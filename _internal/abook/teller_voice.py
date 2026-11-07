@@ -1,8 +1,9 @@
 """Listener-selected narration presentation, independent of speaker identity.
 
-Inner speech always uses the thinking character's identity and voice. The default
-mode is inert. Explicit teller mode changes only narration voice profiles, using
-transactional per-line provenance to restore or retarget them after reopen.
+Inner speech always uses the thinking character's identity and voice. A named
+chapter or accepted section teller of a different gender uses their own voice.
+Explicit teller mode also applies same-gender voices. Per-line provenance restores
+or retargets presentation after reopen without changing speaker identity.
 """
 from __future__ import annotations
 
@@ -94,6 +95,12 @@ class Tellers:
     def row_narrator(self, row: Any) -> str:
         return self.of(int(row["chapter_id"]), int(row["seq"]))
 
+    def local_choice(self, row: Any) -> bool:
+        """A chapter setting or accepted section explicitly supplies this teller."""
+        index = self.chapter_index.get(int(row["chapter_id"]), -1)
+        return (index in self.chapters or narrator_sections.narrator_at(
+            self.sections, index, int(row["seq"])) is not None)
+
 
 def tellers_of(project_root: Path | str, settings: dict[str, Any], connection: sqlite3.Connection) -> Tellers:
     index = {int(row[0]): int(row[1]) if row[1] is not None else int(row[0])
@@ -156,6 +163,19 @@ def preset_gender(preset: str) -> str:
     from .voice_catalog import narrator_presets
 
     return next((str(item["gender"]) for item in narrator_presets() if item["name"] == preset), "")
+
+
+def profile_gender(profile: Any) -> str:
+    from .voice_catalog import engine_voice
+
+    voice = engine_voice(str(profile["preset_name"]), str(profile["engine"]))
+    return str(voice["gender"]) if voice is not None else preset_gender(str(profile["preset_name"]))
+
+
+def chapter_voice_selected(tellers: Tellers, row: Any, mode: str, base_gender: str, gender: str) -> bool:
+    """Share the presentation rule between the writer and the export check."""
+    return mode == "teller" or (tellers.local_choice(row) and base_gender in GENDERS
+                               and gender in GENDERS and gender != base_gender)
 
 
 def aligned_narrator_preset(connection: sqlite3.Connection, gender: str) -> str | None:
@@ -221,26 +241,22 @@ def _recorded(connection: sqlite3.Connection) -> bool:
 
 
 def ensure(project_root: Path | str, db: Any, settings: dict[str, Any], log: Callable[[str], None] = lambda _m: None) -> dict[str, Any]:
-    """Apply an explicit narration voice choice, or undo it, without changing identity.
-
-    The default mode preserves every accepted speaker and voice, including thoughts.
-    """
+    """Apply chapter/section narration choices without changing speaker identity."""
     if not db.casting_is_finalized():
         return {"skipped": "not_cast"}
     record = read(project_root)
     with db.connect() as connection:
         tellers = tellers_of(project_root, settings, connection)
-        applied = presentation_applied(connection)
     result: dict[str, Any] = {}
-    if record["mode"] != "teller" and (applied or "teller" in record["applied"]):
-        result.update(_disable_teller(project_root, db, log))
-        record = read(project_root)
-    if not tellers.active:
-        return result or {"skipped": "third_person"}
-    if record["mode"] == "teller":
+    if record["mode"] == "teller" and tellers.active:
         result.update(_enable_teller(project_root, db, tellers, log))
         return result
-
+    if "teller" in record["applied"]:
+        result.update(_disable_teller(project_root, db, log, tellers=tellers))
+    else:
+        result.update(_ensure_chapter_tellers(project_root, db, tellers))
+    if not tellers.active:
+        return result or {"skipped": "third_person"}
     return result
 
 
@@ -269,7 +285,7 @@ def _narrator_chosen(connection: sqlite3.Connection, project_root: Path | str) -
 
 
 def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers) -> dict[str, Any]:
-    """Apply or undo explicitly selected narration profiles in one transaction.
+    """Apply or undo chapter narration profiles in one transaction.
 
     Identity stays unchanged. Source-bound provenance and audio resets commit with
     the profile change, so an interrupted update can be safely repeated.
@@ -278,7 +294,7 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
     from .database import thought_reads_as_narrator
     from .webui.store import keep_heard_scripts
 
-    selected = read(project_root)["mode"] == "teller"
+    mode = read(project_root)["mode"]
     wishes = _wishes(project_root)
     kept = False
     changed = redo = 0
@@ -286,7 +302,9 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
         base = narrator_profile(conn)
         if base is None:
             return {}
-        selected = selected and not _narrator_chosen(conn, project_root)
+        chosen = _narrator_chosen(conn, project_root)
+        base_gender = profile_gender(base)
+        genders: dict[str, str] = {}
         targets = {}
         origins = {int(r["segment_id"]): dict(r) for r in conn.execute("SELECT * FROM chapter_teller_lines")}
         for row in conn.execute("SELECT * FROM segments WHERE kind IN ('narration','dialogue','thought') ORDER BY chapter_id,seq"):
@@ -305,8 +323,9 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
                         if origin else dict(row))
             name = tellers.row_narrator(row)
             if name not in targets:
-                targets[name] = _teller_target(conn, name, int(base["id"])) if selected else None
-            target = targets[name]
+                targets[name] = _teller_target(conn, name, int(base["id"])) if name and not chosen else None
+                genders[name] = teller_gender(conn, name)
+            target = (targets[name] if chapter_voice_selected(tellers, row, mode, base_gender, genders[name]) else None)
             # Ownership, rather than punctuation-derived kind, selects the voice
             # layer. Attributed inner speech keeps the thinking person's profile.
             eligible = str(original["speaker"]).upper() == NARRATOR or thought_reads_as_narrator(
@@ -335,7 +354,10 @@ def _wishes(project_root: Path | str) -> set[str]:
     from .listener_overrides import read_overrides
 
     overrides = read_overrides(Path(project_root))
-    return {stable for section in ("speakers", "lines") for stable in (overrides.get(section) or {})}
+    # Text edits do not select a voice. Choosing NARRATOR selects ownership; its
+    # presentation still follows the chapter, unless a narrator preset was chosen.
+    return {stable for stable, entry in (overrides.get("speakers") or {}).items()
+            if isinstance(entry, dict) and str(entry.get("speaker") or "").upper() not in ("", NARRATOR, "UNKNOWN")}
 
 
 def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any]) -> None:
@@ -420,17 +442,42 @@ def _shown_name(connection: sqlite3.Connection, character_id: Any, label: str) -
 
 def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers: Tellers) -> dict[str, Any]:
     """Price an explicit narration voice change without altering any line."""
-    origins = connection.execute(
-        "SELECT s.* FROM segments s JOIN chapter_teller_lines t ON t.segment_id=s.id "
-        "WHERE s.voice_profile_id=t.applied_profile_id AND s.voice_profile_id IS NOT t.original_profile_id").fetchall()
-    if origins:
-        return {"direction": "off", "lines": len(origins),
-                "recorded": sum(bool(_heard(row)) for row in origins), "tellers": []}
-    groups, _no_voice = teller_lines(connection, tellers)
-    lines = [row for rows in groups.values() for row in rows]
-    names = [_shown_name(connection, character, label) for character, _profile, label in groups]
-    return {"direction": "on", "lines": len(lines), "recorded": sum(bool(_heard(row)) for row in lines),
-            "tellers": sorted(set(names), key=str.casefold)}
+    from .listener_overrides import narrator_profile
+    from .database import thought_reads_as_narrator
+
+    record = read(project_root)
+    applied = presentation_applied(connection)
+    off = "teller" in record["applied"] or (record["mode"] == "teller" and applied)
+    mode = "narrator" if off else "teller"
+    base = narrator_profile(connection)
+    lines, names = [], set()
+    if base is not None and not _narrator_chosen(connection, project_root):
+        origins = {int(r["segment_id"]): dict(r) for r in connection.execute("SELECT * FROM chapter_teller_lines")}
+        wishes, targets, genders = _wishes(project_root), {}, {}
+        for row in connection.execute("SELECT * FROM segments ORDER BY chapter_id,seq"):
+            origin = origins.get(int(row["id"]))
+            if str(row["stable_id"]) in wishes:
+                continue
+            if origin and (row["speaker"] != origin["original_speaker"] or row["canonical_character_id"] != origin["applied_character_id"]
+                           or row["voice_profile_id"] != origin["applied_profile_id"]):
+                continue
+            original_profile = origin["original_profile_id"] if origin else row["voice_profile_id"]
+            if row["speaker"].upper() != NARRATOR and not thought_reads_as_narrator(row["kind"], row["speaker"], original_profile):
+                continue
+            name = tellers.row_narrator(row)
+            if name not in targets:
+                targets[name] = _teller_target(connection, name, int(base["id"])) if name else None
+                genders[name] = teller_gender(connection, name)
+            target = targets[name]
+            selected = chapter_voice_selected(tellers, row, mode, profile_gender(base), genders[name])
+            desired = target[1] if target is not None and selected else original_profile
+            if desired != row["voice_profile_id"]:
+                lines.append(row)
+                if target is not None:
+                    names.add(_shown_name(connection, target[0], target[2]))
+    return {"direction": "off" if off else "on", "lines": len(lines),
+            "recorded": sum(bool(_heard(row)) for row in lines),
+            "tellers": [] if off else sorted(names, key=str.casefold)}
 
 
 def _move_lines(db: Any, rows: list[Any], profile_id: int | None, reason: str,
@@ -469,9 +516,7 @@ def _enable_teller(project_root: Path | str, db: Any, tellers: Tellers, log: Cal
     return {"teller": {"narration": change["lines"], "redo": change["redo"], "noVoice": 0}}
 
 
-def _disable_teller(project_root: Path | str, db: Any, log: Callable[[str], None]) -> dict[str, Any]:
-    with db.connect() as conn:
-        tellers = tellers_of(project_root, {}, conn)
+def _disable_teller(project_root: Path | str, db: Any, log: Callable[[str], None], *, tellers: Tellers) -> dict[str, Any]:
     result = _ensure_chapter_tellers(project_root, db, tellers)
     change = result.get("chapterNarrator", {"lines": 0, "redo": 0})
     applied = read(project_root)["applied"]

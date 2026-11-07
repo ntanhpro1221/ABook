@@ -11,13 +11,19 @@ def rows(db):
 
 @pytest.mark.parametrize('identity,chapters', [('Mai',{}),('Bao',{'2':'Mai'}),('',{'2':'Mai'}),('Mai',{'2':''})])
 @pytest.mark.parametrize('recorded', [False,True])
-def test_chapter_and_section_tellers_do_not_automatically_change_voices(tmp_path,identity,chapters,recorded):
+def test_only_a_differing_gender_local_teller_changes_default_presentation(tmp_path,identity,chapters,recorded):
     paths, db, settings = _book(tmp_path, settings=_settings(identity,chapters),recorded=recorded)
     narrator_sections.decide(paths.root,1,0,4,accepted=True,narrator='Bao',source='owner')
     before=rows(db)
     teller_voice.ensure(paths.root,db,settings)
     teller_voice.ensure(paths.root,ProjectDB(paths.db),settings)
-    assert rows(db)==before
+    after=rows(db)
+    for sid, row in after.items():
+        if sid == 'c2s2' and chapters.get('2') == 'Mai':
+            assert row['voice_profile_id'] == before['c1s1']['voice_profile_id']
+            assert (row['speaker'],row['canonical_character_id']) == (before[sid]['speaker'],before[sid]['canonical_character_id'])
+        else:
+            assert row == before[sid]
 
 def test_explicit_chapter_voice_changes_presentation_and_undo_restores_profiles(tmp_path):
     paths,db,settings=_book(tmp_path,settings=_settings('Bao',{'2':'Mai'}))
@@ -37,7 +43,8 @@ def test_explicit_chapter_voice_changes_presentation_and_undo_restores_profiles(
     teller_voice.ensure(paths.root,db,settings)
     for sid,row in rows(db).items():
         for field in ('speaker','canonical_character_id','voice_profile_id'):
-            assert row[field]==before[sid][field]
+            expected = before['c1s1'][field] if sid == 'c2s2' and field == 'voice_profile_id' else before[sid][field]
+            assert row[field]==expected
     assert_voice_stability(db)
 
 @pytest.mark.parametrize('fail_at',[1,2,3])

@@ -105,8 +105,9 @@ def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
             # owner. A text-edit wish cannot exempt an incorrect narrator voice.
             if target and not chosen:
                 base_gender = voice_gender(base)
-                different = bool(base_gender and teller_voice.teller_gender(conn, name) not in ('', base_gender))
-                if narrator_owned and (different or record['mode'] == 'teller'):
+                selected = teller_voice.chapter_voice_selected(
+                    tellers, row, record['mode'], base_gender, teller_voice.teller_gender(conn, name))
+                if narrator_owned and selected:
                     expected = profiles.get(target[1])
 
             def issue(code: str, **evidence: Any) -> None:
