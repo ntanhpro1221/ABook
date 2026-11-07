@@ -197,7 +197,7 @@ object Names {
     }
 
     /** Hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận) - `HONORIFICS` của names.py. */
-    private val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
+    private val HONORIFICS = JapanesePolicy.list("honorifics").toSet()
     /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
     private val KOREAN_TERMS = mapOf("oppa" to "óp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "xi", "nim" to "nim")
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
@@ -205,8 +205,7 @@ object Names {
     internal val DICTIONARY_WORDS = mapOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan",
         "vali" to "va-li", "robot" to "rô-bốt", "gorilla" to "gô-ri-la")
     /** Từ Nhật rất quen: đọc theo luật phiên âm với mọi cuốn, dù có trong danh sách từ Anh - `JAPANESE_COMMON`. */
-    internal val JAPANESE_COMMON = setOf("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
-        "onii", "onee", "otaku", "eroge", "tsukkomi", "ara", "umu")
+    internal val JAPANESE_COMMON = JapanesePolicy.list("common").toSet()
     /** Tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số - `CURRENCY`. */
     private val CURRENCY = mapOf("won" to "guôn", "yen" to "yên", "kwan" to "quan")
     private val NUMBER_WORDS = setOf("nghìn", "ngàn", "triệu", "tỷ", "tỉ", "trăm", "vạn", "chục", "mươi", "mười", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")

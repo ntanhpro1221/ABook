@@ -27,7 +27,7 @@ object EnglishPolicy {
         val lower = core.lowercase(Locale.ROOT)
         if (core.all { it in 'A'..'Z' } && lower.all { it in "ivxlcdm" }) return false
         if (vietnamese(core) || lower in Names.JAPANESE_COMMON) return false
-        if (Names.nameReading(core, origin) != null || Names.honorificReading(core, origin) != null) return false
+        if (JapanesePolicy.reading(core, origin) != null || Names.nameReading(core, origin) != null || Names.honorificReading(core, origin) != null) return false
         if (lower.replace("-", "") in EnglishWords.ALL || lower in BuildConfig.DIRECT_ENGLISH_WORDS.split(" ")) return true
         return Names.ORIGINS.all { Romanization.reading(core, it) == null }
     }
@@ -43,6 +43,7 @@ object EnglishPolicy {
     }
 
     fun applyTokens(toks: List<String>, out: MutableList<String>, origin: String?) {
+        JapanesePolicy.applyTokens(toks, out, origin)
         val asian = toks.toMutableList()
         Names.readNames(toks, asian, origin)
         Names.readKoreanNames(toks, asian, origin)

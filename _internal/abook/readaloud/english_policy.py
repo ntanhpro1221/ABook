@@ -50,7 +50,9 @@ def keeps_word(core: str, origin: str | None) -> bool:
         return False
     if vietnamese(core) or core.lower() in names.JAPANESE_COMMON:
         return False
-    if names.name_reading(core, origin) or names.honorific_reading(core, origin):
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin) or names.name_reading(core, origin) or names.honorific_reading(core, origin):
         return False
     if core.replace("-", "").lower() in names.english_words() or core.lower() in POLICY["english_words"]:
         return True
@@ -79,6 +81,9 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
     Preserve contextual Korean names and structural TN such as chapter labels.
     Tags are generated only here, so angle-bracket TN cannot consume them.
     """
+    from .japanese_policy import apply_tokens as japanese_tokens
+
+    japanese_tokens(toks, out, origin)
     asian = names.spoken_names(toks, origin, True)
     for index, token in enumerate(toks):
         before, core, after = names.split_token(token)

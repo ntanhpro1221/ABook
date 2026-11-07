@@ -46,10 +46,15 @@ def book_origin_for_project(db: Any) -> str | None:
 def rule_reading(surface: str, origin: str | None) -> str | None:
     """Cách đọc theo luật phiên âm của tên `surface` (một hay nhiều chữ, có thể kèm hậu tố gọi: "Haruto-kun") trong cuốn gốc `origin`, hay None
     khi có chữ luật không đọc (từ Anh, âm tiết Việt, tiếng reo...) hoặc cách đọc ra có âm tiết bộ kiểm chặt không nhận."""
+    from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
+
+    origin = routing_origin(surface, origin)
     words = surface.split()
     if origin not in readaloud_names.ORIGINS or not words:
         return None
-    readings = [readaloud_names.name_reading(word, origin) for word in words]
+    contextual = contextual_names(words) if origin == "ja" else set()
+    readings = [japanese_reading(word, origin, contextual=i in contextual) if origin == "ja"
+                else readaloud_names.name_reading(word, origin) for i, word in enumerate(words)]
     if any(reading is None for reading in readings):
         return None
     spoken = " ".join(readings).replace("_", "")  # "o_" là dấu riêng của "Nghe ngay" (giữ chữ "o" lẻ qua sea-g2p); Studio lưu chữ thường
@@ -78,10 +83,15 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
 
     if engine_speaks_english is None:
         engine_speaks_english = STUDIO_ENGINE_SPEAKS_ENGLISH
+    from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
+
+    origin = routing_origin(surface, origin)
+    contextual = contextual_names(surface.split()) if origin == "ja" else set()
     spoken: list[str] = []
     by_rule = by_english = False
-    for word in surface.split():
-        reading = rule_reading(word, origin)
+    for index, word in enumerate(surface.split()):
+        reading = (japanese_reading(word, origin, contextual=True) if index in contextual
+                   else rule_reading(word, origin))
         if reading is not None:
             spoken.append(reading)
             by_rule = True
@@ -102,6 +112,50 @@ def _direct_word(word: str, origin: str | None) -> bool:
     from .readaloud.english_policy import keeps_word
 
     return keeps_word(word, origin)
+
+
+def japanese_pronunciations(pronunciations: list[Any], origin: str | None) -> list[Any]:
+    """Materialize automatic Japanese readings by component without rewriting a DB.
+
+    A full machine row must not shadow the same component's listener reading.
+    Explicit listener phrases still keep their normal longest-match priority.
+    Unresolved spellings and other book origins keep their existing route.
+    """
+    from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
+
+    if origin not in (None, "ja"):
+        return pronunciations
+    from .database import LISTENER_PRONUNCIATION_SOURCE
+
+    explicit = {str(row["surface"]).casefold() for row in pronunciations
+                if str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE}
+    components: dict[str, Any] = {}
+    untouched = []
+    for row in pronunciations:
+        words = str(row["surface"]).split()
+        row_origin = routing_origin(str(row["surface"]), origin)
+        contextual = contextual_names(words) if row_origin == "ja" else set()
+        readings = [japanese_reading(word, row_origin, contextual=i in contextual) if row_origin == "ja" else None for i, word in enumerate(words)]
+        if str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE or not any(readings):
+            untouched.append(row)
+            continue
+        groups = str(row["spoken_form"]).split()
+        if len(groups) != len(words) and not all(readings):
+            untouched.append(row)
+            continue
+        for index, (word, reading) in enumerate(zip(words, readings)):
+            key = word.casefold()
+            if key in explicit or key in components:
+                continue
+            component = dict(row)
+            component.update(surface=word, normalized_surface=key,
+                             spoken_form=reading or groups[index])
+            if reading:
+                component.update(source=RULE_ROMANIZATION_PRONUNCIATION_SOURCE,
+                                 confidence=RULE_READING_CONFIDENCE, japanese_fallback=True)
+            components[key] = component
+    untouched = [row for row in untouched if str(row["surface"]).casefold() not in components]
+    return sorted([*untouched, *components.values()], key=lambda row: (-len(str(row["surface"])), str(row["surface"])))
 
 
 def lockable(surface: str, spoken_form: str) -> bool:

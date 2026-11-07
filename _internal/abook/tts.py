@@ -966,6 +966,9 @@ class TTSCoordinator:
         if self._pronunciation_pattern is None:
             minimum = float(self.settings["analysis"].get("low_confidence_threshold", 0.58))
             pronunciations = self.db.list_pronunciations(minimum)
+            from .studio_names import japanese_pronunciations
+
+            pronunciations = japanese_pronunciations(pronunciations, self._origin_of_book())
             exact_pronunciations = [
                 item
                 for item in pronunciations
@@ -1130,6 +1133,7 @@ class TTSCoordinator:
                         "pronunciation_delivery_variant": pronunciation_delivery_variant,
                         "source": str(metadata["source"]),
                         "asr_alias_only": not locked_english_pronunciation,
+                        "japanese_fallback": bool(_row_value(metadata, "japanese_fallback", False)),
                         "source_start": source_start,
                         "source_end": source_end,
                         "_anchor_index": anchor_index,
@@ -1308,6 +1312,9 @@ class TTSCoordinator:
             direct_english=direct_english,
             unprotected_anchors=frozenset(
                 int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
+                and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {
+                    "rule_romanization", LISTENER_PRONUNCIATION_SOURCE,
+                }))
             ),
         )
         present = set().union(*anchor_tags) if anchor_tags else set()
@@ -1339,6 +1346,15 @@ class TTSCoordinator:
             })
             for position in range(spoken_start, spoken_end):
                 anchor_tags[position] = anchor_tags[position] | frozenset({index})
+        from .readaloud.japanese_policy import metadata as japanese_metadata
+        from .studio_names import rule_reading
+
+        for anchor in anchors:
+            if anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and (str(anchor["source"]) == "rule_romanization" or (
+                str(anchor["source"]) == "studio_tn"
+                and rule_reading(str(anchor["surface"]).strip(".,!?\"“”"), self._origin_of_book()) is not None
+            ))):
+                anchor.update(japanese_metadata(str(anchor["surface"])))
         text = self._normalize_with_anchor_spans(text, anchor_tags, anchors)
         for anchor in anchors:
             if anchor.get("asr_alias_only"):

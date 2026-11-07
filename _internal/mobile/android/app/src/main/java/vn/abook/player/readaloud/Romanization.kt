@@ -24,12 +24,8 @@ object Romanization {
         "ko_rare_vowels" to "oe / wi / ui / we / wae của tiếng Hàn: mặc định uê / uy / ưi / uê / oe theo âm (chưa có ví dụ chính thức)",
     )
 
-    private val LONG_VOWELS = mapOf(
-        'ā' to 'a', 'ī' to 'i', 'ū' to 'u', 'ē' to 'e', 'ō' to 'o', 'â' to 'a', 'î' to 'i', 'û' to 'u', 'ê' to 'e', 'ô' to 'o',
-        'Ā' to 'A', 'Ī' to 'I', 'Ū' to 'U', 'Ē' to 'E', 'Ō' to 'O', 'Â' to 'A', 'Î' to 'I', 'Û' to 'U', 'Ê' to 'E', 'Ô' to 'O',
-    )
-    // Tiếng Nhật giữ ō / ô thành "ô" (dài viết bằng dấu -> ô), để phân biệt với "ou" viết ra hai chữ (-> âu: chủ sách 04-10)
-    private val JA_LONG_O = mapOf('ō' to 'ô', 'Ō' to 'Ô', 'ô' to 'ô', 'Ô' to 'Ô')
+    private val LONG_VOWELS = JapanesePolicy.strings("long_vowels").mapKeys { it.key.single() }.mapValues { it.value.single() }
+    private val JA_LONG_O = JapanesePolicy.strings("long_o").mapKeys { it.key.single() }.mapValues { it.value.single() }
     private const val ACUTE = "́"
     private const val DIACRITIC_VOWELS = "ăâêôơư"
     private val FRONT = setOf("i", "e", "ê", "y")
@@ -72,10 +68,11 @@ object Romanization {
                 nucleus = nucleus.substring(1)
             } else {
                 onset = if (nucleus.take(1) in FRONT) "k" else "c"
+                if (JapanesePolicy.choice("k") == "k_all" || (JapanesePolicy.choice("k") == "k_o" && nucleus.startsWith("ô"))) onset = "k"
             }
         } else if (onset == "G") {
             // g + i đọc "ghi" (chủ sách 04-10: Hiiragi -> Hi-ra-ghi; ji vẫn -> gi); trước e, ê cũng "gh"
-            onset = if (nucleus.take(1) in FRONT) "gh" else "g"
+            onset = if (nucleus.take(1) in FRONT && !(nucleus.startsWith("i") && JapanesePolicy.choice("g") == "gi")) "gh" else "g"
         } else if (onset == "gi" && nucleus.take(1) == "i") {
             nucleus = nucleus.substring(1)
         }
@@ -98,20 +95,14 @@ object Romanization {
 
     // ---- tiếng Nhật (mục 2) ------------------------------------------------------------------------------------------
 
-    private const val JA_VOWELS = "aiueo"
-    private const val JA_VOWELS_LONG = "aiueoôŏ" // ô: o viết bằng dấu (ō), đọc ô; ŏ: "oh" trước phụ âm / cuối từ (nội bộ, jaSpelling), luôn đọc ô kể cả đầu từ
-    private val JA_VOWEL = mapOf('a' to "a", 'i' to "i", 'u' to "u", 'e' to "e", 'o' to "ô") // chủ sách 04-10: u -> u và e -> e ở mọi chỗ
-    private val JA_SIMPLE = mapOf(
-        "k" to "K", "g" to "G", "s" to "x", "z" to "d", "t" to "t", "d" to "đ", "n" to "n", "h" to "h", "b" to "b", "p" to "p", "m" to "m", "r" to "r",
-    )
-    private val JA_ALLOWED = mapOf(
-        "k" to "aiueo", "g" to "aiueo", "n" to "aiueo", "b" to "aiueo", "p" to "aiueo", "m" to "aiueo", "r" to "aiueo",
-        "s" to "aueo", "z" to "aueo", "t" to "aeo", "d" to "aieo", "h" to "aieo", // di: tên kiểu Latin trong truyện Nhật (Reidi, Direkuresu; chủ sách 04-10 lần 9), Hepburn không có
-        "sh" to "aiueo", "ch" to "aiueo", "j" to "aiueo", "ts" to "u", "f" to "ui", "w" to "a", "y" to "auo",
-        "ky" to "auo", "gy" to "auo", "ny" to "auo", "hy" to "auo", "by" to "auo", "py" to "auo", "my" to "auo", "ry" to "auo",
-    )
-    private val JA_ONSETS = listOf("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
-    private val JA_GEMINATE_CODA = mapOf("k" to "c", "p" to "p", "t" to "t", "s" to "t")
+    private val JA_VOWELS = JapanesePolicy.data.getString("vowels")
+    private val JA_VOWELS_LONG = JapanesePolicy.data.getString("internal_vowels")
+    private val JA_VOWEL = JapanesePolicy.strings("vowel").mapKeys { it.key.single() }
+    private val JA_SIMPLE = JapanesePolicy.strings("simple").mapValues { if (it.value == "S") JapanesePolicy.choice("s") else it.value }
+    private val JA_ALLOWED = JapanesePolicy.strings("allowed")
+    private val JA_ONSETS = JapanesePolicy.list("onsets")
+    private val JA_GEMINATE_CODA = JapanesePolicy.strings("geminate_coda").mapValues { if (it.value == "ss") JapanesePolicy.choice("ss") else it.value }
+    private val JA_EMIT = JapanesePolicy.strings("emit")
 
     private fun jaEmit(onset: String, vowel: Char, syllables: MutableList<Syl>, flags: MutableList<String>) {
         val plain = JA_VOWEL.getValue(vowel)
@@ -121,39 +112,30 @@ object Romanization {
                 syllables.add(Syl("", if (vowel == 'o' && !afterIu) "o" else plain))
             }
             onset in JA_SIMPLE -> syllables.add(Syl(JA_SIMPLE.getValue(onset), plain))
-            onset == "sh" -> syllables.add(Syl("s", plain)) // shi shu sha sho -> si su sa sô (chủ sách 04-10: shu giữ s + u)
-            onset == "ch" -> syllables.add(Syl("ch", if (vowel == 'u') "u" else plain))
-            onset == "j" -> syllables.add(Syl("gi", if (vowel == 'u') "u" else plain))
-            onset == "ts" -> syllables.add(Syl("x", "u")) // tsu -> xu ở mọi chỗ (chủ sách 04-10)
-            onset == "f" -> syllables.add(Syl("ph", vowel.toString())) // fu -> phu; fi -> phi (lần 9: Fii -> Phi, Fina -> Phi-na)
-            onset == "w" -> syllables.add(Syl("", "oa"))
+            onset == "sh" -> syllables.add(Syl(JapanesePolicy.choice("sh"), plain)) // shi shu sha sho -> si su sa sô (chủ sách 04-10: shu giữ s + u)
+            onset == "ch" -> syllables.add(Syl(JA_EMIT.getValue("ch"), plain))
+            onset == "j" -> syllables.add(Syl(JA_EMIT.getValue("j"), plain))
+            onset == "ts" -> syllables.add(Syl(JA_EMIT.getValue("ts"), JA_VOWEL.getValue('u'))) // tsu -> xu ở mọi chỗ (chủ sách 04-10)
+            onset == "f" -> syllables.add(Syl(JA_EMIT.getValue("f"), vowel.toString())) // fu -> phu; fi -> phi (lần 9: Fii -> Phi, Fina -> Phi-na)
+            onset == "w" -> syllables.add(Syl("", JA_EMIT.getValue("w")))
             onset == "y" -> { // y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10); yu, yo theo ya
                 if (vowel != 'a') flags.add("analogy:y_gi")
-                syllables.add(Syl("gi", plain))
+                syllables.add(Syl(JA_EMIT.getValue("y"), plain))
             }
             else -> {
                 val head = JA_SIMPLE.getValue(onset.substring(0, 1))
                 if (vowel == 'a') flags.add("analogy:cya") // kyu -> ki-u, kyo -> ki-ô (chủ sách 04-10: Ryuu -> Ri-u)
-                syllables.add(Syl(head, "i"))
-                syllables.add(Syl("", plain))
+                if (vowel == 'a' && JapanesePolicy.choice("kya") == "kia") syllables.add(Syl(head, "ia"))
+                else {
+                    syllables.add(Syl(head, "i"))
+                    syllables.add(Syl("", plain))
+                }
             }
         }
     }
 
     /** Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng. */
-    private val JA_FIXED = mapOf(
-        "onigiri" to listOf(Triple("", "o", ""), Triple("n", "i", ""), Triple("gi", "i", ""), Triple("r", "i", "")),
-        // chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
-        "chwan" to listOf(Triple("ch", "oa", "n")),
-        // chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
-        // (Hepburn không có ti, nên không đi qua luật: chỉ đúng các tên này; fi -> phi thì là luật từ lần 9, Fina -> phi-na)
-        "gesunoh" to listOf(Triple("G", "e", "t"), Triple("x", "u", ""), Triple("n", "ô", "")),
-        "theia" to listOf(Triple("th", "i", ""), Triple("", "a", "")),
-        "tio" to listOf(Triple("t", "i", ""), Triple("", "ô", "")),
-        // chủ sách lần 9, ngoại lệ không có luật: Hatta -> ha-ta (tt KHÔNG khép); Koichi -> co-i-chi (ghép kou + ichi, khác Koizumi -> coi-du-mi)
-        "hatta" to listOf(Triple("h", "a", ""), Triple("t", "a", "")),
-        "koichi" to listOf(Triple("K", "o", ""), Triple("", "i", ""), Triple("ch", "i", "")),
-    )
+    private val JA_FIXED = JapanesePolicy.fixed()
 
     private val JA_GH = Regex("gh(?=[aiueo])")
     private val JA_JY = Regex("jy(?=[aiueo])")
@@ -165,7 +147,7 @@ object Romanization {
      * ô dài, kể cả đầu từ (Ohto -> Ô-tô, Ohka -> Ô-ca; "oh" trước nguyên âm là o + h của ha, hi: Ohayou giữ nguyên);
      * lần 9: cch -> tch (ecchi -> Ét-chi: cách viết khác của tch, Hepburn viết matcha).
      */
-    private fun jaSpelling(raw: String, flags: MutableList<String>): String {
+    internal fun jaSpelling(raw: String, flags: MutableList<String>): String {
         var word = raw
         if (JA_GH.containsMatchIn(word)) {
             flags.add("analogy:ja_gh")
@@ -194,7 +176,7 @@ object Romanization {
         while (i < word.length) {
             val c = word.substring(i, i + 1)
             val after = sub(word, i + 1, i + 2)
-            // kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (chủ sách lần 9: Sapporo -> Xáp-pô-rô, Nissan -> Nít-xan, Matcha -> Mát-cha; Hatta là ngoại lệ, JA_FIXED)
+            // kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (chủ sách lần 9: Sapporo -> Xáp-pô-rô, Nissan -> Nít-xan, Matcha -> Mát-cha)
             if (c in JA_GEMINATE_CODA && (after == c || (c == "t" && sub(word, i + 1, i + 3) == "ch"))) {
                 if (c == "s") flags.add("analogy:ss_t")
                 if (!close(syllables, JA_GEMINATE_CODA.getValue(c))) return null
@@ -259,11 +241,11 @@ object Romanization {
             if (forcedO) syllables.last().nucleus = "ô" // oh: ô dài, kể cả đầu từ (Ohto -> Ô-tô; ō đầu từ vẫn o: Ōsaka -> O-xa-ca)
             val follow = if (longO) "" else sub(word, j, j + 1)
             if (vowel == 'e' && follow == "i") {
-                syllables.last().nucleus = "ây" // ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)
+                syllables.last().nucleus = JapanesePolicy.choice("ei") // ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)
                 j += 1
             } else if (vowel == 'o' && follow == "u") { // ou viết ra -> âu (chủ sách 04-10: Kyouko -> Ki-âu-cô); ō / oo vẫn -> ô
                 if (onset == "sh" || onset == "ch" || onset == "j") flags.add("analogy:ou_vom")
-                syllables.last().nucleus = "âu"
+                syllables.last().nucleus = JapanesePolicy.strings("vowel_pairs").getValue("ou")
                 j += 1
             } else if (follow.length == 1 && vowel == follow[0] && vowel in "oueia") {
                 j += 1 // nguyên âm kép viết lặp gộp một: oo, uu, ee, ii, aa (chủ sách 04-10)
@@ -278,7 +260,7 @@ object Romanization {
                 syllables.last().nucleus += "i"
                 j += 1
             } else if (vowel == 'o' && follow == "i" && onset.isNotEmpty() && !forcedO) {
-                syllables.last().nucleus = "oi" // oi sau phụ âm là MỘT âm tiết (chủ sách lần 9: Koizumi -> Coi-du-mi, Izayoi -> I-da-gioi); không phụ âm đầu thì tách (Aoi -> A-o-i); Koichi là ngoại lệ
+                syllables.last().nucleus = "oi" // oi sau phụ âm là MỘT âm tiết (chủ sách lần 9: Koizumi -> Coi-du-mi, Izayoi -> I-da-gioi); không phụ âm đầu thì tách (Aoi -> A-o-i)
                 j += 1
             }
             i = j
@@ -598,7 +580,7 @@ object Romanization {
 
     // ---- cửa vào -----------------------------------------------------------------------------------------------------
 
-    internal val JA_SUFFIXES = setOf("san", "kun", "chan", "chwan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")
+    internal val JA_SUFFIXES = JapanesePolicy.list("suffixes").toSet()
     private const val ABBREVIATION_MAX = 4 // chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
     private const val ENGLISH_MIN = 4 // chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
@@ -618,7 +600,7 @@ object Romanization {
         return "mixed"
     }
 
-    /** Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HImeno -> H, Imeno). */
+    /** Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HAruto -> H, Imeno). */
     private fun splitCamel(segment: String): List<String> {
         val parts = ArrayList<String>()
         var start = 0
@@ -674,7 +656,7 @@ object Romanization {
                 return pieces.filterNotNull()
             }
         }
-        // hoa lạ không tách được (HImeno): đọc như viết hoa chữ đầu
+        // hoa lạ không tách được (HAruto): đọc như viết hoa chữ đầu
         val piece = makePiece(segment.lowercase(Locale.ROOT), segment[0].isUpperCase(), origin, false)
         if (piece == null || piece.kind != "read") return null
         flags.add("analogy:case_fold")

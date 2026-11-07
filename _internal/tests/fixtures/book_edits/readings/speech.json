@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "1766a7f4b3c4fd4f8ae5d170aa9ae04b910762924b6c9169abf8f2db4c7a16d6"
+   "key": "b274ee41872bc033f28ae9389c246defeb05779b6a9c3ab085670f6a999f020e"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "257e7c87a40392424e253de71ba3137bf98150187118fd03dd1250c8791a7683"
+   "key": "8ad71e4645d59688d849f63a90d5be7a19416761a64a38141bfdc37761cb6d96"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "bbf31eaf214c448e1a937a787c39854f99c8a6e898f5b8fe6937ecea8546eded"
+   "key": "346aec92be9825db3648385986a8c38e328aa7db2463145699904ed3c5c70fe3"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -190,7 +190,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "dea1273462bf78ab36a7980ca89b12ae87035fcbe566808be86a9254f6e884fa"
+   "key": "766227b768c733836c8120df3329c3880b706f4dcb9ec4bbec98d8a5d00ad7ca"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "c0800fdf5cfb266aa3c2c76f9eccfafe9fd81225c1bd824fd3e95d1927ff3bc5"
+   "key": "c870c32858429d4ca4251c513b1e7d0927145f5c0d83e5c82361a89c44f44dea"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "dc1284ac90ec60807b8787ff721979e4c3b17661418748eab76f2a08a326c326"
+   "key": "c7ff39d28266c8c379dc871cd957d8ae0a478c5b095586bed942ae570b0932f7"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "504ebdefb778d1c0f19a42710a936438c413315412954d2e66cac85666eba324"
+   "key": "92b35c85200022e806ecda6b67f2d6b281b2dc1ae7fae68443195f914e89b57c"
   }
  ]
 }

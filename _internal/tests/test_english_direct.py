@@ -51,7 +51,7 @@ def test_vietnamese_dictionary_intersection_is_protected():
 def test_full_and_short_names_have_identical_components():
     for surface in ("Michael", "Michael Godswill", "Ferrell", "Ferrell Bartholomew"):
         assert planned_reading(surface, None, direct_english=True) == (surface, "keep_english")
-    assert planned_reading("Keiji", None, direct_english=True) is None
+    assert planned_reading("Tanaka", None, direct_english=True) == ("Ta-na-ca", "rule_romanization")
     assert planned_reading("Haruto", "ja", direct_english=True) == planned_reading("Haruto", "ja")
 
 
@@ -59,7 +59,7 @@ def test_only_vieneu_gets_the_new_policy_and_cache_namespace():
     toks = "Tôi kiểm GPS và video.".split()
     assert vieneu.spoken_tokens(toks) == ["Tôi", "kiểm", "giê pê ét", "và", "vi-đê-ô."]
     assert vieneu.reading_tag("Tôi kiểm GPS.", None) == ""
-    assert vieneu.reading_tag("Tôi kiểm GPS.", None, direct_english=True) == f"direct-en{english_policy.VERSION}"
+    assert vieneu.reading_tag("Tôi kiểm GPS.", None, direct_english=True) == f"direct-en{english_policy.VERSION}+jp-fallback1"
     assert english_policy.PROVENANCE == "auto"
     assert english_policy.ACRONYMS >= {"UDF", "MIT", "GPS", "DNA", "ID"}
 
