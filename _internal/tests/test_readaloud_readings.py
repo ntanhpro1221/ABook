@@ -117,7 +117,7 @@ def test_a_voice_on_this_computer_applies_the_reading_after_the_names(fake_voice
     said = engines["turbo"].calls[-1]
     assert "ha-ru-to" in said and "ha-ru-tô" not in said and "kết" in said, "cách đọc của người nghe thắng luật phiên âm"
     assert len(clip["words"]) == len(text.split())
-    key = cache.clip_key("vieneu", "turbo/Thường", text, "+".join([vieneu.reading_tag(text, "ja"),
+    key = cache.clip_key("vieneu", "turbo/Thường", text, "+".join([vieneu.reading_tag(text, "ja", direct_english=True),
                                                                        readings.tag(text, {"Haruto": "Ha-ru-to", "Kate": "Kết"}),
                                                                        loudness.clip_tag("vieneu:turbo/Thường")]))
     assert clip["file"].startswith(key)

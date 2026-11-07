@@ -121,7 +121,7 @@ class VieneuSpeaker(
     /** [live]: the paragraph the listener is waiting for streams - each unit goes to it as soon as it is read ([LocalLive]). */
     fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String, origin: String? = null,
               readings: Map<String, String>? = null, live: LocalLive? = null): Spoken {
-        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin, readings)
+        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin, readings, directEnglish = true)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {

@@ -113,13 +113,13 @@ def test_a_japanese_book_reads_its_names_by_rule_and_asks_the_model_only_for_the
         assert stored[name] == (name_reading(name, "ja").replace("_", ""), RULE_ROMANIZATION_PRONUNCIATION_SOURCE), "the same reading as Nghe ngay, without its lone-o mark"
     assert stored["Haruto-kun"] == ("Ha-ru-tô-cun", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
     assert stored["Rose"] == ("Rose", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
-    assert sent == [["Xenlor"]], "only the name no rule reads reaches the model"
-    assert stored["Xenlor"][0] == "Xen-lo"
+    assert sent == [], "Western spelling stays English; Japanese rules still run first"
+    assert stored["Xenlor"] == ("Xenlor", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
 
 
 def test_the_model_prompt_carries_the_origin_and_owner_readings(monkeypatch) -> None:
-    db = _book(JAPANESE, "Xenlor bước vào.")
-    analyzer, _sent = _analyzer(db, monkeypatch, {"Xenlor": "Xen-lo"})
+    db = _book(JAPANESE, "Xenlor-kun bước vào.")
+    analyzer, _sent = _analyzer(db, monkeypatch, {"Xenlor-kun": "Xen-lo-cun"})
     prompts: list[str] = []
     respond = analyzer._stream_json_response
     monkeypatch.setattr(analyzer, "_stream_json_response", lambda request, **kw: prompts.append(request["prompt"]) or respond(request, **kw))
@@ -168,19 +168,20 @@ def test_a_locked_name_is_never_changed(monkeypatch) -> None:
 
 
 def test_a_full_name_reads_its_kept_word_the_same_way(monkeypatch) -> None:
-    """"Michael" giữ tiếng Anh; "Michael Godswill" đi LLM và về "Mai-cồ Gót-uyu" - một tên hai cách đọc. Chữ do luật thắng."""
+    """Full and short Western names share per-word English readings without an LLM request."""
     db = _book(WESTERN, *["Michael Godswill đứng dậy."] * 2)
     analyzer, sent = _analyzer(db, monkeypatch, {"Michael Godswill": "Mai-cồ Gót-uyu"})
 
     analyzer.reconcile_name_pronunciations()
 
-    assert sent == [["Michael Godswill"]]
-    assert _stored(db)["Michael Godswill"][0] == "Michael Gót-uyu"
+    assert sent == []
+    assert "Michael Godswill" not in _stored(db)
+    assert _stored(db)["Godswill"] == ("Godswill", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
     assert _stored(db)["Michael"] == ("Michael", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
 
 
 def test_a_full_name_read_from_the_dictionary_is_fixed_too(monkeypatch) -> None:
-    """Không có tên nào phải hỏi LLM (đường trả về sớm) thì tên đầy đủ đi CMU vẫn được sửa cho khớp chữ giữ tiếng Anh."""
+    """CMU availability does not override the new Western spelling policy."""
     db = _book(WESTERN, *["Michael Kowalski đứng dậy."] * 2)
     analyzer, _sent = _analyzer(db, monkeypatch)
 
@@ -188,7 +189,8 @@ def test_a_full_name_read_from_the_dictionary_is_fixed_too(monkeypatch) -> None:
 
     dictionary = _cmu_phrase_to_vietnamese("Michael Kowalski")
     assert dictionary.split()[0] != "Michael", "the dictionary reads the kept word its own way"
-    assert _stored(db)["Michael Kowalski"][0] == "Michael " + dictionary.split()[1]
+    assert "Michael Kowalski" not in _stored(db)
+    assert _stored(db)["Kowalski"] == ("Kowalski", KEEP_ENGLISH_PRONUNCIATION_SOURCE)
 
 
 def test_the_strict_check_refuses_a_rule_reading_with_a_broken_syllable() -> None:
