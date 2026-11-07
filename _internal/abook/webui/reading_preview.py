@@ -623,7 +623,7 @@ class ReadingPreviews:
             log.unlink(missing_ok=True)
         with log.open("ab") as errors:
             return subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors, env=environment,
-                                    cwd=str(cwd), text=True, encoding="utf-8", bufsize=1,
+                                    cwd=str(cwd), text=True, encoding="utf-8", errors="replace", bufsize=1,
                                     creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
 
     def _environment(self, studio: Any, fake: bool, code_root: Path) -> dict[str, str]:

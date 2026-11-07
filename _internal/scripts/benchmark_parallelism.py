@@ -53,7 +53,7 @@ def _gpu_snapshot() -> dict[str, float]:
                 "--format=csv,noheader,nounits",
             ],
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             timeout=20,
             check=False,
         )

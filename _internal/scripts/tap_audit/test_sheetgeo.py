@@ -25,7 +25,7 @@ def test_real_player_geometry(edge, injected):
                '--edge', edge, '--output', str(output)]
     if injected:
         command.extend(['--no-build', '--inject-fault'])
-    completed = subprocess.run(command, cwd=root, capture_output=True, text=True, encoding='utf-8', timeout=900)
+    completed = subprocess.run(command, cwd=root, capture_output=True, text=True, encoding='utf-8', errors="replace", timeout=900)
     assert completed.returncode == int(injected), completed.stdout + completed.stderr
     report = json.loads(output.read_text(encoding='utf-8'))
     assert report['status'] == ('FAIL' if injected else 'PASS'), completed.stdout
