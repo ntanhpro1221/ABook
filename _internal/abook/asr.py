@@ -340,6 +340,9 @@ def fold_number_units(text: str) -> str:
 
 
 def normalize_transcript(text: str) -> str:
+    # VieNeu frontend controls carry no spoken words. Keep their contents and
+    # every ordinary word; acronym anchors still align each occurrence normally.
+    text = re.sub(r"</?en>", "", text)
     # Consume complete thousands groups BEFORE punctuation is discarded. Otherwise
     # 300,000 becomes two numbers (300 and 000). A decimal such as 3,14 is not grouped.
     text = re.sub(

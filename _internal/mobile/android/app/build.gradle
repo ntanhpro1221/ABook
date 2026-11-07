@@ -15,6 +15,7 @@ if (releaseSigningFile.isFile()) {
 }
 
 def musicLevelRange = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/music_mix.json"))
+def englishPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/english_policy.json"))
 
 android {
     namespace = "vn.abook.player"
@@ -29,6 +30,11 @@ android {
         // Chế độ sách giả cho đo đạc (NativeActivity.DEMO_BOOKS) chỉ có ở bản thử dưới gói riêng: Activity mở app nhận Intent của mọi app khác,
         // nên bản phát hành không bao giờ nghe extra ấy.
         buildConfigField "boolean", "DEMO", "${project.hasProperty("benchAppId")}"
+        buildConfigField "int", "ENGLISH_READING_VERSION", "${englishPolicy.version}"
+        buildConfigField "String", "ENGLISH_ACRONYMS", '"' + englishPolicy.acronyms.join(' ') + '"'
+        buildConfigField "String", "PRESERVE_ACRONYMS", '"' + englishPolicy.preserve_acronyms.join(' ') + '"'
+        buildConfigField "String", "DIRECT_ENGLISH_WORDS", '"' + englishPolicy.english_words.join(' ') + '"'
+        buildConfigField "String", "ENGLISH_READING_PROVENANCE", '"' + englishPolicy.provenance + '"'
         // Remote Studio is the release desktop service; our own server is build-specific.
         buildConfigField "String", "STUDIO_SERVICE_UUID", '"' + peerEndpoints.release.serviceUuid + '"'
         buildConfigField "int", "DEFAULT_PEER_PORT", "${peerEndpoints.release.port}"

@@ -212,8 +212,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   trong batch lỗi; resume chỉ xử lý phần chưa khóa. Lỗi ranh giới âm tiết có thể sửa cơ học an toàn như
   `A-der-on → A-đe-ron`; nếu không sửa được, retry chỉ tên lỗi với feedback cụ thể, không gửi lại nguyên prompt/batch.
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
-  CMUdict cục bộ cung cấp ARPAbet và bắt buộc tên tiếng Anh được chuyển thành âm tiết thuần Việt; tên fantasy ngoài
-  từ điển do Qwen phân loại theo ngữ cảnh. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
+  VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
+  Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. Tên Nhật/Hàn giữ đường luật/CMU/Qwen hiện có;
+  tên còn mơ hồ tiếp tục đường hiện có. Từ Việt hợp lệ không được phiên âm chỉ vì có trong từ điển Anh; detector chỉ đọc ở
+  `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
+  không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.

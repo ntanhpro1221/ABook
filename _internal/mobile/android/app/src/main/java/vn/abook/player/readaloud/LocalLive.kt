@@ -71,7 +71,7 @@ class LocalLive(
             val (provider, rest) = ClipCache.split(voice)
             return when (provider) {
                 SupertonicVoices.PREFIX -> SupertonicText.units(text, origin, readings)
-                VieneuVoices.PREFIX -> VieneuSpeaker.MAX_CHARS[rest.substringBefore('/')]?.let { VieneuUnits.units(text, it, origin, readings) }
+                VieneuVoices.PREFIX -> VieneuSpeaker.MAX_CHARS[rest.substringBefore('/')]?.let { VieneuUnits.units(text, it, origin, readings, directEnglish = true) }
                 else -> null
             }
         }

@@ -30,6 +30,7 @@ from .database import (
     PRONUNCIATION_DELIVERY_LOCKED,
     PRONUNCIATION_DELIVERY_SOURCE,
     PRONUNCIATION_DELIVERY_VARIANTS,
+    LISTENER_PRONUNCIATION_SOURCE,
     ProjectDB,
     thought_reads_as_narrator,
 )
@@ -1062,6 +1063,14 @@ class TTSCoordinator:
             )
             canonical_replacement = pronunciation_map.get(key, matched_text)
             metadata = metadata_map.get(key)
+            from .readaloud import english_policy
+
+            automatic = metadata is not None and str(metadata["source"]) not in {
+                LISTENER_PRONUNCIATION_SOURCE, CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
+            }
+            if automatic and english_policy.vietnamese(matched_text):
+                # A dictionary/table lookup cannot turn Vietnamese into English.
+                canonical_replacement = matched_text
             if (
                 not speaks_english
                 and metadata is not None
@@ -1259,6 +1268,10 @@ class TTSCoordinator:
         anchors: list[dict[str, Any]] = []
         # Đoạn của máy không nói được tiếng Anh nhận dạng Việt hoá của tên Anh để nguyên; khâu chấm ASR so với đúng chữ này.
         speaks_english = self._row_speaks_english(row)
+        direct_english = speaks_english and (
+            not _row_value(row, "voice_profile_id", None)
+            or str(_row_value(self._voice_profile_for_row(row), "engine", "vieneu")) == VieNeuEngine.name
+        )
         text, origins, anchor_tags = self._substitute_pronunciations(
             source_text,
             origins,
@@ -1292,6 +1305,7 @@ class TTSCoordinator:
         text, anchor_tags = studio_tn_tagged(
             text, anchor_tags, self._origin_of_book(), speaks_english,
             changed_words=changed_words,
+            direct_english=direct_english,
             unprotected_anchors=frozenset(
                 int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
             ),
@@ -1318,6 +1332,7 @@ class TTSCoordinator:
                 "canonical_spoken_form": spoken,
                 "pronunciation_delivery_variant": normalized_variant,
                 "source": "studio_tn",
+                "provenance": "auto",
                 "asr_alias_only": True,
                 "source_start": source_start, "source_end": source_end,
                 "_anchor_index": index, "_execution_order": index,

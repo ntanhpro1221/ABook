@@ -31,7 +31,7 @@ class ReadingsTest {
             val origin = case.opt("origin") as? String
             val tokens = WordTokens.tokens(text).map { text.substring(it.first, it.last + 1) }
             assertEquals("$text: chữ hiện", strings(case.get("tokens")), tokens)
-            strings(case.opt("spokenTokens"))?.let { assertEquals("$text ($voice): chữ đem đọc", it, VieneuUnits.spokenTokens(tokens, origin, readings)) }
+            strings(case.opt("spokenTokens"))?.let { assertEquals("$text ($voice): chữ đem đọc", it, VieneuUnits.spokenTokens(tokens, origin, readings, directEnglish = voice.startsWith("vieneu:"))) }
             (case.opt("spokenText") as? String)?.let {
                 val (said, slots) = Readings.spokenLayout(text, readings)
                 assertEquals("$text ($voice): chữ đem đọc", it, said)

@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "af698b6e28e512ca7d4d23a6549e3e4366ab21b6fce2ffcc06c2eb91a54c76c8"
+   "key": "1766a7f4b3c4fd4f8ae5d170aa9ae04b910762924b6c9169abf8f2db4c7a16d6"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "5e55dc33946d39433b988d605e10b45444ed63da08702f98a082b016e0df7f26"
+   "key": "257e7c87a40392424e253de71ba3137bf98150187118fd03dd1250c8791a7683"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "d9424f65d88904f6d724c7a492ceb6cafe99ac11c901039de9e4c55718116e72"
+   "key": "bbf31eaf214c448e1a937a787c39854f99c8a6e898f5b8fe6937ecea8546eded"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -190,7 +190,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "f6e15cc29d70c93a439767b466e251a1f576da68adea2eef81b02a70befeafe6"
+   "key": "dea1273462bf78ab36a7980ca89b12ae87035fcbe566808be86a9254f6e884fa"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "556a6cb3ebe26769db3cfea16d20c69253fafcd0b73a3732dfc2ea35eba34f22"
+   "key": "c0800fdf5cfb266aa3c2c76f9eccfafe9fd81225c1bd824fd3e95d1927ff3bc5"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "fb09998391b1dfae521dea9009c1821a083fa7dad928cee67f5dd69a4a1ba4df"
+   "key": "dc1284ac90ec60807b8787ff721979e4c3b17661418748eab76f2a08a326c326"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "a19f2ca02e209f0951587b20585680a9a6302a893a87a439a65c98d37f0f96dc"
+   "key": "504ebdefb778d1c0f19a42710a936438c413315412954d2e66cac85666eba324"
   }
  ]
 }
