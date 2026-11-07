@@ -8,7 +8,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 - Hẹn giờ ngủ tự bật chỉ khi màn hình đã tắt và điện thoại nằm yên; chạm, cầm máy hay mở màn hình là huỷ hẹn giờ tự động. Máy tính tính theo lần dùng chuột/bàn phím gần nhất của cả máy, không chỉ trong app. Hẹn giờ bạn tự đặt giữ nguyên.
-- Lời nhân vật chen giữa câu dẫn không còn bị đọc bằng giọng dẫn; chương có người kể nữ đọc mọi câu dẫn bằng giọng dẫn nữ, không lẫn từ nào sang giọng dẫn nam.
+- Lời nhân vật chen giữa câu dẫn không còn bị đọc bằng giọng dẫn; chương do một nhân vật khác giới với giọng dẫn kể (như người kể nữ trong sách giọng dẫn nam) đọc mọi câu dẫn bằng giọng của người kể ấy, không lẫn từ nào sang giọng dẫn kia.
 - Studio kiểm giọng cả cuốn trước khi đóng gói: câu dẫn sai giọng người kể của chương hay nhân vật sai giọng được báo ra, không lọt vào sách.
 - Phân tích người nói ít ghi đè nhầm những nhãn người nói và loại câu đã đúng.
 - Từ tiếng Anh và tên Tây được đọc như chữ gốc thay vì phiên ra âm Việt; viết tắt tiếng Anh như GPS, DNA đọc từng chữ cái tiếng Anh. Từ tiếng Việt viết không dấu trùng chữ Anh vẫn đọc tiếng Việt.
