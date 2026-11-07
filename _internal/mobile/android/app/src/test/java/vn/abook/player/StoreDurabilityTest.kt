@@ -8,6 +8,30 @@ import java.io.File
 
 class StoreDurabilityTest {
     @Test
+    fun atomic_write_replaces_existing_bytes_without_leaving_a_partial_file() {
+        val root = BookEditsFixtures.tempDir("store-replace-existing")
+        val target = File(root, "state.json")
+        Store.writeAtomic(target, "first")
+        Store.writeAtomic(target, byteArrayOf(0, 1, -1, 42))
+        org.junit.Assert.assertArrayEquals(byteArrayOf(0, 1, -1, 42), target.readBytes())
+        assertFalse(File(root, "state.json.part").exists())
+        Store.writeAtomic(target, "third")
+        assertEquals("third", target.readText())
+        assertFalse(File(root, "state.json.part").exists())
+    }
+
+    @Test
+    fun failed_partial_write_keeps_the_previously_committed_bytes() {
+        val root = BookEditsFixtures.tempDir("store-partial-write-fail")
+        val target = File(root, "state.json").apply { writeText("committed") }
+        val part = File(root, "state.json.part").apply { mkdirs() }
+        File(part, "keep").writeText("unfinished")
+        assertTrue(runCatching { Store.writeAtomic(target, "replacement") }.isFailure)
+        assertEquals("committed", target.readText())
+        assertEquals("unfinished", File(part, "keep").readText())
+    }
+
+    @Test
     fun corrupt_records_index_is_preserved_before_recreating_the_index() {
         val root = BookEditsFixtures.tempDir("store-corrupt-index")
         Store::class.java.getDeclaredField("root").apply { isAccessible = true }.set(null, root)

@@ -185,10 +185,7 @@ object BookMusic {
                 part.delete()
                 return false
             }
-            if (!part.renameTo(target)) {
-                part.delete()
-                return false
-            }
+            AtomicFiles.replace(part, target)
             true
         } catch (_: Exception) {
             part.delete()

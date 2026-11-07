@@ -1,5 +1,14 @@
 # Test report
 
+## 08-11-2026 — kotfix: Windows JVM atomic file replacement
+
+- Unchanged origin/main `5678fddf7` reproduces the exact 25 reported failures on Microsoft OpenJDK 21.0.8; the same 45 tests pass on JetBrains 21.0.10. A standalone file probe confirms that `File.renameTo` refuses an existing target on the former and replaces it on the latter. These failures predate the integ165 merges.
+- The release gate already runs the complete Kotlin unit task with `--rerun-tasks` and checks fresh XML plus the process exit. Its default JBR environment passes the original tests; the parser correctly counts and rejects the new main/MS failure evidence. No Kotlin gate omission was found.
+- Share atomic replacement across Store, book music downloads, small peer downloads and cover-size caching. Windows uses an atomic NIO move in a separate host class; Android keeps its POSIX rename path, including minSdk 24. Keep Store's sync, completed-writer publication, old destinations on failure and existing download validation. No delete-before-replace or copy fallback.
+- Two new Store durability regressions cover repeated binary replacement and partial-write failure preserving committed bytes. Before the product fix: 4 passed / 1 failed. The first full MS run after fixing Store exposed three other writers: 3370 passed / 3 failed / 7 skipped. After routing them through the shared primitive: 9 affected classes, 63/63 passed on both MS and JBR.
+- Final full `:app:testDebugUnitTest --rerun-tasks --info` on MS: **3380 tests, 3373 passed, 0 failed/errors, 7 skipped, 388 suites**, exit 0, 4m54s. Skips require the import corpus, Python Bluetooth endpoint, symlink privilege, Supertonic model and three sea-g2p host fixtures; no skip or relaxed assertion was added. Raw logs and immutable XML copies are in task `scratchpad/codex/kotfix/report.md`.
+- No repository Python, dependency, version, GPU or device changes; no commit/push. Directly imported 53 quality entries; hash remains `998bbdbf94139368cb858e3347247ae23779700ae5eba911f5dac9d03f613fe8`.
+
 ## 07-11-2026 — voxfix on dev/integ165
 
 - Inline quote shape only resolves an empty/UNKNOWN owner; named/local speakers and thinkers survive. Existing speech-tag attribution and batch-edge context remain authoritative. Explicit teller presentation covers NARRATOR in every kind without changing identity; default mode stays inert. Nullable provenance supports undo of an initially absent character/profile, with no migration.

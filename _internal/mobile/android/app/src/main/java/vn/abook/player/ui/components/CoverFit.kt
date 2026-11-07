@@ -11,6 +11,7 @@ import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import vn.abook.player.BuildConfig
+import vn.abook.player.AtomicFiles
 
 /**
  * Cỡ chữ ĐÃ VỪA của bìa tự vẽ (tên sách thu cỡ cho vừa ô, nhãn tập thu cho vừa một dòng). `TextAutoSize.StepBased` tìm cỡ bằng nhiều lần dàn chữ thử (chia đôi ~6 lần mỗi ô)
@@ -74,12 +75,14 @@ internal class CoverFit(private val file: File?, private val io: Executor = WRIT
             sizes.entries.joinToString("") { "${it.value}\t${escape(it.key)}\n" }
         }
         val target = file ?: return
+        val temp = File(target.path + ".tmp")
         try {
-            val temp = File(target.path + ".tmp")
             temp.writeBytes(snapshot.toByteArray(Charsets.UTF_8))
-            if (!temp.renameTo(target)) temp.delete()
+            AtomicFiles.replace(temp, target)
         } catch (_: java.io.IOException) {
             // Bộ nhớ chỉ để nhanh hơn: không ghi được thì lần sau dàn thử lại.
+        } finally {
+            temp.delete()
         }
     }
 
