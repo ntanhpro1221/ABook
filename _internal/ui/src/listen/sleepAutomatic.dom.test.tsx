@@ -28,7 +28,7 @@ function Probe() { actions = usePlayer(); return null; }
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.useFakeTimers();
-  vi.setSystemTime(new Date(2026, 10, 7, 23));
+  clock = new Date(2026, 10, 7, 23).getTime(); vi.setSystemTime(clock);
   vi.clearAllMocks(); listeners.clear(); paused = true; osIdle = 0;
   vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaSession: { setActionHandler: vi.fn() } }));
   vi.stubGlobal("MediaMetadata", class { constructor(data: object) { Object.assign(this, data); } });
@@ -50,8 +50,9 @@ async function mount(schedule = false, reader: (() => Promise<number | null>) | 
   </QueryClientProvider>));
   await act(async () => { actions.prepare(book, chapters, 1, 12); paused = false; fire("play"); fire("playing"); });
 }
+let clock = new Date(2026, 10, 7, 23).getTime();
 async function elapsed(ms: number) {
-  vi.setSystemTime(Date.now() + ms);
+  clock += ms; vi.setSystemTime(clock);
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
 }
 
@@ -68,7 +69,7 @@ it("unknown system evidence cannot arm either automatic route", async () => {
 it("a delayed OS reply cannot arm a timer using stale evidence", async () => {
   let answer!: (value: number) => void;
   await mount(false, () => new Promise<number>(resolve => { answer = resolve; }));
-  vi.setSystemTime(Date.now() + 2 * 3_600_000);
+  vi.setSystemTime(new Date(2026, 10, 8, 1));
   await act(async () => { answer(2 * 3_600_000); });
   expect(actions.sleep.kind).toBe("off");
 });
