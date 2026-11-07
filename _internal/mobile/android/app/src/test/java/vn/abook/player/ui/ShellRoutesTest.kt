@@ -8,6 +8,10 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.unit.width
+import androidx.compose.ui.unit.height
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -130,6 +134,28 @@ class ShellRoutesTest {
     @Test fun everyRouteHasContentAndABackWayOutInDemoLight() = walk(dark = false)
 
     @Test fun everyRouteHasContentAndABackWayOutInDemoDark() = walk(dark = true)
+
+    @Test fun everyDestinationRetracesTheSameScreenGeometryWithoutChangingHeight() {
+        show(dark = false)
+        for (route in routes) {
+            rule.runOnUiThread { shell.nav.push(route) }
+            rule.waitForIdle()
+            val top = rule.onNodeWithTag("screen_top").getUnclippedBoundsInRoot()
+            rule.mainClock.autoAdvance = false
+            for (step in (10 downTo 0).toList() + (0..10).toList()) {
+                val p = step / 10f
+                rule.runOnUiThread { scope.launch { shell.nav.dragBack(1f - p) } }
+                rule.mainClock.advanceTimeByFrame()
+                val now = rule.onNodeWithTag("screen_top").getUnclippedBoundsInRoot()
+                assertEquals("$route at $p: horizontal direction", top.left.value + (1f - p) * top.width.value, now.left.value, 0.1f)
+                assertEquals("$route at $p: header y", top.top.value, now.top.value, 0.1f)
+                assertEquals("$route at $p: layout height", top.height.value, now.height.value, 0.1f)
+            }
+            rule.mainClock.autoAdvance = true
+            back(); rule.waitForIdle()
+            assertEquals(0, shell.nav.stack.size)
+        }
+    }
 
     @Test
     fun theUnavailableScreenLooksRight() {

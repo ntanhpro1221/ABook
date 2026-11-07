@@ -5,7 +5,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { Collapse } from "./Collapse";
-import { enterPage, leavePage, pageEntering } from "./motion";
+import { enterPage, leavePage, pageEntering, type NavMotion } from "./motion";
 
 type Call = { frames: Keyframe[]; options: KeyframeAnimationOptions };
 
@@ -42,14 +42,27 @@ it("mờ ra ngay khi bấm, bấm liên tiếp dùng chung một lần mờ, tra
   expect(calls[1].frames.at(-1)).toMatchObject({ opacity: 1, transform: "none" });
 });
 
-it("ngang hàng (tab dưới) mờ qua và phóng nhẹ; không đổi trang thì không đụng khung", async () => {
+it("ngang hàng phóng nhẹ cả lúc rời lẫn lúc vào; không đổi trang thì không đụng khung", async () => {
   const { calls, finishers, doc } = fakePage();
   await leavePage("none", doc);
   expect(calls).toHaveLength(0);
   const left = leavePage("through", doc);
-  expect(calls[0].frames.at(-1)).toMatchObject({ opacity: 0, transform: "none" });
+  expect(calls[0].frames.at(-1)).toMatchObject({ opacity: 0, transform: "scale(0.97)" });
   finishers[0](); await left; enterPage(doc);
   expect(calls[1].frames[0]).toMatchObject({ opacity: 0, transform: "scale(0.97)" });
+});
+
+it.each<NavMotion>(["forward", "back", "tab-forward", "tab-back", "through"])("%s: both halves have geometry, reduced motion is explicit", async nav => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
+  const { calls, finishers, doc } = fakePage();
+  const left = leavePage(nav, doc);
+  finishers[0](); await left; enterPage(doc);
+  for (const call of calls) expect(call.frames[0].transform).not.toBe(call.frames.at(-1)?.transform);
+  if (nav !== "through") {
+    const back = nav.endsWith("back");
+    expect(calls[0].frames.at(-1)?.transform).toBe(`translateX(${back ? 12 : -12}px)`);
+    expect(calls[1].frames[0].transform).toBe(`translateX(${back ? -32 : 32}px)`);
+  }
 });
 
 it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới sau vẫn mở ra", async () => {

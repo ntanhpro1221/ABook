@@ -50,7 +50,6 @@ Item {
 
     Shortcut { sequences: ["Ctrl+B"]; onActivated: root.toggle() }
 
-    HoverHandler { id: hover }
     Timer { id: openTimer; interval: 150; onTriggered: if (hover.hovered && !root.expanded && !root.peekBlocked) root.peek = true }
     Timer { id: closeTimer; interval: 300; onTriggered: if (!hover.hovered) root.peek = false }
     Connections {
@@ -74,6 +73,10 @@ Item {
         height: parent.height
         clip: true
         Behavior on width { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+
+        // Follow the visible panel, including its overlay beyond the 56 px layout rail.
+        // Watching the rail instead closes the menu while the pointer moves onto its labels.
+        HoverHandler { id: hover }
 
         // Nền: chỉ đục khi đè lên nội dung (lúc đứng yên cùng màu cửa sổ nên không thấy)
         Rectangle { anchors.fill: parent; color: Theme.bg }

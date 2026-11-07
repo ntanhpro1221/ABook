@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import vn.abook.player.ui.components.TextAction
 import androidx.compose.ui.Modifier
+import vn.abook.player.ui.motion.bookCoverSource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -240,7 +241,7 @@ private fun BookTile(
             .pressable(onLongClick = onLong, onClick = onClick)
             .testTag(if (series != null) "series_cell" else "book_cell"),
     ) {
-        Box(Modifier.fillMaxWidth().clip(BookCoverShape).testTag("library_cover")) {
+        Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).testTag("library_cover")) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.

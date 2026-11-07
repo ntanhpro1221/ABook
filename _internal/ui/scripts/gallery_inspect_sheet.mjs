@@ -116,11 +116,12 @@ export function installGeometryProbe() {
       const timer = setTimeout(() => finish(false), 2000);
       const tick = () => {
         if (done) return;
-        const measured = surfaces();
+        const measured = [...surfaces(), ...(window.__sheetProbe.anchors ?? []).map(anchor => anchor.el).filter(el => el?.isConnected)];
         const current = measured.map(el => box(el));
         const same = current.length === previous.length && current.every((r, i) => ['x', 'y', 'width', 'height'].every(k => Math.abs(r[k] - previous[i][k]) <= tolerance));
         const moving = document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity
-          && (!geometryOnly || measured.includes(a.effect?.target) || a.effect?.pseudoElement?.startsWith('::view-transition')));
+          && (!geometryOnly || measured.includes(a.effect?.target) || measured.some(node => a.effect?.target?.contains?.(node))
+            || a.effect?.pseudoElement?.startsWith('::view-transition')));
         // WAAPI morphs finish before React's exit fallback removes their closed surface.
         // A still-mounted exit can briefly enlarge document overflow; it is not a closed-page baseline.
         const exiting = document.querySelector('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]');

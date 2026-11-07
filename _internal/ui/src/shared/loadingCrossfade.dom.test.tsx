@@ -52,5 +52,6 @@ it("khung chờ trễ đúng LOADING_PATIENCE trong CSS", () => {
   expect(css).toContain(`--loading-patience: ${LOADING_PATIENCE}ms;`);
   expect(css).toContain('.motion-loading-placeholder.motion-panel[data-state="open"] { animation-delay: var(--loading-patience); }');
   // Mọi khung chờ xám (Skeleton) cũng chờ đúng mốc ấy, kể cả bản không qua LoadingCrossfade.
-  expect(css.match(/fade-in var\(--motion-medium\) linear var\(--loading-patience\) backwards/g)).toHaveLength(2);
+  expect(css.match(/(?:fade-in|motion-enter) var\(--motion-medium\) linear var\(--loading-patience\) backwards/g)).toHaveLength(2);
+  expect(css).toMatch(/\.motion-skeleton\s*\{\s*--enter-y:/);
 });

@@ -118,11 +118,17 @@ Item {
     readonly property string screenKey: (view === "own" || view === "open") ? "route:" + route : view
     property string shownKey: screenKey
     property real phase: 1
-    onScreenKeyChanged: swap.restart()
+    property int motionDirection: 1
+    property bool motionEntering: false
+    onScreenKeyChanged: {
+        motionDirection = screenKey === "route:list" && shownKey !== "route:list" ? -1 : 1
+        motionEntering = false
+        swap.restart()
+    }
     SequentialAnimation {
         id: swap
         NumberAnimation { target: root; property: "phase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        ScriptAction { script: root.shownKey = root.screenKey }      // màn MỚI NHẤT lúc cái cũ đã khép (đổi liền hai lần vẫn ra đúng màn cuối)
+        ScriptAction { script: { root.shownKey = root.screenKey; root.motionEntering = true } }      // màn MỚI NHẤT lúc cái cũ đã khép (đổi liền hai lần vẫn ra đúng màn cuối)
         NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
     readonly property string shownView: shownKey.indexOf("route:") === 0 ? (peer ? "open" : "own") : shownKey
@@ -136,7 +142,7 @@ Item {
         height: parent.height - y
         visible: root.shownView === "own" || root.shownView === "open"
         opacity: root.phase
-        transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
+        transform: Translate { x: Theme.reduceMotion ? 0 : (root.motionEntering ? 1 : -1) * root.motionDirection * 24 * (1 - root.phase) }
         // Dữ liệu của trình tạo sách: dựng muộn, sống tiếp khi rời trang (nháp không mất)
         Loader {
             id: newLoader
@@ -211,7 +217,7 @@ Item {
         height: parent.height - y
         visible: !content.visible
         opacity: root.phase
-        transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
+        transform: Translate { x: Theme.reduceMotion ? 0 : (root.motionEntering ? 1 : -1) * root.motionDirection * 24 * (1 - root.phase) }
         // Thiết bị này chỉ được nghe ở máy kia (StudioClosed): nói bật quyền ở đâu
         EmptyState {
             objectName: "studioClosed"

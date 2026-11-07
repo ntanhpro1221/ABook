@@ -137,9 +137,10 @@ export async function main(argv = process.argv.slice(2)) {
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
   if (args.base && !["127.0.0.1", "localhost", "[::1]"].includes(new URL(args.base).hostname)) throw new Error("Chỉ được dùng --base cục bộ");
   const failOn = gateRules(args.failOn);
+  if (args.staticOnly && failOn.includes(SHEET_RULE)) throw new Error("--static-only cannot gate SHEET GEOMETRY; choose explicit static --fail-on rules");
   const out = path.resolve(args.out);
   for (const dir of [out, path.join(out, "crops"), path.join(out, "contacts")]) mkdirSync(dir, { recursive: true });
-  const report = { created: new Date().toISOString(), rules: RULES, counts: {}, settings: { phone: "412x915 @2x", desktop: "1440x900 @1x", cropScale: 4, themes: args.theme }, stories: [], findings: [], errors: [] };
+  const report = { created: new Date().toISOString(), rules: RULES, counts: {}, settings: { phone: "412x915 @2x", desktop: "1440x900 @1x", cropScale: 4, themes: args.theme, staticOnly: Boolean(args.staticOnly) }, stories: [], findings: [], errors: [] };
   let local, browser, cdp, geometryBrowser, geometryCdp;
   try {
     local = args.base ? null : await serve(args.dist);
@@ -218,6 +219,7 @@ export async function main(argv = process.argv.slice(2)) {
     }));
     report.stories.sort((a, b) => entries.findIndex(e => e.id === a.id) - entries.findIndex(e => e.id === b.id) || themes.indexOf(a.theme) - themes.indexOf(b.theme));
     // Preserve the existing raster detector environment; only geometry needs native scrollbar gutters.
+    if (!args.staticOnly) {
     geometryBrowser = await launch(executable, { hideScrollbars: false });
     geometryCdp = await connect(geometryBrowser.endpoint);
     // Independent headless pages; bounded concurrency keeps the full release matrix practical.
@@ -239,6 +241,7 @@ export async function main(argv = process.argv.slice(2)) {
         writeOutputs(out, report);
       }
     }));
+    }
   } finally {
     geometryCdp?.close();
     await geometryBrowser?.close();

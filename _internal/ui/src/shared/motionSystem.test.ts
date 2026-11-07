@@ -144,8 +144,24 @@ describe("navMotion: hướng chuyển trang", () => {
     expect(navMotion("POP", at("/settings/voice", 2), at("/settings", 1))).toBe("back");
   });
   it("giữa các mục gốc (tab dưới, thanh bên) là ngang hàng", () => {
-    expect(navMotion("PUSH", at("/", 0), at("/studio", 1))).toBe("through");
-    expect(navMotion("POP", at("/settings", 2), at("/studio", 1))).toBe("through");
+    expect(navMotion("PUSH", at("/", 0), at("/studio", 1))).toBe("tab-forward");
+    expect(navMotion("POP", at("/settings", 2), at("/studio", 1))).toBe("tab-back");
+  });
+  it("every navigation pair reverses on Back, including REPLACE root tabs", () => {
+    const roots = ["/", "/downloads", "/studio", "/settings"];
+    for (const from of roots) for (const to of roots) if (from !== to) {
+      const forward = navMotion("REPLACE", at(from, 0), at(to, 0));
+      const back = navMotion("REPLACE", at(to, 0), at(from, 0));
+      expect([forward, back].sort()).toEqual(["tab-back", "tab-forward"]);
+    }
+    const pairs = [["/", "/book/a"], ["/book/a", "/book/a/read"], ["/studio", "/studio/project/a"],
+      ["/studio/project/a", "/studio/project/a/script"], ["/settings", "/settings/voice"]];
+    for (const [from, to] of pairs) {
+      expect(navMotion("PUSH", at(from, 0), at(to, 1))).toBe("forward");
+      expect(navMotion("POP", at(to, 1), at(from, 0))).toBe("back");
+      expect(navMotion("PUSH", at(to, 1), at(from, 2))).toBe("back");
+      expect(navMotion("REPLACE", at(to, 1), at(from, 1))).toBe("back");
+    }
   });
   it("cùng trang, chỉ đổi ?tìm / # bằng PUSH: không chuyển vùng trang", () => {
     expect(navMotion("PUSH", at("/book/a", 1), at("/book/a", 2))).toBe("none");

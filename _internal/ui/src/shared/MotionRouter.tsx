@@ -1,12 +1,13 @@
-// HashRouter có chuyển trang (a120 - chủ app: "đóng mở các màn hình… quá xấu, thậm chí là không có"). Như HashRouter của react-router (cùng
-// lịch sử hash, cùng `idx` trong history.state mà shared/backLayers đọc), chỉ khác: mỗi lần đổi trang, khung nội dung mờ đi trước
-// (leavePage), trang mới dựng trong lúc khuất rồi hiện vào từ phía kia (sâu vào / lùi ra) hay mờ qua (ngang hàng: tab dưới, nhóm cài đặt)
-// - enterPage. Không qua View Transition: chụp cả tài liệu làm điện thoại đứng hình trước khi chuyển (xem shared/motion.ts).
+// Keep hash history and its index, and animate the outgoing/incoming page with
+// geometry. Root tabs slide in their visual order; parent links reverse push
+// motion even when navigate(parent) creates a PUSH history entry. Book artwork
+// flies separately while the new page loads. No document View Transition.
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Router, UNSAFE_createHashHistory, type Location, type NavigationType } from "react-router";
 import { enterPage, leavePage, navMotion } from "./motion";
 import { installBackOrder } from "./backOrder";
 import { dismissTopLayer } from "@/shared/backLayers";
+import { captureBookCover, landBookCover } from "./bookCoverFlight";
 
 type RouterState = { action: NavigationType; location: Location };
 
@@ -35,6 +36,7 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RouterState>({ action: history.action, location: history.location });
   const now = useRef({ pathname: history.location.pathname, search: history.location.search, idx: historyIndex() });
   const latest = useRef(0);
+  const coverBack = useRef(false);
   const guard = useRef<ReturnType<typeof layerHistoryGuard> | null>(null);
   guard.current ??= layerHistoryGuard(() => dismissTopLayer(), (delta) => history.go(delta));
   useLayoutEffect(() => {
@@ -47,7 +49,7 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
       }
     };
     document.addEventListener("keydown", escape, true);
-    return () => { cleanup(); document.removeEventListener("keydown", escape, true); };
+    return () => { cleanup(); captureBookCover("", ""); document.removeEventListener("keydown", escape, true); };
   }, []);
   useLayoutEffect(
     () =>
@@ -55,6 +57,8 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
         const to = { pathname: location.pathname, search: location.search, idx: historyIndex() };
         if (guard.current?.(action, now.current.idx, to.idx)) return;
         const nav = navMotion(action, now.current, to);
+        captureBookCover(now.current.pathname, to.pathname);
+        coverBack.current = nav === "back";
         now.current = to;
         // Bấm liên tiếp: mọi lần chờ cùng một lần mờ và chỉ lần cuối được áp - lần cũ xong muộn không đè vị trí mới hơn.
         const id = ++latest.current;
@@ -64,7 +68,7 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
       }),
     [history],
   );
-  useLayoutEffect(() => enterPage(), [state]);
+  useLayoutEffect(() => enterPage(undefined, () => landBookCover(coverBack.current)), [state]);
   return (
     <Router location={state.location} navigationType={state.action} navigator={history}>
       {children}

@@ -246,6 +246,30 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
         assertBounds(before, bounds("transport"), 0.1f)
     }
+
+    @Test fun everyPlayerSheetKeepsUnderlayFixedOnEveryFrameInBothModes() {
+        show()
+        rule.mainClock.autoAdvance = false
+        for (reading in listOf(false, true)) {
+            rule.runOnUiThread { window.reading = reading }
+            rule.mainClock.advanceTimeBy(400)
+            val tags = listOf("transport", "player_seek", "player_speed", "player_more", "player_cover")
+            val before = tags.associateWith(::bounds)
+            for (sheet in listOf(PlayerSheet.More, PlayerSheet.Speed, PlayerSheet.Sleep, PlayerSheet.Chapters)) {
+                rule.runOnUiThread { window.openSheet(sheet) }
+                repeat(24) {
+                    rule.mainClock.advanceTimeByFrame()
+                    for (tag in tags) assertBounds(before.getValue(tag), bounds(tag), 0.1f)
+                }
+                rule.runOnUiThread { window.closeSheet() }
+                repeat(16) {
+                    rule.mainClock.advanceTimeByFrame()
+                    for (tag in tags) assertBounds(before.getValue(tag), bounds(tag), 0.1f)
+                }
+            }
+        }
+        rule.mainClock.autoAdvance = true
+    }
     @Test fun sharedContainerStartsAtMiniBoundsAndReturnsThere() {
         show(expanded = false)
         val mini = bounds("mini_player")

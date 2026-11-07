@@ -196,7 +196,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => actions.open(book)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
-          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
+          <BookCover bookKey={book.id} title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
         </button>
         <button
           type="button"
@@ -264,7 +264,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
   return (
     <section className="flex items-center gap-4 sm:gap-6" aria-label="Đang nghe">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
-        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-cover sm:w-28" />
+        <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-cover sm:w-28" />
       </button>
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
@@ -346,7 +346,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
       disabled={!onOpen}
       className="flex items-center gap-3 py-3 text-left"
     >
-      <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
+      <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
         <span className="block break-words text-sm font-semibold">{book.title}</span>
         <span className="block truncate text-xs text-fg-2">{status}</span>

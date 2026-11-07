@@ -95,6 +95,26 @@ function installPlayerProbe() {
         anchors: Object.fromEntries(Object.entries(refs).map(([k, e]) => [k, e?.isConnected ? box(e) : null])),
         surface: surface ? { rect: box(surface), sheet: surface.classList.contains('motion-sheet'), state: surface.dataset.state, title: surface.getAttribute('aria-label') || surface.querySelector('[data-surface-title]')?.textContent } : null };
     },
+    ready() {
+      this.pin();
+      return new Promise((resolve, reject) => {
+        const begin = performance.now(); let previous = '', count = 0;
+        const tick = () => {
+          // Pin the NEW tab's anchors. The old panel's references are detached
+          // during a mode change and cannot tell whether its replacement moves.
+          this.pin();
+          const current = JSON.stringify(this.snapshot().anchors);
+          const targets = Object.values(refs).filter(Boolean);
+          const moving = document.getAnimations().some(a => a.playState === 'running'
+            && a.effect?.getComputedTiming().endTime !== Infinity
+            && targets.some(node => a.effect?.target?.contains?.(node)));
+          count = current === previous && !moving ? count + 1 : 0; previous = current;
+          if (count >= 3) resolve(true);
+          else if (performance.now() - begin > 2500) reject(Error('New player anchors never settled'));
+          else requestAnimationFrame(tick);
+        }; requestAnimationFrame(tick);
+      });
+    },
     arm() {
       this.frames = []; this.events = []; this.done = false;
       const begin = performance.now();
@@ -121,7 +141,8 @@ function installPlayerProbe() {
         // Wait for the measured boxes (and the view-transition), not unrelated content.
         const targets = new Set([player(), ...Object.values(refs), ...document.querySelectorAll('[role="dialog"]')]);
         const moving = document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity
-          && (targets.has(a.effect?.target) || a.effect?.pseudoElement?.startsWith('::view-transition')));
+          && (targets.has(a.effect?.target) || [...targets].some(node => node && a.effect?.target?.contains?.(node))
+            || a.effect?.pseudoElement?.startsWith('::view-transition')));
         const settled = triggeredAt !== null && performance.now() - triggeredAt >= 180 && stableFrames >= 3 && !moving;
         if (!settled && performance.now() - begin < 2500) requestAnimationFrame(tick);
         else { observer.disconnect(); document.removeEventListener('click', event, true); document.removeEventListener('keydown', event, true); this.timedOut = !settled; this.done = true; }
@@ -132,7 +153,11 @@ function installPlayerProbe() {
 }
 
 const ev = (cdp, session, expression) => evaluate(cdp, session, expression);
-const stable = (cdp, session) => galleryStable(cdp, session, { tolerance: 0.5, geometryOnly: true });
+const stable = async (cdp, session) => {
+  await galleryStable(cdp, session, { tolerance: 0.5, geometryOnly: true });
+  if (await ev(cdp, session, 'Boolean(window.__playerProbe && document.querySelector(".now-playing:not([data-state=warm])"))'))
+    await ev(cdp, session, '__playerProbe.ready()');
+};
 async function record(cdp, session, action) {
   await ev(cdp, session, '__playerProbe.arm()');
   await action();
@@ -259,7 +284,7 @@ export async function main(argv) {
   const report = { status: 'FAIL', injected: argv.includes('--inject-fault'), classes, results: [], cleanup: {} };
   let server, browser, cdp;
   try {
-    ({ server, base: args.base } = await serve(path.join(here, '../dist/gallery')));
+    ({ server, base: args.base } = await serve(path.resolve(args.dist ?? path.join(here, '../dist/gallery'))));
     browser = await launch(args.edge, { hideScrollbars: false, profileParent: args['task-dir'] || root, disableGpu: true });
     cdp = await connect(browser.endpoint);
     report.browser = await cdp.send('Browser.getVersion');
