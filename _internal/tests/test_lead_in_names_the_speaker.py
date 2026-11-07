@@ -82,8 +82,8 @@ def test_a_lead_in_before_the_line_also_names_the_speaker(tmp_path: Path) -> Non
     assert _repair(db) == ["SHIZUKA", "KOU", "NARRATOR", "NARRATOR", "KOU"]
 
 
-def test_a_whole_exchange_is_ordered_around_the_line_with_a_lead_in(tmp_path: Path) -> None:
-    # Model gán cả chuỗi cho Kou; chỉ có lời dẫn ở câu cuối. Bốn câu liền nhau xen kẽ KOU-SHIZUKA-KOU-SHIZUKA.
+def test_a_lead_in_changes_only_its_line_without_reordering_the_exchange(tmp_path: Path) -> None:
+    # Only the line with direct speech attribution may change.
     db = _project(tmp_path / "a", [
         (1, "dialogue", "“Ăn cơm chưa?”", "SHIZUKA", "female"),
         (2, "narration", "Cô quay sang cậu.", "NARRATOR", "unknown"),
@@ -93,7 +93,7 @@ def test_a_whole_exchange_is_ordered_around_the_line_with_a_lead_in(tmp_path: Pa
         (6, "dialogue", "“Hôm nay cậu chọn quán đi.”", "KOU", "male"),
         (7, "narration", "Shizuka đáp.", "NARRATOR", "unknown"),
     ])
-    assert _repair(db) == ["SHIZUKA", "NARRATOR", "KOU", "SHIZUKA", "KOU", "SHIZUKA", "NARRATOR"]
+    assert _repair(db) == ["SHIZUKA", "NARRATOR", "KOU", "KOU", "KOU", "SHIZUKA", "NARRATOR"]
 
 
 def test_a_reaction_a_call_or_a_self_introduction_leaves_the_line_alone(tmp_path: Path) -> None:

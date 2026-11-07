@@ -33,12 +33,13 @@ def view(project_root: Path) -> dict[str, Any]:
     with closing(store.connect(project_root)) as connection:
         tellers = teller_voice.tellers_of(project_root, settings, connection)
         cast = _cast_locked(connection)
+        applied = teller_voice.presentation_applied(connection)
         plan = None
         if tellers.active and cast:
             plan = teller_voice.mode_plan(connection, project_root, tellers)
             each, measured = store.seconds_per_line(connection)
             plan = {**plan, "seconds": round(plan["recorded"] * each, 1), "measured": measured}
-    return {"available": tellers.active, "mode": record["mode"], "castLocked": cast, "applied": "teller" in record["applied"], "plan": plan}
+    return {"available": tellers.active, "mode": record["mode"], "castLocked": cast, "applied": applied, "plan": plan}
 
 
 def set_mode(project_root: Path, mode: str, *, running: bool) -> dict[str, Any]:

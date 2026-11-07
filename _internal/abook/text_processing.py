@@ -982,13 +982,33 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
     return merged
 
 
-def _find_quote_closing(line: str, closing_mark: str, start: int = 0) -> int:
-    """Where `closing_mark` closes in `line` from `start`, counting the closers it accepts in its place (‘…')."""
+def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> tuple[int, tuple[str, ...]]:
+    """Return the outer closer and remaining nesting, including across source lines."""
+    closing_mark = closers[0]
+    if closing_mark in ("”", "’"):
+        stack = list(closers)
+        for index in range(start, len(line)):
+            char = line[index]
+            if char in ("“", "‘"):
+                stack.append("”" if char == "“" else "’")
+            elif char == stack[-1] or (stack[-1] == "’" and char == "'"):
+                stack.pop()
+                if not stack:
+                    return index, ()
+        return -1, tuple(stack)
     pattern = QUOTE_CLOSING_PATTERNS.get(closing_mark)
     if pattern is None:
-        return line.find(closing_mark, start)
+        index = line.find(closing_mark, start)
+        return index, () if index >= 0 else closers
     match = pattern.search(line, start)
-    return match.start() if match is not None else -1
+    return (match.start(), ()) if match is not None else (-1, closers)
+
+
+def _find_quote_closing(line: str, closing_mark: str, start: int = 0) -> int:
+    return _scan_quote_closing(line, (closing_mark,), start)[0]
+
+
+QuoteState = tuple[str, str, tuple[str, ...]]
 
 
 def _balanced_quote_spans(line: str) -> list[tuple[int, int]]:
@@ -1057,11 +1077,12 @@ def _terminal_alternative_quote_closing(line: str, expected_closing_mark: str) -
 
 def _line_pieces_with_quote_state(
     line: str,
-    quote_state: tuple[str, str] | None,
-) -> tuple[list[tuple[str, str]], tuple[str, str] | None]:
+    quote_state: QuoteState | None,
+) -> tuple[list[tuple[str, str]], QuoteState | None]:
     if quote_state is not None:
-        hint, closing_mark = quote_state
-        closing_index = _find_quote_closing(line, closing_mark)
+        hint, closing_mark, closers = quote_state
+        repeated = len(closers) == 1 and ((closing_mark == "”" and line.startswith("“")) or (closing_mark == "’" and line.startswith("‘")))
+        closing_index, remaining_closers = _scan_quote_closing(line, closers, 1 if repeated else 0)
         if closing_index < 0:
             alternative_closing_index = _terminal_alternative_quote_closing(
                 line,
@@ -1069,7 +1090,7 @@ def _line_pieces_with_quote_state(
             )
             if alternative_closing_index >= 0:
                 return [(line[: alternative_closing_index + 1], hint)], None
-            return [(line, hint)], quote_state
+            return [(line, hint)], (hint, closing_mark, remaining_closers)
         pieces = [(line[: closing_index + 1], hint)]
         remainder = line[closing_index + 1 :].strip()
         if not remainder:
@@ -1108,10 +1129,11 @@ def _line_pieces_with_quote_state(
     quoted = line[opening_index:].strip()
     if quoted:
         pieces.append((quoted, hint))
-    return pieces, (hint, closing_mark)
+    _index, closers = _scan_quote_closing(line, (closing_mark,), opening_index + 1)
+    return pieces, (hint, closing_mark, closers)
 
 
-def _fresh_quote_opening(line: str, quote_state: tuple[str, str]) -> int:
+def _fresh_quote_opening(line: str, quote_state: QuoteState) -> int:
     """Where a later paragraph opens a NEW quote although `quote_state` is still open, or -1.
 
     A quote that really runs on either carries on without a mark until its closer, or (the
@@ -1119,7 +1141,9 @@ def _fresh_quote_opening(line: str, quote_state: tuple[str, str]) -> int:
     opens a fresh “ in the middle of its text before closing anything, or starts with an opener
     after a paragraph that did not, shows the earlier quote never ran on: its closer is missing.
     """
-    _hint, closing_mark = quote_state
+    _hint, closing_mark, closers = quote_state
+    if len(closers) > 1:
+        return -1
     if line.startswith("“") or (closing_mark == "’" and line.startswith("‘")):
         return 0
     if line.startswith('"') and len(line) > 1 and not line[1].isspace():
@@ -1190,7 +1214,7 @@ def _walk_paragraphs(
     max_chars: int,
     close_at_end_of: frozenset[int],
     dialogue_in_quotes: bool = False,
-) -> tuple[list[dict[str, Any]], tuple[str, str] | None, int | None]:
+) -> tuple[list[dict[str, Any]], QuoteState | None, int | None]:
     """One pass over the chapter, returning its rows and how the quote state ended.
 
     ``close_at_end_of`` names the paragraphs whose quote is forced shut when the paragraph
@@ -1225,7 +1249,7 @@ def _walk_paragraphs(
                 }
             )
 
-    quote_state: tuple[str, str] | None = None
+    quote_state: QuoteState | None = None
     opened_at: int | None = None
     # Có đoạn nào từ chỗ mở tới đây KHÔNG mở lại bằng dấu ngoặc (lối viết một ngoặc cho cả lời nói dài).
     ran_on_unmarked = False

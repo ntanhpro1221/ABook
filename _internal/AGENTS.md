@@ -273,8 +273,21 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   kể bị gán cho chính người đang nói chuyện với anh ta (không mang nhãn đại từ nào, nên `resolve_first_person_labels`
   sau phân tích không cứu được). Máy chỉ ĐOÁN truyện nào kể ngôi thứ nhất (`first_person.py`), tên người kể do người
   dùng chọn từ gợi ý - đoán tên từ văn bản thô từng ra "Portal".
-- Ngoặc kép kéo dài qua nhiều paragraph phải giữ state hội thoại; ngoặc đơn cong `‘…’` là hint
-  độc thoại nội tâm và mọi segment `thought` bắt buộc dùng `NARRATOR`, không gắn với character identity.
+- Ngoặc kéo dài qua nhiều paragraph phải giữ độ sâu lồng nhau. Dấu ngoặc chỉ tạo `kind_hint`;
+  generator và critic quyết kind theo ngữ nghĩa, không có khóa dialogue/thought chỉ từ hint.
+  Nội tâm giữ danh tính và giọng của chính người đang nghĩ. `teller_voice` mặc định không sửa
+  speaker/character/voice; lựa chọn rõ `mode=teller` chỉ đổi lớp giọng lời dẫn, giữ identity,
+  lưu provenance và reset audio trong cùng transaction. SQLite là thẩm quyền sau crash/reopen.
+- Lời dẫn chỉ có thẩm quyền khi chủ thể gắn với động từ phát ngôn thật; hành động, phản ứng,
+  ý định chưa nói và phép so sánh không đủ. Cue generic yếu không đè nhãn chắc, không làm neo
+  lan theo đoạn; mention do app suy ra có phạm vi paragraph. Chuỗi thoại liền nhau của đúng hai
+  người có thể hồi phục phase khi ít nhất một lời gọi xác định duy nhất một thứ tự xen kẽ.
+  Đây là heuristic, không phải bằng chứng mọi lượt đều đổi người. Tự giới thiệu, trả lời tên
+  (kể cả nhiều câu và câu trả lời tiếp câu hỏi tên), trích lồng và tên người con trong nhãn quan
+  hệ không được làm neo. Câu kể xen giữa hoặc lời dẫn cùng paragraph làm ngắt chuỗi;
+  stage lời dẫn không tự lan ABAB. Trích thuật ngữ không có cue
+  rõ phải có đủ hai nửa câu kể cùng paragraph, kể cả ngoài mép batch; một hành động nối tiếp
+  không đủ để tước identity. Nhãn quan hệ giữ đầy đủ vai và không fuzzy-snap vào tên của người khác.
 - Với profile `high_quality`, batching phải giữ nguyên source unit gồm các segment cùng paragraph và phần tiếp nối của
   cùng một ngoặc kép ngoài qua nhiều paragraph. Source unit không quá cap 5 segment không được chia lại khi retry; unit
   vượt cap mới được hard-split hữu hạn. Lời dẫn narration cùng paragraph phải đi chung với lượt thoại để attribution không
@@ -363,10 +376,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   phải được lưu và mọi dissent chưa có authority độc lập vẫn fail-closed. Semantic lock nguồn khác vẫn được compose bình
   thường. SQLite phải tính lại context hash từ current + neighbor stable ID, text SHA, chapter, seq, paragraph và kind ở
   allocate/reopen/critic completion/commit; policy, neighbor hoặc lock/override bị chèn sửa phải bị từ chối.
-- Source `kind_hint=dialogue` phải tạo kind-only host lock `dialogue` trong generator/critic contract. Lock này chỉ bảo vệ
-  ranh giới lời nói, tuyệt đối không cấp authority cho speaker: critic dissent chỉ trên kind có thể được source-bound override,
-  nhưng mọi delta speaker vẫn unresolved và làm row fail-closed. SQLite phải tái dựng lock từ source text/hash/kind khi
-  allocate, reopen, critic completion và commit; evidence thiếu lock, giả rule hoặc giả partition đều bị từ chối.
+- `kind_hint=dialogue|thought` không tạo host kind lock hoặc source-kind override. SQLite phải chấp nhận
+  kind ngữ nghĩa khác hint khi candidate/critic đồng ý và vẫn kiểm source/context/hash như thường;
+  khóa dialogue chỉ dựa trên hint phải bị từ chối. Các khóa narration có predicate ngữ nghĩa độc lập vẫn giữ.
 - Director critic cho narration là lời dẫn ngay trước source thought cùng chapter và paragraph phải dùng
   `narration_before_thought_previous_only`: giữ previous source nhưng xóa `next_text` từ immutable original context.
   Source parser sở hữu bất biến `kind=narration`: generator vẫn nhận đủ adjacent context nhưng validation/feedback phải

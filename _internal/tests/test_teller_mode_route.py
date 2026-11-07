@@ -58,22 +58,22 @@ def test_the_price_is_shown_before_anything_changes(studio) -> None:
     assert _speakers(db)["c1s0"] == "NARRATOR", "xem giá không đổi gì"
 
 
-def test_turning_it_on_after_confirming_applies_it_and_turning_it_off_gives_the_book_back(studio) -> None:
-    paths, db, _settings, server, _runner = studio
-    _record_everything(db)
-
-    status, view = _call(server, "PUT", _url(paths), {"mode": "teller"})
-
-    assert status == 200 and view["mode"] == "teller" and view["applied"] is True and view["plan"]["direction"] == "off"
-    assert _speakers(db)["c1s0"] == "MAI"
-
-    status, view = _call(server, "PUT", _url(paths), {"mode": "narrator"})
-
-    assert status == 200 and view["mode"] == "narrator" and view["applied"] is False
-    assert _speakers(db)["c1s0"] == _speakers(db)["c1s2"] == "NARRATOR"
+def test_explicit_mode_changes_voice_only_and_the_route_restores_it(studio):
+    paths,db,_settings,server,_runner=studio
+    before=_speakers(db)
     with db.connect() as conn:
-        own = conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s1'").fetchone()[0]
-        assert {r[0] for r in conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id IN ('c1s0','c1s2')")} == {own}
+        base=conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s0'").fetchone()[0]
+        own=conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s1'").fetchone()[0]
+    status,view=_call(server,'PUT',_url(paths),{'mode':'teller'})
+    assert status==200 and view['mode']=='teller'
+    assert _speakers(db)==before
+    with db.connect() as conn:
+        assert conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s0'").fetchone()[0]==own
+    status,view=_call(server,'PUT',_url(paths),{'mode':'narrator'})
+    assert status==200 and view['mode']=='narrator'
+    assert _speakers(db)==before
+    with db.connect() as conn:
+        assert conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s0'").fetchone()[0]==base
 
 
 def test_a_running_book_is_refused_and_nothing_is_written(studio) -> None:

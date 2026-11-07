@@ -51,29 +51,39 @@ def test_a_term_at_the_edge_of_an_analysis_batch_is_still_seen() -> None:
     assert result["s4"]["speaker"].casefold() != "arthur"
 
 
-def test_a_spoken_line_with_a_lowercase_tag_is_still_the_paragraphs() -> None:
-    group = [
-        _row(0, "dialogue", "“Đi thôi,”"),
-        _row(1, "narration", "hắn nói, rồi quay sang Arthur."),
-        _row(2, "dialogue", "“Chúng ta đi thôi.”"),
-        _row(3, "narration", "Arthur nói."),
-    ]
-    payload = {"segments": [
-        _item(0, "dialogue", "Lucien", "male"), _item(1, "narration", "NARRATOR"),
-        _item(2, "dialogue", "Arthur", "male"), _item(3, "narration", "NARRATOR"),
-    ]}
-    result = _validate(group, payload)
-    assert result["s0"]["speaker"].casefold() == "arthur"
+def test_a_later_tag_does_not_propagate_backward_over_another_tag():
+    from tests.test_analysis_required import _castrule_batch
+    rows,payload=_castrule_batch([('“Giữ đèn nhé.”','dialogue','Mira'),('cô nói, rồi nhìn Tavin.','narration','NARRATOR'),('“Tôi cầm ô.”','dialogue','Tavin'),('Tavin nói.','narration','NARRATOR')])
+    assert _validate(rows,payload)['r0']['speaker']=='Mira'
 
 
-def test_a_line_standing_on_its_own_is_still_the_paragraphs() -> None:
-    group = [
-        _row(0, "dialogue", "“Chúng ta đi thôi.”"),
-        _row(1, "narration", "Arthur nói."),
-        _row(2, "dialogue", "“Trời sắp tối rồi.”"),
-    ]
-    payload = {"segments": [
-        _item(0, "dialogue", "Arthur", "male"), _item(1, "narration", "NARRATOR"), _item(2, "dialogue", "Lucien", "male"),
-    ]}
-    result = _validate(group, payload)
-    assert result["s2"]["speaker"].casefold() == "arthur"
+def test_a_confident_following_turn_is_independent():
+    from tests.test_analysis_required import _castrule_batch
+    rows,payload=_castrule_batch([('“Tôi giữ đèn.”','dialogue','Mira'),('Mira nói.','narration','NARRATOR'),('“Tôi cầm ô.”','dialogue','Tavin')])
+    assert _validate(rows,payload)['r2']['speaker']=='Tavin'
+
+
+def test_embedded_terms_repair_model_errors_without_a_term_word_allowlist():
+    from tests.test_analysis_required import _castrule_batch
+    from abook.analysis import _original_neighbor_context
+    rows, payload = _castrule_batch([
+        ('Mira nhắc về', 'narration', 'NARRATOR'),
+        ('“bản đồ gió”', 'dialogue', 'Tavin'),
+        (', một vật dụng đã thất lạc.', 'narration', 'NARRATOR'),
+    ])
+    assert _validate(rows, payload)['r1']['speaker'] == 'NARRATOR'
+    context = _original_neighbor_context(rows)
+    assert _validate([rows[1]], {'segments': [payload['segments'][1]]},
+                     original_context=context)['r1']['speaker'] == 'NARRATOR'
+
+
+def test_a_single_quoted_term_is_not_an_unrelated_characters_thought():
+    from tests.test_analysis_required import _castrule_batch
+    rows, payload = _castrule_batch([
+        ('Tôi gọi tấm bản đồ ấy là', 'narration', 'NARRATOR'),
+        ('‘đường về nhà’', 'thought', 'Tavin'),
+        (', vì nó dẫn qua thung lũng.', 'narration', 'NARRATOR'),
+    ])
+    result = _validate(rows, payload)
+    assert result['r1']['speaker'] == 'NARRATOR'
+    assert result['r1']['kind'] == 'thought'

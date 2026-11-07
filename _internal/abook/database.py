@@ -4194,8 +4194,10 @@ class ProjectDB:
             stable_id
             for stable_id, critic_row in critic_row_by_stable.items()
             if critic_row["source_role"] == ANALYSIS_SOURCE_ROLE_CONTENT
-            and critic_row["hint"] == "dialogue"
+            and critic_row["host_locked_fields"].get("kind") == "dialogue"
         }
+        if dialogue_kind_row_ids:
+            raise RuntimeError("A quote hint cannot create a durable dialogue kind lock")
         semantic_row_ids = {
             stable_id
             for stable_id, critic_row in critic_row_by_stable.items()
@@ -4787,29 +4789,6 @@ class ProjectDB:
                 or candidate_kind not in ANALYSIS_CRITIC_KINDS
             ):
                 raise RuntimeError("Analysis candidate kind is not supported")
-            crosses_dialogue_boundary = (candidate_kind == "dialogue") != (
-                source_kind == "dialogue"
-            )
-            loses_explicit_thought = (
-                source_kind == "thought" and candidate_kind != "thought"
-            )
-            if crosses_dialogue_boundary or loses_explicit_thought:
-                raise RuntimeError(
-                    "Analysis candidate kind violates a source-owned boundary"
-                )
-            if source_kind == "dialogue":
-                expected_dialogue_lock = {
-                    "policy_version": ANALYSIS_HOST_SEMANTIC_POLICY_VERSION,
-                    "rule": ANALYSIS_SOURCE_DIALOGUE_KIND_RULE,
-                    "source_kind": "dialogue",
-                }
-                if (
-                    context_kind_locks.get(str(stored["stable_id"]))
-                    != expected_dialogue_lock
-                ):
-                    raise RuntimeError(
-                        "Explicit dialogue source kind is not durably host-locked"
-                    )
             if source_kind == "thought":
                 previous = conn.execute(
                     "SELECT text FROM segments WHERE chapter_id=? AND seq=?",
