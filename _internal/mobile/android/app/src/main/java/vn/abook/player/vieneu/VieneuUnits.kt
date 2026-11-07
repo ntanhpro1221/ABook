@@ -56,8 +56,8 @@ object VieneuUnits {
     private val EMOTICON = Regex("""(?:[:;=]['\-^o]?[()dDpP3vV/\\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)""")
     private val STUTTER_ONSETS = listOf("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")
     private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph")
-    private val STUTTER = Regex("""([^$W]*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
-    private val STUTTER_ALONE = Regex("""([^$W]*)(\p{L}{1,3})-+([^$W]*)""")
+    private val STUTTER = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
+    private val STUTTER_ALONE = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+([^$W]*)""")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
     /** "hent*i", "E**alibur": dấu che giữa hai chữ cái; "*boing**boing*": chữ đầu chữ là dấu nhấn. */
     private val INSIDE_STAR = Regex("""(?<=\p{L})\*+(?=\p{L})""")
@@ -74,7 +74,7 @@ object VieneuUnits {
     private val ARROW_TIME = Regex("[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")
     private val ARROW_TIME_WORDS = "giờ sáng trưa chiều tối khuya".split(" ").toSet()
     /** Chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên). */
-    private val GLUED = Regex("""(?:\.{2,}|[…—–])+|(?<=\p{L})\((?=\p{L})""")
+    private val GLUED = Regex("""(?:\.{2,}|[…—–])+|(?<=\p{L})[!?]+(?=\p{L})|(?<=\p{L})\((?=\p{L})""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
     private val THOUSANDS = Regex("(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")
     /** I..CCCXCIX (the empty string matches too and is rejected apart). */
@@ -474,8 +474,12 @@ object VieneuUnits {
             val before = match.groupValues[1]
             val frag = match.groupValues[2]
             if (!Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT).startsWith(frag.lowercase(Locale.ROOT))) continue
-            if (frag.length > 1 && Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD).any { it in "aeiouy" }) continue
-            val sound = stutterSound(frag, rest)
+            val syllable = frag.length > 1 && Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD).any { it in "aeiouy" }
+            if (syllable) {
+                val restCore = Names.splitToken(rest).second
+                if (restCore.equals(frag, ignoreCase = true) || !vn.abook.player.VietnameseReading.isSyllable(frag) || !vn.abook.player.VietnameseReading.isSyllable(restCore)) continue
+            }
+            val sound = if (syllable) frag.lowercase(Locale.ROOT) else stutterSound(frag, rest)
             out[index] = if (alone) {
                 val next = tail.trimStart { it in CLOSERS }.firstOrNull()
                 before + sound + (if (next != null && next in PUNCT_MARKS) "" else "…") + tail
@@ -603,6 +607,7 @@ object VieneuUnits {
                 if (!unchanged) break
             }
         }
+        Shouts.readShouts(pieces, said, origin)
         romanNumbers(pieces, said)
         Abbreviations.readLevels(pieces, said)
         Abbreviations.readTitles(pieces, said)
@@ -624,7 +629,7 @@ object VieneuUnits {
     private const val HONORIFIC_HYPHENS = "‐‑‒–"
     private val HONORIFIC_BOUNDARIES = Regex("""(?:\.{2,}|[…—])+|(?<=\p{L})\((?=\p{L})""")
     private val JA_HYPHEN_SUFFIX = Regex(".+[$HONORIFIC_HYPHENS](?:san|kun|chan|sama|senpai|sensei|dono)$")
-    private val ENUMERATION = Regex("([" + Regex.escape(OPENERS + FRAMES_OPEN) + "]*)([vV]\\.v)(\\.*[" + Regex.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + "]*)")
+    private val ENUMERATION = Regex("([" + Regex.escape(OPENERS + FRAMES_OPEN) + "]*)([vV]\\.v|[vV]v(?=\\.))(\\.*[" + Regex.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + "]*)")
 
     /** Reuse ASCII honorific readings, only for complete joined Japanese suffixes. */
     private fun typographicHonorific(token: String, origin: String?): String {
@@ -756,9 +761,20 @@ object VieneuUnits {
      * `spoken_tokens` of vieneu.py.
      */
     fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null, directEnglish: Boolean = false): List<String> {
+        val (prepared, owners) = Shouts.presentationTokens(toks)
+        if (prepared != toks) {
+            val said = spokenTokens(prepared, origin, readings, directEnglish)
+            val rebuilt = MutableList(toks.size) { "" }
+            for ((index, word) in said.withIndex()) {
+                val owner = owners[index]
+                rebuilt[owner] += (if (rebuilt[owner].isNotEmpty() && word.isNotEmpty()) " " else "") + word
+            }
+            Readings.applyTokens(toks, rebuilt, readings)
+            return rebuilt
+        }
         val out = toks.toMutableList()
         stutters(toks, out, origin)
-        Shouts.readShouts(toks, out)
+        Shouts.readShouts(toks, out, origin)
         readWords(toks, out, origin)
         Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)

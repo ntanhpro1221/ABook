@@ -82,6 +82,7 @@ abook = [
   "assets/CMUDICT_LICENSE.txt",
   "assets/voice_previews/*.wav",
   "readaloud/english_policy.json",
+  "readaloud/sound_policy.json",
 ]
 
 [tool.pytest.ini_options]

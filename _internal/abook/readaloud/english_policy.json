@@ -2,7 +2,7 @@
   "version": 1,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
-  "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "TP", "HCM", "VIP", "TV", "OK"],
+  "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "GVCN", "TP", "HCM", "VIP", "TV", "OK"],
   "english_words": ["nanobot"],
   "mode": "keep_english",
   "acronym_mode": "spell_english"
