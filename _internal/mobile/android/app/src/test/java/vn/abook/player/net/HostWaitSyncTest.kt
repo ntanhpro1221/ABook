@@ -50,8 +50,17 @@ class HostWaitSyncTest {
     @Test fun aPostIsResentToo_theSameRequestOnce() {
         fast()
         val heads = ArrayList<String>()
+        val bodies = ArrayList<String>()
         FakeHost { attempt, socket, head ->
             synchronized(heads) { heads += head }
+            // Consume the complete request before replying/closing. Closing a
+            // Windows socket with an unread POST body can reset the connection
+            // before HttpURLConnection has read the response headers.
+            val length = head.lineSequence().first { it.startsWith("Content-Length:", ignoreCase = true) }
+                .substringAfter(':').trim().toInt()
+            val bytes = ByteArray(length)
+            java.io.DataInputStream(socket.getInputStream()).readFully(bytes)
+            synchronized(bodies) { bodies += bytes.toString(Charsets.UTF_8) }
             if (attempt == 1) FakeHost.silent(attempt, socket, head) else FakeHost.reply(socket, 200, """{"ok":true}""")
         }.use { host ->
             val text = SyncLink.request(context, "POST", "/api/books/b1/voice/preview", JSONObject().put("voice", "v"),
@@ -59,6 +68,7 @@ class HostWaitSyncTest {
             assertEquals("""{"ok":true}""", text)
             assertEquals(2, host.connections)
             assertEquals(heads[0].substringBefore("\r\n"), heads[1].substringBefore("\r\n"))
+            assertEquals(listOf("""{"voice":"v"}""", """{"voice":"v"}"""), bodies)
             assertTrue(heads[0].startsWith("POST /api/books/b1/voice/preview "))
         }
     }

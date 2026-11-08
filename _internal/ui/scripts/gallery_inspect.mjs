@@ -199,7 +199,17 @@ export async function main(argv = process.argv.slice(2)) {
         console.log(`ok ${entry.id} (${theme}) · ${result.findings.length} phát hiện · ${story.contacts.length} chi tiết · ${((performance.now() - started) / 1000).toFixed(1)}s`);
       } catch (error) {
         story.error = error.message;
-        report.errors.push({ story: entry.id, theme, error: error.message });
+        const failure = { story: entry.id, theme, error: error.message };
+        try {
+          const errorStem = `errors/static-${stem}`;
+          mkdirSync(path.join(out, 'errors'), { recursive: true });
+          const state = await evaluate(cdp, page.sessionId, `({gallery:window.__gallery,active:document.activeElement?.outerHTML,html:document.documentElement.outerHTML,visibility:document.visibilityState})`);
+          writeFileSync(path.join(out, errorStem + '.json'), JSON.stringify({ context: failure, state }, null, 2));
+          const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, page.sessionId);
+          writeFileSync(path.join(out, errorStem + '.png'), Buffer.from(data, 'base64'));
+          failure.evidence = { state: errorStem + '.json', image: errorStem + '.png' };
+        } catch (captureError) { failure.evidenceError = captureError.message; }
+        report.errors.push(failure);
         console.error(`!! ${entry.id} (${theme}): ${error.message}`);
       } finally {
         await cdp.send("Target.disposeBrowserContext", { browserContextId: page.browserContextId }).catch(() => undefined);
@@ -222,6 +232,16 @@ export async function main(argv = process.argv.slice(2)) {
     if (!args.staticOnly) {
     geometryBrowser = await launch(executable, { hideScrollbars: false });
     geometryCdp = await connect(geometryBrowser.endpoint);
+    let errorSequence = 0;
+    const onGeometryError = async (client, session, context) => {
+      const stem = `errors/geometry-${String(++errorSequence).padStart(4, '0')}`;
+      mkdirSync(path.join(out, 'errors'), { recursive: true });
+      const state = await evaluate(client, session, `({gallery:window.__gallery,pending:window.__sheetProbe?.pending,recentInput:window.__sheetProbe?.recentInput,active:document.activeElement?.outerHTML,html:document.documentElement.outerHTML})`);
+      writeFileSync(path.join(out, stem + '.json'), JSON.stringify({ context, state }, null, 2));
+      const { data } = await client.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, session);
+      writeFileSync(path.join(out, stem + '.png'), Buffer.from(data, 'base64'));
+      return { state: stem + '.json', image: stem + '.png' };
+    };
     // Independent headless pages; bounded concurrency keeps the full release matrix practical.
     const queue = report.stories.filter(s => !s.error);
     await Promise.all(Array.from({ length: 4 }, async () => {
@@ -229,7 +249,7 @@ export async function main(argv = process.argv.slice(2)) {
         const story = queue.shift();
         if (!story) return;
         const entry = entries.find(e => e.id === story.id);
-        story.sheetGeometry = await inspectSheets(geometryCdp, { base, entry, theme: story.theme, timeout: args.timeout });
+        story.sheetGeometry = await inspectSheets(geometryCdp, { base, entry, theme: story.theme, timeout: args.timeout, onError: onGeometryError });
         for (const finding of story.sheetGeometry.findings) {
           finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
           report.findings.push(finding);

@@ -5,14 +5,12 @@ exactly as the batch-9 patch allows, and the very next report export killed the 
 `_validated_promoted_candidate_conn` only knew the keep-locked-reading exemption. Same lesson
 as batch 9, one layer down: relaxed at the promotion, not at the check.
 
-Fixture: the frozen batch-9 copy (`_fixtures/lo09_223_cut_off`), chapter 223, "Gục đi!" - a real
-cut-off incumbent with a real finished candidate. The promotion is the real one; then the three
-call sites of the validator are exercised on its result.
+The synthetic current-schema fixture reproduces the cut-off incumbent and finished candidate.
+The actual promotion API runs before the three downstream validator call sites.
 """
 from __future__ import annotations
 
 import re
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -24,18 +22,13 @@ from abook.database import (
     ProjectDB,
 )
 
-FIXTURE = Path("D:/Novels/Audiobooks/_fixtures/lo09_223_cut_off")
 SEGMENT_SUFFIX = "5b7f60a11624"  # "Gục đi!"
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def _copy(tmp_path: Path) -> ProjectDB:
-    if not (FIXTURE / "project.sqlite3").is_file():
-        pytest.skip(f"không có fixture {FIXTURE.name} trên máy này")
-    shutil.copyfile(FIXTURE / "project.sqlite3", tmp_path / "project.sqlite3")
-    if (FIXTURE / "book_settings.json").is_file():
-        shutil.copyfile(FIXTURE / "book_settings.json", tmp_path / "book_settings.json")
-    return ProjectDB(tmp_path / "project.sqlite3")
+    from tests.candidate_fixtures import finished_take
+    return finished_take(tmp_path)
 
 
 def _segment(db: ProjectDB) -> sqlite3.Row:

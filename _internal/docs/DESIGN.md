@@ -327,6 +327,8 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 - Lưu toàn app trên từng thiết bị. Dòng giải thích giống nhau: “Lưu cho toàn app. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.” Âm lượng app điều khiển cả lời và nhạc, độc lập âm lượng hệ thống; EQ/tăng trầm/boost/cao độ chỉ đường lời đọc, gồm thu sẵn và đọc to. Nhạc không bị đổi màu/cao độ. Limiter bảo vệ đỉnh; tốc độ vẫn giữ cao độ đã chọn.
 - Đây là tuỳ chọn phát lại, không sửa WAV/MP3, preset giọng TTS, hash chất lượng hay kết quả duyệt. Tốc độ vẫn lưu theo sách như trước.
 
+### Danh sách kiểm giao diện
+
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.

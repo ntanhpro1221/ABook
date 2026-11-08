@@ -15,15 +15,16 @@
 #include <thread>
 #include <vector>
 
-class FileSinkDevice final : public MixDevice {
+template<class Clock = std::chrono::steady_clock>
+class ClockedFileSinkDevice final : public MixDevice {
 public:
     struct Gap { quint64 at, frames; };
 
-    FileSinkDevice(const QString &path, int rate = 48000, size_t capacity = 48000, int periodMs = 10)
+    ClockedFileSinkDevice(const QString &path, int rate = 48000, size_t capacity = 48000, int periodMs = 10)
         : m_file(path), m_rate(rate), m_capacity(capacity), m_period(std::max<size_t>(1, size_t(rate) * size_t(periodMs) / 1000)) {
         if (m_file.open(QIODevice::WriteOnly | QIODevice::Truncate)) m_file.write(QByteArray(44, '\0'));
     }
-    ~FileSinkDevice() override {
+    ~ClockedFileSinkDevice() override {
         advance();
         finish();
     }
@@ -51,7 +52,7 @@ public:
         if (!m_started || !m_running) return;
         const auto period = std::chrono::duration<double>(double(m_period) / m_rate);
         const auto since = std::chrono::duration<double>(Clock::now() - m_epoch);
-        const auto next = m_epoch + std::chrono::duration_cast<Clock::duration>(period * (std::floor(since / period) + 1));
+        const auto next = m_epoch + std::chrono::duration_cast<typename Clock::duration>(period * (std::floor(since / period) + 1));
         const auto until = std::min(next, Clock::now() + std::chrono::milliseconds(maxMs));
         while (Clock::now() < until) std::this_thread::yield();
         advance();
@@ -71,12 +72,11 @@ public:
     }
 
 private:
-    using Clock = std::chrono::steady_clock;
     QFile m_file;
     int m_rate;
     size_t m_capacity, m_period;
     bool m_started = false, m_running = false;
-    Clock::time_point m_epoch;
+    typename Clock::time_point m_epoch;
     quint64 m_ticks = 0, m_played = 0, m_saved = 0;
     std::atomic<long long> m_epochNs{0};
     std::deque<float> m_queue;
@@ -90,20 +90,26 @@ private:
     // Mỗi ranh chu kỳ đã qua: engine kéo đúng một chu kỳ của luồng (đang dừng = im lặng cả chu kỳ).
     void advance() {
         if (!m_started) return;
-        const auto due = quint64(std::chrono::duration<double>(Clock::now() - m_epoch).count() * m_rate / double(m_period));
-        for (; m_ticks < due; ++m_ticks) {
-            if (!m_running) {
-                note(m_stops, m_played, m_period);
-                m_scratch.assign(m_period * 2, 0.0f);
+        // File writes/flushes can cross another engine boundary. Account that
+        // elapsed time under the current state before stop/start changes it.
+        // Otherwise the next call falsely assigns the write latency to the new state.
+        for (;;) {
+            const auto due = quint64(std::chrono::duration<double>(Clock::now() - m_epoch).count() * m_rate / double(m_period));
+            if (m_ticks >= due) break;
+            for (; m_ticks < due; ++m_ticks) {
+                if (!m_running) {
+                    note(m_stops, m_played, m_period);
+                    m_scratch.assign(m_period * 2, 0.0f);
+                    emit_(m_scratch.data(), m_period);
+                    continue;
+                }
+                const size_t have = std::min(m_period, m_queue.size() / 2);
+                m_scratch.assign(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
+                m_queue.erase(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
+                m_scratch.resize(m_period * 2, 0.0f);
+                if (have < m_period) note(m_gaps, m_played + have, m_period - have);
                 emit_(m_scratch.data(), m_period);
-                continue;
             }
-            const size_t have = std::min(m_period, m_queue.size() / 2);
-            m_scratch.assign(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
-            m_queue.erase(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
-            m_scratch.resize(m_period * 2, 0.0f);
-            if (have < m_period) note(m_gaps, m_played + have, m_period - have);
-            emit_(m_scratch.data(), m_period);
         }
     }
     void emit_(const float *data, quint64 frames) {
@@ -137,3 +143,5 @@ private:
         }
     }
 };
+
+using FileSinkDevice = ClockedFileSinkDevice<>;

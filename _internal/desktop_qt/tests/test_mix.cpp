@@ -1,6 +1,7 @@
 // Lõi trộn của đường âm thanh WASAPI (mixcore.h, mp3source.h): vòng đệm, âm lượng trượt, đổi tần số, giải mã mp3 - thử trên số và
 // trên fixture mp3 chung, không cần thiết bị âm thanh.
 #include "downloadforecast.h"
+#include "filesinkdevice.h"
 #include "mixcore.h"
 #include "mp3source.h"
 #include "mfsource.h"
@@ -34,6 +35,19 @@
 using namespace MixCore;
 
 namespace {
+
+struct SinkClock {
+    using Base = std::chrono::steady_clock;
+    using time_point = Base::time_point;
+    using duration = Base::duration;
+    using period = Base::period;
+    inline static int reads = 0, elapsedMs = 0;
+    inline static bool slowEmission = false;
+    static time_point now() {
+        const int elapsed = slowEmission ? (++reads == 1 ? 20 : 30) : elapsedMs;
+        return time_point{} + std::chrono::seconds(1) + std::chrono::milliseconds(elapsed);
+    }
+};
 
 class FakeDevice final : public MixDevice {
 public:
@@ -176,6 +190,32 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void fileSinkAccountsWriteTimeBeforeChangingState_data() {
+        QTest::addColumn<bool>("realPause");
+        QTest::newRow("write-latency-is-not-a-pause") << false;
+        QTest::newRow("actual-pause-is-still-recorded") << true;
+    }
+    void fileSinkAccountsWriteTimeBeforeChangingState() {
+        QFETCH(bool, realPause);
+        QTemporaryDir dir;
+        const QString path = dir.filePath(QStringLiteral("sink.wav"));
+        SinkClock::reads = SinkClock::elapsedMs = 0; SinkClock::slowEmission = false;
+        {
+            ClockedFileSinkDevice<SinkClock> device(path);
+            const std::vector<float> pcm(4800 * 2, 0.01f);
+            QVERIFY(device.write(pcm.data(), 4800)); QVERIFY(device.start());
+            // Advancing at 20 ms takes another 10 ms to emit samples. That
+            // interval still belongs to the running engine before stop returns.
+            SinkClock::slowEmission = true;
+            device.stop(); device.padding();
+            SinkClock::slowEmission = false; SinkClock::elapsedMs = realPause ? 70 : 30;
+            QVERIFY(device.start());
+        }
+        QFile stops(path + QStringLiteral(".stops")); QVERIFY(stops.open(QIODevice::ReadOnly));
+        QCOMPARE(stops.readAll(), realPause ? QByteArray("1440 1920\n") : QByteArray());
+        QFile gaps(path + QStringLiteral(".gaps")); QVERIFY(gaps.open(QIODevice::ReadOnly));
+        QVERIFY(gaps.readAll().isEmpty());
+    }
     void outputSelectionRollbackAndAudibleCursor() {
         MixerRig rig;
         QSignalSpy replies(&rig.mixer, &MusicMixer::outputsReady);

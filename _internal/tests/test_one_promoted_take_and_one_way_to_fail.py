@@ -7,7 +7,6 @@ theo được vá ở đây: hai bản `promoted` cho một đoạn, và một n
 """
 from __future__ import annotations
 
-import shutil
 import sqlite3
 import sys
 from pathlib import Path
@@ -22,15 +21,12 @@ from abook.database import (
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-REAL = Path("D:/Novels/Audiobooks/_fixtures/lo03r_084b_pre6b")
 LOST_LINE_SUFFIX = "feeb9dd9dda2"
 
 
 def _copy(tmp_path: Path) -> Path:
-    if not (REAL / "project.sqlite3").is_file() or not (REAL / "book_settings.json").is_file():
-        pytest.skip(f"không có project thật {REAL.name} trên máy này")
-    shutil.copyfile(REAL / "project.sqlite3", tmp_path / "project.sqlite3")
-    shutil.copyfile(REAL / "book_settings.json", tmp_path / "book_settings.json")
+    from tests.candidate_fixtures import locked_reading
+    locked_reading(tmp_path)
     return tmp_path
 
 
@@ -99,7 +95,7 @@ def test_the_cut_off_substitution_swallows_its_own_failures(tmp_path: Path) -> N
     from abook.config import build_settings
     from abook.models import ProjectPaths
 
-    # Keep historical candidate evidence; exercise the hook with current settings.
+    # Exercise the hook with the constructed candidate evidence and current settings.
     paths = ProjectPaths.build(root)
     db = ProjectDB(paths.db)
     settings = build_settings()

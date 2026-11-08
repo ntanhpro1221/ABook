@@ -38,6 +38,7 @@ export function prepare(entry: Entry, theme: Theme): void {
   galleryState.missing.clear();
   galleryState.errors.length = 0;
   galleryState.ready = false;
+  galleryState.trace.length = 0;
   try {
     localStorage.clear();
     sessionStorage.clear();

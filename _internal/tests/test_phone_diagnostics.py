@@ -69,6 +69,7 @@ class FakePhone:
 def _paired(tmp_path: Path, phone: FakePhone, *, token: str = TOKEN, fingerprint: str | None = None) -> tuple[App, str]:
     app = _this_computer(tmp_path)
     entry = {"name": "Pixel của tôi", "host": "127.0.0.1", "port": phone.port, "token": token,
+             "addresses": [{"address": f"127.0.0.1:{phone.port}", "lastSuccess": 0}],
              "fingerprint": fingerprint or phone.identity.fingerprint, "pairedAt": 1.0, "lastSeen": 1.0, "error": "", "kind": "phone"}
     app.computers._write({"computers": {"a1b2c3d4e5f6": entry}})
     return app, "a1b2c3d4e5f6"
@@ -164,6 +165,7 @@ def _own(tmp_path: Path) -> tuple[App, str]:
     fingerprint = "ab" * 32
     app.computers._write({"computers": {"a1b2c3d4e5f6": {
         "name": "Pixel", "host": "192.168.1.9", "port": 47630, "token": TOKEN, "fingerprint": fingerprint,
+        "addresses": [{"address": "192.168.1.9:47630", "lastSuccess": 0}],
         "pairedAt": 1.0, "lastSeen": 2.0, "error": "", "kind": "phone"}}})
     logs = app.preferences.path.parent / "logs"
     logs.mkdir(parents=True)

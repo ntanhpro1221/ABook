@@ -73,6 +73,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - ProjectDB chỉ tạo schema đầy đủ cho DB trống, hoặc mở đúng schema hiện hành. DB khác phiên bản/thiếu cấu trúc bị từ chối
   trước kết nối ghi; không backup nâng cấp, ALTER hay chuyển rows cũ. Danh sách backup của Store chỉ nhận snapshot qua cùng gate
   chỉ đọc; API quan sát giữ `mode=ro`/`query_only` để chẩn đoán dự án lỗi.
+  Schema đầy đủ gồm `character_exposure` của dự án nối tiếp; continuation chỉ ghi dữ liệu, không tạo thêm bảng khi gieo.
 - Với chính sách hẹn ngủ, app KHÔNG BAO GIỜ tự hẹn/tự dừng khi người nghe không yêu cầu. Lâu không tương tác không phải yêu cầu hẹn ngủ. Chỉ hẹn khi người nghe yêu cầu: hẹn phút, hết chương, hoặc lịch đêm do chính người nghe bật (mặc định tắt). Lịch đêm đợi máy rảnh: Android cần màn tắt và bốn cửa sổ nằm yên khi có cảm biến; desktop cần thời gian rảnh toàn OS. Tín hiệu còn thức huỷ hẹn theo lịch, không huỷ hẹn tay. Không khôi phục hẹn theo lịch từ đĩa; hẹn tay gắn đúng sách/hồ sơ. Không đọc, xoá hay migrate khoá cũ của tính năng đã gỡ.
 - Android: `Store.writeAtomic` sync dữ liệu trước rename, không xoá đích trước; JSON hồ sơ hỏng phải giữ ở `.corrupt-…`.
   Adopt/rekey cùng phiên bản ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
