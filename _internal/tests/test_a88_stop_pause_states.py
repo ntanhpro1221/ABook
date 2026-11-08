@@ -255,12 +255,13 @@ def test_a_crashed_run_says_why_and_a_stop_you_pressed_does_not(studio) -> None:
     assert data["book"]["runEnd"] is None, "bạn bấm Dừng - không phải sự cố"
 
 
-def test_the_phone_is_told_apart_a_stop_from_a_crash(library, tmp_path: Path) -> None:  # noqa: F811
+def test_the_phone_is_told_apart_a_stop_from_a_crash(studio, tmp_path: Path) -> None:
     from abook.webui.sync import Devices, SyncApp
 
-    lib, project, listening = library
-    sync = SyncApp(lib, listening, Devices(tmp_path / "devices.json"), "Máy thử")
-    _working_with_a_fresh_lease(ProjectDB(project / "project.sqlite3"))  # sổ đang ở pha phân tích, nhịp tim còn mới
+    paths, db, _server, app = studio
+    project = paths.root
+    sync = SyncApp(app.library, app.listening, Devices(tmp_path / "devices.json"), "Máy thử")
+    _working_with_a_fresh_lease(db)
     _write_state(project, "stopped", detail="worker đã dừng sạch", exit_code=0, stop_requested=True)
     (book,) = sync.studio_view()
     assert book["end"] == "stopped" and book["endDetail"] == "" and book["running"] is False

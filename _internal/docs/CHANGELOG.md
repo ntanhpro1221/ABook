@@ -1,7 +1,3 @@
-# Chưa phát hành — 08-11-2026
-
-- Gỡ hoàn toàn tự hẹn/tự dừng khi người nghe lâu không tương tác trên Android, Qt và web. Không còn lựa chọn hoặc thông báo cho tính năng này. Hẹn phút, hết chương và lịch đêm do người nghe bật vẫn giữ.
-
 # Nhật ký thay đổi
 
 Những gì NGƯỜI DÙNG thấy thay đổi ở mỗi bản phát hành (máy tính và điện thoại cùng một số phiên bản). Lý do kỹ thuật và
@@ -13,13 +9,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [0.4.165] - 2026-11-08
 
-- Hẹn giờ ngủ tự bật chỉ khi màn hình đã tắt và điện thoại nằm yên; chạm, cầm máy hay mở màn hình là huỷ hẹn giờ tự động. Máy tính tính theo lần dùng chuột/bàn phím gần nhất của cả máy, không chỉ trong app. Hẹn giờ bạn tự đặt giữ nguyên.
+- Bỏ tự hẹn giờ và tự dừng khi lâu không tương tác. Chỉ dừng theo số phút, hết chương hoặc lịch đêm bạn đã bật; sửa thao tác hẹn lại và huỷ hẹn giờ trên điện thoại, máy tính và web.
+- Mục Âm thanh có equalizer năm dải và năm lựa chọn sẵn, tăng trầm, âm lượng riêng của app, tăng âm đến 12 dB có bảo vệ đỉnh và chỉnh cao độ độc lập với tốc độ đọc. Các chỉnh sửa chỉ áp khi nghe, không đổi file sách.
 - Lời nhân vật chen giữa câu dẫn không còn bị đọc bằng giọng dẫn; chương do một nhân vật khác giới với giọng dẫn kể (như người kể nữ trong sách giọng dẫn nam) đọc mọi câu dẫn bằng giọng của người kể ấy, không lẫn từ nào sang giọng dẫn kia.
 - Studio kiểm giọng cả cuốn trước khi đóng gói: câu dẫn sai giọng người kể của chương hay nhân vật sai giọng được báo ra, không lọt vào sách.
 - Phân tích người nói ít ghi đè nhầm những nhãn người nói và loại câu đã đúng.
 - Từ tiếng Anh và tên Tây được đọc như chữ gốc thay vì phiên ra âm Việt; viết tắt tiếng Anh như GPS, DNA đọc từng chữ cái tiếng Anh. Từ tiếng Việt viết không dấu trùng chữ Anh vẫn đọc tiếng Việt.
 - Mở sách trên điện thoại có bìa bay từ thư viện vào trang sách; thanh bên và màn Đang nghe trên máy tính chuyển cảnh mượt, không lệch bố cục khi đổi khổ cửa sổ.
+- Đổi khổ cửa sổ máy tính giữ chỗ cuộn trong thư viện và đoạn đang đọc; nút tạo hồ sơ nghe ghi rõ “Tạo và nghe”.
 - Sửa nhật ký thu bị lỗi chữ liên tục trên vài máy (đọc trạng thái GPU in ký tự lạ).
+
+### Lưu ý khi nâng cấp
+
+- Dự án Studio phải dùng đúng cấu trúc dữ liệu hiện hành; app báo lỗi khi mở dự án khác cấu trúc. Tạo dự án mới để thu với bản này. File sách `.abook` đã xuất vẫn dùng để nghe.
 
 ## [0.4.164] - 2026-11-07
 

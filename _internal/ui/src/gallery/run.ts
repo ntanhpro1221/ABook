@@ -1,6 +1,6 @@
 import { installPlatform, prepare } from "./boot";
 import { mountApp } from "./mount";
-import { galleryState } from "./state";
+import { galleryState, tracePhase } from "./state";
 import type { Entry, Theme } from "./entries";
 
 // Dựng một mục trưng bày: thế giới giả -> trang của app -> thao tác -> chờ trang đứng yên. Dùng chung cho khung trưng bày (frame) và test.
@@ -63,20 +63,26 @@ export async function runEntry(entry: Entry, theme: Theme, container: HTMLElemen
   watchErrors();
   installPlatform(entry.platform, entry.clock);
   prepare(entry, theme);
+  tracePhase("mount:start");
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${entry.route}`);
   const unmount = await mountApp(container, entry.showcase);
+  tracePhase("mount:done");
   await waitStill(quiet);
+  tracePhase("initial-still:done");
   if (entry.act) {
     try {
       await entry.act();
+      tracePhase("act:done");
     } catch (error) {
       galleryState.errors.push(`act: ${(error as Error).message}`);
     }
     await waitStill(quiet);
+    tracePhase("final-still:done");
   }
   // Trang mới mở đưa tiêu điểm vào tiêu đề (shared/motion usePageFocus) - viền tiêu điểm ấy chỉ làm bẩn ảnh chụp.
   const focused = document.activeElement as HTMLElement | null;
   if (focused?.matches("h1, h2, [tabindex='-1']")) focused.blur();
   galleryState.ready = true;
+  tracePhase("ready");
   return unmount;
 }

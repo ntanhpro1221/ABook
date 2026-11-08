@@ -46,6 +46,8 @@ theo package + lock hiện tại, tái sử dụng khi đủ phiên bản khóa.
 junction node_modules dùng chung không đổi. Thiếu npm/module hoặc cài thất bại là FAIL có log, không bỏ kiểm.
 Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscreen/phần mềm: WidthTests có deadline riêng
 1800 giây, các suite khác 360 giây; mọi subprocess gate chạy BELOW_NORMAL trên Windows.
+Gallery inspect có deadline 3600 giây cho toàn bộ ma trận sáng/tối, hai khổ cửa sổ và các lượt mở/đóng sheet;
+thời hạn 1800 giây đã ngắt lượt 0.4.165 sau 3312 trial sạch, khi còn hai trạng thái chưa kiểm xong.
 
 Ý nghĩa các bằng chứng (lệnh cụ thể xem `--list`):
 

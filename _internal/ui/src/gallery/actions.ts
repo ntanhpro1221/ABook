@@ -1,5 +1,6 @@
 // Thao tác trên trang đã dựng để đưa nó tới trạng thái của mục trưng bày (mở menu, mở hộp thoại, gõ chữ...): bấm như người dùng
 // bấm, tìm phần tử theo nhãn trợ năng hay chữ hiện ra - không với vào trong thành phần của app.
+import { tracePhase } from "./state";
 
 const CLICKABLE = "button, a, [role=button], [role=menuitem], [role=menuitemradio], [role=tab], [role=option], [role=switch], [role=radio], summary, label";
 
@@ -60,19 +61,23 @@ async function press(element: HTMLElement): Promise<void> {
 
 /** Như `click` nhưng lấy phần tử ĐẦU trong cây (không phải cuối): nút "Thêm tuỳ chọn" của trang sách đứng trước nút cùng tên của thanh phát. */
 export async function clickFirst(target: string | RegExp): Promise<HTMLElement> {
+  tracePhase(`clickFirst:find:${String(target)}`);
   const element = await waitFor(
     () => [...document.querySelectorAll<HTMLElement>(CLICKABLE)].find((candidate) => matches(candidate, target) && visible(candidate)) ?? null,
     `nút “${String(target)}”`,
   );
   await press(element);
+  tracePhase(`clickFirst:pressed:${String(target)}`);
   await settle();
   return element;
 }
 
 /** Chờ phần tử hiện rồi bấm. */
 export async function click(target: string | RegExp, within?: ParentNode): Promise<HTMLElement> {
+  tracePhase(`click:find:${String(target)}`);
   const element = await waitFor(() => find(target, within), `nút “${String(target)}”`);
   await press(element);
+  tracePhase(`click:pressed:${String(target)}`);
   await settle();
   return element;
 }

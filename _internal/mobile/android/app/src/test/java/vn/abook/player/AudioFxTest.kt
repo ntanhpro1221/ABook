@@ -71,10 +71,10 @@ class AudioFxTest {
             println("AUDIOFX pitch=$semitones speed=$speed f0=$hz seconds=${samples.size/48000.0}")
         }
     }
-    @Test fun cpuBenchmarkReportsDspCost() {
+    @Test fun sustainedStereoProcessingRemainsFinite() {
         val dsp=AudioFxDsp(48000,2);dsp.configure(AudioFxSettings(enabled=true,boost=12.0).withPreset(1))
-        val frame=doubleArrayOf(.1,.1);val started=System.nanoTime()
+        val frame=doubleArrayOf(.1,.1)
         for(i in 0 until 48000*10) {frame[0]=.1;frame[1]=.1;dsp.process(frame)}
-        println("AUDIOFX JVM stereo_10s_ms=${(System.nanoTime()-started)/1e6} (host JVM, not phone CPU)")
+        assertTrue(frame.all { it.isFinite() && abs(it) <= .891251 })
     }
 }

@@ -8,12 +8,12 @@ import type { Theme } from "./entries";
 
 declare global {
   interface Window {
-    __gallery?: { ready: boolean; errors: string[]; missing: string[]; known: string[]; id: string };
+    __gallery?: { ready: boolean; errors: string[]; missing: string[]; known: string[]; id: string; trace: { phase: string; at: number }[] };
   }
 }
 
 export async function startFrame(id: string, theme: Theme): Promise<void> {
-  const report = () => (window.__gallery = { ready: galleryState.ready, errors: galleryState.errors, missing: [...galleryState.missing], known: [...galleryState.known], id });
+  const report = () => (window.__gallery = { ready: galleryState.ready, errors: galleryState.errors, missing: [...galleryState.missing], known: [...galleryState.known], id, trace: galleryState.trace });
   report();
   const item = entry(id);
   const root = document.getElementById("root")!;

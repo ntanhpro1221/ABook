@@ -1,15 +1,11 @@
-"""Giữ cách đọc ghim khi chỉ bài chính tả neo tên phàn nàn — thử trên bản sao của project THẬT.
+"""Keep a locked reading when only the name-spelling check rejects it.
 
-Chương 084 đúc lại (`lo03r_084b`) là ca gốc: bản đọc-ghim `I-xờ-hờ-ta-ra` qua nhịp, chết ở neo
-tên trên cả hai đường phiên (`dual_failed`), và bản đọc theo chữ viết được đề cử. Đồ thị ứng
-viên với đủ provenance quá nặng để dựng tay, nên bài này chép project thật vào thư mục tạm và
-đề cử lại ở đó — WAV được tham chiếu bằng đường dẫn tuyệt đối nên chốt chặn file vẫn chạy thật.
-Bỏ qua (có nói lý do) khi máy không có project ấy.
+A current-schema synthetic scenario recreates the observed competing candidates.
+It uses durable checkpoint/promotion APIs and real files for checksum validation.
 """
 from __future__ import annotations
 
 import json
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -24,16 +20,12 @@ from abook.database import (
     ProjectDB,
 )
 
-REAL = Path("D:/Novels/Audiobooks/_fixtures/lo03r_084b_pre6b")
 <removed>
 
 
 def _copy(tmp_path: Path) -> ProjectDB:
-    if not (REAL / "project.sqlite3").is_file():
-        pytest.skip(f"không có project thật {REAL.name} trên máy này")
-    target = tmp_path / "project.sqlite3"
-    shutil.copyfile(REAL / "project.sqlite3", target)
-    return ProjectDB(target)
+    from tests.candidate_fixtures import locked_reading
+    return locked_reading(tmp_path)
 
 
 def _segment(db: ProjectDB) -> sqlite3.Row:
@@ -204,15 +196,12 @@ def test_a_drifted_spoken_text_checksum_is_skipped_not_raised(tmp_path: Path) ->
     Đường ống chạy móc này giữa vòng sửa của MỌI chương, nên một ngoại lệ thoát ra sẽ giết chương
     đang phiên. alpha.47 cho thấy checksum ấy trôi được thật: ghim một cách đọc giữa lượt chạy.
     """
-    if not (REAL / "book_settings.json").is_file():
-        pytest.skip(f"không có project thật {REAL.name} trên máy này")
     import sys
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from scripts.keep_the_locked_reading import bare_pipeline
 
-    shutil.copyfile(REAL / "project.sqlite3", tmp_path / "project.sqlite3")
-    shutil.copyfile(REAL / "book_settings.json", tmp_path / "book_settings.json")
+    _copy(tmp_path)
     with sqlite3.connect(str(tmp_path / "project.sqlite3")) as conn:
         conn.row_factory = sqlite3.Row
         segment = conn.execute(
@@ -226,7 +215,7 @@ def test_a_drifted_spoken_text_checksum_is_skipped_not_raised(tmp_path: Path) ->
     from abook.config import build_settings
     from abook.models import ProjectPaths
 
-    # Keep historical candidate evidence; exercise the hook with current settings.
+    # Exercise the hook with the constructed candidate evidence and current settings.
     paths = ProjectPaths.build(tmp_path)
     db = ProjectDB(paths.db)
     settings = build_settings()

@@ -191,6 +191,13 @@ def match_offset(sink, source, at_sink, at_source, rate, win_s=0.04, search_s=0.
     seg_e = (c2[w:] - c2[:-w]) - seg_sum * seg_sum / w
     score = corr / (na * np.sqrt(np.maximum(seg_e, 1e-12)))
     k = int(np.argmax(score))
+    # A voiced syllable can correlate above MATCH_SCORE at two distant source
+    # positions. The larger peak alone does not identify which occurrence was
+    # heard. Refuse that measurement when another accepted position lies at
+    # least one complete matching window away; retain every gate tolerance.
+    accepted = np.flatnonzero(score > MATCH_SCORE)
+    if len(accepted) and np.any(np.abs(accepted - k) >= w):
+        return None, float(score[k])
     return (k - s) / rate, float(score[k])
 
 

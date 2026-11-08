@@ -14,7 +14,7 @@ lõi cho Studio (nút "Làm tiếp cuốn này") và `cli create --seed-from`: a
 Hai giới hạn cứng:
 
 - Chỉ gieo GIỮA `create` và `run`: dự án đích đã phân tích thì đổi cách đọc tên là làm trôi chữ nói dưới audio đã có.
-- Dự án nguồn chỉ được ĐỌC (sqlite `mode=ro`): nó có thể đang chạy, và `ProjectDB(...)` ghi schema ngay khi mở.
+- Dự án nguồn chỉ được ĐỌC (sqlite `mode=ro`): nó có thể đang chạy.
 
 Dự án nối tiếp ghi `continues.json` (dự án trước + số phần), để lần "làm tiếp" sau đi được cả chuỗi và thư viện nghe gộp
 được các phần về một cuốn.
@@ -40,16 +40,8 @@ from . import names as renames
 DB_NAME = "project.sqlite3"
 LINK_FILE = "continues.json"
 # Sổ cộng dồn: số câu mỗi nhân vật đã nói qua MỌI phần - `upsert_character` ghi đè `mention_count` bằng số của riêng dự
-# án hiện tại. `character_registry._book_exposure` đọc nó khi cấp giọng; DDL giống hệt `scripts/backfill_exposure.py`.
+# án hiện tại. `character_registry._book_exposure` đọc nó khi cấp giọng; schema thuộc ProjectDB.
 LEDGER_TABLE = "character_exposure"
-LEDGER_DDL = f"""
-CREATE TABLE IF NOT EXISTS {LEDGER_TABLE} (
-    canonical_name TEXT PRIMARY KEY,
-    dialogue_lines INTEGER NOT NULL,
-    batches INTEGER NOT NULL,
-    updated_at REAL NOT NULL
-)
-"""
 # "Tên · Phần 2": cùng quy ước "Tên · Tập 16" mà thư viện nghe gom thành bộ (ui/src/listen/model.ts `seriesOf`) - phần sau
 # đứng cạnh phần đầu và được mời nghe tiếp khi phần trước hết. Bỏ được cả hậu tố cũ "(phần 2)".
 PART_SUFFIX = re.compile(r"\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$", re.IGNORECASE)
@@ -452,7 +444,6 @@ def book_exposure(chain: list[Path]) -> dict[str, tuple[int, int]]:
 def _write_ledger(target: ProjectDB, exposure: dict[str, tuple[int, int]]) -> None:
     now = time.time()
     with target.transaction() as connection:
-        connection.execute(LEDGER_DDL)  # `execute`, không `executescript`: cái sau tự COMMIT giao dịch đang mở
         connection.execute(f"DELETE FROM {LEDGER_TABLE}")
         connection.executemany(
             f"INSERT INTO {LEDGER_TABLE} (canonical_name, dialogue_lines, batches, updated_at) VALUES (?,?,?,?)",

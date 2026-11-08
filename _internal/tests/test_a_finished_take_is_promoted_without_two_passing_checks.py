@@ -1,14 +1,10 @@
-"""Bản thu tự kết thúc thay bản bị cắt: đề cử THẬT phải qua, không chỉ bốn điều kiện.
+"""Promote a finished take over a cut-off incumbent through the durable API.
 
-Fixture: bản sao đóng băng của lô 9 (`D:/Novels/Audiobooks/_fixtures/lo09_223_cut_off`), chương
-223, đoạn "Gục đi!": đương nhiệm 1,92 s chạm trần, ứng viên #11 0,64 s tự kết thúc, hai đường
-phiên ASR đều trượt vì văn bản dưới ngưỡng phán xử. Finder đã chọn #11 từ trước bản vá; cái hỏng
-là chốt "hai đường phiên đều qua" trong `promote_segment_candidate`, và chỉ đề cử thật mới chạm
-tới nó.
+The current-schema synthetic fixture reproduces the batch-9 failure conditions:
+short text, a capped incumbent, and a finished candidate with two failed decodes.
 """
 from __future__ import annotations
 
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -16,17 +12,12 @@ import pytest
 
 from abook.database import SEGMENT_CANDIDATE_PROMOTED, ProjectDB
 
-FIXTURE = Path("D:/Novels/Audiobooks/_fixtures/lo09_223_cut_off")
 SEGMENT_SUFFIX = "5b7f60a11624"  # "Gục đi!"
 
 
 def _copy(tmp_path: Path) -> ProjectDB:
-    if not (FIXTURE / "project.sqlite3").is_file():
-        pytest.skip(f"không có fixture {FIXTURE.name} trên máy này")
-    shutil.copyfile(FIXTURE / "project.sqlite3", tmp_path / "project.sqlite3")
-    if (FIXTURE / "book_settings.json").is_file():
-        shutil.copyfile(FIXTURE / "book_settings.json", tmp_path / "book_settings.json")
-    return ProjectDB(tmp_path / "project.sqlite3")
+    from tests.candidate_fixtures import finished_take
+    return finished_take(tmp_path)
 
 
 def _segment(db: ProjectDB) -> sqlite3.Row:
@@ -56,7 +47,7 @@ def _eligible_candidate(db: ProjectDB, segment: sqlite3.Row) -> sqlite3.Row:
     return candidate
 
 
-def test_the_real_cut_off_case_is_promoted(tmp_path: Path) -> None:
+def test_the_finished_candidate_is_promoted(tmp_path: Path) -> None:
     db = _copy(tmp_path)
     segment = _segment(db)
     candidate = _eligible_candidate(db, segment)

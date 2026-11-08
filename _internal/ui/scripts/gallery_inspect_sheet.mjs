@@ -45,6 +45,15 @@ export function installGeometryProbe() {
     return `body > ${parts.join(' > ')}`;
   };
   const surfaces = () => [...document.querySelectorAll(surfaceSelector)].filter(el => el.getBoundingClientRect().width > 0);
+  const recentInput = [];
+  for (const type of ['pointerdown', 'pointerup', 'click', 'focusin', 'focusout', 'keydown']) {
+    document.addEventListener(type, event => {
+      const el = event.target instanceof Element ? event.target : null;
+      recentInput.push({ type, at: performance.now(), key: event.key, trusted: event.isTrusted,
+        target: el?.outerHTML.slice(0, 400), surfaceTitles: surfaces().map(node => node.getAttribute('aria-label') || node.textContent.slice(0, 120)) });
+      if (recentInput.length > 30) recentInput.shift();
+    }, true);
+  }
   // A menu can itself be a phone Sheet and is replaced by its selected dialog. It is not stable page content.
   const excluded = el => el.closest('[role="dialog"], [role="menu"], [role="tooltip"], [data-sonner-toaster], [data-motion-ghost], .now-playing:not([data-state="open"])');
   let sequence = 0;
@@ -56,6 +65,7 @@ export function installGeometryProbe() {
   });
   window.__sheetProbe = {
     documentId: crypto.randomUUID(),
+    recentInput,
     pending: null,
     surfaces: () => surfaces().map(el => ({ selector: path(el), title: el.querySelector('[data-surface-title]')?.textContent || el.getAttribute('aria-label') || '', rect: box(el) })),
     triggers: () => [...document.querySelectorAll('[aria-haspopup="dialog"], [aria-label="Mở màn hình đang nghe"]' + (innerWidth <= 640 ? ', [aria-haspopup="menu"]' : ''))]
@@ -203,7 +213,7 @@ export async function visit(cdp, session, url, timeout, onClick) {
   }
 }
 
-export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000 }) {
+export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000, onError }) {
   const result = { story: entry.id, theme, widths: [], trials: [], findings: [], errors: [], known: [] };
   for (const width of [1440, 400]) {
     const page = await openPage(cdp, { width, height: 900, scale: 1, mobile: false, theme, newWindow: true, isolated: true });
@@ -213,6 +223,14 @@ export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000 }
     await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(${installGeometryProbe.toString()})()` }, session);
     const url = `${base}?frame=${encodeURIComponent(entry.id)}&theme=${theme}`;
     const targets = [];
+    const recordError = async detail => {
+      const item = { story: entry.id, theme, width, ...detail };
+      if (onError) {
+        try { item.evidence = await onError(cdp, session, item); }
+        catch (error) { item.evidenceError = error.message; }
+      }
+      result.errors.push(item);
+    };
     try {
       // Discover *all* dialog/Now Playing transitions in the catalog's actual action sequence.
       await visit(cdp, session, url, timeout, async pending => {
@@ -296,11 +314,11 @@ export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000 }
           } catch (error) {
             reusableSelector = null;
             trial.error = error.message;
-            result.errors.push({ story: entry.id, theme, width, position, dismissal, target: target.label, error: error.message });
+            await recordError({ position, dismissal, target: target.label, error: error.message });
           }
         }
       }
-    } catch (error) { result.errors.push({ story: entry.id, theme, width, error: error.message }); }
+    } catch (error) { await recordError({ error: error.message }); }
     finally { await cdp.send("Target.disposeBrowserContext", { browserContextId: page.browserContextId }); }
   }
   return result;

@@ -33,6 +33,25 @@ def kinds(data):
     return {f["kind"] for f in sink.check(data)["findings"]}
 
 
+def test_two_distinct_matching_occurrences_cannot_identify_the_audio_position():
+    rate = 48000
+    phrase = np.random.default_rng(41).normal(0, .1, 1920)
+    source = np.zeros(rate)
+    source[12000:13920] = phrase
+    source[24000:25920] = phrase
+    heard = np.r_[np.zeros(1000), phrase, np.zeros(1000)]
+    offset, score = sink.match_offset(heard, source, 1000, 18000, rate)
+    assert offset is None and score > sink.MATCH_SCORE
+
+
+def test_a_unique_match_keeps_its_measured_offset():
+    rate = 48000
+    source = np.random.default_rng(42).normal(0, .1, rate)
+    heard = source[24000:26000].copy()
+    offset, score = sink.match_offset(heard, source, 0, 24000-2400, rate)
+    assert offset == pytest.approx(.05) and score > .999
+
+
 def test_build_bat_gates_package_and_installer_on_the_ear():
     bat = (ROOT / "build.bat").read_text(encoding="ascii")
     gate = bat.index('tools\\audio_sink.py" gate "%HERE%dist\\ABookDesk.exe"')

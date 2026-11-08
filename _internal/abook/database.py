@@ -1772,6 +1772,13 @@ def _analysis_source_matches_host_semantic_rule(text: str, rule: str) -> bool:
 
 
 SCHEMA = """
+CREATE TABLE character_exposure (
+    canonical_name TEXT PRIMARY KEY,
+    dialogue_lines INTEGER NOT NULL,
+    batches INTEGER NOT NULL,
+    updated_at REAL NOT NULL
+);
+
 CREATE TABLE book (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     title TEXT NOT NULL,
