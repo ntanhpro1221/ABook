@@ -2,6 +2,7 @@
 #include "sonic/sonic.h"
 #include <algorithm>
 #include <new>
+#include <cmath>
 
 struct TimeStretch::Impl {
     sonicStream stream = nullptr;
@@ -11,10 +12,10 @@ struct TimeStretch::Impl {
     // Sonic C cắt cụt số mẫu mỗi chu kỳ cao độ: ghi từng khối 256 khung, 750 s ở 3x ra hụt 0,8 s (nội dung trôi 2,4 s
     // khỏi vị trí bộ trộn tính = khung ra x tốc độ). Đếm vào / ra từ lần đổi tốc độ, lệch quá 50 ms nội dung thì nắn
     // tốc độ Sonic tối đa 0,5 % cho lệch về trong ~10 s. Tốc độ 1 không nắn: Sonic chép thẳng, không trôi.
-    double speed = 1, in = 0, out = 0;
+    double speed = 1, pitch = 0, in = 0, out = 0;
     explicit Impl(int rate) : rate(rate) {}
     void steer() {
-        if (speed == 1.0) return;
+        if (speed == 1.0 && pitch == 0) return;
         const double deficit = in - (out + sonicSamplesAvailable(stream)) * speed, band = rate * 0.05;
         const double over = deficit > band ? deficit - band : deficit < -band ? deficit + band : 0;
         sonicSetSpeed(stream, float(speed / (1 + std::clamp(over / (rate * 10.0), -0.005, 0.005))));
@@ -34,6 +35,19 @@ void TimeStretch::setRate(double speed) {
     if (speed == d->speed && d->in) return;
     d->speed = speed; d->in = d->out = 0;
     sonicSetSpeed(d->stream, float(speed));
+}
+void TimeStretch::setPitch(double semitones) {
+    semitones = std::isfinite(semitones) ? std::clamp(semitones,-6.0,6.0) : 0;
+    if (semitones == d->pitch) return;
+    // Instantiate Sonic even at 1x; speed remains independent of pitch.
+    if (!d->stream) {
+        d->stream = sonicCreateStream(d->rate,2);
+        if (!d->stream) throw std::bad_alloc();
+        d->bypass = false;
+        sonicSetSpeed(d->stream,float(d->speed));
+    }
+    d->pitch=semitones;
+    sonicSetPitch(d->stream,float(std::pow(2,semitones/12)));
 }
 size_t TimeStretch::read(MixCore::Ring &input, float *stereo, size_t frames, bool eof) {
     if (d->bypass) {

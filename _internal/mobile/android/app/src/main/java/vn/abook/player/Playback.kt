@@ -247,6 +247,7 @@ object Playback {
     }
 
     fun init(context: Context) {
+        AudioFx.init(context)
         appContext = context.applicationContext
         Store.init(appContext)
         Remote.init(appContext)
@@ -434,8 +435,8 @@ object Playback {
 
     fun applyVolume(fade: Float = fadeLevel) {
         fadeLevel = fade
-        player?.volume = fade * ReadAloud.gainFactor()
-        MusicBed.setSleepFade(fade) // nhạc nền nhỏ dần cùng giọng; trả 1 (huỷ / gia hạn / hết giờ) thì nhạc về mức cũ
+        player?.volume = fade * ReadAloud.gainFactor() * AudioFx.current.volume.toFloat()
+        MusicBed.setSleepFade(fade * AudioFx.current.volume.toFloat())
     }
 
     /** Hẹn giờ "hết chương": ExoPlayer dừng ở cuối mục. Chương đọc to gồm nhiều mục (mỗi đoạn một mục) nên không dùng được - ReadAloud tự dừng nạp ở cuối chương. */
@@ -769,7 +770,7 @@ object Playback {
 
     private fun applySpeed(exo: ExoPlayer, rate: Double) {
         knownSpeed = rate.toFloat() // trước khi đặt: ExoPlayer báo onPlaybackParametersChanged ngay trong lời gọi
-        exo.playbackParameters = PlaybackParameters(knownSpeed)
+        exo.playbackParameters = PlaybackParameters(knownSpeed, AudioFx.pitchRatio())
     }
 
     /**

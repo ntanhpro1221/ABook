@@ -111,6 +111,7 @@ public:
     void seek(double seconds) override;
     void setRate(double rate) override;
     void setVolume(double volume) override;
+    void setAudioFx(const AudioFx::Settings &fx) override;
     void preload() override;
     void setLoop(bool loop) override;
     void setPlayUntil(double seconds) override;

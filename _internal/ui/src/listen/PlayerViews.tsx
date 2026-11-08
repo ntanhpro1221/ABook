@@ -1,5 +1,7 @@
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AudioFxPanel } from './AudioFxPanel';
+import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
@@ -1505,6 +1507,10 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
 /** "…" của trình phát: mọi việc ít dùng (nhạc nền, giọng, âm lượng, gợi ý, phát trên máy khác...) nằm trong một bảng, hàng chính chỉ giữ việc
  *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: "Chọn giọng khác" ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
  *  khi dựng (voiceMenuWaiting). */
+function AudioFxMenu() {
+  const {volume,setVolume}=usePlayer();
+  return <MenuShell label="Âm thanh" caption="Âm thanh" icon={SlidersHorizontal} trigger="Chỉnh" look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel volume={volume} setVolume={setVolume}/></MenuShell>;
+}
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const openRef = useRef(open);
@@ -1646,6 +1652,7 @@ export function PlayerBar({
           <SpeedMenu />
           <VolumeControl />
           <MoreMenu scope="bar">
+            <AudioFxMenu/>
             <SleepMenu look="row" />
             <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>Chương trước</MenuRow>
             <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>Chương sau</MenuRow>
@@ -2063,6 +2070,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         {mobile ? <PlayerModeSwitch reading={reading} onSelect={onReading} /> : <span className="label-section text-fg-2">Đang nghe</span>}
         <div>
           <MoreMenu scope="screen">
+            <AudioFxMenu/>
             <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
             <MusicMenu look="row" />
             <VoiceMenu scope="screen" look="row" />
