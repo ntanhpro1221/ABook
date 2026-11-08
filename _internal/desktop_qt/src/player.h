@@ -365,7 +365,7 @@ private:
     int m_lastSleepMinutes = 30;
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
-    int m_safetyHours = 2;
+    int m_safetyHours = 0;
     bool m_autoRewind = true;
     int m_extendMinutes = 10;
     QVariantMap m_schedule;

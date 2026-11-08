@@ -252,6 +252,12 @@ Item {
         }
 
         // ---- Hẹn giờ ngủ ----
+        function test_unselectedAutomaticSleepIsOff() {
+            Api.preferences = {}
+            const page = make(sleepFactory)
+            compare(choiceOf(page, "Tự tắt").value, "0")
+            verify(!switchOf(page, "Lịch đêm").checked)
+        }
         function test_sleepChoicesWriteNumbers() {
             const page = make(sleepFactory)
             choiceOf(page, "Tự tắt").picked("3")

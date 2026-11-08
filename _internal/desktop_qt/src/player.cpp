@@ -373,7 +373,7 @@ void Player::configure(const QVariantMap &p) {
     const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
     m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
-    m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
+    m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 0).toInt(), 0, 3);
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
     if (extendMinutes != m_extendMinutes) {

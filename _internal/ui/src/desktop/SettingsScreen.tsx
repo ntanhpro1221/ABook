@@ -272,7 +272,7 @@ function SleepGroup() {
       <SettingsRow label="Tự tắt" hint="Máy rảnh đủ lâu mới nhỏ dần rồi dừng.">
         <ChoiceRow<"0" | "1" | "2" | "3">
           label="Tự tắt"
-          value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}
+          value={String(preferences?.safetyStopHours ?? 0) as "0" | "1" | "2" | "3"}
           onChange={(value) => update({ safetyStopHours: Number(value) })}
           options={[
             { value: "0", label: "Không" },
@@ -510,7 +510,7 @@ function useRows(groups: readonly SettingsGroupId[], info: AppInfo | undefined):
   const summary: Record<SettingsGroupId, string | undefined> = {
     voice: voiceName,
     listen: `${preferences?.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${preferences?.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}`,
-    sleep: sleepSummary(preferences?.sleepSchedule, preferences?.safetyStopHours ?? 2),
+    sleep: sleepSummary(preferences?.sleepSchedule, preferences?.safetyStopHours ?? 0),
     look: info?.remote ? "Phím tắt" : themeSummary(preferences?.theme, "Tự động"),
     devices: sync ? (sync.enabled ? `${sync.devices.length} thiết bị đã ghép` : "Đang tắt") : undefined,
     studio: info?.remote ? "Mẫu thiết lập" : info?.studio?.installed ? "Đã cài" : "Chưa cài",

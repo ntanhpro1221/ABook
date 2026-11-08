@@ -37,7 +37,7 @@ class ListenPrefsRangesTest {
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
         SleepTimer.shakeThresholdG = 2.2
-        SleepTimer.safetyStopHours = 2.0
+        SleepTimer.safetyStopHours = 0.0
         SleepTimer.schedule = null
         Motion.flipEnabled = false
     }

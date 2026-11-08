@@ -13,6 +13,20 @@ class SleepPolicyTest {
         }
     }
 
+    @Test fun defaultSettingsCannotArmWhileListeningWithThePhoneStillAndScreenOff() {
+        val p = asleep()
+        val now = 3 * hour + 1000
+        still(p, now)
+        val settings = vn.abook.player.ui.data.AppSettings.from(org.json.JSONObject())
+        assertFalse(p.allows(now, settings.safetyStopHours * hour, true, 0))
+        assertNull(settings.schedule)
+    }
+
+    @Test fun anInvalidNativeSafetySettingCannotEnableAutomaticSleep() {
+        val cleaned = ListenPrefs.clean(org.json.JSONObject().put("safetyStopHours", "bad"))
+        assertEquals(0, cleaned.getInt("safetyStopHours"))
+    }
+
     @Test fun usingAnotherAppWithTheScreenOnNeverArmsEvenAfterThreeHours() {
         val p = SleepPolicy()
         still(p, 3 * hour)

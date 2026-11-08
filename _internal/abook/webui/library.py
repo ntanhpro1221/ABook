@@ -45,7 +45,7 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "sleepFadeSeconds": 30,
     "sleepExtendMinutes": 10,
     # Lưới an toàn ngủ quên: phát liên tục chừng này giờ không ai chạm máy thì tự dừng (0 = tắt).
-    "safetyStopHours": 2,
+    "safetyStopHours": 0,
     # Lịch đêm tự hẹn giờ: {"from": "22:00", "to": "06:00", "minutes": 30} hoặc None.
     "sleepSchedule": None,
     # Máy tính xách tay rút sạc: tạm dừng tạo sách (supervisor đọc thẳng khoá này - power_source.PREFERENCE_KEY).
