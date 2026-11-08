@@ -120,6 +120,18 @@ def test_icon_table_flags_a_wrong_icon():
     assert tool.icon_violations(tool.Scan(), wrong)
 
 
+def test_native_http_headers_are_code_but_accessible_labels_still_count(tmp_path, monkeypatch):
+    tool = _tool()
+    monkeypatch.setattr(tool, "ROOT", tmp_path)
+    path = tmp_path / "Headers.kt"
+    path.write_text('connection.setRequestProperty("Accept", "application/json")\n'
+                    'connection.addRequestProperty("Content Language", "vi")\n'
+                    'Caption("Chọn nơi phát")\n', encoding="utf-8", newline="\n")
+    scan = tool.Scan()
+    tool.kt_scan_file(path, scan, {}, {})
+    assert {i.text for i in scan.items} == {"Chọn nơi phát"}
+
+
 # --- máy dò phải CẮN: dựng cây nguồn giả (web + Kotlin) trong thư mục tạm, trỏ máy dò vào đó, không đụng file thật -------------------------
 
 WEB_TSX = """export function Screen() {

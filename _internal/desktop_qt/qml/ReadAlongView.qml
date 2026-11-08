@@ -12,7 +12,34 @@ Item {
     id: root
     property bool following: true
     property bool tapped: false
-    Connections { target: Player; function onChapterChanged() { root.tapped = false } }
+    // Retain the paragraph at the viewport edge while its preceding text wraps.
+    // Playback following still owns placement when following is enabled.
+    property var viewportAnchor: null
+    property bool restoringViewport: false
+    readonly property bool settled: !restoringViewport
+    function rememberViewport() {
+        if (following || restoringViewport) return
+        const index = list.indexAt(list.width / 2, list.contentY + 1)
+        const item = index >= 0 ? list.itemAtIndex(index) : null
+        if (item) viewportAnchor = {index: index, offset: item.y - list.contentY}
+    }
+    function restoreViewport() {
+        const anchor = viewportAnchor
+        const item = anchor ? list.itemAtIndex(anchor.index) : null
+        if (item && !following) scrollTo(item.y - anchor.offset, false)
+        restoringViewport = false
+        rememberViewport()
+    }
+    onWidthChanged: {
+        if (!following && viewportAnchor) {
+            restoringViewport = true
+        }
+    }
+    Connections {
+        target: root.Window.window
+        function onFrameSwapped() { if (root.restoringViewport) Later.call(root, root.restoreViewport) }
+    }
+    Connections { target: Player; function onChapterChanged() { root.tapped = false; root.viewportAnchor = null } }
     Connections { target: ReadAlong; function onListened() { root.tapped = true } }
     Text {
         id: hint; objectName: "readerHint"
@@ -150,6 +177,7 @@ Item {
         onMovementStarted: root.manual()
         onContentYChanged: {
             if (!root.following) {
+                root.rememberViewport()
                 settle.restart()
                 root.refreshPlacement()
             }
