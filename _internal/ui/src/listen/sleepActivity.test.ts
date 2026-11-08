@@ -4,10 +4,6 @@ import { sleepExtended, sleepFrom, remoteSleepAfter, remoteSleepCommand } from "
 
 afterEach(() => vi.unstubAllGlobals());
 describe("automatic timer evidence", () => {
-  it("another app's input blocks the two-hour safety timer", () => {
-    expect(automaticSleepAllowed(1000, 3 * 3_600_000, 2 * 3_600_000)).toBe(false);
-    expect(automaticSleepAllowed(2 * 3_600_000, 2 * 3_600_000, 2 * 3_600_000)).toBe(true);
-  });
   it("night schedule waits for OS and player idleness", () => {
     expect(automaticSleepAllowed(119_999, 1_000_000, NIGHT_IDLE_MS)).toBe(false);
     expect(automaticSleepAllowed(1_000_000, 119_999, NIGHT_IDLE_MS)).toBe(false);
@@ -19,7 +15,7 @@ describe("automatic timer evidence", () => {
   it.each(["media", "bluetooth", "notification", "widget", "volume", "seek", "chapter", "pointer", "remote"])("%s input restarts the idle interval", () => {
     expect(automaticSleepAllowed(10_000_000, 0, NIGHT_IDLE_MS)).toBe(false);
   });
-  it("disabled safety and clock rollback cannot arm", () => {
+  it("missing idle interval and clock rollback cannot arm a night schedule", () => {
     expect(automaticSleepAllowed(10_000_000, 10_000_000, 0)).toBe(false);
     expect(automaticSleepAllowed(10_000_000, -1, NIGHT_IDLE_MS)).toBe(false);
   });

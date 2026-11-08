@@ -25,7 +25,7 @@ object SleepText {
     /** Đầu lưới mức hẹn: đang hẹn thì "Đặt lại", chưa thì "Dừng phát sau". */
     fun gridHeading(active: Boolean): String = if (active) "Đặt lại" else "Dừng phát sau"
 
-    /** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn (`picked` = 0: không ai chọn, như lưới an toàn ngủ quên), hết chương thì "Mỗi lần nghe thêm" (`fallback`). MỘT hàm cho [vn.abook.player.SleepTimer.extend], nút thông báo và nhãn nút. Web: sleep.ts `sleepExtendMinutes`. */
+    /** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn, hết chương thì "Mỗi lần nghe thêm" (`fallback`). MỘT hàm cho [vn.abook.player.SleepTimer.extend], nút thông báo và nhãn nút. Web: sleep.ts `sleepExtendMinutes`. */
     fun extendMinutes(minutesMode: Boolean, picked: Int, fallback: Int): Int = if (minutesMode && picked > 0) picked else fallback
 
     fun extendMinutes(sleep: PlayerSleep, options: SleepOptions): Int = extendMinutes(sleep.kind == SleepKind.Minutes, sleep.minutes, options.extendMinutes)

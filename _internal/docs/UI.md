@@ -29,8 +29,8 @@ Nghe (máy tính + Android):
 - Thư viện gom các tập cùng bộ, thẻ "Đang nghe dở" nói chương + giờ + lần nghe cuối, thẻ "Tối qua" buổi sáng, sách
   đang làm mà chưa có chương nào hiện dạng "Đang làm · chương đầu sau khoảng X"; tìm không dấu.
 - Trình phát: hẹn giờ ngủ chỉ đếm khi đang phát, nhỏ dần theo dB, nghe thêm bằng phím/chuột (máy tính) hoặc lắc máy
-  (điện thoại); lịch đêm tự hẹn giờ; lưới an toàn: phát liên tục N giờ không ai chạm máy thì tự dừng và ghi nhật ký
-  đêm; tự lùi theo độ dài lần dừng (0/10/30 giây); "Quay lại chỗ vừa nghe" sau cú nhảy xa; hỏi khi thiết bị khác đã
+  (điện thoại); lịch đêm chỉ hẹn khi người nghe tự bật, mặc định tắt. Không tự hẹn hay tự dừng vì lâu không tương tác;
+  tự lùi theo độ dài lần dừng (0/10/30 giây); "Quay lại chỗ vừa nghe" sau cú nhảy xa; hỏi khi thiết bị khác đã
   nghe xa hơn; tiến độ cả cuốn; nghe xong một tập thì mời tập kế.
 - Chế độ đọc (`/book/:id/read/:chapterId`): đọc cả chương chưa thu âm, nhớ chỗ đọc, "Nghe từ đây" đúng câu.
 - Phím tắt: Space/←/→/Shift/M/[ ]/Esc.
@@ -45,7 +45,7 @@ Studio (máy tính):
 - "Xuất M4B cho app sách nói" (`webui/export.export_m4b`, việc nền `POST/GET /api/books/<id>/m4b-job`): giải mã từng chương
   ra PCM đổ liên tục vào một bộ mã hoá AAC (64 kb/s mono, 96 kb/s stereo), đếm mẫu để mốc chương đúng từng mẫu, rồi chép luồng
   sang `.m4b` kèm mục lục chương, bìa và tag như bản MP3. Chỉ chương đã xong.
-- Cài đặt: điện thoại (ghép bằng mã 6 số, huỷ mã sau 5 lần sai), hẹn giờ ngủ, lịch đêm, lưới an toàn.
+- Cài đặt: điện thoại (ghép bằng mã 6 số, huỷ mã sau 5 lần sai), hẹn giờ ngủ, lịch đêm do người nghe bật.
 
 ## Máy tính: web trong Qt WebEngine
 

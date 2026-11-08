@@ -37,6 +37,14 @@ function sections(html: string): Record<string, string> {
 }
 
 describe("Cài đặt", () => {
+  it("hẹn ngủ chỉ có các lựa chọn người nghe yêu cầu", async () => {
+    const { SettingsScreen } = await import("@/desktop/SettingsScreen");
+    const html = wrap(<SettingsAt group="sleep" screen={<SettingsScreen />} />);
+    expect(html).toContain("Lịch đêm");
+    expect(html).not.toContain("Tự tắt");
+    expect(html).not.toContain("Máy rảnh đủ lâu mới nhỏ dần rồi dừng.");
+    expect(html).not.toContain("safetyStopHours");
+  });
   it("máy tính: Nghe có Nhạc nền với Nhạc của tôi; Nâng cao có Giới thiệu và nút thành phần bên thứ ba", async () => {
     const { SettingsScreen } = await import("@/desktop/SettingsScreen");
     const listen = wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />);

@@ -25,12 +25,6 @@ export function sleepFrom(request: SleepRequest, playing: boolean, now: number):
   return { kind: "minutes", minutes: request.minutes, leftMs: request.minutes * 60_000, since: playing ? now : null };
 }
 
-/** Hẹn giờ của lưới an toàn (không ai chạm máy suốt N giờ): đếm 1 phút rồi tắt, nhưng KHÔNG ai chọn số phút nên `minutes: 0` - "Hẹn lại" về mức
- *  "Mỗi lần nghe thêm" ([sleepExtendMinutes]) chứ không về 1 phút. Điện thoại: SleepTimer.setMinutes(1, "safety"). */
-export function sleepSafetyNet(playing: boolean, now: number): SleepMode {
-  return { kind: "minutes", minutes: 0, leftMs: 60_000, since: playing ? now : null };
-}
-
 export function sleepLeftMs(mode: SleepMode, now: number): number | null {
   if (mode.kind !== "minutes") return null;
   return Math.max(0, mode.since === null ? mode.leftMs : mode.leftMs - Math.max(0, now - mode.since));
@@ -47,7 +41,7 @@ export function sleepResumed(mode: SleepMode, now: number): SleepMode {
   return { ...mode, since: now };
 }
 
-/** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn (`minutes: 0` = không ai chọn, như lưới an toàn), hết chương thì `fallback` ("Mỗi lần nghe thêm" của Cài đặt). MỘT hàm cho nhãn nút và
+/** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn, hết chương thì `fallback` ("Mỗi lần nghe thêm" của Cài đặt). MỘT hàm cho nhãn nút và
  *  [sleepExtended]. Điện thoại: SleepText.extendMinutes (Kotlin). */
 export function sleepExtendMinutes(mode: SleepMode, fallback: number): number {
   return mode.kind === "minutes" && mode.minutes > 0 ? mode.minutes : fallback;
@@ -154,7 +148,6 @@ export interface SleepSchedule {
 // clean_sleep_schedule) - file tuỳ chọn sửa tay / bản app khác ghi không được lọt vào trình phát (soát a100 V2). Android dùng lại ở settings.ts.
 export const FADE_CHOICES = [10, 30, 60];
 export const EXTEND_CHOICES = [5, 10, 15];
-export const SAFETY_STOP_CHOICES = [0, 1, 2, 3];
 export const SCHEDULE_MINUTES = [15, 30, 45, 60];
 const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 

@@ -21,7 +21,7 @@ namespace {
 constexpr int kNoticeMs = 8000;
 constexpr int kSessionsKept = 4;
 constexpr int kHiddenSaveEveryMs = 30'000;
-constexpr double kSafetyWarnMs = 30'000;
+constexpr double kSleepWarnMs = 30'000;
 constexpr double kListenedMinimum = 20; // phiên nghe dưới 20 giây thật thì bỏ
 
 const QString kPlayError = QStringLiteral("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
@@ -347,7 +347,7 @@ void Player::updateTicker() {
     if (!m_uiActive && m_sleep.kind == Sleep::Off) {
         const auto until = [&](qint64 deadline) { return int(std::clamp<qint64>(deadline - m_now(), 1, kHiddenSaveEveryMs)); };
         if (m_loaded && m_playing) {
-            if (m_schedule.size() || m_safetyHours > 0) interval = std::min(interval, 1000);
+            if (!m_schedule.isEmpty()) interval = std::min(interval, 1000);
             if (m_now() < m_lastAttempt + kHiddenSaveEveryMs)
                 interval = std::min(interval, until(m_lastAttempt + kHiddenSaveEveryMs));
         }
@@ -373,7 +373,6 @@ void Player::configure(const QVariantMap &p) {
     const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
     m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
-    m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
     if (extendMinutes != m_extendMinutes) {
@@ -1022,10 +1021,10 @@ void Player::tickSleep(qint64 now) {
         return;
     }
     if (m_sleep.kind == Sleep::Minutes) {
-        if (left <= kSafetyWarnMs && !m_sleepWarned) {
+        if (left <= kSleepWarnMs && !m_sleepWarned) {
             m_sleepWarned = true;
             emit sleepWarning(); // 30 giây trước khi tắt: nốt trầm của lớp tiếng chạm (Feedback), tiếng duy nhất kêu cả khi đang phát
-        } else if (left > kSafetyWarnMs)
+        } else if (left > kSleepWarnMs)
             m_sleepWarned = false;
     }
     const double fadeMs = m_fadeSeconds * 1000.0;
@@ -1298,15 +1297,14 @@ void Player::tick() {
     } else if (m_purpose == QLatin1String("listen")) {
         const QString night = scheduleWindow();
         const bool scheduled = !night.isEmpty() && night != m_scheduleOffFor && automaticSleepAllowed(idle, now - m_lastActivity, 120'000);
-        const bool safety = automaticSleepAllowed(idle, now - m_lastActivity, qint64(m_safetyHours) * 3'600'000);
-        if (scheduled || safety) {
+        if (scheduled) {
             endFade();
             resetSleepMark();
-            const int minutes = scheduled ? m_schedule.value(QStringLiteral("minutes")).toInt() : 1;
-            applySleepState(Sleep::Minutes, scheduled ? minutes : 0, minutes * 60'000.0);
-            m_automaticSleep = scheduled ? QStringLiteral("schedule") : QStringLiteral("safety");
+            const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
+            applySleepState(Sleep::Minutes, minutes, minutes * 60'000.0);
+            m_automaticSleep = QStringLiteral("schedule");
             m_automaticLastInput = now - idle;
-            setNotice(QString::fromUtf8(scheduled ? AutoSleepText::Schedule : AutoSleepText::Safety),
+            setNotice(QString::fromUtf8(AutoSleepText::Schedule),
                       QString::fromUtf8(AutoSleepText::Continue), QStringLiteral("stay"));
             m_noticeTimer.stop(); // Visible until cancelled or finished, through the existing animated notice.
         }

@@ -269,19 +269,6 @@ function SleepGroup() {
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
     <SettingsBlock>
-      <SettingsRow label="Tự tắt" hint="Máy rảnh đủ lâu mới nhỏ dần rồi dừng.">
-        <ChoiceRow<"0" | "1" | "2" | "3">
-          label="Tự tắt"
-          value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}
-          onChange={(value) => update({ safetyStopHours: Number(value) })}
-          options={[
-            { value: "0", label: "Không" },
-            { value: "1", label: "1 giờ" },
-            { value: "2", label: "2 giờ" },
-            { value: "3", label: "3 giờ" },
-          ]}
-        />
-      </SettingsRow>
       <SleepSchedule />
       <SettingsRow label="Mỗi lần nghe thêm" hint={`Lúc đang nhỏ dần: ${EXTEND_GESTURE}.`}>
         <ChoiceRow<"5" | "10" | "15">
@@ -510,7 +497,7 @@ function useRows(groups: readonly SettingsGroupId[], info: AppInfo | undefined):
   const summary: Record<SettingsGroupId, string | undefined> = {
     voice: voiceName,
     listen: `${preferences?.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${preferences?.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}`,
-    sleep: sleepSummary(preferences?.sleepSchedule, preferences?.safetyStopHours ?? 2),
+    sleep: sleepSummary(preferences?.sleepSchedule),
     look: info?.remote ? "Phím tắt" : themeSummary(preferences?.theme, "Tự động"),
     devices: sync ? (sync.enabled ? `${sync.devices.length} thiết bị đã ghép` : "Đang tắt") : undefined,
     studio: info?.remote ? "Mẫu thiết lập" : info?.studio?.installed ? "Đã cài" : "Chưa cài",

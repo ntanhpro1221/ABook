@@ -62,20 +62,6 @@ object Bedtime {
         current != null && current.optString("bookId") == bookId && current.optString("recordId") == recordId &&
             now - current.optDouble("lastAt", 0.0) < 90 * 60
 
-    /** Mốc "còn thức" đã biết từ trước (lần chạm máy cuối cùng trước khi lưới an toàn bật). */
-    fun touchAt(atMs: Long, chapterId: Int?, seconds: Double) {
-        val current = session ?: return
-        val chapter = Playback.chapters.firstOrNull { it.id == chapterId }
-        val position = JSONObject()
-            .put("chapterId", chapterId ?: JSONObject.NULL)
-            .put("chapterTitle", chapter?.title ?: "")
-            .put("seconds", seconds)
-        current.getJSONArray("events").put(
-            JSONObject().put("type", "touch").put("action", "last-activity").put("at", atMs / 1000.0).put("position", position),
-        )
-        save()
-    }
-
     fun interaction(kind: String) {
         if (session == null) return
         add("touch", JSONObject().put("action", kind))

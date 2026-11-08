@@ -46,7 +46,7 @@ Item {
             DesktopApi.reset()
             Platform.reset()
             Api.bind(DesktopApi, Theme)
-            Api.preferences = {theme: "system", autoRewind: true, autoMusic: true, safetyStopHours: 2, sleepExtendMinutes: 10, sleepFadeSeconds: 30,
+            Api.preferences = {theme: "system", autoRewind: true, autoMusic: true, sleepExtendMinutes: 10, sleepFadeSeconds: 30,
                 sleepSchedule: null, readingSurface: "auto", touchSounds: true, letterShortcuts: true, libraryRoot: "C:\\Users\\An\\Audiobooks"}
             Api.info = {version: "0.4.147", dialogs: true}
             Api.loaded = true
@@ -252,19 +252,24 @@ Item {
         }
 
         // ---- Hẹn giờ ngủ ----
+        function test_unselectedAutomaticSleepIsOff() {
+            Api.preferences = {}
+            const page = make(sleepFactory)
+            verify(!hasText(page, "Tự tắt"))
+            verify(!hasText(page, "Máy rảnh đủ lâu mới nhỏ dần rồi dừng."))
+            verify(!switchOf(page, "Lịch đêm").checked)
+        }
         function test_sleepChoicesWriteNumbers() {
             const page = make(sleepFactory)
-            choiceOf(page, "Tự tắt").picked("3")
-            compare(last("PUT", "/api/preferences").body.safetyStopHours, 3)
             choiceOf(page, "Số phút nghe thêm").picked("15")
             compare(last("PUT", "/api/preferences").body.sleepExtendMinutes, 15)
             choiceOf(page, "Độ dài nhỏ dần").picked("60")
             compare(last("PUT", "/api/preferences").body.sleepFadeSeconds, 60)
             verify(hasText(page, "Lúc đang nhỏ dần: chạm phím hoặc chuột."))
-            verify(hasText(page, "Máy rảnh đủ lâu mới nhỏ dần rồi dừng."))
+            verify(!hasText(page, "Tự tắt"))
             reply("/api/preferences", 500, {error: "Đĩa đầy"})
-            choiceOf(page, "Tự tắt").picked("0")
-            compare(Api.preferences.safetyStopHours, 3)
+            choiceOf(page, "Độ dài nhỏ dần").picked("10")
+            compare(Api.preferences.sleepFadeSeconds, 60)
             compare(Api.notice, "Chưa lưu được cài đặt\nĐĩa đầy")
         }
         function test_nightSchedule() {

@@ -201,14 +201,6 @@ object Playback {
     private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
-    /** Lần cuối người nghe chạm vào trình phát (nút, thông báo, widget) - cho lưới an toàn ngủ quên. */
-    var lastInteractionMs = System.currentTimeMillis()
-        private set
-    var lastInteractionChapter: Int? = null
-        private set
-    var lastInteractionSeconds = 0.0
-        private set
-
     // Phiên nghe: mở lúc bắt đầu phát, đóng lúc dừng; dưới 20 giây nghe thật thì bỏ (bấm phát rồi dừng ngay).
     private var sessionStartMs = 0L
     private var sessionListenedMs = 0L
@@ -252,9 +244,6 @@ object Playback {
 
     fun touched() {
         SleepTimer.onAwake()
-        lastInteractionMs = System.currentTimeMillis()
-        lastInteractionChapter = currentChapter?.id
-        lastInteractionSeconds = positionSeconds
     }
 
     fun init(context: Context) {
@@ -864,7 +853,7 @@ object Playback {
                     saveNow()
                     pushHeld(force = false)
                 }
-                if (beats % 2 == 0) SleepTimer.checkAutomatic()
+                if (beats % 2 == 0) SleepTimer.checkSchedule()
                 Bedtime.checkpoint()
                 noteStall(exo.isPlaying)
                 syncMusic(true)
