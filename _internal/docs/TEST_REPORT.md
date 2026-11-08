@@ -1,5 +1,20 @@
 # Test report
 
+## 08-11-2026 — widthbook: retry settled Qt width measurements
+
+- Apply the `80cde88c3` settings pattern throughout `tests/width/tst_width.qml`: retry post-open row layout, painted text bounds, cover geometry and page centering with fresh measurements inside each callback. Chapter delegates are re-enumerated after the asynchronous model count arrives. Keep every numeric bound/tolerance, the four-complete-row requirement and the deliberate intermediate/reduced-motion checks.
+- Run the complete `build/width_tests/WidthTests.exe -o <log>,txt` suite three times in fresh processes, with offscreen QPA and hidden processes. The QML source SHA-256 is unchanged across all three runs.
+
+| Run | Passed | Failed | Skipped | QtTest time |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 1529 | 0 | 1 | 890127 ms |
+| 2 | 1529 | 0 | 1 | 841023 ms |
+| 3 | 1528 | 1 | 1 | 913140 ms |
+
+- All 46 `Width` checks pass in each run, including `Width::test_book(rail1024)`. The existing opt-in glyph negative control accounts for the skip. All logs have zero missing glyphs, QML type errors and displayed value leaks; the project's `check_test_results.py` passes runs 1/2 and correctly rejects run 3.
+- Run 3 fails in unchanged `Studio4::test_longTextWrapsAtBothWidths()`, at the shared `VisualReady.js:37` settled-frame deadline, before the `Width` test case runs. An isolated offscreen recheck of that unchanged Studio4 test passes (3 passed including setup/cleanup, 0 failed, exit 0); this does not replace the failed full-suite result. No shared-helper change is included.
+- Raw logs, per-run glyph audits, commands, source hashes and the isolated recheck are in task `scratchpad/codex/widthbook/` (`width-run-1.txt` through `width-run-3.txt`, `results.json`, `studio4-recheck.txt`). Test/documentation changes only; no commit.
+
 ## 08-11-2026 — castaudit2: restore the owner's default A+
 
 - Default A+ aligns an automatic unrecorded book narrator to the first-person teller's known gender, avoiding held presets and respecting narrator choices. Own first-person thoughts use the narration profile with unchanged speaker/character/kind; other thoughts retain their voice. Chapter exceptions compare against the aligned base; B remains explicit.
