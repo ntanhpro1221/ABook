@@ -28,17 +28,21 @@ export function ActionMenu({ trigger, children, title }: { trigger: ReactNode; c
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hostRef = useRef<HTMLElement | null>(null);
   const keyboard = useRef(false);
+  // Đã có lần nhấn xuống TRONG menu từ lúc mở chưa. Menu mở ngay lúc nhấn nút mở (Radix), nên khi nhả tay chậm (máy chậm, nhấn giữ lâu) Sheet đã trượt lên
+  // phủ đúng chỗ ngón tay: lần nhả ấy rơi vào mục đầu và Radix coi là chọn mục. Nhả không có nhấn trong menu đi trước thì không được chọn gì.
+  const pressed = useRef(false);
   const attach = useCallback((element: HTMLElement | null) => { hostRef.current = element; setHost(element); }, []);
   const go = useCallback((next: string | null) => { setDirection(next === null ? "back" : "forward"); setStep(next); }, []);
   // Mở lại thì về danh sách chính; đóng thì giữ nguyên để Sheet đang trượt xuống không đổi nội dung giữa chừng.
-  const change = (next: boolean) => { if (next) { setStep(null); setDirection(null); } setOpen(next); };
+  const change = (next: boolean) => { if (next) { setStep(null); setDirection(null); pressed.current = false; } setOpen(next); };
   // Back của điện thoại (và Esc) về danh sách chính trước, chưa đóng cả Sheet: lớp nằm TRONG menu nên đứng trên nó (backLayers.dismissTopLayer).
   useBackLayer(phone && step !== null, () => go(null), hostRef);
   const escape = (event: KeyboardEvent) => { if (phone && step !== null) { event.preventDefault(); go(null); } };
   const content = <DropdownMenu.Content aria-label={title} align="end" sideOffset={6} collisionPadding={12}
     className="book-action-menu z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 max-w-[min(22rem,calc(100vw-24px))] overflow-y-auto overscroll-contain rounded-sheet bg-panel p-3 shadow-float"
     onEscapeKeyDown={escape}
-    onPointerDownCapture={() => { keyboard.current = false; }}
+    onPointerDownCapture={() => { keyboard.current = false; pressed.current = true; }}
+    onPointerUpCapture={event => { if (!pressed.current) event.stopPropagation(); }}
     onKeyDownCapture={() => { keyboard.current = true; }}
     onCloseAutoFocus={phone ? event => event.preventDefault() : undefined}>
     {phone
