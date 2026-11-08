@@ -8,6 +8,7 @@ public:
     explicit TimeStretch(int rate);
     ~TimeStretch();
     void setRate(double speed);
+    void setPitch(double semitones);
     size_t read(MixCore::Ring &input, float *stereo, size_t frames, bool eof);
     bool drained() const;
 private:

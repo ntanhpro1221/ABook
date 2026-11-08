@@ -16,6 +16,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.session.CommandButton
@@ -88,7 +91,12 @@ class PlaybackService : MediaLibraryService() {
         Playback.init(this)
         ListenerActivity.start(this)
         Playback.addListener(sleepButtons)
-        val player = ExoPlayer.Builder(this)
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(context: android.content.Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink =
+                DefaultAudioSink.Builder(context).setEnableFloatOutput(false)
+                    .setEnableAudioOutputPlaybackParameters(false).setAudioProcessorChain(AudioFxChain()).build()
+        }
+        val player = ExoPlayer.Builder(this, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(),
                 true,
@@ -121,7 +129,10 @@ class PlaybackService : MediaLibraryService() {
                 Playback.onWantsChanged()
             }
 
-            override fun onPlaybackParametersChanged(playbackParameters: androidx.media3.common.PlaybackParameters) = Playback.onRateChanged(playbackParameters.speed)
+            override fun onPlaybackParametersChanged(playbackParameters: androidx.media3.common.PlaybackParameters) {
+                if (playbackParameters.pitch != AudioFx.pitchRatio()) player.playbackParameters = androidx.media3.common.PlaybackParameters(playbackParameters.speed, AudioFx.pitchRatio())
+                Playback.onRateChanged(playbackParameters.speed)
+            }
 
             override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) = Playback.touched()
 
@@ -139,6 +150,8 @@ class PlaybackService : MediaLibraryService() {
             }
         })
         Playback.player = player
+        player.playbackParameters = androidx.media3.common.PlaybackParameters(1f, AudioFx.pitchRatio())
+        Playback.applyVolume()
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

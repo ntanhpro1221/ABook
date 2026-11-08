@@ -919,12 +919,40 @@ void Player::stepRate(int direction) {
 
 void Player::setVolume(double volume) {
     noteInteraction();
+    if (!std::isfinite(volume)) return;
     volume = std::clamp(volume, 0.0, 1.0);
     if (volume == m_volume)
         return;
     m_volume = volume;
     m_out->setVolume(outputVolume());
     emit volumeChanged();
+}
+
+QVariantMap Player::audioFx() const {
+    QVariantList bands;
+    for (double db:m_audioFx.bands) bands.append(db);
+    return {{QStringLiteral("enabled"),m_audioFx.enabled},{QStringLiteral("preset"),m_audioFx.preset},{QStringLiteral("bands"),bands},
+        {QStringLiteral("bass"),m_audioFx.bass},{QStringLiteral("boost"),m_audioFx.boost},{QStringLiteral("pitch"),m_audioFx.pitch}};
+}
+void Player::setAudioFx(const QVariantMap &value) {
+    auto next=m_audioFx;
+    auto number=[](const QVariant &v,double fallback,double lo,double hi) {
+        bool ok=false; const double n=v.toDouble(&ok); return ok && std::isfinite(n)?std::clamp(n,lo,hi):fallback;
+    };
+    if (value.contains(QStringLiteral("enabled"))) next.enabled=value[QStringLiteral("enabled")].toBool();
+    if (value.contains(QStringLiteral("preset"))) next.preset=int(number(value[QStringLiteral("preset")],0,-1,4));
+    if (value.contains(QStringLiteral("bands"))) {
+        const auto bands=value[QStringLiteral("bands")].toList();
+        for (size_t i=0;i<5;++i) next.bands[i]=number(bands.value(int(i)),0,-12,12);
+    } else if (value.contains(QStringLiteral("preset")) && next.preset>=0) { next.bands=AudioFx::presets[size_t(next.preset)]; next.bass=0; }
+    if (value.contains(QStringLiteral("bass"))) next.bass=number(value[QStringLiteral("bass")],0,0,12);
+    if (value.contains(QStringLiteral("boost"))) next.boost=number(value[QStringLiteral("boost")],0,0,12);
+    if (value.contains(QStringLiteral("pitch"))) next.pitch=number(value[QStringLiteral("pitch")],0,-6,6);
+    if (next==m_audioFx) return;
+    m_audioFx=next;
+    m_out->setAudioFx(next);
+    noteInteraction();
+    emit audioFxChanged();
 }
 
 void Player::toggleMute() {

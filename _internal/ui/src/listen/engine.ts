@@ -11,6 +11,7 @@ import type { SpeechTrack } from "./readAloud";
 import type { MusicCredit } from "./musicBed";
 import type { SleepMode, SleepRequest } from "./sleep";
 import type { ReadingAnchor } from "./readingAnchor";
+import { attachAudioFx } from './audioFx';
 
 export interface TrackInfo {
   url: string;
@@ -131,6 +132,8 @@ export class WebAudioEngine implements AudioEngine {
 
   constructor() {
     this.audio.preload = "auto";
+    this.audio.preservesPitch = true;
+    attachAudioFx(this.audio);
     // ?mute=1: kiểm thử tự động không được phát tiếng ra loa của người dùng.
     this.audio.muted = new URLSearchParams(window.location.search).get("mute") === "1";
     this.audio.addEventListener("loadedmetadata", () => {

@@ -1,5 +1,14 @@
 # Test report
 
+## 08-11-2026 — audiofx: playback EQ, volume/boost and independent pitch
+
+- Android Compose, Qt/WASAPI and web share `… → Âm thanh`, five bands/presets, bass shelf, app volume, 0–12 dB boost with linked peak limiter, and ±6 semitone pitch. Playback settings are device-wide; recording/quality files remain unchanged.
+- Kotlin JVM full run: 3,381 passed, 8 skipped, 0 failed (3,389 discovered). Vitest full run: 320 files / 2,848 passed, 0 failed. Related pytest with `-rf`: 56 passed, 0 failed.
+- Qt: AudioFxTests 12, PlayerTests 47, PlayerNativeTests 18, MixTests 91, VoiceTests 50, AudioFxUi/PlayerParity 7: 225 passed, 0 failed. UI tests and screenshots use offscreen rendering; the full WidthTests suite was not rerun.
+- Each platform's 75 EQ measurements has worst error <0.249 dB. Android/Qt pitch checks cover ±3/±6 semitones at 1×/1.5×; web covers ±3/±6 with a real OfflineAudioContext/AudioWorklet. All stay within 3% F0 and 0.5% duration (web has exactly the requested frame count). Limiter sample peaks stay ≤−1 dBFS; these are not true-peak or perceptual listening results.
+- Web gallery: light/dark, 0 findings/errors including 48 geometry trials. Android headless emulator captures light/dark and measures DSP CPU; no physical phone. Detailed logs and screenshots: task `scratchpad/codex/audiofx/`, report.md/result.md.
+- Quality hash before/after: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc` (unchanged). No commit or push.
+
 ## 08-11-2026 — widthbook: retry settled Qt width measurements
 
 - Apply the `80cde88c3` settings pattern throughout `tests/width/tst_width.qml`: retry post-open row layout, painted text bounds, cover geometry and page centering with fresh measurements inside each callback. Chapter delegates are re-enumerated after the asynchronous model count arrives. Keep every numeric bound/tolerance, the four-complete-row requirement and the deliberate intermediate/reduced-motion checks.

@@ -119,7 +119,7 @@ Item {
         if (!open) return
         capture()
         open = false
-        speed.close(); sleep.close(); chapters.close(); music.close(); more.close(); shortcuts.close(); reader.close(); recommendations.close(); suggestions.close(); output.close(); voice.close()
+        speed.close(); sleep.close(); chapters.close(); music.close(); more.close(); audioFx.close(); shortcuts.close(); reader.close(); recommendations.close(); suggestions.close(); output.close(); voice.close()
         Nav.closedLayer(root)
     }
     onOpenChanged: {
@@ -600,7 +600,7 @@ Item {
                     return `Đã nghe ${Math.round(heard / total * 100) + "%"} ${scope}\u00a0·\u00a0${remaining}`
                 }
             }
-            VolumeControl { width: parent.width }
+            MenuRow { objectName: "nowAudioFxButton"; width: parent.width; text: "Âm thanh"; value: "Chỉnh"; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
             MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
             MenuRow { objectName: "nowVoice"; width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
             MenuRow { objectName: "nowOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
@@ -612,5 +612,6 @@ Item {
         }
     }
     OutputPopover { id: output; anchorItem: moreButton }
+    Popover { id: audioFx; objectName: "nowAudioFx"; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel {} }
     PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
 }
