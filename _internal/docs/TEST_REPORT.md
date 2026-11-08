@@ -1460,3 +1460,10 @@ CPU giữ Nhật 12/34, Anh 27/37 và 26/26 cặp tiếng kêu không tụt; hai
 Kiểm cuối: Python đường đọc 1.093 pass; hai test khởi động dùng Event chờ callback thật thay thời gian ngủ cố định. Toàn bộ 10,754 pass, 15 skip, 2 xfail, 0 FAILED/error; đủ 10,771 node qua bốn partition rời nhau. Lượt đầu lộ một race trong test; giữ log đầu và kiểm lại nguyên hai partition chứa nó. Kotlin :app:testDebugUnitTest 3.386 pass/4 skip, 0 failure/error; compileall và whitespace đạt.
 
 Quality đọc trực tiếp 59 mục, hash 00621d2fe93b76496889e6aea804c9944699e586f0011e1707a908a40b3c5a5b. HEAD a695c934e giữ nguyên; thay đổi chỉ ở nhánh dev, chưa commit.
+
+
+### 08-11 dev/jppause: ranh giới âm trong tên Nhật
+
+Đo CPU 10 cách × 40 câu × hai giọng mặc định, đủ 800 clip/CTC/ASR/UTMOS. Luật chung nối phoneme mỗi từ và hạ các trọng âm sau thành nhẹ, cùng JSON Python/Kotlin; namespace jp-fallback4. Khoảng yên trong từ ≥120 ms 12/160 → 4/160; ≥200 ms 7 → 1. Còn một khoảng 400 ms, chưa bảo đảm mọi tên hết ngắt. Sửa được 10 lần đọc từ, có 2 cảnh báo mới. ASR bộ cố định Nhật 12/34 → 13/34, Anh 27/37; Nhật có 4 mục mới đúng/3 mục mới sai.
+
+Pytest cuối -rf: 10783 passed, 15 skipped, 2 xfailed, 0 failure/error; bộ liên quan 509 passed. Kotlin ReadAloud/VieNeu 558 passed, 5 skipped, 0 failure/error. Phonemizer Studio/Nghe ngay 40/40 cùng đầu vào mô hình; tokenizer native/portable 400/400 cùng ID. Hash đọc trực tiếp 60 mục: cc4adbb2075b5935e0d500989fb8ea11f5b9cbe3ebf6ab152ba459e6581cb097. Không commit; chỉ nhánh dev. Báo cáo chi tiết, 20 cặp MP3, trang nghe HTML và từng phép đo ở thư mục việc jppause ngoài repo; không đưa chữ truyện vào cây.

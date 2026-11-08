@@ -104,7 +104,7 @@ def test_long_vowels_remain_auto_without_name_lists():
         assert metadata(word)["provenance"] == "auto"
         assert set(metadata(word)) == {"provenance", "reading_namespace", "source_spelling", "long_vowels"}
     assert set(POLICY["fixed"]) == {"onigiri"}
-    assert set(POLICY) <= {"version", "namespace", "provenance", "description", "choices", "long_vowels", "long_o", "vowels", "internal_vowels", "vowel", "simple", "allowed", "onsets", "geminate_coda", "fixed", "suffixes", "honorifics", "common", "emit", "vowel_pairs", "routing"}
+    assert set(POLICY) <= {"version", "namespace", "provenance", "description", "delivery", "choices", "long_vowels", "long_o", "vowels", "internal_vowels", "vowel", "simple", "allowed", "onsets", "geminate_coda", "fixed", "suffixes", "honorifics", "common", "emit", "vowel_pairs", "routing"}
 
 
 @pytest.mark.parametrize("core,count", [("Tanaka", 3), ("Satou", 2), ("Yuuki", 2), ("Shinji", 2), ("Ryu", 1), ("Sappa", 2), ("English", 0), ("Nnka", 0), ("Kkaka", 0)])

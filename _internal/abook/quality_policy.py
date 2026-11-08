@@ -91,6 +91,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "readaloud/japanese_policy.json",
     "readaloud/japanese_lexicon.txt.gz",
     "readaloud/abbreviations.py",
+    "readaloud/japanese_delivery.py",
     "readaloud/readings.py",
     "readaloud/shouts.py",
     "readaloud/sound_policy.json",

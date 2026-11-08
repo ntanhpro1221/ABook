@@ -615,12 +615,17 @@ def keep_vieneu_final_mark() -> None:
         return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
-        out = original_phonemize(text, punc_norm)
-        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
-            written = original_phonemize(text, False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
-            if written.endswith(("?", "!")):
-                out = out[:-1] + written[-1]
-        return out
+        from .readaloud.japanese_delivery import phonemes
+
+        def plain(value: str, final: bool) -> str:
+            out = original_phonemize(value, final)
+            if final and out.endswith(".") and ("?" in value or "!" in value):
+                written = original_phonemize(value, False).rstrip()
+                if written.endswith(("?", "!")):
+                    out = out[:-1] + written[-1]
+            return out
+
+        return phonemes(text, punc_norm, plain)
 
     phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
     phonemize_text._abook_keeps_final_mark = True
@@ -684,9 +689,13 @@ class VieNeuEngine(EngineAdapter):
             else vieneu_sampling_for_segment(row, self.settings)
         )
         try:
+            from .readaloud.japanese_delivery import mark_anchors
+
+            materialized = _row_value(row, "_materialized_spoken", None)
+            inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
             return np.asarray(
                 self.tts.infer(
-                    str(row["text"]),
+                    inference_text,
                     voice=voice,
                     style=style,
                     **effective_sampling,

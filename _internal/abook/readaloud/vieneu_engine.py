@@ -338,6 +338,18 @@ def keep_lone_o(chunk: str, normalised: str) -> str:
 
 
 def phonemize(sentences: Sequence[str]) -> str:
+    from . import japanese_delivery
+
+    text = " ".join(sentences)
+    if japanese_delivery.POLICY["delivery"]["joiner"] in text:
+        return japanese_delivery.phonemes(
+            text, True, lambda value, final: _phonemize_plain([value]) if final
+            else _sea().run(value, punc_norm=False),
+        )
+    return _phonemize_plain(sentences)
+
+
+def _phonemize_plain(sentences: Sequence[str]) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
     của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
     Khác vieneu ở MỘT điểm: `punc_norm` ép dấu cuối của khúc dưới 5 từ về "." ("Thật sao?" thành "Thật sao.") nên câu hỏi / cảm thán ngắn mất giọng

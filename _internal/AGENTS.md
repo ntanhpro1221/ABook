@@ -214,7 +214,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
   VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
   Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. VieNeu dùng bảng dự phòng Nhật
-  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback3`. Tên Latin phải tách hết bằng bảng âm:
+  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback4`. Tên Latin phải tách hết bằng bảng âm:
   ít nhất hai âm tiết cho dự phòng mới khi gốc cuốn đã là Nhật; chưa rõ gốc cần kính ngữ dính hoặc cặp romaji viết hoa.
   Từ Nhật quen, kính ngữ và cách đọc tên đã được luật cũ chấp nhận có đường riêng; bộ lọc tên không được xoá cách đọc ấy chỉ vì thiếu âm tiết.
   Viết tắt, số và từ mượn đã được xử lý giữ quyền trên output; HOA ngắn không tự thành tên Nhật nhờ đổi hoa thường.
@@ -227,6 +227,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
   không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
+  VieNeu nối phoneme của từng từ Nhật tự động, giữ trọng âm đầu và đổi các trọng âm sau thành nhẹ, theo `delivery` trong cùng JSON của Python/Kotlin.
+  Dấu bảo vệ chỉ có trong đầu vào suy luận; chữ lưu, neo ASR và biên họ/tên giữ nguyên. Chỉ nối span có hai biên tiền tố khớp chính xác với chuỗi âm toàn câu;
+  cách đọc khác do người nghe chọn giữ quyền riêng.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây

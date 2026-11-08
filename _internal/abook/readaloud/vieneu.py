@@ -1051,7 +1051,10 @@ class VieneuProvider:
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
-            phonemes = ve.phonemize(unit.pieces)
+            from . import japanese_delivery
+
+            groups = japanese_delivery.groups(unit.text(toks).split(), origin, readings)
+            phonemes = ve.phonemize([japanese_delivery.mark(piece, groups) for piece in unit.pieces])
             seed = seed_of(tier, name, " ".join(unit.pieces))
             if not phonemes:
                 audio = np.zeros(0, dtype=np.float32)

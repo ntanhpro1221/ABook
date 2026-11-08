@@ -58,6 +58,15 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
      * would turn a short "Thật sao?" into "Thật sao." and lose the question tone); a unit without a final mark still gets ".".
      */
     fun phonemize(sentences: List<String>): String {
+        val text = sentences.joinToString(" ")
+        val joiner = vn.abook.player.readaloud.JapanesePolicy.data.getJSONObject("delivery").getString("joiner")
+        if (joiner !in text) return phonemizePlain(sentences)
+        return vn.abook.player.readaloud.JapaneseDelivery.phonemes(text, true) { value, final ->
+            if (final) phonemizePlain(listOf(value)) else g2p(normalize(value, false))
+        }
+    }
+
+    private fun phonemizePlain(sentences: List<String>): String {
         val text = normalizeUnit(sentences)
         val chunk = puncNorm(text)
         if (chunk.isBlank()) return ""

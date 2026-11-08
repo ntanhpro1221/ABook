@@ -47,7 +47,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r8c771f618eb8ec75",
-      "key": "60fba6ea3dab79012c3a00a2fc6f17411c4bb6599fb7d06dd5daff9ba071681b"
+      "key": "6246a2d0a2b9895c0dc75e4df03ecd119285284b93899a79f5d98e6e458eb516"
     },
     {
       "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r8c771f618eb8ec75",
-      "key": "7c8a34196d6e725d6923cda6aa7e5ae6d2f48353e02f38e5628b7838fa552a1f"
+      "key": "fc16c3d1b65b9a44b3dbcf0b31d2294666fd20e9f8de685dab6edf1859012e37"
     },
     {
       "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r669e9aea4c533d44",
-      "key": "6d9995c6b4db4607cd82f34aad1cf5180202f03db6fb9653a1251a043683ce15"
+      "key": "0ea83035cf2d0633a63a331bfd068293a2fc6a66141751ac41d9b9b31c8c4b41"
     },
     {
       "voice": "edge:vi-VN-HoaiMyNeural",
@@ -190,7 +190,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r2370bda33939e04a",
-      "key": "9db499f83f6d90f7c6815106d2b07fbe862210949c676332e89a5629c3d210e3"
+      "key": "28359c78bef093557009f85a44ee13d20dcb92a370c1b9fdf8d8d71c3da770d4"
     },
     {
       "voice": "azure:vi-VN-HoaiMyNeural",
@@ -324,7 +324,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r81c6e74e07144399",
-      "key": "bf3b36ebc2e16102e3dd11f686af8f45b62d24a5c78e765934245e0ad5623463"
+      "key": "885a66969258e0c2e05296793b34151140e3a1f9e8df27a4493abdd3867fa4a9"
     },
     {
       "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r3e4375453368fca7",
-      "key": "7be8e9afea475d5c9f82006a58a1559a045c2bfbbeada95505cc0998671f89e8"
+      "key": "9867059701d1e4a30e7bd6e972bbd627a9c8d23bc963ab973fb8024189df0ab9"
     },
     {
       "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
       "spokenText": null,
       "spokenSlots": null,
       "tag": "r7f137f8486d33d82",
-      "key": "e60e14c6e63056eb337c8124e17eac8de3d4f12040983a6dacd1002cd3d62f37"
+      "key": "21fd86d5ddb55d6b628d2f580f1089434b46a70453e5e098d727f96062cd9ad6"
     }
   ]
 }
