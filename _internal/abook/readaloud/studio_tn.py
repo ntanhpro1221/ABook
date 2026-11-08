@@ -48,11 +48,40 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     if not matches:
         return separate_digit_quotes(text), identity
     toks = [match.group() for match in matches]
-    said = [w if w == t else w.replace("_", "") for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]  # "o_": lone syllable marker, not used by Studio
+    def voice_markers(word: str) -> str:
+        if not direct_english:
+            return word.replace("_", "")
+        # Keep the generated syllable marker through the FIRST sea-g2p pass;
+        # it distinguishes a name's o from the letter O (ô).
+        return re.sub(r"(?<!\w)o_(?=[-.,!?;:\s]|$)|_",
+                      lambda match: "o_" if match.group() == "o_" else "", word)
+
+    said = [w if w == t else voice_markers(w) for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]
+    segmented: dict[int, list[tuple[int, int, str]]] = {}
     for index, match in enumerate(matches):
-        if any(match.start() < end and match.end() > start for start, end in protected_spans):
-            said[index] = toks[index]
-    if said == toks:
+        spans = [(max(0, start - match.start()), min(len(match.group()), end - match.start()))
+                 for start, end in protected_spans if match.start() < end and match.end() > start]
+        if not spans:
+            continue
+        said[index] = toks[index]
+        if origin != "ja" or not direct_english:
+            continue
+        # A locked suffix protects its own bytes, not the unrendered name
+        # joined to it. Keep each piece separate so anchors retain exact maps.
+        from .japanese_policy import reading
+
+        cuts = sorted({0, len(match.group()), *(point for span in spans for point in span)})
+        pieces = []
+        changed = False
+        for start, end in zip(cuts, cuts[1:]):
+            part = match.group()[start:end]
+            protected = any(start < stop and end > begin for begin, stop in spans)
+            new = None if protected or not part.startswith("-") and not part.endswith("-") else reading(part, origin)
+            pieces.append((start, end, new or part))
+            changed |= bool(new and new != part)
+        if changed:
+            segmented[index] = pieces
+    if said == toks and not segmented:
         return separate_digit_quotes(text), identity
     # Cả chuỗi cũ thành các đoạn liền nhau [bắt đầu, kết thúc, chữ mới]: khoảng đầu, từng chữ, khoảng giữa, khoảng cuối.
     pieces: list[list] = []
@@ -61,7 +90,10 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     for index, match in enumerate(matches):
         pieces.append([cursor, match.start(), text[cursor:match.start()]])
         token_at.append(len(pieces))
-        pieces.append([match.start(), match.end(), said[index]])
+        if index in segmented:
+            pieces.extend([match.start() + start, match.start() + end, new] for start, end, new in segmented[index])
+        else:
+            pieces.append([match.start(), match.end(), said[index]])
         cursor = match.end()
     pieces.append([cursor, len(text), text[cursor:]])
     for index, word in enumerate(said):  # chữ đổi thành rỗng: bỏ luôn một khoảng trắng kề (sau nó; chữ cuối thì trước nó)
@@ -120,14 +152,18 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
         from ..webui.word_timing import _TOKEN
 
         for match in _TOKEN.finditer(text):
-            start, end = match.span()
-            before, after = match.group(), new_text[mapping[start]:mapping[end]]
-            if (before != after and any(c.isalpha() for c in before)
-                    and not any(c.isdigit() for c in before)
-                    and any(c.isalpha() for c in after)
-                    and not any(anchor_tags[start:end])
-                    and not any(start < b and end > a for a, b in cues)):
-                changed_words.append((start, end, mapping[start], mapping[end]))
+            spans = [match.span()]
+            if any(anchor_tags[match.start():match.end()]):
+                spans = [(match.start() + part.start(), match.start() + part.end())
+                         for part in re.finditer(r"[^\W\d_]+", match.group())]
+            for start, end in spans:
+                before, after = text[start:end], new_text[mapping[start]:mapping[end]]
+                if (before != after and any(c.isalpha() for c in before)
+                        and not any(c.isdigit() for c in before)
+                        and any(c.isalpha() for c in after)
+                        and not any(anchor_tags[start:end])
+                        and not any(start < b and end > a for a, b in cues)):
+                    changed_words.append((start, end, mapping[start], mapping[end]))
     if new_text == text:
         return text, anchor_tags
     marks: list[set[int]] = [set() for _character in new_text]

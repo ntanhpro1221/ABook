@@ -615,12 +615,14 @@ def keep_vieneu_final_mark() -> None:
         return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
+        from .readaloud.phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o
+
         out = original_phonemize(text, punc_norm)
         if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
             written = original_phonemize(text, False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
             if written.endswith(("?", "!")):
                 out = out[:-1] + written[-1]
-        return out
+        return emphasize_english_interjections(text, repair_syllabic_o(text, repair_syllabic_gi(text, out)), phonemize_text._get_g2p().convert)
 
     phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
     phonemize_text._abook_keeps_final_mark = True

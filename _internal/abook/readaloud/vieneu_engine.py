@@ -354,7 +354,9 @@ def phonemize(sentences: Sequence[str]) -> str:
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):
             phonemes = phonemes[:-1] + written[-1]
-    return phonemes
+    from .phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o
+
+    return emphasize_english_interjections(text, repair_syllabic_o(text, repair_syllabic_gi(text, phonemes)), pipeline.g2p.convert)
 
 
 # ---- phiên onnxruntime ----------------------------------------------------------------------------------------------------------

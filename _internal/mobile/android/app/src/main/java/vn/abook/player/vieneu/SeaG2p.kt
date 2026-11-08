@@ -61,12 +61,12 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
         val text = normalizeUnit(sentences)
         val chunk = puncNorm(text)
         if (chunk.isBlank()) return ""
-        val phonemes = g2p(keepLoneO(chunk, normalize(chunk, true)))
+        var phonemes = g2p(keepLoneO(chunk, normalize(chunk, true)))
         if (phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
-            if (written.endsWith("?") || written.endsWith("!")) return phonemes.dropLast(1) + written.last()
+            if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()
         }
-        return phonemes
+        return PhonemePolicy.emphasizeEnglishInterjections(text, PhonemePolicy.repairSyllabicO(text, PhonemePolicy.repairSyllabicGi(text, phonemes)), ::g2p)
     }
 
     @Synchronized

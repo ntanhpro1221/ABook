@@ -229,6 +229,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
   không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
+- `readaloud/phoneme_policy.py` sửa ở biên phoneme chung của Studio/Nghe ngay/Kotlin: âm tiết `gi` phải còn nguyên âm `/i/`,
+  và `o` của tên đã qua lượt chuẩn hoá đầu không được lượt sau đổi thành tên chữ `ô`. Từ cảm thán/hỏi Anh ngắn,
+  có từ điển và không trùng âm tiết Việt, giữ trọng âm mạnh/nguyên âm kéo dài trước `?!`; không thêm từ, đổi dấu câu hay chia riêng để đọc.
+  Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
