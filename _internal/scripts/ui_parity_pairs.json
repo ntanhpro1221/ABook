@@ -126,7 +126,7 @@
         {
           "side": "native",
           "match": "^cửa sổ mini$",
-          "reason": "Cửa sổ mini: bản web + Tauri đang làm ở dev/cloud-tray; gộp xong thì xoá mục này"
+          "reason": "Khác khả năng nền tảng: web trình duyệt không có cửa sổ mini app của hệ điều hành. Qt NowPlaying/SettingsLook và Android PiP đã có cùng thao tác; scripts/ui_parity_qt.py kiểm nhãn ở đúng file của hai nền."
         }
       ],
       "web_also": [
@@ -620,7 +620,7 @@
         {
           "side": "native",
           "match": "^(tự mở cửa sổ mini|rời app khi có sách mở thì sách thu vào cửa sổ mini)$",
-          "reason": "Cửa sổ mini: bản web + Tauri đang làm ở dev/cloud-tray; gộp xong thì xoá mục này"
+          "reason": "Khác khả năng nền tảng: web trình duyệt không có cửa sổ mini app của hệ điều hành. Qt NowPlaying/SettingsLook và Android PiP đã có cùng thao tác; scripts/ui_parity_qt.py kiểm nhãn ở đúng file của hai nền."
         }
       ],
       "web_also": [

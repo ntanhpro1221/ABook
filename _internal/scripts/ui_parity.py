@@ -52,7 +52,8 @@ KT_SKIP_CALLEE = {"testTag", "Regex", "Log", "File", "Uri", "println", "error", 
                   "setOf", "mapOf", "arrayOf", "put", "putExtra", "getString", "optString", "getJSONObject", "getJSONArray", "has",
                   "Intent", "IntentFilter", "toRegex", "startsWith", "endsWith", "contains", "split", "replace", "trim", "removePrefix",
                   "removeSuffix", "equals", "format", "assert", "Pair", "to", "storageKey", "route", "key", "id", "tag", "name", "optBoolean",
-                  "optInt", "optLong", "optDouble", "getBoolean", "getInt", "getLong", "getDouble", "getString", "joinToString", "indexOf", "w", "e", "d", "i"}
+                  "optInt", "optLong", "optDouble", "getBoolean", "getInt", "getLong", "getDouble", "getString", "joinToString", "indexOf", "w", "e", "d", "i",
+                  "setRequestProperty", "getRequestProperty", "addRequestProperty"}
 KT_SKIP_NAMED = {"tag", "key", "route", "id", "storageKey", "testTag", "name", "action_id", "channel", "mime", "type", "scheme"}
 # Chuỗi là mã chứ không phải chữ người nghe, cả hai phía: một vế của phép so sánh (`id === "Xing"`, `label == "Mất file audio"`). Web thêm,
 # cùng ý KT_SKIP_CALLEE: đối số của lệnh đọc / ghi header HTTP (`response.headers.get("Content-Length")`). Xem ts_code_literal.

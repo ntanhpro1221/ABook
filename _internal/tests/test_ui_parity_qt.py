@@ -6,6 +6,7 @@ Chữ và icon lệch được báo cáo trong file chứ không làm test hỏn
 import importlib.util
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "ui_parity_qt.py"
@@ -128,6 +129,18 @@ def test_mode_switch_labels_agree_on_all_three_platforms():
     assert problems == [], problems
     assert found["Android"] == found["Web"] == [["Nghe"], ["Đọc theo"]]
     assert found["Qt"][0] == ["Nghe"] and "Đọc theo" in found["Qt"][1]   # ô 2 của Qt đổi sang "Chương" khi sách chưa có mốc thời gian
+
+
+def test_reviewed_actions_reject_changed_word_icon_or_missing_control():
+    tool = _tool()
+    web, qt, native = tool.web_scan(), tool.qt_scan(), tool.up.native_scan()
+    assert tool.action_findings(web, qt, native) == []
+    altered = tool.QtScan(items=[replace(i, text="Tạo và nghe từ đầu") if i.file.endswith("RecordLogic.js") and i.text == "Tạo và nghe" else i for i in qt.items], pairs=qt.pairs)
+    assert any("record-create" in problem for problem in tool.action_findings(web, altered, native))
+    altered = tool.QtScan(items=qt.items, pairs=[replace(p, icon="x") if p.file.endswith("NowPlaying.qml") and p.label == "Cửa sổ mini" else p for p in qt.pairs])
+    assert any("mini-enter" in problem for problem in tool.action_findings(web, altered, native))
+    absent = tool.up.Scan(items=[i for i in native.items if not (i.file.endswith("ListenExtras.kt") and i.text == "Chuyển")], pairs=native.pairs)
+    assert any("record-move" in problem for problem in tool.action_findings(web, qt, absent))
 
 
 def test_mode_switch_rule_goes_red_when_one_platform_changes_a_word():
