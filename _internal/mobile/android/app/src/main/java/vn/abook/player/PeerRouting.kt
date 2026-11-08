@@ -53,7 +53,7 @@ internal object PeerRouting {
         val hasAddresses = values.containsKey("addresses")
         val original = if (hasAddresses) runCatching { JSONArray(values["addresses"] as String) }.getOrNull() else null
         if (hasAddresses) peer.put("addresses", original ?: JSONObject.NULL)
-        PeerAddresses.migrate(peer)
+        PeerAddresses.normalize(peer)
         val clean = peer.getJSONArray("addresses").toString()
         val badPort = values.containsKey("port") && (values["port"] !is Int || (values["port"] as Int) !in 1..65535)
         val damaged = (hasAddresses && (original == null || original.toString() != clean)) || badPort ||

@@ -70,14 +70,17 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   analysis, cùng tiền lệ speaker repair của casting).
 - Mọi process nền trên Windows dùng `pythonw`/`CREATE_NO_WINDOW`, redirect stdio UTF-8 vào log; POSIX dùng session riêng.
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
+- ProjectDB chỉ tạo schema đầy đủ cho DB trống, hoặc mở đúng schema hiện hành. DB khác phiên bản/thiếu cấu trúc bị từ chối
+  trước kết nối ghi; không backup nâng cấp, ALTER hay chuyển rows cũ. Danh sách backup của Store chỉ nhận snapshot qua cùng gate
+  chỉ đọc; API quan sát giữ `mode=ro`/`query_only` để chẩn đoán dự án lỗi.
 - Với chính sách hẹn ngủ, app KHÔNG BAO GIỜ tự hẹn/tự dừng khi người nghe không yêu cầu. Lâu không tương tác không phải yêu cầu hẹn ngủ. Chỉ hẹn khi người nghe yêu cầu: hẹn phút, hết chương, hoặc lịch đêm do chính người nghe bật (mặc định tắt). Lịch đêm đợi máy rảnh: Android cần màn tắt và bốn cửa sổ nằm yên khi có cảm biến; desktop cần thời gian rảnh toàn OS. Tín hiệu còn thức huỷ hẹn theo lịch, không huỷ hẹn tay. Không khôi phục hẹn theo lịch từ đĩa; hẹn tay gắn đúng sách/hồ sơ. Không đọc, xoá hay migrate khoá cũ của tính năng đã gỡ.
 - Android: `Store.writeAtomic` sync dữ liệu trước rename, không xoá đích trước; JSON hồ sơ hỏng phải giữ ở `.corrupt-…`.
-  Migration state giữ nguồn đến sau commit `records.json`; adopt/rekey ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
+  Adopt/rekey cùng phiên bản ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
   Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
   Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.
 - Dữ liệu peer: kiểm mã sách Android tại native trước I/O và trước thêm tiền tố peer; `bookDir` phải là con trực tiếp của `books/`.
-  Máy đã ghép lưu `addresses` tối đa 8 mục `{address,lastSuccess}`; host/cổng cũ chỉ là chi tiết lần ghép, nâng một lần sang danh sách.
+  Máy đã ghép lưu `addresses` tối đa 8 mục `{address,lastSuccess}`; host/cổng chỉ là chi tiết lần ghép, không bù route thiếu từ các trường ấy.
   Chỉ học địa chỉ từ TLS khớp vân tay đã ghim (discovery chỉ là gợi ý); thử đường trước HTTP, không replay POST khi chưa biết kết quả.
   Chọn TLS gộp theo identity, cache lỗi 2 giây (xoá khi đổi mạng/discover đã xác thực), tối đa 2 tác vụ I/O mỗi peer và 32 peer giữ trong bộ chọn;
   DNS kẹt giữ slot của chính peer đó, không xếp hàng vô hạn hay chặn peer khác. Đường ưu tiên đi trước 150 ms; đủ ngân sách hai lane cho cả 8 địa chỉ (tối đa 6,15 giây).

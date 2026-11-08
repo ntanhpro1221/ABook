@@ -11,11 +11,11 @@ ROWS = json.loads((Path(__file__).parent / "fixtures/peer_addresses_malformed.js
 @pytest.mark.parametrize("row", ROWS, ids=lambda row: row["name"])
 def test_malformed_shared_contract(row):
     entry = row["entry"]
-    pa.migrate(entry)
+    pa.normalize(entry)
     assert pa.ordered(entry) == row["expected"]
     assert len(entry["addresses"]) <= 8
     assert all(isinstance(item, dict) for item in entry["addresses"])
-    assert not pa.migrate(entry), "normalization must be idempotent"
+    assert not pa.normalize(entry), "normalization must be idempotent"
 
 
 @pytest.mark.parametrize("success", [float("nan"), float("inf"), -float("inf")])

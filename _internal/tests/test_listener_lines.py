@@ -213,24 +213,12 @@ def test_changing_the_words_keeps_an_emotion_the_pipeline_has_not_applied_yet(tm
     assert request["spoken"] is None, "câu gốc đã đổi (băm khác): không mang chữ sửa của câu cũ sang"
 
 
-def test_the_fix_survives_reopening_and_an_old_book_gains_the_column(tmp_path: Path) -> None:
-    """Crash/mở lại: chữ sửa nằm trong SQLite, mở lại vẫn còn. Sách tạo trước khi có cột: giao diện (mở DB chưa nâng cấp)
-    vẫn xét được yêu cầu, và lần dây chuyền mở DB kế tiếp thêm cột mà không mất gì."""
-    import sqlite3
-
-    from abook.listener_overrides import line_target
-
+def test_the_fix_survives_reopening_the_current_schema(tmp_path: Path) -> None:
+    """Crash/mở lại cùng schema: chữ sửa đã commit vẫn còn."""
     paths, db = _book(tmp_path)
     _apply(db, "c1s1", spoken="Đi thôi nào.")
     assert _line(ProjectDB(paths.db), "c1s1")["listener_text"] == "Đi thôi nào."
 
-    old = sqlite3.connect(paths.db)
-    old.row_factory = sqlite3.Row
-    old.execute("ALTER TABLE segments DROP COLUMN listener_text")
-    old.commit()
-    target, problem = line_target(old, stable_id="c1s2", text_sha256="sha-c1s2", spoken="Cô chắc không?")
-    assert problem is None and target is not None and target["listener_text"] == "Cô chắc không?"
-    old.close()
     reopened = ProjectDB(paths.db)
     assert _line(reopened, "c1s2")["listener_text"] is None and _line(reopened, "c1s2")["status"] == "verified"
     assert _apply(reopened, "c1s2", spoken="Cô chắc không?")["reset"] is True

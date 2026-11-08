@@ -118,10 +118,9 @@ class Computers:
                     del data["computers"][key]
                     changed = damaged = True
                     continue
-                had_addresses = "addresses" in entry
-                normalized = peer_addresses.migrate(entry)
+                normalized = peer_addresses.normalize(entry)
                 changed = normalized or changed
-                damaged = (had_addresses and normalized) or damaged
+                damaged = normalized or damaged
                 if normalized and not peer_addresses.ordered(entry) and not _bluetooth_of(entry):
                     del data["computers"][key]
                     changed = damaged = True
@@ -299,7 +298,7 @@ class Computers:
                 pending = list(self._read().get("revoke") or [])
             done = []
             for item in pending:
-                peer_addresses.migrate(item)
+                peer_addresses.normalize(item)
                 endpoint = _base(item)
                 try:
                     _request(endpoint, "POST", "/sync/v1/unpair", str(item["token"]), {}, timeout=REVOKE_TIMEOUT)
