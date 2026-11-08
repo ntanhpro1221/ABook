@@ -214,9 +214,12 @@ Item {
                 tryVerify(function() { return !a.visible && b.visible })
                 tryVerify(function() { return Math.abs((b.x) - (a.x)) <= 0.5 })
             }
-            const p = a.mapToItem(page, 0, 0)
-            const q = b.mapToItem(page, b.width, 0)
-            fuzzyCompare(p.x, page.width - q.x, 0.5)
+            // Measure the settled frame: the compact page slides in, and mapToItem includes that slide.
+            tryVerify(function() {
+                const p = a.mapToItem(page, 0, 0)
+                const q = b.mapToItem(page, b.width, 0)
+                return Math.abs(p.x - (page.width - q.x)) <= 0.5
+            })
         }
         function test_transitionAndReducedMotion() {
             Theme.reduceMotion = false
