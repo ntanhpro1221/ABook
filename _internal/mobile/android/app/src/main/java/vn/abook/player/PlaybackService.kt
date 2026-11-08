@@ -87,7 +87,7 @@ class PlaybackService : MediaLibraryService() {
         AppLog.i("PlaybackService", "dịch vụ phát bật")
         Playback.init(this)
         ListenerActivity.start(this)
-        Playback.addListener(sleepButtons)
+        Playback.addListener(sleepButtons, ticks = false)
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(),

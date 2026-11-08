@@ -132,6 +132,11 @@ kotlin {
 composeCompiler {
     // Soát độ ổn định: gradlew -PcomposeReports ... -> app/build/compose_reports (docs/NATIVE_PHONE_UI.md §3).
     if (project.hasProperty("composeReports")) {
+        // Kotlin's default Android module name contains ':', which is not a Windows filename.
+        // Metrics use that name for their output files. Keep this diagnostic-only.
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            compilerOptions.moduleName.set("abook_${name}")
+        }
         reportsDestination = layout.buildDirectory.dir("compose_reports")
         metricsDestination = layout.buildDirectory.dir("compose_reports")
     }

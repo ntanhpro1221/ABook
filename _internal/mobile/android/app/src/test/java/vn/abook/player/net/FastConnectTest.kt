@@ -390,12 +390,14 @@ class FastConnectTest {
         process.inputStream.readBytes()
         if (process.waitFor() != 0) return null
         val store = KeyStore.getInstance("PKCS12").apply { file.inputStream().use { load(it, "changeit".toCharArray()) } }
-        val keys = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()).apply { init(store, "changeit".toCharArray()) }
+        val keys = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(store, "changeit".toCharArray()) }
         val trusted = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null); setCertificateEntry("a", store.getCertificate("a")) }
-        val trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply { init(trusted) }
+        val trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(trusted) }
         return Pki(
-            SSLContext.getInstance("TLS").apply { init(keys.keyManagers, null, null) },
-            SSLContext.getInstance("TLS").apply { init(null, trust.trustManagers, null) },
+            // Robolectric installs Conscrypt globally when earlier UI tests run in the same worker.
+            // This fixture exercises JDK HttpURLConnection, so use its JSSE provider consistently.
+            SSLContext.getInstance("TLS", "SunJSSE").apply { init(keys.keyManagers, null, null) },
+            SSLContext.getInstance("TLS", "SunJSSE").apply { init(null, trust.trustManagers, null) },
         )
     }
 
@@ -430,8 +432,12 @@ class FastConnectTest {
         try {
             connection.inputStream.close()
             fail("chứng chỉ của tên khác phải bị từ chối")
-        } catch (error: SSLException) {
-            // đúng: kiểm tên vẫn chạy với tên gốc abook.test, không bị đổi thành địa chỉ số
+        } catch (error: IOException) {
+            // JSSE can reject the name during the handshake or in HttpsClient afterwards.
+            // Reject only that failure, never an unrelated transport or certificate error.
+            val messages = generateSequence<Throwable>(error) { it.cause }.mapNotNull { it.message }.joinToString("\n")
+            assertTrue(messages, messages.contains("abook.test") &&
+                (messages.contains("No subject alternative DNS name matching") || messages.contains("HTTPS hostname wrong")))
         }
     }
 

@@ -38,7 +38,7 @@ class CoverLoader(maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().
         override fun sizeOf(key: String, value: Cached) = value.bytes
     }
 
-    fun key(path: String, stamp: Long, width: Int) = "$path|$stamp|$width"
+    fun key(path: String, stamp: Long, width: Int, height: Int) = "$path|$stamp|$width|$height"
 
     /** Đã có trong bộ nhớ đệm thì lấy ngay (không chờ giải mã) - để ô cuộn vào không nháy khung trống. */
     fun peek(key: String): ImageBitmap? = cache.get(key)?.image
@@ -59,7 +59,19 @@ class CoverLoader(maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().
             inSampleSize = CoverSampling.sampleSize(bounds.outWidth, bounds.outHeight, width, height)
             inPreferredConfig = Bitmap.Config.RGB_565
         }
-        return BitmapFactory.decodeFile(path, options)
+        val decoded = BitmapFactory.decodeFile(path, options) ?: return null
+        // Power-of-two sampling can leave almost twice the display width in each axis.
+        // Retain only the pixels needed for the existing center-crop; never upscale a small source.
+        val scale = maxOf(width.toDouble() / decoded.width, height.toDouble() / decoded.height).coerceAtMost(1.0)
+        val image = if (scale < 1.0) {
+            Bitmap.createScaledBitmap(decoded, kotlin.math.ceil(decoded.width * scale).toInt().coerceAtLeast(1),
+                kotlin.math.ceil(decoded.height * scale).toInt().coerceAtLeast(1), true).also {
+                if (it !== decoded) decoded.recycle()
+            }
+        } else decoded
+        // Queue the texture upload while still on a decoder thread, before the first visible draw.
+        image.prepareToDraw()
+        return image
     }
 
     /** Hệ điều hành xin bớt bộ nhớ (UI ẩn / thiếu RAM): bỏ bìa đã nạp. */

@@ -200,6 +200,7 @@ object Playback {
     /** "Tự lùi khi nghe lại" (Cài đặt); how far: [AutoRewind]. */
     private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
+    private val tickListeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
     /** Lần cuối người nghe chạm vào trình phát (nút, thông báo, widget) - cho lưới an toàn ngủ quên. */
     var lastInteractionMs = System.currentTimeMillis()
@@ -270,14 +271,21 @@ object Playback {
         if (Looper.myLooper() == Looper.getMainLooper()) block() else main.post(block)
     }
 
-    fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
-    fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
+    fun addListener(listener: (JSONObject) -> Unit, ticks: Boolean = true) {
+        listeners += listener
+        if (ticks) tickListeners += listener else tickListeners -= listener
+    }
+    fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener; tickListeners -= listener }
 
     fun emit(kind: String) {
         bufferingGuard.observe(waitingForSound())
         if (kind == "sleep") ReadAloud.pump() // hẹn giờ "hết chương" vừa tắt / đổi: đọc to nạp tiếp sang chương kế được rồi
-        val event = state().put("kind", kind)
-        listeners.toList().forEach { runCatching { it(event) } }
+        val recipients = if (kind == "tick") tickListeners else listeners
+        // With the UI detached, the sleep-button listener needs no half-second JSON snapshot.
+        if (recipients.isNotEmpty()) {
+            val event = state().put("kind", kind)
+            recipients.toList().forEach { runCatching { it(event) } }
+        }
         if (::appContext.isInitialized) runCatching { PlayerWidget.refresh(appContext, tick = kind == "tick") }
         // Máy tính đang xem điện thoại phát gì (Remote): mọi đổi trừ nhịp đồng hồ đều báo ngay.
         if (kind != "tick") Remote.kick()

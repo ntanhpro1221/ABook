@@ -70,7 +70,7 @@ fun BookCover(
     val heightPx = widthPx * 3 / 2
     val path = cover?.path
     val stamp = cover?.stamp ?: 0L
-    val key = remember(path, stamp, widthPx) { path?.let { covers.key(it, stamp, widthPx) } }
+    val key = remember(path, stamp, widthPx, heightPx) { path?.let { covers.key(it, stamp, widthPx, heightPx) } }
     val image = remember(key) { mutableStateOf(key?.let(covers::peek)) }
     if (key != null && path != null && image.value == null) {
         LaunchedEffect(key) { image.value = covers.load(key, path, widthPx, heightPx) }

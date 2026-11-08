@@ -2,6 +2,7 @@ package vn.abook.baselineprofile
 
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.junit4.BaselineProfileRule
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
@@ -18,9 +19,19 @@ class BaselineProfileGenerator {
     @get:Rule
     val rule = BaselineProfileRule()
 
+    private fun collect(startup: Boolean = false, block: MacrobenchmarkScope.() -> Unit) {
+        // Bound this emulator audit explicitly; normal profile generation retains library stability defaults.
+        if (InstrumentationRegistry.getArguments().getString("perf165BoundedProfile") == "true") {
+            rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = startup,
+                maxIterations = 5, stableIterations = 2, strictStability = false) { block() }
+        } else {
+            rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = startup) { block() }
+        }
+    }
+
     /** Cover the real startup graph as well as the demo-only navigation scenarios. */
     @Test
-    fun diskStartup() = rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = true) {
+    fun diskStartup() = collect(startup = true) {
         pressHome()
         startActivityAndWait()
         check(device.wait(Until.hasObject(By.res("tab_library")), 8_000))
@@ -28,8 +39,49 @@ class BaselineProfileGenerator {
         Thread.sleep(1_500)
     }
 
+    /** Real disk fixture: also profile audio startup, container transform, read-along and player sheets. */
     @Test
-    fun generate() = rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = true) {
+    fun diskPlayer() = collect {
+        pressHome()
+        startActivityAndWait()
+        check(device.wait(Until.hasObject(By.res("book_cell")), 8_000)) { "Seed the disk fixture before generating the player profile" }
+        device.findObjects(By.res("book_cell")).first().click()
+        check(device.wait(Until.hasObject(By.res("book_primary")), 8_000))
+        device.findObject(By.res("book_primary")).click()
+        Thread.sleep(1_500)
+        device.pressBack()
+        check(device.wait(Until.hasObject(By.res("mini_open")), 8_000))
+        repeat(3) {
+            checkNotNull(device.wait(Until.findObject(By.res("mini_open")), 8_000)).click()
+            check(device.wait(Until.hasObject(By.res("collapse_player")), 8_000))
+            Thread.sleep(500)
+            for (tag in listOf("player_speed", "player_sleep", "player_more")) {
+                device.findObject(By.res(tag)).click()
+                Thread.sleep(400)
+                device.pressBack()
+                Thread.sleep(400)
+            }
+            device.findObject(By.res("mode_read")).click()
+            check(device.wait(Until.hasObject(By.res("read_along_text")), 8_000))
+            val text = device.findObject(By.res("read_along_text"))
+            val bounds = text.visibleBounds
+            val x = bounds.centerX()
+            val top = bounds.top + bounds.height() / 4
+            val bottom = bounds.bottom - bounds.height() / 4
+            device.swipe(x, bottom, x, top, 20)
+            Thread.sleep(600)
+            device.swipe(x, top, x, bottom, 20)
+            Thread.sleep(600)
+            device.findObject(By.res("mode_listen")).click()
+            // Let the mode transition settle before locating and clicking the collapse control.
+            Thread.sleep(600)
+            device.findObject(By.res("collapse_player")).click()
+            check(device.wait(Until.hasObject(By.res("mini_open")), 8_000))
+        }
+    }
+
+    @Test
+    fun generate() = collect(startup = true) {
         pressHome()
         startActivityAndWait { it.putExtra("abook.demo.books", 200) }
         device.wait(Until.hasObject(By.res("library_grid")), 8_000)
