@@ -26,14 +26,6 @@ Column {
 
     SectionBlock {
         width: parent.width
-        SettingChoices {
-            width: parent.width
-            label: "Tự tắt"
-            hint: "Máy rảnh đủ lâu mới nhỏ dần rồi dừng."
-            value: String(root.prefs.safetyStopHours ?? 2)
-            options: [{value: "0", label: "Không"}, {value: "1", label: "1 giờ"}, {value: "2", label: "2 giờ"}, {value: "3", label: "3 giờ"}]
-            onPicked: value => store.update({safetyStopHours: Number(value)})
-        }
         SettingRow {
             width: parent.width
             label: "Lịch đêm"

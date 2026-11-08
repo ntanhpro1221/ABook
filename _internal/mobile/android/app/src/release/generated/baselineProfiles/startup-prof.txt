@@ -23001,7 +23001,6 @@ SPLvn/abook/player/ui/data/AppSettings;->getFlipToPause()Z
 SPLvn/abook/player/ui/data/AppSettings;->getHaptics()Z
 SPLvn/abook/player/ui/data/AppSettings;->getHeadsetSkips()Z
 SPLvn/abook/player/ui/data/AppSettings;->getReadingSurface()Lvn/abook/player/ui/data/ReadingSurface;
-SPLvn/abook/player/ui/data/AppSettings;->getSafetyStopHours()I
 PLvn/abook/player/ui/data/AppSettings;->getSchedule()Lvn/abook/player/ui/data/SleepSchedule;
 SPLvn/abook/player/ui/data/AppSettings;->getShakeAction()Lvn/abook/player/ui/data/ShakeAction;
 SPLvn/abook/player/ui/data/AppSettings;->getShakeSensitivity()Lvn/abook/player/ui/data/ShakeSensitivity;

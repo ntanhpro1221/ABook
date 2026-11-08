@@ -268,13 +268,11 @@ private slots:
         QCOMPARE(rig.player->clock()->sleepLeft(), 600.0);
     }
 
-    // ---- Lịch đêm, lưới an toàn, tuỳ chọn Nghe / Hẹn giờ ngủ nạp từ Cài đặt (configure) ----
+    // ---- Lịch đêm, tuỳ chọn Nghe / Hẹn giờ ngủ nạp từ Cài đặt (configure) ----
 
     static qint64 at(int hour, int minute) { return QDateTime(QDate(2027, 1, 15), QTime(hour, minute)).toMSecsSinceEpoch(); }
-    // safetyStopHours = 0: các thử này nhảy đồng hồ hàng giờ, đừng để lưới an toàn ngủ quên hẹn giờ thay lịch đêm
     static QVariantMap night(const QString &from = QStringLiteral("22:00"), const QString &to = QStringLiteral("06:00"), int minutes = 30) {
-        return {{QStringLiteral("safetyStopHours"), 0},
-                {QStringLiteral("sleepSchedule"), QVariantMap{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}, {QStringLiteral("minutes"), minutes}}}};
+        return {{QStringLiteral("sleepSchedule"), QVariantMap{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}, {QStringLiteral("minutes"), minutes}}}};
     }
 
     void nightScheduleWaitsUntilTheWholeSystemIsIdle() {
@@ -330,44 +328,40 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() > 14 * 60);
     }
 
-    void safetyStopArmsOneMinuteAfterIdleHours() {
-        Rig rig;
-        rig.player->configure({{QStringLiteral("safetyStopHours"), 1}});
-        rig.player->open(QStringLiteral("a"), -1, -1, true);
-        rig.player->setSleep(QStringLiteral("minutes"), 45);
-        rig.player->setSleep(QStringLiteral("off"));
-        rig.run(1);
-        g_now += 59 * 60'000;
-        rig.player->tick();
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
-        g_now += 2 * 60'000;
-        rig.player->tick();
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
-        QCOMPARE(rig.player->notice(), QString::fromUtf8("Tự hẹn vì lâu không dùng máy"));
-        QCOMPARE(rig.player->noticeAction(), QString::fromUtf8("Chạm để nghe tiếp"));
-        QCOMPARE(rig.player->lastSleepMinutes(), 45); // nút hẹn giờ vẫn nhớ lần hẹn của người nghe
+    void defaultPlaybackNeverArmsAnUnrequestedTimer() {
+        for (bool configure : {false, true}) {
+            Rig rig;
+            if (configure) rig.player->configure({{QStringLiteral("autoRewind"), true}});
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.run(1);
+            g_now += 3 * 3'600'000;
+            rig.player->tick();
+            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        }
     }
 
     void awakeExtensionCancelsTheAutomaticTimer() {
+        g_now = at(23, 0);
         Rig rig;
-        rig.player->configure({{QStringLiteral("safetyStopHours"), 1}, {QStringLiteral("sleepExtendMinutes"), 15}});
+        rig.player->configure(night());
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         rig.run(1);
         g_now += 61 * 60'000;
         rig.player->tick();
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
-        QVERIFY(rig.player->sleepLeftSeconds() <= 60.0);   // vẫn đếm ngược 1 phút
-        QCOMPARE(rig.player->sleepMinutes(), 0);           // nhưng không ai chọn số phút
-        QCOMPARE(rig.player->sleepExtendMinutes(), 15);
+        QVERIFY(rig.player->sleepLeftSeconds() <= 1800.0);
+        QCOMPARE(rig.player->sleepMinutes(), 30);
+        QCOMPARE(rig.player->sleepExtendMinutes(), 30);
         rig.player->extendSleep();
         rig.player->extendSleep();
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
         QVERIFY(rig.player->notice().isEmpty());
     }
 
-    void otherAppsOsInputPreventsSafetyAndCancelsAnAutomaticCountdown() {
+    void otherAppsOsInputCancelsANightCountdown() {
+        g_now = at(23, 0);
         Rig rig;
-        rig.player->configure({{QStringLiteral("safetyStopHours"), 1}});
+        rig.player->configure(night());
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         g_now += 2 * 3'600'000;
         rig.lastOsInput = g_now;
@@ -395,14 +389,20 @@ private slots:
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
     }
 
-    void safetyStopOffNeverArms() {
-        Rig rig;
-        rig.player->configure({{QStringLiteral("safetyStopHours"), 0}});
-        rig.player->open(QStringLiteral("a"), -1, -1, true);
-        rig.run(1);
-        g_now += 5 * 3'600'000;
-        rig.player->tick();
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+    void removedSettingsCannotArmAfterThreeQuietHours() {
+        for (int storedHours : {1, 2, 3}) {
+            Rig rig;
+            rig.player->configure({{QStringLiteral("safetyStopHours"), storedHours}});
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.run(1);
+            for (int minute = 0; minute < 180; ++minute) {
+                g_now += 60'000;
+                rig.player->tick();
+                QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+                QVERIFY(rig.out.isPlaying);
+                QVERIFY(rig.player->notice().isEmpty());
+            }
+        }
     }
 
     void configuredExtendAndAutoRewind() {

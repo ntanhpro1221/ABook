@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSafetyNet, sleepSpoken } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -101,16 +101,6 @@ describe("nghe thêm là hẹn lại, không cộng dồn", () => {
     expect(sleepExtendMinutes({ kind: "off" }, 15)).toBe(15);
   });
 
-  it("lưới an toàn đếm 1 phút nhưng hẹn lại về \"Mỗi lần nghe thêm\", không về 1 phút", () => {
-    const net = sleepSafetyNet(true, at);
-    expect(minutesLeft(net, at)).toBeCloseTo(1, 5);
-    expect(sleepExtendMinutes(net, 15)).toBe(15);
-    expect(sleepExtendLabel(sleepExtendMinutes(net, 15))).toBe("Hẹn lại 15 phút");
-    const again = sleepExtended(net, 15, true, at + 10_000);
-    expect(minutesLeft(again, at + 10_000)).toBeCloseTo(15, 5);
-    expect(again).toMatchObject({ kind: "minutes", minutes: 15 });
-    expect(minutesLeft(sleepExtended(again, 15, true, at + 10_000), at + 10_000)).toBeCloseTo(15, 5);
-  });
 
   it("nhãn nút chung một chữ cho mọi nơi", () => {
     expect(sleepExtendLabel(10)).toBe("Hẹn lại 10 phút");

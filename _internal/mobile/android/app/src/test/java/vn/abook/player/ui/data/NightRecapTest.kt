@@ -24,12 +24,12 @@ class NightRecapTest {
     }
 
     @Test
-    fun `without stillness the last touch is suggested, and a safety stop hides the timer marker`() {
+    fun `without stillness the last touch is suggested and the schedule keeps its timer marker`() {
         val touched = NightRecap.markers(night(event("timer", 1.0, 100.0), event("shake", 2.0, 300.0), event("stopped", 4.0, 800.0)))
         assertEquals(MarkerKind.Touch, touched.first { it.suggested }.kind)
-        val safety = NightRecap.markers(night(event("timer", 1.0, 100.0, "safety"), event("stopped", 4.0, 800.0)))
-        assertEquals(listOf(MarkerKind.Stopped), safety.map { it.kind })
-        assertEquals("không ai chạm máy suốt một lúc lâu", safety[0].hint)
+        val scheduled = NightRecap.markers(night(event("timer", 1.0, 100.0, "schedule"), event("stopped", 4.0, 800.0)))
+        assertEquals(listOf(MarkerKind.Timer, MarkerKind.Stopped), scheduled.map { it.kind })
+        assertEquals("lúc hết giờ hẹn", scheduled[1].hint)
     }
 
     @Test
@@ -71,13 +71,13 @@ class NightRecapTest {
 
     @Test
     fun `a stored night parses and a missing end stays missing`() {
-        val json = JSONObject("""{"bookId":"b","bookTitle":"T","startedAt":5.0,"events":[{"type":"timer","at":6.0,"action":"safety","position":{"chapterId":null,"chapterTitle":"","seconds":1.5}},
+        val json = JSONObject("""{"bookId":"b","bookTitle":"T","startedAt":5.0,"events":[{"type":"timer","at":6.0,"action":"schedule","position":{"chapterId":null,"chapterTitle":"","seconds":1.5}},
             {"type":"still","at":7.0,"position":{"chapterId":3,"chapterTitle":"Ba","seconds":9.0}}]}""")
         val session = NightSession.parse(json)
         assertNull(session.endedAt)
         assertEquals(2, session.events.size)
         assertNull(session.events[0].chapterId)
         assertEquals(3, session.events[1].chapterId)
-        assertEquals("safety", session.events[0].action)
+        assertEquals("schedule", session.events[0].action)
     }
 }

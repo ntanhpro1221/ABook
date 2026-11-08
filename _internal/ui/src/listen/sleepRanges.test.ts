@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { EXTEND_CHOICES, FADE_CHOICES, SAFETY_STOP_CHOICES, SCHEDULE_MINUTES, cleanSleepSchedule } from "./sleep";
+import { EXTEND_CHOICES, FADE_CHOICES, SCHEDULE_MINUTES, cleanSleepSchedule } from "./sleep";
 
 // Miền giá trị của tuỳ chọn nghe: MỘT bảng chung (tests/fixtures/settings/ranges.json) cho Python, giao diện và lõi Kotlin (soát a102 B3).
 const ranges = JSON.parse(readFileSync(new URL("../../../tests/fixtures/settings/ranges.json", import.meta.url)).toString("utf8")) as {
@@ -13,7 +13,6 @@ describe("bảng miền chung", () => {
   it("các hằng của sleep.ts là bảng của fixture", () => {
     expect(FADE_CHOICES).toEqual(ranges.choices.sleepFadeSeconds.values);
     expect(EXTEND_CHOICES).toEqual(ranges.choices.sleepExtendMinutes.values);
-    expect(SAFETY_STOP_CHOICES).toEqual(ranges.choices.safetyStopHours.values);
     expect(SCHEDULE_MINUTES).toEqual(ranges.schedule.minutes);
   });
 

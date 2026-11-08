@@ -65,9 +65,10 @@ def test_wrongly_typed_preferences_fall_back_one_key_at_a_time(tmp_path: Path) -
     assert data["volume"] == 0.4, "khoá đúng kiểu giữ nguyên"
     assert isinstance(data["libraryRoot"], str) and data["libraryRoot"]
     assert (data["theme"], data["recents"], data["positions"], data["syncEnabled"], data["playbackRate"]) == ("system", [], {}, False, 1.0)
-    assert data["custom"] == {"x": 1}, "khoá lạ không xét"
+    assert "custom" not in data, "chỉ khoá thuộc schema hiện tại được nạp vào app"
     assert len(_kept(tmp_path, "preferences.json")) == 1 and notices.NOTICES.all()
     assert json.loads(path.read_text(encoding="utf-8"))["volume"] == 0.4, "bản sạch được ghi lại ngay"
+    assert json.loads(path.read_text(encoding="utf-8"))["custom"] == {"x": 1}, "không migrate hay xoá khoá lạ trên đĩa khi nạp"
     Preferences(path)
     assert len(_kept(tmp_path, "preferences.json")) == 1, "lần mở sau không báo lại"
     Library(preferences).projects()  # libraryRoot 5 từng làm mọi yêu cầu 500

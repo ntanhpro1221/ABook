@@ -13,6 +13,36 @@ class SleepPolicyTest {
         }
     }
 
+    @Test fun threeHoursOfQuietPlaybackCannotArmATimerEvenWithASavedRemovedSetting() {
+        val voice = FakeExo().apply { playing = true; playWhenReady = true }
+        val mode = SleepTimer::class.java.getDeclaredField("mode").also { it.isAccessible = true }
+        mode.set(SleepTimer, SleepTimer.Mode.OFF)
+        SleepTimer.schedule = null
+        Playback.player = voice.player
+        val evidence = ListenerActivity.evidence
+        android.os.Handler.reset()
+        android.os.Handler.advance(1000L)
+        evidence.screen(false, 1000L)
+        try {
+            val settings = org.json.JSONObject().put("safetyStopHours", 1)
+            assertFalse(ListenPrefs.clean(settings).has("safetyStopHours"))
+            assertNull(vn.abook.player.ui.data.AppSettings.from(settings).schedule)
+            repeat(360) { step ->
+                android.os.Handler.advance(SleepPolicy.WINDOW_MS)
+                val now = 1000L + (step + 1) * SleepPolicy.WINDOW_MS
+                evidence.motionWindow(now - SleepPolicy.WINDOW_MS, now, 0.01)
+                SleepTimer.checkSchedule()
+                assertEquals("after ${(step + 1) * 30} seconds", SleepTimer.Mode.OFF, SleepTimer.mode)
+                assertTrue(voice.playing)
+            }
+            assertFalse(voice.calls.contains("pause"))
+        } finally {
+            evidence.screen(true, 3 * hour + 1000L)
+            Playback.player = null
+            android.os.Handler.reset()
+        }
+    }
+
     @Test fun usingAnotherAppWithTheScreenOnNeverArmsEvenAfterThreeHours() {
         val p = SleepPolicy()
         still(p, 3 * hour)
@@ -20,7 +50,7 @@ class SleepPolicyTest {
         assertFalse(p.allows(3 * hour, 2 * hour, false, 0))
     }
 
-    @Test fun safetyRequiresTheWholeIdleIntervalWithTheScreenOff() {
+    @Test fun aNightScheduleRequiresTheWholeIdleIntervalWithTheScreenOff() {
         val p = asleep()
         val now = 2 * hour + 1000
         still(p, now)
@@ -61,7 +91,7 @@ class SleepPolicyTest {
         }
     }
 
-    @Test fun sensorGapsClockRollbackAndDisabledSafetyNeverArm() {
+    @Test fun sensorGapsClockRollbackAndMissingIdleIntervalNeverArm() {
         val p = asleep()
         still(p, 121_000)
         p.motionWindow(221_000, 251_000, 0.01)

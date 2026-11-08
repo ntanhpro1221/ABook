@@ -11,7 +11,7 @@ thử trên máy ảo Android 16 (Play Store): **Smart AudioBook Player** (SABP,
 
 - **Hẹn giờ ngủ**: mặc định 10 phút; mỗi lần lắc máy thì đặt lại từ đầu. Có **lịch tự bật** (tự bật/tắt theo giờ), độ
   nhạy lắc, "theo dõi chuyển động: luôn / chỉ lúc sắp tắt", báo khi bắt đầu nhỏ dần, rung khi được đặt lại.
-- **Force stop sau 2 giờ phát liên tục** - lưới an toàn cho người ngủ quên mà không hẹn giờ.
+- **Force stop sau 2 giờ phát liên tục** là tính năng của SABP; ABook không áp dụng. Chủ sách 08-11 yêu cầu gỡ hoàn toàn việc tự hẹn/tự dừng vì lâu không tương tác, kể cả lựa chọn trong Cài đặt.
 - **Tự lùi theo độ dài lần dừng**, tối đa 30 giây ("Big"). Đây đúng là cách ta vừa làm (0 / 10 / 30 giây).
 - Tự phát khi cắm tai nghe; tạm dừng khi có tin nhắn hoặc chỉ đường; tự phát lại sau cuộc gọi; dừng khi app khác phát.
 - Dòng tiến độ **cả cuốn** ngay trên trình phát: "Đã nghe 15:00 / 45:00 · 33% · Còn 30:00".

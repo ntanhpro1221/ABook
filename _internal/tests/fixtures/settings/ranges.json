@@ -5,7 +5,6 @@
     "readingSurface": { "values": ["auto", "paper", "ivory", "night"], "default": "auto" },
     "sleepFadeSeconds": { "values": [10, 30, 60], "default": 30 },
     "sleepExtendMinutes": { "values": [5, 10, 15], "default": 10 },
-    "safetyStopHours": { "values": [0, 1, 2, 3], "default": 2 },
     "shakeSensitivity": { "values": ["gentle", "normal", "firm"], "default": "normal" }
   },
   "booleans": {
