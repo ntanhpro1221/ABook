@@ -31,6 +31,11 @@ endforeach()
 find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QmlPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
 
+qt_add_executable(AudioFxTests tests/test_audiofx.cpp src/timestretch.cpp third_party/sonic/sonic.c)
+target_include_directories(AudioFxTests PRIVATE src third_party)
+target_link_libraries(AudioFxTests PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME AudioFxTests COMMAND AudioFxTests)
+
 # App chỉ dựng trên Windows (Media Foundation, QWindowKit); máy khác (Linux CI, cloud) dựng và chạy mọi bộ thử.
 if(WIN32)
 # Khung cửa sổ tự vẽ (Apache-2.0, liên kết TĨNH, không thêm DLL): tools/build_qwindowkit.bat dựng vào QWK_ROOT/inst.
@@ -154,6 +159,8 @@ qt_add_qml_module(ABookDesk
         qml/ActionButton.qml
         qml/BookLogic.js
         qml/VolumeControl.qml
+        qml/AudioFxSlider.qml
+        qml/AudioFxPanel.qml
         qml/MusicLevelSlider.qml
         qml/ReadingSuggestions.qml
         qml/BookCell.qml

@@ -14,6 +14,7 @@
 #include "mediacontrols.h"
 #include "platform.h"
 #include "player.h"
+#include <QSettings>
 #include "speechout.h"
 #include "outputdevices.h"
 #include "readalong.h"
@@ -220,6 +221,11 @@ int main(int argc, char *argv[]) {
     OutputDevices::setInstance(&outputs);
     Player player(&speech, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
+    QSettings audioFxStore;
+    player.setAudioFx(audioFxStore.value(QStringLiteral("audioFx")).toMap());
+    player.setVolume(audioFxStore.value(QStringLiteral("appVolume"),0.9).toDouble());
+    QObject::connect(&player,&Player::audioFxChanged,&player,[&] { audioFxStore.setValue(QStringLiteral("audioFx"),player.audioFx()); });
+    QObject::connect(&player,&Player::volumeChanged,&player,[&] { audioFxStore.setValue(QStringLiteral("appVolume"),player.volume()); });
     player.watchInput();
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
         auto *voice = new MixVoice(mixer.get(), MixVoice::Bed);

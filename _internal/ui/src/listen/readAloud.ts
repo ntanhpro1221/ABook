@@ -1,4 +1,5 @@
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
+import { attachAudioFx } from './audioFx';
 import type { Script, ScriptSegment } from "./model";
 import { makeAnchor, restoreAnchor, textFingerprint, type ReadingAnchor } from "./readingAnchor";
 import { LiveClip, MP3_MIME } from "./liveClip";
@@ -1785,8 +1786,10 @@ export class ReadAloudEngine implements AudioEngine {
       slot.objectUrl = slot.clip.bytes && typeof URL.createObjectURL === "function" ? URL.createObjectURL(slot.clip.bytes) : null;
     }
     const audio = this.createAudio(slot.objectUrl ?? slot.clip.url);
+    const detachFx = typeof HTMLMediaElement !== 'undefined' && audio instanceof HTMLMediaElement ? attachAudioFx(audio) : () => {};
     if (source && live) slot.feed = new LiveFeed(source, live, () => this.feedBroken(index, slot));
     audio.preload = "auto";
+    if (typeof HTMLMediaElement !== 'undefined' && audio instanceof HTMLMediaElement) audio.preservesPitch = true;
     audio.muted = this.muted;
     audio.playbackRate = this.rate;
     const ended = () => this.audioEnded(index);
@@ -1808,6 +1811,7 @@ export class ReadAloudEngine implements AudioEngine {
     audio.addEventListener("waiting", waiting);
     audio.addEventListener("error", broken);
     slot.detach = () => {
+      detachFx();
       audio.removeEventListener("ended", ended);
       audio.removeEventListener("timeupdate", tick);
       audio.removeEventListener("playing", playing);

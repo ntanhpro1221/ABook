@@ -316,6 +316,14 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 
 ## 8. Kiểm trước khi gộp một thay đổi giao diện
 
+### Âm thanh khi nghe (Android / Qt / web)
+
+- Trình phát `…` → `Âm thanh` (2 cấp); Back khép lớp đang mở. Dùng sheet/popover sẵn có: trượt + đổi cỡ khi vào/ra, không fade thuần.
+- Cùng thứ tự: ghi chú phạm vi → **Âm lượng** 0–100% → **Tăng âm** 0–12 dB → **Cao độ** −6…+6 bán âm, bước 0,5 và **Về mặc định** (0) → **Equalizer** → preset → 5 dải → **Tăng trầm** 0–12 dB.
+- Preset: **Phẳng**, **Rõ lời**, **Trầm ấm**, **Bổng**, **Giảm chói**. Năm dải **80 Hz · 250 Hz · 1 kHz · 4 kHz · 12 kHz**, mỗi dải −12…+12 dB, bước 1 dB; chỉnh tay bỏ chọn preset. Chọn preset bật EQ; tắt EQ giữ các giá trị để bật lại. Tăng trầm là low shelf 120 Hz.
+- Lưu toàn app trên từng thiết bị. Dòng giải thích giống nhau: “Lưu cho toàn app. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.” Âm lượng app điều khiển cả lời và nhạc, độc lập âm lượng hệ thống; EQ/tăng trầm/boost/cao độ chỉ đường lời đọc, gồm thu sẵn và đọc to. Nhạc không bị đổi màu/cao độ. Limiter bảo vệ đỉnh; tốc độ vẫn giữ cao độ đã chọn.
+- Đây là tuỳ chọn phát lại, không sửa WAV/MP3, preset giọng TTS, hash chất lượng hay kết quả duyệt. Tốc độ vẫn lưu theo sách như trước.
+
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
