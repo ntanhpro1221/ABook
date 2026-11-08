@@ -7,6 +7,18 @@ import org.junit.Test
 import vn.abook.player.vieneu.VieneuUnits
 
 class JapaneseFallbackTest {
+    @Test fun sharedReadingOwnership() {
+        val cases = org.json.JSONArray(File("../../../tests/fixtures/readaloud/japanese_fallback/ownership.json").readText(Charsets.UTF_8))
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val text = c.getString("text")
+            val origin = if (c.isNull("origin")) null else c.getString("origin")
+            val toks = text.split(" ")
+            assertEquals(text, c.getString("said"), VieneuUnits.spokenTokens(toks, origin, directEnglish = true).joinToString(" "))
+            assertEquals("đã-chọn", VieneuUnits.spokenTokens(toks, origin, readings = mapOf(toks.first() to "đã chọn"), directEnglish = true).first())
+        }
+    }
+
     @Test fun sharedBookEvidenceAndPresentation() {
         val cases = org.json.JSONArray(File("../../../tests/fixtures/readaloud/japanese_fallback/book_evidence.json").readText(Charsets.UTF_8))
         for (i in 0 until cases.length()) {
@@ -55,11 +67,13 @@ class JapaneseFallbackTest {
             val expected = c.getJSONArray("indices")
             assertEquals(c.getString("text"), (0 until expected.length()).map { expected.getInt(it) }, actual)
         }
-        for (word in listOf("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel", "Anime")) {
+        for (word in listOf("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel")) {
             assertNull(word, JapanesePolicy.reading(word, null))
             if (word == "Aya") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
             else assertNull(word, JapanesePolicy.reading(word, "ja"))
         }
+        assertNotNull(JapanesePolicy.reading("Anime", null))
+        assertNotNull(JapanesePolicy.reading("Anime", "ja"))
         assertEquals(3, JapanesePolicy.syllables("Tanaka"))
         assertEquals(2, JapanesePolicy.syllables("Satou"))
         assertEquals(0, JapanesePolicy.syllables("English"))

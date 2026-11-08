@@ -23,6 +23,15 @@ def lexical_guard() -> frozenset[str]:
         return frozenset(stream.read().split())
 
 
+def _lexically_guarded(head: str) -> bool:
+    low = head.casefold()
+    # The broad English asset also contains romanized Japanese proper nouns.
+    # A Japanese onset plus a complete parse can preserve an established name
+    # reading in a Japanese book. Ordinary English vocabulary still wins first.
+    marked = any(onset in low for onset in [*POLICY["onsets"], "wa"])
+    return low in lexical_guard() and not marked
+
+
 def _normalized(core: str, origin: str | None) -> str:
     if origin != "ja":
         return core
@@ -43,7 +52,8 @@ def _head(core: str) -> tuple[str, bool]:
     while len(parts) > 1 and parts[-1].casefold() in POLICY["suffixes"]:
         parts.pop()
     # Initial stutters inherit the complete name's evidence.
-    while len(parts) > 1 and len(parts[0]) == 1 and parts[0].casefold() == parts[-1][:1].casefold():
+    while (len(parts) > 1 and len(parts[0]) < len(parts[-1])
+           and parts[-1].casefold().startswith(parts[0].casefold())):
         parts.pop(0)
     return "-".join(parts), honorific
 
@@ -94,12 +104,15 @@ def _candidate(core: str, origin: str | None = None) -> tuple[int, bool]:
     from .names import english_words
 
     head, honorific = _head(_normalized(core, origin))
-    if (len(head) < 2 or not head[:1].isupper() or head[1:] != head[1:].lower()
+    parts = head.split("-")
+    if (len(head) < 2 or not head[:1].isupper()
+            or any(part[1:] != part[1:].lower() for part in parts)
             or is_vietnamese_syllable(head) or head.casefold() in english_words()
-            or (origin == "ja" and head.casefold() in lexical_guard())
+            or (origin == "ja" and _lexically_guarded(head))
             or head.casefold() in POLICY["common"] or re.search(r"(.)\1\1", head.casefold())):
         return 0, False
-    count = syllables(head)
+    counts = [syllables(part) for part in parts]
+    count = sum(counts) if all(counts) else 0
     return (count, honorific) if count and romanized_reading(head, "ja") else (0, False)
 
 
@@ -111,8 +124,12 @@ def routing_origin(surface: str, origin: str | None) -> str | None:
 
 
 def _supported(core: str) -> bool:
+    from .names import honorific_reading, term_origin
+
+    if core.casefold() in POLICY["common"] or (term_origin(core) == "ja" and honorific_reading(core, None)):
+        return True
     count, honorific = _candidate(core)
-    return bool(count and (honorific or count >= POLICY["routing"]["min_syllables"]))
+    return bool(count and honorific)
 
 
 def contextual_names(toks: list[str], origin: str | None = None) -> set[int]:
@@ -129,12 +146,34 @@ def contextual_names(toks: list[str], origin: str | None = None) -> set[int]:
 
 def _reading_word(core: str, origin: str | None, *, contextual: bool = False) -> str | None:
     from ..romanization import romanized_reading
-    from .names import lone_syllable
+    from .names import honorific_reading, loanword_reading, lone_syllable, name_reading, term_origin
 
+    source = core
     core = _normalized(core, origin)
+    if origin == "ko":
+        return None
+    # Lexical Japanese and joined addresses have their own evidence. A name
+    # detector's negative result must not erase either earlier reading.
+    lexical = loanword_reading(core)
+    if core.casefold() in POLICY["common"] and lexical:
+        return lexical
+    address = honorific_reading(core, origin) if term_origin(core) != "ko" else None
+    if address:
+        return address
+    # Short capitals belong to letter/number TN unless an adjacent name or
+    # joined address supplies independent evidence. Case folding is not evidence.
+    if source.isupper() and len(source) <= 4 and not contextual:
+        return None
     count, honorific = _candidate(core, origin)
     minimum = POLICY["routing"]["known_ja_min_syllables" if origin == "ja" else "min_syllables"]
-    if origin == "ko" or not count or not (contextual or honorific or count >= minimum):
+    if origin is None and not (contextual or honorific):
+        return None
+    # A one-nucleus vocalization with a written long vowel was already readable
+    # in a Japanese book; it is not an English word merely because it is short.
+    long_sound = origin == "ja" and count == 1 and bool(re.search(r"([aiueo])\1", core.casefold()))
+    if not count or not (contextual or honorific or count >= minimum or long_sound):
+        if origin == "ja" and not _lexically_guarded(_head(core)[0]):
+            return name_reading(core, origin)
         return None
     head, _ = _head(core)
     parts = core.split("-")
@@ -184,11 +223,16 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
         before, core, after = split_token(source)
         if not core or before[-1:].isdigit() or re.match(r"^[-–]?\d", after):
             continue
+        previous_name = name_reading(core, origin)
+        if out[index] != token and out[index] != before + str(previous_name) + after:
+            # Structural TN, letter spelling, loanwords and honorifics own their
+            # output. Only an earlier name reading may be replaced or rejected.
+            continue
         said = reading(core, origin, contextual=index in contextual)
         if said:
             out[index] = before + said + after
-        elif origin == "ja" and out[index] == before + str(name_reading(core, origin)) + after:
-            # The direct-reading policy also governs short ambiguous spellings.
+        elif (origin == "ja" and _lexically_guarded(_head(_normalized(core, origin))[0])
+              and out[index] == before + str(previous_name) + after):
             out[index] = token
 
 
@@ -223,7 +267,7 @@ def read_unmodified(source: str, spoken: str, origin: str | None, *, contextual:
         if len(locations) != 1:
             continue
         said = _reading_word(raw, origin, contextual=contextual)
-        if said is None and origin != "ja":
+        if said is None and not (origin == "ja" and _lexically_guarded(_head(_normalized(raw, origin))[0])):
             continue
         start, stop = locations.pop()
         replacements.append((start, stop, said or raw))

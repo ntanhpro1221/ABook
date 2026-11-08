@@ -1,6 +1,6 @@
 [
   {"token": "Nopi", "origin": "ja", "reading": "Nô-pi", "spoken": "Nô-pi"},
-  {"token": "NOPI", "origin": "ja", "reading": "Nô-pi", "spoken": "Nô-pi"},
+  {"token": "NOPI", "origin": "ja", "reading": null, "spoken": "nopi"},
   {"token": "Nopi-kunn", "origin": "ja", "reading": "Nô-pi-cun", "spoken": "Nô-pi-cun…"},
   {"token": "NOPI-CHAAAN", "origin": "ja", "reading": "Nô-pi-chan", "spoken": "Nô-pi-chan…"},
   {"token": "Nopi[note27]", "origin": "ja", "reading": "Nô-pi[note27]", "spoken": "Nô-pi"},

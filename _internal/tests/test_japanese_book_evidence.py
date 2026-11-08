@@ -19,7 +19,7 @@ def test_shared_book_evidence(case):
         assert vieneu.spoken_tokens([case["token"]], case["origin"], direct_english=True) == [case["spoken"]]
 
 
-@pytest.mark.parametrize("word", ["Nopi", "NOPI", "Nopi-kunn", "NOPI-CHAAAN"])
+@pytest.mark.parametrize("word", ["Nopi", "NOPIKA", "Nopi-kunn", "NOPI-CHAAAN"])
 def test_known_book_reads_short_names_and_uppercase(word):
     assert jp.reading(word, "ja") is not None
     assert jp.reading(word, None) is None
@@ -29,7 +29,7 @@ def test_known_book_reads_short_names_and_uppercase(word):
     assert planned_reading(word, "ja", direct_english=True)[1] == "rule_romanization"
 
 
-@pytest.mark.parametrize("word", ["_Nopi_", "~Nopi~", "Nopi[note27]", "chữ「Nopi」to", "Nopi・Nopika", "(NOPI)"])
+@pytest.mark.parametrize("word", ["_Nopi_", "~Nopi~", "Nopi[note27]", "chữ「Nopi」to", "Nopi・Nopika", "(NOPIKA)"])
 def test_presentation_is_only_removed_for_recognition(word):
     original = word
     assert jp.reading(word, "ja") is not None
@@ -78,3 +78,14 @@ def test_lexical_asset_is_in_both_pipeline_fingerprints():
 
     assert "readaloud/japanese_lexicon.txt.gz" in QUALITY_IMPLEMENTATION_FILES
     assert "readaloud/japanese_lexicon.txt.gz" in ANALYSIS_CASTING_IMPLEMENTATION_FILES
+
+
+@pytest.mark.parametrize("case", json.loads((Path(__file__).parent / "fixtures/readaloud/japanese_fallback/ownership.json").read_text(encoding="utf-8")))
+def test_reading_ownership_and_independent_name_evidence(case):
+    text = case["text"]
+    toks = text.split()
+    assert " ".join(vieneu.spoken_tokens(toks, case["origin"], direct_english=True)) == case["said"]
+    _, units = vieneu.units(text, 256, case["origin"], direct_english=True)
+    assert " ".join(piece for unit in units for piece in unit.pieces) == case["said"]
+    # A listener's explicit choice still wins over every automatic stage.
+    assert vieneu.spoken_tokens(toks, case["origin"], readings={toks[0]: "đã chọn"}, direct_english=True)[0] == "đã-chọn"

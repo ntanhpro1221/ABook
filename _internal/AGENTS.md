@@ -214,8 +214,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
   VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
   Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. VieNeu dùng bảng dự phòng Nhật
-  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback2`. Tên Latin phải tách hết bằng bảng âm:
-  ít nhất hai âm tiết khi gốc cuốn đã là Nhật; chưa rõ gốc thì ít nhất ba âm tiết, kính ngữ dính hoặc cặp romaji viết hoa.
+  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback3`. Tên Latin phải tách hết bằng bảng âm:
+  ít nhất hai âm tiết cho dự phòng mới khi gốc cuốn đã là Nhật; chưa rõ gốc cần kính ngữ dính hoặc cặp romaji viết hoa.
+  Từ Nhật quen, kính ngữ và cách đọc tên đã được luật cũ chấp nhận có đường riêng; bộ lọc tên không được xoá cách đọc ấy chỉ vì thiếu âm tiết.
+  Viết tắt, số và từ mượn đã được xử lý giữ quyền trên output; HOA ngắn không tự thành tên Nhật nhờ đổi hoa thường.
   Từ Việt/từ Anh được bảo vệ; một tên cục bộ không tự nâng gốc cả cuốn. Tiếng kêu, kéo dài và nói lắp chạy trước tên Nhật,
   giữ mảnh âm đã đọc qua bước direct English; mảnh tên còn nguyên cùng token vẫn theo policy Nhật, không phân tích lại âm đã phát.
   Cách đọc người nghe vẫn áp cuối. Khóa tự động theo thành phần; khi materialize,

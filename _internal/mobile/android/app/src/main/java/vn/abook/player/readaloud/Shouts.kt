@@ -60,7 +60,8 @@ object Shouts {
         val run = Regex("(.)\\1{" + (POLICY.getInt("min_run") - 1) + ",}")
         val stretched = run.containsMatchIn(word)
         val base = run.replace(word) { it.groupValues[1] }
-        val patterned = word !in EnglishWords.ALL && !VietnameseReading.isSyllable(word) && word.all { it in vowels + "hkgwy" }
+        val soundCase = !(core.any(Char::isUpperCase) && core.none(Char::isLowerCase)) || word.length == 2 || Regex("(.)\\1").containsMatchIn(word)
+        val patterned = soundCase && word !in EnglishWords.ALL && !VietnameseReading.isSyllable(word) && word.all { it in vowels + "hkgwy" }
         val reading = when {
             stretched && Regex(POLICY.getString("growl_pattern")).matches(base) -> base.dropLast(1)
             stretched && Regex(POLICY.getString("hiss_pattern")).matches(base) -> base.replace(Regex("[zs]+$"), "") + "… xì"

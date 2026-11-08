@@ -69,15 +69,17 @@ def test_japanese_names_cannot_be_kept_as_western_names(surface, origin):
 
 
 def test_general_evidence_and_short_homographs():
-    assert planned_reading("Haruto", None, direct_english=True)[1] == "rule_romanization"
+    assert planned_reading("Haruto", None, direct_english=True) is None
     assert english_policy.reading("Michael", None) == ("Michael", "keep_english")
     assert " ".join(vieneu.spoken_tokens("Nopi Nakata đến.".split(), None, direct_english=True)) == "Nô-pi Na-ca-ta đến."
-    assert " ".join(vieneu.spoken_tokens("Jin, Nakata đến.".split(), None, direct_english=True)) == "Jin, Na-ca-ta đến."
+    assert " ".join(vieneu.spoken_tokens("Jin, Nakata đến.".split(), None, direct_english=True)) == "Jin, Nakata đến."
     assert vieneu.spoken_tokens(["Tanaka"], None) == ["Tanaka"]
     assert " ".join(vieneu.spoken_tokens("Tanaka Abe đến.".split(), None, direct_english=True)) == "Ta-na-ca a-be đến."
-    for word in ("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel", "Anime"):
+    for word in ("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel"):
         assert reading(word, None) is None
         assert (reading(word, "ja") is None) == (word != "Aya")
+    assert reading("Anime", None) is not None
+    assert reading("Anime", "ja") is not None
     assert vieneu.spoken_tokens(["T-Tanaka"], "ja", direct_english=True) == ["tờ… Ta-na-ca"]
 
 

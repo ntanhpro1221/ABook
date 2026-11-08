@@ -78,7 +78,8 @@ def _expanded_reading(core: str) -> str | None:
     # Lexical words are not short cries merely because their letters fit a pattern.
     from ..analysis import is_vietnamese_syllable
 
-    patterned = word not in names.english_words() and not is_vietnamese_syllable(word) and not any(
+    sound_case = not core.isupper() or len(word) == 2 or bool(re.search(r"(.)\1", word))
+    patterned = sound_case and word not in names.english_words() and not is_vietnamese_syllable(word) and not any(
         c not in POLICY["vowels"] + "hkgwy" for c in word)
     reading = None
     if re.fullmatch(POLICY["growl_pattern"], base) and stretched:
