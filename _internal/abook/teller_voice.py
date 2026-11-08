@@ -1,6 +1,7 @@
 """Listener-selected narration presentation, independent of speaker identity.
 
-Inner speech always uses the thinking character's identity and voice. A named
+First-person inner speech shares the narration profile in default A+ mode while
+retaining the thinking character's identity. Other inner speech keeps its voice. A named
 chapter or accepted section teller of a different gender uses their own voice.
 Explicit teller mode also applies same-gender voices. Per-line provenance restores
 or retargets presentation after reopen without changing speaker identity.
@@ -235,13 +236,11 @@ def teller_thoughts(connection: sqlite3.Connection, tellers: Tellers, *, skip: s
 # ---- áp ---------------------------------------------------------------------------------------------------------
 
 def _recorded(connection: sqlite3.Connection) -> bool:
-    if "wav_path" not in {row[1] for row in connection.execute("PRAGMA table_info(segments)")}:
-        return False
-    return connection.execute("SELECT 1 FROM segments WHERE wav_path IS NOT NULL AND wav_path<>'' LIMIT 1").fetchone() is not None
+    return any(has_recording(row) for row in connection.execute("SELECT * FROM segments"))
 
 
 def ensure(project_root: Path | str, db: Any, settings: dict[str, Any], log: Callable[[str], None] = lambda _m: None) -> dict[str, Any]:
-    """Apply chapter/section narration choices without changing speaker identity."""
+    """Apply A+ by default, or the listener's explicit B, preserving identity."""
     if not db.casting_is_finalized():
         return {"skipped": "not_cast"}
     record = read(project_root)
@@ -251,13 +250,67 @@ def ensure(project_root: Path | str, db: Any, settings: dict[str, Any], log: Cal
     if record["mode"] == "teller" and tellers.active:
         result.update(_enable_teller(project_root, db, tellers, log))
         return result
+    if tellers.active:
+        result.update(_ensure_narrator_mode(project_root, db, settings, tellers, record, log))
     if "teller" in record["applied"]:
         result.update(_disable_teller(project_root, db, log, tellers=tellers))
     else:
-        result.update(_ensure_chapter_tellers(project_root, db, tellers))
+        result.update(_ensure_chapter_tellers(project_root, db, tellers, log))
     if not tellers.active:
         return result or {"skipped": "third_person"}
     return result
+
+
+def _ensure_narrator_mode(project_root: Path | str, db: Any, settings: dict[str, Any], tellers: Tellers,
+                          record: dict[str, Any], log: Callable[[str], None]) -> dict[str, Any]:
+    """Align an automatic book profile only before any recording exists."""
+    from .listener_overrides import narrator_profile
+
+    if not record["narratorAuto"]:
+        return {}
+    wanted = None
+    with db.transaction() as conn:
+        if _recorded(conn) or _narrator_chosen(conn, project_root):
+            return {}
+        profile = narrator_profile(conn)
+        configured = str((settings.get("voices") or {}).get("narrator_voice") or "")
+        # A changed preset without a recorded wish is still not ours to replace.
+        if profile is None or str(profile["preset_name"] or "") != configured:
+            return {}
+        gender = book_teller_gender(conn, tellers)
+        if not gender or profile_gender(profile) in ("", gender):
+            return {}
+        preset = aligned_narrator_preset(conn, gender)
+        if preset:
+            wanted = {"reading": configured, "preset": preset, "gender": gender}
+            _align_narrator(db, settings, wanted, connection=conn)
+    if wanted is None:
+        db.event("warning", "NARRATOR_ALIGN_NO_FREE_VOICE",
+                 "the first-person narrator's gender differs from the narration voice but every narrator voice of that gender is taken",
+                 {"gender": gender})
+        log("Không còn giọng dẫn cùng giới người kể “tôi” chưa nhân vật nào giữ; giữ giọng dẫn hiện tại.")
+        return {"narrator": "no_free_voice"}
+    applied = read(project_root)["applied"]
+    applied["narrator"] = {"from": wanted["reading"], "to": wanted["preset"], "gender": gender, "at": time.time()}
+    _save(project_root, applied=applied)
+    log(f"Người kể xưng “tôi” là {'nữ' if gender == 'female' else 'nam'}: giọng dẫn đổi {wanted['reading']} -> {wanted['preset']}.")
+    return {"narrator": applied["narrator"]}
+
+
+def own_teller_thought(connection: sqlite3.Connection, tellers: Tellers, row: Any) -> bool:
+    """The accepted thinker is the named first-person teller at this exact line."""
+    return (row["kind"] == "thought" and str(row["speaker"]).upper() != NARRATOR
+            and row["canonical_character_id"] in character_ids(connection, tellers.row_narrator(row)))
+
+
+def has_recording(row: Any) -> bool:
+    return bool(row["wav_path"] or row["wav_sha256"] or _heard(row))
+
+
+def has_presentation_table(connection: sqlite3.Connection) -> bool:
+    """A read-only source without this table has no presentation evidence."""
+    return connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='chapter_teller_lines'").fetchone() is not None
 
 
 def presentation_applied(connection: sqlite3.Connection) -> bool:
@@ -284,7 +337,8 @@ def _narrator_chosen(connection: sqlite3.Connection, project_root: Path | str) -
         "SELECT details_json FROM runtime_events WHERE code='VOICE_SET_BY_LISTENER'"))
 
 
-def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers) -> dict[str, Any]:
+def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers,
+                            log: Callable[[str], None] = lambda _m: None) -> dict[str, Any]:
     """Apply or undo chapter narration profiles in one transaction.
 
     Identity stays unchanged. Source-bound provenance and audio resets commit with
@@ -294,10 +348,12 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
     from .database import thought_reads_as_narrator
     from .webui.store import keep_heard_scripts
 
-    mode = read(project_root)["mode"]
+    record = read(project_root)
+    mode = record["mode"]
+    allow_recorded = mode == "teller" or "teller" in record["applied"]
     wishes = _wishes(project_root)
     kept = False
-    changed = redo = 0
+    changed = redo = thoughts = 0
     with db.transaction() as conn:
         base = narrator_profile(conn)
         if base is None:
@@ -318,6 +374,10 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
                 # A subsequent listener change owns this row, even without a pending wish.
                 conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
                 continue
+            # Automatic presentation never invalidates an existing take. Explicit B
+            # keeps its priced retake path, including an explicit return from B.
+            if not allow_recorded and has_recording(row):
+                continue
             original = ({**dict(row), "speaker": origin["original_speaker"],
                          "canonical_character_id": origin["original_character_id"], "voice_profile_id": origin["original_profile_id"]}
                         if origin else dict(row))
@@ -326,27 +386,34 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
                 targets[name] = _teller_target(conn, name, int(base["id"])) if name and not chosen else None
                 genders[name] = teller_gender(conn, name)
             target = (targets[name] if chapter_voice_selected(tellers, row, mode, base_gender, genders[name]) else None)
-            # Ownership, rather than punctuation-derived kind, selects the voice
-            # layer. Attributed inner speech keeps the thinking person's profile.
+            own_thought = own_teller_thought(conn, tellers, original)
             eligible = str(original["speaker"]).upper() == NARRATOR or thought_reads_as_narrator(
                 original["kind"], original["speaker"], original["voice_profile_id"])
+            desired_profile = target[1] if target is not None and eligible else original["voice_profile_id"]
+            if mode == "narrator" and own_thought:
+                desired_profile = target[1] if target is not None else int(base["id"])
             desired = (original["speaker"], original["canonical_character_id"],
-                       target[1] if target is not None and eligible else original["voice_profile_id"])
+                       desired_profile)
             current = (row["speaker"], row["canonical_character_id"], row["voice_profile_id"])
             if desired == current:
                 continue
             if not kept:
                 keep_heard_scripts(Path(project_root))
                 kept = True
-            if target is not None and eligible:
+            if desired_profile != original["voice_profile_id"]:
                 conn.execute("INSERT INTO chapter_teller_lines(segment_id,original_speaker,original_character_id,original_profile_id,"
                              "applied_character_id,applied_profile_id) VALUES(?,?,?,?,?,?) ON CONFLICT(segment_id) DO UPDATE SET"
                              " applied_character_id=excluded.applied_character_id,applied_profile_id=excluded.applied_profile_id",
-                             (row["id"], original["speaker"], original["canonical_character_id"], original["voice_profile_id"], original["canonical_character_id"], target[1]))
+                             (row["id"], original["speaker"], original["canonical_character_id"], original["voice_profile_id"], original["canonical_character_id"], desired_profile))
             else:
                 conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
             redo += _move_lines(db, [row], desired[2], "Giọng kể theo chương: thu lại bằng giọng người kể", connection=conn)
             changed += 1
+            thoughts += int(own_thought and mode == "narrator" and desired_profile == int(base["id"]))
+    if thoughts:
+        db.event("info", "TELLER_THOUGHTS_TO_NARRATOR",
+                 f"{thoughts} inner thoughts of the first-person narrator are read in the narration voice", {"lines": thoughts})
+        log(f"{thoughts} câu nội tâm của chính người kể “tôi” đọc bằng giọng dẫn.")
     return {"chapterNarrator": {"lines": changed, "redo": redo}} if changed else {}
 
 
@@ -360,7 +427,8 @@ def _wishes(project_root: Path | str) -> set[str]:
             if isinstance(entry, dict) and str(entry.get("speaker") or "").upper() not in ("", NARRATOR, "UNKNOWN")}
 
 
-def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any]) -> None:
+def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any],
+                    *, connection: sqlite3.Connection | None = None) -> None:
     """Đổi preset của chính hồ sơ `narrator` (khoá giữ nguyên - như người nghe đổi giọng dẫn) và giới của nhân vật NARRATOR, một
     transaction. Sách chưa thu câu nào nên không có gì phải thu lại."""
     from .config import build_settings
@@ -369,12 +437,13 @@ def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any]) -
     description = build_settings(str(settings.get("quality_profile") or "high_quality"),
                                  {"voices": {"narrator_voice": preset}})["voices"]["narrator_description"]
     now = time.time()
-    with db.transaction() as conn:
+    with (nullcontext(connection) if connection is not None else db.transaction()) as conn:
         db._set_narrator_preset_conn(conn, preset, settings["voices"], now, description=description)
         conn.execute("UPDATE characters SET gender=?, updated_at=? WHERE canonical_name=?", (wanted["gender"], now, NARRATOR))
-    db.event("info", "NARRATOR_ALIGNED_TO_TELLER",
-             f"narration voice {wanted['reading']} -> {preset} to match the first-person narrator's gender",
-             {"from": wanted["reading"], "to": preset, "gender": wanted["gender"]})
+        conn.execute("INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                     (now, "info", "NARRATOR_ALIGNED_TO_TELLER",
+                      f"narration voice {wanted['reading']} -> {preset} to match the first-person narrator's gender",
+                      json.dumps({"from": wanted["reading"], "to": preset, "gender": wanted["gender"]})))
 
 def _heard(row: Any) -> bool:
     """Câu đã có bản thu cần bỏ khi đổi giọng (cùng tập trạng thái với `ProjectDB.apply_listener_speaker`)."""
@@ -391,12 +460,19 @@ def _teller_target(connection: sqlite3.Connection, name: str, narrator_profile_i
     if len(ids) != 1:
         return None
     character_id = next(iter(ids))
+    presented = has_presentation_table(connection)
+    own_profile = ("CASE WHEN t.segment_id IS NOT NULL AND s.voice_profile_id=t.applied_profile_id"
+                   " AND s.speaker=t.original_speaker AND s.canonical_character_id IS t.original_character_id"
+                   " THEN t.original_profile_id ELSE s.voice_profile_id END" if presented else "s.voice_profile_id")
+    join = " LEFT JOIN chapter_teller_lines t ON t.segment_id=s.id" if presented else ""
     voice = connection.execute(
-        "SELECT voice_profile_id, speaker, COUNT(*) AS lines FROM segments WHERE canonical_character_id=? AND voice_profile_id IS NOT NULL"
-        " AND kind IN ('dialogue','thought') GROUP BY voice_profile_id, speaker ORDER BY lines DESC, speaker LIMIT 1", (character_id,)).fetchone()
-    if voice is None or int(voice["voice_profile_id"]) == narrator_profile_id:
+        f"SELECT {own_profile} AS own_profile, s.speaker, COUNT(*) AS lines FROM segments s{join}"
+        " WHERE s.canonical_character_id=? AND s.voice_profile_id IS NOT NULL"
+        " AND s.kind IN ('dialogue','thought') GROUP BY own_profile,s.speaker ORDER BY lines DESC,s.speaker LIMIT 1",
+        (character_id,)).fetchone()
+    if voice is None or voice["own_profile"] is None or int(voice["own_profile"]) == narrator_profile_id:
         return None
-    return character_id, int(voice["voice_profile_id"]), str(voice["speaker"])
+    return character_id, int(voice["own_profile"]), str(voice["speaker"])
 
 
 def teller_lines(connection: sqlite3.Connection, tellers: Tellers) -> tuple[dict[tuple[int, int, str], list[sqlite3.Row]], int]:
@@ -451,7 +527,8 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
     mode = "narrator" if off else "teller"
     base = narrator_profile(connection)
     lines, names = [], set()
-    if base is not None and not _narrator_chosen(connection, project_root):
+    if base is not None:
+        chosen = _narrator_chosen(connection, project_root)
         origins = {int(r["segment_id"]): dict(r) for r in connection.execute("SELECT * FROM chapter_teller_lines")}
         wishes, targets, genders = _wishes(project_root), {}, {}
         for row in connection.execute("SELECT * FROM segments ORDER BY chapter_id,seq"):
@@ -462,15 +539,19 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
                            or row["voice_profile_id"] != origin["applied_profile_id"]):
                 continue
             original_profile = origin["original_profile_id"] if origin else row["voice_profile_id"]
-            if row["speaker"].upper() != NARRATOR and not thought_reads_as_narrator(row["kind"], row["speaker"], original_profile):
+            own_thought = own_teller_thought(connection, tellers, row)
+            eligible = row["speaker"].upper() == NARRATOR or thought_reads_as_narrator(row["kind"], row["speaker"], original_profile)
+            if not eligible and not own_thought and origin is None:
                 continue
             name = tellers.row_narrator(row)
             if name not in targets:
-                targets[name] = _teller_target(connection, name, int(base["id"])) if name else None
+                targets[name] = _teller_target(connection, name, int(base["id"])) if name and not chosen else None
                 genders[name] = teller_gender(connection, name)
             target = targets[name]
             selected = chapter_voice_selected(tellers, row, mode, profile_gender(base), genders[name])
-            desired = target[1] if target is not None and selected else original_profile
+            desired = target[1] if target is not None and selected and eligible else original_profile
+            if mode == "narrator" and own_thought:
+                desired = target[1] if target is not None and selected else int(base["id"])
             if desired != row["voice_profile_id"]:
                 lines.append(row)
                 if target is not None:
@@ -502,7 +583,7 @@ def _move_lines(db: Any, rows: list[Any], profile_id: int | None, reason: str,
 
 def _enable_teller(project_root: Path | str, db: Any, tellers: Tellers, log: Callable[[str], None]) -> dict[str, Any]:
     """Apply the selected narration profile; per-line provenance owns undo."""
-    result = _ensure_chapter_tellers(project_root, db, tellers)
+    result = _ensure_chapter_tellers(project_root, db, tellers, log)
     change = result.get("chapterNarrator")
     applied = read(project_root)["applied"]
     with db.connect() as conn:
@@ -517,7 +598,7 @@ def _enable_teller(project_root: Path | str, db: Any, tellers: Tellers, log: Cal
 
 
 def _disable_teller(project_root: Path | str, db: Any, log: Callable[[str], None], *, tellers: Tellers) -> dict[str, Any]:
-    result = _ensure_chapter_tellers(project_root, db, tellers)
+    result = _ensure_chapter_tellers(project_root, db, tellers, log)
     change = result.get("chapterNarrator", {"lines": 0, "redo": 0})
     applied = read(project_root)["applied"]
     applied.pop("teller", None)
