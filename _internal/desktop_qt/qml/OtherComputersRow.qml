@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
@@ -46,7 +47,7 @@ Collapse {
             width: parent.width
             storageKey: "other-computers." + root.rowId
             title: root.computer.name || ""
-            summary: root.computer.waking ? "Đang chờ" : root.computer.error ? "Cần kiểm tra" : "Đã ghép"
+            summary: root.computer.waking ? S.s_dang_cho_4257d45b : root.computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f
             Item {
                 id: body
                 width: parent.width
@@ -75,9 +76,9 @@ Collapse {
                             opacity: enabled ? 1 : 0.6
                             pressScaling: false
                             Accessible.role: Accessible.Button
-                            Accessible.name: "Thôi chờ"
+                            Accessible.name: S.s_thoi_cho_6bf8a752
                             onClicked: root.stopWaiting(root.rowId)
-                            Text { id: stopText; x: 8; text: "Thôi chờ"; color: Theme.accentText; font.pixelSize: Theme.sizeCaption; font.underline: stopLink.hovered }
+                            Text { id: stopText; x: 8; text: S.s_thoi_cho_6bf8a752; color: Theme.accentText; font.pixelSize: Theme.sizeCaption; font.underline: stopLink.hovered }
                         }
                     }
                     // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
@@ -85,7 +86,7 @@ Collapse {
                         width: parent.width
                         visible: !root.computer.waking
                         text: root.computer.error ? root.computer.error
-                            : Logic.connectionRoute(root.computer.connectedVia) + (root.computer.lastSeen ? "\u00a0·\u00a0thấy " + Logic.formatRelative(root.computer.lastSeen, root.clock) : "")
+                            : Logic.connectionRoute(root.computer.connectedVia) + (root.computer.lastSeen ? S.s_u00a0_u00a0thay_f7bb91c5 + Logic.formatRelative(root.computer.lastSeen, root.clock) : "")
                         color: root.computer.error ? Theme.danger : Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption
@@ -95,7 +96,7 @@ Collapse {
                         width: parent.width
                         topPadding: 2
                         visible: Boolean(root.computer.fingerprint)
-                        text: "Vân tay " + Logic.formatFingerprint(root.computer.fingerprint).slice(0, 9) + "…"
+                        text: S.s_van_tay_8abdcdf0 + Logic.formatFingerprint(root.computer.fingerprint).slice(0, 9) + "…"
                         Accessible.description: Logic.formatFingerprint(root.computer.fingerprint)
                         color: Theme.text3
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -109,8 +110,8 @@ Collapse {
                     x: body.inline ? body.width - width : body.width - width
                     y: body.inline ? (body.lineHeight - height) / 2 : body.lineHeight + 12
                     // Studio của máy tính ấy ngay trong app này, bằng ghép sẵn có - không ghép lần hai (webui/peer_studio.py).
-                    Button { objectName: "openStudio"; visible: root.computer.kind === "computer"; size: "sm"; kind: "ghost"; icon: "clapperboard"; text: "Mở Studio"; Accessible.name: "Mở Studio của " + (root.computer.name || ""); onClicked: root.openStudio(root.rowId) }
-                    Button { objectName: "diagnose"; visible: root.computer.kind === "phone"; size: "sm"; kind: "ghost"; icon: "stethoscope"; text: "Chẩn đoán"; Accessible.name: "Chẩn đoán " + (root.computer.name || ""); onClicked: root.diagnose(root.computer) }
+                    Button { objectName: "openStudio"; visible: root.computer.kind === "computer"; size: "sm"; kind: "ghost"; icon: "clapperboard"; text: S.s_mo_studio_84ec0a81; Accessible.name: S.s_mo_studio_cua_57fcc890 + (root.computer.name || ""); onClicked: root.openStudio(root.rowId) }
+                    Button { objectName: "diagnose"; visible: root.computer.kind === "phone"; size: "sm"; kind: "ghost"; icon: "stethoscope"; text: S.s_chan_doan_906791d5; Accessible.name: S.s_chan_doan_738cc26b + (root.computer.name || ""); onClicked: root.diagnose(root.computer) }
                     OtherComputersBluetooth {
                         visible: !root.bluetoothHost
                         computer: root.computer
@@ -118,8 +119,8 @@ Collapse {
                         busy: root.busy
                         onChoose: address => root.bluetooth(root.rowId, address)
                     }
-                    IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: "Hỏi lại thư viện"; enabled: !root.busy; Accessible.name: "Hỏi lại thư viện"; onClicked: root.refresh() }
-                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: "Bỏ ghép " + (root.computer.name || ""); Accessible.name: "Bỏ ghép " + (root.computer.name || ""); onClicked: root.unpair(root.computer) }
+                    IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: S.s_hoi_lai_thu_vien_bfe2a0e8; enabled: !root.busy; Accessible.name: S.s_hoi_lai_thu_vien_bfe2a0e8; onClicked: root.refresh() }
+                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); Accessible.name: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); onClicked: root.unpair(root.computer) }
                 }
             }
         }

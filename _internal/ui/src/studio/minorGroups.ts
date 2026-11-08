@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Thẻ "vai phụ không tên cả cuốn" (webui/work_items.py mục 5): mọi câu của một nhãn vai ở nhiều chương, người nghe bỏ chọn
 // câu nào không phải rồi chọn người một lần. Phần tính ở đây, không đụng giao diện - để thử được bằng vitest.
 
@@ -42,9 +43,9 @@ export function keepRequests(item: KeepableItem): SpeakerRequest[] {
 
 /** Dòng nói đang chọn bao nhiêu câu, cho thẻ nhóm. */
 export function pickNote(picked: number, total: number): string {
-  if (picked === total) return `Đang chọn cả ${total} câu`;
-  if (picked === 0) return `Chưa chọn câu nào trong ${total} câu`;
-  return `Đang chọn ${picked}/${total} câu`;
+  if (picked === total) return S.s_dang_chon_ca_0_cau_504a9b88(total);
+  if (picked === 0) return S.s_chua_chon_cau_nao_trong_0_cau_0e18fa35(total);
+  return S.s_dang_chon_0_1_cau_3dce2fb6(picked, total);
 }
 
 /** Thẻ nhóm lớn chỉ mang vài câu đầu (`examplesTotal` là tổng - webui/work_items.for_page); "Xem thêm" lấy từng trang `page` câu
@@ -58,5 +59,5 @@ export function examplesPage<T>(bookId: string, key: string, first: T[], more: T
 
 /** Chữ nút "Xem thêm" của thẻ nhóm lớn. */
 export function moreText(shown: number, total: number, format: (value: number) => string = String): string {
-  return `Xem thêm (đang hiện ${format(shown)}/${format(total)} câu)`;
+  return S.s_xem_them_dang_hien_0_1_cau_ebb4ffe0(format(shown), format(total));
 }

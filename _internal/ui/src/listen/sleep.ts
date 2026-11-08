@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Hẹn giờ ngủ - phần tính toán, chung cho máy tính và giao diện Android (lõi native tự đếm trên Android).
 //
 // Ba điều người nghe lúc buồn ngủ cần, rút ra từ đánh giá 26-09:
@@ -55,7 +56,7 @@ export function sleepExtendMinutes(mode: SleepMode, fallback: number): number {
 
 /** Nhãn nút nghe thêm: đồng hồ về lại N phút, không cộng thêm. Điện thoại: SleepText.extendLabel. */
 export function sleepExtendLabel(minutes: number): string {
-  return `Hẹn lại ${minutes} phút`;
+  return S.s_hen_lai_0_phut_d6009aba(minutes);
 }
 
 /** Nghe thêm = hẹn lại: đồng hồ về đúng [sleepExtendMinutes] phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
@@ -79,7 +80,7 @@ export function fadeGain(leftMs: number, fadeMs: number): number {
 
 /** Nhãn trên nút: "14:59", phút cuối vẫn đếm từng giây; "Hết chương". */
 export function sleepLabel(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return "Hết chương";
+  if (mode.kind === "chapter") return S.s_het_chuong_f1d590bb;
   const left = sleepLeftMs(mode, now);
   if (left === null) return "";
   const seconds = Math.ceil(left / 1000);
@@ -89,20 +90,20 @@ export function sleepLabel(mode: SleepMode, now: number): string {
 /** Nhãn trên NÚT hẹn giờ: có đơn vị ("14 phút", "40 giây") - "14:51" ngay cạnh nút tốc độ và giọng đọc trông như giờ đồng hồ (soát UX a9). Bảng mở ra vẫn
  *  hiện đồng hồ đếm lùi đầy đủ ([sleepLabel]). */
 export function sleepButtonLabel(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return "Hết chương";
+  if (mode.kind === "chapter") return S.s_het_chuong_f1d590bb;
   const left = sleepLeftMs(mode, now);
   if (left === null) return "";
   // Theo số giây làm tròn lên (như đồng hồ trong bảng): còn 59,5 giây là "1 phút", không phải "60 giây".
   const seconds = Math.ceil(left / 1000);
-  return seconds < 60 ? `${Math.max(1, seconds)} giây` : `${Math.ceil(left / 60_000)} phút`;
+  return seconds < 60 ? S.s_0_giay_daac30d3(Math.max(1, seconds)) : S.s_0_phut_2596d212(Math.ceil(left / 60_000));
 }
 
 export function sleepSpoken(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return "Hẹn giờ ngủ: dừng khi hết chương này";
+  if (mode.kind === "chapter") return S.s_hen_gio_ngu_dung_khi_het_chuong_nay_38902b7c;
   const left = sleepLeftMs(mode, now);
-  if (left === null) return "Hẹn giờ ngủ";
+  if (left === null) return S.s_hen_gio_ngu_21073488;
   const seconds = Math.ceil(left / 1000);
-  return seconds < 60 ? `Hẹn giờ ngủ: còn ${seconds} giây` : `Hẹn giờ ngủ: còn ${Math.ceil(left / 60_000)} phút`;
+  return seconds < 60 ? S.s_hen_gio_ngu_con_0_giay_b3403ad5(seconds) : S.s_hen_gio_ngu_con_0_phut_52a86bfa(Math.ceil(left / 60_000));
 }
 
 /**

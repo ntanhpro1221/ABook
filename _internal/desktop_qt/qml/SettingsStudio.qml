@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -9,15 +10,15 @@ Column {
     signal studioRequested()
     SectionBlock {
         width: parent.width
-        title: "Máy này"
+        title: S.s_may_nay_4668c138
         StudioSettings { width: parent.width; onStudioRequested: root.studioRequested() }
         SettingRow {
             width: parent.width
-            label: "Tạm dừng dùng pin"
-            hint: "Cắm sạc lại thì tự làm tiếp đúng chỗ."
+            label: S.s_tam_dung_dung_pin_8786ee21
+            hint: S.s_cam_sac_lai_thi_tu_lam_tiep_dung_cho_ce18fa7b
             Switch {
                 objectName: "pauseOnBattery"
-                label: "Tạm dừng dùng pin"
+                label: S.s_tam_dung_dung_pin_8786ee21
                 checked: Api.preferences.pauseOnBattery !== false
                 onToggled: value => Api.update({pauseOnBattery: value})
             }
@@ -26,18 +27,18 @@ Column {
     Collapse {
         width: parent.width
         open: !(Api.info && Api.info.studio && Api.info.studio.installed)
-        Text { objectName: "notInstalledNote"; width: parent.width; topPadding: 8; text: "Tuỳ chọn ở trang này dùng khi đã cài Studio."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
+        Text { objectName: "notInstalledNote"; width: parent.width; topPadding: 8; text: S.s_tuy_chon_o_trang_nay_dung_khi_da_cai_studi_f1c313c4; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
     }
     SectionBlock {
         width: parent.width
-        title: "Sách mới"
+        title: S.s_sach_moi_099947f8
         fold: "studio.new-book"
         NewBookDefaults { width: parent.width }
         SettingsItem { width: parent.width; BookTemplates { width: Math.min(parent.width, 576) } }
     }
     SectionBlock {
         width: parent.width
-        title: "Cách đọc chung"
+        title: S.s_cach_doc_chung_a7e00c51
         fold: "studio.shared-readings"
         SharedReadingsSettings { width: parent.width }
     }

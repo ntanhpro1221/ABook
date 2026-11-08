@@ -16,7 +16,7 @@ object MusicImport {
     val MIME_TYPES = arrayOf("audio/*", "application/ogg")
 
     fun run(context: Context, uris: List<Uri>, progress: (done: Int, total: Int) -> Unit): JSONObject {
-        val store = LocalStudio.musicStore ?: throw IllegalStateException("Kho nhạc chưa sẵn sàng")
+        val store = LocalStudio.musicStore ?: throw IllegalStateException(S.s_kho_nhac_chua_san_sang_d2b3b0e6)
         val added = ArrayList<JSONObject>()
         val existing = ArrayList<JSONObject>()
         val failed = ArrayList<String>()
@@ -25,14 +25,14 @@ object MusicImport {
                 context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                     if (cursor.moveToFirst()) cursor.getString(0) else null
                 }
-            }.getOrNull() ?: uri.lastPathSegment ?: "nhạc"
+            }.getOrNull() ?: uri.lastPathSegment ?: S.s_nhac_76318bc9
             try {
                 val (track, duplicate) = store.importStream(name) { context.contentResolver.openInputStream(uri) }
                 (if (duplicate) existing else added).add(track)
             } catch (error: MusicStore.ImportError) {
                 failed.add(error.message.orEmpty())
             } catch (error: Exception) {
-                failed.add("“$name”: không thêm được (${error.message ?: error.javaClass.simpleName}).")
+                failed.add(S.s_0_khong_them_duoc_1_8b310b93(name, error.message ?: error.javaClass.simpleName))
             }
             progress(index + 1, uris.size)
         }

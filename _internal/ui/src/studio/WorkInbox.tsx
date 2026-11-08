@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
@@ -144,23 +145,23 @@ export interface WorkView {
 }
 
 const KIND_LABEL: Record<WorkKind, string> = {
-  speaker: "Ai nói câu này",
-  caller: "Người gọi / ngoài khung",
-  turn: "Lượt đối đáp",
-  pronunciation: "Cách đọc tên",
-  gender: "Nam hay nữ",
-  vocative: "Gọi hay nói",
-  alias: "Một người hai tên",
-  bracket: "Lời trong 『』",
-  "shared-voice": "Chung giọng",
-  unnamed: "Vai phụ không tên",
-  audio: "Bản thu lỗi",
-  narrator: "Người kể của đoạn",
-  "voice-wish": "Giọng chưa đổi được",
-  snap: "Tên viết khác",
-  "teller-voice": "Giọng lời dẫn",
-  "teller-thought": "Nội tâm người kể",
-  refused: "Yêu cầu chưa được",
+  speaker: S.s_ai_noi_cau_nay_0e00a5c7,
+  caller: S.s_nguoi_goi_ngoai_khung_03677986,
+  turn: S.s_luot_doi_dap_a2c055e0,
+  pronunciation: S.s_cach_doc_ten_1c46e75d,
+  gender: S.s_nam_hay_nu_0167dbc6,
+  vocative: S.s_goi_hay_noi_305521d7,
+  alias: S.s_mot_nguoi_hai_ten_9293d8ab,
+  bracket: S.s_loi_trong_c682376b,
+  "shared-voice": S.s_chung_giong_a58df5cc,
+  unnamed: S.s_vai_phu_khong_ten_6395f0d2,
+  audio: S.s_ban_thu_loi_753aaed5,
+  narrator: S.s_nguoi_ke_cua_doan_b218398e,
+  "voice-wish": S.s_giong_chua_doi_duoc_2617419d,
+  snap: S.s_ten_viet_khac_f05542f3,
+  "teller-voice": S.s_giong_loi_dan_f8f4ea1e,
+  "teller-thought": S.s_noi_tam_nguoi_ke_0c360f80,
+  refused: S.s_yeu_cau_chua_duoc_3c62dd70,
 };
 
 const PAGE = 40;
@@ -204,7 +205,7 @@ export function useWorkCount(bookId: string, fromList = false, enabled = true) {
 
 /** Việc đã quyết chờ gì: sách đang dở thì tự áp khi chạy tiếp; sách ĐÃ XONG không tự chạy lại - phải bấm "Áp dụng thay
  *  đổi" (soát UX 29-09: thẻ từng nói "chờ … chạy tiếp" cả ở sách đã xong). */
-const PendingHint = createContext("chờ áp dụng khi sách chạy tiếp");
+const PendingHint = createContext<string>(S.s_cho_ap_dung_khi_sach_chay_tiep_6f0a3bc6);
 
 function Example({ bookId, example, picked, onPick }: { bookId: string; example: WorkExample; picked?: boolean; onPick?: () => void }) {
   const clip = useClip();
@@ -219,7 +220,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
             type="checkbox"
             checked={picked}
             onChange={onPick}
-            aria-label={`Gồm câu này: ${example.text}`}
+            aria-label={S.s_gom_cau_nay_0_544f2a6f(example.text)}
             className="size-4 accent-[var(--accent)]"
           />
         </label>
@@ -228,7 +229,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <button
           type="button"
           onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
-          aria-label={playing ? "Dừng" : `Nghe câu: ${example.text}`}
+          aria-label={playing ? S.s_dung_11554138 : S.s_nghe_cau_0_4329fb13(example.text)}
           className="mt-0.5 grid size-[32px] shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
           <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -237,16 +238,16 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền trước: </span>{example.before}</p>}
+        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p>}
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
           <div className="text-xs text-fg-3">
-            {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
-            {example.speaker && ` · máy gán: ${example.speaker}`}
-            {example.narration && " · lời kể"}
-            {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
-            {!example.hasAudio && " · chưa thu"}
+            {example.chapterTitle} · {example.seq === 0 ? S.s_tieu_de_chuong_4f8f59f4 : S.s_cau_0_7b7d4092(example.seq)}
+            {example.speaker && S.s_may_gan_0_e3b67580(example.speaker)}
+            {example.narration && S.s_loi_ke_d511b7eb}
+            {example.changes && <span className="font-semibold text-accent-text">{S.s_se_doi_b8b363f7}</span>}
+            {!example.hasAudio && S.s_chua_thu_240643ef}
           </div>
           <p className={example.narration ? "text-fg-2" : "text-fg"}>
             {example.names?.length
@@ -262,7 +263,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
+        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_sau_e9238b3e}</span>{example.after}</p>}
       </div>
     </li>
   );
@@ -274,11 +275,11 @@ function VoiceSample({ bookId, sampleId, samplePreset, name }: { bookId: string;
   const id = `work-voice-${sampleId ?? samplePreset}`;
   const playing = clip.current === id;
   return (
-    <Tooltip label={playing ? "Dừng" : `Nghe ${name} nói`}>
+    <Tooltip label={playing ? S.s_dung_11554138 : S.s_nghe_0_noi_e9307f6f(name)}>
       <button
         type="button"
         onClick={() => clip.toggle(id, sampleId ? urls.sample(bookId, sampleId) : urls.voice(samplePreset!))}
-        aria-label={playing ? "Dừng nghe thử" : `Nghe ${name} nói`}
+        aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_0_noi_e9307f6f(name)}
         className="touch-hit grid size-[32px] shrink-0 place-items-center rounded-full text-fg-2 transition-colors hover:bg-hover hover:text-fg"
       >
         <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -320,16 +321,16 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         "pronunciation",
         [{ surface: item.surface, requestedAt, previous: item.current, keep }],
         item.requested
-          ? `Trở lại quyết định trước: “${item.surface}” đọc là “${item.requested}”.`
-          : `“${item.surface}” lại đọc là “${item.current}”.`,
+          ? S.s_tro_lai_quyet_dinh_truoc_0_doc_la_1_0fd271bc(item.surface, item.requested)
+          : S.s_0_lai_doc_la_1_734123f6(item.surface, item.current),
       );
       if (elsewhere?.spokenForm !== undefined) warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", action.onClick);
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
       if (keep) {
-        toast.success(`Giữ cách đọc “${spokenForm}”`, { action, duration: UNDO_MS });
+        toast.success(S.s_giu_cach_doc_0_ad3b6d08(spokenForm), { action, duration: UNDO_MS });
         return;
       }
-      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
+      toast.success(S.s_da_ghi_0_doc_la_1_2c14f196(item.surface, spokenForm), {
         action,
         duration: UNDO_MS,
       });
@@ -365,7 +366,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* "Giữ" cách máy đang đọc không đổi gì trong sách - không bảo bấm "Áp dụng thay đổi" (soát UX 29-09). */}
-          {item.requested === item.current ? `Giữ “${item.requested}” - không cần áp dụng.` : `Đã ghi “${item.requested}” - ${pending}.`}
+          {item.requested === item.current ? S.s_giu_0_khong_can_ap_dung_90d56536(item.requested) : S.s_da_ghi_0_1_ff5ca65e(item.requested, pending)}
         </p>
       )}
       <form
@@ -375,16 +376,13 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           if (typed) save.mutate(typed);
         }}
       >
-        <DecisionButton data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
-          Đúng rồi, giữ “{item.current}”
+        <DecisionButton data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>{S.s_dung_roi_giu_b3493ad3}{item.current}”
         </DecisionButton>
-        <label htmlFor={inputId} className="text-xs text-fg-2">
-          hoặc đọc là
-        </label>
+        <label htmlFor={inputId} className="text-xs text-fg-2">{S.s_hoac_doc_la_376990a8}</label>
         <input
           id={inputId}
-          aria-label={`Cách đọc mới cho ${item.surface}`}
-          placeholder={`vd ${item.current}`}
+          aria-label={S.s_cach_doc_moi_cho_0_d68a75c3(item.surface)}
+          placeholder={S.s_vd_0_85e20173(item.current)}
           value={value}
           onChange={(event) => {
             setValue(event.target.value);
@@ -407,14 +405,10 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           type="submit"
           loading={save.isPending}
           disabled={!typed || typed === item.current || typed === item.requested}
-        >
-          Đọc thế này
-        </Button>
+        >{S.s_doc_the_nay_b9d202fe}</Button>
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
         {onOpenNames && (
-          <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>
-            Mọi cách đọc tên
-          </Button>
+          <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>{S.s_moi_cach_doc_ten_5d01fa0c}</Button>
         )}
       </form>
       {tryIt.note}
@@ -473,31 +467,31 @@ function SpeakerFix({
       }),
     onSuccess: ({ lines: recorded, speaker, alias, requestedAt, elsewhere }) => {
       refreshAfterDecision(client, bookId);
-      const which = recorded > 1 ? `${recorded} câu này` : "câu này";
+      const which = recorded > 1 ? S.s_0_cau_nay_eeb40df6(recorded) : S.s_cau_nay_c70feb8f;
       const keep = speaker === item.currentValue;
       // Thẻ "hai tên một người": máy chủ rút luôn bí danh ghi cùng mốc (server._withdraw) nên hoàn tác được. Quy ước 『』 cả cuốn còn ghi ở
       // cấp cuốn cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
       const back = item.requested
-        ? `Trở lại quyết định trước: ${which} của ${midSentence(item.requested)}.`
+        ? S.s_tro_lai_quyet_dinh_truoc_0_cua_1_1a135e00(which, midSentence(item.requested))
         : item.pick
-          ? `${sentence(which)} trở lại chờ duyệt.`
-          : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
+          ? S.s_0_tro_lai_cho_duyet_d4777925(sentence(which))
+          : S.s_0_lai_la_cua_1_1de883c6(sentence(which), midSentence(item.current));
       const undo = alias && item.kind === "bracket" ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
       const replaced = Object.values(elsewhere ?? {});
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", undo.action?.onClick);
       if (keep) {
-        toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
+        toast.success(item.keepLabel ? S.s_da_ghi_0_5450366f(item.keepLabel) : S.s_giu_nguyen_0_cua_1_f0574c99(which, midSentence(item.current)), {
           ...undo,
         });
         return;
       }
       const choice = item.choices?.find((option) => option.value === speaker);
       const label = choice?.name ?? choice?.label ?? speaker;
-      toast.success(`Đã ghi: ${which} của ${midSentence(label)}`, {
+      toast.success(S.s_da_ghi_0_cua_1_36d6075b(which, midSentence(label)), {
         ...undo,
       });
     },
-    onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_nguoi_noi_5ef0be83, { description: error.message }),
   });
   // Thẻ nhóm giữ nguyên: mỗi vai giữ người của nó - vài yêu cầu, một nút hoàn tác cho cả nhóm.
   const keepAll = useMutation({
@@ -516,16 +510,16 @@ function SpeakerFix({
     },
     onSuccess: ({ made, replaced }) => {
       refreshAfterDecision(client, bookId);
-      const action = undoAction(client, bookId, "speaker", made, "Thẻ hỏi lại như trước khi bấm.");
+      const action = undoAction(client, bookId, "speaker", made, S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e);
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", action.onClick);
-      toast.success(`Đã ghi: ${item.keepLabel ?? "Giữ nguyên"}`, {
+      toast.success(S.s_da_ghi_0_5450366f(item.keepLabel ?? S.s_giu_nguyen_1b550a12), {
         action,
         duration: UNDO_MS,
       });
     },
     onError: (error: Error) => {
       refreshAfterDecision(client, bookId);
-      toast.error("Chưa ghi được", { description: error.message });
+      toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message });
     },
   });
   const busy = save.isPending || keepAll.isPending;
@@ -544,20 +538,20 @@ function SpeakerFix({
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
           {item.kind === "alias"
-            ? `Đã ghi: “${item.subject ?? item.current}” là ${midSentence(item.requested)} - cả cuốn và các phần sau.`
-            : `Đã ghi: ${(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của ${midSentence(item.requested)} - ${pending}.`}
+            ? S.s_da_ghi_0_la_1_ca_cuon_va_cac_phan_sau_a67585e2(item.subject ?? item.current, midSentence(item.requested))
+            : S.s_da_ghi_0_cua_1_2_efc7efdc((item.lines?.length ?? 1) > 1 ? S.s_0_cau_nay_eeb40df6(item.lines?.length) : S.s_cau_nay_c70feb8f, midSentence(item.requested), pending)}
         </p>
       )}
       {item.allLines && item.lines && onScope && (
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-fg-2">
-          <span>Đổi người nói cho</span>
+          <span>{S.s_doi_nguoi_noi_cho_214fb622}</span>
           <ChoiceRow<Scope>
-            label="Đổi người nói cho những câu nào"
+            label={S.s_doi_nguoi_noi_cho_nhung_cau_nao_88602af5}
             value={scope}
             onChange={onScope}
             options={[
-              { value: "alternate", label: `${item.scopeLabels?.[0] ?? "Câu xen kẽ"} · ${item.lines.length}` },
-              { value: "all", label: `${item.scopeLabels?.[1] ?? "Cả chuỗi"} · ${item.allLines.length}` },
+              { value: "alternate", label: `${item.scopeLabels?.[0] ?? S.s_cau_xen_ke_a9442401} · ${item.lines.length}` },
+              { value: "all", label: `${item.scopeLabels?.[1] ?? S.s_ca_chuoi_2a2c3bbf} · ${item.allLines.length}` },
             ]}
           />
         </div>
@@ -565,8 +559,8 @@ function SpeakerFix({
       {item.allLines && item.lines && onScope && (
         <p className="mb-2 text-xs text-fg-3">
           {item.scopeLabels
-            ? `${item.scopeLabels[0]} theo chương; ${item.scopeLabels[1]} theo cả sách và các phần sau.`
-            : "Câu xen kẽ chỉ đổi câu đánh dấu; cả chuỗi đổi toàn bộ người nói."}
+            ? S.s_0_theo_chuong_1_theo_ca_sach_va_cac_phan_s_1dd980b1(item.scopeLabels[0], item.scopeLabels[1])
+            : S.s_cau_xen_ke_chi_doi_cau_danh_dau_ca_chuoi_d_8b814b90}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
@@ -588,67 +582,63 @@ function SpeakerFix({
         ))}
         {item.currentValue && (
           <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
-            {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
+            {item.keepLabel ?? (item.kind === "unnamed" ? S.s_dung_la_vai_phu_7f821afe : S.s_giu_0_b8c06ffa(item.current))}
           </DecisionButton>
         )}
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         {item.newPerson && (
           <DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
-            {item.newPersonLabel ?? `Tạo nhân vật`}
+            {item.newPersonLabel ?? S.s_tao_nhan_vat_18e9a09a}
           </DecisionButton>
         )}
         {item.keepGroups && item.keepGroups.length > 0 && (
           <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
-            {item.keepLabel ?? "Giữ nguyên"}
+            {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton>
         )}
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
           <Button size="sm" variant="ghost" icon={item.suggestedName || item.kind === "caller" ? undefined : UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
-            {item.suggestedName ? "Đặt tên" : "Người khác"}
+            {item.suggestedName ? S.s_dat_ten_519d84a1 : S.s_nguoi_khac_36be042b}
           </Button>
         )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
-          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
-            Tìm người khác
-          </Button>
+          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>{S.s_tim_nguoi_khac_ce406b45}</Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
             quyết, mở đúng chương, tại câu đầu của nhóm. */}
         {onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
-          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>
-            Xem {item.lines!.length} câu
-          </Button>
+          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>{S.s_xem_e7ed16f8}{item.lines!.length}{S.s_cau_b07e1008}</Button>
         )}
       </div>
       <Collapse open={creating}>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {moreChoices.length > 0 && (
-            <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label="Những người khác trong sách">
+            <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
               {moreChoices.map((choice) => (
                 <Button key={choice.value} size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
                   {choice.label}
                 </Button>
               ))}
-              <span className="text-xs text-fg-3">hay đặt tên một người mới:</span>
+              <span className="text-xs text-fg-3">{S.s_hay_dat_ten_mot_nguoi_moi_10597c08}</span>
             </div>
           )}
           <input
             ref={nameInput}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder={sample ? `Tên người nói (vd ${sample})` : "Tên người nói"}
-            aria-label="Tên người nói mới"
+            placeholder={sample ? S.s_ten_nguoi_noi_vd_0_b7a0ff62(sample) : S.s_ten_nguoi_noi_d3caf277}
+            aria-label={S.s_ten_nguoi_noi_moi_9be83401}
             maxLength={80}
             className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
-          <span className="text-xs text-fg-2">Giới (bấm để lưu):</span>
+          <span className="text-xs text-fg-2">{S.s_gioi_bam_de_luu_e314c934}</span>
           {(
             [
-              ["male", "Nam"],
-              ["female", "Nữ"],
-              ["unknown", "Không rõ"],
+              ["male", S.s_nam_22dd59c8],
+              ["female", S.s_nu_e15bc11c],
+              ["unknown", S.s_khong_ro_8af7da78],
             ] as const
           ).map(([gender, label]) => (
             <Button
@@ -656,7 +646,7 @@ function SpeakerFix({
               size="sm"
               variant="ghost"
               disabled={!name.trim() || busy || none}
-              aria-label={`Lưu người nói mới, giới: ${label.toLowerCase()}`}
+              aria-label={S.s_luu_nguoi_noi_moi_gioi_0_f39ab58a(label.toLowerCase())}
               onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
             >
               {label}
@@ -687,20 +677,20 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       api<{ action: string; narrator: string }>(`/api/books/${bookId}/narrator-section`, { method: "POST", body: { ...where, ...body } }),
     onSuccess: ({ action, narrator }) => {
       refreshAfterDecision(client, bookId);
-      const back = item.requested ? `Trở lại quyết định trước: ${item.requested}.` : "Thẻ hỏi lại như trước khi bấm.";
+      const back = item.requested ? S.s_tro_lai_quyet_dinh_truoc_0_2d7ed059(item.requested) : S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e;
       toast.success(
         action === "keep"
-          ? item.current ? `Giữ nguyên: đoạn này vẫn do ${item.current} kể` : "Giữ nguyên: đoạn này vẫn kể ở ngôi thứ ba"
+          ? item.current ? S.s_giu_nguyen_doan_nay_van_do_0_ke_dffb3797(item.current) : S.s_giu_nguyen_doan_nay_van_ke_o_ngoi_thu_ba_f0be91ed
           : narrator
-            ? `Đã ghi: đoạn này do ${section.heading?.narrator === narrator ? section.heading.label : narrator} kể`
-            : `Đã ghi: đoạn này không phải ${item.current} kể`,
+            ? S.s_da_ghi_doan_nay_do_0_ke_99b4e3f7(section.heading?.narrator === narrator ? section.heading.label : narrator)
+            : S.s_da_ghi_doan_nay_khong_phai_0_ke_71722738(item.current),
         {
           action: undoAction(client, bookId, "narrator-section", [where], back),
           duration: UNDO_MS,
         },
       );
     },
-    onError: (error: Error) => toast.error("Chưa ghi được người kể", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_nguoi_ke_ce503d25, { description: error.message }),
   });
   const typed = name.trim();
   return (
@@ -709,19 +699,17 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          {item.redoOnly ? "Đã ghi - áp khi làm lại phân tích từ đầu." : `Đã ghi: ${item.requested}.`}
+          {item.redoOnly ? S.s_da_ghi_ap_khi_lam_lai_phan_tich_tu_dau_4ed021d7 : S.s_da_ghi_0_036988b1(item.requested)}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
         </DecisionButton>
-        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === "Giữ nguyên" ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
+        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === S.s_giu_nguyen_1b550a12 ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
           {buttons.keep}
         </DecisionButton>
-        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>
-          Người kể khác
-        </Button>
+        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>{S.s_nguoi_ke_khac_7291e079}</Button>
       </div>
       <Collapse open={choosing}>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -734,14 +722,12 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             ref={nameInput}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Tên người kể"
-            aria-label="Tên người kể của đoạn"
+            placeholder={S.s_ten_nguoi_ke_d492ccfb}
+            aria-label={S.s_ten_nguoi_ke_cua_doan_94204731}
             maxLength={80}
             className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
-          <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>
-            Đặt người kể
-          </Button>
+          <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>{S.s_dat_nguoi_ke_d4ae9aa6}</Button>
         </div>
       </Collapse>
     </div>
@@ -760,14 +746,12 @@ function RefusedFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       }),
     onSuccess: () => {
       refreshAfterDecision(client, bookId);
-      toast.success("Đã bỏ yêu cầu này");
+      toast.success(S.s_da_bo_yeu_cau_nay_5eec8a27);
     },
-    onError: (error: Error) => toast.error("Chưa bỏ được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bo_duoc_638141d7, { description: error.message }),
   });
   return (
-    <Button size="sm" variant="ghost" className="mt-3" loading={drop.isPending} onClick={() => drop.mutate()}>
-      Bỏ yêu cầu này
-    </Button>
+    <Button size="sm" variant="ghost" className="mt-3" loading={drop.isPending} onClick={() => drop.mutate()}>{S.s_bo_yeu_cau_nay_670ce121}</Button>
   );
 }
 
@@ -788,39 +772,38 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     onSuccess: (made, { label, keep }) => {
       refreshAfterDecision(client, bookId);
       // Nói cụ thể điều gì trở lại, như thẻ cách đọc và thẻ người nói (soát UX 30-09: "Thẻ hỏi lại như trước khi bấm").
-      const heard = item.current === "Giọng nam" || item.current === "Giọng nữ" ? item.current.toLowerCase() : "giọng đang có";
+      const heard = item.current === S.s_giong_nam_4ab78f43 || item.current === S.s_giong_nu_cd860480 ? item.current.toLowerCase() : S.s_giong_dang_co_3b2ea3dd;
       const back =
         item.kind === "gender" && item.subject
           ? item.requested
-            ? `Trở lại quyết định trước: ${item.subject} là ${item.requested.toLowerCase()}.`
-            : `${item.subject} lại để máy quyết - vẫn đọc bằng ${heard}.`
+            ? S.s_tro_lai_quyet_dinh_truoc_0_la_1_68f9b1ee(item.subject, item.requested.toLowerCase())
+            : S.s_0_lai_de_may_quyet_van_doc_bang_1_d02a4952(item.subject, heard)
           : item.requested
-            ? `Trở lại quyết định trước: ${item.requested}.`
+            ? S.s_tro_lai_quyet_dinh_truoc_0_2d7ed059(item.requested)
             : item.kind === "shared-voice"
-              ? "Hai người lại dùng chung giọng như trước."
-              : "Thẻ hỏi lại như trước khi bấm.";
+              ? S.s_hai_nguoi_lai_dung_chung_giong_nhu_truoc_7486498c
+              : S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e;
       const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep })), back), duration: UNDO_MS };
       if (keep) {
-        toast.success(`Đã ghi: ${label}`, { ...undo });
+        toast.success(S.s_da_ghi_0_5450366f(label), { ...undo });
         return;
       }
       // Lựa chọn nói trước cái giá ("giữ giọng đang đọc" / "đổi giọng, thu lại N câu") - thông báo nói đúng cái giá ấy, không
       // rào "nếu giọng phải đổi" khi giọng giữ nguyên (soát UX 29-09).
-      toast.success(`Đã ghi: ${label}`, {
+      toast.success(S.s_da_ghi_0_5450366f(label), {
         ...undo,
       });
     },
-    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message }),
   });
   return (
     <div className="mt-3">
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
-          <Check className="size-3.5 text-success" />
-          Đã ghi: {item.requested} - {pending}.
+          <Check className="size-3.5 text-success" />{S.s_da_ghi_85094402}{item.requested} - {pending}.
         </p>
       )}
-      <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
+      <div className="flex flex-wrap items-start gap-2" role="group" aria-label={S.s_chon_1171ca97}>
         {(item.voiceChoices ?? []).map((choice) => (
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
             <DecisionButton data-choice
@@ -850,12 +833,12 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             onClick={() =>
               save.mutate({
                 requests: item.keepCharacters!.map((character) => ({ character })),
-                label: item.keepLabel ?? "Giữ nguyên",
+                label: item.keepLabel ?? S.s_giu_nguyen_1b550a12,
                 keep: true,
               })
             }
           >
-            {item.keepLabel ?? "Giữ nguyên"}
+            {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton>
         )}
       </div>
@@ -887,17 +870,15 @@ function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
       icon={RotateCcw}
       className="ml-auto"
       disabled={asked}
-      aria-label={`Hoàn tác: ${decidedTitle(item) ?? item.title}`}
+      aria-label={S.s_hoan_tac_0_d8c7233a(decidedTitle(item) ?? item.title)}
       onClick={() => {
         setAsked(true);
-        undoAction(client, bookId, undo.endpoint, undo.decisions, "Việc này trở lại chờ bạn duyệt.").onClick();
+        undoAction(client, bookId, undo.endpoint, undo.decisions, S.s_viec_nay_tro_lai_cho_ban_duyet_76cf7987).onClick();
         // Không hoàn tác được (đã vào sách) thì thẻ còn đó - mở nút lại để thử khi đổi ý.
         window.clearTimeout(resetTimer.current);
         resetTimer.current = window.setTimeout(() => setAsked(false), 2500);
       }}
-    >
-      Hoàn tác
-    </Button>
+    >{S.s_hoan_tac_e72ff675}</Button>
   );
 }
 
@@ -923,7 +904,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
     setLoadingMore(true);
     api<{ examples: WorkExample[]; total: number }>(next)
       .then((page) => setMore((current) => [...current, ...page.examples]))
-      .catch((error: Error) => toast.error("Chưa tải thêm được câu", { description: error.message }))
+      .catch((error: Error) => toast.error(S.s_chua_tai_them_duoc_cau_35372122, { description: error.message }))
       .finally(() => setLoadingMore(false));
   };
   const shownExamples = item.pick && !all ? loaded.slice(0, PICK_PREVIEW) : loaded;
@@ -951,18 +932,14 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
       <MotionRegion motionKey={scope} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
+        <span>{S.s_anh_huong_f9ba35dd}<span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
         <span>
-          Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span> câu
-        </span>
-        <span>
-          {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}:{" "}
-          <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? "không ai - chương kể ở ngôi thứ ba" : item.current}</span>
+          {item.kind === "audio" ? S.s_trang_thai_cb31de81 : item.kind === "narrator" ? S.s_may_coi_nguoi_ke_la_f1309939 : S.s_may_dang_dung_d9ef0879}:{" "}
+          <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? S.s_khong_ai_chuong_ke_o_ngoi_thu_ba_209ef4df : item.current}</span>
         </span>
       </MotionRegion>
       {item.kind === "audio" ? (
-        <Button size="sm" variant="ghost" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>
-          Nghe lại
-        </Button>
+        <Button size="sm" variant="ghost" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>{S.s_nghe_lai_2ac2936f}</Button>
       ) : item.kind === "pronunciation" && item.surface ? (
         <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
       ) : item.kind === "narrator" && item.narratorSection ? (
@@ -972,9 +949,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : item.kind === "voice-wish" ? (
         <div className="flex flex-wrap items-end gap-2">
           {item.pickVoice && onPickVoice && (
-            <Button size="sm" variant="ghost" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
-              Chọn giọng khác
-            </Button>
+            <Button size="sm" variant="ghost" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>{S.s_chon_giong_khac_d31cfe89}</Button>
           )}
           <VoiceFix bookId={bookId} item={item} />
         </div>
@@ -984,11 +959,11 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         <>
           <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
           {item.kind === "unnamed" && item.pickVoice && onPickVoice && (
-            <Button size="sm" variant="ghost" className="edge-start-action mt-2" onClick={() => onPickVoice(item.pickVoice!)}>Giới / giọng</Button>
+            <Button size="sm" variant="ghost" className="edge-start-action mt-2" onClick={() => onPickVoice(item.pickVoice!)}>{S.s_gioi_giong_a5c7c7b7}</Button>
           )}
         </>
       ) : (
-        <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
+        <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label={S.s_lua_chon_499eda35}>
           {item.options.map((option) => (
             <span key={option} className="rounded-control border border-line px-2.5 py-1 text-xs text-fg-2">
               {option}
@@ -999,7 +974,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       {item.examples.length > 0 && (
         <MotionRegion motionKey={[scope, shownExamples.map(example => example.segmentId)]}><ul className="mt-3 space-y-2 border-t border-line pt-3">
           {picked && item.lines && (
-            <li className="text-xs text-fg-2">{pickNote(picked.length, item.lines.length)} - bỏ chọn câu không phải của người ấy.</li>
+            <li className="text-xs text-fg-2">{pickNote(picked.length, item.lines.length)}{S.s_bo_chon_cau_khong_phai_cua_nguoi_ay_c8d4e374}</li>
           )}
           {shownExamples.map((example) => (
             <Example
@@ -1024,11 +999,11 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
               setAll((value) => !value);
             }}
           >
-            {all ? "Thu gọn" : `Xem cả ${formatNumber(total)} câu`}
+            {all ? S.s_thu_gon_1f6bf2c3 : S.s_xem_ca_0_cau_444f6616(formatNumber(total))}
           </Button>
           {all && next && (
             <Button size="sm" variant="ghost" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? "Đang tải" : moreText(loaded.length, total, formatNumber)}
+              {loadingMore ? S.s_dang_tai_465b1987 : moreText(loaded.length, total, formatNumber)}
             </Button>
           )}
         </div>
@@ -1040,7 +1015,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
 
 /** Nhiều hơn ngần này lựa chọn thì phần còn lại gom vào “Người khác…”. */
 const MAX_CHIPS = 6;
-const GENERIC_PEOPLE = new Set(["Người kể", "Người kể đọc tất cả", "Vai phụ không tên"]);
+const GENERIC_PEOPLE = new Set<string>([S.s_nguoi_ke_fd36cd15, S.s_nguoi_ke_doc_tat_ca_97e4f69d, S.s_vai_phu_khong_ten_6395f0d2]);
 
 /** Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn - nhóm lớn thì từng trang PICK_PAGE câu. */
 const PICK_PREVIEW = 3;
@@ -1085,14 +1060,14 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
         }
         done += 1;
       }
-      const action = undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${done} thẻ trở lại chờ duyệt.`);
+      const action = undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, S.s_0_the_tro_lai_cho_duyet_bff909d5(done));
       if (replaced.length) warnElsewhere(replaced.length, replaced[0], action.onClick);
-      toast.success(`Đã giữ như máy đang làm cho ${done} thẻ`, {
+      toast.success(S.s_da_giu_nhu_may_dang_lam_cho_0_the_8f7492cc(done), {
         action,
         duration: UNDO_MS,
       });
     } catch (error) {
-      toast.error(`Mới giữ được ${done}/${keepable.length} thẻ`, { description: (error as Error).message });
+      toast.error(S.s_moi_giu_duoc_0_1_the_58b9cdf5(done, keepable.length), { description: (error as Error).message });
     } finally {
       setBusy(false);
       setConfirm(false);
@@ -1101,24 +1076,18 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   };
   return (
     <>
-      <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
-        Giữ {keepable.length} thẻ
-      </Button>
+      <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>{S.s_giu_d3777f80}{keepable.length}{S.s_the_5d800d1c}</Button>
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setConfirm(false)}>
-            Thôi
-          </Button>
-          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>
-            Giữ cả {keepable.length} thẻ
-          </Button>
+          <Button variant="ghost" onClick={() => setConfirm(false)}>{S.s_thoi_e68f9e88}</Button>
+          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>{S.s_giu_ca_4b7c5467}{keepable.length}{S.s_the_5d800d1c}</Button>
         </DialogActions>}
         open={confirm}
         onOpenChange={setConfirm}
-        title={`Giữ cả ${keepable.length} thẻ “${KIND_LABEL[kind]}”?`}
+        title={S.s_giu_ca_0_the_1_33bc5807(keepable.length, KIND_LABEL[kind])}
         description={
           pronunciation
-            ? "Giữ cách đọc tên, không thu lại; có thể hoàn tác."
-            : "Giữ người nói, không thu lại; có thể hoàn tác."
+            ? S.s_giu_cach_doc_ten_khong_thu_lai_co_the_hoan_175ec7d0
+            : S.s_giu_nguoi_noi_khong_thu_lai_co_the_hoan_ta_602c8451
         }
       >
 
@@ -1243,13 +1212,11 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
     // setKind chỉ ghi state + gọi onKind - không cần gắn lại.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, kind, inPrecast]);
-  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại việc cần duyệt." onRetry={() => void refetch()} /></MotionRegion>;
-  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label="Đang tải việc duyệt" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_viec_718b2054} onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label={S.s_dang_tai_viec_duyet_f68f3839} /></MotionRegion>;
   if (!data.items.length) {
     return (
-      <MotionRegion><EmptyState icon={AudioLines} title="Không còn việc duyệt" className="py-10">
-        Máy chắc chắn về mọi thứ đã làm tới giờ.
-      </EmptyState></MotionRegion>
+      <MotionRegion><EmptyState icon={AudioLines} title={S.s_khong_con_viec_duyet_21f808a7} className="py-10">{S.s_may_chac_chan_ve_moi_thu_da_lam_toi_gio_15f0b56b}</EmptyState></MotionRegion>
     );
   }
   // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
@@ -1282,33 +1249,29 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       {atReview > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
           <span className="min-w-0 text-pretty">
-            {atReview} việc của các chương đầu đang chờ ở “Duyệt trước khi thu”.
-          </span>
+            {atReview}{S.s_viec_cua_cac_chuong_dau_dang_cho_o_duyet_t_ffc8b06a}</span>
           {onOpenPrecast && (
-            <Button size="sm" variant="ghost" onClick={onOpenPrecast}>
-              Mở màn duyệt
-            </Button>
+            <Button size="sm" variant="ghost" onClick={onOpenPrecast}>{S.s_mo_man_duyet_5d7f194c}</Button>
           )}
         </div>
       )}
       <div className="mt-4">
         <FilterRow<WorkKind | "all">
-          label="Loại việc"
+          label={S.s_loai_viec_19d758cd}
           value={active}
           onChange={(value) => {
             setKind(value);
             setShown(PAGE);
           }}
           options={[
-            { value: "all", label: `Tất cả · ${open.length}` },
+            { value: "all", label: S.s_tat_ca_0_bc914efb(open.length) },
             ...kinds.map((value) => ({ value, label: `${KIND_LABEL[value]} · ${counts[value]}` })),
           ]}
         />
       </div>
       {active !== "all" && <BulkKeep bookId={bookId} kind={active} items={items} />}
       <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
-        <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1–9</Kbd> chọn đáp án · <Kbd>Esc</Kbd> bỏ chọn
-      </p>
+        <Kbd>{S.s_j_6da43b94}</Kbd> <Kbd>{S.s_k_86be9a55}</Kbd>{S.s_chon_the_d4ce1760}<Kbd>1–9</Kbd>{S.s_chon_dap_an_4ef796c6}<Kbd>{S.s_esc_52f878ed}</Kbd>{S.s_bo_chon_647a1871}</p>
       {/* Đổi loại việc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn thẻ cũ đang mờ ra. */}
       <MotionRegion motionKey={active} slideIndex={active === "all" ? 0 : kinds.indexOf(active) + 1}>
       <AnimatedRows key={active} as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={items.slice(0, shown)} keyOf={(item) => item.key}>
@@ -1318,22 +1281,20 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </AnimatedRows>
       </MotionRegion>
       <MotionPresence open={items.length > shown}>
-        <Button variant="ghost" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
-          Xem thêm {Math.min(PAGE, items.length - shown)} việc
-        </Button>
+        <Button variant="ghost" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>{S.s_xem_them_58c3f515}{Math.min(PAGE, items.length - shown)}{S.s_viec_1c50ca93}</Button>
       </MotionPresence>
       <MotionPresence open={!open.length && atReview === 0}>
         <p id="work-end" tabIndex={-1} className="mt-4 text-sm text-fg-2">
           {later.length > 0
-            ? "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
-            : `Mọi việc đã có quyết định${decided.length > 0 ? ` - ${hint}` : ""}.`}
+            ? S.s_het_viec_sua_duoc_ngay_nhung_viec_ben_duoi_2b4551c3
+            : S.s_moi_viec_da_co_quyet_dinh_0_b683c4dd(decided.length > 0 ? ` - ${hint}` : "")}
         </p>
       </MotionPresence>
       {/* Ba nhóm phụ: thẻ vào / ra (Hoàn tác, quyết thêm) khép / mở tại chỗ. data-motion-live: vùng cả hộp không mờ lại theo từng thẻ. */}
       <MotionPresence open={decided.length > 0}>
         <details className="mt-6 border-t border-line">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">
-            {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length} việc` : `Đã quyết · ${decided.length} việc (${waiting} thay đổi chờ áp dụng)`}
+            {waiting === decided.length ? S.s_da_quyet_cho_ap_dung_0_viec_87d1149b(decided.length) : S.s_da_quyet_0_viec_1_thay_doi_cho_ap_dung_9f6d58ae(decided.length, waiting)}
           </summary>
           <div data-motion-live="">
           <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={decided} keyOf={(item) => item.key}>
@@ -1344,10 +1305,8 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </MotionPresence>
       <MotionPresence open={later.length > 0}>
         <details className="mt-4 border-t border-line">
-          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chờ phân tích lại</summary>
-          <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
-            Chỉ áp khi phân tích lại; không chặn sách chạy tiếp.
-          </p>
+          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">{S.s_cho_phan_tich_lai_8038a2ac}</summary>
+          <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">{S.s_chi_ap_khi_phan_tich_lai_khong_chan_sach_c_56e246b0}</p>
           <div data-motion-live="">
           <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={later} keyOf={(item) => item.key}>
             {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
@@ -1357,7 +1316,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </MotionPresence>
       <MotionPresence open={redo.length > 0}>
         <details className="mt-4 border-t border-line">
-          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Đã ghi</summary>
+          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">{S.s_da_ghi_6fd13e0b}</summary>
           <div data-motion-live="">
           <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={redo} keyOf={(item) => item.key}>
             {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}

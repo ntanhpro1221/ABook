@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows } from "@/shared/MotionPresence";
@@ -10,9 +11,9 @@ import type { ScannedFile } from "@/studio/api";
 import { addStart, moveStart, ranges, removeStart, startNumbers, volumeTitles, type VolumeProposal } from "@/studio/volumes";
 
 const SOURCE_TEXT: Record<VolumeProposal["source"], string> = {
-  folders: "mỗi thư mục là một tập",
-  epubs: "mỗi file EPUB là một tập",
-  headings: "các tiêu đề chương gọi tên tập",
+  folders: S.s_moi_thu_muc_la_mot_tap_5f476863,
+  epubs: S.s_moi_file_epub_la_mot_tap_42de53c4,
+  headings: S.s_cac_tieu_de_chuong_goi_ten_tap_2ed33746,
 };
 
 function foldersIn(files: ScannedFile[]): number {
@@ -86,9 +87,7 @@ export function VolumeSplit({
     if (!proposal) {
       return (
         <MotionRegion as="div" className="mt-4">
-          <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange([files[0].path])}>
-            Chia thành nhiều phần
-          </Button>
+          <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange([files[0].path])}>{S.s_chia_thanh_nhieu_phan_af52ab82}</Button>
         </MotionRegion>
       );
     }
@@ -97,18 +96,14 @@ export function VolumeSplit({
       <MotionRegion as="div" className="mt-4 flex gap-3 py-4 text-sm">
         <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">Chia {proposal.volumes.length} phần?</p>
-          <p className="mt-1 text-fg-2">Nối các phần, giữ giọng và cách đọc tên.</p>
-          <MoreInfo>
-            Máy thấy {SOURCE_TEXT[proposal.source]}:{" "}
-            {shown.map((volume) => `${volume.label} (${formatNumber(volume.chapters)} chương)`).join(", ")}
+          <p className="font-semibold">{S.s_chia_e1f5ebcd}{proposal.volumes.length}{S.s_phan_67dc9fc9}</p>
+          <p className="mt-1 text-fg-2">{S.s_noi_cac_phan_giu_giong_va_cach_doc_ten_ae9d0eb0}</p>
+          <MoreInfo>{S.s_may_thay_ed1e7e9f}{SOURCE_TEXT[proposal.source]}:{" "}
+            {shown.map((volume) => S.s_0_1_chuong_a776ede8(volume.label, formatNumber(volume.chapters))).join(", ")}
             {proposal.volumes.length > shown.length ? ", …" : ""}.
-            {" "}Chưa chia thì cả truyện là một sách. Mỗi phần tự bắt đầu sau phần trước; bạn sửa chỗ cắt bằng số chương.
-          </MoreInfo>
+            {" "}{S.s_chua_chia_thi_ca_truyen_la_mot_sach_moi_ph_5e6fe008}</MoreInfo>
           <div className="mt-2.5 flex gap-2">
-            <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>
-              Chia thành nhiều phần
-            </Button>
+            <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>{S.s_chia_thanh_nhieu_phan_af52ab82}</Button>
           </div>
         </div>
       </MotionRegion>
@@ -117,7 +112,7 @@ export function VolumeSplit({
 
   const starts = startNumbers(ordered, value, new Set(excluded));
   const parts = ranges(starts, total);
-  const titles = volumeTitles(title || "Tên sách", parts.length);
+  const titles = volumeTitles(title || S.s_ten_sach_d54846eb, parts.length);
   const proposed = new Map((proposal?.volumes ?? []).map((volume) => [volume.startPath, volume.label]));
   const commit = (next: number[] | null): boolean => {
     if (!next) return false;
@@ -128,15 +123,11 @@ export function VolumeSplit({
     <MotionRegion as="section" aria-labelledby="volumes-title" className="mt-4 py-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
-          <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy phần?"}
+          <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? S.s_chia_thanh_0_phan_db0187a5(parts.length) : S.s_chia_thanh_may_phan_1bf1cf9e}
         </h3>
-        <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
-          Không chia nữa
-        </Button>
+        <Button size="sm" variant="ghost" onClick={() => onChange(null)}>{S.s_khong_chia_nua_3d6b48ed}</Button>
       </div>
-      <p className="mt-1 text-fg-2">
-        Mỗi phần thành một sách nối tiếp; chọn chương bắt đầu để chia.
-      </p>
+      <p className="mt-1 text-fg-2">{S.s_moi_phan_thanh_mot_sach_noi_tiep_chon_chuo_d7604c1a}</p>
       {/* Thêm / bỏ chỗ cắt: hàng của phần mở / khép tại chỗ (useListPresence), không mờ cả khung; đổi trong hàng thì hàng tự mờ qua.
           Hàng đang khép giữ số phần / tên cuối của nó. */}
       <div data-motion-live="">
@@ -147,7 +138,7 @@ export function VolumeSplit({
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
               <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
                 {title}
-                {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">phần 1</span>}
+                {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">{S.s_phan_1_81023e6c}</span>}
               </div>
               <div className="truncate text-xs text-fg-2">
                 {files[part.start - 1]?.firstLine || files[part.start - 1]?.name}
@@ -155,27 +146,25 @@ export function VolumeSplit({
               </div>
               {foldersIn(files.slice(part.start - 1, part.end)) > 1 && (
                 // Dây chuyền xếp chương theo TÊN file: chương của hai thư mục trong một tập thì xen nhau (máy chủ từ chối khi tạo).
-                <div className="text-xs text-warning">Dời chỗ cắt về ranh giới thư mục để giữ thứ tự đọc.</div>
+                <div className="text-xs text-warning">{S.s_doi_cho_cat_ve_ranh_gioi_thu_muc_de_giu_th_b3f10724}</div>
               )}
             </div>
-            <label className="flex items-center gap-2 text-fg-2">
-              từ chương
-              {index === 0 ? (
+            <label className="flex items-center gap-2 text-fg-2">{S.s_tu_chuong_e2536d03}{index === 0 ? (
                 <span className="grid h-8 w-16 place-items-center tabular-nums text-fg">1</span>
               ) : (
                 <NumberBox
                   value={part.start}
-                  label={`Phần ${index + 1} bắt đầu từ chương`}
+                  label={S.s_phan_0_bat_dau_tu_chuong_970b282f(index + 1)}
                   onCommit={(number) => commit(moveStart(starts, index, number, total))}
                 />
               )}
             </label>
-            <span className="tabular text-right text-xs text-fg-2 max-sm:col-start-1 max-sm:text-left">{formatNumber(part.chapters)} chương</span>
+            <span className="tabular text-right text-xs text-fg-2 max-sm:col-start-1 max-sm:text-left">{formatNumber(part.chapters)}{S.s_chuong_9e6a01dc}</span>
             {index > 0 ? (
               <button
                 type="button"
-                aria-label={`Bỏ chỗ cắt trước ${title}`}
-                title="Gộp vào phần trước"
+                aria-label={S.s_bo_cho_cat_truoc_0_5082349b(title)}
+                title={S.s_gop_vao_phan_truoc_b2b49634}
                 onClick={() => commit(removeStart(starts, index))}
                 className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-danger"
               >
@@ -204,13 +193,13 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
   return (
     <MotionRegion>
     <div className="mt-3 flex flex-wrap items-center gap-2 text-fg-2">
-      <span>Cắt từ chương</span>
+      <span>{S.s_cat_tu_chuong_43026b03}</span>
       <input
         value={text}
         inputMode="numeric"
-        aria-label="Thêm phần từ chương"
+        aria-label={S.s_them_phan_tu_chuong_cba5b511}
         aria-invalid={bad}
-        placeholder={`từ 2 đến ${total}`}
+        placeholder={S.s_tu_2_den_0_206d9e4a(total)}
         onChange={(event) => {
           setText(event.target.value);
           setBad(false);
@@ -226,12 +215,10 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           bad ? "border-danger" : "border-line",
         )}
       />
-      <Button size="sm" variant="ghost" icon={Plus} disabled={!text.trim()} onClick={add}>
-        Thêm
-      </Button>
+      <Button size="sm" variant="ghost" icon={Plus} disabled={!text.trim()} onClick={add}>{S.s_them_dd92626f}</Button>
       {bad && (
         <span role="alert" className="text-danger">
-          {starts.length >= 99 ? "Tối đa 99 phần." : "Chương này đã là chỗ cắt, hay không nằm trong 2 – " + total + "."}
+          {starts.length >= 99 ? S.s_toi_da_99_phan_9661ebdc : S.s_chuong_nay_da_la_cho_cat_hay_khong_nam_tro_1005c9e5 + total + "."}
         </span>
       )}
     </div>

@@ -29,7 +29,7 @@ object Mp4Finish {
     /** Hộp ở mức cao nhất của file (có thể quá 2 GB). */
     private class Span(val offset: Long, val header: Int, val size: Long)
 
-    private fun broken() = Mp3Export.Refused("File âm thanh trung gian không hợp lệ")
+    private fun broken() = Mp3Export.Refused(S.s_file_am_thanh_trung_gian_khong_hop_le_a040cef8)
 
     private const val GENRE = "Audiobook"
     /** Tên chương dài hơn thì cắt (chpl chỉ có một byte cho độ dài, ffmpeg cũng cắt ở 255); chpl chỉ chứa tối đa 255 chương. */
@@ -189,7 +189,7 @@ object Mp4Finish {
                 } else {
                     val at = body + 8 + entry * 4
                     val moved = be32(buffer, at) + delta
-                    if (moved !in 0..0xFFFFFFFFL) throw Mp3Export.Refused("File M4B quá lớn (hơn 4 GB)")
+                    if (moved !in 0..0xFFFFFFFFL) throw Mp3Export.Refused(S.s_file_m4b_qua_lon_hon_4_gb_6d7f6a0f)
                     ByteBuffer.wrap(buffer, at, 4).putInt(moved.toInt())
                 }
             }
@@ -250,7 +250,7 @@ object Mp4Finish {
      */
     fun finish(source: File, out: OutputStream, tags: Tags, marks: List<Mark>, delay: Int = 0, stopped: () -> Boolean = { false }) {
         RandomAccessFile(source, "r").use { file ->
-            if (file.length() > MAX_FILE) throw Mp3Export.Refused("File M4B quá lớn (hơn 4 GB)")
+            if (file.length() > MAX_FILE) throw Mp3Export.Refused(S.s_file_m4b_qua_lon_hon_4_gb_6d7f6a0f)
             val head = ByteArray(16)
             var mdat: Span? = null
             var moov: Span? = null

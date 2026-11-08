@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -8,8 +9,8 @@ Column {
     property string state: "ready"      // "loading" | "error" | "empty" | "ready"
     property bool adding: false
     // Studio (MyMusic của studio/MusicTab.tsx) mời "Thêm nhạc của bạn" + nút chính "Nhập nhạc"; Cài đặt giữ câu của mình
-    property string emptyTitle: "Chưa có bài nào"
-    property string addText: "Thêm nhạc của bạn"
+    property string emptyTitle: S.s_chua_co_bai_nao_c1c708be
+    property string addText: S.s_them_nhac_cua_ban_dbd7d8c4
     property string addKind: "ghost"
     signal retry()
     signal add()
@@ -23,7 +24,7 @@ Column {
             width: parent.width
             spacing: 16
             Accessible.role: Accessible.StaticText
-            Accessible.name: "Đang tải nhạc riêng"
+            Accessible.name: S.s_dang_tai_nhac_rieng_144f69a2
             property real pulse: 1
             SequentialAnimation on pulse {
                 running: root.state === "loading" && Nav.uiVisible && !Theme.reduceMotion
@@ -50,7 +51,7 @@ Column {
         objectName: "myMusicError"
         width: parent.width
         open: root.state === "error"
-        message: "Bạn hãy thử tải lại nhạc của bạn."
+        message: S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139
         onRetry: root.retry()
     }
 

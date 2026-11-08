@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "RecordLogic.js" as Logic
@@ -58,7 +59,7 @@ Modal {
         const spec = Logic.request(bookId, kind, active, typed, null)
         const message = Logic.doneMessage(kind, active, typed, null)
         const target = typed.target
-        const opens = kind === "move" ? {label: "Mở cuốn ấy", run: function() { root.openBook(target.id) }} : null
+        const opens = kind === "move" ? {label: S.s_mo_cuon_ay_064ee566, run: function() { root.openBook(target.id) }} : null
         root.dismiss()
         perform(bookId, book, spec, message, opens, kind === "create", kind !== "rename")
     }
@@ -94,7 +95,7 @@ Modal {
                     objectName: "recordLoading"
                     visible: root.library === "loading"
                     width: parent.width
-                    text: "Đang mở thư viện…"
+                    text: S.s_dang_mo_thu_vien_95914f2d
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -103,7 +104,7 @@ Modal {
                     objectName: "recordNoOthers"
                     visible: root.library !== "loading" && root.options.length === 0
                     width: parent.width
-                    text: "Thư viện chưa có cuốn nào khác."
+                    text: S.s_thu_vien_chua_co_cuon_nao_khac_4bff3d9b
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -113,8 +114,8 @@ Modal {
                     objectName: "recordTarget"
                     visible: root.library === "ready" && root.options.length > 0
                     width: parent.width
-                    label: "Chuyển sang cuốn"
-                    placeholder: "Chọn cuốn…"
+                    label: S.s_chuyen_sang_cuon_ffe90248
+                    placeholder: S.s_chon_cuon_300c901b
                     options: root.options
                     value: root.dialog && root.dialog.target ? root.dialog.target.id : ""
                     onPicked: value => root.setTarget(value)
@@ -128,8 +129,8 @@ Modal {
                 id: nameField
                 objectName: "recordName"
                 width: parent.width
-                label: "Tên hồ sơ"
-                placeholderText: "Tên hồ sơ"
+                label: S.s_ten_ho_so_0ea145bd
+                placeholderText: S.s_ten_ho_so_0ea145bd
                 onTextChanged: if (text.length > 60) text = text.slice(0, 60)
                 onAccepted: root.submit()
             }
@@ -138,7 +139,7 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "recordCancel"; text: "Huỷ"; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "recordCancel"; text: S.s_huy_96732485; kind: "ghost"; onClicked: root.close() }
             Button {
                 objectName: "recordConfirm"
                 text: root.dialog ? Logic.confirmLabel(root.dialog.kind) : ""

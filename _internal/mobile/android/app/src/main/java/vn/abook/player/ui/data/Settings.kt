@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.util.Locale
@@ -13,12 +15,12 @@ import java.util.Locale
  * Nhóm của trang gốc Cài đặt, theo thứ tự hay dùng (shared/SettingsNav.tsx `SETTINGS_GROUPS`, nhóm có mặt trên điện thoại). Mỗi nhóm một màn con - không cấp ba.
  */
 enum class SettingsGroup(val label: String, val tag: String) {
-    Voice("Giọng đọc", "settings_voice"),
-    Listen("Nghe", "settings_listen"),
-    Sleep("Hẹn giờ ngủ", "settings_sleep"),
-    Look("Giao diện", "settings_look"),
-    Devices("Thiết bị", "settings_devices"),
-    Advanced("Nâng cao", "settings_advanced"),
+    Voice(S.s_giong_doc_11f2548d, "settings_voice"),
+    Listen(S.s_nghe_a43aafef, "settings_listen"),
+    Sleep(S.s_hen_gio_ngu_21073488, "settings_sleep"),
+    Look(S.s_giao_dien_0813b59e, "settings_look"),
+    Devices(S.s_thiet_bi_eb706979, "settings_devices"),
+    Advanced(S.s_nang_cao_d16fca15, "settings_advanced"),
 }
 
 /** Một lựa chọn trong nhóm chọn-một: `key` là giá trị lưu ở kho (giữ nguyên chữ đã lưu), `label` là chữ trên màn. */
@@ -28,25 +30,25 @@ interface Choice {
 }
 
 enum class ThemeMode(override val key: String, override val label: String) : Choice {
-    System("system", "Tự động"),
-    Light("light", "Sáng"),
-    Dark("dark", "Tối");
+    System("system", S.s_tu_dong_a25c8028),
+    Light("light", S.s_sang_8f0c677d),
+    Dark("dark", S.s_toi_4ac2d267);
 
     /** Giao diện tối thật sự hay không, khi máy đang ở `systemDark`. */
     fun dark(systemDark: Boolean): Boolean = this == Dark || (this == System && systemDark)
 }
 
 enum class ReadingSurface(override val key: String, override val label: String) : Choice {
-    Auto("auto", "Tự động"),
-    Paper("paper", "Giấy"),
-    Ivory("ivory", "Ngà"),
-    Night("night", "Đêm"),
+    Auto("auto", S.s_tu_dong_a25c8028),
+    Paper("paper", S.s_giay_702e14de),
+    Ivory("ivory", S.s_nga_370ffbed),
+    Night("night", S.s_dem_98ef3f93),
 }
 
 enum class ShakeSensitivity(override val key: String, override val label: String) : Choice {
-    Gentle("gentle", "Nhẹ tay"),
-    Normal("normal", "Vừa"),
-    Firm("firm", "Mạnh tay"),
+    Gentle("gentle", S.s_nhe_tay_a3b81145),
+    Normal("normal", S.s_vua_8af1c03b),
+    Firm("firm", S.s_manh_tay_fe6b55ab),
 }
 
 /** Lịch đêm tự hẹn giờ: nghe trong khung `from`-`to` ("HH:mm") thì tự hẹn `minutes` phút. */
@@ -161,14 +163,14 @@ data class AppSettings(
 /** Dòng tóm tắt dưới tên nhóm ở trang gốc Cài đặt. */
 object SettingsSummary {
     fun listen(settings: AppSettings): String =
-        dotJoin(if (settings.autoRewind) "Tự lùi" else "Không tự lùi", if (settings.autoMusic) "nhạc tự chọn" else "không nhạc nền")
+        dotJoin(if (settings.autoRewind) S.s_tu_lui_6fc7685a else S.s_khong_tu_lui_8aec206c, if (settings.autoMusic) S.s_nhac_tu_chon_31bdb97d else S.s_khong_nhac_nen_0e54f623)
 
     fun sleep(settings: AppSettings): String {
         val schedule = settings.schedule
         return when {
-            schedule != null -> "Lịch đêm ${schedule.from}–${schedule.to}"
-            settings.safetyStopHours > 0 -> "Máy rảnh ${settings.safetyStopHours} giờ"
-            else -> "Tắt"
+            schedule != null -> S.s_lich_dem_0_1_4578d519(schedule.from, schedule.to)
+            settings.safetyStopHours > 0 -> S.s_may_ranh_0_gio_073900a0(settings.safetyStopHours)
+            else -> S.s_tat_3286064e
         }
     }
 

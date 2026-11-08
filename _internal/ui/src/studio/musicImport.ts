@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { api } from "./api";
 import { pickFiles } from "./data";
 import { mergeImports, type ImportResult } from "./musicLocal";
@@ -44,7 +45,7 @@ export async function importMusic(progress: MusicProgress): Promise<MusicImportO
       return { result: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
-  const paths = await pickFiles("Chọn nhạc của bạn", "", "music");
+  const paths = await pickFiles(S.s_chon_nhac_cua_ban_3441200f, "", "music");
   if (!paths.length) return { result: null };
   const results: ImportResult[] = [];
   progress(0, paths.length);

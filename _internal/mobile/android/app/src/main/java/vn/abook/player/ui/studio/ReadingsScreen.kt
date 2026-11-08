@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -138,7 +140,7 @@ private fun ReadingRow(state: StudioReadingsState, item: NameReading, clip: Clip
             }
             Column(Modifier.weight(1f)) {
                 BasicText(
-                    if (item.spoken.isNotEmpty()) "${item.surface} đọc là “${ReadingsLogic.shown(item.spoken)}”" else item.surface,
+                    if (item.spoken.isNotEmpty()) S.s_0_doc_la_1_e7d498da(item.surface, ReadingsLogic.shown(item.spoken)) else item.surface,
                     style = Abook.type.bodyStrong, modifier = Modifier.testTag("studio_reading_title"),
                 )
                 val note = when {
@@ -215,7 +217,7 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
     FieldGroup(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12).testTag("studio_reading_editor")) {
         BookField(
             null, value, { value = it; clear() }, "studio_reading_field",
-            description = ReadingsText.FIELD, placeholder = "vd ${item.spoken.ifEmpty { "Hên-khơ" }}",
+            description = ReadingsText.FIELD, placeholder = S.s_vd_0_85e20173(item.spoken.ifEmpty { S.s_hen_kho_5490c924 }),
         )
         InlineProblem(problem, null, "studio_reading_problem")
         if (suggestion.isNotEmpty()) {

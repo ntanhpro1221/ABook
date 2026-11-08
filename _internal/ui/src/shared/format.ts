@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // Định dạng kiểu Việt: "1.234" cho số, "9 giờ 12 phút" cho thời lượng dài, "13:05" cho đồng hồ phát.
 
 const numberFormat = new Intl.NumberFormat("vi-VN");
@@ -21,7 +22,7 @@ export function formatSize(bytes: number): string {
  * Bản native: Storage.line (devices/DevicesModel.kt) - cùng từng chữ.
  */
 export function storageSummary(bytes: number, free: number): string {
-  return `${bytes < 1024 ? "Chưa có sách" : `Sách ${formatSize(bytes)}`} · còn trống ${formatSize(free)}`;
+  return S.s_0_con_trong_1_2568383f(bytes < 1024 ? S.s_chua_co_sach_30843cb2 : S.s_sach_0_529204b5(formatSize(bytes)), formatSize(free));
 }
 
 /** Tên file trong một đường dẫn (dấu ngăn \ hay /): thông báo chỉ nói tên, đường đầy đủ để ở gợi ý khi rê chuột. */
@@ -88,19 +89,19 @@ export function shownReading(spoken: string): string {
 
 /** Thời lượng cho con người: "45 phút", "9 giờ 12 phút", "2 giờ". */
 export function formatLength(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0 phút";
+  if (!Number.isFinite(seconds) || seconds <= 0) return S.s_0_phut_66a3b36a;
   const minutes = Math.round(seconds / 60);
-  if (minutes < 1) return "dưới 1 phút";
+  if (minutes < 1) return S.s_duoi_1_phut_a1dd4f60;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (!hours) return `${minutes} phút`;
-  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+  if (!hours) return S.s_0_phut_2596d212(minutes);
+  return rest ? S.s_0_gio_1_phut_b72ee2eb(hours, rest) : S.s_0_gio_0341419e(hours);
 }
 
 /** Như `formatLength` nhưng làm tròn LÊN tới phút: thời gian còn lại nói cạnh đồng hồ đếm ngược của thanh phát ("-2:09" là "3 phút",
  *  không phải "2 phút" - soát a26 L10). */
 export function formatLengthUp(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0 phút";
+  if (!Number.isFinite(seconds) || seconds <= 0) return S.s_0_phut_66a3b36a;
   return formatLength(Math.ceil(seconds / 60) * 60);
 }
 
@@ -110,8 +111,8 @@ const NEAR_DONE = 0.85;
 /** `fraction`: bước đang làm đã được bao nhiêu (0-1). Còn ít giây mà bước chưa tới mức gần xong thì chỉ nói còn dưới 2 phút -
  *  "sắp xong" là lời hứa về cái đích, không phải về con số giây. Không đưa `fraction` thì giữ nghĩa cũ. */
 export function formatEta(seconds: number, fraction?: number): string {
-  if (seconds < 90) return fraction === undefined || fraction >= NEAR_DONE ? "sắp xong" : "còn dưới 2 phút";
-  return `còn khoảng ${formatLength(seconds)}`;
+  if (seconds < 90) return fraction === undefined || fraction >= NEAR_DONE ? S.s_sap_xong_7d5cfa0f : S.s_con_duoi_2_phut_41c172a6;
+  return S.s_con_khoang_0_1186d7f6(formatLength(seconds));
 }
 
 /** Thời gian còn lại của một cuốn đang chạy, theo bước máy đang ước (phân tích / thu âm), hoặc null khi chưa có tốc độ để ước.
@@ -123,25 +124,25 @@ export function etaOf(book: {
 }, short = false): string | null {
   if (!book.eta) return null;
   // Gọn (cột hẹp của danh sách dự án, soát 24-10 - "pha thu âm còn khoảng 3 giờ 2…" bị cắt): bỏ "pha" và "khoảng", vẫn nói của bước nào.
-  const say = (step: string, left: string) => (short ? `${step} ${left.replace(/^còn khoảng /, "còn ")}` : `pha ${step} ${left}`);
+  const say = (step: string, left: string) => (short ? `${step} ${left.replace(/^còn khoảng /, S.s_con_c697bae9)}` : `pha ${step} ${left}`);
   if (book.eta.phase === "speaker") {
     const pass = book.speakerPass;
-    return say(short ? "dò người nói" : "xác định người nói", formatEta(book.eta.seconds, pass && pass.total ? pass.done / pass.total : undefined));
+    return say(short ? S.s_do_nguoi_noi_1365941c : S.s_xac_dinh_nguoi_noi_a6f340f9, formatEta(book.eta.seconds, pass && pass.total ? pass.done / pass.total : undefined));
   }
   const synthesis = book.eta.phase === "synthesis";
   const left = formatEta(book.eta.seconds, synthesis ? book.progress.synthesis : book.progress.analysis);
-  return say(synthesis ? "thu âm" : "phân tích", left);
+  return say(synthesis ? S.s_thu_am_1382b7bf : S.s_phan_tich_70311eb1, left);
 }
 
 export function formatRelative(epochSeconds: number | null | undefined): string {
   if (!epochSeconds) return "";
   const delta = Date.now() / 1000 - epochSeconds;
-  if (delta < 60) return "vừa xong";
-  if (delta < 3600) return `${Math.floor(delta / 60)} phút trước`;
-  if (delta < 86400) return `${Math.floor(delta / 3600)} giờ trước`;
+  if (delta < 60) return S.s_vua_xong_b46f7a2b;
+  if (delta < 3600) return S.s_0_phut_truoc_86f05998(Math.floor(delta / 60));
+  if (delta < 86400) return S.s_0_gio_truoc_4c489dff(Math.floor(delta / 3600));
   const days = Math.floor(delta / 86400);
-  if (days === 1) return "hôm qua";
-  if (days < 7) return `${days} ngày trước`;
+  if (days === 1) return S.s_hom_qua_20142adc;
+  if (days < 7) return S.s_0_ngay_truoc_4f7dbb51(days);
   return formatDate(epochSeconds);
 }
 
@@ -161,9 +162,9 @@ export function formatWhen(epochSeconds: number | null | undefined): string {
       86_400_000,
   );
   const time = date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  if (days <= 0) return Date.now() / 1000 - epochSeconds < 60 ? "vừa xong" : `hôm nay ${time}`;
-  if (days === 1) return date.getHours() >= 18 ? `tối qua ${time}` : `hôm qua ${time}`;
-  if (days < 7) return `${days} ngày trước`;
+  if (days <= 0) return Date.now() / 1000 - epochSeconds < 60 ? S.s_vua_xong_b46f7a2b : S.s_hom_nay_0_0d4210b7(time);
+  if (days === 1) return date.getHours() >= 18 ? S.s_toi_qua_0_dbb7ff0b(time) : S.s_hom_qua_0_04ed87e6(time);
+  if (days < 7) return S.s_0_ngay_truoc_4f7dbb51(days);
   return formatDate(epochSeconds);
 }
 
@@ -208,7 +209,7 @@ export function musicNeedsModifiedNote(license?: string | null): boolean {
 }
 
 /** Lời "đã chỉnh sửa" đi kèm ghi công nhạc CC BY; cùng câu với bản xuất MP3 / M4B (`music_export.MODIFIED_NOTE`). */
-export const MUSIC_MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách.";
+export const MUSIC_MODIFIED_NOTE = S.s_da_chinh_sua_cac_bai_nhac_duoc_cat_vong_tr_929d3f58;
 
 /** Vân tay chứng chỉ để người dùng nhìn và đối chiếu: nhóm 4 ký tự, hoa - "AB12 CD34 ..." như `tls.display` / `Pin.display`.
  *  Nhận cả dạng hex lưu sẵn lẫn dạng đã nhóm (chạy lại không đổi); rỗng thì trả rỗng. */

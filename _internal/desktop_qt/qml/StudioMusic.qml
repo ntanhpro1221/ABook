@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioMusicLogic.js" as Logic
@@ -58,9 +59,9 @@ Column {
         const moods = Boolean(next.moods && next.moods.running)
         if (wasMoods && !moods) {
             Api.editedBook(bookId)
-            Api.notice = next.moods && next.moods.error ? "Không đọc xong không khí các đoạn\n" + next.moods.error : "Đã đọc xong không khí các đoạn - nhạc đã chọn lại"
+            Api.notice = next.moods && next.moods.error ? S.s_khong_doc_xong_khong_khi_cac_doan_d40f338a + next.moods.error : S.s_da_doc_xong_khong_khi_cac_doan_nhac_da_cho_487aac39
         }
-        if (wasDownload && !(next.download && next.download.active) && next.error) Api.notice = "Chưa tải được nhạc\n" + next.error
+        if (wasDownload && !(next.download && next.download.active) && next.error) Api.notice = S.s_chua_tai_duoc_nhac_17bf975f + next.error
     }
     function refreshSoon() { soon.restart() }
     Timer { id: soon; interval: 600; onTriggered: root.load() }
@@ -86,12 +87,12 @@ Column {
         pending = body
         store.request("PUT", "/api/books/" + bookId + "/music", body, function(status, data) {
             root.pending = null
-            if (!root.store.ok(status) || !data) { Api.notice = "Chưa đổi được nhạc nền\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = S.s_chua_doi_duoc_nhac_nen_3b7ee8b5 + root.store.errorText(status, data); return }
             root.view = data
             root.closeSwap()
             Api.editedBook(root.bookId)
             root.refreshSoon()
-            if (data.error) Api.notice = "Đã lưu lựa chọn\n" + data.error
+            if (data.error) Api.notice = S.s_da_luu_lua_chon_d745b366 + data.error
             if (done) done()
         })
     }
@@ -100,7 +101,7 @@ Column {
         rebuilding = true
         store.request("POST", "/api/books/" + bookId + "/music/rebuild", null, function(status, data) {
             root.rebuilding = false
-            if (!root.store.ok(status) || !data) { Api.notice = "Chưa chọn lại được nhạc\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = S.s_chua_chon_lai_duoc_nhac_24c667d1 + root.store.errorText(status, data); return }
             root.view = data
             root.closeSwap()
             Api.editedBook(root.bookId)
@@ -111,18 +112,18 @@ Column {
         cancelling = true
         store.request("POST", "/api/books/" + bookId + "/music/download/cancel", null, function(status, data) {
             root.cancelling = false
-            if (!root.store.ok(status) || !data) { Api.notice = "Chưa dừng được việc tải nhạc\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = S.s_chua_dung_duoc_viec_tai_nhac_f9093bd7 + root.store.errorText(status, data); return }
             // Máy chủ dừng ở khúc kế (một phần giây): ẩn dòng tiến độ ngay thay vì đợi lần hỏi sau
             const next = Object.assign({}, data); delete next.download
             root.view = next
-            Api.notice = "Đã dừng tải nhạc nền"
+            Api.notice = S.s_da_dung_tai_nhac_nen_6addc23d
         })
     }
     // Bỏ một bài cho cả cuốn: báo (kèm số đoạn đang dùng bài ấy, đếm trước khi đổi) và cho "Hoàn tác"
     function ban(link, label) {
         const used = Logic.usedBy(plan, link)
         change({ban: [link]}, function() {
-            Api.toast("Đã bỏ “" + label + "” cho cả cuốn (đang dùng ở " + used + " đoạn)", {action: {label: "Hoàn tác", run: function() { root.change({unban: [link]}) }}})
+            Api.toast(S.s_da_bo_8ccb2051 + label + S.s_cho_ca_cuon_dang_dung_o_90c1b242 + used + S.s_doan_19c016c5, {action: {label: S.s_hoan_tac_e72ff675, run: function() { root.change({unban: [link]}) }}})
         })
     }
 
@@ -155,12 +156,12 @@ Column {
     Collapse {
         width: parent.width
         open: root.view === null && !root.failed
-        EditBookSkeleton { width: parent.width; shape: "cards"; label: "Đang tải nhạc nền" }
+        EditBookSkeleton { width: parent.width; shape: "cards"; label: S.s_dang_tai_nhac_nen_0b8c4795 }
     }
     InlineError {
         width: parent.width
         open: root.failed && root.view === null
-        message: "Bạn hãy kiểm tra kết nối rồi tải lại nhạc nền."
+        message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_nhac_9a91e125
         onRetry: { root.failed = false; root.load() }
     }
 
@@ -175,11 +176,11 @@ Column {
             width: parent.width
             SettingRow {
                 width: parent.width
-                label: "Nhạc nền"
-                hint: root.overrides.enabled ? "Đang bật cho cuốn này." : "Đang tắt: các đoạn dưới đây sẽ không phát."
+                label: S.s_nhac_nen_271fb292
+                hint: root.overrides.enabled ? S.s_dang_bat_cho_cuon_nay_6752e54b : S.s_dang_tat_cac_doan_duoi_day_se_khong_phat_e93d8c97
                 Switch {
                     objectName: "musicEnabled"
-                    label: "Nhạc nền"
+                    label: S.s_nhac_nen_271fb292
                     checked: root.overrides.enabled
                     enabled: !root.changing
                     onToggled: value => root.change({enabled: value})
@@ -187,15 +188,15 @@ Column {
             }
             SettingRow {
                 width: parent.width
-                label: "Thể loại truyện"
+                label: S.s_the_loai_truyen_9c821aa0
                 // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài nên ghi đủ tên bên dưới
                 readonly property string named: Logic.genreName(root.taxonomy, root.overrides.genre)
-                hint: "Chưa chọn thì nhạc lấy từ mọi thể loại" + (root.width < 640 && named.length > 28 ? "\n" + named : "")
+                hint: S.s_chua_chon_thi_nhac_lay_tu_moi_the_loai_a144c9d2 + (root.width < 640 && named.length > 28 ? "\n" + named : "")
                 Select {
                     objectName: "musicGenre"
                     implicitWidth: 256
                     width: 256
-                    label: "Thể loại truyện"
+                    label: S.s_the_loai_truyen_9c821aa0
                     options: Logic.genreOptions(root.taxonomy)
                     value: root.overrides.genre || ""
                     enabled: !root.changing && !root.rebuilding
@@ -206,8 +207,8 @@ Column {
                 width: parent.width
                 SettingRow {
                     width: parent.width
-                    label: "Mức nhạc nền"
-                    hint: "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
+                    label: S.s_muc_nhac_nen_a45588ff
+                    hint: S.s_nho_hon_giong_doc_bay_nhieu_may_tu_bu_bai_e1b269b4
                 }
                 MusicLevelSlider {
                     objectName: "musicLevel"
@@ -219,11 +220,11 @@ Column {
             }
             SettingRow {
                 width: parent.width
-                label: "Bài cho từng đoạn"
-                hint: "Máy chọn lại theo thể loại và mức nhạc ở trên."
+                label: S.s_bai_cho_tung_doan_f2d49b48
+                hint: S.s_may_chon_lai_theo_the_loai_va_muc_nhac_o_t_927c2f67
                 Button {
                     objectName: "musicRebuild"
-                    text: root.rebuilding ? "Đang chọn lại" : "Chọn lại nhạc"
+                    text: root.rebuilding ? S.s_dang_chon_lai_16e4af51 : S.s_chon_lai_nhac_ebe26dde
                     icon: "refresh-cw"; kind: "ghost"
                     busy: root.rebuilding
                     onActivated: root.rebuild()
@@ -264,11 +265,11 @@ Column {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
                         Accessible.role: Accessible.StaticText
-                        Accessible.name: downloadBox.download ? Logic.spokenProgress("Đang tải sẵn nhạc nền", Logic.downloadShare(downloadBox.download)) : ""
+                        Accessible.name: downloadBox.download ? Logic.spokenProgress(S.s_dang_tai_san_nhac_nen_3d38ca5b, Logic.downloadShare(downloadBox.download)) : ""
                     }
                     Button {
                         objectName: "musicCancelDownload"
-                        text: "Huỷ tải"; icon: "square"; kind: "ghost"; size: "sm"
+                        text: S.s_huy_tai_1a9ff73d; icon: "square"; kind: "ghost"; size: "sm"
                         busy: root.cancelling
                         onActivated: root.cancelDownload()
                     }
@@ -276,7 +277,7 @@ Column {
                 MyMusicBar {
                     width: parent.width
                     value: downloadBox.download ? Logic.downloadShare(downloadBox.download) : 0
-                    label: "Tải sẵn nhạc nền"
+                    label: S.s_tai_san_nhac_nen_4474e87f
                 }
             }
             // "Dùng lại": dòng khép tại chỗ; bỏ hết thì cả mục khép lại
@@ -287,7 +288,7 @@ Column {
                     objectName: "musicBanned"
                     width: parent.width
                     topPadding: 8
-                    summary: "Bài đã bỏ (" + root.overrides.banned.length + ")"
+                    summary: S.s_bai_da_bo_4d06ea6e + root.overrides.banned.length + ")"
                     Repeater {
                         model: root.overrides.banned
                         Item {
@@ -308,7 +309,7 @@ Column {
                                 objectName: "musicUnban"
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "Dùng lại"; kind: "ghost"; size: "sm"
+                                text: S.s_dung_lai_01a1973f; kind: "ghost"; size: "sm"
                                 enabled: !root.changing
                                 onActivated: root.change({unban: [modelData]})
                             }
@@ -322,7 +323,7 @@ Column {
             objectName: "musicMoodsFold"
             width: parent.width
             storageKey: "studio.music.moods"
-            title: "Nhạc theo ngữ cảnh"
+            title: S.s_nhac_theo_ngu_canh_566500d8
             StudioMusicMoods {
                 width: parent.width
                 store: root.store
@@ -335,7 +336,7 @@ Column {
             objectName: "musicLocalFold"
             width: parent.width
             storageKey: "studio.music.local"
-            title: "Nhạc của tôi"
+            title: S.s_nhac_cua_toi_f65b7ac6
             StudioMyMusic {
                 width: parent.width
                 store: root.store
@@ -357,7 +358,7 @@ Column {
             objectName: "musicOffNote"
             width: parent.width
             visible: !root.overrides.enabled && root.scenes.length > 0
-            text: "Nhạc nền đang tắt - các đoạn dưới đây sẽ không phát."
+            text: S.s_nhac_nen_dang_tat_cac_doan_duoi_day_se_kho_2cc431ba
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -366,7 +367,7 @@ Column {
             objectName: "musicNoScenes"
             width: parent.width
             visible: root.scenes.length === 0
-            text: "Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích."
+            text: S.s_chua_co_doan_nao_nhac_nen_dung_sau_khi_sac_b1bdaf8e
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -442,7 +443,7 @@ Column {
                 objectName: "musicCredits"
                 width: parent.width
                 fontSize: Theme.sizeCaption
-                summary: "Ghi công (" + root.credits.lines.length + ")"
+                summary: S.s_ghi_cong_153d3665 + root.credits.lines.length + ")"
                 Column {
                     width: parent.width
                     topPadding: 8

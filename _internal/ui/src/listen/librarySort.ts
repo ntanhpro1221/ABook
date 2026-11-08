@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { foldVietnamese, type ListenBook } from "./model";
 
 // Thứ tự sách trong Thư viện (máy tính và điện thoại dùng chung): mặc định "Nghe gần đây" - thứ tự nguồn đã xếp theo lần nghe cuối;
@@ -6,10 +7,10 @@ import { foldVietnamese, type ListenBook } from "./model";
 export type LibrarySort = "recent" | "title" | "author" | "added";
 
 export const SORT_OPTIONS: { value: LibrarySort; label: string }[] = [
-  { value: "recent", label: "Nghe gần đây" },
-  { value: "title", label: "Tên sách" },
-  { value: "author", label: "Tác giả" },
-  { value: "added", label: "Mới thêm" },
+  { value: "recent", label: S.s_nghe_gan_day_2b222d97 },
+  { value: "title", label: S.s_ten_sach_d54846eb },
+  { value: "author", label: S.s_tac_gia_0ec4731b },
+  { value: "added", label: S.s_moi_them_bcc59d6f },
 ];
 
 const KEY = "abook-library-sort";

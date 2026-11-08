@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -77,10 +79,10 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     }
     val form = ui.form
     BookForm(
-        "Nối máy tính", onBack, "pair_screen",
+        S.s_noi_may_tinh_2950692d, onBack, "pair_screen",
         footer = if (ui.showForm) ({
             PrimaryButton(
-                if (ui.paired) "Ghép thiết bị" else "Kết nối", devices::connect,
+                if (ui.paired) S.s_ghep_thiet_bi_8de1f23c else S.s_ket_noi_02ca3cba, devices::connect,
                 Modifier.fillMaxWidth().testTag("pair_connect"), enabled = form.ready && ui.attempt !is Attempt.Working,
             )
         }) else null,
@@ -92,7 +94,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
             devicesList(ui, devices, sheets)
             booksLists(ui, devices)
             if (ui.showForm) pairForm(ui, devices) else item("add_device", "action") {
-                TextAction("Thêm thiết bị", { devices.setAdding(true) }, "pair_add", Modifier.padding(top = Dim.s8).fillMaxWidth(), align = Alignment.CenterStart)
+                TextAction(S.s_them_thiet_bi_15b663e2, { devices.setAdding(true) }, "pair_add", Modifier.padding(top = Dim.s8).fillMaxWidth(), align = Alignment.CenterStart)
             }
             if (!ui.paired) item("install", "install") { InstallFold(devices) }
         }
@@ -104,14 +106,14 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
 private fun RefreshButton(refreshing: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
     Box(
-        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh").semantics { contentDescription = "Tìm lại" },
+        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh").semantics { contentDescription = S.s_tim_lai_635fcbe8 },
         contentAlignment = Alignment.Center,
     ) { RefreshIcon(if (refreshing) colors.text3 else colors.text2) }
 }
 
 private fun LazyListScope.devicesList(ui: PairUi, devices: DevicesState, sheets: SheetHost) {
     if (ui.devices.isEmpty()) return
-    item("devices_title", "title") { SectionTitle("Máy đã nối", first = true) }
+    item("devices_title", "title") { SectionTitle(S.s_may_da_noi_a1b94280, first = true) }
     items(ui.devices, key = { "device_${it.key}" }, contentType = { "device" }) { device ->
         Column(Modifier.fillMaxWidth()) {
             DeviceRow(
@@ -126,8 +128,8 @@ private fun LazyListScope.devicesList(ui: PairUi, devices: DevicesState, sheets:
     item("away", "away") {
         Reveal(ui.devices.any { it.reach is Reach.Offline }) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("pair_away")) {
-                RowHint("Sách đã tải vẫn nghe được khi ra ngoài.")
-                MoreInfo("Nghe khi ra ngoài", DeviceText.AWAY_HELP, "pair_away_help")
+                RowHint(S.s_sach_da_tai_van_nghe_duoc_khi_ra_ngoai_93db87dd)
+                MoreInfo(S.s_nghe_khi_ra_ngoai_b5de4fd3, DeviceText.AWAY_HELP, "pair_away_help")
             }
         }
     }
@@ -136,7 +138,7 @@ private fun LazyListScope.devicesList(ui: PairUi, devices: DevicesState, sheets:
 private fun LazyListScope.booksLists(ui: PairUi, devices: DevicesState) {
     for (section in ui.sections) {
         val name = section.source ?: "main"
-        item("books_$name", "title") { SectionTitle("Sách trên ${section.deviceName}") }
+        item("books_$name", "title") { SectionTitle(S.s_sach_tren_0_7e7f4260(section.deviceName)) }
         items(section.books, key = { "book_${it.id}" }, contentType = { "book" }) { book ->
             Column(Modifier.fillMaxWidth()) {
                 RemoteBookRow(
@@ -153,36 +155,36 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
     val form = ui.form
     if (ui.paired) item("form_title", "title") {
         Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-            BasicText("Thiết bị khác", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-            TextAction("Huỷ", { devices.setAdding(false) }, "pair_cancel")
+            BasicText(S.s_thiet_bi_khac_e027e6f8, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+            TextAction(S.s_huy_96732485, { devices.setAdding(false) }, "pair_cancel")
         }
     }
     if (!ui.paired) item("intro", "intro") {
         Column(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("pair_intro")) {
-            RowHint("Cùng Wi-Fi, mở Thiết bị trên máy tính.")
-            MoreInfo("Cách lấy mã", DeviceText.PAIR_CODE_HELP, "pair_code_help")
+            RowHint(S.s_cung_wi_fi_mo_thiet_bi_tren_may_tinh_49c24644)
+            MoreInfo(S.s_cach_lay_ma_12058487, DeviceText.PAIR_CODE_HELP, "pair_code_help")
         }
     }
     item("method", "method") {
         if (ui.paired) {
-            RowHint("Sách máy kia hiện trong Thư viện.")
-            TextAction("Ghép Bluetooth", { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
+            RowHint(S.s_sach_may_kia_hien_trong_thu_vien_a323b709)
+            TextAction(S.s_ghep_bluetooth_0193ced5, { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
         }
-        ChoiceSetting("Cách nối", PairMethod.entries, ui.method, { method, _ -> devices.setMethod(method) }, "pair_method")
+        ChoiceSetting(S.s_cach_noi_54df7083, PairMethod.entries, ui.method, { method, _ -> devices.setMethod(method) }, "pair_method")
     }
     when (ui.method) {
         PairMethod.Wifi -> wifiRows(ui, devices)
         PairMethod.Bluetooth -> bluetoothRows(ui, devices)
         PairMethod.Address -> item("address", "address") {
             Column(Modifier.padding(top = Dim.s12)) {
-                BookField(null, form.address, devices::setAddress, "pair_address", description = "Địa chỉ máy tính", placeholder = "Địa chỉ, ví dụ 192.168.1.20:47630", keyboard = KeyboardType.Uri)
+                BookField(null, form.address, devices::setAddress, "pair_address", description = S.s_dia_chi_may_tinh_3717a634, placeholder = S.s_dia_chi_vi_du_192_168_1_20_47630_23c40eb4, keyboard = KeyboardType.Uri)
             }
         }
     }
     item("code", "code") {
         Reveal(form.target != null) {
             Column(Modifier.padding(top = Dim.s16)) {
-                BookField("Mã ghép nối", form.code, devices::setCode, "pair_code", description = "Mã ghép nối", placeholder = "Mã 6 số", keyboard = KeyboardType.Number)
+                BookField(S.s_ma_ghep_noi_9111985a, form.code, devices::setCode, "pair_code", description = S.s_ma_ghep_noi_9111985a, placeholder = S.s_ma_6_so_a067b6d9, keyboard = KeyboardType.Number)
             }
         }
     }
@@ -192,7 +194,7 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
         (ui.attempt as? Attempt.Working)?.let { last[0] = it.name }
         Column(Modifier.fillMaxWidth()) {
             Reveal(ui.attempt is Attempt.Working) {
-                ListItem("Đang nối ${last[0]}", Modifier.testTag("pair_working"), below = { CreepProgress() })
+                ListItem(S.s_dang_noi_0_12f5920e(last[0]), Modifier.testTag("pair_working"), below = { CreepProgress() })
             }
             InlineProblem((ui.attempt as? Attempt.Failed)?.message.orEmpty(), devices::connect, "pair_problem")
         }
@@ -202,9 +204,9 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
 private fun LazyListScope.wifiRows(ui: PairUi, devices: DevicesState) {
     val list = ui.wifiChoices
     when {
-        list.isNotEmpty() -> { item("wifi_title", "title") { SectionTitle("Máy tính tìm thấy") }; foundRows(list, ui, devices) }
-        ui.scanning -> item("scanning", "status") { ListItem("Đang tìm thiết bị", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
-        else -> item("none", "status") { NoneRow("Chưa thấy thiết bị", devices::scan) }
+        list.isNotEmpty() -> { item("wifi_title", "title") { SectionTitle(S.s_may_tinh_tim_thay_fda2636c) }; foundRows(list, ui, devices) }
+        ui.scanning -> item("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        else -> item("none", "status") { NoneRow(S.s_chua_thay_thiet_bi_192c6e9e, devices::scan) }
     }
 }
 
@@ -212,30 +214,30 @@ private fun LazyListScope.bluetoothRows(ui: PairUi, devices: DevicesState) {
     when (val bluetooth = ui.bluetooth) {
         Bluetooth.Off, Bluetooth.Explain -> item("permission", "permission") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
-                RowHint("Cho phép “Thiết bị ở gần” để tìm máy đã ghép.")
-                MoreInfo("Quyền Bluetooth", "Chỉ tìm máy đã ghép Bluetooth để nhận sách; ABook không dò hay kết nối thiết bị khác.", "bluetooth_reason")
-                TextAction("Cho phép", devices::requestBluetooth, "bluetooth_allow")
-                TextAction("Để sau", devices::deferBluetooth, "bluetooth_later")
+                RowHint(S.s_cho_phep_thiet_bi_o_gan_de_tim_may_da_ghep_9a04ce0a)
+                MoreInfo(S.s_quyen_bluetooth_b86ed969, S.s_chi_tim_may_da_ghep_bluetooth_de_nhan_sach_29918072, "bluetooth_reason")
+                TextAction(S.s_cho_phep_f1a437f5, devices::requestBluetooth, "bluetooth_allow")
+                TextAction(S.s_de_sau_9be0a7ab, devices::deferBluetooth, "bluetooth_later")
             }
         }
-        Bluetooth.Listing -> item("scanning", "status") { ListItem("Đang tìm thiết bị", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        Bluetooth.Listing -> item("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
         Bluetooth.Denied -> item("denied", "status") {
             ListItem(
-                "Cần quyền Thiết bị ở gần", Modifier.testTag("pair_denied"), titleColor = Abook.colors.danger,
-                trailing = { TextAction("Mở cài đặt", devices::openAppSettings, "pair_open_settings") },
+                S.s_can_quyen_thiet_bi_o_gan_ea24d4e0, Modifier.testTag("pair_denied"), titleColor = Abook.colors.danger,
+                trailing = { TextAction(S.s_mo_cai_dat_60ab929f, devices::openAppSettings, "pair_open_settings") },
             )
         }
         is Bluetooth.Failed -> item("failed", "status") {
             ListItem(
                 bluetooth.message, Modifier.testTag("pair_bluetooth_failed"), titleColor = Abook.colors.danger,
-                trailing = { TextAction("Thử lại", devices::findBluetooth, "pair_bluetooth_retry") },
+                trailing = { TextAction(S.s_thu_lai_c58d068c, devices::findBluetooth, "pair_bluetooth_retry") },
             )
         }
         is Bluetooth.Devices -> {
-            item("bt_title", "title") { SectionTitle("Máy tính đã ghép Bluetooth") }
+            item("bt_title", "title") { SectionTitle(S.s_may_tinh_da_ghep_bluetooth_7f2e5d06) }
             val list = ui.bluetoothChoices
             if (list.isNotEmpty()) foundRows(list, ui, devices) else item("none", "status") {
-                NoneRow("Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.", devices::findBluetooth)
+                NoneRow(S.s_chua_co_may_nao_ghep_bluetooth_ghep_o_cai_01e82050, devices::findBluetooth)
             }
         }
     }
@@ -253,7 +255,7 @@ private fun LazyListScope.foundRows(list: List<Found>, ui: PairUi, devices: Devi
 /** Không thấy máy nào: một dòng nói thẳng và "Tìm lại" ở cuối dòng đầu. */
 @Composable
 private fun NoneRow(title: String, onRetry: () -> Unit) {
-    ListItem(title, Modifier.testTag("pair_none"), trailing = { IconAction("Tìm lại", onRetry, "pair_rescan") { RefreshIcon(Abook.colors.text2) } })
+    ListItem(title, Modifier.testTag("pair_none"), trailing = { IconAction(S.s_tim_lai_635fcbe8, onRetry, "pair_rescan") { RefreshIcon(Abook.colors.text2) } })
 }
 
 /**
@@ -264,17 +266,17 @@ private fun NoneRow(title: String, onRetry: () -> Unit) {
 private fun InstallFold(devices: DevicesState) {
     val colors = Abook.colors
     var copied by remember { mutableStateOf<Boolean?>(null) }
-    Fold("Cài trên máy tính", "pair_install", Modifier.padding(top = Dim.s16)) {
+    Fold(S.s_cai_tren_may_tinh_3a208e7c, "pair_install", Modifier.padding(top = Dim.s16)) {
         ListItem(
-            "Studio máy tính", Modifier, null, "pair_studio_intro", hint = "Tạo sách nói rồi nghe ở đây.",
+            S.s_studio_may_tinh_1773d208, Modifier, null, "pair_studio_intro", hint = S.s_tao_sach_noi_roi_nghe_o_day_2bf381ff,
             titleStyle = Abook.type.bodyStrong, leading = { LaptopIcon(colors.text2) },
         )
         RowLine(start = 36.dp)
         ListItem(
-            "Tải ABook Windows", Modifier, devices::openDesktopRelease, "pair_download",
-            hint = copied?.let { if (it) "Đã chép địa chỉ" else keepUrlTogether(DeviceText.DESKTOP_RELEASES) },
+            S.s_tai_abook_windows_9001b86d, Modifier, devices::openDesktopRelease, "pair_download",
+            hint = copied?.let { if (it) S.s_da_chep_dia_chi_956bdd76 else keepUrlTogether(DeviceText.DESKTOP_RELEASES) },
             titleColor = colors.accentText, titleStyle = Abook.type.bodyStrong, leading = { DownloadIcon(colors.text2) },
-            trailing = { IconAction("Chép địa chỉ", { copied = devices.copyDesktopRelease() }, "pair_copy_release") { CopyIcon(colors.text2) } },
+            trailing = { IconAction(S.s_chep_dia_chi_06306764, { copied = devices.copyDesktopRelease() }, "pair_copy_release") { CopyIcon(colors.text2) } },
         )
     }
 }

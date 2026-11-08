@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +21,7 @@ class AndroidReadAlongSource(context: Context) : ReadAlongSource {
             return withContext(Dispatchers.Default) { ReadAlongLookup.parse(active) }
         }
         return withContext(Dispatchers.IO) {
-            val raw = BookActions.text(app, bookId, "scripts/${chapter.id}.json") ?: error("Bạn cần tải chữ của chương.")
+            val raw = BookActions.text(app, bookId, "scripts/${chapter.id}.json") ?: error(S.s_ban_can_tai_chu_cua_chuong_17c96de9)
             ReadAlongLookup.parse(JSONObject(raw))
         }
     }

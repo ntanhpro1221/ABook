@@ -119,7 +119,7 @@ class MusicStore(
      */
     private fun info(digest: String, entry: JSONObject): JSONObject {
         val analysis = entry.optJSONObject("analysis")
-        val title = entry.optString("title").ifEmpty { File(entry.optString("name")).nameWithoutExtension }.ifEmpty { "Bài nhạc" }
+        val title = entry.optString("title").ifEmpty { File(entry.optString("name")).nameWithoutExtension }.ifEmpty { S.s_bai_nhac_5d07657e }
         val info = JSONObject().put("link", LOCAL_PREFIX + digest).put("title", title).put("creator", entry.optString("artist"))
             .put("duration", Math.rint(entry.optDouble("duration", 0.0)).toLong()).put("source", "local")
             .put("analysed", analysis != null && analysis.length() > 0).put("name", entry.optString("name"))
@@ -162,7 +162,7 @@ class MusicStore(
 
     /** Nhập một file nằm trên đĩa (`source`): [importStream] với tên file của nó. */
     fun importFile(source: File): Pair<JSONObject, Boolean> {
-        if (!source.isFile) throw ImportError("“${source.name}”: không thấy file này.")
+        if (!source.isFile) throw ImportError(S.s_0_khong_thay_file_nay_e246b28f(source.name))
         return importStream(source.name) { source.inputStream() }
     }
 
@@ -172,10 +172,10 @@ class MusicStore(
      * tên file người dùng thấy (đuôi quyết định định dạng).
      */
     fun importStream(displayName: String, open: () -> InputStream?): Pair<JSONObject, Boolean> {
-        val name = displayName.substringAfterLast('/').substringAfterLast('\\').ifEmpty { "nhạc" }
+        val name = displayName.substringAfterLast('/').substringAfterLast('\\').ifEmpty { S.s_nhac_76318bc9 }
         val extension = name.substringAfterLast('.', "").lowercase()
         if (extension !in EXTENSIONS) {
-            throw ImportError("“$name”: chưa thêm được định dạng này - dùng ${EXTENSIONS.joinToString(", ") { ".$it" }}.")
+            throw ImportError(S.s_0_chua_them_duoc_dinh_dang_nay_dung_1_717c410b(name, EXTENSIONS.joinToString(", ") { ".$it" }))
         }
         val folder = File(root, "files").apply { mkdirs() }
         synchronized(lock) {
@@ -188,7 +188,7 @@ class MusicStore(
             val digest = MessageDigest.getInstance("SHA-1")
             var size = 0L
             try {
-                val input = open() ?: throw ImportError("“$name”: không đọc được file này.")
+                val input = open() ?: throw ImportError(S.s_0_khong_doc_duoc_file_nay_f309c568(name))
                 input.use { source ->
                     part.outputStream().use { sink ->
                         val buffer = ByteArray(1 shl 16)
@@ -196,14 +196,14 @@ class MusicStore(
                             val read = source.read(buffer)
                             if (read < 0) break
                             size += read
-                            if (size > MAX_TRACK_BYTES) throw ImportError("“$name”: file quá lớn để làm nhạc nền (tối đa 1 GB).")
+                            if (size > MAX_TRACK_BYTES) throw ImportError(S.s_0_file_qua_lon_de_lam_nhac_nen_toi_da_1_gb_8429299e(name))
                             digest.update(buffer, 0, read)
                             sink.write(buffer, 0, read)
                         }
                     }
                 }
             } catch (error: IOException) {
-                throw ImportError("Chưa chép được “$name” vào kho nhạc — bạn thử lại.")
+                throw ImportError(S.s_chua_chep_duoc_0_vao_kho_nhac_ban_thu_lai_42aca3e5(name))
             }
             val sha = digest.digest().joinToString("") { "%02x".format(it) }
             synchronized(lock) { duplicate(sha)?.let { return it to true } }
@@ -220,7 +220,7 @@ class MusicStore(
                 val target = File(folder, "$sha.$extension")
                 if (!part.renameTo(target)) {
                     target.delete()
-                    if (!part.renameTo(target)) throw ImportError("“$name”: không chép được vào kho nhạc.")
+                    if (!part.renameTo(target)) throw ImportError(S.s_0_khong_chep_duoc_vao_kho_nhac_17dc63c8(name))
                 }
                 val entry = JSONObject().put("ext", extension).put("name", name).put("bytes", target.length()).put("added", clock())
                     .put("duration", Math.round(found.duration * 100) / 100.0).put("title", (found.title ?: "").take(TAG_MAX))
@@ -292,7 +292,7 @@ class MusicStore(
         private val FAMILIES = setOf("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other") // music_plan.FAMILIES
         private val EMOTIONS = listOf("peacefulness", "tenderness", "nostalgia", "sadness", "joy", "playful", "power", "wonder", "tension",
             "fear", "anger", "mystery", "moved") // music_scenes.EMOTION_CLASSES
-        const val NO_ANALYZER = "Chưa có bộ phân tích nhạc; bạn vẫn chọn bài thủ công được."
+        const val NO_ANALYZER = S.s_chua_co_bo_phan_tich_nhac_ban_van_chon_bai_a4664edd
 
         /** Mã sha1 (40 hex) của file trong link `local:<sha1>`; link khác dạng -> null. */
         fun localHash(link: String): String? = link.removePrefix(LOCAL_PREFIX).takeIf { link.startsWith(LOCAL_PREFIX) && SHA1.matches(it) }

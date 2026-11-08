@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -40,15 +41,15 @@ QtObject {
     function quiet(method, p, body, done) {
         return request(method, p, body, function(status, data) {
             if (ok(status)) { if (done) done(data, null) }
-            else if (done) done(null, data && (data.message || data.error) || (status === 0 ? errorText(0, null) : "Chưa làm được lúc này."), data)
+            else if (done) done(null, data && (data.message || data.error) || (status === 0 ? errorText(0, null) : S.s_chua_lam_duoc_luc_nay_2e7cacde), data)
         })
     }
     // Lời lỗi cho người nghe (serverMessage + failureText của web)
     function errorText(status, data) {
-        if (status === 0) return "Mất kết nối tới ABook."
-        const raw = String(data && (data.error || data.message) || "Lỗi " + status)
+        if (status === 0) return S.s_mat_ket_noi_toi_abook_1d2b48ae
+        const raw = String(data && (data.error || data.message) || S.s_loi_6e07427b + status)
         return status >= 500 && /^[A-Z][A-Za-z]*(?:Error|Exception|Interrupt|Iteration|Exit)(?::|$)/.test(raw.trim())
-            ? "Máy gặp lỗi không ngờ khi làm việc này. Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ." : raw
+            ? S.s_may_gap_loi_khong_ngo_khi_lam_viec_nay_thu_b7a45f7b : raw
     }
     function say(title, description) { Api.notice = description ? title + "\n" + description : title }
     function fail(title, status, data) { say(title, errorText(status, data)) }
@@ -132,9 +133,9 @@ QtObject {
         starting = true
         request("POST", "/api/books/" + id + "/start", null, function(status, data) {
             root.starting = false
-            if (!ok(status)) { root.fail("Chưa bắt đầu được", status, data); return }
+            if (!ok(status)) { root.fail(S.s_chua_bat_dau_duoc_99e21669, status, data); return }
             root.refresh(id)
-            Api.notice = data && data.queuePosition ? "Đã xếp hàng - tự bắt đầu khi cuốn đang chạy xong (cần mở app)" : "Đang khởi động"
+            Api.notice = data && data.queuePosition ? S.s_da_xep_hang_tu_bat_dau_khi_cuon_dang_chay_02a64243 : S.s_dang_khoi_dong_e7a9b0e5
         })
     }
     // Studio chưa cài / cần cập nhật: nói thẳng ở đây thay vì gửi lệnh rồi nhận lỗi (Actions.begin của web)
@@ -150,7 +151,7 @@ QtObject {
         pausing = true
         request("POST", "/api/books/" + id + "/pause", {paused: paused}, function(status, data) {
             root.pausing = false
-            if (!ok(status)) { root.refresh(id); root.fail(paused ? "Chưa tạm dừng được" : "Chưa làm tiếp được", status, data); return }
+            if (!ok(status)) { root.refresh(id); root.fail(paused ? S.s_chua_tam_dung_duoc_18ca46fa : S.s_chua_lam_tiep_duoc_9c01f548, status, data); return }
             root.adopt(data)
             const notice = Logic.pauseNotice(paused, data, Boolean(battery))
             root.say(notice.title, notice.description)
@@ -161,9 +162,9 @@ QtObject {
         stopping = true
         request("POST", "/api/books/" + id + "/stop", null, function(status, data) {
             root.stopping = false
-            if (!ok(status)) { root.refresh(id); root.fail("Chưa dừng được", status, data); return }
+            if (!ok(status)) { root.refresh(id); root.fail(S.s_chua_dung_duoc_27687f3d, status, data); return }
             root.adopt(data)
-            Api.notice = wasPaused ? "Đang dừng hẳn - mọi thứ đã xong được giữ nguyên" : "Sẽ dừng ở chỗ an toàn kế tiếp - mọi thứ đã xong được giữ nguyên"
+            Api.notice = wasPaused ? S.s_dang_dung_han_moi_thu_da_xong_duoc_giu_ngu_2ae6d285 : S.s_se_dung_o_cho_an_toan_ke_tiep_moi_thu_da_x_f2b7fc37
         })
     }
     // "Bỏ xếp hàng": lệnh riêng, máy chủ CHỈ bỏ khỏi hàng (dừng giữa pha phân tích là đổi quyển sách)
@@ -171,58 +172,58 @@ QtObject {
         if (commanding) return
         request("POST", "/api/books/" + id + "/dequeue", null, function(status, data) {
             root.refresh(id)
-            if (!ok(status)) root.fail("Chưa bỏ xếp hàng được", status, data)
-            else Api.notice = "Đã bỏ xếp hàng - cuốn này không tự bắt đầu nữa"
+            if (!ok(status)) root.fail(S.s_chua_bo_xep_hang_duoc_48e75172, status, data)
+            else Api.notice = S.s_da_bo_xep_hang_cuon_nay_khong_tu_bat_dau_n_f9ec176f
         })
     }
     function reveal(id) {
         request("POST", "/api/books/" + id + "/reveal", null, function(status, data) {
-            if (!ok(status)) root.fail("Chưa mở được thư mục", status, data)
+            if (!ok(status)) root.fail(S.s_chua_mo_duoc_thu_muc_481da77e, status, data)
         })
     }
     function rename(id, title, done) {
         request("PUT", "/api/books/" + id + "/title", {title: title}, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa đổi được tên", status, data); if (done) done(false); return }
+            if (!ok(status)) { root.fail(S.s_chua_doi_duoc_ten_ad5b4df1, status, data); if (done) done(false); return }
             root.loadLibrary()
             if (id === root.bookId) root.loadBook()
-            Api.notice = "Đã đổi tên thành “" + data.title + "”"
+            Api.notice = S.s_da_doi_ten_thanh_a5653594 + data.title + "”"
             if (done) done(true)
         })
     }
     // Xoá = cả thư mục dự án vào Thùng rác (khôi phục được trong ít giây qua "Hoàn tác", trash_pending.py)
     function remove(id, title, done) {
         request("DELETE", "/api/books/" + id, null, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa xoá được", status, data); if (done) done(false); return }
+            if (!ok(status)) { root.fail(S.s_chua_xoa_duoc_b872fff6, status, data); if (done) done(false); return }
             root.loadLibrary()
             if (done) done(true)
-            const message = "Đã xoá dự án “" + title + "”"
+            const message = S.s_da_xoa_du_an_fa259027 + title + "”"
             if (data && data.undo) {
-                Api.toast(message, {duration: 28000, action: {label: "Hoàn tác", run: function() { root.undoRemove(data.undo, title) }}})
+                Api.toast(message, {duration: 28000, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.undoRemove(data.undo, title) }}})
             } else Api.notice = message
         })
     }
     function undoRemove(token, title) {
         request("POST", "/api/trash/" + token + "/undo", {}, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa hoàn tác được", status, data); return }
+            if (!ok(status)) { root.fail(S.s_chua_hoan_tac_duoc_164b754b, status, data); return }
             root.loadLibrary()
-            Api.notice = data && data.renamed && data.title ? "Đã khôi phục “" + title + "” vào thư mục “" + data.title + "”" : "Đã khôi phục “" + title + "”"
+            Api.notice = data && data.renamed && data.title ? S.s_da_khoi_phuc_eaf7c0a3 + title + S.s_vao_thu_muc_97d32e04 + data.title + "”" : S.s_da_khoi_phuc_eaf7c0a3 + title + "”"
         })
     }
     function restoreBackup(id, title, done) {
         request("POST", "/api/books/" + id + "/restore-backup", null, function(status, data) {
             root.loadLibrary()
-            if (!ok(status)) { root.fail("Chưa khôi phục được", status, data); if (done) done(false); return }
-            Api.notice = "Đã khôi phục “" + title + "” từ bản sao"
+            if (!ok(status)) { root.fail(S.s_chua_khoi_phuc_duoc_4cd0f749, status, data); if (done) done(false); return }
+            Api.notice = S.s_da_khoi_phuc_eaf7c0a3 + title + S.s_tu_ban_sao_e33346f6
             if (done) done(true)
         })
     }
     // "Mở dự án có sẵn…": chọn thư mục rồi mở nó (pickFolder + useOpenBook của web)
     function openExisting(done) {
-        request("POST", "/api/dialog/folder", {title: "Chọn thư mục một cuốn sách đã tạo", start: ""}, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa mở được sách", status, data); return }
+        request("POST", "/api/dialog/folder", {title: S.s_chon_thu_muc_mot_cuon_sach_da_tao_9b48464a, start: ""}, function(status, data) {
+            if (!ok(status)) { root.fail(S.s_chua_mo_duoc_sach_86cc68d3, status, data); return }
             if (!data || !data.path) return
             root.request("POST", "/api/books/open", {path: data.path}, function(s2, d2) {
-                if (!root.ok(s2)) { root.fail("Chưa mở được sách", s2, d2); return }
+                if (!root.ok(s2)) { root.fail(S.s_chua_mo_duoc_sach_86cc68d3, s2, d2); return }
                 root.loadLibrary()
                 if (done) done(d2.id)
             })
@@ -240,7 +241,7 @@ QtObject {
     // Công tắc "Duyệt trước khi thu" (PrecastWaitSwitch): PUT /precast {wait}; lời đáp là trạng thái mới của màn duyệt
     function setPrecastWait(id, wait, done) {
         request("PUT", "/api/books/" + id + "/precast", {wait: wait}, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa đổi được", status, data); if (done) done(false); return }
+            if (!ok(status)) { root.fail(S.s_chua_doi_duoc_a6c67cde, status, data); if (done) done(false); return }
             if (id === bookId) loadBook()
             if (libraryWanted) loadLibrary()
             precastChanged(id)
@@ -252,8 +253,8 @@ QtObject {
     // "Thu lại cả chương" (ChapterMenu của ProjectScreen.tsx): đặt lại mọi câu đã thu của chương để thu lại với hạt giống mới
     function retakeChapter(id, chapter, done) {
         request("POST", "/api/books/" + id + "/chapters/" + chapter.id + "/retake", null, function(status, data) {
-            if (!ok(status)) { root.fail("Chưa ghi được", status, data); if (done) done(false); return }
-            Api.notice = "Đã ghi: thu lại " + data.lines + " câu của " + chapter.displayTitle
+            if (!ok(status)) { root.fail(S.s_chua_ghi_duoc_9fa87a7d, status, data); if (done) done(false); return }
+            Api.notice = S.s_da_ghi_thu_lai_4303c66d + data.lines + S.s_cau_cua_35c4143d + chapter.displayTitle
             root.refresh(id)
             if (done) done(true)
         })

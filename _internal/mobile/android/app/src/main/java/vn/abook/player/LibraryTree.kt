@@ -69,8 +69,8 @@ object LibraryTree {
                 Node(
                     id = BOOK + id,
                     bookId = id,
-                    title = manifest.optString("title").ifBlank { "Sách" },
-                    subtitle = if (resume != null) "Nghe tiếp: ${resume.first.title}" else "${chapters(manifest).size} chương",
+                    title = manifest.optString("title").ifBlank { S.s_sach_0c2b3e9b },
+                    subtitle = if (resume != null) S.s_nghe_tiep_0_623f2799(resume.first.title) else S.s_0_chuong_04093412(chapters(manifest).size),
                     playable = true,
                     browsable = true,
                 )
@@ -83,14 +83,14 @@ object LibraryTree {
         val parts = partsOf(manifest)
         return chapters(manifest).map { chapter ->
             val subtitle = when {
-                chapter.id == current -> "Đang nghe dở"
-                heard?.optJSONObject(chapter.id.toString())?.optBoolean("done") == true -> "Đã nghe"
-                chapter.isText -> "Giọng đọc của máy"
+                chapter.id == current -> S.s_dang_nghe_do_a844cf51
+                heard?.optJSONObject(chapter.id.toString())?.optBoolean("done") == true -> S.s_da_nghe_1e0f8d88
+                chapter.isText -> S.s_giong_doc_cua_may_fb991f25
                 else -> minutes(chapter.duration)
             }
             // Cả bộ nhiều phần trong một file (bookfile.pack_series): màn Android Auto không có tiêu đề nhóm nên mỗi dòng
             // tự nói mình ở phần nào.
-            val part = parts[chapter.id]?.let { "Phần $it · " }.orEmpty()
+            val part = parts[chapter.id]?.let { S.s_phan_0_04fc3043(it) }.orEmpty()
             Node("$CHAPTER$id/${chapter.id}", id, chapter.title, part + subtitle, playable = true, browsable = false)
         }
     }
@@ -140,6 +140,6 @@ object LibraryTree {
 
     private fun minutes(seconds: Double): String {
         val total = (seconds / 60).toInt().coerceAtLeast(1)
-        return if (total < 60) "$total phút" else "${total / 60} giờ ${total % 60} phút"
+        return if (total < 60) S.s_0_phut_2596d212(total) else S.s_0_gio_1_phut_b72ee2eb(total / 60, total % 60)
     }
 }

@@ -45,7 +45,7 @@ class ExportMusic private constructor(
                 fetching(missing.size, missing.size)
             }
             val guard = runCatching { MusicRender.Params.load(context) }.getOrNull()
-                ?: throw Mp3Export.Refused("Chưa đọc được thiết lập nhạc nền của app - cài lại app rồi xuất lại")
+                ?: throw Mp3Export.Refused(S.s_chua_doc_duoc_thiet_lap_nhac_nen_cua_app_c_4b4c6e34)
             val cache = TrackPcmCache(File(context.cacheDir, "music-pcm/$run"), M4bAudio.trackDecoder({ File(it) }, stopped))
             // Chương một kênh: bù gộp theo đoạn phát của từng bài (music_export.Mixer._fold_offsets).
             val mixer = MusicExport.Mixer(BookMusic.chapterMusic(dir, music, chapterIds), cache, guard, M4bAudio.foldOffset(stopped))

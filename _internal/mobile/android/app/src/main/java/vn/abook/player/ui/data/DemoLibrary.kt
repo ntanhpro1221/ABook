@@ -1,12 +1,14 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 /**
  * Thư viện giả CHỈ cho đo đạc và ảnh chụp: extra `abook.demo.books` của NativeActivity (đo đạc) và test.
  * Có bộ nhiều tập, sách chỉ-chữ, sách trên máy tính, cuốn đang nghe dở, cuốn đã xong - đủ mọi dáng của lưới. Cố định theo chỉ số: cùng số sách, cùng ảnh.
  */
 object DemoLibrary {
-    private val bases = arrayOf("Tắt đèn", "Chí Phèo", "Đêm trắng", "Dế Mèn phiêu lưu ký", "Nhật ký trong tù", "Số đỏ", "Truyện Kiều", "Lão Hạc", "Cánh đồng bất tận")
-    private val authors = arrayOf("Ngô Tất Tố", "Nam Cao", "Dostoevsky", "Tô Hoài", "Hồ Chí Minh", "Vũ Trọng Phụng", "Nguyễn Du", "Nguyễn Huy Thiệp", "")
+    private val bases = arrayOf(S.s_tat_den_e8abef9d, S.s_chi_pheo_92401a7e, S.s_dem_trang_aedad6e4, S.s_de_men_phieu_luu_ky_4e0a5b60, S.s_nhat_ky_trong_tu_da8fe5b2, S.s_so_do_8c497a89, S.s_truyen_kieu_1a35c271, S.s_lao_hac_042cebe1, S.s_canh_dong_bat_tan_d273c661)
+    private val authors = arrayOf(S.s_ngo_tat_to_354f581c, "Nam Cao", "Dostoevsky", S.s_to_hoai_5ed4f544, S.s_ho_chi_minh_d8678887, S.s_vu_trong_phung_b3c8fd0d, S.s_nguyen_du_34215116, S.s_nguyen_huy_thiep_58945098, "")
 
     fun books(count: Int): List<ListenBook> {
         val list = ArrayList<ListenBook>(count)
@@ -16,7 +18,7 @@ object DemoLibrary {
             // Cứ mười ba cuốn có một bộ ba tập: ba bìa gom thành một.
             if (index % 13 == 4 && list.size + 3 <= count) {
                 val name = "$base ${index / bases.size + 1}"
-                for (volume in 1..3) list += book(list.size, "$name · Tập $volume", authors[index % authors.size])
+                for (volume in 1..3) list += book(list.size, S.s_0_tap_1_c13c39ff(name, volume), authors[index % authors.size])
             } else {
                 list += book(list.size, "$base ${index + 1}", authors[index % authors.size])
             }
@@ -31,7 +33,7 @@ object DemoLibrary {
     /** Chương của cuốn giả: 12 chương cùng dài, ["Chương i"]. Sách chỉ-chữ: chương chỉ có chữ, độ dài chưa biết. */
     private fun chapterInfos(n: Int, duration: Double): List<ChapterInfo> {
         val textOnly = n % 11 == 8
-        return (1..CHAPTERS).map { ChapterInfo(it, "Chương $it", if (textOnly) 0.0 else duration / CHAPTERS, available = !textOnly, textOnly = textOnly) }
+        return (1..CHAPTERS).map { ChapterInfo(it, S.s_chuong_0_268b0521(it), if (textOnly) 0.0 else duration / CHAPTERS, available = !textOnly, textOnly = textOnly) }
     }
 
     private fun book(n: Int, title: String, author: String): ListenBook {
@@ -67,8 +69,8 @@ object DemoLibrary {
             state = state,
             progress = progress,
             resume = ListenLogic.resumePoint(state, true, chapters),
-            lastChapterTitle = if (last != null) "Chương $chapterAt" else "",
-            remote = if (n % 9 == 6) RemoteRef("máy tính") else null,
+            lastChapterTitle = if (last != null) S.s_chuong_0_268b0521(chapterAt) else "",
+            remote = if (n % 9 == 6) RemoteRef(S.s_may_tinh_8eafc226) else null,
         )
     }
 

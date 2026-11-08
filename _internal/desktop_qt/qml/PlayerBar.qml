@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -19,7 +20,7 @@ Item {
     property bool thumbShown: true
     signal settingsRequested(string group)
     Accessible.role: Accessible.Pane
-    Accessible.name: "Trình phát"
+    Accessible.name: S.s_trinh_phat_9270993d
     readonly property real transportHeight: Math.max(84, Math.max(titles.implicitHeight, thumb.height) + 2 * Theme.s12)
     readonly property real natural: transportHeight + alerts.height
     property real appear: Player.loaded ? 1 : 0
@@ -57,7 +58,7 @@ Item {
         pressScaling: false
         ringRadius: 0
         ringMargin: -2
-        Accessible.name: "Mở màn hình đang nghe"
+        Accessible.name: S.s_mo_man_hinh_dang_nghe_2426b4ad
         Rectangle {
             anchors.fill: parent
             color: Theme.text
@@ -117,12 +118,12 @@ Item {
             PlayButton { id: playButton; size: 44; anchors.verticalCenter: parent.verticalCenter; opacity: root.sharedShown ? 1 : 0 }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
             IconButton {
-                icon: "picture-in-picture-2"; tip: "Cửa sổ mini"
+                icon: "picture-in-picture-2"; tip: S.s_cua_so_mini_65edeb9b
                 enabled: Player.loaded
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: Nav.windowMode.enter()
             }
-            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: "Thêm tuỳ chọn"; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
+            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
         }
     }
 
@@ -145,14 +146,14 @@ Item {
         id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
         Column {
             width: parent.width
-            MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
-            MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
-            MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
-            MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
-            MenuRow { width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
-            MenuRow { width: parent.width; text: "Mở màn hình đang nghe"; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
-            MenuRow { objectName: "barClose"; width: parent.width; text: "Đóng trình phát"; icon: "x"; onClicked: { more.close(); Player.close() } }
-            MenuRow { objectName: "barOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
+            MenuRow { width: parent.width; text: S.s_hen_gio_39d9ca26; icon: "moon"; onClicked: { more.close(); sleep.show() } }
+            MenuRow { width: parent.width; text: S.s_chuong_truoc_4750f9e9; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
+            MenuRow { width: parent.width; text: S.s_chuong_sau_17d1bd20; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
+            MenuRow { width: parent.width; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+            MenuRow { width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { width: parent.width; text: S.s_mo_man_hinh_dang_nghe_2426b4ad; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
+            MenuRow { objectName: "barClose"; width: parent.width; text: S.s_dong_trinh_phat_8a833838; icon: "x"; onClicked: { more.close(); Player.close() } }
+            MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
         }
     }
     SleepPopover { id: sleep; anchorItem: moreButton }

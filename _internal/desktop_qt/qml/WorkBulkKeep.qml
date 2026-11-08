@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -23,7 +24,7 @@ Item {
         size: "sm"
         kind: "ghost"
         icon: "check"
-        text: "Giữ " + root.keepable.length + " thẻ…"
+        text: S.s_giu_d3777f80 + root.keepable.length + S.s_the_539c2ef4
         onClicked: root.open()
     }
     function open() {
@@ -32,7 +33,7 @@ Item {
         confirm.actions = actions()
         confirm.show()
     }
-    function actions() { return [{key: "later", text: "Thôi", enabled: !busy}, {key: "go", text: "Giữ cả " + keepable.length + " thẻ", icon: "check", kind: "primary", busy: busy}] }
+    function actions() { return [{key: "later", text: S.s_thoi_e68f9e88, enabled: !busy}, {key: "go", text: S.s_giu_ca_4b7c5467 + keepable.length + S.s_the_5d800d1c, icon: "check", kind: "primary", busy: busy}] }
     function run() {
         if (busy) return
         busy = true

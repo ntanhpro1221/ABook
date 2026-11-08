@@ -13,7 +13,7 @@ object NameRules {
     const val SURFACE_MAX = 80
     const val SPOKEN_MAX = 120
 
-    private val RESERVED = setOf("người kể", "người kể đọc tất cả", "vai phụ không tên", "narrator", "unknown", "unnamed", "anonymous")
+    private val RESERVED = setOf(S.s_nguoi_ke_50063a62, S.s_nguoi_ke_doc_tat_ca_50e8a103, S.s_vai_phu_khong_ten_6a816c3e, "narrator", "unknown", "unnamed", "anonymous")
 
     /** Lời báo cho người gõ (đã là tiếng Việt, hiện nguyên văn). */
     class Problem(message: String) : Exception(message)
@@ -40,12 +40,12 @@ object NameRules {
 
     private fun typed(raw: String, what: String): String {
         val cleaned = tidy(raw)
-        if (cleaned.isEmpty() && BookEdits.pyStrip(raw).isNotEmpty()) throw Problem("$what chỉ có ký tự không nhìn thấy - bạn gõ lại bằng chữ thường.")
+        if (cleaned.isEmpty() && BookEdits.pyStrip(raw).isNotEmpty()) throw Problem(S.s_0_chi_co_ky_tu_khong_nhin_thay_ban_go_lai_b9991811(what))
         return cleaned
     }
 
     private fun tooLong(cleaned: String, limit: Int, what: String) {
-        if (length(cleaned) > limit) throw Problem("$what tối đa $limit ký tự, hiện có ${length(cleaned)} — bạn rút ngắn lại.")
+        if (length(cleaned) > limit) throw Problem(S.s_0_toi_da_1_ky_tu_hien_co_2_ban_rut_ngan_la_73afad5d(what, limit, length(cleaned)))
     }
 
     fun isReserved(name: String): Boolean {
@@ -55,17 +55,17 @@ object NameRules {
 
     /** `name_rules.person`: tên một người (đổi tên, người mới). `others`: tên những người KHÁC. Rỗng chỉ khi `allowEmpty` (trở về tên gốc). */
     fun person(raw: String, others: List<String> = emptyList(), allowEmpty: Boolean = false): String {
-        val name = typed(raw, "Tên")
+        val name = typed(raw, S.s_ten_c8b17259)
         if (name.isEmpty()) {
             if (allowEmpty) return ""
-            throw Problem("Bạn chưa gõ tên.")
+            throw Problem(S.s_ban_chua_go_ten_a420d6a9)
         }
-        tooLong(name, NAME_MAX, "Tên")
-        if (isReserved(name)) throw Problem("“$name” là tên máy dùng cho người kể hay vai phụ không tên - bạn đặt tên khác.")
+        tooLong(name, NAME_MAX, S.s_ten_c8b17259)
+        if (isReserved(name)) throw Problem(S.s_0_la_ten_may_dung_cho_nguoi_ke_hay_vai_phu_5c4ec8cb(name))
         val folded = VietnameseReading.casefold(name)
         for (other in others) {
             if (VietnameseReading.casefold(tidy(other)) == folded) {
-                throw Problem("Đã có “${tidy(other)}” trong sách — bạn đặt tên khác để tránh nhầm người.")
+                throw Problem(S.s_da_co_0_trong_sach_ban_dat_ten_khac_de_tra_1c5bd10d(tidy(other)))
             }
         }
         return name
@@ -73,17 +73,17 @@ object NameRules {
 
     /** `name_rules.surface`: chữ trong sách cần đổi cách đọc. */
     fun surface(raw: String): String {
-        val word = typed(raw, "Từ cần đổi cách đọc")
-        if (word.isEmpty()) throw Problem("Bạn chưa gõ từ cần đổi cách đọc.")
-        tooLong(word, SURFACE_MAX, "Từ cần đổi cách đọc")
+        val word = typed(raw, S.s_tu_can_doi_cach_doc_f9aca636)
+        if (word.isEmpty()) throw Problem(S.s_ban_chua_go_tu_can_doi_cach_doc_cfee5b4f)
+        tooLong(word, SURFACE_MAX, S.s_tu_can_doi_cach_doc_f9aca636)
         return word
     }
 
     /** `name_rules.spoken`: cách đọc người gõ. */
     fun spoken(raw: String): String {
-        val form = typed(raw, "Cách đọc")
-        if (form.isEmpty()) throw Problem("Bạn chưa gõ cách đọc.")
-        tooLong(form, SPOKEN_MAX, "Cách đọc")
+        val form = typed(raw, S.s_cach_doc_94265da7)
+        if (form.isEmpty()) throw Problem(S.s_ban_chua_go_cach_doc_6f2d412a)
+        tooLong(form, SPOKEN_MAX, S.s_cach_doc_94265da7)
         return form
     }
 

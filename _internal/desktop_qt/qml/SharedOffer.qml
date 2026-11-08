@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -35,7 +36,7 @@ Collapse {
                 size: "sm"
                 kind: "ghost"
                 icon: "book-open-check"
-                text: "Dùng " + root.held.length + " cách đọc chung"
+                text: S.s_dung_5c3730f4 + root.held.length + S.s_cach_doc_chung_c315f242
                 busy: root.busy
                 onActivated: {
                     root.busy = true

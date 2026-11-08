@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioSetupLogic.js" as Setup
@@ -38,7 +39,7 @@ Item {
         Item {
             width: parent.width
             Accessible.role: Accessible.Grouping
-            Accessible.name: "Cần Studio"
+            Accessible.name: S.s_can_studio_4b14a373
             readonly property bool wide: width >= 520
             readonly property real buttons: root.shownUnfit ? peerFlow.height : (root.remote ? 0 : install.height)
             height: 16 + Math.max(words.height, wide ? buttons : words.height + 8 + buttons) + 16
@@ -53,7 +54,7 @@ Item {
                 Prose {
                     strong: true
                     tone: Theme.text
-                    text: root.shownUnfit ? "Máy thiếu cấu hình" : (root.studio.repair ? "Cần sửa Studio" : root.studio.update ? "Studio cần cập nhật" : "Chưa cài Studio")
+                    text: root.shownUnfit ? S.s_may_thieu_cau_hinh_df5ae9ef : (root.studio.repair ? S.s_can_sua_studio_a65aa0f0 : root.studio.update ? S.s_studio_can_cap_nhat_c0338642 : S.s_chua_cai_studio_029df34a)
                 }
                 Prose {
                     objectName: "studioNoticeLine"
@@ -61,8 +62,8 @@ Item {
                     small: true
                     text: root.shownUnfit
                         ? Setup.noStudioLine(root.fit && root.fit.reason ? root.fit.reason : "").replace(/\.$/, "") + "; " +
-                          (root.peers.length ? "tạo trên máy đã ghép có Studio, sách xong nghe ở cả hai máy." : "cài Studio trên máy khác rồi ghép tại Cài đặt → Thiết bị.")
-                        : "Dự án giữ thiết lập và chờ Studio sẵn sàng."
+                          (root.peers.length ? S.s_tao_tren_may_da_ghep_co_studio_sach_xong_n_816bfc37 : S.s_cai_studio_tren_may_khac_roi_ghep_tai_cai_ae8031d9)
+                        : S.s_du_an_giu_thiet_lap_va_cho_studio_san_sang_e878c6ea
                 }
             }
             Button {
@@ -94,7 +95,7 @@ Item {
                     delegate: Button {
                         required property var modelData
                         objectName: "studioNoticePeer"
-                        text: "Tạo trên " + modelData.name
+                        text: S.s_tao_tren_91f136e2 + modelData.name
                         icon: "clapperboard"
                         kind: "ghost"
                         size: "sm"

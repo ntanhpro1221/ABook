@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -75,7 +77,7 @@ class OnlineKeys(private val store: Store, private val box: SecretBox) {
     /** Lưu khoá mới (phải kiểm tra lại: `valid` false, bỏ danh sách giọng cũ). `key` rỗng = giữ khoá đã lưu, chỉ đổi vùng. */
     @Synchronized
     fun put(provider: String, key: String, region: String) {
-        val value = key.trim().ifEmpty { get(provider)?.key ?: throw IllegalArgumentException("Thiếu khoá") }
+        val value = key.trim().ifEmpty { get(provider)?.key ?: throw IllegalArgumentException(S.s_thieu_khoa_4d87ef96) }
         write(provider, Entry(value, region.trim().lowercase(), false, emptyList()))
     }
 

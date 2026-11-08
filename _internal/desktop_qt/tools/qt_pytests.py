@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 TESTS = Path(__file__).resolve().parents[2] / "tests"
-PARITY = ("test_ui_parity.py", "test_ui_parity_qt.py", "test_moreinfo_parity.py", "test_host_wait_parity.py")
+PARITY = ("test_ui_parity.py", "test_ui_parity_qt.py", "test_moreinfo_parity.py", "test_host_wait_parity.py", "test_ui_strings.py", "test_native_tokens.py")
 
 
 def files() -> list[str]:
@@ -26,4 +26,4 @@ def files() -> list[str]:
 if __name__ == "__main__":
     os.chdir(TESTS.parent)  # _internal, as `python -m pytest` from there: tests import abook and scripts from it
     sys.path.insert(0, str(TESTS.parent))
-    sys.exit(pytest.main(["-q", "-p", "no:cacheprovider", "-rf", *files()]))
+    sys.exit(pytest.main(["-o", "addopts=", "-q", "-p", "no:cacheprovider", "-rf", *files()]))

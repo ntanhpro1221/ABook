@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONObject
 import vn.abook.player.Store
 import java.io.File
@@ -64,7 +66,7 @@ class MachineVoicePick(
     }
 
     fun setOverride(engine: String) = synchronized(lock) {
-        require(engine.isEmpty() || engines().any { it.id == engine }) { "Giọng này chưa tải trên máy" }
+        require(engine.isEmpty() || engines().any { it.id == engine }) { S.s_giong_nay_chua_tai_tren_may_c3c42007 }
         val data = read().put("override", engine)
         Store.writeAtomic(file, data.toString())
     }
@@ -86,7 +88,7 @@ class MachineVoicePick(
                     val out = File.createTempFile("voice-pick-", ".wav", file.parentFile)
                     try {
                         val began = clock()
-                        engine.synthesize("Xin chào.", out)
+                        engine.synthesize(S.s_xin_chao_0dcb19e7, out)
                         row.put("loadMs", (clock() - began) / 1_000_000)
                         var work = 0L
                         var audio = 0L
@@ -96,7 +98,7 @@ class MachineVoicePick(
                             work += clock() - start
                             audio += clip.durationMs
                         }
-                        check(audio > 0) { "Máy đọc không ra tiếng" }
+                        check(audio > 0) { S.s_may_doc_khong_ra_tieng_7f1ebda2 }
                         row.put("rtf", work / (audio * 1_000_000.0))
                     } finally {
                         running.set(false); sampler.join()
@@ -105,7 +107,7 @@ class MachineVoicePick(
                         out.delete()
                     }
                 } catch (error: Exception) {
-                    row.put("error", error.message ?: "Thử không được")
+                    row.put("error", error.message ?: S.s_thu_khong_duoc_d17d8afe)
                 } finally { engine.forget() }
                 rows.put(engine.id, row)
             }
@@ -113,7 +115,7 @@ class MachineVoicePick(
                 val data = read().put("machine", machine).put("engines", rows).put("at", System.currentTimeMillis())
                 Store.writeAtomic(file, data.toString())
             }
-        } catch (error: Exception) { problem = error.message ?: "Thử không được" }
+        } catch (error: Exception) { problem = error.message ?: S.s_thu_khong_duoc_d17d8afe }
         finally { measuring = false }
     }
 
@@ -122,16 +124,16 @@ class MachineVoicePick(
         const val CER_GATE = 0.15
         const val NATURAL_TIE = 0.1
         val SENTENCES = listOf(
-            "Buổi sáng hôm ấy, trời trong xanh và gió thổi nhẹ qua những hàng cây.",
-            "Cô bé mở cửa sổ, lặng lẽ nhìn xuống con đường vắng người bên dưới.",
-            <removed>
-            "Chúng tôi đi bộ dọc bờ sông cho tới khi mặt trời lặn hẳn.",
+            S.s_buoi_sang_hom_ay_troi_trong_xanh_va_gio_th_3c7ef60b,
+            S.s_co_be_mo_cua_so_lang_le_nhin_xuong_con_duo_f7a6d29c,
+            S.s_anh_ay_im_lang_mot_luc_lau_roi_moi_cham_ra_5b6f8f27,
+            S.s_chung_toi_di_bo_doc_bo_song_cho_toi_khi_ma_e5b1a748,
         )
         fun engineOf(voice: String) = if ('/' in voice) voice.substringBefore('/') else voice.substringBefore(':')
         fun name(engine: String) = when (engine) {
-            "vieneu:turbo" -> "Giọng VieNeu"
-            "vieneu:nano" -> "Giọng VieNeu Nano"
-            "supertonic" -> "Giọng Supertonic"
+            "vieneu:turbo" -> S.s_giong_vieneu_371ad9fb
+            "vieneu:nano" -> S.s_giong_vieneu_nano_dc5fdeb6
+            "supertonic" -> S.s_giong_supertonic_9922ded4
             else -> engine
         }
         fun choose(rows: List<EngineNumbers>): String? {

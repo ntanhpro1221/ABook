@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // "Chia thành nhiều tập" ở trình tạo sách (abook/webui/volumes.py): máy ĐỀ XUẤT chỗ cắt, người dùng bấm mới áp và sửa được
 // từng chỗ cắt theo số chương. Chỗ cắt lưu bằng ĐƯỜNG DẪN file chương đầu của mỗi tập (không phải số thứ tự) - bỏ một chương
 // hay đổi thứ tự thì chỗ cắt vẫn đứng đúng chương; số chương chỉ là cách hiện và cách nhập.
@@ -77,5 +78,5 @@ export function removeStart(starts: number[], position: number): number[] {
 /** Tên các sách sẽ tạo - như máy chủ đặt (continuation.continued_title): tập 1 giữ tên, tập sau "Tên · Phần N". Chỉ để HIỆN. */
 export function volumeTitles(title: string, count: number): string[] {
   const base = title.replace(/\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$/i, "").trim() || title.trim();
-  return Array.from({ length: count }, (_value, index) => (index === 0 ? title.trim() : `${base} · Phần ${index + 1}`));
+  return Array.from({ length: count }, (_value, index) => (index === 0 ? title.trim() : S.s_0_phan_1_3957afda(base, index + 1)));
 }

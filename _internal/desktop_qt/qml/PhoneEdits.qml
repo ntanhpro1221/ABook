@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -60,11 +61,11 @@ Item {
                 open: (root.held.devices || []).length > 0
                 Column {
                     width: parent.width
-                    Text { width: Math.min(parent.width, 768); topPadding: 4; text: "Áp dụng để đưa vào hàng chờ; bỏ qua vẫn khôi phục được."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                    Text { width: Math.min(parent.width, 768); topPadding: 4; text: S.s_ap_dung_de_dua_vao_hang_cho_bo_qua_van_kho_b65a72a7; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                     MoreInfo {
                         width: parent.width
-                        label: "Đã áp dụng"
-                        Text { width: parent.width; text: "Tên sách, bìa, tên nhân vật, tên chương và nhạc nền đã áp ngay. Yêu cầu trong hàng chờ chưa thu lại; khôi phục việc bỏ qua ở “Đã bỏ qua”."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                        label: S.s_da_ap_dung_0e69eb72
+                        Text { width: parent.width; text: S.s_ten_sach_bia_ten_nhan_vat_ten_chuong_va_nh_da8df954; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                     }
                 }
             }
@@ -80,14 +81,14 @@ Item {
                 objectName: "inboxSkipped"
                 present: root.skippedCount > 0
                 gap: 12
-                title: "Đã bỏ qua (" + root.skippedCount + ")"
+                title: S.s_da_bo_qua_7f216d1a + root.skippedCount + ")"
                 StudioRows { width: parent.width; items: root.held.skipped || []; keyField: "id"; delegate: skippedDelegate }
             }
             WorkSection {
                 objectName: "inboxRecent"
                 present: (root.held.recent || []).length > 0
                 gap: 12
-                title: "Gửi gần đây (" + (root.held.recent || []).length + ")"
+                title: S.s_gui_gan_day_954ffe00 + (root.held.recent || []).length + ")"
                 Column {
                     width: parent.width
                     spacing: 8
@@ -127,7 +128,7 @@ Item {
                     height: allApply.height
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
-                    text: "<span style=\"font-weight:500\">" + W.esc(TextWrap.keepDots(block.modelData.name)) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;gửi " + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
+                    text: "<span style=\"font-weight:500\">" + W.esc(TextWrap.keepDots(block.modelData.name)) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + S.s_nbsp_nbsp_gui_862864dc + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
                     color: Theme.text
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -137,7 +138,7 @@ Item {
                     objectName: "inboxApplyAll"
                     size: "sm"
                     icon: "check"
-                    text: "Áp dụng tất cả"
+                    text: S.s_ap_dung_tat_ca_068378e0
                     busy: root.busy === block.modelData.id + ":all"
                     enabled: root.busy === ""
                     onActivated: root.decide("apply", block.modelData, null)
@@ -148,9 +149,9 @@ Item {
                     size: "sm"
                     kind: "ghost"
                     icon: "x"
-                    text: "Bỏ qua tất cả"
+                    text: S.s_bo_qua_tat_ca_e736ef1f
                     enabled: root.busy === ""
-                    onClicked: { root.skipping = block.modelData; confirm.title = "Bỏ qua mọi việc từ " + (block.modelData.name || "máy này") + "?"; confirm.description = "Bỏ " + block.modelData.items.length + " việc khỏi hàng chờ, khôi phục được ở “Đã bỏ qua”."; confirm.show() }
+                    onClicked: { root.skipping = block.modelData; confirm.title = S.s_bo_qua_moi_viec_tu_863669f5 + (block.modelData.name || S.s_may_nay_e53e5d40) + "?"; confirm.description = S.s_bo_8d4fc41c + block.modelData.items.length + S.s_viec_khoi_hang_cho_khoi_phuc_duoc_o_da_bo_2e106212; confirm.show() }
                 }
             }
             Item { width: 1; height: 8 }
@@ -185,8 +186,8 @@ Item {
                             implicitHeight: 32
                             icon: "check"
                             iconSize: 16
-                            tip: "Áp dụng việc này"
-                            Accessible.name: "Áp dụng việc này"
+                            tip: S.s_ap_dung_viec_nay_76d8752a
+                            Accessible.name: S.s_ap_dung_viec_nay_76d8752a
                             enabled: root.busy === ""
                             onClicked: root.decide("apply", block.modelData, row.modelData)
                         }
@@ -198,8 +199,8 @@ Item {
                             implicitHeight: 32
                             icon: "x"
                             iconSize: 16
-                            tip: "Bỏ qua việc này"
-                            Accessible.name: "Bỏ qua việc này"
+                            tip: S.s_bo_qua_viec_nay_e6b2362b
+                            Accessible.name: S.s_bo_qua_viec_nay_e6b2362b
                             enabled: root.busy === ""
                             onClicked: root.decide("skip", block.modelData, row.modelData)
                         }
@@ -236,7 +237,7 @@ Item {
                     size: "sm"
                     kind: "ghost"
                     icon: "rotate-ccw"
-                    text: "Khôi phục tất cả"
+                    text: S.s_khoi_phuc_tat_ca_cc961492
                     enabled: root.busy === ""
                     onClicked: root.decide("restore", block.modelData, null)
                 }
@@ -270,8 +271,8 @@ Item {
                             implicitHeight: 32
                             icon: "rotate-ccw"
                             iconSize: 16
-                            tip: "Khôi phục việc này"
-                            Accessible.name: "Khôi phục việc này"
+                            tip: S.s_khoi_phuc_viec_nay_8da3e2a8
+                            Accessible.name: S.s_khoi_phuc_viec_nay_8da3e2a8
                             enabled: root.busy === ""
                             onClicked: root.decide("restore", block.modelData, row.modelData)
                         }
@@ -285,7 +286,7 @@ Item {
         id: confirm
         objectName: "skipConfirm"
         panelWidth: 448
-        actions: [{key: "later", text: "Thôi"}, {key: "go", text: "Bỏ qua tất cả", kind: "primary"}]
+        actions: [{key: "later", text: S.s_thoi_e68f9e88}, {key: "go", text: S.s_bo_qua_tat_ca_e736ef1f, kind: "primary"}]
         onChosen: key => {
             const device = root.skipping
             confirm.dismiss()

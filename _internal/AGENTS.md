@@ -509,6 +509,12 @@ Module chính:
 
 ## Quy tắc thay đổi
 
+- UI copy lives in `ui_strings/vi.json`; design token values live in `ui_design/tokens.json` and are checked against `docs/DESIGN.md`.
+  Run `scripts/prepare_ui.py` before building web, Compose or Qt. Never edit generated `UiStrings.kt`, `strings.xml`,
+  `strings.generated.ts`, `UiStrings.js`, `uistrings.generated.h`, `Tokens.kt`, `Theme.qml` or generated token declarations by hand.
+  New handwritten UI copy fails the shared build gate. Every exact exception in `ui_strings/exceptions.json` needs a reason;
+  every remaining Qt wording candidate needs its own explanation in `ui_strings/qt_wording_review.json`.
+
 - Database/recovery change phải có crash/reopen test.
 - Resource policy change phải test bằng snapshot giả lập.
 - Pipeline change phải có mock adapter để test không cần model.

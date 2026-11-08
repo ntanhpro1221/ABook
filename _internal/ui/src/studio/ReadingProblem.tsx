@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { Button } from "@/shared/ui";
 import { MotionRegion } from "@/shared/MotionRegion";
 
@@ -23,8 +24,7 @@ export function ReadingProblem({
         {problem}
       </p>
       {suggestion && (
-        <Button size="sm" variant="ghost" type="button" className="mt-1.5" onClick={() => onUse(suggestion)}>
-          Dùng “{suggestion}”
+        <Button size="sm" variant="ghost" type="button" className="mt-1.5" onClick={() => onUse(suggestion)}>{S.s_dung_b12f0f49}{suggestion}”
         </Button>
       )}
       </>}

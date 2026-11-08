@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 
@@ -40,7 +41,7 @@ const ClipContext = createContext<ClipContextValue | null>(null);
 
 export function useClip(): ClipContextValue {
   const value = useContext(ClipContext);
-  if (!value) throw new Error("useClip ngoài ClipProvider");
+  if (!value) throw new Error(S.s_useclip_ngoai_clipprovider_881cd1b4);
   return value;
 }
 
@@ -89,7 +90,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     setLoading(false);
     // Một id: sự kiện `error` và `play()` bị từ chối có thể cùng báo một lần bấm - hai toast giống hệt (soát UX 29-09). Không
     // hứa "sách vẫn phát tiếp": lúc bấm sách có thể đang dừng.
-    toast.warning("Chưa nghe thử được", { id: "clip-failed", description: "Câu mẫu này chưa có bản thu." });
+    toast.warning(S.s_chua_nghe_thu_duoc_f7601d1f, { id: "clip-failed", description: S.s_cau_mau_nay_chua_co_ban_thu_c744f35c });
   }, []);
 
   const toggle = useCallback((id: string, source: string | ClipSource) => {

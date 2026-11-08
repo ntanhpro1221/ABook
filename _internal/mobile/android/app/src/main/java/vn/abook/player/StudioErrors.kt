@@ -38,13 +38,13 @@ sealed class StudioError(message: String? = null, cause: Throwable? = null) : Ex
 /** Phân loại lỗi - phần thuần (không Context), cùng lời với `ui/src/studio/api.ts` (ApiError, serverMessage) và `polling.ts`. */
 object StudioErrors {
     /** Lỗi không ngờ của máy chủ (500 mang nguyên văn lỗi Python): câu người dùng hiểu thay cho nguyên văn (api.ts UNEXPECTED_ERROR). */
-    const val UNEXPECTED = "Máy gặp lỗi không ngờ khi làm việc này. Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ."
+    const val UNEXPECTED = S.s_may_gap_loi_khong_ngo_khi_lam_viec_nay_thu_b7a45f7b
 
     private val PYTHON_ERROR = Regex("^[A-Z][A-Za-z]*(?:Error|Exception|Interrupt|Iteration|Exit)(?::|$)")
 
     /** Lời máy chủ cho một lỗi HTTP: khoá `error` của thân JSON, không có thì "Lỗi <mã>" (api.ts settle + serverMessage). */
     fun serverMessage(status: Int, body: String): String {
-        val raw = runCatching { JSONObject(body).optString("error") }.getOrNull()?.takeIf { it.isNotBlank() } ?: "Lỗi $status"
+        val raw = runCatching { JSONObject(body).optString("error") }.getOrNull()?.takeIf { it.isNotBlank() } ?: S.s_loi_0_356d33a7(status)
         return if (status >= 500 && PYTHON_ERROR.containsMatchIn(raw.trim())) UNEXPECTED else raw
     }
 
@@ -127,13 +127,13 @@ object StudioPaths {
     val DELETES = setOf("cover")
 
     fun delete(id: String, endpoint: String): String {
-        require(endpoint in DELETES) { "Đường không hợp lệ" }
+        require(endpoint in DELETES) { S.s_duong_khong_hop_le_5a2f3cf7 }
         return book(id) + "/" + endpoint
     }
 
     /** Việc xuất chạy nền (`GET` hỏi, `POST` bắt đầu): `job` là `bookfile-job`, `m4b-job` hay `mp3-job`; huỷ ở `/cancel` ([WRITES]). */
     fun exportJob(id: String, job: String): String {
-        require(job in setOf("bookfile-job", "m4b-job", "mp3-job")) { "Đường không hợp lệ" }
+        require(job in setOf("bookfile-job", "m4b-job", "mp3-job")) { S.s_duong_khong_hop_le_5a2f3cf7 }
         return book(id) + "/" + job
     }
 
@@ -158,7 +158,7 @@ object StudioPaths {
     const val CREATE_BOOK = "/api/books"
 
     fun put(id: String, endpoint: String): String {
-        require(endpoint in PUTS) { "Đường không hợp lệ" }
+        require(endpoint in PUTS) { S.s_duong_khong_hop_le_5a2f3cf7 }
         return book(id) + "/" + endpoint
     }
 
@@ -191,7 +191,7 @@ object StudioPaths {
     fun castingChapter(id: String, chapter: Int): String = book(id) + "/casting/$chapter"
 
     fun write(id: String, endpoint: String): String {
-        require(endpoint in WRITES) { "Đường không hợp lệ" }
+        require(endpoint in WRITES) { S.s_duong_khong_hop_le_5a2f3cf7 }
         return book(id) + "/" + endpoint
     }
 
@@ -228,7 +228,7 @@ object StudioPaths {
     private fun enc(text: String): String = java.net.URLEncoder.encode(text, "UTF-8").replace("+", "%20")
 
     private fun checked(id: String): String {
-        require(valid(id)) { "Mã sách không hợp lệ" }
+        require(valid(id)) { S.s_ma_sach_khong_hop_le_154e3f76 }
         return id
     }
 }

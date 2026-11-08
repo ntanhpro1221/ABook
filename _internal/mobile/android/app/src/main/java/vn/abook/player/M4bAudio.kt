@@ -108,10 +108,10 @@ object M4bAudio : M4bExport.AudioEncoder {
             }
 
         override fun decodeUnits(units: Iterator<ByteArray>, rate: Int, channels: Int, stopped: () -> Boolean, write: (ShortArray, Int) -> Unit) =
-            M4bAudio.decodeUnits(format ?: throw Mp3Export.Refused("Bộ mã hoá AAC chưa ra cấu hình"), units, rate, channels, stopped, write)
+            M4bAudio.decodeUnits(format ?: throw Mp3Export.Refused(S.s_bo_ma_hoa_aac_chua_ra_cau_hinh_d36253b8), units, rate, channels, stopped, write)
 
         override fun mux(target: File, rate: Int, channels: Int, units: Iterator<ByteArray>, stopped: () -> Boolean) {
-            val track = AacTrack(target, format ?: throw Mp3Export.Refused("Không có âm thanh nào để ghi"), rate)
+            val track = AacTrack(target, format ?: throw Mp3Export.Refused(S.s_khong_co_am_thanh_nao_de_ghi_9998b831), rate)
             try {
                 var index = 0L
                 for (unit in units) {
@@ -184,7 +184,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                     codec.releaseOutputBuffer(out, false)
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
                 } else if (out < 0 && out != MediaCodec.INFO_OUTPUT_FORMAT_CHANGED && inputDone && ++idle > 500) {
-                    throw Mp3Export.Refused("Chưa giải mã lại được âm thanh vừa mã hoá")
+                    throw Mp3Export.Refused(S.s_chua_giai_ma_lai_duoc_am_thanh_vua_ma_hoa_e1166339)
                 }
             }
             val owed = fed * AacJoin.FRAME * channels - given
@@ -194,7 +194,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         } catch (error: Mp3Export.Refused) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Chưa giải mã lại được âm thanh vừa mã hoá")
+            throw Mp3Export.Refused(S.s_chua_giai_ma_lai_duoc_am_thanh_vua_ma_hoa_e1166339)
         } finally {
             runCatching { codec.stop() }
             runCatching { codec.release() }
@@ -210,13 +210,13 @@ object M4bAudio : M4bExport.AudioEncoder {
         try {
             extractor.setDataSource(file.absolutePath)
             val index = audioTrack(extractor)
-            if (index < 0) throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
+            if (index < 0) throw Mp3Export.Refused(S.s_chua_doc_duoc_am_thanh_cua_0_2694582b(file.name))
             val format = extractor.getTrackFormat(index)
             return format.getInteger(MediaFormat.KEY_SAMPLE_RATE) to if (format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) 1 else 2
         } catch (error: Mp3Export.Refused) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
+            throw Mp3Export.Refused(S.s_chua_doc_duoc_am_thanh_cua_0_2694582b(file.name))
         } finally {
             extractor.release()
         }
@@ -234,7 +234,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         try {
             extractor.setDataSource(file.absolutePath)
             val index = audioTrack(extractor)
-            if (index < 0) throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
+            if (index < 0) throw Mp3Export.Refused(S.s_chua_doc_duoc_am_thanh_cua_0_2694582b(file.name))
             extractor.selectTrack(index)
             val format = extractor.getTrackFormat(index)
             val length = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION).toDouble() else 0.0
@@ -297,7 +297,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                         codec.releaseOutputBuffer(out, false)
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
                     }
-                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused("Chưa giải mã được ${file.name}") // 5 giây không ra gì: codec treo
+                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused(S.s_chua_giai_ma_duoc_0_c891d699(file.name)) // 5 giây không ra gì: codec treo
                 }
             }
         } catch (error: SinkError) {
@@ -307,7 +307,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         } catch (error: Mp3Export.Stopped) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Chưa giải mã được ${file.name}")
+            throw Mp3Export.Refused(S.s_chua_giai_ma_duoc_0_c891d699(file.name))
         } finally {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }
@@ -321,7 +321,7 @@ object M4bAudio : M4bExport.AudioEncoder {
      */
     fun trackDecoder(file: (String) -> File?, stopped: () -> Boolean): TrackPcmCache.TrackDecoder =
         TrackPcmCache.TrackDecoder { track, rate, channels, out ->
-            val source = file(track)?.takeIf { it.isFile } ?: throw Mp3Export.Refused("Thiếu bài nhạc $track")
+            val source = file(track)?.takeIf { it.isFile } ?: throw Mp3Export.Refused(S.s_thieu_bai_nhac_0_e073e4da(track))
             var bytes = ByteArray(0)
             decodeFile(source, rate, channels, stopped) { pcm, count ->
                 if (bytes.size < 2 * count) bytes = ByteArray(2 * count)
@@ -448,13 +448,13 @@ object M4bAudio : M4bExport.AudioEncoder {
                     queued = true
                 } else {
                     drain()
-                    if (++waited > 500) throw Mp3Export.Refused("Bộ mã hoá AAC không nhận thêm dữ liệu")
+                    if (++waited > 500) throw Mp3Export.Refused(S.s_bo_ma_hoa_aac_khong_nhan_them_du_lieu_b64a8e0e)
                 }
             }
             waited = 0
             while (!ended) {
                 drain(TIMEOUT_US)
-                if (++waited > 1000) throw Mp3Export.Refused("Bộ mã hoá AAC không kết thúc")
+                if (++waited > 1000) throw Mp3Export.Refused(S.s_bo_ma_hoa_aac_khong_ket_thuc_5d6317c6)
             }
             encoder.stop()
             encoder.release()
@@ -538,7 +538,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         /** Hết đầu vào: xả nốt bộ mã hoá, đóng file. */
         override fun finish() {
             encoder.finish()
-            val closing = track ?: throw Mp3Export.Refused("Không có âm thanh nào để ghi")
+            val closing = track ?: throw Mp3Export.Refused(S.s_khong_co_am_thanh_nao_de_ghi_9998b831)
             track = null
             closing.finish()
         }

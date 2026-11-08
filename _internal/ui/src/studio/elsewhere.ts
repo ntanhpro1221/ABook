@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { toast } from "@/shared/toast";
 
 // Hai máy (hay hai cửa sổ) cùng sửa một chỗ: người nói của câu, cách đọc một tên, phán quyết "Nghe lại". Mỗi lần ghi gửi kèm `seen` - điều
@@ -8,8 +9,8 @@ import { toast } from "@/shared/toast";
 /** Câu báo: `count` chỗ vừa được sửa ở nơi khác, `was` là điều nơi ấy đã đặt (nói bằng lời; "" = chưa ai quyết). */
 export function elsewhereNote(count: number, was: string): { title: string; description: string } {
   return {
-    title: count > 1 ? `${count} câu vừa được sửa ở máy hay cửa sổ khác` : "Chỗ này vừa được sửa ở máy hay cửa sổ khác",
-    description: `${was ? `Trước đó đang là ${was}` : "Trước đó chưa ai quyết khác"} - lần ghi của bạn đã thay nó.`,
+    title: count > 1 ? S.s_0_cau_vua_duoc_sua_o_may_hay_cua_so_khac_1f803269(count) : S.s_cho_nay_vua_duoc_sua_o_may_hay_cua_so_khac_66af9a6c,
+    description: S.s_0_lan_ghi_cua_ban_da_thay_no_420a088b(was ? S.s_truoc_do_dang_la_0_4ed72a4f(was) : S.s_truoc_do_chua_ai_quyet_khac_1f656a59),
   };
 }
 
@@ -22,7 +23,7 @@ export function warnElsewhere(count: number, was: string, takeTheirs?: () => voi
     duration: 20_000,
     description: note.description,
     // Giữ bản của bạn = để thông báo trôi đi (một nút duy nhất, không "Giữ bản của bạn").
-    ...(takeTheirs ? { action: { label: "Lấy của máy kia", onClick: takeTheirs } } : {}),
+    ...(takeTheirs ? { action: { label: S.s_lay_cua_may_kia_37d97780, onClick: takeTheirs } } : {}),
   });
 }
 
@@ -59,11 +60,11 @@ export function theirDelivery(theirs: SeenDelivery | null): { kind?: string; emo
 
 /** Phán quyết "Nghe lại" nói bằng lời ("" = chưa ai quyết). */
 export function verdictWord(verdict: string | null | undefined): string {
-  return verdict === "ok" ? "“Ổn”" : verdict === "redo" ? "“Cần thu lại”" : "";
+  return verdict === "ok" ? S.s_on_742e24ad : verdict === "redo" ? S.s_can_thu_lai_9d482626 : "";
 }
 
 /** Lựa chọn giọng máy kia đã đặt cho nhân vật (`elsewhere` của POST /voice), nói bằng lời ("" = không có gì chờ). */
 export function voiceWas(theirs: { voice: string; gender: string }): string {
-  if (theirs.voice) return `giọng ${theirs.voice}`;
-  return theirs.gender === "female" ? "nhân vật nữ" : theirs.gender === "male" ? "nhân vật nam" : "";
+  if (theirs.voice) return S.s_giong_0_e048b478(theirs.voice);
+  return theirs.gender === "female" ? S.s_nhan_vat_nu_36236b63 : theirs.gender === "male" ? S.s_nhan_vat_nam_8de64942 : "";
 }

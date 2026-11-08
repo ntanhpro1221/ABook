@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -35,12 +36,12 @@ Column {
         noStudio: noStudio
     })
 
-    Text { width: parent.width; text: "Khi tạo"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold }
+    Text { width: parent.width; text: S.s_khi_tao_07d6f63b; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold }
     Item { width: 1; height: 8 }
     NewSwitchRow {
         objectName: "newStartNow"
         width: parent.width
-        name: "Bắt đầu tạo ngay"
+        name: S.s_bat_dau_tao_ngay_58ad17d7
         hint: Logic.startNowHint(root.draft.startNow, root.noStudio, root.unfit)
         checked: Boolean(root.draft.startNow) && !root.noStudio
         enabled: !root.noStudio
@@ -50,19 +51,19 @@ Column {
     NewSwitchRow {
         objectName: "newPrecastWait"
         width: parent.width
-        name: "Duyệt trước khi thu"
+        name: S.s_duyet_truoc_khi_thu_74c121d0
         hint: Logic.precastHint(Boolean(root.draft.precastWait))
         checked: Boolean(root.draft.precastWait)
         onToggled: value => root.form.update({precastWait: value})
     }
     Item { width: 1; height: 32 }
-    Text { width: parent.width; text: "Tóm tắt"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold }
+    Text { width: parent.width; text: S.s_tom_tat_b4bb3064; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold }
     Item { width: 1; height: 8 }
     Column {
         objectName: "newSummary"
         width: parent.width
         Accessible.role: Accessible.List
-        Accessible.name: "Tóm tắt"
+        Accessible.name: S.s_tom_tat_b4bb3064
         Repeater {
             model: root.rows
             delegate: Item {

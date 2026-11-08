@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
@@ -50,29 +51,29 @@ type SeriesResult = {
 };
 
 const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDown }[] = [
-  { value: "mp3", title: "Thư mục MP3", detail: "Mỗi chương một file có tên và bìa.", icon: FolderDown },
-  { value: "abook", title: "File .abook", detail: "Một file chứa cả sách, mở bằng ABook.", icon: FileAudio },
+  { value: "mp3", title: S.s_thu_muc_mp3_2eea06d7, detail: S.s_moi_chuong_mot_file_co_ten_va_bia_97cf9d56, icon: FolderDown },
+  { value: "abook", title: S.s_copy_af47db37cfcc, detail: S.s_mot_file_chua_ca_sach_mo_bang_abook_c88beb23, icon: FileAudio },
   {
     // Cùng đường với mục "Xuất M4B cho app sách nói" ở menu Thư viện (desktop/ExportBookFileJob.tsx): việc nền, báo tiến độ ngoài hộp.
     value: "m4b",
-    title: "Sách nói M4B",
-    detail: "Một file có mục lục chương, cho app sách nói.",
+    title: S.s_sach_noi_m4b_01d29e1d,
+    detail: S.s_mot_file_co_muc_luc_chuong_cho_app_sach_no_a73ffb74,
     icon: BookAudio,
   },
   {
     value: "abookproj",
-    title: "Cả dự án (.abookproj)",
+    title: S.s_ca_du_an_abookproj_ff1824d8,
     detail:
-      "Cả dự án và audio, để sao lưu hay làm tiếp ở máy khác.",
+      S.s_ca_du_an_va_audio_de_sao_luu_hay_lam_tiep_e5b95d4c,
     icon: FolderArchive,
   },
 ];
 
 const SAVING: Record<Kind, [string, string, string]> = {
-  mp3: ["Chọn nơi lưu", "Đang xuất MP3…", "Chưa xuất được MP3"],
-  abook: ["Chọn nơi lưu", "Đang đóng gói sách…", "Chưa xuất được file sách"],
-  m4b: ["Chọn nơi lưu", "Đang làm file M4B…", "Chưa xuất được M4B"],
-  abookproj: ["Chọn nơi lưu", "Đang đóng gói dự án…", "Chưa gói được dự án"],
+  mp3: [S.s_chon_noi_luu_2965936c, S.s_dang_xuat_mp3_1f5f6554, S.s_chua_xuat_duoc_mp3_1550e65a],
+  abook: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_sach_c372ab53, S.s_chua_xuat_duoc_file_sach_43236ec7],
+  m4b: [S.s_chon_noi_luu_2965936c, S.s_dang_lam_file_m4b_01a34d3b, S.s_chua_xuat_duoc_m4b_5a39de4c],
+  abookproj: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_du_an_59bb0a50, S.s_chua_goi_duoc_du_an_fd3612d5],
 };
 
 /** Truy vấn chọn trạng thái tải nhạc / Huỷ của đúng kiểu xuất ở máy chủ (server.py `_music_key`); `.abook` không cần. MP3 / M4B là việc nền riêng (ExportJobHost). */
@@ -197,17 +198,17 @@ export function ExportDialog({
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
   const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? changedChapters.length : ready;
-  const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${selectedCount} chương`;
+  const countText = kind === "abookproj" ? undefined : wholeSeries ? S.s_0_phan_40e8af8c(parts.length) : S.s_0_chuong_04093412(selectedCount);
   // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
   const root = info?.libraryRoot ?? "";
   const computer = info?.remote ? listenOnlyOwner(info) : "";
   const savePlace = info?.dialogs
-    ? "Bấm nút bên dưới rồi chọn thư mục để lưu."
+    ? S.s_bam_nut_ben_duoi_roi_chon_thu_muc_de_luu_e266290b
     : info?.remote
-      ? `Sẽ lưu vào thư mục “Đã xuất” trong thư viện của máy tính${computer && computer !== "máy tính" ? ` ${computer}` : ""} - file nằm ở máy tính, không tải về máy này.`
+      ? S.s_se_luu_vao_thu_muc_da_xuat_trong_thu_vien_fb4d5397(computer && computer !== S.s_may_tinh_8eafc226 ? ` ${computer}` : "")
       : root
-      ? `Sẽ lưu vào thư mục “Đã xuất” trong thư viện: ${root}${root.includes("\\") ? "\\" : "/"}Đã xuất`
-      : "Sẽ lưu vào thư mục “Đã xuất” trong thư viện.";
+      ? S.s_se_luu_vao_thu_muc_da_xuat_trong_thu_vien_d0a73045(root, root.includes("\\") ? "\\" : "/")
+      : S.s_se_luu_vao_thu_muc_da_xuat_trong_thu_vien_a78ada3d;
   const handleOpenChange = (next: boolean) => {
     if (!next && busy && loadingToast.current === null) {
       loadingToast.current = toast.loading(SAVING[kind][1], { description: countText });
@@ -252,24 +253,24 @@ export function ExportDialog({
           : await packBookFile(book.id, { target, series: wholeSeries, partial, ...(wholeSeries ? { single: layout === "single" } : {}) },
                                () => followPacking("bookfile") as Promise<Packed>, attach);
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
-      const skippedNote = result.skipped?.length ? `chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+      const skippedNote = result.skipped?.length ? S.s_chua_co_chuong_nao_nen_bo_qua_0_56da88e7(result.skipped.map((part) => S.s_phan_0_7c77642d(part.part)).join(", ")) : "";
       const skipped = skippedNote ? ` · ${skippedNote}` : "";
-      const lostNote = lost ? `${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "";
+      const lostNote = lost ? S.s_0_file_nguon_chuong_da_bi_doi_hay_xoa_nen_a83aaefb(lost) : "";
       // `file` chỉ có khi cả bộ (hay một phần) nằm trong MỘT file; cả bộ mỗi phần một file thì có `parts` mà không có `file`.
       const single = "file" in result && typeof result.file === "string";
       const title = result.parts
         ? single
-          ? `Đã xuất cả bộ ${result.parts.length} phần trong một file sách`
-          : `Đã xuất ${result.parts.length} file sách`
+          ? S.s_da_xuat_ca_bo_0_phan_trong_mot_file_sach_720c8181(result.parts.length)
+          : S.s_da_xuat_0_file_sach_9d6f2abd(result.parts.length)
         : kind === "abook"
-          ? "Đã xuất file sách"
-          : "Đã gói dự án";
+          ? S.s_da_xuat_file_sach_242afa05
+          : S.s_da_goi_du_an_9908b445;
       // Studio từ xa: máy chủ chỉ trả TÊN file / thư mục (hay không trả thư mục) - nói file nằm ở máy tính nào.
       const perPart = Boolean(result.parts && kind === "abook" && !single);
-      const placeText = perPart ? `${result.folder} · mỗi phần một file .abook riêng` : single ? `${result.file} · ${formatSize(result.size ?? 0)}` : result.folder;
+      const placeText = perPart ? S.s_0_moi_phan_mot_file_abook_rieng_d57434af(result.folder) : single ? `${result.file} · ${formatSize(result.size ?? 0)}` : result.folder;
       const detail =
         (info?.remote
-          ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? "mỗi phần một file .abook riêng" : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
+          ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? S.s_moi_phan_mot_file_abook_rieng_e768e635 : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
           : placeText) +
         skipped +
         (lostNote ? ` · ${lostNote}` : "") + (result.coverage ? ` · ${result.coverage}` : "");
@@ -281,7 +282,7 @@ export function ExportDialog({
         // MỘT dòng + nút “Mở thư mục” (chỗ file nằm); thiếu gì (phần bỏ qua, nguồn chương) thì cảnh báo với đúng phần thiếu. Studio từ xa: file nằm ở máy tính.
         toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote, result.coverage].filter(Boolean).join(" · ") || undefined, {
           id: pending ?? undefined,
-          action: info?.remote ? undefined : { label: "Mở thư mục", onClick: () => revealFolder(result.folder) },
+          action: info?.remote ? undefined : { label: S.s_mo_thu_muc_4bf5b127, onClick: () => revealFolder(result.folder) },
         });
       }
     } catch (error) {
@@ -289,7 +290,7 @@ export function ExportDialog({
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
-        toast.info("Đã dừng xuất", { id: pending ?? undefined, duration: 6000 });
+        toast.info(S.s_da_dung_xuat_ab8ac9d1, { id: pending ?? undefined, duration: 6000 });
       } else if (kind === "abookproj") {
         const shown = packError((error as Error).message);
         toast.error(SAVING[kind][2], {
@@ -300,7 +301,7 @@ export function ExportDialog({
               <span>{shown.summary}</span>
               {shown.detail && (
                 <details className="text-xs">
-                  <summary className="cursor-pointer select-none">Chi tiết</summary>
+                  <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
                   <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
                 </details>
               )}
@@ -337,16 +338,16 @@ export function ExportDialog({
   const whole = kind === "abookproj";
   const warnings = (
     whole
-      ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
+      ? [book.running && S.s_du_an_dang_chay_goi_khi_no_da_chay_xong_ho_b4407187]
       : [
-          textOnly && `Chưa chương nào có audio: file .abook chỉ mang chữ của ${formatNumber(total)} chương (đọc được, chưa nghe được). Có audio rồi thì xuất lại.`,
-          !wholeSeries && !textOnly && ready < total && `${formatNumber(ready)}/${formatNumber(total)} chương có audio${missing ? ` (${missing} chương mất file)` : ""}${kind === "abook" ? ". Chọn “Xuất một phần” để xuất khi thiếu chương." : " - không có trong bản xuất."}`,
-          wholeSeries && (kind === "abook" ? "File sách cần đủ chương. Chọn “Xuất một phần” để ghi rõ những chương thiếu." : "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này."),
-          !wholeSeries && book.running && (kind === "abook" ? "Sách đang chạy. File sách cần đủ chương hoặc chọn “Xuất một phần”." : "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này."),
+          textOnly && S.s_chua_chuong_nao_co_audio_file_abook_chi_ma_7b9001f4(formatNumber(total)),
+          !wholeSeries && !textOnly && ready < total && S.s_0_1_chuong_co_audio_2_3_3ee25355(formatNumber(ready), formatNumber(total), missing ? S.s_0_chuong_mat_file_8c87f657(missing) : "", kind === "abook" ? S.s_chon_xuat_mot_phan_de_xuat_khi_thieu_chuon_286cd8c0 : S.s_khong_co_trong_ban_xuat_2fda2fce),
+          wholeSeries && (kind === "abook" ? S.s_file_sach_can_du_chuong_chon_xuat_mot_phan_95692f80 : S.s_phan_nao_chua_co_chuong_xong_se_bi_bo_qua_4d9cf695),
+          !wholeSeries && book.running && (kind === "abook" ? S.s_sach_dang_chay_file_sach_can_du_chuong_hoa_d628b896 : S.s_sach_dang_chay_ban_xuat_chi_gom_cac_chuong_8941cd4a),
           !wholeSeries && redoExportNote(book.chapters.redo ?? 0, kind === "abook"),
           oneFile &&
             bytes > FAT32_LIMIT &&
-            `File này sẽ lớn hơn 4 GB - thẻ nhớ hay USB định dạng FAT32 không chứa nổi.${wholeSeries ? " Chọn “Mỗi phần một file” nếu định chép vào đó." : ""}`,
+            S.s_file_nay_se_lon_hon_4_gb_the_nho_hay_usb_d_0ed52ab5(wholeSeries ? S.s_chon_moi_phan_mot_file_neu_dinh_chep_vao_d_812841f9 : ""),
         ]
   ).filter(Boolean) as string[];
   // Studio từ xa (trình duyệt máy khác) không gói dự án: file nằm ở máy tính, việc của người ngồi trước nó.
@@ -357,26 +358,16 @@ export function ExportDialog({
   return (
     <Dialog footer={busy ? (<DialogActions>
             {packing && (
-              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>
-                Huỷ xuất
-              </Button>
+              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>{S.s_huy_xuat_ca425e96}</Button>
             )}
-            <Button variant="ghost" onClick={() => handleOpenChange(false)}>
-              Đóng, cứ để chạy
-            </Button>
+            <Button variant="ghost" onClick={() => handleOpenChange(false)}>{S.s_dong_cu_de_chay_9a342df0}</Button>
           </DialogActions>) : (finished ? (<DialogActions>
             {!info?.remote && (
-              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
-                Mở thư mục
-              </Button>
+              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>{S.s_mo_thu_muc_4bf5b127}</Button>
             )}
-            <Button variant="primary" onClick={() => handleOpenChange(false)}>
-              Xong
-            </Button>
+            <Button variant="primary" onClick={() => handleOpenChange(false)}>{S.s_xong_a6f4543a}</Button>
           </DialogActions>) : (<DialogActions>
-        <Button variant="ghost" onClick={() => handleOpenChange(false)}>
-          Thôi
-        </Button>
+        <Button variant="ghost" onClick={() => handleOpenChange(false)}>{S.s_thoi_e68f9e88}</Button>
         <Button
           variant="primary"
           icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
@@ -384,10 +375,10 @@ export function ExportDialog({
           disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
           onClick={() => void run()}
         >
-          {info?.dialogs ? "Lưu và xuất" : "Xuất"}
+          {info?.dialogs ? S.s_luu_va_xuat_e274cff0 : S.s_xuat_b2ebc56b}
         </Button>
-      </DialogActions>))} open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
-      description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(selectedCount)} chương sẽ vào bản xuất.`}>
+      </DialogActions>))} open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={S.s_xuat_0_387e7d8f(book.title)}
+      description={wholeSeries ? S.s_cac_chuong_nghe_duoc_cua_ca_0_phan_se_vao_cf4e1648(parts.length) : S.s_0_chuong_se_vao_ban_xuat_4d6ae334(formatNumber(selectedCount))}>
       <MotionRegion fadeThrough>
       {busy ? (
         <MotionRegion className="py-2" role="status" motionKey={[cancelling, Boolean(downloading), Boolean(packing), Boolean(packShown), packShown?.fraction === null]}>
@@ -398,19 +389,17 @@ export function ExportDialog({
           )}
           <p className="mt-3 text-sm font-semibold">
             {cancelling
-              ? "Đang huỷ…"
+              ? S.s_dang_huy_c25a0214
               : downloading
-                ? <LiveText shown={`Đang tải nhạc nền (${downloading.done}/${downloading.total})…`} spoken={spokenProgress("Đang tải nhạc nền", downloading.done / downloading.total)} />
+                ? <LiveText shown={S.s_dang_tai_nhac_nen_0_1_124fda76(downloading.done, downloading.total)} spoken={spokenProgress(S.s_dang_tai_nhac_nen_0b8c4795, downloading.done / downloading.total)} />
                 : (packShown?.title ?? SAVING[kind][1])}
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {downloading
-              ? "Tải nhạc còn thiếu; "
+              ? S.s_tai_nhac_con_thieu_d1ac2c2f
               : countText
                 ? `${countText}; `
-                : ""}
-            đóng hộp vẫn xuất nền và báo khi xong.
-          </p>
+                : ""}{S.s_dong_hop_van_xuat_nen_va_bao_khi_xong_604904f6}</p>
 
         </MotionRegion>
       ) : finished ? (
@@ -428,14 +417,14 @@ export function ExportDialog({
         <div
           className="relative mb-3 flex flex-wrap gap-6 text-sm"
           role="radiogroup"
-          aria-label="Phạm vi bản xuất"
+          aria-label={S.s_pham_vi_ban_xuat_bcfd596b}
           onKeyDown={radioGroupKeys(scopeValues, scope, setScope)}
         >
           <SlidingIndicator variant="line" />
           {(
             [
-              ["part", "Phần này"],
-              ["series", `Cả bộ (${parts.length} phần)`],
+              ["part", S.s_phan_nay_20fb3a86],
+              ["series", S.s_ca_bo_0_phan_5bfa9de3(parts.length)],
             ] as const
           ).map(([value, label], index) => (
             <button
@@ -452,7 +441,7 @@ export function ExportDialog({
           ))}
         </div>
       )}
-      <div className="relative grid divide-y divide-line" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
+      <div className="relative grid divide-y divide-line" role="radiogroup" aria-label={S.s_kieu_ban_xuat_c2b4cb1e} onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
         <SlidingIndicator variant="line" />
         {kinds.map(({ value, title, detail, icon: Icon }, index) => (
           <button
@@ -480,14 +469,14 @@ export function ExportDialog({
           <div
             className="relative mt-3 flex flex-wrap gap-6 text-sm"
             role="radiogroup"
-            aria-label="Cách chia file"
+            aria-label={S.s_cach_chia_file_14e62e54}
             onKeyDown={radioGroupKeys(layoutValues, layout, setLayout)}
           >
             <SlidingIndicator variant="line" />
             {(
               [
-                ["single", "Một file"],
-                ["perPart", "Mỗi phần một file"],
+                ["single", S.s_mot_file_774a88e2],
+                ["perPart", S.s_moi_phan_mot_file_055af8d9],
               ] as const
             ).map(([value, label], index) => (
               <button
@@ -505,8 +494,8 @@ export function ExportDialog({
           </div>
           <p className="mt-2 text-sm text-fg-2 text-pretty">
             {layout === "single"
-              ? "Cả bộ trong một file .abook, nghe nối tiếp các phần."
-              : "Mỗi phần một file, cùng thư mục của bộ."}
+              ? S.s_ca_bo_trong_mot_file_abook_nghe_noi_tiep_c_a02fc82b
+              : S.s_moi_phan_mot_file_cung_thu_muc_cua_bo_4e8f08b0}
           </p>
         </>
       )}
@@ -517,9 +506,8 @@ export function ExportDialog({
       )}
       <p className="mt-3 text-sm text-fg-2 text-pretty">{savePlace}</p>
       {kind === "abook" && bytes > 0 && (
-        <p className="mt-2 text-sm text-fg-2">
-          Cỡ ước tính: khoảng {formatSize(bytes)}
-          {musicPending > 0 && `; cộng thêm ${musicPending} bài nhạc khi xuất.`}
+        <p className="mt-2 text-sm text-fg-2">{S.s_co_uoc_tinh_khoang_a6ece2b0}{formatSize(bytes)}
+          {musicPending > 0 && S.s_cong_them_0_bai_nhac_khi_xuat_725f787e(musicPending)}
         </p>
       )}
       {needsFfmpeg && ffmpeg.data && (
@@ -527,7 +515,7 @@ export function ExportDialog({
           <FfmpegNeeded
             status={ffmpeg.data}
             remote={Boolean(info?.remote)}
-            onDownload={() => void ffmpegStart().then(refreshFfmpeg, (error: Error) => toast.error("Chưa tải được công cụ", { description: error.message }))}
+            onDownload={() => void ffmpegStart().then(refreshFfmpeg, (error: Error) => toast.error(S.s_chua_tai_duoc_cong_cu_cfe422f9, { description: error.message }))}
             onStop={() => void ffmpegCancel().then(refreshFfmpeg, () => undefined)}
           />
         </div>
@@ -535,37 +523,33 @@ export function ExportDialog({
       {kind === "abook" &&
         (info?.remote ? (
           <p className="mt-3">
-            <OnComputerOnly verb="Chữ sáng theo giọng" />
+            <OnComputerOnly verb={S.s_chu_sang_theo_giong_57fb4327} />
           </p>
         ) : (
           <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />
         ))}
       {wholeSeries && kind === "mp3" && (
-        <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con trong thư mục của bộ.</p>
+        <p className="mt-3 text-sm text-fg-2 text-pretty">{S.s_moi_phan_mot_thu_muc_con_trong_thu_muc_cua_7e868eba}</p>
       )}
       {/* Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép - không mất cứng. */}
       <MotionPresence open={staleExports.length > 0}>
       <div className="mt-3 py-3 text-sm">
-        <p className="font-semibold">Bản xuất đã cũ</p>
+        <p className="font-semibold">{S.s_ban_xuat_da_cu_7e726524}</p>
         <div data-motion-live="">
         <AnimatedRows items={staleExports} keyOf={(item) => item.target}>
         {(item) => <div className="space-y-2 pt-2">
-          <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
-          <Button size="sm" variant="ghost" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? "Xuất lại M4B" : item.kind === "mp3" ? "Xuất chương đổi" : "Xuất file sách"}</Button>
-          {item.kind === "m4b" && <p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p>}
+          <p className="break-all">{item.target} · {item.changed.length}{S.s_chuong_da_doi_a6114cc0}</p>
+          <Button size="sm" variant="ghost" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? S.s_xuat_lai_m4b_07ad2a50 : item.kind === "mp3" ? S.s_xuat_chuong_doi_7eb1033d : S.s_xuat_file_sach_02b848a2}</Button>
+          {item.kind === "m4b" && <p>{S.s_m4b_gop_ca_cuon_ban_can_dung_lai_ca_file_v_6adad4ec}</p>}
         </div>}
         </AnimatedRows>
         </div>
       </div>
       </MotionPresence>
       {kind === "abook" && <label className="mt-3 flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={partial} onChange={(event) => setPartial(event.target.checked)} />
-        Xuất một phần
-      </label>}
+        <input type="checkbox" checked={partial} onChange={(event) => setPartial(event.target.checked)} />{S.s_xuat_mot_phan_fc85b7e5}</label>}
       {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />
-        Xuất {changedChapters.length} chương đổi
-      </label>}
+        <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />{S.s_xuat_00fa2c47}{changedChapters.length}{S.s_chuong_doi_e42b9885}</label>}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
         <div className="mt-3 space-y-1.5 py-3 text-sm">
           {warnings.map((line) => (
@@ -577,12 +561,8 @@ export function ExportDialog({
           {!whole && Boolean(book.pendingChanges) && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
               <AlertTriangle className="size-4 shrink-0 text-warning" />
-              <span className="min-w-0 flex-1 text-pretty">
-                Còn {book.pendingChanges} thay đổi chưa áp - bản xuất đọc như TRƯỚC khi sửa.
-              </span>
-              <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => { onOpenChange(false); onApplyFirst(); }}>
-                Áp dụng trước
-              </Button>
+              <span className="min-w-0 flex-1 text-pretty">{S.s_con_71d0e2b2}{book.pendingChanges}{S.s_thay_doi_chua_ap_ban_xuat_doc_nhu_truoc_kh_3a7b1e79}</span>
+              <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => { onOpenChange(false); onApplyFirst(); }}>{S.s_ap_dung_truoc_fec0937b}</Button>
             </div>
           )}
         </div>

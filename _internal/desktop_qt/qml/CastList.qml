@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -81,7 +82,7 @@ Item {
                     topPadding: Theme.s16
                     spacing: Theme.s16
                     Accessible.role: Accessible.Indicator
-                    Accessible.name: "Đang tải nhân vật"
+                    Accessible.name: S.s_dang_tai_nhan_vat_83ee4602
                     SequentialAnimation {
                         running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
                         loops: Animation.Infinite
@@ -108,8 +109,8 @@ Item {
                     objectName: "castEmpty"
                     width: parent.width
                     icon: "audio-lines"
-                    title: "Chưa có dàn nhân vật"
-                    text: "Dàn nhân vật hiện ra khi truyện đã được phân vai."
+                    title: S.s_chua_co_dan_nhan_vat_6f7729cd
+                    text: S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364
                 }
             }
             Collapse {
@@ -144,7 +145,7 @@ Item {
                                 spacing: 2
                                 Text {
                                     width: parent.width
-                                    text: "Người kể chuyện"
+                                    text: S.s_nguoi_ke_chuyen_c0c2c504
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
@@ -155,7 +156,7 @@ Item {
                                 Text {
                                     objectName: "castNarratorVoice"
                                     width: parent.width
-                                    text: narratorRow.voice || "Mặc định"
+                                    text: narratorRow.voice || S.s_mac_dinh_9a1af367
                                     color: Theme.text
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeBody
@@ -190,7 +191,7 @@ Item {
                                     visible: narratorRow.voice !== ""
                                     clipId: Logic.voiceId(narratorRow.voice)
                                     url: Logic.routed(Logic.voiceUrl(narratorRow.voice), root.peer)
-                                    label: "Nghe giọng " + narratorRow.voice
+                                    label: S.s_nghe_giong_c10b4bc4 + narratorRow.voice
                                 }
                                 IconButton {
                                     objectName: "castNarratorVoiceButton"
@@ -201,9 +202,9 @@ Item {
                                     iconSize: 16
                                     ink: Theme.text2
                                     hoverInk: Theme.text
-                                    tip: "Đổi giọng người kể"
-                                    Accessible.name: "Đổi giọng người kể"
-                                    onClicked: root.request("narrator", ({name: "NARRATOR", displayName: "người kể"}))
+                                    tip: S.s_doi_giong_nguoi_ke_c2afb757
+                                    Accessible.name: S.s_doi_giong_nguoi_ke_c2afb757
+                                    onClicked: root.request("narrator", ({name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62}))
                                 }
                             }
                         }
@@ -216,8 +217,8 @@ Item {
                     DevicesFold {
                         width: parent.width
                         storageKey: root.fold("cast")
-                        title: "Vai chính"
-                        summary: root.characters.length + " người có lời thoại"
+                        title: S.s_vai_chinh_b84f4098
+                        summary: root.characters.length + S.s_nguoi_co_loi_thoai_2a69ebe0
                         defaultOpen: root.characters.length <= 4
                         Column {
                             width: parent.width
@@ -248,7 +249,7 @@ Item {
                                         id: laterText
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: parent.width
-                                        text: (root.later ? "Ẩn chương sau" : "Hiện chương sau") + "\u00a0·\u00a0" + Logic.ahead(root.characters, root.reached) + " người"
+                                        text: (root.later ? S.s_an_chuong_sau_97c9aacb : S.s_hien_chuong_sau_81aa431a) + "\u00a0·\u00a0" + Logic.ahead(root.characters, root.reached) + S.s_nguoi_dfc3c5c7
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeBodySmall
@@ -264,8 +265,8 @@ Item {
                         DevicesFold {
                             width: parent.width
                             storageKey: root.fold("extras")
-                            title: "Vai phụ"
-                            summary: root.extras.length + " người trong một cảnh"
+                            title: S.s_vai_phu_6e7c6bce
+                            summary: root.extras.length + S.s_nguoi_trong_mot_canh_516e46e7
                             CastPeople {
                                 width: parent.width
                                 bookId: root.bookId
@@ -284,8 +285,8 @@ Item {
                         DevicesFold {
                             width: parent.width
                             storageKey: root.fold("carried")
-                            title: "Từ phần trước"
-                            summary: root.carried.length + " người chưa xuất hiện"
+                            title: S.s_tu_phan_truoc_aaf26cfe
+                            summary: root.carried.length + S.s_nguoi_chua_xuat_hien_f5957cce
                             defaultOpen: root.characters.length === 0 && root.carried.length <= 4
                             CastPeople {
                                 width: parent.width

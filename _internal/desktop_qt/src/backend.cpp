@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "backend.h"
 #include "hostmessage.h"
 
@@ -57,7 +58,7 @@ Backend::Backend(QObject *parent) : QObject(parent), m_library(new LibraryModel(
             return;
         qWarning().noquote() << "host chưa báo sẵn sàng sau" << s_startLimitMs << "ms";
         // A late Ready still opens the app (parseReady); "Thử lại" restarts the stuck host.
-        fail(QStringLiteral("ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
+        fail(UiStrings::s_copy_8b16fe00d9da);
     });
 }
 
@@ -120,11 +121,11 @@ bool Backend::resolveLaunch(Launch *out, QString *error) const {
         out->bundled = true;
     }
     if (!QFileInfo(out->python).isFile()) {
-        *error = QStringLiteral("Không tìm thấy phần chạy nền của ABook:\n%1").arg(QDir::toNativeSeparators(out->python));
+        *error = UiStrings::s_copy_683fb11556ea.arg(QDir::toNativeSeparators(out->python));
         return false;
     }
     if (out->folder.isEmpty() || !QFileInfo::exists(QDir(out->folder).filePath(QStringLiteral("abook/webui/host.py")))) {
-        *error = QStringLiteral("Không tìm thấy phần chạy nền của ABook:\n%1").arg(QDir::toNativeSeparators(out->folder));
+        *error = UiStrings::s_copy_683fb11556ea.arg(QDir::toNativeSeparators(out->folder));
         return false;
     }
     return true;
@@ -190,7 +191,7 @@ void Backend::start() {
         if (generation != m_generation || e != QProcess::FailedToStart)
             return;
         qWarning().noquote() << "host không chạy được:" << proc->errorString();
-        fail(QStringLiteral("ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
+        fail(UiStrings::s_copy_8b16fe00d9da);
     });
     m_since.restart();
     proc->start();
@@ -239,7 +240,7 @@ void Backend::parseReady(const QString &address) {
     m_port = url.port();
     m_token = QUrlQuery(url).queryItemValue(QStringLiteral("t"));
     if (m_port <= 0) {
-        fail(QStringLiteral("ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
+        fail(UiStrings::s_copy_8b16fe00d9da);
         return;
     }
     publishEndpoint(m_port, m_token.toUtf8());
@@ -257,7 +258,7 @@ void Backend::onFinished(int, QProcess::ExitStatus) {
         return;
     m_proc->deleteLater();
     m_proc = nullptr;
-    fail(QStringLiteral("ABook dừng bất ngờ. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
+    fail(UiStrings::s_copy_ce66a0524cbf);
 }
 
 void Backend::fail(const QString &message) {
@@ -285,7 +286,7 @@ void Backend::refreshLibrary() {
         if (generation != m_generation)
             return;
         if (reply->error() != QNetworkReply::NoError) {
-            m_library->setError(QStringLiteral("Chưa lấy được thư viện. Bạn thử lại."));
+            m_library->setError(UiStrings::s_copy_425b0cbebe82);
             return;
         }
         const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
@@ -332,7 +333,7 @@ void Backend::restart() {
 void Backend::runInstaller(const QString &installer, const QStringList &arguments) {
     if (!QProcess::startDetached(installer, arguments)) {
         qWarning().noquote() << "không chạy được bộ cài:" << installer;
-        emit hostEvent(QStringLiteral("abook-update-failed"), QStringLiteral("Chưa cài được bản mới. Bạn đóng rồi mở lại ABook, rồi thử lại."));
+        emit hostEvent(QStringLiteral("abook-update-failed"), UiStrings::s_copy_72489c7fb0fb);
         return;
     }
     stop();

@@ -35,13 +35,13 @@ internal object Py {
                     at += 2
                     when (next) {
                         's' -> out.append(if (inClass) SPACE else "[$SPACE]")
-                        'S' -> if (inClass) throw IllegalArgumentException("\\S trong ngoặc vuông") else out.append("[^$SPACE]")
+                        'S' -> if (inClass) throw IllegalArgumentException(S.s_s_trong_ngoac_vuong_e98ac6b3) else out.append("[^$SPACE]")
                         'd' -> out.append("\\p{Nd}")
-                        'D' -> if (inClass) throw IllegalArgumentException("\\D trong ngoặc vuông") else out.append("\\P{Nd}")
+                        'D' -> if (inClass) throw IllegalArgumentException(S.s_d_trong_ngoac_vuong_ba00f817) else out.append("\\P{Nd}")
                         'w' -> out.append(if (inClass) WORD else "[$WORD]")
-                        'W' -> if (inClass) throw IllegalArgumentException("\\W trong ngoặc vuông") else out.append("[^$WORD]")
-                        'b' -> if (inClass) throw IllegalArgumentException("\\b trong ngoặc vuông") else out.append(BOUNDARY)
-                        'B' -> if (inClass) throw IllegalArgumentException("\\B trong ngoặc vuông") else out.append(NOT_BOUNDARY)
+                        'W' -> if (inClass) throw IllegalArgumentException(S.s_w_trong_ngoac_vuong_00af2784) else out.append("[^$WORD]")
+                        'b' -> if (inClass) throw IllegalArgumentException(S.s_b_trong_ngoac_vuong_206c6320) else out.append(BOUNDARY)
+                        'B' -> if (inClass) throw IllegalArgumentException(S.s_b_trong_ngoac_vuong_a27189f8) else out.append(NOT_BOUNDARY)
                         else -> out.append('\\').append(next)
                     }
                     continue

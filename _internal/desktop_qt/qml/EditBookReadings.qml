@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -30,9 +31,9 @@ Column {
         const said = Logic.cleanSpoken(spoken)
         Api.call("PUT", "/api/books/" + bookId + "/readings", {surface: surface, spoken: said}, function(data, error) {
             root.saving = false
-            if (error) { Api.notice = Logic.toastText(editing === surface ? "Chưa lưu được cách đọc" : "Chưa bỏ được cách đọc", error); return }
+            if (error) { Api.notice = Logic.toastText(editing === surface ? S.s_chua_luu_duoc_cach_doc_484ed453 : S.s_chua_bo_duoc_cach_doc_0fffff4e, error); return }
             root.list = data.readings || []
-            Api.notice = said ? "“" + surface + "” sẽ đọc là “" + said + "” từ đoạn sau" : "“" + surface + "” đọc lại như chữ trong sách từ đoạn sau"
+            Api.notice = said ? "“" + surface + S.s_se_doc_la_7a286c54 + said + S.s_tu_doan_sau_c4975fce : "“" + surface + S.s_doc_lai_nhu_chu_trong_sach_tu_doan_sau_0f8d93c4
             root.closeEdit()
             root.changed()
         })
@@ -42,7 +43,7 @@ Column {
         saving = true
         Api.call("PUT", "/api/books/" + bookId + "/readings", {surface: surface, spoken: ""}, function(data, error) {
             root.saving = false
-            if (error) { Api.notice = Logic.toastText("Chưa bỏ được cách đọc", error); return }
+            if (error) { Api.notice = Logic.toastText(S.s_chua_bo_duoc_cach_doc_0fffff4e, error); return }
             root.list = data.readings || []
             root.closeEdit()
         })
@@ -64,12 +65,12 @@ Column {
     Collapse {
         width: parent.width
         open: root.loading
-        EditBookSkeleton { width: parent.width; count: 2; label: "Đang tải cách đọc" }
+        EditBookSkeleton { width: parent.width; count: 2; label: S.s_dang_tai_cach_doc_32d14df3 }
     }
     InlineError {
         width: parent.width
         open: root.failed && !root.loading
-        message: "Bạn hãy thử tải lại danh sách cách đọc."
+        message: S.s_ban_hay_thu_tai_lai_danh_sach_cach_doc_78ca66ce
         onRetry: root.load()
     }
     Collapse {
@@ -77,7 +78,7 @@ Column {
         open: !root.loading && !root.failed && root.list.length === 0
         HintText {
             width: parent.width
-            text: "Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc."
+            text: S.s_chua_co_tu_nao_o_man_doc_giu_hay_bam_chuot_56927ffd
         }
     }
     Repeater {
@@ -101,7 +102,7 @@ Column {
                     color: Theme.text
                     font.pixelSize: Theme.sizeBodySmall
                     textFormat: Text.StyledText
-                    text: "<b>" + escapeHtml(entry.modelData.surface) + "</b><font color='" + Theme.text2 + "'> đọc là </font>“" + escapeHtml(entry.modelData.spoken) + "”"
+                    text: "<b>" + escapeHtml(entry.modelData.surface) + "</b><font color='" + Theme.text2 + S.s_doc_la_font_0ec4a1ff + escapeHtml(entry.modelData.spoken) + "”"
                     function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
                 }
                 IconButton {
@@ -109,7 +110,7 @@ Column {
                     width: 32; height: 32
                     anchors.verticalCenter: parent.verticalCenter
                     icon: "pencil"; iconSize: 16
-                    tip: "Sửa cách đọc " + entry.modelData.surface
+                    tip: S.s_sua_cach_doc_5968f72a + entry.modelData.surface
                     Accessible.name: tip
                     onClicked: root.openEdit(entry.modelData)
                 }
@@ -119,7 +120,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                     icon: "trash"; iconSize: 16
                     enabled: !root.saving
-                    tip: "Bỏ cách đọc " + entry.modelData.surface
+                    tip: S.s_bo_cach_doc_4887d95e + entry.modelData.surface
                     Accessible.name: tip
                     onClicked: root.remove(entry.modelData.surface)
                 }
@@ -134,12 +135,12 @@ Column {
                     color: Theme.text2
                     font.pixelSize: Theme.sizeCaption
                     textFormat: Text.StyledText
-                    text: "<b><font color='" + Theme.text + "'>“" + entry.modelData.surface.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "”</font></b> đọc là"
+                    text: "<b><font color='" + Theme.text + "'>“" + entry.modelData.surface.replace(/&/g, "&amp;").replace(/</g, "&lt;") + S.s_font_b_doc_la_b6fb6454
                 }
                 FormField {
                     width: parent.width
-                    label: "Cách đọc cho " + entry.modelData.surface
-                    placeholderText: "vd Ha-ru-tô"
+                    label: S.s_cach_doc_cho_d0061fb3 + entry.modelData.surface
+                    placeholderText: S.s_vd_ha_ru_to_93151b6c
                     text: root.editing === entry.modelData.surface ? root.draft : ""
                     onTextChanged: if (root.editing === entry.modelData.surface && text !== root.draft) root.draft = text.slice(0, 200)
                     onAccepted: saveButton.activated()
@@ -149,7 +150,7 @@ Column {
                     spacing: 8
                     Button {
                         id: saveButton
-                        text: "Lưu cho cả cuốn"
+                        text: S.s_luu_cho_ca_cuon_76b88dc9
                         size: "sm"
                         enabled: Logic.cleanSpoken(root.draft) !== "" && Logic.cleanSpoken(root.draft) !== entry.modelData.spoken && Logic.cleanSpoken(root.draft) !== entry.modelData.surface
                         busy: root.saving && Logic.cleanSpoken(root.draft) !== ""
@@ -157,7 +158,7 @@ Column {
                     }
                     Button {
                         visible: entry.modelData.spoken !== ""
-                        text: "Đọc như chữ trong sách"
+                        text: S.s_doc_nhu_chu_trong_sach_9a45fc3e
                         kind: "ghost"
                         size: "sm"
                         enabled: !root.saving

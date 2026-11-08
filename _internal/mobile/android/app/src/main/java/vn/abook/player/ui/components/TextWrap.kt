@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.S
+
 /**
  * Địa chỉ web trong câu chữ giữ NGUYÊN MỘT KHỐI khi xuống dòng: chèn U+2060 (nối từ, không rộng, không vẽ) sau mỗi "/" nên địa chỉ không tách đôi giữa đường dẫn
  * ("github.com/" ở dòng này, "ntanhpro1221/ABook" ở dòng sau - soát điện thoại 30-10) mà cả khối xuống dòng sau. Chỉ khi cả địa chỉ rộng hơn dòng thì máy mới buộc phải ngắt
@@ -25,7 +27,7 @@ fun hasOrphanLastLine(lines: List<String>): Boolean {
  */
 fun keepUnitsTogether(text: String): String = unitToken.replace(text) { "${it.groupValues[1]}\u00A0${it.groupValues[2]}" }
 
-private const val UNITS = "chương|giờ|phút|giây|tập|cuốn|vai|KB|MB|GB"
+private const val UNITS = S.s_chuong_gio_phut_giay_tap_cuon_vai_kb_mb_gb_e49fb7e8
 
 private val unitToken = Regex("""(\d) ($UNITS)(?!\p{L})""")
 

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useBackLayer } from "@/shared/backStack";
 import { Copy, Pencil, Play, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -118,9 +119,9 @@ export function useSentenceMenu({
     void navigator.clipboard.writeText(text).then(
       () => {
         select(null);
-        toast.success("Đã chép câu", { id: "copied" });
+        toast.success(S.s_da_chep_cau_9a5493ec, { id: "copied" });
       },
-      () => toast.error("Chưa chép được"),
+      () => toast.error(S.s_chua_chep_duoc_888f7b79),
     );
   };
 
@@ -137,8 +138,8 @@ export function useSentenceMenu({
               {...keepFocus}
               className={BAR_BUTTON}
             >
-              <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
-              <span className="max-sm:hidden">Nghe từ câu này</span>
+              <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">{S.s_nghe_tu_day_6a7ff4ab}</span>
+              <span className="max-sm:hidden">{S.s_nghe_tu_cau_nay_f5bd1329}</span>
             </button>
           )}
           {readingEdit && (
@@ -153,7 +154,7 @@ export function useSentenceMenu({
               {...keepFocus}
               className={BAR_BUTTON}
             >
-              <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
+              <Pencil className="size-4" /> <span className={BAR_LABEL}>{S.s_sua_cach_doc_d67b7a7b}</span>
             </button>
           )}
           {lineEdit && (
@@ -168,19 +169,18 @@ export function useSentenceMenu({
               {...keepFocus}
               className={BAR_BUTTON}
             >
-              <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
+              <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? S.s_sua_trong_studio_4ba850ad : S.s_sua_cau_nay_a82aec43}</span>
             </button>
           )}
           <button type="button" onClick={() => copySentence(selected)} {...keepFocus} className={BAR_BUTTON}>
-            <Copy className="size-4" /> <span className={BAR_LABEL}>Chép câu</span>
+            <Copy className="size-4" /> <span className={BAR_LABEL}>{S.s_chep_cau_4456863f}</span>
           </button>
-          <button type="button" aria-label="Bỏ chọn câu" onClick={() => select(null)} {...keepFocus} className={cn(BAR_BUTTON, "px-3")}>
+          <button type="button" aria-label={S.s_bo_chon_cau_bab8219f} onClick={() => select(null)} {...keepFocus} className={cn(BAR_BUTTON, "px-3")}>
             <X className="size-4" />
           </button>
         </div>
         {lineEdit?.mode === "blocked" && (
-          <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
-            Sửa câu này: {lineEdit.note}
+          <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">{S.s_sua_cau_nay_ce1728d3}{lineEdit.note}
           </p>
         )}
       </div>

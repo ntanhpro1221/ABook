@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem
@@ -131,8 +133,8 @@ object ReadAloud {
             val clip = result.getOrNull()
             when {
                 clip != null && entry.done -> entry.relocate(clip.file)
-                clip != null -> entry.fail(VoiceException("Đoạn đã đọc bằng giọng khác"))
-                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
+                clip != null -> entry.fail(VoiceException(S.s_doan_da_doc_bang_giong_khac_5bb499bb))
+                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException(S.s_chua_doc_duoc_doan_nay_27971564))
             }
         }
     }
@@ -276,7 +278,7 @@ object ReadAloud {
     /** Bộ đệm đoạn dùng chung cho nghe và "Làm trước" (PrepareAhead.kt); danh sách đoạn ghim nằm ngoài thư mục cache. */
     @Synchronized
     internal fun cache(): ClipCache = cache ?: run {
-        val ctx = context ?: throw VoiceException("Chưa khởi động")
+        val ctx = context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec)
         VoiceSpeed.setup(ctx)
         // giọng hai bậc ([VoiceSpeed]): mã giọng trần = bậc nghe trực tiếp lúc này; bản xuất hỏi [VoiceSpeed.quality]. Giọng trên máy: dấu model của bậc ấy trong khoá
         // (mô-đun tính một lần mỗi lần tải / cập nhật / gỡ - VoiceModule.mark).
@@ -301,7 +303,7 @@ object ReadAloud {
     /** Tốc độ đo được của từng giọng (ước thời gian "Làm trước"). */
     @Synchronized
     internal fun speeds(): VoiceSpeeds = speeds ?: run {
-        val ctx = context ?: throw VoiceException("Chưa khởi động")
+        val ctx = context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec)
         VoiceSpeeds(File(ctx.filesDir, "readaloud-speeds.json")).also { speeds = it }
     }
 
@@ -312,7 +314,7 @@ object ReadAloud {
 
     @Synchronized
     private fun reader(): ClipReader = reader ?: run {
-        val ctx = context ?: throw VoiceException("Chưa khởi động")
+        val ctx = context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec)
         // Giọng dùng khoá hỏng (khoá bị từ chối, hết hạn mức, mất mạng): Edge đỡ trước giọng của máy - NẾU người nghe đã đồng ý gửi chữ cho Microsoft; mỗi chuyện báo người nghe một lần.
         ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }, onlineFallback = ::edgeFallback, notice = ::notice).also { reader = it }
     }
@@ -324,10 +326,10 @@ object ReadAloud {
         val (provider, name) = ClipCache.split(id)
         return when (provider) {
             "edge" -> EdgeTts(name.ifEmpty { "vi-VN-HoaiMyNeural" })
-            "device" -> DeviceTts(context ?: throw VoiceException("Chưa khởi động"), name)
-            VieneuVoices.PREFIX -> VieneuVoices.voice(context ?: throw VoiceException("Chưa khởi động"), id)
-            SupertonicVoices.PREFIX -> SupertonicVoices.voice(context ?: throw VoiceException("Chưa khởi động"), id)
-            else -> OnlineVoices.voiceFor(context ?: throw VoiceException("Chưa khởi động"), id) ?: throw VoiceException("Giọng lạ: $id")
+            "device" -> DeviceTts(context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec), name)
+            VieneuVoices.PREFIX -> VieneuVoices.voice(context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec), id)
+            SupertonicVoices.PREFIX -> SupertonicVoices.voice(context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec), id)
+            else -> OnlineVoices.voiceFor(context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec), id) ?: throw VoiceException(S.s_giong_la_0_17f5fa0c(id))
         }
     }
 
@@ -413,7 +415,7 @@ object ReadAloud {
     /** Danh sách giọng cho giao diện (chạy ở luồng nền - hỏi bộ đọc của máy có thể chờ). */
     fun voices(ctx: Context): List<JSONObject> {
         val list = ArrayList<VoiceInfo>()
-        list.add(VoiceInfo(DEFAULT_VOICE, "Hoài My (Edge)", "edge", true, true, DEFAULT_VOICE_GENDER))
+        list.add(VoiceInfo(DEFAULT_VOICE, S.s_hoai_my_edge_65e287a0, "edge", true, true, DEFAULT_VOICE_GENDER))
         list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
         list.addAll(VieneuVoices.voices(ctx)) // giọng VieNeu: chỉ khi mô-đun đã tải về điện thoại
         list.addAll(SupertonicVoices.voices(ctx)) // giọng Supertonic: như vậy
@@ -528,7 +530,7 @@ object ReadAloud {
     private fun sendsText(index: Int, voice: String = voiceId): Boolean = chapters().getOrNull(index)?.isText == true && needsConsent(voice)
 
     /** Lời khi chữ sắp rời máy mà người nghe chưa đồng ý (đường không qua giao diện: Android Auto, widget, nút tai nghe; giao diện thì hỏi trước - player.tsx withConsent). */
-    internal const val CONSENT_NOTICE = "Giọng gửi chữ sách ra ngoài — bạn cho phép ở ABook → Phát hoặc dùng giọng máy."
+    internal const val CONSENT_NOTICE = S.s_giong_gui_chu_sach_ra_ngoai_ban_cho_phep_o_5bde3abf
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. Đang nghe chương chữ mà giọng mới gửi chữ đi chưa được đồng ý thì từ chối: giữ giọng cũ, báo người nghe
      *  (giao diện hỏi đồng ý TRƯỚC khi đổi - listen/PlayerViews.tsx; đây là lưới cuối cho đường không qua nó). */
@@ -760,7 +762,7 @@ object ReadAloud {
         val running = key in textWaits
         textWaits[key] = { ok ->
             if (token == generation && Playback.bookId == book) {
-                if (ok) then() else fail("Chưa lấy được chữ “${chapter.title}” từ ${SyncLink.holderName(ctx, book)} — bạn kiểm tra mạng rồi phát lại.")
+                if (ok) then() else fail(S.s_chua_lay_duoc_chu_0_tu_1_ban_kiem_tra_mang_116b0d25(chapter.title, SyncLink.holderName(ctx, book)))
             }
         }
         if (!running) {
@@ -827,7 +829,7 @@ object ReadAloud {
                 Playback.emit("state")
                 return
             }
-            fail("Chưa đọc được chữ của chương “${chapter.title}”")
+            fail(S.s_chua_doc_duoc_chu_cua_chuong_0_55c4f151(chapter.title))
             return
         }
         val restored = if (segment < 0) ReadingAnchor.restore(chap.paragraphs, anchor) else null
@@ -915,7 +917,7 @@ object ReadAloud {
             if (chap == null) {
                 // Cuốn nghe thẳng: chữ chương kế còn ở máy giữ sách - lấy về rồi nạp tiếp (hàng đợi vẫn phát phần đã có).
                 if (fetchText(feedChapter) { pump() }) return
-                fail("Chưa đọc được chữ của chương “${chapter.title}”")
+                fail(S.s_chua_doc_duoc_chu_cua_chuong_0_55c4f151(chapter.title))
                 return
             }
             // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
@@ -923,7 +925,7 @@ object ReadAloud {
             if (feedSegment >= chap.paragraphs.size) {
                 if (opening?.queue?.scheduled == true) return // cả chương đã vào hàng chờ: đợi phát clip đầu, không báo nhầm "không có chữ" hay đọc sang chương khác
                 if (feedChapter + 1 >= all.size) {
-                    if (waiting != null) fail("Chương “${chapter.title}” không có chữ để đọc")
+                    if (waiting != null) fail(S.s_chuong_0_khong_co_chu_de_doc_e8c37db4(chapter.title))
                     return
                 }
                 // Hẹn giờ "hết chương": dừng nạp ở cuối chương này để ExoPlayer tự dừng đúng chỗ (handleEnded).
@@ -1044,7 +1046,7 @@ object ReadAloud {
                 Wav.silence(part, ms)
                 part.renameTo(file)
             }
-            check(file.isFile) { "không ghi được file lặng" }
+            check(file.isFile) { S.s_khong_ghi_duoc_file_lang_5512f995 }
             Clip(file, ms, emptyList(), "silence")
         }.getOrNull()
     }
@@ -1443,7 +1445,7 @@ object ReadAloud {
                 return
             }
             if (streaming != null && exo != null && liveIndex(exo, streaming) >= 0) {
-                onLiveBroke(streaming, error as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
+                onLiveBroke(streaming, error as? Exception ?: VoiceException(S.s_chua_doc_duoc_doan_nay_27971564))
                 return
             }
             // Đoạn hết cách đọc: dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) hay lỗi giọng khác - nhớ đoạn này, lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại,
@@ -1467,7 +1469,7 @@ object ReadAloud {
                 resume = null
                 waiting = Target(chap.index, segment, if (rest.from > 0) 0L else rest.baseMs, if (rest.from > 0) rest.from else -1, exo?.playWhenReady == true)
             }
-            fail((error as? VoiceException)?.message ?: "Chưa đọc được đoạn này (${error.message})", chap.index to segment)
+            fail((error as? VoiceException)?.message ?: S.s_chua_doc_duoc_doan_nay_0_947406a0(error.message), chap.index to segment)
             return
         }
         // Clip đuôi: `words` đủ chữ của đoạn (chữ trước chữ bấm mốc [0, 0]), âm thanh bắt đầu từ chữ ấy ([SeekPlan.tailWords]).

@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 /** Máy này làm được gì với một cuốn sách (docs/EDITING.md) - giao diện chỉ hỏi qua đây, không tự suy ra từ nền tảng.
  *
  * - `toolchain`: Studio dùng được trên máy này (bản dev luôn có; app Windows đóng gói khi đã cài và không cũ; điện thoại không).
@@ -28,8 +29,8 @@ export function canEditLayer(caps: Capabilities | null | undefined): boolean {
 export function studioNeed(caps: Capabilities | null | undefined): string | null {
   if (!caps || caps.link) return null;
   if (caps.workshop && caps.toolchain) return null;
-  if (!caps.toolchain) return "cần cài Studio";
-  return "cuốn này chưa có dự án Studio";
+  if (!caps.toolchain) return S.s_can_cai_studio_7de0b351;
+  return S.s_cuon_nay_chua_co_du_an_studio_b175061f;
 }
 
 /** Việc cần Studio có nên hiện (bị mờ) không: mọi cuốn của máy này trừ cuốn đã làm được ngay. */
@@ -43,10 +44,10 @@ export function syncsToComputer(caps: Capabilities | null | undefined): boolean 
 }
 
 /** Lý do không sửa được cuốn của điện thoại chia sẻ thư viện (máy tính) - cùng câu với 409 của máy tính. */
-export const LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy";
+export const LINK_BOOK = S.s_sach_nay_lay_tu_may_tinh_khac_muon_sua_thi_d2a5136b;
 
 /** Cuốn của điện thoại khác: sửa được, nhưng phần sửa chỉ nằm trên máy này - câu nói điều đó cho người nghe. */
-export const LOCAL_EDITS = "Sách này nằm trên điện thoại khác nên các thay đổi chỉ có trên máy này - máy kia vẫn giữ sách như cũ";
+export const LOCAL_EDITS = S.s_sach_nay_nam_tren_dien_thoai_khac_nen_cac_fb84887c;
 
 /** Phần sửa của cuốn này chỉ ở lại máy này (cuốn của điện thoại khác): `LOCAL_EDITS`, không thì `null`. */
 export function localEditsNote(caps: Capabilities | null | undefined): string | null {
@@ -70,7 +71,7 @@ export function lineEditing(caps: Capabilities | null | undefined): LineEditing 
   if (!caps) return null;
   if (caps.link && !caps.workshop) return { mode: "blocked", note: LINK_BOOK };
   // Việc chờ Studio cần một máy làm sách nhận được; điện thoại khác không phải máy ấy.
-  if (caps.local && !caps.workshop) return { mode: "blocked", note: "Sách này nằm trên điện thoại khác - sửa từng câu phải làm ở máy ấy" };
-  if (caps.workshop) return caps.toolchain ? { mode: "studio" } : { mode: "blocked", note: studioNeed(caps) ?? "cần cài Studio" };
+  if (caps.local && !caps.workshop) return { mode: "blocked", note: S.s_sach_nay_nam_tren_dien_thoai_khac_sua_tung_269dd675 };
+  if (caps.workshop) return caps.toolchain ? { mode: "studio" } : { mode: "blocked", note: studioNeed(caps) ?? S.s_can_cai_studio_7de0b351 };
   return { mode: "wish" };
 }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -77,8 +78,8 @@ Collapse {
                     id: listen
                     objectName: "musicPreview"
                     visible: root.canPreview
-                    text: root.previewing ? "Dừng nghe" : "Nghe thử"
-                    icon: root.previewing ? "square" : "play"
+                    text: root.previewing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_fa024065
+                    icon: root.previewing ? "pause" : "play"
                     kind: "ghost"; size: "sm"
                     Accessible.name: text + ": " + (root.track.title || "")
                     onActivated: root.preview()
@@ -94,9 +95,9 @@ Collapse {
                     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                     Button {
                         id: askButton
-                        text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
+                        text: S.s_xoa_777195ab; icon: "trash"; kind: "ghost"; size: "sm"
                         enabled: !root.confirming
-                        Accessible.name: "Xoá: " + (root.track.title || "")
+                        Accessible.name: S.s_xoa_81a43b8a + (root.track.title || "")
                         onClicked: root.askRemove()
                     }
                 }
@@ -114,16 +115,16 @@ Collapse {
                         spacing: 4
                         Button {
                             id: removeButton
-                            text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
+                            text: S.s_xoa_bai_d554a496; icon: "trash"; kind: "ghost"; size: "sm"
                             busy: root.removing
                             enabled: root.confirming
-                            Accessible.name: "Xoá bài: " + (root.track.title || "")
+                            Accessible.name: S.s_xoa_bai_ccd757ca + (root.track.title || "")
                             onActivated: root.remove()
                         }
                         Button {
-                            text: "Giữ lại"; kind: "ghost"; size: "sm"
+                            text: S.s_giu_lai_3c3ba2db; kind: "ghost"; size: "sm"
                             enabled: root.confirming && !root.removing
-                            Accessible.name: "Giữ lại: " + (root.track.title || "")
+                            Accessible.name: S.s_giu_lai_28cdd2d4 + (root.track.title || "")
                             onClicked: root.keep()
                         }
                     }

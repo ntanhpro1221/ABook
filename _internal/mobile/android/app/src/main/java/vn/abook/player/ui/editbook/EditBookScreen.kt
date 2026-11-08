@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -96,11 +98,11 @@ fun EditBookRoute(
 @Composable
 fun CoverSheet(hasCover: Boolean, onPick: () -> Unit, onRemove: () -> Unit, onFind: () -> Unit = {}) {
     Column(Modifier.fillMaxWidth().testTag("cover_sheet")) {
-        BasicText("Ảnh bìa", style = Abook.type.sectionTitle)
+        BasicText(S.s_anh_bia_f224644d, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
-        MenuRow("Chọn ảnh", tag = "cover_pick", onClick = onPick) { ink -> ImageIcon(ink) }
-        MenuRow("Tìm bìa", tag = "cover_find", onClick = onFind) { ink -> GlobeIcon(ink) }
-        if (hasCover) MenuRow("Bỏ ảnh bìa", tag = "cover_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
+        MenuRow(S.s_chon_anh_41ecf092, tag = "cover_pick", onClick = onPick) { ink -> ImageIcon(ink) }
+        MenuRow(S.s_tim_bia_34025664, tag = "cover_find", onClick = onFind) { ink -> GlobeIcon(ink) }
+        if (hasCover) MenuRow(S.s_bo_anh_bia_696c6692, tag = "cover_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
     }
 }
 
@@ -112,8 +114,8 @@ fun CoverSheet(hasCover: Boolean, onPick: () -> Unit, onRemove: () -> Unit, onFi
 fun DiscardSheet(discardAll: ((String?) -> Unit) -> Unit, dismiss: () -> Unit) {
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    ConfirmPage("Bỏ mọi thay đổi", "discard_confirm", listOf(ReadingText.DISCARD_HINT), problem) {
-        DangerButton("Bỏ hết thay đổi", {
+    ConfirmPage(S.s_bo_moi_thay_doi_ad999cde, "discard_confirm", listOf(ReadingText.DISCARD_HINT), problem) {
+        DangerButton(S.s_bo_het_thay_doi_b55603a1, {
             if (working) return@DangerButton
             working = true
             problem = ""
@@ -124,7 +126,7 @@ fun DiscardSheet(discardAll: ((String?) -> Unit) -> Unit, dismiss: () -> Unit) {
             }
         }, "discard_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Thôi", dismiss, "discard_keep")
+        QuietButton(S.s_thoi_e68f9e88, dismiss, "discard_keep")
     }
 }
 
@@ -140,12 +142,12 @@ fun EditBookScreen(
     readings: ReadingsUi = ReadingsUi(), loadReadings: () -> Unit = {}, setReading: (String, String, () -> Unit) -> Unit = { _, _, _ -> },
     discard: () -> Unit = {},
 ) {
-    BookForm("Sửa sách", onBack, "edit_book_screen") {
+    BookForm(S.s_sua_sach_79fb71d2, onBack, "edit_book_screen") {
         val book = state.saved
         val draft = state.draft
         val list = rememberLazyListState()
         LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("edit_book_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s32)) {
-            if (state.loading) item("loading", "state") { Caption("Đang đọc", Modifier.padding(top = Dim.s16)) }
+            if (state.loading) item("loading", "state") { Caption(S.s_dang_doc_1b09d2d9, Modifier.padding(top = Dim.s16)) }
             if (book == null || draft == null) {
                 if (!state.loading) item("failed", "state") { InlineProblem(state.problem, retry, "edit_problem", Modifier.padding(top = Dim.s16)) }
             } else {
@@ -154,10 +156,10 @@ fun EditBookScreen(
                         CoverButton(book, draft, covers, openCover, enabled = !state.saving && !state.sending)
                         Spacer(Modifier.width(Dim.s16))
                         Column(Modifier.weight(1f)) {
-                            BookField("Tên sách", draft.title, { value -> change { it.copy(title = value) } }, "edit_title", !state.sending)
+                            BookField(S.s_ten_sach_d54846eb, draft.title, { value -> change { it.copy(title = value) } }, "edit_title", !state.sending)
                             Spacer(Modifier.height(Dim.s16))
-                            BookField("Tác giả", draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
-                                placeholder = "Không rõ tác giả")
+                            BookField(S.s_tac_gia_0ec4731b, draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
+                                placeholder = S.s_khong_ro_tac_gia_baaa8118)
                         }
                     }
                 }
@@ -166,28 +168,28 @@ fun EditBookScreen(
                 if (book.sendable && (book.pending > 0 || state.sending)) item("send", "send") {
                     Column(Modifier.padding(top = Dim.sectionGap)) {
                         ActionRow(
-                            "${book.pending} thay đổi đang chờ gửi về ${book.holder}", if (state.sending) "Đang gửi" else "Gửi về ${book.holder}",
+                            S.s_0_thay_doi_dang_cho_gui_ve_1_af5aef9d(book.pending, book.holder), if (state.sending) S.s_dang_gui_dd6f95be else S.s_gui_ve_0_50e46c2d(book.holder),
                             { if (!state.sending && !state.saving) send() }, "send_edits",
-                            hint = "Tự gửi khi tới được ${book.holder}; bấm “Gửi về ${book.holder}” để gửi ngay.",
+                            hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(book.holder, book.holder),
                         )
                         if (book.syncNote.isNotEmpty()) Caption(book.syncNote, Modifier.testTag("sync_note"))
                         InlineProblem(state.sendProblem, send, "send_problem")
                     }
                 }
                 if (book.sendable && book.pending == 0 && book.syncNote.isNotBlank()) item("sent", "sent") { Caption(book.syncNote) }
-                item("chapters_title", "section") { SectionTitle("Chương") }
+                item("chapters_title", "section") { SectionTitle(S.s_chuong_2d157977) }
                 items(draft.chapters, key = { it.id }, contentType = { "chapter" }) { row ->
                     Column {
                         ListItem(
                             row.shown, onClick = { chapter(row.id) }, tag = "edit_chapter_${row.id}",
-                            hint = if (row.renamed) "Tên gốc: ${row.original}" else null, hintColor = Abook.colors.text3, chevron = true,
+                            hint = if (row.renamed) S.s_ten_goc_0_b27cd007(row.original) else null, hintColor = Abook.colors.text3, chevron = true,
                         )
                         RowLine()
                     }
                 }
                 // Sách chỉ có chữ: các từ đã dạy giọng đọc (web: "Cách đọc tên" gập trong Sửa sách).
                 if (book.textOnly) item("readings", "readings") {
-                    Fold("Cách đọc tên", "edit_readings", Modifier.padding(top = Dim.sectionGap)) {
+                    Fold(S.s_cach_doc_ten_1c46e75d, "edit_readings", Modifier.padding(top = Dim.sectionGap)) {
                         ReadingsSection(readings, loadReadings, setReading)
                     }
                 }
@@ -206,7 +208,7 @@ private fun CoverButton(book: EditSnapshot, draft: EditDraft, covers: CoverLoade
     val colors = Abook.colors
     Box(
         Modifier.width(112.dp + Dim.s8).then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier)
-            .semantics { contentDescription = if (book.cover == null) "Chọn ảnh bìa" else "Đổi ảnh bìa" }.testTag("edit_cover"),
+            .semantics { contentDescription = if (book.cover == null) S.s_chon_anh_bia_207ac182 else S.s_doi_anh_bia_7889ff91 }.testTag("edit_cover"),
     ) {
         BookCover(book.cover, draft.title, null, covers, 112.dp, Modifier.width(112.dp).padding(bottom = Dim.s8))
         Box(
@@ -220,17 +222,17 @@ private fun CoverButton(book: EditSnapshot, draft: EditDraft, covers: CoverLoade
 fun EditChapterRoute(editor: BookEditor, chapterId: Long, onBack: () -> Unit) {
     val state by editor.state.collectAsState()
     val row = state.draft?.chapters?.firstOrNull { it.id == chapterId }
-    BookForm("Tên chương", onBack, "edit_chapter_screen") {
+    BookForm(S.s_ten_chuong_9edb6c28, onBack, "edit_chapter_screen") {
         if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
             val textOnly = state.saved?.textOnly == true
             // Sách chữ: một tên. Sách nói: nhãn ("Chương 3") và tên riêng.
             FieldGroup {
-                BookField(if (textOnly) null else "Nhãn", row.title, { value ->
+                BookField(if (textOnly) null else S.s_nhan_58861f44, row.title, { value ->
                     editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
-                }, "chapter_title", description = if (textOnly) "Tên chương" else "Nhãn")
+                }, "chapter_title", description = if (textOnly) S.s_ten_chuong_9edb6c28 else S.s_nhan_58861f44)
                 if (!textOnly) {
                     Spacer(Modifier.height(Dim.s16))
-                    BookField("Tên", row.subtitle, { value ->
+                    BookField(S.s_ten_c8b17259, row.subtitle, { value ->
                         editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
                     }, "chapter_subtitle")
                 }
@@ -252,7 +254,7 @@ private fun DiscardRow(edits: Int, discard: () -> Unit) {
     Reveal(edits > 0) {
         Column(Modifier.fillMaxWidth().padding(top = Dim.sectionGap)) {
             ListItem(
-                "Bỏ mọi thay đổi (${last[0]})", Modifier, discard, "discard_edits", hint = ReadingText.DISCARD_HINT,
+                S.s_bo_moi_thay_doi_0_af6c6828(last[0]), Modifier, discard, "discard_edits", hint = ReadingText.DISCARD_HINT,
                 titleColor = Abook.colors.danger,
             )
         }
@@ -288,8 +290,8 @@ private fun ReadingsSection(ui: ReadingsUi, load: () -> Unit, setReading: (Strin
         ) { shown ->
             when (shown) {
                 ReadingsStage.Failed -> InlineProblem(ui.problem, load, "readings_problem")
-                ReadingsStage.Loading -> Caption("Đang tải cách đọc", Modifier.padding(top = Dim.s12).testTag("readings_loading"))
-                ReadingsStage.Empty -> Caption("Chưa có từ nào.", Modifier.padding(top = Dim.s12).testTag("readings_empty"))
+                ReadingsStage.Loading -> Caption(S.s_dang_tai_cach_doc_32d14df3, Modifier.padding(top = Dim.s12).testTag("readings_loading"))
+                ReadingsStage.Empty -> Caption(S.s_chua_co_tu_nao_b1a59234, Modifier.padding(top = Dim.s12).testTag("readings_empty"))
                 ReadingsStage.Words -> Column(Modifier.fillMaxWidth()) {
                     for (row in rows) key(row.item.surface) {
                         AnimatedVisibility(
@@ -321,11 +323,11 @@ private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, onE
     val colors = Abook.colors
     Column(Modifier.fillMaxWidth().testTag("reading_${item.surface}")) {
         ListItem(
-            item.surface, hint = "đọc là “${item.spoken}”", titleStyle = Abook.type.bodyStrong,
+            item.surface, hint = S.s_doc_la_0_328eec99(item.spoken), titleStyle = Abook.type.bodyStrong,
             trailing = {
                 Row {
-                    IconAction("Sửa cách đọc ${item.surface}", onEdit, "reading_edit_${item.surface}") { PencilIcon(colors.text2) }
-                    IconAction("Bỏ cách đọc ${item.surface}", { if (!saving) onRemove() }, "reading_remove_${item.surface}") { TrashIcon(colors.text2) }
+                    IconAction(S.s_sua_cach_doc_0_683b998a(item.surface), onEdit, "reading_edit_${item.surface}") { PencilIcon(colors.text2) }
+                    IconAction(S.s_bo_cach_doc_0_c3b9bf0d(item.surface), { if (!saving) onRemove() }, "reading_remove_${item.surface}") { TrashIcon(colors.text2) }
                 }
             },
         )
@@ -338,13 +340,13 @@ private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, onE
 private fun ReadingForm(surface: String, current: String, saving: Boolean, onSave: (String) -> Unit) {
     var value by remember(surface, current) { mutableStateOf(current) }
     Column(Modifier.fillMaxWidth().padding(bottom = Dim.s16).testTag("reading_form")) {
-        RowHint("“$surface” đọc là", Modifier.padding(bottom = Dim.s8))
+        RowHint(S.s_0_doc_la_75e643e3(surface), Modifier.padding(bottom = Dim.s8))
         FieldGroup {
-            BookField(null, value, { value = it }, "reading_field", !saving, description = "Cách đọc cho $surface", placeholder = "vd Ha-ru-tô")
+            BookField(null, value, { value = it }, "reading_field", !saving, description = S.s_cach_doc_cho_0_e92e2d44(surface), placeholder = S.s_vd_ha_ru_to_93151b6c)
             Spacer(Modifier.height(Dim.s12))
-            PrimaryButton("Lưu cho cả cuốn", { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
+            PrimaryButton(S.s_luu_cho_ca_cuon_76b88dc9, { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
                 enabled = !saving && ReadingText.canSave(surface, current, value))
-            if (current.isNotEmpty()) TextAction("Đọc như trong sách", { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
+            if (current.isNotEmpty()) TextAction(S.s_doc_nhu_trong_sach_4ff053c6, { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
         }
     }
 }

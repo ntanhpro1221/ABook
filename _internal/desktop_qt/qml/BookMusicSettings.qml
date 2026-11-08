@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -37,7 +38,7 @@ Column {
         for (const key in (body.pins || {})) if (body.pins[key]) choosingLink = body.pins[key]
         Api.call("PUT", "/api/books/" + bookId + "/music", body, function(data, error) {
             root.changing = false; root.choosingLink = ""
-            if (error) { Api.notice = Logic.toastText("Chưa chỉnh được nhạc nền", error); return }
+            if (error) { Api.notice = Logic.toastText(S.s_chua_chinh_duoc_nhac_nen_312d1561, error); return }
             root.view = Logic.musicEditView(data)
             root.closeSwap()
             Api.editedBook(root.bookId)
@@ -60,12 +61,12 @@ Column {
     Collapse {
         width: parent.width
         open: root.loading
-        EditBookSkeleton { width: parent.width; label: "Đang tải nhạc nền" }
+        EditBookSkeleton { width: parent.width; label: S.s_dang_tai_nhac_nen_0b8c4795 }
     }
     InlineError {
         width: parent.width
         open: root.failed && !root.loading
-        message: "Bạn hãy thử tải lại nhạc nền của cuốn này."
+        message: S.s_ban_hay_thu_tai_lai_nhac_nen_cua_cuon_nay_b4336281
         onRetry: root.load()
     }
     Collapse {
@@ -73,7 +74,7 @@ Column {
         open: !!root.view && !root.view.hasMusic
         Text {
             width: parent.width
-            text: "Người làm sách không gắn nhạc nền cho cuốn này."
+            text: S.s_nguoi_lam_sach_khong_gan_nhac_nen_cho_cuon_80c1a983
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -94,14 +95,14 @@ Column {
                 Switch {
                     objectName: "musicSwitch"
                     anchors.verticalCenter: parent.verticalCenter
-                    label: "Nhạc nền"
+                    label: S.s_nhac_nen_271fb292
                     checked: root.view ? root.view.enabled : false
                     enabled: !root.changing
                     onToggled: value => root.change({enabled: value})
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.view && root.view.enabled ? "Bật" : "Tắt"
+                    text: root.view && root.view.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e
                     color: Theme.text
                     font.pixelSize: Theme.sizeBodySmall
                 }
@@ -109,7 +110,7 @@ Column {
             Column {
                 width: Math.min(260, parent.width)
                 spacing: 4
-                Text { width: parent.width; text: "Mức nhạc nền"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                Text { width: parent.width; text: S.s_muc_nhac_nen_a45588ff; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                 MusicLevelSlider {
                     objectName: "musicLevel"
                     width: parent.width
@@ -120,8 +121,8 @@ Column {
             }
         }
         // Thước đo hai chữ của nút im lặng (không vẽ): nút giữ bề ngang của chữ dài hơn
-        Button { id: silenceWide; visible: false; text: "Im lặng"; kind: "ghost"; size: "sm" }
-        Button { id: soundWide; visible: false; text: "Có nhạc"; kind: "ghost"; size: "sm" }
+        Button { id: silenceWide; visible: false; text: S.s_im_lang_1a012238; kind: "ghost"; size: "sm" }
+        Button { id: soundWide; visible: false; text: S.s_co_nhac_f514e0fa; kind: "ghost"; size: "sm" }
         // Các đoạn nhạc: cao tối đa 288, cuộn trong khung; tắt nhạc thì mờ đi
         Item {
             width: parent.width
@@ -157,7 +158,7 @@ Column {
                                     Text {
                                         width: parent.width
                                         // Đoạn người nghe cho im: nói thẳng (như StudioMusicScene), không gạch ngang tên - gạch ngang đọc như lỗi
-                                        text: TextWrap.keepDots(cue.modelData.silenced ? "Im lặng (bạn chọn)" : (cue.modelData.title || "Nhạc nền"))
+                                        text: TextWrap.keepDots(cue.modelData.silenced ? S.s_im_lang_ban_chon_356a628b : (cue.modelData.title || S.s_nhac_nen_271fb292))
                                         color: cue.modelData.silenced ? Theme.text2 : Theme.text
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeBodySmall
@@ -169,7 +170,7 @@ Column {
                                         font.pixelSize: Theme.sizeCaption
                                         font.features: {"tnum": 1}
                                         text: cue.modelData.chapter + "\u00a0·\u00a0" + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
-                                              + (cue.modelData.creator ? "\u00a0·\u00a0" + cue.modelData.creator : "") + (cue.modelData.pinned ? "\u00a0·\u00a0bài của bạn" : "")
+                                              + (cue.modelData.creator ? "\u00a0·\u00a0" + cue.modelData.creator : "") + (cue.modelData.pinned ? S.s_u00a0_u00a0bai_cua_ban_b647eb20 : "")
                                     }
                                 }
                                 Row {
@@ -177,19 +178,19 @@ Column {
                                     spacing: 4
                                     Button {
                                         visible: !!cue.modelData.pinned
-                                        text: "Về bài gốc"; kind: "ghost"; size: "sm"
+                                        text: S.s_ve_bai_goc_dc6a21f6; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
                                         onClicked: { const pins = {}; pins[cue.modelData.key] = null; root.change({pins: pins}) }
                                     }
                                     Button {
-                                        text: "Đổi bài"; icon: "shuffle"; kind: "ghost"; size: "sm"
+                                        text: S.s_doi_bai_7b81488f; icon: "shuffle"; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
                                         onClicked: root.swapping === cue.modelData.key ? root.closeSwap() : root.openSwap(cue.modelData.key)
                                     }
                                     Button {
                                         // Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng
                                         width: Math.max(implicitWidth, silenceWide.implicitWidth, soundWide.implicitWidth)
-                                        text: cue.modelData.silenced ? "Có nhạc" : "Im lặng"; kind: "ghost"; size: "sm"
+                                        text: cue.modelData.silenced ? S.s_co_nhac_f514e0fa : S.s_im_lang_1a012238; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
                                         onClicked: { const silence = {}; silence[cue.modelData.key] = !cue.modelData.silenced; root.change({silence: silence}) }
                                     }

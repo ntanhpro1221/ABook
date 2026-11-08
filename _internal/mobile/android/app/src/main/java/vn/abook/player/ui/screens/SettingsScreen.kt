@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.DisclosureRow
 import vn.abook.player.ui.components.IconSlot
@@ -154,7 +156,7 @@ private fun GroupList(
         modifier.testTag("settings_screen").fadeEdges(scroll, startInset = top).verticalScroll(scroll)
             .padding(top = top, start = if (split) Dim.margin - Dim.s8 else Dim.margin, end = if (split) Dim.s8 else Dim.margin, bottom = Dim.s24),
     ) {
-        Box(Modifier.padding(horizontal = if (split) Dim.s8 else 0.dp)) { ScreenHeader("Cài đặt") }
+        Box(Modifier.padding(horizontal = if (split) Dim.s8 else 0.dp)) { ScreenHeader(S.s_cai_dat_202e0e9b) }
         for ((index, group) in SettingsGroup.entries.withIndex()) {
             if (!split && index > 0) RowLine(start = IconSlot + IconGap)
             val here = group == selected
@@ -186,8 +188,8 @@ private fun summary(group: SettingsGroup, settings: AppSettings, voices: VoiceLi
     SettingsGroup.Listen -> SettingsSummary.listen(settings)
     SettingsGroup.Sleep -> SettingsSummary.sleep(settings)
     SettingsGroup.Look -> SettingsSummary.look(settings)
-    SettingsGroup.Devices -> "Nối máy · chia sẻ · dung lượng"
-    SettingsGroup.Advanced -> "Phiên bản $version"
+    SettingsGroup.Devices -> S.s_noi_may_chia_se_dung_luong_52ae8caa
+    SettingsGroup.Advanced -> S.s_phien_ban_0_164b4cda(version)
 }
 
 @Composable

@@ -43,7 +43,7 @@ object Peers {
             }
         }
         if (damaged) PeerRouting.preserve(prefs, "peers", raw)
-        if (changed || damaged) check(prefs.edit().putString("peers", peers.toString()).commit()) { "Chưa lưu được danh sách máy đã ghép" }
+        if (changed || damaged) check(prefs.edit().putString("peers", peers.toString()).commit()) { S.s_chua_luu_duoc_danh_sach_may_da_ghep_a1f96676 }
         return peers
     }
 
@@ -75,7 +75,7 @@ object Peers {
         val (reply, fingerprint) = try {
             SyncLink.pair(context, root, body)
         } catch (error: Exception) {
-            throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
+            throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
         }
         val host = "bt:$address"
         val peers = all(context)
@@ -204,7 +204,7 @@ object Peers {
     fun sendUnsent(key: String, send: (String) -> Unit) {
         for (book in unsent(key).books) send(book.id)
         val left = unsent(key)
-        if (left.books.isNotEmpty()) throw IllegalStateException("Còn ${left.changes} thay đổi chưa gửi về máy kia - chưa bỏ ghép")
+        if (left.books.isNotEmpty()) throw IllegalStateException(S.s_con_0_thay_doi_chua_gui_ve_may_kia_chua_bo_e6a45b5a(left.changes))
     }
 
     /** Từ chối bỏ ghép khi còn sửa chưa gửi mà người dùng chưa chọn bỏ (`discard`): lỗi nói số cuốn và số thay đổi sẽ mất. */
@@ -212,7 +212,7 @@ object Peers {
         if (discard) return
         val left = unsent(key)
         if (left.books.isNotEmpty()) {
-            throw IllegalStateException("Còn ${left.changes} sửa đổi chưa gửi — bạn gửi hoặc chọn bỏ trước khi bỏ ghép.")
+            throw IllegalStateException(S.s_con_0_sua_doi_chua_gui_ban_gui_hoac_chon_b_0acedc11(left.changes))
         }
     }
 
@@ -232,7 +232,7 @@ object Peers {
 
     fun request(context: Context, key: String, method: String, path: String, body: JSONObject? = null,
                 readTimeoutMs: Int? = null, connectTimeoutMs: Int = 5000, upload: File? = null): String {
-        val link = link(context, key) ?: throw IllegalStateException("Thiết bị này chưa ghép")
+        val link = link(context, key) ?: throw IllegalStateException(S.s_thiet_bi_nay_chua_ghep_4b9b7c59)
         return SyncLink.request(context, method, path, body, auth = false, root = link.base, readTimeoutMs = readTimeoutMs,
             connectTimeoutMs = connectTimeoutMs, token = link.token, upload = upload)
     }
@@ -277,7 +277,7 @@ object Peers {
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
                 entry.put("connectedVia", all(context).getJSONObject(key).optString("connectedVia"))
             } catch (error: Exception) {
-                entry.put("books", JSONArray()).put("error", error.message ?: "không kết nối được")
+                entry.put("books", JSONArray()).put("error", error.message ?: S.s_khong_ket_noi_duoc_82cdd285)
                 if (error is Pin.ChangedException) entry.put("pinChanged", true)
                 if (NetErrors.unpaired(error)) entry.put("unpaired", true) // máy ấy đã bỏ ghép điện thoại này - không phải tắt máy
                 else NetErrors.kind(error)?.let { entry.put("error", NetErrors.message(it, peer.optString("name"))).put("technical", NetErrors.technical(error)) }

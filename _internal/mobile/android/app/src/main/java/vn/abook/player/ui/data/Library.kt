@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -85,7 +87,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         val books = try {
             readAll(context, ::live).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
         } catch (error: Exception) {
-            AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
+            AppLog.w("Library", S.s_khong_doc_duoc_thu_vien_0_a68df852(error.javaClass.simpleName))
             if (flow.value is LibraryState.Ready) return@withContext
             emptyList()
         }
@@ -107,7 +109,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
             BookDetail.of(live(manifest), Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id))
         } catch (error: Exception) {
-            AppLog.w("Library", "Không đọc được trang sách: ${error.javaClass.simpleName}")
+            AppLog.w("Library", S.s_khong_doc_duoc_trang_sach_0_829ad767(error.javaClass.simpleName))
             null
         }
     }
@@ -138,7 +140,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         try {
             BookActions.share(context, id, project = false).chooser
         } catch (error: Exception) {
-            AppLog.w("Library", "Không đóng được file sách để chia sẻ: ${error.javaClass.simpleName}")
+            AppLog.w("Library", S.s_khong_dong_duoc_file_sach_de_chia_se_0_df18fde5(error.javaClass.simpleName))
             null
         }
     }
@@ -157,8 +159,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                 SaveStep.Ask(BookSaves.askIntent(id, project), project)
             }
         } catch (error: Exception) {
-            AppLog.w("Library", "Không lưu được file sách: ${error.javaClass.simpleName}")
-            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
+            AppLog.w("Library", S.s_khong_luu_duoc_file_sach_0_0d017197(error.javaClass.simpleName))
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
         }
     }
 
@@ -172,8 +174,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             val written = BookSaves.write(context, id, uri, project ?: BookSaves.asProject(id, null), direct = false)
             SaveStep.Done(written.name, written.edits)
         } catch (error: Exception) {
-            AppLog.w("Library", "Không lưu được file sách: ${error.javaClass.simpleName}")
-            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
+            AppLog.w("Library", S.s_khong_luu_duoc_file_sach_0_0d017197(error.javaClass.simpleName))
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
         }
     }
 
@@ -182,7 +184,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             Store.init(context)
             Cast.parse(BookActions.text(context, id, "cast.json"))
         } catch (error: Exception) {
-            AppLog.w("Library", "Không đọc được dàn nhân vật: ${error.javaClass.simpleName}")
+            AppLog.w("Library", S.s_khong_doc_duoc_dan_nhan_vat_0_98b25d53(error.javaClass.simpleName))
             null
         }
     }
@@ -201,8 +203,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                 scope.launch(Dispatchers.IO) { done.push() }
                 null
             } catch (error: Exception) {
-                AppLog.w("Library", "Không đổi được hồ sơ nghe: ${error.javaClass.simpleName}")
-                error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
+                AppLog.w("Library", S.s_khong_doi_duoc_ho_so_nghe_0_d81081a7(error.javaClass.simpleName))
+                error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b
             }
         }
         refresh()
@@ -226,8 +228,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             try {
                 Edit(block(), null)
             } catch (error: Exception) {
-                AppLog.w("Library", "Không sửa được nhân vật: ${error.javaClass.simpleName}")
-                Edit<T>(null, error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
+                AppLog.w("Library", S.s_khong_sua_duoc_nhan_vat_0_f6bc8710(error.javaClass.simpleName))
+                Edit<T>(null, error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
             }
         }
         if (result.problem == null) refresh()
@@ -262,7 +264,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             try {
                 block()
             } catch (error: Exception) {
-                AppLog.w("Library", "Không ghi được trạng thái nghe: ${error.javaClass.simpleName}")
+                AppLog.w("Library", S.s_khong_ghi_duoc_trang_thai_nghe_0_74712b3f(error.javaClass.simpleName))
             }
         }
         refresh()
@@ -274,8 +276,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             try {
                 block()
             } catch (error: Exception) {
-                AppLog.w("Library", "Không sửa được sách: ${error.javaClass.simpleName}")
-                error.message?.takeIf { it.isNotBlank() } ?: "Chưa xoá được"
+                AppLog.w("Library", S.s_khong_sua_duoc_sach_0_8a5c95cc(error.javaClass.simpleName))
+                error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_xoa_duoc_b872fff6
             }
         }
         if (problem == null) refresh()
@@ -304,7 +306,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                     val book = BookJson.book(live(manifest), Store.state(id), ::coverOf, remote, added, Store.isImported(id))
                     books += book
                 } catch (error: Exception) {
-                    AppLog.w("Library", "Bỏ qua một cuốn không đọc được: ${error.javaClass.simpleName}")
+                    AppLog.w("Library", S.s_bo_qua_mot_cuon_khong_doc_duoc_0_3a1e4dbc(error.javaClass.simpleName))
                 }
             }
             return Library.recentFirst(books)

@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONObject
 import vn.abook.player.Py
 import java.io.File
@@ -141,16 +143,16 @@ object EdgeProtocol {
         val deadline = System.nanoTime() + totalMs * 1_000_000
         var audio = 0L
         while (true) {
-            if (System.nanoTime() > deadline) throw VoiceException("$label trả lời quá chậm", reason = "timeout")
+            if (System.nanoTime() > deadline) throw VoiceException(S.s_0_tra_loi_qua_cham_4ff30b00(label), reason = "timeout")
             val message = try {
                 socket.receive()
             } catch (error: java.net.SocketTimeoutException) {
-                throw VoiceException("$label trả lời quá chậm", cause = error, reason = "timeout")
+                throw VoiceException(S.s_0_tra_loi_qua_cham_4ff30b00(label), cause = error, reason = "timeout")
             } catch (error: java.io.IOException) {
-                throw onDrop("Mất kết nối với ${label.replaceFirstChar { it.lowercase() }} giữa chừng", error)
+                throw onDrop(S.s_mat_ket_noi_voi_0_giua_chung_bfd3225a(label.replaceFirstChar { it.lowercase() }), error)
             }
             when (message) {
-                is WebSocket.Message.Closed -> throw onClose(message) ?: onDrop("$label đóng kết nối trước khi đọc xong", null)
+                is WebSocket.Message.Closed -> throw onClose(message) ?: onDrop(S.s_0_dong_ket_noi_truoc_khi_doc_xong_cb76c6a6(label), null)
                 is WebSocket.Message.Text -> {
                     val head = message.text.substringBefore("\r\n\r\n")
                     when (headers(head)["Path"]) {
@@ -163,7 +165,7 @@ object EdgeProtocol {
                     }
                 }
                 is WebSocket.Message.Binary -> {
-                    val (headers, data) = parseBinary(message.data) ?: throw VoiceException("$label gửi tin hỏng")
+                    val (headers, data) = parseBinary(message.data) ?: throw VoiceException(S.s_0_gui_tin_hong_94320853(label))
                     if (headers["Path"] == "audio" && data.isNotEmpty()) {
                         sink.write(data)
                         audio += data.size
@@ -229,7 +231,7 @@ class ConnectionSlots(val size: Int, val extra: Int = 0) {
     }
 
     fun release() = lock.withLock {
-        check(free < size) { "Trả chỗ kết nối quá số đã giữ" }
+        check(free < size) { S.s_tra_cho_ket_noi_qua_so_da_giu_a86b0a3c }
         free += 1
         changed.signalAll()
     }
@@ -464,7 +466,7 @@ internal class PieceAssembler(private val pieces: List<String>, private val out:
         }
     }
 
-    private fun mismatch(): Nothing = throw VoiceException("Giọng Edge trả lời khác đi giữa hai lần thử", reason = "service")
+    private fun mismatch(): Nothing = throw VoiceException(S.s_giong_edge_tra_loi_khac_di_giua_hai_lan_th_0c889158, reason = "service")
 
     private fun restart(index: Int) = synchronized(lock) {
         val piece = state[index]
@@ -590,9 +592,9 @@ class EdgeTts(
         const val RETRIES = 3
         val BACKOFF_MS = longArrayOf(0L, 1_500L, 4_000L) // lần thử lại đầu nối lại ngay (kết nối mới); chỉ lần sau mới nghỉ
         /** Hết cách thử lại vì MẤT MẠNG thật: câu nói thẳng cho người nghe (thay cho "Mất kết nối với giọng Edge giữa chừng"). */
-        const val LOST_NETWORK = "Mất mạng, giọng tạm dừng — bạn bấm Phát để thử lại hoặc chọn giọng trên máy."
+        const val LOST_NETWORK = S.s_mat_mang_giong_tam_dung_ban_bam_phat_de_th_3a49d55e
         /** Hết cách thử lại mà mạng vẫn còn (dịch vụ cắt lượt / bận): không nói "mất mạng". */
-        const val NOT_ANSWERING = "Giọng Edge đang không trả lời - bấm phát để thử lại, hoặc chọn giọng trên máy."
+        const val NOT_ANSWERING = S.s_giong_edge_dang_khong_tra_loi_bam_phat_de_7bff9c80
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
         /** Kết nối Edge đang mở của cả tiến trình (mọi đoạn đọc trước x mảnh); bài thử thay bằng cái nhỏ hơn để kiểm trần. */
@@ -636,14 +638,14 @@ class EdgeTts(
                 if (pieces.size <= 1) pieces.forEachIndexed { index, piece -> assembler.finish(index, speakPiece(piece, received, run, assembler.tap(index))) }
                 else speakInParallel(pieces, received, run, assembler, live != null)
             } catch (error: Exception) {
-                if (run.cancel.cancelled && error !is CancellationException) throw CancellationException("Lượt đọc đã bị huỷ").apply { initCause(error) }
+                if (run.cancel.cancelled && error !is CancellationException) throw CancellationException(S.s_luot_doc_da_bi_huy_7d77b2c0).apply { initCause(error) }
                 throw error
             } finally {
                 outer?.unregister(link)
                 run.cancel.cancel() // mảnh nào còn chạy (một mảnh khác hỏng, quá hạn) thì ổ cắm đóng ngay
             }
             if (memory != null) out.outputStream().use { it.write(memory.toByteArray()) }
-            if (assembler.bytes == 0L) throw VoiceException("Giọng Edge không trả về âm thanh")
+            if (assembler.bytes == 0L) throw VoiceException(S.s_giong_edge_khong_tra_ve_am_thanh_3f8406c3)
             val duration = EdgeProtocol.durationMs(assembler.bytes)
             Clip(out, duration, WordTokens.map(text, assembler.boundaries, duration), id)
         } catch (error: Exception) {
@@ -665,7 +667,7 @@ class EdgeTts(
         /** Hạn cho một lượt chờ / nhận tin: phần còn lại của clip; lần thử lại còn bị quỹ [ClipBudget] cắt ngắn thêm. */
         fun attemptMs(retry: Boolean): Long = ClipBudget.attemptMs(remainingMs(), retry)
         fun checkNotCancelled() {
-            if (cancel.cancelled) throw CancellationException("Lượt đọc đã bị huỷ")
+            if (cancel.cancelled) throw CancellationException(S.s_luot_doc_da_bi_huy_7d77b2c0)
         }
     }
 
@@ -698,7 +700,7 @@ class EdgeTts(
             var failure: Throwable? = null
             val waiting = (pieces.indices).toMutableSet()
             while (waiting.any { it < broken }) {
-                val done = completion.poll(run.remainingMs(), TimeUnit.MILLISECONDS) ?: throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
+                val done = completion.poll(run.remainingMs(), TimeUnit.MILLISECONDS) ?: throw VoiceException(S.s_giong_edge_tra_loi_qua_cham_3e7102f2, reason = "timeout")
                 val (index, result) = try {
                     done.get()
                 } catch (error: ExecutionException) {
@@ -779,7 +781,7 @@ class EdgeTts(
         // Chờ chỗ, nối và nhận tin cùng ăn vào MỘT hạn của clip ([ClipRun.attemptMs]).
         // Hết chỗ thì đoạn gần người nghe hơn ([ClipBudget.rank]) đứng trước.
         val slots = connections
-        if (!slots.tryAcquire(run.attemptMs(retry), ClipBudget.rank())) throw VoiceException("Giọng Edge trả lời quá chậm", reason = "timeout")
+        if (!slots.tryAcquire(run.attemptMs(retry), ClipBudget.rank())) throw VoiceException(S.s_giong_edge_tra_loi_qua_cham_3e7102f2, reason = "timeout")
         try {
             run.checkNotCancelled()
             val socket = open()
@@ -794,7 +796,7 @@ class EdgeTts(
                 val boundaries = ArrayList<Boundary>()
                 tap?.restart() // lần thử mới của mảnh này: bộ ghép bỏ phần dở của lần trước (phần đã phát luồng thì đối chiếu)
                 EdgeProtocol.readTurn(
-                    socket, audio, EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, "Giọng Edge", run.attemptMs(retry), onDrop = { message, cause -> Dropped(message, cause) },
+                    socket, audio, EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, S.s_giong_edge_b61f2b23, run.attemptMs(retry), onDrop = { message, cause -> Dropped(message, cause) },
                     onAudio = tap?.let { it::audio }, onBoundaries = tap?.let { it::boundaries },
                 )
                 return audio.toByteArray() to boundaries
@@ -829,17 +831,17 @@ class EdgeTts(
                     retried = true
                     continue
                 }
-                if (error.status == 429 || error.status >= 500) throw Dropped("Giọng Edge đang bận (HTTP ${error.status})", error)
-                throw VoiceException("Dịch vụ giọng Edge từ chối (${error.status}) - có thể đã đổi cách dùng", cause = error, reason = "rejected")
+                if (error.status == 429 || error.status >= 500) throw Dropped(S.s_giong_edge_dang_ban_http_0_978231ca(error.status), error)
+                throw VoiceException(S.s_dich_vu_giong_edge_tu_choi_0_co_the_da_doi_6293cc2e(error.status), cause = error, reason = "rejected")
             } catch (error: UnknownHostException) {
                 throw offline(error)
             } catch (error: ConnectException) {
                 throw offline(error)
             } catch (error: SocketTimeoutException) {
                 // Máy chủ đã tìm thấy (DNS xong) mà bắt tay treo: thử lại như một lượt bị cắt, không báo mất mạng ngay (a51: một lần treo làm cả chương dừng "Không có mạng").
-                throw ConnectTimedOut("Giọng Edge không bắt tay kịp (quá giờ)", error)
+                throw ConnectTimedOut(S.s_giong_edge_khong_bat_tay_kip_qua_gio_c742732b, error)
             } catch (error: IOException) {
-                if (isReset(error)) throw Dropped("Giọng Edge cắt kết nối lúc bắt tay", error)
+                if (isReset(error)) throw Dropped(S.s_giong_edge_cat_ket_noi_luc_bat_tay_80eeb769, error)
                 throw offline(error)
             }
         }
@@ -852,5 +854,5 @@ class EdgeTts(
                 (cause.message.orEmpty().contains("reset", ignoreCase = true) || cause.message.orEmpty().contains("abort", ignoreCase = true))
         }
 
-    private fun offline(cause: Throwable) = VoiceException("Không có mạng để dùng giọng Edge", offline = true, cause = cause)
+    private fun offline(cause: Throwable) = VoiceException(S.s_khong_co_mang_de_dung_giong_edge_af2cfa67, offline = true, cause = cause)
 }

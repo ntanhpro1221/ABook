@@ -42,10 +42,10 @@ object MusicRender {
         companion object {
             fun parse(json: JSONObject): Params {
                 val table = json.getJSONArray("truePeakFir")
-                require(table.length() == FIR_PHASES) { "truePeakFir: cần $FIR_PHASES pha" }
+                require(table.length() == FIR_PHASES) { S.s_truepeakfir_can_0_pha_29f68eb9(FIR_PHASES) }
                 val fir = Array(FIR_PHASES) { p ->
                     val row = table.getJSONArray(p)
-                    require(row.length() == FIR_TAPS) { "truePeakFir[$p]: cần $FIR_TAPS hệ số" }
+                    require(row.length() == FIR_TAPS) { S.s_truepeakfir_0_can_1_he_so_64d0a96b(p, FIR_TAPS) }
                     DoubleArray(FIR_TAPS) { row.getDouble(it) }
                 }
                 return Params(
@@ -147,7 +147,7 @@ object MusicRender {
                 missing.add(element.track)
                 continue
             }
-            require(data.channels == channels) { "bài ${element.track}: ${data.channels} kênh, chương $channels" }
+            require(data.channels == channels) { S.s_bai_0_1_kenh_chuong_2_01fd8dc2(element.track, data.channels, channels) }
             val k0 = samples(element.from, rate)
             val k1 = if (!element.to.isFinite()) start + n else min(samples(element.to, rate), start + n)
             val lo = max(k0, start)
@@ -185,7 +185,7 @@ object MusicRender {
         val gains: MutableList<DoubleArray>? = if (keepGains) ArrayList() else null
 
         fun feed(voice: DoubleArray, bus: DoubleArray): DoubleArray {
-            require(voice.size == bus.size && voice.size % channels == 0) { "khối giọng/bus lệch" }
+            require(voice.size == bus.size && voice.size % channels == 0) { S.s_khoi_giong_bus_lech_05361761 }
             this.voice = this.voice + voice
             this.bus = this.bus + bus
             return emit(final = false)

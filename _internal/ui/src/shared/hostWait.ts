@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // Một chính sách chờ cho mọi lời gọi từ giao diện web tới máy chủ cục bộ (studio/api.ts, listen/readAloud.ts fetchClipBytes); bản Qt: desktop_qt/src/hostwait.h + hostcall.cpp.
 // Lời gọi hỏng khi KHÔNG CÓ BYTE NÀO về trong IDLE chừng ấy, không phải sau một tổng thời gian: câu trả lời dài mà vẫn đang về không bị cắt.
 
@@ -41,7 +42,7 @@ export const idleMs = (path: string): number => (isLongWork(path) ? LONG_IDLE_MS
 /** Máy chủ im quá hạn ở mọi lượt gửi. */
 export class HostTimeout extends Error {
   constructor() {
-    super("Máy chưa trả lời kịp.");
+    super(S.s_may_chua_tra_loi_kip_5c0e0045);
   }
 }
 

@@ -89,20 +89,20 @@ class StudentHead(arrays: Map<String, NpyArray>, vox: Map<String, NpyArray>? = n
 
     init {
         // Đầu A không có cột âm học (`names` rỗng): 512 chiều CLAP và thế thôi.
-        if (arrays.containsKey("names") && arrays.getValue("names").size > 0) throw IllegalArgumentException("đầu của đường onnx phải là đầu A (chỉ 512 chiều CLAP)")
+        if (arrays.containsKey("names") && arrays.getValue("names").size > 0) throw IllegalArgumentException(S.s_dau_cua_duong_onnx_phai_la_dau_a_chi_512_c_f0c39b72)
         if (mu.size != EMBEDDING || sd.size != EMBEDDING || coef.shape.size != 2 || coef.shape[0] != emotions.size + 3 ||
             coef.shape[1] != EMBEDDING || intercept.size != emotions.size + 3 || background.shape.toList() != listOf(2, EMBEDDING) ||
             familyText.shape.toList() != listOf(familyNames.size, EMBEDDING)
         ) {
-            throw IllegalArgumentException("gói model không đúng hình đầu trò")
+            throw IllegalArgumentException(S.s_goi_model_khong_dung_hinh_dau_tro_4320d74a)
         }
     }
 
-    private fun array(arrays: Map<String, NpyArray>, name: String) = arrays[name] ?: throw IllegalArgumentException("gói model thiếu “$name”")
+    private fun array(arrays: Map<String, NpyArray>, name: String) = arrays[name] ?: throw IllegalArgumentException(S.s_goi_model_thieu_0_e7e34608(name))
 
     /** Kết quả cho một vector nhúng (512, đã chuẩn hoá L2): đúng khoá của `_Head.predict` với hiệu chỉnh của đường onnx. */
     fun predict(embedding: DoubleArray): JSONObject {
-        require(embedding.size == EMBEDDING) { "vector nhúng phải có $EMBEDDING chiều" }
+        require(embedding.size == EMBEDDING) { S.s_vector_nhung_phai_co_0_chieu_ce2139a9(EMBEDDING) }
         val z = DoubleArray(EMBEDDING) { (embedding[it] - mu[it]) / sd[it] }
         val rows = emotions.size + 3
         val out = DoubleArray(rows) { row ->
@@ -186,15 +186,15 @@ internal class VoxHead(arrays: Map<String, NpyArray>) {
     private val sd = array(arrays, "sd").doubles()
     private val coef = array(arrays, "coef").doubles()
     private val intercept = array(arrays, "intercept").doubles()
-    val tau: Double = array(arrays, "tau").doubles().let { if (it.size == 1) it[0] else throw IllegalArgumentException("gói model không đúng hình đầu dò lời hát") }
+    val tau: Double = array(arrays, "tau").doubles().let { if (it.size == 1) it[0] else throw IllegalArgumentException(S.s_goi_model_khong_dung_hinh_dau_do_loi_hat_53749437) }
 
     init {
         if (mu.size != StudentHead.EMBEDDING || sd.size != StudentHead.EMBEDDING || coef.size != StudentHead.EMBEDDING || intercept.size != 1) {
-            throw IllegalArgumentException("gói model không đúng hình đầu dò lời hát")
+            throw IllegalArgumentException(S.s_goi_model_khong_dung_hinh_dau_do_loi_hat_53749437)
         }
     }
 
-    private fun array(arrays: Map<String, NpyArray>, name: String) = arrays[name] ?: throw IllegalArgumentException("gói model thiếu “$name”")
+    private fun array(arrays: Map<String, NpyArray>, name: String) = arrays[name] ?: throw IllegalArgumentException(S.s_goi_model_thieu_0_e7e34608(name))
 
     fun probability(embedding: DoubleArray): Double {
         var score = intercept[0]

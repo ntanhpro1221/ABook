@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -23,8 +25,8 @@ class AzureTts(
     private val restBase: ((String) -> String)? = null,
 ) : KeyedProvider(keys) {
     override val id = "azure"
-    override val name = "Azure Speech"
-    override val limits = Limits(3000, "Bậc miễn phí F0: 500.000 ký tự mỗi tháng", "exact", region = true)
+    override val name = S.s_azure_speech_8bd84d93
+    override val limits = Limits(3000, S.s_bac_mien_phi_f0_500_000_ky_tu_moi_thang_bdc3d8ce, "exact", region = true)
 
     companion object {
         const val WS_PATH = "/tts/cognitiveservices/websocket/v1"
@@ -48,8 +50,8 @@ class AzureTts(
 
         fun speechConfig(): String = JSONObject()
             .put("context", JSONObject()
-                .put("system", JSONObject().put("name", "SpeechSDK").put("version", "1.44.0").put("build", "Android").put("lang", "Kotlin"))
-                .put("os", JSONObject().put("platform", "Android").put("name", "ABook").put("version", "1")))
+                .put("system", JSONObject().put("name", "SpeechSDK").put("version", "1.44.0").put("build", S.s_android_6d612a86).put("lang", "Kotlin"))
+                .put("os", JSONObject().put("platform", S.s_android_6d612a86).put("name", S.s_abook_1c37d334).put("version", "1")))
             .toString()
 
         fun synthesisContext(): String = JSONObject()
@@ -69,16 +71,16 @@ class AzureTts(
         fun closed(message: WebSocket.Message.Closed, name: String): VoiceException? {
             val reason = message.reason.lowercase()
             return when {
-                listOf("quota", "429", "throttl", "exceed").any { it in reason } -> VoiceException("Khoá $name đã hết hạn mức hoặc gọi quá dày", reason = "quota")
-                listOf("auth", "401", "subscription").any { it in reason } -> VoiceException("$name từ chối khoá của bạn - kiểm tra lại khoá trong Cài đặt", reason = "auth")
-                (message.code == 1007 || message.code == 1008) && reason.isNotEmpty() -> VoiceException("$name không nhận yêu cầu: ${message.reason.take(200)}", reason = "rejected")
+                listOf("quota", "429", "throttl", "exceed").any { it in reason } -> VoiceException(S.s_khoa_0_da_het_han_muc_hoac_goi_qua_day_629213ff(name), reason = "quota")
+                listOf("auth", "401", "subscription").any { it in reason } -> VoiceException(S.s_0_tu_choi_khoa_cua_ban_kiem_tra_lai_khoa_t_531422df(name), reason = "auth")
+                (message.code == 1007 || message.code == 1008) && reason.isNotEmpty() -> VoiceException(S.s_0_khong_nhan_yeu_cau_1_2661ffb3(name, message.reason.take(200)), reason = "rejected")
                 else -> null
             }
         }
     }
 
     private fun region(entry: OnlineKeys.Entry): String =
-        entry.region.takeIf(::validRegion) ?: throw VoiceException("Vùng $name chưa đúng (ví dụ: southeastasia)", reason = "auth")
+        entry.region.takeIf(::validRegion) ?: throw VoiceException(S.s_vung_0_chua_dung_vi_du_southeastasia_4644b386(name), reason = "auth")
 
     override fun listVoices(entry: OnlineKeys.Entry): List<OnlineKeys.VoiceRow> {
         val region = region(entry)
@@ -88,7 +90,7 @@ class AzureTts(
         val list = try {
             JSONArray(String(response.body, Charsets.UTF_8))
         } catch (error: org.json.JSONException) {
-            throw VoiceException("$name trả danh sách giọng hỏng", cause = error)
+            throw VoiceException(S.s_0_tra_danh_sach_giong_hong_fde61e93(name), cause = error)
         }
         return (0 until list.length()).mapNotNull { list.optJSONObject(it) }
             .filter { it.optString("Locale") == "vi-VN" && it.optString("ShortName").isNotEmpty() }
@@ -109,21 +111,21 @@ class AzureTts(
                 } catch (error: HandshakeException) {
                     throw OnlineHttp.failure(error.status, name)
                 } catch (error: IOException) {
-                    throw VoiceException("Không có mạng để dùng giọng $name", offline = true, cause = error)
+                    throw VoiceException(S.s_khong_co_mang_de_dung_giong_0_e88a3cb4(name), offline = true, cause = error)
                 }
                 try {
                     val request = EdgeProtocol.connectionId(random)
                     socket.sendText(message("speech.config", request, "application/json", speechConfig()))
                     socket.sendText(message("synthesis.context", request, "application/json", synthesisContext()))
                     socket.sendText(message("ssml", request, "application/ssml+xml", ssml(voice, EdgeProtocol.escape(part))))
-                    bytes += EdgeProtocol.readTurn(socket, sink, EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, "Giọng $name",
+                    bytes += EdgeProtocol.readTurn(socket, sink, EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, S.s_giong_0_c554bb1b(name),
                         EdgeTts.TOTAL_MS, onClose = { closed(it, name) })
                 } finally {
                     socket.close()
                 }
             }
         }
-        if (bytes == 0L) throw VoiceException("$name không trả về âm thanh", reason = "service")
+        if (bytes == 0L) throw VoiceException(S.s_0_khong_tra_ve_am_thanh_b0fc54e9(name), reason = "service")
         return EdgeProtocol.durationMs(bytes) to boundaries
     }
 }

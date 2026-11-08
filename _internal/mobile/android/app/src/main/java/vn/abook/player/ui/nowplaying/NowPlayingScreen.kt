@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsets
@@ -119,11 +121,11 @@ private fun NowPlayingBody(
             Row(Modifier.fillMaxWidth().height(56.dp).playerReveal(windowProgress)
                 .dismissPlayerOnDrag(window, readingHere && !window.sheetOpen),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                GlyphButton("Thu nhỏ", "⌄", window::close, Modifier.testTag("collapse_player"))
+                GlyphButton(S.s_thu_nho_d7896922, "⌄", window::close, Modifier.testTag("collapse_player"))
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
                 if (state.readAlongAvailable && !split) PlayerModeSwitch(mode, setReading)
-                else BasicText("ĐANG NGHE", style = Abook.type.caption)
-                GlyphButton("Thêm tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
+                else BasicText(S.s_dang_nghe_8bb22da4, style = Abook.type.caption)
+                GlyphButton(S.s_them_tuy_chon_a0b4bb6e, "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
             // Both modes occupy this same fixed weight. Transport is outside it and never changes coordinates.
             // Nghe: bìa lớn ở trên, tên chương + tên sách ở dưới. Đọc theo: chính bìa ấy thu về ô 48 dp, chính hai dòng tên trượt lên
@@ -151,7 +153,7 @@ private fun NowPlayingBody(
                     RollingLabel(subtitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
-                    .pressable { setReading(false) }.semantics { contentDescription = "Về chế độ nghe" } else Modifier))
+                    .pressable { setReading(false) }.semantics { contentDescription = S.s_ve_che_do_nghe_a0052a89 } else Modifier))
             }) { measurables, constraints ->
                 val width = constraints.maxWidth
                 val height = constraints.maxHeight
@@ -217,20 +219,20 @@ private fun NowPlayingBody(
                 }
                 Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                    GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
-                    GlyphButton("Lùi 15 giây", "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
+                    GlyphButton(S.s_chuong_truoc_4750f9e9, "|‹", model::previous, Modifier.playerReveal(windowProgress))
+                    GlyphButton(S.s_lui_15_giay_eb84ecc0, "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
                     PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play), description = toggleLabel)
-                    GlyphButton("Tới 15 giây", "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
+                    GlyphButton(S.s_toi_15_giay_77c8545b, "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
                     // Chương cuối: nút mờ và nói đó là chương cuối; chương sau chưa có audio: nói vì sao (nút vẫn bấm được, như web).
                     GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,
                         Modifier.playerReveal(windowProgress), dimmed = !state.hasNext && !state.moreChapters)
                 }
                 // Các ô bằng nhau (ba, hoặc bốn khi máy có PiP): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
-                    PlayerAction("Tốc độ", PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
+                    PlayerAction(S.s_toc_do_16ee0914, PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
                     SleepAction(state.sleep, model.position, { window.openSheet(PlayerSheet.Sleep) }, Modifier.weight(1f))
-                    PlayerAction("Chương", "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
-                    window.miniWindow?.let { enter -> PlayerAction("Cửa sổ mini", MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
+                    PlayerAction(S.s_chuong_2d157977, "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
+                    window.miniWindow?.let { enter -> PlayerAction(S.s_cua_so_mini_65edeb9b, MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
             SleepNotice(state, model, Modifier.playerReveal(windowProgress))
@@ -306,7 +308,7 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
     LaunchedEffect(sleep, position) {
         snapshotFlow { position.sleepRemainingMs.value }.collect { label = PlayerLabels.sleep(sleep, it) }
     }
-    PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"), clock = true)
+    PlayerAction(S.s_hen_gio_39d9ca26, label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"), clock = true)
 }
 
 @Composable
@@ -321,7 +323,7 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
         // Thanh tua có lớp riêng: đang phát thì mỗi khung nó vẽ lại, và nếu không có lớp riêng thì cả lớp trong của cửa sổ (chữ, nút) ghi lại theo (~3 ms luồng giao diện mỗi khung trên OPPO).
         vn.abook.player.ui.components.RangeSlider(
             value = (seconds * 1000).toDouble(), min = 0.0, max = durationMs.coerceAtLeast(1).toDouble(), step = 1.0,
-            default = null, title = "Vị trí trong chương", description = PlayerLabels.time(seconds * 1000), enabled = durationMs > 0,
+            default = null, title = S.s_vi_tri_trong_chuong_2f741c43, description = PlayerLabels.time(seconds * 1000), enabled = durationMs > 0,
             onMove = { value ->
                 dragging.value = true
                 dragged.longValue = value.toLong()
@@ -362,7 +364,7 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
                 androidx.compose.ui.geometry.CornerRadius(corner - inset))
         },
         content = {
-            for ((index, label) in listOf("Nghe", "Đọc theo").withIndex()) {
+            for ((index, label) in listOf(S.s_nghe_a43aafef, S.s_doc_theo_df342819).withIndex()) {
                 val reading = index == 1
                 Box(Modifier
                     .pressable(role = Role.Tab) { onSelect(reading) }
@@ -398,7 +400,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
         androidx.compose.animation.AnimatedVisibility(shown,
             enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
             exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-            BasicText("Về chỗ vừa nghe", Modifier
+            BasicText(S.s_ve_cho_vua_nghe_8da3c710, Modifier
                 .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")

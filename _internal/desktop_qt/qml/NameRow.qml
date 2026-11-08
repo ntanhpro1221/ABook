@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -25,7 +26,7 @@ Item {
     readonly property real infoWidth: Math.max(120, width - 56 - 12 - (sideEdit ? sideWidth + 12 : 0))
     readonly property real tailHeight: Math.max(editButton.height * (1 - editor.reveal), editor.height)
     readonly property string statusHtml: W.esc(N.rowStatus(item, work ? work.analyzed : true, fresh, reach, false))
-        + (sharedHere ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;dùng chung</span>" : "")
+        + (sharedHere ? "<span style=\"color:" + W.cssColor(Theme.text3) + S.s_nbsp_nbsp_dung_chung_span_f776a40b : "")
         + (item.requested ? "<span style=\"color:" + W.cssColor(Theme.accentText) + "; font-weight:600\">" + W.esc(N.waitingPart(item)) + "</span>" : "")
     width: parent ? parent.width : 600
     height: 10 + Math.max(32, info.height, sideEdit ? tail.height : 0) + (sideEdit ? 0 : 8 + tail.height) + 10
@@ -60,9 +61,9 @@ Item {
         width: 32
         height: 32
         ringRadius: 16
-        tip: root.example ? root.example.chapterTitle + "\u00a0·\u00a0câu " + root.example.seq : ""
+        tip: root.example ? root.example.chapterTitle + S.s_u00a0_u00a0cau_d6eab207 + root.example.seq : ""
         Accessible.role: Accessible.Button
-        Accessible.name: root.playing ? "Dừng" : root.example ? N.sampleLabel(root.item) : ""
+        Accessible.name: root.playing ? S.s_dung_11554138 : root.example ? N.sampleLabel(root.item) : ""
         onClicked: Clip.toggle(root.clipId, root.work.store.path("/media/books/" + root.work.bookId + "/samples/" + root.example.segmentId))
         Rectangle {
             anchors.fill: parent
@@ -84,7 +85,7 @@ Item {
             width: parent.width
             textFormat: Text.RichText
             text: "<b>" + W.esc(root.surface) + "</b>"
-                + (root.item.spoken ? " <span style=\"color:" + W.cssColor(Theme.text2) + "; font-size:14px\">đọc là</span> <span style=\"font-weight:500\">“" + W.esc(Studio.shownReading(root.item.spoken)) + "”</span>" : "")
+                + (root.item.spoken ? " <span style=\"color:" + W.cssColor(Theme.text2) + S.s_font_size_14px_doc_la_span_span_style_font_cb92289b + W.esc(Studio.shownReading(root.item.spoken)) + "”</span>" : "")
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: 16

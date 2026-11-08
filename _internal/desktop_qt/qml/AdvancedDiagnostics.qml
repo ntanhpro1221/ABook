@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -12,13 +13,13 @@ Column {
     function send() {
         if (busy) return
         busy = true
-        folders.choose("Chọn nơi lưu gói nhật ký", "")
+        folders.choose(S.s_chon_noi_luu_goi_nhat_ky_17fab271, "")
     }
     function save(target) {
         Api.call("POST", "/api/diagnostics/save", target ? {target: target} : {}, function(data, error) {
             root.busy = false
-            if (error) Api.notice = Music.toast("Chưa lưu được gói nhật ký", error)
-            else Api.notice = data.folder ? "Đã lưu gói nhật ký trong " + data.folder : "Đã lưu gói nhật ký"
+            if (error) Api.notice = Music.toast(S.s_chua_luu_duoc_goi_nhat_ky_ec27bfaf, error)
+            else Api.notice = data.folder ? S.s_da_luu_goi_nhat_ky_trong_5982b4bb + data.folder : S.s_da_luu_goi_nhat_ky_82b1b295
         })
     }
     NativeFolders { id: folders; onPicked: path => root.save(path); onCancelled: root.busy = false }
@@ -29,7 +30,7 @@ Column {
             id: hint
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - send.width - 24
-            text: "Xem lại trước khi gửi; bạn tự gửi đi."
+            text: S.s_xem_lai_truoc_khi_gui_ban_tu_gui_di_755dd05a
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: 13
@@ -38,13 +39,13 @@ Column {
             id: send
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: "Gửi nhật ký"; icon: "save"; kind: "ghost"; size: "sm"
+            text: S.s_gui_nhat_ky_2e35a4f8; icon: "save"; kind: "ghost"; size: "sm"
             busy: root.busy
             onActivated: root.send()
         }
     }
     MoreInfo {
         width: parent.width
-        HintText { width: parent.width; text: "Gồm thông tin máy và nhật ký gần nhất; tự che khoá, mã ghép, đường dẫn và IP nhận ra được." }
+        HintText { width: parent.width; text: S.s_gom_thong_tin_may_va_nhat_ky_gan_nhat_tu_c_888894b2 }
     }
 }

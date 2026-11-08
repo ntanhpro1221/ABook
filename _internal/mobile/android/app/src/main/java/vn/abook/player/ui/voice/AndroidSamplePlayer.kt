@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -36,7 +38,7 @@ class AndroidSamplePlayer(context: Context) : SamplePlayer {
                 onEnded()
             }
             next.setOnErrorListener { _, what, _ ->
-                AppLog.w("Voice", "nghe thử không phát được (mã $what)")
+                AppLog.w("Voice", S.s_nghe_thu_khong_phat_duoc_ma_0_2c05bef5(what))
                 release(next)
                 onFailed()
                 true
@@ -56,7 +58,7 @@ class AndroidSamplePlayer(context: Context) : SamplePlayer {
             }
             next.prepareAsync()
         } catch (error: Exception) {
-            AppLog.w("Voice", "nghe thử không mở được mẫu: ${error.javaClass.simpleName}")
+            AppLog.w("Voice", S.s_nghe_thu_khong_mo_duoc_mau_0_5d43cda2(error.javaClass.simpleName))
             release(next)
             onFailed()
         }

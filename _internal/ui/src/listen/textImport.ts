@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // "Thêm sách từ file…": đưa EPUB / DOCX / PDF / thư mục TXT vào thư viện thành sách CHỈ-CÓ-CHỮ (docs/LISTEN_ANYTHING.md mục 1 và 2).
 // Máy tính: máy chủ cục bộ chạy `abook/importers.py` (webui/textbook.py). Điện thoại: `BookImport.kt` ở native; PDF thì
 // `ImportRepo` (PdfRenderer) lấy chữ từng trang rồi đưa vào lớp luật của Kotlin.
@@ -74,8 +75,8 @@ export function footnotesToSend(choice: FootnoteChoice): FootnoteChoice | undefi
 export function footnoteSummary(offer: FootnoteOffer): { title: string; example: string | null } {
   const first = offer.examples[0];
   return {
-    title: `${formatNumber(offer.found)} chú thích trong file`,
-    example: first ? `Ví dụ: “${first.mark}” có lời chú “${first.note}”` : null,
+    title: S.s_0_chu_thich_trong_file_be2ecbf5(formatNumber(offer.found)),
+    example: first ? S.s_vi_du_0_co_loi_chu_1_f4213994(first.mark, first.note) : null,
   };
 }
 
@@ -178,8 +179,8 @@ export type ChapterNames = Readonly<Record<number, string>>;
 export function splitHint(preview: Pick<ImportPreview, "splitOffer" | "splitHeadings">): string {
   const offer = preview.splitOffer ?? 0;
   const headings = preview.splitHeadings ?? offer;
-  const extra = offer > headings ? ` (thêm phần Mở đầu - ${formatNumber(offer)} chương)` : "";
-  return `Theo ${formatNumber(headings)} dòng “Chương N” trong file${extra}.`;
+  const extra = offer > headings ? S.s_them_phan_mo_dau_0_chuong_16e2c142(formatNumber(offer)) : "";
+  return S.s_theo_0_dong_chuong_n_trong_file_1_a36f5485(formatNumber(headings), extra);
 }
 
 /** Từ chừng này dòng "Chương N" trong MỘT file TXT thì máy chắc đó là cả truyện: ô tách tích sẵn (soát UX a8 02-10 - truyện tải trên mạng

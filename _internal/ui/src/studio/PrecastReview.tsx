@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -70,21 +71,21 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
       void client.invalidateQueries({ queryKey: ["book", book.id] });
       void client.invalidateQueries({ queryKey: ["library"] });
     },
-    onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_a6c67cde, { description: error.message }),
   });
   const passed = Boolean(book.precast?.announcedAt);
   const id = `precast-wait-${book.id}`;
   return (
     <div className={className}>
       <SettingsRow
-        label={<span id={`${id}-name`}>Duyệt trước khi thu</span>}
+        label={<span id={`${id}-name`}>{S.s_duyet_truoc_khi_thu_74c121d0}</span>}
         hint={
           <span id={`${id}-hint`}>
             {passed
-              ? "Phân tích đã xong. Muốn dừng thì bấm “Tạm dừng”."
+              ? S.s_phan_tich_da_xong_muon_dung_thi_bam_tam_du_73416c6b
               : wait
-                ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
-                : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
+                ? S.s_dung_sau_phan_tich_de_ban_duyet_roi_bam_th_0ca451d3
+                : S.s_phan_tich_xong_thi_thu_luon_duyet_luc_nao_1f91e9f9}
           </span>
         }
       >
@@ -100,10 +101,8 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
 function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
   return (
     <>
-      <p className="mt-1 max-w-2xl text-pretty text-sm text-fg-2">
-        Duyệt nhanh trước khi thu; có thể bỏ qua từng bước.
-      </p>
-      <MoreInfo label="Khi áp dụng">{freeNote(view)}</MoreInfo>
+      <p className="mt-1 max-w-2xl text-pretty text-sm text-fg-2">{S.s_duyet_nhanh_truoc_khi_thu_co_the_bo_qua_tu_d3a2f0a0}</p>
+      <MoreInfo label={S.s_khi_ap_dung_017de1f0}>{freeNote(view)}</MoreInfo>
       {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
       <MotionPresence open={!book.precast?.announcedAt && !view.recordedChapters}><PrecastWaitSwitch book={book} className="mt-2" /></MotionPresence>
     </>
@@ -114,10 +113,10 @@ function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
 const PRECAST_ENDS: CardFocusEnds = { end: "precast-end", lead: "precast-step" };
 
 const STEP_TITLE: Record<PrecastStep, string> = {
-  cast: "Nhân vật và giọng",
-  names: "Cách đọc tên",
-  lines: "Ai nói câu này",
-  done: "Xong",
+  cast: S.s_nhan_vat_va_giong_52dfc919,
+  names: S.s_cach_doc_ten_1c46e75d,
+  lines: S.s_ai_noi_cau_nay_0e00a5c7,
+  done: S.s_xong_a6f4543a,
 };
 const STEP_ICON = { cast: Users, names: SpellCheck, lines: MessageSquareQuote, done: ClipboardCheck } as const;
 
@@ -150,8 +149,8 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   // Quyết xong một thẻ thì thẻ rời danh sách: tiêu điểm sang thẻ kế (hết thẻ thì về đầu vùng bước), không rơi về BODY (useCardFocus.ts).
   const lists = useRef<WorkLists | null>(null);
   useCardFocus(lists, PRECAST_ENDS);
-  if ((precast.isError && !view) || (workQuery.isError && !work) || (castQuery.isError && !cast)) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại lượt duyệt." onRetry={() => { void precast.refetch(); void workQuery.refetch(); void castQuery.refetch(); }} /></MotionRegion>;
-  if (!view || isLoading || !work || !cast) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label="Đang tải lượt duyệt" /></MotionRegion>;
+  if ((precast.isError && !view) || (workQuery.isError && !work) || (castQuery.isError && !cast)) return <MotionRegion fadeThrough><InlineError className="mt-6" message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_luot_971eabb5} onRetry={() => { void precast.refetch(); void workQuery.refetch(); void castQuery.refetch(); }} /></MotionRegion>;
+  if (!view || isLoading || !work || !cast) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label={S.s_dang_tai_luot_duyet_c2e5bf3f} /></MotionRegion>;
 
   const people = (cast?.characters ?? []).slice(0, TOP_PEOPLE);
   // Nhiều dòng cùng tên ("Lính gác" ba lần) hầu như là một người máy tách ra theo từng chương - hỏi, và cho đường tắt tới chỗ gộp.
@@ -161,9 +160,9 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   const lineCards = lineItems(work.items, view.upcoming.map((chapter) => chapter.id));
   const range = chapterRange(view.upcoming);
   const counts: Record<PrecastStep, string> = {
-    cast: castCards.length ? `${castCards.length} việc` : `${people.length} người`,
-    names: nameCards.length ? `${nameCards.length} tên` : "Tên nào cũng ổn",
-    lines: lineCards.length ? `${lineCount(lineCards)} câu` : "Không câu nào nghi",
+    cast: castCards.length ? S.s_0_viec_d6b72911(castCards.length) : S.s_0_nguoi_272b4f6d(people.length),
+    names: nameCards.length ? S.s_0_ten_f2f08473(nameCards.length) : S.s_ten_nao_cung_on_095d4866,
+    lines: lineCards.length ? S.s_0_cau_2a1e6590(lineCount(lineCards)) : S.s_khong_cau_nao_nghi_25d773f7,
     done: "",
   };
   lists.current = { open: (step === "cast" ? castCards : step === "names" ? nameCards : step === "lines" ? lineCards : []).map((item) => item.key), decided: [] };
@@ -176,14 +175,14 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
       {/* Phẳng, không khung, không lặp tên tab làm tiêu đề (DESIGN 6 "Tab trong trang"; soát 24-10): tiêu đề chỉ cho trình đọc màn hình. */}
       <div>
         <div className="min-w-0 max-w-2xl">
-          <h2 className="sr-only">Duyệt trước khi thu</h2>
+          <h2 className="sr-only">{S.s_duyet_truoc_khi_thu_74c121d0}</h2>
           {book.precast?.held && (
-            <p className="text-sm font-medium text-warning">Sách đang chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
+            <p className="text-sm font-medium text-warning">{S.s_sach_dang_cho_ban_duyet_duyet_xong_bam_thu_f9900395}</p>
           )}
         </div>
         {narrow ? (
           <details className="mt-2">
-            <summary className="cursor-pointer text-sm text-fg-2">Chờ duyệt</summary>
+            <summary className="cursor-pointer text-sm text-fg-2">{S.s_cho_duyet_6af96613}</summary>
             <Intro book={book} view={view} />
           </details>
         ) : (
@@ -192,7 +191,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
       </div>
 
       {/* Bốn bước: hàng chữ có số/dấu tích, bước đang mở có gạch chân hổ phách như tab - không bốn thẻ viền (DESIGN 4). */}
-      <ol className="mt-5 flex flex-wrap gap-x-6 border-b border-line max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-4" aria-label="Các bước duyệt">
+      <ol className="mt-5 flex flex-wrap gap-x-6 border-b border-line max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-4" aria-label={S.s_cac_buoc_duyet_d69dc0a2}>
         {PRECAST_STEPS.map((value, position) => {
           const Icon = STEP_ICON[value];
           const active = value === step;
@@ -225,9 +224,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
       <section id="precast-step" tabIndex={-1} className="mt-5 outline-none" aria-label={STEP_TITLE[step]}>
         {step === "cast" && (
           <>
-            <p className="max-w-3xl text-sm text-fg-2">
-              Nghe và chỉnh giọng cho {people.length} nhân vật nói nhiều nhất.
-            </p>
+            <p className="max-w-3xl text-sm text-fg-2">{S.s_nghe_va_chinh_giong_cho_b5f5cadd}{people.length}{S.s_nhan_vat_noi_nhieu_nhat_a302caa8}</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {people.map((person) => (
                 <div key={person.name} className="flex min-w-0 flex-col gap-1">
@@ -242,10 +239,8 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                   />
                   {twins.has(nameKey(person.displayName)) && person.lines > 0 && (
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-2">
-                      <span>Cùng tên với người khác trong sách - một người?</span>
-                      <Button size="sm" variant="ghost" onClick={() => open.onMerge(person)}>
-                        Gộp vào
-                      </Button>
+                      <span>{S.s_cung_ten_voi_nguoi_khac_trong_sach_mot_ngu_e99f281d}</span>
+                      <Button size="sm" variant="ghost" onClick={() => open.onMerge(person)}>{S.s_gop_vao_6221e312}</Button>
                     </div>
                   )}
                 </div>
@@ -253,8 +248,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
             </div>
             {/* Quyết xong thẻ cuối: cả nhóm khép lại, không mất cứng giữa lúc thẻ đang khép. */}
             <MotionPresence open={castCards.length > 0}>
-                <h3 className="mt-6 text-sm font-semibold">
-                  Máy chưa chắc <span className="font-normal text-fg-2">· {castCards.length} việc về người và giọng</span>
+                <h3 className="mt-6 text-sm font-semibold">{S.s_may_chua_chac_0e10b540}<span className="font-normal text-fg-2">· {castCards.length}{S.s_viec_ve_nguoi_va_giong_681679b6}</span>
                 </h3>
                 <WorkCards {...cards} items={castCards} />
             </MotionPresence>
@@ -264,12 +258,12 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
           <>
             <p className="max-w-3xl text-sm text-fg-2">
               {nameCards.length
-                ? `Nghe và sửa ${nameCards.length} cách đọc tên, tên kém chắc ở trên.`
-                : "Xem và sửa cách đọc từng tên ở danh sách dưới."}
+                ? S.s_nghe_va_sua_0_cach_doc_ten_ten_kem_chac_o_bc275c71(nameCards.length)
+                : S.s_xem_va_sua_cach_doc_tung_ten_o_danh_sach_d_efbb8f8e}
             </p>
             <MotionPresence open={nameCards.length > 0}><WorkCards {...cards} items={nameCards} /></MotionPresence>
             <details className="mt-6 border-t border-line">
-              <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Cách đọc tên</summary>
+              <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">{S.s_cach_doc_ten_1c46e75d}</summary>
               <NameReadings bookId={book.id} />
             </details>
           </>
@@ -278,40 +272,32 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
           <>
             <p className="max-w-3xl text-sm text-fg-2">
               {lineCards.length
-                ? `${formatNumber(lineCount(lineCards))} câu máy chưa chắc ai nói ở ${range || "những chương sắp thu"} - các chương thu đầu tiên;`
+                ? S.s_0_cau_may_chua_chac_ai_noi_o_1_cac_chuong_b54ef45a(formatNumber(lineCount(lineCards)), range || S.s_nhung_chuong_sap_thu_969d3947)
                 : view.upcoming.length
-                  ? `Không có câu nghi ngờ ở ${range}`
-                  : "Đã thu mọi chương"}{" "}
-              các chương sau xem ở Việc cần duyệt.
-            </p>
+                  ? S.s_khong_co_cau_nghi_ngo_o_0_146b864d(range)
+                  : S.s_da_thu_moi_chuong_52c1b8d5}{" "}{S.s_cac_chuong_sau_xem_o_viec_can_duyet_4bdcd63e}</p>
             <MotionPresence open={lineCards.length > 0}><WorkCards {...cards} items={lineCards} /></MotionPresence>
           </>
         )}
         {step === "done" && (
-          <EmptyState icon={ClipboardCheck} title="Xong lượt duyệt" className="py-10" action={
+          <EmptyState icon={ClipboardCheck} title={S.s_xong_luot_duyet_aaf11626} className="py-10" action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant="ghost" size="lg" onClick={open.onClose}>
-                Về danh sách chương
-              </Button>
+              <Button variant="ghost" size="lg" onClick={open.onClose}>{S.s_ve_danh_sach_chuong_b5fd5434}</Button>
             </div>
           }>
             {book.precast?.held
-              ? "Đã ghi lại. Bấm “Thu âm” để làm tiếp."
+              ? S.s_da_ghi_lai_bam_thu_am_de_lam_tiep_0f63f737
               : book.running
-                ? "Sửa nào cũng đã ghi lại; máy áp ở chương kế tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
-                : "Sửa nào cũng đã ghi lại; máy áp khi sách chạy tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."}
+                ? S.s_sua_nao_cung_da_ghi_lai_may_ap_o_chuong_ke_7b639271
+                : S.s_sua_nao_cung_da_ghi_lai_may_ap_khi_sach_ch_eb78b798}
           </EmptyState>
         )}
       </section>
 
       {step !== "done" && (
         <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-line pt-4">
-          <Button variant="ghost" onClick={next}>
-            Bỏ qua bước này
-          </Button>
-          <Button variant="primary" onClick={next}>
-            Tiếp tục
-          </Button>
+          <Button variant="ghost" onClick={next}>{S.s_bo_qua_buoc_nay_128392ff}</Button>
+          <Button variant="primary" onClick={next}>{S.s_tiep_tuc_87a7ae88}</Button>
         </div>
       )}
     </MotionRegion>
@@ -325,14 +311,12 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
     <div className="mt-6 flex flex-wrap items-center gap-3 py-4">
       <ClipboardCheck className={cn("size-5 shrink-0", held ? "text-warning" : "text-accent-text")} />
       <div className="min-w-0 flex-1 text-sm">
-        <div className="font-semibold">{held ? "Phân tích xong - sách đang chờ bạn duyệt" : "Phân tích xong - duyệt trước khi thu?"}</div>
-        <div className="text-fg-2">Duyệt giọng, tên và người nói trước để tránh thu lại.</div>
+        <div className="font-semibold">{held ? S.s_phan_tich_xong_sach_dang_cho_ban_duyet_4df5357f : S.s_phan_tich_xong_duyet_truoc_khi_thu_86b704d6}</div>
+        <div className="text-fg-2">{S.s_duyet_giong_ten_va_nguoi_noi_truoc_de_tran_fcbf5c99}</div>
       </div>
       {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}
       <div className="flex gap-2">
-        <Button variant={held ? "ghost" : "primary"} onClick={onOpen}>
-          Duyệt ngay
-        </Button>
+        <Button variant={held ? "ghost" : "primary"} onClick={onOpen}>{S.s_duyet_ngay_9f97c010}</Button>
       </div>
     </div>
   );

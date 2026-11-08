@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "SizeFormat.js" as Size
@@ -26,22 +27,22 @@ Item {
         wanted: root.active && root.needed
         onFinished: data => {
             if (data.installed && (data.outdated || []).length === 0) {
-                Api.notice = "Studio đã sẵn sàng"
+                Api.notice = S.s_studio_da_san_sang_eb109553
                 setup.refreshInfo()
             } else if (data.error) {
-                Api.notice = "Studio chưa xong\n" + Setup.friendlySetupError(data.error).summary
+                Api.notice = S.s_studio_chua_xong_66fa507e + Setup.friendlySetupError(data.error).summary
             }
         }
     }
     property bool details: false
     property var fit: root.status && !root.status.installed ? Setup.studioFit(root.status.gpu) : null
-    readonly property var button: root.status ? Setup.cardButton(root.status, root.fit) : ({kind: "go", text: "Cài Studio"})
+    readonly property var button: root.status ? Setup.cardButton(root.status, root.fit) : ({kind: "go", text: S.s_cai_studio_5fdd3bd9})
     readonly property var friendly: root.status && root.status.error ? Setup.friendlySetupError(root.status.error) : ({summary: "", detail: ""})
 
     function press() {
         const kind = button.kind
-        if (kind === "cancel" || kind === "cancelOld") setup.cancel(function(ok, data) { if (!ok) setup.failure("Chưa cài được Studio", data) })
-        else if (kind === "go" || kind === "unfit") setup.install(function(ok, data) { if (!ok) setup.failure("Chưa cài được Studio", data) })
+        if (kind === "cancel" || kind === "cancelOld") setup.cancel(function(ok, data) { if (!ok) setup.failure(S.s_chua_cai_duoc_studio_ee5900df, data) })
+        else if (kind === "go" || kind === "unfit") setup.install(function(ok, data) { if (!ok) setup.failure(S.s_chua_cai_duoc_studio_ee5900df, data) })
     }
 
     Collapse {
@@ -136,7 +137,7 @@ Item {
                     Accessible.role: Accessible.Button
                     Accessible.name: toggleText.text
                     onClicked: root.details = !root.details
-                    Text { id: toggleText; anchors.verticalCenter: parent.verticalCenter; text: "Chi tiết"; color: Theme.danger; font.pixelSize: Theme.sizeCaption }
+                    Text { id: toggleText; anchors.verticalCenter: parent.verticalCenter; text: S.s_chi_tiet_e762d926; color: Theme.danger; font.pixelSize: Theme.sizeCaption }
                 }
                 Text {
                     visible: root.details && root.friendly.detail !== ""
@@ -203,7 +204,7 @@ Item {
                     width: parent.width
                     size: "sm"
                     value: root.status ? Math.max(0, Setup.progressOf(root.status)) : 0
-                    label: "Tiến độ: " + (root.status && Setup.currentStep(root.status) ? Setup.currentStep(root.status).label : "")
+                    label: S.s_tien_do_515e1f3f + (root.status && Setup.currentStep(root.status) ? Setup.currentStep(root.status).label : "")
                 }
                 Item {
                     width: parent.width

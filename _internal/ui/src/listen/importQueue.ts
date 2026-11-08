@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Hàng xem trước của "Thêm sách từ file…" khi chọn / kéo thả NHIỀU file một lúc: mỗi cuốn vẫn qua đúng bước xem trước của một file; hàng chỉ
 // nhớ cuốn nào đã thêm, đã có, đã bỏ, hay không đọc được (lỗi của một file không chặn các file sau). Hàm thuần - AddBook.tsx giữ trạng thái.
 
@@ -58,7 +59,7 @@ export function itemFromPath(path: string): PickedItem {
   // Đuôi file là chữ Latin / số liền sau dấu chấm cuối, có ít nhất một chữ cái ("Vol. 2", "Tập 1.5", "1. Hòn đá" là tên thư mục, không phải đuôi).
   const last = name.match(/\.(?=[a-z0-9]*[a-z])[a-z0-9]{1,10}$/i)?.[0] ?? "";
   if (last && !BOOK_TYPES.test(name)) {
-    return { name, error: `Chưa hỗ trợ ${last.toLowerCase()}. Bạn hãy chọn EPUB, DOCX, PDF có chữ, TXT hoặc file .abook.` };
+    return { name, error: S.s_chua_ho_tro_0_ban_hay_chon_epub_docx_pdf_c_dd9c234b(last.toLowerCase()) };
   }
   return { name, choice: { ref: clean, name } };
 }
@@ -71,7 +72,7 @@ export function buildQueue(picked: readonly PickedItem[]): QueueItem[] {
   let number = 0;
   return entries.map(({ item }, id) => {
     if ("error" in item) return { id, name: item.name, state: "error", note: item.error };
-    if ("opened" in item) return { id, name: item.name, state: "opened", note: "Đã thêm" };
+    if ("opened" in item) return { id, name: item.name, state: "opened", note: S.s_da_them_e26b2fcb };
     number += 1;
     return { id, name: item.name, choice: item.choice, state: "waiting", number };
   });
@@ -85,7 +86,7 @@ export function queueTotal(items: readonly QueueItem[]): number {
 /** "Sách 2/5" cho một cuốn; không đánh số (file không nhận được) thì không có nhãn. */
 export function queueLabel(items: readonly QueueItem[], id: number): string {
   const item = items.find((entry) => entry.id === id);
-  return item?.number === undefined ? "" : `Sách ${item.number}/${queueTotal(items)}`;
+  return item?.number === undefined ? "" : S.s_sach_0_1_77b98415(item.number, queueTotal(items));
 }
 
 export const nextWaiting = (items: readonly QueueItem[]): QueueItem | undefined => items.find((item) => item.state === "waiting");
@@ -106,13 +107,13 @@ export async function addWithDefaults(
   choice: ImportChoice,
 ): Promise<Pick<QueueItem, "state" | "note" | "bookId">> {
   const { preview, split } = await readPreview(importer, choice);
-  if (preview.existing) return { state: "existing", note: "Đã có trong thư viện", bookId: preview.existing.id };
-  if (preview.sameSource) return { state: "existing", note: "Đã thêm từ file này rồi", bookId: preview.sameSource.id };
+  if (preview.existing) return { state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: preview.existing.id };
+  if (preview.sameSource) return { state: "existing", note: S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: preview.sameSource.id };
   const title = preview.title.trim();
-  if (!title) throw new Error("File này chưa có tên sách - thêm riêng để đặt tên.");
-  if (defaultPicked(preview.chapters).size === 0) throw new Error("File này chưa có chương nào để thêm.");
+  if (!title) throw new Error(S.s_file_nay_chua_co_ten_sach_them_rieng_de_da_ec9e7d95);
+  if (defaultPicked(preview.chapters).size === 0) throw new Error(S.s_file_nay_chua_co_chuong_nao_de_them_83a1704f);
   const added = await importer.add(choice, title, false, { splitChapters: split, ...(preview.sourceFingerprint ? { sourceFingerprint: preview.sourceFingerprint } : {}) });
-  return { state: added.how === "existing" ? "existing" : "added", note: added.how === "existing" ? "Đã có trong thư viện" : undefined, bookId: added.id };
+  return { state: added.how === "existing" ? "existing" : "added", note: added.how === "existing" ? S.s_da_co_trong_thu_vien_3bb6eeb4 : undefined, bookId: added.id };
 }
 
 export interface QueueSummary {
@@ -131,14 +132,14 @@ export function summarize(items: readonly QueueItem[]): QueueSummary {
 /** Một câu cho người nghe sau khi hàng xong: "Đã thêm 3 sách · 1 cuốn đã có trong thư viện · 1 file chưa đọc được". */
 export function summaryText(summary: QueueSummary): string {
   const parts = [
-    summary.added ? `Đã thêm ${summary.added} sách` : "",
-    summary.opened ? `đã mở ${summary.opened} file sách` : "",
-    summary.existing ? `${summary.existing} cuốn đã có trong thư viện` : "",
-    summary.skipped ? `bỏ qua ${summary.skipped} cuốn` : "",
-    summary.failed ? `${summary.failed} file chưa đọc được` : "",
+    summary.added ? S.s_da_them_0_sach_87064233(summary.added) : "",
+    summary.opened ? S.s_da_mo_0_file_sach_3f65ee9d(summary.opened) : "",
+    summary.existing ? S.s_0_cuon_da_co_trong_thu_vien_8b8e2e2a(summary.existing) : "",
+    summary.skipped ? S.s_bo_qua_0_cuon_ec29180b(summary.skipped) : "",
+    summary.failed ? S.s_0_file_chua_doc_duoc_8acf9d51(summary.failed) : "",
   ].filter(Boolean);
   const text = parts.join(" · ");
-  return text ? text[0].toUpperCase() + text.slice(1) : "Không thêm cuốn nào";
+  return text ? text[0].toUpperCase() + text.slice(1) : S.s_khong_them_cuon_nao_0fb1d747;
 }
 
 /** Chọn / kéo thả xong: một file thì y như trước (bước xem trước, hay lý do không nhận được); nhiều file thì thành hàng. */

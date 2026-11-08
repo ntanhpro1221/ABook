@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.S
+
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
@@ -140,7 +142,7 @@ fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String?
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val ink = Abook.colors.text
     Box(
-        modifier.size(Dim.s48).pressable(onClick = onClick).semantics { contentDescription = "Quay lại" },
+        modifier.size(Dim.s48).pressable(onClick = onClick).semantics { contentDescription = S.s_quay_lai_6d793582 },
         contentAlignment = Alignment.CenterStart,
     ) {
         // lucide ArrowLeft như bản web; mũi nhọn (x 4 kể cả nửa nét) dời về mép trái ô để thẳng mép nội dung.

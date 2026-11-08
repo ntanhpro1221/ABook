@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { endSentence } from "@/shared/format";
 
 // "Tải về máy" cho sách "Trên máy khác" (webui/remote_books.py `Downloads`, như điện thoại tải sách của máy tính): chữ nói tình trạng
@@ -36,29 +37,29 @@ export interface DownloadNote {
 /** Dòng tình trạng dưới tên sách; `null` khi chưa tải gì và không có gì để nói. `computer`: tên máy giữ sách. */
 export function downloadNote(status: RemoteDownload | null | undefined, computer: string): DownloadNote | null {
   if (!status) return null;
-  const where = computer || "máy kia";
+  const where = computer || S.s_may_kia_d1eb7142;
   const percent = `${Math.floor(downloadFraction(status) * 100)}%`;
   switch (status.state) {
     case "running":
-      return { tone: "running", title: `Đang tải về máy… ${percent}`, detail: "Vẫn nghe được trong lúc tải", action: "cancel" };
+      return { tone: "running", title: S.s_dang_tai_ve_may_0_d19b4333(percent), detail: S.s_van_nghe_duoc_trong_luc_tai_12c4a3a5, action: "cancel" };
     case "done":
-      return { tone: "done", title: "Đã tải về máy", detail: `Nghe được cả khi ${where} tắt`, action: null };
+      return { tone: "done", title: S.s_da_tai_ve_may_a3ac321b, detail: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), action: null };
     case "failed": {
       // Chỉ nói “vẫn giữ” khi thật sự đã có phần tải được; đứt ở 0% thì không có gì để giữ.
-      const kept = status.bytesDone > 0 || status.filesDone > 0 ? " Phần đã tải vẫn giữ trên máy này." : "";
-      const again = status.retry ? ` Tự tải tiếp khi ${where} trả lời lại.` : "";
+      const kept = status.bytesDone > 0 || status.filesDone > 0 ? S.s_phan_da_tai_van_giu_tren_may_nay_79d4dcb7 : "";
+      const again = status.retry ? S.s_tu_tai_tiep_khi_0_tra_loi_lai_5e0e8b25(where) : "";
       return {
         tone: "error",
-        title: `Chưa tải xong về máy (${percent})`,
-        detail: `${endSentence(status.error || `${where} không trả lời`)}${kept}${again}`,
+        title: S.s_chua_tai_xong_ve_may_0_4e6343f2(percent),
+        detail: `${endSentence(status.error || S.s_0_khong_tra_loi_412cfadc(where))}${kept}${again}`,
         action: "resume",
       };
     }
     case "cancelled":
       return {
         tone: "paused",
-        title: `Đã dừng tải (${percent})`,
-        detail: status.bytesDone > 0 || status.filesDone > 0 ? "Phần đã tải vẫn giữ trên máy này." : "",
+        title: S.s_da_dung_tai_0_c6869240(percent),
+        detail: status.bytesDone > 0 || status.filesDone > 0 ? S.s_phan_da_tai_van_giu_tren_may_nay_7a0ab6ab : "",
         action: "resume",
       };
     default:
@@ -68,14 +69,14 @@ export function downloadNote(status: RemoteDownload | null | undefined, computer
 
 /** Mục trong menu của sách: tên + câu phụ, tuỳ tình trạng. */
 export function downloadMenuLabel(status: RemoteDownload | null | undefined, computer: string): { label: string; hint: string; disabled: boolean } {
-  const where = computer || "máy kia";
-  if (status?.state === "running") return { label: "Huỷ tải", hint: `Đã tải ${Math.floor(downloadFraction(status) * 100)}%`, disabled: false };
-  if (status?.state === "done") return { label: "Đã tải về máy", hint: `Nghe được cả khi ${where} tắt`, disabled: true };
+  const where = computer || S.s_may_kia_d1eb7142;
+  if (status?.state === "running") return { label: S.s_huy_tai_1a9ff73d, hint: S.s_da_tai_0_12412428(Math.floor(downloadFraction(status) * 100)), disabled: false };
+  if (status?.state === "done") return { label: S.s_da_tai_ve_may_a3ac321b, hint: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), disabled: true };
   // “Tải nốt” chỉ khi đã có phần thật; 0% thì vẫn là tải từ đầu.
   if (status && Math.floor(downloadFraction(status) * 100) > 0) {
     // Đủ audio mà còn thiếu file: phần còn lại là chữ đọc theo hay nhạc nền - nói ra, "99%" không cho biết vì sao chưa xong.
-    const rest = status.bytes > 0 && status.bytesDone >= status.bytes ? " - còn chữ đọc theo hay nhạc nền" : "";
-    return { label: "Tải nốt về máy", hint: `Đã có ${Math.floor(downloadFraction(status) * 100)}% trên máy này${rest}`, disabled: false };
+    const rest = status.bytes > 0 && status.bytesDone >= status.bytes ? S.s_con_chu_doc_theo_hay_nhac_nen_39189ff1 : "";
+    return { label: S.s_tai_not_ve_may_8235a2a9, hint: S.s_da_co_0_tren_may_nay_1_86511a91(Math.floor(downloadFraction(status) * 100), rest), disabled: false };
   }
-  return { label: "Tải về máy", hint: `Để nghe cả khi ${where} tắt`, disabled: false };
+  return { label: S.s_tai_ve_may_41e0b494, hint: S.s_de_nghe_ca_khi_0_tat_7052488a(where), disabled: false };
 }

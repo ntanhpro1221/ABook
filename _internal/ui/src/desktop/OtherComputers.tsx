@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold } from "@/shared/Collapse";
@@ -96,9 +97,9 @@ export function OtherComputers() {
       done(view);
       setAddress("");
       setCode("");
-      toast.success(name ? `Đã ghép ${name}` : "Đã ghép");
+      toast.success(name ? S.s_da_ghep_0_a04998dd(name) : S.s_da_ghep_2bd0972f);
     },
-    onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghep_duoc_e27b68c8, { description: error.message }),
   });
   const refresh = useMutation({
     mutationFn: () => api<ComputersView>("/api/computers/refresh", { method: "POST" }),
@@ -110,7 +111,7 @@ export function OtherComputers() {
   });
   // Bỏ ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
   const unpair = useUnpair<Computer>({
-    self: "máy tính",
+    self: S.s_may_tinh_8eafc226,
     name: (computer) => computer.name,
     reachable: (computer) => {
       const current = data?.computers.find((item) => item.id === computer.id) ?? computer;
@@ -127,13 +128,13 @@ export function OtherComputers() {
       api<ComputersView>(`/api/computers/${id}/bluetooth`, { method: "POST", body: { address } }),
     onSuccess: (view, { address }) => {
       done(view);
-      toast.success(address ? "Đã chọn Bluetooth dự phòng" : "Không dùng Bluetooth dự phòng nữa");
+      toast.success(address ? S.s_da_chon_bluetooth_du_phong_4a0a6048 : S.s_khong_dung_bluetooth_du_phong_nua_0283e9c4);
     },
-    onError: (error: Error) => toast.error("Chưa chọn được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_chon_duoc_078e7435, { description: error.message }),
   });
   const discover = useMutation({
     mutationFn: () => api<{ found: FoundComputer[] }>("/api/computers/discover"),
-    onError: (error: Error) => toast.error("Chưa tìm được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_tim_duoc_9359cd73, { description: error.message }),
   });
   const codeInput = useRef<HTMLInputElement>(null);
   // Hộp "Chẩn đoán" của một điện thoại đã ghép (nhật ký + tình trạng, lấy qua kết nối đã ghép).
@@ -148,8 +149,8 @@ export function OtherComputers() {
     setAddress(device.address);
     codeInput.current?.focus();
   };
-  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại thiết bị." onRetry={() => void refetch()} /></MotionRegion>;
-  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải thiết bị" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_thiet_cedab5c7} onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton count={2} label={S.s_dang_tai_thiet_bi_09ddbf1d} /></MotionRegion>;
   // Đã ghép rồi thì không mời ghép lại.
   const pairedAddresses = new Set(data.computers.filter((computer) => isBluetoothHost(computer.host)).map((computer) => bluetoothAddress(computer)));
   const unpaired = devices.filter((device) => device.services?.includes("release") && !pairedAddresses.has(device.address));
@@ -168,7 +169,7 @@ export function OtherComputers() {
         <AnimatedRows className="divide-y divide-line" items={data.computers} keyOf={(computer) => computer.id}>
           {(computer) => (
             <MotionRegion>
-              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? S.s_dang_cho_4257d45b : computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
@@ -180,22 +181,19 @@ export function OtherComputers() {
                       className="ml-2 rounded-control text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
                       disabled={stopWaiting.isPending}
                       onClick={() => stopWaiting.mutate(computer.id)}
-                    >
-                      Thôi chờ
-                    </button>
+                    >{S.s_thoi_cho_6bf8a752}</button>
                   </div>
                 ) : (
                   // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
                   <div data-motion-live className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "truncate text-fg-2")}>
                     {computer.error
                       ? computer.error
-                      : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
+                      : `${routeLine(computer, devices)}${computer.lastSeen ? S.s_thay_0_45bf670a(formatRelative(computer.lastSeen)) : ""}`}
                   </div>
                 )}
                 {computer.fingerprint && (
                   // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
-                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>
-                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
+                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>{S.s_van_tay_8abdcdf0}<span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
                   </div>
                 )}
               </div>
@@ -208,15 +206,11 @@ export function OtherComputers() {
                   variant="ghost"
                   icon={Clapperboard}
                   onClick={() => window.location.assign(peerPage(window.location.search, computer.id))}
-                  aria-label={`Mở Studio của ${computer.name}`}
-                >
-                  Mở Studio
-                </Button>
+                  aria-label={S.s_mo_studio_cua_0_07ada8e5(computer.name)}
+                >{S.s_mo_studio_84ec0a81}</Button>
               )}
               {computer.kind === "phone" && (
-                <Button size="sm" variant="ghost" icon={Stethoscope} onClick={() => setDiagnosing(computer)} aria-label={`Chẩn đoán ${computer.name}`}>
-                  Chẩn đoán
-                </Button>
+                <Button size="sm" variant="ghost" icon={Stethoscope} onClick={() => setDiagnosing(computer)} aria-label={S.s_chan_doan_0_b8c06668(computer.name)}>{S.s_chan_doan_906791d5}</Button>
               )}
               {!isBluetoothHost(computer.host) && (
                 <BluetoothFallback
@@ -226,14 +220,10 @@ export function OtherComputers() {
                   onChoose={(address) => setBluetooth.mutate({ id: computer.id, address })}
                 />
               )}
-              <IconButton label="Hỏi lại thư viện" icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label="Hỏi lại thư viện">
-                Hỏi lại
-              </Button>
-              <IconButton label={`Bỏ ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Bỏ ghép ${computer.name}`}>
-                Bỏ ghép
-              </Button>
+              <IconButton label={S.s_hoi_lai_thu_vien_bfe2a0e8} icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label={S.s_hoi_lai_thu_vien_bfe2a0e8}>{S.s_hoi_lai_1dc3bd7a}</Button>
+              <IconButton label={S.s_bo_ghep_0_56c3fd6f(computer.name)} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={S.s_bo_ghep_0_56c3fd6f(computer.name)}>{S.s_bo_ghep_64f921f9}</Button>
               </div>
               </Fold>
             </MotionRegion>
@@ -241,20 +231,18 @@ export function OtherComputers() {
         </AnimatedRows>
         </div>
       </MotionPresence>
-      <Fold storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
+      <Fold storageKey="other-computers.pair" title={S.s_ghep_may_601e4c98} summary={S.s_nghe_sach_cua_may_tinh_khac_31628082} bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
-        <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
-          Tự tìm
-        </Button>
+        <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>{S.s_tu_tim_3f09ad05}</Button>
         {discover.data &&
           (discover.data.found.length ? (
             <ul className="divide-y divide-line">
               {discover.data.found.map((found) => (
                 <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 py-2">
                   {found.kind === "phone" ? (
-                    <Smartphone className="size-5 shrink-0 text-fg-2" aria-label="điện thoại" />
+                    <Smartphone className="size-5 shrink-0 text-fg-2" aria-label={S.s_dien_thoai_2f73f175} />
                   ) : (
-                    <Laptop className="size-5 shrink-0 text-fg-2" aria-label="máy tính" />
+                    <Laptop className="size-5 shrink-0 text-fg-2" aria-label={S.s_may_tinh_8eafc226} />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{found.name}</div>
@@ -263,17 +251,15 @@ export function OtherComputers() {
                     </div>
                   </div>
                   {found.paired ? (
-                    <span className="text-xs text-fg-2">Đã ghép</span>
+                    <span className="text-xs text-fg-2">{S.s_da_ghep_2bd0972f}</span>
                   ) : (
-                    <Button size="sm" variant="ghost" onClick={() => choose(found)}>
-                      Chọn
-                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => choose(found)}>{S.s_chon_1171ca97}</Button>
                   )}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-fg-2">Chưa thấy thiết bị</p>
+            <p className="text-xs text-fg-2">{S.s_chua_thay_thiet_bi_192c6e9e}</p>
           ))}
       </div>
       <form
@@ -283,22 +269,18 @@ export function OtherComputers() {
           pair.mutate();
         }}
       >
-        <label className="min-w-0 flex-1 text-xs text-fg-2 max-sm:basis-full" htmlFor="other-computer-address">
-          Địa chỉ máy kia
-          <input
+        <label className="min-w-0 flex-1 text-xs text-fg-2 max-sm:basis-full" htmlFor="other-computer-address">{S.s_dia_chi_may_kia_e746667e}<input
             id="other-computer-address"
             value={address}
             onChange={(event) => setAddress(event.target.value)}
-            placeholder="192.168.1.20 hoặc địa chỉ Bluetooth"
+            placeholder={S.s_192_168_1_20_hoac_dia_chi_bluetooth_326669dc}
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
             className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
-        <label className="w-32 text-xs text-fg-2" htmlFor="other-computer-code">
-          Mã 6 số
-          <input
+        <label className="w-32 text-xs text-fg-2" htmlFor="other-computer-code">{S.s_ma_6_so_a067b6d9}<input
             id="other-computer-code"
             ref={codeInput}
             value={code}
@@ -309,19 +291,16 @@ export function OtherComputers() {
             className="tabular mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
-        <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>
-          Kết nối
-        </Button>
+        <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>{S.s_ket_noi_02ca3cba}</Button>
       </form>
       {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
       {pair.isError && (
-        <p role="alert" className="text-[0.8125rem] text-danger text-pretty">
-          Chưa ghép được: {pair.error.message}
+        <p role="alert" className="text-[0.8125rem] text-danger text-pretty">{S.s_chua_ghep_duoc_160c13b4}{pair.error.message}
         </p>
       )}
       {unpaired.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-fg-2">Khác Wi-Fi? Chọn máy đã ghép Bluetooth:</p>
+          <p className="text-xs text-fg-2">{S.s_khac_wi_fi_chon_may_da_ghep_bluetooth_f451876c}</p>
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
               <li key={device.address}>
@@ -336,10 +315,9 @@ export function OtherComputers() {
       {unpairedDev.map((device) => (
         <Button key={`${device.address}@dev`} size="sm" variant="ghost" icon={Bluetooth}
           onClick={() => { setAddress(`${device.address}@dev`); codeInput.current?.focus(); }}>
-          {device.name} · bản thử
-        </Button>
+          {device.name}{S.s_ban_thu_7ef7942e}</Button>
       ))}
-      <p className="text-xs text-fg-2">Máy kia: Cài đặt → Thiết bị → bật “{SYNC_SWITCH_LABEL}” để lấy mã; ghép một chiều để nghe thư viện của máy ấy.</p>
+      <p className="text-xs text-fg-2">{S.s_may_kia_cai_dat_thiet_bi_bat_daa5df50}{SYNC_SWITCH_LABEL}{S.s_de_lay_ma_ghep_mot_chieu_de_nghe_thu_vien_bea7e639}</p>
       </Fold>
       {unpair.dialog}
       {lastDiagnosing.current && <PhoneDiagnostics computer={lastDiagnosing.current} open={diagnosing !== null} onOpenChange={(open) => !open && setDiagnosing(null)} />}
@@ -362,9 +340,9 @@ export function BluetoothFallback({
   const current = bluetoothAddress(computer);
   return (
     <DropdownMenu.Root>
-      <Tooltip label="Dùng Bluetooth">
+      <Tooltip label={S.s_dung_bluetooth_a7d4c199}>
         <DropdownMenu.Trigger
-          aria-label={`Dùng Bluetooth cho ${computer.name}`}
+          aria-label={S.s_dung_bluetooth_cho_0_82d05e59(computer.name)}
           disabled={busy}
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
@@ -372,29 +350,25 @@ export function BluetoothFallback({
           )}
         >
           <Bluetooth className="glyph" strokeWidth={2} />
-          <span className="ml-1.5 text-sm sm:hidden">Bluetooth</span>
+          <span className="ml-1.5 text-sm sm:hidden">{S.s_bluetooth_8bb29098}</span>
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Qua Bluetooth</DropdownMenu.Label>
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">{S.s_qua_bluetooth_983cecc1}</DropdownMenu.Label>
           {!devices.length && (
-            <p className="px-2 py-1.5 text-xs text-fg-3">
-              Ghép thiết bị trong Cài đặt Windows trước.
-            </p>
+            <p className="px-2 py-1.5 text-xs text-fg-3">{S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2}</p>
           )}
           {devices.map((device) => (
             <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={MENU_ITEM}>
               <SelectionMark selected={device.address === current} />
               <span className="min-w-0 flex-1 text-pretty [overflow-wrap:anywhere]">
                 {device.name} <span className="text-fg-3">· {deviceKindLabel(device.kind)}</span>
-                {device.address === current && <span className="sr-only">, đang chọn</span>}
+                {device.address === current && <span className="sr-only">{S.s_dang_chon_19938ba6}</span>}
               </span>
             </DropdownMenu.Item>
           ))}
-          <DropdownMenu.Item disabled={!current} onSelect={() => onChoose("")} className={cn(MENU_ITEM, "text-fg-2")}>
-            Không dùng
-          </DropdownMenu.Item>
+          <DropdownMenu.Item disabled={!current} onSelect={() => onChoose("")} className={cn(MENU_ITEM, "text-fg-2")}>{S.s_khong_dung_30db3c31}</DropdownMenu.Item>
         </MotionRegion></DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

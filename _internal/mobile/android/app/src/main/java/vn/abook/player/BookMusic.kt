@@ -139,9 +139,9 @@ object BookMusic {
     /** null = file đúng bài này; không thì lý do. `announced`: cỡ máy kia báo trước (-1 = không báo). */
     fun problem(file: File, track: Track, announced: Long = -1): String? {
         val length = file.length()
-        if (length == 0L) return "file rỗng"
-        if (track.size > 0 && length != track.size) return "sai cỡ ($length/${track.size})"
-        if (announced >= 0 && length != announced) return "đứt giữa chừng ($length/$announced)"
+        if (length == 0L) return S.s_file_rong_8bef4a2c
+        if (track.size > 0 && length != track.size) return S.s_sai_co_0_1_da9083bf(length, track.size)
+        if (announced >= 0 && length != announced) return S.s_dut_giua_chung_0_1_bfd915f6(length, announced)
         if (track.sha1 != null) {
             val digest = MessageDigest.getInstance("SHA-1")
             file.inputStream().use { input ->
@@ -152,7 +152,7 @@ object BookMusic {
                     digest.update(buffer, 0, read)
                 }
             }
-            if (digest.digest().joinToString("") { "%02x".format(it) } != track.sha1) return "sai mã băm"
+            if (digest.digest().joinToString("") { "%02x".format(it) } != track.sha1) return S.s_sai_ma_bam_0d3a2f22
         }
         return null
     }

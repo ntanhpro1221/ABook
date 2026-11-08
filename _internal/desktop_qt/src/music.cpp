@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "music.h"
 
 #include "musictext.h"
@@ -227,7 +228,7 @@ void Music::change(const QJsonObject &body) {
         m_busy = false;
         emit busyChanged();
         if (status != 200) {
-            m_player->showNotice(QStringLiteral("Chưa chỉnh được nhạc nền"));
+            m_player->showNotice(UiStrings::s_chua_chinh_duoc_nhac_nen_312d1561);
             return;
         }
         applyView(next);

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { cn } from "@/shared/cn";
@@ -37,5 +38,5 @@ export function useWishes(bookId: string, enabled: boolean) {
 
 /** Dấu "đang chờ Studio" cạnh một câu trong trang đọc. */
 export function WaitingMark({ className }: { className?: string }) {
-  return <Clock aria-label="Đang chờ máy làm sách" role="img" className={cn("ml-1 inline size-[0.7em] align-[-0.05em] text-fg-3", className)} />;
+  return <Clock aria-label={S.s_dang_cho_may_lam_sach_bad9fc96} role="img" className={cn("ml-1 inline size-[0.7em] align-[-0.05em] text-fg-3", className)} />;
 }

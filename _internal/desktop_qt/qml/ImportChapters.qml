@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ImportQueue.js" as Queue
@@ -97,7 +98,7 @@ Item {
                         checked: row.on
                         inView: root.inside(row.y + 9, 20)
                         enabled: !root.locked
-                        label: "Đưa vào sách: " + (row.renamed !== undefined ? row.renamed : row.chapter.title)
+                        label: S.s_dua_vao_sach_ac340122 + (row.renamed !== undefined ? row.renamed : row.chapter.title)
                         onToggled: value => root.pick(row.chapter.index, value)
                     }
                     Text {
@@ -132,7 +133,7 @@ Item {
                                 height: Math.max(20, titleText.contentHeight + 2)
                                 visible: !row.isEditing
                                 enabled: !root.locked
-                                tip: "Bấm để đổi tên chương"
+                                tip: S.s_bam_de_doi_ten_chuong_10c942c5
                                 ringMargin: 2
                                 Accessible.role: Accessible.Button
                                 Accessible.name: row.title
@@ -171,7 +172,7 @@ Item {
                                 width: parent.width
                                 visible: row.isEditing
                                 enabled: row.isEditing
-                                label: "Tên chương"
+                                label: S.s_ten_chuong_9edb6c28
                                 escapeLocal: true
                                 topPadding: 6
                                 bottomPadding: 6
@@ -201,7 +202,7 @@ Item {
                         Text {
                             width: parent.width
                             visible: text !== ""
-                            text: row.chapter.matter ? row.chapter.matter + " - có vẻ không phải truyện, tích nếu muốn nghe" : (row.chapter.short ? "rất ngắn - có thể là bìa / trang bản quyền" : "")
+                            text: row.chapter.matter ? row.chapter.matter + S.s_co_ve_khong_phai_truyen_tich_neu_muon_nghe_e93a3b54 : (row.chapter.short ? S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0 : "")
                             color: Theme.text3
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeCaption
@@ -215,7 +216,7 @@ Item {
                         Text {
                             width: parent.width
                             horizontalAlignment: Text.AlignRight
-                            text: Queue.formatNumber(row.chapter.words || 0) + " chữ"
+                            text: Queue.formatNumber(row.chapter.words || 0) + S.s_chu_6117d040
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeCaption

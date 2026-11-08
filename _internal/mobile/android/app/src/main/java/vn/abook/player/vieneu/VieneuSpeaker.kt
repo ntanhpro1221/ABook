@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.MusicRender
@@ -27,7 +29,7 @@ class VieneuPreset(val name: String, val gender: String, val speaker: FloatArray
 object VieneuPresets {
     val TIERS = listOf("turbo", "nano")
     val FILES = mapOf("turbo" to "voices_v3_turbo.json", "nano" to "voices_v3_nano.json")
-    val LABEL = mapOf("turbo" to "VieNeu", "nano" to "VieNeu Nano")
+    val LABEL = mapOf("turbo" to S.s_vieneu_338b8a9f, "nano" to "VieNeu Nano")
 
     private fun floats(array: JSONArray?): FloatArray? = array?.let { FloatArray(it.length()) { i -> it.getDouble(i).toFloat() } }
 
@@ -62,7 +64,7 @@ class NanoTier(private val engine: VieneuNano, private val params: MusicRender.P
     override val rate = VieneuNano.SAMPLE_RATE
 
     override fun infer(phonemes: String, preset: VieneuPreset, seed: Long): FloatArray {
-        val style = preset.style ?: throw IllegalArgumentException("giọng Nano thiếu style")
+        val style = preset.style ?: throw IllegalArgumentException(S.s_giong_nano_thieu_style_d401ada5)
         val audio = engine.synthesize(phonemes, preset.speaker, style, null, seed).audio
         return VieneuAudio.trimAndFade(ClipLift.underCeiling(audio, params), rate)
     }

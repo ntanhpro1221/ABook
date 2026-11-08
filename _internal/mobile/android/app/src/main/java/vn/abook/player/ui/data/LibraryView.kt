@@ -1,22 +1,24 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import java.math.BigInteger
 
 /** Bộ lọc của hàng chữ có gạch chân hổ phách (DESIGN.md §6): thứ tự là thứ tự trượt. */
 enum class LibraryFilter(val label: String, val tag: String) {
-    All("Tất cả", "filter_all"),
-    Listening("Nghe dở", "filter_listening"),
-    New("Chưa nghe", "filter_new"),
-    Finished("Xong", "filter_finished"),
+    All(S.s_tat_ca_49c73a31, "filter_all"),
+    Listening(S.s_nghe_do_7e529071, "filter_listening"),
+    New(S.s_chua_nghe_2fbea4c8, "filter_new"),
+    Finished(S.s_xong_a6f4543a, "filter_finished"),
 }
 
 /** Cách xếp (librarySort.ts): mặc định "Nghe gần đây". */
 enum class LibrarySort(val label: String) {
-    Recent("Nghe gần đây"),
-    Title("Tên sách"),
-    Author("Tác giả"),
-    Added("Mới thêm"),
+    Recent(S.s_nghe_gan_day_2b222d97),
+    Title(S.s_ten_sach_d54846eb),
+    Author(S.s_tac_gia_0ec4731b),
+    Added(S.s_moi_them_bcc59d6f),
 }
 
 /** Một ô của lưới: cuốn lẻ, hay MỘT bìa cho cả bộ nhiều tập (chạm mở bộ). `key` ổn định cho LazyGrid. */

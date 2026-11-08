@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
@@ -196,14 +197,14 @@ const NowPlayingContext = createContext<{ expanded: boolean; setExpanded: (expan
 
 export function usePlayer(): PlayerValue {
   const value = useContext(PlayerContext);
-  if (!value) throw new Error("usePlayer ngoài PlayerProvider");
+  if (!value) throw new Error(S.s_useplayer_ngoai_playerprovider_38b689f6);
   return value;
 }
 
 /** Màn hình "Đang nghe" mở hay đóng - tách khỏi trình phát để mở/đóng không render lại cả cây. */
 export function useNowPlaying() {
   const value = useContext(NowPlayingContext);
-  if (!value) throw new Error("useNowPlaying ngoài PlayerProvider");
+  if (!value) throw new Error(S.s_usenowplaying_ngoai_playerprovider_37ffa625);
   return value;
 }
 
@@ -229,7 +230,7 @@ export const SKIP_SECONDS = 15;
 const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
 /** Lời báo khi nguồn âm thanh không phát được mà không có lý do nào cụ thể hơn (cùng câu với Qt Player::kPlayError). */
-const PLAY_ERROR = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+const PLAY_ERROR = S.s_chua_phat_duoc_chuong_nay_file_co_the_da_b_252bdb32;
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
@@ -585,12 +586,12 @@ export function PlayerProvider({
     if (history.length > HISTORY) history.shift();
     setCanGoBack(true);
     const sameChapter = from.chapterId === to.chapterId;
-    toast(note ? "Đã tới câu chọn" : `Đã tới ${sameChapter ? formatClock(to.seconds) : "chương mới"}`, {
+    toast(note ? S.s_da_toi_cau_chon_c63df9f4 : S.s_da_toi_0_773f4122(sameChapter ? formatClock(to.seconds) : S.s_chuong_moi_d272e542), {
       id: "jump",
       duration: 8000,
       // Vị trí đã hiện trong trình phát; thông báo chỉ xác nhận và giữ MỘT đường quay về.
       action: {
-        label: "Quay lại",
+        label: S.s_quay_lai_6d793582,
         onClick: () => goBackRef.current(),
       },
     });
@@ -653,7 +654,7 @@ export function PlayerProvider({
         const offline = native.musicOffline;
         if (offline !== lastOffline) {
           // Như máy tính (Studio báo khi tải nhạc dừng vì mất mạng): nói một lần lúc nhạc vừa bị giữ lại, không im lặng.
-          if (offline) toast.warning("Chưa tải được nhạc", { id: "music-offline", description: offline });
+          if (offline) toast.warning(S.s_chua_tai_duoc_nhac_e5f3ccb5, { id: "music-offline", description: offline });
           lastOffline = offline;
           setMusicOffline(offline);
         }
@@ -993,7 +994,7 @@ export function PlayerProvider({
   const finishedToast = useCallback(() => {
     // Màn "Đang nghe" đang mở thì khối trong màn đã nói (kèm "Nghe lại từ đầu"): một chỗ báo, không thêm toast (soát UX 03-10).
     if (refs.current.expanded) return;
-    toast("Đã nghe hết sách", { id: "finished", duration: 8000, action: { label: "Nghe lại từ đầu", onClick: () => restartRef.current() } });
+    toast(S.s_da_nghe_het_sach_2fefde33, { id: "finished", duration: 8000, action: { label: S.s_nghe_lai_tu_dau_e251d632, onClick: () => restartRef.current() } });
   }, []);
   const caughtUpToast = useCallback(() => {
     if (refs.current.expanded) return;
@@ -1045,7 +1046,7 @@ export function PlayerProvider({
         ? newerElsewhere(book?.state.last, refs.current.stamp, { chapterId: current.chapterId, seconds: engine.time })
         : null;
       if (away && refs.current.queue.some((chapter) => chapter.id === away.chapterId && canPlay(chapter))) {
-        jumpToRef.current(away.chapterId, away.seconds, `Nghe tiếp từ chỗ thiết bị khác đã nghe tới (${formatClock(away.seconds)})`);
+        jumpToRef.current(away.chapterId, away.seconds, S.s_nghe_tiep_tu_cho_thiet_bi_khac_da_nghe_toi_fd51588a(formatClock(away.seconds)));
         return;
       }
       resumeHere();
@@ -1215,9 +1216,9 @@ export function PlayerProvider({
       const queue = refs.current.queue;
       const waiting = direction === 1 ? queue[queue.findIndex((chapter) => chapter.id === current.chapterId) + 1] : undefined;
       if (waiting && !canPlay(waiting)) {
-        toast("Chương sau chưa có audio", {
+        toast(S.s_chuong_sau_chua_co_audio_e17e3d72, {
           duration: 8000,
-          action: { label: "Đọc chương ấy", onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
+          action: { label: S.s_doc_chuong_ay_7699b649, onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
         });
       }
       return;
@@ -1354,7 +1355,7 @@ export function PlayerProvider({
     if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
     const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
     close();
-    toast.info(`“${book.title}” đã rời Thư viện vì đã bỏ ghép ${computer || "máy kia"}`);
+    toast.info(S.s_0_da_roi_thu_vien_vi_da_bo_ghep_1_901be30e(book.title, computer || S.s_may_kia_d1eb7142));
   }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);
@@ -1523,7 +1524,7 @@ export function PlayerProvider({
         void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
           .then((answer) => {
             if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
-            const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
+            const message = S.s_may_0_khong_tra_loi_tat_hay_mat_mang_chuon_e92480f9(remote.computer || "kia");
             setError((current) => (current === fallback ? message : current));
             // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
             const chapterId = refs.current.track?.chapterId;

@@ -133,7 +133,7 @@ def test_mode_switch_labels_agree_on_all_three_platforms():
 def test_mode_switch_rule_goes_red_when_one_platform_changes_a_word():
     """Kiểm lực: chính lỗi "Bìa" -> "Nghe" của Qt (các mục a-c không bắt được) và cùng lỗi ở hai nền kia phải thành vấn đề."""
     tool = _tool()
-    qt, android, web = (path.read_bytes().decode("utf-8") for path in (tool.QT_PLAYER, tool.ANDROID_PLAYER, tool.WEB_PLAYER))
+    qt, android, web = (tool.up.expand(path.read_bytes().decode("utf-8"), language) for path, language in zip((tool.QT_PLAYER, tool.ANDROID_PLAYER, tool.WEB_PLAYER), ("qml", "kt", "ts")))
     assert 'labels: ["Nghe",' in qt and 'listOf("Nghe", "Đọc theo")' in android and '["Nghe", false]' in web
     assert tool.mode_switch_findings()[1] == []
     qt_bad = tool.mode_switch_findings(qt_src=qt.replace('labels: ["Nghe",', 'labels: ["Bìa",'))[1]

@@ -18,7 +18,7 @@ object Mp3Export {
     private const val NAME_BYTES = 255
 
     /** Người dùng bấm "Dừng" (hay việc bị thay bằng lượt xuất mới). */
-    class Stopped : Exception("Đã dừng xuất")
+    class Stopped : Exception(S.s_da_dung_xuat_ab8ac9d1)
 
     /** Câu cho người dùng: sách không có gì để xuất, chỗ lưu không ghi được. */
     class Refused(message: String) : Exception(message)
@@ -66,7 +66,7 @@ object Mp3Export {
             val candidate = "$name ($number)"
             if (!exists(candidate)) return candidate
         }
-        throw Refused("Chỗ đã chọn có quá nhiều bản xuất cùng tên")
+        throw Refused(S.s_cho_da_chon_co_qua_nhieu_ban_xuat_cung_ten_a37afa11)
     }
 
     /** Nơi lưu là một thư mục thường (test JVM, bài thử trên máy): "<tên>.part" rồi đổi tên, như máy tính. */
@@ -76,7 +76,7 @@ object Mp3Export {
             var fresh = freshFolderName(name) { File(root, it).exists() }
             var dir = File(root, fresh)
             while (!dir.mkdir()) {
-                if (!dir.exists()) throw Refused("Chưa tạo được thư mục trong chỗ đã chọn")
+                if (!dir.exists()) throw Refused(S.s_chua_tao_duoc_thu_muc_trong_cho_da_chon_8b406ffc)
                 fresh = freshFolderName(name) { File(root, it).exists() }
                 dir = File(root, fresh)
             }
@@ -98,7 +98,7 @@ object Mp3Export {
                 val final = File(dir, name)
                 if (!part.renameTo(final)) {
                     final.delete()
-                    if (!part.renameTo(final)) throw Refused("Chưa ghi được $name")
+                    if (!part.renameTo(final)) throw Refused(S.s_chua_ghi_duoc_0_96798ec8(name))
                 }
             }
         }
@@ -144,7 +144,7 @@ object Mp3Export {
     }
 
     /** File ghi công nhạc nền cạnh các chương (`export.CREDITS_FILE` của máy tính). */
-    const val CREDITS_FILE = "Ghi công nhạc nền.txt"
+    const val CREDITS_FILE = S.s_ghi_cong_nhac_nen_txt_7e007e4b
 
     /** Đuôi file chương của bản xuất kèm nhạc nền: điện thoại không có bộ mã hoá MP3 (chỉ AAC có sẵn), nên chương đã trộn nhạc là `.m4a`. */
     const val MIXED_EXTENSION = ".m4a"
@@ -185,20 +185,20 @@ object Mp3Export {
      * tính, số thứ tự đếm trên các chương ấy. `drawnCover`: PNG bìa giao diện tự vẽ, chỉ dùng khi sách không có bìa thật.
      */
     fun plan(id: String, drawnCover: ByteArray? = null, chapterIds: List<Int>? = null): Plan {
-        val book = Store.manifest(id) ?: throw Refused("Không tìm thấy sách này trên điện thoại")
+        val book = Store.manifest(id) ?: throw Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
         val chapters = book.optJSONArray("chapters")
         val listenable = ArrayList<JSONObject>()
         for (index in 0 until (chapters?.length() ?: 0)) {
             val chapter = chapters!!.optJSONObject(index) ?: continue
             if (chapter.optBoolean("available") && chapter.optString("file").isNotEmpty()) listenable += chapter
         }
-        if (listenable.isEmpty()) throw Refused("Sách chưa có chương nào nghe được để xuất")
+        if (listenable.isEmpty()) throw Refused(S.s_sach_chua_co_chuong_nao_nghe_duoc_de_xuat_1cb391aa)
         val planned = listenable.mapIndexedNotNull { index, chapter ->
             val file = runCatching { Store.file(id, chapter.optString("file")) }.getOrNull()?.takeIf { it.isFile } ?: return@mapIndexedNotNull null
             Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file, chapter.optInt("id", index + 1))
         }
         val selected = if (chapterIds == null) planned else planned.filter { it.id in chapterIds }
-        if (selected.isEmpty() || chapterIds?.any { wanted -> planned.none { it.id == wanted } } == true) throw Refused("Bạn hãy chọn các chương nghe được để xuất.")
+        if (selected.isEmpty() || chapterIds?.any { wanted -> planned.none { it.id == wanted } } == true) throw Refused(S.s_ban_hay_chon_cac_chuong_nghe_duoc_de_xuat_753d6d45)
         val (cover, coverName) = coverOf(id, drawnCover)
         return Plan(
             title = book.optString("title").ifEmpty { id },

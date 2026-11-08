@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.CoverRef
 
@@ -15,7 +17,7 @@ data class EditChapter(val id: Long, val title: String, val subtitle: String = "
 data class EditSnapshot(
     val id: String, val title: String, val author: String = "", val chapters: List<EditChapter> = emptyList(),
     val cover: CoverRef? = null, val textOnly: Boolean = true, val sendable: Boolean = false,
-    val holder: String = "máy tính", val pending: Int = 0, val syncNote: String = "",
+    val holder: String = S.s_may_tinh_8eafc226, val pending: Int = 0, val syncNote: String = "",
     /** Số thay đổi của người nghe trên cuốn này (áp ngay + chờ Studio, `BookEdits.count`): "Bỏ mọi thay đổi (N)" chỉ hiện khi khác 0. */
     val edits: Int = 0,
 )
@@ -54,18 +56,18 @@ object EditLogic {
     )
 
     fun validate(diff: EditDiff): String? {
-        if (diff.title != null && tidy(diff.title).isEmpty()) return "Bạn hãy nhập tên sách."
-        if (diff.chapters.any { tidy(it.title).isEmpty() }) return "Bạn hãy nhập tên chương."
+        if (diff.title != null && tidy(diff.title).isEmpty()) return S.s_ban_hay_nhap_ten_sach_da2b7a84
+        if (diff.chapters.any { tidy(it.title).isEmpty() }) return S.s_ban_hay_nhap_ten_chuong_e78e5b32
         val fields = listOfNotNull(diff.title, diff.author) + diff.chapters.flatMap { listOf(it.title, it.subtitle) }
-        if (fields.any { it.codePointCount(0, it.length) > 160 }) return "Tên quá dài. Bạn hãy dùng tối đa 160 ký tự."
+        if (fields.any { it.codePointCount(0, it.length) > 160 }) return S.s_ten_qua_dai_ban_hay_dung_toi_da_160_ky_tu_51872335
         return null
     }
 
     /** Câu đầu của lời lỗi khi lưu hỏng, theo thứ đang lưu (cùng chữ với lời báo của web, listen/EditBook.tsx). */
     fun failure(diff: EditDiff): String = when {
-        diff.title != null -> "Chưa đổi được tên sách."
-        diff.author != null -> "Chưa đổi được tác giả."
-        else -> "Chưa đổi được tên chương."
+        diff.title != null -> S.s_chua_doi_duoc_ten_sach_cbfa6bb5
+        diff.author != null -> S.s_chua_doi_duoc_tac_gia_3e777e8e
+        else -> S.s_chua_doi_duoc_ten_chuong_01cae915
     }
 }
 
@@ -121,10 +123,10 @@ object ReadingText {
 
     /** Lời sau khi lưu: đoạn đang đọc nói nốt cách cũ, từ đoạn sau mới là cách mới (web: toast của ReadingForm). */
     fun saved(surface: String, spoken: String): String =
-        if (spoken.isNotEmpty()) "“$surface” sẽ đọc là “$spoken” từ đoạn sau" else "“$surface” đọc lại như chữ trong sách từ đoạn sau"
+        if (spoken.isNotEmpty()) S.s_0_se_doc_la_1_tu_doan_sau_da097218(surface, spoken) else S.s_0_doc_lai_nhu_chu_trong_sach_tu_doan_sau_bb73a28d(surface)
 
-    const val HINT = "Dạy cách đọc từ (thường là tên riêng). Chữ giữ nguyên."
-    const val DISCARD_HINT = "Sách trở về đúng như người làm sách đã đóng gói."
+    const val HINT = S.s_day_cach_doc_tu_thuong_la_ten_rieng_chu_gi_69023eb0
+    const val DISCARD_HINT = S.s_sach_tro_ve_dung_nhu_nguoi_lam_sach_da_don_f3a48d43
 }
 
 @Immutable

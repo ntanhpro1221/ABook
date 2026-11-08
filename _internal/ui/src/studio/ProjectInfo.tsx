@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { Dialog } from "@/shared/ui";
 import { formatClock, formatDate, formatRelative } from "@/shared/format";
 import type { BookSummary } from "./api";
@@ -11,15 +12,15 @@ export function projectDetails(book: BookSummary): string[] {
     book.settings.profileLabel,
     // Model đã phân tích cuốn này - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
     book.settings.analyzer ? analyzerLabel(book.settings.analyzer) : "",
-    book.createdAt ? `Tạo ${formatDate(book.createdAt)}` : "",
-    book.position ? `Nghe lần cuối ${formatRelative(book.position.at)} ở ${formatClock(book.position.seconds)}` : "",
+    book.createdAt ? S.s_tao_0_51af33c6(formatDate(book.createdAt)) : "",
+    book.position ? S.s_nghe_lan_cuoi_0_o_1_1a74586f(formatRelative(book.position.at), formatClock(book.position.seconds)) : "",
   ].filter(Boolean);
 }
 
 export function ProjectInfoDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
   const details = projectDetails(book);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Chi tiết dự án" description={book.title}>
+    <Dialog open={open} onOpenChange={onOpenChange} title={S.s_chi_tiet_du_an_c4b7fea0} description={book.title}>
       <ul className="space-y-1.5 text-sm text-fg-2">
         {details.map((line) => (
           <li key={line}>{line}</li>

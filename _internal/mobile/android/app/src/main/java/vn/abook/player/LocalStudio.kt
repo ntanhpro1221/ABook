@@ -64,7 +64,7 @@ object LocalStudio {
 
     /** `my_music_view` của server.py: danh sách bài đã nhập + có bộ phân tích âm thanh chưa. */
     fun musicView(): JSONObject {
-        val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
+        val store = musicStore ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)
         val view = JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
         // Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime): tải một lần khi người dùng bấm, cùng hình `module` với máy tính.
         student?.let { view.put("module", it.status()) }
@@ -95,27 +95,27 @@ object LocalStudio {
 
     /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống. */
     private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean, cancel: Boolean): Pair<Int, Any?> {
-        val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
+        val store = musicStore ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)
         return when {
             method == "POST" && download -> {
                 // Người dùng bấm "Tải bộ phân tích": chạy ở luồng riêng, giao diện hỏi lại view để thấy tiến độ.
-                (student ?: throw Api(404, "Không có đường dẫn này")).start()
+                (student ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)).start()
                 200 to musicView()
             }
             method == "POST" && cancel -> {
                 // Người dùng bấm Huỷ khi đang tải: dừng ở nhịp đọc kế, phần đã tải giữ để lần sau làm tiếp.
-                (student ?: throw Api(404, "Không có đường dẫn này")).cancel()
+                (student ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)).cancel()
                 200 to musicView()
             }
             method == "POST" && reanalyse -> {
                 // Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật Phân tích nhạc: không bao giờ tự chạy.
                 if (!store.analyzerAvailable()) throw Api(409, MusicStore.NO_ANALYZER)
-                (student ?: throw Api(404, "Không có đường dẫn này")).reanalyse()
+                (student ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)).reanalyse()
                 200 to musicView()
             }
             method == "GET" && digest == null && !analyze -> 200 to musicView()
             method == "DELETE" && digest != null -> {
-                if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
+                if (!store.remove(digest)) throw Api(404, S.s_bai_nay_khong_con_trong_nhac_cua_toi_07833cb0)
                 Playback.onMain { MusicBed.refreshMine() }
                 200 to musicView()
             }
@@ -124,7 +124,7 @@ object LocalStudio {
                 val done = store.analyzePending()
                 200 to musicView().put("analysed", done)
             }
-            else -> throw Api(404, "Không có đường dẫn này")
+            else -> throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)
         }
     }
 
@@ -132,7 +132,7 @@ object LocalStudio {
         val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
         if (method == "GET" && path == "/api/music/playlists") return 200 to playlistsView()
         MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null, it.groups[5] != null) }
-        val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
+        val match = ROUTE.matchEntire(path) ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)
         val id = match.groupValues[1]
         val rest = match.groupValues[2]
         // Hai đường cần MẠNG (tìm bìa, tải bìa đã chọn) chạy ngoài khoá: vài giây chờ nguồn ảnh không được chặn các lần sửa khác.
@@ -149,7 +149,7 @@ object LocalStudio {
             }
             return synchronized(lock) { 200 to setCover(dir, raw) }
         }
-        val handler = route(method, rest) ?: throw Api(404, "Không có đường dẫn này")
+        val handler = route(method, rest) ?: throw Api(404, S.s_khong_co_duong_dan_nay_9da2ede3)
         val dir = editable(id)
         // Mỗi cuốn một lần sửa một lúc: đọc-sửa-ghi của hai yêu cầu không được chen nhau.
         return synchronized(lock) { 200 to handler(dir, body) }
@@ -157,7 +157,7 @@ object LocalStudio {
 
     /** Thư mục cuốn mà người nghe sửa được: mọi cuốn trên máy (đã tải, mở từ file, hay nghe thẳng chỉ có `stream.json`); không có thì 404. */
     private fun editable(id: String): java.io.File {
-        if (Store.rawManifest(id) == null && Store.streamManifest(id) == null) throw Api(404, "Không tìm thấy sách này trong thư viện")
+        if (Store.rawManifest(id) == null && Store.streamManifest(id) == null) throw Api(404, S.s_khong_tim_thay_sach_nay_trong_thu_vien_74a995af)
         return Store.bookDir(id)
     }
 
@@ -166,7 +166,7 @@ object LocalStudio {
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
         CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let {
-            return { _, _ -> throw Api(404, "File dự án không kèm từng câu của chương - đọc chữ trong sách") }
+            return { _, _ -> throw Api(404, S.s_file_du_an_khong_kem_tung_cau_cua_chuong_d_d856bdf2) }
         }
         SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
@@ -210,7 +210,7 @@ object LocalStudio {
     /** PUT /title {title}: `App.rename` - làm sạch như `store.clean_title` rồi lớp sửa ghi lại (NFC) hay bỏ khi đúng tên sách. */
     private fun title(dir: java.io.File, body: JSONObject): Any? {
         val cleaned = BookEdits.cleanText(BookEdits.pyText(body.opt("title")), BookEdits.TITLE_MAX, normalize = false)
-        if (cleaned.isEmpty()) throw BookEdits.EditsError("Tên sách không được để trống")
+        if (cleaned.isEmpty()) throw BookEdits.EditsError(S.s_ten_sach_khong_duoc_de_trong_5c7b1ef8)
         return JSONObject().put("title", BookEdits.setTitle(dir, cleaned))
     }
 
@@ -240,7 +240,7 @@ object LocalStudio {
         val character = BookEdits.pyStrip(BookEdits.pyStr(if (body.has("character")) body.opt("character") else "")).let {
             if (it.codePointCount(0, it.length) > 200) it.substring(0, it.offsetByCodePoints(0, 200)) else it
         }
-        if (character.isEmpty() || character.uppercase(java.util.Locale.ROOT) == "NARRATOR") throw BookEdits.EditsError("Thiếu nhân vật")
+        if (character.isEmpty() || character.uppercase(java.util.Locale.ROOT) == "NARRATOR") throw BookEdits.EditsError(S.s_thieu_nhan_vat_1605a34d)
         // Tên gõ qua phép kiểm của máy tính (`_checked_name`): NFC, bỏ ký tự vô hình, báo khi quá dài / trùng người khác / tên dành riêng; rỗng = trở về tên gốc.
         val (_, _, cast) = fresh(dir)
         val mine = BookWishes.characterKey(character)
@@ -265,10 +265,10 @@ object LocalStudio {
         fun text(value: Any?): String? = when {
             value == null || value === JSONObject.NULL -> null
             value is String -> value
-            else -> throw BookEdits.EditsError("Tên chương phải là chữ")
+            else -> throw BookEdits.EditsError(S.s_ten_chuong_phai_la_chu_5920fb22)
         }
         val (newTitle, newSubtitle) = text(title) to text(subtitle)
-        return BookEdits.setChapterTitle(dir, chapter.toLongOrNull() ?: throw BookEdits.EditsError("Không có chương này trong sách"), newTitle, newSubtitle)
+        return BookEdits.setChapterTitle(dir, chapter.toLongOrNull() ?: throw BookEdits.EditsError(S.s_khong_co_chuong_nay_trong_sach_11e1c7d3), newTitle, newSubtitle)
     }
 
     /**
@@ -297,7 +297,7 @@ object LocalStudio {
     private fun reading(dir: java.io.File, body: JSONObject): JSONObject {
         val surface = body.opt("surface")
         val spoken = if (body.has("spoken")) body.opt("spoken") else ""
-        if (surface !is String || spoken !is String) throw BookEdits.EditsError("Thiếu từ hoặc cách đọc")
+        if (surface !is String || spoken !is String) throw BookEdits.EditsError(S.s_thieu_tu_hoac_cach_doc_e8396cca)
         BookEdits.setReading(dir, surface, spoken)
         vn.abook.player.readaloud.ReadAloud.readingsChanged(dir.name)
         return BookEdits.readingsView(EditsSync.experienced(dir))
@@ -321,10 +321,10 @@ object LocalStudio {
     /** PUT /skip {line, chapters, skip}: người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý - dòng bị bỏ khỏi phần đọc của các chương ấy,
      *  chữ không đổi (`server.put_skip_line`). */
     private fun skipLine(dir: java.io.File, body: JSONObject): JSONObject {
-        val line = body.opt("line") as? String ?: throw BookEdits.EditsError("Dòng cần bỏ phải là chữ.")
+        val line = body.opt("line") as? String ?: throw BookEdits.EditsError(S.s_dong_can_bo_phai_la_chu_b5c011ca)
         val chapters = body.opt("chapters") as? JSONArray
         val ids = chapters?.let { array -> (0 until array.length()).map { array.opt(it) } }
-        if (ids == null || ids.any { it !is Int && it !is Long }) throw BookEdits.EditsError("Không có chương này trong sách")
+        if (ids == null || ids.any { it !is Int && it !is Long }) throw BookEdits.EditsError(S.s_khong_co_chuong_nay_trong_sach_11e1c7d3)
         return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
@@ -342,14 +342,14 @@ object LocalStudio {
         try {
             alternatives(editable(id), key) as JSONObject
         } catch (error: Api) {
-            throw BookEdits.EditsError(error.message ?: "Không thấy đoạn nhạc này trong sách.")
+            throw BookEdits.EditsError(error.message ?: S.s_khong_thay_doan_nhac_nay_trong_sach_cbf90189)
         }
     }
 
     /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy (playlist: mã, "mine", "off" = tắt, null = để máy chọn). */
     private fun music(dir: java.io.File, body: JSONObject): JSONObject {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
-            throw BookEdits.EditsError("Sách đóng gói chỉ đổi được bật/tắt, mức nhạc, đoạn im, bài và danh sách nhạc.")
+            throw BookEdits.EditsError(S.s_sach_dong_goi_chi_doi_duoc_bat_tat_muc_nha_5b4dae4f)
         }
         return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } },
             musicStore?.let { store -> { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } } }))
@@ -385,7 +385,7 @@ object LocalStudio {
         val book = BookEdits.rawBook(dir)
         val edits = BookEdits.load(dir)
         val cues = BookEdits.musicView(book, edits).getJSONArray("cues")
-        if ((0 until cues.length()).none { cues.getJSONObject(it).getString("key") == key }) throw Api(404, "Không thấy đoạn nhạc này trong sách.")
+        if ((0 until cues.length()).none { cues.getJSONObject(it).getString("key") == key }) throw Api(404, S.s_khong_thay_doan_nhac_nay_trong_sach_cbf90189)
         val current = edits.optJSONObject("music")?.optJSONObject("pins")?.optString(key, "")?.ifEmpty { null } ?: BookEdits.baseLinks(book)[key]
         val items = (musicStore?.entries() ?: emptyList()).filter { it.getString("link") != current }.map { track ->
             JSONObject().put("link", track.getString("link")).put("title", track.getString("title")).put("creator", track.getString("creator"))
@@ -399,29 +399,29 @@ object LocalStudio {
     // ---- ý muốn chờ Studio (docs/EDITING.md, P2a): từng đường theo đúng server.py, câu báo lỗi và mã trạng thái y hệt -------------
 
     private val PRONUNCIATION_PROBLEMS = mapOf(
-        VietnameseReading.MULTI_WORD to "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ.",
-        VietnameseReading.NOT_VIETNAMESE to "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ.",
+        VietnameseReading.MULTI_WORD to S.s_chi_sua_duoc_cach_doc_cua_mot_tu_cach_doc_2369cd55,
+        VietnameseReading.NOT_VIETNAMESE to S.s_cach_doc_phai_la_cac_am_tiet_tieng_viet_no_74ea3ba7,
     )
     private val LINE_PROBLEMS = mapOf(
-        BookWishes.UNKNOWN_LINE to "Không còn câu này trong sách.",
-        BookWishes.SOURCE_CHANGED to "Chữ của câu này đã đổi - tải lại chương.",
-        BookWishes.BAD_KIND to "Loại đoạn phải là lời kể, lời thoại hay nội tâm.",
-        BookWishes.BAD_EMOTION to "Cảm xúc này không có trong bộ giọng.",
-        BookWishes.NOT_SPEECH to "Lời kể không có người nói - đổi thành lời thoại trước.",
-        BookWishes.NO_VOICE to "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
-        BookWishes.BAD_TEXT to "Chữ đem đọc phải có chữ cái, không ký tự lạ, và không dài quá bốn lần câu gốc.",
+        BookWishes.UNKNOWN_LINE to S.s_khong_con_cau_nay_trong_sach_2d609e4e,
+        BookWishes.SOURCE_CHANGED to S.s_chu_cua_cau_nay_da_doi_tai_lai_chuong_a8666675,
+        BookWishes.BAD_KIND to S.s_loai_doan_phai_la_loi_ke_loi_thoai_hay_noi_69b997f9,
+        BookWishes.BAD_EMOTION to S.s_cam_xuc_nay_khong_co_trong_bo_giong_4e27fd3e,
+        BookWishes.NOT_SPEECH to S.s_loi_ke_khong_co_nguoi_noi_doi_thanh_loi_th_fd8a4f85,
+        BookWishes.NO_VOICE to S.s_nguoi_nay_chua_co_giong_trong_sach_chua_no_60892cd0,
+        BookWishes.BAD_TEXT to S.s_chu_dem_doc_phai_co_chu_cai_khong_ky_tu_la_599ae6ba,
     )
     private val VOICE_PROBLEMS = mapOf(
-        BookWishes.UNKNOWN_CHARACTER to "Không có nhân vật này trong sách.",
-        BookWishes.NARRATOR_VOICE_ONLY to "Người kể chỉ đổi được giọng, không có giới để đổi.",
-        BookWishes.NO_VOICE to "Nhân vật này chưa có giọng (chưa qua bước phân vai) - chưa đổi được.",
-        BookWishes.BAD_GENDER to "Giới phải là nam hoặc nữ.",
+        BookWishes.UNKNOWN_CHARACTER to S.s_khong_co_nhan_vat_nay_trong_sach_7f5f7050,
+        BookWishes.NARRATOR_VOICE_ONLY to S.s_nguoi_ke_chi_doi_duoc_giong_khong_co_gioi_cdaa071d,
+        BookWishes.NO_VOICE to S.s_nhan_vat_nay_chua_co_giong_chua_qua_buoc_p_728f8be5,
+        BookWishes.BAD_GENDER to S.s_gioi_phai_la_nam_hoac_nu_bd1b754b,
     )
     private val SPEAKER_PROBLEMS = mapOf(
-        BookWishes.UNKNOWN_LINE to "Không còn câu này trong sách.",
-        BookWishes.SOURCE_CHANGED to "Chữ của câu này đã đổi từ lúc máy chấm - tải lại danh sách việc.",
-        BookWishes.NOT_SPEECH to "Câu này là lời kể, không có người nói để đổi.",
-        BookWishes.NO_VOICE to "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
+        BookWishes.UNKNOWN_LINE to S.s_khong_con_cau_nay_trong_sach_2d609e4e,
+        BookWishes.SOURCE_CHANGED to S.s_chu_cua_cau_nay_da_doi_tu_luc_may_cham_tai_1b334526,
+        BookWishes.NOT_SPEECH to S.s_cau_nay_la_loi_ke_khong_co_nguoi_noi_de_do_1d659a5d,
+        BookWishes.NO_VOICE to S.s_nguoi_nay_chua_co_giong_trong_sach_chua_no_60892cd0,
     )
     private val NEW_GENDERS = setOf("male", "female", "unknown")
 
@@ -453,13 +453,13 @@ object LocalStudio {
     /** `_withdraw` của server.py cho ý muốn chờ Studio: rút đúng lần bấm ấy, ý muốn nó thay (`replaced`) trở lại. */
     private fun withdraw(dir: java.io.File, section: String, keys: List<String>, body: JSONObject): Any? {
         val at = requestedAt(body)
-        if (keys.isEmpty() || at <= 0) throw Api(400, "Thiếu quyết định cần hoàn tác")
+        if (keys.isEmpty() || at <= 0) throw Api(400, S.s_thieu_quyet_dinh_can_hoan_tac_e1037df2)
         val mine = BookWishes.madeAt(dir, section, keys, at)
         if (mine.isEmpty()) {
             // Đã gửi về máy giữ sách (gửi xong là gỡ khỏi lớp sửa): nhờ máy ấy rút đúng thao tác này, lần gửi kế mang đi.
             val asked = EditsSync.retract(dir, section, keys, at)
             if (asked.isNotEmpty()) return JSONObject().put("undone", asked.size).put("restored", false).put("sent", true)
-            throw Api(409, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+            throw Api(409, S.s_quyet_dinh_nay_da_duoc_thay_bang_mot_lua_c_52d7dad8)
         }
         val removed = BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("undone", removed.size).put("restored", false)
@@ -468,27 +468,27 @@ object LocalStudio {
     /** `_checked_reading`: cách đọc người nghe gửi, sau phép kiểm của Studio - nghe được là lưu được. */
     private fun checkedReading(body: JSONObject, surface: String): String {
         val raw = field(body, "spokenForm")
-        if (surface.isEmpty() || BookEdits.pyStrip(raw).isEmpty()) throw Api(400, "Thiếu tên hoặc cách đọc")
+        if (surface.isEmpty() || BookEdits.pyStrip(raw).isEmpty()) throw Api(400, S.s_thieu_ten_hoac_cach_doc_55cefe36)
         val spoken = typed { NameRules.spoken(raw) }
         val problem = VietnameseReading.problem(surface, spoken) ?: return spoken
         // Gõ theo tai mà sai chính tả ("Hên-kơ"): nói đúng âm tiết sai và mời dùng bản sửa - bản sửa qua đúng phép kiểm vừa từ chối.
         val fixed = VietnameseReading.respelled(spoken)
         if (problem == VietnameseReading.NOT_VIETNAMESE && fixed != spoken && VietnameseReading.problem(surface, fixed) == null) {
-            throw Api(400, "${VietnameseReading.respellingNote(spoken, fixed)} Viết: “$fixed”.", JSONObject().put("suggestion", fixed))
+            throw Api(400, S.s_0_viet_1_c61c4bca(VietnameseReading.respellingNote(spoken, fixed), fixed), JSONObject().put("suggestion", fixed))
         }
         if (problem == VietnameseReading.NOT_VIETNAMESE) throw Api(400, notVietnameseNote(surface, spoken))
-        throw Api(400, PRONUNCIATION_PROBLEMS[problem] ?: "Cách đọc này không dùng được")
+        throw Api(400, PRONUNCIATION_PROBLEMS[problem] ?: S.s_cach_doc_nay_khong_dung_duoc_1ac16408)
     }
 
     /** `spelling.not_vietnamese_note`: the refusal says why - a reading that only differs from the word by its marks ("Tám" -> "Tâm"), or a syllable
      *  the check does not know. */
     private fun notVietnameseNote(surface: String, spoken: String): String {
-        fun unmarked(text: String) = java.text.Normalizer.normalize(text.lowercase().replace("đ", "d"), java.text.Normalizer.Form.NFD)
+        fun unmarked(text: String) = java.text.Normalizer.normalize(text.lowercase().replace(S.s_d_bf502a39, "d"), java.text.Normalizer.Form.NFD)
             .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
         return if (unmarked(BookWishes.collapse(spoken)) == unmarked(surface)) {
-            "“$spoken” chỉ khác dấu với “$surface” — bạn viết khác hoặc giữ cách đọc gốc."
+            S.s_0_chi_khac_dau_voi_1_ban_viet_khac_hoac_gi_f19b1351(spoken, surface)
         } else {
-            "Chưa nhận được “$spoken” — bạn viết từng âm tiếng Việt, nối bằng gạch nối."
+            S.s_chua_nhan_duoc_0_ban_viet_tung_am_tieng_vi_629aa9cc(spoken)
         }
     }
 
@@ -516,10 +516,10 @@ object LocalStudio {
 
     /** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi - cùng lời với giao diện (`neverText` của readingReach.ts). */
     private fun neverText(surface: String): String =
-        "Ký hiệu trong “$surface” ngăn áp cách đọc — bạn sửa “Chữ đem đọc” của câu."
+        S.s_ky_hieu_trong_0_ngan_ap_cach_doc_ban_sua_c_a20d7d87(surface)
 
     private const val CHAPTERS_SHOWN = 6
-    private const val NOT_RECORDED = "chưa thu nên không phải thu lại"
+    private const val NOT_RECORDED = S.s_chua_thu_nen_khong_phai_thu_lai_413c146b
     private const val WORD_CHAR = "[\\p{L}\\p{N}_]" // `\w` của Python (chữ, số, gạch dưới) - không dùng UNICODE_CHARACTER_CLASS: ICU của Android văng
 
     /**
@@ -531,7 +531,7 @@ object LocalStudio {
      */
     private fun readingReach(dir: java.io.File, body: JSONObject): Any? {
         val surface = typed { NameRules.typedSurface(BookEdits.pyText(body.opt("surface"))) }
-        if (surface.isEmpty()) throw Api(400, "Thiếu chữ cần xem")
+        if (surface.isEmpty()) throw Api(400, S.s_thieu_chu_can_xem_921fffab)
         val book = BookEdits.rawBook(dir)
         val chapters = BookEdits.applyManifest(book, BookEdits.load(dir)).optJSONArray("chapters")?.let { list ->
             (0 until list.length()).mapNotNull { list.optJSONObject(it) }.filter { it.opt("id") is Int || it.opt("id") is Long }
@@ -567,7 +567,7 @@ object LocalStudio {
         val never = if (matched > 0) reached.isEmpty() else !pattern.containsMatchIn(SpokenSymbols.toWords(surface))
         return JSONObject().put("surface", surface).put("lines", matched).put("reached", reached.size).put("recorded", recorded).put("blocked", matched - reached.size)
             .put("never", never)
-            .put("cost", if (recorded > 0) "thu lại $recorded câu" else NOT_RECORDED)
+            .put("cost", if (recorded > 0) S.s_thu_lai_0_cau_07a28f8d(recorded) else NOT_RECORDED)
             .put("chapters", JSONArray(perChapter.entries.take(CHAPTERS_SHOWN).map { (chapterId, counts) ->
                 JSONObject().put("chapterId", chapterId).put("title", titles[chapterId] ?: "").put("lines", counts[0]).put("recorded", counts[1])
             }))
@@ -581,9 +581,9 @@ object LocalStudio {
         val sources: List<Any?> = if (raw is JSONArray) (0 until raw.length()).map { raw.opt(it) } else listOf(body)
         val lines = sources.filterIsInstance<JSONObject>().map { clip(field(it, "stableId"), 120) to clip(field(it, "textSha256"), 64) }
         if (BookEdits.truthy(body.opt("withdraw"))) return withdraw(dir, "speakers", lines.map { it.first }.filter { it.isNotEmpty() }, body)
-        if (speaker.isEmpty() || lines.isEmpty() || !lines.all { it.first.isNotEmpty() && it.second.isNotEmpty() }) throw Api(400, "Thiếu câu hoặc người nói")
+        if (speaker.isEmpty() || lines.isEmpty() || !lines.all { it.first.isNotEmpty() && it.second.isNotEmpty() }) throw Api(400, S.s_thieu_cau_hoac_nguoi_noi_cf80e04b)
         val newGender = BookEdits.pyStrip(field(body, "newGender"))
-        if (newGender.isNotEmpty() && newGender !in NEW_GENDERS) throw Api(400, "Giới của người mới không hợp lệ")
+        if (newGender.isNotEmpty() && newGender !in NEW_GENDERS) throw Api(400, S.s_gioi_cua_nguoi_moi_khong_hop_le_3219a3d2)
         val (_, index, cast) = fresh(dir)
         // "Người mới…": tên qua cùng phép kiểm với "Đổi tên" (server `_checked_name`).
         val person = if (newGender.isEmpty()) speaker else typed {
@@ -593,7 +593,7 @@ object LocalStudio {
         val waiting = BookEdits.load(dir).optJSONObject("wishes")
         for ((stableId, sha) in lines) {
             val problem = BookWishes.speakerProblem(index, cast, stableId, sha, person, newGender, BookWishes.pendingLineKind(waiting, stableId, sha))
-            if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Chưa đổi được người nói câu này")
+            if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: S.s_chua_doi_duoc_nguoi_noi_cau_nay_82bcc30b)
         }
         val at = now()
         // Máy/cửa sổ khác vừa sửa chính câu này khác điều giao diện đã thấy (`seen`): vẫn ghi, báo lại - chỉ khi lệch (server `_edited_elsewhere`).
@@ -667,12 +667,12 @@ object LocalStudio {
         val intensity: Long? = if (rawIntensity is Number) rawIntensity.toLong() else null
         val spoken: String? = (body.opt("spoken") as? String)?.let { BookEdits.cut(it, 2200) }
         if (stableId.isEmpty() || sha.isEmpty() || !(kind.isNotEmpty() || emotion.isNotEmpty() || intensity != null || speaker.isNotEmpty() || spoken != null)) {
-            throw Api(400, "Thiếu câu hoặc thay đổi")
+            throw Api(400, S.s_thieu_cau_hoac_thay_doi_98756156)
         }
-        if (intensity != null && intensity !in 0..BookWishes.INTENSITY_MAX.toLong()) throw Api(400, "Cường độ phải từ 0 tới ${BookWishes.INTENSITY_MAX}")
+        if (intensity != null && intensity !in 0..BookWishes.INTENSITY_MAX.toLong()) throw Api(400, S.s_cuong_do_phai_tu_0_toi_0_14da1ba0(BookWishes.INTENSITY_MAX))
         val (_, index, cast) = fresh(dir)
         val problem = BookWishes.lineProblem(index, cast, stableId, sha, kind, emotion, speaker, spoken)
-        if (problem != null) throw Api(400, LINE_PROBLEMS[problem] ?: "Chưa đổi được cách đọc câu này")
+        if (problem != null) throw Api(400, LINE_PROBLEMS[problem] ?: S.s_chua_doi_duoc_cach_doc_cau_nay_028c6d96)
         val elsewhere = lineElsewhere(dir, stableId, sha, body)
         val at = now()
         BookWishes.requestLine(dir, stableId, sha, kind, emotion, intensity, speaker, spoken, at)
@@ -689,11 +689,11 @@ object LocalStudio {
         val preset = clip(orText(body, "preset"), 120)
         val gender = clip(orText(body, "gender"), 10)
         val avoid = clip(orText(body, "avoid"), 200)
-        if (character.isEmpty()) throw Api(400, "Thiếu nhân vật")
-        if (preset.isEmpty() && gender.isEmpty() && avoid.isEmpty()) throw Api(400, "Thiếu giọng hoặc giới tính")
+        if (character.isEmpty()) throw Api(400, S.s_thieu_nhan_vat_1605a34d)
+        if (preset.isEmpty() && gender.isEmpty() && avoid.isEmpty()) throw Api(400, S.s_thieu_giong_hoac_gioi_tinh_fb23e2a7)
         val (_, _, cast) = fresh(dir)
         val problem = BookWishes.voiceProblem(cast, character, gender, avoid)
-        if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Chưa đổi được giọng nhân vật này")
+        if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: S.s_chua_doi_duoc_giong_nhan_vat_nay_0b88253d)
         val at = now()
         val elsewhere = voiceElsewhere(dir, character, body)
         BookWishes.requestVoice(dir, character, preset, gender, avoid, at)
@@ -709,7 +709,7 @@ object LocalStudio {
     private fun review(dir: java.io.File, body: JSONObject): Any? {
         val verdict = body.opt("verdict")
         val none = verdict == null || verdict === JSONObject.NULL
-        if (!none && verdict != "ok" && verdict != "redo") throw Api(400, "Phán quyết không hợp lệ")
+        if (!none && verdict != "ok" && verdict != "redo") throw Api(400, S.s_phan_quyet_khong_hop_le_d05dc9da)
         val refs = body.opt("lines") as? JSONArray
         val stableIds = refs?.let { list ->
             (0 until minOf(list.length(), 2000)).mapNotNull { list.opt(it) as? JSONObject }
@@ -746,12 +746,12 @@ object LocalStudio {
     private fun mergeCharacters(dir: java.io.File, body: JSONObject): Any? {
         val source = clip(field(body, "from"), 200)
         val target = clip(field(body, "into"), 200)
-        if (source.isEmpty() || target.isEmpty() || BookWishes.aliasKey(source) == BookWishes.aliasKey(target)) throw Api(400, "Chọn hai người khác nhau")
+        if (source.isEmpty() || target.isEmpty() || BookWishes.aliasKey(source) == BookWishes.aliasKey(target)) throw Api(400, S.s_chon_hai_nguoi_khac_nhau_947a4e1f)
         val (_, index, cast) = fresh(dir)
         val found = BookWishes.speakerLines(index, cast, source)
-        if (found.isEmpty()) throw Api(400, "Người này không còn câu nói nào để gộp")
+        if (found.isEmpty()) throw Api(400, S.s_nguoi_nay_khong_con_cau_noi_nao_de_gop_7841c6a8)
         val problem = BookWishes.speakerProblem(index, cast, found[0].first, found[0].second, target)
-        if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Chưa gộp được vào người này")
+        if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: S.s_chua_gop_duoc_vao_nguoi_nay_287693ea)
         val at = now()
         BookWishes.requestSpeakers(dir, found, target, at)
         BookWishes.requestAlias(dir, source, target, at)
@@ -762,7 +762,7 @@ object LocalStudio {
     private fun chapterRetake(dir: java.io.File, chapter: String): Any? {
         val (_, index, _) = fresh(dir)
         val found = BookWishes.chapterLines(index, chapter.toLongOrNull() ?: -1L)
-        if (found.isEmpty()) throw Api(400, "Chương này chưa có câu nào đã thu để thu lại.")
+        if (found.isEmpty()) throw Api(400, S.s_chuong_nay_chua_co_cau_nao_da_thu_de_thu_l_70c44bee)
         val at = now()
         BookWishes.requestRetakes(dir, found, at)
         return JSONObject().put("lines", found.size).put("requestedAt", at)
@@ -773,19 +773,19 @@ object LocalStudio {
         val section = orText(body, "section")
         val key = orText(body, "key")
         val at = requestedAt(body)
-        if (section !in BookWishes.SECTIONS || key.isEmpty() || at <= 0) throw Api(400, "Thiếu thay đổi cần bỏ")
+        if (section !in BookWishes.SECTIONS || key.isEmpty() || at <= 0) throw Api(400, S.s_thieu_thay_doi_can_bo_51103463)
         val group = if (section in BookWishes.byClick) {
             (body.opt("keys") as? JSONArray)?.let { list -> (0 until list.length()).mapNotNull { list.opt(it) as? String } }?.take(5000) ?: emptyList()
         } else emptyList()
         val mine = BookWishes.madeAt(dir, section, group.ifEmpty { listOf(key) }, at)
-        if (mine.isEmpty()) throw Api(409, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
+        if (mine.isEmpty()) throw Api(409, S.s_thay_doi_nay_vua_duoc_thay_bang_mot_lua_ch_321ad0a7)
         BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("withdrawn", mine.size)
     }
 
     /** GET /work, /casting, /pronunciations: bản chụp trong file dự án; 404 khi cuốn không có (cuốn từ file `.abook`, hay file không kèm). */
     private fun projectView(dir: java.io.File, name: String): Any? =
-        ProjectDocument.view(dir, name) ?: throw Api(404, "File dự án này không kèm bản chụp của màn đó")
+        ProjectDocument.view(dir, name) ?: throw Api(404, S.s_file_du_an_nay_khong_kem_ban_chup_cua_man_2c1c8244)
 
     /**
      * GET /narrator-mode: công tắc B "Người kể xưng “tôi” tự kể chuyện" CHỈ ĐỌC. Việc đổi nó ghi thẳng vào sổ dự án và đặt lại bản thu
@@ -805,5 +805,5 @@ object LocalStudio {
 
     /** GET /chapters/<n>/script: chữ đọc theo đã qua lớp sửa. */
     private fun script(dir: java.io.File, chapter: String): Any? =
-        chapter.toLongOrNull()?.let { BookEdits.script(dir, BookEdits.rawBook(dir), it) } ?: throw Api(404, "Không có chương này")
+        chapter.toLongOrNull()?.let { BookEdits.script(dir, BookEdits.rawBook(dir), it) } ?: throw Api(404, S.s_khong_co_chuong_nay_87338800)
 }

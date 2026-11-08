@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import androidx.compose.runtime.Immutable
@@ -29,7 +31,7 @@ object OnlineConsent {
     fun chooseText(voices: List<ConsentVoice>, current: ConsentVoice): String {
         val hasLocal = voices.any { !it.online }
         val hasOnline = voices.any { it.online }
-        val local = "Giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu."
+        val local = S.s_giong_cua_may_doc_ngay_tren_may_nay_khong_de4e8960
         val ask = VoiceText.consent(current.name, current.provider)
         if (!hasOnline) return local
         return if (hasLocal) "$local $ask" else ask
@@ -37,10 +39,10 @@ object OnlineConsent {
 
     /** Chữ nhỏ dưới tên một giọng trong danh sách: nơi đọc, kèm " · đang chọn" cho giọng đang được hỏi. */
     fun tag(voice: ConsentVoice, currentId: String): String =
-        (if (voice.online) "trực tuyến" else "của máy") + if (voice.id == currentId) " · đang chọn" else ""
+        (if (voice.online) S.s_truc_tuyen_ada49667 else S.s_cua_may_f44ee5ca) + if (voice.id == currentId) S.s_dang_chon_4851f502 else ""
 
     /** Tên nút nghe thử của một giọng cho trình đọc màn hình. */
-    fun sampleLabel(playing: Boolean, name: String): String = (if (playing) "Dừng" else "Nghe thử") + " giọng " + VoiceText.spokenName(name)
+    fun sampleLabel(playing: Boolean, name: String): String = (if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065) + S.s_giong_ded5e045 + VoiceText.spokenName(name)
 
     /** Chương mà một lệnh "chương trước / sau" sẽ tới (id), hay null nếu không có. `previous` quá 5 giây thì về đầu chính chương này (Playback.previous). */
     fun stepTarget(chapterIds: List<Int>, currentId: Int?, delta: Int, positionMs: Long): Int? {
@@ -54,7 +56,7 @@ object OnlineConsent {
 /** Khối lỗi của trình phát khi giọng đang chọn không đọc được: lời báo ngắn nói tên giọng, và nút theo tình huống (readAloudVoice.ts `isVoiceStuck`, `localVoiceFor`). */
 object VoiceStuck {
     /** Mở đầu chung của lời báo mất mạng (ClipReader.NO_OFFLINE_LEAD). */
-    const val NO_OFFLINE_LEAD = "Không có mạng - giọng "
+    const val NO_OFFLINE_LEAD = S.s_khong_co_mang_giong_54121622
     private val UNUSABLE = Regex("^Giọng .+ đang không dùng được[.]$")
 
     fun isNoOffline(message: String): Boolean = message.startsWith(NO_OFFLINE_LEAD)
@@ -67,11 +69,11 @@ object VoiceStuck {
 
     /** Giọng đang đọc, viết cho người nghe: tên người, không kèm tên bộ máy đọc; giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (readAloudVoice.ts `voiceCaption`). */
     fun caption(voice: ConsentVoice?): String =
-        if (voice == null || voice.provider == "device") "Giọng đọc của máy" else VoiceText.spokenName(voice.name)
+        if (voice == null || voice.provider == "device") S.s_giong_doc_cua_may_fb991f25 else VoiceText.spokenName(voice.name)
 
-    fun noOfflineMessage(name: String): String = "$NO_OFFLINE_LEAD$name cần mạng."
+    fun noOfflineMessage(name: String): String = S.s_0_1_can_mang_ccab37d8(NO_OFFLINE_LEAD, name)
 
-    fun unusableMessage(name: String): String = "Giọng $name đang không dùng được."
+    fun unusableMessage(name: String): String = S.s_giong_0_dang_khong_dung_duoc_65353328(name)
 
     /** Lời hiện cho bạn: lõi chưa biết tên giọng ("đang chọn") nên giao diện thay bằng tên thật. */
     fun shown(error: String, voiceName: String?): String = when {
@@ -106,8 +108,8 @@ data class OfflineOffer(val light: List<String>, val full: List<String>) {
 
         /** Chữ trên nút tải: "Thử lại" sau lỗi, không thì `button` kèm cỡ cần tải. */
         fun label(button: String, failed: Boolean, bytes: Long): String =
-            if (failed) "Thử lại" else if (bytes > 0) "$button (${formatSize(bytes)})" else button
+            if (failed) S.s_thu_lai_c58d068c else if (bytes > 0) "$button (${formatSize(bytes)})" else button
 
-        fun fullLabel(bytes: Long): String = "Gói đầy đủ (" + formatSize(bytes) + ")"
+        fun fullLabel(bytes: Long): String = S.s_goi_day_du_b5f9d00a + formatSize(bytes) + ")"
     }
 }

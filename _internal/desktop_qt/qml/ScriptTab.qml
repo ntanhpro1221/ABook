@@ -1,6 +1,7 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
-import "ScriptLogic.js" as S
+import "ScriptLogic.js" as Script
 import "CastLogic.js" as Cast
 import "StudioLogic.js" as Studio
 import "TextWrap.js" as TextWrap
@@ -50,16 +51,16 @@ Item {
         work: root.work
         bookId: root.bookId
         wanted: root.visible
-        chapterId: S.startChapter(scripts.chapters, root.asked)
+        chapterId: Script.startChapter(scripts.chapters, root.asked)
     }
     readonly property var chapters: scripts.chapters
     readonly property var script: scripts.data
     readonly property var entry: chapters.find(chapter => chapter.chapterId === scripts.chapterId) || null
-    readonly property var shown: script ? S.visibleLines(script.lines, filter, who || null) : []
-    readonly property var speechRows: shown.filter(item => S.isSpeech(item.line)).map(item => item.line)
+    readonly property var shown: script ? Script.visibleLines(script.lines, filter, who || null) : []
+    readonly property var speechRows: shown.filter(item => Script.isSpeech(item.line)).map(item => item.line)
     readonly property var activeLine: speechRows.find(line => line.stableId === active) || null
-    readonly property var people: S.people(script, added)
-    readonly property int unnamed: script ? S.said(script.lines, S.UNNAMED) : 0
+    readonly property var people: Script.people(script, added)
+    readonly property int unnamed: script ? Script.said(script.lines, Script.UNNAMED) : 0
     readonly property int doubts: script ? script.lines.filter(line => line.hint).length : entry ? entry.hints : 0
     // Chỗ ô tìm chữ khớp (trong câu đang hiện, theo thứ tự đọc): {stableId: [[đầu, cuối]...]}
     readonly property var matches: {
@@ -67,13 +68,13 @@ Item {
         if (!findText.trim()) return out
         for (const item of shown) {
             if (item.context) continue
-            const ranges = S.findRanges(item.line.text, findText)
+            const ranges = Script.findRanges(item.line.text, findText)
             if (ranges.length) out[item.line.stableId] = ranges
         }
         return out
     }
     readonly property var matchIds: Object.keys(matches)
-    readonly property string nowMatch: matchIds.length ? matchIds[S.wrapIndex(findAt, matchIds.length)] : ""
+    readonly property string nowMatch: matchIds.length ? matchIds[Script.wrapIndex(findAt, matchIds.length)] : ""
     readonly property var openLines: script ? script.lines.filter(line => line.editable && !line.wish && !line.hint) : []
     readonly property int doubtful: script ? script.lines.filter(line => line.editable && !line.wish && line.hint).length : 0
     readonly property var group: speechRows.filter(line => selected.indexOf(line.stableId) >= 0)
@@ -112,7 +113,7 @@ Item {
     ListModel { id: lineModel }
     function syncRows() {
         const next = {}, visible = {}
-        for (let i = 0; i < shown.length; ++i) visible[shown[i].line.stableId] = {context: shown[i].context, gap: S.gapBefore(shown, i, filter)}
+        for (let i = 0; i < shown.length; ++i) visible[shown[i].line.stableId] = {context: shown[i].context, gap: Script.gapBefore(shown, i, filter)}
         const keys = script ? script.lines.map(line => line.stableId) : []
         for (const line of script ? script.lines : []) {
             const found = visible[line.stableId]
@@ -231,7 +232,7 @@ Item {
         const many = targets(line)
         const lines = many.filter(item => item.editable && !(item.wish && item.wish.value === person.value))
         if (!lines.length) return
-        if (person.value !== S.UNNAMED && !added.some(item => item.value === person.value)) added = added.concat([person])
+        if (person.value !== Script.UNNAMED && !added.some(item => item.value === person.value)) added = added.concat([person])
         // Chọn trong danh sách (Enter, bấm tên) cũng sang câu kế như phím số
         const after = nextAfter(many)
         scripts.assign(lines, person)
@@ -241,7 +242,7 @@ Item {
     function askRetake(line) {
         const many = targets(line)
         const lines = many.filter(item => item.hasAudio && item.retake !== "pending")
-        if (!lines.length) { Api.toast(S.retakeNone(many)); return }
+        if (!lines.length) { Api.toast(Script.retakeNone(many)); return }
         scripts.retake(lines)
     }
     function openSpeaker(line, anchor) {
@@ -328,7 +329,7 @@ Item {
             objectName: "scriptContentsError"
             width: parent.width
             open: scripts.contents.error !== null && scripts.contents.data === null
-            message: "Bạn hãy kiểm tra kết nối rồi tải lại kịch bản."
+            message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_kich_9c98c8b3
             onRetry: scripts.contents.load()
         }
         EditBookSkeleton {
@@ -336,7 +337,7 @@ Item {
             width: parent.width * 2 / 3
             shape: "rows"
             count: 4
-            label: "Đang tải kịch bản"
+            label: S.s_dang_tai_kich_ban_0eea9c53
         }
         EmptyState {
             objectName: "scriptEmpty"
@@ -344,8 +345,8 @@ Item {
             width: parent.width
             height: visible ? implicitHeight + 40 : 0
             icon: "book-open-text"
-            title: "Chưa có kịch bản"
-            text: "Kịch bản hiện ra khi máy đã phân tích xong chương đầu tiên: câu nào là lời kể, câu nào của ai."
+            title: S.s_chua_co_kich_ban_0692980e
+            text: S.s_kich_ban_hien_ra_khi_may_da_phan_tich_xong_6fe414dd
         }
         Column {
             id: main
@@ -355,7 +356,7 @@ Item {
             Text {
                 objectName: "scriptIntro"
                 width: Math.min(parent.width, 768)
-                text: "Bấm tên để đổi người nói; dấu vàng là câu cần xem."
+                text: S.s_bam_ten_de_doi_nguoi_noi_dau_vang_la_cau_c_bf16b47d
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -367,7 +368,7 @@ Item {
                 Text {
                     width: parent.width
                     topPadding: 4
-                    text: "Thu xong chương sẽ nghe lại được từng câu."
+                    text: S.s_thu_xong_chuong_se_nghe_lai_duoc_tung_cau_f8926561
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -379,7 +380,7 @@ Item {
                 objectName: "scriptChapterError"
                 width: parent.width
                 open: scripts.script.error !== null && !root.script
-                message: "Bạn hãy kiểm tra kết nối rồi tải lại chương này."
+                message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_chuon_a61802ff
                 onRetry: scripts.script.load()
             }
             Column {
@@ -408,7 +409,7 @@ Item {
                         id: notReady
                         x: 24; y: 12
                         width: parent.width - x
-                        text: "Sửa người nói được sau bước phân vai."
+                        text: S.s_sua_nguoi_noi_duoc_sau_buoc_phan_vai_ed1cbb3f
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
@@ -430,7 +431,7 @@ Item {
                             width: Math.min(implicitWidth, firstFlow.width)
                             height: Math.max(32, implicitHeight)
                             verticalAlignment: Text.AlignVCenter
-                            text: "Chương kể ngôi thứ nhất: máy hay nhầm câu của người khác thành của “tôi”."
+                            text: S.s_chuong_ke_ngoi_thu_nhat_may_hay_nham_cau_c_b15169be
                             color: Theme.text2
                             wrapMode: Text.Wrap
                             font.pixelSize: 13
@@ -441,7 +442,7 @@ Item {
                             kind: "ghost"
                             readonly property var first: parent.parent.first
                             readonly property var person: first && root.script ? root.script.cast.find(item => item.value === first.chip) : null
-                            text: first ? "Soát câu của " + (person ? person.label : first.label) : ""
+                            text: first ? S.s_soat_cau_cua_b1475472 + (person ? person.label : first.label) : ""
                             onClicked: root.setWho(first.chip)
                         }
                     }
@@ -462,7 +463,7 @@ Item {
                             Text {
                                 height: 32
                                 verticalAlignment: Text.AlignVCenter
-                                text: "Đang chọn " + root.selected.length + " câu"
+                                text: S.s_dang_chon_b79eb4ba + root.selected.length + S.s_cau_b07e1008
                                 color: Theme.text
                                 font.pixelSize: 13
                                 font.weight: Theme.weightBold
@@ -471,7 +472,7 @@ Item {
                                 width: Math.min(implicitWidth, selectionFlow.width)
                                 height: Math.max(32, implicitHeight)
                                 verticalAlignment: Text.AlignVCenter
-                                text: "- phím số hay chọn người ở một câu trong nhóm gán cả " + root.selected.length + " câu\u00a0·\u00a0Esc bỏ chọn"
+                                text: S.s_phim_so_hay_chon_nguoi_o_mot_cau_trong_nho_342b4e5a + root.selected.length + S.s_cau_u00a0_u00a0esc_bo_chon_7b208736
                                 color: Theme.text2
                                 wrapMode: Text.Wrap
                                 font.pixelSize: 13
@@ -482,8 +483,8 @@ Item {
                                 kind: "ghost"
                                 icon: "refresh-cw"
                                 enabled: root.recordedInGroup > 0 && !scripts.retaking
-                                tip: root.recordedInGroup ? "" : "Các câu đang chọn chưa thu hay đã xin thu lại"
-                                text: root.recordedInGroup ? "Thu lại " + root.recordedInGroup + " câu" : "Chưa có bản thu"
+                                tip: root.recordedInGroup ? "" : S.s_cac_cau_dang_chon_chua_thu_hay_da_xin_thu_283d1f95
+                                text: root.recordedInGroup ? S.s_thu_lai_bceb80c2 + root.recordedInGroup + S.s_cau_b07e1008 : S.s_chua_co_ban_thu_9897618d
                                 onClicked: root.askRetake(root.group[0])
                             }
                         }
@@ -495,8 +496,8 @@ Item {
                     width: parent.width
                     height: visible ? implicitHeight + 40 : 0
                     icon: "book-open-text"
-                    title: S.emptyTitle(root.who, S.whoLabel(root.people, root.who), root.filter)
-                    text: S.emptyText(root.who, root.filter)
+                    title: Script.emptyTitle(root.who, Script.whoLabel(root.people, root.who), root.filter)
+                    text: Script.emptyText(root.who, root.filter)
                 }
                 Column {
                     id: lines
@@ -506,7 +507,7 @@ Item {
                     topPadding: 12
                     Keys.onPressed: event => root.onKey(event)
                     Accessible.role: Accessible.List
-                    Accessible.name: root.script ? "Kịch bản " + root.script.title : ""
+                    Accessible.name: root.script ? S.s_kich_ban_f1bc89e3 + root.script.title : ""
                     Repeater {
                         id: rows
                         model: lineModel
@@ -556,7 +557,7 @@ Item {
                                 onPick: person => root.pick(line, person, true)
                                 onRetake: root.askRetake(line)
                                 onCancelRetake: scripts.cancelRetake([line])
-                                onActiveFocusChanged: if (activeFocus && S.isSpeech(line) && root.active !== line.stableId) root.activate(line)
+                                onActiveFocusChanged: if (activeFocus && Script.isSpeech(line) && root.active !== line.stableId) root.activate(line)
                             }
                         }
                     }
@@ -584,14 +585,14 @@ Item {
                             kind: "ghost"
                             icon: "check"
                             busy: scripts.confirming
-                            text: "Duyệt " + root.openLines.length + " câu"
+                            text: S.s_duyet_9a137351 + root.openLines.length + S.s_cau_b07e1008
                             onClicked: scripts.confirm(root.openLines)
                         }
                         Text {
                             id: footerNote
                             objectName: "scriptFooterNote"
                             width: parent.width
-                            text: root.script ? S.footerNote(root.script, root.openLines.length, root.doubtful) : ""
+                            text: root.script ? Script.footerNote(root.script, root.openLines.length, root.doubtful) : ""
                             color: Theme.text3
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeCaption
@@ -606,14 +607,14 @@ Item {
                         width: nextRow.width + 8
                         height: 40
                         Accessible.role: Accessible.Button
-                        Accessible.name: "Chương sau"
+                        Accessible.name: S.s_chuong_sau_17d1bd20
                         onClicked: root.go(root.script.next)
                         Row {
                             id: nextRow
                             x: 4
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 4
-                            Text { text: "Chương sau"; color: nextChapter.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                            Text { text: S.s_chuong_sau_17d1bd20; color: nextChapter.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                             Icon { anchors.verticalCenter: parent.verticalCenter; name: "skip-forward"; size: 16; color: nextChapter.hovered ? Theme.text : Theme.text2 }
                         }
                     }
@@ -654,7 +655,7 @@ Item {
                         height: Math.max(36, chapterTitle.height + 12)
                         pressScaling: false
                         Accessible.role: Accessible.ComboBox
-                        Accessible.name: "Chương"
+                        Accessible.name: S.s_chuong_2d157977
                         onClicked: chapterMenu.toggle()
                         Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: chapterButton.hovered || chapterMenu.open ? 1 : 0 }
                         Text {
@@ -662,7 +663,7 @@ Item {
                             x: 10
                             width: Math.min(implicitWidth, chapterButton.width - 36)
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.entry ? TextWrap.pretty(S.chapterLabel(root.entry)) : ""
+                            text: root.entry ? TextWrap.pretty(Script.chapterLabel(root.entry)) : ""
                             color: Theme.text
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -681,8 +682,8 @@ Item {
                     IconButton {
                         objectName: "scriptPrevious"
                         icon: "skip-back"
-                        tip: "Chương trước"
-                        Accessible.name: "Chương trước"
+                        tip: S.s_chuong_truoc_4750f9e9
+                        Accessible.name: S.s_chuong_truoc_4750f9e9
                         enabled: !!root.script && !!root.script.previous
                         opacity: enabled ? 1 : 0.4
                         onClicked: root.go(root.script.previous)
@@ -690,8 +691,8 @@ Item {
                     IconButton {
                         objectName: "scriptNext"
                         icon: "skip-forward"
-                        tip: "Chương sau"
-                        Accessible.name: "Chương sau"
+                        tip: S.s_chuong_sau_17d1bd20
+                        Accessible.name: S.s_chuong_sau_17d1bd20
                         enabled: !!root.script && !!root.script.next
                         opacity: enabled ? 1 : 0.4
                         onClicked: root.go(root.script.next)
@@ -700,7 +701,7 @@ Item {
                 Text {
                     visible: root.narrow && !!root.entry && text !== ""
                     width: toolbar.width
-                    text: root.entry ? S.chapterExtras(root.entry) : ""
+                    text: root.entry ? Script.chapterExtras(root.entry) : ""
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
@@ -715,8 +716,8 @@ Item {
                         y: 2
                         leftPadding: 34
                         rightPadding: findCount.width + 16
-                        label: "Tìm chữ trong chương này"
-                        placeholderText: "Tìm chữ trong chương…"
+                        label: S.s_tim_chu_trong_chuong_nay_75ba2c08
+                        placeholderText: S.s_tim_chu_trong_chuong_ca34cb89
                         escapeLocal: text !== ""
                         onTextChanged: { root.findText = text; root.findAt = 0 }
                         onEscaped: text = ""
@@ -734,7 +735,7 @@ Item {
                         anchors.right: parent.right
                         anchors.rightMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
-                        text: S.findCount(root.findText, root.findAt, root.matchIds.length)
+                        text: Script.findCount(root.findText, root.findAt, root.matchIds.length)
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
                         font.features: {"tnum": 1}
@@ -743,9 +744,9 @@ Item {
                 }
                 ChoiceRow {
                     objectName: "scriptFilter"
-                    label: "Hiện câu nào"
+                    label: S.s_hien_cau_nao_959e6c6b
                     value: root.filter
-                    options: [{value: "all", label: "Cả chương"}, {value: "speech", label: "Chỉ lời nói"}, {value: "doubt", label: "Máy nghi\u00a0·\u00a0" + root.doubts}]
+                    options: [{value: "all", label: S.s_ca_chuong_46eb4e7a}, {value: "speech", label: S.s_chi_loi_noi_a7c5728f}, {value: "doubt", label: S.s_may_nghi_u00a0_u00a0_c4362d4a + root.doubts}]
                     onPicked: value => root.setFilter(value)
                 }
             }
@@ -757,9 +758,9 @@ Item {
                 width: parent.width + 4
                 spacing: 4
                 Accessible.role: Accessible.Grouping
-                Accessible.name: "Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả"
+                Accessible.name: S.s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7
                 Repeater {
-                    model: S.legend(root.people, root.unnamed)
+                    model: Script.legend(root.people, root.unnamed)
                     delegate: Interactive {
                         id: chip
                         required property var modelData
@@ -768,7 +769,7 @@ Item {
                         width: chipRow.width + 12
                         height: 28
                         opacity: root.who && !on ? 0.5 : 1
-                        tip: modelData.person.value === S.UNNAMED ? "Câu máy chưa biết ai nói, và vai phụ không tên" : ""
+                        tip: modelData.person.value === Script.UNNAMED ? S.s_cau_may_chua_biet_ai_noi_va_vai_phu_khong_2bf6e97f : ""
                         Accessible.role: Accessible.Button
                         Accessible.name: modelData.person.label
                         Accessible.checked: on
@@ -799,7 +800,7 @@ Item {
                     width: showAllRow.width + 16
                     height: 28
                     Accessible.role: Accessible.Button
-                    Accessible.name: "Xem tất cả"
+                    Accessible.name: S.s_xem_tat_ca_44aeb8cb
                     onClicked: root.setWho(root.who)
                     Rectangle { anchors.fill: parent; radius: height / 2; color: Theme.hover; opacity: showAll.hovered ? 1 : 0 }
                     Row {
@@ -808,7 +809,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 4
                         Icon { anchors.verticalCenter: parent.verticalCenter; name: "x"; size: 12; color: Theme.accentText }
-                        Text { text: "Xem tất cả"; color: Theme.accentText; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+                        Text { text: S.s_xem_tat_ca_44aeb8cb; color: Theme.accentText; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
                     }
                 }
             }
@@ -816,32 +817,32 @@ Item {
                 objectName: "scriptKeys"
                 visible: !!root.script && root.script.castReady && root.people.length > 0 && root.width >= 720
                 width: parent.width
-                label: "Phím tắt"
+                label: S.s_phim_tat_7baaed2f
                 Flow {
                     width: parent.width
                     spacing: 4
-                    Kbd_ { text: "Bàn phím:" ; plain: true }
+                    Kbd_ { text: S.s_ban_phim_3b989b39 ; plain: true }
                     LookKbd { text: "↑" }
                     LookKbd { text: "↓" }
-                    Kbd_ { text: "chọn câu ("; plain: true }
+                    Kbd_ { text: S.s_chon_cau_13758b49; plain: true }
                     LookKbd { text: "Shift" }
-                    Kbd_ { text: "chọn nhiều)\u00a0·"; plain: true }
+                    Kbd_ { text: S.s_chon_nhieu_u00a0_7d614fad; plain: true }
                     LookKbd { text: "1" }
                     Kbd_ { text: "–"; plain: true }
-                    LookKbd { text: String(Math.min(S.HOTKEYS, root.people.length)) }
-                    Kbd_ { text: "gán người theo số rồi sang câu kế\u00a0·"; plain: true }
+                    LookKbd { text: String(Math.min(Script.HOTKEYS, root.people.length)) }
+                    Kbd_ { text: S.s_gan_nguoi_theo_so_roi_sang_cau_ke_u00a0_fa4d3d49; plain: true }
                     LookKbd { text: "Enter" }
-                    Kbd_ { text: "danh sách\u00a0·"; plain: true }
+                    Kbd_ { text: S.s_danh_sach_u00a0_59498158; plain: true }
                     LookKbd { text: "P" }
-                    Kbd_ { text: "nghe câu\u00a0·"; plain: true }
+                    Kbd_ { text: S.s_nghe_cau_u00a0_800673e1; plain: true }
                     LookKbd { text: "R" }
-                    Kbd_ { text: "thu lại câu\u00a0·"; plain: true }
+                    Kbd_ { text: S.s_thu_lai_cau_u00a0_cdca8671; plain: true }
                     LookKbd { text: "/" }
-                    Kbd_ { text: "tìm chữ\u00a0·"; plain: true }
+                    Kbd_ { text: S.s_tim_chu_u00a0_3238c248; plain: true }
                     LookKbd { text: "Ctrl" }
                     Kbd_ { text: "+"; plain: true }
                     LookKbd { text: "Z" }
-                    Kbd_ { text: "hoàn tác"; plain: true }
+                    Kbd_ { text: S.s_hoan_tac_ada0d6cc; plain: true }
                 }
             }
         }
@@ -890,7 +891,7 @@ Item {
         readonly property var line: root.script ? root.script.lines.find(item => item.stableId === root.deliveryLine) || null : null
         // Esc / bấm ra ngoài khi còn lựa chọn chưa lưu: bảng đóng và lựa chọn mất - nói ra thay vì lặng lẽ
         onOpenChanged: if (!open && root.deliveryLine) {
-            if (dirty && !saved) Api.toast("Chưa lưu cách đọc của câu này\nLựa chọn vừa rồi đã bỏ. Mở lại và bấm “Lưu cho câu này” để giữ.")
+            if (dirty && !saved) Api.toast(S.s_chua_luu_cach_doc_cua_cau_nay_lua_chon_vua_15bde49f)
             dirty = false
             root.backTo(root.deliveryLine)
         }

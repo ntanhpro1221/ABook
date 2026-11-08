@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -100,15 +102,15 @@ fun CoverSearchScreen(
     ui: CoverSearchUi, onBack: () -> Unit, setQuery: (String) -> Unit, search: () -> Unit, choose: (FoundCover) -> Unit, pickFile: () -> Unit,
     thumbnail: suspend (String) -> ImageBitmap?,
 ) {
-    BookForm("Tìm ảnh bìa", onBack, "cover_search_screen", footer = {
-        InlineProblem(if (ui.failed.isNotEmpty() && !ui.searching) "Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." else "", search, "cover_sources_problem")
-        InlineProblem(if (ui.unset != null) "Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." else "", ui.unset?.let { found -> { choose(found) } }, "cover_choose_problem")
+    BookForm(S.s_tim_anh_bia_9825b3d1, onBack, "cover_search_screen", footer = {
+        InlineProblem(if (ui.failed.isNotEmpty() && !ui.searching) S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_cac_n_c69012d6 else "", search, "cover_sources_problem")
+        InlineProblem(if (ui.unset != null) S.s_ban_hay_kiem_tra_ket_noi_roi_dat_lai_anh_b_86cb5b41 else "", ui.unset?.let { found -> { choose(found) } }, "cover_choose_problem")
     }) {
-        RowHint("Bạn chọn ảnh từ các nguồn sách hoặc trên máy.", Modifier.padding(top = Dim.s4))
+        RowHint(S.s_ban_chon_anh_tu_cac_nguon_sach_hoac_tren_m_ca23c898, Modifier.padding(top = Dim.s4))
         Spacer(Modifier.height(Dim.s12))
         BookField(
-            null, ui.query, setQuery, "cover_query", description = "Tên sách để tìm bìa", placeholder = "Tên sách (tiếng Anh thường cho nhiều kết quả hơn)",
-            trailing = { TextAction("Tìm", search, "cover_search_go") },
+            null, ui.query, setQuery, "cover_query", description = S.s_ten_sach_de_tim_bia_4f406cde, placeholder = S.s_ten_sach_tieng_anh_thuong_cho_nhieu_ket_qu_82eea1b6,
+            trailing = { TextAction(S.s_tim_bbe47492, search, "cover_search_go") },
         )
         val stage = when {
             ui.searching || !ui.searched -> CoverStage.Searching
@@ -130,12 +132,12 @@ fun CoverSearchScreen(
             when (shown) {
                 CoverStage.Searching -> CoverSkeleton()
                 CoverStage.Failed -> Column(Modifier.fillMaxWidth()) {
-                    InlineProblem("Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa.", search, "cover_search_problem")
+                    InlineProblem(S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_anh_b_887a4046, search, "cover_search_problem")
                 }
                 CoverStage.Nothing -> Column(Modifier.fillMaxWidth().padding(top = Dim.s24).testTag("cover_nothing"), horizontalAlignment = Alignment.CenterHorizontally) {
-                    BasicText("Bạn hãy chọn ảnh trên máy", style = Abook.type.sectionTitle)
+                    BasicText(S.s_ban_hay_chon_anh_tren_may_006585b2, style = Abook.type.sectionTitle)
                     Spacer(Modifier.height(Dim.s16))
-                    PrimaryButton("Chọn ảnh", pickFile, Modifier.fillMaxWidth().testTag("cover_pick_file"))
+                    PrimaryButton(S.s_chon_anh_41ecf092, pickFile, Modifier.fillMaxWidth().testTag("cover_pick_file"))
                 }
                 CoverStage.Found -> CoverGrid(ui, choose, thumbnail)
             }
@@ -175,7 +177,7 @@ private fun FoundCoverTile(found: FoundCover, choosing: String?, choose: (FoundC
         Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken)) {
             image?.let { Image(it, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
         }
-        Reveal(busy) { Box(Modifier.fillMaxWidth().semantics { contentDescription = "Đang đặt ảnh bìa" }.testTag("cover_setting")) { CreepProgress() } }
+        Reveal(busy) { Box(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_dat_anh_bia_f4a60e45 }.testTag("cover_setting")) { CreepProgress() } }
         BasicText(found.title, style = Abook.type.caption.copy(color = colors.text), modifier = Modifier.padding(top = Dim.s8))
         BasicText(found.provider, style = Abook.type.caption.copy(color = colors.text3))
     }
@@ -185,7 +187,7 @@ private fun FoundCoverTile(found: FoundCover, choosing: String?, choose: (FoundC
 @Composable
 private fun CoverSkeleton() {
     val colors = Abook.colors
-    Column(Modifier.fillMaxWidth().semantics { contentDescription = "Đang tìm ảnh bìa" }.testTag("cover_searching")) {
+    Column(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_tim_anh_bia_af1f4a20 }.testTag("cover_searching")) {
         for (row in 0 until 2) {
             androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().padding(bottom = Dim.s16), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
                 for (cell in 0 until 2) {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.S
+
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -241,7 +243,7 @@ private fun CueAction(
     Row(
         Modifier.heightIn(min = Dim.s48)
             .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
-            .semantics { if (expanded != null) stateDescription = if (expanded) "Đang mở" else "Đang đóng" }
+            .semantics { if (expanded != null) stateDescription = if (expanded) S.s_dang_mo_98235c77 else S.s_dang_dong_4886d4e7 }
             .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -309,7 +311,7 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
 private fun AddRow(ui: BookMusicUi, onAdd: () -> Unit) {
     val colors = Abook.colors
     ListItem(
-        if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else MusicText.ADD_LABEL, Modifier,
+        if (ui.importing) S.s_dang_them_0_1_84372256(ui.done, ui.total) else MusicText.ADD_LABEL, Modifier,
         if (ui.importing) null else onAdd, "music_add",
         titleColor = if (ui.importing) colors.text else colors.accentText,
         leading = { PlusIcon(if (ui.importing) colors.text2 else colors.accentText) },
@@ -416,7 +418,7 @@ fun MusicCreditBlock(credit: MusicCredit?) {
         Column(Modifier.fillMaxWidth().padding(top = Dim.s12).bringIntoViewRequester(into).testTag("music_credit")) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
             ListItem(
-                "Đang phát", Modifier, { open = !open }, "music_credit_toggle",
+                S.s_dang_phat_ac2dd0c2, Modifier, { open = !open }, "music_credit_toggle",
                 hint = MusicText.creditLine(shown),
                 trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
             )
@@ -425,11 +427,11 @@ fun MusicCreditBlock(credit: MusicCredit?) {
                     BasicText(MusicText.creditText(shown), style = Abook.type.bodySmall)
                     if (shown.license.isNotEmpty() || shown.licenseUrl.isNotEmpty()) {
                         val label = MusicText.licenseLabel(shown.license, shown.licenseUrl)
-                        if (shown.licenseUrl.isNotEmpty()) ActionRow("Giấy phép", label, { openUri(shown.licenseUrl) }, "music_license")
-                        else ListRow("Giấy phép") { BasicText(label, style = Abook.type.bodySmall) }
+                        if (shown.licenseUrl.isNotEmpty()) ActionRow(S.s_giay_phep_b609ade1, label, { openUri(shown.licenseUrl) }, "music_license")
+                        else ListRow(S.s_giay_phep_b609ade1) { BasicText(label, style = Abook.type.bodySmall) }
                     }
                     if (MusicText.needsModifiedNote(shown.license)) Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8))
-                    if (shown.landing.isNotEmpty()) ActionRow("Trang của bài nhạc", "Mở", { openUri(shown.landing) }, "music_landing")
+                    if (shown.landing.isNotEmpty()) ActionRow(S.s_trang_cua_bai_nhac_50968bde, S.s_mo_741bd2c2, { openUri(shown.landing) }, "music_landing")
                 }
             }
         }

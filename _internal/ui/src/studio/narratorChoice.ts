@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { Voice } from "./api";
 
 // Giọng dẫn của sách kể ngôi thứ nhất (abook/teller_voice.py): người dùng không tự chọn giọng thì để máy chọn cùng giới với người kể
@@ -6,7 +7,7 @@ import type { Voice } from "./api";
 export type TellerGender = "male" | "female";
 
 /** Giới trong danh sách giọng của máy chủ ("Nam" / "Nữ"). */
-const VOICE_GENDER: Record<TellerGender, string> = { male: "Nam", female: "Nữ" };
+const VOICE_GENDER: Record<TellerGender, string> = { male: S.s_nam_22dd59c8, female: S.s_nu_e15bc11c };
 
 export interface NarratorDraft {
   /** Người dùng đã bấm một giọng (hay "Dùng lại" giọng phần trước, hay áp mẫu có ghi giọng kể). */

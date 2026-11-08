@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.formatSize
 
@@ -25,7 +27,7 @@ enum class ExportKind(val wire: String) {
 
 /** Hai dạng file người nghe chọn cho sách đã có tiếng. Sách chỉ có chữ chỉ có M4B (máy đọc cả cuốn rồi ghép), nên không có lựa chọn. */
 enum class ExportFormat(override val key: String, override val label: String) : Choice {
-    Mp3("mp3", "MP3 theo chương"), M4b("m4b", "M4B cả cuốn");
+    Mp3("mp3", S.s_mp3_theo_chuong_a08d3a89), M4b("m4b", S.s_m4b_ca_cuon_2cba5ce9);
 
     fun kind(textOnly: Boolean): ExportKind = if (textOnly) ExportKind.Audiobook else if (this == Mp3) ExportKind.Mp3 else ExportKind.M4b
 }
@@ -158,56 +160,56 @@ object ExportText {
     /** "khoảng 1 giờ 20 phút", "khoảng 12 phút", "dưới 1 phút" (prepareAhead.ts `spokenDuration`). */
     fun spokenDuration(seconds: Long): String {
         val minutes = Math.round(seconds / 60.0).toInt()
-        if (minutes < 1) return "dưới 1 phút"
-        if (minutes < 60) return "khoảng $minutes phút"
+        if (minutes < 1) return S.s_duoi_1_phut_a1dd4f60
+        if (minutes < 60) return S.s_khoang_0_phut_db610fec(minutes)
         val hours = minutes / 60
         val rest = minutes % 60
-        return "khoảng $hours giờ${if (rest != 0) " $rest phút" else ""}"
+        return S.s_khoang_0_gio_1_7ba17859(hours, if (rest != 0) S.s_0_phut_1bea6774(rest) else "")
     }
 
     /** Dòng nói sách dài bao nhiêu và máy cần bao lâu: "12 chương · khoảng 8 giờ nghe · máy cần khoảng 2 giờ 10 phút." */
     fun planText(plan: AudiobookPlan): String {
-        val machine = plan.secondsEstimate?.let { " · máy cần ${spokenDuration(it)}" }.orEmpty()
-        return "${plan.chapters} chương · ${spokenDuration(plan.audioSeconds)} nghe$machine."
+        val machine = plan.secondsEstimate?.let { S.s_may_can_0_6e7b3653(spokenDuration(it)) }.orEmpty()
+        return S.s_0_chuong_1_nghe_2_7610a1f8(plan.chapters, spokenDuration(plan.audioSeconds), machine)
     }
 
     /** Nói phần nào đã có sẵn (đã nghe, đã làm trước, lần xuất trước); tính theo phần nghe đã có trên cả cuốn, không đếm chương đủ. */
     fun resumeText(plan: AudiobookPlan): String {
-        if (plan.chapters > 0 && plan.readyChapters >= plan.chapters) return "Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại."
+        if (plan.chapters > 0 && plan.readyChapters >= plan.chapters) return S.s_da_doc_san_ca_cuon_chi_con_ghep_thanh_file_d6e392df
         if (plan.readySeconds >= 60 && plan.audioSeconds > 0) {
             // Chưa đủ cả cuốn thì không nói 100% (quãng lặng giữa đoạn, làm tròn).
             val percent = Math.round(plan.readySeconds * 100.0 / plan.audioSeconds).toInt().coerceIn(1, 99)
-            return "Đã đọc sẵn khoảng $percent% - phần này xuất ngay, không đọc lại."
+            return S.s_da_doc_san_khoang_0_phan_nay_xuat_ngay_kho_6b951d4f(percent)
         }
         return ""
     }
 
     /** Chỗ trống cần trong máy lúc làm (file tạm, xoá khi xong). */
-    fun spaceText(plan: AudiobookPlan): String = "Lúc làm cần khoảng ${formatSize(plan.bytes)} trống trong điện thoại (file tạm, xoá khi xong)."
+    fun spaceText(plan: AudiobookPlan): String = S.s_luc_lam_can_khoang_0_trong_trong_dien_thoa_95d36302(formatSize(plan.bytes))
 
     /** Lượt kèm nhạc dài (trên 20 chương) tốn pin đáng kể: gợi ý cắm sạc, không chặn. Rỗng khi không cần. */
-    fun chargerHint(music: Boolean, chapters: Int): String = if (music && chapters > 20) "Cuốn dài: nên cắm sạc trong lúc làm - trộn nhạc tốn pin." else ""
+    fun chargerHint(music: Boolean, chapters: Int): String = if (music && chapters > 20) S.s_cuon_dai_nen_cam_sac_trong_luc_lam_tron_nh_abda88ea else ""
 
     /** "12 đoạn phải đọc lại" khi đổi nhạc nền buộc ghép lại chương đã làm mà bản đọc của đoạn ấy không còn trong máy; rỗng khi không có. */
     fun rereadText(plan: AudiobookPlan): String =
-        if (plan.rereads > 0) "${plan.rereads} đoạn phải đọc lại vì đổi nhạc nền (bản đọc cũ đã được dọn khỏi máy)." else ""
+        if (plan.rereads > 0) S.s_0_doan_phai_doc_lai_vi_doi_nhac_nen_ban_do_43436550(plan.rereads) else ""
 
     /** Chữ của giọng trực tuyến gửi CẢ CUỐN ra ngoài máy; rỗng khi giọng chạy trên máy. */
     fun wholeBookNotice(voice: ExportVoice): String {
         if (!voice.online) return ""
-        VoiceText.KEYED[voice.provider]?.let { return "Chữ của cả cuốn được gửi tới $it để đọc, bằng khoá của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn." }
-        if (voice.provider == "edge") return "Chữ của cả cuốn được gửi tới máy chủ Microsoft để đọc."
-        return "Chữ của cả cuốn được gửi tới dịch vụ ngoài để đọc."
+        VoiceText.KEYED[voice.provider]?.let { return S.s_chu_cua_ca_cuon_duoc_gui_toi_0_de_doc_bang_1e9d8dd0(it) }
+        if (voice.provider == "edge") return S.s_chu_cua_ca_cuon_duoc_gui_toi_may_chu_micro_301f6ec7
+        return S.s_chu_cua_ca_cuon_duoc_gui_toi_dich_vu_ngoai_a88c44d1
     }
 
     /** Chỉ đường trong trang cài đặt mở ra, theo hãng máy (backgroundHelp.ts). */
     fun backgroundHelp(manufacturer: String): String {
         val maker = manufacturer.trim().lowercase()
         return when {
-            maker in setOf("oppo", "realme", "oneplus") -> "Trong trang mở ra: Pin → bật “Cho phép hoạt động dưới nền” và “Cho phép tự động khởi chạy”."
-            maker in setOf("xiaomi", "redmi", "poco") -> "Trong trang mở ra: Tiết kiệm pin → chọn “Không hạn chế”."
-            maker == "samsung" -> "Trong trang mở ra: Pin → chọn “Không hạn chế”."
-            else -> "Trong trang mở ra: Pin → chọn “Không hạn chế” hay “Cho phép chạy nền” (tên mục khác nhau tuỳ máy)."
+            maker in setOf("oppo", "realme", "oneplus") -> S.s_trong_trang_mo_ra_pin_bat_cho_phep_hoat_do_32b8dd5a
+            maker in setOf("xiaomi", "redmi", "poco") -> S.s_trong_trang_mo_ra_tiet_kiem_pin_chon_khong_cf948322
+            maker == "samsung" -> S.s_trong_trang_mo_ra_pin_chon_khong_han_che_20bf23a6
+            else -> S.s_trong_trang_mo_ra_pin_chon_khong_han_che_h_8ca81aa3
         }
     }
 
@@ -223,7 +225,7 @@ object ExportText {
     }
 
     private fun again(event: ExportEvent): String =
-        if ((event.peakOver ?: 0) > 0) "Mã hoá lại vì ${event.peakOver} chương vượt đỉnh (lượt ${event.peakRound ?: 1})" else ""
+        if ((event.peakOver ?: 0) > 0) S.s_ma_hoa_lai_vi_0_chuong_vuot_dinh_luot_1_04047057(event.peakOver, event.peakRound ?: 1) else ""
 
     /** Việc tự báo tiến độ theo pha (bookFileExport.ts `reportedProgress`): chữ + phần đã xong + lời đọc; không báo thì null. */
     private fun reported(event: ExportEvent): ExportProgress? {
@@ -231,37 +233,37 @@ object ExportText {
         if (event.phase == "music-fetch" && total > 0) {
             val done = event.done ?: 0
             val fraction = done.toFloat() / total
-            return ExportProgress("Đang tải nhạc nền ${minOf(done + 1, total)}/$total bài", spokenProgress("Đang tải nhạc nền", fraction), fraction)
+            return ExportProgress(S.s_dang_tai_nhac_nen_0_1_bai_2a186c13(minOf(done + 1, total), total), spokenProgress(S.s_dang_tai_nhac_nen_0b8c4795, fraction), fraction)
         }
-        if (event.phase == "peaks") return ExportProgress("Đang kiểm đỉnh âm", "Đang kiểm đỉnh âm", 1f)
+        if (event.phase == "peaks") return ExportProgress(S.s_dang_kiem_dinh_am_fddf3cc5, S.s_dang_kiem_dinh_am_fddf3cc5, 1f)
         val retry = again(event)
         if (event.phase == "reencode") return ExportProgress(retry, retry, 1f)
         val chapter = event.chapter ?: return null
         val chapters = event.chapters?.takeIf { it > 0 } ?: return null
-        val where = "Chương $chapter/$chapters"
+        val where = S.s_chuong_0_1_7e729467(chapter, chapters)
         when (event.phase) {
-            "encode" -> return ExportProgress(if (retry.isNotEmpty()) "$retry · $where" else "Đang ghép file âm thanh · $where", retry.ifEmpty { "Đang ghép file âm thanh" }, 1f)
+            "encode" -> return ExportProgress(if (retry.isNotEmpty()) "$retry · $where" else S.s_dang_ghep_file_am_thanh_0_a01e1ed9(where), retry.ifEmpty { S.s_dang_ghep_file_am_thanh_c3a409b3 }, 1f)
             "chapters" -> {
                 val fraction = (chapter - 1f) / chapters
-                return ExportProgress("Đang ghi chương $chapter/$chapters", spokenProgress("Đang xuất MP3", fraction), fraction)
+                return ExportProgress(S.s_dang_ghi_chuong_0_1_41650b16(chapter, chapters), spokenProgress(S.s_dang_xuat_mp3_99b61b74, fraction), fraction)
             }
             "music" -> {
-                val text = "Đang trộn nhạc chương $chapter/$chapters"
+                val text = S.s_dang_tron_nhac_chuong_0_1_1216281a(chapter, chapters)
                 val fraction = event.percent?.let { it / 100f } ?: ((chapter - 1f) / chapters)
-                return ExportProgress(if (retry.isNotEmpty()) "$retry · $text" else text, retry.ifEmpty { spokenProgress("Đang trộn nhạc nền", fraction) }, fraction)
+                return ExportProgress(if (retry.isNotEmpty()) "$retry · $text" else text, retry.ifEmpty { spokenProgress(S.s_dang_tron_nhac_nen_97fb2b7d, fraction) }, fraction)
             }
         }
         val parts = mutableListOf(where, "${event.percent ?: 0}%")
         when {
-            event.waiting == "listening" -> parts += "nhường cho chương đang nghe"
-            event.waiting == "network" -> parts += "Đang chờ mạng"
-            event.secondsLeft != null -> parts += "còn ${spokenDuration(event.secondsLeft)}"
+            event.waiting == "listening" -> parts += S.s_nhuong_cho_chuong_dang_nghe_93babd54
+            event.waiting == "network" -> parts += S.s_dang_cho_mang_4e41560e
+            event.secondsLeft != null -> parts += S.s_con_0_46699fed(spokenDuration(event.secondsLeft))
         }
         val fraction = (event.percent ?: 0) / 100f
         val spoken = when (event.waiting) {
-            "listening" -> "Tạm nhường cho chương đang nghe"
-            "network" -> "Mất mạng - đang chờ mạng về để làm tiếp"
-            else -> spokenProgress("Đang xuất $chapters chương", fraction)
+            "listening" -> S.s_tam_nhuong_cho_chuong_dang_nghe_258d655c
+            "network" -> S.s_mat_mang_dang_cho_mang_ve_de_lam_tiep_34393630
+            else -> spokenProgress(S.s_dang_xuat_0_chuong_46b78449(chapters), fraction)
         }
         return ExportProgress(parts.dotJoined(), spoken, fraction)
     }
@@ -271,25 +273,25 @@ object ExportText {
         reported(event)?.let { return it }
         val total = event.total ?: 0
         if (total <= 0) {
-            val text = if (chapters > 0) "$chapters chương" else "Đang chuẩn bị"
+            val text = if (chapters > 0) S.s_0_chuong_04093412(chapters) else S.s_dang_chuan_bi_597acedb
             return ExportProgress(text, text, null)
         }
         val done = event.done ?: 0
         val percent = event.percent?.let { " · ${it.coerceIn(0, 99)}%" }.orEmpty()
         val fraction = event.percent?.let { it / 100f } ?: (done.toFloat() / total)
-        return ExportProgress("$done/$total chương$percent", spokenProgress(busy(event.kind), fraction), fraction)
+        return ExportProgress(S.s_0_1_chuong_2_1cd18526(done, total, percent), spokenProgress(busy(event.kind), fraction), fraction)
     }
 
     /** Dòng đầu của lượt vừa bắt đầu, trước tin tiến độ đầu tiên. */
     fun starting(kind: ExportKind, chapters: Int): ExportProgress =
-        if (kind == ExportKind.Audiobook) ExportProgress("Chương 1/$chapters · 0%", "Đang làm sách nói", 0f)
+        if (kind == ExportKind.Audiobook) ExportProgress(S.s_chuong_1_0_0_2a765294(chapters), S.s_dang_lam_sach_noi_99820a05, 0f)
         else progress(ExportEvent(kind, "", ""), chapters)
 
     /** Tên việc đang làm, một tiêu đề cho cả ba kiểu. */
     fun busy(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3 -> "Đang xuất MP3"
-        ExportKind.M4b -> "Đang làm file M4B"
-        ExportKind.Audiobook -> "Đang làm sách nói"
+        ExportKind.Mp3 -> S.s_dang_xuat_mp3_99b61b74
+        ExportKind.M4b -> S.s_dang_lam_file_m4b_4a95b4ac
+        ExportKind.Audiobook -> S.s_dang_lam_sach_noi_99820a05
     }
 
     // ---- kết thúc -------------------------------------------------------------------------------------------------------
@@ -297,24 +299,24 @@ object ExportText {
     private fun missingChapters(event: ExportEvent): String {
         val chapters = event.chapters ?: event.files
         val total = event.chaptersTotal
-        return if (chapters != null && total != null && chapters < total) "$chapters/$total chương - chương chưa xong không có trong file" else ""
+        return if (chapters != null && total != null && chapters < total) S.s_0_1_chuong_chuong_chua_xong_khong_co_trong_35795edf(chapters, total) else ""
     }
 
     private fun musicMissing(event: ExportEvent): String =
-        event.musicMissing?.takeIf { it > 0 }?.let { "$it đoạn thiếu nhạc vì chưa tải được bài" } ?: ""
+        event.musicMissing?.takeIf { it > 0 }?.let { S.s_0_doan_thieu_nhac_vi_chua_tai_duoc_bai_66255efe(it) } ?: ""
 
     /** Kết quả "xong": MP3 nói số chương và thư mục; M4B / sách nói nói tên file và cỡ; lưu ý khi còn chương chưa làm xong hay thiếu nhạc. */
     fun finished(event: ExportEvent): ExportResult {
         if (event.kind == ExportKind.Mp3) {
             val files = event.files ?: 0
-            val partial = if (!event.selection && files < (event.chaptersTotal ?: 0)) "Các chương chưa làm xong sẽ không có trong bản xuất." else ""
-            val lost = event.musicMissing?.takeIf { it > 0 }?.let { "$it đoạn thiếu nhạc vì chưa tải được bài." }.orEmpty()
+            val partial = if (!event.selection && files < (event.chaptersTotal ?: 0)) S.s_cac_chuong_chua_lam_xong_se_khong_co_trong_5186bdb4 else ""
+            val lost = event.musicMissing?.takeIf { it > 0 }?.let { S.s_0_doan_thieu_nhac_vi_chua_tai_duoc_bai_3011f095(it) }.orEmpty()
             return ExportResult(
-                event.kind, "Đã xuất $files chương", listOfNotNull(event.folder?.let { "Vào $it" }),
+                event.kind, S.s_da_xuat_0_chuong_8de90dcc(files), listOfNotNull(event.folder?.let { S.s_vao_0_55d7d040(it) }),
                 listOf(partial, lost).filter { it.isNotEmpty() }, event.uri, event.folder,
             )
         }
-        val title = if (event.kind == ExportKind.Audiobook) "Đã xuất sách nói" else "Đã xuất M4B"
+        val title = if (event.kind == ExportKind.Audiobook) S.s_da_xuat_sach_noi_82ff590c else S.s_da_xuat_m4b_76947b3a
         val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { formatSize(it) })
         val notes = listOf(missingChapters(event), musicMissing(event)).filter { it.isNotEmpty() }
         return ExportResult(event.kind, title, listOf(lines.dotJoined()).filter { it.isNotEmpty() }, notes, event.uri)
@@ -322,62 +324,62 @@ object ExportText {
 
     /** Lượt dừng: điều còn lại sau khi dừng, theo kiểu xuất. */
     fun stoppedNote(event: ExportEvent): String = when (event.kind) {
-        ExportKind.Mp3 -> "${event.files ?: 0} chương đã ghi"
-        ExportKind.M4b -> "File dở đã xoá"
-        ExportKind.Audiobook -> "Phần đã làm được giữ - xuất lại để làm tiếp từ đó."
+        ExportKind.Mp3 -> S.s_0_chuong_da_ghi_902bdff1(event.files ?: 0)
+        ExportKind.M4b -> S.s_file_do_da_xoa_3d5d9f52
+        ExportKind.Audiobook -> S.s_phan_da_lam_duoc_giu_xuat_lai_de_lam_tiep_5da9523a
     }
 
     /** Tiêu đề khi dừng, cùng chữ với thông báo của bản web (ExportMp3 / ExportM4b / listenExport.ts). */
     fun stoppedTitle(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3, ExportKind.M4b, ExportKind.Audiobook -> "Đã dừng xuất"
+        ExportKind.Mp3, ExportKind.M4b, ExportKind.Audiobook -> S.s_da_dung_xuat_ab8ac9d1
     }
 
     /** Tiêu đề khi lỗi, cùng chữ với bản web. */
     fun failedTitle(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3 -> "Chưa xuất được MP3"
-        ExportKind.M4b -> "Chưa xuất được M4B"
-        ExportKind.Audiobook -> "Chưa xuất được sách nói"
+        ExportKind.Mp3 -> S.s_chua_xuat_duoc_mp3_1550e65a
+        ExportKind.M4b -> S.s_chua_xuat_duoc_m4b_5a39de4c
+        ExportKind.Audiobook -> S.s_chua_xuat_duoc_sach_noi_5468423d
     }
 
     // ---- lựa chọn -------------------------------------------------------------------------------------------------------
 
     /** Một câu nói dạng file là gì, cho người chưa biết MP3 / M4B khác nhau chỗ nào. */
     fun about(format: ExportFormat): String = when (format) {
-        ExportFormat.Mp3 -> "Một thư mục, mỗi chương một MP3 kèm danh sách phát. Trình phát nào cũng mở được."
-        ExportFormat.M4b -> "Một file có mục lục chương, nhớ chỗ nghe dở. Hợp Apple Books, BookPlayer, Smart AudioBook Player."
+        ExportFormat.Mp3 -> S.s_mot_thu_muc_moi_chuong_mot_mp3_kem_danh_sa_d7562c0b
+        ExportFormat.M4b -> S.s_mot_file_co_muc_luc_chuong_nho_cho_nghe_do_903bace3
     }
 
-    const val ABOUT_AUDIOBOOK = "Máy đọc cả cuốn rồi ghép thành MỘT file M4B có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở."
+    const val ABOUT_AUDIOBOOK = S.s_may_doc_ca_cuon_roi_ghep_thanh_mot_file_m4_845bc226
 
     /** Lời dưới ô "Kèm nhạc nền" - đúng chữ của web (MUSIC_MIX_HINT). */
-    const val MUSIC_MIX_HINT = "Nhạc được trộn thẳng vào file, không tắt riêng được khi nghe."
+    const val MUSIC_MIX_HINT = S.s_nhac_duoc_tron_thang_vao_file_khong_tat_ri_e1608133
 
     /** Lời báo khi MP3 có nhạc ra file .m4a - đúng chữ của hộp Xuất MP3 trên web. */
-    const val MP3_MUSIC_NOTE = "Có nhạc nền thì mỗi chương là file .m4a thay vì .mp3 (điện thoại không ghi được MP3 có trộn nhạc). Âm thanh y như bản M4B."
+    const val MP3_MUSIC_NOTE = S.s_co_nhac_nen_thi_moi_chuong_la_file_m4a_tha_e5064103
 
     /** Việc của sách nói và lời báo chạy nền - đúng chữ của hộp Xuất sách nói trên web. */
-    const val AUDIOBOOK_PURPOSE = "Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
-    const val AUDIOBOOK_NOTE = "Chạy nền; dừng vẫn giữ phần đã làm."
+    const val AUDIOBOOK_PURPOSE = S.s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850
+    const val AUDIOBOOK_NOTE = S.s_chay_nen_dung_van_giu_phan_da_lam_b5b35b4d
 
     /** Máy không mở được thư mục: chỉ đường bằng tên thư mục nếu biết - đúng chữ của web. */
     fun noFolderOpener(folder: String?): String =
-        if (folder != null) "Máy không mở được thư mục - mở app Tệp rồi vào $folder" else "Máy không mở được thư mục - mở app Tệp rồi vào thư mục đã chọn"
+        if (folder != null) S.s_may_khong_mo_duoc_thu_muc_mo_app_tep_roi_v_1c7714fc(folder) else S.s_may_khong_mo_duoc_thu_muc_mo_app_tep_roi_v_3490fb90
 
     /** Hỏi xuất riêng các chương đã đổi hay cả cuốn - đúng chữ của hộp "Có chương đã đổi" trên web. */
-    fun changedAsk(count: Int): String = "Bản MP3 bạn xuất trước đây có $count chương đã đổi từ đó. Xuất riêng các chương ấy, hay cả cuốn?"
+    fun changedAsk(count: Int): String = S.s_ban_mp3_ban_xuat_truoc_day_co_0_chuong_da_f85437e7(count)
 
     /** Dòng phụ của một bản đã xuất: còn mới, hay đã đổi bao nhiêu chương từ lúc ấy. */
     fun pastLine(past: PastExport): String = when {
-        !past.stale -> "Còn mới"
-        past.kind == ExportKind.Mp3 -> "${past.changed.size} chương đã đổi từ lần xuất này"
-        else -> "${past.changed.size} chương đã đổi - cần dựng lại cả file"
+        !past.stale -> S.s_con_moi_47b72502
+        past.kind == ExportKind.Mp3 -> S.s_0_chuong_da_doi_tu_lan_xuat_nay_e38aaaee(past.changed.size)
+        else -> S.s_0_chuong_da_doi_can_dung_lai_ca_file_a6e7de45(past.changed.size)
     }
 
     fun pastTitle(past: PastExport): String {
         val label = when (past.kind) {
-            ExportKind.Mp3 -> "MP3"
-            ExportKind.M4b -> "M4B"
-            ExportKind.Audiobook -> "Sách nói"
+            ExportKind.Mp3 -> S.s_mp3_b84e4872
+            ExportKind.M4b -> S.s_m4b_c793d08a
+            ExportKind.Audiobook -> S.s_sach_noi_65750c67
         }
         // Đích là địa chỉ content: của nơi lưu ("…/document/primary%3AMusic%2FTên"): chỉ nói tên thư mục / file cuối.
         val name = runCatching { java.net.URLDecoder.decode(past.target.replace("+", "%2B"), "UTF-8") }.getOrDefault(past.target)
@@ -387,9 +389,9 @@ object ExportText {
 
     /** Dòng nói của hàng "Đang xuất" trong menu của cuốn. */
     fun menuHint(phase: ExportPhase, fraction: Float?): String? = when (phase) {
-        is ExportPhase.Running -> if (fraction == null) "Đang xuất" else "Đang xuất · ${(fraction * 100).toInt().coerceIn(0, 99)}%"
-        is ExportPhase.Done -> "Đã xuất xong"
-        is ExportPhase.Failed -> "Chưa xuất được"
+        is ExportPhase.Running -> if (fraction == null) S.s_dang_xuat_989a7c21 else S.s_dang_xuat_0_20b7b18c((fraction * 100).toInt().coerceIn(0, 99))
+        is ExportPhase.Done -> S.s_da_xuat_xong_58c33c02
+        is ExportPhase.Failed -> S.s_chua_xuat_duoc_27b1025b
         else -> null
     }
 }

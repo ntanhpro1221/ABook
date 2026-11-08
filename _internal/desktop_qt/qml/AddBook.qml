@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -17,10 +18,10 @@ Modal {
         NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
     panelWidth: expanded ? Math.min(width - 2 * Theme.margin, 1160) : 560
-    title: preview && queueName !== "" ? queueName + "\u00a0·\u00a0Thêm sách" : "Thêm sách"
+    title: preview && queueName !== "" ? queueName + S.s_u00a0_u00a0them_sach_f6090bce : S.s_them_sach_2a9d3708
     description: queue && !preview ? Queue.summaryText(Queue.summarize(queue))
-               : preview ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
-               : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
+               : preview ? S.s_xem_lai_chuong_truoc_khi_them_chu_cua_truy_c12c6d5d
+               : S.s_epub_docx_pdf_co_chu_txt_thu_muc_txt_hay_f_77950f7f
 
     // ---- Trạng thái ----
     property var preview: null              // bản xem trước của cuốn đang xem (null = chưa có / đang đọc)
@@ -180,7 +181,7 @@ Modal {
         requestPreview(path, next.split, Queue.footnotesToSend(next.footnotes), mine, function(result, error) {
             if (mine !== root.generation) return
             root.busy = ""
-            if (error) { Api.notice = Queue.said("Chưa đọc lại được file", error); return }
+            if (error) { Api.notice = Queue.said(S.s_chua_doc_lai_duoc_file_114c3abe, error); return }
             if (!(root.preview && Queue.sameRows(root.preview.chapters, result.chapters))) {
                 root.picked = Queue.defaultPicked(result.chapters); root.names = ({}); root.skipped = []
             }
@@ -210,7 +211,7 @@ Modal {
             Api.notice = Queue.said(named.title, named.note)
             Api.quiet("GET", "/api/listen/books/" + encodeURIComponent(outcome.id), null, function(book, error) {
                 if (!error && book && book.title && Api.notice === Queue.said(named.title, named.note))
-                    Api.notice = Queue.said("Đã thêm “" + book.title + "”", named.note)
+                    Api.notice = Queue.said(S.s_da_them_c5aaf773 + book.title + "”", named.note)
             })
         } else if (outcome.notice) Api.notice = outcome.notice
         if (!outcome.id) return
@@ -225,7 +226,7 @@ Modal {
         opening = true
         send("POST", "/api/listen/open-book-file", {}, function(result, error) {
             root.opening = false
-            if (error) { Api.notice = Queue.said("Chưa mở được file sách", error); return }
+            if (error) { Api.notice = Queue.said(S.s_chua_mo_duoc_file_sach_2cdc21ae, error); return }
             root.applyOpened(Queue.openedOutcome(result))
         })
     }
@@ -240,7 +241,7 @@ Modal {
             const item = current[at++]
             root.openBookPath(item.path, mine, function(ok, error) {
                 current = error ? Queue.settle(current, item.id, {state: "error", note: error})
-                                : Queue.settle(current, item.id, ok === false ? {state: "error", note: "Chưa mở được file sách này."} : {state: "opened", note: "Đã mở"})
+                                : Queue.settle(current, item.id, ok === false ? {state: "error", note: S.s_chua_mo_duoc_file_sach_nay_1bc6cc5d} : {state: "opened", note: S.s_da_mo_617b34d1})
                 root.queue = current
                 step()
             })
@@ -317,16 +318,16 @@ Modal {
         const mine = generation
         addCurrent(separate, function(added, error) {
             if (mine !== root.generation) return
-            if (error) { root.busy = ""; Feedback.play("reject"); Api.notice = Queue.said("Chưa thêm được sách", error); return }
+            if (error) { root.busy = ""; Feedback.play("reject"); Api.notice = Queue.said(S.s_chua_them_duoc_sach_b327e086, error); return }
             if (root.queue && root.currentId >= 0) {
                 // Trong hàng: cuốn này xong, sang cuốn kế (thông báo gộp ở cuối hàng).
-                const done = Queue.settle(root.queue, root.currentId, added.how === "existing" ? {state: "existing", note: "Đã có trong thư viện", bookId: added.id} : {state: "added", bookId: added.id})
+                const done = Queue.settle(root.queue, root.currentId, added.how === "existing" ? {state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: added.id} : {state: "added", bookId: added.id})
                 root.queue = done
                 root.goNext(done)
                 return
             }
             if (added.how !== "existing") Feedback.play("confirm")
-            Api.notice = added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm “" + root.bookTitle.trim() + "”"
+            Api.notice = added.how === "existing" ? S.s_cuon_nay_da_co_trong_thu_vien_2aae08e1 : S.s_da_them_c5aaf773 + root.bookTitle.trim() + "”"
             root.clear()
             root.dismiss()
             root.openBook(added.id)
@@ -354,11 +355,11 @@ Modal {
         function mine_() { return mine === root.generation }
         function now() {
             root.working = root.bookTitle.trim()
-            if (root.known) { ended({state: "existing", note: root.existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: root.known.id}); return }
+            if (root.known) { ended({state: "existing", note: root.existing ? S.s_da_co_trong_thu_vien_3bb6eeb4 : S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: root.known.id}); return }
             root.addCurrent(false, function(added, error) {
                 if (!mine_()) return
                 ended(error ? {state: "error", note: error}
-                            : added.how === "existing" ? {state: "existing", note: "Đã có trong thư viện", bookId: added.id} : {state: "added", bookId: added.id})
+                            : added.how === "existing" ? {state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: added.id} : {state: "added", bookId: added.id})
             })
         }
         function step() {
@@ -386,22 +387,22 @@ Modal {
         })
     }
     function addDefaults(file, result, splitChapters, done) {
-        if (result.existing) { done({state: "existing", note: "Đã có trong thư viện", bookId: result.existing.id}); return }
-        if (result.sameSource) { done({state: "existing", note: "Đã thêm từ file này rồi", bookId: result.sameSource.id}); return }
+        if (result.existing) { done({state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: result.existing.id}); return }
+        if (result.sameSource) { done({state: "existing", note: S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: result.sameSource.id}); return }
         const name = (result.title || "").trim()
-        if (!name) { done({state: "error", note: "File này chưa có tên sách - thêm riêng để đặt tên."}); return }
-        if (Queue.defaultPicked(result.chapters).length === 0) { done({state: "error", note: "File này chưa có chương nào để thêm."}); return }
+        if (!name) { done({state: "error", note: S.s_file_nay_chua_co_ten_sach_them_rieng_de_da_ec9e7d95}); return }
+        if (Queue.defaultPicked(result.chapters).length === 0) { done({state: "error", note: S.s_file_nay_chua_co_chuong_nao_de_them_83a1704f}); return }
         const body = {path: file, title: name, separate: false, splitChapters: splitChapters}
         if (result.sourceFingerprint) body.sourceFingerprint = result.sourceFingerprint
         send("POST", "/api/listen/import", body, function(added, error) {
             if (error) { done({state: "error", note: error}); return }
-            done(added.how === "existing" ? {state: "existing", note: "Đã có trong thư viện", bookId: added.id} : {state: "added", bookId: added.id})
+            done(added.how === "existing" ? {state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: added.id} : {state: "added", bookId: added.id})
         })
     }
     function skipCurrent() {
         if (!queue || currentId < 0) return
-        const rest = known ? Queue.settle(queue, currentId, {state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id})
-                           : Queue.settle(queue, currentId, {state: "skipped", note: "Bỏ qua"})
+        const rest = known ? Queue.settle(queue, currentId, {state: "existing", note: existing ? S.s_da_co_trong_thu_vien_3bb6eeb4 : S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: known.id})
+                           : Queue.settle(queue, currentId, {state: "skipped", note: S.s_bo_qua_c67ba288})
         queue = rest
         goNext(rest)
     }
@@ -438,35 +439,35 @@ Modal {
             open: root.leave === "" && ((root.queue !== null && !root.preview && root.busy === "") || root.preview !== null)
             ImportSlot {
                 open: root.queue !== null && !root.preview && root.busy === ""
-                Button { text: "Xong"; onClicked: root.close() }
+                Button { text: S.s_xong_a6f4543a; onClicked: root.close() }
             }
             ImportSlot {
                 open: root.preview !== null
-                Button { text: "Chọn lại"; kind: "ghost"; enabled: root.busy === ""; onClicked: root.chooseAgain() }
+                Button { text: S.s_chon_lai_834274af; kind: "ghost"; enabled: root.busy === ""; onClicked: root.chooseAgain() }
             }
             ImportSlot {
                 open: root.preview !== null && root.queue !== null && !root.known
-                Button { objectName: "importSkip"; text: "Bỏ cuốn này"; kind: "ghost"; enabled: root.busy === ""; onClicked: root.skipCurrent() }
+                Button { objectName: "importSkip"; text: S.s_bo_cuon_nay_ba5f36fe; kind: "ghost"; enabled: root.busy === ""; onClicked: root.skipCurrent() }
             }
             ImportSlot {
                 open: root.preview !== null && root.rest > 0
-                Button { objectName: "importAddRest"; text: "Thêm phần còn lại"; kind: "ghost"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy === ""; onActivated: root.addAll() }
+                Button { objectName: "importAddRest"; text: S.s_them_phan_con_lai_45b70e44; kind: "ghost"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy === ""; onActivated: root.addAll() }
             }
             ImportSlot {
                 open: root.preview !== null && root.known !== null
-                Button { objectName: "importAddSeparate"; text: root.existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"; icon: "copy"; kind: "ghost"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy === ""; onActivated: root.add(true) }
+                Button { objectName: "importAddSeparate"; text: root.existing ? S.s_them_ban_rieng_fe9759e4 : S.s_van_them_ban_moi_f4832361; icon: "copy"; kind: "ghost"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy === ""; onActivated: root.add(true) }
             }
             ImportSlot {
                 open: root.preview !== null && root.known !== null && root.queue === null
-                Button { objectName: "importOpenKnown"; text: "Mở cuốn đó"; icon: "book-open"; enabled: root.busy === ""; onClicked: root.openExisting(root.known.id) }
+                Button { objectName: "importOpenKnown"; text: S.s_mo_cuon_do_75ab80a2; icon: "book-open"; enabled: root.busy === ""; onClicked: root.openExisting(root.known.id) }
             }
             ImportSlot {
                 open: root.preview !== null && root.known === null
-                Button { objectName: "importAdd"; text: "Thêm vào thư viện"; icon: "book-plus"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy !== "reading"; onActivated: root.add(false) }
+                Button { objectName: "importAdd"; text: S.s_them_vao_thu_vien_cc27dafc; icon: "book-plus"; busy: root.busy === "adding"; enabled: root.canAdd && root.busy !== "reading"; onActivated: root.add(false) }
             }
             ImportSlot {
                 open: root.preview !== null && root.queue !== null && root.known !== null
-                Button { text: "Bỏ cuốn này"; enabled: root.busy === ""; onClicked: root.skipCurrent() }
+                Button { text: S.s_bo_cuon_nay_ba5f36fe; enabled: root.busy === ""; onClicked: root.skipCurrent() }
             }
         }
     ]
@@ -483,7 +484,7 @@ Modal {
             width: parent.width
             open: root.leave !== ""
             Accessible.role: Accessible.AlertMessage
-            Accessible.name: root.leave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"
+            Accessible.name: root.leave === "again" ? S.s_chon_lai_khi_con_sach_chua_them_4b4c7b1a : S.s_dong_khi_con_sach_chua_them_0406a915
             Column {
                 width: parent.width
                 topPadding: 14
@@ -492,8 +493,8 @@ Modal {
                 Text {
                     width: parent.width
                     text: root.shownLeave === "again"
-                        ? "Còn " + root.pending + " cuốn chưa thêm vào thư viện. Chọn lại thì các cuốn ấy sẽ không được thêm."
-                        : "Còn " + root.pending + " cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm."
+                        ? S.s_con_71d0e2b2 + root.pending + S.s_cuon_chua_them_vao_thu_vien_chon_lai_thi_c_f69d612b
+                        : S.s_con_71d0e2b2 + root.pending + S.s_cuon_chua_them_vao_thu_vien_dong_bay_gio_t_4bb486b8
                     color: Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall
@@ -504,14 +505,14 @@ Modal {
                     width: parent.width
                     Button {
                         objectName: "importLeaveDrop"
-                        text: root.shownLeave === "again" ? "Bỏ và chọn lại" : "Bỏ phần còn lại"
+                        text: root.shownLeave === "again" ? S.s_bo_va_chon_lai_89f7d490 : S.s_bo_phan_con_lai_63a3c314
                         kind: "ghost"
                         onClicked: {
                             if (root.leave === "again") root.chooseAgain()
                             else { root.reset(); root.dismiss() }
                         }
                     }
-                    Button { objectName: "importLeaveBack"; text: "Quay lại thêm sách"; onClicked: root.leave = "" }
+                    Button { objectName: "importLeaveBack"; text: S.s_quay_lai_them_sach_e5ac9359; onClicked: root.leave = "" }
                 }
             }
         }
@@ -525,7 +526,7 @@ Modal {
                 Collapse {
                     width: parent.width
                     open: root.busy === "reading"
-                    ImportSkeleton { width: parent.width; shape: "rows"; count: 1; label: "Đang đọc file tiếp" }
+                    ImportSkeleton { width: parent.width; shape: "rows"; count: 1; label: S.s_dang_doc_file_tiep_04269ffc }
                 }
                 Item {
                     width: parent.width
@@ -546,13 +547,13 @@ Modal {
                     spacing: 8
                     Button {
                         objectName: "importPickFile"
-                        text: root.busy === "reading" ? "Đang đọc…" : "Chọn file sách"
+                        text: root.busy === "reading" ? S.s_dang_doc_97b38b9f : S.s_chon_file_sach_1f25282c
                         icon: "file-text"
                         busy: root.busy === "reading"
                         enabled: root.busy === ""
                         onActivated: root.pickFiles()
                     }
-                    Button { text: "Chọn thư mục TXT"; icon: "folder"; kind: "ghost"; enabled: root.busy === ""; onClicked: root.pickFolder() }
+                    Button { text: S.s_chon_thu_muc_txt_dd0d140c; icon: "folder"; kind: "ghost"; enabled: root.busy === ""; onClicked: root.pickFolder() }
                 }
                 Item {
                     width: parent.width
@@ -562,8 +563,8 @@ Modal {
                         objectName: "importTyped"
                         y: 16
                         width: parent.width - openTyped.width - 8 + 14
-                        label: "Đường dẫn file hay thư mục"
-                        placeholderText: "…hoặc dán đường dẫn"
+                        label: S.s_duong_dan_file_hay_thu_muc_4a384785
+                        placeholderText: S.s_hoac_dan_duong_dan_bb4837f7
                         enabled: root.busy === ""
                         onAccepted: root.openTyped()
                     }
@@ -571,7 +572,7 @@ Modal {
                         id: openTyped
                         y: 16
                         x: parent.width + 14 - width
-                        text: "Mở"
+                        text: S.s_mo_741bd2c2
                         kind: "ghost"
                         enabled: root.busy === "" && Queue.cleanPath(typed.text) !== ""
                         onClicked: root.openTyped()
@@ -583,7 +584,7 @@ Modal {
                     Item {
                         width: parent.width
                         height: skeleton.implicitHeight + 16
-                        ImportSkeleton { id: skeleton; y: 16; width: parent.width; shape: "cards"; count: 2; label: "Đang đọc file sách" }
+                        ImportSkeleton { id: skeleton; y: 16; width: parent.width; shape: "cards"; count: 2; label: S.s_dang_doc_file_sach_c43ad921 }
                     }
                 }
                 Item {
@@ -594,7 +595,7 @@ Modal {
                 Text {
                     width: parent.width
                     topPadding: 16
-                    text: "PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được."
+                    text: S.s_pdf_phai_co_chu_pdf_chup_tu_may_quet_thi_a_56803be1
                     color: Theme.text3
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeCaption
@@ -629,7 +630,7 @@ Modal {
                     }
                     Text {
                         width: parent.width
-                        text: "Tên sách"
+                        text: S.s_ten_sach_d54846eb
                         color: Theme.text
                         font.pixelSize: Theme.sizeBodySmall
                         font.weight: Theme.weightMedium
@@ -642,8 +643,8 @@ Modal {
                             objectName: "importTitle"
                             y: 6
                             width: parent.width
-                            label: "Tên sách"
-                            placeholderText: "Tên hiển thị trong thư viện"
+                            label: S.s_ten_sach_d54846eb
+                            placeholderText: S.s_ten_hien_thi_trong_thu_vien_c48c7ac6
                             invalid: root.bookTitle.trim() === ""
                             font.pixelSize: 15
                             font.weight: Theme.weightMedium
@@ -668,7 +669,7 @@ Modal {
                         Text {
                             width: parent.width
                             topPadding: 6
-                            text: TextWrap.keepDots("Tác giả: " + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : ""))
+                            text: TextWrap.keepDots(S.s_tac_gia_3fe05994 + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : ""))
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -688,14 +689,14 @@ Modal {
                             spacing: 4
                             Text {
                                 objectName: "importTotals"
-                                text: root.totals.chapters + (shownPreview && root.totals.chapters !== root.shownPreview.chapters.length ? " / " + root.shownPreview.chapters.length : "") + " chương"
+                                text: root.totals.chapters + (shownPreview && root.totals.chapters !== root.shownPreview.chapters.length ? " / " + root.shownPreview.chapters.length : "") + S.s_chuong_9e6a01dc
                                 color: Theme.text
                                 font.pixelSize: Theme.sizeBodySmall
                                 font.weight: 600
                                 font.features: { "tnum": 1 }
                             }
                             FlowDetail {
-                                detail: Queue.formatNumber(root.totals.words) + " chữ"
+                                detail: Queue.formatNumber(root.totals.words) + S.s_chu_6117d040
                                 font.features: { "tnum": 1 }
                             }
                         }
@@ -707,7 +708,7 @@ Modal {
                             y: totalsRow.stacked ? 16 + summaryFlow.height + 4 : 16
                             spacing: 12
                             Repeater {
-                                model: [{label: "Chọn hết", all: true}, {label: "Bỏ chọn hết", all: false}]
+                                model: [{label: S.s_chon_het_9e8a7c2c, all: true}, {label: S.s_bo_chon_het_669fa50d, all: false}]
                                 Interactive {
                                     id: link
                                     required property var modelData
@@ -743,8 +744,8 @@ Modal {
                                 y: 12
                                 width: parent.width
                                 label: root.shownPreview && root.shownPreview.splitOffer ? Queue.splitLabel(root.shownPreview) : ""
-                                help: root.split ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
-                                                 : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."
+                                help: root.split ? S.s_moi_dong_chuong_n_mo_mot_chuong_moi_chu_cu_f6621815
+                                                 : S.s_ca_truyen_dang_la_mot_chuong_tich_de_tach_96e81c27
                                 checked: root.split
                                 enabled: root.busy === ""
                                 onToggled: value => root.reread({split: value, footnotes: root.footnotes})
@@ -759,7 +760,7 @@ Modal {
                             objectName: "importNothingPicked"
                             width: parent.width
                             topPadding: 8
-                            text: "Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện."
+                            text: S.s_chua_chon_chuong_nao_tich_it_nhat_mot_chuo_416cb9ec
                             color: Theme.danger
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -785,8 +786,8 @@ Modal {
                                 y: 12
                                 width: parent.width
                                 storageKey: "format"
-                                title: "Định dạng"
-                                summary: root.notes.length + " ghi chú"
+                                title: S.s_dinh_dang_36b746b6
+                                summary: root.notes.length + S.s_ghi_chu_305e0316
                                 Column {
                                     width: parent.width
                                     leftPadding: 12
@@ -795,7 +796,7 @@ Modal {
                                     spacing: 4
                                     Text {
                                         width: parent.width - 24
-                                        text: "Máy đã đổi định dạng - chữ của truyện giữ nguyên"
+                                        text: S.s_may_da_doi_dinh_dang_chu_cua_truyen_giu_ng_bdfa175d
                                         color: Theme.text
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
@@ -817,7 +818,7 @@ Modal {
                                     Text {
                                         width: parent.width - 24
                                         visible: root.notes.length > 6
-                                        text: "…và " + (root.notes.length - 6) + " ghi chú nữa."
+                                        text: S.s_va_6e638075 + (root.notes.length - 6) + S.s_ghi_chu_nua_fe5122f7
                                         color: Theme.text2
                                         font.pixelSize: Theme.sizeCaption
                                     }
@@ -838,7 +839,7 @@ Modal {
                                 y: 12
                                 width: parent.width
                                 storageKey: "footnotes"
-                                title: "Chú thích"
+                                title: S.s_chu_thich_fc0aa279
                                 Column {
                                     id: noteBody
                                     width: parent.width
@@ -853,7 +854,7 @@ Modal {
                                         spacing: 2
                                         Text {
                                             width: parent.width
-                                            text: TextWrap.keepDots(noteBody.said.title + " - ABook không tự bỏ hay sửa chữ của truyện")
+                                            text: TextWrap.keepDots(noteBody.said.title + S.s_abook_khong_tu_bo_hay_sua_chu_cua_truyen_1318242a)
                                             color: Theme.text
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeCaption
@@ -875,8 +876,8 @@ Modal {
                                         open: noteBody.offer.marks > 0
                                         ImportCheck {
                                             width: parent.width
-                                            label: "Không đọc số chú thích"
-                                            help: "Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."
+                                            label: S.s_khong_doc_so_chu_thich_072033f4
+                                            help: S.s_bo_cac_con_so_nhu_2_hay_3_khoi_phan_doc_lo_de439e57
                                             checked: root.footnotes.hideMarks
                                             enabled: root.busy === ""
                                             onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: value, notes: root.footnotes.notes}})
@@ -884,16 +885,16 @@ Modal {
                                     }
                                     ImportCheck {
                                         width: parent.width - 24
-                                        label: "Đọc lời chú ở cuối chương"
-                                        help: "Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."
+                                        label: S.s_doc_loi_chu_o_cuoi_chuong_13bcd8a5
+                                        help: S.s_moi_loi_chu_nam_o_cuoi_chuong_co_so_goi_no_263a0a08
                                         checked: root.footnotes.notes === "end"
                                         enabled: root.busy === ""
                                         onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "end" : ""}})
                                     }
                                     ImportCheck {
                                         width: parent.width - 24
-                                        label: "Bỏ lời chú"
-                                        help: "Phần đọc không có lời chú nào. Bỏ tích để có lại."
+                                        label: S.s_bo_loi_chu_b3d90294
+                                        help: S.s_phan_doc_khong_co_loi_chu_nao_bo_tich_de_c_844a284e
                                         checked: root.footnotes.notes === "drop"
                                         enabled: root.busy === ""
                                         onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "drop" : ""}})
@@ -901,7 +902,7 @@ Modal {
                                     Text {
                                         width: parent.width - 24
                                         topPadding: 4
-                                        text: "Không tích gì thì sách giữ nguyên như trong file."
+                                        text: S.s_khong_tich_gi_thi_sach_giu_nguyen_nhu_tron_330a1251
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
@@ -924,8 +925,8 @@ Modal {
                                 y: 12
                                 width: parent.width
                                 storageKey: "suggestions"
-                                title: "Gợi ý phần đọc"
-                                summary: root.groups.length + " nhóm"
+                                title: S.s_goi_y_phan_doc_b268d95e
+                                summary: root.groups.length + S.s_nhom_44c769d6
                                 Column {
                                     width: parent.width
                                     leftPadding: 12
@@ -934,7 +935,7 @@ Modal {
                                     Text {
                                         width: parent.width - 24
                                         topPadding: 2
-                                        text: "Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên."
+                                        text: S.s_dong_bo_chi_bi_bo_qua_khi_doc_chu_cua_sach_5cc5fc5e
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
@@ -961,7 +962,7 @@ Modal {
                                                         required property var modelData
                                                         width: hintColumn.width
                                                         inView: y + 11 >= hintList.contentY && y + 31 <= hintList.contentY + hintList.height
-                                                        label: "Bỏ dòng này khỏi phần đọc"
+                                                        label: S.s_bo_dong_nay_khoi_phan_doc_5f39c6b5
                                                         help: "“" + modelData.line + "” - " + Queue.where(modelData.chapters)
                                                         checked: root.skipped.indexOf(modelData.line) >= 0
                                                         enabled: root.busy === ""
@@ -987,8 +988,8 @@ Modal {
                             width: parent.width
                             topPadding: 12 + 12
                             bottomPadding: 12
-                            text: TextWrap.keepDots(root.existing ? "Cuốn này đã có trong thư viện: “" + root.existing.title + "”."
-                                : root.sameSource ? "Bạn đã thêm file này thành “" + root.sameSource.title + "” (" + root.sameSource.chapters + " chương)." : "")
+                            text: TextWrap.keepDots(root.existing ? S.s_cuon_nay_da_co_trong_thu_vien_1d0cdfca + root.existing.title + "”."
+                                : root.sameSource ? S.s_ban_da_them_file_nay_thanh_cfc38264 + root.sameSource.title + "” (" + root.sameSource.chapters + S.s_chuong_7aae2c68 : "")
                             color: Theme.accentText
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -1002,7 +1003,7 @@ Modal {
                         Item {
                             width: parent.width
                             height: adding.implicitHeight + 12
-                            ImportSkeleton { id: adding; y: 12; width: parent.width; shape: "rows"; count: 1; label: "Đang thêm " + root.working }
+                            ImportSkeleton { id: adding; y: 12; width: parent.width; shape: "rows"; count: 1; label: S.s_dang_them_b24da066 + root.working }
                         }
                     }
                 }
@@ -1032,9 +1033,9 @@ Modal {
 
     FileDialog {
         id: files
-        title: "Chọn file sách (chọn được nhiều file một lúc)"
+        title: S.s_chon_file_sach_chon_duoc_nhieu_file_mot_lu_309bfc98
         fileMode: FileDialog.OpenFiles
-        nameFilters: ["Sách (*.epub *.docx *.pdf *.txt *.abook *.abookproj)", "Tất cả file (*)"]
+        nameFilters: [S.s_sach_epub_docx_pdf_txt_abook_abookproj_79f2a402, S.s_tat_ca_file_05ec85ad]
         onAccepted: {
             if (root.pickSession !== root.generation || !root.open) return
             root.startPicked(selectedFiles.map(file => Queue.itemFromPath(DesktopApi.localPath(file))))
@@ -1042,7 +1043,7 @@ Modal {
     }
     FolderDialog {
         id: folder
-        title: "Chọn thư mục có các chương TXT"
+        title: S.s_chon_thu_muc_co_cac_chuong_txt_21d4f564
         onAccepted: {
             if (root.pickSession !== root.generation || !root.open) return
             const picked = DesktopApi.localPath(selectedFolder)

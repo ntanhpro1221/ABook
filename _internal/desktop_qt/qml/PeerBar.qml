@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PeerStudio.js" as Peer
@@ -45,7 +46,7 @@ Collapse {
                 objectName: "peerHome"
                 x: row.width - width
                 y: (row.height - height) / 2
-                text: "Về máy này"
+                text: S.s_ve_may_nay_d9404884
                 kind: "ghost"
                 size: "sm"
                 onClicked: root.home()

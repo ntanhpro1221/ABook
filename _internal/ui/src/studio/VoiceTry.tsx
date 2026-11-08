@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { BookOpenText, Loader2, Pause } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -48,7 +49,7 @@ export function useVoiceTry(bookId: string): {
     }
     clip.stop();
     setAsking(key);
-    setSaid({ text: `Máy đang đọc thử giọng ${voiceName} - lần đầu có thể mất vài chục giây`, status: true });
+    setSaid({ text: S.s_may_dang_doc_thu_giong_0_lan_dau_co_the_ma_c13230cd(voiceName), status: true });
     try {
       const preview = await api<VoicePreview>(`/api/books/${bookId}/voice/preview`, { method: "POST", body: request });
       heard.set(key, preview);
@@ -57,10 +58,10 @@ export function useVoiceTry(bookId: string): {
       const reason = error instanceof ApiError ? error.detail.reason : undefined;
       if (reason === "no-line" && fallbackUrl) {
         clip.toggle(`voice-${voiceName}`, fallbackUrl);
-        setSaid({ text: "Người này chưa có câu nào để đọc thử - đang phát câu mẫu chung của giọng", status: true });
+        setSaid({ text: S.s_nguoi_nay_chua_co_cau_nao_de_doc_thu_dang_85cfd8f2, status: true });
       } else {
         const why = refusalText(reason, (error as Error).message, error instanceof ApiError && Boolean(error.detail.busyBook));
-        setSaid({ text: fallbackUrl ? `${why} - nút ▶ vẫn nghe được câu mẫu chung của giọng` : why, status: true });
+        setSaid({ text: fallbackUrl ? S.s_0_nut_van_nghe_duoc_cau_mau_chung_cua_gion_1cd2a0c9(why) : why, status: true });
       }
     } finally {
       setAsking(null);
@@ -75,7 +76,7 @@ export function useVoiceTry(bookId: string): {
     const known = heard.get(key);
     const playing = known !== undefined && clip.current === clipId(known);
     const loading = asking === key || (playing && clip.loading);
-    const label = playing ? "Dừng nghe thử" : `Nghe giọng ${voiceName} đọc một câu của sách`;
+    const label = playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_giong_0_doc_mot_cau_cua_sach_ef193b67(voiceName);
     if (compact)
       return (
         <button
@@ -103,7 +104,7 @@ export function useVoiceTry(bookId: string): {
         aria-label={label}
       >
         {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <BookOpenText className="size-4" />}
-        {playing ? "Dừng" : "Nghe thử"}
+        {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
       </Button>
     );
   };

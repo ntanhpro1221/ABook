@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONObject
 import java.io.File
 
@@ -91,7 +93,7 @@ class VoiceChoices(private val file: File) {
     /** Người dùng chọn gốc của cuốn: "ja" / "ko" / "none"; null bỏ ghi đè (theo máy đoán). */
     @Synchronized
     fun setOriginOverride(bookId: String, value: String?) {
-        require(value == null || value == "none" || value in Names.ORIGINS) { "gốc phải là ja, ko, none hay bỏ trống" }
+        require(value == null || value == "none" || value in Names.ORIGINS) { S.s_goc_phai_la_ja_ko_none_hay_bo_trong_d97a946a }
         val entry = origins().optJSONObject(bookId) ?: JSONObject().also { origins().put(bookId, it) }
         if (value == null) entry.remove("override") else entry.put("override", value)
         save()

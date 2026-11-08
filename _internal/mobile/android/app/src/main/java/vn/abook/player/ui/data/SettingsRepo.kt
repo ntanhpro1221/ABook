@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import androidx.compose.runtime.Immutable
@@ -40,12 +42,12 @@ sealed interface VoiceList {
 data class VoiceSpeedState(val choice: VoiceSpeedChoice, val lines: List<String>, val downloads: List<Pair<String, Long>> = emptyList())
 
 enum class VoiceSpeedChoice(override val key: String, override val label: String, val description: String) : Choice {
-    Auto("auto", "Tự động", "Máy kịp thì đọc bản hay nhất."),
-    Quality("quality", "Chất lượng cao nhất", "Luôn đọc bản hay nhất; máy chậm có thể phải chờ."),
-    Fast("fast", "Nhanh hơn", "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu.");
+    Auto("auto", S.s_tu_dong_a25c8028, S.s_may_kip_thi_doc_ban_hay_nhat_afe3d688),
+    Quality("quality", S.s_chat_luong_cao_nhat_74af310a, S.s_luon_doc_ban_hay_nhat_may_cham_co_the_phai_2de7d693),
+    Fast("fast", S.s_nhanh_hon_ecd73c9a, S.s_nhanh_hon_tieng_kem_hon_chut_hop_may_yeu_d7e135a1);
 
     /** Câu dưới hàng chọn. */
-    val sentence: String get() = "$description Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."
+    val sentence: String get() = S.s_0_chi_ap_cho_giong_supertonic_sach_xuat_ra_ebca17bb(description)
 }
 
 /** Một mục của danh sách thành phần bên thứ ba (docs/THIRD_PARTY.md); `bullet`: gạch đầu dòng hay đoạn văn. */
@@ -114,7 +116,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     var openAdvanced: () -> Unit = {}
     suspend fun offerNotifications(allow: () -> Unit) {
         if (withContext(io) { !core.notificationsAllowed() && core.takeNotificationOffer() })
-            notes.say("Cho phép thông báo để biết khi sách xong hay xuất xong.", "Cho phép", allow)
+            notes.say(S.s_cho_phep_thong_bao_de_biet_khi_sach_xong_h_ec26ebc7, S.s_cho_phep_f1a437f5, allow)
     }
     val oldSaves = MutableStateFlow<List<OldSave>>(emptyList())
     val update = MutableStateFlow<AppRelease?>(null)
@@ -128,20 +130,20 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         scope.launch {
             oldSaves.value = withContext(io) { core.oldSaves() }
             if (withContext(io) { core.freshOldSaves(oldSaves.value.map { it.name }) })
-                notes.say("Có ${oldSaves.value.size} bản lưu cũ chưa trả lại được - mở trong Cài đặt", "Mở Cài đặt") { openAdvanced() }
+                notes.say(S.s_co_0_ban_luu_cu_chua_tra_lai_duoc_mo_trong_bcceb5c9(oldSaves.value.size), S.s_mo_cai_dat_b3af2339) { openAdvanced() }
             trialBuild.value = !withContext(io) { core.releaseSigned() }
             if (trialBuild.value) { update.value = null; return@launch }
             val release = withContext(io) { core.release() }
             update.value = release?.takeIf { AppRelease.newer(it.version, version) }
             update.value?.let { if (withContext(io) { core.tellRelease(it.version) }) {
-                notice.value = "Có ABook ${it.version}"
-                notes.say(notice.value, "Tải") { openRelease(it.apk ?: it.page) }
+                notice.value = S.s_co_abook_0_6e3b5a77(it.version)
+                notes.say(notice.value, S.s_tai_73be7aad) { openRelease(it.apk ?: it.page) }
             } }
         }
     }
 
-    fun deleteOldSave(name: String) = maintenance("Chưa xoá được", "Đã xoá bản lưu cũ") { core.deleteOldSave(name) }
-    fun exportOldSave(name: String, uri: String) = maintenance("Chưa lưu ra được", "Đã lưu bản cũ ra chỗ bạn chọn") { core.exportOldSave(name, uri) }
+    fun deleteOldSave(name: String) = maintenance(S.s_chua_xoa_duoc_b872fff6, S.s_da_xoa_ban_luu_cu_7be7cd34) { core.deleteOldSave(name) }
+    fun exportOldSave(name: String, uri: String) = maintenance(S.s_chua_luu_ra_duoc_e5ce53e8, S.s_da_luu_ban_cu_ra_cho_ban_chon_b2e322d5) { core.exportOldSave(name, uri) }
     private fun maintenance(error: String, success: String, action: () -> Unit) {
         if (maintenanceBusy.value) return
         maintenanceBusy.value = true; problem.value = ""
@@ -229,7 +231,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         speedFlow.value = now.copy(choice = choice)
         scope.launch {
             try { speedFlow.value = withContext(io) { VoiceSpeedText.state(core.setVoiceSpeed(choice.key)) } }
-            catch (e: Exception) { speedFlow.value = now; problem.value = listOf("Chưa đổi được tốc độ giọng", e.message.orEmpty()).joinToString(". ") }
+            catch (e: Exception) { speedFlow.value = now; problem.value = listOf(S.s_chua_doi_duoc_toc_do_giong_e3562390, e.message.orEmpty()).joinToString(". ") }
         }
     }
 
@@ -239,8 +241,8 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
 
     fun clearCache() {
         scope.launch {
-            try { cacheFlow.value = withContext(io) { core.clearCache() }; notice.value = "Đã dọn bản đọc đã làm" }
-            catch (e: Exception) { problem.value = listOf("Chưa dọn được bản đọc", e.message.orEmpty()).joinToString(". ") }
+            try { cacheFlow.value = withContext(io) { core.clearCache() }; notice.value = S.s_da_don_ban_doc_da_lam_19cc9826 }
+            catch (e: Exception) { problem.value = listOf(S.s_chua_don_duoc_ban_doc_fbc43cc6, e.message.orEmpty()).joinToString(". ") }
         }
     }
 
@@ -253,8 +255,8 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
 
     fun clearLogs() {
         scope.launch {
-            try { withContext(io) { core.clearLogs() }; notice.value = "Đã xoá nhật ký" }
-            catch (e: Exception) { problem.value = listOf("Chưa xoá được nhật ký", e.message.orEmpty()).joinToString(". ") }
+            try { withContext(io) { core.clearLogs() }; notice.value = S.s_da_xoa_nhat_ky_526f2ff7 }
+            catch (e: Exception) { problem.value = listOf(S.s_chua_xoa_duoc_nhat_ky_1b7a3e04, e.message.orEmpty()).joinToString(". ") }
         }
     }
 
@@ -263,14 +265,14 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
 
 /** Nhóm giọng theo khoá đang chọn. Hàm thuần. */
 object Voices {
-    private val KEYED = listOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
+    private val KEYED = listOf("azure" to S.s_azure_speech_8bd84d93, "google" to S.s_google_cloud_69bd2211, "fpt" to "FPT.AI", "viettel" to S.s_viettel_ai_9094e708)
     private val GROUPS: List<Triple<String, String, String>> =
-        listOf(Triple("edge", "Edge", "trực tuyến, miễn phí")) +
-            KEYED.map { (provider, name) -> Triple(provider, name, "dùng khoá của bạn") } +
+        listOf(Triple("edge", S.s_edge_0f82fe72, S.s_truc_tuyen_mien_phi_0282fe41)) +
+            KEYED.map { (provider, name) -> Triple(provider, name, S.s_dung_khoa_cua_ban_36c096a0) } +
             listOf(
-                Triple("vieneu", "VieNeu", "trên máy này, không cần mạng"),
-                Triple("supertonic", "Supertonic", "trên máy này, không cần mạng"),
-                Triple("device", "Giọng của máy", "không cần mạng"),
+                Triple("vieneu", S.s_vieneu_338b8a9f, S.s_tren_may_nay_khong_can_mang_c8ad4ea8),
+                Triple("supertonic", S.s_supertonic_b426cb32, S.s_tren_may_nay_khong_can_mang_c8ad4ea8),
+                Triple("device", S.s_giong_cua_may_2404d649, S.s_khong_can_mang_1c7dfe7f),
             )
     private val SUFFIX = Regex("""^(.*\S)\s+\(([^()]+)\)$""")
 
@@ -278,7 +280,7 @@ object Voices {
         val known = GROUPS.map { it.first }.toSet()
         val groups = GROUPS.map { (provider, title, detail) -> VoiceGroup(provider, title, detail, voices.filter { it.provider == provider }.map { shorten(it, title) }) }
         val other = voices.filter { it.provider !in known }
-        return (if (other.isEmpty()) groups else groups + VoiceGroup("other", "Khác", "", other)).filter { it.voices.isNotEmpty() }
+        return (if (other.isEmpty()) groups else groups + VoiceGroup("other", S.s_khac_bda82bf0, "", other)).filter { it.voices.isNotEmpty() }
     }
 
     /** "Hoài My (Edge)" trong nhóm Edge -> "Hoài My": tên nhóm đã nói nơi đọc. Đuôi khác (tên mô-đun, vùng) giữ nguyên. */
@@ -301,7 +303,7 @@ object Voices {
 
 /** Lời của "Tốc độ đọc" (listen/voiceSpeed.ts). Hàm thuần. */
 object VoiceSpeedText {
-    private fun tierLabel(tier: String) = if (tier == "fast") "Nhanh hơn" else "Chất lượng cao nhất"
+    private fun tierLabel(tier: String) = if (tier == "fast") S.s_nhanh_hon_ecd73c9a else S.s_chat_luong_cao_nhat_74af310a
 
     fun state(status: JSONObject): VoiceSpeedState {
         val choice = VoiceSpeedChoice.entries.firstOrNull { it.key == status.optString("choice") } ?: VoiceSpeedChoice.Auto
@@ -319,21 +321,21 @@ object VoiceSpeedText {
         val tier = voice.optString("tier")
         val using = voice.optString("using")
         if (tier == "fast" && using != "fast") {
-            return "$name - Đang dùng: ${tierLabel("quality")}. Bản nhanh hơn cần tải thêm ${formatSize(voice.optLong("fastBytes"))}."
+            return S.s_0_dang_dung_1_ban_nhanh_hon_can_tai_them_2_59000948(name, tierLabel("quality"), formatSize(voice.optLong("fastBytes")))
         }
         val why = when {
-            choice != VoiceSpeedChoice.Auto -> "bạn đã chọn"
-            voice.isNull("rtf") -> "chưa đo được tốc độ máy này"
-            tier == "fast" -> "máy này đọc chậm hơn tốc độ nghe"
-            else -> "máy này đọc kịp tốc độ nghe"
+            choice != VoiceSpeedChoice.Auto -> S.s_ban_da_chon_f4117fe4
+            voice.isNull("rtf") -> S.s_chua_do_duoc_toc_do_may_nay_6a6f6928
+            tier == "fast" -> S.s_may_nay_doc_cham_hon_toc_do_nghe_1766f852
+            else -> S.s_may_nay_doc_kip_toc_do_nghe_aa82c4ab
         }
-        return "$name - Đang dùng: ${tierLabel(using)} ($why)."
+        return S.s_0_dang_dung_1_2_e0b4e869(name, tierLabel(using), why)
     }
 }
 
 /** docs/THIRD_PARTY.md -> các mục (shared/thirdParty.ts `parseThirdParty`): mục theo `##`, mục cho người bảo trì bỏ đi. Hàm thuần. */
 object ThirdParty {
-    const val MAINTAINER_SECTION = "Ghi chú cho người bảo trì"
+    const val MAINTAINER_SECTION = S.s_ghi_chu_cho_nguoi_bao_tri_c8670b77
 
     fun parse(markdown: String): List<ThirdPartySection> {
         val titles = arrayListOf("")

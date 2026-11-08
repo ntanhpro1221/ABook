@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -65,7 +67,7 @@ import vn.abook.player.ui.theme.MotionMs
 private const val SHOWN_CHOICES = 4
 
 /** Thẻ có ba vai không phải tên riêng: luôn nằm trên thẻ, không bị đẩy vào "Người khác". */
-private val GENERIC_PEOPLE = setOf("Người kể", "Người kể đọc tất cả", "Vai phụ không tên")
+private val GENERIC_PEOPLE = setOf(S.s_nguoi_ke_fd36cd15, S.s_nguoi_ke_doc_tat_ca_97e4f69d, S.s_vai_phu_khong_ten_6395f0d2)
 
 /** Thẻ chỉ xem trước bấy nhiêu câu ví dụ trên thẻ (web `PICK_PREVIEW`); còn lại mở bằng "Chọn câu". */
 private const val PREVIEW_LINES = 3
@@ -209,13 +211,13 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
         }
     }
     item.currentValue?.let { current -> AnswerButton(WorkText.keepName(item), { pick(current) }, "studio_keep", enabled = !none) }
-    item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: "Tạo nhân vật", { pick(name, "unknown") }, "studio_new_person", enabled = !none) }
-    if (item.keepGroups.isNotEmpty()) AnswerButton(item.keepLabel ?: "Giữ nguyên", { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all")
+    item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: S.s_tao_nhan_vat_18e9a09a, { pick(name, "unknown") }, "studio_new_person", enabled = !none) }
+    if (item.keepGroups.isNotEmpty()) AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all")
     if (item.kind != WorkKind.Alias) {
-        TextAction(if (item.suggestedName.isNotEmpty()) "Đặt tên" else WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none, item.suggestedName) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
+        TextAction(if (item.suggestedName.isNotEmpty()) S.s_dat_ten_519d84a1 else WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none, item.suggestedName) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
     }
     if (item.kind == WorkKind.Unnamed) item.pickVoice?.let { person ->
-        TextAction("Giới / giọng", { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_role_voice", align = Alignment.CenterStart)
+        TextAction(S.s_gioi_giong_a5c7c7b7, { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_role_voice", align = Alignment.CenterStart)
     }
 }
 
@@ -403,7 +405,7 @@ private fun ReadingAnswers(item: WorkItem, state: StudioProjectState) {
     FieldGroup(Modifier.fillMaxWidth(), Arrangement.spacedBy(Dim.s8)) {
         BookField(
             null, value, { value = it; problem = ""; suggestion = ""; heard = "" }, "studio_reading_field",
-            description = WorkText.readingField(item.surface.orEmpty()), placeholder = "vd ${item.current}",
+            description = WorkText.readingField(item.surface.orEmpty()), placeholder = S.s_vd_0_85e20173(item.current),
         )
         InlineProblem(problem, null, "studio_reading_problem")
         if (suggestion.isNotEmpty()) {
@@ -423,7 +425,7 @@ private fun VoiceAnswers(item: WorkItem, state: StudioProjectState, sheets: Shee
     item.voiceChoices.orEmpty().forEachIndexed { index, choice ->
         AnswerButton(choice.label, { work.decide(WorkDecisions.voice(item, choice)) }, "studio_voice_$index", primary = choice.recommended, hint = choice.note)
     }
-    if (item.keepCharacters.isNotEmpty()) AnswerButton(item.keepLabel ?: "Giữ nguyên", { WorkDecisions.voiceKeep(item)?.let(work::decide) }, "studio_voice_keep")
+    if (item.keepCharacters.isNotEmpty()) AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.voiceKeep(item)?.let(work::decide) }, "studio_voice_keep")
     item.pickVoice?.let { person ->
         TextAction(WorkText.VOICE_OTHER, { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_voice_other", align = Alignment.CenterStart)
     }

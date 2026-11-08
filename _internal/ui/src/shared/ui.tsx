@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
@@ -327,11 +328,11 @@ export function heardBarProps(fraction: number) {
   const percent = percentOf(fraction);
   return {
     role: "progressbar",
-    "aria-label": "Đã nghe",
+    "aria-label": S.s_da_nghe_1e0f8d88,
     "aria-valuemin": 0,
     "aria-valuemax": 100,
     "aria-valuenow": percent,
-    "aria-valuetext": `đã nghe ${percent}%`,
+    "aria-valuetext": S.s_da_nghe_0_22617fbf(percent),
   } as const;
 }
 
@@ -512,12 +513,12 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
       </TabsPrimitive.List>
       {/* Mũi tên báo còn tab ngoài mép (mọi cỡ màn: chuột bấm được; bàn phím đã có phím mũi tên của hàng tab). */}
       {/* Luôn dựng, chỉ mờ vào / ra tại chỗ (.motion-hold): cuộn vài px không làm mũi tên bật ra cứng. */}
-      <button type="button" tabIndex={-1} aria-label="Xem các tab trước" aria-hidden={!edges.left || undefined} data-state={edges.left ? "open" : "closed"} onClick={() => nudge(-1)} className="motion-hold absolute left-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+      <button type="button" tabIndex={-1} aria-label={S.s_xem_cac_tab_truoc_e9a74c92} aria-hidden={!edges.left || undefined} data-state={edges.left ? "open" : "closed"} onClick={() => nudge(-1)} className="motion-hold absolute left-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
         <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
           <ChevronLeft className="size-3.5" />
         </span>
       </button>
-      <button type="button" tabIndex={-1} aria-label="Xem các tab sau" aria-hidden={!edges.right || undefined} data-state={edges.right ? "open" : "closed"} onClick={() => nudge(1)} className="motion-hold absolute right-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+      <button type="button" tabIndex={-1} aria-label={S.s_xem_cac_tab_sau_b4d3db10} aria-hidden={!edges.right || undefined} data-state={edges.right ? "open" : "closed"} onClick={() => nudge(1)} className="motion-hold absolute right-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
         <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
           <ChevronRight className="size-3.5" />
         </span>
@@ -550,7 +551,7 @@ export function TabLabel({ count, children }: { count?: number; children: ReactN
         <span className="tabular text-xs font-normal text-fg-2">
           <span className="sr-only">, </span>
           {count}
-          <span className="sr-only"> mục</span>
+          <span className="sr-only">{S.s_muc_7fbec4ee}</span>
         </span>
       )}</MotionRegion>
     </span>
@@ -698,7 +699,7 @@ export function Dialog({
             </div>
             {/* Mực của ✕ dừng 5/24 ô biểu tượng trước mép ô (3,65 px ở 17,5 px): lề phải bù thêm chừng ấy cho mực thẳng mép nội dung. */}
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className={cn(CLOSE_BUTTON, "-mr-[16.9px] pointer-coarse:-mr-[18.9px]")}>
+              <button aria-label={S.s_dong_5d54c2a1} className={cn(CLOSE_BUTTON, "-mr-[16.9px] pointer-coarse:-mr-[18.9px]")}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
@@ -840,7 +841,7 @@ export function Sheet({
             }}
             onPointerCancel={() => { start.current = null; setDrag(0); }}>
           <DialogPrimitive.Close asChild>
-            <button type="button" aria-label="Đóng" data-sheet-handle onClick={(event) => { if (dragged.current) { event.preventDefault(); dragged.current = false; } }} className="mx-auto mb-2 flex size-[48px] items-center justify-center rounded-control">
+            <button type="button" aria-label={S.s_dong_5d54c2a1} data-sheet-handle onClick={(event) => { if (dragged.current) { event.preventDefault(); dragged.current = false; } }} className="mx-auto mb-2 flex size-[48px] items-center justify-center rounded-control">
               <span className="h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
             </button>
           </DialogPrimitive.Close>
@@ -869,7 +870,7 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Khung chờ theo hình nội dung: dòng danh sách, thẻ duyệt, hay lưới bìa. */
-export function ContentSkeleton({ shape = "rows", count = 3, label = "Đang tải", className }: {
+export function ContentSkeleton({ shape = "rows", count = 3, label = S.s_dang_tai_465b1987, className }: {
   shape?: "rows" | "cards" | "covers";
   count?: number;
   label?: string;
@@ -899,13 +900,13 @@ export function InlineError({ message, onRetry, className, open }: { message: st
     <AlertTriangle aria-hidden className="ink-start mt-[calc((var(--button-h)-1rem)/2)] size-4 shrink-0 text-danger" />
     <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
       <p className="measure min-w-0 py-[calc((var(--button-h)-1lh)/2)] text-balance text-fg-2">{message}</p>
-      <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>Thử lại</Button>
+      <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>{S.s_thu_lai_c58d068c}</Button>
     </div>
   </MotionRegion>;
 }
 
 /** Chỉ thông báo mất mạng; không gỡ nội dung hay chặn thao tác trên máy. */
-export function OfflineStrip({ offline: forced, message = "Mất mạng · Bạn vẫn dùng được sách đã tải." }: { offline?: boolean; message?: string }) {
+export function OfflineStrip({ offline: forced, message = S.s_mat_mang_ban_van_dung_duoc_sach_da_tai_5c54bcb2 }: { offline?: boolean; message?: string }) {
   const [offline, setOffline] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
   useEffect(() => {
     const lost = () => setOffline(true);
@@ -960,7 +961,7 @@ export function failedEmpty(query: { isError: boolean; data?: readonly unknown[]
 }
 
 export function LoadError({ what, onRetry, className, open }: { what: string; error?: unknown; onRetry: () => void; className?: string; open?: boolean }) {
-  return <InlineError message={`Chưa tải được ${what}; bạn hãy kiểm tra kết nối rồi thử lại.`} onRetry={onRetry} className={className} open={open} />;
+  return <InlineError message={S.s_chua_tai_duoc_0_ban_hay_kiem_tra_ket_noi_r_fb4c8be5(what)} onRetry={onRetry} className={className} open={open} />;
 }
 
 export function Kbd({ children }: { children: ReactNode }) {

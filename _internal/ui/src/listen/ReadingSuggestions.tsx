@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lightbulb } from "lucide-react";
 import { useState } from "react";
@@ -49,7 +50,7 @@ export function setSkipLine(bookId: string, line: string, chapters: number[], sk
 }
 
 function where(chapters: number[]): string {
-  return chapters.length === 1 ? `chương ${chapters[0]}` : `${chapters.length} chương`;
+  return chapters.length === 1 ? S.s_chuong_0_55d256d1(chapters[0]) : S.s_0_chuong_04093412(chapters.length);
 }
 
 /** Các gợi ý, mỗi dòng một ô "Bỏ đọc dòng" (cùng chữ với điện thoại, addbook/AddBookScreen.kt). */
@@ -72,7 +73,7 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
               className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
             />
             <span className="min-w-0">
-              <span className="block">Bỏ đọc dòng</span>
+              <span className="block">{S.s_bo_doc_dong_3e82a7fd}</span>
               <span className="block break-words text-xs text-fg-2">
                 “{group.line}” · {where(group.chapters)}
               </span>
@@ -118,7 +119,7 @@ function useBookSuggestions(bookId: string, enabled = true) {
       client.removeQueries({ queryKey: ["listen", "script", bookId] });
       refreshAfterEdit(client, bookId);
     },
-    onError: (error) => toast.error("Chưa đổi được phần đọc", { description: (error as Error).message }),
+    onError: (error) => toast.error(S.s_chua_doi_duoc_phan_doc_c573a0df, { description: (error as Error).message }),
   });
   const [dismissed, setDismissed] = useState(() => dismissedLines(bookId));
   const groups = groupSuggestions(query.data?.suggestions ?? []);
@@ -144,9 +145,7 @@ function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions:
   const { groups, toggle } = suggestions;
   return (
     <>
-      <p className="mt-0.5 text-xs text-fg-2 text-pretty">
-        Bỏ khỏi phần đọc, giữ chữ gốc; bỏ chọn để đọc lại.
-        {track?.bookId === bookId && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
+      <p className="mt-0.5 text-xs text-fg-2 text-pretty">{S.s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_35421485}{track?.bookId === bookId && S.s_chuong_dang_nghe_se_doi_tu_lan_nghe_sau_ca_06a20d3f}
       </p>
       <div className="mt-2">
         <SuggestionChoices
@@ -157,7 +156,7 @@ function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions:
         />
         {listenOnly && (
           <p className="mt-2">
-            <OnComputerOnly verb="Bỏ dòng khỏi phần đọc" />
+            <OnComputerOnly verb={S.s_bo_dong_khoi_phan_doc_7b69e049} />
           </p>
         )}
       </div>
@@ -178,22 +177,18 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
     <MotionPresence open={groups.length > 0}>
       <MotionRegion motionKey={quiet && !open ? "quiet" : "card"}>
         {quiet && !open ? (
-          <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
-            Xem lại gợi ý
-          </button>
+          <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">{S.s_xem_lai_goi_y_fd8e89c7}</button>
         ) : (
           <section className="mt-4 max-w-xl py-3 text-left">
             <h2 className="text-sm font-medium">
-              <MotionRegion as="span">Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}</MotionRegion>
+              <MotionRegion as="span">{S.s_goi_y_cho_phan_doc_8d550ff1}{pending ? S.s_0_chua_ap_85970233(pending) : ""}</MotionRegion>
             </h2>
             <SuggestionsBody bookId={book.id} suggestions={suggestions} />
             <MotionPresence open={pending > 0}>
               <Button size="sm" variant="ghost" className="mt-2" onClick={() => {
                 dismiss();
                 setOpen(false);
-              }}>
-                Bỏ qua gợi ý
-              </Button>
+              }}>{S.s_bo_qua_goi_y_bccec2b3}</Button>
             </MotionPresence>
           </section>
         )}
@@ -209,25 +204,21 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
   const suggestions = useBookSuggestions(bookId);
   const { groups, pending, dismiss } = suggestions;
   if (!groups.length) return null;
-  const label = pending ? `Gợi ý cho phần đọc (${pending} chưa áp)` : "Gợi ý cho phần đọc";
+  const label = pending ? S.s_goi_y_cho_phan_doc_0_chua_ap_700c648b(pending) : S.s_goi_y_cho_phan_doc_8d550ff1;
   return (
     <>
       {slot
-        ? <SlotFace aria-label={label} value={pending ? `${pending} chưa áp` : "Xem"} onClick={() => setOpen(true)} />
+        ? <SlotFace aria-label={label} value={pending ? S.s_0_chua_ap_0ddead2d(pending) : S.s_xem_f6de0ffd} onClick={() => setOpen(true)} />
         : <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />}
       <Dialog footer={<DialogActions>
           {pending > 0 && (
             <Button variant="ghost" onClick={() => {
               dismiss();
               setOpen(false);
-            }}>
-              Bỏ qua gợi ý
-            </Button>
+            }}>{S.s_bo_qua_goi_y_bccec2b3}</Button>
           )}
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            Đóng
-          </Button>
-        </DialogActions>} open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
+          <Button variant="ghost" onClick={() => setOpen(false)}>{S.s_dong_5d54c2a1}</Button>
+        </DialogActions>} open={open} onOpenChange={setOpen} title={S.s_goi_y_cho_phan_doc_8d550ff1}>
         <SuggestionsBody bookId={bookId} suggestions={suggestions} />
         {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}
 

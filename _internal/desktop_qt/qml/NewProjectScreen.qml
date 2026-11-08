@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -59,8 +60,8 @@ FocusScope {
                 objectName: "newHeader"
                 width: parent.width
                 showBack: true
-                backLabel: "Về Studio"
-                title: root.draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"
+                backLabel: S.s_ve_studio_349a48c4
+                title: root.draft.seed ? S.s_lam_tiep_cuon_nay_18bbf3cc : S.s_tao_sach_noi_ab873c7a
             }
             NewSeedBanner { id: seedBanner; width: parent.width; form: root.form }
             Item { width: 1; height: 32 }
@@ -89,7 +90,7 @@ FocusScope {
                     width: parent.width
                     section: true
                     icon: "sliders-horizontal"
-                    title: "Tuỳ chọn"
+                    title: S.s_tuy_chon_dc06ba8f
                     summary: root.form ? Logic.optionsSummary(root.form.autoNarrator, root.draft.narrator, root.draft.profile, root.draft.startNow, root.noStudio) : ""
                     expanded: root.optionsOpen
                     onClicked: root.setOptions(!root.optionsOpen)
@@ -149,7 +150,7 @@ FocusScope {
             y: 17
             width: root.contentW
             height: Math.max(startOver.height, create.height, hint.height)
-            Button { id: startOver; objectName: "newStartOver"; text: "Bắt đầu lại"; kind: "ghost"; onActivated: root.form.reset() }
+            Button { id: startOver; objectName: "newStartOver"; text: S.s_bat_dau_lai_a3fe79c8; kind: "ghost"; onActivated: root.form.reset() }
             Row {
                 x: parent.width - width
                 height: parent.height
@@ -161,7 +162,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, Math.max(80, actions.width - startOver.width - create.width - 36))
                     horizontalAlignment: Text.AlignRight
-                    text: "Máy thiếu cấu hình"
+                    text: S.s_may_thieu_cau_hinh_df5ae9ef
                     color: Theme.text2
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: 13
@@ -173,7 +174,7 @@ FocusScope {
                     kind: "primary"
                     size: "lg"
                     icon: root.draft.startNow && !root.noStudio ? "wand-sparkles" : "mic"
-                    text: root.gate.label || (root.draft.startNow && !root.noStudio ? "Bắt đầu" : "Tạo sách")
+                    text: root.gate.label || (root.draft.startNow && !root.noStudio ? S.s_bat_dau_b3cacc46 : S.s_tao_sach_af3aeee3)
                     busy: Boolean(root.form) && (root.form.submitting || root.gate.reading)
                     enabled: !root.gate.disabled
                     onActivated: root.form.submit()

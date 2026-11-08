@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "LibraryLogic.js" as LibraryLogic
@@ -44,7 +45,7 @@ FocusScope {
     property string filter: "all"
     property string query: ""
     property string sortOrder: "recent"
-    readonly property var sortOptions: [{value: "recent", label: "Nghe gần đây"}, {value: "title", label: "Tên sách"}, {value: "author", label: "Tác giả"}, {value: "added", label: "Mới thêm"}]
+    readonly property var sortOptions: [{value: "recent", label: S.s_nghe_gan_day_2b222d97}, {value: "title", label: S.s_ten_sach_d54846eb}, {value: "author", label: S.s_tac_gia_0ec4731b}, {value: "added", label: S.s_moi_them_bcc59d6f}]
     readonly property var filtered: LibraryLogic.sort(books.filter(b => LibraryLogic.matches(b, filter, query)), sortOrder)
     readonly property var sections: LibraryLogic.sections(filtered)
     property var shownSections: []
@@ -91,9 +92,9 @@ FocusScope {
         objectName: "libraryHeader"
         x: root.contentX
         width: root.contentW
-        title: "Thư viện"
-        subtitle: root.loading || root.failed || root.total === 0 ? "" : root.query.trim() ? root.filtered.length + " trong " + root.total + " cuốn" : root.total + " cuốn"
-        Button { opacity: root.total > 0 ? 1 : 0; enabled: opacity > 0; text: "Thêm sách"; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]); Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
+        title: S.s_thu_vien_58145555
+        subtitle: root.loading || root.failed || root.total === 0 ? "" : root.query.trim() ? root.filtered.length + S.s_copy_3481988241fe + root.total + S.s_cuon_421f8494 : root.total + S.s_cuon_421f8494
+        Button { opacity: root.total > 0 ? 1 : 0; enabled: opacity > 0; text: S.s_them_sach_2a9d3708; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]); Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
     }
 
     // Desktop: continue across the full grid width, filters on the next row;
@@ -125,15 +126,15 @@ FocusScope {
             Row {
                 id: filters
                 Accessible.role: Accessible.Grouping
-                Accessible.name: "Lọc sách"
+                Accessible.name: S.s_loc_sach_bebccfba
                 spacing: Theme.s4
                 Repeater {
-                    model: [{value: "all", label: "Tất cả"}, {value: "listening", label: "Nghe dở"}, {value: "new", label: "Chưa nghe"}, {value: "finished", label: "Xong"}]
+                    model: [{value: "all", label: S.s_tat_ca_49c73a31}, {value: "listening", label: S.s_nghe_do_7e529071}, {value: "new", label: S.s_chua_nghe_2fbea4c8}, {value: "finished", label: S.s_xong_a6f4543a}]
                     ChoiceChip {
                         required property var modelData
                         objectName: "filter_" + modelData.value
                         text: modelData.label
-                        Accessible.name: modelData.value === "finished" ? "Nghe xong" : modelData.label
+                        Accessible.name: modelData.value === "finished" ? S.s_nghe_xong_9480636e : modelData.label
                         selected: root.filter === modelData.value
                         onClicked: root.filter = modelData.value
                     }
@@ -147,11 +148,11 @@ FocusScope {
                 Behavior on y { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
                 Button {
                     id: order; objectName: "librarySort"
-                    kind: "ghost"; text: "Xếp theo"; icon: "arrow-down-wide-narrow"
-                    tip: `Xếp theo: ${root.sortOptions.find(o => o.value === root.sortOrder).label}`
+                    kind: "ghost"; text: S.s_xep_theo_2b280cd9; icon: "arrow-down-wide-narrow"
+                    tip: S.s_xep_theo_0_89631506(root.sortOptions.find(o => o.value === root.sortOrder).label)
                     onClicked: sortMenu.toggle()
                 }
-                IconButton { id: searchButton; objectName: "librarySearch"; icon: "search"; tip: "Tìm sách"; onClicked: search.open ? search.close() : search.show() }
+                IconButton { id: searchButton; objectName: "librarySearch"; icon: "search"; tip: S.s_tim_sach_1deb0125; onClicked: search.open ? search.close() : search.show() }
             }
         }
         Collapse {
@@ -165,13 +166,13 @@ FocusScope {
                 FormField {
                     id: searchField; objectName: "librarySearchField"
                     width: parent.width - clear.width - Theme.s8
-                    label: "Tìm sách"; placeholderText: "Tên sách, tác giả, giọng"
-                    Accessible.description: "Gõ không dấu cũng được"
+                    label: S.s_tim_sach_1deb0125; placeholderText: S.s_ten_sach_tac_gia_giong_a003bb13
+                    Accessible.description: S.s_go_khong_dau_cung_duoc_b7275695
                     text: root.query
                     onTextChanged: root.query = text
                     escapeLocal: true; onEscaped: search.close()
                 }
-                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? "Xoá ô tìm" : "Đóng ô tìm"; onClicked: root.query ? root.query = "" : search.close() }
+                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? S.s_xoa_o_tim_0bafa7ad : S.s_dong_o_tim_1ba06fdf; onClicked: root.query ? root.query = "" : search.close() }
             }
         }
     }
@@ -225,7 +226,7 @@ FocusScope {
             const paths = drop.urls.map(url => DesktopApi.localPath(url)).filter(path => path !== "")
             if (!paths.length) return
             drop.acceptProposedAction()
-            if (Nav.layers.length > 0) Api.notice = "Đóng hộp đang mở rồi thả lại file nhé"
+            if (Nav.layers.length > 0) Api.notice = S.s_dong_hop_dang_mo_roi_tha_lai_file_nhe_448c0946
             else root.addRequested(paths)
         }
         ImportDrop { anchors.fill: parent; shown: dropArea.containsDrag && Nav.layers.length === 0 }
@@ -251,7 +252,7 @@ FocusScope {
         keyNavigationEnabled: false
         reuseItems: true
         Accessible.role: Accessible.List
-        Accessible.name: "Sách"
+        Accessible.name: S.s_sach_0c2b3e9b
 
         delegate: Item {
             id: rowItem
@@ -291,9 +292,9 @@ FocusScope {
                         }
                         coverWidth: root.coverW
                         title: section.books.length > 1 ? section.title : info.title || ""
-                        subtitle: section.books.length > 1 ? section.books.length + " tập" : info.subtitle || ""
-                        Accessible.name: section.books.length > 1 ? `Mở bộ ${section.title}` : title
-                        Accessible.description: section.remote && section.books.length > 1 ? "Có sách trên máy khác" : ""
+                        subtitle: section.books.length > 1 ? section.books.length + S.s_tap_269b0b3d : info.subtitle || ""
+                        Accessible.name: section.books.length > 1 ? S.s_mo_bo_0_676ecc6b(section.title) : title
+                        Accessible.description: section.remote && section.books.length > 1 ? S.s_co_sach_tren_may_khac_3b7cdd88 : ""
                         book: info
                         playVisible: section.books.length === 1
                         onReadRequested: root.readRequested(info)
@@ -354,7 +355,7 @@ FocusScope {
         opacity: root.loading ? 1 : 0
         visible: opacity > 0
         Accessible.role: Accessible.StaticText
-        Accessible.name: "Đang mở ABook"
+        Accessible.name: S.s_dang_mo_abook_90234941
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         SequentialAnimation {
             running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
@@ -400,7 +401,7 @@ FocusScope {
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.failed ? "Chưa mở được ABook" : (root.libraryError ? "Chưa tải được thư viện" : "Chưa có sách")
+            text: root.failed ? S.s_chua_mo_duoc_abook_4bb307da : (root.libraryError ? S.s_chua_tai_duoc_thu_vien_e20e0f11 : S.s_chua_co_sach_30843cb2)
             color: Theme.text
             font.pixelSize: Theme.sizeSection
             font.weight: Theme.weightMedium
@@ -410,21 +411,21 @@ FocusScope {
             width: Math.min(root.width - 2 * Theme.margin, 460)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Thêm truyện hoặc tạo sách nói.")
+            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : S.s_them_truyen_hoac_tao_sach_noi_4fff75be)
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.failed || root.libraryError
-            text: "Thử lại"
+            text: S.s_thu_lai_c58d068c
             onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
         }
         Button {
             objectName: "emptyAdd"
             anchors.horizontalCenter: parent.horizontalCenter
             visible: !root.failed && !root.libraryError
-            text: "Thêm sách"
+            text: S.s_them_sach_2a9d3708
             icon: "plus"
             size: "lg"
             onClicked: root.addRequested([])
@@ -433,8 +434,8 @@ FocusScope {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: !root.failed && !root.libraryError
             spacing: 4
-            Button { objectName: "emptyStudio"; text: "Tạo sách nói"; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
-            Button { objectName: "emptyOpenFile"; text: root.fileOpening ? "Đang mở…" : "Mở file sách"; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
+            Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
+            Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_4a027b81 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
         }
     }
 
@@ -446,8 +447,8 @@ FocusScope {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         icon: "search"
-        title: root.query ? "Không tìm thấy sách nào khớp “" + root.query + "”" : "Không có sách ở đây"
-        text: root.query ? "Thử tên sách hoặc tác giả khác." : root.filter === "listening" ? "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu." : root.filter === "finished" ? "Chưa có cuốn nào nghe xong." : "Cuốn nào cũng đã được nghe ít nhất một đoạn."
+        title: root.query ? S.s_khong_tim_thay_sach_nao_khop_1c1f4c16 + root.query + "”" : S.s_khong_co_sach_o_day_9b24f539
+        text: root.query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : root.filter === "listening" ? S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e : root.filter === "finished" ? S.s_chua_co_cuon_nao_nghe_xong_8d430580 : S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
     }
     Component.onCompleted: { root.shownSections = root.sections; const saved = Api.store("abook-library-sort"); if (root.sortOptions.some(o => o.value === saved)) root.sortOrder = saved; list.forceActiveFocus() }
     onVisibleChanged: if (visible) list.forceActiveFocus()

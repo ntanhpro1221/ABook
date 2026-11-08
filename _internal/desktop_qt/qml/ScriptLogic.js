@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 
 // Tab "Kịch bản" (studio/ScriptTab.tsx + scriptFind.ts của bản web): đọc cả chương như kịch bản - câu nào của ai - và đổi người nói, cách đọc
@@ -6,8 +7,8 @@
 var NARRATOR = "NARRATOR"
 var UNNAMED = "UNNAMED"
 var FIXED = [
-    {value: NARRATOR, label: "Người kể", lines: 0},
-    {value: UNNAMED, label: "Vai phụ không tên", lines: 0}
+    {value: NARRATOR, label: S.s_nguoi_ke_fd36cd15, lines: 0},
+    {value: UNNAMED, label: S.s_vai_phu_khong_ten_6395f0d2, lines: 0}
 ]
 // Gán nhanh bằng phím số: người nói nhiều nhất của chương đứng trước.
 var HOTKEYS = 9
@@ -16,25 +17,25 @@ var STAMP_MS = 6000
 var FILTERS = ["all", "speech", "doubt"]
 // Bộ cảm xúc của khâu phân tích (analysis.ALLOWED_EMOTIONS) và bốn mức cường độ.
 var EMOTIONS = [
-    ["neutral", "Bình thường"],
-    ["happy", "Vui"],
-    ["sad", "Buồn"],
-    ["angry", "Giận"],
-    ["afraid", "Sợ"],
-    ["surprised", "Ngạc nhiên"],
-    ["tender", "Dịu dàng"],
-    ["sarcastic", "Mỉa mai"],
-    ["excited", "Hào hứng"],
-    ["tired", "Mệt mỏi"],
-    ["whispering", "Thì thầm"]
+    ["neutral", S.s_binh_thuong_23c1bd43],
+    ["happy", S.s_vui_2e2beffc],
+    ["sad", S.s_buon_a1dc5853],
+    ["angry", S.s_gian_19da03ba],
+    ["afraid", S.s_so_485ed077],
+    ["surprised", S.s_ngac_nhien_8b160295],
+    ["tender", S.s_diu_dang_0d05b980],
+    ["sarcastic", S.s_mia_mai_729f7055],
+    ["excited", S.s_hao_hung_b8003bdb],
+    ["tired", S.s_met_moi_304a36cf],
+    ["whispering", S.s_thi_tham_ed2d29dd]
 ]
-var LEVELS = ["Nhẹ", "Vừa", "Mạnh", "Rất mạnh"]
+var LEVELS = [S.s_nhe_52e76ce9, S.s_vua_8af1c03b, S.s_manh_52416a97, S.s_rat_manh_bef32ca9]
 var KINDS = [
-    {value: "narration", label: "Lời kể"},
-    {value: "dialogue", label: "Lời thoại"},
-    {value: "thought", label: "Nội tâm"}
+    {value: "narration", label: S.s_loi_ke_eba0761e},
+    {value: "dialogue", label: S.s_loi_thoai_4ed83728},
+    {value: "thought", label: S.s_noi_tam_885fce10}
 ]
-var GENDERS = [{value: "male", label: "Nam"}, {value: "female", label: "Nữ"}, {value: "unknown", label: "Không rõ"}]
+var GENDERS = [{value: "male", label: S.s_nam_22dd59c8}, {value: "female", label: S.s_nu_e15bc11c}, {value: "unknown", label: S.s_khong_ro_8af7da78}]
 
 function emotionLabel(emotion) {
     for (const pair of EMOTIONS) if (pair[0] === emotion) return pair[1]
@@ -52,9 +53,9 @@ function deliveryText(emotion, intensity) {
 function deliveryWords(delivery) {
     const spoken = delivery.spoken
     return [
-        delivery.kind ? "loại câu: " + kindLabel(delivery.kind).toLowerCase() : "",
-        delivery.emotion ? "cảm xúc: " + deliveryText(delivery.emotion, delivery.intensity).toLowerCase() : "",
-        spoken !== undefined && spoken !== null ? (spoken ? "đọc là “" + spoken + "”" : "trả về chữ của sách") : ""
+        delivery.kind ? S.s_loai_cau_7d36723e + kindLabel(delivery.kind).toLowerCase() : "",
+        delivery.emotion ? S.s_cam_xuc_fd4a891d + deliveryText(delivery.emotion, delivery.intensity).toLowerCase() : "",
+        spoken !== undefined && spoken !== null ? (spoken ? S.s_doc_la_61eaf179 + spoken + "”" : S.s_tra_ve_chu_cua_sach_0451f8ec) : ""
     ].filter(Boolean).join(", ")
 }
 // `seen` của lần sửa cách đọc một câu (elsewhere.ts seenDelivery): cách đọc màn này đang thấy, null = chưa ai sửa câu này.
@@ -116,12 +117,12 @@ function gapBefore(shown, index, filter) {
 // Chỉ ghi điều KHÁC giữa các chương: chỉ chương không có câu nói nào mới ghi "chỉ lời kể", rồi tới chỗ nghi và việc đã quyết.
 function chapterExtras(chapter) {
     return [
-        chapter.speech ? "" : "chỉ lời kể",
-        chapter.hints ? chapter.hints + " chỗ nghi" : "",
-        chapter.decided ? chapter.decided + " đã quyết" : ""
+        chapter.speech ? "" : S.s_chi_loi_ke_6ec7b2cb,
+        chapter.hints ? chapter.hints + S.s_cho_nghi_b59d77e4 : "",
+        chapter.decided ? chapter.decided + S.s_da_quyet_3f663a9a : ""
     ].filter(Boolean).join("\u00a0·\u00a0")
 }
-function chapterLabel(chapter) { return chapter.title || "Chương " + chapter.index }
+function chapterLabel(chapter) { return chapter.title || S.s_chuong_aad5968e + chapter.index }
 // Mở đầu ở chương đầu tiên có chỗ máy nghi - nơi người nghe sửa được nhiều nhất.
 function startChapter(chapters, asked) {
     if (asked && chapters.some(function(chapter) { return chapter.chapterId === asked })) return asked
@@ -151,18 +152,18 @@ function people(script, added) {
 // Hàng chip: người theo số (1-9) rồi "Chưa rõ" (nhóm vô danh, không có số phím) nếu chương có câu ấy
 function legend(list, unnamed) {
     const out = list.map(function(person, index) { return {person: person, badge: index < HOTKEYS ? String(index + 1) : ""} })
-    if (unnamed > 0) out.push({person: {value: UNNAMED, label: "Chưa rõ", lines: unnamed}, badge: "?"})
+    if (unnamed > 0) out.push({person: {value: UNNAMED, label: S.s_chua_ro_be464a5a, lines: unnamed}, badge: "?"})
     return out
 }
 function whoLabel(list, who) {
     const person = list.find(function(item) { return item.value === who })
-    return person ? person.label : who === UNNAMED ? "Chưa rõ" : ""
+    return person ? person.label : who === UNNAMED ? S.s_chua_ro_be464a5a : ""
 }
 function emptyTitle(who, label, filter) {
-    return who ? "Không có câu nào của " + label + " ở mục này" : filter === "doubt" ? "Máy không nghi câu nào trong chương này" : "Chương này chỉ có lời kể"
+    return who ? S.s_khong_co_cau_nao_cua_40cffaf6 + label + S.s_o_muc_nay_1eed1ee9 : filter === "doubt" ? S.s_may_khong_nghi_cau_nao_trong_chuong_nay_89a0a346 : S.s_chuong_nay_chi_co_loi_ke_39589983
 }
 function emptyText(who, filter) {
-    return who ? "Bấm lại tên ở trên để xem mọi người nói." : filter === "doubt" ? "Chọn “Cả chương” để đọc lại toàn bộ." : "Không có câu nói nào để gán người."
+    return who ? S.s_bam_lai_ten_o_tren_de_xem_moi_nguoi_noi_1edb333f : filter === "doubt" ? S.s_chon_ca_chuong_de_doc_lai_toan_bo_940e0db5 : S.s_khong_co_cau_noi_nao_de_gan_nguoi_48cf1ced
 }
 
 // Cách đọc mặc định ("Bình thường · vừa", không có yêu cầu đang chờ): không phải thông tin, chỉ là lối vào sửa - hiện khi rê / chọn câu.
@@ -175,8 +176,8 @@ function deliveryChip(line) {
                    : deliveryText(line.emotion, line.intensity)
 }
 function lineWishText(wish, pendingNote) {
-    const what = wish.kind ? "Đã đổi loại câu: " + kindLabel(wish.kind).toLowerCase() : "Đã ghi cách đọc câu"
-    const spoken = wish.spoken !== undefined ? (wish.spoken ? " - đọc là \"" + wish.spoken + "\"" : " - trả về chữ của sách") : ""
+    const what = wish.kind ? S.s_da_doi_loai_cau_2ec1aef5 + kindLabel(wish.kind).toLowerCase() : S.s_da_ghi_cach_doc_cau_ce5474e2
+    const spoken = wish.spoken !== undefined ? (wish.spoken ? S.s_doc_la_16104c6f + wish.spoken + "\"" : S.s_tra_ve_chu_cua_sach_b10a6f5a) : ""
     return what + spoken + " - " + pendingNote + "."
 }
 
@@ -263,7 +264,7 @@ function markedHtml(text, ranges, mark) {
 // Ô đếm: "k/n" hay "Không có"; "" khi ô trống
 function findCount(text, at, found) {
     if (!String(text).trim()) return ""
-    return found ? (wrapIndex(at, found) + 1) + "/" + found : "Không có"
+    return found ? (wrapIndex(at, found) + 1) + "/" + found : S.s_khong_co_af48b64f
 }
 
 // Ô chọn người (SpeakerMenu): tìm theo tên bỏ dấu, tối đa 8 người
@@ -279,22 +280,22 @@ function suggestedOf(script, line) {
 
 // ---- lời báo (chép từng chữ) ----
 function assignedText(recorded, label, line, keep) {
-    if (keep) return recorded > 1 ? "Đã xác nhận " + recorded + " câu của " + label : "Đã xác nhận: câu này của " + line.label
-    return recorded > 1 ? "Đã ghi: " + recorded + " câu của " + label : "Đã ghi: câu này của " + label
+    if (keep) return recorded > 1 ? S.s_da_xac_nhan_c0b382d5 + recorded + S.s_cau_cua_35c4143d + label : S.s_da_xac_nhan_cau_nay_cua_8f9da842 + line.label
+    return recorded > 1 ? S.s_da_ghi_85094402 + recorded + S.s_cau_cua_35c4143d + label : S.s_da_ghi_cau_nay_cua_e43b7ee7 + label
 }
 function assignBack(lines) {
     const line = lines[0]
-    return lines.length > 1 ? lines.length + " câu trở lại như trước."
-        : line.wish && line.wish.state === "pending" ? "Trở lại quyết định trước: câu này của " + line.wish.label + "." : "Câu này lại là của " + line.label + "."
+    return lines.length > 1 ? lines.length + S.s_cau_tro_lai_nhu_truoc_fab5b735
+        : line.wish && line.wish.state === "pending" ? S.s_tro_lai_quyet_dinh_truoc_cau_nay_cua_5fa780cc + line.wish.label + "." : S.s_cau_nay_lai_la_cua_ed2f5b8d + line.label + "."
 }
 function retakeNone(group) {
-    return group.some(function(item) { return item.hasAudio }) ? "Câu này đã xin thu lại - máy thu khi áp dụng thay đổi"
-        : "Chưa thu câu này nên chưa có gì để thu lại - sẽ thu lần đầu khi sách làm tới đó"
+    return group.some(function(item) { return item.hasAudio }) ? S.s_cau_nay_da_xin_thu_lai_may_thu_khi_ap_dung_f84d9f60
+        : S.s_chua_thu_cau_nay_nen_chua_co_gi_de_thu_lai_d2bc2550
 }
 function footerNote(script, open, doubtful) {
     if (!script.castReady) return ""
-    if (open > 0) return "Coi người nói của các câu chưa ai quyết là đúng" + (doubtful ? ", trừ " + doubtful + " câu máy còn nghi" : "") + ": máy thôi hỏi; Ctrl+Z để hoàn tác."
-    return doubtful ? "Còn " + doubtful + " câu máy nghi chưa ai quyết - xem các câu có dấu vàng ở trên." : "Mọi câu nói trong chương đã có người quyết."
+    if (open > 0) return S.s_coi_nguoi_noi_cua_cac_cau_chua_ai_quyet_la_08ff324b + (doubtful ? S.s_tru_7a3a6ada + doubtful + S.s_cau_may_con_nghi_157474e3 : "") + S.s_may_thoi_hoi_ctrl_z_de_hoan_tac_a01ae5fa
+    return doubtful ? S.s_con_71d0e2b2 + doubtful + S.s_cau_may_nghi_chua_ai_quyet_xem_cac_cau_co_a900151f : S.s_moi_cau_noi_trong_chuong_da_co_nguoi_quyet_fea38465
 }
 // Những câu "Duyệt N câu" xác nhận, chia theo người nói hiện tại (mỗi nhóm một yêu cầu, như web)
 function confirmGroups(lines) {

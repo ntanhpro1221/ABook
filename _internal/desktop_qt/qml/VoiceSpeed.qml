@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "SizeFormat.js" as Size
@@ -13,7 +14,7 @@ VoiceFold {
     property bool busy: false
     readonly property bool ready: status.choice !== undefined && Array.isArray(status.voices)
     storageKey: "voice.performance"
-    title: "Hiệu năng"
+    title: S.s_hieu_nang_8c7b7526
     summary: ready ? VoiceLogic.speedLabel(status.choice) : ""
 
     function refresh() {
@@ -24,7 +25,7 @@ VoiceFold {
         busy = true
         Api.quiet("POST", "/api/readaloud/voice-speed", {choice: choice}, function(data, error) {
             root.busy = false
-            if (error) { Api.notice = "Chưa đổi được tốc độ giọng\n" + error; return }
+            if (error) { Api.notice = S.s_chua_doi_duoc_toc_do_giong_327ae356 + error; return }
             root.status = data
             // Thẻ mô-đun mời / thôi mời tải bản nhanh hơn theo lựa chọn mới
             if (root.supertonic) root.supertonic.refresh()
@@ -90,10 +91,10 @@ VoiceFold {
                         anchors.verticalCenter: parent.verticalCenter
                         size: "sm"
                         kind: "text"
-                        text: "Tải (" + Size.formatSize(line.voice.fastBytes || 0) + ")"
+                        text: S.s_tai_40698276 + Size.formatSize(line.voice.fastBytes || 0) + ")"
                         busy: root.supertonic !== null && root.supertonic.downloading
                         enabled: root.supertonic !== null && !root.supertonic.working
-                        onActivated: root.supertonic.start([line.voice.fastChoice], "Chưa tải được bản nhanh hơn")
+                        onActivated: root.supertonic.start([line.voice.fastChoice], S.s_chua_tai_duoc_ban_nhanh_hon_0011ec37)
                     }
                 }
             }

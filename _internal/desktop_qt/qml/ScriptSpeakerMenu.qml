@@ -1,6 +1,7 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
-import "ScriptLogic.js" as S
+import "ScriptLogic.js" as Script
 import "CastLogic.js" as Cast
 import "StudioLogic.js" as Studio
 
@@ -15,9 +16,9 @@ Column {
     signal picked(var person)
 
     readonly property string query: findField.text.trim()
-    readonly property var found: query ? S.findPeople(script, query) : []
-    readonly property var suggested: S.suggestedOf(script, line)
-    readonly property var fixed: S.FIXED.filter(person => !embedded || person.value !== S.NARRATOR)
+    readonly property var found: query ? Script.findPeople(script, query) : []
+    readonly property var suggested: Script.suggestedOf(script, line)
+    readonly property var fixed: Script.FIXED.filter(person => !embedded || person.value !== Script.NARRATOR)
     function focusFind() { findField.forceActiveFocus() }
     spacing: 6
 
@@ -25,8 +26,8 @@ Column {
         id: findField
         objectName: "speakerSearch"
         width: parent.width
-        label: "Tìm người nói"
-        placeholderText: "Tìm người khác trong truyện…"
+        label: S.s_tim_nguoi_noi_70e3871e
+        placeholderText: S.s_tim_nguoi_khac_trong_truyen_e6ee499c
         activeFocusOnTab: !root.embedded
         onAccepted: if (root.found.length) root.picked(root.found[0])
     }
@@ -50,7 +51,7 @@ Column {
                 spacing: 8
                 Text {
                     width: parent.width
-                    text: "Chưa có ai tên như thế trong truyện. Tạo người mới “" + root.query + "”:"
+                    text: S.s_chua_co_ai_ten_nhu_the_trong_truyen_tao_ng_897641ec + root.query + "”:"
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -59,7 +60,7 @@ Column {
                     width: parent.width
                     spacing: 6
                     Repeater {
-                        model: S.GENDERS
+                        model: Script.GENDERS
                         delegate: Button {
                             required property var modelData
                             objectName: "speakerNew_" + modelData.value
@@ -73,14 +74,14 @@ Column {
                 }
             }
         }
-        Section_ { shown: !root.query && !!root.suggested && root.suggested.value !== root.line.current; text: "Máy gợi ý"; tone: Theme.warning }
+        Section_ { shown: !root.query && !!root.suggested && root.suggested.value !== root.line.current; text: S.s_may_goi_y_1e7f4cfa; tone: Theme.warning }
         Row_ { visible: !root.query && !!root.suggested && root.suggested.value !== root.line.current; person: root.suggested || ({value: "", label: "", lines: 0}) }
-        Section_ { shown: !root.query && root.script.cast.length > 0; text: "Trong chương này" }
+        Section_ { shown: !root.query && root.script.cast.length > 0; text: S.s_trong_chuong_nay_73a2b156 }
         Repeater {
             model: root.query ? [] : root.script.cast
-            delegate: Row_ { required property var modelData; required property int index; person: modelData; hotkey: index < S.HOTKEYS ? String(index + 1) : "" }
+            delegate: Row_ { required property var modelData; required property int index; person: modelData; hotkey: index < Script.HOTKEYS ? String(index + 1) : "" }
         }
-        Section_ { shown: !root.query; text: "Khác" }
+        Section_ { shown: !root.query; text: S.s_khac_bda82bf0 }
         Repeater {
             model: root.query ? [] : root.fixed
             delegate: Row_ { required property var modelData; person: modelData }
@@ -136,7 +137,7 @@ Column {
             x: 40
             width: parent.width - x - tail.width - 16
             anchors.verticalCenter: parent.verticalCenter
-            text: option.current ? "Đúng là " + option.person.label : option.person.label
+            text: option.current ? S.s_dung_la_8cf18603 + option.person.label : option.person.label
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall

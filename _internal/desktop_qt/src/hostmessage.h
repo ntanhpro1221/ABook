@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 // Một dòng JSON host gửi lên vỏ qua stdout (webui/host.py Channel; vỏ Tauri đọc ở shell/src-tauri/src/main.rs). Tách khỏi Backend để thử
 // được không cần tiến trình host:
 //   {"ready": "http://127.0.0.1:PORT/?t=MÃ"}       host đã nghe
@@ -57,7 +58,7 @@ inline Message parse(const QByteArray &line) {
 /// Kết quả "Kiểm tra bản mới" khi host chạy KHÔNG có --self-update (bản dev, như vỏ Tauri bản dev không kiểm): nói thẳng bằng đúng câu máy chủ dùng cho bản không tự cập nhật (server.py check_for_update), không im để nút chờ
 /// 45 giây rồi đổ cho mạng, cũng không nói "bản mới nhất" khi chưa hề kiểm.
 inline QVariantMap updateCheckedWithoutUpdater() {
-    return {{QStringLiteral("state"), QStringLiteral("failed")}, {QStringLiteral("message"), QStringLiteral("Bản chạy từ mã nguồn không tự cập nhật")}};
+    return {{QStringLiteral("state"), QStringLiteral("failed")}, {QStringLiteral("message"), UiStrings::s_copy_01198b7bfe31}};
 }
 
 } // namespace HostMessage

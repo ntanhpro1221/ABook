@@ -13,7 +13,7 @@ import org.json.JSONObject
  *
  * `transport` là đường gửi thật; test thay bằng bản giả (không cần ghép máy).
  */
-class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException("Chưa gửi được tệp") }) {
+class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException(S.s_chua_gui_duoc_tep_d2028875) }) {
     constructor(transport: Transport) : this(transport, transport)
 
     /** Hạn chờ theo đường (net/HostWait.kt): việc máy tính trả lời sau khi làm xong (`HostWait.LONG_WORK`: nghe thử giọng / cách đọc, quét, tách nguồn, kể ngôi, tạo sách, dựng lại nhạc) im tới 100 giây, mọi việc khác 30 giây - nên không còn đường "chậm" riêng. */
@@ -76,7 +76,7 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
         } ?: throw malformed()
     }
 
-    private fun malformed() = StudioError.Server("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", 0)
+    private fun malformed() = StudioError.Server(S.s_du_lieu_may_gui_khong_hop_le_ban_hay_thu_l_d2b2ac09, 0)
 
     private companion object {
         /** Máy tính `computer` lúc này (đường nối có thể đổi giữa các lần gọi); đã bỏ ghép thì 401 như máy kia bỏ ghép mình. */

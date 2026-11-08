@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useListPresence } from "@/shared/motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,9 +53,9 @@ export const KIND_ICON = { pronunciation: BookOpenCheck, speaker: UserRound, lin
 export function dropLabel(item: Pick<PendingItem, "kind" | "label">): string {
   if (item.kind === "pronunciation") {
     const surface = /^“([^”]+)”/.exec(item.label)?.[1];
-    if (surface) return `Bỏ cách đọc “${surface}”`;
+    if (surface) return S.s_bo_cach_doc_0_a883978b(surface);
   }
-  const verb = { pronunciation: "Bỏ cách đọc", speaker: "Bỏ đổi người nói", line: "Bỏ sửa cách đọc câu", voice: "Bỏ đổi giọng", retake: "Bỏ thu lại" }[item.kind] ?? "Bỏ";
+  const verb = { pronunciation: S.s_bo_cach_doc_98ceb6ae, speaker: S.s_bo_doi_nguoi_noi_4787bbf3, line: S.s_bo_sua_cach_doc_cau_2b4e183f, voice: S.s_bo_doi_giong_d165cd63, retake: S.s_bo_thu_lai_ed903b0f }[item.kind] ?? S.s_bo_e07d3f4d;
   return `${verb}: ${item.label}`;
 }
 
@@ -86,11 +87,11 @@ export function PendingList({
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}
               {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
-              {item.from && <span className="text-fg-3"> · từ {item.from}</span>}
+              {item.from && <span className="text-fg-3">{S.s_tu_02926cd1}{item.from}</span>}
             </span>
             {showLines && (
               <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
-                {item.lines ? `${formatNumber(item.lines)} câu thu lại` : "chưa thu - không tốn gì"}
+                {item.lines ? S.s_0_cau_thu_lai_372ad9c3(formatNumber(item.lines)) : S.s_chua_thu_khong_ton_gi_d0da00cf}
               </span>
             )}
             {extra && <span className="-my-1 shrink-0">{extra(item)}</span>}
@@ -141,7 +142,7 @@ export function ApplyChangesDialog({
       if (count <= 1) onOpenChange(false);
       await client.invalidateQueries();
     } catch (error) {
-      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error(S.s_chua_bo_duoc_thay_doi_nay_eccfaf9b, { description: (error as Error).message });
     } finally {
       setDropping(null);
     }
@@ -152,11 +153,11 @@ export function ApplyChangesDialog({
     enabled: open,
   });
   const chapters = data?.chapters ?? [];
-  const shownChapters = chapters.slice(0, 4).join(", ") + (chapters.length > 4 ? `, và ${chapters.length - 4} chương khác` : "");
+  const shownChapters = chapters.slice(0, 4).join(", ") + (chapters.length > 4 ? S.s_va_0_chuong_khac_e2145ca8(chapters.length - 4) : "");
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          {running ? "Đóng" : "Để sau"}
+          {running ? S.s_dong_5d54c2a1 : S.s_de_sau_9be0a7ab}
         </Button>
         {!running && (
           <Button
@@ -166,41 +167,37 @@ export function ApplyChangesDialog({
               onOpenChange(false);
               onApply();
             }}
-          >
-            Áp dụng
-          </Button>
+          >{S.s_ap_dung_ff631576}</Button>
         )}
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
-      title={running ? `${count} thay đổi đang chờ áp` : `Áp dụng ${count} thay đổi?`}
+      title={running ? S.s_0_thay_doi_dang_cho_ap_663ea37f(count) : S.s_ap_dung_0_thay_doi_b7955e0a(count)}
       description={
         running
-          ? "Tự áp ở chương kế tiếp; chỉ bỏ được việc chưa áp."
-          : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
+          ? S.s_tu_ap_o_chuong_ke_tiep_chi_bo_duoc_viec_ch_6f3e60e9
+          : S.s_may_chi_thu_lai_nhung_cau_bi_anh_huong_roi_67af5454
       }
     ><MotionRegion>
       {!data ? (
-        <p className="text-sm text-fg-2">Đang xem các thay đổi</p>
+        <p className="text-sm text-fg-2">{S.s_dang_xem_cac_thay_doi_765915d5}</p>
       ) : (
         <>
           <PendingList
             items={data.items}
             dropping={dropping}
             onDrop={(item) => void drop(item)}
-            extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voiceLabel || "mới") : null)}
+            extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voiceLabel || S.s_moi_54e203ba) : null)}
           />
           {tryVoice.note}
           <p className="mt-3 text-sm text-pretty">
             {data.lines ? (
-              <>
-                Thu lại <span className="font-semibold">{formatNumber(data.lines)} câu</span> ở {chapters.length} chương (
-                {shownChapters})
+              <>{S.s_thu_lai_bceb80c2}<span className="font-semibold">{formatNumber(data.lines)}{S.s_cau_b07e1008}</span>{S.s_o_ce0ade07}{chapters.length}{S.s_chuong_1c106b8b}{shownChapters})
                 {data.seconds > 0 && <> - {estimateText(data.seconds, data.measured)}</>}.
               </>
             ) : (
-              "Chỉ ghi thay đổi, không thu lại câu nào."
+              S.s_chi_ghi_thay_doi_khong_thu_lai_cau_nao_ad9ef853
             )}
           </p>
         </>

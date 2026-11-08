@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,9 +35,9 @@ function useRemoteDownload(book: ListenBook) {
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "POST" }),
     onSuccess: (status) => {
       client.setQueryData(key, status);
-      toast("Đang tải về máy");
+      toast(S.s_dang_tai_ve_may_abb61c38);
     },
-    onError: (error: Error) => toast.error("Chưa tải được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_tai_duoc_33a159b7, { description: error.message }),
   });
   const cancel = useMutation({
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "DELETE" }),
@@ -49,10 +50,10 @@ function useRemoteDownload(book: ListenBook) {
     const now = query.data?.state;
     const id = `remote-download-${book.id}`;
     if (previous.current === "running" && now === "done") {
-      toast.success(`Đã tải “${book.title}” về máy`, { id });
+      toast.success(S.s_da_tai_0_ve_may_b9892c92(book.title), { id });
     } else if (previous.current === "running" && now === "failed") {
-      const kept = (query.data?.bytesDone ?? 0) > 0 ? " Phần đã tải vẫn giữ trên máy này." : "";
-      toast.error("Chưa tải xong về máy", { id, description: `${endSentence(query.data?.error || `${computerOf(book) || "Máy kia"} không trả lời`)}${kept}` });
+      const kept = (query.data?.bytesDone ?? 0) > 0 ? S.s_phan_da_tai_van_giu_tren_may_nay_79d4dcb7 : "";
+      toast.error(S.s_chua_tai_xong_ve_may_c8e88833, { id, description: `${endSentence(query.data?.error || S.s_0_khong_tra_loi_412cfadc(computerOf(book) || S.s_may_kia_642728b8))}${kept}` });
     }
     previous.current = now;
   }, [query.data?.state, query.data?.error, book]);
@@ -91,10 +92,10 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
     >
       <p className="inline-flex items-center gap-1.5 font-medium">
         <Icon className="size-3.5 shrink-0" />{" "}
-        {note.tone === "running" ? <LiveText shown={note.title} spoken={spokenProgress("Đang tải về máy", downloadFraction(status))} /> : note.title}
+        {note.tone === "running" ? <LiveText shown={note.title} spoken={spokenProgress(S.s_dang_tai_ve_may_abb61c38, downloadFraction(status))} /> : note.title}
       </p>
       {note.detail && <p className="mt-0.5 text-pretty">{note.detail}</p>}
-      {note.tone === "running" && <Progress value={downloadFraction(status)} size="xs" className="mt-2" label="Đã tải về máy" />}
+      {note.tone === "running" && <Progress value={downloadFraction(status)} size="xs" className="mt-2" label={S.s_da_tai_ve_may_a3ac321b} />}
       {note.action && (
         <Button
           size="sm"
@@ -104,7 +105,7 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
           loading={busy}
           onClick={note.action === "cancel" ? cancel : start}
         >
-          {note.action === "cancel" ? "Huỷ tải" : "Tải tiếp"}
+          {note.action === "cancel" ? S.s_huy_tai_1a9ff73d : S.s_tai_tiep_1efbd854}
         </Button>
       )}
     </MotionRegion>

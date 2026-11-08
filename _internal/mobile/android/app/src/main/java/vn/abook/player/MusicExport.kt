@@ -66,7 +66,7 @@ object MusicExport {
         override val frames: Long get() = position
 
         override fun write(pcm: ShortArray, count: Int) {
-            require(count % channels == 0) { "khối không trọn khung" }
+            require(count % channels == 0) { S.s_khoi_khong_tron_khung_c184e523 }
             val n = count / channels
             if (n == 0) return
             val voice = DoubleArray(count) { pcm[it] / 32768.0 }

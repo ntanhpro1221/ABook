@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useEffect, useState, type ReactNode } from "react";
 import { letterShortcutsOn, useLetterShortcuts } from "@/shared/letterShortcuts";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -14,18 +15,18 @@ export function openShortcuts() {
 
 /** [phím, việc, là phím một chữ cái (tắt được ở Cài đặt › Phím tắt)]. */
 const SHORTCUTS: [ReactNode, string, boolean][] = [
-  [<Kbd key="space">Space</Kbd>, "Phát / tạm dừng", false],
-  [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Lùi / tới 15 giây", false],
-  [<><Kbd>Shift</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, "Chương trước / sau", false],
-  [<Kbd key="m">M</Kbd>, "Tắt / bật tiếng", true],
-  [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "Giảm / tăng tốc độ đọc", true],
-  [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe", false],
-  [<Kbd key="help">?</Kbd>, "Xem các phím tắt này", true],
+  [<Kbd key="space">{S.s_space_20eac5aa}</Kbd>, S.s_phat_tam_dung_563530d1, false],
+  [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, S.s_lui_toi_15_giay_5f952fd6, false],
+  [<><Kbd>{S.s_shift_2e544a29}</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, S.s_chuong_truoc_sau_1f7a3d2b, false],
+  [<Kbd key="m">{S.s_m_08f27188}</Kbd>, S.s_tat_bat_tieng_152563ae, true],
+  [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, S.s_giam_tang_toc_do_doc_484ba2e5, true],
+  [<Kbd key="esc">{S.s_esc_52f878ed}</Kbd>, S.s_thu_nho_man_hinh_dang_nghe_ec2467a0, false],
+  [<Kbd key="help">?</Kbd>, S.s_xem_cac_phim_tat_nay_bdc607f4, true],
 ];
 
 /** Dòng mô tả công tắc "Phím tắt một chữ cái" (Cài đặt › Giao diện). */
 export const LETTER_SHORTCUTS_HINT =
-  "Tắt nếu hay lỡ chạm phím hay nhập bằng giọng nói.";
+  S.s_tat_neu_hay_lo_cham_phim_hay_nhap_bang_gio_03fe0a14;
 
 /** `remote`: thiết bị ở xa (Studio từ xa) không đổi được cài đặt của máy tính - câu cuối không chỉ nó tới một công tắc nó không có.
  *  `inSettings`: danh sách nằm ngay dưới công tắc trong Cài đặt › Giao diện - không trỏ về chính trang ấy (soát 24-10 T18). */
@@ -39,7 +40,7 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
           <div key={label} className="flex items-center justify-between gap-4">
             <dt className="text-fg-2">
               {label}
-              {letter && !letters && " (đang tắt)"}
+              {letter && !letters && S.s_dang_tat_3aac6b7f}
             </dt>
             <dd className={letter && !letters ? "flex items-center gap-1 text-fg-2 line-through" : "flex items-center gap-1 text-fg-2"}>{keys}</dd>
           </div>
@@ -49,9 +50,9 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
       <p className="mt-3 max-w-md text-[0.8125rem] text-fg-2 text-pretty">
         {letters
           ? remote
-            ? "Phím một chữ cái: M, [ ], ?, và J, K, 1–9, O, R ở Studio."
-            : "Tắt phím một chữ cái ở Cài đặt › Giao diện."
-          : `Phím một chữ cái đang tắt${remote || inSettings ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
+            ? S.s_phim_mot_chu_cai_m_va_j_k_19_o_r_o_studio_456e9e75
+            : S.s_tat_phim_mot_chu_cai_o_cai_dat_giao_dien_dea67281
+          : S.s_phim_mot_chu_cai_dang_tat_0_space_mui_ten_7e515535(remote || inSettings ? "" : S.s_bat_o_cai_dat_giao_dien_e4e0ca4b)}
       </p>
       )}
     </MotionRegion>
@@ -83,7 +84,7 @@ export function ShortcutsHost({ remote = false }: { remote?: boolean }) {
     };
   }, []);
   return (
-    <Dialog open={open} onOpenChange={setOpen} title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
+    <Dialog open={open} onOpenChange={setOpen} title={S.s_phim_tat_7baaed2f} description={S.s_dung_duoc_o_moi_man_hinh_tru_khi_dang_go_c_6452e52d}>
       <ShortcutList remote={remote} />
     </Dialog>
   );

@@ -84,7 +84,7 @@ class PlaybackService : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        AppLog.i("PlaybackService", "dịch vụ phát bật")
+        AppLog.i("PlaybackService", S.s_dich_vu_phat_bat_da10337c)
         Playback.init(this)
         ListenerActivity.start(this)
         Playback.addListener(sleepButtons)
@@ -159,9 +159,9 @@ class PlaybackService : MediaLibraryService() {
     fun buttons(): List<CommandButton> {
         val list = mutableListOf(
             CommandButton.Builder(CommandButton.ICON_SKIP_BACK_15)
-                .setPlayerCommand(Player.COMMAND_SEEK_BACK).setDisplayName("Lùi 15 giây").build(),
+                .setPlayerCommand(Player.COMMAND_SEEK_BACK).setDisplayName(S.s_lui_15_giay_eb84ecc0).build(),
             CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_15)
-                .setPlayerCommand(Player.COMMAND_SEEK_FORWARD).setDisplayName("Tới 15 giây").build(),
+                .setPlayerCommand(Player.COMMAND_SEEK_FORWARD).setDisplayName(S.s_toi_15_giay_77c8545b).build(),
         )
         if (SleepTimer.mode != SleepTimer.Mode.OFF) {
             list += CommandButton.Builder(CommandButton.ICON_PLUS)
@@ -169,9 +169,9 @@ class PlaybackService : MediaLibraryService() {
         }
         list += listOf(
             CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-                .setSessionCommand(PREVIOUS_CHAPTER).setDisplayName("Chương trước").setSlots(CommandButton.SLOT_OVERFLOW).build(),
+                .setSessionCommand(PREVIOUS_CHAPTER).setDisplayName(S.s_chuong_truoc_4750f9e9).setSlots(CommandButton.SLOT_OVERFLOW).build(),
             CommandButton.Builder(CommandButton.ICON_NEXT)
-                .setSessionCommand(NEXT_CHAPTER).setDisplayName("Chương sau").setSlots(CommandButton.SLOT_OVERFLOW).build(),
+                .setSessionCommand(NEXT_CHAPTER).setDisplayName(S.s_chuong_sau_17d1bd20).setSlots(CommandButton.SLOT_OVERFLOW).build(),
         )
         return list
     }
@@ -309,7 +309,7 @@ class PlaybackService : MediaLibraryService() {
             // Cuốn đọc to đã nạp, hàng đợi rỗng vì đang chờ đọc đoạn đầu: không nạp lại gì, lệnh phát đi tiếp qua HeadsetSkips.play.
             if (isForPlayback && ReadAloud.active) return readAloudQueue()
             val recent = Playback.lastListened()
-                ?: return Futures.immediateFailedFuture(UnsupportedOperationException("chưa nghe sách nào"))
+                ?: return Futures.immediateFailedFuture(UnsupportedOperationException(S.s_chua_nghe_sach_nao_f2635716))
             val (manifest, last) = recent
             val chapters = Playback.chaptersOf(manifest)
             // Hệ thống chỉ hỏi để vẽ thẻ "nghe tiếp" (isForPlayback false): đừng nạp, đừng phát.
@@ -376,7 +376,7 @@ class PlaybackService : MediaLibraryService() {
             val state = Store.state(id)
             val start = manifest?.let { LibraryTree.start(chosen, it, state) }
             if (manifest == null || start == null) {
-                return Futures.immediateFailedFuture(IllegalArgumentException("Cuốn này không còn trên máy"))
+                return Futures.immediateFailedFuture(IllegalArgumentException(S.s_cuon_nay_khong_con_tren_may_de91299f))
             }
             val chapters = LibraryTree.chapters(manifest)
             val title = manifest.optString("title")
@@ -439,7 +439,7 @@ class PlaybackService : MediaLibraryService() {
     private fun rootItem(): MediaItem = MediaItem.Builder()
         .setMediaId(LibraryTree.ROOT)
         .setMediaMetadata(
-            MediaMetadata.Builder().setTitle("ABook").setIsBrowsable(true).setIsPlayable(false)
+            MediaMetadata.Builder().setTitle(S.s_abook_1c37d334).setIsBrowsable(true).setIsPlayable(false)
                 .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_AUDIO_BOOKS).build(),
         )
         .build()
@@ -475,12 +475,12 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = session?.player
-        AppLog.i("PlaybackService", "vuốt app khỏi danh sách gần đây (đang phát: ${player?.playWhenReady == true})")
+        AppLog.i("PlaybackService", S.s_vuot_app_khoi_danh_sach_gan_day_dang_phat_068f42f7(player?.playWhenReady == true))
         if (player == null || !player.playWhenReady || player.mediaItemCount == 0) stopSelf()
     }
 
     override fun onDestroy() {
-        AppLog.i("PlaybackService", "dịch vụ phát tắt")
+        AppLog.i("PlaybackService", S.s_dich_vu_phat_tat_a884c3ae)
         Playback.removeListener(sleepButtons)
         Playback.saveNow()
         session?.run {

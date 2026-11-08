@@ -1,5 +1,7 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
@@ -22,7 +24,7 @@ data class PreparedImport(val ref: String?, val name: String, val preview: Impor
 
 /** Narrow typed boundary. Tests inject it; production calls the core, never a Plugin or LocalStudio route. */
 interface ImportSource {
-    suspend fun replace(item: ImportItem): PreparedImport = error("Chưa thay được sách")
+    suspend fun replace(item: ImportItem): PreparedImport = error(S.s_chua_thay_duoc_sach_8eebed8f)
     suspend fun describe(item: ImportItem): String = item.name
     suspend fun prepare(item: ImportItem): PreparedImport
     suspend fun revise(ref: String, choices: ImportChoices): ImportPreview
@@ -56,8 +58,8 @@ class ImportRepo(private val context: Context) : ImportSource {
             val result = BookFileImport.import(context, uri)
             if (result.how in setOf("older", "conflict")) return@withContext PreparedImport(null, shown,
                 packageReview = PackageReview(result.id, result.title, result.incomingTitle, result.how))
-            val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) "Tên trong file là “${result.incomingTitle}”, khác tên đang dùng."
-                else if (result.how == "updated") "Đã cập nhật “${result.title}”" else "Đã thêm “${result.title}”"
+            val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) S.s_ten_trong_file_la_0_khac_ten_dang_dung_f6042eec(result.incomingTitle)
+                else if (result.how == "updated") S.s_da_cap_nhat_0_627a2681(result.title) else S.s_da_them_0_ea40abe7(result.title)
             return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how == "existing", notice = notice)
         }
         val staged = if (item.folder) stageFolder(uri) else TextImports.stageFile(incoming ?: shown) {
@@ -95,8 +97,8 @@ class ImportRepo(private val context: Context) : ImportSource {
     }
 
     override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> = withContext(Dispatchers.IO) {
-        require(choices.title.isNotBlank()) { "Bạn hãy nhập tên sách." }
-        require(choices.title.codePointCount(0, choices.title.length) <= BookEdits.TITLE_MAX) { "Tên quá dài. Bạn hãy dùng tối đa ${BookEdits.TITLE_MAX} ký tự." }
+        require(choices.title.isNotBlank()) { S.s_ban_hay_nhap_ten_sach_da2b7a84 }
+        require(choices.title.codePointCount(0, choices.title.length) <= BookEdits.TITLE_MAX) { S.s_ten_qua_dai_ban_hay_dung_toi_da_0_ky_tu_a84827da(BookEdits.TITLE_MAX) }
         val accepted = ImportLogic.accepted(preview, choices)
         val result = created[ref] ?: TextImports.createBook(ref, choices.title, context.cacheDir, choices.separate,
             ImportLogic.picks(preview, choices)).also { created[ref] = it }
@@ -116,7 +118,7 @@ class ImportRepo(private val context: Context) : ImportSource {
 
     override suspend fun replace(item: ImportItem): PreparedImport = withContext(Dispatchers.IO) {
         val result = BookFileImport.import(context, Uri.parse(item.source), allowOlder = true)
-        PreparedImport(null, item.name, bookId = result.id, notice = "Đã thêm “${result.title}”")
+        PreparedImport(null, item.name, bookId = result.id, notice = S.s_da_them_0_ea40abe7(result.title))
     }
 
     private fun name(uri: Uri): String? {
@@ -139,24 +141,24 @@ class ImportRepo(private val context: Context) : ImportSource {
                 files += cursor.getString(1) to { context.contentResolver.openInputStream(uri) }
             }
         }
-        return TextImports.stageFolder(name(DocumentsContract.buildDocumentUriUsingTree(tree, id)) ?: "File đã chọn", files)
+        return TextImports.stageFolder(name(DocumentsContract.buildDocumentUriUsingTree(tree, id)) ?: S.s_file_da_chon_e29eb975, files)
     }
 
     private fun readPdf(file: File): List<List<String>> {
-        check(Build.VERSION.SDK_INT >= 35) { "Máy này chưa lấy chữ PDF trực tiếp được. Bạn hãy chọn EPUB, DOCX hoặc TXT." }
+        check(Build.VERSION.SDK_INT >= 35) { S.s_may_nay_chua_lay_chu_pdf_truc_tiep_duoc_ba_2d4d21bd }
         return pdfText(file)
     }
 
     @android.annotation.TargetApi(35)
     private fun pdfText(file: File): List<List<String>> =
         PdfRenderer(ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)).use { pdf ->
-            require(pdf.pageCount <= 5000) { "PDF quá nhiều trang. Bạn hãy chia file rồi thử lại." }
+            require(pdf.pageCount <= 5000) { S.s_pdf_qua_nhieu_trang_ban_hay_chia_file_roi_92aad5ba }
             var chars = 0L
             (0 until pdf.pageCount).map { index ->
                 pdf.openPage(index).use { page ->
                     page.textContents.flatMap { it.text.lines() }.also { lines ->
                         chars += lines.sumOf { it.length.toLong() }
-                        require(chars <= 16L * 1024 * 1024) { "PDF có quá nhiều chữ. Bạn hãy chia file rồi thử lại." }
+                        require(chars <= 16L * 1024 * 1024) { S.s_pdf_co_qua_nhieu_chu_ban_hay_chia_file_roi_8d90218e }
                     }
                 }
             }

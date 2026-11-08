@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "bookdetail.h"
 
 using namespace PlayerLogic;
@@ -84,13 +85,13 @@ void BookDetail::recompute() {
 
     QString text, icon = kPlay;
     if (playing) {
-        text = QStringLiteral("Tạm dừng");
+        text = UiStrings::s_tam_dung_67635815;
         icon = kPause;
     } else if (finished && !here) {
-        text = QStringLiteral("Nghe lại từ đầu");
+        text = UiStrings::s_nghe_lai_tu_dau_e251d632;
         icon = kRestart;
     } else {
-        text = started ? QStringLiteral("Nghe tiếp") : QStringLiteral("Nghe");
+        text = started ? UiStrings::s_nghe_tiep_403b90a5 : UiStrings::s_nghe_a43aafef;
         // Nói rõ nghe tiếp từ ĐÂU: đang nạp ở bộ phát thì đúng chương đang đứng, không thì điểm nghe tiếp của cuốn.
         QString caption;
         if (here) {

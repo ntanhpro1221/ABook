@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -24,10 +25,10 @@ Collapse {
         Api.call("DELETE", "/api/readaloud/cache?all=1", null, function(data, error) {
             root.busy = false
             if (error) {
-                Api.notice = Music.toast("Chưa dọn được bản đọc", error)
+                Api.notice = Music.toast(S.s_chua_don_duoc_ban_doc_fbc43cc6, error)
             } else {
                 root.usage = data
-                Api.notice = "Đã dọn bản đọc đã làm"
+                Api.notice = S.s_da_don_ban_doc_da_lam_19cc9826
             }
             dialog.dismiss()
         })
@@ -38,7 +39,7 @@ Collapse {
 
     SettingRow {
         width: parent.width
-        label: "Bản đọc đã làm"
+        label: S.s_ban_doc_da_lam_776edb87
         hint: root.usage ? Music.storageLabel(root.usage) : ""
         Item {
             implicitWidth: root.hasStorage ? clean.implicitWidth - 12 : 0     // chữ nút thẳng mép phải (settings-row-control > ghost: -mr-3)
@@ -46,16 +47,16 @@ Collapse {
             Behavior on implicitWidth { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
             opacity: root.hasStorage ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-            Button { id: clean; text: "Dọn bản đọc"; kind: "ghost"; size: "sm"; enabled: root.hasStorage; onClicked: root.ask() }
+            Button { id: clean; text: S.s_don_ban_doc_5ae4774e; kind: "ghost"; size: "sm"; enabled: root.hasStorage; onClicked: root.ask() }
         }
     }
     MoreInfo {
         width: parent.width
-        HintText { width: parent.width; text: "Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống." }
+        HintText { width: parent.width; text: S.s_nghe_lai_doan_da_doc_xong_thi_khong_phai_c_05c920a7 }
     }
     Modal {
         id: dialog
-        title: "Dọn bản đọc đã làm"
+        title: S.s_don_ban_doc_da_lam_ba8c42a3
         description: root.usage ? Music.clearStorageQuestion(root.usage) : ""
         dismissable: !root.busy
         keepOpen: function() { return root.busy }
@@ -64,8 +65,8 @@ Collapse {
                 width: dialog.bodyWidth
                 layoutDirection: Qt.RightToLeft
                 spacing: 8
-                Button { text: "Dọn"; kind: "danger"; busy: root.busy; onActivated: root.clear() }
-                Button { text: "Giữ lại"; kind: "ghost"; enabled: !root.busy; onClicked: dialog.close() }
+                Button { text: S.s_don_6730827d; kind: "danger"; busy: root.busy; onActivated: root.clear() }
+                Button { text: S.s_giu_lai_3c3ba2db; kind: "ghost"; enabled: !root.busy; onClicked: dialog.close() }
             }
         ]
     }

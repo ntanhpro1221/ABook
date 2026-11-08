@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -10,7 +11,7 @@ Interactive {
     property string clipId: ""
     property string url: ""
     property string label: ""
-    property string stopLabel: "Dừng nghe thử"     // tên trợ năng lúc đang phát (trình tạo: "Dừng nghe <giọng>")
+    property string stopLabel: S.s_dung_nghe_thu_41a2925b     // tên trợ năng lúc đang phát (trình tạo: "Dừng nghe <giọng>")
     property string idleIcon: "play"
     property bool asks: false
     property bool busy: false
@@ -21,7 +22,7 @@ Interactive {
     implicitWidth: 36
     implicitHeight: 36
     ringRadius: width / 2
-    tip: active ? "Dừng" : label
+    tip: active ? S.s_dung_11554138 : label
     Accessible.role: Accessible.Button
     Accessible.name: active ? stopLabel : label
     onClicked: { if (asks) root.requested(); else Clip.toggle(clipId, url) }

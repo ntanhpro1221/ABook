@@ -4,6 +4,9 @@
   "version": "0.4.165",
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/prepare_ui.mjs",
+    "pretest": "node scripts/prepare_ui.mjs",
+    "pretypecheck": "node scripts/prepare_ui.mjs",
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "typecheck": "tsc -p tsconfig.json",

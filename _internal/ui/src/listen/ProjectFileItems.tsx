@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,8 +23,8 @@ const MENU_ITEM =
 
 /** Chữ nói rõ cái giá của “Dựng xưởng” - người nghe nhận ra cái họ mất, không phải cách nó chạy. */
 export const WORKSHOP_COST =
-  "Studio sẽ tạo một dự án mới từ chữ và giọng của cuốn này, mang theo tên bạn đặt và những việc bạn ghi cho Studio. " +
-  "Không còn dự án gốc: audio sẽ làm lại hết. Cuốn đang nghe giữ nguyên.";
+  S.s_studio_se_tao_mot_du_an_moi_tu_chu_va_gion_500db53d +
+  S.s_khong_con_du_an_goc_audio_se_lam_lai_het_c_a2a1a61a;
 
 /** “Dựng xưởng” / “Tạo sách nói”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
  *  `done` nói điều đã mang sang, theo loại cuốn. */
@@ -38,10 +39,10 @@ function useBuildProject(book: ListenBook, done: (made: { chapters: number; voic
       void client.invalidateQueries({ queryKey: ["library"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
       toast.success(done(made), {
-        action: { label: "Mở dự án", onClick: () => navigate(`/studio/${made.id}`) },
+        action: { label: S.s_mo_du_an_f990c9d8, onClick: () => navigate(`/studio/${made.id}`) },
       });
     } catch (error) {
-      toast.error("Chưa dựng được xưởng", { description: (error as Error).message });
+      toast.error(S.s_chua_dung_duoc_xuong_c69867f7, { description: (error as Error).message });
     } finally {
       setBuilding(false);
     }
@@ -79,7 +80,7 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
       <span className="min-w-0">
         <span className="block">{title}</span>
         <span className="block text-xs text-fg-3">
-          {studio.repair ? "Studio cần sửa - " : studio.update ? "Cần cập nhật Studio - " : "Cần cài Studio (card NVIDIA) - "}
+          {studio.repair ? S.s_studio_can_sua_df3737b2 : studio.update ? S.s_can_cap_nhat_studio_55da602b : S.s_can_cai_studio_card_nvidia_04f7c5f8}
           <span className="font-medium text-accent-text underline">{studio.action}</span>
         </span>
       </span>
@@ -89,22 +90,21 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
 
 /** Chữ nói rõ “Tạo sách nói” mang gì sang Studio. */
 export const TEXT_BOOK_COST =
-  "Tạo dự án Studio từ chữ cuốn này. Chưa chạy gì; cuốn đang đọc giữ nguyên.";
+  S.s_tao_du_an_studio_tu_chu_cuon_nay_chua_chay_667f3623;
 
 /** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Tạo sách nói” (máy có Studio) hay mở dự án đã làm. */
 export function TextBookItems({ book }: { book: ListenBook }) {
   const navigate = useNavigate();
-  const { build, building } = useBuildProject(book, (made) => `Đã tạo dự án Studio · ${made.chapters} chương`);
+  const { build, building } = useBuildProject(book, (made) => S.s_da_tao_du_an_studio_0_chuong_247e4db3(made.chapters));
   if (book.stage !== "text") return null;
   const toolchain = Boolean(book.capabilities?.toolchain);
   if (book.studioProject) {
     return (
       <DropdownMenu.Item onSelect={() => navigate(`/studio/${book.studioProject}`)} className={MENU_ITEM}>
-        <Hammer className="size-4" /> Mở dự án Studio
-      </DropdownMenu.Item>
+        <Hammer className="size-4" />{S.s_mo_du_an_studio_9ead1ad4}</DropdownMenu.Item>
     );
   }
-  if (!toolchain) return <NeedStudioItem title="Tạo sách nói" phoneNote="Chỉ làm được ở Studio trên máy tính. Ở đây bạn vẫn nghe cuốn này bằng Nghe ngay." />;
+  if (!toolchain) return <NeedStudioItem title={S.s_tao_sach_noi_ab873c7a} phoneNote={S.s_chi_lam_duoc_o_studio_tren_may_tinh_o_day_a481062a} />;
   return (
     <DropdownMenu.Item
       disabled={building}
@@ -113,7 +113,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
     >
       <Hammer className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Tạo sách nói</span>
+        <span className="block">{S.s_tao_sach_noi_ab873c7a}</span>
         <span className="block text-xs text-fg-3">{TEXT_BOOK_COST}</span>
       </span>
     </DropdownMenu.Item>
@@ -124,7 +124,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
 export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews: () => void }) {
   const info = book.projectFile;
   const navigate = useNavigate();
-  const { build, building } = useBuildProject(book, (made) => `Đã dựng xưởng · ${made.chapters} chương, ${made.voices} giọng`);
+  const { build, building } = useBuildProject(book, (made) => S.s_da_dung_xuong_0_chuong_1_giong_9135690f(made.chapters, made.voices));
   if (!info) return null;
   const pending = info.workshop === "pending";
   const toolchain = Boolean(book.capabilities?.toolchain);
@@ -132,15 +132,13 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
     <>
       {info.views.length > 0 && (
         <DropdownMenu.Item onSelect={onViews} className={MENU_ITEM}>
-          <ClipboardList className="size-4" /> Việc của xưởng
-        </DropdownMenu.Item>
+          <ClipboardList className="size-4" />{S.s_viec_cua_xuong_4471031f}</DropdownMenu.Item>
       )}
       {pending && info.built && (
         <DropdownMenu.Item onSelect={() => navigate(`/studio/${info.built}`)} className={MENU_ITEM}>
-          <Hammer className="size-4" /> Mở xưởng đã dựng
-        </DropdownMenu.Item>
+          <Hammer className="size-4" />{S.s_mo_xuong_da_dung_4a9a2211}</DropdownMenu.Item>
       )}
-      {pending && !info.built && !toolchain && <NeedStudioItem title="Dựng xưởng" phoneNote="Cần cài Studio - file này chỉ mang phần nghe, chưa có xưởng" />}
+      {pending && !info.built && !toolchain && <NeedStudioItem title={S.s_dung_xuong_186ba1e1} phoneNote={S.s_can_cai_studio_file_nay_chi_mang_phan_nghe_a924b6b8} />}
       {pending && !info.built && toolchain && (
         <DropdownMenu.Item
           disabled={building}
@@ -149,7 +147,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
         >
           <Hammer className="mt-line-icon size-4 shrink-0" />
           <span className="min-w-0">
-            <span className="block">Dựng xưởng</span>
+            <span className="block">{S.s_dung_xuong_186ba1e1}</span>
             <span className="block text-xs text-fg-3">{WORKSHOP_COST}</span>
           </span>
         </DropdownMenu.Item>
@@ -188,9 +186,9 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
   const scrollFade = useFadeScroller<HTMLElement>();
   const views = book.projectFile?.views ?? [];
   const tabs: { value: Tab; label: string }[] = [
-    { value: "work", label: "Việc cần duyệt" },
-    { value: "casting", label: "Kịch bản" },
-    { value: "names", label: "Cách đọc tên" },
+    { value: "work", label: S.s_viec_can_duyet_5c0c3ce1 },
+    { value: "casting", label: S.s_kich_ban_602e5f27 },
+    { value: "names", label: S.s_cach_doc_ten_1c46e75d },
   ];
   const available = tabs.filter((tab) => views.includes(tab.value));
   const [chosen, setTab] = useState<Tab>("work");
@@ -203,20 +201,18 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
   });
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Đóng
-        </Button>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_dong_5d54c2a1}</Button>
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
-      title="Việc của xưởng"
-      description="Ảnh chụp lúc người làm sách đóng gói file - chỉ để xem. Muốn sửa thì mở file bằng Studio."
+      title={S.s_viec_cua_xuong_bfea3878}
+      description={S.s_anh_chup_luc_nguoi_lam_sach_dong_goi_file_bd6bbbbf}
     >
-      {available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
+      {available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label={S.s_man_47a0e3c8} options={available} />}
       {/* Khung chờ / lỗi / đổi màn: mờ qua (fadeThrough) theo khoá màn + pha tải, không đổi cứng trong hộp đang mở. */}
       <MotionRegion elementRef={scrollFade.ref} style={scrollFade.style} fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
-        {isLoading ? <ContentSkeleton label="Đang tải việc xưởng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} /> : null}
+        {isLoading ? <ContentSkeleton label={S.s_dang_tai_viec_xuong_571590f2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_viec_cua_xuong_3c08f0cd} onRetry={() => void refetch()} /> : null}
         {tab === "work" && <WorkList data={data as WorkSnapshot | undefined} />}
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
         {tab === "names" && <NamesList data={data as NamesSnapshot | undefined} />}
@@ -239,8 +235,8 @@ function WorkList({ data }: { data?: WorkSnapshot }) {
   const decided = items.filter((item) => item.requested).length;
   const later = items.filter((item) => !item.requested && item.redoOnly).length;
   const rest = [
-    decided > 0 ? `${decided} việc đã quyết, chờ áp dụng` : "",
-    later > 0 ? `${later} việc chỉ có tác dụng khi làm lại phân tích` : "",
+    decided > 0 ? S.s_0_viec_da_quyet_cho_ap_dung_c1a9df50(decided) : "",
+    later > 0 ? S.s_0_viec_chi_co_tac_dung_khi_lam_lai_phan_ti_f4942454(later) : "",
   ].filter(Boolean);
   return (
     <>
@@ -254,23 +250,23 @@ function WorkList({ data }: { data?: WorkSnapshot }) {
           ))}
         </ul>
       ) : (
-        <Empty>{rest.length ? "Không còn việc nào cần quyết." : "Máy không còn chỗ nào nghi ngờ."}</Empty>
+        <Empty>{rest.length ? S.s_khong_con_viec_nao_can_quyet_4cccb08f : S.s_may_khong_con_cho_nao_nghi_ngo_5bcb5676}</Empty>
       )}
-      {rest.length > 0 && <p className="mt-3 text-xs text-fg-3">Ngoài ra: {rest.join(" · ")}.</p>}
+      {rest.length > 0 && <p className="mt-3 text-xs text-fg-3">{S.s_ngoai_ra_41b5d544}{rest.join(" · ")}.</p>}
     </>
   );
 }
 
 function CastingList({ data }: { data?: CastingSnapshot }) {
   if (!data) return null;
-  if (!data.chapters?.length) return <Empty>Chưa có chương nào được phân vai.</Empty>;
+  if (!data.chapters?.length) return <Empty>{S.s_chua_co_chuong_nao_duoc_phan_vai_6a126e57}</Empty>;
   return (
     <ul className="divide-y divide-line">
       {data.chapters.map((chapter) => (
         <li key={chapter.chapterId} className="flex items-baseline justify-between gap-3 py-2">
-          <span className="min-w-0 truncate">{chapter.title || `Chương ${chapter.chapterId}`}</span>
+          <span className="min-w-0 break-words">{chapter.title || S.s_chuong_0_268b0521(chapter.chapterId)}</span>
           <span className="shrink-0 text-xs text-fg-3">
-            {chapter.speech} câu thoại{chapter.hints ? ` · ${chapter.hints} chỗ máy nghi` : ""}
+            {chapter.speech}{S.s_cau_thoai_0bf070fe}{chapter.hints ? S.s_0_cho_may_nghi_886300ca(chapter.hints) : ""}
           </span>
         </li>
       ))}
@@ -280,7 +276,7 @@ function CastingList({ data }: { data?: CastingSnapshot }) {
 
 function NamesList({ data }: { data?: NamesSnapshot }) {
   if (!data) return null;
-  if (!data.items?.length) return <Empty>Chưa có tên riêng nào cần ghi cách đọc.</Empty>;
+  if (!data.items?.length) return <Empty>{S.s_chua_co_ten_rieng_nao_can_ghi_cach_doc_635443e9}</Empty>;
   return (
     <ul className="divide-y divide-line">
       {data.items.map((item) => (
@@ -289,9 +285,8 @@ function NamesList({ data }: { data?: NamesSnapshot }) {
             {item.surface} → {item.spoken}
           </span>
           <span className="shrink-0 text-xs text-fg-3">
-            {item.byListener ? "bạn đã chọn · " : ""}
-            {item.lines} câu
-          </span>
+            {item.byListener ? S.s_ban_da_chon_1ab9b9d8 : ""}
+            {item.lines}{S.s_cau_b07e1008}</span>
         </li>
       ))}
     </ul>

@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // Phản hồi giác quan của giao diện (DESIGN.md 5.3 âm thanh, 5.4 rung): MỘT chỗ cho mọi tiếng chạm và mọi cú rung.
 // Tiếng tự tổng hợp bằng Web Audio (không file thu âm), cùng một âm sắc "đồng thau gõ nhẹ", ngắn <= 250 ms, ~ -24 dB. Tiếng tự im khi sách
 // đang phát - trừ báo hẹn giờ ngủ sắp tắt. Rung chỉ trên điện thoại: android/main.tsx nối `haptic` tới EbookPlayer.haptic (Haptics.kt chọn
@@ -59,7 +60,7 @@ export const SOUNDS: Readonly<Record<FeedbackKind, readonly Note[] | null>> = {
 };
 
 /** Dòng mô tả công tắc "Âm thanh chạm" (Cài đặt > Giao diện, cả hai nền tảng). */
-export const TOUCH_SOUNDS_HINT = "Tiếng khẽ khi bạn chọn. Im khi đang nghe.";
+export const TOUCH_SOUNDS_HINT = S.s_tieng_khe_khi_ban_chon_im_khi_dang_nghe_b844543e;
 
 interface FeedbackOptions {
   /** Cài đặt > Giao diện > "Âm thanh chạm" (mặc định bật). */

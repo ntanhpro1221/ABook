@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.formatSize
 
@@ -45,17 +47,17 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
     val pair by devices.pair.collectAsState()
     val entries = rememberPresence(ui.storage.entries) { it.id }
     LaunchedEffect(devices) { devices.openStorage() }
-    BookForm("Dung lượng", onBack, "storage_screen") {
+    BookForm(S.s_dung_luong_32009349, onBack, "storage_screen") {
         val list = rememberLazyListState()
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("storage_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
                     ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
-                    Caption("Còn trống ${formatSize(ui.storage.free)}", ticking = true)
+                    Caption(S.s_con_trong_0_78b8755a(formatSize(ui.storage.free)), ticking = true)
                 }
             }
             if (entries.isEmpty()) item("empty", "status") {
-                ListItem("Chưa có gì trên máy", Modifier.testTag("storage_empty"))
+                ListItem(S.s_chua_co_gi_tren_may_e57d2ed6, Modifier.testTag("storage_empty"))
             }
             items(entries, key = { "stored_${it.item.id}" }, contentType = { "stored" }) { entry ->
                 AnimatedVisibility(entry.visible, Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),

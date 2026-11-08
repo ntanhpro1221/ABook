@@ -53,12 +53,12 @@ object NetErrors {
 
     /** Câu cho người nghe. `who`: máy ở đầu kia, như "máy tính MayCuaNam-Laptop"; không biết thì "máy kia". */
     fun message(kind: Kind, who: String = ""): String {
-        val other = who.ifBlank { "máy kia" }
+        val other = who.ifBlank { S.s_may_kia_d1eb7142 }
         return when (kind) {
-            Kind.UNREACHABLE -> "Chưa nối được $other — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “Kết nối Wi-Fi”."
-            Kind.DROPPED -> "Kết nối với $other bị ngắt giữa chừng - thử lại"
-            Kind.SECURITY -> "Địa chỉ của $other chưa đúng — bạn chép lại “Địa chỉ máy này” cạnh mã ghép trên máy kia."
-            Kind.TIMEOUT -> "Hết giờ chờ $other trả lời - mạng chậm hay máy ấy đang bận, thử lại"
+            Kind.UNREACHABLE -> S.s_chua_noi_duoc_0_ban_mo_abook_kiem_tra_cung_0058d156(other)
+            Kind.DROPPED -> S.s_ket_noi_voi_0_bi_ngat_giua_chung_thu_lai_954c33ea(other)
+            Kind.SECURITY -> S.s_dia_chi_cua_0_chua_dung_ban_chep_lai_dia_c_23035482(other)
+            Kind.TIMEOUT -> S.s_het_gio_cho_0_tra_loi_mang_cham_hay_may_ay_2780801f(other)
         }
     }
 

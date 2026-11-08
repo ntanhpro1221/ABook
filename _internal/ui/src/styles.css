@@ -47,111 +47,111 @@
   Mọi cặp chữ/nền có tỉ lệ tương phản kiểm bằng shared/palette.test.ts (cả hai giao diện) - đổi một giá trị thì chạy lại test ấy.
 */
 :root {
-  --bg: #f5f3ef;
-  --bg-sunken: #ece9e3;
-  --panel: #ffffff;
-  --panel-2: #faf9f6;
-  --hover: #efece6;
-  --line: #e3dfd7;
-  --line-strong: #d3cdc2;
+  --bg: #f5f3ef; /* generated: ui_design/tokens.json */
+  --bg-sunken: #ece9e3; /* generated: ui_design/tokens.json */
+  --panel: #ffffff; /* generated: ui_design/tokens.json */
+  --panel-2: #faf9f6; /* generated: ui_design/tokens.json */
+  --hover: #efece6; /* generated: ui_design/tokens.json */
+  --line: #e3dfd7; /* generated: ui_design/tokens.json */
+  --line-strong: #d3cdc2; /* generated: ui_design/tokens.json */
   /* Viền NÚT và Ô NHẬP (WCAG 1.4.11: ranh giới của điều khiển >= 3:1 với nền; soát UX a20: --line 1,16:1 nên nút phụ, ô nhập, thẻ
      bấm được gần như vô hình trên nền sáng). --line giữ nguyên cho đường kẻ và viền thẻ
      (trang trí, không cần). */
-  --control-line: #857e72;
-  --control-line-strong: #6f685d;
+  --control-line: #857e72; /* generated: ui_design/tokens.json */
+  --control-line-strong: #6f685d; /* generated: ui_design/tokens.json */
   /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
-  --switch-off: #857e72;
+  --switch-off: #857e72; /* generated: ui_design/tokens.json */
   /* Rãnh bật dùng màu vòng tiêu điểm (đồng thau sẫm), không dùng --accent: --accent chỉ 2,4:1 trên nền sáng nên rãnh bật nhạt hơn nền cả khi núm trắng đè lên. */
-  --switch-on: var(--focus);
+  --switch-on: var(--focus); /* generated: ui_design/tokens.json */
   /* Vòng tiêu điểm và viền điều khiển đang chọn (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
      2,1-2,4:1 trên nền sáng). --accent giữ cho nút chính, tiến độ, trang trí. */
-  --focus: #a0600c;
-  --text: #1a1814;
-  --text-2: #4f4a43;
+  --focus: #a0600c; /* generated: ui_design/tokens.json */
+  --text: #1a1814; /* generated: ui_design/tokens.json */
+  --text-2: #4f4a43; /* generated: ui_design/tokens.json */
   /* chữ phụ, cảnh báo, thông tin: >= 4,5:1 cả trên --bg-sunken / --hover / --accent-soft (soát a67) */
-  --text-3: #67615a;
+  --text-3: #67615a; /* generated: ui_design/tokens.json */
   /* Mực mờ (DESIGN 5.1): CHỈ icon phụ / chữ >= 18px (>= 3:1). Chữ thường dùng --text-3 trở lên. */
-  --fg-3: #8a8478;
+  --fg-3: #8a8478; /* generated: ui_design/tokens.json */
   /* Mũi tên của ô chọn: chính ChevronDown của lucide, màu --fg-3 (như mũi tên gập). */
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8478' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  --accent: #d4912b;
-  --accent-hover: #c2821f;
-  --accent-ink: #1d1304;
-  --accent-text: #8a5309;
-  --accent-soft: #f7ead5;
-  --success: #2a7554; /* cả chữ trên --success-soft (pill "Hoàn tất", soát UX a17) và trên --bg-sunken / --hover (>= 4,5:1) */
-  --success-soft: #dff3ea;
-  --danger: #b23b33; /* cả chữ trên --danger-soft (soát UX a17) */
-  --danger-soft: #fbe4e4;
-  --warning: #905b10; /* chữ >= 4,5:1 cả trên --bg-sunken / --hover / --warning-soft */
-  --warning-soft: #fcf1dc;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8478' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); /* generated: ui_design/tokens.json */
+  --accent: #d4912b; /* generated: ui_design/tokens.json */
+  --accent-hover: #c2821f; /* generated: ui_design/tokens.json */
+  --accent-ink: #1d1304; /* generated: ui_design/tokens.json */
+  --accent-text: #8a5309; /* generated: ui_design/tokens.json */
+  --accent-soft: #f7ead5; /* generated: ui_design/tokens.json */
+  --success: #2a7554; /* generated: ui_design/tokens.json */
+  --success-soft: #dff3ea; /* generated: ui_design/tokens.json */
+  --danger: #b23b33; /* generated: ui_design/tokens.json */
+  --danger-soft: #fbe4e4; /* generated: ui_design/tokens.json */
+  --warning: #905b10; /* generated: ui_design/tokens.json */
+  --warning-soft: #fcf1dc; /* generated: ui_design/tokens.json */
   /* Thông tin KHÔNG có màu riêng: ngoài hổ phách và các màu trạng thái (xanh lục / đỏ / vàng đất) app không có sắc thứ hai - ghi chú thông tin là mảng xám ấm. */
-  --info: #5e5950;
-  --info-soft: #ece9e3;
-  --nav-active: #ffffff;
-  --nav-active-ring: rgb(26 24 20 / 0.08);
-  --avatar-bg-l: 0.93;
-  --avatar-fg-l: 0.43;
-  --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16);
-  --shadow-lg: 0 24px 64px -24px rgb(20 24 29 / 0.35);
-  --scrim: rgb(20 17 13 / 0.45);
+  --info: #5e5950; /* generated: ui_design/tokens.json */
+  --info-soft: #ece9e3; /* generated: ui_design/tokens.json */
+  --nav-active: #ffffff; /* generated: ui_design/tokens.json */
+  --nav-active-ring: rgb(26 24 20 / 0.08); /* generated: ui_design/tokens.json */
+  --avatar-bg-l: 0.93; /* generated: ui_design/tokens.json */
+  --avatar-fg-l: 0.43; /* generated: ui_design/tokens.json */
+  --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16); /* generated: ui_design/tokens.json */
+  --shadow-lg: 0 24px 64px -24px rgb(20 24 29 / 0.35); /* generated: ui_design/tokens.json */
+  --scrim: rgb(20 17 13 / .45); /* generated: ui_design/tokens.json */
   /* Mực trên mảng tô đặc của trạng thái; núm công tắc; chữ / icon đè lên ảnh bìa (luôn trên lớp phủ tối, vì bìa là ảnh bất kỳ). */
-  --success-ink: #ffffff;
-  --danger-ink: #ffffff;
-  --switch-thumb: #ffffff;
-  --cover-overlay: rgb(18 17 16 / 0.72);
-  --cover-ink: #ffffff;
+  --success-ink: #ffffff; /* generated: ui_design/tokens.json */
+  --danger-ink: #ffffff; /* generated: ui_design/tokens.json */
+  --switch-thumb: #ffffff; /* generated: ui_design/tokens.json */
+  --cover-overlay: rgb(18 17 16 / 0.72); /* generated: ui_design/tokens.json */
+  --cover-ink: #ffffff; /* generated: ui_design/tokens.json */
   /* Vệt sáng trên nút chính và thanh đang chạy: trắng ngà, không trắng lạnh. */
-  --button-shine: rgb(255 250 240 / 0.25);
-  --sheen: rgb(255 250 240 / 0.35);
+  --button-shine: rgb(255 250 240 / 0.25); /* generated: ui_design/tokens.json */
+  --sheen: rgb(255 250 240 / 0.35); /* generated: ui_design/tokens.json */
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg: #121110;
-  --bg-sunken: #0c0b0a;
-  --panel: #1b1a18;
-  --panel-2: #201e1b;
-  --hover: #252320;
-  --line: #2e2b27;
-  --line-strong: #3d3934;
+  --bg: #121110; /* generated: ui_design/tokens.json */
+  --bg-sunken: #0c0b0a; /* generated: ui_design/tokens.json */
+  --panel: #1b1a18; /* generated: ui_design/tokens.json */
+  --panel-2: #201e1b; /* generated: ui_design/tokens.json */
+  --hover: #252320; /* generated: ui_design/tokens.json */
+  --line: #2e2b27; /* generated: ui_design/tokens.json */
+  --line-strong: #3d3934; /* generated: ui_design/tokens.json */
   /* tối: viền nút và ô nhập >= 3:1 (soát a31 C3: --line #252d37 chỉ 1,36:1, ô nhập gần như vô hình). Rãnh công tắc tắt cũng vậy (C5: #4b5563 chỉ 2,3:1). */
-  --control-line: #75706a;
-  --control-line-strong: #8c867c;
-  --switch-off: #75706a;
-  --focus: #e9a945; /* = --accent */
-  --text: #ece8e1;
-  --text-2: #bab3a8;
-  --text-3: #a0998e;
-  --fg-3: #7a746a;
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a746a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  --accent: #e9a945;
-  --accent-hover: #f4b85c;
-  --accent-ink: #1b1204;
-  --accent-text: #f0b961;
-  --accent-soft: rgb(233 169 69 / 0.14);
-  --success: #5cc596;
-  --success-soft: rgb(92 197 150 / 0.13);
-  --danger: #ef7b70;
-  --danger-soft: rgb(239 123 112 / 0.13);
-  --warning: #e8b64c;
-  --warning-soft: rgb(232 182 76 / 0.13);
-  --info: #a8a196;
-  --info-soft: rgb(236 232 225 / 0.08);
-  --nav-active: #252320;
-  --nav-active-ring: transparent;
-  --avatar-bg-l: 0.33;
-  --avatar-fg-l: 0.84;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
-  --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.75);
-  --scrim: rgb(6 5 4 / 0.62);
-  --success-ink: #0c241a;
-  --danger-ink: #32130f;
-  --switch-thumb: #1b1204;
-  --cover-overlay: rgb(18 17 16 / 0.72);
-  --cover-ink: #ffffff;
-  --button-shine: rgb(255 250 240 / 0.25);
-  --sheen: rgb(255 250 240 / 0.35);
+  --control-line: #75706a; /* generated: ui_design/tokens.json */
+  --control-line-strong: #8c867c; /* generated: ui_design/tokens.json */
+  --switch-off: #75706a; /* generated: ui_design/tokens.json */
+  --focus: #e9a945; /* generated: ui_design/tokens.json */
+  --text: #ece8e1; /* generated: ui_design/tokens.json */
+  --text-2: #bab3a8; /* generated: ui_design/tokens.json */
+  --text-3: #a0998e; /* generated: ui_design/tokens.json */
+  --fg-3: #7a746a; /* generated: ui_design/tokens.json */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a746a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); /* generated: ui_design/tokens.json */
+  --accent: #e9a945; /* generated: ui_design/tokens.json */
+  --accent-hover: #f4b85c; /* generated: ui_design/tokens.json */
+  --accent-ink: #1b1204; /* generated: ui_design/tokens.json */
+  --accent-text: #f0b961; /* generated: ui_design/tokens.json */
+  --accent-soft: rgb(233 169 69 / .14); /* generated: ui_design/tokens.json */
+  --success: #5cc596; /* generated: ui_design/tokens.json */
+  --success-soft: rgb(92 197 150 / 0.13); /* generated: ui_design/tokens.json */
+  --danger: #ef7b70; /* generated: ui_design/tokens.json */
+  --danger-soft: rgb(239 123 112 / .13); /* generated: ui_design/tokens.json */
+  --warning: #e8b64c; /* generated: ui_design/tokens.json */
+  --warning-soft: rgb(232 182 76 / 0.13); /* generated: ui_design/tokens.json */
+  --info: #a8a196; /* generated: ui_design/tokens.json */
+  --info-soft: rgb(236 232 225 / 0.08); /* generated: ui_design/tokens.json */
+  --nav-active: #252320; /* generated: ui_design/tokens.json */
+  --nav-active-ring: transparent; /* generated: ui_design/tokens.json */
+  --avatar-bg-l: 0.33; /* generated: ui_design/tokens.json */
+  --avatar-fg-l: 0.84; /* generated: ui_design/tokens.json */
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7); /* generated: ui_design/tokens.json */
+  --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.75); /* generated: ui_design/tokens.json */
+  --scrim: rgb(6 5 4 / .62); /* generated: ui_design/tokens.json */
+  --success-ink: #0c241a; /* generated: ui_design/tokens.json */
+  --danger-ink: #32130f; /* generated: ui_design/tokens.json */
+  --switch-thumb: #1b1204; /* generated: ui_design/tokens.json */
+  --cover-overlay: rgb(18 17 16 / 0.72); /* generated: ui_design/tokens.json */
+  --cover-ink: #ffffff; /* generated: ui_design/tokens.json */
+  --button-shine: rgb(255 250 240 / 0.25); /* generated: ui_design/tokens.json */
+  --sheen: rgb(255 250 240 / 0.35); /* generated: ui_design/tokens.json */
   color-scheme: dark;
 }
 
@@ -192,9 +192,9 @@
   --color-cover-overlay: var(--cover-overlay);
   --color-cover-ink: var(--cover-ink);
   --color-nav-active: var(--nav-active);
-  /* Gốc chữ 16px (Tailwind text-xs = 12px, text-sm = 14px - đánh giá 26-09: 10,5px là quá nhỏ cho app đọc/nghe);
-     khoảng cách giữ nguyên 3,5px mỗi bậc như trước, nên bố cục không phình ra. */
-  --spacing: 0.21875rem;
+  /* Gốc chữ 16px (Tailwind text-xs = 12px, text-sm = 14px). Khoảng cách gốc 4px theo
+     ui_design/tokens.json và DESIGN.md; rem giữ lựa chọn cỡ chữ của hệ thống. */
+  --spacing: 0.25rem;
   --shadow-card: var(--shadow);
   --shadow-float: var(--shadow-lg);
   --font-sans: "Be Vietnam Pro", ui-sans-serif, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
@@ -432,7 +432,7 @@ select[class~="border-line"] {
   }
 }
 /* Như `touch-hit` nhưng chỉ nới CHIỀU DỌC (nút trên thanh công cụ đứng sát nhau theo chiều ngang - nới ngang sẽ giành chạm của nút bên cạnh):
- * nền của Button / IconButton. Lưu ý khoảng cách trong app là --spacing 3,5 px (không phải 4), nên `h-9` chỉ 31,5 px. */
+ * nền của Button / IconButton. Khoảng cách gốc --spacing = 4px từ nguồn token chung, nên `h-9` cao 36px. */
 @utility touch-reach {
   @media (pointer: coarse), (max-width: 40rem) {
     position: relative;
@@ -783,20 +783,20 @@ select[class~="border-line"] {
    ========================================================================================================= */
 :root {
   /* Nút, tooltip, đổi biểu tượng */
-  --motion-fast: 120ms;
-  --motion-fast-out: 90ms;
+  --motion-fast: 120ms; /* generated: ui_design/tokens.json */
+  --motion-fast-out: 90ms; /* generated: ui_design/tokens.json */
   /* Lớp phủ, hộp thoại, menu, bảng nổi, mục gấp/mở */
-  --motion-medium: 220ms;
-  --motion-medium-out: 150ms;
+  --motion-medium: 220ms; /* generated: ui_design/tokens.json */
+  --motion-medium-out: 150ms; /* generated: ui_design/tokens.json */
   /* Đổi trang, tấm trượt, màn Đang nghe */
-  --motion-slow: 300ms;
-  --motion-slow-out: 200ms;
+  --motion-slow: 300ms; /* generated: ui_design/tokens.json */
+  --motion-slow-out: 200ms; /* generated: ui_design/tokens.json */
   /* Khung chờ chỉ hiện khi chờ lâu hơn chừng này (shared/MotionPresence.tsx LOADING_PATIENCE): dữ liệu về sớm thì không có nhịp xám. */
   --loading-patience: 200ms;
   /* Material 3: standard (chuyển trong màn), emphasized decelerate (vào), emphasized accelerate (ra) */
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
-  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* generated: ui_design/tokens.json */
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1); /* generated: ui_design/tokens.json */
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15); /* generated: ui_design/tokens.json */
   /* 1 = đầy đủ; 0 = chỉ hiện/mờ (prefers-reduced-motion) */
   --motion-amount: 1;
 }

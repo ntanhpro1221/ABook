@@ -1,6 +1,7 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
-import "ScriptLogic.js" as S
+import "ScriptLogic.js" as Script
 
 // Bảng sửa cách đọc một câu (DeliveryMenu của ScriptTab.tsx): loại đoạn, cảm xúc, mức, chữ đem đọc. Lời kể thành lời thoại / nội tâm thì phải chọn người
 // nói (một câu thoại luôn có chủ) - bằng chính ô chọn người của "Ai nói câu này". Mức do khâu phân tích hiệu chỉnh lại theo cảm xúc. Tên riêng trong câu
@@ -25,24 +26,24 @@ Column {
     property var picked: null
     readonly property string words: wordsField.text
     readonly property bool needsSpeaker: line.kind === "narration" && kind !== "narration"
-    readonly property var change: S.deliveryChange(line, kind, emotion, level, picked, words)
-    readonly property bool ready: S.deliveryReady(line, kind, change)
+    readonly property var change: Script.deliveryChange(line, kind, emotion, level, picked, words)
+    readonly property bool ready: Script.deliveryReady(line, kind, change)
     // Khác lúc mở bảng (kể cả lựa chọn đang chờ áp đã điền sẵn) = còn thứ chưa lưu
     readonly property bool unsaved: kind !== startKind || emotion !== startEmotion || level !== startLevel || Boolean(needsSpeaker && picked) || words !== startWords
-    readonly property var names: work && work.names.data ? S.namesInLine(work.names.data.items, line.text) : []
+    readonly property var names: work && work.names.data ? Script.namesInLine(work.names.data.items, line.text) : []
     spacing: 12
     Component.onCompleted: if (work) work.namesOpened = true
 
     Column {
         width: parent.width
         spacing: 6
-        Label_ { text: "Loại đoạn" }
+        Label_ { text: S.s_loai_doan_4c243930 }
         ChoiceRow {
             objectName: "deliveryKind"
             width: parent.width
-            label: "Loại đoạn"
+            label: S.s_loai_doan_4c243930
             value: root.kind
-            options: S.KINDS
+            options: Script.KINDS
             onPicked: value => root.kind = value
         }
     }
@@ -53,7 +54,7 @@ Column {
         Column {
             width: parent.width
             spacing: 6
-            Label_ { text: "Ai nói?" }
+            Label_ { text: S.s_ai_noi_ab25bbf5 }
             Item {
                 visible: !!root.picked
                 width: parent.width
@@ -65,7 +66,7 @@ Column {
                     x: 24
                     width: parent.width - x - changeLink.width - 8
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.picked ? root.picked.label + (root.picked.newGender ? "\u00a0·\u00a0người mới" : "") : ""
+                    text: root.picked ? root.picked.label + (root.picked.newGender ? S.s_u00a0_u00a0nguoi_moi_fa97703c : "") : ""
                     color: Theme.accentText
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall
@@ -76,7 +77,7 @@ Column {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     accent: true
-                    text: "Đổi"
+                    text: S.s_doi_8f75900f
                     onClicked: root.picked = null
                 }
             }
@@ -95,8 +96,8 @@ Column {
         width: parent.width
         prefix: "fold."
         storageKey: "delivery.emotion"
-        title: "Cảm xúc"
-        summary: S.deliveryText(root.emotion, root.level)
+        title: S.s_cam_xuc_05c1aee0
+        summary: Script.deliveryText(root.emotion, root.level)
         Column {
             width: parent.width
             spacing: 12
@@ -104,12 +105,12 @@ Column {
                 visible: root.line.emotion !== null
                 width: parent.width
                 spacing: 6
-                Label_ { text: "Cảm xúc" }
+                Label_ { text: S.s_cam_xuc_05c1aee0 }
                 Flow {
                     width: parent.width
                     spacing: 6
                     Repeater {
-                        model: S.EMOTIONS
+                        model: Script.EMOTIONS
                         delegate: ChoiceChip {
                             required property var modelData
                             objectName: "deliveryEmotion_" + modelData[0]
@@ -124,18 +125,18 @@ Column {
                 visible: root.line.intensity !== null
                 width: parent.width
                 spacing: 6
-                Label_ { text: "Mức" }
+                Label_ { text: S.s_muc_10267bc5 }
                 ChoiceRow {
                     objectName: "deliveryLevel"
                     width: parent.width
-                    label: "Mức"
+                    label: S.s_muc_10267bc5
                     value: String(root.level)
-                    options: S.LEVELS.map((label, index) => ({value: String(index), label: label}))
+                    options: Script.LEVELS.map((label, index) => ({value: String(index), label: label}))
                     onPicked: value => root.level = Number(value)
                 }
                 Text {
                     width: parent.width
-                    text: "Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa \"Vừa\"."
+                    text: S.s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: 11
@@ -146,20 +147,20 @@ Column {
     Column {
         width: parent.width
         spacing: 6
-        Label_ { text: "Chữ đem đọc" }
+        Label_ { text: S.s_chu_dem_doc_9772701b }
         FormField {
             id: wordsField
             objectName: "deliveryWords"
             width: parent.width
             multiline: true
-            label: "Chữ máy sẽ đọc thay cho câu này"
-            placeholderText: "Gõ chữ muốn máy đọc (để trống: đọc đúng chữ của sách)"
+            label: S.s_chu_may_se_doc_thay_cho_cau_nay_a93194d6
+            placeholderText: S.s_go_chu_muon_may_doc_de_trong_doc_dung_chu_e25320a7
             text: root.startWords
             escapeLocal: false
         }
         Text {
             width: parent.width
-            text: "Chỉ sửa chữ đem đọc; sách giữ nguyên" + (root.line.spoken ? "; xoá hết để dùng chữ gốc." : "")
+            text: S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_bfa41b6d + (root.line.spoken ? S.s_xoa_het_de_dung_chu_goc_e7344ee8 : "")
             color: Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: 11
@@ -168,7 +169,7 @@ Column {
             objectName: "deliveryOriginal"
             visible: !!root.line.spoken
             accent: true
-            text: "Dùng chữ gốc"
+            text: S.s_dung_chu_goc_b0016031
             onClicked: wordsField.text = root.line.text
         }
     }
@@ -178,7 +179,7 @@ Column {
         size: "sm"
         kind: "primary"
         enabled: root.ready
-        text: root.needsSpeaker && !root.picked ? "Chọn người nói trước" : "Lưu cho câu này"
+        text: root.needsSpeaker && !root.picked ? S.s_chon_nguoi_noi_truoc_f3e512e0 : S.s_luu_cho_cau_nay_6402d7a6
         onClicked: root.save(root.change)
     }
     ImportFold {
@@ -187,12 +188,12 @@ Column {
         width: parent.width
         prefix: "fold."
         storageKey: "delivery.names"
-        title: "Tên trong câu"
-        summary: root.names.length + " tên"
+        title: S.s_ten_trong_cau_7a39c9f4
+        summary: root.names.length + S.s_ten_0fd957e9
         Column {
             width: parent.width
             spacing: 8
-            Label_ { text: "Tên cả cuốn" }
+            Label_ { text: S.s_ten_ca_cuon_050a79ad }
             Repeater {
                 model: root.names
                 delegate: NameRow {

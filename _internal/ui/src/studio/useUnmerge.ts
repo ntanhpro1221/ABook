@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/shared/toast";
 import type { CastMember } from "@/listen/model";
@@ -15,7 +16,7 @@ export function useUnmerge(bookId: string) {
       const stamp = person.mergedAt;
       const details = await api<PendingDetails>(`/api/books/${bookId}/pending-changes`);
       const item = typeof stamp === "number" ? details.items.find((entry) => entry.section === "speakers" && Math.abs(entry.requestedAt - stamp) < 1e-6) : undefined;
-      if (!item) throw new Error("Lần gộp này đã được áp hoặc đã bị thay bằng lựa chọn khác - mở lại màn này để xem.");
+      if (!item) throw new Error(S.s_lan_gop_nay_da_duoc_ap_hoac_da_bi_thay_ban_a6f706a3);
       await api(`/api/books/${bookId}/speaker`, {
         method: "POST",
         body: { lines: (item.keys ?? [item.key]).map((stableId) => ({ stableId })), withdraw: true, requestedAt: item.requestedAt },
@@ -23,8 +24,8 @@ export function useUnmerge(bookId: string) {
     },
     onSuccess: (_done, person) => {
       refreshAfterDecision(client, bookId);
-      toast.success(`Đã bỏ gộp ${person.displayName}`);
+      toast.success(S.s_da_bo_gop_0_4a404f0a(person.displayName));
     },
-    onError: (error: Error) => toast.error("Chưa bỏ gộp được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bo_gop_duoc_68297e79, { description: error.message }),
   });
 }

@@ -16,7 +16,7 @@ declare module "node:path" {
 }
 declare const process: { env: Record<string, string | undefined>; platform: string };
 interface ImportMeta { readonly dirname: string; }
-declare module "node:vm" { export function runInNewContext(code: string): unknown; }
+declare module "node:vm" { export function runInNewContext(code: string, context?: Record<string, unknown>): unknown; }
 declare module "node:child_process" {
   export function execFileSync(file: string, args: string[], options: {
     cwd?: string; input?: string; encoding: "utf8"; env?: Record<string, string | undefined>;

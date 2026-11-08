@@ -1,5 +1,7 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -119,27 +121,27 @@ fun AddBookScreen(
     // Số cuốn giữ lại trong lúc lời hỏi khép (không đổi thành "Còn 0 cuốn" giữa chừng).
     val lastCount = remember { intArrayOf(0) }
     if (leaving > 0) lastCount[0] = leaving
-    BookForm("Thêm sách", onBack, "add_book_screen", footer = {
+    BookForm(S.s_them_sach_2a9d3708, onBack, "add_book_screen", footer = {
         Reveal(leaving == 0) {
             Column(Modifier.fillMaxWidth()) {
                 Reveal(state.items.size > 1 && ImportLogic.unfinished(state.items) > 0 && !state.busy && !state.addingRest) {
-                    TextAction("Thêm phần còn lại", addRest, "add_rest", Modifier.fillMaxWidth(), align = Alignment.Center)
+                    TextAction(S.s_them_phan_con_lai_45b70e44, addRest, "add_rest", Modifier.fillMaxWidth(), align = Alignment.Center)
                 }
-                PrimaryButton("Chọn file sách", pickFiles, Modifier.fillMaxWidth().testTag("pick_books"))
-                TextAction("Chọn thư mục TXT", pickFolder, "pick_folder", Modifier.fillMaxWidth(), align = Alignment.Center)
+                PrimaryButton(S.s_chon_file_sach_1f25282c, pickFiles, Modifier.fillMaxWidth().testTag("pick_books"))
+                TextAction(S.s_chon_thu_muc_txt_dd0d140c, pickFolder, "pick_folder", Modifier.fillMaxWidth(), align = Alignment.Center)
             }
         }
         Reveal(leaving > 0) {
-            Column(Modifier.fillMaxWidth().semantics { paneTitle = "Đóng khi còn sách chưa thêm" }.testTag("leave_confirm")) {
+            Column(Modifier.fillMaxWidth().semantics { paneTitle = S.s_dong_khi_con_sach_chua_them_0406a915 }.testTag("leave_confirm")) {
                 BasicText(if (choosingAgain) ImportLogic.rechooseQuestion(lastCount[0]) else ImportLogic.leaveQuestion(lastCount[0]), style = Abook.type.bodyStrong, modifier = Modifier.padding(bottom = Dim.s12).testTag("leave_question"))
-                PrimaryButton("Quay lại thêm sách", stay, Modifier.fillMaxWidth().testTag("leave_stay"))
-                TextAction(if (choosingAgain) "Bỏ và chọn lại" else "Bỏ phần còn lại", dropRest, "leave_drop", Modifier.fillMaxWidth(), align = Alignment.Center)
+                PrimaryButton(S.s_quay_lai_them_sach_e5ac9359, stay, Modifier.fillMaxWidth().testTag("leave_stay"))
+                TextAction(if (choosingAgain) S.s_bo_va_chon_lai_89f7d490 else S.s_bo_phan_con_lai_63a3c314, dropRest, "leave_drop", Modifier.fillMaxWidth(), align = Alignment.Center)
             }
         }
     }) {
         if (state.items.isEmpty()) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("add_empty")) {
-                BasicText("EPUB, DOCX, PDF có chữ, TXT hoặc file .abook. Chọn được nhiều file.", style = Abook.type.bodySmall)
+                BasicText(S.s_epub_docx_pdf_co_chu_txt_hoac_file_abook_c_cc969e7b, style = Abook.type.bodySmall)
             }
         } else {
             val list = rememberLazyListState()
@@ -179,7 +181,7 @@ private fun ImportRow(
         hint = if (failed) item.problem.ifEmpty { item.stage.label } else item.stage.label,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { if (item.folder) FolderIcon(colors.text2) else FileIcon(colors.text2) },
-        trailing = if (failed) ({ TextAction("Thử lại", { retry(item.id) }, "retry_${item.id}") }) else null,
+        trailing = if (failed) ({ TextAction(S.s_thu_lai_c58d068c, { retry(item.id) }, "retry_${item.id}") }) else null,
         chevron = open != null,
         below = if (item.stage == ImportStage.Reading || item.stage == ImportStage.Adding) ({ StageProgress(progress(item.id)) }) else null,
     )
@@ -196,7 +198,7 @@ fun ImportReviewRoute(queue: ImportQueue, itemId: Long, onBack: () -> Unit, open
 
 /** Cách xử lý lời chú: loại trừ nhau trong lõi (`FootnoteChoice.notes` là MỘT giá trị "", "end" hay "drop"), nên là một hàng chọn-một. */
 private enum class NoteMode(val code: String, override val label: String) : Choice {
-    Keep("", "Giữ nguyên"), End("end", "Cuối chương"), Drop("drop", "Bỏ lời chú");
+    Keep("", S.s_giu_nguyen_1b550a12), End("end", S.s_cuoi_chuong_8e067450), Drop("drop", S.s_bo_loi_chu_b3d90294);
 
     override val key: String get() = name.lowercase()
 }
@@ -218,17 +220,17 @@ fun ImportReviewScreen(
     val known = preview?.existingId != null && !choice.separate
     // Nhiều file: "Sách 2/5 · Xem trước" như tên hộp của web.
     val at = state.items.indexOfFirst { it.id == state.currentId }
-    val label = if (state.items.size > 1 && at >= 0) "Sách ${at + 1}/${state.items.size}" else ""
-    val title = if (label.isEmpty()) "Xem trước" else "$label · Xem trước"
+    val label = if (state.items.size > 1 && at >= 0) S.s_sach_0_1_77b98415(at + 1, state.items.size) else ""
+    val title = if (label.isEmpty()) S.s_xem_truoc_4282388c else S.s_0_xem_truoc_0b80ebc7(label)
     val adding = state.items.firstOrNull { it.id == state.currentId }?.stage == ImportStage.Adding
     BookForm(title, onBack, "import_review_screen", footer = {
         InlineProblem(state.problem, tag = "import_problem")
         InlineProblem(if (preview != null && !ImportLogic.canAdd(preview, choice)) ImportLogic.NOTHING_PICKED else "", tag = "import_none_picked")
         if (preview != null) PrimaryButton(
             when {
-                state.busy -> if (adding) "Đang thêm" else "Đang đọc"
-                known -> if (state.items.size == 1) "Mở cuốn đó" else "Bỏ cuốn này"
-                else -> "Thêm vào thư viện"
+                state.busy -> if (adding) S.s_dang_them_457edcc3 else S.s_dang_doc_1b09d2d9
+                known -> if (state.items.size == 1) S.s_mo_cuon_do_75ab80a2 else S.s_bo_cuon_nay_ba5f36fe
+                else -> S.s_them_vao_thu_vien_cc27dafc
             },
             add, Modifier.fillMaxWidth().testTag("confirm_import"), enabled = !state.busy && ImportLogic.canAdd(preview, choice),
         )
@@ -237,9 +239,9 @@ fun ImportReviewScreen(
         if (preview != null) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_review"), state = list) {
             item("metadata", "metadata") {
                 Column(Modifier.padding(top = Dim.s16)) {
-                    BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, "Tên sách",
-                        placeholder = "Tên hiển thị trong thư viện")
-                    val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, "${choice.picked.size} / ${preview.chapters.size} chương")
+                    BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, S.s_ten_sach_d54846eb,
+                        placeholder = S.s_ten_hien_thi_trong_thu_vien_c48c7ac6)
+                    val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, S.s_0_1_chuong_505874dc(choice.picked.size, preview.chapters.size))
                     Spacer(Modifier.height(Dim.s8))
                     BasicText(meta.dotJoined(), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
                 }
@@ -247,22 +249,22 @@ fun ImportReviewScreen(
             if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {
                 Column(Modifier.padding(top = Dim.sectionGap)) {
                     if (preview.existingId != null) {
-                        Caption(if (preview.sameSource) "Đã thêm từ file này rồi" else "Cuốn này đã có trong thư viện")
-                        SwitchRow(if (preview.sameSource) "Vẫn thêm bản mới" else "Thêm bản riêng", choice.separate, { choose { it.copy(separate = !it.separate) } },
-                            "separate_copy", hint = if (preview.sameSource) "Bạn đã thêm file này thành “${preview.existingTitle}” (${preview.existingChapters} chương)."
-                            else "Cuốn này đã có trong thư viện: “${preview.existingTitle}”.")
+                        Caption(if (preview.sameSource) S.s_da_them_tu_file_nay_roi_42fe4ad5 else S.s_cuon_nay_da_co_trong_thu_vien_2aae08e1)
+                        SwitchRow(if (preview.sameSource) S.s_van_them_ban_moi_f4832361 else S.s_them_ban_rieng_fe9759e4, choice.separate, { choose { it.copy(separate = !it.separate) } },
+                            "separate_copy", hint = if (preview.sameSource) S.s_ban_da_them_file_nay_thanh_0_1_chuong_68248830(preview.existingTitle, preview.existingChapters)
+                            else S.s_cuon_nay_da_co_trong_thu_vien_0_d8728110(preview.existingTitle))
                     }
                     if (preview.existingId != null && preview.splitOffer > 0) RowLine()
-                    if (preview.splitOffer > 0) SwitchRow("Tách chương", choice.split, { revise { it.copy(split = !it.split) } },
+                    if (preview.splitOffer > 0) SwitchRow(S.s_tach_chuong_2f1df570, choice.split, { revise { it.copy(split = !it.split) } },
                         "split_chapters", hint = ImportLogic.splitHint(preview))
                 }
             }
             val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
             if (groups.isNotEmpty()) {
-                item("suggestion_heading", "heading") { SectionTitle("Gợi ý phần đọc") }
+                item("suggestion_heading", "heading") { SectionTitle(S.s_goi_y_phan_doc_b268d95e) }
                 items(groups, key = { "suggestion_${it.line}" }, contentType = { "suggestion" }) { group ->
                     Column {
-                        SwitchRow("Bỏ đọc dòng", group.line in choice.skipped,
+                        SwitchRow(S.s_bo_doc_dong_3e82a7fd, group.line in choice.skipped,
                             { choose { it.copy(skipped = if (group.line in it.skipped) it.skipped - group.line else it.skipped + group.line) } },
                             "suggestion_${group.line}", hint = "“${group.line}” · ${ImportLogic.where(group.chapters)}")
                         RowLine()
@@ -271,34 +273,34 @@ fun ImportReviewScreen(
             }
             if (preview.footnoteCount > 0) item("footnotes", "footnotes") {
                 Column {
-                    SectionTitle("Chú thích")
-                    Caption("${preview.footnoteCount} chú thích trong file", Modifier.testTag("footnote_count"))
+                    SectionTitle(S.s_chu_thich_fc0aa279)
+                    Caption(S.s_0_chu_thich_trong_file_be2ecbf5(preview.footnoteCount), Modifier.testTag("footnote_count"))
                     if (preview.footnoteExample.isNotEmpty()) {
                         Spacer(Modifier.height(Dim.s12))
                         QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
                     }
                     Spacer(Modifier.height(Dim.s8))
                     if (preview.footnoteMarks > 0) {
-                        SwitchRow("Bỏ số gọi", choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
-                            hint = "${preview.footnoteMarks} số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi.")
+                        SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
+                            hint = S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(preview.footnoteMarks))
                         RowLine()
                     }
-                    ChoiceSetting("Lời chú", NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
+                    ChoiceSetting(S.s_loi_chu_eca33b1a, NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
                         { mode, _ -> revise { it.copy(notes = mode.code) } }, "footnote_notes")
                     // Cùng câu với web (FootnoteChoices.tsx): hàng chọn-một không có lời riêng cho từng lựa chọn nên một câu giải thích cả ba.
-                    Caption("Bạn chọn Giữ nguyên để giữ lời chú như trong file; Cuối chương đặt mỗi lời chú ở cuối chương có số gọi nó.", Modifier.padding(top = Dim.s4).testTag("footnote_notes_help"))
+                    Caption(S.s_ban_chon_giu_nguyen_de_giu_loi_chu_nhu_tro_fa013ff9, Modifier.padding(top = Dim.s4).testTag("footnote_notes_help"))
                 }
             }
             item("chapter_heading", "heading") {
                 // Nhiều chương: "Chọn hết" / "Bỏ chọn hết" ở cuối hàng tiêu đề (web: cạnh số chương đã tích).
                 if (preview.chapters.size > 1) {
                     Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-                        BasicText("Chương", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-                        TextAction("Chọn hết", { choose { it.copy(picked = ImportLogic.all(preview)) } }, "pick_all_chapters")
+                        BasicText(S.s_chuong_2d157977, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+                        TextAction(S.s_chon_het_9e8a7c2c, { choose { it.copy(picked = ImportLogic.all(preview)) } }, "pick_all_chapters")
                         Spacer(Modifier.width(Dim.s16))
-                        TextAction("Bỏ chọn hết", { choose { it.copy(picked = emptySet()) } }, "pick_no_chapters")
+                        TextAction(S.s_bo_chon_het_669fa50d, { choose { it.copy(picked = emptySet()) } }, "pick_no_chapters")
                     }
-                } else SectionTitle("Chương")
+                } else SectionTitle(S.s_chuong_2d157977)
             }
             items(preview.chapters, key = { "chapter_${it.index}" }, contentType = { "chapter" }) { row ->
                 val kept = row.index in choice.picked
@@ -313,12 +315,12 @@ fun ImportReviewScreen(
                     RowLine(start = 56.dp)
                 }
             }
-            if (preview.notes.isNotEmpty()) item("notes_heading", "heading") { SectionTitle("Định dạng") }
+            if (preview.notes.isNotEmpty()) item("notes_heading", "heading") { SectionTitle(S.s_dinh_dang_36b746b6) }
             items(preview.notes.distinct(), key = { "note_$it" }, contentType = { "note" }) { note ->
                 Caption(note, Modifier.padding(top = Dim.s12))
             }
             if (!known) item("skip", "action") {
-                TextAction("Bỏ cuốn này", skip, "skip_book", Modifier.padding(top = Dim.s24, bottom = Dim.s16).fillMaxWidth(), align = Alignment.CenterStart)
+                TextAction(S.s_bo_cuon_nay_ba5f36fe, skip, "skip_book", Modifier.padding(top = Dim.s24, bottom = Dim.s16).fillMaxWidth(), align = Alignment.CenterStart)
             }
         }
     }
@@ -356,10 +358,10 @@ fun ImportChapterRoute(queue: ImportQueue, index: Int, onBack: () -> Unit) {
 @Composable
 fun ImportChapterScreen(state: ImportState, index: Int, onBack: () -> Unit, choose: ((ImportChoices) -> ImportChoices) -> Unit) {
     val row = state.preview?.chapters?.firstOrNull { it.index == index }
-    BookForm("Tên chương", onBack, "import_chapter_screen") {
+    BookForm(S.s_ten_chuong_9edb6c28, onBack, "import_chapter_screen") {
         if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
             val current = state.choices.names[index] ?: row.title
-            BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = "Tên chương")
+            BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = S.s_ten_chuong_9edb6c28)
             if (ImportLogic.renamed(current, row.title)) {
                 Spacer(Modifier.height(Dim.s16))
                 RevertName(row.title, { choose { it.copy(names = it.names - index) } })

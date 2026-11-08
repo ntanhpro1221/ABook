@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "./backStack";
 import { Pencil } from "lucide-react";
@@ -93,7 +94,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   checked={on}
                   disabled={choice.disabled}
                   onChange={(event) => choice.onPick(index, event.target.checked)}
-                  aria-label={`Đưa vào sách: ${renamed ?? chapter.title}`}
+                  aria-label={S.s_dua_vao_sach_0_af27b180(renamed ?? chapter.title)}
                   className="size-4 accent-[var(--accent)]"
                 />
               </label>
@@ -106,7 +107,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                 <input
                   autoFocus
                   defaultValue={renamed ?? chapter.title}
-                  aria-label="Tên chương"
+                  aria-label={S.s_ten_chuong_9edb6c28}
                   data-escape-local
                   maxLength={160}
                   onFocus={(event) => event.target.select()}
@@ -133,7 +134,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   data-rename={index}
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
-                  title="Bấm để đổi tên chương"
+                  title={S.s_bam_de_doi_ten_chuong_10c942c5}
                   className="touch-hit group block w-full rounded-control text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
                   {/* Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng (đặt cạnh khối chữ thì tên hai dòng đẩy bút ra tận mép phải). */}
@@ -147,14 +148,14 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               )}
               {sub && <div className="break-words text-xs text-fg-2">{sub}</div>}
               {chapter.matter ? (
-                <div className="text-xs text-fg-3">{chapter.matter} - có vẻ không phải truyện, tích nếu muốn nghe</div>
+                <div className="text-xs text-fg-3">{chapter.matter}{S.s_co_ve_khong_phai_truyen_tich_neu_muon_nghe_e93a3b54}</div>
               ) : (
-                chapter.short && <div className="text-xs text-fg-3">rất ngắn - có thể là bìa / trang bản quyền</div>
+                chapter.short && <div className="text-xs text-fg-3">{S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0}</div>
               )}
             </div>
             <div className="tabular text-right text-xs text-fg-2">
-              <div className="pt-[2px] leading-5">{formatNumber(chapter.words)} chữ</div>
-              {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)} ký tự</div>}
+              <div className="pt-[2px] leading-5">{formatNumber(chapter.words)}{S.s_chu_6117d040}</div>
+              {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)}{S.s_ky_tu_c7cc4ddf}</div>}
             </div>
           </div>
         );

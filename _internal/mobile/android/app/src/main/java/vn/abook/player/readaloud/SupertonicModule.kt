@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Part
 import vn.abook.player.SharedRuntime
@@ -35,7 +37,7 @@ class SupertonicModule(
     groups: Map<String, List<Part>>? = null,
     blocked: String? = null,
 ) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered), VoiceSpeed.Family {
-    override val name = "giọng Supertonic"
+    override val name = S.s_giong_supertonic_cb38a9b1
     override val key = "supertonic"
     /** "Bản nhanh hơn" only where its part is pinned (tests give their own parts). */
     override val choices = if (FAST_CHOICE in this.groups) listOf(CHOICE, FAST_CHOICE) else listOf(CHOICE)
@@ -47,7 +49,7 @@ class SupertonicModule(
         choice != FAST_CHOICE || choice in installed || (CHOICE in installed && VoiceSpeed.wantsFast(speedRtf()))
     override fun requires(choice: String) = if (choice == FAST_CHOICE) listOf(CHOICE) else emptyList()
     override val unsupported: String = blocked ?: if (abi == null || this.groups["ort"].isNullOrEmpty())
-        "điện thoại này chưa chạy được giọng Supertonic (kiến trúc máy chưa hỗ trợ)" else ""
+        S.s_dien_thoai_nay_chua_chay_duoc_giong_supert_2f1a473a else ""
 
     /** The desktop's card: one choice, not "Khuyên dùng" but ticked. */
     override fun marks(choice: String, best: String) = false to true
@@ -107,11 +109,11 @@ class SupertonicModule(
         const val FOLDER = "supertonic"
         val NEEDS = listOf("ort", "g2p", CHOICE)
         private const val MODEL = "model"
-        private const val LABEL = "Giọng Supertonic"
-        private const val DETAIL = "10 giọng nam nữ, 44 kHz; tự đổi số và ngày giờ thành chữ."
-        private const val FAST_LABEL = "Bản nhanh hơn"
-        private const val FAST_DETAIL = "Tạo giọng nhanh hơn, tiếng kém chút; xuất sách vẫn dùng bản tốt nhất."
-        val PART_LABEL = mapOf("ort" to "Bộ chạy giọng", "g2p" to "Bộ đọc tiếng Việt", CHOICE to "Giọng Supertonic", FAST_CHOICE to FAST_LABEL)
+        private const val LABEL = S.s_giong_supertonic_9922ded4
+        private const val DETAIL = S.s_10_giong_nam_nu_44_khz_tu_doi_so_va_ngay_g_3c90dbcf
+        private const val FAST_LABEL = S.s_ban_nhanh_hon_895ea9a3
+        private const val FAST_DETAIL = S.s_tao_giong_nhanh_hon_tieng_kem_chut_xuat_sa_46d2b823
+        val PART_LABEL = mapOf("ort" to S.s_bo_chay_giong_892e1ea9, "g2p" to S.s_bo_doc_tieng_viet_d4488a68, CHOICE to S.s_giong_supertonic_9922ded4, FAST_CHOICE to FAST_LABEL)
 
         private fun defaultGroups(abi: String?): Map<String, List<Part>> = linkedMapOf(
             "ort" to SharedRuntime.ortParts(abi),
@@ -123,7 +125,7 @@ class SupertonicModule(
         // Pins: the same files as abook/webui/supertonic_module.py (SOURCE_REPO at SOURCE_REVISION, FILES).
         private const val BASE = "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/"
 
-        private fun file(name: String, sha256: String, size: Long) = Part("$MODEL/$name", sha256, size, BASE + name, label = "Giọng Supertonic")
+        private fun file(name: String, sha256: String, size: Long) = Part("$MODEL/$name", sha256, size, BASE + name, label = S.s_giong_supertonic_9922ded4)
         /** A file the app made itself ([VoiceModule.APP_MODELS], desktop the same pins): [path] on the phone, [source] in that repo. */
         private fun appFile(path: String, source: String, sha256: String, size: Long, label: String) =
             Part(path, sha256, size, VoiceModule.APP_MODELS + source, label = label)
@@ -131,8 +133,8 @@ class SupertonicModule(
         val FILES = listOf(
             file("onnx/duration_predictor.onnx", "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db", 3_700_147),
             file("onnx/text_encoder.onnx", "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff", 36_416_150),
-            appFile("$MODEL/onnx/vector_estimator.onnx", "supertonic3-int8/top30/vector_estimator.onnx", "30ca11e17f99f2ccb33b7d8ec7cc51df9c86c7f2df3ede6a2107b5f505d526f0", 115_904_311, "Giọng Supertonic"),
-            appFile("$MODEL/onnx/vocoder.onnx", "supertonic3-int8/vocoder/vocoder.onnx", "a81b861b87697404ae897b0824801691ecaac59f6801b70c6b55b9432aa46059", 45_162_003, "Giọng Supertonic"),
+            appFile("$MODEL/onnx/vector_estimator.onnx", "supertonic3-int8/top30/vector_estimator.onnx", "30ca11e17f99f2ccb33b7d8ec7cc51df9c86c7f2df3ede6a2107b5f505d526f0", 115_904_311, S.s_giong_supertonic_9922ded4),
+            appFile("$MODEL/onnx/vocoder.onnx", "supertonic3-int8/vocoder/vocoder.onnx", "a81b861b87697404ae897b0824801691ecaac59f6801b70c6b55b9432aa46059", 45_162_003, S.s_giong_supertonic_9922ded4),
             file("onnx/tts.json", "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09", 8_253),
             file("onnx/unicode_indexer.json", "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f", 277_676),
             file("config.json", "4099082b107a9d4029849ac76b89eca65e03732660969c2babe5bf308c7357f2", 174),

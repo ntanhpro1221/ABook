@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Packed
 import vn.abook.player.PinnedFiles.Part
@@ -36,15 +38,15 @@ class VieneuModule(
     blocked: String? = null,
 ) : VoiceModule(dir, runtime, groups ?: defaultGroups(abi), facts, benchmark, forget, metered) {
     private val g2pLib = abi?.let { G2P_LIBRARIES[it] }
-    override val name = "giọng VieNeu"
+    override val name = S.s_giong_vieneu_8c2eeab6
     override val key = "vieneu"
     override val choices = CHOICES
     override val tiers = TIERS
     override fun needs(choice: String) = NEEDS.getValue(choice)
     override fun partLabel(id: String) = PART_LABEL.getValue(id)
     override val unsupported: String = blocked ?: when {
-        abi == null || g2pLib == null || this.groups["ort"].isNullOrEmpty() -> "điện thoại này chưa chạy được giọng VieNeu (kiến trúc máy chưa hỗ trợ)"
-        G2P_REVISION.isEmpty() -> "bản giọng VieNeu cho điện thoại chưa được đăng"
+        abi == null || g2pLib == null || this.groups["ort"].isNullOrEmpty() -> S.s_dien_thoai_nay_chua_chay_duoc_giong_vieneu_01f77430
+        G2P_REVISION.isEmpty() -> S.s_ban_giong_vieneu_cho_dien_thoai_chua_duoc_f23cc16d
         else -> ""
     }
 
@@ -55,7 +57,7 @@ class VieneuModule(
         val (label, text) = CHOICE_TEXT.getValue(choice)
         // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
         val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
-            "$text. Cần 1,3 GB RAM, dễ bị Android tắt — bạn nên chọn Nano."
+            S.s_0_can_1_3_gb_ram_de_bi_android_tat_ban_nen_1fbf7771(text)
         else text
         return label to detail
     }
@@ -127,11 +129,11 @@ class VieneuModule(
         val CHOICES = listOf("nano", "turbo")
         val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"))
         val CHOICE_TEXT = mapOf(
-            "nano" to ("Giọng VieNeu Nano" to "11 giọng, 24 kHz; ít bộ nhớ, hợp điện thoại yếu; tải nặng hơn VieNeu."),
-            "turbo" to ("Giọng VieNeu" to "25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh"),
+            "nano" to (S.s_giong_vieneu_nano_dc5fdeb6 to S.s_11_giong_24_khz_it_bo_nho_hop_dien_thoai_y_25e727de),
+            "turbo" to (S.s_giong_vieneu_371ad9fb to S.s_25_giong_am_thanh_48_khz_hay_nhat_can_dien_097d3188),
         )
-        val PART_LABEL = mapOf("ort" to "Bộ chạy giọng", "g2p" to "Bộ đọc tiếng Việt", "voices" to "Danh sách giọng",
-            "turbo" to "Giọng VieNeu", "nano" to "Giọng VieNeu Nano")
+        val PART_LABEL = mapOf("ort" to S.s_bo_chay_giong_892e1ea9, "g2p" to S.s_bo_doc_tieng_viet_d4488a68, "voices" to S.s_danh_sach_giong_acec3455,
+            "turbo" to S.s_giong_vieneu_371ad9fb, "nano" to S.s_giong_vieneu_nano_dc5fdeb6)
 
         // Pins: the same upstream files as abook/webui/vieneu_module.py (tests/test_vieneu_android.py compares the two tables).
         private const val TURBO_BASE = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
@@ -145,7 +147,7 @@ class VieneuModule(
         private const val G2P_BASE = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/$G2P_REVISION/sea-g2p/0.9.1/"
 
         private fun g2pLib(abi: String, sha256: String, size: Long, packedSha256: String, packedSize: Long) =
-            Part("g2p/libabook_sea_g2p.so", sha256, size, "$G2P_BASE$abi/libabook_sea_g2p.so.gz", Packed(packedSha256, packedSize), true, "Bộ đọc tiếng Việt")
+            Part("g2p/libabook_sea_g2p.so", sha256, size, "$G2P_BASE$abi/libabook_sea_g2p.so.gz", Packed(packedSha256, packedSize), true, S.s_bo_doc_tieng_viet_d4488a68)
 
         // As scripts/prepare_sea_g2p_android.py prints them (SHA-256 + size of the library and of its gzip on the server).
         val G2P_LIBRARIES = mapOf(
@@ -157,36 +159,36 @@ class VieneuModule(
         /** The 63 MB dictionary, taken out of the very wheel the desktop downloads (vieneu_module.G2P). */
         val DICTIONARY = Part("g2p/sea_g2p.bin", "4346e690d0711ebc5231e7a42c5c88aaf6e40377e894b4617c018fd81c6f4096", 62_829_820,
             "https://files.pythonhosted.org/packages/73/57/58916050fe1218c106f89d4fa3b8f18f4ef5d264e6ec5906020f2f1dfcf2/sea_g2p-0.10.0-cp310-abi3-win_amd64.whl",
-            Packed("118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792, "sea_g2p/sea_g2p.bin"), label = "Bộ đọc tiếng Việt")
+            Packed("118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792, "sea_g2p/sea_g2p.bin"), label = S.s_bo_doc_tieng_viet_d4488a68)
 
         /** The vieneu 3.8.3 wheel (vieneu_module.VOICES), kept whole: the two voice lists are read out of it. */
         val VOICES = Part("voices/vieneu-3.8.3-py3-none-any.whl", "7388d166e65746f5bb075bf8094d324f8131a82393680b712260d6f2f983ef06", 2_643_059,
             "https://files.pythonhosted.org/packages/fc/9c/e7b624412b8a734d6b1cd8ca6209f88a309464b05393c40f2e316ec90885/vieneu-3.8.3-py3-none-any.whl",
-            label = "Danh sách giọng")
+            label = S.s_danh_sach_giong_acec3455)
         val VOICE_MEMBERS = mapOf("turbo" to "vieneu/assets/voices_v3_turbo.json", "nano" to "vieneu/assets/voices_v3_nano.json")
 
         private fun file(folder: String, base: String, name: String, sha256: String, size: Long, label: String) =
             Part("$folder/$name", sha256, size, base + name, label = label)
 
         val TURBO_FILES = listOf(
-            file("turbo", TURBO_BASE, "config.json", "a9f8d9c4b4736448ab355d1a98cfe48f5e39aecf2916c37b0806c228612e9a2d", 2_152, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "tokenizer.json", "6cc6bcbe380b8c37bd9f2514e37c5dfa3e00e122c6e3125dae5c4afe48e39158", 22_320, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "vieneu_prefill.onnx", "c6a80dabf67c820de798f8deb7d4e0f37d81b5d76e33fbe20ab5a67f2d371f4e", 1_090_823, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "vieneu_decode_step.onnx", "2c5b30bd8ccb751c58d651f44c074df10c4113efd08719adaa8e3dec6a6ce2ca", 1_062_040, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "vieneu_acoustic_cached.onnx", "f631e3387c788c3d8b9a5ac5df94952af5bc4c4d1049ff8a751e76a246fff2d4", 7_207_223, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "vieneu_backbone_shared.data", "bb683925f7c8d826fadca4f8a0252ae4d5fc5b7837c14f6857e18f4c6666588d", 103_891_968, "Giọng VieNeu"),
-            file("turbo", TURBO_BASE, "vieneu_v3_heads.npz", "fb22484baa424bbb775133a6e5f0d00d6299b2b256fbe3312a864b85b9aed01e", 52_219_622, "Giọng VieNeu"),
-            file("turbo", CODEC_BASE, "moss_audio_tokenizer_decode_full.onnx", "0fbbafe3fd4afa2a019af5c5ced204af6e2d1db044fa40f021525d2aee95b4ac", 681_902, "Giọng VieNeu"),
-            file("turbo", CODEC_BASE, "moss_audio_tokenizer_decode_shared.data", "e69d52e0f4e84ca27850557ee54face46632d3a5a16c89bd246c7c408466dcad", 44_198_912, "Giọng VieNeu"),
+            file("turbo", TURBO_BASE, "config.json", "a9f8d9c4b4736448ab355d1a98cfe48f5e39aecf2916c37b0806c228612e9a2d", 2_152, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "tokenizer.json", "6cc6bcbe380b8c37bd9f2514e37c5dfa3e00e122c6e3125dae5c4afe48e39158", 22_320, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "vieneu_prefill.onnx", "c6a80dabf67c820de798f8deb7d4e0f37d81b5d76e33fbe20ab5a67f2d371f4e", 1_090_823, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "vieneu_decode_step.onnx", "2c5b30bd8ccb751c58d651f44c074df10c4113efd08719adaa8e3dec6a6ce2ca", 1_062_040, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "vieneu_acoustic_cached.onnx", "f631e3387c788c3d8b9a5ac5df94952af5bc4c4d1049ff8a751e76a246fff2d4", 7_207_223, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "vieneu_backbone_shared.data", "bb683925f7c8d826fadca4f8a0252ae4d5fc5b7837c14f6857e18f4c6666588d", 103_891_968, S.s_giong_vieneu_371ad9fb),
+            file("turbo", TURBO_BASE, "vieneu_v3_heads.npz", "fb22484baa424bbb775133a6e5f0d00d6299b2b256fbe3312a864b85b9aed01e", 52_219_622, S.s_giong_vieneu_371ad9fb),
+            file("turbo", CODEC_BASE, "moss_audio_tokenizer_decode_full.onnx", "0fbbafe3fd4afa2a019af5c5ced204af6e2d1db044fa40f021525d2aee95b4ac", 681_902, S.s_giong_vieneu_371ad9fb),
+            file("turbo", CODEC_BASE, "moss_audio_tokenizer_decode_shared.data", "e69d52e0f4e84ca27850557ee54face46632d3a5a16c89bd246c7c408466dcad", 44_198_912, S.s_giong_vieneu_371ad9fb),
         )
         val NANO_FILES = listOf(
-            file("nano", NANO_BASE, "config.json", "3762f1716fd8d7a1451ddf2e051c03b0a341e8adda4f1dbd0db0ae9777514e56", 2_927, "Giọng VieNeu Nano"),
-            file("nano", NANO_BASE, "constants.npz", "7c011938effe41687a9af85107a31a040dfcf0fb3d0f048ec10f4fb65c1a8829", 53_448, "Giọng VieNeu Nano"),
-            file("nano", NANO_BASE, "text_encoder.onnx", "204f02cccae1f16ccb2d3840f05721a37fe250b82cbd456337a0ccb49615e4bf", 26_519_943, "Giọng VieNeu Nano"),
-            file("nano", NANO_BASE, "duration_predictor.onnx", "20fd7fa60006d0a48ee82e0451b3f920d2052588c083c756cce669f3947c0a68", 727_809, "Giọng VieNeu Nano"),
-            file("nano", NANO_BASE, "vector_estimator.onnx", "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418, "Giọng VieNeu Nano"),
+            file("nano", NANO_BASE, "config.json", "3762f1716fd8d7a1451ddf2e051c03b0a341e8adda4f1dbd0db0ae9777514e56", 2_927, S.s_giong_vieneu_nano_dc5fdeb6),
+            file("nano", NANO_BASE, "constants.npz", "7c011938effe41687a9af85107a31a040dfcf0fb3d0f048ec10f4fb65c1a8829", 53_448, S.s_giong_vieneu_nano_dc5fdeb6),
+            file("nano", NANO_BASE, "text_encoder.onnx", "204f02cccae1f16ccb2d3840f05721a37fe250b82cbd456337a0ccb49615e4bf", 26_519_943, S.s_giong_vieneu_nano_dc5fdeb6),
+            file("nano", NANO_BASE, "duration_predictor.onnx", "20fd7fa60006d0a48ee82e0451b3f920d2052588c083c756cce669f3947c0a68", 727_809, S.s_giong_vieneu_nano_dc5fdeb6),
+            file("nano", NANO_BASE, "vector_estimator.onnx", "c6c1d4398ca35d3ad1bd3f0459413d1b975d09e7f2f3a2b4493a7b92bbf6ce93", 155_132_418, S.s_giong_vieneu_nano_dc5fdeb6),
             // the app's int8 decoder (desktop vieneu_module.NANO_FILES), read with VieneuNano.CFG_LAST false
-            file("nano", NANO_INT8_BASE, "codec_decoder.onnx", "88a1586a4dff8cf2a5a9a359115687c48b38a29eb9d21e25add964f370a47f94", 42_609_995, "Giọng VieNeu Nano"),
+            file("nano", NANO_INT8_BASE, "codec_decoder.onnx", "88a1586a4dff8cf2a5a9a359115687c48b38a29eb9d21e25add964f370a47f94", 42_609_995, S.s_giong_vieneu_nano_dc5fdeb6),
         )
     }
 }

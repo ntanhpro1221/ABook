@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #pragma once
 #include <QJSEngine>
 #include <QObject>
@@ -28,7 +29,7 @@ public:
     Q_INVOKABLE void select(const QString &id) { if (m_busy) return; m_busy = true; m_error.clear(); emit changed(); m_request(true, id); }
     void complete(const QVariantList &devices, const QString &selected, bool accepted) {
         m_devices = devices; m_selected = selected; m_busy = false;
-        m_error = accepted ? QString() : QStringLiteral("Chưa đổi được thiết bị phát. Vẫn dùng thiết bị trước.");
+        m_error = accepted ? QString() : UiStrings::s_copy_f51ca150be46;
         emit changed();
     }
 signals:

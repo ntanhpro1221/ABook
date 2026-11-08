@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -24,7 +25,7 @@ Item {
         if (list.indexOf(value) < 0) { list.push(value); list.sort() }
         return list.map(time => ({value: time, label: time}))
     }
-    readonly property var minuteOptions: [15, 30, 45, 60].map(minutes => ({value: minutes, label: minutes + " phút"}))
+    readonly property var minuteOptions: [15, 30, 45, 60].map(minutes => ({value: minutes, label: minutes + S.s_phut_cf728a6a}))
 
     Collapse {
         id: fold
@@ -40,19 +41,19 @@ Item {
                 width: parent.width
                 spacing: 8
                 Select {
-                    tabular: true; inline: true; label: "Từ"; enabled: !root.locked
+                    tabular: true; inline: true; label: S.s_tu_c2634aaa; enabled: !root.locked
                     options: root.times(root.last.from); value: root.last.from
                     onPicked: value => root.changed({from: value, to: root.last.to, minutes: root.last.minutes})
                 }
-                Item { width: toWord.implicitWidth; height: 40; Text { id: toWord; anchors.verticalCenter: parent.verticalCenter; text: "đến"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall } }
+                Item { width: toWord.implicitWidth; height: 40; Text { id: toWord; anchors.verticalCenter: parent.verticalCenter; text: S.s_den_80b69c87; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall } }
                 Select {
-                    tabular: true; inline: true; label: "Đến"; enabled: !root.locked
+                    tabular: true; inline: true; label: S.s_den_4f14ac22; enabled: !root.locked
                     options: root.times(root.last.to); value: root.last.to
                     onPicked: value => root.changed({from: root.last.from, to: value, minutes: root.last.minutes})
                 }
-                Item { width: forWord.implicitWidth; height: 40; Text { id: forWord; anchors.verticalCenter: parent.verticalCenter; text: "hẹn"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall } }
+                Item { width: forWord.implicitWidth; height: 40; Text { id: forWord; anchors.verticalCenter: parent.verticalCenter; text: S.s_hen_791f3d1e; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall } }
                 Select {
-                    inline: true; label: "Số phút hẹn"; enabled: !root.locked
+                    inline: true; label: S.s_so_phut_hen_40312361; enabled: !root.locked
                     options: root.minuteOptions; value: root.last.minutes
                     onPicked: value => root.changed({from: root.last.from, to: root.last.to, minutes: Number(value)})
                 }

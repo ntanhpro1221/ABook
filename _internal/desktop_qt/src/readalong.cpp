@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "readalong.h"
 #include "textscript.h"
 
@@ -361,7 +362,7 @@ bool ReadAlong::listenFrom(int paragraph, int position) {
             offset = segment.wordChars[word].first - segment.textStart;
         }
     }
-    m_player->jumpTo(m_player->chapterId(), at, QStringLiteral("Nghe từ “%1”").arg(excerpt(segment.text.mid(offset))));
+    m_player->jumpTo(m_player->chapterId(), at, UiStrings::s_copy_3020bf8b595c.arg(excerpt(segment.text.mid(offset))));
     update();
     emit listened();
     return true;

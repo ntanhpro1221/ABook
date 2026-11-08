@@ -98,7 +98,7 @@ object AacJoin {
         private var length = 0L
 
         fun put(index: Int, unit: ByteArray) {
-            require(unit.isNotEmpty()) { "khung AAC rỗng" }
+            require(unit.isNotEmpty()) { S.s_khung_aac_rong_c5204824 }
             if (index >= sizes.size) {
                 val grown = max(index + 1, sizes.size * 2)
                 offsets = offsets.copyOf(grown)
@@ -114,7 +114,7 @@ object AacJoin {
         fun has(index: Int): Boolean = index in sizes.indices && sizes[index] > 0
 
         operator fun get(index: Int): ByteArray {
-            check(has(index)) { "thiếu khung $index" }
+            check(has(index)) { S.s_thieu_khung_0_1c8ef1b1(index) }
             val out = ByteArray(sizes[index])
             data.seek(offsets[index])
             data.readFully(out)
@@ -244,7 +244,7 @@ object AacJoin {
         private fun recent(from: Long, to: Long): ShortArray {
             val size = history.size
             val out = ShortArray(((to - from) * channels).toInt())
-            check(from >= 0 && (position - from) * channels <= size && to <= position) { "vòng đệm không đủ" }
+            check(from >= 0 && (position - from) * channels <= size && to <= position) { S.s_vong_dem_khong_du_485dac50 }
             var at = ((from * channels) % size).toInt()
             var i = 0
             while (i < out.size) {
@@ -344,7 +344,7 @@ object AacJoin {
                 progress(index + 1, n, before.coerceAtMost(0.99))
             }
             starts[n] = position
-            if (position == 0L) throw Mp3Export.Refused("Không có âm thanh nào để ghi")
+            if (position == 0L) throw Mp3Export.Refused(S.s_khong_co_am_thanh_nao_de_ghi_9998b831)
             val total = units(position, delay)
             bounds[n] = total
             for (index in 1 until n) bounds[index] = min(bounds[index], total)
@@ -357,7 +357,7 @@ object AacJoin {
             val missing = (0 until total).firstOrNull { !units.has(it) } ?: total
             if (missing < total) {
                 if (missing <= bounds[n - 1] || (missing until total).any { units.has(it) }) {
-                    throw Mp3Export.Refused("Bộ mã hoá AAC bỏ sót một đoạn - xuất lại")
+                    throw Mp3Export.Refused(S.s_bo_ma_hoa_aac_bo_sot_mot_doan_xuat_lai_99c3f4eb)
                 }
                 bounds[n] = missing
             }
@@ -487,7 +487,7 @@ object AacJoin {
             }
             piece.encoder.finish()
             open.remove(piece)
-            if (piece.written < last - first) throw Mp3Export.Refused("Bộ mã hoá AAC bỏ sót một đoạn - xuất lại")
+            if (piece.written < last - first) throw Mp3Export.Refused(S.s_bo_ma_hoa_aac_bo_sot_mot_doan_xuat_lai_99c3f4eb)
         }
 
         private fun edgeCovers(j: Int, from: Long, to: Long): Boolean {

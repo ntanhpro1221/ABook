@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -146,7 +147,7 @@ Item {
             width: 20
             height: 20
             Accessible.role: Accessible.Button
-            Accessible.name: "Đóng thông báo"
+            Accessible.name: S.s_dong_thong_bao_8af6ba92
             onClicked: Api.dismissNotice(root.slot)
             Rectangle {
                 anchors.fill: parent

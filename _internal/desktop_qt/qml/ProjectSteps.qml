@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -35,7 +36,7 @@ Column {
         width: parent.width
         prefix: "fold.project."
         storageKey: (root.book ? root.book.id : "") + ".steps"
-        title: "Các bước"
+        title: S.s_cac_buoc_93e33a59
         summary: root.book ? Logic.stepSummary(root.book) : ""
         Grid {
             id: steps

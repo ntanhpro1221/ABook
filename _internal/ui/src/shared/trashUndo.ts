@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { toast, toastDone } from "@/shared/toast";
 import { moveBookStorage } from "@/shared/bookStorage";
 import { api } from "@/studio/api";
@@ -13,16 +14,16 @@ type Restored = { ok: boolean; title?: string; renamed?: boolean; wasQueued?: bo
 
 /** "Đã khôi phục “X”" - hay "… vào thư mục “X (2)”" khi chỗ cũ đã có cuốn cùng tên (thư viện vẫn hiện tên sách, không phải tên thư mục). */
 export function restoredMessage(title: string, result: Partial<Pick<Restored, "title" | "renamed">>): string {
-  return result.renamed && result.title ? `Đã khôi phục “${title}” vào thư mục “${result.title}”` : `Đã khôi phục “${title}”`;
+  return result.renamed && result.title ? S.s_da_khoi_phuc_0_vao_thu_muc_1_1648356b(title, result.title) : S.s_da_khoi_phuc_0_7dbdaf93(title);
 }
 
 /** Lưu ý của "Đã khôi phục" (khôi phục thiếu gì đó thì thành cảnh báo): thư viện có hai cuốn trùng tên (tên mới đã nằm trong chữ chính); chỗ nghe
  *  chưa mang theo; cuốn từng xếp hàng chờ thì hàng chờ không tự xếp lại. */
 export function restoredNote(result: Partial<Pick<Restored, "renamed" | "wasQueued" | "dataLeft">>): string | undefined {
   const notes = [
-    result.renamed ? "Thư viện có hai cuốn trùng tên." : "",
-    result.dataLeft ? "Chưa mang theo chỗ nghe." : "",
-    result.wasQueued ? "Chưa xếp lại hàng chờ làm sách." : "",
+    result.renamed ? S.s_thu_vien_co_hai_cuon_trung_ten_a3b49caa : "",
+    result.dataLeft ? S.s_chua_mang_theo_cho_nghe_9d990607 : "",
+    result.wasQueued ? S.s_chua_xep_lai_hang_cho_lam_sach_8397275f : "",
   ].filter(Boolean);
   return notes.length ? notes.join(" ") : undefined;
 }
@@ -65,7 +66,7 @@ function showPending(): void {
   const id = toastId();
   const shown = [...pending.keys()];
   timer = setTimeout(showPending, firstExpiry - now);
-  toast.success(items.length === 1 ? last.message : `Đã bỏ ${items.length} cuốn`, {
+  toast.success(items.length === 1 ? last.message : S.s_da_bo_0_cuon_9816ea00(items.length), {
     id,
     duration: firstExpiry - now,
     // Gạt / đóng toast = không hoàn tác những cuốn ấy: lần bỏ sau không gộp chúng vào "Đã bỏ N cuốn" và Hoàn tác không trả chúng về.
@@ -76,7 +77,7 @@ function showPending(): void {
       if (!pending.size) clearTimeout(timer);
     },
     action: {
-      label: "Hoàn tác",
+      label: S.s_hoan_tac_e72ff675,
       onClick: async () => {
         generation += 1;
         if (restoring) return;
@@ -95,7 +96,7 @@ function showPending(): void {
               toastDone(restoredMessage(item.title, restored), restoredNote(restored));
               item.onRestored();
             } catch (error) {
-              toast.error("Chưa hoàn tác được", { description: (error as Error).message });
+              toast.error(S.s_chua_hoan_tac_duoc_164b754b, { description: (error as Error).message });
             }
           }
         } finally {

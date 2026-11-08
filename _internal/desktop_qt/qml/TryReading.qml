@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Cast
@@ -47,7 +48,7 @@ QtObject {
             const named = Boolean(data && data.busyBook)
             root.needsStudio = reason === "studio"
             const why = Cast.refusalText(reason, message, named)
-            root.refusal = why === message && !named ? "Chưa nghe thử được - " + why : why
+            root.refusal = why === message && !named ? S.s_chua_nghe_thu_duoc_37e1d214 + why : why
         })
     }
 }

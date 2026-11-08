@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
@@ -177,7 +178,7 @@ export function ReaderScreen(edit: SentenceEditing) {
     if (!validReadingRevision(place.rev)) {
       place.rev = nextReadingRevision(revisionBook.current, place);
       try { localStorage.setItem(readingKey(id, record), JSON.stringify(place)); }
-      catch { toast.error("Chưa lưu được bản dự phòng chỗ đọc", { id: "reading-local" }); }
+      catch { toast.error(S.s_chua_luu_duoc_ban_du_phong_cho_doc_365d2800, { id: "reading-local" }); }
     }
     saving.current = true;
     try {
@@ -190,7 +191,7 @@ export function ReaderScreen(edit: SentenceEditing) {
       }
     } catch (error) {
       const backup = Boolean(localReading(id, record));
-      toast.error("Chưa lưu được chỗ đọc vào hồ sơ", { id: "reading-save", description: `${backup ? "Bạn vẫn có bản lưu trên máy này." : "App sẽ thử lưu lại chỗ đọc của bạn."} ${(error as Error).message}` });
+      toast.error(S.s_chua_luu_duoc_cho_doc_vao_ho_so_03b0df65, { id: "reading-save", description: `${backup ? S.s_ban_van_co_ban_luu_tren_may_nay_c2821718 : S.s_app_se_thu_luu_lai_cho_doc_cua_ban_49902924} ${(error as Error).message}` });
     } finally {
       saving.current = false;
     }
@@ -206,7 +207,7 @@ export function ReaderScreen(edit: SentenceEditing) {
     const place: ReadingPosition = { chapterId, index: found, at: Date.now() / 1000, rev: nextReadingRevision(book, pending.current ?? localReading(id, record)), anchor: makeAnchor(paragraphs, found, 0, textHash), quote: paragraphs[found]?.slice(0, 200), pending: true };
     pending.current = place;
     try { localStorage.setItem(readingKey(id, record), JSON.stringify(place)); }
-    catch { toast.error("Chưa lưu được bản dự phòng chỗ đọc", { id: "reading-local" }); }
+    catch { toast.error(S.s_chua_luu_duoc_ban_du_phong_cho_doc_365d2800, { id: "reading-local" }); }
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => void flushReading(), 2000);
   }, [book, chapterId, follow, id, script, record, owner, paragraphs, textHash, flushReading, pending]);
@@ -261,7 +262,7 @@ export function ReaderScreen(edit: SentenceEditing) {
 
   if (!chapter || !script) {
     return (
-      <EmptyState icon={BookOpenText} title="Chưa mở được chương này" className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>Về trang sách</Button>}>
+      <EmptyState icon={BookOpenText} title={S.s_chua_mo_duoc_chuong_nay_d7a0396b} className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>{S.s_ve_trang_sach_52317a7e}</Button>}>
         {chapterOpenProblem(scriptError)}
       </EmptyState>
     );
@@ -339,34 +340,34 @@ export function ReaderScreen(edit: SentenceEditing) {
   const name = chapter.subtitle || chapter.title;
   // Điện thoại: thanh trải đúng lề trang 20 px như chữ phía trên, các nút dàn đều (trước đây hộp co theo nút, thụt 34 px - soát 140 V13).
   const bar = (
-    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-cover bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
-      <IconButton label="Chương trước" icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
-      <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
+    <div role="toolbar" aria-label={S.s_dieu_khien_doc_9a0e8e89} data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-cover bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
+      <IconButton label={S.s_chuong_truoc_4750f9e9} icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
+      <IconButton label={S.s_tim_trong_sach_de3ccc5f} icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
       {canListen && (
         // Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình.
         // Chữ hệ thống phóng to (textZoom Android không đổi bề rộng màn) thì nút này co, nhãn cắt "…" - các nút khác đứng yên trong thanh.
         <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 min-w-0 max-sm:h-11 max-[379px]:px-3">
-          <span className="min-w-0 truncate max-[379px]:sr-only">Nghe từ đây</span>
+          <span className="min-w-0 truncate max-[379px]:sr-only">{S.s_nghe_tu_day_6a7ff4ab}</span>
         </Button>
       )}
       <Popover.Root>
         <Popover.Trigger asChild>
-          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
+          <button type="button" aria-label={S.s_co_chu_va_gian_dong_7dfe48ac} className={cn("grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
             <Type className="glyph" />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[288px] max-w-[calc(100vw-24px)] rounded-cover border border-line bg-panel p-3 shadow-float">
-            <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
-            <div role="group" aria-label="Cỡ chữ" className="relative mt-1.5 grid grid-cols-5 gap-1">
+            <div className="text-xs font-medium text-fg-2">{S.s_co_chu_d7b231e3}</div>
+            <div role="group" aria-label={S.s_co_chu_d7b231e3} className="relative mt-1.5 grid grid-cols-5 gap-1">
               <SlidingIndicator variant="line" />
               {SIZES.map((size) => (
                 <button
                   key={size}
                   type="button"
                   aria-pressed={prefs.size === size}
-                  aria-label={`Cỡ chữ ${size}`}
+                  aria-label={S.s_co_chu_0_21809038(size)}
                   onClick={() => setPrefs({ ...prefs, size })}
                   className={cn("tabular relative h-9 min-w-[48px] text-left text-sm font-medium transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "text-accent-text" : "hover:bg-hover")}
                 >
@@ -374,7 +375,7 @@ export function ReaderScreen(edit: SentenceEditing) {
                 </button>
               ))}
             </div>
-            <div className="mt-3 text-xs font-medium text-fg-2">Giãn dòng</div>
+            <div className="mt-3 text-xs font-medium text-fg-2">{S.s_gian_dong_db0409d5}</div>
             <div className="relative mt-1.5 grid grid-cols-3 gap-1">
               <SlidingIndicator variant="line" />
               {LEADINGS.map((leading) => (
@@ -392,7 +393,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-      <IconButton label="Chương sau" icon={SkipForward} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
+      <IconButton label={S.s_chuong_sau_17d1bd20} icon={SkipForward} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
     </div>
   );
 
@@ -401,13 +402,13 @@ export function ReaderScreen(edit: SentenceEditing) {
       {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
       <header ref={header} data-reader-header className="sticky top-0 z-10 flex min-h-14 shrink-0 items-center border-b border-line bg-bg py-1 page-x">
         {/* Cùng nút ← với mọi màn con (ScreenHeader): nét mũi tên đứng trên lề màn như mép chữ bên dưới, tên chương sát sau. */}
-        <BackButton label="Về trang sách" onClick={() => navigate(`/book/${id}`)} />
+        <BackButton label={S.s_ve_trang_sach_52317a7e} onClick={() => navigate(`/book/${id}`)} />
         <h2 className="min-w-0 flex-1 break-words text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
           <MotionRegion as="span" motionKey={chapterId} className="block">{name}</MotionRegion>
         </h2>
       </header>
 
-      <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll data-overlay="Thanh nổi trên chữ đang mờ dần ở mép dưới" className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
+      <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll data-overlay={S.s_thanh_noi_tren_chu_dang_mo_dan_o_mep_duoi_ffcf55bb} className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
         {/* Mép trên mờ dần như mép dưới (soát 25-10 V6): chữ cuộn lên không bị cắt ngang dưới thanh đầu. Dính mép trên, cao bằng lề pt-8 của bài và
             lùi lại bằng đúng chừng ấy (-mb-8) nên không chiếm chỗ; chưa cuộn thì chỉ phủ lên phần lề trống nên chẳng thấy. */}
         <div aria-hidden data-reader-fade-top className="pointer-events-none sticky top-0 z-[1] -mb-8 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
@@ -441,7 +442,7 @@ export function ReaderScreen(edit: SentenceEditing) {
               className="mt-12 flex w-full items-center justify-between gap-4 border-t border-line py-5 text-left text-base transition-colors duration-motion-fast hover:text-accent-text"
             >
               <span>
-                <span className="block text-xs text-fg-2">Chương tiếp theo</span>
+                <span className="block text-xs text-fg-2">{S.s_chuong_tiep_theo_f07a08a4}</span>
                 <span className="block font-semibold">{chapters[index + 1].subtitle || chapters[index + 1].title}</span>
               </span>
               <ArrowRight className="ink-end size-5 text-fg-2 [--icon-w:17.5px]" />

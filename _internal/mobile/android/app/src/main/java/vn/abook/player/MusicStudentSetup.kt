@@ -113,7 +113,7 @@ class MusicStudentSetup(
         synchronized(lock) {
             if (state == DOWNLOADING) return
             if (!supported) {
-                fail("Điện thoại này chưa chạy được bộ phân tích nhạc.")
+                fail(S.s_dien_thoai_nay_chua_chay_duoc_bo_phan_tich_8915027c)
                 return
             }
             if (state == READY && outdatedParts().isEmpty()) return
@@ -170,7 +170,7 @@ class MusicStudentSetup(
             }
             return
         } catch (failure: Exception) {
-            val said = PinnedFiles.failure("bộ phân tích nhạc", failure)
+            val said = PinnedFiles.failure(S.s_bo_phan_tich_nhac_1da090c3, failure)
             fail(said.message, said.detail)
             return
         } finally {
@@ -193,7 +193,7 @@ class MusicStudentSetup(
             // gói đủ file mà không dùng được (cấu hình lạ, đầu hỏng): xoá để lần bấm sau tải lại sạch; thư viện dùng chung chỉ đi khi không ai cần
             pinned.wipe(own)
             runtime.release(libs.groupBy { it.name.substringBefore('/') })
-            fail("Bộ phân tích tải về không dùng được - bấm Thử lại để tải lại.", PinnedFiles.technical(failure))
+            fail(S.s_bo_phan_tich_tai_ve_khong_dung_duoc_bam_th_040006ea, PinnedFiles.technical(failure))
             false
         }
     }

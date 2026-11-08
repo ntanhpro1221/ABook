@@ -49,7 +49,7 @@ def test_separators_are_bound_to_both_pieces():
     # a plain space on either side of the dot (" · ", "\u00a0· "), also across a RichText tag (" <span ...>· "), and a piece that
     # STARTS with "·": glued after a string this cannot see, or a lone Flow piece that leads the row once the Flow wraps (FlowDetail
     # drops its dot there)
-    bare = [f"{path.name}:{line}: {body!r}" for path in sources() if path.name != "FlowDetail.qml"
+    bare = [f"{path.name}:{line}: {body!r}" for path in sources() if path.name not in ("FlowDetail.qml", "UiStrings.js")
             for line, body in string_literals(path.read_text(encoding="utf-8"))
             if re.search(r"[ \t](<[^<>]*>)*·|·(<[^<>]*>)*[ \t]|^\s*·", body)]
     assert not bare, ("dùng \"\\u00a0·\\u00a0\" (dấu ngăn dính cả hai mảnh, không bao giờ đứng đầu hay cuối dòng) hay FlowDetail:\n"

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Shapes
 import ABook
@@ -49,7 +50,7 @@ Item {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: "Thả để thêm sách"
+                text: S.s_tha_de_them_sach_e3e7000e
                 color: Theme.text
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: 18
@@ -58,7 +59,7 @@ Item {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: "EPUB, Word (DOCX), PDF có chữ, TXT hay file sách .abook. Thả nhiều file một lúc cũng được."
+                text: S.s_epub_word_docx_pdf_co_chu_txt_hay_file_sac_59f8efc3
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeBodySmall

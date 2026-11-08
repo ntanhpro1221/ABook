@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
@@ -54,13 +56,13 @@ class ProductionSource(
 
 object ProductionText {
     fun upcoming(book: ListenBook): String {
-        val where = book.remote?.let { "trên ${it.deviceName}" }
+        val where = book.remote?.let { S.s_tren_0_983af173(it.deviceName) }
         if (where != null) {
-            if (book.producing && book.pauseReason != null) return "Đang tạm dừng $where"
-            return if (book.producing) "Đang làm $where" else "Chưa có chương nghe được · làm $where"
+            if (book.producing && book.pauseReason != null) return S.s_dang_tam_dung_0_b6363dfa(where)
+            return if (book.producing) S.s_dang_lam_0_fa0badf5(where) else S.s_chua_co_chuong_nghe_duoc_lam_0_20bbbaa5(where)
         }
-        if (book.producing && book.pauseReason != null) return if (book.pauseReason == "battery") "Đang tạm dừng · máy đang chạy pin" else "Đang tạm dừng"
-        val eta = if (book.etaSeconds != null && book.etaPhase in listOf("analysis", "speaker")) "chương đầu nghe được sau khoảng ${Fmt.length(book.etaSeconds + 600)}" else "đang chuẩn bị"
-        return if (book.producing) "Đang làm · $eta" else "Chưa có chương nghe được"
+        if (book.producing && book.pauseReason != null) return if (book.pauseReason == "battery") S.s_dang_tam_dung_may_dang_chay_pin_83cf9dae else S.s_dang_tam_dung_e40cc1b7
+        val eta = if (book.etaSeconds != null && book.etaPhase in listOf("analysis", "speaker")) S.s_chuong_dau_nghe_duoc_sau_khoang_0_424385a4(Fmt.length(book.etaSeconds + 600)) else S.s_dang_chuan_bi_d4a83411
+        return if (book.producing) S.s_dang_lam_0_f411f518(eta) else S.s_chua_co_chuong_nghe_duoc_40ca01ec
     }
 }

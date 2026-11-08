@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -100,13 +102,13 @@ class StudioCoverSource(private val session: StudioSession) : EditSource {
 }
 
 object StudioCoverText {
-    const val TITLE = "Ảnh bìa"
-    const val HAS = "Sách đã có ảnh bìa."
-    const val NONE = "Sách chưa có ảnh bìa: dùng bìa vẽ từ tên."
-    const val LEAD = "Ảnh bìa nằm ở máy tính và đi theo file xuất."
-    const val PICK = "Chọn ảnh"
-    const val FIND = "Tìm bìa"
-    const val REMOVE = "Bỏ ảnh bìa"
+    const val TITLE = S.s_anh_bia_f224644d
+    const val HAS = S.s_sach_da_co_anh_bia_b9cf94f1
+    const val NONE = S.s_sach_chua_co_anh_bia_dung_bia_ve_tu_ten_7f1db374
+    const val LEAD = S.s_anh_bia_nam_o_may_tinh_va_di_theo_file_xua_de3b9400
+    const val PICK = S.s_chon_anh_41ecf092
+    const val FIND = S.s_tim_bia_34025664
+    const val REMOVE = S.s_bo_anh_bia_696c6692
 }
 
 private sealed class CoverStage(val index: Int) {

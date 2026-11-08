@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
@@ -76,7 +77,7 @@ function lineOf(segment: ScriptSegment, index: number, people: Person[], wish: L
     kind: segment.kind,
     speaker: segment.speaker,
     current: found?.value ?? (speaker ? speaker : NARRATOR),
-    label: speaker || "Người kể",
+    label: speaker || S.s_nguoi_ke_fd36cd15,
     editable: true,
     hasAudio: false,
     hint: null,
@@ -95,12 +96,12 @@ function lineOf(segment: ScriptSegment, index: number, people: Person[], wish: L
 function waitingItems(wish: LineWish | undefined): { key: string; text: string; section: string; requestedAt: number; held?: boolean }[] {
   const items: { key: string; text: string; section: string; requestedAt: number; held?: boolean }[] = [];
   if (wish?.speaker) {
-    items.push({ key: "speaker", text: `Người nói: ${wish.speaker.shown}`, section: "speakers", requestedAt: wish.speaker.requestedAt, held: wish.speaker.held });
+    items.push({ key: "speaker", text: S.s_nguoi_noi_0_be397362(wish.speaker.shown), section: "speakers", requestedAt: wish.speaker.requestedAt, held: wish.speaker.held });
   }
   if (wish?.delivery) {
-    items.push({ key: "delivery", text: `Cách đọc câu - ${deliveryWords(wish.delivery) || "đã ghi"}`, section: "lines", requestedAt: wish.delivery.requestedAt });
+    items.push({ key: "delivery", text: S.s_cach_doc_cau_0_fab076f0(deliveryWords(wish.delivery) || S.s_da_ghi_daf41a52), section: "lines", requestedAt: wish.delivery.requestedAt });
   }
-  if (wish?.retake) items.push({ key: "retake", text: "Thu lại câu này", section: "retakes", requestedAt: wish.retake.requestedAt });
+  if (wish?.retake) items.push({ key: "retake", text: S.s_thu_lai_cau_nay_034c2834, section: "retakes", requestedAt: wish.retake.requestedAt });
   return items;
 }
 
@@ -158,8 +159,8 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
   const reach = useReach(bookId, word ?? "", Boolean(word)).data;
   return (
     <div className="space-y-3">
-      <p className="text-sm text-fg-2">Chạm vào từ máy đọc sai (thường là tên riêng). Cách đọc lưu cho cả cuốn: mọi câu có từ ấy.</p>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Các từ trong câu">
+      <p className="text-sm text-fg-2">{S.s_cham_vao_tu_may_doc_sai_thuong_la_ten_rien_2afff698}</p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
         {words.map((item) => {
           const waiting = names.find((entry) => sameWord(entry.surface, item));
           return (
@@ -186,19 +187,17 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
             <span className="font-semibold">{word}</span>
             {pending && (
               <span className="text-xs font-medium text-accent-text">
-                {" "}
-                · đang chờ máy làm sách: <span className="whitespace-nowrap">“{pending.spokenForm}”</span>
+                {" "}{S.s_dang_cho_may_lam_sach_c4bd7a16}<span className="whitespace-nowrap">“{pending.spokenForm}”</span>
               </span>
             )}
             {pending && (
               <button
                 type="button"
                 onClick={() => onWithdraw(pending)}
-                aria-label={`Bỏ cách đọc “${pending.surface}”`}
+                aria-label={S.s_bo_cach_doc_0_a883978b(pending.surface)}
                 className="ml-1.5 inline-flex items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
               >
-                <X className="size-3" /> Bỏ
-              </button>
+                <X className="size-3" />{S.s_bo_7107fb3c}</button>
             )}
           </MotionRegion>
           <MotionPresence open={Boolean(reach && reach.surface === word)}>
@@ -220,9 +219,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
           />}
         </MotionRegion>
       </MotionPresence>
-      <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={onBack}>
-        Quay lại
-      </Button>
+      <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={onBack}>{S.s_quay_lai_6d793582}</Button>
     </div>
   );
 }
@@ -282,7 +279,7 @@ export function LineWishDialog({
     others: people.here.length ? people.others : [],
     lines: [],
   };
-  const need = studioNeed(book.capabilities) ?? "cần Studio";
+  const need = studioNeed(book.capabilities) ?? S.s_can_studio_0cf02b2b;
   // Cuốn tải từ máy khác: thay đổi gửi sang máy ấy và áp ngay ở đó - lời hứa nói thế (decisions.waitingStudio).
   const holder = syncsToComputer(book.capabilities) ? holderName(book.remote) : null;
   const promise = waitingStudio(holder);
@@ -309,16 +306,16 @@ export function LineWishDialog({
       }),
     onSuccess: ({ requestedAt, elsewhere }, person) => {
       done();
-      const action = undoAction(client, book.id, "speaker", [{ lines: [ref], requestedAt, keep: false }], "Câu này trở lại như trước khi đổi người nói.");
+      const action = undoAction(client, book.id, "speaker", [{ lines: [ref], requestedAt, keep: false }], S.s_cau_nay_tro_lai_nhu_truoc_khi_doi_nguoi_no_ea7b426d);
       const was = Object.values(elsewhere ?? {});
       if (was.length) warnElsewhere(1, was[0] ? (people.here.concat(people.others).find((item) => item.value === was[0])?.label ?? was[0]) : "", action.onClick);
-      toast.success(`Đã ghi: câu này của ${person.label}`, {
+      toast.success(S.s_da_ghi_cau_nay_cua_0_8b08302d(person.label), {
         action,
         duration: UNDO_MS,
       });
       close();
     },
-    onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_nguoi_noi_5ef0be83, { description: error.message }),
   });
   const delivery = useMutation({
     // `seen`: cách đọc câu này đang chờ mà hộp thấy - cửa sổ/máy khác vừa ghi khác thì được hỏi (uxfix28 A).
@@ -331,16 +328,16 @@ export function LineWishDialog({
         const takeTheirs = () =>
           void api(`/api/books/${book.id}/line`, { method: "POST", body: { ...ref, ...theirs } })
             .then(done)
-            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }));
+            .catch((error: Error) => toast.error(S.s_chua_lay_lai_duoc_2e01d8a8, { description: error.message }));
         warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
       }
-      toast.success("Đã ghi cách đọc câu này", {
+      toast.success(S.s_da_ghi_cach_doc_cau_nay_0db96b25, {
         action: answer.requestedAt ? undoLineFix(client, book.id, ref, answer) : undefined,
         duration: UNDO_MS,
       });
       close();
     },
-    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message }),
   });
   const retake = useMutation({
     // `seen`: hộp có thấy câu này đang chờ thu lại không - máy kia vừa xin/bỏ khác thì được hỏi (uxfix28 A).
@@ -356,12 +353,12 @@ export function LineWishDialog({
         warnElsewhere(1, verdictWord(theirs), () =>
           void api(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: theirs || null, stableId: ref.stableId, chapterId: script.chapterId } })
             .then(done)
-            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message })),
+            .catch((error: Error) => toast.error(S.s_chua_lay_lai_duoc_2e01d8a8, { description: error.message })),
         );
       }
-      toast.success("Đã ghi: thu lại câu này", {
+      toast.success(S.s_da_ghi_thu_lai_cau_nay_9c9b1e4b, {
         action: {
-          label: "Hoàn tác",
+          label: S.s_hoan_tac_e72ff675,
           onClick: () =>
             void api<{ sent?: boolean }>(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: null, stableId: ref.stableId } })
               .then((answer) => {
@@ -369,13 +366,13 @@ export function LineWishDialog({
                 // Câu đã gửi sang máy giữ sách rồi: chỉ nhờ được máy ấy rút lại - nói đúng điều đó, đừng làm như đã xong.
                 if (answer?.sent) toastDone(...undoToast(false, true));
               })
-              .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message })),
+              .catch((error: Error) => toast.error(S.s_chua_hoan_tac_duoc_164b754b, { description: error.message })),
         },
         duration: UNDO_MS,
       });
       close();
     },
-    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message }),
   });
   const withdraw = useMutation({
     // `key`: mục cần bỏ - mã câu (người nói, cách đọc câu, thu lại) hay khoá từ (cách đọc một từ).
@@ -385,7 +382,7 @@ export function LineWishDialog({
         body: { section: item.section, key: item.key ?? ref.stableId, keys: [item.key ?? ref.stableId], requestedAt: item.requestedAt },
       }),
     onSuccess: done,
-    onError: (error: Error) => toast.error("Chưa bỏ được thay đổi này", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bo_duoc_thay_doi_nay_eccfaf9b, { description: error.message }),
   });
   const withdrawName = (name: NameWish) => withdraw.mutate({ section: "pronunciations", key: name.key, requestedAt: name.requestedAt });
 
@@ -394,19 +391,16 @@ export function LineWishDialog({
   const names = (wishes?.pronunciations ?? []).filter((name) => sentenceWords.some((word) => sameWord(word, name.surface)));
   const items: { key: string; text: string; section: string; requestedAt: number; held?: boolean; name?: NameWish }[] = [
     ...waitingItems(wish),
-    ...names.map((name) => ({ key: `name:${name.key}`, text: `Cách đọc “${name.surface}”: “${name.spokenForm}”`, section: "pronunciations", requestedAt: name.requestedAt, name })),
+    ...names.map((name) => ({ key: `name:${name.key}`, text: S.s_cach_doc_0_1_0648aee6(name.surface, name.spokenForm), section: "pronunciations", requestedAt: name.requestedAt, name })),
   ];
-  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là" : "Sửa câu này";
+  const title = view === "speaker" ? (line?.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95) : view === "delivery" ? S.s_cach_doc_cau_nay_d8d0b9f1 : view === "word" ? S.s_doc_tu_nay_la_00b9f99e : S.s_sua_cau_nay_a82aec43;
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
         <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
           <LineQuote line={line} />
           {!identified && (
-            <p className="py-2 text-sm text-fg-2">
-              File sách này làm bằng ABook bản cũ nên chưa ghi được việc riêng cho từng câu (người nói, cách đọc câu, thu lại). Sửa cách đọc một từ vẫn
-              được; muốn sửa từng câu, làm lại file bằng ABook mới.
-            </p>
+            <p className="py-2 text-sm text-fg-2">{S.s_file_sach_nay_lam_bang_abook_ban_cu_nen_ch_45df1722}</p>
           )}
           {/* Đổi bước (menu câu <-> Ai nói / Cách đọc / Sửa một từ): bước mới trượt vào như đổi trang - từ phải khi đi sâu, từ trái khi về menu. */}
           <div key={view} className={cn("space-y-3", moved && "motion-step")} data-direction={view === "menu" ? "back" : undefined}>
@@ -416,8 +410,7 @@ export function LineWishDialog({
               <MotionPresence open={items.length > 0}>
                 <div className="py-2 text-sm" role="status">
                   <p className="flex items-center gap-1.5 font-medium">
-                    <Clock className="size-4 shrink-0 text-info" /> Đang chờ máy làm sách
-                  </p>
+                    <Clock className="size-4 shrink-0 text-info" />{S.s_dang_cho_may_lam_sach_d0ed158e}</p>
                   <AnimatedRows items={items} keyOf={(item) => item.key} className="mt-1">
                     {(item) => (
                       <div className="flex items-center gap-2 pb-1 text-fg-2">
@@ -429,62 +422,59 @@ export function LineWishDialog({
                               setPickedWord(item.name!.surface);
                               goView("word");
                             }}
-                            aria-label={`Sửa cách đọc “${item.name.surface}”`}
+                            aria-label={S.s_sua_cach_doc_0_339e93f2(item.name.surface)}
                             className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
-                          >
-                            Sửa
-                          </button>
+                          >{S.s_sua_d4e07603}</button>
                         )}
                         {item.held ? (
-                          <span className="shrink-0 text-xs text-fg-3">đã ở {holder ?? "máy tính"}</span>
+                          <span className="shrink-0 text-xs text-fg-3">{S.s_da_o_2ec587c0}{holder ?? S.s_may_tinh_8eafc226}</span>
                         ) : (
                           <button
                             type="button"
                             disabled={withdraw.isPending}
                             onClick={() => (item.name ? withdrawName(item.name) : withdraw.mutate(item))}
-                            aria-label={`Bỏ: ${item.text}`}
+                            aria-label={S.s_bo_0_47f8ec66(item.text)}
                             className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
                           >
-                            <X className="size-3" /> Bỏ
-                          </button>
+                            <X className="size-3" />{S.s_bo_7107fb3c}</button>
                         )}
                       </div>
                     )}
                   </AnimatedRows>
                   {/* Chỉ có việc đã ở máy giữ sách (đặt ở đó): không có gì "đã gửi" từ máy này - chỉ nói khi nào giọng đổi. */}
                   <MotionRegion as="p" className="mt-0.5 text-xs text-fg-2">
-                    {holder && items.every((item) => item.held) ? `Giọng đọc chưa đổi: Studio sẽ thu lại ${retakeWhen(holder)}.` : promise}
+                    {holder && items.every((item) => item.held) ? S.s_giong_doc_chua_doi_studio_se_thu_lai_0_98beb11a(retakeWhen(holder)) : promise}
                   </MotionRegion>
                 </div>
               </MotionPresence>
               <MotionRegion>
                 <MenuRow
                   icon={UserRound}
-                  title={line.kind === "thought" ? "Ai nghĩ câu này" : "Ai nói câu này"}
+                  title={line.kind === "thought" ? S.s_ai_nghi_cau_nay_0656af4f : S.s_ai_noi_cau_nay_0e00a5c7}
                   note={
                     !identified
-                      ? "chưa sửa được từng câu ở file làm bằng ABook bản cũ"
+                      ? S.s_chua_sua_duoc_tung_cau_o_file_lam_bang_abo_82209a43
                       : !speech
-                        ? "Lời kể không có người nói - muốn gán người, đổi câu thành lời thoại ở “Cách đọc câu”"
+                        ? S.s_loi_ke_khong_co_nguoi_noi_muon_gan_nguoi_d_a62c8bf9
                         : wish?.speaker
-                          ? `Đang chờ máy làm sách: ${wish.speaker.shown}`
-                          : `Hiện là ${line.label}`
+                          ? S.s_dang_cho_may_lam_sach_0_712ab9de(wish.speaker.shown)
+                          : S.s_hien_la_0_d6cdb2e8(line.label)
                   }
                   disabled={!identified || !speech}
                   onClick={() => goView("speaker")}
                 />
                 <MenuRow
                   icon={MessageSquareQuote}
-                  title="Cách đọc câu"
-                  note="Loại câu, cảm xúc, chữ đem đọc"
+                  title={S.s_cach_doc_cau_50f2072a}
+                  note={S.s_loai_cau_cam_xuc_chu_dem_doc_483deab7}
                   disabled={!identified}
                   onClick={() => goView("delivery")}
                 />
-                <MenuRow icon={Type} title="Sửa cách đọc một từ" note="Chọn từ máy đọc sai, gõ cách đọc đúng" onClick={() => goView("word")} />
+                <MenuRow icon={Type} title={S.s_sua_cach_doc_mot_tu_ad71101c} note={S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e} onClick={() => goView("word")} />
                 <MenuRow
                   icon={RefreshCw}
-                  title="Thu lại câu này"
-                  note={!identified ? "chưa sửa được từng câu ở file làm bằng ABook bản cũ" : !hasAudio ? "Chương này chưa có audio - chưa có gì để thu lại" : wish?.retake ? "Đã ghi - đang chờ máy làm sách" : "Đọc lại một lần khác, giọng như cũ"}
+                  title={S.s_thu_lai_cau_nay_034c2834}
+                  note={!identified ? S.s_chua_sua_duoc_tung_cau_o_file_lam_bang_abo_82209a43 : !hasAudio ? S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 : wish?.retake ? S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2 : S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad}
                   disabled={!identified || !hasAudio || Boolean(wish?.retake) || retake.isPending}
                   onClick={() => retake.mutate()}
                   trailing={null}
@@ -495,17 +485,13 @@ export function LineWishDialog({
           {view === "speaker" && (
             <>
               <SpeakerMenu line={line} script={chapterScript} onPick={(person) => speaker.mutate(person)} phone />
-              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>
-                Quay lại
-              </Button>
+              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>{S.s_quay_lai_6d793582}</Button>
             </>
           )}
           {view === "delivery" && (
             <>
               <DeliveryMenu bookId={book.id} line={line} script={chapterScript} onSave={(change) => delivery.mutate(change)} wide noWorkshop />
-              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>
-                Quay lại
-              </Button>
+              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>{S.s_quay_lai_6d793582}</Button>
             </>
           )}
           {view === "word" && (

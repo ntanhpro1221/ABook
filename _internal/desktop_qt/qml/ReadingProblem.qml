@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -36,7 +37,7 @@ Collapse {
                 visible: root.shownSuggestion !== ""
                 size: "sm"
                 kind: "ghost"
-                text: "Dùng “" + root.shownSuggestion + "”"
+                text: S.s_dung_b12f0f49 + root.shownSuggestion + "”"
                 onClicked: root.used(root.shownSuggestion)
             }
         }

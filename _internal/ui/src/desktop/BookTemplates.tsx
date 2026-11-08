@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useBackLayer } from "@/shared/backStack";
@@ -20,7 +21,7 @@ export function BookTemplates() {
   useBackLayer(renaming !== null, () => setRenaming(null), renameBox);
   // Mẫu vừa bị thiết bị khác xoá / đặt trùng tên: nói đúng lời máy tính báo (danh sách đã tự tải lại); việc khác hỏng thì nói không lưu được.
   const fail = (error: Error) =>
-    staleTemplateError(error) ? toast.error(error.message) : toast.error("Chưa lưu được mẫu", { description: error.message });
+    staleTemplateError(error) ? toast.error(error.message) : toast.error(S.s_chua_luu_duoc_mau_f9aea903, { description: error.message });
   const finishRename = (from: string) => {
     const wrong = nameProblem(templates, typed, from);
     if (wrong) {
@@ -45,9 +46,9 @@ export function BookTemplates() {
       { op: "delete", name: template.name },
       {
         onSuccess: () =>
-          toast(`Đã xoá mẫu “${template.name}”`, {
+          toast(S.s_da_xoa_mau_0_28991c54(template.name), {
             duration: 10000,
-            action: { label: "Hoàn tác", onClick: () => run({ op: "restore", template, index }, { onError: fail }) },
+            action: { label: S.s_hoan_tac_e72ff675, onClick: () => run({ op: "restore", template, index }, { onError: fail }) },
           }),
         onError: fail,
       },
@@ -55,12 +56,10 @@ export function BookTemplates() {
   };
   return (
     <MotionRegion as="div" className="mb-4 max-w-xl">
-      <div className="text-sm font-medium">Mẫu sách mới</div>
-      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">
-        Ở Tạo sách, chọn “Lưu thành mẫu…” để dùng lại.
-      </p>
+      <div className="text-sm font-medium">{S.s_mau_sach_moi_6e860e3e}</div>
+      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">{S.s_o_tao_sach_chon_luu_thanh_mau_de_dung_lai_a2505ca9}</p>
       {!templates.length ? (
-        <p className="mt-2 text-[0.8125rem] text-fg-3">Chưa có mẫu nào.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-3">{S.s_chua_co_mau_nao_55b4683e}</p>
       ) : (
         // Xoá / Hoàn tác một mẫu: hàng khép / mở tại chỗ; đổi tên <-> hàng thường thì hàng tự mờ qua. data-motion-live: cả vùng không mờ theo từng hàng.
         <div data-motion-live="">
@@ -80,7 +79,7 @@ export function BookTemplates() {
                     autoFocus
                     value={typed}
                     maxLength={NAME_MAX}
-                    aria-label={`Tên mới của mẫu “${template.name}”`}
+                    aria-label={S.s_ten_moi_cua_mau_0_bb9744ca(template.name)}
                     aria-invalid={Boolean(problem)}
                     onChange={(event) => {
                       setTyped(event.target.value);
@@ -91,12 +90,8 @@ export function BookTemplates() {
                     }}
                     className="h-8 min-w-0 flex-1 rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
                   />
-                  <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>
-                    Lưu
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
-                    Huỷ
-                  </Button>
+                  <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>{S.s_luu_e91f26c0}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>{S.s_huy_96732485}</Button>
                   <MotionPresence className="basis-full" open={Boolean(problem)}><p role="alert" className="text-[0.8125rem] text-danger">{problem}</p></MotionPresence>
                 </form>
               ) : (
@@ -104,7 +99,7 @@ export function BookTemplates() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{template.name}</div>
                     <div className="truncate text-[0.8125rem] text-fg-2">
-                      {[template.narrator || "Giọng máy đề xuất", PROFILE_LABEL[template.profile], template.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu", ...(template.precastWait ? ["chờ bạn duyệt trước khi thu"] : [])].join(" · ")}
+                      {[template.narrator || S.s_giong_may_de_xuat_35389626, PROFILE_LABEL[template.profile], template.startNow ? S.s_bat_dau_ngay_83137873 : S.s_cho_bam_bat_dau_5d760870, ...(template.precastWait ? [S.s_cho_ban_duyet_truoc_khi_thu_35299b41] : [])].join(" · ")}
                     </div>
                   </div>
                   <Button
@@ -115,12 +110,8 @@ export function BookTemplates() {
                       setTyped(template.name);
                       setProblem("");
                     }}
-                  >
-                    Đổi tên
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => remove(template)}>
-                    Xoá
-                  </Button>
+                  >{S.s_doi_ten_a2a0dc70}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => remove(template)}>{S.s_xoa_777195ab}</Button>
                 </>
               )}
             </MotionRegion>

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.formatSize
 
@@ -53,7 +55,7 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
             val unsupported = shown.state == ModuleState.Unsupported
             val metered = if (!shown.working && offer.missing.isNotEmpty()) VoiceText.metered(shown, bytes) else null
             val note = when {
-                downloading -> "Đang tải ${formatSize(shown.total)} · ${shown.percent}%"
+                downloading -> S.s_dang_tai_0_1_0d39c288(formatSize(shown.total), shown.percent)
                 failed -> shown.error
                 unsupported -> VoiceText.unsupported(shown)
                 shown.cancelled -> VoiceText.CANCELLED
@@ -61,14 +63,14 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
             }
             Column(Modifier.fillMaxWidth()) {
                 if (downloading) {
-                    Row(Modifier.fillMaxWidth().semantics { contentDescription = "Đang tải giọng VieNeu" }, verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_tai_giong_vieneu_ba98a3a0 }, verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) { DownloadBar(voice.progress(kind)) }
                         Spacer(Modifier.width(Dim.s12))
-                        TextAction("Huỷ", { voice.cancel(kind) }, "vieneu_cancel")
+                        TextAction(S.s_huy_96732485, { voice.cancel(kind) }, "vieneu_cancel")
                     }
                 }
                 if (failed) {
-                    BasicText("Chưa tải được giọng VieNeu", style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s4))
+                    BasicText(S.s_chua_tai_duoc_giong_vieneu_7fd2908f, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s4))
                 }
                 if (note != null) ClockLabel(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
                 if (metered != null) BasicText(metered, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
@@ -86,6 +88,6 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
                 }
             }
         }
-        TextAction("Xem trong Cài đặt", openSettings, "vieneu_settings", align = Alignment.CenterStart)
+        TextAction(S.s_xem_trong_cai_dat_a83e130c, openSettings, "vieneu_settings", align = Alignment.CenterStart)
     }
 }

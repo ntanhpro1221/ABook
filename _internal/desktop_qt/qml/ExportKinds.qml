@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -13,7 +14,7 @@ Item {
     implicitHeight: column.height
     height: implicitHeight
     Accessible.role: Accessible.RadioButton
-    Accessible.name: "Kiểu bản xuất"
+    Accessible.name: S.s_kieu_ban_xuat_c2b4cb1e
     readonly property int selectedIndex: Math.max(0, root.kinds.findIndex(item => item.value === root.value))
 
     function step(direction) {

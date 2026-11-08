@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -29,7 +30,7 @@ Column {
             Prose {
                 textFormat: Text.StyledText
                 tone: Theme.text
-                text: root.replaces ? (root.replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của ") + "<b>“" + Logic.esc(root.replaces.title) + "”</b>: đã điền thiết lập cũ; tạo xong sẽ đưa bản cũ vào Thùng rác." : " "
+                text: root.replaces ? (root.replaces.restart ? S.s_dang_lam_lai_phan_tich_cua_a4a97a79 : S.s_dang_sua_thiet_lap_cua_e2a5f0e6) + "<b>“" + Logic.esc(root.replaces.title) + S.s_b_da_dien_thiet_lap_cu_tao_xong_se_dua_ban_c1eec016 : " "
             }
         }
     }
@@ -41,7 +42,7 @@ Column {
             objectName: "newExistingNote"
             width: parent.width
             icon: "info"
-            Prose { strong: true; tone: Theme.text; text: "Truyện này đã có dự án" }
+            Prose { strong: true; tone: Theme.text; text: S.s_truyen_nay_da_co_du_an_07223685 }
             Repeater {
                 model: root.others
                 delegate: Flow {
@@ -50,15 +51,15 @@ Column {
                     spacing: 8
                     Text {
                         width: Math.min(implicitWidth, parent.width)
-                        text: TextWrap.keepDots("“" + modelData.title + "”\u00a0·\u00a0" + (modelData.shared === modelData.chapters ? "cả " + modelData.chapters + " chương" : "trùng " + modelData.shared + "/" + modelData.chapters + " chương") + "\u00a0·\u00a0" + modelData.statusLabel)
+                        text: TextWrap.keepDots("“" + modelData.title + "”\u00a0·\u00a0" + (modelData.shared === modelData.chapters ? S.s_ca_5887ed5b + modelData.chapters + S.s_chuong_9e6a01dc : S.s_trung_6eb22ee4 + modelData.shared + "/" + modelData.chapters + S.s_chuong_9e6a01dc) + "\u00a0·\u00a0" + modelData.statusLabel)
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall
                     }
-                    TextLink { objectName: "newExistingOpen"; text: "Mở dự án"; accent: true; onClicked: root.projectRequested(modelData.id) }
+                    TextLink { objectName: "newExistingOpen"; text: S.s_mo_du_an_f990c9d8; accent: true; onClicked: root.projectRequested(modelData.id) }
                 }
             }
-            Prose { text: "Vẫn tạo được dự án mới - ví dụ để thử một giọng kể khác." }
+            Prose { text: S.s_van_tao_duoc_du_an_moi_vi_du_de_thu_mot_gi_b8eda300 }
         }
     }
     // Gợi ý tách file cả truyện
@@ -81,15 +82,15 @@ Column {
                     Prose {
                         strong: true
                         tone: Theme.text
-                        text: "Gợi ý: “" + suggestion.modelData.name + "” có vẻ chứa cả " + Studio.formatNumber(suggestion.outcome.chapters) + " chương"
+                        text: S.s_goi_y_80f3b4ba + suggestion.modelData.name + S.s_co_ve_chua_ca_f34d3ea9 + Studio.formatNumber(suggestion.outcome.chapters) + S.s_chuong_9e6a01dc
                     }
                     Prose {
-                        text: "Tách theo " + suggestion.plan.titles.map(title => "“" + title + "”").join(", ") + (suggestion.plan.chapters > suggestion.plan.titles.length ? "…" : "") + ", giữ file gốc" + (suggestion.plan.preamble ? " và chữ mở đầu" : "") + "."
+                        text: S.s_tach_theo_5f3e6530 + suggestion.plan.titles.map(title => "“" + title + "”").join(", ") + (suggestion.plan.chapters > suggestion.plan.titles.length ? "…" : "") + S.s_giu_file_goc_4cf6140f + (suggestion.plan.preamble ? S.s_va_chu_mo_dau_a047c58f : "") + "."
                     }
                     Item { width: 1; height: 6 }
                     Button {
                         objectName: "newSplitButton"
-                        text: "Tách thành " + Studio.formatNumber(suggestion.outcome.chapters) + " chương"
+                        text: S.s_tach_thanh_a08e8a2c + Studio.formatNumber(suggestion.outcome.chapters) + S.s_chuong_9e6a01dc
                         icon: "scissors"
                         kind: "ghost"
                         size: "sm"
@@ -112,8 +113,8 @@ Column {
             objectName: "newMatter"
             width: parent.width
             topPadding: 16
-            Prose { strong: true; tone: Theme.text; topPadding: 16; text: Studio.formatNumber(root.matter.length) + " trang phụ chưa chọn" }
-            Prose { topPadding: 4; text: "Bìa, bản quyền, mục lục hay trang tên sách nằm trong file sách. Máy chưa chọn chúng vì nghe lên không phải truyện - tích trang nào bạn muốn nghe." }
+            Prose { strong: true; tone: Theme.text; topPadding: 16; text: Studio.formatNumber(root.matter.length) + S.s_trang_phu_chua_chon_fa525053 }
+            Prose { topPadding: 4; text: S.s_bia_ban_quyen_muc_luc_hay_trang_ten_sach_n_49213805 }
             Item { width: 1; height: 8 }
             Repeater {
                 model: root.matter

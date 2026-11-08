@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { BookPlus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -22,7 +23,7 @@ export function DropToAdd({ onBookFile }: { onBookFile?: (path: string, session?
       hover: (on) => setHovering(on && !dialogOpen()),
       drop: (items) => {
         if (!items.length) return;
-        if (dialogOpen()) toast("Đóng hộp đang mở rồi thả lại file nhé");
+        if (dialogOpen()) toast(S.s_dong_hop_dang_mo_roi_tha_lai_file_nhe_448c0946);
         else setDropped(items);
       },
     });
@@ -33,8 +34,8 @@ export function DropToAdd({ onBookFile }: { onBookFile?: (path: string, session?
       <MotionPresence open={hovering} className="pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-bg/80 p-6">
           <div className="flex max-w-md flex-col items-center gap-3 rounded-cover border-2 border-dashed border-accent bg-accent-soft px-10 py-12 text-center">
             <BookPlus className="size-10 text-accent-text" strokeWidth={1.75} />
-            <p className="text-lg font-semibold">Thả để thêm sách</p>
-            <p className="text-sm text-fg-2">EPUB, Word (DOCX), PDF có chữ, TXT hay file sách .abook. Thả nhiều file một lúc cũng được.</p>
+            <p className="text-lg font-semibold">{S.s_tha_de_them_sach_e3e7000e}</p>
+            <p className="text-sm text-fg-2">{S.s_epub_word_docx_pdf_co_chu_txt_hay_file_sac_59f8efc3}</p>
           </div>
         </MotionPresence>
       <AddBookDialog open={dropped !== null} onOpenChange={(open) => !open && setDropped(null)} onBookFile={onBookFile} initial={dropped} />

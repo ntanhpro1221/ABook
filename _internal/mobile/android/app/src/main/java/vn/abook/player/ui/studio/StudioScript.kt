@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -118,7 +120,7 @@ internal object StudioScriptJson {
 }
 
 /** Bộ lọc của danh sách câu (web `Filter`). */
-enum class ScriptFilter(val label: String) { All("Cả chương"), Speech("Chỉ lời nói"), Doubt("Máy nghi") }
+enum class ScriptFilter(val label: String) { All(S.s_ca_chuong_46eb4e7a), Speech(S.s_chi_loi_noi_a7c5728f), Doubt(S.s_may_nghi_0e611f8b) }
 
 /** Một câu hiện ra, kèm cờ "chỉ làm ngữ cảnh" (câu trước chỗ nghi, hiện mờ). */
 @Immutable
@@ -128,7 +130,7 @@ object ScriptLogic {
     /** Người nói cố định luôn chọn được (web `FIXED`). */
     const val NARRATOR = "NARRATOR"
     const val UNNAMED = "UNNAMED"
-    val FIXED = listOf(ScriptPerson(NARRATOR, "Người kể", 0), ScriptPerson(UNNAMED, "Vai phụ không tên", 0))
+    val FIXED = listOf(ScriptPerson(NARRATOR, S.s_nguoi_ke_fd36cd15, 0), ScriptPerson(UNNAMED, S.s_vai_phu_khong_ten_6395f0d2, 0))
 
     fun isSpeech(line: ScriptLine) = line.kind == "dialogue" || line.kind == "thought"
 
@@ -169,10 +171,10 @@ object ScriptLogic {
 
     /** Chỉ ghi điều KHÁC giữa các chương: chương không có câu nói nào mới ghi "chỉ lời kể", rồi tới chỗ nghi và việc đã quyết. */
     fun extras(entry: ScriptEntry): String = listOfNotNull(
-        "chỉ lời kể".takeIf { entry.speech == 0 }, "${entry.hints} chỗ nghi".takeIf { entry.hints > 0 }, "${entry.decided} đã quyết".takeIf { entry.decided > 0 },
+        S.s_chi_loi_ke_6ec7b2cb.takeIf { entry.speech == 0 }, S.s_0_cho_nghi_cb433938(entry.hints).takeIf { entry.hints > 0 }, S.s_0_da_quyet_715a62cc(entry.decided).takeIf { entry.decided > 0 },
     ).dotJoined()
 
-    fun chapterLabel(entry: ScriptEntry) = entry.title.ifEmpty { "Chương ${entry.index}" }
+    fun chapterLabel(entry: ScriptEntry) = entry.title.ifEmpty { S.s_chuong_0_268b0521(entry.index) }
 
     /** `seen` của lần sửa người nói (`seenFor`): điều màn này đang thấy cho câu - người đang chờ đổi, "" nếu chưa ai quyết. */
     fun seenSpeaker(line: ScriptLine): JSONObject =
@@ -184,7 +186,7 @@ object ScriptLogic {
         val body = JSONObject()
             .put("lines", org.json.JSONArray().put(JSONObject().put("stableId", ref.stableId).put("textSha256", ref.textSha256)))
             .put("speaker", person.value).put("newGender", "").put("seen", seenSpeaker(line))
-        val summary = if (person.value == line.current) "Giữ nguyên: câu này của ${line.label}" else "Đã ghi: câu này của ${person.label}"
+        val summary = if (person.value == line.current) S.s_giu_nguyen_cau_nay_cua_0_687e1e4f(line.label) else S.s_da_ghi_cau_nay_cua_0_8b08302d(person.label)
         return WorkDecision("line:${line.stableId}", summary, listOf(WorkStep("speaker", body)))
     }
 
@@ -208,7 +210,7 @@ object ScriptLogic {
     /** `POST /line`: chữ đem đọc của một câu. */
     fun speak(line: ScriptLine, spoken: String): WorkDecision {
         val body = JSONObject().put("stableId", line.stableId).put("textSha256", line.textSha256).put("spoken", spoken).put("seen", seenDelivery(line.lineWish))
-        val summary = if (spoken.isEmpty()) "Câu này trở về chữ của sách" else "Đã ghi: câu này đọc là “$spoken”"
+        val summary = if (spoken.isEmpty()) S.s_cau_nay_tro_ve_chu_cua_sach_9b0c405c else S.s_da_ghi_cau_nay_doc_la_0_e21c67e2(spoken)
         return WorkDecision("spoken:${line.stableId}", summary, listOf(WorkStep("line", body)))
     }
 
@@ -234,27 +236,27 @@ object ScriptLogic {
 }
 
 object ScriptText {
-    const val TITLE = "Kịch bản"
-    const val LOADING = "Đang tải kịch bản"
-    const val EMPTY = "Chương này chưa có câu nào."
-    const val NOT_READY = "Phân vai chưa xong - kịch bản hiện ra sau bước ấy."
-    const val CHAPTERS = "Đổi chương"
-    const val PREVIOUS = "Chương trước"
-    const val NEXT = "Chương sau"
-    const val WHO = "Ai nói câu này"
-    const val SPOKEN = "Chữ đem đọc"
-    const val SPOKEN_HINT = "Chỉ sửa chữ đem đọc; sách giữ nguyên chữ của nó. Ô trống là đọc đúng chữ của sách."
-    const val SAVE = "Lưu cho câu này"
-    const val ORIGINAL = "Dùng chữ gốc"
-    const val CANCEL = "Huỷ"
-    const val NARRATION = "Lời kể"
-    const val CONTEXT = "câu trước chỗ nghi"
-    const val READ_AS = "Đọc là"
-    const val PENDING = "chờ áp dụng"
+    const val TITLE = S.s_kich_ban_602e5f27
+    const val LOADING = S.s_dang_tai_kich_ban_0eea9c53
+    const val EMPTY = S.s_chuong_nay_chua_co_cau_nao_63c211e9
+    const val NOT_READY = S.s_phan_vai_chua_xong_kich_ban_hien_ra_sau_bu_e34abb30
+    const val CHAPTERS = S.s_doi_chuong_2c6b94e8
+    const val PREVIOUS = S.s_chuong_truoc_4750f9e9
+    const val NEXT = S.s_chuong_sau_17d1bd20
+    const val WHO = S.s_ai_noi_cau_nay_0e00a5c7
+    const val SPOKEN = S.s_chu_dem_doc_9772701b
+    const val SPOKEN_HINT = S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_chu_cu_f9a19d63
+    const val SAVE = S.s_luu_cho_cau_nay_6402d7a6
+    const val ORIGINAL = S.s_dung_chu_goc_b0016031
+    const val CANCEL = S.s_huy_96732485
+    const val NARRATION = S.s_loi_ke_eba0761e
+    const val CONTEXT = S.s_cau_truoc_cho_nghi_0e615cb4
+    const val READ_AS = S.s_doc_la_332819df
+    const val PENDING = S.s_cho_ap_dung_d6fb25f0
 
-    fun doubt(count: Int) = "Máy nghi · $count"
-    fun suggest(note: String, suggest: String?) = if (suggest.isNullOrEmpty()) note else "$note · gợi ý: $suggest"
-    fun line(seq: Int) = "Câu $seq"
+    fun doubt(count: Int) = S.s_may_nghi_0_2ad345f9(count)
+    fun suggest(note: String, suggest: String?) = if (suggest.isNullOrEmpty()) note else S.s_0_goi_y_1_df2d24b0(note, suggest)
+    fun line(seq: Int) = S.s_cau_0_f1dd4255(seq)
 }
 
 /**

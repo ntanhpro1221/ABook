@@ -184,7 +184,7 @@ object Streaming {
             else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
         )
         PeerPaths.checkManifest(manifest)
-        require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử lại." }
+        require(manifest.getString("id") == remote) { S.s_ma_sach_may_gui_tra_ve_khong_khop_ban_hay_f17ccf05 }
         if (peer != null) {
             manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
             Peers.localizeSeries(manifest, peer)
@@ -248,7 +248,7 @@ object Streaming {
                 connection.inputStream.use { PeerTransfer.copy(it, output, limit, target.parentFile!!) }
                 output.fd.sync()
             }
-            check(expected < 0 || pending.length() == expected) { "File tải chưa đủ; bạn hãy thử lại." }
+            check(expected < 0 || pending.length() == expected) { S.s_file_tai_chua_du_ban_hay_thu_lai_85125ce7 }
             AtomicFiles.replace(pending, target)
             target
         } finally {

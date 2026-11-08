@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -34,35 +35,35 @@ Item {
                 y: 36
                 width: root.wide ? parent.width - 28 - drop.width - 12 : parent.width - 28
                 spacing: 2
-                Prose { strong: true; tone: Theme.text; text: box.seed ? "Phần " + box.seed.part + " của “" + box.seed.title + "”" : " " }
+                Prose { strong: true; tone: Theme.text; text: box.seed ? S.s_phan_0_1_07722a78(box.seed.part, box.seed.title) : " " }
                 Prose {
                     visible: Boolean(box.seed) && Boolean(box.seed.clickedTitle)
-                    text: box.seed ? "Nối sau “" + (box.seed.latestTitle || box.seed.title) + "”, giữ " + Logic.carriedText(box.seed.carries) + "." : ""
+                    text: box.seed ? S.s_noi_sau_26bf063a + (box.seed.latestTitle || box.seed.title) + S.s_giu_c0878737 + Logic.carriedText(box.seed.carries) + "." : ""
                 }
                 Prose {
                     visible: Boolean(box.seed) && !box.seed.clickedTitle
-                    text: box.seed ? "Giữ " + Logic.carriedText(box.seed.carries) + ", giọng và cách đọc tên." : ""
+                    text: box.seed ? S.s_giu_d3777f80 + Logic.carriedText(box.seed.carries) + S.s_giong_va_cach_doc_ten_995cc280 : ""
                 }
                 // Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file
                 Prose {
                     objectName: "newSeedEmpty"
                     visible: Boolean(box.seed) && box.seed.empty && !root.hasFiles
                     topPadding: visible ? 4 : 0
-                    text: box.seed ? (box.seed.folder ? "Chọn file mới sau " + (box.seed.lastChapter || "chương cuối phần trước") + " ở dưới." : "Chọn file chương mới ở dưới.") : ""
+                    text: box.seed ? (box.seed.folder ? S.s_chon_file_moi_sau_5b6856da + (box.seed.lastChapter || S.s_chuong_cuoi_phan_truoc_7e3d0c5b) + S.s_o_duoi_a9e009c8 : S.s_chon_file_chuong_moi_o_duoi_0af6839c) : ""
                 }
                 Prose {
                     objectName: "newSeedModelMissing"
                     visible: Boolean(box.seed) && Boolean(box.seed.analysisModelMissing)
                     topPadding: visible ? 4 : 0
                     tone: Theme.warning
-                    text: "Thiếu bộ phân tích của phần trước; đổi bộ có thể đổi phân vai. Chọn lại ở Chất lượng."
+                    text: S.s_thieu_bo_phan_tich_cua_phan_truoc_doi_bo_c_9b47e7fe
                 }
                 Prose {
                     objectName: "newSeedUnanalyzed"
                     visible: Boolean(box.seed) && !box.seed.analyzed
                     topPadding: visible ? 4 : 0
                     tone: Theme.warning
-                    text: "Phần trước chưa phân tích xong - chỉ mang được những gì đã có tới lúc này."
+                    text: S.s_phan_truoc_chua_phan_tich_xong_chi_mang_du_6719c096
                 }
             }
             TextLink {
@@ -70,7 +71,7 @@ Item {
                 objectName: "newSeedDrop"
                 x: root.wide ? parent.width - width : 28
                 y: root.wide ? 20 + 12 : 36 + body.height + 4
-                text: "Bỏ nối tiếp"
+                text: S.s_bo_noi_tiep_2b7945ba
                 small: true
                 onClicked: root.form.dropSeed()
             }

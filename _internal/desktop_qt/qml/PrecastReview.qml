@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PrecastLogic.js" as P
@@ -85,13 +86,13 @@ FocusScope {
             width: parent.width
             shape: "rows"
             count: 4
-            label: "Đang tải lượt duyệt"
+            label: S.s_dang_tai_luot_duyet_c2e5bf3f
         }
         InlineError {
             objectName: "precastError"
             width: parent.width
             open: root.failed
-            message: "Bạn hãy kiểm tra kết nối rồi tải lại lượt duyệt."
+            message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_luot_971eabb5
             onRetry: root.retry()
         }
         Column {
@@ -119,7 +120,7 @@ FocusScope {
                 objectName: "precastIntroToggle"
                 visible: root.narrow
                 width: parent.width
-                title: "Chờ duyệt"
+                title: S.s_cho_duyet_6af96613
                 expanded: root.introOpen
                 onClicked: root.introOpen = !root.introOpen
             }
@@ -139,7 +140,7 @@ FocusScope {
                     }
                     MoreInfo {
                         width: parent.width
-                        label: "Khi áp dụng"
+                        label: S.s_khi_ap_dung_017de1f0
                         Text {
                             objectName: "precastFree"
                             width: parent.width
@@ -166,7 +167,7 @@ FocusScope {
                 width: parent.width
                 height: stepFlow.height
                 Accessible.role: Accessible.List
-                Accessible.name: "Các bước duyệt"
+                Accessible.name: S.s_cac_buoc_duyet_d69dc0a2
                 Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
                 Flow {
                     id: stepFlow
@@ -279,7 +280,7 @@ FocusScope {
                                 spacing: 6
                                 Text {
                                     objectName: "precastDoubt"
-                                    text: "Máy chưa chắc"
+                                    text: S.s_may_chua_chac_5781f0c4
                                     color: Theme.text
                                     font.pixelSize: Theme.sizeBodySmall
                                     font.weight: 600
@@ -313,7 +314,7 @@ FocusScope {
                         DisclosureRow {
                             objectName: "precastNamesToggle"
                             width: parent.width
-                            title: "Cách đọc tên"
+                            title: S.s_cach_doc_ten_1c46e75d
                             expanded: root.namesOpen
                             onClicked: root.namesOpen = !root.namesOpen
                         }
@@ -360,13 +361,13 @@ FocusScope {
                             topPadding: 40
                             bottomPadding: 40
                             icon: "clipboard-check"
-                            title: "Xong lượt duyệt"
+                            title: S.s_xong_luot_duyet_aaf11626
                             text: root.book ? P.doneText(root.book) : ""
                             Button {
                                 objectName: "precastClose"
                                 kind: "ghost"
                                 size: "lg"
-                                text: "Về danh sách chương"
+                                text: S.s_ve_danh_sach_chuong_b5fd5434
                                 onClicked: root.closeRequested()
                             }
                         }
@@ -384,8 +385,8 @@ FocusScope {
                     width: parent.width
                     layoutDirection: Qt.RightToLeft
                     spacing: 8
-                    Button { objectName: "precastNext"; text: "Tiếp tục"; onClicked: root.next() }
-                    Button { objectName: "precastSkip"; text: "Bỏ qua bước này"; kind: "ghost"; onClicked: root.next() }
+                    Button { objectName: "precastNext"; text: S.s_tiep_tuc_87a7ae88; onClicked: root.next() }
+                    Button { objectName: "precastSkip"; text: S.s_bo_qua_buoc_nay_128392ff; kind: "ghost"; onClicked: root.next() }
                 }
             }
         }
@@ -414,7 +415,7 @@ FocusScope {
                 objectName: "precastTwinMerge"
                 size: "sm"
                 kind: "ghost"
-                text: "Gộp vào…"
+                text: S.s_gop_vao_8d886bd3
                 onClicked: root.personRequest("merge", twin.person)
             }
         }

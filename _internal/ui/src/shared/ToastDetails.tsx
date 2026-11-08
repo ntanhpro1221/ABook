@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { createElement, isValidElement, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast as sonner, type ExternalToast } from "sonner";
 import { useBackLayer } from "./backStack";
@@ -35,11 +36,11 @@ export function ToastDetails({ title, description, action, toastId }: { title: C
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
   return <span ref={host} className="contents">
-    <button ref={trigger} type="button" data-button aria-expanded={open} onClick={() => changeOpen(!open)} className="toast-details-action">Chi tiết</button>
+    <button ref={trigger} type="button" data-button aria-expanded={open} onClick={() => changeOpen(!open)} className="toast-details-action">{S.s_chi_tiet_e762d926}</button>
     {/* Neo vào chính toast: không chịu hai hệ toạ độ do transform của Sonner, không tạo lớp dialog thứ hai. */}
     <MotionPresence open={open} className={`absolute right-0 z-50 w-[min(320px,calc(100vw-32px))] ${above ? "bottom-[calc(100%+12px)]" : "top-[calc(100%+12px)]"}`}>
     {/* Khung (bo, bóng) ở lớp ngoài, phần cuộn mờ mép ở lớp trong: mặt nạ trên chính khung sẽ xoá cả bóng. */}
-    <div ref={content} role="region" aria-label="Chi tiết thông báo" className="flex max-h-[60dvh] flex-col rounded-cover bg-panel p-[16px] text-sm text-fg shadow-float">
+    <div ref={content} role="region" aria-label={S.s_chi_tiet_thong_bao_4b7e1ee8} className="flex max-h-[60dvh] flex-col rounded-cover bg-panel p-[16px] text-sm text-fg shadow-float">
       <div ref={scrollFade.ref} style={scrollFade.style} className="min-h-0 overflow-y-auto">
         <MotionRegion className="space-y-3 text-pretty">
           <p className="font-medium">{shown(title)}</p>

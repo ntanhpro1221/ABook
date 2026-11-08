@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 // WinRT phải đứng trước Qt: macro signals/slots/emit không thuộc cú pháp C++/WinRT.
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Media.h>
@@ -21,7 +22,7 @@ MediaState fromPlayer(const Player &player) {
     MediaState s;
     s.loaded = player.loaded();
     if (!s.loaded) return s;
-    s.title = player.chapterTitle().isEmpty() ? QStringLiteral("Chương %1").arg(player.chapterNumber()) : player.chapterTitle();
+    s.title = player.chapterTitle().isEmpty() ? UiStrings::s_copy_f8f1577d6ab2.arg(player.chapterNumber()) : player.chapterTitle();
     s.artist = s.album = player.bookTitle();
     s.status = player.playing() ? MediaState::Playing : MediaState::Paused;
     s.canNext = player.canNext();

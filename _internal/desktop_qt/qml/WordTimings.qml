@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -26,7 +27,7 @@ Item {
         starting = true
         store.quiet("POST", "/api/books/" + bookId + "/word-timings", null, function(result, error) {
             root.starting = false
-            if (error) store.say("Chưa thêm được chữ sáng", error)
+            if (error) store.say(S.s_chua_them_duoc_chu_sang_ab107f49, error)
             else root.timings = result
         })
     }
@@ -51,7 +52,7 @@ Item {
                 id: texts
                 x: 28
                 width: parent.width - 28
-                Text { width: parent.width; text: "Chữ sáng"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightBold }
+                Text { width: parent.width; text: S.s_chu_sang_02de067c; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightBold }
                 ClockLabel { objectName: "wordTimingsNote"; width: parent.width; text: Logic.wordTimingsNote(root.timings); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
             }
         }
@@ -60,7 +61,7 @@ Item {
             objectName: "wordTimingsStart"
             size: "sm"
             kind: "ghost"
-            text: "Thêm chữ sáng"
+            text: S.s_them_chu_sang_9bfff902
             busy: root.working
             enabled: !Logic.wordTimingsDisabled(root.timings, root.bookRunning)
             onActivated: root.begin()

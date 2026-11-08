@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // Danh sách thành phần bên thứ ba cho mục "Giới thiệu" (máy tính và điện thoại): đọc thẳng docs/THIRD_PARTY.md lúc build - Vite gói
 // file thành một phần tải riêng, chỉ tải khi người dùng mở danh sách; thiếu file thì build hỏng chứ không ra app thiếu danh sách.
 
@@ -8,7 +9,7 @@ export interface ThirdPartySection {
 }
 
 /** Mục dành cho người bảo trì (cách phát hành, đường trong mã nguồn): nằm trong file docs để người phát hành đọc, app không hiện cho người dùng. */
-export const MAINTAINER_SECTION = "Ghi chú cho người bảo trì";
+export const MAINTAINER_SECTION = S.s_ghi_chu_cho_nguoi_bao_tri_c8670b77;
 
 export async function loadThirdParty(): Promise<string> {
   return (await import("../../../docs/THIRD_PARTY.md?raw")).default;

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DecisionLogic.js" as D
@@ -85,13 +86,13 @@ QtObject {
 
     // ---- Hoàn tác (undoAction / undoSteps): gửi lại đúng lần bấm với `withdraw`, nói thật điều đã xảy ra ----
     function undoSteps(steps, message) {
-        return {label: "Hoàn tác", run: function() {
+        return {label: S.s_hoan_tac_e72ff675, run: function() {
             let done = 0, restored = false, sent = false
             function next(i) {
                 if (i >= steps.length) { Api.toast(D.undoText(restored, sent, message)); root.after(); return }
                 root.store.request("POST", root.path("/" + steps[i].endpoint), Object.assign({}, steps[i].decision, {withdraw: true}), function(status, data) {
                     if (!root.ok(status)) {
-                        root.fail(done > 0 ? "Mới hoàn tác được " + done + "/" + steps.length + " việc" : "Chưa hoàn tác được", status, data)
+                        root.fail(done > 0 ? S.s_moi_hoan_tac_duoc_c859e754 + done + "/" + steps.length + S.s_viec_1c50ca93 : S.s_chua_hoan_tac_duoc_164b754b, status, data)
                         root.after()
                         return
                     }
@@ -110,9 +111,9 @@ QtObject {
     // Hai máy (hay hai cửa sổ) cùng sửa một chỗ: báo và hỏi giữ của mình hay lấy của máy kia. Chỉ có một chỗ cho lời báo nên lời này thế lời "Đã ghi" (cũng có nút lấy lại).
     function warnElsewhere(count, was, takeTheirs) {
         const note = D.elsewhereNote(count, was)
-        Api.toast(note.title + "\n" + note.description, {duration: 20000, action: takeTheirs ? {label: "Lấy của máy kia", run: takeTheirs} : null})
+        Api.toast(note.title + "\n" + note.description, {duration: 20000, action: takeTheirs ? {label: S.s_lay_cua_may_kia_37d97780, run: takeTheirs} : null})
     }
-    function undoDecision(item) { undoAction(item.undo.endpoint, item.undo.decisions, "Việc này trở lại chờ bạn duyệt.").run() }
+    function undoDecision(item) { undoAction(item.undo.endpoint, item.undo.decisions, S.s_viec_nay_tro_lai_cho_ban_duyet_76cf7987).run() }
 
     // ---- thẻ cách đọc tên (PronunciationFix) ----
     // done(vấn đề, gợi ý): vấn đề rỗng = ổn. Lỗi chỉ nằm dưới ô nhập, không thêm lời báo.
@@ -123,7 +124,7 @@ QtObject {
             const keep = data.spokenForm === item.current
             const action = undoAction("pronunciation", [{surface: item.surface, requestedAt: data.requestedAt, previous: item.current, keep: keep}], W.pronunciationBack(item))
             if (data.elsewhere && data.elsewhere.spokenForm !== undefined) warnElsewhere(1, data.elsewhere.spokenForm ? "“" + data.elsewhere.spokenForm + "”" : "", action.run)
-            else say(keep ? "Giữ cách đọc “" + data.spokenForm + "”" : "Đã ghi: “" + item.surface + "” đọc là “" + data.spokenForm + "”", "", kept(D.UNDO_MS, action))
+            else say(keep ? S.s_giu_cach_doc_fac907c0 + data.spokenForm + "”" : S.s_da_ghi_a2accbdb + item.surface + S.s_doc_la_4c516fb0 + data.spokenForm + "”", "", kept(D.UNDO_MS, action))
             done("", "")
         })
     }
@@ -134,9 +135,9 @@ QtObject {
         if (item.kind === "alias" && request.speaker !== item.currentValue) body.alias = item.currentValue
         if (item.kind === "bracket" && scope === "all") body.bracketRule = true
         post("/speaker", body, function(status, data) {
-            if (!ok(status)) { fail("Chưa ghi được người nói", status, data); done(false); return }
+            if (!ok(status)) { fail(S.s_chua_ghi_duoc_nguoi_noi_5ef0be83, status, data); done(false); return }
             after()
-            const which = data.lines > 1 ? data.lines + " câu này" : "câu này"
+            const which = data.lines > 1 ? data.lines + S.s_cau_nay_499089cc : S.s_cau_nay_c70feb8f
             const keep = request.speaker === item.currentValue
             // Quy ước 『』 cả cuốn còn ghi ở cấp cuốn cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời
             const undo = data.alias && item.kind === "bracket" ? null : undoAction("speaker", [{lines: lines, requestedAt: data.requestedAt, keep: keep}], W.speakerBack(item, which))
@@ -153,15 +154,15 @@ QtObject {
         function next(i) {
             if (i >= requests.length) {
                 after()
-                const action = undoAction("speaker", made, "Thẻ hỏi lại như trước khi bấm.")
+                const action = undoAction("speaker", made, S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e)
                 if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? W.personOf(item, replaced[0]) : "", action.run)
-                else say("Đã ghi: " + (item.keepLabel || "Giữ nguyên"), "", kept(D.UNDO_MS, action))
+                else say(S.s_da_ghi_85094402 + (item.keepLabel || S.s_giu_nguyen_1b550a12), "", kept(D.UNDO_MS, action))
                 done(true)
                 return
             }
             const request = requests[i]
             post("/speaker", Object.assign({}, request, {seen: D.seenFor(request.lines, item.seen)}), function(status, data) {
-                if (!ok(status)) { after(); fail("Chưa ghi được", status, data); done(false); return }
+                if (!ok(status)) { after(); fail(S.s_chua_ghi_duoc_9fa87a7d, status, data); done(false); return }
                 for (const key of Object.keys(data.elsewhere || {})) replaced.push(data.elsewhere[key])
                 made.push({lines: request.lines, requestedAt: data.requestedAt, keep: true})
                 next(i + 1)
@@ -175,12 +176,12 @@ QtObject {
         const section = item.narratorSection
         const where = {chapterIndex: section.chapterIndex, fromSeq: section.fromSeq, toSeq: section.toSeq}
         post("/narrator-section", Object.assign({}, where, request), function(status, data) {
-            if (!ok(status)) { fail("Chưa ghi được người kể", status, data); done(false); return }
+            if (!ok(status)) { fail(S.s_chua_ghi_duoc_nguoi_ke_ce503d25, status, data); done(false); return }
             after()
-            const back = item.requested ? "Trở lại quyết định trước: " + item.requested + "." : "Thẻ hỏi lại như trước khi bấm."
-            const text = data.action === "keep" ? (item.current ? "Giữ nguyên: đoạn này vẫn do " + item.current + " kể" : "Giữ nguyên: đoạn này vẫn kể ở ngôi thứ ba")
-                : data.narrator ? "Đã ghi: đoạn này do " + (section.heading && section.heading.narrator === data.narrator ? section.heading.label : data.narrator) + " kể"
-                : "Đã ghi: đoạn này không phải " + item.current + " kể"
+            const back = item.requested ? S.s_tro_lai_quyet_dinh_truoc_33162bcb + item.requested + "." : S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e
+            const text = data.action === "keep" ? (item.current ? S.s_giu_nguyen_doan_nay_van_do_f7becfe7 + item.current + S.s_ke_8a00bf95 : S.s_giu_nguyen_doan_nay_van_ke_o_ngoi_thu_ba_f0be91ed)
+                : data.narrator ? S.s_da_ghi_doan_nay_do_480c260f + (section.heading && section.heading.narrator === data.narrator ? section.heading.label : data.narrator) + S.s_ke_8a00bf95
+                : S.s_da_ghi_doan_nay_khong_phai_97eb5c49 + item.current + S.s_ke_8a00bf95
             say(text, "", kept(D.UNDO_MS, undoAction("narrator-section", [where], back)))
             done(true)
         })
@@ -189,9 +190,9 @@ QtObject {
     // ---- thẻ "Yêu cầu chưa được" ----
     function dropRefused(item, done) {
         post("/pending-changes/withdraw", {section: item.refused.section, key: item.refused.key, requestedAt: item.refused.requestedAt}, function(status, data) {
-            if (!ok(status)) { fail("Chưa bỏ được", status, data); done(false); return }
+            if (!ok(status)) { fail(S.s_chua_bo_duoc_638141d7, status, data); done(false); return }
             after()
-            say("Đã bỏ yêu cầu này")
+            say(S.s_da_bo_yeu_cau_nay_5eec8a27)
             done(true)
         })
     }
@@ -203,12 +204,12 @@ QtObject {
             if (i >= requests.length) {
                 after()
                 const decisions = made.map(function(decision) { return Object.assign({}, decision, {keep: keep}) })
-                say("Đã ghi: " + label, "", kept(D.UNDO_MS, undoAction("voice", decisions, W.voiceBack(item))))
+                say(S.s_da_ghi_85094402 + label, "", kept(D.UNDO_MS, undoAction("voice", decisions, W.voiceBack(item))))
                 done(true)
                 return
             }
             post("/voice", requests[i], function(status, data) {
-                if (!ok(status)) { fail("Chưa ghi được", status, data); done(false); return }
+                if (!ok(status)) { fail(S.s_chua_ghi_duoc_9fa87a7d, status, data); done(false); return }
                 made.push({character: requests[i].character, requestedAt: data.requestedAt})
                 next(i + 1)
             })
@@ -224,11 +225,11 @@ QtObject {
         let finished = 0
         function end(error) {
             after()
-            if (error) say("Mới giữ được " + finished + "/" + keepable.length + " thẻ", error)
+            if (error) say(S.s_moi_giu_duoc_77444fff + finished + "/" + keepable.length + S.s_the_5d800d1c, error)
             else {
-                const action = undoAction(pronunciation ? "pronunciation" : "speaker", decisions, finished + " thẻ trở lại chờ duyệt.")
+                const action = undoAction(pronunciation ? "pronunciation" : "speaker", decisions, finished + S.s_the_tro_lai_cho_duyet_7b3f19d4)
                 if (replaced.length) warnElsewhere(replaced.length, replaced[0], action.run)
-                else say("Đã giữ như máy đang làm cho " + finished + " thẻ", "", kept(D.UNDO_MS, action))
+                else say(S.s_da_giu_nhu_may_dang_lam_cho_c7678ece + finished + S.s_the_5d800d1c, "", kept(D.UNDO_MS, action))
             }
             done()
         }
@@ -266,7 +267,7 @@ QtObject {
     // Câu của thẻ vai phụ cả cuốn tải thêm theo trang (GET /work/examples)
     function loadExamples(url, done) {
         store.request("GET", url, null, function(status, data) {
-            if (!ok(status) || !data) { fail("Chưa tải thêm được câu", status, data); done(null); return }
+            if (!ok(status) || !data) { fail(S.s_chua_tai_them_duoc_cau_35372122, status, data); done(null); return }
             done(data)
         })
     }
@@ -279,7 +280,7 @@ QtObject {
         const seen = {}
         seen[item.stableId] = item.verdict || ""
         post("/review", Object.assign({}, base, {verdict: value, seen: seen}), function(status, data) {
-            if (!ok(status)) fail("Chưa ghi được phán quyết nghe", status, data)
+            if (!ok(status)) fail(S.s_chua_ghi_duoc_phan_quyet_nghe_0e587881, status, data)
             else {
                 const theirs = data && data.elsewhere ? data.elsewhere[item.stableId] : undefined
                 if (theirs !== undefined) warnElsewhere(1, D.verdictWord(theirs), function() {
@@ -313,7 +314,7 @@ QtObject {
             const undo = undoAction("pronunciation", [decision], N.savedBack(item, everywhere))
             if (data.elsewhere && data.elsewhere.spokenForm !== undefined) {
                 // "Lấy của máy kia": bỏ lần ghi này - yêu cầu nó thay (của máy kia) trở lại
-                const back = undoAction("pronunciation", [{surface: item.surface, requestedAt: data.requestedAt, keep: false}], "“" + item.surface + "” trở lại cách đọc máy kia đã ghi.")
+                const back = undoAction("pronunciation", [{surface: item.surface, requestedAt: data.requestedAt, keep: false}], "“" + item.surface + S.s_tro_lai_cach_doc_may_kia_da_ghi_3b5ad9a3)
                 warnElsewhere(1, data.elsewhere.spokenForm ? "“" + data.elsewhere.spokenForm + "”" : "", back.run)
             } else say(N.savedToast(item, saved), "", kept(D.UNDO_MS, undo))
             done("", "")
@@ -322,10 +323,10 @@ QtObject {
     // "Dùng N cách đọc chung" (SharedReadingsOffer)
     function applyShared(done) {
         post("/shared-readings", null, function(status, data) {
-            if (!ok(status)) { fail("Chưa dùng được cách đọc chung", status, data); done(false); return }
+            if (!ok(status)) { fail(S.s_chua_dung_duoc_cach_doc_chung_cb8d8746, status, data); done(false); return }
             after()
             offer.invalidate()
-            say("Đã dùng " + (data.applied ? data.applied.length : 0) + " cách đọc chung")
+            say(S.s_da_dung_14489f3b + (data.applied ? data.applied.length : 0) + S.s_cach_doc_chung_c315f242)
             done(true)
         })
     }
@@ -335,15 +336,15 @@ QtObject {
         const body = {device: device.id}
         if (item) body.items = [item.id]
         post("/edits-inbox/" + verb, body, function(status, data) {
-            if (!ok(status)) { fail("Chưa làm được", status, data); done(false); return }
+            if (!ok(status)) { fail(S.s_chua_lam_duoc_8b442a06, status, data); done(false); return }
             if (verb === "apply") {
                 const made = data.requests || 0
                 const skipped = data.skipped || 0
                 const held = data.held || 0
                 const dropped = (data.dropped || []).map(function(row) { return row.label })
-                say(made ? "Đã ghi " + made + " việc vào “Áp dụng thay đổi”" : "Chưa ghi được việc nào", skipped || held ? N.applyNote(skipped, held, dropped) : "")
-            } else if (verb === "restore") say("Đã khôi phục")
-            else say("Đã bỏ qua", "", kept(D.UNDO_MS, {label: "Khôi phục", run: function() { root.decide("restore", device, item, function() {}) }}))
+                say(made ? S.s_da_ghi_6b67a4c2 + made + S.s_viec_vao_ap_dung_thay_doi_dff2da7a : S.s_chua_ghi_duoc_viec_nao_25a1794a, skipped || held ? N.applyNote(skipped, held, dropped) : "")
+            } else if (verb === "restore") say(S.s_da_khoi_phuc_e60855c0)
+            else say(S.s_da_bo_qua_df41794e, "", kept(D.UNDO_MS, {label: S.s_khoi_phuc_c652d9c0, run: function() { root.decide("restore", device, item, function() {}) }}))
             after()
             inbox.invalidate()
             reviewCounted.invalidate()

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -28,23 +29,23 @@ Item {
         Accessible.role: Accessible.ColumnHeader
         Accessible.name: text
     }
-    Head { x: root.pad; text: "#"; Accessible.name: "Số chương" }
-    Head { x: root.titleX; text: "Chương" }
-    Head { visible: root.wide; x: root.statusX; text: "Trạng thái" }
+    Head { x: root.pad; text: "#"; Accessible.name: S.s_so_chuong_6e52dccd }
+    Head { x: root.titleX; text: S.s_chuong_2d157977 }
+    Head { visible: root.wide; x: root.statusX; text: S.s_trang_thai_cb31de81 }
     Head {
         id: length
         visible: root.wide
         x: root.lengthX
         width: 110
         horizontalAlignment: Text.AlignRight
-        text: "Độ dài"
+        text: S.s_do_dai_5e055f59
         HoverHandler {
             id: lengthHover
             onHoveredChanged: if (hovered) lengthTip.restart(); else { lengthTip.stop(); Nav.hideTip(length) }
         }
-        Timer { id: lengthTip; interval: 600; onTriggered: Nav.showTip(length, "Số phút khi chương đã có audio; chưa có thì số câu của chương") }
-        Accessible.description: "Số phút khi chương đã có audio; chưa có thì số câu của chương"
+        Timer { id: lengthTip; interval: 600; onTriggered: Nav.showTip(length, S.s_so_phut_khi_chuong_da_co_audio_chua_co_thi_e936f4b1) }
+        Accessible.description: S.s_so_phut_khi_chuong_da_co_audio_chua_co_thi_e936f4b1
     }
-    Head { visible: root.wide; x: root.doneX; width: 96; horizontalAlignment: Text.AlignRight; text: "Xong lúc" }
+    Head { visible: root.wide; x: root.doneX; width: 96; horizontalAlignment: Text.AlignRight; text: S.s_xong_luc_e527f5af }
     Rectangle { x: root.pad; width: parent.width - 2 * root.pad; height: 1; anchors.bottom: parent.bottom; color: Theme.line }
 }

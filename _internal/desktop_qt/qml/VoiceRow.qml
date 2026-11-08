@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -90,7 +91,7 @@ Item {
                     visible: root.selected
                     x: (gender.visible ? gender.x + gender.implicitWidth : name.x + name.width) + 10
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Mặc định"
+                    text: S.s_mac_dinh_9a1af367
                     color: Theme.accentText
                     font.pixelSize: Theme.sizeCaption
                 }
@@ -101,11 +102,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 size: "sm"
                 kind: "text"
-                text: root.playing ? "Dừng" : "Thử giọng"
+                text: root.playing ? S.s_dung_11554138 : S.s_thu_giong_c6ece39e
                 icon: root.playing ? "square" : "play"
                 busy: root.loading
                 activeFocusOnTab: root.tabbable || activeFocus
-                Accessible.name: (root.playing ? "Dừng" : "Thử") + " giọng " + (root.voice.name || "")
+                Accessible.name: (root.playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9) + S.s_giong_ded5e045 + (root.voice.name || "")
                 onActivated: root.sample()
             }
         }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -54,7 +55,7 @@ Collapse {
                     id: again
                     objectName: "inlineErrorRetry"
                     x: -12
-                    text: "Thử lại"
+                    text: S.s_thu_lai_c58d068c
                     icon: "rotate-cw"
                     kind: "ghost"
                     size: "sm"

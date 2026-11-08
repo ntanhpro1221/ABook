@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "librarymodel.h"
 
 #include "playerlogic.h"
@@ -37,8 +38,8 @@ QString LibraryModel::durationText(double seconds) {
         return {};
     const int h = minutes / 60, m = minutes % 60;
     if (h == 0)
-        return QStringLiteral("%1 phút").arg(m);
-    return m == 0 ? QStringLiteral("%1 giờ").arg(h) : QStringLiteral("%1 giờ %2 phút").arg(h).arg(m);
+        return UiStrings::s_copy_728d747023f1.arg(m);
+    return m == 0 ? UiStrings::s_copy_197789ab8e87.arg(h) : UiStrings::s_copy_16f9191d6b05.arg(h).arg(m);
 }
 
 void LibraryModel::setBooks(const QJsonArray &array) {
@@ -68,7 +69,7 @@ void LibraryModel::setBooks(const QJsonArray &array) {
         b.coverKey = PlayerLogic::coverKeyOf(b.id, o.value(QStringLiteral("cover")).toObject());
         QStringList detail;
         if (b.producing)
-            detail << QStringLiteral("Đang làm\u00a0·\u00a0%1/%2 chương").arg(b.chaptersAvailable).arg(b.chaptersTotal);
+            detail << UiStrings::s_copy_1998b9f7f5e7.arg(b.chaptersAvailable).arg(b.chaptersTotal);
         else if (const QString d = durationText(b.duration); !d.isEmpty())
             detail << d;
         b.detail = detail.join(QStringLiteral("\u00a0·\u00a0"));   // dấu ngăn dính mảnh trước: không bao giờ đứng đầu dòng

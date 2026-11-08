@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -23,7 +24,7 @@ Item {
     implicitHeight: 44
     height: 44
     Accessible.role: Accessible.PageTabList
-    Accessible.name: "Mục của dự án"
+    Accessible.name: S.s_muc_cua_du_an_37a54f69
 
     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
     Flickable {

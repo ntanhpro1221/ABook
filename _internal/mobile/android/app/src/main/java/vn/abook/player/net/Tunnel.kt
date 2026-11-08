@@ -1,5 +1,7 @@
 package vn.abook.player.net
 
+import vn.abook.player.S
+
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
@@ -49,7 +51,7 @@ internal class Tunnel(private val fast: FastConnect, private val pool: ExecutorS
     @Synchronized
     private fun listener(): ServerSocket {
         server?.let { return it }
-        check(!closed) { "kênh đã đóng" }
+        check(!closed) { S.s_kenh_da_dong_bd835d07 }
         val socket = ServerSocket(0, 50, InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1)))
         server = socket
         Thread({
@@ -113,9 +115,9 @@ internal class Tunnel(private val fast: FastConnect, private val pool: ExecutorS
         val text = StringBuilder()
         while (!text.endsWith("\r\n\r\n")) {
             val b = input.read()
-            if (b < 0) throw IOException("khách đóng giữa đầu yêu cầu")
+            if (b < 0) throw IOException(S.s_khach_dong_giua_dau_yeu_cau_16560f27)
             text.append(b.toChar())
-            if (text.length > MAX_HEAD) throw IOException("đầu yêu cầu quá dài")
+            if (text.length > MAX_HEAD) throw IOException(S.s_dau_yeu_cau_qua_dai_9ea7dfc8)
         }
         return text.toString()
     }

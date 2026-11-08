@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -23,7 +24,7 @@ ListView {
         progress: model.progress
         fullTitle: model.fullTitle
         hasMenu: true
-        Accessible.name: model.playable ? model.current && Player.playing ? `Tạm dừng ${model.fullTitle}` : `Nghe ${model.fullTitle}` : `Đọc ${model.fullTitle} (chưa có audio)`
+        Accessible.name: model.playable ? model.current && Player.playing ? S.s_tam_dung_0_43ccbbf2(model.fullTitle) : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
         menuOpen: menu.open && root.menuChapter && root.menuChapter.chapterId === model.chapterId
         onClicked: {
             if (row.onMenuButton) return
@@ -41,8 +42,8 @@ ListView {
         panelWidth: 236; pad: Theme.s8
         Column {
             width: parent.width
-            MenuRow { width: parent.width; text: "Nghe từ đầu chương"; icon: "play"; visible: !!root.menuChapter && root.menuChapter.playable; onClicked: { menu.close(); Player.jumpTo(root.menuChapter.chapterId, 0) } }
-            MenuRow { objectName: "chapterRead"; width: parent.width; text: "Đọc chương này"; icon: "book-open"; onClicked: { menu.close(); root.readRequested(root.menuChapter.chapterId) } }
+            MenuRow { width: parent.width; text: S.s_nghe_tu_dau_chuong_06c66bfc; icon: "play"; visible: !!root.menuChapter && root.menuChapter.playable; onClicked: { menu.close(); Player.jumpTo(root.menuChapter.chapterId, 0) } }
+            MenuRow { objectName: "chapterRead"; width: parent.width; text: S.s_doc_chuong_nay_5d5272d3; icon: "book-open"; onClicked: { menu.close(); root.readRequested(root.menuChapter.chapterId) } }
         }
     }
     SmoothWheel { flick: root }

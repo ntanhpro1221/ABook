@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -126,7 +127,7 @@ export function undoLineFix(client: QueryClient, bookId: string, ref: { stableId
   const steps: { endpoint: string; decision: Record<string, unknown> }[] = [];
   if (answer.speakerAt) steps.push({ endpoint: "speaker", decision: { lines: [ref], requestedAt: answer.speakerAt } });
   steps.push({ endpoint: "line", decision: { stableId: ref.stableId, requestedAt: answer.requestedAt } });
-  return undoSteps(client, bookId, steps, "Câu này trở lại như trước khi sửa cách đọc.");
+  return undoSteps(client, bookId, steps, S.s_cau_nay_tro_lai_nhu_truoc_khi_sua_cach_doc_77690b99);
 }
 
 export interface ChapterScript {
@@ -170,8 +171,8 @@ interface FindState {
 export const NARRATOR = "NARRATOR";
 export const UNNAMED = "UNNAMED";
 const FIXED: Person[] = [
-  { value: NARRATOR, label: "Người kể", lines: 0 },
-  { value: UNNAMED, label: "Vai phụ không tên", lines: 0 },
+  { value: NARRATOR, label: S.s_nguoi_ke_fd36cd15, lines: 0 },
+  { value: UNNAMED, label: S.s_vai_phu_khong_ten_6395f0d2, lines: 0 },
 ];
 // Gán nhanh bằng phím số: người nói nhiều nhất của chương đứng trước.
 const HOTKEYS = 9;
@@ -179,24 +180,24 @@ const HOTKEYS = 9;
 const STAMP_MS = 6000;
 // Bộ cảm xúc của khâu phân tích (analysis.ALLOWED_EMOTIONS) và bốn mức cường độ.
 export const EMOTIONS: [string, string][] = [
-  ["neutral", "Bình thường"],
-  ["happy", "Vui"],
-  ["sad", "Buồn"],
-  ["angry", "Giận"],
-  ["afraid", "Sợ"],
-  ["surprised", "Ngạc nhiên"],
-  ["tender", "Dịu dàng"],
-  ["sarcastic", "Mỉa mai"],
-  ["excited", "Hào hứng"],
-  ["tired", "Mệt mỏi"],
-  ["whispering", "Thì thầm"],
+  ["neutral", S.s_binh_thuong_23c1bd43],
+  ["happy", S.s_vui_2e2beffc],
+  ["sad", S.s_buon_a1dc5853],
+  ["angry", S.s_gian_19da03ba],
+  ["afraid", S.s_so_485ed077],
+  ["surprised", S.s_ngac_nhien_8b160295],
+  ["tender", S.s_diu_dang_0d05b980],
+  ["sarcastic", S.s_mia_mai_729f7055],
+  ["excited", S.s_hao_hung_b8003bdb],
+  ["tired", S.s_met_moi_304a36cf],
+  ["whispering", S.s_thi_tham_ed2d29dd],
 ];
 const EMOTION_LABEL = Object.fromEntries(EMOTIONS) as Record<string, string>;
-const LEVELS = ["Nhẹ", "Vừa", "Mạnh", "Rất mạnh"];
+const LEVELS = [S.s_nhe_52e76ce9, S.s_vua_8af1c03b, S.s_manh_52416a97, S.s_rat_manh_bef32ca9];
 export const KINDS = [
-  { value: "narration", label: "Lời kể" },
-  { value: "dialogue", label: "Lời thoại" },
-  { value: "thought", label: "Nội tâm" },
+  { value: "narration", label: S.s_loi_ke_eba0761e },
+  { value: "dialogue", label: S.s_loi_thoai_4ed83728 },
+  { value: "thought", label: S.s_noi_tam_885fce10 },
 ];
 
 export function deliveryText(emotion: string, intensity: number | null): string {
@@ -207,9 +208,9 @@ export function deliveryText(emotion: string, intensity: number | null): string 
 /** Cách đọc một câu nói bằng lời ("loại câu: nội tâm, cảm xúc: buồn"); "" khi không đặt gì. */
 export function deliveryWords({ kind, emotion, intensity, spoken }: SeenDelivery): string {
   return [
-    kind ? `loại câu: ${KINDS.find((item) => item.value === kind)?.label.toLowerCase() ?? kind}` : "",
-    emotion ? `cảm xúc: ${deliveryText(emotion, intensity).toLowerCase()}` : "",
-    spoken != null ? (spoken ? `đọc là “${spoken}”` : "trả về chữ của sách") : "",
+    kind ? S.s_loai_cau_0_ed69f21b(KINDS.find((item) => item.value === kind)?.label.toLowerCase() ?? kind) : "",
+    emotion ? S.s_cam_xuc_0_8fc548ed(deliveryText(emotion, intensity).toLowerCase()) : "",
+    spoken != null ? (spoken ? S.s_doc_la_0_328eec99(spoken) : S.s_tra_ve_chu_cua_sach_0451f8ec) : "",
   ]
     .filter(Boolean)
     .join(", ");
@@ -259,16 +260,16 @@ export function visibleLines(lines: Line[], filter: Filter, who: string | null):
 // nên chỉ chương không có câu nói nào mới ghi "chỉ lời kể", rồi tới chỗ nghi và việc đã quyết.
 function chapterExtras(chapter: ChapterEntry): string {
   return [
-    chapter.speech ? "" : "chỉ lời kể",
-    chapter.hints ? `${chapter.hints} chỗ nghi` : "",
-    chapter.decided ? `${chapter.decided} đã quyết` : "",
+    chapter.speech ? "" : S.s_chi_loi_ke_6ec7b2cb,
+    chapter.hints ? S.s_0_cho_nghi_cb433938(chapter.hints) : "",
+    chapter.decided ? S.s_0_da_quyet_715a62cc(chapter.decided) : "",
   ]
     .filter(Boolean)
     .join(" · ");
 }
 
 function chapterLabel(chapter: ChapterEntry): string {
-  return chapter.title || `Chương ${chapter.index}`;
+  return chapter.title || S.s_chuong_0_268b0521(chapter.index);
 }
 
 interface UndoStack {
@@ -323,10 +324,10 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
         "speaker",
         [{ lines: lines.map((item) => ({ stableId: item.stableId, textSha256: item.textSha256 })), requestedAt, keep }],
         lines.length > 1
-          ? `${lines.length} câu trở lại như trước.`
+          ? S.s_0_cau_tro_lai_nhu_truoc_8b66dcb7(lines.length)
           : line.wish?.state === "pending"
-            ? `Trở lại quyết định trước: câu này của ${line.wish.label}.`
-            : `Câu này lại là của ${line.label}.`,
+            ? S.s_tro_lai_quyet_dinh_truoc_cau_nay_cua_0_d64092bb(line.wish.label)
+            : S.s_cau_nay_lai_la_cua_0_82aa6bb3(line.label),
       );
       let used = false;
       const run = () => {
@@ -341,19 +342,19 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
       if (replaced.length) warnElsewhere(replaced.length, replaced[0][1] ? nameOf(replaced[0][1]) : "", run);
       const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
       if (keep) {
-        toast.success(recorded > 1 ? `Đã xác nhận ${recorded} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
+        toast.success(recorded > 1 ? S.s_da_xac_nhan_0_cau_cua_1_d26ebd5f(recorded, label) : S.s_da_xac_nhan_cau_nay_cua_0_6fa40cfd(line.label), {
           ...undo,
         });
         return;
       }
-      toast.success(recorded > 1 ? `Đã ghi: ${recorded} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
+      toast.success(recorded > 1 ? S.s_da_ghi_0_cau_cua_1_c1ccd6a7(recorded, label) : S.s_da_ghi_cau_nay_cua_0_8b08302d(label), {
         // Chỉ câu đã thu mới phải thu lại - sách chưa thu thì không hứa điều ấy (soát UX a23).
         ...undo,
       });
     },
     onError: (error: Error, _variables, context) => {
       context?.restore();
-      toast.error("Chưa ghi được người nói", { description: error.message });
+      toast.error(S.s_chua_ghi_duoc_nguoi_noi_5ef0be83, { description: error.message });
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
@@ -386,7 +387,7 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
           made.push({ lines: refs, requestedAt: answer.requestedAt, keep: true });
         } catch (error) {
           // Các nhóm trước đã ghi thật (mỗi nhóm một yêu cầu): nói đúng số, không báo như chưa làm gì (soát a83 B11).
-          if (count > 0) throw new Error(`Mới xác nhận được ${count} câu, còn lại chưa ghi: ${(error as Error).message}. Bạn bấm xác nhận lại - những câu đã ghi sẽ không bị làm lại.`);
+          if (count > 0) throw new Error(S.s_moi_xac_nhan_duoc_0_cau_con_lai_chua_ghi_1_6c8a052e(count, (error as Error).message));
           throw error;
         }
       }
@@ -394,7 +395,7 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
     },
     onSuccess: ({ count, made, elsewhere }) => {
       // Nút trên thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác (như sửa người nói từng câu).
-      const action = undoAction(client, bookId, "speaker", made, `${count} câu trở lại chờ duyệt.`);
+      const action = undoAction(client, bookId, "speaker", made, S.s_0_cau_tro_lai_cho_duyet_a8cec9a6(count));
       let used = false;
       const run = () => {
         if (used) return false;
@@ -405,12 +406,12 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
       onUndoable(run);
       const replaced = Object.values(elsewhere);
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? nameOf(replaced[0]) : "", run);
-      toast.success(`Đã xác nhận ${count} câu là đúng`, {
+      toast.success(S.s_da_xac_nhan_0_cau_la_dung_66ffefb7(count), {
         action: { label: action.label, onClick: run },
         duration: UNDO_MS,
       });
     },
-    onError: (error: Error) => toast.error("Chưa xác nhận được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_xac_nhan_duoc_0804addb, { description: error.message }),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
       void client.invalidateQueries({ queryKey: ["work", bookId] });
@@ -438,7 +439,7 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
       void Promise.all(
         replaced.map(([stableId, verdict]) => api(`/api/books/${bookId}/review`, { method: "POST", body: { verdict: verdict || null, stableId, chapterId } })),
       )
-        .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }))
+        .catch((error: Error) => toast.error(S.s_chua_lay_lai_duoc_2e01d8a8, { description: error.message }))
         .finally(refresh),
     );
   };
@@ -458,11 +459,11 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
     },
     onSuccess: (answer) => {
       warn(answer);
-      toast.success("Đã bỏ yêu cầu thu lại");
+      toast.success(S.s_da_bo_yeu_cau_thu_lai_c5881de5);
     },
     onError: (error: Error, _lines, context) => {
       context?.restore();
-      toast.error("Chưa bỏ được", { description: error.message });
+      toast.error(S.s_chua_bo_duoc_638141d7, { description: error.message });
     },
     onSettled: refresh,
   });
@@ -482,20 +483,20 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
         if (used) return false;
         used = true;
         void api(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) })
-          .then(() => toast.success(lines.length > 1 ? `Đã hoàn tác: ${lines.length} câu không phải thu lại nữa` : "Đã hoàn tác: câu này không phải thu lại nữa"))
-          .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message }))
+          .then(() => toast.success(lines.length > 1 ? S.s_da_hoan_tac_0_cau_khong_phai_thu_lai_nua_afda5c27(lines.length) : S.s_da_hoan_tac_cau_nay_khong_phai_thu_lai_nua_5ba9e5c0))
+          .catch((error: Error) => toast.error(S.s_chua_hoan_tac_duoc_164b754b, { description: error.message }))
           .finally(refresh);
         return true;
       };
       onUndoable(run);
-      toast.success(lines.length > 1 ? `Đã ghi: thu lại ${lines.length} câu` : "Đã ghi: thu lại câu này", {
-        action: { label: "Hoàn tác", onClick: run },
+      toast.success(lines.length > 1 ? S.s_da_ghi_thu_lai_0_cau_234ce9a0(lines.length) : S.s_da_ghi_thu_lai_cau_nay_9c9b1e4b, {
+        action: { label: S.s_hoan_tac_e72ff675, onClick: run },
         duration: UNDO_MS,
       });
     },
     onError: (error: Error, _lines, context) => {
       context?.restore();
-      toast.error("Chưa ghi được", { description: error.message });
+      toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message });
     },
     onSettled: refresh,
   });
@@ -536,19 +537,19 @@ function useLineFix(bookId: string, chapterId: number) {
         const theirs = theirDelivery(elsewhere.delivery);
         const takeTheirs = () =>
           void api(`/api/books/${bookId}/line`, { method: "POST", body: { stableId: line.stableId, textSha256: line.textSha256, ...theirs } })
-            .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }))
+            .catch((error: Error) => toast.error(S.s_chua_lay_lai_duoc_2e01d8a8, { description: error.message }))
             .finally(refresh);
         warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
       }
       // Hoàn tác như người nói / cách đọc tên / giọng: bấm nhầm một loại đoạn hay một chữ đem đọc thì rút được (soát a89 V7).
-      toast.success("Đã ghi cách đọc câu này", {
+      toast.success(S.s_da_ghi_cach_doc_cau_nay_0db96b25, {
         action: answer.requestedAt ? undoLineFix(client, bookId, line, answer) : undefined,
         duration: UNDO_MS,
       });
     },
     onError: (error: Error, _variables, context) => {
       context?.restore();
-      toast.error("Chưa ghi được", { description: error.message });
+      toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message });
     },
     onSettled: refresh,
   });
@@ -617,22 +618,20 @@ export function DeliveryMenu({
     <MotionRegion as="div" className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
       <div>
-        <div className="mb-1.5 label-section text-fg-2">Loại đoạn</div>
-        <ChoiceRow label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
+        <div className="mb-1.5 label-section text-fg-2">{S.s_loai_doan_4c243930}</div>
+        <ChoiceRow label={S.s_loai_doan_4c243930} value={kind} onChange={setKind} options={KINDS} />
       </div>
       {needsSpeaker && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">Ai nói?</div>
+          <div className="mb-1.5 label-section text-fg-2">{S.s_ai_noi_ab25bbf5}</div>
           {picked ? (
             <div className="flex items-center gap-2 py-1.5 text-sm text-accent-text">
               <SelectionMark selected />
               <span className="min-w-0 flex-1 truncate font-medium">
                 {picked.label}
-                {picked.newGender ? " · người mới" : ""}
+                {picked.newGender ? S.s_nguoi_moi_cc9a5f2d : ""}
               </span>
-              <button type="button" className="shrink-0 text-xs font-medium underline" onClick={() => setPicked(null)}>
-                Đổi
-              </button>
+              <button type="button" className="shrink-0 text-xs font-medium underline" onClick={() => setPicked(null)}>{S.s_doi_8f75900f}</button>
             </div>
           ) : (
             <div className="py-1">
@@ -641,55 +640,51 @@ export function DeliveryMenu({
           )}
         </div>
       )}
-      <Fold storageKey="delivery.emotion" title="Cảm xúc" summary={deliveryText(emotion, level)} bodyClassName="space-y-3 px-3 pb-3">
+      <Fold storageKey="delivery.emotion" title={S.s_cam_xuc_05c1aee0} summary={deliveryText(emotion, level)} bodyClassName="space-y-3 px-3 pb-3">
       {line.emotion !== null && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">Cảm xúc</div>
-          <ChoiceRow wrap label="Cảm xúc" value={emotion} onChange={setEmotion} options={EMOTIONS.map(([value, label]) => ({ value, label }))} />
+          <div className="mb-1.5 label-section text-fg-2">{S.s_cam_xuc_05c1aee0}</div>
+          <ChoiceRow wrap label={S.s_cam_xuc_05c1aee0} value={emotion} onChange={setEmotion} options={EMOTIONS.map(([value, label]) => ({ value, label }))} />
         </div>
       )}
       {line.intensity !== null && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">Mức</div>
+          <div className="mb-1.5 label-section text-fg-2">{S.s_muc_10267bc5}</div>
           <ChoiceRow
-            label="Mức"
+            label={S.s_muc_10267bc5}
             value={String(level)}
             onChange={(value) => setLevel(Number(value))}
             options={LEVELS.map((label, index) => ({ value: String(index), label }))}
           />
-          <p className="mt-1.5 text-[0.6875rem] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
+          <p className="mt-1.5 text-[0.6875rem] leading-snug text-fg-3">{S.s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3}</p>
         </div>
       )}
       </Fold>
       <label className="block">
-        <span className="mb-1.5 block label-section text-fg-2">Chữ đem đọc</span>
+        <span className="mb-1.5 block label-section text-fg-2">{S.s_chu_dem_doc_9772701b}</span>
         <textarea
           id={`spoken-${line.stableId}`}
-          aria-label="Chữ máy sẽ đọc thay cho câu này"
-          placeholder="Gõ chữ muốn máy đọc (để trống: đọc đúng chữ của sách)"
+          aria-label={S.s_chu_may_se_doc_thay_cho_cau_nay_a93194d6}
+          placeholder={S.s_go_chu_muon_may_doc_de_trong_doc_dung_chu_e25320a7}
           value={words}
           onChange={(event) => setWords(event.target.value)}
           rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
           className="w-full resize-y rounded-control border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
         />
-        <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">
-          Chỉ sửa chữ đem đọc; sách giữ nguyên
-          {line.spoken ? "; xoá hết để dùng chữ gốc." : ""}
+        <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">{S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_bfa41b6d}{line.spoken ? S.s_xoa_het_de_dung_chu_goc_e7344ee8 : ""}
         </span>
       </label>
       {line.spoken && (
-        <button type="button" className="text-xs font-medium text-accent-text" onClick={() => setWords(line.text)}>
-          Dùng chữ gốc
-        </button>
+        <button type="button" className="text-xs font-medium text-accent-text" onClick={() => setWords(line.text)}>{S.s_dung_chu_goc_b0016031}</button>
       )}
       <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
-        {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cho câu này"}
+        {needsSpeaker && !speaker ? S.s_chon_nguoi_noi_truoc_f3e512e0 : S.s_luu_cho_cau_nay_6402d7a6}
       </Button>
       {/* Tên riêng trong câu đọc sai là sai ở MỌI câu có tên ấy: sửa ngay tại đây, cho cả cuốn (mục "Cách đọc tên" ở tab
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
-        <Fold storageKey="delivery.names" title="Tên trong câu" summary={`${names.length} tên`} bodyClassName="px-3 pb-3"><div data-names-section>
-          <div className="mb-1.5 label-section text-fg-2">Tên cả cuốn</div>
+        <Fold storageKey="delivery.names" title={S.s_ten_trong_cau_7a39c9f4} summary={S.s_0_ten_f2f08473(names.length)} bodyClassName="px-3 pb-3"><div data-names-section>
+          <div className="mb-1.5 label-section text-fg-2">{S.s_ten_ca_cuon_050a79ad}</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -733,7 +728,7 @@ function DeliveryChip({
   // Esc / bấm ra ngoài khi còn lựa chọn chưa lưu: bảng đóng và lựa chọn mất - nói ra thay vì lặng lẽ (soát UX a23).
   const dismiss = (next: boolean) => {
     if (!next && dirty.current) {
-      toast.warning("Chưa lưu cách đọc của câu này", { description: "Lựa chọn vừa rồi đã bỏ. Mở lại và bấm “Lưu cho câu này” để giữ." });
+      toast.warning(S.s_chua_luu_cach_doc_cua_cau_nay_bc80163a, { description: S.s_lua_chon_vua_roi_da_bo_mo_lai_va_bam_luu_c_d852e9da });
     }
     dirty.current = false;
     onOpenChange(next);
@@ -749,7 +744,7 @@ function DeliveryChip({
     <button
       type="button"
       onClick={(event) => event.stopPropagation()}
-      aria-label={`Cách đọc: ${text}. Bấm để sửa`}
+      aria-label={S.s_cach_doc_0_bam_de_sua_cbabcbd5(text)}
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
         "relative inline-flex h-6 items-center gap-1 rounded-control px-1.5 text-[0.6875rem] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
@@ -769,7 +764,7 @@ function DeliveryChip({
   // Điện thoại: tấm trượt từ đáy, rộng hết màn - bảng nổi neo vào nút 24 px bị ép sát mép, cuộn trong khung thấp.
   if (phone) {
     return (
-      <Sheet open={open} onOpenChange={dismiss} title="Cách đọc câu này" trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
+      <Sheet open={open} onOpenChange={dismiss} title={S.s_cach_doc_cau_nay_d8d0b9f1} trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
         <LineQuote line={line} />
         <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} wide dirty={dirty} />
       </Sheet>
@@ -833,7 +828,7 @@ export function SpeakerMenu({
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 truncate">
-          {current ? `Đúng là ${person.label}` : person.label}
+          {current ? S.s_dung_la_0_32e8685a(person.label) : person.label}
         </span>
         {current ? <Check className="size-4 shrink-0 text-success" /> : person.lines > 0 && <span className="tabular shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span>}
       </button>
@@ -850,8 +845,8 @@ export function SpeakerMenu({
           onKeyDown={(event) => {
             if (event.key === "Enter" && found[0]) onPick(found[0]);
           }}
-          placeholder="Tìm người khác trong truyện"
-          aria-label="Tìm người nói"
+          placeholder={S.s_tim_nguoi_khac_trong_truyen_35bd0d1a}
+          aria-label={S.s_tim_nguoi_noi_70e3871e}
           spellCheck={false}
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
@@ -865,13 +860,13 @@ export function SpeakerMenu({
             // Người chưa từng được máy gán câu nào (linh thể nói trong 『』...): tạo người ấy - dây chuyền cấp giọng riêng
             // như bước phân vai, khác giọng người cùng chương.
             <div className="px-2 py-2.5">
-              <p className="text-sm text-fg-2">Chưa có ai tên như thế trong truyện. Tạo người mới “{query.trim()}”:</p>
+              <p className="text-sm text-fg-2">{S.s_chua_co_ai_ten_nhu_the_trong_truyen_tao_ng_897641ec}{query.trim()}”:</p>
               <div className="mt-2 flex gap-1.5">
                 {(
                   [
-                    ["male", "Nam"],
-                    ["female", "Nữ"],
-                    ["unknown", "Không rõ"],
+                    ["male", S.s_nam_22dd59c8],
+                    ["female", S.s_nu_e15bc11c],
+                    ["unknown", S.s_khong_ro_8af7da78],
                   ] as const
                 ).map(([gender, label]) => (
                   <button
@@ -890,17 +885,17 @@ export function SpeakerMenu({
           <>
             {suggested && suggested.value !== line.current && (
               <>
-                <div className="px-2 pb-1 pt-1.5 label-section text-warning">Máy gợi ý</div>
+                <div className="px-2 pb-1 pt-1.5 label-section text-warning">{S.s_may_goi_y_1e7f4cfa}</div>
                 {item(suggested)}
               </>
             )}
             {script.cast.length > 0 && (
               <>
-                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Trong chương này</div>
+                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">{S.s_trong_chuong_nay_73a2b156}</div>
                 {script.cast.map((person, index) => item(person, index < HOTKEYS ? index + 1 : undefined))}
               </>
             )}
-            <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Khác</div>
+            <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">{S.s_khac_bda82bf0}</div>
             {FIXED.filter((person) => !embedded || person.value !== NARRATOR).map((person) => item(person))}
           </>
         )}
@@ -931,7 +926,7 @@ function SpeakerChip({
       type="button"
       tabIndex={-1}
       disabled={!script.castReady || !line.editable}
-      aria-label={`${line.kind === "thought" ? "Người nghĩ" : "Người nói"}: ${shown}. Bấm để đổi`}
+      aria-label={S.s_0_1_bam_de_doi_80d58682(line.kind === "thought" ? S.s_nguoi_nghi_ce1afa0f : S.s_nguoi_noi_9620707b, shown)}
       className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
@@ -942,7 +937,7 @@ function SpeakerChip({
   // Điện thoại: tấm trượt như bảng cách đọc câu - bảng nổi 288 px neo vào chip bị ép sát mép.
   if (phone) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange} title={line.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?"} trigger={trigger}>
+      <Sheet open={open} onOpenChange={onOpenChange} title={line.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95} trigger={trigger}>
         <LineQuote line={line} />
         <div className="px-1.5 pt-2">
           <SpeakerMenu line={line} script={script} onPick={onPick} phone />
@@ -1046,7 +1041,7 @@ function ScriptRow({
         {speech ? (
           <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />
         ) : (
-          <span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || "Người kể"}</span>
+          <span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || S.s_nguoi_ke_fd36cd15}</span>
         )}
       </div>
       {/* Nút nghe đứng ngay trước chữ (cột cố định, cao bằng dòng chữ đầu): luôn sát chữ dù câu ngắn hay dài, không trôi sang mép phải. */}
@@ -1059,7 +1054,7 @@ function ScriptRow({
               event.stopPropagation();
               clip.toggle(id, urls.sample(bookId, line.segmentId));
             }}
-            aria-label={playing ? "Dừng" : `Nghe câu: ${line.text}`}
+            aria-label={playing ? S.s_dung_11554138 : S.s_nghe_cau_0_4329fb13(line.text)}
             className="grid size-7 place-items-center rounded-full text-fg-3 hover:bg-panel hover:text-fg"
           >
             <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -1069,10 +1064,10 @@ function ScriptRow({
       <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
       <SelectionMark selected={selected} className="mt-1" />
       {/* Hàng là phần tử thường (chứa nút, chip), không phải option: trạng thái "đang chọn" đọc bằng chữ ẩn thay cho aria-selected. */}
-      {selected && <span className="sr-only">Đang chọn. </span>}
+      {selected && <span className="sr-only">{S.s_dang_chon_8580d1e5}</span>}
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
         <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
-          {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
+          {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">{S.s_nghi_821be246}</span>}
           {marks?.length ? (
             splitByRanges(line.text, marks).map(([part, hit], index) =>
               hit ? (
@@ -1088,8 +1083,7 @@ function ScriptRow({
           )}
         </p>
         {line.spoken && (
-          <p className="mt-0.5 text-xs text-fg-2">
-            Đọc là: <span className="text-fg">{line.spoken}</span>
+          <p className="mt-0.5 text-xs text-fg-2">{S.s_doc_la_4f8195e0}<span className="text-fg">{line.spoken}</span>
           </p>
         )}
         {script.castReady && !plainDelivery(line) && (
@@ -1099,16 +1093,15 @@ function ScriptRow({
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
             {line.lineWish.kind
-              ? `Đã đổi loại câu: ${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()}`
-              : "Đã ghi cách đọc câu"}
-            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} -{" "}
+              ? S.s_da_doi_loai_cau_0_0c42f4ee(KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase())
+              : S.s_da_ghi_cach_doc_cau_ce5474e2}
+            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? S.s_doc_la_0_613387f1(line.lineWish.spoken) : S.s_tra_ve_chu_cua_sach_b10a6f5a) : ""} -{" "}
             {pendingNote}.
           </p>
         )}
         {line.lineWish?.state === "refused" && (
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-danger">
-            <AlertTriangle className="size-3.5 shrink-0" />
-            Cách đọc mới không áp được: {line.lineWish.reason}
+            <AlertTriangle className="size-3.5 shrink-0" />{S.s_cach_doc_moi_khong_ap_duoc_3b993682}{line.lineWish.reason}
           </p>
         )}
         {line.hint && !context && (!line.wish || line.wish.state === "refused") && (
@@ -1122,16 +1115,14 @@ function ScriptRow({
                 type="button"
                 onClick={() => onPick(suggested)}
                 className="rounded-control px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
-              >
-                Gán cho {suggested.label}
+              >{S.s_gan_cho_6fe48d05}{suggested.label}
               </button>
             )}
           </p>
         )}
         {line.retake === "pending" && (
           <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-fg-2">
-            <Clock className="size-3.5 shrink-0" />
-            Đã xin thu lại câu này - {pendingNote}.
+            <Clock className="size-3.5 shrink-0" />{S.s_da_xin_thu_lai_cau_nay_7919d78c}{pendingNote}.
             <button
               type="button"
               onClick={(event) => {
@@ -1139,21 +1130,17 @@ function ScriptRow({
                 onCancelRetake();
               }}
               className="font-medium text-accent-text hover:underline"
-            >
-              Bỏ
-            </button>
+            >{S.s_bo_e07d3f4d}</button>
           </p>
         )}
         {line.wish?.state === "pending" && (
           <p className="mt-1 flex items-center gap-1.5 text-xs text-fg-2">
-            <Clock className="size-3.5 shrink-0" />
-            Đã ghi {line.wish.label} (máy gán {line.label}) - {pendingNote}.
+            <Clock className="size-3.5 shrink-0" />{S.s_da_ghi_6b67a4c2}{line.wish.label}{S.s_may_gan_c2531001}{line.label}) - {pendingNote}.
           </p>
         )}
         {line.wish?.state === "refused" && (
           <p className="mt-1 flex items-center gap-1.5 text-xs text-danger">
-            <AlertTriangle className="size-3.5 shrink-0" />
-            Yêu cầu {line.wish.label} không áp được: {line.wish.reason}
+            <AlertTriangle className="size-3.5 shrink-0" />{S.s_yeu_cau_6833dc12}{line.wish.label}{S.s_khong_ap_duoc_1fe639f0}{line.wish.reason}
           </p>
         )}
       </div>
@@ -1168,8 +1155,8 @@ function ScriptRow({
               event.stopPropagation();
               onRetake();
             }}
-            aria-label={`Thu lại câu: ${line.text}`}
-            title="Thu lại câu này (R)"
+            aria-label={S.s_thu_lai_cau_0_3b48be85(line.text)}
+            title={S.s_thu_lai_cau_nay_r_04ccfef4}
             className={cn(
               "grid size-7 place-items-center rounded-full text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100",
               !active && "opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60",
@@ -1283,7 +1270,7 @@ function ChapterScriptView({
       // Lần đã hoàn tác bằng nút trên thông báo thì bỏ qua, lấy lần trước nữa; hết thì nói ra thay vì im lặng (soát UX a23).
       let undone = false;
       while (!undone && undos.current.length) undone = undos.current.pop()!();
-      if (!undone) toast("Không còn gì để hoàn tác");
+      if (!undone) toast(S.s_khong_con_gi_de_hoan_tac_6b0854e7);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1355,7 +1342,7 @@ function ChapterScriptView({
     const lines = group.filter((item) => item.hasAudio && item.retake !== "pending");
     if (!lines.length) {
       const recorded = group.some((item) => item.hasAudio);
-      toast(recorded ? "Câu này đã xin thu lại - máy thu khi áp dụng thay đổi" : "Chưa thu câu này nên chưa có gì để thu lại - sẽ thu lần đầu khi sách làm tới đó");
+      toast(recorded ? S.s_cau_nay_da_xin_thu_lai_may_thu_khi_ap_dung_f84d9f60 : S.s_chua_thu_cau_nay_nen_chua_co_gi_de_thu_lai_d2bc2550);
       return;
     }
     retake.ask.mutate(lines);
@@ -1400,14 +1387,14 @@ function ChapterScriptView({
   };
 
   if (!shown.length) {
-    const label = people.find((person) => person.value === who)?.label ?? (who === UNNAMED ? "Chưa rõ" : "");
+    const label = people.find((person) => person.value === who)?.label ?? (who === UNNAMED ? S.s_chua_ro_be464a5a : "");
     return (
       <MotionRegion><EmptyState
         icon={BookOpenText}
-        title={who ? `Không có câu nào của ${label} ở mục này` : filter === "doubt" ? "Máy không nghi câu nào trong chương này" : "Chương này chỉ có lời kể"}
+        title={who ? S.s_khong_co_cau_nao_cua_0_o_muc_nay_6a7fe340(label) : filter === "doubt" ? S.s_may_khong_nghi_cau_nao_trong_chuong_nay_89a0a346 : S.s_chuong_nay_chi_co_loi_ke_39589983}
         className="py-10"
       >
-        {who ? "Bấm lại tên ở trên để xem mọi người nói." : filter === "doubt" ? "Chọn “Cả chương” để đọc lại toàn bộ." : "Không có câu nói nào để gán người."}
+        {who ? S.s_bam_lai_ten_o_tren_de_xem_moi_nguoi_noi_1edb333f : filter === "doubt" ? S.s_chon_ca_chuong_de_doc_lai_toan_bo_940e0db5 : S.s_khong_co_cau_noi_nao_de_gan_nguoi_48cf1ced}
       </EmptyState></MotionRegion>
     );
   }
@@ -1416,8 +1403,8 @@ function ChapterScriptView({
     <MotionRegion slideIndex={FILTERS.indexOf(filter)} motionKey={[filter, who]}>
       <MotionPresence open={selected.length > 1}>
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-control px-3 py-1.5 text-[0.8125rem]" role="status">
-          <span className="font-semibold">Đang chọn {selected.length} câu</span>
-          <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
+          <span className="font-semibold">{S.s_dang_chon_b79eb4ba}{selected.length}{S.s_cau_b07e1008}</span>
+          <span className="text-fg-2">{S.s_phim_so_hay_chon_nguoi_o_mot_cau_trong_nho_342b4e5a}{selected.length}{S.s_cau_esc_bo_chon_f55d704f}</span>
           {(() => {
             // Thu lại cả nhóm: chỉ những câu đã thu (câu chưa thu không có gì để thu lại).
             const group = speechRows.filter((item) => selected.includes(item.stableId));
@@ -1429,15 +1416,15 @@ function ChapterScriptView({
                 icon={RefreshCw}
                 disabled={!recorded || retake.ask.isPending}
                 onClick={() => askRetake(group[0])}
-                title={recorded ? "" : "Các câu đang chọn chưa thu hay đã xin thu lại"}
+                title={recorded ? "" : S.s_cac_cau_dang_chon_chua_thu_hay_da_xin_thu_283d1f95}
               >
-                {recorded ? `Thu lại ${recorded} câu` : "Chưa có bản thu"}
+                {recorded ? S.s_thu_lai_0_cau_f6a47026(recorded) : S.s_chua_co_ban_thu_9897618d}
               </Button>
             );
           })()}
         </p>
       </MotionPresence>
-      <ol aria-label={`Kịch bản ${script.title}`} onKeyDown={onKeyDown} className="-mx-2 mt-3">
+      <ol aria-label={S.s_kich_ban_0_214591c3(script.title)} onKeyDown={onKeyDown} className="-mx-2 mt-3">
       {/* Hàng rời / vào danh sách (gán câu sang người khác khi đang lọc theo người nói) khép / mở tại chỗ; đổi chương hay bộ lọc thì dựng
           lại từ đầu (key) - cả danh sách trượt theo vùng cha, không từng hàng. */}
       <LineRows key={`${script.chapterId}|${filter}|${who ?? ""}`} items={shown}>
@@ -1518,25 +1505,20 @@ export function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: 
     <MotionRegion className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
       {script.castReady && open.length > 0 ? (
         <div className="min-w-0">
-          <Button size="sm" variant="ghost" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
-            Duyệt {open.length} câu
-          </Button>
-          <p className="mt-1 text-xs text-fg-3">
-            Coi người nói của các câu chưa ai quyết là đúng{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}: máy thôi hỏi; Ctrl+Z để hoàn tác.
-          </p>
+          <Button size="sm" variant="ghost" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>{S.s_duyet_9a137351}{open.length}{S.s_cau_b07e1008}</Button>
+          <p className="mt-1 text-xs text-fg-3">{S.s_coi_nguoi_noi_cua_cac_cau_chua_ai_quyet_la_08ff324b}{doubtful ? S.s_tru_0_cau_may_con_nghi_f1d01f25(doubtful) : ""}{S.s_may_thoi_hoi_ctrl_z_de_hoan_tac_a01ae5fa}</p>
         </div>
       ) : (
         <span className="text-xs text-fg-3">
           {!script.castReady
             ? ""
             : doubtful
-              ? `Còn ${doubtful} câu máy nghi chưa ai quyết - xem các câu có dấu vàng ở trên.`
-              : "Mọi câu nói trong chương đã có người quyết."}
+              ? S.s_con_0_cau_may_nghi_chua_ai_quyet_xem_cac_c_11c34308(doubtful)
+              : S.s_moi_cau_noi_trong_chuong_da_co_nguoi_quyet_fea38465}
         </span>
       )}
       {script.next !== null && (
-        <button type="button" onClick={onNext} className="touch-row inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
-          Chương sau <SkipForward className="ink-end size-4" />
+        <button type="button" onClick={onNext} className="touch-row inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">{S.s_chuong_sau_d6c434e4}<SkipForward className="ink-end size-4" />
         </button>
       )}
     </MotionRegion>
@@ -1568,7 +1550,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
         <button
           type="button"
           id="script-chapter"
-          aria-label="Chương"
+          aria-label={S.s_chuong_2d157977}
           className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-control px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
           <span className="truncate">{current ? chapterLabel(current) : ""}</span>
@@ -1677,16 +1659,14 @@ export function ScriptTab({ bookId }: { bookId: string }) {
     );
   };
 
-  if (contents.isError && !contents.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại kịch bản." onRetry={() => void contents.refetch()} /></MotionRegion>;
-  if (contents.isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="mt-6" label="Đang tải kịch bản" /></MotionRegion>;
+  if (contents.isError && !contents.data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_kich_9c98c8b3} onRetry={() => void contents.refetch()} /></MotionRegion>;
+  if (contents.isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="mt-6" label={S.s_dang_tai_kich_ban_0eea9c53} /></MotionRegion>;
   if (!chapters.length) {
     return (
-      <MotionRegion><EmptyState icon={BookOpenText} title="Chưa có kịch bản" className="py-10">
-        Kịch bản hiện ra khi máy đã phân tích xong chương đầu tiên: câu nào là lời kể, câu nào của ai.
-      </EmptyState></MotionRegion>
+      <MotionRegion><EmptyState icon={BookOpenText} title={S.s_chua_co_kich_ban_0692980e} className="py-10">{S.s_kich_ban_hien_ra_khi_may_da_phan_tich_xong_6fe414dd}</EmptyState></MotionRegion>
     );
   }
-  if (script.isError && !script.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại chương này." onRetry={() => void script.refetch()} /></MotionRegion>;
+  if (script.isError && !script.data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_chuon_a61802ff} onRetry={() => void script.refetch()} /></MotionRegion>;
   const data = script.data?.chapterId === chapterId ? script.data : undefined;
   const entry = chapters.find((chapter) => chapter.chapterId === chapterId);
   const doubts = data?.lines.filter((line) => line.hint).length ?? entry?.hints ?? 0;
@@ -1703,13 +1683,9 @@ export function ScriptTab({ bookId }: { bookId: string }) {
     : [];
   return (
     <MotionRegion as="div" className="mt-5" motionKey={[filter, who, chapterId, Boolean(data), data?.castReady]}>
-      <p className="max-w-3xl text-sm text-fg-2">
-        Bấm tên để đổi người nói; dấu vàng là câu cần xem.
-      </p>
+      <p className="max-w-3xl text-sm text-fg-2">{S.s_bam_ten_de_doi_nguoi_noi_dau_vang_la_cau_c_bf16b47d}</p>
       <MotionPresence open={Boolean(data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio))}>
-        <p className="mt-1 max-w-3xl text-sm text-fg-2">
-          Thu xong chương sẽ nghe lại được từng câu.
-        </p>
+        <p className="mt-1 max-w-3xl text-sm text-fg-2">{S.s_thu_xong_chuong_se_nghe_lai_duoc_tung_cau_f8926561}</p>
       </MotionPresence>
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
           chương sau phải cuộn ngược lên đầu). */}
@@ -1718,8 +1694,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         {/* Tên chương (menu của app, không ô chọn gốc) rồi chương trước · sau. Chữ tên chương đứng đúng mép nội dung (nút lùi lề bằng đệm của nó). */}
         <div className="flex w-full min-w-0 items-center sm:w-auto sm:max-w-full">
           <ChapterMenu chapters={chapters} chapterId={chapterId} narrow={narrow} onPick={go} />
-          <IconButton label="Chương trước" icon={SkipBack} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
-          <IconButton label="Chương sau" icon={SkipForward} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
+          <IconButton label={S.s_chuong_truoc_4750f9e9} icon={SkipBack} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
+          <IconButton label={S.s_chuong_sau_17d1bd20} icon={SkipForward} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
         {narrow && entry && <MotionRegion as="p" className="w-full text-xs text-fg-3">{chapterExtras(entry)}</MotionRegion>}
         <div className="relative flex h-9 w-full items-center rounded-control border border-line bg-panel focus-within:border-focus sm:w-60">
@@ -1739,40 +1715,40 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 setFind({ text: "", at: 0 });
               }
             }}
-            placeholder="Tìm chữ trong chương"
-            aria-label="Tìm chữ trong chương này"
+            placeholder={S.s_tim_chu_trong_chuong_3a69db97}
+            aria-label={S.s_tim_chu_trong_chuong_nay_75ba2c08}
             autoComplete="off"
             spellCheck={false}
             className="h-full min-w-0 flex-1 bg-transparent px-2 text-sm text-fg outline-none placeholder:text-fg-3 [&::-webkit-search-cancel-button]:hidden"
           />
           {/* Ô đếm hiện / ẩn và "k/n" <-> "Không có" mờ qua tại chỗ; số đổi thì không mờ. */}
           <MotionRegion as="span" motionKey={!find.text.trim() ? "" : found ? "n" : "none"} className="tabular mr-2 shrink-0 text-xs text-fg-2" role="status" aria-live="polite">
-            {find.text.trim() ? (found ? `${wrapIndex(find.at, found) + 1}/${found}` : "Không có") : null}
+            {find.text.trim() ? (found ? `${wrapIndex(find.at, found) + 1}/${found}` : S.s_khong_co_af48b64f) : null}
           </MotionRegion>
         </div>
         <FilterRow<Filter>
-          label="Hiện câu nào"
+          label={S.s_hien_cau_nao_959e6c6b}
           className="sm:ml-auto"
           value={filter}
           onChange={setFilter}
           options={[
-            { value: "all", label: "Cả chương" },
-            { value: "speech", label: "Chỉ lời nói" },
-            { value: "doubt", label: `Máy nghi · ${doubts}` },
+            { value: "all", label: S.s_ca_chuong_46eb4e7a },
+            { value: "speech", label: S.s_chi_loi_noi_a7c5728f },
+            { value: "doubt", label: S.s_may_nghi_0_2ad345f9(doubts) },
           ]}
         />
       </div>
       {/* Chú giải người nói: cùng mép trái với thanh công cụ và hàng chữ (chip lùi 4 px để vòng chữ cái đầu chạm mép), cùng nhịp 8 px. */}
       {/* Chip thêm / bớt (gán câu cho người chưa có trong chú giải) mờ qua cả hàng, cao đổi dần nếu hàng xuống dòng. */}
       {data && (people.length > 0 || unnamed > 0) && (
-        <MotionRegion motionKey={[...people.map((person) => person.value), unnamed > 0]} className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label="Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả">
-          {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: "Chưa rõ", lines: unnamed }, badge: "?" }] : [])].map(
+        <MotionRegion motionKey={[...people.map((person) => person.value), unnamed > 0]} className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label={S.s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7}>
+          {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: S.s_chua_ro_be464a5a, lines: unnamed }, badge: "?" }] : [])].map(
             ({ person, badge }) => (
               <button
                 key={person.value}
                 type="button"
                 aria-pressed={who === person.value}
-                title={person.value === UNNAMED ? "Câu máy chưa biết ai nói, và vai phụ không tên" : undefined}
+                title={person.value === UNNAMED ? S.s_cau_may_chua_biet_ai_noi_va_vai_phu_khong_2bf6e97f : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
                   "inline-flex h-7 items-center gap-1.5 rounded-full py-0 pl-0.5 pr-2.5 text-[0.8125rem] font-medium transition-[opacity,background-color]",
@@ -1790,16 +1766,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           )}
           {who && (
             <button type="button" onClick={() => setWho(null)} className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-accent-text hover:bg-hover">
-              <X className="size-3" /> Xem tất cả
-            </button>
+              <X className="size-3" />{S.s_xem_tat_ca_866753d5}</button>
           )}
         </MotionRegion>
       )}
       {data?.castReady && people.length > 0 && (
-        <MoreInfo label="Phím tắt" className="hidden md:block">
-          Bàn phím: <Kbd>↑</Kbd> <Kbd>↓</Kbd> chọn câu (<Kbd>Shift</Kbd> chọn nhiều) · <Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd> gán
-          người theo số rồi sang câu kế · <Kbd>Enter</Kbd> danh sách · <Kbd>P</Kbd> nghe câu · <Kbd>R</Kbd> thu lại câu · <Kbd>/</Kbd> tìm chữ · <Kbd>Ctrl</Kbd>+<Kbd>Z</Kbd> hoàn tác
-        </MoreInfo>
+        <MoreInfo label={S.s_phim_tat_7baaed2f} className="hidden md:block">{S.s_ban_phim_829be77a}<Kbd>↑</Kbd> <Kbd>↓</Kbd>{S.s_chon_cau_34f48bfa}<Kbd>{S.s_shift_2e544a29}</Kbd>{S.s_chon_nhieu_e566ea07}<Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd>{S.s_gan_nguoi_theo_so_roi_sang_cau_ke_c48dc680}<Kbd>{S.s_enter_dc8659db}</Kbd>{S.s_danh_sach_fdc39a79}<Kbd>{S.s_p_5c62e091}</Kbd>{S.s_nghe_cau_86987114}<Kbd>{S.s_r_8c257489}</Kbd>{S.s_thu_lai_cau_4f35bcfb}<Kbd>/</Kbd>{S.s_tim_chu_9560d10a}<Kbd>{S.s_ctrl_e2ee2909}</Kbd>+<Kbd>{S.s_z_bbeebd87}</Kbd>{S.s_hoan_tac_53f9f6a9}</MoreInfo>
       )}
       </div>
       {!data ? (
@@ -1812,19 +1784,14 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         <>
           {!data.castReady && (
             <p className="mt-4 flex items-start gap-2 py-3 text-sm text-fg">
-              <Clock className="mt-line-icon size-4 shrink-0 text-info" />
-              Sửa người nói được sau bước phân vai.
-            </p>
+              <Clock className="mt-line-icon size-4 shrink-0 text-info" />{S.s_sua_nguoi_noi_duoc_sau_buoc_phan_vai_ed1cbb3f}</p>
           )}
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
               người kể là sai) - mời soát riêng câu của người kể trước. */}
           {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
             <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-fg-2">
-              <span className="text-pretty">
-                Chương kể ngôi thứ nhất: máy hay nhầm câu của người khác thành của “tôi”.
-              </span>
-              <Button size="sm" variant="ghost" onClick={() => setWho(data.firstPerson!.chip!)}>
-                Soát câu của {data.cast.find((person) => person.value === data.firstPerson!.chip)?.label ?? data.firstPerson.label}
+              <span className="text-pretty">{S.s_chuong_ke_ngoi_thu_nhat_may_hay_nham_cau_c_b15169be}</span>
+              <Button size="sm" variant="ghost" onClick={() => setWho(data.firstPerson!.chip!)}>{S.s_soat_cau_cua_b1475472}{data.cast.find((person) => person.value === data.firstPerson!.chip)?.label ?? data.firstPerson.label}
               </Button>
             </p>
           )}

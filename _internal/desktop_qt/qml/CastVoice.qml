@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -29,8 +30,8 @@ CastModal {
     readonly property string shownGender: filter !== "" ? filter : currentGender !== "" ? currentGender : choices && choices.character.gender === "female" ? "female" : "male"
     readonly property var groups: choices ? Logic.groupByEngine(Logic.byGender(choices.voices, shownGender)) : []
     readonly property var labels: Logic.groupLabels(groups)
-    title: "Giọng của " + (person ? person.displayName : "")
-    description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương\u00a0·\u00a0đang đọc bằng " + (choices.current || "chưa có giọng") : ""
+    title: S.s_giong_cua_851e2a41 + (person ? person.displayName : "")
+    description: choices ? Logic.formatNumber(choices.character.lines) + S.s_cau_o_b6fbfb19 + choices.character.chapters + S.s_chuong_u00a0_u00a0dang_doc_bang_dd5c355e + (choices.current || S.s_chua_co_giong_93574f94) : ""
     keepOpen: function() { if (root.crossing) { root.crossing = null; return true } return false }
     onClosed: { Clip.stop(); voiceTry.reset() }
     VoiceTry { id: voiceTry; store: root.store; bookId: root.bookId }
@@ -76,11 +77,11 @@ CastModal {
         root.ask("POST", "/api/books/" + bookId + "/voice", body, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { root.fail("Chưa đổi được giọng", error); return }
+            if (error) { root.fail(S.s_chua_doi_duoc_giong_5b5ed91f, error); return }
             root.saved()
-            root.offerUndo("Đã ghi: " + name + " đọc bằng giọng " + voice.name + (withGender ? " và là " + Logic.genderWord(voice.gender) : ""),
+            root.offerUndo(S.s_da_ghi_85094402 + name + S.s_doc_bang_giong_3ab6963c + voice.name + (withGender ? S.s_va_la_dde34d8d + Logic.genderWord(voice.gender) : ""),
                            info.character.value, answer ? answer.requestedAt : 0,
-                           "Giọng" + (withGender ? " và giới" : "") + " của " + name + " trở lại như trước khi đổi.")
+                           S.s_giong_e2c28b04 + (withGender ? S.s_va_gioi_c20b236e : "") + S.s_cua_ae306eb2 + name + S.s_tro_lai_nhu_truoc_khi_doi_1e8c9d3d)
             root.dismiss()
         })
     }
@@ -93,9 +94,9 @@ CastModal {
         root.ask("POST", "/api/books/" + bookId + "/voice", {character: info.character.value, withdraw: true, requestedAt: info.pending.requestedAt}, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { root.fail("Chưa bỏ được lựa chọn", error); return }
+            if (error) { root.fail(S.s_chua_bo_duoc_lua_chon_c0844396, error); return }
             root.saved()
-            Api.notice = info.pending.name ? "Đã bỏ lựa chọn " + info.pending.name : "Đã bỏ lựa chọn giọng"
+            Api.notice = info.pending.name ? S.s_da_bo_lua_chon_ebd5d466 + info.pending.name : S.s_da_bo_lua_chon_giong_1aff3c76
             root.dismiss()
         })
     }
@@ -113,7 +114,7 @@ CastModal {
                 width: parent.width
                 spacing: 8
                 Accessible.role: Accessible.Indicator
-                Accessible.name: "Đang tải giọng đọc"
+                Accessible.name: S.s_dang_tai_giong_doc_ac8359a5
                 SequentialAnimation {
                     running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
                     loops: Animation.Infinite
@@ -128,7 +129,7 @@ CastModal {
             objectName: "voiceFailed"
             width: parent.width
             open: root.status === "failed"
-            message: "Bạn hãy kiểm tra kết nối rồi tải lại danh sách giọng."
+            message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_danh_a542de69
             onRetry: { root.status = "loading"; root.load(false) }
         }
         Collapse {
@@ -147,14 +148,14 @@ CastModal {
                         Text {
                             objectName: "voicePending"
                             width: Math.min(implicitWidth, parent.width)
-                            text: TextWrap.keepDots(root.choices && root.choices.pending ? "Chờ áp dụng: đổi sang " + (root.choices.pending.name || "giọng khác") : "")
+                            text: TextWrap.keepDots(root.choices && root.choices.pending ? S.s_cho_ap_dung_doi_sang_d280f3e4 + (root.choices.pending.name || S.s_giong_khac_95c40f55) : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall
                         }
                         Button {
                             objectName: "voiceKeep"
-                            text: "Giữ " + (root.choices ? (root.choices.current || "giọng đang dùng") : "")
+                            text: S.s_giu_d3777f80 + (root.choices ? (root.choices.current || S.s_giong_dang_dung_4e5460a7) : "")
                             size: "sm"; kind: "ghost"; wrap: true
                             enabled: !root.saving
                             onClicked: root.keep()
@@ -184,8 +185,8 @@ CastModal {
                         Text {
                             width: parent.width
                             text: crossingBox.keptVoice && root.choices
-                                ? root.shownName + " đang là " + Logic.genderWord(root.choices.character.gender) + " - giọng " + crossingBox.keptVoice.name + " là giọng "
-                                    + Logic.genderWord(crossingBox.keptVoice.gender) + ". Đổi cả giới của " + root.shownName + " thành " + Logic.genderWord(crossingBox.keptVoice.gender) + "?" : ""
+                                ? root.shownName + S.s_dang_la_8bd58298 + Logic.genderWord(root.choices.character.gender) + S.s_giong_b5e0ec31 + crossingBox.keptVoice.name + S.s_la_giong_a07d5815
+                                    + Logic.genderWord(crossingBox.keptVoice.gender) + S.s_doi_ca_gioi_cua_a6dfa69e + root.shownName + S.s_thanh_3acad264 + Logic.genderWord(crossingBox.keptVoice.gender) + "?" : ""
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall
@@ -193,17 +194,17 @@ CastModal {
                         Flow {
                             width: parent.width
                             spacing: 8
-                            Button { objectName: "voiceCrossGender"; text: "Đổi giọng và giới"; size: "sm"; busy: root.saving; onActivated: root.save(root.crossing, true) }
-                            Button { objectName: "voiceCrossKeep"; text: "Giữ như cũ"; size: "sm"; kind: "ghost"; enabled: !root.saving; onClicked: root.crossing = null }
+                            Button { objectName: "voiceCrossGender"; text: S.s_doi_giong_va_gioi_21985f64; size: "sm"; busy: root.saving; onActivated: root.save(root.crossing, true) }
+                            Button { objectName: "voiceCrossKeep"; text: S.s_giu_nhu_cu_4fecf996; size: "sm"; kind: "ghost"; enabled: !root.saving; onClicked: root.crossing = null }
                         }
                     }
                 }
                 ChoiceRow {
                     objectName: "voiceGenderFilter"
                     width: parent.width
-                    label: "Lọc giọng theo giới"
+                    label: S.s_loc_giong_theo_gioi_93d59ab4
                     value: root.shownGender
-                    options: [{value: "male", label: "Nam"}, {value: "female", label: "Nữ"}, {value: "all", label: "Tất cả"}]
+                    options: [{value: "male", label: S.s_nam_22dd59c8}, {value: "female", label: S.s_nu_e15bc11c}, {value: "all", label: S.s_tat_ca_49c73a31}]
                     onPicked: value => root.filter = value
                 }
                 Text {
@@ -285,7 +286,7 @@ CastModal {
                                     visible: row.voice.preview
                                     clipId: Logic.voiceId(row.voice.name)
                                     url: root.media(Logic.voiceUrl(row.voice.key))
-                                    label: "Nghe thử giọng " + row.voice.name
+                                    label: S.s_nghe_thu_giong_d06e1a82 + row.voice.name
                                 }
                                 // "Nghe thử bằng câu của sách": một câu của chính người này đọc bằng giọng ấy (chỉ khi người ấy có câu)
                                 CastSample {
@@ -323,21 +324,21 @@ CastModal {
                                         }
                                         Text {
                                             visible: Boolean(row.voice.current && root.choices.pending)
-                                            text: "Đang dùng"
+                                            text: S.s_dang_dung_275ca289
                                             color: Theme.accentText
                                             font.pixelSize: 11
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
                                             visible: Boolean(row.voice.pending && !row.voice.current)
-                                            text: "Chờ áp dụng"
+                                            text: S.s_cho_ap_dung_77a52853
                                             color: Theme.warning
                                             font.pixelSize: 11
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
                                             visible: Boolean(row.voice.suggested && !row.voice.current && !row.voice.pending)
-                                            text: "Máy gợi ý"
+                                            text: S.s_may_goi_y_1e7f4cfa
                                             color: Theme.text2
                                             font.pixelSize: 11
                                             font.weight: Theme.weightMedium
@@ -360,7 +361,7 @@ CastModal {
                                     width: 120
                                     size: "sm"
                                     kind: row.voice.current && root.choices.pending ? "ghost" : row.voice.suggested && !row.voice.current && !row.voice.pending ? "primary" : "ghost"
-                                    text: row.voice.current && root.choices.pending ? "Giữ giọng này" : Logic.voiceAction(row.voice)
+                                    text: row.voice.current && root.choices.pending ? S.s_giu_giong_nay_2bc52cde : Logic.voiceAction(row.voice)
                                     wrap: true
                                     enabled: row.voice.current && root.choices.pending ? !root.saving
                                         : !(row.voice.current || row.voice.pending || !row.voice.installed || (row.voice.takenBy || []).length || root.saving)
@@ -372,7 +373,7 @@ CastModal {
                 }
                 Text {
                     width: parent.width
-                    text: root.narrator ? "Đổi giọng sẽ thu lại lời kể." : "Nghe thử trước khi đổi giọng."
+                    text: root.narrator ? S.s_doi_giong_se_thu_lai_loi_ke_3d190924 : S.s_nghe_thu_truoc_khi_doi_giong_9d5e986a
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
@@ -381,11 +382,11 @@ CastModal {
                 MoreInfo {
                     objectName: "voiceMoreInfo"
                     width: parent.width
-                    label: root.narrator ? "Tìm hiểu thêm" : "Dùng chung giọng"
+                    label: root.narrator ? S.s_tim_hieu_them_032fe408 : S.s_dung_chung_giong_ccea62a1
                     HintText {
                         width: parent.width
-                        text: root.narrator ? "Người kể cần giọng riêng, nên không chọn giọng nhân vật đang dùng. Câu chưa thu dùng giọng mới ngay; bạn không cần tạo lại sách."
-                                            : "Giọng thêm có thể khiến hai nhân vật nghe giống nhau."
+                        text: root.narrator ? S.s_nguoi_ke_can_giong_rieng_nen_khong_chon_gi_c145ea51
+                                            : S.s_giong_them_co_the_khien_hai_nhan_vat_nghe_ec79eba6
                     }
                 }
             }

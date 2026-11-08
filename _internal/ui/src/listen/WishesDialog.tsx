@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,34 +44,32 @@ export function WishesDialog({
       refreshAfterEdit(client, bookId);
       await client.invalidateQueries({ queryKey: ["pending-changes", bookId] });
     } catch (error) {
-      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error(S.s_chua_bo_duoc_thay_doi_nay_eccfaf9b, { description: (error as Error).message });
     } finally {
       setDropping(null);
     }
   };
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Đóng
-        </Button>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_dong_5d54c2a1}</Button>
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
-      title={syncs ? "Việc chờ gửi" : "Việc chờ Studio"}
+      title={syncs ? S.s_viec_cho_gui_2f10547f : S.s_viec_cho_studio_d4715141}
       description={
         syncs
-          ? "Chờ máy tính nhận và Studio thu lại."
-          : "Chờ Studio thu lại; thay đổi đi cùng file sách."
+          ? S.s_cho_may_tinh_nhan_va_studio_thu_lai_bfb954a8
+          : S.s_cho_studio_thu_lai_thay_doi_di_cung_file_s_5714487e
       }
     ><MotionRegion>
-      <MoreInfo>{syncs ? "Tự gửi khi kết nối lại máy tính. Chủ máy duyệt Áp dụng hoặc Bỏ qua trước khi Studio thu lại." : "Lưu file sách sẽ mang theo các thay đổi của bạn và thiết bị đã ghép. Mở bằng Studio trên máy tính để áp vào dự án và thu lại."}</MoreInfo>
+      <MoreInfo>{syncs ? S.s_tu_gui_khi_ket_noi_lai_may_tinh_chu_may_du_aeab54b7 : S.s_luu_file_sach_se_mang_theo_cac_thay_doi_cu_a23d72b4}</MoreInfo>
       {!data ? (
-        <p className="text-sm text-fg-2">Đang xem các thay đổi</p>
+        <p className="text-sm text-fg-2">{S.s_dang_xem_cac_thay_doi_765915d5}</p>
       ) : data.items.length ? (
         <PendingList items={data.items} dropping={dropping} onDrop={(item) => void drop(item)} showLines={false} />
       ) : (
-        <p className="text-sm text-fg-2">Chưa có việc nào đang chờ.</p>
+        <p className="text-sm text-fg-2">{S.s_chua_co_viec_nao_dang_cho_5fa38d2b}</p>
       )}
 
     </MotionRegion></Dialog>

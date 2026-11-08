@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -42,10 +44,10 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
         return vn.abook.player.OldSaves.list(dir).map { OldSave(it.name, it.size, it.modified) }
     }
     override fun deleteOldSave(name: String) {
-        check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { "Chưa xoá được" }
+        check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { S.s_chua_xoa_duoc_b872fff6 }
     }
     override fun exportOldSave(name: String, uri: String) {
-        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Chưa mở được file để ghi")
+        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error(S.s_chua_mo_duoc_file_de_ghi_8d83a336)
         sink.use { vn.abook.player.OldSaves.copyTo(vn.abook.player.OldSaves.dir(app.filesDir), name, it) }
     }
     override fun releaseSigned(): Boolean = signedByRelease
@@ -152,7 +154,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
 
     override fun clearLogs() {
         AppLog.clear()
-        AppLog.i("Diagnostics", "người dùng xoá nhật ký")
+        AppLog.i("Diagnostics", S.s_nguoi_dung_xoa_nhat_ky_fc9587f3)
     }
 
     override fun thirdParty(): String =

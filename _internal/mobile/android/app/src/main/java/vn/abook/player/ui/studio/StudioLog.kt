@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -49,18 +51,18 @@ object StudioLogLogic {
 }
 
 object StudioLogText {
-    const val TITLE = "Nhật ký"
-    const val INFO = "Thông tin"
-    const val STATUS = "Trạng thái"
-    const val CHAPTERS = "Chương"
-    const val LENGTH = "Dài"
-    const val EMPTY = "Chưa có gì"
-    const val EMPTY_HINT = "Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy."
-    const val LOADING = "Đang mở nhật ký"
-    const val TECHNICAL = "Chi tiết kỹ thuật"
+    const val TITLE = S.s_nhat_ky_1e6c3c10
+    const val INFO = S.s_thong_tin_4aa16c92
+    const val STATUS = S.s_trang_thai_cb31de81
+    const val CHAPTERS = S.s_chuong_2d157977
+    const val LENGTH = S.s_dai_c9cdc15c
+    const val EMPTY = S.s_chua_co_gi_adba6b1d
+    const val EMPTY_HINT = S.s_dien_bien_se_hien_o_day_khi_sach_bat_dau_c_7794dda1
+    const val LOADING = S.s_dang_mo_nhat_ky_9a166cda
+    const val TECHNICAL = S.s_chi_tiet_ky_thuat_f27eb5f6
 
     fun chapters(done: Int, total: Int) = if (total > 0) "$done/$total xong" else "$done"
-    fun count(count: Int) = "$count mục gần nhất"
+    fun count(count: Int) = S.s_0_muc_gan_nhat_fd2e30e0(count)
 }
 
 /** Nhật ký của một dự án: hỏi 5 giây một lần khi máy đang làm sách, không thì chỉ hỏi lúc mở; bật "Chi tiết kỹ thuật" thì hỏi lại ngay. */

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -26,7 +27,7 @@ Item {
         x: 2
         y: 8
         checked: root.picked
-        label: "Gồm câu này: " + root.example.text
+        label: S.s_gom_cau_nay_7af5d0df + root.example.text
         onToggled: root.pickToggled()
     }
     Item {
@@ -39,7 +40,7 @@ Item {
             visible: Boolean(root.example.hasAudio)
             clipId: "work-" + root.example.segmentId
             url: root.work && root.example.hasAudio ? root.work.store.path("/media/books/" + root.work.bookId + "/samples/" + root.example.segmentId) : ""
-            label: "Nghe câu: " + root.example.text
+            label: S.s_nghe_cau_22ae467f + root.example.text
         }
     }
     Column {
@@ -55,7 +56,7 @@ Item {
             color: Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
-            Accessible.description: "Câu liền trước"
+            Accessible.description: S.s_cau_lien_truoc_897f439a
         }
         Item {
             width: parent.width
@@ -93,7 +94,7 @@ Item {
             color: Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
-            Accessible.description: "Câu liền sau"
+            Accessible.description: S.s_cau_lien_sau_46fd2133
         }
     }
 }

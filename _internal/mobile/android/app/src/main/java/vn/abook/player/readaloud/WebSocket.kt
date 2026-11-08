@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import java.io.ByteArrayOutputStream
 import java.io.EOFException
 import java.io.IOException
@@ -12,7 +14,7 @@ import java.security.SecureRandom
 import javax.net.ssl.SSLSocketFactory
 
 /** Máy chủ không đồng ý nâng lên WebSocket (Edge trả 403 khi đồng hồ máy lệch: `headers["date"]` cho biết giờ máy chủ). */
-class HandshakeException(val status: Int, val headers: Map<String, String>) : IOException("máy chủ trả $status khi bắt tay WebSocket")
+class HandshakeException(val status: Int, val headers: Map<String, String>) : IOException(S.s_may_chu_tra_0_khi_bat_tay_websocket_905dea83(status))
 
 /**
  * Máy khách WebSocket (RFC 6455) tối thiểu trên SSLSocket, đủ cho dịch vụ đọc to của Edge: bắt tay, khung chữ + nhị phân (có ghép mảnh), ping/pong, đóng.
@@ -67,7 +69,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
             for (c in text) {
                 if (c == '=' || c.isWhitespace()) continue
                 val value = B64.indexOf(c)
-                require(value >= 0) { "base64 hỏng" }
+                require(value >= 0) { S.s_base64_hong_0ad723a9 }
                 buffer = (buffer shl 6) or value
                 bits += 6
                 if (bits >= 8) {
@@ -115,7 +117,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                 length = 0
                 for (byte in b) length = (length shl 8) or (byte.toLong() and 0xFF)
             }
-            if (length < 0 || length > MAX_PAYLOAD) throw IOException("khung WebSocket quá lớn: $length")
+            if (length < 0 || length > MAX_PAYLOAD) throw IOException(S.s_khung_websocket_qua_lon_0_a828e3cf(length))
             val mask = if (masked) readFully(input, 4) else null
             val payload = readFully(input, length.toInt())
             if (mask != null) for (i in payload.indices) payload[i] = (payload[i].toInt() xor mask[i and 3].toInt()).toByte()
@@ -127,7 +129,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
             var read = 0
             while (read < count) {
                 val n = input.read(data, read, count - read)
-                if (n < 0) throw EOFException("kết nối đóng giữa chừng")
+                if (n < 0) throw EOFException(S.s_ket_noi_dong_giua_chung_cea90be9)
                 read += n
             }
             return data
@@ -138,12 +140,12 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
             val text = StringBuilder()
             while (!text.endsWith("\r\n\r\n")) {
                 val b = input.read()
-                if (b < 0) throw EOFException("máy chủ đóng kết nối khi bắt tay")
+                if (b < 0) throw EOFException(S.s_may_chu_dong_ket_noi_khi_bat_tay_e2511e8e)
                 text.append(b.toChar())
-                if (text.length > 16 * 1024) throw IOException("câu trả lời bắt tay quá dài")
+                if (text.length > 16 * 1024) throw IOException(S.s_cau_tra_loi_bat_tay_qua_dai_e97c4afd)
             }
             val lines = text.toString().split("\r\n")
-            val status = lines[0].split(" ").getOrNull(1)?.toIntOrNull() ?: throw IOException("dòng trạng thái lạ: ${lines[0]}")
+            val status = lines[0].split(" ").getOrNull(1)?.toIntOrNull() ?: throw IOException(S.s_dong_trang_thai_la_0_198a57e0(lines[0]))
             val headers = lines.drop(1).filter { it.contains(':') }.associate { it.substringBefore(':').trim().lowercase() to it.substringAfter(':').trim() }
             return status to headers
         }
@@ -154,7 +156,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
          */
         fun connect(url: String, headers: Map<String, String>, connectTimeoutMs: Int, readTimeoutMs: Int): WebSocket {
             val uri = URI(url)
-            require(uri.scheme == "wss") { "chỉ hỗ trợ wss://" }
+            require(uri.scheme == "wss") { S.s_chi_ho_tro_wss_6c6ca189 }
             val port = if (uri.port > 0) uri.port else 443
             val socket = FastConnect.connect(uri.host, port, connectTimeoutMs)
             try {
@@ -164,7 +166,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                 tls.startHandshake()
                 // Kiểm tên máy trong chứng chỉ (SSLSocket không tự kiểm khi không dùng HttpsURLConnection).
                 val verifier = javax.net.ssl.HttpsURLConnection.getDefaultHostnameVerifier()
-                if (!verifier.verify(uri.host, tls.session)) throw javax.net.ssl.SSLPeerUnverifiedException("chứng chỉ không khớp ${uri.host}")
+                if (!verifier.verify(uri.host, tls.session)) throw javax.net.ssl.SSLPeerUnverifiedException(S.s_chung_chi_khong_khop_0_79a16e5d(uri.host))
                 val keyBytes = ByteArray(16).also(random::nextBytes)
                 val key = base64(keyBytes)
                 val path = (uri.rawPath.ifEmpty { "/" }) + (uri.rawQuery?.let { "?$it" } ?: "")
@@ -175,7 +177,7 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                 tls.outputStream.flush()
                 val (status, answer) = readHead(tls.inputStream)
                 if (status != 101) throw HandshakeException(status, answer)
-                if (answer["sec-websocket-accept"] != acceptFor(key)) throw IOException("máy chủ trả Sec-WebSocket-Accept sai")
+                if (answer["sec-websocket-accept"] != acceptFor(key)) throw IOException(S.s_may_chu_tra_sec_websocket_accept_sai_63018713)
                 tls.soTimeout = readTimeoutMs
                 return WebSocket(tls, tls.inputStream, tls.outputStream)
             } catch (error: Throwable) {
@@ -216,14 +218,14 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                     if (frame.opcode != OP_CONTINUATION) {
                         kind = frame.opcode
                         buffer.reset()
-                    } else if (kind < 0) throw IOException("khung nối tiếp không có khung đầu")
+                    } else if (kind < 0) throw IOException(S.s_khung_noi_tiep_khong_co_khung_dau_a52d498f)
                     buffer.write(frame.payload)
-                    if (buffer.size() > MAX_PAYLOAD) throw IOException("tin WebSocket quá lớn")
+                    if (buffer.size() > MAX_PAYLOAD) throw IOException(S.s_tin_websocket_qua_lon_25f97ec4)
                     if (frame.fin) {
                         return if (kind == OP_TEXT) Message.Text(String(buffer.toByteArray(), Charsets.UTF_8)) else Message.Binary(buffer.toByteArray())
                     }
                 }
-                else -> throw IOException("opcode lạ: ${frame.opcode}")
+                else -> throw IOException(S.s_opcode_la_0_49bb291a(frame.opcode))
             }
         }
     }

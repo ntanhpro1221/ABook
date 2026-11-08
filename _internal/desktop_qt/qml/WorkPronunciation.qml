@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -31,14 +32,14 @@ Column {
         spacing: 8
         DecisionButton {
             objectName: "pronKeep"
-            text: "Đúng rồi, giữ “" + root.item.current + "”"
+            text: S.s_dung_roi_giu_b3493ad3 + root.item.current + "”"
             enabled: !root.saving
             onClicked: root.save(root.item.current)
         }
         Text {
             height: 40
             verticalAlignment: Text.AlignVCenter
-            text: "hoặc đọc là"
+            text: S.s_hoac_doc_la_376990a8
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
         }
@@ -50,8 +51,8 @@ Column {
                 objectName: "pronField"
                 y: 4
                 width: parent.width
-                label: "Cách đọc mới cho " + root.item.surface
-                placeholderText: "vd " + root.item.current
+                label: S.s_cach_doc_moi_cho_c1e4a60a + root.item.surface
+                placeholderText: S.s_vd_76c4de6f + root.item.current
                 invalid: root.problem !== ""
                 onTextChanged: { root.problem = ""; root.suggestion = "" }
                 onAccepted: if (root.typed && root.typed !== root.item.current && root.typed !== root.item.requested) root.save(root.typed)
@@ -61,7 +62,7 @@ Column {
         Button {
             objectName: "pronSave"
             size: "sm"
-            text: "Đọc thế này"
+            text: S.s_doc_the_nay_b9d202fe
             busy: root.saving
             enabled: root.typed !== "" && root.typed !== root.item.current && root.typed !== root.item.requested
             onActivated: root.save(root.typed)
@@ -72,7 +73,7 @@ Column {
             visible: root.namesLink
             size: "sm"
             kind: "ghost"
-            text: "Mọi cách đọc tên…"
+            text: S.s_moi_cach_doc_ten_85347e60
             onClicked: root.openNames(root.item.surface || "")
         }
     }

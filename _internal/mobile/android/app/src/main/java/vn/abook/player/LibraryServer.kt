@@ -101,14 +101,14 @@ object LibraryServer {
 
     /** Bản chẩn đoán cho `GET /sync/v1/diagnostics` (số dòng nhật ký đã kẹp); test JVM thay bằng giá trị giả (không có Context). */
     internal var diagnosticsSource: (Int) -> JSONObject = { lines ->
-        Diagnostics.collect(appContext ?: throw IllegalStateException("Chưa khởi động"), lines)
+        Diagnostics.collect(appContext ?: throw IllegalStateException(S.s_chua_khoi_dong_87924fec), lines)
     }
 
     @Synchronized
     fun init(context: Context): Boolean {
         val directory = context.filesDir.canonicalFile
         if (::devicesFile.isInitialized && devicesFile.parentFile != directory) {
-            AppLog.w("Share", "Bỏ qua init: thư mục khác với máy chủ đã chọn.")
+            AppLog.w("Share", S.s_bo_qua_init_thu_muc_khac_voi_may_chu_da_ch_812da679)
             return false
         }
         if (!Store.init(context)) return false
@@ -124,13 +124,13 @@ object LibraryServer {
     @Synchronized
     internal fun diagnostics(context: Context): JSONObject {
         val directory = context.filesDir.canonicalFile
-        check(Store.isReadyFor(directory)) { "Kho chưa sẵn." }
-        check(!::devicesFile.isInitialized || devicesFile.parentFile == directory) { "Chia sẻ chưa sẵn cho kho này." }
+        check(Store.isReadyFor(directory)) { S.s_kho_chua_san_3bc02288 }
+        check(!::devicesFile.isInitialized || devicesFile.parentFile == directory) { S.s_chia_se_chua_san_cho_kho_nay_6d666bcf }
         val devices = readDevices(File(directory, "share.json")).getJSONObject("devices")
         return JSONObject().put("running", running()).put("pairedDevices", devices.length()).put("lastError", lastError)
     }
 
-    fun name(): String = appContext?.let(DeviceName::shared) ?: if (BuildConfig.DEBUG) "Điện thoại (ABook .dev)" else "Điện thoại"
+    fun name(): String = appContext?.let(DeviceName::shared) ?: if (BuildConfig.DEBUG) S.s_dien_thoai_abook_dev_891f2143 else S.s_dien_thoai_8185f4c9
 
     /**
      * Tên máy kèm tên Bluetooth (`bluetoothName`) trong lời chào / ghép / thư viện: máy tính lưu tên Bluetooth người dùng đặt,
@@ -160,8 +160,8 @@ object LibraryServer {
         val identity = try {
             ShareTls.identity()
         } catch (error: Exception) {
-            lastError = "Chưa tạo được chứng chỉ kết nối — bạn thử lại."
-            AppLog.e("Share", "cổng đồng bộ không bật được: $lastError", error)
+            lastError = S.s_chua_tao_duoc_chung_chi_ket_noi_ban_thu_la_3bc94e1f
+            AppLog.e("Share", S.s_cong_dong_bo_khong_bat_duoc_0_ef5f5463(lastError), error)
             throw IllegalStateException(lastError)
         }
         fingerprint = identity.fingerprint
@@ -172,12 +172,12 @@ object LibraryServer {
                 bind(InetSocketAddress(PORT))
             }
         } catch (error: Exception) {
-            lastError = "Cổng $PORT đang bận - ${error.message ?: "không mở được"}"
-            AppLog.e("Share", "cổng đồng bộ không bật được: $lastError", error)
+            lastError = S.s_cong_0_dang_ban_1_a606f5c2(PORT, error.message ?: S.s_khong_mo_duoc_61869ca3)
+            AppLog.e("Share", S.s_cong_dong_bo_khong_bat_duoc_0_ef5f5463(lastError), error)
             throw IllegalStateException(lastError)
         }
         server = socket
-        AppLog.i("Share", "cổng đồng bộ đã bật ở cổng $PORT")
+        AppLog.i("Share", S.s_cong_dong_bo_da_bat_o_cong_0_3eb85a4b(PORT))
         Thread({ accept(socket) }, "library-server").apply { isDaemon = true }.start()
         discovery = runCatching {
             DatagramSocket(null).apply {
@@ -189,7 +189,7 @@ object LibraryServer {
 
     @Synchronized
     fun stop() {
-        if (server != null) AppLog.i("Share", "cổng đồng bộ đã tắt")
+        if (server != null) AppLog.i("Share", S.s_cong_dong_bo_da_tat_5899f2d7)
         runCatching { BluetoothShare.stop() }
         runCatching { server?.close() }
         runCatching { discovery?.close() }
@@ -233,22 +233,22 @@ object LibraryServer {
     fun wrongCodeMessage(): String = wrongCodeText(blocked, pairing != null && pairing!!.second > System.currentTimeMillis(), failures)
 
     internal fun wrongCodeText(blocked: Boolean, active: Boolean, failures: Int): String = when {
-        blocked -> "Mã đã huỷ sau $PAIRING_ATTEMPTS lần nhập sai — bạn tạo mã mới trên máy kia."
-        active -> "Mã sai; còn ${PAIRING_ATTEMPTS - failures} lần thử trước khi mã bị huỷ."
-        else -> "Mã sai hoặc hết hạn — bạn tạo mã mới trên máy kia."
+        blocked -> S.s_ma_da_huy_sau_0_lan_nhap_sai_ban_tao_ma_mo_7bd4cd99(PAIRING_ATTEMPTS)
+        active -> S.s_ma_sai_con_0_lan_thu_truoc_khi_ma_bi_huy_b31a0a0e(PAIRING_ATTEMPTS - failures)
+        else -> S.s_ma_sai_hoac_het_han_ban_tao_ma_moi_tren_ma_fecca94f
     }
 
     @Synchronized
     private fun pair(code: String, device: String, ident: String = ""): String? {
         val digits = code.filter { it.isDigit() }.take(12)
-        val current = pairing ?: run { AppLog.w("Share", "ghép nối bị từ chối: chưa tạo mã ghép"); return null }
+        val current = pairing ?: run { AppLog.w("Share", S.s_ghep_noi_bi_tu_choi_chua_tao_ma_ghep_9ed148dd); return null }
         if (current.second <= System.currentTimeMillis()) {
-            AppLog.w("Share", "ghép nối bị từ chối: mã ghép đã hết hạn")
+            AppLog.w("Share", S.s_ghep_noi_bi_tu_choi_ma_ghep_da_het_han_a55bdfc8)
             return null
         }
         if (!MessageDigest.isEqual(digits.toByteArray(), current.first.toByteArray())) {
             failures += 1
-            AppLog.w("Share", "ghép nối bị từ chối: mã sai (lần $failures/$PAIRING_ATTEMPTS)")
+            AppLog.w("Share", S.s_ghep_noi_bi_tu_choi_ma_sai_lan_0_1_e2894dc7(failures, PAIRING_ATTEMPTS))
             if (failures >= PAIRING_ATTEMPTS) {
                 pairing = null
                 blocked = true
@@ -262,13 +262,13 @@ object LibraryServer {
         val devices = data.getJSONObject("devices")
         if (same.isNotEmpty()) devices.keys().asSequence().toList().filter { devices.getJSONObject(it).optString("ident") == same }.forEach(devices::remove)
         devices.put(hash(token), JSONObject()
-            .put("name", device.trim().take(80).ifBlank { "Thiết bị" })
+            .put("name", device.trim().take(80).ifBlank { S.s_thiet_bi_eb706979 })
             .put("pairedAt", System.currentTimeMillis() / 1000.0)
             .put("lastSeen", System.currentTimeMillis() / 1000.0)
             .apply { if (same.isNotEmpty()) put("ident", same) })
         Store.writeAtomic(devicesFile, data.toString())
         pairing = null // chỉ tiêu thụ mã sau khi ghi danh sách thành công
-        AppLog.i("Share", "đã ghép với máy ${device.trim().take(40)}")
+        AppLog.i("Share", S.s_da_ghep_voi_may_0_11302662(device.trim().take(40)))
         return token
     }
 
@@ -306,7 +306,7 @@ object LibraryServer {
     }
 
     private class CorruptDevices(val text: String, cause: Exception) : java.io.IOException(
-        "Danh sách máy ghép hỏng; giữ bản cũ — bạn khôi phục bản sao trước khi đổi ghép.", cause)
+        S.s_danh_sach_may_ghep_hong_giu_ban_cu_ban_kho_b37e3bc2, cause)
 
     /** Writer path: preserve the original bytes independently, then fail closed. */
     private fun readDevices(): JSONObject = try {
@@ -321,10 +321,10 @@ object LibraryServer {
     private fun readDevices(devicesFile: File): JSONObject {
         if (!devicesFile.exists()) return JSONObject().put("devices", JSONObject())
         val text = try { devicesFile.readText(Charsets.UTF_8) } catch (error: Exception) {
-            throw java.io.IOException("Chưa đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
+            throw java.io.IOException(S.s_chua_doc_duoc_danh_sach_may_da_ghep_ban_ha_1d001a5d, error)
         }
         try {
-            val data = StrictJson.parse(text) as? JSONObject ?: error("sai dạng")
+            val data = StrictJson.parse(text) as? JSONObject ?: error(S.s_sai_dang_82150286)
             val devices = data.getJSONObject("devices")
             for (key in devices.keys()) {
                 require(Regex("[0-9a-f]{64}").matches(key))
@@ -543,14 +543,14 @@ object LibraryServer {
         val token = request.headers["authorization"]?.removePrefix("Bearer ")?.trim().orEmpty()
         val caller = identify(token)
         if (caller == null) {
-            json(output, 401, JSONObject().put("error", "Thiết bị chưa ghép nối"))
+            json(output, 401, JSONObject().put("error", S.s_thiet_bi_chua_ghep_noi_f3a2a99e))
             return
         }
         // Chẩn đoán từ xa (a114): máy ĐÃ GHÉP đọc nhật ký + trạng thái của điện thoại này (Diagnostics) - không cần adb, đi được qua LAN,
         // Tailscale hay 4G. Cùng kiểm mã như mọi đường khác (sai mã ở trên đã 401); chỉ chạy khi người dùng bật "Cho máy khác nghe thư viện này".
         if (request.method == "GET" && path == "/sync/v1/diagnostics") {
             val lines = Diagnostics.clampLines(Diagnostics.linesOf(request.query))
-            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} đọc chẩn đoán ($lines dòng)")
+            AppLog.i("Share", S.s_may_0_doc_chan_doan_1_dong_ae26058f(caller.optString("name", "?").take(40), lines))
             json(output, 200, diagnosticsSource(lines))
             return
         }
@@ -561,7 +561,7 @@ object LibraryServer {
         // Máy bên kia bỏ ghép điện thoại này: thu hồi mã của nó ở đây luôn (như máy tính, sync.py - soát a27 lỗi 5).
         if (request.method == "POST" && path == "/sync/v1/unpair") {
             revoke(hash(token).take(12))
-            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} bỏ ghép")
+            AppLog.i("Share", S.s_may_0_bo_ghep_ebaf09ff(caller.optString("name", "?").take(40)))
             json(output, 200, JSONObject().put("ok", true))
             return
         }
@@ -573,13 +573,13 @@ object LibraryServer {
                 "POST" -> {
                     val command = runCatching { JSONObject(String(request.body)) }.getOrNull()?.let(::remoteCommand)
                     if (command == null) {
-                        json(output, 400, JSONObject().put("error", "Lệnh không hỗ trợ"))
+                        json(output, 400, JSONObject().put("error", S.s_lenh_khong_ho_tro_1bf2198b))
                     } else {
                         val problem = Remote.applyNow(command)
                         json(output, 200, JSONObject().put("id", hex(6)).put("ok", problem == null).put("message", problem ?: ""))
                     }
                 }
-                else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
+                else -> json(output, 405, JSONObject().put("error", S.s_khong_ho_tro_3a163218))
             }
             return
         }
@@ -587,7 +587,7 @@ object LibraryServer {
         val book = match?.groupValues?.get(1).orEmpty()
         val manifest = if (BOOK_ID.matches(book) && Store.isFileBook(book)) Store.manifest(book) else null
         if (match == null || manifest == null) {
-            json(output, 404, JSONObject().put("error", "Không có sách này"))
+            json(output, 404, JSONObject().put("error", S.s_khong_co_sach_nay_03da6ddc))
             return
         }
         when {
@@ -600,18 +600,18 @@ object LibraryServer {
                 val overlaid = if (allowed) Store.overlaidText(book, relative, shared = true) else null
                 val target = if (!allowed) null else if (relative == "cover.jpg") Store.coverFile(book) else Store.file(book, relative)
                 if (overlaid != null) sendBytes(output, overlaid.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8", request.method == "HEAD")
-                else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
+                else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", S.s_khong_co_file_nay_e955f895))
                 else sendFile(output, target, request.headers["range"], request.method == "HEAD", request.headers["if-range"])
             }
             // Chỗ nghe hai chiều: máy kia gửi bản của nó. Có mã hồ sơ: gộp đúng hồ sơ ấy (tên, chọn, chuyển, bia mộ - Store.mergeRecord,
             // như máy tính giữ sách); máy đời trước không có mã: hồ sơ đang dùng của cuốn này (Store.mergeRemote). Trả bản đã gộp.
             request.method == "POST" && match.groupValues[2] == "state" -> {
                 val body = runCatching { JSONObject(String(request.body)) }.getOrNull()
-                if (body == null) json(output, 400, JSONObject().put("error", "Thân yêu cầu không phải JSON"))
+                if (body == null) json(output, 400, JSONObject().put("error", S.s_than_yeu_cau_khong_phai_json_8b246a0b))
                 else if (Store.isRecordId(body.optString("record"))) json(output, 200, addressesReply(Store.mergeRecord(book, body)))
                 else json(output, 200, addressesReply(Store.mergeRemote(book, body)))
             }
-            else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
+            else -> json(output, 405, JSONObject().put("error", S.s_khong_ho_tro_3a163218))
         }
     }
 
@@ -838,7 +838,7 @@ object LibraryServer {
     }
 
     private fun head(output: OutputStream, status: Int, type: String, length: Long, extra: Map<String, String> = emptyMap()) {
-        val reason = mapOf(200 to "OK", 206 to "Partial Content", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden",
+        val reason = mapOf(200 to S.s_ok_565339bc, 206 to "Partial Content", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden",
             404 to "Not Found", 405 to "Method Not Allowed", 416 to "Range Not Satisfiable", 500 to "Internal Server Error")
         val lines = StringBuilder("HTTP/1.1 $status ${reason[status] ?: "Status"}\r\n")
             .append("Content-Type: $type\r\n").append("Content-Length: $length\r\n").append("Connection: close\r\n")

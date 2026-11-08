@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import java.util.Calendar
 import java.util.Locale
 
@@ -7,18 +9,18 @@ import java.util.Locale
 object Fmt {
     /** Thời lượng cho con người: "45 phút", "9 giờ 12 phút", "2 giờ". */
     fun length(seconds: Double): String {
-        if (!seconds.isFinite() || seconds <= 0) return "0 phút"
+        if (!seconds.isFinite() || seconds <= 0) return S.s_0_phut_66a3b36a
         val minutes = Math.round(seconds / 60.0).toInt()
-        if (minutes < 1) return "dưới 1 phút"
+        if (minutes < 1) return S.s_duoi_1_phut_a1dd4f60
         val hours = minutes / 60
         val rest = minutes % 60
-        if (hours == 0) return "$minutes phút"
-        return if (rest != 0) "$hours giờ $rest phút" else "$hours giờ"
+        if (hours == 0) return S.s_0_phut_2596d212(minutes)
+        return if (rest != 0) S.s_0_gio_1_phut_b72ee2eb(hours, rest) else S.s_0_gio_0341419e(hours)
     }
 
     /** Như [length] nhưng làm tròn LÊN tới phút (thời gian còn lại cạnh đồng hồ đếm ngược). */
     fun lengthUp(seconds: Double): String {
-        if (!seconds.isFinite() || seconds <= 0) return "0 phút"
+        if (!seconds.isFinite() || seconds <= 0) return S.s_0_phut_66a3b36a
         return length(Math.ceil(seconds / 60.0) * 60.0)
     }
 
@@ -40,9 +42,9 @@ object Fmt {
         val days = Math.round((midnight(today) - midnight(then)) / 86_400_000.0).toInt()
         val time = String.format(Locale.ROOT, "%02d:%02d", then.get(Calendar.HOUR_OF_DAY), then.get(Calendar.MINUTE))
         return when {
-            days <= 0 -> if (nowMs / 1000.0 - epochSeconds < 60) "vừa xong" else "hôm nay $time"
-            days == 1 -> if (then.get(Calendar.HOUR_OF_DAY) >= 18) "tối qua $time" else "hôm qua $time"
-            days < 7 -> "$days ngày trước"
+            days <= 0 -> if (nowMs / 1000.0 - epochSeconds < 60) S.s_vua_xong_b46f7a2b else S.s_hom_nay_0_0d4210b7(time)
+            days == 1 -> if (then.get(Calendar.HOUR_OF_DAY) >= 18) S.s_toi_qua_0_dbb7ff0b(time) else S.s_hom_qua_0_04ed87e6(time)
+            days < 7 -> S.s_0_ngay_truoc_4f7dbb51(days)
             else -> "${then.get(Calendar.DAY_OF_MONTH)}/${then.get(Calendar.MONTH) + 1}/${then.get(Calendar.YEAR)}"
         }
     }

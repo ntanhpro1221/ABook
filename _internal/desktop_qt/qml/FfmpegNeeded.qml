@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -12,7 +13,7 @@ Column {
     objectName: "ffmpegNeeded"
     property var status: null
     property bool remote: false
-    property string computer: "máy tính"
+    property string computer: S.s_may_tinh_8eafc226
     property bool detailOpen: false
     signal download()
     signal stop()
@@ -21,12 +22,12 @@ Column {
     bottomPadding: 12
     spacing: 2
     Accessible.role: Accessible.Grouping
-    Accessible.name: "Công cụ ghép âm thanh"
+    Accessible.name: S.s_cong_cu_ghep_am_thanh_f56c00a0
 
     Text {
         objectName: "ffmpegTitle"
         width: parent.width
-        text: root.outdated ? "Cập nhật công cụ" : "Thiếu công cụ ghép"
+        text: root.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : S.s_thieu_cong_cu_ghep_1c3e0226
         color: Theme.text
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall
@@ -35,8 +36,8 @@ Column {
     Text {
         objectName: "ffmpegLine"
         width: parent.width
-        text: (root.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Tải một lần để ghép MP3 / M4B")
-              + " (khoảng " + Size.formatSize(root.status ? root.status.bytes : 0).replace(" ", "\u00a0") + ")."
+        text: (root.outdated ? S.s_co_ban_moi_de_ghep_loi_doc_thanh_file_mp3_e3f81f2c : S.s_tai_mot_lan_de_ghep_mp3_m4b_2e0a2a50)
+              + S.s_khoang_05ede49e + Size.formatSize(root.status ? root.status.bytes : 0).replace(" ", "\u00a0") + ")."
         color: Theme.text2
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall
@@ -46,7 +47,7 @@ Column {
         visible: root.status !== null && root.status.downloading
         width: parent.width
         height: Math.max(40, percent.implicitHeight)
-        Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: "Dừng"; onClicked: root.stop() }
+        Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_dung_11554138; onClicked: root.stop() }
         ClockLabel {
             id: percent
             objectName: "ffmpegPercent"
@@ -67,12 +68,12 @@ Column {
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             value: root.status ? Logic.ffmpegPercent(root.status) / 100 : 0
-            label: "Đang tải công cụ ghép âm thanh"
+            label: S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc
         }
     }
     OnComputerPill {
         visible: root.status !== null && !root.status.downloading && root.remote
-        verb: root.outdated ? "Cập nhật công cụ ghép âm thanh" : "Tải công cụ ghép âm thanh"
+        verb: root.outdated ? S.s_cap_nhat_cong_cu_ghep_am_thanh_6fd454a5 : S.s_tai_cong_cu_ghep_am_thanh_1d4036fd
         computer: root.computer
         maxWidth: root.width
     }
@@ -93,7 +94,7 @@ Column {
         Button {
             objectName: "ffmpegDownload"
             size: "sm"
-            text: root.status && root.status.error ? "Thử lại" : root.outdated ? "Cập nhật công cụ" : "Tải công cụ"
+            text: root.status && root.status.error ? S.s_thu_lai_c58d068c : root.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : S.s_tai_cong_cu_83ce1fe8
             onClicked: root.download()
         }
         Column {
@@ -103,7 +104,7 @@ Column {
             TextLink {
                 visible: root.status !== null && Boolean(root.status.errorDetail)
                 small: true
-                text: "Chi tiết"
+                text: S.s_chi_tiet_e762d926
                 onClicked: root.detailOpen = !root.detailOpen
             }
             Collapse {

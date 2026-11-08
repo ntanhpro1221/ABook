@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "appfonts.h"
 #include "backend.h"
 #include "desktopapi.h"
@@ -168,8 +169,8 @@ int main(int argc, char *argv[]) {
     BenchExposure benchExposure(benchMode && qEnvironmentVariableIntValue("ABOOK_BENCH_HIDDEN_DESKTOP")==1 && QGuiApplication::platformName()==QStringLiteral("windows"));
     BenchWindowGuard benchWindowGuard;
     if (benchMode) app.installEventFilter(&benchWindowGuard);
-    QGuiApplication::setApplicationName(QStringLiteral("ABook"));
-    QGuiApplication::setOrganizationName(QStringLiteral("ABook"));
+    QGuiApplication::setApplicationName(UiStrings::s_abook_1c37d334);
+    QGuiApplication::setOrganizationName(UiStrings::s_abook_1c37d334);
     app.setQuitOnLastWindowClosed(false);
     app.setWindowIcon(QIcon(QStringLiteral(":/app/app.ico")));
     Bench::mark(QStringLiteral("main"));

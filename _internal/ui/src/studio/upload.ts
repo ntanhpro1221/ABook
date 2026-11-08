@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { api } from "@/studio/api";
 import { formatSize } from "@/shared/format";
 
@@ -48,7 +49,7 @@ const byName = <T extends Picked>(a: T, b: T) => collator.compare(a.name, b.name
 /** "Tải lên 05-10-2026 18h22 ab12": mỗi lần gửi một thư mục riêng, hai lần gửi trong cùng phút không trộn chương vào nhau. */
 export function batchName(now: Date, tag: string): string {
   const two = (value: number) => String(value).padStart(2, "0");
-  return `Tải lên ${two(now.getDate())}-${two(now.getMonth() + 1)}-${now.getFullYear()} ${two(now.getHours())}h${two(now.getMinutes())} ${tag}`;
+  return S.s_tai_len_0_1_2_3_h_4_5_6c25db59(two(now.getDate()), two(now.getMonth() + 1), now.getFullYear(), two(now.getHours()), two(now.getMinutes()), tag);
 }
 
 /**
@@ -99,15 +100,15 @@ export function planUpload<T extends Picked>(files: T[], batch: string): UploadP
 
 function listed(names: string[]): string {
   const shown = names.slice(0, 3).map((name) => `“${name}”`).join(", ");
-  return names.length > 3 ? `${shown} và ${names.length - 3} file khác` : shown;
+  return names.length > 3 ? S.s_0_va_1_file_khac_6807c416(shown, names.length - 3) : shown;
 }
 
 /** Lời nhắc về những file không gửi (nói ra, không bỏ âm thầm), hay null khi không bỏ file nào. */
 export function planNotice(plan: UploadPlan<Picked>): string | null {
   const lines = [
-    plan.rejected.length ? `${listed(plan.rejected)} không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf.` : "",
+    plan.rejected.length ? S.s_0_khong_phai_file_truyen_chi_nhan_txt_epub_291c54f4(listed(plan.rejected)) : "",
     plan.tooBig.length
-      ? `${listed(plan.tooBig)} lớn hơn ${LIMIT_MB} MB nên không gửi qua mạng được. Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.`
+      ? S.s_0_lon_hon_1_mb_nen_khong_gui_qua_mang_duoc_6a6df97e(listed(plan.tooBig), LIMIT_MB)
       : "",
   ].filter(Boolean);
   return lines.length ? lines.join(" ") : null;
@@ -122,7 +123,7 @@ export interface UploadProgress {
 
 /** "Đang gửi 3/12 file · 1,2 MB / 4,5 MB". */
 export function progressLabel(progress: UploadProgress): string {
-  return `Đang gửi ${progress.files}/${progress.totalFiles} file · ${formatSize(progress.bytes)} / ${formatSize(progress.totalBytes)}`;
+  return S.s_dang_gui_0_1_file_2_3_9e389644(progress.files, progress.totalFiles, formatSize(progress.bytes), formatSize(progress.totalBytes));
 }
 
 export interface SendResult {
@@ -141,9 +142,9 @@ const isAbort = (error: unknown) => error instanceof DOMException && error.name 
 
 /** "Đã gửi 3/12 file, giữ lại; 9 file chưa gửi." - nói rõ gì đã tới máy tính khi dừng giữa chừng. */
 export function sendSummary(result: Pick<SendResult, "sent" | "total">): string {
-  if (!result.sent) return "Chưa gửi file nào.";
+  if (!result.sent) return S.s_chua_gui_file_nao_17f3f72a;
   const rest = result.total - result.sent;
-  return `Đã gửi ${result.sent}/${result.total} file, giữ lại${rest > 0 ? `; ${rest} file chưa gửi` : ""}.`;
+  return S.s_da_gui_0_1_file_giu_lai_2_5a054886(result.sent, result.total, rest > 0 ? S.s_0_file_chua_gui_7ceb311f(rest) : "");
 }
 
 /**

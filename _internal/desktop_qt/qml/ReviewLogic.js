@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "WorkLogic.js" as Work
 .import "StudioLogic.js" as Studio
@@ -28,43 +29,43 @@ function clipOf(item, bookId, route) {
     return null
 }
 function unplayableText(item) {
-    return item.kind === "failed" ? "Câu này chưa thu được, chưa có gì để nghe" : "Bản thu riêng của câu này đã được dọn sau khi ghép chương - nghe câu này trong chương"
+    return item.kind === "failed" ? S.s_cau_nay_chua_thu_duoc_chua_co_gi_de_nghe_3e5fa33a : S.s_ban_thu_rieng_cua_cau_nay_da_duoc_don_sau_552e64b0
 }
 
 // ---- reviewText.ts ----
 function notRecordedYet(segments) { return !!segments && segments.recorded === 0 }
-function matchPhrase(percent) { return "máy nghe lại khớp " + percent + " với chữ của câu" }
-function matchShort(percent) { return "khớp " + percent }
-function spokenEditLabel(twins) { return twins > 0 ? "Sửa " + (twins + 1) + " câu" : "Sửa cách đọc" }
-function shortcutHint(continuous) { return continuous ? "Đang nghe liền: bấm O nếu ổn, R nếu cần thu lại - rồi sang câu kế" : null }
+function matchPhrase(percent) { return S.s_may_nghe_lai_khop_979c637f + percent + S.s_voi_chu_cua_cau_dfe84142 }
+function matchShort(percent) { return S.s_khop_4cfe8500 + percent }
+function spokenEditLabel(twins) { return twins > 0 ? S.s_sua_d5f3503d + (twins + 1) + S.s_cau_b07e1008 : S.s_sua_cach_doc_d67b7a7b }
+function shortcutHint(continuous) { return continuous ? S.s_dang_nghe_lien_bam_o_neu_on_r_neu_can_thu_4e3d0d8d : null }
 function heardLine(item) {
-    return "Máy nghe ra: “" + item.heard + "”"
+    return S.s_may_nghe_ra_31219589 + item.heard + "”"
 }
 function showsHeard(item) { return !!item.heard && !sameText(item.heard, item.text) }
 function similarityText(item) { return item.similarity === null || item.similarity === undefined ? "" : "\u00a0·\u00a0" + matchShort(Studio.formatPercent(item.similarity)) }
 function pendingSpokenLine(item, note) {
-    return (item.pendingSpoken ? "Sẽ đọc là “" + item.pendingSpoken + "”" : "Sẽ đọc lại đúng chữ sách") + " - " + note + "."
+    return (item.pendingSpoken ? S.s_se_doc_la_a0124031 + item.pendingSpoken + "”" : S.s_se_doc_lai_dung_chu_sach_32abc746) + " - " + note + "."
 }
 function leadLine(data, unrecorded) {
-    if (data.pending) return {strong: data.pending + " câu", rest: ": nghe rồi chọn Ổn hoặc Cần thu lại."}
-    return {strong: "", rest: unrecorded ? "Chưa có bản thu - sẽ có sau khi thu âm." : "Đã xem hết các câu đáng lo."}
+    if (data.pending) return {strong: data.pending + S.s_cau_b07e1008, rest: S.s_nghe_roi_chon_on_hoac_can_thu_lai_1f69221d}
+    return {strong: "", rest: unrecorded ? S.s_chua_co_ban_thu_se_co_sau_khi_thu_am_c61d063f : S.s_da_xem_het_cac_cau_dang_lo_c91d08e4}
 }
-function emptyTitle(filter, unrecorded) { return filter === "todo" ? (unrecorded ? "Chưa có bản thu" : "Đã xem hết") : "Chưa đánh dấu câu nào" }
+function emptyTitle(filter, unrecorded) { return filter === "todo" ? (unrecorded ? S.s_chua_co_ban_thu_9897618d : S.s_da_xem_het_75fa60d3) : S.s_chua_danh_dau_cau_nao_6b8e8be3 }
 function emptyText(filter, unrecorded) {
-    if (filter === "todo") return unrecorded ? "Máy kiểm từng câu ngay khi thu xong; câu nào đáng lo sẽ hiện ở đây." : "Mọi câu đáng lo đều đã có phán quyết."
-    return "Nghe một câu rồi bấm Ổn hoặc Cần thu lại."
+    if (filter === "todo") return unrecorded ? S.s_may_kiem_tung_cau_ngay_khi_thu_xong_cau_na_3fe114af : S.s_moi_cau_dang_lo_deu_da_co_phan_quyet_7c2be09b
+    return S.s_nghe_mot_cau_roi_bam_on_hoac_can_thu_lai_c3dfde28
 }
 function minorCount(counts) { return ((counts && counts.name) || 0) + ((counts && counts.text) || 0) }
-function redoLine(count) { return count + " chương chờ thu lại; sửa chữ ở Kịch bản." }
-function loadMoreText(remaining, busy) { return busy ? "Đang tải…" : "Tải tiếp\u00a0·\u00a0còn " + (remaining || 0) + " câu" }
-function spokenSaved(count) { return count > 1 ? "Đã ghi cách đọc cho " + count + " câu" : "Đã ghi cách đọc câu này" }
+function redoLine(count) { return count + S.s_chuong_cho_thu_lai_sua_chu_o_kich_ban_11e7f43e }
+function loadMoreText(remaining, busy) { return busy ? S.s_dang_tai_42d77f3a : S.s_tai_tiep_u00a0_u00a0con_0ebab88c + (remaining || 0) + S.s_cau_b07e1008 }
+function spokenSaved(count) { return count > 1 ? S.s_da_ghi_cach_doc_cho_4566132d + count + S.s_cau_b07e1008 : S.s_da_ghi_cach_doc_cau_nay_0db96b25 }
 
 // ---- previewText.ts ----
 function tryNote(state) {
-    if (state.pending) return "Máy đang đọc thử - lần đầu có thể mất vài chục giây"
+    if (state.pending) return S.s_may_dang_doc_thu_lan_dau_co_the_mat_vai_ch_51a539dc
     if (state.refusal) return state.refusal
-    if (state.playing && state.caption) return "Đang phát\u00a0·\u00a0" + state.caption
-    if (state.caption) return "Đã nghe xong - bấm “Nghe thử” để nghe lại\u00a0·\u00a0" + state.caption
-    if (state.bookBusy) return "Đang làm sách; bạn thử lại khi xong."
+    if (state.playing && state.caption) return S.s_dang_phat_u00a0_u00a0_6c88d17d + state.caption
+    if (state.caption) return S.s_da_nghe_xong_bam_nghe_thu_de_nghe_lai_u00a_9e8cc7ab + state.caption
+    if (state.bookBusy) return S.s_dang_lam_sach_ban_thu_lai_khi_xong_4414af8b
     return null
 }

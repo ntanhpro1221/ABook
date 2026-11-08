@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { ActionSubmenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -61,25 +62,25 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     onSuccess: (view, { playlist, notice }) => {
       // Chọn xong phải thấy đã đổi (menu đóng ngay): nói tên danh sách vừa chọn (hay kết quả thêm nhạc, nếu việc chọn đến từ đó).
       if (notice) {
-        toast[notice.kind](notice.title, { id: ADD_TOAST, description: [notice.description, "Đang dùng làm nhạc nền của cuốn này."].filter(Boolean).join("\n") });
+        toast[notice.kind](notice.title, { id: ADD_TOAST, description: [notice.description, S.s_dang_dung_lam_nhac_nen_cua_cuon_nay_9cab7be5].filter(Boolean).join("\n") });
       } else {
         // Để máy chọn: lời đáp của server đã là màn của máy chọn - nói máy chọn gì.
         const auto = autoPlaylistName(view, menu.data);
-        toast(playlist === null ? `Nhạc nền: để máy chọn${auto ? ` - ${auto}` : ""}` : `Nhạc nền: ${playlistLabel(view, menu.data)}`, {
+        toast(playlist === null ? S.s_nhac_nen_de_may_chon_0_76676aa5(auto ? ` - ${auto}` : "") : S.s_nhac_nen_0_2890a0c1(playlistLabel(view, menu.data)), {
           id: "playlist-choice",
           duration: 2500,
         });
       }
       client.setQueryData(key, view);
       // Chọn xong mà nhạc đang bị giữ vì mất mạng (điện thoại): lựa chọn đã lưu, bài tải khi có mạng - như Studio ("Đã lưu lựa chọn").
-      if (view.error) toast.warning("Đã lưu lựa chọn", { id: "music-offline", description: view.error });
+      if (view.error) toast.warning(S.s_da_luu_lua_chon_3dbba0c5, { id: "music-offline", description: view.error });
       void client.invalidateQueries({ queryKey: ["listen", "book", bookId] }); // số thay đổi của cuốn
       void client.invalidateQueries({ queryKey: ["listen", "library"] });
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
     },
     onError: (error: Error, { notice }) => {
       // Nhạc đã vào kho dù chưa chọn được: nói cả hai.
-      toast.error("Chưa đổi được nhạc nền", { id: notice ? ADD_TOAST : undefined, description: [notice?.title, error.message].filter(Boolean).join("\n") });
+      toast.error(S.s_chua_doi_duoc_nhac_nen_b5d19c42, { id: notice ? ADD_TOAST : undefined, description: [notice?.title, error.message].filter(Boolean).join("\n") });
     },
   });
   // Mức nhạc nền: nhớ theo cuốn như danh sách; trình phát nạp lại hàng bài (MUSIC_CHANGED_EVENT) với mức mới.
@@ -91,7 +92,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       void client.invalidateQueries({ queryKey: ["listen", "book", bookId] });
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
     },
-    onError: (error: Error) => toast.error("Chưa chỉnh được mức nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_chinh_duoc_muc_nhac_4ed5127b, { description: error.message }),
   });
   const addMusic = async () => {
     if (adding) return;
@@ -99,7 +100,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     try {
       // Trình đọc màn hình chỉ đọc mốc 25 %, không đọc lại sau mỗi bài (soát a31 A6).
       const { result, error } = await importMusic(
-        (done, total) => void toast.loading(<LiveText shown={`Đang thêm nhạc ${done}/${total}`} spoken={spokenProgress("Đang thêm nhạc", done / total)} />, { id: ADD_TOAST }),
+        (done, total) => void toast.loading(<LiveText shown={S.s_dang_them_nhac_0_1_a3b58965(done, total)} spoken={spokenProgress(S.s_dang_them_nhac_b14bb1bb, done / total)} />, { id: ADD_TOAST }),
       );
       if (result) {
         client.setQueryData(MY_MUSIC_KEY, result);
@@ -112,9 +113,9 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       } else {
         toast.dismiss(ADD_TOAST);
       }
-      if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
+      if (error) toast.error(S.s_dang_them_nhac_thi_dung_8712c030, { description: error.message });
     } catch (error) {
-      toast.error("Chưa mở được hộp chọn file", { id: ADD_TOAST, description: (error as Error).message });
+      toast.error(S.s_chua_mo_duoc_hop_chon_file_17d8e8aa, { id: ADD_TOAST, description: (error as Error).message });
     } finally {
       adding = false;
     }
@@ -171,11 +172,11 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
   return (
     <ActionSubmenu
       id="music"
-      label="Nhạc nền"
+      label={S.s_nhac_nen_271fb292}
       itemClassName={MENU_ITEM}
       trigger={<>
         <EighthNote className="size-4" />
-        <span className="flex-1">Nhạc nền</span>
+        <span className="flex-1">{S.s_nhac_nen_271fb292}</span>
         <span className="max-w-[45%] text-right text-xs text-fg-2 [overflow-wrap:anywhere]">{shortPlaylistLabel(label)}</span>
         <ChevronRight className="ink-end size-4 text-fg-2" />
       </>}
@@ -199,7 +200,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
           {ADD_MUSIC_LABEL}
         </DropdownMenu.Item>
       )}
-      <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
+      <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label={S.s_dang_tai_danh_sach_831ab748} className="p-2" /> : loadFailed ? <InlineError message={S.s_ban_hay_thu_tai_lai_danh_sach_nhac_c3976285} onRetry={retry} /> : null}</MotionRegion>
       {/* Chữ nhỏ chỉ khi có điều cần biết (mất mạng lần đầu thì lý do) - như bản điện thoại, không nhắc suông. */}
       <MotionRegion motionKey={error}>{error ? <p data-menu-note className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error}</p> : null}</MotionRegion>
     </ActionSubmenu>

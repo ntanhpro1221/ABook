@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -164,12 +166,12 @@ object MusicLogic {
     fun isContinuation(scene: MusicScene): Boolean = scene.continued && scene.link != null && !scene.pinned && !scene.silenced
 
     /** Lời nút "Đổi bài": ở mảnh nối tiếp, ghim bài mới vào đây nên đổi từ chỗ này trở đi. */
-    fun swapText(scene: MusicScene): String = if (isContinuation(scene)) "Đổi từ đây" else "Đổi bài"
+    fun swapText(scene: MusicScene): String = if (isContinuation(scene)) S.s_doi_tu_day_a54eee44 else S.s_doi_bai_7b81488f
 
     private val EMOTION_VI = mapOf(
-        "peacefulness" to "bình yên", "tenderness" to "dịu dàng", "nostalgia" to "hoài niệm", "sadness" to "buồn", "joy" to "vui tươi",
-        "playful" to "tinh nghịch", "power" to "hào hùng", "wonder" to "kỳ vĩ", "tension" to "căng thẳng", "fear" to "rùng rợn",
-        "anger" to "giận dữ", "mystery" to "bí ẩn", "moved" to "xúc động",
+        "peacefulness" to S.s_binh_yen_9e77ef15, "tenderness" to S.s_diu_dang_deaaa55a, "nostalgia" to S.s_hoai_niem_799529ae, "sadness" to S.s_buon_a474e7e0, "joy" to S.s_vui_tuoi_8ebbee23,
+        "playful" to S.s_tinh_nghich_f27e1115, "power" to S.s_hao_hung_fec61823, "wonder" to S.s_ky_vi_ac54ac08, "tension" to S.s_cang_thang_48be6812, "fear" to S.s_rung_ron_e9a9ecec,
+        "anger" to S.s_gian_du_1565d541, "mystery" to S.s_bi_an_ace8c102, "moved" to S.s_xuc_dong_bc36f9eb,
     )
 
     /** Không khí của đoạn: các cảm xúc mạnh nhất (tối đa hai); không cảm xúc nào đủ mạnh thì gọi theo vui/buồn và căng thẳng; còn lại "êm" (musicScenes.ts `moodOf`). */
@@ -177,10 +179,10 @@ object MusicLogic {
         val strong = scene.emotions.filter { it.value >= 0.5 }.entries.sortedByDescending { it.value }.take(2).map { names[it.key]?.takeIf { name -> name.isNotEmpty() } ?: EMOTION_VI[it.key] ?: it.key }
         return when {
             strong.isNotEmpty() -> strong.dotJoined()
-            scene.tension >= 0.5 -> "căng thẳng"
-            scene.valence <= -0.4 -> "buồn"
-            scene.valence >= 0.4 -> "tươi vui"
-            else -> "êm"
+            scene.tension >= 0.5 -> S.s_cang_thang_48be6812
+            scene.valence <= -0.4 -> S.s_buon_a474e7e0
+            scene.valence >= 0.4 -> S.s_tuoi_vui_43fac912
+            else -> S.s_em_07866b70
         }
     }
 
@@ -196,7 +198,7 @@ object MusicLogic {
 
     /** Dòng ghi công của một bài (dùng chung với trình phát: [vn.abook.player.ui.music.MusicText.creditText]); nhạc bạn nhập thì nói rõ không có giấy phép. */
     fun creditText(link: String, track: MusicTrack): String =
-        if (track.source == "local") "${listOf(track.title, track.creator).dotJoined()} - nhạc của bạn, không có thông tin giấy phép"
+        if (track.source == "local") S.s_0_nhac_cua_ban_khong_co_thong_tin_giay_phe_71454f92(listOf(track.title, track.creator).dotJoined())
         else MusicText.creditText(MusicCredit(track.title, track.creator, track.attribution, license = track.license)).ifEmpty { link }
 
     /** Có bài giấy phép đòi ghi công (khác cc0) thì kèm lời "đã chỉnh sửa". */
@@ -210,9 +212,9 @@ object MusicLogic {
 
     /** Dòng tiến độ tải sẵn: MB khi biết cỡ, không thì đếm bài. */
     fun downloadText(download: MusicDownload): String {
-        val tracks = "bài ${minOf(download.done + 1, download.total)}/${download.total}"
-        if (download.totalBytes <= 0L) return "Đang tải sẵn nhạc nền: $tracks"
-        return "Đang tải sẵn nhạc nền: ${formatSize(download.doneBytes)} / ${formatSize(download.totalBytes)} ($tracks)"
+        val tracks = S.s_bai_0_1_515d0997(minOf(download.done + 1, download.total), download.total)
+        if (download.totalBytes <= 0L) return S.s_dang_tai_san_nhac_nen_0_ca14ae35(tracks)
+        return S.s_dang_tai_san_nhac_nen_0_1_2_48ce53ca(formatSize(download.doneBytes), formatSize(download.totalBytes), tracks)
     }
 
     /** Phần đã xong (0-1) cho vạch tiến độ. */
@@ -251,60 +253,60 @@ object MusicLogic {
 }
 
 object StudioMusicText {
-    const val LOADING = "Đang tải nhạc nền"
-    const val ENABLED = "Nhạc nền"
-    const val ENABLED_ON = "Đang bật cho cuốn này."
-    const val ENABLED_OFF = "Đang tắt: các đoạn dưới đây sẽ không phát."
-    const val GENRE = "Thể loại truyện"
-    const val GENRE_NONE = "Chưa chọn"
-    const val GENRE_HINT = "Chưa chọn thì nhạc lấy từ mọi thể loại"
-    const val LEVEL = "Mức nhạc nền"
-    const val LEVEL_HINT = "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
-    const val REBUILD = "Chọn lại nhạc"
-    const val REBUILD_HINT = "Máy chọn lại theo thể loại và mức nhạc ở trên."
-    const val REBUILD_TITLE = "Chọn lại nhạc cho cả cuốn?"
-    const val REBUILD_LINE = "Bài bạn đã ghim vẫn được giữ. Máy tính mất cỡ nửa phút để chọn lại."
-    const val REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút."
-    const val SAVING = "Đang lưu lựa chọn"
-    const val CANCEL_DOWNLOAD = "Huỷ tải"
-    const val CANCELLED = "Đã dừng tải nhạc nền"
+    const val LOADING = S.s_dang_tai_nhac_nen_0b8c4795
+    const val ENABLED = S.s_nhac_nen_271fb292
+    const val ENABLED_ON = S.s_dang_bat_cho_cuon_nay_6752e54b
+    const val ENABLED_OFF = S.s_dang_tat_cac_doan_duoi_day_se_khong_phat_e93d8c97
+    const val GENRE = S.s_the_loai_truyen_9c821aa0
+    const val GENRE_NONE = S.s_chua_chon_e5f50074
+    const val GENRE_HINT = S.s_chua_chon_thi_nhac_lay_tu_moi_the_loai_a144c9d2
+    const val LEVEL = S.s_muc_nhac_nen_a45588ff
+    const val LEVEL_HINT = S.s_nho_hon_giong_doc_bay_nhieu_may_tu_bu_bai_e1b269b4
+    const val REBUILD = S.s_chon_lai_nhac_ebe26dde
+    const val REBUILD_HINT = S.s_may_chon_lai_theo_the_loai_va_muc_nhac_o_t_927c2f67
+    const val REBUILD_TITLE = S.s_chon_lai_nhac_cho_ca_cuon_2e88e27c
+    const val REBUILD_LINE = S.s_bai_ban_da_ghim_van_duoc_giu_may_tinh_mat_0fe51780
+    const val REBUILDING = S.s_dang_chon_lai_nhac_co_nua_phut_4166612f
+    const val SAVING = S.s_dang_luu_lua_chon_d37252de
+    const val CANCEL_DOWNLOAD = S.s_huy_tai_1a9ff73d
+    const val CANCELLED = S.s_da_dung_tai_nhac_nen_6addc23d
     /** Nhãn đếm đoạn nhạc của một chương (cùng chữ với MusicTab.tsx); số trơ trọi không nói nó đếm gì. */
-    fun sceneCount(n: Int) = "$n đoạn"
-    const val NO_SCENES = "Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích."
-    const val OFF_NOTE = "Nhạc nền đang tắt - các đoạn dưới đây sẽ không phát."
-    const val CONTINUED = "↳ tiếp bài của đoạn trên"
-    const val SILENT_CHOSEN = "Im lặng (bạn chọn)"
-    const val SILENT_AUTO = "Im lặng - không bài nào đủ hợp"
-    const val PINNED = "Đã ghim"
-    const val PIN_GONE = "Bài bạn ghim không còn trên máy này - đoạn dùng bài khác."
+    fun sceneCount(n: Int) = S.s_0_doan_c2eb5200(n)
+    const val NO_SCENES = S.s_chua_co_doan_nao_nhac_nen_dung_sau_khi_sac_b1bdaf8e
+    const val OFF_NOTE = S.s_nhac_nen_dang_tat_cac_doan_duoi_day_se_kho_2cc431ba
+    const val CONTINUED = S.s_tiep_bai_cua_doan_tren_79bb9e24
+    const val SILENT_CHOSEN = S.s_im_lang_ban_chon_356a628b
+    const val SILENT_AUTO = S.s_im_lang_khong_bai_nao_du_hop_6881c83f
+    const val PINNED = S.s_da_ghim_f1645be7
+    const val PIN_GONE = S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e
     const val AI = "AI"
-    const val TRACK = "Bài nhạc"
-    const val SILENCE_ON = "Tắt nhạc đoạn này"
-    const val SILENCE_OFF = "Bật nhạc đoạn này"
-    const val UNPIN = "Bỏ ghim"
-    const val BAN = "Loại khỏi cuốn"
-    const val MORE = "Thêm"
-    const val PLAY = "Nghe thử"
-    const val STOP = "Dừng nghe"
-    const val CHOOSE = "Chọn"
-    const val ALT_TITLE = "Đổi bài"
-    const val ALT_LOADING = "Đang tải bài khác"
-    const val ALT_EMPTY = "Không còn bài nào khác trong danh mục đủ hợp đoạn này."
-    const val BANNED = "Bài đã bỏ"
-    const val UNBAN = "Dùng lại"
-    const val ADVANCED = "Nâng cao"
-    const val MOODS = "Đọc không khí cả đoạn bằng AI"
-    const val MOODS_LEAD = "Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách."
-    const val MOODS_RUN = "Đọc lại ngữ cảnh"
-    const val MOODS_RUNNING = "Đang đọc không khí"
-    const val MOODS_DONE = "Đã đọc xong không khí các đoạn - nhạc đã chọn lại"
-    const val MOODS_ABSENT = "Máy tính chưa có phần đọc không khí; tải nó trên máy tính."
-    const val CREDITS = "Ghi công"
-    const val CHOSEN_TITLE = "Chọn thể loại"
+    const val TRACK = S.s_bai_nhac_5d07657e
+    const val SILENCE_ON = S.s_tat_nhac_doan_nay_8fb1136b
+    const val SILENCE_OFF = S.s_bat_nhac_doan_nay_57d716ef
+    const val UNPIN = S.s_bo_ghim_1600e29e
+    const val BAN = S.s_loai_khoi_cuon_3b45b802
+    const val MORE = S.s_them_dd92626f
+    const val PLAY = S.s_nghe_thu_fa024065
+    const val STOP = S.s_dung_nghe_f20939be
+    const val CHOOSE = S.s_chon_1171ca97
+    const val ALT_TITLE = S.s_doi_bai_7b81488f
+    const val ALT_LOADING = S.s_dang_tai_bai_khac_2c0e1ec8
+    const val ALT_EMPTY = S.s_khong_con_bai_nao_khac_trong_danh_muc_du_h_970fe053
+    const val BANNED = S.s_bai_da_bo_756dc520
+    const val UNBAN = S.s_dung_lai_01a1973f
+    const val ADVANCED = S.s_nang_cao_d16fca15
+    const val MOODS = S.s_doc_khong_khi_ca_doan_bang_ai_f0aaaea4
+    const val MOODS_LEAD = S.s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581
+    const val MOODS_RUN = S.s_doc_lai_ngu_canh_edb18d3a
+    const val MOODS_RUNNING = S.s_dang_doc_khong_khi_0640731b
+    const val MOODS_DONE = S.s_da_doc_xong_khong_khi_cac_doan_nhac_da_cho_487aac39
+    const val MOODS_ABSENT = S.s_may_tinh_chua_co_phan_doc_khong_khi_tai_no_af85f596
+    const val CREDITS = S.s_ghi_cong_9c291f64
+    const val CHOSEN_TITLE = S.s_chon_the_loai_0b964b7a
 
     fun banned(count: Int) = "$BANNED ($count)"
-    fun bannedDone(label: String, used: Int) = "Đã bỏ “$label” cho cả cuốn (đang dùng ở $used đoạn)"
-    fun moodsDownloading(percent: Int?) = "Đang tải phần đọc không khí${percent?.let { " - $it%" }.orEmpty()}"
+    fun bannedDone(label: String, used: Int) = S.s_da_bo_0_cho_ca_cuon_dang_dung_o_1_doan_388eec18(label, used)
+    fun moodsDownloading(percent: Int?) = S.s_dang_tai_phan_doc_khong_khi_0_25520a88(percent?.let { " - $it%" }.orEmpty())
 }
 
 /**

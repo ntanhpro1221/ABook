@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Edit
@@ -28,13 +29,13 @@ Item {
     function refresh() { store.refresh(book.id) }
     function setImage(image) {
         if (busy || !book) return
-        if (!image) { Api.notice = "Chưa đặt được ảnh bìa\nChưa đọc được file ảnh"; return }
+        if (!image) { Api.notice = S.s_chua_dat_duoc_anh_bia_chua_doc_duoc_file_a_07b09b14; return }
         working = true
         request("PUT", {image: image}, function(status, data) {
             root.working = false
-            if (status < 200 || status >= 300) { root.fail("Chưa đặt được ảnh bìa", status, data); return }
+            if (status < 200 || status >= 300) { root.fail(S.s_chua_dat_duoc_anh_bia_a4afb9fa, status, data); return }
             root.refresh()
-            Api.toast("Đã đặt ảnh bìa")
+            Api.toast(S.s_da_dat_anh_bia_90470364)
         })
     }
     function removeCover() {
@@ -42,9 +43,9 @@ Item {
         working = true
         request("DELETE", null, function(status, data) {
             root.working = false
-            if (status < 200 || status >= 300) { root.fail("Chưa bỏ được ảnh bìa", status, data); return }
+            if (status < 200 || status >= 300) { root.fail(S.s_chua_bo_duoc_anh_bia_a4173b5d, status, data); return }
             root.refresh()
-            Api.toast("Đã bỏ ảnh bìa")
+            Api.toast(S.s_da_bo_anh_bia_dc2da6ed)
         })
     }
     function chooseFile() {
@@ -115,7 +116,7 @@ Item {
                 root.dragging = false
                 const image = drop.urls.filter(url => /\.(png|jpe?g|webp|gif|bmp)$/i.test(String(url)))[0]
                 if (image) { drop.acceptProposedAction(); root.setImage(DesktopApi.imageData(image)) }
-                else Api.notice = "Chỉ thả được file ảnh (PNG, JPEG, WebP…)"
+                else Api.notice = S.s_chi_tha_duoc_file_anh_png_jpeg_webp_2d5d7caf
             }
         }
     }
@@ -128,7 +129,7 @@ Item {
         Button {
             objectName: "coverSet"
             visible: !root.narrow
-            text: root.hasCover ? "Đổi bìa" : "Đặt bìa"
+            text: root.hasCover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7
             icon: "image-plus"
             kind: "ghost"
             size: "sm"
@@ -142,8 +143,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: root.hasCover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"
-            Accessible.name: root.hasCover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"
+            tip: root.hasCover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265
+            Accessible.name: root.hasCover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265
             enabled: !root.busy
             onClicked: root.chooseFile()
         }
@@ -155,8 +156,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: "Tìm ảnh bìa trên mạng"
-            Accessible.name: "Tìm ảnh bìa trên mạng"
+            tip: S.s_tim_anh_bia_tren_mang_a87bd41b
+            Accessible.name: S.s_tim_anh_bia_tren_mang_a87bd41b
             enabled: !root.busy
             onClicked: { search.begin(root.book.id, Edit.seriesName(root.book.title)); searchBox.show() }
         }
@@ -169,8 +170,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: "Bỏ ảnh bìa"
-            Accessible.name: "Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách"
+            tip: S.s_bo_anh_bia_696c6692
+            Accessible.name: S.s_bo_anh_bia_dung_lai_bia_ve_tu_ten_sach_95de3f45
             enabled: !root.busy
             onClicked: root.removeCover()
         }
@@ -180,7 +181,7 @@ Item {
         visible: !root.narrow
         y: actions.y + actions.height
         width: parent.width
-        text: "Kéo hoặc dán ảnh"
+        text: S.s_keo_hoac_dan_anh_71bf1343
         color: Theme.text3
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         font.pixelSize: Theme.sizeCaption
@@ -190,8 +191,8 @@ Item {
     Modal {
         id: searchBox
         objectName: "coverSearchBox"
-        title: "Tìm ảnh bìa"
-        description: "Bạn chọn ảnh từ các nguồn sách hoặc trên máy."
+        title: S.s_tim_anh_bia_9825b3d1
+        description: S.s_ban_chon_anh_tu_cac_nguon_sach_hoac_tren_m_ca23c898
         panelWidth: 560
         onClosed: { search.cancel(); root.choosing = false }
         CoverSearch {
@@ -199,7 +200,7 @@ Item {
             objectName: "coverSearchPanel"
             width: parent.width
             route: function(method, path, body, done) { return root.store.request(method, path, body, done) }
-            onChosen: { searchBox.dismiss(); root.refresh(); Api.toast("Đã đặt ảnh bìa") }
+            onChosen: { searchBox.dismiss(); root.refresh(); Api.toast(S.s_da_dat_anh_bia_90470364) }
             onChooseFile: { searchBox.dismiss(); root.chooseFile() }
             onChoosingChanged: root.choosing = choosing
         }

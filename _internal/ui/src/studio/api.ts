@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
@@ -404,7 +405,7 @@ export class ApiError extends Error {
 
 /** Lỗi không ngờ của máy chủ (500 mang nguyên văn lỗi Python, vd "TypeError: …"): câu người dùng hiểu thay cho nguyên văn; nguyên văn giữ ở
  *  `technicalOf` để nơi hiện lỗi thu vào "Chi tiết" (soát a64: hộp Thêm sách hiện "TypeError: …" trần). Lỗi máy chủ đã viết bằng lời thì giữ nguyên. */
-export const UNEXPECTED_ERROR = "Máy gặp lỗi không ngờ khi làm việc này. Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.";
+export const UNEXPECTED_ERROR = S.s_may_gap_loi_khong_ngo_khi_lam_viec_nay_thu_b7a45f7b;
 const PYTHON_ERROR = /^[A-Z][A-Za-z]*(?:Error|Exception|Interrupt|Iteration|Exit)(?::|$)/;
 
 /** Lời báo cho người dùng từ một lỗi của máy chủ: lỗi không ngờ thì câu chung, còn lại nguyên lời máy chủ. */
@@ -489,7 +490,7 @@ function settle<T>(response: Response, text: string): T {
     // Máy kia tắt / mất mạng giữa chừng: thanh "Studio của <máy>" báo và tự nối lại (desktop/PeerBar.tsx).
     if (peer && data?.unreachable) window.dispatchEvent(new CustomEvent(PEER_SILENT_EVENT, { detail: String(data.error ?? "") }));
     if (response.status === 403 && data?.listenOnly === true) window.dispatchEvent(new Event(LISTEN_ONLY_EVENT));
-    const { message, technical } = serverMessage(response.status, String((data && data.error) || `Lỗi ${response.status}`));
+    const { message, technical } = serverMessage(response.status, String((data && data.error) || S.s_loi_0_356d33a7(response.status)));
     throw new ApiError(response.status, message, { ...(data && typeof data === "object" ? data : {}), ...(technical ? { technical } : {}) });
   }
   return data as T;

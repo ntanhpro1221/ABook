@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Collapse } from "@/shared/Collapse";
 import type { ReactNode } from "react";
@@ -23,20 +24,20 @@ import { AUDIOBOOK_COPY } from "./listenExport";
 export type ExportKind = "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
-  bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
-  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
+  bookfile: { copy: BOOK_FILE_COPY, pick: S.s_chon_noi_luu_2965936c, url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
+  m4b: { copy: M4B_COPY, pick: S.s_chon_noi_luu_2965936c, url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
   // Thư mục MP3 của Studio (hộp Xuất) và của menu Thư viện: cùng việc nền, cả bộ thì thêm `extra.series`.
-  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
+  mp3: { copy: MP3_COPY, pick: S.s_chon_noi_luu_2965936c, url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
   audiobook: {
     copy: AUDIOBOOK_COPY,
-    pick: "Chọn nơi lưu",
+    pick: S.s_chon_noi_luu_2965936c,
     url: (id) => `/api/listen/books/${id}/audiobook`,
     cancel: (id) => `/api/listen/books/${id}/audiobook/cancel`,
   },
   // Hộp Xuất của Studio (studio/ExportBook.tsx) bắt đầu và theo việc này khi còn mở; host nhận theo dõi khi hộp bị gỡ giữa chừng (`trackExport`) hay app mở lại lúc máy chủ còn gói.
   projectfile: {
     copy: PROJECT_FILE_COPY,
-    pick: "Chọn nơi lưu",
+    pick: S.s_chon_noi_luu_2965936c,
     url: (id) => `/api/books/${id}/projectfile-job`,
     cancel: (id) => `/api/books/${id}/projectfile-job/cancel`,
   },
@@ -102,7 +103,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
         <span className="block">{label}</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ??
-            (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? "Chưa có audio: file chỉ mang chữ của các chương" : kind === "mp3" ? "Mỗi chương một file." : kind === "m4b" ? "Một file có mục lục." : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
+            (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? S.s_chua_co_audio_file_chi_mang_chu_cua_cac_ch_73b7b3a7 : kind === "mp3" ? S.s_moi_chuong_mot_file_321dcc0b : kind === "m4b" ? S.s_mot_file_co_muc_luc_8ff7b612 : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
         </MotionRegion>
       </span>
     </DropdownMenu.Item>
@@ -110,17 +111,17 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
 }
 
 export function BookFileMenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="bookfile" icon={FileAudio} label="Xuất file sách" />;
+  return <ExportJobMenuItem book={book} kind="bookfile" icon={FileAudio} label={S.s_xuat_file_sach_02b848a2} />;
 }
 
 /** Cả cuốn trong một file `.m4b` có mục lục chương - app sách nói (Apple Books, Smart AudioBook Player...) mở là thấy đủ chương. */
 export function M4bMenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="m4b" icon={BookAudio} label="Xuất M4B" />;
+  return <ExportJobMenuItem book={book} kind="m4b" icon={BookAudio} label={S.s_xuat_m4b_4a708187} />;
 }
 
 /** Thư mục MP3 có tên sách, tên chương, bìa - nghe được bằng mọi trình phát khác. */
 export function Mp3MenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="mp3" icon={FolderDown} label="Xuất MP3" />;
+  return <ExportJobMenuItem book={book} kind="mp3" icon={FolderDown} label={S.s_xuat_mp3_60946614} />;
 }
 
 /** Mở hộp Xuất sách nói (AudiobookDialogHost) cho cuốn này. */
@@ -137,9 +138,9 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
     >
       <Headphones className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
-        <span className="block">Xuất sách nói</span>
+        <span className="block">{S.s_xuat_sach_noi_219fb12a}</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
-          {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
+          {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? S.s_mang_sang_dien_thoai_xe_hoi_trinh_phat_kha_6977689a}
         </MotionRegion>
       </span>
     </DropdownMenu.Item>
@@ -164,7 +165,7 @@ export function ProgressNote({ text, spoken, fraction, label }: { text: string; 
   );
 }
 
-const STOPPING = { title: "Đang dừng…", note: "Phần đã làm được giữ." };
+const STOPPING = { title: S.s_dang_dung_2fb8aa7c, note: S.s_phan_da_lam_duoc_giu_3dfe2e42 };
 /** Lời "Đang dừng…" của kiểu xuất này (M4B: không giữ gì - `ExportCopy.stopping`). */
 const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 
@@ -226,7 +227,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           duration: Infinity,
           action: cancel
             ? {
-                label: "Dừng",
+                label: S.s_dung_11554138,
                 onClick: () => {
                   stopping.current.add(id);
                   exportToast("loading", STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
@@ -252,7 +253,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           hint: view.place,
           duration: 15000,
           // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
-          action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },
+          action: remote ? undefined : { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },
         });
       } else {
         exportToast("error", view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });

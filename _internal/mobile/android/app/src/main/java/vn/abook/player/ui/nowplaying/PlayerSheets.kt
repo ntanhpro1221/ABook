@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.gestureBarPadding
 import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
@@ -81,7 +83,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim, alpha = scrimShown * (1f - drag.value / sheetHeight).coerceIn(0f, 1f)) }
-                .pressable(onClick = window::closeSheet).semantics { contentDescription = "Đóng" })
+                .pressable(onClick = window::closeSheet).semantics { contentDescription = S.s_dong_5d54c2a1 })
         }
         transition.AnimatedVisibility(
             visible = { it }, enter = slideInVertically(tween(MotionMs.SLOW)) { it },
@@ -140,7 +142,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             SleepClock(state.sleep, model.position)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
                                 TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
-                                TextAction("Tắt hẹn giờ", { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart)
+                                TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart)
                             }
                         } else {
                             val now = remember(window.sheetOpen) { System.currentTimeMillis() }
@@ -153,12 +155,12 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         }
                         RowHint(SleepText.gridHeading(active), Modifier.padding(top = Dim.s8))
                         for (row in PlayerLabels.sleepMinutes.chunked(3)) Row(Modifier.fillMaxWidth()) {
-                            for (minutes in row) ChoiceCell("$minutes phút", state.sleep.kind == SleepKind.Minutes && state.sleep.minutes == minutes, Modifier.weight(1f)) {
+                            for (minutes in row) ChoiceCell(S.s_0_phut_2596d212(minutes), state.sleep.kind == SleepKind.Minutes && state.sleep.minutes == minutes, Modifier.weight(1f)) {
                                 window.lastSleepMinutes = minutes
                                 model.setSleep(SleepKind.Minutes, minutes); window.closeSheet()
                             }
                         }
-                        SheetRow("Hết chương này", if (state.sleep.kind == SleepKind.Chapter) "Đang chọn" else "") {
+                        SheetRow(S.s_het_chuong_nay_918907cf, if (state.sleep.kind == SleepKind.Chapter) S.s_dang_chon_ad61dc23 else "") {
                             model.setSleep(SleepKind.Chapter); window.closeSheet()
                         }
                         BasicText(SleepText.note(options, model.hadNight), style = Abook.type.caption.copy(color = Abook.colors.text2),
@@ -172,7 +174,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                 Column(Modifier.fillMaxWidth().pressable { model.jump(chapter.id); window.closeSheet() }
                                     .semantics { selected = current }.padding(vertical = 12.dp)) {
                                     BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
-                                    RowHint(if (current) "Đang nghe" else PlayerLabels.time(chapter.durationMs))
+                                    RowHint(if (current) S.s_dang_nghe_9310d8cf else PlayerLabels.time(chapter.durationMs))
                                     if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
                                         val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
                                         drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * fraction.coerceIn(0f, 1f), size.height))
@@ -183,7 +185,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     }
                     PlayerSheet.More -> {
                         BookProgressLine(state, model)
-                        if (window.otherPlayers != null) SheetRow("Thiết bị phát", "Chọn") {
+                        if (window.otherPlayers != null) SheetRow(S.s_thiet_bi_phat_c8cfc7a8, S.s_chon_1171ca97) {
                             window.closeSheet()
                             window.otherPlayers?.invoke()
                         }
@@ -192,21 +194,21 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             val ui by music.ui.collectAsState()
                             val book = ui.book.takeIf { ui.bookId == state.bookId }
                             Reveal((book != null && book.kind != MusicKind.None) || (ui.failed && ui.bookId == state.bookId)) {
-                                SheetRow("Nhạc nền", MusicText.value(book, ui.menu)) { deeper(PlayerSheet.Music) }
+                                SheetRow(S.s_nhac_nen_271fb292, MusicText.value(book, ui.menu)) { deeper(PlayerSheet.Music) }
                             }
                         }
                         // Dáng chữ chỉ có nghĩa khi có chữ để đọc theo.
-                        if (state.readAlongAvailable) Box(Modifier.semantics { contentDescription = "Cỡ chữ và giãn dòng" }) {
-                            SheetRow("Cỡ chữ", window.look.summary) { deeper(PlayerSheet.Look) }
+                        if (state.readAlongAvailable) Box(Modifier.semantics { contentDescription = S.s_co_chu_va_gian_dong_7dfe48ac }) {
+                            SheetRow(S.s_co_chu_d7b231e3, window.look.summary) { deeper(PlayerSheet.Look) }
                         }
-                        SheetRow("Giọng đọc", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {
+                        SheetRow(S.s_giong_doc_11f2548d, if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) S.s_giong_thu_san_ff3861c7 else S.s_chon_giong_1bc47aed) {
                             deeper(PlayerSheet.Voice)
                         }
                     }
                     PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Look -> LookPage(window)
                     PlayerSheet.Voice -> {
-                        if (state.voices.isEmpty()) BasicText("Máy này chưa có giọng đọc.", style = Abook.type.bodySmall)
+                        if (state.voices.isEmpty()) BasicText(S.s_may_nay_chua_co_giong_doc_3449f846, style = Abook.type.bodySmall)
                         else VoiceList(state, model, window)
                     }
                 } } }
@@ -249,22 +251,22 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                     val playing = sample.playing == voice.id
                     Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f)) {
-                            SheetRow(voice.name, if (voice.id == state.voiceId) "Đang chọn" else "") {
+                            SheetRow(voice.name, if (voice.id == state.voiceId) S.s_dang_chon_ad61dc23 else "") {
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
-                        if (sampling != null) TextAction(if (playing) "Dừng" else "Thử", {
+                        if (sampling != null) TextAction(if (playing) S.s_dung_11554138 else S.s_thu_77e1c0d9, {
                             if (playing) sampling.stopSample() else sampling.play(voice.id)
-                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = (if (playing) "Dừng" else "Thử") + " giọng " + voice.name })
+                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = (if (playing) S.s_dung_11554138 else S.s_thu_77e1c0d9) + S.s_giong_ded5e045 + voice.name })
                     }
                 }
                 item(key = "add-voices") {
-                    if (window.voiceSettings != null) SheetRow("Thêm giọng", "", role = Role.Button) {
+                    if (window.voiceSettings != null) SheetRow(S.s_them_giong_15d3a618, "", role = Role.Button) {
                         window.closeSheet(); window.voiceSettings?.invoke()
                     }
                 }
             }
-            BasicText("Kéo xuống còn giọng khác", Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
+            BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
                 .background(Abook.colors.panel, RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 10.dp, vertical = 2.dp).testTag("voice_more_hint"),
                 style = Abook.type.caption)
         }
@@ -276,8 +278,8 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
 }
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
-    PlayerSheet.Speed -> "Tốc độ đọc"; PlayerSheet.Sleep -> "Hẹn giờ ngủ"; PlayerSheet.Chapters -> "Chương"
-    PlayerSheet.More -> "Thêm tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"; PlayerSheet.Look -> "Cỡ chữ"
+    PlayerSheet.Speed -> S.s_toc_do_doc_3657e59d; PlayerSheet.Sleep -> S.s_hen_gio_ngu_21073488; PlayerSheet.Chapters -> S.s_chuong_2d157977
+    PlayerSheet.More -> S.s_them_tuy_chon_a0b4bb6e; PlayerSheet.Voice -> S.s_giong_doc_11f2548d; PlayerSheet.Music -> S.s_nhac_nen_271fb292; PlayerSheet.Look -> S.s_co_chu_d7b231e3
 }
 
 /** Tấm "Cỡ chữ" (web: ReaderScreen, bảng cỡ chữ và giãn dòng): năm cỡ, ba mức giãn dòng; đổi là thấy ngay ở chữ Đọc theo và được nhớ. */
@@ -285,13 +287,13 @@ private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
 private fun LookPage(window: NowPlayingWindowState) {
     val look = window.look
     Row(Modifier.fillMaxWidth()) {
-        for (size in ReadLook.SIZES) ChoiceCell("$size", size == look.size, Modifier.weight(1f), "Cỡ chữ $size") { window.changeLook(look.sized(size)) }
+        for (size in ReadLook.SIZES) ChoiceCell("$size", size == look.size, Modifier.weight(1f), S.s_co_chu_0_21809038(size)) { window.changeLook(look.sized(size)) }
     }
     // Nhãn của hàng dưới: cách hàng cỡ chữ phía trên rộng hơn cách hàng nó gọi tên (s16 trên, s4 dưới) - không kẹp đều giữa hai hàng (soát điện thoại thật 02-11).
-    RowHint("Giãn dòng", Modifier.padding(top = Dim.s16, bottom = Dim.s4))
+    RowHint(S.s_gian_dong_db0409d5, Modifier.padding(top = Dim.s16, bottom = Dim.s4))
     Row(Modifier.fillMaxWidth()) {
         for (leading in ReadLook.LEADINGS) ChoiceCell(ReadLook.leadingLabel(leading), leading == look.leading, Modifier.weight(1f),
-            "Giãn dòng " + ReadLook.leadingLabel(leading)) { window.changeLook(look.spaced(leading)) }
+            S.s_gian_dong_8c920943 + ReadLook.leadingLabel(leading)) { window.changeLook(look.spaced(leading)) }
     }
 }
 
@@ -323,5 +325,5 @@ private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
     } }
     ClockLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
     if (sleep.kind == SleepKind.Minutes && !sleep.counting)
-        BasicText("Đang tạm dừng - đồng hồ cũng dừng.", style = Abook.type.caption)
+        BasicText(S.s_dang_tam_dung_dong_ho_cung_dung_474889f9, style = Abook.type.caption)
 }

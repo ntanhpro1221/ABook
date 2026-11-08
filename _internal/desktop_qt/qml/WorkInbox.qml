@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -103,13 +104,13 @@ FocusScope {
             y: 24
             shape: "rows"
             count: 4
-            label: "Đang tải việc duyệt"
+            label: S.s_dang_tai_viec_duyet_f68f3839
         }
         InlineError {
             objectName: "workError"
             width: parent.width
             open: root.query !== null && root.query.error !== null && root.query.data === null
-            message: "Bạn hãy kiểm tra kết nối rồi tải lại việc cần duyệt."
+            message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_viec_718b2054
             onRetry: root.query.load()
         }
         EmptyState {
@@ -119,8 +120,8 @@ FocusScope {
             topPadding: 40
             bottomPadding: 40
             icon: "audio-lines"
-            title: "Không còn việc duyệt"
-            text: "Máy chắc chắn về mọi thứ đã làm tới giờ."
+            title: S.s_khong_con_viec_duyet_21f808a7
+            text: S.s_may_chac_chan_ve_moi_thu_da_lam_toi_gio_15f0b56b
         }
         Column {
             id: content
@@ -162,7 +163,7 @@ FocusScope {
                         y: 16 + 12
                         size: "sm"
                         kind: "ghost"
-                        text: "Mở màn duyệt"
+                        text: S.s_mo_man_duyet_5d7f194c
                         onClicked: root.openPrecast()
                     }
                 }
@@ -171,7 +172,7 @@ FocusScope {
             ChoiceRow {
                 objectName: "workFilter"
                 width: parent.width
-                label: "Loại việc"
+                label: S.s_loai_viec_19d758cd
                 value: root.group.active
                 options: W.filterOptions(root.group)
                 onPicked: value => { root.kind = value; root.shown = W.PAGE; root.cursor = -1; root.kindChosen(value) }
@@ -185,11 +186,11 @@ FocusScope {
                 spacing: 6
                 LookKbd { text: "J" }
                 LookKbd { text: "K" }
-                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn thẻ\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: S.s_chon_the_u00a0_d1e08dae; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                 LookKbd { text: "1–9" }
-                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn đáp án\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
-                LookKbd { text: "Esc" }
-                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "bỏ chọn"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: S.s_chon_dap_an_u00a0_e8ed3999; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                LookKbd { text: S.s_esc_52f878ed }
+                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: S.s_bo_chon_55fb72e9; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
             }
             Item { width: 1; height: 12 }
             WorkCards {
@@ -215,7 +216,7 @@ FocusScope {
                         y: 16
                         size: "sm"
                         kind: "ghost"
-                        text: "Xem thêm " + Math.min(W.PAGE, root.group.filtered.length - root.shown) + " việc"
+                        text: S.s_xem_them_58c3f515 + Math.min(W.PAGE, root.group.filtered.length - root.shown) + S.s_viec_1c50ca93
                         onClicked: root.shown += W.PAGE
                     }
                 }
@@ -254,11 +255,11 @@ FocusScope {
                 objectName: "workLater"
                 present: root.group.later.length > 0
                 gap: 16
-                title: "Chờ phân tích lại"
+                title: S.s_cho_phan_tich_lai_8038a2ac
                 Text {
                     width: Math.min(parent.width, 768)
                     topPadding: 8
-                    text: "Chỉ áp khi phân tích lại; không chặn sách chạy tiếp."
+                    text: S.s_chi_ap_khi_phan_tich_lai_khong_chan_sach_c_56e246b0
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
@@ -279,7 +280,7 @@ FocusScope {
                 objectName: "workRedo"
                 present: root.group.redo.length > 0
                 gap: 16
-                title: "Đã ghi"
+                title: S.s_da_ghi_6fd13e0b
                 WorkCards {
                     objectName: "studioRows"
                     width: parent.width

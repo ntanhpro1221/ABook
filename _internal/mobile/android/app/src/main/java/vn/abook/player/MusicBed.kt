@@ -71,7 +71,7 @@ object MusicBed {
     private const val LOOP_SETTLE = false
     private const val PREFS = "music_bed"
     /** Giọng của người nghe, không phải lỗi: nhạc nền chờ Wi-Fi (không tự tải bài nhạc lớn bằng dữ liệu di động). */
-    private const val METERED_NOTICE = "Nhạc chờ Wi-Fi — bạn chọn bài ở nút Nhạc nền để tải ngay qua mạng di động."
+    private const val METERED_NOTICE = S.s_nhac_cho_wi_fi_ban_chon_bai_o_nut_nhac_nen_37365b66
     private const val AUTO_KEY = "auto-scene-music"
     private const val SEAM_P3_KEY = "music-seam-p3"
     /** Nhạc theo cảnh dựng nền: chương chưa xong thì [SceneDevice] giữ lời hỏi tới BUILD_WAIT_MS rồi trả `pending`, nên hỏi lại không cần thưa - [SCENE_FAST_POLLS] lần đầu
@@ -227,12 +227,12 @@ object MusicBed {
             return block()
         } finally {
             val spent = SystemClock.elapsedRealtime() - began
-            if (spent > SLOW_STEP_MS) AppLog.i(TAG, "$step chậm: $spent ms")
+            if (spent > SLOW_STEP_MS) AppLog.i(TAG, S.s_0_cham_1_ms_578dd865(step, spent))
         }
     }
 
     /** Nhả trình phát của [bed] trên luồng chính (luồng tạo ra nó), gỡ listener trước. */
-    private fun release(bed: Bed) = timed("nhả trình phát nhạc") {
+    private fun release(bed: Bed) = timed(S.s_nha_trinh_phat_nhac_ec04f4cd) {
         bed.released = true
         bed.listeners.forEach(bed.player::removeListener)
         bed.listeners.clear()
@@ -639,12 +639,12 @@ object MusicBed {
     private fun demote(appContext: Context, bed: Bed, reason: DemoteReason, reject: Boolean) {
         val built = bed.built ?: return
         val why = when (reason) {
-            DemoteReason.LATE -> "Nối chưa dựng kịp trước loopEnd"
-            DemoteReason.FAIL -> "dựng Nối lỗi"
-            DemoteReason.SEEK -> "tua tới chỗ Nối chưa dựng xong"
-            DemoteReason.ERROR -> "lỗi phát"
+            DemoteReason.LATE -> S.s_noi_chua_dung_kip_truoc_loopend_5ee13229
+            DemoteReason.FAIL -> S.s_dung_noi_loi_91ba0dc7
+            DemoteReason.SEEK -> S.s_tua_toi_cho_noi_chua_dung_xong_f3e798fe
+            DemoteReason.ERROR -> S.s_loi_phat_1946da6c
         }
-        AppLog.w(TAG, "đường P3 rơi về a87: $why (${built.key})")
+        AppLog.w(TAG, S.s_duong_p3_roi_ve_a87_0_1_efd0a459(why, built.key))
         emit { SeamEvents.demote(bed.testK, reason) }
         if (reject) seamPicker.reject(built, why)
         val cue = bed.cue
@@ -718,12 +718,12 @@ object MusicBed {
         // Bài a87 mở vào giữa vòng mà Nối giờ đã dựng xong: bản tạo sẵn là trình phát P3 đứng ở đầu Nối (đón ranh lặp này, [promoteTo]).
         val later = p3Pending(owner, cue)
         if (later != null) {
-            return timed("lặp mờ chéo: tạo sẵn trình phát P3") {
+            return timed(S.s_lap_mo_cheo_tao_san_trinh_phat_p3_df410437) {
                 open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, standby = true, built = later, forced = SeamClock.Target(1, 0))
             }
         }
         val startAt = frameAligned(owner.player, snap.bounds.loopStart)
-        return timed("lặp mờ chéo: tạo sẵn trình phát") {
+        return timed(S.s_lap_mo_cheo_tao_san_trinh_phat_3a5ea607) {
             open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, startAt, Handoff(owner, snap.bounds), standby = true)
         }.also { it.at = startAt }
     }
@@ -758,7 +758,7 @@ object MusicBed {
             if (playing) ready.player.play()
             ready
         } else {
-            timed("lặp mờ chéo: mở trình phát mới") { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt, Handoff(bed, bounds)) }
+            timed(S.s_lap_mo_cheo_mo_trinh_phat_moi_0dea769f) { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt, Handoff(bed, bounds)) }
         }
         current = next.also {
             it.early = bed.early
@@ -785,7 +785,7 @@ object MusicBed {
     /** Lần chuyển hỏng / không kịp: nhả P3, a87 vào bản lặp mờ chéo của nó như khi không có Nối (ranh lặp này vẫn đang tới hạn). */
     private fun abortHandover(reason: DemoteReason) {
         val h = handover ?: return
-        AppLog.w(TAG, "chuyển a87 sang P3 không kịp / hỏng (${reason.word}), a87 lặp mờ chéo")
+        AppLog.w(TAG, S.s_chuyen_a87_sang_p3_khong_kip_hong_0_a87_la_e85dcd47(reason.word))
         emit { SeamEvents.demote(h.p3.testK, reason) }
         cancelHandover()
         loopHandoff.check()
@@ -801,7 +801,7 @@ object MusicBed {
         val built = ready.built ?: return false
         if (!playing) return false
         if (SeamHandover.target(built.seam, snap.position, p3LagMs) == null) {
-            AppLog.w(TAG, "chuyển a87 sang P3 không kịp: a87 sát hết Nối")
+            AppLog.w(TAG, S.s_chuyen_a87_sang_p3_khong_kip_a87_sat_het_n_196f4b4b)
             emit { SeamEvents.demote(ready.testK, DemoteReason.LATE) }
             return false
         }
@@ -1544,23 +1544,23 @@ object MusicBed {
             // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
             // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
             override fun onPlayerError(error: PlaybackException) {
-                AppLog.w(TAG, "nhạc nền: lỗi phát ${error.errorCodeName}", error)
+                AppLog.w(TAG, S.s_nhac_nen_loi_phat_0_304a603e(error.errorCodeName), error)
                 main.post {
                     if (bed.released) return@post // đã nhả (bản tạo sẵn bị bỏ, bài mờ xong): lỗi muộn không tính là bài hỏng
                     if (bed.built != null && handover?.p3 === bed) { // P3 hỏng khi đang khởi động câm: bỏ Nối này, a87 lặp mờ chéo
-                        seamPicker.reject(bed.built!!, "lỗi phát ${error.errorCodeName}")
+                        seamPicker.reject(bed.built!!, S.s_loi_phat_0_9eec8a78(error.errorCodeName))
                         abortHandover(DemoteReason.ERROR)
                         return@post
                     }
                     if (loopHandoff.prepared() === bed && bed.built != null) { // bản P3 tạo sẵn hỏng trước khi dùng: bỏ Nối này, bài ở lại a87
-                        seamPicker.reject(bed.built!!, "lỗi phát ${error.errorCodeName}")
+                        seamPicker.reject(bed.built!!, S.s_loi_phat_0_9eec8a78(error.errorCodeName))
                         loopHandoff.discardReady()
                         return@post
                     }
                     if (bed.built != null) {
                         // Đường P3 hỏng giữa chừng (Nối / Clip không phát được): bỏ Nối này cả phiên, bài phát tiếp bằng a87 ở chỗ giọng đang tới - không im lặng, không văng.
                         if (current === bed) demote(appContext, bed, DemoteReason.ERROR, reject = true)
-                        else { seamPicker.reject(bed.built!!, "lỗi phát ${error.errorCodeName}"); release(bed); fading.removeAll { it === bed } }
+                        else { seamPicker.reject(bed.built!!, S.s_loi_phat_0_9eec8a78(error.errorCodeName)); release(bed); fading.removeAll { it === bed } }
                         return@post
                     }
                     if (loopHandoff.prepared() === bed) { // bản lặp tạo sẵn hỏng trước khi dùng: bỏ êm, tới hạn mở mới

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -78,8 +79,8 @@ Interactive {
             // Sách chỉ có chữ vẫn nghe được bằng giọng đọc của máy; máy chưa có giọng nào thì nút mở trang đọc.
             readonly property bool textOnly: root.book.stage === "text" && Api.voiceList.length === 0
             icon: textOnly ? "book-open" : here && Player.playing ? "pause" : "play"
-            tip: textOnly ? `Đọc ${root.title}` : here && Player.playing ? `Tạm dừng ${root.title}`
-                : root.book.stage === "text" ? `Nghe ngay ${root.title}` : `Nghe ${root.title}`
+            tip: textOnly ? S.s_doc_0_2e6ee219(root.title) : here && Player.playing ? S.s_tam_dung_0_43ccbbf2(root.title)
+                : root.book.stage === "text" ? S.s_nghe_ngay_0_95114fdc(root.title) : S.s_nghe_0_42d1e966(root.title)
             opacity: root.playVisible && (root.hovered || root.externalFocus || play.activeFocus || here) ? 1 : 0
             visible: opacity > 0
             enabled: root.playVisible
@@ -124,12 +125,12 @@ Interactive {
         x: 18
         y: subtitleText.y + (subtitleText.visible ? subtitleText.implicitHeight + 4 : 0)
         width: root.coverWidth - x
-        text: root.remoteSeries ? "Có sách trên máy khác" : "Trên " + root.source
+        text: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
         color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
     }
     Icon {
         x: 0; y: sourceText.y + 2; size: 12; name: "laptop"; color: Theme.text3
         visible: sourceText.visible
-        Accessible.name: root.remoteSeries ? "Có sách trên máy khác" : "Trên " + root.source
+        Accessible.name: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
     }
 }

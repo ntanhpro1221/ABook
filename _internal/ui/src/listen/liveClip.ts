@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { ReadAloudError, type ReadAloudClip } from "./readAloud";
 import type { WordSpan } from "./words";
 
@@ -153,7 +154,7 @@ const spans = (value: unknown): WordSpan[] => (Array.isArray(value) ? (value as 
  *  máy chủ trả sang địa chỉ dùng được (mã phiên). `signal`: bộ máy bỏ lượt này (giọng trên máy, [ClipOptions.signal]) - đứt vì nó là lý do "cancelled", không phải mất kết nối. */
 export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (path: string) => string, signal?: AbortSignal): Promise<ReadAloudClip> {
   const lost = () =>
-    signal?.aborted ? new ReadAloudError("Đã bỏ đoạn này.", "cancelled") : new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service");
+    signal?.aborted ? new ReadAloudError(S.s_da_bo_doan_nay_93f891ed, "cancelled") : new ReadAloudError(S.s_mat_ket_noi_voi_giong_doc_giua_chung_c290002d, "service");
   if (!body) return Promise.reject(lost());
   const reader = body.getReader();
   const records = new RecordReader();
@@ -189,7 +190,7 @@ export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (
         live.cut(Number(json(record.body).word));
       } else if (record.kind === "X") {
         const failure = json(record.body);
-        throw new ReadAloudError(String(failure.message || "Giọng đọc không phản hồi."), String(failure.reason || "service"));
+        throw new ReadAloudError(String(failure.message || S.s_giong_doc_khong_phan_hoi_d369f446), String(failure.reason || "service"));
       }
     };
     const fail = (error: unknown) => {

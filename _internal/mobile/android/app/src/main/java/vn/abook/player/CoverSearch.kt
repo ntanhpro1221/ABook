@@ -39,9 +39,9 @@ object CoverSearch {
     const val DOWNLOAD_DEADLINE_SECONDS = 30
 
     /** Lời báo khi tải ảnh hỏng: chi tiết (HTTP 503, ...) không lên màn hình - như DOWNLOAD_FAILED của máy tính. */
-    const val DOWNLOAD_FAILED = "Chưa tải được ảnh này, bạn thử lại hoặc chọn ảnh khác"
-    const val REFUSAL = "Chỉ lấy ảnh từ iTunes, Open Library hoặc Google Books"
-    private const val USER_AGENT = "ABook/1 (cover search)"
+    const val DOWNLOAD_FAILED = S.s_chua_tai_duoc_anh_nay_ban_thu_lai_hoac_cho_69a17144
+    const val REFUSAL = S.s_chi_lay_anh_tu_itunes_open_library_hoac_go_78755b83
+    private const val USER_AGENT = S.s_abook_1_cover_search_0efca08c
     private const val QUERY_MAX = 120
     private const val RESULTS_MAX = 30
     private const val JSON_MAX_BYTES = 4 * 1024 * 1024
@@ -112,7 +112,7 @@ object CoverSearch {
             val coverId = doc.opt("cover_i")
             if (!BookEdits.truthy(coverId)) continue
             val authors = doc.opt("author_name").let { list -> if (list is JSONArray) (0 until list.length()).map { list.get(it) as String } else emptyList() }
-            found += entry("Open Library", firstTruthy(doc.opt("title")), BookEdits.cut(authors.joinToString(", "), 80),
+            found += entry(S.s_open_library_11e9037f, firstTruthy(doc.opt("title")), BookEdits.cut(authors.joinToString(", "), 80),
                 "https://covers.openlibrary.org/b/id/${BookEdits.pyStr(coverId)}-M.jpg", "https://covers.openlibrary.org/b/id/${BookEdits.pyStr(coverId)}-L.jpg")
         }
         return found
@@ -127,7 +127,7 @@ object CoverSearch {
             val thumb = BookEdits.pyText(firstTruthy(links.opt("thumbnail"), links.opt("smallThumbnail"))).replace("http://", "https://")
             if (thumb.isEmpty()) continue
             val authors = info.opt("authors").let { list -> if (list is JSONArray) (0 until list.length()).map { list.get(it) as String } else emptyList() }
-            found += entry("Google Books", firstTruthy(info.opt("title")), BookEdits.cut(authors.joinToString(", "), 80), thumb,
+            found += entry(S.s_google_books_8a341a41, firstTruthy(info.opt("title")), BookEdits.cut(authors.joinToString(", "), 80), thumb,
                 // zoom=0 xin ảnh lớn nhất Google có cho cuốn ấy (có khi vẫn nhỏ)
                 Regex("""([?&])zoom=\d""").replace(thumb, "$1zoom=0").replace("&edge=curl", ""))
         }
@@ -216,7 +216,7 @@ object CoverSearch {
             // Chi tiết (HTTP 503, ...) không lên màn hình; điện thoại không có nhật ký riêng để ghi.
             throw CoverCodec.CoverError(DOWNLOAD_FAILED)
         }
-        if (data.size > Covers.MAX_UPLOAD_BYTES) throw CoverCodec.CoverError("Ảnh quá lớn")
+        if (data.size > Covers.MAX_UPLOAD_BYTES) throw CoverCodec.CoverError(S.s_anh_qua_lon_3f3b1d15)
         return data
     }
 
@@ -237,9 +237,9 @@ object CoverSearch {
                     connection.setRequestProperty("User-Agent", USER_AGENT)
                     val code = connection.responseCode
                     if (code in listOf(301, 302, 303, 307, 308)) {
-                        val next = connection.getHeaderField("Location") ?: throw IOException("HTTP $code không có nơi chuyển tới")
+                        val next = connection.getHeaderField("Location") ?: throw IOException(S.s_http_0_khong_co_noi_chuyen_toi_f6ae75eb(code))
                         url = URL(URL(url), next).toString()
-                        if (!url.startsWith("https://", ignoreCase = true)) throw IOException("bị chuyển sang địa chỉ không an toàn")
+                        if (!url.startsWith("https://", ignoreCase = true)) throw IOException(S.s_bi_chuyen_sang_dia_chi_khong_an_toan_f9f2b559)
                         return@repeat
                     }
                     if (code >= 400) throw IOException("HTTP $code")
@@ -248,7 +248,7 @@ object CoverSearch {
                     connection.disconnect()
                 }
             }
-            throw IOException("chuyển hướng quá nhiều lần")
+            throw IOException(S.s_chuyen_huong_qua_nhieu_lan_1c09e8cb)
         }
 
         /** `response.read(limit)`: đọc tối đa `limit` byte (đủ để thấy ảnh vượt trần mà không nạp cả file khổng lồ); nguồn nhỏ giọt quá hạn thì bỏ. */
@@ -256,7 +256,7 @@ object CoverSearch {
             val out = ByteArrayOutputStream()
             val buffer = ByteArray(16 * 1024)
             while (out.size() < limit) {
-                if (System.nanoTime() - deadline > 0) throw IOException("quá hạn đọc")
+                if (System.nanoTime() - deadline > 0) throw IOException(S.s_qua_han_doc_84f327ed)
                 val read = input.read(buffer, 0, minOf(buffer.size, limit - out.size()))
                 if (read < 0) break
                 out.write(buffer, 0, read)

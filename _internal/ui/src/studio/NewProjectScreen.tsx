@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { DisclosureRow } from "@/shared/DisclosureRow";
@@ -90,24 +91,24 @@ import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
 const PROFILES: { value: Profile; title: string; pace: string; summary: string; points: string[] }[] = [
   {
     value: "fast",
-    title: "Nhanh",
-    pace: "Nhanh nhất",
-    summary: "Nghe thử một truyện mới, hoặc cần gấp.",
-    points: ["Máy hiểu truyện theo từng đoạn dài một lần - nhanh hơn", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 1 lần nếu câu bị đọc sai"],
+    title: S.s_nhanh_c2385879,
+    pace: S.s_nhanh_nhat_3e80ad74,
+    summary: S.s_nghe_thu_mot_truyen_moi_hoac_can_gap_7595a3d8,
+    points: [S.s_may_hieu_truyen_theo_tung_doan_dai_mot_lan_e6cda2fb, S.s_soat_co_ban_sau_khi_doc_2e51d472, S.s_doc_lai_toi_da_1_lan_neu_cau_bi_doc_sai_82e58722],
   },
   {
     value: "balanced",
-    title: "Cân bằng",
-    pace: "Vừa phải",
-    summary: "Nghe hằng ngày, chấp nhận vài câu chưa hoàn hảo.",
-    points: ["Phân tích truyện đầy đủ", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 2 lần nếu câu bị đọc sai"],
+    title: S.s_can_bang_8b88211d,
+    pace: S.s_vua_phai_8c671657,
+    summary: S.s_nghe_hang_ngay_chap_nhan_vai_cau_chua_hoan_2bc0c77a,
+    points: [S.s_phan_tich_truyen_day_du_7d2d439e, S.s_soat_co_ban_sau_khi_doc_2e51d472, S.s_doc_lai_toi_da_2_lan_neu_cau_bi_doc_sai_4d15b713],
   },
   {
     value: "high_quality",
-    title: "Chất lượng cao",
-    pace: "Chậm nhất, kỹ nhất",
-    summary: "Sách nghe lại nhiều lần hoặc để chia sẻ.",
-    points: ["Rà lại cảm xúc từng câu một lần nữa", "Nghe lại mọi câu, soát kỹ từng chữ", "Đọc lại tới 5 lần nếu câu bị đọc sai"],
+    title: S.s_chat_luong_cao_dc7017a7,
+    pace: S.s_cham_nhat_ky_nhat_ff0d4141,
+    summary: S.s_sach_nghe_lai_nhieu_lan_hoac_de_chia_se_c35352d9,
+    points: [S.s_ra_lai_cam_xuc_tung_cau_mot_lan_nua_5d40fd1d, S.s_nghe_lai_moi_cau_soat_ky_tung_chu_88b14719, S.s_doc_lai_toi_5_lan_neu_cau_bi_doc_sai_df336644],
   },
 ];
 const PROFILE_VALUES = PROFILES.map((option) => option.value);
@@ -296,20 +297,20 @@ export function SourceStep({
     const plan = planUpload(picked, batchName(new Date(), Math.random().toString(36).slice(2, 6)));
     const notice = planNotice(plan);
     if (!plan.groups.length) {
-      toast.error("Không có file truyện nào để gửi", {
-        description: notice ?? "Chọn các file .txt (mỗi file một chương) hay một file .epub / .docx / .pdf.",
+      toast.error(S.s_khong_co_file_truyen_nao_de_gui_d7431246, {
+        description: notice ?? S.s_chon_cac_file_txt_moi_file_mot_chuong_hay_ab6662ed,
       });
       return;
     }
-    if (notice) toast.warning("Có file không gửi", { description: notice });
+    if (notice) toast.warning(S.s_co_file_khong_gui_2d8a5d11, { description: notice });
     const controller = new AbortController();
     sending.current = controller;
     try {
       const result = await sendPlan(plan, setUploading, controller.signal);
       // File đã tới máy tính thì giữ (huỷ hay hỏng giữa chừng cũng vậy): người dùng làm tiếp được, và nói rõ đã gửi bao nhiêu.
       if (result.paths.length) (append ? onAddFiles : onPaths)(result.paths);
-      if (result.error) toast.error("Không gửi hết các chương", { description: `${result.error.message} ${sendSummary(result)}` });
-      else if (result.cancelled) toast(result.sent ? `Đã dừng gửi - ${sendSummary(result)}` : "Đã huỷ gửi");
+      if (result.error) toast.error(S.s_khong_gui_het_cac_chuong_eda12b69, { description: `${result.error.message} ${sendSummary(result)}` });
+      else if (result.cancelled) toast(result.sent ? S.s_da_dung_gui_0_f0b1325f(sendSummary(result)) : S.s_da_huy_gui_d2e596a4);
     } finally {
       sending.current = null;
       setStopping(false);
@@ -322,14 +323,14 @@ export function SourceStep({
   };
   const percent = uploading?.totalBytes ? Math.round((uploading.bytes / uploading.totalBytes) * 100) : 0;
   const chooseFolder = async () => {
-    const path = await pickFolder("Chọn thư mục chứa các chương TXT").catch((error: Error) => {
+    const path = await pickFolder(S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58).catch((error: Error) => {
       toast.error(error.message);
       return null;
     });
     if (path) onPaths([path]);
   };
   const chooseFiles = async (append: boolean) => {
-    const chosen = await pickFiles("Chọn các chương TXT hay một file sách (EPUB, DOCX, PDF)").catch((error: Error) => {
+    const chosen = await pickFiles(S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8).catch((error: Error) => {
       toast.error(error.message);
       return [];
     });
@@ -395,12 +396,12 @@ export function SourceStep({
           />
         </>
       )}
-      <SectionHeading>Nguồn truyện</SectionHeading>
-      <p className="mt-1 text-sm text-fg-2">Chọn TXT, EPUB, Word hoặc PDF có chữ.</p>
-      <Fold storageKey="new-project.formats" title="Định dạng" className="mt-3" heading="h3"><ul className="list-disc space-y-1 pl-5 text-sm text-fg-2">
-        <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
-        <li>EPUB, Word, PDF (có chữ): chọn thẳng, máy tự tách chương.</li>
-        <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
+      <SectionHeading>{S.s_nguon_truyen_ddecd9bb}</SectionHeading>
+      <p className="mt-1 text-sm text-fg-2">{S.s_chon_txt_epub_word_hoac_pdf_co_chu_5e38434f}</p>
+      <Fold storageKey="new-project.formats" title={S.s_dinh_dang_36b746b6} className="mt-3" heading="h3"><ul className="list-disc space-y-1 pl-5 text-sm text-fg-2">
+        <li>{S.s_moi_file_txt_la_mot_chuong_xep_theo_ten_fi_50c79061}</li>
+        <li>{S.s_epub_word_pdf_co_chu_chon_thang_may_tu_tac_6fe43d31}</li>
+        <li>{S.s_ca_truyen_nam_trong_mot_file_txt_thi_may_g_67a7c9cb}</li>
       </ul></Fold>
       {!files.length ? (
         <div
@@ -424,7 +425,7 @@ export function SourceStep({
             setDragging(false);
             pickedFromDrop(event.dataTransfer).then(
               (picked) => upload(picked, false),
-              (error: Error) => toast.error("Chưa đọc được các file vừa thả", { description: error.message }),
+              (error: Error) => toast.error(S.s_chua_doc_duoc_cac_file_vua_tha_a0eba75e, { description: error.message }),
             );
           }}
         >
@@ -433,27 +434,23 @@ export function SourceStep({
           </div>
           <p className="mt-4 font-medium">
             {scanning
-              ? "Đang đọc các chương"
+              ? S.s_dang_doc_cac_chuong_ec75d38e
               : browser
                 ? folderPick
-                  ? "Chọn hay kéo thả vào đây các chương của truyện"
-                  : "Gửi các chương từ máy này"
-                : "Chọn hay kéo thả vào đây thư mục truyện, hay một file EPUB, DOCX, PDF"}
+                  ? S.s_chon_hay_keo_tha_vao_day_cac_chuong_cua_tr_77883a5f
+                  : S.s_gui_cac_chuong_tu_may_nay_ac7786f4
+                : S.s_chon_hay_keo_tha_vao_day_thu_muc_truyen_ha_978b59fe}
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {browser
-              ? `Các file .txt${folderPick ? " hay cả thư mục" : ""}, hoặc một file .epub / .docx / .pdf, tới ${UPLOAD_LIMIT / 2 ** 20} MB mỗi file.`
-              : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
+              ? S.s_cac_file_txt_0_hoac_mot_file_epub_docx_pdf_3bd70a5b(folderPick ? S.s_hay_ca_thu_muc_b71bcc1b : "", UPLOAD_LIMIT / 2 ** 20)
+              : S.s_chi_lay_file_nam_ngay_trong_thu_muc_khong_29e37f3e}
           </p>
           {browser && (
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <Button variant="primary" icon={Upload} disabled={Boolean(uploading)} onClick={() => browse(filesInput.current, false)}>
-                Chọn file
-              </Button>
+              <Button variant="primary" icon={Upload} disabled={Boolean(uploading)} onClick={() => browse(filesInput.current, false)}>{S.s_chon_file_f43fd47b}</Button>
               {folderPick && (
-                <Button icon={Folder} disabled={Boolean(uploading)} onClick={() => browse(folderInput.current, false)}>
-                  Chọn thư mục
-                </Button>
+                <Button icon={Folder} disabled={Boolean(uploading)} onClick={() => browse(folderInput.current, false)}>{S.s_chon_thu_muc_1fe47e38}</Button>
               )}
             </div>
           )}
@@ -461,7 +458,7 @@ export function SourceStep({
             <div className="mx-auto mt-4 max-w-xs" role="status">
               <div
                 role="progressbar"
-                aria-label="Đang gửi các chương"
+                aria-label={S.s_dang_gui_cac_chuong_d7b47553}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={percent}
@@ -470,21 +467,17 @@ export function SourceStep({
                 <div className="motion-progress h-full rounded-full bg-accent" style={{ transform: `scaleX(${percent / 100})` }} />
               </div>
               <p className="tabular mt-1.5 text-xs text-fg-2">
-                <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
+                <LiveText shown={progressLabel(uploading)} spoken={spokenProgress(S.s_dang_gui_cac_chuong_d7b47553, uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
               <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                {stopping ? "Đang dừng" : "Huỷ gửi"}
+                {stopping ? S.s_dang_dung_9b35aeb5 : S.s_huy_gui_4d53a582}
               </Button>
             </div>
           )}
           {info?.dialogs && (
             <div className="mt-6 flex justify-center gap-2">
-              <Button variant="primary" icon={Folder} onClick={() => void chooseFolder()}>
-                Chọn thư mục
-              </Button>
-              <Button icon={FileText} onClick={() => void chooseFiles(false)}>
-                Chọn từng file
-              </Button>
+              <Button variant="primary" icon={Folder} onClick={() => void chooseFolder()}>{S.s_chon_thu_muc_1fe47e38}</Button>
+              <Button icon={FileText} onClick={() => void chooseFiles(false)}>{S.s_chon_tung_file_c6f96077}</Button>
             </div>
           )}
           {info?.remote ? null : browser && !advanced ? (
@@ -495,9 +488,7 @@ export function SourceStep({
               aria-expanded={false}
               onClick={() => setAdvanced(true)}
               className="mt-5 text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
-            >
-              Dán đường dẫn
-            </button>
+            >{S.s_dan_duong_dan_2ae49bc1}</button>
           ) : (
             <>
               <form
@@ -511,20 +502,18 @@ export function SourceStep({
                 <input
                   value={typed}
                   onChange={(event) => setTyped(event.target.value)}
-                  aria-label="Đường dẫn thư mục"
+                  aria-label={S.s_duong_dan_thu_muc_d8f9678b}
                   aria-invalid={Boolean(problem)}
                   aria-describedby={problem ? "source-problem" : undefined}
-                  placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
+                  placeholder={info?.dialogs ? S.s_hoac_dan_duong_dan_bb4837f7 : S.s_dan_duong_dan_thu_muc_hay_file_40ebc3a2}
                   className={cn(
                     "h-10 min-w-0 flex-1 rounded-control border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus",
                     problem ? "border-danger" : "border-line",
                   )}
                 />
-                <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || scanning}>
-                  Lấy chương
-                </Button>
+                <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || scanning}>{S.s_lay_chuong_8869b554}</Button>
               </form>
-              {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">Ví dụ: D:\Truyện\Tên truyện</p>}
+              {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">{S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8}</p>}
             </>
           )}
           {problem && (
@@ -532,7 +521,7 @@ export function SourceStep({
               {problem.text}
               {problem.subfolders.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  <div className="text-fg-2">Có lẽ nên chọn thư mục con:</div>
+                  <div className="text-fg-2">{S.s_co_le_nen_chon_thu_muc_con_b36394ab}</div>
                   {problem.subfolders.length > 1 && (
                     // Light novel ra từng tập, mỗi tập một thư mục: chọn cả bộ một lần; bước sau ĐỀ XUẤT chia tập, người dùng bấm mới chia.
                     <button
@@ -541,7 +530,7 @@ export function SourceStep({
                       className="flex min-h-10 w-full items-center gap-2 py-2 text-left font-medium text-accent-text hover:bg-hover"
                     >
                       <Layers className="size-4 shrink-0 text-accent-text" />
-                      <span className="min-w-0">Chọn {problem.subfolders.length} tập</span>
+                      <span className="min-w-0">{S.s_chon_345d435d}{problem.subfolders.length}{S.s_tap_269b0b3d}</span>
                     </button>
                   )}
                   {problem.subfolders.slice(0, 8).map((folder) => (
@@ -560,7 +549,7 @@ export function SourceStep({
                     </button>
                   ))}
                   {problem.subfolders.length > 8 && (
-                    <div className="text-fg-2">…và {problem.subfolders.length - 8} thư mục nữa (đều nằm trong “Dùng cả” ở trên).</div>
+                    <div className="text-fg-2">{S.s_va_6e638075}{problem.subfolders.length - 8}{S.s_thu_muc_nua_deu_nam_trong_dung_ca_o_tren_ea2063d1}</div>
                   )}
                 </div>
               )}
@@ -570,7 +559,7 @@ export function SourceStep({
       ) : (
         <>
           <label className="mt-6 block">
-            <span className="text-sm font-medium">Tên sách</span>
+            <span className="text-sm font-medium">{S.s_ten_sach_d54846eb}</span>
             <input
               value={title}
               onChange={(event) => onTitle(event.target.value)}
@@ -580,41 +569,36 @@ export function SourceStep({
                 "mt-1.5 h-11 w-full rounded-cover border bg-panel px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus",
                 title.trim() ? "border-line" : "border-danger",
               )}
-              placeholder="Tên hiển thị trong thư viện"
+              placeholder={S.s_ten_hien_thi_trong_thu_vien_c48c7ac6}
             />
             {!title.trim() && (
-              <span id="title-problem" role="alert" className="mt-1 block text-[0.8125rem] text-danger">
-                Sách cần có tên để hiện trong thư viện.
-              </span>
+              <span id="title-problem" role="alert" className="mt-1 block text-[0.8125rem] text-danger">{S.s_sach_can_co_ten_de_hien_trong_thu_vien_49495e92}</span>
             )}
           </label>
           {replaces && (
             <div className="mt-4 flex gap-3 py-4 text-sm">
               <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
-                {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
-                <span className="font-semibold">“{replaces.title}”</span>: đã điền thiết lập cũ; tạo xong sẽ đưa bản cũ vào Thùng rác.
-              </p>
+                {replaces.restart ? S.s_dang_lam_lai_phan_tich_cua_a4a97a79 : S.s_dang_sua_thiet_lap_cua_e2a5f0e6}
+                <span className="font-semibold">“{replaces.title}”</span>{S.s_da_dien_thiet_lap_cu_tao_xong_se_dua_ban_c_1adb5eb8}</p>
             </div>
           )}
           {scan?.existing && scan.existing.some((project) => project.id !== replaces?.id) && (
             <div className="mt-4 flex gap-3 py-4 text-sm">
               <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <div className="min-w-0">
-                <p className="font-semibold">Truyện này đã có dự án</p>
+                <p className="font-semibold">{S.s_truyen_nay_da_co_du_an_07223685}</p>
                 <ul className="mt-1 space-y-1">
                   {scan.existing.filter((project) => project.id !== replaces?.id).map((project) => (
                     <li key={project.id} className="flex flex-wrap items-baseline gap-x-2">
                       <span className="min-w-0 break-words">
-                        “{project.title}” · {project.shared === project.chapters ? `cả ${project.chapters} chương` : `trùng ${project.shared}/${project.chapters} chương`} · {project.statusLabel}
+                        “{project.title}” · {project.shared === project.chapters ? S.s_ca_0_chuong_f8291b8f(project.chapters) : S.s_trung_0_1_chuong_25d29e17(project.shared, project.chapters)} · {project.statusLabel}
                       </span>
-                      <Link to={`/studio/${project.id}`} className="touch-reach font-medium text-accent-text hover:underline">
-                        Mở dự án
-                      </Link>
+                      <Link to={`/studio/${project.id}`} className="touch-reach font-medium text-accent-text hover:underline">{S.s_mo_du_an_f990c9d8}</Link>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-1 text-fg-2">Vẫn tạo được dự án mới - ví dụ để thử một giọng kể khác.</p>
+                <p className="mt-1 text-fg-2">{S.s_van_tao_duoc_du_an_moi_vi_du_de_thu_mot_gi_b8eda300}</p>
               </div>
             </div>
           )}
@@ -630,7 +614,7 @@ export function SourceStep({
               splitting && volumeStarts
                 ? ranges(volumeStarts, files.length).flatMap((part, index) =>
                     chapterNumberIssues(files.slice(part.start - 1, part.end), index === 0 ? previousLast : undefined).map(
-                      (issue) => `Phần ${index + 1}: ${issue}`,
+                      (issue) => S.s_phan_0_1_07722a78(index + 1, issue),
                     ),
                   )
                 : chapterNumberIssues(files, previousLast)
@@ -640,53 +624,48 @@ export function SourceStep({
           <CreditSuggestion files={files} drop={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
-              <span className="font-semibold text-fg">{files.length} chương</span> · {approx(scan!.totals.words, scan!.totals.estimated)} chữ · khoảng{" "}
-              {formatLength(scan!.totals.audioSeconds)} audio
-            </div>
+              <span className="font-semibold text-fg">{files.length}{S.s_chuong_9e6a01dc}</span> · {approx(scan!.totals.words, scan!.totals.estimated)}{S.s_chu_khoang_7a1a54c6}{" "}
+              {formatLength(scan!.totals.audioSeconds)}{S.s_audio_7024c69b}</div>
             <div className="flex gap-1">
               {info?.dialogs && (
-                <Button size="sm" variant="ghost" icon={FileText} onClick={() => void chooseFiles(true)}>
-                  Thêm file
-                </Button>
+                <Button size="sm" variant="ghost" icon={FileText} onClick={() => void chooseFiles(true)}>{S.s_them_file_834b1f33}</Button>
               )}
               {browser && (
                 <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(uploading)} onClick={() => browse(filesInput.current, true)}>
-                  {uploading ? progressLabel(uploading) : "Thêm file"}
+                  {uploading ? progressLabel(uploading) : S.s_them_file_834b1f33}
                 </Button>
               )}
               {browser && uploading && (
                 <Button size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                  {stopping ? "Đang dừng" : "Huỷ gửi"}
+                  {stopping ? S.s_dang_dung_9b35aeb5 : S.s_huy_gui_4d53a582}
                 </Button>
               )}
-              <Button size="sm" variant="ghost" onClick={() => onPaths([])}>
-                Chọn lại
-              </Button>
+              <Button size="sm" variant="ghost" onClick={() => onPaths([])}>{S.s_chon_lai_834274af}</Button>
             </div>
           </div>
           {/* Truyện dài (còn ra tiếp, hay làm từng đợt bằng "Làm tiếp cuốn này"): bỏ từng chương một thì không xuể - chọn
               nhanh làm N chương đầu, phần còn lại để đợt sau. */}
           {total > CHAPTER_LIMITS[0] && !splitting && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-2">
-              <span>Đợt này làm</span>
+              <span>{S.s_dot_nay_lam_34f9f26c}</span>
               <ChoiceRow<string>
-                label="Đợt này làm bao nhiêu chương"
+                label={S.s_dot_nay_lam_bao_nhieu_chuong_fb0c6a1b}
                 wrap
                 value={limit ? String(limit) : "all"}
                 onChange={(value) => onLimit(value === "all" ? null : Number(value))}
                 options={[
-                  ...CHAPTER_LIMITS.filter((count) => count < total).map((count) => ({ value: String(count), label: `${count} chương đầu` })),
-                  { value: "all", label: `Cả ${formatNumber(total)} chương` },
+                  ...CHAPTER_LIMITS.filter((count) => count < total).map((count) => ({ value: String(count), label: S.s_0_chuong_dau_1edc0ecb(count) })),
+                  { value: "all", label: S.s_ca_0_chuong_65f6a487(formatNumber(total)) },
                 ]}
               />
-              {limit !== null && later > 0 && <span>· còn {formatNumber(later)} chương cho đợt sau</span>}
+              {limit !== null && later > 0 && <span>{S.s_con_b3181893}{formatNumber(later)}{S.s_chuong_cho_dot_sau_50fbbbf5}</span>}
             </div>
           )}
           {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
-          <Fold storageKey="new-project.chapters" title="Danh sách chương" summary={`${files.length} chương`} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
+          <Fold storageKey="new-project.chapters" title={S.s_danh_sach_chuong_7fa755f9} summary={S.s_0_chuong_04093412(files.length)} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
           <div className="overflow-hidden">
           {/* data-motion-live: vùng cả bước không mờ lại khi bỏ / thêm chương - hàng tự khép / mở tại chỗ (useListPresence), thanh cuộn đứng yên. */}
-          <div ref={setChapterList} style={chapterFade} role="list" aria-label="Các chương sẽ làm" data-motion-live="" className="max-h-[340px] overflow-y-auto overscroll-contain">
+          <div ref={setChapterList} style={chapterFade} role="list" aria-label={S.s_cac_chuong_se_lam_5a07f064} data-motion-live="" className="max-h-[340px] overflow-y-auto overscroll-contain">
             <ChapterRows files={files}>
             {({ key, item: file, state, ref }) => {
               const index = files.findIndex((item) => item.path === key);
@@ -698,14 +677,14 @@ export function SourceStep({
                   <MotionPresence open={part >= 0}>
                     <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
-                      <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
+                      <span className="min-w-0 truncate">{S.s_phan_a17569d5}{part + 1}{S.s_bat_dau_76545e3c}</span>
                     </div>
                   </MotionPresence>
                   <div
                     className="group grid grid-cols-[auto_minmax(0,1fr)_90px_36px] items-center gap-2 px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto]"
                   >
                     <span className="tabular text-right text-xs text-fg-2" style={{ width: `${String(files.length).length}ch` }}>
-                      {part >= 0 && <span className="sr-only">Phần {part + 1} bắt đầu. </span>}
+                      {part >= 0 && <span className="sr-only">{S.s_phan_a17569d5}{part + 1}{S.s_bat_dau_85cad92e}</span>}
                       {index >= 0 ? index + 1 : ""}
                     </span>
                     <div className="min-w-0">
@@ -713,13 +692,13 @@ export function SourceStep({
                       <div className="truncate text-xs text-fg-2">{file.name}</div>
                     </div>
                     <div className="tabular text-right text-xs text-fg-2">
-                      <div>{approx(file.words, file.estimated)} chữ</div>
-                      {file.chars > 0 && <div className="text-fg-3">{approx(file.chars, file.estimated)} ký tự</div>}
+                      <div>{approx(file.words, file.estimated)}{S.s_chu_6117d040}</div>
+                      {file.chars > 0 && <div className="text-fg-3">{approx(file.chars, file.estimated)}{S.s_ky_tu_c7cc4ddf}</div>}
                     </div>
                     <button
                       type="button"
-                      aria-label={`Bỏ chương ${file.name}`}
-                      title="Bỏ chương này"
+                      aria-label={S.s_bo_chuong_0_bc591be5(file.name)}
+                      title={S.s_bo_chuong_nay_dfcadfcd}
                       onClick={() => onRemove(file.path)}
                       className="touch-hit grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                     >
@@ -734,9 +713,9 @@ export function SourceStep({
           </div>
           </div>
           </Fold>
-          {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
+          {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">{S.s_bo_qua_0e8d852d}{scan!.skipped.length}{S.s_file_khong_phai_txt_674f8d1a}</p>}
           {/* File sách hỏng / PDF scan nằm cạnh file tốt, thư mục có cả TXT lẫn EPUB, trang chỉ có ảnh bị bỏ, gợi ý dòng ghi công: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}
-          {[...(scan!.errors ?? []).map((error) => `Bỏ qua ${error}`), ...(scan!.notes ?? [])].map((line) => (
+          {[...(scan!.errors ?? []).map((error) => S.s_bo_qua_0_a2975d42(error)), ...(scan!.notes ?? [])].map((line) => (
             <p key={line} className="mt-2 text-xs text-warning">
               {line}
             </p>
@@ -763,14 +742,14 @@ function chapterLabel(file: ScannedFile): string {
 
 function carriedText(carries: Seed["carries"]): string {
   const parts = [
-    carries.voices ? `giọng ${formatNumber(carries.voices)} nhân vật` : "",
-    carries.pronunciations ? `${formatNumber(carries.pronunciations)} cách đọc tên` : "",
-    carries.pins ? `giới / tuổi đã sửa tay của ${formatNumber(carries.pins)} nhân vật` : "",
-    carries.aliases ? `${formatNumber(carries.aliases)} bí danh` : "",
-    carries.names ? `${formatNumber(carries.names)} tên nhân vật đã đổi` : "",
-    carries.bracket ? "quy ước lời trong 『』" : "",
+    carries.voices ? S.s_giong_0_nhan_vat_acc51e04(formatNumber(carries.voices)) : "",
+    carries.pronunciations ? S.s_0_cach_doc_ten_740fd23f(formatNumber(carries.pronunciations)) : "",
+    carries.pins ? S.s_gioi_tuoi_da_sua_tay_cua_0_nhan_vat_f4f6e10d(formatNumber(carries.pins)) : "",
+    carries.aliases ? S.s_0_bi_danh_a35a01a7(formatNumber(carries.aliases)) : "",
+    carries.names ? S.s_0_ten_nhan_vat_da_doi_3aa798e4(formatNumber(carries.names)) : "",
+    carries.bracket ? S.s_quy_uoc_loi_trong_b4f1c558 : "",
   ].filter(Boolean);
-  return parts.length ? parts.join(" · ") : "những gì phần trước đã có";
+  return parts.length ? parts.join(" · ") : S.s_nhung_gi_phan_truoc_da_co_84eb2fe7;
 }
 
 // Phát hiện được thì ĐỀ XUẤT, không tự làm (chủ sách 29-09: app không bao giờ tự sửa nội dung truyện). Dòng ghi công người
@@ -793,27 +772,21 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
       <div className="min-w-0 flex-1">
         {dropped ? (
           <>
-            <p className="font-semibold">
-              Sẽ bỏ {formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })} khỏi phần đọc
-            </p>
-            <p className="mt-1 break-words text-fg-2">
-              Chỉ bỏ khỏi phần đọc, giữ nguyên file truyện.
-            </p>
+            <p className="font-semibold">{S.s_se_bo_976be2fb}{formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })}{S.s_khoi_phan_doc_a9d1c125}</p>
+            <p className="mt-1 break-words text-fg-2">{S.s_chi_bo_khoi_phan_doc_giu_nguyen_file_truye_94c7dd67}</p>
           </>
         ) : (
           <>
-            <p className="font-semibold">
-              Gợi ý: {formatNumber(credits.chapters)} chương có {creditWhere(credits)}
+            <p className="font-semibold">{S.s_goi_y_dddb8282}{formatNumber(credits.chapters)}{S.s_chuong_co_51021419}{creditWhere(credits)}
             </p>
             <p className="mt-1 break-words text-fg-2">
               {quoted}
-              {credits.lines > credits.examples.length ? "…" : ""} — chọn bỏ nếu không muốn đọc.
-            </p>
+              {credits.lines > credits.examples.length ? "…" : ""}{S.s_chon_bo_neu_khong_muon_doc_5abe810e}</p>
           </>
         )}
         {all && (
           <div className="mt-2 overflow-hidden">
-          <ul ref={setList} style={fade} className="max-h-64 space-y-1 overflow-y-auto overscroll-contain p-2 text-xs text-fg-2" aria-label="Mọi dòng gợi ý theo chương">
+          <ul ref={setList} style={fade} className="max-h-64 space-y-1 overflow-y-auto overscroll-contain p-2 text-xs text-fg-2" aria-label={S.s_moi_dong_goi_y_theo_chuong_af83ec00}>
             {creditRows(files, chapterLabel).map((row, index) => (
               <li key={`${index}-${row.chapter}`} className="break-words">
                 <span className="font-medium text-fg">{row.chapter}:</span>{" "}
@@ -832,23 +805,19 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           {both ? (
             <>
               <Button size="sm" variant="ghost" aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
-                {drop.head ? "Giữ dòng đầu" : `Bỏ ${formatNumber(credits.head)} dòng`}
+                {drop.head ? S.s_giu_dong_dau_d250460c : S.s_bo_0_dong_f647322c(formatNumber(credits.head))}
               </Button>
               <Button size="sm" variant="ghost" aria-pressed={drop.tail} onClick={() => onChange({ ...drop, tail: !drop.tail })}>
-                {drop.tail ? "Giữ dòng cuối" : `Bỏ ${formatNumber(credits.tail)} dòng`}
+                {drop.tail ? S.s_giu_dong_cuoi_d9387556 : S.s_bo_0_dong_f647322c(formatNumber(credits.tail))}
               </Button>
             </>
           ) : dropped ? (
-            <Button size="sm" variant="ghost" onClick={() => onChange(KEEP_CREDITS)}>
-              Giữ nguyên chữ
-            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onChange(KEEP_CREDITS)}>{S.s_giu_nguyen_chu_02c81916}</Button>
           ) : (
-            <Button size="sm" variant="ghost" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>
-              Bỏ khỏi phần đọc
-            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>{S.s_bo_khoi_phan_doc_6726e734}</Button>
           )}
           <Button size="sm" variant="ghost" aria-expanded={all} onClick={() => setAll((value) => !value)}>
-            {all ? "Thu gọn" : `Xem hết ${formatNumber(credits.lines)} dòng`}
+            {all ? S.s_thu_gon_1f6bf2c3 : S.s_xem_het_0_dong_064e8d87(formatNumber(credits.lines))}
           </Button>
         </div>
       </div>
@@ -865,7 +834,7 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
     <div className="mt-4 flex gap-3 py-4 text-sm">
       <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0">
-        <p className="font-semibold">Số chương có chỗ lạ - xem lại trước khi tạo</p>
+        <p className="font-semibold">{S.s_so_chuong_co_cho_la_xem_lai_truoc_khi_tao_cbf84a1f}</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-4 text-fg-2">
           {issues.map((issue) => (
             <li key={issue} className="break-words">{issue}</li>
@@ -873,10 +842,8 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
         </ul>
         <p className="mt-1 text-fg-2">
           {suggestsSplit
-            ? "Nhiều tập đánh số lại từ 1? Chia thành nhiều phần ở trên. "
-            : ""}
-          Vẫn tạo được như thế - máy chỉ nhắc, không bỏ file nào.
-        </p>
+            ? S.s_nhieu_tap_danh_so_lai_tu_1_chia_thanh_nhie_50bbb0ff
+            : ""}{S.s_van_tao_duoc_nhu_the_may_chi_nhac_khong_bo_08ad11a0}</p>
       </div>
     </div>
   );
@@ -892,9 +859,8 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
     <div className="mt-4 flex gap-3 py-4 text-sm">
       <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
-        <p className="mt-1 break-words text-fg-2">
-          Tách theo {quoted}{plan.chapters > plan.titles.length ? "…" : ""}, giữ file gốc{plan.preamble ? " và chữ mở đầu" : ""}.
+        <p className="font-semibold">{S.s_goi_y_80f3b4ba}{file.name}{S.s_co_ve_chua_ca_f34d3ea9}{formatNumber(outcome.chapters)}{S.s_chuong_9e6a01dc}</p>
+        <p className="mt-1 break-words text-fg-2">{S.s_tach_theo_5f3e6530}{quoted}{plan.chapters > plan.titles.length ? "…" : ""}{S.s_giu_file_goc_4cf6140f}{plan.preamble ? S.s_va_chu_mo_dau_a047c58f : ""}.
         </p>
         <div className="mt-2.5">
           <Button
@@ -906,9 +872,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
               setBusy(true);
               void onSplit(file.path).finally(() => setBusy(false));
             }}
-          >
-            Tách thành {formatNumber(outcome.chapters)} chương
-          </Button>
+          >{S.s_tach_thanh_a08e8a2c}{formatNumber(outcome.chapters)}{S.s_chuong_9e6a01dc}</Button>
         </div>
       </div>
     </div>
@@ -921,43 +885,35 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
     <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 py-4 text-sm sm:flex-nowrap">
       <Layers className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">
-          Phần {seed.part} của “{seed.title}”
+        <p className="font-semibold">{S.s_phan_a17569d5}{seed.part}{S.s_cua_285bec9f}{seed.title}”
         </p>
         {seed.clickedTitle && (
-          <p className="mt-0.5 text-fg-2">
-            Nối sau “{seed.latestTitle ?? seed.title}”, giữ {carriedText(seed.carries)}.
+          <p className="mt-0.5 text-fg-2">{S.s_noi_sau_26bf063a}{seed.latestTitle ?? seed.title}{S.s_giu_c0878737}{carriedText(seed.carries)}.
           </p>
         )}
-        {!seed.clickedTitle && <p className="mt-0.5 text-fg-2">Giữ {carriedText(seed.carries)}, giọng và cách đọc tên.</p>}
+        {!seed.clickedTitle && <p className="mt-0.5 text-fg-2">{S.s_giu_d3777f80}{carriedText(seed.carries)}{S.s_giong_va_cach_doc_ten_995cc280}</p>}
         {/* Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file (soát UX a6 01-10, B5: vẫn hiện sau khi đã có). */}
         {seed.empty && !hasFiles && (
           <p className="mt-1 text-fg-2">
             {seed.folder ? (
-              <>
-                Chọn file mới sau {seed.lastChapter || "chương cuối phần trước"} ở dưới.
-              </>
+              <>{S.s_chon_file_moi_sau_5b6856da}{seed.lastChapter || S.s_chuong_cuoi_phan_truoc_7e3d0c5b}{S.s_o_duoi_a9e009c8}</>
             ) : (
-              "Chọn file chương mới ở dưới."
+              S.s_chon_file_chuong_moi_o_duoi_0af6839c
             )}
           </p>
         )}
         {seed.analysisModelMissing && (
-          <p className="mt-1 text-warning">
-            Thiếu bộ phân tích của phần trước; đổi bộ có thể đổi phân vai. Chọn lại ở Chất lượng.
-          </p>
+          <p className="mt-1 text-warning">{S.s_thieu_bo_phan_tich_cua_phan_truoc_doi_bo_c_9b47e7fe}</p>
         )}
         {!seed.analyzed && (
-          <p className="mt-1 text-warning">Phần trước chưa phân tích xong - chỉ mang được những gì đã có tới lúc này.</p>
+          <p className="mt-1 text-warning">{S.s_phan_truoc_chua_phan_tich_xong_chi_mang_du_6719c096}</p>
         )}
       </div>
       <button
         type="button"
         onClick={onDrop}
         className="self-start whitespace-nowrap text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
-      >
-        Bỏ nối tiếp
-      </button>
+      >{S.s_bo_noi_tiep_2b7945ba}</button>
     </MotionRegion>
   );
 }
@@ -989,7 +945,7 @@ export function VoiceCard({
       <button
         type="button"
         tabIndex={-1}
-        aria-label={playing ? `Dừng nghe ${voice.name}` : `Nghe thử giọng ${voice.name}`}
+        aria-label={playing ? S.s_dung_nghe_0_11a2fef9(voice.name) : S.s_nghe_thu_giong_0_d16e376e(voice.name)}
         onClick={() => clip.toggle(id, source.voiceUrl(voice.name))}
         // Trên lớp phủ bấm-để-chọn của thẻ (after:inset-0): nghe thử không đổi giọng đang chọn (soát UX a5 01-10).
         className={cn(
@@ -1010,12 +966,10 @@ export function VoiceCard({
       >
         <span className="block font-semibold leading-snug">{voice.name}</span>
         <span className="mt-0.5 block text-xs text-fg-2">
-          {voice.gender} · Miền {voice.region} · {voice.style}
+          {voice.gender}{S.s_mien_8dcd7dbe}{voice.region} · {voice.style}
         </span>
         {voice.recommended && (
-          <span className="mt-1.5 inline-block rounded-control bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
-            Đề xuất
-          </span>
+          <span className="mt-1.5 inline-block rounded-control bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">{S.s_de_xuat_3a11f911}</span>
         )}
       </button>
       <MotionRegion as="span" className="grid size-6 shrink-0 place-items-center" aria-hidden>
@@ -1056,11 +1010,9 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
   if (!chapters.length) return null;
   return (
     <fieldset className="mt-4 border-t border-line pt-3">
-      <legend className="sr-only">Chương đổi người kể</legend>
-      <p className="text-sm font-semibold">Chương đổi người kể</p>
-      <p className="mt-0.5 text-sm text-fg-2 text-pretty">
-        Kể bằng “tôi”; bỏ chọn nếu máy đoán sai.
-      </p>
+      <legend className="sr-only">{S.s_chuong_doi_nguoi_ke_88865076}</legend>
+      <p className="text-sm font-semibold">{S.s_chuong_doi_nguoi_ke_88865076}</p>
+      <p className="mt-0.5 text-sm text-fg-2 text-pretty">{S.s_ke_bang_toi_bo_chon_neu_may_doan_sai_306c44c1}</p>
       <ul className="mt-2 space-y-1.5">
         {chapters.map((chapter) => {
           const on = !off.includes(chapter.chapter);
@@ -1075,7 +1027,7 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
                   className="mt-0.5 size-4 accent-[var(--accent)]"
                 />
                 <span>
-                  {chapter.title} - “tôi” là <b>{chapter.name}</b>
+                  {chapter.title}{S.s_toi_la_90e4c35d}<b>{chapter.name}</b>
                 </span>
               </label>
             </li>
@@ -1107,24 +1059,20 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
         onClick={() => setOpened(true)}
         className="mt-3 text-sm font-medium text-accent-text underline underline-offset-2 disabled:opacity-60"
         disabled={isLoading}
-      >
-        Kể bằng “tôi”?
-      </MotionRegion>
+      >{S.s_ke_bang_toi_521f80f7}</MotionRegion>
     );
   }
   return (
     <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl py-4 sm:py-5">
-      <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
-      <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Tên người kể giúp phân vai đúng lời thoại.
-      </p>
-      <MoreInfo label="Máy đoán">{hint?.firstPerson
+      <h3 id="first-person-title" className="font-semibold">{S.s_toi_la_ai_efbf5a65}</h3>
+      <p className="mt-1 text-sm text-fg-2 text-pretty">{S.s_ten_nguoi_ke_giup_phan_vai_dung_loi_thoai_ded89111}</p>
+      <MoreInfo label={S.s_may_doan_0f0472f0}>{hint?.firstPerson
         ? hint.chaptersSampled && hint.chaptersWithI
-          ? `${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có lời kể xưng “tôi”.`
-          : `${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”.`
-        : "Chọn nhân vật xưng “tôi” trong lời kể."} Bạn có thể sửa gợi ý này.</MoreInfo>
+          ? S.s_0_1_chuong_dau_co_loi_ke_xung_toi_6b41741b(hint.chaptersWithI, hint.chaptersSampled)
+          : S.s_0_doan_loi_ke_co_toi_b16efe53(Math.round(hint.rate * 100))
+        : S.s_chon_nhan_vat_xung_toi_trong_loi_ke_d47a6c20}{S.s_ban_co_the_sua_goi_y_nay_ffd074da}</MoreInfo>
       {Boolean(hint?.suggestions.length) && (
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Gợi ý tên người kể">
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={S.s_goi_y_ten_nguoi_ke_7b50873d}>
           {hint!.suggestions.map((name) => (
             <button
               key={name}
@@ -1141,31 +1089,27 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           ))}
         </div>
       )}
-      <label className="mt-3 block text-sm text-fg-2">
-        Tên người kể
-        <input
+      <label className="mt-3 block text-sm text-fg-2">{S.s_ten_nguoi_ke_d492ccfb}<input
           id="first-person-name"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Tên nhân vật xưng “tôi” (để trống nếu kể ngôi thứ ba)"
+          placeholder={S.s_ten_nhan_vat_xung_toi_de_trong_neu_ke_ngoi_67659017}
           className="mt-1.5 h-11 w-full rounded-cover border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
         />
       </label>
       {value.trim() && (
         <div className="mt-3">
           <ChoiceRow
-            label="Người kể là"
+            label={S.s_nguoi_ke_la_379f9c45}
             value={gender ?? "unknown"}
             onChange={(next) => onGender(next === "male" || next === "female" ? next : undefined)}
             options={[
-              { value: "unknown", label: "Chưa rõ" },
-              { value: "male", label: "Nam" },
-              { value: "female", label: "Nữ" },
+              { value: "unknown", label: S.s_chua_ro_be464a5a },
+              { value: "male", label: S.s_nam_22dd59c8 },
+              { value: "female", label: S.s_nu_e15bc11c },
             ]}
           />
-          <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
-            Chưa rõ thì máy đoán. Lời dẫn dùng giọng cùng giới người kể.
-          </p>
+          <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">{S.s_chua_ro_thi_may_doan_loi_dan_dung_giong_cu_243f284d}</p>
           <label className="mt-3 flex items-start gap-3 py-4" htmlFor="teller-mode">
             <Switch id="teller-mode" labelledBy="teller-mode-name" describedBy="teller-mode-hint" checked={Boolean(tellerMode)} onCheckedChange={onTellerMode} />
             <span>
@@ -1236,10 +1180,8 @@ export function VoiceStep({
   };
   return (
     <MotionRegion as="div">
-      <SectionHeading>Giọng kể</SectionHeading>
-      <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">
-        Giọng đọc lời dẫn. Nhân vật được trao giọng riêng sau.
-      </p>
+      <SectionHeading>{S.s_giong_ke_b209f686}</SectionHeading>
+      <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">{S.s_giong_doc_loi_dan_nhan_vat_duoc_trao_giong_6dd30d7a}</p>
       <FirstPersonQuestion
         paths={paths}
         seedFrom={seedFrom}
@@ -1253,46 +1195,39 @@ export function VoiceStep({
         setPovOff={setPovOff}
       />
       {narratorAuto && (
-        <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">
-          Máy chọn cùng giới người kể; chọn giọng để đổi.
-        </p>
+        <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">{S.s_may_chon_cung_gioi_nguoi_ke_chon_giong_de_48aef3e1}</p>
       )}
       {previousNarrator && (
-        <p className="mt-4 text-sm text-fg-2">
-          Giọng kể phần trước: <span className="font-semibold text-fg">{previousNarrator}</span>
+        <p className="mt-4 text-sm text-fg-2">{S.s_giong_ke_phan_truoc_9750613e}<span className="font-semibold text-fg">{previousNarrator}</span>
           {narrator && narrator !== previousNarrator && (
             <>
-              {" - đang chọn giọng khác, hai phần sẽ đọc lời dẫn khác nhau. "}
-              <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => setNarrator(previousNarrator)}>
-                Dùng lại {previousNarrator}
+              {S.s_dang_chon_giong_khac_hai_phan_se_doc_loi_d_bd6d927d}
+              <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => setNarrator(previousNarrator)}>{S.s_dung_lai_267968d0}{previousNarrator}
               </button>
             </>
           )}
         </p>
       )}
-      <Fold storageKey="new-project.voices" title="Đổi giọng" summary={narrator || "Chọn một giọng"} defaultOpen={!narrator} className="mt-4" heading="h3">
+      <Fold storageKey="new-project.voices" title={S.s_doi_giong_94b6b371} summary={narrator || S.s_chon_mot_giong_749f92a2} defaultOpen={!narrator} className="mt-4" heading="h3">
       <div className="flex flex-wrap items-center gap-3">
-        <ChoiceRow label="Giới tính" value={gender} onChange={setGender} options={[
-          { value: "all", label: "Mọi giọng" },
-          { value: "Nam", label: "Giọng nam" },
-          { value: "Nữ", label: "Giọng nữ" },
+        <ChoiceRow label={S.s_gioi_tinh_46eb9a2c} value={gender} onChange={setGender} options={[
+          { value: "all", label: S.s_moi_giong_b0243b7c },
+          { value: S.s_nam_22dd59c8, label: S.s_giong_nam_4ab78f43 },
+          { value: S.s_nu_e15bc11c, label: S.s_giong_nu_cd860480 },
         ]} />
-        <ChoiceRow label="Miền" value={region} onChange={setRegion} options={[
-          { value: "all", label: "Mọi miền" },
-          { value: "Bắc", label: "Miền Bắc" },
-          { value: "Nam", label: "Miền Nam" },
-          { value: "Trung", label: "Miền Trung" },
+        <ChoiceRow label={S.s_mien_498584a9} value={region} onChange={setRegion} options={[
+          { value: "all", label: S.s_moi_mien_58ed42fb },
+          { value: S.s_bac_b8cc98f1, label: S.s_mien_bac_67b1bf3b },
+          { value: S.s_nam_22dd59c8, label: S.s_mien_nam_81505299 },
+          { value: S.s_trung_83080cf9, label: S.s_mien_trung_f313e576 },
         ]} />
       </div>
       {hiddenSelection && (
-        <p className="mt-3 text-sm text-fg-2">
-          Đang chọn: <span className="font-semibold text-fg">{narrator}</span> (bộ lọc đang ẩn giọng này).{" "}
-          <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => { setGender("all"); setRegion("all"); }}>
-            Bỏ lọc
-          </button>
+        <p className="mt-3 text-sm text-fg-2">{S.s_dang_chon_7789a2de}<span className="font-semibold text-fg">{narrator}</span>{S.s_bo_loc_dang_an_giong_nay_90f64c87}{" "}
+          <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => { setGender("all"); setRegion("all"); }}>{S.s_bo_loc_74de0064}</button>
         </p>
       )}
-      <div ref={group} role="radiogroup" aria-label="Giọng kể chuyện" onKeyDown={onKeyDown} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+      <div ref={group} role="radiogroup" aria-label={S.s_giong_ke_chuyen_4a4e32b1} onKeyDown={onKeyDown} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         {shown.map((voice) => (
           <VoiceCard
             key={voice.name}
@@ -1334,13 +1269,11 @@ export function QualityStep({
   const chosen = PROFILES.find((option) => option.value === profile)!;
   return (
     <div>
-      <SectionHeading>Chất lượng</SectionHeading>
-      <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Cố định sau khi tạo, để mọi chương đọc giống nhau.
-      </p>
+      <SectionHeading>{S.s_chat_luong_a12ed26c}</SectionHeading>
+      <p className="mt-1 text-sm text-fg-2 text-pretty">{S.s_co_dinh_sau_khi_tao_de_moi_chuong_doc_gion_165eeae2}</p>
       <div
         role="radiogroup"
-        aria-label="Chất lượng"
+        aria-label={S.s_chat_luong_a12ed26c}
         onKeyDown={radioGroupKeys(PROFILE_VALUES, profile, setProfile)}
         className="mt-6 grid divide-y divide-line"
       >
@@ -1361,8 +1294,7 @@ export function QualityStep({
             >
               {option.value === "high_quality" && (
                 <span className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-fg-2">
-                  <Sparkles className="size-3" /> Nên dùng
-                </span>
+                  <Sparkles className="size-3" />{S.s_nen_dung_6d30e4cd}</span>
               )}
               <div className="flex items-center justify-between">
                 <span className="text-base font-semibold">{option.title}</span>
@@ -1376,10 +1308,10 @@ export function QualityStep({
           );
         })}
       </div>
-      <Fold storageKey="new-project.quality" title="Chi tiết" summary={chosen.title} className="mt-4" heading="h3">
+      <Fold storageKey="new-project.quality" title={S.s_chi_tiet_e762d926} summary={chosen.title} className="mt-4" heading="h3">
         <MotionRegion>
           <ul className="space-y-2 text-sm">{chosen.points.map((point) => <li key={point} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden /><span>{point}</span></li>)}</ul>
-          <p className="mt-3 text-sm text-fg-2">{noStudio ? "Cài Studio để ước tính thời gian." : profile === "high_quality" ? <>Tham khảo: {lengthRange(guess.totalLow, guess.totalHigh)} cho {chapters} chương. {timeBasis(exact)}.</> : "Nhanh hơn Chất lượng cao; chưa có số đo."}</p>
+          <p className="mt-3 text-sm text-fg-2">{noStudio ? S.s_cai_studio_de_uoc_tinh_thoi_gian_0ac5ef9b : profile === "high_quality" ? <>{S.s_tham_khao_e9bde754}{lengthRange(guess.totalLow, guess.totalHigh)}{S.s_cho_0f86da9d}{chapters}{S.s_chuong_2721c3eb}{timeBasis(exact)}.</> : S.s_nhanh_hon_chat_luong_cao_chua_co_so_do_d80ead73}</p>
         </MotionRegion>
       </Fold>
       <AnalysisModelPicker value={analysisModel} onChange={setAnalysisModel} />
@@ -1443,60 +1375,60 @@ function ConfirmStep({
   const guess = estimate(scan.totals.words, scan.files.length, exact);
   const measured = profile === "high_quality" && !noStudio;
   const rows: [string, string][] = [
-    ["Chương", `${scan.files.length} chương · ${approx(scan.totals.words, scan.totals.estimated)} chữ`],
+    [S.s_chuong_2d157977, S.s_0_chuong_1_chu_7d350bc3(scan.files.length, approx(scan.totals.words, scan.totals.estimated))],
     // Tập 1 là sách thường, tập sau nối tiếp nó (continuation.py): nói rõ tên từng sách và việc "tự chạy khi tập trước xong".
     ...(volumes
       ? ([
-          ["Chia thành", `${volumes.length} phần: ${volumeTitles(title, volumes.length).map((name, index) => `“${name}” (${formatNumber(volumes[index].chapters)} chương)`).join(", ")}`],
-          ["Các phần sau", startNow ? "Tự chạy sau phần trước, giữ giọng và cách đọc tên" : "Xếp hàng sau phần 1, giữ giọng và cách đọc tên"],
+          [S.s_chia_thanh_b0af0247, S.s_0_phan_1_e33b2de5(volumes.length, volumeTitles(title, volumes.length).map((name, index) => S.s_0_1_chuong_e82e8596(name, formatNumber(volumes[index].chapters))).join(", "))],
+          [S.s_cac_phan_sau_c2deb368, startNow ? S.s_tu_chay_sau_phan_truoc_giu_giong_va_cach_d_3418c1f0 : S.s_xep_hang_sau_phan_1_giu_giong_va_cach_doc_a149ce8b],
         ] as [string, string][])
       : []),
     ...(droppedLines(credits, dropCredits)
       ? ([[
           creditKind({ ...credits, head: dropCredits.head ? credits.head : 0, tail: dropCredits.tail ? credits.tail : 0 }).replace(/^d/, "D"),
-          `bỏ ${formatNumber(droppedLines(credits, dropCredits))} dòng khỏi phần đọc`,
+          S.s_bo_0_dong_khoi_phan_doc_6c4cc4ad(formatNumber(droppedLines(credits, dropCredits))),
         ]] as [string, string][])
       : []),
-    ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
-    ["Giọng kể", narratorAuto ? `máy chọn, cùng giới với người kể “tôi” (đang là ${narrator})` : narrator],
+    [S.s_do_dai_audio_cc51e366, S.s_khoang_0_22035be1(formatLength(scan.totals.audioSeconds))],
+    [S.s_giong_ke_b209f686, narratorAuto ? S.s_may_chon_cung_gioi_voi_nguoi_ke_toi_dang_l_13824b7a(narrator) : narrator],
     ...(firstPerson
-      ? ([["Người kể “tôi”", firstPersonGender ? `${firstPerson} (${firstPersonGender === "female" ? "nữ" : "nam"})` : firstPerson]] as [string, string][])
+      ? ([[S.s_nguoi_ke_toi_e2ce42b1, firstPersonGender ? `${firstPerson} (${firstPersonGender === "female" ? S.s_nu_316c30fd : "nam"})` : firstPerson]] as [string, string][])
       : []),
-    ...(tellerMode ? ([["Lời kể", "đọc bằng giọng của người kể “tôi”"]] as [string, string][]) : []),
+    ...(tellerMode ? ([[S.s_loi_ke_eba0761e, S.s_doc_bang_giong_cua_nguoi_ke_toi_e1d42efd]] as [string, string][]) : []),
     ...(Object.keys(povChapters).length
-      ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
+      ? ([[S.s_chuong_doi_nguoi_ke_88865076, Object.entries(povChapters).map(([chapter, name]) => S.s_chuong_0_1_e933721c(chapter, name)).join(", ")]] as [string, string][])
       : []),
     // "Nối tiếp: phần 2 của …" đọc như nối SAU phần 2 hay LÀ phần 2 đều được - nói thẳng là phần mấy, sau phần nào, và dải
     // chương (soát UX 29-09).
     ...(seed
       ? ([[
-          "Là",
-          `phần ${seed.part} của “${seed.title}”, nối sau phần ${seed.part - 1}` +
+          S.s_la_9d0892e6,
+          S.s_phan_0_cua_1_noi_sau_phan_2_48e60119(seed.part, seed.title, seed.part - 1) +
             (scan.files.length ? ` · ${chapterLabel(scan.files[0])} → ${chapterLabel(scan.files[scan.files.length - 1])}` : ""),
         ]] as [string, string][])
       : []),
-    ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
-    ["Chất lượng", option.title],
+    [S.s_nhan_vat_d4940c17, seed ? S.s_giu_0_nguoi_moi_duoc_phan_vai_sau_khi_phan_41927c80(carriedText(seed.carries)) : S.s_tu_dong_phan_vai_sau_khi_phan_tich_6530ecf1],
+    [S.s_chat_luong_a12ed26c, option.title],
     // Luôn nói bộ phân tích nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
     ...(analysisModel || models?.default
-      ? ([["Bộ phân tích truyện", analysisChoiceLabel(analysisModel, seed?.analysisModel)]] as [string, string][])
+      ? ([[S.s_bo_phan_tich_truyen_9a52f60b, analysisChoiceLabel(analysisModel, seed?.analysisModel)]] as [string, string][])
       : []),
     ...(unfit
-      ? ([["Thời gian làm", "máy này không làm sách nói được"]] as [string, string][])
+      ? ([[S.s_thoi_gian_lam_ba044b40, S.s_may_nay_khong_lam_sach_noi_duoc_a627fd2a]] as [string, string][])
       : noStudio
-      ? ([["Thời gian làm", "tính được khi Studio đã cài - dự án chờ tới lúc đó"]] as [string, string][])
+      ? ([[S.s_thoi_gian_lam_ba044b40, S.s_tinh_duoc_khi_studio_da_cai_du_an_cho_toi_4387d301]] as [string, string][])
       : measured
         ? ([
-            ["Thời gian làm (tham khảo)", lengthRange(guess.totalLow, guess.totalHigh)],
-            ["Chương đầu nghe được sau (tham khảo)", `${exact ? "khoảng" : "tối đa khoảng"} ${formatLength(guess.firstChapter)}`],
-            ["Số tham khảo từ đâu", timeBasis(exact)],
+            [S.s_thoi_gian_lam_tham_khao_95d55912, lengthRange(guess.totalLow, guess.totalHigh)],
+            [S.s_chuong_dau_nghe_duoc_sau_tham_khao_2d0bf61e, `${exact ? S.s_khoang_18209c07 : S.s_toi_da_khoang_1532dcc6} ${formatLength(guess.firstChapter)}`],
+            [S.s_so_tham_khao_tu_dau_afcc409b, timeBasis(exact)],
           ] as [string, string][])
         : // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng (soát UX a5 01-10).
-          ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)}, số tham khảo)`]] as [string, string][])),
+          ([[S.s_thoi_gian_lam_ba044b40, S.s_chua_do_cho_che_do_nay_ngan_hon_chat_luong_eb953340(formatLength(guess.totalHigh))]] as [string, string][])),
   ];
   return (
     <MotionRegion as="div">
-      <h3 className="text-base font-semibold">Khi tạo</h3>
+      <h3 className="text-base font-semibold">{S.s_khi_tao_07d6f63b}</h3>
       <div className="mt-2 divide-y divide-line">
         <label className="flex items-start gap-3 py-3" htmlFor="start-now">
           <Switch
@@ -1508,32 +1440,32 @@ function ConfirmStep({
             onCheckedChange={setStartNow}
           />
           <span>
-            <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
+            <span id="start-now-name" className="block text-sm font-medium">{S.s_bat_dau_tao_ngay_58ad17d7}</span>
             <MotionRegion as="span" id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
               {unfit
-                ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
+                ? S.s_tat_vi_may_nay_khong_lam_sach_noi_duoc_ly_7f659322
                 : noStudio
-                ? "Chưa có Studio: sách được tạo và chờ cài xong."
+                ? S.s_chua_co_studio_sach_duoc_tao_va_cho_cai_xo_5e5d9ecf
                 : startNow
-                ? "Chạy nền; nghe được ngay từng chương đã xong."
-                : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."}
+                ? S.s_chay_nen_nghe_duoc_ngay_tung_chuong_da_xon_5872a97a
+                : S.s_tao_nhung_chua_chay_bat_dau_o_trang_du_an_3c708f92}
             </MotionRegion>
           </span>
         </label>
         <label className="flex items-start gap-3 py-3" htmlFor="precast-wait">
           <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
           <span>
-            <span id="precast-wait-name" className="block text-sm font-medium">Duyệt trước khi thu</span>
+            <span id="precast-wait-name" className="block text-sm font-medium">{S.s_duyet_truoc_khi_thu_74c121d0}</span>
             <MotionRegion as="span" id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
               {precastWait
-                ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
-                : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
+                ? S.s_dung_sau_phan_tich_de_ban_duyet_roi_bam_th_0ca451d3
+                : S.s_phan_tich_xong_thi_thu_luon_duyet_luc_nao_1f91e9f9}
             </MotionRegion>
           </span>
         </label>
       </div>
       {/* Mọi lựa chọn sẽ gửi đi, kể cả thời gian tham khảo - một danh sách phẳng. */}
-      <h3 className="mt-8 text-base font-semibold">Tóm tắt</h3>
+      <h3 className="mt-8 text-base font-semibold">{S.s_tom_tat_b4bb3064}</h3>
       <dl className="mt-2 divide-y divide-line text-sm">
         {rows.map(([label, value]) => (
           // Điện thoại: nhãn trên, giá trị dưới - cột nhãn cố định từng ép giá trị thành 5-6 dòng ở 390 px.
@@ -1556,16 +1488,13 @@ function StartNotes({ restart, noStudio, unfit, analysis }: { restart?: { title:
       {restart && (
         <p className="flex gap-2 text-pretty">
           <Info className="mt-line-icon size-4 shrink-0 text-info" />
-          <span>Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “{restart.title}” vào Thùng rác.</span>
+          <span>{S.s_tao_cuon_moi_tu_dau_giu_bia_va_file_goc_ba_690baff8}{restart.title}{S.s_vao_thung_rac_76efc06d}</span>
         </p>
       )}
       <div className="flex gap-2 text-pretty">
         <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
-        <div>
-          Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng.{" "}
-          <MoreInfo label="Vì sao?">
-            Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục.
-            {!noStudio && analysis && ` Thời gian tham khảo: ${analysis}.`}
+        <div>{S.s_dang_phan_tich_ma_can_nghi_hay_dung_tam_du_ddbf5b3d}{" "}
+          <MoreInfo label={S.s_vi_sao_3f6469f9}>{S.s_dung_tat_may_cho_may_ngu_hoac_bam_dung_tro_98270a3d}{!noStudio && analysis && S.s_thoi_gian_tham_khao_0_b2b41058(analysis)}
           </MoreInfo>
         </div>
       </div>
@@ -1613,13 +1542,13 @@ export function NewProjectScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences]);
-  usePageTitle(draft.seed ? "Làm tiếp cuốn này" : draft.replaces ? `Sửa thiết lập · ${draft.replaces.title}` : undefined);
+  usePageTitle(draft.seed ? S.s_lam_tiep_cuon_nay_18bbf3cc : draft.replaces ? S.s_sua_thiet_lap_0_feb34d5a(draft.replaces.title) : undefined);
 
   // "Sửa thiết lập" (?redo=<id>): điền lại đúng lựa chọn lúc tạo của cuốn chưa bắt đầu, một lần, rồi bỏ tham số.
   useEffect(() => {
     if (!redoId || !redo) return;
     if (redo.started) {
-      toast.error("Sách đã bắt đầu chạy", { description: "Không thể làm lại với thiết lập khác nữa." });
+      toast.error(S.s_sach_da_bat_dau_chay_d8b50089, { description: S.s_khong_the_lam_lai_voi_thiet_lap_khac_nua_b3eef0b6 });
       navigate(`/studio/${redoId}`, { replace: true });
       return;
     }
@@ -1648,7 +1577,7 @@ export function NewProjectScreen() {
     setParams({}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
-    if (redoError) toast.error("Chưa đọc được thiết lập của sách", { description: (redoError as Error).message });
+    if (redoError) toast.error(S.s_chua_doc_duoc_thiet_lap_cua_sach_d7efab34, { description: (redoError as Error).message });
   }, [redoError]);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
@@ -1684,7 +1613,7 @@ export function NewProjectScreen() {
   }, [continueId, plan, setParams]);
 
   useEffect(() => {
-    if (planError) toast.error("Chưa mở được phần trước", { description: planError.message });
+    if (planError) toast.error(S.s_chua_mo_duoc_phan_truoc_52e838aa, { description: planError.message });
   }, [planError]);
 
   useEffect(() => {
@@ -1715,8 +1644,8 @@ export function NewProjectScreen() {
     setDraft(apply);
     // Áp mẫu ghi đè giọng / chất lượng / chờ duyệt bạn vừa chọn: nói đã đổi gì và cho trả lại (soát UX a32).
     if (changed.length) {
-      toast.success(`Đã áp ${template ? `mẫu “${template.name}”` : "lựa chọn mặc định"}: đổi ${changed.join(", ")}`, {
-        action: { label: "Hoàn tác", onClick: () => setDraft((current) => ({ ...current, ...before })) },
+      toast.success(S.s_da_ap_0_doi_1_cf6466d9(template ? S.s_mau_0_184a389f(template.name) : S.s_lua_chon_mac_dinh_2b7a4461, changed.join(", ")), {
+        action: { label: S.s_hoan_tac_e72ff675, onClick: () => setDraft((current) => ({ ...current, ...before })) },
         duration: 8000,
       });
     }
@@ -1740,10 +1669,10 @@ export function NewProjectScreen() {
         if (!result.files.length) {
           setProblem(
             result.errors?.length
-              ? { text: `Chưa mở được ${result.errors[0]}`, subfolders: [] }
+              ? { text: S.s_chua_mo_duoc_0_849699f5(result.errors[0]), subfolders: [] }
               : result.missing.length
-              ? { text: isSourceRef(result.missing[0]) ? `Không tìm thấy “${sourceName(result.missing[0])}” trên máy tính. Gửi lại rồi thử lần nữa.` : `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
-              : { text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders },
+              ? { text: isSourceRef(result.missing[0]) ? S.s_khong_tim_thay_0_tren_may_tinh_gui_lai_roi_1e682119(sourceName(result.missing[0])) : S.s_khong_tim_thay_0_kiem_tra_lai_duong_dan_9c467c16(result.missing[0]), subfolders: [] }
+              : { text: S.s_thu_muc_nay_khong_co_file_txt_hay_epub_doc_9c5a2dff, subfolders: result.subfolders },
           );
           return;
         }
@@ -1753,7 +1682,7 @@ export function NewProjectScreen() {
       onError: (error: Error) => {
         if (latestSources.current !== key) return;
         setScanned({ key, result: null });
-        setProblem({ text: `Chưa đọc được: ${error.message}`, subfolders: [] });
+        setProblem({ text: S.s_chua_doc_duoc_0_3adbe047(error.message), subfolders: [] });
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1806,9 +1735,9 @@ export function NewProjectScreen() {
   const guess = scan ? estimate(scan.totals.words, scan.files.length, exact) : null;
   const analysisTime = guess && draft.profile === "high_quality" ? (exact ? formatLength(guess.analysis) : lengthRange(guess.analysisLow, guess.analysisHigh)) : undefined;
   const optionsSummary = [
-    autoNarrator ? "Giọng kể máy chọn" : `Giọng kể ${draft.narrator}`,
+    autoNarrator ? S.s_giong_ke_may_chon_bcf6a534 : S.s_giong_ke_0_958dd853(draft.narrator),
     PROFILES.find((option) => option.value === draft.profile)?.title,
-    draft.startNow && !noStudio ? "bắt đầu ngay" : "chưa chạy",
+    draft.startNow && !noStudio ? S.s_bat_dau_ngay_83137873 : S.s_chua_chay_713224b6,
   ].filter(Boolean).join(" · ");
 
   const gate = createGate({ title, reading, unfit: Boolean(unfit) });
@@ -1844,23 +1773,23 @@ export function NewProjectScreen() {
           saveDraft(null);
           const volumes = result.parts?.length ?? 0;
           // MỘT dòng: trang dự án (mở ngay sau đây) nói tiến trình; chỉ hàng chờ nằm trong câu, và việc Studio chưa cài xong là cảnh báo cùng dòng.
-          const queued = draft.startNow && !noStudio && result.queued ? ` - vào hàng chờ (thứ ${result.queued})` : "";
+          const queued = draft.startNow && !noStudio && result.queued ? S.s_vao_hang_cho_thu_0_76b18f6c(result.queued) : "";
           toastDone(
             (result.unchanged
-              ? "Không có thiết lập nào thay đổi - giữ nguyên sách cũ"
+              ? S.s_khong_co_thiet_lap_nao_thay_doi_giu_nguyen_929846eb
               : volumes > 1
-                ? `Đã tạo ${volumes} phần`
+                ? S.s_da_tao_0_phan_dd256b57(volumes)
                 : draft.replaces?.restart
-                  ? "Đã làm lại sách từ đầu"
+                  ? S.s_da_lam_lai_sach_tu_dau_6e51eb4c
                   : draft.replaces
-                    ? "Đã tạo lại sách với thiết lập mới"
-                    : "Đã tạo sách") + queued,
-            noStudio ? "Dự án chờ tới khi Studio cài xong, rồi bấm “Bắt đầu tạo sách nói” ở trang dự án." : undefined,
+                    ? S.s_da_tao_lai_sach_voi_thiet_lap_moi_cd546877
+                    : S.s_da_tao_sach_15431889) + queued,
+            noStudio ? S.s_du_an_cho_toi_khi_studio_cai_xong_roi_bam_9937b79b : undefined,
           );
-          if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
+          if (result.replaceError) toast.warning(S.s_ban_cu_van_con_trong_du_an_19473cdb, { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
         },
-        onError: (error: Error) => toast.error("Chưa tạo được sách", { description: error.message }),
+        onError: (error: Error) => toast.error(S.s_chua_tao_duoc_sach_2d0ce411, { description: error.message }),
         onSettled: () => {
           submitting.current = false;
         },
@@ -1870,7 +1799,7 @@ export function NewProjectScreen() {
 
   return (
     <div className="page-x mx-auto max-w-[920px] pb-16">
-      <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} title={<MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion>} />
+      <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} title={<MotionRegion as="span">{draft.seed ? S.s_lam_tiep_cuon_nay_18bbf3cc : S.s_tao_sach_noi_ab873c7a}</MotionRegion>} />
       <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (
         <SeedBanner
           seed={draft.seed}
@@ -1879,9 +1808,9 @@ export function NewProjectScreen() {
             // Bỏ nối tiếp = phân vai lại từ đầu, giọng lệch phần trước: một cú bấm lỡ tay phải lấy lại được (soát UX 29-09).
             const previous = draft.seed;
             update({ seed: undefined });
-            toast("Đã bỏ nối tiếp - sách sẽ phân vai lại từ đầu", {
+            toast(S.s_da_bo_noi_tiep_sach_se_phan_vai_lai_tu_dau_fa1cf109, {
               duration: 10000,
-              action: { label: "Hoàn tác", onClick: () => update({ seed: previous }) },
+              action: { label: S.s_hoan_tac_e72ff675, onClick: () => update({ seed: previous }) },
             });
           }}
         />
@@ -1917,10 +1846,10 @@ export function NewProjectScreen() {
             onRemove={(path) => {
               update({ excluded: [...draft.excluded, path] });
               const name = sourceName(path);
-              toast(`Đã bỏ ${name}`, {
+              toast(S.s_da_bo_0_d38fac95(name), {
                 id: `removed-${path}`,
                 action: {
-                  label: "Hoàn tác",
+                  label: S.s_hoan_tac_e72ff675,
                   onClick: () => setDraft((current) => ({ ...current, excluded: current.excluded.filter((item) => item !== path) })),
                 },
               });
@@ -1947,9 +1876,9 @@ export function NewProjectScreen() {
                 );
                 const plan = scan?.files.find((file) => samePath(file.path, path))?.split;
                 const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
-                toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương");
+                toast.success(chapters ? S.s_da_tach_thanh_0_chuong_fa082fb5(formatNumber(chapters)) : S.s_da_tach_thanh_cac_chuong_1e1bb231);
               } catch (error) {
-                toast.error("Chưa tách được", { description: (error as Error).message });
+                toast.error(S.s_chua_tach_duoc_7d64588d, { description: (error as Error).message });
               }
             }}
           />
@@ -1957,7 +1886,7 @@ export function NewProjectScreen() {
               chương - trước đó chưa có gì để chọn. */}
           <MotionPresence open={ready}>
             <section className="mt-8 border-t border-line">
-              <h2><DisclosureRow section title="Tuỳ chọn" summary={optionsSummary} icon={<SlidersHorizontal className="size-4" />} expanded={optionsOpen} controls="new-project-options" onClick={() => setOptionsOpen(!optionsOpen)} /></h2>
+              <h2><DisclosureRow section title={S.s_tuy_chon_dc06ba8f} summary={optionsSummary} icon={<SlidersHorizontal className="size-4" />} expanded={optionsOpen} controls="new-project-options" onClick={() => setOptionsOpen(!optionsOpen)} /></h2>
               <Collapse open={optionsOpen} id="new-project-options">
                 <div className="space-y-12 pb-4 pt-4">
                   {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
@@ -2032,13 +1961,11 @@ export function NewProjectScreen() {
                   latestSources.current = "";
                   setScanned(null);
                 }}
-              >
-                Bắt đầu lại
-              </Button>
+              >{S.s_bat_dau_lai_a3fe79c8}</Button>
               <span className="flex min-w-0 items-center gap-3">
-                <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy thiếu cấu hình</span></MotionPresence>
+                <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</span></MotionPresence>
                 <Button variant="primary" size="lg" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
-                  {gate.label ?? (draft.startNow && !noStudio ? "Bắt đầu" : "Tạo sách")}
+                  {gate.label ?? (draft.startNow && !noStudio ? S.s_bat_dau_b3cacc46 : S.s_tao_sach_af3aeee3)}
                 </Button>
               </span>
             </div>

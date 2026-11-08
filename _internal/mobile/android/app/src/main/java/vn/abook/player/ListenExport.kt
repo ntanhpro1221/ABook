@@ -119,13 +119,13 @@ object ListenExport {
         id: String,
         parse: (String, List<Int>) -> Map<Int, Pair<String, List<Paragraphs.Paragraph>>> = ReadAloud::parsedChapters,
     ): List<Chapter> {
-        val book = Store.manifest(id) ?: throw Mp3Export.Refused("Không tìm thấy sách này trên điện thoại")
+        val book = Store.manifest(id) ?: throw Mp3Export.Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
         val array = book.optJSONArray("chapters") ?: JSONArray()
         val items = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.filter { it.optString("text").startsWith("texts/") }
         val parsed = parse(id, items.map { it.optInt("id") })
         return items.mapNotNull { item ->
             val paragraphs = parsed[item.optInt("id")]?.second ?: return@mapNotNull null
-            val title = item.optString("fullTitle").ifEmpty { item.optString("title") }.ifEmpty { "Chương ${item.optInt("index", item.optInt("id"))}" }
+            val title = item.optString("fullTitle").ifEmpty { item.optString("title") }.ifEmpty { S.s_chuong_0_268b0521(item.optInt("index", item.optInt("id"))) }
             Chapter(item.optInt("id"), title, paragraphs).takeIf { it.speakable.isNotEmpty() }
         }
     }
@@ -422,7 +422,7 @@ object ListenExport {
                         pause(failures * 1000L)
                         continue
                     }
-                    throw Mp3Export.Refused("“${chapters[index].title}”: ${error.message}; giữ phần đã làm — bạn xuất lại để tiếp tục.")
+                    throw Mp3Export.Refused(S.s_0_1_giu_phan_da_lam_ban_xuat_lai_de_tiep_t_263c1046(chapters[index].title, error.message))
                 }
             }
         }
@@ -472,7 +472,7 @@ object ListenExport {
                     break
                 }
             }
-            throw Mp3Export.Refused("Giọng đọc không đọc được gì ở “${chapter.title}”.")
+            throw Mp3Export.Refused(S.s_giong_doc_khong_doc_duoc_gi_o_0_b3943e36(chapter.title))
         }
 
         /** Giọng của cả chương (clip từng đoạn + quãng lặng) vào `output` ở `rate`. */
@@ -493,12 +493,12 @@ object ListenExport {
                 }
                 check()
             }
-            if (!heard) throw Mp3Export.Refused("Giọng đọc không đọc được gì ở “${chapter.title}”.")
+            if (!heard) throw Mp3Export.Refused(S.s_giong_doc_khong_doc_duoc_gi_o_0_b3943e36(chapter.title))
         }
 
         private fun publish(part: File, final: File, chapter: Chapter) {
             final.delete()
-            if (!part.renameTo(final)) throw Mp3Export.Refused("Chưa ghi được file tạm của “${chapter.title}”")
+            if (!part.renameTo(final)) throw Mp3Export.Refused(S.s_chua_ghi_duoc_file_tam_cua_0_d0aa16b3(chapter.title))
         }
 
         /**

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.studio.StudioRoute
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -55,14 +57,14 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     override suspend fun nearbyAllowed(): Boolean = BluetoothLink.permitted(context)
 
     override suspend fun bluetoothDevices(): List<Found> = io {
-        guard("Chưa dùng được Bluetooth") {
+        guard(S.s_chua_dung_duoc_bluetooth_25b57c22) {
             val devices = Devices.bluetoothDevices(context)
             (0 until devices.length()).map { DevicesJson.bluetooth(devices.getJSONObject(it)) }
         }
     }
 
     override suspend fun pair(address: String, code: String, extra: Boolean): String = io {
-        guard("Chưa kết nối được") {
+        guard(S.s_chua_ket_noi_duoc_007a5651) {
             val digits = code.filter(Char::isDigit)
             if (address.startsWith("bt:")) {
                 val device = address.removePrefix("bt:")
@@ -77,7 +79,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     override suspend fun unpair() = io { Devices.unpair(context) }
 
     override suspend fun remote(): RemoteLibrary = io {
-        guard("Chưa nối được máy kia.") {
+        guard(S.s_chua_noi_duoc_may_kia_ad0a1976) {
             val reply = RemoteBooks.library(context)
             RemoteLibrary(reply.optString("name"), DevicesJson.books(reply.getJSONArray("books"))).also { RemoteBooks.reached(context) }
         }
@@ -104,7 +106,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     }
 
     override suspend fun forget(key: String, choice: ForgetChoice) = io {
-        guard("Chưa bỏ ghép được") {
+        guard(S.s_chua_bo_ghep_duoc_7e3c5ca4) {
             if (choice == ForgetChoice.Send) Peers.sendUnsent(key) { EditsSync.pushNow(context, it) }
             Peers.forget(context, key, discard = choice == ForgetChoice.Discard)
         }
@@ -117,7 +119,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     }
 
     override suspend fun download(book: RemoteBook) = io {
-        guard("Chưa tải được") {
+        guard(S.s_chua_tai_duoc_33a159b7) {
             val manifest = Store.streamManifest(book.id)
             val source = book.source ?: manifest?.optString("source")?.takeIf { it.isNotEmpty() }
             val remoteId = book.remoteId ?: manifest?.optString("remoteId")?.takeIf { it.isNotEmpty() }
@@ -143,13 +145,13 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
         (0 until computers.length()).map { computers.getJSONObject(it) }.map { StudioComputer(it.optString("key"), it.optString("name"), it.optBoolean("listenOnly")) }
     }
 
-    override suspend fun studioTarget(key: String): Pair<String, StudioRoute> = io { guard("Chưa mở được Studio") { Devices.studioTarget(context, null, key) } }
+    override suspend fun studioTarget(key: String): Pair<String, StudioRoute> = io { guard(S.s_chua_mo_duoc_studio_f86879e2) { Devices.studioTarget(context, null, key) } }
 
     override suspend fun share(): Share = io { DevicesJson.share(Devices.shareView(context)) }
 
-    override suspend fun setShare(on: Boolean): Share = io { guard("Chưa làm được") { DevicesJson.share(Devices.setShare(context, on)) } }
+    override suspend fun setShare(on: Boolean): Share = io { guard(S.s_chua_lam_duoc_8b442a06) { DevicesJson.share(Devices.setShare(context, on)) } }
 
-    override suspend fun startCode(): Share = io { guard("Chưa làm được") { DevicesJson.share(Devices.sharePair(context)) } }
+    override suspend fun startCode(): Share = io { guard(S.s_chua_lam_duoc_8b442a06) { DevicesJson.share(Devices.sharePair(context)) } }
 
     override suspend fun cancelCode(): Share = io { DevicesJson.share(Devices.shareCancelPairing(context)) }
 

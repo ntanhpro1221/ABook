@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { FolderX, Settings } from "lucide-react";
 import { useNavigate } from "react-router";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
@@ -18,19 +19,15 @@ export function MissingLibrary({ root, className }: { root: string; className?: 
   return (
     <EmptyState
       icon={FolderX}
-      title={remote || !root ? "Không thấy thư mục thư viện" : `Không thấy thư mục thư viện “${folderName(root)}”`}
+      title={remote || !root ? S.s_khong_thay_thu_muc_thu_vien_8c2af7eb : S.s_khong_thay_thu_muc_thu_vien_0_9b3dbbec(folderName(root))}
       className={className}
       action={
         remote ? (
-          <OnComputerOnly verb="Chọn lại thư mục thư viện" />
+          <OnComputerOnly verb={S.s_chon_lai_thu_muc_thu_vien_2d290748} />
         ) : (
-          <Button variant="primary" icon={Settings} onClick={() => navigate("/settings/advanced")}>
-            Chọn thư mục
-          </Button>
+          <Button variant="primary" icon={Settings} onClick={() => navigate("/settings/advanced")}>{S.s_chon_thu_muc_1fe47e38}</Button>
         )
       }
-    >
-      Ổ chưa cắm, hay thư mục đã đổi tên. Cắm lại ổ hoặc chọn chỗ mới; chỗ đang nghe vẫn giữ.
-    </EmptyState>
+    >{S.s_o_chua_cam_hay_thu_muc_da_doi_ten_cam_lai_713e694c}</EmptyState>
   );
 }

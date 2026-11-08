@@ -62,14 +62,14 @@ object BookWishes {
     const val NARRATOR = "NARRATOR"
     const val UNNAMED = "UNNAMED"
 
-    const val BAD_WISHES = "Phần ý muốn chờ Studio trong phần sửa không hợp lệ hay quá dài."
+    const val BAD_WISHES = S.s_phan_y_muon_cho_studio_trong_phan_sua_khon_d949202b
     private val BAD_ENTRY = mapOf(
-        "pronunciations" to "Một ý muốn về cách đọc tên trong phần sửa không hợp lệ.",
-        "speakers" to "Một ý muốn về người nói trong phần sửa không hợp lệ.",
-        "lines" to "Một ý muốn về cách đọc câu trong phần sửa không hợp lệ.",
-        "voices" to "Một ý muốn về giọng nhân vật trong phần sửa không hợp lệ.",
-        "retakes" to "Một ý muốn thu lại câu trong phần sửa không hợp lệ.",
-        ALIASES to "Một ý muốn gộp tên trong phần sửa không hợp lệ.",
+        "pronunciations" to S.s_mot_y_muon_ve_cach_doc_ten_trong_phan_sua_8234a6d0,
+        "speakers" to S.s_mot_y_muon_ve_nguoi_noi_trong_phan_sua_kho_0e9f09fd,
+        "lines" to S.s_mot_y_muon_ve_cach_doc_cau_trong_phan_sua_8fe41ea6,
+        "voices" to S.s_mot_y_muon_ve_giong_nhan_vat_trong_phan_su_387dcc80,
+        "retakes" to S.s_mot_y_muon_thu_lai_cau_trong_phan_sua_khon_e3f57d29,
+        ALIASES to S.s_mot_y_muon_gop_ten_trong_phan_sua_khong_ho_836324f5,
     )
 
     // ---- chữ ----------------------------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ object BookWishes {
     fun aliasKey(name: String): String =
         collapse(VietnameseReading.casefold(BookEdits.pyStrip(Normalizer.normalize(name, Normalizer.Form.NFC).replace('_', ' '))))
 
-    private val GENDER_LABELS = mapOf("male" to "Nam", "female" to "Nữ")
+    private val GENDER_LABELS = mapOf("male" to S.s_nam_22dd59c8, "female" to S.s_nu_e15bc11c)
 
     private fun cutCodePoints(text: String, limit: Int): String = BookEdits.cut(text, limit)
 
@@ -668,10 +668,10 @@ object BookWishes {
     // ---- danh sách "đang chờ Studio" --------------------------------------------------------------------------------------
 
     private val QUOTE_OPENERS = mapOf('“' to '”', '"' to '"', '‘' to '’', '\'' to '\'', '«' to '»', '「' to '」', '『' to '』')
-    private val EMOTIONS = mapOf("neutral" to "Bình thường", "happy" to "Vui", "sad" to "Buồn", "angry" to "Giận", "afraid" to "Sợ",
-        "surprised" to "Ngạc nhiên", "tender" to "Dịu dàng", "sarcastic" to "Mỉa mai", "excited" to "Hào hứng", "tired" to "Mệt mỏi",
-        "whispering" to "Thì thầm")
-    private val KIND_LABELS = mapOf("narration" to "lời kể", "dialogue" to "lời thoại", "thought" to "nội tâm")
+    private val EMOTIONS = mapOf("neutral" to S.s_binh_thuong_23c1bd43, "happy" to S.s_vui_2e2beffc, "sad" to S.s_buon_a1dc5853, "angry" to S.s_gian_19da03ba, "afraid" to S.s_so_485ed077,
+        "surprised" to S.s_ngac_nhien_8b160295, "tender" to S.s_diu_dang_0d05b980, "sarcastic" to S.s_mia_mai_729f7055, "excited" to S.s_hao_hung_b8003bdb, "tired" to S.s_met_moi_304a36cf,
+        "whispering" to S.s_thi_tham_ed2d29dd)
+    private val KIND_LABELS = mapOf("narration" to S.s_loi_ke_ed1d797e, "dialogue" to S.s_loi_thoai_8bac28b3, "thought" to S.s_noi_tam_41e63cdd)
 
     /** store.quote_line: một câu trích cắt ở 70 ký tự; câu đã có ngoặc của sách thì không bọc thêm một lớp nữa. */
     fun quoteLine(raw: String): String {
@@ -685,25 +685,25 @@ object BookWishes {
     private fun labelLine(text: String, entry: JSONObject): String {
         val what = ArrayList<String>()
         val kind = BookEdits.pyText(entry.opt("kind"))
-        if (kind.isNotEmpty()) what.add("đọc là ${KIND_LABELS[kind] ?: kind}")
+        if (kind.isNotEmpty()) what.add(S.s_doc_la_0_f8cd3da0(KIND_LABELS[kind] ?: kind))
         val emotion = BookEdits.pyText(entry.opt("emotion"))
-        if (emotion.isNotEmpty()) what.add("cảm xúc ${(EMOTIONS[emotion] ?: emotion).lowercase(Locale.ROOT)}")
+        if (emotion.isNotEmpty()) what.add(S.s_cam_xuc_0_762838db((EMOTIONS[emotion] ?: emotion).lowercase(Locale.ROOT)))
         val spoken = entry.opt("spoken")
-        if (spoken is String) what.add(if (spoken.isNotEmpty()) "chữ đem đọc “${cutCodePoints(spoken, 50)}”" else "đọc lại theo chữ sách")
-        return quoteLine(text) + ": " + (if (what.isEmpty()) "cách đọc mới" else what.joinToString(", "))
+        if (spoken is String) what.add(if (spoken.isNotEmpty()) S.s_chu_dem_doc_0_3d60bffa(cutCodePoints(spoken, 50)) else S.s_doc_lai_theo_chu_sach_839313cb)
+        return quoteLine(text) + ": " + (if (what.isEmpty()) S.s_cach_doc_moi_1c0ae3fe else what.joinToString(", "))
     }
 
     private fun labelVoice(name: String, entry: JSONObject): String {
         val preset = BookEdits.pyText(entry.opt("preset"))
-        val change = VoiceLabels.label(preset).ifEmpty { mapOf("male" to "giọng nam", "female" to "giọng nữ")[BookEdits.pyText(entry.opt("gender"))] ?: "giọng khác" }
-        return "Giọng của $name: $change"
+        val change = VoiceLabels.label(preset).ifEmpty { mapOf("male" to S.s_giong_nam_fe24e338, "female" to S.s_giong_nu_c88b7098)[BookEdits.pyText(entry.opt("gender"))] ?: S.s_giong_khac_95c40f55 }
+        return S.s_giong_cua_0_1_432864f2(name, change)
     }
 
     /** `shown_name` của Python: tên người nghe thấy của một người trong ý muốn ("người kể", tên đã đổi, hay chính chữ gõ). */
     private fun shownName(cast: List<JSONObject>, raw: String): String {
-        if (characterKey(raw) == NARRATOR) return "người kể"
+        if (characterKey(raw) == NARRATOR) return S.s_nguoi_ke_50063a62
         // The machine's key for an unnamed bit part never reaches the listener (review a70: "Người nói: UNNAMED").
-        if (raw == UNNAMED) return "vai phụ không tên"
+        if (raw == UNNAMED) return S.s_vai_phu_khong_ten_6a816c3e
         val found = person(cast, raw) ?: return raw
         return listOf(found.opt("displayName"), found.opt("name")).first { BookEdits.truthy(it) }.toString()
     }
@@ -764,7 +764,7 @@ object BookWishes {
         for (key in sortedKeys("pronunciations")) {
             val entry = wishes.getJSONObject("pronunciations").getJSONObject(key)
             items.put(handle(JSONObject().put("kind", "pronunciation")
-                .put("label", "“${entry.getString("surface")}” đọc là “${entry.getString("spoken_form")}”").put("lines", 0), "pronunciations", key, entry))
+                .put("label", S.s_0_doc_la_1_a616d74c(entry.getString("surface"), entry.getString("spoken_form"))).put("lines", 0), "pronunciations", key, entry))
         }
         val clicks = LinkedHashMap<Double, MutableList<String>>()
         for (stableId in sortedKeys("speakers")) {
@@ -776,13 +776,13 @@ object BookWishes {
             val speaker = who(entry.getString("speaker"))
             if (ids.size == 1) {
                 items.put(handle(JSONObject().put("kind", "speaker")
-                    .put("label", quoteLine(BookEdits.pyText(segment.opt("text"))) + " là lời của " + speaker)
+                    .put("label", quoteLine(BookEdits.pyText(segment.opt("text"))) + S.s_la_loi_cua_93562a86 + speaker)
                     .put("chapter", titles[lines.idOf(chapter)] ?: "").put("lines", 0), "speakers", ids[0], entry))
                 continue
             }
             val places = ids.map { lines.idOf(lines.get(it)!!.first) }.toSortedSet().toList()
-            items.put(JSONObject().put("kind", "speaker").put("label", "${ids.size} câu là lời của $speaker")
-                .put("chapter", (titles[places[0]] ?: "") + (if (places.size > 1) " và ${places.size - 1} chương khác" else ""))
+            items.put(JSONObject().put("kind", "speaker").put("label", S.s_0_cau_la_loi_cua_1_4afae760(ids.size, speaker))
+                .put("chapter", (titles[places[0]] ?: "") + (if (places.size > 1) S.s_va_0_chuong_khac_b5dbea81(places.size - 1) else ""))
                 .put("lines", 0).put("section", "speakers").put("key", ids[0]).put("keys", JSONArray(ids)).put("requestedAt", at))
         }
         for (stableId in sortedKeys("lines")) {
@@ -805,10 +805,10 @@ object BookWishes {
             val (chapter, segment) = lines.get(known[0])!!
             val where = titles[lines.idOf(chapter)] ?: ""
             if (ids.size == 1) {
-                items.put(handle(JSONObject().put("kind", "retake").put("label", "Thu lại " + quoteLine(BookEdits.pyText(segment.opt("text"))))
+                items.put(handle(JSONObject().put("kind", "retake").put("label", S.s_thu_lai_bceb80c2 + quoteLine(BookEdits.pyText(segment.opt("text"))))
                     .put("chapter", where).put("lines", 0), "retakes", known[0], wishes.getJSONObject("retakes").getJSONObject(known[0])))
             } else {
-                items.put(JSONObject().put("kind", "retake").put("label", "Thu lại cả chương (${ids.size} câu)").put("chapter", where).put("lines", 0)
+                items.put(JSONObject().put("kind", "retake").put("label", S.s_thu_lai_ca_chuong_0_cau_781a8c0d(ids.size)).put("chapter", where).put("lines", 0)
                     .put("section", "retakes").put("key", ids[0]).put("keys", JSONArray(ids)).put("requestedAt", at))
             }
         }

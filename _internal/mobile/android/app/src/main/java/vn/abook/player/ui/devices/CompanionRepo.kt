@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import android.content.Context
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.CancellationException
@@ -81,7 +83,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                     val ack = acks.getJSONObject(i)
                     val id = ack.optString("id")
                     if (id.isNotBlank() && seen.add(id) && !ack.optBoolean("ok"))
-                        problem = "${row.optString("name")}: ${ack.optString("message").ifBlank { "không làm được lệnh này" }}"
+                        problem = S.s_0_1_fb62fe2a(row.optString("name"), ack.optString("message").ifBlank { S.s_khong_lam_duoc_lenh_nay_9dea7638 })
                 }
                 OtherPlayer.from(row)
             }
@@ -92,10 +94,10 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
     }
 
     private companion object {
-        const val OFFLINE = "Chưa nối được máy kia."
+        const val OFFLINE = S.s_chua_noi_duoc_may_kia_ad0a1976
     }
 
-    suspend fun setNotices(enabled: Boolean) = attempt("Chưa đổi được") { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
+    suspend fun setNotices(enabled: Boolean) = attempt(S.s_chua_doi_duoc_a6c67cde) { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
 
     suspend fun findPlayers() = attempt { core.scan(); kotlinx.coroutines.delay(2_500) }.also { refresh() }
 
@@ -134,7 +136,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
 
     suspend fun handOff(remote: OtherPlayer, local: vn.abook.player.ui.data.PlayerState, position: Double, pause: () -> Unit): Boolean {
         if (!local.hasTrack) return false
-        if (remote.cast) flow.value = flow.value.copy(opening = "Đang mở trên ${remote.name}")
+        if (remote.cast) flow.value = flow.value.copy(opening = S.s_dang_mo_tren_0_6d32dc4a(remote.name))
         return attempt {
             generation++
             core.command(remote.device, JSONObject().put("action", "load").put("bookId", local.bookId)
@@ -143,7 +145,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         }.also { flow.value = flow.value.copy(opening = ""); refresh() }
     }
 
-    private suspend fun attempt(failure: String = "Chưa làm được", block: suspend () -> Unit): Boolean {
+    private suspend fun attempt(failure: String = S.s_chua_lam_duoc_8b442a06, block: suspend () -> Unit): Boolean {
         if (flow.value.busy) return false
         flow.value = flow.value.copy(busy = true, problem = "")
         return try { block(); true }

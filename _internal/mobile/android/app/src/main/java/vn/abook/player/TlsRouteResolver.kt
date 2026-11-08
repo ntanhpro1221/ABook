@@ -39,7 +39,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
         synchronized(lock) {
             if (!peers.containsKey(identity) && peers.size >= 32) {
                 val idle = peers.entries.firstOrNull { it.value.round == null && it.value.pending.keys.all { job -> job.isDone } }
-                    ?: throw java.io.IOException("Bộ chọn đường đang bận; bạn hãy thử lại")
+                    ?: throw java.io.IOException(S.s_bo_chon_duong_dang_ban_ban_hay_thu_lai_0776acd8)
                 idle.value.pool.shutdown()
                 peers.remove(idle.key)
             }

@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "musicmixer.h"
 
 #include "downloadforecast.h"
@@ -164,7 +165,7 @@ struct DecodeJob {
                 return false;
             }
             if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered) || out.write(header(rate, 0)) != HEADER) {
-                error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+                error = UiStrings::s_copy_286b1b51e066 + out.errorString(); return false;
             }
             opened = true; total = quint64(std::llround(decoder.duration() * rate));
         }
@@ -179,14 +180,14 @@ struct DecodeJob {
                 const auto sample = qint16(std::clamp(std::lround(block[i] * 32768.0f), -32768L, 32767L));
                 qToLittleEndian<qint16>(sample, pcm.data() + i * 2);
             }
-            if (out.write(pcm) != pcm.size()) { error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false; }
+            if (out.write(pcm) != pcm.size()) { error = UiStrings::s_copy_286b1b51e066 + out.errorString(); return false; }
             frames += n; got += n;
         }
         if (!bytes->error().isEmpty()) { error = bytes->error(); return false; }
         // Khung hỏng giữa bài: giữ phần đã giải mã như bài ngắn hơn, không bỏ cả bài.
         if (decoder.atEnd() || !decoder.error().isEmpty()) {
             if (!frames || !out.seek(0) || out.write(header(rate, frames)) != HEADER) {
-                error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+                error = UiStrings::s_copy_286b1b51e066 + out.errorString(); return false;
             }
             out.close(); done = true;
         }
@@ -305,7 +306,7 @@ bool WasapiDevice::selectOutput(const QString &id) {
 }
 QString WasapiDevice::outputId() const { return d->selected; }
 QVariantList WasapiDevice::outputs() const {
-    QVariantList result{QVariantMap{{QStringLiteral("id"), QString()}, {QStringLiteral("name"), QStringLiteral("Mặc định")}}};
+    QVariantList result{QVariantMap{{QStringLiteral("id"), QString()}, {QStringLiteral("name"), UiStrings::s_mac_dinh_9a1af367}}};
     ComPtr<IMMDeviceCollection> endpoints;
     if (!d->enumerator || FAILED(d->enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &endpoints))) return result;
     UINT count = 0; endpoints->GetCount(&count);
@@ -347,7 +348,7 @@ bool WasapiDevice::openOutput(const QString &selected) {
         // Engine pull event belongs to the new client, before publishing the selected endpoint.
         hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, d->pull ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0, 10000000, 0, format, nullptr);
         if (SUCCEEDED(hr) && d->pull) hr = client->SetEventHandle(d->pull);
-    } else d->error = QStringLiteral("Thiết bị cần định dạng float32 hoặc PCM16/32.");
+    } else d->error = UiStrings::s_copy_e3c4fedb556b;
     if (FAILED(hr) || FAILED(client->GetBufferSize(&capacity)) || FAILED(client->GetService(IID_PPV_ARGS(&render)))) {
         CoTaskMemFree(format); return false;
     }
@@ -832,8 +833,8 @@ void MusicMixer::serviceReader() {
                     Mp3Source mp3(outRate);
                     MfSource mf(outRate);
                     QSaveFile cache(path);
-                    if (format == Format::Unknown) error = QStringLiteral("Không nhận ra định dạng tệp nhạc (MP3, WAV, FLAC, M4A, Ogg/Opus).");
-                    else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Chưa đọc được tệp nhạc mp3.");
+                    if (format == Format::Unknown) error = UiStrings::s_copy_58db99c4526f;
+                    else if (format == Format::Mp3 && !mp3.open(bytes)) error = UiStrings::s_copy_2317d141d048;
                     else if (format == Format::Mf && !mf.open(bytes)) error = mf.error();
                     else if (!cache.open(QIODevice::WriteOnly) || cache.write(header(outRate, 0)) != HEADER) error = cache.errorString();
                     else {
@@ -857,10 +858,10 @@ void MusicMixer::serviceReader() {
                         { Guard guard(s->mutex); current = s->generation == generation; }
                         if (!current) continue;
                         if (error.isEmpty() && (!frames || !cache.seek(0) || cache.write(header(outRate, frames)) != HEADER || !cache.commit()))
-                            error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + cache.errorString();
+                            error = UiStrings::s_copy_286b1b51e066 + cache.errorString();
                     }
                     if (error.isEmpty() && (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames))
-                        error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
+                        error = UiStrings::s_copy_c12708a9ae5c;
                 }
             }
             if (job && error.isEmpty()) {
@@ -873,7 +874,7 @@ void MusicMixer::serviceReader() {
                 else if (!job->opened || (!job->done && job->frames < std::min(job->total, quint64(outRate) * 3))) continue;
                 else if (job->done) {
                     frames = job->frames;
-                    if (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames) error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
+                    if (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames) error = UiStrings::s_copy_c12708a9ae5c;
                 } else {
                     frames = job->total;
                     if (!file->open(QIODevice::ReadOnly | QIODevice::Unbuffered)) error = file->errorString();
@@ -1522,7 +1523,7 @@ void MixVoice::stop() {
         if (!used) {
             auto *reply = it->reply; it = m_mixer->d->downloads.erase(it);
             reply->disconnect(m_mixer); reply->abort(); reply->deleteLater();
-            stream->finish(QStringLiteral("Đã huỷ tải nhạc.")); // lần giải mã dở bỏ tệp đệm của nó
+            stream->finish(UiStrings::s_copy_2dc2b9b61a9b); // lần giải mã dở bỏ tệp đệm của nó
             m_mixer->wake(true);
         } else ++it;
     }

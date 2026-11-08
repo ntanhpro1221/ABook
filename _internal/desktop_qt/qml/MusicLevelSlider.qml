@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
@@ -39,7 +40,7 @@ Column {
         snapMode: C.Slider.SnapAlways
         onMoved: if (!pressed) root.picked(value)
         onPressedChanged: if (!pressed) root.picked(value)
-        Accessible.name: "Mức nhạc nền"
+        Accessible.name: S.s_muc_nhac_nen_a45588ff
         Accessible.description: Music.levelLabel(value) + ", " + Music.levelNumber(value)
         background: Rectangle {
             x: slider.leftPadding
@@ -66,7 +67,7 @@ Column {
     }
     Button {
         objectName: "musicLevelReset"
-        text: "Về mặc định"
+        text: S.s_ve_mac_dinh_4eb6b300
         kind: "ghost"
         size: "sm"
         opacity: slider.value !== Music.levelDefault ? 1 : 0

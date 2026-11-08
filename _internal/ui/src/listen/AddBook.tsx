@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { feedback } from "@/shared/feedback";
 import { Fold } from "@/shared/Collapse";
@@ -83,9 +84,7 @@ export function AddBookButton({
   if (!source.textImport) return null;
   return (
     <>
-      <Button variant={variant} size={size} icon={Plus} className="touch-row" onClick={() => setOpen(true)}>
-        Thêm sách
-      </Button>
+      <Button variant={variant} size={size} icon={Plus} className="touch-row" onClick={() => setOpen(true)}>{S.s_them_sach_2a9d3708}</Button>
       <AddBookDialog open={open} onOpenChange={setOpen} onBookFile={onBookFile} />
     </>
   );
@@ -287,13 +286,13 @@ export function AddBookDialog({
       session?.still();
       if (item.state !== "waiting" || !item.choice) continue;
       if (!onBookFile) {
-        next = settle(next, item.id, { state: "error", note: "Ở đây chưa mở được file sách .abook - dùng nút “Mở file sách”." });
+        next = settle(next, item.id, { state: "error", note: S.s_o_day_chua_mo_duoc_file_sach_abook_dung_nu_47081bf0 });
         continue;
       }
       try {
         const opening = onBookFile(item.choice.ref, session);
         const ok = await (session ? session.wait(opening) : opening);
-        next = ok === false ? settle(next, item.id, { state: "error", note: "Chưa mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
+        next = ok === false ? settle(next, item.id, { state: "error", note: S.s_chua_mo_duoc_file_sach_nay_1bc6cc5d }) : settle(next, item.id, { state: "opened", note: S.s_da_them_e26b2fcb });
       } catch (error) {
         if (error instanceof ReadCancelled) throw error;
         next = settle(next, item.id, { state: "error", note: (error as Error).message });
@@ -312,7 +311,7 @@ export function AddBookDialog({
     clear();
     onOpenChange(false);
     (summary.added || summary.opened ? toast.success : toast)(summaryText(summary), {
-      action: known ? { label: "Mở cuốn đó", onClick: () => navigate(`/book/${known}`) } : undefined,
+      action: known ? { label: S.s_mo_cuon_do_75ab80a2, onClick: () => navigate(`/book/${known}`) } : undefined,
     });
     if (added.length === 1 && added[0].bookId && summary.opened === 0) navigate(`/book/${added[0].bookId}`);
   };
@@ -385,7 +384,7 @@ export function AddBookDialog({
       setFootnotes(next.footnotes);
     } catch (error) {
       if (error instanceof ReadCancelled) return;
-      toast.error("Chưa đọc lại được file", { description: (error as Error).message });
+      toast.error(S.s_chua_doc_lai_duoc_file_114c3abe, { description: (error as Error).message });
     } finally {
       if (session.active()) setBusy(null);
     }
@@ -465,20 +464,20 @@ export function AddBookDialog({
       const items = queueRef.current;
       if (items && currentId !== null) {
         // Trong hàng: cuốn này xong, sang cuốn kế (toast gộp ở cuối hàng).
-        const done = settle(items, currentId, added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id });
+        const done = settle(items, currentId, added.how === "existing" ? { state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: added.id } : { state: "added", bookId: added.id });
         setQueue(done);
         await goNext(done);
         return;
       }
       if (added.how !== "existing") feedback("confirm");
-      if (added.how === "existing") toast.success("Cuốn này đã có trong thư viện");
-      else toast.success(`Đã thêm “${title.trim()}”`);
+      if (added.how === "existing") toast.success(S.s_cuon_nay_da_co_trong_thu_vien_2aae08e1);
+      else toast.success(S.s_da_them_0_ea40abe7(title.trim()));
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
       navigate(`/book/${added.id}`);
     } catch (error) {
       feedback("reject");
-      toast.error("Chưa thêm được sách", { description: (error as Error).message });
+      toast.error(S.s_chua_them_duoc_sach_b327e086, { description: (error as Error).message });
     } finally {
       setBusy(null);
     }
@@ -493,10 +492,10 @@ export function AddBookDialog({
       // Cuốn đang xem được thêm SAU các cuốn kế (addRest): cả lô vào thư viện đúng thứ tự đã chọn.
       const addNow = async (): Promise<Pick<QueueItem, "state" | "note" | "bookId">> => {
         setWorking(title.trim());
-        if (known) return { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id };
+        if (known) return { state: "existing", note: existing ? S.s_da_co_trong_thu_vien_3bb6eeb4 : S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: known.id };
         try {
           const added = await addCurrent(false);
-          return added.how === "existing" ? { state: "existing", note: "Đã có trong thư viện", bookId: added.id } : { state: "added", bookId: added.id };
+          return added.how === "existing" ? { state: "existing", note: S.s_da_co_trong_thu_vien_3bb6eeb4, bookId: added.id } : { state: "added", bookId: added.id };
         } catch (error) {
           return { state: "error", note: (error as Error).message };
         }
@@ -517,8 +516,8 @@ export function AddBookDialog({
     if (!items || currentId === null) return;
     if (choice) void importer.discard?.(choice).catch(() => undefined);
     const rest = known
-      ? settle(items, currentId, { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id })
-      : settle(items, currentId, { state: "skipped", note: "Đã bỏ qua" });
+      ? settle(items, currentId, { state: "existing", note: existing ? S.s_da_co_trong_thu_vien_3bb6eeb4 : S.s_da_them_tu_file_nay_roi_42fe4ad5, bookId: known.id })
+      : settle(items, currentId, { state: "skipped", note: S.s_da_bo_qua_df41794e });
     setQueue(rest);
     void goNext(rest);
   };
@@ -537,65 +536,55 @@ export function AddBookDialog({
   const label = queue && currentId !== null ? queueLabel(queue, currentId) : "";
   const rest = queue && currentId !== null ? waitingAfter(queue, currentId).length : 0;
   // Cuốn đã có: bỏ qua là việc chính, đứng cuối chân hộp ở cả hai nền tảng.
-  const skipAction = queue && <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>Bỏ cuốn này</Button>;
+  const skipAction = queue && <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>{S.s_bo_cuon_nay_ba5f36fe}</Button>;
 
   return (
     <Dialog footer={queue && !preview ? (busy === null && (<DialogActions>
-              <Button variant="primary" onClick={() => close(false)}>
-                Xong
-              </Button>
+              <Button variant="primary" onClick={() => close(false)}>{S.s_xong_a6f4543a}</Button>
             </DialogActions>)) : (!preview ? (null) : (<DialogActions data-add-book-actions>
-            <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
-              Chọn lại
-            </Button>
+            <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>{S.s_chon_lai_834274af}</Button>
             {!known && skipAction}
             {rest > 0 && (
-              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>
-                Thêm phần còn lại
-              </Button>
+              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button>
             )}
             {known ? (
               <>
                 <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
-                  {existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"}
+                  {existing ? S.s_them_ban_rieng_fe9759e4 : S.s_van_them_ban_moi_f4832361}
                 </Button>
                 {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
                 {!queue && (
-                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
-                    Mở cuốn đó
-                  </Button>
+                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>{S.s_mo_cuon_do_75ab80a2}</Button>
                 )}
               </>
             ) : (
-              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>
-                Thêm vào thư viện
-              </Button>
+              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>{S.s_them_vao_thu_vien_cc27dafc}</Button>
             )}
             {known && skipAction}
           </DialogActions>))}
       open={open}
       onOpenChange={close}
       width="max-w-[560px]"
-      title={preview ? (label ? `${label} · Xem trước` : "Xem trước") : "Thêm sách"}
+      title={preview ? (label ? S.s_0_xem_truoc_0b80ebc7(label) : S.s_xem_truoc_4282388c) : S.s_them_sach_2a9d3708}
       description={
         queue && !preview
           ? summaryText(summarize(queue))
           : preview
           ? undefined
-          : "EPUB, DOCX, PDF có chữ, TXT hoặc file .abook. Chọn được nhiều file."
+          : S.s_epub_docx_pdf_co_chu_txt_hoac_file_abook_c_cc969e7b
       }
     ><MotionRegion fadeThrough>
       {confirmLeave && (
         <div
           ref={confirmBox}
           role="alertdialog"
-          aria-label={confirmLeave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"}
+          aria-label={confirmLeave === "again" ? S.s_chon_lai_khi_con_sach_chua_them_4b4c7b1a : S.s_dong_khi_con_sach_chua_them_0406a915}
           className="mb-4 py-3.5"
         >
           <p className="text-sm font-medium">
             {confirmLeave === "again"
-              ? `Còn ${unfinished} cuốn chưa thêm vào thư viện. Chọn lại thì các cuốn ấy sẽ không được thêm.`
-              : `Còn ${unfinished} cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.`}
+              ? S.s_con_0_cuon_chua_them_vao_thu_vien_chon_lai_0dbdaa1f(unfinished)
+              : S.s_con_0_cuon_chua_them_vao_thu_vien_dong_bay_91cf24f8(unfinished)}
           </p>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
             <Button
@@ -609,18 +598,16 @@ export function AddBookDialog({
                 onOpenChange(false);
               }}
             >
-              {confirmLeave === "again" ? "Bỏ và chọn lại" : "Bỏ phần còn lại"}
+              {confirmLeave === "again" ? S.s_bo_va_chon_lai_89f7d490 : S.s_bo_phan_con_lai_63a3c314}
             </Button>
-            <Button variant="primary" onClick={() => setConfirmLeave(null)}>
-              Quay lại thêm sách
-            </Button>
+            <Button variant="primary" onClick={() => setConfirmLeave(null)}>{S.s_quay_lai_them_sach_e5ac9359}</Button>
           </div>
         </div>
       )}
       {queue && !preview ? (
         <div>
           {busy === "reading" && (
-            <ContentSkeleton count={1} label="Đang đọc" />
+            <ContentSkeleton count={1} label={S.s_dang_doc_1b09d2d9} />
           )}
           <QueueList items={queue} currentId={currentId} working={working} tall />
 
@@ -631,11 +618,9 @@ export function AddBookDialog({
             {importer.choose && (
               <>
                 <Button variant="primary" icon={busy === "reading" ? Loader2 : FileText} disabled={busy !== null} onClick={() => void choose("file")}>
-                  {busy === "reading" ? "Đang đọc" : "Chọn file sách"}
+                  {busy === "reading" ? S.s_dang_doc_1b09d2d9 : S.s_chon_file_sach_1f25282c}
                 </Button>
-                <Button icon={Folder} disabled={busy !== null} onClick={() => void choose("folder")}>
-                  Chọn thư mục TXT
-                </Button>
+                <Button icon={Folder} disabled={busy !== null} onClick={() => void choose("folder")}>{S.s_chon_thu_muc_txt_dd0d140c}</Button>
               </>
             )}
           </div>
@@ -652,24 +637,20 @@ export function AddBookDialog({
                 value={typed}
                 data-autofocus={window.matchMedia?.("(any-pointer: coarse)").matches ? undefined : true}
                 onChange={(event) => setTyped(event.target.value)}
-                aria-label="Đường dẫn file hay thư mục"
+                aria-label={S.s_duong_dan_file_hay_thu_muc_4a384785}
                 aria-describedby={importer.choose ? undefined : "typed-path-hint"}
-                placeholder={importer.choose ? "…hoặc dán đường dẫn" : "Dán đường dẫn file hay thư mục"}
+                placeholder={importer.choose ? S.s_hoac_dan_duong_dan_bb4837f7 : S.s_dan_duong_dan_file_hay_thu_muc_5bbc5845}
                 className="h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
               />
-              <Button type="submit" className="-mr-3.5 h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>
-                Mở
-              </Button>
+              <Button type="submit" className="-mr-3.5 h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>{S.s_mo_741bd2c2}</Button>
             </form>
           )}
           {/* Gợi ý dài nằm dưới ô, không nhét vào chữ mờ trong ô - màn 390 px cắt cụt nó (soát a64). Có nút chọn file thì lời đầu hộp đã kể các
               loại file, không nhắc lại. */}
           {importer.typedPath && !importer.choose && (
-            <p id="typed-path-hint" className="mt-1.5 text-pretty text-xs text-fg-3">
-              File sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\Truyện\Tên truyện.epub
-            </p>
+            <p id="typed-path-hint" className="mt-1.5 text-pretty text-xs text-fg-3">{S.s_file_sach_epub_word_pdf_txt_hay_thu_muc_tx_3632db2b}</p>
           )}
-          {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc" className="mt-4" />}
+          {busy === "reading" && <ContentSkeleton shape="cards" count={2} label={S.s_dang_doc_1b09d2d9} className="mt-4" />}
           {problem && (
             <div className="mt-3">
               <InlineError message={problem} onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose(lastKind.current); }} />
@@ -681,26 +662,24 @@ export function AddBookDialog({
         <div>
           {queue && <QueueList items={queue} currentId={currentId} working={working} />}
           <label className={cn("block", queue && "mt-4")}>
-            <span className="text-sm font-medium">Tên sách</span>
+            <span className="text-sm font-medium">{S.s_ten_sach_d54846eb}</span>
             <input
               ref={titleField}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               aria-invalid={!title.trim()}
               className="touch-box mt-1.5 h-11 w-full rounded-cover border border-line bg-bg px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus"
-              placeholder="Tên hiển thị trong thư viện"
+              placeholder={S.s_ten_hien_thi_trong_thu_vien_c48c7ac6}
             />
           </label>
-          {preview.author && <p className="mt-1.5 text-sm text-fg-2">Tác giả: {preview.author}</p>}
-          <SectionHeading as="h3" className="mt-2">Chương</SectionHeading>
+          {preview.author && <p className="mt-1.5 text-sm text-fg-2">{S.s_tac_gia_3fe05994}{preview.author}</p>}
+          <SectionHeading as="h3" className="mt-2">{S.s_chuong_2d157977}</SectionHeading>
           <div className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
             <span>
               <span className="font-semibold text-fg">
                 {totals.chapters}
-                {totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""} chương
-              </span>{" "}
-              · {formatNumber(totals.words)} chữ
-            </span>
+                {totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""}{S.s_chuong_9e6a01dc}</span>{" "}
+              · {formatNumber(totals.words)}{S.s_chu_6117d040}</span>
             {preview.chapters.length > 1 && (
               <span className="flex gap-3 text-xs">
                 <button
@@ -708,12 +687,8 @@ export function AddBookDialog({
                   disabled={busy !== null}
                   className="touch-row inline-flex items-center text-accent-text hover:underline disabled:opacity-50"
                   onClick={() => setPicked(new Set(preview.chapters.map((chapter) => chapter.index)))}
-                >
-                  Chọn hết
-                </button>
-                <button type="button" disabled={busy !== null} className="touch-row inline-flex items-center text-accent-text hover:underline disabled:opacity-50" onClick={() => setPicked(new Set())}>
-                  Bỏ chọn hết
-                </button>
+                >{S.s_chon_het_9e8a7c2c}</button>
+                <button type="button" disabled={busy !== null} className="touch-row inline-flex items-center text-accent-text hover:underline disabled:opacity-50" onClick={() => setPicked(new Set())}>{S.s_bo_chon_het_669fa50d}</button>
               </span>
             )}
           </div>
@@ -727,7 +702,7 @@ export function AddBookDialog({
                 className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
               />
               <span className="min-w-0">
-                <span className="block font-medium">Tách chương</span>
+                <span className="block font-medium">{S.s_tach_chuong_2f1df570}</span>
                 <span className="block text-xs text-fg-2">{splitHint(preview)}</span>
               </span>
             </label>
@@ -753,24 +728,22 @@ export function AddBookDialog({
             }}
           />
           {nothingPicked && (
-            <p role="status" className="mt-2 text-sm text-danger">
-              Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện.
-            </p>
+            <p role="status" className="mt-2 text-sm text-danger">{S.s_chua_chon_chuong_nao_tich_it_nhat_mot_chuo_416cb9ec}</p>
           )}
           {notes.length > 0 && (
-            <Fold storageKey="add-book.format" title="Định dạng" summary={`${notes.length} ghi chú`} className="mt-3" bodyClassName="px-3 pb-3 text-xs text-fg-2">
-              <p className="font-medium text-fg">Máy đã đổi định dạng - chữ của truyện giữ nguyên</p>
+            <Fold storageKey="add-book.format" title={S.s_dinh_dang_36b746b6} summary={S.s_0_ghi_chu_0dffe4dd(notes.length)} className="mt-3" bodyClassName="px-3 pb-3 text-xs text-fg-2">
+              <p className="font-medium text-fg">{S.s_may_da_doi_dinh_dang_chu_cua_truyen_giu_ng_bdfa175d}</p>
               <ul className="mt-1 space-y-1">
                 {notes.slice(0, 6).map((note) => (
                   <li key={note}>{note}</li>
                 ))}
               </ul>
-              {notes.length > 6 && <p className="mt-1">…và {notes.length - 6} ghi chú nữa.</p>}
+              {notes.length > 6 && <p className="mt-1">{S.s_va_6e638075}{notes.length - 6}{S.s_ghi_chu_nua_fe5122f7}</p>}
             </Fold>
           )}
-          {preview.footnotes && <Fold storageKey="add-book.footnotes" title="Chú thích" className="mt-3" bodyClassName="px-3 pb-3"><FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} /></Fold>}
+          {preview.footnotes && <Fold storageKey="add-book.footnotes" title={S.s_chu_thich_fc0aa279} className="mt-3" bodyClassName="px-3 pb-3"><FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} /></Fold>}
           {groups.length > 0 && (
-            <Fold storageKey="add-book.suggestions" title="Gợi ý phần đọc" summary={`${groups.length} nhóm`} className="mt-3" bodyClassName="px-3 pb-3">
+            <Fold storageKey="add-book.suggestions" title={S.s_goi_y_phan_doc_b268d95e} summary={S.s_0_nhom_5fc9eee6(groups.length)} className="mt-3" bodyClassName="px-3 pb-3">
               <div ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-40 overflow-y-auto">
                 <SuggestionChoices
                   groups={groups}
@@ -791,12 +764,12 @@ export function AddBookDialog({
           {known && (
             <p role="status" className="mt-3 py-3 text-sm text-accent-text">
               {existing
-                ? `Cuốn này đã có trong thư viện: “${existing.title}”.`
-                : `Bạn đã thêm file này thành “${sameSource!.title}” (${sameSource!.chapters} chương).`}
+                ? S.s_cuon_nay_da_co_trong_thu_vien_0_d8728110(existing.title)
+                : S.s_ban_da_them_file_nay_thanh_0_1_chuong_68248830(sameSource!.title, sameSource!.chapters)}
             </p>
           )}
           {busy === "adding" && working && queue && (
-            <ContentSkeleton className="mt-3" count={1} label="Đang thêm" />
+            <ContentSkeleton className="mt-3" count={1} label={S.s_dang_them_457edcc3} />
           )}
 
 
@@ -807,11 +780,11 @@ export function AddBookDialog({
 }
 
 const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
-  added: "Đã thêm",
-  existing: "Đã có trong thư viện",
-  skipped: "Đã bỏ qua",
-  opened: "Đã thêm",
-  error: "Chưa đọc được",
+  added: S.s_da_them_e26b2fcb,
+  existing: S.s_da_co_trong_thu_vien_3bb6eeb4,
+  skipped: S.s_da_bo_qua_df41794e,
+  opened: S.s_da_them_e26b2fcb,
+  error: S.s_chua_doc_duoc_ad95887c,
 };
 
 /** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
@@ -820,7 +793,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
-    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label="File đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label={S.s_file_da_chon_e29eb975} className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
@@ -828,7 +801,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
         else if (item.state === "error") mark = <CircleAlert className="size-3.5 text-danger" />;
         else if (item.state === "skipped") mark = <Minus className="size-3.5 text-fg-3" />;
         else if (current) mark = <span className="block size-3 rounded-full bg-accent" />;
-        const said = item.state === "waiting" ? (current ? (focus.adding ? "Đang thêm" : "Đang xem") : "Chờ") : item.note ?? STATE_TEXT[item.state];
+        const said = item.state === "waiting" ? (current ? (focus.adding ? S.s_dang_them_457edcc3 : S.s_dang_xem_42cc3b08) : S.s_cho_8de7e9a5) : item.note ?? STATE_TEXT[item.state];
         return (
           <li key={key} ref={ref} aria-current={current ? "true" : undefined} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-2">
             <MotionRegion as="span" className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</MotionRegion>

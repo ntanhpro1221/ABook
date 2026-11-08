@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -38,7 +39,7 @@ Column {
     }
     WorkRequested {
         width: parent.width
-        text: root.item.requested ? (root.item.redoOnly ? "Đã ghi - áp khi làm lại phân tích từ đầu." : "Đã ghi: " + root.item.requested + ".") : ""
+        text: root.item.requested ? (root.item.redoOnly ? S.s_da_ghi_ap_khi_lam_lai_phan_tich_tu_dau_4ed021d7 : S.s_da_ghi_85094402 + root.item.requested + ".") : ""
     }
     Flow {
         width: parent.width
@@ -53,7 +54,7 @@ Column {
         DecisionButton {
             objectName: "narratorKeep"
             text: root.buttons.keep
-            marked: root.item.requested === "Giữ nguyên"
+            marked: root.item.requested === S.s_giu_nguyen_1b550a12
             enabled: !root.busy
             onClicked: root.save({action: "keep"})
         }
@@ -62,8 +63,8 @@ Column {
             size: "sm"
             kind: "ghost"
             icon: "user-plus"
-            text: "Người kể khác…"
-            Accessible.description: root.choosing ? "Đang mở" : "Đang đóng"
+            text: S.s_nguoi_ke_khac_df5e1e67
+            Accessible.description: root.choosing ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
             onClicked: root.choosing = !root.choosing
         }
     }
@@ -97,8 +98,8 @@ Column {
                         objectName: "narratorName"
                         y: 4
                         width: parent.width
-                        label: "Tên người kể của đoạn"
-                        placeholderText: "Tên người kể"
+                        label: S.s_ten_nguoi_ke_cua_doan_94204731
+                        placeholderText: S.s_ten_nguoi_ke_d492ccfb
                         onTextChanged: if (text.length > 80) text = text.slice(0, 80)
                         onAccepted: if (root.typed) root.save({action: "choose", narrator: root.typed})
                     }
@@ -106,7 +107,7 @@ Column {
                 Button {
                     objectName: "narratorSet"
                     size: "sm"
-                    text: "Đặt người kể"
+                    text: S.s_dat_nguoi_ke_d4ae9aa6
                     enabled: root.typed !== "" && !root.busy
                     onActivated: root.save({action: "choose", narrator: root.typed})
                 }

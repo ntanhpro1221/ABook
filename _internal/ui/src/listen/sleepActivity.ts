@@ -1,8 +1,9 @@
+import { S } from "../shared/strings.generated";
 import { api } from "@/studio/api";
 
-export const AUTO_SLEEP_SAFETY = "Tự hẹn vì lâu không dùng máy";
-export const AUTO_SLEEP_SCHEDULE = "Tự hẹn theo lịch đêm";
-export const AUTO_SLEEP_CONTINUE = "Chạm để nghe tiếp";
+export const AUTO_SLEEP_SAFETY = S.s_tu_hen_vi_lau_khong_dung_may_d8b4c900;
+export const AUTO_SLEEP_SCHEDULE = S.s_tu_hen_theo_lich_dem_17ee1443;
+export const AUTO_SLEEP_CONTINUE = S.s_cham_de_nghe_tiep_86bd1a37;
 export const NIGHT_IDLE_MS = 120_000;
 export type AutoSleepReason = "safety" | "schedule";
 

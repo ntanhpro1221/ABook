@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { formatSize } from "@/shared/format";
 import { CANCELLED_NOTE, modulePercent } from "./musicLocal";
 
@@ -55,33 +56,33 @@ export function groupByEngine<V extends EngineVoice>(voices: readonly V[]): Engi
 export function plainGroupLabels(groups: readonly { engine: string }[]): string[] {
   const extras = groups.filter((group) => group.engine !== "vieneu").length;
   let seen = 0;
-  return groups.map((group) => (group.engine === "vieneu" ? "Giọng chính" : extras > 1 ? `Giọng thêm ${++seen}` : "Giọng thêm"));
+  return groups.map((group) => (group.engine === "vieneu" ? S.s_giong_chinh_4a3858e3 : extras > 1 ? S.s_giong_them_0_fc9c414c(++seen) : S.s_giong_them_f6d2cefe));
 }
 
 /** `current`: giọng người này đang đọc - không nói "Chưa ai dùng" về một giọng đang được dùng. */
 export function sharedText(voice: EngineVoice, current = false): string {
-  const others = voice.otherUsers ? `${voice.otherUsers} người khác dùng, không cùng chương` : "";
-  if (!voice.sharedWith.length) return others || (current ? "Giọng đang đọc cho người này" : "Chưa ai dùng");
-  const people = voice.sharedWith.map((person) => `${person.label} (${person.chapters} chương)`).join(", ");
-  const after = "hai người sẽ nghe giống hệt nhau";
-  return `Cùng chương với ${people} - ${after}${others ? ` · ${others}` : ""}`;
+  const others = voice.otherUsers ? S.s_0_nguoi_khac_dung_khong_cung_chuong_9e46519d(voice.otherUsers) : "";
+  if (!voice.sharedWith.length) return others || (current ? S.s_giong_dang_doc_cho_nguoi_nay_16983253 : S.s_chua_ai_dung_3ba5b001);
+  const people = voice.sharedWith.map((person) => S.s_0_1_chuong_a776ede8(person.label, person.chapters)).join(", ");
+  const after = S.s_hai_nguoi_se_nghe_giong_het_nhau_958bdccc;
+  return S.s_cung_chuong_voi_0_1_2_fce54130(people, after, others ? ` · ${others}` : "");
 }
 
 /** Hộp "Đổi giọng" của người kể: giọng nhân vật đang giữ không chọn được - nói của ai (tối đa ba tên). */
 export function takenText(takenBy: string[]): string {
   const named = takenBy.slice(0, 3).join(", ");
-  const rest = takenBy.length > 3 ? ` và ${takenBy.length - 3} người khác` : "";
-  return `Đang là giọng của ${named}${rest} - người kể cần giọng riêng`;
+  const rest = takenBy.length > 3 ? S.s_va_0_nguoi_khac_cc066f39(takenBy.length - 3) : "";
+  return S.s_dang_la_giong_cua_0_1_nguoi_ke_can_giong_r_9f7b35e6(named, rest);
 }
 
 /** Dòng ghi chú dưới tên nhóm của một máy đọc chưa sẵn sàng trên máy này; null khi đã dùng được. */
 export function moduleNote(status: EngineModuleStatus | undefined): string | null {
   if (!status || status.state === "ready") return null;
-  if (status.state === "downloading") return `Đang tải giọng (${formatSize(status.total)}) ${modulePercent(status)}%`;
-  if (status.state === "error") return status.error || "Chưa tải được giọng - thử lại.";
-  if (status.state === "unsupported") return "Máy này chưa dùng được những giọng này.";
+  if (status.state === "downloading") return S.s_dang_tai_giong_0_1_c53995be(formatSize(status.total), modulePercent(status));
+  if (status.state === "error") return status.error || S.s_chua_tai_duoc_giong_thu_lai_b81aafc6;
+  if (status.state === "unsupported") return S.s_may_nay_chua_dung_duoc_nhung_giong_nay_89504253;
   const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
-  if (status.damaged) return `${cancelled}Giọng này đã tải nhưng một phần bị mất hay hỏng - bấm Sửa giọng để tải lại đúng phần ấy.`;
-  if (status.state === "outdated") return `${cancelled}Có bản giọng mới (${formatSize(status.bytes)}) - tải để dùng tiếp.`;
-  return `${cancelled}Máy đọc khác: cần tải thêm ${formatSize(status.bytes)}, một lần.`;
+  if (status.damaged) return S.s_0_giong_nay_da_tai_nhung_mot_phan_bi_mat_h_d97ecfc6(cancelled);
+  if (status.state === "outdated") return S.s_0_co_ban_giong_moi_1_tai_de_dung_tiep_c24fe37d(cancelled, formatSize(status.bytes));
+  return S.s_0_may_doc_khac_can_tai_them_1_mot_lan_058187fb(cancelled, formatSize(status.bytes));
 }

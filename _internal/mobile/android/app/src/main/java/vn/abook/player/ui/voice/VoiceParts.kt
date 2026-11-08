@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import androidx.compose.animation.AnimatedContent
@@ -49,8 +51,8 @@ fun ModuleChoiceRow(kind: ModuleKind, row: ModuleRow, progress: () -> StateFlow<
     val action = row.action
     val trailing: (@Composable () -> Unit)? = when (action) {
         is ModuleAction.Download -> ({ TextAction(action.label, onAction, "${tag}_action") })
-        ModuleAction.Cancel -> ({ TextAction("Huỷ", onAction, "${tag}_cancel") })
-        ModuleAction.Retry -> ({ TextAction("Thử lại", onAction, "${tag}_retry") })
+        ModuleAction.Cancel -> ({ TextAction(S.s_huy_96732485, onAction, "${tag}_cancel") })
+        ModuleAction.Retry -> ({ TextAction(S.s_thu_lai_c58d068c, onAction, "${tag}_retry") })
         ModuleAction.Manage, ModuleAction.None -> null
     }
     ListItem(

@@ -19,7 +19,7 @@ internal object PeerTransfer {
     const val JOB_FILES = 20000
     const val DISK_MARGIN = 64L * 1024 * 1024
 
-    class Limit : IOException("File vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.")
+    class Limit : IOException(S.s_file_vuot_gioi_han_tai_ban_hay_kiem_tra_la_fbadfa00)
 
     /**
      * Chỉ dùng GET; retry trước khi giao stream cho caller, không phát lại POST hoặc stream đã đọc dở. Máy kia im quá hạn "không byte nào" của kết nối ([HostWait.open]) trước khi
@@ -75,7 +75,7 @@ internal object PeerTransfer {
             if (count < 0) return total
             if (count == 0) continue
             if (count > limit - total) throw Limit()
-            if (dir.usableSpace < DISK_MARGIN + count) throw IOException("Máy không đủ chỗ trống; bạn hãy dọn bớt rồi tải lại.")
+            if (dir.usableSpace < DISK_MARGIN + count) throw IOException(S.s_may_khong_du_cho_trong_ban_hay_don_bot_roi_f8a7a55d)
             output.write(buffer, 0, count)
             total += count
         }
@@ -103,7 +103,7 @@ internal object PeerTransfer {
         // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
         if (code >= 400 && !(code == 416 && have > 0)) {
             connection.disconnect()
-            throw IllegalStateException("Chưa tải được $label (mã $code)")
+            throw IllegalStateException(S.s_chua_tai_duoc_0_ma_1_5a6ca1c7(label, code))
         }
         var answer = if (code == 416) PartResume.Answer.STALE_TAIL
         else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
@@ -116,7 +116,7 @@ internal object PeerTransfer {
             code = Pin.guard { connection.responseCode }
             if (code >= 400) {
                 connection.disconnect()
-                throw IllegalStateException("Chưa tải được $label (mã $code)")
+                throw IllegalStateException(S.s_chua_tai_duoc_0_ma_1_5a6ca1c7(label, code))
             }
             answer = PartResume.Answer.WHOLE
         }
@@ -131,7 +131,7 @@ internal object PeerTransfer {
                 connection.inputStream.use { input -> copy(input, output, limit, dir, initial, check) }
                 output.fd.sync()
             }
-            if (expectedSize <= 0 && length >= 0 && partial.length() < initial + length) throw IOException("Tải $label chưa đủ (${partial.length()}/${initial + length} byte)")
+            if (expectedSize <= 0 && length >= 0 && partial.length() < initial + length) throw IOException(S.s_tai_0_chua_du_1_2_byte_120c9bab(label, partial.length(), initial + length))
         } catch (error: Exception) {
             if (error is Limit || !keepPartial) PartResume.discard(partial)
             throw error

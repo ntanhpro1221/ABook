@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -22,11 +23,11 @@ Modal {
     // Lời báo "Hoàn tác" cho lần đổi giọng / giới vừa ghi; hoàn tác xong thì lời báo nói đúng điều đã xảy ra
     function offerUndo(text, character, requestedAt, message) {
         const book = bookId
-        Api.toast(text, {duration: undoMs, action: {label: "Hoàn tác", run: function() {
+        Api.toast(text, {duration: undoMs, action: {label: S.s_hoan_tac_e72ff675, run: function() {
             root.ask("POST", "/api/books/" + book + "/voice", {character: character, requestedAt: requestedAt, keep: false, withdraw: true}, function(data, error) {
-                if (error) { Api.notice = Logic.toastText("Chưa hoàn tác được", error); return }
+                if (error) { Api.notice = Logic.toastText(S.s_chua_hoan_tac_duoc_164b754b, error); return }
                 root.saved(book)
-                Api.notice = data && data.restored ? "Đã hoàn tác - máy đọc lại theo cách cũ" : message ? "Đã hoàn tác. " + message : "Đã hoàn tác"
+                Api.notice = data && data.restored ? S.s_da_hoan_tac_may_doc_lai_theo_cach_cu_15e82a15 : message ? S.s_da_hoan_tac_fd822d19 + message : S.s_da_hoan_tac_2ef55fca
             })
         }}})
     }

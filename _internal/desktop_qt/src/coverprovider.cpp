@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "coverprovider.h"
 
 #include "backend.h"
@@ -59,7 +60,7 @@ public:
                 if (!self)
                     return;
                 self->m_image = image;
-                self->m_error = image.isNull() ? (error.isEmpty() ? QStringLiteral("không có ảnh bìa") : error) : QString();
+                self->m_error = image.isNull() ? (error.isEmpty() ? UiStrings::s_copy_42ba41f7758a : error) : QString();
                 emit self->finished();
             }, Qt::QueuedConnection);
         });
@@ -75,7 +76,7 @@ private:
     static QImage fetchAndDecode(const QString &book, const QString &version, QSize box, int radius, std::atomic_bool *cancelled, QString *error) {
         const auto endpoint = Backend::endpoint();
         if (endpoint.port <= 0) {
-            *error = QStringLiteral("backend chưa sẵn sàng");
+            *error = UiStrings::s_copy_dd64426458c4;
             return {};
         }
         // Mỗi luồng giải mã giữ một QNetworkAccessManager riêng (chờ trong vòng lặp cục bộ) - luồng giao diện không dính mạng bìa.

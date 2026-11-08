@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script, ScriptSegment } from "./model";
 import { makeAnchor, restoreAnchor, textFingerprint, type ReadingAnchor } from "./readingAnchor";
@@ -58,7 +59,7 @@ export async function fetchClipBytes(url: string, get: (url: string) => Promise<
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.blob();
   } catch {
-    throw new ReadAloudError("Chưa tải được đoạn giọng đọc.", "service");
+    throw new ReadAloudError(S.s_chua_tai_duoc_doan_giong_doc_230766c7, "service");
   }
 }
 
@@ -493,7 +494,7 @@ export class ReadAloudEngine implements AudioEngine {
   load(track: TrackInfo, startAt: number, autoplay: boolean): void {
     this.dispose();
     const speech = track.speech;
-    if (!speech) throw new Error("ReadAloudEngine cần track.speech");
+    if (!speech) throw new Error(S.s_readaloudengine_can_track_speech_d8cb03a0);
     this.speech = speech;
     const id = ++this.loadId;
     this.wanted = autoplay;
@@ -1342,7 +1343,7 @@ export class ReadAloudEngine implements AudioEngine {
     this.publish();
     this.fire("duration");
     if (index === this.target.index && this.wanted) this.fire("waiting");
-    this.clipFailed(index, live.error ?? new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service"), ctx);
+    this.clipFailed(index, live.error ?? new ReadAloudError(S.s_mat_ket_noi_voi_giong_doc_giua_chung_c290002d, "service"), ctx);
     this.afterFetch();
   }
 
@@ -1559,7 +1560,7 @@ export class ReadAloudEngine implements AudioEngine {
       this.fire("duration");
       return;
     }
-    rest.error = error ?? new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service");
+    rest.error = error ?? new ReadAloudError(S.s_mat_ket_noi_voi_giong_doc_giua_chung_c290002d, "service");
     slot.feed?.finish();
   }
 
@@ -1800,7 +1801,7 @@ export class ReadAloudEngine implements AudioEngine {
       if (index === this.target.index && this.wanted) this.fire("waiting");
     };
     const broken = () => {
-      if (index === this.target.index && this.wanted) this.fail(new ReadAloudError("Chưa phát được clip giọng đọc.", "service"));
+      if (index === this.target.index && this.wanted) this.fail(new ReadAloudError(S.s_chua_phat_duoc_clip_giong_doc_34244feb, "service"));
     };
     audio.addEventListener("ended", ended);
     audio.addEventListener("timeupdate", tick);
@@ -1971,7 +1972,7 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   private fail(error: unknown): void {
-    this.lastError = error instanceof Error && error.message ? error.message : "Giọng đọc không phản hồi.";
+    this.lastError = error instanceof Error && error.message ? error.message : S.s_giong_doc_khong_phan_hoi_d369f446;
     const was = this.wanted;
     this.errorPause = was || this.resuming; // dừng vì lỗi (lần xin lại sau khi gỡ lỗi mà hỏng nữa cũng vậy), khác người nghe bấm dừng
     this.resuming = false;

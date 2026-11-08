@@ -73,7 +73,7 @@ object RemotePlayers {
     /** Loa / TV điện thoại tự thấy: phát sách đã có trên điện thoại; sách nghe thẳng thì nhờ máy tính (nếu nó thấy thiết bị). */
     private fun direct(context: Context, id: String, command: JSONObject): JSONObject {
         if (command.optString("action") == "load" && PhoneCast.book(command.optString("bookId")) == null) {
-            if (!SyncLink.paired(context)) throw IllegalStateException("Sách này chưa tải về điện thoại - tải về rồi phát lên loa, TV")
+            if (!SyncLink.paired(context)) throw IllegalStateException(S.s_sach_nay_chua_tai_ve_dien_thoai_tai_ve_roi_f518aa94)
             return command(context, CAST + id, command)
         }
         return try {
@@ -116,7 +116,7 @@ object RemotePlayers {
                 else -> ""
             }
             if (remote.isEmpty()) {
-                throw IllegalStateException(if (cast) "Loa, TV chỉ phát được sách của máy tính" else "Máy kia không có cuốn này")
+                throw IllegalStateException(if (cast) S.s_loa_tv_chi_phat_duoc_sach_cua_may_tinh_bbee0026 else S.s_may_kia_khong_co_cuon_nay_40f5016a)
             }
             command.put("bookId", remote)
         }
@@ -129,7 +129,7 @@ object RemotePlayers {
         }
         val reply = JSONObject(text)
         if (reply.has("ok") && !reply.optBoolean("ok")) {
-            throw IllegalStateException(reply.optString("message").ifBlank { "Máy kia không làm được lệnh này" })
+            throw IllegalStateException(reply.optString("message").ifBlank { S.s_may_kia_khong_lam_duoc_lenh_nay_cb8ed959 })
         }
         if (cast && command.optString("action") == "load") ComputerCasts.choose(device.removePrefix(CAST))
         return reply

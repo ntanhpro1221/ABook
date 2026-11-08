@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoin
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -78,7 +80,7 @@ internal fun LazyListScope.reviewTab(review: StudioReviewState, data: ReviewData
             if (list.nextCursor != null) {
                 item("review_more", "more") {
                     TextAction(
-                        if (review.loadingMore) WorkText.LOADING else "${WorkText.MORE_ITEMS} (còn ${list.remaining})", review::loadMore, "studio_review_more",
+                        if (review.loadingMore) WorkText.LOADING else S.s_0_con_1_42b7795c(WorkText.MORE_ITEMS, list.remaining), review::loadMore, "studio_review_more",
                         Modifier.fillMaxWidth().then(slide), Alignment.CenterStart,
                     )
                 }
@@ -95,7 +97,7 @@ private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: Revi
         if (review.filter == ReviewFilter.Todo) Caption(WorkText.reviewPending(list.pending), Modifier.testTag("studio_review_pending"))
         if (list.redoChapters.isNotEmpty()) {
             RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
-            MoreInfo("Tìm hiểu thêm", WorkText.REDO_MORE, "studio_review_redo_more")
+            MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.REDO_MORE, "studio_review_redo_more")
         }
         if (minor > 0 || review.showMinor) {
             TextAction(
@@ -160,7 +162,7 @@ private fun ReviewRow(item: ReviewItem, review: StudioReviewState, clip: ClipSta
         if (item.reason.isNotEmpty()) RowHint(item.reason, Modifier.padding(top = Dim.s4))
         val heard = heardLine(item)
         if (heard.isNotEmpty()) RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_review_heard"))
-        item.pendingSpoken?.let { RowHint("Sẽ đọc là “$it”", Modifier.padding(top = Dim.s4)) }
+        item.pendingSpoken?.let { RowHint(S.s_se_doc_la_0_f26bc05e(it), Modifier.padding(top = Dim.s4)) }
         if (spec == null) Caption(WorkText.NO_AUDIO, Modifier.padding(top = Dim.s8))
         Spacer(Modifier.height(Dim.s8))
         SideBySide {

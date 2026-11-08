@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "desktopapi.h"
 #include "backend.h"
 #include "hostcall.h"
@@ -43,7 +44,7 @@ QString DesktopApi::thirdParty() const {
     QStringList shown;
     bool skip = false;
     for (const auto &line : QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'))) {
-        if (line.startsWith(QStringLiteral("## "))) skip = line.contains(QStringLiteral("Ghi chú cho người bảo trì"));
+        if (line.startsWith(QStringLiteral("## "))) skip = line.contains(UiStrings::s_ghi_chu_cho_nguoi_bao_tri_c8670b77);
         if (!skip && !line.startsWith(QStringLiteral("# "))) shown.append(line);
     }
     return shown.join(QLatin1Char('\n'));

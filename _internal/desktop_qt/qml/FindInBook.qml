@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "FindLogic.js" as Find
@@ -10,7 +11,7 @@ Modal {
     id: root
     objectName: "findInBook"
     panelWidth: 560
-    title: "Tìm trong sách"
+    title: S.s_tim_trong_sach_de3ccc5f
     description: bookTitle
     property string bookId: ""
     property string bookTitle: ""
@@ -115,8 +116,8 @@ Modal {
                 topPadding: 12
                 bottomPadding: 12
                 font.pixelSize: Theme.sizeBody
-                label: "Chữ hay câu cần tìm"
-                placeholderText: "Chữ hay câu cần tìm…"
+                label: S.s_chu_hay_cau_can_tim_d9ab6029
+                placeholderText: S.s_chu_hay_cau_can_tim_41e570d3
                 onTextChanged: root.query = text
                 onAccepted: if (root.hits.length) root.pick(root.hits[0])
                 Keys.onDownPressed: event => {

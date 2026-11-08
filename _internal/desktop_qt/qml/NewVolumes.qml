@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -16,7 +17,7 @@ Column {
     readonly property bool chosen: form ? form.splitting : false
     readonly property var starts: form ? form.volumeStarts : [1]
     readonly property var parts: Logic.ranges(starts, files.length)
-    readonly property var titles: Logic.volumeTitles(String(draft.title || "").trim() || "Tên sách", parts.length)
+    readonly property var titles: Logic.volumeTitles(String(draft.title || "").trim() || S.s_ten_sach_d54846eb, parts.length)
     readonly property var proposed: {
         const map = {}
         for (const volume of (proposal ? proposal.volumes : [])) map[volume.startPath] = volume.label
@@ -36,7 +37,7 @@ Column {
         Item {
             width: parent.width
             height: 16 + plain.height
-            Button { id: plain; objectName: "newSplitPlain"; y: 16; text: "Chia thành nhiều phần"; icon: "layers"; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: [root.files[0].path]}) }
+            Button { id: plain; objectName: "newSplitPlain"; y: 16; text: S.s_chia_thanh_nhieu_phan_af52ab82; icon: "layers"; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: [root.files[0].path]}) }
         }
     }
     // Chưa chia, máy đề xuất
@@ -48,8 +49,8 @@ Column {
             width: parent.width
             icon: "sparkles"
             tone: Theme.accentText
-            Prose { strong: true; tone: Theme.text; text: root.proposal ? "Chia " + root.proposal.volumes.length + " phần?" : " " }
-            Prose { text: "Nối các phần, giữ giọng và cách đọc tên." }
+            Prose { strong: true; tone: Theme.text; text: root.proposal ? S.s_chia_e1f5ebcd + root.proposal.volumes.length + S.s_phan_67dc9fc9 : " " }
+            Prose { text: S.s_noi_cac_phan_giu_giong_va_cach_doc_ten_ae9d0eb0 }
             MoreInfo {
                 width: parent.width
                 Prose {
@@ -57,14 +58,14 @@ Column {
                     text: {
                         if (!root.proposal) return " "
                         const shown = root.proposal.volumes.slice(0, 4)
-                        return "Máy thấy " + Logic.SOURCE_TEXT[root.proposal.source] + ": " +
-                            shown.map(volume => volume.label + " (" + Studio.formatNumber(volume.chapters) + " chương)").join(", ") +
-                            (root.proposal.volumes.length > shown.length ? ", …" : "") + ". Chưa chia thì cả truyện là một sách. Mỗi phần tự bắt đầu sau phần trước; bạn sửa chỗ cắt bằng số chương."
+                        return S.s_may_thay_ed1e7e9f + Logic.SOURCE_TEXT[root.proposal.source] + ": " +
+                            shown.map(volume => volume.label + " (" + Studio.formatNumber(volume.chapters) + S.s_chuong_be1b3067).join(", ") +
+                            (root.proposal.volumes.length > shown.length ? ", …" : "") + S.s_chua_chia_thi_ca_truyen_la_mot_sach_moi_ph_5630bb53
                     }
                 }
             }
             Item { width: 1; height: 6 }
-            Button { objectName: "newSplitAccept"; text: "Chia thành nhiều phần"; icon: "layers"; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: root.proposal.volumes.map(volume => volume.startPath)}) }
+            Button { objectName: "newSplitAccept"; text: S.s_chia_thanh_nhieu_phan_af52ab82; icon: "layers"; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: root.proposal.volumes.map(volume => volume.startPath)}) }
         }
     }
     // Đang chia: danh sách phần
@@ -83,11 +84,11 @@ Column {
                     spacing: 8
                     width: parent.width - noMore.width - 8
                     Icon { y: 3; name: "layers"; size: 16; color: Theme.accentText }
-                    Prose { width: parent.width - 24; strong: true; tone: Theme.text; text: root.parts.length > 1 ? "Chia thành " + root.parts.length + " phần" : "Chia thành mấy phần?" }
+                    Prose { width: parent.width - 24; strong: true; tone: Theme.text; text: root.parts.length > 1 ? S.s_chia_thanh_be2299ce + root.parts.length + S.s_phan_20f71101 : S.s_chia_thanh_may_phan_1bf1cf9e }
                 }
-                Button { id: noMore; objectName: "newSplitCancel"; x: parent.width - width; text: "Không chia nữa"; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: null}) }
+                Button { id: noMore; objectName: "newSplitCancel"; x: parent.width - width; text: S.s_khong_chia_nua_3d6b48ed; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: null}) }
             }
-            Prose { topPadding: 4; text: "Mỗi phần thành một sách nối tiếp; chọn chương bắt đầu để chia." }
+            Prose { topPadding: 4; text: S.s_moi_phan_thanh_mot_sach_noi_tiep_chon_chuo_d7604c1a }
             Item { width: 1; height: 12 }
             StudioRows {
                 id: rowsList
@@ -113,7 +114,7 @@ Column {
                                 font.weight: Theme.weightMedium
                                 textFormat: Text.StyledText
                                 // Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1
-                                text: Logic.esc(row.modelData.title) + (row.modelData.index === 0 ? " <font color=\"" + Theme.text3 + "\" size=\"2\">phần 1</font>" : "")
+                                text: Logic.esc(row.modelData.title) + (row.modelData.index === 0 ? " <font color=\"" + Theme.text3 + S.s_size_2_phan_1_font_d3b1f617 : "")
                             }
                             Prose {
                                 small: true
@@ -125,7 +126,7 @@ Column {
                                 small: true
                                 tone: Theme.warning
                                 // Dây chuyền xếp chương theo TÊN file: chương của hai thư mục trong một phần thì xen nhau (máy chủ từ chối khi tạo).
-                                text: "Dời chỗ cắt về ranh giới thư mục để giữ thứ tự đọc."
+                                text: S.s_doi_cho_cat_ve_ranh_gioi_thu_muc_de_giu_th_b3f10724
                             }
                         }
                         Row {
@@ -133,7 +134,7 @@ Column {
                             x: row.wide ? row.width - width : 0
                             y: row.wide ? 8 + (info.height - height) / 2 : 8 + info.height + 4
                             spacing: 12
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: "từ chương"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_tu_chuong_e2536d03; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                             Item {
                                 width: 64; height: 32
                                 anchors.verticalCenter: parent.verticalCenter
@@ -143,7 +144,7 @@ Column {
                                     objectName: "newCutBox"
                                     width: 64
                                     value: row.modelData.start
-                                    label: "Phần " + (row.modelData.index + 1) + " bắt đầu từ chương"
+                                    label: S.s_phan_a17569d5 + (row.modelData.index + 1) + S.s_bat_dau_tu_chuong_319e1cbb
                                     commitWith: number => root.commit(Logic.moveStart(root.starts, row.modelData.index, number, root.files.length))
                                 }
                             }
@@ -151,7 +152,7 @@ Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 90
                                 horizontalAlignment: Text.AlignRight
-                                text: Studio.formatNumber(row.modelData.chapters) + " chương"
+                                text: Studio.formatNumber(row.modelData.chapters) + S.s_chuong_9e6a01dc
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
@@ -166,8 +167,8 @@ Column {
                                     anchors.fill: parent
                                     icon: "trash-2"
                                     iconSize: 16
-                                    tip: "Gộp vào phần trước"
-                                    Accessible.name: "Bỏ chỗ cắt trước " + row.modelData.title
+                                    tip: S.s_gop_vao_phan_truoc_b2b49634
+                                    Accessible.name: S.s_bo_cho_cat_truoc_79e9b165 + row.modelData.title
                                     onClicked: root.commit(Logic.removeStart(root.starts, row.modelData.index))
                                 }
                             }
@@ -184,19 +185,19 @@ Column {
                     y: 12
                     width: parent.width
                     spacing: 8
-                    Text { height: 32; verticalAlignment: Text.AlignVCenter; text: "Cắt từ chương"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                    Text { height: 32; verticalAlignment: Text.AlignVCenter; text: S.s_cat_tu_chuong_43026b03; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                     NumberBox {
                         id: addBox
                         objectName: "newCutAdd"
                         width: 112
                         mode: "add"
-                        placeholderText: "từ 2 đến " + root.files.length
-                        label: "Thêm phần từ chương"
+                        placeholderText: S.s_tu_2_den_cafac407 + root.files.length
+                        label: S.s_them_phan_tu_chuong_cba5b511
                         commitWith: number => root.commit(Logic.addStart(root.starts, number, root.files.length))
                     }
                     Button {
                         objectName: "newCutAddButton"
-                        text: "Thêm"
+                        text: S.s_them_dd92626f
                         icon: "plus"
                         kind: "ghost"
                         size: "sm"
@@ -207,7 +208,7 @@ Column {
                         objectName: "newCutError"
                         visible: addBox.bad
                         width: Math.min(implicitWidth, addRow.width)
-                        text: root.starts.length >= 99 ? "Tối đa 99 phần." : "Chương này đã là chỗ cắt, hay không nằm trong 2 – " + root.files.length + "."
+                        text: root.starts.length >= 99 ? S.s_toi_da_99_phan_9661ebdc : S.s_chuong_nay_da_la_cho_cat_hay_khong_nam_tro_1005c9e5 + root.files.length + "."
                         color: Theme.danger
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall

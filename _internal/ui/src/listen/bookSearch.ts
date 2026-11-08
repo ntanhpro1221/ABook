@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { findInSegments, foldedQuery, foldedText, type FindHit } from "./findText";
 
 // Tìm chữ trong CẢ cuốn: đi qua từng chương theo thứ tự trong sách, nạp chữ của chương rồi dò từng đoạn (findText.ts). Nguồn có `loadMany`
@@ -109,7 +110,7 @@ export async function searchBook({
       }
       out.push(text);
     }
-    if (!out.length) throw new Error("Máy chủ không trả chương nào");
+    if (!out.length) throw new Error(S.s_may_chu_khong_tra_chuong_nao_9a0798fe);
     return out;
   };
   let bulk = Boolean(loadMany);

@@ -15,9 +15,9 @@ import java.util.zip.ZipInputStream
 class NpyArray(val shape: IntArray, val numbers: DoubleArray?, val strings: List<String>?) {
     val size: Int get() = shape.fold(1) { total, dimension -> total * dimension }
 
-    fun doubles(): DoubleArray = numbers ?: throw IllegalArgumentException("mảng này không phải số")
+    fun doubles(): DoubleArray = numbers ?: throw IllegalArgumentException(S.s_mang_nay_khong_phai_so_48d2cabf)
 
-    fun texts(): List<String> = strings ?: throw IllegalArgumentException("mảng này không phải chữ")
+    fun texts(): List<String> = strings ?: throw IllegalArgumentException(S.s_mang_nay_khong_phai_chu_1b06838a)
 }
 
 object Npz {
@@ -48,7 +48,7 @@ object Npz {
     /** Đọc đầu `.npy` từ [bytes] (chỉ cần phần đầu file); đầu hỏng thì ném lỗi kèm lý do. */
     fun header(bytes: ByteArray, name: String = "npy"): Header {
         fun bad(why: String): Nothing = throw IllegalArgumentException("$name: $why")
-        if (bytes.size < 10 || !bytes.copyOfRange(0, 6).contentEquals(MAGIC)) bad("không phải file .npy")
+        if (bytes.size < 10 || !bytes.copyOfRange(0, 6).contentEquals(MAGIC)) bad(S.s_khong_phai_file_npy_92e72f32)
         val major = bytes[6].toInt()
         val headerLength: Int
         val headerStart: Int
@@ -61,25 +61,25 @@ object Npz {
                 headerLength = ByteBuffer.wrap(bytes, 8, 4).order(ByteOrder.LITTLE_ENDIAN).int
                 headerStart = 12
             }
-            else -> bad("phiên bản .npy $major chưa hỗ trợ")
+            else -> bad(S.s_phien_ban_npy_0_chua_ho_tro_782d5112(major))
         }
-        if (headerLength < 0 || headerStart + headerLength > bytes.size) bad("đầu file hỏng")
+        if (headerLength < 0 || headerStart + headerLength > bytes.size) bad(S.s_dau_file_hong_9ffba96b)
         val header = String(bytes, headerStart, headerLength, if (major == 3) Charsets.UTF_8 else Charsets.ISO_8859_1)
-        val descr = DESCR.find(header)?.groupValues?.get(1) ?: bad("thiếu kiểu số")
+        val descr = DESCR.find(header)?.groupValues?.get(1) ?: bad(S.s_thieu_kieu_so_03af5124)
         val fortran = FORTRAN.find(header)?.groupValues?.get(1) != "False"
         val dimensions = SHAPE.find(header)?.groupValues?.get(1)?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.map { it.toInt() }
-            ?: bad("thiếu hình dạng")
+            ?: bad(S.s_thieu_hinh_dang_58758a2f)
         return Header(descr, fortran, dimensions.toIntArray(), headerStart + headerLength)
     }
 
     fun parse(bytes: ByteArray, name: String = "npy"): NpyArray {
         fun bad(why: String): Nothing = throw IllegalArgumentException("$name: $why")
         val head = header(bytes, name)
-        if (head.fortran) bad("chỉ đọc được thứ tự C")
+        if (head.fortran) bad(S.s_chi_doc_duoc_thu_tu_c_087035f9)
         val descr = head.descr
         val shape = head.shape
         val count = shape.fold(1L) { total, dimension -> total * dimension }
-        if (count > Int.MAX_VALUE) bad("mảng quá lớn")
+        if (count > Int.MAX_VALUE) bad(S.s_mang_qua_lon_2d0bc2cb)
         val data = ByteBuffer.wrap(bytes, head.dataOffset, bytes.size - head.dataOffset).order(ByteOrder.LITTLE_ENDIAN)
         val numbers = when (descr) {
             "<f4" -> 4
@@ -89,7 +89,7 @@ object Npz {
             else -> 0
         }
         if (numbers > 0) {
-            if (data.remaining() < count * numbers) bad("thiếu dữ liệu")
+            if (data.remaining() < count * numbers) bad(S.s_thieu_du_lieu_d2b05c2e)
             val out = DoubleArray(count.toInt()) {
                 when (descr) {
                     "<f4" -> data.float.toDouble()
@@ -101,8 +101,8 @@ object Npz {
             return NpyArray(shape, out, null)
         }
         if (descr.startsWith("<U")) {
-            val width = descr.substring(2).toIntOrNull() ?: bad("kiểu $descr lạ")
-            if (data.remaining().toLong() < count * width * 4) bad("thiếu dữ liệu")
+            val width = descr.substring(2).toIntOrNull() ?: bad(S.s_kieu_0_la_a9618525(descr))
+            if (data.remaining().toLong() < count * width * 4) bad(S.s_thieu_du_lieu_d2b05c2e)
             val strings = List(count.toInt()) {
                 val builder = StringBuilder()
                 var ended = false
@@ -114,6 +114,6 @@ object Npz {
             }
             return NpyArray(shape, null, strings)
         }
-        bad("kiểu $descr chưa hỗ trợ")
+        bad(S.s_kieu_0_chua_ho_tro_477e655f(descr))
     }
 }

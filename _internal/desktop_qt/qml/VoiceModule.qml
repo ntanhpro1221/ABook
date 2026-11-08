@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "SizeFormat.js" as Size
@@ -54,9 +55,9 @@ Item {
             if (after) after()
         })
     }
-    function start(choices, failure) { run("", choices ? {choices: choices} : {}, failure || "Chưa tải được " + lowerName) }
+    function start(choices, failure) { run("", choices ? {choices: choices} : {}, failure || S.s_chua_tai_duoc_d5533c6e + lowerName) }
     function remove(id) {
-        run("/remove", {choice: id}, "Chưa gỡ được " + lowerName, function() { root.changed() })
+        run("/remove", {choice: id}, S.s_chua_go_duoc_c49db1d8 + lowerName, function() { root.changed() })
     }
     function toggle(id, on) { chosen = VoiceLogic.toggleChoice(status, picked, id, on) }
     // "Gỡ" một giọng đã tải: hỏi trước. Bản tăng tốc chỉ là bản chạy nhanh hơn của cùng giọng: không hỏi cuốn nào.
@@ -74,10 +75,10 @@ Item {
     function switchTo() {
         const suggestion = status.suggestion
         if (!suggestion) return
-        if (suggestion.switchTo === "nano" && !suggestion.installed) { run("", {choices: ["nano"]}, "Chưa tải được " + lowerName); return }
+        if (suggestion.switchTo === "nano" && !suggestion.installed) { run("", {choices: ["nano"]}, S.s_chua_tai_duoc_d5533c6e + lowerName); return }
         function done(target) {
             root.switched(target)
-            Api.notice = suggestion.switchTo === "nano" ? "Đã chuyển sang giọng VieNeu Nano" : "Đã chuyển sang giọng trực tuyến"
+            Api.notice = suggestion.switchTo === "nano" ? S.s_da_chuyen_sang_giong_vieneu_nano_78fd20a4 : S.s_da_chuyen_sang_giong_truc_tuyen_f1c06742
         }
         if (suggestion.switchTo !== "nano") { done(VoiceLogic.ONLINE_VOICE); return }
         Api.quiet("GET", "/api/readaloud/voices", null, function(voices, error) {
@@ -136,7 +137,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.line
                     Accessible.role: Accessible.ProgressBar
-                    Accessible.name: "Đang tải " + root.lowerName
+                    Accessible.name: S.s_dang_tai_4568372a + root.lowerName
                     Rectangle {
                         objectName: "moduleBar"
                         width: track.width * VoiceLogic.percent(root.shown) / 100
@@ -153,9 +154,9 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     size: "sm"
                     kind: "text"
-                    text: "Huỷ"
+                    text: S.s_huy_96732485
                     busy: root.busy
-                    onActivated: root.run("/cancel", {}, "Chưa huỷ được việc tải " + root.lowerName)
+                    onActivated: root.run("/cancel", {}, S.s_chua_huy_duoc_viec_tai_cefb2562 + root.lowerName)
                 }
             }
         }
@@ -227,7 +228,7 @@ Item {
                                         Text {
                                             id: badge
                                             anchors.centerIn: parent
-                                            text: "Khuyên dùng"
+                                            text: S.s_khuyen_dung_b1d3dec8
                                             color: Theme.accentText
                                             font.pixelSize: 11
                                             font.weight: 600
@@ -247,7 +248,7 @@ Item {
                                 anchors.right: removeButton.visible ? removeButton.left : parent.right
                                 anchors.rightMargin: removeButton.visible ? 12 : 0
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: choiceRow.choice.installed ? "Đã có" : choiceRow.size > 0 ? Size.formatSize(choiceRow.size) : "Đã có sẵn"
+                                text: choiceRow.choice.installed ? S.s_da_co_7610f1dd : choiceRow.size > 0 ? Size.formatSize(choiceRow.size) : S.s_da_co_san_90ac4add
                                 color: Theme.text2
                                 font.pixelSize: Theme.sizeCaption
                             }
@@ -259,7 +260,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 size: "sm"
                                 kind: "text"
-                                text: choiceRow.choice.installed ? "Gỡ" : "Xoá phần đã tải"
+                                text: choiceRow.choice.installed ? S.s_go_f3243c30 : S.s_xoa_phan_da_tai_9f9ae26f
                                 busy: root.busy
                                 onActivated: { if (choiceRow.choice.installed) root.ask(choiceRow.choice.id, choiceRow.choice.label); else root.remove(choiceRow.choice.id) }
                             }
@@ -280,16 +281,16 @@ Item {
                 pressScaling: false
                 objectName: "moduleAccelerate"
                 Accessible.role: Accessible.CheckBox
-                Accessible.name: "Dùng bản tăng tốc"
+                Accessible.name: S.s_dung_ban_tang_toc_40b7f3dd
                 Accessible.checked: Boolean(root.status.accelerated && root.status.accelerated.on)
-                onClicked: root.run("/accelerate", {on: !(root.status.accelerated && root.status.accelerated.on)}, "Chưa đổi được cách đọc")
+                onClicked: root.run("/accelerate", {on: !(root.status.accelerated && root.status.accelerated.on)}, S.s_chua_doi_duoc_cach_doc_5077e18b)
                 VoiceCheck { checked: Boolean(root.status.accelerated && root.status.accelerated.on); anchors.verticalCenter: parent.verticalCenter }
                 Text {
                     id: accelText
                     x: 24
                     width: parent.width - 24
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Dùng bản tăng tốc"
+                    text: S.s_dung_ban_tang_toc_40b7f3dd
                     color: Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall
@@ -366,7 +367,7 @@ Item {
                     visible: root.status.state === "outdated"
                     size: "sm"
                     kind: "text"
-                    text: "Cập nhật (" + Size.formatSize(root.status.outdatedBytes || 0) + ")"
+                    text: S.s_cap_nhat_000e3ccc + Size.formatSize(root.status.outdatedBytes || 0) + ")"
                     busy: root.busy
                     onActivated: root.start()
                 }
@@ -376,7 +377,7 @@ Item {
                     visible: root.missing.length > 0
                     size: "sm"
                     kind: root.status.state === "missing" ? "primary" : "text"
-                    text: root.failed ? "Thử lại" : root.bytes > 0 ? "Tải (" + Size.formatSize(root.bytes) + ")" : "Dùng"
+                    text: root.failed ? S.s_thu_lai_c58d068c : root.bytes > 0 ? S.s_tai_40698276 + Size.formatSize(root.bytes) + ")" : S.s_dung_7927ca4e
                     busy: root.busy
                     onActivated: root.start(root.missing)
                 }
@@ -385,9 +386,9 @@ Item {
                     visible: root.hasMeasure
                     size: "sm"
                     kind: "text"
-                    text: "Thử lại tốc độ"
+                    text: S.s_thu_lai_toc_do_a69ef56d
                     busy: root.busy
-                    onActivated: root.run("/measure", {}, "Chưa tải được " + root.lowerName)
+                    onActivated: root.run("/measure", {}, S.s_chua_tai_duoc_d5533c6e + root.lowerName)
                 }
             }
         }
@@ -398,8 +399,8 @@ Item {
         id: confirm
         objectName: "removeConfirm." + root.copy.key
         parent: root.Window.window ? root.Window.window.contentItem : root
-        title: "Gỡ “" + root.askLabel + "” khỏi máy này?"
-        description: root.asking && root.asking.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)
+        title: S.s_go_3b2e5a10 + root.askLabel + S.s_khoi_may_nay_4869a7b9
+        description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_5b75d605 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)
         onClosed: root.asking = null
         footer: [
             Flow {
@@ -410,14 +411,14 @@ Item {
                 Button {
                     objectName: "removeConfirmYes." + root.copy.key
                     kind: "danger"
-                    text: "Gỡ giọng"
+                    text: S.s_go_giong_2f8014a9
                     enabled: root.asking !== null && root.asking.use !== undefined
                     onClicked: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }
                 }
                 Button {
                     objectName: "removeConfirmNo." + root.copy.key
                     kind: "text"
-                    text: "Giữ lại"
+                    text: S.s_giu_lai_3c3ba2db
                     onClicked: confirm.dismiss()
                 }
             }

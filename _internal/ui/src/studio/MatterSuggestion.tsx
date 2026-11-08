@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { ScannedFile } from "@/studio/api";
 import { formatNumber } from "@/shared/format";
 import { matterFiles } from "@/studio/scanView";
@@ -9,10 +10,8 @@ export function MatterSuggestion({ files, keep, onKeep }: { files: ScannedFile[]
   const kept = new Set(keep);
   return (
     <div className="mt-4 py-4 text-sm">
-      <p className="font-semibold">{formatNumber(rows.length)} trang phụ chưa chọn</p>
-      <p className="mt-1 text-fg-2">
-        Bìa, bản quyền, mục lục hay trang tên sách nằm trong file sách. Máy chưa chọn chúng vì nghe lên không phải truyện - tích trang nào bạn muốn nghe.
-      </p>
+      <p className="font-semibold">{formatNumber(rows.length)}{S.s_trang_phu_chua_chon_fa525053}</p>
+      <p className="mt-1 text-fg-2">{S.s_bia_ban_quyen_muc_luc_hay_trang_ten_sach_n_49213805}</p>
       <ul className="mt-2 space-y-1">
         {rows.map((row) => (
           <li key={row.path}>

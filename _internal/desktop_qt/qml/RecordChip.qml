@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -10,7 +11,7 @@ Interactive {
     property real maxWidth: 10000
     readonly property real extra: 12 + 14 + 6 + 6 + 14 + 12      // đệm, icon người, khe, khe, mũi tên, đệm
     Accessible.role: Accessible.Button
-    Accessible.name: "Hồ sơ nghe: " + name
+    Accessible.name: S.s_ho_so_nghe_11bebd07 + name
     implicitWidth: Math.min(maxWidth, labelText.implicitWidth + 4 + nameText.implicitWidth + extra)
     implicitHeight: Math.max(32, flow.height + 12)
     width: implicitWidth
@@ -40,7 +41,7 @@ Interactive {
         spacing: 4
         Text {
             id: labelText
-            text: "Hồ sơ nghe:"
+            text: S.s_ho_so_nghe_a80cbba0
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
         }

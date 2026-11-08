@@ -49,11 +49,11 @@ class SeamPicker(
         val built = try {
             plan(file, cue)
         } catch (t: Throwable) {
-            dead(key, "dựng hình học Nối lỗi (${t.message}), phát bằng đường cũ")
+            dead(key, S.s_dung_hinh_hoc_noi_loi_0_phat_bang_duong_cu_56d2c375(t.message))
             return Choice.Legacy
         }
         if (built == null) {
-            dead(key, "bài không lặp mờ chéo, phát bằng đường cũ")
+            dead(key, S.s_bai_khong_lap_mo_cheo_phat_bang_duong_cu_c1f6548c)
             return Choice.Legacy
         }
         synchronized(this) { entries[key] = built }
@@ -69,7 +69,7 @@ class SeamPicker(
                     built.source = "built"
                     synchronized(this) { if (built.state == State.BUILDING) built.state = State.READY }
                 } catch (t: Throwable) {
-                    reject(built, "dựng Nối lỗi (${t.message})")
+                    reject(built, S.s_dung_noi_loi_0_46b5b526(t.message))
                 }
             })
         }
@@ -84,14 +84,14 @@ class SeamPicker(
     /** Bỏ Nối này cho cả phiên (lỗi giữa chừng khi phát, dựng hỏng): lần chọn sau là [Choice.Legacy]. */
     fun reject(built: Built, why: String) {
         synchronized(this) { built.state = State.DEAD }
-        note("Nối ${built.key}: $why - phát bằng đường cũ")
+        note(S.s_noi_0_1_phat_bang_duong_cu_f71a3ee4(built.key, why))
     }
 
     private fun dead(key: String, why: String) {
         val stub = Built(LoopSeam.Seam(File(""), File(""), 0, 0, 0, 0, 0, 0, 0, 0), MusicCues.Loop(0.0, 0.0, 0.0, false), 0.0, key)
         stub.state = State.DEAD
         synchronized(this) { entries[key] = stub }
-        note("Nối $key: $why")
+        note(S.s_noi_0_1_c848fb1c(key, why))
     }
 
     companion object {

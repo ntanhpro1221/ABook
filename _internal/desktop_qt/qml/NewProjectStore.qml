@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -55,7 +56,7 @@ QtObject {
 
     // ---- đọc dữ liệu ----
     function request(method, path, body, done) { return store ? store.request(method, path, body, done) : 0 }
-    function fail(title, status, data) { Api.notice = title + "\n" + (store ? store.errorText(status, data) : "Chưa làm được lúc này.") }
+    function fail(title, status, data) { Api.notice = title + "\n" + (store ? store.errorText(status, data) : S.s_chua_lam_duoc_luc_nay_2e7cacde) }
     function loadVoices() {
         const mine = store ? store.peer : ""
         request("GET", "/api/voices", null, function(status, data) {
@@ -122,9 +123,9 @@ QtObject {
         redoing = true
         request("GET", "/api/books/" + id + "/redo", null, function(status, data) {
             root.redoing = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Chưa đọc được thiết lập của sách", status, data); root.leaveRequested(""); return }
+            if (status < 200 || status >= 300 || !data) { root.fail(S.s_chua_doc_duoc_thiet_lap_cua_sach_d7efab34, status, data); root.leaveRequested(""); return }
             if (data.started) {
-                Api.notice = "Sách đã bắt đầu chạy\nKhông thể làm lại với thiết lập khác nữa."
+                Api.notice = S.s_sach_da_bat_dau_chay_khong_the_lam_lai_voi_cf900f37
                 root.leaveRequested(id)
                 return
             }
@@ -136,7 +137,7 @@ QtObject {
         redoing = true
         request("GET", "/api/books/" + id + "/continuation", null, function(status, data) {
             root.redoing = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Chưa mở được phần trước", status, data); root.leaveRequested(""); return }
+            if (status < 200 || status >= 300 || !data) { root.fail(S.s_chua_mo_duoc_phan_truoc_52e838aa, status, data); root.leaveRequested(""); return }
             root.draft = Logic.draftFromContinuation(data, id)
             root.profileApplied = true
         })
@@ -144,7 +145,7 @@ QtObject {
     function dropSeed() {
         const previous = draft.seed
         update({seed: undefined})
-        Api.toast("Đã bỏ nối tiếp - sách sẽ phân vai lại từ đầu", {duration: 10000, action: {label: "Hoàn tác", run: function() { root.update({seed: previous}) }}})
+        Api.toast(S.s_da_bo_noi_tiep_sach_se_phan_vai_lai_tu_dau_fa1cf109, {duration: 10000, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.update({seed: previous}) }}})
     }
 
     // ---- quét nguồn: chỉ khi danh sách nguồn đổi ----
@@ -161,7 +162,7 @@ QtObject {
             root.scanning = false
             if (status < 200 || status >= 300 || !data) {
                 root.scanned = {key: key, result: null}
-                root.problem = {text: "Chưa đọc được: " + (root.store ? root.store.errorText(status, data) : ""), subfolders: []}
+                root.problem = {text: S.s_chua_doc_duoc_2213ed66 + (root.store ? root.store.errorText(status, data) : ""), subfolders: []}
                 return
             }
             root.scanned = {key: key, result: data}
@@ -227,8 +228,8 @@ QtObject {
         draft = next
         // Áp mẫu ghi đè giọng / chất lượng / chờ duyệt bạn vừa chọn: nói đã đổi gì và cho trả lại
         if (changed.length) {
-            Api.toast("Đã áp " + (template ? "mẫu “" + template.name + "”" : "lựa chọn mặc định") + ": đổi " + changed.join(", "),
-                      {duration: 8000, action: {label: "Hoàn tác", run: function() { root.draft = Object.assign({}, root.draft, before) }}})
+            Api.toast(S.s_da_ap_4cdf7062 + (template ? S.s_mau_81b2d539 + template.name + "”" : S.s_lua_chon_mac_dinh_2b7a4461) + S.s_doi_b9166fa9 + changed.join(", "),
+                      {duration: 8000, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.draft = Object.assign({}, root.draft, before) }}})
         }
     }
     property bool templateBusy: false
@@ -243,7 +244,7 @@ QtObject {
                 root.prefs = data
                 if (root.store && !root.store.peer) Api.preferences = Object.assign({}, Api.preferences, data)
             } else if (status === 404 || status === 409) root.loadPrefs()
-            if (done) done(ok, ok ? "" : (data && (data.message || data.error)) || "Chưa làm được lúc này.")
+            if (done) done(ok, ok ? "" : (data && (data.message || data.error)) || S.s_chua_lam_duoc_luc_nay_2e7cacde)
         })
     }
 
@@ -260,7 +261,7 @@ QtObject {
     }
     function removeChapter(path) {
         update({excluded: draft.excluded.concat([path])})
-        Api.toast("Đã bỏ " + Logic.sourceName(path), {action: {label: "Hoàn tác", run: function() { root.update({excluded: root.draft.excluded.filter(function(item) { return item !== path })}) }}})
+        Api.toast(S.s_da_bo_4874210f + Logic.sourceName(path), {action: {label: S.s_hoan_tac_e72ff675, run: function() { root.update({excluded: root.draft.excluded.filter(function(item) { return item !== path })}) }}})
     }
     function keepMatter(path, on) { update(Logic.keepMatterState(draft, path, on)) }
 
@@ -271,10 +272,10 @@ QtObject {
         const plan = Upload.planUpload(list, Upload.batchName(new Date(), Math.random().toString(36).slice(2, 6)))
         const notice = Upload.planNotice(plan)
         if (!plan.groups.length) {
-            Api.notice = "Không có file truyện nào để gửi\n" + (notice || "Chọn các file .txt (mỗi file một chương) hay một file .epub / .docx / .pdf.")
+            Api.notice = S.s_khong_co_file_truyen_nao_de_gui_1e4764a1 + (notice || S.s_chon_cac_file_txt_moi_file_mot_chuong_hay_ab6662ed)
             return
         }
-        if (notice) Api.notice = "Có file không gửi\n" + notice
+        if (notice) Api.notice = S.s_co_file_khong_gui_52410790 + notice
         stopping = false
         sendJob = {plan: plan, append: append, group: 0, file: 0, folder: "", result: {paths: [], sent: 0, total: Upload.planFileCount(plan), cancelled: false, error: ""},
                    progress: {files: 0, totalFiles: Upload.planFileCount(plan), bytes: 0, totalBytes: plan.bytes}}
@@ -293,7 +294,7 @@ QtObject {
         request("POST", "/api/sources/upload", {folder: group.folder, name: picked.name, data: data}, function(status, reply) {
             if (root.sendJob !== job) return
             if (status < 200 || status >= 300 || !reply) {
-                job.result.error = root.store ? root.store.errorText(status, reply) : "Chưa gửi được."
+                job.result.error = root.store ? root.store.errorText(status, reply) : S.s_chua_gui_duoc_d4832c85
                 root.closeGroup(job, group)
                 root.finishUpload(job, false)
                 return
@@ -319,8 +320,8 @@ QtObject {
         const result = job.result
         // File đã tới máy tính thì giữ (huỷ hay hỏng giữa chừng cũng vậy)
         if (result.paths.length) { if (job.append) addFiles(result.paths); else setPaths(result.paths) }
-        if (result.error) Api.notice = "Không gửi hết các chương\n" + result.error + " " + Upload.sendSummary(result)
-        else if (result.cancelled) Api.notice = result.sent ? "Đã dừng gửi - " + Upload.sendSummary(result) : "Đã huỷ gửi"
+        if (result.error) Api.notice = S.s_khong_gui_het_cac_chuong_9f410c03 + result.error + " " + Upload.sendSummary(result)
+        else if (result.cancelled) Api.notice = result.sent ? S.s_da_dung_gui_da4bd94f + Upload.sendSummary(result) : S.s_da_huy_gui_d2e596a4
     }
     function cancelUpload() { stopping = true }
     Component.onDestruction: stopping = true
@@ -328,7 +329,7 @@ QtObject {
     // ---- tách một file cả truyện thành các chương ----
     function splitSource(path, done) {
         request("POST", "/api/sources/split", {path: path, title: String(draft.title).trim()}, function(status, data) {
-            if (status < 200 || status >= 300 || !data) { root.fail("Chưa tách được", status, data); if (done) done(); return }
+            if (status < 200 || status >= 300 || !data) { root.fail(S.s_chua_tach_duoc_7d64588d, status, data); if (done) done(); return }
             const folder = data.folder
             // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương, bỏ file cả truyện khỏi danh sách
             const replaced = root.draft.paths.some(function(item) { return Logic.samePath(item, path) })
@@ -339,7 +340,7 @@ QtObject {
             root.update(Object.assign(replaced
                 ? {paths: root.draft.paths.map(function(item) { return Logic.samePath(item, path) ? folder : item }), excluded: [], keepMatter: [], limit: null, volumeStarts: null}
                 : {paths: root.draft.paths.concat([folder]), excluded: root.draft.excluded.concat([path]), limit: null, volumeStarts: null}, keepTitle))
-            Api.notice = chapters ? "Đã tách thành " + Studio.formatNumber(chapters) + " chương" : "Đã tách thành các chương"
+            Api.notice = chapters ? S.s_da_tach_thanh_df60df1d + Studio.formatNumber(chapters) + S.s_chuong_9e6a01dc : S.s_da_tach_thanh_cac_chuong_1e1bb231
             if (done) done()
         })
     }
@@ -354,10 +355,10 @@ QtObject {
         const body = Logic.createBody({draft: mine, files: scan.files, volumeStarts: volumeStarts, povChapters: povChapters, auto: autoNarrator, remote: remote, noStudio: noStudio, credits: credits})
         request("POST", "/api/books", body, function(status, data) {
             root.submitting = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Chưa tạo được sách", status, data); return }
+            if (status < 200 || status >= 300 || !data) { root.fail(S.s_chua_tao_duoc_sach_2d0ce411, status, data); return }
             const text = Logic.createdText(data, mine, root.noStudio)
             Api.notice = text[1] ? text[0] + "\n" + text[1] : text[0]
-            if (data.replaceError) Api.toast("Bản cũ vẫn còn trong Dự án\n" + data.replaceError)
+            if (data.replaceError) Api.toast(S.s_ban_cu_van_con_trong_du_an_43fe501c + data.replaceError)
             root.reset()
             if (root.store) root.store.refresh(data.id)
             root.created(data.id)

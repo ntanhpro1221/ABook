@@ -8,7 +8,7 @@ import org.json.JSONObject
  */
 object MusicCredits {
     /** Câu nói nhạc đã bị chỉnh (cắt vòng, trộn dưới giọng, đổi âm lượng) - CC BY đòi nói rõ; cùng câu với máy tính và giao diện. */
-    const val MODIFIED_NOTE = "Nhạc đã cắt vòng, trộn nhỏ dưới giọng đọc và cân âm lượng cho sách."
+    const val MODIFIED_NOTE = S.s_nhac_da_cat_vong_tron_nho_duoi_giong_doc_v_443b5669
     private val CC_KINDS = Regex("""^by(-(nc|nd|sa))*$""")
     private val CC_URL = Regex("""creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
 
@@ -44,7 +44,7 @@ object MusicCredits {
         if (name.isNotEmpty() || creator.isNotEmpty()) parts += name + if (creator.isNotEmpty()) " - $creator" else ""
         val foreign = info.optString("source") != "local"
         val licence = licenseLabel(text(info, "license"), text(info, "licenseUrl"))
-        if (parts.isNotEmpty() && licence.isNotEmpty() && foreign) parts += "giấy phép $licence"
+        if (parts.isNotEmpty() && licence.isNotEmpty() && foreign) parts += S.s_giay_phep_0_d7d241a7(licence)
         val link = text(info, "licenseUrl").ifEmpty { text(info, "landing") }
         if (parts.isNotEmpty() && link.isNotEmpty() && foreign) parts += link
         return parts.joinToString(", ")
@@ -62,6 +62,6 @@ object MusicCredits {
             }
         }
         if (lines.isEmpty()) return ""
-        return (listOf("Nhạc nền:") + lines + if (credited) listOf(MODIFIED_NOTE) else emptyList()).joinToString("\n") + "\n"
+        return (listOf(S.s_nhac_nen_2be5fb14) + lines + if (credited) listOf(MODIFIED_NOTE) else emptyList()).joinToString("\n") + "\n"
     }
 }

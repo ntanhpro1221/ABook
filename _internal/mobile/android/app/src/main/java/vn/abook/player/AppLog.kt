@@ -162,10 +162,10 @@ object AppLog {
     /** Chỉ che mã / khoá, không cắt (file văng giữ nguyên độ dài của stack). */
     internal fun scrub(message: String): String {
         var text = hideAddressLists(message)
-        text = rawHost.replace(text) { it.groupValues[1] + "<địa chỉ>" }
-        text = dnsError.replace(text) { it.groupValues[1] + "<địa chỉ>" }
-        text = urlAuthority.replace(text) { it.groupValues[1] + "<địa chỉ>" }
-        text = socketHost.replace(text, "<địa chỉ>")
+        text = rawHost.replace(text) { it.groupValues[1] + S.s_dia_chi_b37f0249 }
+        text = dnsError.replace(text) { it.groupValues[1] + S.s_dia_chi_b37f0249 }
+        text = urlAuthority.replace(text) { it.groupValues[1] + S.s_dia_chi_b37f0249 }
+        text = socketHost.replace(text, S.s_dia_chi_b37f0249)
         // Private paths keep only their source basename and line; protect that span until paths.replace below.
         val sourceSpans = paths.findAll(text).mapNotNull { path ->
             sourceFile.find(path.value)?.let { source ->
@@ -176,12 +176,12 @@ object AppLog {
             val source = (it.range.first > 0 && text[it.range.first - 1] == '(' &&
                 text.getOrNull(it.range.last + 1) == ')' && sourceLocation.containsMatchIn(it.value)) ||
                 sourceSpans.any { span -> it.range.first in span && it.range.last in span }
-            if (it.groups[1] != null || source) it.value else "<địa chỉ>"
+            if (it.groups[1] != null || source) it.value else S.s_dia_chi_b37f0249
         }
         for ((pattern, replacement) in secrets) text = pattern.replace(text, replacement)
         text = paths.replace(text) { match ->
             val source = sourceFile.find(match.value)
-            "<đường>" + if (source == null) "" else "/" + source.groupValues[1] + source.groupValues[2] +
+            S.s_duong_bfe825a2 + if (source == null) "" else "/" + source.groupValues[1] + source.groupValues[2] +
                 match.value.substring(source.range.last + 1).takeWhile { it == ')' }
         }
         // Numeric parsing only; no name resolution/network I/O. Avoid treating times/stack line numbers as IPs.
@@ -240,18 +240,18 @@ object AppLog {
      * do hệ thống dừng (Android 12+) khi việc bị dừng - hay stack nếu ném. Không ghi tên sách hay chữ truyện.
      */
     fun worker(tag: String, worker: androidx.work.ListenableWorker, block: () -> androidx.work.ListenableWorker.Result): androidx.work.ListenableWorker.Result {
-        i(tag, "việc nền bắt đầu (lần chạy thứ ${worker.runAttemptCount + 1})")
+        i(tag, S.s_viec_nen_bat_dau_lan_chay_thu_0_c79b3669(worker.runAttemptCount + 1))
         try {
             val result = block()
-            val stopped = if (worker.isStopped) " - bị dừng, lý do ${if (android.os.Build.VERSION.SDK_INT >= 31) worker.stopReason else -1}" else ""
+            val stopped = if (worker.isStopped) S.s_bi_dung_ly_do_0_0f720c37(if (android.os.Build.VERSION.SDK_INT >= 31) worker.stopReason else -1) else ""
             when (result) {
-                is androidx.work.ListenableWorker.Result.Success -> i(tag, "việc nền xong$stopped")
-                is androidx.work.ListenableWorker.Result.Retry -> w(tag, "việc nền sẽ chạy lại$stopped")
-                else -> w(tag, "việc nền kết thúc không thành công$stopped")
+                is androidx.work.ListenableWorker.Result.Success -> i(tag, S.s_viec_nen_xong_0_6b87e803(stopped))
+                is androidx.work.ListenableWorker.Result.Retry -> w(tag, S.s_viec_nen_se_chay_lai_0_2954315f(stopped))
+                else -> w(tag, S.s_viec_nen_ket_thuc_khong_thanh_cong_0_26aad5f0(stopped))
             }
             return result
         } catch (error: Throwable) {
-            e(tag, "việc nền văng: ${error.javaClass.simpleName}: ${scrub(error.message.orEmpty()).take(200)}", error)
+            e(tag, S.s_viec_nen_vang_0_1_c78909ff(error.javaClass.simpleName, scrub(error.message.orEmpty()).take(200)), error)
             throw error
         }
     }

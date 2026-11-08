@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { useMotionState } from "@/shared/motion";
@@ -44,20 +45,18 @@ const FORMATS = FORMAT_CHOICES.map((choice) => choice.id);
 export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void; remote?: boolean }) {
   if (status.ready && !status.outdated) return <MotionRegion />;
   return (
-    <MotionRegion as="div" className="py-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
-      <p className="font-medium">{status.outdated ? "Cập nhật công cụ" : remote ? "Thiếu công cụ ghép" : "Thiếu công cụ ghép"}</p>
-      <p className="mt-0.5 text-fg-2">{status.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Tải một lần để ghép MP3 / M4B"} (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
+    <MotionRegion as="div" className="py-3 text-sm" role="group" aria-label={S.s_cong_cu_ghep_am_thanh_f56c00a0}>
+      <p className="font-medium">{status.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : remote ? S.s_thieu_cong_cu_ghep_1c3e0226 : S.s_thieu_cong_cu_ghep_1c3e0226}</p>
+      <p className="mt-0.5 text-fg-2">{status.outdated ? S.s_co_ban_moi_de_ghep_loi_doc_thanh_file_mp3_e3f81f2c : S.s_tai_mot_lan_de_ghep_mp3_m4b_2e0a2a50}{S.s_khoang_05ede49e}{formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
-          <Progress value={ffmpegPercent(status) / 100} size="sm" running label="Đang tải công cụ ghép âm thanh" />
+          <Progress value={ffmpegPercent(status) / 100} size="sm" running label={S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc} />
           <span className="tabular shrink-0 text-xs text-fg-2">{status.retrying ? `${RETRYING_NOTE} ${ffmpegPercent(status)}%` : `${ffmpegPercent(status)}%`}</span>
-          <Button size="sm" variant="ghost" onClick={onStop}>
-            Dừng
-          </Button>
+          <Button size="sm" variant="ghost" onClick={onStop}>{S.s_dung_11554138}</Button>
         </div>
       ) : remote ? (
         <p className="mt-2">
-          <OnComputerOnly verb={status.outdated ? "Cập nhật công cụ ghép âm thanh" : "Tải công cụ ghép âm thanh"} />
+          <OnComputerOnly verb={status.outdated ? S.s_cap_nhat_cong_cu_ghep_am_thanh_6fd454a5 : S.s_tai_cong_cu_ghep_am_thanh_1d4036fd} />
         </p>
       ) : status.blocked ? (
         <p className="mt-2 text-warning">{status.blocked}</p>
@@ -65,7 +64,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
         <div className="mt-2 flex items-center gap-3">
           {/* Lời lỗi nói "bấm Thử lại" (studio_setup.download_failure): nút mang đúng tên ấy. */}
           <Button size="sm" onClick={onDownload}>
-            {status.error ? "Thử lại" : status.outdated ? "Cập nhật công cụ" : "Tải công cụ"}
+            {status.error ? S.s_thu_lai_c58d068c : status.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : S.s_tai_cong_cu_83ce1fe8}
           </Button>
           {status.error && (
             <div className="text-xs text-danger">
@@ -98,7 +97,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
   const notice = voice ? wholeBookNotice(voice) : "";
   return (
     <MotionRegion className="flex flex-col gap-4">
-      <div role="radiogroup" aria-label="Kiểu file" onKeyDown={radioGroupKeys(FORMATS, format, onFormat)} className="relative flex flex-wrap gap-6">
+      <div role="radiogroup" aria-label={S.s_kieu_file_510afc1c} onKeyDown={radioGroupKeys(FORMATS, format, onFormat)} className="relative flex flex-wrap gap-6">
         <SlidingIndicator variant="line" />
         {FORMAT_CHOICES.map((choice, index) => (
           <button
@@ -121,15 +120,14 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
 
       <div className="text-sm">
         {voice ? (
-          <p>
-            Giọng đọc: <span className="font-medium">{voiceCaption(voice)}</span>
-            <span className="text-fg-3"> - giọng đang chọn cho cuốn này; đổi ở trình phát.</span>
+          <p>{S.s_giong_doc_34c62dcf}<span className="font-medium">{voiceCaption(voice)}</span>
+            <span className="text-fg-3">{S.s_giong_dang_chon_cho_cuon_nay_doi_o_trinh_p_63b2e190}</span>
           </p>
         ) : (
-          <p className="text-warning">Máy chưa có giọng đọc nào - tải giọng ở Cài đặt → Giọng đọc rồi quay lại.</p>
+          <p className="text-warning">{S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_aa7e4957}</p>
         )}
         <p className="mt-1 text-fg-2" aria-live="polite">
-          {planError || (plan ? planText(plan) : voice ? "Đang tính độ dài…" : "")}
+          {planError || (plan ? planText(plan) : voice ? S.s_dang_tinh_do_dai_408daa51 : "")}
         </p>
         {plan && resumeText(plan) && <p className="mt-1 text-fg-2">{resumeText(plan)}</p>}
       </div>
@@ -144,9 +142,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
 
       {ffmpeg && <FfmpegNeeded status={ffmpeg} onDownload={onDownload} onStop={onStopDownload} />}
 
-      <p className="text-xs text-fg-3">
-        Chạy nền; dừng vẫn giữ phần đã làm.
-      </p>
+      <p className="text-xs text-fg-3">{S.s_chay_nen_dung_van_giu_phan_da_lam_b5b35b4d}</p>
     </MotionRegion>
   );
 }
@@ -191,7 +187,7 @@ export function AudiobookDialogHost() {
     try {
       let target = "";
       if (info?.dialogs) {
-        const picked = await pickFolder("Chọn nơi lưu", "").catch(() => null);
+        const picked = await pickFolder(S.s_chon_noi_luu_2965936c, "").catch(() => null);
         if (!picked) return;
         target = picked;
       }
@@ -210,17 +206,13 @@ export function AudiobookDialogHost() {
   const ready = ffmpeg.data?.ready ?? false;
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
-        </Button>
-        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => void start()}>
-          Bắt đầu
-        </Button>
+        <Button variant="ghost" onClick={() => setBook(null)}>{S.s_de_sau_9be0a7ab}</Button>
+        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => void start()}>{S.s_bat_dau_b3cacc46}</Button>
       </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
-      title="Xuất sách nói"
-      description="Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
+      title={S.s_xuat_sach_noi_219fb12a}
+      description={S.s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850}
       width="max-w-[560px]"
     >
       <AudiobookForm
@@ -230,7 +222,7 @@ export function AudiobookDialogHost() {
         plan={plan.data}
         planError={plan.error ? (plan.error as Error).message : ""}
         ffmpeg={ffmpeg.data}
-        onDownload={() => void ffmpegStart().then(refresh, (error: Error) => toast.error("Chưa tải được công cụ", { description: error.message }))}
+        onDownload={() => void ffmpegStart().then(refresh, (error: Error) => toast.error(S.s_chua_tai_duoc_cong_cu_cfe422f9, { description: error.message }))}
         onStopDownload={() => void ffmpegCancel().then(refresh, () => undefined)}
         music={music}
         onMusic={setMusic}

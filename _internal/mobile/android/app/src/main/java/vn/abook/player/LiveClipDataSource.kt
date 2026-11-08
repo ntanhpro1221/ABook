@@ -26,7 +26,7 @@ class LiveClipDataSource : BaseDataSource(false) {
     override fun open(dataSpec: DataSpec): Long {
         uri = dataSpec.uri
         transferInitializing(dataSpec)
-        val entry = LiveClips.get(LiveClips.idOf(dataSpec.uri.toString())) ?: throw IOException("Clip đang đọc không còn")
+        val entry = LiveClips.get(LiveClips.idOf(dataSpec.uri.toString())) ?: throw IOException(S.s_clip_dang_doc_khong_con_d569fc48)
         reader = entry.reader(dataSpec.position)
         opened = true
         transferStarted(dataSpec)
@@ -39,7 +39,7 @@ class LiveClipDataSource : BaseDataSource(false) {
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         if (length == 0) return 0
-        val got = (reader ?: throw IOException("Chưa mở")).read(buffer, offset, length)
+        val got = (reader ?: throw IOException(S.s_chua_mo_b744b3e7)).read(buffer, offset, length)
         if (got < 0) return C.RESULT_END_OF_INPUT
         bytesTransferred(got)
         return got
@@ -77,7 +77,7 @@ class LiveRoutingDataSource(private val live: DataSource, private val other: Dat
         return chosen.open(dataSpec)
     }
 
-    override fun read(buffer: ByteArray, offset: Int, length: Int): Int = (current ?: throw IOException("Chưa mở")).read(buffer, offset, length)
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int = (current ?: throw IOException(S.s_chua_mo_b744b3e7)).read(buffer, offset, length)
 
     override fun getUri(): Uri? = current?.uri
 

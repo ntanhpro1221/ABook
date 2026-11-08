@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useState } from "react";
 import { MUSIC_MIX_HINT, type MusicExportState } from "./listenExport";
 
@@ -16,7 +17,7 @@ export function MusicMixOption({ checked, onChange, disabled }: { checked: boole
         className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
       />
       <span className="min-w-0">
-        <span className="block font-medium">Kèm nhạc nền</span>
+        <span className="block font-medium">{S.s_kem_nhac_nen_c616e8d2}</span>
         <span className="block text-xs text-fg-2">{MUSIC_MIX_HINT}</span>
       </span>
     </label>

@@ -49,7 +49,7 @@ object GCast {
     const val NS_RECEIVER = "urn:x-cast:com.google.cast.receiver"
     const val NS_MEDIA = "urn:x-cast:com.google.cast.media"
     const val MAX_FRAME = 64 * 1024
-    private const val STRANGE = "thiết bị trả lời lạ"
+    private const val STRANGE = S.s_thiet_bi_tra_loi_la_37277b3c
 
     /** Các mốc giờ (mili giây); bài thử rút ngắn. */
     data class Timing(
@@ -385,7 +385,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
     // -- kết nối --------------------------------------------------------------------------------------------------------
 
     private fun dial(): SSLSocket {
-        if (!Dlna.lan(host)) throw Dlna.Failure("địa chỉ thiết bị không ở trong nhà")
+        if (!Dlna.lan(host)) throw Dlna.Failure(S.s_dia_chi_thiet_bi_khong_o_trong_nha_98462a75)
         val raw = try {
             FastConnect.connect(host, port, timing.connect)
         } catch (error: IOException) {
@@ -408,7 +408,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
         lock.withLock {
             if (closed) { // đóng giữa lúc đang nối lại
                 runCatching { socket.close() }
-                throw Dlna.Failure("đã đóng kết nối với thiết bị")
+                throw Dlna.Failure(S.s_da_dong_ket_noi_voi_thiet_bi_4a6ece4c)
             }
             sock = socket
             connected = true
@@ -424,7 +424,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
     /** Mở kết nối, mở ứng dụng phát và nối vào nó (nếu chưa). */
     private fun ready() {
         val first = lock.withLock {
-            if (closed) throw Dlna.Failure("đã đóng kết nối với thiết bị")
+            if (closed) throw Dlna.Failure(S.s_da_dong_ket_noi_voi_thiet_bi_4a6ece4c)
             thread == null
         }
         if (first) {
@@ -445,7 +445,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
             app = app(replies)
             launched = true
         }
-        if (app == null || app.text("transportId").isEmpty()) throw Dlna.Failure("thiết bị không mở được trình phát")
+        if (app == null || app.text("transportId").isEmpty()) throw Dlna.Failure(S.s_thiet_bi_khong_mo_duoc_trinh_phat_1a690b5d)
         lock.withLock {
             sessionId = app.text("sessionId")
             transportId = app.text("transportId")
@@ -467,7 +467,7 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
 
     private fun launchedIn(replies: List<JSONObject>): Boolean {
         for (reply in replies) {
-            if (reply.text("type") == "LAUNCH_ERROR" || reply.text("type") == "INVALID_REQUEST") throw Dlna.Failure("thiết bị không mở được trình phát")
+            if (reply.text("type") == "LAUNCH_ERROR" || reply.text("type") == "INVALID_REQUEST") throw Dlna.Failure(S.s_thiet_bi_khong_mo_duoc_trinh_phat_1a690b5d)
         }
         val app = app(replies)
         return app != null && app.text("transportId").isNotEmpty()
@@ -811,9 +811,9 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
     private fun JSONObject.text(key: String): String = opt(key) as? String ?: ""
 
     companion object {
-        private const val LOST = "mất kết nối - thiết bị đã tắt hay rời mạng?"
-        private const val NO_ANSWER = "không trả lời - thiết bị đã tắt hay rời mạng?"
-        private const val LOST_AT_CONNECT = "không nối được - thiết bị đã tắt hay rời mạng?"
+        private const val LOST = S.s_mat_ket_noi_thiet_bi_da_tat_hay_roi_mang_990a74d4
+        private const val NO_ANSWER = S.s_khong_tra_loi_thiet_bi_da_tat_hay_roi_mang_9b736dd4
+        private const val LOST_AT_CONNECT = S.s_khong_noi_duoc_thiet_bi_da_tat_hay_roi_man_b6a0453d
         private val IDLE_REASONS = mapOf("FINISHED" to "finished", "ERROR" to "error", "INTERRUPTED" to "interrupted", "CANCELLED" to "interrupted")
         private val PLAYER_STATES = mapOf("PLAYING" to "PLAYING", "PAUSED" to "PAUSED_PLAYBACK", "BUFFERING" to "TRANSITIONING", "LOADING" to "TRANSITIONING")
     }

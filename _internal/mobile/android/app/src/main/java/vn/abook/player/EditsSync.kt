@@ -149,11 +149,11 @@ object EditsSync {
         var cover: ByteArray? = null
         if (edits.opt("cover") is JSONObject) {
             val file = File(dir, BookEdits.EDITS_COVER)
-            if (!file.isFile) throw IllegalStateException("Thiếu ảnh bìa mới trong sách - hãy đặt lại ảnh bìa rồi gửi")
+            if (!file.isFile) throw IllegalStateException(S.s_thieu_anh_bia_moi_trong_sach_hay_dat_lai_a_91ead5a1)
             cover = file.readBytes()
         }
         for (name in BookEdits.pinnedFiles(edits)) {
-            if (!File(dir, name).isFile) throw IllegalStateException("Thiếu file nhạc đã chọn trong sách - hãy chọn lại bài ấy rồi gửi")
+            if (!File(dir, name).isFile) throw IllegalStateException(S.s_thieu_file_nhac_da_chon_trong_sach_hay_cho_133eee7d)
         }
         Snapshot(BookEdits.deepCopy(edits) as JSONObject, cover, removed)
     }
@@ -185,7 +185,7 @@ object EditsSync {
         }
         if (target.length() > MAX_PACKAGE_BYTES) {
             target.delete()
-            throw IllegalStateException("Phần sửa quá lớn để gửi một lần - bớt bài nhạc đã chọn rồi gửi lại")
+            throw IllegalStateException(S.s_phan_sua_qua_lon_de_gui_mot_lan_bot_bai_nh_635ee83b)
         }
     }
 
@@ -200,7 +200,7 @@ object EditsSync {
      */
     @Synchronized
     fun push(id: String, host: String = "", send: (File) -> String): JSONObject {
-        if (Store.editDestination(id) == null) throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
+        if (Store.editDestination(id) == null) throw IllegalStateException(S.s_cuon_nay_khong_lay_tu_may_tinh_nen_khong_c_0d87eb09)
         val dir = Store.bookDir(id)
         val snapshot = try {
             snapshot(dir)
@@ -218,11 +218,11 @@ object EditsSync {
             val reply = try {
                 JSONObject(send(file))
             } catch (error: IOException) {
-                throw failure(dir, id, "Chưa nối được máy tính; giữ phần sửa ở máy này và gửi lại khi có mạng.", error)
+                throw failure(dir, id, S.s_chua_noi_duoc_may_tinh_giu_phan_sua_o_may_f42e62b5, error)
             } catch (error: IllegalStateException) {
-                throw failure(dir, id, error.message ?: "Máy tính không nhận phần sửa", error)
+                throw failure(dir, id, error.message ?: S.s_may_tinh_khong_nhan_phan_sua_ce78179a, error)
             } catch (error: JSONException) {
-                throw failure(dir, id, "Máy tính trả lời không hiểu được", error)
+                throw failure(dir, id, S.s_may_tinh_tra_loi_khong_hieu_duoc_b801447f, error)
             }
             refresh?.let { runCatching { it(id) } } // sách mới của máy tính đã mang sửa: tải lại TRƯỚC khi gỡ lớp phủ để không chớp bản cũ
             synchronized(stateLock) { // đọc sổ MỚI NHẤT: người nghe có thể vừa hoàn tác một thao tác trong lúc chờ máy tính trả lời
@@ -267,24 +267,24 @@ object EditsSync {
      * CHỦ máy ấy ("máy tính đã đặt...") - ở đây nó không đúng góc nhìn.
      */
     internal fun senderLabel(item: JSONObject, host: String): String {
-        val where = if (host.isNotEmpty()) "máy kia ($host)" else "máy kia"
+        val where = if (host.isNotEmpty()) S.s_may_kia_0_41e7bf48(host) else S.s_may_kia_d1eb7142
         val what = text(item, "what")
         val lost = text(item, "lost")
         val kept = text(item, "kept")
         if (item.optBoolean("held") && what.isNotEmpty()) {
-            val changed = if (lost.isNotEmpty()) "đã đổi thành $lost" else "đã đổi khác"
-            return "$what: $where $changed sau khi bạn sửa - bản của bạn${if (kept.isNotEmpty()) " $kept" else ""} chờ chủ máy chọn"
+            val changed = if (lost.isNotEmpty()) S.s_da_doi_thanh_0_aee5c198(lost) else S.s_da_doi_khac_c9cc5734
+            return S.s_0_1_2_sau_khi_ban_sua_ban_cua_ban_3_cho_ch_dcdf6b2c(what, where, changed, if (kept.isNotEmpty()) " $kept" else "")
         }
         return when {
-            lost.isNotEmpty() && kept.isNotEmpty() -> "$what: $where đã đổi thành $lost trước đó, bản của bạn $kept đã thay vào"
-            what.isNotEmpty() -> "$what: $where đã đổi khác trước đó, bản của bạn đã thay vào"
+            lost.isNotEmpty() && kept.isNotEmpty() -> S.s_0_1_da_doi_thanh_2_truoc_do_ban_cua_ban_3_c09bf215(what, where, lost, kept)
+            what.isNotEmpty() -> S.s_0_1_da_doi_khac_truoc_do_ban_cua_ban_da_th_e5aac6b4(what, where)
             else -> text(item, "label") // máy kia cũ không gửi các khoá trên: giữ câu của nó
         }
     }
 
     /** Gửi thật qua đường TLS đã ghim tới máy giữ sách - máy tính chính, hay máy tính khác đã ghép (không bao giờ gọi trên luồng giao diện). */
     fun pushNow(context: Context, id: String): JSONObject = push(id, holderName(context, id)) { file ->
-        val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
+        val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException(S.s_cuon_nay_khong_lay_tu_may_tinh_nen_khong_c_0d87eb09)
         if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file)
         else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", upload = file)
     }

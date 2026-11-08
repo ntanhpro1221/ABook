@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -7,7 +8,7 @@ QtObject {
     // `done(data, error)` chỉ chạy khi lệnh PUT thật sự đi (Api.update bỏ qua lệnh đến lúc đang lưu một lệnh khác).
     function update(changes, done) {
         Api.update(changes, function(data, error) {
-            if (error) Api.notice = "Chưa lưu được cài đặt\n" + error
+            if (error) Api.notice = S.s_chua_luu_duoc_cai_dat_dc441dbc + error
             if (done) done(data, error)
         })
     }

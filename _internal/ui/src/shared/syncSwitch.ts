@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 /** Tên công tắc ở Cài đặt › Thiết bị: MỘT nguồn cho mọi chỗ nhắc tới nó trong giao diện. Lời báo lỗi của máy chủ
  *  (webui/remote_books.py `SYNC_SWITCH`) nhắc lại đúng chuỗi này - tests/test_sync_switch_label.py giữ hai bên không lệch. */
-export const SYNC_SWITCH_LABEL = "Kết nối Wi-Fi";
+export const SYNC_SWITCH_LABEL = S.s_ket_noi_wi_fi_7680d1aa;

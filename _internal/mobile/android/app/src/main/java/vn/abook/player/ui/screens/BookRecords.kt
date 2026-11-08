@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -98,8 +100,8 @@ private fun PickPage(
     val scope = rememberCoroutineScope()
     var problem by remember { mutableStateOf("") }
     Column(Modifier.fillMaxWidth()) {
-        BasicText("Hồ sơ nghe", style = Abook.type.sectionTitle)
-        RowHint("Mỗi hồ sơ giữ chỗ nghe, lịch sử riêng.")
+        BasicText(S.s_ho_so_nghe_a1cef52b, style = Abook.type.sectionTitle)
+        RowHint(S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597)
         Spacer(Modifier.height(Dim.s8))
         val list = rememberLazyListState()
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp).fadeEdges(list).testTag("record_list"), state = list) {
@@ -121,10 +123,10 @@ private fun PickPage(
         }
         ProblemLine(problem, "record_problem")
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
-        MenuRow("Hồ sơ mới", tag = "record_create", onClick = { onForm(RecordAction.Create) }) { ink -> PlusIcon(ink) }
-        MenuRow("Đổi tên hồ sơ", tag = "record_rename", onClick = { onForm(RecordAction.Rename) }) { ink -> TextCursorInputIcon(ink) }
-        MenuRow("Chuyển sang cuốn khác", tag = "record_move", onClick = { onForm(RecordAction.Move) }) { ink -> ArrowRightLeftIcon(ink) }
-        MenuRow("Xoá hồ sơ này", tag = "record_delete", danger = true, onClick = { onForm(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
+        MenuRow(S.s_ho_so_moi_5dfda9aa, tag = "record_create", onClick = { onForm(RecordAction.Create) }) { ink -> PlusIcon(ink) }
+        MenuRow(S.s_doi_ten_ho_so_92440dab, tag = "record_rename", onClick = { onForm(RecordAction.Rename) }) { ink -> TextCursorInputIcon(ink) }
+        MenuRow(S.s_chuyen_sang_cuon_khac_0ddcf455, tag = "record_move", onClick = { onForm(RecordAction.Move) }) { ink -> ArrowRightLeftIcon(ink) }
+        MenuRow(S.s_xoa_ho_so_nay_27fc6264, tag = "record_delete", danger = true, onClick = { onForm(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
     }
 }
 
@@ -172,7 +174,7 @@ private fun FormPage(
                         RecordAction.Create -> notes.say(Records.createdNote(name))
                         RecordAction.Rename -> notes.say(Records.RENAMED_NOTE)
                         RecordAction.Delete -> notes.say(Records.deletedNote(active.name))
-                        RecordAction.Move -> if (target != null) notes.say(Records.movedNote(active.name, target.title), "Mở cuốn ấy") { openBook(target.id) }
+                        RecordAction.Move -> if (target != null) notes.say(Records.movedNote(active.name, target.title), S.s_mo_cuon_ay_064ee566) { openBook(target.id) }
                     }
                 }
             }
@@ -184,11 +186,11 @@ private fun FormPage(
         Spacer(Modifier.height(Dim.s12))
         when (action) {
             RecordAction.Create, RecordAction.Rename ->
-                SheetField(form.name, { onChange(RecordForm(action, it.take(Records.NAME_MAX), form.target)) }, "Tên hồ sơ", "record_name", onDone = { submit() })
+                SheetField(form.name, { onChange(RecordForm(action, it.take(Records.NAME_MAX), form.target)) }, S.s_ten_ho_so_0ea145bd, "record_name", onDone = { submit() })
             RecordAction.Move -> if (others.isEmpty()) {
-                BasicText("Thư viện chưa có cuốn nào khác.", style = Abook.type.bodySmall)
+                BasicText(S.s_thu_vien_chua_co_cuon_nao_khac_4bff3d9b, style = Abook.type.bodySmall)
             } else {
-                RowHint("Chọn cuốn")
+                RowHint(S.s_chon_cuon_34833868)
                 val list = rememberLazyListState()
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp).fadeEdges(list).testTag("record_targets"), state = list) {
                     items(others, key = { it.id }, contentType = { "target" }) { other ->
@@ -206,6 +208,6 @@ private fun FormPage(
         } else {
             PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready)
         }
-        QuietButton("Huỷ", onCancel, "record_cancel")
+        QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
     }
 }

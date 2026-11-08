@@ -137,9 +137,9 @@ object Remote {
             kick()
         }
         if (done.await(5, TimeUnit.SECONDS)) return result.get()
-        if (claim.compareAndSet(0, 2)) return "Điện thoại không trả lời kịp"
+        if (claim.compareAndSet(0, 2)) return S.s_dien_thoai_khong_tra_loi_kip_61a3b80e
         // Đã bắt đầu làm (luồng chính chậm): chờ kết quả thật thay vì báo sai.
-        return if (done.await(10, TimeUnit.SECONDS)) result.get() else "Điện thoại vẫn đang làm lệnh này"
+        return if (done.await(10, TimeUnit.SECONDS)) result.get() else S.s_dien_thoai_van_dang_lam_lenh_nay_0cf729cc
     }
 
     /** Trạng thái trình phát, đọc ở luồng chính (ExoPlayer chỉ cho đọc từ luồng của nó). */
@@ -182,7 +182,7 @@ object Remote {
             val id = command.optString("bookId")
             if (command.optString("action") == "load" && Store.manifest(id) == null) {
                 runCatching { Streaming.fetchManifest(context, id) }
-                    .onFailure { fetchProblems[command.optString("id")] = "Chưa lấy được sách từ máy tính: ${it.message}" }
+                    .onFailure { fetchProblems[command.optString("id")] = S.s_chua_lay_duoc_sach_tu_may_tinh_0_6cf498da(it.message) }
             }
         }
         Playback.onMain {
@@ -204,7 +204,7 @@ object Remote {
             "play", "toggle" -> when {
                 loaded && command.optString("action") == "toggle" -> Playback.toggle()
                 loaded -> Playback.play()
-                Playback.lastListened() == null -> return "Điện thoại chưa nghe cuốn nào"
+                Playback.lastListened() == null -> return S.s_dien_thoai_chua_nghe_cuon_nao_9d3e5e3e
                 else -> withService { Playback.resumeLast() }
             }
             "pause" -> if (loaded) Playback.pause()
@@ -215,7 +215,7 @@ object Remote {
             "jump" -> if (loaded) Playback.jumpTo(command.optInt("chapterId"), command.optDouble("seconds", 0.0))
             "rate" -> if (loaded) Playback.setRate(command.optDouble("rate", 1.0).coerceIn(0.5, 3.0))
             "load" -> return load(command)
-            else -> return "Điện thoại chưa hiểu lệnh này - cập nhật app trên điện thoại"
+            else -> return S.s_dien_thoai_chua_hieu_lenh_nay_cap_nhat_app_815a7699
         }
         return null
     }
@@ -223,10 +223,10 @@ object Remote {
     /** "Phát trên điện thoại": nạp đúng cuốn, đúng chương, đúng giây máy tính đang nghe - chương chưa tải thì nghe thẳng. */
     private fun load(command: JSONObject): String? {
         val id = command.optString("bookId")
-        val manifest = Store.playableManifest(id) ?: return "Điện thoại chưa có cuốn này"
+        val manifest = Store.playableManifest(id) ?: return S.s_dien_thoai_chua_co_cuon_nay_cbd69402
         val chapters = Playback.chaptersOf(manifest)
         val chapterId = command.optInt("chapterId")
-        if (chapters.none { it.id == chapterId }) return "Chương này chưa nghe được trên điện thoại"
+        if (chapters.none { it.id == chapterId }) return S.s_chuong_nay_chua_nghe_duoc_tren_dien_thoai_7b0cf6c4
         val rate = Store.state(id).optDouble("rate", 1.0)
         withService {
             Playback.load(id, manifest.optString("title"), manifest.optString("narrator"), chapters, chapterId,

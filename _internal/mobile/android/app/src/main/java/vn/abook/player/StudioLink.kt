@@ -19,10 +19,10 @@ object StudioLink {
      */
     fun computers(mainPaired: Boolean, mainName: String, peers: JSONObject): List<Computer> {
         val out = mutableListOf<Computer>()
-        if (mainPaired) out += Computer(MAIN, mainName.ifBlank { "Máy tính" })
+        if (mainPaired) out += Computer(MAIN, mainName.ifBlank { S.s_may_tinh_828ebb9d })
         for (key in peers.keys().asSequence().sorted()) {
             val peer = peers.optJSONObject(key) ?: continue
-            if (peer.optString("kind") == "computer") out += Computer(key, peer.optString("name").ifBlank { "Máy tính" })
+            if (peer.optString("kind") == "computer") out += Computer(key, peer.optString("name").ifBlank { S.s_may_tinh_828ebb9d })
         }
         return out
     }
@@ -43,10 +43,10 @@ object StudioLink {
 
     /** "Máy <tên>" - tên đã mở đầu bằng "Máy" thì không thêm (như remote_books._called). */
     fun called(name: String): String =
-        if (name.lowercase().startsWith("máy ")) name.replaceFirstChar { it.uppercase() } else "Máy $name"
+        if (name.lowercase().startsWith(S.s_may_f0f07096)) name.replaceFirstChar { it.uppercase() } else S.s_may_0_1d53de0c(name)
 
     /** Dòng của màn chờ khi máy ấy không trả lời (tắt, đổi mạng). */
-    fun silentLine(name: String): String = "${called(name)} không trả lời - đang chờ nối lại"
+    fun silentLine(name: String): String = S.s_0_khong_tra_loi_dang_cho_noi_lai_86180c02(called(name))
 
     /** Gốc https và mã thiết bị của máy tính `key` lúc này (máy tính chính: theo đường đang thông), hay null khi đã bỏ ghép. */
     fun link(context: Context, key: String): Peers.Link? =
@@ -56,7 +56,7 @@ object StudioLink {
     /** Tên máy tính `key` như người dùng thấy ở Cài đặt › Thiết bị. */
     fun name(context: Context, key: String): String =
         computers(SyncLink.paired(context), SyncLink.prefs(context).getString("name", "").orEmpty(), Peers.all(context))
-            .firstOrNull { it.key == key }?.name ?: "Máy tính"
+            .firstOrNull { it.key == key }?.name ?: S.s_may_tinh_828ebb9d
 
     /** Máy tính mở Studio được lúc này. */
     fun computers(context: Context): List<Computer> =

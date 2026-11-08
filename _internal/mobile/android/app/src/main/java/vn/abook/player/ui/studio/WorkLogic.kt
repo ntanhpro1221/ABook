@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONArray
 import org.json.JSONObject
@@ -38,11 +40,11 @@ object WorkLogic {
 
     /** Vế sau gạch nối, cho dòng "Đã ghi ... - {vế}". */
     fun pendingNote(when_: ApplyWhen): String = when (when_) {
-        ApplyWhen.Start -> "dùng khi bắt đầu làm sách"
-        ApplyWhen.Cast -> "chờ phân vai xong"
-        ApplyWhen.Running -> "áp từ chương sau"
-        ApplyWhen.Done -> "bấm “Áp dụng thay đổi” ở đầu trang để áp"
-        ApplyWhen.Paused -> "chờ áp dụng khi sách chạy tiếp"
+        ApplyWhen.Start -> S.s_dung_khi_bat_dau_lam_sach_a665a71d
+        ApplyWhen.Cast -> S.s_cho_phan_vai_xong_51f41859
+        ApplyWhen.Running -> S.s_ap_tu_chuong_sau_8f2706c5
+        ApplyWhen.Done -> S.s_bam_ap_dung_thay_doi_o_dau_trang_de_ap_fd47948b
+        ApplyWhen.Paused -> S.s_cho_ap_dung_khi_sach_chay_tiep_6f0a3bc6
     }
 
     /** Chữ đầu viết hoa - "câu này" đứng đầu câu báo. */
@@ -51,49 +53,49 @@ object WorkLogic {
     /** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu. Tên người giữ nguyên. */
     fun midSentence(label: String?): String {
         val text = label.orEmpty()
-        return if (text == "Vai phụ không tên" || text == "Người kể") text.replaceFirstChar { it.lowercase() } else text
+        return if (text == S.s_vai_phu_khong_ten_6395f0d2 || text == S.s_nguoi_ke_fd36cd15) text.replaceFirstChar { it.lowercase() } else text
     }
 
     /** Tiêu đề thẻ người kể sau khi đã quyết: nói KẾT QUẢ, không lặp tiền tố của nhãn. */
     fun narratorDecidedTitle(current: String, answer: String): String {
-        if (answer == "Giữ nguyên") return if (current.isNotEmpty()) "Đoạn này vẫn do $current kể" else "Đoạn này vẫn kể ở ngôi thứ ba"
-        if (answer == "Đổi người kể") return "Đoạn này không phải $current kể"
+        if (answer == S.s_giu_nguyen_1b550a12) return if (current.isNotEmpty()) S.s_doan_nay_van_do_0_ke_1aa31bd2(current) else S.s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d
+        if (answer == S.s_doi_nguoi_ke_ddc42796) return S.s_doan_nay_khong_phai_0_ke_691681b8(current)
         val name = answer.replace(Regex("^Người kể:\\s*"), "").trim()
-        return "Đoạn này do ${name.ifEmpty { answer }} kể"
+        return S.s_doan_nay_do_0_ke_9870e5f7(name.ifEmpty { answer })
     }
 
     /** Hai nút đầu của thẻ người kể và lựa chọn đã ghi (`requested`) ứng với nút nhận. */
     fun narratorButtons(current: String, heading: NarratorHeading?): NarratorButtons {
-        val keep = if (current.isNotEmpty()) "Giữ $current" else "Giữ ngôi thứ ba"
-        if (heading == null) return NarratorButtons("Kể ngôi thứ ba", keep, "Đổi người kể")
-        return if (heading.label.isNotEmpty()) NarratorButtons("${heading.label} kể", keep, "Người kể: ${heading.label}")
-        else NarratorButtons("Kể ngôi thứ ba", keep, "Đổi người kể")
+        val keep = if (current.isNotEmpty()) S.s_giu_0_b8c06ffa(current) else S.s_giu_ngoi_thu_ba_271d46cb
+        if (heading == null) return NarratorButtons(S.s_ke_ngoi_thu_ba_3ba8b1e4, keep, S.s_doi_nguoi_ke_ddc42796)
+        return if (heading.label.isNotEmpty()) NarratorButtons(S.s_0_ke_d684eff0(heading.label), keep, S.s_nguoi_ke_0_78e70db0(heading.label))
+        else NarratorButtons(S.s_ke_ngoi_thu_ba_3ba8b1e4, keep, S.s_doi_nguoi_ke_ddc42796)
     }
 
     /** Thẻ đã quyết nói KẾT QUẢ thay vì lặp câu hỏi; null = giữ tiêu đề. */
     fun decidedTitle(item: WorkItem): String? {
         val answer = item.requested ?: return null
         if (item.kind == WorkKind.Pronunciation && item.surface != null) {
-            return if (answer == item.current) "Giữ: “${item.surface}” đọc là “$answer”" else "“${item.surface}” sẽ đọc là “$answer”"
+            return if (answer == item.current) S.s_giu_0_doc_la_1_f568ced8(item.surface, answer) else S.s_0_se_doc_la_1_e0b21c39(item.surface, answer)
         }
         val voices = item.voiceChoices.orEmpty()
         if (voices.isNotEmpty()) return voices.firstOrNull { it.label == answer || it.done == answer }?.done
-        if (item.kind == WorkKind.Alias) return "“${item.subject ?: item.current}” là ${midSentence(answer)}"
+        if (item.kind == WorkKind.Alias) return S.s_0_la_1_9ee6c344(item.subject ?: item.current, midSentence(answer))
         if (item.kind == WorkKind.Narrator) return narratorDecidedTitle(item.current, answer)
         val count = item.lines?.size ?: 0
-        if (count > 0) return "${if (count > 1) "$count câu này" else "Câu này"} của ${midSentence(answer)}"
+        if (count > 0) return S.s_0_cua_1_c0e3e388(if (count > 1) S.s_0_cau_nay_eeb40df6(count) else S.s_cau_nay_ee66e104, midSentence(answer))
         return null
     }
 
     /** Lời mở đầu của hộp việc theo trạng thái sách. */
     fun inboxLead(book: StudioBook): String {
         val first = when {
-            book.running && book.paused != null -> "Sách đang tạm dừng; sửa áp khi làm tiếp."
-            book.running -> "Máy đang chạy tiếp; sửa áp ở chương sau."
-            book.phase == "done" -> "Sửa xong, bấm “Áp dụng thay đổi”."
-            else -> "Sách đang dừng; sửa áp khi làm tiếp."
+            book.running && book.paused != null -> S.s_sach_dang_tam_dung_sua_ap_khi_lam_tiep_12a374a4
+            book.running -> S.s_may_dang_chay_tiep_sua_ap_o_chuong_sau_5482c856
+            book.phase == "done" -> S.s_sua_xong_bam_ap_dung_thay_doi_43042cc6
+            else -> S.s_sach_dang_dung_sua_ap_khi_lam_tiep_9778f9fd
         }
-        return "Ưu tiên việc trên. $first"
+        return S.s_uu_tien_viec_tren_0_c06ed70f(first)
     }
 
     /**
@@ -174,13 +176,13 @@ object WorkLogic {
 
     /** Dòng nói đang chọn bao nhiêu câu, cho thẻ nhóm. */
     fun pickNote(picked: Int, total: Int): String = when (picked) {
-        total -> "Đang chọn cả $total câu"
-        0 -> "Chưa chọn câu nào trong $total câu"
-        else -> "Đang chọn $picked/$total câu"
+        total -> S.s_dang_chon_ca_0_cau_504a9b88(total)
+        0 -> S.s_chua_chon_cau_nao_trong_0_cau_0e18fa35(total)
+        else -> S.s_dang_chon_0_1_cau_3dce2fb6(picked, total)
     }
 
     /** Chữ nút "Xem thêm" của thẻ nhóm lớn. */
-    fun moreText(shown: Int, total: Int): String = "Xem thêm (đang hiện $shown/$total câu)"
+    fun moreText(shown: Int, total: Int): String = S.s_xem_them_dang_hien_0_1_cau_ebb4ffe0(shown, total)
 
     /** Còn trang ví dụ kế không: số câu đã có / tổng. */
     fun hasMoreExamples(loaded: Int, total: Int?): Boolean = loaded < maxOf(total ?: 0, loaded)
@@ -189,8 +191,8 @@ object WorkLogic {
 
     /** Câu báo `count` chỗ vừa được sửa ở nơi khác; `was` là điều nơi ấy đã đặt ("" = chưa ai quyết). Trả (tiêu đề, mô tả). */
     fun elsewhereNote(count: Int, was: String): Pair<String, String> = Pair(
-        if (count > 1) "$count câu vừa được sửa ở máy hay cửa sổ khác" else "Chỗ này vừa được sửa ở máy hay cửa sổ khác",
-        "${if (was.isNotEmpty()) "Trước đó đang là $was" else "Trước đó chưa ai quyết khác"} - lần ghi của bạn đã thay nó.",
+        if (count > 1) S.s_0_cau_vua_duoc_sua_o_may_hay_cua_so_khac_1f803269(count) else S.s_cho_nay_vua_duoc_sua_o_may_hay_cua_so_khac_66af9a6c,
+        S.s_0_lan_ghi_cua_ban_da_thay_no_420a088b(if (was.isNotEmpty()) S.s_truoc_do_dang_la_0_4ed72a4f(was) else S.s_truoc_do_chua_ai_quyet_khac_1f656a59),
     )
 
     /** `seen` gửi kèm lần ghi: điều thẻ này đang thấy cho từng câu (câu không có thì ""). */
@@ -199,16 +201,16 @@ object WorkLogic {
 
     /** Phán quyết "Nghe lại" nói bằng lời ("" = chưa ai quyết). */
     fun verdictWord(verdict: String?): String = when (verdict) {
-        "ok" -> "“Ổn”"
-        "redo" -> "“Cần thu lại”"
+        "ok" -> S.s_on_742e24ad
+        "redo" -> S.s_can_thu_lai_9d482626
         else -> ""
     }
 
     /** Lựa chọn giọng máy kia đã đặt cho nhân vật, nói bằng lời ("" = không có gì chờ). */
     fun voiceWas(voice: String, gender: String): String = when {
-        voice.isNotEmpty() -> "giọng $voice"
-        gender == "female" -> "nhân vật nữ"
-        gender == "male" -> "nhân vật nam"
+        voice.isNotEmpty() -> S.s_giong_0_e048b478(voice)
+        gender == "female" -> S.s_nhan_vat_nu_36236b63
+        gender == "male" -> S.s_nhan_vat_nam_8de64942
         else -> ""
     }
 }
@@ -243,12 +245,12 @@ object WorkDecisions {
         if (item.kind == WorkKind.Alias && speaker != item.currentValue) body.put("alias", item.currentValue.orEmpty())
         // Thẻ 『』 phạm vi "Cả cuốn": quy ước của cả cuốn, các phần sau tự áp.
         if (item.kind == WorkKind.Bracket && scope == WorkScope.All) body.put("bracketRule", true)
-        val which = if (lines.size > 1) "${lines.size} câu này" else "câu này"
+        val which = if (lines.size > 1) S.s_0_cau_nay_eeb40df6(lines.size) else S.s_cau_nay_c70feb8f
         val summary = if (speaker == item.currentValue) {
-            item.keepLabel?.let { "Đã ghi: $it" } ?: "Giữ nguyên: $which của ${WorkLogic.midSentence(item.current)}"
+            item.keepLabel?.let { S.s_da_ghi_0_5450366f(it) } ?: S.s_giu_nguyen_0_cua_1_f0574c99(which, WorkLogic.midSentence(item.current))
         } else {
             val choice = item.choices.orEmpty().firstOrNull { it.value == speaker }
-            "Đã ghi: $which của ${WorkLogic.midSentence(choice?.name ?: choice?.label ?: speaker)}"
+            S.s_da_ghi_0_cua_1_36d6075b(which, WorkLogic.midSentence(choice?.name ?: choice?.label ?: speaker))
         }
         // Tên hiện của từng người nói (mã -> tên) để câu "vừa được sửa ở máy khác" nói tên người, không nói mã.
         val names = item.choices.orEmpty().associate { it.value to (it.name ?: it.label) } + (item.currentValue?.let { mapOf(it to item.current) } ?: emptyMap())
@@ -262,14 +264,14 @@ object WorkDecisions {
         val steps = requests.map { request ->
             WorkStep("speaker", JSONObject().put("lines", array(request.lines)).put("speaker", request.speaker).put("seen", WorkLogic.seenFor(request.lines, item.seen)))
         }
-        return WorkDecision(item.key, "Đã ghi: ${item.keepLabel ?: "Giữ nguyên"}", steps)
+        return WorkDecision(item.key, S.s_da_ghi_0_5450366f(item.keepLabel ?: S.s_giu_nguyen_1b550a12), steps)
     }
 
     /** `POST /pronunciation` (`PronunciationFix.save`): `seen` là cách đọc thẻ này đang thấy đã ghi. */
     fun pronunciation(item: WorkItem, spoken: String): WorkDecision {
         val surface = item.surface.orEmpty()
         val body = JSONObject().put("surface", surface).put("spokenForm", spoken).put("seen", item.requested.orEmpty())
-        val summary = if (spoken == item.current) "Giữ cách đọc “$spoken”" else "Đã ghi: “$surface” đọc là “$spoken”"
+        val summary = if (spoken == item.current) S.s_giu_cach_doc_0_ad3b6d08(spoken) else S.s_da_ghi_0_doc_la_1_2c14f196(surface, spoken)
         return WorkDecision(item.key, summary, listOf(WorkStep("pronunciation", body)))
     }
 
@@ -292,9 +294,9 @@ object WorkDecisions {
             else -> ""
         }
         val summary = when {
-            action == "keep" -> if (item.current.isNotEmpty()) "Giữ nguyên: đoạn này vẫn do ${item.current} kể" else "Giữ nguyên: đoạn này vẫn kể ở ngôi thứ ba"
-            chosen.isNotEmpty() -> "Đã ghi: đoạn này do ${if (section.heading?.narrator == chosen) section.heading.label else chosen} kể"
-            else -> "Đã ghi: đoạn này không phải ${item.current} kể"
+            action == "keep" -> if (item.current.isNotEmpty()) S.s_giu_nguyen_doan_nay_van_do_0_ke_dffb3797(item.current) else S.s_giu_nguyen_doan_nay_van_ke_o_ngoi_thu_ba_f0be91ed
+            chosen.isNotEmpty() -> S.s_da_ghi_doan_nay_do_0_ke_99b4e3f7(if (section.heading?.narrator == chosen) section.heading.label else chosen)
+            else -> S.s_da_ghi_doan_nay_khong_phai_0_ke_71722738(item.current)
         }
         return WorkDecision(item.key, summary, listOf(WorkStep("narrator-section", body)))
     }
@@ -308,12 +310,12 @@ object WorkDecisions {
 
     /** `POST /voice` cho một nút của thẻ giọng / giới (`VoiceFix`). */
     fun voice(item: WorkItem, choice: VoiceOption): WorkDecision =
-        WorkDecision(item.key, "Đã ghi: ${choice.done ?: choice.label}", listOf(WorkStep("voice", voiceBody(choice.character, choice.gender, choice.preset, choice.avoid))))
+        WorkDecision(item.key, S.s_da_ghi_0_5450366f(choice.done ?: choice.label), listOf(WorkStep("voice", voiceBody(choice.character, choice.gender, choice.preset, choice.avoid))))
 
     /** "Giữ nguyên" của thẻ giọng: ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
     fun voiceKeep(item: WorkItem): WorkDecision? =
         item.keepCharacters.takeIf { it.isNotEmpty() }?.let { people ->
-            WorkDecision(item.key, "Đã ghi: ${item.keepLabel ?: "Giữ nguyên"}", people.map { WorkStep("voice", voiceBody(it)) })
+            WorkDecision(item.key, S.s_da_ghi_0_5450366f(item.keepLabel ?: S.s_giu_nguyen_1b550a12), people.map { WorkStep("voice", voiceBody(it)) })
         }
 
     /** Đổi giọng một nhân vật từ bảng giọng: `gender` kèm theo khi giọng khác giới đã được hỏi và đồng ý. `seen`: mốc lựa chọn đang chờ bảng này thấy (0 = không). */
@@ -321,19 +323,19 @@ object WorkDecisions {
         val body = JSONObject().put("character", character).put("preset", preset)
         gender?.let { body.put("gender", it) }
         body.put("seen", seen)
-        val tail = if (gender != null) " và là ${if (gender == "female") "nữ" else "nam"}" else ""
-        return WorkDecision("voice:$character", "Đã ghi: $name đọc bằng giọng $voiceName$tail", listOf(WorkStep("voice", body)))
+        val tail = if (gender != null) S.s_va_la_0_3ac4fdbc(if (gender == "female") S.s_nu_316c30fd else "nam") else ""
+        return WorkDecision("voice:$character", S.s_da_ghi_0_doc_bang_giong_1_2_27a9c30c(name, voiceName, tail), listOf(WorkStep("voice", body)))
     }
 
     /** Bỏ lựa chọn giọng chưa vào sách (`POST /voice` với `withdraw`) - không giữ 15 giây. */
     fun voiceWithdraw(character: String, requestedAt: Double): WorkDecision =
-        WorkDecision("voice:$character", "Đã bỏ lựa chọn giọng", listOf(WorkStep("voice", JSONObject().put("character", character).put("withdraw", true).put("requestedAt", requestedAt))), hold = false)
+        WorkDecision("voice:$character", S.s_da_bo_lua_chon_giong_1aff3c76, listOf(WorkStep("voice", JSONObject().put("character", character).put("withdraw", true).put("requestedAt", requestedAt))), hold = false)
 
     /** Bỏ một yêu cầu máy đã từ chối (`RefusedFix`): không hoàn tác được nên không giữ 15 giây. */
     fun dropRefused(item: WorkItem): WorkDecision? {
         val refused = item.refused ?: return null
         val body = JSONObject().put("section", refused.section).put("key", refused.key).put("requestedAt", refused.requestedAt)
-        return WorkDecision(item.key, "Đã bỏ yêu cầu này", listOf(WorkStep("pending-changes/withdraw", body)), hold = false)
+        return WorkDecision(item.key, S.s_da_bo_yeu_cau_nay_5eec8a27, listOf(WorkStep("pending-changes/withdraw", body)), hold = false)
     }
 
     /** Phán quyết "Nghe lại" (`POST /review`): `verdict` ok | redo | null (bỏ phán quyết). */

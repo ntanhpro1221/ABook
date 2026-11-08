@@ -1,5 +1,7 @@
 package vn.abook.player.ui
 
+import vn.abook.player.S
+
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
@@ -121,7 +123,7 @@ class NativeActivity : ComponentActivity() {
                         try {
                             setPictureInPictureParams(PipParams.build(this@NativeActivity, plan))
                         } catch (error: IllegalStateException) {
-                            AppLog.w("Pip", "không đặt được thông số cửa sổ nhỏ: ${error.javaClass.simpleName}")
+                            AppLog.w("Pip", S.s_khong_dat_duoc_thong_so_cua_so_nho_0_2ebecbdd(error.javaClass.simpleName))
                         }
                     }
             }
@@ -277,7 +279,7 @@ class NativeActivity : ComponentActivity() {
         },
         copyText = { text ->
             val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-            clipboard != null && runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("ABook", text)) }.isSuccess
+            clipboard != null && runCatching { clipboard.setPrimaryClip(ClipData.newPlainText(S.s_abook_1c37d334, text)) }.isSuccess
         },
         openRelease = { url -> if (url.startsWith(SOURCE_URL)) open(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
     )
@@ -338,8 +340,8 @@ class NativeActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
-            AppLog.w("Settings", "máy không mở được ${intent.action}")
-            app.settings.problem.value = "Chưa mở được trình duyệt"
+            AppLog.w("Settings", S.s_may_khong_mo_duoc_0_0265535d(intent.action))
+            app.settings.problem.value = S.s_chua_mo_duoc_trinh_duyet_3735f072
         }
     }
 
@@ -350,13 +352,13 @@ class NativeActivity : ComponentActivity() {
                 try {
                     Diagnostics.shareIntent(this@NativeActivity)
                 } catch (error: Exception) {
-                    AppLog.w("Diagnostics", "không gom được nhật ký để gửi: ${error.javaClass.simpleName}")
-                    app.settings.problem.value = "Chưa gửi được nhật ký"
+                    AppLog.w("Diagnostics", S.s_khong_gom_duoc_nhat_ky_de_gui_0_4f5019a9(error.javaClass.simpleName))
+                    app.settings.problem.value = S.s_chua_gui_duoc_nhat_ky_b7c68516
                     null
                 }
             } ?: return@launch
             open(shared.first)
-            AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${shared.second.length()} byte)")
+            AppLog.i("Diagnostics", S.s_mo_bang_chia_se_nhat_ky_0_byte_3fd57b21(shared.second.length()))
         }
     }
 
@@ -381,7 +383,7 @@ class NativeActivity : ComponentActivity() {
         try {
             enterPictureInPictureMode(PipParams.build(this, currentPipPlan()))
         } catch (error: IllegalStateException) {
-            AppLog.w("Pip", "không vào được cửa sổ nhỏ: ${error.javaClass.simpleName}")
+            AppLog.w("Pip", S.s_khong_vao_duoc_cua_so_nho_0_00b1c99d(error.javaClass.simpleName))
         }
     }
 

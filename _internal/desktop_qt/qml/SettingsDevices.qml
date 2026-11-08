@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -8,7 +9,7 @@ Column {
     PhoneSync { id: phone; width: parent.width }
     SectionBlock {
         width: Theme.listWidth(parent, parent.width)
-        title: "Máy tính khác"
+        title: S.s_may_tinh_khac_8c7c9cae
         SettingsItem {
             width: parent.width
             OtherComputers { id: computers; width: parent.width }

@@ -97,7 +97,7 @@ object Devices {
             SyncLink.pair(context, root, body)
         } catch (error: Exception) {
             val reason = BluetoothLink.lastError(address)
-            throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
+            throw IllegalStateException(reason.ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
         }
         SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
             .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, "bt:$address", 0, fingerprint,
@@ -108,7 +108,7 @@ object Devices {
 
     /** Máy đã ghép Bluetooth với điện thoại; nơi gọi đã kiểm quyền "Thiết bị ở gần" ([BluetoothLink.permitted]). */
     fun bluetoothDevices(context: Context): JSONArray {
-        if (!BluetoothLink.permitted(context)) throw IllegalStateException("Cần cho ABook dùng \"Thiết bị ở gần\" để kết nối qua Bluetooth")
+        if (!BluetoothLink.permitted(context)) throw IllegalStateException(S.s_can_cho_abook_dung_thiet_bi_o_gan_de_ket_n_f1520580)
         return BluetoothLink.devices(context)
     }
 
@@ -219,12 +219,12 @@ object Devices {
      */
     fun studioTarget(context: Context, book: String?, computer: String?): Pair<String, StudioRoute> {
         val (key, route) = if (book != null) {
-            val (holder, remote) = StudioLink.bookTarget(book) ?: throw IllegalStateException("Cuốn này không làm trên máy tính nào đã ghép")
+            val (holder, remote) = StudioLink.bookTarget(book) ?: throw IllegalStateException(S.s_cuon_nay_khong_lam_tren_may_tinh_nao_da_gh_3256648c)
             holder to StudioRoute(remote.takeIf { StudioPaths.valid(it) })
         } else {
             (computer ?: StudioLink.MAIN) to StudioRoute()
         }
-        if (!StudioLink.known(key, SyncLink.paired(context), Peers.all(context))) throw IllegalStateException("Chưa ghép với máy tính nào")
+        if (!StudioLink.known(key, SyncLink.paired(context), Peers.all(context))) throw IllegalStateException(S.s_chua_ghep_voi_may_tinh_nao_97f851e1)
         return key to route
     }
 }

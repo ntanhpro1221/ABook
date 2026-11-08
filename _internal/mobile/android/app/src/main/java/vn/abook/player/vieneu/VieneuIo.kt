@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
@@ -44,17 +46,17 @@ class NpzFile(private val file: File) {
     val names: Set<String> get() = members.keys.map { it.removeSuffix(".npy") }.toSet()
 
     fun floats(name: String): Floats = RandomAccessFile(file, "r").use { handle ->
-        val member = members["$name.npy"] ?: throw IllegalArgumentException("${file.name}: không có mảng $name")
-        require(member.method == 0) { "${file.name}: mảng $name bị nén (chỉ đọc được npz không nén)" }
+        val member = members["$name.npy"] ?: throw IllegalArgumentException(S.s_0_khong_co_mang_1_a9648e82(file.name, name))
+        require(member.method == 0) { S.s_0_mang_1_bi_nen_chi_doc_duoc_npz_khong_nen_f7751a57(file.name, name) }
         val local = ByteArray(30).also { handle.seek(member.headerOffset); handle.readFully(it) }
         val head = ByteBuffer.wrap(local).order(ByteOrder.LITTLE_ENDIAN)
-        require(head.getInt(0) == 0x04034b50) { "${file.name}: đầu mục zip hỏng" }
+        require(head.getInt(0) == 0x04034b50) { S.s_0_dau_muc_zip_hong_2f852d40(file.name) }
         val start = member.headerOffset + 30 + (head.getShort(26).toInt() and 0xFFFF) + (head.getShort(28).toInt() and 0xFFFF)
         val probe = ByteArray(minOf(member.size, 4096L).toInt()).also { handle.seek(start); handle.readFully(it) }
         val npy = vn.abook.player.Npz.header(probe, name)
-        require(npy.descr == "<f4" && !npy.fortran) { "${file.name}: $name là ${npy.descr}, cần <f4 thứ tự C" }
+        require(npy.descr == "<f4" && !npy.fortran) { S.s_0_1_la_2_can_f4_thu_tu_c_ca1856e1(file.name, name, npy.descr) }
         val count = npy.shape.fold(1L) { total, dimension -> total * dimension }
-        require(npy.dataOffset + count * 4 <= member.size) { "${file.name}: $name cụt" }
+        require(npy.dataOffset + count * 4 <= member.size) { S.s_0_1_cut_08d7e7aa(file.name, name) }
         val mapped = handle.channel.map(FileChannel.MapMode.READ_ONLY, start + npy.dataOffset, count * 4).order(ByteOrder.LITTLE_ENDIAN)
         Floats(npy.shape, FloatArray(count.toInt()).also { mapped.asFloatBuffer().get(it) })
     }
@@ -64,15 +66,15 @@ class NpzFile(private val file: File) {
         val tailSize = minOf(length, 22L + 65_535L).toInt()
         val tail = ByteArray(tailSize).also { handle.seek(length - tailSize); handle.readFully(it) }
         val buffer = ByteBuffer.wrap(tail).order(ByteOrder.LITTLE_ENDIAN)
-        val eocd = (tailSize - 22 downTo 0).firstOrNull { buffer.getInt(it) == 0x06054b50 } ?: throw IllegalArgumentException("${file.name}: không phải file zip")
+        val eocd = (tailSize - 22 downTo 0).firstOrNull { buffer.getInt(it) == 0x06054b50 } ?: throw IllegalArgumentException(S.s_0_khong_phai_file_zip_bca0858e(file.name))
         var entries = (buffer.getShort(eocd + 10).toInt() and 0xFFFF).toLong()
         var directory = buffer.getInt(eocd + 16).toLong() and 0xFFFFFFFFL
         if (entries == 0xFFFFL || directory == 0xFFFFFFFFL) { // zip64: the locator sits right before the classic record
             val locator = eocd - 20
-            require(locator >= 0 && buffer.getInt(locator) == 0x07064b50) { "${file.name}: thiếu bản ghi zip64" }
+            require(locator >= 0 && buffer.getInt(locator) == 0x07064b50) { S.s_0_thieu_ban_ghi_zip64_f8f1816c(file.name) }
             val record = ByteArray(56).also { handle.seek(buffer.getLong(locator + 8)); handle.readFully(it) }
             val zip64 = ByteBuffer.wrap(record).order(ByteOrder.LITTLE_ENDIAN)
-            require(zip64.getInt(0) == 0x06064b50) { "${file.name}: bản ghi zip64 hỏng" }
+            require(zip64.getInt(0) == 0x06064b50) { S.s_0_ban_ghi_zip64_hong_3af0eda3(file.name) }
             entries = zip64.getLong(32)
             directory = zip64.getLong(48)
         }
@@ -81,7 +83,7 @@ class NpzFile(private val file: File) {
         repeat(entries.toInt()) {
             val fixed = ByteArray(46).also { handle.seek(at); handle.readFully(it) }
             val entry = ByteBuffer.wrap(fixed).order(ByteOrder.LITTLE_ENDIAN)
-            require(entry.getInt(0) == 0x02014b50) { "${file.name}: mục lục zip hỏng" }
+            require(entry.getInt(0) == 0x02014b50) { S.s_0_muc_luc_zip_hong_f4616570(file.name) }
             val nameLength = entry.getShort(28).toInt() and 0xFFFF
             val extraLength = entry.getShort(30).toInt() and 0xFFFF
             val commentLength = entry.getShort(32).toInt() and 0xFFFF

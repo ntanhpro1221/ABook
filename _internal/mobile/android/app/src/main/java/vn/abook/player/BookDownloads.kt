@@ -69,7 +69,7 @@ object BookDownloads {
     private const val KEY_REMOTE = "remoteId"
 
     /** Hệ thống dừng việc tải vì dịch vụ nền hết giờ (Android 15): không chạy lại vô hạn, người nghe bấm Tải để làm tiếp từ phần đã về. */
-    const val TIMEOUT_NOTE = "Hệ thống Android đã dừng việc tải sau 6 giờ - bạn bấm Tải để làm tiếp"
+    const val TIMEOUT_NOTE = S.s_he_thong_android_da_dung_viec_tai_sau_6_gi_e8447973
 
     /** Giao diện đang mở thì nghe tin của việc nền ("download" của EbookLibrary): tiến độ, xong, huỷ, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
@@ -123,10 +123,10 @@ object BookDownloads {
     /** Mã việc đã vào doWork (khác việc còn xếp hàng chưa chạy). */
     private val running: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    class DownloadCancelled : Exception("Đã huỷ tải")
+    class DownloadCancelled : Exception(S.s_da_huy_tai_d7924578)
 
     /** Việc bị dừng từ ngoài (hệ thống dừng, hay nút Huỷ trên thông báo): [BookDownloadWorker] phân biệt hai trường hợp bằng dấu huỷ của [ExportCancellation]. */
-    class Interrupted : Exception("Việc tải bị dừng")
+    class Interrupted : Exception(S.s_viec_tai_bi_dung_47041577)
 
     /** Cổng kiểm giữa các khối: ném khi người nghe bấm Huỷ ([DownloadCancelled]) hay khi việc nền bị dừng ([Interrupted]). */
     class Gate(private val run: String? = null, private val stopped: () -> Boolean = { false }) {
@@ -157,7 +157,7 @@ object BookDownloads {
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
     fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
         if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
-        if (NetErrors.unpaired(error)) return "Máy kia đã bỏ ghép — bạn ghép lại để tải và nghe sách." to null
+        if (NetErrors.unpaired(error)) return S.s_may_kia_da_bo_ghep_ban_ghep_lai_de_tai_va_d8874ae9 to null
         val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
         return NetErrors.message(kind) to NetErrors.technical(error)
     }
@@ -171,7 +171,7 @@ object BookDownloads {
     fun start(context: Context, id: String, source: String?, remoteId: String?) {
         Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
         Store.requireBookId(remoteId ?: id)
-        if (source != null && remoteId == null) throw IllegalArgumentException("thiếu remoteId")
+        if (source != null && remoteId == null) throw IllegalArgumentException(S.s_thieu_remoteid_2e75943d)
         val data = Data.Builder().putString(KEY_BOOK, id)
         source?.let { data.putString(KEY_SOURCE, it) }
         remoteId?.let { data.putString(KEY_REMOTE, it) }
@@ -228,7 +228,7 @@ object BookDownloads {
     }
 
     internal fun foreground(context: Context, work: UUID, bookId: String, title: String, fraction: Double): ForegroundInfo =
-        Mp3Exports.foreground(context, work, bookId, title, 0, 0, TAG, fraction, "Đang tải sách…", "Huỷ", Mp3Exports.DOWNLOAD_CHANNEL)
+        Mp3Exports.foreground(context, work, bookId, title, 0, 0, TAG, fraction, S.s_dang_tai_sach_4afe3c14, S.s_huy_96732485, Mp3Exports.DOWNLOAD_CHANNEL)
 
     internal fun finished(context: Context, bookId: String, title: String, text: String) =
         Mp3Exports.finished(context, bookId, title, text, TAG, Mp3Exports.DOWNLOAD_CHANNEL)
@@ -262,21 +262,21 @@ object BookDownloads {
         // Cỡ cuối phải đúng cỡ sách ghi trước khi nhận file: thiếu thì giữ phần dở cho lần sau, khác thì bỏ - không bao giờ đổi tên file sai thành file thật.
         when (PartResume.finish(partial.length(), expectedSize)) {
             PartResume.Final.OK -> {}
-            PartResume.Final.SHORT -> throw java.io.IOException("Tải $relative chưa đủ (${partial.length()}/$expectedSize byte)")
+            PartResume.Final.SHORT -> throw java.io.IOException(S.s_tai_0_chua_du_1_2_byte_120c9bab(relative, partial.length(), expectedSize))
             PartResume.Final.WRONG -> {
                 val got = partial.length()
                 PartResume.discard(partial)
-                throw java.io.IOException("File $relative tải về không đúng cỡ ($got/$expectedSize byte)")
+                throw java.io.IOException(S.s_file_0_tai_ve_khong_dung_co_1_2_byte_fb2c98ec(relative, got, expectedSize))
             }
         }
         // Băm đúng byte vừa tải (không qua bộ nhớ: `.part` là file đang đổi), rồi ghi vào sổ khi đã đổi tên - lần kiểm sau không băm lại.
         val actual = if (digest.isEmpty()) "" else AudioRevision.sha256(partial)
         if (actual != digest) {
             PartResume.discard(partial)
-            throw java.io.IOException("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
+            throw java.io.IOException(S.s_ban_thu_da_doi_trong_luc_tai_ban_hay_tai_l_fc023405)
         }
         if (!partial.renameTo(target)) {
-            throw java.io.IOException("Chưa ghi được file; bạn hãy thử tải lại.")
+            throw java.io.IOException(S.s_chua_ghi_duoc_file_ban_hay_thu_tai_lai_5c7dabb1)
         }
         if (actual.isNotEmpty()) Store.rememberDigest(id, relative, target, actual)
         PartResume.tagFile(partial).delete()
@@ -292,12 +292,12 @@ object BookDownloads {
             progress: (Long, Long) -> Unit = { _, _ -> }) {
         Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
         Store.requireBookId(remoteId ?: id)
-        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã bỏ ghép")
+        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException(S.s_thiet_bi_nay_da_bo_ghep_ae51d316)
         else Peers.Link(SyncLink.base(context), SyncLink.prefs(context).getString("token", "") ?: "")
-        val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
+        val remote = if (source != null) remoteId ?: throw IllegalArgumentException(S.s_thieu_remoteid_2e75943d) else id
         if (source == null) matchImported(context) // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
         val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
-        require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử tải lại." }
+        require(manifest.getString("id") == remote) { S.s_ma_sach_may_gui_tra_ve_khong_khop_ban_hay_77276d25 }
         PeerPaths.checkManifest(manifest)
         title(manifest.optString("title"))
         if (source != null) {
@@ -387,7 +387,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
         fun report(error: String, technical: String?): Result {
             if (BookDownloads.leave(bookId, run)) {
                 BookDownloads.emit(JSONObject().put("bookId", bookId).put("error", error).apply { if (technical != null) put("technical", technical) })
-                BookDownloads.finished(context, bookId, "Tải bị gián đoạn", "$title · $error")
+                BookDownloads.finished(context, bookId, S.s_tai_bi_gian_doan_8ba012e5, "$title · $error")
             }
             return Result.failure()
         }
@@ -413,7 +413,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
                     })
             }
             BookDownloads.leave(bookId, run)
-            BookDownloads.finished(context, bookId, "Đã tải xong", "$title · nghe được cả khi không có mạng")
+            BookDownloads.finished(context, bookId, S.s_da_tai_xong_118e7acc, S.s_0_nghe_duoc_ca_khi_khong_co_mang_0dc61da8(title))
             return Result.success()
         } catch (stopped: BookDownloads.DownloadCancelled) {
             return cancelled()
@@ -433,7 +433,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
                 return Result.retry()
             }
             if (isStopped && Mp3Exports.timedOut(this)) return report(BookDownloads.TIMEOUT_NOTE, null)
-            val (message, technical) = BookDownloads.describe(error, "lỗi tải")
+            val (message, technical) = BookDownloads.describe(error, S.s_loi_tai_0d142bd4)
             return report(message, technical)
         } finally {
             BookDownloads.leave(bookId, run, keep = retrying)

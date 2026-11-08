@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "FindLogic.js" as Find
@@ -11,7 +12,7 @@ Modal {
     id: root
     objectName: "chapterReader"
     panelWidth: 720
-    title: chapter ? chapter.fullTitle || chapter.title : "Đọc"
+    title: chapter ? chapter.fullTitle || chapter.title : S.s_doc_5709880c
     property string bookId: ""
     property var chapters: []
     property var chapter: null
@@ -42,7 +43,7 @@ Modal {
             root.chapters = data.chapters || []
             const selected = root.chapters.find(c => c.id === chapterId) || root.chapters[0]
             if (selected && selected.id !== chapterId) root.at = -1
-            if (!selected) { root.error = "Chưa có chương để đọc."; root.loading = false; return }
+            if (!selected) { root.error = S.s_chua_co_chuong_de_doc_d353340e; root.loading = false; return }
             root.load(selected)
         })
     }
@@ -69,21 +70,21 @@ Modal {
         const target = root.paragraphs[row]
         root.play = false
         if (typeof target.start === "number" && Player.loaded && Player.bookId === root.bookId)
-            Player.jumpTo(root.chapter.id, target.start, "Nghe từ “" + Find.snippetOf(target.text, null).after + "”")
+            Player.jumpTo(root.chapter.id, target.start, S.s_nghe_tu_d29cd3c3 + Find.snippetOf(target.text, null).after + "”")
     }
     onClosed: { ++generation; loading = false; textMotion.stop() }
     Column {
         width: parent.width; spacing: Theme.s16
         Select {
             objectName: "readerChapters"
-            width: parent.width; label: "Chương"
+            width: parent.width; label: S.s_chuong_2d157977
             options: root.chapters.map(c => ({value: c.id, label: c.fullTitle || c.title}))
             value: root.chapter ? root.chapter.id : -1
             onPicked: value => { root.at = -1; root.load(root.chapters.find(c => c.id === value)) }
         }
         Collapse {
             width: parent.width; open: root.loading
-            Text { width: parent.width; text: "Đang tải chương…"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Text { width: parent.width; text: S.s_dang_tai_chuong_e4feb053; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
         InlineError {
             objectName: "readerError"

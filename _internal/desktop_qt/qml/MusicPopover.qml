@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -22,7 +23,7 @@ Popover {
                 anchors.rightMargin: Theme.s12
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.StyledText
-                text: "Nhạc nền: <b>" + (Music.enabled ? "Bật" : "Tắt") + "</b>"
+                text: S.s_nhac_nen_b_f3940d2f + (Music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) + "</b>"
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -33,13 +34,13 @@ Popover {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.s8
                 anchors.verticalCenter: parent.verticalCenter
-                tip: "Nhạc nền"
+                tip: S.s_nhac_nen_271fb292
                 checked: Music.enabled
                 enabled: !Music.busy
                 onToggled: (on) => Music.setEnabled(on)
             }
         }
-        Warning { shown: Music.enabled && Music.broken; text: "Bài nhạc chương này không phát được." }
+        Warning { shown: Music.enabled && Music.broken; text: S.s_bai_nhac_chuong_nay_khong_phat_duoc_e0bc4ba6 }
         Warning { shown: Music.problem !== ""; text: Music.problem }
 
         Column {
@@ -51,7 +52,7 @@ Popover {
                 width: parent.width - 2 * Theme.s8
                 topPadding: Theme.s4
                 bottomPadding: Theme.s4
-                text: "Mức nhạc nền"
+                text: S.s_muc_nhac_nen_a45588ff
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -70,8 +71,8 @@ Popover {
             width: parent.width - 2 * Theme.s8
             topPadding: 6
             bottomPadding: Theme.s4
-            text: Music.project ? "Đổi luôn trong Studio."
-                                : "Chỉ đổi trên máy này."
+            text: Music.project ? S.s_doi_luon_trong_studio_20c762a6
+                                : S.s_chi_doi_tren_may_nay_93811b69
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption

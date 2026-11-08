@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -13,8 +15,8 @@ import java.io.File
  */
 class ViettelTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvider(keys) {
     override val id = "viettel"
-    override val name = "Viettel AI"
-    override val limits = Limits(2000, "Miễn phí 50.000 ký tự trong tháng đầu", "estimated")
+    override val name = S.s_viettel_ai_9094e708
+    override val limits = Limits(2000, S.s_mien_phi_50_000_ky_tu_trong_thang_dau_a4a44d1b, "estimated")
 
     companion object {
         const val BASE = "https://viettelai.vn"
@@ -28,9 +30,9 @@ class ViettelTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvi
     override fun listVoices(entry: OnlineKeys.Entry): List<OnlineKeys.VoiceRow> {
         val response = OnlineHttp.request("GET", "$base/tts/voices", mapOf("token" to entry.key), null, name)
         if (response.status != 200) throw OnlineHttp.failure(response.status, name, detail(response.body))
-        val list = runCatching { JSONArray(String(response.body, Charsets.UTF_8)) }.getOrElse { throw VoiceException("$name trả danh sách giọng hỏng", cause = it) }
+        val list = runCatching { JSONArray(String(response.body, Charsets.UTF_8)) }.getOrElse { throw VoiceException(S.s_0_tra_danh_sach_giong_hong_fde61e93(name), cause = it) }
         return (0 until list.length()).mapNotNull { list.optJSONObject(it) }.filter { it.optString("code").isNotEmpty() }.map { item ->
-            val label = item.optString("name").ifEmpty { item.getString("code") }.replace(" chất lượng cao", "")
+            val label = item.optString("name").ifEmpty { item.getString("code") }.replace(S.s_chat_luong_cao_d8a057c6, "")
             val described = item.optString("description").split(' ').filter { it.isNotEmpty() } // "Nữ miền Bắc"
             val region = described.drop(1).joinToString(" ")
             OnlineKeys.VoiceRow(item.getString("code"), if (region.isNotEmpty()) "$label - $region" else label, OnlineHttp.gender(described.firstOrNull()))
@@ -44,7 +46,7 @@ class ViettelTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvi
             payload.toString().toByteArray(Charsets.UTF_8), name)
         if (response.status != 200) throw OnlineHttp.failure(response.status, name, detail(response.body))
         if ("json" in response.headers["content-type"].orEmpty()) {
-            throw VoiceException("$name không đọc được đoạn này (${detail(response.body).ifEmpty { "không rõ lý do" }})", reason = "service")
+            throw VoiceException(S.s_0_khong_doc_duoc_doan_nay_1_77569675(name, detail(response.body).ifEmpty { S.s_khong_ro_ly_do_f42ccdef }), reason = "service")
         }
         response.body
     }

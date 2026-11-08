@@ -1,5 +1,7 @@
 package vn.abook.player.ui.shell
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,22 +37,22 @@ internal fun Unavailable(destination: Destination, onBack: () -> Unit) {
 
 /** Tên màn trên đầu trang [Unavailable]: cùng chữ với màn thật. */
 internal fun unavailableTitle(destination: Destination): String = when (destination) {
-    Destination.AddBook, is Destination.ImportReview -> "Thêm sách"
-    is Destination.ImportChapter, is Destination.EditChapter -> "Tên chương"
-    is Destination.EditBook -> "Sửa sách"
-    is Destination.CropCover -> "Cắt ảnh bìa"
-    is Destination.CoverSearch -> "Tìm ảnh bìa"
+    Destination.AddBook, is Destination.ImportReview -> S.s_them_sach_2a9d3708
+    is Destination.ImportChapter, is Destination.EditChapter -> S.s_ten_chuong_9edb6c28
+    is Destination.EditBook -> S.s_sua_sach_79fb71d2
+    is Destination.CropCover -> S.s_cat_anh_bia_d9d3257b
+    is Destination.CoverSearch -> S.s_tim_anh_bia_9825b3d1
     is Destination.Book -> destination.book.title
-    is Destination.Export -> if (destination.book.textOnly) "Xuất sách nói" else "Xuất sách"
+    is Destination.Export -> if (destination.book.textOnly) S.s_xuat_sach_noi_219fb12a else S.s_xuat_sach_792effe5
     is Destination.Settings -> destination.group.label
     is Destination.Devices -> when (destination.page) {
-        DevicesPage.Pair -> "Nối máy tính"
-        DevicesPage.Share -> "Chia sẻ thư viện"
-        DevicesPage.Storage -> "Dung lượng"
+        DevicesPage.Pair -> S.s_noi_may_tinh_2950692d
+        DevicesPage.Share -> S.s_chia_se_thu_vien_940de671
+        DevicesPage.Storage -> S.s_dung_luong_32009349
     }
     is Destination.Voice -> when (destination.page) {
-        VoicePage.Keys -> "Khoá trực tuyến"
-        VoicePage.Music -> "Nhạc của tôi"
+        VoicePage.Keys -> S.s_khoa_truc_tuyen_b32d4988
+        VoicePage.Music -> S.s_nhac_cua_toi_f65b7ac6
     }
     is Destination.Studio, is Destination.StudioProject -> StudioText.TITLE
     is Destination.StudioNew -> StudioNewText.TITLE
@@ -65,4 +67,4 @@ internal fun unavailableTitle(destination: Destination): String = when (destinat
 }
 
 /** Câu duy nhất của màn trống, bằng lời người nghe ("ở đây" như web: "Ở đây chưa mở được file sách"), không nói về "bản thử" hay cách dựng app. */
-internal const val UNAVAILABLE_LINE = "Màn này chưa mở được ở đây."
+internal const val UNAVAILABLE_LINE = S.s_man_nay_chua_mo_duoc_o_day_88fd4f22

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -35,7 +36,7 @@ Item {
                     height: Math.max(44, label.height + 16)
                     Accessible.role: Accessible.Button
                     Accessible.name: root.shownTitle
-                    Accessible.description: root.expanded ? "Đang mở" : "Đang đóng"
+                    Accessible.description: root.expanded ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
                     onClicked: root.expanded = !root.expanded
                     Text {
                         id: label

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -88,10 +90,10 @@ fun PersonSheet(
             PersonPage.Menu -> Column(Modifier.fillMaxWidth()) {
                 BasicText(name, style = Abook.type.sectionTitle)
                 Spacer(Modifier.height(Dim.s8))
-                if (person.lines > 0) MenuRow("Gộp vào người khác", tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) }
-                MenuRow("Đổi tên", tag = "person_rename", onClick = { page = PersonPage.Rename }) { ink -> TextCursorInputIcon(ink) }
+                if (person.lines > 0) MenuRow(S.s_gop_vao_nguoi_khac_8f5c461d, tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) }
+                MenuRow(S.s_doi_ten_a2a0dc70, tag = "person_rename", onClick = { page = PersonPage.Rename }) { ink -> TextCursorInputIcon(ink) }
                 if (person.voice != null && person.lines > 0) {
-                    MenuRow("Đổi giới tính", tag = "person_gender", onClick = { page = PersonPage.Gender }) { ink -> UserRoundIcon(ink) }
+                    MenuRow(S.s_doi_gioi_tinh_8fde2c62, tag = "person_gender", onClick = { page = PersonPage.Gender }) { ink -> UserRoundIcon(ink) }
                 }
             }
             PersonPage.Rename -> RenamePage(bookId, person, source, notes, dismiss, onBack = { page = PersonPage.Menu })
@@ -122,22 +124,22 @@ private fun RenamePage(bookId: String, person: CastMember, source: BookSource, n
                     dismiss()
                     notes.say(Cast.renamedNote(renamed.name, renamed.renamed))
                 } else {
-                    problem = failure("Chưa đổi được tên", done.problem.orEmpty())
+                    problem = failure(S.s_chua_doi_duoc_ten_ad5b4df1, done.problem.orEmpty())
                 }
             }
         }
     }
     Column(Modifier.fillMaxWidth().imePadding().testTag("person_rename_page")) {
-        BasicText("Đổi tên $name", style = Abook.type.sectionTitle)
-        RowHint("Chỉ đổi tên hiển thị, giữ giọng và audio.")
+        BasicText(S.s_doi_ten_0_d6845bbc(name), style = Abook.type.sectionTitle)
+        RowHint(S.s_chi_doi_ten_hien_thi_giu_giong_va_audio_1f7110c8)
         Spacer(Modifier.height(Dim.s12))
-        SheetField(value, { value = it.take(80) }, "Tên mới của $name", "person_rename_field", onDone = { if (value.isNotBlank()) save(value) })
-        person.originalName?.let { RowHint("Tên gốc: ${Cast.cleanName(it)}", Modifier.padding(top = Dim.s8)) }
+        SheetField(value, { value = it.take(80) }, S.s_ten_moi_cua_0_ac5dd137(name), "person_rename_field", onDone = { if (value.isNotBlank()) save(value) })
+        person.originalName?.let { RowHint(S.s_ten_goc_0_b27cd007(Cast.cleanName(it)), Modifier.padding(top = Dim.s8)) }
         ProblemLine(problem, "person_rename_problem")
         Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (busy) "Đang lưu" else "Lưu", { if (value.isNotBlank()) save(value) }, Modifier.fillMaxWidth().testTag("person_rename_save"), enabled = value.isNotBlank() && !busy)
-        if (person.originalName != null) QuietButton("Về tên gốc", { save("") }, "person_rename_original")
-        QuietButton("Thôi", onBack, "person_rename_cancel")
+        PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(value) }, Modifier.fillMaxWidth().testTag("person_rename_save"), enabled = value.isNotBlank() && !busy)
+        if (person.originalName != null) QuietButton(S.s_ve_ten_goc_643cd2e0, { save("") }, "person_rename_original")
+        QuietButton(S.s_thoi_e68f9e88, onBack, "person_rename_cancel")
     }
 }
 
@@ -159,31 +161,31 @@ private fun GenderPage(bookId: String, person: CastMember, source: BookSource, n
                 val at = done.value
                 if (at != null) {
                     dismiss()
-                    notes.say(Cast.genderNote(name, picked), "Hoàn tác") {
+                    notes.say(Cast.genderNote(name, picked), S.s_hoan_tac_e72ff675) {
                         scope.launch {
                             val problem = source.withdrawGender(bookId, person.name, at)
-                            notes.say(if (problem == null) Cast.genderUndone(name) else failure("Chưa hoàn tác được", problem))
+                            notes.say(if (problem == null) Cast.genderUndone(name) else failure(S.s_chua_hoan_tac_duoc_164b754b, problem))
                         }
                     }
                 } else {
-                    problem = failure("Chưa đổi được giới tính", done.problem.orEmpty())
+                    problem = failure(S.s_chua_doi_duoc_gioi_tinh_4eefcf7a, done.problem.orEmpty())
                 }
             }
         }
     }
     Column(Modifier.fillMaxWidth().testTag("person_gender_page")) {
-        BasicText("Giới tính của $name", style = Abook.type.sectionTitle)
+        BasicText(S.s_gioi_tinh_cua_0_ce17d919(name), style = Abook.type.sectionTitle)
         RowHint(Cast.genderCurrent(current))
         Spacer(Modifier.height(Dim.s8))
         for (gender in Gender.entries) {
             PickRow(gender.label, null, choice == gender, { choice = gender }, "person_gender_${gender.wire}")
         }
         Spacer(Modifier.height(Dim.s8))
-        BasicText("Giọng đọc của $name chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio.", style = Abook.type.bodySmall.copy(color = Abook.colors.text))
+        BasicText(S.s_giong_doc_cua_0_chua_doi_ngay_studio_se_la_8778cee8(name), style = Abook.type.bodySmall.copy(color = Abook.colors.text))
         ProblemLine(problem, "person_gender_problem")
         Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (busy) "Đang ghi" else "Ghi lại", { save() }, Modifier.fillMaxWidth().testTag("person_gender_save"), enabled = choice != null && choice != current && !busy)
-        QuietButton("Thôi", onBack, "person_gender_cancel")
+        PrimaryButton(if (busy) S.s_dang_ghi_68059375 else S.s_ghi_lai_923c1fd4, { save() }, Modifier.fillMaxWidth().testTag("person_gender_save"), enabled = choice != null && choice != current && !busy)
+        QuietButton(S.s_thoi_e68f9e88, onBack, "person_gender_cancel")
     }
 }
 
@@ -210,19 +212,19 @@ private fun MergePage(bookId: String, person: CastMember, people: List<CastMembe
                     dismiss()
                     notes.say(Cast.mergedNote(lines, name, Cast.cleanName(target.displayName)))
                 } else {
-                    problem = failure("Chưa gộp được", done.problem.orEmpty())
+                    problem = failure(S.s_chua_gop_duoc_3d63128a, done.problem.orEmpty())
                 }
             }
         }
     }
     Column(Modifier.fillMaxWidth().imePadding().testTag("person_merge_page")) {
-        BasicText("Gộp nhân vật", style = Abook.type.sectionTitle)
-        RowHint("Mọi câu của $name và các phần sau dùng người bạn chọn.")
+        BasicText(S.s_gop_nhan_vat_37b51bd5, style = Abook.type.sectionTitle)
+        RowHint(S.s_moi_cau_cua_0_va_cac_phan_sau_dung_nguoi_b_75a7c03f(name))
         Spacer(Modifier.height(Dim.s12))
-        SheetField(query, { query = it }, "Tìm người trong truyện", "person_merge_search", leading = { SearchIcon(colors.text3) }, imeSearch = true)
+        SheetField(query, { query = it }, S.s_tim_nguoi_trong_truyen_a1507054, "person_merge_search", leading = { SearchIcon(colors.text3) }, imeSearch = true)
         Spacer(Modifier.height(Dim.s8))
         if (others.isEmpty()) {
-            BasicText("Không có ai khớp “$query”.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s12))
+            BasicText(S.s_khong_co_ai_khop_0_d1bfb22a(query), style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s12))
         } else {
             val list = rememberLazyListState()
             LazyColumn(Modifier.fillMaxWidth().heightIn(max = 256.dp).fadeEdges(list).testTag("person_merge_list"), state = list) {
@@ -242,10 +244,10 @@ private fun MergePage(bookId: String, person: CastMember, people: List<CastMembe
         ProblemLine(problem, "person_merge_problem")
         Spacer(Modifier.height(Dim.s24))
         PrimaryButton(
-            if (busy) "Đang gộp" else "Gộp", { merge() }, Modifier.fillMaxWidth().testTag("person_merge_go"), enabled = into != null && !busy,
+            if (busy) S.s_dang_gop_779c36ae else S.s_gop_2380bed6, { merge() }, Modifier.fillMaxWidth().testTag("person_merge_go"), enabled = into != null && !busy,
             icon = { ink -> GitMergeIcon(ink) },
         )
-        QuietButton("Thôi", onBack, "person_merge_cancel")
+        QuietButton(S.s_thoi_e68f9e88, onBack, "person_merge_cancel")
     }
 }
 

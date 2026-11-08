@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 
 // "Mẫu thiết lập" có tên cho sách mới (ui/src/studio/bookTemplates.ts): phần thuần dùng chung cho Cài đặt (BookTemplates.qml: đổi tên, xoá) và trình tạo sách
@@ -8,8 +9,8 @@
 var MAX_TEMPLATES = 20
 var NAME_MAX = 40
 /** Nhãn của lựa chọn "không mẫu" (giá trị mặc định của app) - không đặt được làm tên mẫu. */
-var DEFAULT_LABEL = "Mặc định"
-var PROFILE_LABEL = {high_quality: "Chất lượng cao", balanced: "Cân bằng", fast: "Nhanh"}
+var DEFAULT_LABEL = S.s_mac_dinh_9a1af367
+var PROFILE_LABEL = {high_quality: S.s_chat_luong_cao_dc7017a7, balanced: S.s_can_bang_8b88211d, fast: S.s_nhanh_c2385879}
 
 function same(a, b) { return String(a).toLocaleLowerCase("vi") === String(b).toLocaleLowerCase("vi") }
 function cleanName(value) { return String(value).split(/\s+/).filter(Boolean).join(" ") }
@@ -45,16 +46,16 @@ function findTemplate(templates, name) {
 /** Lời báo cho một cái tên không dùng được, "" nếu được. `except`: tên đang được đổi (không tính là trùng với chính nó). */
 function nameProblem(templates, raw, except) {
     const name = cleanName(raw)
-    if (!name) return "Đặt cho mẫu một cái tên"
-    if (name.length > NAME_MAX) return "Tên mẫu tối đa " + NAME_MAX + " chữ"
-    if (same(name, DEFAULT_LABEL)) return "“" + DEFAULT_LABEL + "” là mẫu có sẵn của app - chọn tên khác"
-    for (const item of templates) if (same(item.name, name) && !(except !== undefined && except !== "" && same(item.name, except))) return "Đã có mẫu tên “" + name + "”"
+    if (!name) return S.s_dat_cho_mau_mot_cai_ten_acc6e254
+    if (name.length > NAME_MAX) return S.s_ten_mau_toi_da_c66079a1 + NAME_MAX + S.s_chu_6117d040
+    if (same(name, DEFAULT_LABEL)) return "“" + DEFAULT_LABEL + S.s_la_mau_co_san_cua_app_chon_ten_khac_02696be5
+    for (const item of templates) if (same(item.name, name) && !(except !== undefined && except !== "" && same(item.name, except))) return S.s_copy_69e49650d87d(name)
     return ""
 }
 function isFull(templates) { return templates.length >= MAX_TEMPLATES }
 function summaryOf(t) {
-    return [t.narrator || "Giọng máy đề xuất", PROFILE_LABEL[t.profile], t.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu"]
-        .concat(t.precastWait ? ["chờ bạn duyệt trước khi thu"] : []).join("\u00a0·\u00a0")
+    return [t.narrator || S.s_giong_may_de_xuat_35389626, PROFILE_LABEL[t.profile], t.startNow ? S.s_bat_dau_ngay_83137873 : S.s_cho_bam_bat_dau_5d760870]
+        .concat(t.precastWait ? [S.s_cho_ban_duyet_truoc_khi_thu_35299b41] : []).join("\u00a0·\u00a0")
 }
 
 /** Model của mẫu mà máy không còn: tên model, "" nếu dùng được. `available` = tên các model đang có (chưa biết thì không kết luận). */
@@ -69,8 +70,8 @@ function missingVoice(template, available) {
     if (!wanted || !available || !available.length) return ""
     return available.indexOf(wanted) >= 0 ? "" : wanted
 }
-function missingVoiceNote(voice) { return "Giọng " + voice + " trong mẫu không còn trên máy - giữ giọng đang chọn." }
-function missingModelNote() { return "Bộ phân tích trong mẫu không còn trên máy - giữ bộ đang chọn." }
+function missingVoiceNote(voice) { return S.s_giong_7e6f9338 + voice + S.s_trong_mau_khong_con_tren_may_giu_giong_dan_28d28bcb }
+function missingModelNote() { return S.s_bo_phan_tich_trong_mau_khong_con_tren_may_a85891ce }
 
 /** Chụp các lựa chọn hiện tại của nháp thành một mẫu. `narratorAuto`: giọng kể do máy chọn - mẫu ghi "" để áp cho sách khác thì máy lại chọn theo sách ấy. */
 function templateFromDraft(draft, name, narratorAuto) {
@@ -103,7 +104,7 @@ function templateChoices(draft) {
         startNow: draft.startNow, precastWait: Boolean(draft.precastWait), template: draft.template
     }
 }
-var CHOICE_LABELS = [["narrator", "giọng kể"], ["profile", "chất lượng"], ["analysisModel", "model đọc hiểu"], ["startNow", "bắt đầu ngay"], ["precastWait", "chờ bạn duyệt trước khi thu"]]
+var CHOICE_LABELS = [["narrator", S.s_giong_ke_cc1476e9], ["profile", S.s_chat_luong_7c01566d], ["analysisModel", S.s_model_doc_hieu_97027daf], ["startNow", S.s_bat_dau_ngay_83137873], ["precastWait", S.s_cho_ban_duyet_truoc_khi_thu_35299b41]]
 /** Áp mẫu đã đổi những lựa chọn nào (nói như người dùng thấy). */
 function changedChoices(before, after) {
     const a = templateChoices(before), b = templateChoices(after)

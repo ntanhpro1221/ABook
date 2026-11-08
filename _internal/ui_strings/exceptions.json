@@ -1,0 +1,417 @@
+[
+  {
+    "file": "desktop_qt/qml/CastNote.qml",
+    "text": "<a href=\"redo\">{}</a>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/EditBookMyMusic.qml",
+    "text": "<font color='{}'>&nbsp;·&nbsp;{}</font>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/EditBookReadings.qml",
+    "text": "<b><font color='{}'>“{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/EditBookReadings.qml",
+    "text": "<b>{}</b><font color='{}”",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/MusicCredit.qml",
+    "text": "<a href=\"{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NameReadings.qml",
+    "text": "{}; font-weight:400\">·&nbsp;{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NameRow.qml",
+    "text": "<span style=\"color:{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NewChapters.qml",
+    "text": "<font color=\"{}\"><b>{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NewCredits.qml",
+    "text": "<b>{}:</b> {}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NewDrop.qml",
+    "text": "<font color=\"{}\">{}</font>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/NewVolumes.qml",
+    "text": "<font color=\"{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/OtherComputersBluetooth.qml",
+    "text": "&nbsp;<span style='color:{}'>·&nbsp;{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/PhoneEdits.qml",
+    "text": "</span><span style=\"color:{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/PhoneEdits.qml",
+    "text": "<br><span style=\"color:{}; font-size:12px\">{}</span>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/PhoneEdits.qml",
+    "text": "<span style=\"color:{}\">&nbsp;·&nbsp;{}</span>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/PhoneEdits.qml",
+    "text": "<span style=\"font-weight:500\">{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/PhoneSync.qml",
+    "text": "{}<span style='font-weight:500;color:{}<span style='font-weight:500;color:{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ProjectRow.qml",
+    "text": "{}<font color=\"{}\"><b>&nbsp;·&nbsp;{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ReviewQueue.qml",
+    "text": "<b><span style=\"color:{}\">{}</span></b>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ReviewRow.qml",
+    "text": "<span style=\"color:{}\">{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ReviewRow.qml",
+    "text": "{}\">{}</span>” - {}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ScreenHeader.qml",
+    "text": "{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "Ctrl",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "Shift",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "desktop_qt/qml/StudioMusicScene.qml",
+    "text": "<font color=\"{}\">&nbsp;·&nbsp;{}</font>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/ThirdPartyText.qml",
+    "text": "<p style=\"margin:0; line-height:162%\">{}</p>",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "desktop_qt/qml/WorkCard.qml",
+    "text": ": <b><span style=\"color:{}\">{}",
+    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
+  },
+  {
+    "file": "mobile/android/app/src/main/java/vn/abook/player/ui/data/AndroidSettingsCore.kt",
+    "text": "Accept",
+    "reason": "HTTP Accept request header, a wire protocol identifier."
+  },
+  {
+    "file": "ui/src/desktop/BookTemplates.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/desktop/SleepSchedule.tsx",
+    "text": "Tab",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/desktop/httpSource.ts",
+    "text": "Files",
+    "reason": "HTML drag-and-drop DataTransfer type, a browser protocol identifier."
+  },
+  {
+    "file": "ui/src/listen/FindInBook.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/PlayerViews.tsx",
+    "text": "End",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/PlayerViews.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/PlayerViews.tsx",
+    "text": "Home",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/PlayerViews.tsx",
+    "text": "Space",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/ReadAlongText.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/ReaderScreen.tsx",
+    "text": "Tab",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/follow.ts",
+    "text": "End",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/follow.ts",
+    "text": "Home",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/musicBed.ts",
+    "text": "Info",
+    "reason": "MP3 Info frame marker, not visible UI copy."
+  },
+  {
+    "file": "ui/src/listen/musicBed.ts",
+    "text": "Xing",
+    "reason": "MP3 Xing frame marker, not visible UI copy."
+  },
+  {
+    "file": "ui/src/listen/player.tsx",
+    "text": "Arrow",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/listen/player.tsx",
+    "text": "Tab",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ChapterPreview.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ChapterPreview.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/MotionRouter.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/backLayers.ts",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ui.tsx",
+    "text": "End",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ui.tsx",
+    "text": "Home",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ui.tsx",
+    "text": "Tab",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/NameReadings.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/NewProjectScreen.tsx",
+    "text": "Files",
+    "reason": "HTML drag-and-drop DataTransfer type, a browser protocol identifier."
+  },
+  {
+    "file": "ui/src/studio/ReviewQueue.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/ScriptTab.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/ScriptTab.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/TemplateBar.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/VolumeSplit.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/studio/upload.ts",
+    "text": "Aborted",
+    "reason": "DOMException AbortError diagnostic, never presented as UI copy."
+  },
+  {
+    "file": "ui/src/studio/workKeys.ts",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "desktop_qt/qml/MusicCredit.qml",
+    "text": "<a href=\"{}\">{}</a>",
+    "reason": "HTML link markup; its text and URL come from the music credit data, not UI copy."
+  },
+  {
+    "file": "desktop_qt/src/backend.cpp",
+    "text": "host chưa báo sẵn sàng sau",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/backend.cpp",
+    "text": "host không chạy được:",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/backend.cpp",
+    "text": "không chạy được bộ cài:",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/later.h",
+    "text": "Later.call: fn không phải hàm",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/singleinstance.cpp",
+    "text": "bản ABook đang chạy không đáp lần mở mới",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/singleinstance.cpp",
+    "text": "không giữ được kênh một bản:",
+    "reason": "Internal qWarning diagnostic for developers; never displayed as UI copy."
+  },
+  {
+    "file": "desktop_qt/src/chaptersmodel.h",
+    "text": "Có sẵn trong Player.chapters",
+    "reason": "Q_CLASSINFO annotation for developers; not displayed to the listener."
+  },
+  {
+    "file": "desktop_qt/src/librarymodel.h",
+    "text": "Có sẵn trong Backend.library",
+    "reason": "Q_CLASSINFO annotation for developers; not displayed to the listener."
+  },
+  {
+    "file": "desktop_qt/src/player.h",
+    "text": "Có sẵn trong Player.clock",
+    "reason": "Q_CLASSINFO annotation for developers; not displayed to the listener."
+  },
+  {
+    "file": "desktop_qt/src/readalong.h",
+    "text": "Có sẵn trong ReadAlong.paragraphs",
+    "reason": "Q_CLASSINFO annotation for developers; not displayed to the listener."
+  },
+  {
+    "file": "desktop_qt/qml/ReviewQueue.qml",
+    "text": "O",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ReviewQueue.qml",
+    "text": "R",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "P",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "R",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/ScriptTab.qml",
+    "text": "Z",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/WorkInbox.qml",
+    "text": "J",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/WorkInbox.qml",
+    "text": "K",
+    "reason": "Visible keyboard shortcut key; a computer-only affordance tied to the input protocol."
+  },
+  {
+    "file": "desktop_qt/qml/NewCredits.qml",
+    "text": "head",
+    "reason": "Import credit-line position identifier passed to the resolver; never shown as text."
+  },
+  {
+    "file": "desktop_qt/qml/NewCredits.qml",
+    "text": "tail",
+    "reason": "Import credit-line position identifier passed to the resolver; never shown as text."
+  },
+  {
+    "file": "desktop_qt/qml/VoiceSpeed.qml",
+    "text": "auto",
+    "reason": "Persisted voice-speed choice identifier passed to the description resolver; never shown as text."
+  },
+  {
+    "file": "desktop_qt/qml/ScreenHeader.qml",
+    "text": "{} (Esc)",
+    "reason": "Keyboard shortcut suffix appended to a catalog-supplied back label on desktop."
+  }
+]

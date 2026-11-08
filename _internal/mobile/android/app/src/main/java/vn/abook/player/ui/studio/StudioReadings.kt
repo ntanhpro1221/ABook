@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoin
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
@@ -141,35 +143,35 @@ object ReadingsLogic {
 
     /** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi ("Mở/đóng"), và làm gì thay vào đó. */
     fun neverText(surface: String): String =
-        "Máy đọc ký hiệu trong “$surface” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy."
+        S.s_may_doc_ky_hieu_trong_0_thanh_mot_cho_ngun_41720519(surface)
 
     private fun where(reach: Reach): String {
-        val named = reach.chapters.take(3).map { it.title.ifEmpty { "chương ${it.chapterId}" } }
+        val named = reach.chapters.take(3).map { it.title.ifEmpty { S.s_chuong_0_55d256d1(it.chapterId) } }
         val more = reach.chapters.size - named.size
-        return if (named.isEmpty()) "" else " · ở ${named.joinToString(", ")}${if (more > 0) " và $more chương nữa" else ""}"
+        return if (named.isEmpty()) "" else S.s_o_0_1_dd43afcc(named.joinToString(", "), if (more > 0) S.s_va_0_chuong_nua_128abbd4(more) else "")
     }
 
     /** Dòng dưới ô khi đang sửa: có bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại (web `reachSummary`). */
     fun reachSummary(reach: Reach): String {
-        if (reach.never) return "${if (reach.lines > 0) "Có ${reach.lines} câu có chữ này, nhưng m" else "M"}áy không dùng được cách đọc cho chữ có ký hiệu này."
-        if (reach.lines == 0) return "Chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện."
-        val cost = if (reach.recorded > 0) "${reach.recorded} câu đã thu sẽ được thu lại" else "chưa thu câu nào nên không phải thu lại"
-        val blocked = if (reach.blocked > 0) " (${reach.blocked} câu khác không dùng được vì ký hiệu)" else ""
-        return "${reach.reached} câu có chữ này · $cost${where(reach)}$blocked"
+        if (reach.never) return S.s_0_ay_khong_dung_duoc_cach_doc_cho_chu_co_k_0fe94280(if (reach.lines > 0) S.s_co_0_cau_co_chu_nay_nhung_m_d75dd8c1(reach.lines) else "M")
+        if (reach.lines == 0) return S.s_chua_co_cau_nao_co_chu_nay_cach_doc_se_duo_2d730bc4
+        val cost = if (reach.recorded > 0) S.s_0_cau_da_thu_se_duoc_thu_lai_4520a0f5(reach.recorded) else S.s_chua_thu_cau_nao_nen_khong_phai_thu_lai_79ed2712
+        val blocked = if (reach.blocked > 0) S.s_0_cau_khac_khong_dung_duoc_vi_ky_hieu_d0715176(reach.blocked) else ""
+        return S.s_0_cau_co_chu_nay_1_2_3_8abc27d8(reach.reached, cost, where(reach), blocked)
     }
 
     /** Dòng phụ dưới một tên: bao nhiêu câu và ai chọn cách đọc. `analyzed`: sách đã phân tích xong chưa. */
     fun rowNote(item: NameReading, analyzed: Boolean, shared: Boolean): String {
         val base = when {
-            !analyzed && item.lines == 0 -> "chưa phân tích tới"
-            else -> "${item.lines} câu · " + when {
-                item.never -> "máy không dùng được cách đọc này (ký hiệu)"
-                item.byListener -> "đã chọn"
-                item.spoken.isNotEmpty() -> "máy đoán"
-                else -> "chưa có trong sách"
+            !analyzed && item.lines == 0 -> S.s_chua_phan_tich_toi_34530fdc
+            else -> S.s_0_cau_4e05e46f(item.lines) + when {
+                item.never -> S.s_may_khong_dung_duoc_cach_doc_nay_ky_hieu_2038583b
+                item.byListener -> S.s_da_chon_a0788df6
+                item.spoken.isNotEmpty() -> S.s_may_doan_7217169e
+                else -> S.s_chua_co_trong_sach_5fecd5a8
             }
         }
-        return base + (if (shared) " · dùng chung" else "") + (item.requested?.let { " · chờ áp dụng: “$it”" } ?: "")
+        return base + (if (shared) S.s_dung_chung_9b5fc850 else "") + (item.requested?.let { S.s_cho_ap_dung_0_7f062955(it) } ?: "")
     }
 
     /** Mục cách đọc chung của một chữ (không phân biệt hoa thường). */
@@ -177,7 +179,7 @@ object ReadingsLogic {
         shared.firstOrNull { it.surface.lowercase() == surface.lowercase() && (reading == null || it.spokenForm == reading) }
 
     /** Số chương một dòng gợi ý nằm ở, nói gọn. */
-    fun where(group: CreditGroup): String = if (group.chapters.size == 1) "chương ${group.chapters[0]}" else "${group.chapters.size} chương"
+    fun where(group: CreditGroup): String = if (group.chapters.size == 1) S.s_chuong_0_55d256d1(group.chapters[0]) else S.s_0_chuong_04093412(group.chapters.size)
 
     /** Thân `POST /pronunciation` (`EditReading.save`): `seen` là cách đọc dòng này thấy (chờ áp, hay người nghe đã giữ). */
     fun saveStep(item: NameReading, spoken: String, everywhere: Boolean): WorkStep {
@@ -189,7 +191,7 @@ object ReadingsLogic {
 
     fun decision(item: NameReading, spoken: String, everywhere: Boolean): WorkDecision {
         val keep = spoken == item.spoken
-        val summary = if (keep) "Giữ cách đọc “${shown(spoken)}”" else "Đã ghi: “${item.surface}” đọc là “$spoken”"
+        val summary = if (keep) S.s_giu_cach_doc_0_ad3b6d08(shown(spoken)) else S.s_da_ghi_0_doc_la_1_2c14f196(item.surface, spoken)
         return WorkDecision("reading:${item.surface}", summary, listOf(saveStep(item, spoken, everywhere)))
     }
 
@@ -203,34 +205,34 @@ object ReadingsLogic {
 }
 
 object ReadingsText {
-    const val TITLE = "Cách đọc tên"
-    const val LEAD = "Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại."
+    const val TITLE = S.s_cach_doc_ten_1c46e75d
+    const val LEAD = S.s_nghe_va_sua_cach_doc_ten_cau_da_thu_co_ten_957bce51
     /** Gợi ý trong ô tìm (cùng chữ với NameReadings.tsx): ngắn, vừa một dòng; gõ chữ chưa có thì ô vẫn thêm được. */
-    const val SEARCH = "Tìm hoặc thêm tên"
-    const val SEARCH_NAME = "Tìm tên"
-    const val LOADING = "Đang tải cách đọc tên"
-    const val EMPTY = "Cuốn này chưa có tên nào cần chốt cách đọc."
-    const val EDIT = "Sửa"
-    const val SAVE = "Lưu"
-    const val CANCEL = "Huỷ"
-    const val TRY = "Nghe thử"
-    const val TRYING = "Máy tính đang đọc thử"
-    const val TRY_STOP = "Dừng nghe"
-    const val FIELD = "Cách đọc mới"
-    const val EVERYWHERE = "Dùng cho mọi sách"
-    const val MORE = "Xem thêm"
-    const val NO_MATCH = "Không khớp; gõ một chữ liền để thêm cách đọc."
-    const val SHARED_NONE = "Không có trong danh sách - máy đọc theo chữ"
-    fun lineCount(n: Int) = "$n dòng"
-    const val SUGGEST_TITLE = "Dòng nên bỏ khỏi phần đọc"
-    const val SUGGEST_LEAD = "Máy thấy vài dòng ghi công hay xin ủng hộ. Chữ của truyện giữ nguyên; chọn dòng nào thì phần đọc bỏ qua dòng ấy."
-    const val SUGGEST_SKIP = "Bỏ đọc dòng"
+    const val SEARCH = S.s_tim_hoac_them_ten_27507006
+    const val SEARCH_NAME = S.s_tim_ten_260c6baf
+    const val LOADING = S.s_dang_tai_cach_doc_ten_8856dead
+    const val EMPTY = S.s_cuon_nay_chua_co_ten_nao_can_chot_cach_doc_c132f8db
+    const val EDIT = S.s_sua_d4e07603
+    const val SAVE = S.s_luu_e91f26c0
+    const val CANCEL = S.s_huy_96732485
+    const val TRY = S.s_nghe_thu_fa024065
+    const val TRYING = S.s_may_tinh_dang_doc_thu_ebc9983a
+    const val TRY_STOP = S.s_dung_nghe_f20939be
+    const val FIELD = S.s_cach_doc_moi_39ce794c
+    const val EVERYWHERE = S.s_dung_cho_moi_sach_fd10b5e6
+    const val MORE = S.s_xem_them_e0ac1b1e
+    const val NO_MATCH = S.s_khong_khop_go_mot_chu_lien_de_them_cach_do_62b9e5c9
+    const val SHARED_NONE = S.s_khong_co_trong_danh_sach_may_doc_theo_chu_935ca799
+    fun lineCount(n: Int) = S.s_0_dong_4a3b8570(n)
+    const val SUGGEST_TITLE = S.s_dong_nen_bo_khoi_phan_doc_16f0e5d7
+    const val SUGGEST_LEAD = S.s_may_thay_vai_dong_ghi_cong_hay_xin_ung_ho_9597cd96
+    const val SUGGEST_SKIP = S.s_bo_doc_dong_3e82a7fd
 
-    fun count(counted: Int, analyzed: Boolean) = if (analyzed) "$counted tên trong phần này" else "chưa phân tích - tên hiện ra sau bước ấy"
-    fun unseen(count: Int) = "$count tên khác của cuốn không có câu nào trong phần này."
-    fun more(count: Int) = "Xem thêm $count tên"
-    fun add(surface: String) = "Đọc “$surface”"
-    fun sharedOffer(count: Int) = "Dùng $count cách đọc chung"
-    fun sharedDone(count: Int) = "Đã dùng $count cách đọc chung"
-    fun playTitle(item: NameReading) = dotJoin(item.example?.chapterTitle, "câu ${item.example?.seq ?: 0}")
+    fun count(counted: Int, analyzed: Boolean) = if (analyzed) S.s_0_ten_trong_phan_nay_e81c3ccb(counted) else S.s_chua_phan_tich_ten_hien_ra_sau_buoc_ay_32656b4c
+    fun unseen(count: Int) = S.s_0_ten_khac_cua_cuon_khong_co_cau_nao_trong_acf7b517(count)
+    fun more(count: Int) = S.s_xem_them_0_ten_bce27e05(count)
+    fun add(surface: String) = S.s_doc_0_5067e74c(surface)
+    fun sharedOffer(count: Int) = S.s_dung_0_cach_doc_chung_0622f2a8(count)
+    fun sharedDone(count: Int) = S.s_da_dung_0_cach_doc_chung_f3c4cdb8(count)
+    fun playTitle(item: NameReading) = dotJoin(item.example?.chapterTitle, S.s_cau_0_7b7d4092(item.example?.seq ?: 0))
 }

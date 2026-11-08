@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.util.Calendar
@@ -64,11 +66,11 @@ object NightRecap {
 
     /** "Tối qua" chỉ đúng khi lần hẹn giờ kết thúc hôm trước hay lúc rạng sáng; hẹn giờ ban ngày thì "Vừa hẹn giờ". */
     fun sessionLabel(endedAt: Double?, nowMs: Long, zone: TimeZone = TimeZone.getDefault()): String {
-        if (endedAt == null || endedAt <= 0) return "Tối qua"
+        if (endedAt == null || endedAt <= 0) return S.s_toi_qua_920edeaa
         val ended = Calendar.getInstance(zone).apply { timeInMillis = (endedAt * 1000).toLong() }
         val now = Calendar.getInstance(zone).apply { timeInMillis = nowMs }
         val today = ended.get(Calendar.YEAR) == now.get(Calendar.YEAR) && ended.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-        return if (today && ended.get(Calendar.HOUR_OF_DAY) >= 5) "Vừa hẹn giờ" else "Tối qua"
+        return if (today && ended.get(Calendar.HOUR_OF_DAY) >= 5) S.s_vua_hen_gio_2234db1f else S.s_toi_qua_920edeaa
     }
 
     /** Giờ của một mốc, "HH:mm". */
@@ -87,10 +89,10 @@ object NightRecap {
         val stopped = events.lastOrNull { it.type == "stopped" }
         val safety = timer?.action == "safety"
         val list = listOfNotNull(
-            if (safety) null else make(timer, MarkerKind.Timer, "Hẹn giờ ngủ", "chắc chắn còn thức"),
-            if (lastTouch != null && lastTouch !== timer) make(lastTouch, MarkerKind.Touch, "Lần cuối chạm máy", "chắc chắn còn thức") else null,
-            make(still, MarkerKind.Still, "Máy bắt đầu nằm yên", "có lẽ đã ngủ từ khoảng này", BEFORE_SLEEP_SECONDS),
-            make(stopped, MarkerKind.Stopped, "Tự dừng", if (safety) "không ai chạm máy suốt một lúc lâu" else "lúc hết giờ hẹn"),
+            if (safety) null else make(timer, MarkerKind.Timer, S.s_hen_gio_ngu_21073488, S.s_chac_chan_con_thuc_097f76f4),
+            if (lastTouch != null && lastTouch !== timer) make(lastTouch, MarkerKind.Touch, S.s_lan_cuoi_cham_may_5c49b606, S.s_chac_chan_con_thuc_097f76f4) else null,
+            make(still, MarkerKind.Still, S.s_may_bat_dau_nam_yen_ca43165f, S.s_co_le_da_ngu_tu_khoang_nay_92066e96, BEFORE_SLEEP_SECONDS),
+            make(stopped, MarkerKind.Stopped, S.s_tu_dung_abf27f05, if (safety) S.s_khong_ai_cham_may_suot_mot_luc_lau_f60ea173 else S.s_luc_het_gio_hen_daffbb84),
         )
         val pick = list.firstOrNull { it.kind == MarkerKind.Still } ?: list.firstOrNull { it.kind == MarkerKind.Touch } ?: list.firstOrNull()
         return list.map { it.copy(suggested = it === pick) }

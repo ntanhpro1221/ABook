@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -12,7 +13,7 @@ Popover {
     readonly property var friendly: Logic.friendlyError(raw, studio, false, false)
     panelWidth: 512
     maxHeight: 360
-    Accessible.name: "Lỗi chương"
+    Accessible.name: S.s_loi_chuong_0aa915a2
     function openFor(anchor, message, bundled) {
         raw = message
         studio = bundled

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -157,7 +159,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
                 PrimaryAction(book, kind, state.busy, onPick = { picked -> pick(picked, book, state, sheets, listen) })
                 val note = StudioText.actionNote(book, kind)
                 if (note.isNotEmpty()) BasicText(note, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("studio_action_note"))
-                if (StudioText.onBattery(book)) MoreInfo("Dùng pin", StudioText.BATTERY_INFO, "studio_battery_info")
+                if (StudioText.onBattery(book)) MoreInfo(S.s_dung_pin_d9d66b55, StudioText.BATTERY_INFO, "studio_battery_info")
                 InlineProblem(state.problem, state::retryLast, "studio_problem")
             }
         }
@@ -229,14 +231,14 @@ private fun pick(kind: PrimaryKind, book: StudioBook, state: StudioProjectState,
         PrimaryKind.Starting, PrimaryKind.Stopping -> Unit
         PrimaryKind.Resume -> sheets.show { dismiss ->
             ConfirmPage(StudioText.resumeTitle(), "studio_resume", StudioText.resumeLines(book), "") {
-                DangerButton("Vẫn tiếp tục", { dismiss(); state.send(StudioCommand.Start) }, "studio_resume_confirm")
-                QuietButton("Để sau", dismiss, "studio_resume_later")
+                DangerButton(S.s_van_tiep_tuc_8ba2321f, { dismiss(); state.send(StudioCommand.Start) }, "studio_resume_confirm")
+                QuietButton(S.s_de_sau_9be0a7ab, dismiss, "studio_resume_later")
             }
         }
         PrimaryKind.Apply -> sheets.show { dismiss ->
             ConfirmPage(StudioText.applyTitle(book), "studio_apply", listOf(StudioText.APPLY_LINE), "") {
-                PrimaryButton("Áp dụng", { dismiss(); state.send(StudioCommand.Start) }, Modifier.fillMaxWidth().testTag("studio_apply_confirm"))
-                QuietButton("Để sau", dismiss, "studio_apply_later")
+                PrimaryButton(S.s_ap_dung_ff631576, { dismiss(); state.send(StudioCommand.Start) }, Modifier.fillMaxWidth().testTag("studio_apply_confirm"))
+                QuietButton(S.s_de_sau_9be0a7ab, dismiss, "studio_apply_later")
             }
         }
     }
@@ -266,12 +268,12 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
                         }
                     }
                 }
-                if (book.running && !book.stopping) MenuRow("Dừng", "studio_more_stop", onClick = { page = MorePage.Stop }) { StopIcon(it) }
+                if (book.running && !book.stopping) MenuRow(S.s_dung_11554138, "studio_more_stop", onClick = { page = MorePage.Stop }) { StopIcon(it) }
             }
             MorePage.Stop -> ConfirmPage(StudioText.stopTitle(book), "studio_stop", StudioText.stopLines(book), "") {
                 // Tạm dừng luôn là lựa chọn đầu khi đang phân tích (AGENTS.md: dừng giữa phân tích là đổi cả quyển sách).
                 if (book.phase == "analysis" && book.paused == null && book.canPause) {
-                    PrimaryButton("Tạm dừng", { dismiss(); state.send(StudioCommand.Pause(true)) }, Modifier.fillMaxWidth().testTag("studio_stop_pause"))
+                    PrimaryButton(S.s_tam_dung_67635815, { dismiss(); state.send(StudioCommand.Pause(true)) }, Modifier.fillMaxWidth().testTag("studio_stop_pause"))
                     Spacer(Modifier.height(Dim.s8))
                 }
                 DangerButton(StudioText.stopConfirm(book), { dismiss(); state.send(StudioCommand.Stop) }, "studio_stop_confirm")

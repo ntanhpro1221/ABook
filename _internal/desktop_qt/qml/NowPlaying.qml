@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "LibraryLogic.js" as LibraryLogic
@@ -235,21 +236,21 @@ Item {
                     id: moreButton; objectName: "nowMore"
                     x: root.colX + root.colW - width
                     y: Theme.s16
-                    icon: "ellipsis"; tip: "Thêm tuỳ chọn"
+                    icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e
                     onClicked: more.toggle()
                 }
                 Text {
                     x: root.colX + 44; y: Theme.s16 + 12
                     width: Math.max(0, root.colW - 88)
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Đang nghe"; color: Theme.text2; font.pixelSize: Theme.sizeCaption
+                    text: S.s_dang_nghe_9310d8cf; color: Theme.text2; font.pixelSize: Theme.sizeCaption
                     opacity: root.wideT
                 }
                 IconButton {
                     x: root.blend(root.colX, Theme.margin) - 10
                     y: Theme.s16
                     icon: "chevron-down"
-                    tip: "Thu nhỏ (Esc)"
+                    tip: S.s_thu_nho_esc_884a3a3e
                     onClicked: root.close()
                 }
                 PageSwitch {
@@ -258,7 +259,7 @@ Item {
                     enabled: !root.wide
                     x: Math.round((root.width - width) / 2)
                     y: Theme.s16 + 2
-                    labels: ["Nghe", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Đọc theo"]
+                    labels: [S.s_nghe_a43aafef, ReadAlong.status === "ready" && !ReadAlong.timed ? S.s_chuong_2d157977 : S.s_doc_theo_df342819]
                     index: root.page
                     onPicked: (i) => root.page = i
                 }
@@ -291,7 +292,7 @@ Item {
                         transform: Translate { y: Theme.reduceMotion ? 0 : (1 - narratorLabel.opacity) * 8 }
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: Player.narrator.toLowerCase().startsWith("giọng") ? Player.narrator : "Giọng " + Player.narrator
+                        text: Player.narrator.toLowerCase().startsWith(S.s_giong_35c0fe3c) ? Player.narrator : S.s_giong_7e6f9338 + Player.narrator
                         color: Theme.text3
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeCaption
@@ -319,7 +320,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             wrapMode: Text.Wrap
                             text: Player.error !== "" ? Player.error
-                                : (Player.atEnd === "finished" ? (root.nextVolume ? "Đã nghe hết cuốn này." : "Đã nghe hết sách") : "Đã nghe hết phần đã có.")
+                                : (Player.atEnd === "finished" ? (root.nextVolume ? S.s_da_nghe_het_cuon_nay_05edcdd9 : S.s_da_nghe_het_sach_2fefde33) : S.s_da_nghe_het_phan_da_co_56906a54)
                             color: Player.error !== "" ? Theme.danger : Theme.text2
                             font.pixelSize: Theme.sizeBodySmall
                         }
@@ -327,21 +328,21 @@ Item {
                             width: parent.width; horizontalAlignment: Text.AlignHCenter
                             opacity: Player.atEnd === "caughtUp" ? 1 : 0; visible: opacity > 0
                             Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
-                            text: root.currentBook.producing ? "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy." : "Các chương sau chưa có audio."
+                            text: root.currentBook.producing ? S.s_chuong_tiep_theo_se_nghe_duoc_khi_may_lam_2d887378 : S.s_cac_chuong_sau_chua_co_audio_44723dd5
                             color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
                         }
                         Button {
                             anchors.horizontalCenter: parent.horizontalCenter
                             visible: Player.atEnd === "finished"
                             kind: "text"
-                            text: Player.error !== "" ? "Thử lại" : "Nghe lại từ đầu"
+                            text: Player.error !== "" ? S.s_thu_lai_c58d068c : S.s_nghe_lai_tu_dau_e251d632
                             onClicked: Player.error !== "" ? Player.retry() : Player.restart()
                         }
                         Button {
                             objectName: "nowNextVolume"
                             anchors.horizontalCenter: parent.horizontalCenter
                             visible: Player.atEnd === "finished" && !!root.nextVolume
-                            kind: "ghost"; text: "Nghe tiếp"
+                            kind: "ghost"; text: S.s_nghe_tiep_403b90a5
                             tip: root.nextVolume ? root.nextVolume.title : ""
                             onClicked: Player.playBook(root.nextVolume.bookId)
                         }
@@ -349,7 +350,7 @@ Item {
                             objectName: "nowOtherBooks"
                             anchors.horizontalCenter: parent.horizontalCenter
                             visible: Player.atEnd === "finished"
-                            kind: "ghost"; text: "Nghe cuốn khác"
+                            kind: "ghost"; text: S.s_nghe_cuon_khac_cc5cf8a7
                             onClicked: recommendations.show()
                         }
                     }
@@ -357,7 +358,7 @@ Item {
                     PlayerAlert { width: parent.width; onVoiceRequested: voice.fromAlert(); onSettingsRequested: root.settingsRequested("voice") }
                     Collapse {
                         width: parent.width; open: Player.sleepKind === "chapter" && !Player.fading
-                        Text { width: parent.width; text: "Sẽ dừng khi hết chương này."; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                        Text { width: parent.width; text: S.s_se_dung_khi_het_chuong_nay_9c1f8c30; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     }
                     SeekBar {
                         id: seek
@@ -387,7 +388,7 @@ Item {
                         IconButton {
                             icon: "skip-back"
                             enabled: Player.loaded
-                            tip: "Chương trước (Shift+←)"
+                            tip: S.s_chuong_truoc_shift_9994756d
                             onClicked: Player.previous()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -398,7 +399,7 @@ Item {
                             icon: "skip-forward"
                             enabled: Player.loaded && Player.chapters.rowOf(Player.chapterId) < Player.chapters.count - 1
                             opacity: enabled ? 1 : 0.4
-                            tip: Player.canNext ? "Chương sau (Shift+→)" : Player.chapters.rowOf(Player.chapterId) >= Player.chapters.count - 1 ? "Đây là chương cuối" : "Chương sau chưa có audio"
+                            tip: Player.canNext ? S.s_chuong_sau_shift_20da5bb5 : Player.chapters.rowOf(Player.chapterId) >= Player.chapters.count - 1 ? S.s_day_la_chuong_cuoi_e4e693d4 : S.s_chuong_sau_chua_co_audio_e17e3d72
                             onClicked: Player.next()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -408,7 +409,7 @@ Item {
                         width: parent.width
                         spacing: Theme.s8
                         Accessible.role: Accessible.Grouping
-                        Accessible.name: "Điều khiển phụ"
+                        Accessible.name: S.s_dieu_khien_phu_bf325663
                         // Natural text + padding; wrap rather than stretching
                         // secondary actions across the entire player column.
                         property real musicT: 0
@@ -420,9 +421,9 @@ Item {
                         ControlChip {
                             id: speedChip
                             objectName: "nowSpeed"
-                            text: Player.rate === 1 ? "Tốc độ" : String(Player.rate).replace(".", ",") + "×"
+                            text: Player.rate === 1 ? S.s_toc_do_16ee0914 : String(Player.rate).replace(".", ",") + "×"
                             active: Player.rate !== 1
-                            tip: "Tốc độ đọc"
+                            tip: S.s_toc_do_doc_3657e59d
                             onClicked: speed.toggle()
                         }
                         ControlChip {
@@ -431,15 +432,15 @@ Item {
                             icon: "moon"
                             // Nhãn trên nút có đơn vị ("14 phút", "40 giây") như web (sleepButtonLabel): "14:51" cạnh nút tốc độ trông như giờ đồng hồ
                             text: Player.sleepKind === "minutes"
-                                ? (Player.clock.sleepLeft < 60 ? Math.max(1, Math.ceil(Player.clock.sleepLeft)) + " giây" : Math.ceil(Player.clock.sleepLeft / 60) + " phút")
-                                : (Player.sleepKind === "chapter" ? "Hết chương" : "Hẹn giờ")
+                                ? (Player.clock.sleepLeft < 60 ? Math.max(1, Math.ceil(Player.clock.sleepLeft)) + S.s_giay_9f6b3e22 : Math.ceil(Player.clock.sleepLeft / 60) + S.s_phut_cf728a6a)
+                                : (Player.sleepKind === "chapter" ? S.s_het_chuong_f1d590bb : S.s_hen_gio_39d9ca26)
                             // Đếm ngược đổi tại chỗ: giữ chỗ cho hai chữ số, Flow không đẩy các nút bên cạnh mỗi phút / giây
-                            reserve: Player.sleepKind === "minutes" ? ["00 phút", "00 giây"] : []
+                            reserve: Player.sleepKind === "minutes" ? [S.s_00_phut_347ed245, S.s_00_giay_27015af3] : []
                             active: Player.sleepKind !== "off"
-                            tip: "Hẹn giờ tắt"
+                            tip: S.s_hen_gio_39d9ca26
                             Accessible.name: Player.sleepKind === "minutes"
-                                ? Player.clock.sleepLeft < 60 ? `Hẹn giờ tắt: còn ${Math.ceil(Player.clock.sleepLeft)} giây` : `Hẹn giờ tắt: còn ${Math.ceil(Player.clock.sleepLeft / 60)} phút`
-                                : "Hẹn giờ tắt"
+                                ? Player.clock.sleepLeft < 60 ? S.s_hen_gio_tat_con_0_giay_ae60de9d(Math.ceil(Player.clock.sleepLeft)) : S.s_hen_gio_tat_con_0_phut_e53bab94(Math.ceil(Player.clock.sleepLeft / 60))
+                                : S.s_hen_gio_39d9ca26
                             onClicked: sleep.toggle()
                         }
                         ControlChip {
@@ -450,8 +451,8 @@ Item {
                             visible: opacity > 0
                             enabled: !root.wide
                             icon: "list-ordered"
-                            text: "Chương"
-                            tip: "Danh sách chương"
+                            text: S.s_chuong_2d157977
+                            tip: S.s_danh_sach_chuong_7fa755f9
                             onClicked: chapters.toggle()
                         }
                         ControlChip {
@@ -462,7 +463,7 @@ Item {
                             icon: "eighth-note"
                             struck: !Music.enabled
                             active: Music.enabled
-                            tip: "Nhạc nền"
+                            tip: S.s_nhac_nen_271fb292
                             onClicked: music.toggle()
                         }
                     }
@@ -483,7 +484,7 @@ Item {
                     PageSwitch {
                         id: sideTabs; objectName: "nowSideTabs"
                         x: 0; y: Theme.s16
-                        labels: ["Chương", "Đọc theo"]
+                        labels: [S.s_chuong_2d157977, S.s_doc_theo_df342819]
                         index: root.sidePage
                         onPicked: i => root.sidePage = i
                         opacity: root.wideT; visible: opacity > 0
@@ -569,7 +570,7 @@ Item {
     ReadingSuggestions { id: suggestions; objectName: "nowSuggestions"; bookId: Player.bookId }
     ShortcutsDialog { id: shortcuts; letters: Api.preferences.letterShortcuts !== false }
     Modal {
-        id: recommendations; objectName: "nowRecommendations"; title: "Nghe cuốn khác"
+        id: recommendations; objectName: "nowRecommendations"; title: S.s_nghe_cuon_khac_cc5cf8a7
         Column {
             width: parent.width; spacing: Theme.s8
             Repeater {
@@ -580,7 +581,7 @@ Item {
                     onClicked: { recommendations.close(); Player.playBook(modelData.bookId) }
                 }
             }
-            Button { text: "Về Thư viện"; kind: "ghost"; onClicked: { recommendations.close(); root.close(); if (Nav.stack) Nav.stack.show(0) } }
+            Button { text: S.s_ve_thu_vien_992fad7b; kind: "ghost"; onClicked: { recommendations.close(); root.close(); if (Nav.stack) Nav.stack.show(0) } }
         }
     }
     Popover {
@@ -591,24 +592,24 @@ Item {
                 width: parent.width; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption
                 text: {
                     const p = LibraryLogic.progress(root.currentBook)
-                    if (p.finished) return "Đã nghe hết cả cuốn"
+                    if (p.finished) return S.s_da_nghe_het_ca_cuon_11fdce7b
                     const total = p.totalSeconds || root.currentBook.duration || 0, heard = Math.min(total, p.heardSeconds || 0)
-                    if (!total) return `Chưa nghe\u00a0·\u00a0${root.currentBook.chaptersTotal || 0} chương`
-                    if (!heard) return `Chưa nghe\u00a0·\u00a0${Player.lengthText(total)}`
-                    const scope = root.currentBook.complete ? "cả cuốn" : "phần đã có"
-                    const remaining = Player.rate === 1 ? "còn " + Player.lengthText(total - heard) : "còn khoảng " + Player.lengthText((total - heard) / Player.rate) + " ở tốc độ " + String(Player.rate).replace(".", ",") + "×"
-                    return `Đã nghe ${Math.round(heard / total * 100) + "%"} ${scope}\u00a0·\u00a0${remaining}`
+                    if (!total) return S.s_chua_nghe_u00a0_u00a0_0_chuong_af6b9134(root.currentBook.chaptersTotal || 0)
+                    if (!heard) return S.s_chua_nghe_u00a0_u00a0_0_2ada9121(Player.lengthText(total))
+                    const scope = root.currentBook.complete ? S.s_ca_cuon_b841210a : S.s_phan_da_co_69a9b13c
+                    const remaining = Player.rate === 1 ? S.s_con_c697bae9 + Player.lengthText(total - heard) : S.s_con_khoang_f88c6a5c + Player.lengthText((total - heard) / Player.rate) + S.s_o_toc_do_46172629 + String(Player.rate).replace(".", ",") + "×"
+                    return S.s_da_nghe_0_1_u00a0_u00a0_2_12a8bc8c(Math.round(heard / total * 100) + "%", scope, remaining)
                 }
             }
             VolumeControl { width: parent.width }
-            MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
-            MenuRow { objectName: "nowVoice"; width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
-            MenuRow { objectName: "nowOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
-            MenuRow { objectName: "nowHistory"; width: parent.width; text: "Về chỗ vừa nghe"; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
-            MenuRow { objectName: "nowKeys"; width: parent.width; text: "Phím tắt"; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
-            MenuRow { objectName: "nowAddVoice"; width: parent.width; text: "Thêm giọng…"; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
-            MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: "Gợi ý đọc"; icon: "lightbulb"; visible: suggestions.groups.length > 0; onClicked: { more.close(); suggestions.show() } }
-            MenuRow { width: parent.width; text: "Cửa sổ mini"; icon: "picture-in-picture-2"; onClicked: { more.close(); if (Nav.windowMode) Nav.windowMode.enter() } }
+            MenuRow { width: parent.width; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+            MenuRow { objectName: "nowVoice"; width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
+            MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
+            MenuRow { objectName: "nowKeys"; width: parent.width; text: S.s_phim_tat_7baaed2f; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
+            MenuRow { objectName: "nowAddVoice"; width: parent.width; text: S.s_them_giong_bbe0caf9; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
+            MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: S.s_goi_y_doc_346ac8be; icon: "lightbulb"; visible: suggestions.groups.length > 0; onClicked: { more.close(); suggestions.show() } }
+            MenuRow { width: parent.width; text: S.s_cua_so_mini_65edeb9b; icon: "picture-in-picture-2"; onClicked: { more.close(); if (Nav.windowMode) Nav.windowMode.enter() } }
         }
     }
     OutputPopover { id: output; anchorItem: moreButton }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.layout.Layout
@@ -222,7 +224,7 @@ fun PlayMorph(
         view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         onClick()
     }
-        .semantics { contentDescription = description ?: if (playing) "Tạm dừng" else "Phát" }
+        .semantics { contentDescription = description ?: if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 }
         .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(if (large) 32.dp else 24.dp)) {
             val p = morph.value

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -54,7 +55,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
       forgetVoices();
       void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
     } catch (error) {
-      toast.error("Chưa đổi được", { description: (error as Error).message });
+      toast.error(S.s_chua_doi_duoc_a6c67cde, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -62,9 +63,9 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
   const measured = status.engines.some((row) => row.measured);
   return (
     <MotionRegion className="space-y-3">
-      <h3 className="text-sm font-semibold">Giọng theo máy</h3>
+      <h3 className="text-sm font-semibold">{S.s_giong_theo_may_bc8b9fff}</h3>
       <p role="status" className="text-sm text-fg-2 text-pretty">{pickHeadline(status)}</p>
-      {measuring && <Progress value={(status.done ?? 0) / Math.max(1, status.total ?? 1)} size="sm" running label="Đang thử các giọng" />}
+      {measuring && <Progress value={(status.done ?? 0) / Math.max(1, status.total ?? 1)} size="sm" running label={S.s_dang_thu_cac_giong_872881f6} />}
       {status.engines.length > 0 && (
         <ul className="divide-y divide-line">
           {status.engines.map((row) => {
@@ -84,9 +85,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
                   <span data-motion-live className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{rowNumbers(row, status.liveRtf)}</span>
                 </span>
                 {!isChosen && !measuring && (
-                  <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>
-                    Dùng giọng này
-                  </Button>
+                  <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button>
                 )}
               </li>
             );
@@ -97,12 +96,10 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
       {status.engines.length > 0 && !measuring && (
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant={measured ? "ghost" : "primary"} loading={busy} onClick={() => void run(() => backend.measure())}>
-            {measured ? "Thử lại" : "Thử"}
+            {measured ? S.s_thu_lai_c58d068c : S.s_thu_77e1c0d9}
           </Button>
           {status.override && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.choose(""))}>
-              Theo số đo
-            </Button>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.choose(""))}>{S.s_theo_so_do_f3663b51}</Button>
           )}
         </div>
       )}

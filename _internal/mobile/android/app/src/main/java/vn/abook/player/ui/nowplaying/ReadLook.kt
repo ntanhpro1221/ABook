@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import java.math.BigDecimal
 
@@ -16,7 +18,7 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
     fun spaced(value: Double) = copy(leading = value.takeIf { it in LEADINGS } ?: leading)
 
     /** "20 · giãn dòng 1,7": giá trị của hàng "Cỡ chữ" ở tấm Thêm tuỳ chọn - gọi đúng tên hai mục của bảng web ("Cỡ chữ", "Giãn dòng"), không để số trần. */
-    val summary: String get() = "$size · giãn dòng ${leadingLabel(leading)}"
+    val summary: String get() = S.s_0_gian_dong_1_c148910e(size, leadingLabel(leading))
 
     companion object {
         val SIZES = listOf(16, 18, 20, 22, 24)
@@ -29,9 +31,9 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
 
 /** Lời nhắc ở đầu chữ của Đọc theo (web: labels.ts `readerHint`); null = không nhắc. */
 object ReadHint {
-    const val UNTIMED = "Chưa có audio; bạn vẫn đọc được chữ."
-    const val NO_VOICE = "Máy này chưa có giọng đọc."
-    const val TAP = "Chạm" + " chữ để nghe từ đó."
+    const val UNTIMED = S.s_chua_co_audio_ban_van_doc_duoc_chu_6b728db5
+    const val NO_VOICE = S.s_may_nay_chua_co_giong_doc_3449f846
+    const val TAP = S.s_cham_36a8bd9a + S.s_chu_de_nghe_tu_do_b2d392a7
 
     /**
      * `speaking`: chương đọc to bằng giọng máy (chữ là nguồn, không có audio thu sẵn). `canSpeak`: máy có giọng đọc. `timed`: chữ đã có mốc theo audio.
@@ -42,7 +44,7 @@ object ReadHint {
         val reading = ""
         if (speaking) {
             if (!canSpeak) return NO_VOICE
-            return if (tapped) "Nghe bằng giọng đọc.$reading" else TAP
+            return if (tapped) S.s_nghe_bang_giong_doc_0_7e4bfabe(reading) else TAP
         }
         if (!timed) return UNTIMED
         return if (tapped) null else TAP

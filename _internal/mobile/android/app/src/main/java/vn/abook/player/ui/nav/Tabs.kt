@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nav
 
+import vn.abook.player.S
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -13,9 +15,9 @@ import vn.abook.player.ui.motion.Motion
 
 /** Ba tab đáy, theo thứ tự trái -> phải (chỉ số tab quyết định chiều trượt). */
 enum class Tab(val label: String, val tag: String) {
-    Library("Thư viện", "tab_library"),
-    Studio("Studio", "tab_studio"),
-    Settings("Cài đặt", "tab_settings"),
+    Library(S.s_thu_vien_58145555, "tab_library"),
+    Studio(S.s_studio_0aa91af2, "tab_studio"),
+    Settings(S.s_cai_dat_202e0e9b, "tab_settings"),
 }
 
 /**

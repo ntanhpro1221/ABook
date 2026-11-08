@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -25,11 +27,11 @@ class ClipReader(
         /** Mất mạng mà máy không có giọng nào đọc được khi không có mạng (không giọng tiếng Việt của máy, chưa tải VieNeu): một câu ngắn thay cho câu của giọng mạng
          *  (trước đây "... - đọc bằng giọng của máy" rồi dừng - thấy 03-10 trên máy ảo không có giọng tiếng Việt). Giao diện nhận ra nó nhờ [NO_OFFLINE_LEAD]
          *  (readAloudVoice.ts), thay "đang chọn" bằng tên giọng và đưa nút theo tình huống: "Đọc bằng …" nếu đã có giọng chạy trên máy, "Tải giọng VieNeu" nếu chưa. */
-        const val NO_OFFLINE_LEAD = "Không có mạng - giọng "
-        const val NO_OFFLINE_VOICE = "${NO_OFFLINE_LEAD}đang chọn cần mạng."
+        const val NO_OFFLINE_LEAD = S.s_khong_co_mang_giong_54121622
+        val NO_OFFLINE_VOICE = S.s_0_dang_chon_can_mang_bf99b81c(NO_OFFLINE_LEAD)
         /** Có mạng mà giọng trực tuyến vẫn hỏng (dịch vụ từ chối - Edge 403 -, trả lỗi, không phản hồi) và máy không có giọng nào đọc không cần mạng: cùng đường ra như
          *  [NO_OFFLINE_VOICE]. Giao diện (readAloudVoice.ts `isVoiceStuck`) nhận ra dạng "Giọng … đang không dùng được.", thay "đang chọn" bằng tên giọng. */
-        const val NO_USABLE_VOICE = "Giọng đang chọn đang không dùng được."
+        const val NO_USABLE_VOICE = S.s_giong_dang_chon_dang_khong_dung_duoc_3c97984f
         private val TROUBLE_REASONS = setOf("rejected", "service", "timeout")
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
@@ -40,13 +42,13 @@ class ClipReader(
         /** Câu cho người nghe khi đoạn này đọc tạm bằng `next` thay cho `failed` (cùng lời với giao diện máy tính, readAloudVoice.ts). */
         fun noticeFor(failed: Voice, problem: VoiceException, next: Voice): String {
             val keyed = OnlineVoices.NAMES[provider(failed)]
-            val instead = if (provider(next) == "edge") "giọng Edge" else "giọng của máy"
+            val instead = if (provider(next) == "edge") S.s_giong_edge_b2d9bb82 else S.s_giong_cua_may_af7d0773
             return when {
-                local(failed) -> "Giọng ${if (provider(failed) == "supertonic") "Supertonic" else "VieNeu"} chưa đọc được lúc này - tạm đọc bằng $instead."
-                keyed == null -> "Chưa dùng được giọng trực tuyến - tạm đọc bằng $instead."
-                problem.reason == "auth" -> "Khoá $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khoá trong Cài đặt."
-                problem.reason == "quota" -> "Khoá $keyed đã hết hạn mức - tạm đọc bằng $instead."
-                else -> "Chưa dùng được giọng $keyed lúc này - tạm đọc bằng $instead."
+                local(failed) -> S.s_giong_0_chua_doc_duoc_luc_nay_tam_doc_bang_8aa5bc74(if (provider(failed) == "supertonic") S.s_supertonic_b426cb32 else S.s_vieneu_338b8a9f, instead)
+                keyed == null -> S.s_chua_dung_duoc_giong_truc_tuyen_tam_doc_ba_6a3ec3ba(instead)
+                problem.reason == "auth" -> S.s_khoa_0_khong_dung_duoc_tam_doc_bang_1_kiem_3aaa8960(keyed, instead)
+                problem.reason == "quota" -> S.s_khoa_0_da_het_han_muc_tam_doc_bang_1_f381b45b(keyed, instead)
+                else -> S.s_chua_dung_duoc_giong_0_luc_nay_tam_doc_ban_e4fe94da(keyed, instead)
             }
         }
     }
@@ -129,7 +131,7 @@ class ClipReader(
                 problem = error
             }
         }
-        throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException("Chưa có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy.")
+        throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException(S.s_chua_co_giong_nao_doc_duoc_kiem_tra_mang_h_111b4207)
     }
 
     /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). Bản xuất đưa
@@ -152,7 +154,7 @@ class ClipReader(
             throw error
         } catch (error: Exception) {
             tmp.delete()
-            throw VoiceException("Chưa đọc được đoạn này (${error.message})", cause = error)
+            throw VoiceException(S.s_chua_doc_duoc_doan_nay_0_947406a0(error.message), cause = error)
         }
     }
 }

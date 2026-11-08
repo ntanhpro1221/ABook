@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles
@@ -211,7 +213,7 @@ abstract class VoiceModule(
         synchronized(lock) {
             if (downloading || benchmarking) return
             val unknown = wanted?.firstOrNull { it !in choices }
-            require(unknown == null) { "Không có lựa chọn $unknown" }
+            require(unknown == null) { S.s_khong_co_lua_chon_0_321f9d79(unknown) }
             val states = states()
             val needed = lacking(wanted ?: have(states), states)
             error = ""
@@ -335,7 +337,7 @@ abstract class VoiceModule(
     /** Remove one choice; parts another installed choice still needs stay, the last one takes this module's folder. A runtime part goes only when
      *  no installed module needs it any more ([SharedRuntime.release], decided from what is on disk after this module's own files are gone). */
     fun remove(choice: String) {
-        require(choice in choices) { "Không có lựa chọn $choice" }
+        require(choice in choices) { S.s_khong_co_lua_chon_0_321f9d79(choice) }
         synchronized(lock) {
             if (downloading || benchmarking) return
             forget()

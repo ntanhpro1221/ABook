@@ -201,7 +201,7 @@ object LoopSeam {
                         rate = shown.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                         channels = shown.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                         val encoding = if (shown.containsKey(MediaFormat.KEY_PCM_ENCODING)) shown.getInteger(MediaFormat.KEY_PCM_ENCODING) else android.media.AudioFormat.ENCODING_PCM_16BIT
-                        check(encoding == android.media.AudioFormat.ENCODING_PCM_16BIT) { "bộ giải mã ra PCM định dạng $encoding, không phải 16 bit" }
+                        check(encoding == android.media.AudioFormat.ENCODING_PCM_16BIT) { S.s_bo_giai_ma_ra_pcm_dinh_dang_0_khong_phai_1_7927e697(encoding) }
                     }
                     out >= 0 -> {
                         idle = 0
@@ -314,7 +314,7 @@ object LoopSeam {
     internal fun decodeRegion(frames: Mp3Frames, first: Int, count: Int, pre: Int): ShortArray {
         val f0 = first - pre
         val last = first + count // khung thừa
-        require(f0 >= 0 && last < frames.count) { "vùng ngoài file: khung $f0..$last / ${frames.count}" }
+        require(f0 >= 0 && last < frames.count) { S.s_vung_ngoai_file_khung_0_1_2_71bf39be(f0, last, frames.count) }
         val spf = frames.samplesPerFrame
         val channels = frames.channels
         val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_MPEG, frames.sampleRate, channels)
@@ -336,8 +336,8 @@ object LoopSeam {
         val start = pre.toLong() * spf
         var filled = 0L
         val decoded = pump(format, source, (pre + count).toLong() * spf) { firstSample, pcm -> filled += copyInto(firstSample, pcm, channels, start, out) }
-        check(decoded.sampleRate == frames.sampleRate && decoded.channels == channels) { "đầu ra bộ giải mã ${decoded.sampleRate}/${decoded.channels} khác định dạng đầu vào ${frames.sampleRate}/$channels" }
-        check(filled == count.toLong() * spf) { "giải mã vùng thiếu: được $filled / ${count.toLong() * spf} mẫu" }
+        check(decoded.sampleRate == frames.sampleRate && decoded.channels == channels) { S.s_dau_ra_bo_giai_ma_0_1_khac_dinh_dang_dau_v_e77dc46b(decoded.sampleRate, decoded.channels, frames.sampleRate, channels) }
+        check(filled == count.toLong() * spf) { S.s_giai_ma_vung_thieu_duoc_0_1_mau_a83f8856(filled, count.toLong() * spf) }
         return out
     }
 
@@ -371,7 +371,7 @@ object LoopSeam {
         val ka = maxOf(1L, frames(bounds.audibleStart))
         val ks = frames(bounds.loopStart)
         val ke = frames(bounds.loopEnd)
-        require(ks >= 0 && ke - ks > 2 * kx + 8 && ke - kx > ka) { "vòng quá ngắn cho Nối ($kx khung): audible=$ka loopStart=$ks loopEnd=$ke (khung)" }
+        require(ks >= 0 && ke - ks > 2 * kx + 8 && ke - kx > ka) { S.s_vong_qua_ngan_cho_noi_0_khung_audible_1_lo_d05ff6e7(kx, ka, ks, ke) }
         val n = (kx * spf).toInt()
         val dir = File(context.cacheDir, "loopseam").apply { mkdirs() }
         val wav = File(dir, cacheKey(file, ka, ks, ke, kx, rate, channels) + ".wav")
@@ -406,12 +406,12 @@ object LoopSeam {
             val decoded = decode(file, stopAt = ke * spf) { first, pcm ->
                 filled += copyInto(first, pcm, channels, (ke - kx) * spf, old) + copyInto(first, pcm, channels, ks * spf, new)
             }
-            check(decoded.sampleRate == rate && decoded.channels == channels) { "đầu ra bộ giải mã ${decoded.sampleRate}/${decoded.channels} khác định dạng đầu vào $rate/$channels" }
-            check(filled == 2L * n) { "giải mã thiếu: được $filled / ${2L * n} mẫu (file ngắn hơn loopEnd'?)" }
+            check(decoded.sampleRate == rate && decoded.channels == channels) { S.s_dau_ra_bo_giai_ma_0_1_khac_dinh_dang_dau_v_e77dc46b(decoded.sampleRate, decoded.channels, rate, channels) }
+            check(filled == 2L * n) { S.s_giai_ma_thieu_duoc_0_1_mau_file_ngan_hon_l_ab35ca09(filled, 2L * n) }
         }
         val tmp = File(dir, wav.name + ".tmp")
         writeWav(tmp, mix(old, new, channels), rate, channels)
-        check(tmp.renameTo(wav) || wav.length() == tmp.length()) { "không đổi tên được ${tmp.name}" }
+        check(tmp.renameTo(wav) || wav.length() == tmp.length()) { S.s_khong_doi_ten_duoc_0_575a512b(tmp.name) }
         return Seam(file, wav, seam.audibleStartSamples, seam.loopStartSamples, seam.loopEndSamples, n, rate, channels, spf, seam.buildMs + SystemClock.elapsedRealtime() - began, seam.prerollFrames, false)
     }
 
@@ -894,7 +894,7 @@ object LoopSeam {
             val landed = try {
                 landOf(seam, expected, pcm)
             } catch (e: java.io.IOException) {
-                android.util.Log.w("ABookMusic", "lưới an toàn Nối: không đọc được WAV (${e.message})")
+                android.util.Log.w("ABookMusic", S.s_luoi_an_toan_noi_khong_doc_duoc_wav_0_1300e1a3(e.message))
                 return@execute
             }
             onLand(landed)

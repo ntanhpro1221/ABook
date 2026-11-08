@@ -383,6 +383,11 @@
           "side": "native",
           "match": "^(xoá\\ phần\\ đã\\ tải|xoá\\ phần\\ đã\\ tải\\ của\\ “\\{\\}”)$",
           "reason": "phone-only deleting of a book downloaded from a computer; the computer's Xoá khỏi thư viện removes .abook imports only (see wording_for_lead)"
+        },
+        {
+          "side": "web",
+          "label": "Chờ chương mới",
+          "reason": "The web library has a caught-up badge; the phone has no matching badge. This is a missing surface, not alternative wording."
         }
       ],
       "deferred": [],

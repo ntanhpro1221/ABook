@@ -1,10 +1,11 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
 import "TextWrap.js" as TextWrap
 
 // Nút + bảng chọn đường Bluetooth dự phòng của một máy ghép qua Wi-Fi (BluetoothFallback của desktop/OtherComputers.tsx): Wi-Fi vẫn đi
-// trước, Bluetooth chỉ khi Wi-Fi hỏng. Nút xanh nhấn khi đã chọn một thiết bị; bảng: nhãn "Qua Bluetooth", các thiết bị đã ghép ở Windows
+// trước, Bluetooth chỉ khi Wi-Fi hỏng. Nút xanh nhấn khi đã chọn một thiết bị; bảng: nhãn S.s_qua_bluetooth_983cecc1, các thiết bị đã ghép ở Windows
 // (dấu tích đầu dòng ở thiết bị đang chọn), "Không dùng". Bảng là một lớp của Back (Popover).
 Item {
     id: root
@@ -22,9 +23,9 @@ Item {
         icon: "bluetooth"
         ink: root.current !== "" ? Theme.accentText : Theme.text2
         hoverInk: root.current !== "" ? Theme.accentText : Theme.text
-        tip: "Dùng Bluetooth"
+        tip: S.s_dung_bluetooth_a7d4c199
         enabled: !root.busy
-        Accessible.name: "Dùng Bluetooth cho " + (root.computer.name || "")
+        Accessible.name: S.s_dung_bluetooth_cho_1bd77035 + (root.computer.name || "")
         onClicked: menu.toggle()
     }
     Popover {
@@ -40,7 +41,7 @@ Item {
                 width: parent.width - 16
                 topPadding: 2
                 bottomPadding: 4
-                text: "Qua Bluetooth"
+                text: S.s_qua_bluetooth_983cecc1
                 color: Theme.text3
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -52,7 +53,7 @@ Item {
                 visible: root.devices.length === 0
                 topPadding: 6
                 bottomPadding: 6
-                text: "Ghép thiết bị trong Cài đặt Windows trước."
+                text: S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2
                 color: Theme.text3
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -68,7 +69,7 @@ Item {
                     height: implicitHeight
                     pressScaling: false
                     Accessible.role: Accessible.MenuItem
-                    Accessible.name: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind) + (selected ? ", đang chọn" : "")
+                    Accessible.name: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind) + (selected ? S.s_dang_chon_19938ba6 : "")
                     onClicked: { menu.close(); root.choose(modelData.address) }
                     Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
                     Icon { x: 8; y: 6 + 2; name: "check"; size: 16; color: Theme.accentText; opacity: row.selected ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
@@ -95,10 +96,10 @@ Item {
                 opacity: enabled ? 1 : 0.6
                 pressScaling: false
                 Accessible.role: Accessible.MenuItem
-                Accessible.name: "Không dùng"
+                Accessible.name: S.s_khong_dung_30db3c31
                 onClicked: { menu.close(); root.choose("") }
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: none.hovered && none.enabled ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
-                Text { id: noneLabel; x: 8 + 16 + 8; y: 6; width: parent.width - x - 8; text: "Không dùng"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                Text { id: noneLabel; x: 8 + 16 + 8; y: 6; width: parent.width - x - 8; text: S.s_khong_dung_30db3c31; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
             }
         }
     }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import android.os.SystemClock
 import org.json.JSONObject
 import vn.abook.player.Playback
@@ -10,7 +12,7 @@ import vn.abook.player.Playback
  */
 class DemoPlaybackCore : PlaybackCore {
     private val listeners = ArrayList<(JSONObject) -> Unit>()
-    private val queue = List(12) { Playback.Chapter(it + 1, "Chương ${it + 1} · ${if (it == 0) "Một buổi sớm" else "Trên con đường"}", "", 360.0, "texts/${it + 1}.txt") }
+    private val queue = List(12) { Playback.Chapter(it + 1, S.s_chuong_0_1_f0f29379(it + 1, if (it == 0) S.s_mot_buoi_som_0635ca65 else S.s_tren_con_duong_952afe11), "", 360.0, "texts/${it + 1}.txt") }
     private var chapterIndex = 0
     private var playing = false
     private var rate = 1.0
@@ -42,7 +44,7 @@ class DemoPlaybackCore : PlaybackCore {
 
     override fun snapshot(): JSONObject {
         val chapter = queue[chapterIndex]
-        return JSONObject().put("kind", "state").put("bookId", BOOK_ID).put("bookTitle", "Những ngày gió hát").put("chapterId", chapter.id)
+        return JSONObject().put("kind", "state").put("bookId", BOOK_ID).put("bookTitle", S.s_nhung_ngay_gio_hat_c6b4626f).put("chapterId", chapter.id)
             .put("chapterTitle", chapter.title).put("playing", playing).put("position", now() / 1000.0).put("duration", chapter.duration)
             .put("rate", rate).put("sleep", JSONObject().put("mode", sleepMode).put("minutes", sleepMinutes).put("counting", playing).put("remaining", sleepMinutes * 60.0))
     }

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { useBackLayer } from "@/shared/backStack";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -66,7 +67,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   useBackLayer(saving, () => confirming ? setConfirming(false) : close(), formBox, saveButton);
   const submit = () => {
     const existing = findTemplate(templates, name);
-    const wrong = nameProblem(templates, name, existing?.name) || (!existing && isFull(templates) ? "Đã có đủ 20 mẫu - xoá bớt một mẫu trong Cài đặt trước" : "");
+    const wrong = nameProblem(templates, name, existing?.name) || (!existing && isFull(templates) ? S.s_da_co_du_20_mau_xoa_bot_mot_mau_trong_cai_c3b1c3a3 : "");
     if (wrong) {
       setProblem(wrong);
       return;
@@ -81,7 +82,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
       { op: "save", template: saved, replace: Boolean(existing) },
       {
         onSuccess: () => {
-          toast.success(`Đã lưu mẫu “${saved.name}”`);
+          toast.success(S.s_da_luu_mau_0_73392b8c(saved.name));
           onPick(saved);
           close();
         },
@@ -93,16 +94,16 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   return (
     <MotionRegion as="div" className="mb-6 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="text-sm font-medium">Mẫu thiết lập</span>
+        <span className="text-sm font-medium">{S.s_mau_thiet_lap_be32f35e}</span>
         {templates.length > 0 && (
           <ChoiceRow<string>
-            label="Mẫu thiết lập"
+            label={S.s_mau_thiet_lap_be32f35e}
             wrap
             value={active?.name ?? ""}
             onChange={(value) => onPick(value ? (findTemplate(templates, value) ?? null) : null)}
             options={[
               { value: "", label: DEFAULT_LABEL },
-              ...templates.map((item) => ({ value: item.name, label: item.name === active?.name && modified ? `${item.name} (đã sửa)` : item.name })),
+              ...templates.map((item) => ({ value: item.name, label: item.name === active?.name && modified ? S.s_0_da_sua_d46146e2(item.name) : item.name })),
             ]}
           />
         )}
@@ -117,18 +118,16 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               setName(active?.name ?? "");
               setSaving(true);
             }}
-          >
-            Lưu thành mẫu
-          </Button>
+          >{S.s_luu_thanh_mau_3b28bc8b}</Button>
         )}
       </div>
       {modified && active && (
-        <p className="mt-2 text-[0.8125rem] text-fg-2">Bấm lại mẫu “{active.name}” để khôi phục thiết lập đã lưu.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_bam_lai_mau_26ea82c5}{active.name}{S.s_de_khoi_phuc_thiet_lap_da_luu_095b8a08}</p>
       )}
       {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
       {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote()}</p>}
       {!templates.length && !saving && (
-        <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_luu_cac_lua_chon_duoi_day_thanh_mau_de_dun_8513aa2f}</p>
       )}
       {saving && (
         <form
@@ -144,9 +143,9 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               autoFocus
               value={name}
               maxLength={NAME_MAX}
-              aria-label="Tên mẫu"
+              aria-label={S.s_ten_mau_f037fdd2}
               aria-invalid={Boolean(problem)}
-              placeholder="Tên mẫu, ví dụ Light novel"
+              placeholder={S.s_ten_mau_vi_du_light_novel_aae56cfd}
               onChange={(event) => {
                 setName(event.target.value);
                 setConfirming(false);
@@ -159,28 +158,20 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
             />
             {confirming ? (
               <>
-                <Button type="submit" size="sm" variant="primary" loading={running}>
-                  Ghi đè
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-                  Đặt tên khác
-                </Button>
+                <Button type="submit" size="sm" variant="primary" loading={running}>{S.s_ghi_de_5e4cd1eb}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>{S.s_dat_ten_khac_78e8f19c}</Button>
               </>
             ) : (
               <>
-                <Button type="submit" size="sm" variant="primary" loading={running} disabled={!cleanName(name)}>
-                  Lưu
-                </Button>
-                <Button size="sm" variant="ghost" onClick={close}>
-                  Huỷ
-                </Button>
+                <Button type="submit" size="sm" variant="primary" loading={running} disabled={!cleanName(name)}>{S.s_luu_e91f26c0}</Button>
+                <Button size="sm" variant="ghost" onClick={close}>{S.s_huy_96732485}</Button>
               </>
             )}
           </div>
-          {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
+          {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_da_co_mau_8527783b}{findTemplate(templates, name)?.name}{S.s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5}</p>}
           {problem && <p role="alert" className="mt-2 text-[0.8125rem] text-danger">{problem}</p>}
-          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu lưu giọng, chất lượng và cách tạo sách.</p>
-          <MoreInfo>Gồm bộ phân tích, bắt đầu ngay và duyệt trước khi thu. Không lưu truyện, tên sách hay dòng ghi công.</MoreInfo>
+          <p className="mt-2 text-[0.8125rem] text-fg-3">{S.s_mau_luu_giong_chat_luong_va_cach_tao_sach_143fa4bf}</p>
+          <MoreInfo>{S.s_gom_bo_phan_tich_bat_dau_ngay_va_duyet_tru_7f1b3642}</MoreInfo>
         </form>
       )}
     </MotionRegion>

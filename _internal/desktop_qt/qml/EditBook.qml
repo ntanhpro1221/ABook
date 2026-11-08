@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -41,8 +42,8 @@ Modal {
     onAuthorDraftChanged: if (authorField.text !== authorDraft) authorField.text = authorDraft
     onShownTitleChanged: titleDraft = shownTitle
     onShownAuthorChanged: authorDraft = shownAuthor
-    title: searching ? "Tìm ảnh bìa" : "Sửa sách"
-    description: searching ? "Bạn chọn ảnh từ các nguồn sách hoặc trên máy." : Logic.editDescription(book, computer)
+    title: searching ? S.s_tim_anh_bia_9825b3d1 : S.s_sua_sach_79fb71d2
+    description: searching ? S.s_ban_chon_anh_tu_cac_nguon_sach_hoac_tren_m_ca23c898 : Logic.editDescription(book, computer)
 
     function begin(data) {
         generation++
@@ -112,23 +113,23 @@ Modal {
     }
     function saveTitle() {
         if (!titleDraft.trim() || titleDraft.trim() === book.title) return
-        call("renaming", "PUT", "/title", {title: titleDraft}, function() { root.done("Đã đổi tên sách") }, "Chưa đổi được tên sách")
+        call("renaming", "PUT", "/title", {title: titleDraft}, function() { root.done(S.s_da_doi_ten_sach_d9618322) }, S.s_chua_doi_duoc_ten_sach_d845e696)
     }
     function saveAuthor() {
         if (!Logic.authorSaveable(authorDraft, book.author)) return
-        call("savingAuthor", "PUT", "/author", {author: authorDraft}, function(saved) { root.done(saved.author ? "Đã đổi tác giả" : "Đã bỏ tên tác giả") }, "Chưa đổi được tác giả")
+        call("savingAuthor", "PUT", "/author", {author: authorDraft}, function(saved) { root.done(saved.author ? S.s_da_doi_tac_gia_cc6c70a5 : S.s_da_bo_ten_tac_gia_538a5212) }, S.s_chua_doi_duoc_tac_gia_32e393fb)
     }
     function setCoverImage(image) {
-        call("settingCover", "PUT", "/cover", {image: image}, function() { root.done("Đã đặt ảnh bìa") }, "Chưa đặt được ảnh bìa")
+        call("settingCover", "PUT", "/cover", {image: image}, function() { root.done(S.s_da_dat_anh_bia_90470364) }, S.s_chua_dat_duoc_anh_bia_a4afb9fa)
     }
     function removeCover() {
-        call("removingCover", "DELETE", "/cover", null, function() { root.done("Đã bỏ ảnh bìa - sách dùng bìa vẽ từ tên") }, "Chưa bỏ được ảnh bìa")
+        call("removingCover", "DELETE", "/cover", null, function() { root.done(S.s_da_bo_anh_bia_sach_dung_bia_ve_tu_ten_f562bcab) }, S.s_chua_bo_duoc_anh_bia_a4173b5d)
     }
     function revertAll() {
         call("reverting", "DELETE", "/edits", null, function() {
             root.cancelRevert()
-            root.done("Đã bỏ mọi thay đổi - sách như người làm sách đã đóng gói")
-        }, "Chưa bỏ được thay đổi")
+            root.done(S.s_da_bo_moi_thay_doi_sach_nhu_nguoi_lam_sach_eecea191)
+        }, S.s_chua_bo_duoc_thay_doi_e73f2d58)
     }
 
     // ---- hai trang: mục chính | bước tìm bìa; trang khép thì cao 0, trang mở lớn dần ----
@@ -150,7 +151,7 @@ Modal {
 
                     EditBookSection {
                         width: parent.width
-                        title: "Tên sách"
+                        title: S.s_ten_sach_d54846eb
                         first: true
                         Row {
                             width: parent.width
@@ -159,7 +160,7 @@ Modal {
                                 id: titleField
                                 objectName: "editTitle"
                                 width: parent.width - saveTitleButton.width - 8
-                                label: "Tên sách"
+                                label: S.s_ten_sach_d54846eb
                                 text: root.titleDraft
                                 onTextChanged: {
                                     if (text.length > 160) { text = text.slice(0, 160); return }
@@ -170,7 +171,7 @@ Modal {
                             Button {
                                 id: saveTitleButton
                                 objectName: "editSaveTitle"
-                                text: "Lưu tên"
+                                text: S.s_luu_ten_0b3ef54a
                                 busy: root.renaming
                                 enabled: root.titleDraft.trim() !== "" && root.titleDraft.trim() !== root.book.title
                                 onActivated: root.saveTitle()
@@ -180,8 +181,8 @@ Modal {
                     // Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả
                     EditBookSection {
                         width: parent.width
-                        title: "Tác giả"
-                        hint: "Để trống nếu không rõ tác giả. Hiện ở thư viện, trang sách và trong file sách nói xuất ra."
+                        title: S.s_tac_gia_0ec4731b
+                        hint: S.s_de_trong_neu_khong_ro_tac_gia_hien_o_thu_v_04875479
                         shown: root.textBook && !root.workshop
                         Row {
                             width: parent.width
@@ -190,8 +191,8 @@ Modal {
                                 id: authorField
                                 objectName: "editAuthor"
                                 width: parent.width - saveAuthorButton.width - 8
-                                label: "Tác giả"
-                                placeholderText: "Không rõ tác giả"
+                                label: S.s_tac_gia_0ec4731b
+                                placeholderText: S.s_khong_ro_tac_gia_baaa8118
                                 text: root.authorDraft
                                 onTextChanged: {
                                     if (text.length > 160) { text = text.slice(0, 160); return }
@@ -202,7 +203,7 @@ Modal {
                             Button {
                                 id: saveAuthorButton
                                 objectName: "editSaveAuthor"
-                                text: "Lưu tác giả"
+                                text: S.s_luu_tac_gia_cd5c8008
                                 busy: root.savingAuthor
                                 enabled: Logic.authorSaveable(root.authorDraft, root.book.author)
                                 onActivated: root.saveAuthor()
@@ -218,7 +219,7 @@ Modal {
                     width: parent.width - x
                     EditBookSection {
                         width: parent.width
-                        title: "Ảnh bìa"
+                        title: S.s_anh_bia_f224644d
                         separator: 1 - root.wideT
                         // Bìa 112 + cột nút; hẹp thì cột nút xuống dưới bìa thay vì tràn khỏi hộp
                         Flow {
@@ -235,7 +236,7 @@ Modal {
                                 spacing: 4
                                 Button {
                                     objectName: "editPickCover"
-                                    text: root.book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"
+                                    text: root.book.cover ? S.s_doi_anh_bia_178aa3bf : S.s_chon_anh_bia_a6c0a477
                                     icon: "image-plus"
                                     kind: "ghost"
                                     enabled: !root.busy
@@ -244,7 +245,7 @@ Modal {
                                 Button {
                                     id: findCover
                                     objectName: "editFindCover"
-                                    text: "Tìm bìa…"
+                                    text: S.s_tim_bia_6db18516
                                     icon: "globe"
                                     kind: "ghost"
                                     enabled: !root.busy
@@ -255,7 +256,7 @@ Modal {
                                     open: Boolean(root.book.cover)
                                     Button {
                                         objectName: "editRemoveCover"
-                                        text: "Bỏ ảnh bìa"
+                                        text: S.s_bo_anh_bia_696c6692
                                         icon: "trash"
                                         kind: "ghost"
                                         enabled: !root.busy
@@ -265,14 +266,14 @@ Modal {
                                 Collapse {
                                     width: parent.width
                                     open: root.settingCover
-                                    EditBookSkeleton { width: 160; count: 1; label: "Đang đặt ảnh bìa" }
+                                    EditBookSkeleton { width: 160; count: 1; label: S.s_dang_dat_anh_bia_f4a60e45 }
                                 }
                             }
                         }
                     }
                     EditBookSection {
                         width: parent.width
-                        title: "Nhạc nền"
+                        title: S.s_nhac_nen_271fb292
                         fold: "edit-book.music"
                         shown: !root.textBook
                         Flow {
@@ -282,14 +283,14 @@ Modal {
                             spacing: 12
                             Text {
                                 width: Math.min(implicitWidth, parent.width)
-                                text: "Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio."
+                                text: S.s_cuon_nay_co_xuong_nhac_nen_chinh_day_du_ch_b296f56d
                                 color: Theme.text2
                                 wrapMode: Text.Wrap
                                 font.pixelSize: Theme.sizeBodySmall
                             }
                             Button {
                                 visible: root.canOpenStudio
-                                text: "Mở tab Nhạc nền"
+                                text: S.s_mo_tab_nhac_nen_117e60f2
                                 icon: "eighth-note"
                                 kind: "ghost"
                                 size: "sm"
@@ -304,13 +305,13 @@ Modal {
                     }
                     EditBookSection {
                         width: parent.width
-                        title: root.textBook ? "Tên chương" : "Tên riêng"
-                        hint: root.textBook ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."
+                        title: root.textBook ? S.s_ten_chuong_9edb6c28 : S.s_ten_rieng_8a9cd50f
+                        hint: root.textBook ? S.s_bam_o_dong_chuong_de_doi_ten_chuong_d2fb9984 : S.s_bam_o_dong_chuong_de_doi_ten_chuong_o_tab_733e1523
                     }
                     EditBookSection {
                         width: parent.width
-                        title: "Cách đọc tên"
-                        hint: "Dạy cách đọc từ (thường là tên riêng). Chữ giữ nguyên."
+                        title: S.s_cach_doc_ten_1c46e75d
+                        hint: S.s_day_cach_doc_tu_thuong_la_ten_rieng_chu_gi_69023eb0
                         fold: "edit-book.readings"
                         shown: root.textBook && !root.workshop
                         Loader {
@@ -321,8 +322,8 @@ Modal {
                     }
                     EditBookSection {
                         width: parent.width
-                        title: "Bỏ mọi thay đổi (" + (root.book.edits || 0) + ")"
-                        hint: "Sách trở về đúng như người làm sách đã đóng gói."
+                        title: S.s_bo_moi_thay_doi_dd1a050a + (root.book.edits || 0) + ")"
+                        hint: S.s_sach_tro_ve_dung_nhu_nguoi_lam_sach_da_don_f3a48d43
                         shown: !root.workshop && (root.book.edits || 0) > 0
                         Item {
                             width: parent.width
@@ -335,7 +336,7 @@ Modal {
                                     id: revertButton
                                     objectName: "editRevert"
                                     x: -14
-                                    text: "Bỏ mọi thay đổi…"
+                                    text: S.s_bo_moi_thay_doi_bf843dbb
                                     kind: "ghost"
                                     onClicked: root.askRevert()
                                 }
@@ -349,14 +350,14 @@ Modal {
                                     spacing: 8
                                     Button {
                                         objectName: "editRevertConfirm"
-                                        text: "Bỏ hết thay đổi"
+                                        text: S.s_bo_het_thay_doi_b55603a1
                                         kind: "danger"
                                         busy: root.reverting
                                         onActivated: root.revertAll()
                                     }
                                     Button {
                                         objectName: "editRevertCancel"
-                                        text: "Thôi"
+                                        text: S.s_thoi_e68f9e88
                                         kind: "ghost"
                                         onClicked: root.cancelRevert()
                                     }
@@ -377,14 +378,14 @@ Modal {
                 height: 40
                 width: backRow.width
                 Accessible.role: Accessible.Button
-                Accessible.name: "Sửa sách"
+                Accessible.name: S.s_sua_sach_79fb71d2
                 onClicked: root.leaveSearch()
                 Row {
                     id: backRow
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
                     Icon { anchors.verticalCenter: parent.verticalCenter; name: "arrow-left"; size: 16; color: backToEdit.hovered ? Theme.text : Theme.text2 }
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: "Sửa sách"; color: backToEdit.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_sua_sach_79fb71d2; color: backToEdit.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                 }
             }
             Item { width: 1; height: 12 }
@@ -392,7 +393,7 @@ Modal {
                 id: coverSearch
                 objectName: "coverSearchPanel"
                 width: parent.width
-                onChosen: { root.leaveSearch(false); root.done("Đã đặt ảnh bìa") }
+                onChosen: { root.leaveSearch(false); root.done(S.s_da_dat_anh_bia_90470364) }
                 onChooseFile: { root.leaveSearch(false); images.open() }
             }
         }
@@ -400,11 +401,11 @@ Modal {
 
     FileDialog {
         id: images
-        title: "Chọn ảnh bìa"
-        nameFilters: ["Ảnh (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"]
+        title: S.s_chon_anh_bia_207ac182
+        nameFilters: [S.s_anh_png_jpg_jpeg_webp_gif_bmp_8ce57f5a]
         onAccepted: {
             const image = DesktopApi.imageData(selectedFile)
-            if (!image) { Api.notice = Logic.toastText("Chưa đặt được ảnh bìa", "Chưa đọc được file ảnh"); return }
+            if (!image) { Api.notice = Logic.toastText(S.s_chua_dat_duoc_anh_bia_a4afb9fa, S.s_chua_doc_duoc_file_anh_09736d91); return }
             root.setCoverImage(image)
         }
     }

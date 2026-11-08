@@ -183,7 +183,7 @@ Item {
             compare(dialogs.title, "Nghe lại từ đầu")
             compare(dialogs.description, "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên.")
             compare(findChild(dialogs, "recordName").text, "Lần nghe 2")
-            compare(confirm().text, "Tạo và nghe từ đầu")
+            compare(confirm().text, "Tạo và nghe")
             compare(Nav.layers.length, 1)                                 // hộp là một lớp Back
             findChild(dialogs, "recordName").text = "  Lần của Lan  "
             confirm().activated()

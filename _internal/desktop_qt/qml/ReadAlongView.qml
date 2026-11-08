@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PlayerLabels.js" as Labels
@@ -329,7 +330,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         visible: ReadAlong.status === "loading" || ReadAlong.status === "failed"
-        text: ReadAlong.status === "loading" ? "Đang mở văn bản chương…" : "Chưa mở được văn bản chương này."
+        text: ReadAlong.status === "loading" ? S.s_dang_mo_van_ban_chuong_703dec05 : S.s_chua_mo_duoc_van_ban_chuong_nay_fc50ef45
         color: root.surface.fg2
         font.pixelSize: Theme.sizeBodySmall
     }
@@ -365,7 +366,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             Text {
-                text: "Tới câu đang nghe"
+                text: S.s_toi_cau_dang_nghe_4526cf38
                 color: Theme.dark ? Theme.bg : "#f5f3ef"
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium

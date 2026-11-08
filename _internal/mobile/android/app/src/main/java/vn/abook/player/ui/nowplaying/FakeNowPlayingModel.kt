@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import android.os.SystemClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
@@ -77,14 +79,14 @@ class FakeNowPlayingModel(
 
     companion object {
         fun demoState() = NowPlayingState(
-            bookId = "native-player-demo", bookTitle = "Những ngày gió hát", chapterId = 1, chapterTitle = "Chương 1 · Một buổi sớm",
+            bookId = "native-player-demo", bookTitle = S.s_nhung_ngay_gio_hat_c6b4626f, chapterId = 1, chapterTitle = S.s_chuong_1_mot_buoi_som_74c20e6d,
             durationMs = 360_000, playing = false, readAlongAvailable = true,
-            chapters = List(12) { PlayerChapter(it + 1, "Chương ${it + 1} · ${if (it == 0) "Một buổi sớm" else "Trên con đường"}", 360_000, "texts/${it + 1}.txt") },
+            chapters = List(12) { PlayerChapter(it + 1, S.s_chuong_0_1_f0f29379(it + 1, if (it == 0) S.s_mot_buoi_som_0635ca65 else S.s_tren_con_duong_952afe11), 360_000, "texts/${it + 1}.txt") },
         )
         fun demoText(): ReadAlongState {
-            val lines = listOf("Trời vừa hửng sáng, sương mù còn vương trên những tán lá.",
-                "Bạn bước ra hiên nhà, nghe tiếng gió kể một câu chuyện cũ.",
-                "Xa xa, con đường nhỏ dẫn qua khu vườn đang chờ nắng lên.")
+            val lines = listOf(S.s_troi_vua_hung_sang_suong_mu_con_vuong_tren_b365e644,
+                S.s_ban_buoc_ra_hien_nha_nghe_tieng_gio_ke_mot_c7a8801c,
+                S.s_xa_xa_con_duong_nho_dan_qua_khu_vuon_dang_e1a4b638)
             return ReadAlongState("native-player-demo", 1, List(80) { i ->
                 val line = lines[i % lines.size]
                 val tokens = Regex("\\S+").findAll(line).toList()
@@ -99,5 +101,5 @@ class FakeNowPlayingModel(
 /** Demo text for the measuring intent (`abook.demo.books`): the same eighty paragraphs as the fake model, through the real model's text path. */
 object DemoReadAlongSource : ReadAlongSource {
     override suspend fun paragraphs(bookId: String, chapter: vn.abook.player.ui.data.PlayerChapter): List<ReadParagraph> = FakeNowPlayingModel.demoText().paragraphs
-    override suspend fun voices(): List<PlayerVoice> = listOf(PlayerVoice("demo:a", "Giọng thử A"), PlayerVoice("demo:b", "Giọng thử B"))
+    override suspend fun voices(): List<PlayerVoice> = listOf(PlayerVoice("demo:a", S.s_giong_thu_a_9fbd3685), PlayerVoice("demo:b", S.s_giong_thu_b_6cf84320))
 }

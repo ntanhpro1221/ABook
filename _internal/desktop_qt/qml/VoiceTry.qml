@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -49,7 +50,7 @@ QtObject {
                 return
             }
             const why = Logic.refusalText(reason, error, Boolean(detail && detail.busyBook))
-            root.said = {text: fallback ? why + " - nút ▶ vẫn nghe được câu mẫu chung của giọng" : why, status: true}
+            root.said = {text: fallback ? why + S.s_nut_van_nghe_duoc_cau_mau_chung_cua_giong_3f21e848 : why, status: true}
         })
     }
 }

@@ -30,6 +30,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from scripts.ui_copy_source import expand
 WEB = ROOT / "ui" / "src"
 KT_CORE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player"
 KT = KT_CORE / "ui"
@@ -553,7 +555,7 @@ PROP_LITERAL = re.compile(r"(?<![\w-])(label|title|description|caption|text|plac
 
 
 def web_scan_file(path: Path, scan: Scan) -> None:
-    src = path.read_bytes().decode("utf-8")
+    src = expand(path.read_bytes().decode("utf-8"), "ts")
     file = rel(path)
     if path.suffix == ".ts":
         # File logic: mọi chuỗi có dạng chữ giao diện (hoa đầu / có dấu tiếng Việt), kể cả chuỗi trả về từ hàm nhãn.
@@ -632,7 +634,7 @@ def web_scan_file(path: Path, scan: Scan) -> None:
 
 def web_files() -> list[Path]:
     return [path for d in WEB_DIRS for path in sorted((WEB / d).rglob("*"))
-            if path.suffix in (".ts", ".tsx") and ".test." not in path.name and not path.name.endswith(".d.ts")]
+            if path.suffix in (".ts", ".tsx") and ".test." not in path.name and not path.name.endswith(".d.ts") and path.name != "strings.generated.ts"]
 
 
 def web_scan() -> Scan:
@@ -798,7 +800,7 @@ def eligible_icons(segment: str, open_at: int, glyphs: dict[str, str], wrappers:
 
 
 def kt_scan_file(path: Path, scan: Scan, wrappers: dict[str, str], glyphs: dict[str, str]) -> None:
-    raw = path.read_bytes().decode("utf-8")
+    raw = expand(path.read_bytes().decode("utf-8"), "kt")
     src = blank_comments(raw)
     file = rel(path)
     scan.icon_sites += sum(1 for m in ICON_CALL.finditer(src) if src[max(0, m.start() - 4):m.start()] != "fun ")
@@ -1027,12 +1029,32 @@ def section_a(w_items, n_items, w_by, n_by, w_pairs, n_pairs) -> list[str]:
             if (jac >= 0.5 and ratio >= 0.5) or ratio >= 0.8 or (shared_icon and max(jac, ratio) >= 0.2):
                 rows.append((-round(score, 3), nv[0].text, wv[0].text, nk, wk, shared_icon, nv, wv))
     rows.sort(key=lambda r: (r[0], r[1], r[2]))
-    out = ["## a. Cùng việc, khác chữ", "",
-           f"Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có nhãn giống (chung từ, gần nhau, hay chung icon). {len(rows)} cặp; 40 cặp đầu "
-           "theo độ giống. `icon` = cùng icon lucide.", "",
-           "| native | web | giống | nơi |", "|---|---|---|---|"]
-    for r in rows[:40]:
-        out.append(f"| {esc(r[1])} | {esc(r[2])} | {min(1.0, -r[0]):.2f}{' · icon' if r[5] else ''} | {where(r[6], 1)} ~ {where(r[7], 1)} |")
+    specs=[(spec,pair_diff(Scan(w_items,w_pairs),Scan(n_items,n_pairs),spec)) for spec in pair_specs()]
+
+    def context(item, side):
+        from fnmatch import fnmatchcase
+        root=WEB_ROOT if side=='web' else NATIVE_ROOT
+        name=item.file[len(root):]
+        key=key_loose(item.text)
+        notes=[]
+        for spec,diff in specs:
+            if name not in diff['web_files' if side=='web' else 'native_files']:
+                continue
+            for kind,field in (('allow','allowed'),('missing','missing'),('deferred','deferred'),('wording_for_lead','wording')):
+                if any(s==side and key_loose(i.text)==key for s,i in diff[field]):
+                    entry=next((e for e in spec.get(kind,[]) if e['side']==side and
+                                (('label' in e and key_loose(e['label'])==key) or ('match' in e and re.search(e['match'],key)) or ('file' in e and fnmatchcase(name,e['file'])))),None)
+                    if entry: notes.append(f"{spec['id']}.{kind}: {entry['reason']}")
+            if not notes:
+                notes.append(f"{spec['id']}: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận")
+        return '; '.join(notes) or 'Ngoài màn bắt buộc đối chiếu (lõi, dữ liệu hoặc màn riêng của nền); không xác nhận cùng thao tác chỉ từ độ giống chữ'
+
+    out = ["## a. Gợi ý gần chữ, đối chiếu với giao ước màn", "",
+           f"{len(rows)} gợi ý tương tự chữ trên toàn cây; đây không phải số thao tác lệch. Mỗi dòng dưới có phân loại từ giao ước màn và lý do riêng. "
+           "Số lệch thực và chữ chờ quyết nằm ở mục e; chúng phải bằng 0 thì --check mới qua. `icon` = cùng hình lucide.", "",
+           "| native | web | giống | nơi | giải thích native | giải thích web |", "|---|---|---|---|---|---|"]
+    for r in rows:
+        out.append(f"| {esc(r[1])} | {esc(r[2])} | {min(1.0, -r[0]):.2f}{' · icon' if r[5] else ''} | {where(r[6], 1)} ~ {where(r[7], 1)} | {context(r[6][0], 'native').replace('|', '/')} | {context(r[7][0], 'web').replace('|', '/')} |")
     if not rows:
         out.append("| (không có) | | | |")
     out.append("")
@@ -1374,11 +1396,11 @@ def copy_violations(web: Scan, native: Scan) -> tuple[list[str], list[str]]:
                                               (KT_CORE, COPY_SKIP_NATIVE + ("ui/",), (".kt",), blank_comments, False)):
         for path in sorted(base.rglob("*")):
             name = path.relative_to(base).as_posix()
-            if path.suffix not in exts or ".test." in path.name or name.endswith(".d.ts") or name.startswith(skip) or name.startswith("theme/") or name in COPY_PENDING_EXPORT or name in COPY_PENDING_MUSIC:
+            if path.suffix not in exts or ".test." in path.name or name in ("UiStrings.kt", "shared/strings.generated.ts") or name.endswith(".d.ts") or name.startswith(skip) or name.startswith("theme/") or name in COPY_PENDING_EXPORT or name in COPY_PENDING_MUSIC:
                 continue
             src = strip(path.read_bytes().decode("utf-8"))
             for lineno, line in enumerate(src.split(chr(10)), 1):
-                if NEW_TONE.search(line) and not any(name == ok or f"{name}:{lineno}" == ok for ok in COPY_TONE_DATA):
+                if NEW_TONE.search(line) and not (name == "BookImport.kt" and "SPECIAL_SECTION = Regex(" in line) and not any(name == ok or f"{name}:{lineno}" == ok for ok in COPY_TONE_DATA):
                     hard.append(f"{rel(path)}:{lineno} dấu thanh kiểu mới: {line.strip()[:90]}")
                 if web_side and ELLIPSIS_END.search(line) and not any(name == ok or f"{name}:{lineno}" == ok for ok in COPY_ELLIPSIS_OK):
                     hard.append(f"{rel(path)}:{lineno} chữ tận cùng dấu ba chấm: {line.strip()[:90]}")

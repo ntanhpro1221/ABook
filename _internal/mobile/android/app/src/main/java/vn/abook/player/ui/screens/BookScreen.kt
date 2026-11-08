@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.AnimatedContent
@@ -316,9 +318,9 @@ private fun BookScreenBody(
                 BackButton(actions.back, Modifier.testTag("book_back"))
             }
             EmptyNote(
-                "Không tìm thấy sách này", "Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.",
+                S.s_khong_tim_thay_sach_nay_0836038e, S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0,
                 Modifier.padding(horizontal = Dim.margin, vertical = Dim.s32), "book_gone", icon = { ink -> BookOpenTextIcon(ink, size = 28.dp) },
-            ) { PrimaryButton("Về thư viện", actions.back, Modifier.testTag("book_gone_back")) }
+            ) { PrimaryButton(S.s_ve_thu_vien_7bb3f8c2, actions.back, Modifier.testTag("book_gone_back")) }
         }
         return
     }
@@ -484,7 +486,7 @@ private fun BookHead(
             val fraction = book.progress.fraction
             val fill = if (book.progress.finished) colors.success else colors.accent
             Box(
-                Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).semantics { contentDescription = "Đã nghe" }.drawBehind {
+                Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).semantics { contentDescription = S.s_da_nghe_1e0f8d88 }.drawBehind {
                     drawRect(colors.line)
                     drawRect(fill, Offset.Zero, Size(size.width * fraction, size.height))
                 },
@@ -532,19 +534,19 @@ private fun BookButtons(
             actions.playChapter(book.id, first.id, 0.0)
             // Bấm nhầm "Từ đầu" giữa chừng: một lời báo đủ lâu để kịp quay lại chỗ đang nghe (web: toast "Quay lại chỗ cũ").
             if (resume != null && !finished && (resume.chapterId != first.id || resume.at > 30)) {
-                notes.say("Đang nghe lại từ đầu", "Quay lại chỗ cũ") { actions.playChapter(book.id, resume.chapterId, resume.at) }
+                notes.say(S.s_dang_nghe_lai_tu_dau_5ad4fe3c, S.s_quay_lai_cho_cu_fea69b14) { actions.playChapter(book.id, resume.chapterId, resume.at) }
             }
         }
     }
     Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
         when {
             caughtUp -> BasicText(
-                "Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.",
+                S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13,
                 style = Abook.type.bodySmall,
                 modifier = Modifier.padding(vertical = Dim.s12),
             )
             resume == null -> BasicText(
-                "Sách chưa có chương nào nghe được trên máy này.",
+                S.s_sach_chua_co_chuong_nao_nghe_duoc_tren_may_82a4ef6b,
                 style = Abook.type.bodySmall,
                 modifier = Modifier.padding(vertical = Dim.s12),
             )
@@ -566,7 +568,7 @@ private fun BookButtons(
         Spacer(Modifier.height(Dim.s12))
         // Hàng phụ: luôn cùng ba chỗ, cùng thứ tự - nút chưa dùng được thì nhạt đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe).
         Row(Modifier.fillMaxWidth().testTag("book_secondary"), horizontalArrangement = Arrangement.SpaceBetween) {
-            SecondaryButton("Tìm", "Tìm chữ trong sách", enabled = !detail?.chapters.isNullOrEmpty(), tag = "book_find", edge = -1, onClick = {
+            SecondaryButton(S.s_tim_bbe47492, S.s_tim_chu_trong_sach_7bc2c2ee, enabled = !detail?.chapters.isNullOrEmpty(), tag = "book_find", edge = -1, onClick = {
                 val loaded = detail ?: return@SecondaryButton
                 sheets.show { dismiss ->
                     FindInBookSheet(loaded, source, onPick = { hit ->
@@ -576,9 +578,9 @@ private fun BookButtons(
                 }
             }) { color -> SearchIcon(color) }
             SecondaryButton(
-                "Từ đầu", "Nghe lại từ đầu", enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
+                S.s_tu_dau_89ef6d78, S.s_nghe_lai_tu_dau_e251d632, enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
-            SecondaryButton("", "Thêm tuỳ chọn", enabled = true, tag = "book_more", edge = 1, onClick = {
+            SecondaryButton("", S.s_them_tuy_chon_a0b4bb6e, enabled = true, tag = "book_more", edge = 1, onClick = {
                 sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }, notes = notes) }
             }) { color -> MoreIcon(color) }
         }
@@ -684,7 +686,7 @@ private fun ChapterJump(visible: Boolean, onJump: () -> Unit) {
         exit = slideOutVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
     ) {
         Box(Modifier.fillMaxWidth().heightIn(min = Dim.touch).pressable(onClick = onJump).testTag("book_jump_current"), contentAlignment = Alignment.CenterEnd) {
-            BasicText("Tới chỗ đang nghe", style = Abook.type.label.copy(color = Abook.colors.accentText))
+            BasicText(S.s_toi_cho_dang_nghe_b0553a27, style = Abook.type.label.copy(color = Abook.colors.accentText))
         }
     }
 }
@@ -758,7 +760,7 @@ private fun ChapterRow(
         Box(
             // Ô chạm 44 có tâm đúng tâm dòng đầu (lề trên 12 + nửa dòng 24).
             Modifier.padding(top = Dim.s12 + FirstLine / 2 - Dim.touch / 2).size(Dim.touch)
-                .pressable(onClick = onMore).semantics { contentDescription = "Thêm tuỳ chọn cho ${chapter.title}" }
+                .pressable(onClick = onMore).semantics { contentDescription = S.s_them_tuy_chon_cho_0_82a2cf4d(chapter.title) }
                 .testTag("chapter_more"),
             contentAlignment = Alignment.CenterEnd,
         ) {
@@ -774,7 +776,7 @@ private fun PreparedMark() {
         verticalAlignment = Alignment.CenterVertically) {
         CloudDownloadIcon(Abook.colors.accentText)
         Spacer(Modifier.width(Dim.s4))
-        BasicText("Đã làm sẵn", style = Abook.type.caption.copy(color = Abook.colors.accentText))
+        BasicText(S.s_da_lam_san_18d7d0da, style = Abook.type.caption.copy(color = Abook.colors.accentText))
     }
 }
 

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
@@ -151,7 +153,7 @@ class MusicState(
             if (flow.value.swapKey.isNotEmpty()) readMine(flow.value.swapKey)
             else if (here && done.added + done.existing > 0 && flow.value.book?.kind == MusicKind.Playlist) choose(MusicText.MINE)
         }
-        result.onFailure { error -> if (here) flow.update { it.copy(problem = message(error, "Chưa thêm được nhạc")) } }
+        result.onFailure { error -> if (here) flow.update { it.copy(problem = message(error, S.s_chua_them_duoc_nhac_5565bc66)) } }
     }
 
     private fun readBook(id: String) {
@@ -182,7 +184,7 @@ class MusicState(
             val result = attempt { apply(id) }
             if (flow.value.bookId != id) return@launch
             result.onSuccess { book -> flow.update { it.copy(busy = false, book = book) } }
-            result.onFailure { error -> flow.update { it.copy(busy = false, problem = message(error, "Chưa đổi được nhạc nền")) } }
+            result.onFailure { error -> flow.update { it.copy(busy = false, problem = message(error, S.s_chua_doi_duoc_nhac_nen_b5d19c42)) } }
             after(result.isSuccess)
         }
     }

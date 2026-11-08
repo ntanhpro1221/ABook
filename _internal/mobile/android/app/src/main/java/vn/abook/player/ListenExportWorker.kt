@@ -132,10 +132,10 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         var music: ExportMusic? = null
         ListenExports.active += bookId
         try {
-            val book = Store.manifest(bookId) ?: throw Mp3Export.Refused("Không tìm thấy sách này trên điện thoại")
+            val book = Store.manifest(bookId) ?: throw Mp3Export.Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
             title = book.optString("title").ifEmpty { bookId }
             val chapters = ListenExport.chapters(bookId)
-            if (chapters.isEmpty()) throw Mp3Export.Refused("Sách chưa có chương nào có chữ để đọc")
+            if (chapters.isEmpty()) throw Mp3Export.Refused(S.s_sach_chua_co_chuong_nao_co_chu_de_doc_8d6e72e1)
             val reading = ListenExport.Reading(voice, ReadAloud.originNow(bookId), ReadAloud.readingsOf(bookId))
             val work = ListenExport.workFolder(ListenExports.workRoot(context), bookId).apply { mkdirs() }
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
@@ -149,7 +149,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             val extra = music.music?.let { ExportMusic.listenBytes(Store.bookDir(bookId), it, chapters) } ?: 0L
             val need = ListenExport.plan(chapters, reading, work, null, music = { mixer?.chapter(it) }, extra = extra).bytes
             if (work.usableSpace < need) {
-                throw Mp3Export.Refused("Thiếu chỗ làm sách nói (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
+                throw Mp3Export.Refused(S.s_thieu_cho_lam_sach_noi_can_0_mb_ban_don_bo_4939c93b(need shr 20))
             }
             var shown = 0L
             fun show(progress: ListenExport.Progress) {
@@ -184,14 +184,14 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             val (cover, coverName) = Mp3Export.coverOf(bookId, input.cover?.takeIf { it.isFile }?.readBytes())
             val exportPlan = ListenExport.exportPlan(book, bookId, chapters, stamps, work, cover, coverName)
             val joined = File(work, "all.m4a")
-            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Chưa ghi được vào chỗ đã chọn")
+            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused(S.s_chua_ghi_duoc_vao_cho_da_chon_6ff57f62)
             val result = out.buffered(256 * 1024).use { stream ->
                 M4bExport.run(exportPlan, joined, stream, ListenAudio, progress = { joinedChapters, total, _ -> show(ListenExport.encodeProgress(chapters, joinedChapters, total)) }, stopped = { isStopped })
             }
             work.deleteRecursively()
             val missing = mixer?.missing(chapters.map { it.id }) ?: 0
-            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
-            ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${formatSize(result.size)}.$lost")
+            val lost = if (missing > 0) S.s_0_doan_chua_tai_duoc_nhac_ban_tai_lai_neu_4743385d(missing) else ""
+            ListenExports.finished(context, bookId, S.s_da_xuat_sach_noi_82ff590c, S.s_0_1_chuong_2_3_2ef60a1a(title, result.chapters, formatSize(result.size), lost))
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
                 .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString())
             if (missing > 0) finished.put("musicMissing", missing)
@@ -200,7 +200,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 stamps[index].peakDbtp?.takeIf { guard != null && it > guard.ceilingDbtp }?.let { index + 1 to it }
             }
             if (over.isNotEmpty()) {
-                AppLog.w("ListenExport", "sau ${ListenExport.Run.PEAK_RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
+                AppLog.w("ListenExport", S.s_sau_0_luot_ma_hoa_lai_van_vuot_tran_1_18313a13(ListenExport.Run.PEAK_RETRIES, over))
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
             }
             ListenExports.emit(finished)
@@ -216,11 +216,11 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             M4bExports.discard(context, file)
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): phần đã đọc xong được giữ, xuất lại là làm tiếp từ đó.
-                ListenExports.finished(context, bookId, "Xuất đã dừng: $title", "Hết 6 giờ; giữ phần đã đọc — bạn bấm Xuất lại.")
+                ListenExports.finished(context, bookId, S.s_xuat_da_dung_0_4f7ca574(title), S.s_het_6_gio_giu_phan_da_doc_ban_bam_xuat_lai_81c30b27)
                 ListenExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }
-            ListenExports.finished(context, bookId, "Đã dừng xuất", "$title · giữ phần đã đọc — bạn xuất lại để làm tiếp")
+            ListenExports.finished(context, bookId, S.s_da_dung_xuat_ab8ac9d1, S.s_0_giu_phan_da_doc_ban_xuat_lai_de_lam_tiep_4a60a238(title))
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
@@ -232,7 +232,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             M4bExports.discard(context, file)
             val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
                 else M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
-            ListenExports.finished(context, bookId, "Chưa xuất được", "$title · $message")
+            ListenExports.finished(context, bookId, S.s_chua_xuat_duoc_27b1025b, "$title · $message")
             ListenExports.emit(event().put("error", message))
             return Result.failure()
         } finally {

@@ -14,7 +14,7 @@ object ExportCancellation {
     private fun prefs(context: Context) = context.getSharedPreferences("export_cancellation", Context.MODE_PRIVATE)
 
     internal fun markThenCancel(mark: () -> Boolean, cancel: () -> Unit) {
-        check(mark()) { "Chưa lưu được yêu cầu dừng xuất" }
+        check(mark()) { S.s_chua_luu_duoc_yeu_cau_dung_xuat_a3e21a00 }
         cancel()
     }
 

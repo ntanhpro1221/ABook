@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -69,7 +70,7 @@ Item {
         Text {
             visible: !!root.person.originalName
             width: parent.width
-            text: "(tên gốc: " + Logic.cleanName(root.person.originalName) + ")"
+            text: S.s_ten_goc_ece0e59a + Logic.cleanName(root.person.originalName) + ")"
             color: Theme.text3
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
@@ -121,11 +122,11 @@ Item {
                 width: implicitWidth
                 height: implicitHeight
                 Accessible.role: Accessible.Button
-                Accessible.name: "Bỏ gộp " + root.shownName + " vào " + Logic.cleanName(root.person.mergedInto)
+                Accessible.name: S.s_bo_gop_2bdba67e + root.shownName + S.s_vao_8c3e5eb6 + Logic.cleanName(root.person.mergedInto)
                 onClicked: root.request("unmerge", root.person)
                 Text {
                     id: unmergeText
-                    text: "Bỏ gộp"
+                    text: S.s_bo_gop_d7199137
                     color: Theme.accentText
                     font.pixelSize: Theme.sizeCaption
                     font.weight: Theme.weightMedium
@@ -154,7 +155,7 @@ Item {
             visible: !!root.person.sampleId
             clipId: Logic.sampleId(root.bookId, root.person)
             url: Logic.routed(Logic.sampleUrl(root.bookId, root.person), root.peer)
-            label: "Nghe " + root.shownName + " nói"
+            label: S.s_nghe_b2faf200 + root.shownName + S.s_noi_76731592
         }
         IconButton {
             objectName: "castVoiceButton"
@@ -165,8 +166,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: "Đổi giọng " + root.shownName
-            Accessible.name: "Đổi giọng " + root.shownName
+            tip: S.s_doi_giong_bd515f96 + root.shownName
+            Accessible.name: S.s_doi_giong_bd515f96 + root.shownName
             onClicked: root.request("voice", root.person)
         }
         IconButton {
@@ -179,8 +180,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: "Thêm tuỳ chọn cho " + root.shownName
-            Accessible.name: "Thêm tuỳ chọn cho " + root.shownName
+            tip: S.s_them_tuy_chon_cho_5ddcac37 + root.shownName
+            Accessible.name: S.s_them_tuy_chon_cho_5ddcac37 + root.shownName
             onClicked: root.menuRequested(more, root.person)
         }
     }

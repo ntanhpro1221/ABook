@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -5,7 +6,7 @@ import ABook
 // DisclosureRow có icon dấu hỏi, thân là chữ 12 mực phụ mở ra tại chỗ. Nội dung đặt thẳng vào trong (thường một hay vài Text).
 Column {
     id: root
-    property string label: "Tìm hiểu thêm"
+    property string label: S.s_tim_hieu_them_032fe408
     property bool open: false
     default property alias content: body.content
     DisclosureRow {

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ImportQueue.js" as Queue
@@ -15,7 +16,7 @@ Item {
     readonly property var spot: Queue.queueFocus(items, currentId, working)
     objectName: "importQueueList"
     Accessible.role: Accessible.List
-    Accessible.name: "File đã chọn"
+    Accessible.name: S.s_file_da_chon_e29eb975
     implicitHeight: view.height + 20
 
     Flickable {

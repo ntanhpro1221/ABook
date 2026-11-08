@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
@@ -28,7 +30,7 @@ object OnlineHttp {
             try {
                 connection.requestMethod = method
                 connection.readTimeout = timeoutMs
-                connection.setRequestProperty("User-Agent", "ABook-ReadAloud")
+                connection.setRequestProperty("User-Agent", S.s_abook_readaloud_fd127dde)
                 headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
                 if (body != null) {
                     connection.doOutput = true
@@ -43,7 +45,7 @@ object OnlineHttp {
                         val read = input.read(buffer)
                         if (read < 0) break
                         out.write(buffer, 0, read)
-                        if (out.size() > MAX_RESPONSE) throw IOException("trả lời quá lớn")
+                        if (out.size() > MAX_RESPONSE) throw IOException(S.s_tra_loi_qua_lon_1c99a5e8)
                     }
                     out.toByteArray()
                 } ?: ByteArray(0)
@@ -53,9 +55,9 @@ object OnlineHttp {
                 connection.disconnect()
             }
         } catch (error: SocketTimeoutException) {
-            throw VoiceException("$name không trả lời (quá giờ)", cause = error, reason = "timeout") // có mạng mà dịch vụ không trả lời: không phải "mất mạng" (như byok.py)
+            throw VoiceException(S.s_0_khong_tra_loi_qua_gio_e4796eee(name), cause = error, reason = "timeout") // có mạng mà dịch vụ không trả lời: không phải "mất mạng" (như byok.py)
         } catch (error: IOException) {
-            throw VoiceException("Không có mạng để dùng giọng $name", offline = true, cause = error)
+            throw VoiceException(S.s_khong_co_mang_de_dung_giong_0_e88a3cb4(name), offline = true, cause = error)
         }
     }
 
@@ -63,15 +65,15 @@ object OnlineHttp {
     fun failure(status: Int, name: String, detail: String = ""): VoiceException {
         val tail = if (detail.isNotBlank()) " (${detail.take(200)})" else ""
         return when {
-            status == 401 || status == 403 -> VoiceException("$name từ chối khoá của bạn - kiểm tra lại khoá trong Cài đặt$tail", reason = "auth")
-            status == 402 || status == 429 -> VoiceException("Khoá $name đã hết hạn mức hoặc gọi quá dày$tail", reason = "quota")
-            status >= 500 -> VoiceException("$name đang trục trặc (HTTP $status)$tail", reason = "service")
-            else -> VoiceException("$name không nhận yêu cầu (HTTP $status)$tail", reason = "rejected")
+            status == 401 || status == 403 -> VoiceException(S.s_0_tu_choi_khoa_cua_ban_kiem_tra_lai_khoa_t_d92c96f9(name, tail), reason = "auth")
+            status == 402 || status == 429 -> VoiceException(S.s_khoa_0_da_het_han_muc_hoac_goi_qua_day_1_470a25c1(name, tail), reason = "quota")
+            status >= 500 -> VoiceException(S.s_0_dang_truc_trac_http_1_2_de54479f(name, status, tail), reason = "service")
+            else -> VoiceException(S.s_0_khong_nhan_yeu_cau_http_1_2_c8cb886f(name, status, tail), reason = "rejected")
         }
     }
 
     fun gender(value: String?): String = when (value?.trim()?.lowercase()) {
-        "female", "nữ" -> "female"
+        "female", S.s_nu_316c30fd -> "female"
         "male", "nam" -> "male"
         else -> ""
     }
@@ -101,7 +103,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
     fun voice(code: String): Voice = KeyedVoice(this, code)
 
     fun synthesize(text: String, voice: String, out: File): Clip {
-        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException("Khoá $name chưa dùng được - kiểm tra lại trong Cài đặt", reason = "auth")
+        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException(S.s_khoa_0_chua_dung_duoc_kiem_tra_lai_trong_c_033e7c72(name), reason = "auth")
         try {
             val (duration, boundaries) = speak(entry, text, voice, out)
             return Clip(out, duration, WordTokens.map(text, boundaries, duration), "$id:$voice")
@@ -113,10 +115,10 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
 
     /** "Kiểm tra" trong Cài đặt: lấy danh sách giọng rồi đọc thử một câu thật ngắn vào `scratch`. */
     fun check(scratch: File): JSONObject {
-        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", "Chưa nhập khoá.")
+        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", S.s_chua_nhap_khoa_7ae5f64c)
         return try {
             val voices = listVoices(entry)
-            if (voices.isEmpty()) throw VoiceException("Tài khoản $name này không có giọng tiếng Việt", reason = "voice")
+            if (voices.isEmpty()) throw VoiceException(S.s_tai_khoan_0_nay_khong_co_giong_tieng_viet_c80e1eff(name), reason = "voice")
             try {
                 speak(entry, PROBE_TEXT, voices[0].code, scratch)
             } finally {
@@ -152,12 +154,12 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
                 offset += length
             }
         }
-        if (offset == 0L) throw VoiceException("$name không trả về âm thanh", reason = "service")
+        if (offset == 0L) throw VoiceException(S.s_0_khong_tra_ve_am_thanh_b0fc54e9(name), reason = "service")
         return offset to boundaries
     }
 
     companion object {
-        const val PROBE_TEXT = "Xin chào."
+        const val PROBE_TEXT = S.s_xin_chao_0dcb19e7
     }
 }
 
@@ -170,7 +172,7 @@ class KeyedVoice(private val provider: KeyedProvider, private val code: String) 
 /** Danh sách các nhà cung cấp dùng khoá (Azure đứng đầu: nhà chính thức của chính các giọng Edge) + việc của plugin. */
 object OnlineVoices {
     /** Tên để nói với người nghe (cùng bảng `KEYED_PROVIDERS` của giao diện). */
-    val NAMES = linkedMapOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
+    val NAMES = linkedMapOf("azure" to S.s_azure_speech_8bd84d93, "google" to S.s_google_cloud_69bd2211, "fpt" to "FPT.AI", "viettel" to S.s_viettel_ai_9094e708)
 
     @Volatile private var all: List<KeyedProvider>? = null
 
@@ -181,7 +183,7 @@ object OnlineVoices {
     }
 
     fun provider(context: Context, id: String): KeyedProvider =
-        providers(context).firstOrNull { it.id == id } ?: throw IllegalArgumentException("Nhà cung cấp lạ: $id")
+        providers(context).firstOrNull { it.id == id } ?: throw IllegalArgumentException(S.s_nha_cung_cap_la_0_971204b7(id))
 
     fun voices(context: Context): List<VoiceInfo> = providers(context).flatMap { it.voices() }
 
@@ -197,7 +199,7 @@ object OnlineVoices {
     /** "Lưu" khoá (chỉ cất trên máy, không gửi gì ra mạng); `key` rỗng = giữ khoá đã lưu, chỉ đổi vùng. Trả mô tả đã che của nhà cung cấp. */
     fun saveKey(context: Context, provider: String, key: String, region: String): JSONObject {
         val clean = region.trim().lowercase()
-        if (provider == "azure" && !AzureTts.validRegion(clean)) throw IllegalArgumentException("Vùng Azure chưa đúng (ví dụ: southeastasia)")
+        if (provider == "azure" && !AzureTts.validRegion(clean)) throw IllegalArgumentException(S.s_vung_azure_chua_dung_vi_du_southeastasia_f41747f8)
         val keyed = provider(context, provider)
         keyed.keys.put(provider, key, if (provider == "azure") clean else "")
         return keyed.describe()

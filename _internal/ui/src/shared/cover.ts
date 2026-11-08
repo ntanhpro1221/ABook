@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // Bìa sách tự sinh: sách TXT không có ảnh bìa, nên mỗi cuốn nhận một cặp màu cố định băm từ tên (cùng tên,
 // cùng bìa, mọi lần mở). Bảng màu là các tông đá quý đậm, đủ tương phản với chữ trắng ở mọi cặp.
 
@@ -42,11 +43,11 @@ export function coverStyle(title: string): CoverStyle {
 export function splitTitle(title: string, part?: number | null): [string, string] {
   const match = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(.+)$/i);
   if (match) return [match[1].trim(), `${match[2]} ${match[3]}`.trim()];
-  if (part && part > 1) return [title.trim(), `Phần ${part}`];
+  if (part && part > 1) return [title.trim(), S.s_phan_0_7c77642d(part)];
   return [title.trim(), ""];
 }
 
-const STOPWORDS = new Set(["the", "and", "của", "và", "những", "các", "một"]);
+const STOPWORDS = new Set(["the", "and", S.s_cua_56cf0ad4, S.s_va_befa210d, S.s_nhung_767e74d8, S.s_cac_d6e0786e, S.s_mot_0231bfca]);
 
 /** Chữ trên bìa nhỏ: số tập nếu là sách trong một bộ ("16"), không thì hai chữ cái đầu. */
 export function coverLabel(title: string, part?: number | null): string {

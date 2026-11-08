@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
 
@@ -11,24 +12,24 @@ function tidy(text) { return String(text || "").trim().replace(/\s+/g, " ") }
 function authorSaveable(typed, shown) { return tidy(typed) !== tidy(shown || "") }
 
 // ---- capabilities.ts ----
-var LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
+var LINK_BOOK = S.s_sach_nay_lay_tu_may_tinh_khac_muon_sua_thi_d2a5136b
 function canEditLayer(caps) { return !!caps && (!!caps.workshop || !caps.link) }
 function studioNeed(caps) {
     if (!caps || caps.link) return null
     if (caps.workshop && caps.toolchain) return null
-    if (!caps.toolchain) return "cần cài Studio"
-    return "cuốn này chưa có dự án Studio"
+    if (!caps.toolchain) return S.s_can_cai_studio_7de0b351
+    return S.s_cuon_nay_chua_co_du_an_studio_b175061f
 }
 function syncsToComputer(caps) { return !!(caps && caps.sync) && !(caps && caps.workshop) }
 function editBlockedNote(caps) { return caps && caps.link && !caps.workshop ? LINK_BOOK : null }
-function holderName(remote) { return remote && typeof remote === "object" && remote.computer ? remote.computer : "máy tính" }
+function holderName(remote) { return remote && typeof remote === "object" && remote.computer ? remote.computer : S.s_may_tinh_8eafc226 }
 
 // Lời mô tả dưới tên hộp "Sửa sách"
 function editDescription(book, computer) {
-    if (computer) return "Đổi có hiệu lực ngay trên máy tính " + computer + " - audio và chữ của người làm sách giữ nguyên."
+    if (computer) return S.s_doi_co_hieu_luc_ngay_tren_may_tinh_2c86999e + computer + S.s_audio_va_chu_cua_nguoi_lam_sach_giu_nguyen_23fc70c2
     if (syncsToComputer(book.capabilities))
-        return "Đổi có hiệu lực ngay trên máy này và được gửi về " + holderName(book.remote) + " khi kết nối - audio và chữ của người làm sách giữ nguyên."
-    return "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+        return S.s_doi_co_hieu_luc_ngay_tren_may_nay_va_duoc_6f67ffbd + holderName(book.remote) + S.s_khi_ket_noi_audio_va_chu_cua_nguoi_lam_sac_100e8418
+    return S.s_doi_co_hieu_luc_ngay_va_chi_tren_may_nay_a_a2fe1444
 }
 
 // ---- model.ts seriesOf: bộ truyện từ tên sách, làm ô tìm bìa mặc định ----
@@ -62,9 +63,9 @@ function musicEditView(raw) {
 }
 
 // ---- CoverSearch.tsx ----
-var PROVIDER_NAMES = {itunes: "iTunes", open_library: "Open Library", google_books: "Google Books"}
+var PROVIDER_NAMES = {itunes: "iTunes", open_library: S.s_open_library_11e9037f, google_books: S.s_google_books_8a341a41}
 function failedSourcesNote(failed) {
-    return "Chưa nối được " + failed.map(function(name) { return PROVIDER_NAMES[name] || String(name).replace("_", " ") }).join(", ") + ". Thử lại hoặc chọn ảnh trên máy."
+    return S.s_chua_noi_duoc_21cf7b4e + failed.map(function(name) { return PROVIDER_NAMES[name] || String(name).replace("_", " ") }).join(", ") + S.s_thu_lai_hoac_chon_anh_tren_may_576777e9
 }
 function coverTitle(found) { return found.title + (found.author ? " - " + found.author : "") + " (" + found.provider + ")" }
 

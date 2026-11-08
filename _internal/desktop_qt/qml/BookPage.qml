@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -47,7 +48,7 @@ Item {
         x: stage.x
         width: stage.width
         showBack: true
-        backLabel: "Về Thư viện"
+        backLabel: S.s_ve_thu_vien_992fad7b
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
     }
@@ -96,7 +97,7 @@ Item {
         const before = bookDetail.point()
         Player.open(id, first, 0, true)
         if (before.chapterId !== undefined && (before.chapterId !== first || before.at > 30))
-            Api.toast("Đang nghe lại từ đầu", {duration: 8000, action: {label: "Quay lại chỗ cũ", run: function() { Player.open(id, before.chapterId, before.at, true) }}})
+            Api.toast(S.s_dang_nghe_lai_tu_dau_5ad4fe3c, {duration: 8000, action: {label: S.s_quay_lai_cho_cu_fea69b14, run: function() { Player.open(id, before.chapterId, before.at, true) }}})
     }
     function primary() {
         if (!bookDetail.hasPoint) root.read()
@@ -125,7 +126,7 @@ Item {
     Popover {
         id: more
         objectName: "bookMoreMenu"
-        Accessible.name: "Việc với sách"
+        Accessible.name: S.s_viec_voi_sach_9582a854
         anchorItem: moreButton
         panelWidth: 280
         pad: Theme.s8
@@ -148,7 +149,7 @@ Item {
                 width: parent.width
                 height: visible ? implicitHeight : 0
                 icon: "check-check"
-                text: root.finishedNow ? "Chưa nghe xong" : "Đã nghe xong"
+                text: root.finishedNow ? S.s_chua_nghe_xong_6b821209 : S.s_da_nghe_xong_d276b702
                 onClicked: { more.close(); root.setFinished(!root.finishedNow) }
             }
             EditBookItems {
@@ -202,7 +203,7 @@ Item {
     // Mục của sách: Chương | Lịch sử | Nhân vật (0, 1, 2). Sách chỉ có chữ (chưa phân vai) không có dàn nhân vật nên không có mục cuối.
     property int tab: 0
     readonly property bool hasCast: fullBook.id !== undefined && fullBook.stage !== "text"
-    readonly property var tabLabels: hasCast ? ["Chương", "Lịch sử", "Nhân vật"] : ["Chương", "Lịch sử"]
+    readonly property var tabLabels: hasCast ? [S.s_chuong_2d157977, S.s_lich_su_0a235708, S.s_nhan_vat_d4940c17] : [S.s_chuong_2d157977, S.s_lich_su_0a235708]
     readonly property int paneIndex: Math.min(tab, tabLabels.length - 1)
     property int previousPaneIndex: 0
     property int paneDirection: 1
@@ -262,7 +263,7 @@ Item {
             height: Theme.buttonHeight * (1 + (c.playable ? 2 : 0) + (root.canRename ? 1 : 0))
             MenuRow {
                 objectName: "chapterRead"
-                width: parent.width; icon: "book-open"; text: "Đọc chương này"
+                width: parent.width; icon: "book-open"; text: S.s_doc_chuong_nay_5d5272d3
                 onClicked: { chapterMenu.close(); reader.begin(root.book.bookId, parent.c.chapterId) }
             }
             MenuRow {
@@ -270,7 +271,7 @@ Item {
                 visible: Boolean(parent.c.playable)
                 width: parent.width
                 icon: "play"
-                text: "Nghe từ đầu chương"
+                text: S.s_nghe_tu_dau_chuong_06c66bfc
                 onClicked: { chapterMenu.close(); Player.open(root.book.bookId, parent.c.chapterId, 0, true) }
             }
             MenuRow {
@@ -278,7 +279,7 @@ Item {
                 visible: Boolean(parent.c.playable)
                 width: parent.width
                 icon: parent.c.done ? "circle-dashed" : "check-check"
-                text: parent.c.done ? "Chưa nghe" : "Đã nghe xong"
+                text: parent.c.done ? S.s_chua_nghe_2fbea4c8 : S.s_da_nghe_xong_d276b702
                 onClicked: { chapterMenu.close(); root.setChapterDone(parent.c.chapterId, !parent.c.done) }
             }
             MenuRow {
@@ -286,7 +287,7 @@ Item {
                 visible: root.canRename
                 width: parent.width
                 icon: "text-cursor-input"
-                text: "Đổi tên chương…"
+                text: S.s_doi_ten_chuong_bb06ca82
                 onClicked: {
                     chapterMenu.close()
                     const c = parent.c
@@ -356,7 +357,7 @@ Item {
                 Text {
                     visible: text !== ""
                     width: parent.width
-                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join("\u00a0·\u00a0")
+                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + S.s_chuong_9e6a01dc : ""].filter(s => !!s).join("\u00a0·\u00a0")
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -380,7 +381,7 @@ Item {
                     radius: height / 2
                     color: Theme.sunken
                     Accessible.role: Accessible.ProgressBar
-                    Accessible.name: "Đã nghe"
+                    Accessible.name: S.s_da_nghe_1e0f8d88
                     readonly property var progress: BookText.progressOf(root.fullBook)
                     Rectangle {
                         width: parent.width * Math.max(0, Math.min(1, Number(parent.progress.fraction || 0)))
@@ -432,7 +433,7 @@ Item {
                         objectName: "bookCaughtUp"
                         visible: bookDetail.caughtUp
                         width: actions.columns === 1 ? parent.width : Math.max(0, parent.width - actions.rowWidth - actions.columnSpacing)
-                        text: "Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong."
+                        text: S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13
                         color: Theme.text2
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
@@ -454,7 +455,7 @@ Item {
                         width: actions.rowWidth
                         height: secondary.height
                         Accessible.role: Accessible.Grouping
-                        Accessible.name: "Việc với sách"
+                        Accessible.name: S.s_viec_voi_sach_9582a854
                         Row {
                             id: secondary
                             readonly property var shown: [readButton, findButton, restartButton, moreButton].filter(b => b.visible)
@@ -465,7 +466,7 @@ Item {
                                 objectName: "bookRead"
                                 visible: bookDetail.hasPoint || bookDetail.caughtUp
                                 icon: "book-open"
-                                label: "Đọc"
+                                label: S.s_doc_5709880c
                                 Accessible.name: BookText.readLabel(root.fullBook, root.listening)
                                 onClicked: root.read()
                             }
@@ -473,8 +474,8 @@ Item {
                                 id: findButton
                                 objectName: "bookFind"
                                 icon: "search"
-                                label: "Tìm"
-                                Accessible.name: "Tìm chữ trong sách"
+                                label: S.s_tim_bbe47492
+                                Accessible.name: S.s_tim_chu_trong_sach_7bc2c2ee
                                 enabled: (root.fullBook.chapters || []).length > 0
                                 onClicked: root.find()
                             }
@@ -483,8 +484,8 @@ Item {
                                 objectName: "bookRestart"
                                 visible: !root.textOnly || bookDetail.hasPoint
                                 icon: "rotate-ccw"
-                                label: "Từ đầu"
-                                Accessible.name: "Nghe lại từ đầu"
+                                label: S.s_tu_dau_89ef6d78
+                                Accessible.name: S.s_nghe_lai_tu_dau_e251d632
                                 enabled: bookDetail.started && bookDetail.hasPoint && !bookDetail.finished
                                 onClicked: root.restart()
                             }
@@ -493,8 +494,8 @@ Item {
                                 objectName: "bookMore"
                                 visible: root.moreMenu
                                 icon: "ellipsis"
-                                label: "Thêm"
-                                Accessible.name: "Thêm việc với sách"
+                                label: S.s_them_dd92626f
+                                Accessible.name: S.s_them_viec_voi_sach_da033e6f
                                 active: more.open
                                 onClicked: more.toggle()
                             }
@@ -513,7 +514,7 @@ Item {
             PageSwitch {
                 id: tabs
                 objectName: "bookTabs"
-                label: "Mục của sách"
+                label: S.s_muc_cua_sach_37e9b664
                 labels: root.tabLabels
                 index: root.paneIndex
                 onPicked: index => root.tab = index
@@ -551,7 +552,7 @@ Item {
                     fullTitle: model.fullTitle
                     hasMenu: true
                     menuOpen: chapterMenu.open && root.menuChapter !== null && root.menuChapter.chapterId === model.chapterId
-                    Accessible.name: model.playable ? model.current && Player.playing ? `Tạm dừng ${model.fullTitle}` : `Nghe ${model.fullTitle}` : `Đọc ${model.fullTitle} (chưa có audio)`
+                    Accessible.name: model.playable ? model.current && Player.playing ? S.s_tam_dung_0_43ccbbf2(model.fullTitle) : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
                     onClicked: {
                         if (row.onMenuButton) return
                         if (model.playable) bookDetail.playChapter(model.chapterId)
@@ -618,8 +619,8 @@ Item {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         icon: "book-open-text"
-        title: "Không tìm thấy sách này"
-        text: "Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện."
-        Button { objectName: "bookMissingBack"; text: "Về thư viện"; onClicked: Nav.back() }
+        title: S.s_khong_tim_thay_sach_nay_0836038e
+        text: S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0
+        Button { objectName: "bookMissingBack"; text: S.s_ve_thu_vien_7bb3f8c2; onClicked: Nav.back() }
     }
 }

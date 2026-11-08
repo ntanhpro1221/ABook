@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -18,7 +19,7 @@ Column {
             height: Math.max(24, label.height + 4)
             ringMargin: 2
             Accessible.role: Accessible.Button
-            Accessible.name: "Chi tiết"
+            Accessible.name: S.s_chi_tiet_e762d926
             onClicked: root.open = !root.open
             Icon {
                 id: marker
@@ -33,7 +34,7 @@ Column {
                 id: label
                 x: 18
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Chi tiết"
+                text: S.s_chi_tiet_e762d926
                 color: Theme.danger
                 font.pixelSize: Theme.sizeCaption
             }

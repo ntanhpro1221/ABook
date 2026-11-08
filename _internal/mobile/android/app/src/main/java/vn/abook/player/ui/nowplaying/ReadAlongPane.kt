@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -73,11 +75,11 @@ fun ReadAlongPane(
                 }
         }
         when {
-            state.loading -> BasicText("Đang tải chữ", Modifier.align(Alignment.Center), style = Abook.type.bodySmall)
+            state.loading -> BasicText(S.s_dang_tai_chu_d97dd379, Modifier.align(Alignment.Center), style = Abook.type.bodySmall)
             state.error.isNotEmpty() -> Column(Modifier.align(Alignment.Center)) {
                 BasicText(state.error, style = Abook.type.bodySmall)
                 Box(Modifier.height(48.dp).pressable(onClick = onRetry), contentAlignment = Alignment.Center) {
-                    BasicText("Thử lại", style = Abook.type.label)
+                    BasicText(S.s_thu_lai_c58d068c, style = Abook.type.label)
                 }
             }
             else -> LazyColumn(
@@ -96,7 +98,7 @@ fun ReadAlongPane(
                     BasicText(
                         paragraph.text,
                         Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("paragraph_${paragraph.id}")
-                            .semantics { onClick("Nghe từ đây") { onListen(paragraph.startMs); true } }
+                            .semantics { onClick(S.s_nghe_tu_day_6a7ff4ab) { onListen(paragraph.startMs); true } }
                             .pointerInput(paragraph) {
                                 detectTapGestures { at ->
                                     onTap()
@@ -120,7 +122,7 @@ fun ReadAlongPane(
                 if (nextTitle != null) item(key = "next-chapter", contentType = "next") {
                     Column(Modifier.widthIn(max = 680.dp).fillMaxWidth().heightIn(min = 56.dp).pressable(onClick = onNext).testTag("read_next_chapter"),
                         verticalArrangement = Arrangement.Center) {
-                        BasicText("Chương tiếp theo", style = Abook.type.caption.copy(color = Abook.colors.text2))
+                        BasicText(S.s_chuong_tiep_theo_f07a08a4, style = Abook.type.caption.copy(color = Abook.colors.text2))
                         BasicText(nextTitle, style = Abook.type.body.copy(color = Abook.colors.accentText))
                     }
                 }
@@ -133,7 +135,7 @@ fun ReadAlongPane(
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
                 Box(Modifier.heightIn(min = 48.dp).pressable { following = true; onTap() }.testTag("follow_sentence"),
                     contentAlignment = Alignment.Center) {
-                    BasicText("Tới câu đang nghe", Modifier
+                    BasicText(S.s_toi_cau_dang_nghe_4526cf38, Modifier
                         .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                         style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))

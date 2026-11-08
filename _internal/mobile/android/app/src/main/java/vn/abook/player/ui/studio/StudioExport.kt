@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -31,9 +33,9 @@ import vn.abook.player.ui.export.ExportText
 
 /** Ba kiểu xuất của máy tính; `job` là tên đường `POST/GET /api/books/<id>/<job>` ([vn.abook.player.StudioPaths.exportJob]). */
 enum class StudioExportKind(val job: String, override val label: String) : Choice {
-    BookFile("bookfile-job", "File sách"),
-    M4b("m4b-job", "M4B"),
-    Mp3("mp3-job", "Thư mục MP3");
+    BookFile("bookfile-job", S.s_file_sach_ccdcf961),
+    M4b("m4b-job", S.s_m4b_c793d08a),
+    Mp3("mp3-job", S.s_thu_muc_mp3_2eea06d7);
 
     override val key: String get() = job
 
@@ -193,7 +195,7 @@ object StudioExportLogic {
             val done = minOf(job.done ?: 0, total)
             val fraction = from + (to - from) * if (total > 0) done.toFloat() / total else 0f
             val text = when {
-                phase == "listen" && total > 0 -> "Đã gom $done/$total chương"
+                phase == "listen" && total > 0 -> S.s_da_gom_0_1_chuong_ed4dbcd9(done, total)
                 (phase == "hash" || phase == "write") && total > 0 -> "${formatSize(done.toLong())}/${formatSize(total.toLong())}"
                 else -> StudioExportText.BUSY_BOOKFILE
             }
@@ -239,8 +241,8 @@ object StudioExportLogic {
     /** Dòng cỡ ước của file sách; rỗng khi chưa biết. */
     fun sizeNote(options: StudioExportOptions): String {
         if (options.bytes <= 0) return ""
-        val extra = if (options.musicPending > 0) "; cộng thêm ${options.musicPending} bài nhạc khi xuất" else ""
-        return "Cỡ ước tính: khoảng ${formatSize(options.bytes)}$extra."
+        val extra = if (options.musicPending > 0) S.s_cong_them_0_bai_nhac_khi_xuat_5661e4a4(options.musicPending) else ""
+        return S.s_co_uoc_tinh_khoang_0_1_6d7f5901(formatSize(options.bytes), extra)
     }
 
     /** Lượt xuất xong nói gì: nằm ở máy nào, tên file / thư mục, cỡ, và phần thiếu. */
@@ -252,28 +254,28 @@ object StudioExportLogic {
             result.size.takeIf { it > 0 }?.let { formatSize(it) },
         )
         val notes = listOfNotNull(
-            result.chapters?.let { c -> result.chaptersTotal?.takeIf { c < it }?.let { "$c/$it chương - chương chưa xong không có trong file" } },
-            result.missingSources.takeIf { it > 0 }?.let { "$it file nguồn chương đã bị dời hay xoá nên không có trong gói" },
-            result.musicMissing.takeIf { it > 0 }?.let { "$it đoạn thiếu nhạc vì chưa tải được bài" },
-            if (result.coverBroken) "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" else null,
-            result.skipped.takeIf { it.isNotEmpty() }?.let { "chưa có chương nào nên bỏ qua: " + it.joinToString(", ") { part -> "Phần $part" } },
+            result.chapters?.let { c -> result.chaptersTotal?.takeIf { c < it }?.let { S.s_0_1_chuong_chuong_chua_xong_khong_co_trong_35795edf(c, it) } },
+            result.missingSources.takeIf { it > 0 }?.let { S.s_0_file_nguon_chuong_da_bi_doi_hay_xoa_nen_a83aaefb(it) },
+            result.musicMissing.takeIf { it > 0 }?.let { S.s_0_doan_thieu_nhac_vi_chua_tai_duoc_bai_66255efe(it) },
+            if (result.coverBroken) S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 else null,
+            result.skipped.takeIf { it.isNotEmpty() }?.let { S.s_chua_co_chuong_nao_nen_bo_qua_09add84f + it.joinToString(", ") { part -> S.s_phan_0_7c77642d(part) } },
         )
         return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).dotJoined()).filter { it.isNotEmpty() }, notes)
     }
 
     /** Điều còn lại sau khi huỷ, theo kiểu xuất (web `stoppedNote`). */
     fun stoppedNote(kind: StudioExportKind): String = when (kind) {
-        StudioExportKind.BookFile -> "Chưa có file sách nào được ghi."
-        StudioExportKind.M4b -> "Chưa có file M4B nào được ghi."
-        StudioExportKind.Mp3 -> "Các chương đã ghi dở được xoá."
+        StudioExportKind.BookFile -> S.s_chua_co_file_sach_nao_duoc_ghi_acffb6e0
+        StudioExportKind.M4b -> S.s_chua_co_file_m4b_nao_duoc_ghi_341f690c
+        StudioExportKind.Mp3 -> S.s_cac_chuong_da_ghi_do_duoc_xoa_55c0187f
     }
 
     /** Loại file của một lần xuất trước đây, nói bằng cái người dùng nhận ra. */
     fun pastLabel(past: StudioPast): String = when (past.kind) {
-        "mp3" -> "MP3"
-        "m4b" -> "M4B"
-        "abookproj" -> "Dự án"
-        else -> "File sách"
+        "mp3" -> S.s_mp3_b84e4872
+        "m4b" -> S.s_m4b_c793d08a
+        "abookproj" -> S.s_du_an_4f139d43
+        else -> S.s_file_sach_ccdcf961
     }
 
     /** Tên cuối của đích (chỉ TÊN, không đường dẫn) - đích do máy tính gửi, có thể là đường Windows. */
@@ -281,7 +283,7 @@ object StudioExportLogic {
 
     fun pastTitle(past: StudioPast): String = listOf(pastLabel(past), pastName(past)).dotJoined()
 
-    fun pastLine(past: StudioPast): String = if (past.changed == 0) "Còn mới" else "${past.changed} chương đã đổi từ lần xuất này"
+    fun pastLine(past: StudioPast): String = if (past.changed == 0) S.s_con_moi_47b72502 else S.s_0_chuong_da_doi_tu_lan_xuat_nay_e38aaaee(past.changed)
 
     /** Mô tả ngắn của từng kiểu, cho người chưa biết chúng khác nhau chỗ nào. */
     fun about(kind: StudioExportKind): String = when (kind) {
@@ -292,37 +294,37 @@ object StudioExportLogic {
 }
 
 object StudioExportText {
-    const val TITLE = "Xuất sách"
-    const val LEAD = "Máy tính đóng gói; file nằm ở thư mục “Đã xuất” trong thư viện của máy tính."
-    const val EXPORT = "Xuất"
-    const val CANCEL = "Huỷ"
-    const val STOPPING = "Đang dừng"
-    const val RETRY = "Xuất lại"
-    const val LOADING = "Đang mở hộp Xuất"
-    const val MUSIC = "Kèm nhạc nền"
-    const val BUSY_BOOKFILE = "Đang đóng gói sách"
-    const val ABOUT_BOOKFILE = "Một file .abook mang cả chữ và tiếng: mở được ở ABook trên máy khác."
-    const val NO_CHAPTERS = "Sách chưa có chương nào để xuất."
-    const val NO_AUDIO = "Chưa có chương nào thu xong để xuất."
-    const val FFMPEG_TITLE = "Máy tính chưa có ffmpeg"
-    const val FFMPEG_LINE = "Cần ffmpeg để ghép âm thanh. Bạn tải nó trên máy tính, ở hộp Xuất của ABook."
-    const val HISTORY = "Đã xuất"
-    const val CANCEL_TITLE = "Huỷ xuất?"
-    const val CANCEL_CONFIRM = "Huỷ xuất"
-    const val CANCEL_KEEP = "Tiếp tục xuất"
-    const val STOPPING_NOTE = "Dừng ở chỗ an toàn kế tiếp."
-    const val FAILED = "Chưa xuất được"
-    const val STOPPED = "Đã dừng xuất"
+    const val TITLE = S.s_xuat_sach_792effe5
+    const val LEAD = S.s_may_tinh_dong_goi_file_nam_o_thu_muc_da_xu_40dbce64
+    const val EXPORT = S.s_xuat_b2ebc56b
+    const val CANCEL = S.s_huy_96732485
+    const val STOPPING = S.s_dang_dung_9b35aeb5
+    const val RETRY = S.s_xuat_lai_4ebb6635
+    const val LOADING = S.s_dang_mo_hop_xuat_26410b21
+    const val MUSIC = S.s_kem_nhac_nen_c616e8d2
+    const val BUSY_BOOKFILE = S.s_dang_dong_goi_sach_ac7bab85
+    const val ABOUT_BOOKFILE = S.s_mot_file_abook_mang_ca_chu_va_tieng_mo_duo_cc2f21c6
+    const val NO_CHAPTERS = S.s_sach_chua_co_chuong_nao_de_xuat_cbf33efb
+    const val NO_AUDIO = S.s_chua_co_chuong_nao_thu_xong_de_xuat_3b428245
+    const val FFMPEG_TITLE = S.s_may_tinh_chua_co_ffmpeg_7d05b938
+    const val FFMPEG_LINE = S.s_can_ffmpeg_de_ghep_am_thanh_ban_tai_no_tre_5e34a9d9
+    const val HISTORY = S.s_da_xuat_d801674e
+    const val CANCEL_TITLE = S.s_huy_xuat_fe04b8c2
+    const val CANCEL_CONFIRM = S.s_huy_xuat_ca425e96
+    const val CANCEL_KEEP = S.s_tiep_tuc_xuat_1c5b45b3
+    const val STOPPING_NOTE = S.s_dung_o_cho_an_toan_ke_tiep_9103075b
+    const val FAILED = S.s_chua_xuat_duoc_27b1025b
+    const val STOPPED = S.s_da_dung_xuat_ab8ac9d1
 
-    fun elapsed(seconds: Double) = "đã ${Fmt.clock(seconds)}"
+    fun elapsed(seconds: Double) = S.s_da_0_0e900305(Fmt.clock(seconds))
 
     /** "Đã xuất vào máy tính MayCuaNam-Laptop": nói rõ file nằm ở máy nào. */
-    fun doneTitle(machine: String): String = if (machine.isBlank()) "Đã xuất vào máy tính" else "Đã xuất vào máy tính $machine"
+    fun doneTitle(machine: String): String = if (machine.isBlank()) S.s_da_xuat_vao_may_tinh_d121586e else S.s_da_xuat_vao_may_tinh_0_19bf0167(machine)
 
     fun failedTitle(kind: StudioExportKind): String = when (kind) {
-        StudioExportKind.BookFile -> "Chưa xuất được file sách"
-        StudioExportKind.M4b -> "Chưa xuất được M4B"
-        StudioExportKind.Mp3 -> "Chưa xuất được MP3"
+        StudioExportKind.BookFile -> S.s_chua_xuat_duoc_file_sach_43236ec7
+        StudioExportKind.M4b -> S.s_chua_xuat_duoc_m4b_5a39de4c
+        StudioExportKind.Mp3 -> S.s_chua_xuat_duoc_mp3_1550e65a
     }
 }
 

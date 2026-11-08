@@ -35,7 +35,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         /** A runtime library must match the code in the APK: an old one cannot run, an old model still can. */
         val blocking: Boolean = false,
         /** What the listener calls this part ("có bản mới" card). */
-        val label: String = "Model nghe nhạc",
+        val label: String = S.s_model_nghe_nhac_4efd9d21,
     ) {
         /** Bytes that cross the network for this file. */
         val wireSize get() = packed?.size ?: size
@@ -53,8 +53,8 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         fun cancelled(): Boolean = false
     }
 
-    class ChecksumError : IOException("sai mã kiểm")
-    class SpaceError : IOException("Bạn giải phóng bộ nhớ trên điện thoại rồi bấm Thử lại.")
+    class ChecksumError : IOException(S.s_sai_ma_kiem_7b6b7023)
+    class SpaceError : IOException(S.s_ban_giai_phong_bo_nho_tren_dien_thoai_roi_17f5da65)
 
     /** The connection ended before the whole file came (a cut without an error): the network, not the file. */
     class ShortRead(message: String) : IOException(message)
@@ -64,7 +64,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     class Failure(val message: String, val detail: String)
 
     /** The download was stopped on request ([Progress.cancelled]): not an error, and never retried. */
-    class Cancelled : Exception("đã huỷ")
+    class Cancelled : Exception(S.s_da_huy_6287edb4)
 
     private val stampFile get() = File(dir, stampName)
 
@@ -179,7 +179,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                 } else {
                     ZipInputStream(wire.inputStream().buffered()).use { zip ->
                         while (true) {
-                            val entry = zip.nextEntry ?: throw IOException("thiếu ${packed.member}")
+                            val entry = zip.nextEntry ?: throw IOException(S.s_thieu_0_cad4dc74(packed.member))
                             if (entry.name == packed.member) break
                         }
                         output(raw).use { zip.copyTo(it, 1 shl 16) }
@@ -208,7 +208,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     private fun promote(from: File, to: File, name: String) {
         if (from.renameTo(to)) return
         to.delete()
-        if (!from.renameTo(to)) throw IOException("không ghi được file $name")
+        if (!from.renameTo(to)) throw IOException(S.s_khong_ghi_duoc_file_0_b546fa7f(name))
     }
 
     private fun transfer(remote: String, expected: String, size: Long, partial: File, progress: Progress) {
@@ -230,16 +230,16 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                 if (code == 416 && have > 0) {
                     // The part is longer than the file the server holds now: drop it; the retry asks for the whole file.
                     PartResume.discard(partial)
-                    throw ShortRead("phần tải dở không còn khớp file trên máy chủ - tải lại từ đầu")
+                    throw ShortRead(S.s_phan_tai_do_khong_con_khop_file_tren_may_c_55522a32)
                 }
-                if (code != HttpURLConnection.HTTP_PARTIAL && code != HttpURLConnection.HTTP_OK) throw IOException("máy chủ trả mã $code")
+                if (code != HttpURLConnection.HTTP_PARTIAL && code != HttpURLConnection.HTTP_OK) throw IOException(S.s_may_chu_tra_ma_0_5de7bc3d(code))
                 when (PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)) {
                     PartResume.Answer.RESUME -> {}
                     PartResume.Answer.WHOLE -> have = 0 // the server ignored Range, or the file changed: start over
                     // A 206 that is not the tail of the file the part came from: drop the part; the retry asks for the whole file.
                     PartResume.Answer.STALE_TAIL -> {
                         PartResume.discard(partial)
-                        throw ShortRead("phần tải dở không còn khớp file trên máy chủ - tải lại từ đầu")
+                        throw ShortRead(S.s_phan_tai_do_khong_con_khop_file_tren_may_c_55522a32)
                     }
                 }
                 connection.inputStream.use { input ->
@@ -253,7 +253,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                             if (progress.cancelled()) throw Cancelled()
                             val read = input.read(buffer)
                             if (read < 0) break
-                            if (written + read > size) throw IOException("file lớn hơn dự kiến")
+                            if (written + read > size) throw IOException(S.s_file_lon_hon_du_kien_834db73e)
                             output.write(buffer, 0, read)
                             written += read
                             progress.current(written)
@@ -264,7 +264,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                 connection.disconnect()
             }
         }
-        if (partial.length() != size) throw ShortRead("tải chưa đủ (${partial.length()}/$size byte)")
+        if (partial.length() != size) throw ShortRead(S.s_tai_chua_du_0_1_byte_a553f60d(partial.length(), size))
         if (sha256(partial) != expected) {
             PartResume.discard(partial)
             throw ChecksumError()
@@ -277,7 +277,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
 
         /** A download that could not reach the server (no name lookup, timeout, connection cut) - same sentence as the desktop
          *  (abook/webui/studio_setup.py NETWORK_FAILURE). */
-        const val NETWORK_FAILURE = "Chưa kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm Thử lại."
+        const val NETWORK_FAILURE = S.s_chua_ket_noi_duoc_toi_may_chu_tai_kiem_tra_45aad6e1
 
         /** The network, not the file or the phone, failed: anywhere in the cause chain. */
         fun isNetwork(error: Throwable): Boolean = generateSequence(error) { it.cause }.take(5).any {
@@ -290,10 +290,10 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         fun failure(what: String, error: Throwable): Failure = when {
             generateSequence(error) { it.cause }.take(5).any {
                 it is SpaceError || it.message.orEmpty().contains("ENOSPC", true) || it.message.orEmpty().contains("No space left", true)
-            } -> Failure("Bạn giải phóng bộ nhớ trên điện thoại rồi bấm Thử lại.", technical(error))
-            error is ChecksumError -> Failure("$what tải về bị hỏng — bạn bấm Thử lại để tải lại.", "")
+            } -> Failure(S.s_ban_giai_phong_bo_nho_tren_dien_thoai_roi_17f5da65, technical(error))
+            error is ChecksumError -> Failure(S.s_0_tai_ve_bi_hong_ban_bam_thu_lai_de_tai_la_766b8bd5(what), "")
             isNetwork(error) -> Failure(NETWORK_FAILURE, technical(error))
-            else -> Failure("Chưa tải được $what — bạn bấm Thử lại hoặc xem Chi tiết để nhờ hỗ trợ.", technical(error))
+            else -> Failure(S.s_chua_tai_duoc_0_ban_bam_thu_lai_hoac_xem_c_47566603(what), technical(error))
         }
 
         /** The raw error, short enough for a folded "Chi tiết". */

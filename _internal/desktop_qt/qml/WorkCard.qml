@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -123,9 +124,9 @@ Item {
                 size: "sm"
                 kind: "ghost"
                 icon: "rotate-ccw"
-                text: "Hoàn tác"
+                text: S.s_hoan_tac_e72ff675
                 enabled: !root.asked
-                Accessible.name: "Hoàn tác: " + W.cardTitle(root.item)
+                Accessible.name: S.s_hoan_tac_4f656a74 + W.cardTitle(root.item)
                 onClicked: root.undo()
             }
         }
@@ -146,7 +147,7 @@ Item {
                 objectName: "workAffected"
                 rightPadding: 12
                 textFormat: Text.RichText
-                text: "Ảnh hưởng <b><span style=\"color:" + W.cssColor(Theme.text) + "\">" + Studio.formatNumber(root.item.allLines && root.scope === "all" ? root.item.allLines.length : root.item.affected) + "</span></b> câu"
+                text: S.s_anh_huong_b_span_style_color_eefdcb72 + W.cssColor(Theme.text) + "\">" + Studio.formatNumber(root.item.allLines && root.scope === "all" ? root.item.allLines.length : root.item.affected) + S.s_span_b_cau_e3672e40
                 color: Theme.text2
                 font.pixelSize: Theme.sizeCaption
             }
@@ -154,8 +155,8 @@ Item {
                 objectName: "workCurrent"
                 rightPadding: 12
                 textFormat: Text.RichText
-                text: (root.item.kind === "audio" ? "Trạng thái" : root.item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng") + ": <b><span style=\"color:" + W.cssColor(Theme.text) + "\">"
-                    + W.esc(root.item.kind === "narrator" && !root.item.current ? "không ai - chương kể ở ngôi thứ ba" : root.item.current || "") + "</span></b>"
+                text: (root.item.kind === "audio" ? S.s_trang_thai_cb31de81 : root.item.kind === "narrator" ? S.s_may_coi_nguoi_ke_la_f1309939 : S.s_may_dang_dung_d9ef0879) + ": <b><span style=\"color:" + W.cssColor(Theme.text) + "\">"
+                    + W.esc(root.item.kind === "narrator" && !root.item.current ? S.s_khong_ai_chuong_ke_o_ngoi_thu_ba_209ef4df : root.item.current || "") + "</span></b>"
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 width: Math.min(implicitWidth, parent.width)
@@ -180,7 +181,7 @@ Item {
             id: audioFix
             Item {
                 height: 12 + review.height
-                Button { id: review; objectName: "workReview"; y: 12; size: "sm"; kind: "ghost"; icon: "audio-lines"; text: "Nghe lại"; onClicked: root.openReview(root.item.key) }
+                Button { id: review; objectName: "workReview"; y: 12; size: "sm"; kind: "ghost"; icon: "audio-lines"; text: S.s_nghe_lai_2ac2936f; onClicked: root.openReview(root.item.key) }
             }
         }
         Component {
@@ -207,7 +208,7 @@ Item {
                     y: 12
                     size: "sm"
                     kind: "ghost"
-                    text: "Bỏ yêu cầu này"
+                    text: S.s_bo_yeu_cau_nay_670ce121
                     busy: parent.busy
                     onActivated: { parent.busy = true; root.work.dropRefused(root.item, function() { parent.busy = false }) }
                 }
@@ -226,7 +227,7 @@ Item {
                         y: 12
                         size: "sm"
                         kind: "ghost"
-                        text: "Chọn giọng khác…"
+                        text: S.s_chon_giong_khac_8cd635ac
                         onClicked: root.pickVoice(root.item.pickVoice)
                     }
                 }
@@ -262,7 +263,7 @@ Item {
                     width: parent.width
                     spacing: 6
                     Accessible.role: Accessible.Grouping
-                    Accessible.name: "Lựa chọn"
+                    Accessible.name: S.s_lua_chon_499eda35
                     Repeater {
                         model: root.item.options || []
                         delegate: Rectangle {
@@ -294,7 +295,7 @@ Item {
                 objectName: "workPickNote"
                 visible: root.picked !== null && Boolean(root.item.lines)
                 width: parent.width
-                text: root.picked !== null && root.item.lines ? W.pickNote(root.picked.length, root.item.lines.length) + " - bỏ chọn câu không phải của người ấy." : ""
+                text: root.picked !== null && root.item.lines ? W.pickNote(root.picked.length, root.item.lines.length) + S.s_bo_chon_cau_khong_phai_cua_nguoi_ay_c8d4e374 : ""
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -337,8 +338,8 @@ Item {
                 objectName: "workMore"
                 size: "sm"
                 kind: "ghost"
-                text: root.all ? "Thu gọn" : "Xem cả " + Studio.formatNumber(root.page.total) + " câu"
-                Accessible.description: root.all ? "Đang mở" : "Đang đóng"
+                text: root.all ? S.s_thu_gon_1f6bf2c3 : S.s_xem_ca_bcce605f + Studio.formatNumber(root.page.total) + S.s_cau_b07e1008
+                Accessible.description: root.all ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
                 onClicked: {
                     if (!root.all && root.page.next && root.more.length === 0) root.loadMore()
                     root.all = !root.all
@@ -350,7 +351,7 @@ Item {
                 size: "sm"
                 kind: "ghost"
                 enabled: !root.loadingMore
-                text: root.loadingMore ? "Đang tải…" : W.moreText(root.examples.length, root.page.total)
+                text: root.loadingMore ? S.s_dang_tai_42d77f3a : W.moreText(root.examples.length, root.page.total)
                 onClicked: root.loadMore()
             }
         }

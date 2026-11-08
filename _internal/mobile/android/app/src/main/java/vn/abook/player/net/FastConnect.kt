@@ -1,5 +1,7 @@
 package vn.abook.player.net
 
+import vn.abook.player.S
+
 import java.io.Closeable
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -133,7 +135,7 @@ class FastConnect internal constructor(
 
     private fun addressesOf(host: String): List<InetAddress> {
         val bare = host.trim().trim('[', ']')
-        if (bare.isEmpty()) throw UnknownHostException("thiếu tên máy")
+        if (bare.isEmpty()) throw UnknownHostException(S.s_thieu_ten_may_b466e029)
         if (isLiteral(bare)) return listOf(InetAddress.getByName(bare))
         val found = interleave(resolver.resolve(bare))
         if (found.isEmpty()) throw UnknownHostException(bare)
@@ -165,7 +167,7 @@ class FastConnect internal constructor(
             while (true) {
                 val now = System.nanoTime()
                 if (deadline != NO_DEADLINE && now - deadline >= 0) {
-                    throw SocketTimeoutException("hết giờ nối tới $host:$port").apply { lastError?.let { initCause(it) } }
+                    throw SocketTimeoutException(S.s_het_gio_noi_toi_0_1_bf436963(host, port)).apply { lastError?.let { initCause(it) } }
                 }
                 if (started.size < addresses.size && now - nextAt >= 0) {
                     val attempt = Attempt(InetSocketAddress(addresses[started.size], port))
@@ -190,7 +192,7 @@ class FastConnect internal constructor(
                     outcomes.poll(wake, TimeUnit.NANOSECONDS)
                 } catch (error: InterruptedException) {
                     Thread.currentThread().interrupt()
-                    throw InterruptedIOException("bị ngắt khi đang nối")
+                    throw InterruptedIOException(S.s_bi_ngat_khi_dang_noi_0453720a)
                 } ?: continue
                 val error = done.error
                 if (error == null) {
@@ -232,9 +234,9 @@ class FastConnect internal constructor(
                 configure(connection)
                 val code = connection.responseCode
                 if (code !in REDIRECTS) return connection
-                val next = URL(URL(current), connection.getHeaderField("Location") ?: throw IOException("HTTP $code không có nơi chuyển tới"))
+                val next = URL(URL(current), connection.getHeaderField("Location") ?: throw IOException(S.s_http_0_khong_co_noi_chuyen_toi_f6ae75eb(code)))
                 if (current.startsWith("https://", ignoreCase = true) && !next.protocol.equals("https", ignoreCase = true)) {
-                    throw IOException("bị chuyển sang địa chỉ không an toàn")
+                    throw IOException(S.s_bi_chuyen_sang_dia_chi_khong_an_toan_f9f2b559)
                 }
                 current = next.toString()
             } catch (error: Throwable) {
@@ -243,7 +245,7 @@ class FastConnect internal constructor(
             }
             connection.disconnect()
         }
-        throw IOException("chuyển hướng quá nhiều lần")
+        throw IOException(S.s_chuyen_huong_qua_nhieu_lan_1c09e8cb)
     }
 
     /**
@@ -351,7 +353,7 @@ class FastConnect internal constructor(
         private fun remainingMs(deadline: Long): Int {
             if (deadline == NO_DEADLINE) return 0
             val left = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
-            if (left <= 0) throw SocketTimeoutException("hết giờ trước khi nối")
+            if (left <= 0) throw SocketTimeoutException(S.s_het_gio_truoc_khi_noi_18b03bee)
             return minOf(left, Int.MAX_VALUE.toLong()).toInt()
         }
 

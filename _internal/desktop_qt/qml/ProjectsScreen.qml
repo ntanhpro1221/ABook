@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -64,13 +65,13 @@ FocusScope {
         objectName: "projectsHeader"
         x: root.contentX
         width: root.contentW
-        title: "Studio"
+        title: S.s_studio_0aa91af2
         subtitle: root.loading || root.failed ? " " : Logic.projectsSubtitle(root.books.length)
         Button {
             objectName: "newProject"
             opacity: root.listed ? 1 : 0
             enabled: opacity > 0
-            text: "Dự án mới"
+            text: S.s_du_an_moi_992d22b2
             icon: "plus"
             kind: "ghost"
             onClicked: root.newRequested()
@@ -82,8 +83,8 @@ FocusScope {
             visible: Boolean(root.store && root.store.info && root.store.info.dialogs)
             icon: "ellipsis"
             iconSize: 20
-            tip: "Tuỳ chọn Studio"
-            Accessible.name: "Tuỳ chọn Studio"
+            tip: S.s_tuy_chon_studio_16c07366
+            Accessible.name: S.s_tuy_chon_studio_16c07366
             onClicked: { studioMenu.anchorItem = studioMore; studioMenu.show() }
         }
     }
@@ -117,10 +118,10 @@ FocusScope {
             width: root.rowW
             height: visible ? 28 : 0
             Rectangle { x: 12; y: parent.height - 1; width: parent.width - 24; height: 1; color: Theme.line }
-            Text { x: root.cols.nameX; y: 4; width: root.cols.nameW; text: "Dự án"; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
-            Text { x: root.cols.statusX; y: 4; width: root.cols.statusW; text: "Trạng thái"; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
-            Text { x: root.cols.progressX; y: 4; width: root.cols.progressW; text: "Tiến độ"; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
-            Text { visible: root.kind === "wide"; x: root.cols.updatedX; y: 4; width: root.cols.updatedW; horizontalAlignment: Text.AlignRight; text: "Cập nhật"; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { x: root.cols.nameX; y: 4; width: root.cols.nameW; text: S.s_du_an_4f139d43; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { x: root.cols.statusX; y: 4; width: root.cols.statusW; text: S.s_trang_thai_cb31de81; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { x: root.cols.progressX; y: 4; width: root.cols.progressW; text: S.s_tien_do_e5947845; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { visible: root.kind === "wide"; x: root.cols.updatedX; y: 4; width: root.cols.updatedW; horizontalAlignment: Text.AlignRight; text: S.s_cap_nhat_5293d03c; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
         }
 
         // ---- khung chờ ----
@@ -132,7 +133,7 @@ FocusScope {
             width: root.contentW
             shape: "rows"
             count: 5
-            label: "Đang tải danh sách dự án"
+            label: S.s_dang_tai_danh_sach_du_an_269d378e
         }
 
         // ---- bảng ----
@@ -187,7 +188,7 @@ FocusScope {
                         book: cell.row.book || ({})
                         layoutKind: root.kind
                         local: root.local
-                        computer: root.store ? root.store.computerName : "máy tính"
+                        computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226
                         menuOpen: menu.open && root.menuId === (cell.row.id || "")
                         onOpened: root.projectOpened(cell.row.id)
                         onMenuRequested: anchor => {
@@ -214,7 +215,7 @@ FocusScope {
             y: 24
             width: root.contentW
             open: root.failed
-            message: "Chưa tải được danh sách dự án; bạn hãy kiểm tra kết nối rồi thử lại."
+            message: S.s_chua_tai_duoc_danh_sach_du_an_ban_hay_kiem_7f4ca36c
             onRetry: root.store.loadLibrary()
         }
         EmptyState {
@@ -225,10 +226,10 @@ FocusScope {
             width: root.contentW
             icon: "folder-x"
             title: root.local && root.store && root.store.libraryData && root.store.libraryData.root
-                   ? "Không thấy thư mục thư viện “" + Logic.folderName(root.store.libraryData.root) + "”" : "Không thấy thư mục thư viện"
-            text: "Ổ chưa cắm, hay thư mục đã đổi tên. Cắm lại ổ hoặc chọn chỗ mới; chỗ đang nghe vẫn giữ."
-            Button { visible: root.local; text: "Chọn thư mục"; icon: "settings"; onClicked: if (Nav.stack) Nav.stack.show(2) }
-            OnComputerPill { visible: !root.local; verb: "Chọn lại thư mục thư viện"; computer: root.store ? root.store.computerName : "máy tính" }
+                   ? S.s_khong_thay_thu_muc_thu_vien_a160d7be + Logic.folderName(root.store.libraryData.root) + "”" : S.s_khong_thay_thu_muc_thu_vien_8c2af7eb
+            text: S.s_o_chua_cam_hay_thu_muc_da_doi_ten_cam_lai_713e694c
+            Button { visible: root.local; text: S.s_chon_thu_muc_1fe47e38; icon: "settings"; onClicked: if (Nav.stack) Nav.stack.show(2) }
+            OnComputerPill { visible: !root.local; verb: S.s_chon_lai_thu_muc_thu_vien_2d290748; computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226 }
         }
         EmptyState {
             objectName: "projectsEmpty"
@@ -237,9 +238,9 @@ FocusScope {
             y: 48 - 56
             width: root.contentW
             icon: "clapperboard"
-            title: "Chưa có dự án"
-            text: "Biến một truyện thành sách nói nhiều giọng."
-            Button { objectName: "newProjectEmpty"; text: "Dự án mới"; icon: "plus"; size: "lg"; onClicked: root.newRequested() }
+            title: S.s_chua_co_du_an_dd6cd3d2
+            text: S.s_bien_mot_truyen_thanh_sach_noi_nhieu_giong_3e0bcdc1
+            Button { objectName: "newProjectEmpty"; text: S.s_du_an_moi_992d22b2; icon: "plus"; size: "lg"; onClicked: root.newRequested() }
         }
 
     }
@@ -253,14 +254,14 @@ FocusScope {
     ProjectMenu {
         id: studioMenu
         objectName: "studioMenu"
-        items: [Logic.item("openExisting", "folder-open", "Mở dự án có sẵn…")]
+        items: [Logic.item("openExisting", "folder-open", S.s_mo_du_an_co_san_344c8318)]
         onPicked: root.store.openExisting(function(id) { root.projectOpened(id) })
     }
     StudioDialogs {
         id: dialogs
         store: root.store
         local: root.local
-        computer: root.store ? root.store.computerName : "máy tính"
+        computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226
         onListenRequested: id => root.listenRequested(id)
         onNewProjectRequested: (mode, id) => root.newProjectRequested(mode, id)
     }

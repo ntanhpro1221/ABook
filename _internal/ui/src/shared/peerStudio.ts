@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 // "Mở Studio" của máy tính đã ghép ngay trong app máy này (webui/peer_studio.py, soát a27 lỗi 14): cùng giao diện, chỉ khác gốc API.
 // Trang mang `?peer=<mã máy>`; mọi lời gọi `/api/...` và `/media/...` đi qua cầu nối của máy chủ máy này, nơi giữ mã thiết bị đã
 // nhận lúc ghép - mã ấy không bao giờ xuống trang.
@@ -37,23 +38,23 @@ export const LISTEN_ONLY_EVENT = "abook-listen-only";
 
 /** Máy kia chưa cho dòng thiết bị của máy này "Điều khiển sản xuất" - cùng câu máy chủ trả (peer_studio.listen_only). */
 export function listenOnlyLine(name: string): string {
-  return `Chỉ nghe - bật quyền sửa ở ${name}: Cài đặt > Thiết bị`;
+  return S.s_chi_nghe_bat_quyen_sua_o_0_cai_dat_thiet_b_ebb26e94(name);
 }
 
 /** Máy cần bật quyền sửa cho trang chỉ nghe: máy tính đang mở qua app này (`peer`), không thì chính máy phục vụ trang (`machine` -
  *  Studio từ xa trong trình duyệt hay app điện thoại, remote_studio.forward). */
 export function listenOnlyOwner(info: { peer?: { name: string }; machine?: string }): string {
-  return info.peer?.name || info.machine || "máy tính";
+  return info.peer?.name || info.machine || S.s_may_tinh_8eafc226;
 }
 
 /** Dòng ở thanh trên cùng khi đang mở Studio của máy khác: máy ấy không trả lời (câu của máy chủ), chỉ được nghe, hay bình thường. */
 export function peerBarLine(name: string, { silent = "", listenOnly = false }: { silent?: string; listenOnly?: boolean } = {}): string {
-  if (silent) return `${silent} - tự nối lại khi máy ấy trả lời`;
-  return listenOnly ? listenOnlyLine(name) : `Đang mở Studio của ${name}`;
+  if (silent) return S.s_0_tu_noi_lai_khi_may_ay_tra_loi_a2c6470a(silent);
+  return listenOnly ? listenOnlyLine(name) : S.s_dang_mo_studio_cua_0_53bcaadc(name);
 }
 
 /** Việc chỉ làm được ngay trên máy tính phục vụ trang ("Làm ở máy tính NGD-PC", "Đổi ở máy tính NGD-PC"): thay cho nút ẩn im lặng hay nút
  *  bấm ra 403 (soát a33). `verb`: việc người dùng đang tìm. Chưa biết tên máy thì chỉ nói "máy tính". */
 export function onComputerLine(verb: string, name: string): string {
-  return name && name !== "máy tính" ? `${verb} ở máy tính ${name}` : `${verb} ở máy tính`;
+  return name && name !== S.s_may_tinh_8eafc226 ? S.s_0_o_may_tinh_1_0a036b60(verb, name) : S.s_0_o_may_tinh_bfe7dd1d(verb);
 }

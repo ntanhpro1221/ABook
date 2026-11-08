@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -81,10 +83,10 @@ object Wav {
 
     /** Nối các file WAV cùng định dạng thành `out` (một đầu 44 byte + dữ liệu của từng mảnh). */
     fun concat(parts: List<File>, out: File): Format {
-        val formats = parts.map { format(it) ?: throw IOException("không đọc được WAV: ${it.name}") }
+        val formats = parts.map { format(it) ?: throw IOException(S.s_khong_doc_duoc_wav_0_903e6335(it.name)) }
         val first = formats.first()
         if (formats.any { it.sampleRate != first.sampleRate || it.channels != first.channels || it.bitsPerSample != first.bitsPerSample }) {
-            throw IOException("các mảnh WAV khác định dạng")
+            throw IOException(S.s_cac_manh_wav_khac_dinh_dang_812de347)
         }
         val dataSize = parts.indices.sumOf { parts[it].length() - formats[it].dataOffset }
         out.outputStream().buffered().use { sink ->
@@ -94,7 +96,7 @@ object Wav {
                     var left = formats[index].dataOffset.toLong()
                     while (left > 0) {
                         val skipped = input.skip(left)
-                        if (skipped <= 0) throw IOException("WAV cụt: ${part.name}")
+                        if (skipped <= 0) throw IOException(S.s_wav_cut_0_af1ee4a8(part.name))
                         left -= skipped
                     }
                     input.copyTo(sink)

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
@@ -65,7 +67,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
     override suspend fun load(id: String): EditSnapshot = withContext(Dispatchers.IO) {
         Store.init(context)
         val book = Store.manifest(id) ?: Store.streamManifest(id)?.let { Store.streamed(id, it) }
-            ?: error("Không tìm thấy sách. Bạn hãy quay lại Thư viện.")
+            ?: error(S.s_khong_tim_thay_sach_ban_hay_quay_lai_thu_v_54d9bdb0)
         val array = book.optJSONArray("chapters")
         val dir = Store.bookDir(id)
         // Tên trong file gốc (trước lớp sửa) để hiện "Về tên gốc": cuốn nghe thẳng chưa tải có stream.json cạnh lớp sửa, không có thì để trống.
@@ -81,7 +83,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         val edits = BookEdits.load(dir)
         val pending = EditsSync.pending(dir, edits)
         val sync = EditsSync.view(dir, pending)
-        val holder = SyncLink.holderName(context, id).ifEmpty { "máy tính" }
+        val holder = SyncLink.holderName(context, id).ifEmpty { S.s_may_tinh_8eafc226 }
         val last = sync.optJSONObject("last")
         EditSnapshot(id, book.optString("title"), book.optString("author").takeUnless { it == "null" }.orEmpty(), chapters,
             LibraryRepo.coverOf(id), Playlists.isTextBook(book), Store.editDestination(id) != null,

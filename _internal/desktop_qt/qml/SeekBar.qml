@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -21,8 +22,8 @@ Item {
     enabled: Player.loaded && total > 0
     activeFocusOnTab: enabled
     Accessible.role: Accessible.Slider
-    Accessible.name: "Vị trí trong chương"
-    Accessible.description: "Đã nghe chương này\u00a0·\u00a0" + Player.clockText(shownPosition)
+    Accessible.name: S.s_vi_tri_trong_chuong_2f741c43
+    Accessible.description: S.s_da_nghe_chuong_nay_u00a0_u00a0_e748babe + Player.clockText(shownPosition)
     Keys.onLeftPressed: Player.skip(-Player.skipSeconds)
     Keys.onRightPressed: Player.skip(Player.skipSeconds)
     Keys.onUpPressed: Player.skip(Player.skipSeconds)
@@ -53,8 +54,8 @@ Item {
             radius: parent.radius
             color: Theme.accent
             Accessible.role: Accessible.ProgressBar
-            Accessible.name: "Đã nghe chương này"
-            Accessible.description: `đã nghe ${Math.round(root.fraction * 100)}% chương`
+            Accessible.name: S.s_da_nghe_chuong_nay_4e1ecf11
+            Accessible.description: S.s_da_nghe_0_chuong_474d875d(Math.round(root.fraction * 100))
         }
     }
     Rectangle {

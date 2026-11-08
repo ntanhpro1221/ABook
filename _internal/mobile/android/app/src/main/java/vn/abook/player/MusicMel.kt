@@ -109,7 +109,7 @@ object MusicMel {
             for (i in 0 until MAX_SAMPLES) out[i] = wave[offset + i].toDouble()
             return out
         }
-        require(length > 0) { "cửa sổ rỗng" }
+        require(length > 0) { S.s_cua_so_rong_ec286216 }
         for (i in 0 until (MAX_SAMPLES / length) * length) out[i] = wave[offset + i % length].toDouble()
         return out
     }
@@ -164,7 +164,7 @@ object MusicMel {
                 is Number -> (have as? Number)?.toDouble() == want.toDouble()
                 else -> have == want
             }
-            if (!same) throw IllegalArgumentException("preprocessor_config $key=$have, bộ phân tích chép cứng $want")
+            if (!same) throw IllegalArgumentException(S.s_preprocessor_config_0_1_bo_phan_tich_chep_dbd403d7(key, have, want))
         }
     }
 }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.S
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -149,7 +151,7 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, tag:
     ListRow(
         label,
         Modifier.pressable(Role.Switch) { onChange(!checked) }
-            .semantics { stateDescription = if (checked) "Bật" else "Tắt" }
+            .semantics { stateDescription = if (checked) S.s_bat_f26cbc4a else S.s_tat_3286064e }
             .testTag(tag),
         hint = hint,
     ) {
@@ -384,7 +386,7 @@ fun InlineProblem(message: String, onRetry: (() -> Unit)? = null, tag: String = 
             BasicText(shown, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.weight(1f).padding(top = if (onRetry != null) 14.dp else Dim.s8, bottom = if (onRetry != null) 13.dp else Dim.s8))
             if (onRetry != null) {
                 Spacer(Modifier.width(Dim.s12))
-                TextAction("Thử lại", onRetry, "$tag-retry")
+                TextAction(S.s_thu_lai_c58d068c, onRetry, "$tag-retry")
             }
         }
     }

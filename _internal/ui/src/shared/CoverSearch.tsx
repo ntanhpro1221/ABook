@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
@@ -9,7 +10,7 @@ import { api, ApiError } from "@/studio/api";
 import { useFadeScroller } from "./scrollFade";
 
 /** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
-const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: "Open Library", google_books: "Google Books" };
+const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: S.s_open_library_11e9037f, google_books: S.s_google_books_8a341a41 };
 
 export interface FoundCover {
   provider: string;
@@ -28,7 +29,7 @@ export interface CoverSearchResult {
 
 /** Câu báo "chưa hỏi được nguồn nào" - dùng chung để hai nơi hiện cùng một câu. */
 export function failedSourcesNote(failed: string[]): string {
-  return `Chưa nối được ${failed.map((name) => PROVIDER_NAMES[name] ?? name.replace("_", " ")).join(", ")}. Thử lại hoặc chọn ảnh trên máy.`;
+  return S.s_chua_noi_duoc_0_thu_lai_hoac_chon_anh_tren_2aa913a7(failed.map((name) => PROVIDER_NAMES[name] ?? name.replace("_", " ")).join(", "));
 }
 
 /**
@@ -73,7 +74,7 @@ export function CoverSearchPanel({
     onSuccess: () => {
       onChosen();
       onClose();
-      toast.success("Đã đặt ảnh bìa");
+      toast.success(S.s_da_dat_anh_bia_90470364);
     },
   });
   useEffect(() => {
@@ -118,19 +119,17 @@ export function CoverSearchPanel({
           id="cover-search-query"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Tên sách (tiếng Anh thường cho nhiều kết quả hơn)"
-          aria-label="Tên sách để tìm bìa"
+          placeholder={S.s_ten_sach_tieng_anh_thuong_cho_nhieu_ket_qu_82eea1b6}
+          aria-label={S.s_ten_sach_de_tim_bia_4f406cde}
           className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
         />
-        <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" icon={Search} loading={search.isPending}>
-          Tìm
-        </Button>
+        <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" icon={Search} loading={search.isPending}>{S.s_tim_bbe47492}</Button>
       </form>
       <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[55vh] overflow-y-auto">
         {search.isPending ? (
-          <ContentSkeleton shape="covers" count={4} label="Đang tìm ảnh bìa" />
+          <ContentSkeleton shape="covers" count={4} label={S.s_dang_tim_anh_bia_af1f4a20} />
         ) : search.isError && !wasAborted(search.error) ? (
-          <InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa." onRetry={() => search.mutate(query)} />
+          <InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_anh_b_887a4046} onRetry={() => search.mutate(query)} />
         ) : results.length ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
             {results.map((found) => (
@@ -164,10 +163,10 @@ export function CoverSearchPanel({
             ))}
           </div>
         ) : search.data && !failed.length ? (
-          <EmptyState icon={Search} title="Bạn hãy chọn ảnh trên máy" className="py-8" action={<Button onClick={() => { close(); onChooseFile(); }}>Chọn ảnh</Button>} />
+          <EmptyState icon={Search} title={S.s_ban_hay_chon_anh_tren_may_006585b2} className="py-8" action={<Button onClick={() => { close(); onChooseFile(); }}>{S.s_chon_anh_41ecf092}</Button>} />
         ) : null}
-        <InlineError open={failed.length > 0} message="Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." onRetry={() => search.mutate(query)} />
-        <InlineError open={choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409)} message="Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />
+        <InlineError open={failed.length > 0} message={S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_cac_n_c69012d6} onRetry={() => search.mutate(query)} />
+        <InlineError open={choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409)} message={S.s_ban_hay_kiem_tra_ket_noi_roi_dat_lai_anh_b_86cb5b41} onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />
       </div>
     </MotionRegion>
   );
@@ -183,5 +182,5 @@ export function CoverSearchDialog({ open, onOpenChange, ...panel }: Omit<Paramet
   );
 }
 
-export const COVER_SEARCH_TITLE = "Tìm ảnh bìa";
-export const COVER_SEARCH_NOTE = "Bạn chọn ảnh từ các nguồn sách hoặc trên máy.";
+export const COVER_SEARCH_TITLE = S.s_tim_anh_bia_9825b3d1;
+export const COVER_SEARCH_NOTE = S.s_ban_chon_anh_tu_cac_nguon_sach_hoac_tren_m_ca23c898;

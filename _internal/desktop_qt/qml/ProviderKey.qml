@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
@@ -17,7 +18,7 @@ Item {
     readonly property string savedRegion: info.region || ""
     readonly property bool hasRegion: Boolean(info.limits && info.limits.region)
     readonly property bool regionChanged: hasRegion && regionField.text.trim() !== savedRegion
-    readonly property string status: info.valid ? "Dùng được\u00a0·\u00a0" + info.voices + " giọng" : info.hasKey ? "Chưa dùng được" : ""
+    readonly property string status: info.valid ? S.s_dung_duoc_u00a0_u00a0_d746b459 + info.voices + S.s_giong_17cc0855 : info.hasKey ? S.s_chua_dung_duoc_c68b3845 : ""
     signal changed()
     objectName: "providerKey." + (info.id || "")
     implicitHeight: col.height + 24
@@ -30,10 +31,10 @@ Item {
     function finish() { busy = ""; changed() }
     function save() {
         busy = "save"; result = ""
-        if (!secret.text.trim() && !info.hasKey) { fail("Dán khoá trước đã."); finish(); return }
+        if (!secret.text.trim() && !info.hasKey) { fail(S.s_dan_khoa_truoc_da_d88da35d); finish(); return }
         Api.quiet("PUT", path(), {key: secret.text.trim(), region: regionField.text.trim()}, function(data, error) {
             if (error) fail(error)
-            else { secret.text = ""; resultOk = true; result = "Đã lưu khoá. Bấm “Kiểm tra” để thử." }
+            else { secret.text = ""; resultOk = true; result = S.s_da_luu_khoa_bam_kiem_tra_de_thu_a21b7359 }
             finish()
         })
     }
@@ -45,14 +46,14 @@ Item {
                 else {
                     secret.text = ""
                     resultOk = checked.ok === true
-                    result = checked.ok ? "Dùng được\u00a0·\u00a0" + (checked.voices !== undefined && checked.voices !== null ? checked.voices : checked.provider.voices) + " giọng tiếng Việt"
-                                        : (checked.message || "Khoá chưa dùng được.")
+                    result = checked.ok ? S.s_dung_duoc_u00a0_u00a0_d746b459 + (checked.voices !== undefined && checked.voices !== null ? checked.voices : checked.provider.voices) + S.s_giong_tieng_viet_aaa6e239
+                                        : (checked.message || S.s_khoa_chua_dung_duoc_2ae17f08)
                 }
                 finish()
             })
         }
         if (secret.text.trim() || (hasRegion && regionField.text.trim() !== savedRegion)) {
-            if (!secret.text.trim() && !info.hasKey) { fail("Dán khoá trước đã."); finish(); return }
+            if (!secret.text.trim() && !info.hasKey) { fail(S.s_dan_khoa_truoc_da_d88da35d); finish(); return }
             Api.quiet("PUT", path(), {key: secret.text.trim() || "", region: regionField.text.trim()}, function(data, error) {
                 if (error) { fail(error); finish() }
                 else ask()
@@ -113,14 +114,14 @@ Item {
             Text {
                 width: parent.width
                 topPadding: 4
-                text: (root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng.")
+                text: (root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? S.s_to_dung_tung_chu_dang_doc_b0692da6 : S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b)
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: 13
             }
             MoreInfo {
                 width: parent.width
-                label: "Nhận khoá"
+                label: S.s_nhan_khoa_7ba3a705
                 HintText { width: parent.width; text: VoiceLogic.KEY_HELP[root.info.id] || "" }
             }
             Item { width: parent.width; height: 10 }
@@ -135,8 +136,8 @@ Item {
                     passwordMaskDelay: 0
                     inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
                     enabled: root.busy === ""
-                    Accessible.name: "Khoá " + (root.info.name || "")
-                    placeholderText: root.info.hasKey ? "Đã lưu " + root.info.masked + " - dán khoá mới để thay" : "Dán khoá của bạn"
+                    Accessible.name: S.s_khoa_d7b08da0 + (root.info.name || "")
+                    placeholderText: root.info.hasKey ? S.s_da_luu_62b04ebe + root.info.masked + S.s_dan_khoa_moi_de_thay_eb5e0364 : S.s_dan_khoa_cua_ban_c390a2e9
                 }
                 Box {
                     id: regionField
@@ -144,13 +145,13 @@ Item {
                     visible: root.hasRegion
                     implicitWidth: 192
                     enabled: root.busy === ""
-                    Accessible.name: "Vùng " + (root.info.name || "")
-                    placeholderText: "Vùng, ví dụ southeastasia"
+                    Accessible.name: S.s_vung_0dec5e2e + (root.info.name || "")
+                    placeholderText: S.s_vung_vi_du_southeastasia_959965a2
                     text: root.savedRegion
                 }
                 Button {
                     objectName: "keySave"
-                    text: "Lưu"
+                    text: S.s_luu_e91f26c0
                     kind: "text"
                     busy: root.busy === "save"
                     enabled: root.busy === "" && (secret.text.trim() !== "" || root.regionChanged)
@@ -158,7 +159,7 @@ Item {
                 }
                 Button {
                     objectName: "keyCheck"
-                    text: "Kiểm tra"
+                    text: S.s_kiem_tra_ff6e2891
                     icon: "key-round"
                     busy: root.busy === "check"
                     enabled: root.busy === "" && (Boolean(root.info.hasKey) || secret.text.trim() !== "")
@@ -167,7 +168,7 @@ Item {
                 Button {
                     objectName: "keyRemove"
                     visible: Boolean(root.info.hasKey)
-                    text: "Xoá khoá"
+                    text: S.s_xoa_khoa_2ec6cb1a
                     icon: "trash"
                     kind: "text"
                     busy: root.busy === "remove"

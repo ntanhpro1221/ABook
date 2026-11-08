@@ -40,7 +40,7 @@ object DeviceScenes {
                 val raw = context.applicationContext.assets.open(NNLITE_ASSET).use { it.readBytes() }
                 NnLite.parse(raw) to SceneBook.sha1(raw).take(12)
             } catch (error: Exception) {
-                AppLog.w("SceneMusic", "NN-lite không nạp được (${error.message}): nhạc theo cảnh chạy đường N0")
+                AppLog.w("SceneMusic", S.s_nn_lite_khong_nap_duoc_0_nhac_theo_canh_ch_7681b090(error.message))
                 null
             }
         }
@@ -121,7 +121,7 @@ object DeviceScenes {
         } catch (error: java.util.concurrent.ExecutionException) {
             failed = true // danh mục không tải được, chữ không đọc được: hỏi lại sau
             reason = (error.cause as? MusicCatalog.CatalogError)?.message // mục lục đã cất mà mảnh ô / tracks/ không tải được (mất mạng sau lần đầu): nói lý do, như lúc chưa có mục lục
-            if (reason == null) AppLog.w("SceneMusic", "dựng nhạc chương $chapterId hỏng: ${error.cause?.javaClass?.simpleName}: ${error.cause?.message.orEmpty().take(200)}", error.cause)
+            if (reason == null) AppLog.w("SceneMusic", S.s_dung_nhac_chuong_0_hong_1_2_2c3d3ca1(chapterId, error.cause?.javaClass?.simpleName, error.cause?.message.orEmpty().take(200)), error.cause)
         } catch (_: java.util.concurrent.CancellationException) {
             failed = true
         }

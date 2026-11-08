@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -17,8 +19,8 @@ import java.io.File
  */
 class GoogleTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvider(keys) {
     override val id = "google"
-    override val name = "Google Cloud"
-    override val limits = Limits(4000, "Miễn phí mỗi tháng: 4 triệu ký tự giọng Standard, 1 triệu WaveNet / Neural2", "exact")
+    override val name = S.s_google_cloud_69bd2211
+    override val limits = Limits(4000, S.s_mien_phi_moi_thang_4_trieu_ky_tu_giong_sta_718565c1, "exact")
 
     companion object {
         const val BASE = "https://texttospeech.googleapis.com"
@@ -74,7 +76,7 @@ class GoogleTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvid
         val response = OnlineHttp.request("GET", "$base/v1/voices?languageCode=vi-VN", mapOf("X-goog-api-key" to entry.key), null, name)
         if (response.status != 200) throw error(response.status, response.body)
         val list = runCatching { JSONObject(String(response.body, Charsets.UTF_8)).optJSONArray("voices") ?: JSONArray() }
-            .getOrElse { throw VoiceException("$name trả danh sách giọng hỏng", cause = it) }
+            .getOrElse { throw VoiceException(S.s_0_tra_danh_sach_giong_hong_fde61e93(name), cause = it) }
         return (0 until list.length()).mapNotNull { list.optJSONObject(it) }
             .filter { item ->
                 val codes = item.optJSONArray("languageCodes") ?: JSONArray()
@@ -93,7 +95,7 @@ class GoogleTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvid
                 val payload = JSONObject()
                     .put("input", JSONObject().put("ssml", ssml(group)))
                     .put("voice", JSONObject().put("languageCode", "vi-VN").put("name", voice))
-                    .put("audioConfig", JSONObject().put("audioEncoding", "MP3"))
+                    .put("audioConfig", JSONObject().put("audioEncoding", S.s_mp3_b84e4872))
                     .put("enableTimePointing", JSONArray().put("SSML_MARK"))
                 val response = OnlineHttp.request("POST", "$base/v1beta1/text:synthesize",
                     mapOf("X-goog-api-key" to entry.key, "Content-Type" to "application/json; charset=utf-8"), payload.toString().toByteArray(Charsets.UTF_8), name)
@@ -106,7 +108,7 @@ class GoogleTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvid
                         point.getString("markName") to Math.round(point.getDouble("timeSeconds") * 1000)
                     }
                 } catch (error: Exception) {
-                    throw VoiceException("$name trả lời hỏng", cause = error)
+                    throw VoiceException(S.s_0_tra_loi_hong_c05d9787(name), cause = error)
                 }
                 val length = Mp3.durationMs(data)
                 val endMark = marks["end"] ?: length
@@ -119,7 +121,7 @@ class GoogleTts(keys: OnlineKeys, private val base: String = BASE) : KeyedProvid
                 offset += length
             }
         }
-        if (offset == 0L) throw VoiceException("$name không trả về âm thanh", reason = "service")
+        if (offset == 0L) throw VoiceException(S.s_0_khong_tra_ve_am_thanh_b0fc54e9(name), reason = "service")
         return offset to boundaries
     }
 }

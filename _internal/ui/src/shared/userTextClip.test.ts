@@ -28,7 +28,7 @@ it("không khối nào cắt tên sách / tên chương / tên người dùng đ
         if (ALLOWED_ANYWHERE.has(where)) continue;
         // Thanh phát thu nhỏ: khối MotionRegion của tên chương ngay trong nút "Mở màn hình đang nghe".
         const before = source.slice(Math.max(0, (match.index ?? 0) - 900), match.index);
-        if (ALLOWED.has(`${where}#mini`) && before.includes('aria-label="Mở màn hình đang nghe"')) continue;
+        if (ALLOWED.has(`${where}#mini`) && before.includes('aria-label={S.s_mo_man_hinh_dang_nghe_')) continue;
         clipped.push(`${where} (dòng ${source.slice(0, match.index).split("\n").length})`);
       }
     }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -65,10 +67,10 @@ fun OnlineVoiceSheet(
     }
     SheetPages(page, { it.ordinal }, "online_voice_sheet") { shown ->
         when (shown) {
-            AskPage.Ask -> ConfirmPage("Giọng đọc trực tuyến", "online_voice_ask", listOf(VoiceText.consent(request.voice.name, request.voice.provider)), "") {
-                PrimaryButton("Nghe", { request.answer(request.voice) }, Modifier.fillMaxWidth().testTag("online_voice_listen"))
+            AskPage.Ask -> ConfirmPage(S.s_giong_doc_truc_tuyen_44ae53c1, "online_voice_ask", listOf(VoiceText.consent(request.voice.name, request.voice.provider)), "") {
+                PrimaryButton(S.s_nghe_a43aafef, { request.answer(request.voice) }, Modifier.fillMaxWidth().testTag("online_voice_listen"))
                 Spacer(Modifier.height(Dim.s8))
-                QuietButton("Chọn giọng khác", { page = AskPage.Choose }, "online_voice_choose")
+                QuietButton(S.s_chon_giong_khac_d31cfe89, { page = AskPage.Choose }, "online_voice_choose")
             }
             AskPage.Choose -> ChoosePage(request, voice, openVoiceSettings)
         }
@@ -81,7 +83,7 @@ private fun ChoosePage(request: ConsentRequest, voice: VoiceState?, openVoiceSet
     val sample by (voice?.sample ?: NoSample).collectAsState()
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxWidth().testTag("online_voice_list")) {
-        BasicText("Chọn giọng đọc", style = Abook.type.sectionTitle)
+        BasicText(S.s_chon_giong_doc_a3941a79, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
         BasicText(OnlineConsent.chooseText(request.voices, request.voice), style = Abook.type.body.copy(color = Abook.colors.text2))
         Spacer(Modifier.height(Dim.s8))
@@ -102,7 +104,7 @@ private fun ChoosePage(request: ConsentRequest, voice: VoiceState?, openVoiceSet
                     titleColor = if (current) Abook.colors.accentText else Abook.colors.text,
                     trailing = if (voice == null) null else ({
                         TextAction(
-                            if (playing) "Dừng" else "Nghe thử", { voice.play(item.id) }, "online_voice_sample_${item.id}",
+                            if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, { voice.play(item.id) }, "online_voice_sample_${item.id}",
                             Modifier.semantics { contentDescription = OnlineConsent.sampleLabel(playing, item.name) },
                         )
                     }),
@@ -113,12 +115,12 @@ private fun ChoosePage(request: ConsentRequest, voice: VoiceState?, openVoiceSet
             }
             // Danh sách chỉ có giọng ĐANG dùng được; giọng chạy trên máy chưa tải thì không có mặt - chỉ đường tới nơi tải, hộp chưa phát gì.
             ListItem(
-                "Tải giọng về máy", Modifier, onClick = {
+                S.s_tai_giong_ve_may_62bb0900, Modifier, onClick = {
                     voice?.stopSample()
                     request.answer(null)
                     openVoiceSettings()
                 },
-                tag = "online_voice_download", hint = "VieNeu, Supertonic - đọc được cả khi không có mạng", titleColor = Abook.colors.accentText,
+                tag = "online_voice_download", hint = S.s_vieneu_supertonic_doc_duoc_ca_khi_khong_co_68472ba2, titleColor = Abook.colors.accentText,
             )
         }
     }

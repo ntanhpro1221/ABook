@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -56,7 +58,7 @@ internal object DevicesJson {
         bytes = json.optLong("bytes"), free = json.optLong("free"),
         entries = json.optJSONArray("books").objects().map {
             val id = it.getString("id")
-            Stored(id, it.optString("title").ifBlank { "Sách tải dở" }, it.optLong("bytes"), partial = !isBook(id), holder = if (isBook(id)) "" else holder(id))
+            Stored(id, it.optString("title").ifBlank { S.s_sach_tai_do_fe69262b }, it.optLong("bytes"), partial = !isBook(id), holder = if (isBook(id)) "" else holder(id))
         }.sortedByDescending { it.bytes },
     )
 
@@ -75,7 +77,7 @@ internal object DevicesJson {
         }
         val books = books(json.optJSONArray("books"))
         val device = Paired(
-            key = json.getString("key"), name = name.ifBlank { "Thiết bị" }, kind = kind(json.optString("kind")), via = json.optString("connectedVia"),
+            key = json.getString("key"), name = name.ifBlank { S.s_thiet_bi_eb706979 }, kind = kind(json.optString("kind")), via = json.optString("connectedVia"),
             fingerprint = json.optString("fingerprint"), reach = reach, books = books.size, host = json.optString("host"),
         )
         return PeerLibrary(device, books)

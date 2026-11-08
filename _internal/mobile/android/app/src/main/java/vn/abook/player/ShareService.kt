@@ -35,7 +35,7 @@ class ShareService : Service() {
         super.onCreate()
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
-            manager.createNotificationChannel(NotificationChannel(CHANNEL, "Chia sẻ thư viện", NotificationManager.IMPORTANCE_LOW))
+            manager.createNotificationChannel(NotificationChannel(CHANNEL, S.s_chia_se_thu_vien_940de671, NotificationManager.IMPORTANCE_LOW))
         }
         try {
             if (Build.VERSION.SDK_INT >= 29) {
@@ -45,14 +45,14 @@ class ShareService : Service() {
             }
         } catch (error: Exception) {
             // Máy từ chối dịch vụ chạy nền: không làm sập app - chia sẻ vẫn chạy, chỉ thiếu phần chống đóng băng.
-            AppLog.w("ShareService", "máy từ chối dịch vụ nền của chia sẻ: ${error.javaClass.simpleName}: ${error.message}", error)
+            AppLog.w("ShareService", S.s_may_tu_choi_dich_vu_nen_cua_chia_se_0_1_a5529522(error.javaClass.simpleName, error.message), error)
             stopSelf()
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            AppLog.i("ShareService", "bấm Tắt chia sẻ trên thông báo")
+            AppLog.i("ShareService", S.s_bam_tat_chia_se_tren_thong_bao_3afcfa79)
             // Nút trên thông báo: tắt công tắc như người dùng tắt trong app.
             Thread({ turnOff(applicationContext) }, "share-service-stop").start()
         }
@@ -68,10 +68,10 @@ class ShareService : Service() {
             Intent(this, ShareService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
-            .setContentTitle("Chia sẻ thư viện")
-            .setContentText("Máy đã ghép nghe được sách trên điện thoại này")
+            .setContentTitle(S.s_chia_se_thu_vien_940de671)
+            .setContentText(S.s_may_da_ghep_nghe_duoc_sach_tren_dien_thoai_060e1527)
             .setContentIntent(open)
-            .addAction(0, "Tắt chia sẻ", stop)
+            .addAction(0, S.s_tat_chia_se_7620f688, stop)
             .setOngoing(true)
             .setSilent(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

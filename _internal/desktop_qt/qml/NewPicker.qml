@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -12,14 +13,14 @@ Item {
     function chooseFolder() { append = false; folder.open() }
     FileDialog {
         id: files
-        title: "Chọn các chương TXT hay một file sách (EPUB, DOCX, PDF)"
+        title: S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8
         fileMode: FileDialog.OpenFiles
-        nameFilters: ["Truyện (*.txt *.epub *.docx *.pdf)", "Tất cả file (*)"]
+        nameFilters: [S.s_truyen_txt_epub_docx_pdf_33caae66, S.s_tat_ca_file_05ec85ad]
         onAccepted: root.picked(selectedFiles.map(file => DesktopApi.localPath(file)).filter(path => path !== ""), root.append)
     }
     FolderDialog {
         id: folder
-        title: "Chọn thư mục chứa các chương TXT"
+        title: S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58
         onAccepted: root.picked([DesktopApi.localPath(selectedFolder)], false)
     }
 }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -68,7 +69,7 @@ Column {
             kind: "ghost"
             text: root.action
             busy: root.busy
-            onActivated: root.run("", "Chưa tải được giọng")
+            onActivated: root.run("", S.s_chua_tai_duoc_giong_728a140d)
         }
         OnComputerPill {
             id: pill
@@ -76,8 +77,8 @@ Column {
             visible: root.action !== "" && root.remote
             x: parent.width - width
             anchors.verticalCenter: parent.verticalCenter
-            verb: "Tải giọng"
-            computer: root.store ? root.store.computerName : "máy tính"
+            verb: S.s_tai_giong_d6f57d0b
+            computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226
             maxWidth: Math.max(120, parent.width * 0.6)
         }
     }
@@ -109,9 +110,9 @@ Column {
             y: 2
             size: "sm"
             kind: "ghost"
-            text: "Huỷ"
+            text: S.s_huy_96732485
             busy: root.busy
-            onActivated: root.run("/cancel", "Chưa huỷ được việc tải giọng")
+            onActivated: root.run("/cancel", S.s_chua_huy_duoc_viec_tai_giong_636cbb4a)
         }
     }
 }

@@ -29,7 +29,7 @@ object BookActions {
         Store.init(context)
         val (status, reply) = LocalStudio.handle(method, "/api/books/$id$rest", body)
         val answer = reply as? JSONObject ?: JSONObject()
-        if (status != 200) error(answer.optString("error").ifEmpty { "Bạn hãy thử lại." })
+        if (status != 200) error(answer.optString("error").ifEmpty { S.s_ban_hay_thu_lai_5fc1a02b })
         if (method != "GET") edited(context, id)
         return answer
     }
@@ -64,7 +64,7 @@ object BookActions {
     fun delete(context: Context, id: String, background: (Runnable) -> Unit): String? {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - `?: ""` từng biến thành xoá CẢ thư mục sách.
         // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (soát a97 V6).
-        require(!BookDownloads.isActive(context, id)) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
+        require(!BookDownloads.isActive(context, id)) { S.s_dang_tai_cuon_nay_huy_tai_roi_moi_xoa_duoc_3d745e7c }
         val undo = Store.holdBook(id)
         if (undo != null) {
             Handler(Looper.getMainLooper()).postDelayed(
@@ -91,7 +91,7 @@ object BookActions {
      * dở và ném lại. Luồng nền; mở bảng (startActivity) là việc của nơi gọi, ở luồng chính.
      */
     fun share(context: Context, id: String, project: Boolean): Shared {
-        require(canShare(id)) { "Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy" }
+        require(canShare(id)) { S.s_sach_nay_lay_tu_may_tinh_khac_muon_gui_fil_4ef0fe11 }
         val title = Store.manifest(id)?.optString("title").orEmpty()
         val file = BookShare.target(context.cacheDir, title, project)
         try {
@@ -105,7 +105,7 @@ object BookActions {
                 .putExtra(Intent.EXTRA_TITLE, file.name)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             send.clipData = ClipData.newUri(context.contentResolver, file.name, uri)
-            val chooser = Intent.createChooser(send, "Chia sẻ “${title.ifBlank { file.nameWithoutExtension }}”")
+            val chooser = Intent.createChooser(send, S.s_chia_se_0_4293e415(title.ifBlank { file.nameWithoutExtension }))
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             return Shared(chooser, file.name)
         } catch (error: Exception) {

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -49,7 +50,7 @@ Collapse {
             x: 28
             y: (root.first ? 0 : 1) + 8
             width: line.width - 28 - actions.width - 12
-            text: root.item.label + (root.item.chapter ? "\u00a0·\u00a0" + root.item.chapter : "") + (root.item.from ? "\u00a0·\u00a0từ " + root.item.from : "")
+            text: root.item.label + (root.item.chapter ? "\u00a0·\u00a0" + root.item.chapter : "") + (root.item.from ? S.s_u00a0_u00a0tu_ce4ae8bc + root.item.from : "")
             color: Theme.text
             textFormat: Text.PlainText
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -78,10 +79,10 @@ Collapse {
                 size: "sm"
                 kind: "ghost"
                 icon: root.playing ? "pause" : "book-open-text"
-                text: root.playing ? "Dừng" : "Nghe thử"
+                text: root.playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065
                 busy: root.voiceTry !== null && root.voiceTry.asking === root.key && root.key !== ""
                 enabled: root.voiceTry !== null && (root.voiceTry.asking === "" || root.voiceTry.asking === root.key)
-                Accessible.name: Cast.tryLabel(root.item.voiceLabel || "mới", root.playing)
+                Accessible.name: Cast.tryLabel(root.item.voiceLabel || S.s_moi_54e203ba, root.playing)
                 onActivated: root.tryRequested(root.item)
             }
             IconButton {

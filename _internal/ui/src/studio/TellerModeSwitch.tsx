@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mic2 } from "lucide-react";
@@ -12,7 +13,7 @@ import { pollDelay, retryUnlessGone } from "./polling";
 import { costText, needsConfirm, TELLER_ELSEWHERE, TELLER_TITLE, tellerHint, type TellerModeView } from "./tellerMode";
 
 /** Sách đang chạy: Tạm dừng chưa đủ (máy vẫn giữ sách), phải “Dừng”. Dừng lúc này an toàn vì công tắc chỉ mở sau khi máy đã đọc hiểu xong truyện. */
-const BUSY_NOTE = "Dừng sau phân tích để đổi, rồi Tiếp tục; Tạm dừng chưa đủ.";
+const BUSY_NOTE = S.s_dung_sau_phan_tich_de_doi_roi_tiep_tuc_tam_2623587f;
 
 /** Công tắc "Người kể xưng “tôi” tự kể chuyện" của một cuốn (webui/teller_mode.py), dưới hàng "Người kể chuyện" của tab Nhân vật.
  *  Mặc định tắt. Sách đã có bản thu thì bật / tắt hiện trước số câu phải thu lại và chờ bạn xác nhận; sách đang chạy thì phải bấm “Dừng” trước
@@ -37,12 +38,12 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
       setAsking(null);
       // Chỉ nhắc thu lại khi có bản thu bị bỏ (số báo trước lúc đổi); chưa thu câu nào thì máy cứ thu theo giọng mới, không có gì "lại".
       if (view.castLocked && view.mode === "teller" && view.applied) {
-        toast.success(recorded > 0 ? "Đã đổi - bấm “Tiếp tục” để thu lại những câu đổi giọng" : "Đã đổi - những câu đổi giọng sẽ được thu bằng giọng mới");
+        toast.success(recorded > 0 ? S.s_da_doi_bam_tiep_tuc_de_thu_lai_nhung_cau_d_273ea241 : S.s_da_doi_nhung_cau_doi_giong_se_duoc_thu_ban_1a29ee0b);
       }
     },
     onError: (error: Error) => {
       setAsking(null);
-      toast.error("Chưa đổi được", { description: error.message });
+      toast.error(S.s_chua_doi_duoc_a6c67cde, { description: error.message });
     },
   });
   if (!data?.available) return <MotionRegion />;
@@ -72,16 +73,14 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
         </SettingsRow>
       </div>
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setAsking(null)}>
-            Thôi
-          </Button>
+          <Button variant="ghost" onClick={() => setAsking(null)}>{S.s_thoi_e68f9e88}</Button>
           <Button variant="primary" icon={Mic2} loading={save.isPending} onClick={() => asking && save.mutate({ mode: asking, recorded: data.plan?.recorded ?? 0 })}>
-            {asking === "teller" ? "Bật và thu lại" : "Tắt và thu lại"}
+            {asking === "teller" ? S.s_bat_va_thu_lai_16adc647 : S.s_tat_va_thu_lai_dc0f8e21}
           </Button>
         </DialogActions>}
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}
-        title={asking === "teller" ? "Bật giọng tự kể?" : "Dùng giọng dẫn?"}
+        title={asking === "teller" ? S.s_bat_giong_tu_ke_ef32d59a : S.s_dung_giong_dan_c9aaaec4}
         description={costText(data.plan, asking === "teller")}
       >
 

@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 /**
  * Thử lại một đoạn đọc hỏng vì lỗi thoáng qua của giọng trực tuyến (Edge cắt lượt / bận / chậm - [VoiceException.transient]): nghỉ lùi dần rồi đọc lại, ở luồng nền, để các đoạn đã nạp
  * vẫn phát và người nghe chỉ phải dừng khi hết lần thử (cùng luật với máy tính, listen/readAloud.ts). Lỗi khác (mất mạng, bị từ chối, khoá / giọng hỏng, lời cuối của [ClipReader]) và giọng
@@ -87,7 +89,7 @@ object ClipBudget {
     /** Giọng chạy trên máy (VieNeu, Supertonic) gọi giữa các khúc và các bước của model: lượt đọc ở luồng này đã bị huỷ (người nghe nhảy đi, đổi giọng, Huỷ bản xuất) thì
      *  thôi ngay bằng [CancellationException] - CPU về đoạn người nghe đang chờ, không clip nào được ghi (máy tính: model.stop_if_cancelled). Ngoài [ClipRetry.run]: không làm gì. */
     fun stopIfCancelled() {
-        if (cancel()?.cancelled == true) throw java.util.concurrent.CancellationException("Lượt đọc đã bị huỷ")
+        if (cancel()?.cancelled == true) throw java.util.concurrent.CancellationException(S.s_luot_doc_da_bi_huy_7d77b2c0)
     }
 
     /** Chạy `block` ở luồng này trong quỹ `scope` (của luồng gọi - [current]); xong trả quỹ cũ. */

@@ -37,7 +37,7 @@ class AbookColors(
  * Màn mờ sau lớp nổi (web: `--scrim` ở styles.css): sáng rgb(20 17 13 / .45), tối rgb(6 5 4 / .62). Tối phải đậm hơn - bảng #1b1a18 chỉ hơn nền #121110 một bậc,
  * bóng đổ không thấy được trên nền tối, nên bờ của bảng là do màn mờ này (cộng vạch [AbookColors.line] ở mép trên) chứ không phải do bóng.
  */
-val AbookColors.scrim: Color get() = if (dark) Color(0xFF060504).copy(alpha = 0.62f) else Color(0xFF14110D).copy(alpha = 0.45f)
+val AbookColors.scrim: Color get() = Color(if (dark) DarkPalette.SCRIM else LightPalette.SCRIM)
 
 internal val LightColors = AbookColors(
     Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE), Color(LightPalette.CONTROL_LINE),

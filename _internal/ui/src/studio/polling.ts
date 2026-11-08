@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "./api";
@@ -17,8 +18,8 @@ export const isOffline = (error: unknown): boolean => error instanceof TypeError
 
 /** Lời lỗi cho người nghe, tiếng Việt: mất kết nối nói thế (không phải "Failed to fetch"); lỗi máy chủ thì lời máy chủ. */
 export function failureText(error: unknown): string {
-  if (isOffline(error)) return "Mất kết nối tới ABook.";
-  return (error as Error | null)?.message || "Sách có thể đã bị chuyển hoặc xoá.";
+  if (isOffline(error)) return S.s_mat_ket_noi_toi_abook_1d2b48ae;
+  return (error as Error | null)?.message || S.s_sach_co_the_da_bi_chuyen_hoac_xoa_e69fbf8d;
 }
 
 /** Trang dự án khi lần hỏi gần nhất hỏng (soát UX a23 B13: một nhịp hỏng ~15 giây biến cả trang thành "Không mở được sách /

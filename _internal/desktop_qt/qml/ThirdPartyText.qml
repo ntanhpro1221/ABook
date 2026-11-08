@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -17,7 +18,7 @@ Column {
         width: parent.width
         topPadding: 16
         bottomPadding: 16
-        text: "Chưa mở được danh sách."
+        text: S.s_chua_mo_duoc_danh_sach_92a6ce82
         color: Theme.text2
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall

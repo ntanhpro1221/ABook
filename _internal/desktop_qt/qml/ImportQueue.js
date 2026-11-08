@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 
 // Hàm thuần của "Thêm sách" (listen/importQueue.ts + listen/textImport.ts + ReadingSuggestions.tsx của bản web): hàng nhiều file, chương đã tích,
@@ -32,7 +33,7 @@ function itemFromPath(path) {
     const dot = name.lastIndexOf(".")
     const last = name.indexOf(".") >= 0 ? name.slice(dot) : ""
     if (last && !BOOK_TYPES.test(name))
-        return {name: name, error: "Chưa hỗ trợ " + last.toLowerCase() + ". Chọn EPUB, DOCX, PDF có chữ, TXT hoặc .abook."}
+        return {name: name, error: S.s_chua_ho_tro_bf077876 + last.toLowerCase() + S.s_chon_epub_docx_pdf_co_chu_txt_hoac_abook_26d1adb6}
     return {name: name, path: clean}
 }
 
@@ -46,7 +47,7 @@ function buildQueue(picked) {
     return entries.map((entry, id) => {
         const item = entry.item
         if (item.error !== undefined) return {id: id, name: item.name, state: "error", note: item.error}
-        if (item.opened) return {id: id, name: item.name, state: "opened", note: "Đã mở"}
+        if (item.opened) return {id: id, name: item.name, state: "opened", note: S.s_da_mo_617b34d1}
         number += 1
         return {id: id, name: item.name, path: item.path, state: "waiting", number: number}
     })
@@ -56,7 +57,7 @@ function queueTotal(items) { return items.filter(item => item.number !== undefin
 
 function queueLabel(items, id) {
     const item = items.find(entry => entry.id === id)
-    return !item || item.number === undefined ? "" : "Sách " + item.number + "/" + queueTotal(items)
+    return !item || item.number === undefined ? "" : S.s_sach_cf2dd275 + item.number + "/" + queueTotal(items)
 }
 
 function nextWaiting(items) { return items.find(item => item.state === "waiting") }
@@ -80,14 +81,14 @@ function summarize(items) {
 // "Đã thêm 3 sách · 1 cuốn đã có trong thư viện · 1 file chưa đọc được"
 function summaryText(summary) {
     const parts = [
-        summary.added ? "Đã thêm " + summary.added + " sách" : "",
-        summary.opened ? "đã mở " + summary.opened + " file sách" : "",
-        summary.existing ? summary.existing + " cuốn đã có trong thư viện" : "",
-        summary.skipped ? "bỏ qua " + summary.skipped + " cuốn" : "",
-        summary.failed ? summary.failed + " file chưa đọc được" : ""
+        summary.added ? S.s_da_them_14852134 + summary.added + S.s_sach_c41b3bde : "",
+        summary.opened ? S.s_da_mo_2e7c79a1 + summary.opened + S.s_file_sach_679b88e4 : "",
+        summary.existing ? summary.existing + S.s_cuon_da_co_trong_thu_vien_c132fc69 : "",
+        summary.skipped ? S.s_bo_qua_cea5e01e + summary.skipped + S.s_cuon_421f8494 : "",
+        summary.failed ? summary.failed + S.s_file_chua_doc_duoc_a21a3450 : ""
     ].filter(part => part !== "")
     const text = parts.join("\u00a0·\u00a0")
-    return text ? text[0].toUpperCase() + text.slice(1) : "Không thêm cuốn nào"
+    return text ? text[0].toUpperCase() + text.slice(1) : S.s_khong_them_cuon_nao_0fb1d747
 }
 
 // Cuốn mà dòng "Đang …" ở: đang thêm cả lô thì cuốn ĐANG THÊM (khớp tên), không thì cuốn đang xem.
@@ -97,11 +98,11 @@ function queueFocus(items, currentId, working) {
     return {id: match ? match.id : currentId, adding: true}
 }
 
-var STATE_TEXT = {added: "Đã thêm", existing: "Đã có trong thư viện", skipped: "Bỏ qua", opened: "Đã mở", error: "Chưa đọc được"}
+var STATE_TEXT = {added: S.s_da_them_e26b2fcb, existing: S.s_da_co_trong_thu_vien_3bb6eeb4, skipped: S.s_bo_qua_c67ba288, opened: S.s_da_mo_617b34d1, error: S.s_chua_doc_duoc_ad95887c}
 
 // Dòng nói tình trạng của một hàng trong danh sách file.
 function rowSaid(item, focus) {
-    if (item.state === "waiting") return item.id === focus.id ? (focus.adding ? "Đang thêm" : "Đang xem") : "Chờ"
+    if (item.state === "waiting") return item.id === focus.id ? (focus.adding ? S.s_dang_them_457edcc3 : S.s_dang_xem_42cc3b08) : S.s_cho_8de7e9a5
     return item.note !== undefined && item.note !== "" ? item.note : STATE_TEXT[item.state]
 }
 
@@ -115,8 +116,8 @@ function splitIsSure(preview) {
 function splitLabel(preview) {
     const offer = preview.splitOffer || 0
     const headings = preview.splitHeadings !== undefined && preview.splitHeadings !== null ? preview.splitHeadings : offer
-    const base = "Tách theo " + formatNumber(headings) + " dòng “Chương N”"
-    return offer > headings ? base + " (thêm phần Mở đầu - " + formatNumber(offer) + " chương)" : base
+    const base = S.s_tach_theo_5f3e6530 + formatNumber(headings) + S.s_dong_chuong_n_cc00807e
+    return offer > headings ? base + S.s_them_phan_mo_dau_dccbd9ba + formatNumber(offer) + S.s_chuong_be1b3067 : base
 }
 
 // Các hàng tích sẵn: mọi hàng trừ mục rất ngắn và phần có vẻ không phải truyện (máy gửi `included: false`).
@@ -174,7 +175,7 @@ function groupSuggestions(suggestions, chapters, picked) {
     return groups
 }
 
-function where(chapters) { return chapters.length === 1 ? "chương " + chapters[0] : chapters.length + " chương" }
+function where(chapters) { return chapters.length === 1 ? S.s_chuong_f4f8b331 + chapters[0] : chapters.length + S.s_chuong_9e6a01dc }
 
 // ---- Chú thích ------------------------------------------------------------------------------------------------------------
 var NO_FOOTNOTES = {hideMarks: false, notes: ""}
@@ -185,8 +186,8 @@ function footnotesToSend(choice) { return choice.hideMarks || choice.notes ? {hi
 function footnoteSummary(offer) {
     const first = offer.examples && offer.examples.length ? offer.examples[0] : null
     return {
-        title: "Tìm thấy " + formatNumber(offer.found) + " chú thích trong sách",
-        example: first ? "Ví dụ: “" + first.mark + "” có lời chú “" + first.note + "”" : ""
+        title: S.s_tim_thay_52e7add3 + formatNumber(offer.found) + S.s_chu_thich_trong_sach_26cae6a5,
+        example: first ? S.s_vi_du_364d1ccf + first.mark + S.s_co_loi_chu_68675904 + first.note + "”" : ""
     }
 }
 
@@ -194,42 +195,42 @@ function footnoteSummary(offer) {
 // Lời báo sau khi máy chủ mở một file sách (useOpenedBook của desktop/App.tsx + shared/editsKept.ts). Toast của bản web là Api.notice ở đây: tiêu đề, nếu có
 // lời phụ thì nối sau " - ".
 var OPENED_SAID = {
-    "new": "Đã thêm", existing: "Sách đã có", updated: "Đã cập nhật", older: "File này cũ hơn bản đang có", conflict: "File này có bản thu khác",
-    repaired: "Đã khôi phục file", project: "Sách của Studio", studio: "Đã mở dự án"
+    "new": S.s_da_them_e26b2fcb, existing: S.s_sach_da_co_24cc49e2, updated: S.s_da_cap_nhat_9ca1e681, older: S.s_file_nay_cu_hon_ban_dang_co_afc4d520, conflict: S.s_file_nay_co_ban_thu_khac_6036a451,
+    repaired: S.s_da_khoi_phuc_file_037a8437, project: S.s_sach_cua_studio_b54d45e2, studio: S.s_da_mo_du_an_ef7db505
 }
 
 function said(title, note) { return note ? title + " - " + note : title }
 
 function workshopMergeNote(merge) {
     if (!merge || (!merge.merged && !merge.kept)) return null
-    const taken = merge.merged ? "Đã gộp " + merge.merged + " sửa từ file" : ""
-    const kept = merge.kept ? merge.kept + " sửa giữ bản của máy này vì mới hơn" : ""
+    const taken = merge.merged ? S.s_da_gop_c3d15783 + merge.merged + S.s_sua_tu_file_681b4e09 : ""
+    const kept = merge.kept ? merge.kept + S.s_sua_giu_ban_cua_may_nay_vi_moi_hon_7dd147cc : ""
     return [taken, kept].filter(part => part !== "").join(", ") + "."
 }
 
 function brokenMusicNote(broken) {
     if (!broken || broken <= 0) return null
-    return broken === 1 ? "1 bài nhạc nền trong sách bị hỏng - đoạn ấy sẽ không có nhạc."
-                        : broken + " bài nhạc nền trong sách bị hỏng - những đoạn ấy sẽ không có nhạc."
+    return broken === 1 ? S.s_1_bai_nhac_nen_trong_sach_bi_hong_doan_ay_0a679d5d
+                        : broken + S.s_bai_nhac_nen_trong_sach_bi_hong_nhung_doan_1864261a
 }
 
 // {ok, notice, id, studio}: `ok` false = không mở được (lỗi / thiếu mã); `studio` mở Studio thay vì trang sách; không có `id` = chỉ báo, không chuyển trang.
 function openedOutcome(result) {
     if (!result) return {ok: false, notice: ""}
-    if (result.error) return {ok: false, notice: said("Chưa mở được file sách", result.file ? result.file + ": " + result.error : result.error)}
+    if (result.error) return {ok: false, notice: said(S.s_chua_mo_duoc_file_sach_2cdc21ae, result.file ? result.file + ": " + result.error : result.error)}
     if (!result.id) return {ok: false, notice: ""}
     const how = result.how || "new"
     if (how === "older" || how === "conflict")
-        return {ok: true, notice: said(OPENED_SAID[how], "Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.")}
+        return {ok: true, notice: said(OPENED_SAID[how], S.s_chinh_sua_va_cho_nghe_cua_ban_van_duoc_giu_287783a6)}
     if (how === "studio") {
         const lost = result.missingSources || 0
         return {ok: true, id: result.id, studio: true,
-                notice: said(OPENED_SAID.studio, lost ? "Thiếu " + lost + " file nguồn chương - thu lại chương ấy thì cần chép nguồn vào." : "")}
+                notice: said(OPENED_SAID.studio, lost ? S.s_thieu_8f1e7ea0 + lost + S.s_file_nguon_chuong_thu_lai_chuong_ay_thi_ca_c813f633 : "")}
     }
-    const kept = result.merge && result.merge.kept > 0 ? "Đã cập nhật sách - giữ nguyên " + result.merge.kept + " chỉnh sửa của bạn" : null
-    const adopted = result.merge && result.merge.adopted ? "Đã lấy " + result.merge.adopted + " thay đổi từ file" : null
+    const kept = result.merge && result.merge.kept > 0 ? S.s_da_cap_nhat_sach_giu_nguyen_578dc3b4 + result.merge.kept + S.s_chinh_sua_cua_ban_ab7109a7 : null
+    const adopted = result.merge && result.merge.adopted ? S.s_da_lay_7e7e7a15 + result.merge.adopted + S.s_thay_doi_tu_file_5db945f8 : null
     const title = workshopMergeNote(result.workshop) || kept || adopted || OPENED_SAID[how] || OPENED_SAID["new"]
-    const note = [result.otherTitle ? "Tên trong file là “" + result.otherTitle + "”, khác tên đang dùng." : "", brokenMusicNote(result.brokenMusic) || ""]
+    const note = [result.otherTitle ? S.s_ten_trong_file_la_c98d30b4 + result.otherTitle + S.s_khac_ten_dang_dung_a0b3b466 : "", brokenMusicNote(result.brokenMusic) || ""]
         .filter(part => part !== "").join(" ")
     // Cuốn mới: AddBook hỏi tên sách để nói “Đã thêm “tên”” (`named`); tên chưa đọc được thì còn “Đã thêm”.
     if (how === "new" && title === OPENED_SAID["new"]) return {ok: true, id: result.id, notice: said(title, note), named: {title: title, note: note}}

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -27,7 +28,7 @@ Column {
             gap: 0
             pad: 0
             icon: "info"
-            Prose { text: "Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “" + (root.replaces ? root.replaces.title : "") + "” vào Thùng rác." }
+            Prose { text: S.s_tao_cuon_moi_tu_dau_giu_bia_va_file_goc_ba_690baff8 + (root.replaces ? root.replaces.title : "") + S.s_vao_thung_rac_76efc06d }
         }
     }
     NewNote {
@@ -40,7 +41,7 @@ Column {
         Prose { objectName: "newPauseText"; text: Logic.PAUSE_NOTE }
         MoreInfo {
             width: parent.width
-            label: "Vì sao?"
+            label: S.s_vi_sao_3f6469f9
             Prose { objectName: "newPauseWhy"; small: true; text: Logic.pauseWhy(root.form ? root.form.noStudio : false, root.analysis) }
         }
     }

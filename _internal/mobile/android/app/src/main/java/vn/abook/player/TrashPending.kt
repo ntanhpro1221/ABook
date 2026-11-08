@@ -52,15 +52,15 @@ class TrashPending(private val root: File, private val clock: () -> Long = Syste
     /** Hoàn tác: thư mục về đúng đường gốc. Trả meta. [NotPending] khi mã lạ / hết hạn, [Occupied] khi chỗ cũ đã bị chiếm. */
     @Synchronized
     fun restore(token: String): JSONObject {
-        if (!TOKEN.matches(token)) throw NotPending("Cuốn này không còn để hoàn tác (đã xoá hẳn khỏi điện thoại).")
+        if (!TOKEN.matches(token)) throw NotPending(S.s_cuon_nay_khong_con_de_hoan_tac_da_xoa_han_cb7faf9b)
         val folder = File(base, token)
-        val meta = meta(folder) ?: throw NotPending("Cuốn này không còn để hoàn tác (đã xoá hẳn khỏi điện thoại).")
+        val meta = meta(folder) ?: throw NotPending(S.s_cuon_nay_khong_con_de_hoan_tac_da_xoa_han_cb7faf9b)
         val item = File(folder, meta.getString("name"))
         val original = File(meta.getString("original"))
-        if (!item.isDirectory) throw NotPending("Cuốn này không còn để hoàn tác (đã xoá hẳn khỏi điện thoại).")
-        if (original.exists()) throw Occupied("Chỗ cũ đã có sách cùng mã nên chưa hoàn tác được.")
+        if (!item.isDirectory) throw NotPending(S.s_cuon_nay_khong_con_de_hoan_tac_da_xoa_han_cb7faf9b)
+        if (original.exists()) throw Occupied(S.s_cho_cu_da_co_sach_cung_ma_nen_chua_hoan_ta_5dc94eb4)
         original.parentFile?.mkdirs()
-        if (!item.renameTo(original)) throw java.io.IOException("Chưa đưa cuốn về chỗ cũ được.")
+        if (!item.renameTo(original)) throw java.io.IOException(S.s_chua_dua_cuon_ve_cho_cu_duoc_83649336)
         folder.deleteRecursively()
         tidyBase()
         return meta

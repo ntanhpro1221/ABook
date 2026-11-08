@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "chaptersmodel.h"
 
 QHash<int, QByteArray> ChaptersModel::roleNames() const {
@@ -37,7 +38,7 @@ ChaptersModel::Row ChaptersModel::make(const PlayerLogic::Book &book, const Play
     // chapterSubline của bản web: dòng phụ = tên chương khi có phụ đề, rồi độ dài; chương chỉ có chữ không có gì riêng để nói.
     row.length = chapter.available ? PlayerLogic::formatLength(chapter.duration) : QString();
     if (!chapter.available && !chapter.textOnly)
-        row.status = book.producing ? QStringLiteral("Đang thu âm…") : QStringLiteral("Chưa có audio");
+        row.status = book.producing ? UiStrings::s_copy_7e63dd84fb6c : UiStrings::s_chua_co_audio_4b0d19a4;
     return row;
 }
 

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
@@ -186,7 +188,7 @@ internal object StudioCastJson {
 data class VoiceGroup(val engine: String, val label: String, val voices: List<VoiceEntry>)
 
 /** Bộ lọc giới của bảng giọng. */
-enum class GenderFilter(val key: String, val label: String) { Male("male", "Nam"), Female("female", "Nữ"), All("all", "Tất cả") }
+enum class GenderFilter(val key: String, val label: String) { Male("male", S.s_nam_22dd59c8), Female("female", S.s_nu_e15bc11c), All("all", S.s_tat_ca_49c73a31) }
 
 /** Logic thuần của bảng "Đổi giọng" - port `voiceEngines.ts`, `voiceTryText.ts`, `previewText.ts`, `VoicePicker.tsx voiceMeta`. */
 object VoiceLogic {
@@ -200,7 +202,7 @@ object VoiceLogic {
     fun groupLabels(groups: List<VoiceGroup>): List<String> {
         val extras = groups.count { it.engine != "vieneu" }
         var seen = 0
-        return groups.map { if (it.engine == "vieneu") "Giọng chính" else if (extras > 1) "Giọng thêm ${++seen}" else "Giọng thêm" }
+        return groups.map { if (it.engine == "vieneu") S.s_giong_chinh_4a3858e3 else if (extras > 1) S.s_giong_them_0_fc9c414c(++seen) else S.s_giong_them_f6d2cefe }
     }
 
     fun byGender(voices: List<VoiceEntry>, filter: GenderFilter): List<VoiceEntry> = if (filter == GenderFilter.All) voices else voices.filter { it.gender == filter.key }
@@ -214,23 +216,23 @@ object VoiceLogic {
 
     /** `current`: giọng người này đang đọc - không nói "Chưa ai dùng" về một giọng đang được dùng. */
     fun sharedText(voice: VoiceEntry, current: Boolean = false): String {
-        val others = if (voice.otherUsers > 0) "${voice.otherUsers} người khác dùng, không cùng chương" else ""
-        if (voice.sharedWith.isEmpty()) return others.ifEmpty { if (current) "Giọng đang đọc cho người này" else "Chưa ai dùng" }
-        val people = voice.sharedWith.joinToString(", ") { "${it.label} (${it.chapters} chương)" }
-        val after = "hai người sẽ nghe giống hệt nhau"
-        return "Cùng chương với $people - $after${if (others.isNotEmpty()) " · $others" else ""}"
+        val others = if (voice.otherUsers > 0) S.s_0_nguoi_khac_dung_khong_cung_chuong_9e46519d(voice.otherUsers) else ""
+        if (voice.sharedWith.isEmpty()) return others.ifEmpty { if (current) S.s_giong_dang_doc_cho_nguoi_nay_16983253 else S.s_chua_ai_dung_3ba5b001 }
+        val people = voice.sharedWith.joinToString(", ") { S.s_0_1_chuong_a776ede8(it.label, it.chapters) }
+        val after = S.s_hai_nguoi_se_nghe_giong_het_nhau_958bdccc
+        return S.s_cung_chuong_voi_0_1_2_fce54130(people, after, if (others.isNotEmpty()) " · $others" else "")
     }
 
     /** Hộp "Đổi giọng" của người kể: giọng nhân vật đang giữ không chọn được - nói của ai (tối đa ba tên). */
     fun takenText(takenBy: List<String>): String {
         val named = takenBy.take(3).joinToString(", ")
-        val rest = if (takenBy.size > 3) " và ${takenBy.size - 3} người khác" else ""
-        return "Đang là giọng của $named$rest - người kể cần giọng riêng"
+        val rest = if (takenBy.size > 3) S.s_va_0_nguoi_khac_cc066f39(takenBy.size - 3) else ""
+        return S.s_dang_la_giong_cua_0_1_nguoi_ke_can_giong_r_9f7b35e6(named, rest)
     }
 
     /** Dòng phụ dưới tên giọng: chất giọng, rồi ai đang dùng chung (`voiceMeta`). */
     fun meta(voice: VoiceEntry, withGender: Boolean): String {
-        val parts = if (voice.description.isNotEmpty()) listOf(voice.description) else listOf(if (voice.region.isNotEmpty()) "Miền ${voice.region}" else "", voice.style)
+        val parts = if (voice.description.isNotEmpty()) listOf(voice.description) else listOf(if (voice.region.isNotEmpty()) S.s_mien_0_ea8d625b(voice.region) else "", voice.style)
         val about = (listOf(if (withGender && voice.description.isEmpty()) voice.genderLabel else "") + parts).dotJoined()
         val alone = voice.current && voice.sharedWith.isEmpty() && voice.otherUsers == 0
         val use = voice.takenNote ?: if (voice.takenBy.isNotEmpty()) takenText(voice.takenBy) else if (alone) "" else sharedText(voice, voice.current)
@@ -239,14 +241,14 @@ object VoiceLogic {
 
     /** Thời gian thu lại: số đo của chính cuốn ("trên máy này"), hay số ước khi chưa đo được. */
     fun estimateText(seconds: Double, measured: Boolean): String {
-        val length = if (seconds < 60) "chưa tới 1 phút" else "khoảng ${vn.abook.player.ui.data.Fmt.length(seconds)}"
-        return if (!measured) "$length - ước chừng, vì cuốn chưa xong chương nào để đo" else "$length trên máy này"
+        val length = if (seconds < 60) S.s_chua_toi_1_phut_e8b7904f else S.s_khoang_0_22035be1(vn.abook.player.ui.data.Fmt.length(seconds))
+        return if (!measured) S.s_0_uoc_chung_vi_cuon_chua_xong_chuong_nao_d_4008a02f(length) else S.s_0_tren_may_nay_cc87f35c(length)
     }
 
     /** Một dòng trong bảng "Đổi giọng": đổi giọng tốn gì. */
     fun rerecordText(name: String, cost: Rerecord): String =
-        if (cost.lines == 0) "Chưa câu nào của $name được thu - đổi giọng không phải thu lại gì."
-        else "Đổi giọng là thu lại ${vn.abook.player.ui.data.Fmt.number(cost.lines.toLong())} câu đã thu của $name, ${estimateText(cost.seconds, cost.measured)}."
+        if (cost.lines == 0) S.s_chua_cau_nao_cua_0_duoc_thu_doi_giong_khon_ecc23040(name)
+        else S.s_doi_giong_la_thu_lai_0_cau_da_thu_cua_1_2_34198100(vn.abook.player.ui.data.Fmt.number(cost.lines.toLong()), name, estimateText(cost.seconds, cost.measured))
 
     /** Khoá bản nghe thử trong phiên: cùng sách, cùng người, cùng giọng thì phát lại, không hỏi máy. */
     fun tryKey(bookId: String, character: String, preset: String): String = listOf(bookId, character, preset).joinToString("\u0000")
@@ -255,15 +257,15 @@ object VoiceLogic {
     fun refusalText(reason: String, fallback: String, named: Boolean): String {
         if (reason == "producing" && named) return fallback
         return when (reason) {
-            "producing" -> "Máy đang làm sách; thử lại khi xong."
-            "gpu" -> "Card đồ hoạ đang bận - thử lại sau ít phút"
-            "studio" -> "Cài Studio để nghe thử."
-            "busy" -> "Đang nghe thử câu khác - bấm lại sau ít giây"
+            "producing" -> S.s_may_dang_lam_sach_thu_lai_khi_xong_eea5a664
+            "gpu" -> S.s_card_do_hoa_dang_ban_thu_lai_sau_it_phut_f63229bf
+            "studio" -> S.s_cai_studio_de_nghe_thu_60d07d86
+            "busy" -> S.s_dang_nghe_thu_cau_khac_bam_lai_sau_it_giay_8047fd55
             else -> fallback
         }
     }
 
     /** Dòng dưới nút sau khi nghe: lúc thu thật sẽ nghe gần như vậy, câu nào, giọng ai. */
     fun previewCaption(text: String, speaker: String): String =
-        "Lúc thu thật sẽ nghe gần như vậy · câu “${text.replace(Regex("\\s+"), " ").trim()}”${if (speaker.isNotEmpty()) " · giọng $speaker" else ""}"
+        S.s_luc_thu_that_se_nghe_gan_nhu_vay_cau_0_1_e031974e(text.replace(Regex("\\s+"), " ").trim(), if (speaker.isNotEmpty()) S.s_giong_0_8c67e1bb(speaker) else "")
 }

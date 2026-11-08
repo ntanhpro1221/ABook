@@ -1,30 +1,31 @@
+.import "UiStrings.js" as S
 .pragma library
 
 // Phần thuần của việc cài Studio (ui/src/studio/StudioSetup.tsx, studioFit.ts, errorText.ts friendlySetupError, setupLeftover.ts):
 // chữ chép từng chữ để thẻ "Cài Studio" ở màn Dự án, Cài đặt › Studio và khối nhắc ở trình tạo sách nói cùng một câu.
 
-var STUDIO_WHAT = "Studio biến truyện chữ thành sách nói."
+var STUDIO_WHAT = S.s_studio_bien_truyen_chu_thanh_sach_noi_59542b09
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử (docs/ANALYSIS_RESEARCH.md)
-var STUDIO_NEEDS = "NVIDIA từ 8 GB\u00a0·\u00a0tải ~25 GB\u00a0·\u00a0trống 35 GB\u00a0·\u00a0~7–10 phút/chương."
+var STUDIO_NEEDS = S.s_nvidia_tu_8_gb_u00a0_u00a0tai_25_gb_u00a0_7eecc929
 var TESTED_GB = 8
 var MIN_GB = 6
 
 // ---- studio/studioFit.ts: máy này có đủ để làm sách nói không (NVIDIA từ 8 GB đủ, 6-8 GB chưa thử, dưới 6 GB hay không có card là không) ----
 function studioFit(gpu) {
     if (!gpu) {
-        const reason = "không có card đồ hoạ NVIDIA, hay driver NVIDIA chưa cài"
-        return {level: "no", line: "Máy này " + reason + ".", reason: reason}
+        const reason = S.s_khong_co_card_do_hoa_nvidia_hay_driver_nvi_a6c48055
+        return {level: "no", line: S.s_may_nay_ee46aadd + reason + ".", reason: reason}
     }
-    if (!(gpu.memory > 0)) return {level: "maybe", line: "Card " + gpu.name + ": chưa đọc được bộ nhớ của card, chưa biết có đủ không."}
+    if (!(gpu.memory > 0)) return {level: "maybe", line: "Card " + gpu.name + S.s_chua_doc_duoc_bo_nho_cua_card_chua_biet_co_6aad987d}
     const gb = gpu.memory / Math.pow(2, 30)
     const shown = gpu.name + " (" + Math.round(gb) + " GB)"
-    if (gb >= TESTED_GB - 0.5) return {level: "ok", line: "Card " + shown + ": đủ để làm sách nói (đã thử trên card " + TESTED_GB + " GB)."}
-    if (gb >= MIN_GB - 0.5) return {level: "maybe", line: "Card " + shown + ": có thể chạy được nhưng chưa thử trên card dưới " + TESTED_GB + " GB, có thể chậm."}
-    const reason = "card " + shown + " ít bộ nhớ hơn mức tối thiểu " + MIN_GB + " GB"
-    return {level: "no", line: "Card " + shown + ": ít bộ nhớ hơn mức tối thiểu " + MIN_GB + " GB.", reason: reason}
+    if (gb >= TESTED_GB - 0.5) return {level: "ok", line: "Card " + shown + S.s_du_de_lam_sach_noi_da_thu_tren_card_da727240 + TESTED_GB + " GB)."}
+    if (gb >= MIN_GB - 0.5) return {level: "maybe", line: "Card " + shown + S.s_co_the_chay_duoc_nhung_chua_thu_tren_card_68d4fe61 + TESTED_GB + S.s_gb_co_the_cham_cd510682}
+    const reason = "card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_f038c1c3 + MIN_GB + " GB"
+    return {level: "no", line: "Card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_d079c3f4 + MIN_GB + " GB.", reason: reason}
 }
 /** Câu nói thật khi máy không làm sách nói được - MỘT câu cho trình tạo sách, bước cuối và thẻ Cài Studio. */
-function noStudioLine(reason) { return "Máy này không làm sách nói được (" + reason + "). Bạn vẫn nghe ngay mọi sách." }
+function noStudioLine(reason) { return S.s_may_nay_khong_lam_sach_noi_duoc_d4aa86af + reason + S.s_ban_van_nghe_ngay_moi_sach_8376f422 }
 
 // ---- tình trạng từ /api/app ----
 /** `info.studio` -> {missing, update, repair, action}: tên nút dẫn tới thẻ Studio ở màn Dự án (useStudioMissing). */
@@ -34,7 +35,7 @@ function studioMissing(studio) {
     return {
         missing: Boolean(studio && (!studio.installed || studio.outdated)),
         update: update, repair: repair,
-        action: repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio"
+        action: repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : S.s_cai_studio_5fdd3bd9
     }
 }
 
@@ -55,35 +56,35 @@ function currentStep(status) {
     return null
 }
 function progressOf(status) { return status.progress && status.progress.total > 0 ? status.progress.done / status.progress.total : -1 }
-function cardTitle(status) { return isRepair(status) ? "Sửa Studio" : isUpdate(status) ? "Cập nhật Studio" : "Cài Studio" }
+function cardTitle(status) { return isRepair(status) ? S.s_sua_studio_2f99394d : isUpdate(status) ? S.s_cap_nhat_studio_b3acc7e7 : S.s_cai_studio_5fdd3bd9 }
 function cardLine(status) {
-    if (isRepair(status)) return "Tải lại " + damagedOf(status).concat(staleOf(status)).join(", ") + "; sách giữ nguyên."
-    if (isUpdate(status)) return "Cập nhật " + status.outdated.join(", ") + "; sách giữ nguyên."
+    if (isRepair(status)) return S.s_tai_lai_eb29b90a + damagedOf(status).concat(staleOf(status)).join(", ") + S.s_sach_giu_nguyen_4f087c0c
+    if (isUpdate(status)) return S.s_can_cap_nhat_1655056f + status.outdated.join(", ") + S.s_sach_giu_nguyen_4f087c0c
     return STUDIO_NEEDS
 }
 /** Nút chính của thẻ theo tình trạng: {kind: "cancel" | "cancelOld" | "wait" | "unfit" | "go", text}. */
 function cardButton(status, fit) {
-    if (status.running) return {kind: "cancel", text: "Dừng"}
-    if (status.leftover) return status.leftover.orphan ? {kind: "cancelOld", text: "Dừng lượt cũ"} : {kind: "wait", text: "Cài tiếp"}
-    if (fit && fit.level === "no") return {kind: "unfit", text: "Vẫn cài"}
-    return {kind: "go", text: isRepair(status) ? "Sửa Studio" : isUpdate(status) ? "Cập nhật Studio" : started(status) ? "Cài tiếp" : "Cài Studio"}
+    if (status.running) return {kind: "cancel", text: S.s_dung_11554138}
+    if (status.leftover) return status.leftover.orphan ? {kind: "cancelOld", text: S.s_dung_luot_cu_98c3e5d1} : {kind: "wait", text: S.s_cai_tiep_f4243054}
+    if (fit && fit.level === "no") return {kind: "unfit", text: S.s_van_cai_ef098464}
+    return {kind: "go", text: isRepair(status) ? S.s_sua_studio_2f99394d : isUpdate(status) ? S.s_cap_nhat_studio_b3acc7e7 : started(status) ? S.s_cai_tiep_f4243054 : S.s_cai_studio_5fdd3bd9}
 }
 
 var OFFLINE = /getaddrinfo failed|\[Errno 11001\]|WinError 11001|WinError 10051|WinError 10060|Network is unreachable|Temporary failure in name resolution|Name or service not known|timed out|Connection (?:aborted|reset)|RemoteDisconnected|IncompleteRead/i
 /** Lỗi dừng dở của bước "Cài Studio": mất mạng nói bằng lời người nghe và chỉ việc làm tiếp; nguyên văn ở `detail` cho "Chi tiết". */
 function friendlySetupError(raw) {
     const detail = String(raw).trim()
-    if (OFFLINE.test(detail)) return {summary: "Mất mạng giữa chừng - bấm Cài tiếp để làm tiếp.", detail: detail}
+    if (OFFLINE.test(detail)) return {summary: S.s_mat_mang_giua_chung_bam_cai_tiep_de_lam_ti_c7e5dddf, detail: detail}
     return {summary: detail, detail: ""}
 }
 function clock(seconds) {
-    if (!seconds) return "trước"
+    if (!seconds) return S.s_truoc_22e6f96e
     const date = new Date(seconds * 1000)
     return (date.getHours() < 10 ? "0" : "") + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
 }
 function leftoverLine(leftover) {
     const when = clock(leftover.since)
     return leftover.orphan
-        ? "Lượt cài lúc " + when + " (lần mở app trước) vẫn còn chạy ngầm. Bạn chờ nó xong rồi bấm Cài tiếp, hoặc bấm “Dừng lượt cũ” để cài lại từ chỗ dở."
-        : "Một cửa sổ ABook khác đang cài Studio từ " + when + ". Bạn đóng nó hoặc chờ nó xong rồi bấm Cài tiếp."
+        ? S.s_luot_cai_luc_f7b49d0c + when + S.s_lan_mo_app_truoc_van_con_chay_ngam_ban_cho_0515b464
+        : S.s_mot_cua_so_abook_khac_dang_cai_studio_tu_d0368be3 + when + S.s_ban_dong_no_hoac_cho_no_xong_roi_bam_cai_t_8a3284aa
 }

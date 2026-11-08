@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,10 +56,10 @@ fun EndNotice(state: NowPlayingState, model: NowPlayingModel, window: NowPlaying
                 val next = choices.next
                 if (next != null) {
                     BasicText(PlayerText.ENDED_PART, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-                    TextAction("Nghe tiếp ${PlayerEnd.nextLabel(next.title)}", { model.listen(next.id) }, "end_next", align = Alignment.Center)
+                    TextAction(S.s_nghe_tiep_0_248b1487(PlayerEnd.nextLabel(next.title)), { model.listen(next.id) }, "end_next", align = Alignment.Center)
                 } else {
                     BasicText(PlayerText.ENDED_BOOK, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-                    TextAction("Nghe lại từ đầu", model::restart, "end_restart", align = Alignment.Center)
+                    TextAction(S.s_nghe_lai_tu_dau_e251d632, model::restart, "end_restart", align = Alignment.Center)
                 }
                 AfterTheEnd(choices.others, model, window)
             }
@@ -71,10 +73,10 @@ private fun AfterTheEnd(others: List<PlayerEnd.Pick>, model: NowPlayingModel, wi
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8), horizontalAlignment = Alignment.CenterHorizontally) {
         Reveal(others.isNotEmpty()) {
             Column(Modifier.fillMaxWidth().testTag("end_others")) {
-                BasicText("Nghe cuốn khác", Modifier.padding(bottom = Dim.s4), style = Abook.type.caption.copy(color = Abook.colors.text2))
+                BasicText(S.s_nghe_cuon_khac_cc5cf8a7, Modifier.padding(bottom = Dim.s4), style = Abook.type.caption.copy(color = Abook.colors.text2))
                 for (book in others) {
                     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { model.listen(book.id) }
-                        .semantics { contentDescription = "Nghe ${book.title}" }.testTag("end_other_${book.id}"),
+                        .semantics { contentDescription = S.s_nghe_0_42d1e966(book.title) }.testTag("end_other_${book.id}"),
                         verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             BasicText(book.title, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
@@ -86,7 +88,7 @@ private fun AfterTheEnd(others: List<PlayerEnd.Pick>, model: NowPlayingModel, wi
                 }
             }
         }
-        if (window.toLibrary != null) TextAction("Về thư viện", { window.toLibrary?.invoke() }, "end_library", align = Alignment.Center)
+        if (window.toLibrary != null) TextAction(S.s_ve_thu_vien_7bb3f8c2, { window.toLibrary?.invoke() }, "end_library", align = Alignment.Center)
     }
 }
 

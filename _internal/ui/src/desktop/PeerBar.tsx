@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +18,7 @@ export function usePeerSilent(onBack?: () => void): string {
   const [silent, setSilent] = useState("");
   useEffect(() => {
     if (!currentPeer()) return;
-    const listener = (event: Event) => setSilent((event as CustomEvent<string>).detail || "Máy kia không trả lời");
+    const listener = (event: Event) => setSilent((event as CustomEvent<string>).detail || S.s_may_kia_khong_tra_loi_aabbe89f);
     window.addEventListener(PEER_SILENT_EVENT, listener);
     return () => window.removeEventListener(PEER_SILENT_EVENT, listener);
   }, []);
@@ -54,9 +55,7 @@ export function PeerBar() {
       <div className="page-x mx-auto flex max-w-[1180px] items-center gap-3 max-sm:flex-wrap">
         <Laptop className="ink-start size-4 shrink-0 text-fg-2" aria-hidden />
         <MotionRegion as="span" className="min-w-0 flex-1 text-pretty">{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</MotionRegion>
-        <Button size="sm" variant="ghost" onClick={() => window.location.assign(homePage(window.location.search))}>
-          Về máy này
-        </Button>
+        <Button size="sm" variant="ghost" onClick={() => window.location.assign(homePage(window.location.search))}>{S.s_ve_may_nay_d9404884}</Button>
       </div>
     </div>
   );

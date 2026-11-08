@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -112,7 +113,7 @@ function EmptyLibrary() {
   return (
     <MotionRegion><EmptyState
       icon={Headphones}
-      title="Chưa có sách"
+      title={S.s_chua_co_sach_30843cb2}
       className="mt-12"
       // Một nút chính; các lối khác cùng một kiểu chữ-có-biểu-tượng ở hàng dưới (DESIGN: một câu + một nút, không khung đứt nét - soát V25).
       action={
@@ -120,23 +121,17 @@ function EmptyLibrary() {
           {canAdd ? (
             <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
           ) : (
-            <Button variant="primary" size="lg" icon={Clapperboard} onClick={() => navigate("/studio/new", PICK_SOURCE)}>
-              Tạo sách nói
-            </Button>
+            <Button variant="primary" size="lg" icon={Clapperboard} onClick={() => navigate("/studio/new", PICK_SOURCE)}>{S.s_tao_sach_noi_ab873c7a}</Button>
           )}
           <div className="flex flex-wrap justify-center gap-1">
             {canAdd && (
-              <Button variant="ghost" icon={Clapperboard} className="touch-row" onClick={() => navigate("/studio/new", PICK_SOURCE)}>
-                Tạo sách nói
-              </Button>
+              <Button variant="ghost" icon={Clapperboard} className="touch-row" onClick={() => navigate("/studio/new", PICK_SOURCE)}>{S.s_tao_sach_noi_ab873c7a}</Button>
             )}
             <OpenBookFileButton variant="ghost" />
           </div>
         </div>
       }
-    >
-      Thêm truyện hoặc tạo sách nói.
-    </EmptyState></MotionRegion>
+    >{S.s_them_truyen_hoac_tao_sach_noi_4fff75be}</EmptyState></MotionRegion>
   );
 }
 
@@ -147,8 +142,7 @@ function StudioMenuItem({ id }: { id: string }) {
       onSelect={() => navigate(`/studio/${id}`)}
       className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
     >
-      <Clapperboard className="size-4" /> Mở trong Studio
-    </DropdownMenu.Item>
+      <Clapperboard className="size-4" />{S.s_mo_trong_studio_b4b3fe3c}</DropdownMenu.Item>
   );
 }
 
@@ -160,15 +154,14 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-imported", { detail: book }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
-      <Trash2 className="size-4" /> Xoá khỏi thư viện
-    </DropdownMenu.Item>
+      <Trash2 className="size-4" />{S.s_xoa_khoi_thu_vien_cfddb0f5}</DropdownMenu.Item>
   );
 }
 
 function removeAsk(book: ListenBook): string {
   return book.stage === "text"
-    ? "Sách vào Thùng rác, khôi phục được. File gốc giữ nguyên."
-    : "Sách vào Thùng rác, khôi phục được. File .abook gốc giữ nguyên.";
+    ? S.s_sach_vao_thung_rac_khoi_phuc_duoc_file_goc_969557e8
+    : S.s_sach_vao_thung_rac_khoi_phuc_duoc_file_abo_6d9feb25;
 }
 
 function RemoveImportedHost() {
@@ -194,29 +187,25 @@ function RemoveImportedHost() {
       void client.invalidateQueries({ queryKey: ["listen"] });
       // "Hoàn tác" (trash_pending.py): thư mục nằm chờ vài chục giây trước khi vào Thùng rác.
       toastRemoved({
-        message: `Đã bỏ “${book.title}” khỏi thư viện`,
+        message: S.s_da_bo_0_khoi_thu_vien_8218fead(book.title),
         title: book.title,
         undo: result.undo,
         onRestored: () => void client.invalidateQueries({ queryKey: ["listen"] }),
       });
     } catch (error) {
-      toast.error("Chưa xoá được", { description: (error as Error).message });
+      toast.error(S.s_chua_xoa_duoc_b872fff6, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
-        </Button>
-        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
-          Xoá khỏi thư viện
-        </Button>
+        <Button variant="ghost" onClick={() => setBook(null)}>{S.s_de_sau_9be0a7ab}</Button>
+        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>
       </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
-      title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
+      title={S.s_bo_0_khoi_thu_vien_fe842224(book?.title ?? "")}
       description={book ? removeAsk(book) : ""}
     >
 
@@ -249,14 +238,14 @@ interface OpenedBook {
 
 // Thông báo mở file = MỘT dòng (DESIGN 6): chỉ cái vừa xảy ra; "xoá file gốc cũng không sao"... là điều người dùng không cần được nhắc mỗi lần mở.
 const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, string> = {
-  new: "Đã thêm", // có tên sách thì nói “Đã thêm “tên”” (xem dưới)
-  existing: "Sách đã có",
-  updated: "Đã cập nhật",
-  older: "File này cũ hơn bản đang có",
-  conflict: "File này có bản thu khác",
-  repaired: "Đã khôi phục file",
-  project: "Sách của Studio",
-  studio: "Đã mở dự án",
+  new: S.s_da_them_e26b2fcb, // có tên sách thì nói “Đã thêm “tên”” (xem dưới)
+  existing: S.s_sach_da_co_24cc49e2,
+  updated: S.s_da_cap_nhat_9ca1e681,
+  older: S.s_file_nay_cu_hon_ban_dang_co_afc4d520,
+  conflict: S.s_file_nay_co_ban_thu_khac_6036a451,
+  repaired: S.s_da_khoi_phuc_file_037a8437,
+  project: S.s_sach_cua_studio_b54d45e2,
+  studio: S.s_da_mo_du_an_ef7db505,
 };
 
 /** Thư viện mà một file sách vừa mở làm đổi: thư viện Studio (dự án) hay thư viện nghe. */
@@ -268,17 +257,17 @@ function useOpenedBook() {
   return useCallback(
     (result: OpenedBook): boolean => {
       if (result.error) {
-        toast.error("Chưa mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
+        toast.error(S.s_chua_mo_duoc_file_sach_2cdc21ae, { description: result.file ? `${result.file}: ${result.error}` : result.error });
         return false;
       }
       if (!result.id) return false;
       if (result.how === "older" || result.how === "conflict") {
         // Hai lựa chọn là "Thay bằng file này" (nút) và giữ bản đang có (đóng thông báo): không cần nút thứ hai.
-        toast.warning(OPENED_SAID[result.how], { description: "Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.", duration: Infinity,
-          action: { label: "Thay bằng file này", onClick: () => {
+        toast.warning(OPENED_SAID[result.how], { description: S.s_chinh_sua_va_cho_nghe_cua_ban_van_duoc_giu_287783a6, duration: Infinity,
+          action: { label: S.s_thay_bang_file_nay_3140e07e, onClick: () => {
             void api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path: result.source, allowOlder: true } })
-              .then((next) => { void client.invalidateQueries({ queryKey: ["listen"] }); navigate(`/book/${next.id}`); toast.success("Đã thay bản sách, giữ chỉnh sửa và chỗ nghe của bạn"); })
-              .catch((error: Error) => toast.error("Chưa thay được sách", { description: error.message }));
+              .then((next) => { void client.invalidateQueries({ queryKey: ["listen"] }); navigate(`/book/${next.id}`); toast.success(S.s_da_thay_ban_sach_giu_chinh_sua_va_cho_nghe_d3a95558); })
+              .catch((error: Error) => toast.error(S.s_chua_thay_duoc_sach_8eebed8f, { description: error.message }));
           } } });
         return true;
       }
@@ -287,7 +276,7 @@ function useOpenedBook() {
         navigate(`/studio/${result.id}`);
         if (result.edits) offerFold(client, result.id, result.edits); // file dự án đã được sửa ở máy khác (điện thoại)
         const lost = result.missingSources ?? 0;
-        toastDone(OPENED_SAID.studio, lost ? `Thiếu ${lost} file nguồn chương - thu lại chương ấy thì cần chép nguồn vào.` : undefined);
+        toastDone(OPENED_SAID.studio, lost ? S.s_thieu_0_file_nguon_chuong_thu_lai_chuong_a_6d1a66a9(lost) : undefined);
         return true;
       }
       void client.invalidateQueries(openedLibrary(result));
@@ -297,7 +286,7 @@ function useOpenedBook() {
       const notes = [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined;
       if ((result.how === "new" && title === OPENED_SAID.new) || (result.how === "updated" && title === OPENED_SAID.updated)) {
         // Cuốn mới / cuốn vừa cập nhật: nói tên sách như bên điện thoại (“Đã thêm “tên””, “Đã cập nhật “tên””); tên chưa đọc được thì còn câu trơn.
-        const named = (name: string) => (result.how === "updated" ? `Đã cập nhật “${name}”` : `Đã thêm “${name}”`);
+        const named = (name: string) => (result.how === "updated" ? S.s_da_cap_nhat_0_627a2681(name) : S.s_da_them_0_ea40abe7(name));
         void api<{ title?: string }>(`/api/listen/books/${result.id}`).then((book) => book.title, () => undefined)
           .then((name) => toastDone(name ? named(name) : title, notes));
       } else toastDone(title, notes);
@@ -311,7 +300,7 @@ function useOpenedBook() {
 /** File đã sửa mở vào cuốn có sẵn trên máy: nói bao nhiêu thay đổi được lấy từ file (phần "giữ nguyên N chỉnh sửa của bạn" ở keptEditsTitle). Không nói gì khi file không mang thay đổi. */
 function mergedTitle(result: OpenedBook): string | undefined {
   const adopted = result.merge?.adopted;
-  return adopted ? `Đã lấy ${adopted} thay đổi từ file` : undefined;
+  return adopted ? S.s_da_lay_0_thay_doi_tu_file_9d294714(adopted) : undefined;
 }
 
 /** File `.abook` mang thay đổi của người nghe, mở ra đúng dự án của máy này: hỏi có áp vào dự án không - thông báo có nút,
@@ -323,18 +312,18 @@ function offerFold(client: QueryClient, id: string, edits: number) {
     void client.invalidateQueries({ queryKey: ["listen"] });
   };
   // Chưa áp gì cho tới khi bấm; để thông báo trôi đi thì phần chờ vẫn nằm đó (một nút duy nhất - không nút "Bỏ qua").
-  toast(`${edits} thay đổi trong file - áp vào dự án?`, {
+  toast(S.s_0_thay_doi_trong_file_ap_vao_du_an_1aaa143e(edits), {
     duration: 30000,
     action: {
-      label: "Áp vào dự án",
+      label: S.s_ap_vao_du_an_1fe4afd5,
       onClick: () =>
         void api<{ applied: number; skipped: number; requests?: number }>(`/api/books/${id}/edits/fold`, { method: "POST", body: {} })
           .then((report) => {
             refresh();
-            const asked = report.requests ? `, ${report.requests} việc chờ làm` : "";
-            toastDone(`Đã áp ${report.applied} thay đổi vào dự án${asked}`, report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : undefined);
+            const asked = report.requests ? S.s_0_viec_cho_lam_7287f8e5(report.requests) : "";
+            toastDone(S.s_da_ap_0_thay_doi_vao_du_an_1_d610c92d(report.applied, asked), report.skipped ? S.s_0_thay_doi_khong_con_cho_trong_du_an_nen_b_d95c15fd(report.skipped) : undefined);
           })
-          .catch((error: Error) => toast.error("Chưa áp được thay đổi", { description: error.message })),
+          .catch((error: Error) => toast.error(S.s_chua_ap_duoc_thay_doi_a0070248, { description: error.message })),
     },
   });
 }
@@ -403,7 +392,7 @@ function UpdateListener() {
   useEffect(() => {
     const found = () => void client.invalidateQueries({ queryKey: ["app"] });
     // Lời của vỏ đã viết sẵn cho người nghe (không lộ chuỗi lỗi của thư viện) và đã nói bước tiếp theo.
-    const failed = (event: Event) => toast.error("Chưa tải được bản mới", { description: (event as CustomEvent<string>).detail });
+    const failed = (event: Event) => toast.error(S.s_chua_tai_duoc_ban_moi_ce6632c0, { description: (event as CustomEvent<string>).detail });
     window.addEventListener("abook-update", found);
     window.addEventListener("abook-update-failed", failed);
     return () => {
@@ -445,14 +434,14 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
     try {
       opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Chưa mở được file sách", { description: (error as Error).message });
+      toast.error(S.s_chua_mo_duoc_file_sach_2cdc21ae, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
   return (
     <Button variant={variant} icon={FileAudio} className="touch-row" disabled={busy} onClick={() => void run()}>
-      {busy ? "Đang mở" : "Mở file sách"}
+      {busy ? S.s_dang_mo_98235c77 : S.s_mo_file_sach_d826dd00}
     </Button>
   );
 }
@@ -460,9 +449,7 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
 function StudioChipLink({ id }: { id: string }) {
   const navigate = useNavigate();
   return (
-    <button type="button" onClick={() => navigate(`/studio/${id}`)} className="font-semibold underline underline-offset-2 hover:no-underline">
-      Mở Studio
-    </button>
+    <button type="button" onClick={() => navigate(`/studio/${id}`)} className="font-semibold underline underline-offset-2 hover:no-underline">{S.s_mo_studio_84ec0a81}</button>
   );
 }
 
@@ -473,9 +460,7 @@ function PeerStudioChipLink({ device, book }: { device: string; book: string }) 
       type="button"
       onClick={() => window.location.assign(peerPage(window.location.search, device, `/studio/${book}`))}
       className="font-semibold underline underline-offset-2 hover:no-underline"
-    >
-      Mở Studio
-    </button>
+    >{S.s_mo_studio_84ec0a81}</button>
   );
 }
 
@@ -492,11 +477,11 @@ function PeerTrouble({ error, retry }: { error: unknown; retry: () => void }) {
   return (
     <EmptyState
       icon={Laptop}
-      title={(error as Error).message || "Máy kia không trả lời"}
+      title={(error as Error).message || S.s_may_kia_khong_tra_loi_aabbe89f}
       className="mt-24"
-      action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>Về máy này</Button>}
+      action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>{S.s_ve_may_nay_d9404884}</Button>}
     >
-      <MotionRegion as="span">{silent ? "Studio tự mở khi máy ấy trả lời lại." : null}</MotionRegion>
+      <MotionRegion as="span">{silent ? S.s_studio_tu_mo_khi_may_ay_tra_loi_lai_f4f4f246 : null}</MotionRegion>
     </EmptyState>
   );
 }
@@ -531,10 +516,8 @@ function StudioClosed({ children }: { children: ReactNode }) {
       icon={Clapperboard}
       title={listenOnlyLine(listenOnlyOwner(info))}
       className="mt-24"
-      action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
-    >
-      Sách của máy ấy vẫn nghe được ở Thư viện.
-    </EmptyState></MotionRegion>
+      action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
+    >{S.s_sach_cua_may_ay_van_nghe_duoc_o_thu_vien_04fff8ae}</EmptyState></MotionRegion>
   );
 }
 
@@ -543,12 +526,10 @@ function NotFound() {
   return (
     <EmptyState
       icon={Compass}
-      title="Không có trang này"
+      title={S.s_khong_co_trang_nay_8ab9dc44}
       className="mt-24"
-      action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
-    >
-      Đường dẫn có thể đã cũ hoặc gõ nhầm.
-    </EmptyState>
+      action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
+    >{S.s_duong_dan_co_the_da_cu_hoac_go_nham_006475cb}</EmptyState>
   );
 }
 
@@ -563,7 +544,7 @@ export function App() {
     setVoiceReady(true);
     return onDefaultVoiceChosen((voice) => {
       void api("/api/preferences", { method: "PUT", body: { readAloudVoice: voice } })
-        .catch(() => toast.error("Chưa lưu được giọng mặc định. Bạn hãy chọn lại để thử lại."));
+        .catch(() => toast.error(S.s_chua_luu_duoc_giong_mac_dinh_ban_hay_chon_a2d2c7af));
     });
   }, [info?.remote, preferences?.readAloudVoice]);
   useTheme(preferences?.theme ?? info?.theme);
@@ -595,9 +576,9 @@ export function App() {
   if (!info && error && currentPeer()) return <MotionRegion motionKey="peer-error"><PeerTrouble error={error} retry={retry} /></MotionRegion>;
   // Màn lỗi trước khi có app: dải mất mạng tràn cả bề ngang (không nằm trong lề), lời lỗi thẳng lề màn (page-x 20 / 40) - p-10 cũ là 35 px
   // vì thang khoảng cách 3,5 px, dải mạng thụt vào trong lề (soát 25-10).
-  if (!info && error) return <MotionRegion motionKey="app-error"><OfflineStrip /><InlineError message="Bạn hãy mở lại ABook rồi thử kết nối lại." onRetry={retry} className="page-x py-[32px]" /></MotionRegion>;
-  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><InlineError message="Bạn hãy thử tải lại cài đặt giọng đọc." onRetry={() => void reloadPreferences()} className="page-x py-[32px]" /></MotionRegion>;
-  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label="Đang tải điều hướng" /><ContentSkeleton shape="covers" count={5} className="flex-1 self-start" label="Đang mở ABook" /></div></MotionRegion>;
+  if (!info && error) return <MotionRegion motionKey="app-error"><OfflineStrip /><InlineError message={S.s_ban_hay_mo_lai_abook_roi_thu_ket_noi_lai_7d16da25} onRetry={retry} className="page-x py-[32px]" /></MotionRegion>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_giong_doc_7911aec7} onRetry={() => void reloadPreferences()} className="page-x py-[32px]" /></MotionRegion>;
+  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label={S.s_dang_tai_dieu_huong_6542cd54} /><ContentSkeleton shape="covers" count={5} className="flex-1 self-start" label={S.s_dang_mo_abook_90234941} /></div></MotionRegion>;
   return (
     <MotionRegion motionKey="ready" className="h-full" fadeThrough><TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={source}>
@@ -678,7 +659,7 @@ export function App() {
                             : info.remote
                               ? { remote: listenOnlyOwner(info) }
                               : {
-                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu", "").catch(() => null) : undefined,
+                                  pickFolder: info.dialogs ? () => pickFolder(S.s_chon_noi_luu_2965936c, "").catch(() => null) : undefined,
                                   onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
                                 }
                         }
@@ -714,11 +695,11 @@ export function App() {
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton
         // Nhãn trọn (mặc định sonner nối "alt+T" thô): phím tắt nói bằng chữ của app.
-        customAriaLabel="Thông báo (Alt+T)"
+        customAriaLabel={S.s_thong_bao_alt_t_0cddce34}
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
         toastOptions={{
-          closeButtonAriaLabel: "Đóng thông báo",
+          closeButtonAriaLabel: S.s_dong_thong_bao_8af6ba92,
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-cover",
             description: "!text-fg-2",

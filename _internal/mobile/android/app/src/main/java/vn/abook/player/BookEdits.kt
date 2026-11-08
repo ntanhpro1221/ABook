@@ -52,7 +52,7 @@ object BookEdits {
     private const val LEVEL_MAX = BuildConfig.levelMaxDb
     internal const val DEFAULT_LEVEL_DB = BuildConfig.levelDefaultDb // music_plan.DEFAULT_LEVEL_DB
     private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
-    const val TOO_BIG = "Quá nhiều sửa đổi đang chờ — bạn lưu và áp bớt vào dự án rồi làm tiếp."
+    const val TOO_BIG = S.s_qua_nhieu_sua_doi_dang_cho_ban_luu_va_ap_b_fbd9b57e
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine")
     /** Số bài tối đa của "Nhạc của tôi" mang theo sách (book_edits.MAX_MINE). */
@@ -267,37 +267,37 @@ object BookEdits {
 
     /** `edits.json` đã đọc -> dạng chuẩn; sai thì [EditsError]. Khoá lạ, kiểu sai, chữ chưa sạch, quá trần: từ chối. */
     fun validate(raw: Any?): JSONObject {
-        if (raw !is JSONObject || names(raw).any { it !in TOP_KEYS }) throw EditsError("Phần sửa của sách có mục lạ.")
+        if (raw !is JSONObject || names(raw).any { it !in TOP_KEYS }) throw EditsError(S.s_phan_sua_cua_sach_co_muc_la_c570b0d2)
         val version = raw.opt("version")
         if (raw.opt("format") != FORMAT || version !is Number || version.toDouble() != VERSION.toDouble()) {
-            throw EditsError("Phần sửa của sách không đúng định dạng hay mới hơn app - hãy cập nhật app.")
+            throw EditsError(S.s_phan_sua_cua_sach_khong_dung_dinh_dang_hay_d5f832a3)
         }
         val out = empty()
         if (raw.has("title")) {
             val title = raw.opt("title")
-            if (title !is String || title.isEmpty() || !isClean(title, TITLE_MAX)) throw EditsError("Tên sách trong phần sửa không hợp lệ.")
+            if (title !is String || title.isEmpty() || !isClean(title, TITLE_MAX)) throw EditsError(S.s_ten_sach_trong_phan_sua_khong_hop_le_66e42690)
             out.put("title", title)
         }
         if (raw.has("author")) {
             val author = raw.opt("author")
             // Trống được: sách không rõ tác giả.
-            if (author !is String || !isClean(author, AUTHOR_MAX)) throw EditsError("Tác giả trong phần sửa không hợp lệ.")
+            if (author !is String || !isClean(author, AUTHOR_MAX)) throw EditsError(S.s_tac_gia_trong_phan_sua_khong_hop_le_1ecaa99c)
             out.put("author", author)
         }
         if (raw.has("cover")) out.put("cover", validateCover(raw.opt("cover")))
         if (raw.has("characters")) {
             val people = raw.opt("characters")
             if (people !is JSONObject || people.length() > MAX_CHARACTERS) {
-                throw EditsError("Phần đổi tên nhân vật không hợp lệ hay quá dài.")
+                throw EditsError(S.s_phan_doi_ten_nhan_vat_khong_hop_le_hay_qua_0c764c33)
             }
             val kept = JSONObject()
             for (name in names(people)) {
                 val shown = people.opt(name)
                 if (name.isEmpty() || name.codePointCount(0, name.length) > 200 || hasControl(name)) {
-                    throw EditsError("Tên nhân vật trong phần sửa không hợp lệ.")
+                    throw EditsError(S.s_ten_nhan_vat_trong_phan_sua_khong_hop_le_ed5d7eef)
                 }
                 if (shown !is String || shown.isEmpty() || !isClean(shown, NAME_MAX)) {
-                    throw EditsError("Tên hiện của một nhân vật trong phần sửa không hợp lệ.")
+                    throw EditsError(S.s_ten_hien_cua_mot_nhan_vat_trong_phan_sua_k_25fbd086)
                 }
                 kept.put(name, shown)
             }
@@ -305,18 +305,18 @@ object BookEdits {
         }
         if (raw.has("chapters")) {
             val chapters = raw.opt("chapters")
-            if (chapters !is JSONObject || chapters.length() > MAX_CHAPTERS) throw EditsError("Phần đổi tên chương không hợp lệ hay quá dài.")
+            if (chapters !is JSONObject || chapters.length() > MAX_CHAPTERS) throw EditsError(S.s_phan_doi_ten_chuong_khong_hop_le_hay_qua_d_2a43d57d)
             val kept = JSONObject()
             for (key in names(chapters)) {
                 val entry = chapters.opt(key)
                 if (!CHAPTER_ID.matches(key) || entry !is JSONObject || entry.length() == 0 || names(entry).any { it !in CHAPTER_KEYS }) {
-                    throw EditsError("Một mục đổi tên chương không hợp lệ.")
+                    throw EditsError(S.s_mot_muc_doi_ten_chuong_khong_hop_le_6baebc64)
                 }
                 val copy = JSONObject()
                 for (field in names(entry)) {
                     val text = entry.opt(field)
                     if (text !is String || !isClean(text, TITLE_MAX) || (field == "title" && text.isEmpty())) {
-                        throw EditsError("Tên một chương trong phần sửa không hợp lệ.")
+                        throw EditsError(S.s_ten_mot_chuong_trong_phan_sua_khong_hop_le_4076479d)
                     }
                     copy.put(field, text)
                 }
@@ -333,7 +333,7 @@ object BookEdits {
 
     /** `skip`: {mã chương: [dòng người nghe bỏ khỏi phần đọc]} (`book_edits._validate_skip`). */
     private fun validateSkip(skip: Any?): JSONObject {
-        if (skip !is JSONObject || skip.length() > MAX_CHAPTERS) throw EditsError("Phần bỏ dòng khỏi phần đọc không hợp lệ hay quá dài.")
+        if (skip !is JSONObject || skip.length() > MAX_CHAPTERS) throw EditsError(S.s_phan_bo_dong_khoi_phan_doc_khong_hop_le_ha_0fa8677d)
         val out = JSONObject()
         for (key in names(skip)) {
             val lines = skip.opt(key)
@@ -341,7 +341,7 @@ object BookEdits {
             if (!CHAPTER_ID.matches(key) || list == null || list.isEmpty() || list.size > MAX_SKIP_LINES || list.toSet().size != list.size ||
                 list.any { it !is String || it.isEmpty() || !isClean(it, SKIP_LINE_MAX) }
             ) {
-                throw EditsError("Một dòng bỏ khỏi phần đọc trong phần sửa không hợp lệ.")
+                throw EditsError(S.s_mot_dong_bo_khoi_phan_doc_trong_phan_sua_k_2d945ab7)
             }
             out.put(key, JSONArray(list.map { it as String }.sortedWith { a, b -> byCodePoints(a, b) }))
         }
@@ -354,7 +354,7 @@ object BookEdits {
      */
     fun validateReadings(readings: Any?): JSONObject {
         if (readings !is JSONObject || readings.length() == 0 || readings.length() > MAX_READINGS) {
-            throw EditsError("Phần cách đọc riêng không hợp lệ hay quá dài.")
+            throw EditsError(S.s_phan_cach_doc_rieng_khong_hop_le_hay_qua_d_2156b11f)
         }
         val out = JSONObject()
         for (shown in names(readings).sortedWith { a, b -> byCodePoints(a, b) }) {
@@ -362,7 +362,7 @@ object BookEdits {
             if (!isClean(shown, READING_WORD_MAX) || !Readings.isKey(shown) || spoken !is String || spoken.isEmpty() ||
                 !isClean(spoken, READING_SPOKEN_MAX) || spoken == shown
             ) {
-                throw EditsError("Một cách đọc riêng trong phần sửa không hợp lệ.")
+                throw EditsError(S.s_mot_cach_doc_rieng_trong_phan_sua_khong_ho_24a6d139)
             }
             out.put(shown, spoken)
         }
@@ -375,7 +375,7 @@ object BookEdits {
 
     private fun validateCover(cover: Any?): Any {
         if (cover === JSONObject.NULL) return JSONObject.NULL
-        val bad = EditsError("Ảnh bìa trong phần sửa không hợp lệ.")
+        val bad = EditsError(S.s_anh_bia_trong_phan_sua_khong_hop_le_e9d1cf58)
         if (cover !is JSONObject || names(cover).any { it !in COVER_KEYS }) throw bad
         val color = if (cover.has("color")) cover.opt("color") else ""
         val numbers = listOf("width", "height", "version").map { if (cover.has(it)) cover.opt(it) else 0L }
@@ -388,29 +388,29 @@ object BookEdits {
 
     private fun validateMusic(music: Any?): JSONObject {
         if (music !is JSONObject || music.length() == 0 || names(music).any { it !in MUSIC_KEYS }) {
-            throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+            throw EditsError(S.s_phan_sua_nhac_nen_khong_hop_le_52023080)
         }
         val out = JSONObject()
         if (music.has("enabled")) {
             val enabled = music.opt("enabled")
-            if (enabled !is Boolean) throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+            if (enabled !is Boolean) throw EditsError(S.s_phan_sua_nhac_nen_khong_hop_le_52023080)
             out.put("enabled", enabled)
         }
         if (music.has("levelDb")) {
             val level = music.opt("levelDb")
             if (!isNumber(level) || (level is Boolean) || (level as Number).toDouble() !in LEVEL_MIN..LEVEL_MAX) {
-                throw EditsError("Mức nhạc nền trong phần sửa nằm ngoài khoảng cho phép.")
+                throw EditsError(S.s_muc_nhac_nen_trong_phan_sua_nam_ngoai_khoa_bd5e0c44)
             }
             out.put("levelDb", level.toDouble())
         }
         if (music.has("playlist")) {
             val playlist = music.opt("playlist")
-            if (playlist !is String || !PLAYLIST.matches(playlist)) throw EditsError("Danh sách nhạc nền trong phần sửa không hợp lệ.")
+            if (playlist !is String || !PLAYLIST.matches(playlist)) throw EditsError(S.s_danh_sach_nhac_nen_trong_phan_sua_khong_ho_d1e123e7)
             out.put("playlist", playlist)
         }
         if (music.has("silenced")) {
             val silenced = music.opt("silenced")
-            val bad = EditsError("Danh sách đoạn nhạc im lặng trong phần sửa không hợp lệ.")
+            val bad = EditsError(S.s_danh_sach_doan_nhac_im_lang_trong_phan_sua_469a3da3)
             if (silenced !is JSONArray || silenced.length() > MAX_SILENCED) throw bad
             val keys = (0 until silenced.length()).map { silenced.opt(it) }
             if (keys.any { it !is String || !CUE_KEY.matches(it) } || keys.toSet().size != keys.size) throw bad
@@ -418,7 +418,7 @@ object BookEdits {
         }
         val pins = if (music.has("pins")) {
             val raw = music.opt("pins")
-            val bad = EditsError("Danh sách đoạn nhạc đã đổi bài trong phần sửa không hợp lệ.")
+            val bad = EditsError(S.s_danh_sach_doan_nhac_da_doi_bai_trong_phan_53a794d8)
             if (raw !is JSONObject || raw.length() > MAX_PINS) throw bad
             val sorted = JSONObject()
             for (key in names(raw).sorted()) {
@@ -436,7 +436,7 @@ object BookEdits {
             val shas = if (mine is JSONArray) (0 until mine.length()).map { mine.opt(it) } else emptyList()
             if (out.opt("playlist") != Playlists.MINE || mine !is JSONArray || mine.length() == 0 || mine.length() > MAX_MINE ||
                 shas.any { it !is String || !SHA1.matches(it) } || shas.toSet().size != shas.size) {
-                throw EditsError("Danh sách Nhạc của tôi trong phần sửa không hợp lệ.")
+                throw EditsError(S.s_danh_sach_nhac_cua_toi_trong_phan_sua_khon_5b575a0a)
             }
             out.put("mine", JSONArray(shas.map { it as String }))
             wanted.addAll(shas.map { it as String })
@@ -444,7 +444,7 @@ object BookEdits {
         if (music.has("tracks") || wanted.isNotEmpty()) {
             val tracks = music.opt("tracks")
             if (tracks !is JSONObject || names(tracks).toSet() != wanted) {
-                throw EditsError("Nhạc trong phần sửa không khớp các đoạn đổi bài và danh sách đã chọn.")
+                throw EditsError(S.s_nhac_trong_phan_sua_khong_khop_cac_doan_do_115cee57)
             }
             val kept = JSONObject()
             for (sha in names(tracks).sorted()) kept.put(sha, validateTrack(tracks.opt(sha)))
@@ -458,7 +458,7 @@ object BookEdits {
      * độ dài và độ to đo từ chính file. Không có giấy phép / ghi công: ABook không nói gì ngoài tên + nghệ sĩ có sẵn trong file.
      */
     private fun validateTrack(entry: Any?): JSONObject {
-        val bad = EditsError("Thông tin một bài nhạc trong phần sửa không hợp lệ.")
+        val bad = EditsError(S.s_thong_tin_mot_bai_nhac_trong_phan_sua_khon_511f76da)
         if (entry !is JSONObject || names(entry).any { it !in TRACK_KEYS } || (entry.opt("ext") as? String) !in MusicStore.EXTENSIONS) throw bad
         val out = JSONObject().put("ext", entry.getString("ext"))
         for (key in listOf("title", "creator")) {
@@ -478,15 +478,15 @@ object BookEdits {
 
     /** Byte của `edits.json` -> dạng chuẩn ([validate]); quá cỡ hay không phải JSON: [EditsError]. */
     fun parse(data: ByteArray): JSONObject {
-        if (data.size > MAX_EDITS_BYTES) throw EditsError("Phần sửa của sách quá lớn.")
+        if (data.size > MAX_EDITS_BYTES) throw EditsError(S.s_phan_sua_cua_sach_qua_lon_723ad868)
         val raw = try {
             val decoder = Charsets.UTF_8.newDecoder()
                 .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT).onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
             StrictJson.parse(decoder.decode(java.nio.ByteBuffer.wrap(data)).toString())
         } catch (error: StrictJson.ParseError) {
-            throw EditsError("Phần sửa của sách bị hỏng.")
+            throw EditsError(S.s_phan_sua_cua_sach_bi_hong_22120834)
         } catch (error: java.nio.charset.CharacterCodingException) {
-            throw EditsError("Phần sửa của sách bị hỏng.")
+            throw EditsError(S.s_phan_sua_cua_sach_bi_hong_22120834)
         }
         return validate(raw)
     }
@@ -564,7 +564,7 @@ object BookEdits {
     fun save(folder: File, edits: JSONObject) = synchronized(lock) {
         if (isEmpty(edits)) {
             val file = File(folder, EDITS_FILE)
-            check(!file.exists() || file.delete()) { "Chưa lưu được phần sửa sách của bạn" }
+            check(!file.exists() || file.delete()) { S.s_chua_luu_duoc_phan_sua_sach_cua_ban_8e2cc552 }
             File(folder, EDITS_COVER).delete()
             return@synchronized
         }
@@ -717,7 +717,7 @@ object BookEdits {
     fun baseTitle(title: String): String = pyStrip(PART_SUFFIX.replace(title, "")).ifEmpty { pyStrip(title) }
 
     /** continuation.continued_title: "Tên · Phần 3", không chồng hậu tố cũ. */
-    fun continuedTitle(title: String, part: Int): String = "${baseTitle(title)} · Phần $part"
+    fun continuedTitle(title: String, part: Int): String = S.s_0_phan_1_3957afda(baseTitle(title), part)
 
     /** `book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tác giả, tên chương, bìa, nhạc. */
     fun applyManifest(book: JSONObject, edits: JSONObject): JSONObject {
@@ -1048,7 +1048,7 @@ object BookEdits {
         listOf("book.json", "stream.json").map { File(folder, it) }.firstOrNull { it.isFile }?.let { JSONObject(it.readText()) }
 
     /** Như [rawBookOrNull] nhưng ném lỗi khi thư mục không có sách. */
-    fun rawBook(folder: File): JSONObject = rawBookOrNull(folder) ?: throw IOException("Thư mục không có gói sách")
+    fun rawBook(folder: File): JSONObject = rawBookOrNull(folder) ?: throw IOException(S.s_thu_muc_khong_co_goi_sach_b9a24dfc)
 
     /** Tên file dàn nhân vật theo book.json (mặc định cast.json). */
     private fun castName(book: JSONObject): String = listOf(book.opt("cast"), "cast.json").first { truthy(it) }.toString()
@@ -1103,7 +1103,7 @@ object BookEdits {
     /** Đặt lại tên sách (người nghe). Tên rỗng: [EditsError]. Trả tên đã làm sạch. */
     fun setTitle(folder: File, title: String): String {
         val cleaned = cleanText(title, TITLE_MAX)
-        if (cleaned.isEmpty()) throw EditsError("Tên sách không được để trống")
+        if (cleaned.isEmpty()) throw EditsError(S.s_ten_sach_khong_duoc_de_trong_5c7b1ef8)
         synchronized(lock) {
             val edits = load(folder)
             if (cleaned == pyText(rawBook(folder).opt("title"))) edits.remove("title") else edits.put("title", cleaned)
@@ -1168,7 +1168,7 @@ object BookEdits {
         val book = rawBook(folder)
         val person = personOf(rawCast(folder, book), wanted)
         if (wanted.isEmpty() || wanted.uppercase(java.util.Locale.ROOT) == "NARRATOR" || person == null) {
-            throw EditsError("Không có nhân vật này trong sách")
+            throw EditsError(S.s_khong_co_nhan_vat_nay_trong_sach_a72a53a3)
         }
         val baseShown = listOf(person.opt("displayName"), wanted).first { truthy(it) }.toString()
         val original = listOf(person.opt("originalName"), baseShown).first { truthy(it) }.toString()
@@ -1197,9 +1197,9 @@ object BookEdits {
         val list = rawBook(folder).optJSONArray("chapters")
         val known = (0 until (list?.length() ?: 0)).mapNotNull { (list?.optJSONObject(it)?.opt("id") as? Number)?.toLong() }.toSet()
         val wanted = chapterIds.toSortedSet()
-        if (wanted.isEmpty() || wanted.any { it !in known }) throw EditsError("Không có chương này trong sách")
+        if (wanted.isEmpty() || wanted.any { it !in known }) throw EditsError(S.s_khong_co_chuong_nay_trong_sach_11e1c7d3)
         val clean = cleanText(line, SKIP_LINE_MAX)
-        if (clean.isEmpty()) throw EditsError("Dòng cần bỏ trống.")
+        if (clean.isEmpty()) throw EditsError(S.s_dong_can_bo_trong_fdddd736)
         val out = JSONObject()
         synchronized(lock) {
             val edits = load(folder)
@@ -1208,7 +1208,7 @@ object BookEdits {
                 val key = chapterId.toString()
                 val lines = skipLines(skipped, key).toMutableSet()
                 if (skip) {
-                    if (clean !in lines && lines.size >= MAX_SKIP_LINES) throw EditsError("Mỗi chương bỏ được tối đa $MAX_SKIP_LINES dòng.")
+                    if (clean !in lines && lines.size >= MAX_SKIP_LINES) throw EditsError(S.s_moi_chuong_bo_duoc_toi_da_0_dong_23cdfac9(MAX_SKIP_LINES))
                     lines.add(clean)
                 } else {
                     lines.remove(clean)
@@ -1241,7 +1241,7 @@ object BookEdits {
             val (start, end) = Readings.coreSpan(word)
             word = word.substring(start, end)
         }
-        if (word.isEmpty() || !Readings.isKey(word)) throw EditsError("Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc.")
+        if (word.isEmpty() || !Readings.isKey(word)) throw EditsError(S.s_ban_chon_toi_da_6_tu_lien_nhau_khong_co_da_499818a1)
         return word to cleanText(spoken, READING_SPOKEN_MAX)
     }
 
@@ -1257,7 +1257,7 @@ object BookEdits {
             if (said.isEmpty() || said == word) {
                 readings.remove(word)
             } else {
-                if (!readings.has(word) && readings.length() >= MAX_READINGS) throw EditsError("Mỗi cuốn đặt được tối đa $MAX_READINGS cách đọc.")
+                if (!readings.has(word) && readings.length() >= MAX_READINGS) throw EditsError(S.s_moi_cuon_dat_duoc_toi_da_0_cach_doc_1d0b3de0(MAX_READINGS))
                 readings.put(word, said)
             }
             if (readings.length() > 0) edits.put("readings", readings) else edits.remove("readings")
@@ -1270,7 +1270,7 @@ object BookEdits {
         val book = rawBook(folder)
         val list = book.optJSONArray("chapters")
         val chapter = (0 until (list?.length() ?: 0)).mapNotNull { list?.optJSONObject(it) }
-            .firstOrNull { (it.opt("id") as? Number)?.toLong() == chapterId } ?: throw EditsError("Không có chương này trong sách")
+            .firstOrNull { (it.opt("id") as? Number)?.toLong() == chapterId } ?: throw EditsError(S.s_khong_co_chuong_nay_trong_sach_11e1c7d3)
         val newTitle = if (title != null) cleanText(title, TITLE_MAX) else ""
         val newSubtitle = if (subtitle != null) cleanText(subtitle, TITLE_MAX) else null
         val entry = JSONObject()
@@ -1312,7 +1312,7 @@ object BookEdits {
      */
     private fun trackEntry(info: JSONObject, file: File): JSONObject {
         val extension = file.extension.lowercase()
-        if (extension !in MusicStore.EXTENSIONS) throw EditsError("Định dạng bài nhạc này chưa dùng được")
+        if (extension !in MusicStore.EXTENSIONS) throw EditsError(S.s_dinh_dang_bai_nhac_nay_chua_dung_duoc_6f166c61)
         val entry = JSONObject().put("ext", extension)
         for (key in listOf("title", "creator")) cleanText(info.opt(key), TRACK_TEXT_MAX).takeIf { it.isNotEmpty() }?.let { entry.put(key, it) }
         val duration = info.opt("duration")
@@ -1334,10 +1334,10 @@ object BookEdits {
             source.copyTo(part, overwrite = true)
             if (!part.renameTo(target)) {
                 target.delete()
-                if (!part.renameTo(target)) throw IOException("không đổi tên được file tạm")
+                if (!part.renameTo(target)) throw IOException(S.s_khong_doi_ten_duoc_file_tam_7b19ec53)
             }
         } catch (error: IOException) {
-            throw EditsError("Chưa chép được nhạc vào sách — bạn thử lại.")
+            throw EditsError(S.s_chua_chep_duoc_nhac_vao_sach_ban_thu_lai_9151f40e)
         } finally {
             part.delete()
         }
@@ -1372,7 +1372,7 @@ object BookEdits {
             }
             if (body.has("levelDb")) {
                 val value = body.opt("levelDb")
-                if (!isNumber(value) || value is Boolean) throw EditsError("Mức nhạc nền không hợp lệ")
+                if (!isNumber(value) || value is Boolean) throw EditsError(S.s_muc_nhac_nen_khong_hop_le_df7348d6)
                 val level = Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, (value as Number).toDouble()))
                 if (level == base.getDouble("levelDb")) music.remove("levelDb") else music.put("levelDb", level)
             }
@@ -1381,7 +1381,7 @@ object BookEdits {
                 when {
                     !truthy(playlist) -> music.remove("playlist")
                     playlist is String && PLAYLIST.matches(playlist) -> music.put("playlist", playlist)
-                    else -> throw EditsError("Không có danh sách nhạc nền này")
+                    else -> throw EditsError(S.s_khong_co_danh_sach_nhac_nen_nay_5aaa2a20)
                 }
                 music.remove("mine")
                 if (music.opt("playlist") == Playlists.MINE && mine != null) {
@@ -1399,35 +1399,35 @@ object BookEdits {
                 }
             }
             if (truthy(body.opt("silence"))) {
-                val wanted = body.opt("silence") as? JSONObject ?: throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+                val wanted = body.opt("silence") as? JSONObject ?: throw EditsError(S.s_phan_sua_nhac_nen_khong_hop_le_52023080)
                 val known = (0 until base.getJSONArray("cues").length()).map { base.getJSONArray("cues").getJSONObject(it).getString("key") }.toSet()
                 val silenced = strings(music.optJSONArray("silenced")).toMutableSet()
                 for (key in names(wanted)) {
-                    if (key !in known) throw EditsError("Không có đoạn nhạc này trong sách")
+                    if (key !in known) throw EditsError(S.s_khong_co_doan_nhac_nay_trong_sach_e7f8149a)
                     if (truthy(wanted.opt(key))) silenced.add(key) else silenced.remove(key)
                 }
                 if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced.sorted())) else music.remove("silenced")
             }
             if (truthy(body.opt("pins"))) {
-                val wanted = body.opt("pins") as? JSONObject ?: throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+                val wanted = body.opt("pins") as? JSONObject ?: throw EditsError(S.s_phan_sua_nhac_nen_khong_hop_le_52023080)
                 val known = (0 until base.getJSONArray("cues").length()).map { base.getJSONArray("cues").getJSONObject(it).getString("key") }.toSet()
                 val original = baseLinks(book)
                 val pins = music.optJSONObject("pins")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
                 for (key in names(wanted)) {
-                    if (key !in known) throw EditsError("Không có đoạn nhạc này trong sách")
+                    if (key !in known) throw EditsError(S.s_khong_co_doan_nhac_nay_trong_sach_e7f8149a)
                     val link = wanted.opt(key)
                     if (!truthy(link)) {
                         pins.remove(key)
                         continue
                     }
                     val sha = (link as? String)?.takeIf { LOCAL_LINK.matches(it) }?.removePrefix(MusicStore.LOCAL_PREFIX)
-                        ?: throw EditsError("Chỉ đổi được sang bài trong Nhạc của tôi")
+                        ?: throw EditsError(S.s_chi_doi_duoc_sang_bai_trong_nhac_cua_toi_763f3478)
                     if (link == original[key]) {
                         pins.remove(key)
                         continue
                     }
                     if (!shown.has(sha)) {
-                        val (info, file) = track?.invoke(link as String) ?: throw EditsError("Bài này không còn trong Nhạc của tôi")
+                        val (info, file) = track?.invoke(link as String) ?: throw EditsError(S.s_bai_nay_khong_con_trong_nhac_cua_toi_07833cb0)
                         shown.put(sha, trackEntry(info, file))
                         placing.add(pinnedName(sha, shown.getJSONObject(sha)) to file)
                     }
