@@ -13,10 +13,10 @@ class PeerAddressesTest {
         for (i in 0 until rows.length()) {
             val row = rows.getJSONObject(i)
             val peer = row.getJSONObject("entry")
-            PeerAddresses.migrate(peer)
+            PeerAddresses.normalize(peer)
             val expected = row.getJSONArray("expected").let { array -> (0 until array.length()).map { array.getString(it) } }
             assertEquals(row.getString("name"), expected, PeerAddresses.ordered(peer))
-            assertFalse(PeerAddresses.migrate(peer))
+            assertFalse(PeerAddresses.normalize(peer))
             assertTrue(peer.getJSONArray("addresses").length() <= 8)
         }
     }
@@ -52,14 +52,13 @@ class PeerAddressesTest {
             assertEquals(0.0, entries.getJSONObject(i).getDouble("lastSuccess"), 0.0)
     }
 
-    @Test fun legacyHostBecomesFirstRouteExactlyOnce() {
+    @Test fun hostDoesNotSupplyMissingRoutes() {
         val peer = JSONObject().put("host", "100.73.1.2").put("port", 47630).put("fingerprint", pin)
-        assertTrue(PeerAddresses.migrate(peer))
-        assertEquals(listOf("100.73.1.2:47630"), PeerAddresses.ordered(peer))
-        assertEquals(0.0, peer.getJSONArray("addresses").getJSONObject(0).getDouble("lastSuccess"), 0.0)
-        assertFalse(PeerAddresses.migrate(peer))
+        assertTrue(PeerAddresses.normalize(peer))
+        assertTrue(PeerAddresses.ordered(peer).isEmpty())
+        assertFalse(PeerAddresses.normalize(peer))
         peer.put("addresses", JSONArray())
-        assertFalse(PeerAddresses.migrate(peer))
+        assertFalse(PeerAddresses.normalize(peer))
         assertTrue(PeerAddresses.ordered(peer).isEmpty())
     }
 

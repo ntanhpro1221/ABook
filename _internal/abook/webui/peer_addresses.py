@@ -4,7 +4,6 @@ from __future__ import annotations
 import ipaddress
 import math
 from typing import Any
-from .peer_endpoints import RELEASE
 
 LIMIT = 8
 
@@ -58,16 +57,10 @@ def discovery_endpoint(host: str, raw_port: Any, *, advertised: bool = True) -> 
         return None
 
 
-def migrate(entry: dict[str, Any]) -> bool:
-    """Normalize every read; legacy host/port are used only when addresses is absent."""
-    missing = "addresses" not in entry
-    old = entry.get("addresses")
-    if missing:
-        host = entry.get("host")
-        address = discovery_endpoint(host, entry.get("port", RELEASE["port"]), advertised=False) if isinstance(host, str) and not host.startswith("bt:") else None
-        old = [{"address": address, "lastSuccess": 0}] if address else []
-    clean = records(old)
-    changed = missing or entry["addresses"] != clean
+def normalize(entry: dict[str, Any]) -> bool:
+    """Repair current route records; host/port never supply missing routes."""
+    clean = records(entry.get("addresses"))
+    changed = entry.get("addresses") != clean
     entry["addresses"] = clean
     return changed
 

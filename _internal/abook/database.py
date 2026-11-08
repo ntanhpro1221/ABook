@@ -8,6 +8,7 @@ import sqlite3
 import time
 import wave
 from contextlib import contextmanager
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
@@ -77,8 +78,7 @@ from .tts_contract import (
 )
 
 
-# Version 1 is the legacy pre-QA layout. Existing projects did not persist a
-# user_version, so they migrate from 0 through the current schema.
+# Only this complete schema is supported. Existing projects are never upgraded.
 SCHEMA_VERSION = 13
 QUALITY_SCOPE_SEGMENT = "segment"
 QUALITY_SCOPE_CHAPTER = "chapter"
@@ -1772,10 +1772,7 @@ def _analysis_source_matches_host_semantic_rule(text: str, rule: str) -> bool:
 
 
 SCHEMA = """
-PRAGMA journal_mode=WAL;
-PRAGMA foreign_keys=ON;
-
-CREATE TABLE IF NOT EXISTS book (
+CREATE TABLE book (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     title TEXT NOT NULL,
     project_root TEXT NOT NULL,
@@ -1800,7 +1797,7 @@ CREATE TABLE IF NOT EXISTS book (
     )
 );
 
-CREATE TABLE IF NOT EXISTS chapters (
+CREATE TABLE chapters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     chapter_index INTEGER NOT NULL UNIQUE,
     title TEXT NOT NULL,
@@ -1818,7 +1815,7 @@ CREATE TABLE IF NOT EXISTS chapters (
     last_error TEXT
 );
 
-CREATE TABLE IF NOT EXISTS segments (
+CREATE TABLE segments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     stable_id TEXT NOT NULL UNIQUE,
     chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
@@ -1864,17 +1861,20 @@ CREATE TABLE IF NOT EXISTS segments (
     warning_code TEXT,
     error TEXT,
     updated_at REAL NOT NULL,
+    listener_text TEXT,
+    listener_retakes INTEGER NOT NULL DEFAULT 0,
+    listener_retake_at REAL NOT NULL DEFAULT 0,
     UNIQUE(chapter_id, seq)
 );
 
-CREATE TABLE IF NOT EXISTS wav_signal_metrics (
+CREATE TABLE wav_signal_metrics (
     wav_sha256 TEXT NOT NULL,
     measurement_version TEXT NOT NULL,
     metrics_json TEXT NOT NULL,
     PRIMARY KEY (wav_sha256, measurement_version)
 );
 
-CREATE TABLE IF NOT EXISTS chapter_teller_lines (
+CREATE TABLE chapter_teller_lines (
     segment_id INTEGER PRIMARY KEY REFERENCES segments(id) ON DELETE CASCADE,
     original_speaker TEXT NOT NULL,
     original_character_id INTEGER,
@@ -1883,7 +1883,7 @@ CREATE TABLE IF NOT EXISTS chapter_teller_lines (
     applied_profile_id INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS characters (
+CREATE TABLE characters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     canonical_name TEXT NOT NULL UNIQUE,
     display_name TEXT NOT NULL,
@@ -1906,7 +1906,7 @@ CREATE TABLE IF NOT EXISTS characters (
     updated_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS character_aliases (
+CREATE TABLE character_aliases (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
     alias TEXT NOT NULL,
@@ -1915,7 +1915,7 @@ CREATE TABLE IF NOT EXISTS character_aliases (
     source TEXT NOT NULL DEFAULT 'analysis'
 );
 
-CREATE TABLE IF NOT EXISTS listener_audio_acceptances (
+CREATE TABLE listener_audio_acceptances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     segment_stable_id TEXT NOT NULL,
     wav_sha256 TEXT NOT NULL,
@@ -1932,7 +1932,7 @@ CREATE TABLE IF NOT EXISTS listener_audio_acceptances (
 -- ngay, sửa được. Quên lọc một cột `source` thì báo cáo nói "người đã nghe" về một bản
 -- thu chưa ai nghe - im lặng, và là nói dối chủ sách về chính thứ ông ấy uỷ quyền.
 -- Chọn kiểu hỏng ồn ào.
-CREATE TABLE IF NOT EXISTS machine_audio_acceptances (
+CREATE TABLE machine_audio_acceptances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     segment_stable_id TEXT NOT NULL,
     wav_sha256 TEXT NOT NULL,
@@ -1942,7 +1942,7 @@ CREATE TABLE IF NOT EXISTS machine_audio_acceptances (
     UNIQUE (segment_stable_id, wav_sha256, warning_code)
 );
 
-CREATE TABLE IF NOT EXISTS machine_take_substitutions (
+CREATE TABLE machine_take_substitutions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     segment_stable_id TEXT NOT NULL,
     incumbent_wav_sha256 TEXT NOT NULL,
@@ -1952,7 +1952,7 @@ CREATE TABLE IF NOT EXISTS machine_take_substitutions (
     UNIQUE (segment_stable_id, candidate_wav_sha256)
 );
 
-CREATE TABLE IF NOT EXISTS pronunciations (
+CREATE TABLE pronunciations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     surface TEXT NOT NULL,
     normalized_surface TEXT NOT NULL UNIQUE,
@@ -1964,7 +1964,7 @@ CREATE TABLE IF NOT EXISTS pronunciations (
     updated_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS voice_profiles (
+CREATE TABLE voice_profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     voice_key TEXT NOT NULL UNIQUE,
     engine TEXT NOT NULL,
@@ -1977,7 +1977,7 @@ CREATE TABLE IF NOT EXISTS voice_profiles (
     updated_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS artifacts (
+CREATE TABLE artifacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     artifact_key TEXT NOT NULL UNIQUE,
     kind TEXT NOT NULL,
@@ -1990,7 +1990,7 @@ CREATE TABLE IF NOT EXISTS artifacts (
     updated_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS quality_policies (
+CREATE TABLE quality_policies (
     policy_hash TEXT PRIMARY KEY,
     policy_version INTEGER NOT NULL,
     policy_json TEXT NOT NULL,
@@ -1999,7 +1999,7 @@ CREATE TABLE IF NOT EXISTS quality_policies (
     updated_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS quality_checks (
+CREATE TABLE quality_checks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     scope TEXT NOT NULL CHECK (scope IN ('segment', 'chapter')),
     stage TEXT NOT NULL,
@@ -2020,7 +2020,7 @@ CREATE TABLE IF NOT EXISTS quality_checks (
     )
 );
 
-CREATE TABLE IF NOT EXISTS segment_candidates (
+CREATE TABLE segment_candidates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     segment_id INTEGER NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
     policy_hash TEXT NOT NULL REFERENCES quality_policies(policy_hash),
@@ -2127,7 +2127,7 @@ CREATE TABLE IF NOT EXISTS segment_candidates (
     )
 );
 
-CREATE TABLE IF NOT EXISTS analysis_candidates (
+CREATE TABLE analysis_candidates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     policy_fingerprint TEXT NOT NULL,
     model_name TEXT NOT NULL,
@@ -2175,7 +2175,7 @@ CREATE TABLE IF NOT EXISTS analysis_candidates (
     )
 );
 
-CREATE TABLE IF NOT EXISTS analysis_candidate_generator_contracts (
+CREATE TABLE analysis_candidate_generator_contracts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     analysis_candidate_id INTEGER NOT NULL
         REFERENCES analysis_candidates(id) ON DELETE CASCADE,
@@ -2187,7 +2187,7 @@ CREATE TABLE IF NOT EXISTS analysis_candidate_generator_contracts (
     UNIQUE(analysis_candidate_id,generator_contract_hash)
 );
 
-CREATE TABLE IF NOT EXISTS analysis_critic_attempts (
+CREATE TABLE analysis_critic_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     analysis_candidate_id INTEGER NOT NULL
         REFERENCES analysis_candidates(id) ON DELETE CASCADE,
@@ -2221,7 +2221,7 @@ CREATE TABLE IF NOT EXISTS analysis_critic_attempts (
 -- Sổ phản hồi phân tích: mỗi request gửi Ollama (băm nguyên thân request) và đúng chuỗi nó trả về, ghi trước khi
 -- parse, kể cả phản hồi bị host/critic bác. Request trùng băm thì đọc lại từ đây thay vì hỏi lại model, nên resume
 -- đi lại đúng con đường cũ. Không nâng SCHEMA_VERSION (như machine_take_substitutions): mã cũ bỏ qua bảng lạ.
-CREATE TABLE IF NOT EXISTS analysis_responses (
+CREATE TABLE analysis_responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request_hash TEXT NOT NULL UNIQUE,
     role TEXT NOT NULL,
@@ -2241,7 +2241,7 @@ CREATE TABLE IF NOT EXISTS analysis_responses (
 -- Trạng thái của vòng phân tích ở ranh giới batch vừa chốt, ghi CÙNG giao dịch với các segment của batch ấy: đếm người
 -- nói theo thứ tự chèn, giới, phản hồi mang sang batch con, và hàng đợi batch còn lại. Resume nạp lại nguyên trạng
 -- thay vì dựng lại từ segment (AUDIT resume_determinism 5.2).
-CREATE TABLE IF NOT EXISTS analysis_state (
+CREATE TABLE analysis_state (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     policy_fingerprint TEXT NOT NULL,
     committed_batches INTEGER NOT NULL CHECK (committed_batches >= 1),
@@ -2258,7 +2258,7 @@ CREATE TABLE IF NOT EXISTS analysis_state (
 -- model phân tích (tên + digest; đổi giữa chừng là dừng); mỗi chương một giao dịch: nhãn mới vào `segments.speaker`, nhãn gốc của
 -- model phân tích giữ ở `speaker_pass_labels` để kiểm/so, và dòng của chương trong `speaker_pass_chapters` (chưa có dòng này là chưa
 -- xong - resume làm lại chương từ đầu). Không nâng SCHEMA_VERSION (như analysis_responses): mã cũ bỏ qua bảng lạ.
-CREATE TABLE IF NOT EXISTS speaker_pass_state (
+CREATE TABLE speaker_pass_state (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     model_name TEXT NOT NULL,
     model_digest TEXT NOT NULL,
@@ -2268,7 +2268,7 @@ CREATE TABLE IF NOT EXISTS speaker_pass_state (
     locked_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS speaker_pass_chapters (
+CREATE TABLE speaker_pass_chapters (
     chapter_id INTEGER PRIMARY KEY REFERENCES chapters(id) ON DELETE CASCADE,
     spoken_lines INTEGER NOT NULL,
     changed_lines INTEGER NOT NULL,
@@ -2279,7 +2279,7 @@ CREATE TABLE IF NOT EXISTS speaker_pass_chapters (
     completed_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS speaker_pass_labels (
+CREATE TABLE speaker_pass_labels (
     segment_id INTEGER PRIMARY KEY REFERENCES segments(id) ON DELETE CASCADE,
     chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
     analysis_speaker TEXT NOT NULL,
@@ -2290,7 +2290,7 @@ CREATE TABLE IF NOT EXISTS speaker_pass_labels (
 -- này (đã áp, hay không có gì để đổi, hay bị từ chối - đều là đã xét). Giao diện đếm "chờ áp dụng" theo bảng này, không suy từ
 -- thời gian sổ / lần khởi động. `listener_override_sweeps` có dòng khi dây chuyền đã quét yêu cầu ít nhất một lần (sau khi khoá phân
 -- vai): từ đó mới tin biên nhận. Không nâng SCHEMA_VERSION (như analysis_responses): mã cũ bỏ qua bảng lạ.
-CREATE TABLE IF NOT EXISTS listener_override_receipts (
+CREATE TABLE listener_override_receipts (
     section TEXT NOT NULL,
     key TEXT NOT NULL,
     requested_at REAL NOT NULL,
@@ -2299,12 +2299,12 @@ CREATE TABLE IF NOT EXISTS listener_override_receipts (
     PRIMARY KEY (section, key)
 );
 
-CREATE TABLE IF NOT EXISTS listener_override_sweeps (
+CREATE TABLE listener_override_sweeps (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     first_at REAL NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS runtime_events (
+CREATE TABLE runtime_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp REAL NOT NULL,
     level TEXT NOT NULL,
@@ -2313,7 +2313,7 @@ CREATE TABLE IF NOT EXISTS runtime_events (
     details_json TEXT
 );
 
-CREATE TABLE IF NOT EXISTS worker_leases (
+CREATE TABLE worker_leases (
     worker_name TEXT PRIMARY KEY,
     pid INTEGER NOT NULL,
     generation INTEGER NOT NULL,
@@ -2323,29 +2323,135 @@ CREATE TABLE IF NOT EXISTS worker_leases (
     metadata_json TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_segments_chapter_status ON segments(chapter_id, status, seq);
-CREATE INDEX IF NOT EXISTS idx_segments_status ON segments(status);
-CREATE INDEX IF NOT EXISTS idx_segments_speaker ON segments(speaker);
-CREATE INDEX IF NOT EXISTS idx_runtime_events_time ON runtime_events(timestamp);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_quality_policies_active
+CREATE INDEX idx_segments_chapter_status ON segments(chapter_id, status, seq);
+CREATE INDEX idx_segments_status ON segments(status);
+CREATE INDEX idx_segments_speaker ON segments(speaker);
+CREATE INDEX idx_runtime_events_time ON runtime_events(timestamp);
+CREATE UNIQUE INDEX idx_quality_policies_active
     ON quality_policies(active) WHERE active = 1;
-CREATE INDEX IF NOT EXISTS idx_quality_checks_segment
+CREATE INDEX idx_quality_checks_segment
     ON quality_checks(segment_id, stage, policy_hash, id);
-CREATE INDEX IF NOT EXISTS idx_quality_checks_chapter
+CREATE INDEX idx_quality_checks_chapter
     ON quality_checks(chapter_id, stage, policy_hash, id);
-CREATE INDEX IF NOT EXISTS idx_segment_candidates_resume
+CREATE INDEX idx_segment_candidates_resume
     ON segment_candidates(segment_id, policy_hash, state, repair_round);
-CREATE INDEX IF NOT EXISTS idx_analysis_candidates_exact
+CREATE INDEX idx_analysis_candidates_exact
     ON analysis_candidates(
         policy_fingerprint,model_name,model_digest,group_fingerprint,context_hash,candidate_hash
     );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_analysis_candidates_actionable_scope
+CREATE UNIQUE INDEX idx_analysis_candidates_actionable_scope
     ON analysis_candidates(
         policy_fingerprint,model_name,model_digest,group_fingerprint,context_hash
     )
     WHERE state IN ('allocated','critic_in_flight','critic_invalid','critic_accepted');
-CREATE INDEX IF NOT EXISTS idx_analysis_critic_attempts_candidate
+CREATE INDEX idx_analysis_critic_attempts_candidate
     ON analysis_critic_attempts(analysis_candidate_id,attempt_number);
+
+CREATE TRIGGER segment_candidates_repair_binding_insert
+BEFORE INSERT ON segment_candidates
+WHEN NOT (
+    (
+        NEW.candidate_repair_requirement =
+            'standard_candidate_gate_v1'
+        AND NEW.repair_trigger_check_id IS NULL
+    )
+    OR (
+        NEW.candidate_repair_requirement =
+            'naturalness_improvement_v1'
+        AND NEW.repair_trigger_check_id IS NOT NULL
+        AND NEW.perceptual_required = 1
+    )
+)
+BEGIN
+    SELECT RAISE(ABORT, 'invalid segment candidate repair binding');
+END;
+
+CREATE TRIGGER segment_candidates_repair_binding_update
+BEFORE UPDATE ON segment_candidates
+WHEN
+    NEW.candidate_repair_requirement IS NOT
+        OLD.candidate_repair_requirement
+    OR NEW.repair_trigger_check_id IS NOT OLD.repair_trigger_check_id
+    OR NOT (
+        (
+            NEW.candidate_repair_requirement =
+                'standard_candidate_gate_v1'
+            AND NEW.repair_trigger_check_id IS NULL
+        )
+        OR (
+            NEW.candidate_repair_requirement =
+                'naturalness_improvement_v1'
+            AND NEW.repair_trigger_check_id IS NOT NULL
+            AND NEW.perceptual_required = 1
+        )
+    )
+BEGIN
+    SELECT RAISE(ABORT, 'immutable segment candidate repair binding');
+END;
+
+CREATE TRIGGER segment_candidates_perceptual_required_update
+BEFORE UPDATE OF perceptual_required ON segment_candidates
+WHEN NEW.perceptual_required IS NOT OLD.perceptual_required
+BEGIN
+    SELECT RAISE(ABORT, 'immutable segment candidate perceptual requirement');
+END;
+
+CREATE TRIGGER segment_candidates_generation_strategy_update
+BEFORE UPDATE OF generation_strategy ON segment_candidates
+WHEN
+    NEW.generation_strategy IS NOT OLD.generation_strategy
+    AND NOT (
+        OLD.state = 'generating'
+        AND NEW.state = 'generating'
+        AND OLD.generation_strategy = 'direct_v1'
+        AND NEW.generation_strategy = 'split_v1'
+        AND NEW.tts_attempt = OLD.tts_attempt + 1
+    )
+BEGIN
+    SELECT RAISE(ABORT, 'invalid segment candidate generation strategy transition');
+END;
+
+CREATE TRIGGER segment_candidates_postprocess_binding_insert
+BEFORE INSERT ON segment_candidates
+WHEN NOT (
+    (
+        NEW.postprocess_profile = 'none'
+        AND NEW.postprocess_source_candidate_id IS NULL
+        AND NEW.postprocess_source_sha256 IS NULL
+    )
+    OR (
+        NEW.postprocess_profile = 'ffmpeg_atempo_0_94_pcm_s16le_v1'
+        AND NEW.postprocess_source_candidate_id IS NOT NULL
+        AND NEW.postprocess_source_sha256 IS NOT NULL
+    )
+)
+BEGIN
+    SELECT RAISE(ABORT, 'invalid segment candidate postprocess binding');
+END;
+
+CREATE TRIGGER segment_candidates_postprocess_binding_update
+BEFORE UPDATE ON segment_candidates
+WHEN
+    NEW.postprocess_profile IS NOT OLD.postprocess_profile
+    OR NEW.postprocess_source_candidate_id IS NOT
+        OLD.postprocess_source_candidate_id
+    OR NEW.postprocess_source_sha256 IS NOT
+        OLD.postprocess_source_sha256
+    OR NOT (
+        (
+            NEW.postprocess_profile = 'none'
+            AND NEW.postprocess_source_candidate_id IS NULL
+            AND NEW.postprocess_source_sha256 IS NULL
+        )
+        OR (
+            NEW.postprocess_profile = 'ffmpeg_atempo_0_94_pcm_s16le_v1'
+            AND NEW.postprocess_source_candidate_id IS NOT NULL
+            AND NEW.postprocess_source_sha256 IS NOT NULL
+        )
+    )
+BEGIN
+    SELECT RAISE(ABORT, 'immutable segment candidate postprocess binding');
+END;
 """
 
 
@@ -2384,721 +2490,101 @@ def _character_key(name: str) -> str:
     return canonical_key(name)
 
 
+class UnsupportedProjectSchema(RuntimeError):
+    """The project must remain untouched; only the complete current schema is supported."""
+
+
+@lru_cache(maxsize=256)
+def _schema_tokens(sql: str) -> tuple[str, ...]:
+    # Compare SQL tokens, including constraints and triggers, without depending on
+    # indentation or comments. sqlite_master removes IF NOT EXISTS itself.
+    tokens = re.compile(r"--[^\n]*|/\*[\s\S]*?\*/|'(?:''|[^'])*'|\w+|[^\s]")
+    return tuple(token if token.startswith("'") else token.casefold()
+                 for token in tokens.findall(sql)
+                 if not token.startswith(("--", "/*")))
+
+
+def _schema_objects(conn: sqlite3.Connection) -> dict[tuple[str, str], tuple[str, ...]]:
+    return {
+        (str(kind), str(name)): _schema_tokens(str(sql))
+        for kind, name, sql in conn.execute(
+            "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'"
+        )
+    }
+
+
+def _schema_statements() -> Iterator[str]:
+    statement = ""
+    for line in SCHEMA.splitlines(keepends=True):
+        statement += line
+        if sqlite3.complete_statement(statement):
+            yield statement
+            statement = ""
+    if statement.strip():
+        raise RuntimeError("Incomplete current project schema")
+
+
+@lru_cache(maxsize=1)
+def _current_schema_objects() -> dict[tuple[str, str], tuple[str, ...]]:
+    conn = sqlite3.connect(":memory:")
+    try:
+        conn.executescript(SCHEMA)
+        return _schema_objects(conn)
+    finally:
+        conn.close()
+
+
+def validate_project_schema(conn: sqlite3.Connection) -> None:
+    """Read only: refuse old, future or incomplete schemas before any project write."""
+    version = int(conn.execute("PRAGMA user_version").fetchone()[0])
+    if version != SCHEMA_VERSION:
+        raise UnsupportedProjectSchema(
+            f"Unsupported project schema version {version}; required version {SCHEMA_VERSION}"
+        )
+    actual = _schema_objects(conn)
+    expected = _current_schema_objects()
+    different = sorted(key[1] for key in actual.keys() | expected.keys()
+                       if actual.get(key) != expected.get(key))
+    if different:
+        raise UnsupportedProjectSchema(
+            "Unsupported project schema layout: " + ", ".join(different)
+        )
+
+
+def _empty_project_schema(conn: sqlite3.Connection) -> bool:
+    return int(conn.execute("PRAGMA user_version").fetchone()[0]) == 0 and not _schema_objects(conn)
+
+
 class ProjectDB:
     def __init__(self, path: Path, synchronous: str = "FULL") -> None:
         self.path = path
-        self.path.parent.mkdir(parents=True, exist_ok=True)
         self.synchronous = synchronous.upper()
         if self.synchronous not in {"OFF", "NORMAL", "FULL", "EXTRA"}:
             raise ValueError(f"Unsupported SQLite synchronous mode: {synchronous}")
+        # Do not even open a writable connection to an unsupported database.
+        if self.path.exists():
+            conn = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
+            try:
+                if not _empty_project_schema(conn):
+                    validate_project_schema(conn)
+            finally:
+                conn.close()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as conn:
-            schema_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
-            if schema_version > SCHEMA_VERSION:
-                raise RuntimeError(
-                    f"Project schema version {schema_version} is newer than supported version "
-                    f"{SCHEMA_VERSION}"
-                )
-            has_user_tables = bool(
-                conn.execute(
-                    """
-                    SELECT 1 FROM sqlite_master
-                    WHERE type='table' AND name NOT LIKE 'sqlite_%'
-                    LIMIT 1
-                    """
-                ).fetchone()
-            )
-            if has_user_tables and schema_version < SCHEMA_VERSION:
-                self._create_migration_backup(conn, schema_version)
-            conn.executescript(SCHEMA)
+            conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("BEGIN IMMEDIATE")
             try:
-                self._migrate_schema(conn)
-                conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+                # Another creator may have initialized the file while we waited.
+                if _empty_project_schema(conn):
+                    for statement in _schema_statements():
+                        conn.execute(statement)
+                    conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+                else:
+                    validate_project_schema(conn)
                 conn.execute("COMMIT")
             except Exception:
                 conn.execute("ROLLBACK")
                 raise
-
-    def _migration_backup_path(self, source_version: int) -> Path:
-        return self.path.with_name(
-            f"{self.path.name}.pre-v{source_version}-to-v{SCHEMA_VERSION}.bak"
-        )
-
-    def _create_migration_backup(
-        self,
-        conn: sqlite3.Connection,
-        source_version: int,
-    ) -> Path:
-        backup_path = self._migration_backup_path(source_version)
-        if backup_path.exists():
-            return backup_path
-        temp = backup_path.with_name(backup_path.name + ".part")
-        temp.unlink(missing_ok=True)
-        try:
-            backup = sqlite3.connect(temp)
-            try:
-                conn.backup(backup)
-                result = backup.execute("PRAGMA integrity_check").fetchone()
-                if result is None or str(result[0]).casefold() != "ok":
-                    raise RuntimeError("SQLite migration backup failed integrity_check")
-            finally:
-                backup.close()
-            os.replace(temp, backup_path)
-            return backup_path
-        finally:
-            temp.unlink(missing_ok=True)
-
-    @staticmethod
-    def _migrate_schema(conn: sqlite3.Connection) -> None:
-        segment_columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(segments)")}
-        if "break_ms" not in segment_columns:
-            conn.execute("ALTER TABLE segments ADD COLUMN break_ms INTEGER NOT NULL DEFAULT 220")
-        if "scene_break" not in segment_columns:
-            conn.execute("ALTER TABLE segments ADD COLUMN scene_break INTEGER NOT NULL DEFAULT 0")
-        if "generation_frame_cap" not in segment_columns:
-            conn.execute(
-                """
-                ALTER TABLE segments ADD COLUMN generation_frame_cap INTEGER
-                CHECK(generation_frame_cap IS NULL OR generation_frame_cap > 0)
-                """
-            )
-        if "generation_delivery_mode" not in segment_columns:
-            conn.execute(
-                """
-                ALTER TABLE segments ADD COLUMN generation_delivery_mode TEXT
-                NOT NULL DEFAULT 'primary'
-                CHECK(generation_delivery_mode IN ('primary','clarity'))
-                """
-            )
-        if "generation_repair_round" not in segment_columns:
-            conn.execute(
-                """
-                ALTER TABLE segments ADD COLUMN generation_repair_round INTEGER
-                CHECK(generation_repair_round IS NULL OR generation_repair_round >= 0)
-                """
-            )
-        if "generation_policy_hash" not in segment_columns:
-            conn.execute("ALTER TABLE segments ADD COLUMN generation_policy_hash TEXT")
-        if "listener_text" not in segment_columns:
-            # Chữ đem đọc người nghe sửa cho câu này (Studio, overrides.json `lines`): TTS và phép so của Whisper đọc cột
-            # này thay `text`; văn bản sách (`text`, `text_sha256`, đọc theo) giữ nguyên. NULL = không sửa.
-            conn.execute("ALTER TABLE segments ADD COLUMN listener_text TEXT")
-        if "listener_retakes" not in segment_columns:
-            # Số lần người nghe yêu cầu THU LẠI nguyên câu (overrides.json `retakes`): tts.generation_seed thêm số này vào
-            # hạt giống, nên bản thu mới khác bản cũ; 0 = hạt giống như trước khi có cột. Không nâng SCHEMA_VERSION (như
-            # listener_text): mã cũ bỏ qua cột lạ.
-            conn.execute("ALTER TABLE segments ADD COLUMN listener_retakes INTEGER NOT NULL DEFAULT 0")
-        if "listener_retake_at" not in segment_columns:
-            # Mốc `requested_at` của yêu cầu thu lại đã áp gần nhất: overrides.json là trạng thái mong muốn, đọc lại ở MỌI
-            # ranh giới - mốc này làm một yêu cầu chỉ thu lại câu đúng một lần.
-            conn.execute("ALTER TABLE segments ADD COLUMN listener_retake_at REAL NOT NULL DEFAULT 0")
-
-        character_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(characters)")
-        }
-        if "locked_voice_key" not in character_columns:
-            conn.execute(
-                "ALTER TABLE characters ADD COLUMN locked_voice_key TEXT NOT NULL DEFAULT ''"
-            )
-        if "locked_age" not in character_columns:
-            conn.execute(
-                "ALTER TABLE characters ADD COLUMN locked_age TEXT NOT NULL DEFAULT ''"
-            )
-        book_columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(book)")}
-        if "speaker_pass_reconciled" not in book_columns:
-            conn.execute("ALTER TABLE book ADD COLUMN speaker_pass_reconciled INTEGER NOT NULL DEFAULT 0")
-            conn.execute(
-                "UPDATE book SET speaker_pass_reconciled=1 WHERE EXISTS(SELECT 1 FROM speaker_pass_state) "
-                "OR EXISTS(SELECT 1 FROM speaker_pass_chapters)"
-            )
-        if "casting_finalized" not in book_columns:
-            conn.execute("ALTER TABLE book ADD COLUMN casting_finalized INTEGER NOT NULL DEFAULT 0")
-            conn.execute(
-                """
-                UPDATE book SET casting_finalized=1
-                WHERE EXISTS(
-                    SELECT 1 FROM segments
-                    WHERE voice_profile_id IS NOT NULL
-                      AND status IN ('signal_passed','asr_passed','verified','warning','failed')
-                )
-                """
-            )
-        if "analysis_model_name" not in book_columns:
-            conn.execute("ALTER TABLE book ADD COLUMN analysis_model_name TEXT")
-        if "analysis_model_digest" not in book_columns:
-            conn.execute("ALTER TABLE book ADD COLUMN analysis_model_digest TEXT")
-        if "analysis_model_locked_at" not in book_columns:
-            conn.execute("ALTER TABLE book ADD COLUMN analysis_model_locked_at REAL")
-
-        candidate_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(segment_candidates)")
-        }
-        added_pronunciation_delivery_variant = False
-        added_expected_spoken_text_sha256 = False
-        added_generation_strategy = False
-        if "repair_budget" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN repair_budget "
-                "INTEGER NOT NULL DEFAULT 1 CHECK(repair_budget >= 1)"
-            )
-            conn.execute(
-                "UPDATE segment_candidates SET repair_budget=repair_round + 1"
-            )
-        if "perceptual_required" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN perceptual_required "
-                "INTEGER NOT NULL DEFAULT 0 CHECK(perceptual_required IN (0,1))"
-            )
-        if "generation_strategy" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN generation_strategy "
-                f"TEXT NOT NULL DEFAULT '{GENERATION_STRATEGY_DIRECT}' "
-                "CHECK(generation_strategy IN "
-                f"('{GENERATION_STRATEGY_DIRECT}','{GENERATION_STRATEGY_SPLIT}'))"
-            )
-            added_generation_strategy = True
-        if "postprocess_profile" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN postprocess_profile "
-                f"TEXT NOT NULL DEFAULT '{POSTPROCESS_PROFILE_NONE}' "
-                "CHECK(postprocess_profile IN "
-                f"('{POSTPROCESS_PROFILE_NONE}','{POSTPROCESS_PROFILE_TEMPO}'))"
-            )
-        if "postprocess_source_candidate_id" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN "
-                "postprocess_source_candidate_id INTEGER "
-                "REFERENCES segment_candidates(id)"
-            )
-        if "postprocess_source_sha256" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN "
-                "postprocess_source_sha256 TEXT"
-            )
-        if added_generation_strategy:
-            pronunciation_projection = (
-                "candidates.pronunciation_delivery_variant"
-                if "pronunciation_delivery_variant" in candidate_columns
-                else (
-                    f"'{PRONUNCIATION_DELIVERY_LOCKED}' "
-                    "AS pronunciation_delivery_variant"
-                )
-            )
-            legacy_generation_rows = list(
-                conn.execute(
-                    f"""
-                    SELECT
-                        candidates.id,candidates.repair_round,
-                        {pronunciation_projection},
-                        candidates.generation_seed,candidates.signal_json,
-                        segments.stable_id,profiles.voice_key
-                    FROM segment_candidates AS candidates
-                    JOIN segments ON segments.id=candidates.segment_id
-                    JOIN voice_profiles AS profiles
-                      ON profiles.id=candidates.expected_voice_profile_id
-                    ORDER BY candidates.id
-                    """
-                )
-            )
-            for candidate in legacy_generation_rows:
-                try:
-                    signal = json.loads(str(candidate["signal_json"] or "{}"))
-                except (TypeError, json.JSONDecodeError):
-                    signal = {}
-                split_fields_present = isinstance(signal, dict) and any(
-                    signal.get(field) not in (None, [])
-                    for field in (
-                        "split_checkpoint_seed",
-                        "split_seed_salt_prefix",
-                        SPLIT_STRATEGY_FIELD,
-                        SPLIT_MAX_CHARS_FIELD,
-                        "split_parts",
-                    )
-                )
-                split_seed_salt = segment_candidate_split_seed_salt(
-                    int(candidate["repair_round"]),
-                    str(candidate["pronunciation_delivery_variant"]),
-                )
-                expected_split_seed = stable_int(
-                    "segment::"
-                    f"{candidate['stable_id']}::{candidate['voice_key']}::"
-                    f"{split_seed_salt}"
-                )
-                generation_strategy = (
-                    GENERATION_STRATEGY_SPLIT
-                    if split_fields_present
-                    or int(candidate["generation_seed"]) == expected_split_seed
-                    else GENERATION_STRATEGY_DIRECT
-                )
-                conn.execute(
-                    "UPDATE segment_candidates SET generation_strategy=? WHERE id=?",
-                    (generation_strategy, int(candidate["id"])),
-                )
-        if "candidate_repair_requirement" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN candidate_repair_requirement "
-                f"TEXT NOT NULL DEFAULT '{STANDARD_CANDIDATE_GATE_REQUIREMENT}' "
-                "CHECK(candidate_repair_requirement IN "
-                f"('{STANDARD_CANDIDATE_GATE_REQUIREMENT}',"
-                f"'{NATURALNESS_IMPROVEMENT_REQUIREMENT}'))"
-            )
-        if "repair_trigger_check_id" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN repair_trigger_check_id "
-                "INTEGER REFERENCES quality_checks(id)"
-            )
-        conn.execute(
-            f"""
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_repair_binding_insert
-            BEFORE INSERT ON segment_candidates
-            WHEN NOT (
-                (
-                    NEW.candidate_repair_requirement =
-                        '{STANDARD_CANDIDATE_GATE_REQUIREMENT}'
-                    AND NEW.repair_trigger_check_id IS NULL
-                )
-                OR (
-                    NEW.candidate_repair_requirement =
-                        '{NATURALNESS_IMPROVEMENT_REQUIREMENT}'
-                    AND NEW.repair_trigger_check_id IS NOT NULL
-                    AND NEW.perceptual_required = 1
-                )
-            )
-            BEGIN
-                SELECT RAISE(ABORT, 'invalid segment candidate repair binding');
-            END
-            """
-        )
-        conn.execute(
-            f"""
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_repair_binding_update
-            BEFORE UPDATE ON segment_candidates
-            WHEN
-                NEW.candidate_repair_requirement IS NOT
-                    OLD.candidate_repair_requirement
-                OR NEW.repair_trigger_check_id IS NOT OLD.repair_trigger_check_id
-                OR NOT (
-                    (
-                        NEW.candidate_repair_requirement =
-                            '{STANDARD_CANDIDATE_GATE_REQUIREMENT}'
-                        AND NEW.repair_trigger_check_id IS NULL
-                    )
-                    OR (
-                        NEW.candidate_repair_requirement =
-                            '{NATURALNESS_IMPROVEMENT_REQUIREMENT}'
-                        AND NEW.repair_trigger_check_id IS NOT NULL
-                        AND NEW.perceptual_required = 1
-                    )
-                )
-            BEGIN
-                SELECT RAISE(ABORT, 'immutable segment candidate repair binding');
-            END
-            """
-        )
-        conn.execute(
-            """
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_perceptual_required_update
-            BEFORE UPDATE OF perceptual_required ON segment_candidates
-            WHEN NEW.perceptual_required IS NOT OLD.perceptual_required
-            BEGIN
-                SELECT RAISE(ABORT, 'immutable segment candidate perceptual requirement');
-            END
-            """
-        )
-        conn.execute(
-            """
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_generation_strategy_update
-            BEFORE UPDATE OF generation_strategy ON segment_candidates
-            WHEN
-                NEW.generation_strategy IS NOT OLD.generation_strategy
-                AND NOT (
-                    OLD.state = 'generating'
-                    AND NEW.state = 'generating'
-                    AND OLD.generation_strategy = 'direct_v1'
-                    AND NEW.generation_strategy = 'split_v1'
-                    AND NEW.tts_attempt = OLD.tts_attempt + 1
-                )
-            BEGIN
-                SELECT RAISE(ABORT, 'invalid segment candidate generation strategy transition');
-            END
-            """
-        )
-        conn.execute(
-            f"""
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_postprocess_binding_insert
-            BEFORE INSERT ON segment_candidates
-            WHEN NOT (
-                (
-                    NEW.postprocess_profile = '{POSTPROCESS_PROFILE_NONE}'
-                    AND NEW.postprocess_source_candidate_id IS NULL
-                    AND NEW.postprocess_source_sha256 IS NULL
-                )
-                OR (
-                    NEW.postprocess_profile = '{POSTPROCESS_PROFILE_TEMPO}'
-                    AND NEW.postprocess_source_candidate_id IS NOT NULL
-                    AND NEW.postprocess_source_sha256 IS NOT NULL
-                )
-            )
-            BEGIN
-                SELECT RAISE(ABORT, 'invalid segment candidate postprocess binding');
-            END
-            """
-        )
-        conn.execute(
-            f"""
-            CREATE TRIGGER IF NOT EXISTS segment_candidates_postprocess_binding_update
-            BEFORE UPDATE ON segment_candidates
-            WHEN
-                NEW.postprocess_profile IS NOT OLD.postprocess_profile
-                OR NEW.postprocess_source_candidate_id IS NOT
-                    OLD.postprocess_source_candidate_id
-                OR NEW.postprocess_source_sha256 IS NOT
-                    OLD.postprocess_source_sha256
-                OR NOT (
-                    (
-                        NEW.postprocess_profile = '{POSTPROCESS_PROFILE_NONE}'
-                        AND NEW.postprocess_source_candidate_id IS NULL
-                        AND NEW.postprocess_source_sha256 IS NULL
-                    )
-                    OR (
-                        NEW.postprocess_profile = '{POSTPROCESS_PROFILE_TEMPO}'
-                        AND NEW.postprocess_source_candidate_id IS NOT NULL
-                        AND NEW.postprocess_source_sha256 IS NOT NULL
-                    )
-                )
-            BEGIN
-                SELECT RAISE(ABORT, 'immutable segment candidate postprocess binding');
-            END
-            """
-        )
-        if "perceptual_result_json" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN perceptual_result_json TEXT"
-            )
-        if "perceptual_check_id" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN perceptual_check_id "
-                "INTEGER REFERENCES quality_checks(id)"
-            )
-        if "pronunciation_delivery_variant" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN pronunciation_delivery_variant "
-                f"TEXT NOT NULL DEFAULT '{PRONUNCIATION_DELIVERY_LOCKED}'"
-            )
-            added_pronunciation_delivery_variant = True
-        if "expected_spoken_text_sha256" not in candidate_columns:
-            conn.execute(
-                "ALTER TABLE segment_candidates ADD COLUMN expected_spoken_text_sha256 "
-                "TEXT NOT NULL DEFAULT '0000000000000000000000000000000000000000000000000000000000000000'"
-            )
-            added_expected_spoken_text_sha256 = True
-        if (
-            added_pronunciation_delivery_variant
-            or added_expected_spoken_text_sha256
-        ):
-            empty_sha256 = "0" * 64
-
-            def decoded_object(value: Any) -> dict[str, Any] | None:
-                try:
-                    decoded = json.loads(str(value))
-                except (TypeError, json.JSONDecodeError):
-                    return None
-                return decoded if isinstance(decoded, dict) else None
-
-            def payload_spoken_sha256(payload: dict[str, Any] | None) -> str | None:
-                value = str((payload or {}).get("spoken_text_sha256") or "")
-                normalized = value.strip().casefold()
-                if re.fullmatch(r"[0-9a-f]{64}", normalized):
-                    return normalized
-                return None
-
-            legacy_rows = list(
-                conn.execute(
-                    """
-                    SELECT
-                        candidates.*,
-                        segments.signal_json AS incumbent_signal_json,
-                        segments.wav_sha256 AS current_segment_sha256
-                    FROM segment_candidates AS candidates
-                    JOIN segments ON segments.id=candidates.segment_id
-                    ORDER BY candidates.id
-                    """
-                )
-            )
-            for candidate in legacy_rows:
-                signal = decoded_object(candidate["signal_json"])
-                incumbent_signal = decoded_object(candidate["incumbent_signal_json"])
-                promoted_current_candidate = (
-                    str(candidate["state"]) == SEGMENT_CANDIDATE_PROMOTED
-                    and str(candidate["wav_sha256"] or "")
-                    == str(candidate["current_segment_sha256"] or "")
-                )
-                if promoted_current_candidate:
-                    candidate_spoken_sha256 = payload_spoken_sha256(signal)
-                    incumbent_spoken_sha256 = payload_spoken_sha256(
-                        incumbent_signal
-                    )
-                    if (
-                        signal is None
-                        or incumbent_signal is None
-                        or candidate_spoken_sha256 is None
-                        or incumbent_spoken_sha256 is None
-                        or candidate_spoken_sha256 != incumbent_spoken_sha256
-                        or ProjectDB._candidate_signal_immutable_projection(
-                            signal,
-                            default_pronunciation_variant=(
-                                PRONUNCIATION_DELIVERY_LOCKED
-                            ),
-                        )
-                        != ProjectDB._candidate_signal_immutable_projection(
-                            incumbent_signal,
-                            default_pronunciation_variant=(
-                                PRONUNCIATION_DELIVERY_LOCKED
-                            ),
-                        )
-                    ):
-                        raise RuntimeError(
-                            "promoted legacy candidate signal differs from the live segment"
-                        )
-                expected_spoken_sha256 = (
-                    payload_spoken_sha256(signal)
-                    or payload_spoken_sha256(incumbent_signal)
-                    or empty_sha256
-                )
-                stored_variant = str(
-                    candidate["pronunciation_delivery_variant"] or ""
-                ).strip().casefold()
-                pronunciation_variant = (
-                    stored_variant
-                    if stored_variant in PRONUNCIATION_DELIVERY_VARIANTS
-                    else PRONUNCIATION_DELIVERY_LOCKED
-                )
-                encoded_payloads: dict[str, str | None] = {}
-                for field in (
-                    "signal_json",
-                    "beam_result_json",
-                    "greedy_result_json",
-                ):
-                    payload = decoded_object(candidate[field])
-                    if payload is None:
-                        encoded_payloads[field] = candidate[field]
-                        continue
-                    payload.setdefault(
-                        "pronunciation_delivery_variant",
-                        pronunciation_variant,
-                    )
-                    encoded_payloads[field] = json.dumps(
-                        payload,
-                        ensure_ascii=False,
-                        sort_keys=True,
-                    )
-                conn.execute(
-                    """
-                    UPDATE segment_candidates SET
-                        pronunciation_delivery_variant=?,
-                        expected_spoken_text_sha256=?,
-                        signal_json=?,beam_result_json=?,greedy_result_json=?
-                    WHERE id=?
-                    """,
-                    (
-                        pronunciation_variant,
-                        expected_spoken_sha256,
-                        encoded_payloads["signal_json"],
-                        encoded_payloads["beam_result_json"],
-                        encoded_payloads["greedy_result_json"],
-                        int(candidate["id"]),
-                    ),
-                )
-                for check_id_field in (
-                    "beam_check_id",
-                    "greedy_check_id",
-                    "final_check_id",
-                ):
-                    check_id = candidate[check_id_field]
-                    if check_id is None:
-                        continue
-                    check = conn.execute(
-                        "SELECT metrics_json FROM quality_checks WHERE id=?",
-                        (int(check_id),),
-                    ).fetchone()
-                    metrics = (
-                        decoded_object(check["metrics_json"])
-                        if check is not None
-                        else None
-                    )
-                    if metrics is None:
-                        continue
-                    metrics.setdefault(
-                        "pronunciation_delivery_variant",
-                        pronunciation_variant,
-                    )
-                    if check_id_field == "final_check_id":
-                        metrics.setdefault(
-                            "expected_spoken_text_sha256",
-                            expected_spoken_sha256,
-                        )
-                        decode_evidence = metrics.get("decode_evidence")
-                        if isinstance(decode_evidence, list):
-                            for evidence in decode_evidence:
-                                if isinstance(evidence, dict):
-                                    evidence.setdefault(
-                                        "pronunciation_delivery_variant",
-                                        pronunciation_variant,
-                                    )
-                    conn.execute(
-                        "UPDATE quality_checks SET metrics_json=? WHERE id=?",
-                        (
-                            json.dumps(
-                                metrics,
-                                ensure_ascii=False,
-                                sort_keys=True,
-                            ),
-                            int(check_id),
-                        ),
-                    )
-                if promoted_current_candidate:
-                    incumbent_signal.setdefault(
-                        "pronunciation_delivery_variant",
-                        pronunciation_variant,
-                    )
-                    conn.execute(
-                        "UPDATE segments SET signal_json=? WHERE id=?",
-                        (
-                            json.dumps(
-                                incumbent_signal,
-                                ensure_ascii=False,
-                                sort_keys=True,
-                            ),
-                            int(candidate["segment_id"]),
-                        ),
-                    )
-        candidate_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(segment_candidates)")
-        }
-        required_candidate_columns = {
-            "id",
-            "segment_id",
-            "policy_hash",
-            "repair_round",
-            "repair_budget",
-            "incumbent_sha256",
-            "expected_voice_profile_id",
-
-            "pronunciation_delivery_variant",
-            "expected_spoken_text_sha256",
-            "state",
-            "generation_strategy",
-            "postprocess_profile",
-            "postprocess_source_candidate_id",
-            "postprocess_source_sha256",
-            "tts_attempt",
-            "generation_seed",
-            "wav_path",
-            "wav_sha256",
-            "wav_duration",
-            "signal_json",
-            "beam_result_json",
-            "greedy_result_json",
-            "beam_check_id",
-            "greedy_check_id",
-            "perceptual_required",
-            "candidate_repair_requirement",
-            "repair_trigger_check_id",
-            "perceptual_result_json",
-            "perceptual_check_id",
-            "final_check_id",
-            "failure_reason",
-            "created_at",
-            "updated_at",
-            "promoted_at",
-        }
-        missing_candidate_columns = required_candidate_columns - candidate_columns
-        if missing_candidate_columns:
-            raise RuntimeError(
-                "segment_candidates schema is incomplete: "
-                + ", ".join(sorted(missing_candidate_columns))
-            )
-
-        required_analysis_candidate_columns = {
-            "id",
-            "policy_fingerprint",
-            "model_name",
-            "model_digest",
-            "group_fingerprint",
-            "context_hash",
-            "candidate_hash",
-            "candidate_json",
-            "envelope_hash",
-            "commit_envelope_json",
-            "commit_envelope_hash",
-            "state",
-            "initial_generator_contract_json",
-            "initial_generator_contract_hash",
-            "deterministic_issue_json",
-            "deterministic_issue_hash",
-            "critic_attempt_count",
-            "critic_max_attempts",
-            "terminal_reason",
-            "created_at",
-            "updated_at",
-            "accepted_at",
-        }
-        analysis_candidate_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(analysis_candidates)")
-        }
-        if analysis_candidate_columns and "envelope_hash" not in analysis_candidate_columns:
-            conn.execute("ALTER TABLE analysis_candidates ADD COLUMN envelope_hash TEXT")
-            conn.execute(
-                "UPDATE analysis_candidates SET envelope_hash=candidate_hash "
-                "WHERE envelope_hash IS NULL"
-            )
-        if analysis_candidate_columns and "commit_envelope_json" not in analysis_candidate_columns:
-            conn.execute(
-                "ALTER TABLE analysis_candidates ADD COLUMN commit_envelope_json TEXT"
-            )
-        if analysis_candidate_columns and "commit_envelope_hash" not in analysis_candidate_columns:
-            conn.execute(
-                "ALTER TABLE analysis_candidates ADD COLUMN commit_envelope_hash TEXT"
-            )
-        analysis_candidate_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(analysis_candidates)")
-        }
-        missing_analysis_candidate_columns = (
-            required_analysis_candidate_columns - analysis_candidate_columns
-        )
-        if missing_analysis_candidate_columns:
-            raise RuntimeError(
-                "analysis_candidates schema is incomplete: "
-                + ", ".join(sorted(missing_analysis_candidate_columns))
-            )
-        required_analysis_attempt_columns = {
-            "id",
-            "analysis_candidate_id",
-            "attempt_number",
-            "state",
-            "intent_json",
-            "intent_hash",
-            "contract_json",
-            "contract_hash",
-            "outcome_json",
-            "outcome_hash",
-            "evidence_json",
-            "evidence_hash",
-            "completion_hash",
-            "reserved_at",
-            "completed_at",
-        }
-        analysis_attempt_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(analysis_critic_attempts)")
-        }
-        missing_analysis_attempt_columns = (
-            required_analysis_attempt_columns - analysis_attempt_columns
-        )
-        if missing_analysis_attempt_columns:
-            raise RuntimeError(
-                "analysis_critic_attempts schema is incomplete: "
-                + ", ".join(sorted(missing_analysis_attempt_columns))
-            )
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:

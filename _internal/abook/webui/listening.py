@@ -97,7 +97,9 @@ def _well_formed(raw: Any) -> bool:
 
 
 def _profiles(raw: Any) -> dict[str, Any]:
-    """Nội dung file hồ sơ nghe thành dạng hồ sơ + liên kết; không phải dạng hiện hành thì là hồ sơ trống."""
+    """Load current profiles, or an empty store when no file was read."""
+    if raw and (not isinstance(raw, dict) or raw.get("version") != FORMAT_VERSION):
+        raise ValueError("Unsupported listening profile version; required version 2")
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
         records = raw.get("records") if isinstance(raw.get("records"), dict) else {}
         links = raw.get("links") if isinstance(raw.get("links"), dict) else {}
@@ -452,7 +454,7 @@ class Listening:
             return list(self._data["links"])
 
     def rename_books(self, renamed: dict[str, str]) -> None:
-        """Đổi khoá sách của bảng liên kết ({mã cũ: mã mới}, library.legacy_ids). Hồ sơ giữ nguyên mã - điện thoại gộp
+        """Đổi khoá sách khi chuyển thư viện ({mã cũ: mã mới}). Hồ sơ giữ nguyên mã - điện thoại gộp
         theo mã hồ sơ nên vẫn khớp. Hai khoá về cùng một cuốn: gộp danh sách hồ sơ; hồ sơ đang dùng là bên chọn sau."""
         with self._changing():
             links = self._data["links"]

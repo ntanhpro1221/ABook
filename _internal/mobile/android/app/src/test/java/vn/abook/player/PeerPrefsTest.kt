@@ -42,7 +42,7 @@ class PeerPrefsTest {
     }
 
     @Test fun corruptPeerDoesNotHideOtherPeersAndRawPreferenceSurvivesWrites() {
-        val raw = """{"bad":17,"badPort":{"host":"phone.local","port":"invalid"},"good":{"host":"10.0.0.1","port":47630,"token":"t"}}"""
+        val raw = """{"bad":17,"badPort":{"host":"phone.local","port":"invalid"},"good":{"host":"10.0.0.1","port":47630,"addresses":[{"address":"10.0.0.1:47630","lastSuccess":0}],"token":"t"}}"""
         val values = mutableMapOf<String, Any>("peers" to raw)
         val storage = prefs(values)
         val peers = Peers.readPrefs(storage)
