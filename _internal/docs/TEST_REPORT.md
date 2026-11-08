@@ -1448,3 +1448,15 @@ CPU: Nhật 12/34 mục tiêu trong 24 câu; Anh 27/37 trong 26 câu và hai đ�
 Kiểm cuối: Python liên quan 1.082 pass; toàn bộ 10.743 pass, 15 skip, 2 xfail, 0 FAILED/error, đủ 10.760 node rời nhau qua bốn log -rf. Kotlin liên quan 558 pass/1 skip; toàn :app:testDebugUnitTest 3.385 pass/4 skip, 0 failure/error. :app:assembleDebug, compileall và whitespace đạt.
 
 Danh sách quality đọc trực tiếp có 59 mục; hash cuối 8b2743893f2ce90b706cc451ba14e2c5fe6c993df40083ac2b0d497e2b54fd7b. Chỉ cây dev; merge chưa commit.
+
+# 08-11-2026 — giữ quyền của từng đường đọc
+
+Direct JA giữ kết quả số, viết tắt, từ mượn và kính ngữ của lớp trước. Từ Nhật quen tách khỏi nhận diện tên; tên nối gạch kiểm từng phần. Khi chưa rõ gốc cuốn, tên đơn không tự đủ bằng chứng chỉ nhờ ba âm tiết. Laugh atom không nuốt nguyên âm khác nhau; chuỗi HOA không kéo dài giữ đường viết tắt. Python/Kotlin dùng chung JSON và asset; namespace Nhật 3, cache rules 12.
+
+Nhãn model và phép chấm đường đọc/phoneme cả câu: primary 1.697/1.855, JA_NAME 463/491; enaudit 611/671; soundfix 350/391. Held-out mới gồm 1.080 lượt từ 13 cuốn, khóa nhãn SHA trước sửa luật: 951/1.076 xác định, JA_NAME 284/302. Mọi ô loại có mẫu >= max(base, soundfix); không xem đây là phán quyết nghe hoặc độ chính xác tự nhiên toàn Corpus. Chi tiết và mọi hỏng mới nằm trong thư mục việc ngoài repo.
+
+CPU giữ Nhật 12/34, Anh 27/37 và 26/26 cặp tiếng kêu không tụt; hai clip Nhật khác byte được ASR CPU mới, các transcript tái dùng có checksum trùng. Không GPU/API trả tiền.
+
+Kiểm cuối: Python đường đọc 1.093 pass; hai test khởi động dùng Event chờ callback thật thay thời gian ngủ cố định. Toàn bộ 10,754 pass, 15 skip, 2 xfail, 0 FAILED/error; đủ 10,771 node qua bốn partition rời nhau. Lượt đầu lộ một race trong test; giữ log đầu và kiểm lại nguyên hai partition chứa nó. Kotlin :app:testDebugUnitTest 3.386 pass/4 skip, 0 failure/error; compileall và whitespace đạt.
+
+Quality đọc trực tiếp 59 mục, hash 00621d2fe93b76496889e6aea804c9944699e586f0011e1707a908a40b3c5a5b. HEAD a695c934e giữ nguyên; thay đổi chỉ ở nhánh dev, chưa commit.

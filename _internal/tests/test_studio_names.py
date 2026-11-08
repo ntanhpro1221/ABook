@@ -78,7 +78,7 @@ def test_rule_reading_is_the_read_aloud_romanization() -> None:
     assert studio_names.rule_reading("Kyoukota", "ja") == "Ki-âu-cô-ta"
     assert studio_names.rule_reading("Haruto Shinomiya", "ja") == "Ha-ru-tô Si-nô-mi-a"
     assert studio_names.rule_reading("Seojun", "ko") == romanized_reading("Seojun", "ko")
-    assert studio_names.rule_reading("Haruto", None) == "Ha-ru-tô"
+    assert studio_names.rule_reading("Haruto", None) is None
     assert studio_names.rule_reading("Rose", "ja") is None, "an English name is not a romaji name"
 
 

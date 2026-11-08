@@ -20,6 +20,12 @@ object JapanesePolicy {
     private val wordPattern = Regex("[$LETTERS]+(?:[-'][$LETTERS]+)*")
     private val notePattern = Regex("\\[note[0-9]+\\]", RegexOption.IGNORE_CASE)
 
+    private fun lexicallyGuarded(head: String): Boolean {
+        val low = head.lowercase(Locale.ROOT)
+        val marked = (list("onsets") + "wa").any { it in low }
+        return low in lexicalGuard && !marked
+    }
+
     private fun normalized(core: String, origin: String?): String {
         if (origin != "ja") return core
         return core.split("-").mapIndexed { index, part ->
@@ -35,7 +41,7 @@ object JapanesePolicy {
         val parts = core.split("-").toMutableList()
         val honorific = parts.size > 1 && parts.last().lowercase(Locale.ROOT) in list("honorifics")
         while (parts.size > 1 && parts.last().lowercase(Locale.ROOT) in list("suffixes")) parts.removeAt(parts.lastIndex)
-        while (parts.size > 1 && parts.first().length == 1 && parts.first().equals(parts.last().take(1), true)) parts.removeAt(0)
+        while (parts.size > 1 && parts.first().length < parts.last().length && parts.last().startsWith(parts.first(), true)) parts.removeAt(0)
         return parts.joinToString("-") to honorific
     }
 
@@ -80,9 +86,11 @@ object JapanesePolicy {
     private fun candidate(core: String, origin: String? = null): Pair<Int, Boolean> {
         val (head, honorific) = head(normalized(core, origin))
         val low = head.lowercase(Locale.ROOT)
-        if (head.length < 2 || !head.first().isUpperCase() || head.drop(1) != head.drop(1).lowercase(Locale.ROOT) ||
-            VietnameseReading.isSyllable(head) || low in EnglishWords.ALL || (origin == "ja" && low in lexicalGuard) || low in list("common") || Regex("(.)\\1\\1").containsMatchIn(low)) return 0 to false
-        val count = syllables(head)
+        val parts = head.split("-")
+        if (head.length < 2 || !head.first().isUpperCase() || parts.any { it.drop(1) != it.drop(1).lowercase(Locale.ROOT) } ||
+            VietnameseReading.isSyllable(head) || low in EnglishWords.ALL || (origin == "ja" && lexicallyGuarded(head)) || low in list("common") || Regex("(.)\\1\\1").containsMatchIn(low)) return 0 to false
+        val counts = parts.map(::syllables)
+        val count = if (counts.all { it > 0 }) counts.sum() else 0
         return if (count > 0 && Romanization.reading(head, "ja") != null) count to honorific else 0 to false
     }
 
@@ -91,15 +99,23 @@ object JapanesePolicy {
         val words = surface.split(" ")
         return if (contextualNames(words).isNotEmpty() || words.any {
             val (count, honorific) = candidate(it)
-            count > 0 && (honorific || count >= data.getJSONObject("routing").getInt("min_syllables"))
+            it.lowercase(Locale.ROOT) in list("common") || (Names.termOrigin(it) == "ja" && Names.honorificReading(it, null) != null) || (count > 0 && honorific)
         }) "ja" else null
     }
 
     private fun readingWord(source: String, origin: String?, contextual: Boolean): String? {
         val core = normalized(source, origin)
+        if (origin == "ko") return null
+        // Lexical Japanese and joined addresses are independent of name inference.
+        if (core.lowercase(Locale.ROOT) in list("common")) Names.loanwordReading(core)?.let { return it }
+        if (Names.termOrigin(core) != "ko") Names.honorificReading(core, origin)?.let { return it }
+        if (source.any(Char::isUpperCase) && source.none(Char::isLowerCase) && source.length <= 4 && !contextual) return null
         val (count, honorific) = candidate(core, origin)
         val minimum = data.getJSONObject("routing").getInt(if (origin == "ja") "known_ja_min_syllables" else "min_syllables")
-        if (origin == "ko" || count == 0 || !(contextual || honorific || count >= minimum)) return null
+        if (origin == null && !(contextual || honorific)) return null
+        val longSound = origin == "ja" && count == 1 && Regex("([aiueo])\\1").containsMatchIn(core.lowercase(Locale.ROOT))
+        if (count == 0 || !(contextual || honorific || count >= minimum || longSound))
+            return if (origin == "ja" && !lexicallyGuarded(head(core).first)) Names.nameReading(core, origin) else null
         val (head, _) = head(core)
         val parts = core.split("-")
         if (parts.size > 1 && parts.dropLast(1).all { it.length == 1 && it.equals(head.take(1), ignoreCase = true) }) {
@@ -136,9 +152,12 @@ object JapanesePolicy {
             val source = if (origin == "ja") notePattern.replace(token, "") else token
             val (before, core, after) = Names.splitToken(source)
             if (core.isEmpty() || before.lastOrNull()?.isDigit() == true || Regex("^[-–]?[0-9]").containsMatchIn(after)) continue
+            val previousName = Names.nameReading(core, origin)
+            // Structural TN and non-name readings retain ownership of their output.
+            if (out[index] != token && out[index] != before + previousName + after) continue
             val said = reading(core, origin, index in contextual)
             if (said != null) out[index] = before + said + after
-            else if (origin == "ja" && out[index] == before + Names.nameReading(core, origin) + after) out[index] = token
+            else if (origin == "ja" && lexicallyGuarded(head(normalized(core, origin)).first) && out[index] == before + previousName + after) out[index] = token
         }
     }
 
@@ -167,7 +186,7 @@ object JapanesePolicy {
             }
             if (locations.size != 1) continue
             val said = readingWord(raw, origin, contextual)
-            if (said == null && origin != "ja") continue
+            if (said == null && !(origin == "ja" && lexicallyGuarded(head(normalized(raw, origin)).first))) continue
             val (start, stop) = locations.single()
             replacements.add(Triple(start, stop, said ?: raw))
         }
