@@ -44,6 +44,14 @@
 - Final CPU pytest with `-rf`: **1,047 passed / 0 FAILED / 0 errors / 0 skipped**, two disjoint invocations (971 cases across 22 files, 76 across 3 files). JUnit failure/error nodes and raw FAILED-line counts agree. JVM offline: **55 passed / 0 failures / 0 errors / 0 skipped**, 10 related classes; debug Kotlin/Java compilation passed. `compileall -q abook tests scripts` and `git diff --check` passed. No model, GPU synthesis, app window, phone or production book/DB was used.
 - Earlier iterations are retained outside git: pytest 5, 16 and 2 failures; JVM 1 failure. Final checks above are separate successful runs. The Store gate was reviewed and limited to mutation/restore boundaries so observational fixture tests and diagnostics do not require initialization; the current-schema backup fixture and peer fixture were corrected.
 - All work remains uncommitted on dev/nomig165. Read the locked set from code: **56 files**, 3 changed (`config.py`, `database.py`, `webui/store.py`). Quality implementation hash: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc` → `fc26deb8e7481acdb8484098f84e6b0330ab653d84d7124b78bec90453d0f5a5`. Integrate after the active production run; use a clean project for the changed pipeline. Detailed report, logs and XML: `C:/Users/user/AppData/Local/Temp/claude/D--Novels-ABook/eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a/scratchpad/codex/nomig165/`.
+## 08-11-2026 — audiofx: playback EQ, volume/boost and independent pitch
+
+- Android Compose, Qt/WASAPI and web share `… → Âm thanh`, five bands/presets, bass shelf, app volume, 0–12 dB boost with linked peak limiter, and ±6 semitone pitch. Playback settings are device-wide; recording/quality files remain unchanged.
+- Kotlin JVM full run: 3,381 passed, 8 skipped, 0 failed (3,389 discovered). Vitest full run: 320 files / 2,848 passed, 0 failed. Related pytest with `-rf`: 56 passed, 0 failed.
+- Qt: AudioFxTests 12, PlayerTests 47, PlayerNativeTests 18, MixTests 91, VoiceTests 50, AudioFxUi/PlayerParity 7: 225 passed, 0 failed. UI tests and screenshots use offscreen rendering; the full WidthTests suite was not rerun.
+- Each platform's 75 EQ measurements has worst error <0.249 dB. Android/Qt pitch checks cover ±3/±6 semitones at 1×/1.5×; web covers ±3/±6 with a real OfflineAudioContext/AudioWorklet. All stay within 3% F0 and 0.5% duration (web has exactly the requested frame count). Limiter sample peaks stay ≤−1 dBFS; these are not true-peak or perceptual listening results.
+- Web gallery: light/dark, 0 findings/errors including 48 geometry trials. Android headless emulator captures light/dark and measures DSP CPU; no physical phone. Detailed logs and screenshots: task `scratchpad/codex/audiofx/`, report.md/result.md.
+- Quality hash before/after: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc` (unchanged). No commit or push.
 
 ## 08-11-2026 — widthbook: retry settled Qt width measurements
 

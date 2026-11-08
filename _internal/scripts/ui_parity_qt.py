@@ -61,6 +61,7 @@ QML_SKIP = {"BenchScenario.qml"}
 
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
+    ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None))),
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
     ("Thư viện", ("Library*.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),

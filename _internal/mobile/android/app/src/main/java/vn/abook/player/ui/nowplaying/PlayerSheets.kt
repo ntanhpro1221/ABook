@@ -47,7 +47,7 @@ import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
-enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music, Look }
+enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music, Look, Audio }
 
 /** Sheets translate over a fixed player. There is no scale or translation on the underlying screen. */
 @Composable
@@ -183,6 +183,11 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     }
                     PlayerSheet.More -> {
                         BookProgressLine(state, model)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.SLIDERS_HORIZONTAL, Abook.colors.text)
+                            Spacer(Modifier.width(8.dp))
+                            Box(Modifier.weight(1f)) { SheetRow("Âm thanh", "Chỉnh") { deeper(PlayerSheet.Audio) } }
+                        }
                         if (window.otherPlayers != null) SheetRow("Thiết bị phát", "Chọn") {
                             window.closeSheet()
                             window.otherPlayers?.invoke()
@@ -205,6 +210,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     }
                     PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Look -> LookPage(window)
+                    PlayerSheet.Audio -> AudioFxPage()
                     PlayerSheet.Voice -> {
                         if (state.voices.isEmpty()) BasicText("Máy này chưa có giọng đọc.", style = Abook.type.bodySmall)
                         else VoiceList(state, model, window)
@@ -277,7 +283,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
     PlayerSheet.Speed -> "Tốc độ đọc"; PlayerSheet.Sleep -> "Hẹn giờ ngủ"; PlayerSheet.Chapters -> "Chương"
-    PlayerSheet.More -> "Thêm tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"; PlayerSheet.Look -> "Cỡ chữ"
+    PlayerSheet.More -> "Thêm tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"; PlayerSheet.Look -> "Cỡ chữ"; PlayerSheet.Audio -> "Âm thanh"
 }
 
 /** Tấm "Cỡ chữ" (web: ReaderScreen, bảng cỡ chữ và giãn dòng): năm cỡ, ba mức giãn dòng; đổi là thấy ngay ở chữ Đọc theo và được nhớ. */

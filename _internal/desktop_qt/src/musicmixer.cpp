@@ -452,6 +452,8 @@ struct MixVoiceState {
     std::function<std::unique_ptr<VoiceDecoder>(int)> decoderFactory;
     std::shared_ptr<VoiceDecoder> decoder; // reader keeps an epoch alive while stop/seek/device commands proceed
     std::unique_ptr<TimeStretch> stretch;
+    AudioFx::Settings fx;
+    AudioFx::Dsp fxDsp;
     float first[2] = {};
     // joining: nguồn vừa đặt lại chỗ, chưa góp khung nào; được nối vào tại con trỏ nghe (từ joinAt nếu đang bắc cầu).
     // fadeIn: tiếng trước đó bị cắt giữa chừng nên khúc đầu tiên mờ vào. speedDirty: đổi tốc độ khi đang phát.
@@ -1030,6 +1032,7 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
         if (s->target != target || s->seekSerial != seekSerial || s->flush || d->resetQueued) { wake(true); return; }
         s->target = std::clamp(s->target, 0.0, s->duration);
         s->ring->clear(); s->stretch = std::make_unique<TimeStretch>(s->rate); s->stretch->setRate(s->speed);
+        s->fxDsp = AudioFx::Dsp(); // A seek/new clip must not carry the old filter tail or limiter envelope.
         s->mediaMixed = s->mediaHeard = s->target; s->mixed = s->heard = 0; s->spans.clear();
         s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
         if (s->seeking) postSeeked(s);
@@ -1296,8 +1299,9 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
         else if (s->fadeOutLen) n = std::min<size_t>(n, s->fadeOutLeft);
     }
     std::vector<float> block(frames * 2, 0.0f), scratch;
-    if (s->streaming) s->stretch->setRate(s->speed);
+    if (s->streaming) { s->stretch->setRate(s->speed); s->stretch->setPitch(s->fx.pitch); }
     const size_t got = s->streaming ? s->stretch->read(*s->ring, block.data(), n, s->eof) : s->ring->read(block.data(), n * 2) / 2;
+    if (s->streaming) { s->fxDsp.configure(s->fx,s->rate); s->fxDsp.process(block.data(),got); }
     if (s->fadeOutLen && got) {
         // Mờ ra tuyến tính tới 0 ở khung cuối còn trong vòng đệm.
         for (size_t i = 0; i < got; ++i) {
@@ -1563,6 +1567,12 @@ void MixVoice::setRate(double speed) {
       m_state->speed = speed;
       // Đang phát: bắc cầu sang Sonic mới (remix). Chưa xếp gì thì tốc độ mới áp ngay ở lượt trộn tới.
       if (m_state->streaming && m_state->want && !m_state->spans.empty()) m_mixer->d->resetQueued = m_state->flush = m_state->speedDirty = true;
+    }
+    m_mixer->wake();
+}
+void MixVoice::setAudioFx(const AudioFx::Settings &fx) {
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      m_state->fx=fx;
     }
     m_mixer->wake();
 }

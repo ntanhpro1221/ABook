@@ -96,6 +96,7 @@ class Player : public QObject {
     Q_PROPERTY(QString purpose READ purpose NOTIFY bookChanged)
     Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
     Q_PROPERTY(double volume READ volume NOTIFY volumeChanged)       // 0..1 của giọng (phím M tắt / bật tiếng)
+    Q_PROPERTY(QVariantMap audioFx READ audioFx NOTIFY audioFxChanged)
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
@@ -148,6 +149,8 @@ public:
     Q_INVOKABLE void review(const QString &bookId, int chapterId);
     double rate() const { return m_rate; }
     double volume() const { return m_volume; }
+    QVariantMap audioFx() const;
+    Q_INVOKABLE void setAudioFx(const QVariantMap &value);
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.minutes; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
@@ -244,6 +247,7 @@ signals:
     void bufferingChanged();
     void rateChanged();
     void volumeChanged();
+    void audioFxChanged();
     void audioSeeked();
     void outputGainChanged();
     /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
@@ -353,6 +357,7 @@ private:
     double m_rate = PlayerLogic::kDefaultRate;
     double m_defaultRate = PlayerLogic::kDefaultRate;
     double m_volume = 0.9;
+    AudioFx::Settings m_audioFx;
     double m_muted = 0; // mức trước lần tắt tiếng gần nhất
     bool m_fading = false;
     QString m_error;

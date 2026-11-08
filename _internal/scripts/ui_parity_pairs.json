@@ -5,6 +5,7 @@
       "id": "now-playing",
       "web": [
         "listen/PlayerViews.tsx",
+        "listen/AudioFxPanel.tsx",
         "listen/ReadAlongText.tsx"
       ],
       "native": [
@@ -16,13 +17,18 @@
       "allow": [
         {
           "side": "web",
+          "label": "Chưa lưu được âm thanh. Bạn hãy thử lại.",
+          "reason": "browser only: synchronous localStorage quota/permission failure; Android SharedPreferences writes through the platform service"
+        },
+        {
+          "side": "web",
           "match": "^(bảng|esc|phím|phím tắt|shift\\+[←→])$",
           "reason": "computer only: keyboard shortcuts, and the tab list name of the desktop side panel (the phone player has no side panel)"
         },
         {
           "side": "web",
-          "match": "^(âm lượng.*|bật tiếng|tắt tiếng)$",
-          "reason": "computer only: phone volume is the hardware keys"
+          "match": "^(bật tiếng|tắt tiếng|âm lượng \\{\\}%)$",
+          "reason": "computer only: keyboard mute shortcut and its live accessible percentage; app volume is available on both platforms"
         },
         {
           "side": "web",

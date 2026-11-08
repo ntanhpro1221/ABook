@@ -145,6 +145,7 @@ Item {
         id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
         Column {
             width: parent.width
+            MenuRow { width: parent.width; text: "Âm thanh"; value: "Chỉnh"; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
             MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
             MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
             MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
@@ -159,4 +160,5 @@ Item {
     MusicPopover { id: music; anchorItem: moreButton }
     PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
     OutputPopover { id: output; anchorItem: moreButton }
+    Popover { id: audioFx; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel {} }
 }

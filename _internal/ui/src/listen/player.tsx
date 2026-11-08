@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { appVolume } from './audioFx';
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
@@ -252,7 +253,7 @@ export function PlayerProvider({
   engine,
   children,
   defaultRate = 1,
-  defaultVolume = 0.9,
+  defaultVolume = appVolume(),
   keyboard = true,
   fadeSeconds = DEFAULT_FADE_SECONDS,
   extendMinutes = DEFAULT_EXTEND_MINUTES,
@@ -1256,8 +1257,10 @@ export function PlayerProvider({
   }, [applyRate, client, night, position, source]);
 
   const setVolume = useCallback((value: number) => {
+    if (!Number.isFinite(value)) return;
     awakeRef.current();
     const clamped = Math.max(0, Math.min(1, value));
+    try { localStorage.setItem('abook.appVolume',String(clamped)); } catch { toast.error('Chưa lưu được âm lượng.'); }
     refs.current.volume = clamped;
     setVolumeState(clamped);
     engine.setVolume(clamped * refs.current.sleepGain);

@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QtGlobal>
 #include <limits>
+#include "audiofx.h"
 
 class AudioOut : public QObject {
     Q_OBJECT
@@ -23,6 +24,7 @@ public:
     /// Tốc độ 0,5-4 với GIỮ cao độ.
     virtual void setRate(double rate) = 0;
     virtual void setVolume(double volume) = 0; // 0..1
+    virtual void setAudioFx(const AudioFx::Settings &) {}
     /// Mở nguồn và nạp sẵn mà KHÔNG phát (nhạc nền: phần tử lặp tạo sẵn phải có tiếng ngay khi tới hạn). Mặc định: không làm gì.
     virtual void preload() {}
     /// Hết nguồn thì quay lại đầu, không phát `ended` (nhạc nền: bài quá ngắn để lặp mờ chéo). Mặc định: không lặp.
