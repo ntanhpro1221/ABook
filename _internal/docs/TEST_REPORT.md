@@ -1,5 +1,23 @@
 # Test report
 
+## 08-11-2026 — widthbook2: shared Qt visual readiness
+
+- `VisualReady.js` previously began a single 5s wall deadline before polish, potentially leaving a 1ms allowance for a transition started during layout. It also accepted animation endpoints without proving that measured text geometry and post-render polish had settled. A controlled virtual-clock probe reproduces the budget error; the original failed full-run log has no phase durations, so it cannot prove that this specific timeout exhausted its budget that way.
+- Preserve the 5s Qt polish/animation/render waits, drain polish after rendering/metric reads, and require matching text geometry across consecutive requested frames before auditing. Convergence is bounded by observed frames, returning as soon as stable; no blind sleep or numeric assertion/tolerance change. Input waits retain perpetual indicators. Three regressions cover queued width/font-size layout, a layout change queued after an actual frame, and live indicators; the queued-after-frame regression fails with the original helper.
+- Studio3/4/5/6 `noCut()` now waits before reading text and parent geometry. Audit all 16 suites called by `desktop_qt/build.bat`: additionally fix SidebarTests icon captures to assert polish/render completion and selector checks to re-read both moving/target geometry. Complete SidebarTests: **166 passed / 0 failed / 0 skipped**. Complete Studio6 repeated five times: **51 passed / 0 failed** each. Qt Python rules pass (143 passed / 1 existing skip, exit 0).
+- Final complete WidthTests, fresh hidden Windows processes, `QT_QPA_PLATFORM=offscreen`, unchanged test-source SHA-256 fingerprints throughout all five runs:
+
+| Run | Passed | Failed | Skipped | QtTest time |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 1532 | 0 | 1 | 873688 ms |
+| 2 | 1532 | 0 | 1 | 893590 ms |
+| 3 | 1532 | 0 | 1 | 870081 ms |
+| 4 | 1532 | 0 | 1 | 839685 ms |
+| 5 | 1532 | 0 | 1 | 830255 ms |
+
+- Every process and `check_test_results.py` exits 0; zero missing glyphs, QML type errors or displayed value leaks. Studio4 long-text, Studio6 restored-position and all new readiness regressions pass in all five full suites. The single skip is the existing opt-in missing-glyph negative control. The three added regressions account for the pass-count increase from widthbook.
+- Preserve all earlier development failures separately: the first prototype used a render-producing `tryVerify` predicate, later diagnostics dereferenced destroyed QML wrappers, and a later full run exposed missing post-render polish draining. None substitutes for the final five clean full invocations. Raw logs, source fingerprints, exact reused widthbook run commands, controlled probes, the 16-suite audit and development history are in task `scratchpad/codex/widthbook2/` (`audit.md`, `width-complete-1.txt` through `width-complete-5.txt`, `width-complete-results.json`, `final-verification.json`, `result.md`). Test/documentation changes only; no commit or removal.
+
 ## 08-11-2026 — widthbook: retry settled Qt width measurements
 
 - Apply the `80cde88c3` settings pattern throughout `tests/width/tst_width.qml`: retry post-open row layout, painted text bounds, cover geometry and page centering with fresh measurements inside each callback. Chapter delegates are re-enumerated after the asynchronous model count arrives. Keep every numeric bound/tolerance, the four-complete-row requirement and the deliberate intermediate/reduced-motion checks.
