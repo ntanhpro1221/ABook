@@ -289,6 +289,34 @@ def test_a_clip_has_one_timing_per_word_inside_its_unit(fake_voices, tmp_path: P
     assert again == clip and len(engines["turbo"].calls) == 1, "lần sau lấy bộ đệm"
 
 
+def test_japanese_audio_is_repaired_before_joining_and_word_timings(fake_voices, monkeypatch):
+    from abook.readaloud import japanese_audio
+
+    provider, _ = fake_voices
+    called = []
+    def repair(samples, rate, text, spans, aligner):
+        called.append((text, spans, aligner))
+        return samples[:-1000], {'edits': [{}]}
+    monkeypatch.setattr(japanese_audio, 'repair', repair)
+    tier, name, installed, preset = provider._voice('turbo/Thường')
+    samples, rate, tokens, parts, spans = provider._speak(tier,name,installed,preset,'Nopami đã về nhà.','ja')
+    assert called == [('Nô-pa-mi đã về nhà.', [(0, 8)], None)]
+    assert spans[-1][1] == len(samples)
+    result = vieneu.timed_synthesis(samples,rate,tokens,parts,spans,None)
+    assert result.words[-1][1] <= result.duration_ms
+
+
+def test_vieneu_audio_cache_changes_when_alignment_is_installed(fake_voices, monkeypatch):
+    from dataclasses import replace
+
+    provider, _ = fake_voices
+    first = provider.reading_tag('Nopami đã về nhà.','ja')
+    installed = provider.locate()
+    monkeypatch.setattr(provider,'locate',lambda:replace(installed,aligner=True))
+    assert first.endswith('+jp-name-audio1-plain')
+    assert provider.reading_tag('Nopami đã về nhà.','ja').endswith('+jp-name-audio1-ctc')
+
+
 def test_units_get_the_pause_vieneu_puts_between_chunks(fake_voices) -> None:
     provider, _ = fake_voices
     found = provider.locate()

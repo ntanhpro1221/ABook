@@ -230,6 +230,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   VieNeu nối phoneme của từng từ Nhật tự động, giữ trọng âm đầu và đổi các trọng âm sau thành nhẹ, theo `delivery` trong cùng JSON của Python/Kotlin.
   Dấu bảo vệ chỉ có trong đầu vào suy luận; chữ lưu, neo ASR và biên họ/tên giữ nguyên. Chỉ nối span có hai biên tiền tố khớp chính xác với chuỗi âm toàn câu;
   cách đọc khác do người nghe chọn giữ quyền riêng.
+  Trên desktop có CTC, `readaloud/japanese_audio.py` rút phần năng lượng thấp >=120 ms nằm hoàn toàn trong từng từ Nhật tự động về 80 ms,
+  giữ 5 ms crossfade và hai mép thấp năng lượng. Chỉ dùng span CTC đầy đủ với confidence >=0,7; thiếu model/căn yếu thì giữ audio.
+  Studio áp sau tempo, trước signal/ASR QA và ghi evidence vào metrics; Nghe ngay áp trước ghép khúc/căn mốc chữ.
+  Cache VieNeu desktop mang `jp-name-audio1` cùng trạng thái có CTC. Android chưa có CTC nên vẫn chỉ áp luật phoneme, không suy số đo desktop sang Android.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây

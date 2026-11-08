@@ -1511,6 +1511,14 @@ class TTSCoordinator:
                         f"Bỏ hệ số tốc độ x{speed_factor:.2f} cho segment {row['stable_id']} "
                         f"vì xử lý lỗi: {exc}"
                     )
+            japanese_audio_evidence: dict[str, Any] = {}
+            if engine.name == VieNeuEngine.name:
+                from .readaloud.japanese_audio import repair_anchors
+
+                audio, japanese_audio_evidence = repair_anchors(
+                    audio, self.sample_rate, str(spoken_row["text"]),
+                    spoken_row["_materialized_spoken"][2],
+                )
             vocalization_provenance: dict[str, Any] = {}
             if vocalization_delivery_profile == HA_VOCALIZATION_DELIVERY_PROFILE:
                 audio_array = np.asarray(audio, dtype=np.float32).reshape(-1)
@@ -1561,6 +1569,8 @@ class TTSCoordinator:
                     os.replace(rejected, output)
                 raise
             metrics["tts_delivery_mode"] = str(delivery_mode).strip().casefold()
+            if japanese_audio_evidence and japanese_audio_evidence.get("status") != "not_applicable":
+                metrics["japanese_name_audio"] = japanese_audio_evidence
             metrics["pronunciation_delivery_variant"] = normalized_pronunciation_variant
             metrics["spoken_text_sha256"] = hashlib.sha256(
                 str(spoken_row["text"]).encode("utf-8")
