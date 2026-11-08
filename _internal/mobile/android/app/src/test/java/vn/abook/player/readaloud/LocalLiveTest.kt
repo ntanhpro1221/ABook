@@ -87,7 +87,8 @@ class LocalLiveTest {
     fun theStreamedClipIsByteIdenticalAndTheStreamIsItsSamples() {
         val (plain, _) = read("plain.wav", null)
         val target = Target()
-        val (streamed, spoken) = read("streamed.wav", target)
+        // This case models a fast producer; host load must not change how many units are flushed.
+        val (streamed, spoken) = read("streamed.wav", target, clock = { 0L })
         assertArrayEquals("the final file does not change by one byte", plain.readBytes(), streamed.readBytes())
         val (_, units) = VieneuUnits.units(text, 140)
         assertTrue(units.size > 1)

@@ -1051,7 +1051,10 @@ class VieneuProvider:
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
-            phonemes = ve.phonemize(unit.pieces)
+            from . import japanese_delivery
+
+            groups = japanese_delivery.groups(unit.text(toks).split(), origin, readings)
+            phonemes = ve.phonemize([japanese_delivery.mark(piece, groups) for piece in unit.pieces])
             seed = seed_of(tier, name, " ".join(unit.pieces))
             if not phonemes:
                 audio = np.zeros(0, dtype=np.float32)
@@ -1060,6 +1063,13 @@ class VieneuProvider:
                 audio = engine.infer(phonemes, speaker, codes, rng=np.random.RandomState(seed))
             else:
                 audio = engine.infer(phonemes, speaker, np.asarray(preset["style"], dtype=np.float32), seed=seed)
+            if groups:
+                from . import japanese_audio
+
+                said = " ".join(unit.pieces)
+                audio, _ = japanese_audio.repair(audio, engine.SAMPLE_RATE, said,
+                                               japanese_audio.word_spans(said, groups),
+                                               self._aligner() if installed.aligner else None)
             waves.append(audio)
             pauses.append(ve.GAP_SECONDS["sentence" if phonemes.rstrip()[-1:] in ".!?" else "minor"])
         joined, spans = ve.join(waves, engine.SAMPLE_RATE, pauses[:-1])
@@ -1068,7 +1078,11 @@ class VieneuProvider:
         return joined, engine.SAMPLE_RATE, toks, parts, spans
 
     def reading_tag(self, text: str, origin: str | None) -> str:
-        return reading_tag(text, origin, self.speaks_english, direct_english=True)
+        from .japanese_audio import VERSION
+
+        installed = self.locate()
+        alignment = "ctc" if installed is not None and installed.aligner else "plain"
+        return reading_tag(text, origin, self.speaks_english, direct_english=True) + f"+{VERSION}-{alignment}"
 
     def synthesize(self, text: str, native_voice: str, origin: str | None = None, readings: Mapping[str, str] | None = None) -> Synthesis:
         tier, name, installed, preset = self._voice(native_voice)

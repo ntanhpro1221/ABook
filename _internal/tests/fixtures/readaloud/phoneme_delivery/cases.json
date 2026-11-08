@@ -1,0 +1,18 @@
+{
+  "description": "Syllable preservation and emphatic short English delivery; shared native frontend checks.",
+  "cases": [
+    {"text": "what!", "phonemes": "wˈʌt!"},
+    {"text": "wait!", "phonemes": "wˈeːɪt!"},
+    {"text": "wake!", "phonemes": "wˈeːɪk!"},
+    {"text": "wave!", "phonemes": "wˈeːɪv!"},
+    {"text": "great!", "phonemes": "ɡɹˈeɪt!"},
+    {"text": "nice!", "phonemes": "nˈaɪs!"},
+    {"text": "Hello?", "phonemes": "həlˈoʊ?"},
+    {"text": "wait.", "phonemes": "wˈeɪt."},
+    {"text": "me!", "phonemes": "mˈiː!"},
+    {"text": "gì?", "phonemes": "zˈi2?"},
+    {"text": "gi.", "phonemes": "zˈi."},
+    {"text": "Ha-gi-me.", "phonemes": "hˈaː zˈi mˈɛ."},
+    {"text": "o_-ghi-u-e.", "phonemes": "ˈɔ ɣˈi ˈu ˈɛ."}
+  ]
+}

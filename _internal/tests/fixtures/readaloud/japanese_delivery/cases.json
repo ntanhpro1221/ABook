@@ -1,0 +1,185 @@
+{
+  "cases": [
+    {
+      "text": "Hôm nay Nô-pa-mi Na-ca-nô đã về.",
+      "words": [
+        "nô-pa-mi",
+        "na-ca-nô"
+      ],
+      "marked": "Hôm nay <en>Nô‿pa‿mi</en> <en>Na‿ca‿nô</en> đã về.",
+      "phonemes": "hˈom nˈaj nˈopˌaː2mˌi nˈaːkˌaːnˌo ɗˌaː5 vˈe2.",
+      "ordinary": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
+      "calls": {
+        "Hôm nay Nô-pa-mi Na-ca-nô đã về.|1": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
+        "nam|0": "nˈaːm",
+        "Hôm nay  nam|0": "hˈom nˈaj nˈaːm",
+        "Hôm nay Nô-pa-mi nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaːm",
+        "Hôm nay Nô-pa-mi  nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaːm",
+        "Hôm nay Nô-pa-mi Na-ca-nô nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo nˈaːm"
+      }
+    },
+    {
+      "text": "Nô-pa-mi?",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "<en>Nô‿pa‿mi</en>?",
+      "phonemes": "nˈopˌaː2mˌi?",
+      "ordinary": "nˈo pˈaː2 mˈi?",
+      "calls": {
+        "Nô-pa-mi?|1": "nˈo pˈaː2 mˈi?",
+        "nam|0": "nˈaːm",
+        " nam|0": "nˈaːm",
+        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Nô-pa-mi!",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "<en>Nô‿pa‿mi</en>!",
+      "phonemes": "nˈopˌaː2mˌi!",
+      "ordinary": "nˈo pˈaː2 mˈi!",
+      "calls": {
+        "Nô-pa-mi!|1": "nˈo pˈaː2 mˈi!",
+        "nam|0": "nˈaːm",
+        " nam|0": "nˈaːm",
+        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Nô-pa-mi, Na-ca-nô.",
+      "words": [
+        "nô-pa-mi",
+        "na-ca-nô"
+      ],
+      "marked": "<en>Nô‿pa‿mi</en>, <en>Na‿ca‿nô</en>.",
+      "phonemes": "nˈopˌaː2mˌi, nˈaːkˌaːnˌo.",
+      "ordinary": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo.",
+      "calls": {
+        "Nô-pa-mi, Na-ca-nô.|1": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo.",
+        "nam|0": "nˈaːm",
+        " nam|0": "nˈaːm",
+        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm",
+        "Nô-pa-mi,  nam|0": "nˈo pˈaː2 mˈi, nˈaːm",
+        "Nô-pa-mi, Na-ca-nô nam|0": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo nˈaːm"
+      }
+    },
+    {
+      "text": "Nô-pa-mi và Nô-pa-mi.",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "<en>Nô‿pa‿mi</en> và <en>Nô‿pa‿mi</en>.",
+      "phonemes": "nˈopˌaː2mˌi vˌaː2 nˈopˌaː2mˌi.",
+      "ordinary": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+      "calls": {
+        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+        "nam|0": "nˈaːm",
+        " nam|0": "nˈaːm",
+        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm",
+        "Nô-pa-mi và  nam|0": "nˈo pˈaː2 mˈi vˌaː2 nˈaːm",
+        "Nô-pa-mi và Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Nô-pa-mi và Nô-pa-mi.",
+      "words": [],
+      "marked": "Nô-pa-mi và Nô-pa-mi.",
+      "phonemes": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+      "ordinary": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+      "calls": {
+        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi."
+      }
+    },
+    {
+      "text": "Tên <en>James</en> đến.",
+      "words": [],
+      "marked": "Tên <en>James</en> đến.",
+      "phonemes": "t̪ˈen dʒˈeɪmz ɗˌeɜn.",
+      "ordinary": "t̪ˈen dʒˈeɪmz ɗˌeɜn.",
+      "calls": {
+        "Tên <en>James</en> đến.|1": "t̪ˈen dʒˈeɪmz ɗˌeɜn."
+      }
+    },
+    {
+      "text": "Tên Nô-pa-mi, 2026 người.",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "Tên <en>Nô‿pa‿mi</en>, 2026 người.",
+      "phonemes": "t̪ˈen nˈopˌaː2mˌi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+      "calls": {
+        "Tên Nô-pa-mi, 2026 người.|1": "t̪ˈen nˈo pˈaː2 mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+        "nam|0": "nˈaːm",
+        "Tên  nam|0": "t̪ˈen nˈaːm",
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Tên Nô-pa-mi, Na-ca-nô?",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "Tên <en>Nô‿pa‿mi</en>, Na-ca-nô?",
+      "phonemes": "t̪ˈen nˈopˌaː2mˌi, nˈaː kˈaː nˈo?",
+      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo?",
+      "calls": {
+        "Tên Nô-pa-mi, Na-ca-nô?|1": "t̪ˈen nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo?",
+        "nam|0": "nˈaːm",
+        "Tên  nam|0": "t̪ˈen nˈaːm",
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Tên Nô-pa-mi. Ngày mai Na-ca-nô đến.",
+      "words": [
+        "nô-pa-mi",
+        "na-ca-nô"
+      ],
+      "marked": "Tên <en>Nô‿pa‿mi</en>. Ngày mai <en>Na‿ca‿nô</en> đến.",
+      "phonemes": "t̪ˈen nˈopˌaː2mˌi. ŋˈa2j mˈaːj nˈaːkˌaːnˌo ɗˌeɜn.",
+      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
+      "calls": {
+        "Tên Nô-pa-mi. Ngày mai Na-ca-nô đến.|1": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
+        "nam|0": "nˈaːm",
+        "Tên  nam|0": "t̪ˈen nˈaːm",
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm",
+        "Tên Nô-pa-mi. Ngày mai  nam|0": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaːm",
+        "Tên Nô-pa-mi. Ngày mai Na-ca-nô nam|0": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo nˈaːm"
+      }
+    },
+    {
+      "text": "tờ… Nô-pa-mi đến.",
+      "words": [
+        "nô-pa-mi"
+      ],
+      "marked": "tờ… <en>Nô‿pa‿mi</en> đến.",
+      "phonemes": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
+      "ordinary": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
+      "calls": {
+        "tờ… Nô-pa-mi đến.|1": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
+        "nam|0": "nˈaːm",
+        "tờ…  nam|0": "t̪ˈəː2. nˈaːm",
+        "tờ… Nô-pa-mi nam|0": "t̪ˈəː2. nˈo pˈaː2 mˈi nˈaːm"
+      }
+    },
+    {
+      "text": "Tên ô_-na-mi đến.",
+      "words": [
+        "ô_-na-mi"
+      ],
+      "marked": "Tên <en>ô_‿na‿mi</en> đến.",
+      "phonemes": "t̪ˈen ˈonˌaːmˌi ɗˌeɜn.",
+      "ordinary": "t̪ˈen ˈo nˈaː mˈi ɗˌeɜn.",
+      "calls": {
+        "Tên ô_-na-mi đến.|1": "t̪ˈen ˈo nˈaː mˈi ɗˌeɜn.",
+        "nam|0": "nˈaːm",
+        "Tên  nam|0": "t̪ˈen nˈaːm",
+        "Tên ô_-na-mi nam|0": "t̪ˈen ˈo nˈaː mˈi nˈaːm"
+      }
+    }
+  ]
+}

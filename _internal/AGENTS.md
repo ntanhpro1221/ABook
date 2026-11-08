@@ -216,7 +216,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Viết tắt theo bảng chung `english_policy.json`: cách đọc chủ sách, khai triển từ Việt, VN theo câu văn/mã, KTX theo ngữ cảnh tàu và AI theo ngữ cảnh đại từ.
   Các mặt chữ cần ngữ cảnh không được tự khóa thành một cách đọc chung khi lập bảng tên; quyết định ở từng occurrence.
   Mã ngắn chưa rõ đọc từng chữ Anh qua `<en>`, provenance `auto`; từ Anh HOA phải đưa vào máy đọc ở dạng thường. VieNeu dùng bảng dự phòng Nhật
-  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback3`. Tên Latin phải tách hết bằng bảng âm:
+  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback4`. Tên Latin phải tách hết bằng bảng âm:
   ít nhất hai âm tiết cho dự phòng mới khi gốc cuốn đã là Nhật; chưa rõ gốc cần kính ngữ dính hoặc cặp romaji viết hoa.
   Từ Nhật quen, kính ngữ và cách đọc tên đã được luật cũ chấp nhận có đường riêng; bộ lọc tên không được xoá cách đọc ấy chỉ vì thiếu âm tiết.
   Viết tắt, số và từ mượn đã được xử lý giữ quyền trên output; HOA ngắn không tự thành tên Nhật nhờ đổi hoa thường.
@@ -229,10 +229,18 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
   không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
+  VieNeu nối phoneme của từng từ Nhật tự động, giữ trọng âm đầu và đổi các trọng âm sau thành nhẹ, theo `delivery` trong cùng JSON của Python/Kotlin.
+  Dấu bảo vệ chỉ có trong đầu vào suy luận; chữ lưu, neo ASR và biên họ/tên giữ nguyên. Chỉ nối span có hai biên tiền tố khớp chính xác với chuỗi âm toàn câu;
+  cách đọc khác do người nghe chọn giữ quyền riêng.
+  Trên desktop có CTC, `readaloud/japanese_audio.py` rút phần năng lượng thấp >=120 ms nằm hoàn toàn trong từng từ Nhật tự động về 80 ms,
+  giữ 5 ms crossfade và hai mép thấp năng lượng. Chỉ dùng span CTC đầy đủ với confidence >=0,7; thiếu model/căn yếu thì giữ audio.
+  Studio áp sau tempo, trước signal/ASR QA và ghi evidence vào metrics; Nghe ngay áp trước ghép khúc/căn mốc chữ.
+  Cache VieNeu desktop mang `jp-name-audio1` cùng trạng thái có CTC. Android chưa có CTC nên vẫn chỉ áp luật phoneme, không suy số đo desktop sang Android.
 - `readaloud/phoneme_policy.py` sửa ở biên phoneme chung của Studio/Nghe ngay/Kotlin: âm tiết `gi` phải còn nguyên âm `/i/`,
   và `o` của tên đã qua lượt chuẩn hoá đầu không được lượt sau đổi thành tên chữ `ô`. Từ cảm thán/hỏi Anh ngắn,
   có từ điển và không trùng âm tiết Việt, giữ trọng âm mạnh/nguyên âm kéo dài trước `?!`; không thêm từ, đổi dấu câu hay chia riêng để đọc.
-  Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python.
+  Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python. Cả chuỗi đầy đủ và tiền tố dùng để
+  xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
