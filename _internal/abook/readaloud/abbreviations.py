@@ -1,10 +1,9 @@
-"""Viết tắt TOÀN HOA trong "Nghe ngay": đọc tên chữ cái hệ a-bê-xê ("HP" -> "hát pê", "NPC" -> "en pê xê") - biến đổi để đọc, chữ hiện không đổi.
+"""Spoken abbreviations; displayed text is unchanged.
 
-sea-g2p đọc "MP" thành "mờ phê" và để "VIT", "ATK" nguyên chữ cho giọng đọc tự đoán. Quy ước (bộ thử TN, gold_spec 3.1-3.5): viết tắt đọc tên chữ cái, dạng nói gọn
-khi đọc liền, với MỌI giọng (kể cả giọng nói được tiếng Anh). Chỉ đọc khi chắc là viết tắt: 2-5 chữ cái Latin HOA, không dính số ("10KG", "LV5" để sea-g2p đọc đơn vị),
-không phải từ tiếng Anh viết hoa cả ("LINE", "MAX", "TIP", "YES": `english_words.txt`; vài viết tắt nằm trong danh sách ấy nên có bảng riêng; những từ này đổi sang chữ thường vì
-sea-g2p đọc chữ hoa cả thành từng chữ cái), không phải tiếng Nhật viết hoa cả ("BAKA": đọc được bằng luật romaji), không nằm trong câu viết hoa cả ("ONII-CHAN LO LẮNG CHO CON KÌA": đang gào, không phải viết tắt). Ngoại lệ đọc như từ
-(chủ sách): VIP "víp", ID "ai-đi", OK "ô kê", TV "ti vi". Bản Kotlin y hệt: `readaloud/Abbreviations.kt`.
+Owner readings and Vietnamese expansions come from english_policy.json, shared
+with Kotlin. VN distinguishes prose from identifiers; AI also has pronoun guards.
+Dictionary words in capitals are words. Short unresolved codes retain the letter
+route; VieNeu's direct English policy selects English letter names for that route.
 """
 from __future__ import annotations
 
@@ -13,12 +12,13 @@ import re
 from ..romanization import romanized_reading
 from . import names
 from .names import english_words, split_token
+from .english_policy import POLICY
 
 LETTERS = {
     "a": "a", "b": "bê", "c": "xê", "d": "đê", "e": "e", "f": "ép", "g": "giê", "h": "hát", "i": "i", "j": "gi", "k": "ca", "l": "e-lờ", "m": "em",
     "n": "en", "o": "ô", "p": "pê", "q": "quy", "r": "e-rờ", "s": "ét", "t": "tê", "u": "u", "v": "vê", "w": "vê-kép", "x": "ích", "y": "i-dài", "z": "dét",
 }
-AS_WORDS = {"vip": "víp", "id": "ai-đi", "ok": "ô kê", "tv": "ti vi"}
+AS_WORDS = {"id": "ai-đi", **POLICY["spoken_abbreviations"]}
 SPELLED_ENGLISH = frozenset("abc ceo cia dna exp fbi hiv ibm nba usa".split())  # có trong english_words.txt, có nguyên âm, nhưng là viết tắt
 SHOUT_WORDS = frozenset("no oh ah eh uh um ha ho yo hi he we me my up so to of or on ya ye go do if in is an by at".split())  # từ Anh hai chữ gào lên
 LAUGH = re.compile(r"(?:ha|he|hi|ho)+")  # "HAHA": tiếng cười, không phải viết tắt
@@ -45,6 +45,34 @@ def _word(lower: str) -> bool:
     if len(lower) == 2:
         return lower in SHOUT_WORDS
     return lower in english_words() and lower not in SPELLED_ENGLISH and any(ch in "aeiouy" for ch in lower)
+
+
+def standard_reading(core: str, toks: list[str], index: int, before: str = "", after: str = "") -> str | None:
+    """Owner readings shared with Kotlin; VN distinguishes prose from an identifier."""
+    lower = core.casefold()
+    if lower in POLICY["case_sensitive_abbreviations"] and not core.isupper():
+        return None
+    if pronoun_ai(toks, index):
+        return None
+    if contextual_letters(core, toks, index):
+        return None
+    contextual = POLICY["contextual_abbreviations"].get(lower)
+    if contextual:
+        previous = [split_token(t)[1].casefold() for t in toks[max(0, index - 2):index]]
+        code = (any(w in POLICY["code_context"] for w in previous)
+                or bool(re.search(r"[\w]$", before)) or bool(re.match(r"[-_/]?\d|[-_/][\w]", after)))
+        return contextual["code" if code else "prose"]
+    return POLICY["spoken_abbreviations"].get(lower) or POLICY["vietnamese_abbreviations"].get(lower)
+
+
+def pronoun_ai(toks: list[str], index: int) -> bool:
+    return (split_token(toks[index])[1] == "AI" and index + 1 < len(toks)
+            and split_token(toks[index + 1])[1].casefold() in POLICY["pronoun_following"])
+
+
+def contextual_letters(core: str, toks: list[str], index: int) -> bool:
+    cues = POLICY["contextual_letter_names"].get(core.casefold(), [])
+    return any(split_token(t)[1].casefold() in cues for t in toks[max(0, index - 3):index])
 
 
 def spelled(core: str) -> str | None:
@@ -95,6 +123,14 @@ def spell_abbreviations(toks: list[str], out: list[str]) -> None:
         if out[index] != token:
             continue
         before, core, after = parts[index]
+        if pronoun_ai(toks, index):
+            continue
+        if before[-1:].isdigit() or after[:1].isdigit():
+            continue
+        standard = standard_reading(core, toks, index, before, after)
+        if standard:
+            out[index] = before + standard + names.closing(after, standard)
+            continue
         if "(" in token:
             out[index] = PAREN_ABBREVIATION.sub(lambda m: "(" + (spelled(m.group(1)) or m.group(1)) + ")", token)
             if out[index] != token:

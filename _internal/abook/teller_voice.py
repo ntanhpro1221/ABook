@@ -164,7 +164,7 @@ def aligned_narrator_preset(connection: sqlite3.Connection, gender: str) -> str 
     from .voice_catalog import DEFAULT_NARRATOR_BY_GENDER, narrator_presets
 
     held = character_presets(connection)
-    candidates = [DEFAULT_NARRATOR_BY_GENDER.get(gender, ""), *(str(item["name"]) for item in narrator_presets(gender))]
+    candidates = [DEFAULT_NARRATOR_BY_GENDER.get(gender, ""), *(str(item["name"]) for item in narrator_presets(gender, automatic=True))]
     return next((name for name in candidates if name and name not in held), None)
 
 

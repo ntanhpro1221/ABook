@@ -1,10 +1,9 @@
 package vn.abook.player.readaloud
 
 /**
- * Viết tắt TOÀN HOA trong "Nghe ngay": đọc tên chữ cái hệ a-bê-xê ("HP" -> "hát pê", "NPC" -> "en pê xê") - bản Kotlin y hệt `abook/readaloud/abbreviations.py`
- * (cùng đọc tests/fixtures/vieneu/android/text.json: các khúc `units`). Biến đổi để đọc, chữ hiện không đổi. Chỉ đọc khi chắc là viết tắt: 2-5 chữ cái Latin HOA, không dính
- * số, không phải từ tiếng Anh / tiếng Nhật / tiếng cười viết hoa cả (những từ ấy đổi sang chữ thường vì sea-g2p đọc chữ hoa cả thành từng chữ cái), không nằm trong câu
- * viết hoa cả. Ngoại lệ đọc như từ (chủ sách): VIP "víp", ID "ai-đi", OK "ô kê", TV "ti vi".
+ * Spoken abbreviations, with unchanged display text. Owner readings, Vietnamese
+ * expansions and contextual cues come from the same english_policy.json as Python.
+ * Dictionary words in capitals remain words; unresolved short codes use letters.
  */
 object Abbreviations {
     val LETTERS = mapOf(
@@ -12,7 +11,45 @@ object Abbreviations {
         'm' to "em", 'n' to "en", 'o' to "ô", 'p' to "pê", 'q' to "quy", 'r' to "e-rờ", 's' to "ét", 't' to "tê", 'u' to "u", 'v' to "vê", 'w' to "vê-kép", 'x' to "ích",
         'y' to "i-dài", 'z' to "dét",
     )
-    private val AS_WORDS = mapOf("vip" to "víp", "id" to "ai-đi", "ok" to "ô kê", "tv" to "ti vi")
+    private val policy by lazy { org.json.JSONObject(vn.abook.player.BuildConfig.ENGLISH_READING_POLICY) }
+    private val AS_WORDS by lazy {
+        mapOf("id" to "ai-đi") + listOf("spoken_abbreviations").flatMap { key ->
+            val table = policy.getJSONObject(key)
+            table.keys().asSequence().map { it to table.getString(it) }.toList()
+        }.toMap()
+    }
+
+    fun standardReading(core: String, toks: List<String>, index: Int, before: String = "", after: String = ""): String? {
+        val lower = core.lowercase(java.util.Locale.ROOT)
+        val sensitive = policy.getJSONArray("case_sensitive_abbreviations")
+        if ((0 until sensitive.length()).any { sensitive.getString(it) == lower } && core != core.uppercase(java.util.Locale.ROOT)) return null
+        if (pronounAi(toks, index)) return null
+        if (contextualLetters(core, toks, index)) return null
+        val contextual = policy.getJSONObject("contextual_abbreviations").optJSONObject(lower)
+        if (contextual != null) {
+            val cues = policy.getJSONArray("code_context")
+            val previous = toks.subList(maxOf(0, index - 2), index).map { Names.splitToken(it).second.lowercase(java.util.Locale.ROOT) }
+            val code = (0 until cues.length()).any { cues.getString(it) in previous } ||
+                Regex("[\\w]$").containsMatchIn(before) || Regex("^([-_/]?[0-9]|[-_/][\\w])").containsMatchIn(after)
+            return contextual.getString(if (code) "code" else "prose")
+        }
+        return policy.getJSONObject("spoken_abbreviations").optString(lower, "").ifEmpty {
+            policy.getJSONObject("vietnamese_abbreviations").optString(lower, "")
+        }.ifEmpty { null }
+    }
+
+    fun pronounAi(toks: List<String>, index: Int): Boolean {
+        if (Names.splitToken(toks[index]).second != "AI" || index + 1 >= toks.size) return false
+        val next = Names.splitToken(toks[index + 1]).second.lowercase(java.util.Locale.ROOT)
+        val following = policy.getJSONArray("pronoun_following")
+        return (0 until following.length()).any { following.getString(it) == next }
+    }
+
+    fun contextualLetters(core: String, toks: List<String>, index: Int): Boolean {
+        val cues = policy.getJSONObject("contextual_letter_names").optJSONArray(core.lowercase(java.util.Locale.ROOT)) ?: return false
+        val previous = toks.subList(maxOf(0, index - 3), index).map { Names.splitToken(it).second.lowercase(java.util.Locale.ROOT) }
+        return (0 until cues.length()).any { cues.getString(it) in previous }
+    }
     private val SPELLED_ENGLISH = "abc ceo cia dna exp fbi hiv ibm nba usa".split(" ").toSet()
     private val SHOUT_WORDS = "no oh ah eh uh um ha ho yo hi he we me my up so to of or on ya ye go do if in is an by at".split(" ").toSet()
     private val LAUGH = Regex("(?:ha|he|hi|ho)+")
@@ -76,6 +113,12 @@ object Abbreviations {
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val (before, core, after) = parts[index]
+            if (pronounAi(toks, index)) continue
+            if (before.lastOrNull()?.isDigit() == true || after.firstOrNull()?.isDigit() == true) continue
+            standardReading(core, toks, index, before, after)?.let {
+                out[index] = before + it + Names.closing(after, it)
+            }
+            if (out[index] != token) continue
             if ('(' in token) {
                 out[index] = PAREN_ABBREVIATION.replace(token) { m -> "(" + (spelled(m.groupValues[1]) ?: m.groupValues[1]) + ")" }
                 if (out[index] != token) continue

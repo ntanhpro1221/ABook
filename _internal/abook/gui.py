@@ -600,7 +600,10 @@ class MainWindow(QMainWindow):
         if self.narrator_voice_combo.findData(target) < 0 and gender in DEFAULT_NARRATOR_BY_GENDER:
             target = DEFAULT_NARRATOR_BY_GENDER[gender]
         index = self.narrator_voice_combo.findData(target)
-        self.narrator_voice_combo.setCurrentIndex(index if index >= 0 else 0)
+        if index < 0:
+            automatic = narrator_presets(gender or None, region or None, automatic=True)
+            index = self.narrator_voice_combo.findData(automatic[0]["name"]) if automatic else -1
+        self.narrator_voice_combo.setCurrentIndex(index)
         del blocker
 
     def _voice_foldout_icon(self, *, expanded: bool) -> QIcon:

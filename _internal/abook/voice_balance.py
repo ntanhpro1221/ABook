@@ -226,7 +226,7 @@ def balanced_preset_names() -> list[str]:
 
     names: list[str] = []
     for gender in ("male", "female"):
-        for preset in casting_presets(gender) + narrator_presets(gender):
+        for preset in casting_presets(gender, automatic=False) + narrator_presets(gender):
             if preset["name"] not in names:
                 names.append(preset["name"])
     return names

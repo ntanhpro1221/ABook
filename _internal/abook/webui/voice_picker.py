@@ -221,7 +221,7 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     installed = {ENGINE_VIENEU: True, **{engine: engine_installed(engine) for engine in engines}}
     entries = []
     for gender in ("male", "female"):
-        for preset in [*casting_presets(gender), *castable_engine_voices(gender)]:
+        for preset in [*casting_presets(gender, automatic=False), *castable_engine_voices(gender)]:
             name = str(preset["name"])
             if name in not_for_characters:
                 continue

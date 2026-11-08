@@ -45,7 +45,9 @@ def test_vietnamese_homographs_never_take_an_automatic_dictionary_reading(tmp_pa
 def test_vietnamese_dictionary_intersection_is_protected():
     homographs = [word for word in names.english_words() if english_policy.vietnamese(word)]
     assert len(homographs) > 100
-    assert all(english_policy.reading(word, None) is None for word in homographs)
+    from abook.readaloud.abbreviations import standard_reading
+    assert all(english_policy.reading(word, None) is None for word in homographs
+               if standard_reading(word, [word], 0) is None)
 
 
 def test_full_and_short_names_have_identical_components():

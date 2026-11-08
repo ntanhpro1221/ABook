@@ -87,14 +87,20 @@ function onlineNotice(voice) {
 
 // Giọng VieNeu kể chuyện trung tính của từng bản, theo thứ tự ưu tiên (readAloudVoice.ts NARRATOR_VOICES)
 var NARRATOR = {
-    turbo: ["Đức Trí", "Đoan Trang", "Thanh Bình"],
+    turbo: ["Đức Trí", "Ngọc Linh", "Kim Thanh", "Đoan Trang", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan", "Thanh Bình"],
     nano: ["Ái Hân", "Mỹ Duyên", "Đức Trí"]
+}
+// Checked against assets/voice_rank.json by the shared web/Qt test.
+var NEVER_AUTO = ["Ngọc Huyền", "Trúc Ly", "Ngọc Trân"]
+
+function autoAllowed(voice) {
+    return NEVER_AUTO.indexOf(nfc(voice.id.slice(voice.id.indexOf("/") + 1))) < 0
 }
 
 function nfc(text) { return text.normalize ? text.normalize("NFC") : text }
 
 function narratorVoice(voices, gender) {
-    const local = voices.filter(v => v.provider === "vieneu")
+    const local = voices.filter(v => v.provider === "vieneu" && autoAllowed(v))
     const tierOf = v => v.id.slice(v.id.indexOf(":") + 1, v.id.indexOf("/"))
     const nameOf = v => nfc(v.id.slice(v.id.indexOf("/") + 1))
     let ranks = 0
@@ -110,7 +116,8 @@ function narratorVoice(voices, gender) {
 function resolveVoice(voices, chosen) {
     const exact = voices.find(v => v.id === chosen)
     if (exact) return exact
-    const fallback = voices.find(v => v.default) || voices[0]
+    const available = voices.filter(autoAllowed)
+    const fallback = available.find(v => v.default) || available[0]
     const local = chosen ? undefined : narratorVoice(voices, fallback ? fallback.gender : undefined)
     return local || fallback
 }

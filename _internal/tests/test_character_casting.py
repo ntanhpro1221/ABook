@@ -250,7 +250,7 @@ def test_casting_prioritizes_natural_north_then_natural_south() -> None:
         *[(REGION_SOUTH, STYLE_STORY)] * 2,
     ]
     assert female_order == [
-        *[(REGION_NORTH, STYLE_NATURAL)] * 3,
+        *[(REGION_NORTH, STYLE_NATURAL)] * 1,
         *[(REGION_NORTH, STYLE_STORY)] * 2,
         *[(REGION_SOUTH, STYLE_STORY)] * 3,
     ]

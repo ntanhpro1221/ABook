@@ -88,7 +88,10 @@ def fake(tmp_path: Path):
 def _alive(pid: int) -> bool:
     import psutil
 
-    return psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE
+    try:
+        return psutil.Process(pid).status() != psutil.STATUS_ZOMBIE
+    except psutil.NoSuchProcess:
+        return False
 
 
 def _voice(files: GgufFiles) -> Path:

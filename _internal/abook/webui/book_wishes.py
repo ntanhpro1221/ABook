@@ -422,7 +422,7 @@ def _known_presets(narrator: bool) -> set[str]:
 
     if narrator:
         return {str(item["name"]) for item in narrator_presets()}
-    return {str(item["name"]) for gender in ("male", "female") for item in casting_presets(gender)} | {
+    return {str(item["name"]) for gender in ("male", "female") for item in casting_presets(gender, automatic=False)} | {
         str(item["name"]) for item in castable_engine_voices()}
 
 

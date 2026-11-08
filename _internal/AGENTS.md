@@ -213,7 +213,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `A-der-on → A-đe-ron`; nếu không sửa được, retry chỉ tên lỗi với feedback cụ thể, không gửi lại nguyên prompt/batch.
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
   VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
-  Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. VieNeu dùng bảng dự phòng Nhật
+  Viết tắt theo bảng chung `english_policy.json`: cách đọc chủ sách, khai triển từ Việt, VN theo câu văn/mã, KTX theo ngữ cảnh tàu và AI theo ngữ cảnh đại từ.
+  Các mặt chữ cần ngữ cảnh không được tự khóa thành một cách đọc chung khi lập bảng tên; quyết định ở từng occurrence.
+  Mã ngắn chưa rõ đọc từng chữ Anh qua `<en>`, provenance `auto`; từ Anh HOA phải đưa vào máy đọc ở dạng thường. VieNeu dùng bảng dự phòng Nhật
   `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback3`. Tên Latin phải tách hết bằng bảng âm:
   ít nhất hai âm tiết cho dự phòng mới khi gốc cuốn đã là Nhật; chưa rõ gốc cần kính ngữ dính hoặc cặp romaji viết hoa.
   Từ Nhật quen, kính ngữ và cách đọc tên đã được luật cũ chấp nhận có đường riêng; bộ lọc tên không được xoá cách đọc ấy chỉ vì thiếu âm tiết.
@@ -269,7 +271,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   bảng hạng người nghe đi trước các thước đo; giọng ngang bậc hoặc chưa xếp mới phân xử theo các thước đo và thứ tự cũ.
 - `voice_catalog.preset_eligible` là cửa dùng giọng theo vai: preset được chủ sách xếp trong `assets/voice_rank.json`
   được dùng cho đúng vai ấy bất kể style catalog; tin tức chưa được xếp vẫn bị loại. Vùng miền và lệnh cấm phân vai
-  vẫn giữ nguyên. Bảng hạng ưu tiên hơn các thước đo; mặc định nữ là Đoan Trang, nam là Đức Trí.
+  vẫn giữ nguyên khi tự chọn. `never_auto` cấm tự chọn ở cả hai vai và cả dự phòng; danh sách chọn tay vẫn giữ các giọng ấy.
+  Bảng hạng ưu tiên hơn thứ tự catalog; mặc định nữ là Ngọc Linh, nam là Đức Trí. Hạng dẫn nữ đầu gồm Ngọc Linh và Kim Thanh ngang nhau.
 - NPC có nhãn cục bộ được giữ identity riêng trong phạm vi chapter/batch; NPC không phân biệt được
   ít nhất phải tách pool nam, nữ và chưa rõ giới tính.
 - Nhãn NPC cục bộ trùng chính xác với tên nhân vật trong cùng chapter phải được hợp nhất trước khi

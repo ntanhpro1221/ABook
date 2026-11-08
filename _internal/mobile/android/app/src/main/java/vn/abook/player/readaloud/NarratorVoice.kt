@@ -9,8 +9,13 @@ import java.text.Normalizer
  * `NARRATOR_VOICES` bên giao diện.
  */
 object NarratorVoice {
+    private val policy by lazy { org.json.JSONObject(vn.abook.player.BuildConfig.VOICE_RANK_POLICY) }
+    private val neverAuto by lazy { policy.getJSONArray("never_auto").let { a -> (0 until a.length()).map { nfc(a.getString(it)) }.toSet() } }
     val PREFERRED = mapOf(
-        "turbo" to listOf("Đức Trí", "Đoan Trang", "Thanh Bình"),
+        "turbo" to (listOf("Đức Trí") + org.json.JSONObject(vn.abook.player.BuildConfig.VOICE_RANK_POLICY)
+            .getJSONObject("narrator").getJSONArray("female").let { tiers ->
+                (0 until tiers.length()).flatMap { i -> tiers.getJSONArray(i).let { tier -> (0 until tier.length()).map { tier.getString(it) } } }
+            } + "Thanh Bình"),
         "nano" to listOf("Ái Hân", "Mỹ Duyên", "Đức Trí"),
     )
 
@@ -20,13 +25,14 @@ object NarratorVoice {
      *  mọi bản trước; cùng bậc thì giọng đứng trước); không có thì giọng đầu tiên cùng giới [gender] (giới của giọng đang dùng); không biết giới mới
      *  lấy giọng đầu danh sách; null khi danh sách rỗng. */
     fun pick(voices: List<Pair<String, String>>, gender: String?): String? {
+        val available = voices.filter { nfc(it.first.substringAfter('/')) !in neverAuto }
         val ranks = PREFERRED.values.maxOf { it.size }
         for (rank in 0 until ranks) {
-            voices.firstOrNull { (id, _) ->
+            available.firstOrNull { (id, _) ->
                 val tier = id.substringAfter(':').substringBefore('/')
                 PREFERRED[tier]?.getOrNull(rank)?.let { nfc(it) == nfc(id.substringAfter('/')) } == true
             }?.let { return it.first }
         }
-        return (voices.firstOrNull { !gender.isNullOrEmpty() && it.second == gender } ?: voices.firstOrNull())?.first
+        return (available.firstOrNull { !gender.isNullOrEmpty() && it.second == gender } ?: available.firstOrNull())?.first
     }
 }

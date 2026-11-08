@@ -1,10 +1,11 @@
 {
   "narrator": {
     "male": [["Đức Trí", "Thiền Tâm Đức"], ["Phạm Tuyên", "Xuân Vĩnh"], ["Thái Sơn", "Adam"]],
-    "female": [["Đoan Trang"], ["Ngọc Linh"], ["Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"]]
+    "female": [["Ngọc Linh", "Kim Thanh"], ["Đoan Trang"], ["Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"]]
   },
   "character": {
     "male": [["Xuân Vĩnh"], ["Đức Trí", "Thiền Tâm Đức", "Phạm Tuyên"], ["Thái Sơn", "Adam"]],
     "female": [["Ngọc Linh"], ["Đoan Trang"], ["Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"]]
-  }
+  },
+  "never_auto": ["Ngọc Huyền", "Trúc Ly", "Ngọc Trân"]
 }

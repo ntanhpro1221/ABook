@@ -17,8 +17,8 @@ def _said(text: str, origin: str | None = None, speaks_english: bool = True) -> 
 
 # ---- viết tắt: tên chữ cái hệ a-bê-xê ----------------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("token, reading", [
-    ("HP", "hát pê"), ("MP", "em pê"), ("NPC", "en pê xê"), ("EXP", "e ích pê"), ("SSR", "ét ét e-rờ"), ("GOTY", "giê ô tê i-dài"), ("QQ", "quy quy"),
-    ("XL", "ích e-lờ"), ("BBQ", "bê bê quy"), ("ATSM", "a tê ét em"), ("WZ", "vê-kép dét"), ("JK", "gi ca"), ("AI", "a i"), ("ABC", "a bê xê"), ("USA", "u ét a"),
+    ("HP", "hát pê"), ("MP", "mờ pê"), ("NPC", "en pi xi"), ("EXP", "e ích pê"), ("SSR", "ét ét e-rờ"), ("GOTY", "giê ô tê i-dài"), ("QQ", "quy quy"),
+    ("XL", "ích e-lờ"), ("BBQ", "bê bê quy"), ("ATSM", "a tê ét em"), ("WZ", "vê-kép dét"), ("JK", "gi ca"), ("AI", "ây ai"), ("ABC", "a bê xê"), ("USA", "u ét a"),
     ("RPG", "e-rờ pê giê"), ("VIT", "vê i tê"),
 ])
 def test_an_abbreviation_is_read_by_its_letter_names(token: str, reading: str) -> None:
@@ -36,19 +36,19 @@ def test_a_capital_word_is_a_word_not_an_abbreviation(token: str, lowered: str) 
     assert _said(f"Rồi {token}.") == ["Rồi", f"{lowered}."], "chữ thường: sea-g2p đọc chữ hoa cả thành từng chữ cái"
 
 
-@pytest.mark.parametrize("token", ["Hp", "hp", "NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "ĐH", "CÁC"])
+@pytest.mark.parametrize("token", ["NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC"])
 def test_other_tokens_are_left_alone(token: str) -> None:
     assert _said(f"Rồi {token} đến.") == ["Rồi", token, "đến."]
 
 
 def test_punctuation_around_an_abbreviation_is_kept_and_a_number_before_it_stops_it() -> None:
-    assert _said("“HP,” (MP) NPC! 3MP LV5 5HP") == ["“hát pê,”", "(em pê)", "en pê xê!", "3MP", "level 5", "5HP"]
+    assert _said("“HP,” (MP) NPC! 3MP LV5 5HP") == ["“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "level 5", "5HP"]
 
 
 def test_a_shouted_sentence_is_not_a_row_of_abbreviations() -> None:
     assert _said("CÚT ĐI, AI ĐÓ") == ["CÚT", "ĐI,", "AI", "ĐÓ"]
     assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
-    assert _said("HP MP SP") == ["hát pê", "em pê", "ét pê"], "một dãy toàn viết tắt thì vẫn đọc"
+    assert _said("HP MP SP") == ["hát pê", "mờ pê", "ét pê"], "một dãy toàn viết tắt thì vẫn đọc"
 
 
 def test_a_roman_numeral_is_still_a_number_before_an_abbreviation_is_tried() -> None:
