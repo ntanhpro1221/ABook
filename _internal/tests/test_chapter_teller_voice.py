@@ -18,22 +18,33 @@ def test_only_a_differing_gender_local_teller_changes_default_presentation(tmp_p
     teller_voice.ensure(paths.root,db,settings)
     teller_voice.ensure(paths.root,ProjectDB(paths.db),settings)
     after=rows(db)
+    female_base = (identity == 'Mai' or (identity == '' and chapters.get('2') == 'Mai')) and not recorded
+    base = before['c1s0']['voice_profile_id']
     for sid, row in after.items():
-        if sid == 'c2s2' and chapters.get('2') == 'Mai':
-            assert row['voice_profile_id'] == before['c1s1']['voice_profile_id']
-            assert (row['speaker'],row['canonical_character_id']) == (before[sid]['speaker'],before[sid]['canonical_character_id'])
-        else:
+        expected = before[sid]['voice_profile_id']
+        if sid == 'c2s2' and chapters.get('2') == 'Mai' and not female_base:
+            expected = before['c1s1']['voice_profile_id']
+        elif sid in ('c1s0', 'c1s4') and female_base:
+            expected = before['c1s3']['voice_profile_id']
+        elif sid == 'c1s3':
+            expected = before[sid]['voice_profile_id'] if female_base else base
+        elif sid == 'c2s0' and (chapters.get('2', identity) == 'Mai'):
+            expected = base if female_base or '2' not in chapters else before[sid]['voice_profile_id']
+        assert row['voice_profile_id'] == expected
+        assert (row['speaker'],row['canonical_character_id'],row['kind']) == (before[sid]['speaker'],before[sid]['canonical_character_id'],before[sid]['kind'])
+        if expected == before[sid]['voice_profile_id']:
             assert row == before[sid]
 
 def test_explicit_chapter_voice_changes_presentation_and_undo_restores_profiles(tmp_path):
     paths,db,settings=_book(tmp_path,settings=_settings('Bao',{'2':'Mai'}))
+    teller_voice.ensure(paths.root,db,settings)
     before=rows(db)
     teller_voice.set_mode(paths.root,'teller')
     teller_voice.ensure(paths.root,db,settings)
     after=rows(db)
     for sid, row in after.items():
         assert (row['speaker'],row['canonical_character_id']) == (before[sid]['speaker'],before[sid]['canonical_character_id'])
-        if row['kind']=='thought':
+        if row['kind']=='thought' and sid != 'c1s3':
             assert row==before[sid]
     assert after['c2s2']['voice_profile_id']==before['c1s1']['voice_profile_id']
     assert_voice_stability(db)
@@ -74,6 +85,7 @@ def test_profile_change_and_provenance_roll_back_together(tmp_path,monkeypatch,f
 
 def test_committed_voice_change_is_undoable_after_a_sidecar_failure(tmp_path,monkeypatch):
     paths,db,settings=_book(tmp_path)
+    teller_voice.ensure(paths.root,db,settings)
     before=rows(db)
     teller_voice.set_mode(paths.root,'teller')
     def interrupted(*args,**kwargs):

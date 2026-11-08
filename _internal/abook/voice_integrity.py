@@ -60,10 +60,19 @@ def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
         characters = {int(r['id']): dict(r) for r in conn.execute('SELECT * FROM characters')}
         base = next((r for r in profiles.values() if r['voice_key'] == 'narrator'), None)
         all_rows = [dict(r) for r in conn.execute('SELECT * FROM segments ORDER BY chapter_id,seq')]
+        origins = ({int(r['segment_id']): dict(r) for r in conn.execute('SELECT * FROM chapter_teller_lines')}
+                   if teller_voice.has_presentation_table(conn) else {})
+        wishes = teller_voice._wishes(root)
         own: dict[int, Counter[int]] = {}
         for row in all_rows:
             if row['speaker'].upper() != 'NARRATOR' and row['voice_profile_id'] is not None:
-                own.setdefault(row['canonical_character_id'], Counter())[int(row['voice_profile_id'])] += 1
+                origin = origins.get(int(row['id']))
+                profile_id = (origin['original_profile_id'] if origin
+                              and row['speaker'] == origin['original_speaker']
+                              and row['canonical_character_id'] == origin['original_character_id']
+                              and row['voice_profile_id'] == origin['applied_profile_id'] else row['voice_profile_id'])
+                if profile_id is not None:
+                    own.setdefault(row['canonical_character_id'], Counter())[int(profile_id)] += 1
         targets = {}
 
         def voice_gender(profile: dict[str, Any] | None) -> str:
@@ -109,6 +118,16 @@ def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
                     tellers, row, record['mode'], base_gender, teller_voice.teller_gender(conn, name))
                 if narrator_owned and selected:
                     expected = profiles.get(target[1])
+            origin = origins.get(int(row['id']))
+            thought_presentation = (record['mode'] == 'narrator' and teller_voice.own_teller_thought(conn, tellers, row)
+                                    and str(row['stable_id']) not in wishes
+                                    and (not teller_voice.has_recording(row) or (origin
+                                         and row['speaker'] == origin['original_speaker']
+                                         and row['canonical_character_id'] == origin['original_character_id'])))
+            if thought_presentation:
+                selected = teller_voice.chapter_voice_selected(
+                    tellers, row, record['mode'], voice_gender(base), teller_voice.teller_gender(conn, name))
+                expected = profiles.get(target[1]) if target and not chosen and selected else base
 
             def issue(code: str, **evidence: Any) -> None:
                 issues.append(dict(code=code, chapter=int(row['chapter_id']), stable_id=row['stable_id'],
@@ -122,8 +141,8 @@ def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
             actual_gender = voice_gender(actual)
             if actual is not None and not actual_gender:
                 issue('VOICE_PROFILE_UNKNOWN')
-            gender = character['gender'] if character and not narrator_owned else ''
-            if not gender and not narrator_owned and row['kind'] in ('dialogue', 'thought'):
+            gender = character['gender'] if character and not narrator_owned and not thought_presentation else ''
+            if not gender and not narrator_owned and not thought_presentation and row['kind'] in ('dialogue', 'thought'):
                 gender = row['gender']
             if actual_gender and gender in ('male', 'female') and actual_gender != gender:
                 issue('VOICE_GENDER_MISMATCH', speaker_gender=gender, preset_gender=actual_gender)
