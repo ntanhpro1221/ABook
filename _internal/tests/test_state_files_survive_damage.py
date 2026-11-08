@@ -263,12 +263,24 @@ def test_a_project_held_by_another_program_is_not_called_broken(tmp_path: Path) 
 
 def test_a_damaged_project_offers_its_backup(tmp_path: Path) -> None:
     from abook.database import ProjectDB
+    from abook.config import build_settings, save_settings, settings_hash
 
     root = tmp_path / "thu_vien"
     root.mkdir()
-    project = make_project(root)
-    ProjectDB(project / "project.sqlite3")  # nâng cấp: dây chuyền chụp bản sao .pre-v*.bak
+    project = root / "sach_thu"
+    project.mkdir()
+    settings = build_settings()
+    save_settings(project / "book_settings.json", settings)
     database = project / "project.sqlite3"
+    db = ProjectDB(database)
+    db.initialize_book(title="Sách thử · Tập 1", project_root=project, settings=settings,
+                       settings_hash=settings_hash(settings), input_manifest_hash="fixture-manifest")
+    backup = project / "project.sqlite3.pre-v13-to-v13.bak"
+    import sqlite3
+    with sqlite3.connect(database) as source, sqlite3.connect(backup) as target:
+        source.backup(target)  # same-version recovery fixture; no runtime migration backup
+    source.close()
+    target.close()
     database.write_bytes(database.read_bytes()[:1000])
     app = _app(tmp_path, root)
     row = _row(app)
@@ -281,6 +293,32 @@ def test_a_damaged_project_offers_its_backup(tmp_path: Path) -> None:
     assert status == 200, data
     assert list(project.glob("project.sqlite3.hong-*")), "bản hỏng được giữ"
     assert _row(app)["title"] == "Sách thử · Tập 1"
+
+
+def test_an_unsupported_backup_is_refused_before_replacing_the_damaged_database(tmp_path: Path) -> None:
+    import sqlite3
+
+    root = tmp_path / "library"
+    root.mkdir()
+    project = make_project(root)
+    database = project / "project.sqlite3"
+    backup = project / "project.sqlite3.pre-v0-to-v13.bak"
+    with sqlite3.connect(database) as source, sqlite3.connect(backup) as target:
+        source.backup(target)  # this intentionally has the unsupported fixture schema
+    source.close()
+    target.close()
+    database.write_bytes(database.read_bytes()[:1000])
+    before = {path.name: path.read_bytes() for path in project.iterdir() if path.is_file()}
+    app = _app(tmp_path, root)
+    row = _row(app)
+    assert row["backup"] is False
+    server = Server(app, port=0).start()
+    try:
+        status, _, _ = _request(server.port, "POST", f"/api/books/{row['id']}/restore-backup", headers={"X-Ebook-Token": "t"})
+    finally:
+        server.stop()
+    assert status == 404
+    assert {path.name: path.read_bytes() for path in project.iterdir() if path.is_file()} == before
 
 
 def test_an_unfinished_project_says_how_to_fix_it(tmp_path: Path) -> None:

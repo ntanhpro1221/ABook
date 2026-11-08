@@ -34,10 +34,9 @@ object Peers {
         for (key in peers.keys().asSequence().toList()) {
             val peer = peers.optJSONObject(key)
             if (peer == null) { peers.remove(key); changed = true; damaged = true; continue }
-            val hadAddresses = peer.has("addresses")
-            val normalized = PeerAddresses.migrate(peer)
+            val normalized = PeerAddresses.normalize(peer)
             changed = changed || normalized
-            damaged = damaged || (hadAddresses && normalized)
+            damaged = damaged || normalized
             if (normalized && PeerAddresses.ordered(peer).isEmpty() && PeerRouting.bluetooth(peer).isBlank()) {
                 peers.remove(key); changed = true; damaged = true
             }

@@ -92,16 +92,17 @@ def test_the_mark_is_stored_and_checked_on_resume(tmp_path: Path) -> None:
         assert all(expected[field] == checkpoint[field] for field in SEGMENTATION_CHECKPOINT_FIELDS)
 
 
-def test_a_database_made_before_the_flag_gains_the_column(tmp_path: Path) -> None:
+def test_a_database_without_the_flag_is_refused_without_adding_the_column(tmp_path: Path) -> None:
     import sqlite3
 
     path = tmp_path / "project.sqlite3"
     ProjectDB(path).initialize_book(title="Book", project_root=tmp_path, settings={}, settings_hash="s", input_manifest_hash="m")
     with sqlite3.connect(path) as conn:
         conn.execute("ALTER TABLE segments DROP COLUMN scene_break")
-    ProjectDB(path).initialize_book(title="Book", project_root=tmp_path, settings={}, settings_hash="s", input_manifest_hash="m")
+    with pytest.raises(RuntimeError, match="Unsupported project schema layout"):
+        ProjectDB(path)
     with sqlite3.connect(path) as conn:
-        assert "scene_break" in {row[1] for row in conn.execute("PRAGMA table_info(segments)")}
+        assert "scene_break" not in {row[1] for row in conn.execute("PRAGMA table_info(segments)")}
 
 
 def test_the_pause_reaches_the_audio_concat_entries(tmp_path: Path) -> None:

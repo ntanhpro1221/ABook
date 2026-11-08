@@ -93,7 +93,7 @@ def clean_state(raw: Any) -> dict:
 def clean_profiles(raw: dict) -> dict:
     data = copy.deepcopy(raw)
     if data.get("version") != 2:
-        return {key: clean_state(value) for key, value in data.items() if isinstance(value, dict)}
+        raise ValueError("Unsupported listening profile version; required version 2")
     if "_clock" in data and (type(data["_clock"]) is not int or not 0 <= data["_clock"] <= MAX_COUNTER):
         data.pop("_clock")
     if "_epoch" in data and not valid_epoch(data["_epoch"]):
