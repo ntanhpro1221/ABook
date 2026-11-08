@@ -154,3 +154,17 @@ it("điện thoại: chạm mở bước thì không mục nào bị tô; mở b
   await escape(); await wait();
   expect(document.activeElement?.textContent).toContain("Nhạc nền");
 });
+
+it("nhả tay chậm sau khi nhấn nút mở: Sheet đã phủ chỗ ngón tay, lần nhả không chọn mục đầu; nhấn rồi nhả trong menu vẫn chọn", async () => {
+  const pick = vi.fn();
+  await act(() => root.render(<ActionMenu title="Việc với sách" trigger={<button>Thêm</button>}>
+    <DropdownMenu.Item onSelect={pick}>Xuất MP3</DropdownMenu.Item>
+  </ActionMenu>));
+  await act(() => { document.querySelector<HTMLButtonElement>("button")!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 })); });
+  await wait();
+  const first = item("Xuất MP3")!;
+  await act(() => { first.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, button: 0 })); });
+  expect(pick).not.toHaveBeenCalled();
+  await act(() => { first.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 })); first.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, button: 0 })); first.click(); });
+  expect(pick).toHaveBeenCalledOnce();
+});

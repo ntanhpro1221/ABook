@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Trang sách trên cửa sổ hẹp: bấm "Thêm tuỳ chọn" rồi nhả chuột chậm không còn vô tình chọn mục đầu tiên của menu vừa trượt lên.
+
 ## [0.4.165] - 2026-11-08
 
 - Bỏ tự hẹn giờ và tự dừng khi lâu không tương tác. Chỉ dừng theo số phút, hết chương hoặc lịch đêm bạn đã bật; sửa thao tác hẹn lại và huỷ hẹn giờ trên điện thoại, máy tính và web.
