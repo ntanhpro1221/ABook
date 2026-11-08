@@ -1,11 +1,13 @@
 import QtQuick
 import QtTest
+import ABook
 import "VisualReady.js" as VisualReady
 
 Item {
     id: host
     width: 300; height: 100
     Text { text: "Ready" }
+    Vu { id: liveVu; x: 280; still: false }
     Item {
         id: motion
         property real value: 0
@@ -38,6 +40,18 @@ Item {
         property real value: 0
         NumberAnimation on value { from: 0; to: 1; duration: 180; loops: Animation.Infinite; running: true }
         Timer { interval: 10; repeat: true; running: true }
+    }
+    Column {
+        id: textLayout
+        width: 260
+        Text {
+            id: wrapped
+            width: parent.width
+            text: "Một đoạn chữ dài cần xuống dòng sau khi đổi chiều rộng và cỡ phông chữ."
+            wrapMode: Text.Wrap
+            font.pixelSize: 12
+        }
+        Item { id: following; width: 1; height: 1 }
     }
     TestCase {
         name: "VisualReady"
@@ -85,6 +99,46 @@ Item {
         }
         function test_infiniteAnimationAndTimerDoNotBlock() {
             verify(VisualReady.settled(continuous, qtVisualReady))
+        }
+        function test_queuedTextMetricsAndColumnLayoutArePainted() {
+            for (const width of [110, 260]) {
+                Qt.callLater(function() { textLayout.width = width; wrapped.font.pixelSize = width === 110 ? 24 : 12 })
+                VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
+                compare(textLayout.width, width)
+                compare(wrapped.font.pixelSize, width === 110 ? 24 : 12)
+                verify(wrapped.lineCount > 1)
+                compare(following.y, wrapped.height)
+                compare(textLayout.height, wrapped.height + following.height)
+                verify(!isPolishScheduled(host.Window.window))
+                verify(qtVisualReady.lines(wrapped).length === wrapped.lineCount)
+            }
+        }
+        function test_metricReadQueuesAnotherLayoutPass() {
+            // Model a metric getter/response invalidating layout at the last
+            // readiness check. The helper must observe the new geometry and
+            // polish it before returning, even when no animation is running.
+            let firstFrame = null
+            let queued = false
+            const probe = {settled: function() {
+                const frame = qtFullRepaint.frames()
+                if (firstFrame === null) firstFrame = frame
+                else if (!queued && frame > firstFrame) {
+                    queued = true
+                    Qt.callLater(function() { textLayout.width = 110; wrapped.font.pixelSize = 24 })
+                }
+                return true
+            }}
+            textLayout.width = 260; wrapped.font.pixelSize = 12
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, probe)
+            verify(queued)
+            compare(textLayout.width, 110)
+            compare(following.y, wrapped.height)
+            verify(!isPolishScheduled(host.Window.window))
+        }
+        function test_layoutWaitKeepsPerpetualIndicatorsRunning() {
+            liveVu.still = false
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
+            compare(liveVu.still, false)
         }
     }
 }

@@ -70,9 +70,15 @@ Item {
 
         function probe(nm, sz) {
             const item = createTemporaryObject(probeFactory, host, { nm: nm, sz: sz })
-            waitForRendering(item)
+            rendered(item)
             const img = grabImage(item)
             return img
+        }
+
+        function rendered(item) {
+            verify(waitForPolish(host.Window.window), "icon layout must finish")
+            host.Window.window.update()
+            verify(waitForRendering(item), "requested icon frame must render")
         }
 
         function test_everyIconHasInkInsideItsBoxAndCentred_data() {
@@ -125,7 +131,7 @@ Item {
         function test_writeSheets() {
             for (const dark of [false, true]) {
                 const sheet = createTemporaryObject(sheetFactory, host, { dark: dark, list: host.names })
-                waitForRendering(sheet)
+                rendered(sheet)
                 const img = grabImage(sheet)
                 const path = Qt.resolvedUrl("../../build/icon_sheet_" + (dark ? "dark" : "light") + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")   // D:/... trên Windows, /home/... trên Linux
                 img.save(path)      // trả về void; có file hay không do người xem
