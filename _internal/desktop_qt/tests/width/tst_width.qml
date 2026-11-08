@@ -64,19 +64,22 @@ Item {
             tryCompare(list, "count", 32)
             let right = 0
             let rows = 0
-            for (let row of list.contentItem.children) {
-                if (row.objectName !== "bookChapterRow" || row.y < list.contentY
-                    || row.y + row.height > list.contentY + list.height) continue
-                const rowRight = textInkRight(row, page)
-                right = Math.max(right, rowRight)
-                rows++
-            }
-            verify(rows >= 4)
+            tryVerify(function() {
+                right = 0
+                rows = 0
+                for (let row of list.contentItem.children) {
+                    if (row.objectName !== "bookChapterRow" || row.y < list.contentY
+                        || row.y + row.height > list.contentY + list.height) continue
+                    const rowRight = textInkRight(row, page)
+                    right = Math.max(right, rowRight)
+                    rows++
+                }
+                const left = list.mapToItem(page, 0, 0).x
+                return rows >= 4 && right > left && right <= left + Theme.listMeasure + 0.5
+            })
             // DESIGN.md caps the complete row, including its duration/action.
             // Measuring an empty fraction of the window would reward stretched rows.
             verify(list.width <= Theme.listMeasure + 0.5, "chapter column exceeds readable measure")
-            const left = list.mapToItem(page, 0, 0).x
-            verify(right > left && right <= left + Theme.listMeasure + 0.5)
             console.log("ROW_MEASURE window=" + data.w + " row=" + list.width.toFixed(2))
         }
         function test_trackRow_data() {
@@ -94,10 +97,10 @@ Item {
             const duration = findChild(row, "chapterDuration")
             const fill = findChild(row, "chapterFill")
             const progress = findChild(row, "chapterProgress")
-            fuzzyCompare(duration.x + duration.paintedWidth, row.width - Theme.s12, 0.5)
+            tryVerify(function() { return Math.abs(duration.x + duration.paintedWidth - (row.width - Theme.s12)) <= 0.5 })
             compare(duration.font.features.tnum, 1)
-            fuzzyCompare(fill.width, row.width, 0.5)
-            fuzzyCompare(progress.width, (row.width - progress.x - Theme.s12) * 0.4, 0.5)
+            tryVerify(function() { return Math.abs(fill.width - row.width) <= 0.5 })
+            tryVerify(function() { return Math.abs(progress.width - (row.width - progress.x - Theme.s12) * 0.4) <= 0.5 })
             verify(progress.visible)
             // Render at the far end of the row, beyond the short title's ink.
             mouseMove(host, 1500, 1000)
@@ -123,30 +126,48 @@ Item {
             const cover = findChild(page, "bookCover")
             const list = findChild(page, "bookChapters")
             tryCompare(list, "count", 32)
-            verify(cover.height <= data.h * 0.45, "cover exceeds window cap")
-            fuzzyCompare(cover.height / cover.width, 1.5, 0.01)
-            let visible = 0
-            for (let c of list.contentItem.children) {
-                if (c.objectName !== "bookChapterRow") continue
-                if (c.y >= list.contentY - 0.5 && c.y + c.height <= list.contentY + list.height + 0.5) visible++
-                fuzzyCompare(c.width, list.width, 0.5, "row must fill the column")
-            }
-            if (data.w >= 1024) verify(visible >= 4, "only " + visible + " complete chapter rows")
+            tryVerify(function() { return cover.height <= data.h * 0.45 }, 5000, "cover exceeds window cap")
+            tryVerify(function() { return Math.abs(cover.height / cover.width - 1.5) <= 0.01 })
+            // The model count can arrive before delegate layout and the opening
+            // slide settle. Re-read the rows and their geometry on every retry.
+            tryVerify(function() {
+                let rows = 0
+                for (let c of list.contentItem.children) {
+                    if (c.objectName !== "bookChapterRow") continue
+                    rows++
+                    if (!(Math.abs(c.width - list.width) <= 0.5)) return false
+                }
+                return rows > 0
+            }, 5000, "row must fill the column")
+            if (data.w >= 1024) tryVerify(function() {
+                let visible = 0
+                for (let c of list.contentItem.children) {
+                    if (c.objectName === "bookChapterRow" && c.y >= list.contentY - 0.5
+                        && c.y + c.height <= list.contentY + list.height + 0.5) visible++
+                }
+                return visible >= 4
+            }, 5000, "at least four complete chapter rows")
             const summary = findChild(page, "bookSummary")
             const region = findChild(page, "bookChapterRegion")
-            const a = summary.mapToItem(page, 0, 0)
-            const b = region.mapToItem(page, 0, 0)
-            verify(Math.min(a.x, b.x) <= page.width * 0.35)
-            verify(page.width - Math.max(a.x + summary.width, b.x + region.width) <= page.width * 0.35)
+            tryVerify(function() {
+                const a = summary.mapToItem(page, 0, 0)
+                const b = region.mapToItem(page, 0, 0)
+                return Math.min(a.x, b.x) <= page.width * 0.35
+                    && page.width - Math.max(a.x + summary.width, b.x + region.width) <= page.width * 0.35
+            })
             if (page.expanded) {
-                verify(summary.width + Theme.s32 + region.width <= 1360.5, "composition exceeds cap")
-                fuzzyCompare(a.x, page.width - b.x - region.width, 0.5, "composition must be centred")
+                tryVerify(function() { return summary.width + Theme.s32 + region.width <= 1360.5 }, 5000, "composition exceeds cap")
+                tryVerify(function() {
+                    const a = summary.mapToItem(page, 0, 0)
+                    const b = region.mapToItem(page, 0, 0)
+                    return Math.abs(a.x - (page.width - b.x - region.width)) <= 0.5
+                }, 5000, "composition must be centred")
                 const title = findChild(page, "bookTitle")
-                fuzzyCompare(cover.mapToItem(page, 0, 0).x, title.mapToItem(page, 0, 0).x, 1,
-                             "cover and title must share their left edge")
+                tryVerify(function() { return Math.abs(cover.mapToItem(page, 0, 0).x - title.mapToItem(page, 0, 0).x) <= 1 },
+                          5000, "cover and title must share their left edge")
             } else {
-                fuzzyCompare(b.x, Theme.margin, 0.5)
-                fuzzyCompare(region.width, Math.min(page.width - 2 * Theme.margin, Theme.listMeasure), 0.5)
+                tryVerify(function() { return Math.abs(region.mapToItem(page, 0, 0).x - Theme.margin) <= 0.5 })
+                tryVerify(function() { return Math.abs(region.width - Math.min(page.width - 2 * Theme.margin, Theme.listMeasure)) <= 0.5 })
             }
             const top = findChild(page, "scrollFadeTop")
             const bottom = findChild(page, "scrollFadeBottom")
@@ -164,21 +185,25 @@ Item {
         }
         function test_library(data) {
             const page = make(libraryFactory, data)
-            verify(page.coverW >= 160 && page.coverW <= 200, "cover width " + page.coverW)
+            tryVerify(function() { return page.coverW >= 160 && page.coverW <= 200 }, 5000, "cover width must be 160–200")
             const row = findChild(page, "libraryGridRow")
             verify(row !== null)
-            const p = row.mapToItem(page, 0, 0)
-            fuzzyCompare(p.x, page.width - p.x - row.width, 0.5, "grid margins differ")
-            verify(p.x <= page.width * 0.35)
+            tryVerify(function() {
+                const p = row.mapToItem(page, 0, 0)
+                return Math.abs(p.x - (page.width - p.x - row.width)) <= 0.5
+            }, 5000, "grid margins differ")
+            tryVerify(function() { return row.mapToItem(page, 0, 0).x <= page.width * 0.35 })
         }
         function test_shortLibrarySharesFrame() {
             Backend.library.count = 3
             const page = make(libraryFactory, sizes()[2])
             const row = findChild(page, "libraryGridRow")
-            const p = row.mapToItem(page, 0, 0)
-            fuzzyCompare(p.x, page.width - p.x - row.width, 0.5)
-            fuzzyCompare(p.x, findChild(page, "libraryHeader").x, 0.5)
-            fuzzyCompare(row.children[0].x, 0, 0.5, "short row starts at the content edge")
+            tryVerify(function() {
+                const p = row.mapToItem(page, 0, 0)
+                return Math.abs(p.x - (page.width - p.x - row.width)) <= 0.5
+            })
+            tryVerify(function() { return Math.abs(row.mapToItem(page, 0, 0).x - findChild(page, "libraryHeader").x) <= 0.5 })
+            tryVerify(function() { return Math.abs(row.children[0].x) <= 0.5 }, 5000, "short row starts at the content edge")
         }
         function test_nowPlaying_data() { return sizes() }
         function test_nowPlaying(data) {
@@ -191,9 +216,9 @@ Item {
             compare(region.visible, beside)
             if (beside) {
                 verify(read.visible)
-                verify(region.x >= page.colX + page.colW)
-                fuzzyCompare(region.x + region.width, page.width - Theme.margin, 0.5)
-                verify(region.width > 500)
+                tryVerify(function() { return region.x >= page.colX + page.colW })
+                tryVerify(function() { return Math.abs(region.x + region.width - (page.width - Theme.margin)) <= 0.5 })
+                tryVerify(function() { return region.width > 500 })
             } else {
                 page.page = 1
                 tryCompare(region, "visible", true)
@@ -207,7 +232,7 @@ Item {
             const b = findChild(page, "settingsContent")
             if (page.width >= Theme.widthExpanded) {
                 verify(a.visible && b.visible)
-                verify(b.x >= a.width + Theme.s32 - 1)
+                tryVerify(function() { return b.x >= a.width + Theme.s32 - 1 })
             } else {
                 verify(a.visible && !b.visible)
                 page.active = "look"
@@ -261,10 +286,19 @@ Item {
             for (let c of page.children) {
                 // Thanh "Đang mở Studio của …" (máy đã ghép) tràn cả bề ngang như PeerBar của web; nội dung của nó thẳng khối giữa
                 // Vùng nội dung tràn cả bề ngang; đầu màn dự án của nó thẳng khối giữa
-                if (c.objectName === "studioContent") { const h = findChild(c, "projectsHeader"); fuzzyCompare(h.x, (page.width - h.width) / 2, 0.5); verify(h.width <= 1180); continue }
-                if (c.objectName === "peerBar") { fuzzyCompare(c.contentX, (page.width - c.contentWidth) / 2, 0.5); verify(c.contentWidth <= 880); continue }
-                verify(c.width <= 880)
-                fuzzyCompare(c.x, (page.width - c.width) / 2, 0.5)
+                if (c.objectName === "studioContent") {
+                    const h = findChild(c, "projectsHeader")
+                    tryVerify(function() { return Math.abs(h.x - (page.width - h.width) / 2) <= 0.5 })
+                    tryVerify(function() { return h.width <= 1180 })
+                    continue
+                }
+                if (c.objectName === "peerBar") {
+                    tryVerify(function() { return Math.abs(c.contentX - (page.width - c.contentWidth) / 2) <= 0.5 })
+                    tryVerify(function() { return c.contentWidth <= 880 })
+                    continue
+                }
+                tryVerify(function() { return c.width <= 880 })
+                tryVerify(function() { return Math.abs(c.x - (page.width - c.width) / 2) <= 0.5 })
             }
         }
     }
