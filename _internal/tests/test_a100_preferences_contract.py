@@ -52,7 +52,6 @@ def test_a_valid_night_schedule_is_kept_untouched(tmp_path: Path) -> None:
 @pytest.mark.parametrize("key,value", [
     ("sleepFadeSeconds", -30), ("sleepFadeSeconds", 45), ("sleepFadeSeconds", True),
     ("sleepExtendMinutes", -10), ("sleepExtendMinutes", 0), ("sleepExtendMinutes", "10"),
-    ("safetyStopHours", -1), ("safetyStopHours", 4), ("safetyStopHours", None),
     ("playbackRate", 0), ("playbackRate", 9), ("volume", -1), ("volume", 2),
 ])
 def test_out_of_range_or_wrong_type_numbers_fall_back_to_their_own_default(tmp_path: Path, key: str, value) -> None:
@@ -64,8 +63,8 @@ def test_out_of_range_or_wrong_type_numbers_fall_back_to_their_own_default(tmp_p
 
 
 @pytest.mark.parametrize("stored", [
-    {"sleepFadeSeconds": 10, "sleepExtendMinutes": 5, "safetyStopHours": 0, "playbackRate": 0.5, "volume": 0.0},
-    {"sleepFadeSeconds": 60, "sleepExtendMinutes": 15, "safetyStopHours": 3, "playbackRate": 3.0, "volume": 1.0},
+    {"sleepFadeSeconds": 10, "sleepExtendMinutes": 5, "playbackRate": 0.5, "volume": 0.0},
+    {"sleepFadeSeconds": 60, "sleepExtendMinutes": 15, "playbackRate": 3.0, "volume": 1.0},
     {"sleepSchedule": None},
 ])
 def test_every_choice_the_interface_offers_is_accepted(tmp_path: Path, stored: dict) -> None:
@@ -94,11 +93,10 @@ def test_the_server_put_and_the_loader_share_one_contract(tmp_path: Path) -> Non
         def _send_json(self, status, value) -> None:
             self.reply = value
 
-    Handler.put_preferences(Request({"sleepSchedule": {**GOOD, "extra": 1}, "sleepFadeSeconds": 60, "safetyStopHours": True}), {})
+    Handler.put_preferences(Request({"sleepSchedule": {**GOOD, "extra": 1}, "sleepFadeSeconds": 60}), {})
     stored = Preferences(prefs.path).get()
     assert stored["sleepSchedule"] == GOOD
     assert stored["sleepFadeSeconds"] == 60
-    assert stored["safetyStopHours"] == DEFAULT_PREFERENCES["safetyStopHours"]  # bool không phải mức
     Handler.put_preferences(Request({"sleepSchedule": {"from": 12, "to": "06:00", "minutes": 30}, "sleepExtendMinutes": -10}), {})
     again = Preferences(prefs.path).get()
     assert again["sleepSchedule"] == GOOD and again["sleepExtendMinutes"] == DEFAULT_PREFERENCES["sleepExtendMinutes"]

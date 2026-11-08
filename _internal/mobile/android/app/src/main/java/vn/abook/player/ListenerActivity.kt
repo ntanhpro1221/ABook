@@ -62,9 +62,9 @@ internal object ListenerActivity {
         if (current != volume) { volume = current; Playback.touched() }
     }
 
-    fun allows(idleMs: Long): Boolean {
+    fun allowsNightSchedule(): Boolean {
         sampleScreen()
         sampleVolume()
-        return context != null && evidence.allows(SystemClock.elapsedRealtime(), idleMs, Motion.available, 0L)
+        return context != null && evidence.allows(SystemClock.elapsedRealtime(), SleepPolicy.NIGHT_IDLE_MS, Motion.available, 0L)
     }
 }

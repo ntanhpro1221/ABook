@@ -1,6 +1,6 @@
 package vn.abook.player
 
-/** Evidence for automatic timers. No Android dependencies; unknown evidence never means asleep. */
+/** Evidence for the listener-enabled night schedule. No Android dependencies; unknown evidence never means asleep. */
 internal class SleepPolicy {
     companion object {
         const val WINDOW_MS = 30_000L
@@ -51,8 +51,7 @@ internal class SleepPolicy {
 
 /** Shared, word-for-word with the web and Qt player. */
 object AutoSleepText {
-    const val SAFETY = "Tự hẹn vì lâu không dùng máy"
     const val SCHEDULE = "Tự hẹn theo lịch đêm"
     const val CONTINUE = "Chạm để nghe tiếp"
-    fun reason(reason: String): String = when (reason) { "safety" -> SAFETY; "schedule" -> SCHEDULE; else -> "" }
+    fun reason(reason: String): String = when (reason) { "schedule" -> SCHEDULE; else -> "" }
 }

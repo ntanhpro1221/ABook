@@ -71,7 +71,6 @@ data class AppSettings(
     val autoMusic: Boolean = true,
     /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
     val autoPip: Boolean = true,
-    val safetyStopHours: Int = 0,
     val schedule: SleepSchedule? = null,
     val shakeToExtend: Boolean = true,
     val shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Normal,
@@ -83,7 +82,6 @@ data class AppSettings(
 ) {
     companion object {
         val Default = AppSettings()
-        val SAFETY_HOURS = listOf(0, 1, 2, 3)
         val EXTEND_MINUTES = listOf(5, 10, 15)
         val FADE_SECONDS = listOf(10, 30, 60)
         private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
@@ -120,7 +118,6 @@ data class AppSettings(
             headsetSkips = flag(json, "headsetSkips", Default.headsetSkips),
             autoMusic = flag(json, "autoMusic", Default.autoMusic),
             autoPip = flag(json, "autoPip", Default.autoPip),
-            safetyStopHours = pick(json, "safetyStopHours", SAFETY_HOURS, Default.safetyStopHours),
             schedule = schedule(json.opt("schedule")),
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
             shakeSensitivity = word(json, "shakeSensitivity", Default.shakeSensitivity),
@@ -145,7 +142,6 @@ data class AppSettings(
         if (headsetSkips != before.headsetSkips) out.put("headsetSkips", headsetSkips)
         if (autoMusic != before.autoMusic) out.put("autoMusic", autoMusic)
         if (autoPip != before.autoPip) out.put("autoPip", autoPip)
-        if (safetyStopHours != before.safetyStopHours) out.put("safetyStopHours", safetyStopHours)
         if (schedule != before.schedule) {
             out.put("schedule", schedule?.let { JSONObject().put("from", it.from).put("to", it.to).put("minutes", it.minutes) } ?: JSONObject.NULL)
         }
@@ -167,7 +163,6 @@ object SettingsSummary {
         val schedule = settings.schedule
         return when {
             schedule != null -> "Lịch đêm ${schedule.from}–${schedule.to}"
-            settings.safetyStopHours > 0 -> "Máy rảnh ${settings.safetyStopHours} giờ"
             else -> "Tắt"
         }
     }

@@ -43,7 +43,7 @@ export class NightRecorder {
     return Boolean(this.session && !this.session.endedAt);
   }
 
-  start(book: { id: string; title: string; record?: string }, minutes: number | null, position: NightPosition, reason?: "safety" | "schedule"): void {
+  start(book: { id: string; title: string; record?: string }, minutes: number | null, position: NightPosition, reason?: "schedule"): void {
     const now = Date.now();
     const current = this.session;
     const reusable =
@@ -72,7 +72,7 @@ export class NightRecorder {
     this.push({ type: "timer", at: now / 1000, minutes: minutes ?? undefined, action: reason, position });
   }
 
-  /** Mốc "còn thức" đã biết từ trước (lần cuối chạm máy trước khi lưới an toàn bật). */
+  /** Mốc "còn thức" đã biết từ trước (lần cuối chạm máy trước khi lịch đêm hẹn giờ). */
   touchAt(atMs: number, action: string, position: NightPosition): void {
     if (!this.active) return;
     this.push({ type: "touch", action, at: atMs / 1000, position });

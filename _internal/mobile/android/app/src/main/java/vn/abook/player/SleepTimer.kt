@@ -25,8 +25,7 @@ import kotlin.math.sqrt
  * Máy rung nhẹ để xác nhận mà không phải mở mắt nhìn màn hình.
  *
  * Đồng hồ chỉ chạy khi ĐANG PHÁT (tự tạm dừng rồi nghe lại không bị tắt ngay), nhỏ dần theo thang dB (tai nghe âm
- * lượng theo logarit - giảm đều theo biên độ thì mấy bậc cuối tụt như bị cắt). Hai lưới thêm, học từ Smart AudioBook
- * Player (docs/PLAYER_RESEARCH.md): lịch đêm tự hẹn giờ, và tự dừng khi phát liên tục lâu mà không ai chạm máy.
+ * lượng theo logarit - giảm đều theo biên độ thì mấy bậc cuối tụt như bị cắt). Lịch đêm chỉ tự hẹn khi người nghe đã bật trong Cài đặt.
  */
 object SleepTimer {
     enum class Mode { OFF, MINUTES, CHAPTER }
@@ -37,10 +36,8 @@ object SleepTimer {
     /** Thời gian còn lại tính tới mốc runningSinceMs; runningSinceMs = 0 nghĩa là đồng hồ đang đứng (đang dừng). */
     private var remainingMs = 0L
     private var runningSinceMs = 0L
-    /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). 0 = không ai chọn (lưới an toàn ngủ quên): "Hẹn lại" dùng "Mỗi lần nghe thêm". */
+    /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). Hẹn theo chương dùng "Mỗi lần nghe thêm". */
     private var minutes = 0
-    // Automatic sleep is opt-in, including service startup before the Compose settings load.
-    var safetyStopHours = 0.0
     /** Lịch đêm: (từ phút-trong-ngày, đến phút-trong-ngày, số phút hẹn) hoặc null. */
     var schedule: Triple<Int, Int, Int>? = null
     private var scheduleOffFor = ""
@@ -65,10 +62,11 @@ object SleepTimer {
         if (automaticReason.isNotEmpty() && mode != Mode.OFF) cancel()
     }
 
-    fun checkAutomatic() {
+    fun checkSchedule() {
+        if (schedule == null) return
         ListenerActivity.sampleScreen()
         ListenerActivity.sampleVolume()
-        if (mode == Mode.OFF) { maybeSchedule(); maybeSafetyStop(Playback.lastInteractionMs) }
+        if (mode == Mode.OFF) maybeSchedule()
     }
 
     /** Listener của lõi cho dịch vụ phát: hẹn giờ đặt / gia hạn / hết / lịch đêm tự bật (sự kiện "sleep") thì dựng lại nút thông báo - không phụ thuộc giao diện còn sống (soát a77 #10). */
@@ -150,11 +148,11 @@ object SleepTimer {
     fun setMinutes(value: Int, reason: String? = null) {
         if (value !in 1..60) return
         if (reason == null) onAwake()
-        automaticReason = reason?.takeIf { it == "safety" || it == "schedule" }.orEmpty()
+        automaticReason = reason?.takeIf { it == "schedule" }.orEmpty()
         ownerBook = Playback.bookId
         ownerRecord = Playback.recordId
         mode = Mode.MINUTES
-        minutes = if (reason == "safety") 0 else value // lưới an toàn đếm 1 phút nhưng không ai chọn số phút: 0 = "Hẹn lại" về "Mỗi lần nghe thêm" ([SleepText.extendMinutes])
+        minutes = value
         remainingMs = value * 60_000L
         runningSinceMs = if (playing()) System.currentTimeMillis() else 0L
         stoppedAtMs = 0
@@ -290,8 +288,7 @@ object SleepTimer {
                     return
                 }
                 if (automaticReason.isNotEmpty()) {
-                    val required = if (automaticReason == "schedule") SleepPolicy.NIGHT_IDLE_MS else (safetyStopHours * 3_600_000).toLong()
-                    if (!ListenerActivity.allows(required)) onAwake()
+                    if (!ListenerActivity.allowsNightSchedule()) onAwake()
                     if (mode == Mode.OFF) { ticking = false; return }
                 }
                 val remaining = when (mode) {
@@ -333,17 +330,8 @@ object SleepTimer {
         val (_, _, planned) = schedule ?: return
         val window = scheduleWindow() ?: return
         if (mode != Mode.OFF || scheduleOffFor == window || !playing()) return
-        if (!ListenerActivity.allows(SleepPolicy.NIGHT_IDLE_MS)) return
+        if (!ListenerActivity.allowsNightSchedule()) return
         setMinutes(planned, "schedule")
-    }
-
-    /** Lưới an toàn ngủ quên: phát liên tục quá lâu mà không ai chạm máy thì tự hẹn 1 phút (nhỏ dần rồi dừng). */
-    fun maybeSafetyStop(lastInteractionMs: Long) {
-        if (mode != Mode.OFF || safetyStopHours <= 0.0 || !playing()) return
-        if (!ListenerActivity.allows((safetyStopHours * 3_600_000).toLong())) return
-        if (System.currentTimeMillis() - lastInteractionMs < safetyStopHours * 3_600_000) return
-        setMinutes(1, "safety")
-        Bedtime.touchAt(lastInteractionMs, Playback.lastInteractionChapter, Playback.lastInteractionSeconds)
     }
 
     private fun restoreVolume() {
@@ -386,7 +374,7 @@ object Motion : SensorEventListener {
      */
     fun refresh() {
         val now = System.currentTimeMillis()
-        val wanted = (Playback.player?.isPlaying == true && (SleepTimer.safetyStopHours > 0 || SleepTimer.schedule != null)) || SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
+        val wanted = (Playback.player?.isPlaying == true && SleepTimer.schedule != null) || SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
             (flipEnabled && (Playback.player?.isPlaying == true || (flipPausedAtMs > 0 && now - flipPausedAtMs < FLIP_RESUME_MS)))
         if (wanted) start(Playback.appContext) else stop()
     }

@@ -4369,7 +4369,6 @@ class Handler(BaseHTTPRequestHandler):
             "volume": prefs["volume"],
             "sleepFadeSeconds": prefs.get("sleepFadeSeconds", 30),
             "sleepExtendMinutes": prefs.get("sleepExtendMinutes", 10),
-            "safetyStopHours": prefs.get("safetyStopHours", 0),
             "sleepSchedule": prefs.get("sleepSchedule"),
             # File trạng thái hỏng đã được giữ lại lúc mở app (notices.keep_broken): giao diện báo một lần.
             "notices": notices.NOTICES.all(),

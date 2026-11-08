@@ -21,7 +21,6 @@ inline bool automaticSleepAllowed(qint64 osIdle, qint64 appIdle, qint64 required
 }
 
 namespace AutoSleepText {
-inline constexpr auto Safety = "Tự hẹn vì lâu không dùng máy";
 inline constexpr auto Schedule = "Tự hẹn theo lịch đêm";
 inline constexpr auto Continue = "Chạm để nghe tiếp";
 }

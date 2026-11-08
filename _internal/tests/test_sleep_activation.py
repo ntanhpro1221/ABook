@@ -1,4 +1,3 @@
-"""Automatic sleep requires a chosen setting, including after loading preferences."""
 import json
 
 import pytest
@@ -7,20 +6,25 @@ from abook.webui.library import Preferences
 from abook.webui.sync import remote_command
 
 
-@pytest.mark.parametrize("stored", [{}, {"theme": "dark"}, {"safetyStopHours": "bad"}])
-def test_unselected_or_invalid_safety_does_not_enable_sleep(tmp_path, stored):
-    path = tmp_path / "preferences.json"
-    path.write_text(json.dumps(stored), encoding="utf-8")
-    settings = Preferences(path).get()
-    assert settings["safetyStopHours"] == 0
-    assert settings["sleepSchedule"] is None
+@pytest.mark.parametrize("stored", [{}, {"theme": "dark"}, *({"safetyStopHours": value} for value in ("bad", 0, 1, 2, 3))])
+def test_removed_settings_are_ignored_and_cannot_request_a_timer_after_three_hours(tmp_path, stored):
+    from abook.webui.library import DEFAULT_PREFERENCES, SLEEP_CHOICES
+    from abook.webui import library
+    from unittest.mock import patch
 
-
-@pytest.mark.parametrize("hours", [0, 1, 2, 3])
-def test_saved_explicit_safety_choice_is_preserved(tmp_path, hours):
     path = tmp_path / "preferences.json"
-    path.write_text(json.dumps({"safetyStopHours": hours}), encoding="utf-8")
-    assert Preferences(path).get()["safetyStopHours"] == hours
+    original = json.dumps(stored)
+    path.write_text(original, encoding="utf-8")
+    prefs = Preferences(path)
+    assert path.read_text(encoding="utf-8") == original
+    with patch.object(library.time, "time", return_value=3 * 3600):
+        settings = prefs.get()
+        assert settings["sleepSchedule"] is None
+        assert "safetyStopHours" not in settings
+        assert "safetyStopHours" not in DEFAULT_PREFERENCES
+        assert "safetyStopHours" not in SLEEP_CHOICES
+        assert "safetyStopHours" not in prefs.update({"safetyStopHours": 1})
+    assert not list(tmp_path.glob("*.hong-*"))
 
 
 @pytest.mark.parametrize("action", ["sleep", "setSleep", "extendSleep", "SLEEP_PLUS"])
