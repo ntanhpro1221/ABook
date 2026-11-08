@@ -1,5 +1,13 @@
 # Test report
 
+## 08-11-2026 — castaudit2: restore the owner's default A+
+
+- Default A+ aligns an automatic unrecorded book narrator to the first-person teller's known gender, avoiding held presets and respecting narrator choices. Own first-person thoughts use the narration profile with unchanged speaker/character/kind; other thoughts retain their voice. Chapter exceptions compare against the aligned base; B remains explicit.
+- Shared narrator presets freeze once any recording exists; automatic presentation only changes unrecorded lines. SQLite provenance supports reopen/undo, thought-only tellers and B pricing. Voice checks and held-preset checks use original character profiles, including listener choices that restore the base over a chapter exception. Read-only audits do not create absent provenance tables.
+- Related pytest: **272 passed / 0 FAILED**, 20 files. Full final across four disjoint module groups: **10,595 passed / 0 FAILED / 14 skipped / 2 xfailed**, 10,611 XML cases matching the selected collection; 0 failure/error nodes. All fixture modules included, -rf throughout; seven real synthesis function names excluded with -k. No GPU/TTS. An audit plugin blocks production book writes; frozen fixture reads are allowed. Commands, full collection, logs/XML, per-shard results and skip reasons are outside git.
+- Copy simulations preserve every recorded row and identity: Three Days keeps Phạm Tuyên, Pain and Your Story keep Đức Trí; 0 recorded voice changes. Pain/Your Story pass voice_integrity. Three Days retains 231 owner and 7 gender/attribution issues already present; allowing unrecorded chapter changes resolves only the 231 owner issues. Synthetic plan provenance is not audio evidence.
+- The six ranked female narrators match the owner's tiers; the selector retains three unranked options (Ngọc Huyền, Trúc Ly, Ngọc Trân) after them. Mai Anh is unavailable; no catalog edits. Direct import returns 56 quality entries: `399466d2d36947cad30817d144b69c61b24892ab8df88742f3c64f57267d3cf7` -> `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc`. Compileall, LF and diff checks pass. Uncommitted dev/castaudit only; detailed report/logs/XML/copies stay outside git in task castaudit2.
+
 ## 08-11-2026 — castaudit: two unintended paths from f01a158e8
 
 - Crowd casting still supplied only a source hint to an attribution helper that now requires accepted speaker/confidence. Supply the accepted kind, speaker and confidence; preserve an individual speech tag when semantic kind differs from the hint. Six synthetic SQLite/casting cases cover the caller and reopen. The two crash cases pass on f01^, fail on f01 and received HEAD, and pass after the fix.

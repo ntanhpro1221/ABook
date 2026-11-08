@@ -39,11 +39,11 @@ def test_a_voice_the_user_chose_gets_the_card_not_an_automatic_change(tmp_path: 
     assert _cards(root, "teller-thought") == [], "nội tâm của chính “tôi” vẫn tự về giọng dẫn khi chưa thu"
 
 
-def test_an_unselected_narration_voice_is_offered_without_changing_thoughts(tmp_path):
+def test_automatic_a_plus_alignment_needs_no_voice_card(tmp_path):
     paths,db,settings=_book(tmp_path)
     root=_with_settings(paths,settings)
     teller_voice.ensure(root,db,settings)
-    assert len(_cards(root,'teller-voice'))==1
+    assert _cards(root,'teller-voice')==[]
     assert _cards(root,'teller-thought')==[]
 
 

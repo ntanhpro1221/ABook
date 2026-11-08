@@ -350,12 +350,22 @@ def narrator_voiced(row: Any, narrator_profile_id: int) -> bool:
 def character_presets(conn: sqlite3.Connection) -> dict[str, list[str]]:
     """{giọng gốc: khoá tên chuẩn những nhân vật đang giữ nó} - giọng trên câu của họ, hay giọng đã ghim (người mang từ phần
     trước chưa nói câu nào). Người kể không được nhận giọng nào ở đây."""
+    from .teller_voice import has_presentation_table
+
+    # Presentation borrows the narrator profile without surrendering the actor's
+    # original voice, including an actor whose only lines are inner speech.
+    presented = has_presentation_table(conn)
+    own_profile = ("CASE WHEN s.speaker=t.original_speaker AND s.canonical_character_id IS t.original_character_id"
+                   " AND s.voice_profile_id=t.applied_profile_id THEN t.original_profile_id ELSE s.voice_profile_id END"
+                   if presented else "s.voice_profile_id")
+    join = " LEFT JOIN chapter_teller_lines t ON t.segment_id=s.id" if presented else ""
     held: dict[str, set[str]] = {}
     for row in conn.execute(
-        """
-        SELECT c.canonical_name, v.preset_name FROM segments s
-        JOIN characters c ON c.id = s.canonical_character_id JOIN voice_profiles v ON v.id = s.voice_profile_id
-        WHERE c.canonical_name <> 'NARRATOR'
+        f"""
+          SELECT c.canonical_name, v.preset_name FROM segments s
+          JOIN characters c ON c.id = s.canonical_character_id {join}
+          JOIN voice_profiles v ON v.id = {own_profile}
+          WHERE c.canonical_name <> 'NARRATOR' AND v.voice_key <> 'narrator' COLLATE NOCASE
         UNION
         SELECT c.canonical_name, v.preset_name FROM characters c JOIN voice_profiles v ON v.voice_key = c.locked_voice_key
         WHERE c.canonical_name <> 'NARRATOR'
