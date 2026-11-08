@@ -8,6 +8,20 @@ import java.io.File
 
 class StoreDurabilityTest {
     @Test
+    fun unsupported_record_indexes_are_refused_without_rewriting_or_preserving_as_damage() {
+        for (version in listOf(1, 3)) {
+            val root = BookEditsFixtures.tempDir("store-unsupported-index-$version")
+            Store::class.java.getDeclaredField("root").apply { isAccessible = true }.set(null, root)
+            Store::class.java.getDeclaredField("recordsCache").apply { isAccessible = true }.set(null, null)
+            val raw = """{"version":$version,"records":{},"links":{}}"""
+            val file = File(root, "records.json").apply { writeText(raw) }
+            assertTrue(runCatching { Store.knownActiveRecord("book") }.exceptionOrNull() is IllegalArgumentException)
+            assertEquals(raw, file.readText())
+            assertEquals(listOf("records.json"), root.listFiles()!!.map { it.name })
+        }
+    }
+
+    @Test
     fun atomic_write_replaces_existing_bytes_without_leaving_a_partial_file() {
         val root = BookEditsFixtures.tempDir("store-replace-existing")
         val target = File(root, "state.json")

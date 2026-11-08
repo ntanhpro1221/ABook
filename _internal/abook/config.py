@@ -294,38 +294,10 @@ def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def is_legacy_director_settings(settings: dict[str, Any]) -> bool:
-    analysis = settings.get("analysis", {})
-    if not isinstance(analysis, dict):
-        return False
-    return DIRECTOR_CRITIC_SETTING_KEYS.isdisjoint(analysis)
 
 
-def is_legacy_analysis_retry_settings(settings: dict[str, Any]) -> bool:
-    analysis = settings.get("analysis", {})
-    if not isinstance(analysis, dict):
-        return False
-    return ANALYSIS_RETRY_SETTING_KEYS.isdisjoint(analysis)
 
 
-def normalize_legacy_locked_settings(settings: dict[str, Any]) -> dict[str, Any]:
-    """Build effective settings for a pre-director project without rewriting its lock files."""
-    effective = deepcopy(settings)
-    analysis = effective.get("analysis")
-    if not isinstance(analysis, dict):
-        return effective
-    defaults = DEFAULT_SETTINGS["analysis"]
-    if is_legacy_director_settings(effective):
-        for key in DIRECTOR_CRITIC_SETTING_KEYS:
-            analysis[key] = deepcopy(defaults[key])
-        if effective.get("quality_profile") == "high_quality":
-            analysis["director_critic_enabled"] = True
-            analysis["director_critic_required"] = True
-            analysis["low_confidence_policy"] = "fail"
-    if is_legacy_analysis_retry_settings(effective):
-        for key in ANALYSIS_RETRY_SETTING_KEYS:
-            analysis[key] = deepcopy(defaults[key])
-    return effective
 
 
 # The analysis prompt is a fixed instruction block plus a JSON schema plus the segments
@@ -699,7 +671,7 @@ def save_settings(path: Path, settings: dict[str, Any]) -> None:
 
 def load_settings(path: Path) -> dict[str, Any]:
     data = load_settings_raw(path)
-    validate_settings(normalize_legacy_locked_settings(data))
+    validate_settings(data)
     return data
 
 

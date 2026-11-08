@@ -90,6 +90,7 @@ internal object ListeningSchema {
     }
 
     fun index(raw: JSONObject): JSONObject {
+        require(raw.opt("version") == 2) { "Unsupported listening profile version; required version 2" }
         val clean = JSONObject(raw.toString())
         if (clean.has("_clock") && !ListeningRevision.validNumber(clean.opt("_clock"))) clean.remove("_clock")
         if (clean.has("_epoch") && !ListeningRevision.validEpoch(clean.opt("_epoch"))) clean.remove("_epoch")
