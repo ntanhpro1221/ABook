@@ -1016,6 +1016,7 @@ export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name
       name={name}
       extendMinutes={options.extendMinutes}
       onExtend={() => {
+        feedback("sleepExtend");
         // Loa / TV giữ số phút đã hẹn: hẹn lại là gửi lại đúng số ấy (không gửi phần còn lại), và chỉ khi nó dài hơn phần còn lại.
         const longer = sleepExtended(sleep, options.extendMinutes, sleep.kind === "minutes" && sleep.since !== null, now);
         if (longer.kind === "minutes" && (sleepLeftMs(longer, now) ?? 0) > (sleepLeftMs(sleep, now) ?? 0)) onSet({ kind: "minutes", minutes: longer.minutes });
@@ -1052,7 +1053,7 @@ function SleepPicker({
   note: ReactNode;
 }) {
   // Chọn mức / thêm giờ là việc người nghe vừa làm: tiếng chạm + rung (DESIGN 5.3/5.4). Hẹn giờ tự tắt thì không đi qua đây.
-  const onExtend = withFeedback("toggle", handlers.onExtend);
+  const onExtend = handlers.onExtend; // Playback owns the single sleepExtend sound/haptic, including keyboard gestures.
   const onSet = withFeedback("toggle", handlers.onSet);
   const active = sleep.kind !== "off";
   const left = sleepLeftMs(sleep, now);

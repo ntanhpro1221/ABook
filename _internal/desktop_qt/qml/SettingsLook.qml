@@ -36,7 +36,7 @@ Column {
         SettingRow {
             width: parent.width
             label: "Âm thanh chạm"
-            hint: "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
+            hint: "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại."
             Switch { label: "Âm thanh chạm"; checked: root.prefs.touchSounds !== false; onToggled: value => store.update({touchSounds: value}) }
         }
     }

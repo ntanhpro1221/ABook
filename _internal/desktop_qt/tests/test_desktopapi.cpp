@@ -181,6 +181,9 @@ private slots:
         QCOMPARE(Feedback::notes(QStringLiteral("confirm")).size(), 2);
         QCOMPARE(Feedback::notes(QStringLiteral("done")).size(), 3);
         QCOMPARE(Feedback::notes(QStringLiteral("sleepWarn"))[0].pitch, 220.0);
+        QCOMPARE(Feedback::notes(QStringLiteral("sleepExtend")).size(), 2);
+        QCOMPARE(Feedback::notes(QStringLiteral("sleepExtend"))[0].pitch, 1046.5);
+        QCOMPARE(Feedback::notes(QStringLiteral("sleepExtend"))[1].pitch, 1318.5);
         for (const char *silent : {"tap", "playPause", "reject", "longPress", "khác"})
             QVERIFY(Feedback::notes(QString::fromLatin1(silent)).isEmpty());
     }
@@ -228,13 +231,17 @@ private slots:
         QCOMPARE(feedback.played(), 2);
         QCOMPARE(out->loads, 2);
         // "Âm thanh chạm" tắt: im hết, kể cả hẹn giờ
+        feedback.play(QStringLiteral("sleepExtend"));
+        QCOMPARE(feedback.played(), 3);
+        QCOMPARE(feedback.lastKind(), QStringLiteral("sleepExtend"));
         feedback.setBookPlaying(false);
         QSignalSpy changed(&feedback, &Feedback::soundsChanged);
         feedback.setSounds(false);
         QCOMPARE(changed.size(), 1);
         feedback.play(QStringLiteral("toggle"));
         feedback.play(QStringLiteral("sleepWarn"));
-        QCOMPARE(feedback.played(), 2);
+        feedback.play(QStringLiteral("sleepExtend"));
+        QCOMPARE(feedback.played(), 3);
         QCOMPARE(made, 1);                                    // một bộ phát dùng lại cho mọi tiếng
     }
     // Nghe thử câu mẫu của nhân vật (trang sách › Nhân vật): QML biết clip bắt đầu / hết / hỏng qua ba tín hiệu của DesktopApi.

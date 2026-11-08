@@ -44,6 +44,21 @@ class PlayerTest : public QObject {
     };
 
 private slots:
+    void timerExtensionNotifiesOnceAndAnOffTimerIsSilent() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QSignalSpy extended(rig.player.get(), &Player::sleepExtended);
+        rig.player->extendSleep();
+        QCOMPARE(extended.size(), 0);
+        rig.player->setSleep(QStringLiteral("minutes"), 1);
+        rig.player->extendSleep();
+        QCOMPARE(extended.size(), 1);
+        rig.player->setSleep(QStringLiteral("chapter"));
+        rig.player->extendSleep();
+        QCOMPARE(extended.size(), 2);
+        rig.run(601);
+        QCOMPARE(extended.size(), 2); // Expiry has no extension sound.
+    }
     void reviewKeepsListenerProgressAndRate() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 1, 0, true); rig.run(5);
@@ -190,6 +205,18 @@ private slots:
         QCOMPARE(warned.size(), 1);
         rig.run(55);
         QCOMPARE(warned.size(), 2);
+    }
+
+    void chapterTimerAlsoWarnsOnceBeforeItsFade() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("chapter"));
+        QSignalSpy warned(rig.player.get(), &Player::sleepWarning);
+        rig.player->seek(rig.player->duration() - 25);
+        rig.run(1);
+        QCOMPARE(warned.size(), 1);
+        rig.run(5);
+        QCOMPARE(warned.size(), 1);
     }
 
     void muteKeyRemembersVolume() {

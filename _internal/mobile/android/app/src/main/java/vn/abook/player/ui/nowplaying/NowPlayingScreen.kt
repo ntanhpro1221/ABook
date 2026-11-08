@@ -293,7 +293,7 @@ private fun ReadAlongHost(state: NowPlayingState, model: NowPlayingModel, window
 fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier, dimmed: Boolean = false) {
     val view = LocalView.current
     Box(modifier.size(48.dp).then(if (dimmed) Modifier.alpha(0.4f) else Modifier).pressable {
-        view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+        vn.abook.player.Feedback.play("tap", view)
         onClick()
     }.semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         PlayerGlyph(glyph)
@@ -326,7 +326,7 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
                 dragging.value = true
                 dragged.longValue = value.toLong()
                 val tick = dragged.longValue / 15_000
-                if (tick != lastTick) { lastTick = tick; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
+                if (tick != lastTick) { lastTick = tick; vn.abook.player.Feedback.play("tick", view) }
             },
             onCommit = { onSeek(it.toLong()); dragging.value = false },
             modifier = Modifier.graphicsLayer {}.testTag("player_seek"),

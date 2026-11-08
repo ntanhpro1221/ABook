@@ -375,7 +375,9 @@ export function PlayerProvider({
     [engine],
   );
 
+  const sleepWarned = useRef(false);
   const applySleep = useCallback((mode: SleepMode) => {
+    sleepWarned.current = false;
     refs.current.sleep = mode;
     setSleepState(mode);
   }, []);
@@ -435,7 +437,6 @@ export function PlayerProvider({
 
   // Tiếng chạm của giao diện im khi sách đang phát (shared/feedback.ts, DESIGN 5.3).
   useEffect(() => setBookPlaying(playing), [playing]);
-  const sleepWarned = useRef(false);
 
   useEffect(() => {
     if (native) return;
@@ -1307,11 +1308,12 @@ export function PlayerProvider({
       return;
     }
     if (refs.current.sleep.kind === "off") return;
-    if (automaticSleep.current) { awakeRef.current(); return; }
+    if (automaticSleep.current) { awakeRef.current(); feedback("sleepExtend"); return; }
     const minutes = sleepExtendMinutes(refs.current.sleep, options.extendMinutes);
     endFade();
     applySleep(sleepExtended(refs.current.sleep, options.extendMinutes, refs.current.audible && !engine.paused, Date.now()));
     night.extend(minutes, position());
+    feedback("sleepExtend");
     toast.success(sleepExtendLabel(minutes), { id: "sleep-extend", duration: 2500 });
   }, [applySleep, endFade, engine, native, night, options.extendMinutes, position]);
 
@@ -1728,10 +1730,10 @@ export function PlayerProvider({
         stopBySleep();
         return;
       }
-      // 30 giây trước khi tắt: một nốt trầm (DESIGN 5.3; tiếng duy nhất kêu cả khi đang phát). Thêm giờ quá mốc thì báo lại được.
-      if (mode.kind === "minutes") {
-        if (left <= SLEEP_WARN_MS && !sleepWarned.current) feedback("sleepWarn");
-        sleepWarned.current = left <= SLEEP_WARN_MS;
+      // One low note before expiry, for either timer mode. Extending past the threshold re-arms it.
+      if (mode.kind === "minutes" || mode.kind === "chapter") {
+        if (left > 0 && left <= SLEEP_WARN_MS && !sleepWarned.current) feedback("sleepWarn");
+        sleepWarned.current = left > 0 && left <= SLEEP_WARN_MS;
       }
       const fadeMs = options.fadeSeconds * 1000;
       if (left < fadeMs) {

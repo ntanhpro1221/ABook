@@ -54,7 +54,7 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
         when (mode) {
             "minutes" -> SleepTimer.setMinutes(minutes)
             "chapter" -> SleepTimer.setEndOfChapter()
-            else -> SleepTimer.cancel()
+            else -> { SleepTimer.cancel(); vn.abook.player.Feedback.play("toggle") }
         }
     }
 

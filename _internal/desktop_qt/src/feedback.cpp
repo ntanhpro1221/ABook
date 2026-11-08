@@ -81,7 +81,7 @@ QVector<Feedback::Note> Feedback::notes(const QString &kind) {
         return {{G6, 0, 0.06, -30}};
     if (kind == QLatin1String("tick"))
         return {{E6, 0, 0.04, -32}};
-    if (kind == QLatin1String("confirm"))
+    if (kind == QLatin1String("confirm") || kind == QLatin1String("sleepExtend"))
         return {{C6, 0, 0.12, -24}, {E6, 0.09, 0.16, -24}};
     if (kind == QLatin1String("done"))
         return {{C6, 0, 0.1, -24}, {E6, 0.08, 0.1, -24}, {G6, 0.16, 0.09, -24}};
@@ -134,7 +134,7 @@ QByteArray Feedback::wav(const QVector<Note> &notes, int sampleRate) {
 
 void Feedback::play(const QString &kind) {
     const QVector<Note> chosen = notes(kind);
-    if (chosen.isEmpty() || !m_sounds || (m_bookPlaying && kind != QLatin1String("sleepWarn")))
+    if (chosen.isEmpty() || !m_sounds || (m_bookPlaying && kind != QLatin1String("sleepWarn") && kind != QLatin1String("sleepExtend")))
         return;
     QString path = m_files.value(kind);
     if (path.isEmpty()) {

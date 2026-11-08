@@ -67,7 +67,7 @@ private object GroupCopy {
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
-    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
+    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại."
     const val SCHEDULE = "Máy rảnh 2 phút trong khung giờ này mới tự hẹn."
     const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để hẹn lại từ đầu."
     const val SURFACE = "Nền của chữ khi đọc theo."

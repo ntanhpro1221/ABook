@@ -5,13 +5,9 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import org.json.JSONObject
 import vn.abook.player.ui.nowplaying.SleepText
 import java.util.Calendar
@@ -22,7 +18,7 @@ import kotlin.math.sqrt
  * Hẹn giờ ngủ: tắt sau N phút hoặc hết chương, tiếng nhỏ dần trước khi dừng, lắc máy để hẹn lại (đồng hồ về N phút, không cộng dồn).
  *
  * Lắc được cả khi đang nhỏ dần và trong 2 phút sau khi đã tự dừng (người nghe vẫn còn thức, lắc để nghe tiếp).
- * Máy rung nhẹ để xác nhận mà không phải mở mắt nhìn màn hình.
+ * Hai nốt xác nhận và rung nhẹ cùng lượt, theo hai công tắc riêng, không cần mở mắt nhìn màn hình.
  *
  * Đồng hồ chỉ chạy khi ĐANG PHÁT (tự tạm dừng rồi nghe lại không bị tắt ngay), nhỏ dần theo thang dB (tai nghe âm
  * lượng theo logarit - giảm đều theo biên độ thì mấy bậc cuối tụt như bị cắt). Lịch đêm chỉ tự hẹn khi người nghe đã bật trong Cài đặt.
@@ -49,6 +45,7 @@ object SleepTimer {
     /** Ngưỡng một cú lắc, tính bằng g: nhỏ = nhẹ tay cũng tính (Cài đặt: nhẹ tay 1,6 / vừa 2,2 / mạnh tay 2,8). */
     var shakeThresholdG = 2.2
     private var ticking = false
+    private var warned = false
     var automaticReason = ""
         private set
     private var stoppedAutomatically = false
@@ -102,6 +99,7 @@ object SleepTimer {
         mode = Mode.MINUTES
         minutes = timer.optInt("minutes", (left / 60_000L).toInt())
         remainingMs = left
+        warned = false
         runningSinceMs = 0L
     }
 
@@ -145,7 +143,7 @@ object SleepTimer {
         Playback.emit("sleep")
     }
 
-    fun setMinutes(value: Int, reason: String? = null) {
+    fun setMinutes(value: Int, reason: String? = null, feedback: Boolean = true) {
         if (value !in 1..60) return
         if (reason == null) onAwake()
         automaticReason = reason?.takeIf { it == "schedule" }.orEmpty()
@@ -154,6 +152,7 @@ object SleepTimer {
         mode = Mode.MINUTES
         minutes = value
         remainingMs = value * 60_000L
+        warned = false
         runningSinceMs = if (playing()) System.currentTimeMillis() else 0L
         stoppedAtMs = 0
         Playback.player?.pauseAtEndOfMediaItems = false
@@ -163,6 +162,7 @@ object SleepTimer {
         tick()
         persist()
         Playback.emit("sleep")
+        if (reason == null && feedback) Feedback.play("toggle")
     }
 
     fun setEndOfChapter() {
@@ -171,6 +171,7 @@ object SleepTimer {
         ownerRecord = Playback.recordId
         automaticReason = ""
         mode = Mode.CHAPTER
+        warned = false
         stoppedAtMs = 0
         Playback.holdAtItemEnd(true)
         restoreVolume()
@@ -179,6 +180,7 @@ object SleepTimer {
         tick()
         persist()
         Playback.emit("sleep")
+        Feedback.play("toggle")
     }
 
     fun cancel() {
@@ -202,10 +204,10 @@ object SleepTimer {
      * Nghe thêm = hẹn lại: đồng hồ về đúng [extendTarget] phút, không bao giờ hơn (lắc nhiều lần không cộng dồn). Còn lại đã >= số ấy thì giữ nguyên, chỉ trả tiếng.
      * Đang hẹn hết chương thì chuyển thành N phút kể từ bây giờ.
      */
-    fun extend() {
+    fun extend(feedback: Boolean = true) {
         // Hẹn giờ đã hết (hay đã tắt): nút "Hẹn lại" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
         if (mode == Mode.OFF) return
-        if (automaticReason.isNotEmpty()) { onAwake(); return }
+        if (automaticReason.isNotEmpty()) { onAwake(); if (feedback) Feedback.play("sleepExtend"); return }
         val now = System.currentTimeMillis()
         val target = extendTarget()
         remainingMs = maxOf(if (mode == Mode.MINUTES) leftMs(now) else 0L, target * 60_000L)
@@ -215,10 +217,12 @@ object SleepTimer {
             Playback.player?.pauseAtEndOfMediaItems = false
         }
         minutes = target
+        warned = false
         restoreVolume()
         tick()
         persist()
         Playback.emit("sleep")
+        if (feedback) Feedback.play("sleepExtend")
     }
 
     /** Vừa tự dừng chưa tới 2 phút: cảm biến còn nghe để "lắc để nghe tiếp". */
@@ -231,19 +235,19 @@ object SleepTimer {
         Playback.touched()
         if (changed) {
             Bedtime.event("shake")
-            buzz(longArrayOf(0, 60, 80, 60))
+            Feedback.play("sleepExtend")
         }
     }
 
     /** Phần đổi hẹn giờ của cú lắc (tách khỏi rung / nhật ký để thử trên JVM): true khi có việc đã làm. */
     internal fun applyShake(now: Long): Boolean = when {
-        mode != Mode.OFF -> { extend(); true }
+        mode != Mode.OFF -> { extend(feedback = false); true }
         stoppedAtMs > 0 && now - stoppedAtMs in 0 until 120_000L -> {
             val automatic = stoppedAutomatically
             if (automatic) scheduleOffFor = scheduleWindow() ?: ""
             stoppedAtMs = 0L
             Playback.play()
-            if (!automatic) setMinutes(extendMinutes)
+            if (!automatic) setMinutes(extendMinutes, feedback = false)
             true
         }
         else -> false
@@ -270,7 +274,7 @@ object SleepTimer {
         stoppedAtMs = System.currentTimeMillis()
         restoreVolume()
         Bedtime.stopped()
-        buzz(longArrayOf(0, 40))
+        // No sound or vibration at expiry: the listener may already be asleep (DESIGN 5.4).
         // Cảm biến còn nghe thêm 2 phút để "lắc để nghe tiếp" vẫn chạy.
         main.postDelayed({ Motion.refresh() }, 125_000L)
         persist()
@@ -308,6 +312,7 @@ object SleepTimer {
                 } else if (Playback.fadeLevel < 1f && remaining >= fadeMs) {
                     Playback.applyVolume(1f)
                 }
+                if (exo.isPlaying) warning(remaining)
                 main.postDelayed(this, 250)
             }
         })
@@ -338,14 +343,9 @@ object SleepTimer {
         Playback.applyVolume(1f)
     }
 
-    private fun buzz(pattern: LongArray) {
-        val context = Playback.appContext
-        val vibrator = if (Build.VERSION.SDK_INT >= 31) {
-            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-        } else {
-            @Suppress("DEPRECATION") context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-        runCatching { vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1)) }
+    internal fun warning(remaining: Long) {
+        if (remaining in 1..30_000L && !warned) Feedback.play("sleepWarn")
+        warned = remaining in 1..30_000L
     }
 }
 

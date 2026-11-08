@@ -72,6 +72,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
 - Với chính sách hẹn ngủ, app KHÔNG BAO GIỜ tự hẹn/tự dừng khi người nghe không yêu cầu. Lâu không tương tác không phải yêu cầu hẹn ngủ. Chỉ hẹn khi người nghe yêu cầu: hẹn phút, hết chương, hoặc lịch đêm do chính người nghe bật (mặc định tắt). Lịch đêm đợi máy rảnh: Android cần màn tắt và bốn cửa sổ nằm yên khi có cảm biến; desktop cần thời gian rảnh toàn OS. Tín hiệu còn thức huỷ hẹn theo lịch, không huỷ hẹn tay. Không khôi phục hẹn theo lịch từ đĩa; hẹn tay gắn đúng sách/hồ sơ. Không đọc, xoá hay migrate khoá cũ của tính năng đã gỡ.
 - Android: `Store.writeAtomic` sync dữ liệu trước rename, không xoá đích trước; JSON hồ sơ hỏng phải giữ ở `.corrupt-…`.
+  Phản hồi âm/rung native đi qua `Feedback.kt` và công tắc `ListenPrefs`: hẹn lại phát hai nốt xác nhận cùng lượt rung, cả khi màn tắt; báo sắp hết chỉ một nốt, hết hẹn im cả âm/rung. Qt/web giữ cùng bảng nốt và ngoại lệ khi đang phát trong DESIGN 5.3/5.4.
   Migration state giữ nguồn đến sau commit `records.json`; adopt/rekey ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
   Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.

@@ -67,9 +67,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -519,7 +518,7 @@ private fun BookButtons(
     notes: BookNotes,
     openRecords: (RecordAction?) -> Unit,
 ) {
-    val haptic = LocalHapticFeedback.current
+    val view = LocalView.current
     val listening = player.bookId == book.id
     val playingHere = listening && player.playing
     val finished = book.progress.finished && !playingHere
@@ -554,7 +553,7 @@ private fun BookButtons(
                 playing = playingHere,
                 restart = finished,
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                    vn.abook.player.Feedback.play("playPause", view)
                     when {
                         finished -> restart()
                         listening -> actions.toggle()

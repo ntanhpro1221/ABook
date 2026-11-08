@@ -56,7 +56,7 @@ Popover {
         }
         Collapse {
             width: parent.width; open: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
-            Button { objectName: "sleepRestart"; text: "Bật lại " + Player.lastSleepMinutes + " phút"; kind: "ghost"; onClicked: { Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
+            Button { objectName: "sleepRestart"; text: "Bật lại " + Player.lastSleepMinutes + " phút"; kind: "ghost"; onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"
@@ -72,7 +72,7 @@ Popover {
                     objectName: "sleepChoice_" + modelData
                     text: modelData + " phút"
                     selected: Player.sleepKind === "minutes" && Player.sleepMinutes === modelData
-                    onClicked: { Player.setSleep("minutes", modelData); root.close() }
+                    onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", modelData); root.close() }
                 }
             }
         }
@@ -82,7 +82,7 @@ Popover {
             width: parent.width
             text: "Hết chương này"
             selected: Player.sleepKind === "chapter"
-            onClicked: { Player.setSleep("chapter"); root.close() }
+            onClicked: { Feedback.play("toggle"); Player.setSleep("chapter"); root.close() }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"
@@ -99,7 +99,7 @@ Popover {
                 objectName: "sleepOff"
                 kind: "text"
                 text: "Tắt hẹn giờ"
-                onClicked: { Player.setSleep("off"); root.close() }
+                onClicked: { Feedback.play("toggle"); Player.setSleep("off"); root.close() }
             }
             }
         }

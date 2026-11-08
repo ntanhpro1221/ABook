@@ -980,7 +980,7 @@ int Player::sleepExtendMinutes() const {
 
 // Nghe thêm = hẹn lại: đồng hồ về đúng sleepExtendMinutes() phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
 void Player::extendSleep() {
-    if (!m_automaticSleep.isEmpty()) { noteInteraction(); return; }
+    if (!m_automaticSleep.isEmpty()) { noteInteraction(); emit sleepExtended(); return; }
     if (m_sleep.kind == Sleep::Off)
         return;
     const int minutes = sleepExtendMinutes();
@@ -989,6 +989,7 @@ void Player::extendSleep() {
     resetSleepMark();
     applySleepState(Sleep::Minutes, minutes, std::max(left, minutes * 60'000.0));
     setNotice(QStringLiteral("Hẹn lại %1 phút").arg(minutes));
+    emit sleepExtended();
 }
 
 void Player::endFade() {
@@ -1020,10 +1021,10 @@ void Player::tickSleep(qint64 now) {
         stopBySleep();
         return;
     }
-    if (m_sleep.kind == Sleep::Minutes) {
-        if (left <= kSleepWarnMs && !m_sleepWarned) {
+    if (m_sleep.kind == Sleep::Minutes || m_sleep.kind == Sleep::Chapter) {
+        if (left > 0 && left <= kSleepWarnMs && !m_sleepWarned) {
             m_sleepWarned = true;
-            emit sleepWarning(); // 30 giây trước khi tắt: nốt trầm của lớp tiếng chạm (Feedback), tiếng duy nhất kêu cả khi đang phát
+            emit sleepWarning(); // Timer warning stays audible during playback, like the explicit extension confirmation.
         } else if (left > kSleepWarnMs)
             m_sleepWarned = false;
     }

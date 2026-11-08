@@ -517,6 +517,35 @@ Item {
             compare(Feedback.played, before + 1)
         }
 
+        function test_timerExtensionUsesOneSoundWhilePlaying() {
+            Player.open("width", 1, 0, true)
+            tryVerify(function() { return Player.playing })
+            Player.setSleep("minutes", 5)
+            const before = Feedback.played
+            Player.extendSleep()
+            compare(Feedback.played, before + 1)
+            compare(Feedback.lastKind, "sleepExtend")
+            Feedback.sounds = false
+            Player.extendSleep()
+            compare(Feedback.played, before + 1)
+            Player.setSleep("off")
+        }
+
+        function test_keyDuringFadeUsesTheSameTimerSound() {
+            Player.open("width", 1, 0, true)
+            tryVerify(function() { return Player.playing })
+            Player.setSleep("minutes", 1)
+            WidthNet.advance(45)
+            verify(Player.fading)
+            const before = Feedback.played
+            const keys = createTemporaryObject(keysFactory, host)
+            verify(keys.handle(key(Qt.Key_Plus, "+")))
+            verify(!Player.fading)
+            compare(Feedback.played, before + 1)
+            compare(Feedback.lastKind, "sleepExtend")
+            Player.setSleep("off")
+        }
+
         // ================= 4c. Nền đọc =================
         function test_readingSurfaceFollowsSettingNotTheme() {
             const view = createTemporaryObject(readFactory, host, {width: 600, height: 500})

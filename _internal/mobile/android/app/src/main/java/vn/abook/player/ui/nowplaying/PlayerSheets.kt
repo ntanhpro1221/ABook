@@ -126,7 +126,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     PlayerSheet.Speed -> {
                         for (row in PlayerLabels.rates.chunked(3)) Row(Modifier.fillMaxWidth()) {
                             for (rate in row) ChoiceCell(PlayerLabels.rate(rate), rate == state.rate, Modifier.weight(1f)) {
-                                model.setRate(rate); window.closeSheet()
+                                vn.abook.player.Feedback.play("toggle"); model.setRate(rate); window.closeSheet()
                             }
                             repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
