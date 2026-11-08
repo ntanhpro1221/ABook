@@ -66,7 +66,7 @@ object ListenPrefs {
         val out = JSONObject()
         if (json.has("sleepExtendMinutes")) out.put("sleepExtendMinutes", choiceOr(json, "sleepExtendMinutes", EXTEND_MINUTES, 10))
         if (json.has("sleepFadeSeconds")) out.put("sleepFadeSeconds", choiceOr(json, "sleepFadeSeconds", FADE_SECONDS, 30))
-        if (json.has("safetyStopHours")) out.put("safetyStopHours", choiceOr(json, "safetyStopHours", SAFETY_HOURS, 2))
+        if (json.has("safetyStopHours")) out.put("safetyStopHours", choiceOr(json, "safetyStopHours", SAFETY_HOURS, 0))
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
         // Giao diện sáng/tối do giao diện áp; lõi chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))

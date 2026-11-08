@@ -28,7 +28,7 @@ class SettingsDataTest {
         assertEquals(ReadingSurface.Auto, d.readingSurface)
         assertEquals(10, d.sleepExtendMinutes)
         assertEquals(30, d.sleepFadeSeconds)
-        assertEquals(2, d.safetyStopHours)
+        assertEquals(0, d.safetyStopHours)
         assertTrue(d.shakeToExtend && d.headsetSkips && d.autoRewind && d.autoMusic && d.touchSounds && d.haptics)
         assertFalse(d.flipToPause)
         assertEquals(ShakeSensitivity.Normal, d.shakeSensitivity)
@@ -130,8 +130,8 @@ class SettingsDataTest {
     @Test
     fun `summaries and quarters`() {
         assertEquals("Tự lùi · nhạc tự chọn", SettingsSummary.listen(AppSettings.Default))
-        assertEquals("Máy rảnh 2 giờ", SettingsSummary.sleep(AppSettings.Default))
-        assertEquals("Tắt", SettingsSummary.sleep(AppSettings.Default.copy(safetyStopHours = 0)))
+        assertEquals("Tắt", SettingsSummary.sleep(AppSettings.Default))
+        assertEquals("Máy rảnh 2 giờ", SettingsSummary.sleep(AppSettings.Default.copy(safetyStopHours = 2)))
         assertEquals("Lịch đêm 22:00–06:00", SettingsSummary.sleep(AppSettings.Default.copy(schedule = SleepSchedule.Default)))
         assertEquals(96, Quarters.ALL.size)
         assertEquals("23:45", Quarters.ALL.last())

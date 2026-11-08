@@ -41,11 +41,11 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-async function mount(schedule = false, reader: (() => Promise<number | null>) | undefined = async () => osIdle) {
+async function mount(schedule = false, reader: (() => Promise<number | null>) | undefined = async () => osIdle, defaults = false) {
   const source = { kind: "desktop", audioUrl: () => "/audio", saveProgress: async () => {}, beginProgress: async () => {},
     setRate: async () => {}, book: async () => book } as unknown as ListenSource;
   await act(() => root.render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { queryFn: async () => [], retry: false } } })}>
-    <SourceProvider source={source}><PlayerProvider engine={engine} keyboard={false} systemIdleReader={reader} safetyStopHours={schedule ? 0 : 2}
+    <SourceProvider source={source}><PlayerProvider engine={engine} keyboard={false} systemIdleReader={reader} safetyStopHours={defaults ? undefined : schedule ? 0 : 2}
       sleepSchedule={schedule ? { from: "22:00", to: "06:00", minutes: 30 } : null}><Probe /></PlayerProvider></SourceProvider>
   </QueryClientProvider>));
   await act(async () => { actions.prepare(book, chapters, 1, 12); paused = false; fire("play"); fire("playing"); });
@@ -55,6 +55,13 @@ async function elapsed(ms: number) {
   clock += ms; vi.setSystemTime(clock);
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
 }
+
+it("default playback stays without a timer after three idle hours", async () => {
+  await mount(false, async () => osIdle, true);
+  osIdle = 3 * 3_600_000;
+  await elapsed(3 * 3_600_000);
+  expect(actions.sleep.kind).toBe("off");
+});
 
 it("two hours in another app cannot arm the safety timer", async () => {
   await mount(); osIdle = 500;

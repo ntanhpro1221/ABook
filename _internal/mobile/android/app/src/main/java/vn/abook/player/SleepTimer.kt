@@ -39,7 +39,8 @@ object SleepTimer {
     private var runningSinceMs = 0L
     /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). 0 = không ai chọn (lưới an toàn ngủ quên): "Hẹn lại" dùng "Mỗi lần nghe thêm". */
     private var minutes = 0
-    var safetyStopHours = 2.0
+    // Automatic sleep is opt-in, including service startup before the Compose settings load.
+    var safetyStopHours = 0.0
     /** Lịch đêm: (từ phút-trong-ngày, đến phút-trong-ngày, số phút hẹn) hoặc null. */
     var schedule: Triple<Int, Int, Int>? = null
     private var scheduleOffFor = ""

@@ -259,7 +259,7 @@ export function PlayerProvider({
   keyboard = true,
   fadeSeconds = DEFAULT_FADE_SECONDS,
   extendMinutes = DEFAULT_EXTEND_MINUTES,
-  safetyStopHours = 2,
+  safetyStopHours = 0,
   sleepSchedule = null,
   systemIdleReader,
   autoRewind = true,

@@ -330,6 +330,18 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() > 14 * 60);
     }
 
+    void defaultPlaybackNeverArmsAnUnrequestedTimer() {
+        for (bool configure : {false, true}) {
+            Rig rig;
+            if (configure) rig.player->configure({{QStringLiteral("autoRewind"), true}});
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.run(1);
+            g_now += 3 * 3'600'000;
+            rig.player->tick();
+            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        }
+    }
+
     void safetyStopArmsOneMinuteAfterIdleHours() {
         Rig rig;
         rig.player->configure({{QStringLiteral("safetyStopHours"), 1}});

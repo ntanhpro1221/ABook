@@ -1,5 +1,14 @@
 # Test report
 
+## 08-11-2026 — timerbug2: automatic sleep requires a chosen setting
+
+- Audited 14 activation paths on the 0.4.165 `abook` tree: Compose Android (`mobile/android`), native Qt and web. The remaining cause from the previous audit was the default two-hour safety stop, which armed a one-minute timer while listening without a timer request. Change startup, settings, invalid-value and UI fallbacks to zero on all three platforms. Keep explicitly saved choices and night schedules.
+- The other two old findings are already guarded here: extend from OFF is ignored, and cancel clears the recent-stop shake window. Existing JVM regression tests cover both.
+- Red before production edits: JVM 2 failed, pytest 3 failed, web 1 failed, Qt 1 failed. Final green: JVM/Compose 220, pytest 159, Vitest 1282, Qt player 46, QML settings 21; **1728 tests passed, 0 failed, 0 skipped**, plus four passing Qt setup/cleanup entries. Counts come from JUnit/Gradle XML, with pytest run using `-rf`. The expanded web run needs `ABOOK_TEST_PYTHON` pointing to the shared runtime; the first attempt failed setup because this worktree has no Python runtime, then all 112 files passed after setting that environment variable.
+- TypeScript typecheck, Python compileall and diff whitespace checks pass. The shared settings fixture now defaults safety to zero. Automatic sleep remains available after an explicit 1/2/3-hour choice, with the existing OS/screen/motion evidence gates.
+- OPPO diagnostics through `scripts/phone_diag.py --device OPPO` cannot find a paired device; the device list is empty. No adb, install or deployment. The actual phone incident is unconfirmed. A previously saved value of two hours is preserved; this change does not reset user settings.
+- Read the locked-file list from code (56 entries). Quality implementation hash is unchanged: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc`. Evidence and full route audit: task `scratchpad/codex/timerbug2/`. No commit or push.
+
 ## 08-11-2026 — widthbook: retry settled Qt width measurements
 
 - Apply the `80cde88c3` settings pattern throughout `tests/width/tst_width.qml`: retry post-open row layout, painted text bounds, cover geometry and page centering with fresh measurements inside each callback. Chapter delegates are re-enumerated after the asynchronous model count arrives. Keep every numeric bound/tolerance, the four-complete-row requirement and the deliberate intermediate/reduced-motion checks.

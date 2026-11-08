@@ -195,7 +195,7 @@ class SettingsScreenTest {
 
     @Test
     fun choiceUnderlineSlidesToTheNewOption() {
-        showGroup(SettingsGroup.Sleep)
+        showGroup(SettingsGroup.Sleep, stored = JSONObject().put("safetyStopHours", 2))
         rule.onNodeWithTag("safety_stop_2").assertIsSelected()
         rule.mainClock.autoAdvance = false
         rule.onNodeWithTag("safety_stop_0").performClick()
