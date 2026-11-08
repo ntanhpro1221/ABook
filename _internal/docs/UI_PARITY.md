@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5304 chữ (3066 khác nhau), 334 cặp nhãn-icon; native 1920 chữ (1482 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5304 chữ (3066 khác nhau), 334 cặp nhãn-icon; native 1919 chữ (1481 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -234,7 +234,7 @@ Số cặp: web 289, native 72; icon lucide dùng: web 93, native 39.
 
 Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể cả chữ giống chữ ở mục a. Để phân biệt tính năng thiếu với chữ trôi: một màn native có nhiều nhãn chỉ-native mà web cùng màn không có thường là tính năng mới; vài nhãn lẻ thường là chữ trôi (mục a).
 
-### c1. Chỉ có ở native (241 nhãn)
+### c1. Chỉ có ở native (240 nhãn)
 
 - `native/NativeActivity.kt` (2): Chưa mở được trình duyệt (`342`); Chưa gửi được nhật ký (`354`)
 - `native/addbook/BookForms.kt` (1): Tên gốc: {} (`134`)
@@ -243,7 +243,6 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/addbook/ImportRepo.kt` (1): Bạn hãy nhập tên sách. (`98`)
 - `native/addbook/PackageReviewScreen.kt` (1): Mở sách (`15`)
 - `native/components/Confirm.kt` (2): Xoá phần đã tải của “{}”? (`93`); Đang xoá (`94`)
-- `native/data/AndroidSettingsCore.kt` (1): Accept (`71`)
 - `native/data/DemoPlayback.kt` (1): Chương {} · {} (`13`)
 - `native/data/Library.kt` (1): Bạn hãy thử lại. (`161`)
 - `native/data/ListenExtras.kt` (1): Nghe tiếp từ {} (`98`)
@@ -414,23 +413,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5304 | 0 / 1920 |
-| dấu ba chấm `…` | 36 / 5304 | 0 / 1920 |
-| kết thúc bằng dấu chấm `.` | 904 / 5304 | 394 / 1920 |
-| kết thúc bằng `!` | 0 / 5304 | 0 / 1920 |
-| kết thúc bằng `:` | 52 / 5304 | 3 / 1920 |
-| dấu thanh kiểu cũ `oà oá uý` | 390 / 5304 | 173 / 1920 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5304 | 0 / 1920 |
-| số thập phân dấu phẩy `1,5` | 1 / 5304 | 0 / 1920 |
-| số thập phân dấu chấm `1.5` | 0 / 5304 | 0 / 1920 |
-| nhân bằng `×` | 0 / 5304 | 0 / 1920 |
-| nhân bằng `x` sau số | 0 / 5304 | 0 / 1920 |
-| ngăn cách `·` | 121 / 5304 | 34 / 1920 |
-| ngăn cách ` - ` | 257 / 5304 | 81 / 1920 |
-| gạch dài `—`/`–` | 10 / 5304 | 1 / 1920 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5304 | 2 / 1920 |
-| dấu `%` dính số | 0 / 5304 | 1 / 1920 |
-| dấu `%` cách số | 0 / 5304 | 0 / 1920 |
+| dấu ba chấm ASCII `...` | 8 / 5304 | 0 / 1919 |
+| dấu ba chấm `…` | 36 / 5304 | 0 / 1919 |
+| kết thúc bằng dấu chấm `.` | 904 / 5304 | 394 / 1919 |
+| kết thúc bằng `!` | 0 / 5304 | 0 / 1919 |
+| kết thúc bằng `:` | 52 / 5304 | 3 / 1919 |
+| dấu thanh kiểu cũ `oà oá uý` | 390 / 5304 | 173 / 1919 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5304 | 0 / 1919 |
+| số thập phân dấu phẩy `1,5` | 1 / 5304 | 0 / 1919 |
+| số thập phân dấu chấm `1.5` | 0 / 5304 | 0 / 1919 |
+| nhân bằng `×` | 0 / 5304 | 0 / 1919 |
+| nhân bằng `x` sau số | 0 / 5304 | 0 / 1919 |
+| ngăn cách `·` | 121 / 5304 | 34 / 1919 |
+| ngăn cách ` - ` | 257 / 5304 | 81 / 1919 |
+| gạch dài `—`/`–` | 10 / 5304 | 1 / 1919 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5304 | 2 / 1919 |
+| dấu `%` dính số | 0 / 5304 | 1 / 1919 |
+| dấu `%` cách số | 0 / 5304 | 0 / 1919 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
@@ -484,9 +483,9 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |
 |---|---|---|---|---|---|---|---|
 | now-playing | 104 | 103 | 0 | 0 | 31 | 5 | 0 |
-| shared-labels | 31 | 1300 | 0 | 0 | 7 | 0 | 0 |
+| shared-labels | 31 | 1299 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 203 | 211 | 0 | 0 | 66 | 10 | 0 |
-| settings | 122 | 140 | 0 | 0 | 24 | 81 | 0 |
+| settings | 122 | 139 | 0 | 0 | 23 | 81 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 162 | 148 | 0 | 0 | 27 | 24 | 0 |
 | add-edit-book | 163 | 139 | 0 | 0 | 60 | 4 | 0 |

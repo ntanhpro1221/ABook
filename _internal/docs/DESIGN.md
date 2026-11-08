@@ -316,6 +316,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 
 ## 8. Kiểm trước khi gộp một thay đổi giao diện
 
+Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp gần chữ trong bảng parity là ứng viên; chỉ so nhãn khi đã xác định cùng control, hành động và trạng thái. Không dùng nhãn thông báo thay nhãn nút, hay lỗi tải thay lỗi dừng. Máy dò Qt có luật cứng cho tạo/xoá/chuyển hồ sơ nghe và mini Qt/Android; đối chứng đổi chữ, đổi icon hoặc mất control phải đỏ. Khác biệt web trình duyệt với cửa sổ mini hệ điều hành phải có lý do khả năng nền tảng, không viện dẫn shell Tauri đã bỏ.
+
+Đổi khổ phải kiểm trên cùng instance đang giữ focus và chỗ cuộn, qua hai phía mốc 840/1200. Với văn bản xuống dòng lại, giữ đoạn đang thấy cùng offset trong khung; không so số pixel cuộn cũ như thể chiều cao các đoạn không đổi. Ảnh fixture và test offscreen không thay nghiệm thu bản đóng gói, máy thật hoặc Lead xem trực quan. R28 chỉ đóng sau khi tái hiện đúng cử chỉ từ video gốc VID_20261026064113.
+
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.

@@ -71,7 +71,7 @@ function dialogDescription(dialog, recordCount) {
 }
 
 function confirmLabel(kind) {
-    return kind === "create" ? "Tạo và nghe từ đầu" : kind === "delete" ? "Xoá hồ sơ" : kind === "move" ? "Chuyển" : "Lưu"
+    return kind === "create" ? "Tạo và nghe" : kind === "delete" ? "Xoá hồ sơ" : kind === "move" ? "Chuyển" : "Lưu"
 }
 
 // Nút chính của hộp dùng được chưa: đổi tên cần tên, chuyển cần chọn cuốn nhận

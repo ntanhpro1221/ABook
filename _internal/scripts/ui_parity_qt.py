@@ -716,6 +716,7 @@ def render_report(web: Scan, qt: QtScan) -> str:
     out += section_e(q_items, w_by)
     out += section_f(qt.shortcuts, qt.spaced)
     out += section_g(*mode_switch_findings())
+    out += section_h(action_findings(web, qt))
     out += ["", END, ""]
     return "\n".join(out)
 
@@ -1027,6 +1028,40 @@ def section_g(found, problems) -> list[str]:
     return out
 
 
+# These are operation contracts, not nearest-word matches from section a.
+# A native OS mini window has no browser counterpart; Qt and Android do.
+ACTION_CONTRACTS = (
+    ("record-create", "Tạo và nghe", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
+    ("record-delete", "Xoá hồ sơ", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
+    ("record-move", "Chuyển", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
+    ("mini-enter", "Cửa sổ mini", (("Qt", "desktop_qt/qml/NowPlaying.qml", "picture-in-picture-2"), ("Android", up.NATIVE_ROOT + "nowplaying/NowPlayingScreen.kt", ""))),
+    ("mini-auto", "Tự mở cửa sổ mini", (("Qt", "desktop_qt/qml/SettingsLook.qml", ""), ("Android", up.NATIVE_ROOT + "screens/SettingsGroups.kt", ""))),
+)
+
+
+def action_findings(web: Scan, qt: QtScan, native: Scan | None = None) -> list[str]:
+    """Check reviewed operations at their own source sites, including icon binding."""
+    scans = {"Web": web, "Qt": qt, "Android": native if native is not None else up.native_scan()}
+    problems = []
+    for action, label, sites in ACTION_CONTRACTS:
+        for side, file, icon in sites:
+            scan = scans[side]
+            if not any(i.file == file and i.text == label for i in scan.items):
+                problems.append(f"{action}: {side} {file} thiếu đúng nhãn {label!r}")
+            if icon and not any(p.file == file and p.label == label and p.icon == icon for p in scan.pairs):
+                problems.append(f"{action}: {side} {file} nhãn {label!r} phải đi với icon {icon}")
+    return problems
+
+
+def section_h(problems) -> list[str]:
+    out = ["## h. Cùng thao tác đã duyệt (luật cứng)", "",
+           "So đúng file và nhãn của thao tác, không dùng độ giống chữ. Cửa sổ mini và tự mở mini có ở Qt/Android; web trình duyệt không có cửa sổ app của hệ điều hành. Đây không còn là việc chờ Tauri/cloud-tray.", "",
+           "| thao tác | nhãn chuẩn | nền |", "|---|---|---|"]
+    for action, label, sites in ACTION_CONTRACTS:
+        out.append(f"| {action} | {label} | {', '.join(side for side, _, _ in sites)} |")
+    return out + ["", "Lệch: " + ("; ".join(problems) if problems else "(không có)"), ""]
+
+
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -1052,7 +1087,7 @@ def render_doc(current: str | None) -> str:
 def main(argv: list[str]) -> int:
     current = DOC.read_bytes().decode("utf-8") if DOC.is_file() else None
     text = render_doc(current)
-    problems = mode_switch_findings()[1]
+    problems = mode_switch_findings()[1] + action_findings(web_scan(), qt_scan())
     for problem in problems:
         print(f"công tắc chế độ Đang nghe lệch giữa các nền: {problem}", file=sys.stderr)
     if "--check" in argv:

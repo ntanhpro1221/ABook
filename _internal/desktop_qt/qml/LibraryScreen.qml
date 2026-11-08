@@ -81,6 +81,15 @@ FocusScope {
     property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
     property alias list: list
 
+    // Changing the grid's column count replaces its numeric ListView model.
+    // Restore the live viewport after that reset rather than jumping to row 0.
+    onColsChanged: {
+        if (resultMotion.running) return
+        const previousY = list.contentY
+        const selection = appliedSelection
+        Later.call(root, function() { if (!resultMotion.running && root.appliedSelection === selection) list.contentY = previousY })
+    }
+
     function select(index) {
         current = Math.max(0, Math.min(count - 1, index))
         list.positionViewAtIndex(Math.floor(current / cols), ListView.Contain)
