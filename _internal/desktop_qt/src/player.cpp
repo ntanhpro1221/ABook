@@ -130,6 +130,7 @@ Player::Player(AudioOut *out, PlayerNet *net, const QString &outboxPath, QObject
     connect(m_out, &AudioOut::failed, this, &Player::onFailed);
     connect(m_out, &AudioOut::durationChanged, this, &Player::onDuration);
     m_out->setVolume(m_volume);
+    m_sharedAudio=audioFx(); m_sharedAudio.remove(QStringLiteral("bookOnly"));
 }
 
 Player::~Player() {
@@ -540,9 +541,7 @@ void Player::adoptBook(const Book &book) {
     }
     m_book = book;
     m_chapters.setBook(book);
-    const double bookRate = startingRate(book.rate.has_value() ? book.rate : std::optional<double>(m_defaultRate));
-    if (!qFuzzyCompare(bookRate, m_rate))
-        applyRate(bookRate);
+    activateAudioProfile();
     changed();
     emit bookChanged();
 }
@@ -900,9 +899,10 @@ void Player::applyRate(double rate) {
 
 void Player::setRate(double rate) {
     noteInteraction();
-    if (rate <= 0)
+    if (!std::isfinite(rate) || rate < 0.5 || rate > 4)
         return;
     applyRate(rate);
+    rememberAudioProfile();
     if (!m_loaded || m_purpose == QLatin1String("review"))
         return;
     // Tốc độ nhớ riêng của cuốn: cũng nằm trong bộ nhớ của trang sách (state.rate) - nghe lại không đè tốc độ cũ lên.
@@ -926,15 +926,51 @@ void Player::setVolume(double volume) {
     m_volume = volume;
     m_out->setVolume(outputVolume());
     emit volumeChanged();
+    rememberAudioProfile();
 }
 
 QVariantMap Player::audioFx() const {
     QVariantList bands;
     for (double db:m_audioFx.bands) bands.append(db);
     return {{QStringLiteral("enabled"),m_audioFx.enabled},{QStringLiteral("preset"),m_audioFx.preset},{QStringLiteral("bands"),bands},
-        {QStringLiteral("bass"),m_audioFx.bass},{QStringLiteral("boost"),m_audioFx.boost},{QStringLiteral("pitch"),m_audioFx.pitch}};
+        {QStringLiteral("bass"),m_audioFx.bass},{QStringLiteral("boost"),m_audioFx.boost},{QStringLiteral("pitch"),m_audioFx.pitch},
+        {QStringLiteral("mono"),m_audioFx.mono},{QStringLiteral("balance"),m_audioFx.balance},{QStringLiteral("skipSilence"),m_audioFx.skipSilence},
+        {QStringLiteral("silenceDb"),m_audioFx.silenceDb},{QStringLiteral("silenceSeconds"),m_audioFx.silenceSeconds},{QStringLiteral("keepSeconds"),m_audioFx.keepSeconds},
+        {QStringLiteral("speed"),m_rate},{QStringLiteral("volume"),m_volume},{QStringLiteral("bookOnly"),m_bookOnly}};
+}
+QVariantMap Player::audioProfiles() const { return {{QStringLiteral("shared"),m_sharedAudio},{QStringLiteral("books"),m_bookAudio}}; }
+void Player::restoreAudioProfiles(const QVariantMap &profiles) {
+    if (profiles.contains(QStringLiteral("shared"))) m_sharedAudio=profiles.value(QStringLiteral("shared")).toMap();
+    m_bookAudio=profiles.value(QStringLiteral("books")).toMap(); activateAudioProfile();
+}
+void Player::rememberAudioProfile() {
+    if(m_applyingAudio) return;
+    auto snapshot=audioFx(); snapshot.remove(QStringLiteral("bookOnly"));
+    if(m_bookOnly && !m_book.id.isEmpty()) m_bookAudio.insert(m_book.id,snapshot); else m_sharedAudio=snapshot;
+    emit audioProfilesChanged();
+}
+void Player::activateAudioProfile() {
+    m_applyingAudio=true;
+    m_bookOnly=!m_book.id.isEmpty() && m_bookAudio.contains(m_book.id);
+    const auto snapshot=m_bookOnly?m_bookAudio.value(m_book.id).toMap():m_sharedAudio;
+    m_audioFx=AudioFx::Settings();
+    setAudioFx(snapshot);
+    const double volume=snapshot.value(QStringLiteral("volume"),.9).toDouble();
+    const double speed=snapshot.value(QStringLiteral("speed"),1.).toDouble();
+    setVolume(std::isfinite(volume)?std::clamp(volume,0.,1.):.9);
+    applyRate(std::isfinite(speed)?std::clamp(speed,.5,4.):1.);
+    m_out->setAudioFx(m_audioFx);
+    m_applyingAudio=false; emit audioFxChanged();
 }
 void Player::setAudioFx(const QVariantMap &value) {
+    if(!m_applyingAudio && value.contains(QStringLiteral("bookOnly")) && !m_book.id.isEmpty()) {
+        const bool own=value.value(QStringLiteral("bookOnly")).toBool();
+        if(own!=m_bookOnly) {
+            auto snapshot=audioFx(); snapshot.remove(QStringLiteral("bookOnly"));
+            if(own) m_bookAudio.insert(m_book.id,snapshot); else m_bookAudio.remove(m_book.id);
+            activateAudioProfile(); emit audioProfilesChanged();
+        }
+    }
     auto next=m_audioFx;
     auto number=[](const QVariant &v,double fallback,double lo,double hi) {
         bool ok=false; const double n=v.toDouble(&ok); return ok && std::isfinite(n)?std::clamp(n,lo,hi):fallback;
@@ -948,11 +984,19 @@ void Player::setAudioFx(const QVariantMap &value) {
     if (value.contains(QStringLiteral("bass"))) next.bass=number(value[QStringLiteral("bass")],0,0,12);
     if (value.contains(QStringLiteral("boost"))) next.boost=number(value[QStringLiteral("boost")],0,0,12);
     if (value.contains(QStringLiteral("pitch"))) next.pitch=number(value[QStringLiteral("pitch")],0,-6,6);
+    if (value.contains(QStringLiteral("mono"))) next.mono=value[QStringLiteral("mono")].toBool();
+    if (value.contains(QStringLiteral("balance"))) next.balance=number(value[QStringLiteral("balance")],0,-1,1);
+    if (value.contains(QStringLiteral("skipSilence"))) next.skipSilence=value[QStringLiteral("skipSilence")].toBool();
+    if (value.contains(QStringLiteral("silenceDb"))) next.silenceDb=number(value[QStringLiteral("silenceDb")],-60,-80,-45);
+    if (value.contains(QStringLiteral("silenceSeconds"))) next.silenceSeconds=number(value[QStringLiteral("silenceSeconds")],3,2,10);
+    if (value.contains(QStringLiteral("keepSeconds"))) next.keepSeconds=number(value[QStringLiteral("keepSeconds")],1.5,1.5,3);
+    next.keepSeconds=std::min(next.keepSeconds,next.silenceSeconds);
     if (next==m_audioFx) return;
     m_audioFx=next;
     m_out->setAudioFx(next);
     noteInteraction();
     emit audioFxChanged();
+    rememberAudioProfile();
 }
 
 void Player::toggleMute() {

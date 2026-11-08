@@ -319,10 +319,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 ### Âm thanh khi nghe (Android / Qt / web)
 
 - Trình phát `…` → `Âm thanh` (2 cấp); Back khép lớp đang mở. Dùng sheet/popover sẵn có: trượt + đổi cỡ khi vào/ra, không fade thuần.
-- Cùng thứ tự: ghi chú phạm vi → **Âm lượng** 0–100% → **Tăng âm** 0–12 dB → **Cao độ** −6…+6 bán âm, bước 0,5 và **Về mặc định** (0) → **Equalizer** → preset → 5 dải → **Tăng trầm** 0–12 dB.
+- Cùng thứ tự: ghi chú phạm vi → **Riêng sách này** → **Âm lượng** 0–100% → **Tăng âm** 0–12 dB → **Cao độ** −6…+6 bán âm, bước 0,5 và **Về mặc định** (0) → **Mono** → **Cân bằng** −100% trái…+100% phải → **Bỏ khoảng lặng** → **Ngưỡng lặng** → **Dài tối thiểu** → **Giữ khoảng nghỉ** → **Equalizer** → preset → 5 dải → **Tăng trầm** 0–12 dB.
 - Preset: **Phẳng**, **Rõ lời**, **Trầm ấm**, **Bổng**, **Giảm chói**. Năm dải **80 Hz · 250 Hz · 1 kHz · 4 kHz · 12 kHz**, mỗi dải −12…+12 dB, bước 1 dB; chỉnh tay bỏ chọn preset. Chọn preset bật EQ; tắt EQ giữ các giá trị để bật lại. Tăng trầm là low shelf 120 Hz.
-- Lưu toàn app trên từng thiết bị. Dòng giải thích giống nhau: “Lưu cho toàn app. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.” Âm lượng app điều khiển cả lời và nhạc, độc lập âm lượng hệ thống; EQ/tăng trầm/boost/cao độ chỉ đường lời đọc, gồm thu sẵn và đọc to. Nhạc không bị đổi màu/cao độ. Limiter bảo vệ đỉnh; tốc độ vẫn giữ cao độ đã chọn.
-- Đây là tuỳ chọn phát lại, không sửa WAV/MP3, preset giọng TTS, hash chất lượng hay kết quả duyệt. Tốc độ vẫn lưu theo sách như trước.
+- Mặc định dùng chung trên thiết bị (kể cả tốc độ/âm lượng). **Riêng sách này** sao chép bộ đang dùng vào sách; tắt quay về bộ chung và bỏ bộ riêng. Dòng giải thích giống nhau: “Dùng chung mặc định. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.” Âm lượng điều khiển cả lời và nhạc; DSP còn lại chỉ đường lời. Tốc độ giữ cao độ đã chọn. Không thêm icon cho các hàng công tắc; icon Âm thanh vẫn sliders-horizontal.
+- **Bỏ khoảng lặng** mặc định tắt. Peak cả hai kênh trước EQ/gain, ngưỡng −80…−45 dBFS (mặc định −60), chỉ rút quãng dài hơn 2…10 s (mặc định 3 s), giữ 1,5…3 s (mặc định 1,5 s, không quá ngưỡng thời lượng), giữ hai mép. Sàn 1,5 s bảo vệ nhịp câu/đoạn/ngăn cảnh TTS. Ba slider vẫn hiện, mờ khi tắt, không thêm tầng. Đồng hồ/đọc theo/phụ đề luôn dùng thời gian nguồn; tua và đổi nguồn xoá bộ đệm cũ. Web chỉ tua qua khoảng đã quét PCM nguồn đầy đủ, không đo mức ra loa để đoán phần chưa nghe; live clip không quét thì giữ nguyên nghỉ.
+- Đây là tuỳ chọn phát lại, không sửa WAV/MP3, preset giọng TTS, hash chất lượng hay kết quả duyệt. Không gắn nhãn giảm nhiễu cho EQ: TTS sạch chưa có lý do thêm DSP giảm nhiễu.
 
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.

@@ -1,5 +1,15 @@
 # Test report
 
+## 08-11-2026 — audiofx2: silence shortening, channel controls and book profiles
+
+- Android Compose, Qt and web share the existing `… → Âm thanh` entry: Mono, Balance, conservative silence shortening, and a device-local per-book profile switch. Profiles include volume and speed. Default scope is shared; disabling an override restores the shared profile. DESIGN and UI inventories are updated.
+- Silence shortening defaults off: peak threshold −60 dBFS, trigger strictly longer than 3 s, retain 1.5 s split across both edges. The 1.5 s floor preserves the current TTS scene-break rhythm. Source-time maps keep subtitle/progress clocks after trimming; seek resets the map. Web only seeks across decoded verified intervals and preserves live/unscannable clips.
+- Kotlin JVM full coverage: 3,387 passed, 8 skipped, 0 failed (3,395 discovered), with all 21 FastConnect TLS tests in a separate JVM via an external init script. The ordinary shared-JVM full command previously had 2 TLS failures; it is not claimed fixed. An intermediate isolated run had 1 existing polling/timing failure; its recheck and final full run pass. No TLS assertions or timing tolerances were weakened.
+- Vitest final full run: 2,857 passed, 0 failed / 320 files. Related pytest with `-rf`: 53 passed, 0 failed. Qt DSP/Player/Native/Mix/Voice/UI: 238 passed, 0 failed, including QtTest init/cleanup. Emulator: 1 passed, 0 failed, headless/read-only only; captures reject a foreground System UI error dialog.
+- Web real OfflineAudioContext checks 20 mono/stereo/balance combinations; real media playback shortens a 6.8 s fixture to about 3.60 s at 1x / 2.50 s at 1.5x including startup, with final source clock 6.8 s. Source speech and the 1.5 s structural pause remain intact. Web light/dark inspection: 0 findings/errors, 48 geometry trials.
+- Full suites precede a final disabled-slider opacity polish. After that visual change, all three builds, TypeScript, the 17 DSP tests, 14 Qt UI tests, 1 emulator test and web inspection pass; full suites were not repeated for opacity alone.
+- No denoiser is added without a noisy imported-book corpus and listening evidence. No physical phone, release or commit. Quality implementation hash unchanged: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc`. Detailed failed/final runs, probes, screenshots and limits: task `scratchpad/codex/audiofx2/report.md` and `result.md`.
+
 ## 08-11-2026 — audiofx: playback EQ, volume/boost and independent pitch
 
 - Android Compose, Qt/WASAPI and web share `… → Âm thanh`, five bands/presets, bass shelf, app volume, 0–12 dB boost with linked peak limiter, and ±6 semitone pitch. Playback settings are device-wide; recording/quality files remain unchanged.

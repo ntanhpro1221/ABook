@@ -222,10 +222,8 @@ int main(int argc, char *argv[]) {
     Player player(&speech, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     QSettings audioFxStore;
-    player.setAudioFx(audioFxStore.value(QStringLiteral("audioFx")).toMap());
-    player.setVolume(audioFxStore.value(QStringLiteral("appVolume"),0.9).toDouble());
-    QObject::connect(&player,&Player::audioFxChanged,&player,[&] { audioFxStore.setValue(QStringLiteral("audioFx"),player.audioFx()); });
-    QObject::connect(&player,&Player::volumeChanged,&player,[&] { audioFxStore.setValue(QStringLiteral("appVolume"),player.volume()); });
+    player.restoreAudioProfiles(audioFxStore.value(QStringLiteral("audioProfiles")).toMap());
+    QObject::connect(&player,&Player::audioProfilesChanged,&player,[&] { audioFxStore.setValue(QStringLiteral("audioProfiles"),player.audioProfiles()); });
     player.watchInput();
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
         auto *voice = new MixVoice(mixer.get(), MixVoice::Bed);

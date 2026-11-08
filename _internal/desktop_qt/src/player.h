@@ -151,6 +151,8 @@ public:
     double volume() const { return m_volume; }
     QVariantMap audioFx() const;
     Q_INVOKABLE void setAudioFx(const QVariantMap &value);
+    QVariantMap audioProfiles() const;
+    void restoreAudioProfiles(const QVariantMap &profiles);
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.minutes; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
@@ -249,6 +251,7 @@ signals:
     void rateChanged();
     void volumeChanged();
     void audioFxChanged();
+    void audioProfilesChanged();
     void audioSeeked();
     void outputGainChanged();
     /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
@@ -359,6 +362,10 @@ private:
     double m_defaultRate = PlayerLogic::kDefaultRate;
     double m_volume = 0.9;
     AudioFx::Settings m_audioFx;
+    QVariantMap m_sharedAudio, m_bookAudio;
+    bool m_bookOnly = false, m_applyingAudio = false;
+    void rememberAudioProfile();
+    void activateAudioProfile();
     double m_muted = 0; // mức trước lần tắt tiếng gần nhất
     bool m_fading = false;
     QString m_error;

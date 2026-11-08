@@ -509,6 +509,9 @@ Module chính:
 
 ## Quy tắc thay đổi
 
+- Tuỳ chọn âm thanh khi nghe thuộc thiết bị: mặc định dùng chung; `Riêng sách này` sao chép bộ hiện tại theo mã sách, tắt thì dùng lại bộ chung. Bao gồm tốc độ/âm lượng và DSP; không sửa bản thu, preset TTS hoặc evidence QA.
+- Bỏ khoảng lặng mặc định tắt, đo PCM nguồn trước gain/EQ trên mọi kênh. Chỉ rút quãng dài hơn thời lượng chọn, giữ hai mép và ít nhất 1,5 s (nhịp ngăn cảnh TTS). Đồng hồ, phụ đề và anchor dùng thời gian nguồn ở con trỏ đã nghe, không dùng tổng khung giải mã trước; tua/đổi nguồn đặt lại bản đồ. Web chỉ tua qua quãng đã quét, live clip chưa quét giữ nguyên.
+
 - Database/recovery change phải có crash/reopen test.
 - Resource policy change phải test bằng snapshot giả lập.
 - Pipeline change phải có mock adapter để test không cần model.

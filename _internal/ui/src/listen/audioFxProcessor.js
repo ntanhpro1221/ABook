@@ -60,6 +60,22 @@ export class PitchShifter {
   }
 }
 
+/** Stereo matrix, downmix before balance. Shared by live graph and offline QA. */
+export function stereoGains(mono,balance) {
+  const b=Number.isFinite(balance)?Math.max(-1,Math.min(1,balance)):0;
+  const left=1-Math.max(0,b),right=1+Math.min(0,b);
+  return [mono?.5*left:left,mono?.5*right:0,mono?.5*left:0,mono?.5*right:right];
+}
+export function createStereoMatrix(ctx,source) {
+  const stereo=ctx.createGain();stereo.channelCount=2;stereo.channelCountMode='explicit';
+  const split=ctx.createChannelSplitter(2),output=ctx.createChannelMerger(2);
+  const matrix=Array.from({length:4},()=>ctx.createGain());
+  source.connect(stereo);stereo.connect(split);
+  matrix.forEach((node,i)=>{node.gain.value=i===0||i===3?1:0;split.connect(node,Math.floor(i/2));node.connect(output,0,i%2);});
+  return {output,update(mono,balance,smooth=true){stereoGains(mono,balance).forEach((v,i)=>{if(smooth)matrix[i].gain.setTargetAtTime(v,ctx.currentTime,.015);else matrix[i].gain.value=v;});},
+    dispose(){for(const node of [stereo,split,output,...matrix])node.disconnect();}};
+}
+
 export class PeakLimiter {
   constructor(rate=48000) { this.envelope=1; this.release=Math.exp(-1/(rate*.08)); }
   gain(peak) {

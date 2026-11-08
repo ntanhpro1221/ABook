@@ -426,11 +426,12 @@ private slots:
         QCOMPARE(rig.player->clock()->sleepLeft(), 900.0);
     }
 
-    void rateIsPerBook() {
+    void rateIsSharedUnlessBookOverride() {
         Rig rig;
         rig.net.books.insert(QStringLiteral("b"), makeBook(QStringLiteral("b"), 2, true, 0, 0, 0, 1.5));
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         QCOMPARE(rig.player->rate(), 1.0);
+        rig.player->setAudioFx({{QStringLiteral("bookOnly"),true}});
         rig.player->setRate(1.25);
         const auto rates = rig.net.callsTo(QStringLiteral("/rate"));
         QCOMPARE(rates.size(), 1);
@@ -439,14 +440,31 @@ private slots:
         QCOMPARE(rates.first().body.value(QStringLiteral("record")).toString(), QStringLiteral("r1"));
         QCOMPARE(rig.out.rate, 1.25);
         rig.player->open(QStringLiteral("b"), -1, -1, true);
-        QCOMPARE(rig.player->rate(), 1.5);
-        QCOMPARE(rig.out.rate, 1.5);
+        QCOMPARE(rig.player->rate(), 1.0);
+        QCOMPARE(rig.out.rate, 1.0);
         // Về cuốn a: máy chủ đã nhớ 1.25 cho nó.
         rig.net.books.insert(QStringLiteral("a"), makeBook(QStringLiteral("a"), 4, true, 0, 0, 0, 1.25));
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         QCOMPARE(rig.player->rate(), 1.25);
         rig.player->stepRate(1);
         QCOMPARE(rig.player->rate(), 1.3);
+        rig.player->setAudioFx({{QStringLiteral("bookOnly"),false}});
+        QCOMPARE(rig.player->rate(),1.0);
+    }
+    void audioProfilesPersistAndIsolateAllControls() {
+        Rig rig;rig.player->setAudioFx({{QStringLiteral("boost"),3.0}});rig.player->setVolume(.7);rig.player->setRate(1.5);
+        rig.player->open(QStringLiteral("a"),-1,-1,false);
+        rig.player->setAudioFx({{QStringLiteral("bookOnly"),true},{QStringLiteral("mono"),true},{QStringLiteral("boost"),9.0},{QStringLiteral("skipSilence"),true}});
+        rig.player->setVolume(.4);rig.player->setRate(2.0);
+        const auto profiles=rig.player->audioProfiles();
+        rig.player->open(QStringLiteral("b"),-1,-1,true);
+        QCOMPARE(rig.player->rate(),1.5);QCOMPARE(rig.player->volume(),.7);QCOMPARE(rig.player->audioFx().value(QStringLiteral("boost")).toDouble(),3.);
+        Rig reopened;reopened.player->restoreAudioProfiles(profiles);reopened.player->open(QStringLiteral("a"),-1,-1,false);
+        QCOMPARE(reopened.player->rate(),2.0);QCOMPARE(reopened.player->volume(),.4);
+        QVERIFY(reopened.player->audioFx().value(QStringLiteral("mono")).toBool());
+        QVERIFY(reopened.player->audioFx().value(QStringLiteral("skipSilence")).toBool());
+        reopened.player->setAudioFx({{QStringLiteral("bookOnly"),false}});
+        QCOMPARE(reopened.player->rate(),1.5);QCOMPARE(reopened.player->volume(),.7);
     }
 
     void progressSavedOnPauseAndClose() {

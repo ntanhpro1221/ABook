@@ -55,7 +55,7 @@ struct Device : MixDevice {
     quint64 revision() const override { return epoch; }
     bool write(const float *samples, size_t n) override { output.insert(output.end(), samples, samples + n * 2); queued += n; return true; }
 };
-struct Control { bool starved = false, unavailable = false; double duration = 6; int seeks = 0; std::function<void()> duringRead; };
+struct Control { bool starved = false, unavailable = false, longSilence = false; double duration = 6; int seeks = 0; std::function<void()> duringRead; };
 class Decoder : public VoiceDecoder {
     std::shared_ptr<Control> control;
     int hz;
@@ -70,7 +70,7 @@ public:
         const auto end = quint64(std::llround(duration() * hz));
         frames = size_t(std::min<quint64>(frames, end - std::min(end, at)));
         for (size_t i = 0; i < frames; ++i, ++at) {
-            const float x = float(0.25 * std::sin(2 * 3.141592653589793 * 440 * double(at) / hz));
+            const float x = control->longSilence && at>=quint64(hz) && at<quint64(hz*6)?0:float(0.25 * std::sin(2 * 3.141592653589793 * 440 * (double(at)+.5) / hz));
             out.push_back(x); out.push_back(x);
         }
         return frames;
@@ -173,6 +173,20 @@ private:
 class VoiceTests : public QObject {
     Q_OBJECT
 private slots:
+    void silenceClockFollowsHeardFramesNotDecodeAhead() {
+        Rig rig;rig.control->duration=7;rig.control->longSilence=true;
+        AudioFx::Settings fx;fx.skipSilence=true;rig.voice.setAudioFx(fx);rig.voice.play();
+        for(int i=0;i<50;++i)rig.step();
+        QVERIFY(rig.voice.position()<.6); // decode-ahead must not jump the current subtitle
+        double before=rig.voice.position();bool jumped=false;
+        for(int i=0;i<400;++i) {
+            rig.step();const double now=rig.voice.position();
+            if(now-before>3) { QVERIFY(now>=5.2 && now<5.4);jumped=true; }
+            before=now;
+        }
+        QVERIFY(jumped);QVERIFY(rig.voice.position()>6.9);
+        rig.voice.seek(.2);rig.step();QVERIFY(rig.voice.position()<.3); // old map discarded
+    }
     void unityStretchIsBitIdenticalAcrossRingWrapAndEof() {
         Ring input(514);
         TimeStretch stretch(48000); stretch.setRate(1.0);

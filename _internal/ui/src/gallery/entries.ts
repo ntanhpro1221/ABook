@@ -112,7 +112,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/book-record-move", group: "Trang sách", title: "Chuyển hồ sơ", route: "/book/suong-mu-2", act: async () => {
     await clickFirst("Thêm tuỳ chọn"); await click("Chuyển hồ sơ");
   } },
-  { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: async () => {
+  { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", storage: {"abook.audioFx.book:suong-mu-2":JSON.stringify({speed:1.15})}, act: async () => {
     await compactPlayerOpen(); await click(/^Tốc độ đọc/);
   } },
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
@@ -128,7 +128,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-music-level", group: "Trình phát", title: "Hộp nhạc nền · thanh trượt mức", route: "/book/gac-xep", scenario: { music: true }, act: async () => {
     await desktopTextMore(); await click("Nhạc nền");
   } },
-  { id: "desktop/player-full-speed", group: "Trình phát", title: "Tốc độ ở màn nghe", route: "/", act: async () => {
+  { id: "desktop/player-full-speed", group: "Trình phát", title: "Tốc độ ở màn nghe", route: "/", storage: {"abook.audioFx.book:suong-mu-2":JSON.stringify({speed:1.15})}, act: async () => {
     await playerOpen(); await click(/^Tốc độ đọc/, document.querySelector('.now-playing')!);
   } },
   { id: "desktop/player-full-sleep", group: "Trình phát", title: "Hẹn giờ ở màn nghe", route: "/", act: async () => {

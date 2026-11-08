@@ -7,6 +7,49 @@
 class AudioFxTests : public QObject {
     Q_OBJECT
 private slots:
+    void monoBalance() {
+        for(bool mono:{false,true}) for(double balance:{-1.,-.5,0.,.5,1.}) {
+            AudioFx::Settings s;s.mono=mono;s.balance=balance;AudioFx::Dsp dsp;dsp.configure(s,48000);
+            float f[]{.2f,.6f};dsp.process(f,1);
+            QVERIFY(std::abs(f[0]-(mono?.4:.2)*(1-std::max(0.,balance)))<1e-7);
+            QVERIFY(std::abs(f[1]-(mono?.4:.6)*(1+std::min(0.,balance)))<1e-7);
+        }
+    }
+    void silenceAndClock() {
+        AudioFx::Settings s;s.skipSilence=true;AudioFx::SilenceTrimmer trim(1000);std::vector<std::array<float,2>> out;
+        auto sink=[&](const auto &f){out.push_back(f);};trim.configure(s,sink);
+        auto push=[&](int n,std::array<float,2> f){for(int i=0;i<n;++i)trim.push(f,sink);};
+        push(100,{.1f,.2f});push(1500,{0,0});push(100,{.1f,.2f});push(5000,{0,0});push(100,{.1f,.2f});trim.finish(sink);
+        QCOMPARE(out.size(),size_t(3300));
+        QCOMPARE(std::count_if(out.begin(),out.end(),[](auto f){return f[0]==.1f && f[1]==.2f;}),300);
+        QVERIFY(std::abs(trim.sourceSeconds(2.449)-2.449)<1e-9);
+        QVERIFY(std::abs(trim.sourceSeconds(3.2)-6.7)<1e-9);
+        QVERIFY(std::abs(trim.sourceSeconds(3.3)-6.8)<1e-9);
+    }
+    void silenceBoundariesAndChannels() {
+        for(int length:{1500,3000,3001,5000}) {
+            AudioFx::Settings s;s.skipSilence=true;AudioFx::SilenceTrimmer trim(1000);int count=0;
+            auto sink=[&](const auto &){++count;};trim.configure(s,sink);
+            for(int i=0;i<length;++i)trim.push({0,0},sink);trim.finish(sink);
+            QCOMPARE(count,length>3000?1500:length);
+        }
+        AudioFx::Settings s;s.skipSilence=true;AudioFx::SilenceTrimmer trim(1000);int count=0;
+        auto sink=[&](const auto &){++count;};trim.configure(s,sink);
+        for(int i=0;i<5000;++i)trim.push({0,.01f},sink);trim.finish(sink);QCOMPARE(count,5000);
+    }
+    void silenceThroughSonicKeepsSourceClock() {
+        constexpr int rate=48000;
+        for(double speed:{1.,1.5}) {
+            std::vector<float> source(size_t(rate*7)*2);
+            for(size_t i=0;i<source.size()/2;++i) if(i<size_t(rate) || i>=size_t(rate*6)) source[2*i]=source[2*i+1]=float(.2*std::sin(2*std::numbers::pi*220*(i+.5)/rate));
+            MixCore::Ring input(source.size());input.write(source.data(),source.size());
+            TimeStretch stretch(rate);AudioFx::Settings s;s.skipSilence=true;stretch.setAudioFx(s);stretch.setRate(speed);
+            float block[512];size_t count=0;
+            while(!stretch.drained())count+=stretch.read(input,block,256,true);
+            QVERIFY(std::abs(double(count)/rate-3.5/speed)<.025);
+            QVERIFY(std::abs(stretch.sourceSeconds(2.5)-6.0)<1e-9);
+        }
+    }
     void presetResponse() {
         double worst=0;
         for (int rate:{24000,44100,48000}) for (size_t p=0;p<5;++p) for (size_t b=0;b<5;++b) {
