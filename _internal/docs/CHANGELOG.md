@@ -1,3 +1,7 @@
+# Chưa phát hành — 08-11-2026
+
+- Gỡ hoàn toàn tự hẹn/tự dừng khi người nghe lâu không tương tác trên Android, Qt và web. Không còn lựa chọn hoặc thông báo cho tính năng này. Hẹn phút, hết chương và lịch đêm do người nghe bật vẫn giữ.
+
 # Nhật ký thay đổi
 
 Những gì NGƯỜI DÙNG thấy thay đổi ở mỗi bản phát hành (máy tính và điện thoại cùng một số phiên bản). Lý do kỹ thuật và

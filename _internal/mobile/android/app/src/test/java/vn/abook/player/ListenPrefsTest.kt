@@ -26,7 +26,6 @@ class ListenPrefsTest {
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
         SleepTimer.shakeThresholdG = 2.2
-        SleepTimer.safetyStopHours = 0.0
         SleepTimer.schedule = null
         Motion.flipEnabled = false
         sleep("mode").set(SleepTimer, SleepTimer.Mode.OFF)
@@ -51,7 +50,7 @@ class ListenPrefsTest {
 
     private fun chosen() = JSONObject(
         """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,
-            "shakeSensitivity":"firm","flipToPause":false,"safetyStopHours":3.0,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
+            "shakeSensitivity":"firm","flipToPause":false,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
     )
 
     @Test fun theChoicesSurviveTheProcessDyingBeforeTheUiPushesThemAgain() {
@@ -67,7 +66,6 @@ class ListenPrefsTest {
         assertEquals(10_000L, SleepTimer.fadeMs)
         assertFalse(SleepTimer.shakeEnabled)
         assertEquals(2.8, SleepTimer.shakeThresholdG, 0.0)
-        assertEquals(3.0, SleepTimer.safetyStopHours, 0.0)
         assertEquals(Triple(23 * 60, 6 * 60 + 30, 45), SleepTimer.schedule)
     }
 
@@ -164,7 +162,6 @@ class ListenPrefsTest {
             .put("savedAt", now).put("minutes", 30).put("remainingMs", 600_000L)
         for (bad in listOf(
             JSONObject().put("endsAt", now + 60_000L),
-            JSONObject(valid.toString()).put("source", "safety"),
             JSONObject(valid.toString()).put("source", "schedule"),
             JSONObject(valid.toString()).put("savedAt", now - 25 * 3_600_000L),
             JSONObject(valid.toString()).put("bookId", ""),
@@ -178,7 +175,7 @@ class ListenPrefsTest {
 
     @Test fun automaticCountdownIsNeverPersistedAsAManualTimer() {
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
-        sleep("automaticReason").set(SleepTimer, "safety")
+        sleep("automaticReason").set(SleepTimer, "schedule")
         sleep("remainingMs").setLong(SleepTimer, 60_000L)
         SleepTimer.persist(1_000_000_000L)
         defaults()

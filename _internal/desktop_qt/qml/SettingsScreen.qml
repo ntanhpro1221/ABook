@@ -84,8 +84,7 @@ FocusScope {
         if (key === "listen") return (p.autoRewind !== false ? "Tự lùi" : "Không tự lùi") + "\u00a0·\u00a0" + (p.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền")
         if (key === "sleep") {
             if (p.sleepSchedule) return "Lịch đêm " + p.sleepSchedule.from + "–" + p.sleepSchedule.to
-            const hours = p.safetyStopHours ?? 0
-            return hours ? "Máy rảnh " + hours + " giờ" : "Tắt"
+            return "Tắt"
         }
         if (key === "look") return p.theme === "light" ? "Sáng" : p.theme === "dark" ? "Tối" : "Tự động"
         if (key === "devices") return root.sync ? (root.sync.enabled ? (root.sync.devices || []).length + " thiết bị đã ghép" : "Đang tắt") : ""

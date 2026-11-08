@@ -1418,6 +1418,16 @@ TRƯỚC và SAU nhận vào khớp toàn bộ JSON với lượt 2 (184 local +
 
 Cả bốn tài liệu castrules cũ, gồm deltas.csv, được move ra thư mục tác vụ; repo chỉ giữ số tổng ở docs/castrules. Báo cáo đầy đủ, từng sách, lý do từng test và bằng chứng riêng ở scratchpad/codex/castrules3. Hash dev `71aa3370…` → `e1825aff…`; không commit/push hay sửa cây khác, không LLM/API/GPU/kill.
 
+# nosafety — 08-11-2026
+
+Gỡ hoàn toàn tự hẹn/tự dừng vì lâu không tương tác trên Android Compose/native, Qt, web và Python preferences/API. Không còn field/range/UI/nhánh safety; không đọc, migrate hay xoá khoá cũ. Giữ lịch đêm mặc định tắt do người nghe bật, hẹn phút/hết chương, cử chỉ opt-in và các đường dừng do hết nội dung/lỗi/audio focus. Invariant trong AGENTS.md; sinh lại parity; cập nhật năm ảnh chuẩn settings Android. Test giả lập nghe không thao tác 3 giờ giữ timer OFF và audio không pause.
+
+Kotlin JVM toàn bộ: **3.377 passed, 0 failures/errors, 8 skipped** (390 suite, 3.385 cases). Vitest liên quan 113 file: **1.305 passed, 0 failed**, typecheck đạt. Qt PlayerTests **47 passed**; WidthTests toàn bộ ba file settings/d2/shots **38 passed**, 0 failed. Android ảnh record và verify mỗi lượt **6 passed**. Tất cả GUI headless/offscreen.
+
+Pytest full một invocation `-rf`: **10.610 passed, 2 FAILED, 14 skipped, 2 xfailed, 3 warnings**, 3.012,56 giây; đối chiếu đúng hai dòng FAILED với hai XML failure nodes. Hai lỗi là kỳ vọng copy safety đã gỡ (module collect trước khi sửa test) và kỳ vọng giữ khoá lạ trong Preferences.get. Đã đổi contract test theo schema hiện tại, kiểm raw file vẫn giữ dữ liệu lạ khi nạp; không sửa thêm code sản phẩm. Recheck toàn bộ **12 file: 162 passed, 0 FAILED/errors/skipped**. Không gọi lượt full là xanh.
+
+Danh sách quality đọc trực tiếp có **56 mục**. Hash trước/sau giữ nguyên `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc`. LF/compileall/diff check đạt. Chỉ nhánh dev/timerbug2, HEAD f7eca3884, chưa commit/push. Bằng chứng, danh sách 11 loại đường hẹn/dừng còn lại và chi tiết các lượt lỗi/recheck ở scratchpad/codex/nosafety/report.md.
+
 # safetystop — 07-11-2026
 
 Hẹn tự động trên Android cần màn tắt liên tục, không tương tác và bốn cửa sổ nằm yên khi có cảm biến; desktop dùng thời gian rảnh toàn OS (Windows GetLastInputInfo). Dấu hiệu còn thức huỷ hẹn tự động; hẹn tay giữ nguyên. Không khôi phục hẹn tự động từ đĩa; hẹn tay gắn sách/hồ sơ. Giao diện và thông báo nêu lý do, dùng hoạt ảnh sẵn có. Chữ và mô tả ba nền đã đồng bộ, sinh lại parity.

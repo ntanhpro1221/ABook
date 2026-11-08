@@ -13,7 +13,7 @@ object ListenPrefs {
     private const val FILE = "listen-prefs.json"
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeSensitivity", "flipToPause",
-        "headsetSkips", "autoRewind", "safetyStopHours", "schedule", "theme",
+        "headsetSkips", "autoRewind", "schedule", "theme",
         // Tiếng chạm, rung, nền đọc: do giao diện áp; lõi chỉ nhớ để trả lại (như theme).
         "touchSounds", "haptics", "readingSurface",
         // Chỉ giao diện của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở; bảng chung ranges.json không liệt kê.
@@ -29,7 +29,6 @@ object ListenPrefs {
     // ListenPrefsRangesTest so khớp. Giá trị ngoài miền về mặc định RIÊNG trường ấy (soát a102 B3), không giữ giá trị cũ.
     private val FADE_SECONDS = listOf(10, 30, 60)
     private val EXTEND_MINUTES = listOf(5, 10, 15)
-    private val SAFETY_HOURS = listOf(0, 1, 2, 3)
     private val SCHEDULE_MINUTES = listOf(15, 30, 45, 60)
     private val SHAKE_SENSITIVITIES = listOf("gentle", "normal", "firm")
     private val THEMES = listOf("system", "light", "dark")
@@ -66,7 +65,6 @@ object ListenPrefs {
         val out = JSONObject()
         if (json.has("sleepExtendMinutes")) out.put("sleepExtendMinutes", choiceOr(json, "sleepExtendMinutes", EXTEND_MINUTES, 10))
         if (json.has("sleepFadeSeconds")) out.put("sleepFadeSeconds", choiceOr(json, "sleepFadeSeconds", FADE_SECONDS, 30))
-        if (json.has("safetyStopHours")) out.put("safetyStopHours", choiceOr(json, "safetyStopHours", SAFETY_HOURS, 0))
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
         // Giao diện sáng/tối do giao diện áp; lõi chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))
@@ -94,7 +92,6 @@ object ListenPrefs {
         if (json.has("shakeSensitivity")) {
             SleepTimer.shakeThresholdG = when (json.getString("shakeSensitivity")) { "gentle" -> 1.6; "firm" -> 2.8; else -> 2.2 }
         }
-        if (json.has("safetyStopHours")) SleepTimer.safetyStopHours = json.getInt("safetyStopHours").toDouble()
         if (json.has("schedule")) {
             val schedule = json.optJSONObject("schedule")
             SleepTimer.schedule = schedule?.let { Triple(clockMinutes(it.getString("from"))!!, clockMinutes(it.getString("to"))!!, it.getInt("minutes")) }

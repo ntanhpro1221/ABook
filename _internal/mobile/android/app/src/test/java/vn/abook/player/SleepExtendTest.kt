@@ -131,14 +131,13 @@ class SleepExtendTest {
 
     @Test fun awakeExtensionCancelsAutomaticTimerInsteadOfArmingAnother() = withSensors {
         SleepTimer.extendMinutes = 15
-        SleepTimer.safetyStopHours = 2.0
         voice.playing = true
-        SleepTimer.setMinutes(1, "safety") // decision evidence is covered by SleepPolicyTest
+        SleepTimer.setMinutes(30, "schedule") // decision evidence is covered by SleepPolicyTest
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals("đếm ngược vẫn 1 phút", 60.0, left(), 2.0)
-        assertEquals("không ai chọn số phút", 0, SleepTimer.describe().getInt("minutes"))
-        assertEquals(15, SleepTimer.extendTarget())
-        assertEquals("Hẹn lại 15 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
+        assertEquals("lịch đêm đếm đúng số phút đã chọn", 1800.0, left(), 2.0)
+        assertEquals(30, SleepTimer.describe().getInt("minutes"))
+        assertEquals(30, SleepTimer.extendTarget())
+        assertEquals("Hẹn lại 30 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
         SleepTimer.extend()
         SleepTimer.extend()
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
@@ -167,8 +166,8 @@ class SleepExtendTest {
         )
         for (command in commands) {
             Motion::class.java.getDeclaredField("running").also { it.isAccessible = true }.setBoolean(Motion, true)
-            timer(0, 1.0)
-            field("automaticReason").set(SleepTimer, "safety")
+            timer(30, 1.0)
+            field("automaticReason").set(SleepTimer, "schedule")
             command()
             assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
             timer(30, 12.0)

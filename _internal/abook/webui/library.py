@@ -44,8 +44,6 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Hẹn giờ ngủ: nhỏ dần bao lâu trước khi tắt, và mỗi lần "nghe thêm" cộng bao nhiêu phút.
     "sleepFadeSeconds": 30,
     "sleepExtendMinutes": 10,
-    # Lưới an toàn ngủ quên: phát liên tục chừng này giờ không ai chạm máy thì tự dừng (0 = tắt).
-    "safetyStopHours": 0,
     # Lịch đêm tự hẹn giờ: {"from": "22:00", "to": "06:00", "minutes": 30} hoặc None.
     "sleepSchedule": None,
     # Máy tính xách tay rút sạc: tạm dừng tạo sách (supervisor đọc thẳng khoá này - power_source.PREFERENCE_KEY).
@@ -335,7 +333,6 @@ CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "ne
 SLEEP_CHOICES: dict[str, tuple[int, ...]] = {
     "sleepFadeSeconds": (10, 30, 60),
     "sleepExtendMinutes": (5, 10, 15),
-    "safetyStopHours": (0, 1, 2, 3),
 }
 SCHEDULE_MINUTES = (15, 30, 45, 60)
 NUMBER_RANGES: dict[str, tuple[float, float]] = {"playbackRate": (0.5, 3.0), "volume": (0.0, 1.0)}
@@ -427,7 +424,7 @@ class Preferences:
     @staticmethod
     def _defaults(parsed: dict[str, Any]) -> dict[str, Any]:
         data = json.loads(json.dumps(DEFAULT_PREFERENCES))
-        data.update(parsed)
+        data.update({key: value for key, value in parsed.items() if key in DEFAULT_PREFERENCES})
         if not data["libraryRoot"].strip():
             data["libraryRoot"] = str(Path.home() / "Audiobooks")
         return data

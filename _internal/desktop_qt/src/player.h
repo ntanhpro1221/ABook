@@ -226,7 +226,6 @@ public:
     void setFreshSpotMs(int ms) { m_freshMs = ms; }
     void setDefaultRate(double rate) { m_defaultRate = rate; }
     void setSystemIdleReader(std::function<qint64()> read) { m_systemIdle = std::move(read); }
-    void setSafetyStopHours(int hours) { m_safetyHours = hours; }
     void setFadeSeconds(int seconds) { m_fadeSeconds = seconds; }
     QString lastFailure() const { return m_lastFailure; }
     bool wantsPlay() const { return m_wantsPlay; }
@@ -234,7 +233,7 @@ public:
     double outputVolume() const { return m_volume * (m_fading ? m_gain : 1.0); }
     /// Lời nhắn ngắn ở thanh phát (nhạc nền: "Chưa chỉnh được nhạc nền").
     void showNotice(const QString &notice) { setNotice(notice); }
-    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lưới an toàn ngủ quên, và "lắc máy" hẹn lại lúc đang nhỏ dần.
+    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lịch đêm đã bật, và "lắc máy" hẹn lại lúc đang nhỏ dần.
     void watchInput();
 
 signals:
@@ -365,7 +364,6 @@ private:
     int m_lastSleepMinutes = 30;
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
-    int m_safetyHours = 0;
     bool m_autoRewind = true;
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
