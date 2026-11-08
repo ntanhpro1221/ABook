@@ -991,7 +991,10 @@ def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> 
             char = line[index]
             if char in ("“", "‘"):
                 stack.append("”" if char == "“" else "’")
-            elif char == stack[-1] or (stack[-1] == "’" and char == "'"):
+            elif char == stack[-1] or (
+                stack[-1] == "’" and char == "'"
+                and THOUGHT_CLOSING_PATTERN.match(line, index) is not None
+            ):
                 stack.pop()
                 if not stack:
                     return index, ()

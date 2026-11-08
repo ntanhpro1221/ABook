@@ -67,6 +67,7 @@ def test_applying_twice_changes_nothing_more(tmp_path: Path) -> None:
 
 def test_turning_it_off_restores_the_original_profiles_and_preserves_thoughts(tmp_path):
     paths,db,settings=_book(tmp_path)
+    teller_voice.ensure(paths.root,db,settings)
     before=_rows(db)
     teller_voice.set_mode(paths.root,'teller')
     teller_voice.ensure(paths.root,db,settings)
@@ -138,6 +139,7 @@ def test_teller_profile_retargets_on_the_next_worker_check(tmp_path):
 
 def test_a_failed_voice_change_leaves_no_partial_profile_or_origin(tmp_path,monkeypatch):
     paths,db,settings=_book(tmp_path)
+    teller_voice.ensure(paths.root,db,settings)
     before=_rows(db)
     teller_voice.set_mode(paths.root,'teller')
     def interrupted(*args,**kwargs):
@@ -147,7 +149,7 @@ def test_a_failed_voice_change_leaves_no_partial_profile_or_origin(tmp_path,monk
         teller_voice.ensure(paths.root,db,settings)
     assert _rows(db)==before
     with db.connect() as conn:
-        assert conn.execute('SELECT COUNT(*) FROM chapter_teller_lines').fetchone()[0]==0
+        assert conn.execute('SELECT COUNT(*) FROM chapter_teller_lines').fetchone()[0]==2
     monkeypatch.undo()
     teller_voice.ensure(paths.root,db,settings)
     teller_voice.set_mode(paths.root,'narrator')

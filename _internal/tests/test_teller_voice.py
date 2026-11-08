@@ -1,4 +1,4 @@
-"""Accepted inner speech keeps its identity and voice through default worker policy."""
+"""A+ narration presentation keeps accepted identity and protects recordings."""
 from __future__ import annotations
 
 import json
@@ -95,16 +95,23 @@ def _events(db: ProjectDB, code: str) -> int:
         return int(conn.execute("SELECT COUNT(*) FROM runtime_events WHERE code=?", (code,)).fetchone()[0])
 
 
-def test_a_default_female_teller_keeps_every_accepted_identity_and_profile(tmp_path):
+def test_default_a_plus_aligns_narration_and_own_thought_profiles(tmp_path):
     paths, db, settings = _book(tmp_path)
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+    before = _profiles(db)
+    identity = _identities(db)
+    messages = []
+    result = teller_voice.ensure(paths.root, db, settings, messages.append)
+    assert _narrator_preset(db) == FEMALE_NARRATOR
+    assert result['narrator']['from'] == NARRATOR_VOICE
+    after = _profiles(db)
+    assert after['c1s2'] == after['c2s0'] == before['c1s0']
+    assert after['c1s1'] == before['c1s1']
+    assert after['c1s3'] == before['c1s3'] and after['c2s1'] == before['c2s1']
+    assert _identities(db) == identity
+    assert _events(db, 'NARRATOR_ALIGNED_TO_TELLER') == 1
+    assert _events(db, 'TELLER_THOUGHTS_TO_NARRATOR') == 1
+    assert messages and teller_voice.read(paths.root)['applied']['narrator']['to'] == FEMALE_NARRATOR
+
 
 
 def test_applying_twice_changes_nothing_more(tmp_path: Path) -> None:
@@ -117,16 +124,15 @@ def test_applying_twice_changes_nothing_more(tmp_path: Path) -> None:
     assert (_narrator_preset(db), _speakers(db), _events(db, "NARRATOR_ALIGNED_TO_TELLER")) == before
 
 
-def test_a_narration_voice_the_owner_chose_is_never_overridden_but_the_thoughts_keep_their_identity(tmp_path):
+def test_narrator_auto_false_keeps_base_and_still_applies_own_thought_presentation(tmp_path):
     paths, db, settings = _book(tmp_path, narrator_auto=False)
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+    before = _profiles(db)
+    identity = _identities(db)
+    teller_voice.ensure(paths.root, db, settings)
+    assert _narrator_preset(db) == NARRATOR_VOICE
+    assert _profiles(db)['c1s2'] == before['c1s0']
+    assert _identities(db) == identity
+
 
 
 def test_a_listener_who_already_changed_the_narration_voice_is_left_alone(tmp_path: Path) -> None:
@@ -140,16 +146,18 @@ def test_a_listener_who_already_changed_the_narration_voice_is_left_alone(tmp_pa
     assert _narrator_preset(db) == other and "narrator" not in result
 
 
-def test_a_same_gender_book_with_recorded_lines_is_not_touched_automatically(tmp_path):
-    paths, db, settings = _book(tmp_path, recorded=True, mai_gender="male")
+def test_recorded_book_keeps_shared_preset_and_every_recorded_row(tmp_path):
+    paths, db, settings = _book(tmp_path, recorded=True)
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET wav_path='thought.wav',wav_sha256='thought-sha',status='verified' WHERE stable_id='c1s2'")
+        before = dict(conn.execute("SELECT * FROM segments WHERE stable_id='c1s2'").fetchone())
+    profiles = _profiles(db)
+    teller_voice.ensure(paths.root, db, settings)
+    assert _narrator_preset(db) == NARRATOR_VOICE
     with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+        assert dict(conn.execute("SELECT * FROM segments WHERE stable_id='c1s2'").fetchone()) == before
+    assert _profiles(db)['c2s0'] == profiles['c1s0']
+
 
 
 def test_nothing_happens_before_casting_or_in_a_third_person_book(tmp_path: Path) -> None:
@@ -162,68 +170,63 @@ def test_nothing_happens_before_casting_or_in_a_third_person_book(tmp_path: Path
     assert teller_voice.ensure(paths2.root, db2, settings2) == {"skipped": "not_cast"}
 
 
-def test_an_unknown_gender_keeps_the_narration_voice_but_the_thoughts_keep_their_identity(tmp_path):
-    paths, db, settings = _book(tmp_path, mai_gender="unknown")
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+def test_unknown_gender_keeps_base_but_known_first_person_identity_selects_thoughts(tmp_path):
+    paths, db, settings = _book(tmp_path, mai_gender='unknown')
+    before = _profiles(db)
+    identity = _identities(db)
+    teller_voice.ensure(paths.root, db, settings)
+    assert _narrator_preset(db) == NARRATOR_VOICE
+    assert _profiles(db)['c1s2'] == before['c1s0']
+    assert _profiles(db)['c1s3'] == before['c1s3']
+    assert _identities(db) == identity
 
 
-def test_a_chapter_told_by_someone_else_keeps_that_persons_thoughts_and_a_tie_keeps_the_voice(tmp_path):
-    paths, db, settings = _book(tmp_path, settings=_settings(chapters={"2": "Bao"}))
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+
+def test_tied_book_gender_keeps_base_and_local_female_chapter_uses_own_voice(tmp_path):
+    paths, db, settings = _book(tmp_path, settings=_settings('Bao', {'2': 'Mai'}))
+    before = _profiles(db)
+    teller_voice.ensure(paths.root, db, settings)
+    after = _profiles(db)
+    assert _narrator_preset(db) == NARRATOR_VOICE
+    assert after['c1s3'] == before['c1s0']
+    assert after['c1s2'] == before['c1s2']
+    assert after['c2s0'] == after['c2s2'] == before['c1s1']
+    assert after['c2s1'] == before['c2s1']
 
 
-def test_a_chapter_in_the_third_person_is_not_touched(tmp_path):
-    paths, db, settings = _book(tmp_path, settings=_settings(chapters={"2": ""}))
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+
+def test_third_person_chapter_keeps_every_thinker_profile(tmp_path):
+    paths, db, settings = _book(tmp_path, settings=_settings(chapters={'2': ''}))
+    before = _profiles(db)
+    teller_voice.ensure(paths.root, db, settings)
+    after = _profiles(db)
+    assert after['c1s2'] == before['c1s0']
+    assert all(after[sid] == before[sid] for sid in ('c2s0', 'c2s1', 'c2s2'))
 
 
-def test_a_decision_the_listener_already_made_about_a_thought_is_kept(tmp_path):
+
+def test_listener_thought_choice_wins_and_other_own_thought_still_uses_narration(tmp_path):
     paths, db, settings = _book(tmp_path)
-    request_speaker(paths.root, "c1s2", "sha-c1s2", "MAI", now=1.0)
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+    request_speaker(paths.root, 'c1s2', 'sha-c1s2', 'MAI', now=1.0)
+    before = _profiles(db)
+    teller_voice.ensure(paths.root, db, settings)
+    after = _profiles(db)
+    assert after['c1s2'] == before['c1s2']
+    assert after['c2s0'] == before['c1s0']
+    assert _speakers(db)['c1s2'] == 'MAI'
 
 
-def test_default_mode_does_not_request_an_automatic_narration_voice(tmp_path,monkeypatch):
+
+def test_no_free_narrator_voice_keeps_base_and_emits_warning(tmp_path, monkeypatch):
     paths, db, settings = _book(tmp_path)
-    def unexpected(*args,**kwargs):
-        raise AssertionError("Default mode cannot select a narration voice")
-    monkeypatch.setattr(teller_voice,"aligned_narrator_preset",unexpected)
-    with db.connect() as conn:
-        before = [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")]
-    profile = _narrator_preset(db)
-    assert teller_voice.ensure(paths.root, db, settings) == {}
-    with db.connect() as conn:
-        assert [tuple(r) for r in conn.execute("SELECT * FROM segments ORDER BY id")] == before
-    assert _narrator_preset(db) == profile
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+    monkeypatch.setattr(teller_voice, 'aligned_narrator_preset', lambda *_args: None)
+    messages = []
+    result = teller_voice.ensure(paths.root, db, settings, messages.append)
+    assert result['narrator'] == 'no_free_voice'
+    assert _narrator_preset(db) == NARRATOR_VOICE
+    assert _events(db, 'NARRATOR_ALIGN_NO_FREE_VOICE') == 1
+    assert messages
+
 
 
 def test_the_teller_of_a_section_beats_the_chapter_and_the_book(tmp_path: Path) -> None:
@@ -269,12 +272,23 @@ def test_a_failure_of_the_teller_voice_never_stops_the_run_but_leaves_a_warning(
     assert _events(db, "TELLER_VOICE_SKIPPED") == 2 and "hỏng giữa chừng" in messages[0]
 
 
-def test_default_worker_does_not_claim_listener_speaker_changes(tmp_path):
+def test_default_worker_changes_only_presentation_and_never_claims_listener_identity(tmp_path):
     from abook.worker import apply_teller_voice
     paths, db, settings = _book(tmp_path)
-    before = _speakers(db)
+    before = _identities(db)
     apply_teller_voice(paths.root, db, settings, None)
     apply_teller_voice(paths.root, db, settings, None)
-    assert _speakers(db) == before
-    assert _events(db, "SPEAKER_SET_BY_LISTENER") == 0
-    assert _events(db, "TELLER_THOUGHTS_TO_NARRATOR") == 0
+    assert _identities(db) == before
+    assert _events(db, 'SPEAKER_SET_BY_LISTENER') == 0
+    assert _events(db, 'TELLER_THOUGHTS_TO_NARRATOR') == 1
+
+
+
+def _profiles(db):
+    with db.connect() as conn:
+        return {r['stable_id']: r['voice_profile_id'] for r in conn.execute('SELECT * FROM segments')}
+
+
+def _identities(db):
+    with db.connect() as conn:
+        return [tuple(r) for r in conn.execute('SELECT stable_id,speaker,canonical_character_id,kind FROM segments ORDER BY id')]
