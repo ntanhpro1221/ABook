@@ -176,8 +176,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Đọc theo
 
-- chỉ Qt (1): Đang mở văn bản chương… (`qt/ReadAlongView.qml:361`)
-- chỉ web (3): Đang tải chữ (`1749`); Nghe từ “{}” (`56`); Shift F10: sửa cách đọc. (`338`)
+- chỉ Qt (1): Đang mở văn bản chương… (`qt/ReadAlongView.qml:374`)
+- chỉ web (3): Đang tải chữ (`1749`); Nghe từ “{}” (`56`); Shift F10: sửa cách đọc. (`373`)
 
 ### Trang sách
 
@@ -319,7 +319,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang làm file M4B… (`qt/ExportLogic.js:191`) - web: `Đang làm file M4B…`
 - Đang làm file M4B… (`qt/ExportLogic.js:21`) - web: `Đang làm file M4B…`
 - Đang mở thư viện… (`qt/RecordDialogs.qml:98`) - web: `Đang mở thư viện`
-- Đang mở văn bản chương… (`qt/ReadAlongView.qml:361`) - web: (không có)
+- Đang mở văn bản chương… (`qt/ReadAlongView.qml:374`) - web: (không có)
 - Đang mở… (`qt/ConnectionChip.qml:55`) - web: `Đang mở`
 - Đang mở… (`qt/LibraryScreen.qml:447`) - web: `Đang mở`
 - Đang thêm chữ sáng… (`qt/ExportLogic.js:258`) - web: (không có)

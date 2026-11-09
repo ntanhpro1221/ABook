@@ -4,6 +4,9 @@
 // Luật (chọn 03-10):
 // - Đang theo: câu đang nghe sắp khuất (chạm mép trên, hay xuống quá 85% chiều cao khung) thì cuộn nó lên khoảng một phần ba từ trên - không
 //   cuộn theo từng câu, mắt không bị kéo liên tục.
+// - Câu có mốc từng chữ (chọn lại 09-11, chủ sách: "scroll không đi theo highlight word"): chữ đang đọc xuống dòng mới thì cuộn mượt đưa DÒNG ấy về chỗ một
+//   phần ba - mắt đọc đứng yên một chỗ, chữ chảy lên từng dòng. Câu không có mốc chữ vẫn theo luật trên. Cùng luật: ReadAlongView.qml, ReadFollow (điện thoại).
+// - Vừa mở (vào tab, về lại màn, sang chương): đứng đúng chỗ ngay, không cuộn hoạt hoạ từ đầu chương xuống.
 // - Người tự cuộn (lăn chuột, vuốt, phím trang / mũi tên, kéo thanh cuộn) là thôi theo.
 // - Theo lại khi: bấm "Tới câu đang nghe", bấm một chữ / một câu để nghe, hay người đọc tự cuộn về chỗ câu đang nghe (câu ấy nằm trong khung và
 //   đã thôi cuộn SETTLE_MS). KHÔNG tự theo lại chỉ vì đứng yên vài giây: người đang đọc trước một đoạn sẽ bị giật trang mất chỗ.
@@ -42,6 +45,11 @@ export function needsFollowScroll(rect: Box, view: Box): boolean {
 export function followScrollTop(rect: Box, view: Box, scrollTop: number): number {
   const height = view.bottom - view.top;
   return Math.max(0, scrollTop + rect.top - view.top - height * PLACE_AT);
+}
+
+/** Chữ đang đọc (đỉnh `top`, tính trong nội dung cuộn) đã sang dòng khác dòng `previous` chưa; lệch vài px trong cùng một dòng thì chưa. */
+export function isNewLine(previous: number | null, top: number): boolean {
+  return previous === null || Math.abs(previous - top) > SLACK;
 }
 
 /** Thôi theo (người đã cuộn) mà câu đang nghe lại nằm trong khung, và người đã ngừng cuộn đủ lâu: theo lại. */

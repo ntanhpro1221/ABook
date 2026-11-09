@@ -5,7 +5,7 @@ import "PlayerLabels.js" as Labels
 
 // Văn bản chương chạy theo giọng (bản web: ReadAlongText.tsx + follow.ts). Danh sách đoạn ảo hoá: chỉ đoạn đang thấy mới có TextEdit. Câu đang nghe được tô nền
 // theo từng dòng chữ (hình chữ nhật lấy từ QTextLayout của chính TextEdit; chỉ đoạn có câu đổi mới vẽ lại), chữ đang đọc tô đậm hơn khi sách có mốc chữ,
-// câu đã nghe nhạt đi. Đang theo: câu sắp khuất thì cuộn nó lên khoảng một phần ba từ trên. Người tự cuộn là thôi theo và hiện "Tới câu đang nghe";
+// câu đã nghe nhạt đi. Đang theo: câu sắp khuất thì cuộn nó lên khoảng một phần ba từ trên; câu có mốc chữ thì chữ xuống dòng mới là cuộn dòng ấy về đúng chỗ đó. Người tự cuộn là thôi theo và hiện "Tới câu đang nghe";
 // thôi cuộn 1,5 giây mà câu đang đọc nằm trong khung thì theo lại. Bấm một câu (hay một chữ) là nghe từ đó.
 // Mặt đọc (Cài đặt › Giao diện › "Nền đọc", Theme.read; .reading-surface của web): nền, chữ, chữ phụ, màu nhấn và lớp tô câu / chữ của vùng này
 // theo MẶT ĐỌC chứ không theo giao diện của app; đổi mặt thì nền và chữ mờ chéo theo motionSlow.
@@ -118,6 +118,18 @@ Item {
         if (following) follow(true)
         else refreshPlacement()
     }
+    // Đỉnh dòng của chữ đang đọc, tính trong nội dung cuộn: chữ sang dòng khác thì đưa dòng ấy về chỗ đọc (luật ở follow.ts).
+    property real wordLine: -1
+    function afterWord() {
+        if (!following) return
+        const item = list.itemAtIndex(ReadAlong.currentPara)
+        if (!item || item.wordRects.length === 0) return
+        const rect = item.wordRects[0]
+        const line = item.y + item.bodyY + rect.y
+        if (Math.abs(line - wordLine) <= 4) return
+        wordLine = line
+        scrollTo(ReadAlong.followTop(line - list.contentY, 0, list.height, list.contentY), !firstPlacement)
+    }
     // Đoạn đang đọc vừa tính xong hình chữ nhật của câu. Gọi từ Component.onCompleted của dòng đang được dựng: để sau (Later.call gộp các lần gọi), vì
     // cuộn / positionViewAtIndex ngay trong lúc ListView đang dựng dòng bằng incubator làm dòng bị đụng lại giữa chừng (app chết trong QQmlObjectCreator::finalize).
     function currentRectsChanged() { Later.call(root, rectsSettled) }
@@ -149,6 +161,7 @@ Item {
     Connections {
         target: ReadAlong
         function onCurrentSegmentChanged() { Later.call(root, root.afterSegment) }
+        function onCurrentWordChanged() { Later.call(root, root.afterWord) }
         function onListened() { root.following = true; root.firstPlacement = false }
         function onStatusChanged() {
             if (ReadAlong.status === "ready") {

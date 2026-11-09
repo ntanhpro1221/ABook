@@ -25,6 +25,11 @@ import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
+import vn.abook.player.ui.nowplaying.ReadInk
+import vn.abook.player.ui.nowplaying.drawInkRects
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -423,7 +428,7 @@ private fun FindRow(hit: FindHit, chapterTitle: String, onPick: (FindHit) -> Uni
         buildAnnotatedString {
             append(hit.text)
             if (hit.matchEnd > hit.matchStart && hit.matchEnd <= hit.text.length) {
-                addStyle(SpanStyle(background = colors.accentSoft, color = colors.accentText, fontWeight = FontWeight.Bold), hit.matchStart, hit.matchEnd)
+                addStyle(SpanStyle(color = colors.accentText, fontWeight = FontWeight.Bold), hit.matchStart, hit.matchEnd)
             }
         }
     }
@@ -432,6 +437,10 @@ private fun FindRow(hit: FindHit, chapterTitle: String, onPick: (FindHit) -> Uni
         val where = hit.start?.let { "$chapterTitle · ${Fmt.clock(it)}" } ?: S.s_0_tu_dau_chuong_5df8329a(chapterTitle)
         BasicText(where, style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))
         Spacer(Modifier.height(Dim.s4))
-        BasicText(text, style = Abook.type.bodySmall.copy(color = colors.text))
+        // Nền của chữ tìm thấy: SpanStyle.background chỉ vẽ được góc vuông, nên tự tô bo góc từ dàn chữ.
+        var marks by remember(hit) { mutableStateOf<List<Rect>>(emptyList()) }
+        val radius = with(LocalDensity.current) { Dim.radiusControl.toPx() }
+        BasicText(text, Modifier.drawBehind { drawInkRects(marks, colors.accentSoft, radius) }, style = Abook.type.bodySmall.copy(color = colors.text),
+            onTextLayout = { marks = ReadInk.rangeRects(it, hit.matchStart, hit.matchEnd, 0f, 0f) })
     }
 }

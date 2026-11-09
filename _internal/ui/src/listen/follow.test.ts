@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chapterToFollow, firstVisibleIndex, followScrollTop, lineToEdit, needsFollowScroll, placementOf, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying } from "./follow";
+import { chapterToFollow, firstVisibleIndex, followScrollTop, isNewLine, lineToEdit, needsFollowScroll, placementOf, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying } from "./follow";
 
 const VIEW = { top: 100, bottom: 700 }; // khung cuộn cao 600 px
 
@@ -16,6 +16,13 @@ describe("placementOf", () => {
 });
 
 describe("theo giọng", () => {
+  it("chữ đang đọc chỉ tính là sang dòng mới khi lệch quá vài px", () => {
+    expect(isNewLine(null, 300)).toBe(true);
+    expect(isNewLine(300, 302)).toBe(false);
+    expect(isNewLine(300, 330)).toBe(true);
+    expect(isNewLine(300, 270)).toBe(true);
+  });
+
   it("chỉ cuộn khi câu chạm mép trên hay xuống quá 85% khung - không cuộn theo từng câu", () => {
     expect(needsFollowScroll({ top: 200, bottom: 240 }, VIEW)).toBe(false);
     expect(needsFollowScroll({ top: 560, bottom: 610 }, VIEW)).toBe(false); // 610 < 100 + 510

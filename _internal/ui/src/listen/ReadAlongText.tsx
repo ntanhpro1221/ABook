@@ -1,12 +1,12 @@
 import { S } from "../shared/strings.generated";
 import { Locate } from "lucide-react";
 import { feedback } from "@/shared/feedback";
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
 import { useClock } from "./clock";
 import { SpeakerLabel } from "./SpeakerLabel";
-import { followScrollTop, needsFollowScroll, placementOf, SCROLL_KEYS, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying, type Placement } from "./follow";
+import { followScrollTop, isNewLine, needsFollowScroll, placementOf, SCROLL_KEYS, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying, type Placement } from "./follow";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { usePlayer } from "./player";
@@ -62,6 +62,10 @@ export function useListenFrom(bookId: string, book: ListenBook | undefined, chap
   return { canSpeak, canListen, listenFrom };
 }
 
+/** Chữ đang đọc vừa đổi: sự kiện nổi lên từ chính span của chữ, khung cuộn (`useFollowVoice`) đo nó - đồng hồ không phải đi qua cây câu / đoạn. */
+export const LIT_WORD_EVENT = "abook:lit-word";
+const LIT_WORD = ".read-along-word.is-lit";
+
 /** Khung cuộn đi theo câu đang nghe (luật ở follow.ts). `initial`: mở ra đã theo chưa (màn đọc mở đúng một câu được yêu cầu thì chưa);
  *  `resetKey` đổi (sang chương khác) thì về lại `initial`. Gắn `input` vào khung cuộn, `onScroll` vào sự kiện cuộn của nó. */
 export function useFollowVoice(container: RefObject<HTMLElement | null>, playingIndex: number, { initial = true, resetKey = "", smooth = true } = {}) {
@@ -75,6 +79,10 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
   smoothRef.current = smooth;
   const manualAt = useRef(0);
   const settle = useRef<number | undefined>(undefined);
+  // Chưa đứng vào chỗ lần nào từ lúc mở / sang chương: lần đầu không hoạt hoạ.
+  const placed = useRef(false);
+  // Đỉnh dòng của chữ đang đọc, tính trong nội dung cuộn (không đổi khi đang cuộn).
+  const wordLine = useRef<number | null>(null);
 
   const measure = useCallback(() => {
     const box = container.current;
@@ -89,12 +97,34 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
     const box = container.current;
     const place = measure();
     if (!box || !place) return;
-    box.scrollTo({ top: followScrollTop(place.rect, place.view, box.scrollTop), behavior: scrollMotion(animate) });
+    // Có chữ đang sáng thì đưa DÒNG của nó vào chỗ, không phải đầu câu: câu dài đang đọc dở không bị kéo ngược lên.
+    const lit = box.querySelector<HTMLElement>(`[data-index="${indexRef.current}"] ${LIT_WORD}`)?.getBoundingClientRect();
+    if (lit) wordLine.current = lit.top - place.view.top + box.scrollTop;
+    box.scrollTo({ top: followScrollTop(lit ?? place.rect, place.view, box.scrollTop), behavior: scrollMotion(animate) });
   }, [container, measure]);
+
+  // Chữ đang đọc đổi: sang dòng mới thì đưa dòng ấy về chỗ đọc. Gắn lại mỗi lần vẽ vì khung cuộn có thể dựng sau (đang tải chữ); chỉ vẽ lại khi sang câu.
+  useEffect(() => {
+    const box = container.current;
+    if (!box) return;
+    const lit = (event: Event) => {
+      if (!followingRef.current) return;
+      const rect = (event.target as HTMLElement).getBoundingClientRect();
+      const view = box.getBoundingClientRect();
+      const line = rect.top - view.top + box.scrollTop;
+      if (!isNewLine(wordLine.current, line)) return;
+      wordLine.current = line;
+      box.scrollTo({ top: followScrollTop(rect, view, box.scrollTop), behavior: scrollMotion(smoothRef.current && placed.current) });
+    };
+    box.addEventListener(LIT_WORD_EVENT, lit);
+    return () => box.removeEventListener(LIT_WORD_EVENT, lit);
+  });
 
   useEffect(() => {
     setFollowing(initial);
     manualAt.current = 0;
+    placed.current = false;
+    wordLine.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
@@ -112,7 +142,8 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
       return;
     }
     if (following) {
-      if (needsFollowScroll(place.rect, place.view)) scrollToPlaying(smoothRef.current);
+      if (needsFollowScroll(place.rect, place.view)) scrollToPlaying(smoothRef.current && placed.current);
+      placed.current = true;
       setPlacement("inside");
       return;
     }
@@ -198,7 +229,11 @@ function LitWords({ text, words }: { text: string; words: WordSpan[] }) {
 }
 
 const Word = memo(function Word({ text, lit }: { text: string; lit: boolean }) {
-  return <span className={lit ? "read-along-word is-lit" : "read-along-word"}>{text}</span>;
+  const span = useRef<HTMLSpanElement | null>(null);
+  useLayoutEffect(() => {
+    if (lit) span.current?.dispatchEvent(new Event(LIT_WORD_EVENT, { bubbles: true }));
+  }, [lit]);
+  return <span ref={span} className={lit ? "read-along-word is-lit" : "read-along-word"}>{text}</span>;
 });
 
 export function ReadAlongText({
