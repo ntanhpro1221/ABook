@@ -19,6 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bỏ khoảng lặng trên máy tính không còn báo đang tải ở mỗi khoảng lặng dài, hẹn giờ ngủ đếm tiếp.
 - Đổi tốc độ trên web vẫn có tác dụng khi trình duyệt chặn lưu dữ liệu trang (chỉ báo là chưa lưu được).
 - Hộp chọn giọng nhân vật không còn có giọng miền Trung, và mở đầu bằng giọng bạn chấm tốt nhất.
+- Trẻ con, cả bé trai, lại đọc bằng giọng nữ nguyên bản, không bóp giọng; nhân vật mang tên Nhật dùng cho cả nam lẫn nữ (như Mizuho, Chihiro) được nhận giới theo lời văn thay vì theo tên.
 
 ## [0.4.165] - 2026-11-08
 

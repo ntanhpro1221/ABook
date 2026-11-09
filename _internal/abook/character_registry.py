@@ -1437,6 +1437,31 @@ FEMALE_PERSON_WORDS = frozenset(
 GENDER_EVIDENCE_MINIMUM_HITS = 5
 GENDER_EVIDENCE_MINIMUM_RATIO = 3.0
 WORD_PATTERN = re.compile(r"[^\W\d_]+", flags=re.UNICODE)
+# Japanese given names borne by men and women alike, or whose sound reads feminine to a model
+# that does not know them (romanised, Hepburn with and without long vowels). On such a name the
+# analyser's vote is the name, not the book: sugaru_v5mac cast YUGAMI MIZUHO (Pain, Pain, Go
+# Away) female in 551 of 551 segments and CHIHIRO AMAGAI (Your Story) in 265 of 275, while the
+# same books analysed again voted male for both - and both are the books' male "tôi". So for
+# a name in this list even a unanimous vote asks the text first, and a smaller margin is
+# enough for the text to win (Chihiro: 28 male words to 11). A class of names, not a patch per
+# character: the text still decides each one.
+GENDER_AMBIGUOUS_GIVEN_NAMES = frozenset({
+    "akira", "aoi", "asahi", "asuka", "chiaki", "chihiro", "haruka", "hibiki", "hikaru",
+    "hinata", "hiromi", "itsuki", "izumi", "jun", "kaoru", "kazumi", "kei", "mahiro",
+    "makoto", "masami", "masumi", "michiru", "mikoto", "mitsuki", "mizuho", "mizuki",
+    "nagisa", "nao", "natsuki", "ren", "rin", "ritsu", "satsuki", "shinobu", "sora",
+    "subaru", "tomomi", "tsubasa", "tsukasa", "yoshimi", "yu", "yuu", "yuki", "yuuki",
+})
+AMBIGUOUS_NAME_EVIDENCE_MINIMUM_RATIO = 2.0
+
+
+def has_gender_ambiguous_given_name(names: Iterable[str]) -> bool:
+    """Does any of these spellings of a character carry a given name from `GENDER_AMBIGUOUS_GIVEN_NAMES`?"""
+    return any(
+        word in GENDER_AMBIGUOUS_GIVEN_NAMES
+        for name in names
+        for word in WORD_PATTERN.findall(str(name).casefold())
+    )
 
 
 def _gendered_word_evidence(rows: list[Any], names: set[str]) -> Counter[str]:
@@ -1463,14 +1488,14 @@ def _gendered_word_evidence(rows: list[Any], names: set[str]) -> Counter[str]:
     return counts
 
 
-def _decisive(counts: Counter[str]) -> str | None:
+def _decisive(counts: Counter[str], ratio: float = GENDER_EVIDENCE_MINIMUM_RATIO) -> str | None:
     """The gender the evidence points at, or None when it does not point hard enough."""
     male, female = counts.get("male", 0), counts.get("female", 0)
     winner, loser = ("male", female) if male >= female else ("female", male)
     top = max(male, female)
     if top < GENDER_EVIDENCE_MINIMUM_HITS:
         return None
-    if loser > 0 and top / loser < GENDER_EVIDENCE_MINIMUM_RATIO:
+    if loser > 0 and top / loser < ratio:
         return None
     return winner
 
@@ -1492,6 +1517,9 @@ def resolve_gender(
     tie - the case that used to kill a run after ninety minutes of analysis - the text is
     asked instead. It answers far better than the model does, because Vietnamese marks
     gender in nearly every word it uses for a person.
+
+    A gender-ambiguous Japanese given name (`GENDER_AMBIGUOUS_GIVEN_NAMES`) asks the text even
+    when the votes agree, and lets it win on a smaller margin: there the votes read the name.
     """
     if locked:
         for row in identity_rows:
@@ -1504,12 +1532,17 @@ def resolve_gender(
         if str(row["gender"]) in {"male", "female"}
     )
     ranked = votes.most_common()
+    names = {str(row["speaker"]) for row in identity_rows}
+    if has_gender_ambiguous_given_name(names):
+        evidence = _gendered_word_evidence(all_rows, names)
+        decided = _decisive(evidence, AMBIGUOUS_NAME_EVIDENCE_MINIMUM_RATIO)
+        if decided is not None:
+            return decided, f"text_ambiguous_name:{evidence.get('male', 0)}nam/{evidence.get('female', 0)}nữ"
     if len(ranked) == 1:
         return ranked[0][0], "model"
     # Phiếu CHIA (cả hai giới đều có phiếu) nghĩa là model đang lưỡng lự, nên hỏi văn bản TRƯỚC khi đếm đa số:
     # một đa số mỏng vẫn thắng được thì văn bản không bao giờ được hỏi, và NEESHKA (9 nam/12 nữ trong khi văn bản
     # 23 nam/7 nữ, gọi "Ngài Neeshka", "quý ông"), CHLOE, LAUREN đều bị đọc bằng giọng nữ vì thế.
-    names = {str(row["speaker"]) for row in identity_rows}
     evidence = _gendered_word_evidence(all_rows, names)
     decided = _decisive(evidence)
     if decided is not None:
@@ -1680,6 +1713,26 @@ def _preset_by_name(name: str) -> dict[str, str]:
         raise ValueError(f"VieNeu narrator preset is not in the locked catalog: {name!r}") from exc
 
 
+def casting_gender(gender: str, age: str) -> str:
+    """The preset gender a person is cast from: a child, boy or girl, reads in a female preset.
+
+    Owner 05-11: "trẻ con thì dùng giọng của nữ đi, đừng bóp nữa, bóp đem đến âm thanh quá tệ".
+    The voice is the preset untouched; 06-11 removed every pitch and formant change by age.
+    """
+    return GENDER_FEMALE if str(age) == "child" else str(gender)
+
+
+def preset_fits_person(preset_gender: str | None, gender: str | None, age: str | None) -> bool:
+    """A preset of this gender may read this person: same gender, or a female preset for a child.
+
+    Unknown on either side convicts nothing. A boy keeps a male preset someone chose for him too:
+    the child rule says which presets casting picks from, not that a boy's own voice is wrong.
+    """
+    if not gender or not preset_gender or preset_gender == gender:
+        return True
+    return str(age) == "child" and preset_gender == GENDER_FEMALE
+
+
 class PresetAllocator:
     """Một preset là một giọng; ưu tiên giọng chưa ai giữ trong cả hai nhóm vai."""
     def __init__(self, narrator_voice: str, other_narrators: Iterable[str] = ()) -> None:
@@ -1693,6 +1746,7 @@ class PresetAllocator:
         self.chapters_of[str(who)] = set(chapters)
 
     def choose(self, gender: str, *, npc: bool, age: str = "unknown", who: str = "") -> dict[str, str]:
+        gender = casting_gender(gender, age)
         candidates = [p for p in casting_presets(gender, automatic=True) if p["name"] not in self.not_for_characters]
         if not candidates:
             candidates = [p for p in VIENEU_PRESETS if p["name"] not in self.not_for_characters and preset_eligible(p, "character", automatic=True)]
@@ -2301,15 +2355,13 @@ def _drop_pins_that_contradict_a_person(
     locked_ages: dict[str, str],
     log: Any,
 ) -> dict[str, str]:
-    """Giữ preset đúng phái người nghe đã ghim, áp cùng luật cho mọi tuổi."""
+    """Giữ preset hợp với phái người nghe đã ghim; trẻ con giữ được preset nữ (`preset_fits_person`)."""
     kept: dict[str, str] = {}
     for key, voice_key in locked_voices.items():
         gender = locked_genders.get(key)
         age = locked_ages.get(key)
         preset = preset_gender_of_voice_key(voice_key)
-        contradicts = bool(
-            gender and preset and preset != gender
-        )
+        contradicts = not preset_fits_person(preset, gender, age)
         if not contradicts:
             kept[key] = voice_key
             continue

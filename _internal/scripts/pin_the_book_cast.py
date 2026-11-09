@@ -208,14 +208,13 @@ def unpin_character(database: ProjectDB, canonical_name: str) -> int:
 def voice_contradicts_a_person(voice_key: str, gender: str | None, age: str | None) -> bool:
     """Giọng này có trái với thứ NGƯỜI NGHE đã ghim không? Cùng luật với phân vai.
 
-    Đúng luật của `character_registry._drop_pins_that_contradict_a_person`: preset phải đúng phái
-    ở mọi lứa tuổi. Hai bên phải nói cùng một câu - nếu script này
+    Đúng luật của `character_registry._drop_pins_that_contradict_a_person` (`preset_fits_person`):
+    preset phải đúng phái, trừ trẻ con được đọc bằng preset nữ. Hai bên phải nói cùng một câu - nếu script này
     chọn một giọng mà phân vai sẽ bỏ, thì lựa chọn ấy chỉ là một lần rút thăm lại được hoãn tới lượt chạy.
     """
-    from abook.character_registry import preset_gender_of_voice_key
+    from abook.character_registry import preset_fits_person, preset_gender_of_voice_key
 
-    preset = preset_gender_of_voice_key(voice_key)
-    return bool(gender and preset and preset != gender)
+    return not preset_fits_person(preset_gender_of_voice_key(voice_key), gender, age)
 
 
 def rows_the_listener_would_accept(

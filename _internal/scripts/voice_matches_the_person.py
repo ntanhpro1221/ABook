@@ -113,13 +113,15 @@ def fold_names(rows: list[dict]) -> list[dict]:
 
 
 def wrong_gender(rows: list[dict]) -> list[dict]:
-    """Dòng có giọng khác phái; mọi tuổi cùng luật, unknown không bị kết tội."""
+    """Dòng có giọng khác phái, theo đúng luật phân vai (`preset_fits_person`): trẻ con đọc giọng nữ
+    không phải lỗi, unknown không bị kết tội."""
+    from abook.character_registry import preset_fits_person
+
     return [
         r
         for r in rows
         if r["gender"] in ("male", "female")
-        and preset_gender(r["voice"]) is not None
-        and preset_gender(r["voice"]) != r["gender"]
+        and not preset_fits_person(preset_gender(r["voice"]), r["gender"], r["age"])
     ]
 
 
