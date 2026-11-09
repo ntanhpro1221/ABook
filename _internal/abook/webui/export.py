@@ -378,6 +378,13 @@ def watched(sink: Any, cancelled: Callable[[], bool] | None) -> Any:
     return sink if cancelled is None else _Watched(sink, cancelled)
 
 
+def _check_sink_cancelled(sink: Any) -> None:
+    while isinstance(sink, _Lowered):
+        sink = sink.sink
+    if isinstance(sink, _Watched):
+        _stop_if(sink.cancelled)
+
+
 # ---- M4B: cả cuốn trong một file, có mục lục chương ------------------------------------------------------------------
 # Trình phát sách nói (Apple Books, Smart AudioBook Player, BookPlayer...) đọc `.m4b` là MỘT cuốn có danh sách chương, nhớ chỗ
 # nghe theo cuốn. Ghép là giải mã từng chương ra PCM rồi đổ liên tục vào MỘT bộ mã hoá AAC: đếm mẫu đi qua nên mốc chương đúng
@@ -471,6 +478,7 @@ def _run_mux(command: list[str], cancelled: Callable[[], bool] | None) -> None:
 def pump_pcm(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any, lower_db: float = 0.0) -> int:
     """Giải mã một chương ra PCM 16-bit (đổi về `rate`/`channels` chung của cuốn) đổ vào `sink`; trả số byte đã đổ. `lower_db` > 0: hạ
     mức ngay trong ffmpeg (lần mã hoá lại M4B có chương vượt trần - không cần numpy, bản cài chỉ để nghe không có nó)."""
+    _check_sink_cancelled(sink)
     lowering = ["-af", f"volume={-lower_db:.4f}dB"] if lower_db > 0 else []
     with tempfile.TemporaryFile() as errors:
         decoder = subprocess.Popen([ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(source), "-map", "0:a:0", *lowering,
@@ -494,6 +502,7 @@ def pump_mixed(ffmpeg: str, mixer: Any, chapter_id: int, source: Path, rate: int
                seconds: float | None = None) -> int:
     """Như `pump_pcm` nhưng giọng đi qua bộ trộn nhạc nền của chương (`music_export.Mixer.wrap`): `sink` nhận PCM đã trộn, đúng bằng số
     byte của giọng (trả lại số ấy). Chung cho MP3 / M4B của Studio và bản tạm chương của sách Nghe ngay."""
+    _check_sink_cancelled(sink)
     mixed = mixer.wrap(chapter_id, sink, rate, channels, seconds)
     size = pump_pcm(ffmpeg, source, rate, channels, mixed)
     mixed.finish()

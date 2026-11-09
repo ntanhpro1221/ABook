@@ -22,6 +22,23 @@ from tests.test_export_series import _get, _mp3_job, _post, _studio
 pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
 
 
+def test_cancelled_pcm_never_starts_a_decoder_or_builds_the_music_mix(tmp_path, monkeypatch):
+    from io import BytesIO
+    from types import SimpleNamespace
+
+    def unexpected(*_args, **_kwargs):
+        pytest.fail("a cancelled feed must stop before decoder or mixer setup")
+
+    monkeypatch.setattr(export.subprocess, "Popen", unexpected)
+    mixer = SimpleNamespace(wrap=unexpected)
+    sink = export.watched(BytesIO(), lambda: True)
+    for wrapped in (sink, export._Lowered(sink, 1.0)):
+        with pytest.raises(export_jobs.Cancelled):
+            export.pump_pcm("ffmpeg", tmp_path / "missing.mp3", 48000, 2, wrapped)
+        with pytest.raises(export_jobs.Cancelled):
+            export.pump_mixed("ffmpeg", mixer, 1, tmp_path / "missing.mp3", 48000, 2, wrapped)
+
+
 def _studio_book(tmp_path: Path):
     """Cancellation exercises export phases; track analysis is a separate contract."""
     from abook.webui.music_plan import MEASURE_SIDECAR
