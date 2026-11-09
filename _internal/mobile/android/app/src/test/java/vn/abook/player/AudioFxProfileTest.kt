@@ -46,6 +46,48 @@ class AudioFxProfileTest {
         assertEquals(200_000,chain.getMediaDuration(200_000)) // seek starts a fresh map
         AudioFx.update(AudioFxSettings())
     }
+    /** DefaultAudioSink drains the chain before every pitch/speed change; the pipeline re-sends end of stream to each
+     *  processor on every pass, so a processor that emits again on each call never ends and the voice stops for good. */
+    @Test fun everyChainProcessorStaysEndedWhenEndOfStreamIsResent() {
+        // Sonic at -4.5 semitones (0.7711) adds one frame of rounding carry on every resent end of stream (seen on the
+        // phone: outputFrameCount 0, 1, 2 ... while the drain spun); the silence trimmer re-armed its tail each time.
+        AudioFx.update(AudioFxSettings(skipSilence = true))
+        val chain = AudioFxChain()
+        chain.applyPlaybackParameters(androidx.media3.common.PlaybackParameters(1f, .7711054f))
+        for (processor in chain.audioProcessors) {
+            processor.configure(AudioFormat(24000, 1, C.ENCODING_PCM_16BIT)); processor.flush(StreamMetadata.DEFAULT)
+            processor.queueInput(ByteBuffer.allocateDirect(4608).order(ByteOrder.nativeOrder()))
+            processor.queueEndOfStream(); processor.output
+            var extra = 0
+            repeat(30) { processor.queueEndOfStream(); extra += processor.output.remaining() }
+            assertEquals("$processor emitted again after a resent end of stream", 0, extra)
+            assertTrue(processor.isEnded)
+        }
+        AudioFx.update(AudioFxSettings())
+    }
+    @Test fun drainForPitchChangeEndsEvenWhenEndOfStreamIsResent() {
+        for (skip in listOf(false, true)) for (pitch in listOf(.75f, .7711054f, 1.2f)) {
+            AudioFx.update(AudioFxSettings(skipSilence = skip))
+            val chain = AudioFxChain()
+            chain.applyPlaybackParameters(androidx.media3.common.PlaybackParameters(1f, pitch))
+            val head = object : androidx.media3.common.audio.BaseAudioProcessor() { // stands in for Media3's trimming step
+                override fun onConfigure(inputAudioFormat: AudioFormat) = inputAudioFormat
+                override fun queueInput(inputBuffer: ByteBuffer) {
+                    val out = replaceOutputBuffer(inputBuffer.remaining()); out.put(inputBuffer); out.flip()
+                }
+            }
+            val pipeline = androidx.media3.common.audio.AudioProcessingPipeline(
+                com.google.common.collect.ImmutableList.copyOf(listOf(head) + chain.audioProcessors))
+            pipeline.configure(AudioFormat(24000, 1, C.ENCODING_PCM_16BIT)); pipeline.flush(StreamMetadata.DEFAULT)
+            val input = ByteBuffer.allocateDirect(4608).order(ByteOrder.nativeOrder()) // one decoder buffer, as on the phone
+            while (input.hasRemaining()) { pipeline.queueInput(input); while (pipeline.output.hasRemaining()) pipeline.output.position(pipeline.output.limit()) }
+            pipeline.queueEndOfStream()
+            var passes = 0
+            while (!pipeline.isEnded && passes < 1000) { val out = pipeline.output; out.position(out.limit()); passes++ }
+            assertTrue("skipSilence=$skip pitch=$pitch: drain never ended", pipeline.isEnded)
+        }
+        AudioFx.update(AudioFxSettings())
+    }
     @Test fun sharedBookAndReopenDoNotLeak() {
         val context=ApplicationProvider.getApplicationContext<Context>()
         context.getSharedPreferences("audio_fx",Context.MODE_PRIVATE).edit().clear().commit()

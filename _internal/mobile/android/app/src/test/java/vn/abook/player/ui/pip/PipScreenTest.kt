@@ -123,7 +123,9 @@ class PipScreenTest {
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
-        assertEquals(0, rule.onAllNodesWithTagCount("player_mini"))
+        rule.onNodeWithTag("player_more").performClick()
+        rule.waitForIdle()
+        assertEquals(0, rule.onAllNodesWithTagCount("more_mini"))
     }
 
     @Test
@@ -132,9 +134,13 @@ class PipScreenTest {
         showShell(PipControl(available = true) { entered++ })
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
-        rule.onNodeWithTag("player_mini").assertIsDisplayed()
+        // Cửa sổ mini là dòng cuối của Thêm tuỳ chọn (hàng nút chính còn ba ô).
+        assertEquals(0, rule.onAllNodesWithTagCount("player_mini"))
+        rule.onNodeWithTag("player_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("more_mini").assertIsDisplayed()
         rule.onRoot().captureRoboImage("src/test/snapshots/pip_now_playing_button_light.png")
-        rule.onNodeWithTag("player_mini").performClick()
+        rule.onNodeWithTag("more_mini").performClick()
         assertEquals(1, entered)
     }
 
@@ -143,7 +149,9 @@ class PipScreenTest {
         showShell(PipControl(available = true), dark = true)
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
-        rule.onNodeWithTag("player_mini").assertIsDisplayed()
+        rule.onNodeWithTag("player_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("more_mini").assertIsDisplayed()
         rule.onRoot().captureRoboImage("src/test/snapshots/pip_now_playing_button_dark.png")
     }
 
@@ -186,15 +194,15 @@ class PipScreenTest {
     }
 
     @Test
-    fun theSwitchIsInListenSettingsOnByDefaultAndSavesWhenToggled() {
+    fun theSwitchIsInListenSettingsOffByDefaultAndSavesWhenToggled() {
         showListen(PipControl(available = true))
         rule.onNodeWithTag("auto_pip").assertIsDisplayed()
+        assertFalse(settings.state.value.autoPip)
+        rule.onNodeWithTag("auto_pip").performClick()
         assertTrue(settings.state.value.autoPip)
+        assertTrue(settingsCore.saved.last().getBoolean("autoPip"))
         rule.onNodeWithTag("auto_pip").performClick()
         assertFalse(settings.state.value.autoPip)
-        assertFalse(settingsCore.saved.last().getBoolean("autoPip"))
-        rule.onNodeWithTag("auto_pip").performClick()
-        assertTrue(settings.state.value.autoPip)
     }
 
     @Test

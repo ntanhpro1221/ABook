@@ -17,7 +17,7 @@ Column {
         SettingRow {
             width: parent.width
             label: S.s_tu_mo_cua_so_mini_a93a51d2
-            Switch { label: S.s_tu_mo_cua_so_mini_a93a51d2; checked: Nav.windowMode ? Nav.windowMode.autoMini : true; onToggled: value => { if (Nav.windowMode) Nav.windowMode.autoMini = value } }
+            Switch { label: S.s_tu_mo_cua_so_mini_a93a51d2; checked: Nav.windowMode ? Nav.windowMode.autoMini : false; onToggled: value => { if (Nav.windowMode) Nav.windowMode.autoMini = value } }
         }
         SettingChoices {
             width: parent.width

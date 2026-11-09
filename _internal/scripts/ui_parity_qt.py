@@ -1047,7 +1047,7 @@ ACTION_CONTRACTS = (
     ("record-create", "Tạo và nghe", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-delete", "Xoá hồ sơ", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-move", "Chuyển", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
-    ("mini-enter", "Cửa sổ mini", (("Qt", "desktop_qt/qml/NowPlaying.qml", "picture-in-picture-2"), ("Android", up.NATIVE_ROOT + "nowplaying/NowPlayingScreen.kt", ""))),
+    ("mini-enter", "Cửa sổ mini", (("Qt", "desktop_qt/qml/NowPlaying.qml", "picture-in-picture-2"), ("Android", up.NATIVE_ROOT + "nowplaying/PlayerSheets.kt", ""))),
     ("mini-auto", "Tự mở cửa sổ mini", (("Qt", "desktop_qt/qml/SettingsLook.qml", ""), ("Android", up.NATIVE_ROOT + "screens/SettingsGroups.kt", ""))),
 )
 

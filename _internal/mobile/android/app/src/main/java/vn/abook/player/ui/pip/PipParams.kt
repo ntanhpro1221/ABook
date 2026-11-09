@@ -40,11 +40,11 @@ object PipParams {
     const val RATIO_WIDTH = 2
     const val RATIO_HEIGHT = 3
 
-    /** Tự vào PiP khi rời app: có sách mở VÀ công tắc "Tự mở cửa sổ mini" bật. */
-    fun autoEnter(hasBook: Boolean, switchOn: Boolean): Boolean = hasBook && switchOn
+    /** Tự vào PiP khi rời app: công tắc "Tự mở cửa sổ mini" bật (mặc định tắt) VÀ sách đang phát - đang dừng thì rời app là rời hẳn. Nút "Cửa sổ mini" vẫn mở được khi dừng. */
+    fun autoEnter(hasBook: Boolean, switchOn: Boolean, playing: Boolean): Boolean = hasBook && switchOn && playing
 
     fun plan(playing: Boolean, hasBook: Boolean, switchOn: Boolean): PipPlan = PipPlan(
-        hasBook, playing, autoEnter(hasBook, switchOn),
+        hasBook, playing, autoEnter(hasBook, switchOn, playing),
         if (!hasBook) emptyList() else listOf(
             PipButton(PipKind.Back, S.s_lui_0_giay_718bdd89(Playback.SKIP_SECONDS), PlayerWidget.ACTION_BACK, 2),
             PipButton(PipKind.Toggle, if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48, PlayerWidget.ACTION_TOGGLE, 1),

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import vn.abook.player.ui.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -50,7 +51,8 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
 
 /**
- * Nhạc nền ở hai chỗ của giao diện native: tấm "Nhạc nền" của trình phát (từ "Thêm tuỳ chọn", Back về lại tấm ấy) và trang "Nhạc nền" trong bảng "Thêm" của trang sách.
+ * Nhạc nền ở hai chỗ của giao diện native: trong trang Âm thanh của trình phát (công tắc + mức, "Chọn nhạc" mở tấm "Nhạc nền", Back về lại Âm thanh) và trang "Nhạc nền"
+ * trong bảng "Thêm" của trang sách.
  * Ảnh sáng + tối của từng chỗ.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -133,11 +135,23 @@ class MusicScreenTest {
         rule.waitForIdle()
     }
 
+    /** Thêm tuỳ chọn -> Âm thanh: nhạc nền nằm ngay dưới Giọng đọc. */
+    private fun openAudio() {
+        rule.onNodeWithTag("more_audio").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("audiofx_music").assertIsDisplayed()
+    }
+
+    private fun chooseMusic() {
+        rule.onNodeWithTag("audiofx_music_more").performClick()
+        rule.waitForIdle()
+    }
+
     private fun playerMusicSheet(dark: Boolean) {
         showPlayer(dark)
+        openAudio()
         rule.onNodeWithText("Theo cảnh").assertIsDisplayed()
-        rule.onNodeWithText("Nhạc nền").performClick()
-        rule.waitForIdle()
+        chooseMusic()
         rule.onNodeWithTag("player_sheet_music").assertIsDisplayed()
         rule.onNodeWithTag("music_option_auto").assertIsDisplayed()
         shot("player_choices_${if (dark) "dark" else "light"}")
@@ -158,8 +172,8 @@ class MusicScreenTest {
     @Test
     fun choosingInThePlayerSavesForThisBookAndBackReturnsToOptions() {
         showPlayer()
-        rule.onNodeWithText("Nhạc nền").performClick()
-        rule.waitForIdle()
+        openAudio()
+        chooseMusic()
         rule.onNodeWithTag("music_option_night_rain").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_level_slider"))
@@ -167,8 +181,8 @@ class MusicScreenTest {
         rule.waitForIdle()
         assertEquals(listOf("choose $demo night_rain", "level $demo -24.0"), source.calls)
         back()
-        rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
-        rule.onNodeWithText("Đêm mưa").assertIsDisplayed()
+        rule.onNodeWithTag("player_sheet_audio").assertIsDisplayed()
+        rule.onNodeWithTag("audiofx_music").assertIsDisplayed()
         back()
         assertTrue(!window.sheetOpen)
     }
@@ -180,6 +194,10 @@ class MusicScreenTest {
         rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
         rule.onNodeWithText("Giọng đọc").assertIsDisplayed()
         assertTrue(rule.onAllNodesWithText("Nhạc nền").fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithTag("more_audio").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("audiofx_page").assertIsDisplayed()
+        assertTrue(rule.onAllNodesWithTag("audiofx_music").fetchSemanticsNodes().isEmpty())
     }
 
     private fun bookMenuMusic(dark: Boolean) {

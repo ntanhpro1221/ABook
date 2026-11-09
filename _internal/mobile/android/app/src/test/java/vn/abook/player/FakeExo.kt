@@ -17,6 +17,8 @@ class FakeExo {
     var position = 0L
     var duration = 0L
     var speed = 1f
+    var pitch = 1f
+    var error: androidx.media3.exoplayer.ExoPlaybackException? = null
     var item: MediaItem? = null
     /** Hàng đợi nhiều mục (sau setMediaItems); rỗng thì chỉ có `item` như trước. */
     var items: List<MediaItem> = emptyList()
@@ -55,8 +57,9 @@ class FakeExo {
                 null
             }
             "seekTo" -> { position = args!!.last() as Long; null }
-            "getPlaybackParameters" -> PlaybackParameters(speed)
-            "setPlaybackParameters" -> { speed = (args!![0] as PlaybackParameters).speed; null }
+            "getPlaybackParameters" -> PlaybackParameters(speed, pitch)
+            "setPlaybackParameters" -> { (args!![0] as PlaybackParameters).let { speed = it.speed; pitch = it.pitch }; null }
+            "getPlayerError" -> error
             "getVolume" -> volume
             "setVolume" -> { volume = args!![0] as Float; null }
             "addListener" -> { listeners.add(args!![0] as Player.Listener); null }

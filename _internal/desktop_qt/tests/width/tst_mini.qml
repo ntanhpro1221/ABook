@@ -158,12 +158,16 @@ Item {
         function test_minimizeSetting() {
             const win = createTemporaryObject(windowFactory, host)
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: false})
-            compare(mode.closeToTray, true); compare(mode.autoMini, true)
+            compare(mode.closeToTray, true); compare(mode.autoMini, false)
+            Player.play()
             mode.minimize(); compare(mode.mini, false)
-            mode.loaded = true; mode.autoMini = false
-            mode.minimize(); compare(mode.mini, false)
-            mode.autoMini = true; mode.minimize(); compare(mode.mini, true)
-            mode.expand(); win.hide()
+            mode.loaded = true
+            mode.minimize(); compare(mode.mini, false)     // mặc định tắt
+            win.show(); mode.autoMini = true; Player.pause()
+            mode.minimize(); compare(mode.mini, false)     // bật nhưng đang dừng
+            win.show(); Player.play()
+            mode.minimize(); compare(mode.mini, true)      // bật và đang phát
+            mode.expand(); Player.pause(); win.hide()
         }
         function test_maximizedRestore() {
             const win = createTemporaryObject(windowFactory, host)
@@ -253,12 +257,12 @@ Item {
         }
         function test_persistedPositionAndSettings() {
             Platform.setSetting("miniPosition", "400,250")
-            Platform.setSetting("autoMini", "false")
+            Platform.setSetting("autoMini", "true")
             Platform.setSetting("closeToTray", "false")
             const win = createTemporaryObject(windowFactory, host)
             win.show()
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
-            compare(mode.autoMini, false); compare(mode.closeToTray, false)
+            compare(mode.autoMini, true); compare(mode.closeToTray, false)
             mode.enter(); geometryReady(mode, win); tryCompare(win, "x", 400); compare(win.y, 250)
             mode.miniHeight = 280; tryCompare(win, "height", 280)   // cửa sổ đổi cỡ bất đồng bộ
             compare(win.minimumHeight, 280)    // Kéo mép cửa sổ cũng không thể ép tên sách bị cắt.

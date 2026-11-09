@@ -9,12 +9,12 @@ export const FX_BANDS = ['80 Hz','250 Hz','1 kHz','4 kHz','12 kHz'];
 export const FX_LABELS = [S.s_copy_0053dd90f780,S.s_copy_bac2d68d2977,S.s_copy_05798ad73e95,S.s_copy_66823083cf09,S.s_copy_47dbcad94daf];
 export const FX_PRESETS = [[0,0,0,0,0],[-4,-2,2,3,-2],[4,2,0,-1,-2],[-2,-1,0,2,4],[0,0,0,-3,-5]];
 export interface AudioFxSettings { enabled:boolean; preset:number; bands:number[]; bass:number; boost:number; pitch:number; volume:number; speed:number; mono:boolean; balance:number; skipSilence:boolean; silenceDb:number; silenceSeconds:number; keepSeconds:number }
-export const DEFAULT_FX: AudioFxSettings = {enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,volume:.9,speed:1,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5};
+export const DEFAULT_FX: AudioFxSettings = {enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,volume:1,speed:1,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5};
 const number = (value:unknown,lo:number,hi:number) => typeof value==='number' && Number.isFinite(value)?Math.max(lo,Math.min(hi,value)):0;
 export function safeFx(value:Partial<AudioFxSettings>): AudioFxSettings {
   return {enabled:value.enabled===true,preset:Math.round(number(value.preset,-1,4)),
     bands:FX_BANDS.map((_,i)=>number(value.bands?.[i],-12,12)),bass:number(value.bass,0,12),boost:number(value.boost,0,12),pitch:number(value.pitch,-6,6),
-    volume:typeof value.volume==='number' && Number.isFinite(value.volume)?number(value.volume,0,1):.9,
+    volume:typeof value.volume==='number' && Number.isFinite(value.volume)?number(value.volume,0,1):1,
     speed:typeof value.speed==='number' && Number.isFinite(value.speed)?number(value.speed,.5,4):1,
     mono:value.mono===true,balance:number(value.balance,-1,1),skipSilence:value.skipSilence===true,
     silenceDb:typeof value.silenceDb==='number' && Number.isFinite(value.silenceDb)?number(value.silenceDb,-80,-45):-60,
@@ -42,6 +42,17 @@ export function setAudioBookOnly(enabled:boolean) {
   if(enabled)localStorage.setItem(key,JSON.stringify(current));else localStorage.removeItem(key);
   current=read();for(const listener of listeners)listener();
 }
+/** "Giọng đọc" một thanh 0..VOICE_MAX (1 = gốc): dưới gốc là âm lượng, trên gốc là tăng âm (dB) có chặn đỉnh - như Android/Qt. */
+export const VOICE_MAX = 2;
+export const voiceLevel = (fx:AudioFxSettings) => fx.boost>0?10**(fx.boost/20):fx.volume;
+export const withVoiceLevel = (level:number): {volume:number;boost:number} =>
+  level<=1?{volume:Math.max(0,level),boost:0}:{volume:1,boost:20*Math.log10(Math.min(level,VOICE_MAX))};
+/** Âm sắc: -1 Tự chỉnh, 0 Phẳng (tắt EQ), 1..4 các kiểu sẵn. */
+export const fxTone = (fx:AudioFxSettings) => fx.enabled?fx.preset:0;
+export const withTone = (index:number): Partial<AudioFxSettings> =>
+  index===0?{enabled:false,preset:0}:index<0?{enabled:true,preset:-1}:{enabled:true,preset:index,bass:0,bands:[...FX_PRESETS[index]]};
+/** Về mặc định của trang Âm thanh: mọi thứ trong trang về gốc (tốc độ thuộc bảng riêng), áp ngay. */
+export function resetAudioFx() { setAudioFx({...DEFAULT_FX,bands:[...DEFAULT_FX.bands],speed:current.speed}); }
 export function useAudioFx() { return useSyncExternalStore(onAudioFx,getAudioFx); }
 export function appVolume() { return current.volume; }
 

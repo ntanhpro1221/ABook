@@ -31,6 +31,7 @@ var s_ai_noi_ab25bbf5 = "Ai nói?";
 var s_ai_noi_cau_nay_0e00a5c7 = "Ai nói câu này";
 function s_am_luong_0_0a64b489(p0) { return "Âm lượng " + String(p0) + "%"; }
 var s_am_luong_5dafca26 = "Âm lượng";
+var s_am_sac_8c2f4e1a = "Âm sắc";
 var s_am_thanh_cham_a33e2a3c = "Âm thanh chạm";
 var s_an_42708d66 = "Ẩn ";
 var s_an_chi_tiet_5df2cd32 = "Ẩn chi tiết";
@@ -787,8 +788,6 @@ var s_copy_521d621b4996 = "14 phút";
 var s_copy_66823083cf09 = "Bổng";
 function s_copy_69e49650d87d(p0) { return "Đã có mẫu “" + String(p0) + "”"; }
 var s_copy_6f00156cec07 = "Mono";
-var s_copy_71255f2b6855 = "Equalizer";
-var s_copy_7252e7ce0085 = "Preset";
 var s_copy_7bb79ab52e37 = "40 giây";
 var s_copy_7d21bf1340d9 = "Hoài My";
 var s_copy_8e18e6dd7fd9 = "Ngưỡng lặng";
@@ -801,9 +800,7 @@ var s_copy_9ce4f6d91ba0 = "Ngọc Linh";
 var s_copy_b09b5fb2264a = "Giữ nhịp nghỉ; chỉ rút khoảng lặng dài.";
 var s_copy_bac2d68d2977 = "Rõ lời";
 var s_copy_c1303271503d = "Âm thanh";
-var s_copy_c77e16da718e = "Tăng âm";
 var s_copy_cc27613e0895 = "Chỉnh";
-var s_copy_d05a51c01f29 = "Dùng chung mặc định. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.";
 var s_copy_e3518044ceec = "Tự chỉnh";
 var s_copy_e9d6329e8255 = " bán âm";
 var s_copy_eb4635c58f1d = "Tăng trầm";

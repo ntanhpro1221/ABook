@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.session.CommandButton
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
@@ -43,7 +44,8 @@ import vn.abook.player.ui.nowplaying.SleepText
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
  * nhận nút tai nghe/Bluetooth, tự dừng khi rút tai nghe hoặc có cuộc gọi (audio focus).
  *
- * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm chương trước / chương sau và - khi đang hẹn giờ ngủ - "+10 phút".
+ * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm Đóng (X), chương trước / chương sau và - khi đang hẹn giờ ngủ - "+10 phút".
+ * Đang dừng thì vuốt bỏ được (dịch vụ rời tiền cảnh ngay khi dừng); Đóng thì cất sách và tắt hẳn.
  *
  * Là MediaLibraryService: Android Auto và trình duyệt media của hệ thống duyệt được thư viện trên máy (LibraryTree:
  * sách -> chương) và chọn phát ngay trên màn hình xe.
@@ -71,6 +73,7 @@ class PlaybackService : MediaLibraryService() {
         // Chương trước/sau là lệnh riêng của app: Trước/Sau của phiên media (tai nghe, xe, đồng hồ) là lùi/tới 15 giây (HeadsetSkips).
         val PREVIOUS_CHAPTER = SessionCommand("vn.abook.PREVIOUS_CHAPTER", Bundle.EMPTY)
         val NEXT_CHAPTER = SessionCommand("vn.abook.NEXT_CHAPTER", Bundle.EMPTY)
+        val CLOSE = SessionCommand("vn.abook.CLOSE", Bundle.EMPTY)
         var instance: PlaybackService? = null
             private set
 
@@ -160,6 +163,21 @@ class PlaybackService : MediaLibraryService() {
             .setSessionActivity(openApp)
             .setMediaButtonPreferences(buttons())
             .build()
+        setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build().apply { setSmallIcon(R.drawable.ic_notification) })
+        // Dừng là rời tiền cảnh ngay: thẻ thông báo vuốt bỏ được. Không còn gì để phát (Đóng, lỗi) thì không giữ thẻ.
+        setForegroundServiceTimeoutMs(0)
+        setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_NEVER)
+    }
+
+    /**
+     * Nút Đóng trên thông báo: dừng, lưu chỗ nghe, cất sách khỏi máy phát (hàng đợi rỗng nên thẻ biến mất) rồi tắt dịch vụ - phiên media
+     * được gỡ ở [onDestroy] ngay khi không còn ai gắn vào (app đang mở thì đợi app rời).
+     */
+    @OptIn(UnstableApi::class)
+    fun close() {
+        AppLog.i("PlaybackService", S.s_dong_5d54c2a1)
+        Playback.closeBook()
+        pauseAllPlayersAndStopSelf()
     }
 
     /**
@@ -180,7 +198,11 @@ class PlaybackService : MediaLibraryService() {
             list += CommandButton.Builder(CommandButton.ICON_PLUS)
                 .setSessionCommand(SLEEP_PLUS).setDisplayName(SleepText.extendLabel(SleepTimer.extendTarget())).setSlots(CommandButton.SLOT_OVERFLOW).build()
         }
+        // Đóng đứng ngay sau ba nút chính: thẻ media của Android 13+ và ColorOS chỉ vẽ năm ô (lùi · phát · tới + hai nút đầu phần mở rộng), nút thứ sáu
+        // không bao giờ hiện. Media3 không có biểu tượng đóng: X riêng (make_icons.py).
         list += listOf(
+            CommandButton.Builder(CommandButton.ICON_UNDEFINED).setCustomIconResId(R.drawable.ic_notification_close)
+                .setSessionCommand(CLOSE).setDisplayName(S.s_dong_5d54c2a1).setSlots(CommandButton.SLOT_OVERFLOW).build(),
             CommandButton.Builder(CommandButton.ICON_PREVIOUS)
                 .setSessionCommand(PREVIOUS_CHAPTER).setDisplayName(S.s_chuong_truoc_4750f9e9).setSlots(CommandButton.SLOT_OVERFLOW).build(),
             CommandButton.Builder(CommandButton.ICON_NEXT)
@@ -303,9 +325,9 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (+10 phút, chương trước/sau).
+            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (+10 phút, chương trước/sau, Đóng).
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
-                .add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).build()
+                .add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).add(CLOSE).build()
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(commands)
                 .setMediaButtonPreferences(buttons())
@@ -420,6 +442,10 @@ class PlaybackService : MediaLibraryService() {
                 // extend() handles automatic timers before the general awake signal clears provenance.
                 SleepTimer.extend()
                 Playback.touched()
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+            if (customCommand.customAction == CLOSE.customAction) {
+                close()
                 return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
             }
             Playback.touched()

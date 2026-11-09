@@ -10,7 +10,7 @@ data class AudioFxSettings(
     val bass: Double = 0.0,
     val boost: Double = 0.0,
     val pitch: Double = 0.0,
-    val volume: Double = 0.9,
+    val volume: Double = 1.0,
     val speed: Double = 1.0,
     val mono: Boolean = false,
     val balance: Double = 0.0,
@@ -22,15 +22,27 @@ data class AudioFxSettings(
     fun safe() = copy(preset = preset.coerceIn(-1, 4),
         bands = List(5) { bands.getOrNull(it).finite(0.0, -12.0, 12.0) },
         bass = bass.finite(0.0, 0.0, 12.0), boost = boost.finite(0.0, 0.0, 12.0),
-        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(0.9, 0.0, 1.0),
+        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(1.0, 0.0, 1.0),
         speed = speed.finite(1.0, 0.5, 4.0), balance = balance.finite(0.0, -1.0, 1.0),
         silenceDb = silenceDb.finite(-60.0, -80.0, -45.0),
         silenceSeconds = silenceSeconds.finite(3.0, 2.0, 10.0),
         keepSeconds = keepSeconds.finite(1.5, 1.5, 3.0).coerceAtMost(silenceSeconds.finite(3.0, 2.0, 10.0)))
     fun withPreset(index: Int) = copy(preset = index, bands = PRESETS[index].toList(), bass = 0.0)
+    /** "Giọng đọc" một thanh 0..[VOICE_MAX] (1 = gốc): dưới gốc là âm lượng, trên gốc là tăng âm có chặn đỉnh. */
+    val voiceLevel: Double get() = if (boost > 0) 10.0.pow(boost / 20) else volume
+    fun withVoiceLevel(level: Double) = if (level <= 1.0) copy(volume = level.coerceAtLeast(0.0), boost = 0.0)
+        else copy(volume = 1.0, boost = 20 * log10(level.coerceAtMost(VOICE_MAX)))
+    /** Âm sắc đang chọn: -1 Tự chỉnh, 0 Phẳng (tắt), 1..4 các kiểu sẵn. */
+    val tone: Int get() = if (!enabled) 0 else preset
+    fun withTone(index: Int) = when {
+        index == 0 -> copy(enabled = false, preset = 0)
+        index < 0 -> copy(enabled = true, preset = -1)
+        else -> withPreset(index).copy(enabled = true)
+    }
     companion object {
         val FREQUENCIES = doubleArrayOf(80.0, 250.0, 1000.0, 4000.0, 12000.0)
-        val LABELS = listOf("Phẳng", "Rõ lời", "Trầm ấm", "Bổng", "Giảm chói")
+        const val VOICE_MAX = 2.0
+        val LABELS = listOf(S.s_copy_0053dd90f780, S.s_copy_bac2d68d2977, S.s_copy_05798ad73e95, S.s_copy_66823083cf09, S.s_copy_47dbcad94daf)
         val PRESETS = listOf(doubleArrayOf(0.0, 0.0, 0.0, 0.0, 0.0),
             doubleArrayOf(-4.0, -2.0, 2.0, 3.0, -2.0), doubleArrayOf(4.0, 2.0, 0.0, -1.0, -2.0),
             doubleArrayOf(-2.0, -1.0, 0.0, 2.0, 4.0), doubleArrayOf(0.0, 0.0, 0.0, -3.0, -5.0))

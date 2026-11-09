@@ -39,7 +39,7 @@ object AudioFx {
         val o = runCatching { JSONObject(prefs?.getString(key, "{}") ?: "{}") }.getOrDefault(JSONObject())
         return AudioFxSettings(o.optBoolean("enabled"), o.optInt("preset"),
             List(5) { o.optJSONArray("bands")?.optDouble(it, 0.0) ?: 0.0 },
-            o.optDouble("bass", 0.0), o.optDouble("boost", 0.0), o.optDouble("pitch", 0.0), o.optDouble("volume", .9),
+            o.optDouble("bass", 0.0), o.optDouble("boost", 0.0), o.optDouble("pitch", 0.0), o.optDouble("volume", 1.0),
             o.optDouble("speed", 1.0), o.optBoolean("mono"), o.optDouble("balance", 0.0), o.optBoolean("skipSilence"),
             o.optDouble("silenceDb", -60.0), o.optDouble("silenceSeconds", 3.0), o.optDouble("keepSeconds", 1.5)).safe()
     }
@@ -59,7 +59,11 @@ object AudioFx {
             update(read("shared"))
         }
     }
-    fun update(value: AudioFxSettings) {
+    /**
+     * [settleMs] > 0: pitch and speed reach the player only after the hand has rested that long (a pitch drag passes it
+     * while moving). Each change makes the player drain its audio chain first, so a drag must not send dozens of them.
+     */
+    fun update(value: AudioFxSettings, settleMs: Long = 0) {
         current = value.safe(); mutable.value = current
         val s = current
         val o = JSONObject().put("enabled", s.enabled).put("preset", s.preset).put("bands", JSONArray(s.bands))
@@ -67,9 +71,19 @@ object AudioFx {
             .put("mono", s.mono).put("balance", s.balance).put("skipSilence", s.skipSilence)
             .put("silenceDb", s.silenceDb).put("silenceSeconds", s.silenceSeconds).put("keepSeconds", s.keepSeconds)
         prefs?.edit()?.putString(if (scoped.value) "book:$bookId" else "shared", o.toString())?.apply()
-        Playback.player?.let { it.playbackParameters = PlaybackParameters(s.speed.toFloat(), pitchRatio()) }
+        main.removeCallbacks(applyParameters)
+        if (settleMs > 0) main.postDelayed(applyParameters, settleMs) else applyParameters.run()
         Playback.applyVolume()
     }
+    /** Everything the audio sheet sets goes back to default at once (speed belongs to its own sheet) and is heard right away. */
+    fun reset() {
+        update(AudioFxSettings(speed = current.speed))
+        Playback.unstick()
+    }
+    /** While dragging pitch: the player hears the value only when the hand rests this long or lets go. */
+    const val DRAG_SETTLE_MS = 1500L
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private val applyParameters = Runnable { Playback.player?.playbackParameters = PlaybackParameters(current.speed.toFloat(), pitchRatio()) }
     fun pitchRatio() = 2.0.pow(current.pitch / 12).toFloat()
 }
 
@@ -112,7 +126,7 @@ class AudioFxProcessor : BaseAudioProcessor() {
 class AudioFxChain : AudioProcessorChain {
     private val sonic = SonicAudioProcessor()
     private val silence = SilenceProcessor()
-    private val processors = arrayOf<AudioProcessor>(silence, sonic, AudioFxProcessor())
+    private val processors = arrayOf<AudioProcessor>(EndOnce(silence), EndOnce(sonic), EndOnce(AudioFxProcessor()))
     override fun getAudioProcessors() = processors
     override fun applyPlaybackParameters(value: PlaybackParameters): PlaybackParameters {
         sonic.setSpeed(value.speed); sonic.setPitch(value.pitch)
@@ -121,6 +135,27 @@ class AudioFxChain : AudioProcessorChain {
     override fun applySkipSilenceEnabled(enabled: Boolean) = false
     override fun getMediaDuration(playoutDuration: Long) = silence.sourceDurationUs(sonic.getMediaDuration(playoutDuration))
     override fun getSkippedOutputFrameCount() = 0L
+}
+
+/**
+ * Before every pitch/speed change DefaultAudioSink drains the chain, and the pipeline re-sends end of stream to a
+ * processor on every pass once the one before it has ended. Sonic (rounding carry) and the silence trimmer emit a tail
+ * on each call, so they never end, the drain never finishes and the voice stops while music plays on.
+ * End of stream is taken once per stream here.
+ */
+@androidx.annotation.OptIn(UnstableApi::class)
+class EndOnce(private val inner: AudioProcessor) : AudioProcessor by inner {
+    private var ended = false
+    override fun queueEndOfStream() {
+        if (ended) return
+        ended = true
+        inner.queueEndOfStream()
+    }
+    override fun flush(streamMetadata: AudioProcessor.StreamMetadata) { ended = false; inner.flush(streamMetadata) }
+    @Deprecated("Media3 keeps it for old callers", ReplaceWith("flush(streamMetadata)"))
+    override fun flush() { ended = false; @Suppress("DEPRECATION") inner.flush() }
+    override fun reset() { ended = false; inner.reset() }
+    override fun getDurationAfterProcessorApplied(durationUs: Long) = inner.getDurationAfterProcessorApplied(durationUs)
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)

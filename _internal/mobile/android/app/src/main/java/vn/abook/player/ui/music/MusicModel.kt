@@ -1,5 +1,6 @@
 package vn.abook.player.ui.music
 
+import kotlin.math.roundToInt
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
@@ -172,6 +173,8 @@ object MusicLevels {
     private fun decibels(value: Double): String =
         if (value == Math.rint(value)) value.toLong().toString() else value.toString().replace('.', ',')
     fun number(value: Double): String = "${decibels(value)} dB" + if (value == DEFAULT_DB) S.s_mac_dinh_2a963068 else ""
+    /** Cùng mức, nói bằng phần trăm của miền (0 % nhỏ nhất, 100 % to nhất) - thanh "Nhạc nền" của trang Âm thanh, cạnh thanh "Giọng đọc". */
+    fun percent(value: Double): Int = ((clamp(value) - MIN_DB) / (MAX_DB - MIN_DB) * 100).roundToInt()
 }
 
 /** Chữ của nhạc nền trên điện thoại (cùng luật với playlistBed.ts, nhãn ngắn). */

@@ -325,12 +325,30 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 Đổi khổ phải kiểm trên cùng instance đang giữ focus và chỗ cuộn, qua hai phía mốc 840/1200. Với văn bản xuống dòng lại, giữ đoạn đang thấy cùng offset trong khung; không so số pixel cuộn cũ như thể chiều cao các đoạn không đổi. Ảnh fixture và test offscreen không thay nghiệm thu bản đóng gói, máy thật hoặc Lead xem trực quan. R28 chỉ đóng sau khi tái hiện đúng cử chỉ từ video gốc VID_20261026064113.
 ### Âm thanh khi nghe (Android / Qt / web)
 
-- Trình phát `…` → `Âm thanh` (2 cấp); Back khép lớp đang mở. Dùng sheet/popover sẵn có: trượt + đổi cỡ khi vào/ra, không fade thuần.
-- Cùng thứ tự: ghi chú phạm vi → **Riêng sách này** → **Âm lượng** 0–100% → **Tăng âm** 0–12 dB → **Cao độ** −6…+6 bán âm, bước 0,5 và **Về mặc định** (0) → **Mono** → **Cân bằng** −100% trái…+100% phải → **Bỏ khoảng lặng** → **Ngưỡng lặng** → **Dài tối thiểu** → **Giữ khoảng nghỉ** → **Equalizer** → preset → 5 dải → **Tăng trầm** 0–12 dB.
-- Preset: **Phẳng**, **Rõ lời**, **Trầm ấm**, **Bổng**, **Giảm chói**. Năm dải **80 Hz · 250 Hz · 1 kHz · 4 kHz · 12 kHz**, mỗi dải −12…+12 dB, bước 1 dB; chỉnh tay bỏ chọn preset. Chọn preset bật EQ; tắt EQ giữ các giá trị để bật lại. Tăng trầm là low shelf 120 Hz.
-- Mặc định dùng chung trên thiết bị (kể cả tốc độ/âm lượng). **Riêng sách này** sao chép bộ đang dùng vào sách; tắt quay về bộ chung và bỏ bộ riêng. Dòng giải thích giống nhau: “Dùng chung mặc định. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.” Âm lượng điều khiển cả lời và nhạc; DSP còn lại chỉ đường lời. Tốc độ giữ cao độ đã chọn. Không thêm icon cho các hàng công tắc; icon Âm thanh vẫn sliders-horizontal.
-- **Bỏ khoảng lặng** mặc định tắt. Peak cả hai kênh trước EQ/gain, ngưỡng −80…−45 dBFS (mặc định −60), chỉ rút quãng dài hơn 2…10 s (mặc định 3 s), giữ 1,5…3 s (mặc định 1,5 s, không quá ngưỡng thời lượng), giữ hai mép. Sàn 1,5 s bảo vệ nhịp câu/đoạn/ngăn cảnh TTS. Ba slider vẫn hiện, mờ khi tắt, không thêm tầng. Đồng hồ/đọc theo/phụ đề luôn dùng thời gian nguồn; tua và đổi nguồn xoá bộ đệm cũ. Web chỉ tua qua khoảng đã quét PCM nguồn đầy đủ, không đo mức ra loa để đoán phần chưa nghe; live clip không quét thì giữ nguyên nghỉ.
+- Trình phát `…` → `Âm thanh` (2 cấp); Back khép lớp đang mở. Dùng sheet/popover sẵn có: trượt + đổi cỡ khi vào/ra, không fade thuần. Chữ một nguồn (`ui_strings/vi.json`).
+- Cùng thứ tự, không dòng giải thích dài ở đầu: **Giọng đọc** một thanh 0–200 % (100 % = gốc; trên 100 % là tăng âm, tối đa +6 dB) → **Nhạc nền** (công tắc, cạnh nó **Theo cảnh** khi cuốn có nhạc theo cảnh; bật thì mức 0–100 % ngay dưới và **Chọn nhạc**; cuốn không có nhạc thì không hiện) → **Âm sắc** → **Mono** → **Cân bằng** −100 % trái…+100 % phải → **Bỏ khoảng lặng** (ba thanh chỉ hiện khi bật) → **Riêng sách này** → **Cao độ** −6…+6 bán âm, bước 0,5, gọn ở cuối → **Về mặc định**.
+- **Âm sắc** là MỘT hàng cuộn ngang, không xuống dòng ở 360 dp: **Phẳng · Rõ lời · Trầm ấm · Bổng · Giảm chói · Tự chỉnh**. Năm dải **80 Hz · 250 Hz · 1 kHz · 4 kHz · 12 kHz** (−12…+12 dB, bước 1) và **Tăng trầm** 0–12 dB (low shelf 120 Hz) chỉ hiện ở Tự chỉnh. Không dùng chữ "Equalizer", "Preset", "Âm lượng", "Tăng âm".
+- **Về mặc định** đưa MỌI thứ trên trang về gốc (giọng 100 %, Phẳng, cao độ 0, mono/cân bằng/bỏ khoảng lặng tắt, nhạc nền về mức mặc định) và nghe ngay; tốc độ thuộc tấm Tốc độ nên giữ. Trên Android nó còn gỡ giọng đang đứng chờ (tua tại chỗ / nạp lại).
+- Kéo **Cao độ**: con số đổi theo tay, giọng chỉ nhận giá trị khi thả tay hay tay dừng 1,5 s - mỗi lần đổi cao độ máy phát phải xả hết tiếng đang xử lý, kéo liên tục không được gửi hàng chục lần đổi.
+- Thanh kéo: núm nằm trọn trong ô của nó ở 0 và ở tối đa (rãnh chạy từ tâm núm đầu tới tâm núm cuối) - mép mờ hay bo góc của bảng không xén nửa núm (máy dò `RangeTrackTest`).
+- Mặc định dùng chung trên thiết bị (kể cả tốc độ). **Riêng sách này** sao chép bộ đang dùng vào sách; tắt quay về bộ chung và bỏ bộ riêng. Giọng đọc chỉ là đường lời; nhạc nền có mức riêng. Tốc độ giữ cao độ đã chọn. Hàng công tắc không icon; icon Âm thanh vẫn sliders-horizontal.
+- **Bỏ khoảng lặng** mặc định tắt. Peak cả hai kênh trước EQ/gain, ngưỡng −80…−45 dBFS (mặc định −60), chỉ rút quãng dài hơn 2…10 s (mặc định 3 s), giữ 1,5…3 s (mặc định 1,5 s, không quá ngưỡng thời lượng), giữ hai mép. Sàn 1,5 s bảo vệ nhịp câu/đoạn/ngăn cảnh TTS. Đồng hồ/đọc theo/phụ đề luôn dùng thời gian nguồn; tua và đổi nguồn xoá bộ đệm cũ. Web chỉ tua qua khoảng đã quét PCM nguồn đầy đủ, không đo mức ra loa để đoán phần chưa nghe; live clip không quét thì giữ nguyên nghỉ.
 - Đây là tuỳ chọn phát lại, không sửa WAV/MP3, preset giọng TTS, hash chất lượng hay kết quả duyệt. Không gắn nhãn giảm nhiễu cho EQ: TTS sạch chưa có lý do thêm DSP giảm nhiễu.
+
+### Thêm tuỳ chọn (trình phát `…`)
+
+- Dòng tiến độ cả cuốn ở đầu, rồi các dòng, MỌI dòng có icon 20 dp cách chữ 16 dp, cao tối thiểu 48 dp: **Âm thanh** (sliders-horizontal) → **Giọng đọc** (mic-vocal) → **Cỡ chữ** (captions, khi có Đọc theo) → **Thiết bị phát** (cast) → **Trang sách** (book-open: thu trình phát rồi tới trang của cuốn; đang ở trang ấy thì không mở chồng) → **Cửa sổ mini** (picture-in-picture-2) LUÔN ở cuối. Nhạc nền không còn dòng riêng (nằm trong Âm thanh). Hàng nút chính của trình phát giữ ba ô, không có nút cửa sổ mini.
+- **Tự mở cửa sổ mini** mặc định TẮT (điện thoại và máy tính). Bật thì chỉ tự thu khi sách ĐANG PHÁT lúc rời app; nút Cửa sổ mini bấm tay thì mở được cả khi đang dừng.
+
+### Bảng trượt: cử chỉ chung
+
+- Kéo xuống từ BẤT KỲ chỗ nào trong bảng thì bảng theo tay (danh sách đang ở đầu cũng vậy); thả quá 25 % chiều cao hay vuốt nhanh quá 1.500 px/s thì đóng, không thì trượt về. Một ngưỡng chung (`SheetClose`) cho mọi bảng.
+- Chạm chỗ trống trong bảng không đóng; chỉ chạm nền tối, Back hay kéo xuống mới đóng. Thanh kéo và hàng cuộn ngang giữ cử chỉ của chúng.
+
+### Thẻ phát ở thanh thông báo (Android)
+
+- Lùi 15 · Phát/Dừng · Tới 15 nổi bật; ngay sau là **Đóng** (X) rồi Chương trước, Chương sau - thẻ media Android 13+ và ColorOS chỉ vẽ năm ô, nút thứ sáu không hiện. Đóng: dừng, lưu chỗ nghe, cất sách, thẻ biến mất. Đang dừng thì vuốt bỏ được.
+- Icon nhỏ của mọi thông báo là hình ABook đơn sắc vector (`drawable/ic_notification`, sinh từ `scripts/make_icons.py`). Màn chờ dùng vector riêng: khung 240 dp, icon tròn trong vòng 160 dp, nền app_bg - không phóng icon launcher (nhoè trên OPPO).
 
 ### Danh sách kiểm giao diện
 

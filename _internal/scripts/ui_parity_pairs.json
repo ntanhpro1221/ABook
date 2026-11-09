@@ -94,6 +94,11 @@
           "side": "web",
           "reason": "native music sheet shows a skeleton while the playlists load (DESIGN §2: no loading words), the web still writes a line",
           "label": "Đang tải các danh sách nhạc"
+        },
+        {
+          "side": "web",
+          "label": "Âm lượng",
+          "reason": "computer only: the desktop bar keeps a volume button beside speed (a phone uses its volume keys); both Âm thanh pages set the same level through the Giọng đọc slider"
         }
       ],
       "missing": [
@@ -126,6 +131,11 @@
           "side": "web",
           "label": "Đổi luôn trong Studio.",
           "reason": "native chưa có nhạc của dự án Studio trong tấm Nhạc nền (MusicKind chỉ Playlist / Packaged); lời của nhạc đóng gói 'Chỉ đổi trên máy này.' có cả hai phía"
+        },
+        {
+          "side": "native",
+          "label": "Chọn nhạc",
+          "reason": "phone Âm thanh shows the music switch and level inline under Giọng đọc and links the full music sheet; web still opens the Nhạc nền menu row placed at the same spot"
         }
       ],
       "deferred": [
@@ -630,7 +640,7 @@
       "deferred": [
         {
           "side": "native",
-          "match": "^(tự mở cửa sổ mini|rời app khi có sách mở thì sách thu vào cửa sổ mini)$",
+          "match": "^(tự mở cửa sổ mini|rời app khi sách đang phát thì sách thu vào cửa sổ mini)$",
           "reason": "Khác khả năng nền tảng: web trình duyệt không có cửa sổ mini app của hệ điều hành. Qt NowPlaying/SettingsLook và Android PiP đã có cùng thao tác; scripts/ui_parity_qt.py kiểm nhãn ở đúng file của hai nền."
         }
       ],

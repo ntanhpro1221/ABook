@@ -12,6 +12,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AudioLines,
+  BookOpen,
   Check,
   ChevronDown,
   Gauge,
@@ -38,7 +39,7 @@ import {
   X,
 } from "lucide-react";
 import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
@@ -1479,8 +1480,9 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
  *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
  *  khi dựng (voiceMenuWaiting). */
 function AudioFxMenu() {
-  const {volume,setVolume}=usePlayer();
-  return <MenuShell label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel volume={volume} setVolume={setVolume}/></MenuShell>;
+  const {setVolume}=usePlayer();
+  // Nhạc nền ngay dưới Giọng đọc (không còn dòng riêng trong "…"): to nhỏ của lời và nhạc ở cùng một chỗ.
+  return <MenuShell label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel setVolume={setVolume} music={<MusicMenu look="row" />}/></MenuShell>;
 }
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -1627,7 +1629,6 @@ export function PlayerBar({
             <SleepMenu look="row" />
             <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>{S.s_chuong_truoc_4750f9e9}</MenuRow>
             <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>{S.s_chuong_sau_17d1bd20}</MenuRow>
-            <MusicMenu look="row" />
             <VoiceMenu look="row" />
             <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>{S.s_mo_man_hinh_dang_nghe_2426b4ad}</MenuRow>
             <MenuRow icon={X} onClick={close}>{S.s_dong_trinh_phat_8a833838}</MenuRow>
@@ -2015,8 +2016,12 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   edit?: SentenceEditing;
 }) {
   const scrollFade = useFadeScroller<HTMLElement>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { track, sleep, fading, canGoBack, goBack } = player;
   if (!track) return null;
+  // Trang sách của cuốn đang nghe: thu màn Đang nghe; đang ở đúng trang ấy thì không mở chồng thêm một lần.
+  const bookPage = `/book/${encodeURIComponent(track.bookId)}`;
   return (
     // Chỉ cột điện thoại cuộn (máy tính: cột cố định có viền phải - mặt nạ sẽ xoá cả viền).
     <aside ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
@@ -2037,9 +2042,8 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           <MoreMenu scope="screen">
             <AudioFxMenu/>
             <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
-            <MusicMenu look="row" />
             <VoiceMenu scope="screen" look="row" />
-            <VolumeControl look="row" />
+            <MenuRow icon={BookOpen} onClick={() => { onCollapse(); if (location.pathname !== bookPage) navigate(bookPage); }}>{S.s_trang_sach_2b6c8e51}</MenuRow>
             {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>{S.s_ve_cho_vua_nghe_8da3c710}</MenuRow>}
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
             {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}

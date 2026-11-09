@@ -107,13 +107,13 @@ it("hẹn giờ nhỏ dần giọng và nhạc cùng hệ số, huỷ/gia hạn 
   actions.setSleep({ kind: "minutes", minutes: 1 });
   for (let i = 0; i < 450; ++i) { state.time += 0.1; vi.advanceTimersByTime(100); }
   const faded = vi.mocked(engine.setVolume).mock.lastCall![0];
-  expect(faded).toBeLessThan(0.9);
+  expect(faded).toBeLessThan(1);
   expect(musicVolume).toHaveBeenLastCalledWith(faded);
   actions.extendSleep();
-  expect(musicVolume).toHaveBeenLastCalledWith(0.9);
+  expect(musicVolume).toHaveBeenLastCalledWith(1);
   actions.setSleep({ kind: "off" });
-  expect(engine.setVolume).toHaveBeenLastCalledWith(0.9);
-  expect(musicVolume).toHaveBeenLastCalledWith(0.9);
+  expect(engine.setVolume).toHaveBeenLastCalledWith(1);
+  expect(musicVolume).toHaveBeenLastCalledWith(1);
   musicVolume.mockRestore();
 });
 it("hẹn giờ phút không trôi trong waiting hoặc khoảng ngủ máy không có tiếng", async () => {

@@ -40,16 +40,31 @@ import kotlin.math.floor
 import kotlin.math.max
 
 /** Continuous control geometry shares the control renderer; no hand-drawn icons at call sites. */
+/**
+ * Thanh kéo: rãnh chạy từ tâm núm ở đầu tới tâm núm ở cuối, nên núm (bán kính [RangeTrack.THUMB]) không bao giờ ló ra ngoài ô của nó - ô cha cắt
+ * (mép mờ, bo góc của bảng) cũng không xén mất nửa núm ở 0 hay ở tối đa. Chạm / kéo đổi ra giá trị qua cùng [RangeTrack.fraction].
+ */
+object RangeTrack {
+    val THUMB = 5.dp
+    /** Toạ độ x (px) của núm ở `fraction` (0..1) trong ô rộng `width`. */
+    fun x(fraction: Float, width: Float, thumb: Float): Float = thumb + fraction.coerceIn(0f, 1f) * (width - 2 * thumb).coerceAtLeast(0f)
+    /** Ngược của [x]: chỗ chạm -> phần (0..1). */
+    fun fraction(x: Float, width: Float, thumb: Float): Float = ((x - thumb) / (width - 2 * thumb).coerceAtLeast(1f)).coerceIn(0f, 1f)
+}
+
 internal fun DrawScope.drawRangeTrack(value: Double, min: Double, max: Double, default: Double?, colors: AbookColors) {
     val y = size.height / 2
-    val x = ((value - min) / (max - min)).toFloat().coerceIn(0f, 1f) * size.width
-    drawLine(colors.line, Offset(0f, y), Offset(size.width, y), 3.dp.toPx(), StrokeCap.Round)
-    drawLine(colors.accent, Offset(0f, y), Offset(x, y), 3.dp.toPx(), StrokeCap.Round)
+    val thumb = RangeTrack.THUMB.toPx()
+    val start = RangeTrack.x(0f, size.width, thumb)
+    val end = RangeTrack.x(1f, size.width, thumb)
+    val x = RangeTrack.x(((value - min) / (max - min)).toFloat(), size.width, thumb)
+    drawLine(colors.line, Offset(start, y), Offset(end, y), 3.dp.toPx(), StrokeCap.Round)
+    drawLine(colors.accent, Offset(start, y), Offset(x, y), 3.dp.toPx(), StrokeCap.Round)
     if (default != null) {
-        val mark = ((default - min) / (max - min)).toFloat() * size.width
+        val mark = RangeTrack.x(((default - min) / (max - min)).toFloat(), size.width, thumb)
         drawLine(colors.text2, Offset(mark, y - 5.dp.toPx()), Offset(mark, y + 5.dp.toPx()), 2.dp.toPx())
     }
-    drawCircle(colors.accent, 5.dp.toPx(), Offset(x, y))
+    drawCircle(colors.accent, thumb, Offset(x, y))
 }
 
 /**

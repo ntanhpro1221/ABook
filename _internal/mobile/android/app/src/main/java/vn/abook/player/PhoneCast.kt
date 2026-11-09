@@ -246,7 +246,7 @@ class CastService : Service() {
         val where = computer?.device ?: names.joinToString(", ")
         val toggle = if (playing) ACTION_PAUSE else ACTION_PLAY
         val builder = NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(S.s_0_tren_1_c3bdf3d1(if (playing) S.s_dang_phat_ac2dd0c2 else S.s_dang_dung_9b35aeb5, where.ifEmpty { "loa / TV" }))
             .setContentText(if (computer != null) S.s_may_tinh_dang_phat_cuon_nay_371c11e8 else S.s_dien_thoai_dang_truyen_am_thanh_ban_giu_wi_e8b358d7)
             .setContentIntent(openApp())

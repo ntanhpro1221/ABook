@@ -67,12 +67,12 @@ TestCase {
         keyClick("?", Qt.ShiftModifier, -1, win)
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
         tryVerify(function() { return !dialog().open })
-        tryCompare(Player, "volume", 0.9)
+        tryCompare(Player, "volume", 1)
         Api.preferences = {theme: "system"}
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
         compare(Player.volume, 0)
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
-        compare(Player.volume, 0.9)
+        compare(Player.volume, 1)
     }
     function test_3_preferencesTakeEffectNow() {
         Api.preferences = {theme: "system", touchSounds: false, readingSurface: "ivory"}

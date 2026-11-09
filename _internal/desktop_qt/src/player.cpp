@@ -955,9 +955,9 @@ void Player::activateAudioProfile() {
     const auto snapshot=m_bookOnly?m_bookAudio.value(m_book.id).toMap():m_sharedAudio;
     m_audioFx=AudioFx::Settings();
     setAudioFx(snapshot);
-    const double volume=snapshot.value(QStringLiteral("volume"),.9).toDouble();
+    const double volume=snapshot.value(QStringLiteral("volume"),1.).toDouble();
     const double speed=snapshot.value(QStringLiteral("speed"),1.).toDouble();
-    setVolume(std::isfinite(volume)?std::clamp(volume,0.,1.):.9);
+    setVolume(std::isfinite(volume)?std::clamp(volume,0.,1.):1.);
     applyRate(std::isfinite(speed)?std::clamp(speed,.5,4.):1.);
     m_out->setAudioFx(m_audioFx);
     m_applyingAudio=false; emit audioFxChanged();

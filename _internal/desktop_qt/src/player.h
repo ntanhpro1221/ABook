@@ -360,7 +360,7 @@ private:
     bool m_loadingSource = false;  // đang gọi m_out->load: bỏ sự kiện dừng đồng bộ của nguồn cũ
     double m_rate = PlayerLogic::kDefaultRate;
     double m_defaultRate = PlayerLogic::kDefaultRate;
-    double m_volume = 0.9;
+    double m_volume = 1.0;
     AudioFx::Settings m_audioFx;
     QVariantMap m_sharedAudio, m_bookAudio;
     bool m_bookOnly = false, m_applyingAudio = false;
