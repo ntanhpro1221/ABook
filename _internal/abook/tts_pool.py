@@ -54,6 +54,9 @@ reaching the OS cache, not the pool being fast.
 # fewer or it will not run at all.
 TTS_POOL_BASE_VRAM_MB = 2733
 TTS_POOL_WORKER_VRAM_MB = 917
+# Each worker measures its own takes, so it loads its own word aligner: +280 MB RSS measured
+# after one 8 s alignment (revwb, 2026-11-09), on top of the synthesis worker's RSS.
+TTS_WORKER_ALIGNER_RAM_GB = 0.28
 TTS_POOL_FOREGROUND_RESERVE_MB = 800
 """What the pool leaves on the card for whoever else is using the computer.
 

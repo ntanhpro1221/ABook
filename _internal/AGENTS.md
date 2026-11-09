@@ -148,8 +148,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Retry cùng chữ/giọng giữ bản thu tốt nhất trong SQLite và trên đĩa đến khi bản tốt hơn checkpoint. Lượt thử ghi file riêng;
   hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
 - Cổng ngắt trong từ đo WAV sau tempo/gain bằng CTC, chỉ bật cho giọng có thước riêng trong `voice_balance`. Không đổi sampling hay chữ khi sinh lại.
-  Budget một lần được reserve bền trong `artifacts` trước inference, gắn policy/chữ đọc/giọng/lượt thu tay; crash tiêu lượt đã reserve.
-  Mẫu đầu và mẫu sinh lại giữ đường riêng; `signal_json.word_break_gate` giữ phép đo của bản được chọn và lịch sử trước/sau.
+  Budget một lần và seed được reserve bền trong `artifacts` trước inference, gắn policy/chữ đọc/giọng/lượt thu tay; sinh lại là hàm thuần của (đầu vào, seed đã reserve).
+  Crash, thiếu bộ nhớ hay lỗi đĩa không tiêu lượt: chạy lại đúng seed, lỗi môi trường không hết thì `CriticalResourceStop` và giữ reservation; chỉ phán quyết của bộ kiểm audio mới là `failed` cuối.
+  Resume đi cùng code với đường liền mạch và cùng các phép kiểm high_quality; recovery xếp take dở vào `failed + quality_pending`, nên vòng chapter phải gọi lại câu có cổng đã bắn (`_word_break_retry_owed`).
+  Mẫu đầu và mẫu sinh lại giữ đường riêng, ứng viên ASR cũng vậy: chọn bằng `_usable_take_rank`, bản sinh lại chỉ thay `wav_path` của ứng viên khi tốt hơn; signal của incumbent không bị đụng. `signal_json.word_break_gate` giữ phép đo của bản được chọn và lịch sử trước/sau.
 - Chia câu chỉ dùng lời đọc đã materialize cùng span nguồn/lời đọc; không áp phát âm lại lên kết quả thay thế.
 - Xuất `.abook` âm thanh so toàn bộ chương nguồn, giải mã, băm và đủ dòng phụ đề. Thiếu chương phải từ chối trừ khi chọn
   `partial` rõ ràng; manifest, CLI và kết quả UI cùng ghi N/M và tên chương thiếu. `bookfile verify` kiểm lại giao ước này.

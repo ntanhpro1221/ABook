@@ -108,7 +108,9 @@
       "ref_lufs": -19.5114388,
       "word_break_gate": {
         "metric": "silence_ms",
-        "threshold": 72.8
+        "threshold": 72.8,
+        "calibrated_r": 1.0447,
+        "calibrated_x": 1.0
       }
     },
     "vieneu@3.8.3/Ngọc Trân": {
@@ -183,7 +185,9 @@
       "word_break_gate": {
         "metric": "closure_hgb_v1",
         "threshold": 0.09294049196233728,
-        "model": "word_break_duc_tri.json"
+        "model": "word_break_duc_tri.json",
+        "calibrated_r": 1.2643,
+        "calibrated_x": 1.0
       }
     },
     "zerotts@0.1.5/baotrang": {

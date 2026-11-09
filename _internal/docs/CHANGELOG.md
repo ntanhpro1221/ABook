@@ -7,7 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-- Tự sinh lại tối đa một lần khi phát hiện ngắt giữa các âm tiết cùng từ ở giọng đã hiệu chỉnh, giữ nguyên chữ và cách đọc.
+- Tự sinh lại tối đa một lần khi phát hiện ngắt giữa các âm tiết cùng từ ở giọng đã hiệu chỉnh, giữ nguyên chữ và cách đọc. Tắt máy giữa chừng hay thiếu bộ nhớ không làm sách đọc khác đi, và bản sinh lại chỉ được dùng khi tốt hơn bản đầu.
 
 ## [0.4.165] - 2026-11-08
 

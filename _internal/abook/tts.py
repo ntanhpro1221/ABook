@@ -1411,6 +1411,7 @@ class TTSCoordinator:
         repair_short_utterance: bool = False,
         delivery_mode: str = DELIVERY_PRIMARY,
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
+        measure_word_break: bool = True,
     ) -> tuple[str, dict[str, Any], int]:
         try:
             profile = self._voice_profile_for_row(row)
@@ -1568,18 +1569,19 @@ class TTSCoordinator:
                 metrics["generation_endpoint_floor_dbfs"] = endpoint_floor_dbfs
             if generation_ceiling_hit:
                 metrics[GENERATION_CEILING_METRIC] = 1.0
-            from .word_break import FIELD as WORD_BREAK_FIELD, measure as measure_word_break
+            if measure_word_break:
+                from . import word_break
 
-            def read_unit(text: str) -> str:
-                unit_row = dict(row, text=text, listener_text=None)
-                unit_row.pop("_materialized_spoken", None)
-                return self.spoken_text(unit_row, pronunciation_delivery_variant=normalized_pronunciation_variant)
+                def read_unit(text: str) -> str:
+                    unit_row = dict(row, text=text, listener_text=None)
+                    unit_row.pop("_materialized_spoken", None)
+                    return self.spoken_text(unit_row, pronunciation_delivery_variant=normalized_pronunciation_variant)
 
-            metrics[WORD_BREAK_FIELD] = measure_word_break(
-                output, voice_constants.key,
-                str(_row_value(row, "listener_text", None) or row["text"]),
-                str(spoken_row["text"]), read_unit,
-            )
+                metrics[word_break.FIELD] = word_break.measure(
+                    output, voice_constants.key,
+                    str(_row_value(row, "listener_text", None) or row["text"]),
+                    str(spoken_row["text"]), read_unit,
+                )
             return checksum, metrics, seed
         finally:
             # VieNeu's PyTorch backend may retain allocator cache after returning a NumPy waveform.

@@ -9453,10 +9453,12 @@ class ProjectDB:
         self, *, artifact_key: str, segment_id: int, incumbent_sha256: str,
         output: Path, metadata: dict[str, Any], parent_candidate_id: int | None = None,
     ) -> dict[str, Any] | None:
-        """Spend the one retry before inference, in the existing artifact ledger.
+        """Reserve the one retry and its seed before inference, in the artifact ledger.
 
         The key binds policy, spoken text, voice and listener retake. A crash after
-        reservation spends the retry too; reopening cannot mint a second one.
+        reservation reruns this same seed; reopening can never mint a second take.
+        An ASR candidate's own checkpoint carries its retry history: the incumbent's
+        signal describes the incumbent, not a take that may never be promoted.
         """
         if metadata.get("state") != "reserved" or metadata.get("retry_count") != 1:
             raise ValueError("word-break reservation must spend exactly one attempt")
@@ -9484,11 +9486,27 @@ class ProjectDB:
                 "INSERT INTO artifacts(artifact_key,kind,path,verified,metadata_json,created_at,updated_at) VALUES(?,?,?,0,?,?,?)",
                 (artifact_key, "word_break_candidate", str(output.resolve()), json.dumps(metadata, ensure_ascii=False), now, now),
             )
-            gate = dict(signal.get("word_break_gate") or {})
-            gate.update(retry_count=1, triggered=True, retry_state="reserved", candidate_key=artifact_key)
-            signal["word_break_gate"] = gate
-            conn.execute("UPDATE segments SET signal_json=?,updated_at=? WHERE id=? AND wav_sha256=?",
-                         (json.dumps(signal, ensure_ascii=False), now, segment_id, incumbent_sha256))
+            if parent_candidate_id is None:
+                gate = dict(signal.get("word_break_gate") or {})
+                gate.update(retry_count=1, triggered=True, retry_state="reserved", candidate_key=artifact_key)
+                signal["word_break_gate"] = gate
+                conn.execute("UPDATE segments SET signal_json=?,updated_at=? WHERE id=? AND wav_sha256=?",
+                             (json.dumps(signal, ensure_ascii=False), now, segment_id, incumbent_sha256))
+        return metadata
+
+    def reopen_word_break_retry(self, artifact_key: str) -> dict[str, Any]:
+        """A completed retry whose WAV is gone goes back to its reserved seed."""
+        with self.transaction() as conn:
+            artifact = conn.execute("SELECT * FROM artifacts WHERE artifact_key=?", (artifact_key,)).fetchone()
+            if artifact is None or artifact["kind"] != "word_break_candidate":
+                raise RuntimeError("word-break retry reservation is missing")
+            metadata = self._json_object(artifact["metadata_json"], "word-break reservation")
+            if metadata["state"] != "complete":
+                raise RuntimeError("only a completed word-break retry can lose its file")
+            metadata["state"] = "reserved"
+            metadata.pop("result", None)
+            conn.execute("UPDATE artifacts SET sha256=NULL,metadata_json=?,updated_at=? WHERE id=?",
+                         (json.dumps(metadata, ensure_ascii=False), time.time(), artifact["id"]))
         return metadata
 
     def finish_word_break_retry(self, artifact_key: str, *, result: dict[str, Any],

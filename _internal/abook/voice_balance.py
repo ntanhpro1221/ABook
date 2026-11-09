@@ -92,9 +92,17 @@ def _validate(table: Any) -> dict[str, Any]:
             gate = record["word_break_gate"]
             if not isinstance(gate, dict) or gate.get("metric") not in {"silence_ms", "closure_hgb_v1"}:
                 raise VoiceBalanceError(f"voice_balance.json: {key} có cổng ngắt trong từ không hợp lệ")
-            fields = {"metric", "threshold"} if gate["metric"] == "silence_ms" else {"metric", "threshold", "model"}
+            fields = {"metric", "threshold", "calibrated_r", "calibrated_x"}
+            if gate["metric"] != "silence_ms":
+                fields.add("model")
             if set(gate) != fields:
                 raise VoiceBalanceError(f"voice_balance.json: {key} có trường cổng ngắt ngoài hợp đồng")
+            # Thước đo WAV sau tempo: đổi r/x là đổi phân bố khoảng lặng, thước cũ không còn đúng.
+            if gate["calibrated_r"] != r or gate["calibrated_x"] != x:
+                raise VoiceBalanceError(
+                    f"voice_balance.json: {key} đổi tempo sau hiệu chỉnh cổng ngắt "
+                    f"(calibrated_r={gate['calibrated_r']}, calibrated_x={gate['calibrated_x']}, r={r}, x={x}); hãy hiệu chỉnh lại"
+                )
             number(gate, "threshold", (0.001, 1000.0 if gate["metric"] == "silence_ms" else 1.0), key)
             if gate["metric"] == "closure_hgb_v1" and (key != "vieneu@3.8.3/Đức Trí" or gate["model"] != "word_break_duc_tri.json"):
                 raise VoiceBalanceError(f"voice_balance.json: {key} chưa có thước closure hợp lệ")
