@@ -182,6 +182,25 @@ class SleepExtendTest {
         assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
     }
 
+    /** "Hết N chương" (bộ chọn giá trị): tự sang chương thì đếm xuống, người nghe tự chuyển chương thì giữ nguyên số chương còn lại. */
+    @Test fun endOfThreeChaptersCountsDownOnlyOnNaturalChapterEnds() = withSensors {
+        field("mode").set(SleepTimer, SleepTimer.Mode.CHAPTER)
+        field("chapters").setInt(SleepTimer, 3)
+        try {
+            SleepTimer.onChapterChanged()
+            assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
+            assertEquals(2, SleepTimer.chapters)
+            SleepTimer.onChapterChanged(manual = true)
+            assertEquals("tự chuyển chương không đếm", 2, SleepTimer.chapters)
+            SleepTimer.onChapterChanged()
+            assertEquals(1, SleepTimer.chapters)
+            assertEquals(1, SleepTimer.describe().getInt("chapters"))
+            assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
+        } finally {
+            field("chapters").setInt(SleepTimer, 1)
+        }
+    }
+
     @Test fun switchingListeningProfilesCannotCarryThePreviousListenersTimer() = withSensors {
         timer(30, 12.0)
         field("ownerBook").set(SleepTimer, Playback.bookId)

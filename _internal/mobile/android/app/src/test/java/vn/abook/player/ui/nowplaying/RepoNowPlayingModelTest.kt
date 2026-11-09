@@ -76,7 +76,7 @@ class RepoNowPlayingModelTest {
         assertEquals(
             listOf(
                 "toggle", "skip 15.0", "seek 45.0", "jump 1 0.0", "next", "previous", "rate 1.5",
-                "sleep minutes 15", "sleep chapter 0", "sleep off 0",
+                "sleep minutes 15", "sleep minutes 7", "sleep chapter 1", "sleep off 0",
             ),
             core.calls,
         )

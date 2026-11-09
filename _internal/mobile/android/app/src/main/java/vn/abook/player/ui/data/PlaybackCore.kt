@@ -53,7 +53,7 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun setSleep(mode: String, minutes: Int) = withService {
         when (mode) {
             "minutes" -> SleepTimer.setMinutes(minutes)
-            "chapter" -> SleepTimer.setEndOfChapter()
+            "chapter" -> SleepTimer.setEndOfChapter(minutes.coerceAtLeast(1))
             else -> { SleepTimer.cancel(); vn.abook.player.Feedback.play("toggle") }
         }
     }

@@ -826,9 +826,12 @@ object Playback {
             return
         }
         val sameChapter = slot.chapterIndex == lastClipChapter
+        val crossed = !sameChapter && lastClipChapter >= 0
         lastClipChapter = slot.chapterIndex
         ReadAloud.onClipChanged()
         applyVolume()
+        // "Hết N chương" khi đọc to: đọc sang chương kế là một chương đã nghe hết - đếm xuống (chương cuối của hẹn thì ReadAloud tự dừng nạp, không tới đây).
+        if (crossed && SleepTimer.mode == SleepTimer.Mode.CHAPTER && (manual || SleepTimer.chapters > 1)) SleepTimer.onChapterChanged(manual)
         if (!sameChapter) emit("chapter")
     }
 

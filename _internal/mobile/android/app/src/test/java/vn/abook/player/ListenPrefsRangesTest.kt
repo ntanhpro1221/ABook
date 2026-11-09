@@ -18,6 +18,8 @@ class ListenPrefsRangesTest {
     private val ranges: JSONObject = JSONObject(BookEditsFixtures.file("../settings/ranges.json").readText(Charsets.UTF_8))
     private val choices = ranges.getJSONObject("choices")
     private val booleans = ranges.getJSONObject("booleans")
+    private val numbers = ranges.getJSONObject("numbers")
+    private fun numberKeys() = numbers.keys().asSequence().filter { it != "_" }.toList()
 
     @Before fun setup() {
         Handler.reset()
@@ -88,17 +90,41 @@ class ListenPrefsRangesTest {
         }
     }
 
+    /** Số chọn tự do (bộ chọn giá trị): miền ở bảng chung = miền ValueSpecs; mọi số đúng lưới được giữ, số lệch lưới / ngoài miền / sai kiểu về mặc định. */
+    @Test fun freeNumbersKeepEveryValueOnTheSharedGrid() {
+        val specs = mapOf("sleepFadeSeconds" to vn.abook.player.ui.components.ValueSpecs.sleepFadeSeconds,
+            "sleepExtendMinutes" to vn.abook.player.ui.components.ValueSpecs.sleepExtendMinutes)
+        assertEquals(specs.keys, numberKeys().toSet())
+        for (key in numberKeys()) {
+            val range = numbers.getJSONObject(key)
+            val min = range.getInt("min"); val max = range.getInt("max"); val step = range.getInt("step"); val default = range.getInt("default").toDouble()
+            val spec = specs.getValue(key)
+            assertEquals("$key: miền = ValueSpecs", listOf(min.toDouble(), max.toDouble(), step.toDouble()), listOf(spec.min, spec.max, spec.step))
+            for (value in min..max step step) {
+                push(key, if (value == min) "$max" else "$min")
+                push(key, "$value")
+                assertEquals("$key=$value", value.toDouble(), observed(key))
+            }
+            val wrong = listOf("${min - step}", "${max + step}", "\"x\"", "null", "true", "[]", "\"$min\"", "${min}.5") + (if (step > 1) listOf("${min + 1}") else emptyList())
+            for (bad in wrong) {
+                push(key, "$max")
+                push(key, bad)
+                assertEquals("$key=$bad", default, observed(key))
+            }
+        }
+    }
+
     @Test fun aWrongFieldDoesNotSpoilTheOthers() {
         val body = JSONObject()
         for (key in natively()) body.put(key, values(key).first { expected(it) != default(key) })
         body.put("sleepExtendMinutes", 999)
         body.put("shakeToExtend", "yes")
-        body.put("schedule", JSONObject("""{"from":"22:00","to":"06:00","minutes":20}"""))
+        body.put("sleepFadeSeconds", 45)
+        body.put("schedule", JSONObject("""{"from":"22:00","to":"06:00","minutes":22}"""))
         ListenPrefs.apply(body)
-        for (key in natively()) {
-            if (key == "sleepExtendMinutes") assertEquals(default(key), observed(key))
-            else assertEquals(key, expected(body.get(key)), observed(key))
-        }
+        for (key in natively()) assertEquals(key, expected(body.get(key)), observed(key))
+        assertEquals("số sai về mặc định riêng", numbers.getJSONObject("sleepExtendMinutes").getInt("default").toDouble(), observed("sleepExtendMinutes"))
+        assertEquals("số tự do bên cạnh vẫn giữ", 45.0, observed("sleepFadeSeconds"))
         assertTrue("công tắc sai kiểu về mặc định của nó", SleepTimer.shakeEnabled == booleans.getBoolean("shakeToExtend"))
         assertNull("lịch sai về không có lịch", SleepTimer.schedule)
     }
@@ -130,7 +156,8 @@ class ListenPrefsRangesTest {
 
     @Test fun theNightScheduleFollowsTheSharedClockAndMinutes() {
         val clock = Regex(ranges.getJSONObject("schedule").getString("clock"))
-        val minutes = ranges.getJSONObject("schedule").getJSONArray("minutes").let { a -> (0 until a.length()).map { a.getInt(it) } }
+        val range = ranges.getJSONObject("schedule").getJSONObject("minutes")
+        val minutes = (range.getInt("min")..range.getInt("max") step range.getInt("step")).toList()
         for (m in minutes) {
             push("schedule", """{"from":"22:00","to":"06:30","minutes":$m}""")
             assertEquals(Triple(22 * 60, 6 * 60 + 30, m), SleepTimer.schedule)
@@ -141,7 +168,7 @@ class ListenPrefsRangesTest {
             push("schedule", """{"from":"$from","to":"06:30","minutes":30}""")
             assertNull("giờ $from", SleepTimer.schedule)
         }
-        for (bad in listOf("""{"from":"22:00","to":"06:30","minutes":${minutes.max() + 1}}""", """{"from":"22:00","to":"06:30","minutes":-10}""", """{"from":"22:00","to":"06:30"}""",
+        for (bad in listOf("""{"from":"22:00","to":"06:30","minutes":${minutes.max() + range.getInt("step")}}""", """{"from":"22:00","to":"06:30","minutes":${minutes.min() + 1}}""", """{"from":"22:00","to":"06:30","minutes":-10}""", """{"from":"22:00","to":"06:30"}""",
             """{"from":"22:00","to":"06:30","minutes":"30"}""", """{"from":22,"to":"06:30","minutes":30}""", "[]", "\"22:00\"", "5")) {
             push("schedule", """{"from":"22:00","to":"06:30","minutes":30}""")
             push("schedule", bad)
@@ -155,7 +182,7 @@ class ListenPrefsRangesTest {
     }
 
     @Test fun whatNativeRemembersAndHandsBackIsAlreadyInsideTheTable() {
-        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":999,"sleepFadeSeconds":15,"shakeSensitivity":7,"shakeToExtend":"no",
+        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":999,"sleepFadeSeconds":17,"shakeSensitivity":7,"shakeToExtend":"no",
             "schedule":{"from":"99:00","to":"06:00","minutes":30},"settingsStamp":"later"}"""))
         val stored = ListenPrefs.stored()
         for (key in natively()) assertEquals("$key đã nhớ", default(key), expected(stored.get(key)))
@@ -165,6 +192,8 @@ class ListenPrefsRangesTest {
         ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":15,"settingsStamp":1700000000123}"""))
         assertEquals(1700000000123L, ListenPrefs.stored().getLong("settingsStamp"))
         assertEquals(15, ListenPrefs.stored().getInt("sleepExtendMinutes"))
+        assertEquals("số lệch lưới nhớ là mặc định", 30, stored.getInt("sleepFadeSeconds"))
+        assertEquals("số ngoài miền nhớ là mặc định", 10, stored.getInt("sleepExtendMinutes"))
     }
 
     @Test fun theSharedTableHasNoDuplicatesAndTheNativeDefaultsAreInIt() {

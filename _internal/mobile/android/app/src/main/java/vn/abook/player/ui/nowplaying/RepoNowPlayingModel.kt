@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.ValueSpecs
+import vn.abook.player.ui.components.ValuePickerLogic
 import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
@@ -168,13 +170,14 @@ class RepoNowPlayingModel(
     override fun jump(chapterId: Int) { rememberPlace(); repo.jumpTo(chapterId, 0.0) }
     override fun next() { rememberPlace(); repo.next() }
     override fun previous() { rememberPlace(); repo.previous() }
-    override fun setRate(rate: Double) { if (rate in PlayerLabels.rates) repo.setRate(rate) }
+    // Bộ chọn giá trị: mọi tốc độ / số phút / số chương trong miền, đúng bước (ValueSpecs) - lõi nhận đúng số người nghe chọn.
+    override fun setRate(rate: Double) { if (ValuePickerLogic.quantize(ValueSpecs.speed, rate) == rate) repo.setRate(rate) }
 
     override fun setSleep(kind: SleepKind, minutes: Int) {
         when (kind) {
             SleepKind.Off -> repo.setSleep("off")
-            SleepKind.Chapter -> repo.setSleep("chapter")
-            SleepKind.Minutes -> if (minutes in PlayerLabels.sleepMinutes) repo.setSleep("minutes", minutes)
+            SleepKind.Chapter -> repo.setSleep("chapter", ValuePickerLogic.quantize(ValueSpecs.sleepChapters, minutes.toDouble()).toInt())
+            SleepKind.Minutes -> if (ValuePickerLogic.quantize(ValueSpecs.sleepMinutes, minutes.toDouble()) == minutes.toDouble()) repo.setSleep("minutes", minutes)
         }
     }
 

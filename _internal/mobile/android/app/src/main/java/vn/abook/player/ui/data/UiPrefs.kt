@@ -15,11 +15,8 @@ class UiPrefs(context: Context) {
     }
 
     /** Dáng chữ của Đọc theo: cỡ chữ, giãn dòng, đã chạm chữ để nghe từ đó chưa ([vn.abook.player.ui.nowplaying.ReadLook]). */
-    fun readLook(): ReadLook = ReadLook(
-        prefs.getInt(READ_SIZE, 20).takeIf { it in ReadLook.SIZES } ?: 20,
-        prefs.getFloat(READ_LEADING, 1.7f).toDouble().let { value -> ReadLook.LEADINGS.firstOrNull { Math.abs(it - value) < 0.01 } ?: 1.7 },
-        prefs.getBoolean(READ_TAPPED, false),
-    )
+    fun readLook(): ReadLook = ReadLook(tapped = prefs.getBoolean(READ_TAPPED, false))
+        .sized(prefs.getInt(READ_SIZE, 20)).spaced(prefs.getFloat(READ_LEADING, 1.7f).toDouble())
 
     fun setReadLook(look: ReadLook) {
         prefs.edit().putInt(READ_SIZE, look.size).putFloat(READ_LEADING, look.leading.toFloat()).putBoolean(READ_TAPPED, look.tapped).apply()

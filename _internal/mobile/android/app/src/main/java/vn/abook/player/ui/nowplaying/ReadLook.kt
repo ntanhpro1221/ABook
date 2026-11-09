@@ -3,7 +3,8 @@ package vn.abook.player.ui.nowplaying
 import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
-import java.math.BigDecimal
+import vn.abook.player.ui.components.ValuePickerLogic
+import vn.abook.player.ui.components.ValueSpecs
 
 /**
  * Dáng chữ của chế độ Đọc theo (web: ReaderScreen `SIZES`, `LEADINGS`, `ReaderPrefs`): cỡ chữ, giãn dòng, và người đọc đã chạm chữ để nghe từ đó lần nào chưa
@@ -14,8 +15,9 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
     /** Cao một dòng, theo sp (cỡ × giãn). */
     val lineHeight: Float get() = (size * leading).toFloat()
 
-    fun sized(value: Int) = copy(size = value.takeIf { it in SIZES } ?: size)
-    fun spaced(value: Double) = copy(leading = value.takeIf { it in LEADINGS } ?: leading)
+    // Bộ chọn giá trị (DESIGN mục 6): mọi cỡ 12-40, mọi giãn dòng 1,2-2,4 bước 0,05 (ValueSpecs); giá trị ngoài miền / lệch lưới bị bỏ.
+    fun sized(value: Int) = copy(size = value.takeIf { ValuePickerLogic.quantize(ValueSpecs.readSize, it.toDouble()) == it.toDouble() } ?: size)
+    fun spaced(value: Double) = copy(leading = gridLeading(value) ?: leading)
 
     /** "20 · giãn dòng 1,7": giá trị của hàng "Cỡ chữ" ở tấm Thêm tuỳ chọn - gọi đúng tên hai mục của bảng web ("Cỡ chữ", "Giãn dòng"), không để số trần. */
     val summary: String get() = S.s_0_gian_dong_1_c148910e(size, leadingLabel(leading))
@@ -24,8 +26,15 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
         val SIZES = listOf(16, 18, 20, 22, 24)
         val LEADINGS = listOf(1.5, 1.7, 1.9)
 
-        /** 1,5 / 1,7 / 1,9 - dấu phẩy như web (`toLocaleString("vi-VN")`). */
-        fun leadingLabel(value: Double): String = BigDecimal.valueOf(value).stripTrailingZeros().toPlainString().replace('.', ',')
+        /** Giãn dòng đúng lưới (cả số đọc lại từ Float của SharedPreferences, lệch chừng 1e-7); ngoài miền / lệch lưới thì null. */
+        fun gridLeading(value: Double): Double? {
+            val spec = ValueSpecs.readLeading
+            if (value < spec.min - 0.001 || value > spec.max + 0.001) return null
+            return ValuePickerLogic.quantize(spec, value).takeIf { Math.abs(it - value) < 0.001 }
+        }
+
+        /** 1,5 / 1,75 / 1,9 - dấu phẩy như web (`formatNumber`). */
+        fun leadingLabel(value: Double): String = ValuePickerLogic.format(ValueSpecs.readLeading, value)
     }
 }
 

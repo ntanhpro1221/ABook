@@ -96,11 +96,14 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                                             TextAction(S.s_hen_gio_39d9ca26, { sleepFor = if (sleepFor == remote.device) null else remote.device }, "remote_sleep_${remote.device}", align = Alignment.CenterStart)
                                             Reveal(sleepFor == remote.device) {
                                                 Column {
-                                                    for (minutes in listOf(15, 30, 45, 60)) {
-                                                        TextAction(S.s_0_phut_2596d212(minutes), {
-                                                            if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes); sleepFor = null }
-                                                        }, "remote_sleep_${remote.device}_$minutes", Modifier.fillMaxWidth(), Alignment.CenterStart)
-                                                    }
+                                                    // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do 1-240 phút; mỗi lần đổi là hẹn lại trên máy kia.
+                                                    var remoteMinutes by remember { mutableIntStateOf(30) }
+                                                    ValuePicker(
+                                                        ValueSpecs.sleepMinutes, remoteMinutes.toDouble(),
+                                                        { minutes -> remoteMinutes = minutes.toInt(); if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes.toInt()) } },
+                                                        { minutes -> S.s_0_phut_2596d212(minutes.toInt()) }, S.s_hen_gio_39d9ca26, "remote_sleep_${remote.device}_minutes",
+                                                        current = remote.sleep == "minutes",
+                                                    )
                                                     TextAction(S.s_tat_hen_gio_fc8af231, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
                                                     TextAction(S.s_het_chuong_f1d590bb, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
                                                 }

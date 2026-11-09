@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import org.json.JSONObject
+import vn.abook.player.ui.components.ValueSpecs
 import vn.abook.player.ui.nowplaying.SleepText
 import java.util.Calendar
 import kotlin.math.pow
@@ -34,6 +35,12 @@ object SleepTimer {
     private var runningSinceMs = 0L
     /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). Hẹn theo chương dùng "Mỗi lần nghe thêm". */
     private var minutes = 0
+    /** "Hết N chương": số chương còn phải nghe hết (1 = chương này). Chỉ chương cuối của hẹn giữ ở cuối mục ([Playback.holdAtItemEnd]); các chương trước
+     *  đếm xuống ở lúc sang chương tự nhiên ([onChapterChanged]), không nhỏ dần. */
+    var chapters = 1
+        private set
+    /** Hẹn "hết chương" dừng ở cuối CHƯƠNG NÀY (chương cuối của "Hết N chương"). */
+    val stopsAtChapterEnd: Boolean get() = mode == Mode.CHAPTER && chapters == 1
     /** Lịch đêm: (từ phút-trong-ngày, đến phút-trong-ngày, số phút hẹn) hoặc null. */
     var schedule: Triple<Int, Int, Int>? = null
     private var scheduleOffFor = ""
@@ -89,7 +96,7 @@ object SleepTimer {
         val left = if (timer.has("endsAt")) timer.optLong("endsAt") - now else timer.optLong("remainingMs", 0L)
         val picked = timer.optInt("minutes")
         if (timer.optString("source") != "manual" || timer.optString("bookId").isEmpty() ||
-            now - timer.optLong("savedAt") !in 0..(24 * 3_600_000L) || picked !in 1..60 || left !in 1..(picked * 60_000L)) {
+            now - timer.optLong("savedAt") !in 0..(24 * 3_600_000L) || !minutesAllowed(picked) || left !in 1..(picked * 60_000L)) {
             ListenPrefs.saveTimer(null)
             return
         }
@@ -107,7 +114,7 @@ object SleepTimer {
         val json = JSONObject().put("mode", mode.name.lowercase()).put("reason", automaticReason)
         when (mode) {
             Mode.MINUTES -> json.put("remaining", leftMs(now) / 1000.0).put("minutes", minutes).put("counting", runningSinceMs > 0)
-            Mode.CHAPTER -> json.put("remaining", remainingInChapter())
+            Mode.CHAPTER -> json.put("remaining", remainingInChapter()).put("chapters", chapters)
             Mode.OFF -> if (stoppedAtMs > 0) json.put("stoppedAt", stoppedAtMs / 1000.0)
         }
         return json
@@ -143,8 +150,11 @@ object SleepTimer {
         Playback.emit("sleep")
     }
 
+    /** Số phút hẹn được: miền tự do của bộ chọn giá trị (1-240, ValueSpecs.sleepMinutes). */
+    private fun minutesAllowed(value: Int) = value >= ValueSpecs.sleepMinutes.min && value <= ValueSpecs.sleepMinutes.max
+
     fun setMinutes(value: Int, reason: String? = null, feedback: Boolean = true) {
-        if (value !in 1..60) return
+        if (!minutesAllowed(value)) return
         if (reason == null) onAwake()
         automaticReason = reason?.takeIf { it == "schedule" }.orEmpty()
         ownerBook = Playback.bookId
@@ -165,15 +175,18 @@ object SleepTimer {
         if (reason == null && feedback) Feedback.play("toggle")
     }
 
-    fun setEndOfChapter() {
+    /** "Hết chương này" (`count` 1) hay "Hết N chương" (N 1-10, ValueSpecs.sleepChapters). */
+    fun setEndOfChapter(count: Int = 1) {
+        if (count < ValueSpecs.sleepChapters.min || count > ValueSpecs.sleepChapters.max) return
         onAwake()
+        chapters = count
         ownerBook = Playback.bookId
         ownerRecord = Playback.recordId
         automaticReason = ""
         mode = Mode.CHAPTER
         warned = false
         stoppedAtMs = 0
-        Playback.holdAtItemEnd(true)
+        Playback.holdAtItemEnd(count == 1)
         restoreVolume()
         Bedtime.timerSet(-1)
         Motion.refresh()
@@ -253,9 +266,17 @@ object SleepTimer {
         else -> false
     }
 
+    /** Sang chương: người nghe tự chuyển thì giữ hẹn như cũ; tự sang (hết chương) khi hẹn còn hơn một chương thì đếm xuống, chương cuối của hẹn mới giữ ở cuối mục. */
     fun onChapterChanged(manual: Boolean = false) {
-        if (mode == Mode.CHAPTER) {
-            if (manual) Playback.holdAtItemEnd(true) else finish()
+        if (mode != Mode.CHAPTER) return
+        when {
+            manual -> Playback.holdAtItemEnd(chapters == 1)
+            chapters > 1 -> {
+                chapters -= 1
+                Playback.holdAtItemEnd(chapters == 1)
+                Playback.emit("sleep")
+            }
+            else -> finish()
         }
     }
 
@@ -297,7 +318,8 @@ object SleepTimer {
                 }
                 val remaining = when (mode) {
                     Mode.MINUTES -> leftMs()
-                    Mode.CHAPTER -> Playback.remainingInChapterMs()
+                    // "Hết N chương": chỉ chương cuối của hẹn mới nhỏ dần / báo sắp tắt.
+                    Mode.CHAPTER -> if (chapters > 1) Long.MAX_VALUE else Playback.remainingInChapterMs()
                     Mode.OFF -> 0L
                 }
                 if (mode == Mode.MINUTES && remaining <= 0) {

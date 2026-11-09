@@ -24,7 +24,8 @@ data class PlayerVoice(val id: String, val name: String, val gender: String = ""
 
 enum class SleepKind { Off, Minutes, Chapter }
 
-/** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here. */
+/** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here.
+ *  `minutes`: số phút đã chọn ([SleepKind.Minutes]) hay số chương còn phải nghe hết ([SleepKind.Chapter], 1 = "Hết chương này"). */
 @Immutable
 data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L, val automaticReason: String = "")
 
@@ -151,7 +152,7 @@ object PlayerLabels {
     /** `leftMs`: the time left on the timer (the clock's `sleepRemainingMs`). `clock`: the sheet's big readout instead of the button label. */
     fun sleep(sleep: PlayerSleep, leftMs: Long, clock: Boolean = false): String = when (sleep.kind) {
         SleepKind.Off -> if (clock) S.s_tat_3286064e else S.s_hen_gio_39d9ca26
-        SleepKind.Chapter -> S.s_het_chuong_f1d590bb
+        SleepKind.Chapter -> if (sleep.minutes > 1) S.s_het_0_chuong_79433c77(sleep.minutes) else S.s_het_chuong_f1d590bb
         SleepKind.Minutes -> {
             val left = leftMs.coerceAtLeast(0)
             if (clock) time(ceil(left / 1000.0).toLong() * 1000)

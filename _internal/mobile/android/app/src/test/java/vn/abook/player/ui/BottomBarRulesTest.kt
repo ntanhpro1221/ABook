@@ -54,7 +54,7 @@ class BottomBarRulesTest {
     private val root = File("src/main/java/vn/abook/player/ui")
 
     @Test fun theSharedBottomContainersLiftThemselvesAboveTheKeyboard() {
-        for (path in listOf("addbook/BookForms.kt", "components/Sheet.kt")) {
+        for (path in listOf("addbook/BookForms.kt", "components/Sheet.kt", "screens/SettingsParts.kt")) {
             val text = File(root, path).readText()
             assertTrue("$path mất imePadding(): màn / bảng có ô nhập sẽ bị bàn phím che", Regex("""(?m)^[^/*\n]*\.imePadding\(\)""").containsMatchIn(text))
         }
@@ -65,7 +65,8 @@ class BottomBarRulesTest {
         val offenders = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.filter { file ->
             val text = file.readText()
             // LibraryChrome: ô tìm kiếm ở ĐẦU Thư viện (trên bàn phím sẵn), không có chân. *Sheets.kt: nội dung bảng trượt, SheetLayer đã imePadding.
-            file.name != "LibraryChrome.kt" && !file.name.endsWith("Sheets.kt") && Regex("""\b(BookField|BasicTextField)\(""").containsMatchIn(text) && file.name != "BookForms.kt" &&
+            // ValuePicker.kt: ô gõ số của thành phần chung; nơi đặt nó (bảng trượt, SettingsPage) đã imePadding.
+            file.name != "LibraryChrome.kt" && file.name != "ValuePicker.kt" && !file.name.endsWith("Sheets.kt") && Regex("""\b(BookField|BasicTextField)\(""").containsMatchIn(text) && file.name != "BookForms.kt" &&
                 !text.contains("BookForm(") && !text.contains("imePadding()") && !text.contains("sheets.show") && !text.contains("SheetHost")
         }.map { it.name }.toList()
         assertTrue("ô nhập không nằm trong BookForm / bảng trượt / imePadding: $offenders", offenders.isEmpty())

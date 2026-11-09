@@ -24,7 +24,8 @@ class NowPlayingLogicTest {
     }
     @Test fun decimalRateSurvivesTheMappingSoTheSheetMarksTheChosenCell() {
         assertEquals(1.1, mapped("""{"bookId":"b","chapterId":7,"rate":1.1}""").rate, 0.0)
-        assertTrue(PlayerLabels.rates.contains(mapped("""{"bookId":"b","chapterId":7,"rate":0.9}""").rate))
+        assertEquals(1.35, mapped("""{"bookId":"b","chapterId":7,"rate":1.35}""").rate, 0.0)
+        assertEquals("1,35×", PlayerLabels.rate(1.35))
     }
     @Test fun absentChapterDoesNotOfferReadAlong() {
         val state = mapped("""{"chapterId":null}""")
