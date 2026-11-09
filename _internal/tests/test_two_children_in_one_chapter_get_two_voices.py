@@ -47,3 +47,38 @@ def test_children_in_different_chapters_still_use_unused_presets_first():
     second = allocator.choose("male", npc=True, age="child", who="B")
     assert first["name"] != second["name"]
     assert {first["gender"], second["gender"]} == {"female"}
+
+
+def test_registry_casts_a_named_boy_and_a_local_boy_to_distinct_female_voices(tmp_path):
+    from abook.character_registry import build_registry_and_cast
+    from abook.config import build_settings
+    from abook.voice_catalog import preset_by_name
+    from tests.test_character_casting import _identity_db
+
+    db = _identity_db(tmp_path, [("AEREN", "male"), ("NPC_LOCAL::C00001::CON TRAI", "male")])
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET age='child'")
+    build_registry_and_cast(db, build_settings(), lambda _: None)
+    with db.connect() as conn:
+        voices = [r[0] for r in conn.execute(
+            "SELECT v.preset_name FROM segments s JOIN voice_profiles v ON v.id=s.voice_profile_id ORDER BY s.id")]
+    assert len(voices) == len(set(voices)) == 2
+    assert all(preset_by_name(name)['gender'] == 'female' for name in voices)
+
+
+def test_registry_keeps_the_male_voice_the_listener_pinned_for_a_boy(tmp_path):
+    from abook.character_registry import build_registry_and_cast, voice_profile_spec
+    from abook.config import build_settings
+    from abook.voice_catalog import preset_by_name
+    from tests.test_character_casting import _identity_db
+
+    db = _identity_db(tmp_path, [("AEREN", "male")])
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET age='child'")
+    spec = voice_profile_spec(preset_by_name('Thái Sơn'))
+    db.upsert_voice_profile(spec)
+    db.set_locked_character_voice('AEREN', spec['voice_key'])
+    for _ in range(2):
+        build_registry_and_cast(db, build_settings(), lambda _: None)
+        with db.connect() as conn:
+            assert conn.execute("SELECT v.preset_name FROM segments s JOIN voice_profiles v ON v.id=s.voice_profile_id").fetchone()[0] == 'Thái Sơn'

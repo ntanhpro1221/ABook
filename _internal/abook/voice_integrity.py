@@ -43,6 +43,7 @@ def _signal_voices(signal: dict[str, Any], location: str = 'signal') -> list[tup
 
 def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
           acoustic_probe: AcousticProbe | None = None) -> dict[str, Any]:
+    from .character_registry import preset_fits_person
     from .voice_catalog import engine_voice, preset_by_name
     from .webui import store
 
@@ -144,7 +145,8 @@ def audit(project_root: Path | str, *, chapter_ids: set[int] | None = None,
             gender = character['gender'] if character and not narrator_owned and not thought_presentation else ''
             if not gender and not narrator_owned and not thought_presentation and row['kind'] in ('dialogue', 'thought'):
                 gender = row['gender']
-            if actual_gender and gender in ('male', 'female') and actual_gender != gender:
+            age = character['age'] if character else row['age']
+            if actual_gender and gender in ('male', 'female') and not preset_fits_person(actual_gender, gender, age):
                 issue('VOICE_GENDER_MISMATCH', speaker_gender=gender, preset_gender=actual_gender)
             if narrator_owned and row['kind'] == 'dialogue' and row['gender'] in ('male', 'female'):
                 expected_gender = voice_gender(expected)

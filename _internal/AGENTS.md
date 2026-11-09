@@ -120,7 +120,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Khoá bảng `engine@version/preset`; VieNeu chỉ có `r`, `o_db`, `ref_lufs`. Gain câu = `L + o_db - ref_lufs`,
   thêm trần đỉnh an toàn; không line offset, không RMS/LUFS đo từng câu để đặt gain. Không đổi `r` khi fit độ to.
 - Sau phân tích toàn sách, cấp preset chưa dùng cho vai nhiều câu trước vai ít câu. Chọn bằng phái và hạng
-  chủ sách; mọi tuổi theo cùng luật. Hết preset thì dùng chung và nghe cùng giọng; không tạo thang bậc phụ.
+  chủ sách; trẻ con (cả bé trai) tự chọn từ pool nữ nguyên bản, giọng người nghe ghim vẫn được ưu tiên.
+  Casting và kiểm giọng trước xuất dùng chung `preset_fits_person`. Hết preset thì dùng chung và nghe cùng giọng; không tạo thang bậc phụ.
 - Schema và prompt phân tích vẫn giữ emotion/intensity/volume để giữ gold và dữ liệu huấn luyện.
   Mọi số độ to phải fit bằng bộ 40 câu trung tính × hai seed, ISO 532-1 stationary; sách chỉ là dữ liệu test.
 - Chỉ gỡ vòng hiệu chỉnh sách sau khi cả hai sách kiểm định đạt đúng 1,5 phon giữa giọng và ±1,0 phon

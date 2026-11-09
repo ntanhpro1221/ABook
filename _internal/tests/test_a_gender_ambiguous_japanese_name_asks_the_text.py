@@ -39,6 +39,20 @@ def test_without_decisive_text_the_vote_still_stands() -> None:
     assert resolve_gender(ident, ident) == ("female", "model")
 
 
+def test_a_different_ambiguous_name_can_resolve_to_female() -> None:
+    ident = [row("AOI", "male") for _ in range(6)]
+    text = row("NARRATOR", "unknown", "Cô Aoi gặp chị Aoi, bà Aoi, nàng Aoi và cô gái Aoi.")
+    gender, why = resolve_gender(ident, [*ident, text])
+    assert gender == "female", why
+    assert why.startswith("text_ambiguous_name:")
+
+
+def test_a_few_gendered_words_do_not_overrule_a_unanimous_vote() -> None:
+    ident = [row("AOI", "female") for _ in range(6)]
+    text = row("NARRATOR", "unknown", "Anh Aoi gọi cậu Aoi.")
+    assert resolve_gender(ident, [*ident, text]) == ("female", "model")
+
+
 def test_an_ordinary_name_keeps_the_unanimous_vote() -> None:
     ident = [row("MILINA", "female") for _ in range(4)]
     text = row("NARRATOR", "unknown", "Ngài Neeshka, ông Evans, anh ấy, cậu ta, ông ấy quay sang Milina.")
