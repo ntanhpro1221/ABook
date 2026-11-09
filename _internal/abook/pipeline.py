@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import inspect
 import json
@@ -377,6 +378,22 @@ class CriticalResourceStop(RuntimeError):
 TTS_WORKER_RAM_GB = PERCEPTUAL_WORKER_RAM_GB + TTS_WORKER_ALIGNER_RAM_GB
 # Same-seed reruns of a word-break retry before the environment is declared broken.
 WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS = 3
+# Same-seed reruns after an out-of-memory error before the shortage is declared lasting.
+# A budget of its own: the machine's load never spends one of the take's quality attempts.
+TTS_MEMORY_RECOVERY_ATTEMPTS = 3
+TAKE_SESSION_KIND = "take_session"
+
+
+def _is_memory_pressure(error: BaseException) -> bool:
+    """Somebody else's memory, raised directly or wrapped by the engine."""
+    seen: set[int] = set()
+    current: BaseException | None = error
+    while current is not None and id(current) not in seen:
+        if isinstance(current, MemoryError) or is_transient_tts_memory_error(current):
+            return True
+        seen.add(id(current))
+        current = current.__cause__
+    return False
 
 
 class BookPipeline:
@@ -3216,14 +3233,14 @@ class BookPipeline:
         for index, row in enumerate(current_rows, 1):
             self._progress(tts_label, index - 1, len(current_rows))
             status = str(row["status"])
-            word_break_owed = self._word_break_retry_owed(row)
+            owed = self._owed_take_session(row) if row["voice_profile_id"] is not None else None
             if (status == SegmentStatus.FAILED.value
                     and self._segment_signal_provenance(dict(row)).get("quality_pending")
                     and self._has_real_audio(row)
-                    and not word_break_owed):
+                    and owed is None):
                 continue
             signal_valid, signal_metrics = self._inspect_existing_segment(row)
-            signal_valid = signal_valid and not word_break_owed
+            signal_valid = signal_valid and owed is None
             if signal_valid and self._segment_has_current_asr_failure(row):
                 if status != SegmentStatus.FAILED.value:
                     self.db.mark_failed(
@@ -3258,14 +3275,17 @@ class BookPipeline:
             if row["voice_profile_id"] is None:
                 self.db.mark_failed(int(row["id"]), "No locked voice profile")
                 continue
-            interrupted_clarity = self._is_interrupted_clarity_repair(row, status)
+            if owed is not None:
+                # An interrupted call replays as the call it was, whatever the row now says.
+                interrupted_clarity = owed["call"]["delivery_mode"] == DELIVERY_CLARITY
+            else:
+                interrupted_clarity = self._is_interrupted_clarity_repair(row, status)
             if interrupted_clarity:
-                stored_round = int(row["generation_repair_round"])
-                next_round = (
-                    stored_round + 1
-                    if status == SegmentStatus.FAILED.value and not word_break_owed
-                    else stored_round
-                )
+                if owed is not None:
+                    next_round = int(owed["call"]["asr_repair_round"])
+                else:
+                    stored_round = int(row["generation_repair_round"])
+                    next_round = stored_round + 1 if status == SegmentStatus.FAILED.value else stored_round
                 repair_rounds = int(self.settings["asr"].get("repair_rounds", 2))
                 if next_round >= repair_rounds:
                     self.db.mark_failed(
@@ -4413,15 +4433,16 @@ class BookPipeline:
                 if claimed is not None:
                     checksum, metrics, seed = claimed
                 else:
-                    checksum, metrics, seed = (
-                        self._synthesize_atomic_with_pronunciation_variant(
+                    checksum, metrics, seed = self._without_memory_pressure(
+                        f"sinh candidate {row['stable_id']}",
+                        lambda: self._synthesize_atomic_with_pronunciation_variant(
                             row,
                             output,
                             pronunciation_delivery_variant=pronunciation_variant,
                             seed_salt=seed_salt,
                             repair_short_utterance=repair_short_utterance,
                             delivery_mode=DELIVERY_CLARITY,
-                        )
+                        ),
                     )
                 if int(seed) != expected_seed:
                     raise RuntimeError("TTS returned a seed that differs from the candidate ledger")
@@ -4457,10 +4478,9 @@ class BookPipeline:
             except (PipelineStopped, CriticalResourceStop):
                 raise
             except Exception as exc:  # noqa: BLE001
-                if is_transient_tts_memory_error(exc) and self._recover_from_memory_pressure(
-                    f"sinh candidate {row['stable_id']}", str(exc)
-                ):
-                    continue
+                if _is_memory_pressure(exc):
+                    # The candidate stays at this attempt and seed; the next run replays it.
+                    raise CriticalResourceStop(f"Hết bộ nhớ khi sinh candidate {row['stable_id']}: {exc}") from exc
                 if is_fatal_tts_error(exc):
                     raise RuntimeError(f"Fatal TTS engine failure: {exc}") from exc
                 last_error = str(exc)
@@ -4524,14 +4544,14 @@ class BookPipeline:
                 raise RuntimeError("segment candidate split checkpoint differs from its retry schedule")
             try:
                 split_provenance = (
-                    self._synthesize_split(
+                    self._without_memory_pressure(f"chia nhỏ candidate {row['stable_id']}", lambda: self._synthesize_split(
                         row,
                         output,
                         delivery_mode=DELIVERY_CLARITY,
                         seed_salt_prefix=split_seed_salt,
                         pronunciation_delivery_variant=pronunciation_variant,
                         split_strategy=split_strategy,
-                    )
+                    ))
                     or []
                 )
                 valid, metrics, reason = inspect_wav(
@@ -4573,6 +4593,8 @@ class BookPipeline:
                 )
                 self._reset_tts_failure_streak()
                 return checkpoint
+            except (PipelineStopped, CriticalResourceStop):
+                raise
             except Exception as exc:  # noqa: BLE001
                 last_error = f"{last_error}; split={exc}"
 
@@ -4952,6 +4974,12 @@ class BookPipeline:
         asr_repair_round: int | None = None,
         prefetched: dict[str, Any] | None = None,
     ) -> None:
+        # One ledger for the whole call: a crash, a stop or a memory shortage anywhere in it
+        # resumes by replaying the call, so the book gets the take the unbroken run gets.
+        session = self._begin_take_session(row, dict(
+            seed_salt_prefix=seed_salt_prefix, repair_short_utterance=bool(repair_short_utterance),
+            delivery_mode=delivery_mode, asr_repair_round=asr_repair_round,
+        ))
         selected = self._resume_word_break_retry(
             row, seed_salt_prefix=seed_salt_prefix, delivery_mode=delivery_mode, asr_repair_round=asr_repair_round,
         )
@@ -4960,6 +4988,7 @@ class BookPipeline:
                 self._require_high_quality_take(selected)
                 self._accept_retained_take(row)
                 self._finish_accepted_take(row, selected)
+                self._close_take_session(row, session)
                 return
             except (PipelineStopped, CriticalResourceStop):
                 raise
@@ -4975,7 +5004,8 @@ class BookPipeline:
             try:
                 seed_salt = f"{seed_salt_prefix}_{attempt}"
                 # Mỗi lần thử ghi file riêng: crash không được ghi đè bản đang có trong sổ.
-                output = base_output.with_name(base_output.stem + f".{seed_salt}.{time.time_ns()}.wav")
+                output = self._session_attempt_path(row, session, seed_salt, base_output.with_name(
+                    base_output.stem + f".{seed_salt}.{time.time_ns()}.wav"))
                 self.db.mark_generating(
                     int(row["id"]),
                     self.tts.generation_seed(row, seed_salt),
@@ -4983,23 +5013,26 @@ class BookPipeline:
                     repair_round=asr_repair_round,
                     policy_hash=self.quality_policy_hash,
                 )
-                claimed = self._claim_prefetched_segment(
-                    prefetched if attempt == 0 else None,
-                    row,
-                    base_output,
-                    seed_salt,
-                )
-                if claimed is not None:
-                    checksum, metrics, seed = claimed
-                    output = base_output
-                else:
-                    checksum, metrics, seed = self.tts.synthesize_atomic(
+
+                def synthesize(attempt: int = attempt, seed_salt: str = seed_salt,
+                               output: Path = output) -> tuple[Path, str, dict[str, Any], int]:
+                    claimed = self._claim_prefetched_segment(
+                        prefetched if attempt == 0 else None,
+                        row,
+                        base_output,
+                        seed_salt,
+                    )
+                    if claimed is not None:
+                        return (base_output, *claimed)
+                    return (output, *self.tts.synthesize_atomic(
                         row,
                         output,
                         seed_salt=seed_salt,
                         repair_short_utterance=repair_short_utterance,
                         delivery_mode=delivery_mode,
-                    )
+                    ))
+
+                output, checksum, metrics, seed = self._session_synthesis(row, session, seed_salt, synthesize)
                 metrics["tts_delivery_mode"] = delivery_mode
                 if asr_repair_round is not None:
                     metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
@@ -5015,19 +5048,16 @@ class BookPipeline:
                 self._require_high_quality_take(metrics)
                 self._accept_retained_take(row)
                 self._finish_accepted_take(row, metrics)
+                self._close_take_session(row, session)
                 return
             except (PipelineStopped, CriticalResourceStop):
                 raise
             except Exception as exc:  # noqa: BLE001
-                # Somebody else's memory, not a broken engine. Release, wait, try the same
-                # attempt again - the retry loop is bounded, and so is the wait, so this
-                # cannot spin. Only when the wait runs out does it fall through to the
-                # fatal path it used to take immediately.
+                if _is_memory_pressure(exc):
+                    # Synthesis already rode out its own shortages; one from anywhere else
+                    # must not spend this attempt either. Stop here; the next run replays it.
+                    raise CriticalResourceStop(f"Hết bộ nhớ khi xử lý {row['stable_id']}: {exc}") from exc
                 self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
-                if is_transient_tts_memory_error(exc) and self._recover_from_memory_pressure(
-                    f"tổng hợp {row['stable_id']}", str(exc)
-                ):
-                    continue
                 if is_fatal_tts_error(exc):
                     self.db.mark_failed(int(row["id"]), f"Fatal TTS engine failure: {exc}")
                     raise RuntimeError(f"Fatal TTS engine failure: {exc}") from exc
@@ -5062,7 +5092,8 @@ class BookPipeline:
                     split_strategy,
                 )
                 split_seed_salt = f"{seed_salt_prefix}_split"
-                output = base_output.with_name(base_output.stem + f".{split_seed_salt}.{time.time_ns()}.wav")
+                output = self._session_attempt_path(row, session, split_seed_salt, base_output.with_name(
+                    base_output.stem + f".{split_seed_salt}.{time.time_ns()}.wav"))
                 split_seed = self.tts.generation_seed(row, split_seed_salt)
                 self.db.mark_generating(
                     int(row["id"]),
@@ -5072,13 +5103,13 @@ class BookPipeline:
                     policy_hash=self.quality_policy_hash,
                 )
                 split_provenance = (
-                    self._synthesize_split(
+                    self._without_memory_pressure(f"chia nhỏ {row['stable_id']}", lambda: self._synthesize_split(
                         row,
                         output,
                         delivery_mode=delivery_mode,
                         seed_salt_prefix=split_seed_salt,
                         split_strategy=split_strategy,
-                    )
+                    ))
                     or []
                 )
                 valid, metrics, reason = inspect_wav(
@@ -5121,13 +5152,19 @@ class BookPipeline:
                     raise AudioQualityError("split take still requires quality review")
                 self._accept_retained_take(row)
                 self._reset_tts_failure_streak()
+                self._close_take_session(row, session)
                 self.log(f"Đã cứu TTS segment {row['stable_id']} bằng cách chia nhỏ.")
                 return
+            except (PipelineStopped, CriticalResourceStop):
+                raise
             except Exception as exc:  # noqa: BLE001
+                if _is_memory_pressure(exc):
+                    raise CriticalResourceStop(f"Hết bộ nhớ khi chia nhỏ {row['stable_id']}: {exc}") from exc
                 self._retain_rejected_output(row, output, str(exc), f"{seed_salt_prefix}_split", delivery_mode, asr_repair_round)
                 last_error = f"{last_error}; split={exc}"
 
         self.db.mark_failed(int(row["id"]), last_error)
+        self._close_take_session(row, session)
         self.log(f"TTS segment {row['stable_id']} thất bại hoàn toàn: {last_error}")
         self.db.event(
             "error",
@@ -5232,37 +5269,139 @@ class BookPipeline:
         self.log(message)
         self.db.event("warning", "WORD_BREAK_ALIGNER_MISSING", message)
 
+    def _without_memory_pressure(self, where: str, synthesize: Callable[[], Any]) -> Any:
+        """Run one synthesis; another program's memory may delay it but never change its seed.
+
+        Every synthesis path goes through here, so an out-of-memory error reruns the same
+        take instead of moving on to the next seed: which take a book gets must not depend
+        on what else the machine was doing. The budget is separate from the quality
+        attempts; when it runs out the run stops at a checkpoint and the next run replays
+        this same seed.
+        """
+        failures = 0
+        while True:
+            try:
+                return synthesize()
+            except (PipelineStopped, CriticalResourceStop):
+                raise
+            except Exception as exc:  # noqa: BLE001
+                if not _is_memory_pressure(exc):
+                    raise
+                failures += 1
+                if failures < TTS_MEMORY_RECOVERY_ATTEMPTS and self._recover_from_memory_pressure(where, str(exc)):
+                    continue
+                raise CriticalResourceStop(f"Hết bộ nhớ kéo dài khi {where}: {exc}") from exc
+
+    def _take_session_key(self, row: Any) -> str:
+        return f"{TAKE_SESSION_KIND}:{int(row['id'])}"
+
+    def _take_session_identity(self, row: Any) -> dict[str, Any]:
+        spoken, _ = self._spoken_text_with_pronunciation_variant(row, PRONUNCIATION_DELIVERY_LOCKED)
+        return dict(policy_hash=self.quality_policy_hash, spoken_text_sha256=hashlib.sha256(spoken.encode()).hexdigest(),
+                    voice_profile_id=int(self.tts.locked_voice_provenance(row)["voice_profile_id"]),
+                    listener_retakes=int(_segment_value(row, "listener_retakes", 0) or 0))
+
+    def _owed_take_session(self, row: Any) -> dict[str, Any] | None:
+        """The synthesis call a dead or stopped process left open on this segment, if any.
+
+        Recovery files its retained take as failed + quality_pending, which the chapter loop
+        would otherwise keep: the book would have a take the unbroken run went on to check,
+        retry or accept. The call is owed a replay instead, wherever it stopped.
+        """
+        artifact = self.db.artifact_by_key(self._take_session_key(row))
+        if artifact is None:
+            return None
+        session = json.loads(str(artifact["metadata_json"]))
+        if session["state"] != "open" or session["identity"] != self._take_session_identity(row):
+            # Source, voice or listener edits make it another book's call, not this one's.
+            return None
+        return session
+
+    def _write_take_session(self, row: Any, session: dict[str, Any]) -> None:
+        self.db.register_artifact(artifact_key=self._take_session_key(row), kind=TAKE_SESSION_KIND,
+                                  path=self._chunk_path(row), sha256=None, verified=False, metadata=session)
+
+    def _begin_take_session(self, row: Any, call: dict[str, Any]) -> dict[str, Any]:
+        owed = self._owed_take_session(row)
+        if owed is not None and owed["call"] == call:
+            # Back to where the call started, then the same steps: takes it already made
+            # are read from the ledger, the one it was making is synthesized again.
+            self.db.restore_segment_take(int(row["id"]), owed["snapshot"])
+            self.log(f"Làm tiếp lượt tổng hợp dở của {row['stable_id']} từ đầu, theo sổ các lần thử.")
+            return owed
+        session = dict(state="open", call=call, identity=self._take_session_identity(row),
+                       snapshot=self.db.segment_take_snapshot(int(row["id"])), attempts={})
+        self._write_take_session(row, session)
+        return session
+
+    def _close_take_session(self, row: Any, session: dict[str, Any]) -> None:
+        session.update(state="closed", snapshot=None, attempts={})
+        self._write_take_session(row, session)
+
+    def _session_attempt_path(self, row: Any, session: dict[str, Any], seed_salt: str, fresh: Path) -> Path:
+        """Reserve this attempt's file and seed before synthesizing, so a replay writes the same file."""
+        record = session["attempts"].get(seed_salt)
+        if record is not None:
+            return Path(record["path"])
+        session["attempts"][seed_salt] = dict(path=str(fresh), seed=int(self.tts.generation_seed(row, seed_salt)))
+        self._write_take_session(row, session)
+        return fresh
+
+    def _session_synthesis(self, row: Any, session: dict[str, Any], seed_salt: str,
+                           synthesize: Callable[[], tuple[Path, str, dict[str, Any], int]],
+                           ) -> tuple[Path, str, dict[str, Any], int]:
+        """One attempt's take: from the ledger when this call already made it, else synthesized."""
+        record = session["attempts"][seed_salt]
+        if "error" in record:
+            # The engine's verdict on this seed is part of the book, like its audio.
+            error_type = AudioQualityError if record["quality"] else RuntimeError
+            raise error_type(record["error"])
+        if "sha256" in record:
+            path = Path(record["path"])
+            if path.is_file() and sha256_file(path) == record["sha256"]:
+                return path, record["sha256"], copy.deepcopy(record["metrics"]), int(record["seed"])
+        try:
+            output, checksum, metrics, seed = self._without_memory_pressure(f"tổng hợp {row['stable_id']}", synthesize)
+        except (PipelineStopped, CriticalResourceStop):
+            raise
+        except Exception as exc:  # noqa: BLE001
+            if not is_fatal_tts_error(exc):
+                record.update(error=str(exc), quality=isinstance(exc, AudioQualityError))
+                self._write_take_session(row, session)
+            raise
+        record.update(path=str(output), sha256=checksum, metrics=copy.deepcopy(metrics), seed=int(seed))
+        self._write_take_session(row, session)
+        return output, checksum, metrics, seed
+
     def _word_break_retake(self, row: Any, path: Path, metadata: dict[str, Any]) -> tuple[str, dict[str, Any], int]:
         """Synthesize the reserved seed; what the machine does to it must not change the book."""
         context = metadata["context"]
         failures = 0
         while True:
             try:
-                return self._synthesize_atomic_with_pronunciation_variant(
-                    row, path, pronunciation_delivery_variant=context["pronunciation_delivery_variant"],
-                    seed_salt=metadata["seed_salt"], repair_short_utterance=context["repair_short_utterance"],
-                    delivery_mode=context["delivery_mode"],
+                # Memory shortages are ridden out by the same rule as every other take.
+                return self._without_memory_pressure(
+                    f"sinh lại {row['stable_id']}",
+                    lambda: self._synthesize_atomic_with_pronunciation_variant(
+                        row, path, pronunciation_delivery_variant=context["pronunciation_delivery_variant"],
+                        seed_salt=metadata["seed_salt"], repair_short_utterance=context["repair_short_utterance"],
+                        delivery_mode=context["delivery_mode"],
+                    ),
                 )
             except (PipelineStopped, CriticalResourceStop):
                 raise
             except Exception as exc:  # noqa: BLE001
-                transient = is_transient_tts_memory_error(exc)
-                if not transient:
-                    if is_fatal_tts_error(exc):
-                        raise
-                    # The engine wraps its own failures with a cause; without one this is
-                    # the validators' verdict on the audio, the same on every replay.
-                    if isinstance(exc, AudioQualityError) and exc.__cause__ is None:
-                        raise
+                if is_fatal_tts_error(exc):
+                    raise
+                # The engine wraps its own failures with a cause; without one this is
+                # the validators' verdict on the audio, the same on every replay.
+                if isinstance(exc, AudioQualityError) and exc.__cause__ is None:
+                    raise
                 failures += 1
-                if transient:
-                    recovered = self._recover_from_memory_pressure(f"sinh lại {row['stable_id']}", str(exc))
-                else:
-                    time.sleep(min(8, 2**failures))
-                    recovered = True
-                if recovered and failures < WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS:
+                time.sleep(min(8, 2**failures))
+                if failures < WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS:
                     continue
-                if transient or isinstance(exc, OSError):
+                if isinstance(exc, OSError):
                     # Never spend the budget on the machine's state: the reservation stays
                     # and the next run replays this seed.
                     raise CriticalResourceStop(
@@ -5313,23 +5452,6 @@ class BookPipeline:
         current = self.db.get_segment(int(row["id"]))
         self.db.annotate_word_break_retry(int(row["id"]), str(current["wav_sha256"]), metadata["result"]["summary"])
         return metadata
-
-    def _word_break_retry_owed(self, row: Any) -> bool:
-        """A crash froze this take between its gate firing and its quality decision.
-
-        Recovery files such a take as failed + quality_pending, which the chapter loop would
-        otherwise skip: the book would keep a take the unbroken run went on to retry or check.
-        """
-        if str(row["status"]) != SegmentStatus.FAILED.value:
-            return False
-        signal = self._segment_signal_provenance(dict(row))
-        if not signal.get("quality_pending"):
-            return False
-        gate = signal.get("word_break_gate") or {}
-        if gate.get("fired") or gate.get("retry_count"):
-            return True
-        # A later attempt's take, after this segment's retry was refused by the high-quality checks.
-        return self.db.artifact_by_key(self._word_break_candidate_key(row, signal)) is not None
 
     def _resume_word_break_retry(self, row: Any, *, seed_salt_prefix: str = "primary",
                                  delivery_mode: str = DELIVERY_PRIMARY,

@@ -184,6 +184,10 @@ def test_active_edge_uses_existing_pipeline_seed_retry(tmp_path, monkeypatch):
     p._keep_usable_take = lambda *a: None
     p._accept_retained_take = lambda row: committed.append({'generation_seed': len(salts)})
     p._resume_word_break_retry = lambda *a, **k: None
+    p._begin_take_session = lambda *a, **k: {}
+    p._session_attempt_path = lambda _row, _session, _salt, fresh: fresh
+    p._session_synthesis = lambda _row, _session, _salt, synth: synth()
+    p._close_take_session = lambda *a: None
     monkeypatch.setattr('abook.pipeline.time.sleep', lambda _: None)
     p._process_single_segment({'id': 1, 'stable_id': 'synthetic', 'text': 'Một câu thử.'}, {})
     assert salts == ['primary_0', 'primary_1']

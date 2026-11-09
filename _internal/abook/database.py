@@ -7705,6 +7705,37 @@ class ProjectDB:
                 )
             self._refresh_chapter_counts_conn(conn, int(row["chapter_id"]))
 
+    _TAKE_SNAPSHOT_COLUMNS = (
+        "status", "attempt_count", "generation_seed", "generation_delivery_mode", "generation_repair_round",
+        "generation_policy_hash", "wav_path", "wav_sha256", "wav_duration", "signal_json",
+        "asr_text", "asr_similarity", "asr_wer", "warning_code", "error",
+    )
+
+    def segment_take_snapshot(self, segment_id: int) -> dict[str, Any]:
+        """The columns a synthesis call reads and writes, as they stand before it starts."""
+        with self.connect() as conn:
+            row = conn.execute(
+                f"SELECT {','.join(self._TAKE_SNAPSHOT_COLUMNS)} FROM segments WHERE id=?", (segment_id,)
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"Unknown segment id: {segment_id}")
+        return {column: row[column] for column in self._TAKE_SNAPSHOT_COLUMNS}
+
+    def restore_segment_take(self, segment_id: int, snapshot: dict[str, Any]) -> None:
+        """Put a segment back where an interrupted synthesis call found it, so the call replays."""
+        if set(snapshot) != set(self._TAKE_SNAPSHOT_COLUMNS):
+            raise ValueError("segment take snapshot has the wrong columns")
+        with self.transaction() as conn:
+            row = conn.execute("SELECT chapter_id FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if row is None:
+                raise KeyError(f"Unknown segment id: {segment_id}")
+            assignments = ",".join(f"{column}=?" for column in self._TAKE_SNAPSHOT_COLUMNS)
+            conn.execute(
+                f"UPDATE segments SET {assignments},updated_at=? WHERE id=?",
+                (*(snapshot[column] for column in self._TAKE_SNAPSHOT_COLUMNS), time.time(), segment_id),
+            )
+            self._refresh_chapter_counts_conn(conn, int(row["chapter_id"]))
+
     def checkpoint_usable_take(
         self, segment_id: int, *, wav_path: Path, wav_sha256: str, duration: float,
         signal: dict[str, Any], generation_seed: int | None, warning_codes: Sequence[str] = (),

@@ -167,6 +167,10 @@ class FakeTTS:
         spoken_text, _anchors = self.spoken_text_with_anchors(row)
         return spoken_text
 
+    def locked_voice_provenance(self, row):
+        profile = self.db.voice_profile(int(row["voice_profile_id"])) if row["voice_profile_id"] is not None else None
+        return {"voice_profile_id": int(profile["id"]) if profile is not None else None}
+
     def spoken_text_with_anchors(self, row):
         return str(row["text"]), []
 
@@ -389,6 +393,9 @@ class ScriptedShortTTS:
 
     def spoken_text(self, row):
         return str(row["text"])
+
+    def locked_voice_provenance(self, row):
+        return {"voice_profile_id": int(self.db.voice_profile(int(row["voice_profile_id"]))["id"])}
 
     def synthesize_atomic(
         self,

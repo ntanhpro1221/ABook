@@ -155,13 +155,13 @@ def test_inconclusive_retry_retains_measured_incumbent(tmp_path, monkeypatch):
 
 
 def test_chapter_loop_leaves_a_finished_failed_take_alone(tmp_path, monkeypatch):
-    """Only a take the gate fired on is owed a resume; other retained takes keep today's rule."""
+    """Only a call a crash left open is owed a replay; a take no call is making keeps today's rule."""
     pipeline, chapter, row, engine = scenario(tmp_path, monkeypatch, ["clean"])
     pipeline._keep_usable_take(row, *_clean_take(pipeline, row, tmp_path))
     reopened = ProjectDB(pipeline.paths.db)
     reopened.reset_in_progress_segments("crash before quality decision")
     pipeline.db = reopened
-    assert not pipeline._word_break_retry_owed(reopened.get_segment(int(row["id"])))
+    assert pipeline._owed_take_session(reopened.get_segment(int(row["id"]))) is None
 
 
 def _clean_take(pipeline, row, tmp_path):

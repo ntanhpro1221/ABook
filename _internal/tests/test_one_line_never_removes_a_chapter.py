@@ -121,7 +121,8 @@ def test_provider_rejecting_after_writing_audio_cannot_lose_the_take(tmp_path, m
         path.parent.mkdir(parents=True, exist_ok=True)
         sf.write(path, .1 * np.sin(np.arange(24000) / 30), 24000)
         raise AudioQualityError('provider rejected a decodable take')
-    pipeline.tts = SimpleNamespace(generation_seed=lambda *a: 7, spoken_text=lambda r: r['text'], synthesize_atomic=reject)
+    pipeline.tts = SimpleNamespace(generation_seed=lambda *a: 7, spoken_text=lambda r: r['text'], synthesize_atomic=reject,
+                                   locked_voice_provenance=lambda r: {'voice_profile_id': r['voice_profile_id']})
     monkeypatch.setattr(pipeline_module.time, 'sleep', lambda _: None)
     monkeypatch.setattr(pipeline.db, 'mark_signal_passed', lambda *a, **k: pytest.fail('rejected audio was marked passed'))
     pipeline._process_single_segment(row, chapter)
@@ -163,7 +164,8 @@ def test_unusable_output_never_becomes_replacement_speech(tmp_path, monkeypatch,
         else:
             path.write_bytes(b'not a WAV')
         raise AudioQualityError('no usable speech')
-    pipeline.tts = SimpleNamespace(generation_seed=lambda *a: 7, spoken_text=lambda r: r['text'], synthesize_atomic=reject)
+    pipeline.tts = SimpleNamespace(generation_seed=lambda *a: 7, spoken_text=lambda r: r['text'], synthesize_atomic=reject,
+                                   locked_voice_provenance=lambda r: {'voice_profile_id': r['voice_profile_id']})
     monkeypatch.setattr(pipeline_module.time, 'sleep', lambda _: None)
     pipeline._process_single_segment(row, chapter)
     current = pipeline.db.get_segment(row['id'])

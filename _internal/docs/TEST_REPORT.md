@@ -1,5 +1,13 @@
 # Test report
 
+## 09-11-2026 — wbgate3: deterministic takes across memory pressure and crashes
+
+- Primary synthesis, ASR candidates, word-break retakes and split fallback share a bounded resource retry budget. A transient OOM, including a wrapped exception or a native `MemoryError`, reruns the same take and salt. A lasting shortage stops at its reservation instead of spending a quality attempt.
+- Every primary/clarity synthesis call keeps a durable take session: its starting segment snapshot (including the logical attempt count), reserved paths/seeds and completed take results. Recovery replays an open call through the chapter loop, including voices with no word-break gate, and retains the original clarity round. Completed takes are read back after checksum verification.
+- The CPU fault matrix compares actual WAV bytes, the complete segment row except paths/timestamps, signals and artifact ledgers against uninterrupted runs. It covers each take, resource exhaustion and recovery, reservation/synthesis/result checkpoints, accept/close boundaries, candidates and split parts. Removing resource retry fails four regressions; removing session re-entry fails the plain-segment status regression; removing attempt-count restoration fails the DB comparison while audio still matches.
+- Full `pytest -rf` ran once: **10,865 passed, 17 skipped, 2 xfailed, 3 warnings, 0 FAILED**, exit 0, 2,909.03 s. The raw log has zero `^FAILED ` lines. Real available RAM before starting was 12.240585 GiB. Related files first reported 1,053 passed, 2 skipped and eight fixture import failures; all eight were corrected and rerun with **8 passed, 0 failed** before the full invocation. The full invocation includes those corrections and the complete fault matrix.
+- Quality implementation hash: `644488c3129f51a908beff757b4f1d03c1869f2f7ccd2e8fcd92e3e92f64b646` before the change, `4b53b8404d46218d17e6c8bfd21b77f4df5fb0ef838455f6bf97c804c96ce6dd` after; the latter stayed identical before/after the full suite. Changes stay on `dev/wbgate`; wait until runs pinned to the old hash finish before integrating. GPU repeatability and F8 gate overhead remain unmeasured. No schema migration, dependency/version change or release is included.
+
 ## 09-11-2026 — word-break retry review fixes
 
 - The retry is now a pure function of the input and its reserved seed: crash at any point, out-of-memory and file-lock faults give the same selected take and metadata as an unbroken run (`tests/test_word_break_gate.py`, invariance matrix over 8 single-take and 7 candidate fault points, resume through the real chapter loop). Removing the chapter-loop re-entry alone fails 20 of those 26 tests.
