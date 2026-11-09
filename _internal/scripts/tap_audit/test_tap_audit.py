@@ -29,6 +29,25 @@ def test_toast_wait_requires_a_real_mounted_toast(monkeypatch, appears):
     assert c.calls >= 2
 
 
+def test_toast_event_is_retried_until_the_new_shell_listener_is_ready(monkeypatch):
+    class FakeCDP(CDP):
+        publications = 0
+
+        async def evaluate(self, expression):
+            if 'dispatchEvent' in expression:
+                self.publications += 1
+                return True
+            return self.publications >= 2
+
+    async def no_sleep(_seconds):
+        pass
+
+    monkeypatch.setattr(asyncio, 'sleep', no_sleep)
+    c = FakeCDP(None)
+    assert asyncio.run(c.wait_toast(publish=True))
+    assert c.publications == 2
+
+
 def test_repository_scenarios():
     specs = load_scenarios(Path(__file__).with_name('scenarios.json'))
     assert len(specs) == 21

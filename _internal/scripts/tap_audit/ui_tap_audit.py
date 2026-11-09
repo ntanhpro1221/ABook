@@ -93,9 +93,13 @@ class CDP:
         await self.evaluate("new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))")
         await self.evaluate("Promise.race([Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)),new Promise(r=>setTimeout(r,2000))])")
         await asyncio.sleep(.15)
-    async def wait_toast(self, timeout=3):
+    async def wait_toast(self, timeout=3, publish=False):
         deadline = asyncio.get_running_loop().time() + timeout
         while True:
+            if publish:
+                # A newly navigated shell may not have committed UpdateListener yet.
+                # Keep sending the normal event until a real toast mounts; never fake its DOM.
+                await self.evaluate("window.dispatchEvent(new CustomEvent('abook-update-failed',{detail:'Kiểm tra thông báo khi mở bảng'}))")
             if await self.evaluate("!!document.querySelector('[data-sonner-toast][data-mounted=\"true\"]:not([data-removed=\"true\"])')"):
                 return True
             if asyncio.get_running_loop().time() >= deadline:
@@ -221,9 +225,8 @@ async def scenario(c,base,s,inject):
         for step in s['steps']:
             # Exercise the real shared toaster through the shell's normal event, on
             # every screen. Never dismiss it to make an open layer pass.
-            await c.evaluate("window.dispatchEvent(new CustomEvent('abook-update-failed',{detail:'Kiểm tra thông báo khi mở bảng'}))")
+            check('real toast mounted before opening layer',await c.wait_toast(publish=True))
             await c.settle()
-            check('real toast mounted before opening layer',await c.wait_toast())
             await c.evaluate("""(()=>{window.__toastFrames={count:0,blocked:[],running:true};const sample=()=>{const f=window.__toastFrames;if(!f.running)return;f.count++;const e=tapAudit.top();if(e)for(const b of e.querySelectorAll(tapAudit.controls))if(tapAudit.visible(b)){const p=tapAudit.inspect(b);if(!p.disabled&&p.hitToast)f.blocked.push(p)}requestAnimationFrame(sample)};requestAnimationFrame(sample)})()""")
             await c.step(step)
             frames=await c.evaluate("(()=>{const f=window.__toastFrames;f.running=false;return f})()")
