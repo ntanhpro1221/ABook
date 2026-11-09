@@ -172,7 +172,8 @@ export function ValuePicker({
         }}
         className={cn(
           "press touch-reach inline-flex shrink-0 items-center justify-center rounded-control text-fg-2 transition-[color,background-color,scale,opacity] duration-motion-fast hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-40 pointer-coarse:min-w-[48px]",
-          dense ? "size-8" : "size-9",
+          // Kiểu gọn: mực của "−" / "+" thẳng mép cột chữ (nút 32, icon 12: đệm 10 px - máy dò INK EDGE).
+          dense ? cn("size-8", steps < 0 ? "-ml-2.5" : "-mr-2.5") : "size-9",
         )}
       >
         <Icon className="glyph" strokeWidth={2} />
@@ -236,7 +237,7 @@ export function ValuePicker({
   );
 
   return (
-    <div data-value-picker className={cn("flex min-w-0 flex-col", dense ? "gap-0.5" : "gap-2", disabled && "opacity-50", className)}>
+    <div data-value-picker aria-disabled={disabled || undefined} className={cn("flex min-w-0 flex-col", dense ? "gap-0.5" : "gap-2", disabled && "opacity-50", className)}>
       {dense ? (
         <div className="flex min-h-8 items-center justify-between gap-3">
           <div className="min-w-0">
@@ -301,7 +302,7 @@ export function ValuePicker({
         {stepButton(1)}
       </div>
       {spec.typical.length > 0 && (
-        <div role="group" aria-label={label} className={cn("flex flex-wrap", dense ? "gap-1" : "justify-center gap-1.5")}>
+        <div role="group" aria-label={label} className={cn("flex flex-wrap", dense ? "-ml-2.5 gap-1" : "justify-center gap-1.5")}>
           {spec.typical.map((typical, index) => (
             <button
               key={typical}
@@ -318,7 +319,7 @@ export function ValuePicker({
                 commit(typical);
               }}
               className={cn(
-                "tabular touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-2.5 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
+                "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-2.5 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
                 index === selected ? "font-semibold text-accent-text" : "text-fg",
               )}
