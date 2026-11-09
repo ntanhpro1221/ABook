@@ -1693,9 +1693,9 @@ class PresetAllocator:
         self.chapters_of[str(who)] = set(chapters)
 
     def choose(self, gender: str, *, npc: bool, age: str = "unknown", who: str = "") -> dict[str, str]:
-        candidates = [p for p in casting_presets(gender) if p["name"] not in self.not_for_characters]
+        candidates = [p for p in casting_presets(gender, automatic=True) if p["name"] not in self.not_for_characters]
         if not candidates:
-            candidates = [p for p in VIENEU_PRESETS if p["name"] not in self.not_for_characters and preset_eligible(p, "character")]
+            candidates = [p for p in VIENEU_PRESETS if p["name"] not in self.not_for_characters and preset_eligible(p, "character", automatic=True)]
         mine = self.chapters_of.get(who, set())
         def rank(preset: dict[str, Any]) -> tuple[Any, ...]:
             name = str(preset["name"])

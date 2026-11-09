@@ -1,0 +1,1334 @@
+{
+  "schema": 1,
+  "provenance": "Self-written names and sentences; automatic suggestions",
+  "conflicts": [
+    [
+      "Tanaka",
+      "Shinji Tanaka"
+    ],
+    [
+      "Shinji",
+      "Shinji Tanaka"
+    ],
+    [
+      "Satou",
+      "Yuuki Satou"
+    ],
+    [
+      "Yuuki",
+      "Yuuki Satou"
+    ],
+    [
+      "Haruto",
+      "Haruto Nakata"
+    ],
+    [
+      "Nakata",
+      "Haruto Nakata"
+    ]
+  ],
+  "cases": [
+    {
+      "token": "Tanaka",
+      "origin": "ja",
+      "reading": "Ta-na-ca",
+      "flags": [],
+      "text": "Tôi ghi Tanaka vào sổ.",
+      "said": "Tôi ghi Ta-na-ca vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tanaka",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Satou",
+      "origin": "ja",
+      "reading": "Xa-tâu",
+      "flags": [],
+      "text": "Tôi ghi Satou vào sổ.",
+      "said": "Tôi ghi Xa-tâu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Satou",
+        "long_vowels": [
+          "ou"
+        ]
+      }
+    },
+    {
+      "token": "Yuuki",
+      "origin": "ja",
+      "reading": "Giu-ki",
+      "flags": [
+        "analogy:y_gi"
+      ],
+      "text": "Tôi ghi Yuuki vào sổ.",
+      "said": "Tôi ghi Giu-ki vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Yuuki",
+        "long_vowels": [
+          "uu"
+        ]
+      }
+    },
+    {
+      "token": "Shinji",
+      "origin": "ja",
+      "reading": "Sin-gi",
+      "flags": [],
+      "text": "Tôi ghi Shinji vào sổ.",
+      "said": "Tôi ghi Sin-gi vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Shinji",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Haruto",
+      "origin": "ja",
+      "reading": "Ha-ru-tô",
+      "flags": [],
+      "text": "Tôi ghi Haruto vào sổ.",
+      "said": "Tôi ghi Ha-ru-tô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Haruto",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Tsubasa",
+      "origin": "ja",
+      "reading": "Xu-ba-xa",
+      "flags": [],
+      "text": "Tôi ghi Tsubasa vào sổ.",
+      "said": "Tôi ghi Xu-ba-xa vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tsubasa",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Kazuki",
+      "origin": "ja",
+      "reading": "Ca-du-ki",
+      "flags": [],
+      "text": "Tôi ghi Kazuki vào sổ.",
+      "said": "Tôi ghi Ca-du-ki vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kazuki",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Kenta",
+      "origin": "ja",
+      "reading": "Ken-ta",
+      "flags": [],
+      "text": "Tôi ghi Kenta vào sổ.",
+      "said": "Tôi ghi Ken-ta vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kenta",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Haruka",
+      "origin": "ja",
+      "reading": "Ha-ru-ca",
+      "flags": [],
+      "text": "Tôi ghi Haruka vào sổ.",
+      "said": "Tôi ghi Ha-ru-ca vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Haruka",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Nakata",
+      "origin": "ja",
+      "reading": "Na-ca-ta",
+      "flags": [],
+      "text": "Tôi ghi Nakata vào sổ.",
+      "said": "Tôi ghi Na-ca-ta vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Nakata",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Morita",
+      "origin": "ja",
+      "reading": "Mô-ri-ta",
+      "flags": [],
+      "text": "Tôi ghi Morita vào sổ.",
+      "said": "Tôi ghi Mô-ri-ta vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Morita",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Aoi",
+      "origin": "ja",
+      "reading": "A-o-i",
+      "flags": [
+        "analogy:ao_split"
+      ],
+      "text": "Tôi ghi Aoi vào sổ.",
+      "said": "Tôi ghi a-o_-i vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Aoi",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Ryuu",
+      "origin": "ja",
+      "reading": "Ri-u",
+      "flags": [],
+      "text": "Tôi ghi Ryuu vào sổ.",
+      "said": "Tôi ghi Ri-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Ryuu",
+        "long_vowels": [
+          "uu"
+        ]
+      }
+    },
+    {
+      "token": "Ryou",
+      "origin": "ja",
+      "reading": "Ri-âu",
+      "flags": [],
+      "text": "Tôi ghi Ryou vào sổ.",
+      "said": "Tôi ghi Ri-âu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Ryou",
+        "long_vowels": [
+          "ou"
+        ]
+      }
+    },
+    {
+      "token": "Ryō",
+      "origin": "ja",
+      "reading": "Ri-ô",
+      "flags": [],
+      "text": "Tôi ghi Ryō vào sổ.",
+      "said": "Tôi ghi Ri-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Ryō",
+        "long_vowels": [
+          "ō"
+        ]
+      }
+    },
+    {
+      "token": "Kyou",
+      "origin": "ja",
+      "reading": "Ki-âu",
+      "flags": [],
+      "text": "Tôi ghi Kyou vào sổ.",
+      "said": "Tôi ghi ki-âu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kyou",
+        "long_vowels": [
+          "ou"
+        ]
+      }
+    },
+    {
+      "token": "Kō",
+      "origin": "ja",
+      "reading": "Cô",
+      "flags": [],
+      "text": "Tôi ghi Kō vào sổ.",
+      "said": "Tôi ghi Cô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kō",
+        "long_vowels": [
+          "ō"
+        ]
+      }
+    },
+    {
+      "token": "Sei",
+      "origin": "ja",
+      "reading": "Xây",
+      "flags": [],
+      "text": "Tôi ghi Sei vào sổ.",
+      "said": "Tôi ghi Sei vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Sei",
+        "long_vowels": [
+          "ei"
+        ]
+      }
+    },
+    {
+      "token": "Seii",
+      "origin": "ja",
+      "reading": "Xây-i",
+      "flags": [],
+      "text": "Tôi ghi Seii vào sổ.",
+      "said": "Tôi ghi Xây-i vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Seii",
+        "long_vowels": [
+          "ei"
+        ]
+      }
+    },
+    {
+      "token": "Kou",
+      "origin": "ja",
+      "reading": "Câu",
+      "flags": [],
+      "text": "Tôi ghi Kou vào sổ.",
+      "said": "Tôi ghi câu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kou",
+        "long_vowels": [
+          "ou"
+        ]
+      }
+    },
+    {
+      "token": "Koou",
+      "origin": "ja",
+      "reading": "Cô-u",
+      "flags": [],
+      "text": "Tôi ghi Koou vào sổ.",
+      "said": "Tôi ghi cô-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Koou",
+        "long_vowels": [
+          "oo"
+        ]
+      }
+    },
+    {
+      "token": "Sufu",
+      "origin": "ja",
+      "reading": "Xu-phu",
+      "flags": [],
+      "text": "Tôi ghi Sufu vào sổ.",
+      "said": "Tôi ghi Xu-phu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Sufu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Tsusu",
+      "origin": "ja",
+      "reading": "Xu-xu",
+      "flags": [],
+      "text": "Tôi ghi Tsusu vào sổ.",
+      "said": "Tôi ghi Xu-xu vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tsusu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Shishi",
+      "origin": "ja",
+      "reading": "Si-si",
+      "flags": [],
+      "text": "Tôi ghi Shishi vào sổ.",
+      "said": "Tôi ghi Si-si vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Shishi",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Chichi",
+      "origin": "ja",
+      "reading": "Chi-chi",
+      "flags": [],
+      "text": "Tôi ghi Chichi vào sổ.",
+      "said": "Tôi ghi Chi-chi vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Chichi",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Jiji",
+      "origin": "ja",
+      "reading": "Gi-gi",
+      "flags": [],
+      "text": "Tôi ghi Jiji vào sổ.",
+      "said": "Tôi ghi Gi-gi vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Jiji",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Gigi",
+      "origin": "ja",
+      "reading": "Ghi-ghi",
+      "flags": [],
+      "text": "Tôi ghi Gigi vào sổ.",
+      "said": "Tôi ghi Ghi-ghi vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Gigi",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Gige",
+      "origin": "ja",
+      "reading": "Ghi-ghe",
+      "flags": [],
+      "text": "Tôi ghi Gige vào sổ.",
+      "said": "Tôi ghi Ghi-ghe vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Gige",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Kya",
+      "origin": "ja",
+      "reading": "Ki-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Kya vào sổ.",
+      "said": "Tôi ghi Kya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Kyu",
+      "origin": "ja",
+      "reading": "Ki-u",
+      "flags": [],
+      "text": "Tôi ghi Kyu vào sổ.",
+      "said": "Tôi ghi ki-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kyu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Kyo",
+      "origin": "ja",
+      "reading": "Ki-ô",
+      "flags": [],
+      "text": "Tôi ghi Kyo vào sổ.",
+      "said": "Tôi ghi ki-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Kyo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Gya",
+      "origin": "ja",
+      "reading": "Ghi-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Gya vào sổ.",
+      "said": "Tôi ghi Gya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Gya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Gyu",
+      "origin": "ja",
+      "reading": "Ghi-u",
+      "flags": [],
+      "text": "Tôi ghi Gyu vào sổ.",
+      "said": "Tôi ghi ghi-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Gyu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Gyo",
+      "origin": "ja",
+      "reading": "Ghi-ô",
+      "flags": [],
+      "text": "Tôi ghi Gyo vào sổ.",
+      "said": "Tôi ghi ghi-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Gyo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Nya",
+      "origin": "ja",
+      "reading": "Ni-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Nya vào sổ.",
+      "said": "Tôi ghi Nya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Nya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Nyu",
+      "origin": "ja",
+      "reading": "Ni-u",
+      "flags": [],
+      "text": "Tôi ghi Nyu vào sổ.",
+      "said": "Tôi ghi Ni-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Nyu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Nyo",
+      "origin": "ja",
+      "reading": "Ni-ô",
+      "flags": [],
+      "text": "Tôi ghi Nyo vào sổ.",
+      "said": "Tôi ghi Ni-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Nyo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Hya",
+      "origin": "ja",
+      "reading": "Hi-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Hya vào sổ.",
+      "said": "Tôi ghi Hya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Hya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Hyu",
+      "origin": "ja",
+      "reading": "Hi-u",
+      "flags": [],
+      "text": "Tôi ghi Hyu vào sổ.",
+      "said": "Tôi ghi hi-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Hyu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Hyo",
+      "origin": "ja",
+      "reading": "Hi-ô",
+      "flags": [],
+      "text": "Tôi ghi Hyo vào sổ.",
+      "said": "Tôi ghi hi-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Hyo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Bya",
+      "origin": "ja",
+      "reading": "Bi-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Bya vào sổ.",
+      "said": "Tôi ghi Bya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Bya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Byu",
+      "origin": "ja",
+      "reading": "Bi-u",
+      "flags": [],
+      "text": "Tôi ghi Byu vào sổ.",
+      "said": "Tôi ghi Bi-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Byu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Byo",
+      "origin": "ja",
+      "reading": "Bi-ô",
+      "flags": [],
+      "text": "Tôi ghi Byo vào sổ.",
+      "said": "Tôi ghi Bi-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Byo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Pya",
+      "origin": "ja",
+      "reading": "Pi-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Pya vào sổ.",
+      "said": "Tôi ghi Pya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Pya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Pyu",
+      "origin": "ja",
+      "reading": "Pi-u",
+      "flags": [],
+      "text": "Tôi ghi Pyu vào sổ.",
+      "said": "Tôi ghi Pi-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Pyu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Pyo",
+      "origin": "ja",
+      "reading": "Pi-ô",
+      "flags": [],
+      "text": "Tôi ghi Pyo vào sổ.",
+      "said": "Tôi ghi Pi-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Pyo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Mya",
+      "origin": "ja",
+      "reading": "Mi-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Mya vào sổ.",
+      "said": "Tôi ghi Mya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Mya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Myu",
+      "origin": "ja",
+      "reading": "Mi-u",
+      "flags": [],
+      "text": "Tôi ghi Myu vào sổ.",
+      "said": "Tôi ghi Mi-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Myu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Myo",
+      "origin": "ja",
+      "reading": "Mi-ô",
+      "flags": [],
+      "text": "Tôi ghi Myo vào sổ.",
+      "said": "Tôi ghi Mi-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Myo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Rya",
+      "origin": "ja",
+      "reading": "Ri-a",
+      "flags": [
+        "analogy:cya"
+      ],
+      "text": "Tôi ghi Rya vào sổ.",
+      "said": "Tôi ghi Rya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Rya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Ryu",
+      "origin": "ja",
+      "reading": "Ri-u",
+      "flags": [],
+      "text": "Tôi ghi Ryu vào sổ.",
+      "said": "Tôi ghi Ri-u vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Ryu",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Ryo",
+      "origin": "ja",
+      "reading": "Ri-ô",
+      "flags": [],
+      "text": "Tôi ghi Ryo vào sổ.",
+      "said": "Tôi ghi Ri-ô vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Ryo",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Sappa",
+      "origin": "ja",
+      "reading": "Xáp-pa",
+      "flags": [],
+      "text": "Tôi ghi Sappa vào sổ.",
+      "said": "Tôi ghi Xáp-pa vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Sappa",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Satta",
+      "origin": "ja",
+      "reading": "Xát-ta",
+      "flags": [],
+      "text": "Tôi ghi Satta vào sổ.",
+      "said": "Tôi ghi Xát-ta vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Satta",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Sassa",
+      "origin": "ja",
+      "reading": "Xát-xa",
+      "flags": [
+        "analogy:ss_t"
+      ],
+      "text": "Tôi ghi Sassa vào sổ.",
+      "said": "Tôi ghi Xát-xa vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Sassa",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Takka",
+      "origin": "ja",
+      "reading": "Tác-ca",
+      "flags": [],
+      "text": "Tôi ghi Takka vào sổ.",
+      "said": "Tôi ghi Tác-ca vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Takka",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Matcha",
+      "origin": "ja",
+      "reading": "Mát-cha",
+      "flags": [],
+      "text": "Tôi ghi Matcha vào sổ.",
+      "said": "Tôi ghi Mát-cha vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Matcha",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Onigiri",
+      "origin": "ja",
+      "reading": "O-ni-gi-ri",
+      "flags": [],
+      "text": "Tôi ghi Onigiri vào sổ.",
+      "said": "Tôi ghi o_-ni-gi-ri vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Onigiri",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Onii-chan",
+      "origin": "ja",
+      "reading": "O-ni-chan",
+      "flags": [],
+      "text": "Tôi ghi Onii-chan vào sổ.",
+      "said": "Tôi ghi o_-ni-chan vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Onii-chan",
+        "long_vowels": [
+          "ii"
+        ]
+      }
+    },
+    {
+      "token": "Onee-san",
+      "origin": "ja",
+      "reading": "O-ne-xan",
+      "flags": [],
+      "text": "Tôi ghi Onee-san vào sổ.",
+      "said": "Tôi ghi o_-ne-xan vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Onee-san",
+        "long_vowels": [
+          "ee"
+        ]
+      }
+    },
+    {
+      "token": "Senpai",
+      "origin": "ja",
+      "reading": "Xen-pai",
+      "flags": [],
+      "text": "Tôi ghi Senpai vào sổ.",
+      "said": "Tôi ghi xen-pai vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Senpai",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Sensei",
+      "origin": "ja",
+      "reading": "Xen-xây",
+      "flags": [],
+      "text": "Tôi ghi Sensei vào sổ.",
+      "said": "Tôi ghi xen-xây vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Sensei",
+        "long_vowels": [
+          "ei"
+        ]
+      }
+    },
+    {
+      "token": "Tanaka",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Tanaka vào sổ.",
+      "said": "Tôi ghi Tanaka vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tanaka",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Haruto",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Haruto vào sổ.",
+      "said": "Tôi ghi Haruto vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Haruto",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Satou",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Satou vào sổ.",
+      "said": "Tôi ghi Satou vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Satou",
+        "long_vowels": [
+          "ou"
+        ]
+      }
+    },
+    {
+      "token": "Yuuki",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Yuuki vào sổ.",
+      "said": "Tôi ghi Yuuki vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Yuuki",
+        "long_vowels": [
+          "uu"
+        ]
+      }
+    },
+    {
+      "token": "Shinji",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Shinji vào sổ.",
+      "said": "Tôi ghi Shinji vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Shinji",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Abe",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Abe vào sổ.",
+      "said": "Tôi ghi Abe vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Abe",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Jin",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Jin vào sổ.",
+      "said": "Tôi ghi Jin vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Jin",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Aya",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Aya vào sổ.",
+      "said": "Tôi ghi Aya vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Aya",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Rita",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Rita vào sổ.",
+      "said": "Tôi ghi Rita vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Rita",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Tina",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Tina vào sổ.",
+      "said": "Tôi ghi Tina vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tina",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Mary",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Mary vào sổ.",
+      "said": "Tôi ghi Mary vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Mary",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Anime",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Anime vào sổ.",
+      "said": "Tôi ghi a-ni-me vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Anime",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Rachel",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Rachel vào sổ.",
+      "said": "Tôi ghi Rachel vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Rachel",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "English",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi English vào sổ.",
+      "said": "Tôi ghi English vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "English",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "GPS",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi GPS vào sổ.",
+      "said": "Tôi ghi <en>G P S</en> vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "GPS",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Hoa",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Hoa vào sổ.",
+      "said": "Tôi ghi Hoa vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Hoa",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Nam",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Nam vào sổ.",
+      "said": "Tôi ghi Nam vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Nam",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "TANAKA",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi TANAKA vào sổ.",
+      "said": "Tôi ghi TANAKA vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "TANAKA",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Tanaka-kun",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Tanaka-kun vào sổ.",
+      "said": "Tôi ghi Ta-na-ca-cun vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Tanaka-kun",
+        "long_vowels": []
+      }
+    },
+    {
+      "token": "Yuuki-san",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Yuuki-san vào sổ.",
+      "said": "Tôi ghi Giu-ki-xan vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Yuuki-san",
+        "long_vowels": [
+          "uu"
+        ]
+      }
+    },
+    {
+      "token": "Abe-sensei",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi Abe-sensei vào sổ.",
+      "said": "Tôi ghi a-be-xen-xây vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "Abe-sensei",
+        "long_vowels": [
+          "ei"
+        ]
+      }
+    },
+    {
+      "token": "T-Tanaka",
+      "origin": null,
+      "reading": null,
+      "flags": [],
+      "text": "Tôi ghi T-Tanaka vào sổ.",
+      "said": "Tôi ghi tờ… Tanaka vào sổ.",
+      "metadata": {
+        "provenance": "auto",
+        "reading_namespace": "jp-fallback4",
+        "source_spelling": "T-Tanaka",
+        "long_vowels": []
+      }
+    }
+  ],
+  "routing": [
+    {
+      "text": "Abe đến.",
+      "indices": []
+    },
+    {
+      "text": "Jin đến.",
+      "indices": []
+    },
+    {
+      "text": "Aya đến.",
+      "indices": []
+    },
+    {
+      "text": "Tanaka Abe đến.",
+      "indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "text": "Tanaka, Abe đến.",
+      "indices": []
+    },
+    {
+      "text": "Tanaka (Abe) đến.",
+      "indices": []
+    },
+    {
+      "text": "Yuuki Satou đến.",
+      "indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "text": "Rita Tanaka đến.",
+      "indices": []
+    },
+    {
+      "text": "Anime đến.",
+      "indices": [
+        0
+      ]
+    },
+    {
+      "text": "Tina đến.",
+      "indices": []
+    },
+    {
+      "text": "Yuuki-san đến.",
+      "indices": [
+        0
+      ]
+    },
+    {
+      "text": "Tanaka1 đến.",
+      "indices": []
+    },
+    {
+      "text": "1Tanaka đến.",
+      "indices": []
+    },
+    {
+      "text": "Aya Nannka ??n.",
+      "indices": []
+    }
+  ]
+}

@@ -53,7 +53,7 @@ async function mount(schedule = false, reader: (() => Promise<number | null>) | 
 }
 let clock = new Date(2026, 10, 7, 23).getTime();
 async function elapsed(ms: number) {
-  clock += ms; vi.setSystemTime(clock);
+  vi.setSystemTime(vi.getMockedSystemTime()!.getTime() + ms);
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
 }
 
@@ -103,7 +103,7 @@ it("unknown system evidence cannot arm the night schedule", async () => {
 it("a delayed OS reply cannot arm a timer using stale evidence", async () => {
   let answer!: (value: number) => void;
   await mount(true, () => new Promise<number>(resolve => { answer = resolve; }));
-  vi.setSystemTime(new Date(2026, 10, 8, 1));
+  vi.setSystemTime(vi.getMockedSystemTime()!.getTime() + 2 * 3_600_000);
   await act(async () => { answer(2 * 3_600_000); });
   expect(actions.sleep.kind).toBe("off");
 });

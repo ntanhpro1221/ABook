@@ -146,7 +146,7 @@ class SleepExtendTest {
     @Test fun cancellingClearsTheRecentStopSoShakingCannotRearm() = withSensors {
         field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)
         SleepTimer.cancel()
-        assertFalse(SleepTimer.applyShake(1_001_000L))
+        assertFalse(SleepTimer.applyShake(1_060_000L))
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
 

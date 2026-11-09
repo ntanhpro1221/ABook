@@ -66,11 +66,11 @@ def _table(**roles) -> dict:
 
 def test_the_shipped_file_loads_in_tiers_and_names_only_real_presets() -> None:
     data = json.loads(voice_catalog.VOICE_RANK_PATH.read_text(encoding="utf-8"))
-    assert set(data) == {"narrator", "character"}
+    assert set(data) == {"narrator", "character", "never_auto"}
     table = voice_catalog.load_voice_rank()
     stable = ("Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan")
     assert table["character"]["female"] == (("Ngọc Linh",), ("Đoan Trang",), stable)
-    assert table["narrator"]["female"] == (("Đoan Trang",), ("Ngọc Linh",), stable)
+    assert table["narrator"]["female"] == (("Ngọc Linh", "Kim Thanh"), ("Đoan Trang",), ("Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"))
 
 
 def test_the_shipped_file_is_the_owners_male_verdict() -> None:
@@ -193,7 +193,8 @@ def test_the_shipped_female_verdict_decides_who_the_characters_get() -> None:
     picks = _picks("female", 8, narrator="Mỹ Duyên")
     assert picks[:2] == ["Ngọc Linh", "Đoan Trang"]
     assert set(picks[2:5]) == {"Kim Thanh", "Quỳnh Anh", "Thục Đoan"}
-    assert set(picks[5:7]) == {"Ngọc Huyền", "Trúc Ly"}
+    assert not set(picks) & voice_catalog.NEVER_AUTO
+    assert set(picks[5:7]) == {"Ngọc Linh", "Đoan Trang"}
 
 
 def test_the_cross_gender_fallback_uses_the_same_news_eligibility(monkeypatch) -> None:
@@ -211,7 +212,7 @@ def test_empty_lists_leave_casting_exactly_as_it_was(monkeypatch: pytest.MonkeyP
     """With nothing ranked the change is neutral: the old order, voice for voice."""
     _rank(monkeypatch)
     assert _picks("male", 6) == ["Adam bựa", "Hải Đăng", "Quốc Tuấn", "Xuân Vĩnh", "Adam", "Thanh Bình"]
-    assert _picks("female", 6) == ["Ngọc Huyền", "Trúc Ly", "Đoan Trang", "Ngọc Linh", "Quỳnh Anh", "Kim Thanh"]
+    assert _picks("female", 6) == ["Đoan Trang", "Ngọc Linh", "Quỳnh Anh", "Kim Thanh", "Mỹ Duyên", "Thục Đoan"]
 
 
 @pytest.mark.parametrize("gender", ["male", "female"])
@@ -223,7 +224,7 @@ def test_no_arbitrary_order_sits_ahead_of_the_listeners_ranking(monkeypatch: pyt
     """
     pool = [
         str(preset["name"])
-        for preset in casting_presets(gender)
+        for preset in casting_presets(gender, automatic=True)
         if preset["name"] != NARRATOR
     ]
     ranking = [[name] for name in reversed(pool)]
@@ -241,13 +242,13 @@ def test_the_default_narrator_is_in_the_top_narrator_tier() -> None:
         assert DEFAULT_NARRATOR_BY_GENDER[gender] in table["narrator"][gender][0]
         assert DEFAULT_NARRATOR_BY_GENDER[gender] in {preset["name"] for preset in narrator_presets(gender)}
     assert DEFAULT_NARRATOR_BY_GENDER["male"] == "Đức Trí"
-    assert DEFAULT_NARRATOR_BY_GENDER["female"] == "Đoan Trang"
+    assert DEFAULT_NARRATOR_BY_GENDER["female"] == "Ngọc Linh"
 
 
 def test_news_voices_remain_unavailable_for_narration_and_casting() -> None:
     news = {str(p["name"]) for p in voice_catalog.VIENEU_PRESETS if p["style"] == voice_catalog.STYLE_NEWS}
     assert "Mai Anh" in news
-    assert narrator_presets("female")[0]["name"] == "Đoan Trang"
+    assert narrator_presets("female")[0]["name"] == "Ngọc Linh"
     assert _picks("female", 2) == ["Ngọc Linh", "Đoan Trang"]
     for name in news:
         assert name not in {p["name"] for p in narrator_presets()}
@@ -277,8 +278,8 @@ def test_the_narrator_list_follows_the_owners_tiers_after_the_default() -> None:
     assert set(names[2:4]) == {"Phạm Tuyên", "Xuân Vĩnh"}
     assert set(names[4:6]) == {"Thái Sơn", "Adam"}
     women = [str(preset["name"]) for preset in narrator_presets("female")]
-    assert women[:2] == ["Đoan Trang", "Ngọc Linh"]
-    assert set(women[2:6]) == {"Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"}
+    assert women[:3] == ["Ngọc Linh", "Kim Thanh", "Đoan Trang"]
+    assert set(women[3:6]) == {"Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"}
 
 
 def test_narrator_tiers_are_read_by_each_presets_own_gender(monkeypatch: pytest.MonkeyPatch) -> None:

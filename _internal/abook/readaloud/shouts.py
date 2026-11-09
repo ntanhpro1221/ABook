@@ -12,11 +12,97 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import json
+from pathlib import Path
 from functools import lru_cache
 
 from ..romanization import romanized_reading
 from . import names
 from .names import split_token
+
+POLICY = json.loads(Path(__file__).with_name("sound_policy.json").read_text(encoding="utf-8"))
+NOTE = re.compile(POLICY["note_pattern"], re.IGNORECASE)
+
+
+def presentation_tokens(toks: list[str]) -> tuple[list[str], list[int]]:
+    """Split note anchors only in voice text; keep one owner per displayed token.
+
+    Edge underscores are framing. Internal underscores remain identifiers.
+    Other punctuation stays available to the existing structural rules.
+    """
+    prepared, owners = [], []
+    for index, token in enumerate(toks):
+        parts = NOTE.sub(" ", token).split() or [""]
+        for part in parts:
+            before, core, after = split_token(part)
+            if core and not any(c.isalnum() for c in before + after):
+                part = before.replace("_", "") + core + after.replace("_", "")
+            prepared.append(part)
+            owners.append(index)
+    return prepared, owners
+
+
+def honorific_stretch(core: str, origin: str | None) -> str | None:
+    """Repeated suffix letters retain the established honorific route."""
+    parts = re.split("[-‐‑‒–]", core)
+    if len(parts) < 2:
+        return None
+    suffix = dedupe(parts[-1].lower())
+    if suffix not in names.HONORIFICS or suffix == parts[-1].lower():
+        return None
+    canonical = "-".join(parts[:-1] + [suffix])
+    from .japanese_policy import reading as japanese_reading
+
+    reading = japanese_reading(canonical, origin) or names.honorific_reading(canonical, origin)
+    return reading + "…" if reading else None
+
+
+def _expanded_reading(core: str) -> str | None:
+    """Phonotactic vocal patterns and bounded, readable repeated-letter forms."""
+    word = core.lower()
+    if not word.isascii() or not word.isalpha():
+        return None
+    if core.isupper() and (ROMAN_LETTERS.issuperset(word) or word in SHORT_CASED
+                           or (len(set(word)) == 1 and word[0] not in VOWELS)):
+        return None
+    if re.fullmatch(POLICY["laugh_pattern"], word):
+        sounds = []
+        for atom in re.findall(POLICY["laugh_atom"], word):
+            vowel = next(c for c in atom if c in POLICY["vowels"])
+            sounds.append("phu" if atom[0] == "f" else POLICY["laugh_vowels"][vowel])
+        return " ".join(sounds[:POLICY["max_laugh_syllables"]])
+    if re.fullmatch(POLICY["nasal_pattern"], word):
+        return romanized_reading(dedupe(word), "ja")
+    stretched = re.search(r"(.)\1{" + str(POLICY["min_run"] - 1) + r",}", word)
+    base = re.sub(r"(.)\1{" + str(POLICY["min_run"] - 1) + r",}", r"\1", word)
+    # Lexical words are not short cries merely because their letters fit a pattern.
+    from ..analysis import is_vietnamese_syllable
+
+    sound_case = not core.isupper() or len(word) == 2 or bool(re.search(r"(.)\1", word))
+    patterned = sound_case and word not in names.english_words() and not is_vietnamese_syllable(word) and not any(
+        c not in POLICY["vowels"] + "hkgwy" for c in word)
+    reading = None
+    if re.fullmatch(POLICY["growl_pattern"], base) and stretched:
+        reading = base[:-1]
+    elif re.fullmatch(POLICY["hiss_pattern"], base) and stretched:
+        reading = re.sub("[zs]+$", "", base) + "… xì"
+    elif patterned and (re.fullmatch(POLICY["breath_pattern"], word)
+                        or re.fullmatch(POLICY["palatal_pattern"], word)):
+        plain = re.sub("[hkg]+$", "", base)
+        reading = romanized_reading(plain, "ja") if plain else None
+    elif stretched:
+        # A proper name with one repeated final consonant remains uncertain.
+        runs = _runs(list(word))
+        if core.istitle() and len(runs) == 1 and runs[0][1] == len(word) and word[-1] not in POLICY["vowels"]:
+            return None
+        reading = base if is_vietnamese_syllable(base) else romanized_reading(base, "ja")
+        if reading is None:
+            reading = base if base in names.english_words() else None
+    if not reading:
+        return None
+    if "…" in reading:
+        return reading
+    return reading + "…" if stretched else reading
 
 INTERJECTIONS = {"umm": "ừm", "ugh": "ức", "boom": "bùm", "oh": "ô", "hmm": "hừm", "shh": "suỵt", "ah": "a", "eh": "ê", "hm": "hừm", "huh": "hả", "ooh": "ô",
                  "hic": "hích", "urgh": "ức", "um": "ừm", "uhm": "ừm", "uh": "ờ", "mm": "ừm",  # "Um", "Uh", "Mm" (sea-g2p đọc "mm" là "mi li mét")
@@ -29,7 +115,7 @@ LAUGH = re.compile(r"(?:ha|he|hi|ho|fu){2,}", re.IGNORECASE)
 TONE_MARKS = "\u0300\u0301\u0303\u0309\u0323"  # huyền, sắc, ngã, hỏi, nặng (còn lại là dấu mũ / móc / trăng: thuộc về chữ)
 STANDALONE = frozenset("aeêioôơuư")  # nguyên âm đứng riêng được thành một âm tiết: chữ kéo là chữ này thì nhắc lại nó sau "…"
 VOWELS = frozenset("aăâeêioôơuưy")
-MIN_RUN = 3  # một chữ lặp chừng ấy lần liền là kéo dài
+MIN_RUN = int(POLICY["min_run"])
 ROMAN_LETTERS = frozenset("ivx")
 RANK_NOUNS = frozenset(("hạng", "cấp", "rank", "class", "loại", "bậc"))  # "hạng AAA", "hạng SSS": chữ hạng, không phải tiếng kéo
 GLUE = re.compile(r"(?:\.{2,}|[…~—–])+")  # chỗ ngắt dính liền giữa tiếng kêu và chữ sau nó
@@ -85,8 +171,7 @@ def _runs(chars: list[str]) -> list[tuple[int, int]]:
     return runs
 
 
-@lru_cache(maxsize=4096)
-def stretch_reading(core: str) -> str | None:
+def _basic_reading(core: str) -> str | None:
     """Cách đọc của `core` (chữ cái đầu tới cuối, không dấu câu) khi nó là thán từ Latin hay tiếng kêu kéo dài; None khi để nguyên."""
     from ..analysis import is_vietnamese_syllable
 
@@ -99,7 +184,7 @@ def stretch_reading(core: str) -> str | None:
     if word in INTERJECTIONS and not (word == "um" and core.islower()):  # "um" thường là chữ Việt ("xanh um tùm"); "Um" hoa là tiếng ừm
         return INTERJECTIONS[word]
     if LAUGH.fullmatch(word) and all(word[i:i + 2] == word[:2] for i in range(0, len(word), 2)):
-        return " ".join(LAUGH_SYLLABLES[word[i:i + 2]] for i in range(0, len(word), 2))
+        return " ".join(LAUGH_SYLLABLES[word[i:i + 2]] for i in range(0, min(len(word), 2 * POLICY["max_laugh_syllables"]), 2))
     runs = _runs(chars)
     pair = not runs and len(chars) >= 3 and chars[-1] == chars[-2] and chars[-1] in PAIR_LETTERS and (chars[-1] != "z" or [_plain(char) for char in chars[-4:-2]] == ["a", "i"])
     if pair:  # "Ahh", "Haizz", "Hừmm": chữ cuối lặp hai lần
@@ -135,6 +220,11 @@ def stretch_reading(core: str) -> str | None:
     return f"{base}…" + (f" {names.lone_syllable(append)}" if append and letter in STANDALONE else "")
 
 
+@lru_cache(maxsize=4096)
+def stretch_reading(core: str) -> str | None:
+    return _basic_reading(core) or _expanded_reading(core)
+
+
 def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
     """Chữ có NHIỀU chỗ kéo ("Cccchhhhàaaaaaoooo" -> "chào… ò"): gộp mỗi chỗ kéo thành một chữ (giữ dấu thanh ở chữ đầu của chỗ ấy); chỉ đọc khi gộp ra đúng một âm tiết tiếng Việt.
     Chỗ kéo cuối là nguyên âm đứng riêng thì nhắc lại nó một lần sau "…", mang thanh của âm tiết."""
@@ -160,30 +250,34 @@ def _counted(word: str) -> bool:
     return word[-1:].isdigit() or word in names.NUMBER_WORDS or word in COUNT_WORDS
 
 
-def _read_segment(segment: str, toks: list[str], index: int, first: bool) -> str:
+def _read_segment(segment: str, toks: list[str], index: int, first: bool, origin: str | None = None) -> str:
     """Đọc `segment` (token, hay phần token sau một chỗ dính liền) theo `read_shouts`; không phải tiếng kêu thì trả nguyên. Chữ đầu là tiếng kêu thì phần sau chỗ dính cũng được xét ("Um....Umm…")."""
+    face = segment.strip(POLICY["frames"])
+    if face.lower() in POLICY["emoticons"]:
+        at = segment.index(face)
+        return segment[:at] + POLICY["emoticons"][face.lower()] + segment[at + len(face):]
     glued = GLUE.search(segment, len(split_token(segment)[0]))
     head, rest = (segment[:glued.start()], segment[glued.start():]) if glued else (segment, "")
     before, core, after = split_token(head)
     previous = toks[index - 1] if first and index else ""
     if not core or any(char.isdigit() for char in before + after) or (core.isupper() and (after.startswith("+") or previous.lower().strip(CLOSING) in RANK_NOUNS)):
         return segment  # chữ dính số ("55mm", "ss1") không phải tiếng kêu
-    reading = stretch_reading(core)
+    reading = honorific_stretch(core, origin) or stretch_reading(core)
     if not reading or (core.lower() == "mm" and _counted(previous)):  # "127 mm", "vài mm" là mi-li-mét, "Mm…" là tiếng ừm
         return segment
     if rest:
         joint = GLUE.match(rest).end()
-        rest = rest[:joint] + _read_segment(rest[joint:], toks, index, False)
+        rest = rest[:joint] + _read_segment(rest[joint:], toks, index, False, origin)
     rest = rest.lstrip("~") if reading.endswith("…") else rest
     if reading.endswith("…") and rest[:1] in ("…", "."):
         reading = reading[:-1]  # "…" đã có ngay sau chữ
     return before + reading + names.closing(after.replace("-", "") if "…" in reading else after, reading) + rest
 
 
-def read_shouts(toks: list[str], out: list[str]) -> None:
+def read_shouts(toks: list[str], out: list[str], origin: str | None = None) -> None:
     """Thay tại chỗ, trong `out`, token (chưa bị đổi so với `toks`) là thán từ / tiếng kêu kéo dài bằng cách đọc của nó, giữ dấu câu quanh (dấu "-" đuôi của
     "Xoạttt-" bỏ); số chữ không đổi. Chữ dính liền vào phần sau qua "…", "..", "~" hay "—" ("Ummm…Ý", "màaaa—nếu", "Um....Umm") thì mỗi phần được xét riêng. Chữ hoa cả là hạng
     ("hạng AAA", "AAA+++") thì để viết tắt đọc."""
     for index, token in enumerate(toks):
         if out[index] == token:
-            out[index] = _read_segment(token, toks, index, True)
+            out[index] = _read_segment(token, toks, index, True, origin)

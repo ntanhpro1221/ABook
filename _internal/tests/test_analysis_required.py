@@ -3319,6 +3319,8 @@ def test_required_cmu_names_are_checkpointed_without_qwen(monkeypatch) -> None:
 
 
 def test_invalid_aderon_boundary_is_repaired_without_repeating_the_request(monkeypatch) -> None:
+    # Exercise the model's boundary repair after the upstream name router abstains.
+    monkeypatch.setattr(studio_names_module, "planned_reading", lambda *_args, **_kw: None)
     db = FakeDB()
     db.rows = [
         {
@@ -3387,6 +3389,8 @@ def test_a_rule_reading_that_fails_the_lock_check_warns_instead_of_aborting_the_
 
 
 def test_name_pronunciation_digest_drift_is_fatal_without_fallback(monkeypatch) -> None:
+    # The digest check belongs to the model request path, independently of routing.
+    monkeypatch.setattr(studio_names_module, "planned_reading", lambda *_args, **_kw: None)
     db = FakeDB()
     db.rows = [
         {

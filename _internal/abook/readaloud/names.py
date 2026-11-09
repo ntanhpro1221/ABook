@@ -26,6 +26,7 @@ from typing import Callable, Iterable
 
 from ..romanization import _JA_SUFFIXES as JA_SUFFIXES
 from ..romanization import romanized_reading
+from .japanese_policy import POLICY as JAPANESE_POLICY
 
 ENGLISH_FILE = Path(__file__).with_name("english_words.txt")
 ORIGINS = ("ja", "ko")
@@ -50,7 +51,7 @@ KOREAN_AH = re.compile(r"[aeiou]ah$")  # Seah, Jiah: -ah của tên Hàn (h câm
 RULE_VERSION = 5  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
 ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
-HONORIFICS = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono")  # hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận)
+HONORIFICS = tuple(JAPANESE_POLICY["honorifics"])
 KOREAN_TERMS = {"oppa": "óp-pa", "unnie": "un-ni", "noona": "nu-na", "hyung": "hi-ung", "ssi": "xi", "nim": "nim"}  # tiếng gọi Hàn cố định (bộ thử TN, chủ sách 04-10: Oppa o ngắn); luật RR chưa khớp quy ước ở "ssi", "unnie"
 KOREAN_ALONE = ("oppa", "unnie", "noona", "hyung")  # đứng riêng cũng đọc (không cần tên đi trước)
 KOREAN_SURNAMES = frozenset(("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
@@ -60,8 +61,7 @@ _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
 DICTIONARY_WORDS = {"sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
                     "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la"}
 # Từ Nhật rất quen trong truyện dịch: đọc theo luật phiên âm với MỌI cuốn (cuốn không rõ gốc cũng vậy), dù có trong danh sách từ Anh (anime, manga, sake).
-JAPANESE_COMMON = frozenset(("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
-                             "onii", "onee", "otaku", "eroge", "tsukkomi", "ara", "umu"))
+JAPANESE_COMMON = frozenset(JAPANESE_POLICY["common"])
 CURRENCY = {"won": "guôn", "yen": "yên", "kwan": "quan"}  # đơn vị tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số (cuốn không rõ gốc)
 NUMBER_WORDS = frozenset(("nghìn", "ngàn", "triệu", "tỷ", "tỉ", "trăm", "vạn", "chục", "mươi", "mười", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"))
 

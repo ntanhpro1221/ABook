@@ -4,6 +4,7 @@ import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import { onlineConsentGiven, spokenVoiceName } from "./onlineConsent";
 import type { ListenSource } from "./source";
+import voiceRanks from "../../../abook/assets/voice_rank.json";
 
 // Giọng đọc của "Nghe ngay": nhớ lựa chọn theo từng cuốn (+ một lựa chọn chung cho cuốn mới), chọn giọng mặc định, và bọc việc lấy clip với hai
 // việc người nghe cần biết: giọng trực tuyến gửi chữ ra ngoài máy (nói một lần), và giọng ấy hỏng (mất mạng, khoá bị từ chối, hết hạn mức) thì
@@ -57,7 +58,7 @@ export function isVoiceStuck(message: string): boolean {
 
 /** Giọng chạy trên máy (đã tải: VieNeu, Supertonic…; không kể giọng của máy, nó đã tự đỡ) để đổi sang khi mất mạng; cùng giới với giọng đang chọn nếu có. */
 export function localVoiceFor(voices: ReadAloudVoice[], current: ReadAloudVoice | undefined): ReadAloudVoice | undefined {
-  const local = voices.filter((voice) => !voice.online && voice.provider !== "device");
+  const local = voices.filter((voice) => !voice.online && voice.provider !== "device" && autoAllowed(voice));
   return local.find((voice) => current?.gender && voice.gender === current.gender) ?? local[0];
 }
 
@@ -195,14 +196,14 @@ export const SAMPLE_TEXT = S.s_xin_chao_toi_se_doc_sach_cho_ban_nghe_ban_885b35e
  *  giọng đầu danh sách: ở cả hai bản đó là "Adam bựa" / "Adam" (giọng nam có cá tính, không hợp một lời kể đầu tiên - soát a66: tải Nano xong mọi
  *  cuốn chưa chọn lặng lẽ thành Adam).
  *  - Turbo, chọn từ danh sách giọng của Studio (abook/voice_catalog.py): "Đức Trí" là giọng dẫn truyện mặc định của Studio cho giọng nam (Nam ·
- *    Nam · Kể chuyện, giọng đứng đầu nhóm kể chuyện tốt theo chủ sách 05-11), "Đoan Trang" là giọng dẫn truyện mặc định cho giọng nữ (chủ sách 05-11: kể chuyện tốt), "Thanh Bình"
- *    (Nam · Bắc · Kể chuyện) là giọng kể chuyện chủ sách đã chỉnh trầm xuống cho êm.
+ *    Nam · Kể chuyện, giọng đứng đầu nhóm kể chuyện tốt theo chủ sách 05-11). Ngọc Linh và Kim Thanh cùng hạng dẫn nữ cao nhất (08-11), rồi Đoan Trang.
+ *    Danh sách dẫn nữ và các giọng không tự chọn lấy từ voice_rank.json.
  *  - Nano không có giọng nào ở trên: "Ái Hân" (nữ) - cùng giới với giọng mặc định trước khi tải (Edge Hoài My) nên người nghe không thấy đổi giới,
  *    là giọng app đã mời khi mất mạng ("Đọc bằng Ái Hân", localVoiceFor) và giọng đo tốc độ đọc của Nano (abook/readaloud/prepare.py); rồi "Mỹ
  *    Duyên" (nữ, chủ sách giữ nguyên tốc độ khi chấm giọng Studio), "Đức Trí" (nam, giọng dẫn truyện chủ sách chọn ở Studio).
  *  Cùng danh sách ở bản Android (readaloud/NarratorVoice.kt); bộ ví dụ chung tests/fixtures/default_voice. */
 export const NARRATOR_VOICES: Record<string, readonly string[]> = {
-  turbo: [S.s_duc_tri_c0417aaf, S.s_doan_trang_61fdcaa5, S.s_thanh_binh_6455e387],
+  turbo: [S.s_duc_tri_c0417aaf, ...voiceRanks.narrator.female.flat(), S.s_thanh_binh_6455e387],
   nano: [S.s_ai_han_a1f0d04f, S.s_my_duyen_ad56a239, S.s_duc_tri_c0417aaf],
 };
 
@@ -212,7 +213,7 @@ export const NARRATOR_VOICES: Record<string, readonly string[]> = {
  *  đứng trước trong danh sách); không có thì giọng đầu tiên cùng giới `gender` (giới của giọng đang dùng khi chưa có giọng trên máy - giọng mặc định
  *  của máy); không biết giới mới lấy giọng đầu danh sách. */
 export function narratorVoice(voices: ReadAloudVoice[], gender?: string): ReadAloudVoice | undefined {
-  const local = voices.filter((voice) => voice.pick === true);
+  const local = voices.filter((voice) => voice.pick === true && autoAllowed(voice));
   const tierOf = (voice: ReadAloudVoice) => (voice.id.includes("/") ? voice.id.slice(voice.id.indexOf(":") + 1, voice.id.indexOf("/")) : "");
   const nameOf = (voice: ReadAloudVoice) => voice.id.slice(voice.id.indexOf("/") + 1).normalize("NFC");
   const ranks = Math.max(0, ...Object.values(NARRATOR_VOICES).map((list) => list.length));
@@ -227,9 +228,14 @@ export function narratorVoice(voices: ReadAloudVoice[], gender?: string): ReadAl
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
   const exact = voices.find((voice) => voice.id === chosen);
   if (exact) return exact;
-  const fallback = voices.find((voice) => voice.default) ?? voices[0];
+  const available = voices.filter(autoAllowed);
+  const fallback = available.find((voice) => voice.default) ?? available[0];
   const local = chosen ? undefined : narratorVoice(voices, fallback?.gender);
   return local ?? fallback;
+}
+
+function autoAllowed(voice: ReadAloudVoice): boolean {
+  return !voiceRanks.never_auto.includes(voice.id.slice(voice.id.indexOf("/") + 1).normalize("NFC"));
 }
 
 /** Giọng chạy trên máy này (VieNeu, Supertonic, giọng của máy) hay trực tuyến: trình phát xin clip của giọng trên máy lần lượt ([SpeechTrack.serial]); chưa biết giọng thì
@@ -328,7 +334,7 @@ export function fallbackChain(voices: ReadAloudVoice[], voice: ReadAloudVoice, c
   if (!voice.online) return [];
   const edges = consented("edge") ? voices.filter((item) => item.provider === "edge") : [];
   const edge = edges.find((item) => item.default) ?? edges[0];
-  const device = voices.find((item) => !item.online);
+  const device = voices.find((item) => !item.online && autoAllowed(item));
   return [voice.provider !== "edge" ? edge : undefined, device].filter((item): item is ReadAloudVoice => Boolean(item) && item!.id !== voice.id);
 }
 

@@ -39,6 +39,9 @@ phần ấy.
   `scripts/build_english_phones.py`) là bản gọn của chính từ điển này - cách đọc đầu tiên của mỗi từ a-z, gzip - cùng giấy phép; bộ cài máy tính
   mang nó, điện thoại tải khi cần.
 - `abook/readaloud/english_words.txt` (danh sách từ tiếng Anh cho "Nghe ngay", `scripts/build_english_words.py`): các từ nguyên vẹn trong từ vựng `bert-base-uncased` (Apache-2.0, Google) cũng có trong CMU Pronouncing Dictionary (ở trên), cộng danh sách tên gọi và họ Anh / Âu do ABook tự viết. Chỉ là danh sách từ viết thường, không kèm trọng số hay model.
+  `abook/readaloud/japanese_lexicon.txt.gz` dùng cùng hai nguồn cho bộ chặn từ vựng ở cuốn gốc Nhật;
+  `scripts/build_japanese_lexicon.py` sinh từ giao từ vựng và các từ CMU có tiền tố Anh cùng gốc nằm trong giao ấy.
+  Asset nén xác định được dùng chung cho Python/Kotlin, không chứa trọng số hay dữ liệu truyện.
 
 ## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
 

@@ -18,6 +18,11 @@ PROVENANCE = str(POLICY["provenance"])
 ACRONYMS = frozenset(POLICY["acronyms"])
 
 
+def english_letters(core: str) -> str:
+    """The owner's Z is zed; the frontend's bare Z otherwise says zee."""
+    return "<en>" + " ".join(POLICY["english_letter_words"].get(ch, ch) for ch in core.upper()) + "</en>"
+
+
 def vietnamese(surface: str) -> bool:
     from ..analysis import is_vietnamese_syllable
 
@@ -50,7 +55,9 @@ def keeps_word(core: str, origin: str | None) -> bool:
         return False
     if vietnamese(core) or core.lower() in names.JAPANESE_COMMON:
         return False
-    if names.name_reading(core, origin) or names.honorific_reading(core, origin):
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin) or names.name_reading(core, origin) or names.honorific_reading(core, origin):
         return False
     if core.replace("-", "").lower() in names.english_words() or core.lower() in POLICY["english_words"]:
         return True
@@ -58,30 +65,63 @@ def keeps_word(core: str, origin: str | None) -> bool:
 
 
 def reading(core: str, origin: str | None) -> tuple[str, str] | None:
+    from .abbreviations import standard_reading
+
+    # These need the occurrence's sentence; never lock a context-free default.
+    if (core.casefold() in POLICY["contextual_abbreviations"] or core.casefold() in POLICY["contextual_letter_names"]
+            or core.casefold() in POLICY["case_sensitive_abbreviations"]):
+        return None
+    standard = standard_reading(core, [core], 0)
+    if standard:
+        return standard, "owner_abbreviation"
     if core in POLICY["preserve_acronyms"]:
         return None
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin):
+        return None
     if core in ACRONYMS:
-        return "<en>" + " ".join(core) + "</en>", "spell_english"
+        return english_letters(core), "spell_english"
     from .abbreviations import LETTERS, ROMAN_LETTERS, spelled
 
     if (core.isascii() and core.isalpha() and core.isupper()
             and not vietnamese(core) and not ROMAN_LETTERS.issuperset(core.lower())
             and spelled(core) == " ".join(LETTERS[ch] for ch in core.lower())):
-        return "<en>" + " ".join(core) + "</en>", "spell_english"
+        return english_letters(core), "spell_english"
     if keeps_word(core, origin):
-        return core, "keep_english"
+        return core.lower() if core.isupper() else core, "keep_english"
     return None
 
 
-def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
+def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protected: set[int] | None = None) -> None:
     """Run after punctuation TN, before explicit per-book listener readings.
 
     Preserve contextual Korean names and structural TN such as chapter labels.
     Tags are generated only here, so angle-bracket TN cannot consume them.
     """
+    from .japanese_policy import apply_tokens as japanese_tokens, contextual_names, read_unmodified
+
+    protected = protected or set()
+    proposed = list(out)
+    japanese_tokens(toks, proposed, origin)
+    contextual = contextual_names(toks, origin) if protected and origin != "ko" else set()
+    for index, said in enumerate(proposed):
+        if index not in protected:
+            out[index] = said
+        else:
+            out[index] = read_unmodified(toks[index], out[index], origin, contextual=index in contextual)
     asian = names.spoken_names(toks, origin, True)
     for index, token in enumerate(toks):
+        if index in protected:
+            continue
         before, core, after = names.split_token(token)
+        from .abbreviations import contextual_letters, pronoun_ai, standard_reading
+
+        if contextual_letters(core, toks, index):
+            out[index] = before + english_letters(core) + after
+            continue
+        if pronoun_ai(toks, index) or standard_reading(core, toks, index, before, after):
+            continue
         if not core or before[-1:].isdigit() or re.match(r"^[-–]?\d", after):
             continue
         if core in POLICY["preserve_acronyms"]:
@@ -93,7 +133,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
             from .vieneu import roman_value
 
             if out[index].casefold() == token.casefold():
-                out[index] = token
+                out[index] = token.lower() if core.isascii() and len(core) >= 2 and core.isupper() else token
             elif core.isupper() and roman_value(core) is None:
                 expanded = spelled(core)
                 if expanded:

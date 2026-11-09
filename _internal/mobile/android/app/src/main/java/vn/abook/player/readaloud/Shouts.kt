@@ -4,6 +4,8 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import vn.abook.player.VietnameseReading
+import vn.abook.player.BuildConfig
+import org.json.JSONObject
 
 /**
  * Tiếng kêu trong "Nghe ngay": thán từ Latin ("Umm", "Oh") và thán từ kéo dài ("Aaaa", "Hmmm", "rồiiii") đọc thành âm tiếng Việt - bản Kotlin y hệt
@@ -14,6 +16,69 @@ import vn.abook.player.VietnameseReading
  * Nhận ra bằng một chữ lặp từ ba lần liền; chỉ đọc khi tách được gốc (thán từ trong bảng, âm tiết Việt, tiếng kêu kiểu Nhật đọc được bằng luật romaji).
  */
 object Shouts {
+    val POLICY = JSONObject(BuildConfig.SOUND_POLICY)
+    private val NOTE = Regex(POLICY.getString("note_pattern"), RegexOption.IGNORE_CASE)
+
+    /** Presentation is removed from voice text only; owners retain displayed word positions. */
+    fun presentationTokens(toks: List<String>): Pair<List<String>, List<Int>> {
+        val prepared = ArrayList<String>()
+        val owners = ArrayList<Int>()
+        for ((index, token) in toks.withIndex()) {
+            val parts = NOTE.replace(token, " ").split(Regex("\\s+")).filter { it.isNotEmpty() }.ifEmpty { listOf("") }
+            for (raw in parts) {
+                val (before, core, after) = Names.splitToken(raw)
+                val part = if (core.isNotEmpty() && (before + after).none { it.isLetterOrDigit() }) before.replace("_", "") + core + after.replace("_", "") else raw
+                prepared.add(part)
+                owners.add(index)
+            }
+        }
+        return prepared to owners
+    }
+
+    fun honorificStretch(core: String, origin: String?): String? {
+        val parts = core.split(Regex("[-‐‑‒–]"))
+        if (parts.size < 2) return null
+        val suffix = dedupe(parts.last().lowercase(Locale.ROOT))
+        if (suffix !in Names.HONORIFICS || suffix == parts.last().lowercase(Locale.ROOT)) return null
+        val canonical = (parts.dropLast(1) + suffix).joinToString("-")
+        return (JapanesePolicy.reading(canonical, origin) ?: Names.honorificReading(canonical, origin))?.plus("…")
+    }
+
+    private fun expandedReading(core: String): String? {
+        val word = core.lowercase(Locale.ROOT)
+        if (word.isEmpty() || word.any { it !in 'a'..'z' }) return null
+        if (upper(core) && (word.all { it in ROMAN_LETTERS } || word in SHORT_CASED || (word.toSet().size == 1 && word[0] !in VOWELS))) return null
+        val vowels = POLICY.getString("vowels")
+        if (Regex(POLICY.getString("laugh_pattern")).matches(word)) {
+            return Regex(POLICY.getString("laugh_atom")).findAll(word).take(POLICY.getInt("max_laugh_syllables")).joinToString(" ") {
+                val atom = it.value
+                val vowel = atom.first { ch -> ch in vowels }
+                if (atom[0] == 'f') "phu" else POLICY.getJSONObject("laugh_vowels").getString(vowel.toString())
+            }
+        }
+        if (Regex(POLICY.getString("nasal_pattern")).matches(word)) return Romanization.reading(dedupe(word), "ja")
+        val run = Regex("(.)\\1{" + (POLICY.getInt("min_run") - 1) + ",}")
+        val stretched = run.containsMatchIn(word)
+        val base = run.replace(word) { it.groupValues[1] }
+        val soundCase = !(core.any(Char::isUpperCase) && core.none(Char::isLowerCase)) || word.length == 2 || Regex("(.)\\1").containsMatchIn(word)
+        val patterned = soundCase && word !in EnglishWords.ALL && !VietnameseReading.isSyllable(word) && word.all { it in vowels + "hkgwy" }
+        val reading = when {
+            stretched && Regex(POLICY.getString("growl_pattern")).matches(base) -> base.dropLast(1)
+            stretched && Regex(POLICY.getString("hiss_pattern")).matches(base) -> base.replace(Regex("[zs]+$"), "") + "… xì"
+            patterned && (Regex(POLICY.getString("breath_pattern")).matches(word) || Regex(POLICY.getString("palatal_pattern")).matches(word)) -> {
+                val plain = base.replace(Regex("[hkg]+$"), "")
+                if (plain.isEmpty()) null else Romanization.reading(plain, "ja")
+            }
+            stretched -> {
+                val title = core.first().isUpperCase() && core.drop(1).all { it.isLowerCase() }
+                val runs = runs(word.toList())
+                if (title && runs.size == 1 && runs[0].second == word.length && word.last() !in vowels) return null
+                if (VietnameseReading.isSyllable(base)) base else Romanization.reading(base, "ja") ?: base.takeIf { it in EnglishWords.ALL }
+            }
+            else -> null
+        } ?: return null
+        return if ("…" in reading || !stretched) reading else "$reading…"
+    }
     private val INTERJECTIONS = mapOf("umm" to "ừm", "ugh" to "ức", "boom" to "bùm", "oh" to "ô", "hmm" to "hừm", "shh" to "suỵt", "ah" to "a", "eh" to "ê",
         "hm" to "hừm", "huh" to "hả", "ooh" to "ô", "hic" to "hích", "urgh" to "ức",
         // "Um", "Uh", "Mm" (sea-g2p reads "mm" as "mi li mét"); repeated consonants: "grrr", "pfffft", "kkkk", "hhhh", "ssss" ("mmm" is "mm" above)
@@ -30,7 +95,7 @@ object Shouts {
     private const val TONE_MARKS = "̣̀́̃̉"
     private val STANDALONE = "aeêioôơuư".toSet()
     private val VOWELS = "aăâeêioôơuưy".toSet()
-    private const val MIN_RUN = 3
+    private val MIN_RUN = POLICY.getInt("min_run")
     private val ROMAN_LETTERS = "ivx".toSet()
     private val RANK_NOUNS = setOf("hạng", "cấp", "rank", "class", "loại", "bậc")
     private val GLUE = Regex("(?:\\.{2,}|[…~—–])+")
@@ -103,7 +168,7 @@ object Shouts {
     fun stretchReading(core: String): String? {
         val hit = readings[core]
         if (hit != null) return hit.ifEmpty { null }
-        val found = compute(core)
+        val found = compute(core) ?: expandedReading(core)
         if (readings.size > 4096) readings.clear()
         readings[core] = found ?: ""
         return found
@@ -118,7 +183,7 @@ object Shouts {
         // "um" is usually a Vietnamese word ("xanh um tùm"); capital "Um" is the cry
         if (!(word == "um" && core.none { it.isUpperCase() })) INTERJECTIONS[word]?.let { return it }
         if (LAUGH.matches(word) && (0 until word.length step 2).all { word.substring(it, it + 2) == word.substring(0, 2) }) {
-            return (0 until word.length step 2).joinToString(" ") { LAUGH_SYLLABLES.getValue(word.substring(it, it + 2)) }
+            return (0 until minOf(word.length, 2 * POLICY.getInt("max_laugh_syllables")) step 2).joinToString(" ") { LAUGH_SYLLABLES.getValue(word.substring(it, it + 2)) }
         }
         var runs = runs(chars)
         val pair = runs.isEmpty() && chars.size >= 3 && chars[chars.size - 1] == chars[chars.size - 2] && chars.last() in PAIR_LETTERS &&
@@ -158,7 +223,13 @@ object Shouts {
     }
 
     /** Reads [segment] (a token, or the part of a token after a glued mark) as [readShouts] does; not a cry -> returned as is. A cry first -> the part after the glue is looked at too ("Um....Umm…"). */
-    private fun readSegment(segment: String, toks: List<String>, index: Int, first: Boolean): String {
+    private fun readSegment(segment: String, toks: List<String>, index: Int, first: Boolean, origin: String?): String {
+        val face = segment.trim { it in POLICY.getString("frames") }
+        val emoticons = POLICY.getJSONObject("emoticons")
+        if (emoticons.has(face.lowercase(Locale.ROOT))) {
+            val at = segment.indexOf(face)
+            return segment.take(at) + emoticons.getString(face.lowercase(Locale.ROOT)) + segment.drop(at + face.length)
+        }
         val glued = GLUE.find(segment, Names.splitToken(segment).first.length)
         val head = if (glued != null) segment.substring(0, glued.range.first) else segment
         var rest = if (glued != null) segment.substring(glued.range.first) else ""
@@ -166,11 +237,11 @@ object Shouts {
         val previous = if (first && index > 0) toks[index - 1] else ""
         if (core.isEmpty() || (before + after).any { it.isDigit() } ||
             (upper(core) && (after.startsWith("+") || previous.lowercase(Locale.ROOT).trim { it in CLOSING } in RANK_NOUNS))) return segment // a word glued to a number ("55mm", "ss1") is no cry
-        var reading = stretchReading(core) ?: return segment
+        var reading = honorificStretch(core, origin) ?: stretchReading(core) ?: return segment
         if (core.lowercase(Locale.ROOT) == "mm" && counted(previous)) return segment // "127 mm", "vài mm" is a unit, "Mm…" is a cry
         if (rest.isNotEmpty()) {
             val joint = GLUE.find(rest)!!.range.last + 1
-            rest = rest.substring(0, joint) + readSegment(rest.substring(joint), toks, index, false)
+            rest = rest.substring(0, joint) + readSegment(rest.substring(joint), toks, index, false, origin)
         }
         if (reading.endsWith("…")) rest = rest.trimStart('~')
         if (reading.endsWith("…") && (rest.startsWith("…") || rest.startsWith("."))) reading = reading.dropLast(1)
@@ -182,9 +253,9 @@ object Shouts {
      * số chữ không đổi. Chữ dính liền vào phần sau qua "…", "..", "~" hay "—" ("Ummm…Ý", "màaaa—nếu", "Um....Umm") thì mỗi phần được xét riêng. Chữ hoa cả là hạng ("hạng AAA", "AAA+++")
      * thì để viết tắt đọc.
      */
-    fun readShouts(toks: List<String>, out: MutableList<String>) {
+    fun readShouts(toks: List<String>, out: MutableList<String>, origin: String? = null) {
         for ((index, token) in toks.withIndex()) {
-            if (out[index] == token) out[index] = readSegment(token, toks, index, true)
+            if (out[index] == token) out[index] = readSegment(token, toks, index, true, origin)
         }
     }
 }

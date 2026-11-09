@@ -1323,7 +1323,6 @@ internal object S {
     fun s_doan_nay_khong_phai_0_ke_691681b8(p0: Any?): String = "Đoạn này không phải " + p0.toString() + " kể"
     fun s_doan_nay_van_do_0_ke_1aa31bd2(p0: Any?): String = "Đoạn này vẫn do " + p0.toString() + " kể"
     const val s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d = "Đoạn này vẫn kể ở ngôi thứ ba"
-    const val s_doan_trang_61fdcaa5 = "Đoan Trang"
     const val s_doan_trong_ba06f5ce = "Đoạn trống"
     fun s_doc_0_5067e74c(p0: Any?): String = "Đọc “" + p0.toString() + "”"
     const val s_doc_bang_f7f5f3b1 = "Đọc bằng "

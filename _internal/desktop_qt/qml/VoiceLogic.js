@@ -88,14 +88,20 @@ function onlineNotice(voice) {
 
 // Giọng VieNeu kể chuyện trung tính của từng bản, theo thứ tự ưu tiên (readAloudVoice.ts NARRATOR_VOICES)
 var NARRATOR = {
-    turbo: [S.s_duc_tri_c0417aaf, S.s_doan_trang_61fdcaa5, S.s_thanh_binh_6455e387],
+    turbo: [S.s_duc_tri_c0417aaf, "Ngọc Linh", "Kim Thanh", S.s_doan_trang_61fdcaa5, S.s_my_duyen_ad56a239, "Quỳnh Anh", "Thục Đoan", S.s_thanh_binh_6455e387],
     nano: [S.s_ai_han_a1f0d04f, S.s_my_duyen_ad56a239, S.s_duc_tri_c0417aaf]
+}
+// Checked against assets/voice_rank.json by the shared web/Qt test.
+var NEVER_AUTO = ["Ngọc Huyền", "Trúc Ly", "Ngọc Trân"]
+
+function autoAllowed(voice) {
+    return NEVER_AUTO.indexOf(nfc(voice.id.slice(voice.id.indexOf("/") + 1))) < 0
 }
 
 function nfc(text) { return text.normalize ? text.normalize("NFC") : text }
 
 function narratorVoice(voices, gender) {
-    const local = voices.filter(v => v.provider === "vieneu")
+    const local = voices.filter(v => v.provider === "vieneu" && autoAllowed(v))
     const tierOf = v => v.id.slice(v.id.indexOf(":") + 1, v.id.indexOf("/"))
     const nameOf = v => nfc(v.id.slice(v.id.indexOf("/") + 1))
     let ranks = 0
@@ -111,7 +117,8 @@ function narratorVoice(voices, gender) {
 function resolveVoice(voices, chosen) {
     const exact = voices.find(v => v.id === chosen)
     if (exact) return exact
-    const fallback = voices.find(v => v.default) || voices[0]
+    const available = voices.filter(autoAllowed)
+    const fallback = available.find(v => v.default) || available[0]
     const local = chosen ? undefined : narratorVoice(voices, fallback ? fallback.gender : undefined)
     return local || fallback
 }

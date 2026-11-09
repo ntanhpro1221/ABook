@@ -37,7 +37,7 @@ SPEED_FACTOR_MIN = 0.70
 SPEED_FACTOR_MAX = 1.50
 DEFAULT_NARRATOR_BY_GENDER = {
     GENDER_MALE: "Đức Trí",
-    GENDER_FEMALE: "Đoan Trang",
+    GENDER_FEMALE: "Ngọc Linh",
 }
 VOICE_PREVIEW_FILENAMES = {
     "Phạm Tuyên": "pham_tuyen.wav",
@@ -328,7 +328,7 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int,
 # A listener's ranking of the presets they have actually heard, per role
 # (`assets/voice_rank.json`: narrator / character, each male and female), as a list
 # of TIERS, best first; each tier is a list of presets the listener rates equal, so a tie
-# inside a tier falls through to the computed proxies and then to `CAST_ORDER`. This
+# inside a tier falls through to catalog priorities and then to `CAST_ORDER`. This
 # outranks measured voice features because those are proxies for how good the
 # result sounds and this is the thing itself - and the proxies have been wrong here
 # before: reach and shift between them put Ngọc Linh last of the three girl voices, which
@@ -345,11 +345,12 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int,
 # Thiền Tâm Đức, Phạm Tuyên] > [Thái Sơn, Adam]; any other male preset (Adam bựa included)
 # is unranked, below every tier.
 #
-# Female verdict, updated 06-11 ("quỳnh trang" read as Quỳnh Anh):
-# narrator = [Đoan Trang] > [Ngọc Linh] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan];
+# Female verdict, updated 08-11:
+# narrator = [Ngọc Linh, Kim Thanh] > [Đoan Trang] > [Mỹ Duyên, Quỳnh Anh, Thục Đoan];
 # character = [Ngọc Linh] > [Đoan Trang] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan].
 # Mai Anh remains a news preset, unranked, not castable or selectable, without balance entries.
-# The default female narrator is Đoan Trang.
+# The default female narrator is Ngọc Linh. Rejected automatic choices are data-driven;
+# they remain available when a listener explicitly chooses them.
 #
 # Children are cast from the female presets by the female `character` tiers: there is no
 # child role.
@@ -390,6 +391,19 @@ def load_voice_rank(path: Path = VOICE_RANK_PATH) -> VoiceRank:
 VOICE_RANK = load_voice_rank()
 
 
+def load_never_auto(path: Path = VOICE_RANK_PATH) -> frozenset[str]:
+    names = json.loads(path.read_text(encoding="utf-8")).get("never_auto", [])
+    known = {str(preset["name"]) for preset in VIENEU_PRESETS}
+    if not isinstance(names, list) or any(not isinstance(name, str) or name not in known for name in names):
+        raise ValueError(f"{path.name}: never_auto names no such VieNeu preset")
+    if len(set(names)) != len(names):
+        raise ValueError(f"{path.name}: never_auto lists a preset twice")
+    return frozenset(names)
+
+
+NEVER_AUTO = load_never_auto()
+
+
 def listener_rank(preset_name: str, gender: str, role: str = "character") -> int:
     """The listener's tier for a preset in this role (0 = best); unranked = the number of tiers, after every ranked one.
 
@@ -400,11 +414,13 @@ def listener_rank(preset_name: str, gender: str, role: str = "character") -> int
     return next((index for index, tier in enumerate(tiers) if name in tier), len(tiers))
 
 
-def preset_eligible(preset: dict[str, Any], role: str) -> bool:
+def preset_eligible(preset: dict[str, Any], role: str, *, automatic: bool = False) -> bool:
     """Quyền dùng theo vai: phán quyết chủ sách mở cả giọng tin tức, chỉ cho vai đã xếp hạng.
 
     Giọng chưa nghe giữ luật catalog cũ. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
     """
+    if preset["name"] in NEVER_AUTO:
+        return not automatic
     tiers = VOICE_RANK[role].get(str(preset["gender"]), ())
     ranked = any(preset["name"] in tier for tier in tiers)
     if preset["style"] == STYLE_NEWS and not ranked:
@@ -433,11 +449,12 @@ EXCLUDED_PRESETS: frozenset[str] = frozenset()
 def narrator_presets(
     gender: str | None = None,
     region: str | None = None,
+    *, automatic: bool = False,
 ) -> list[dict[str, str]]:
     candidates = [
         preset
         for preset in VIENEU_PRESETS
-        if preset_eligible(preset, "narrator")
+        if preset_eligible(preset, "narrator", automatic=automatic)
         and (not gender or preset["gender"] == gender)
         and (not region or preset["region"] == region)
     ]
@@ -458,7 +475,7 @@ def narrator_presets(
     )
 
 
-def casting_presets(gender: str) -> list[dict[str, str]]:
+def casting_presets(gender: str, *, automatic: bool = True) -> list[dict[str, str]]:
     """Every preset eligible for casting, best first.
 
     There is one region allowlist for every role. NPCs used to reach a wider pool that
@@ -469,6 +486,6 @@ def casting_presets(gender: str) -> list[dict[str, str]]:
         preset
         for preset in VIENEU_PRESETS
         if preset["gender"] == gender
-        and preset_eligible(preset, "character")
+        and preset_eligible(preset, "character", automatic=automatic)
     ]
     return sorted(candidates, key=casting_preset_priority)

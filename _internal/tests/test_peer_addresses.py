@@ -90,9 +90,11 @@ def test_slow_dns_for_one_peer_never_occupies_another_peers_slots(monkeypatch):
             job.result(timeout=2)
 
 
-def test_failure_cache_is_invalidated_by_network_discovery_or_changed_candidates():
-    from abook.webui.peer_routing import Resolver
-    resolver = Resolver()
+def test_failure_cache_is_invalidated_by_network_discovery_or_changed_candidates(monkeypatch):
+    from abook.webui import peer_routing
+    # This tests cache identity, independently of worker scheduling and timeouts.
+    monkeypatch.setattr(peer_routing, "time", SimpleNamespace(monotonic=lambda: 100.0))
+    resolver = peer_routing.Resolver()
     attempts = []
     def dead(target):
         attempts.append(target)

@@ -157,7 +157,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6213 chữ (3030 khác nhau), 336 cặp nhãn-icon; native 1935 chữ (1495 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6212 chữ (3029 khác nhau), 336 cặp nhãn-icon; native 1935 chữ (1495 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -695,7 +695,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/voice/VoiceModel.kt` (2): Supertonic nhanh hơn (`231`); Có bản mới · {} (`305`)
 - `native/voice/VoiceSheets.kt` (7): Đang đo tốc độ (`89`); Đang xoá (`108`); Dữ liệu di động (`126`); Vẫn tải (`127`); Đang lưu (`140`); Đồng ý (`140`); Xoá bài này? (`307`)
 
-### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (248 nhãn)
+### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (247 nhãn)
 
 - `listen/AddBook.tsx` (4): Chưa mở được file sách này. (`295`); Chọn lại (`545`); Đường dẫn file hay thư mục (`636`); Chưa đọc được (`787`)
 - `listen/BookScreen.tsx` (19): Tạm dừng {} (`163`); Đọc {} (chưa có audio) (`182`); Đọc chương này (`268`); Danh sách chương (`300`); Bỏ gộp {} vào {} (`451`); Bỏ gộp (`456`); Đổi giọng {} (`468`); Chờ áp dụng: giọng (`558`); Nghe giọng {} (`564`); Đổi giọng người kể (`565`); 7 ngày qua: (`656`); Nghe tiếp từ (`676`); Chuyển sang cuốn (`721`); Đang mở thư viện (`721`); Đọc (`1064`); Đọc tiếp (`1064`); Đã nghe {} (`1163`); Việc với sách (`1192`); Mục của sách (`1263`)
@@ -731,7 +731,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/playlistBed.ts` (1): Đã thêm {} bài (`369`)
 - `listen/prepareAhead.ts` (1): Chưa lưu bản đọc nào. (`74`)
 - `listen/readAloud.ts` (4): Chưa tải được đoạn giọng đọc. (`63`); ReadAloudEngine cần track.speech (`498`); Chưa phát được clip giọng đọc. (`1807`); Giọng đọc không phản hồi. (`1979`)
-- `listen/readAloudVoice.ts` (5): Thanh Bình (`205`); Đoan Trang (`205`); Đức Trí (`205`); Mỹ Duyên (`206`); Ái Hân (`206`)
+- `listen/readAloudVoice.ts` (4): Thanh Bình (`206`); Đức Trí (`206`); Mỹ Duyên (`207`); Ái Hân (`207`)
 - `listen/readings.ts` (1): Chưa nghe thử được lúc này. (`162`)
 - `listen/saveFailure.ts` (1): Chưa lưu được chỗ đang nghe (`17`)
 - `listen/sleep.ts` (2): Hẹn giờ ngủ: còn {} giây (`100`); Hẹn giờ ngủ: còn {} phút (`100`)
@@ -806,23 +806,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6213 | 0 / 1935 |
-| dấu ba chấm `…` | 37 / 6213 | 0 / 1935 |
-| kết thúc bằng dấu chấm `.` | 1088 / 6213 | 395 / 1935 |
-| kết thúc bằng `!` | 0 / 6213 | 0 / 1935 |
-| kết thúc bằng `:` | 86 / 6213 | 3 / 1935 |
-| dấu thanh kiểu cũ `oà oá uý` | 464 / 6213 | 176 / 1935 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6213 | 0 / 1935 |
-| số thập phân dấu phẩy `1,5` | 2 / 6213 | 0 / 1935 |
-| số thập phân dấu chấm `1.5` | 0 / 6213 | 0 / 1935 |
-| nhân bằng `×` | 0 / 6213 | 0 / 1935 |
-| nhân bằng `x` sau số | 0 / 6213 | 0 / 1935 |
-| ngăn cách `·` | 141 / 6213 | 34 / 1935 |
-| ngăn cách ` - ` | 277 / 6213 | 81 / 1935 |
-| gạch dài `—`/`–` | 12 / 6213 | 1 / 1935 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6213 | 2 / 1935 |
-| dấu `%` dính số | 0 / 6213 | 1 / 1935 |
-| dấu `%` cách số | 0 / 6213 | 0 / 1935 |
+| dấu ba chấm ASCII `...` | 6 / 6212 | 0 / 1935 |
+| dấu ba chấm `…` | 37 / 6212 | 0 / 1935 |
+| kết thúc bằng dấu chấm `.` | 1088 / 6212 | 395 / 1935 |
+| kết thúc bằng `!` | 0 / 6212 | 0 / 1935 |
+| kết thúc bằng `:` | 86 / 6212 | 3 / 1935 |
+| dấu thanh kiểu cũ `oà oá uý` | 464 / 6212 | 176 / 1935 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6212 | 0 / 1935 |
+| số thập phân dấu phẩy `1,5` | 2 / 6212 | 0 / 1935 |
+| số thập phân dấu chấm `1.5` | 0 / 6212 | 0 / 1935 |
+| nhân bằng `×` | 0 / 6212 | 0 / 1935 |
+| nhân bằng `x` sau số | 0 / 6212 | 0 / 1935 |
+| ngăn cách `·` | 141 / 6212 | 34 / 1935 |
+| ngăn cách ` - ` | 277 / 6212 | 81 / 1935 |
+| gạch dài `—`/`–` | 12 / 6212 | 1 / 1935 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6212 | 2 / 1935 |
+| dấu `%` dính số | 0 / 6212 | 1 / 1935 |
+| dấu `%` cách số | 0 / 6212 | 0 / 1935 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
@@ -880,9 +880,9 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | library-book | 204 | 211 | 0 | 0 | 66 | 11 | 0 |
 | settings | 117 | 135 | 0 | 0 | 22 | 81 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
-| voice | 162 | 148 | 0 | 0 | 27 | 24 | 0 |
+| voice | 161 | 148 | 0 | 0 | 26 | 24 | 0 |
 | add-edit-book | 163 | 139 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2164 | 429 | 0 | 0 | 59 | 90 | 0 |
+| studio | 2163 | 429 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
 | music | 33 | 50 | 0 | 0 | 9 | 8 | 0 |
 

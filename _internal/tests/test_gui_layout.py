@@ -329,6 +329,8 @@ def test_new_book_resets_book_settings_but_keeps_global_settings(tmp_path: Path)
     window.profile_combo.setCurrentIndex(window.profile_combo.findData("high_quality"))
     window.narrator_gender_combo.setCurrentIndex(window.narrator_gender_combo.findData("female"))
     window.narrator_region_combo.setCurrentIndex(window.narrator_region_combo.findData("Trung"))
+    assert window.narrator_voice_combo.currentData() is None
+    window.narrator_voice_combo.setCurrentIndex(window.narrator_voice_combo.findData("Ngọc Trân"))
     window.resource_combo.setCurrentIndex(window.resource_combo.findData("max_safe"))
     window.max_temp.setValue(84)
 
@@ -605,8 +607,8 @@ def test_narrator_filters_offer_eligible_voices_and_build_matching_settings(tmp_
         window.narrator_voice_combo.itemData(index)
         for index in range(window.narrator_voice_combo.count())
     }
-    assert window.narrator_voice_combo.currentData() == "Đoan Trang"
-    assert window.narrator_voice_combo.itemData(0) == "Đoan Trang"
+    assert window.narrator_voice_combo.currentData() == "Ngọc Linh"
+    assert window.narrator_voice_combo.itemData(0) == "Ngọc Linh"
     assert available == {
         "Trúc Ly", "Đoan Trang", "Ngọc Linh", "Thục Đoan", "Ngọc Trân",
         "Kim Thanh", "Mỹ Duyên", "Ngọc Huyền", "Quỳnh Anh",
@@ -615,6 +617,8 @@ def test_narrator_filters_offer_eligible_voices_and_build_matching_settings(tmp_
     central_index = window.narrator_region_combo.findData("Trung")
     window.narrator_region_combo.setCurrentIndex(central_index)
     assert window.narrator_voice_combo.count() == 1
+    assert window.narrator_voice_combo.currentData() is None
+    window.narrator_voice_combo.setCurrentIndex(window.narrator_voice_combo.findData("Ngọc Trân"))
     assert window.narrator_voice_combo.currentData() == "Ngọc Trân"
 
     window.narrator_gender_combo.setCurrentIndex(window.narrator_gender_combo.findData(""))
@@ -625,7 +629,7 @@ def test_narrator_filters_offer_eligible_voices_and_build_matching_settings(tmp_
     ]
     all_available = set(all_available_ordered)
     assert len(all_available) == 21
-    assert all_available_ordered[:2] == ["Đức Trí", "Đoan Trang"]
+    assert all_available_ordered[:2] == ["Đức Trí", "Ngọc Linh"]
     assert {"Minh Đức", "Minh Triết", "Mai Anh", "Thùy Dung"}.isdisjoint(all_available)
 
     window.narrator_gender_combo.setCurrentIndex(female_index)

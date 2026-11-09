@@ -221,11 +221,34 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `A-der-on → A-đe-ron`; nếu không sửa được, retry chỉ tên lỗi với feedback cụ thể, không gửi lại nguyên prompt/batch.
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
   VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
-  Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. Tên Nhật/Hàn giữ đường luật/CMU/Qwen hiện có;
+  Viết tắt theo bảng chung `english_policy.json`: cách đọc chủ sách, khai triển từ Việt, VN theo câu văn/mã, KTX theo ngữ cảnh tàu và AI theo ngữ cảnh đại từ.
+  Các mặt chữ cần ngữ cảnh không được tự khóa thành một cách đọc chung khi lập bảng tên; quyết định ở từng occurrence.
+  Mã ngắn chưa rõ đọc từng chữ Anh qua `<en>`, provenance `auto`; từ Anh HOA phải đưa vào máy đọc ở dạng thường. VieNeu dùng bảng dự phòng Nhật
+  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback4`. Tên Latin phải tách hết bằng bảng âm:
+  ít nhất hai âm tiết cho dự phòng mới khi gốc cuốn đã là Nhật; chưa rõ gốc cần kính ngữ dính hoặc cặp romaji viết hoa.
+  Từ Nhật quen, kính ngữ và cách đọc tên đã được luật cũ chấp nhận có đường riêng; bộ lọc tên không được xoá cách đọc ấy chỉ vì thiếu âm tiết.
+  Viết tắt, số và từ mượn đã được xử lý giữ quyền trên output; HOA ngắn không tự thành tên Nhật nhờ đổi hoa thường.
+  Từ Việt/từ Anh được bảo vệ; một tên cục bộ không tự nâng gốc cả cuốn. Tiếng kêu, kéo dài và nói lắp chạy trước tên Nhật,
+  giữ mảnh âm đã đọc qua bước direct English; mảnh tên còn nguyên cùng token vẫn theo policy Nhật, không phân tích lại âm đã phát.
+  Cách đọc người nghe vẫn áp cuối. Khóa tự động theo thành phần; khi materialize,
+  hàng Nhật tự động không được che cách đọc người nghe của thành phần và không được đưa kết quả phiên âm qua TN Nhật lần nữa.
+  Tên Hàn giữ đường hiện có;
   tên còn mơ hồ tiếp tục đường hiện có. Từ Việt hợp lệ không được phiên âm chỉ vì có trong từ điển Anh; detector chỉ đọc ở
   `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
   không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
+  VieNeu nối phoneme của từng từ Nhật tự động, giữ trọng âm đầu và đổi các trọng âm sau thành nhẹ, theo `delivery` trong cùng JSON của Python/Kotlin.
+  Dấu bảo vệ chỉ có trong đầu vào suy luận; chữ lưu, neo ASR và biên họ/tên giữ nguyên. Chỉ nối span có hai biên tiền tố khớp chính xác với chuỗi âm toàn câu;
+  cách đọc khác do người nghe chọn giữ quyền riêng.
+  Trên desktop có CTC, `readaloud/japanese_audio.py` rút phần năng lượng thấp >=120 ms nằm hoàn toàn trong từng từ Nhật tự động về 80 ms,
+  giữ 5 ms crossfade và hai mép thấp năng lượng. Chỉ dùng span CTC đầy đủ với confidence >=0,7; thiếu model/căn yếu thì giữ audio.
+  Studio áp sau tempo, trước signal/ASR QA và ghi evidence vào metrics; Nghe ngay áp trước ghép khúc/căn mốc chữ.
+  Cache VieNeu desktop mang `jp-name-audio1` cùng trạng thái có CTC. Android chưa có CTC nên vẫn chỉ áp luật phoneme, không suy số đo desktop sang Android.
+- `readaloud/phoneme_policy.py` sửa ở biên phoneme chung của Studio/Nghe ngay/Kotlin: âm tiết `gi` phải còn nguyên âm `/i/`,
+  và `o` của tên đã qua lượt chuẩn hoá đầu không được lượt sau đổi thành tên chữ `ô`. Từ cảm thán/hỏi Anh ngắn,
+  có từ điển và không trùng âm tiết Việt, giữ trọng âm mạnh/nguyên âm kéo dài trước `?!`; không thêm từ, đổi dấu câu hay chia riêng để đọc.
+  Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python. Cả chuỗi đầy đủ và tiền tố dùng để
+  xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
@@ -268,7 +291,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   bảng hạng người nghe đi trước các thước đo; giọng ngang bậc hoặc chưa xếp mới phân xử theo các thước đo và thứ tự cũ.
 - `voice_catalog.preset_eligible` là cửa dùng giọng theo vai: preset được chủ sách xếp trong `assets/voice_rank.json`
   được dùng cho đúng vai ấy bất kể style catalog; tin tức chưa được xếp vẫn bị loại. Vùng miền và lệnh cấm phân vai
-  vẫn giữ nguyên. Bảng hạng ưu tiên hơn các thước đo; mặc định nữ là Đoan Trang, nam là Đức Trí.
+  vẫn giữ nguyên khi tự chọn. `never_auto` cấm tự chọn ở cả hai vai và cả dự phòng; danh sách chọn tay vẫn giữ các giọng ấy.
+  Bảng hạng ưu tiên hơn thứ tự catalog; mặc định nữ là Ngọc Linh, nam là Đức Trí. Hạng dẫn nữ đầu gồm Ngọc Linh và Kim Thanh ngang nhau.
 - NPC có nhãn cục bộ được giữ identity riêng trong phạm vi chapter/batch; NPC không phân biệt được
   ít nhất phải tách pool nam, nữ và chưa rõ giới tính.
 - Nhãn NPC cục bộ trùng chính xác với tên nhân vật trong cùng chapter phải được hợp nhất trước khi

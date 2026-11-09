@@ -1,9 +1,33 @@
 {
-  "version": 1,
+  "version": 2,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
-  "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "TP", "HCM", "VIP", "TV", "OK"],
+  "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "GVCN", "TP", "HCM", "VIP", "TV", "OK"],
   "english_words": ["nanobot"],
   "mode": "keep_english",
-  "acronym_mode": "spell_english"
+  "acronym_mode": "spell_english",
+  "spoken_abbreviations": {
+    "hp": "hát pê", "mp": "mờ pê", "npc": "en pi xi", "ai": "ây ai",
+    "tv": "ti vi", "vip": "víp", "ok": "ô kê", "apec": "a pếch",
+    "raid": "rết", "pop": "póp"
+  },
+  "vietnamese_abbreviations": {
+    "gvcn": "giáo viên chủ nhiệm", "clb": "câu lạc bộ", "tp": "thành phố",
+    "ktx": "ký túc xá", "thpt": "trung học phổ thông", "thcs": "trung học cơ sở",
+    "đh": "đại học", "bv": "bệnh viện", "ubnd": "ủy ban nhân dân",
+    "hđnd": "hội đồng nhân dân", "ubmttq": "ủy ban mặt trận tổ quốc",
+    "pgs": "phó giáo sư", "ths": "thạc sĩ", "tnhh": "trách nhiệm hữu hạn",
+    "bhyt": "bảo hiểm y tế", "bhxh": "bảo hiểm xã hội", "cmnd": "chứng minh nhân dân",
+    "cccd": "căn cước công dân", "gdđt": "giáo dục và đào tạo"
+  },
+  "contextual_abbreviations": {
+    "vn": {"prose": "Việt Nam", "code": "vê-en"}
+  },
+  "code_context": ["mã", "code", "id", "serial", "hiệu", "nhãn"],
+  "case_sensitive_abbreviations": ["ai"],
+  "pronoun_following": ["đó", "đây", "nào", "đâu", "vậy", "ơi"],
+  "contextual_letter_names": {
+    "ktx": ["tàu", "hỏa", "ga", "train", "railway"]
+  },
+  "english_letter_words": {"Z": "zed"}
 }

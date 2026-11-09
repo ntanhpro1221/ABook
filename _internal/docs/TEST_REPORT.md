@@ -137,6 +137,23 @@
 - The new quote stack treated every straight apostrophe as a thought closer, dropping the previous non-space/non-word predicate. Reuse `THOUGHT_CLOSING_PATTERN` within the stack scan. Twelve synthetic cross-paragraph cases pass on f01^, fail from f01 through received HEAD, and pass after the fix; existing nesting and single-paragraph cases remain covered.
 - Related final pytest: **2,604 passed, 0 FAILED, 0 errors**, 52 files, 6 deselected. Full final pytest `-rf`: **10,557 passed, 1 FAILED, 0 errors, 14 skipped, 2 xfailed, 8 deselected**, 3 warnings; JUnit and raw FAILED-line count both report 1. The sole failure is the perceptual environment-restoration test because this audit's harness pre-set `TRANSFORMERS_OFFLINE=1`. It fails on both received HEAD and the changed tree with that variable set; the entire 27-test module passes on both with it absent. The full invocation remains reported as failed; rechecks are separate.
 - Excluded real voice/model synthesis with `-k`, ignored four modules that read Audiobooks fixtures, and redirected external speaker evaluation to an empty task directory. No model inference, GPU use, or Audiobooks access. Compileall, LF and diff checks pass. Directly imported 56 quality entries: `e33e20f4d109266753ff58c956f8be4eb949fd936e4226bc6e107c9dad1a0120` -> `399466d2d36947cad30817d144b69c61b24892ab8df88742f3c64f57267d3cf7`. Changes stay uncommitted on dev/castaudit. The full behavioral inventory, older-code probes, commands and XML are outside the repository in the castaudit task directory's report.md.
+## 08-11-2026 — short English delivery and Japanese frontend syllables
+
+- The fixed eight English capital cases improve from **6/8 to 8/8** using the same CPU ASR check, voice and seeds. Preserve strong stress for a short unambiguous English word before ?/!, and sustain its stressed diphthong after /w/. The shared phoneme policy has no per-word WHAT/WAIT table; source words, punctuation and inference boundaries remain intact.
+- Restore the missing /i/ of standalone romanized `gi`, preserve a generated name's `o_` through Studio's first normalization and its syllabic /ɔ/ through the second, and render unprotected Japanese components beside a locked joined suffix with exact anchor maps. Whole listener readings and protected bytes retain priority. Python and the actual host JNI share phoneme fixtures.
+- Japanese spelling ASR improves **12/34 to 14/34**. An independent Vietnamese wav2vec2 CTC model matches exact expected Vietnamese phoneme sequences on **26/34** targets, versus **24/34** before. Fourteen remaining romaji misses have that independent reference match; six remain inconclusive. These are model diagnostics with owner-style Vietnamese approximations, not human or native Japanese accuracy labels.
+- The owner source search covers all seven AYNIK/Noi ma project DBs and both exported AYNIK packages. Only AYNIK segment 2488 has a surviving Hello WAV; stored and fresh Whisper plus independent CTC retain Hello in the WAV and chapter excerpt. Both packages contain the same chapter checksum. The reported omission is **not reproduced or claimed fixed**. Sixteen short English ?/! cases retain **14/16** strict spelling hits; all 24 prior short cases retain **17/24**, with zero new misses.
+- Final verification: **1541 related pytest passed**. Full collection and execution: **10818 tests, 10802 passed, 14 skipped, 2 xfailed, zero failed/errors**, eight disjoint partitions, all exits 0 and **zero FAILED lines with -rf**. Kotlin full task: **3395 tests, 3391 passed, 4 skipped, zero failed/errors**; all three new tests, including native JNI, execute. Compileall and diff checks pass. Qt is offscreen, Java is headless; all **116 linked MP3s** decode fully.
+- Cache rules **13 to 14** in Python/Kotlin. The code-derived quality list has **60 entries**, including `readaloud/phoneme_policy.py`. Hash `f6f3ad14fef4bfc8cac07148287255c4e2002674419632d46c48e1541168430c` becomes `f7d5a0f8daa66ad0e8dd1264ebb39349e0c3ecd6ce9580625cf95d05f951b2c7`. No commit/staging, dependency/model changes, migration code or source project writes. Private clips, per-target transcripts, report, listen.html and logs remain in the latin166d task directory outside the repository.
+
+## 08-11-2026 — spoken capitals, owner abbreviations and automatic voice choices
+
+- Keep lexical English capitals lowercase at the final VieNeu reading boundary. Apply the owner's mixed letter/word readings and common Vietnamese expansions from one `english_policy.json`, embedded unchanged into Kotlin. VN and KTX use occurrence context; explicit listener readings keep priority. Unknown short codes retain English letter names, with Z pronounced zed.
+- Narrator female tiers are Ngọc Linh/Kim Thanh, then Đoan Trang, then Mỹ Duyên/Quỳnh Anh/Thục Đoan. The shared `never_auto` list excludes Ngọc Huyền, Trúc Ly and Ngọc Trân from automatic roles and fallbacks while retaining manual selection. Web, Kotlin and Qt default selection follow the updated data; equal tiers use deterministic catalog order.
+- CPU audio: fixed English targets **29/37**, Japanese **12/34**, sound pairs **26/26 unchanged WAV and MP3**. Eight capital-word cases improve from **3/8 to 6/8** exact ASR matches. The requested Hello omission was not reproduced: preprocessing retains its phonemes, the exact sentence and its source WAV contain the ASR target; 24 self-written isolated-English cases retain **17/24** strict spelling matches. These are machine checks with documented misses, not a listening verdict or proof that every isolated English word is audible.
+- Preserve the frozen text labels. Under the owner's updated abbreviation references, enaudit **596→611/671**, held-out #4 **951→952/1076**, primary **1690→1698/1855**, soundfix **343→350/391**; zero newly broken occurrences. The unchanged old labels are also reported separately because they prescribe different HP/MP/NPC readings. English and sound groups do not regress.
+- Final Python: **1509 related passed**; full collection and execution **10786 tests: 10770 passed, 14 skipped, 2 xfailed, 0 failed/errors**. Four complete partitions exit 0; `-rf` logs contain **0 FAILED lines**. Kotlin full `:app:testDebugUnitTest`: **3392 tests, 3388 passed, 4 skipped, 0 failed/errors**. Web voice tests **27/27**, TypeScript, compileall and diff checks pass. Test-only synchronization fixes cover callback publication, process disappearance and a cache-identity test's clock; production playback/network behavior is unchanged.
+- Reading cache rules **12→13** in Python/Kotlin. The code-derived quality list has **59 entries**; hash `00621d2fe93b76496889e6aea804c9944699e586f0011e1707a908a40b3c5a5b` → `f6f3ad14fef4bfc8cac07148287255c4e2002674419632d46c48e1541168430c`. Private source context, CPU clips, per-occurrence scores, full logs and the detailed report remain outside the repository. No commit or production project mutation.
 
 ## 08-11-2026 — kotfix: Windows JVM atomic file replacement
 
@@ -1554,3 +1571,94 @@ Test tổng hợp mới 12 ca, có chapter/section, mọi kind, quyền chọn c
 Compileall, LF và diff check đạt. Danh sách khóa đọc từ code: 55 → 56 mục, thêm teller_voice.py. Hash `80e4c2d1b4f22b892b26638404c234f1d754d6e02be5fde3efc52e3baedce2aa` → `e33e20f4d109266753ff58c956f8be4eb949fd936e4226bc6e107c9dad1a0120`. Chỉ cây dev/voxverify, chưa commit. Báo cáo đầy đủ ở `report.md`; DB mô phỏng, log full, chứng cứ HEAD và JSON từng dòng ở thư mục tác vụ ngoài repo `scratchpad/codex/voxverify`.
 
 Sai sót phạm vi kiểm: full suite có `test_readaloud_vieneu.py::test_parity_turbo_and_nano_waveforms`, đã chạy engine VieNeu ONNX thật trên CPU để so waveform. Bài này bị bỏ sót khi kiểm yêu cầu không TTS; không coi lượt full là tuân thủ hoàn toàn yêu cầu đó. Không chạy thêm suy luận sau khi phát hiện. Các mô phỏng gán giọng không gọi TTS; không thu lại hay thay audio của ba sách, DB/WAL/JSON nguồn vẫn khớp băm cuối tác vụ.
+# Sound reading rules (2026-11-08)
+
+The shared `readaloud/sound_policy.json` supplies vocal patterns, common emoticon
+sounds, repetition limits, note boundaries, and the long-initialism bound to
+Python and Android BuildConfig. Display text and word ownership stay intact.
+R1-R3 also preserve the Vietnamese GVCN convention, underscore-framed stutters,
+and the guarded vv. enumeration form. VieNeu cache rules are now 10 on both
+platforms. The policy data is included in package data and the quality hash.
+
+Self-authored shared cases cover repeated vowels/consonants, multiple stretches,
+rhythmic laughter, stretched honorifics, syllable stutters, note anchors, listener
+readings, and false-positive guards for words, names, identifiers, ranks and units.
+Detailed route measurements, SHA freezes, CPU audio/ASR and test logs are private
+artifacts in the soundfix work folder; they are not listening gold labels.
+# 08-11-2026 — dev/jp-names: luật romaji chung và held-out
+
+Policy Nhật dùng một JSON Python/Kotlin, namespace `jp-fallback1`. Định tuyến bằng bảng âm đầy đủ,
+ít nhất ba âm tiết, kính ngữ dính hoặc cặp romaji viết hoa; bảo vệ âm Việt và từ điển Anh hiện có.
+Không có danh sách tên nhân vật theo sách; `fixed` chỉ giữ từ phổ thông onigiri. Mọi cách đọc sinh tự động
+giữ provenance `auto`; cách đọc người nghe cho từ/cụm vẫn thắng.
+
+- Held-out riêng ngoài repo: 14 cuốn khác dev, 416 lượt Nhật / 129 loại tên sau gộp biến thể, 413 lượt âm tính.
+  Dùng gốc cuốn app tự đoán: recall **91,83% → 84,62%**, precision **97,70% → 99,15%**.
+  Đây là đánh đổi precision/recall; không tuyên bố nhận đúng mọi tên. Ngưỡng chọn trước khi chấm held-out.
+- Dev: bộ nhận diện mới 65/70 từ ngữ cảnh câu; materialization theo pronunciation của chính cuốn giữ 70/70,
+  12/12 nhóm nhất quán. Hai phép đo này có lượng thông tin đầu vào khác nhau.
+- Audio thật trên CPU: 52 câu. ASR Nhật **12/34 → 12/34**, Anh **27/37 → 27/37**; không có mục tiêu mới mất.
+  19/24 MP3 Nhật và 28/28 MP3 Anh trùng SHA-256 với jpimpl. Không dùng ASR làm phán quyết phát âm của chủ sách.
+- Pytest liên quan **740 passed / 0 FAILED**; toàn bộ **10665 passed / 0 FAILED / 0 error / 15 skipped / 2 xfailed**.
+  Bốn partition có 10682 node ID, đối chiếu đầy đủ với collection; JUnit và `-rf` cùng xác nhận.
+- Kotlin readaloud/vieneu: 555 passed / 0 failure / 1 skip trong 67 lớp; thêm 14 test SleepExtend đạt.
+  Tổng JVM 569 passed / 0 failure / 1 skip, 68 lớp. Test ghi đè file dùng cùng bytecode trên Linux;
+  các test còn lại, gồm JNI frontend, chạy Windows. 13 test UI về đồng hồ giả đạt.
+- Fixture Nhật là tên phổ thông/câu tự viết; grep tên cấm trên mọi file thay đổi: 0. Mọi file thay đổi LF;
+  compileall và diff check đạt. Ba file test ngoài tên Nhật chỉ thay thời gian bằng giá trị kiểm soát được,
+  để ratchet test không phụ thuộc tải máy; không đổi baseline hay hành vi app của các tính năng đó.
+- Import trực tiếp danh sách khóa: 57 file. Hash đầu lượt
+  `f6b51ed26cb3443f5ae118ae3297d54df5b20c5be035d8bc8d8df2929fe096ea`;
+  hash cuối `3d7e3f337b55366ae8ea92f5426c0fe0e8fed876a44bc2ae002a79510a2de0a9`.
+
+Nhãn ngữ cảnh, câu truyện, nguồn/hash, số từng cuốn, giới hạn và log đầy đủ ở `codex/jpimpl2/report.md`
+trong thư mục việc ngoài repo. Năm DB nguồn giữ nguyên hash. Chỉ cây dev, chưa commit/push; không dùng GPU.
+
+# 08-11-2026 — latin166: kết hợp âm kêu và policy Nhật
+
+Python/Kotlin giữ tiếng kêu, kéo dài và nói lắp trước fallback Nhật, đồng thời xử lý mảnh tên còn nguyên cạnh âm kêu. Cách đọc người nghe vẫn áp cuối. Không thêm từ/tên theo sách, không đổi bảng âm, ngưỡng hoặc policy JSON; hai nền dùng chung JSON/asset. Cache tăng một lần 10 → 11.
+
+Chấm theo đường đọc hoặc phoneme cả câu bằng tham chiếu chung: primary 1.642/1.855 (4 mục mơ hồ trong 1.859); enaudit 607/671; soundfix mới 341/391. Giữ cả sửa đúng và hỏng mới; không diễn giải FP nhận diện tên thành lỗi đọc. Đây là nhãn model, chưa là phán quyết nghe. Nhãn, ngữ cảnh, số từng loại/cuốn và mọi hỏng mới ở report.md trong thư mục việc latin166 ngoài repo.
+
+CPU: Nhật 12/34 mục tiêu trong 24 câu; Anh 27/37 trong 26 câu và hai đối chứng Việt ngoài mẫu số; 26 cặp tiếng kêu không tụt. Thu lại 104 WAV/MP3 trên hash cuối; ASR chỉ tái dùng khi byte giao/byte WAV tương ứng trùng SHA.
+
+Kiểm cuối: Python liên quan 1.082 pass; toàn bộ 10.743 pass, 15 skip, 2 xfail, 0 FAILED/error, đủ 10.760 node rời nhau qua bốn log -rf. Kotlin liên quan 558 pass/1 skip; toàn :app:testDebugUnitTest 3.385 pass/4 skip, 0 failure/error. :app:assembleDebug, compileall và whitespace đạt.
+
+Danh sách quality đọc trực tiếp có 59 mục; hash cuối 8b2743893f2ce90b706cc451ba14e2c5fe6c993df40083ac2b0d497e2b54fd7b. Chỉ cây dev; merge chưa commit.
+
+# 08-11-2026 — giữ quyền của từng đường đọc
+
+Direct JA giữ kết quả số, viết tắt, từ mượn và kính ngữ của lớp trước. Từ Nhật quen tách khỏi nhận diện tên; tên nối gạch kiểm từng phần. Khi chưa rõ gốc cuốn, tên đơn không tự đủ bằng chứng chỉ nhờ ba âm tiết. Laugh atom không nuốt nguyên âm khác nhau; chuỗi HOA không kéo dài giữ đường viết tắt. Python/Kotlin dùng chung JSON và asset; namespace Nhật 3, cache rules 12.
+
+Nhãn model và phép chấm đường đọc/phoneme cả câu: primary 1.697/1.855, JA_NAME 463/491; enaudit 611/671; soundfix 350/391. Held-out mới gồm 1.080 lượt từ 13 cuốn, khóa nhãn SHA trước sửa luật: 951/1.076 xác định, JA_NAME 284/302. Mọi ô loại có mẫu >= max(base, soundfix); không xem đây là phán quyết nghe hoặc độ chính xác tự nhiên toàn Corpus. Chi tiết và mọi hỏng mới nằm trong thư mục việc ngoài repo.
+
+CPU giữ Nhật 12/34, Anh 27/37 và 26/26 cặp tiếng kêu không tụt; hai clip Nhật khác byte được ASR CPU mới, các transcript tái dùng có checksum trùng. Không GPU/API trả tiền.
+
+Kiểm cuối: Python đường đọc 1.093 pass; hai test khởi động dùng Event chờ callback thật thay thời gian ngủ cố định. Toàn bộ 10,754 pass, 15 skip, 2 xfail, 0 FAILED/error; đủ 10,771 node qua bốn partition rời nhau. Lượt đầu lộ một race trong test; giữ log đầu và kiểm lại nguyên hai partition chứa nó. Kotlin :app:testDebugUnitTest 3.386 pass/4 skip, 0 failure/error; compileall và whitespace đạt.
+
+Quality đọc trực tiếp 59 mục, hash 00621d2fe93b76496889e6aea804c9944699e586f0011e1707a908a40b3c5a5b. HEAD a695c934e giữ nguyên; thay đổi chỉ ở nhánh dev, chưa commit.
+
+
+### 08-11 dev/jppause: ranh giới âm trong tên Nhật
+
+Đo CPU 10 cách × 40 câu × hai giọng mặc định, đủ 800 clip/CTC/ASR/UTMOS. Luật chung nối phoneme mỗi từ và hạ các trọng âm sau thành nhẹ, cùng JSON Python/Kotlin; namespace jp-fallback4. Khoảng yên trong từ ≥120 ms 12/160 → 4/160; ≥200 ms 7 → 1. Còn một khoảng 400 ms, chưa bảo đảm mọi tên hết ngắt. Sửa được 10 lần đọc từ, có 2 cảnh báo mới. ASR bộ cố định Nhật 12/34 → 13/34, Anh 27/37; Nhật có 4 mục mới đúng/3 mục mới sai.
+
+Pytest cuối -rf: 10783 passed, 15 skipped, 2 xfailed, 0 failure/error; bộ liên quan 509 passed. Kotlin ReadAloud/VieNeu 558 passed, 5 skipped, 0 failure/error. Phonemizer Studio/Nghe ngay 40/40 cùng đầu vào mô hình; tokenizer native/portable 400/400 cùng ID. Hash đọc trực tiếp 60 mục: cc4adbb2075b5935e0d500989fb8ea11f5b9cbe3ebf6ab152ba459e6581cb097. Không commit; chỉ nhánh dev. Báo cáo chi tiết, 20 cặp MP3, trang nghe HTML và từng phép đo ở thư mục việc jppause ngoài repo; không đưa chữ truyện vào cây.
+
+### 08-11 dev/jppause: sửa khoảng yên còn lại trong tên
+
+Tái dùng đủ 800 WAV cũ; bốn ca còn lại có phoneme đã nối đúng, không có dấu câu/ngắt chunk trong tên. Seed +1 chỉ sửa 2/4 ca; Ishige còn 240/310 ms. Thêm sửa audio bằng CTC: chỉ rút run năng lượng thấp >=120 ms hoàn toàn trong một từ Nhật tự động về 80 ms, giữ 5 ms crossfade; confidence >=0,7, không dùng mốc ước lượng. Studio áp sau tempo và trước QA; Nghe ngay desktop áp trước ghép/căn mốc chữ. Cache thêm jp-name-audio1 cùng trạng thái có CTC. Android chưa có bước sửa waveform này.
+
+Bộ cũ 4/160 -> 0/160; 40 tên held-out mới, chốt trước khi sinh, 7/160 -> 0/160; max tương ứng 400/340 -> 115 ms. 149/160 WAV không đổi SHA; mọi mẫu ngoài cửa sổ sửa của 160 WAV giữ nguyên. ASR từ hoàn chỉnh cũ 53/160 giữ nguyên, mới 50/160 -> 49/160 do Whisper ghép hai tên thành một từ; matcher chuỗi gấp mới giữ 68/160. UTMOS trên 4/7 cặp đổi byte giảm mean 0,048/0,022; không suy hết ngắt thành tăng độ tự nhiên.
+
+Pytest liên quan -rf cuối: 715 passed, 3 skipped, 0 FAILED/error (718 node). Lượt đầu có 2 FAILED do kỳ vọng cache cũ, đã sửa và chạy lại nguyên bộ. Kotlin ReadAloud/VieNeu ép chạy Test task: 558 passed, 5 skipped, 0 failure/error. BPE native/portable 440/440 chuỗi khớp; render lại mã cuối 160/160 WAV trùng byte với bản đã đo; compileall và diff check đạt. Quality đọc trực tiếp 61 mục, hash 85f60b3009ade9d91783aaee8200cfa36e511fc7183f52f85100179fc924e8af. HEAD 8c25eedabe4b6c30c6bb18ecea5e6b40fa6776f0 không đổi, không commit. Báo cáo tiếng Việt, số từng ca, 20 mẫu/44 MP3 và listen.html ở thư mục việc jppause2 ngoài repo.
+
+### 08-11 dev/latin166: hoàn tất giải quyết merge dev/jppause
+
+Giữ luật HOA tiếng Anh, acronym theo ngữ cảnh, never_auto và các sửa frontend gi/o của latin166; nối tên Nhật theo jp-fallback4 và rút yên trong span tên bằng CTC của jppause. Khi tìm span, cả chuỗi đầy đủ và tiền tố dùng cùng luật sửa phoneme trong Studio, Nghe ngay và Kotlin. Bổ sung các file mới còn untracked ở hai nhánh mà code đã import; không thêm migration/legacy code. speech.json sinh từ merged code: chỉ 7 key VieNeu đổi do namespace đọc Nhật, không đổi chữ đọc/kỳ vọng engine khác.
+
+Pytest toàn bộ -q -rf -o addopts=, 8 partition rời nhau: 10847 passed, 14 skipped, 2 xfailed, 0 FAILED/error. Đối chiếu JUnit với kế hoạch: đủ 10863/10863 node duy nhất, thiếu/thừa 0; exit cả 8 = 0; đếm 0 dòng FAILED. Bộ liên quan 88/88 pass. Kotlin :app:testDebugUnitTest ép chạy lại toàn bộ: 3394 passed, 4 skipped, 0 failure/error / 3398 test. Lượt Kotlin đầu có 1 failure do test streaming dùng đồng hồ thật: WAV vẫn trùng byte nhưng host load làm gộp flush. Ca fast-producer dùng clock giả sẵn có, giữ toàn bộ assertion, rồi chạy lại nguyên task; giữ XML/log đầu.
+
+Audio merged code: ASR HOA 8/8 với scorer/giọng/model/seed cũ, sinh mới cả 8 WAV. Đủ 160 clip Nhật/320 lượt từ, gap >=120 ms = 0/320, dài nhất 115 ms; 12 clip có phoneme gi mới được sinh lại cùng seed/giọng, 148 clip chỉ reuse khi đầu vào/checksum khớp. Căn và render lại đủ 160 clip bằng helper sản phẩm rồi đo lại bằng align_measure.py. Studio/Nghe ngay khớp 160/160 đầu vào; JNI Kotlin/Python khớp 84/84 câu, gồm các ca gi/o cùng cảm thán Anh. Android chỉ áp phoneme, chưa có CTC waveform repair. Các số đo không phải gold phát âm Nhật hay phán quyết tự nhiên của người nghe.
+
+compileall, git diff --check và staged diff check đạt. Qt offscreen, Java AWT headless, process con CREATE_NO_WINDOW; không dùng rm. Quality đọc trực tiếp 62 file: hash a0df5a7aa162f690bfd01b06a553559e2fa10e0aa2b5d72ff42499cc8700a5d4. Giữ HEAD 217103929f9a9206f8d2558a8ed709476f0c16fe, MERGE_HEAD da3f379c0a767576471def67a7cb8c86a8767696; không commit. File giải quyết và mã/test cần thiết staged bằng exact paths; ba file owner_reading untracked ban đầu được giữ nguyên. Log/XML/script và báo cáo chi tiết ở scratchpad/codex/merge166 ngoài repo.

@@ -1646,7 +1646,6 @@ export const S = {
   s_doan_nay_khong_phai_0_ke_691681b8: (p0: unknown) => "Đoạn này không phải " + String(p0) + " kể",
   s_doan_nay_van_do_0_ke_1aa31bd2: (p0: unknown) => "Đoạn này vẫn do " + String(p0) + " kể",
   s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d: "Đoạn này vẫn kể ở ngôi thứ ba",
-  s_doan_trang_61fdcaa5: "Đoan Trang",
   s_doc_0_2e6ee219: (p0: unknown) => "Đọc " + String(p0),
   s_doc_0_5067e74c: (p0: unknown) => "Đọc “" + String(p0) + "”",
   s_doc_0_chua_co_audio_baeeb512: (p0: unknown) => "Đọc " + String(p0) + " (chưa có audio)",

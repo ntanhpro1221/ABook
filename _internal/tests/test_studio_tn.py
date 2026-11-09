@@ -67,7 +67,7 @@ def test_an_anchor_after_a_changed_word_points_at_its_name_in_the_new_string(tmp
     db, coordinator = _coordinator(tmp_path)
     _pronounce(db, "Michael", "Mai-cồ")
     text, anchors = coordinator.spoken_text_with_anchors({"text": "Chương IV: gặp HP, rồi Michael đã đi."})
-    assert text == "Chương bốn: gặp <en>H P</en>, rồi Mai-cồ đã đi."
+    assert text == "Chương bốn: gặp hát pê, rồi Mai-cồ đã đi."
     assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors if not anchor.get("asr_alias_only")] == ["Mai-cồ"]
 
 

@@ -615,12 +615,21 @@ def keep_vieneu_final_mark() -> None:
         return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
-        out = original_phonemize(text, punc_norm)
-        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
-            written = original_phonemize(text, False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
-            if written.endswith(("?", "!")):
-                out = out[:-1] + written[-1]
-        return out
+        from .readaloud.japanese_delivery import phonemes
+        from .readaloud.phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o
+
+        def plain(value: str, final: bool) -> str:
+            out = original_phonemize(value, final)
+            if final and out.endswith(".") and ("?" in value or "!" in value):
+                written = original_phonemize(value, False).rstrip()
+                if written.endswith(("?", "!")):
+                    out = out[:-1] + written[-1]
+            return emphasize_english_interjections(
+                value, repair_syllabic_o(value, repair_syllabic_gi(value, out)),
+                phonemize_text._get_g2p().convert,
+            )
+
+        return phonemes(text, punc_norm, plain)
 
     phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
     phonemize_text._abook_keeps_final_mark = True
@@ -684,9 +693,13 @@ class VieNeuEngine(EngineAdapter):
             else vieneu_sampling_for_segment(row, self.settings)
         )
         try:
+            from .readaloud.japanese_delivery import mark_anchors
+
+            materialized = _row_value(row, "_materialized_spoken", None)
+            inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
             return np.asarray(
                 self.tts.infer(
-                    str(row["text"]),
+                    inference_text,
                     voice=voice,
                     style=style,
                     **effective_sampling,
@@ -966,6 +979,9 @@ class TTSCoordinator:
         if self._pronunciation_pattern is None:
             minimum = float(self.settings["analysis"].get("low_confidence_threshold", 0.58))
             pronunciations = self.db.list_pronunciations(minimum)
+            from .studio_names import japanese_pronunciations
+
+            pronunciations = japanese_pronunciations(pronunciations, self._origin_of_book())
             exact_pronunciations = [
                 item
                 for item in pronunciations
@@ -1130,6 +1146,7 @@ class TTSCoordinator:
                         "pronunciation_delivery_variant": pronunciation_delivery_variant,
                         "source": str(metadata["source"]),
                         "asr_alias_only": not locked_english_pronunciation,
+                        "japanese_fallback": bool(_row_value(metadata, "japanese_fallback", False)),
                         "source_start": source_start,
                         "source_end": source_end,
                         "_anchor_index": anchor_index,
@@ -1308,6 +1325,9 @@ class TTSCoordinator:
             direct_english=direct_english,
             unprotected_anchors=frozenset(
                 int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
+                and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {
+                    "rule_romanization", LISTENER_PRONUNCIATION_SOURCE,
+                }))
             ),
         )
         present = set().union(*anchor_tags) if anchor_tags else set()
@@ -1339,6 +1359,15 @@ class TTSCoordinator:
             })
             for position in range(spoken_start, spoken_end):
                 anchor_tags[position] = anchor_tags[position] | frozenset({index})
+        from .readaloud.japanese_policy import metadata as japanese_metadata
+        from .studio_names import rule_reading
+
+        for anchor in anchors:
+            if anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and (str(anchor["source"]) == "rule_romanization" or (
+                str(anchor["source"]) == "studio_tn"
+                and rule_reading(str(anchor["surface"]).strip(".,!?\"“”"), self._origin_of_book()) is not None
+            ))):
+                anchor.update(japanese_metadata(str(anchor["surface"])))
         text = self._normalize_with_anchor_spans(text, anchor_tags, anchors)
         for anchor in anchors:
             if anchor.get("asr_alias_only"):
@@ -1486,6 +1515,14 @@ class TTSCoordinator:
                         f"Bỏ hệ số tốc độ x{speed_factor:.2f} cho segment {row['stable_id']} "
                         f"vì xử lý lỗi: {exc}"
                     )
+            japanese_audio_evidence: dict[str, Any] = {}
+            if engine.name == VieNeuEngine.name:
+                from .readaloud.japanese_audio import repair_anchors
+
+                audio, japanese_audio_evidence = repair_anchors(
+                    audio, self.sample_rate, str(spoken_row["text"]),
+                    spoken_row["_materialized_spoken"][2],
+                )
             vocalization_provenance: dict[str, Any] = {}
             if vocalization_delivery_profile == HA_VOCALIZATION_DELIVERY_PROFILE:
                 audio_array = np.asarray(audio, dtype=np.float32).reshape(-1)
@@ -1536,6 +1573,8 @@ class TTSCoordinator:
                     os.replace(rejected, output)
                 raise
             metrics["tts_delivery_mode"] = str(delivery_mode).strip().casefold()
+            if japanese_audio_evidence and japanese_audio_evidence.get("status") != "not_applicable":
+                metrics["japanese_name_audio"] = japanese_audio_evidence
             metrics["pronunciation_delivery_variant"] = normalized_pronunciation_variant
             metrics["spoken_text_sha256"] = hashlib.sha256(
                 str(spoken_row["text"]).encode("utf-8")

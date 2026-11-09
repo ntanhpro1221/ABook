@@ -23,6 +23,7 @@ class StudioClipsTest {
         var stops = 0
         var ended: (() -> Unit)? = null
         var failed: (() -> Unit)? = null
+        @Volatile var starts = 0
 
         override fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit) = playRange(path, 0, 0, onEnded, onFailed)
 
@@ -30,6 +31,7 @@ class StudioClipsTest {
             ranges += Triple(File(path).name, startMs, endMs)
             ended = onEnded
             failed = onFailed
+            starts++
         }
 
         override fun stop() {
@@ -69,9 +71,9 @@ class StudioClipsTest {
 
     @Test fun aChapterIsDownloadedOnceAndEachSentencePlaysItsOwnWindow() {
         clips.toggle("a", ClipSpec("", chapter, 1000, 2500))
-        until("câu đầu phát") { clips.state.value.playing == "a" }
+        until("câu đầu phát") { clips.state.value.playing == "a" && player.starts == 1 }
         clips.toggle("b", ClipSpec("", chapter, 4000, 5200))
-        until("câu hai phát") { clips.state.value.playing == "b" }
+        until("câu hai phát") { clips.state.value.playing == "b" && player.starts == 2 }
         assertEquals(listOf(chapter), fetched)
         assertEquals(listOf(1000 to 2500, 4000 to 5200), player.ranges.map { it.second to it.third })
         assertEquals(1, player.ranges.map { it.first }.distinct().size)
@@ -79,7 +81,7 @@ class StudioClipsTest {
 
     @Test fun tappingTheSameClipAgainStopsIt() {
         clips.toggle("a", ClipSpec("", chapter))
-        until("phát") { clips.state.value.playing == "a" }
+        until("phát") { clips.state.value.playing == "a" && player.starts == 1 }
         clips.toggle("a", ClipSpec("", chapter))
         assertNull(clips.state.value.playing)
         assertTrue(player.stops > 0)
@@ -88,7 +90,7 @@ class StudioClipsTest {
     @Test fun finishingFiresTheCallbackAndClearsTheState() {
         var ended = 0
         clips.toggle("a", ClipSpec("", chapter)) { ended++ }
-        until("phát") { clips.state.value.playing == "a" }
+        until("phát") { clips.state.value.playing == "a" && player.starts == 1 }
         player.ended!!.invoke()
         assertEquals(1, ended)
         assertEquals(ClipState(), clips.state.value)
@@ -97,7 +99,7 @@ class StudioClipsTest {
     @Test fun stoppingNeverFiresTheEndedCallback() {
         var ended = 0
         clips.toggle("a", ClipSpec("", chapter)) { ended++ }
-        until("phát") { clips.state.value.playing == "a" }
+        until("phát") { clips.state.value.playing == "a" && player.starts == 1 }
         clips.stop()
         player.ended!!.invoke()
         assertEquals(0, ended)
@@ -110,7 +112,7 @@ class StudioClipsTest {
         clips.toggle("b", ClipSpec("", "/media/books/b1/chapters/2/audio"))
         assertEquals("b", clips.state.value.loading)
         gate!!.complete(Unit)
-        until("b phát") { clips.state.value.playing == "b" }
+        until("b phát") { clips.state.value.playing == "b" && player.starts == 1 }
         Thread.sleep(50)
         assertEquals(1, player.ranges.size)
         assertEquals("b", clips.state.value.playing)

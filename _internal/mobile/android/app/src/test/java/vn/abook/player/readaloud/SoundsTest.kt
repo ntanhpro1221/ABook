@@ -19,8 +19,8 @@ class SoundsTest {
 
     @Test
     fun anAbbreviationIsReadByItsLetterNames() {
-        val cases = listOf("HP" to "hát pê", "MP" to "em pê", "NPC" to "en pê xê", "EXP" to "e ích pê", "SSR" to "ét ét e-rờ", "GOTY" to "giê ô tê i-dài", "QQ" to "quy quy",
-            "XL" to "ích e-lờ", "BBQ" to "bê bê quy", "ATSM" to "a tê ét em", "WZ" to "vê-kép dét", "JK" to "gi ca", "AI" to "a i", "ABC" to "a bê xê", "USA" to "u ét a",
+        val cases = listOf("HP" to "hát pê", "MP" to "mờ pê", "NPC" to "en pi xi", "EXP" to "e ích pê", "SSR" to "ét ét e-rờ", "GOTY" to "giê ô tê i-dài", "QQ" to "quy quy",
+            "XL" to "ích e-lờ", "BBQ" to "bê bê quy", "ATSM" to "a tê ét em", "WZ" to "vê-kép dét", "JK" to "gi ca", "AI" to "ây ai", "ABC" to "a bê xê", "USA" to "u ét a",
             "RPG" to "e-rờ pê giê", "VIT" to "vê i tê")
         for ((token, reading) in cases) {
             assertEquals(token, listOf("Rồi", "$reading."), said("Rồi $token."))
@@ -36,11 +36,11 @@ class SoundsTest {
 
     @Test
     fun otherTokensAreLeftAlone() {
-        for (token in listOf("Hp", "hp", "NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "ĐH", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
-        assertEquals(listOf("“hát pê,”", "(em pê)", "en pê xê!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
+        for (token in listOf("NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
+        assertEquals(listOf("“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
         assertEquals(listOf("o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
-        assertEquals(listOf("hát pê", "em pê", "ét pê"), said("HP MP SP"))
+        assertEquals(listOf("hát pê", "mờ pê", "ét pê"), said("HP MP SP"))
         assertEquals(listOf("Chương", "bốn,", "hát pê."), said("Chương IV, HP."))
         assertEquals("i i i i", Abbreviations.spelled("IIII"))
         assertEquals("ích ích ích", Abbreviations.spelled("XXX"))

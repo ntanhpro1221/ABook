@@ -322,11 +322,23 @@ describe("giọng mặc định khi chưa chọn", () => {
       .replace(/^\.(pragma|import).*$/gm, "");
     const strings = readFileSync(new URL("../../../desktop_qt/qml/UiStrings.js", import.meta.url), "utf8").replace(/^\.pragma.*$/gm, "");
     const S = runInNewContext(strings + "\nthis");
-    const qt = runInNewContext(qtSource + "\n({ preferred: NARRATOR, pick: narratorVoice })", { S }) as {
+    const qt = runInNewContext(qtSource + "\n({ preferred: NARRATOR, pick: narratorVoice, neverAuto: NEVER_AUTO, resolve: resolveVoice })", { S }) as {
       preferred: Record<string, string[]>;
+      neverAuto: string[];
       pick: (voices: ReadAloudVoice[], gender?: string) => ReadAloudVoice | undefined;
+      resolve: (voices: ReadAloudVoice[], chosen: string) => ReadAloudVoice | undefined;
     };
     expect(qt.preferred).toEqual(shared.preferred);
+    const policy = JSON.parse(readFileSync(new URL("../../../abook/assets/voice_rank.json", import.meta.url), "utf8"));
+    expect(qt.neverAuto).toEqual(policy.never_auto);
+    for (const name of policy.never_auto) {
+      const voice = { id: `vieneu:turbo/${name}`, name, provider: "vieneu", online: false, gender: "female", pick: true } as ReadAloudVoice;
+      expect(module.resolveVoice([voice], "")).toBeUndefined();
+      expect(qt.resolve([voice], "")).toBeUndefined();
+      expect(module.resolveVoice([voice], voice.id)).toBe(voice);
+      expect(qt.resolve([voice], voice.id)).toBe(voice);
+      expect(module.localVoiceFor([voice], undefined)).toBeUndefined();
+    }
     for (const item of shared.cases) {
       const voices = item.voices.map(([id, gender]) => ({ id, name: id, provider: "vieneu", online: false, gender, pick: true })) as ReadAloudVoice[];
       expect(module.narratorVoice(voices, item.gender ?? undefined)?.id ?? null, item.name).toBe(item.expect);

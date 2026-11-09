@@ -76,10 +76,10 @@ class ClipLiftTest {
         assertTrue(!ClipLift.lifts("supertonic:F1#fast5") && ClipLift.lifts(VoiceSpeed.split("supertonic:F1#fast5").first))
         assertEquals(ClipLift.TAG, ClipCache.reading("supertonic:F3", "Hả?", null))
         assertEquals("ld2", ClipLift.TAG)
-        assertEquals("direct-en${EnglishPolicy.VERSION}+${ClipLift.TAG}", ClipCache.reading("vieneu:turbo/Đức Trí", "Ừ.", null))
+        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback4+${ClipLift.TAG}", ClipCache.reading("vieneu:turbo/Đức Trí", "Ừ.", null))
         assertEquals("", ClipCache.reading("device:vi-vn-x-gft-local", "Ừ.", null))
         // every chunk of every VieNeu / Supertonic voice goes under the true-peak ceiling: unmeasured voices are keyed anew too (loudness.clip_tag)
-        assertEquals("direct-en${EnglishPolicy.VERSION}+${ClipLift.TAG}", ClipCache.reading("vieneu:turbo/Giọng chưa đo", "Ừ.", null))
+        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback4+${ClipLift.TAG}", ClipCache.reading("vieneu:turbo/Giọng chưa đo", "Ừ.", null))
         assertEquals(ClipLift.TAG, ClipLift.tag("supertonic:X9"))
         assertEquals("", ClipLift.tag("edge:vi-VN-HoaiMyNeural"))
         assertEquals(SpokenText.TAG, ClipCache.reading("edge:vi-VN-HoaiMyNeural", "Ừ.", null)) // Edge: no new mark
