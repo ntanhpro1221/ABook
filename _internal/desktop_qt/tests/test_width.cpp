@@ -170,6 +170,10 @@ public slots:
         // Bộ ảnh soát phát hành chụp thêm khổ khác (vd "1280,960"); rỗng = bốn khổ của test.
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideWidths"), qEnvironmentVariable("ABOOK_WIDE_WIDTHS"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtFullRepaint"), &repaint);
+        // Bộ ca chung của bộ chọn giá trị (web vitest, Android JVM, Qt tst_value_picker chạy cùng file).
+        QFile cases(QStringLiteral(WIDTH_SOURCE_DIR "/../tests/fixtures/value_picker/cases.json"));
+        engine->rootContext()->setContextProperty(QStringLiteral("qtValuePickerCases"),
+            cases.open(QIODevice::ReadOnly) ? QString::fromUtf8(cases.readAll()) : QString());
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
         engine->addImageProvider(QStringLiteral("shadow"), new ShadowProvider);
     }

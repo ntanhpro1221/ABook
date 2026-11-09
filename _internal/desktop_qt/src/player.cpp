@@ -239,20 +239,6 @@ bool Player::canNext() const {
     return m_loaded && availableAfter(m_book.chapters, m_chapterId, 1) >= 0;
 }
 
-QVariantList Player::speedsList() const {
-    QVariantList list;
-    for (double speed : speeds())
-        list.append(speed);
-    return list;
-}
-
-QVariantList Player::sleepChoicesList() const {
-    QVariantList list;
-    for (int minutes : sleepChoices())
-        list.append(minutes);
-    return list;
-}
-
 double Player::position() const {
     return m_loaded ? std::max(0.0, m_out->position()) : 0.0;
 }
@@ -375,8 +361,8 @@ void Player::configure(const QVariantMap &p) {
     const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
     m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
-    m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
-    const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
+    m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), kFadeSecondsMin, kFadeSecondsMax);
+    const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 1, kExtendMinutesMax);
     if (extendMinutes != m_extendMinutes) {
         m_extendMinutes = extendMinutes;
         emit sleepChanged(); // nhãn nút "Hẹn lại N phút" đọc số này khi hẹn theo chương
@@ -387,7 +373,7 @@ void Player::configure(const QVariantMap &p) {
     const int minutes = given.value(QStringLiteral("minutes")).toInt();
     const bool fits = clock.match(given.value(QStringLiteral("from")).toString()).hasMatch()
         && clock.match(given.value(QStringLiteral("to")).toString()).hasMatch()
-        && (minutes == 15 || minutes == 30 || minutes == 45 || minutes == 60);
+        && minutes >= kScheduleMinutesMin && minutes <= kScheduleMinutesMax && minutes % kScheduleMinutesStep == 0;
     const QVariantMap schedule = fits ? given : QVariantMap();
     m_schedule = schedule;
 }
@@ -899,7 +885,7 @@ void Player::applyRate(double rate) {
 
 void Player::setRate(double rate) {
     noteInteraction();
-    if (!std::isfinite(rate) || rate < 0.5 || rate > 4)
+    if (!std::isfinite(rate) || rate < kSpeedMin || rate > kSpeedMax)
         return;
     applyRate(rate);
     rememberAudioProfile();
@@ -914,7 +900,7 @@ void Player::setRate(double rate) {
 }
 
 void Player::stepRate(int direction) {
-    setRate(nearestSpeed(m_rate, direction));
+    setRate(stepSpeed(m_rate, direction));
 }
 
 void Player::setVolume(double volume) {
@@ -1033,13 +1019,14 @@ void Player::setSleep(const QString &kind, int minutes) {
     if (automatic) setNotice(QString());
     endFade();
     resetSleepMark();
-    if (kind == QLatin1String("minutes") && minutes > 0) {
+    if (kind == QLatin1String("minutes") && minutes > 0 && minutes <= kSleepMinutesMax) {
         m_lastSleepMinutes = minutes;
         m_sleepStoppedAt = 0;
         applySleepState(Sleep::Minutes, minutes, minutes * 60'000.0);
     } else if (kind == QLatin1String("chapter")) {
+        // "Hết chương này" (`minutes` 0 / 1) hay "Hết N chương" (N 1-10).
         m_sleepStoppedAt = 0;
-        applySleepState(Sleep::Chapter, 0, 0);
+        applySleepState(Sleep::Chapter, std::clamp(minutes, 1, kSleepChaptersMax), 0);
     } else {
         m_scheduleOffFor = scheduleWindow();
         applySleepState(Sleep::Off, 0, 0);
@@ -1085,7 +1072,8 @@ void Player::tickSleep(qint64 now) {
         m_sleep.leftMs = std::max(0.0, m_sleep.leftMs - heard);
         left = m_sleep.leftMs;
         m_clock.setSleepLeft(sleepLeftSeconds());
-    } else if (m_sleep.kind == Sleep::Chapter && duration() > 0) {
+    } else if (m_sleep.kind == Sleep::Chapter && m_sleep.minutes <= 1 && duration() > 0) {
+        // "Hết N chương": chỉ chương cuối của hẹn mới báo sắp tắt / nhỏ dần.
         left = ((duration() - pos) / std::max(0.25, m_rate)) * 1000.0;
     }
     if (left < 0)
@@ -1326,7 +1314,10 @@ void Player::onEnded() {
     markPaused(false);
     m_pausedAt = 0;
     save(true);
-    if (m_sleep.kind == Sleep::Chapter) {
+    if (m_sleep.kind == Sleep::Chapter && m_sleep.minutes > 1) {
+        // "Hết N chương": còn chương nữa thì đếm xuống và nghe tiếp như thường (sleep.ts sleepAfterChapter).
+        applySleepState(Sleep::Chapter, m_sleep.minutes - 1, 0);
+    } else if (m_sleep.kind == Sleep::Chapter) {
         // Hẹn "hết chương": dừng ở đây, nhưng nạp sẵn chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - sáng mai bấm Tiếp tục là vào chương mới.
         stopBySleep();
         if (target >= 0) {

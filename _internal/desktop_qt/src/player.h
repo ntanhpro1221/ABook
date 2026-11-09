@@ -99,6 +99,7 @@ class Player : public QObject {
     Q_PROPERTY(QVariantMap audioFx READ audioFx NOTIFY audioFxChanged)
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
+    Q_PROPERTY(int sleepChapters READ sleepChapters NOTIFY sleepChanged)   // "Hết N chương": số chương còn phải nghe hết (1 = chương này), 0 khi không hẹn chương
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int sleepExtendMinutes READ sleepExtendMinutes NOTIFY sleepChanged) // N của nút "Hẹn lại N phút"
     Q_PROPERTY(QString sleepStoppedText READ sleepStoppedText NOTIFY sleepChanged) // "23:42" khi hẹn giờ vừa tắt tiếng, không thì ""
@@ -112,8 +113,6 @@ class Player : public QObject {
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY historyChanged)
     Q_PROPERTY(ChaptersModel *chapters READ chapters CONSTANT)
     Q_PROPERTY(PlayerClock *clock READ clock CONSTANT)
-    Q_PROPERTY(QVariantList speeds READ speedsList CONSTANT)
-    Q_PROPERTY(QVariantList sleepChoices READ sleepChoicesList CONSTANT)
     /// Đếm số lần ảnh chụp đổi (đo): đứng yên suốt lúc phát liền mạch.
     Q_PROPERTY(quint64 snapshotChanges READ snapshotChanges CONSTANT)
 
@@ -154,7 +153,8 @@ public:
     QVariantMap audioProfiles() const;
     void restoreAudioProfiles(const QVariantMap &profiles);
     QString sleepKind() const;
-    int sleepMinutes() const { return m_sleep.minutes; }
+    int sleepMinutes() const { return m_sleep.kind == Sleep::Minutes ? m_sleep.minutes : 0; }
+    int sleepChapters() const { return m_sleep.kind == Sleep::Chapter ? std::max(1, m_sleep.minutes) : 0; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
     int sleepExtendMinutes() const;
     QString sleepStoppedText() const;
@@ -170,8 +170,6 @@ public:
     PlayerNet *net() const { return m_net; }
     PlayerClock *clock() { return &m_clock; }
     void setUiActive(bool active) { m_uiActive = active; m_clock.setSuspended(!active); updateTicker(); }
-    QVariantList speedsList() const;
-    QVariantList sleepChoicesList() const;
     quint64 snapshotChanges() const { return m_snapshotChanges; }
 
     // ---- lệnh ----
@@ -281,7 +279,7 @@ private:
     };
     struct Sleep {
         enum Kind { Off, Minutes, Chapter } kind = Off;
-        int minutes = 0;
+        int minutes = 0;            // số phút đã chọn; hẹn chương: số chương còn phải nghe hết
         double leftMs = 0;
     };
     struct Spot {

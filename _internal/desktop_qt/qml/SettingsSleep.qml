@@ -1,4 +1,5 @@
 import "UiStrings.js" as S
+import "ValuePickerLogic.js" as Logic
 import QtQuick
 import ABook
 
@@ -44,22 +45,37 @@ Column {
             locked: root.draft !== null
             onChanged: value => root.change(value)
         }
-        SettingChoices {
+        // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do; miền ở ValuePickerLogic.SPECS, cùng hợp đồng với webui/library.py SLEEP_RANGES.
+        SettingsItem {
             width: parent.width
-            label: S.s_moi_lan_nghe_them_9a74fcef
-            choiceLabel: S.s_so_phut_nghe_them_92256232
-            hint: S.s_luc_dang_nho_dan_7102c304 + root.extendGesture + "."
-            value: String(root.prefs.sleepExtendMinutes ?? 10)
-            options: [{value: "5", label: S.s_5_phut_e98d21d5}, {value: "10", label: S.s_10_phut_ed33fe6a}, {value: "15", label: S.s_15_phut_43786c01}]
-            onPicked: value => store.update({sleepExtendMinutes: Number(value)})
+            padding: 12
+            ValuePicker {
+                objectName: "sleepExtendPicker"
+                width: parent.width
+                dense: true
+                spec: Logic.SPECS.sleepExtendMinutes
+                value: root.prefs.sleepExtendMinutes ?? 10
+                label: S.s_moi_lan_nghe_them_9a74fcef
+                hint: S.s_luc_dang_nho_dan_7102c304 + root.extendGesture + "."
+                format: Logic.minutesLabel
+                enabled: Api.loaded
+                onPicked: value => store.update({sleepExtendMinutes: value})
+            }
         }
-        SettingChoices {
+        SettingsItem {
             width: parent.width
-            label: S.s_nho_dan_ae8f3a2d
-            choiceLabel: S.s_do_dai_nho_dan_7c53ef6a
-            value: String(root.prefs.sleepFadeSeconds ?? 30)
-            options: [{value: "10", label: S.s_10_giay_942f8aa9}, {value: "30", label: S.s_30_giay_03dbee33}, {value: "60", label: S.s_1_phut_eca10dbb}]
-            onPicked: value => store.update({sleepFadeSeconds: Number(value)})
+            padding: 12
+            ValuePicker {
+                objectName: "sleepFadePicker"
+                width: parent.width
+                dense: true
+                spec: Logic.SPECS.sleepFadeSeconds
+                value: root.prefs.sleepFadeSeconds ?? 30
+                label: S.s_nho_dan_ae8f3a2d
+                format: Logic.secondsLabel
+                enabled: Api.loaded
+                onPicked: value => store.update({sleepFadeSeconds: value})
+            }
         }
     }
 }

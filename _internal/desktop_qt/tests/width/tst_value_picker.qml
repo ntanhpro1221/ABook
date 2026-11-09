@@ -1,0 +1,152 @@
+import QtQuick
+import QtTest
+import "../../qml/ValuePickerLogic.js" as Logic
+import ABook
+
+// Bộ chọn giá trị: MỘT bộ ca cho ba nền (web valuePickerLogic.test.ts, Android ValuePickerLogicTest) - tests/fixtures/value_picker/cases.json,
+// test_width.cpp đọc file ấy vào `qtValuePickerCases`. Thêm phần thao tác thật trên ValuePicker.qml: kéo, -/+, phím, chip, gõ số (kẹp + báo).
+Item {
+    id: host
+    width: 360
+    height: 420
+    Rectangle { anchors.fill: parent; color: Theme.bg }
+    ValuePicker {
+        id: picker
+        x: 16; width: 328
+        spec: Logic.SPECS.sleepMinutes
+        value: 30
+        label: "Hẹn giờ ngủ"
+        format: Logic.minutesLabel
+        onPicked: v => value = v
+    }
+    SignalSpy { id: picks; target: picker; signalName: "picked" }
+
+    TestCase {
+        name: "ValuePicker"
+        when: windowShown
+        readonly property var fixture: JSON.parse(qtValuePickerCases)
+
+        function init() {
+            picker.spec = Logic.SPECS.sleepMinutes
+            picker.format = Logic.minutesLabel
+            picker.value = 30
+            picker.current = true
+            picker.typing = false
+            picker.clampNote = false
+            picks.clear()
+        }
+
+        function sameSpec(a, b) {
+            return a.min === b.min && a.max === b.max && a.step === b.step && JSON.stringify(a.typical) === JSON.stringify(b.typical)
+                && JSON.stringify(a.scale || null) === JSON.stringify(b.scale || null)
+        }
+
+        function test_theNativeTableIsTheSharedTable() {
+            compare(fixture.snapSteps, Logic.SNAP_STEPS)
+            compare(fixture.pageSteps, Logic.PAGE_STEPS)
+            compare(Object.keys(fixture.specs).sort(), Object.keys(Logic.SPECS).sort())
+            for (const name in fixture.specs) verify(sameSpec(fixture.specs[name], Logic.SPECS[name]), name)
+        }
+
+        function test_everySharedCase() {
+            for (const c of fixture.cases) {
+                const spec = fixture.specs[c.spec]
+                const name = c.spec + " " + c.op + " " + c.in
+                switch (c.op) {
+                case "clamp": { const r = Logic.clampValue(spec, c.in); compare(r.value, c.out, name); compare(r.clamped, c.clamped, name); break }
+                case "step": compare(Logic.stepValue(spec, c.in, c.steps), c.out, name); break
+                case "fromFraction": compare(Logic.fromFraction(spec, c.in), c.out, name); break
+                case "toFraction": fuzzyCompare(Logic.toFraction(spec, c.in), c.out, 1e-9, name); break
+                case "parse": {
+                    const r = Logic.parseValue(spec, c.in)
+                    if (c.out === null) compare(r, null, name)
+                    else { verify(r !== null, name); compare(r.value, c.out, name); compare(r.clamped, c.clamped, name) }
+                    break
+                }
+                case "chip": compare(Logic.chipIndex(spec, c.in), c.out, name); break
+                case "detent": compare(Logic.isDetent(spec, c.prev, c.in), c.out, name); break
+                case "format": compare(Logic.formatNumber(spec, c.in), c.out, name); break
+                default: fail("ca lạ: " + name)
+                }
+            }
+        }
+
+        // Nấc hút không nuốt bước kề: kéo tới được MỌI giá trị trong biên.
+        function test_everyValueIsReachableByDragging() {
+            for (const name in Logic.SPECS) {
+                const spec = Logic.SPECS[name]
+                const reached = {}
+                for (let i = 0; i <= 20000; ++i) reached[Logic.fromFraction(spec, i / 20000)] = true
+                compare(Object.keys(reached).length, Math.round((spec.max - spec.min) / spec.step) + 1, name)
+            }
+        }
+
+        // Một thao tác sau khi mở: kéo thước ra 23 phút (chủ sách 09-11: chọn tự do mà vẫn nhanh).
+        function test_dragReaches23Minutes() {
+            const ruler = findChild(picker, "valueRuler")
+            const track = ruler.width - 2 * ruler.inset
+            const x = ruler.inset + Logic.toFraction(picker.spec, 23) * track
+            mousePress(ruler, ruler.width / 2, ruler.height / 2)
+            mouseMove(ruler, x, ruler.height / 2)
+            compare(picks.count, 0)             // đang kéo: chưa áp
+            compare(picker.shown, 23)
+            mouseRelease(ruler, x, ruler.height / 2)
+            compare(picks.count, 1)
+            compare(picker.value, 23)
+            compare(findChild(picker, "valueDisplay").Accessible.name, "Hẹn giờ ngủ: 23 phút. Chạm để gõ số")
+        }
+
+        function test_stepButtonsAndKeys() {
+            mouseClick(findChild(picker, "valueUp"))
+            compare(picker.value, 31)
+            mouseClick(findChild(picker, "valueDown"))
+            compare(picker.value, 30)
+            const ruler = findChild(picker, "valueRuler")
+            ruler.forceActiveFocus()
+            keyClick(Qt.Key_Right); compare(picker.value, 31)
+            keyClick(Qt.Key_PageUp); compare(picker.value, 41)
+            keyClick(Qt.Key_PageDown); keyClick(Qt.Key_Left); compare(picker.value, 30)
+            keyClick(Qt.Key_End); compare(picker.value, 240)
+            verify(!findChild(picker, "valueUp").enabled)
+            keyClick(Qt.Key_Home); compare(picker.value, 1)
+        }
+
+        function test_chipIsLitAndPicks() {
+            const chip = findChild(picker, "valueChip_15")
+            verify(!chip.selected)
+            verify(findChild(picker, "valueChip_30").selected)
+            mouseClick(chip)
+            compare(picker.value, 15)
+            verify(chip.selected)
+            picker.current = false              // hẹn giờ đang "Hết chương": không chip nào sáng, chạm đúng số đang đứng vẫn là đặt
+            verify(!chip.selected)
+            mouseClick(chip)
+            compare(picks.count, 2)
+        }
+
+        // Mở + chạm số + gõ: 1,35× trong hai thao tác; gõ ngoài biên thì kẹp và báo nhẹ.
+        function test_typingANumber() {
+            picker.spec = Logic.SPECS.speed
+            picker.format = function(v) { return Logic.formatNumber(Logic.SPECS.speed, v) + "×" }
+            picker.value = 1
+            mouseClick(findChild(picker, "valueDisplay"))
+            const input = findChild(picker, "valueInput")
+            tryVerify(function() { return input.activeFocus })
+            input.selectAll(); keyClick(Qt.Key_Delete)
+            keyClick(Qt.Key_1); keyClick(Qt.Key_Comma); keyClick(Qt.Key_3); keyClick(Qt.Key_5)
+            keyClick(Qt.Key_Return)
+            compare(picker.value, 1.35)
+            verify(!picker.clampNote)
+            mouseClick(findChild(picker, "valueDisplay"))
+            tryVerify(function() { return input.activeFocus })
+            input.selectAll(); keyClick(Qt.Key_Delete); keyClick(Qt.Key_9); keyClick(Qt.Key_Return)
+            compare(picker.value, 3)
+            verify(picker.clampNote)
+            tryCompare(findChild(picker, "valueClamped"), "text", "Trong khoảng 0,5×–3×")
+            mouseClick(findChild(picker, "valueDisplay"))
+            tryVerify(function() { return input.activeFocus })
+            input.selectAll(); keyClick(Qt.Key_Delete); keyClick(Qt.Key_X); keyClick(Qt.Key_Return)
+            compare(picker.value, 3)            // chữ không ra số: giữ giá trị cũ
+        }
+    }
+}

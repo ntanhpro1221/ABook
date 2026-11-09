@@ -261,14 +261,15 @@ Item {
         }
         function test_sleepChoicesWriteNumbers() {
             const page = make(sleepFactory)
-            choiceOf(page, "Số phút nghe thêm").picked("15")
-            compare(last("PUT", "/api/preferences").body.sleepExtendMinutes, 15)
-            choiceOf(page, "Độ dài nhỏ dần").picked("60")
+            // Bộ chọn giá trị: số tự do giữa các chip (23 phút, 45 giây) cũng ghi đúng số.
+            findChild(page, "sleepExtendPicker").picked(23)
+            compare(last("PUT", "/api/preferences").body.sleepExtendMinutes, 23)
+            findChild(page, "sleepFadePicker").picked(60)
             compare(last("PUT", "/api/preferences").body.sleepFadeSeconds, 60)
             verify(hasText(page, "Lúc đang nhỏ dần: chạm phím hoặc chuột."))
             verify(!hasText(page, "Tự tắt"))
             reply("/api/preferences", 500, {error: "Đĩa đầy"})
-            choiceOf(page, "Độ dài nhỏ dần").picked("10")
+            findChild(page, "sleepFadePicker").picked(45)
             compare(Api.preferences.sleepFadeSeconds, 60)
             compare(Api.notice, "Chưa lưu được cài đặt\nĐĩa đầy")
         }
@@ -286,16 +287,16 @@ Item {
             const from = choiceOf(window, "Từ"), to = choiceOf(window, "Đến"), minutes = choiceOf(window, "Số phút hẹn")
             compare(from.currentLabel, "22:00")
             compare(to.currentLabel, "06:00")
-            compare(minutes.currentLabel, "30 phút")
-            verify(hasText(window, "đến") && hasText(window, "hẹn"))
+            compare(minutes.value, 30)          // bộ chọn giá trị
+            verify(hasText(window, "đến") && hasText(window, "30 phút"))
             from.picked("23:15")
             compare(last("PUT", "/api/preferences").body.sleepSchedule.from, "23:15")
             to.picked("05:45")
             compare(last("PUT", "/api/preferences").body.sleepSchedule.to, "05:45")
-            minutes.picked(45)
+            minutes.picked(25)                 // số tự do giữa các chip
             const body = last("PUT", "/api/preferences").body.sleepSchedule
-            compare(body.minutes, 45); compare(body.from, "23:15"); compare(body.to, "05:45")
-            compare(Api.preferences.sleepSchedule.minutes, 45)
+            compare(body.minutes, 25); compare(body.from, "23:15"); compare(body.to, "05:45")
+            compare(Api.preferences.sleepSchedule.minutes, 25)
             // giờ lệch 15 phút vẫn có trong danh sách
             Api.preferences = Object.assign({}, Api.preferences, {sleepSchedule: {from: "22:10", to: "06:00", minutes: 30}})
             tryCompare(from, "currentLabel", "22:10")

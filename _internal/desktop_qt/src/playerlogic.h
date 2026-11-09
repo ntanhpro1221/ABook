@@ -10,6 +10,7 @@
 #include <QString>
 #include <QVector>
 
+#include <algorithm>
 #include <cmath>
 #include <optional>
 
@@ -28,14 +29,19 @@ inline constexpr qint64 kRewindShortMs = 30'000;
 inline constexpr qint64 kRewindLongMs = 10 * 60'000;
 inline constexpr double kFadeFloorDb = -40;
 
-inline const QList<double> &speeds() {
-    static const QList<double> list = {0.75, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2.0, 2.5, 3.0};
-    return list;
-}
-inline const QList<int> &sleepChoices() {
-    static const QList<int> list = {5, 10, 15, 30, 45, 60};
-    return list;
-}
+// Miền tự do của bộ chọn giá trị (tests/fixtures/value_picker/cases.json, qml/ValuePickerLogic.js SPECS): tốc độ 0,5-3× bước 0,05, hẹn giờ 1-240 phút,
+// "Hết N chương" 1-10, nhỏ dần 5-120 giây, nghe thêm 1-60 phút, lịch đêm 5-240 phút bước 5.
+inline constexpr double kSpeedMin = 0.5;
+inline constexpr double kSpeedMax = 3.0;
+inline constexpr double kSpeedStep = 0.05;
+inline constexpr int kSleepMinutesMax = 240;
+inline constexpr int kSleepChaptersMax = 10;
+inline constexpr int kFadeSecondsMin = 5;
+inline constexpr int kFadeSecondsMax = 120;
+inline constexpr int kExtendMinutesMax = 60;
+inline constexpr int kScheduleMinutesMin = 5;
+inline constexpr int kScheduleMinutesMax = 240;
+inline constexpr int kScheduleMinutesStep = 5;
 
 struct Chapter {
     int id = 0;
@@ -230,19 +236,13 @@ inline double fadeGain(double leftMs, double fadeMs) {
     return std::pow(10.0, (kFadeFloorDb * progress) / 20.0);
 }
 
-/// Tốc độ gần nhất trong bảng (phím [ ]).
-inline double nearestSpeed(double rate, int step) {
-    const QList<double> &list = speeds();
-    if (step > 0) {
-        for (double speed : list)
-            if (speed > rate + 1e-6)
-                return speed;
-        return list.last();
-    }
-    for (int i = list.size() - 1; i >= 0; --i)
-        if (list[i] < rate - 1e-6)
-            return list[i];
-    return list.first();
+/// Phím [ ]: một bước của bộ chọn tốc độ (stepValue của ValuePickerLogic): về lưới 0,05 rồi thêm / bớt một bước, kẹp 0,5-3×.
+inline double stepSpeed(double rate, int step) {
+    const auto grid = [](double value) {
+        const double clamped = std::clamp(value, kSpeedMin, kSpeedMax);
+        return std::round((kSpeedMin + std::round((clamped - kSpeedMin) / kSpeedStep) * kSpeedStep) * 100.0) / 100.0;
+    };
+    return grid(grid(rate) + step * kSpeedStep);
 }
 
 /// Lệch (giây) từ đó chỗ nghe của thiết bị khác mới là "chỗ khác" - ít hơn là cùng chỗ (lưu chậm vài giây).

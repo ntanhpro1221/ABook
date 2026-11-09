@@ -1,4 +1,5 @@
 import "UiStrings.js" as S
+import "ValuePickerLogic.js" as Logic
 import QtQuick
 import ABook
 
@@ -7,7 +8,7 @@ Popover {
     id: root
     panelWidth: 296
     maxHeight: Math.max(280, Math.min(600, height - 32))
-    readonly property int fadeSeconds: Math.max(10, Math.min(60, Number(Api.preferences.sleepFadeSeconds || 30)))
+    readonly property int fadeSeconds: Logic.quantize(Logic.SPECS.sleepFadeSeconds, Number(Api.preferences.sleepFadeSeconds || 30))
     // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
     readonly property int extendMinutes: Player.sleepExtendMinutes
 
@@ -35,7 +36,7 @@ Popover {
             Text {
                 objectName: "sleepCountdown"
                 width: parent.width
-                text: Player.sleepKind === "chapter" ? S.s_het_chuong_nay_8ccc288f : Player.clockText(Player.clock.sleepLeft)
+                text: Player.sleepKind === "chapter" ? (Player.sleepChapters > 1 ? S.s_het_0_chuong_79433c77(Player.sleepChapters) : S.s_het_chuong_nay_8ccc288f) : Player.clockText(Player.clock.sleepLeft)
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeTitlePhone
@@ -63,27 +64,47 @@ Popover {
             width: parent.width; open: Player.sleepKind !== "off"
             Text { text: S.s_dat_lai_51a46825; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
-        Flow {
+        // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
+        // Chọn là đặt ngay, bảng không tự đóng (kéo thước cần bảng đứng yên).
+        ValuePicker {
+            objectName: "sleepPicker"
             width: parent.width
-            spacing: Theme.s8
-            Repeater {
-                model: Player.sleepChoices
+            spec: Logic.SPECS.sleepMinutes
+            value: Player.sleepKind === "minutes" ? Player.sleepMinutes : Player.lastSleepMinutes
+            current: Player.sleepKind === "minutes"
+            label: S.s_hen_gio_ngu_21073488
+            format: Logic.minutesLabel
+            chipLabel: function(v) { return String(v) }
+            onPicked: value => { Feedback.play("toggle"); Player.setSleep("minutes", value) }
+            // "Hết chương này", -/+ thành "Hết N chương" (N 1-10). Chạm tên là đặt; -/+ đổi N và đặt luôn.
+            Row {
+                id: chapterRow
+                objectName: "sleepChapters"
+                width: parent.width
+                height: 40
+                property int count: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : 1
+                readonly property bool active: Player.sleepKind === "chapter" && Player.sleepChapters === count
+                function pick(n) { count = n; Feedback.play("toggle"); Player.setSleep("chapter", n) }
+                IconButton {
+                    objectName: "sleepChaptersDown"; icon: "minus"; iconSize: 18; tip: S.s_giam_a6c2901a; Accessible.name: S.s_giam_a6c2901a
+                    enabled: chapterRow.count > Logic.SPECS.sleepChapters.min; opacity: enabled ? 1 : 0.4
+                    onClicked: chapterRow.pick(chapterRow.count - 1)
+                }
                 ChoiceChip {
-                    required property var modelData
-                    objectName: "sleepChoice_" + modelData
-                    text: modelData + S.s_phut_cf728a6a
-                    selected: Player.sleepKind === "minutes" && Player.sleepMinutes === modelData
-                    onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", modelData); root.close() }
+                    objectName: "sleepChapter"
+                    fullWidthReason: "Single-column menu (DESIGN 6)"
+                    width: parent.width - 2 * Theme.buttonHeight
+                    height: Theme.buttonHeight
+                    text: chapterRow.count > 1 ? S.s_het_0_chuong_79433c77(chapterRow.count) : S.s_het_chuong_nay_918907cf
+                    selected: chapterRow.active
+                    onClicked: chapterRow.pick(chapterRow.count)
+                }
+                IconButton {
+                    objectName: "sleepChaptersUp"; icon: "plus"; iconSize: 18; tip: S.s_tang_a2363bce; Accessible.name: S.s_tang_a2363bce
+                    enabled: chapterRow.count < Logic.SPECS.sleepChapters.max; opacity: enabled ? 1 : 0.4
+                    onClicked: chapterRow.pick(chapterRow.count + 1)
                 }
             }
-        }
-        ChoiceChip {
-            objectName: "sleepChapter"
-            fullWidthReason: "Single-column menu (DESIGN 6)"
-            width: parent.width
-            text: S.s_het_chuong_nay_918907cf
-            selected: Player.sleepKind === "chapter"
-            onClicked: { Feedback.play("toggle"); Player.setSleep("chapter"); root.close() }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"

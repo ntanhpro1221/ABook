@@ -174,6 +174,8 @@ qt_add_qml_module(ABookDesk
         qml/BookLogic.js
         qml/VolumeControl.qml
         qml/AudioFxSlider.qml
+        qml/ValuePicker.qml
+        qml/ValuePickerLogic.js
         qml/AudioFxPanel.qml
         qml/MusicLevelSlider.qml
         qml/ReadingSuggestions.qml
