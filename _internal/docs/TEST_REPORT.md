@@ -1,5 +1,10 @@
 # Test report
 
+## 09-11-2026 — integ166b periodic audio regression
+
+- The periodic sink assertion remains unchanged. MusicMixer waited for an engine pull before preparing replacement PCM; preparation could use the remaining period, leaving Stop/Reset/Write/Start across the next pull and producing real silence. A deterministic device models 9 ms of preparation and a 2 ms commit in a 10 ms period: the original code misses one period, while waiting after preparation misses none. This is a product scheduling defect, also present in 0.4.165, rather than an assertion to relax.
+- Moved the pull wait into the shared remix commit after PCM preparation. Full VoiceTests passes three times, each **52 passed / 0 failed / 0 skipped**, including the new regression and the unchanged periodic ear assertion. The timing thresholds and skip policy are unchanged. The deterministic red/green logs, subsequent complete Qt and pytest results, final HEAD and quality hash are recorded in the integ166b task dossier.
+
 ## 09-11-2026 — integ166 integration regression
 
 - Merged galwait, wavcache, timerbug2/shakesfx, audiofx/audiofx2, strsrc and latin166 in order from c128d6885; perf165 is excluded. File-level conflict decisions and durable raw results are in the integ166 task dossier.

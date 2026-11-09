@@ -173,6 +173,41 @@ private:
 class VoiceTests : public QObject {
     Q_OBJECT
 private slots:
+    void remixWaitsForTheEngineAfterPreparingAudio() {
+        struct PhaseDevice : Device {
+            int ms = 0, waits = 0, missedPeriods = 0;
+            bool prepare = false, stoppedForRemix = false;
+            void awaitPull(int) override { ms = (ms / 10 + 1) * 10; ++waits; }
+            size_t padding() override {
+                // Preparing a remix can finish near the next engine boundary.
+                if (prepare) { ms += 9; prepare = false; }
+                return Device::padding();
+            }
+            void stop() override { Device::stop(); stoppedForRemix = true; }
+            bool write(const float *samples, size_t frames) override {
+                if (stoppedForRemix) {
+                    const int before = ms / 10;
+                    ms += 2;
+                    missedPeriods += ms / 10 - before;
+                }
+                return Device::write(samples, frames);
+            }
+            bool start() override { stoppedForRemix = false; return Device::start(); }
+        };
+        QTemporaryDir dir;
+        auto *device = new PhaseDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path());
+        auto control = std::make_shared<Control>();
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        voice.load(QUrl(QStringLiteral("fake:phase")), 0); voice.play();
+        mixer.serviceReader(); mixer.service(24000);
+        QVERIFY(device->running);
+        // The first padding sample below models preparation time before commit.
+        device->prepare = true; voice.setVolume(0.5); mixer.service(0);
+        QCOMPARE(device->waits, 1);
+        QCOMPARE(device->missedPeriods, 0);
+        QVERIFY(device->running);
+    }
     void silenceClockFollowsHeardFramesNotDecodeAhead() {
         Rig rig;rig.control->duration=7;rig.control->longSilence=true;
         AudioFx::Settings fx;fx.skipSilence=true;rig.voice.setAudioFx(fx);rig.voice.play();

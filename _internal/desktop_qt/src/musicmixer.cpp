@@ -1075,9 +1075,6 @@ void MusicMixer::selectOutput(const QString &id) {
     wake();
 }
 void MusicMixer::service(size_t frames) {
-    // Trộn lại sắp xảy ra: chờ ngay sau một lần engine kéo, ngoài khoá để giao diện không phải đợi.
-    const bool aligned = d->running && (d->resetQueued || d->joinSoon);
-    if (aligned) d->device->awaitPull(12);
     Guard engine(d->engineMutex);
     const auto voices = d->snapshot();
     const int oldRate = rate();
@@ -1171,13 +1168,8 @@ void MusicMixer::service(size_t frames) {
     // Thao tác (tua, dừng, âm lượng, tốc độ) hay giọng vừa sẵn sàng giữa lúc thiết bị còn hàng đợi:
     // trộn lại ngay tại con trỏ nghe. Không bao giờ để endpoint chạy rỗng trong lúc chờ nguồn đọc lại.
     const bool remix = d->resetQueued || (join && d->written > d->played);
-    if (remix && d->running && !aligned) {
-        // Thao tác tới sau lúc chờ engine kéo: lượt kế (ngay sau đây) chờ rồi mới trộn lại.
-        d->joinSoon = true; wake();
-    } else {
-        if (remix) { d->resetQueued = false; d->remix(voices); padding = size_t(d->written - d->played); }
-        d->joinSoon = false;
-    }
+    if (remix) { d->resetQueued = false; d->remix(voices); padding = size_t(d->written - d->played); }
+    d->joinSoon = false;
     if (!any) {
         // Đuôi mờ ra còn trong thiết bị: để nó phát hết rồi mới Stop, Stop giữa chừng là một tiếng tách.
         // Chỉ chờ tới mẫu cuối còn kêu, không chờ hàng đợi cạn: chờ cạn thì lượt thức trễ hơn một chu kỳ của engine
@@ -1404,6 +1396,10 @@ void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &
     // Nguồn bị cắt cần đặt lại chỗ, giọng vừa nối cần lấp lại vòng đệm: luồng đọc chạy ngay.
     owner->wake(true);
     // Không giữ im lặng thừa sau tiếng cuối: thiết bị cạn đúng lúc hết đuôi mờ.
+    // Preparing the PCM above can span an engine period. Align the short
+    // Stop/Reset/Write/Start commit only AFTER preparation, otherwise Stop may
+    // land just before the next pull and silence a whole period.
+    if (running) device->awaitPull(12);
     device->stop();
     const quint64 now = std::max(at, end - std::min<quint64>(device->padding(), end));
     device->reset(); running = false;
