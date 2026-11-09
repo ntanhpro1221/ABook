@@ -75,7 +75,7 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
     if (worklet && fx.pitch!==previousPitch) {worklet.port.postMessage({pitch:fx.pitch});previousPitch=fx.pitch;}
   };
   const unsubscribe=onAudioFx(update); update();
-  const detachSilence=attachSilenceSkip(audio,ctx,getAudioFx,onAudioFx);
+  const detachSilence=attachSilenceSkip(audio,ctx,getAudioFx,onAudioFx,()=>{toast.warning(S.s_copy_1d3ea0297221,{id:'silence-skip'});});
   const resume=()=>{void ctx.resume().catch(()=>{});};
   const reset=()=>{worklet?.port.postMessage({reset:true});};
   audio.addEventListener('play',resume); audio.addEventListener('seeking',reset);

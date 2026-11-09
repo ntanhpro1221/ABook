@@ -1246,9 +1246,10 @@ export function PlayerProvider({
   restartRef.current = restart;
 
   const setRate = useCallback((value: number) => {
-    setAudioFx({speed:value});
     awakeRef.current();
     applyRate(value);
+    // Áp trước, lưu sau (như setVolume): bộ nhớ trang bị chặn hay đầy thì tốc độ vẫn đổi, chỉ báo là chưa lưu được.
+    try { setAudioFx({speed:value}); } catch { toast.error(S.s_copy_51e8a9a73804); }
     night.touch("rate", position());
     const current = refs.current.track;
     if (current && refs.current.purpose !== "review") {

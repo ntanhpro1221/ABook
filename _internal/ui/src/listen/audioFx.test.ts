@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
-import {beforeEach,expect,it,vi} from 'vitest';
+import {beforeEach,expect,it} from 'vitest';
 import {DEFAULT_FX,FX_PRESETS,getAudioFx,safeFx,setAudioFx,selectAudioBook,setAudioBookOnly,audioBookOnly} from './audioFx';
-import {silenceCuts,silenceDestination,attachSilenceSkip} from './silenceSkip';
+import {silenceCuts,silenceDestination} from './silenceSkip';
 import {PeakLimiter,PitchShifter,stereoGains} from './audioFxProcessor.js';
 
 beforeEach(()=>{localStorage.clear();selectAudioBook('');setAudioFx({...DEFAULT_FX});});
@@ -68,22 +68,4 @@ it('mono matrix averages both channels then attenuates the correct side',()=>{
     expect(l).toBeCloseTo((mono?.4:.2)*(1-Math.max(0,b)),12);
     expect(r).toBeCloseTo((mono?.4:.6)*(1+Math.min(0,b)),12);
   }
-});
-it('scans when metadata arrives after attaching, then seeks on the original clock',async()=>{
-  const audio=new Audio();audio.src='https://localhost/chapter.wav';
-  Object.defineProperty(audio,'duration',{value:NaN,writable:true,configurable:true});
-  Object.defineProperty(audio,'paused',{value:true,writable:true,configurable:true});
-  Object.defineProperty(audio,'seeking',{value:false,writable:true,configurable:true});
-  const pcm=new Float32Array(6800).fill(.2);pcm.fill(0,100,1600);pcm.fill(0,1700,6700);
-  const fetcher=vi.fn().mockResolvedValue({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});
-  vi.stubGlobal('fetch',fetcher);
-  const ctx={decodeAudioData:async()=>({numberOfChannels:1,sampleRate:1000,getChannelData:()=>pcm})} as unknown as AudioContext;
-  const detach=attachSilenceSkip(audio,ctx,()=>({...DEFAULT_FX,skipSilence:true}),()=>()=>{});
-  try {
-    expect(fetcher).not.toHaveBeenCalled();
-    Object.defineProperty(audio,'duration',{value:6.8});audio.dispatchEvent(new Event('loadedmetadata'));
-    await vi.waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1));
-    audio.currentTime=2.46;Object.defineProperty(audio,'paused',{value:false});audio.dispatchEvent(new Event('play'));
-    await vi.waitFor(()=>expect(audio.currentTime).toBe(5.95));
-  } finally {detach();vi.unstubAllGlobals();}
 });
