@@ -159,13 +159,13 @@ Item {
             const win = createTemporaryObject(windowFactory, host)
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: false})
             compare(mode.closeToTray, true); compare(mode.autoMini, false)
-            Player.play()
+            Player.resume(); tryVerify(function() { return Player.playing })
             mode.minimize(); compare(mode.mini, false)
             mode.loaded = true
             mode.minimize(); compare(mode.mini, false)     // mặc định tắt
             win.show(); mode.autoMini = true; Player.pause()
             mode.minimize(); compare(mode.mini, false)     // bật nhưng đang dừng
-            win.show(); Player.play()
+            win.show(); Player.resume(); tryVerify(function() { return Player.playing })
             mode.minimize(); compare(mode.mini, true)      // bật và đang phát
             mode.expand(); Player.pause(); win.hide()
         }
