@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from scripts.ui_copy_source import expand
 
 ROOT = Path(__file__).resolve().parents[1]
 UI_SRC = ROOT / "ui" / "src"
@@ -40,7 +41,7 @@ def ui_strings(src: Path = UI_SRC) -> set[str]:
             continue
         if SKIP_DIRS & set(path.relative_to(src).parts):
             continue
-        code = _COMMENT.sub(" ", path.read_text(encoding="utf-8"))
+        code = _COMMENT.sub(" ", expand(path.read_text(encoding="utf-8"), "ts"))
         for quoted in _QUOTED.finditer(code):
             text = next(group for group in quoted.groups() if group is not None)
             found.add(_squash(_TEMPLATE_HOLE.sub(PLACEHOLDER, text)))

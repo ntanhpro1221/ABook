@@ -3,12 +3,13 @@ import re
 from pathlib import Path
 
 from abook.webui import remote_books
+from scripts.ui_copy_source import expand
 
 SWITCH_TS = Path(__file__).resolve().parents[1] / "ui" / "src" / "shared" / "syncSwitch.ts"
 
 
 def test_unreachable_message_names_the_switch_the_settings_page_shows():
-    match = re.search(r'SYNC_SWITCH_LABEL\s*=\s*"([^"]+)"', SWITCH_TS.read_text(encoding="utf-8"))
+    match = re.search(r'SYNC_SWITCH_LABEL\s*=\s*"([^"]+)"', expand(SWITCH_TS.read_text(encoding="utf-8"), "ts"))
     assert match, "ui/src/shared/syncSwitch.ts không còn SYNC_SWITCH_LABEL"
     assert remote_books.SYNC_SWITCH == match.group(1)
     assert f"“{match.group(1)}”" in remote_books.UNREACHABLE

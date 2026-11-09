@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 import pytest
+from scripts.ui_copy_source import expand
 
 from abook.readaloud import prepare, supertonic
 from abook.webui import supertonic_module, voice_module
@@ -22,7 +23,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "readaloud" / "supertonic" / "sup
 
 
 def _kotlin(name: str) -> str:
-    return (ANDROID / name).read_text(encoding="utf-8")
+    return expand((ANDROID / name).read_text(encoding="utf-8"), "kt")
 
 
 def _script(name: str):

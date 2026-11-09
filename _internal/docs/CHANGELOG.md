@@ -7,6 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Huỷ xuất sách trước khi bắt đầu không còn phải chờ phần âm thanh chuẩn bị xong.
 - Lắc, bấm hoặc dùng phím để hẹn lại có âm xác nhận theo tuỳ chọn âm/rung; hết hẹn vẫn im lặng.
 - Mục Âm thanh thêm Mono, cân bằng trái/phải, bỏ khoảng lặng dài và lưu chỉnh riêng cho từng sách.
 - Chữ hoa tiếng Anh và tên Nhật được đọc liền, đúng cách hơn; không tự chọn giọng dẫn bạn đã loại.

@@ -83,8 +83,7 @@ it('scans when metadata arrives after attaching, then seeks on the original cloc
     expect(fetcher).not.toHaveBeenCalled();
     Object.defineProperty(audio,'duration',{value:6.8});audio.dispatchEvent(new Event('loadedmetadata'));
     await vi.waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1));
-    await new Promise(resolve=>setTimeout(resolve,0));
     audio.currentTime=2.46;Object.defineProperty(audio,'paused',{value:false});audio.dispatchEvent(new Event('play'));
-    expect(audio.currentTime).toBe(5.95);
+    await vi.waitFor(()=>expect(audio.currentTime).toBe(5.95));
   } finally {detach();vi.unstubAllGlobals();}
 });

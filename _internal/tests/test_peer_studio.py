@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import pytest
+from scripts.ui_copy_source import expand
 
 from abook.webui import peer_studio
 from abook.webui.actions import FakeRunner
@@ -133,5 +134,5 @@ def test_a_version_mismatch_is_named_and_a_computer_that_is_off_is_told(two) -> 
 
 def test_the_page_says_listen_only_in_the_same_words_as_the_server() -> None:
     """Trang Studio đóng (ui/src/shared/peerStudio.ts listenOnlyLine) và lời từ chối của cầu nối nói cùng một câu."""
-    source = (Path(__file__).resolve().parents[1] / "ui" / "src" / "shared" / "peerStudio.ts").read_text(encoding="utf-8")
+    source = expand((Path(__file__).resolve().parents[1] / "ui" / "src" / "shared" / "peerStudio.ts").read_text(encoding="utf-8"), "ts")
     assert "`" + peer_studio.listen_only("${name}") + "`" in source

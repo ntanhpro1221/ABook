@@ -15,7 +15,7 @@ from abook.models import ProjectPaths
 from abook.voice_catalog import casting_presets, preset_by_name
 
 NARRATOR_VOICE = str(build_settings()["voices"]["narrator_voice"])
-FEMALE_NARRATOR = "Đoan Trang"
+FEMALE_NARRATOR = "Kim Thanh"
 # Chương 1: kể, lời của Mai, nội tâm của Mai, nội tâm của Bảo, kể. Chương 2: nội tâm của Mai, nội tâm của Bảo, kể.
 LINES = [
     (1, "c1s0", "narration", "NARRATOR", "Một câu kể."),
@@ -60,7 +60,7 @@ def _book(tmp_path: Path, *, mai_gender: str = "female", settings: dict[str, Any
         ])
     narrator = db.upsert_voice_profile({"voice_key": "narrator", "engine": "vieneu", "preset_name": NARRATOR_VOICE,
                                         "description": "kể", "seed": 1, "status": "ready"})
-    cast = {"MAI": ("female", next(p for p in casting_presets("female") if p["name"] not in (NARRATOR_VOICE, FEMALE_NARRATOR))),
+    cast = {"MAI": ("female", preset_by_name("Ngọc Linh")),
             "BAO": ("male", next(p for p in casting_presets("male") if p["name"] != NARRATOR_VOICE))}
     profiles = {"NARRATOR": narrator, **{key: db.upsert_voice_profile(voice_profile_spec(preset)) for key, (_g, preset) in cast.items()}}
     with db.connect() as conn:

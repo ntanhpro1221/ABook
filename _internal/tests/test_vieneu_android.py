@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 import pytest
+from scripts.ui_copy_source import expand
 
 from abook.readaloud import loudness, vieneu, vieneu_engine
 from abook.webui import vieneu_module, voice_module
@@ -20,7 +21,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "vieneu" / "android"
 
 
 def _kotlin(name: str) -> str:
-    return (ANDROID / name).read_text(encoding="utf-8")
+    return expand((ANDROID / name).read_text(encoding="utf-8"), "kt")
 
 
 def _script(name: str):
