@@ -58,8 +58,8 @@ private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, p
     val words: List<List<Rect>> = paragraph.words.map { ReadInk.rangeRects(layout, it.from, it.until, wordPad, wordInset) }
 }
 
-/** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt. */
-private val InkBleed = 8.dp
+/** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt, và khung chữ của trình phát (PlayerTextArea) cũng chừa ngang chừng này. */
+internal val InkBleed = 8.dp
 
 @Composable
 fun ReadAlongPane(

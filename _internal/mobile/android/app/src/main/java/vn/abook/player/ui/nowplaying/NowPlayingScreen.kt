@@ -415,8 +415,11 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
     }
 }
 
-/** The read-along text's visible band, in the text's own coordinates (it slides under the header and over the transport; nothing may show outside the band). */
+/** The read-along text's visible band, in the text's own coordinates (it slides under the header and over the transport; nothing may show outside the band).
+ *  Only the top and bottom cut: sideways the band reaches [InkBleed] into the gutter, so the highlight breathes past the column on the left as much as on the right. */
 private data class PlayerTextArea(val top: Float, val bottom: Float) : androidx.compose.ui.graphics.Shape {
-    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density) =
-        androidx.compose.ui.graphics.Outline.Rectangle(androidx.compose.ui.geometry.Rect(0f, top, size.width, bottom))
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density): androidx.compose.ui.graphics.Outline {
+        val side = with(density) { InkBleed.toPx() }
+        return androidx.compose.ui.graphics.Outline.Rectangle(androidx.compose.ui.geometry.Rect(-side, top, size.width + side, bottom))
+    }
 }
