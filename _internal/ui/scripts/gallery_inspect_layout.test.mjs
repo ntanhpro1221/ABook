@@ -37,6 +37,17 @@ describe("chân chữ tiêu đề màn giữa frame", () => {
   });
 });
 
+describe.skipIf(!browserAvailable)("cụm giữa hai dấu · trên Edge", () => {
+  it("cụm vừa một dòng mà gãy thì báo; cụm dài hơn cả dòng thì được gãy", async () => {
+    for (const result of await layoutFixtures({ fixture: "dot-clusters.html" })) {
+      const broken = (id) => result.findings.filter((f) => f.metric === "cluster-broken" && f.selector.startsWith(`#${id} >`));
+      expect(broken("cluster-broken")).toHaveLength(1);
+      expect(broken("cluster-pass")).toHaveLength(0);
+      expect(broken("cluster-long")).toHaveLength(0);
+    }
+  }, 60000);
+});
+
 describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai khổ", () => {
   let results;
   beforeAll(async () => { results = await layoutFixtures(); }, 60000);

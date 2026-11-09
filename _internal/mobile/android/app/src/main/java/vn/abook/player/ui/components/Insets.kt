@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.theme.Dim
 
 /**
@@ -21,13 +23,19 @@ val GestureBar = Dim.s24
 /** Chỗ chừa dưới chân của thứ bám đáy: thanh điều hướng chiếm bao nhiêu thì chừa bấy nhiêu, nhưng KHÔNG BAO GIỜ dưới [floor]. Hàm thuần để test kiểm. */
 fun bottomClearance(inset: Dp, floor: Dp = GestureBar): Dp = if (inset > floor) inset else floor
 
-/** [bottomClearance] của thanh điều hướng hiện tại. */
+/**
+ * Đáy của chỗ đang dựng KHÔNG chạm mép màn: bên dưới còn thanh phát nhỏ / thanh tab, chính chúng đã chừa vạch cử chỉ (Shell.kt đặt cho lớp màn và thanh báo). Chừa lần nữa là
+ * một dải trống 24 dp treo giữa màn và thanh phát.
+ */
+val LocalBottomCovered = compositionLocalOf { false }
+
+/** [bottomClearance] của thanh điều hướng hiện tại; 0 khi bên dưới đã có thanh của khung ([LocalBottomCovered]). */
 @Composable
-fun navigationClearance(): Dp = bottomClearance(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+fun navigationClearance(): Dp = if (LocalBottomCovered.current) 0.dp else bottomClearance(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
 
 /** Vùng inset đáy: `insets` (mặc định thanh điều hướng) nhưng đáy không dưới [GestureBar]. */
 @Composable
-fun gestureSafe(insets: WindowInsets = WindowInsets.navigationBars): WindowInsets = insets.union(WindowInsets(bottom = GestureBar))
+fun gestureSafe(insets: WindowInsets = WindowInsets.navigationBars): WindowInsets = if (LocalBottomCovered.current) WindowInsets(bottom = 0.dp) else insets.union(WindowInsets(bottom = GestureBar))
 
 /** Chừa đáy theo [gestureSafe]: thay cho `navigationBarsPadding()`. */
 @Composable

@@ -1937,6 +1937,7 @@ var s_mo_studio_cua_57fcc890 = "Mở Studio của ";
 var s_mo_tab_nhac_nen_117e60f2 = "Mở tab Nhạc nền";
 var s_mo_thu_muc_4bf5b127 = "Mở thư mục";
 var s_mo_thu_muc_nhat_ky_62d8d973 = "Mở thư mục nhật ký";
+var s_mo_trang_sach_3f7bd955 = "Mở trang sách";
 var s_model_doc_hieu_97027daf = "model đọc hiểu";
 var s_moi_54e203ba = "mới";
 var s_moi_cach_doc_ten_85347e60 = "Mọi cách đọc tên…";

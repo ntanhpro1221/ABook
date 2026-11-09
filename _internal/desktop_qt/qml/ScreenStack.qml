@@ -61,6 +61,11 @@ Item {
         }
     }
 
+    // Màn trên cùng của mục `index` (chưa dựng: null).
+    function topPage(index) {
+        const top = _top(index)
+        return top ? top.content : null
+    }
     function _top(index) {
         const s = _stacks[index]
         return s && s.length ? s[s.length - 1] : null

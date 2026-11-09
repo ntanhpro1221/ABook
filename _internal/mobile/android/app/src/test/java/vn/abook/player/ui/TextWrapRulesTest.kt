@@ -30,12 +30,15 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.components.BasicText
 import vn.abook.player.ui.components.hasSeparator
+import vn.abook.player.ui.components.keepClustersTogether
 import vn.abook.player.ui.components.keepNumbersTogether
 import vn.abook.player.ui.components.separatorsAtLineEnd
 import vn.abook.player.ui.components.shapeForWrap
 import vn.abook.player.ui.components.tieSeparators
 import vn.abook.player.ui.data.dotJoin
 import vn.abook.player.ui.data.dotJoined
+import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.AbookTheme
 import java.io.File
 
 /**
@@ -67,6 +70,40 @@ class TextWrapRulesTest {
         // Gạch nối trong từ, đường dẫn, ngày: không phải dấu ngăn đứng riêng.
         assertEquals("Spider-Man 12/05 a/b", tieSeparators("Spider-Man 12/05 a/b"))
         assertEquals("không có", tieSeparators("không có"))
+    }
+
+    @Test
+    fun clustersKeepTheirSpacesOnlyWhenTheyAreLongerThanTheLine() {
+        assertEquals("Giọng\u00A0Đức\u00A0Trí\u00A0·\u00A0\u200B5\u00A0chương", keepClustersTogether("Giọng Đức Trí · 5 chương"))
+        assertEquals("một\u00A0cụm", keepClustersTogether("một cụm"))
+        assertEquals("cụm dài quá\u00A0·\u00A0\u200Bngắn", keepClustersTogether("cụm dài quá · ngắn") { it.length <= 4 })
+        // Dấu cuối dòng ngay trước chỗ ngắt vẫn được nhận ra để vẽ trong suốt.
+        val shaped = keepClustersTogether("A b · C d")
+        assertEquals(listOf(4), separatorsAtLineEnd(shaped, listOf(7, shaped.length)))
+    }
+
+    /** Dòng phụ thật của ảnh chủ sách 09-11, đúng bề ngang cột chữ cạnh bìa ở 360 dp, cỡ chữ 130 %: mọi chỗ xuống dòng đều ngay sau "·". */
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun bookMetaLineBreaksOnlyAfterADotAt130Percent() {
+        val text = "Giọng Đức Trí · 5 chương · 5 giờ 45 phút"
+        var layout: TextLayoutResult? = null
+        rule.setContent {
+            AbookTheme {
+                // 360 - hai lề 16 - bìa 112 - khe 16
+                BasicText(keepClustersTogether(text), Modifier.width(200.dp), Abook.type.bodySmall, onTextLayout = { layout = it })
+            }
+        }
+        rule.waitForIdle()
+        val result = layout!!
+        assertTrue("phải xuống dòng thì phép thử mới có nghĩa: ${result.lineCount} dòng", result.lineCount >= 2)
+        val shown = result.layoutInput.text.text
+        for (line in 0 until result.lineCount - 1) {
+            val end = shown.substring(result.getLineStart(line), result.getLineEnd(line))
+            assertTrue("dòng ${line + 1} phải kết thúc ngay sau dấu: [$end]", end.endsWith("·\u00A0\u200B"))
+        }
+        val lines = (0 until result.lineCount).map { shown.substring(result.getLineStart(it), result.getLineEnd(it)).replace("\u00A0", " ") }
+        for (cluster in text.split(" · ")) assertTrue("cụm [$cluster] phải nguyên trong một dòng: $lines", lines.any { cluster in it })
     }
 
     @Test

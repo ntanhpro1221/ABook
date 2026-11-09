@@ -150,7 +150,13 @@ private fun NowPlayingBody(
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter),
                         Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.height(4.dp))
-                    RollingLabel(subtitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
+                    // Tên sách là nút: chạm thì thu trình phát, tới trang sách. Dòng ấy đang nói việc khác (đang chuẩn bị giọng, đã nghe hết phần đã có) thì chỉ là chữ.
+                    val toBook = window.bookPage.takeIf { subtitle == state.bookTitle }
+                    RollingLabel(
+                        if (toBook != null) subtitle + "\u00A0›" else subtitle,
+                        parts.element(NowPlayingPart.Book, if (toBook != null) Modifier.pressable(onClick = toBook).semantics { contentDescription = S.s_mo_trang_sach_3f7bd955 }.testTag("player_book") else Modifier),
+                        Abook.type.bodySmall,
+                    )
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = S.s_ve_che_do_nghe_a0052a89 } else Modifier))

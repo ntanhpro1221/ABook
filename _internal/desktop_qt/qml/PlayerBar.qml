@@ -25,6 +25,7 @@ Item {
     readonly property real natural: transportHeight + alerts.height
     property real appear: Player.loaded ? 1 : 0
     signal openRequested()
+    signal bookRequested()
     Connections {
         target: Player
         function onLoadedChanged() {
@@ -65,7 +66,7 @@ Item {
             opacity: openArea.pressed ? 0.06 : (openArea.hovered ? 0.03 : 0)
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         }
-        onClicked: root.openRequested()
+        onClicked: if (!subtitle.tappedBook) root.openRequested()
     }
 
     Item {
@@ -106,6 +107,7 @@ Item {
                 id: subtitle
                 width: parent.width
                 opacity: root.sharedShown ? 1 : 0
+                onBookRequested: root.bookRequested()
             }
         }
         Row {

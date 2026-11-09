@@ -72,10 +72,21 @@ Window {
         })
     }
 
+    // Tên sách ở trình phát / thanh phát: thu Đang nghe rồi tới trang của cuốn đang nghe; đang đứng ở chính trang ấy thì không đẩy trùng (DESIGN.md L3c).
+    function openPlayingBook() {
+        if (nowPlaying) nowPlaying.close()
+        const top = stack.topPage(0)
+        if (top && top.book && top.book.bookId === Player.bookId) {
+            if (stack.current !== 0) stack.show(0)
+            return
+        }
+        openBookId(Player.bookId)
+    }
+
     Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book, sourceItem) => stack.push(bookPage, { book: book }, sourceItem); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
-    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter); onCastRequested: (kind, data) => castDialogs.begin(kind, data); onRecordRequested: (kind, data) => recordDialogs.begin(kind, data) } }
+    Component { id: bookPage; BookPage { onNowPlayingRequested: win.openNowPlaying(); onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter); onCastRequested: (kind, data) => castDialogs.begin(kind, data); onRecordRequested: (kind, data) => recordDialogs.begin(kind, data) } }
 
     Item {
         id: shell
@@ -147,6 +158,7 @@ Window {
                 contentOpacity: nowPlaying ? 1 - Math.min(1, nowPlaying.g * 3) : 1
                 contentShift: nowPlaying ? -nowPlaying.g * 12 : 0
                 onOpenRequested: win.openNowPlaying()
+                onBookRequested: win.openPlayingBook()
                 onSettingsRequested: group => { stack.show(2); stack.rootContent(2).active = group }
             }
             // Đang nghe chỉ được dựng ở lần mở đầu tiên (thanh phát có sách nhưng chưa ai mở: không trả RAM / khung đầu của cả màn này).
@@ -158,6 +170,7 @@ Window {
                 active: alive
                 sourceComponent: NowPlaying {
                     bar: playerBar
+                    onBookRequested: win.openPlayingBook()
                     onSettingsRequested: group => { close(); stack.show(2); stack.rootContent(2).active = group }
                 }
                 Timer {

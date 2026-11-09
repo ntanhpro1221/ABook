@@ -57,6 +57,9 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     /** Tới Cài đặt > Giọng đọc (khối lỗi "Tải giọng VieNeu", "Xem trong Cài đặt"); null = không có đường ấy. */
     var voiceSettings: (() -> Unit)? = null
 
+    /** Tên sách dưới tên chương: thu cửa sổ, tới trang sách của cuốn; null = không có đường ấy (bản thử). */
+    var bookPage: (() -> Unit)? = null
+
     /** Dáng chữ của Đọc theo (cỡ chữ, giãn dòng): nhớ giữa các lần mở qua [onLook]. */
     var look by mutableStateOf(ReadLook())
 

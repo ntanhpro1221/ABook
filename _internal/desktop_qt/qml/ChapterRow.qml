@@ -20,6 +20,9 @@ Interactive {
     property bool hasMenu: false
     property bool menuOpen: false
     property string fullTitle: ""
+    // Trang sách, chương đang nạp: bấm dòng mở trình phát (chỗ dùng quyết), riêng icon đầu dòng phát / dừng (DESIGN.md L3b).
+    property bool opensPlayer: false
+    signal toggleRequested()
     signal menuRequested(Item anchor)
     readonly property real menuWidth: hasMenu ? 32 + Theme.s4 : 0
     // Cú bấm trúng nút "…": TapHandler của hàng cũng thấy cú bấm ấy (nút con nhận trước) - chỗ dùng bỏ qua `clicked` khi đúng (bấm "…" không
@@ -43,7 +46,28 @@ Interactive {
         x: Theme.s12
         width: 20
         height: parent.height
-        Vu { anchors.centerIn: parent; visible: root.current; color: Theme.accent }
+        Vu { anchors.centerIn: parent; visible: root.current && (!root.opensPlayer || Player.playing); color: Theme.accent }
+        Icon {
+            anchors.centerIn: parent
+            visible: root.current && root.opensPlayer && !Player.playing
+            name: "play"
+            size: 16
+            color: Theme.accentText
+        }
+        Interactive {
+            objectName: "chapterToggle"
+            visible: root.current && root.opensPlayer
+            anchors.centerIn: parent
+            width: 32
+            height: 32
+            Accessible.role: Accessible.Button
+            Accessible.name: Player.playing ? S.s_tam_dung_0_43ccbbf2(root.fullTitle) : S.s_nghe_0_42d1e966(root.fullTitle)
+            onClicked: {
+                root.onMenuButton = true
+                Later.call(root, function() { root.onMenuButton = false })
+                root.toggleRequested()
+            }
+        }
         Icon {
             anchors.centerIn: parent
             visible: !root.current && root.done

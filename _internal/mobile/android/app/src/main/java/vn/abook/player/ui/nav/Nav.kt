@@ -68,6 +68,18 @@ sealed interface Destination {
     data class StudioSub(val computer: String, val book: String, val kind: StudioSubKind) : Destination
 }
 
+/**
+ * Màn có thanh nút đáy riêng (Lưu, Thêm, Xuất...): thanh phát nhỏ nhường đáy cho nó. Mọi màn con khác giữ thanh phát nhỏ ở đáy khi có sách đang nạp (DESIGN.md L3b).
+ * Không có nhánh `else`: thêm một [Destination] thì trình biên dịch bắt phải quyết định ở đây.
+ */
+fun Destination.ownsBottomBar(): Boolean = when (this) {
+    Destination.AddBook, is Destination.ImportReview, is Destination.ImportChapter,
+    is Destination.EditBook, is Destination.EditChapter, is Destination.CropCover, is Destination.CoverSearch,
+    is Destination.Export, is Destination.StudioNew -> true
+    is Destination.Book, is Destination.Settings, is Destination.Devices, is Destination.Voice,
+    is Destination.Studio, is Destination.StudioProject, is Destination.StudioSub -> false
+}
+
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
 @Immutable
 data class Entry(val key: Int, val destination: Destination)
@@ -88,6 +100,9 @@ class BackStack private constructor(val entries: List<Entry>, private val nextKe
 
     /** Bỏ màn trên cùng; ngăn xếp rỗng thì giữ nguyên (Back ở gốc là việc của Activity). */
     fun pop(): BackStack = if (entries.isEmpty()) this else BackStack(entries.dropLast(1), nextKey)
+
+    /** Chỉ giữ `count` màn dưới cùng. */
+    fun keep(count: Int): BackStack = BackStack(entries.take(count), nextKey)
 
     override fun equals(other: Any?) = other is BackStack && other.entries == entries
     override fun hashCode() = entries.hashCode()
@@ -153,6 +168,23 @@ class NavState(private val scope: CoroutineScope) {
             stack = BackStack()
             progress.snapTo(1f)
         }
+    }
+
+    /**
+     * Về màn trên cùng khớp `match` nếu nó đã có trong ngăn xếp (màn phía trên đi ra như Back, rồi bỏ hết chúng). Trả về false khi không có màn nào khớp;
+     * chính nó đang ở đỉnh thì đứng yên. Nhờ vậy "mở trang sách" không bao giờ đẩy trùng một trang.
+     */
+    fun popTo(match: (Destination) -> Boolean): Boolean {
+        val at = stack.entries.indexOfLast { match(it.destination) }
+        if (at < 0) return false
+        if (at == stack.size - 1) return true
+        job?.cancel()
+        job = scope.launch {
+            progress.animateTo(0f, Motion.popOut(progress.value))
+            stack = stack.keep(at + 1)
+            progress.snapTo(1f)
+        }
+        return true
     }
 
     /** Back dự đoán: ngón tay kéo `back` (0..1) - màn đi theo ngón tay. Gọi trong coroutine của [PredictiveBackHandler]. */

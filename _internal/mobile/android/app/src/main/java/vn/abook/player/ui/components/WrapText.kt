@@ -17,7 +17,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 
 /**
@@ -63,6 +66,23 @@ fun BasicText(
         },
         overflow, softWrap, maxLines, minLines, emptyMap<String, InlineTextContent>(), color, autoSize,
     )
+}
+
+/**
+ * Dòng phụ nối bằng " · " (trang sách): mỗi cụm là một khối, chỉ xuống dòng sau dấu ([keepClustersTogether]); số đều như [ClockLabel]. Đo từng cụm theo bề ngang thật của chỗ đặt nên
+ * cụm dài hơn cả dòng mới được ngắt bên trong. Trợ năng và test đọc chữ gốc.
+ */
+@Composable
+fun ClusterLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = TextStyle.Default) {
+    val measurer = rememberTextMeasurer()
+    val shown = style.merge(TextStyle(fontFeatureSettings = "tnum"))
+    BoxWithConstraints(modifier.clearAndSetSemantics { this.text = AnnotatedString(text) }) {
+        val width = constraints.maxWidth
+        val shaped = remember(text, width, shown) {
+            keepClustersTogether(text) { cluster -> measurer.measure(cluster, shown, softWrap = false).size.width <= width }
+        }
+        BasicText(shaped, style = shown)
+    }
 }
 
 /** Chữ có kiểu từng đoạn: đi thẳng vào BasicText của foundation, không đổi chữ. */

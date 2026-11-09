@@ -2378,6 +2378,7 @@ export const S = {
   s_mo_studio_cua_0_07ada8e5: (p0: unknown) => "Mở Studio của " + String(p0),
   s_mo_tab_nhac_nen_117e60f2: "Mở tab Nhạc nền",
   s_mo_thu_muc_4bf5b127: "Mở thư mục",
+  s_mo_trang_sach_3f7bd955: "Mở trang sách",
   s_mo_trong_studio_b4b3fe3c: " Mở trong Studio",
   s_mo_xuong_da_dung_4a9a2211: " Mở xưởng đã dựng",
   s_model_doc_hieu_97027daf: "model đọc hiểu",

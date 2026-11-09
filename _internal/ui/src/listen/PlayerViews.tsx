@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
@@ -1287,10 +1287,23 @@ function MusicCreditLine() {
   return <MotionPresence open={Boolean(playing && musicCredit && label)}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
 }
 
-/** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert). */
-function TrackSubtitle() {
+/** Tới trang của cuốn đang nghe: thu màn Đang nghe nếu đang mở; đang đứng ở chính trang ấy thì không đẩy trùng, Back vẫn về đúng chỗ cũ (DESIGN.md L3c). */
+function useOpenTrackBook(bookId: string | undefined) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { setExpanded } = useNowPlaying();
+  return useCallback(() => {
+    setExpanded(false);
+    if (bookId && pathname !== `/book/${bookId}`) navigate(`/book/${bookId}`);
+  }, [bookId, navigate, pathname, setExpanded]);
+}
+
+/** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert).
+ *  Tên sách là nút tới trang sách; dòng đang nói việc khác thì chỉ là chữ. `look`: "bar" một dòng ở thanh phát, "screen" ở màn Đang nghe (có dấu ›), "reading" một dòng cạnh bìa nhỏ. */
+function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
   const { track, purpose, atEnd, playing, buffering } = usePlayer();
   const speaking = useSpeaking();
+  const openBook = useOpenTrackBook(track?.bookId);
   // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy S.s_dang_chuan_bi_giong_doc_25f86ccf rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
   const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
   if (!track) return <MotionRegion />;
@@ -1299,7 +1312,18 @@ function TrackSubtitle() {
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
-      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : track.bookTitle}
+      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : (
+        <button
+          type="button"
+          data-track-book
+          onClick={openBook}
+          aria-label={S.s_mo_trang_sach_3f7bd955}
+          title={track.bookTitle}
+          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words")}
+        >
+          {track.bookTitle}{look === "screen" && <span aria-hidden>{"\u00a0›"}</span>}
+        </button>
+      )}
     </MotionRegion>
   );
 }
@@ -1549,22 +1573,26 @@ export function PlayerBar({
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" compact />
         <div className="flex h-16 items-center gap-3 px-3">
-          {/* title: tên chương / sách bị cắt S.s_copy_e825d35cde60 khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
-          <button
-            type="button"
-            onClick={() => setExpanded(true)}
-            className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
-            aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
-            title={`${track.chapterTitle} · ${track.bookTitle}`}
-          >
-            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
-            <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-              <div data-np="book" className="truncate text-xs text-fg-2">
-                <TrackSubtitle />
+          {/* title: tên chương / sách bị cắt S.s_copy_e825d35cde60 khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1).
+              Nút mở Đang nghe phủ cả vùng (nút không chứa được nút); tên sách là nút riêng nằm trên nó, tới trang sách. */}
+          <div className="relative flex min-w-0 flex-1 items-center gap-3 text-left">
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="touch-row absolute inset-0"
+              aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
+              title={`${track.chapterTitle} · ${track.bookTitle}`}
+            />
+            <div className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
+              <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
+              <div className="min-w-0">
+                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+                <div data-np="book" className="truncate text-xs text-fg-2">
+                  <TrackSubtitle look="bar" />
+                </div>
               </div>
             </div>
-          </button>
+          </div>
           <button
             type="button"
             onClick={withFeedback("playPause", toggle)}
@@ -1599,21 +1627,25 @@ export function PlayerBar({
           hay cửa sổ hẹp): hai hàng - tên + cụm nút (cụm nút được xuống dòng) ở trên, nút phát + thanh tua cả hàng dưới - không nút nào chồng nút nào (soát a67:
           150 % chồng 9 cặp, 200 % chồng 12 cặp). Cao theo nội dung, tối thiểu 76 px như cũ. */}
       <div className="grid min-h-[4.75rem] grid-cols-[minmax(10rem,1fr)_minmax(14rem,min(36%,480px))_auto] items-center gap-4 px-4 @max-[56.25rem]:grid-cols-[minmax(8rem,1fr)_14rem_auto] @max-[48rem]:grid-cols-[minmax(min(12rem,45%),1fr)_auto] @max-[48rem]:gap-y-1 @max-[48rem]:py-2">
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="flex min-w-0 items-center gap-3 rounded-control p-1 text-left hover:bg-hover"
-          aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
-          title={`${track.chapterTitle} · ${track.bookTitle}`}
-        >
-          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
-          <div className="min-w-0">
-            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-            <div data-np="book" className="truncate text-xs text-fg-2">
-              <TrackSubtitle />
+        {/* Nút mở Đang nghe phủ cả vùng (nút không chứa được nút); tên sách là nút riêng nằm trên nó, tới trang sách. */}
+        <div className="relative flex min-w-0 items-center gap-3 rounded-control p-1 text-left hover:bg-hover">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="absolute inset-0 rounded-control"
+            aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
+            title={`${track.chapterTitle} · ${track.bookTitle}`}
+          />
+          <div className="pointer-events-none flex min-w-0 items-center gap-3">
+            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
+            <div className="min-w-0">
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+              <div data-np="book" className="truncate text-xs text-fg-2">
+                <TrackSubtitle look="bar" />
+              </div>
             </div>
           </div>
-        </button>
+        </div>
         <div className="flex w-full flex-col items-center gap-0.5 @max-[48rem]:col-span-2 @max-[48rem]:row-start-2">
           <Transport chapters={false} />
           <SeekBar />
@@ -2068,9 +2100,9 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
               <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
             </h2>
-            <p data-np="book" className={cn("mt-0.5 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
-              <TrackSubtitle />
-            </p>
+            <div data-np="book" className={cn("mt-0.5 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+              <TrackSubtitle look={reading ? "reading" : "screen"} />
+            </div>
             {!reading && <MusicCreditLine />}
           </div>
         </div>
