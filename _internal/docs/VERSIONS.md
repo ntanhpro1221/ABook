@@ -6,6 +6,18 @@ chỉ là danh sách commit.
 
 ## Quy ước
 
+### 09-11-2026 — rà dependency khi chuẩn bị 0.4.166
+
+Chạy `scripts/check_dependency_updates.py --pins-ref HEAD` trên `dev/integ166`: không lỗi truy vấn,
+UTMOSv2 ghim Git vẫn trùng upstream và không có model Ollama ghim bị đổi tag. Không nâng dependency,
+model hoặc driver trong đợt phát hành này; pyproject/uv.lock/package-lock giữ dependency như 0.4.165.
+
+Runtime dev dùng chung vẫn lệch ghim ở setuptools (78.1.0/81.0.0), PySide6 (6.11.2/6.11.3),
+ctranslate2 (4.8.2/4.8.3), pytest (9.1.1/9.2.0), ruff (0.16.10/0.17.4),
+cryptography (50.0.0/50.0.2) và Brotli (1.2.0/1.2.1). Đây là số đo môi trường kiểm thử,
+không phải xác nhận runtime Studio đã đồng bộ. Giữ nguyên runtime đang dùng; bản đóng gói phải qua
+smoke và kiểm dependency của chính payload. Không nạp model hoặc chạy suy luận GPU để rà cập nhật.
+
 ### 06-11-2026 — rà upstream trên `dev/upstream` (chưa phát hành)
 
 Nâng PySide6 6.11.2 → 6.11.3, pytest 9.1.1 → 9.2.0, ruff 0.16.10 → 0.17.4;
