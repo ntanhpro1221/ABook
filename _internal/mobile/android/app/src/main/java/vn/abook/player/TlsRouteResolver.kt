@@ -8,7 +8,11 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 /** Single-flight by pinned identity. Two pending I/O jobs per peer, no shared DNS queue between peers. */
-internal class TlsRouteResolver(private val probeMs: Long = 1500, private val failureMs: Long = 2000) {
+internal class TlsRouteResolver(
+    private val probeMs: Long = 1500,
+    private val failureMs: Long = 2000,
+    private val nanoTime: () -> Long = System::nanoTime,
+) {
     private class Peer {
         val pool = Executors.newFixedThreadPool(2) { task -> Thread(task, "peer-tls").apply { isDaemon = true } }
         val pending = mutableMapOf<Future<String?>, String>()
@@ -44,7 +48,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
                 peers.remove(idle.key)
             }
             peer = peers.getOrPut(identity) { Peer() }
-            if (peer.failedAt != 0L && System.nanoTime() - peer.failedAt < TimeUnit.MILLISECONDS.toNanos(failureMs) && peer.failedTargets == targets.toSet()) {
+            if (peer.failedAt != 0L && nanoTime() - peer.failedAt < TimeUnit.MILLISECONDS.toNanos(failureMs) && peer.failedTargets == targets.toSet()) {
                 peer.failure?.let { throw it }
                 return null
             }
@@ -56,7 +60,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
         try {
             val result = select(peer, targets, budget, probe)
             synchronized(lock) {
-                peer.failedAt = if (result == null) System.nanoTime() else 0L
+                peer.failedAt = if (result == null) nanoTime() else 0L
                 peer.failedTargets = targets.toSet()
                 peer.failure = null
                 peer.round = null
@@ -65,7 +69,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
             return result
         } catch (error: Throwable) {
             synchronized(lock) {
-                peer.failedAt = System.nanoTime()
+                peer.failedAt = nanoTime()
                 peer.failedTargets = targets.toSet()
                 peer.failure = error
                 peer.round = null
@@ -76,8 +80,8 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
     }
 
     private fun select(peer: Peer, targets: List<String>, budget: Long, probe: (String) -> Boolean): String? {
-        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(budget)
-        var firstDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(minOf(probeMs, 150L))
+        val deadline = nanoTime() + TimeUnit.MILLISECONDS.toNanos(budget)
+        var firstDeadline = nanoTime() + TimeUnit.MILLISECONDS.toNanos(minOf(probeMs, 150L))
         val start = peer.cursor % targets.size
         peer.pending.keys.removeAll { it.isDone }
         val remaining = (targets.drop(start) + targets.take(start)).filter { it !in peer.pending.values }.toMutableList()
@@ -95,7 +99,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
         if (remaining.isNotEmpty() && peer.pending.size < 2) submit()
         while (jobs.isNotEmpty() || remaining.isNotEmpty()) {
             peer.pending.keys.removeAll { it.isDone && it !in jobs }
-            val now = System.nanoTime()
+            val now = nanoTime()
             val preferred = jobs.size == 1 && remaining.size == targets.size - 1 && now < firstDeadline
             while (remaining.isNotEmpty() && peer.pending.size < (if (preferred) 1 else 2)) submit()
             if (jobs.isEmpty()) break
@@ -112,7 +116,7 @@ internal class TlsRouteResolver(private val probeMs: Long = 1500, private val fa
                 }
                 firstDeadline = 0L
             }
-            if (System.nanoTime() >= deadline) break
+            if (nanoTime() >= deadline) break
         }
         mismatch?.let { throw it }
         return null
