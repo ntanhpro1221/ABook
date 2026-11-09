@@ -183,6 +183,7 @@ def test_active_edge_uses_existing_pipeline_seed_retry(tmp_path, monkeypatch):
     # Bài này chỉ kiểm vòng seed; checkpoint giữ bản thu có bài tích hợp dùng SQLite/WAV thật.
     p._keep_usable_take = lambda *a: None
     p._accept_retained_take = lambda row: committed.append({'generation_seed': len(salts)})
+    p._resume_word_break_retry = lambda *a, **k: None
     monkeypatch.setattr('abook.pipeline.time.sleep', lambda _: None)
     p._process_single_segment({'id': 1, 'stable_id': 'synthetic', 'text': 'Một câu thử.'}, {})
     assert salts == ['primary_0', 'primary_1']

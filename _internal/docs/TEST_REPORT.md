@@ -1,5 +1,11 @@
 # Test report
 
+## 09-11-2026 — word-break retry review fixes
+
+- The retry is now a pure function of the input and its reserved seed: crash at any point, out-of-memory and file-lock faults give the same selected take and metadata as an unbroken run (`tests/test_word_break_gate.py`, invariance matrix over 8 single-take and 7 candidate fault points, resume through the real chapter loop). Removing the chapter-loop re-entry alone fails 20 of those 26 tests.
+- Replay of the 400 saved measurement pairs through the new rule: rank changes 0 of 17 retried pairs; the swallowed-syllable rule demotes one case only and that case already kept its first take. No new audio was generated; GPU overhead of the gate is still unmeasured.
+- The final gate test file on the previous commit: **72 failed, 17 passed**. On this code: **89 passed, 0 failed**. Full `pytest -rf` at the fix commit: **2 failed**, 10,741 passed, 15 skipped, 2 xfailed, 3786 s. Both failures were test stubs/fixtures, fixed after that run: the affected files then gave **170 passed, 0 failed**; the full suite was not repeated, since only those test files changed.
+
 ## 09-11-2026 — word-break retry gate
 
 - Enable the balanced-WAV in-word pause gate only for individually calibrated presets: Ngọc Linh (72.8 ms) and Đức Trí (frozen voice-local closure classifier). Kim Thanh and Đoan Trang remain disabled after failing independent validation/holdout; no sampling or source-text change.
