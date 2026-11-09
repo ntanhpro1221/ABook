@@ -14,12 +14,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chữ hoa tiếng Anh và tên Nhật được đọc liền, đúng cách hơn; không tự chọn giọng dẫn bạn đã loại.
 - Nhãn và kiểu hiển thị thống nhất hơn trên điện thoại, máy tính và web.
 - Trang sách trên cửa sổ hẹp: bấm "Thêm tuỳ chọn" rồi nhả chuột chậm không còn vô tình chọn mục đầu tiên của menu vừa trượt lên.
-- Mở lại sách đã thu nhanh hơn vì không đo lại những câu không đổi.
+- Kiểm từng câu đã thu nhanh hơn nhờ dùng lại số đo của bản thu không đổi: lượt đo 500 bản thu giảm từ 43,9 xuống 3,9 giây.
 - Bỏ khoảng lặng trên web không còn nạp cả chương vào bộ nhớ; chương không quét được thì app báo, sách vẫn phát đủ.
 - Bỏ khoảng lặng trên máy tính không còn báo đang tải ở mỗi khoảng lặng dài, hẹn giờ ngủ đếm tiếp.
 - Đổi tốc độ trên web vẫn có tác dụng khi trình duyệt chặn lưu dữ liệu trang (chỉ báo là chưa lưu được).
 - Hộp chọn giọng nhân vật không còn có giọng miền Trung, và mở đầu bằng giọng bạn chấm tốt nhất.
 - Giao diện máy tính không còn khựng khi nhạc nền chuyển bài hay hẹn giờ ngủ đang giảm dần âm lượng trong lúc đang nghe.
+- Sách mới dùng thứ hạng giọng dẫn nữ mới: Ngọc Linh và Kim Thanh ở bậc đầu.
+- Đọc tiếng kéo dài, tiếng cười và nói lắp thành âm phù hợp; bỏ dấu ghi chú dạng `[note27]` khỏi lời đọc, giữ nguyên chữ hiển thị.
+
+### Lưu ý khi nâng cấp
+
+- Sách Studio đang làm dở phải kiểm và thu lại với bản này; file `.abook` đã xuất vẫn nghe bình thường.
 
 ## [0.4.165] - 2026-11-08
 

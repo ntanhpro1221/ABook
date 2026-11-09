@@ -13,8 +13,9 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   bấm), hẹn giờ ngủ, lịch sử nghe, xuất MP3 có tag. Một cuốn có thể có nhiều hồ sơ nghe: mỗi người trong
   nhà một chỗ nghe riêng, hay nghe lại từ đầu mà vẫn giữ lần trước.
 - **Âm thanh theo ý bạn**: equalizer năm dải với lựa chọn sẵn, tăng trầm, âm lượng app và tăng âm đến 12 dB có bảo vệ đỉnh;
-  chỉnh cao độ riêng với tốc độ đọc trên máy tính, điện thoại và web. Chỉ đổi lúc nghe, không sửa file sách. App chỉ hẹn giờ
-  ngủ khi bạn đặt số phút, hết chương hoặc bật lịch đêm.
+  chỉnh cao độ riêng với tốc độ đọc, Mono, cân bằng trái/phải và bỏ khoảng lặng trên máy tính, điện thoại và web. Có thể lưu
+  riêng cho từng sách. Chỉ đổi lúc nghe, không sửa file sách. Hẹn giờ ngủ theo số phút, hết chương hoặc lịch đêm bạn bật;
+  hẹn lại có âm xác nhận theo tuỳ chọn.
 - **Nghe ngay mọi cuốn sách**: bấm **"Thêm sách"** trong Thư viện (máy tính và điện thoại), chọn file EPUB, Word, PDF có chữ
   hay thư mục `.txt`, rồi bấm phát - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
   màn hình điện thoại vẫn đọc tiếp. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; app hỏi trước khi gửi chữ của đoạn
