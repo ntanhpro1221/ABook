@@ -13,6 +13,8 @@ TestCase {
 
     function all(item, name, out) {
         out = out || []
+        // Thẻ đang bị huỷ (danh sách sách dựng lại) còn nằm trong children dưới dạng null một lúc.
+        if (!item) return out
         if (item.objectName === name) out.push(item)
         for (const child of item.children || []) all(child, name, out)
         return out

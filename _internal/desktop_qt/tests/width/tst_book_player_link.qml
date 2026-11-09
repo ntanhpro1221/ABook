@@ -42,8 +42,8 @@ Item {
         function test_barBookNameOpensThePageNotThePlayer() {
             const made = createTemporaryObject(bar, host, {width: host.width})
             tryCompare(made, "appear", 1)
-            first.target = made; first.signalName = "bookRequested"
-            second.target = made; second.signalName = "openRequested"
+            first.signalName = "bookRequested"; first.target = made
+            second.signalName = "openRequested"; second.target = made
             click(findChild(made, "playerBookLink"))
             compare(first.count, 1)
             compare(second.count, 0)
@@ -51,8 +51,8 @@ Item {
         function test_barElsewhereStillOpensThePlayer() {
             const made = createTemporaryObject(bar, host, {width: host.width})
             tryCompare(made, "appear", 1)
-            first.target = made; first.signalName = "bookRequested"
-            second.target = made; second.signalName = "openRequested"
+            first.signalName = "bookRequested"; first.target = made
+            second.signalName = "openRequested"; second.target = made
             click(findChild(made, "barChapterTitle"))
             compare(second.count, 1)
             compare(first.count, 0)
@@ -61,7 +61,7 @@ Item {
             const made = createTemporaryObject(now, host, {width: host.width, height: host.height})
             made.show()
             tryVerify(function() { return made.visible && findChild(made, "playerBookLink").visible })
-            first.target = made; first.signalName = "bookRequested"
+            first.signalName = "bookRequested"; first.target = made
             click(findChild(made, "playerBookLink"))
             compare(first.count, 1)
         }
@@ -71,14 +71,14 @@ Item {
             tryVerify(function() { return made.visible && findChild(made, "nowMore").visible })
             click(findChild(made, "nowMore"))
             tryCompare(findChild(made, "nowMoreMenu"), "open", true)
-            first.target = made; first.signalName = "bookRequested"
+            first.signalName = "bookRequested"; first.target = made
             click(findChild(made, "nowBookPage"))
             compare(first.count, 1)
             tryCompare(findChild(made, "nowMoreMenu"), "open", false)
         }
         function test_coverOfTheLoadedBookOpensThePlayer() {
             const made = bookPage()
-            first.target = made; first.signalName = "nowPlayingRequested"
+            first.signalName = "nowPlayingRequested"; first.target = made
             click(findChild(made, "bookCoverOpen"))
             compare(first.count, 1)
         }
@@ -88,7 +88,7 @@ Item {
         }
         function test_primaryResumesThenOpensThePlayer() {
             const made = bookPage()
-            first.target = made; first.signalName = "nowPlayingRequested"
+            first.signalName = "nowPlayingRequested"; first.target = made
             click(findChild(made, "bookPrimary"))
             tryCompare(first, "count", 1)
         }
@@ -96,7 +96,7 @@ Item {
             const made = bookPage()
             Player.toggle()
             tryVerify(function() { return Player.playing })
-            first.target = made; first.signalName = "nowPlayingRequested"
+            first.signalName = "nowPlayingRequested"; first.target = made
             click(findChild(made, "bookPrimary"))
             verify(!Player.playing)
             compare(first.count, 0)
