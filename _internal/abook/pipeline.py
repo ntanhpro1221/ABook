@@ -126,7 +126,7 @@ from .text_processing import (
     load_and_segment_chapter,
     split_text_for_strategy,
 )
-from .recovery import recover_project
+from .recovery import SignalMetricsCache, recover_project
 from .resource_manager import AdaptiveResourceManager
 from .quality_policy import (
     ANALYSIS_CASTING_STAGE,
@@ -372,6 +372,8 @@ class CriticalResourceStop(RuntimeError):
 
 
 class BookPipeline:
+    _signal_cache: SignalMetricsCache | None = None  # per-WAV waveform measurements, filled on first inspection
+
     def __init__(
         self,
         *,
@@ -3125,12 +3127,17 @@ class BookPipeline:
         if not wav_sha256 or sha256_file(wav) != wav_sha256:
             return False, {}
         expected_text, _anchors = self._spoken_text_and_anchors(dict(row))
+        if self._signal_cache is None:
+            self._signal_cache = SignalMetricsCache(self.db)
+        measurements = self._signal_cache.measurements_for(wav_sha256)
         valid, metrics, _ = inspect_wav(
             wav,
             expected_text,
             self.settings,
             segment=row,
+            signal_measurements=measurements,
         )
+        self._signal_cache.remember(wav_sha256, measurements)
         return valid, metrics if valid else {}
 
     def _existing_segment_is_safe(self, row: Any) -> bool:

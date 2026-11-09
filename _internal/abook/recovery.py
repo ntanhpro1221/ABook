@@ -35,6 +35,29 @@ class RecoveryError(RuntimeError):
     pass
 
 
+class SignalMetricsCache:
+    """Waveform measurements remembered per WAV content hash and measurement version.
+
+    Only the raw measurement is kept; every verdict is still computed from it against the
+    current settings. Shared by recovery and the pipeline's per-segment inspection so a
+    reopened book measures only WAVs it has never seen.
+    """
+
+    def __init__(self, db: ProjectDB) -> None:
+        self._db = db
+        self._version = signal_metrics_cache_version()
+        self._entries = db.load_wav_signal_metrics(self._version)
+
+    def measurements_for(self, wav_sha256: str) -> dict[str, float]:
+        """Return the (possibly empty) dict inspect_wav fills on a miss; pass it to `remember` after."""
+        return dict(self._entries.get(wav_sha256, {}))
+
+    def remember(self, wav_sha256: str, measurements: dict[str, float]) -> None:
+        if measurements and wav_sha256 not in self._entries:
+            self._db.store_wav_signal_metrics(wav_sha256, self._version, measurements)
+            self._entries[wav_sha256] = measurements
+
+
 def _perceptual_qa_enabled(settings: dict) -> bool:
     return bool(settings.get("perceptual_qa", {}).get("enabled", False))
 
@@ -190,8 +213,7 @@ def recover_project(
             return report
 
     accepted_takes = _listener_accepted_takes(db)
-    measurement_version = signal_metrics_cache_version()
-    signal_cache = db.load_wav_signal_metrics(measurement_version)
+    signal_cache = SignalMetricsCache(db)
     for row in db.list_segments(statuses=("signal_passed", "verified", "warning")):
         wav_text = str(row["wav_path"] or "")
         wav = Path(wav_text) if wav_text else None
@@ -204,14 +226,12 @@ def recover_project(
             checksum_ok = bool(row["wav_sha256"]) and checksum == str(row["wav_sha256"])
             if not checksum_required:
                 checksum_ok = True
-            measurements = signal_cache.get(checksum, {})
+            measurements = signal_cache.measurements_for(checksum)
             signal_ok, _, _ = inspect_wav(
                 wav, str(row["text"]), settings, segment=row,
                 signal_measurements=measurements,
             )
-            if measurements and checksum not in signal_cache:
-                db.store_wav_signal_metrics(checksum, measurement_version, measurements)
-                signal_cache[checksum] = measurements
+            signal_cache.remember(checksum, measurements)
             valid = checksum_ok and signal_ok
         if valid and spoken_text_drifted is not None and spoken_text_drifted(row):
             # Bản thu còn nguyên, checksum còn khớp - nhưng nó được làm từ một CHUỖI NÓI khác
