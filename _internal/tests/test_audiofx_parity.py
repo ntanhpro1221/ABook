@@ -1,8 +1,14 @@
 """Playback controls share the same public contract on all three surfaces."""
 from pathlib import Path
 import pytest
+from scripts.ui_copy_source import expand
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def copy_source(path: Path) -> str:
+    language = "kt" if path.suffix == ".kt" else "ts" if path.suffix in {".ts", ".tsx"} else "qml"
+    return expand(path.read_text(encoding="utf-8"), language)
 
 
 @pytest.mark.parametrize("label", ["Phẳng", "Rõ lời", "Trầm ấm", "Bổng", "Giảm chói",
@@ -11,7 +17,7 @@ def test_equalizer_choices_match(label):
     for path in [ROOT / "ui/src/listen/audioFx.ts",
                  ROOT / "mobile/android/app/src/main/java/vn/abook/player/AudioFxDsp.kt",
                  ROOT / "desktop_qt/qml/AudioFxPanel.qml"]:
-        assert label in path.read_text(encoding="utf-8"), path
+        assert label in copy_source(path), path
 
 
 @pytest.mark.parametrize("label", ["Âm lượng", "Tăng âm", "Cao độ", "Về mặc định", "Equalizer", "Tăng trầm",
@@ -21,7 +27,7 @@ def test_audio_panel_copy_matches(label):
     for path in [ROOT / "ui/src/listen/AudioFxPanel.tsx",
                  ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/AudioFxPage.kt",
                  ROOT / "desktop_qt/qml/AudioFxPanel.qml"]:
-        assert label in path.read_text(encoding="utf-8"), path
+        assert label in copy_source(path), path
 
 
 def test_processing_is_narration_only():

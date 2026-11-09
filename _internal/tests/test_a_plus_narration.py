@@ -13,15 +13,16 @@ from tests.test_teller_voice import _book, _events, _identities, _profiles, _set
 
 def test_female_narrator_ranking_matches_the_owner_and_mai_anh_is_unavailable():
     assert VOICE_RANK['narrator']['female'] == (
-        ('Đoan Trang',), ('Ngọc Linh',), ('Kim Thanh', 'Mỹ Duyên', 'Quỳnh Anh', 'Thục Đoan'))
+        ('Ngọc Linh', 'Kim Thanh'), ('Đoan Trang',), ('Mỹ Duyên', 'Quỳnh Anh', 'Thục Đoan'))
     names = [p['name'] for p in narrator_presets('female')]
-    assert names[:2] == ['Đoan Trang', 'Ngọc Linh']
+    assert names[:2] == ['Ngọc Linh', 'Kim Thanh']
     assert 'Mai Anh' not in names
 
 
 def test_alignment_skips_a_top_voice_held_even_by_a_silent_pinned_character(tmp_path):
     paths, db, settings = _book(tmp_path)
-    profile = voice_profile_spec(preset_by_name('Đoan Trang'))
+    # Mai already holds Ngọc Linh; the silent pinned role reserves the other top voice.
+    profile = voice_profile_spec(preset_by_name('Kim Thanh'))
     db.upsert_voice_profile(profile)
     with db.transaction() as conn:
         conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,mention_count,confidence,locked,locked_voice_key,created_at,updated_at)"
@@ -29,7 +30,7 @@ def test_alignment_skips_a_top_voice_held_even_by_a_silent_pinned_character(tmp_
     before = rows(db)
     teller_voice.ensure(paths.root, db, settings)
     with db.connect() as conn:
-        assert conn.execute("SELECT preset_name FROM voice_profiles WHERE voice_key='narrator'").fetchone()[0] == 'Ngọc Linh'
+        assert conn.execute("SELECT preset_name FROM voice_profiles WHERE voice_key='narrator'").fetchone()[0] == 'Đoan Trang'
     assert rows(db)['c1s1'] == before['c1s1']
 
 
@@ -52,7 +53,7 @@ def test_chapter_exception_compares_against_the_aligned_female_base(tmp_path):
     before = rows(db)
     teller_voice.ensure(paths.root, db, settings)
     after = rows(db)
-    assert teller_voice.read(paths.root)['applied']['narrator']['to'] == 'Đoan Trang'
+    assert teller_voice.read(paths.root)['applied']['narrator']['to'] == 'Kim Thanh'
     assert after['c1s0']['voice_profile_id'] == after['c1s4']['voice_profile_id'] == before['c1s3']['voice_profile_id']
     assert after['c1s3']['voice_profile_id'] == before['c1s3']['voice_profile_id']
     assert after['c1s2']['voice_profile_id'] == before['c1s2']['voice_profile_id']
