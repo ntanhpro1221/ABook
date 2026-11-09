@@ -157,7 +157,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6213 chữ (3029 khác nhau), 337 cặp nhãn-icon; native 1934 chữ (1493 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6213 chữ (3029 khác nhau), 337 cặp nhãn-icon; native 1933 chữ (1493 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -811,23 +811,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6213 | 0 / 1934 |
-| dấu ba chấm `…` | 37 / 6213 | 0 / 1934 |
-| kết thúc bằng dấu chấm `.` | 1089 / 6213 | 394 / 1934 |
-| kết thúc bằng `!` | 0 / 6213 | 0 / 1934 |
-| kết thúc bằng `:` | 86 / 6213 | 3 / 1934 |
-| dấu thanh kiểu cũ `oà oá uý` | 465 / 6213 | 176 / 1934 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6213 | 0 / 1934 |
-| số thập phân dấu phẩy `1,5` | 2 / 6213 | 0 / 1934 |
-| số thập phân dấu chấm `1.5` | 0 / 6213 | 0 / 1934 |
-| nhân bằng `×` | 0 / 6213 | 0 / 1934 |
-| nhân bằng `x` sau số | 0 / 6213 | 0 / 1934 |
-| ngăn cách `·` | 141 / 6213 | 34 / 1934 |
-| ngăn cách ` - ` | 277 / 6213 | 81 / 1934 |
-| gạch dài `—`/`–` | 12 / 6213 | 1 / 1934 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6213 | 2 / 1934 |
-| dấu `%` dính số | 0 / 6213 | 1 / 1934 |
-| dấu `%` cách số | 0 / 6213 | 0 / 1934 |
+| dấu ba chấm ASCII `...` | 6 / 6213 | 0 / 1933 |
+| dấu ba chấm `…` | 37 / 6213 | 0 / 1933 |
+| kết thúc bằng dấu chấm `.` | 1089 / 6213 | 394 / 1933 |
+| kết thúc bằng `!` | 0 / 6213 | 0 / 1933 |
+| kết thúc bằng `:` | 86 / 6213 | 3 / 1933 |
+| dấu thanh kiểu cũ `oà oá uý` | 465 / 6213 | 176 / 1933 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6213 | 0 / 1933 |
+| số thập phân dấu phẩy `1,5` | 2 / 6213 | 0 / 1933 |
+| số thập phân dấu chấm `1.5` | 0 / 6213 | 0 / 1933 |
+| nhân bằng `×` | 0 / 6213 | 0 / 1933 |
+| nhân bằng `x` sau số | 0 / 6213 | 0 / 1933 |
+| ngăn cách `·` | 141 / 6213 | 34 / 1933 |
+| ngăn cách ` - ` | 277 / 6213 | 81 / 1933 |
+| gạch dài `—`/`–` | 12 / 6213 | 1 / 1933 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6213 | 2 / 1933 |
+| dấu `%` dính số | 0 / 6213 | 1 / 1933 |
+| dấu `%` cách số | 0 / 6213 | 0 / 1933 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
@@ -882,7 +882,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 |---|---|---|---|---|---|---|---|
 | now-playing | 121 | 120 | 0 | 0 | 32 | 6 | 0 |
 | shared-labels | 31 | 1311 | 0 | 0 | 7 | 0 | 0 |
-| library-book | 204 | 211 | 0 | 0 | 66 | 11 | 0 |
+| library-book | 204 | 210 | 0 | 0 | 66 | 10 | 0 |
 | settings | 117 | 135 | 0 | 0 | 22 | 81 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 161 | 148 | 0 | 0 | 26 | 24 | 0 |
@@ -897,7 +897,7 @@ Thiếu thật ở web - `now-playing`: Chọn; Chọn giọng; Chọn nhạc; G
 
 Thiếu thật ở native - `library-book`: Chờ chương mới
 
-Thiếu thật ở web - `library-book`: Chiếm {}; Chương này chưa có audio.; Chương {}; Nối máy; Sách chưa có chương nào nghe được trên …; Tới chỗ đang nghe; Xoá phần đã tải; Xoá phần đã tải của “{}”?; Đang xoá; Đang đóng file sách
+Thiếu thật ở web - `library-book`: Chiếm {}; Chương này chưa có audio.; Nối máy; Sách chưa có chương nào nghe được trên …; Tới chỗ đang nghe; Xoá phần đã tải; Xoá phần đã tải của “{}”?; Đang xoá; Đang đóng file sách
 
 Thiếu thật ở native - `settings`: ABook {}; ABook{} là bản mới nhất.; Bản mới; Bật Điều khiển sản xuất trên máy tính đ…; Chưa cài; Chưa cập nhật được; Chưa thấy trả lời từ trang phát hành - …; Chưa đổi được lịch đêm; Chất lượng; Chọn thư mục thư viện; Cài đặt chính nằm trên máy tính đang kế…; Cách đọc chung; Cập nhật ABook; Cắm sạc lại thì tự làm tiếp đúng chỗ.; Giọng kể; Kiểm tra bản mới; Lúc đang nhỏ dần: {}.; Máy chủ chưa nhận lịch. Thử lại sau.; Máy này; Máy tính khác; Máy đề xuất; Mẫu thiết lập; Sách mới; Số phút nghe thêm; Thư viện; Tuỳ chọn ở trang này dùng khi đã cài St…; Tạm dừng dùng pin; Đang kiểm tra; Đang tải bản mới; Đang tắt; Đã bật tự chọn nhạc nền; Đã cài; Đã tắt tự chọn nhạc nền; Đã đổi thư mục thư viện; Đổi; Đổi thư mục; Độ dài nhỏ dần
 

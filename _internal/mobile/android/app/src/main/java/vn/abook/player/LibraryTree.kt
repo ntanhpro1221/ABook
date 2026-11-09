@@ -43,6 +43,15 @@ object LibraryTree {
         }
     }
 
+    /**
+     * Tên chương để hiện ở mọi chỗ (thẻ phát, màn khoá, xe hơi, danh sách chương): tên đầy đủ, không có thì tên ngắn, không có nữa thì "Chương N" - không bao
+     * giờ rỗng. Gói sách tạo từ tệp nghe (book.json chỉ có `title`) từng cho thẻ phát tên rỗng, và Android tự điền "ABook is running".
+     */
+    fun chapterTitle(entry: JSONObject): String {
+        fun field(key: String) = entry.optString(key).takeIf { it != "null" }.orEmpty().trim()
+        return field("fullTitle").ifEmpty { field("title") }.ifEmpty { S.s_chuong_0_268b0521(entry.optInt("id")) }
+    }
+
     /** Các chương nghe được của một gói sách: chương có audio, và chương chỉ có chữ (giọng máy đọc to). Chương chưa có audio
      *  cũng chưa có chữ thì không có trong cây (bấm vào không phát được). */
     fun chapters(manifest: JSONObject): List<Playback.Chapter> {
@@ -51,8 +60,8 @@ object LibraryTree {
             val text = textEntry(it)
             val file = it.optString("file").takeIf { file -> file.isNotBlank() && file != "null" }
             when {
-                text.isNotEmpty() -> Playback.Chapter(it.getInt("id"), it.optString("fullTitle"), "", 0.0, text)
-                it.optBoolean("available") && file != null -> Playback.Chapter(it.getInt("id"), it.optString("fullTitle"), file, it.optDouble("duration", 0.0))
+                text.isNotEmpty() -> Playback.Chapter(it.getInt("id"), chapterTitle(it), "", 0.0, text)
+                it.optBoolean("available") && file != null -> Playback.Chapter(it.getInt("id"), chapterTitle(it), file, it.optDouble("duration", 0.0))
                 else -> null
             }
         }
