@@ -49,6 +49,10 @@ qt_add_executable(AudioFxTests tests/test_audiofx.cpp src/timestretch.cpp third_
 target_include_directories(AudioFxTests PRIVATE src third_party)
 target_link_libraries(AudioFxTests PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME AudioFxTests COMMAND AudioFxTests)
+qt_add_executable(TonePresetTests tests/test_tonepresets.cpp)
+target_include_directories(TonePresetTests PRIVATE src)
+target_link_libraries(TonePresetTests PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME TonePresetTests COMMAND TonePresetTests)
 
 # App chỉ dựng trên Windows (Media Foundation, QWindowKit); máy khác (Linux CI, cloud) dựng và chạy mọi bộ thử.
 if(WIN32)
@@ -175,6 +179,8 @@ qt_add_qml_module(ABookDesk
         qml/VolumeControl.qml
         qml/AudioFxSlider.qml
         qml/AudioFxPanel.qml
+        qml/TonePage.qml
+        qml/ToneLabels.js
         qml/MusicLevelSlider.qml
         qml/ReadingSuggestions.qml
         qml/BookCell.qml

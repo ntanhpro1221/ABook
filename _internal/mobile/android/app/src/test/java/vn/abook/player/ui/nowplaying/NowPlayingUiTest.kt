@@ -253,12 +253,25 @@ class NowPlayingUiTest {
         show(sheet = PlayerSheet.Audio)
         shot("audio_light")
         rule.onNodeWithTag("audiofx_voice").assertIsDisplayed()
-        val tones = (0..4).map { rule.onNodeWithTag("audiofx_tone_$it", useUnmergedTree = true).getUnclippedBoundsInRoot() }
-        tones.forEach { assertEquals("Âm sắc xuống dòng: $tones", tones[0].top.value, it.top.value, .5f) }
+        rule.onNodeWithTag("audiofx_tones").assertExists()
         assertTrue(rule.onAllNodesWithText("80 Hz").fetchSemanticsNodes().isEmpty())
-        rule.onNodeWithTag("audiofx_tone_-1", useUnmergedTree = true).performScrollTo().performClick()
+        rule.onNodeWithTag("audiofx_tones").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("80 Hz").assertExists()
+        rule.onNodeWithTag("tone_clear").performClick()
+        rule.runOnIdle { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_audio").assertExists()
+        rule.onNodeWithTag("tone_page").assertDoesNotExist()
+        rule.onNodeWithText("Giọng rõ").assertExists()
+        rule.onNodeWithTag("audiofx_tones").performClick()
+        rule.waitForIdle()
+        rule.runOnIdle { vn.abook.player.AudioFx.changeTone { it.save("Mine");it.edit(2,7.0) } }
+        rule.onNodeWithTag("tone_back").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("tone_overwrite").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_audio").assertExists()
+        assertEquals(7.0,vn.abook.player.AudioFx.current.bands[2],0.0)
         val voice = rule.onNodeWithTag("audiofx_voice").getUnclippedBoundsInRoot()
         val pitch = rule.onNodeWithTag("audiofx_pitch").getUnclippedBoundsInRoot()
         val reset = rule.onNodeWithTag("audiofx_reset").getUnclippedBoundsInRoot()
@@ -280,8 +293,11 @@ class NowPlayingUiTest {
         rule.runOnIdle { window.openSheet(PlayerSheet.Audio) }
         rule.waitForIdle()
         shot("audio_412_light")
-        val tones = (0..4).map { rule.onNodeWithTag("audiofx_tone_$it", useUnmergedTree = true).getUnclippedBoundsInRoot() }
-        tones.forEach { assertEquals("Âm sắc xuống dòng: $tones", tones[0].top.value, it.top.value, .5f) }
+        rule.onNodeWithTag("audiofx_tones").assertIsDisplayed()
+        rule.onNodeWithTag("audiofx_tones").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("tone_page").assertExists()
+
     }
 
     /** Chủ sách 30-10: giờ đổi tại chỗ, không có khung nào mà dòng cũ và dòng mới cùng hiện (trượt). */

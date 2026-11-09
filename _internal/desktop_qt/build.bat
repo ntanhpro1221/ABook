@@ -101,6 +101,8 @@ call :test "%HERE%build\PlayerTests.exe" "%HERE%build\player-test.txt"
 if errorlevel 1 exit /b 1
 call :test "%HERE%build\AudioFxTests.exe" "%HERE%build\audiofx-test.txt"
 if errorlevel 1 exit /b 1
+call :test "%HERE%build\TonePresetTests.exe" "%HERE%build\tonepreset-test.txt"
+if errorlevel 1 exit /b 1
 call :test "%HERE%build\ReadAlongTests.exe" "%HERE%build\readalong-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1

@@ -1,30 +1,27 @@
 import { S } from '@/shared/strings.generated';
 import * as Slider from '@radix-ui/react-slider';
 import * as Switch from '@radix-ui/react-switch';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { MotionRegion } from '@/shared/MotionRegion';
+import { TonePage, type ToneLeaveGuard } from './TonePage';
 import { toast } from '@/shared/toast';
-import { Button, ChoiceRow } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { Collapse } from '@/shared/Collapse';
-import { FX_BANDS, FX_LABELS, VOICE_MAX, fxTone, resetAudioFx, setAudioFx, useAudioFx, voiceLevel, withTone, withVoiceLevel, audioBookOnly, setAudioBookOnly } from './audioFx';
+import { VOICE_MAX, resetAudioFx, setAudioFx, useAudioFx, voiceLevel, withVoiceLevel, audioBookOnly, setAudioBookOnly, useTones } from './audioFx';
 
 /** Trang Âm thanh (DESIGN.md "Âm thanh khi nghe"), cùng thứ tự với Android / Qt: Giọng đọc 0-200 % (100 % = gốc) → Nhạc nền (`music`, ngay dưới) →
  *  Âm sắc một hàng cuộn ngang (dải tần chỉ khi Tự chỉnh) → Mono, Cân bằng, Bỏ khoảng lặng → Riêng sách này → Cao độ ở cuối → Về mặc định (mọi thứ, áp ngay). */
-export function AudioFxPanel({setVolume,music}:{setVolume:(value:number)=>void;music?:ReactNode}) {
+export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:number)=>void;music?:ReactNode;leaveGuard?:ToneLeaveGuard}) {
   const fx=useAudioFx();
   const update:typeof setAudioFx=(value)=>{try {setAudioFx(value);} catch {toast.error(S.s_copy_c669a3bf438d);}};
   const voice=voiceLevel(fx)*100;
-  const tone=fxTone(fx);
-  return <div data-audio-fx className="flex min-w-0 flex-col gap-1">
+  const tones=useTones();
+  const [toneOpen,setToneOpen]=useState(false);
+  return <MotionRegion motionKey={toneOpen} slideIndex={toneOpen?1:0}><div data-audio-fx className="flex min-w-0 flex-col gap-1">
+    {toneOpen?<TonePage onBack={()=>setToneOpen(false)} leaveGuard={leaveGuard}/>:<>
     <FxSlider label={S.s_giong_doc_11f2548d} value={Math.round(voice)} min={0} max={VOICE_MAX*100} step={5} suffix="%" onChange={v=>{const next=withVoiceLevel(v/100);setVolume(next.volume);update({boost:next.boost});}}/>
     {music}
-    <span className="pt-3 text-sm">{S.s_am_sac_8c2f4e1a}</span>
-    <div className="overflow-x-auto [scrollbar-width:none]" data-audio-fx-tones>
-      <ChoiceRow label={S.s_am_sac_8c2f4e1a} className="w-max flex-nowrap whitespace-nowrap" value={String(tone)} options={[...FX_LABELS.map((label,i)=>({value:String(i),label})),{value:'-1',label:S.s_copy_e3518044ceec}]} onChange={value=>update(withTone(Number(value)))}/>
-    </div>
-    <Collapse open={tone<0}>
-      {FX_BANDS.map((label,i)=><FxSlider key={label} label={label} value={fx.bands[i]} min={-12} max={12} onChange={value=>update({preset:-1,bands:fx.bands.map((v,j)=>j===i?value:v)})}/>)}
-      <FxSlider label={S.s_copy_eb4635c58f1d} value={fx.bass} min={0} max={12} onChange={bass=>update({preset:-1,bass})}/>
-    </Collapse>
+    <button type="button" aria-label={S.s_am_sac_8c2f4e1a} className="flex min-h-12 items-center justify-between gap-3 py-2 text-sm" onClick={()=>setToneOpen(true)} data-tone-open><span>{S.s_am_sac_8c2f4e1a}</span><span className="min-w-0 max-w-[60%] break-words text-right text-fg-2">{tones.name}{tones.scoped&&<small className="block">{S.s_copy_0aedb2b2cf2b}</small>}</span></button>
     <FxSwitch label={S.s_copy_6f00156cec07} checked={fx.mono} onChange={mono=>update({mono})}/>
     <FxSlider label={S.s_can_bang_8b88211d} value={fx.balance*100} min={-100} max={100} suffix={S.s_copy_9bf94b95eb12} onChange={v=>update({balance:v/100})}/>
     <FxSwitch label={S.s_copy_289e1cff4cbc} checked={fx.skipSilence} onChange={skipSilence=>update({skipSilence})}/>
@@ -37,7 +34,7 @@ export function AudioFxPanel({setVolume,music}:{setVolume:(value:number)=>void;m
     <FxSwitch label={S.s_copy_0aedb2b2cf2b} checked={audioBookOnly()} onChange={value=>{try{setAudioBookOnly(value);}catch{toast.error(S.s_copy_c669a3bf438d);}}}/>
     <FxSlider label={S.s_copy_519c2d65ca4c} value={fx.pitch} min={-6} max={6} step={.5} suffix={S.s_copy_e9d6329e8255} onChange={pitch=>update({pitch})}/>
     <Button variant="ghost" size="sm" className="self-start px-0" onClick={()=>{try{resetAudioFx();setVolume(1);}catch{toast.error(S.s_copy_c669a3bf438d);}}}>{S.s_ve_mac_dinh_4eb6b300}</Button>
-  </div>;
+  </>}</div></MotionRegion>;
 }
 function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}) {
   return <label className="flex min-h-12 items-center justify-between gap-4 text-sm">{label}

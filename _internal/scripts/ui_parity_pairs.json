@@ -6,7 +6,8 @@
       "web": [
         "listen/PlayerViews.tsx",
         "listen/AudioFxPanel.tsx",
-        "listen/ReadAlongText.tsx"
+        "listen/ReadAlongText.tsx",
+        "listen/TonePage.tsx"
       ],
       "native": [
         "nowplaying/*.kt",

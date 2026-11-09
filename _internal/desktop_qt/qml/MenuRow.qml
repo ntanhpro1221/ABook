@@ -8,10 +8,11 @@ Interactive {
     property string text: ""
     property string icon: ""
     property string value: ""
+    property real valueLimit: 0
     property bool danger: false
 
     property bool selected: false
-    implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 2 * Theme.s8)
+    implicitHeight: Math.max(Theme.buttonHeight, Math.max(label.implicitHeight, valueLabel.implicitHeight) + 2 * Theme.s8)
     Accessible.name: text
     Accessible.checked: selected
 
@@ -36,7 +37,7 @@ Interactive {
         }
         Text {
             id: label
-            width: parent.width - 16 - parent.spacing - (root.value !== "" ? valueLabel.implicitWidth + parent.spacing : 0)
+            width: parent.width - 16 - parent.spacing - (root.value !== "" ? valueLabel.width + parent.spacing : 0)
             wrapMode: Text.Wrap
             text: root.text
             color: root.danger ? Theme.danger : Theme.text
@@ -45,6 +46,8 @@ Interactive {
         }
         Text {
             id: valueLabel
+            width: root.valueLimit > 0 ? Math.min(implicitWidth, root.valueLimit) : implicitWidth
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             visible: root.value !== ""
             text: root.value
             color: Theme.text2

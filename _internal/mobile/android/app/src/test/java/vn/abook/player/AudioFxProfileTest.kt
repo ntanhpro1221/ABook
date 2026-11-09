@@ -16,6 +16,19 @@ import java.nio.ByteOrder
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = android.app.Application::class)
 class AudioFxProfileTest {
+    @Test fun offProcessorPreservesEveryPcm16ValueAfterFiltering() {
+        val processor=AudioFxProcessor()
+        processor.configure(AudioFormat(48000,2,C.ENCODING_PCM_16BIT));processor.flush(StreamMetadata.DEFAULT)
+        AudioFx.update(AudioFxSettings(enabled=true,bands=List(5){12.0},boost=12.0))
+        val peak=ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).putShort(32767).putShort(-32768)
+        peak.flip();processor.queueInput(peak);processor.output
+        AudioFx.update(AudioFxSettings())
+        val input=ByteBuffer.allocateDirect(65536*4).order(ByteOrder.nativeOrder())
+        for(i in -32768..32767){input.putShort(i.toShort());input.putShort((-i-1).toShort())}
+        input.flip();val expected=ByteArray(input.remaining());input.duplicate().get(expected)
+        processor.queueInput(input);val output=processor.output;val actual=ByteArray(output.remaining());output.get(actual)
+        assertArrayEquals(expected,actual)
+    }
     @Test fun monoSourceCanBeBalancedToEitherEar() {
         for(balance in listOf(-1.0,0.0,1.0)) {
             AudioFx.update(AudioFxSettings(balance=balance))
@@ -26,7 +39,7 @@ class AudioFxProfileTest {
             input.flip();processor.queueInput(input)
             val output=processor.output.order(ByteOrder.nativeOrder());assertEquals(4,output.remaining())
             val left=output.short.toInt();val right=output.short.toInt()
-            assertEquals(if(balance==1.0)0 else 5999,left);assertEquals(if(balance== -1.0)0 else 5999,right)
+            assertEquals(if(balance==1.0)0 else 6000,left);assertEquals(if(balance== -1.0)0 else 6000,right)
         }
         AudioFx.update(AudioFxSettings())
     }

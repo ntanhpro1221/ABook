@@ -612,6 +612,6 @@ Item {
         }
     }
     OutputPopover { id: output; anchorItem: moreButton }
-    Popover { id: audioFx; objectName: "nowAudioFx"; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { openMusic: () => { audioFx.close(); music.show() } } }
+    Popover { id: audioFx; closeGuard: action => audioSettings.requestClose(action); objectName: "nowAudioFx"; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { id:audioSettings; openMusic: () => { audioFx.close(); music.show() } } }
     PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
 }

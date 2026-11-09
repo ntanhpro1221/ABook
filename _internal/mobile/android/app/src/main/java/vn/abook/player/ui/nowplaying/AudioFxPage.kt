@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.unit.dp
 import vn.abook.player.AudioFx
 import vn.abook.player.AudioFxSettings
 import vn.abook.player.ui.components.*
@@ -30,7 +31,7 @@ import kotlin.math.roundToInt
  * dải tần chỉ hiện khi Tự chỉnh), các tuỳ chọn tai nghe, Cao độ ở cuối, rồi Về mặc định - đưa MỌI thứ ở trang này về gốc và nghe ngay.
  */
 @Composable
-fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () -> Unit = {}) {
+fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () -> Unit = {}, openTone: () -> Unit = {}) {
     val context = LocalContext.current
     LaunchedEffect(context) { AudioFx.init(context) }
     val fx by AudioFx.state.collectAsState()
@@ -42,18 +43,12 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         FxSlider(S.s_giong_doc_11f2548d, voice, 0.0, AudioFxSettings.VOICE_MAX * 100, 5.0, "${voice.roundToInt()}%", tag = "audiofx_voice",
             default = 100.0) { update(fx.withVoiceLevel(it / 100)) }
         if (music != null && bookId.isNotEmpty()) MusicBlock(music, bookId, openMusic)
-        Section(S.s_am_sac_8c2f4e1a)
-        val tones = remember { AudioFxSettings.LABELS.indices.toList() + -1 }
-        ScrollingTabs(tones, fx.tone, { update(fx.withTone(it)) },
-            label = { if (it < 0) S.s_copy_e3518044ceec else AudioFxSettings.LABELS[it] }, tag = { "audiofx_tone_$it" }, rowTag = "audiofx_tones")
-        Reveal(fx.tone < 0) {
-            Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
-                AudioFxSettings.BAND_LABELS.forEachIndexed { i, name ->
-                    FxSlider(name, fx.bands[i], -12.0, 12.0, 1.0, "${fx.bands[i].roundToInt()} dB", default = 0.0) { db ->
-                        update(fx.copy(preset = -1, bands = fx.bands.mapIndexed { j, v -> if (i == j) db else v }))
-                    }
-                }
-                FxSlider(S.s_copy_eb4635c58f1d, fx.bass, 0.0, 12.0, 1.0, "${fx.bass.roundToInt()} dB") { update(fx.copy(preset = -1, bass = it)) }
+        val toneRevision by AudioFx.toneChanges.collectAsState()
+        val tones = remember(toneRevision) { AudioFx.tones }
+        ListRow(S.s_am_sac_8c2f4e1a, Modifier.pressable(onClick = openTone).testTag("audiofx_tones")) {
+            Column(Modifier.widthIn(max = 180.dp), horizontalAlignment = Alignment.End) {
+                BasicText(tones.name, style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
+                if (tones.scoped) RowHint(S.s_copy_0aedb2b2cf2b)
             }
         }
         Spacer(Modifier.height(Dim.s8))

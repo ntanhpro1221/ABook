@@ -13,7 +13,7 @@ it('persists EQ, manual bands, boost and pitch independently',()=>{
 });
 it('rejects nonfinite settings and clamps bounds',()=>{
   const fx=safeFx({pitch:NaN,bass:99,boost:Infinity,bands:[-99,99,NaN],preset:9});
-  expect(fx).toEqual({...DEFAULT_FX,enabled:false,pitch:0,bass:12,boost:0,bands:[-12,12,0,0,0],preset:4});
+  expect(fx).toEqual({...DEFAULT_FX,enabled:false,pitch:0,bass:12,boost:0,bands:[-12,12,0,0,0],preset:6});
 });
 it('links the limiter envelope and never crosses -1 dBFS',()=>{
   const limiter=new PeakLimiter();let peak=0;

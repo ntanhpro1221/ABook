@@ -24,6 +24,22 @@ object AudioFx {
     private val mutable = MutableStateFlow(AudioFxSettings())
     val state = mutable.asStateFlow()
     private var bookId = ""
+    var tones = ToneLibrary()
+        private set
+    private val toneRevision = MutableStateFlow(0)
+    val toneChanges = toneRevision.asStateFlow()
+    fun changeTone(change: (ToneLibrary) -> Unit) {
+        val next = ToneLibrary.read(tones.json()).also { it.book = bookId }
+        change(next)
+        check(prefs?.edit()?.putString("tones", next.json().toString())?.commit() != false)
+        tones = next
+        toneRevision.value++
+        applyTone()
+    }
+    private fun applyTone() {
+        val s = tones.selected
+        update(current.copy(enabled = s.id != "off", preset = -1, bands = s.bands, bass = 0.0))
+    }
     private val scoped = MutableStateFlow(false)
     val bookOnly = scoped.asStateFlow()
     @Volatile var current = AudioFxSettings()
@@ -32,8 +48,9 @@ object AudioFx {
         if (prefs != null) return
         val p = context.getSharedPreferences("audio_fx", Context.MODE_PRIVATE)
         prefs = p
+        tones = ToneLibrary.read(runCatching { JSONObject(p.getString("tones", "{}") ?: "{}") }.getOrDefault(JSONObject()))
         current = read("shared")
-        mutable.value = current
+        applyTone()
     }
     private fun read(key: String): AudioFxSettings {
         val o = runCatching { JSONObject(prefs?.getString(key, "{}") ?: "{}") }.getOrDefault(JSONObject())
@@ -47,7 +64,9 @@ object AudioFx {
         bookId = id
         scoped.value = id.isNotEmpty() && prefs?.contains("book:$id") == true
         current = read(if (scoped.value) "book:$id" else "shared")
-        mutable.value = current
+        tones.book = id
+        toneRevision.value++
+        applyTone()
         Playback.applyVolume()
         return current
     }
@@ -57,6 +76,7 @@ object AudioFx {
         if (enabled) update(current) else {
             prefs?.edit()?.remove("book:$bookId")?.apply()
             update(read("shared"))
+            applyTone()
         }
     }
     /**
@@ -77,6 +97,7 @@ object AudioFx {
     }
     /** Everything the audio sheet sets goes back to default at once (speed belongs to its own sheet) and is heard right away. */
     fun reset() {
+        changeTone { it.select("off") }
         update(AudioFxSettings(speed = current.speed))
         Playback.unstick()
     }
@@ -115,7 +136,7 @@ class AudioFxProcessor : BaseAudioProcessor() {
             for (ch in 0 until sourceChannels) frame[ch] = inputBuffer.short / 32768.0
             if (sourceChannels == 1) frame[1] = frame[0]
             dsp!!.process(frame)
-            for (ch in frame.indices) output.putShort((frame[ch] * 32767).toInt().toShort())
+            for (ch in frame.indices) output.putShort(kotlin.math.round(frame[ch] * 32768).toInt().coerceIn(-32768,32767).toShort())
         }
         output.flip()
     }

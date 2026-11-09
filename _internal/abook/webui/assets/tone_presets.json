@@ -1,0 +1,89 @@
+{
+  "frequencies": [
+    80,
+    250,
+    1000,
+    4000,
+    12000
+  ],
+  "q": 1.4,
+  "presets": [
+    {
+      "id": "off",
+      "label": "s_tat_3286064e",
+      "bands": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "clear",
+      "label": "s_tone_clear",
+      "bands": [
+        -4,
+        -2,
+        2,
+        3,
+        -2
+      ]
+    },
+    {
+      "id": "warm",
+      "label": "s_tone_warm",
+      "bands": [
+        4,
+        2,
+        0,
+        -1,
+        -2
+      ]
+    },
+    {
+      "id": "bright",
+      "label": "s_sang_8f0c677d",
+      "bands": [
+        -2,
+        -1,
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "soft",
+      "label": "s_tone_soft",
+      "bands": [
+        0,
+        0,
+        0,
+        -3,
+        -5
+      ]
+    },
+    {
+      "id": "earbuds",
+      "label": "s_tone_earbuds",
+      "bands": [
+        3,
+        1,
+        0,
+        2,
+        -2
+      ]
+    },
+    {
+      "id": "speaker",
+      "label": "s_tone_speaker",
+      "bands": [
+        -5,
+        -2,
+        1,
+        3,
+        0
+      ]
+    }
+  ]
+}

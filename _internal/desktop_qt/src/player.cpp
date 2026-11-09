@@ -938,10 +938,10 @@ QVariantMap Player::audioFx() const {
         {QStringLiteral("silenceDb"),m_audioFx.silenceDb},{QStringLiteral("silenceSeconds"),m_audioFx.silenceSeconds},{QStringLiteral("keepSeconds"),m_audioFx.keepSeconds},
         {QStringLiteral("speed"),m_rate},{QStringLiteral("volume"),m_volume},{QStringLiteral("bookOnly"),m_bookOnly}};
 }
-QVariantMap Player::audioProfiles() const { return {{QStringLiteral("shared"),m_sharedAudio},{QStringLiteral("books"),m_bookAudio}}; }
+QVariantMap Player::audioProfiles() const { return {{QStringLiteral("shared"),m_sharedAudio},{QStringLiteral("books"),m_bookAudio},{QStringLiteral("tones"),m_tones.json()}}; }
 void Player::restoreAudioProfiles(const QVariantMap &profiles) {
     if (profiles.contains(QStringLiteral("shared"))) m_sharedAudio=profiles.value(QStringLiteral("shared")).toMap();
-    m_bookAudio=profiles.value(QStringLiteral("books")).toMap(); activateAudioProfile();
+    m_bookAudio=profiles.value(QStringLiteral("books")).toMap(); m_tones.read(profiles.value(QStringLiteral("tones")).toMap()); activateAudioProfile();
 }
 void Player::rememberAudioProfile() {
     if(m_applyingAudio) return;
@@ -955,6 +955,9 @@ void Player::activateAudioProfile() {
     const auto snapshot=m_bookOnly?m_bookAudio.value(m_book.id).toMap():m_sharedAudio;
     m_audioFx=AudioFx::Settings();
     setAudioFx(snapshot);
+    m_tones.book=m_book.id;
+    const auto tone=m_tones.selected();
+    setAudioFx({{QStringLiteral("enabled"),tone.value(QStringLiteral("id"))!=QStringLiteral("off")},{QStringLiteral("preset"),-1},{QStringLiteral("bands"),tone.value(QStringLiteral("bands"))},{QStringLiteral("bass"),0.}});
     const double volume=snapshot.value(QStringLiteral("volume"),1.).toDouble();
     const double speed=snapshot.value(QStringLiteral("speed"),1.).toDouble();
     setVolume(std::isfinite(volume)?std::clamp(volume,0.,1.):1.);
@@ -976,7 +979,7 @@ void Player::setAudioFx(const QVariantMap &value) {
         bool ok=false; const double n=v.toDouble(&ok); return ok && std::isfinite(n)?std::clamp(n,lo,hi):fallback;
     };
     if (value.contains(QStringLiteral("enabled"))) next.enabled=value[QStringLiteral("enabled")].toBool();
-    if (value.contains(QStringLiteral("preset"))) next.preset=int(number(value[QStringLiteral("preset")],0,-1,4));
+    if (value.contains(QStringLiteral("preset"))) next.preset=int(number(value[QStringLiteral("preset")],0,-1,int(ToneCatalog::presets.size())-1));
     if (value.contains(QStringLiteral("bands"))) {
         const auto bands=value[QStringLiteral("bands")].toList();
         for (size_t i=0;i<5;++i) next.bands[i]=number(bands.value(int(i)),0,-12,12);
@@ -997,6 +1000,24 @@ void Player::setAudioFx(const QVariantMap &value) {
     noteInteraction();
     emit audioFxChanged();
     rememberAudioProfile();
+}
+
+QVariantMap Player::toneAction(const QString &action, const QVariantMap &args) {
+    const auto id=args.value(QStringLiteral("id")).toString(),name=args.value(QStringLiteral("name")).toString();QVariantMap result;
+    if(action==QStringLiteral("select"))m_tones.select(id);
+    else if(action==QStringLiteral("prepareLeave"))m_tones.prepareLeave();
+    else if(action==QStringLiteral("discard"))m_tones.discard();
+    else if(action==QStringLiteral("edit"))m_tones.edit(args.value(QStringLiteral("index")).toInt(),args.value(QStringLiteral("value")).toDouble());
+    else if(action==QStringLiteral("scope"))m_tones.scope(args.value(QStringLiteral("enabled")).toBool());
+    else if(action==QStringLiteral("save"))m_tones.save(name,args.value(QStringLiteral("overwrite")).toBool());
+    else if(action==QStringLiteral("rename"))m_tones.rename(id,name);
+    else if(action==QStringLiteral("duplicate"))m_tones.duplicate(id,name);
+    else if(action==QStringLiteral("move"))m_tones.move(id,args.value(QStringLiteral("to")).toInt());
+    else if(action==QStringLiteral("delete"))result=m_tones.remove(id);
+    else if(action==QStringLiteral("undo"))m_tones.undo(args);
+    const auto s=m_tones.selected();
+    setAudioFx({{QStringLiteral("enabled"),s.value(QStringLiteral("id"))!=QStringLiteral("off")},{QStringLiteral("preset"),-1},{QStringLiteral("bands"),s.value(QStringLiteral("bands"))},{QStringLiteral("bass"),0.}});
+    emit audioFxChanged();emit audioProfilesChanged();return result;
 }
 
 void Player::toggleMute() {

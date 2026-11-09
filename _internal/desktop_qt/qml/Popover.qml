@@ -6,6 +6,7 @@ import ABook
 WindowLayer {
     id: root
     property bool open: false
+    property var closeGuard: null
     property Item anchorItem: null
     property int panelWidth: 280
     property int pad: Theme.s12
@@ -47,6 +48,11 @@ WindowLayer {
         Nav.openLayer(root)
     }
     function close() {
+        if (!open) return
+        if (closeGuard) { closeGuard(() => root.closeNow()); return }
+        closeNow()
+    }
+    function closeNow() {
         if (!open) return
         open = false
         focusPending = false

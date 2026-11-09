@@ -1479,13 +1479,19 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
 /** "…" của trình phát: mọi việc ít dùng (nhạc nền, giọng, âm lượng, gợi ý, phát trên máy khác...) nằm trong một bảng, hàng chính chỉ giữ việc
  *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
  *  khi dựng (voiceMenuWaiting). */
+const ToneExitGuard = createContext<React.MutableRefObject<((leave:()=>void)=>void)|null>|null>(null);
 function AudioFxMenu() {
   const {setVolume}=usePlayer();
+  const [open,setOpen]=useState(false);
+  const localGuard=useRef<((leave:()=>void)=>void)|null>(null);
+  const toneGuard=useContext(ToneExitGuard)??localGuard;
+  const change=(next:boolean)=>{if(!next&&toneGuard.current)toneGuard.current(()=>setOpen(false));else setOpen(next);};
   // Nhạc nền ngay dưới Giọng đọc (không còn dòng riêng trong "…"): to nhỏ của lời và nhạc ở cùng một chỗ.
-  return <MenuShell label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel setVolume={setVolume} music={<MusicMenu look="row" />}/></MenuShell>;
+  return <MenuShell open={open} onOpenChange={change} label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel leaveGuard={toneGuard} setVolume={setVolume} music={<MusicMenu look="row" />}/></MenuShell>;
 }
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const toneGuard=useRef<((leave:()=>void)=>void)|null>(null);
   const openRef = useRef(open);
   openRef.current = open;
   useEffect(() => {
@@ -1509,11 +1515,12 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
       focusSelector="[data-player-more]"
       open={open}
       onOpenChange={(value) => {
+        if(!value&&toneGuard.current){toneGuard.current(()=>setOpen(false));return;}
         if (!value && voiceMenuWaiting === scope) voiceMenuWaiting = null;
         setOpen(value);
       }}
     >
-      <div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div>
+      <ToneExitGuard.Provider value={toneGuard}><div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div></ToneExitGuard.Provider>
     </MenuShell>
   );
 }

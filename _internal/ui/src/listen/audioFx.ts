@@ -1,18 +1,19 @@
 import { S } from '@/shared/strings.generated';
+import { ToneLibrary, TONE_CATALOG, BUILTIN_TONES } from './tonePresets';
 import { useSyncExternalStore } from 'react';
 import { toast } from '@/shared/toast';
 import { attachSilenceSkip } from './silenceSkip';
 import { createStereoMatrix } from './audioFxProcessor.js';
 
-export const FX_FREQUENCIES = [80,250,1000,4000,12000];
+export const FX_FREQUENCIES = TONE_CATALOG.frequencies;
 export const FX_BANDS = ['80 Hz','250 Hz','1 kHz','4 kHz','12 kHz'];
-export const FX_LABELS = [S.s_copy_0053dd90f780,S.s_copy_bac2d68d2977,S.s_copy_05798ad73e95,S.s_copy_66823083cf09,S.s_copy_47dbcad94daf];
-export const FX_PRESETS = [[0,0,0,0,0],[-4,-2,2,3,-2],[4,2,0,-1,-2],[-2,-1,0,2,4],[0,0,0,-3,-5]];
+export const FX_LABELS = BUILTIN_TONES.map(p=>p.name);
+export const FX_PRESETS = BUILTIN_TONES.map(p=>p.bands);
 export interface AudioFxSettings { enabled:boolean; preset:number; bands:number[]; bass:number; boost:number; pitch:number; volume:number; speed:number; mono:boolean; balance:number; skipSilence:boolean; silenceDb:number; silenceSeconds:number; keepSeconds:number }
 export const DEFAULT_FX: AudioFxSettings = {enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,volume:1,speed:1,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5};
 const number = (value:unknown,lo:number,hi:number) => typeof value==='number' && Number.isFinite(value)?Math.max(lo,Math.min(hi,value)):0;
 export function safeFx(value:Partial<AudioFxSettings>): AudioFxSettings {
-  return {enabled:value.enabled===true,preset:Math.round(number(value.preset,-1,4)),
+  return {enabled:value.enabled===true,preset:Math.round(number(value.preset,-1,BUILTIN_TONES.length-1)),
     bands:FX_BANDS.map((_,i)=>number(value.bands?.[i],-12,12)),bass:number(value.bass,0,12),boost:number(value.boost,0,12),pitch:number(value.pitch,-6,6),
     volume:typeof value.volume==='number' && Number.isFinite(value.volume)?number(value.volume,0,1):1,
     speed:typeof value.speed==='number' && Number.isFinite(value.speed)?number(value.speed,.5,4):1,
@@ -24,7 +25,16 @@ export function safeFx(value:Partial<AudioFxSettings>): AudioFxSettings {
 let activeBook='';
 const profileKey=()=>activeBook && localStorage.getItem(`abook.audioFx.book:${activeBook}`)!==null?`abook.audioFx.book:${activeBook}`:'abook.audioFx';
 function read(): AudioFxSettings { try { return safeFx(JSON.parse(localStorage.getItem(profileKey())??'{}')); } catch { return {...DEFAULT_FX}; } }
+let tones = new ToneLibrary((()=>{try{return JSON.parse(localStorage.getItem('abook.audioFx.tones')??'{}');}catch{return {};}})());
 let current = read();
+export function getTones(){return tones;}
+export function changeTone(change:(library:ToneLibrary)=>void){
+  const next=new ToneLibrary(JSON.parse(JSON.stringify(tones.data)));next.book=activeBook;change(next);
+  localStorage.setItem('abook.audioFx.tones',JSON.stringify(next.data));tones=next;
+  const s=tones.selected;setAudioFx({enabled:s.id!=='off',preset:-1,bands:s.bands,bass:0});
+}
+export function useTones(){useAudioFx();return tones;}
+current={...current,enabled:tones.selected.id!=='off',preset:-1,bands:tones.selected.bands,bass:0};
 const listeners = new Set<()=>void>();
 export const onAudioFx = (listener:()=>void) => { listeners.add(listener); return ()=>{listeners.delete(listener);}; };
 export function getAudioFx() { return current; }
@@ -34,13 +44,13 @@ export function setAudioFx(value:Partial<AudioFxSettings>) {
   localStorage.setItem(profileKey(),JSON.stringify(next)); current=next;
   for (const listener of listeners) listener();
 }
-export function selectAudioBook(id:string) { activeBook=id;current=read();for(const listener of listeners)listener();return current; }
+export function selectAudioBook(id:string) { activeBook=id;tones.book=id;current={...read(),enabled:tones.selected.id!=='off',preset:-1,bands:tones.selected.bands,bass:0};for(const listener of listeners)listener();return current; }
 export function audioBookOnly() { return !!activeBook && profileKey()!=='abook.audioFx'; }
 export function setAudioBookOnly(enabled:boolean) {
   if(!activeBook || enabled===audioBookOnly())return;
   const key=`abook.audioFx.book:${activeBook}`;
   if(enabled)localStorage.setItem(key,JSON.stringify(current));else localStorage.removeItem(key);
-  current=read();for(const listener of listeners)listener();
+  current={...read(),enabled:tones.selected.id!=='off',preset:-1,bands:tones.selected.bands,bass:0};for(const listener of listeners)listener();
 }
 /** "Giọng đọc" một thanh 0..VOICE_MAX (1 = gốc): dưới gốc là âm lượng, trên gốc là tăng âm (dB) có chặn đỉnh - như Android/Qt. */
 export const VOICE_MAX = 2;
@@ -52,7 +62,7 @@ export const fxTone = (fx:AudioFxSettings) => fx.enabled?fx.preset:0;
 export const withTone = (index:number): Partial<AudioFxSettings> =>
   index===0?{enabled:false,preset:0}:index<0?{enabled:true,preset:-1}:{enabled:true,preset:index,bass:0,bands:[...FX_PRESETS[index]]};
 /** Về mặc định của trang Âm thanh: mọi thứ trong trang về gốc (tốc độ thuộc bảng riêng), áp ngay. */
-export function resetAudioFx() { setAudioFx({...DEFAULT_FX,bands:[...DEFAULT_FX.bands],speed:current.speed}); }
+export function resetAudioFx() { changeTone(t=>t.select('off'));setAudioFx({...DEFAULT_FX,bands:[...DEFAULT_FX.bands],speed:current.speed}); }
 export function useAudioFx() { return useSyncExternalStore(onAudioFx,getAudioFx); }
 export function appVolume() { return current.volume; }
 
@@ -67,7 +77,7 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
   context??=new AudioContext();
   const ctx=context;
   const source=ctx.createMediaElementSource(audio);
-  const filters=FX_FREQUENCIES.map(frequency=>{const f=ctx.createBiquadFilter();f.type='peaking';f.frequency.value=Math.min(frequency,ctx.sampleRate*.45);f.Q.value=1.4;return f;});
+  const filters=createToneFilterNodes(ctx);
   const bass=ctx.createBiquadFilter(); bass.type='lowshelf';bass.frequency.value=120;
   const gain=ctx.createGain(), compressor=ctx.createDynamicsCompressor();
   // Explicit stereo upmix duplicates a mono source; four gains form the matrix.
@@ -75,14 +85,23 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
   compressor.threshold.value=-1; compressor.knee.value=0;compressor.ratio.value=20;compressor.attack.value=.001;compressor.release.value=.08;
   let upstream:AudioNode=matrix.output;
   for (const node of [...filters,bass,gain,compressor]) {upstream.connect(node);upstream=node;}
-  let worklet:AudioWorkletNode|null=null, disposed=false, previousPitch=0;
+  let worklet:AudioWorkletNode|null=null, disposed=false, previousPitch=0, connectedTone:boolean|null=null;
   compressor.connect(ctx.destination);
   const update=()=>{
     const fx=current, at=ctx.currentTime;
+    if(connectedTone!==fx.enabled){
+      connectToneNodes(matrix.output,[...filters,bass],gain,fx.enabled);connectedTone=fx.enabled;
+    }
     filters.forEach((filter,i)=>filter.gain.setTargetAtTime(fx.enabled?fx.bands[i]:0,at,.015));
     bass.gain.setTargetAtTime(fx.enabled?fx.bass:0,at,.015);
     gain.gain.setTargetAtTime(10**(fx.boost/20),at,.015);
     matrix.update(fx.mono,fx.balance);
+    gain.disconnect();compressor.disconnect();worklet?.disconnect();
+    const needsGuard=fx.enabled||fx.boost>0||fx.pitch!==0;
+    let end:AudioNode=gain;
+    if(needsGuard){gain.connect(compressor);end=compressor;}
+    if(worklet&&fx.pitch!==0){end.connect(worklet);end=worklet;}
+    end.connect(ctx.destination);
     if (worklet && fx.pitch!==previousPitch) {worklet.port.postMessage({pitch:fx.pitch});previousPitch=fx.pitch;}
   };
   const unsubscribe=onAudioFx(update); update();
@@ -96,7 +115,7 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
       if (disposed) return;
       worklet=new AudioWorkletNode(ctx,'abook-audio-fx',{processorOptions:{pitch:current.pitch}});
       worklet.port.postMessage({pitch:current.pitch});previousPitch=current.pitch;
-      compressor.disconnect();compressor.connect(worklet);worklet.connect(ctx.destination);
+      update();
     }).catch(()=>{toast.error(S.s_copy_95a6489bbec5);});
   }
   const dispose=()=>{
@@ -108,4 +127,14 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
   };
   graphs.set(audio,{dispose,reset});
   return dispose;
+}
+
+/** Native WebAudio peaking nodes use the same centers and RBJ Q as Android/Qt. */
+export function createToneFilterNodes(ctx:BaseAudioContext){
+  return FX_FREQUENCIES.map(frequency=>{const f=ctx.createBiquadFilter();f.type='peaking';f.frequency.value=Math.min(frequency,ctx.sampleRate*.45);f.Q.value=TONE_CATALOG.q;return f;});
+}
+export function connectToneNodes(source:AudioNode,filters:BiquadFilterNode[],destination:AudioNode,enabled:boolean){
+  source.disconnect();for(const f of filters)f.disconnect();let node:AudioNode=source;
+  if(enabled)for(const f of filters){node.connect(f);node=f;}
+  node.connect(destination);
 }

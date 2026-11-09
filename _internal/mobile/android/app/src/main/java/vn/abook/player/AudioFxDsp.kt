@@ -19,7 +19,7 @@ data class AudioFxSettings(
     val silenceSeconds: Double = 3.0,
     val keepSeconds: Double = 1.5,
 ) {
-    fun safe() = copy(preset = preset.coerceIn(-1, 4),
+    fun safe() = copy(preset = preset.coerceIn(-1, ToneCatalog.presets.lastIndex),
         bands = List(5) { bands.getOrNull(it).finite(0.0, -12.0, 12.0) },
         bass = bass.finite(0.0, 0.0, 12.0), boost = boost.finite(0.0, 0.0, 12.0),
         pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(1.0, 0.0, 1.0),
@@ -40,12 +40,10 @@ data class AudioFxSettings(
         else -> withPreset(index).copy(enabled = true)
     }
     companion object {
-        val FREQUENCIES = doubleArrayOf(80.0, 250.0, 1000.0, 4000.0, 12000.0)
+        val FREQUENCIES = ToneCatalog.frequencies
         const val VOICE_MAX = 2.0
-        val LABELS = listOf(S.s_copy_0053dd90f780, S.s_copy_bac2d68d2977, S.s_copy_05798ad73e95, S.s_copy_66823083cf09, S.s_copy_47dbcad94daf)
-        val PRESETS = listOf(doubleArrayOf(0.0, 0.0, 0.0, 0.0, 0.0),
-            doubleArrayOf(-4.0, -2.0, 2.0, 3.0, -2.0), doubleArrayOf(4.0, 2.0, 0.0, -1.0, -2.0),
-            doubleArrayOf(-2.0, -1.0, 0.0, 2.0, 4.0), doubleArrayOf(0.0, 0.0, 0.0, -3.0, -5.0))
+        val LABELS = ToneCatalog.presets.map { it.name }
+        val PRESETS = ToneCatalog.presets.map { it.bands.toDoubleArray() }
         val BAND_LABELS = listOf("80 Hz", "250 Hz", "1 kHz", "4 kHz", "12 kHz")
     }
 }
@@ -67,7 +65,7 @@ class AudioFxDsp(private val rate: Int, private val channels: Int) {
             fun make(rate: Int, frequency: Double, db: Double, channels: Int, shelf: Boolean = false): Biquad {
                 val w = 2 * PI * min(frequency, rate * 0.45) / rate
                 val a = 10.0.pow(db / 40); val c = cos(w); val s = sin(w)
-                val alpha = s / (2 * 1.4)
+                val alpha = s / (2 * ToneCatalog.Q)
                 if (!shelf) {
                     val a0 = 1 + alpha / a
                     return Biquad((1 + alpha * a) / a0, -2*c/a0, (1-alpha*a)/a0, -2*c/a0, (1-alpha/a)/a0, channels)
@@ -94,6 +92,7 @@ class AudioFxDsp(private val rate: Int, private val channels: Int) {
     }
     /** Caller reuses its PCM frame; no allocations per sample. Instant attack, 80 ms release, -1 dBFS ceiling. */
     fun process(frame: DoubleArray) {
+        if (!settings.enabled && settings.boost == 0.0 && !settings.mono && settings.balance == 0.0) { limiter = 1.0; return }
         if (channels >= 2) {
             if (settings.mono) { val mid = (frame[0] + frame[1]) * 0.5; frame[0] = mid; frame[1] = mid }
             frame[0] *= 1.0 - max(0.0, settings.balance)

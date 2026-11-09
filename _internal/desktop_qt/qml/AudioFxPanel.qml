@@ -1,4 +1,5 @@
 import "UiStrings.js" as S
+import "ToneLabels.js" as ToneLabels
 import QtQuick
 import ABook
 
@@ -7,6 +8,12 @@ import ABook
 Column {
     id: root
     property var fx: Player.audioFx
+    property bool toneOpen: false
+    property var library: Player.tones
+    readonly property string toneName: library.dirty || library.selected.id === "draft" ? S.s_tone_draft : (library.preset.name || ToneLabels.label(library.selected.id) || S.s_tat_3286064e)
+    function requestClose(action) { if(toneOpen)tonePage.leave(() => {root.toneOpen=false;action()});else action() }
+    onToneOpenChanged: { if(toneOpen)Nav.openLayer(tonePage);else Nav.closedLayer(tonePage) }
+    Component.onDestruction: Nav.closedLayer(tonePage)
     // Mở bảng Nhạc nền của cuốn (chọn bài, ghi công); null = không có đường ấy.
     property var openMusic: null
     readonly property real voice: root.fx.boost > 0 ? Math.pow(10, root.fx.boost/20) : Player.volume
@@ -20,39 +27,27 @@ Column {
         else Player.setAudioFx({enabled:true,preset:index})
     }
     function reset() {
+        Player.toneAction("select",{id:"off"})
         Player.setVolume(1)
         Player.setAudioFx({enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5})
     }
     width: parent.width
     spacing: Theme.s4
+    TonePage {
+        id:tonePage;width:root.width;visible:root.toneOpen
+        onBackRequested:root.toneOpen=false
+        onVisibleChanged:if(visible)slide.restart()
+        NumberAnimation { id:slide;target:tonePage;property:"x";from:24;to:0;duration:Theme.reduceMotion?0:Theme.motionMedium }
+    }
+    Column {
+    id:audioMain
+    width:parent.width;visible:!root.toneOpen;spacing:Theme.s4
+    onVisibleChanged:if(visible)backSlide.restart()
+    NumberAnimation { id:backSlide;target:audioMain;property:"x";from:-24;to:0;duration:Theme.reduceMotion?0:Theme.motionMedium }
     Text { width: parent.width; text: S.s_copy_c1303271503d; color: Theme.text; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
     AudioFxSlider { objectName: "audioFxVoice"; width: parent.width; label: S.s_giong_doc_11f2548d; value: Math.round(root.voice*100); from: 0; to: 200; step: 5; suffix: "%"; onPicked: value => root.setVoice(value/100) }
     MenuRow { width: parent.width; visible: root.openMusic !== null && Music.hasMusic; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; onClicked: root.openMusic() }
-    Text { width: parent.width; topPadding: Theme.s8; text: S.s_am_sac_8c2f4e1a; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
-    Flickable {
-        width: parent.width; height: tones.height
-        contentWidth: tones.width; clip: true
-        flickableDirection: Flickable.HorizontalFlick; boundsBehavior: Flickable.StopAtBounds
-        ChoiceRow {
-            id: tones
-            objectName: "audioFxTones"
-            label: S.s_am_sac_8c2f4e1a; value: root.tone
-            options: [{value:0,label:S.s_copy_0053dd90f780},{value:1,label:S.s_copy_bac2d68d2977},{value:2,label:S.s_copy_05798ad73e95},{value:3,label:S.s_copy_66823083cf09},{value:4,label:S.s_copy_47dbcad94daf},{value:-1,label:S.s_copy_e3518044ceec}]
-            onPicked: value => root.setTone(Number(value))
-        }
-    }
-    Column {
-        width: parent.width; visible: root.tone < 0
-        Repeater {
-            model: ["80 Hz","250 Hz","1 kHz","4 kHz","12 kHz"]
-            AudioFxSlider {
-                required property string modelData; required property int index
-                width: root.width; label: modelData; value: root.fx.bands[index]
-                onPicked: value => { const bands=root.fx.bands.slice(); bands[index]=value; Player.setAudioFx({preset:-1,bands:bands}) }
-            }
-        }
-        AudioFxSlider { width: parent.width; label: S.s_copy_eb4635c58f1d; value: root.fx.bass; from: 0; onPicked: value => Player.setAudioFx({preset:-1,bass:value}) }
-    }
+    MenuRow { objectName:"audioFxTones";width:parent.width;valueLimit:width*.55;text:S.s_am_sac_8c2f4e1a;value:root.toneName+(root.library.scoped ? "\u00a0·\u00a0"+S.s_copy_0aedb2b2cf2b : "");icon:"sliders-horizontal";onClicked:root.toneOpen=true }
     Row {
         width: parent.width; height: 48
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_6f00156cec07; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
@@ -78,4 +73,5 @@ Column {
     }
     AudioFxSlider { objectName: "audioFxPitch"; width: parent.width; label: S.s_copy_519c2d65ca4c; value: root.fx.pitch; from: -6; to: 6; step: 0.5; suffix: S.s_copy_e9d6329e8255; onPicked: value => Player.setAudioFx({pitch:value}) }
     TextLink { objectName: "audioFxReset"; text: S.s_ve_mac_dinh_4eb6b300; accent: true; onClicked: root.reset() }
+    }
 }

@@ -49,7 +49,7 @@ import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
-enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music, Look, Audio }
+enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music, Look, Audio, Tone }
 
 /** Sheets translate over a fixed player. There is no scale or translation on the underlying screen. */
 @Composable
@@ -58,18 +58,20 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     val accent = Abook.colors.accent
     val music = model.music
     // Tấm mở từ S.s_them_tuy_chon_a0b4bb6e (Giọng, Nhạc nền): Back về lại tấm ấy, như một trang sâu hơn; tấm mở thẳng thì Back đóng.
-    var parent by remember { mutableStateOf<PlayerSheet?>(null) }
-    LaunchedEffect(window.sheetOpen) { if (!window.sheetOpen) parent = null }
+    val parents = remember { mutableStateListOf<PlayerSheet>() }
+    var toneGuard by remember { mutableStateOf<((() -> Unit) -> Unit)?>(null) }
+    fun leaving(action: () -> Unit) { if(window.sheet==PlayerSheet.Tone && toneGuard!=null) toneGuard!!(action) else action() }
+    fun closeSheet() = leaving { window.closeSheet() }
+    fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }
+    fun back() = leaving { pop() }
+    LaunchedEffect(window.sheetOpen) { if (!window.sheetOpen) parents.clear() }
     LaunchedEffect(window.sheet, window.sheetOpen, state.bookId) {
         if (window.sheetOpen && window.sheet == PlayerSheet.Voice) model.loadVoices()
     }
-    fun deeper(sheet: PlayerSheet) { parent = window.sheet; window.openSheet(sheet) }
-    BackHandler(enabled = window.sheetOpen) {
-        val back = parent
-        if (back != null && back != window.sheet) { parent = null; window.openSheet(back) } else window.closeSheet()
-    }
+    fun deeper(sheet: PlayerSheet) { parents.add(window.sheet); window.openSheet(sheet) }
+    BackHandler(enabled = window.sheetOpen) { back() }
     // Kéo xuống từ bất kỳ chỗ nào trong tấm (sheetSurface, ngưỡng chung SheetClose): theo ngón tay, thả quá ngưỡng thì đóng, không thì về chỗ.
-    val drag = rememberSheetDrag(window::closeSheet)
+    val drag = rememberSheetDrag(::closeSheet)
     LaunchedEffect(window.sheetOpen) { if (window.sheetOpen) drag.reset() }
     val scrim = Abook.colors.scrim
     // Nền tối đậm dần cùng nhịp tấm trượt lên, nhạt dần khi tấm xuống, và nhạt theo ngón tay khi kéo tấm - không bật/tắt.
@@ -79,7 +81,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim, alpha = scrimShown * (1f - drag.offset / drag.height).coerceIn(0f, 1f)) }
-                .pressable(onClick = window::closeSheet).semantics { contentDescription = S.s_dong_5d54c2a1 })
+                .pressable(onClick = ::closeSheet).semantics { contentDescription = S.s_dong_5d54c2a1 })
         }
         transition.AnimatedVisibility(
             visible = { it }, enter = slideInVertically(tween(MotionMs.SLOW)) { it },
@@ -180,7 +182,8 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     }
                     PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Look -> LookPage(window)
-                    PlayerSheet.Audio -> AudioFxPage(music, state.bookId) { deeper(PlayerSheet.Music) }
+                    PlayerSheet.Audio -> AudioFxPage(music, state.bookId, openMusic = { deeper(PlayerSheet.Music) }, openTone = { deeper(PlayerSheet.Tone) })
+                    PlayerSheet.Tone -> TonePage(onBack = ::pop, leaveGuard = { toneGuard = it })
                     PlayerSheet.Voice -> {
                         if (state.voices.isEmpty()) BasicText(S.s_may_nay_chua_co_giong_doc_3449f846, style = Abook.type.bodySmall)
                         else VoiceList(state, model, window)
@@ -253,7 +256,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
     PlayerSheet.Speed -> S.s_toc_do_doc_3657e59d; PlayerSheet.Sleep -> S.s_hen_gio_ngu_21073488; PlayerSheet.Chapters -> S.s_chuong_2d157977
-    PlayerSheet.More -> S.s_them_tuy_chon_a0b4bb6e; PlayerSheet.Voice -> S.s_giong_doc_11f2548d; PlayerSheet.Music -> S.s_nhac_nen_271fb292; PlayerSheet.Look -> S.s_co_chu_d7b231e3; PlayerSheet.Audio -> S.s_copy_c1303271503d
+    PlayerSheet.More -> S.s_them_tuy_chon_a0b4bb6e; PlayerSheet.Voice -> S.s_giong_doc_11f2548d; PlayerSheet.Music -> S.s_nhac_nen_271fb292; PlayerSheet.Look -> S.s_co_chu_d7b231e3; PlayerSheet.Audio -> S.s_copy_c1303271503d; PlayerSheet.Tone -> S.s_am_sac_8c2f4e1a
 }
 
 /** Tấm S.s_co_chu_d7b231e3 (web: ReaderScreen, bảng cỡ chữ và giãn dòng): năm cỡ, ba mức giãn dòng; đổi là thấy ngay ở chữ Đọc theo và được nhớ. */

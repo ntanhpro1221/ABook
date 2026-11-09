@@ -26,5 +26,6 @@ export async function startFrame(id: string, theme: Theme): Promise<void> {
   }
   document.title = `${item.title} · ABook`;
   await runEntry(item, theme, root);
+  if (id === "desktop/player-tone") Object.assign(window, {__toneProbe:(await import("./toneProbe")).toneProbe});
   report();
 }
