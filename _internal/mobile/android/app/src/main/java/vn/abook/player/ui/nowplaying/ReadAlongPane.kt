@@ -109,10 +109,15 @@ fun ReadAlongPane(
             if (!following) { placed = true; return@LaunchedEffect }
             if (!placed) {
                 tracker.settle(placeAt, viewportPx, animate = false)
+                tracker.settled = tracker.target()
                 placed = true
             }
-            snapshotFlow { tracker.target() }.distinctUntilChanged().collectLatest {
-                tracker.settle(placeAt, viewportPx, animate = true)
+            // Chỉ cuộn mượt khi người đọc tiến lên (sang từ ở dòng khác, sang câu). Khung đổi cỡ (chữ mở ra khi vào tab, đổi cỡ chữ) là dàn lại: canh tức thì,
+            // nếu không thì mỗi khung của hoạt cảnh lại khởi động một cú cuộn mượt và danh sách trôi thêm sau khi tab đã mở xong.
+            snapshotFlow { tracker.target() }.distinctUntilChanged().collectLatest { target ->
+                val progressed = target != null && tracker.settled != null && target != tracker.settled
+                tracker.settled = target
+                tracker.settle(placeAt, viewportPx, animate = progressed)
             }
         }
         // Tự cuộn rồi ngừng SETTLE_MS mà dòng đang đọc vẫn trong khung thì theo lại (follow.ts của web); đứng yên ở chỗ khác thì không kéo người đọc đi.
@@ -213,6 +218,8 @@ fun ReadAlongPane(
 private class LineTracker(private val list: LazyListState, private val layouts: Map<Int, TextLayoutResult>, private val position: PlayerPosition) {
     var paragraphs: List<ReadParagraph> by mutableStateOf(emptyList())
     var lead: Int by mutableIntStateOf(0)
+    /** Chỗ đã canh tới lần trước: khác nó mới là người đọc tiến lên. */
+    var settled: ReadFollow.Target? = null
 
     private fun sentence(): Int = ReadAlongLookup.sentence(paragraphs, position.milliseconds.value)
 
