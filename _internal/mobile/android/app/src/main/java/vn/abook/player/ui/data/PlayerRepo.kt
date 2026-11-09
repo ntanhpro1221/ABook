@@ -402,6 +402,10 @@ class PlayerRepo(
         return withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
     }
 
+    /** Chờ cuốn vào trình phát (đã ra lệnh phát, lõi nạp ở luồng nền); false sau 3 giây nếu chưa vào, ví dụ đang chờ bạn đồng ý giọng trực tuyến. */
+    suspend fun awaitLoaded(bookId: String): Boolean =
+        withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
+
     private fun playBook(bookId: String) {
         val generation = loadGeneration
         scope.launch {

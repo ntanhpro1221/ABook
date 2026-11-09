@@ -84,6 +84,7 @@ class BookScreenTest {
 
     private val played = ArrayList<String>()
     private var toggles = 0
+    private var opened = 0
     private var deleted = 0
     private val edited = ArrayList<String>()
     private val actions = BookScreenActions(
@@ -95,6 +96,7 @@ class BookScreenTest {
         readAlong = { played += "read $it" },
         edit = { edited += it.id },
         export = { book, format -> played += "export ${book.id} $format" },
+        openNowPlaying = { opened++ },
     )
 
     private fun chapter(id: Int, duration: Double = 1500.0) = JSONObject().put("id", id).put("fullTitle", "Chương $id: Một cái tên chương khá dài để xuống dòng")
@@ -288,14 +290,50 @@ class BookScreenTest {
         show(detail(listening()))
         rule.onNodeWithTag("book_primary").performClick()
         assertEquals(listOf("book b1"), played)
+        assertEquals("L3b: nút chính phát rồi mở trình phát", 1, opened)
     }
 
     @Test
-    fun primaryTogglesWhenTheBookIsInThePlayer() {
+    fun primaryPausesWithoutOpeningThePlayerWhileTheBookIsPlaying() {
         show(detail(listening()), player = PlayerState(bookId = "b1", chapterId = 3, playing = true))
         rule.onNodeWithTag("book_primary").performClick()
         assertEquals(1, toggles)
         assertTrue(played.isEmpty())
+        assertEquals("nút đang là \"Tạm dừng\": chỉ dừng", 0, opened)
+    }
+
+    @Test
+    fun primaryResumesAndOpensThePlayerWhenTheBookIsPaused() {
+        show(detail(listening()), player = PlayerState(bookId = "b1", chapterId = 3, playing = false))
+        rule.onNodeWithTag("book_primary").performClick()
+        assertEquals(1, toggles)
+        assertEquals(1, opened)
+    }
+
+    @Test
+    fun theRowOfTheLoadedChapterOpensThePlayerAndItsIconToggles() {
+        show(detail(listening()), player = PlayerState(bookId = "b1", chapterId = 3, playing = true))
+        rule.onNodeWithTag("chapter_3").performClick()
+        assertEquals("L3b: chạm dòng chương đang phát", 1, opened)
+        assertEquals(0, toggles)
+        rule.onNode(hasTestTag("chapter_status") and hasAnyAncestor(hasTestTag("chapter_3")), useUnmergedTree = true).performClick()
+        assertEquals("icon đầu dòng vẫn phát / dừng", 1, toggles)
+        assertEquals(1, opened)
+    }
+
+    @Test
+    fun theRowsOfOtherChaptersStillPlayThem() {
+        show(detail(listening()), player = PlayerState(bookId = "b1", chapterId = 3, playing = true))
+        rule.onNodeWithTag("chapter_4").performClick()
+        assertEquals(0, opened)
+        assertEquals(1, played.size)
+    }
+
+    @Test
+    fun theCoverOpensThePlayerOnlyForTheLoadedBook() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_cover").performClick()
+        assertEquals("cuốn chưa nạp: bìa chỉ là hình", 0, opened)
     }
 
     @Test

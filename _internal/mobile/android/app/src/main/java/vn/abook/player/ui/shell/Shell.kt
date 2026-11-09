@@ -10,15 +10,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import vn.abook.player.ui.components.LocalBottomCovered
 import vn.abook.player.ui.motion.BookCoverFlight
 import vn.abook.player.ui.motion.LocalBookCoverFlight
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -65,6 +69,8 @@ import vn.abook.player.ui.nav.Destination
 import vn.abook.player.ui.nav.NavState
 import vn.abook.player.ui.nav.Tab
 import vn.abook.player.ui.nav.TabState
+import vn.abook.player.ui.nav.ownsBottomBar
+import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.addbook.AddBookRoute
@@ -137,6 +143,15 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
         nav.push(Destination.AddBook)
     }
 
+    /** Tên sách ở trình phát: thu cửa sổ rồi tới trang của cuốn. Trang ấy đã có trong ngăn xếp thì về đúng nó, không đẩy trùng; Back từ trang mới về chỗ đang đứng. */
+    suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {
+        sheets.dismiss()
+        window.close()
+        if (nav.popTo { it is Destination.Book && it.book.id == book.id }) return
+        while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+        nav.push(Destination.Book(book))
+    }
+
     /**
      * Thông báo Studio / hàng "Studio" ở Thiết bị mở Studio của một máy: danh sách dự án, thẳng một dự án ở tab đã xin, hay màn con của dự án (đẩy dự án
      * trước để Back về dự án). Thu bảng trượt và cửa sổ Đang nghe như Back; đang ở đúng nơi ấy rồi thì không đẩy thêm màn.
@@ -159,7 +174,7 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
 }
 
 /**
- * Khung app: ngăn xếp màn con (trượt phải / Back dự đoán) trên ba tab (trượt ngang), thanh phát nhỏ trên thanh tab ở mọi màn gốc, bảng trượt trên tất cả.
+ * Khung app: ngăn xếp màn con (trượt phải / Back dự đoán) trên ba tab (trượt ngang), thanh phát nhỏ ở đáy mọi màn (trừ màn có thanh nút đáy riêng), bảng trượt trên tất cả.
  * Gốc = [RootTabs]. `onFirstContent` gọi một lần khi Thư viện đã có nội dung (reportFullyDrawn); ngay sau đó các tab chưa hiện được dựng trước lúc rảnh.
  * `books`: kho của trang sách (đọc chương, đánh dấu, sửa, xoá) - mặc định không có (ảnh chụp chỉ cần phần đầu trang).
  * `sampleClock`: false = the window does not sample the core clock per frame (Robolectric never idles with a frame loop running).
@@ -278,6 +293,13 @@ fun AppShell(
         wasInPip[0] = inPip
     }
     val libraryNow = rememberUpdatedState(library)
+    window.bookPage = remember(shell, player) {
+        {
+            val id = player.state.value.bookId
+            (libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }
+            Unit
+        }
+    }
     val bookActions = remember(shell, player, exports) {
         BookScreenActions(
             back = shell.nav::pop,
@@ -290,6 +312,7 @@ fun AppShell(
             export = { book, format -> shell.nav.push(Destination.Export(book, format)) },
             exportHint = { id -> exports?.hint(id) ?: NoExportHint },
             openBook = { id -> (libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { shell.nav.push(Destination.Book(it)) } },
+            openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },
         )
     }
     if (inPip) {
@@ -303,9 +326,10 @@ fun AppShell(
             NowPlayingLayer(nowPlaying, window, sampleClock) {
                 ShellFrame(
                     nav,
-                    stack = { insets ->
+                    hasTrack = playerState.hasTrack,
+                    stack = { insets, carried ->
                     ScreenStack(
-                        nav = nav, insets = insets,
+                        nav = nav, insets = insets, carried = carried,
                         root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
                         screen = { destination ->
                             when (destination) {
@@ -362,11 +386,16 @@ fun AppShell(
                     )
                     },
                     bars = {
-                        if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
-                            backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = !nav.canPop)
-                        vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
+                        // Thanh báo đứng ngay trên thanh của khung (thanh tab ở gốc, thanh phát nhỏ ở màn con): chúng đã chừa vạch cử chỉ.
+                        val covered = !nav.canPop || (playerState.hasTrack && nav.stack.top?.destination?.ownsBottomBar() == false)
+                        CompositionLocalProvider(LocalBottomCovered provides covered) {
+                            if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
+                                backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = covered)
+                            vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
+                        }
                     },
-                    footer = { RootPlaybackArea(shell, playerState, player, covers, openPlayer, companion) },
+                    miniBar = { MiniBarArea(shell, playerState, player, covers, openPlayer, companion) },
+                    tabBar = { TabBar(shell.tabs) },
                 )
             }
             SheetLayer(shell.sheets)
@@ -376,69 +405,113 @@ fun AppShell(
 }
 
 /**
- * Chỗ chừa ở đáy của các lớp màn, đo bởi [ShellFrame]: lớp gốc (ba tab) nhường chỗ cho thanh báo + chân (thanh phát nhỏ, thanh tab), màn con chỉ nhường chỗ cho
- * thanh báo (chân đã trượt khuất dưới nó). Kích cỡ từng lớp vì thế KHÔNG đổi trong lúc chuyển cảnh - chỉ phép dịch (graphicsLayer) chạy theo khung. Trước đây chân
- * là một khối thu chiều cao trong dòng chảy (Reveal): mỗi khung chuyển cảnh dàn trang lại, vẽ lại cả màn con lẫn gốc, và dựng lại cả chân lúc Back xong
- * (trace Perfetto NATIVE_POLISH: 6-9 ms dựng + 1-2 ms dàn trang mỗi khung trên máy ảo).
+ * Chỗ chừa ở đáy của các lớp màn, đo bởi [ShellFrame]: lớp gốc (ba tab) nhường chỗ cho thanh báo + thanh phát nhỏ + thanh tab; màn con nhường chỗ cho thanh báo + thanh phát nhỏ
+ * (thanh tab đã trượt khuất); màn có thanh nút đáy riêng chỉ nhường chỗ cho thanh báo. Kích cỡ từng lớp vì thế KHÔNG đổi trong lúc chuyển cảnh - chỉ phép dịch (graphicsLayer)
+ * chạy theo khung. Trước đây chân là một khối thu chiều cao trong dòng chảy (Reveal): mỗi khung chuyển cảnh dàn trang lại, vẽ lại cả màn con lẫn gốc, và dựng lại cả chân lúc
+ * Back xong (trace Perfetto NATIVE_POLISH: 6-9 ms dựng + 1-2 ms dàn trang mỗi khung trên máy ảo).
  */
 @Stable
 class LayerInsets {
     var root by mutableIntStateOf(0)
     var screen by mutableIntStateOf(0)
+    var bare by mutableIntStateOf(0)
 }
 
-private fun Modifier.layerInset(insets: LayerInsets, isRoot: Boolean): Modifier = layout { measurable, constraints ->
-    val inset = if (isRoot) insets.root else insets.screen
+private fun Modifier.layerInset(insets: LayerInsets, destination: Destination?): Modifier = layout { measurable, constraints ->
+    val inset = when {
+        destination == null -> insets.root
+        destination.ownsBottomBar() -> insets.bare
+        else -> insets.screen
+    }
     val height = (constraints.maxHeight - inset).coerceAtLeast(0)
     val placeable = measurable.measure(Constraints.fixed(constraints.maxWidth, height))
     layout(constraints.maxWidth, height) { placeable.place(0, 0) }
 }
 
-/** Phần chân đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con đầu tiên trượt vào thì chân trượt xuống theo (1 - p); sâu hơn nữa thì đã khuất. */
-internal fun footerShown(nav: NavState): Float = when (nav.stack.size) {
+/** Phần thanh tab đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con đầu tiên trượt vào thì thanh trượt xuống theo (1 - p); sâu hơn nữa thì đã khuất. */
+internal fun tabBarShown(nav: NavState): Float = when (nav.stack.size) {
     0 -> 1f
     1 -> 1f - nav.progress.value
     else -> 0f
 }
 
 /**
- * Khung đáy của app: từ dưới lên là chân (thanh phát nhỏ + thanh tab), ngăn xếp màn, thanh báo (hoàn tác, lời báo trang). Ba khối được đo MỘT lần ở đây; chân và
- * thanh báo chỉ được đặt bằng lớp vẽ (trượt theo [footerShown]), nên đổi màn không làm đổi dàn trang của ai. Chân luôn nằm trong cây (không dựng lại lúc Back xong);
- * thanh báo nằm TRÊN ngăn xếp để vẫn bấm được khi có màn con, và đứng ngay trên chân khi chân đang lộ.
+ * Phần khối thanh phát nhỏ đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con giữ thanh khi có sách đang nạp (`carried` chạy 0..1 theo [PlayerState.hasTrack]), màn có thanh nút đáy
+ * riêng thì không ([ownsBottomBar]). Đổi màn: đi theo tiến trình của màn trên cùng từ giá trị của màn dưới tới giá trị của nó, nên Back dự đoán kéo thanh theo ngón tay.
+ */
+internal fun miniBarShown(nav: NavState, carried: Float): Float {
+    val entries = nav.stack.entries
+    if (entries.isEmpty()) return 1f
+    val top = if (entries.last().destination.ownsBottomBar()) 0f else carried
+    val below = when {
+        entries.size == 1 -> 1f
+        entries[entries.size - 2].destination.ownsBottomBar() -> 0f
+        else -> carried
+    }
+    return below + (top - below) * nav.progress.value
+}
+
+/**
+ * Khung đáy của app, từ dưới lên: thanh tab, khối thanh phát nhỏ, ngăn xếp màn, thanh báo (hoàn tác, lời báo trang). Các khối được đo MỘT lần ở đây và chỉ được đặt bằng lớp vẽ
+ * (trượt theo [tabBarShown], [miniBarShown]), nên đổi màn không làm đổi dàn trang của ai. Cả hai thanh luôn nằm trong cây (không dựng lại lúc Back xong; thanh phát nhỏ là nguồn
+ * của chuyển động nở trình phát ở mọi màn). Khối thanh phát nhỏ kết thúc bằng dải [navigationClearance] (đứng một mình ở đáy thì nó tự chừa vạch cử chỉ); ở gốc dải ấy nằm khuất
+ * dưới thanh tab, vốn đã chừa rồi. Thanh báo nằm TRÊN ngăn xếp để vẫn bấm được khi có màn con, và đứng ngay trên thanh đang lộ.
  */
 @Composable
 private fun ShellFrame(
     nav: NavState,
-    stack: @Composable (LayerInsets) -> Unit,
+    hasTrack: Boolean,
+    stack: @Composable (LayerInsets, State<Float>) -> Unit,
     bars: @Composable () -> Unit,
-    footer: @Composable () -> Unit,
+    miniBar: @Composable () -> Unit,
+    tabBar: @Composable () -> Unit,
 ) {
     val insets = remember { LayerInsets() }
+    val carried = animateFloatAsState(if (hasTrack) 1f else 0f, if (hasTrack) Motion.Expand else Motion.Collapse, label = "mini-bar-carried")
+    val colors = Abook.colors
+    val clearance = navigationClearance()
     Layout(
         content = {
-            Box(
-                Modifier.layoutId(0).semantics { if (footerShown(nav) <= 0f) hideFromAccessibility() },
-            ) { Column(Modifier.fillMaxWidth()) { footer() } }
-            Box(Modifier.layoutId(1)) { stack(insets) }
-            Column(Modifier.layoutId(2).fillMaxWidth()) { bars() }
+            Box(Modifier.layoutId(TAB_BAR).semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
+            Column(Modifier.layoutId(MINI_BAR).fillMaxWidth().semantics { if (miniBarShown(nav, carried.value) <= 0f) hideFromAccessibility() }) {
+                miniBar()
+                Box(Modifier.fillMaxWidth().height(clearance).background(colors.panel))
+            }
+            Box(Modifier.layoutId(STACK)) { stack(insets, carried) }
+            Column(Modifier.layoutId(BARS).fillMaxWidth()) { bars() }
         },
         modifier = Modifier.fillMaxSize(),
     ) { measurables, constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val loose = Constraints(maxWidth = width, maxHeight = height)
-        val footerPlaceable = measurables.first { it.layoutId == 0 }.measure(loose)
-        val barsPlaceable = measurables.first { it.layoutId == 2 }.measure(loose)
-        insets.root = footerPlaceable.height + barsPlaceable.height
-        insets.screen = barsPlaceable.height
-        val stackPlaceable = measurables.first { it.layoutId == 1 }.measure(Constraints.fixed(width, height))
+        val tabPlaceable = measurables.first { it.layoutId == TAB_BAR }.measure(loose)
+        val miniPlaceable = measurables.first { it.layoutId == MINI_BAR }.measure(loose)
+        val barsPlaceable = measurables.first { it.layoutId == BARS }.measure(loose)
+        val strip = clearance.roundToPx()
+        // Phần thanh tab đứng trên dải chừa đáy của khối thanh phát nhỏ.
+        val tabAbove = tabPlaceable.height - strip
+        insets.root = tabAbove + miniPlaceable.height + barsPlaceable.height
+        insets.screen = (miniPlaceable.height * carried.value).toInt() + barsPlaceable.height
+        insets.bare = barsPlaceable.height
+        val stackPlaceable = measurables.first { it.layoutId == STACK }.measure(Constraints.fixed(width, height))
         layout(width, height) {
-            footerPlaceable.placeWithLayer(0, height - footerPlaceable.height) { translationY = footerPlaceable.height * (1f - footerShown(nav)) }
+            miniPlaceable.placeWithLayer(0, height - miniPlaceable.height) {
+                translationY = miniPlaceable.height * (1f - miniBarShown(nav, carried.value)) - tabAbove * tabBarShown(nav)
+            }
+            tabPlaceable.placeWithLayer(0, height - tabPlaceable.height) { translationY = tabPlaceable.height * (1f - tabBarShown(nav)) }
             stackPlaceable.place(0, 0)
-            barsPlaceable.placeWithLayer(0, height - barsPlaceable.height) { translationY = -footerPlaceable.height * footerShown(nav) }
+            barsPlaceable.placeWithLayer(0, height - barsPlaceable.height) {
+                translationY = -(tabAbove * tabBarShown(nav) + miniPlaceable.height * miniBarShown(nav, carried.value))
+            }
         }
     }
 }
+
+private const val TAB_BAR = 0
+private const val MINI_BAR = 1
+private const val STACK = 2
+private const val BARS = 3
 
 private enum class Layer { Alone, Below, Top }
 
@@ -449,7 +522,7 @@ private const val ROOT_KEY = -1
  * đọc trong graphicsLayer (pha vẽ). Lớp bên dưới đã khuất hẳn thì đẩy ra ngoài màn (không vẽ) nhưng vẫn giữ trong cây: Back không phải dựng lại nó.
  */
 @Composable
-fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets? = null, screen: @Composable (Destination) -> Unit) {
+fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets? = null, carried: State<Float>? = null, screen: @Composable (Destination) -> Unit) {
     val entries = nav.stack.entries
     val count = entries.size
     val background = Abook.colors.bg
@@ -462,9 +535,12 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                     index == count - 1 -> Layer.Alone
                     else -> Layer.Below
                 }
+                val destination = if (index < 0) null else entries[index].destination
+                // Thanh phát nhỏ nằm dưới lớp này thì nó đã chừa vạch cử chỉ. Chỉ đọc qua mốc 0: `carried` chạy theo khung lúc thanh hiện ra.
+                val covered by remember(destination, carried) { derivedStateOf { destination == null || ((carried?.value ?: 0f) > 0f && !destination.ownsBottomBar()) } }
                 Box(
                     // Chừa chỗ cho thanh báo / chân ở đáy NGAY TRONG lớp (kích cỡ lớp cố định suốt chuyển cảnh): xem [LayerInsets].
-                    (if (insets == null) Modifier.fillMaxSize() else Modifier.layerInset(insets, index < 0))
+                    (if (insets == null) Modifier.fillMaxSize() else Modifier.layerInset(insets, destination))
                         .graphicsLayer {
                             val fraction = when (layer) {
                                 Layer.Alone -> 0f
@@ -478,7 +554,9 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                         // Lớp trên chặn chạm: không để chạm xuyên xuống lớp dưới đang trượt lộ ra.
                         .then(if (layer == Layer.Top) Modifier.pointerInput(Unit) {} else Modifier),
                 ) {
-                    if (index < 0) root() else screen(entries[index].destination)
+                    CompositionLocalProvider(LocalBottomCovered provides covered) {
+                        if (destination == null) root() else screen(destination)
+                    }
                 }
             }
         }
@@ -532,11 +610,10 @@ private fun RootTabs(
     }
 }
 
-/** Persistent root footer: transient actions sit ABOVE playback and navigation, in normal layout flow. */
+/** Khối đáy khi nghe: lối sang máy khác đang phát + thanh phát nhỏ; đặt và ẩn hiện bởi [ShellFrame]. */
 @Composable
-private fun RootPlaybackArea(shell: ShellState, player: PlayerState, repo: PlayerRepo, covers: CoverLoader,
+private fun MiniBarArea(shell: ShellState, player: PlayerState, repo: PlayerRepo, covers: CoverLoader,
     openNowPlaying: () -> Unit, companion: vn.abook.player.ui.devices.CompanionRepo?) {
-    val tabs = shell.tabs
     // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
     val last = remember { arrayOf(player) }
     if (player.hasTrack) last[0] = player
@@ -549,7 +626,6 @@ private fun RootPlaybackArea(shell: ShellState, player: PlayerState, repo: Playe
                 MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
             }
         }
-        TabBar(tabs)
     }
 }
 

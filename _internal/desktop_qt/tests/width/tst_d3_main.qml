@@ -9,6 +9,7 @@ TestCase {
     name: "D3Main"
     when: windowShown
     property var win: null
+    readonly property int pageCount: win ? all(win.contentItem, "bookSummary").length : 0
 
     function all(item, name, out) {
         out = out || []
@@ -52,6 +53,26 @@ TestCase {
             compare(loader.active, false)
             compare(loader.item, null)
         }
+    }
+
+    // L3c trong cửa sổ thật: tên sách trên thanh phát mở trang của cuốn đang nghe một lần, bấm nữa không đẩy thêm trang.
+    function test_0_bookNameOpensThePageOnce() {
+        const book = {id: "width", title: "Miền đất", chapters: [{id: 1, index: 1, title: "Chương 1", available: true, duration: 100}], capabilities: {}}
+        DesktopApi.responses["/api/listen/books/width"] = {status: 200, data: book}
+        Player.open("width", 1, 0, true); Player.pause()
+        tryVerify(function() { return Player.loaded })
+        const pages = function() { return all(win.contentItem, "bookSummary").length }
+        const before = pages()
+        const link = function() { return all(win.contentItem, "playerBookLink").filter(item => item.visible)[0] }
+        tryVerify(function() { return link() !== undefined && link().width > 0 })
+        waitForRendering(win.contentItem)
+        mouseClick(link())
+        tryCompare(test, "pageCount", before + 1, 5000, "một chạm, một trang")
+        waitForRendering(win.contentItem)
+        mouseClick(link())
+        wait(100) // fixed: proves absence - bấm lần hai không đẩy thêm trang
+        compare(pages(), before + 1)
+        win.nowPlaying && verify(!win.nowPlaying.open)
     }
 
     function test_1_questionMarkOpensShortcuts() {

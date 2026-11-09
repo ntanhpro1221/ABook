@@ -106,6 +106,7 @@ Item {
         playFrom = barFrame(bar.playButton)
         playTo = itemFrame(fullPlay)
     }
+    signal bookRequested()
     function show() {
         if (open || !Player.loaded) return
         columnScroll.contentY = 0
@@ -284,7 +285,7 @@ Item {
                         font.weight: Theme.weightBold
                         opacity: root.g >= 1 ? 1 : 0
                     }
-                    PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; opacity: root.g >= 1 ? 1 : 0 }
+                    PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; chevron: true; opacity: root.g >= 1 ? 1 : 0; onBookRequested: root.bookRequested() }
                     Text {
                         id: narratorLabel
                         visible: Player.narrator !== ""

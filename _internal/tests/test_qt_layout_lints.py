@@ -154,6 +154,14 @@ def test_wrapping_titles_keep_their_dots():
     assert not loose, "Text xuống dòng hiện tên / tiêu đề phải qua TextWrap.keepDots(...): " + ", ".join(loose)
 
 
+def test_book_meta_keeps_clusters_whole():
+    """Dòng phụ trang sách là Flow của từng cụm (FlowDetail), không phải một Text ghép: "5 giờ / 45 phút" không được gãy."""
+    source = (ROOT / "qml" / "BookPage.qml").read_text(encoding="utf-8")
+    start = source.index('objectName: "bookMeta"')
+    block = source[source.rindex("Flow {", 0, start):source.index("// Tình trạng của cuốn", start)]
+    assert "FlowDetail" in block and "wrapMode" not in block
+
+
 def test_text_block_scanner_matches_braces_outside_strings():
     blocks = list(text_blocks('Item {\n    Text { text: "a { b"; wrapMode: Text.Wrap }\n    Text {\n        text: x.title\n    }\n}'))
     assert [line for line, _ in blocks] == [2, 3]

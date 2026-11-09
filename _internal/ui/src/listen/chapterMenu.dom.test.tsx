@@ -11,7 +11,7 @@ import { ChapterGroups } from "./BookScreen";
 import type { ListenBook, ListenChapter } from "./model";
 
 const state = vi.hoisted(() => ({ player: { track: null, playing: false, toggle: () => {}, play: () => {} } }));
-vi.mock("./player", async (original) => ({ ...(await original<typeof import("./player")>()), usePlayer: () => state.player }));
+vi.mock("./player", async (original) => ({ ...(await original<typeof import("./player")>()), usePlayer: () => state.player, useNowPlaying: () => ({ expanded: false, setExpanded: () => {} }) }));
 vi.mock("./source", async (original) => ({ ...(await original<typeof import("./source")>()), useSource: () => ({ kind: "desktop" }) }));
 
 let root: Root;

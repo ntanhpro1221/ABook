@@ -12,6 +12,11 @@ function formatLengthUp(seconds) {
     return Cast.formatLength(Math.ceil(seconds / 60) * 60)
 }
 
+// Các cụm của dòng phụ trang sách: chi tiết (đã nối " · " ở librarymodel.cpp) + số chương; mỗi cụm một khối không gãy trong Flow của BookPage.
+function metaParts(detail, chapters) {
+    return String(detail || "").split(/\s·\s/).concat(chapters ? [chapters] : []).filter(function(part) { return part !== "" })
+}
+
 function progressOf(book) { return book && book.progress && typeof book.progress === "object" ? book.progress : {} }
 
 function textBookLine(speaks) { return speaks ? S.s_chi_co_chu_u00a0_u00a0nghe_bang_giong_doc_9734cee8 : S.s_chi_co_chu_u00a0_u00a0may_nay_chua_co_gion_3f3880c2 }

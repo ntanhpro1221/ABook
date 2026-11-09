@@ -31,7 +31,7 @@ import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameC
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
-import { usePlayer } from "./player";
+import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
@@ -61,6 +61,8 @@ export interface ChapterActions {
   /** Nghe chương từ giây `at`; chương đang nạp trong trình phát thì phát / tạm dừng. */
   play: (chapter: ListenChapter, at: number) => void;
   toggle: () => void;
+  /** Mở trình phát (hàng chương đang nạp). */
+  open: () => void;
   read: (chapter: ListenChapter) => void;
   done: (chapterId: number, done: boolean) => void;
   rename: (chapter: ListenChapter) => void;
@@ -71,11 +73,13 @@ function useChapterActions(book: ListenBook, onDone: (chapterId: number, done: b
   const player = usePlayer();
   const playBook = usePlayListenBook();
   const navigate = useNavigate();
-  const live = useRef({ book, player, playBook, navigate, onDone, onRename });
-  live.current = { book, player, playBook, navigate, onDone, onRename };
+  const { setExpanded } = useNowPlaying();
+  const live = useRef({ book, player, playBook, navigate, setExpanded, onDone, onRename });
+  live.current = { book, player, playBook, navigate, setExpanded, onDone, onRename };
   return useMemo<ChapterActions>(() => ({
     play: (chapter, at) => void live.current.playBook(live.current.book, chapter.id, at),
     toggle: () => live.current.player.toggle(),
+    open: () => live.current.setExpanded(true),
     read: (chapter) => live.current.navigate(`/book/${live.current.book.id}/read/${chapter.id}`),
     done: (chapterId, done) => live.current.onDone(chapterId, done),
     rename: (chapter) => live.current.onRename?.(chapter),
@@ -178,13 +182,13 @@ const ChapterLine = memo(function ChapterLine({
         )}
       </button>
       {/* Chương chưa có audio vẫn đọc được: bấm vào dòng là mở màn đọc (soát UX 29-09 - trước đây cả dòng bị vô hiệu, chỉ
-          nút "…" hiện khi rê chuột mới có "Đọc chương này"). */}
+          nút "…" hiện khi rê chuột mới có "Đọc chương này"). Chương đang nạp: bấm vào dòng mở trình phát, nút bên trái vẫn phát / dừng (DESIGN.md L3b). */}
       <button
         type="button"
-        onClick={canPlay(chapter) ? onPlay : () => actions.read(chapter)}
-        aria-label={canPlay(chapter) ? undefined : S.s_doc_0_chua_co_audio_baeeb512(chapter.fullTitle)}
+        onClick={!canPlay(chapter) ? () => actions.read(chapter) : current ? actions.open : onPlay}
+        aria-label={!canPlay(chapter) ? S.s_doc_0_chua_co_audio_baeeb512(chapter.fullTitle) : current ? S.s_mo_man_hinh_dang_nghe_2426b4ad : undefined}
         // Nghe được thì nút tên làm đúng việc của nút phát bên trái: bàn phím dừng ở nút phát (đã có tên đầy đủ), chuột vẫn bấm cả dòng.
-        tabIndex={canPlay(chapter) ? -1 : undefined}
+        tabIndex={canPlay(chapter) && !current ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
       >
         <div className={cn("break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
@@ -931,6 +935,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   const tab = TABS.includes(requested as (typeof TABS)[number]) ? (requested as string) : "chapters";
   const { data: book, isLoading, error } = useListenBook(id);
   const player = usePlayer();
+  const { setExpanded } = useNowPlaying();
   const playBook = usePlayListenBook();
   const mutations = useListenMutations(id ?? "");
   const source = useSource();
@@ -1064,7 +1069,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   const readLabel = listening ? S.s_doc_5709880c : latestReading(book) ? S.s_doc_tiep_633d731b : S.s_doc_5709880c;
   // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
   const read = () => navigate(`/book/${book.id}/read${listening && player.track ? `/${player.track.chapterId}` : ""}`);
-  const restart = () => {
+  const restart = async () => {
     const first = chapters.find(canPlay);
     if (!first) return;
     if (listening) {
@@ -1074,7 +1079,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       return;
     }
     const before = point;
-    void playBook(book, first.id, 0);
+    const started = playBook(book, first.id, 0);
     if (before && (before.chapter.id !== first.id || before.at > 30)) {
       toast(S.s_dang_nghe_lai_tu_dau_5ad4fe3c, {
         // Có nút thao tác: đủ lâu để kịp bấm (mặc định 4 giây quá ngắn - soát UX 29-09).
@@ -1082,6 +1087,18 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },
       });
     }
+    await started;
+  };
+  // Nút chính: đang phát cuốn này thì nút là "Tạm dừng", chỉ dừng. Còn lại nút là "nghe": phát rồi mở trình phát của cuốn (DESIGN.md L3b).
+  const listenNow = async () => {
+    if (listening && player.playing) {
+      player.toggle();
+      return;
+    }
+    if (finished) await restart();
+    else if (listening) player.toggle();
+    else await playBook(book);
+    setExpanded(true);
   };
 
   return (
@@ -1099,7 +1116,11 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
       <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pb-6 sm:gap-x-0")}>
-        <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className={cn("w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")} />
+        {/* Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b). Lớp nút phủ lên bìa, nên bắt đầu / thôi nghe không dựng lại bìa. */}
+        <div className={cn("press relative w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")}>
+          <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-full" />
+          {listening && <button type="button" data-book-cover-open aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad} onClick={() => setExpanded(true)} className="absolute inset-0 rounded-cover" />}
+        </div>
         <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
           <p className="tabular mt-1.5 text-sm text-fg-2">
@@ -1180,7 +1201,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
               size="lg"
               data-book-primary
               icon={listenFirst ? (listening && player.playing ? Pause : finished ? RotateCcw : Play) : BookOpen}
-              onClick={listenFirst ? withFeedback("playPause", () => (finished ? restart() : listening ? player.toggle() : void playBook(book))) : read}
+              onClick={listenFirst ? withFeedback("playPause", () => void listenNow()) : read}
               // Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9).
               className="min-w-0 max-w-full max-sm:w-full"
             >

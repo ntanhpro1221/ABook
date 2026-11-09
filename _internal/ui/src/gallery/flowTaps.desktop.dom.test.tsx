@@ -62,6 +62,64 @@ it("L3 mở trình phát: 1 chạm vào thanh phát", async () => {
   expect(taps).toBe(1);
 });
 
+const playerOpen = () => find(/^Thu nhỏ/) || document.querySelector('[role="dialog"][data-state="open"]');
+
+it("L3b trang sách cuốn đang nạp -> trình phát: bấm bìa 1 chạm", async () => {
+  await start("desktop/book");
+  await waitFor(() => document.querySelector("[data-book-cover-open]"), "bìa mở trình phát");
+  taps++;
+  (document.querySelector("[data-book-cover-open]") as HTMLElement).click();
+  await waitFor(playerOpen, "trình phát");
+  expect(taps).toBe(1);
+});
+
+it("L3b trang sách: nút chính phát rồi mở trình phát, 1 chạm", async () => {
+  await start("desktop/book");
+  taps++;
+  (await waitFor(() => document.querySelector<HTMLElement>("[data-book-primary]"), "nút chính")).click();
+  await waitFor(playerOpen, "trình phát");
+  expect(taps).toBe(1);
+});
+
+it("L3b trang sách: dòng chương đang nạp mở trình phát, icon đầu dòng chỉ phát / dừng", async () => {
+  await start("desktop/book");
+  const row = await waitFor(() => [...document.querySelectorAll<HTMLElement>('button[aria-label="Mở màn hình đang nghe"]')].find((button) => button.closest("[data-book-layout] ") && !button.hasAttribute("data-book-cover-open")), "dòng chương đang nạp");
+  const icon = row.parentElement!.querySelector<HTMLElement>("button")!;
+  expect(icon).not.toBe(row);
+  icon.click();
+  await waitFor(() => find(/^Tạm dừng/), "đang phát");
+  expect(playerOpen()).toBeFalsy();
+  taps++;
+  row.click();
+  await waitFor(playerOpen, "trình phát");
+  expect(taps).toBe(1);
+});
+
+it("L3c trình phát -> trang sách: bấm tên sách 1 chạm, thu trình phát", async () => {
+  await start("desktop/player-full");
+  await tap("Mở trang sách");
+  await waitFor(() => window.location.hash === "#/book/suong-mu-2", "trang sách");
+  await waitFor(() => !find(/^Thu nhỏ/), "trình phát thu lại");
+  expect(taps).toBe(1);
+});
+
+it("L3c thanh phát -> trang sách: tên sách trên thanh 1 chạm, không mở trình phát", async () => {
+  await start("desktop/player-playing");
+  await tap("Mở trang sách");
+  await waitFor(() => window.location.hash === "#/book/suong-mu-2", "trang sách");
+  expect(find(/^Thu nhỏ/)).toBeFalsy();
+  expect(taps).toBe(1);
+});
+
+it("L3c đang ở chính trang sách: không đẩy trùng trang", async () => {
+  await start("desktop/book");
+  await waitFor(() => find("Mở trang sách"), "tên sách trên thanh phát");
+  const before = window.history.length;
+  await tap("Mở trang sách");
+  expect(window.location.hash).toBe("#/book/suong-mu-2");
+  expect(window.history.length).toBe(before);
+});
+
 it("L4 nhảy chương: 2 chạm từ trình phát", async () => {
   await start("desktop/player-full");
   await tap("Chương");

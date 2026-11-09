@@ -85,7 +85,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.CheckIcon
-import vn.abook.player.ui.components.keepUnitsTogether
+import vn.abook.player.ui.components.ClusterLabel
 import vn.abook.player.ui.components.CloudDownloadIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
@@ -143,6 +143,8 @@ class BookScreenActions(
     val exportHint: (bookId: String) -> StateFlow<String?> = { NoExportHint },
     /** Mở một cuốn khác của Thư viện ("Mở cuốn ấy" sau khi chuyển hồ sơ sang đó). */
     val openBook: (bookId: String) -> Unit = {},
+    /** Mở trình phát của cuốn này (nở từ thanh phát nhỏ); cuốn vừa ra lệnh phát thì chờ nó vào trình phát rồi mới mở. */
+    val openNowPlaying: (bookId: String) -> Unit = {},
 )
 
 /** Không có việc xuất nào để nói (ảnh chụp, bản thử không dựng màn Xuất). */
@@ -190,6 +192,7 @@ class BookUiState(val bookId: String, private val source: BookSource) {
 /**
  * Trang sách (DESIGN.md §7): đầu trang (bìa · tên · tác giả · giọng · thời lượng, tập / bộ, tiến độ mảnh), MỘT nút chính hổ phách (Nghe / Nghe tiếp · chương /
  * Tạm dừng / Nghe lại từ đầu), hàng phụ cùng kiểu (Tìm · Từ đầu · Thêm), rồi danh sách chương phẳng - chạm chương là phát chương ấy.
+ * Nối với trình phát (DESIGN.md L3b): cuốn đang nạp thì bìa và dòng chương đang phát mở trình phát, icon đầu dòng vẫn phát / dừng; nút chính phát rồi mở trình phát.
  *
  * Danh sách là MỘT LazyColumn (đầu trang là các mục đầu của nó), mọi mục có `key` + `contentType`. Vạch tiến độ của chương đang phát đọc đồng hồ phát
  * trong pha vẽ ([PlayerClock]) - mỗi nhịp không dựng lại hàng nào.
@@ -362,6 +365,7 @@ private fun BookScreenBody(
                                 onPlay = {
                                     if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
                                 },
+                                onOpenPlayer = if (live) ({ actions.openNowPlaying(shown.id) }) else null,
                                 onMore = {
                                     sheets.show { dismiss ->
                                         ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
@@ -396,7 +400,7 @@ private fun BookScreenBody(
                             Modifier.width(bookLeftWidth(width.value).dp).fillMaxHeight().testTag("book_info").fadeEdges(infoScroll).verticalScroll(infoScroll)
                                 .padding(top = Dim.s12, bottom = bottom + Dim.s32),
                         ) {
-                            BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = true) { openRecords(null) }
+                            BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = true, onOpenPlayer = { actions.openNowPlaying(shown.id) }) { openRecords(null) }
                             if (built) BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
                         }
                         Spacer(Modifier.width(Dim.s32))
@@ -418,7 +422,7 @@ private fun BookScreenBody(
                     modifier = Modifier.fillMaxSize().fadeEdges(listNarrow).testTag("book_list"),
                     contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
                 ) {
-                    item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty()) { openRecords(null) } }
+                    item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), onOpenPlayer = { actions.openNowPlaying(shown.id) }) { openRecords(null) } }
                     // Trang vào qua hai khung chờ dựng của Nav.push: khung đầu chỉ dựng đầu trang, khung sau phần còn lại (chưa ai thấy) - khung nặng nhất nhẹ đi gần nửa.
                     if (built) {
                         item(key = "actions", contentType = "actions") {
@@ -450,9 +454,11 @@ private const val TABS_ITEM = 2
 /** Bìa · (tập / bộ) · tên · tác giả · giọng · số chương · thời lượng · dòng tình trạng · tiến độ mảnh. Tên dài xuống dòng, không cắt. */
 @Composable
 private fun BookHead(
-    book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, stacked: Boolean = false, onRecords: () -> Unit,
+    book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, stacked: Boolean = false, onOpenPlayer: () -> Unit, onRecords: () -> Unit,
 ) {
     val colors = Abook.colors
+    // Cuốn đang ở trình phát: chạm bìa mở trình phát; cuốn khác thì bìa chỉ là hình.
+    val coverOpens = if (listening) Modifier.pressable(onClick = onOpenPlayer).semantics { contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad } else Modifier
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
     val info: @Composable ColumnScope.() -> Unit = {
         if (sub.isNotEmpty()) {
@@ -461,7 +467,7 @@ private fun BookHead(
         }
         BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
         Spacer(Modifier.height(Dim.s8))
-        ClockLabel(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
+        ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
         BookPage.statusLine(book)?.let { line ->
             Spacer(Modifier.height(Dim.s8))
             ClockLabel(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
@@ -470,12 +476,12 @@ private fun BookHead(
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
         if (stacked) {
             // Cột trái của hai cột: bìa lớn trên, tên và thông tin dưới (web: bìa w-48 xếp dọc).
-            FlyingBookCover(book, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).testTag("book_cover"))
+            FlyingBookCover(book, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).then(coverOpens).testTag("book_cover"))
             Spacer(Modifier.height(Dim.s16))
             Column(Modifier.fillMaxWidth(), content = info)
         } else {
             Row(Modifier.fillMaxWidth()) {
-                FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).testTag("book_cover"))
+                FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).then(coverOpens).testTag("book_cover"))
                 Spacer(Modifier.width(Dim.s16))
                 Column(Modifier.weight(1f), content = info)
             }
@@ -556,10 +562,15 @@ private fun BookButtons(
                 restart = finished,
                 onClick = {
                     vn.abook.player.Feedback.play("playPause", view)
-                    when {
-                        finished -> restart()
-                        listening -> actions.toggle()
-                        else -> actions.playBook(book.id)
+                    // Đang phát cuốn này thì nút là "Tạm dừng": chỉ dừng. Còn lại nút là "nghe": phát rồi mở trình phát của cuốn.
+                    if (playingHere) actions.toggle()
+                    else {
+                        when {
+                            finished -> restart()
+                            listening -> actions.toggle()
+                            else -> actions.playBook(book.id)
+                        }
+                        actions.openNowPlaying(book.id)
                     }
                 },
             )
@@ -704,6 +715,8 @@ private fun ChapterRow(
     prepared: Boolean,
     producing: Boolean = false,
     onPlay: () -> Unit,
+    /** Chương đang ở trình phát: chạm dòng mở trình phát, chỉ icon đầu dòng phát / dừng. Null: chạm đâu trên dòng cũng phát chương. */
+    onOpenPlayer: (() -> Unit)? = null,
     onMore: () -> Unit,
 ) {
     val colors = Abook.colors
@@ -716,14 +729,19 @@ private fun ChapterRow(
     Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("chapter_row"), verticalAlignment = Alignment.Top) {
         Row(
             Modifier.weight(1f).heightIn(min = 64.dp)
-                .then(if (chapter.playable) Modifier.pressable(onClick = onPlay) else Modifier.semantics { disabled() })
-                .semantics { selected = current }
+                .then(if (chapter.playable) Modifier.pressable(onClick = onOpenPlayer ?: onPlay) else Modifier.semantics { disabled() })
+                .semantics { selected = current; if (onOpenPlayer != null) contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad }
                 .padding(vertical = Dim.s12)
                 .testTag("chapter_${chapter.id}"),
             verticalAlignment = Alignment.Top,
         ) {
             // Biểu tượng đứng giữa DÒNG ĐẦU của tên (cao đúng một dòng chữ 16/24): tên dài xuống dòng thì biểu tượng vẫn thẳng dòng đầu.
-            Box(Modifier.size(Dim.s24, FirstLine).testTag("chapter_status"), contentAlignment = Alignment.CenterStart) {
+            Box(
+                Modifier.size(Dim.s24, FirstLine)
+                    .then(if (onOpenPlayer != null) Modifier.pressable(onClick = onPlay).semantics { contentDescription = if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 } else Modifier)
+                    .testTag("chapter_status"),
+                contentAlignment = Alignment.CenterStart,
+            ) {
                 when {
                     current -> PlayPauseGlyph(playing, colors.accentText, 20.dp)
                     chapter.done -> CheckIcon(colors.success)

@@ -29,8 +29,10 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | # | Luồng | Đích | Các bước |
 |---|---|---|---|
 | L1 | **Lần đầu mở** -> nghe được | ≤ 4 chạm | Thư viện trống: một lời mời "Thêm sách" (nút chính) + dòng phụ "Có máy tính? Nối máy" -> chọn file -> hộp xác nhận (tên, bìa đoán sẵn; chỉ hỏi khi thật cần) -> trang sách -> "Nghe ngay" (đọc máy) hay "Tạo sách nói" (Studio, máy tính) |
-| L2 | **Nghe tiếp** | 1 chạm | Đầu Thư viện: hàng "Đang nghe" (bìa, tên, chương, còn bao lâu, nút phát). Thanh phát thu nhỏ luôn ở đáy mọi màn |
+| L2 | **Nghe tiếp** | 1 chạm | Đầu Thư viện: hàng "Đang nghe" (bìa, tên, chương, còn bao lâu, nút phát). Thanh phát thu nhỏ luôn ở đáy mọi màn, kể cả màn con (trang sách, Cài đặt, Studio); chỉ nhường chỗ ở màn có thanh hành động đáy riêng (Thêm sách, Rà soát, Sửa, Cắt bìa, Tìm bìa, Xuất, Dự án mới). Trang sách ↔ trình phát 1 chạm (L3b, L3c) |
 | L3 | Mở trình phát | 1 | chạm thanh phát thu nhỏ -> trình phát trượt lên; vuốt xuống / Back để thu |
+| L3b | Trang sách -> trình phát của cuốn đó | 1 | cuốn đang nạp: chạm bìa hay dòng chương đang phát (icon đầu dòng vẫn chỉ phát / dừng); nút chính "Nghe tiếp" phát rồi mở trình phát. Nút đang là "Tạm dừng" thì chỉ dừng |
+| L3c | Trình phát -> trang sách | 1 | chạm tên sách dưới tên chương -> trình phát thu lại, tới trang sách (đã có trong ngăn thì quay về đó, không đẩy trùng); Back về màn trước. Máy tính: tên sách trên thanh phát cũng vậy |
 | L4 | Nhảy chương | 2 | trình phát -> "Chương" -> chạm chương |
 | L5 | Hẹn giờ ngủ / tốc độ | 2 | trình phát -> nút -> chọn mức (bảng trượt, Back đóng) |
 | L7 | Đọc theo chữ | 1 | trình phát -> "Đọc theo"; thanh điều khiển tự mờ khi đọc, chạm hiện lại |
@@ -279,6 +281,7 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   Lớp phủ nằm LÊN trên: màn bên dưới đứng yên, không co hay chừa chỗ theo bảng (máy kiểm: gallery/overlayStill.phone.dom.test.tsx).
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
+- **Dòng phụ nhiều cụm** (`A · B · C`): cụm giữa hai "·" không gãy, chỉ xuống dòng ngay sau dấu; cụm dài hơn cả dòng mới được gãy bên trong. Điện thoại `keepClustersTogether` (ClusterLabel), web `DotJoin`, Qt `Flow` + `FlowDetail`; máy kiểm: TextWrapRulesTest, gallery_inspect `cluster-broken`, test_qt_layout_lints.py.
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.
   Thông báo luôn nằm dưới mặt điều khiển của mọi bảng / hộp / menu đang mở, kể cả trong chuyển động mở, đóng và đổi vị trí; không được che nút. Web dịch toast ra khoảng trống ngoài hộp, thiếu chỗ thì mờ dần; Android giữ lời báo trong dòng chảy dưới lớp nổi; Qt đặt toast dưới Modal / Popover. Giữ chuyển động ở mọi nền tảng, kể cả khi giảm chuyển động.
 
@@ -288,8 +291,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   chữ + "Xếp theo" + Tìm. Lưới bìa luôn MỞ (bộ sách nhiều tập gom thành một bìa kèm số tập, chạm mở bộ) - không kệ thu gọn
   che hết bìa. Sách máy kia có dấu nguồn nhỏ góc bìa.
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
-  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng.
-- **Trình phát đầy đủ**: thanh đầu: thu nhỏ · "ĐANG NGHE" · "…"; bìa lớn; tên chương (20) + tên sách; thanh tiến độ + thời gian;
+  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng. Cuốn đang nạp:
+  bìa và dòng chương đang phát mở trình phát (L3b).
+- **Trình phát đầy đủ**: thanh đầu: thu nhỏ · "ĐANG NGHE" · "…"; bìa lớn; tên chương (20) + tên sách (nút "›" tới trang sách, L3c); thanh tiến độ + thời gian;
   hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 3 nút có nhãn (Tốc độ · Hẹn giờ ·
   Chương); đáy: một nút "Đọc theo" rộng cả hàng. Mọi việc khác (nhạc nền, giọng, âm lượng, quay
   lại chỗ vừa nghe, gợi ý, phát trên thiết bị khác) ở "…" của thanh đầu - "Thêm" ở thanh đầu chứ không chiếm một ô hàng phụ, để

@@ -553,6 +553,19 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       { metric: ends ? "separator-ends-line" : "separator-starts-line", value: here.y, referenceValue: (ends ? after : before).y, delta: here.y - (ends ? after : before).y, tolerance: size / 2,
         reason: ends ? "a middle dot separator hangs at the end of a line" : "a middle dot separator begins a line" });
   }
+  // Một cụm của DotJoin xuống dòng bên trong dù vừa cả một dòng ("5 giờ / 45 phút", ảnh chủ sách 09-11): cụm chỉ được gãy khi dài hơn cả dòng.
+  const clusterRuler = document.createElement("canvas").getContext("2d");
+  for (const cluster of document.querySelectorAll(".dot-join > span > span")) {
+    if (!cluster.textContent.trim()) continue;
+    const range = document.createRange(); range.selectNodeContents(cluster);
+    const boxes = [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+    if (!boxes.length || !visible(cluster, rect(cluster.getBoundingClientRect()))) continue;
+    const style = css(cluster), size = Number.parseFloat(style.fontSize), lines = new Set(boxes.map((r) => Math.round(r.y / (size / 2))));
+    if (lines.size < 2) continue;
+    clusterRuler.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const whole = clusterRuler.measureText(cluster.textContent.trim()).width, line = cluster.parentElement.getBoundingClientRect().width;
+    if (whole < line - 1) add("LINE BREAK", cluster, cluster.textContent, boxes.map(rect), { metric: "cluster-broken", value: whole, referenceValue: line, delta: whole - line, tolerance: 1, reason: "a DotJoin cluster that fits one line breaks inside itself" });
+  }
   // Lớp nền đặc đặt tuyệt đối (nhãn, huy hiệu) che chữ trong cùng khung, kể cả chữ vẽ aria-hidden như tên trên bìa vẽ - audit140 V8: nhãn
   // "Máy phòng khách" che tên sách; TEXT-OVER-TEXT bỏ qua vì nhãn có nền riêng còn chữ bìa aria-hidden. Không dùng visible()/elementFromPoint:
   // nhãn thường pointer-events-none. Lớp nổi (dialog, menu, thông báo) là fixed nên không vào đây; nền chuyển màu (mờ mép cuộn) không tính.

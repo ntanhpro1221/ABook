@@ -99,11 +99,30 @@ Item {
         if (before.chapterId !== undefined && (before.chapterId !== first || before.at > 30))
             Api.toast(S.s_dang_nghe_lai_tu_dau_5ad4fe3c, {duration: 8000, action: {label: S.s_quay_lai_cho_cu_fea69b14, run: function() { Player.open(id, before.chapterId, before.at, true) }}})
     }
+    signal nowPlayingRequested()
+    // Nút chính: đang phát cuốn này thì nút là "Tạm dừng", chỉ dừng. Còn lại nút là "nghe": phát rồi mở trình phát của cuốn (DESIGN.md L3b).
     function primary() {
-        if (!bookDetail.hasPoint) root.read()
-        else if (bookDetail.finished) root.restart()
+        if (!bookDetail.hasPoint) { root.read(); return }
+        if (root.listening && Player.playing) { bookDetail.activate(); return }
+        if (bookDetail.finished) root.restart()
         else bookDetail.activate()
+        root.openPlayerWhenLoaded()
     }
+    // Cuốn vừa ra lệnh phát vào trình phát ở luồng khác: chờ nó rồi mới mở; 3 giây chưa vào (lỗi, chờ đồng ý giọng trực tuyến) thì thôi.
+    property bool waitingForPlayer: false
+    function openPlayerWhenLoaded() {
+        waitingForPlayer = true
+        playerWait.restart()
+        settlePlayerWait()
+    }
+    function settlePlayerWait() {
+        if (!waitingForPlayer || !listening) return
+        waitingForPlayer = false
+        playerWait.stop()
+        root.nowPlayingRequested()
+    }
+    onListeningChanged: settlePlayerWait()
+    Timer { id: playerWait; interval: 3000; onTriggered: root.waitingForPlayer = false }
     function find() { finder.begin(root.book.bookId, root.book.title || root.fullBook.title || "", root.fullBook.chapters || []) }
     readonly property bool canToggleFinished: fullBook.id !== undefined && fullBook.stage !== "text"
     readonly property bool finishedNow: Boolean(fullBook.progress && fullBook.progress.finished)
@@ -327,6 +346,17 @@ Item {
                 coverKey: root.book.coverKey || ""
                 title: root.book.title || ""
                 radius: Theme.radiusCover
+                // Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b).
+                Interactive {
+                    objectName: "bookCoverOpen"
+                    visible: root.listening
+                    anchors.fill: parent
+                    ringRadius: Theme.radiusCover
+                    Accessible.role: Accessible.Button
+                    Accessible.name: S.s_mo_man_hinh_dang_nghe_2426b4ad
+                    tip: S.s_mo_man_hinh_dang_nghe_2426b4ad
+                    onClicked: root.nowPlayingRequested()
+                }
             }
             Column {
                 id: info
@@ -354,13 +384,21 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBody
                 }
-                Text {
-                    visible: text !== ""
+                // Mỗi cụm giữa hai "·" là một khối: Flow chỉ xuống hàng giữa hai khối ("5 giờ 45 phút" không gãy), khối dài hơn cả hàng mới gãy bên trong (FlowDetail).
+                Flow {
+                    objectName: "bookMeta"
+                    readonly property var parts: BookText.metaParts(root.book.detail, root.book.chapters > 0 ? root.book.chapters + S.s_chuong_9e6a01dc : "")
+                    visible: parts.length > 0
                     width: parent.width
-                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + S.s_chuong_9e6a01dc : ""].filter(s => !!s).join("\u00a0·\u00a0")
-                    color: Theme.text3
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
+                    spacing: Theme.s4
+                    Repeater {
+                        model: parent.parts
+                        FlowDetail {
+                            required property string modelData
+                            detail: modelData
+                            color: Theme.text3
+                        }
+                    }
                 }
                 // Tình trạng của cuốn: một dòng chữ nhỏ (chỉ có chữ / chưa đủ chương), không hộp, không viên thuốc màu.
                 Text {
@@ -552,10 +590,13 @@ Item {
                     fullTitle: model.fullTitle
                     hasMenu: true
                     menuOpen: chapterMenu.open && root.menuChapter !== null && root.menuChapter.chapterId === model.chapterId
-                    Accessible.name: model.playable ? model.current && Player.playing ? S.s_tam_dung_0_43ccbbf2(model.fullTitle) : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
+                    opensPlayer: model.current && model.playable && root.listening
+                    Accessible.name: model.playable ? row.opensPlayer ? S.s_mo_man_hinh_dang_nghe_2426b4ad : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
+                    onToggleRequested: bookDetail.playChapter(model.chapterId)
                     onClicked: {
                         if (row.onMenuButton) return
-                        if (model.playable) bookDetail.playChapter(model.chapterId)
+                        if (row.opensPlayer) root.nowPlayingRequested()
+                        else if (model.playable) bookDetail.playChapter(model.chapterId)
                         else reader.begin(root.book.bookId, model.chapterId)
                     }
                     onMenuRequested: anchor => root.openChapterMenu(anchor, {chapterId: model.chapterId, title: model.title, subtitle: model.subtitle,

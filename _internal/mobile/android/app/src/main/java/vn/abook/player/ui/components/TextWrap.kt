@@ -57,7 +57,7 @@ fun hasSeparator(text: String): Boolean {
     return false
 }
 
-private fun isBlank(c: Char) = c == ' ' || c == '\u00A0'
+private fun isBlank(c: Char) = c == ' ' || c == '\u00A0' || c == CLUSTER_BREAK
 
 private fun isStandalone(text: String, i: Int): Boolean {
     val before = i == 0 || isBlank(text[i - 1])
@@ -87,6 +87,20 @@ fun keepNumbersTogether(text: String): String = if (text.none { it.isDigit() }) 
 
 // Số đứng trước đơn vị ("chiếm 12 MB") thì để số đi với đơn vị của nó ([keepUnitsTogether]) chứ không kéo thêm chữ phía trước: ngắt trước "12 MB" tốt hơn ngắt giữa "12" và "MB".
 private val numberToken = Regex("""(\p{L}) (\d{1,3})(?!\d|[:.,]\d|[ \u00A0](?:$UNITS)(?!\p{L}))""")
+
+/** Dấu cách rộng 0 (U+200B): chỗ ngắt duy nhất của dòng đã qua [keepClustersTogether], đứng ngay sau "· ". */
+private const val CLUSTER_BREAK = '\u200B'
+
+/**
+ * Dòng nối bằng " · " giữ NGUYÊN từng cụm ("Giọng Đức / Trí · 5 chương · 5 giờ / 45 phút" của ảnh chủ sách 09-11): trong cụm mọi khoảng trắng thành NBSP, chỗ ngắt duy nhất là ngay
+ * sau dấu, và dấu cuối dòng được [BasicText] vẽ trong suốt ([separatorsAtLineEnd]). Cụm dài hơn cả dòng (`fits` = false) thì buộc phải ngắt: nó giữ khoảng trắng của mình.
+ * Cùng luật với DotJoin (web) và MetaFlow (Qt). Chỉ để vẽ.
+ */
+fun keepClustersTogether(text: String, fits: (String) -> Boolean = { true }): String =
+    text.split(" · ").joinToString("\u00A0·\u00A0$CLUSTER_BREAK") { cluster ->
+        val tied = cluster.replace(' ', '\u00A0')
+        if (fits(tied)) tied else cluster
+    }
 
 /** Các luật xuống dòng (số đi liền đơn vị, số ngắn đi liền chữ, dấu ngăn không đầu dòng) trong một bước: chữ mọi nơi trong app qua đây ([BasicText]). */
 fun shapeForWrap(text: String): String = tieSeparators(keepNumbersTogether(keepUnitsTogether(text)))

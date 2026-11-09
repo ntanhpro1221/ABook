@@ -2067,6 +2067,7 @@ internal object S {
     const val s_mo_studio_cua_may_nao_1e9d7740 = "Mở Studio của máy nào?"
     fun s_mo_ta_file_0_khong_khop_goi_d7373bf5(p0: Any?): String = "Mô tả file " + p0.toString() + " không khớp gói."
     const val s_mo_thu_muc_4bf5b127 = "Mở thư mục"
+    const val s_mo_trang_sach_3f7bd955 = "Mở trang sách"
     const val s_moc_doan_phai_tang_dan_33e09f16 = "mốc đoạn phải tăng dần"
     const val s_model_nghe_nhac_4efd9d21 = "Model nghe nhạc"
     fun s_moi_cau_cua_0_va_cac_phan_sau_dung_nguoi_b_75a7c03f(p0: Any?): String = "Mọi câu của " + p0.toString() + " và các phần sau dùng người bạn chọn."
