@@ -12,10 +12,12 @@ struct TimeStretch::Impl {
     AudioFx::SilenceTrimmer silence;
     std::deque<std::array<float,2>> pending;
     bool silenceFlushed = false;
+    size_t consumed = 0; // source frames taken from the ring during the current read()
     size_t readInput(MixCore::Ring &input, float *out, size_t frames, bool eof) {
         auto sink=[this](const auto &f) { pending.push_back(f); };
         while(pending.size()<frames && input.readable()>=2) {
             float block[512]; const size_t n=input.read(block,std::min<size_t>(256,frames)*2)/2;
+            consumed+=n;
             for(size_t i=0;i<n;++i) silence.push({block[2*i],block[2*i+1]},sink);
         }
         if(eof && !input.readable() && !silenceFlushed) { silence.finish(sink); silenceFlushed=true; }
@@ -65,7 +67,9 @@ void TimeStretch::setPitch(double semitones) {
     d->pitch=semitones;
     sonicSetPitch(d->stream,float(std::pow(2,semitones/12)));
 }
+bool TimeStretch::lookingAhead() const { return d->consumed && d->silence.holding(); }
 size_t TimeStretch::read(MixCore::Ring &input, float *stereo, size_t frames, bool eof) {
+    d->consumed = 0;
     if (d->bypass) {
         const size_t n = d->readInput(input, stereo, frames, eof);
         d->flushed = eof && !input.readable() && d->pending.empty() && d->silenceFlushed;

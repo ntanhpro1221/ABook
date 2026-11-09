@@ -1305,7 +1305,10 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
         s->fadeOutLeft -= quint32(got);
         if (!s->fadeOutLeft) { s->fadeOutLen = 0; s->hold = true; }
     }
-    const bool buffering = (got < n || s->hold) && !s->eof;
+    // Frames the silence trimmer is still weighing are not missing data: the source kept up, so the voice is still
+    // playing (and the sleep timer keeps counting) through a pause longer than the ring.
+    const bool short_ = got < n && !(s->streaming && s->stretch->lookingAhead());
+    const bool buffering = (short_ || s->hold) && !s->eof;
     if (s->buffering != buffering) { s->buffering = buffering; owner->post(s, [buffering](MixVoice *v) { emit v->buffering(buffering); }); }
     if (s->streaming && buffering && s->playing) {
         s->playing = false; owner->post(s, [](MixVoice *v) { emit v->playingChanged(false); });

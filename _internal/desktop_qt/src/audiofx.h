@@ -83,6 +83,8 @@ class SilenceTrimmer {
     template<class Emit> void output(const std::array<float,2> &f, Emit sink) { sink(f); ++outputFrames; }
 public:
     explicit SilenceTrimmer(int rate):rate(rate) {}
+    // Quiet source frames held back until the pause is known to be short (played) or long (cut).
+    bool holding() const { return !quiet.empty(); }
     template<class Emit> void finish(Emit sink) {
         if (longPause) cuts.emplace_back(outputFrames,inputFrames-outputFrames-quiet.size());
         while (!quiet.empty()) { output(quiet.front(),sink); quiet.pop_front(); }

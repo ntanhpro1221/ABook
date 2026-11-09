@@ -173,6 +173,23 @@ private:
 class VoiceTests : public QObject {
     Q_OBJECT
 private slots:
+    void silenceLookaheadDoesNotReportBuffering_data() {
+        QTest::addColumn<double>("speed");
+        for (double speed : {1.0, 1.5}) QTest::newRow(qPrintable(QString::number(speed))) << speed;
+    }
+    void silenceLookaheadDoesNotReportBuffering() {
+        QFETCH(double, speed);
+        Rig rig; rig.control->duration=9; rig.control->longSilence=true;
+        AudioFx::Settings fx; fx.skipSilence=true; fx.silenceSeconds=4;
+        rig.voice.setAudioFx(fx); rig.voice.setRate(speed); rig.voice.play();
+        for(int i=0;i<20;++i) rig.step();
+        QSignalSpy buffering(&rig.voice, &AudioOut::buffering);
+        QSignalSpy playing(&rig.voice, &AudioOut::playingChanged);
+        for(int i=0;i<600 && rig.voice.position()<7;++i) rig.step();
+        QVERIFY(rig.voice.position()>=7); // crossed five seconds of silence with a two-second input ring
+        for(const auto &event:buffering) QVERIFY2(!event[0].toBool(), "silence lookahead reported a source underrun");
+        for(const auto &event:playing) QVERIFY2(event[0].toBool(), "silence lookahead interrupted playing/sleep time");
+    }
     void remixWaitsForTheEngineAfterPreparingAudio() {
         struct PhaseDevice : Device {
             int ms = 0, waits = 0, missedPeriods = 0;
