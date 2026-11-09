@@ -419,8 +419,8 @@ def preset_eligible(preset: dict[str, Any], role: str, *, automatic: bool = Fals
 
     Giọng chưa nghe giữ luật catalog cũ. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
     """
-    if preset["name"] in NEVER_AUTO:
-        return not automatic
+    if automatic and preset["name"] in NEVER_AUTO:
+        return False
     tiers = VOICE_RANK[role].get(str(preset["gender"]), ())
     ranked = any(preset["name"] in tier for tier in tiers)
     if preset["style"] == STYLE_NEWS and not ranked:
@@ -466,6 +466,7 @@ def narrator_presets(
         candidates,
         key=lambda preset: (
             preferred_order.get(preset["name"], len(preferred_order)),
+            preset["name"] in NEVER_AUTO,  # disliked voices stay reachable by hand, but never head a list
             # The owner's narrator tiers, by the preset's own gender (this list spans both),
             # ahead of the arbitrary order - so the fallback after the default narrator is
             # the next best narrator rather than the next alphabetical one.
@@ -488,4 +489,10 @@ def casting_presets(gender: str, *, automatic: bool = True) -> list[dict[str, st
         if preset["gender"] == gender
         and preset_eligible(preset, "character", automatic=automatic)
     ]
-    return sorted(candidates, key=casting_preset_priority)
+    if automatic:
+        return sorted(candidates, key=casting_preset_priority)
+    # A hand-picked list: the owner's ear first, as the allocator ranks them, and the voices they disliked
+    # (never_auto) after every other one, so the list never opens on Ngọc Huyền or Trúc Ly.
+    return sorted(candidates, key=lambda preset: (
+        preset["name"] in NEVER_AUTO, listener_rank(preset["name"], gender), *casting_preset_priority(preset),
+    ))

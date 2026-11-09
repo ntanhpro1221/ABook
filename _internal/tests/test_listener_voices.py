@@ -419,3 +419,66 @@ def test_a_voice_another_window_just_picked_is_told_not_silently_replaced(tmp_pa
         assert status == 200 and "elsewhere" not in json.loads(data), "đã thấy lựa chọn mới nhất"
     finally:
         server.stop()
+
+
+# Ba giọng chủ sách không thích (never_auto) chỉ bị cấm ở phân vai TỰ ĐỘNG; luật vùng vẫn chạy cho chọn tay, nên Ngọc Trân
+# (miền Trung) không bao giờ là giọng nhân vật, và hai giọng còn lại xếp sau mọi giọng chủ sách chấm tốt.
+LIKED_FEMALE = ["Ngọc Linh", "Đoan Trang"]
+DISLIKED = {"Ngọc Huyền", "Trúc Ly", "Ngọc Trân"}
+
+
+def test_never_auto_still_obeys_the_region_rule_and_trails_the_ranked_voices() -> None:
+    from abook import voice_catalog
+
+    assert DISLIKED == voice_catalog.NEVER_AUTO
+    tran = preset_by_name("Ngọc Trân")
+    assert tran["region"] == "Trung"
+    assert not voice_catalog.preset_eligible(tran, "character")
+    assert not voice_catalog.preset_eligible(tran, "character", automatic=True)
+    assert voice_catalog.preset_eligible(tran, "narrator") and not voice_catalog.preset_eligible(tran, "narrator", automatic=True)
+    for name in ("Ngọc Huyền", "Trúc Ly"):
+        assert voice_catalog.preset_eligible(preset_by_name(name), "character")
+        assert not voice_catalog.preset_eligible(preset_by_name(name), "character", automatic=True)
+    manual = [str(p["name"]) for p in casting_presets("female", automatic=False)]
+    assert "Ngọc Trân" not in manual
+    assert manual[:2] == LIKED_FEMALE
+    assert manual[-2:] in (["Ngọc Huyền", "Trúc Ly"], ["Trúc Ly", "Ngọc Huyền"]), manual
+    assert set(manual[2:6]) == {"Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan"}
+    assert not DISLIKED & {str(p["name"]) for p in casting_presets("female")}
+    narrators = [str(p["name"]) for p in voice_catalog.narrator_presets("female")]
+    assert narrators[:3] == ["Ngọc Linh", "Kim Thanh", "Đoan Trang"] and set(narrators[-3:]) == DISLIKED
+
+
+def test_book_wishes_accept_a_disliked_voice_by_hand_but_never_a_central_one_for_a_character() -> None:
+    from abook.webui.book_wishes import _known_presets
+
+    characters = _known_presets(narrator=False)
+    assert {"Ngọc Huyền", "Trúc Ly"} <= characters and "Ngọc Trân" not in characters
+    assert DISLIKED <= _known_presets(narrator=True)
+
+
+def test_the_listener_cannot_give_a_character_the_central_voice(tmp_path: Path) -> None:
+    from abook.listener_overrides import voice_target
+
+    _paths, db = _book(tmp_path)
+    with db.connect() as conn:
+        target, problem = voice_target(conn, VOICES, character="NATASHA", preset="Ngọc Trân")
+        assert target is None and problem == UNKNOWN_PRESET
+        target, problem = voice_target(conn, VOICES, character="NATASHA", preset="Trúc Ly")
+        assert problem is None and target is not None
+
+
+def test_the_voice_picker_hides_the_central_voice_and_opens_on_a_liked_one(tmp_path: Path) -> None:
+    from abook.config import save_settings
+    from abook.webui.voice_picker import voice_choices
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    female = [voice["name"] for voice in voice_choices(paths.root, "Natasha")["voices"]
+              if voice["gender"] == "female" and voice.get("engine", "vieneu") == "vieneu"]
+    assert "Ngọc Trân" not in female
+    assert {"Ngọc Huyền", "Trúc Ly"} <= set(female)
+    liked = [name for name in female if name not in DISLIKED]
+    assert female.index("Ngọc Huyền") > max(female.index(name) for name in liked)
+    assert female.index("Trúc Ly") > max(female.index(name) for name in liked)
+    assert female[0] in LIKED_FEMALE
