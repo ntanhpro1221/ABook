@@ -3,6 +3,7 @@ khớp nó - chữ, người nói và mốc từng câu lúc chương xong. Bư�
 mọi chương đã xong ngay trước khi áp sửa (`store.keep_heard_scripts`); trang đọc và file `.abook` dùng bản chụp tới khi có MP3 mới."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,7 @@ import pytest
 from abook.database import LISTENER_REDO
 from abook.database import ProjectDB
 from abook.listener_overrides import request_speaker
-from abook.webui import store
+from abook.webui import bookfile, store, word_timing
 from tests.test_listener_overrides import _Pipeline
 from tests.test_listener_speakers import _book
 
@@ -141,3 +142,50 @@ def test_a_book_file_made_while_chapters_wait_is_whole_and_reads_along_with_the_
     assert (book["chaptersAvailable"], book["chaptersTotal"], book["complete"]) == (1, 1, True)
     script = json.loads(files[book["chapters"][0]["script"]])
     assert script["timed"] and script["segments"][2]["speaker"] == "Lucien"
+
+
+def _align(paths, chapter_id: int = 1) -> dict:
+    """Bộ đệm mốc chữ khớp `chapter_script` hiện tại, như `word_timing.prepare` để lại sau khi đóng gói."""
+    script = store.chapter_script(paths.root, chapter_id)
+    mp3 = paths.chapters / "001.mp3"
+    stat = mp3.stat()
+    lines = {str(segment["id"]): {"textSha256": word_timing.text_sha(segment["text"]),
+                                  "span": [round(segment["start"] * 1000), round(segment["end"] * 1000)], "method": "ctc", "confidence": 1.0,
+                                  "words": [[round(segment["start"] * 1000), round(segment["end"] * 1000)]] * len(word_timing.tokens(segment["text"]))}
+             for segment in script["segments"]}
+    word_timing._save(paths.root, chapter_id, {"version": word_timing.VERSION, "lines": lines,
+                                               "audio": {"sha256": word_timing.audio_sha256(mp3), "size": stat.st_size, "mtimeNs": stat.st_mtime_ns}})
+    return lines
+
+
+def test_a_chapter_with_a_qa_warning_still_carries_its_aligned_words(tmp_path: Path) -> None:
+    """Chương QA "Cần nghe lại" có bản chụp (không mang `words`, chụp trước lúc căn): bản chụp không được nuốt mốc đã căn - All You Need Is Kill 11-07
+    có 0 câu mang `words` ở chương 1-4 dù bộ đệm khớp đủ 2680 câu, nên điện thoại mất tô từng chữ."""
+    paths, db = _recorded(tmp_path)
+    with db.transaction() as conn:
+        conn.execute("UPDATE chapters SET status='warning',last_error='Cần nghe lại: c1s2' WHERE id=1")
+    assert store.keep_heard_scripts(paths.root) == 1
+    assert not any("words" in segment for segment in store.chapter_script(paths.root, 1)["segments"]), "chưa căn thì chưa có mốc"
+
+    lines = _align(paths)
+
+    segments = store.chapter_script(paths.root, 1)["segments"]
+    assert segments and all(segment["words"] == lines[str(segment["id"])]["words"] for segment in segments)
+    book, files = bookfile.listening_layer(paths.root)
+    packed = json.loads(files[book["chapters"][0]["script"]])
+    assert all("words" in segment for segment in packed["segments"]), "file .abook mang đúng mốc ấy"
+
+
+def test_a_kept_script_drops_words_that_no_longer_match_the_recording(tmp_path: Path) -> None:
+    paths, db = _recorded(tmp_path)
+    with db.transaction() as conn:
+        conn.execute("UPDATE chapters SET status='warning',last_error='Cần nghe lại: c1s2' WHERE id=1")
+    store.keep_heard_scripts(paths.root)
+    lines = _align(paths)
+    first = next(iter(lines))
+    lines[first]["span"] = [0, 1]  # mốc câu đã đổi từ lúc căn
+    cache = word_timing._load(paths.root, 1)
+    cache["lines"] = lines
+    word_timing._save(paths.root, 1, cache)
+    words = {str(segment["id"]): "words" in segment for segment in store.chapter_script(paths.root, 1)["segments"]}
+    assert not words[first] and sum(words.values()) == len(lines) - 1

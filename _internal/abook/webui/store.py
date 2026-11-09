@@ -1540,6 +1540,8 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         kept = _kept_script(project_root, chapter)
         if kept is not None:
             chapter_name = chapter_names(connection, project_root).get(int(chapter["id"]), {})
+            # Bản chụp có trước lúc căn chữ (đóng gói căn sau) nên không mang `words`: gắn như đường thường, cùng luật khớp MP3 + chữ + mốc câu.
+            word_timing.attach(project_root, int(chapter["id"]), kept["segments"], chapter_mp3(project_root, chapter["output_mp3"]))
             return {**kept, "chapterId": int(chapter["id"]),
                     "title": chapter_name.get("full") or humanize.chapter_title(str(chapter["title"]))}
         # Tag trình bày của từng câu (cảm xúc, cường độ, nhịp, âm lượng) - có ở mọi sách làm bằng dây chuyền hiện nay,
