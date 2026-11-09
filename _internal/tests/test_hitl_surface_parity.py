@@ -1,6 +1,7 @@
 """Copy contract for the chapter role and remote voice review across three native surfaces."""
 from pathlib import Path
 import re
+from scripts.ui_copy_source import expand
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "ui/src/studio/WorkInbox.tsx"
@@ -9,7 +10,8 @@ ANDROID = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/studio/Stu
 
 
 def test_caller_kind_has_one_shared_visible_label() -> None:
-    sources = [path.read_text("utf-8") for path in (WEB, QT, ANDROID)]
+    sources = [expand(path.read_text("utf-8"), language) for path, language in
+               ((WEB, "ts"), (QT, "qml"), (ANDROID, "kt"))]
     patterns = [r'caller:\s*"([^"]+)"', r'"caller":\s*"([^"]+)"', r'Caller\("caller",\s*"([^"]+)"\)']
     labels = [re.search(pattern, text).group(1) for pattern, text in zip(patterns, sources)]
     assert labels == ["Người gọi / ngoài khung"] * 3
@@ -18,6 +20,7 @@ def test_caller_kind_has_one_shared_visible_label() -> None:
 def test_role_actions_are_named_consistently_on_all_surfaces() -> None:
     for relative in ("ui/src/studio/WorkInbox.tsx", "desktop_qt/qml/WorkSpeaker.qml",
                      "mobile/android/app/src/main/java/vn/abook/player/ui/studio/WorkTab.kt"):
-        text = (ROOT / relative).read_text("utf-8")
+        text = expand((ROOT / relative).read_text("utf-8"),
+                      "kt" if relative.endswith(".kt") else "qml" if relative.endswith(".qml") else "ts")
         assert "Đặt tên" in text and "Giới / giọng" in text
         assert "suggestedName" in text

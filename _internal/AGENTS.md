@@ -76,8 +76,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Schema đầy đủ gồm `character_exposure` của dự án nối tiếp; continuation chỉ ghi dữ liệu, không tạo thêm bảng khi gieo.
 - Với chính sách hẹn ngủ, app KHÔNG BAO GIỜ tự hẹn/tự dừng khi người nghe không yêu cầu. Lâu không tương tác không phải yêu cầu hẹn ngủ. Chỉ hẹn khi người nghe yêu cầu: hẹn phút, hết chương, hoặc lịch đêm do chính người nghe bật (mặc định tắt). Lịch đêm đợi máy rảnh: Android cần màn tắt và bốn cửa sổ nằm yên khi có cảm biến; desktop cần thời gian rảnh toàn OS. Tín hiệu còn thức huỷ hẹn theo lịch, không huỷ hẹn tay. Không khôi phục hẹn theo lịch từ đĩa; hẹn tay gắn đúng sách/hồ sơ. Không đọc, xoá hay migrate khoá cũ của tính năng đã gỡ.
 - Android: `Store.writeAtomic` sync dữ liệu trước rename, không xoá đích trước; JSON hồ sơ hỏng phải giữ ở `.corrupt-…`.
-  Ph?n h?i ?m/rung native ?i qua `Feedback.kt` v? c?ng t?c `ListenPrefs`: h?n l?i ph?t hai n?t x?c nh?n c?ng l??t rung, c? khi m?n t?t; b?o s?p h?t ch? m?t n?t, h?t h?n im c? ?m/rung. Qt/web gi? c?ng b?ng n?t v? ngo?i l? khi ?ang ph?t trong DESIGN 5.3/5.4.
-  Adopt/rekey c?ng phi?n b?n ghi journal tr??c ??i th? m?c v? ho?n t?t li?n k?t/fingerprints khi m? l?i.
+  Phản hồi âm/rung native đi qua `Feedback.kt` và công tắc `ListenPrefs`: hẹn lại phát hai nốt xác nhận cùng lượt rung, cả khi màn tắt; báo sắp hết chỉ một nốt, hết hẹn im cả âm/rung. Qt/web giữ cùng bảng nốt và ngoại lệ khi đang phát trong DESIGN 5.3/5.4.
+  Adopt/rekey cùng phiên bản ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
   Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
   Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.

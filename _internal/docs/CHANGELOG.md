@@ -10,8 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Lắc, bấm hoặc dùng phím để hẹn lại có âm xác nhận theo tuỳ chọn âm/rung; hết hẹn vẫn im lặng.
 - Mục Âm thanh thêm Mono, cân bằng trái/phải, bỏ khoảng lặng dài và lưu chỉnh riêng cho từng sách.
 - Chữ hoa tiếng Anh và tên Nhật được đọc liền, đúng cách hơn; không tự chọn giọng dẫn bạn đã loại.
-- Chữ và màu sắc, kích thước giao diện dùng chung nguồn trên điện thoại, máy tính và web.
-
+- Nhãn và kiểu hiển thị thống nhất hơn trên điện thoại, máy tính và web.
 - Trang sách trên cửa sổ hẹp: bấm "Thêm tuỳ chọn" rồi nhả chuột chậm không còn vô tình chọn mục đầu tiên của menu vừa trượt lên.
 - Mở lại sách đã thu nhanh hơn vì không đo lại những câu không đổi.
 

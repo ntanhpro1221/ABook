@@ -276,7 +276,7 @@ export function ProjectsScreen() {
       <ScreenHeader
         title={S.s_studio_0aa91af2}
         actions={
-          <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[6.75px] pointer-coarse:-mr-[15px] max-sm:-mr-[15px]" : "-mr-3.5")}>
+          <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[9px] pointer-coarse:-mr-[15px] max-sm:-mr-[15px]" : "-mr-3.5")}>
             <MotionPresence open={!empty}>
               <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new", PICK_SOURCE)}>{S.s_du_an_moi_992d22b2}</Button>
             </MotionPresence>

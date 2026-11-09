@@ -10,6 +10,25 @@ import pytest
 from ui_tap_audit import CDP, free_port, load_scenarios, result_status
 
 
+@pytest.mark.parametrize('appears', [True, False])
+def test_toast_wait_requires_a_real_mounted_toast(monkeypatch, appears):
+    class FakeCDP(CDP):
+        calls = 0
+
+        async def evaluate(self, expression):
+            assert 'data-sonner-toast' in expression and 'data-mounted' in expression
+            self.calls += 1
+            return appears and self.calls >= 2
+
+    async def no_sleep(_seconds):
+        pass
+
+    monkeypatch.setattr(asyncio, 'sleep', no_sleep)
+    c = FakeCDP(None)
+    assert asyncio.run(c.wait_toast(timeout=.01)) is appears
+    assert c.calls >= 2
+
+
 def test_repository_scenarios():
     specs = load_scenarios(Path(__file__).with_name('scenarios.json'))
     assert len(specs) == 21
