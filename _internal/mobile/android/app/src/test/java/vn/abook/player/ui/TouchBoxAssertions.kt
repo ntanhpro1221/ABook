@@ -6,7 +6,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
-import vn.abook.player.ui.components.GestureBar
+import vn.abook.player.ui.components.bottomClearance
+import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 /**
@@ -14,12 +15,13 @@ import kotlin.math.roundToInt
  * Với MỌI nút bấm được trong cây ngữ nghĩa CHƯA gộp:
  *  - cao >= 48 dp (kích thước thật, không cắt theo cha);
  *  - mọi chữ con nằm gọn trong hộp chạm (sai số 1 px);
- *  - hộp chạm nằm trên thanh điều hướng: đáy không quá `rootHeight - max(inset đáy, GestureBar)`. Robolectric không có thanh điều hướng (inset 0) = đúng ca ColorOS giấu vạch cử chỉ.
+ *  - hộp chạm nằm trên chỗ chừa đáy: đáy không quá `rootHeight - clearanceDp` (mặc định: luật chung components/Insets.kt cho cửa sổ không inset của Robolectric;
+ *    màn soát kiểu máy thật truyền chỗ chừa của máy ấy, vd [OppoHiddenBar]).
  * Trả về danh sách vi phạm (rỗng = sạch) và số nút đã soát.
  */
 class TouchReport(val checked: Int, val problems: List<String>)
 
-fun ComposeContentTestRule.touchBoxProblems(screen: String, gestureBarDp: Float = GestureBar.value, minDp: Float = 48f, skipTags: Set<String> = emptySet()): TouchReport {
+fun ComposeContentTestRule.touchBoxProblems(screen: String, clearanceDp: Float = bottomClearance(0.dp, 0.dp).value, minDp: Float = 48f, skipTags: Set<String> = emptySet()): TouchReport {
     val root = onRoot(useUnmergedTree = true).fetchSemanticsNode()
     val density = density.density
     val rootHeight = root.size.height
@@ -44,8 +46,8 @@ fun ComposeContentTestRule.touchBoxProblems(screen: String, gestureBarDp: Float 
             val name = "$screen: ${label(node)}"
             val minPx = minDp * density
             if (node.size.height + 0.5f < minPx) problems += "$name cao ${(node.size.height / density).roundToInt()} dp (< ${minDp.roundToInt()} dp)"
-            val limit = rootHeight - gestureBarDp * density
-            if (bottom > limit + 1f) problems += "$name: đáy hộp chạm ${(bottom / density).roundToInt()} dp, thấp hơn mép trên vạch cử chỉ ${(limit / density).roundToInt()} dp"
+            val limit = rootHeight - clearanceDp * density
+            if (bottom > limit + 1f) problems += "$name: đáy hộp chạm ${(bottom / density).roundToInt()} dp, thấp hơn mép trên chỗ chừa đáy ${(limit / density).roundToInt()} dp"
             for (inner in descendants(node)) {
                 if (inner.config.getOrNull(SemanticsProperties.Text) == null) continue
                 val t = inner.positionInRoot.y

@@ -146,7 +146,7 @@ class BookPlayerLinkTest {
         val screen = rule.onNodeWithTag("screen_top").getUnclippedBoundsInRoot()
         val bar = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
         assertEquals("màn dừng ngay trên thanh", bar.top.value, screen.bottom.value, 1f)
-        assertTrue("thanh chừa vạch cử chỉ dưới nó", bar.bottom.value <= 780f - 24f + 1f)
+        assertEquals("thanh chừa đáy đúng một lần dưới nó", 780f - vn.abook.player.ui.components.bottomClearance(0.dp, 0.dp).value, bar.bottom.value, 1f)
     }
 
     @Test
@@ -201,17 +201,24 @@ class BookPlayerLinkTest {
         assertEquals(Destination.Book(book), shell.nav.stack.top?.destination)
     }
 
-    /** Màn con (không thanh tab): dưới thanh phát nhỏ chỉ có MỘT lần chừa đáy (vạch cử chỉ, sàn 24 dp khi máy báo 0) cộng đệm của chính thanh, không phải hai lần. */
-    @Test
-    fun miniBarOnASubScreenLeavesOneBottomClearance() {
+    /** Màn con (không thanh tab): dưới thanh phát nhỏ chỉ có MỘT lần chừa đáy theo inset đo trên máy thật, không phải hai lần, không phải sàn 24 dp cũ. */
+    private fun miniBarGap(insets: BottomInsets, expected: Float) {
         show()
         push(Destination.Book(book))
+        rule.applyBottomInsets(insets)
         val root = rule.onRoot().getUnclippedBoundsInRoot()
-        val mini = rule.onNodeWithTag("mini_play").getUnclippedBoundsInRoot()
-        val gap = root.bottom - mini.bottom
-        assertTrue("nút phát của thanh nhỏ cách mép dưới $gap, cần >= 24 dp (ngoài dải vuốt)", gap >= vn.abook.player.ui.components.GestureBar - 0.5.dp)
-        assertTrue("nút phát của thanh nhỏ cách mép dưới $gap, cần <= 24 + 16 dp (một lần chừa + đệm thanh)", gap <= vn.abook.player.ui.components.GestureBar + 16.dp)
+        val mini = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
+        assertEquals("${insets.name}: thanh phát nhỏ cách mép dưới", expected, (root.bottom - mini.bottom).value, 0.5f)
+        assertEquals(expected, insets.clearance(rule.density.density).value, 0.5f)
     }
+
+    @Test fun miniBarOnASubScreenOppo() = miniBarGap(OppoHiddenBar, 12f)
+
+    @Test @Config(sdk = [35], qualifiers = "w411dp-h914dp-420dpi")
+    fun miniBarOnASubScreenEmulatorGesture() = miniBarGap(EmulatorGesture, 24f)
+
+    @Test @Config(sdk = [35], qualifiers = "w411dp-h914dp-420dpi")
+    fun miniBarOnASubScreenEmulatorThreeButton() = miniBarGap(EmulatorThreeButton, 48f)
 
     @Test
     fun shots() {

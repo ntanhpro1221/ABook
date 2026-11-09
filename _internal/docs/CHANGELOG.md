@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Điện thoại dùng cử chỉ giấu vạch (như OPPO): thanh tab và thanh phát nhỏ nằm thấp hơn, bớt khoảng trống ở đáy mà vẫn bấm trúng.
+
 ## [0.4.166] - 2026-11-09
 
 - Đổi âm lượng, tốc độ hoặc tua khi đang nghe trên máy tính tránh khoảng hụt tiếng khi bộ trộn chuẩn bị âm thanh sát nhịp thiết bị.

@@ -7,7 +7,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import vn.abook.player.ui.nav.Tab
+import org.junit.Assert.assertEquals
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.click
+import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertTrue
@@ -42,7 +51,7 @@ import vn.abook.player.ui.theme.AbookTheme
 
 /**
  * Hộp chạm của mọi việc bám đáy màn (lỗi điện thoại thật 05-11, OPPO cử chỉ ẩn vạch: inset đáy 0, "Thay bằng file này" và nhãn tab đáy vẽ ở 36 dp trên mép - bấm không trúng, app bị đẩy ra nền):
- * cao >= 48 dp, chữ con nằm gọn trong hộp, hộp nằm trên vạch cử chỉ 24 dp. Cửa sổ Robolectric không có thanh điều hướng = đúng ca inset 0 của máy ấy.
+ * cao >= 48 dp, chữ con nằm gọn trong hộp, hộp nằm trên vùng nuốt chạm + khoảng thở 8 dp. Mỗi màn dựng với inset đo trên chính máy ấy ([OppoHiddenBar], 480 dpi như xxhdpi ở đây).
  * Màn nào có chân / thanh đáy phải vào danh sách dưới đây.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -58,8 +67,8 @@ class BottomTouchBoxTest {
     /** Dựng MỘT màn rồi soát; đếm nút để máy dò không "xanh vì mù". */
     private fun check(screen: String, minimum: Int = 1, content: @Composable () -> Unit) {
         rule.setContent { AbookTheme { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) { content() } } }
-        rule.waitForIdle()
-        val result = rule.touchBoxProblems(screen)
+        rule.applyBottomInsets(OppoHiddenBar)
+        val result = rule.touchBoxProblems(screen, clearanceDp = OppoHiddenBar.clearance(rule.density.density).value)
         println("TOUCHBOX $screen: ${result.checked} nút bấm được")
         assertTrue("$screen: chỉ thấy ${result.checked} nút (< $minimum), máy dò mù", result.checked >= minimum)
         assertTrue("Hộp chạm sai:\n" + result.problems.joinToString("\n"), result.problems.isEmpty())
@@ -107,13 +116,35 @@ class BottomTouchBoxTest {
         }
     }
 
-    /** Máy dò không "xanh vì mù": đòi vạch cử chỉ cao hơn chân màn thật (60 dp) thì phải bắt được "Thay bằng file này", và đòi hộp cao 200 dp thì bắt hết. */
+    /** Máy dò không "xanh vì mù": đòi chỗ chừa đáy cao hơn chân màn thật (60 dp) thì phải bắt được "Thay bằng file này", và đòi hộp cao 200 dp thì bắt hết. */
     @Test fun theDetectorFlagsAFooterInsideTheStrip() {
         rule.setContent { AbookTheme { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) { PackageReviewScreen(ImportState(packageReview = PackageReview("b", "A", "B", "older")), {}, {}, {}) } } }
         rule.waitForIdle()
-        val strip = rule.touchBoxProblems("dải 60 dp", gestureBarDp = 60f)
-        assertTrue("dải 60 dp phải bắt được chân màn: ${strip.problems}", strip.problems.any { "vạch cử chỉ" in it })
+        val strip = rule.touchBoxProblems("dải 60 dp", clearanceDp = 60f)
+        assertTrue("dải 60 dp phải bắt được chân màn: ${strip.problems}", strip.problems.any { "chỗ chừa đáy" in it })
         val tall = rule.touchBoxProblems("hộp 200 dp", minDp = 200f)
         assertTrue("hộp 200 dp phải bắt được mọi nút", tall.problems.size >= tall.checked)
+    }
+
+    /**
+     * Lỗi 05-11 không quay lại: trên OPPO (vùng nuốt 4 dp), chạm ở hàng điểm ảnh cuối của tab - ngay trên khoảng thở 8 dp - vẫn tới tab; khoảng thở ấy không thuộc nút nào
+     * (máy dò hộp chạm ở trên), và thanh tab cách đáy đúng 4 + 8 = 12 dp chứ không phải sàn 24 dp cũ.
+     */
+    @Test fun aTapJustAboveTheBreathingBandReachesTheTab() {
+        lateinit var tabs: TabState
+        rule.setContent {
+            AbookTheme {
+                val scope = rememberCoroutineScope()
+                tabs = remember { TabState(scope) }
+                Column(Modifier.fillMaxSize().background(Abook.colors.bg)) { Box(Modifier.weight(1f)); TabBar(tabs) }
+            }
+        }
+        rule.applyBottomInsets(OppoHiddenBar)
+        val root = rule.onRoot().getUnclippedBoundsInRoot()
+        val studio = rule.onNodeWithTag(Tab.Studio.tag).getUnclippedBoundsInRoot()
+        assertEquals(12f, (root.bottom - studio.bottom).value, 0.5f)
+        rule.onNodeWithTag(Tab.Studio.tag).performTouchInput { click(Offset(centerX, height - 1f)) }
+        rule.waitForIdle()
+        assertEquals(Tab.Studio.ordinal, tabs.selected)
     }
 }

@@ -248,8 +248,8 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   rơi cuối dòng. Máy dò: LINE BREAK (gallery_inspect), `Separators.js` (bốn dạng, mọi cảnh width test), `test_qt_layout_lints.py`, `TextWrapRulesTest`.
 - **Hàng chip / tab ngang**: khe giữa hai chữ tối thiểu 16 px (24 khi dư chỗ); thiếu chỗ (màn 320, chữ hệ thống to) thì hàng CUỘN ngang với mép mờ
   (`fadeEdgesHorizontal`, `useRowFade` bên web) - không ép sát nút bên cạnh, không xuống dòng, không cụt chữ; mục đang chọn tự cuộn vào khung.
-- **Chân màn**: thanh đáy (thanh tab) chừa dưới nó ít nhất 8 px kể cả khi máy báo inset thanh điều hướng 0 (ColorOS giấu vạch cử chỉ): vạch hổ phách không bao giờ
-  sát mép màn (điện thoại `bottomClearance`).
+- **Chân màn**: thanh đáy (thanh tab, thanh phát nhỏ, chân màn con) chừa dưới nó đúng thanh điều hướng khi máy có thanh; máy giấu thanh (ColorOS cử chỉ: inset 0)
+  thì chừa vùng hệ thống nuốt chạm (`mandatorySystemGestures`, OPPO 4 dp) + 8 dp thở - không sàn cứng. Một chỗ duy nhất: điện thoại `bottomClearance`.
 - **Việc không lấy lại được** (xoá nhật ký, xoá khỏi máy, bỏ ghép, gỡ giọng, xoá khoá / bài nhạc, bỏ thay đổi): luôn hỏi lại bằng bước xác nhận chung (điện thoại
   `ConfirmPage` + `DangerButton`, web `Dialog` + nút `danger`), nút "Giữ lại" là nút chữ. Máy dò `NativePolishTest.everyDestructiveActionOfTheScreensAsksFirst`.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).

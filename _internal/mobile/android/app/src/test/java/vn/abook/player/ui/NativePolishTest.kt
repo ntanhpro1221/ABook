@@ -1,6 +1,6 @@
 package vn.abook.player.ui
 
-import vn.abook.player.ui.components.GestureBar
+import vn.abook.player.ui.components.GestureBreath
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -182,15 +182,16 @@ class NativePolishTest {
     // ---- thanh tab: vạch không sát mép dưới ----
 
     @Test
-    fun bottomClearanceNeverDropsBelowTheFloor() {
-        assertEquals(GestureBar, bottomClearance(0.dp))
-        assertEquals(GestureBar, bottomClearance(3.dp))
-        assertEquals(24.dp, bottomClearance(24.dp))
-        assertEquals(30.dp, bottomClearance(30.dp))
+    fun bottomClearanceFollowsTheBarOrTheSwallowedStrip() {
+        // Số đo dumpsys: OPPO ẩn vạch 0 / 4 dp -> 4 + 8; emulator cử chỉ 24 / 32 -> đúng thanh 24; 3 nút 48 / 48 -> 48; không gì cả -> chỉ khoảng thở.
+        assertEquals(12.dp, bottomClearance(0.dp, 4.dp))
+        assertEquals(24.dp, bottomClearance(24.dp, 32.dp))
+        assertEquals(48.dp, bottomClearance(48.dp, 48.dp))
+        assertEquals(GestureBreath, bottomClearance(0.dp, 0.dp))
     }
 
     @Test
-    fun tabUnderlineClearsTheBottomEdgeEvenWithNoSystemInset() {
+    fun tabUnderlineSitsOnOneBottomClearance() {
         rule.setContent {
             AbookTheme {
                 val scope = rememberCoroutineScope()
@@ -204,10 +205,8 @@ class NativePolishTest {
         rule.waitForIdle()
         val root = rule.onRoot().getUnclippedBoundsInRoot()
         val indicator = rule.onNodeWithTag("tab_indicator").getUnclippedBoundsInRoot()
-        // Robolectric không có thanh điều hướng (inset 0) = đúng ca của ColorOS giấu vạch cử chỉ.
-        assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần >= 24 dp", root.bottom - indicator.bottom >= GestureBar - 0.5.dp)
-        // Và không chừa hai lần: từ vạch tới mép dưới chỉ là một lần chừa đáy + chút đệm của hàng tab (<= 8 dp), không phải một dải trống thứ hai.
-        assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần <= 24 + 8 dp", root.bottom - indicator.bottom <= GestureBar + 8.dp)
+        // Cửa sổ Robolectric không inset: dưới vạch đúng một lần chừa đáy theo luật chung (khoảng thở), không phải một dải trống thứ hai. Inset của máy thật: BottomInsetProfilesTest.
+        assertEquals(bottomClearance(0.dp, 0.dp).value, (root.bottom - indicator.bottom).value, 0.5f)
         rule.onNodeWithTag(Tab.Library.tag).getUnclippedBoundsInRoot()
     }
 
