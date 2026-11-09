@@ -4,7 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import vn.abook.player.ui.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
 import org.junit.Assert.*
 import org.junit.Rule
