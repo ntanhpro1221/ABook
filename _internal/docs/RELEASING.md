@@ -43,7 +43,8 @@ commit/cây nguồn đổi trong lúc chạy. Không dùng `--only` để chứn
 
 Gate cài UI dependency gồm devDependencies bằng `npm ci --include=dev` vào `runtime/release_gate/dependencies/<hash>`
 theo package + lock hiện tại, tái sử dụng khi đủ phiên bản khóa. Kiểm UI chạy trên bản sao nguồn mới riêng mỗi lượt;
-junction node_modules dùng chung không đổi. Thiếu npm/module hoặc cài thất bại là FAIL có log, không bỏ kiểm.
+các đường dẫn tương đối tới catalog `ui_strings` và token `ui_design` vẫn đọc được từ bản sao ấy.
+Junction node_modules dùng chung không đổi. Thiếu npm/module hoặc cài thất bại là FAIL có log, không bỏ kiểm.
 Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscreen/phần mềm: WidthTests có deadline riêng
 1800 giây, các suite khác 360 giây; mọi subprocess gate chạy BELOW_NORMAL trên Windows.
 Gallery inspect có deadline 3600 giây cho toàn bộ ma trận sáng/tối, hai khổ cửa sổ và các lượt mở/đóng sheet;

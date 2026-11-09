@@ -1,6 +1,7 @@
 """Cổng phát hành phải đỏ khi thiếu bằng chứng, kể cả process tự báo exit 0."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -163,6 +164,38 @@ def test_failed_dependency_does_not_claim_its_checks_ran(tmp_path):
     definitions = [fake_check(), gate.Check("dependent", ["fake"], requires=("suite",))]
     rows = gate.run_gate(definitions, tmp_path, lambda *_: gate.Execution(0, ""))
     assert rows[1]["result"] == "FAIL" and "điều kiện trước" in rows[1]["detail"]
+
+
+def test_private_ui_workspace_preserves_shared_catalogs(tmp_path, monkeypatch):
+    root = tmp_path / "source/_internal"
+    ui = root / "ui"
+    ui.mkdir(parents=True)
+    (ui / "package.json").write_text("{}", encoding="utf-8")
+    (ui / "package-lock.json").write_text('{"packages":{}}', encoding="utf-8")
+    shared = ui / "node_modules"
+    shared.mkdir()
+    (shared / "sentinel").write_text("shared dependencies must stay untouched", encoding="utf-8")
+    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design"):
+        (root / name).mkdir()
+    catalog = {"strings": {"broken_pdf": "PDF không đọc được"}}
+    (root / "ui_strings/vi.json").write_text(json.dumps(catalog), encoding="utf-8")
+    (root / "ui_design/tokens.json").write_text('{"space":{"base":4}}', encoding="utf-8")
+    digest = hashlib.sha256((ui / "package.json").read_bytes() + (ui / "package-lock.json").read_bytes()).hexdigest()
+    install = root / "runtime/release_gate/dependencies" / digest
+    (install / "node_modules").mkdir(parents=True)
+    (install / "complete.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(gate, "ROOT", root)
+
+    def no_install(*_):
+        pytest.fail("Cached dependencies require no installation")
+
+    mirror, _ = gate.prepare_ui(tmp_path / "run", no_install)
+    # Vitest reads outside ui/ through the same relative paths as application consumers.
+    assert json.loads((mirror.parent / "ui_strings/vi.json").read_text(encoding="utf-8")) == catalog
+    assert json.loads((mirror.parent / "ui_design/tokens.json").read_text(encoding="utf-8"))["space"]["base"] == 4
+    assert (mirror / "node_modules").resolve() == (install / "node_modules").resolve()
+    assert (shared / "sentinel").read_text(encoding="utf-8") == "shared dependencies must stay untouched"
+    assert not (mirror / "node_modules/sentinel").exists()
 
 
 def test_only_includes_prerequisites_and_unknown_names_fail():

@@ -563,7 +563,7 @@ def prepare_ui(directory: Path, runner=run_process) -> tuple[Path, dict]:
     shutil.copytree(ui, mirror, ignore=shutil.ignore_patterns("node_modules", "dist", ".vite", ".cache"))
     directory_link(mirror / "node_modules", install / "node_modules")
     # Relative source/test fixture imports and the UI build destination keep their real layout.
-    for name in ("abook", "docs", "tests", "mobile", "desktop_qt"):
+    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design"):
         directory_link(private_root / name, ROOT / name)
     return mirror, {"install": str(install), "lock_sha256": digest, "source": str(ui), "mirror": str(mirror)}
 
