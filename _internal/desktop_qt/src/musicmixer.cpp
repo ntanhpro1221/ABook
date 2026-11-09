@@ -26,6 +26,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <tuple>
 #include <vector>
 
 #define NOMINMAX
@@ -39,6 +40,8 @@
 
 using Microsoft::WRL::ComPtr;
 using Guard = std::lock_guard<std::mutex>;
+// Longest wait for the next engine pull (one shared-mode period is 10 ms).
+constexpr int PULL_WAIT_MS = 12;
 using Clock = std::chrono::steady_clock;
 
 namespace {
@@ -563,7 +566,8 @@ struct MusicMixer::Impl {
     std::mutex outputMutex;
     bool outputRequest = false, outputSelect = false;
     QString outputId;
-    std::atomic<bool> joinSoon{false}; // nguồn vừa đặt lại chỗ: lượt trộn kế có thể trộn lại để nối nó vào
+    // Giọng chờ nối vào giữa hàng đợi: lượt kế chờ engine kéo (ngoài khoá) rồi mới xét lại, không quay theo nhịp 1 ms.
+    std::atomic<bool> pullPaced{false};
     int nextWakeMs = 250;
     std::atomic<bool> relaxed{false};
     Clock::time_point responsiveUntil{}; // engineMutex; controls never wait for a hidden refill deadline.
@@ -576,7 +580,18 @@ struct MusicMixer::Impl {
     std::deque<Span> stopped, tails;
 
     Impl(MusicMixer *q, QString dir) : owner(q), cacheDir(std::move(dir)) {}
-    void remix(const std::vector<std::shared_ptr<MixVoiceState>> &voices);
+    using Began = std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>>;
+    // A remix prepared under engineMutex, not yet committed: `out` holds device frames [at, end), audible up to `last`.
+    struct Remix {
+        quint64 at = 0, end = 0, last = 0, pivot = 0;
+        std::vector<float> out;
+        std::deque<Span> tails;
+        std::vector<std::shared_ptr<MixVoiceState>> staged;
+    };
+    void remix(const std::vector<std::shared_ptr<MixVoiceState>> &voices, std::unique_lock<std::mutex> &engine);
+    Remix prepare(const std::vector<std::shared_ptr<MixVoiceState>> &voices);
+    void publish(Remix &plan, const std::vector<std::shared_ptr<MixVoiceState>> &voices, Began &began);
+    void commit(const Remix &plan, const Began &began);
     size_t render(const std::shared_ptr<MixVoiceState> &s, float *out, quint64 device, size_t frames,
                   std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> &began);
     void forgetQueue() {
@@ -916,7 +931,7 @@ void MusicMixer::serviceReader() {
             s->origin = std::min(s->length, quint64(std::llround(bounded(s->target) * s->rate)));
             s->limit = s->length - s->origin;
             s->file->seek(HEADER + qint64(s->origin) * 4);
-            s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
+            s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false; s->joining = true;
             s->starving = s->hold = false; s->fadeOutLeft = s->fadeOutLen = s->fadeInLen = 0;
             // Tới chỗ mà tải không kịp hay sát chỗ thôi kêu (lúc vào, lúc bed căn bài theo mốc, lúc tua): giữ im ngay như lúc hụt - báo buffering,
             // bài cũ giữ chỗ - rồi mờ vào khi vòng đệm có lại UNDERRUN_LOW_S và mayEnter. Lúc vào và lúc vào lại cùng một phép xét.
@@ -1036,7 +1051,7 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
         s->ring->clear(); s->stretch = std::make_unique<TimeStretch>(s->rate); s->stretch->setRate(s->speed);
         s->fxDsp = AudioFx::Dsp(); // A seek/new clip must not carry the old filter tail or limiter envelope.
         s->timelineStart = s->mediaMixed = s->mediaHeard = s->target; s->mixed = s->heard = 0; s->spans.clear();
-        s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
+        s->eof = false; s->reposition = false; s->joining = true;
         if (s->seeking) postSeeked(s);
     }
     std::vector<float> block; // Reuse capacity through this bounded refill, not once per 8192 frames.
@@ -1075,7 +1090,9 @@ void MusicMixer::selectOutput(const QString &id) {
     wake();
 }
 void MusicMixer::service(size_t frames) {
-    Guard engine(d->engineMutex);
+    // A voice waiting to join mid-queue is re-checked once per engine pull, waited for outside the engine lock.
+    if (d->pullPaced.exchange(false) && d->running) d->device->awaitPull(PULL_WAIT_MS);
+    std::unique_lock<std::mutex> engine(d->engineMutex);
     const auto voices = d->snapshot();
     const int oldRate = rate();
     const quint64 oldCursor = d->cursor();
@@ -1168,8 +1185,12 @@ void MusicMixer::service(size_t frames) {
     // Thao tác (tua, dừng, âm lượng, tốc độ) hay giọng vừa sẵn sàng giữa lúc thiết bị còn hàng đợi:
     // trộn lại ngay tại con trỏ nghe. Không bao giờ để endpoint chạy rỗng trong lúc chờ nguồn đọc lại.
     const bool remix = d->resetQueued || (join && d->written > d->played);
-    if (remix) { d->resetQueued = false; d->remix(voices); padding = size_t(d->written - d->played); }
-    d->joinSoon = false;
+    if (remix) {
+        d->resetQueued = false; d->remix(voices, engine); padding = size_t(d->written - d->played);
+        // The engine lock was released while the remix waited for a pull: a control may have started or paused a voice.
+        any = false;
+        for (const auto &s : voices) { Guard guard(s->mutex); any |= s->want && s->ready; }
+    }
     if (!any) {
         // Đuôi mờ ra còn trong thiết bị: để nó phát hết rồi mới Stop, Stop giữa chừng là một tiếng tách.
         // Chỉ chờ tới mẫu cuối còn kêu, không chờ hàng đợi cạn: chờ cạn thì lượt thức trễ hơn một chu kỳ của engine
@@ -1216,9 +1237,8 @@ void MusicMixer::service(size_t frames) {
         d->nextWakeMs = std::clamp(remainingMs - floorMs, 1, maxWaitMs);
     };
     if (!frames) { schedule(padding); return; }
-    // Không xếp im lặng khi chưa giọng nào góp được tiếng (đang mở hay đang tua): giọng ấy sẽ được nối vào tại con trỏ nghe.
-    // Giọng vừa nối mà hàng đợi còn tiếng (luồng đọc đặt lại chỗ ngay trong lượt này): lượt kế trộn lại, sau một lần
-    // engine kéo, đưa nó vào đúng con trỏ hay chỗ cầu để đan chéo, không nối đuôi sau khúc đã mờ hẳn.
+    // A joining voice whose PCM does not yet cover the write head stays out of this refill. Recheck it after an
+    // engine pull outside engineMutex, then remix at the heard cursor or bridge instead of appending after its fade.
     std::vector<std::shared_ptr<MixVoiceState>> mixing;
     bool joinLater = false;
     for (const auto &s : voices) {
@@ -1226,7 +1246,8 @@ void MusicMixer::service(size_t frames) {
         if (!s->want || !s->ready || s->reposition) continue;
         if (s->joining && padding && s->joinAt < d->written) joinLater = true; else mixing.push_back(s);
     }
-    if (joinLater) d->joinSoon = true;
+    if (joinLater) d->pullPaced = true;
+    // The 1 ms wake dispatches the next pass; pullPaced makes that pass wait for the engine before taking the lock.
     if (mixing.empty()) { d->nextWakeMs = joinLater ? 1 : padding ? std::clamp(int(padding * 1000 / size_t(rate())), 1, 250) : 250; return; }
     // Chỉ xếp phần mọi giọng đã có sẵn: giọng vừa tua hay vừa nối mà luồng đọc chưa lấp xong thì không chèn im lặng
     // giữa câu. Thật sự cạn và hàng đợi sắp hết mới xếp im lặng, từng đoạn 20 ms để tiếng về là nghe ngay.
@@ -1327,21 +1348,92 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
     return got;
 }
 
-// Gọi khi giữ engineMutex. Viết lại [con trỏ nghe, written) từ PCM còn giữ của từng khúc với trạng thái mới (âm lượng,
-// mờ ra khi dừng/tua/đổi tốc độ, giọng mới nối vào) rồi Stop/Reset/Write/Start liền một mạch: không chờ nguồn nào.
-void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &voices) {
-    // Trộn sẵn khi engine còn chạy, Stop..Start chỉ còn chép bộ đệm. Engine có thể kéo thêm một chu kỳ trong lúc trộn,
-    // nên mọi thay đổi bắt đầu ở pivot = con trỏ + 20 ms; trước pivot là đúng tiếng cũ, kéo kịp hay không vẫn liền.
-    // Hàng đợi ngắn thì lùi pivot để đoạn mờ ra vẫn nằm trong tiếng đã xếp.
+// Gọi khi giữ engineMutex (`engine`). Viết lại [con trỏ nghe, written) từ PCM còn giữ của từng khúc với trạng thái mới
+// (âm lượng, mờ ra khi dừng/tua/đổi tốc độ, giọng mới nối vào), chờ engine kéo, rồi Stop/Reset/Write/Start liền một mạch.
+void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &voices, std::unique_lock<std::mutex> &engine) {
+    const auto lockVoices = [&] {
+        std::vector<std::unique_lock<std::mutex>> locks;
+        for (const auto &s : voices) locks.emplace_back(s->mutex);
+        return locks;
+    };
+    auto locked = lockVoices();
+    Began began;
+    Remix plan = prepare(voices);
+    if (running) {
+        // Commit right after an engine pull so the short Stop..Start sits inside one period. The wait releases the
+        // engine lock: UI controls (bed crossfade ticks every 50 ms, the sleep-timer fade, position()) never wait
+        // for the engine. The device still plays the old queue, so a control that lands meanwhile is simply
+        // prepared again now, without a second wait. Preparation has not changed the live queue or consumed PCM.
+        const auto controls = [&] {
+            using Mark = std::tuple<quint64, quint64, size_t, bool, bool, bool, bool, double, double, double, bool, quint64>;
+            std::vector<Mark> marks;
+            for (const auto &s : voices)
+                marks.emplace_back(s->generation, s->seekSerial, s->spans.size(), s->ready, s->want,
+                                   s->reposition, s->joining, s->target, s->volume, s->speed, s->loop, s->limit);
+            return marks;
+        };
+        const auto before = controls();
+        locked.clear();
+        engine.unlock();
+        device->awaitPull(PULL_WAIT_MS);
+        engine.lock();
+        locked = lockVoices();
+        const quint64 now = written - std::min<quint64>(device->padding(), written);
+        // Rebase the pivot on the cursor AFTER the wait, preserving its full 20 ms preparation budget.
+        if (resetQueued || controls() != before || now != plan.at) { resetQueued = false; plan = prepare(voices); }
+    }
+    publish(plan, voices, began);
+    locked.clear();
+    commit(plan, began);
+}
+
+// Gọi khi giữ engineMutex. Trộn sẵn khi engine còn chạy, để Stop..Start chỉ còn chép bộ đệm.
+MusicMixer::Impl::Remix MusicMixer::Impl::prepare(const std::vector<std::shared_ptr<MixVoiceState>> &voices) {
+    // Stage queue edits and PCM only: controls and the reader still see the original queue during awaitPull.
+    // After the wait a changed cursor causes a fresh plan, with pivot = that cursor + 20 ms for preparation.
+    // Short queues move the pivot back so the fade still fits inside the queued sound.
+    Remix plan;
     const quint32 cross = quint32(rate / 200), fade = quint32(rate / 100);
     const quint64 end = written, at = end - std::min<quint64>(device->padding(), end);
     const quint64 pivot = std::max(at, std::min(at + quint64(rate) / 50, end > fade ? end - fade : 0));
+    auto stopped = this->stopped;
+    auto tails = this->tails;
     // Giọng bị dừng hay nạp chương khác: phần đã xếp mờ ra 10 ms thay vì tắt phụt.
     cutInto(stopped, tails, pivot + fade, fade);
     std::vector<float> out(size_t(end - at) * 2, 0.0f), scratch;
     quint64 last = at;
-    for (const auto &s : voices) {
-        Guard guard(s->mutex);
+    for (const auto &source : voices) {
+        auto s = std::make_shared<MixVoiceState>();
+        s->generation = source->generation;
+        s->seekSerial = source->seekSerial;
+        s->ready = source->ready;
+        s->want = source->want;
+        s->loop = source->loop;
+        s->seeking = source->seeking;
+        s->reposition = source->reposition;
+        s->flush = source->flush;
+        s->eof = source->eof;
+        s->volumeDirty = source->volumeDirty;
+        s->target = source->target;
+        s->volume = source->volume;
+        s->duration = source->duration;
+        s->rate = source->rate;
+        s->length = source->length;
+        s->origin = source->origin;
+        s->mixed = source->mixed;
+        s->heard = source->heard;
+        s->limit = source->limit;
+        s->streaming = source->streaming;
+        s->speed = source->speed;
+        s->mediaHeard = source->mediaHeard;
+        s->timelineStart = source->timelineStart;
+        s->joining = source->joining;
+        s->fadeIn = source->fadeIn;
+        s->speedDirty = source->speedDirty;
+        s->joinAt = source->joinAt;
+        s->ramp = source->ramp;
+        s->spans = source->spans;
+        plan.staged.push_back(s);
         dropHeard(*s, at);
         splitAt(s->spans, pivot, s->rate);
         if (s->flush) {
@@ -1349,14 +1441,14 @@ void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &
             if (pausing || seeking) {
                 // Vị trí dừng là lúc bấm (con trỏ nghe); 30 ms đã mờ ra được phát lại khi nghe tiếp.
                 if (pausing && !s->seeking)
-                    s->target = s->streaming ? mediaHeard(*s, at) : double(s->frameAt(heard(*s, at))) / s->rate;
+                    s->target = s->streaming ? mediaHeard(*source, at) : double(s->frameAt(heard(*s, at))) / s->rate;
                 cutInto(s->spans, tails, pivot + (pausing ? fade : cross), pausing ? fade : cross);
                 s->reposition = s->fadeIn = true; s->joining = false; s->joinAt = 0;
             } else if (s->speedDirty && s->streaming && !s->spans.empty()) {
                 // Bắc cầu: tiếng cũ chạy thêm tối đa 60 ms trong lúc Sonic mới mồi từ đúng chỗ ấy, rồi đan chéo 5 ms.
                 const quint64 room = end - pivot, bridge = std::min<quint64>(quint64(rate) * 6 / 100, room > cross ? room - cross : 0);
                 s->joinAt = pivot + bridge;
-                s->target = mediaHeard(*s, s->joinAt);
+                s->target = mediaHeard(*source, s->joinAt);
                 cutInto(s->spans, tails, s->joinAt + cross, cross);
                 s->reposition = s->fadeIn = true; s->joining = false;
             }
@@ -1384,34 +1476,57 @@ void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &
         mixSpan(out.data(), at, at, end, span, scratch);
         last = std::max(last, std::min(span.device + span.frames, span.outEnd));
     }
+    plan.at = at; plan.end = end; plan.last = last; plan.pivot = pivot;
+    plan.out = std::move(out); plan.tails = std::move(tails);
+    return plan;
+}
+
+// Publish only the final plan, under engineMutex. Joining consumes source PCM exactly once, after the wait.
+void MusicMixer::Impl::publish(Remix &plan, const std::vector<std::shared_ptr<MixVoiceState>> &voices, Began &began) {
+    stopped.clear(); tails = std::move(plan.tails);
+    for (size_t i = 0; i < voices.size(); ++i) {
+        const auto &s = voices[i]; const auto &staged = plan.staged[i];
+        s->spans = std::move(staged->spans);
+        s->ramp = std::move(staged->ramp);
+        s->heard = std::move(staged->heard);
+        s->mediaHeard = std::move(staged->mediaHeard);
+        s->target = std::move(staged->target);
+        s->flush = std::move(staged->flush);
+        s->speedDirty = std::move(staged->speedDirty);
+        s->volumeDirty = std::move(staged->volumeDirty);
+        s->reposition = std::move(staged->reposition);
+        s->fadeIn = std::move(staged->fadeIn);
+        s->joining = std::move(staged->joining);
+        s->joinAt = std::move(staged->joinAt);
+    }
     // Giọng vừa sẵn sàng (play, tua xong, đổi tốc độ xong) vào ngay pivot (hay đúng chỗ cầu), không chờ hàng đợi cũ cạn.
-    std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> began;
     for (const auto &s : voices) {
-        Guard guard(s->mutex);
         if (!s->want || !s->ready || s->reposition || !s->joining) continue;
-        const quint64 from = std::max(pivot, s->joinAt);
+        const quint64 from = std::max(plan.pivot, s->joinAt);
         // Hàng đợi đã cạn tới đó: lượt trộn thường nối giọng này ở đầu ghi. Vòng đệm chưa phủ tới đầu ghi: chờ thêm,
         // không để im lặng giữa câu.
-        if (from >= end || ahead(*s) < end - from) continue;
-        render(s, out.data() + (from - at) * 2, from, size_t(end - from), began);
-        last = end;
+        if (from >= plan.end || ahead(*s) < plan.end - from) continue;
+        render(s, plan.out.data() + (from - plan.at) * 2, from, size_t(plan.end - from), began);
+        plan.last = plan.end;
     }
-    // Nguồn bị cắt cần đặt lại chỗ, giọng vừa nối cần lấp lại vòng đệm: luồng đọc chạy ngay.
     owner->wake(true);
+}
+
+// Gọi khi giữ engineMutex, ngay sau lần engine kéo (hay khi engine không chạy).
+void MusicMixer::Impl::commit(const Remix &plan, const Began &began) {
+    // Sample immediately BEFORE Stop, while the old queue is still running. Between Stop and Start there is only
+    // Reset and a copy of the ready buffer: no padding query, wait, allocation or mixing. A pull landing in that
+    // window would silence its whole period; OS preemption can still move us across a boundary.
+    const quint64 now = std::max(plan.at, plan.end - std::min<quint64>(device->padding(), plan.end));
     // Không giữ im lặng thừa sau tiếng cuối: thiết bị cạn đúng lúc hết đuôi mờ.
-    // Preparing the PCM above can span an engine period. Align the short
-    // Stop/Reset/Write/Start commit only AFTER preparation, otherwise Stop may
-    // land just before the next pull and silence a whole period.
-    if (running) device->awaitPull(12);
+    const size_t frames = plan.last > now ? size_t(plan.last - now) : 0;
+    const float *pcm = plan.out.data() + (now - plan.at) * 2;
     device->stop();
-    const quint64 now = std::max(at, end - std::min<quint64>(device->padding(), end));
-    device->reset(); running = false;
+    device->reset();
+    const bool wrote = frames && device->write(pcm, frames);
+    running = wrote && device->start();
     played = now; sampled = Clock::now();
-    written = std::max(last, now);
-    if (last > now) {
-        if (!device->write(out.data() + (now - at) * 2, size_t(last - now))) return;
-        running = device->start();
-    }
+    written = std::max(plan.last, now);
     if (running) for (const auto &entry : began) {
         const auto &s = entry.first;
         Guard guard(s->mutex);

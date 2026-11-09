@@ -1011,7 +1011,8 @@ private slots:
         QCOMPARE(failed.size(), 0);
         for (const auto &file : QDir(dir.path()).entryInfoList({QStringLiteral("*.pcm")}, QDir::Files)) {
             const int hz = file.fileName().endsWith(QStringLiteral("44100.pcm")) ? 44100 : 48000;
-            QVERIFY(MusicMixer::cacheFrames(file.absoluteFilePath(), hz) > 0);
+            // A decode job of the other rate may still be running: its header says 0 frames until it finishes.
+            QTRY_VERIFY(MusicMixer::cacheFrames(file.absoluteFilePath(), hz) > 0);
         }
     }
 

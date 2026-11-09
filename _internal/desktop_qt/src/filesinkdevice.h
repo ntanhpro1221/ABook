@@ -11,7 +11,6 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
-#include <deque>
 #include <thread>
 #include <vector>
 
@@ -21,16 +20,18 @@ public:
     struct Gap { quint64 at, frames; };
 
     ClockedFileSinkDevice(const QString &path, int rate = 48000, size_t capacity = 48000, int periodMs = 10)
-        : m_file(path), m_rate(rate), m_capacity(capacity), m_period(std::max<size_t>(1, size_t(rate) * size_t(periodMs) / 1000)) {
+        : m_file(path), m_rate(rate), m_capacity(capacity), m_period(std::max<size_t>(1, size_t(rate) * size_t(periodMs) / 1000)), m_queue(capacity * 2) {
         if (m_file.open(QIODevice::WriteOnly | QIODevice::Truncate)) m_file.write(QByteArray(44, '\0'));
     }
     ~ClockedFileSinkDevice() override {
         advance();
+        flush();
         finish();
     }
     int rate() const override { return m_rate; }
     bool start() override {
-        advance();
+        // Record stopped boundaries now, but emit their silence on the next advance outside Stop..Start.
+        if (m_started && !m_running) m_stoppedUntil = dueTicks();
         if (!m_started) {
             m_started = true; m_epoch = Clock::now(); m_ticks = 0; m_epochNs = m_epoch.time_since_epoch().count();
             // Khung 0 của file ứng với mốc này, cùng đồng hồ với Bench::mark (ms của steady_clock).
@@ -44,8 +45,10 @@ public:
     }
     void stop() override { advance(); m_running = false; }
     // Như IAudioClient::Reset: bỏ phần còn trong hàng đợi chưa được engine kéo.
-    void reset() override { m_queue.clear(); }
-    size_t padding() override { advance(); return m_queue.size() / 2; }
+    void reset() override { m_head = m_queued = 0; }
+    // The file is only written here and on close, never from stop/write/start: a remix samples padding before Stop,
+    // and the time the write itself takes is counted as running before the frames are reported.
+    size_t padding() override { advance(); flush(); advance(); return m_queued / 2; }
     size_t bufferFrames() const override { return m_capacity; }
     // Như sự kiện của WASAPI event-driven: trả về ngay sau ranh chu kỳ kế tiếp (chờ quay, sleep của Windows quá thô).
     void awaitPull(int maxMs) override {
@@ -58,9 +61,13 @@ public:
         advance();
     }
     bool write(const float *stereo, size_t frames) override {
-        advance();
-        if (m_queue.size() / 2 + frames > m_capacity) return false;
-        m_queue.insert(m_queue.end(), stereo, stereo + frames * 2);
+        if (m_running) advance();
+        if (m_queued / 2 + frames > m_capacity) return false;
+        // Two plain copies into the fixed ring, as cheap as filling the WASAPI buffer.
+        const size_t samples = frames * 2, at = (m_head + m_queued) % m_queue.size(), first = std::min(samples, m_queue.size() - at);
+        std::copy_n(stereo, first, m_queue.begin() + qsizetype(at));
+        std::copy_n(stereo + first, samples - first, m_queue.begin());
+        m_queued += samples;
         return true;
     }
     // Khung đang ra loa lúc này, gọi được từ luồng khác (mốc thao tác của công cụ): theo ranh chu kỳ của engine.
@@ -77,44 +84,53 @@ private:
     size_t m_capacity, m_period;
     bool m_started = false, m_running = false;
     typename Clock::time_point m_epoch;
-    quint64 m_ticks = 0, m_played = 0, m_saved = 0;
+    quint64 m_ticks = 0, m_played = 0, m_saved = 0, m_stoppedUntil = 0;
     std::atomic<long long> m_epochNs{0};
-    std::deque<float> m_queue;
+    std::vector<float> m_queue; // Fixed ring of m_capacity stereo frames: m_queued samples from m_head.
+    size_t m_head = 0, m_queued = 0;
     std::vector<Gap> m_gaps, m_stops;
-    std::vector<float> m_scratch;
+    std::vector<float> m_scratch, m_pending;
 
     static void note(std::vector<Gap> &list, quint64 at, quint64 frames) {
         if (!list.empty() && list.back().at + list.back().frames == at) list.back().frames += frames;
         else list.push_back({at, frames});
     }
     // Mỗi ranh chu kỳ đã qua: engine kéo đúng một chu kỳ của luồng (đang dừng = im lặng cả chu kỳ).
+    quint64 dueTicks() const {
+        return quint64(std::chrono::duration<double>(Clock::now() - m_epoch).count() * m_rate / double(m_period));
+    }
     void advance() {
         if (!m_started) return;
-        // File writes/flushes can cross another engine boundary. Account that
+        // Emitting can itself cross another engine boundary. Account that
         // elapsed time under the current state before stop/start changes it.
-        // Otherwise the next call falsely assigns the write latency to the new state.
         for (;;) {
-            const auto due = quint64(std::chrono::duration<double>(Clock::now() - m_epoch).count() * m_rate / double(m_period));
+            const auto due = dueTicks();
             if (m_ticks >= due) break;
             for (; m_ticks < due; ++m_ticks) {
-                if (!m_running) {
+                if (!m_running || m_ticks < m_stoppedUntil) {
                     note(m_stops, m_played, m_period);
                     m_scratch.assign(m_period * 2, 0.0f);
                     emit_(m_scratch.data(), m_period);
                     continue;
                 }
-                const size_t have = std::min(m_period, m_queue.size() / 2);
-                m_scratch.assign(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
-                m_queue.erase(m_queue.begin(), m_queue.begin() + qsizetype(have * 2));
-                m_scratch.resize(m_period * 2, 0.0f);
+                const size_t have = std::min(m_period, m_queued / 2);
+                m_scratch.assign(m_period * 2, 0.0f);
+                for (size_t i = 0; i < have * 2; ++i) m_scratch[i] = m_queue[(m_head + i) % m_queue.size()];
+                m_head = (m_head + have * 2) % m_queue.size(); m_queued -= have * 2;
                 if (have < m_period) note(m_gaps, m_played + have, m_period - have);
                 emit_(m_scratch.data(), m_period);
             }
         }
     }
+    // Memory only; file I/O is deferred to padding() or close, outside Stop..Start.
     void emit_(const float *data, quint64 frames) {
-        if (m_file.isOpen()) m_file.write(reinterpret_cast<const char *>(data), qint64(frames * 8));
+        m_pending.insert(m_pending.end(), data, data + frames * 2);
         m_played += frames;
+    }
+    void flush() {
+        if (m_pending.empty()) return;
+        if (m_file.isOpen()) m_file.write(reinterpret_cast<const char *>(m_pending.data()), qint64(m_pending.size() * sizeof(float)));
+        m_pending.clear();
         // Mỗi giây ghi lại đầu WAV và hai danh sách: app bị giết giữa chừng vẫn để lại file đọc được tới giây gần nhất.
         if (m_played - m_saved >= quint64(m_rate)) { m_saved = m_played; save(); }
     }

@@ -19,6 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bỏ khoảng lặng trên máy tính không còn báo đang tải ở mỗi khoảng lặng dài, hẹn giờ ngủ đếm tiếp.
 - Đổi tốc độ trên web vẫn có tác dụng khi trình duyệt chặn lưu dữ liệu trang (chỉ báo là chưa lưu được).
 - Hộp chọn giọng nhân vật không còn có giọng miền Trung, và mở đầu bằng giọng bạn chấm tốt nhất.
+- Giao diện máy tính không còn khựng khi nhạc nền chuyển bài hay hẹn giờ ngủ đang giảm dần âm lượng trong lúc đang nghe.
 
 ## [0.4.165] - 2026-11-08
 

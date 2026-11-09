@@ -190,7 +190,10 @@ private slots:
         for(const auto &event:buffering) QVERIFY2(!event[0].toBool(), "silence lookahead reported a source underrun");
         for(const auto &event:playing) QVERIFY2(event[0].toBool(), "silence lookahead interrupted playing/sleep time");
     }
-    void remixWaitsForTheEngineAfterPreparingAudio() {
+    // Pins the call order only: the pull the remix waits for comes after the pass's first padding sample (which this
+    // device charges 9 ms of "preparation"), so the 2 ms Stop..Start that follows still fits inside one engine period.
+    // It does not model where the PCM work really happens nor listen to the audio around the pivot.
+    void remixWaitsForAPullAfterTheFirstPaddingSample() {
         struct PhaseDevice : Device {
             int ms = 0, waits = 0, missedPeriods = 0;
             bool prepare = false, stoppedForRemix = false;
@@ -224,6 +227,118 @@ private slots:
         QCOMPARE(device->waits, 1);
         QCOMPARE(device->missedPeriods, 0);
         QVERIFY(device->running);
+    }
+    // A remix waits up to an engine period for the next pull. The UI thread (music-bed crossfade ticks every 50 ms,
+    // the sleep-timer fade, position()) must not wait with it: the engine lock is released during that wait, and a
+    // control that lands meanwhile is folded into the same commit.
+    void controlsDoNotWaitWhileARemixAwaitsAPull_data() {
+        QTest::addColumn<QString>("command");
+        QTest::newRow("volume") << QStringLiteral("volume");
+        QTest::newRow("seek") << QStringLiteral("seek");
+        QTest::newRow("stop") << QStringLiteral("stop");
+    }
+    void controlsDoNotWaitWhileARemixAwaitsAPull() {
+        QFETCH(QString, command);
+        struct GateDevice : Device {
+            std::mutex m; std::condition_variable cv;
+            bool waiting = false, release = false;
+            void awaitPull(int) override {
+                std::unique_lock<std::mutex> lock(m);
+                if (release) return;
+                waiting = true; cv.notify_all();
+                cv.wait_for(lock, std::chrono::seconds(2), [this] { return release; });
+                waiting = false;
+            }
+        };
+        QTemporaryDir dir;
+        auto *device = new GateDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path());
+        auto control = std::make_shared<Control>();
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:gate")), 0); voice.play();
+        mixer.serviceReader(); mixer.service(24000);
+        QVERIFY(device->running);
+        const int stops = device->stops;
+        const auto original = device->output;
+        voice.setVolume(0.5);
+        std::thread mixing([&] { mixer.service(0); });
+        bool entered = false, stillWaiting = false;
+        { std::unique_lock<std::mutex> lock(device->m);
+          entered = device->cv.wait_for(lock, std::chrono::seconds(2), [&] { return device->waiting; }); }
+        QElapsedTimer elapsed; elapsed.start();
+        voice.position();
+        if (command == QStringLiteral("volume")) voice.setVolume(0.25);
+        else if (command == QStringLiteral("seek")) voice.seek(1);
+        else voice.stop();
+        const qint64 controlUs = elapsed.nsecsElapsed() / 1000;
+        qInfo("control_lock_wait_us=%lld", static_cast<long long>(controlUs));
+        { std::lock_guard<std::mutex> lock(device->m); stillWaiting = device->waiting; device->release = true; }
+        device->cv.notify_all();
+        mixing.join();
+        QVERIFY(entered);
+        QVERIFY2(controlUs < 1000000, "controls waited for the gated engine pull");
+        QVERIFY2(stillWaiting, "a control waited for the engine pull of a remix");
+        QCOMPARE(device->stops, stops + 1);
+        if (command == QStringLiteral("volume")) {
+            QVERIFY(device->output.size() >= original.size() * 2);
+            for (size_t i = 5000; i < 5100; ++i)
+                QVERIFY(std::abs(device->output[original.size() + i * 2] - original[i * 2] * 0.25f) < 1e-5f);
+        } else QCOMPARE(voice.position(), command == QStringLiteral("seek") ? 1.0 : 0.0);
+        mixer.service(0); // nothing left over for the next pass
+        QCOMPARE(device->stops, stops + 1);
+    }
+    // Simulate the engine advancing during preparation and the wait. The entire 20 ms budget must remain after the
+    // wait, including when the advance exceeds a fixed 32 ms allowance.
+    void waitingForAPullDoesNotEatTheFade_data() {
+        QTest::addColumn<int>("elapsedMs");
+        QTest::newRow("25ms") << 25;
+        QTest::newRow("45ms") << 45;
+    }
+    void waitingForAPullDoesNotEatTheFade() {
+        QFETCH(int, elapsedMs);
+        struct LateDevice : Device {
+            size_t pulledMeanwhile = 0;
+            void awaitPull(int) override { queued -= std::min(queued, pulledMeanwhile); }
+        };
+        QTemporaryDir dir;
+        auto *device = new LateDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path());
+        auto control = std::make_shared<Control>();
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:late")), 0); voice.play();
+        mixer.serviceReader(); mixer.service(24000);
+        QVERIFY(device->running);
+        const std::vector<float> before = device->output;
+        const size_t pulled = size_t(48000 * elapsedMs / 1000);
+        device->pulledMeanwhile = pulled;
+        voice.pause(); mixer.service(0);
+        QVERIFY(device->output.size() > before.size());
+        for (size_t i = 0; i < 960; ++i)
+            QVERIFY2(std::abs(device->output[before.size() + i * 2] - before[(pulled + i) * 2]) < 1e-5f, qPrintable(QStringLiteral("faded at frame %1").arg(i)));
+    }
+    // A voice waiting to join mid-queue is re-checked once per engine pull, not every millisecond under the engine lock.
+    void aVoiceWaitingToJoinIsPacedByTheEngine() {
+        struct CountingDevice : Device {
+            int waits = 0;
+            void awaitPull(int) override { ++waits; }
+        };
+        QTemporaryDir dir;
+        auto *device = new CountingDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path());
+        auto control = std::make_shared<Control>();
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:join")), 0); voice.play();
+        mixer.serviceReader(); mixer.service(24000);
+        control->starved = true;
+        voice.seek(1); mixer.service(480); // the remix cuts the voice
+        mixer.serviceReader();             // repositioned, but the ring stays empty: it cannot join yet
+        const int waits = device->waits;
+        mixer.service(480);
+        QCOMPARE(device->waits, waits); // this pass finds the voice waiting
+        mixer.service(480);
+        QCOMPARE(device->waits, waits + 1);
+        mixer.service(480);
+        QCOMPARE(device->waits, waits + 2);
     }
     void silenceClockFollowsHeardFramesNotDecodeAhead() {
         Rig rig;rig.control->duration=7;rig.control->longSilence=true;
@@ -618,9 +733,10 @@ private slots:
         double jump = std::abs(double(remix[0] - queued[2399 * 2]));
         for (size_t i = 1; i < remix.size() / 2; ++i) jump = std::max(jump, std::abs(double(remix[i * 2] - remix[(i - 1) * 2])));
         QVERIFY2(jump < 0.02, qPrintable(QString::number(jump)));
-        // Mọi thay đổi bắt đầu ở pivot = con trỏ + 20 ms (960 khung); trước đó là đúng tiếng cũ.
-        QVERIFY(std::equal(remix.begin(), remix.begin() + 960 * 2, queued.begin() + 2400 * 2));
-        const size_t silentFrom = 960 + (command == QStringLiteral("volume") ? 2400 : command == QStringLiteral("rate") ? 2880 + 240 :
+        // Changes start at the post-wait cursor + 20 ms (960 frames); the preceding audio stays unchanged.
+        const size_t pivot = 960;
+        QVERIFY(std::equal(remix.begin(), remix.begin() + qsizetype(pivot * 2), queued.begin() + 2400 * 2));
+        const size_t silentFrom = pivot + (command == QStringLiteral("volume") ? 2400 : command == QStringLiteral("rate") ? 2880 + 240 :
             command == QStringLiteral("seek") ? 240 : 480);
         QVERIFY(std::all_of(remix.begin() + qsizetype(silentFrom * 2), remix.end(), [](float f) { return f == 0; }));
         QVERIFY(std::abs(remix[(silentFrom - 1) * 2]) < 0.001);
