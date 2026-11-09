@@ -183,6 +183,9 @@ class MusicScreenTest {
         back()
         rule.onNodeWithTag("player_sheet_audio").assertIsDisplayed()
         rule.onNodeWithTag("audiofx_music").assertIsDisplayed()
+        // Âm thanh mở từ Thêm tuỳ chọn: Back về lại Thêm tuỳ chọn, Back nữa mới đóng tấm.
+        back()
+        rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
         back()
         assertTrue(!window.sheetOpen)
     }

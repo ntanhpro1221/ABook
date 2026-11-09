@@ -23,9 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -139,7 +139,7 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().graphicsLayer { alpha = if (placed || state.paragraphs.isEmpty()) 1f else 0f }
+                state = list, modifier = Modifier.fillMaxSize().drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
                     .fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 // Đáy chừa đủ để cả dòng cuối vẫn lên được tới vùng đọc, không kẹt ở nửa dưới màn.
                 contentPadding = PaddingValues(start = InkBleed, end = InkBleed, top = 12.dp, bottom = third * 2), verticalArrangement = Arrangement.spacedBy(20.dp),
