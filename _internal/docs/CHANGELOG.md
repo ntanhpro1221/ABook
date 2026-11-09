@@ -15,6 +15,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nhãn và kiểu hiển thị thống nhất hơn trên điện thoại, máy tính và web.
 - Trang sách trên cửa sổ hẹp: bấm "Thêm tuỳ chọn" rồi nhả chuột chậm không còn vô tình chọn mục đầu tiên của menu vừa trượt lên.
 - Mở lại sách đã thu nhanh hơn vì không đo lại những câu không đổi.
+- Bỏ khoảng lặng trên web không còn nạp cả chương vào bộ nhớ; chương không quét được thì app báo, sách vẫn phát đủ.
+- Bỏ khoảng lặng trên máy tính không còn báo đang tải ở mỗi khoảng lặng dài, hẹn giờ ngủ đếm tiếp.
+- Đổi tốc độ trên web vẫn có tác dụng khi trình duyệt chặn lưu dữ liệu trang (chỉ báo là chưa lưu được).
+- Hộp chọn giọng nhân vật không còn có giọng miền Trung, và mở đầu bằng giọng bạn chấm tốt nhất.
 
 ## [0.4.165] - 2026-11-08
 
