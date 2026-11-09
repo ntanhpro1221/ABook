@@ -486,6 +486,7 @@ object Playback {
         val record = Store.activeRecord(id)
         ReadAloud.useVoiceOf(id, record)
         bookId = id
+        AudioFx.selectBook(id)
         recordId = record
         SleepTimer.checkOwner()
         bookTitle = title
@@ -496,7 +497,7 @@ object Playback {
             // Sách có chương chỉ-có-chữ: ReadAloud đọc đoạn nào đặt đoạn ấy vào hàng đợi (giọng Edge cần mạng, nên giữ Wi-Fi thức khi tắt màn hình).
             exo.setWakeMode(C.WAKE_MODE_NETWORK)
             savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
-            applySpeed(exo, rate)
+            applySpeed(exo, AudioFx.current.speed)
             ReadAloud.begin(index, msOf(startSeconds), autoplay)
             if (autoplay) startTicking()
             emit("load")
@@ -510,7 +511,7 @@ object Playback {
         // Chỗ vừa nạp ghi TRƯỚC khi đặt hàng đợi: sự kiện tua của ExoPlayer ([onSeekSettled]) đến ngay trong lời gọi, thấy chỗ cũ của cuốn trước thì sẽ lưu chỗ vừa nạp như người nghe vừa tua.
         savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
         exo.setMediaItems(media, index, msOf(startSeconds))
-        applySpeed(exo, rate)
+        applySpeed(exo, AudioFx.current.speed)
         exo.prepare()
         // Mở lại app: nạp sẵn đúng chỗ đang nghe dở ở trạng thái dừng, người nghe bấm phát khi sẵn sàng.
         if (autoplay) {
@@ -544,6 +545,7 @@ object Playback {
         val exo = player ?: return
         lastError = ""
         bookId = next.id
+        AudioFx.selectBook(next.id)
         recordId = Store.activeRecord(next.id)
         SleepTimer.checkOwner()
         ReadAloud.useVoiceOf(next.id, recordId)
@@ -552,7 +554,7 @@ object Playback {
         chapters = next.items
         val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "https" }
         exo.setWakeMode(if (streamed) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
-        applySpeed(exo, next.rate)
+        applySpeed(exo, AudioFx.current.speed)
         savedPlace = next.place
         if (exo.isPlaying) {
             openSession()
@@ -690,6 +692,7 @@ object Playback {
 
     fun setRate(rate: Double) {
         touched()
+        AudioFx.update(AudioFx.current.copy(speed = rate))
         player?.let { applySpeed(it, rate) }
         if (bookId.isNotEmpty()) Store.setRate(bookId, rate, recordId.ifEmpty { null })
         emit("rate")
@@ -780,6 +783,7 @@ object Playback {
     fun onRateChanged(speed: Float) {
         if (speed == knownSpeed) return
         knownSpeed = speed
+        if (kotlin.math.abs(AudioFx.current.speed - speed.toDouble()) > 1e-6) AudioFx.update(AudioFx.current.copy(speed = speed.toDouble()))
         if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { AppLog.w("ABookSave", "không lưu được tốc độ", it) }
         emit("rateChanged")
     }

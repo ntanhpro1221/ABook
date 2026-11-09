@@ -11,11 +11,22 @@ data class AudioFxSettings(
     val boost: Double = 0.0,
     val pitch: Double = 0.0,
     val volume: Double = 0.9,
+    val speed: Double = 1.0,
+    val mono: Boolean = false,
+    val balance: Double = 0.0,
+    val skipSilence: Boolean = false,
+    val silenceDb: Double = -60.0,
+    val silenceSeconds: Double = 3.0,
+    val keepSeconds: Double = 1.5,
 ) {
     fun safe() = copy(preset = preset.coerceIn(-1, 4),
         bands = List(5) { bands.getOrNull(it).finite(0.0, -12.0, 12.0) },
         bass = bass.finite(0.0, 0.0, 12.0), boost = boost.finite(0.0, 0.0, 12.0),
-        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(0.9, 0.0, 1.0))
+        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(0.9, 0.0, 1.0),
+        speed = speed.finite(1.0, 0.5, 4.0), balance = balance.finite(0.0, -1.0, 1.0),
+        silenceDb = silenceDb.finite(-60.0, -80.0, -45.0),
+        silenceSeconds = silenceSeconds.finite(3.0, 2.0, 10.0),
+        keepSeconds = keepSeconds.finite(1.5, 1.5, 3.0).coerceAtMost(silenceSeconds.finite(3.0, 2.0, 10.0)))
     fun withPreset(index: Int) = copy(preset = index, bands = PRESETS[index].toList(), bass = 0.0)
     companion object {
         val FREQUENCIES = doubleArrayOf(80.0, 250.0, 1000.0, 4000.0, 12000.0)
@@ -71,6 +82,11 @@ class AudioFxDsp(private val rate: Int, private val channels: Int) {
     }
     /** Caller reuses its PCM frame; no allocations per sample. Instant attack, 80 ms release, -1 dBFS ceiling. */
     fun process(frame: DoubleArray) {
+        if (channels >= 2) {
+            if (settings.mono) { val mid = (frame[0] + frame[1]) * 0.5; frame[0] = mid; frame[1] = mid }
+            frame[0] *= 1.0 - max(0.0, settings.balance)
+            frame[1] *= 1.0 + min(0.0, settings.balance)
+        }
         var peak = 0.0
         for (ch in 0 until channels) {
             var x = frame[ch]

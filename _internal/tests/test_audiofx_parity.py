@@ -15,7 +15,8 @@ def test_equalizer_choices_match(label):
 
 
 @pytest.mark.parametrize("label", ["Âm lượng", "Tăng âm", "Cao độ", "Về mặc định", "Equalizer", "Tăng trầm",
-    "Lưu cho toàn app. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng."])
+    "Dùng chung mặc định. Chỉ chỉnh giọng đọc; nhạc nền có mức riêng.", "Riêng sách này", "Mono", "Cân bằng",
+    "Bỏ khoảng lặng", "Ngưỡng lặng", "Dài tối thiểu", "Giữ khoảng nghỉ"])
 def test_audio_panel_copy_matches(label):
     for path in [ROOT / "ui/src/listen/AudioFxPanel.tsx",
                  ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/AudioFxPage.kt",

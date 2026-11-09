@@ -12,6 +12,8 @@ Column {
     property string suffix: " dB"
     signal picked(real value)
     spacing: 0
+    opacity: enabled ? 1 : 0.5
+    Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     Row {
         width: parent.width
         Text { width: parent.width - number.width; text: root.label; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }

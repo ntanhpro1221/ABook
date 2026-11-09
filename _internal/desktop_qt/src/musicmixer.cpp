@@ -447,7 +447,7 @@ struct MixVoiceState {
     std::unique_ptr<MixCore::Ring> ring;
     std::unique_ptr<QFile> file;
     bool streaming = false;
-    double speed = 1, mediaMixed = 0, mediaHeard = 0;
+    double speed = 1, mediaMixed = 0, mediaHeard = 0, timelineStart = 0;
     std::shared_ptr<ByteSource> source;
     std::function<std::unique_ptr<VoiceDecoder>(int)> decoderFactory;
     std::shared_ptr<VoiceDecoder> decoder; // reader keeps an epoch alive while stop/seek/device commands proceed
@@ -612,6 +612,7 @@ struct MusicMixer::Impl {
             if (cursor <= span.device) break;
             result = span.media + double(std::min(span.frames, cursor - span.device)) * span.speed / s.rate;
         }
+        if (s.stretch) result=s.timelineStart+s.stretch->sourceSeconds(result-s.timelineStart);
         return s.loop ? result : std::min(result, s.duration);
     }
     void trim() {
@@ -1033,7 +1034,7 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
         s->target = std::clamp(s->target, 0.0, s->duration);
         s->ring->clear(); s->stretch = std::make_unique<TimeStretch>(s->rate); s->stretch->setRate(s->speed);
         s->fxDsp = AudioFx::Dsp(); // A seek/new clip must not carry the old filter tail or limiter envelope.
-        s->mediaMixed = s->mediaHeard = s->target; s->mixed = s->heard = 0; s->spans.clear();
+        s->timelineStart = s->mediaMixed = s->mediaHeard = s->target; s->mixed = s->heard = 0; s->spans.clear();
         s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
         if (s->seeking) postSeeked(s);
     }
@@ -1299,7 +1300,7 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
         else if (s->fadeOutLen) n = std::min<size_t>(n, s->fadeOutLeft);
     }
     std::vector<float> block(frames * 2, 0.0f), scratch;
-    if (s->streaming) { s->stretch->setRate(s->speed); s->stretch->setPitch(s->fx.pitch); }
+    if (s->streaming) { s->stretch->setRate(s->speed); s->stretch->setPitch(s->fx.pitch); s->stretch->setAudioFx(s->fx); }
     const size_t got = s->streaming ? s->stretch->read(*s->ring, block.data(), n, s->eof) : s->ring->read(block.data(), n * 2) / 2;
     if (s->streaming) { s->fxDsp.configure(s->fx,s->rate); s->fxDsp.process(block.data(),got); }
     if (s->fadeOutLen && got) {

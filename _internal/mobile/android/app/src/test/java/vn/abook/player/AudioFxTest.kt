@@ -11,6 +11,44 @@ import java.nio.ByteOrder
 import kotlin.math.*
 
 class AudioFxTest {
+    @Test fun monoAndBalancePreserveChannels() {
+        for (mono in listOf(false,true)) for(balance in listOf(-1.0,-.5,0.0,.5,1.0)) {
+            val dsp=AudioFxDsp(48000,2);dsp.configure(AudioFxSettings(mono=mono,balance=balance))
+            val frame=doubleArrayOf(.2,.6);dsp.process(frame)
+            assertEquals((if(mono).4 else .2)*(1-max(0.0,balance)),frame[0],1e-12)
+            assertEquals((if(mono).4 else .6)*(1+min(0.0,balance)),frame[1],1e-12)
+        }
+    }
+    @Test fun silenceKeepsSpeechShortPausesAndSourceClockAcrossChunks() {
+        val rate=1000; val trim=SilenceTrimmer(rate,2);val out=mutableListOf<DoubleArray>()
+        val emit:(DoubleArray)->Unit={out.add(it.copyOf())}
+        trim.configure(AudioFxSettings(skipSilence=true),emit)
+        val voiced=doubleArrayOf(.1,.2)
+        repeat(100){trim.push(voiced,emit)}
+        repeat(1500){trim.push(doubleArrayOf(0.0,0.0),emit)} // structural scene break
+        repeat(100){trim.push(voiced,emit)}
+        repeat(5000){trim.push(doubleArrayOf(0.0,0.0),emit)}
+        repeat(100){trim.push(voiced,emit)}
+        trim.finish(emit)
+        assertEquals(3300,out.size)
+        assertEquals(300,out.count{it[0]==.1 && it[1]==.2})
+        assertEquals(2449000,trim.sourceDurationUs(2449000)) // before cut at 2.45 s
+        assertEquals(6700000,trim.sourceDurationUs(3200000)) // first frame of final sentence
+        assertEquals(6800000,trim.sourceDurationUs(3300000))
+        assertTrue(out.subList(100,1600).all{it.all{v->v==0.0}})
+    }
+    @Test fun silenceRequiresBothChannelsAndStrictDurationAndFlushesTail() {
+        for(seconds in listOf(1500,3000,3001,5000)) {
+            val trim=SilenceTrimmer(1000,2);var count=0
+            val emit:(DoubleArray)->Unit={count++};trim.configure(AudioFxSettings(skipSilence=true),emit)
+            repeat(seconds){trim.push(doubleArrayOf(0.0,0.0),emit)};trim.finish(emit)
+            assertEquals(if(seconds>3000)1500 else seconds,count)
+        }
+        val trim=SilenceTrimmer(1000,2);var count=0;val emit:(DoubleArray)->Unit={count++}
+        trim.configure(AudioFxSettings(skipSilence=true),emit)
+        repeat(5000){trim.push(doubleArrayOf(0.0,.01),emit)};trim.finish(emit);assertEquals(5000,count)
+        assertEquals(1.5,AudioFxSettings(keepSeconds=0.0).safe().keepSeconds,0.0)
+    }
     @Test fun presetsWithinOneDbAtEveryBand() {
         var worst = 0.0
         for (rate in listOf(24000,44100,48000)) for (preset in 0..4) for (band in 0..4) {

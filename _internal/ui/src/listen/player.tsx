@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { appVolume } from './audioFx';
+import { appVolume, selectAudioBook, setAudioFx, getAudioFx, onAudioFx } from './audioFx';
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
@@ -13,7 +13,7 @@ import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type
 import { SceneCues, isSceneCues, scenePollDelay, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { VOICE_STALL_TICK_MS, VoiceStall } from "./voiceStall";
-import { canPlay, newerElsewhere, resumePoint, startingRate, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
+import { canPlay, newerElsewhere, resumePoint, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
 import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
@@ -892,8 +892,14 @@ export function PlayerProvider({
     setRateState(value);
     if (push) engine.setRate(value);
   }, [engine]);
+  useEffect(()=>onAudioFx(()=>{
+    const fx=getAudioFx();
+    applyRate(fx.speed,!native);
+    refs.current.volume=fx.volume;setVolumeState(fx.volume);
+    engine.setVolume(fx.volume*refs.current.sleepGain);bed?.setVolume(fx.volume*refs.current.sleepGain);
+  }),[applyRate,native,engine,bed]);
 
-  const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose, carriedRate?: number) => {
+  const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose, _carriedRate?: number) => {
     const current = refs.current.track;
     if (current && (current.bookId !== book.id || current.recordId !== activeRecord(book))) {
       refs.current.history = [];
@@ -906,10 +912,9 @@ export function PlayerProvider({
     refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true), remote: book.remote, record: activeRecord(book) };
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
-    const { rate: bookRate, keep } = startingRate(book.state?.rate, carriedRate, refs.current.defaultRate);
+    const bookRate=selectAudioBook(book.id).speed;
     // Điện thoại: tốc độ đi cùng lệnh nạp cuốn (loadQueue); đặt trước lệnh ấy thì lõi ghi nó vào cuốn ĐANG nạp - cuốn cũ mất tốc độ riêng.
     if (bookRate !== refs.current.rate) applyRate(bookRate, !native);
-    if (keep && purposeValue === "listen") void source.setRate(book.id, bookRate, activeRecord(book)).catch(() => undefined);
     return bookRate;
   }, [applyRate, native, source]);
 
@@ -1240,6 +1245,7 @@ export function PlayerProvider({
   restartRef.current = restart;
 
   const setRate = useCallback((value: number) => {
+    setAudioFx({speed:value});
     awakeRef.current();
     applyRate(value);
     night.touch("rate", position());
@@ -1261,7 +1267,7 @@ export function PlayerProvider({
     if (!Number.isFinite(value)) return;
     awakeRef.current();
     const clamped = Math.max(0, Math.min(1, value));
-    try { localStorage.setItem('abook.appVolume',String(clamped)); } catch { toast.error('Chưa lưu được âm lượng.'); }
+    try { setAudioFx({volume:clamped}); } catch { toast.error('Chưa lưu được âm lượng.'); }
     refs.current.volume = clamped;
     setVolumeState(clamped);
     engine.setVolume(clamped * refs.current.sleepGain);

@@ -31,6 +31,7 @@ class AudioFxOnDeviceTest {
         check(android.os.Build.FINGERPRINT.contains("generic") || android.os.Build.MODEL.contains("sdk")) { "Emulator only" }
         val settings=AudioFxSettings(enabled=true,boost=6.0,pitch=-1.5).withPreset(1)
         AudioFx.init(context)
+        AudioFx.selectBook("audiofx-ui")
         val intent=Intent(context,NativeActivity::class.java).putExtra(NativeActivity.DEMO_BOOKS,3)
         ActivityScenario.launch<NativeActivity>(intent).use { activity ->
             for(dark in listOf(false,true)) {
@@ -47,19 +48,33 @@ class AudioFxOnDeviceTest {
                 }
                 instrumentation.waitForIdleSync()
                 Thread.sleep(600)
+                // Some emulator images expose no accessibility root to instrumentation.
+                // Check WindowManager's actual foreground window before accepting a bitmap.
+                val focus = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                    instrumentation.uiAutomation.executeShellCommand("dumpsys window")
+                ).bufferedReader().use { it.readText() }.lineSequence().firstOrNull { "mCurrentFocus=" in it }.orEmpty()
+                assertTrue("Capture the app, not a System UI error dialog: $focus", focus.contains(context.packageName))
                 val file=File(context.filesDir,"audiofx-${if(dark)"dark" else "light"}.png")
-                val screenshot=instrumentation.uiAutomation.takeScreenshot()
                 // Reject an empty scene: the sheet's text/controls must occupy the body, excluding OS bars.
-                val background=screenshot.getPixel(10,screenshot.height/2)
-                var ink=0
-                for(y in screenshot.height/4 until screenshot.height*3/4 step 3) for(x in 20 until screenshot.width-20 step 3) {
-                    val pixel=screenshot.getPixel(x,y)
-                    if(kotlin.math.abs(android.graphics.Color.red(pixel)-android.graphics.Color.red(background))>80) ink++
+                fun ink(bitmap: android.graphics.Bitmap): Int {
+                    val background=bitmap.getPixel(10,bitmap.height/2)
+                    var count=0
+                    for(y in bitmap.height/4 until bitmap.height*3/4 step 3) for(x in 20 until bitmap.width-20 step 3) {
+                        val pixel=bitmap.getPixel(x,y)
+                        if(kotlin.math.abs(android.graphics.Color.red(pixel)-android.graphics.Color.red(background))>80) count++
+                    }
+                    return count
                 }
-                assertTrue("Audio sheet must be painted before capturing ($ink ink samples)",ink>500)
+                var screenshot=instrumentation.uiAutomation.takeScreenshot()
+                val deadline=android.os.SystemClock.elapsedRealtime()+5000
+                while(ink(screenshot)<=500 && android.os.SystemClock.elapsedRealtime()<deadline) {
+                    screenshot.recycle();Thread.sleep(100);screenshot=instrumentation.uiAutomation.takeScreenshot()
+                }
+                assertTrue("Audio sheet must be painted before capturing (${ink(screenshot)} ink samples)",ink(screenshot)>500)
                 file.outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }
                 assertTrue(file.length()>1000)
-                instrumentation.uiAutomation.executeShellCommand("input swipe 450 1750 450 850 350").close()
+                val x=screenshot.width/2
+                instrumentation.uiAutomation.executeShellCommand("input swipe $x ${screenshot.height*7/8} $x ${screenshot.height/3} 350").close()
                 Thread.sleep(500)
                 File(context.filesDir,"audiofx-${if(dark)"dark" else "light"}-bottom.png").outputStream().use {
                     instrumentation.uiAutomation.takeScreenshot().compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)
