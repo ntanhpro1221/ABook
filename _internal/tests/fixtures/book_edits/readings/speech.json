@@ -28,7 +28,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "102e7863d1277781f81583833579d6fd11385906e32083306b7689f025eccc93"
+   "key": "63cf5f14c363517ad705e412ac80e0595bf671f33a8b1b263e37875ffc8b1dee"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "1766a7f4b3c4fd4f8ae5d170aa9ae04b910762924b6c9169abf8f2db4c7a16d6"
+   "key": "cf8fb40e66e7dbfb3d97c44ec8cee5a81889de98a5342b55e7b82925c1f196a9"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "257e7c87a40392424e253de71ba3137bf98150187118fd03dd1250c8791a7683"
+   "key": "e886dc686c76875d95cdb73ffe9c710b42d872634e869ab928e74578193907bb"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -105,7 +105,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "3619026fbb9a748681688b284f451a2ae8b6da2bb682bf046d1d02118128c8e5"
+   "key": "b8740b5cc3471e3ca44045d80d767556fa64539b2f56b243bb73046803e98935"
   },
   {
    "voice": "vieneu:nano/Nhẹ",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "bbf31eaf214c448e1a937a787c39854f99c8a6e898f5b8fe6937ecea8546eded"
+   "key": "39456318c8a2cf7825fbc28ef2adfbb6d07af9c9fb8a153249a70503705b5a62"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -167,7 +167,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "",
-   "key": "993e6150e380c8d0b844f9ebee999370d6d267b0a98847104c2e5022b8fa6e64"
+   "key": "38203bc662e20452026cbc0163ab2b1abe4d344445f5d619c82e8b1d9ec9d9c5"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -190,7 +190,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "dea1273462bf78ab36a7980ca89b12ae87035fcbe566808be86a9254f6e884fa"
+   "key": "08fe939ae49217529cb3f3f06e7159f451ecd32ad13ca09fb30ac7a519401849"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -211,7 +211,7 @@
     3
    ],
    "tag": "r6e74ef10f0bb4e8c",
-   "key": "58efd9ec5051abbe020632da5aca6926cd54319e8de66d58795f4fe5acb9fe71"
+   "key": "e512ef90d8f5518cc446ae119ea6adc4cf3658636dffd801c34da5668358b3c4"
   },
   {
    "voice": "supertonic:F1",
@@ -230,7 +230,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "9508bd510a67a7f822bd212f374903ce0e3d542acca5e123623fc65eb4bb3715"
+   "key": "52b020c5c4ccd40c62cbc1e457fda332905c622ed58fe02bd75692a134d278a6"
   },
   {
    "voice": "supertonic:M4",
@@ -259,7 +259,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r633c865c060faef6",
-   "key": "aeb4ca5ac38d8cdad2be577e2f913c35ca3ca38eff0940a5478bae0df2f7e32b"
+   "key": "da7059b9dc7a4fa7d0eda73ba5f78651acbfa07459209ef5d483f6a5cb792c71"
   },
   {
    "voice": "supertonic:F3",
@@ -282,7 +282,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "",
-   "key": "1d8d2c7aebedf7f1a5de5ea27ad22007bd13f3a0e9f89b49f0dea5c0aafade2f"
+   "key": "0daf8a7c4453aa2d9be510b414130085a0c8c9c23645ab80948b614093d9e73f"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -303,7 +303,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "705f26af1ab3cf434ccd8a45bff9902fb5585262282a7589a6c85b23f666f1e3"
+   "key": "7007dc198f3bcfe73bfcac6060aa390867cf1aca2d1898ae008f6b6b23f84663"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "c0800fdf5cfb266aa3c2c76f9eccfafe9fd81225c1bd824fd3e95d1927ff3bc5"
+   "key": "5b0e315046994c345a74773b362c818c99331435921912adcdc16d63623e183a"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -357,7 +357,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "01f313d321ed160d63b1d32b9df82bebc36179048a40fd972ab24753756a8e10"
+   "key": "108aa25996d56f00b59728229929f5c425e150674e9e2f60c3a6724324dba001"
   },
   {
    "voice": "vieneu:nano/Nhẹ",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "dc1284ac90ec60807b8787ff721979e4c3b17661418748eab76f2a08a326c326"
+   "key": "97db9bb976cdceaafe205759b6346dbec98dd5e4b1700c46c4809921e10cbb8d"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -417,7 +417,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "raff1e6190a9d81a9",
-   "key": "fe379e70931dde8d7d0440317aee04b6d0694f45487c912d46752cc783243857"
+   "key": "716695de94f22f7785867ae05b023c1114f3fcbf2a2a445c5fd7c07cbf1b42bd"
   },
   {
    "voice": "supertonic:F1",
@@ -444,7 +444,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "raff1e6190a9d81a9",
-   "key": "e2478aefcda8d18157fc55dcbc254b3100413b6ffc495ebe30c9427cbde1fc7e"
+   "key": "ce88b02e6d06d78b6fc4fa7c4df9cccd7b6f80578eafe1dd3b0ad4f243d44f5b"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -471,7 +471,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "5a3bdac97a0d06617caeeafad8271207548653d5edd4e9437729d929e6c40023"
+   "key": "9ea4da1e1530a08ac8d8bbedc4f0a88a86f698d7cee55cbd0bc5f98790ea6dde"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "504ebdefb778d1c0f19a42710a936438c413315412954d2e66cac85666eba324"
+   "key": "c22ee007821282733dc5559442828c0c58c3af7e2d53e820da7e25d2a617b124"
   }
  ]
 }

@@ -79,6 +79,16 @@ def test_the_books_pronunciation_table_beats_the_word_rules(tmp_path: Path) -> N
     assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors if not anchor.get("asr_alias_only")] == ["ách pi"]
 
 
+def test_a_locked_surface_with_joined_punctuation_matches_before_spacing(tmp_path: Path) -> None:
+    db, coordinator = _coordinator(tmp_path)
+    _pronounce(db, "Hello?What", "đọc riêng")
+    source = "lại.Khoảnh Hello?What"
+    text, anchors = coordinator.spoken_text_with_anchors({"text": source})
+    assert text == "lại. Khoảnh đọc riêng"
+    assert [text[a["spoken_start"]:a["spoken_end"]] for a in anchors if not a.get("asr_alias_only")] == ["đọc riêng"]
+    assert source == "lại.Khoảnh Hello?What"
+
+
 def test_a_cue_still_becomes_a_breath_and_the_anchor_after_it_holds(tmp_path: Path) -> None:
     db, coordinator = _coordinator(tmp_path)
     _pronounce(db, "Michael", "Mai-cồ")

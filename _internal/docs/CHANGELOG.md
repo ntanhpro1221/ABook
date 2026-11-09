@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tách đúng chỗ đọc khi chữ nguồn thiếu khoảng cách sau dấu câu; giữ nguyên chữ trong sách, số, địa chỉ mạng và chữ viết tắt.
+
 ## [0.4.165] - 2026-11-08
 
 - Bỏ tự hẹn giờ và tự dừng khi lâu không tương tác. Chỉ dừng theo số phút, hết chương hoặc lịch đêm bạn đã bật; sửa thao tác hẹn lại và huỷ hẹn giờ trên điện thoại, máy tính và web.

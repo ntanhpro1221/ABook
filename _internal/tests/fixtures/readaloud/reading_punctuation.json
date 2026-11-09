@@ -1,0 +1,98 @@
+[
+ {
+  "source": "lại.Khoảnh",
+  "reading": "lại. Khoảnh"
+ },
+ {
+  "source": "Hello?What",
+  "reading": "Hello? What"
+ },
+ {
+  "source": "Đúng!Được",
+  "reading": "Đúng! Được"
+ },
+ {
+  "source": "nói,lại:Được;Rồi",
+  "reading": "nói, lại: Được; Rồi"
+ },
+ {
+  "source": "3.Người",
+  "reading": "3. Người"
+ },
+ {
+  "source": "xong?!Đúng",
+  "reading": "xong?! Đúng"
+ },
+ {
+  "source": "xong.”“Đúng",
+  "reading": "xong.” “Đúng"
+ },
+ {
+  "source": "rồi...Khoảnh",
+  "reading": "rồi...Khoảnh"
+ },
+ {
+  "source": "rồi…Senpai",
+  "reading": "rồi…Senpai"
+ },
+ {
+  "source": "rồi…”Khoảnh",
+  "reading": "rồi…” Khoảnh"
+ },
+ {
+  "source": "3.5 1.234.567 3,5 12:30",
+  "reading": "3.5 1.234.567 3,5 12:30"
+ },
+ {
+  "source": "https://example.com/a?x=yes,b=no",
+  "reading": "https://example.com/a?x=yes,b=no"
+ },
+ {
+  "source": "www.example.com/a!b",
+  "reading": "www.example.com/a!b"
+ },
+ {
+  "source": "HTTPS://Example.COM/a?x=Hi!Y",
+  "reading": "HTTPS://Example.COM/a?x=Hi!Y"
+ },
+ {
+  "source": "Example.COM Example.Com sub.Example.VN",
+  "reading": "Example.COM Example.Com sub.Example.VN"
+ },
+ {
+  "source": "a.b+tag@example.com",
+  "reading": "a.b+tag@example.com"
+ },
+ {
+  "source": "example.com sub.example.org hello.world",
+  "reading": "example.com sub.example.org hello.world"
+ },
+ {
+  "source": "T.P. U.S.A. v.v. v.v V.v.",
+  "reading": "T.P. U.S.A. v.v. v.v V.v."
+ },
+ {
+  "source": "T.P.HCM",
+  "reading": "T.P.HCM"
+ },
+ {
+  "source": "TP.HCM PGS.TS. A.B",
+  "reading": "TP.HCM PGS.TS. A.B"
+ },
+ {
+  "source": "v.v2 build.v3",
+  "reading": "v.v2 build.v3"
+ },
+ {
+  "source": "Tôi...tôi T...Tôi ừm…ừm",
+  "reading": "Tôi...tôi T...Tôi ừm…ừm"
+ },
+ {
+  "source": "Đã. Có? Cách!",
+  "reading": "Đã. Có? Cách!"
+ },
+ {
+  "source": "",
+  "reading": ""
+ }
+]

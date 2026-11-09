@@ -13,6 +13,20 @@ Tài liệu này gồm bốn phần:
 Chuẩn hoá chữ là **biến đổi để đọc**: chữ hiện cho người đọc không bao giờ đổi, và app không tự bỏ chữ nào của truyện (chỉ đề
 xuất, người nghe đồng ý mới áp).
 
+### Ranh giới đọc khi thiếu cách sau dấu câu (tnfix167, nhánh dev)
+
+`readaloud.studio_tn.reading_punctuation` thêm khoảng cách vào chuỗi đọc sau dấu câu dính chữ, kèm bảng dịch vị trí.
+Studio chạy bước này trước chuẩn hoá ký hiệu (để còn nhận được URL/email), giữ nguyên các surface có cách đọc của cuốn;
+`studio_tn` dùng bảng dịch cho anchor. `spoken_tokens` của Nghe ngay đọc các từ đã tách rồi gộp lại theo chữ hiện,
+không đổi số chữ hiện hay văn bản nguồn. Python và Kotlin dùng chung fixture `readaloud/reading_punctuation.json`;
+cache đọc tăng 8 → 9. Bộ chia khúc Studio nhận chuỗi đọc đã có ranh giới, không sửa bộ nhập/chia đoạn nguồn.
+
+Giữ dấu bên trong số, giờ, URL/email, tên miền ASCII viết thường, chữ cái đầu/viết tắt có chấm và mã có số.
+Một chuỗi ASCII viết thường như tên miền có thể cũng là câu thiếu cách: giữ nguyên khi không phân biệt được.
+Chấm lửng giữa hai chữ, kể cả trước chữ hoa, vẫn theo luật ngập ngừng cũ; chỉ thêm cách khi có ngoặc đóng làm rõ biên.
+Không đặt luật riêng cho từ “Hello”: kiểm tra main vẫn giữ chữ này trong chuỗi gửi máy và phoneme; bằng chứng audio/ASR/CTC
+được lưu ngoài repo. Chưa có bằng chứng để quy lỗi bỏ đọc cho chuẩn hoá hay G2P.
+
 ## 1. Hiện trạng: chưa ngon, nhưng hỏng đúng ở chỗ truyện dùng nhiều nhất
 
 ### Chữ đi qua những gì (04-10, đọc code + chạy thật)

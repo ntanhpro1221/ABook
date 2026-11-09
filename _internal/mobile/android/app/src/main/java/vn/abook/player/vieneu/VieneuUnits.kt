@@ -6,6 +6,7 @@ import vn.abook.player.readaloud.EnglishWords
 import vn.abook.player.readaloud.EnglishPolicy
 import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.Readings
+import vn.abook.player.readaloud.ReadingPunctuation
 import vn.abook.player.readaloud.Shouts
 import vn.abook.player.readaloud.Symbols
 import vn.abook.player.readaloud.WordTokens
@@ -756,6 +757,22 @@ object VieneuUnits {
      * `spoken_tokens` of vieneu.py.
      */
     fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null, directEnglish: Boolean = false): List<String> {
+        val parts = ArrayList<String>()
+        val owners = ArrayList<Int>()
+        toks.forEachIndexed { index, token ->
+            val separated = tokens(ReadingPunctuation.separate(token))
+            parts.addAll(separated)
+            owners.addAll(List(separated.size) { index })
+        }
+        val said = readSeparatedTokens(parts, origin, readings, directEnglish)
+        val grouped = List(toks.size) { ArrayList<String>() }
+        said.forEachIndexed { index, word -> grouped[owners[index]].add(word) }
+        val out = grouped.map { it.joinToString(" ") }.toMutableList()
+        Readings.applyTokens(toks, out, readings)
+        return out
+    }
+
+    private fun readSeparatedTokens(toks: List<String>, origin: String?, readings: Map<String, String>?, directEnglish: Boolean): List<String> {
         val out = toks.toMutableList()
         stutters(toks, out, origin)
         Shouts.readShouts(toks, out)
