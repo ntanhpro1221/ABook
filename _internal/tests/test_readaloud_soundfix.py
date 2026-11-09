@@ -69,8 +69,14 @@ def test_collision_targets_are_vietnamese_and_measured_safe_readings_stay_vietna
         assert not {"ɑː", "aɪ", "iː"} & {said_phone for said_phone in ("ɑː", "aɪ", "iː") if said_phone in vieneu_engine.phonemize([said])}
 
 
-@pytest.mark.parametrize("listener", ["Yuuki[note1] bước vào.", "Senpai[ note12 ]!"])
-def test_reference_marks_pasted_into_listener_text_are_never_said(listener):
-    from abook.text_processing import INLINE_REFERENCE_MARKER_PATTERN, spoken_symbols_to_words
+@pytest.mark.parametrize("field", ["text", "listener_text"])
+@pytest.mark.parametrize("pasted", ["Yuuki[note1] bước vào.", "Senpai[ note12 ]!", "Kyouko-chan[note3]", "Aaaah[note4]!"])
+def test_reference_marks_are_never_said_on_the_studio_route(tmp_path, pasted, field):
+    from abook.config import build_settings
+    from abook.database import ProjectDB
+    from abook.tts import TTSCoordinator
 
-    assert "note" not in spoken_symbols_to_words(INLINE_REFERENCE_MARKER_PATTERN.sub("", listener)).lower()
+    tts = TTSCoordinator(build_settings(), ProjectDB(tmp_path / "project.sqlite3"), lambda _: None)
+    row = {"text": "Câu gốc.", "listener_text": pasted} if field == "listener_text" else {"text": pasted}
+    spoken, _ = tts.spoken_text_with_anchors(row)
+    assert "note" not in spoken.lower()
