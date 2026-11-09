@@ -7,6 +7,7 @@ Interactive {
     id: root
     property string text: ""
     property string icon: ""
+    property string value: ""
     property bool danger: false
 
     property bool selected: false
@@ -35,11 +36,19 @@ Interactive {
         }
         Text {
             id: label
-            width: parent.width - 16 - parent.spacing
+            width: parent.width - 16 - parent.spacing - (root.value !== "" ? valueLabel.implicitWidth + parent.spacing : 0)
             wrapMode: Text.Wrap
             text: root.text
             color: root.danger ? Theme.danger : Theme.text
             font.pixelSize: Theme.sizeBodySmall
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Text {
+            id: valueLabel
+            visible: root.value !== ""
+            text: root.value
+            color: Theme.text2
+            font.pixelSize: Theme.sizeCaption
             anchors.verticalCenter: parent.verticalCenter
         }
     }

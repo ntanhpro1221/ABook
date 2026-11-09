@@ -3,6 +3,7 @@ không bao giờ được dọn, và `#EXTINF` của `.m3u8` lấy độ dài ư
 from __future__ import annotations
 
 import os
+import json
 import re
 import shutil
 import threading
@@ -15,10 +16,22 @@ from tests.async_wait import wait_until
 from abook.io_utils import ffmpeg_available
 from abook.readaloud import mp3
 from abook.webui import export, export_jobs
-from tests.test_export_music import LINK_A, LINK_B, _studio_book
+from tests.test_export_music import LINK_A, LINK_B, _studio_book as _music_book
 from tests.test_export_series import _get, _mp3_job, _post, _studio
 
 pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
+
+
+def _studio_book(tmp_path: Path):
+    """Cancellation exercises export phases; track analysis is a separate contract."""
+    from abook.webui.music_plan import MEASURE_SIDECAR
+    project, tracks = _music_book(tmp_path)
+    for path in tracks.values():
+        path.with_suffix(MEASURE_SIDECAR).write_text(json.dumps({
+            "lufs": -12.0, "s95": -12.0, "seconds": 30.0,
+            "audibleStart": 0.0, "audibleEnd": 30.0,
+        }), encoding="utf-8")
+    return project, tracks
 
 
 def _wait(predicate, seconds: float = 20.0) -> bool:
@@ -37,7 +50,7 @@ def _downloading_app(app, tracks: dict[str, Path], gate: threading.Event | None 
     def fetch(link: str, **_fetch) -> Path | None:
         if link not in cache:
             if gate is not None:
-                gate.wait(20)
+                gate.wait()
             cache[link] = tracks[link]
             fetched.append(link)
         return cache[link]
@@ -86,7 +99,7 @@ def test_the_m4b_job_can_be_cancelled_while_mixing_and_leaves_no_scratch(tmp_pat
 
     def slow_pump(*args, **kwargs):  # chương 1 đang trộn: chờ cho test bấm Huỷ giữa chừng
         mixing.set()
-        release.wait(20)
+        release.wait()
         return real(*args, **kwargs)
 
     monkeypatch.setattr(export, "pump_mixed", slow_pump)

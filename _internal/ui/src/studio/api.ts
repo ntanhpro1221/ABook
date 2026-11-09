@@ -334,7 +334,6 @@ export interface AppInfo {
   volume: number;
   sleepFadeSeconds: number;
   sleepExtendMinutes: number;
-  safetyStopHours: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** File trạng thái hỏng đã được giữ lại lúc mở app (webui/notices.py): mỗi dòng báo một lần. */
   notices?: { id: string; text: string }[];
@@ -349,7 +348,6 @@ export interface Preferences {
   volume: number;
   sleepFadeSeconds: number;
   sleepExtendMinutes: number;
-  safetyStopHours: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** Máy tính xách tay rút sạc: tạm dừng tạo sách (abook/power_source.py). */
   pauseOnBattery?: boolean;

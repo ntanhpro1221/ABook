@@ -191,6 +191,18 @@ def match_offset(sink, source, at_sink, at_source, rate, win_s=0.04, search_s=0.
     seg_e = (c2[w:] - c2[:-w]) - seg_sum * seg_sum / w
     score = corr / (na * np.sqrt(np.maximum(seg_e, 1e-12)))
     k = int(np.argmax(score))
+    # A voiced syllable can correlate above MATCH_SCORE at two distant source
+    # positions. The larger peak alone does not identify which occurrence was
+    # heard when a position at least one window away fits almost as well.
+    # "Almost as well" compares the mismatch (1 - score): the best match must
+    # leave less than half the mismatch of every distant accepted position
+    # (two exact copies of a phrase both score 1.0 and are refused).
+    # Real ambiguous ticks: .91865 vs .91539 and .94334 vs .93350 (refused);
+    # a unique match (1.0 vs .98) is kept. Gate tolerances are unchanged.
+    far = np.abs(np.arange(len(score)) - k) >= w
+    rival = score[far & (score > MATCH_SCORE)]
+    if len(rival) and (1.0 - rival.max()) <= 2.0 * (1.0 - score[k]) + 1e-9:
+        return None, float(score[k])
     return (k - s) / rate, float(score[k])
 
 

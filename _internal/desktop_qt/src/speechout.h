@@ -29,6 +29,7 @@ public:
     void stop() override;
     void seek(double at) override;
     void setRate(double rate) override { m_rate = rate; m_audio->setRate(rate); }
+    void setAudioFx(const AudioFx::Settings &fx) override { m_audio->setAudioFx(fx); }
     void setVolume(double volume) override { m_volume = volume; m_audio->setVolume(volume * (m_text && m_ready ? m_paragraphs[m_index].gain : 1)); }
     double position() const override;
     double duration() const override;

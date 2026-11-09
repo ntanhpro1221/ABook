@@ -305,6 +305,9 @@ it("C5 hiệu năng: câu 5.000 chữ - dựng và 50 nhịp sang chữ kế tro
 }, 30000); // dựng 5.000 chữ trong happy-dom ~1 giây, cả bộ test chạy song song thì lâu hơn hạn mặc định 5 giây
 
 it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
+  // Inspect every intermediate crossfade before its cleanup deadline. Freezing
+  // only the final row-exit phase leaves the earlier snapshots load-sensitive.
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   const book = listenBook("a", "Sách A", { state: { chapters: {}, last: { chapterId: 1, seconds: 30, at: Date.now() / 1000 } } as unknown as ListenBook["state"] });
   state.books = [book];
   player({ track: null });
@@ -333,7 +336,6 @@ it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút;
   // V9: sách cuối rời thư viện -> lời mời trống mờ hẳn qua, không thay tức thì.
   // Advance the row-exit deadline, then inspect the newly committed snapshot
   // before its own deadline. A wall-clock wait can expire both under gate load.
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   state.books = [];
   await render(<LibraryScreen />);
   await act(() => vi.advanceTimersByTime(400)); // hàng cuối khép xong (useListPresence)

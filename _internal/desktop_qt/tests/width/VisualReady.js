@@ -27,21 +27,69 @@ function rest(item) {
     for (const child of item.children || []) rest(child)
 }
 
+// Reading Text metrics can itself finish deferred text/font layout and dirty a
+// containing Row/Column/ListView. Observe the geometry on both sides of a frame,
+// rather than treating an animation endpoint or a delegate count as layout-ready.
+function layoutState(item, state) {
+    if (!item.visible) return state
+    if (item.paintedWidth !== undefined)
+        state.push(item, item.x, item.y, item.width, item.height, item.text,
+            item.contentWidth, item.contentHeight, item.paintedWidth, item.paintedHeight)
+    // Read the metrics the audits use. Decorative geometry (Vu bars, caret,
+    // scrollbar thumb) is allowed to move without invalidating text layout.
+    for (const child of item.children || []) layoutState(child, state)
+    return state
+}
+
+function sameLayout(before, after) {
+    return before.length === after.length && before.every((value, index) => value === after[index])
+}
+
+function difference(before, after) {
+    if (!before) return "first frame"
+    const index = before.findIndex((value, index) => value !== after[index])
+    if (index < 0) return "length " + before.length + " -> " + after.length
+    // A delegate in the old sample may already be destroyed. Do not inspect
+    // it (even String(item) can throw for a deleted QML wrapper).
+    const describe = value => typeof value === "object" ? "<item>" : String(value)
+    return index + ": " + describe(before[index]) + " -> " + describe(after[index])
+}
+
 // A target value may also be the initial value of a sequential transition.
-// Observe running animations, polish, and the frame which actually paints it.
+// Each Qt wait keeps its own 5s budget: expensive text polish/rendering must not
+// consume the animation wait's budget (the old wall deadline could leave 1ms).
 function waitForSettledFrame(test, window, item, probe, freeze) {
-    const deadline = Date.now() + 5000
-    while (true) {
+    let previous = null
+    let change = ""
+    // Keep frame sampling out of tryVerify's predicate: Qt evaluates a true
+    // predicate once more to record the assertion. Rendering in that last
+    // evaluation can invalidate the very condition it has just accepted.
+    // Bound convergence in observed frames, not total wall time spent inside
+    // the already-bounded Qt waits. A slow frame must not consume a later
+    // transition/layout wait's allowance. Return as soon as two samples agree.
+    for (let frame = 0; frame < 120; ++frame) {
         if (freeze) rest(window.contentItem)
         test.verify(test.waitForPolish(window), "window polish must finish")
-        test.tryVerify(function() { return settled(window.contentItem, probe) }, Math.max(1, deadline - Date.now()))
-        test.verify(test.waitForPolish(window), "window polish must finish")
+        test.tryVerify(function() { return settled(window.contentItem, probe) }, 5000, "finite visual transitions must finish")
+        const before = layoutState(window.contentItem, [])
+        test.verify(test.waitForPolish(window), "measured text layout must finish")
         window.update()
-        test.verify(test.waitForRendering(item))
-        // A queued response can start another transition during that frame.
-        if (settled(window.contentItem, probe)) return
-        test.verify(Date.now() < deadline, "visual transitions must settle after rendering")
+        test.verify(test.waitForRendering(item), "requested frame must render")
+        const after = layoutState(window.contentItem, [])
+        // Frame delivery and lazy text measurements can schedule another
+        // polish. Drain that work, rather than repeatedly rendering while
+        // rejecting an otherwise identical text layout for queued polish.
+        test.verify(test.waitForPolish(window), "post-render text layout must finish")
+        // Responses, delegate creation and metric reads can queue more layout
+        // or start another transition during that frame. Paint the new state.
+        const ready = settled(window.contentItem, probe) && !test.isPolishScheduled(window)
+            && sameLayout(before, after) && previous !== null && sameLayout(previous, after)
+        if (ready) return
+        if (frame === 119) change = difference(before, after) + "; previous " + difference(previous, after)
+            + "; animations=" + settled(window.contentItem, probe) + "; polish=" + test.isPolishScheduled(window)
+        previous = after
     }
+    test.verify(false, "visual text layout must converge across rendered frames: " + change)
 }
 
 function render(test, window, item, probe) {

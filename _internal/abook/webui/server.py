@@ -738,7 +738,7 @@ class App:
         return renamed
 
     def restore_project_backup(self, value: str) -> dict[str, Any]:
-        """Sổ làm việc hỏng thật (soát a28 lỗi 13): lấy bản sao dây chuyền chụp trước lần nâng cấp gần nhất (`store.db_backups`) làm sổ, sau khi
+        """Sổ làm việc hỏng thật: chỉ lấy bản sao có schema hiện hành (`store.db_backups`) làm sổ, sau khi
         GIỮ bản hỏng (`<tên>.hong-<giờ>`, cùng -wal / -shm của nó). Việc làm sau mốc bản sao mất - giao diện nói trước khi bấm."""
         self._mutating()
         path = self._book(value)
@@ -757,7 +757,7 @@ class App:
         from ..database import ProjectDB
 
         try:
-            ProjectDB(database)  # bản sao chụp trước lần nâng cấp: nâng lên sổ hiện hành
+            ProjectDB(database)  # validates the same-version snapshot; never upgrades it
         except Exception as error:  # bản sao cũng hỏng: nói thật, bản hỏng vẫn còn
             raise ApiError(HTTPStatus.CONFLICT, f"Bản sao cũng không mở được - bản hỏng vẫn được giữ ({store.DB_NAME}.hong-{stamp})") from error
         return {"ok": True, "kept": f"{store.DB_NAME}.hong-{stamp}"}
@@ -4369,7 +4369,6 @@ class Handler(BaseHTTPRequestHandler):
             "volume": prefs["volume"],
             "sleepFadeSeconds": prefs.get("sleepFadeSeconds", 30),
             "sleepExtendMinutes": prefs.get("sleepExtendMinutes", 10),
-            "safetyStopHours": prefs.get("safetyStopHours", 2),
             "sleepSchedule": prefs.get("sleepSchedule"),
             # File trạng thái hỏng đã được giữ lại lúc mở app (notices.keep_broken): giao diện báo một lần.
             "notices": notices.NOTICES.all(),

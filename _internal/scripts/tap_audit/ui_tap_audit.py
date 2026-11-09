@@ -146,6 +146,16 @@ class CDP:
             await self.key('Escape');await self.settle()
         raise RuntimeError('layers did not close after Escape')
 
+    async def capture_layer(self):
+        # Reopening can schedule an entering surface after the previous surface
+        # finishes exiting. Never store an undefined reference between those phases.
+        for _ in range(30):
+            layer = await self.evaluate("(()=>{const e=tapAudit.top();if(!e)return null;window.__tapLayer=e;return {role:e.role,title:e.textContent.slice(0,150),body:getComputedStyle(document.body).pointerEvents}})()")
+            if layer is not None:
+                return layer
+            await asyncio.sleep(.1)
+        raise RuntimeError('layer did not open after coordinate input')
+
 def free_port():
     with socket.socket() as s: s.bind(('127.0.0.1',0));return s.getsockname()[1]
 
@@ -215,7 +225,7 @@ async def scenario(c,base,s,inject):
                 report['openingLayers'].append(opened)
                 check('opening layer controls reachable',all(e['disabled'] or (e['hit'] and not e['blockedInLayer']) for e in opened['elements']),role=opened['role'])
         await c.settle()
-        layer=await c.evaluate("(()=>{const e=tapAudit.top();if(!e)return null;window.__tapLayer=e;return {role:e.role,title:e.textContent.slice(0,150),body:getComputedStyle(document.body).pointerEvents}})()")
+        layer=await c.capture_layer()
         check('layer opened',layer is not None,layer=layer)
         if not layer: raise RuntimeError('no open top layer')
         if inject:
@@ -235,7 +245,7 @@ async def scenario(c,base,s,inject):
                 # Reopen to test the other input modality independently, still via coordinates.
                 await c.close_layers()
                 for step in s.get('reopenSteps',s['steps']): await c.step(step)
-                await c.evaluate('window.__tapLayer=tapAudit.top();true')
+                await c.capture_layer()
                 if inject: await c.evaluate("__tapLayer.style.pointerEvents='none';true")
             p=await c.select(safe,within=True)
             check(mode+' probe center reaches control',p['hit'] and not p['blockedInLayer'] and not p['disabled'],element=p)
@@ -263,7 +273,7 @@ async def scenario(c,base,s,inject):
                 # Reopen with real coordinate clicks so touch and final Escape are also tested.
                 await c.close_layers()
                 for step in s.get('reopenSteps',s['steps']): await c.step(step)
-                await c.evaluate('window.__tapLayer=tapAudit.top();true')
+                await c.capture_layer()
                 if inject: await c.evaluate("__tapLayer.style.pointerEvents='none';true")
             else:
                 check(mode+' layer remains open',remains)

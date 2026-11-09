@@ -8,7 +8,6 @@ from abook.config import (
     DIRECTOR_CRITIC_SETTING_KEYS,
     build_settings,
     load_settings,
-    normalize_legacy_locked_settings,
     settings_hash,
     validate_settings,
 )
@@ -177,28 +176,6 @@ def test_fail_confidence_floor_must_fit_director_contract(
         })
 
 
-def test_legacy_locked_settings_are_normalized_in_memory_without_changing_raw_hash(
-    tmp_path,
-) -> None:
-    legacy = build_settings()
-    for key in DIRECTOR_CRITIC_SETTING_KEYS | ANALYSIS_RETRY_SETTING_KEYS:
-        legacy["analysis"].pop(key)
-    original_hash = settings_hash(legacy)
-    path = tmp_path / "book_settings.json"
-    path.write_text(__import__("json").dumps(legacy, ensure_ascii=False), encoding="utf-8")
-
-    loaded = load_settings(path)
-    effective = normalize_legacy_locked_settings(loaded)
-
-    assert settings_hash(loaded) == original_hash
-    assert DIRECTOR_CRITIC_SETTING_KEYS.isdisjoint(loaded["analysis"])
-    assert ANALYSIS_RETRY_SETTING_KEYS.isdisjoint(loaded["analysis"])
-    assert effective["analysis"]["director_critic_enabled"] is True
-    assert effective["analysis"]["director_critic_required"] is True
-    assert effective["analysis"]["low_confidence_policy"] == "fail"
-    assert effective["analysis"]["retry_policy_version"] == ANALYSIS_RETRY_POLICY_VERSION
-    assert effective["analysis"]["retry_temperatures"] == [0.1, 0.2, 0.3]
-    assert settings_hash(legacy) == original_hash
 
 
 def test_partially_missing_director_settings_are_not_treated_as_legacy() -> None:
@@ -206,22 +183,9 @@ def test_partially_missing_director_settings_are_not_treated_as_legacy() -> None
     settings["analysis"].pop("director_confidence_cap")
 
     with pytest.raises(ValueError, match="Missing analysis director critic settings"):
-        validate_settings(normalize_legacy_locked_settings(settings))
+        validate_settings(settings)
 
 
-def test_retry_only_legacy_settings_are_normalized_without_raw_hash_drift() -> None:
-    settings = build_settings()
-    for key in ANALYSIS_RETRY_SETTING_KEYS:
-        settings["analysis"].pop(key)
-    original_hash = settings_hash(settings)
-
-    effective = normalize_legacy_locked_settings(settings)
-
-    assert settings_hash(settings) == original_hash
-    assert ANALYSIS_RETRY_SETTING_KEYS.isdisjoint(settings["analysis"])
-    assert effective["analysis"]["retry_policy_version"] == ANALYSIS_RETRY_POLICY_VERSION
-    assert effective["analysis"]["retry_temperatures"] == [0.1, 0.2, 0.3]
-    validate_settings(effective)
 
 
 def test_partially_missing_retry_settings_are_not_treated_as_legacy() -> None:
@@ -229,7 +193,7 @@ def test_partially_missing_retry_settings_are_not_treated_as_legacy() -> None:
     settings["analysis"].pop("retry_temperatures")
 
     with pytest.raises(ValueError, match="Missing analysis retry settings"):
-        validate_settings(normalize_legacy_locked_settings(settings))
+        validate_settings(settings)
 
 
 @pytest.mark.parametrize(

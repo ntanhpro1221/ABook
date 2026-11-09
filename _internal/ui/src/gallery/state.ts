@@ -40,7 +40,12 @@ export const galleryState = {
   /** Cảnh báo dev đã biết của chính app (run.ts KNOWN_DEV_WARNINGS) - không tính là lỗi. */
   known: new Set<string>(),
   ready: false,
+  trace: [] as { phase: string; at: number }[],
 };
+
+export function tracePhase(phase: string): void {
+  galleryState.trace.push({ phase, at: performance.now() });
+}
 
 /** Lời hứa không bao giờ xong: trạng thái "đang tải" đứng yên để chụp. */
 export function never<T>(): Promise<T> {

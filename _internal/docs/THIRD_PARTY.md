@@ -197,4 +197,4 @@ Source không đóng gói model weights: lần cài đầu tải dependency và 
 model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng (`RELEASING.md`).
 Giấy phép MIT của ABook nằm ở `_internal/LICENSE`.
 
-- Sonic (Bill Cox, Apache-2.0): `desktop_qt/third_party/sonic/sonic.c` and `sonic.h`, unmodified; upstream commit b93885dcb70aae50c6f76b0fe4e0868f029a077e. Pitch-preserving voice playback at 0.5-4x through the shared WASAPI mixer. Full license in `desktop_qt/third_party/sonic/LICENSE`. Source: https://github.com/waywardgeek/sonic.
+- Sonic (Bill Cox, Apache-2.0): `desktop_qt/third_party/sonic/sonic.c` and `sonic.h`, unmodified; upstream commit b93885dcb70aae50c6f76b0fe4e0868f029a077e. Voice playback at 0.5-4x with independently selected pitch through the shared WASAPI mixer. Full license in `desktop_qt/third_party/sonic/LICENSE`. Source: https://github.com/waywardgeek/sonic.

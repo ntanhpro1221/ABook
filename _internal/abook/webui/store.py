@@ -28,6 +28,7 @@ from typing import Any, ClassVar, Iterable, Iterator
 
 from . import humanize, listing_cache, word_timing
 from .. import names as renames
+from ..database import validate_project_schema
 from ..io_utils import atomic_write_bytes
 from ..speaker_pass import SPEAKER_PASS_SECONDS_PER_CHAPTER
 
@@ -61,9 +62,17 @@ class ProjectUnfinished(ValueError):
 
 
 def db_backups(project_root: Path) -> list[Path]:
-    """Bản sao sổ làm việc dây chuyền chụp trước mỗi lần nâng cấp (`database.ProjectDB`: `project.sqlite3.pre-v<a>-to-v<b>.bak`), mới nhất trước."""
+    """Only complete current-schema snapshots are eligible for same-version recovery."""
     found = [path for path in project_root.glob(DB_NAME + ".pre-v*.bak") if path.is_file()]
-    return sorted(found, key=lambda path: path.stat().st_mtime, reverse=True)
+    supported = []
+    for path in found:
+        try:
+            with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as conn:
+                validate_project_schema(conn)
+        except (sqlite3.DatabaseError, RuntimeError, OSError):
+            continue
+        supported.append(path)
+    return sorted(supported, key=lambda path: path.stat().st_mtime, reverse=True)
 
 
 def touched(project_root: Path) -> float:

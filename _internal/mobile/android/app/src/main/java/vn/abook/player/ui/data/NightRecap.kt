@@ -85,12 +85,11 @@ object NightRecap {
         val lastTouch = events.lastOrNull { it.type == "touch" || it.type == "shake" || it.type == "extend" }
         val still = events.lastOrNull { it.type == "still" }
         val stopped = events.lastOrNull { it.type == "stopped" }
-        val safety = timer?.action == "safety"
         val list = listOfNotNull(
-            if (safety) null else make(timer, MarkerKind.Timer, "Hẹn giờ ngủ", "chắc chắn còn thức"),
+            make(timer, MarkerKind.Timer, "Hẹn giờ ngủ", "chắc chắn còn thức"),
             if (lastTouch != null && lastTouch !== timer) make(lastTouch, MarkerKind.Touch, "Lần cuối chạm máy", "chắc chắn còn thức") else null,
             make(still, MarkerKind.Still, "Máy bắt đầu nằm yên", "có lẽ đã ngủ từ khoảng này", BEFORE_SLEEP_SECONDS),
-            make(stopped, MarkerKind.Stopped, "Tự dừng", if (safety) "không ai chạm máy suốt một lúc lâu" else "lúc hết giờ hẹn"),
+            make(stopped, MarkerKind.Stopped, "Tự dừng", "lúc hết giờ hẹn"),
         )
         val pick = list.firstOrNull { it.kind == MarkerKind.Still } ?: list.firstOrNull { it.kind == MarkerKind.Touch } ?: list.firstOrNull()
         return list.map { it.copy(suggested = it === pick) }

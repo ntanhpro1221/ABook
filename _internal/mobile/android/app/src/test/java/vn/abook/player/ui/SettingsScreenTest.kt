@@ -194,18 +194,27 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun choiceUnderlineSlidesToTheNewOption() {
+    fun sleepSettingsContainNoInactivityControl() {
         showGroup(SettingsGroup.Sleep)
-        rule.onNodeWithTag("safety_stop_2").assertIsSelected()
+        rule.onNodeWithText("Tự tắt").assertDoesNotExist()
+        rule.onNodeWithText("Máy rảnh đủ lâu mới nhỏ dần rồi dừng.").assertDoesNotExist()
+        rule.onNodeWithTag("sleep_schedule").assertIsDisplayed()
+        assertEquals(null, repo.state.value.schedule)
+    }
+
+    @Test
+    fun choiceUnderlineSlidesToTheNewOption() {
+        showGroup(SettingsGroup.Sleep, stored = JSONObject().put("sleepExtendMinutes", 15))
+        rule.onNodeWithTag("sleep_extend_15").assertIsSelected()
         rule.mainClock.autoAdvance = false
-        rule.onNodeWithTag("safety_stop_0").performClick()
+        rule.onNodeWithTag("sleep_extend_5").performClick()
         rule.mainClock.advanceTimeBy(110)
         shot("settings_choice_sliding_light")
         rule.mainClock.autoAdvance = true
         rule.waitForIdle()
-        rule.onNodeWithTag("safety_stop_0").assertIsSelected()
-        assertEquals(0, repo.state.value.safetyStopHours)
-        assertEquals(0, core.saved.last().getInt("safetyStopHours"))
+        rule.onNodeWithTag("sleep_extend_5").assertIsSelected()
+        assertEquals(5, repo.state.value.sleepExtendMinutes)
+        assertEquals(5, core.saved.last().getInt("sleepExtendMinutes"))
     }
 
     @Test

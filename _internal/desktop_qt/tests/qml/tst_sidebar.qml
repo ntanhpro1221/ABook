@@ -185,14 +185,13 @@ Item {
         function test_selectorTracksInBothStates() {
             sb.currentSection = 1
             compare(sb.selector.target.text, "Studio")
-            tryCompare(sb.selector, "y", sb.selector.target.y, 1000)
-            compare(sb.selector.width, sb.selector.target.width)
+            tryVerify(function() { return sb.selector.y === sb.selector.target.y && sb.selector.width === sb.selector.target.width }, 1000)
             collapse()
             tryCompare(sb.selector, "width", 40, 1000)
             compare(sb.selector.height, sb.selector.target.height)
             sb.currentSection = 2
             compare(sb.selector.target.text, "Cài đặt")
-            tryCompare(sb.selector, "y", sb.selector.target.y, 1000)
+            tryVerify(function() { return sb.selector.y === sb.selector.target.y }, 1000)
         }
 
         function test_iconsKeepTheirRowWhenCollapsed() {

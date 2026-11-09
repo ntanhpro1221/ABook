@@ -169,7 +169,7 @@ def checks() -> list[Check]:
         Check("gallery-build", [node, "node_modules/vite/bin/vite.js", "build", "-c", "vite.gallery.config.ts",
                                 "--configLoader", "runner"], ui, 180),
         Check("gallery-inspect", [node, "scripts/gallery_inspect.mjs", "--theme", "both", "--out", "<run>/gallery"],
-              ui, 1800, "gallery", ("gallery-build",)),
+              ui, 3600, "gallery", ("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
     ]

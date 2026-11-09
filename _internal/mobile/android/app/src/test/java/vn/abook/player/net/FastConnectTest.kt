@@ -25,6 +25,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.nio.file.Files
 import java.security.KeyStore
+import java.security.Security
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SNIMatcher
@@ -393,6 +394,15 @@ class FastConnectTest {
 
     private class Pki(val server: SSLContext, val client: SSLContext)
 
+    private inline fun <T> withJdkTls(block: () -> T): T {
+        // JSSE also obtains XDH/key generators through the global list. Merely
+        // selecting its SSLContext is insufficient with Conscrypt first.
+        val displaced = Security.getProviders().withIndex().filter { it.value.name.contains("Conscrypt", ignoreCase = true) }
+        displaced.forEach { Security.removeProvider(it.value.name) }
+        try { return block() }
+        finally { displaced.forEach { Security.insertProviderAt(it.value, it.index + 1) } }
+    }
+
     /** Chứng chỉ tự ký cho `san` (keytool của JDK đang chạy test); null = JDK không có keytool, bài thử bỏ qua. */
     private fun pki(san: String): Pki? {
         val keytool = File(System.getProperty("java.home"), "bin/" + if (System.getProperty("os.name").lowercase().contains("win")) "keytool.exe" else "keytool")
@@ -405,18 +415,19 @@ class FastConnectTest {
         process.inputStream.readBytes()
         if (process.waitFor() != 0) return null
         val store = KeyStore.getInstance("PKCS12").apply { file.inputStream().use { load(it, "changeit".toCharArray()) } }
+        // Robolectric inserts Conscrypt into the JVM's global provider list.
+        // This fixture exercises the JDK HttpURLConnection, whose SNI/hostname
+        // integration expects JSSE sockets; do not depend on test class order.
         val keys = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(store, "changeit".toCharArray()) }
         val trusted = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null); setCertificateEntry("a", store.getCertificate("a")) }
         val trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(trusted) }
         return Pki(
-            // Robolectric installs Conscrypt globally when earlier UI tests run in the same worker.
-            // This fixture exercises JDK HttpURLConnection, so use its JSSE provider consistently.
             SSLContext.getInstance("TLS", "SunJSSE").apply { init(keys.keyManagers, null, null) },
             SSLContext.getInstance("TLS", "SunJSSE").apply { init(null, trust.trustManagers, null) },
         )
     }
 
-    @Test fun httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost() {
+    @Test fun httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost() = withJdkTls {
         val pki = pki("abook.test")
         assumeTrue("JDK không có keytool", pki != null)
         val http = Http(pki!!.server).track()
@@ -436,7 +447,7 @@ class FastConnectTest {
         assertEquals(2, net.started.size)
     }
 
-    @Test fun httpsStillRejectsACertificateForAnotherName() {
+    @Test fun httpsStillRejectsACertificateForAnotherName() = withJdkTls {
         val pki = pki("other.test")
         assumeTrue("JDK không có keytool", pki != null)
         val http = Http(pki!!.server).track()
@@ -453,6 +464,23 @@ class FastConnectTest {
             val messages = generateSequence<Throwable>(error) { it.cause }.mapNotNull { it.message }.joinToString("\n")
             assertTrue(messages, messages.contains("abook.test") &&
                 (messages.contains("No subject alternative DNS name matching") || messages.contains("HTTPS hostname wrong")))
+        }
+    }
+
+    @Test fun jdkHttpsAssertionsSurviveRobolectricInstallingConscryptFirst() {
+        // Robolectric supplies Conscrypt at test runtime, not on the compile classpath.
+        val provider = Class.forName("org.conscrypt.Conscrypt").getMethod("newProvider").invoke(null) as java.security.Provider
+        val previous = Security.getProvider(provider.name)
+        val position = Security.getProviders().indexOfFirst { it.name == provider.name } + 1
+        Security.removeProvider(provider.name)
+        Security.insertProviderAt(provider, 1)
+        try {
+            assertEquals(provider.name, SSLContext.getInstance("TLS").provider.name)
+            httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost()
+            httpsStillRejectsACertificateForAnotherName()
+        } finally {
+            Security.removeProvider(provider.name)
+            if (previous != null) Security.insertProviderAt(previous, position)
         }
     }
 

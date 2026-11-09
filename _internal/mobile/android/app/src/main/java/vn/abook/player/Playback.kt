@@ -201,14 +201,6 @@ object Playback {
     private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
-    /** Lần cuối người nghe chạm vào trình phát (nút, thông báo, widget) - cho lưới an toàn ngủ quên. */
-    var lastInteractionMs = System.currentTimeMillis()
-        private set
-    var lastInteractionChapter: Int? = null
-        private set
-    var lastInteractionSeconds = 0.0
-        private set
-
     // Phiên nghe: mở lúc bắt đầu phát, đóng lúc dừng; dưới 20 giây nghe thật thì bỏ (bấm phát rồi dừng ngay).
     private var sessionStartMs = 0L
     private var sessionListenedMs = 0L
@@ -252,9 +244,6 @@ object Playback {
 
     fun touched() {
         SleepTimer.onAwake()
-        lastInteractionMs = System.currentTimeMillis()
-        lastInteractionChapter = currentChapter?.id
-        lastInteractionSeconds = positionSeconds
     }
 
     private var initializedContext: Context? = null
@@ -263,6 +252,7 @@ object Playback {
     fun init(context: Context) {
         val application = context.applicationContext
         if (initializedContext === application) return
+        AudioFx.init(application)
         appContext = application
         Store.init(appContext)
         Remote.init(appContext)
@@ -450,8 +440,8 @@ object Playback {
 
     fun applyVolume(fade: Float = fadeLevel) {
         fadeLevel = fade
-        player?.volume = fade * ReadAloud.gainFactor()
-        MusicBed.setSleepFade(fade) // nhạc nền nhỏ dần cùng giọng; trả 1 (huỷ / gia hạn / hết giờ) thì nhạc về mức cũ
+        player?.volume = fade * ReadAloud.gainFactor() * AudioFx.current.volume.toFloat()
+        MusicBed.setSleepFade(fade * AudioFx.current.volume.toFloat())
     }
 
     /** Hẹn giờ "hết chương": ExoPlayer dừng ở cuối mục. Chương đọc to gồm nhiều mục (mỗi đoạn một mục) nên không dùng được - ReadAloud tự dừng nạp ở cuối chương. */
@@ -799,7 +789,7 @@ object Playback {
 
     private fun applySpeed(exo: ExoPlayer, rate: Double) {
         knownSpeed = rate.toFloat() // trước khi đặt: ExoPlayer báo onPlaybackParametersChanged ngay trong lời gọi
-        exo.playbackParameters = PlaybackParameters(knownSpeed)
+        exo.playbackParameters = PlaybackParameters(knownSpeed, AudioFx.pitchRatio())
     }
 
     /**
@@ -870,7 +860,7 @@ object Playback {
         ticking = true
         main.post(object : Runnable {
             var nextSave = SystemClock.elapsedRealtime() + 5_000
-            var nextAutomatic = 0L
+            var nextSchedule = 0L
             override fun run() {
                 val exo = player
                 // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) hay chương phát qua mạng đang đệm vẫn là "đang nghe": nhịp nhạc nền không đứt ([musicVoice]).
@@ -884,9 +874,9 @@ object Playback {
                     nextSave = now + 5_000
                     savePeriodic()
                 }
-                if (now >= nextAutomatic) {
-                    nextAutomatic = now + 1_000
-                    SleepTimer.checkAutomatic()
+                if (now >= nextSchedule) {
+                    nextSchedule = now + 1_000
+                    SleepTimer.checkSchedule()
                 }
                 Bedtime.checkpoint()
                 noteStall(exo.isPlaying)

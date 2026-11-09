@@ -608,7 +608,6 @@ export function App() {
           fadeSeconds={preferences?.sleepFadeSeconds ?? info.sleepFadeSeconds}
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}
-          safetyStopHours={preferences?.safetyStopHours ?? info.safetyStopHours}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
           autoRewind={preferences?.autoRewind !== false}
         >

@@ -56,7 +56,6 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.components.fadeEdges
 
-private val SafetyOptions = AppSettings.SAFETY_HOURS.map { Option(it, if (it == 0) "Không" else "$it giờ") }
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
 private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it phút") }
 private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) "1 phút" else "$it giây") }
@@ -67,7 +66,6 @@ private object GroupCopy {
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
-    const val SAFETY = "Máy rảnh đủ lâu mới nhỏ dần rồi dừng."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
     const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
     const val SCHEDULE = "Máy rảnh 2 phút trong khung giờ này mới tự hẹn."
@@ -115,7 +113,7 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
     }
 }
 
-/** Hẹn giờ ngủ: tự tắt, lịch đêm (giờ chọn trong bảng trượt), cử chỉ, khi sắp tắt. */
+/** Hẹn giờ ngủ: lịch đêm (giờ chọn trong bảng trượt), cử chỉ, khi sắp tắt. */
 @Composable
 fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val settings by repo.state.collectAsState()
@@ -133,11 +131,6 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
     }
     SettingsPage(SettingsGroup.Sleep.label, onBack, SettingsGroup.Sleep.screenTag, modifier) {
         ListSection(first = true) {
-            ChoiceSetting(
-                "Tự tắt", SafetyOptions, SafetyOptions.first { it.value == settings.safetyStopHours },
-                { option, _ -> repo.change { it.copy(safetyStopHours = option.value) } }, "safety_stop", GroupCopy.SAFETY,
-            )
-            RowLine()
             SwitchRow(
                 "Lịch đêm", settings.schedule != null,
                 { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule", GroupCopy.SCHEDULE,

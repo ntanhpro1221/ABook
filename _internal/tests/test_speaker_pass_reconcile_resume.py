@@ -123,7 +123,7 @@ def test_pipeline_resume_does_not_reconcile_committed_pass_labels(tmp_path: Path
 
 
 @pytest.mark.parametrize("checkpoint", ["none", "lock", "chapter"])
-def test_old_databases_preserve_the_pre_pass_checkpoint_on_reopen(tmp_path: Path, checkpoint: str) -> None:
+def test_incomplete_databases_are_refused_without_reconstructing_the_pre_pass_checkpoint(tmp_path: Path, checkpoint: str) -> None:
     db = make_project(tmp_path / "p")
     if checkpoint == "lock":
         db.lock_speaker_pass(model_name="speaker", model_digest="digest", analysis_model="analysis",
@@ -132,7 +132,7 @@ def test_old_databases_preserve_the_pre_pass_checkpoint_on_reopen(tmp_path: Path
         db.commit_speaker_pass_chapter(int(db.list_chapters()[-1]["id"]), [], {}, seconds=0)
     with db.transaction() as conn:
         conn.execute("ALTER TABLE book DROP COLUMN speaker_pass_reconciled")
-    reopened = ProjectDB(db.path)
-    assert reopened.speaker_pass_is_reconciled() == (checkpoint != "none")
-    reopened.mark_speaker_pass_reconciled()
-    assert ProjectDB(db.path).speaker_pass_is_reconciled()
+    with pytest.raises(RuntimeError, match="Unsupported project schema layout"):
+        ProjectDB(db.path)
+    with db.connect() as conn:
+        assert "speaker_pass_reconciled" not in {row[1] for row in conn.execute("PRAGMA table_info(book)")}

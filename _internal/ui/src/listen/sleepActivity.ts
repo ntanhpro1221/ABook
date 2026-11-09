@@ -1,10 +1,9 @@
 import { api } from "@/studio/api";
 
-export const AUTO_SLEEP_SAFETY = "Tự hẹn vì lâu không dùng máy";
 export const AUTO_SLEEP_SCHEDULE = "Tự hẹn theo lịch đêm";
 export const AUTO_SLEEP_CONTINUE = "Chạm để nghe tiếp";
 export const NIGHT_IDLE_MS = 120_000;
-export type AutoSleepReason = "safety" | "schedule";
+export type AutoSleepReason = "schedule";
 
 /** The browser cannot observe input in other apps. Unknown OS evidence disables automatic timers. */
 export function automaticSleepAllowed(osIdleMs: number | null, appIdleMs: number, requiredMs: number): boolean {

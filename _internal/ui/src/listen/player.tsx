@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { appVolume } from './audioFx';
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
@@ -25,7 +26,6 @@ import {
   sleepExtendLabel,
   sleepExtended,
   sleepFrom,
-  sleepSafetyNet,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
@@ -42,7 +42,7 @@ import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { feedback, setBookPlaying } from "@/shared/feedback";
-import { AUTO_SLEEP_SAFETY, AUTO_SLEEP_SCHEDULE, AUTO_SLEEP_CONTINUE, NIGHT_IDLE_MS, automaticSleepAllowed, type AutoSleepReason } from "./sleepActivity";
+import { AUTO_SLEEP_SCHEDULE, AUTO_SLEEP_CONTINUE, NIGHT_IDLE_MS, automaticSleepAllowed, type AutoSleepReason } from "./sleepActivity";
 import { MORPH } from "./nowPlayingMorph";
 
 export type { SleepMode, SleepRequest } from "./sleep";
@@ -82,8 +82,6 @@ export type { SleepSchedule };
 export interface PlayerOptions {
   fadeSeconds: number;
   extendMinutes: number;
-  /** Phát liên tục chừng này giờ mà không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt) - lưới cho người ngủ quên. */
-  safetyStopHours: number;
   schedule: SleepSchedule | null;
   /** Tạm dừng rồi nghe tiếp thì lùi lại một chút (`rewindAfter`). Tuỳ chọn theo máy; điện thoại có công tắc riêng ở lõi native. */
   autoRewind: boolean;
@@ -255,11 +253,10 @@ export function PlayerProvider({
   engine,
   children,
   defaultRate = 1,
-  defaultVolume = 0.9,
+  defaultVolume = appVolume(),
   keyboard = true,
   fadeSeconds = DEFAULT_FADE_SECONDS,
   extendMinutes = DEFAULT_EXTEND_MINUTES,
-  safetyStopHours = 2,
   sleepSchedule = null,
   systemIdleReader,
   autoRewind = true,
@@ -272,7 +269,6 @@ export function PlayerProvider({
   keyboard?: boolean;
   fadeSeconds?: number;
   extendMinutes?: number;
-  safetyStopHours?: number;
   sleepSchedule?: SleepSchedule | null;
   systemIdleReader?: () => Promise<number | null>;
   autoRewind?: boolean;
@@ -293,9 +289,9 @@ export function PlayerProvider({
   );
   const scheduleKey = sleepSchedule ? `${sleepSchedule.from}-${sleepSchedule.to}-${sleepSchedule.minutes}` : "";
   const options = useMemo<PlayerOptions>(
-    () => ({ fadeSeconds, extendMinutes, safetyStopHours, schedule: sleepSchedule, autoRewind }),
+    () => ({ fadeSeconds, extendMinutes, schedule: sleepSchedule, autoRewind }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fadeSeconds, extendMinutes, safetyStopHours, scheduleKey, autoRewind],
+    [fadeSeconds, extendMinutes, scheduleKey, autoRewind],
   );
 
   const [track, setTrack] = useState<Track | null>(null);
@@ -1261,8 +1257,10 @@ export function PlayerProvider({
   }, [applyRate, client, night, position, source]);
 
   const setVolume = useCallback((value: number) => {
+    if (!Number.isFinite(value)) return;
     awakeRef.current();
     const clamped = Math.max(0, Math.min(1, value));
+    try { localStorage.setItem('abook.appVolume',String(clamped)); } catch { toast.error('Chưa lưu được âm lượng.'); }
     refs.current.volume = clamped;
     setVolumeState(clamped);
     engine.setVolume(clamped * refs.current.sleepGain);
@@ -1789,7 +1787,7 @@ export function PlayerProvider({
 
   // Browser input alone cannot establish OS idleness; the local desktop supplies that evidence.
   useEffect(() => {
-    if (native || !playing || !systemIdleReader) return;
+    if (native || !playing || !systemIdleReader || !options.schedule) return;
     let live = true;
     let busy = false;
     const startedAt = Date.now();
@@ -1810,20 +1808,19 @@ export function PlayerProvider({
       if (refs.current.sleep.kind !== "off" || now - requestedAt > 2000) return;
       const window = scheduleWindow(options.schedule);
       const scheduled = window && options.schedule && refs.current.scheduleOffFor !== window && automaticSleepAllowed(osIdle, appIdle, NIGHT_IDLE_MS);
-      const safety = automaticSleepAllowed(osIdle, appIdle, options.safetyStopHours * 3_600_000);
-      if (!scheduled && !safety) return;
-      const reason: AutoSleepReason = scheduled ? "schedule" : "safety";
-      const minutes = scheduled ? options.schedule!.minutes : 1;
+      if (!scheduled) return;
+      const reason: AutoSleepReason = "schedule";
+      const minutes = options.schedule!.minutes;
       const book = refs.current.book;
       if (book) {
         night.start(book, minutes, position(), reason);
         const before = refs.current.lastActivityPosition;
         if (before) night.touchAt(refs.current.lastActivity, "last-activity", before);
       }
-      applySleep(scheduled ? sleepFrom({ kind: "minutes", minutes }, true, now) : sleepSafetyNet(true, now));
+      applySleep(sleepFrom({ kind: "minutes", minutes }, true, now));
       automaticSleep.current = reason;
       automaticLastInput.current = requestedAt - osIdle!;
-      toast(reason === "safety" ? AUTO_SLEEP_SAFETY : AUTO_SLEEP_SCHEDULE, {
+      toast(AUTO_SLEEP_SCHEDULE, {
         id: "automatic-sleep", duration: Infinity,
         action: { label: AUTO_SLEEP_CONTINUE, onClick: () => awakeRef.current() },
       });
@@ -1831,7 +1828,7 @@ export function PlayerProvider({
     void check();
     const timer = window.setInterval(() => void check(), 1000);
     return () => { live = false; window.clearInterval(timer); };
-  }, [applySleep, engine, native, night, options.schedule, options.safetyStopHours, playing, position, systemIdleReader]);
+  }, [applySleep, engine, native, night, options.schedule, playing, position, systemIdleReader]);
 
   useEffect(() => {
     const onHide = () => {

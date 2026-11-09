@@ -156,17 +156,15 @@ def test_full_successful_history_keeps_active_and_new_advertised_host_and_port()
     assert {item["lastSuccess"] for item in peer["addresses"] if item["address"] in fresh} == {0}
 
 
-def test_legacy_computer_is_upgraded_once_with_original_host_first(tmp_path):
+def test_old_host_port_are_not_upgraded_into_routes(tmp_path):
     path = tmp_path / "computers.json"
-    path.write_text(json.dumps({"computers": {"peer": {"host": "100.73.1.2", "port": 47630, "token": "t", "fingerprint": PIN}}}), encoding="utf-8")
+    raw = json.dumps({"computers": {"peer": {"host": "100.73.1.2", "port": 47630, "token": "t", "fingerprint": PIN}}}).encode()
+    path.write_bytes(raw)
     computers = remote_books.Computers(path)
-    assert computers.get("peer")["addresses"] == [{"address": "100.73.1.2:47630", "lastSuccess": 0}]
-    before = path.read_bytes()
-    assert computers.get("peer")["token"] == "t"
-    assert path.read_bytes() == before
-    # Address list is now authoritative; no perpetual fallback to the old host.
-    computers.note("peer", addresses=[])
-    assert computers.get("peer")["addresses"] == []
+    assert computers.get("peer") is None
+    assert computers.broken
+    assert (tmp_path / computers.broken).read_bytes() == raw
+    assert json.loads(path.read_bytes())["computers"] == {}
 
 
 def test_wrong_identity_cannot_teach_addresses_or_success():

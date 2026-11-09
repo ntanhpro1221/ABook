@@ -60,6 +60,30 @@ def test_result_parser_fails_closed():
         assert result_status(reports) == 'FAIL'
 
 
+@pytest.mark.parametrize('opens', [False, True])
+def test_reopened_layer_waits_for_a_live_surface_and_missing_surface_stays_red(monkeypatch, opens):
+    async def immediate(_seconds): pass
+    monkeypatch.setattr(asyncio, 'sleep', immediate)
+
+    class PendingLayer(CDP):
+        def __init__(self):
+            super().__init__(None)
+            self.reads = 0
+
+        async def evaluate(self, _expression):
+            self.reads += 1
+            return dict(role='dialog', title='Speed', body='none') if opens and self.reads >= 3 else None
+
+    c = PendingLayer()
+    if opens:
+        assert asyncio.run(c.capture_layer())['role'] == 'dialog'
+        assert c.reads == 3
+    else:
+        with pytest.raises(RuntimeError, match='layer did not open'):
+            asyncio.run(c.capture_layer())
+        assert c.reads == 30
+
+
 @pytest.mark.parametrize('layer_open', [False, True])
 def test_toast_cover_is_dismissed_only_on_page(layer_open):
     """Không che giấu lỗi toast chồng lên bảng; trang thường đóng bằng toạ độ thật."""

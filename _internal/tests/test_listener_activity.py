@@ -42,6 +42,8 @@ def test_auto_sleep_copy_matches_all_three_platforms():
     root = Path(__file__).resolve().parents[1]
     paths = ["ui/src/listen/sleepActivity.ts", "desktop_qt/src/systemidle.h",
              "mobile/android/app/src/main/java/vn/abook/player/SleepPolicy.kt"]
-    for sentence in ("Tự hẹn vì lâu không dùng máy", "Tự hẹn theo lịch đêm", "Chạm để nghe tiếp"):
+    for sentence in ("Tự hẹn theo lịch đêm", "Chạm để nghe tiếp"):
         for path in paths:
             assert '"' + sentence + '"' in (root / path).read_text(encoding="utf-8"), path
+    for path in paths:
+        assert "Tự hẹn vì lâu không dùng máy" not in (root / path).read_text(encoding="utf-8"), path

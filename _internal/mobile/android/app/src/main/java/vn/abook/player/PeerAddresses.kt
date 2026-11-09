@@ -54,19 +54,11 @@ internal object PeerAddresses {
         return valid(endpoint(host, port), advertised = true)
     }
 
-    fun migrate(peer: JSONObject): Boolean {
-        val missing = !peer.has("addresses")
+    /** Repair current route records; host/port never supply missing routes. */
+    fun normalize(peer: JSONObject): Boolean {
         val before = peer.opt("addresses")?.toString()
-        if (missing) {
-            val host = peer.opt("host") as? String ?: ""
-            val address = if (host.startsWith("bt:")) null else {
-                val port = (if (peer.has("port")) peer.opt("port") else BuildConfig.DEFAULT_PEER_PORT)?.toString()?.toIntOrNull()
-                port?.let { valid(endpoint(host, it)) }
-            }
-            peer.put("addresses", JSONArray().apply { if (address != null) put(JSONObject().put("address", address).put("lastSuccess", 0)) })
-        }
         peer.put("addresses", records(peer.optJSONArray("addresses")))
-        return missing || before != peer.getJSONArray("addresses").toString()
+        return before != peer.getJSONArray("addresses").toString()
     }
 
     private fun records(array: JSONArray?): JSONArray {

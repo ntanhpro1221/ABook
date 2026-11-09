@@ -96,6 +96,7 @@ class Player : public QObject {
     Q_PROPERTY(QString purpose READ purpose NOTIFY bookChanged)
     Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
     Q_PROPERTY(double volume READ volume NOTIFY volumeChanged)       // 0..1 của giọng (phím M tắt / bật tiếng)
+    Q_PROPERTY(QVariantMap audioFx READ audioFx NOTIFY audioFxChanged)
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
@@ -148,6 +149,8 @@ public:
     Q_INVOKABLE void review(const QString &bookId, int chapterId);
     double rate() const { return m_rate; }
     double volume() const { return m_volume; }
+    QVariantMap audioFx() const;
+    Q_INVOKABLE void setAudioFx(const QVariantMap &value);
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.minutes; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
@@ -226,7 +229,6 @@ public:
     void setFreshSpotMs(int ms) { m_freshMs = ms; }
     void setDefaultRate(double rate) { m_defaultRate = rate; }
     void setSystemIdleReader(std::function<qint64()> read) { m_systemIdle = std::move(read); }
-    void setSafetyStopHours(int hours) { m_safetyHours = hours; }
     void setFadeSeconds(int seconds) { m_fadeSeconds = seconds; }
     QString lastFailure() const { return m_lastFailure; }
     bool wantsPlay() const { return m_wantsPlay; }
@@ -234,7 +236,7 @@ public:
     double outputVolume() const { return m_volume * (m_fading ? m_gain : 1.0); }
     /// Lời nhắn ngắn ở thanh phát (nhạc nền: "Chưa chỉnh được nhạc nền").
     void showNotice(const QString &notice) { setNotice(notice); }
-    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lưới an toàn ngủ quên, và "lắc máy" hẹn lại lúc đang nhỏ dần.
+    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lịch đêm đã bật, và "lắc máy" hẹn lại lúc đang nhỏ dần.
     void watchInput();
 
 signals:
@@ -245,6 +247,7 @@ signals:
     void bufferingChanged();
     void rateChanged();
     void volumeChanged();
+    void audioFxChanged();
     void audioSeeked();
     void outputGainChanged();
     /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
@@ -354,6 +357,7 @@ private:
     double m_rate = PlayerLogic::kDefaultRate;
     double m_defaultRate = PlayerLogic::kDefaultRate;
     double m_volume = 0.9;
+    AudioFx::Settings m_audioFx;
     double m_muted = 0; // mức trước lần tắt tiếng gần nhất
     bool m_fading = false;
     QString m_error;
@@ -365,7 +369,6 @@ private:
     int m_lastSleepMinutes = 30;
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
-    int m_safetyHours = 2;
     bool m_autoRewind = true;
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
