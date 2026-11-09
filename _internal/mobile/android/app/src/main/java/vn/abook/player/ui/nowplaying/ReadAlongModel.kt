@@ -19,6 +19,28 @@ data class ReadAlongState(
     val paragraphs: List<ReadParagraph> = emptyList(), val loading: Boolean = false, val error: String = "",
 )
 
+/**
+ * Luật đi theo giọng (cùng ý với ui/src/listen/follow.ts và ReadAlongView.qml): dòng chứa từ đang đọc đứng ở [PLACE_AT] từ trên khung, từ xuống dòng mới thì cuộn
+ * mượt một dòng. Người tự cuộn là thôi theo; thôi cuộn [SETTLE_MS] mà câu đang đọc còn trong khung thì theo lại.
+ */
+object ReadFollow {
+    const val PLACE_AT = 0.3f
+    const val SETTLE_MS = 1500L
+
+    /** Chỗ cần đứng đúng: đổi giá trị này mới là lý do để cuộn. */
+    data class Target(val sentence: Int, val line: Int)
+
+    /**
+     * Dòng chứa từ đang đọc ở [ms]; câu chưa có mốc từ hay chưa tới từ đầu: dòng đầu của câu. Từ cuối đã tắt ([ReadAlongLookup.word] -1 khi quãng nghỉ dài) vẫn tính
+     * dòng của nó: danh sách đứng yên chờ câu sau, không lùi về đầu câu.
+     */
+    fun lineAt(words: List<WordTiming>, ms: Long, lineForOffset: (Int) -> Int): Int {
+        val word = ReadAlongLookup.word(words, ms)
+        val at = if (word < 0 && words.isNotEmpty() && ms > words.last().endMs) words.last() else words.getOrNull(word)
+        return at?.let { lineForOffset(it.from) } ?: 0
+    }
+}
+
 /** Binary searches match listen/words.ts: sentence lead 50 ms, word lead 40 ms, last word hold 400 ms. */
 object ReadAlongLookup {
     // JS's \S+ (words.ts), spelled out: Java's default \s omits NBSP, and (?U) / UNICODE_CHARACTER_CLASS crashes Android's ICU regex.

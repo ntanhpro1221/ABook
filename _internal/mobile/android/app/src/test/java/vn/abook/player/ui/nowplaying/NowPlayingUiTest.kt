@@ -445,8 +445,11 @@ class NowPlayingUiTest {
     @Test fun scrollingAwayShowsAFollowPillInsideTheTextAndTappingItFollowsAgain() {
         show(reading = true)
         rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
-        rule.onNodeWithTag("read_along_text").performTouchInput {
-            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.3f), 300)
+        // Nút chỉ hiện khi câu đang nghe đã ra khỏi khung (như web): cuộn đi đủ xa.
+        repeat(3) {
+            rule.onNodeWithTag("read_along_text").performTouchInput {
+                swipe(Offset(width * 0.5f, height * 0.9f), Offset(width * 0.5f, height * 0.1f), 200)
+            }
         }
         rule.waitForIdle()
         rule.onNodeWithTag("follow_sentence").assertIsDisplayed()

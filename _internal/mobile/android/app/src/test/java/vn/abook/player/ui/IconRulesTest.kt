@@ -21,6 +21,7 @@ class IconRulesTest {
         "nowplaying/PlayerVisuals.kt" to "nút ±15 hình riêng của web, nút phát lớn biến hình",
         "nowplaying/NowPlayingScreen.kt" to "thanh tua, công tắc Nghe | Đọc theo",
         "nowplaying/ReadAlongPane.kt" to "tô câu / từ đang đọc",
+        "nowplaying/ReadInk.kt" to "nền tô chữ bo góc (câu đang đọc, chữ đang đọc, chữ tìm thấy)",
         "screens/LibraryChrome.kt" to "nền ô tìm",
         "theme/ThemeReveal.kt" to "vòng lan đổi giao diện",
         "editbook/CoverCrop.kt" to "khung cắt ảnh bìa",
