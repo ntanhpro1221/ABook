@@ -184,7 +184,6 @@ object Playback {
         private set
     var chapters: List<Chapter> = emptyList()
         private set
-    private var pausedAtMs = 0L
     /** Đang phát - đọc được từ luồng khác (đồng bộ); ExoPlayer chỉ được hỏi trên luồng chính. */
     @Volatile
     var isPlaying = false
@@ -197,8 +196,6 @@ object Playback {
 
     private class Pending(val id: String, val title: String, val narrator: String, val items: List<Chapter>,
                           val place: Pair<Int, Long>, val rate: Double)
-    /** "Tự lùi khi nghe lại" (Cài đặt); how far: [AutoRewind]. */
-    private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
     // Phiên nghe: mở lúc bắt đầu phát, đóng lúc dừng; dưới 20 giây nghe thật thì bỏ (bấm phát rồi dừng ngay).
@@ -571,8 +568,7 @@ object Playback {
             Bedtime.interaction("play")
             return
         }
-        val back = if (autoRewind && pausedAtMs > 0) AutoRewind.seconds(System.currentTimeMillis() - pausedAtMs) else 0.0
-        if (back > 0) seekToMs((positionMs - (back * 1000).toLong()).coerceAtLeast(0))
+        // Resume at the held position. Only an explicit seek may replay heard audio.
         // Sau một lỗi (mất mạng khi nghe thẳng) ExoPlayer nằm ở IDLE: phải chuẩn bị lại thì mới phát tiếp đúng chỗ.
         if (exo.playbackState == Player.STATE_IDLE) {
             lastError = ""
@@ -698,11 +694,6 @@ object Playback {
         emit("rate")
     }
 
-    /** `rewind` null: lần `configure` này không mang `autoRewind` (đổi giọng...) - giữ nguyên lựa chọn đang có (soát a77 #7). */
-    fun configure(rewind: Boolean?) {
-        if (rewind != null) autoRewind = rewind
-    }
-
     // ---- sự kiện từ ExoPlayer ------------------------------------------------------------------------------
 
     fun onPlayingChanged(playing: Boolean) {
@@ -713,13 +704,11 @@ object Playback {
         Remote.onPlaying(playing)
         syncMusic(playing)
         if (!playing) {
-            pausedAtMs = System.currentTimeMillis()
             saveNow()
             pushHeld(force = true)
             closeSession()
         } else {
             openSession()
-            pausedAtMs = 0
             startTicking()
             SleepTimer.maybeSchedule()
         }

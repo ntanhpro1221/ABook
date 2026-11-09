@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -50,15 +49,6 @@ describe("nhãn trên nút hẹn giờ", () => {
     const later = remoteSleepMode({ kind: "minutes", minutes: 5, left: 59, counting: false }, at);
     expect(sleepButtonLabel(later, at)).toBe("59 giây");
     expect(sleepSpoken(later, at)).toBe("Hẹn giờ ngủ: còn 59 giây");
-  });
-});
-
-describe("tự lùi khi nghe lại", () => {
-  it("follows the cases shared with the Android player (tests/fixtures/auto_rewind)", () => {
-    const shared = JSON.parse(readFileSync(new URL("../../../tests/fixtures/auto_rewind/cases.json", import.meta.url)).toString("utf8")) as {
-      cases: [number, number][];
-    };
-    for (const [pausedMs, seconds] of shared.cases) expect(rewindAfter(pausedMs), `tạm dừng ${pausedMs} ms`).toBe(seconds);
   });
 });
 

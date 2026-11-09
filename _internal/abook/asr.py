@@ -1329,6 +1329,10 @@ def _adjudicate_locked_name_anchors(
                 fold_tone=False,
             )
             canonical_threshold_passed = bool(canonical_threshold_passed and plain_wer == 0.0)
+        # A repeated stretch is not a name problem: removing the name spans cannot excuse it,
+        # so neither the promotion below nor the review exemption may stand on it.
+        if result.get(ASR_REPEATED_CONTENT_KEY):
+            canonical_threshold_passed = False
         if anchors_passed:
             canonical_promoted = bool(
                 canonical_threshold_passed
@@ -1477,6 +1481,8 @@ def adjudicate_collapsed_repeated_short(
         asr_result.get("verdict") == ASR_MISMATCH
         and asr_result.get("passed") is False
         and asr_result.get("reason") == "ASR_MISMATCH"
+        # Collapsing the copies is exactly what would hide a take that said the line twice.
+        and not asr_result.get(ASR_REPEATED_CONTENT_KEY)
         and isinstance(transcript, str)
         and bool(transcript.strip())
     )
@@ -1676,6 +1682,93 @@ def tone_folded_transcript_metrics(
             "tone_only_difference_rate": float(tone_only / compared) if compared else 0.0,
         },
     )
+
+
+# Evidence key on an ASR result whose transcript says part of the text more times than the
+# text does. The verdict stays ASR_MISMATCH / "ASR_MISMATCH" so repair, the candidate ledger
+# and every caller keep working unchanged; the key is what stops the rescues (canonical name
+# promotion, collapsed repeat-3) from waving it through.
+ASR_REPEATED_CONTENT_KEY = "repeated_content"
+REPEATED_CONTENT_MAX_NGRAM = 6
+
+
+def _run_length(tokens: Sequence[str], start: int, gram: Sequence[str]) -> int:
+    width, runs = len(gram), 0
+    while list(tokens[start + runs * width : start + (runs + 1) * width]) == list(gram):
+        runs += 1
+    return runs
+
+
+def _longest_run(tokens: Sequence[str], gram: Sequence[str]) -> int:
+    return max(
+        (
+            _run_length(tokens, index, gram)
+            for index in range(len(tokens) - len(gram) + 1)
+            if list(tokens[index : index + len(gram)]) == list(gram)
+        ),
+        default=0,
+    )
+
+
+def heard_repeated_content(expected: str, actual: str) -> dict[str, Any] | None:
+    """A stretch of the text that the transcript says back to back more times than the text.
+
+    VieNeu sometimes reads one short sentence or clause of a segment twice ("... Và tại sao
+    không? Và tại sao không?"). Similarity and WER do count the insertion, but against a long
+    reference one clause is small: in the two books the owner was hearing on 09-11 the takes
+    that did it scored 0.86-0.97, every one above the 0.78 floor. So the gate asked "is
+    something missing?" and never "is something said twice?".
+
+    Stored transcripts from two books exposed local repeats. They are ASR evidence,
+    not proof by themselves: a waveform check or listening is needed to distinguish
+    audio repetitions from recognizer loops. Single-word doubles within a long sentence
+    were especially noisy, so one word counts only in a short line (up to six words),
+    including its three-copy verification context.
+
+    Compared tone-folded, so Whisper's "gái gái" for written "gãi gãi" is not extra
+    content. The extra copies must outnumber the text globally as well as consecutively;
+    an author's stammer ("C-Chào" heard "Chào, chào") adds no word.
+    """
+    expected_words = normalize_transcript(expected).split()
+    actual_words = normalize_transcript(actual).split()
+    if not expected_words or not actual_words:
+        return None
+    folded_expected = _tone_folded_words(expected_words)
+    folded_actual = _tone_folded_words(actual_words)
+    context_words = len(folded_expected) // SHORT_CONTEXT_REPEAT_COUNT
+    short_line = len(folded_expected) <= 6 or (
+        0 < context_words <= 6
+        and folded_expected[:context_words] * SHORT_CONTEXT_REPEAT_COUNT == folded_expected
+    )
+    for width in range(1, min(REPEATED_CONTENT_MAX_NGRAM, len(folded_actual) // 2) + 1):
+        # A written initial stammer (C-Chào -> Chào, chào) substitutes a token;
+        # a single-word flag needs net extra words as well as an extra run.
+        if width == 1 and (not short_line or len(folded_actual) <= len(folded_expected)):
+            continue
+        for start in range(len(folded_actual) - 2 * width + 1):
+            gram = folded_actual[start : start + width]
+            heard = _run_length(folded_actual, start, gram)
+            if heard < 2:
+                continue
+            written = _longest_run(folded_expected, gram)
+            # Counts as well as runs: moving an author's repeated phrase next to its
+            # first occurrence adds nothing. A missing clause elsewhere cannot cancel
+            # extra copies here, so do not compare total transcript lengths.
+            expected_count = sum(
+                folded_expected[i : i + width] == gram
+                for i in range(len(folded_expected) - width + 1)
+            )
+            actual_count = sum(
+                folded_actual[i : i + width] == gram
+                for i in range(len(folded_actual) - width + 1)
+            )
+            if written and heard > written and actual_count > expected_count:
+                return {
+                    "ngram": " ".join(actual_words[start : start + width]),
+                    "heard": int(heard),
+                    "written": int(written),
+                }
+    return None
 
 
 def transcript_metrics(expected: str, actual: str) -> tuple[float, float]:
@@ -2086,16 +2179,22 @@ class WhisperVerifier:
             min_similarity=min_similarity,
             max_wer=max_wer,
         )
-        return {
-            "passed": passed,
-            "verdict": ASR_PASS if passed else ASR_MISMATCH,
+        # Something said twice fails even when the rest of the sentence carries the score:
+        # the take is wrong, and a new seed (the ordinary repair round) is the fix.
+        repeated = heard_repeated_content(expected, transcript)
+        result = {
+            "passed": passed and repeated is None,
+            "verdict": ASR_PASS if passed and repeated is None else ASR_MISMATCH,
             "transcript": transcript,
             "similarity": similarity,
             "wer": wer,
-            "reason": "ok" if passed else "ASR_MISMATCH",
-            "repairable": is_asr_repair_candidate(expected),
+            "reason": "ok" if passed and repeated is None else "ASR_MISMATCH",
+            "repairable": is_asr_repair_candidate(expected) or repeated is not None,
             "severe": not passed and is_severe_asr_mismatch(expected, transcript, similarity),
         }
+        if repeated is not None:
+            result[ASR_REPEATED_CONTENT_KEY] = repeated
+        return result
 
     def can_verify_repeated_short(self, expected: str) -> bool:
         word_count = len(normalize_transcript(expected).split())

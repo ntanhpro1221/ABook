@@ -62,9 +62,6 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Phím tắt MỘT CHỮ CÁI của máy tính (B, M, [ ], ?, J/K/1-9 ở Việc cần duyệt, O/R ở Cần nghe lại; Cài đặt > Phím tắt; mặc định bật):
     # tắt cho người dùng phần mềm nhập bằng giọng nói / phím dính (WCAG 2.1.4). Space, mũi tên, Esc và phím có Ctrl/Alt vẫn chạy.
     "letterShortcuts": True,
-    # Tạm dừng rồi nghe tiếp thì lùi vài giây (listen/sleep.ts rewindAfter; Cài đặt > Nghe; mặc định bật). Theo máy này, không đồng bộ sang máy khác;
-    # điện thoại có công tắc cùng tên ở lõi native (soát a100 T1).
-    "autoRewind": True,
     # Tiếng chạm của giao diện (shared/feedback.ts; Cài đặt > Giao diện > "Âm thanh chạm"; mặc định bật). Tự im khi sách đang phát.
     "touchSounds": True,
     # Nền vùng chữ đọc theo (shared/readingSurface.ts; Cài đặt > Giao diện > "Nền đọc"): auto = theo giao diện sáng/tối.

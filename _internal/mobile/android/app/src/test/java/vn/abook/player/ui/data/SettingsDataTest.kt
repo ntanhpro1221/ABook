@@ -28,7 +28,7 @@ class SettingsDataTest {
         assertEquals(ReadingSurface.Auto, d.readingSurface)
         assertEquals(10, d.sleepExtendMinutes)
         assertEquals(30, d.sleepFadeSeconds)
-        assertTrue(d.shakeToExtend && d.headsetSkips && d.autoRewind && d.autoMusic && d.touchSounds && d.haptics)
+        assertTrue(d.shakeToExtend && d.headsetSkips && d.autoMusic && d.touchSounds && d.haptics)
         assertFalse(d.flipToPause)
         assertEquals(ShakeSensitivity.Normal, d.shakeSensitivity)
         assertNull(d.schedule)
@@ -37,12 +37,12 @@ class SettingsDataTest {
 
     @Test
     fun `a bad field falls back alone`() {
-        val raw = JSONObject().put("theme", "neon").put("sleepFadeSeconds", 45).put("autoRewind", "yes").put("haptics", false)
+        val raw = JSONObject().put("theme", "neon").put("sleepFadeSeconds", 45).put("autoMusic", "yes").put("haptics", false)
             .put("schedule", JSONObject().put("from", "25:00").put("to", "06:00").put("minutes", 30)).put("readingSurface", "ivory")
         val s = AppSettings.from(raw)
         assertEquals(ThemeMode.System, s.theme)
         assertEquals(30, s.sleepFadeSeconds)
-        assertTrue(s.autoRewind)
+        assertTrue(s.autoMusic)
         assertFalse(s.haptics)
         assertNull(s.schedule)
         assertEquals(ReadingSurface.Ivory, s.readingSurface)
@@ -54,7 +54,7 @@ class SettingsDataTest {
     fun `changes use the native keys and values that ListenPrefs keeps unchanged`() {
         val before = AppSettings.Default
         val after = before.copy(
-            theme = ThemeMode.Dark, readingSurface = ReadingSurface.Night, touchSounds = false, haptics = false, autoRewind = false, headsetSkips = false,
+            theme = ThemeMode.Dark, readingSurface = ReadingSurface.Night, touchSounds = false, haptics = false, headsetSkips = false,
             schedule = SleepSchedule("23:00", "05:45", 60), shakeToExtend = false,
             shakeSensitivity = ShakeSensitivity.Firm, flipToPause = true, sleepExtendMinutes = 15, sleepFadeSeconds = 60,
         )
@@ -78,13 +78,13 @@ class SettingsDataTest {
         repo.load()
         assertTrue(repo.loaded.value)
         assertFalse(repo.state.value.autoMusic)
-        repo.change { it.copy(autoRewind = false) }
-        assertFalse(repo.state.value.autoRewind)
+        repo.change { it.copy(headsetSkips = false) }
+        assertFalse(repo.state.value.headsetSkips)
         assertEquals(1, core.saved.size)
         val write = core.saved.single()
-        assertEquals(setOf("autoRewind", "settingsStamp"), write.keys().asSequence().toSet())
+        assertEquals(setOf("headsetSkips", "settingsStamp"), write.keys().asSequence().toSet())
         assertTrue(write.getLong("settingsStamp") > 5L)
-        repo.change { it.copy(autoRewind = false) }
+        repo.change { it.copy(headsetSkips = false) }
         assertEquals(1, core.saved.size)
     }
 
@@ -127,7 +127,7 @@ class SettingsDataTest {
 
     @Test
     fun `summaries and quarters`() {
-        assertEquals("Tự lùi · nhạc tự chọn", SettingsSummary.listen(AppSettings.Default))
+        assertEquals("nhạc tự chọn", SettingsSummary.listen(AppSettings.Default))
         assertEquals("Tắt", SettingsSummary.sleep(AppSettings.Default))
         assertEquals("Lịch đêm 22:00–06:00", SettingsSummary.sleep(AppSettings.Default.copy(schedule = SleepSchedule.Default)))
         assertEquals(96, Quarters.ALL.size)

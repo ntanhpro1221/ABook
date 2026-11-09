@@ -82,7 +82,7 @@ FocusScope {
         const p = Api.preferences || {}
         const info = Api.info || {}
         if (key === "voice") return Api.voiceName
-        if (key === "listen") return (p.autoRewind !== false ? S.s_tu_lui_6fc7685a : S.s_khong_tu_lui_8aec206c) + "\u00a0·\u00a0" + (p.autoMusic !== false ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623)
+        if (key === "listen") return (p.autoMusic !== false ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623)
         if (key === "sleep") {
             if (p.sleepSchedule) return S.s_lich_dem_cd78826f + p.sleepSchedule.from + "–" + p.sleepSchedule.to
             return S.s_tat_3286064e

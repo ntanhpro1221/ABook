@@ -13,7 +13,7 @@ object ListenPrefs {
     private const val FILE = "listen-prefs.json"
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeSensitivity", "flipToPause",
-        "headsetSkips", "autoRewind", "schedule", "theme",
+        "headsetSkips", "schedule", "theme",
         // Feedback is also used by screen-off gestures in the playback process.
         "touchSounds", "haptics", "readingSurface",
         // Chỉ giao diện của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở; bảng chung ranges.json không liệt kê.
@@ -34,7 +34,7 @@ object ListenPrefs {
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true, "autoPip" to true)
+    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "touchSounds" to true, "haptics" to true, "autoPip" to true)
 
     private fun choiceOr(json: JSONObject, key: String, allowed: List<Int>, default: Int): Int {
         val value = json.opt(key) as? Number ?: return default
@@ -98,7 +98,6 @@ object ListenPrefs {
             val schedule = json.optJSONObject("schedule")
             SleepTimer.schedule = schedule?.let { Triple(clockMinutes(it.getString("from"))!!, clockMinutes(it.getString("to"))!!, it.getInt("minutes")) }
         }
-        if (json.has("autoRewind")) Playback.configure(json.getBoolean("autoRewind"))
         if (!startup) remember(json)
     }
 

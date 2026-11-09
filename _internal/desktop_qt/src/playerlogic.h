@@ -24,8 +24,6 @@ inline constexpr double kRestartAfterSeconds = 5; // Trước: quá 5 giây thì
 inline constexpr double kDefaultRate = 1.0;
 inline constexpr int kDefaultFadeSeconds = 30;
 inline constexpr int kDefaultExtendMinutes = 10;
-inline constexpr qint64 kRewindShortMs = 30'000;
-inline constexpr qint64 kRewindLongMs = 10 * 60'000;
 inline constexpr double kFadeFloorDb = -40;
 
 inline const QList<double> &speeds() {
@@ -213,13 +211,6 @@ inline int availableAfter(const QVector<Chapter> &queue, int chapterId, int step
 /// Tốc độ khi nạp một cuốn: riêng của nó, không thì mặc định.
 inline double startingRate(const std::optional<double> &own) {
     return own.has_value() && *own > 0 ? *own : kDefaultRate;
-}
-
-/// Tự lùi khi nghe lại (giây) theo độ dài lần dừng: dưới nửa phút thì thôi; tới 10 phút lùi 5 giây; lâu hơn lùi 10 giây (sleep.ts rewindAfter).
-inline int rewindAfter(qint64 pausedMs) {
-    if (pausedMs < kRewindShortMs)
-        return 0;
-    return pausedMs <= kRewindLongMs ? 5 : 10;
 }
 
 /// Hệ số âm lượng khi còn `leftMs` trong đoạn nhỏ dần dài `fadeMs`: tuyến tính theo dB từ 0 xuống -40 dB (sleep.ts fadeGain).

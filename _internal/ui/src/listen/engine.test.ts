@@ -66,6 +66,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it.each([0.099, 0.1, 0.101])("pause, rate and volume hold the cursor at a short-line boundary (%s)", async (at) => {
+  const engine = new WebAudioEngine();
+  engine.load(track, 0, false);
+  audio.metadata(1);
+  audio.currentTime = at;
+  audio.seeks.length = 0;
+  engine.pause();
+  engine.setRate(1.5);
+  engine.setVolume(0.4);
+  await engine.play();
+  expect(audio.currentTime).toBe(at);
+  expect(audio.seeks).toEqual([]);
+});
+
 it("play bị từ chối phát error/pause; AbortError do đổi nguồn không báo lỗi", async () => {
   const engine = new WebAudioEngine();
   const error = vi.fn(), pause = vi.fn();

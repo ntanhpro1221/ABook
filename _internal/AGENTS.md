@@ -70,6 +70,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   analysis, cùng tiền lệ speaker repair của casting).
 - Mọi process nền trên Windows dùng `pythonw`/`CREATE_NO_WINDOW`, redirect stdio UTF-8 vào log; POSIX dùng session riêng.
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
+- Phát tiếp/mở lại sách phải giữ đúng con trỏ nghe, không tự lùi theo thời gian tạm dừng (Android/Qt/web). Chỉ thao tác tua/nghe lại rõ ràng của người nghe mới được phát lại nội dung đã nghe. Qt pause phải tính cả đuôi mờ đã phát và con trỏ thiết bị tại lúc commit, không lưu lại con trỏ trước `awaitPull`.
+- QA nội dung phải chặn cụm đọc lặp cục bộ dù điểm CER/WER toàn đoạn vẫn đạt. Giữ `repeated_content` trong sổ decode/audio gate; cứu tên riêng hoặc ngữ cảnh ghép-3 không được xoá cờ này. Lượt thu thay thế dùng lịch seed hữu hạn, tất định có sẵn và phải qua hai lượt giải mã.
 - ProjectDB chỉ tạo schema đầy đủ cho DB trống, hoặc mở đúng schema hiện hành. DB khác phiên bản/thiếu cấu trúc bị từ chối
   trước kết nối ghi; không backup nâng cấp, ALTER hay chuyển rows cũ. Danh sách backup của Store chỉ nhận snapshot qua cùng gate
   chỉ đọc; API quan sát giữ `mode=ro`/`query_only` để chẩn đoán dự án lỗi.

@@ -32,7 +32,6 @@ class ListenPrefsRangesTest {
 
     private fun reset() {
         Playback.headsetSkips = true
-        Playback.configure(true)
         SleepTimer.extendMinutes = 10
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
@@ -108,7 +107,6 @@ class ListenPrefsRangesTest {
             "shakeToExtend" -> SleepTimer.shakeEnabled
             "flipToPause" -> Motion.flipEnabled
             "headsetSkips" -> Playback.headsetSkips
-            "autoRewind" -> Playback::class.java.getDeclaredField("autoRewind").also { it.isAccessible = true }.getBoolean(Playback)
             // Tiếng chạm và rung do giao diện áp: lõi chỉ nhớ rồi trả lại.
             "touchSounds", "haptics" -> ListenPrefs.stored().getBoolean(key)
             else -> error(key)
@@ -148,7 +146,7 @@ class ListenPrefsRangesTest {
             assertNull("lịch $bad", SleepTimer.schedule)
         }
         push("schedule", """{"from":"22:00","to":"06:30","minutes":30}""")
-        ListenPrefs.apply(JSONObject("""{"autoRewind":true}"""))
+        ListenPrefs.apply(JSONObject("""{"headsetSkips":true}"""))
         assertEquals("không nhắc tới lịch thì giữ nguyên", Triple(22 * 60, 6 * 60 + 30, 30), SleepTimer.schedule)
         push("schedule", "null")
         assertNull("null xoá lịch", SleepTimer.schedule)
@@ -187,7 +185,7 @@ class ListenPrefsRangesTest {
             assertEquals("theme=$bad", default("theme"), ListenPrefs.stored().getString("theme"))
         }
         ListenPrefs.apply(JSONObject("""{"theme":"dark"}"""))
-        ListenPrefs.apply(JSONObject("""{"autoRewind":false}"""))
+        ListenPrefs.apply(JSONObject("""{"headsetSkips":false}"""))
         assertEquals("lần đẩy không mang theme không làm mất theme đã nhớ", "dark", ListenPrefs.stored().getString("theme"))
     }
 
@@ -212,7 +210,7 @@ class ListenPrefsRangesTest {
             assertEquals("$key sai kiểu về mặc định", booleans.getBoolean(key), ListenPrefs.stored().getBoolean(key))
         }
         ListenPrefs.apply(JSONObject("""{"readingSurface":"ivory","touchSounds":false,"haptics":false}"""))
-        ListenPrefs.apply(JSONObject("""{"autoRewind":false}"""))
+        ListenPrefs.apply(JSONObject("""{"headsetSkips":false}"""))
         val kept = ListenPrefs.stored()
         assertEquals("lần đẩy không mang ba khoá không làm mất chúng", Triple("ivory", false, false),
             Triple(kept.getString("readingSurface"), kept.getBoolean("touchSounds"), kept.getBoolean("haptics")))

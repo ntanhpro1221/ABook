@@ -22,7 +22,6 @@ import {
   DEFAULT_FADE_SECONDS,
   cleanSleepSchedule,
   fadeGain,
-  rewindAfter,
   sleepExtendMinutes,
   sleepExtendLabel,
   sleepExtended,
@@ -84,8 +83,6 @@ export interface PlayerOptions {
   fadeSeconds: number;
   extendMinutes: number;
   schedule: SleepSchedule | null;
-  /** Tạm dừng rồi nghe tiếp thì lùi lại một chút (`rewindAfter`). Tuỳ chọn theo máy; điện thoại có công tắc riêng ở lõi native. */
-  autoRewind: boolean;
 }
 
 function minutesOf(clock: string): number {
@@ -260,7 +257,6 @@ export function PlayerProvider({
   extendMinutes = DEFAULT_EXTEND_MINUTES,
   sleepSchedule = null,
   systemIdleReader,
-  autoRewind = true,
   plainOpen = false,
 }: {
   engine: AudioEngine;
@@ -272,7 +268,6 @@ export function PlayerProvider({
   extendMinutes?: number;
   sleepSchedule?: SleepSchedule | null;
   systemIdleReader?: () => Promise<number | null>;
-  autoRewind?: boolean;
   /** Mở / đóng S.s_dang_nghe_9310d8cf chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
    *  cảnh RỖNG đã chiếm khung 70-140 ms vì phải chụp và dọn cả tài liệu (đo 6x chậm, docs/DESIGN.md 5.2 "60 fps"). Đổi lại bìa không bay. */
   plainOpen?: boolean;
@@ -290,9 +285,9 @@ export function PlayerProvider({
   );
   const scheduleKey = sleepSchedule ? `${sleepSchedule.from}-${sleepSchedule.to}-${sleepSchedule.minutes}` : "";
   const options = useMemo<PlayerOptions>(
-    () => ({ fadeSeconds, extendMinutes, schedule: sleepSchedule, autoRewind }),
+    () => ({ fadeSeconds, extendMinutes, schedule: sleepSchedule }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fadeSeconds, extendMinutes, scheduleKey, autoRewind],
+    [fadeSeconds, extendMinutes, scheduleKey],
   );
 
   const [track, setTrack] = useState<Track | null>(null);
@@ -332,7 +327,6 @@ export function PlayerProvider({
     sleepGain: 1,
     audible: false,
     sleepMark: { at: Date.now(), seconds: 0 },
-    pausedAt: 0,
     lastSaved: 0,
     lastAttempt: 0,
     volume: defaultVolume,
@@ -919,8 +913,6 @@ export function PlayerProvider({
     return bookRate;
   }, [applyRate, native, source]);
 
-  /** Giây lùi lại khi nghe tiếp sau lần dừng `pausedMs`; 0 nếu người nghe tắt S.s_copy_7cd73e3a9845 (ba đường nghe tiếp đều qua đây). */
-  const rewindBy = useCallback((pausedMs: number) => (options.autoRewind ? rewindAfter(pausedMs) : 0), [options.autoRewind]);
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
     const chapterId = chapter.id;
@@ -946,15 +938,11 @@ export function PlayerProvider({
       resumeRef.current();
       return;
     }
-    // Nghe tiếp đúng chỗ đã lưu: lùi theo độ dài lần dừng (mở lại app sáng hôm sau thì lùi hẳn 30 giây).
-    let start = at ?? 0;
+    const start = at ?? 0;
     const last = book.state?.last;
-    if (at !== undefined && last && last.chapterId === chapterId && Math.abs(last.seconds - at) < 1) {
-      start = Math.max(0, at - rewindBy(Date.now() - last.at * 1000));
-    }
     load(next, start, true, !extra?.word && last?.chapterId === chapterId && at !== undefined && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
     if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
-  }, [adoptBook, engine, load, markLoaded, native, rewindBy]);
+  }, [adoptBook, engine, load, markLoaded, native]);
 
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     awakeRef.current();
@@ -985,12 +973,10 @@ export function PlayerProvider({
       return;
     }
     const last = book.state?.last;
-    const back = last ? rewindBy(Date.now() - last.at * 1000) : 0;
-    refs.current.pausedAt = 0;
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
-    load(next, Math.max(0, at - back), false, last?.chapterId === chapterId && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
-  }, [adoptBook, adoptVoice, load, markLoaded, native, rewindBy]);
+    load(next, at, false, last?.chapterId === chapterId && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
+  }, [adoptBook, adoptVoice, load, markLoaded, native]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
@@ -1019,10 +1005,8 @@ export function PlayerProvider({
       else finishedToast();
       return;
     }
-    const back = refs.current.pausedAt ? rewindBy(Date.now() - refs.current.pausedAt) : 0;
-    if (back) engine.seek(Math.max(0, engine.time - back));
     engine.play();
-  }, [caughtUpToast, engine, finishedToast, load, native, night, position, rewindBy]);
+  }, [caughtUpToast, engine, finishedToast, load, native, night, position]);
 
   const resume = useCallback(() => {
     awakeRef.current();
@@ -1571,7 +1555,6 @@ export function PlayerProvider({
         refs.current.wantsPlay = true;
         setPlaying(true);
         setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
-        refs.current.pausedAt = 0;
         openSession();
       }),
       engine.on("pause", () => {
@@ -1579,7 +1562,6 @@ export function PlayerProvider({
         setPlaying(false);
         closeSession();
         syncClock();
-        refs.current.pausedAt = Date.now();
         refs.current.audible = false;
         if (!native && refs.current.sleep.kind === "minutes") applySleep({ ...refs.current.sleep, since: null });
         save(true);

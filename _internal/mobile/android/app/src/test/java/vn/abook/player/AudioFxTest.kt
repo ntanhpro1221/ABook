@@ -11,6 +11,23 @@ import java.nio.ByteOrder
 import kotlin.math.*
 
 class AudioFxTest {
+    @Test fun adjacentShortLinesAreNeverDuplicatedAcrossSilenceChunks() {
+        val trim = SilenceTrimmer(1000, 2)
+        val output = mutableListOf<Double>()
+        val emit: (DoubleArray) -> Unit = { if (it[0] != 0.0) output.add(it[0]) }
+        val expected = (1..200).map { .1 + it / 10000.0 }
+        trim.configure(AudioFxSettings(skipSilence = true), emit)
+        for (i in expected.indices) {
+            if (i == 100) {
+                repeat(1500) { trim.push(doubleArrayOf(0.0, 0.0), emit) }
+                trim.configure(AudioFxSettings(skipSilence = true), emit)
+            }
+            trim.push(doubleArrayOf(expected[i], .2), emit)
+        }
+        trim.finish(emit)
+        assertEquals(expected, output)
+    }
+
     @Test fun monoAndBalancePreserveChannels() {
         for (mono in listOf(false,true)) for(balance in listOf(-1.0,-.5,0.0,.5,1.0)) {
             val dsp=AudioFxDsp(48000,2);dsp.configure(AudioFxSettings(mono=mono,balance=balance))

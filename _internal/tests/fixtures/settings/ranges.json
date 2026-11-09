@@ -11,7 +11,6 @@
     "shakeToExtend": true,
     "flipToPause": false,
     "headsetSkips": true,
-    "autoRewind": true,
     "touchSounds": true,
     "haptics": true
   },

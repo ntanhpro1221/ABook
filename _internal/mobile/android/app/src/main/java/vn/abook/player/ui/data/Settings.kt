@@ -68,7 +68,6 @@ data class AppSettings(
     val readingSurface: ReadingSurface = ReadingSurface.Auto,
     val touchSounds: Boolean = true,
     val haptics: Boolean = true,
-    val autoRewind: Boolean = true,
     val headsetSkips: Boolean = true,
     val autoMusic: Boolean = true,
     /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
@@ -116,7 +115,6 @@ data class AppSettings(
             readingSurface = word(json, "readingSurface", Default.readingSurface),
             touchSounds = flag(json, "touchSounds", Default.touchSounds),
             haptics = flag(json, "haptics", Default.haptics),
-            autoRewind = flag(json, "autoRewind", Default.autoRewind),
             headsetSkips = flag(json, "headsetSkips", Default.headsetSkips),
             autoMusic = flag(json, "autoMusic", Default.autoMusic),
             autoPip = flag(json, "autoPip", Default.autoPip),
@@ -140,7 +138,6 @@ data class AppSettings(
         if (readingSurface != before.readingSurface) out.put("readingSurface", readingSurface.key)
         if (touchSounds != before.touchSounds) out.put("touchSounds", touchSounds)
         if (haptics != before.haptics) out.put("haptics", haptics)
-        if (autoRewind != before.autoRewind) out.put("autoRewind", autoRewind)
         if (headsetSkips != before.headsetSkips) out.put("headsetSkips", headsetSkips)
         if (autoMusic != before.autoMusic) out.put("autoMusic", autoMusic)
         if (autoPip != before.autoPip) out.put("autoPip", autoPip)
@@ -159,7 +156,7 @@ data class AppSettings(
 /** Dòng tóm tắt dưới tên nhóm ở trang gốc Cài đặt. */
 object SettingsSummary {
     fun listen(settings: AppSettings): String =
-        dotJoin(if (settings.autoRewind) S.s_tu_lui_6fc7685a else S.s_khong_tu_lui_8aec206c, if (settings.autoMusic) S.s_nhac_tu_chon_31bdb97d else S.s_khong_nhac_nen_0e54f623)
+        if (settings.autoMusic) S.s_nhac_tu_chon_31bdb97d else S.s_khong_nhac_nen_0e54f623
 
     fun sleep(settings: AppSettings): String {
         val schedule = settings.schedule

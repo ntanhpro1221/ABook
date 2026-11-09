@@ -96,7 +96,7 @@ Item {
         function init() {
             install()
             Api.bind(DesktopApi, Theme)
-            Api.preferences = {theme: "system", autoRewind: true}
+            Api.preferences = {theme: "system"}
             Api.info = {version: "0.4.40"}
             Api.loaded = true
             Api.saving = false

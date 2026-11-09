@@ -46,7 +46,7 @@ Item {
             DesktopApi.reset()
             Platform.reset()
             Api.bind(DesktopApi, Theme)
-            Api.preferences = {theme: "system", autoRewind: true, autoMusic: true, sleepExtendMinutes: 10, sleepFadeSeconds: 30,
+            Api.preferences = {theme: "system", autoMusic: true, sleepExtendMinutes: 10, sleepFadeSeconds: 30,
                 sleepSchedule: null, readingSurface: "auto", touchSounds: true, letterShortcuts: true, libraryRoot: "C:\\Users\\An\\Audiobooks"}
             Api.info = {version: "0.4.147", dialogs: true}
             Api.loaded = true
@@ -99,18 +99,6 @@ Item {
         // ---- Nghe ----
         function test_listenSwitchesWriteAndFail() {
             const page = make(listenFactory)
-            const rewind = switchOf(page, "Tự lùi")
-            verify(rewind.checked)
-            rewind.toggled(false)
-            compare(last("PUT", "/api/preferences").body.autoRewind, false)
-            compare(Api.preferences.autoRewind, false)
-            compare(Api.notice, "")
-            reply("/api/preferences", 500, {error: "Không ghi được tệp tuỳ chọn"})
-            rewind.toggled(true)
-            compare(Api.preferences.autoRewind, false)
-            compare(Api.notice, "Chưa lưu được cài đặt\nKhông ghi được tệp tuỳ chọn")
-            DesktopApi.responses = {}
-            Api.notice = ""
             const music = switchOf(page, "Tự chọn nhạc nền")
             music.toggled(false)
             compare(last("PUT", "/api/preferences").body.autoMusic, false)

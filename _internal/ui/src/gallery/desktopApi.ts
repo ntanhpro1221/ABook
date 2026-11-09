@@ -149,7 +149,6 @@ export function preferences(): Preferences {
     letterShortcuts: true,
     touchSounds: true,
     readingSurface: "auto",
-    autoRewind: true,
   };
 }
 

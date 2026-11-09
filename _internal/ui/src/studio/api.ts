@@ -361,8 +361,6 @@ export interface Preferences {
   bookTemplates?: BookTemplate[];
   /** Phím tắt một chữ cái (M, [ ], ?, J/K/1-9, O/R) - mặc định bật (shared/letterShortcuts.ts). */
   letterShortcuts?: boolean;
-  /** Tạm dừng rồi nghe tiếp thì lùi vài giây - mặc định bật, theo máy này (listen/sleep.ts rewindAfter). */
-  autoRewind?: boolean;
   /** Tiếng chạm của giao diện - mặc định bật, tự im khi sách đang phát (shared/feedback.ts). */
   touchSounds?: boolean;
   /** Nền vùng chữ đọc theo (shared/readingSurface.ts). */

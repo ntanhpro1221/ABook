@@ -367,14 +367,9 @@ void Player::updateTicker() {
         m_ticker.start();
 }
 
-int Player::rewindBy(qint64 pausedMs) const {
-    return m_autoRewind ? rewindAfter(pausedMs) : 0;
-}
-
 void Player::configure(const QVariantMap &p) {
     const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
-    m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
     if (extendMinutes != m_extendMinutes) {
@@ -494,9 +489,7 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay, co
         if (m_loaded)
             return; // thanh đã có sách: không đè
         adoptBook(book);
-        const double back = book.hasLast ? rewindBy(m_now() - qint64(book.lastAt * 1000)) : 0;
-        m_pausedAt = 0;
-        load(chapterId, std::max(0.0, at - back), false);
+        load(chapterId, std::max(0.0, at), false);
         return;
     }
     ++m_intent;
@@ -507,10 +500,7 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay, co
         resume();
         return;
     }
-    // Nghe tiếp đúng chỗ đã lưu: lùi theo độ dài lần dừng (mở lại app sáng hôm sau thì lùi hẳn 10 giây).
-    double startAt = atGiven ? at : 0;
-    if (atGiven && book.hasLast && book.lastChapter == chapterId && std::fabs(book.lastSeconds - at) < 1)
-        startAt = std::max(0.0, at - rewindBy(m_now() - qint64(book.lastAt * 1000)));
+    const double startAt = atGiven ? at : 0;
     load(chapterId, startAt, true);
 }
 
@@ -602,7 +592,6 @@ void Player::load(int chapterId, double at, bool autoplay) {
         m_audible = false;
     }
     if (!autoplay)
-        m_pausedAt = 0;
     changed();
     if (!wasLoaded)
         emit loadedChanged();
@@ -614,7 +603,6 @@ void Player::load(int chapterId, double at, bool autoplay) {
 // ---- phát / dừng ----
 
 void Player::requestPlay() {
-    m_pausedAt = 0;
     setError(QString());
     if (!m_playing) {
         m_audible = false;
@@ -689,9 +677,6 @@ void Player::resumeNow() {
         }
         return;
     }
-    const int back = m_pausedAt ? rewindBy(m_now() - m_pausedAt) : 0;
-    if (back)
-        m_out->seek(std::max(0.0, position() - back));
     requestPlay();
 }
 
@@ -711,7 +696,6 @@ void Player::markPaused(bool saveNow) {
     setBuffering(false);
     closeListening();
     m_clock.refresh();
-    m_pausedAt = m_now();
     m_audible = false;
     if (was)
         resetSleepMark();
@@ -1324,7 +1308,6 @@ void Player::onEnded() {
     const int target = availableAfter(m_book.chapters, m_chapterId, 1);
     m_ended = true;
     markPaused(false);
-    m_pausedAt = 0;
     save(true);
     if (m_sleep.kind == Sleep::Chapter) {
         // Hẹn "hết chương": dừng ở đây, nhưng nạp sẵn chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - sáng mai bấm Tiếp tục là vào chương mới.

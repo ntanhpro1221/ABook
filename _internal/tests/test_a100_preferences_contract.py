@@ -111,30 +111,5 @@ def test_the_listener_is_told_a_broken_setting_was_kept(tmp_path: Path) -> None:
     notices.NOTICES.clear()
 
 
-def test_auto_rewind_is_a_per_machine_switch_on_by_default(tmp_path: Path) -> None:
-    from types import SimpleNamespace
-
-    from abook.webui.server import Handler
-
-    assert Preferences(tmp_path / "preferences.json").get()["autoRewind"] is True
-    prefs = Preferences(tmp_path / "other.json")
-
-    class Request:
-        app = SimpleNamespace(preferences=prefs, library=SimpleNamespace(root=tmp_path), voices=lambda: [])
-
-        def __init__(self, body: dict) -> None:
-            self.body = body
-
-        def _body(self) -> dict:
-            return self.body
-
-        def _send_json(self, status, value) -> None:
-            self.reply = value
-
-    Handler.put_preferences(Request({"autoRewind": False}), {})
-    assert Preferences(prefs.path).get()["autoRewind"] is False
-    Handler.put_preferences(Request({"autoRewind": "yes"}), {})  # không phải bool: bỏ qua
-    assert Preferences(prefs.path).get()["autoRewind"] is False
-    (tmp_path / "x").mkdir()
-    reloaded, _ = _load(tmp_path / "x", {"autoRewind": "no"})
-    assert reloaded.get()["autoRewind"] is True  # sai kiểu trong file: về mặc định
+def test_listening_defaults_do_not_offer_automatic_rewind(tmp_path: Path) -> None:
+    assert "autoRewind" not in Preferences(tmp_path / "preferences.json").get()

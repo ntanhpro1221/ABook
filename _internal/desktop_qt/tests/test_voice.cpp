@@ -55,7 +55,7 @@ struct Device : MixDevice {
     quint64 revision() const override { return epoch; }
     bool write(const float *samples, size_t n) override { output.insert(output.end(), samples, samples + n * 2); queued += n; return true; }
 };
-struct Control { bool starved = false, unavailable = false, longSilence = false; double duration = 6; int seeks = 0; std::function<void()> duringRead; };
+struct Control { bool starved = false, unavailable = false, longSilence = false; double duration = 6, lastSeek = -1; int seeks = 0; std::function<void()> duringRead; };
 class Decoder : public VoiceDecoder {
     std::shared_ptr<Control> control;
     int hz;
@@ -63,7 +63,7 @@ class Decoder : public VoiceDecoder {
 public:
     Decoder(std::shared_ptr<Control> control, int hz) : control(std::move(control)), hz(hz) {}
     bool open() override { return !control->unavailable; }
-    bool seek(double seconds) override { at = quint64(std::llround(seconds * hz)); ++control->seeks; return !control->unavailable; }
+    bool seek(double seconds) override { at = quint64(std::llround(seconds * hz)); control->lastSeek = seconds; ++control->seeks; return !control->unavailable; }
     size_t read(std::vector<float> &out, size_t frames) override {
         if (control->starved) return 0;
         if (control->duringRead) { const auto hook = std::exchange(control->duringRead, nullptr); hook(); }
@@ -401,6 +401,49 @@ private slots:
         QCOMPARE(buffering.last().first().toBool(), false); QCOMPARE(ended.size(), 1); QVERIFY(!rig.voice.playing());
         for (int i = 0; i < 10; ++i) rig.step(); QCOMPARE(ended.size(), 1);
     }
+    void pauseResumeNeverReplaysTheAudibleTail_data() {
+        QTest::addColumn<int>("pulled");
+        QTest::addColumn<bool>("readerDuringCommit");
+        QTest::newRow("one-engine-period") << 480 << false;
+        QTest::newRow("preempted-past-fade") << 2400 << false;
+        QTest::newRow("reader-during-one-period") << 480 << true;
+        QTest::newRow("reader-past-fade") << 2400 << true;
+    }
+    void pauseResumeNeverReplaysTheAudibleTail() {
+        QFETCH(int, pulled);
+        QFETCH(bool, readerDuringCommit);
+        struct PullDevice : Device {
+            size_t pull = 0;
+            std::function<void()> duringPull;
+            void awaitPull(int) override {
+                queued -= std::min(queued, pull);
+                if (duringPull) duringPull();
+            }
+        };
+        QTemporaryDir dir;
+        auto *device = new PullDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path());
+        auto control = std::make_shared<Control>();
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        voice.load(QUrl(QStringLiteral("fake:short-segments")), 0); voice.play();
+        mixer.serviceReader(); mixer.service(12000);
+        device->queued -= 2400; mixer.service(0); // 50 ms heard
+        const double before = voice.position();
+        if (readerDuringCommit) device->duringPull = [&] { mixer.serviceReader(); };
+        voice.pause(); device->pull = size_t(pulled); mixer.service(0);
+        device->pull = 0;
+        device->duringPull = {};
+        // Old audio remains audible for 20 ms before the 10 ms fade ends.
+        const double lastAudible = before + std::max(0.03, double(pulled) / 48000);
+        device->queued = 0; mixer.service(0);
+        QVERIFY2(voice.position() >= lastAudible - 1.0 / 48000,
+                 "pause cursor precedes the audio already rendered to the listener");
+        const double held = voice.position();
+        voice.play(); mixer.serviceReader(); mixer.service(480);
+        QVERIFY(voice.position() >= held);
+        QVERIFY(control->lastSeek >= held - 1.0 / 48000);
+    }
+
     void pauseAllStopsAndResetsWithoutLosingPosition() {
         Rig rig; rig.mixer.serviceReader(); rig.voice.play(); rig.step(2400);
         rig.device->queued = 1200; rig.mixer.service(0); const double at = rig.voice.position();
@@ -410,7 +453,8 @@ private slots:
         QVERIFY(timer.elapsed() < 50); QCOMPARE(rig.device->queued, size_t(1200 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running);
-        QCOMPARE(rig.voice.position(), at); rig.voice.play(); rig.step(480); QCOMPARE(rig.voice.position(), at);
+        const double afterTail = at + 0.025;
+        QCOMPARE(rig.voice.position(), afterTail); rig.voice.play(); rig.step(480); QCOMPARE(rig.voice.position(), afterTail);
         rig.voice.stop(); rig.mixer.service(0); QCOMPARE(rig.device->queued, size_t(480 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > 0);
@@ -628,7 +672,7 @@ private slots:
         rig.device->queued -= 4800; rig.mixer.service(0); QCoreApplication::processEvents();
         QVERIFY(std::abs(other.position() - 0.15) < 1e-8);
         // Tua: nối vào ở pivot (2 + 0,08). Tốc độ: 20 ms tới pivot + 60 ms cầu ở 1x, rồi 1,5x (0,13 + 0,02 * 1,5).
-        const double want = command == QStringLiteral("stop") ? 0 : command == QStringLiteral("pause") ? 0.05 :
+        const double want = command == QStringLiteral("stop") ? 0 : command == QStringLiteral("pause") ? 0.08 :
             command == QStringLiteral("seek") ? 2.08 : command == QStringLiteral("rate") ? 0.16 : 0.15;
         QVERIFY2(std::abs(rig.voice.position() - want) < 0.001, qPrintable(QString::number(rig.voice.position())));
     }

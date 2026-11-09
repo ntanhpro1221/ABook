@@ -9,15 +9,6 @@ Column {
     ListenSave { id: store }
     SectionBlock {
         width: parent.width
-        SettingRow {
-            width: parent.width
-            label: S.s_tu_lui_6fc7685a
-            hint: S.s_nghi_qua_30_giay_thi_lui_5_giay_qua_10_phu_328c3ffd
-            Switch { label: S.s_tu_lui_6fc7685a; checked: root.prefs.autoRewind !== false; onToggled: value => store.update({autoRewind: value}) }
-        }
-    }
-    SectionBlock {
-        width: parent.width
         title: S.s_nhac_nen_271fb292
         SettingRow {
             width: parent.width

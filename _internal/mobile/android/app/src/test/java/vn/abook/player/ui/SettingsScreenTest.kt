@@ -120,7 +120,7 @@ class SettingsScreenTest {
         showRoot()
         for (group in SettingsGroup.entries) rule.onNodeWithTag(group.tag).assertIsDisplayed()
         rule.onNodeWithText("Hoài My").assertIsDisplayed()
-        rule.onNodeWithText("Tự lùi · nhạc tự chọn").assertIsDisplayed()
+        rule.onNodeWithText("nhạc tự chọn").assertIsDisplayed()
         rule.onNodeWithText("Phiên bản 0.4.146").assertIsDisplayed()
         shot("settings_root_light")
         rule.onNodeWithTag("settings_sleep").performClick()
@@ -177,11 +177,10 @@ class SettingsScreenTest {
     fun switchesWriteTheCoreKeys() {
         showGroup(SettingsGroup.Listen)
         rule.onNodeWithTag("notify_allow").assertDoesNotExist()
-        rule.onNodeWithTag("auto_rewind").performClick()
+        rule.onNodeWithTag("auto_rewind").assertDoesNotExist()
         rule.onNodeWithTag("auto_music").performClick()
-        assertFalse(repo.state.value.autoRewind)
-        assertEquals(listOf("autoRewind", "autoMusic"), core.saved.map { write -> write.keys().asSequence().first { it != "settingsStamp" } })
-        assertFalse(core.saved[0].getBoolean("autoRewind"))
+        assertEquals(listOf("autoMusic"), core.saved.map { write -> write.keys().asSequence().first { it != "settingsStamp" } })
+        assertFalse(core.saved[0].getBoolean("autoMusic"))
         assertTrue(core.saved.all { it.getLong("settingsStamp") > 0 })
     }
 
