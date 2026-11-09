@@ -13,6 +13,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Huỷ xuất sách trước khi bắt đầu không còn phải chờ phần âm thanh chuẩn bị xong.
 - Lắc, bấm hoặc dùng phím để hẹn lại có âm xác nhận theo tuỳ chọn âm/rung; hết hẹn vẫn im lặng.
 - Mục Âm thanh thêm Mono, cân bằng trái/phải, bỏ khoảng lặng dài và lưu chỉnh riêng cho từng sách.
+- Các công tắc Âm thanh trên web cảm ứng không che vùng bấm của mục khác trong bảng.
 - Chữ hoa tiếng Anh và tên Nhật được đọc liền, đúng cách hơn; không tự chọn giọng dẫn bạn đã loại.
 - Nhãn và kiểu hiển thị thống nhất hơn trên điện thoại, máy tính và web.
 - Trang sách trên cửa sổ hẹp: bấm "Thêm tuỳ chọn" rồi nhả chuột chậm không còn vô tình chọn mục đầu tiên của menu vừa trượt lên.

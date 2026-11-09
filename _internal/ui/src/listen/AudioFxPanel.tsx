@@ -23,7 +23,7 @@ export function AudioFxPanel({volume,setVolume}:{volume:number;setVolume:(value:
     <FxSlider label={S.s_copy_19adc1b298a9} value={fx.silenceSeconds} min={2} max={10} step={.5} suffix=" s" disabled={!fx.skipSilence} onChange={silenceSeconds=>update({silenceSeconds})}/>
     <FxSlider label={S.s_copy_483cdfec9d5f} value={fx.keepSeconds} min={1.5} max={Math.min(3,fx.silenceSeconds)} step={.1} suffix=" s" disabled={!fx.skipSilence} onChange={keepSeconds=>update({keepSeconds})}/>
     <label className="flex min-h-12 items-center justify-between gap-4 text-sm">{S.s_copy_71255f2b6855}
-      <Switch.Root aria-label={S.s_copy_71255f2b6855} checked={fx.enabled} onCheckedChange={enabled=>update({enabled})} className="h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
+      <Switch.Root aria-label={S.s_copy_71255f2b6855} checked={fx.enabled} onCheckedChange={enabled=>update({enabled})} className="relative h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
         <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-panel transition-transform duration-motion-fast data-[state=checked]:translate-x-[18px]"/>
       </Switch.Root>
     </label>
@@ -35,7 +35,7 @@ export function AudioFxPanel({volume,setVolume}:{volume:number;setVolume:(value:
 }
 function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}) {
   return <label className="flex min-h-12 items-center justify-between gap-4 text-sm">{label}
-    <Switch.Root aria-label={label} checked={checked} onCheckedChange={onChange} className="h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
+    <Switch.Root aria-label={label} checked={checked} onCheckedChange={onChange} className="relative h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
       <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-panel transition-transform duration-motion-fast data-[state=checked]:translate-x-[18px]"/>
     </Switch.Root>
   </label>;
