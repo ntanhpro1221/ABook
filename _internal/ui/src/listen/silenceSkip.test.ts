@@ -105,7 +105,8 @@ it('tells the listener when the decoder refuses a chunk, but not after the chapt
   const again=attachSilenceSkip(audio,ctx,()=>FX,()=>()=>{},left);
   await vi.waitFor(()=>expect(ctx.decodeAudioData).toHaveBeenCalledTimes(2));
   again();refuse(new Error('EncodingError'));
-  await new Promise(resolve=>setTimeout(resolve,20));
+  // The refusal reaches the scan's catch within a fixed number of microtasks; no timer involved.
+  for(let i=0;i<50;i++)await Promise.resolve();
   expect(left).not.toHaveBeenCalled();
   vi.unstubAllGlobals();
 });
