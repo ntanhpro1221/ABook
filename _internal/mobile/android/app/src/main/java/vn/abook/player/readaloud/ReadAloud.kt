@@ -446,10 +446,10 @@ object ReadAloud {
 
     /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
      *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
-    fun useVoiceOf(bookId: String, recordId: String = "") {
+    fun useVoiceOf(bookId: String, recordId: String = "", preparedVoice: String? = null) {
         voiceBook = bookId
         voiceRecord = recordId
-        voiceId = voiceForBook(bookId, recordId)
+        voiceId = preparedVoice ?: voiceForBook(bookId, recordId)
     }
 
     internal fun voiceForBook(bookId: String, recordId: String): String =

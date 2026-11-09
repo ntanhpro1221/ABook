@@ -35,14 +35,10 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
-/** Cache only geometry actually highlighted; scrolling past an inactive paragraph needs no glyph paths. */
-private class ParagraphInk(val layout: TextLayoutResult, private val paragraph: ReadParagraph) {
-    val sentence: Path by lazy(LazyThreadSafetyMode.NONE) { layout.getPathForRange(0, paragraph.text.length) }
-    private val words = arrayOfNulls<Path>(paragraph.words.size)
-    fun word(index: Int): Path? {
-        val range = paragraph.words.getOrNull(index) ?: return null
-        return words[index] ?: layout.getPathForRange(range.from, range.until).also { words[index] = it }
-    }
+/** Geometry computed once per paragraph layout, never allocated in draw. */
+private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph) {
+    val sentence: Path = layout.getPathForRange(0, paragraph.text.length)
+    val words: List<Path> = paragraph.words.map { layout.getPathForRange(it.from, it.until) }
 }
 
 @Composable
@@ -94,6 +90,7 @@ fun ReadAlongPane(
                 }
                 itemsIndexed(state.paragraphs, key = { _, paragraph -> paragraph.id }, contentType = { _, _ -> "paragraph" }) { index, paragraph ->
                     var geometry by remember(paragraph) { mutableStateOf<ParagraphInk?>(null) }
+                    var layout by remember(paragraph) { mutableStateOf<TextLayoutResult?>(null) }
                     val sentenceColor = Abook.colors.accentSoft
                     val wordColor = Abook.colors.accent.copy(alpha = 0.27f)
                     BasicText(
@@ -103,7 +100,7 @@ fun ReadAlongPane(
                             .pointerInput(paragraph) {
                                 detectTapGestures { at ->
                                     onTap()
-                                    if (paragraph.timed) onListen(ReadTap.startAt(paragraph, geometry?.layout?.getOffsetForPosition(at) ?: 0))
+                                    if (paragraph.timed) onListen(ReadTap.startAt(paragraph, layout?.getOffsetForPosition(at) ?: 0))
                                 }
                             }.drawBehind {
                             val ms = position.milliseconds.value
@@ -112,12 +109,12 @@ fun ReadAlongPane(
                                 if (ink != null) {
                                     drawPath(ink.sentence, sentenceColor)
                                     val word = ReadAlongLookup.word(paragraph.words, ms)
-                                    ink.word(word)?.let { drawPath(it, wordColor) }
+                                    if (word >= 0 && word < ink.words.size) drawPath(ink.words[word], wordColor)
                                 }
                             }
                         },
                         style = Abook.type.body.copy(fontSize = look.size.sp, lineHeight = look.lineHeight.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
-                        onTextLayout = { if (geometry?.layout !== it) geometry = ParagraphInk(it, paragraph) },
+                        onTextLayout = { layout = it; geometry = ParagraphInk(it, paragraph) },
                     )
                 }
                 if (nextTitle != null) item(key = "next-chapter", contentType = "next") {

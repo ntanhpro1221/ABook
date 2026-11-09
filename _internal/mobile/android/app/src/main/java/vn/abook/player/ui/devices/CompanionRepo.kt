@@ -55,7 +55,7 @@ class AndroidCompanionCore(private val context: Context) : CompanionCore {
     override suspend fun scan() = withContext(Dispatchers.IO) { vn.abook.player.PhoneCast.players.scan() }
     override suspend fun players() = withContext(Dispatchers.IO) { RemotePlayers.all(context) }
     override suspend fun command(device: String, command: JSONObject) = withContext(Dispatchers.IO) { RemotePlayers.command(context, device, command); Unit }
-    override suspend fun notices() = StudioNoticeState(StudioAlerts.enabled(context), StudioAlerts.permitted(context))
+    override suspend fun notices() = withContext(Dispatchers.IO) { StudioNoticeState(StudioAlerts.enabled(context), StudioAlerts.permitted(context)) }
     override suspend fun setNotices(enabled: Boolean) = withContext(Dispatchers.IO) { StudioAlerts.setEnabled(context, enabled); notices() }
 }
 

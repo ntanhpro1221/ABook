@@ -200,7 +200,6 @@ object Playback {
     /** "Tự lùi khi nghe lại" (Cài đặt); how far: [AutoRewind]. */
     private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
-    private val tickListeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
     /** Lần cuối người nghe chạm vào trình phát (nút, thông báo, widget) - cho lưới an toàn ngủ quên. */
     var lastInteractionMs = System.currentTimeMillis()
@@ -258,36 +257,34 @@ object Playback {
         lastInteractionSeconds = positionSeconds
     }
 
+    private var initializedContext: Context? = null
+
+    @Synchronized
     fun init(context: Context) {
-        appContext = context.applicationContext
+        val application = context.applicationContext
+        if (initializedContext === application) return
+        appContext = application
         Store.init(appContext)
         Remote.init(appContext)
         MusicBed.init(appContext)
         ReadAloud.init(appContext)
         ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có giao diện đẩy chúng xuống
+        initializedContext = application
     }
 
     fun onMain(block: () -> Unit) {
         if (Looper.myLooper() == Looper.getMainLooper()) block() else main.post(block)
     }
 
-    fun addListener(listener: (JSONObject) -> Unit, ticks: Boolean = true) {
-        listeners += listener
-        if (ticks) tickListeners += listener else tickListeners -= listener
-    }
-    fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener; tickListeners -= listener }
+    fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
+    fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
 
     fun emit(kind: String) {
         bufferingGuard.observe(waitingForSound())
-        if (kind == "sleep") ReadAloud.pump() // hẹn giờ "hết chương" vừa tắt / đổi: đọc to nạp tiếp sang chương kế được rồi
-        val recipients = if (kind == "tick") tickListeners else listeners
-        // With the UI detached, the sleep-button listener needs no half-second JSON snapshot.
-        if (recipients.isNotEmpty()) {
-            val event = state().put("kind", kind)
-            recipients.toList().forEach { runCatching { it(event) } }
-        }
+        if (kind == "sleep") ReadAloud.pump()
+        val event = state().put("kind", kind)
+        listeners.toList().forEach { runCatching { it(event) } }
         if (::appContext.isInitialized) runCatching { PlayerWidget.refresh(appContext, tick = kind == "tick") }
-        // Máy tính đang xem điện thoại phát gì (Remote): mọi đổi trừ nhịp đồng hồ đều báo ngay.
         if (kind != "tick") Remote.kick()
     }
 
@@ -491,8 +488,18 @@ object Playback {
         }
     }
 
+    data class PreparedBook(val record: String, val voice: String, val media: List<MediaItem>)
+
+    /** Disk and artwork work for a load; callers run this before returning to the player looper. */
+    internal fun prepareBook(id: String, title: String, narratorName: String, items: List<Chapter>): PreparedBook {
+        val record = Store.activeRecord(id)
+        return PreparedBook(record, ReadAloud.voiceForBook(id, record),
+            if (items.any { it.isText }) emptyList() else mediaItems(id, title, narratorName, items))
+    }
+
     /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
-    fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true) {
+    fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true,
+             prepared: PreparedBook? = null) {
         touched()
         val exo = player ?: return
         pending = null
@@ -501,8 +508,8 @@ object Playback {
         main.removeCallbacks(reconnect) // cuốn khác: thôi nối lại cuốn cũ
         reconnectDelayMs = 0L
         // Giọng "Nghe ngay" của cuốn này, nhớ trong lõi: phát tiếp từ widget / xe hơi sau khi khởi động lại vẫn đúng giọng người nghe đã chọn.
-        val record = Store.activeRecord(id)
-        ReadAloud.useVoiceOf(id, record)
+        val record = prepared?.record ?: Store.activeRecord(id)
+        ReadAloud.useVoiceOf(id, record, prepared?.voice)
         bookId = id
         recordId = record
         SleepTimer.checkOwner()
@@ -522,7 +529,7 @@ object Playback {
         }
         ReadAloud.stop()
         applyVolume()
-        val media = mediaItems(id, title, narratorName, items)
+        val media = prepared?.media ?: mediaItems(id, title, narratorName, items)
         // Có chương phát qua mạng thì giữ Wi-Fi thức khi tắt màn hình; sách đã tải hết thì không tốn pin cho việc ấy.
         exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "https" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         // Chỗ vừa nạp ghi TRƯỚC khi đặt hàng đợi: sự kiện tua của ExoPlayer ([onSeekSettled]) đến ngay trong lời gọi, thấy chỗ cũ của cuốn trước thì sẽ lưu chỗ vừa nạp như người nghe vừa tua.
@@ -858,7 +865,8 @@ object Playback {
         if (ticking) return
         ticking = true
         main.post(object : Runnable {
-            var beats = 0
+            var nextSave = SystemClock.elapsedRealtime() + 5_000
+            var nextAutomatic = 0L
             override fun run() {
                 val exo = player
                 // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) hay chương phát qua mạng đang đệm vẫn là "đang nghe": nhịp nhạc nền không đứt ([musicVoice]).
@@ -867,16 +875,21 @@ object Playback {
                     stalledSince = 0L // người nghe dừng: lần dừng không phải lần đứng chờ
                     return
                 }
-                beats += 1
-                if (beats % 10 == 0) {
-                    saveNow()
-                    pushHeld(force = false)
+                val now = SystemClock.elapsedRealtime()
+                if (now >= nextSave) {
+                    nextSave = now + 5_000
+                    savePeriodic()
                 }
-                if (beats % 2 == 0) SleepTimer.checkAutomatic()
+                if (now >= nextAutomatic) {
+                    nextAutomatic = now + 1_000
+                    SleepTimer.checkAutomatic()
+                }
                 Bedtime.checkpoint()
                 noteStall(exo.isPlaying)
                 syncMusic(true)
-                emit("tick")
+                // No UI or widget clock is drawn while the display is off. Attach takes a fresh snapshot.
+                val screenOn = ListenerActivity.evidence.screenOn
+                if (screenOn) emit("tick")
                 main.postDelayed(this, 500)
             }
         })
@@ -955,22 +968,43 @@ object Playback {
     private var saveFailing = false
     private const val SAVE_FAILED = "Chưa lưu được chỗ nghe, có thể hết bộ nhớ — bạn vẫn nghe được; app sẽ thử lưu lại."
 
-    /**
-     * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả
-     * bộ phát (soát a77 #4). Hỏng thì chỗ đã lưu trước đó còn nguyên (ghi nguyên tử), ghi logcat, báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế (nhịp sau) tự thử lại.
-     */
-    fun saveNow() {
-        val chapter = currentChapter ?: return
-        if (bookId.isEmpty() || ReadAloud.unknownPlace() || foreignItem()) return
+    private var placeSequence = 0L
+    private var placeResultSequence = 0L
+    private data class PlaceCheckpoint(val sequence: Long, val book: String, val record: String?, val chapter: Int,
+        val position: Long, val duration: Double, val anchor: String?) {
+        var written = false
+    }
+
+    private val checkpoints = OrderedCheckpoint<PlaceCheckpoint>(java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-place").apply { isDaemon = true }
+    }, Store) { place ->
+        // Use Store's own monitor for ordering: a record mutation can call saveNow
+        // while already holding it, so there must be no second lock ahead of Store.
+        if (place.record == null || Store.holds(place.book, place.record)) {
+            Store.progress(place.book, place.chapter, place.position / 1000.0, place.duration,
+                place.anchor?.let(::JSONObject), place.record)
+            place.written = true
+        }
+    }
+
+    /** Read ExoPlayer and the reading anchor only on main; the worker receives an owned snapshot. */
+    private fun placeCheckpoint(periodic: Boolean = false): PlaceCheckpoint? {
+        val chapter = currentChapter ?: return null
+        if (bookId.isEmpty() || periodic && recordId.isEmpty() || ReadAloud.unknownPlace() || foreignItem()) return null
+        val position = positionMs
         val duration = durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter.duration
-        // Chỗ nghe phải khớp chương: vượt quá độ dài chương là đồng hồ của thứ khác (cuốn trước) - không lưu, không đồng bộ đi (soát a68 lỗi 2).
-        if (!PlacePolicy.fits(positionSeconds, duration)) return
-        try {
-            // Hồ sơ đã mất (máy khác xoá, đang chờ [recordsGone] dọn): không có chỗ để ghi - không rơi sang hồ sơ còn lại.
-            if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
-            Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor(), recordId.ifEmpty { null })
-        } catch (error: Exception) {
-            AppLog.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
+        if (!PlacePolicy.fits(position / 1000.0, duration)) return null
+        return PlaceCheckpoint(++placeSequence, bookId, recordId.ifEmpty { null }, chapter.id, position, duration, ReadAloud.anchor()?.toString())
+    }
+
+    private fun saved(place: PlaceCheckpoint, result: Result<Unit>) {
+        // A completed write for a previous book/record must not change the current UI or saved-place guard.
+        if (bookId != place.book || recordId != place.record.orEmpty()) return
+        if (result.isSuccess && !place.written) return
+        if (place.sequence < placeResultSequence) return
+        placeResultSequence = place.sequence
+        result.exceptionOrNull()?.let { error ->
+            AppLog.w("ABookSave", "không lưu được chỗ nghe (chương ${place.chapter})", error)
             if (!saveFailing) {
                 saveFailing = true
                 emit("saveFailed")
@@ -978,7 +1012,24 @@ object Playback {
             return
         }
         saveFailing = false
-        savedPlace = chapter.id to positionMs
+        savedPlace = place.chapter to place.position
+    }
+
+    private fun savePeriodic() {
+        val place = placeCheckpoint(periodic = true) ?: return
+        checkpoints.periodic(place) { snapshot, result -> main.post {
+            saved(snapshot, result)
+            if (bookId == snapshot.book && recordId == snapshot.record.orEmpty()) pushHeld(force = false)
+        } }
+    }
+
+    /**
+     * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả
+     * bộ phát (soát a77 #4). Hỏng thì chỗ đã lưu trước đó còn nguyên (ghi nguyên tử), ghi logcat, báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế (nhịp sau) tự thử lại.
+     */
+    fun saveNow() {
+        val place = placeCheckpoint() ?: return
+        saved(place, checkpoints.immediate(place))
     }
 
     fun chaptersJson(): JSONArray = JSONArray().also { array ->

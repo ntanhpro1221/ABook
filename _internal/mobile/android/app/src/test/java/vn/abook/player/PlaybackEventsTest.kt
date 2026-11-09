@@ -12,25 +12,25 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35])
 class PlaybackEventsTest {
     @Test
-    fun uiGetsClockWhileServiceStillGetsStateChangesAndRemovalDetachesBoth() {
+    fun listenersGetEventsAndRemovalDetachesTheUi() {
         val ui = mutableListOf<JSONObject>()
         val service = mutableListOf<String>()
         val uiListener: (JSONObject) -> Unit = { ui += it }
         val serviceListener: (JSONObject) -> Unit = { service += it.optString("kind") }
         Playback.addListener(uiListener)
-        Playback.addListener(serviceListener, ticks = false)
+        Playback.addListener(serviceListener)
         try {
             Playback.emit("tick")
             Playback.emit("record")
             assertEquals(listOf("tick", "record"), ui.map { it.optString("kind") })
-            assertEquals(listOf("record"), service)
+            assertEquals(listOf("tick", "record"), service)
             assertTrue(ui.first().has("position"))
             assertTrue(ui.first().has("sleep"))
             Playback.removeListener(uiListener)
             Playback.emit("tick")
             Playback.emit("record")
             assertEquals(2, ui.size)
-            assertEquals(listOf("record", "record"), service)
+            assertEquals(listOf("tick", "record", "tick", "record"), service)
         } finally {
             Playback.removeListener(uiListener)
             Playback.removeListener(serviceListener)

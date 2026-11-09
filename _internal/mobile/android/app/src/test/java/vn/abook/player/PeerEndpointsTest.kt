@@ -18,17 +18,21 @@ class PeerEndpointsTest {
         assertEquals(release.getString("serviceUuid"), BluetoothLink.SERVICE.toString())
     }
 
-    @Test fun debug_server_and_discovery_use_the_debug_build_fields() {
-        val dev = endpoints().getJSONObject("debug")
+    @Test fun server_and_discovery_use_the_current_build_fields() {
+        val current = endpoints().getJSONObject(if (BuildConfig.DEBUG) "debug" else "release")
         val release = endpoints().getJSONObject("release")
-        assertTrue(BuildConfig.DEBUG)
-        assertEquals(dev.getInt("port"), LibraryServer.PORT)
-        assertEquals(dev.getInt("discoveryPort"), LibraryServer.DISCOVERY_PORT)
-        assertEquals(dev.getString("serviceUuid"), BuildConfig.LIBRARY_SERVICE_UUID)
-        assertEquals(dev.getInt("tunnelFirstPort"), BuildConfig.TUNNEL_FIRST_PORT)
-        assertNotEquals(release.getInt("port"), LibraryServer.PORT)
-        assertNotEquals(release.getInt("discoveryPort"), LibraryServer.DISCOVERY_PORT)
-        assertNotEquals(BluetoothLink.SERVICE, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
-        assertTrue(BuildConfig.APPLICATION_ID.endsWith(".dev"))
+        assertEquals(current.getInt("port"), LibraryServer.PORT)
+        assertEquals(current.getInt("discoveryPort"), LibraryServer.DISCOVERY_PORT)
+        assertEquals(current.getString("serviceUuid"), BuildConfig.LIBRARY_SERVICE_UUID)
+        assertEquals(current.getInt("tunnelFirstPort"), BuildConfig.TUNNEL_FIRST_PORT)
+        if (BuildConfig.DEBUG) {
+            assertNotEquals(release.getInt("port"), LibraryServer.PORT)
+            assertNotEquals(release.getInt("discoveryPort"), LibraryServer.DISCOVERY_PORT)
+            assertNotEquals(BluetoothLink.SERVICE, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
+            assertTrue(BuildConfig.APPLICATION_ID.endsWith(".dev"))
+        } else {
+            assertEquals(BluetoothLink.SERVICE, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
+            assertEquals("com.ngdtuanh.abook", BuildConfig.APPLICATION_ID)
+        }
     }
 }

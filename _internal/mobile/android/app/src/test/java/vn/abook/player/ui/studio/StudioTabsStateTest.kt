@@ -48,7 +48,7 @@ class StudioTabsStateTest {
     private val dir: File = Files.createTempDirectory("studio_tabs").toFile()
     private val player = Player()
     private val fetched = ArrayList<String>()
-    private val clips = StudioClips(dir, { _, path, partial -> fetched += path; partial.writeBytes(ByteArray(4)) }, player, scope)
+    private val clips = StudioClips({ dir }, { _, path, partial -> fetched += path; partial.writeBytes(ByteArray(4)) }, player, scope)
     private val project = StudioProjectState(StudioHub(source, scope, clips).session(""), "b1", pause = never, hold = { hold.await() })
     private val jobs = ArrayList<Job>()
 

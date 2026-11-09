@@ -83,10 +83,15 @@ object Streaming {
             spec.withUri(Uri.parse(selected + original.toString().removePrefix(root)))
                 .withAdditionalHeaders(mapOf("Authorization" to "Bearer $token"))
         }
-        val cached = CacheDataSource.Factory()
-            .setCache(cache(context))
-            .setUpstreamDataSourceFactory(authorized)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        // Media3 constructs data sources on its playback/loading thread. Opening the
+        // disk cache here would instead charge Service.onCreate on the main looper.
+        val cached = DataSource.Factory {
+            CacheDataSource.Factory()
+                .setCache(cache(context))
+                .setUpstreamDataSourceFactory(authorized)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                .createDataSource()
+        }
         val normal = DefaultDataSource.Factory(context, cached)
         // Clip Edge đang đọc dở của Nghe ngay (abooklive://, uxfix57) đi qua nguồn riêng; mọi thứ khác như cũ.
         val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }

@@ -1,6 +1,7 @@
 package vn.abook.player.net
 
 import org.junit.After
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -47,6 +48,17 @@ class FastConnectTest {
     private val blackhole2 = InetAddress.getByName("2001:db8::2")
     private val live = InetAddress.getByName("127.0.0.1")
     private val closeables = mutableListOf<AutoCloseable>()
+    private var androidProviders = emptyList<Pair<java.security.Provider, Int>>()
+
+    @Before fun useJdkEcForTheJdkSocketTests() {
+        // Robolectric installs Conscrypt process-wide. SunJSSE's supported-group
+        // initialization also visits binary curves that Android Conscrypt omits.
+        androidProviders = java.security.Security.getProviders().mapIndexedNotNull { index, provider ->
+            provider.takeIf { it.getService("AlgorithmParameters", "EC")?.className?.startsWith("org.conscrypt.") == true }
+                ?.let { it to index + 1 }
+        }
+        androidProviders.forEach { (provider, _) -> java.security.Security.removeProvider(provider.name) }
+    }
 
     // Địa chỉ mù treo tới hết hạn nối của cuộc gọi. Các bài "không chờ địa chỉ mù" cho hạn này RẤT dài và chỉ đòi xong trong QUICK_MS (vẫn là một phần
     // sáu hạn): chờ nhầm địa chỉ mù thì mất đủ HANG_MS và bài đỏ rõ ràng, còn máy bận làm luồng chạy trễ vài giây thì không đỏ oan. (Hạn 5 giây với mốc
@@ -54,7 +66,10 @@ class FastConnectTest {
     private val HANG_MS = 60_000
     private val QUICK_MS = 10_000L
 
-    @After fun cleanUp() { closeables.reversed().forEach { runCatching { it.close() } } }
+    @After fun cleanUp() {
+        try { closeables.reversed().forEach { runCatching { it.close() } } }
+        finally { androidProviders.forEach { (provider, index) -> java.security.Security.insertProviderAt(provider, index) } }
+    }
 
     private fun <T : AutoCloseable> T.track(): T = also { closeables += it }
 

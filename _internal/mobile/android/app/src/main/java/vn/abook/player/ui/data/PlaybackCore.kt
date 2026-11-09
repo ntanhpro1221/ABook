@@ -7,6 +7,13 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import vn.abook.player.Playback
 import vn.abook.player.PlaybackService
@@ -21,10 +28,13 @@ import vn.abook.player.readaloud.ReadAloud
 class AndroidPlaybackCore(context: Context) : PlaybackCore {
     private val app = context.applicationContext
     private var controller: ListenableFuture<MediaController>? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val initialization = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { Playback.init(app) }
+    private val loadSequence = java.util.concurrent.atomic.AtomicLong()
 
     private fun withService(block: () -> Unit) {
-        Playback.onMain {
-            Playback.init(app)
+        scope.launch {
+            initialization.await()
             val future = controller ?: MediaController.Builder(app, SessionToken(app, ComponentName(app, PlaybackService::class.java)))
                 .setApplicationLooper(Looper.getMainLooper()).buildAsync().also { controller = it }
             future.addListener({ Playback.onMain(block) }, MoreExecutors.directExecutor())
@@ -32,15 +42,21 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     }
 
     override fun addListener(listener: (JSONObject) -> Unit) {
-        Playback.init(app)
         Playback.addListener(listener)
+        // The caller applies a snapshot right after attaching. Only a snapshot taken before
+        // the background init finished is stale; a warm attach must not rebroadcast state.
+        if (initialization.isCompleted) return
+        scope.launch {
+            initialization.await()
+            Playback.emit("state")
+        }
     }
 
     override fun removeListener(listener: (JSONObject) -> Unit) = Playback.removeListener(listener)
     override fun snapshot(): JSONObject = Playback.state()
     override fun play() = withService { Playback.play() }
     override fun pause() = withService { Playback.pause() }
-    override fun close() = Playback.onMain { Playback.closeBook() }
+    override fun close() = Playback.onMain { loadSequence.incrementAndGet(); Playback.closeBook() }
     override fun toggle() = withService { Playback.toggle() }
     override fun skip(deltaSeconds: Double) = withService { Playback.skip(deltaSeconds) }
     override fun seekTo(seconds: Double) = withService { Playback.seekTo(seconds) }
@@ -62,10 +78,25 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
 
     override fun voiceId(): String = ReadAloud.voiceId
     override fun setVoice(voiceId: String) = withService { ReadAloud.chooseFor(Playback.bookId, voiceId, Playback.recordId) }
-    override fun load(request: LoadRequest) = withService {
-        // Nạp để khôi phục lúc mở app: dịch vụ vừa bật xong mà đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì không đè.
-        if (!request.restore || Playback.bookId.isEmpty()) {
-            with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate, autoplay) }
+    override fun load(request: LoadRequest) {
+        val sequence = loadSequence.incrementAndGet()
+        scope.launch {
+            initialization.await()
+            val prepared = withContext(Dispatchers.IO) {
+                with(request) { Playback.prepareBook(id, title, narrator, chapters) }
+            }
+            if (sequence != loadSequence.get()) return@launch
+            withService {
+                if (sequence != loadSequence.get()) return@withService
+                // A cold restore must not replace a book selected by a widget or another controller.
+                if (!request.restore || Playback.bookId.isEmpty()) {
+                    if (vn.abook.player.Store.knownActiveRecord(request.id) != prepared.record) {
+                        load(request)
+                        return@withService
+                    }
+                    with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate, autoplay, prepared) }
+                }
+            }
         }
     }
 }

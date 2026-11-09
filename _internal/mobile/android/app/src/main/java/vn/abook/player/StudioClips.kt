@@ -31,12 +31,13 @@ data class ClipState(val playing: String? = null, val loading: String? = null, v
  * `fetch(computer, path, partial)` tải HẾT file vào `partial` (hay ném lỗi, để lại phần dở cho lần sau); bản thật: [StudioDownloads.fetch].
  */
 class StudioClips(
-    private val dir: File,
+    private val directory: () -> File,
     private val fetch: suspend (computer: String, path: String, partial: File) -> Unit,
     private val player: SamplePlayer,
     private val scope: CoroutineScope,
     private val limitBytes: Long = CACHE_BYTES,
 ) {
+    private val dir: File by lazy(directory)
     private val flow = MutableStateFlow(ClipState())
     val state: StateFlow<ClipState> get() = flow
     private var job: Job? = null

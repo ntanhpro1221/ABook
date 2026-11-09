@@ -58,19 +58,23 @@ class CoverLoader(maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().
         val options = BitmapFactory.Options().apply {
             inSampleSize = CoverSampling.sampleSize(bounds.outWidth, bounds.outHeight, width, height)
             inPreferredConfig = Bitmap.Config.RGB_565
-        }
-        val decoded = BitmapFactory.decodeFile(path, options) ?: return null
-        // Power-of-two sampling can leave almost twice the display width in each axis.
-        // Retain only the pixels needed for the existing center-crop; never upscale a small source.
-        val scale = maxOf(width.toDouble() / decoded.width, height.toDouble() / decoded.height).coerceAtMost(1.0)
-        val image = if (scale < 1.0) {
-            Bitmap.createScaledBitmap(decoded, kotlin.math.ceil(decoded.width * scale).toInt().coerceAtLeast(1),
-                kotlin.math.ceil(decoded.height * scale).toInt().coerceAtLeast(1), true).also {
-                if (it !== decoded) decoded.recycle()
+            // Let the native decoder scale into its result instead of retaining a sampled
+            // bitmap and then allocating a second bitmap in createScaledBitmap.
+            val sampledWidth = kotlin.math.ceil(bounds.outWidth.toDouble() / inSampleSize).toInt()
+            val sampledHeight = kotlin.math.ceil(bounds.outHeight.toDouble() / inSampleSize).toInt()
+            if (sampledWidth > 0 && sampledHeight > 0 && width > 0 && height > 0) {
+                val useWidth = width.toDouble() / sampledWidth >= height.toDouble() / sampledHeight
+                val source = if (useWidth) sampledWidth else sampledHeight
+                val target = if (useWidth) width else height
+                if (target < source) {
+                    inScaled = true
+                    inDensity = source
+                    inTargetDensity = target
+                }
             }
-        } else decoded
-        // Queue the texture upload while still on a decoder thread, before the first visible draw.
-        image.prepareToDraw()
+        }
+        val image = BitmapFactory.decodeFile(path, options) ?: return null
+        image.density = Bitmap.DENSITY_NONE
         return image
     }
 

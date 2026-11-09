@@ -39,7 +39,31 @@ class PerformanceAuditTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             click("book_cell")
             click("book_primary")
+            val started = java.util.concurrent.CountDownLatch(1)
+            val playing: (JSONObject) -> Unit = { if (it.optBoolean("playing")) started.countDown() }
+            instrumentation.runOnMainSync {
+                Playback.addListener(playing)
+                if (Playback.isPlaying) started.countDown()
+            }
+            try {
+                check(started.await(30, java.util.concurrent.TimeUnit.SECONDS)) { "Fixture did not start playing" }
+            } finally {
+                instrumentation.runOnMainSync { Playback.removeListener(playing) }
+            }
             Thread.sleep(12_000)
+            instrumentation.runOnMainSync { check(Playback.isPlaying) { "Fixture stopped during the periodic I/O audit" } }
+            if (InstrumentationRegistry.getArguments().getString("auditEvents") == "true") {
+                instrumentation.runOnMainSync { Playback.pause() }
+                Thread.sleep(1_000)
+                instrumentation.runOnMainSync {
+                    check(!Playback.isPlaying) { "Pause did not settle" }
+                    Playback.seekTo(60.0)
+                }
+                Thread.sleep(1_000)
+                instrumentation.runOnMainSync { Playback.play() }
+                Thread.sleep(1_000)
+                instrumentation.runOnMainSync { check(Playback.isPlaying) { "Voice did not resume after the event audit" } }
+            }
             instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
             Thread.sleep(1_000)
             click("tab_settings")
@@ -62,89 +86,75 @@ class PerformanceAuditTest {
         val files = folder.listFiles()!!.sortedBy { it.name }.map { File(it, "cover.jpg") }.filter { it.isFile }
         check(files.size == 60)
         val samples = JSONArray()
-        for (width in listOf(300, 840)) repeat(3) {
+        val arguments = InstrumentationRegistry.getArguments()
+        val repeats = arguments.getString("coverRepeats")?.toInt() ?: 3
+        for (width in listOf(300, 840)) repeat(repeats) {
             val loader = CoverLoader(32 shl 20)
             var bytes = 0L
+            System.gc()
+            System.runFinalization()
+            val nativeBefore = android.os.Debug.getNativeHeapAllocatedSize()
+            val pssBefore = android.os.Debug.getPss()
+            fun rssHighWaterKiB(): Long = File("/proc/self/status").useLines { rows ->
+                rows.first { it.startsWith("VmHWM:") }.split(Regex("\\s+")).filter { it.isNotEmpty() }[1].toLong()
+            }
+            val rssHighWaterBefore = rssHighWaterKiB()
+            val peakNative = java.util.concurrent.atomic.AtomicLong(nativeBefore)
+            val peakPss = java.util.concurrent.atomic.AtomicLong(pssBefore)
+            val sampling = java.util.concurrent.atomic.AtomicBoolean(true)
+            val sampler = Thread {
+                var polls = 0
+                while (sampling.get()) {
+                    peakNative.accumulateAndGet(android.os.Debug.getNativeHeapAllocatedSize(), ::maxOf)
+                    if (polls++ % 20 == 0) peakPss.accumulateAndGet(android.os.Debug.getPss(), ::maxOf)
+                    Thread.sleep(1)
+                }
+            }.apply { name = "cover-peak-sampler"; start() }
             val start = android.os.SystemClock.elapsedRealtimeNanos()
-            for (file in files) {
-                val height = if (width == 300) 450 else 840
-                val image = loader.load(loader.key(file.path, file.lastModified(), width, height), file.path, width, height)!!
-                bytes += image.asAndroidBitmap().allocationByteCount
+            try {
+                for (file in files) {
+                    val height = if (width == 300) 450 else 840
+                    val image = loader.load(loader.key(file.path, file.lastModified(), width, height), file.path, width, height)!!
+                    bytes += image.asAndroidBitmap().allocationByteCount
+                    check(image.width >= width && image.height >= height)
+                    peakNative.accumulateAndGet(android.os.Debug.getNativeHeapAllocatedSize(), ::maxOf)
+                }
+            } finally {
+                sampling.set(false)
+                sampler.join()
             }
             samples.put(JSONObject().put("width", width).put("bytes", bytes)
-                .put("elapsedMs", (android.os.SystemClock.elapsedRealtimeNanos() - start) / 1e6))
+                .put("elapsedMs", (android.os.SystemClock.elapsedRealtimeNanos() - start) / 1e6)
+                .put("nativeBeforeBytes", nativeBefore).put("sampledNativePeakBytes", peakNative.get())
+                .put("pssBeforeKiB", pssBefore).put("sampledPssPeakKiB", peakPss.get())
+                .put("rssHighWaterBeforeKiB", rssHighWaterBefore).put("rssHighWaterKiB", rssHighWaterKiB()))
             loader.trim()
         }
         File(context.getExternalFilesDir(null), "perf165-covers.json").writeText(samples.toString(2))
     }
 
     @Test
-    fun backgroundTicks() {
+    fun closingDuringPreparationKeepsTheBookClosed() = runBlocking {
         assumeTrue(InstrumentationRegistry.getArguments().getString("perfAudit") == "true")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
-        // The service's real sleep-button listener ignores tick events. UI is not attached in this process.
-        val listener = SleepTimer.buttonsListener {}
-        val samples = JSONArray()
+        Store.init(context)
+        val books = Store.playableBooks()
+        check(books.size == 60) { "Install the synthetic fixture before this audit" }
+        val request = checkNotNull(vn.abook.player.ui.data.PlayPlan.fromStore(books.first().getString("id")))
+        val core = vn.abook.player.ui.data.AndroidPlaybackCore(context)
         instrumentation.runOnMainSync {
-            Playback.addListener(listener, ticks = false)
-            try {
-                repeat(100) { Playback.emit("tick") }
-                repeat(5) {
-                    val bytes = android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong()
-                    val start = android.os.SystemClock.elapsedRealtimeNanos()
-                    repeat(1_000) { Playback.emit("tick") }
-                    samples.put(JSONObject().put("allocatedBytes", android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong() - bytes)
-                        .put("elapsedMs", (android.os.SystemClock.elapsedRealtimeNanos() - start) / 1e6))
-                }
-            } finally {
-                Playback.removeListener(listener)
-            }
+            core.load(request)
+            core.close()
         }
-        File(context.getExternalFilesDir(null), "perf165-ticks.json").writeText(samples.toString(2))
-    }
-
-    @Test
-    fun readAlongGeometry() {
-        assumeTrue(InstrumentationRegistry.getArguments().getString("perfAudit") == "true")
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val text = "Buổi sáng trời trong xanh. Con đường yên tĩnh chạy giữa hàng cây. Gió nhẹ thổi qua cửa sổ. Đây là văn bản tổng hợp dùng để đo cuộn chữ."
-        val words = Regex("\\S+").findAll(text).mapIndexed { i, match ->
-            vn.abook.player.ui.nowplaying.WordTiming(i * 100L, (i + 1) * 100L, match.range.first, match.range.last + 1)
-        }.toList()
-        val paragraph = vn.abook.player.ui.nowplaying.ReadParagraph(0, text, 0, 4_000, true, words)
-        val measurer = androidx.compose.ui.text.TextMeasurer(
-            androidx.compose.ui.text.font.createFontFamilyResolver(context),
-            androidx.compose.ui.unit.Density(context.resources.displayMetrics.density, context.resources.configuration.fontScale),
-            androidx.compose.ui.unit.LayoutDirection.Ltr,
-        )
-        val layout = measurer.measure(androidx.compose.ui.text.AnnotatedString(text),
-            style = androidx.compose.ui.text.TextStyle(fontSize = androidx.compose.ui.unit.TextUnit(20f, androidx.compose.ui.unit.TextUnitType.Sp)),
-            constraints = androidx.compose.ui.unit.Constraints(maxWidth = 900))
-        val type = Class.forName("vn.abook.player.ui.nowplaying.ParagraphInk")
-        val constructor = type.declaredConstructors.first().apply { isAccessible = true }
-        repeat(20) { constructor.newInstance(layout, paragraph) }
-        val samples = JSONArray()
-        repeat(5) {
-            val bytes = android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong()
-            val start = android.os.SystemClock.elapsedRealtimeNanos()
-            val retained = ArrayList<Any>(240)
-            repeat(240) { retained += constructor.newInstance(layout, paragraph) }
-            samples.put(JSONObject().put("paragraphs", retained.size).put("wordsPerParagraph", words.size)
-                .put("elapsedMs", (android.os.SystemClock.elapsedRealtimeNanos() - start) / 1e6)
-                .put("allocatedBytes", android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong() - bytes))
+        val scope = core.javaClass.getDeclaredField("scope").also { it.isAccessible = true }.get(core) as kotlinx.coroutines.CoroutineScope
+        kotlinx.coroutines.withTimeout(30_000) {
+            scope.coroutineContext[kotlinx.coroutines.Job]!!.children.toList().forEach { it.join() }
         }
-        // Both implementations must keep exactly the same word-path bounds when requested.
-        val ink = constructor.newInstance(layout, paragraph)
-        val wordMethod = type.declaredMethods.firstOrNull { it.name == "word" }?.apply { isAccessible = true }
-        val oldWords = type.declaredMethods.firstOrNull { it.name == "getWords" }?.apply { isAccessible = true }
-        val bounds = JSONArray()
-        for (i in words.indices) {
-            val path = (wordMethod?.invoke(ink, i) ?: (oldWords!!.invoke(ink) as List<*>)[i]) as androidx.compose.ui.graphics.Path
-            val box = path.getBounds()
-            bounds.put(JSONArray(listOf(box.left, box.top, box.right, box.bottom)))
+        instrumentation.waitForIdleSync()
+        instrumentation.runOnMainSync {
+            check(Playback.bookId.isEmpty() && !Playback.isPlaying) { "A stale prepared load reopened the dismissed book" }
         }
-        File(context.getExternalFilesDir(null), "perf165-geometry.json").writeText(JSONObject().put("samples", samples).put("wordBounds", bounds).toString(2))
     }
 
     private fun click(tag: String) {

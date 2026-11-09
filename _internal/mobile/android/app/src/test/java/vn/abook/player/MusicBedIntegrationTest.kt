@@ -82,6 +82,32 @@ class MusicBedIntegrationTest {
     }
     @After fun cleanup() { field("sleepFactor").setFloat(MusicBed, 1f); field("context").set(MusicBed, null); MusicBed.stop(); Playback.player = null; Handler.reset() }
 
+    @Test fun enablingMusicOnAQuietBookInvalidatesWithoutPausingTheVoice() {
+        val previousBook = field("book").get(MusicBed)
+        val playbackBook = Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }
+        val previousPlaybackBook = playbackBook.get(Playback)
+        val previousPlayer = Playback.player
+        val previousAuto = Playlists.autoEnabled
+        val voice = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
+        try {
+            field("book").set(MusicBed, "quiet-book")
+            playbackBook.set(Playback, "quiet-book")
+            Playback.player = voice.player
+            Playlists.autoEnabled = false
+            assertEquals("quiet-book", field("book").get(MusicBed))
+            MusicBed.invalidate("other-book")
+            assertEquals("editing another book leaves the loaded music alone", "quiet-book", field("book").get(MusicBed))
+            MusicBed.chooseAuto(true)
+            assertEquals("the next heartbeat reloads the changed music choice", "", field("book").get(MusicBed))
+            assertTrue("enabling music must leave the voice playing", voice.playing && voice.playWhenReady)
+        } finally {
+            field("book").set(MusicBed, previousBook)
+            playbackBook.set(Playback, previousPlaybackBook)
+            Playback.player = previousPlayer
+            Playlists.autoEnabled = previousAuto
+        }
+    }
+
     @Test fun prepareLongerThanFadeStillFadesFromSilenceToTheGoal() {
         val fake = FakePlayer()
         fake.player.prepare()
@@ -259,6 +285,49 @@ class MusicBedIntegrationTest {
     }
 
     private fun playbackField(name: String) = Playback::class.java.getDeclaredField(name).also { it.isAccessible = true }
+
+    @Test fun theRealHeartbeatLoadsCuesAfterAQuietChapterWithoutAnIsPlayingEdge() {
+        installContext()
+        val previousBook = playbackField("bookId").get(Playback)
+        val previousChapters = playbackField("chapters").get(Playback)
+        val track = "music/" + "a".repeat(40) + ".mp3"
+        val cue = org.json.JSONObject().put("start", 20.0).put("end", 100.0).put("track", track)
+        val music = org.json.JSONObject().put("tracks", org.json.JSONObject().put(track, org.json.JSONObject()))
+            .put("chapters", org.json.JSONObject().put("2", org.json.JSONArray().put(cue)))
+        val voice = FakePlayer().also {
+            it.state = Player.STATE_READY; it.playWhenReady = true; it.position = 0
+            it.item = MediaItem.Builder().setMediaId("1").build()
+        }
+        try {
+            Playback.player = voice.player
+            playbackField("bookId").set(Playback, "chapter-clock")
+            playbackField("chapters").set(Playback, listOf(
+                Playback.Chapter(1, "Quiet", "1.mp3", 100.0), Playback.Chapter(2, "Music", "2.mp3", 100.0)))
+            playbackField("ticking").setBoolean(Playback, false)
+            field("book").set(MusicBed, "chapter-clock")
+            field("closedBook").set(MusicBed, "")
+            field("chapter").setInt(MusicBed, 1)
+            field("music").set(MusicBed, music)
+            field("playlist").set(MusicBed, null)
+            field("sceneMode").setBoolean(MusicBed, false)
+            field("cues").set(MusicBed, emptyList<MusicCues.Cue>())
+            Playback::class.java.getDeclaredMethod("startTicking").also { it.isAccessible = true }.invoke(Playback)
+            Handler.advance(0)
+            voice.item = MediaItem.Builder().setMediaId("2").build()
+            // Seamless local transitions keep isPlaying=true; no onPlayingChanged callback arrives.
+            Handler.advance(1_000)
+            assertEquals("the voice clock must notice the new chapter", 2, field("chapter").getInt(MusicBed))
+            @Suppress("UNCHECKED_CAST") val cues = field("cues").get(MusicBed) as List<MusicCues.Cue>
+            assertEquals("the new chapter's authored cue must be scheduled", listOf(track), cues.map { it.track })
+            assertTrue("the transition must leave the voice playing", voice.playing && voice.playWhenReady)
+        } finally {
+            playbackField("bookId").set(Playback, previousBook)
+            playbackField("chapters").set(Playback, previousChapters)
+            playbackField("ticking").setBoolean(Playback, false)
+            field("music").set(MusicBed, null)
+            Handler.reset()
+        }
+    }
 
     @Test fun aVoiceStalledPastTheLimitFadesTheMusicDownAndLetsItBackWhenTheVoiceMoves() {
         // Mạng hỏng hẳn: giọng đệm tới HostWait.STALL_MS (215 s) - nhạc không được kêu một mình suốt chừng ấy. Quá voiceStallFadeAfterSeconds thì mờ xuống
