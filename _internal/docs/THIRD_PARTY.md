@@ -43,13 +43,16 @@ phần ấy.
   `scripts/build_japanese_lexicon.py` sinh từ giao từ vựng và các từ CMU có tiền tố Anh cùng gốc nằm trong giao ấy.
   Asset nén xác định được dùng chung cho Python/Kotlin, không chứa trọng số hay dữ liệu truyện.
 
-## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
+## App Windows đóng gói (Qt và bộ cài NSIS, `docs/QT_INSTALLER.md`)
 
 Bộ cài mang theo:
 
-- Tauri 2 và các plugin single-instance, dialog, updater, window-state (MIT hoặc Apache-2.0); WebView2 là của Windows (Microsoft) -
-  bộ cài chỉ tải trình cài WebView2 khi máy thiếu, không phân phối lại.
-- NSIS (giấy phép zlib/libpng) và `nsis_tauri_utils` (MIT hoặc Apache-2.0) - trình cài/gỡ.
+- Qt Quick và các thành phần Qt, QWindowKit, minimp3, font và biểu tượng đã ghi ở trên; các DLL Qt nằm cạnh file chạy.
+- Sonic (Bill Cox, Apache-2.0): `desktop_qt/third_party/sonic/sonic.c` và `sonic.h`, giữ nguyên từ commit
+  `b93885dcb70aae50c6f76b0fe4e0868f029a077e` của [waywardgeek/sonic](https://github.com/waywardgeek/sonic).
+  Đổi tốc độ 0,5–4× và cao độ riêng qua bộ trộn WASAPI. Bộ cài kèm giấy phép và nguồn ghim trong
+  `licenses/Sonic-LICENSE.txt` và `licenses/Sonic-UPSTREAM.txt`.
+- NSIS (giấy phép zlib/libpng) - trình cài/gỡ.
 - Python 3.14 embeddable (Python Software Foundation License).
 - Pillow (HPND), psutil (BSD-3-Clause), requests (Apache-2.0), urllib3 (MIT), certifi (MPL-2.0), charset-normalizer
   (MIT), idna (BSD-3-Clause) - đúng các bản trong `shell/python/requirements.txt`.
@@ -75,7 +78,7 @@ băm trong `webui/studio_setup.py`):
   trong đó model phân tích của chính dự án `abook-analyzer` (huggingface.co/NGDtuanh/abook-analyzer, Apache-2.0 như
   model nền Qwen3-4B-Instruct-2507; thẻ model: `docs/models/`).
 
-## Giao diện (máy tính và điện thoại dùng chung)
+## Giao diện web
 
 - React, React DOM, React Router (MIT); TanStack Query (MIT); Radix UI (MIT); lucide-react (ISC); sonner (MIT);
   Tailwind CSS (MIT); Vite (MIT).
@@ -199,5 +202,3 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
 Source không đóng gói model weights: lần cài đầu tải dependency và model về `_internal/runtime`. Khi phát hành gói cài đặt, APK hay
 model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng (`RELEASING.md`).
 Giấy phép MIT của ABook nằm ở `_internal/LICENSE`.
-
-- Sonic (Bill Cox, Apache-2.0): `desktop_qt/third_party/sonic/sonic.c` and `sonic.h`, unmodified; upstream commit b93885dcb70aae50c6f76b0fe4e0868f029a077e. Voice playback at 0.5-4x with independently selected pitch through the shared WASAPI mixer. Full license in `desktop_qt/third_party/sonic/LICENSE`. Source: https://github.com/waywardgeek/sonic.
