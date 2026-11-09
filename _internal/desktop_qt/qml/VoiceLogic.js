@@ -4,7 +4,7 @@
 
 // Phần thuần (không giao diện) của Cài đặt › Giọng đọc, chép từng chữ từ bản web: listen/voiceGroups.ts, readAloudVoice.ts (chọn giọng mặc định,
 // lời báo chữ đi đâu), vieneuModule.ts (lời của thẻ giọng trên máy), voiceSpeed.ts (Hiệu năng), studio/musicLocal.ts (hai câu chung).
-// Chỗ web viết "khóa" thì đây viết "khoá" (chủ app 26-10: một cách viết duy nhất).
+// Chỗ web viết S.s_copy_998bbb22cf19 thì đây viết S.s_copy_91f4af3123f0 (chủ app 26-10: một cách viết duy nhất).
 
 var SAMPLE_TEXT = S.s_xin_chao_toi_se_doc_sach_cho_ban_nghe_ban_885b35e2
 var ONLINE_NOTICE = S.s_giong_edge_gui_chu_cua_sach_toi_may_chu_mi_7aefebec
@@ -42,13 +42,13 @@ function groupLabel(group) { return group.detail ? group.title + "\u00a0·\u00a0
 
 function genderLabel(gender) { return gender === "female" ? S.s_nu_e15bc11c : gender === "male" ? S.s_nam_22dd59c8 : "" }
 
-// "Hoài My (Edge)" -> "Hoài My"
+// S.s_hoai_my_edge_65e287a0 -> S.s_copy_7d21bf1340d9
 function spokenVoiceName(name) {
     const spoken = String(name).replace(/\s*\([^)]*\)\s*$/, "").trim()
     return spoken || name
 }
 
-// Tách "Nhẹ (VieNeu Nano)" thành tên giọng + tên mô-đun
+// Tách S.s_copy_9ac1ef13c8d5 thành tên giọng + tên mô-đun
 function splitVoiceName(name) {
     const found = /^(.*\S)\s+\(([^()]+)\)$/.exec(name)
     return found ? {shown: found[1], module: found[2]} : {shown: name, module: null}
@@ -88,11 +88,11 @@ function onlineNotice(voice) {
 
 // Giọng VieNeu kể chuyện trung tính của từng bản, theo thứ tự ưu tiên (readAloudVoice.ts NARRATOR_VOICES)
 var NARRATOR = {
-    turbo: [S.s_duc_tri_c0417aaf, "Ngọc Linh", "Kim Thanh", S.s_doan_trang_61fdcaa5, S.s_my_duyen_ad56a239, "Quỳnh Anh", "Thục Đoan", S.s_thanh_binh_6455e387],
+    turbo: [S.s_duc_tri_c0417aaf, S.s_copy_9ce4f6d91ba0, "Kim Thanh", S.s_doan_trang_61fdcaa5, S.s_my_duyen_ad56a239, S.s_copy_3d89e39b9ae7, S.s_copy_8f79b50d9ab1, S.s_thanh_binh_6455e387],
     nano: [S.s_ai_han_a1f0d04f, S.s_my_duyen_ad56a239, S.s_duc_tri_c0417aaf]
 }
 // Checked against assets/voice_rank.json by the shared web/Qt test.
-var NEVER_AUTO = ["Ngọc Huyền", "Trúc Ly", "Ngọc Trân"]
+var NEVER_AUTO = [S.s_copy_520e2e7d18eb, S.s_copy_4d4dd0d13c5f, S.s_copy_51a4599e02f8]
 
 function autoAllowed(voice) {
     return NEVER_AUTO.indexOf(nfc(voice.id.slice(voice.id.indexOf("/") + 1))) < 0
@@ -150,7 +150,7 @@ function seconds(value) { return value.toFixed(1).replace(".", ",") }
 
 function working(status) { return Boolean(status) && (status.state === "downloading" || Boolean(status.benchmarking)) }
 
-// Dòng tóm tắt của mục "Bộ giọng"
+// Dòng tóm tắt của mục S.s_bo_giong_75b79178
 function moduleActivity(vieneu, supertonic) {
     const out = []
     const pairs = [[S.s_vieneu_338b8a9f, vieneu], [S.s_supertonic_b426cb32, supertonic]]
