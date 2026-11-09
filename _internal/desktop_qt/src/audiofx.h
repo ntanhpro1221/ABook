@@ -27,7 +27,7 @@ struct Biquad {
         const double y=b0*x+z1[ch]; z1[ch]=b1*x-a1*y+z2[ch]; z2[ch]=b2*x-a2*y; return y;
     }
     static Biquad make(int rate, double frequency, double db, bool shelf=false) {
-        const double w=2*std::numbers::pi*std::min(frequency,rate*.45)/rate;
+        const double w=2*std::numbers::pi*(std::min)(frequency,rate*.45)/rate;
         const double a=std::pow(10,db/40), c=std::cos(w), s=std::sin(w), alpha=s/(2*1.4);
         if (!shelf) {
             const double a0=1+alpha/a;
@@ -55,15 +55,15 @@ public:
         constexpr double ceiling=.8912509381337456; // -1 dBFS
         for (size_t i=0;i<frames;++i) {
             if (settings.mono) { const float mid=(stereo[2*i]+stereo[2*i+1])*.5f; stereo[2*i]=stereo[2*i+1]=mid; }
-            stereo[2*i]*=float(1-std::max(0.,settings.balance));
-            stereo[2*i+1]*=float(1+std::min(0.,settings.balance));
+            stereo[2*i]*=float(1-(std::max)(0.,settings.balance));
+            stereo[2*i+1]*=float(1+(std::min)(0.,settings.balance));
             double x[2]; double peak=0;
             for (int ch=0;ch<2;++ch) {
                 x[ch]=stereo[2*i+ch]; if (!std::isfinite(x[ch])) x[ch]=0;
                 if (settings.enabled) for (auto &f:filters) x[ch]=f.tick(x[ch],ch);
-                x[ch]*=gain; peak=std::max(peak,std::abs(x[ch]));
+                x[ch]*=gain; peak=(std::max)(peak,std::abs(x[ch]));
             }
-            envelope=std::min(peak>ceiling?ceiling/peak:1.0,1-(1-envelope)*release);
+            envelope=(std::min)(peak>ceiling?ceiling/peak:1.0,1-(1-envelope)*release);
             for (int ch=0;ch<2;++ch) stereo[2*i+ch]=float(std::clamp(x[ch]*envelope,-ceiling,ceiling));
         }
     }
@@ -104,7 +104,7 @@ public:
         if(longPause) while(quiet.size()>keep-keep/2) quiet.pop_front();
     }
     double sourceSeconds(double seconds) const {
-        const auto frame=uint64_t(std::max(0.,seconds)*rate); uint64_t removed=0;
+        const auto frame=uint64_t((std::max)(0.,seconds)*rate); uint64_t removed=0;
         for(const auto &cut:cuts) { if(cut.first>frame) break; removed=cut.second; }
         return seconds+double(removed)/rate;
     }

@@ -1,4 +1,13 @@
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include "audiofx.h"
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include "timestretch.h"
 #include <QtTest>
 #include <vector>
