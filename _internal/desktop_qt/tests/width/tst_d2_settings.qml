@@ -345,7 +345,7 @@ Item {
             compare(last("PUT", "/api/preferences").body.readingSurface, "ivory")
             switchOf(page, "Âm thanh chạm").toggled(false)
             compare(last("PUT", "/api/preferences").body.touchSounds, false)
-            verify(hasText(page, "Tiếng khẽ khi bạn chọn. Im khi đang nghe."))
+            verify(hasText(page, "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại."))
             verify(hasText(page, "Nền của chữ khi đọc theo."))
             verify(hasText(page, "Tắt nếu hay lỡ chạm phím hay nhập bằng giọng nói."))
             const list = find(page, i => i.rows !== undefined && i.letters !== undefined)
