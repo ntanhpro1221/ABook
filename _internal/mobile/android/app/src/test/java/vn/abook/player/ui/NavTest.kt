@@ -56,11 +56,11 @@ class NavTest {
     private fun p(i: Int, steps: Int) = i.toFloat() / steps
 
     @Test
-    fun `screen enters from the right edge and the one below recedes 30 percent`() {
+    fun `screen enters from the right edge and the one below leaves at the left edge`() {
         assertEquals(1f, ScreenGeometry.topFraction(0f), 0f)
         assertEquals(0f, ScreenGeometry.topFraction(1f), 0f)
         assertEquals(0f, ScreenGeometry.belowFraction(0f), 0f)
-        assertEquals(-0.3f, ScreenGeometry.belowFraction(1f), 1e-6f)
+        assertEquals(-1f, ScreenGeometry.belowFraction(1f), 1e-6f)
     }
 
     @Test
@@ -100,6 +100,19 @@ class NavTest {
     fun `tabs slide by index`() {
         assertEquals(listOf("Thư viện", "Studio", "Cài đặt"), Tab.entries.map { it.label })
         assertEquals(listOf(0, 1, 2), Tab.entries.map { it.ordinal })
+    }
+
+    @Test
+    fun `cover container fades through without overlapping page content`() {
+        assertEquals(1f, ScreenGeometry.outgoingAlpha(0f), 0f)
+        assertEquals(1f, ScreenGeometry.incomingAlpha(1f), 0f)
+        for (step in 0..100) {
+            val progress = step / 100f
+            val incoming = ScreenGeometry.incomingAlpha(progress)
+            val outgoing = ScreenGeometry.outgoingAlpha(progress)
+            assertTrue(incoming in 0f..1f && outgoing in 0f..1f)
+            assertTrue(incoming == 0f || outgoing == 0f)
+        }
     }
 
     @Test

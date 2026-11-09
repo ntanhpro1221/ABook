@@ -32,10 +32,6 @@ object Motion {
     fun popOut(fromProgress: Float): FiniteAnimationSpec<Float> =
         tween((MotionMs.SLOW_OUT * fromProgress).toInt().coerceAtLeast(MotionMs.FAST_OUT), easing = Accelerate)
 
-    /** Nội dung lưới ra (90 ms, tăng tốc) rồi vào (220 ms, giảm tốc) cùng chiều với bộ lọc - chỉ dịch ngang, không mờ. */
-    val SlideOut: FiniteAnimationSpec<Float> = tween(MotionMs.FAST_OUT, easing = Accelerate)
-    val SlideIn: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM, easing = Decelerate)
-
     /** Ô tìm nở ra / thu lại, thanh phát nhỏ hiện lên: vừa (220 ms vào, 150 ms ra). */
     val Expand: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM, easing = Standard)
     val Collapse: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM_OUT, easing = Standard)
@@ -79,7 +75,7 @@ object Motion {
  * khi Back dự đoán kéo dở ([forBack]); không có hàm riêng cho Back để lệch.
  */
 object ScreenGeometry {
-    const val BELOW_SHIFT = 0.3f
+    const val BELOW_SHIFT = 1f
 
     /** Dịch ngang của màn trên cùng, theo tỉ lệ bề rộng (dương = sang phải). */
     fun topFraction(p: Float): Float = 1f - p
@@ -89,4 +85,8 @@ object ScreenGeometry {
 
     /** Tiến trình p ứng với cử chỉ Back đã kéo `back` (0..1): kéo hết = màn trên ra khỏi hẳn. */
     fun forBack(back: Float): Float = 1f - back.coerceIn(0f, 1f)
+
+    /** Container content fades on the cover's clock, including cancelled predictive back. */
+    fun incomingAlpha(p: Float): Float = ((p - 0.35f) / 0.65f).coerceIn(0f, 1f)
+    fun outgoingAlpha(p: Float): Float = (1f - p / 0.35f).coerceIn(0f, 1f)
 }

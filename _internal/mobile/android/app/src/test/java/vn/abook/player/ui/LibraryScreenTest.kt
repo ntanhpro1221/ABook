@@ -202,7 +202,7 @@ class LibraryScreenTest {
         rule.onNodeWithTag(LibraryFilter.Finished.tag).performClick()
         rule.waitForIdle()
         assertEquals(LibraryFilter.Finished, ui.shown)
-        assertEquals(0f, ui.slide.value, 0f)
+        assertEquals(LibraryFilter.Finished.ordinal, ui.pager.settledPage)
         assertEquals(LibraryFilter.Finished.ordinal.toFloat(), ui.position.value, 0f)
         val finished = books.count { it.progress.finished }
         // Mỗi ô đang hiện là một cuốn đã xong (bộ nhiều tập tính một ô).
@@ -214,20 +214,25 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun filterContentLeavesBeforeItEntersAndThereIsNoCrossfade() {
+    fun filterPagesMoveTogetherAndKeepTheirCoverAspectRatios() {
         show(DemoLibrary.books(30))
         rule.mainClock.autoAdvance = false
         rule.onNodeWithTag(LibraryFilter.Listening.tag).performClick()
         rule.mainClock.advanceTimeBy(60)
-        assertEquals("còn đang trượt ra, dữ liệu cũ", LibraryFilter.All, ui.shown)
-        assertTrue(ui.slide.value < 0f)
+        assertTrue(ui.position.value > 0f)
+        val covers = rule.onAllNodesWithTag("library_cover", useUnmergedTree = true).fetchSemanticsNodes()
+        assertTrue("both pages keep visible artwork during the swipe", covers.isNotEmpty())
+        covers.forEach { node ->
+            val bounds = node.size
+            if (bounds.width > 0 && bounds.height > 0) assertTrue(kotlin.math.abs(bounds.width.toFloat() / bounds.height - 2f / 3f) < 0.034f)
+        }
         rule.mainClock.advanceTimeBy(60)
         rule.mainClock.advanceTimeBy(60)
         assertEquals(LibraryFilter.Listening, ui.shown)
-        assertTrue("trượt vào từ bên phải", ui.slide.value > 0f)
+        assertTrue(ui.position.value > 0f)
         rule.mainClock.autoAdvance = true
         rule.waitForIdle()
-        assertEquals(0f, ui.slide.value, 0f)
+        assertEquals(LibraryFilter.Listening.ordinal, ui.pager.settledPage)
     }
 
     @Test

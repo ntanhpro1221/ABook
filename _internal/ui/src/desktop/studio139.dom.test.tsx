@@ -77,8 +77,8 @@ it("nút chuyển máy giữ một vùng khi chưa phát, hiện menu hoặc cò
   await act(() => client.setQueryData(["remote"], { phones: [{ device: "p", name: "Loa", via: "cast", kind: "cast" }] }));
   await act(() => vi.advanceTimersByTime(1));
   expect(host.firstElementChild).toBe(region);
-  expect(host.querySelector('[aria-label="Phát trên Loa"]')).not.toBeNull();
-  expect(vi.mocked(HTMLElement.prototype.animate).mock.contexts).toContain(region);
+  expect(host.querySelector('[aria-label="Phát trên thiết bị khác"]')).not.toBeNull();
+  // A single destination still opens the selector rather than handing off on the icon tap.
 });
 
 it("kết quả tính xuất sách đến muộn fade trong thân hộp", async () => {

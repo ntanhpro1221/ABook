@@ -303,8 +303,8 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
                 .graphicsLayer {
                     transformOrigin = TransformOrigin(1f, 0f)
                     val k = progress.value
-                    scaleX = 0.9f + 0.1f * k
-                    scaleY = 0.8f + 0.2f * k
+                    scaleX = 0.95f + 0.05f * k
+                    scaleY = scaleX
                 }
                 .shadow(8.dp, shape)
                 .clip(shape)

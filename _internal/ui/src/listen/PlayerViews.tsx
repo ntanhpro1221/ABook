@@ -1593,6 +1593,7 @@ export function PlayerBar({
               </div>
             </div>
           </div>
+          {extra}
           <button
             type="button"
             onClick={withFeedback("playPause", toggle)}
@@ -1647,7 +1648,7 @@ export function PlayerBar({
           </div>
         </div>
         <div className="flex w-full flex-col items-center gap-0.5 @max-[48rem]:col-span-2 @max-[48rem]:row-start-2">
-          <Transport chapters={false} />
+          <div className="flex items-center gap-2">{extra}<Transport chapters={false} /></div>
           <SeekBar />
         </div>
         {/* Tối đa 6 điều khiển (docs/DESIGN.md mục 6): lùi · phát · tới ở giữa; tốc độ · âm lượng · "…" bên phải - còn lại vào "…". */}

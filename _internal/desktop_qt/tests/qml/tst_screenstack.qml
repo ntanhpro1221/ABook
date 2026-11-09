@@ -82,7 +82,7 @@ Item {
             const cover = findChild(stack, "navigationCoverMorph")
             compare(stack._coverStart.x, 40)
             compare(stack._coverEnd.x, 400)
-            compare(source.opacity, 0)
+            compare(source.opacity, 1)
             compare(target.opacity, 0)
             tryVerify(() => stack.coverT > 0 && stack.coverT < 1)
             fuzzyCompare(cover.x, 40 + 360 * stack.coverT, 0.01)

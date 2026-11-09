@@ -136,7 +136,9 @@ class BookPlayerLinkTest {
         show(hasTrack = false)
         push(Destination.Book(book))
         val screen = rule.onNodeWithTag("screen_top").getUnclippedBoundsInRoot()
-        assertEquals("màn con không có thanh phát thì chạm đáy", 780.dp.value, screen.bottom.value, 1f)
+        rule.onNodeWithTag("mini_player").assertDoesNotExist()
+        val tab = rule.onNodeWithTag("tab_library").getUnclippedBoundsInRoot()
+        assertEquals("the persistent tab bar keeps the same content baseline", tab.top.value - 1f, screen.bottom.value, 1f)
     }
 
     @Test

@@ -62,6 +62,9 @@ class BookCoverFlightTest {
                         Box(Modifier.fillMaxSize().padding(20.dp)) {
                             BookCover(book.cover, book.title, book.part, covers, 90.dp,
                                 Modifier.width(90.dp).bookCoverSource(book.id).testTag("cell"))
+                            // The adjacent filter page contains the same book, but it is offscreen.
+                            BookCover(book.cover, book.title, book.part, covers, 90.dp,
+                                Modifier.offset(x = 400.dp).width(90.dp).bookCoverSource(book.id).testTag("offscreen_cell"))
                         }
                     }, screen = {
                         Box(Modifier.fillMaxSize().padding(start = 30.dp, top = 90.dp)) {

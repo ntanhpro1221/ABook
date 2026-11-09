@@ -43,9 +43,21 @@ class CoverLoader(maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().
     /** Đã có trong bộ nhớ đệm thì lấy ngay (không chờ giải mã) - để ô cuộn vào không nháy khung trống. */
     fun peek(key: String): ImageBitmap? = cache.get(key)?.image
 
+    /** Reuse the same artwork across cell/header sizes while a sharper decode is pending. */
+    fun peek(path: String, stamp: Long): ImageBitmap? = cache.snapshot().entries
+        .filter { it.key.startsWith("$path|$stamp|") }
+        .maxByOrNull { it.value.image.width }?.value?.image
+
     /** Giải mã bìa ở `path` cho ô `width` x `height` px; null khi file hỏng / mất. */
     suspend fun load(key: String, path: String, width: Int, height: Int): ImageBitmap? {
         cache.get(key)?.let { return it.image }
+        val asset = key.substringBeforeLast('|')
+        val reusable = cache.snapshot().entries.filter {
+            it.key.substringBeforeLast('|') == asset && it.value.image.width >= width && it.value.image.height >= height
+        }.minByOrNull { it.value.bytes }
+        // Sampling often leaves the cell image large enough for the header.
+        // Reuse that bitmap and touch its LRU entry without charging it twice.
+        reusable?.let { return (cache.get(it.key) ?: it.value).image }
         val decoded = withContext(decoders) { decode(path, width, height) } ?: return null
         val image = decoded.asImageBitmap()
         cache.put(key, Cached(image, decoded.allocationByteCount))

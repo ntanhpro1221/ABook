@@ -9,7 +9,7 @@ vi.mock("@tanstack/react-query", async original => ({ ...await original<typeof i
 import { RemoteBars } from "./RemotePhone";
 
 function mount(bars: number) {
-  h.phones = Array.from({ length: bars }, (_, device) => ({ device: String(device), bookId: "sách", chapterId: 1 }));
+  h.phones = Array.from({ length: bars }, (_, device) => ({ device: String(device), bookId: "sách", chapterId: 1, playing: true }));
   h.effects = [];
   function Probe() { RemoteBars(); return null; }
   renderToString(<Probe />);
@@ -20,10 +20,10 @@ afterEach(() => { document.body.replaceChildren(); vi.restoreAllMocks(); });
 it("số thanh đổi thì thông báo lên đúng mép, hết thanh / rời màn thì trả vị trí mặc định", async () => {
   document.body.innerHTML = '<ol data-sonner-toaster></ol>';
   const el = document.querySelector<HTMLElement>("[data-sonner-toaster]")!, root = vi.spyOn(document.documentElement.style, "setProperty");
-  let cleanup = mount(2); expect(el.style.getPropertyValue("--toast-bottom")).toBe("210px"); cleanup?.();
-  cleanup = mount(1); expect(el.style.getPropertyValue("--toast-bottom")).toBe("153px");
+  let cleanup = mount(2); expect(el.style.getPropertyValue("--toast-bottom")).toBe("132px"); cleanup?.();
+  cleanup = mount(1); expect(el.style.getPropertyValue("--toast-bottom")).toBe("132px");
   const late = el.cloneNode() as HTMLElement; late.style.removeProperty("--toast-bottom"); document.body.append(late);
-  await new Promise(resolve => setTimeout(resolve, 0)); expect(late.style.getPropertyValue("--toast-bottom")).toBe("153px");
+  await new Promise(resolve => setTimeout(resolve, 0)); expect(late.style.getPropertyValue("--toast-bottom")).toBe("132px");
   cleanup?.(); expect(el.style.getPropertyValue("--toast-bottom")).toBe(""); expect(late.style.getPropertyValue("--toast-bottom")).toBe("");
   cleanup = mount(0); expect(cleanup).toBeUndefined(); expect(el.style.getPropertyValue("--toast-bottom")).toBe("");
   expect(root).not.toHaveBeenCalled();

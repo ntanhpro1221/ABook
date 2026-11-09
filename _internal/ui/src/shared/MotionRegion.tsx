@@ -164,7 +164,7 @@ export class MotionRegion extends Component<Props> {
       }
     }
     let restore: (() => void) | undefined;
-    if (slide && this.clone) ({ frames, restore } = this.slideFrames(box, this.clone, slide, frames, duration));
+    if (slide && this.clone) ({ frames, restore } = this.slideFrames(box, this.clone, slide, duration));
     this.animation = box.animate?.(frames, { duration, easing: through ? "linear" : EASE.standard }) ?? null;
     if (this.animation) {
       this.animation.onfinish = finish;
@@ -178,7 +178,7 @@ export class MotionRegion extends Component<Props> {
   }
   /** Đổi tab: ảnh cũ trượt hẳn ra phía bên kia, cây mới trượt vào từ phía mục vừa chọn - như lật trang, cùng một nhịp (chủ sách 25-10:
    *  "phần content ở dưới phải lướt sang thế chỗ"). Cả hai bị cắt trong khung của vùng, không tràn ra lề hay tạo cuộn ngang. */
-  private slideFrames(box: HTMLElement, clone: HTMLElement, slide: number, frames: Keyframe[], duration: number) {
+  private slideFrames(box: HTMLElement, clone: HTMLElement, slide: number, duration: number) {
     const width = box.getBoundingClientRect().width;
     // Trên / dưới giữ đúng vết cắt theo khung cuộn mà ảnh đã có (motion.ts trackSurfaceSnapshot): ảnh của cả danh sách dài hơn khung, cắt -100vh
     // thì phần dưới tràn đè thanh phát và thanh điều hướng trong lúc lướt (video chủ sách 26-10 "lướt sang tab khác bị lỗi").
@@ -192,7 +192,8 @@ export class MotionRegion extends Component<Props> {
       { transform: `translateX(${slide * width}px)`, clipPath: slide > 0 ? cut(0, width) : cut(width, 0) },
       { transform: "translateX(0px)", clipPath: cut(0, 0) },
     ];
-    if (frames[0].height !== undefined) { sliding[0].height = frames[0].height; sliding[1].height = frames[frames.length - 1].height; }
+    // Page contents keep their final geometry. Tweening the container height
+    // while virtual rows grow produces squeezed covers and overlapping cells.
     // Phần trượt ngoài khung vẫn tính vào vùng cuộn của tổ tiên: chặn ngang ở cha trong lúc trượt, trả lại khi xong.
     const parents = [box.parentElement, clone.parentElement === box.ownerDocument.body ? null : clone.parentElement].filter((parent): parent is HTMLElement => Boolean(parent));
     const kept = parents.map((parent) => parent.style.overflowX);

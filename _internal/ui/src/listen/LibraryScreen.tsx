@@ -487,6 +487,7 @@ export function LibraryScreen({
   const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0 || book.stage === "text"), [allBooks]);
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
+  const swipeStart = useRef<number | null>(null);
   const [filterRow, setFilterRow] = useState<HTMLDivElement | null>(null);
   const filterFade = useRowFade(filterRow);
   const [query, setQuery] = useState("");
@@ -536,10 +537,10 @@ export function LibraryScreen({
         // -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới.
         // Giữ chỗ từ đầu, chỉ mờ vào khi có sách: dòng tiêu đề không cao thêm lúc sách về (đo 25-10: lưới trôi 8 px khi mở app).
         actions={header && <div className="motion-hold -my-1 -ml-1 -mr-[16px] p-1" data-state={books?.length || upcoming.length ? "open" : "closed"} inert={!(books?.length || upcoming.length)}>{header}</div>}
-        subtitleKey={folded ? `${shown.length + upcomingShown.length}/${allBooks?.length ?? 0}` : allBooks?.length ?? 0}
+        subtitleKey={shown.length + upcomingShown.length}
         // Đang tìm: nói số cuốn khớp, không phải cả thư viện (soát 24-10 T08 - từng ghi "11 cuốn" trên một kết quả).
         // Chưa có số: giữ một dòng trống, số tới không làm đầu trang cao thêm đẩy lưới xuống.
-        subtitle={!allBooks?.length ? "\u00a0" : folded ? S.s_0_trong_1_cuon_99a00aaa(shown.length + upcomingShown.length, allBooks.length) : S.s_0_cuon_2356f2f6(allBooks.length)}
+        subtitle={!allBooks?.length ? "\u00a0" : folded ? S.s_0_trong_1_cuon_99a00aaa(shown.length + upcomingShown.length, allBooks.length) : S.s_0_cuon_2356f2f6(shown.length + upcomingShown.length)}
       />
       {recap}
       <LoadingCrossfade loading={isLoading} placeholder={
@@ -602,9 +603,19 @@ export function LibraryScreen({
             </label>
           </Collapse>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
-          <MotionRegion followScroll fadeThrough slideIndex={LIBRARY_FILTERS.indexOf(filter)} motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}>
+          <MotionRegion followScroll fadeThrough slideIndex={LIBRARY_FILTERS.indexOf(filter)} motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}
+            className="touch-pan-y"
+            onTouchStart={event => { swipeStart.current = event.touches[0]?.clientX ?? null; }}
+            onTouchCancel={() => { swipeStart.current = null; }}
+            onTouchEnd={event => {
+              const start = swipeStart.current; swipeStart.current = null;
+              const end = event.changedTouches[0]?.clientX;
+              if (start == null || end == null || Math.abs(end - start) < 48) return;
+              const next = Math.max(0, Math.min(LIBRARY_FILTERS.length - 1, LIBRARY_FILTERS.indexOf(filter) + (end < start ? 1 : -1)));
+              setFilter(LIBRARY_FILTERS[next]);
+            }}>
             {/* Kết quả rỗng không giữ lại bìa exit dưới ảnh cũ. Còn sách thì giữ node, focus và Windowed. */}
-            <SeriesShelves key={shown.length ? "books" : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
+            <SeriesShelves key={shown.length ? filter : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>
               <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
                 {query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : EMPTY_TEXT[filter]}

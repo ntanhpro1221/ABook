@@ -71,9 +71,9 @@ fun BookCover(
     val path = cover?.path
     val stamp = cover?.stamp ?: 0L
     val key = remember(path, stamp, widthPx) { path?.let { covers.key(it, stamp, widthPx) } }
-    val image = remember(key) { mutableStateOf(key?.let(covers::peek)) }
-    if (key != null && path != null && image.value == null) {
-        LaunchedEffect(key) { image.value = covers.load(key, path, widthPx, heightPx) }
+    val image = remember(path, stamp) { mutableStateOf(key?.let(covers::peek) ?: path?.let { covers.peek(it, stamp) }) }
+    if (key != null && path != null) {
+        LaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it } }
     }
     val shape = if (small) SmallShape else BookCoverShape
     val sunken = Abook.colors.bgSunken

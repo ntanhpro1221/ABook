@@ -33,13 +33,19 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 @Composable
 fun OtherPlayersEntry(repo: CompanionRepo, sheets: SheetHost, player: PlayerRepo) {
     val ui by repo.state.collectAsState()
-    val local by player.state.collectAsState()
     val hidden by repo.hidden.collectAsState()
-    val active = ui.players.filter { it.book.isNotEmpty() && it.chapter != null && "${it.device}:${it.book}" !in hidden }
-    Reveal(ui.players.isNotEmpty() || local.hasTrack) {
-        Column(Modifier.fillMaxWidth().background(Abook.colors.panel).padding(horizontal = Dim.margin)) {
-            DisclosureRow(S.s_phat_tren_681e16e1, { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }, "other_players",
-                summary = if (active.isEmpty()) S.s_chon_noi_phat_8e4c4ed9 else active.joinToString { it.name })
+    val active = ui.players.filter { it.playing && it.book.isNotEmpty() && it.chapter != null && "${it.device}:${it.book}" !in hidden }
+    val names = remember { arrayOf("") }
+    if (active.isNotEmpty()) names[0] = active.joinToString { it.name }
+    Reveal(active.isNotEmpty()) {
+        Row(Modifier.fillMaxWidth().height(36.dp).background(Abook.colors.panel)
+            .pressable { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }
+            .padding(horizontal = Dim.margin).testTag("other_players"), verticalAlignment = Alignment.CenterVertically) {
+            // cắt-có-chủ-ý: the requested one-line strip opens the sheet with full device names.
+            BasicText(S.s_dang_phat_tren_0_62a989a1(names[0]), Modifier.weight(1f),
+                // cắt-có-chủ-ý: the full names remain available in the device sheet.
+                style = Abook.type.caption, maxLines = 1)
+            ChevronIcon(Abook.colors.text2)
         }
     }
 }

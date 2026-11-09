@@ -133,13 +133,18 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 đường cong Material 3 (vào = decelerate, ra = accelerate, đổi chỗ = standard). Quy tắc:
 
 - **Vào chậm hơn ra**; ra luôn dùng thời lượng `*Out`.
-- **Mọi mở / đóng / đổi nội dung đều có hình học** (trượt, đổi cỡ hoặc phóng). Không dùng fade thuần, kể cả khi chiều cao hai nội dung bằng nhau.
-  Nội dung cũ rời trước khi chữ mới hiện để không chồng chữ; đổi cỡ thì tween chiều cao cùng lúc (MotionRegion, Collapse).
+- **Đổi trang và bộ lọc**: hai trang dịch chuyển đồng thời trong hai vùng kề nhau, cùng thời lượng/đường cong. Không có khoảng chờ trang cũ ra hết,
+  không bóp ngang bìa và không giữ các hàng đang thoát bên trong trang mới. Android dùng HorizontalPager cho bộ lọc; số cuốn theo kết quả đang chọn.
+  Bìa Thư viện ↔ trang sách là container transform trong SharedTransitionLayout, nội dung còn lại fade-through trên cùng clock (kể cả predictive Back/huỷ).
+  Đây là ngoại lệ fade có chủ đích. Nội dung dữ liệu về muộn hiện dần 150 ms. Mở/khép hàng riêng vẫn dùng Collapse/Reveal.
   Ngoại lệ: nền scrim / đổi màu, phản hồi trạng thái nhỏ và chế độ giảm chuyển động của hệ điều hành.
-- **Đi / về cùng đường, ngược chiều**: trang sách vào từ phải, Back ra phải và trang dưới trở lại từ trái; tab ngang cấp trượt theo thứ tự tab.
+- **Đi / về cùng đường, ngược chiều**: màn con thường vào từ phải, Back ra phải và trang dưới trở lại từ trái; bìa trang sách đi/về theo đúng đường chung; tab ngang cấp trượt theo thứ tự tab.
   Lớp phủ (sheet, menu, hộp) không đổi khung, kích cỡ hay vị trí bố cục phía dưới trong bất kỳ khung hình nào.
 - **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
   ô lớn; `listen/nowPlayingMorph.ts`, Web Animations trên chính phần tử, không chụp ảnh tài liệu); bìa ở Thư viện bay vào vị trí bìa ở trang sách.
+- **Thanh đáy của vỏ** nằm ngoài vùng chuyển cảnh. Thanh tab và thanh phát nhỏ giữ nguyên baseline ở mọi màn con thường; màn có hàng hành động đáy riêng
+  cho thanh vỏ trượt xuống mượt. Chọn tab từ màn con về gốc của tab đó. Không có hàng "Phát trên / Chọn nơi phát" thường trực: icon cast cạnh nút phát
+  mở bộ chọn. Chỉ máy khác đang phát mới có dải một dòng ≤36 dp "Đang phát trên <tên> ›", hiện/ẩn có chuyển động.
 - **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ

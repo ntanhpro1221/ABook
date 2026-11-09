@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -167,13 +168,16 @@ class ShellScreenshotTest {
     }
 
     @Test
-    fun pushHalfwayIsOnTheRightHalf() {
+    fun bookContainerMovesTheCoverWhileContentKeepsItsFinalCoordinates() {
         show()
+        val source = rule.onAllNodesWithTag("library_cover", useUnmergedTree = true)[0].getUnclippedBoundsInRoot()
         rule.mainClock.autoAdvance = false
         rule.onAllNodesWithTag("book_cell")[0].performClick()
         rule.mainClock.advanceTimeBy(150)
         val left = rule.onNodeWithTag("book_screen").getUnclippedBoundsInRoot().left
-        assert(left > 0.dp && left < 360.dp) { "màn con giữa chừng phải nằm giữa hai mép, left=$left" }
+        assertEquals(0f, left.value, 0.5f)
+        val moving = rule.onNodeWithTag("flying_book_cover", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertTrue("the cover moves upward from its library cell", moving.top < source.top && moving.top > 0.dp)
         shot("shell_push_mid_light")
         rule.mainClock.autoAdvance = true
     }
@@ -181,12 +185,16 @@ class ShellScreenshotTest {
     @Test
     fun predictiveBackMovesTheScreenWithTheFinger() {
         show()
+        val source = rule.onAllNodesWithTag("library_cover", useUnmergedTree = true)[0].getUnclippedBoundsInRoot()
         rule.onAllNodesWithTag("book_cell")[0].performClick()
         rule.waitForIdle()
+        val target = rule.onNodeWithTag("flying_book_cover", useUnmergedTree = true).getUnclippedBoundsInRoot()
         for (back in listOf(0.25f, 0.5f, 0.75f)) {
             rule.runOnUiThread { scope.launch { shell.nav.dragBack(back) } }
             rule.waitForIdle()
-            assertEquals(back * 360f, rule.onNodeWithTag("book_screen").getUnclippedBoundsInRoot().left.value, 1f)
+            val moving = rule.onNodeWithTag("flying_book_cover", useUnmergedTree = true).getUnclippedBoundsInRoot()
+            assertEquals(target.top.value + (source.top.value - target.top.value) * back, moving.top.value, 1f)
+            assertEquals(0f, rule.onNodeWithTag("book_screen").getUnclippedBoundsInRoot().left.value, 1f)
         }
         rule.runOnUiThread { scope.launch { shell.nav.cancelBack() } }
         rule.waitForIdle()

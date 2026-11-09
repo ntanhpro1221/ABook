@@ -284,6 +284,13 @@ Item {
         function test_studioCentred() {
             const page = make(studioFactory, sizes()[2])
             for (let c of page.children) {
+                if (c.objectName === "studioContentSlide") {
+                    compare(c.x, 0)
+                    compare(c.width, page.width)
+                    compare(c.height, page.height - c.y)
+                    verify(c.clip)
+                    continue
+                }
                 // Thanh "Đang mở Studio của …" (máy đã ghép) tràn cả bề ngang như PeerBar của web; nội dung của nó thẳng khối giữa
                 // Vùng nội dung tràn cả bề ngang; đầu màn dự án của nó thẳng khối giữa
                 if (c.objectName === "studioContent") {

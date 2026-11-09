@@ -51,32 +51,49 @@ FocusScope {
     property var shownSections: []
     property string appliedSelection: "all\u0000\u0000recent"
     readonly property int count: shownSections.length
-    property real resultsOpacity: 1
     property real contentOpacity: !loading && !failed && !libraryError ? 1 : 0
     Behavior on contentOpacity { NumberAnimation { duration: Theme.motionMedium } }
     readonly property var continuing: LibraryLogic.listening(books, Player.loaded ? Player.bookId : "")
     function shapeOf(list) { return list.map(s => s.key + ":" + s.books.map(b => b.bookId).join(",")).join("|") }
-    onSectionsChanged: {
-        // Dữ liệu tự làm mới (tiến độ nghe, chuyển chương) mà vẫn là các cuốn ấy theo thứ tự ấy: đổi tại chỗ, không mờ cả danh sách
-        // (luật chủ sách 30-10). Chỉ đổi lọc / tìm / xếp hay danh sách đổi cuốn mới có chuyển động.
-        if (!resultMotion.running && filter + "\u0000" + query + "\u0000" + sortOrder === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) {
-            shownSections = sections
-            return
-        }
-        resultMotion.stop(); resultMotion.start()
+    property real resultProgress: 1
+    property int resultDirection: 1
+    property var resultImage: null
+    property int resultGeneration: 0
+    property int appliedFilter: 0
+    readonly property int filterIndex: ["all", "listening", "new", "finished"].indexOf(filter)
+    function applyResults() {
+        const selection = root.filter + "\u0000" + root.query + "\u0000" + root.sortOrder
+        const changed = selection !== appliedSelection
+        const previousY = list.contentY
+        shownSections = sections
+        if (changed) { current = 0; list.positionViewAtBeginning() }
+        else list.contentY = previousY
+        appliedSelection = selection
+        appliedFilter = filterIndex
     }
-    SequentialAnimation {
+    onSectionsChanged: {
+        const selection = filter + "\u0000" + query + "\u0000" + sortOrder
+        if (selection === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) { shownSections = sections; return }
+        const generation = ++resultGeneration
+        resultMotion.stop()
+        if (!resultViewport.width || !resultViewport.height || loading) { applyResults(); resultProgress = 1; return }
+        // Keep the old page visible while its immutable image is captured.
+        // Both pages then translate together; no out-then-in or width tween.
+        resultViewport.grabToImage(function(result) {
+            if (generation !== root.resultGeneration) return
+            root.resultImage = result
+            root.resultDirection = root.filterIndex >= root.appliedFilter ? 1 : -1
+            root.applyResults()
+            root.resultProgress = 0
+            resultMotion.start()
+        })
+    }
+    NumberAnimation {
         id: resultMotion
-        NumberAnimation { target: root; property: "resultsOpacity"; to: 0; duration: Theme.reduceMotion ? 60 : Theme.motionFastOut }
-        ScriptAction { script: {
-            const selection = root.filter + "\u0000" + root.query + "\u0000" + root.sortOrder
-            const previousY = list.contentY
-            root.shownSections = root.sections
-            if (selection !== root.appliedSelection) { root.current = 0; list.positionViewAtBeginning() }
-            else list.contentY = previousY
-            root.appliedSelection = selection
-        } }
-        NumberAnimation { target: root; property: "resultsOpacity"; to: 1; duration: Theme.reduceMotion ? 90 : Theme.motionMedium }
+        target: root; property: "resultProgress"; to: 1
+        duration: Theme.reduceMotion ? Theme.motionFast : Theme.motionMedium
+        easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard
+        onFinished: root.resultImage = null
     }
     readonly property bool libraryError: Backend.library.error !== ""
     property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
@@ -102,7 +119,7 @@ FocusScope {
         x: root.contentX
         width: root.contentW
         title: S.s_thu_vien_58145555
-        subtitle: root.loading || root.failed || root.total === 0 ? "" : root.query.trim() ? root.filtered.length + S.s_copy_3481988241fe + root.total + S.s_cuon_421f8494 : root.total + S.s_cuon_421f8494
+        subtitle: root.loading || root.failed || root.total === 0 ? "" : root.filtered.length + S.s_cuon_421f8494
         Button { opacity: root.total > 0 ? 1 : 0; enabled: opacity > 0; text: S.s_them_sach_2a9d3708; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]); Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
     }
 
@@ -242,15 +259,35 @@ FocusScope {
     }
 
     // Lưới ảo hoá theo HÀNG: mỗi delegate là một hàng N ô, cao bằng ô cao nhất của hàng (tên dài xuống dòng đủ, không cắt).
+    Item {
+        id: resultViewport
+        anchors.top: libraryTools.bottom; anchors.topMargin: Theme.s16
+        anchors.bottom: parent.bottom; width: parent.width
+        clip: true
+        DragHandler {
+            target: null
+            xAxis.enabled: true; yAxis.enabled: false
+            onActiveChanged: {
+                if (active || Math.abs(translation.x) < 48) return
+                const filters = ["all", "listening", "new", "finished"]
+                root.filter = filters[Math.max(0, Math.min(3, root.filterIndex + (translation.x < 0 ? 1 : -1)))]
+            }
+        }
+        Image {
+            objectName: "libraryPreviousPage"
+            source: root.resultImage ? root.resultImage.url : ""
+            width: parent.width; height: parent.height
+            visible: root.resultProgress < 1 && root.resultImage !== null
+            x: Theme.reduceMotion ? 0 : -root.resultDirection * width * root.resultProgress
+            opacity: Theme.reduceMotion ? 1 - root.resultProgress : 1
+        }
+    }
     ListView {
         id: list
-        anchors.top: libraryTools.bottom
-        anchors.topMargin: Theme.s16
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        opacity: root.resultsOpacity * root.contentOpacity
-        transform: Translate { y: Theme.reduceMotion ? 0 : (1 - list.opacity) * 16 }
+        parent: resultViewport
+        width: parent.width; height: parent.height
+        x: Theme.reduceMotion ? 0 : root.resultDirection * width * (1 - root.resultProgress)
+        opacity: root.contentOpacity * (Theme.reduceMotion ? root.resultProgress : 1)
         visible: opacity > 0 && root.count > 0
         focus: true
         clip: true
@@ -449,9 +486,11 @@ FocusScope {
     }
 
     EmptyState {
-        anchors.top: libraryTools.bottom; anchors.topMargin: Theme.s32
+        parent: resultViewport
+        anchors.top: parent.top; anchors.topMargin: Theme.s16
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.min(parent.width - 2 * Theme.margin, 560)
+        transform: Translate { x: Theme.reduceMotion ? 0 : root.resultDirection * resultViewport.width * (1 - root.resultProgress) }
         opacity: !root.loading && !root.failed && !root.libraryError && root.total > 0 && root.count === 0 ? 1 : 0
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }

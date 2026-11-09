@@ -1,6 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
@@ -18,7 +19,7 @@ import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { ShortName } from "@/shared/ShortName";
-import { announce, IconButton, Tooltip } from "@/shared/ui";
+import { announce, Dialog, IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
 
 // Điều khiển điện thoại đang phát từ máy tính (PLAYER_RESEARCH #12, kiểu Spotify Connect trong mạng nhà).
@@ -167,7 +168,7 @@ function useToastsAbove(bars: number) {
   useLayoutEffect(() => {
     if (!bars) return;
     const offset = toastOffset("bottom");
-    offset.set(`${96 + 57 * bars}px`);
+    offset.set(`${96 + 36}px`);
     return () => offset.dispose();
   }, [bars]);
 }
@@ -296,6 +297,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
  * máy tính" cũng ẩn thanh và dừng điện thoại, nên chuyển ngược về điện thoại là thanh hiện lại.
  */
 export function RemoteBars() {
+  const [open, setOpen] = useState(false);
   const { data } = useRemotePhones();
   const client = useQueryClient();
   const [dismissed, setDismissed] = useState<Record<string, { bookId: string; playing: boolean }>>({});
@@ -327,20 +329,31 @@ export function RemoteBars() {
     const mark = dismissed[phone.device];
     return !!mark && mark.bookId === phone.bookId && (mark.playing || !phone.playing);
   };
-  const visible = (data?.phones ?? []).filter((phone) => phone.bookId && phone.chapterId !== null && !hidden(phone));
-  useToastsAbove(visible.length);
-  if (!data || !visible.length) return <MotionRegion />;
+  const visible = (data?.phones ?? []).filter((phone) => phone.playing && phone.bookId && phone.chapterId !== null && !hidden(phone));
+  const names = useRef("");
+  if (visible.length) names.current = visible.map(phone => phone.name).join(", ");
+  useToastsAbove(visible.length ? 1 : 0);
   return (
-    <MotionRegion>
-      {visible.map((phone) => (
+    <>
+    <MotionPresence open={visible.length > 0}>
+      <button type="button" data-remote-strip onClick={() => setOpen(true)}
+        className="flex h-9 w-full items-center gap-2 border-t border-line bg-panel px-4 text-left text-xs text-fg-2">
+        <Cast className="size-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{S.s_dang_phat_tren_0_62a989a1(names.current)}</span>
+        <span aria-hidden>›</span>
+      </button>
+    </MotionPresence>
+    <Dialog open={open} onOpenChange={setOpen} title={S.s_thiet_bi_phat_c8cfc7a8}>
+      {(data?.phones ?? []).filter(phone => phone.bookId && phone.chapterId !== null).map((phone) => (
         <RemoteBar
           key={phone.device}
           phone={phone}
-          receivedAt={data.receivedAt}
+          receivedAt={data?.receivedAt ?? Date.now()}
           onDismiss={() => setDismissed((current) => ({ ...current, [phone.device]: { bookId: phone.bookId, playing: phone.playing } }))}
         />
       ))}
-    </MotionRegion>
+    </Dialog>
+    </>
   );
 }
 
@@ -380,7 +393,7 @@ export function HandOffButton({ className }: { className?: string }) {
   useEffect(() => {
     if (menuOpen && nothing) announce(searching ? S.s_dang_tim_thiet_bi_b72cae79 : S.s_chua_thay_thiet_bi_192c6e9e);
   }, [menuOpen, nothing, searching]);
-  if (!track || !data) return <MotionRegion as="span" />;
+  if (!track) return <MotionRegion as="span" />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
   const rescan = () => {
     setSearching(true);
@@ -413,7 +426,7 @@ export function HandOffButton({ className }: { className?: string }) {
       },
     );
   };
-  if (targets.length === 1 && !menuOpen) {
+  if (slot && targets.length === 1 && !menuOpen) {
     const [only] = targets;
     const label = S.s_phat_tren_0_1_757da6a7(only.name, protocolLabel(only) ? ` (${protocolLabel(only)})` : "");
     if (slot) return <MotionRegion as="span" className="block"><SlotFace aria-label={label} value={only.name} onClick={() => handOff(only)} /></MotionRegion>;

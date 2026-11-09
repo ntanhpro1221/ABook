@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
-// Đổi trang không qua View Transition (video 25-10 "mở tab thư viện bị giật"): khung trang mờ ra trước, trang mới dựng khi đã khuất rồi
-// hiện vào theo hướng; nội dung có sẵn của trang mới (Collapse appear trong MotionPresence) không mọc từ 0 làm trang cao dần.
+// Route commits immediately; old/new content move together outside fixed shell chrome.
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -14,6 +13,7 @@ function fakePage() {
   const finishers: (() => void)[] = [];
   const cancelled: number[] = [];
   const page = {
+    getBoundingClientRect: () => ({ width: 360, height: 640 }),
     animate: (frames: Keyframe[], options: KeyframeAnimationOptions) => {
       const index = calls.push({ frames, options }) - 1;
       return { finished: new Promise<void>((resolve) => finishers.push(resolve)), cancel: () => cancelled.push(index) };
@@ -26,43 +26,36 @@ function fakePage() {
 
 afterEach(() => { vi.restoreAllMocks(); enterPage({ documentElement: { dataset: {} }, querySelector: () => null } as never); });
 
-it("mờ ra ngay khi bấm, bấm liên tiếp dùng chung một lần mờ, trang mới vào theo hướng của lần cuối", async () => {
-  const { calls, finishers, cancelled, doc } = fakePage();
-  const left = leavePage("forward", doc);
+it("commits immediately and uses the latest direction without an exit-only interval", async () => {
+  const { calls, doc } = fakePage();
+  await leavePage("forward", doc);
   expect(pageEntering()).toBe(true);
-  expect(leavePage("back", doc)).toBe(left);
-  expect(calls).toHaveLength(1);
-  expect(calls[0].frames.at(-1)).toMatchObject({ opacity: 0, transform: "translateX(-12px)" });
-  expect(calls[0].options).toMatchObject({ duration: 90, fill: "forwards" });
-  finishers[0](); await left;
+  await leavePage("back", doc);
+  expect(calls).toHaveLength(0);
   enterPage(doc);
   expect(pageEntering()).toBe(false);
-  expect(cancelled).toContain(0);
-  expect(calls[1].frames[0]).toMatchObject({ opacity: 0, transform: "translateX(-32px)" });
-  expect(calls[1].frames.at(-1)).toMatchObject({ opacity: 1, transform: "none" });
+  expect(calls).toHaveLength(1);
+  expect(calls[0].frames[0]).toMatchObject({ transform: "translateX(-360px)" });
+  expect(calls[0].frames.at(-1)).toMatchObject({ opacity: 1, transform: "none" });
 });
 
-it("ngang hàng phóng nhẹ cả lúc rời lẫn lúc vào; không đổi trang thì không đụng khung", async () => {
-  const { calls, finishers, doc } = fakePage();
+it("peer navigation uses translation without scaling the contents", async () => {
+  const { calls, doc } = fakePage();
   await leavePage("none", doc);
+  enterPage(doc);
   expect(calls).toHaveLength(0);
-  const left = leavePage("through", doc);
-  expect(calls[0].frames.at(-1)).toMatchObject({ opacity: 0, transform: "scale(0.97)" });
-  finishers[0](); await left; enterPage(doc);
-  expect(calls[1].frames[0]).toMatchObject({ opacity: 0, transform: "scale(0.97)" });
+  await leavePage("through", doc); enterPage(doc);
+  expect(calls[0].frames[0]).toMatchObject({ transform: "translateX(360px)" });
 });
 
-it.each<NavMotion>(["forward", "back", "tab-forward", "tab-back", "through"])("%s: both halves have geometry, reduced motion is explicit", async nav => {
+it.each<NavMotion>(["forward", "back", "tab-forward", "tab-back", "through"])("%s: incoming content has fixed geometry and an explicit reduced-motion alternative", async nav => {
   vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
-  const { calls, finishers, doc } = fakePage();
-  const left = leavePage(nav, doc);
-  finishers[0](); await left; enterPage(doc);
-  for (const call of calls) expect(call.frames[0].transform).not.toBe(call.frames.at(-1)?.transform);
-  if (nav !== "through") {
-    const back = nav.endsWith("back");
-    expect(calls[0].frames.at(-1)?.transform).toBe(`translateX(${back ? 12 : -12}px)`);
-    expect(calls[1].frames[0].transform).toBe(`translateX(${back ? -32 : 32}px)`);
-  }
+  const { calls, doc } = fakePage();
+  await leavePage(nav, doc); enterPage(doc);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].frames[0].transform).toBe(`translateX(${nav.endsWith("back") ? -360 : 360}px)`);
+  expect(calls[0].frames.at(-1)?.transform).toBe("none");
+  for (const frame of calls[0].frames) expect(frame).not.toHaveProperty("height");
 });
 
 it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới sau vẫn mở ra", async () => {
@@ -71,11 +64,11 @@ it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới s
   Object.defineProperty(HTMLElement.prototype, "animate", { configurable: true, value: animate });
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);
-  const { finishers, doc } = fakePage();
+  const { doc } = fakePage();
   const left = leavePage("through", doc);
   await act(() => root.render(<Collapse open appear><p>Tất cả</p></Collapse>));
   expect(animate).not.toHaveBeenCalled();
-  finishers[0](); await left; enterPage(doc);
+  await left; enterPage(doc);
   // Tới ngay lúc trang đang hiện vào: cũng hiện tại chỗ.
   await act(() => root.render(<><Collapse open appear><p>Tất cả</p></Collapse><Collapse key="soon" open appear><p>Kèm trang</p></Collapse></>));
   expect(animate).not.toHaveBeenCalled();
@@ -89,7 +82,7 @@ it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới s
 });
 
 it("thứ dựng cùng trang mới (hiện dần, dòng nhô lên) đi theo chuyển cảnh trang; vòng lặp, việc dài, việc đã chạy và việc trễ có chủ ý giữ nguyên", async () => {
-  const { finishers, doc } = fakePage();
+  const { doc } = fakePage();
   const finished: string[] = [];
   const child = (name: string, iterations: number, endTime: number, currentTime: number, delay = 0) =>
     ({ effect: { getComputedTiming: () => ({ iterations, endTime }), getTiming: () => ({ delay }) }, currentTime, cancel() {}, finish: () => finished.push(name) });
@@ -99,7 +92,7 @@ it("thứ dựng cùng trang mới (hiện dần, dòng nhô lên) đi theo chuy
   const own = page.getAnimations;
   page.getAnimations = (options) => (options?.subtree ? children : own());
   const left = leavePage("through", doc);
-  finishers[0](); await left;
+  await left;
   enterPage(doc);
   expect(finished).toEqual(["hiện dần", "dòng nhô"]);
 });

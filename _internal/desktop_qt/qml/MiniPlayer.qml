@@ -82,11 +82,13 @@ Rectangle {
     Row {
         id: playback
         objectName: "miniPlayback"
-        x: details.x + (details.width + Theme.s24) * Math.min(1, root.wideT * 2)
+        x: Math.min(root.width - width - 12,
+                    details.x + (details.width + Theme.s24) * Math.min(1, root.wideT * 2))
         y: details.y + (details.height + Theme.s4) * (1 - Math.max(0, root.wideT * 2 - 1))
         spacing: Theme.s8
         SkipButton { objectName: "miniBack"; forward: false; tip: S.s_lui_0_giay_718bdd89(Player.skipSeconds) }
         PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48 }
+        IconButton { id: deviceButton; objectName: "miniDevices"; icon: "cast"; tip: S.s_thiet_bi_phat_c8cfc7a8; onClicked: output.show() }
         SkipButton { objectName: "miniForward"; forward: true; tip: S.s_toi_0_giay_84234225(Player.skipSeconds) }
     }
     SeekBar {
@@ -96,4 +98,5 @@ Rectangle {
         anchors.bottom: parent.bottom
         height: 12
     }
+    OutputPopover { id: output; anchorItem: deviceButton }
 }

@@ -54,6 +54,7 @@ vi.mock("@/listen/PlayerViews", () => ({ Back15: () => null, Forward15: () => nu
 vi.mock("@/shared/BookCover", () => ({ BookCover: () => null }));
 vi.mock("@/shared/ShortName", () => ({ ShortName: () => null }));
 vi.mock("@/shared/ui", () => ({
+  Dialog: ({ children }: any) => children,
   IconButton: (props: { label: string; onClick?: () => void }) => {
     if (props.label.startsWith("Phát trên")) h.handOff = props.onClick;
     return null;
@@ -63,6 +64,11 @@ vi.mock("@/shared/ui", () => ({
     return children;
   },
 }));
+vi.mock("@radix-ui/react-dropdown-menu", () => {
+  const pass = ({ children }: any) => children;
+  return { Root: pass, Trigger: pass, Portal: pass, Content: pass, Label: pass,
+    Item: ({ onSelect }: any) => { h.handOff = () => onSelect?.({ preventDefault() {} }); return null; } };
+});
 vi.mock("@/studio/api", () => ({ api: (...args: unknown[]) => h.api(...args) }));
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: h.error, loading: vi.fn(() => "t"), dismiss: vi.fn() }) }));
 

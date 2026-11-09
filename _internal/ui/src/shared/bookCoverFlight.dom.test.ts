@@ -11,7 +11,7 @@ beforeEach(() => {
     finished: new Promise<void>(resolve => { complete = resolve; }), cancel() {},
   }) as unknown as Animation);
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-    return this.dataset.target ? box(260, 100, 192, 192) : box(40, 300, 160, 240);
+    return this.dataset.target ? box(260, 100, 192, 288) : box(40, 300, 160, 240);
   });
 });
 afterEach(() => { captureBookCover("", ""); document.body.replaceChildren(); vi.restoreAllMocks(); });
@@ -22,12 +22,12 @@ it.each([false, true])("book cover moves at full opacity and cleans up in either
   captureBookCover(back ? "/book/b" : "/", back ? "/" : "/book/b");
   const clone = document.querySelector<HTMLElement>("[data-book-cover-flight]")!;
   expect(clone.style.position).toBe("fixed");
-  expect(source.style.visibility).toBe("hidden");
+  expect(source.style.visibility).toBe("");
   source.remove();
   const target = document.createElement("div"); target.dataset.bookCover = "b"; target.dataset.target = "1"; document.body.prepend(target);
   landBookCover(back);
   expect(clone.animate).toHaveBeenCalledWith([
-    { transform: "none", opacity: 1 }, { transform: "translate(220px, -200px) scale(1.2, 0.8)", opacity: 1 },
+    { transform: "none", opacity: 1 }, { transform: "translate(220px, -200px) scale(1.2)", opacity: 1 },
   ], expect.objectContaining({ duration: back ? 200 : 300 }));
   expect(target.style.visibility).toBe("hidden");
   complete(); await Promise.resolve();
