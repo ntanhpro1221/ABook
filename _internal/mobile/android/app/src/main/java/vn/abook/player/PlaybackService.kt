@@ -483,6 +483,8 @@ class PlaybackService : MediaLibraryService() {
         AppLog.i("PlaybackService", "dịch vụ phát tắt")
         Playback.removeListener(sleepButtons)
         Playback.saveNow()
+        // The process may go right after this: the last place must be on disk, not only handed to the writer.
+        Playback.flushSaves()
         session?.run {
             player.release()
             release()

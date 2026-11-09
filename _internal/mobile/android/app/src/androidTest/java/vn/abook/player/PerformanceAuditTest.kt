@@ -76,6 +76,13 @@ class PerformanceAuditTest {
             output.writeText("violations=${violations.size}\n\n" + violations.joinToString("\n\n"))
             android.util.Log.i("Perf165", "StrictMode violations=${violations.size}; report=${output.path}")
         }
+        if (InstrumentationRegistry.getArguments().getString("requireOffMain") == "true") {
+            // Load and player events (pause, seek, resume, chapter/media transition) must leave every disk access to workers.
+            val playerPaths = PLAYER_PATHS.filter { path -> violations.any { path in it } }
+            check(playerPaths.isEmpty()) {
+                "Main-thread disk I/O in player paths ${playerPaths}: ${violations.count { v -> PLAYER_PATHS.any { it in v } }} violations"
+            }
+        }
     }
 
     @Test
@@ -155,6 +162,11 @@ class PerformanceAuditTest {
         instrumentation.runOnMainSync {
             check(Playback.bookId.isEmpty() && !Playback.isPlaying) { "A stale prepared load reopened the dismissed book" }
         }
+    }
+
+    private companion object {
+        val PLAYER_PATHS = listOf("Playback.saveNow", "Playback.load", "Playback.onMediaTransition", "Playback.onWantsChanged",
+            "Playback.onPlayingChanged", "Playback.seekTo", "Playback.pause", "Playback.play", "Streaming.keepScript", "MusicBed.sync")
     }
 
     private fun click(tag: String) {

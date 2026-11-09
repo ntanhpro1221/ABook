@@ -57,12 +57,14 @@ class SaveFailureTest {
         voice.position = 2_000_000
         Playback.saveNow() // không được ném ra ngoài: ném ở đây là văng cả bộ phát
         Playback.saveNow() // lần hỏng thứ hai, vẫn không báo lại
+        assertTrue(Playback.flushSaves())
         val failures = events.filter { it.optString("kind") == "saveFailed" }
         assertEquals("báo đúng một lần", 1, failures.size)
         // Nhịp sau thử lại: chỗ ghi thông lại thì lưu được và gỡ lời báo.
         file.delete()
         file.writeText(old)
         Playback.saveNow()
+        assertTrue(Playback.flushSaves())
         assertEquals(2000.0, Store.state("save-book").getJSONObject("last").getDouble("seconds"), 0.001)
         assertTrue(events.none { it.optString("kind") == "saveFailed" && it !== failures.single() })
         // Hỏng lần nữa sau khi đã khoẻ lại là chuyện mới: báo lại.
@@ -70,6 +72,7 @@ class SaveFailureTest {
         file.mkdirs()
         voice.position = 2_100_000
         Playback.saveNow()
+        assertTrue(Playback.flushSaves())
         assertEquals(2, events.count { it.optString("kind") == "saveFailed" })
         file.delete()
     }
@@ -78,6 +81,7 @@ class SaveFailureTest {
         stateFile().let { it.delete(); it.mkdirs() }
         voice.position = 2_000_000
         Playback.saveNow()
+        assertTrue(Playback.flushSaves())
         val failed = events.single { it.optString("kind") == "saveFailed" }
         assertTrue(failed.optString("saveError").contains("bạn"))
         assertTrue(failed.optString("saveError").contains("chỗ"))

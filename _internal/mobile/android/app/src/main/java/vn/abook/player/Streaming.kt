@@ -217,8 +217,12 @@ object Streaming {
     /** Chương đang phát của cuốn nghe thẳng: đệm chữ đọc theo của nó ở nền, cùng lúc với audio - máy tính tắt sau đó thì "Đọc theo" vẫn mở
      *  được chương đã nghe (như máy tính, webui/packages.chapter_file; soát a27 lỗi 12). */
     fun keepScript(context: Context, id: String, chapterId: Long) {
-        val script = missingScript(id, chapterId) ?: return
-        Thread({ fetchSmall(context, id, script) }, "abook-keep-script").apply { isDaemon = true }.start()
+        // Media transitions arrive on the player looper: even the manifest check reads disk, so all of it runs here.
+        scripts.execute { missingScript(id, chapterId)?.let { fetchSmall(context, id, it) } }
+    }
+
+    private val scripts = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-keep-script").apply { isDaemon = true }
     }
 
     /**

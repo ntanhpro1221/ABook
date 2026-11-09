@@ -2,46 +2,59 @@ package vn.abook.player
 
 import java.util.concurrent.Executor
 
-/** One pending periodic snapshot; a synchronous event can never be overwritten by older work. */
+/**
+ * Ordered place writer. Callers hand over an owned snapshot and never wait for the disk: event snapshots
+ * (pause, seek, chapter, record handoff) are written in the order they were offered, and a periodic snapshot only
+ * waits while nothing newer is queued - any newer snapshot makes it obsolete. One drain runs at a time on [executor].
+ */
 internal class OrderedCheckpoint<T>(private val executor: Executor, private val writeLock: Any = Any(), private val write: (T) -> Unit) {
-    private class Work<T>(val sequence: Long, val value: T, val completed: (T, Result<Unit>) -> Unit)
-    private val stateLock = Any()
-    private var sequence = 0L
-    private var barrier = 0L
-    private var pending: Work<T>? = null
+    private class Work<T>(val value: T, val periodic: Boolean, val completed: (T, Result<Unit>) -> Unit)
+    private val stateLock = Object()
+    private val queue = ArrayDeque<Work<T>>()
     private var scheduled = false
 
-    fun periodic(value: T, completed: (T, Result<Unit>) -> Unit) {
+    fun periodic(value: T, completed: (T, Result<Unit>) -> Unit) = offer(Work(value, true, completed))
+
+    /** An event snapshot: always written, after every snapshot offered before it. */
+    fun immediate(value: T, completed: (T, Result<Unit>) -> Unit) = offer(Work(value, false, completed))
+
+    private fun offer(work: Work<T>) {
         synchronized(stateLock) {
-            pending = Work(++sequence, value, completed)
+            queue.removeAll { it.periodic }
+            queue.addLast(work)
             if (scheduled) return
             scheduled = true
         }
-        executor.execute {
-            while (true) {
-                val next = synchronized(stateLock) {
-                    val next = pending
-                    pending = null
-                    if (next == null) {
-                        scheduled = false
-                        return@execute
-                    }
-                    next
+        executor.execute(::drain)
+    }
+
+    private fun drain() {
+        while (true) {
+            val next = synchronized(stateLock) {
+                queue.removeFirstOrNull() ?: run {
+                    scheduled = false
+                    stateLock.notifyAll()
+                    return
                 }
-                val outcome = synchronized(writeLock) {
-                    if (synchronized(stateLock) { next.sequence > barrier }) runCatching { write(next.value) } else null
-                }
-                if (outcome != null) next.completed(next.value, outcome)
             }
+            val outcome = synchronized(writeLock) { runCatching { write(next.value) } }
+            next.completed(next.value, outcome)
         }
     }
 
-    /** Pause, seek, chapter and record handoffs keep the existing durable return contract. */
-    fun immediate(value: T): Result<Unit> = synchronized(writeLock) {
+    /**
+     * Waits until every snapshot offered before the call is written (service teardown, tests). Never call it while
+     * holding [writeLock]: the writer needs that monitor. Returns false when [timeoutMs] passes first.
+     */
+    fun flush(timeoutMs: Long): Boolean {
+        val deadline = System.nanoTime() + timeoutMs * 1_000_000
         synchronized(stateLock) {
-            barrier = ++sequence
-            pending = null
+            while (scheduled) {
+                val left = (deadline - System.nanoTime()) / 1_000_000
+                if (left <= 0) return false
+                stateLock.wait(left)
+            }
         }
-        runCatching { write(value) }
+        return true
     }
 }

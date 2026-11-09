@@ -488,13 +488,14 @@ object Playback {
         }
     }
 
-    data class PreparedBook(val record: String, val voice: String, val media: List<MediaItem>)
+    data class PreparedBook(val record: String, val voice: String, val media: List<MediaItem>, val music: MusicBed.BookMusic)
 
     /** Disk and artwork work for a load; callers run this before returning to the player looper. */
     internal fun prepareBook(id: String, title: String, narratorName: String, items: List<Chapter>): PreparedBook {
         val record = Store.activeRecord(id)
         return PreparedBook(record, ReadAloud.voiceForBook(id, record),
-            if (items.any { it.isText }) emptyList() else mediaItems(id, title, narratorName, items))
+            if (items.any { it.isText }) emptyList() else mediaItems(id, title, narratorName, items),
+            MusicBed.read(id))
     }
 
     /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
@@ -510,6 +511,7 @@ object Playback {
         // Giọng "Nghe ngay" của cuốn này, nhớ trong lõi: phát tiếp từ widget / xe hơi sau khi khởi động lại vẫn đúng giọng người nghe đã chọn.
         val record = prepared?.record ?: Store.activeRecord(id)
         ReadAloud.useVoiceOf(id, record, prepared?.voice)
+        prepared?.let { MusicBed.prepare(it.music) }
         bookId = id
         recordId = record
         SleepTimer.checkOwner()
@@ -736,8 +738,10 @@ object Playback {
         syncMusic(playing)
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
-            saveNow()
-            pushHeld(force = true)
+            val book = bookId
+            val record = recordId
+            // Push only once the paused place is on disk: StateSync reads the record file on its own thread.
+            saveNow { pushHeld(force = true, book, record) }
             closeSession()
         } else {
             openSession()
@@ -912,9 +916,9 @@ object Playback {
     }
 
     /** Đẩy chỗ nghe của ĐÚNG hồ sơ phiên phát đang giữ lên máy giữ sách (không phải hồ sơ đang dùng); hồ sơ đã mất thì không đẩy gì. */
-    private fun pushHeld(force: Boolean) {
-        if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
-        StateSync.pushSoon(appContext, bookId, force, recordId.ifEmpty { null })
+    private fun pushHeld(force: Boolean, book: String = bookId, record: String = recordId) {
+        if (record.isNotEmpty() && !Store.holds(book, record)) return
+        StateSync.pushSoon(appContext, book, force, record.ifEmpty { null })
     }
 
     /**
@@ -1024,12 +1028,22 @@ object Playback {
     }
 
     /**
-     * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả
-     * bộ phát (soát a77 #4). Hỏng thì chỗ đã lưu trước đó còn nguyên (ghi nguyên tử), ghi logcat, báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế (nhịp sau) tự thử lại.
+     * Lưu chỗ nghe. Snapshot đọc trên luồng chính rồi giao cho luồng ghi `abook-place` - luồng chính không chờ đĩa; các lần lưu sự kiện ghi đúng thứ tự,
+     * mới hơn mọi nhịp định kỳ đang chờ. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) không văng bộ phát (soát a77 #4): chỗ cũ còn nguyên (ghi nguyên tử), ghi logcat,
+     * báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế tự thử lại. [then] chạy trên luồng chính sau khi lần ghi này xong (không có gì để lưu: chạy ngay).
+     * Dịch vụ tắt thì [flushSaves] chờ hàng ghi cạn.
      */
-    fun saveNow() {
-        val place = placeCheckpoint() ?: return
-        saved(place, checkpoints.immediate(place))
+    fun saveNow(then: (() -> Unit)? = null) {
+        val place = placeCheckpoint() ?: return run { then?.invoke() }
+        checkpoints.immediate(place) { snapshot, result -> onMain {
+            saved(snapshot, result)
+            then?.invoke()
+        } }
+    }
+
+    /** Chờ mọi lần lưu đã giao ghi xong (dịch vụ phát tắt, test). Không gọi khi đang giữ khoá Store. */
+    fun flushSaves(timeoutMs: Long = 2_000): Boolean = checkpoints.flush(timeoutMs).also { done ->
+        if (!done) AppLog.w("ABookSave", "chỗ nghe chưa ghi xong sau $timeoutMs ms")
     }
 
     fun chaptersJson(): JSONArray = JSONArray().also { array ->

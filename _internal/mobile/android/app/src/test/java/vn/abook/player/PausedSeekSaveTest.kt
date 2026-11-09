@@ -42,16 +42,19 @@ class PausedSeekSaveTest {
     @Test fun seekingWhilePausedSavesTheNewPlaceAtOnce() {
         assertFalse(voice.playing)
         Playback.seekTo(600.0) // tua về phút 10 bằng app / màn khoá
+        assertTrue("the place writer drains in milliseconds", Playback.flushSaves())
         assertEquals("process death ngay sau đây vẫn mở lại ở phút 10", 600.0, savedSeconds(), 0.001)
     }
 
     @Test fun aSeekDiscontinuityWhilePausedSavesToo() {
         voice.position = 300_000 // controller ngoài tua thẳng player (MediaSession)
         Playback.onSeekSettled(androidx.media3.common.Player.DISCONTINUITY_REASON_SEEK)
+        assertTrue(Playback.flushSaves())
         assertEquals(300.0, savedSeconds(), 0.001)
         // Chuyển mục tự động (hết chương) không phải tua: không lưu thêm.
         voice.position = 100_000
         Playback.onSeekSettled(androidx.media3.common.Player.DISCONTINUITY_REASON_AUTO_TRANSITION)
+        assertTrue(Playback.flushSaves())
         assertEquals(300.0, savedSeconds(), 0.001)
     }
 
@@ -61,6 +64,7 @@ class PausedSeekSaveTest {
         voice.position = 1_800_500
         val before = Store.state("seek-book").getJSONObject("last").getDouble("at")
         Playback.onSeekSettled(androidx.media3.common.Player.DISCONTINUITY_REASON_SEEK)
+        assertTrue(Playback.flushSaves())
         assertEquals(before, Store.state("seek-book").getJSONObject("last").getDouble("at"), 0.0)
         assertEquals(1800.0, savedSeconds(), 0.001)
     }
