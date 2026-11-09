@@ -16,7 +16,12 @@ class ScrimRulesTest {
         val code = MotionScan.stripComments(source)
         val names = scrimVar.findAll(code).map { Regex.escape(it.groupValues[1]) } + sequenceOf("""(?:Abook\.)?colors\.scrim""")
         val bare = Regex("""\b(drawRect|background)\(\s*(${names.joinToString("|")})\s*\)""")
-        return bare.findAll(code).map { "$name:${code.substring(0, it.range.first).count { c -> c == '\n' } + 1} ${it.value}" }.toList()
+        return bare.findAll(code).filterNot {
+            // The crop mask is fixed paint outside the selected image rectangle, not a floating layer's backdrop.
+            val lineStart = code.lastIndexOf('\n', it.range.first).let { at -> if (at < 0) 0 else at + 1 }
+            val prefix = code.substring(lineStart, it.range.first)
+            name == "CoverCrop.kt" && prefix.contains("clipPath(") && prefix.contains("ClipOp.Difference")
+        }.map { "$name:${code.substring(0, it.range.first).count { c -> c == '\n' } + 1} ${it.value}" }.toList()
     }
 
     @Test
@@ -37,5 +42,13 @@ class ScrimRulesTest {
         assertEquals(1, scan("t.kt", "Modifier.background(Abook.colors.scrim)").size)
         assertEquals(0, scan("t.kt", "val scrim = Abook.colors.scrim\nModifier.drawBehind { drawRect(scrim, alpha = progress.value) }").size)
         assertEquals(0, scan("t.kt", "val scrim = colors.scrim\n// drawRect(scrim)\nval x = 1").size)
+    }
+
+    @Test
+    fun `only the static crop mask is exempt and its backdrop would still be caught`() {
+        val mask = "val scrim = colors.scrim\nclipPath(path, ClipOp.Difference) { drawRect(scrim) }"
+        assertEquals(0, scan("CoverCrop.kt", mask).size)
+        assertEquals(1, scan("Sheet.kt", mask).size)
+        assertEquals(1, scan("CoverCrop.kt", "val scrim = colors.scrim\ndrawRect(scrim)").size)
     }
 }

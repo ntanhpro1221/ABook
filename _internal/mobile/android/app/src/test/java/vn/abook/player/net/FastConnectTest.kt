@@ -37,6 +37,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLServerSocket
 import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 
 /**
@@ -379,6 +380,24 @@ class FastConnectTest {
 
     private class Pki(val server: SSLContext, val client: SSLContext)
 
+    /** These fixtures test standard HTTPS names independently of Pin's process-wide verifier. */
+    private class IdentityCheckingFactory(private val delegate: SSLSocketFactory) : SSLSocketFactory() {
+        override fun getDefaultCipherSuites(): Array<String> = delegate.defaultCipherSuites
+        override fun getSupportedCipherSuites(): Array<String> = delegate.supportedCipherSuites
+        private fun checked(socket: Socket): Socket = (socket as SSLSocket).apply {
+            sslParameters = sslParameters.apply { endpointIdentificationAlgorithm = "HTTPS" }
+        }
+        override fun createSocket(): Socket = checked(delegate.createSocket())
+        override fun createSocket(socket: Socket, host: String, port: Int, autoClose: Boolean): Socket =
+            checked(delegate.createSocket(socket, host, port, autoClose))
+        override fun createSocket(host: String, port: Int): Socket = checked(delegate.createSocket(host, port))
+        override fun createSocket(host: String, port: Int, localHost: InetAddress, localPort: Int): Socket =
+            checked(delegate.createSocket(host, port, localHost, localPort))
+        override fun createSocket(host: InetAddress, port: Int): Socket = checked(delegate.createSocket(host, port))
+        override fun createSocket(host: InetAddress, port: Int, localHost: InetAddress, localPort: Int): Socket =
+            checked(delegate.createSocket(host, port, localHost, localPort))
+    }
+
     private inline fun <T> withJdkTls(block: () -> T): T {
         // JSSE also obtains XDH/key generators through the global list. Merely
         // selecting its SSLContext is insufficient with Conscrypt first.
@@ -420,7 +439,7 @@ class FastConnectTest {
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 100).track()
         val (body, ms) = timed {
             val connection = fast.open("https://abook.test:${http.port}/hello", HANG_MS) as HttpsURLConnection
-            connection.sslSocketFactory = pki.client.socketFactory
+            connection.sslSocketFactory = IdentityCheckingFactory(pki.client.socketFactory)
             connection.readTimeout = 5000
             connection.inputStream.use { String(it.readBytes()) }
         }
@@ -438,7 +457,7 @@ class FastConnectTest {
         val http = Http(pki!!.server).track()
         val fast = FastConnect(resolver(blackhole, live), Net(http.port, dead = setOf(blackhole)), staggerMs = 50).track()
         val connection = fast.open("https://abook.test:${http.port}/", 5000) as HttpsURLConnection
-        connection.sslSocketFactory = pki.client.socketFactory
+        connection.sslSocketFactory = IdentityCheckingFactory(pki.client.socketFactory)
         connection.readTimeout = 5000
         try {
             connection.inputStream.close()
@@ -462,6 +481,17 @@ class FastConnectTest {
         } finally {
             Security.removeProvider(provider.name)
             if (previous != null) Security.insertProviderAt(previous, position)
+        }
+    }
+
+    @Test fun standardHttpsNamesAreStillCheckedWithAnApplicationWideVerifier() {
+        val previous = HttpsURLConnection.getDefaultHostnameVerifier()
+        HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
+        try {
+            httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost()
+            httpsStillRejectsACertificateForAnotherName()
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(previous)
         }
     }
 

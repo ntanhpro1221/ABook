@@ -3,12 +3,11 @@ package vn.abook.player.ui.nowplaying
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import vn.abook.player.AudioFx
@@ -16,7 +15,6 @@ import vn.abook.player.AudioFxSettings
 import vn.abook.player.ui.components.*
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.data.Choice
-import vn.abook.player.ui.motion.Motion
 import kotlin.math.roundToInt
 
 @Composable
@@ -61,8 +59,7 @@ private data class FxChoice(val index: Int, override val label: String) : Choice
 @Composable
 private fun FxSlider(title: String, value: Double, min: Double, max: Double, step: Double, label: String,
                      enabled: Boolean = true, update: (Double) -> Unit) {
-    val opacity by animateFloatAsState(if (enabled) 1f else .5f, Motion.GlyphMorph, label = "audiofx_enabled_opacity")
-    Column(Modifier.fillMaxWidth().graphicsLayer { alpha = opacity }) {
+    Column(Modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(.5f))) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             BasicText(title, style = Abook.type.bodySmall)
             ClockLabel(label, style = Abook.type.bodySmall)
