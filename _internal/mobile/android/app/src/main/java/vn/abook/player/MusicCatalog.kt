@@ -76,6 +76,13 @@ class MusicCatalog(
      *  Nguồn vẫn trả lời nên KHÔNG bị cho nghỉ [HOST_REST_MS]; tải sẵn xin lại ngay như [Yielded]. */
     class Progressed(kept: Long) : Offline(S.s_tai_dut_giu_0_byte_de_tai_tiep_546e3693(kept))
 
+    /** Người dùng huỷ lượt tải ([download] `cancelled`): phần đã tải nằm lại trong `.part` để tải tiếp. */
+    class Cancelled : IOException()
+
+    /** Bài người dùng đã lưu ở Kho nhạc ([SavedTracks]): [prune] không bao giờ xoá - như `_music_pinned_names` của máy tính. */
+    @Volatile
+    var pinned: () -> Collection<String> = { emptyList() }
+
     /** Kết quả [lookupPartial]: dữ liệu các link tìm được + các mảnh không tải được (mạng) - bài thuộc mảnh ấy chưa biết, chờ tải lại. */
     class Lookup(val found: Map<String, JSONObject>, val missingShards: Set<String>)
 
@@ -279,6 +286,45 @@ class MusicCatalog(
         return value
     }
 
+    /** Mọi bài của danh mục (Kho nhạc): mọi mảnh `tracks/<xx>.json` mục lục kê, tải song song (mảnh đã cất thì đọc đĩa). Mảnh lỗi mạng bị bỏ qua
+     *  (kho hiện phần còn lại); mục lục không có thì [CatalogError] - như `MusicCatalog.everything` của máy tính. */
+    fun everything(): Map<String, JSONObject> {
+        val shards = manifest().optJSONArray("shards")?.let { list -> (0 until list.length()).map { list.optString(it) } } ?: emptyList()
+        val pool = Executors.newFixedThreadPool(SHARD_WORKERS)
+        val found = LinkedHashMap<String, JSONObject>()
+        try {
+            val jobs = shards.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") as? JSONObject } }
+            for ((shard, job) in jobs) {
+                val data = try {
+                    job.get()
+                } catch (error: java.util.concurrent.ExecutionException) {
+                    log(S.s_danh_muc_nhac_manh_tracks_0_json_chua_tai_814f20c0(shard, error.cause?.message))
+                    null
+                } ?: continue
+                for (link in data.keys()) data.optJSONObject(link)?.let { found[link] = it }
+            }
+        } finally {
+            pool.shutdown()
+        }
+        return found
+    }
+
+    /** Các link (trong `links`) đã có file tải về - đọc thư mục bài một lần (Kho nhạc: chip "Đã tải", dòng "Đã tải X bài"). */
+    fun downloaded(links: Collection<String>): Set<String> {
+        val names = File(dir, "files").list()?.toHashSet() ?: return emptySet()
+        return links.filterTo(HashSet()) { fileOf(it).name in names }
+    }
+
+    /** Byte đã tải của lượt dở (`.part`) - "Tải tiếp" của Kho nhạc. */
+    fun partial(link: String): Long = File(fileOf(link).path + ".part").length()
+
+    /** Xoá bản tải của một bài (Kho nhạc "Xoá bản tải" / "Bỏ lưu"); cả phần dở. */
+    fun forget(link: String) {
+        val file = fileOf(link)
+        file.delete()
+        File(file.path + ".part").delete()
+    }
+
     /** Dữ liệu đã gắn cho các link (link không có trong danh mục thì vắng). Các mảnh chưa cất tải song song. Mảnh không tải được (mạng) thì bỏ
      *  qua, các mảnh còn lại vẫn dùng - xem [lookupPartial] để biết mảnh nào còn thiếu mà tải lại. */
     fun lookup(links: List<String>): Map<String, JSONObject> = lookupPartial(links).found
@@ -371,7 +417,7 @@ class MusicCatalog(
     fun prune(keep: Collection<String> = emptyList(), capBytes: Long = FILES_CAP_BYTES) {
         val all = File(dir, "files").listFiles() ?: return
         val now = clock()
-        val protected = keep.map { fileOf(it).name }.toSet()
+        val protected = (keep + runCatching { pinned() }.getOrDefault(emptyList())).map { fileOf(it).name }.toSet()
         // `.part` dở là phần để tải tiếp: chỉ xoá khi đã cũ lắm, và không bao giờ khi đang có lượt tải ghi vào nó hay bài của nó đang cần.
         val writing = synchronized(lock) { downloading.toSet() }
         all.filter { it.name.endsWith(".part") && now - it.lastModified() > PART_STALE_MS && it.name !in writing && it.name.removeSuffix(".part") !in protected }
@@ -503,7 +549,14 @@ class MusicCatalog(
      * Đứt vì mạng thì phần đã tải nằm lại trong `.part` (tên cố định theo bài - bản sao phải khớp sha1 nên cùng byte): lần sau tải tiếp bằng Range
      * ([openFrom]); nguồn không trả đúng phần còn lại thì tải lại từ 0. Đã nhận thêm byte thì ném [Progressed], không cho nguồn nghỉ.
      */
-    fun download(link: String, info: JSONObject?, yields: (() -> Boolean)? = null): File? {
+    fun download(
+        link: String,
+        info: JSONObject?,
+        progress: ((done: Long, total: Long?) -> Unit)? = null,
+        cancelled: (() -> Boolean)? = null,
+        // Cuối cùng: các chỗ gọi cũ truyền `yields` bằng lambda đuôi (`download(link, info) { warmYields }`)
+        yields: (() -> Boolean)? = null,
+    ): File? {
         if (!link.startsWith("https://")) return null
         val target = fileOf(link)
         val expected = info?.optString("sha1")?.lowercase()?.takeIf { SHA1.matches(it) }
@@ -540,6 +593,8 @@ class MusicCatalog(
                     var stood = false
                     var keep = false
                     val gate = {
+                        if (cancelled != null && cancelled()) throw Cancelled()
+                        progress?.invoke(part.length(), size)
                         if (yields != null && yields()) {
                             stood = true
                             while (yields()) Thread.sleep(YIELD_POLL_MS)
@@ -557,6 +612,9 @@ class MusicCatalog(
                         if (!part.renameTo(target) && !target.isFile) throw LocalFailure(S.s_khong_ghi_duoc_a36f16c1)
                         note(url, failed = false) // tải được = nguồn ấy có mạng
                         return target
+                    } catch (error: Cancelled) { // Kho nhạc: người dùng huỷ - giữ phần đã tải, không đổ lỗi cho nguồn
+                        keep = part.length() > 0
+                        throw error
                     } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
                         note(url, failed = false)
                         markTooBig(link, error.size)

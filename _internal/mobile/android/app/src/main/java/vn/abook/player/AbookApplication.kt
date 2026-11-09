@@ -120,6 +120,13 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
     /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho và chung lượt với Nhạc của tôi. */
     val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this), myMusicImports, uiScope) }
 
+    /** Kho nhạc (tab Nhạc, "Nhạc trong sách", Bài đang phát): một holder cho cả tiến trình - lượt tải đang chạy không mất khi Activity dựng lại.
+     *  Nghe thử thì tạm dừng sách (không tự phát lại). */
+    val musicLibrary by lazy {
+        val source = vn.abook.player.ui.music.library.AndroidLibrarySource(this)
+        vn.abook.player.ui.music.library.LibraryState(source, uiScope, vn.abook.player.ui.music.library.MediaPreviewPlayer(source), pauseBook = { player.pause() })
+    }
+
     /** Cửa hỏi bạn trước khi đọc bằng giọng trực tuyến chưa được đồng ý (chữ chưa rời máy khi chưa có câu trả lời): trình phát qua nó, Activity vẽ câu hỏi. */
     val consent by lazy { vn.abook.player.ui.voice.ConsentGate(vn.abook.player.ui.voice.AndroidConsentSource(this), uiScope) }
 

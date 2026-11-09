@@ -439,7 +439,11 @@ object MusicBed {
         val info = infos[track] ?: music?.optJSONObject("tracks")?.optJSONObject(track) ?: return null
         val out = JSONObject()
         for (key in CREDIT_KEYS) info.optString(key).takeIf { it.isNotEmpty() }?.let { out.put(key, it) }
-        return out.takeIf { it.length() > 0 }
+        if (out.length() == 0) return null
+        // Bài đang phát (sheet "Bài đang phát" của màn Nhạc): bài nào; nhạc gắn sẵn của sách thì cả khoá đoạn (cho "Đổi bài")
+        out.put("link", track)
+        if (!sceneMode && playlist == null) current?.cue?.let { cue -> BookEdits.cueKey(chapter, cue.start).takeIf { it.isNotEmpty() }?.let { out.put("scene", it) } }
+        return out
     }
 
     /** Có bài nhạc của sách ở chương này đang bị bỏ vì không phát được (đoạn ấy im lặng, chờ thử lại) - giao diện nói ra thay vì chỉ

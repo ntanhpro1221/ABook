@@ -81,6 +81,9 @@ data class MusicCredit(
     val landing: String = "",
     val license: String = "",
     val licenseUrl: String = "",
+    /** Bài của danh mục đang kêu ("" = không biết) và khoá đoạn của nó (nhạc gắn sẵn): chạm ghi công mở sheet "Bài đang phát". */
+    val link: String = "",
+    val scene: String = "",
 )
 
 /** Phần nhạc của trạng thái trình phát: bài đang kêu, bài của chương này hỏng, lời báo mất mạng, nhạc đang theo cảnh. */
@@ -148,6 +151,7 @@ object MusicJson {
         json ?: return null
         val credit = MusicCredit(
             text(json, "title"), text(json, "creator"), text(json, "attribution"), text(json, "landing"), text(json, "license"), text(json, "licenseUrl"),
+            text(json, "link"), text(json, "scene"),
         )
         return credit.takeIf { it.title.isNotBlank() || it.creator.isNotBlank() }
     }
@@ -287,6 +291,8 @@ object MusicText {
     const val SILENCE_LABEL = S.s_im_lang_1a012238
     const val UNSILENCE_LABEL = S.s_co_nhac_f514e0fa
     const val SWAP_LABEL = S.s_doi_bai_7b81488f
+    /** Dòng cuối "Đổi bài": cả Kho nhạc ở chế độ chọn cho đoạn này (DESIGN.md §7 "Nhạc"). */
+    const val OPEN_LIBRARY = S.s_xem_ca_kho_fa30b353
     const val ORIGINAL_LABEL = S.s_ve_bai_goc_dc6a21f6
     const val CHOOSE_LABEL = S.s_chon_1171ca97
     const val NO_MINE = S.s_chua_co_bai_nao_khac_trong_nhac_cua_toi_811d988a

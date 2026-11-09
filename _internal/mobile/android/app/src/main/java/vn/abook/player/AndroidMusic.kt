@@ -157,5 +157,13 @@ object DeviceMusic {
     /** Không gọi mạng ở đây (có thể chạy ở luồng giao diện): địa chỉ danh mục hỏi cấu hình từ xa ở lần cần mạng đầu tiên, trên luồng nền của người gọi. */
     @Synchronized
     fun catalog(context: Context): MusicCatalog = catalog
-        ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog"), { remoteConfig(context).musicCatalogs().first() }).also { catalog = it }
+        ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog"), { remoteConfig(context).musicCatalogs().first() })
+            .also { made -> made.pinned = { saved(context).links() }; catalog = made }
+
+    private var saved: SavedTracks? = null
+
+    /** Bài người dùng lưu ở Kho nhạc (màn Nhạc): sổ ở `filesDir` (không mất khi hệ thống dọn bộ đệm); bài trong sổ là bài ghim của [catalog]. */
+    @Synchronized
+    fun saved(context: Context): SavedTracks = saved
+        ?: SavedTracks(File(context.applicationContext.filesDir, "music/saved.json")).also { saved = it }
 }

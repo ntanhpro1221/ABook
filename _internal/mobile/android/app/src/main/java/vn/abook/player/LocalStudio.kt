@@ -334,6 +334,20 @@ object LocalStudio {
         withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir)))
     }
 
+    /** "Nhạc trong sách" (màn Nhạc): (khoá đoạn, bài đang dùng) theo thứ tự nghe - bài ghim thay bài gốc, đoạn bạn cho im lặng bỏ qua. */
+    fun bookScenes(id: String): List<Pair<String?, String>> = synchronized(lock) {
+        val dir = editable(id)
+        val book = BookEdits.rawBook(dir)
+        val edits = BookEdits.load(dir)
+        val pins = edits.optJSONObject("music")?.optJSONObject("pins")
+        val base = BookEdits.baseLinks(book)
+        val cues = BookEdits.musicView(book, edits).getJSONArray("cues")
+        (0 until cues.length()).map { cues.getJSONObject(it) }.filterNot { it.optBoolean("silenced") }.map { cue ->
+            val key = cue.getString("key")
+            key to (pins?.optString(key, "")?.ifEmpty { null } ?: base[key].orEmpty())
+        }
+    }
+
     /** PUT /music của giao diện native; lỗi sửa ném [BookEdits.EditsError] (câu cho người nghe). */
     fun setBookMusic(id: String, body: JSONObject): JSONObject = synchronized(lock) { music(editable(id), body) }
 

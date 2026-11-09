@@ -190,7 +190,7 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night, if (demo) null else app.musicLibrary) }
                     LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
                     LaunchedEffect(shell) { for (request in studioRequests) shell.openStudio(request) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }

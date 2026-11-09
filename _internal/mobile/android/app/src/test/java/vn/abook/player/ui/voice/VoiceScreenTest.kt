@@ -600,12 +600,14 @@ class VoiceScreenTest {
     }
 
     @Test
-    fun theListenPageShowsMyMusicWithItsCountAndOpensIt() {
-        source.tracks = listOf(Fixtures.track("Một"), Fixtures.track("Hai"), Fixtures.track("Ba"))
-        showListen()
-        rule.onNodeWithText("3 bài").assertIsDisplayed()
-        tap("my_music")
-        assertEquals(VoicePage.Music, opened)
+    fun theListenPageOpensTheMusicTabInsteadOfMyMusic() {
+        // Nhạc là nội dung, không phải cài đặt (chủ sách 09-11): Cài đặt › Nghe chỉ còn công tắc + lối "Mở Nhạc ›" sang tab Nhạc
+        var music = 0
+        show { env -> env.openMusic = { music++ }; SettingsGroupScreen(SettingsGroup.Listen, env, sheets, onBack = {}, openVoice = { opened = it }) }
+        rule.onNodeWithTag("my_music").assertDoesNotExist()
+        tap("open_music")
+        assertEquals(1, music)
+        assertEquals(null, opened)
         shot("listen_my_music_light")
     }
 
