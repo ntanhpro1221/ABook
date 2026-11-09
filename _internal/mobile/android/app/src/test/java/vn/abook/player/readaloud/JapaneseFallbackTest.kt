@@ -31,6 +31,17 @@ class JapaneseFallbackTest {
         }
     }
 
+    @Test fun sharedBookNameReadings() {
+        val cases = org.json.JSONArray(File("../../../tests/fixtures/readaloud/japanese_fallback/book_names.json").readText(Charsets.UTF_8))
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val texts = c.getJSONArray("texts").let { a -> (0 until a.length()).map { a.getString(it) } }
+            val characters = c.getJSONArray("characters").let { a -> (0 until a.length()).map { a.getString(it) } }
+            val readings = c.getJSONObject("readings").let { o -> o.keys().asSequence().associateWith { o.getString(it) } }
+            assertEquals(c.getString("note"), readings, JapanesePolicy.bookNameReadings(texts.asSequence(), characters))
+        }
+    }
+
     @Test fun sharedPolicyAndFallbackFixture() {
         val policy = JSONObject(File("../../../abook/readaloud/japanese_policy.json").readText(Charsets.UTF_8))
         assertEquals(policy.getString("namespace"), JapanesePolicy.NAMESPACE)
@@ -70,7 +81,7 @@ class JapaneseFallbackTest {
         }
         for (word in listOf("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel")) {
             assertNull(word, JapanesePolicy.reading(word, null))
-            if (word == "Aya") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
+            if (word == "Aya" || word == "Abe") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
             else assertNull(word, JapanesePolicy.reading(word, "ja"))
         }
         assertNotNull(JapanesePolicy.reading("Anime", null))

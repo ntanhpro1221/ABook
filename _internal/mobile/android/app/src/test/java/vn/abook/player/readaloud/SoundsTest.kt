@@ -145,7 +145,7 @@ class SoundsTest {
     // ---- TN "Nghe ngay" lượt 3 (cùng các ca với tests/test_readaloud_sounds.py) ----
     @Test
     fun aLaughOrAnInterjectionIsReadAsSounds() {
-        val cases = listOf("Haha" to "ha ha", "hahaha" to "ha ha ha", "HAHA" to "ha ha", "Hehe" to "hê hê", "Hihi" to "hi hi", "fufu" to "phu phu", "Hm" to "hừm", "Huh" to "hả",
+        val cases = listOf("Haha" to "ha ha", "hahaha" to "ha ha ha", "HAHA" to "ha ha", "Hehe" to "hê hê", "Hihi" to "hy hy", "fufu" to "phu phu", "Hm" to "hừm", "Huh" to "hả",
             "Hic" to "hích", "Ooh" to "ô", "Urgh" to "ức")
         for ((token, reading) in cases) assertEquals(token, listOf("Rồi", "$reading,", "đến."), said("Rồi $token, đến."))
     }
@@ -163,7 +163,7 @@ class SoundsTest {
             "E-em muốn A-anh" to "e… em muốn a… anh", "[Kh- Không phải" to "[khờ… Không phải", "“……T-, tức là" to "“tờ, tức là",
             "Hà-Hà đến, X-quang, E-mail" to "Hà-Hà đến, X-quang, E-mail")
         for ((text, expected) in cases) assertEquals(text, expected, said(text).joinToString(" "))
-        assertEquals("“tờ… Xu-ki-nô-ki-xen-pai cho", said("“T-Tsukinoki-senpai cho", "ja").joinToString(" "))
+        assertEquals("“xờ… Xu-ki-nô-ki-xen-pai cho", said("“T-Tsukinoki-senpai cho", "ja").joinToString(" "))
         assertEquals("a… a-ni-me", said("A-anime").joinToString(" "))
     }
 

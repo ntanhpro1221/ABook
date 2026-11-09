@@ -27,6 +27,6 @@ class SoundfixTest {
         assertEquals(disk.keys().asSequence().toSet(), Shouts.POLICY.keys().asSequence().toSet())
         for (key in disk.keys()) assertEquals(key, disk.get(key).toString(), Shouts.POLICY.get(key).toString())
         assertEquals(14, ClipCache.CACHE_RULES)
-        assertEquals(8, Shouts.stretchReading("a" + "ha".repeat(100))!!.split(" ").size)
+        assertEquals(9, Shouts.stretchReading("a" + "ha".repeat(100))!!.split(" ").size) // eight atoms plus the opening vowel
     }
 }

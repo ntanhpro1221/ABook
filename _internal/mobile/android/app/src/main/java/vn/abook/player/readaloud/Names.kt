@@ -130,7 +130,7 @@ object Names {
     }
 
     /** Họ Hàn thường gặp: đọc theo RR khi bên cạnh là một tên Hàn - `KOREAN_SURNAMES`. */
-    private val KOREAN_SURNAMES = setOf("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
+    internal val KOREAN_SURNAMES = setOf("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
         "baek", "bae", "jeon", "ryu", "nam", "im")
     private val koreanSuffixed = ConcurrentHashMap<String, String>()
     private val koreanHyphenated = ConcurrentHashMap<String, String>()
