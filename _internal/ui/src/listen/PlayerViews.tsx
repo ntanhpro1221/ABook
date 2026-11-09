@@ -20,6 +20,7 @@ import {
   Lightbulb,
   Loader2,
   Maximize2,
+  Minus,
   Moon,
   MoreHorizontal,
   EighthNote,
@@ -57,8 +58,10 @@ import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
 import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type ListenChapter, type Script } from "./model";
-import { SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
-import { SLEEP_CHOICES, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
+import { SKIP_SECONDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
+import { ValuePicker } from "@/shared/ValuePicker";
+import { VALUE_SPECS, formatNumber, stepValue } from "@/shared/valuePickerLogic";
+import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
@@ -88,7 +91,7 @@ import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
 import { useFadeScroller } from "@/shared/scrollFade";
 
 export function speedLabel(rate: number): string {
-  return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
+  return `${formatNumber(VALUE_SPECS.speed, rate)}×`;
 }
 
 /** Tên nút Tốc độ / Giọng đọc kèm giá trị đang dùng: tên nút (aria-label) đè chữ thấy trên nút, nên phải tự mang giá trị - trước đây trình đọc màn
@@ -445,42 +448,31 @@ type MenuLook = "chip" | "action" | "row";
 
 export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
   const { rate, setRate } = usePlayer();
-  const speeds = [...new Set([...SPEEDS, rate])].sort((a, b) => a - b);
   return (
     <MenuShell
       label={speedButtonLabel(rate)}
       dialogLabel={S.s_toc_do_doc_3657e59d}
       active={rate !== 1}
       triggerKey={rate}
-      focusSelector="[data-current-choice]"
+      focusSelector="[data-value-ruler]"
       look={look}
       caption={S.s_toc_do_16ee0914}
       // Nút có nhãn của màn Đang nghe: chính con số là biểu tượng ("1,15×"), nhãn S.s_toc_do_16ee0914 ở dưới.
       trigger={look === "action" ? speedLabel(rate) : <><Gauge className="size-4" />{speedLabel(rate)}</>}
     >
       <MenuNote title={S.s_toc_do_doc_3657e59d}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
-      <div className={cn("grid grid-cols-3 gap-1", MENU_LIST)}>
-        {speeds.map((speed) => (
-          <Popover.Close asChild key={speed}>
-            <button
-              type="button"
-              onClick={() => {
-                feedback("toggle");
-                setRate(speed);
-                announce(S.s_da_chon_toc_do_doc_0_529f4319(speedLabel(speed)));
-              }}
-              aria-pressed={speed === rate}
-              data-current-choice={speed === rate ? "" : undefined}
-              className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center rounded-control text-sm hover:bg-hover",
-                speed === rate ? "font-semibold text-accent-text" : "text-fg",
-              )}
-            >
-              {speedLabel(speed)}
-            </button>
-          </Popover.Close>
-        ))}
-      </div>
+      {/* Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi tốc độ 0,5-3× bước 0,05. Đổi là áp ngay, bảng không tự đóng. */}
+      <ValuePicker
+        className={cn("px-2 pb-1", MENU_LIST)}
+        spec={VALUE_SPECS.speed}
+        value={rate}
+        label={S.s_toc_do_doc_3657e59d}
+        format={speedLabel}
+        onChange={(speed) => {
+          setRate(speed);
+          announce(S.s_da_chon_toc_do_doc_0_529f4319(speedLabel(speed)));
+        }}
+      />
       {!COARSE && (
         <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-semibold">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-semibold">]</kbd>{S.s_de_giam_tang_f47777c5}</p>
       )}
@@ -959,6 +951,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       now={now}
       disabled={!track}
       extendMinutes={options.extendMinutes}
+      lastMinutes={lastSleepMinutes}
       onExtend={() => extendSleep()}
       onSet={setSleep}
       idle={
@@ -1005,6 +998,7 @@ export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name
         if (longer.kind === "minutes" && (sleepLeftMs(longer, now) ?? 0) > (sleepLeftMs(sleep, now) ?? 0)) onSet({ kind: "minutes", minutes: longer.minutes });
       }}
       onSet={onSet}
+      chapterCounts={false}
       note={S.s_het_gio_thi_0_tam_dung_cho_dang_nghe_duoc_7bbd133a(name)}
     />
   );
@@ -1020,6 +1014,8 @@ function SleepPicker({
   idle = null,
   note,
   look = "chip",
+  lastMinutes = 30,
+  chapterCounts = true,
   ...handlers
 }: {
   look?: MenuLook;
@@ -1034,7 +1030,12 @@ function SleepPicker({
   /** Hiện thay phần S.s_copy_90638c7194c5 khi chưa hẹn gì. */
   idle?: ReactNode;
   note: ReactNode;
+  /** Số phút bộ chọn đứng sẵn khi chưa hẹn phút (lần hẹn trước). */
+  lastMinutes?: number;
+  /** "Hết N chương" (N > 1): chỉ trình phát ở đây; loa / TV chỉ biết "Hết chương này". */
+  chapterCounts?: boolean;
 }) {
+  const [draftMinutes, setDraftMinutes] = useState(lastMinutes);
   // Chọn mức / thêm giờ là việc người nghe vừa làm: tiếng chạm + rung (DESIGN 5.3/5.4). Hẹn giờ tự tắt thì không đi qua đây.
   const onExtend = handlers.onExtend; // Playback owns the single sleepExtend sound/haptic, including keyboard gestures.
   const onSet = withFeedback("toggle", handlers.onSet);
@@ -1047,7 +1048,7 @@ function SleepPicker({
       dialogLabel={name ? S.s_hen_gio_ngu_tren_0_2cac5015(name) : S.s_hen_gio_ngu_21073488}
       active={active}
       width="w-[300px]"
-      focusSelector="[data-current-choice]"
+      focusSelector="[data-value-ruler]"
       look={look}
       icon={Moon}
       // Countdown changes in place; choosing a sleep mode still changes the trigger.
@@ -1066,7 +1067,7 @@ function SleepPicker({
         <div className="px-2 pb-2 pt-1.5">
           <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? S.s_dung_khi_f05a4cb5 : S.s_tat_sau_8d10e047}</div>
           <div className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
-            <TickingValue>{sleep.kind === "chapter" ? S.s_het_chuong_nay_8ccc288f : sleepLabel(sleep, now)}</TickingValue>
+            <TickingValue>{sleep.kind === "chapter" ? (sleep.chapters > 1 ? S.s_het_0_chuong_79433c77(sleep.chapters) : S.s_het_chuong_nay_8ccc288f) : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
             <div className="mt-0.5 text-xs text-fg-2">{S.s_dang_tam_dung_dong_ho_cung_dung_474889f9}</div>
@@ -1090,32 +1091,62 @@ function SleepPicker({
         idle
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? S.s_dat_lai_51a46825 : S.s_dung_phat_sau_41477737}</div>
-      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt, ô đang hẹn luôn sáng (chữ nhấn + dấu tích). Máy tính hai cột: mục này còn mở ngay
-          trong menu "…" rộng 280 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
-      <div data-choice-grid="sleep" className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
-        {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: S.s_0_phut_2596d212(minutes), request: { kind: "minutes", minutes } as SleepRequest,
-          current: sleep.kind === "minutes" && sleep.minutes === minutes })),
-          { key: "chapter", label: S.s_het_chuong_nay_918907cf, request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
-          <Popover.Close asChild key={choice.key}>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onSet(choice.request)}
-              aria-pressed={choice.current}
-              data-current-choice={choice.current ? "" : undefined}
-              className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center whitespace-nowrap px-2 text-sm transition-colors duration-motion-medium disabled:opacity-40",
-                choice.key === "chapter" && "col-span-2 max-sm:col-span-3",
-                choice.current ? "font-semibold text-accent-text" : "hover:bg-hover",
-              )}
-            >
-              {choice.label}
-            </button>
-          </Popover.Close>
-        ))}
-      </div>
+      {/* Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi số phút 1-240; hàng riêng dưới cùng
+          là "Hết chương này" / "Hết N chương". Chọn là đặt ngay, bảng không tự đóng (kéo thước cần bảng đứng yên). */}
+      <ValuePicker
+        className={cn("px-2 pb-1", MENU_LIST)}
+        spec={VALUE_SPECS.sleepMinutes}
+        value={sleep.kind === "minutes" ? sleep.minutes : draftMinutes}
+        current={sleep.kind === "minutes"}
+        disabled={disabled}
+        label={S.s_hen_gio_ngu_21073488}
+        format={(minutes) => S.s_0_phut_2596d212(minutes)}
+        chipLabel={(minutes) => String(minutes)}
+        onChange={(minutes) => {
+          setDraftMinutes(minutes);
+          onSet({ kind: "minutes", minutes });
+        }}
+      >
+        <SleepChapterChoice sleep={sleep} disabled={disabled} counts={chapterCounts} onSet={onSet} />
+      </ValuePicker>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
     </MotionRegion></MenuShell>
+  );
+}
+
+/** Hàng lựa chọn đặc biệt của hẹn giờ ngủ: "Hết chương này", và -/+ để thành "Hết N chương" (N 1-10, VALUE_SPECS.sleepChapters). Chạm tên là đặt;
+ *  -/+ đổi N và đặt luôn. Đang hẹn hết chương thì chữ hổ phách đậm như chip đang chọn. */
+function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMode; disabled: boolean; counts: boolean; onSet: (request: SleepRequest) => void }) {
+  const [chapters, setChapters] = useState(() => Math.max(1, chaptersOf(sleep)));
+  const active = sleep.kind === "chapter" && chaptersOf(sleep) === chapters;
+  const spec = VALUE_SPECS.sleepChapters;
+  const pick = (next: number) => {
+    setChapters(next);
+    onSet({ kind: "chapter", chapters: next });
+  };
+  const text = chapters > 1 ? S.s_het_0_chuong_79433c77(chapters) : S.s_het_chuong_nay_918907cf;
+  return (
+    <div data-sleep-chapters className="mt-1 flex items-center gap-1 border-t border-line pt-2">
+      {counts && (
+        <IconButton label={S.s_giam_a6c2901a} icon={Minus} disabled={disabled || chapters <= spec.min} onClick={() => pick(stepValue(spec, chapters, -1))} />
+      )}
+      <button
+        type="button"
+        disabled={disabled}
+        aria-pressed={active}
+        data-current-choice={active ? "" : undefined}
+        onClick={() => pick(chapters)}
+        className={cn(
+          "touch-row inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-control px-2 text-sm transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
+          active ? "font-semibold text-accent-text" : "text-fg",
+        )}
+      >
+        <MotionRegion as="span" motionKey={chapters}>{text}</MotionRegion>
+      </button>
+      {counts && (
+        <IconButton label={S.s_tang_a2363bce} icon={Plus} disabled={disabled || chapters >= spec.max} onClick={() => pick(stepValue(spec, chapters, 1))} />
+      )}
+    </div>
   );
 }
 

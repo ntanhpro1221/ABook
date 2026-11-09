@@ -1,4 +1,5 @@
 import { S } from "../shared/strings.generated";
+import { VALUE_SPECS, quantize, type ValueSpec } from "../shared/valuePickerLogic";
 // Hẹn giờ ngủ - phần tính toán, chung cho máy tính và giao diện Android (lõi native tự đếm trên Android).
 //
 // Ba điều người nghe lúc buồn ngủ cần, rút ra từ đánh giá 26-09:
@@ -8,20 +9,25 @@ import { S } from "../shared/strings.generated";
 //  - nghe thêm được bằng một thao tác (trên điện thoại là lắc máy; trên máy tính là chạm phím/chuột lúc đang nhỏ dần) và KHÔNG cộng dồn: đồng hồ chỉ về lại
 //    số phút đã hẹn.
 
-export type SleepRequest = { kind: "off" } | { kind: "minutes"; minutes: number } | { kind: "chapter" };
+/** `chapters`: dừng khi hết chừng ấy chương (1 = "Hết chương này"), mặc định 1. */
+export type SleepRequest = { kind: "off" } | { kind: "minutes"; minutes: number } | { kind: "chapter"; chapters?: number };
 
 /** `leftMs` là thời gian còn lại tính tới mốc `since`; `since` = lúc bắt đầu đếm (đang phát), null khi đang dừng. */
 export type SleepMode =
   | { kind: "off" }
   | { kind: "minutes"; minutes: number; leftMs: number; since: number | null }
-  | { kind: "chapter" };
+  | { kind: "chapter"; chapters: number };
 
-export const SLEEP_CHOICES = [5, 10, 15, 30, 45, 60];
+/** "Hết N chương": chọn N trong 1..10 (VALUE_SPECS.sleepChapters). */
+export function chaptersOf(mode: SleepMode | SleepRequest): number {
+  return mode.kind === "chapter" ? Math.max(1, Math.round(mode.chapters ?? 1)) : 0;
+}
 export const DEFAULT_FADE_SECONDS = 30;
 export const DEFAULT_EXTEND_MINUTES = 10;
 const FADE_FLOOR_DB = -40;
 
 export function sleepFrom(request: SleepRequest, playing: boolean, now: number): SleepMode {
+  if (request.kind === "chapter") return { kind: "chapter", chapters: chaptersOf(request) };
   if (request.kind !== "minutes") return request;
   return { kind: "minutes", minutes: request.minutes, leftMs: request.minutes * 60_000, since: playing ? now : null };
 }
@@ -72,9 +78,19 @@ export function fadeGain(leftMs: number, fadeMs: number): number {
   return 10 ** ((FADE_FLOOR_DB * progress) / 20);
 }
 
-/** Nhãn trên nút: "14:59", phút cuối vẫn đếm từng giây; "Hết chương". */
+/** Hẹn "hết chương" lúc một chương vừa hết: còn chương nữa thì đếm tiếp (N-1), không thì null = dừng ở đây. */
+export function sleepAfterChapter(mode: SleepMode): SleepMode | null {
+  if (mode.kind !== "chapter") return mode;
+  return mode.chapters > 1 ? { kind: "chapter", chapters: mode.chapters - 1 } : null;
+}
+
+function chapterLabel(mode: SleepMode & { kind: "chapter" }): string {
+  return mode.chapters > 1 ? S.s_het_0_chuong_79433c77(mode.chapters) : S.s_het_chuong_f1d590bb;
+}
+
+/** Nhãn trên nút: "14:59", phút cuối vẫn đếm từng giây; "Hết chương", "Hết 3 chương". */
 export function sleepLabel(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return S.s_het_chuong_f1d590bb;
+  if (mode.kind === "chapter") return chapterLabel(mode);
   const left = sleepLeftMs(mode, now);
   if (left === null) return "";
   const seconds = Math.ceil(left / 1000);
@@ -84,7 +100,7 @@ export function sleepLabel(mode: SleepMode, now: number): string {
 /** Nhãn trên NÚT hẹn giờ: có đơn vị ("14 phút", "40 giây") - "14:51" ngay cạnh nút tốc độ và giọng đọc trông như giờ đồng hồ (soát UX a9). Bảng mở ra vẫn
  *  hiện đồng hồ đếm lùi đầy đủ ([sleepLabel]). */
 export function sleepButtonLabel(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return S.s_het_chuong_f1d590bb;
+  if (mode.kind === "chapter") return chapterLabel(mode);
   const left = sleepLeftMs(mode, now);
   if (left === null) return "";
   // Theo số giây làm tròn lên (như đồng hồ trong bảng): còn 59,5 giây là "1 phút", không phải "60 giây".
@@ -93,7 +109,7 @@ export function sleepButtonLabel(mode: SleepMode, now: number): string {
 }
 
 export function sleepSpoken(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return S.s_hen_gio_ngu_dung_khi_het_chuong_nay_38902b7c;
+  if (mode.kind === "chapter") return mode.chapters > 1 ? S.s_hen_gio_ngu_dung_khi_het_0_chuong_94192fb5(mode.chapters) : S.s_hen_gio_ngu_dung_khi_het_chuong_nay_38902b7c;
   const left = sleepLeftMs(mode, now);
   if (left === null) return S.s_hen_gio_ngu_21073488;
   const seconds = Math.ceil(left / 1000);
@@ -112,7 +128,7 @@ export type RemoteSleepCommand = { action: "sleep"; minutes?: number; endOfChapt
 /** Hẹn giờ của loa / TV theo cách nút hẹn giờ ở đây đọc; `receivedAt`: lúc nhận câu trả lời ấy. */
 export function remoteSleepMode(sleep: RemoteSleep | null | undefined, receivedAt: number): SleepMode {
   if (!sleep) return { kind: "off" };
-  if (sleep.kind === "chapter") return { kind: "chapter" };
+  if (sleep.kind === "chapter") return { kind: "chapter", chapters: 1 };
   return { kind: "minutes", minutes: sleep.minutes, leftMs: sleep.left * 1000, since: sleep.counting ? receivedAt : null };
 }
 
@@ -145,23 +161,23 @@ export interface SleepSchedule {
   minutes: number;
 }
 
-// Hợp đồng của các tuỳ chọn hẹn giờ ngủ: đúng các mức giao diện đưa ra, cùng bảng với webui/library.py (SLEEP_CHOICES, SCHEDULE_MINUTES,
-// clean_sleep_schedule) - file tuỳ chọn sửa tay / bản app khác ghi không được lọt vào trình phát (soát a100 V2). Android dùng lại ở settings.ts.
-export const FADE_CHOICES = [10, 30, 60];
-export const EXTEND_CHOICES = [5, 10, 15];
-export const SCHEDULE_MINUTES = [15, 30, 45, 60];
+// Hợp đồng của các tuỳ chọn hẹn giờ ngủ: miền tự do của bộ chọn giá trị (VALUE_SPECS), cùng bảng với webui/library.py (SLEEP_RANGES,
+// SCHEDULE_MINUTES, clean_sleep_schedule) - file tuỳ chọn sửa tay / bản app khác ghi không được lọt vào trình phát (soát a100 V2).
+export const FADE_RANGE = VALUE_SPECS.sleepFadeSeconds;
+export const EXTEND_RANGE = VALUE_SPECS.sleepExtendMinutes;
+export const SCHEDULE_MINUTES = VALUE_SPECS.scheduleMinutes;
 const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/** `value` nếu là một trong `choices` (đúng kiểu số), không thì `fallback` - trường sai về mặc định RIÊNG trường ấy. */
-export function choiceOr(value: unknown, choices: readonly number[], fallback: number): number {
-  return typeof value === "number" && choices.includes(value) ? value : fallback;
+/** `value` nếu là số trong miền, đúng lưới bước của `spec`; không thì `fallback` - trường sai về mặc định RIÊNG trường ấy. */
+export function rangeOr(value: unknown, spec: ValueSpec, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && quantize(spec, value) === value ? value : fallback;
 }
 
-/** Lịch đêm đúng cấu trúc ("HH:mm" 00:00-23:59 hai đầu, số phút trong các mức), hay null: sai kiểu, thiếu trường, giờ lạ, số phút lạ. */
+/** Lịch đêm đúng cấu trúc ("HH:mm" 00:00-23:59 hai đầu, số phút trong miền), hay null: sai kiểu, thiếu trường, giờ lạ, số phút lạ. */
 export function cleanSleepSchedule(value: unknown): SleepSchedule | null {
   if (!value || typeof value !== "object") return null;
   const { from, to, minutes } = value as Record<string, unknown>;
   if (typeof from !== "string" || !CLOCK.test(from) || typeof to !== "string" || !CLOCK.test(to)) return null;
-  if (typeof minutes !== "number" || !SCHEDULE_MINUTES.includes(minutes)) return null;
+  if (rangeOr(minutes, SCHEDULE_MINUTES, -1) !== minutes) return null;
   return { from, to, minutes };
 }

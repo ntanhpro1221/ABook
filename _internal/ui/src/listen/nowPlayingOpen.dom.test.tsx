@@ -225,7 +225,7 @@ it("ruột dựng sau vỏ: đổi trạng thái phát (sleep) không làm cả 
   await render(<NowPlaying mobile />);
   const open = screen()!;
   animate.mockClear();
-  player({ sleep: { kind: "chapter" } });
+  player({ sleep: { kind: "chapter", chapters: 1 } });
   await render(<NowPlaying mobile />);
   expect((animate.mock.contexts as HTMLElement[]).filter((element) => element === open)).toHaveLength(0);
 });

@@ -199,7 +199,7 @@ it("W1 hẹn giờ hết chương: dòng nhắc trượt vào trong lớp riêng
   await render(<NowPlaying mobile />);
   const screen = host.querySelector<HTMLElement>("section[role=main]")!;
   animate.mockClear();
-  player({ sleep: { kind: "chapter" } });
+  player({ sleep: { kind: "chapter", chapters: 1 } });
   await render(<NowPlaying mobile />);
   const line = [...host.querySelectorAll("p")].find((element) => element.textContent === "Sẽ dừng khi hết chương này.")!;
   expect(line.closest(".motion-panel")?.getAttribute("data-state")).toBe("open");

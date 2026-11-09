@@ -38,7 +38,9 @@ export function galleryCases(platform: Platform): void {
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
         if (entry.id.endsWith("player-speed") || entry.id.endsWith("player-full-speed")) {
-          expect(document.querySelector('[data-current-choice][aria-pressed="true"]')?.textContent).toBe("1,15×");
+          // Bộ chọn giá trị: 1,15× không phải chip tiêu biểu - chữ lớn mang giá trị, không chip nào sáng.
+          expect(document.querySelector('[data-value-display]')?.textContent).toBe("1,15×");
+          expect(document.querySelector('[data-value-chip][aria-pressed="true"]')).toBeNull();
         }
         if (entry.id === "desktop/settings-studio") {
           // Hai cột: "Cài đặt" là tiêu đề màn (h1), tên nhóm đang mở là tiêu đề cột phải (h2).
@@ -87,11 +89,14 @@ export function galleryCases(platform: Platform): void {
           if (selected) { expect(selected.classList.contains('text-fg')).toBe(true); expect(selected.classList.contains('text-accent-text')).toBe(false); }
         }
         if (/player-(?:full-)?sleep(?:-active)?$/.test(entry.id)) {
-          const choices = [...document.querySelectorAll<HTMLButtonElement>('[data-choice-grid="sleep"] button')];
+          // Bộ chọn giá trị (DESIGN mục 6): bảy chip tiêu biểu, thước, hàng riêng "Hết chương này".
+          const choices = [...document.querySelectorAll<HTMLButtonElement>('[role="group"][aria-label="Hẹn giờ ngủ"] [data-value-chip]')];
           expect(choices).toHaveLength(7);
+          expect(document.querySelector('[data-value-ruler][role="slider"]')).not.toBeNull();
+          expect(document.querySelector('[data-sleep-chapters]')).not.toBeNull();
           expect(choices.every(el => !/(?:^|\s)bg-|\bborder\b/.test(el.className))).toBe(true);
           expect(document.querySelector('input[type="number"]')).toBeNull();
-          if (entry.id.endsWith('sleep-active')) expect(choices.find(el => el.getAttribute('aria-pressed') === 'true')?.textContent).toBe('15 phút');
+          if (entry.id.endsWith('sleep-active')) expect(choices.find(el => el.getAttribute('aria-pressed') === 'true')?.getAttribute('aria-label')).toBe('15 phút');
         }
         if (entry.id === 'desktop/toast') {
           const toast = document.querySelector('[data-sonner-toast]')!;

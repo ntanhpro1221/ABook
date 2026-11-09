@@ -154,10 +154,14 @@ it("màn đọc: cỡ chữ và giãn dòng giữ lựa chọn, gạch chân và
   await reader(); await press(named("Cỡ chữ và giãn dòng")!);
   const sizes = document.querySelector('[role="group"][aria-label="Cỡ chữ"]')!;
   expect([...sizes.querySelectorAll("button")].map(button => button.textContent)).toEqual(["16", "18", "20", "22", "24"]);
-  expect(sizes.querySelector('[data-sliding-indicator="line"]')).not.toBeNull();
-  await press(named("Cỡ chữ 24")!);
+  // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do (thước, -/+, gõ số).
+  const sizeChip = () => sizes.querySelector<HTMLButtonElement>('[data-value-chip="24"]')!;
+  await press(sizeChip());
   expect(host.querySelector("article")!.style.fontSize).toBe("24px");
-  expect(named("Cỡ chữ 24")!.getAttribute("aria-pressed")).toBe("true");
+  expect(sizeChip().getAttribute("aria-pressed")).toBe("true");
+  const picker = sizes.closest<HTMLElement>("[data-value-picker]")!;
+  await press(picker.querySelector<HTMLButtonElement>('[data-value-step="up"]')!);
+  expect(host.querySelector("article")!.style.fontSize).toBe("25px");
   await press([...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(button => button.textContent === "1,9")!);
   expect(host.querySelector("article")!.style.lineHeight).toBe("1.9");
 });

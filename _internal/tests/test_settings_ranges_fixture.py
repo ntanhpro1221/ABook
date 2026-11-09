@@ -13,10 +13,12 @@ RANGES = json.loads((Path(__file__).parent / "fixtures" / "settings" / "ranges.j
 
 
 def test_the_choice_tables_match_the_shared_fixture() -> None:
+    for key, spec in RANGES["numbers"].items():
+        if key != "_":
+            assert library.SLEEP_RANGES[key] == (spec["min"], spec["max"], spec["step"]), key
+            assert DEFAULT_PREFERENCES[key] == spec["default"], key
     for key, spec in RANGES["choices"].items():
-        if key in library.SLEEP_CHOICES:
-            assert list(library.SLEEP_CHOICES[key]) == spec["values"], key
-        elif key in library.CHOICES:
+        if key in library.CHOICES:
             assert list(library.CHOICES[key]) == spec["values"], key
         else:
             assert key == "shakeSensitivity", f"{key} không có ở Python mà cũng không phải khoá riêng của điện thoại"
@@ -29,11 +31,13 @@ def test_the_python_defaults_are_the_fixture_defaults() -> None:
 
 
 def test_the_night_schedule_table_and_clock_match_the_fixture() -> None:
-    assert list(library.SCHEDULE_MINUTES) == RANGES["schedule"]["minutes"]
+    bounds = RANGES["schedule"]["minutes"]
+    assert library.SCHEDULE_MINUTES == (bounds["min"], bounds["max"], bounds["step"])
     assert library._CLOCK.pattern == RANGES["schedule"]["clock"].replace("^", "").replace("$", "")
-    for minutes in RANGES["schedule"]["minutes"]:
+    for minutes in (bounds["min"], bounds["min"] + bounds["step"], bounds["max"]):
         assert library.clean_sleep_schedule({"from": "22:00", "to": "06:00", "minutes": minutes}) is not None
-    assert library.clean_sleep_schedule({"from": "22:00", "to": "06:00", "minutes": max(RANGES["schedule"]["minutes"]) + 1}) is None
+    for minutes in (bounds["min"] - bounds["step"], bounds["min"] + 1, bounds["max"] + bounds["step"]):
+        assert library.clean_sleep_schedule({"from": "22:00", "to": "06:00", "minutes": minutes}) is None
     assert re.fullmatch(RANGES["schedule"]["clock"], "23:59") and not re.fullmatch(RANGES["schedule"]["clock"], "24:00")
 
 

@@ -413,5 +413,25 @@
     "file": "desktop_qt/qml/ScreenHeader.qml",
     "text": "{} (Esc)",
     "reason": "Keyboard shortcut suffix appended to a catalog-supplied back label on desktop."
+  },
+  {
+    "file": "ui/src/shared/ValuePicker.tsx",
+    "text": "End",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ValuePicker.tsx",
+    "text": "Enter",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ValuePicker.tsx",
+    "text": "Escape",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
+  },
+  {
+    "file": "ui/src/shared/ValuePicker.tsx",
+    "text": "Home",
+    "reason": "Keyboard event key or shortcut modifier; must match the operating system protocol."
   }
 ]

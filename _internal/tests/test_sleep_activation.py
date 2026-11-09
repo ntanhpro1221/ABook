@@ -8,7 +8,7 @@ from abook.webui.sync import remote_command
 
 @pytest.mark.parametrize("stored", [{}, {"theme": "dark"}, *({"safetyStopHours": value} for value in ("bad", 0, 1, 2, 3))])
 def test_removed_settings_are_ignored_and_cannot_request_a_timer_after_three_hours(tmp_path, stored):
-    from abook.webui.library import DEFAULT_PREFERENCES, SLEEP_CHOICES
+    from abook.webui.library import DEFAULT_PREFERENCES, SLEEP_RANGES
     from abook.webui import library
     from unittest.mock import patch
 
@@ -22,7 +22,7 @@ def test_removed_settings_are_ignored_and_cannot_request_a_timer_after_three_hou
         assert settings["sleepSchedule"] is None
         assert "safetyStopHours" not in settings
         assert "safetyStopHours" not in DEFAULT_PREFERENCES
-        assert "safetyStopHours" not in SLEEP_CHOICES
+        assert "safetyStopHours" not in SLEEP_RANGES
         assert "safetyStopHours" not in prefs.update({"safetyStopHours": 1})
     assert not list(tmp_path.glob("*.hong-*"))
 

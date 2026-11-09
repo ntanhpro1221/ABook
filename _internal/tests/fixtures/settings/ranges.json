@@ -3,9 +3,12 @@
   "choices": {
     "theme": { "values": ["system", "light", "dark"], "default": "system" },
     "readingSurface": { "values": ["auto", "paper", "ivory", "night"], "default": "auto" },
-    "sleepFadeSeconds": { "values": [10, 30, 60], "default": 30 },
-    "sleepExtendMinutes": { "values": [5, 10, 15], "default": 10 },
     "shakeSensitivity": { "values": ["gentle", "normal", "firm"], "default": "normal" }
+  },
+  "numbers": {
+    "_": "Giá trị số chọn tự do (bộ chọn giá trị, tests/fixtures/value_picker/cases.json): mọi số trong [min, max] đúng lưới min + n*step.",
+    "sleepFadeSeconds": { "min": 5, "max": 120, "step": 5, "default": 30 },
+    "sleepExtendMinutes": { "min": 1, "max": 60, "step": 1, "default": 10 }
   },
   "booleans": {
     "shakeToExtend": true,
@@ -16,7 +19,7 @@
     "haptics": true
   },
   "schedule": {
-    "minutes": [15, 30, 45, 60],
+    "minutes": { "min": 5, "max": 240, "step": 5, "default": 30 },
     "clock": "^([01]\\d|2[0-3]):[0-5]\\d$"
   },
   "musicLevel": {

@@ -327,14 +327,14 @@ READING_SURFACES = ("auto", "paper", "ivory", "night")
 CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "newBookProfile": BOOK_PROFILES, "readingSurface": READING_SURFACES}
 
 
-# Hợp đồng của các tuỳ chọn hẹn giờ ngủ và trình phát: đúng các mức giao diện đưa ra. PUT /api/preferences và lúc ĐỌC file dùng chung
-# bảng này (soát a100 V2: file sửa tay / bản app khác ghi `{"from": 12}`, `-10` từng qua bước nạp rồi làm trình phát ném lỗi); Android có
-# bản cùng hợp đồng ở ui/src/android/settings.ts.
-SLEEP_CHOICES: dict[str, tuple[int, ...]] = {
-    "sleepFadeSeconds": (10, 30, 60),
-    "sleepExtendMinutes": (5, 10, 15),
+# Hợp đồng của các tuỳ chọn hẹn giờ ngủ và trình phát: miền tự do của bộ chọn giá trị (min, max, bước - tests/fixtures/value_picker/cases.json).
+# PUT /api/preferences và lúc ĐỌC file dùng chung bảng này (soát a100 V2: file sửa tay / bản app khác ghi `{"from": 12}`, `-10` từng qua bước
+# nạp rồi làm trình phát ném lỗi); Android có bản cùng hợp đồng ở ListenPrefs.kt.
+SLEEP_RANGES: dict[str, tuple[int, int, int]] = {
+    "sleepFadeSeconds": (5, 120, 5),
+    "sleepExtendMinutes": (1, 60, 1),
 }
-SCHEDULE_MINUTES = (15, 30, 45, 60)
+SCHEDULE_MINUTES: tuple[int, int, int] = (5, 240, 5)
 NUMBER_RANGES: dict[str, tuple[float, float]] = {"playbackRate": (0.5, 3.0), "volume": (0.0, 1.0)}
 _CLOCK = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
@@ -343,15 +343,21 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def on_grid(value: Any, bounds: tuple[int, int, int]) -> bool:
+    """Số nguyên trong [min, max], đúng lưới min + n*bước."""
+    low, high, step = bounds
+    return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high and (value - low) % step == 0
+
+
 def clean_sleep_schedule(value: Any) -> dict[str, Any] | None:
-    """Lịch đêm `{"from": "HH:mm", "to": "HH:mm", "minutes": 15|30|45|60}` đã làm sạch, hay None nếu `value` không đúng cấu trúc / miền giá trị
+    """Lịch đêm `{"from": "HH:mm", "to": "HH:mm", "minutes": 5..240 bước 5}` đã làm sạch, hay None nếu `value` không đúng cấu trúc / miền giá trị
     (khoá thừa bỏ đi). None cũng là "không có lịch": người gọi phân biệt bằng `value is None`."""
     if not isinstance(value, dict):
         return None
     start, end, minutes = value.get("from"), value.get("to"), value.get("minutes")
     if not (isinstance(start, str) and _CLOCK.fullmatch(start) and isinstance(end, str) and _CLOCK.fullmatch(end)):
         return None
-    if isinstance(minutes, bool) or minutes not in SCHEDULE_MINUTES:
+    if not on_grid(minutes, SCHEDULE_MINUTES):
         return None
     return {"from": start, "to": end, "minutes": minutes}
 
@@ -364,8 +370,8 @@ def _fits(key: str, value: Any) -> bool:
         return value in CHOICES[key]
     if key == "sleepSchedule":
         return value is None or clean_sleep_schedule(value) == value
-    if key in SLEEP_CHOICES:
-        return _is_number(value) and value in SLEEP_CHOICES[key]
+    if key in SLEEP_RANGES:
+        return on_grid(value, SLEEP_RANGES[key])
     if key in NUMBER_RANGES:
         low, high = NUMBER_RANGES[key]
         return _is_number(value) and low <= value <= high
