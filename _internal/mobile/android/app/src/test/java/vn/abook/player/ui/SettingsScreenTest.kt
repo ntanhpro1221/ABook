@@ -22,6 +22,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import vn.abook.player.ui.screens.screenTag
@@ -96,15 +98,18 @@ class SettingsScreenTest {
         rule.waitForIdle()
     }
 
-    private fun showGroup(group: SettingsGroup, dark: Boolean = false, stored: JSONObject = JSONObject(), allowed: Boolean = true) {
+    private fun showGroup(group: SettingsGroup, dark: Boolean = false, stored: JSONObject = JSONObject(), allowed: Boolean = true, fontScale: Float = 1f) {
         prepare(stored, allowed)
         rule.setContent {
             val scope = rememberCoroutineScope()
             val env = remember { env(scope) }
-            AbookTheme(dark) {
-                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
-                    SettingsGroupScreen(group, env, sheets, onBack = {})
-                    SheetLayer(sheets)
+            val density = LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                AbookTheme(dark) {
+                    Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                        SettingsGroupScreen(group, env, sheets, onBack = {})
+                        SheetLayer(sheets)
+                    }
                 }
             }
         }
@@ -115,6 +120,14 @@ class SettingsScreenTest {
         rule.assertIconLedTextColumns()
         rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
     }
+
+    // ---- bộ chọn giá trị (DESIGN mục 6): ảnh gallery cả trang Hẹn giờ ngủ, lịch đêm mở, máy cao để thấy hết ----
+
+    private val nightOn = JSONObject().put("schedule", JSONObject().put("from", "22:00").put("to", "06:00").put("minutes", 35)).put("sleepExtendMinutes", 23)
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun pickerSleepLight() { showGroup(SettingsGroup.Sleep, stored = nightOn); shot("picker_settings_sleep_light") }
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun pickerSleepDark() { showGroup(SettingsGroup.Sleep, dark = true, stored = nightOn); shot("picker_settings_sleep_dark") }
+    @Test @Config(qualifiers = "w360dp-h1700dp-xxhdpi") fun pickerSleepLargeLight() { showGroup(SettingsGroup.Sleep, stored = nightOn, fontScale = 1.3f); shot("picker_settings_sleep_font130_light") }
+    @Test @Config(qualifiers = "w360dp-h1700dp-xxhdpi") fun pickerSleepLargeDark() { showGroup(SettingsGroup.Sleep, dark = true, stored = nightOn, fontScale = 1.3f); shot("picker_settings_sleep_font130_dark") }
 
     // ---- trang gốc ----
 
