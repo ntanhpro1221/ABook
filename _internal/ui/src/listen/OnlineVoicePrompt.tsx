@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
 import { Play, Square } from "lucide-react";
@@ -18,7 +19,7 @@ export function OnlineVoicePrompt() {
   const { setExpanded } = useNowPlaying();
   // Nghe thử từng giọng trước khi chọn - cùng câu mẫu và cùng đường với nút "Nghe thử" của Cài đặt (soát a64).
   const source = useSource();
-  const sample = useVoiceSample((voice, text) => (source.readAloudSample ? source.readAloudSample(voice, text) : Promise.reject(new Error("Chưa nghe thử được giọng này."))));
+  const sample = useVoiceSample((voice, text) => (source.readAloudSample ? source.readAloudSample(voice, text) : Promise.reject(new Error(S.s_chua_nghe_thu_duoc_giong_nay_baf64b64))));
   useEffect(() => setChoosing(false), [request]);
   // "Chọn giọng khác": nút vừa bấm biến mất cùng phần đồng ý - tiêu điểm vào giọng đang dùng trong danh sách, không về khung hộp (soát a67).
   const list = useRef<HTMLDivElement | null>(null);
@@ -37,7 +38,7 @@ export function OnlineVoicePrompt() {
     <Dialog
       open={Boolean(request)}
       onOpenChange={(open) => !open && request?.answer(null)}
-      title={choosing ? "Chọn giọng đọc" : "Giọng đọc trực tuyến"}
+      title={choosing ? S.s_chon_giong_doc_a3941a79 : S.s_giong_doc_truc_tuyen_44ae53c1}
       description={choosing ? chooseVoiceText(voices, voice) : onlinePromptText(voice)}
       width="max-w-md"
     ><MotionRegion>
@@ -62,7 +63,7 @@ export function OnlineVoicePrompt() {
                     )}
                   >
                     <span className="truncate">{spokenVoiceName(item.name)}</span>
-                    <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? "trực tuyến" : "của máy"}{item.id === voice.id ? " · đang chọn" : ""}</span>
+                    <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? S.s_truc_tuyen_ada49667 : S.s_cua_may_f44ee5ca}{item.id === voice.id ? S.s_dang_chon_4851f502 : ""}</span>
                   </button>
                   {source.readAloudSample && (
                     <Button
@@ -72,9 +73,9 @@ export function OnlineVoicePrompt() {
                       icon={playing ? Square : Play}
                       loading={sample.loading === item.id}
                       onClick={() => (playing ? sample.stop() : void sample.play(item.id))}
-                      aria-label={`${playing ? "Dừng" : "Nghe thử"} giọng ${spokenVoiceName(item.name)}`}
+                      aria-label={S.s_0_giong_1_85dee2ac(playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065, spokenVoiceName(item.name))}
                     >
-                      {playing ? "Dừng" : "Nghe thử"}
+                      {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
                     </Button>
                   )}
                 </div>
@@ -94,18 +95,14 @@ export function OnlineVoicePrompt() {
             }}
             className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-control border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
           >
-            <span>Tải giọng về máy</span>
-            <span className="text-xs font-normal text-fg-2">VieNeu, Supertonic - đọc được cả khi không có mạng</span>
+            <span>{S.s_tai_giong_ve_may_62bb0900}</span>
+            <span className="text-xs font-normal text-fg-2">{S.s_vieneu_supertonic_doc_duoc_ca_khi_khong_co_68472ba2}</span>
           </button>
         </div>
       ) : (
         <div className="flex flex-wrap justify-end gap-2">
-          <Button ref={chooseButton} variant="ghost" onClick={() => setChoosing(true)}>
-            Chọn giọng khác
-          </Button>
-          <Button variant="primary" data-autofocus onClick={() => answer(voice.id)}>
-            Nghe
-          </Button>
+          <Button ref={chooseButton} variant="ghost" onClick={() => setChoosing(true)}>{S.s_chon_giong_khac_d31cfe89}</Button>
+          <Button variant="primary" data-autofocus onClick={() => answer(voice.id)}>{S.s_nghe_a43aafef}</Button>
         </div>
       )}
     </MotionRegion></Dialog>

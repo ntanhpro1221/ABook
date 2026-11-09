@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -29,7 +30,7 @@ import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "
 import { feedback, withFeedback } from "@/shared/feedback";
 
 type Filter = "all" | "listening" | "new" | "finished";
-const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: "Tất cả" }, { value: "listening", label: "Nghe dở" }, { value: "new", label: "Chưa nghe" }, { value: "finished", label: "Xong" }] as const;
+const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: S.s_tat_ca_49c73a31 }, { value: "listening", label: S.s_nghe_do_7e529071 }, { value: "new", label: S.s_chua_nghe_2fbea4c8 }, { value: "finished", label: S.s_xong_a6f4543a }] as const;
 const LIBRARY_FILTERS: Filter[] = LIBRARY_FILTER_OPTIONS.map(option => option.value);
 
 /** Hành động riêng của nền tảng đi cùng bìa, kể cả khi mở bộ sách. */
@@ -84,18 +85,18 @@ export function bookStatusText(book: ListenBook, speaks = false): string {
 
 /** "Trên máy tính" (điện thoại nghe máy tính đã ghép) hay "Trên <tên máy>" (máy tính nghe máy tính khác). */
 export function remotePlace(book: ListenBook): string {
-  return `Trên ${remoteName(book)}`;
+  return S.s_tren_0_a2a4a4cb(remoteName(book));
 }
 
 /** Tên máy đang giữ cuốn nghe thẳng: tên máy tính đã ghép, "máy khác" khi chưa biết tên, "máy tính" khi điện thoại nghe máy tính. */
 export function remoteName(book: ListenBook): string {
-  return typeof book.remote === "object" && book.remote ? book.remote.computer || "máy khác" : "máy tính";
+  return typeof book.remote === "object" && book.remote ? book.remote.computer || S.s_may_khac_95db1846 : S.s_may_tinh_8eafc226;
 }
 
 /** Cuốn nghe thẳng chưa xong: chương còn lại đang ở máy kia và tự hiện khi xong - không phải "file cũ, mở bản mới hơn" (soát a27 lỗi 7). */
 export function remoteUnfinishedLine(book: ListenBook): string {
   const name = remoteName(book);
-  return `${name.charAt(0).toUpperCase()}${name.slice(1)} còn đang làm, chương mới hiện ở đây khi xong`;
+  return S.s_0_1_con_dang_lam_chuong_moi_hien_o_day_khi_9adfb0f7(name.charAt(0).toUpperCase(), name.slice(1));
 }
 
 function progressText(book: ListenBook, speaks: boolean): string {
@@ -104,19 +105,19 @@ function progressText(book: ListenBook, speaks: boolean): string {
   // Dòng phụ là NGƯỜI VIẾT sách (tìm sách theo tác giả được, thẻ cũng phải nói). Không có tác giả thì chỉ số chương: tên giọng không phải thông tin về cuốn sách
   // (cuốn nào cũng cùng một giọng), và "Hoài My (Edge)" còn là chuyện kỹ thuật (soát UX a10, a15). Máy chưa có giọng đọc thì nói "Chỉ có chữ".
   if (book.stage === "text") {
-    const lead = book.author?.trim() || (speaks ? "" : "Chỉ có chữ");
-    return `${lead ? lead + " · " : ""}${book.chaptersTotal} chương`;
+    const lead = book.author?.trim() || (speaks ? "" : S.s_chi_co_chu_bf879f2c);
+    return S.s_0_1_chuong_2ba5a353(lead ? lead + " · " : "", book.chaptersTotal);
   }
-  const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
-  if (book.progress.finished) return "Đã nghe xong";
-  if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
+  const chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal);
+  if (book.progress.finished) return S.s_da_nghe_xong_d276b702;
+  if (book.progress.caughtUp) return S.s_da_nghe_het_phan_da_co_0_25c1ba87(chapters);
   if (!book.complete) {
-    return book.producing ? `${chapters} · đang thu` : chapters;
+    return book.producing ? S.s_0_dang_thu_4abe179a(chapters) : chapters;
   }
   const left = Math.max(0, book.duration - book.progress.heardSeconds);
   if (book.progress.heardSeconds <= 0) return formatLength(book.duration);
   // Ở tốc độ của cuốn, làm tròn lên - như số giờ còn lại ở thanh phát (soát a26 L10: "Còn 1 phút" cạnh "-2:09").
-  return `Còn ${formatLengthUp(left / (book.state.rate ?? 1))}`;
+  return S.s_con_0_f9ae9b72(formatLengthUp(left / (book.state.rate ?? 1)));
 }
 
 /** Lần bấm nghe gần nhất (chung cả app): lời đáp sách về muộn của lần bấm trước không được phát đè cuốn vừa chọn. */
@@ -195,12 +196,12 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
     <MotionRegion as="div" data-book-tile="" className="group">
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
-        <button type="button" tabIndex={-1} onClick={() => actions.open(book)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
+        <button type="button" tabIndex={-1} onClick={() => actions.open(book)} className="block w-full rounded-control" aria-label={S.s_mo_0_7a5716e0(book.title)} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover bookKey={book.id} title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
         </button>
         <button
           type="button"
-          aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
+          aria-label={textOnly ? S.s_doc_0_2e6ee219(book.title) : playingHere ? S.s_tam_dung_0_43ccbbf2(book.title) : book.stage === "text" ? S.s_nghe_ngay_0_95114fdc(book.title) : S.s_nghe_0_42d1e966(book.title)}
           onClick={() => (textOnly ? actions.read(book) : (feedback("playPause"), current ? actions.toggle() : actions.play(book)))}
           className={cn(
             "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-[44px] place-items-center rounded-full bg-panel text-fg shadow-card transition-opacity duration-motion-fast focus-visible:pointer-events-auto focus-visible:opacity-100",
@@ -231,14 +232,14 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         <div className={cn("break-words text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
         <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
-          {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
+          {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
           <TickingValue className="min-w-0 truncate">{progressText(book, speaks)}</TickingValue>
         </div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
         {twin && (twinKind(book) || book.addedAt) ? (
           <div data-motion-live className="mt-0.5 text-xs text-fg-3">
-            {[twinKind(book), book.addedAt ? `Thêm ${formatWhen(book.addedAt)}` : ""].filter(Boolean).join(" · ")}
+            {[twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""].filter(Boolean).join(" · ")}
           </div>
         ) : null}
       </button>
@@ -262,31 +263,31 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const point = useResumeTarget(full ?? book, full?.chapters ?? book.chapters ?? []);
   const where = !point ? "" : playingHere ? point.chapter.title : resumeWhere(point.chapter.title, point.at);
   return (
-    <section className="flex items-center gap-4 sm:gap-6" aria-label="Đang nghe">
-      <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
+    <section className="flex items-center gap-4 sm:gap-6" aria-label={S.s_dang_nghe_9310d8cf}>
+      <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={S.s_mo_0_7a5716e0(book.title)}>
         <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-cover sm:w-28" />
       </button>
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
-        <div className="label-section text-fg-2">Đang nghe</div>
+        <div className="label-section text-fg-2">{S.s_dang_nghe_9310d8cf}</div>
         <h2 className="mt-2 break-words text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
         <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
           {where}
-          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? <TickingValue>{` · nghe lần cuối ${formatWhen(last.at)}`}</TickingValue> : ""}
+          {current ? (playingHere ? S.s_dang_phat_e6ea5044 : S.s_tam_dung_4b55ce49) : last ? <TickingValue>{S.s_nghe_lan_cuoi_0_d055df7b(formatWhen(last.at))}</TickingValue> : ""}
         </MotionRegion>
         <p className="mt-0.5 text-sm text-fg-2"><TickingValue>{bookStatusText(book, speaks)}</TickingValue></p>
-        <Progress value={book.progress.fraction} size="xs" className="mt-3" label="Đã nghe" />
+        <Progress value={book.progress.fraction} size="xs" className="mt-3" label={S.s_da_nghe_1e0f8d88} />
       </div>
       <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>
       {book.progress.caughtUp && !current ? (
         // Đã nghe hết phần đã có: nút phát lớn chỉ phát 0 giây rồi báo hết - nói thẳng đang chờ chương mới (soát UX 29-09).
-        <span className="block rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">Chờ chương mới</span>
+        <span className="block rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">{S.s_cho_chuong_moi_79b8dba7}</span>
       ) : (
       <button
         type="button"
         onClick={withFeedback("playPause", () => (current ? player.toggle() : void playBook(book)))}
-        aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe tiếp ${book.title}${where ? `, ${where}` : ""}`}
+        aria-label={playingHere ? S.s_tam_dung_0_43ccbbf2(book.title) : S.s_nghe_tiep_0_1_d03513bd(book.title, where ? `, ${where}` : "")}
         className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink transition-transform duration-motion-fast active:scale-[0.97]"
       >
         <MotionRegion as="span" motionKey={playingHere} className="inline-grid size-6 place-items-center">
@@ -325,15 +326,15 @@ export function useNextVolume(bookId: string | undefined, title: string | undefi
  *  (soát a27 lỗi 6). */
 export function upcomingStatus(book: ListenBook, canOpen: boolean): string {
   if (book.remote) {
-    const where = `trên ${remoteName(book)}`;
-    if (book.producing && book.pauseReason) return `Đang tạm dừng ${where}`;
-    return book.producing ? `Đang làm ${where}` : `Chưa có chương nghe được · làm ${where}`;
+    const where = S.s_tren_0_983af173(remoteName(book));
+    if (book.producing && book.pauseReason) return S.s_dang_tam_dung_0_b6363dfa(where);
+    return book.producing ? S.s_dang_lam_0_fa0badf5(where) : S.s_chua_co_chuong_nghe_duoc_lam_0_20bbbaa5(where);
   }
-  const eta = book.eta && (book.eta.phase === "analysis" || book.eta.phase === "speaker") ? `chương đầu nghe được sau khoảng ${formatLength(book.eta.seconds + 600)}` : "đang chuẩn bị";
+  const eta = book.eta && (book.eta.phase === "analysis" || book.eta.phase === "speaker") ? S.s_chuong_dau_nghe_duoc_sau_khoang_0_424385a4(formatLength(book.eta.seconds + 600)) : S.s_dang_chuan_bi_d4a83411;
   if (book.producing && book.pauseReason) {
-    return book.pauseReason === "battery" ? "Đang tạm dừng · máy đang chạy pin" : `Đang tạm dừng${canOpen ? " · bấm để làm tiếp" : ""}`;
+    return book.pauseReason === "battery" ? S.s_dang_tam_dung_may_dang_chay_pin_83cf9dae : S.s_dang_tam_dung_0_47531a88(canOpen ? S.s_bam_de_lam_tiep_1a811753 : "");
   }
-  return book.producing ? `Đang làm · ${eta}` : `Chưa có chương nghe được${canOpen ? " · bấm để làm tiếp" : ""}`;
+  return book.producing ? S.s_dang_lam_0_f411f518(eta) : S.s_chua_co_chuong_nghe_duoc_0_4c293697(canOpen ? S.s_bam_de_lam_tiep_1a811753 : "");
 }
 
 function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book: ListenBook) => void }) {
@@ -370,7 +371,7 @@ function Shelf({ books, badges, twins, memory }: { books: ListenBook[]; badges?:
     </div>
   );
   return (
-    <MotionRegion as="div" role="list" aria-label="Sách" className="space-y-7" motionKey={books.map((book) => book.id)}>
+    <MotionRegion as="div" role="list" aria-label={S.s_sach_0c2b3e9b} className="space-y-7" motionKey={books.map((book) => book.id)}>
       <Windowed
         memory={memory} items={rows} block={SHELF_BLOCK} estimate={90} className={SHELF_GRID} alwaysBlocks
         row={({ key, item, state, ref }, index) => (
@@ -412,7 +413,7 @@ function librarySections(books: ListenBook[], grouped: boolean) {
 const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySections>[number]; twins: Set<string>; phone: boolean }) {
   const extras = useContext(BookExtrasContext);
   const [open, setOpen] = useState(false);
-  const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
+  const trigger = <button type="button" aria-label={S.s_mo_bo_0_676ecc6b(item.label)} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
     {/* Số tập dưới bìa đã phân biệt bộ sách; bỏ hai tờ trống nhô lên từng trông như dải báo mạng bị mất chữ. */}
     <div className="relative">
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
@@ -420,9 +421,8 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
     </div>
     <span className="mt-2.5 block break-words text-sm font-medium leading-snug">{item.label}</span>
     <span className="mt-1 flex items-center gap-1 text-xs text-fg-2">
-      {item.items.some(book => book.remote) && <Laptop role="img" aria-label="Có sách trên máy khác" className="size-3 shrink-0" />}
-      {item.items.length} tập
-    </span>
+      {item.items.some(book => book.remote) && <Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" />}
+      {item.items.length}{S.s_tap_269b0b3d}</span>
   </button>;
   const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
   return <MotionRegion data-book-tile="" motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
@@ -441,7 +441,7 @@ export function SeriesShelves({ books, twins, memory, grouped = true }: { books:
   const rows = useListPresence(sections, section => section.key);
   const shelf = useShelfState();
   const actions = useTileActions();
-  return <TileActionsContext.Provider value={actions}><div role="list" aria-label="Sách" className="mt-8">
+  return <TileActionsContext.Provider value={actions}><div role="list" aria-label={S.s_sach_0c2b3e9b} className="mt-8">
     <Windowed memory={memory} items={rows} block={SHELF_BLOCK} estimate={130} className={SHELF_GRID} alwaysBlocks
       row={({ key, item, state, ref }, index) => <div key={key} ref={ref} role="listitem" className="motion-row" data-state={state} inert={state === "exit"}>
         <div className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
@@ -453,10 +453,10 @@ export function SeriesShelves({ books, twins, memory, grouped = true }: { books:
 }
 
 const EMPTY_TEXT: Record<Filter, string> = {
-  all: "Thư viện chưa có sách nào.",
-  listening: "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu.",
-  new: "Cuốn nào cũng đã được nghe ít nhất một đoạn.",
-  finished: "Chưa có cuốn nào nghe xong.",
+  all: S.s_thu_vien_chua_co_sach_nao_0d9c9f45,
+  listening: S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e,
+  new: S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48,
+  finished: S.s_chua_co_cuon_nao_nghe_xong_8d430580,
 };
 
 export function LibraryScreen({
@@ -521,7 +521,7 @@ export function LibraryScreen({
   );
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
   const upcomingRows = useListPresence(upcomingShown, (book) => book.id);
-  const noResultsTitle = query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây";
+  const noResultsTitle = query ? S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query) : S.s_khong_co_sach_o_day_9b24f539;
   const grouped = true;
 
   return (
@@ -531,7 +531,7 @@ export function LibraryScreen({
     <div ref={container} className="library-screen page-x mx-auto max-w-[1180px] pb-16">
       {/* Nút nằm trên CÙNG dòng tiêu đề, căn giữa theo dòng ấy (không lơ lửng giữa tiêu đề và số cuốn). */}
       <ScreenHeader
-        title="Thư viện"
+        title={S.s_thu_vien_58145555}
         // Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9).
         // -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới.
         // Giữ chỗ từ đầu, chỉ mờ vào khi có sách: dòng tiêu đề không cao thêm lúc sách về (đo 25-10: lưới trôi 8 px khi mở app).
@@ -539,7 +539,7 @@ export function LibraryScreen({
         subtitleKey={folded ? `${shown.length + upcomingShown.length}/${allBooks?.length ?? 0}` : allBooks?.length ?? 0}
         // Đang tìm: nói số cuốn khớp, không phải cả thư viện (soát 24-10 T08 - từng ghi "11 cuốn" trên một kết quả).
         // Chưa có số: giữ một dòng trống, số tới không làm đầu trang cao thêm đẩy lưới xuống.
-        subtitle={!allBooks?.length ? "\u00a0" : folded ? `${shown.length + upcomingShown.length} trong ${allBooks.length} cuốn` : `${allBooks.length} cuốn`}
+        subtitle={!allBooks?.length ? "\u00a0" : folded ? S.s_0_trong_1_cuon_99a00aaa(shown.length + upcomingShown.length, allBooks.length) : S.s_0_cuon_2356f2f6(allBooks.length)}
       />
       {recap}
       <LoadingCrossfade loading={isLoading} placeholder={
@@ -555,12 +555,10 @@ export function LibraryScreen({
       {/* Lỗi / trống / có sách thay nhau (mạng về, sách đầu tiên vào thư viện): mờ hẳn qua, không thay cả trang tức thì. */}
       <MotionRegion fadeThrough motionKey={failedEmpty(libraryQuery) ? "error" : !libraryRows.length ? (upcoming.length ? "upcoming" : "empty") : "books"}>
       {failedEmpty(libraryQuery) ? (
-        <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
+        <LoadError what={S.s_thu_vien_beb0f831} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
-          <EmptyState icon={Headphones} title="Chưa có sách trên máy" className="mt-12">
-            Thêm sách của bạn để bắt đầu nghe.
-          </EmptyState>
+          <EmptyState icon={Headphones} title={S.s_chua_co_sach_tren_may_1b1ca653} className="mt-12">{S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f}</EmptyState>
         )
       ) : (
         <>
@@ -571,18 +569,18 @@ export function LibraryScreen({
           )}</MotionPresence>
           {/* Khe lọc 14 px trên điện thoại: vừa cả bốn mục ở cỡ chữ hệ thống 115 % ("Xong" từng cụt ở mép); to hơn nữa thì hàng cuộn, mép mờ. */}
           <div className="mt-8 flex items-center gap-2 sm:mt-12 sm:gap-4">
-            <div ref={setFilterRow} style={filterFade} role="group" aria-label="Lọc sách" className="relative flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
+            <div ref={setFilterRow} style={filterFade} role="group" aria-label={S.s_loc_sach_bebccfba} className="relative flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
               <SlidingIndicator variant="line" />
               {LIBRARY_FILTER_OPTIONS.map((option, index) => [index > 0 && <RowGap key={`gap-${option.value}`} className="w-4" />, <button
-                key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
+                key={option.value} type="button" aria-label={option.value === "finished" ? S.s_nghe_xong_9480636e : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
                 className={cn("touch-hit min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium sm:text-sm", filter === option.value ? "text-fg" : "text-fg-2 hover:text-fg")}>
                 {option.label}
               </button>])}
             </div>
             {/* Xếp sách không khoá trang: modal đổi pointer-events/biến cuộn trên body, tính lại style mọi bìa. */}
             <DropdownMenu.Root modal={false}>
-              <DropdownMenu.Trigger asChild><button type="button" aria-label="Xếp theo" title={`Xếp theo: ${SORT_OPTIONS.find(option => option.value === sort)?.label}`} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
-                <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">Xếp theo</span>
+              <DropdownMenu.Trigger asChild><button type="button" aria-label={S.s_xep_theo_2b280cd9} title={S.s_xep_theo_0_89631506(SORT_OPTIONS.find(option => option.value === sort)?.label)} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
+                <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">{S.s_xep_theo_2b280cd9}</span>
               </button></DropdownMenu.Trigger>
               <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 <DropdownMenu.RadioGroup value={sort} onValueChange={value => { const next = value as LibrarySort; setSort(next); saveLibrarySort(next); }}>
@@ -590,17 +588,17 @@ export function LibraryScreen({
                 </DropdownMenu.RadioGroup>
               </DropdownMenu.Content></DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-control text-fg-2">
+            <button type="button" aria-label={S.s_tim_sach_1deb0125} aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-control text-fg-2">
               {/* Vùng chạm 44 px giữ nguyên, mực kính lúp (lề phải 2/24 của ô 17,5 px) chạm đúng mép phải nội dung: (44 - 17,5) / 2 + 17,5 x 2 / 24 = 14,71 px. */}
               <Search className="size-5" />
             </button>
           </div>
           <Collapse open={searchOpen}>
             <label className="relative mt-3 block">
-              <span className="sr-only">Tìm sách</span>
+              <span className="sr-only">{S.s_tim_sach_1deb0125}</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
-              <input ref={searchInput} aria-label="Tìm sách" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên sách, tác giả, giọng" title="Gõ không dấu cũng được" className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
-              <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? "Xoá ô tìm" : "Đóng ô tìm"} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
+              <input ref={searchInput} aria-label={S.s_tim_sach_1deb0125} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={S.s_ten_sach_tac_gia_giong_a003bb13} title={S.s_go_khong_dau_cung_duoc_b7275695} className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
+              <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? S.s_xoa_o_tim_0bafa7ad : S.s_dong_o_tim_1ba06fdf} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
             </label>
           </Collapse>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
@@ -609,7 +607,7 @@ export function LibraryScreen({
             <SeriesShelves key={shown.length ? "books" : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>
               <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
-                {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
+                {query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : EMPTY_TEXT[filter]}
               </EmptyState>
             </MotionPresence>
           </MotionRegion>

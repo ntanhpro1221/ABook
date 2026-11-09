@@ -56,8 +56,8 @@ object BluetoothLink {
     @SuppressLint("MissingPermission")
     fun devices(context: Context): JSONArray {
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
-            ?: throw IllegalStateException("Điện thoại này không có Bluetooth")
-        if (!adapter.isEnabled) throw IllegalStateException("Bluetooth của điện thoại đang tắt - bật lên rồi thử lại")
+            ?: throw IllegalStateException(S.s_dien_thoai_nay_khong_co_bluetooth_43385a58)
+        if (!adapter.isEnabled) throw IllegalStateException(S.s_bluetooth_cua_dien_thoai_dang_tat_bat_len_04fe8744)
         val out = JSONArray()
         for (device in adapter.bondedDevices) {
             val major = device.bluetoothClass?.majorDeviceClass
@@ -137,13 +137,13 @@ private class Gateway(private val context: Context, private val address: String)
             link().open(client)
             lastUsed = System.currentTimeMillis()
         } catch (error: IOException) {
-            lastError = error.message ?: "không kết nối được qua Bluetooth"
+            lastError = error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc
             runCatching { client.close() }
         } catch (_: SecurityException) {
-            lastError = "Chưa cho ABook dùng Bluetooth"
+            lastError = S.s_chua_cho_abook_dung_bluetooth_0ddc4068
             runCatching { client.close() }
         } catch (error: Exception) { // địa chỉ hỏng, Bluetooth stack lỗi...: không được làm sập app
-            lastError = "Chưa kết nối được qua Bluetooth: ${error.message ?: error.javaClass.simpleName}"
+            lastError = S.s_chua_ket_noi_duoc_qua_bluetooth_0_8313a583(error.message ?: error.javaClass.simpleName)
             runCatching { client.close() }
         }
     }
@@ -151,27 +151,27 @@ private class Gateway(private val context: Context, private val address: String)
     @Synchronized
     @SuppressLint("MissingPermission")
     private fun link(): BtMux {
-        if (closed) throw IOException("Đã bỏ ghép máy này")
+        if (closed) throw IOException(S.s_da_bo_ghep_may_nay_bce936f5)
         mux?.takeIf { it.alive }?.let { return it }
         val now = System.currentTimeMillis()
-        if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { "Chưa kết nối được qua Bluetooth" })
+        if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { S.s_chua_ket_noi_duoc_qua_bluetooth_b2d7ddea })
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
-            ?: throw IOException("Điện thoại này không có Bluetooth")
-        if (!adapter.isEnabled) throw IOException("Bluetooth của điện thoại đang tắt")
+            ?: throw IOException(S.s_dien_thoai_nay_khong_co_bluetooth_43385a58)
+        if (!adapter.isEnabled) throw IOException(S.s_bluetooth_cua_dien_thoai_dang_tat_40a06713)
         // cancelDiscovery đòi BLUETOOTH_SCAN trên Android 12+ (mình không dò tìm nên không xin quyền ấy): chỉ là tối ưu.
         runCatching { adapter.cancelDiscovery() }
         val socket = try {
             adapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(BluetoothLink.SERVICE)
         } catch (error: IllegalArgumentException) {
             failedAt = now
-            throw IOException("Địa chỉ Bluetooth không hợp lệ: $address", error)
+            throw IOException(S.s_dia_chi_bluetooth_khong_hop_le_0_1308dc05(address), error)
         }
         try {
             socket.connect()
         } catch (error: IOException) {
             runCatching { socket.close() }
             failedAt = System.currentTimeMillis()
-            lastError = "Chưa kết nối được qua Bluetooth - máy kia có bật ABook và Bluetooth không?"
+            lastError = S.s_chua_ket_noi_duoc_qua_bluetooth_may_kia_co_d2e24f5d
             throw IOException(lastError, error)
         }
         val fresh = BtMux(socket.inputStream, socket.outputStream, { socket.close() })
@@ -235,7 +235,7 @@ object BluetoothShare {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                 BluetoothAdapter.STATE_ON -> synchronized(this@BluetoothShare) { if (wanted) runCatching { start(context) } }
-                BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> dropListener("Bluetooth của điện thoại đang tắt")
+                BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> dropListener(S.s_bluetooth_cua_dien_thoai_dang_tat_40a06713)
             }
         }
     }
@@ -248,25 +248,25 @@ object BluetoothShare {
         watch(context.applicationContext)
         if (server != null) return
         if (!BluetoothLink.permitted(context)) {
-            status = "Chưa cho ABook dùng \"Thiết bị ở gần\" - bật trong phần Bluetooth"
+            status = S.s_chua_cho_abook_dung_thiet_bi_o_gan_bat_tro_9301c689
             return
         }
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
         if (adapter == null) {
-            status = "Điện thoại này không có Bluetooth"
+            status = S.s_dien_thoai_nay_khong_co_bluetooth_43385a58
             return
         }
         if (!adapter.isEnabled) {
-            status = "Bluetooth của điện thoại đang tắt"
+            status = S.s_bluetooth_cua_dien_thoai_dang_tat_40a06713
             return
         }
         val socket = try {
-            adapter.listenUsingRfcommWithServiceRecord(if (BuildConfig.DEBUG) "ABook .dev" else "ABook", UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
+            adapter.listenUsingRfcommWithServiceRecord(if (BuildConfig.DEBUG) S.s_abook_dev_c1e43072 else S.s_abook_1c37d334, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
         } catch (error: IOException) {
-            status = "Chưa mở được Bluetooth: ${error.message}"
+            status = S.s_chua_mo_duoc_bluetooth_0_3e352e52(error.message)
             return
         } catch (_: SecurityException) {
-            status = "Chưa cho ABook dùng Bluetooth"
+            status = S.s_chua_cho_abook_dung_bluetooth_0ddc4068
             return
         }
         server = socket
@@ -301,7 +301,7 @@ object BluetoothShare {
                 socket.accept()
             } catch (_: IOException) {
                 // Tắt Bluetooth, hay stop(): bỏ socket hỏng để lần bật lại mở socket mới - không báo "đang chạy" mãi.
-                dropListener("Bluetooth ngừng nghe - sẽ tự mở lại khi Bluetooth bật", socket)
+                dropListener(S.s_bluetooth_ngung_nghe_se_tu_mo_lai_khi_blue_c282cfc7, socket)
                 return
             }
             val mux = BtMux(link.inputStream, link.outputStream, { link.close() },

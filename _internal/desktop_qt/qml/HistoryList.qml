@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "HistoryLogic.js" as Logic
@@ -58,7 +59,7 @@ Item {
                     topPadding: Theme.s12
                     spacing: Theme.s12
                     Accessible.role: Accessible.Indicator
-                    Accessible.name: "Đang tải lịch sử"
+                    Accessible.name: S.s_dang_tai_lich_su_38caa09e
                     SequentialAnimation {
                         running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
                         loops: Animation.Infinite
@@ -77,8 +78,8 @@ Item {
                     objectName: "historyEmpty"
                     width: parent.width
                     icon: "history"
-                    title: "Chưa có lịch sử nghe"
-                    text: "Mỗi lượt nghe lưu lại chỗ bạn dừng."
+                    title: S.s_chua_co_lich_su_nghe_5823581d
+                    text: S.s_moi_luot_nghe_luu_lai_cho_ban_dung_4c3bdda1
                 }
             }
             Collapse {
@@ -95,10 +96,10 @@ Item {
                         width: parent.width
                         spacing: 4
                         Accessible.role: Accessible.StaticText
-                        Accessible.name: "7 ngày qua: " + Logic.formatLength(root.week) + " nghe cuốn này."
-                        Text { text: "7 ngày qua:"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                        Accessible.name: S.s_7_ngay_qua_70c6d33d + Logic.formatLength(root.week) + S.s_nghe_cuon_nay_8e481d62
+                        Text { text: S.s_7_ngay_qua_01662a56; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                         Text { objectName: "historyWeekLength"; text: Logic.formatLength(root.week); color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
-                        Text { text: "nghe cuốn này."; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                        Text { text: S.s_nghe_cuon_nay_da2f5566; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                     }
                     Repeater {
                         model: root.groups

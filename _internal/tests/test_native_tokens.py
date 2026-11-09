@@ -21,6 +21,13 @@ def test_tokens_kt_uses_lf():
     assert b"\r" not in _generator().OUT.read_bytes()
 
 
+def test_every_platform_token_output_is_current():
+    gen=_generator()
+    assert gen.main(['--check'])==0
+    for path,render in gen.OUTPUTS:
+        assert path.read_bytes()==render().encode('utf-8'), path
+
+
 def test_generator_reads_every_palette_row():
     gen = _generator()
     light, dark = gen.colors(gen.DESIGN.read_text(encoding="utf-8"))

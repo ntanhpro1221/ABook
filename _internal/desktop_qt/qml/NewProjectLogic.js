@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
 .import "StudioLogic.js" as Studio
@@ -7,12 +8,12 @@
 // splitOffer, sourceRef, samePath, volumes, timeEstimate, AnalysisModelPicker): chữ và quy tắc chép từng chữ để hai nền tảng nói cùng một câu.
 
 var PROFILES = [
-    {value: "fast", title: "Nhanh", pace: "Nhanh nhất", summary: "Nghe thử một truyện mới, hoặc cần gấp.",
-     points: ["Máy hiểu truyện theo từng đoạn dài một lần - nhanh hơn", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 1 lần nếu câu bị đọc sai"]},
-    {value: "balanced", title: "Cân bằng", pace: "Vừa phải", summary: "Nghe hằng ngày, chấp nhận vài câu chưa hoàn hảo.",
-     points: ["Phân tích truyện đầy đủ", "Soát cơ bản sau khi đọc", "Đọc lại tối đa 2 lần nếu câu bị đọc sai"]},
-    {value: "high_quality", title: "Chất lượng cao", pace: "Chậm nhất, kỹ nhất", summary: "Sách nghe lại nhiều lần hoặc để chia sẻ.",
-     points: ["Rà lại cảm xúc từng câu một lần nữa", "Nghe lại mọi câu, soát kỹ từng chữ", "Đọc lại tới 5 lần nếu câu bị đọc sai"]}
+    {value: "fast", title: S.s_nhanh_c2385879, pace: S.s_nhanh_nhat_3e80ad74, summary: S.s_nghe_thu_mot_truyen_moi_hoac_can_gap_7595a3d8,
+     points: [S.s_may_hieu_truyen_theo_tung_doan_dai_mot_lan_e6cda2fb, S.s_soat_co_ban_sau_khi_doc_2e51d472, S.s_doc_lai_toi_da_1_lan_neu_cau_bi_doc_sai_82e58722]},
+    {value: "balanced", title: S.s_can_bang_8b88211d, pace: S.s_vua_phai_8c671657, summary: S.s_nghe_hang_ngay_chap_nhan_vai_cau_chua_hoan_2bc0c77a,
+     points: [S.s_phan_tich_truyen_day_du_7d2d439e, S.s_soat_co_ban_sau_khi_doc_2e51d472, S.s_doc_lai_toi_da_2_lan_neu_cau_bi_doc_sai_4d15b713]},
+    {value: "high_quality", title: S.s_chat_luong_cao_dc7017a7, pace: S.s_cham_nhat_ky_nhat_ff0d4141, summary: S.s_sach_nghe_lai_nhieu_lan_hoac_de_chia_se_c35352d9,
+     points: [S.s_ra_lai_cam_xuc_tung_cau_mot_lan_nua_5d40fd1d, S.s_nghe_lai_moi_cau_soat_ky_tung_chu_88b14719, S.s_doc_lai_toi_5_lan_neu_cau_bi_doc_sai_df336644]}
 ]
 var PROFILE_VALUES = ["fast", "balanced", "high_quality"]
 // Chọn nhanh số chương cho một đợt - chỉ hiện khi nguồn có nhiều hơn mức nhỏ nhất.
@@ -44,17 +45,17 @@ function sourcesKey(paths) { return paths.join("\n") }
 function scanIsCurrent(scanned, paths) { return paths.length === 0 ? true : Boolean(scanned) && scanned.key === sourcesKey(paths) }
 /** Nút cuối trình tạo: chờ khi còn đọc nguồn (nói rõ), khoá khi thiếu tên sách hay máy không làm được. */
 function createGate(title, reading, unfit) {
-    return {disabled: reading || !String(title).trim() || unfit, reading: reading, label: reading ? "Đang đọc nguồn…" : ""}
+    return {disabled: reading || !String(title).trim() || unfit, reading: reading, label: reading ? S.s_dang_doc_nguon_9a3908c6 : ""}
 }
 
 /** Lỗi quét: nguồn không đọc được -> {text, subfolders}. */
 function scanProblem(result) {
-    if (result.errors && result.errors.length) return {text: "Chưa mở được " + result.errors[0], subfolders: []}
+    if (result.errors && result.errors.length) return {text: S.s_chua_mo_duoc_273b1e54 + result.errors[0], subfolders: []}
     if (result.missing && result.missing.length) {
         const first = result.missing[0]
-        return {text: isSourceRef(first) ? "Không tìm thấy “" + sourceName(first) + "” trên máy tính. Gửi lại rồi thử lần nữa." : "Không tìm thấy “" + first + "”. Kiểm tra lại đường dẫn.", subfolders: []}
+        return {text: isSourceRef(first) ? S.s_khong_tim_thay_6ffd6396 + sourceName(first) + S.s_tren_may_tinh_gui_lai_roi_thu_lan_nua_f28a369b : S.s_khong_tim_thay_6ffd6396 + first + S.s_kiem_tra_lai_duong_dan_10db1a21, subfolders: []}
     }
-    return {text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders || []}
+    return {text: S.s_thu_muc_nay_khong_co_file_txt_hay_epub_doc_9c5a2dff, subfolders: result.subfolders || []}
 }
 
 // ---- scanView.ts ----
@@ -128,18 +129,18 @@ function creditSummary(files) {
         for (const line of end) if (tails.length < 3 && tails.indexOf(line) < 0) tails.push(line)
     }
     const examples = heads.slice(0, tails.length ? 2 : 3).map(function(line) { return "“" + line + "”" })
-        .concat(tails.map(function(line) { return "“" + line + "” (cuối chương)" })).slice(0, 3)
+        .concat(tails.map(function(line) { return "“" + line + S.s_cuoi_chuong_097818de })).slice(0, 3)
     return {lines: head + tail, head: head, tail: tail, chapters: chapters, examples: examples}
 }
 function creditKind(credits) {
-    if (!credits.tail) return "dòng ghi công"
-    if (!credits.head) return "dòng xin ủng hộ, quảng cáo"
-    return "dòng ghi công, xin ủng hộ, quảng cáo"
+    if (!credits.tail) return S.s_dong_ghi_cong_acaae945
+    if (!credits.head) return S.s_dong_xin_ung_ho_quang_cao_a4165e32
+    return S.s_dong_ghi_cong_xin_ung_ho_quang_cao_ffb87b29
 }
 function creditWhere(credits) {
-    if (!credits.tail) return "dòng ghi công người dịch ở đầu chương"
-    if (!credits.head) return "dòng xin ủng hộ, quảng cáo hay nguồn ở cuối chương"
-    return "dòng ghi công ở đầu chương hay dòng xin ủng hộ, quảng cáo ở cuối chương"
+    if (!credits.tail) return S.s_dong_ghi_cong_nguoi_dich_o_dau_chuong_c94cc054
+    if (!credits.head) return S.s_dong_xin_ung_ho_quang_cao_hay_nguon_o_cuoi_e826e333
+    return S.s_dong_ghi_cong_o_dau_chuong_hay_dong_xin_un_a0d7e71e
 }
 function droppedLines(credits, drop) { return (drop.head ? credits.head : 0) + (drop.tail ? credits.tail : 0) }
 /** Loại dòng đang được bỏ (để nói "Sẽ bỏ N dòng ghi công khỏi phần đọc"). */
@@ -149,9 +150,9 @@ function creditRows(files, label) {
         .map(function(file) { return {chapter: label(file), head: file.credits || [], tail: file.tailCredits || []} })
 }
 function creditLine(line, place, drop) {
-    const where = place === "head" ? "đầu chương" : "cuối chương"
+    const where = place === "head" ? S.s_dau_chuong_ef996d71 : S.s_cuoi_chuong_f95a0fda
     if (!drop.head && !drop.tail) return {text: "“" + line + "” (" + where + ")", dropped: false}
-    return drop[place] ? {text: "“" + line + "” (" + where + ", bỏ)", dropped: true} : {text: "“" + line + "” (" + where + ", vẫn đọc)", dropped: false}
+    return drop[place] ? {text: "“" + line + "” (" + where + S.s_bo_f7c2a1f4, dropped: true} : {text: "“" + line + "” (" + where + S.s_van_doc_48b294c1, dropped: false}
 }
 /** Dòng cuối chương: "Chương 768" từ dòng đầu file ("Chương 768 - Mô hình…"), không thì tên file - cho dải chương ở bước xác nhận. */
 function chapterLabel(file) {
@@ -166,7 +167,7 @@ function narratorIsAuto(draft, preferred, voices) {
 }
 function recommendedFor(voices, gender) {
     if (!gender) return ""
-    const wanted = gender === "male" ? "Nam" : "Nữ"
+    const wanted = gender === "male" ? S.s_nam_22dd59c8 : S.s_nu_e15bc11c
     for (const voice of voices || []) if (voice.recommended && voice.gender === wanted) return voice.name
     return ""
 }
@@ -188,18 +189,18 @@ function povOffFrom(hint, firstPerson, kept) {
 }
 
 // ---- tellerMode.ts ----
-var TELLER_TITLE = "Nhân vật tự kể"
+var TELLER_TITLE = S.s_nhan_vat_tu_ke_b75121e9
 function tellerHint(on) {
-    return on ? "Nhân vật xưng “tôi” đọc cả lời kể bằng giọng mình." : "Giọng dẫn đọc lời kể; nhân vật chỉ đọc lời thoại."
+    return on ? S.s_nhan_vat_xung_toi_doc_ca_loi_ke_bang_giong_b51f6c3e : S.s_giong_dan_doc_loi_ke_nhan_vat_chi_doc_loi_51b22986
 }
 function firstPersonGuess(hint) {
     if (!hint) return ""
     if (hint.firstPerson) {
         return hint.chaptersSampled && hint.chaptersWithI
-            ? hint.chaptersWithI + "/" + hint.chaptersSampled + " chương đầu có lời kể xưng “tôi”."
-            : Math.round(hint.rate * 100) + "% đoạn lời kể có “tôi”."
+            ? hint.chaptersWithI + "/" + hint.chaptersSampled + S.s_chuong_dau_co_loi_ke_xung_toi_f95b0dc4
+            : Math.round(hint.rate * 100) + S.s_doan_loi_ke_co_toi_608f94df
     }
-    return "Chọn nhân vật xưng “tôi” trong lời kể."
+    return S.s_chon_nhan_vat_xung_toi_trong_loi_ke_d47a6c20
 }
 
 // ---- chapterNumbers.ts ----
@@ -220,23 +221,23 @@ function chapterNumberIssues(files, previousLast) {
     const duplicates = order.filter(function(number) { return seen[number].length > 1 })
     for (const number of duplicates.slice(0, 3)) {
         const names = seen[number]
-        issues.push("Chương " + number + " có " + names.length + " file (" + names.slice(0, 3).join(", ") + ") - giữ một, bỏ các file kia.")
+        issues.push(S.s_chuong_aad5968e + number + S.s_co_d1231f10 + names.length + " file (" + names.slice(0, 3).join(", ") + S.s_giu_mot_bo_cac_file_kia_5cddf0c1)
     }
-    if (duplicates.length > 3) issues.push("và " + (duplicates.length - 3) + " số chương trùng khác.")
+    if (duplicates.length > 3) issues.push(S.s_va_c04322b2 + (duplicates.length - 3) + S.s_so_chuong_trung_khac_a8627d97)
     const backwards = [], gaps = []
     for (let index = 1; index < known.length; ++index) {
         const before = known[index - 1].number, here = known[index].number
-        if (here < before) backwards.push("chương " + here + " đứng sau chương " + before)
-        else if (here > before + 1) gaps.push(here === before + 2 ? "chương " + (before + 1) : "chương " + (before + 1) + "–" + (here - 1))
+        if (here < before) backwards.push(S.s_chuong_f4f8b331 + here + S.s_dung_sau_chuong_5385c5b1 + before)
+        else if (here > before + 1) gaps.push(here === before + 2 ? S.s_chuong_f4f8b331 + (before + 1) : S.s_chuong_f4f8b331 + (before + 1) + "–" + (here - 1))
     }
-    if (backwards.length) issues.push("Thứ tự lệch: " + backwards.slice(0, 3).join("; ") + (backwards.length > 3 ? "; và " + (backwards.length - 3) + " chỗ khác" : "") + " - tên file xếp khác số chương.")
-    if (gaps.length) issues.push("Có vẻ thiếu " + gaps.slice(0, 4).join(", ") + (gaps.length > 4 ? " và " + (gaps.length - 4) + " khoảng khác" : "") + ".")
+    if (backwards.length) issues.push(S.s_thu_tu_lech_603b1a0f + backwards.slice(0, 3).join("; ") + (backwards.length > 3 ? S.s_va_d2f4f022 + (backwards.length - 3) + S.s_cho_khac_e6f6ea90 : "") + S.s_ten_file_xep_khac_so_chuong_47bc7c9e)
+    if (gaps.length) issues.push(S.s_co_ve_thieu_e1b304e8 + gaps.slice(0, 4).join(", ") + (gaps.length > 4 ? S.s_va_79e3d3b1 + (gaps.length - 4) + S.s_khoang_khac_9f3ff65c : "") + ".")
     const last = previousLast ? chapterNumber(previousLast, previousLast) : null
     const first = known[0].number
     if (last !== null && first !== last + 1) {
         issues.push(first <= last
-            ? "Phần trước đã làm tới chương " + last + ", phần này lại bắt đầu từ chương " + first + " - làm lại các chương đã có?"
-            : "Phần trước dừng ở chương " + last + ", phần này bắt đầu từ chương " + first + " - thiếu chương " + (last + 1) + (first > last + 2 ? "–" + (first - 1) : "") + ".")
+            ? S.s_phan_truoc_da_lam_toi_chuong_8f92903c + last + S.s_phan_nay_lai_bat_dau_tu_chuong_2174ede5 + first + S.s_lam_lai_cac_chuong_da_co_1a0e5f5c
+            : S.s_phan_truoc_dung_o_chuong_d995cb57 + last + S.s_phan_nay_bat_dau_tu_chuong_6a49a9cb + first + S.s_thieu_chuong_0f452f06 + (last + 1) + (first > last + 2 ? "–" + (first - 1) : "") + ".")
     }
     return issues
 }
@@ -245,7 +246,7 @@ function numberIssues(files, splitting, starts, previousLast) {
     if (splitting && starts) {
         const out = []
         ranges(starts, files.length).forEach(function(part, index) {
-            chapterNumberIssues(files.slice(part.start - 1, part.end), index === 0 ? previousLast : undefined).forEach(function(issue) { out.push("Phần " + (index + 1) + ": " + issue) })
+            chapterNumberIssues(files.slice(part.start - 1, part.end), index === 0 ? previousLast : undefined).forEach(function(issue) { out.push(S.s_phan_a17569d5 + (index + 1) + ": " + issue) })
         })
         return out
     }
@@ -264,7 +265,7 @@ function splitOutcome(plan, title) {
 
 // ---- volumes.ts ----
 var MAX_VOLUMES = 99
-var SOURCE_TEXT = {folders: "mỗi thư mục là một tập", epubs: "mỗi file EPUB là một tập", headings: "các tiêu đề chương gọi tên tập"}
+var SOURCE_TEXT = {folders: S.s_moi_thu_muc_la_mot_tap_5f476863, epubs: S.s_moi_file_epub_la_mot_tap_42de53c4, headings: S.s_cac_tieu_de_chuong_goi_ten_tap_2ed33746}
 function inOrder(files, order) {
     if (!order) return files
     const rank = {}
@@ -309,7 +310,7 @@ function removeStart(starts, position) { return position < 1 ? starts : starts.f
 function volumeTitles(title, count) {
     const base = String(title).replace(/\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$/i, "").trim() || String(title).trim()
     const out = []
-    for (let i = 0; i < count; ++i) out.push(i === 0 ? String(title).trim() : base + "\u00a0·\u00a0Phần " + (i + 1))
+    for (let i = 0; i < count; ++i) out.push(i === 0 ? String(title).trim() : base + S.s_u00a0_u00a0phan_1a9d9c8e + (i + 1))
     return out
 }
 /** Thư mục chứa file (cắt ở dấu gạch cuối): đếm số thư mục trong một tập. */
@@ -340,12 +341,12 @@ function estimate(words, chapters, exact) {
             firstChapter: (analysis + high / Math.max(1, chapters)) * scale.high}
 }
 function timeBasis(exact) {
-    return exact ? "Số tham khảo, đo trên máy cùng card " + MEASURED_ON
-                 : "Số tham khảo, đo trên máy " + MEASURED_ON + "; máy của bạn có thể nhanh hơn hay chậm hơn nên đây là khoảng rộng"
+    return exact ? S.s_so_tham_khao_do_tren_may_cung_card_4a8c3aa5 + MEASURED_ON
+                 : S.s_so_tham_khao_do_tren_may_fdcf624f + MEASURED_ON + S.s_may_cua_ban_co_the_nhanh_hon_hay_cham_hon_a3289a65
 }
 function lengthRange(low, high) {
     const a = Studio.formatLength(low), b = Studio.formatLength(high)
-    return a === b ? "khoảng " + a : a + " - " + b
+    return a === b ? S.s_khoang_934859d7 + a : a + " - " + b
 }
 
 // ---- AnalysisModelPicker.tsx ----
@@ -353,23 +354,23 @@ function modelLabel(name) { return String(name).replace(/:latest$/, "") }
 function modelHint(model, defaultSize) {
     const parts = []
     const billions = Number.parseFloat(model.parameters)
-    if (isFinite(billions) && /b$/i.test(String(model.parameters).trim())) parts.push(String(Math.round(billions * 10) / 10).replace(".", ",") + " tỉ tham số")
+    if (isFinite(billions) && /b$/i.test(String(model.parameters).trim())) parts.push(String(Math.round(billions * 10) / 10).replace(".", ",") + S.s_ti_tham_so_fa61447f)
     else if (model.parameters) parts.push(model.parameters)
     if (model.size) {
-        parts.push("khoảng " + Size.formatSize(model.size) + " bộ nhớ card")
+        parts.push(S.s_khoang_934859d7 + Size.formatSize(model.size) + S.s_bo_nho_card_f09d305c)
         if (defaultSize > 0) {
-            if (model.size > defaultSize * 1.3) parts.push("nặng và chậm hơn mặc định")
-            else if (model.size < defaultSize * 0.75) parts.push("nhẹ và nhanh hơn mặc định")
+            if (model.size > defaultSize * 1.3) parts.push(S.s_nang_va_cham_hon_mac_dinh_91d5acea)
+            else if (model.size < defaultSize * 0.75) parts.push(S.s_nhe_va_nhanh_hon_mac_dinh_dce4bb68)
         }
     }
     return parts.join("\u00a0·\u00a0")
 }
 function experimentalLabel(model, defaultSize) {
     const hint = modelHint(model, defaultSize)
-    return "Bản thử nghiệm" + (hint ? "\u00a0·\u00a0" + hint : "")
+    return S.s_ban_thu_nghiem_55f7ee8c + (hint ? "\u00a0·\u00a0" + hint : "")
 }
 function analysisChoiceLabel(chosen, seedModel) {
-    return chosen ? "Bản thử nghiệm (" + (seedModel === chosen ? "như phần trước" : "chỉ cuốn này") + ")" : "Mặc định của ABook"
+    return chosen ? S.s_ban_thu_nghiem_a7572b70 + (seedModel === chosen ? S.s_nhu_phan_truoc_74dc8ee9 : S.s_chi_cuon_nay_eaf5b949) + ")" : S.s_mac_dinh_cua_abook_2fc069a4
 }
 /** Tên các model dùng được cho một cuốn (mặc định + Ollama đang có), hay null khi chưa biết (chưa tải xong, Ollama tắt). */
 function availableModelNames(data) { return data && data.reachable ? [data.default].concat(data.models.map(function(model) { return model.name })) : null }
@@ -379,8 +380,8 @@ function modelOptions(data) {
     const others = data.models.filter(function(model) { return modelLabel(model.name) !== modelLabel(data.default) })
     let defaultSize = 0
     for (const model of data.models) if (modelLabel(model.name) === modelLabel(data.default)) defaultSize = model.size || 0
-    const options = [{value: "", label: "Mặc định (khuyên dùng)"}]
-    if (others.length) options.push({header: "Bản khác (thử nghiệm)"})
+    const options = [{value: "", label: S.s_mac_dinh_khuyen_dung_60a7ae4e}]
+    if (others.length) options.push({header: S.s_ban_khac_thu_nghiem_73e6829a})
     others.forEach(function(model, index) { options.push({value: model.name, label: (index + 1) + ". " + experimentalLabel(model, defaultSize)}) })
     return {others: others, options: options, defaultSize: defaultSize}
 }
@@ -389,14 +390,14 @@ function modelOptions(data) {
 function carriedText(carries) {
     const n = Studio.formatNumber
     const parts = [
-        carries.voices ? "giọng " + n(carries.voices) + " nhân vật" : "",
-        carries.pronunciations ? n(carries.pronunciations) + " cách đọc tên" : "",
-        carries.pins ? "giới / tuổi đã sửa tay của " + n(carries.pins) + " nhân vật" : "",
-        carries.aliases ? n(carries.aliases) + " bí danh" : "",
-        carries.names ? n(carries.names) + " tên nhân vật đã đổi" : "",
-        carries.bracket ? "quy ước lời trong 『』" : ""
+        carries.voices ? S.s_giong_c3af83b2 + n(carries.voices) + S.s_nhan_vat_5f244327 : "",
+        carries.pronunciations ? n(carries.pronunciations) + S.s_cach_doc_ten_82e037cc : "",
+        carries.pins ? S.s_gioi_tuoi_da_sua_tay_cua_9c51dd17 + n(carries.pins) + S.s_nhan_vat_5f244327 : "",
+        carries.aliases ? n(carries.aliases) + S.s_bi_danh_c1f87079 : "",
+        carries.names ? n(carries.names) + S.s_ten_nhan_vat_da_doi_2bd21e94 : "",
+        carries.bracket ? S.s_quy_uoc_loi_trong_b4f1c558 : ""
     ].filter(Boolean)
-    return parts.length ? parts.join("\u00a0·\u00a0") : "những gì phần trước đã có"
+    return parts.length ? parts.join("\u00a0·\u00a0") : S.s_nhung_gi_phan_truoc_da_co_84eb2fe7
 }
 
 // ---- nháp từ "Sửa thiết lập" / "Làm tiếp" ----
@@ -466,12 +467,12 @@ function createBody(args) {
 /** Lời báo sau khi tạo: [tiêu đề, mô tả]. */
 function createdText(result, draft, noStudio) {
     const volumes = result.parts ? result.parts.length : 0
-    const queued = draft.startNow && !noStudio && result.queued ? " - vào hàng chờ (thứ " + result.queued + ")" : ""
-    const head = result.unchanged ? "Không có thiết lập nào thay đổi - giữ nguyên sách cũ"
-        : volumes > 1 ? "Đã tạo " + volumes + " phần"
-        : draft.replaces && draft.replaces.restart ? "Đã làm lại sách từ đầu"
-        : draft.replaces ? "Đã tạo lại sách với thiết lập mới" : "Đã tạo sách"
-    return [head + queued, noStudio ? "Dự án chờ tới khi Studio cài xong, rồi bấm “Bắt đầu tạo sách nói” ở trang dự án." : ""]
+    const queued = draft.startNow && !noStudio && result.queued ? S.s_vao_hang_cho_thu_643986c7 + result.queued + ")" : ""
+    const head = result.unchanged ? S.s_khong_co_thiet_lap_nao_thay_doi_giu_nguyen_929846eb
+        : volumes > 1 ? S.s_da_tao_4057a2eb + volumes + S.s_phan_20f71101
+        : draft.replaces && draft.replaces.restart ? S.s_da_lam_lai_sach_tu_dau_6e51eb4c
+        : draft.replaces ? S.s_da_tao_lai_sach_voi_thiet_lap_moi_cd546877 : S.s_da_tao_sach_15431889
+    return [head + queued, noStudio ? S.s_du_an_cho_toi_khi_studio_cai_xong_roi_bam_9937b79b : ""]
 }
 
 // ---- bước xác nhận ----
@@ -483,57 +484,57 @@ function summaryRows(a) {
     const exact = matchesMeasured(a.gpu, a.analysisModel)
     const guess = estimate(scan.totals.words, scan.files.length, exact)
     const measured = a.profile === "high_quality" && !a.noStudio
-    const rows = [["Chương", scan.files.length + " chương\u00a0·\u00a0" + approx(scan.totals.words, scan.totals.estimated) + " chữ"]]
+    const rows = [[S.s_chuong_2d157977, scan.files.length + S.s_chuong_u00a0_u00a0_08db5e1d + approx(scan.totals.words, scan.totals.estimated) + S.s_chu_6117d040]]
     if (a.volumes) {
-        const names = volumeTitles(a.title, a.volumes.length).map(function(name, index) { return "“" + name + "” (" + n(a.volumes[index].chapters) + " chương)" })
-        rows.push(["Chia thành", a.volumes.length + " phần: " + names.join(", ")])
-        rows.push(["Các phần sau", a.startNow ? "Tự chạy sau phần trước, giữ giọng và cách đọc tên" : "Xếp hàng sau phần 1, giữ giọng và cách đọc tên"])
+        const names = volumeTitles(a.title, a.volumes.length).map(function(name, index) { return "“" + name + "” (" + n(a.volumes[index].chapters) + S.s_chuong_be1b3067 })
+        rows.push([S.s_chia_thanh_b0af0247, a.volumes.length + S.s_phan_d5cacf53 + names.join(", ")])
+        rows.push([S.s_cac_phan_sau_c2deb368, a.startNow ? S.s_tu_chay_sau_phan_truoc_giu_giong_va_cach_d_3418c1f0 : S.s_xep_hang_sau_phan_1_giu_giong_va_cach_doc_a149ce8b])
     }
     const dropped = droppedLines(a.credits, a.dropCredits)
-    if (dropped) rows.push([droppedKind(a.credits, a.dropCredits).replace(/^d/, "D"), "bỏ " + n(dropped) + " dòng khỏi phần đọc"])
-    rows.push(["Độ dài audio", "khoảng " + Studio.formatLength(scan.totals.audioSeconds)])
-    rows.push(["Giọng kể", a.narratorAuto ? "máy chọn, cùng giới với người kể “tôi” (đang là " + a.narrator + ")" : a.narrator])
-    if (a.firstPerson) rows.push(["Người kể “tôi”", a.firstPersonGender ? a.firstPerson + " (" + (a.firstPersonGender === "female" ? "nữ" : "nam") + ")" : a.firstPerson])
-    if (a.tellerMode) rows.push(["Lời kể", "đọc bằng giọng của người kể “tôi”"])
+    if (dropped) rows.push([droppedKind(a.credits, a.dropCredits).replace(/^d/, "D"), S.s_bo_00ebba58 + n(dropped) + S.s_dong_khoi_phan_doc_5306b53e])
+    rows.push([S.s_do_dai_audio_cc51e366, S.s_khoang_934859d7 + Studio.formatLength(scan.totals.audioSeconds)])
+    rows.push([S.s_giong_ke_b209f686, a.narratorAuto ? S.s_may_chon_cung_gioi_voi_nguoi_ke_toi_dang_l_6eeb72dc + a.narrator + ")" : a.narrator])
+    if (a.firstPerson) rows.push([S.s_nguoi_ke_toi_e2ce42b1, a.firstPersonGender ? a.firstPerson + " (" + (a.firstPersonGender === "female" ? S.s_nu_316c30fd : "nam") + ")" : a.firstPerson])
+    if (a.tellerMode) rows.push([S.s_loi_ke_eba0761e, S.s_doc_bang_giong_cua_nguoi_ke_toi_e1d42efd])
     const pov = Object.keys(a.povChapters)
-    if (pov.length) rows.push(["Chương đổi người kể", pov.map(function(chapter) { return "chương " + chapter + ": " + a.povChapters[chapter] }).join(", ")])
+    if (pov.length) rows.push([S.s_chuong_doi_nguoi_ke_88865076, pov.map(function(chapter) { return S.s_chuong_f4f8b331 + chapter + ": " + a.povChapters[chapter] }).join(", ")])
     // "Nối tiếp: phần 2 của …" đọc như nối SAU phần 2 hay LÀ phần 2 đều được - nói thẳng là phần mấy, sau phần nào, và dải chương.
     if (a.seed) {
-        rows.push(["Là", "phần " + a.seed.part + " của “" + a.seed.title + "”, nối sau phần " + (a.seed.part - 1) +
+        rows.push([S.s_la_9d0892e6, S.s_phan_c7559390 + a.seed.part + S.s_cua_285bec9f + a.seed.title + S.s_noi_sau_phan_d101f14b + (a.seed.part - 1) +
             (scan.files.length ? "\u00a0·\u00a0" + chapterLabel(scan.files[0]) + " → " + chapterLabel(scan.files[scan.files.length - 1]) : "")])
     }
-    rows.push(["Nhân vật", a.seed ? "Giữ " + carriedText(a.seed.carries) + "; người mới được phân vai sau khi phân tích" : "Tự động phân vai sau khi phân tích"])
-    rows.push(["Chất lượng", option.title])
+    rows.push([S.s_nhan_vat_d4940c17, a.seed ? S.s_giu_d3777f80 + carriedText(a.seed.carries) + S.s_nguoi_moi_duoc_phan_vai_sau_khi_phan_tich_135b0bed : S.s_tu_dong_phan_vai_sau_khi_phan_tich_6530ecf1])
+    rows.push([S.s_chat_luong_a12ed26c, option.title])
     // Luôn nói bộ phân tích nào sẽ đọc hiểu truyện - cả khi là mặc định - vì phân tích là bước dài nhất và không ngắt được.
-    if (a.analysisModel || a.modelsDefault) rows.push(["Bộ phân tích truyện", analysisChoiceLabel(a.analysisModel, a.seed ? a.seed.analysisModel : undefined)])
-    if (a.unfit) rows.push(["Thời gian làm", "máy này không làm sách nói được"])
-    else if (a.noStudio) rows.push(["Thời gian làm", "tính được khi Studio đã cài - dự án chờ tới lúc đó"])
+    if (a.analysisModel || a.modelsDefault) rows.push([S.s_bo_phan_tich_truyen_9a52f60b, analysisChoiceLabel(a.analysisModel, a.seed ? a.seed.analysisModel : undefined)])
+    if (a.unfit) rows.push([S.s_thoi_gian_lam_ba044b40, S.s_may_nay_khong_lam_sach_noi_duoc_a627fd2a])
+    else if (a.noStudio) rows.push([S.s_thoi_gian_lam_ba044b40, S.s_tinh_duoc_khi_studio_da_cai_du_an_cho_toi_4387d301])
     else if (measured) {
-        rows.push(["Thời gian làm (tham khảo)", lengthRange(guess.totalLow, guess.totalHigh)])
-        rows.push(["Chương đầu nghe được sau (tham khảo)", (exact ? "khoảng" : "tối đa khoảng") + " " + Studio.formatLength(guess.firstChapter)])
-        rows.push(["Số tham khảo từ đâu", timeBasis(exact)])
+        rows.push([S.s_thoi_gian_lam_tham_khao_95d55912, lengthRange(guess.totalLow, guess.totalHigh)])
+        rows.push([S.s_chuong_dau_nghe_duoc_sau_tham_khao_2d0bf61e, (exact ? S.s_khoang_18209c07 : S.s_toi_da_khoang_1532dcc6) + " " + Studio.formatLength(guess.firstChapter)])
+        rows.push([S.s_so_tham_khao_tu_dau_afcc409b, timeBasis(exact)])
     } else {
         // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng.
-        rows.push(["Thời gian làm", "chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới " + Studio.formatLength(guess.totalHigh) + ", số tham khảo)"])
+        rows.push([S.s_thoi_gian_lam_ba044b40, S.s_chua_do_cho_che_do_nay_ngan_hon_chat_luong_954558a3 + Studio.formatLength(guess.totalHigh) + S.s_so_tham_khao_6bb184b8])
     }
     return rows
 }
 function startNowHint(startNow, noStudio, unfit) {
-    if (unfit) return "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
-    if (noStudio) return "Chưa có Studio: sách được tạo và chờ cài xong."
-    return startNow ? "Chạy nền; nghe được ngay từng chương đã xong." : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."
+    if (unfit) return S.s_tat_vi_may_nay_khong_lam_sach_noi_duoc_ly_7f659322
+    if (noStudio) return S.s_chua_co_studio_sach_duoc_tao_va_cho_cai_xo_5e5d9ecf
+    return startNow ? S.s_chay_nen_nghe_duoc_ngay_tung_chuong_da_xon_5872a97a : S.s_tao_nhung_chua_chay_bat_dau_o_trang_du_an_3c708f92
 }
-function precastHint(on) { return on ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”." : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được." }
+function precastHint(on) { return on ? S.s_dung_sau_phan_tich_de_ban_duyet_roi_bam_th_0ca451d3 : S.s_phan_tich_xong_thi_thu_luon_duyet_luc_nao_1f91e9f9 }
 function qualityDetail(noStudio, profile, chapters, guess, exact) {
-    if (noStudio) return "Cài Studio để ước tính thời gian."
-    if (profile === "high_quality") return "Tham khảo: " + lengthRange(guess.totalLow, guess.totalHigh) + " cho " + chapters + " chương. " + timeBasis(exact) + "."
-    return "Nhanh hơn Chất lượng cao; chưa có số đo."
+    if (noStudio) return S.s_cai_studio_de_uoc_tinh_thoi_gian_0ac5ef9b
+    if (profile === "high_quality") return S.s_tham_khao_e9bde754 + lengthRange(guess.totalLow, guess.totalHigh) + " cho " + chapters + S.s_chuong_2721c3eb + timeBasis(exact) + "."
+    return S.s_nhanh_hon_chat_luong_cao_chua_co_so_do_d80ead73
 }
-var PAUSE_NOTE = "Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng."
+var PAUSE_NOTE = S.s_dang_phan_tich_ma_can_nghi_hay_dung_tam_du_ddbf5b3d
 function pauseWhy(noStudio, analysis) {
-    return "Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục." +
-        (!noStudio && analysis ? " Thời gian tham khảo: " + analysis + "." : "")
+    return S.s_dung_tat_may_cho_may_ngu_hoac_bam_dung_tro_98270a3d +
+        (!noStudio && analysis ? S.s_thoi_gian_tham_khao_5c7b5a20 + analysis + "." : "")
 }
 function optionsSummary(auto, narrator, profile, startNow, noStudio) {
-    return [auto ? "Giọng kể máy chọn" : "Giọng kể " + narrator, profileTitle(profile), startNow && !noStudio ? "bắt đầu ngay" : "chưa chạy"].filter(Boolean).join("\u00a0·\u00a0")
+    return [auto ? S.s_giong_ke_may_chon_bcf6a534 : S.s_giong_ke_255bd6e6 + narrator, profileTitle(profile), startNow && !noStudio ? S.s_bat_dau_ngay_83137873 : S.s_chua_chay_713224b6].filter(Boolean).join("\u00a0·\u00a0")
 }

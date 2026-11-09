@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ import { useSource } from "./source";
 // tính" (docs/EDITING.md, P2b). Chữ nói tình trạng ở shared/editsSync.ts.
 
 /** Câu cuối của lời báo gửi hỏng (cùng chữ với điện thoại, editbook/BookEditor.kt). */
-const KEPT_HERE = "Phần sửa vẫn nằm trên máy này.";
+const KEPT_HERE = S.s_phan_sua_van_nam_tren_may_nay_095e7b80;
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -30,7 +31,7 @@ export function useSendEdits(book: ListenBook) {
   const where = holderName(book.remote);
   const send = useMutation({
     mutationFn: async () => {
-      if (!source.sendEdits) throw new Error("Máy này không gửi phần sửa về máy tính");
+      if (!source.sendEdits) throw new Error(S.s_may_nay_khong_gui_phan_sua_ve_may_tinh_82e6f13f);
       return source.sendEdits(book.id);
     },
     onSuccess: (state) => {
@@ -40,7 +41,7 @@ export function useSendEdits(book: ListenBook) {
     },
     onError: (error: Error) => {
       refreshAfterEdit(client, book.id);
-      toast.error(`Chưa gửi được về ${where}`, { description: `${endSentence(error.message)} ${KEPT_HERE}`, duration: 10000 });
+      toast.error(S.s_chua_gui_duoc_ve_0_cd4df102(where), { description: `${endSentence(error.message)} ${KEPT_HERE}`, duration: 10000 });
     },
   });
   return { send: () => send.mutate(), busy: send.isPending, available: Boolean(source.sendEdits), where };
@@ -59,8 +60,8 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
     >
       <MotionRegion as="span" className="mt-0.5 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
-        <span className="block">{busy ? "Đang gửi" : `Gửi về ${where}`}</span>
-        {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}
+        <span className="block">{busy ? S.s_dang_gui_dd6f95be : S.s_gui_ve_0_50e46c2d(where)}</span>
+        {!busy && !pending && <span className="block text-xs text-fg-3">{S.s_chua_co_thay_doi_nao_cho_gui_3f3fce11}</span>}
       </span>
     </DropdownMenu.Item>
   );
@@ -73,8 +74,7 @@ export function LocalEditsBanner({ book }: { book: ListenBook }) {
   return (
     <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
-        <Smartphone className="size-3.5 shrink-0" /> {book.edits} thay đổi chỉ có trên điện thoại này
-      </p>
+        <Smartphone className="size-3.5 shrink-0" /> {book.edits}{S.s_thay_doi_chi_co_tren_dien_thoai_nay_fb7327ee}</p>
       <p className="mt-0.5 text-pretty">{note}</p>
     </MotionRegion>
   );
@@ -89,30 +89,25 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
       api(`/api/books/${book.id}/edits-notices/${verb}`, { method: "POST", body: { id: notice?.id ?? "" } }),
     onSuccess: (_reply, { verb }) => {
       refreshAfterEdit(client, book.id);
-      if (verb === "undo") toast.success("Đã đặt lại bản của máy này");
+      if (verb === "undo") toast.success(S.s_da_dat_lai_ban_cua_may_nay_e12443cf);
     },
-    onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_lam_duoc_8b442a06, { description: error.message }),
   });
   const items = book.editsNotices ?? [];
   if (!items.length) return <MotionRegion />;
   return (
     <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
-        <Smartphone className="size-3.5 shrink-0" /> Máy đã ghép vừa đổi phần bạn đã đặt
-      </p>
+        <Smartphone className="size-3.5 shrink-0" />{S.s_may_da_ghep_vua_doi_phan_ban_da_dat_cc07a562}</p>
       <ul className="mt-1 space-y-1.5">
         {items.map((notice) => (
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
-            <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
-              Hoàn tác
-            </Button>
+            <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>{S.s_hoan_tac_e72ff675}</Button>
           </li>
         ))}
       </ul>
-      <Button size="sm" variant="ghost" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>
-        Đã hiểu
-      </Button>
+      <Button size="sm" variant="ghost" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>{S.s_da_hieu_9bb82968}</Button>
     </MotionRegion>
   );
 }
@@ -139,7 +134,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
   const unreachable = /(?:Không|Chưa) kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
   const note =
     found && found.tone === "error" && unreachable && download.data?.state === "failed" && download.data.retry
-      ? { ...found, lines: [`Tự gửi khi ${where} trả lời lại; bấm “Gửi về ${where}” để gửi ngay.`] }
+      ? { ...found, lines: [S.s_tu_gui_khi_0_tra_loi_lai_bam_gui_ve_1_de_g_47a67376(where, where)] }
       : found;
   if (!note) return <MotionRegion />;
   const at = book.editsSync?.last?.at ?? 0;
@@ -171,13 +166,11 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
       ))}
       {available && book.editsSync && book.editsSync.pending > 0 && (
         <Button size="sm" variant="ghost" className="mt-2" icon={Send} loading={busy} onClick={send}>
-          {`Gửi về ${where}`}
+          {S.s_gui_ve_0_50e46c2d(where)}
         </Button>
       )}
       {note.tone === "sent" && (
-        <Button size="sm" variant="ghost" className="mt-2" icon={X} onClick={dismiss}>
-          Đã hiểu
-        </Button>
+        <Button size="sm" variant="ghost" className="mt-2" icon={X} onClick={dismiss}>{S.s_da_hieu_9bb82968}</Button>
       )}
     </MotionRegion>
   );

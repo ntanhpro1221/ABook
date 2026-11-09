@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -19,7 +20,7 @@ Collapse {
             width: head.implicitWidth
             height: Math.max(24, head.implicitHeight)
             Accessible.role: Accessible.Button
-            Accessible.name: "Chi tiết"
+            Accessible.name: S.s_chi_tiet_e762d926
             onClicked: root.detailsOpen = !root.detailsOpen
             Row {
                 id: head
@@ -31,7 +32,7 @@ Collapse {
                     rotation: root.detailsOpen ? 90 : 0
                     Behavior on rotation { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
                 }
-                Text { text: "Chi tiết"; color: root.ink; font.pixelSize: Theme.sizeCaption }
+                Text { text: S.s_chi_tiet_e762d926; color: root.ink; font.pixelSize: Theme.sizeCaption }
             }
         }
         Collapse {

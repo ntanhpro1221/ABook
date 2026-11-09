@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { MotionRegion } from "./MotionRegion";
 import { useEffect, useState } from "react";
 import { loadThirdParty, parseThirdParty, type ThirdPartySection } from "./thirdParty";
@@ -40,8 +41,8 @@ export function ThirdPartySections({ sections }: { sections: ThirdPartySection[]
 }
 
 // Cùng lời với tấm "Thành phần sử dụng" bên native (SettingsAdvanced.kt).
-const LOADING = "Đang mở danh sách";
-const FAILED = "Chưa mở được danh sách.";
+const LOADING = S.s_dang_mo_danh_sach_7f36f104;
+const FAILED = S.s_chua_mo_duoc_danh_sach_92a6ce82;
 
 /** Danh sách thành phần bên thứ ba, tải khi mở (hộp ở máy tính, tấm trượt ở điện thoại). */
 export function ThirdPartyList() {

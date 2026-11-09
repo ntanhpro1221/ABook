@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -280,7 +282,7 @@ class PrepareRunner(
             val paragraphs = texts(chapter)
             if (paragraphs == null) {
                 job.state = "error"
-                job.error = "Chưa đọc được chữ của chương “${chapter.title}” - đã dừng làm trước."
+                job.error = S.s_chua_doc_duoc_chu_cua_chuong_0_da_dung_lam_3f7808a2(chapter.title)
                 save(job)
                 return Outcome.ERROR
             }
@@ -338,11 +340,11 @@ class PrepareRunner(
     /** Câu cho người nghe: không rơi sang giọng khác (âm thanh làm sẵn phải cùng một giọng), nên nói rõ dừng ở đâu và làm sao làm tiếp. */
     private fun errorText(job: PrepareJob, chapter: PrepareChapter, error: VoiceException): String {
         val ready = job.chapters.count { it.ready }
-        val kept = if (ready > 0) " (giữ $ready/${job.chapters.size} chương đã xong)" else ""
+        val kept = if (ready > 0) S.s_giu_0_1_chuong_da_xong_1d7770f2(ready, job.chapters.size) else ""
         return if (job.online && error.offline) {
-            "Mất mạng ở “${chapter.title}”$kept — bạn nối Wi-Fi rồi làm trước lại."
+            S.s_mat_mang_o_0_1_ban_noi_wi_fi_roi_lam_truoc_6452e188(chapter.title, kept)
         } else {
-            "Chưa làm trước được “${chapter.title}”: ${error.message?.trimEnd('.')}.$kept"
+            S.s_chua_lam_truoc_duoc_0_1_2_93af4638(chapter.title, error.message?.trimEnd('.'), kept)
         }
     }
 }

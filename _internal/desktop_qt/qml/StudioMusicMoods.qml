@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioMusicLogic.js" as Logic
@@ -29,7 +30,7 @@ Column {
         store.request("POST", "/api/music/moods-model", null, function(status, data) {
             root.downloading = false
             if (root.store.ok(status) && data) root.model = data
-            else Api.notice = "Chưa tải được phần đọc không khí\n" + root.store.errorText(status, data)
+            else Api.notice = S.s_chua_tai_duoc_phan_doc_khong_khi_95a9edf6 + root.store.errorText(status, data)
         })
     }
     function compute() {
@@ -37,7 +38,7 @@ Column {
         store.request("POST", "/api/books/" + bookId + "/music/moods", null, function(status, data) {
             root.computing = false
             if (root.store.ok(status) && data) root.computed(data)
-            else Api.notice = "Chưa đọc lại được không khí các đoạn\n" + root.store.errorText(status, data)
+            else Api.notice = S.s_chua_doc_lai_duoc_khong_khi_cac_doan_66dab5e3 + root.store.errorText(status, data)
         })
     }
     Component.onCompleted: load()
@@ -53,14 +54,14 @@ Column {
         width: parent.width
         open: root.phase !== "none"
         spacing: 8
-        Text { width: parent.width; text: "Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+        Text { width: parent.width; text: S.s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         Flow {
             width: parent.width
             visible: root.phase === "installed"
             spacing: 12
             Button {
                 objectName: "moodsCompute"
-                text: root.running ? "Đang đọc không khí" : "Đọc lại ngữ cảnh"
+                text: root.running ? S.s_dang_doc_khong_khi_0640731b : S.s_doc_lai_ngu_canh_edb18d3a
                 icon: "refresh-cw"; kind: "ghost"; size: "sm"
                 busy: root.running
                 onActivated: root.compute()
@@ -78,7 +79,7 @@ Column {
         ClockLabel {
             width: parent.width
             visible: root.phase === "downloading"
-            text: "Đang tải phần đọc không khí" + (root.percent !== null ? " - " + root.percent + "%" : "")
+            text: S.s_dang_tai_phan_doc_khong_khi_a6481b11 + (root.percent !== null ? " - " + root.percent + "%" : "")
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -89,7 +90,7 @@ Column {
             spacing: 12
             Button {
                 objectName: "moodsDownload"
-                text: "Tải thêm (3,2 GB)"
+                text: S.s_tai_them_3_2_gb_338f648d
                 icon: "download"; kind: "ghost"; size: "sm"
                 busy: root.downloading
                 onActivated: root.download()
@@ -107,7 +108,7 @@ Column {
         Text {
             width: parent.width
             visible: root.phase === "elsewhere"
-            text: root.model && root.model.downloadable ? "Tải phần đọc không khí trên máy tính chủ sách." : "Máy này chưa có phần đọc không khí (cài qua Ollama)."
+            text: root.model && root.model.downloadable ? S.s_tai_phan_doc_khong_khi_tren_may_tinh_chu_s_f52208a6 : S.s_may_nay_chua_co_phan_doc_khong_khi_cai_qua_5174e4ee
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall

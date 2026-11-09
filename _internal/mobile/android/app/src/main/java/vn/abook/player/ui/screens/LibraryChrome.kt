@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
@@ -90,7 +92,7 @@ fun AddBookButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         PlusIcon(colors.accentText, size = 18.dp)
         Spacer(Modifier.width(Dim.s4))
-        BasicText("Thêm sách", style = Abook.type.label.copy(color = colors.accentText))
+        BasicText(S.s_them_sach_2a9d3708, style = Abook.type.label.copy(color = colors.accentText))
     }
 }
 
@@ -188,7 +190,7 @@ fun SortButton(ui: LibraryUiState, onCoordinates: (LayoutCoordinates) -> Unit, m
     Box(
         modifier.size(Dim.touch, Dim.s48).onGloballyPositioned(onCoordinates)
             .pressable { ui.openMenu() }
-            .semantics { contentDescription = "Xếp theo" }
+            .semantics { contentDescription = S.s_xep_theo_2b280cd9 }
             .testTag("sort_button"),
         contentAlignment = Alignment.Center,
     ) {
@@ -239,7 +241,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(Dim.touch).pressable { ui.openSearch() }.semantics { contentDescription = "Tìm sách" }.testTag("search_button"),
+            Modifier.size(Dim.touch).pressable { ui.openSearch() }.semantics { contentDescription = S.s_tim_sach_1deb0125 }.testTag("search_button"),
             contentAlignment = Alignment.Center,
         ) {
             SearchIcon(if (ui.searchOpen) colors.text else colors.text2)
@@ -256,13 +258,13 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        if (ui.query.isEmpty()) BasicText("Tên sách, tác giả, giọng", style = Abook.type.body.copy(color = colors.text3))
+                        if (ui.query.isEmpty()) BasicText(S.s_ten_sach_tac_gia_giong_a003bb13, style = Abook.type.body.copy(color = colors.text3))
                         inner()
                     }
                 },
             )
             Box(
-                Modifier.size(Dim.touch).pressable { ui.clearOrClose() }.semantics { contentDescription = if (ui.query.isNotEmpty()) "Xoá ô tìm" else "Đóng ô tìm" }.testTag("search_close"),
+                Modifier.size(Dim.touch).pressable { ui.clearOrClose() }.semantics { contentDescription = if (ui.query.isNotEmpty()) S.s_xoa_o_tim_0bafa7ad else S.s_dong_o_tim_1ba06fdf }.testTag("search_close"),
                 contentAlignment = Alignment.Center,
             ) {
                 CloseIcon(colors.text2, size = 18.dp)
@@ -337,7 +339,7 @@ private val MenuWidth = 220.dp
 fun FilterBar(ui: LibraryUiState, count: Int, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(Dim.s48)) {
-            BasicText("$count cuốn", style = Abook.type.bodySmall, modifier = Modifier.align(Alignment.CenterStart).testTag("library_count"))
+            BasicText(S.s_0_cuon_2356f2f6(count), style = Abook.type.bodySmall, modifier = Modifier.align(Alignment.CenterStart).testTag("library_count"))
             Row(Modifier.align(Alignment.CenterEnd)) {
                 SortButton(ui, onSortCoordinates)
                 Spacer(Modifier.width(Dim.touch))

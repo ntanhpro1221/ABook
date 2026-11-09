@@ -18,6 +18,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
+from scripts.ui_copy_source import expand
+
+
+def ui_read(path):
+    return expand(path.read_text(encoding="utf-8"), "kt" if path.suffix == ".kt" else "ts" if path.suffix in (".ts", ".tsx") else "qml")
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "ui" / "src"
@@ -215,7 +220,7 @@ def corpus(dialect: Dialect) -> tuple[tuple[str, str], ...]:
         for path in sorted(base.glob(pattern)):
             if "node_modules" in path.parts or any(mark in path.name for mark in dialect.skip):
                 continue
-            files.append((path.name, strip_comments(path.read_text(encoding="utf-8"))))
+            files.append((path.name, strip_comments(ui_read(path))))
     return tuple(files)
 
 
@@ -297,13 +302,13 @@ class Info:
 
 
 def default_label_web() -> str:
-    found = re.search(r"function MoreInfo\(\{[^}]*?label\s*=\s*\"([^\"]+)\"", (WEB / "shared" / "SettingsNav.tsx").read_text(encoding="utf-8"))
+    found = re.search(r"function MoreInfo\(\{[^}]*?label\s*=\s*\"([^\"]+)\"", ui_read(WEB / "shared" / "SettingsNav.tsx"))
     assert found, "SettingsNav.tsx: không thấy nhãn mặc định của MoreInfo"
     return found.group(1)
 
 
 def default_label_qt() -> str:
-    found = re.search(r"property string label:\s*\"([^\"]+)\"", (QML / "MoreInfo.qml").read_text(encoding="utf-8"))
+    found = re.search(r"property string label:\s*\"([^\"]+)\"", ui_read(QML / "MoreInfo.qml"))
     assert found, "MoreInfo.qml: không thấy nhãn mặc định"
     return found.group(1)
 
@@ -352,7 +357,7 @@ def web_infos(files: dict[str, str], resolve, default: str) -> list[Info]:
                     i += 1
             opening = text[match.end():i]
             end = text.index("</MoreInfo>", i)
-            label = re.search(r"\blabel=\"([^\"]+)\"", opening)
+            label = re.search(r'\blabel=\{?"([^"]+)"\}?', opening)
             infos.append(Info(name, [label.group(1) if label else default], web_pieces(text[i + 1:end], resolve)))
     return infos
 
@@ -419,7 +424,7 @@ def read_tree(base: Path, patterns: tuple[str, ...], skip: tuple[str, ...] = ())
         for path in sorted(base.glob(pattern)):
             if "node_modules" in path.parts or any(mark in path.name for mark in skip):
                 continue
-            files[path.relative_to(base).as_posix()] = path.read_text(encoding="utf-8")
+            files[path.relative_to(base).as_posix()] = ui_read(path)
     return files
 
 

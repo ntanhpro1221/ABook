@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { ReadAloudVoice } from "./readAloud";
 import { KEYED_PROVIDERS } from "./readAloudVoice";
 
@@ -6,11 +7,11 @@ import { KEYED_PROVIDERS } from "./readAloudVoice";
 
 /** Các nhóm giọng theo nhà cung cấp, đúng thứ tự và tên ở Cài đặt › Giọng đọc (trình phát chọn giọng cũng nhóm như vậy). */
 export const VOICE_GROUPS: { provider: string; title: string; detail?: string }[] = [
-  { provider: "edge", title: "Edge", detail: "trực tuyến, miễn phí" },
-  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: name, detail: "dùng khoá của bạn" })),
-  { provider: "vieneu", title: "VieNeu", detail: "trên máy này, không cần mạng" },
-  { provider: "supertonic", title: "Supertonic", detail: "trên máy này, không cần mạng" },
-  { provider: "device", title: "Giọng của máy", detail: "không cần mạng" },
+  { provider: "edge", title: S.s_edge_0f82fe72, detail: S.s_truc_tuyen_mien_phi_0282fe41 },
+  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: name, detail: S.s_dung_khoa_cua_ban_36c096a0 })),
+  { provider: "vieneu", title: S.s_vieneu_338b8a9f, detail: S.s_tren_may_nay_khong_can_mang_c8ad4ea8 },
+  { provider: "supertonic", title: S.s_supertonic_b426cb32, detail: S.s_tren_may_nay_khong_can_mang_c8ad4ea8 },
+  { provider: "device", title: S.s_giong_cua_may_2404d649, detail: S.s_khong_can_mang_1c7dfe7f },
 ];
 
 /** Tên nhóm đọc trọn cho trình đọc màn hình: "Edge · trực tuyến, miễn phí". Nhãn nhìn thấy chỉ lấy `title` (ngắn, hoa), `detail` xuống chữ thường. */
@@ -20,7 +21,7 @@ export function groupLabel(group: { title: string; detail?: string }): string {
 
 /** "Nữ" / "Nam"; không biết thì rỗng. */
 export function genderLabel(gender?: string): string {
-  return gender === "female" ? "Nữ" : gender === "male" ? "Nam" : "";
+  return gender === "female" ? S.s_nu_e15bc11c : gender === "male" ? S.s_nam_22dd59c8 : "";
 }
 
 /** Các giọng có trong danh sách, chia theo nhóm của Cài đặt (nhóm rỗng bỏ qua); giọng của nhà cung cấp lạ gom vào "Khác" ở cuối. */
@@ -28,7 +29,7 @@ export function groupedVoices(voices: ReadAloudVoice[]): { provider: string; tit
   const groups = VOICE_GROUPS.map((group) => ({ ...group, voices: voices.filter((voice) => voice.provider === group.provider) }));
   const known = new Set(VOICE_GROUPS.map((group) => group.provider));
   const other = voices.filter((voice) => !known.has(voice.provider));
-  if (other.length) groups.push({ provider: "other", title: "Khác", voices: other });
+  if (other.length) groups.push({ provider: "other", title: S.s_khac_bda82bf0, voices: other });
   return groups.filter((group) => group.voices.length > 0);
 }
 

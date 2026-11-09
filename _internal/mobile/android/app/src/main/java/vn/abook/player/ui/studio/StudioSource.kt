@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -274,6 +276,6 @@ class StudioRepo(
     private suspend fun <T> parsed(block: suspend () -> T): T = try {
         block()
     } catch (error: org.json.JSONException) {
-        throw StudioError.Server("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", 0)
+        throw StudioError.Server(S.s_du_lieu_may_gui_khong_hop_le_ban_hay_thu_l_d2b2ac09, 0)
     }
 }

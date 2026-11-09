@@ -516,6 +516,11 @@ Module chính:
 
 - Tuỳ chọn âm thanh khi nghe thuộc thiết bị: mặc định dùng chung; `Riêng sách này` sao chép bộ hiện tại theo mã sách, tắt thì dùng lại bộ chung. Bao gồm tốc độ/âm lượng và DSP; không sửa bản thu, preset TTS hoặc evidence QA.
 - Bỏ khoảng lặng mặc định tắt, đo PCM nguồn trước gain/EQ trên mọi kênh. Chỉ rút quãng dài hơn thời lượng chọn, giữ hai mép và ít nhất 1,5 s (nhịp ngăn cảnh TTS). Đồng hồ, phụ đề và anchor dùng thời gian nguồn ở con trỏ đã nghe, không dùng tổng khung giải mã trước; tua/đổi nguồn đặt lại bản đồ. Web chỉ tua qua quãng đã quét, live clip chưa quét giữ nguyên.
+- UI copy lives in `ui_strings/vi.json`; design token values live in `ui_design/tokens.json` and are checked against `docs/DESIGN.md`.
+  Run `scripts/prepare_ui.py` before building web, Compose or Qt. Never edit generated `UiStrings.kt`, `strings.xml`,
+  `strings.generated.ts`, `UiStrings.js`, `uistrings.generated.h`, `Tokens.kt`, `Theme.qml` or generated token declarations by hand.
+  New handwritten UI copy fails the shared build gate. Every exact exception in `ui_strings/exceptions.json` needs a reason;
+  every remaining Qt wording candidate needs its own explanation in `ui_strings/qt_wording_review.json`.
 
 - Database/recovery change phải có crash/reopen test.
 - Resource policy change phải test bằng snapshot giả lập.

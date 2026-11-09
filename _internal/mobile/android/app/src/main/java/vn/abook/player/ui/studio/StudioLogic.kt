@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 /** Màu của một trạng thái (web `Tone`): màn dịch sang màu của bảng màu. */
 enum class StudioTone { Accent, Success, Danger, Warning, Muted }
 
@@ -76,8 +78,8 @@ object StudioLogic {
         val label = when {
             book.broken.isNotEmpty() -> book.broken
             book.queuePosition != null -> StudioText.queue(book.queuePosition)
-            book.starting -> "Đang khởi động"
-            book.precastHeld -> "Chờ bạn duyệt"
+            book.starting -> S.s_dang_khoi_dong_e7a9b0e5
+            book.precastHeld -> S.s_cho_ban_duyet_dd9175be
             else -> book.statusLabel
         }
         val tone = if (book.queuePosition != null || book.paused != null || book.stopping) StudioTone.Warning else tone(book.phase, working)
@@ -86,7 +88,7 @@ object StudioLogic {
 
     /** Chỉ chương LỆCH khỏi mặc định mới có dấu (30 viên "Đã xong" xếp cột là nhiễu che mất chương thật sự cần để ý). */
     fun chapterMark(chapter: StudioChapter): StudioMark? {
-        if (chapter.statusLabel == "Mất file audio") return StudioMark(chapter.statusLabel, StudioTone.Warning)
+        if (chapter.statusLabel == S.s_mat_file_audio_b2b0802b) return StudioMark(chapter.statusLabel, StudioTone.Warning)
         if (chapter.status == "completed" && !chapter.redo) return null
         if (chapter.status in setOf("pending", "analyzed", "synthesizing", "verifying")) return null
         val tone = when (chapter.status) {

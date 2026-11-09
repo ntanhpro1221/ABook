@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -41,23 +43,23 @@ fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayi
     Column(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("player_alert")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             BasicText(message, style = Abook.type.caption, modifier = Modifier.weight(1f).padding(top = Dim.s12).testTag("player_error"))
-            if (onDismiss != null) IconAction("Đóng lời báo", onDismiss, "alert_dismiss") { CloseIcon(Abook.colors.text2) }
+            if (onDismiss != null) IconAction(S.s_dong_loi_bao_d13d19ff, onDismiss, "alert_dismiss") { CloseIcon(Abook.colors.text2) }
         }
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
             if (stuck && local != null) {
-                TextAction("Đọc bằng " + VoiceStuck.caption(local), {
+                TextAction(S.s_doc_bang_f7f5f3b1 + VoiceStuck.caption(local), {
                     model.setVoice(local.id)
                     model.toggle()
                 }, "alert_use_local", align = Alignment.CenterStart)
             }
-            TextAction("Thử lại", model::toggle, "alert_retry", align = Alignment.CenterStart)
+            TextAction(S.s_thu_lai_c58d068c, model::toggle, "alert_retry", align = Alignment.CenterStart)
             if (stuck && state.voices.isNotEmpty()) {
-                TextAction("Chọn giọng khác", { window.openSheet(PlayerSheet.Voice) }, "alert_choose", align = Alignment.CenterStart)
+                TextAction(S.s_chon_giong_khac_d31cfe89, { window.openSheet(PlayerSheet.Voice) }, "alert_choose", align = Alignment.CenterStart)
             }
         }
         val voice = model.voice
         if (stuck && local == null && voice != null) {
-            VieneuDownload(voice, "Tải giọng VieNeu", { window.voiceSettings?.invoke() })
+            VieneuDownload(voice, S.s_tai_giong_vieneu_94c86884, { window.voiceSettings?.invoke() })
         }
     }
 }

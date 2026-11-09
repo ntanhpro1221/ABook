@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -89,7 +90,7 @@ export function LocalVoiceModules({
   const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
-    <Fold storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
+    <Fold storageKey="voice.modules" title={S.s_bo_giong_75b79178} summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
       {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
@@ -101,11 +102,11 @@ export function LocalVoiceModules({
 }
 
 export function moduleActivity(vieneu?: VieneuStatus, supertonic?: VieneuStatus): string {
-  const active = [["VieNeu", vieneu], ["Supertonic", supertonic]] as const;
-  return active.flatMap(([name, status]) => status?.state === "downloading" ? [`${name} · ${vieneuPercent(status)}%`] : status?.benchmarking ? [`${name} · đang đo`] : []).join(" · ") || MODULES_IDLE;
+  const active = [[S.s_vieneu_338b8a9f, vieneu], [S.s_supertonic_b426cb32, supertonic]] as const;
+  return active.flatMap(([name, status]) => status?.state === "downloading" ? [`${name} · ${vieneuPercent(status)}%`] : status?.benchmarking ? [S.s_0_dang_do_3db7e929(name)] : []).join(" · ") || MODULES_IDLE;
 }
 
-const MODULES_IDLE = "Tải, đo và quản lý";
+const MODULES_IDLE = S.s_tai_do_va_quan_ly_5d6c8c8d;
 
 /** Trạng thái mô-đun giọng + nhịp hỏi lại khi đang tải / đo (mỗi giây); tải / đo xong thì danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
  *  Thẻ trong Cài đặt và khối lỗi của trình phát (VieneuDownload) dùng chung - cùng khoá truy vấn nên hai nơi thấy cùng một lần tải. */
@@ -179,7 +180,7 @@ export function VieneuModuleCard({
   const picked = chosen ?? initialChoices(status, preselect);
   const missing = picked.filter((id) => !status.choices.find((choice) => choice.id === id)?.installed);
   const bytes = selectionBytes(status, missing);
-  const run = async (action: () => Promise<VieneuStatus>, failure = `Chưa tải được ${lowerName}`) => {
+  const run = async (action: () => Promise<VieneuStatus>, failure = S.s_chua_tai_duoc_0_0cb3de66(lowerName)) => {
     setBusy(true);
     try {
       client.setQueryData(["readaloud", copy.key], await action());
@@ -191,7 +192,7 @@ export function VieneuModuleCard({
   };
   const remove = async (id: VieneuChoiceId) => {
     if (!backend.remove) return;
-    await run(() => backend.remove!(id), `Chưa gỡ được ${lowerName}`);
+    await run(() => backend.remove!(id), S.s_chua_go_duoc_0_f7e62539(lowerName));
     refreshModuleSizes(client); // gỡ giọng cuối dùng phần chung thì phần ấy đi theo: thẻ kia lại phải tải nó
     forgetVoices();
     void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
@@ -207,7 +208,7 @@ export function VieneuModuleCard({
       target = voices.find((voice) => voice.id.startsWith("vieneu:nano/"))?.id ?? ONLINE_VOICE;
     }
     switchVoices(tierVoicePrefix(suggestion.tier), target);
-    toast.success(suggestion.switchTo === "nano" ? "Đã chuyển sang giọng VieNeu Nano" : "Đã chuyển sang giọng trực tuyến");
+    toast.success(suggestion.switchTo === "nano" ? S.s_da_chuyen_sang_giong_vieneu_nano_78fd20a4 : S.s_da_chuyen_sang_giong_truc_tuyen_f1c06742);
   };
   // Bản tăng tốc chỉ là bản chạy nhanh hơn của cùng giọng: sách không cần nó, nên không hỏi cuốn nào.
   const ask = (id: VieneuChoiceId, label: string) => {
@@ -240,11 +241,9 @@ export function VieneuModuleCard({
       )}
       {status.state === "downloading" && (
         <div className="flex items-center gap-3">
-          <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} className="flex-1" />
+          <Progress value={vieneuPercent(shown) / 100} size="sm" running label={S.s_dang_tai_0_03db34d6(lowerName)} className="flex-1" />
           {backend.cancel && (
-            <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => void run(() => backend.cancel!(), `Chưa huỷ được việc tải ${lowerName}`)}>
-              Huỷ
-            </Button>
+            <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => void run(() => backend.cancel!(), S.s_chua_huy_duoc_viec_tai_0_d8afe625(lowerName))}>{S.s_huy_96732485}</Button>
           )}
         </div>
       )}
@@ -268,17 +267,17 @@ export function VieneuModuleCard({
                   <span id={`${id}-name`} className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {choice.label}
                     {choice.recommended && !choice.installed && (
-                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-text">Khuyên dùng</span>
+                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-text">{S.s_khuyen_dung_b1d3dec8}</span>
                     )}
                   </span>
                   <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
                 <span data-motion-live id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
-                  {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
+                  {choice.installed ? S.s_da_co_7610f1dd : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : S.s_da_co_san_90ac4add}
                 </span>
                 {choice.removable && backend.remove && canPick && (
                   <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
-                    {choice.installed ? "Gỡ giọng" : "Xoá phần đã tải"}
+                    {choice.installed ? S.s_go_giong_2f8014a9 : S.s_xoa_phan_da_tai_9f9ae26f}
                   </Button>
                 )}
               </label>
@@ -294,11 +293,9 @@ export function VieneuModuleCard({
               className="size-4 accent-[var(--accent)]"
               checked={status.accelerated.on}
               disabled={!canPick || busy}
-              onChange={(event) => void run(() => backend.accelerate!(event.target.checked), "Chưa đổi được cách đọc")}
+              onChange={(event) => void run(() => backend.accelerate!(event.target.checked), S.s_chua_doi_duoc_cach_doc_5077e18b)}
               aria-describedby={`${ids}-fast`}
-            />
-            Dùng bản tăng tốc
-          </label>
+            />{S.s_dung_ban_tang_toc_40b7f3dd}</label>
           <p id={`${ids}-fast`} className="text-[0.8125rem] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
         </div>
       )}
@@ -327,25 +324,21 @@ export function VieneuModuleCard({
         <div className="flex flex-wrap items-center gap-2">
           {status.state === "outdated" && (
             <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.start())}>
-              {`Cập nhật (${formatSize(status.outdatedBytes)})`}
+              {S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes))}
             </Button>
           )}
           {missing.length > 0 && (
             <Button size="sm" variant={status.state === "missing" ? "primary" : "ghost"} data-focus-next loading={busy} onClick={() => void run(() => backend.start(missing))}>
-              {failed ? "Thử lại" : bytes > 0 ? `Tải (${formatSize(bytes)})` : "Dùng"}
+              {failed ? S.s_thu_lai_c58d068c : bytes > 0 ? S.s_tai_0_3463a4d8(formatSize(bytes)) : S.s_dung_7927ca4e}
             </Button>
           )}
           {(Object.keys(status.benchmark).length > 0 || Boolean(status.accelerated?.problem)) && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.measure())}>
-              Thử lại tốc độ
-            </Button>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.measure())}>{S.s_thu_lai_toc_do_a69ef56d}</Button>
           )}
         </div>
       )}
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setAsking(null)}>
-            Giữ lại
-          </Button>
+          <Button variant="ghost" onClick={() => setAsking(null)}>{S.s_giu_lai_3c3ba2db}</Button>
           <Button
             variant="danger"
             disabled={asking?.use === undefined}
@@ -354,14 +347,12 @@ export function VieneuModuleCard({
               setAsking(null);
               void remove(id);
             }}
-          >
-            Gỡ giọng
-          </Button>
+          >{S.s_go_giong_2f8014a9}</Button>
         </DialogActions>}
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}
-        title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
-        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này" : removeAsk(asking?.use ?? null)}
+        title={S.s_go_0_khoi_may_nay_be8d523b(asking?.label ?? "")}
+        description={asking?.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : removeAsk(asking?.use ?? null)}
       >
 
       </Dialog>

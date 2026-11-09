@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 pragma Singleton
 import QtQuick
 
@@ -37,7 +38,7 @@ QtObject {
             if (root.current === "") return
             root.current = ""
             root.loading = false
-            Api.notice = "Chưa nghe thử được\nCâu mẫu này chưa có bản thu."
+            Api.notice = S.s_chua_nghe_thu_duoc_cau_mau_nay_chua_co_ban_34bbd4d4
         }
     }
 }

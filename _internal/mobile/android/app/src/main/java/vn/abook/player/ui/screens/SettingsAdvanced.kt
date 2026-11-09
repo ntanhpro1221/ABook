@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import vn.abook.player.ui.components.ListSection
@@ -51,23 +53,23 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
-    const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
-    const val LOG_NOTE = "Gồm thông tin máy, nhật ký gần nhất và tên sách; tự che khoá, mã ghép, đường dẫn và IP nhận ra được. Thiết bị đã ghép đọc được khi bật “Kết nối Wi-Fi”."
-    const val SEND = "Xem lại trước khi gửi; bạn tự gửi đi."
-    const val CLEAR = "Gồm cả các lần văng đã ghi."
-    const val CLEARED = "Đã xoá nhật ký."
+    const val LOG = S.s_viec_app_lam_gan_day_de_tim_loi_xem_lai_tr_52f45596
+    const val LOG_NOTE = S.s_gom_thong_tin_may_nhat_ky_gan_nhat_va_ten_0cc10d61
+    const val SEND = S.s_xem_lai_truoc_khi_gui_ban_tu_gui_di_755dd05a
+    const val CLEAR = S.s_gom_ca_cac_lan_vang_da_ghi_42922903
+    const val CLEARED = S.s_da_xoa_nhat_ky_c5522117
     /** Lời hỏi lại trước khi xoá (web: CLEAR_QUESTION ở android/Diagnostics.tsx - cùng từng chữ). */
-    const val CLEAR_QUESTION = "Nhật ký của ABook sẽ bị xoá khỏi máy này. $CLEAR"
+    val CLEAR_QUESTION = S.s_nhat_ky_cua_abook_se_bi_xoa_khoi_may_nay_0_b2e35856(CLEAR)
     val SOURCE = keepUrlTogether("github.com/ntanhpro1221/ABook")
 
     fun cache(bytes: Long?): String = when {
-        bytes == null -> "Đang đo."
-        bytes > 0 -> "Bản đọc đã làm chiếm ${formatSize(bytes)} trên máy này."
-        else -> "Chưa có bản đọc đã lưu."
+        bytes == null -> S.s_dang_do_6b5cb1b4
+        bytes > 0 -> S.s_ban_doc_da_lam_chiem_0_tren_may_nay_903201f2(formatSize(bytes))
+        else -> S.s_chua_co_ban_doc_da_luu_18fe660f
     }
 
     fun clearQuestion(bytes: Long): String =
-        "Dọn ${formatSize(bytes)} bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
+        S.s_don_0_ban_doc_da_lam_cua_moi_cuon_may_se_d_224ee5c4(formatSize(bytes))
 }
 
 /** Nâng cao: bộ nhớ (bản đọc đã làm), chẩn đoán (xem / gửi / xoá nhật ký), giới thiệu (phiên bản, mã nguồn, thành phần bên thứ ba). */
@@ -79,33 +81,33 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
     LaunchedEffect(repo) { repo.loadCache() }
     SettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
         MaintenanceSections(env, sheets)
-        ListSection("Bộ nhớ", first = true) {
+        ListSection(S.s_bo_nho_e3d4d2b2, first = true) {
             val bytes = cache
-            ListRow("Bản đọc đã làm", hint = AdvancedCopy.cache(bytes)) {
+            ListRow(S.s_ban_doc_da_lam_776edb87, hint = AdvancedCopy.cache(bytes)) {
                 if (bytes != null && bytes > 0) {
-                    TextAction("Dọn bản đọc", { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
+                    TextAction(S.s_don_ban_doc_5ae4774e, { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
                 }
             }
-            vn.abook.player.ui.components.MoreInfo("Tìm hiểu thêm", "Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.", "cache_more")
+            vn.abook.player.ui.components.MoreInfo(S.s_tim_hieu_them_032fe408, S.s_nghe_lai_doan_da_doc_xong_thi_khong_phai_c_05c920a7, "cache_more")
         }
-        ListSection("Chẩn đoán") {
-            ActionRow("Nhật ký", "Xem", { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
-            vn.abook.player.ui.components.MoreInfo("Tìm hiểu thêm", AdvancedCopy.LOG_NOTE, "logs_more")
+        ListSection(S.s_chan_doan_906791d5) {
+            ActionRow(S.s_nhat_ky_1e6c3c10, S.s_xem_f6de0ffd, { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
+            vn.abook.player.ui.components.MoreInfo(S.s_tim_hieu_them_032fe408, AdvancedCopy.LOG_NOTE, "logs_more")
             RowLine()
-            ActionRow("Gửi nhật ký", "Gửi", env.links.shareLogs, "logs_send", AdvancedCopy.SEND)
+            ActionRow(S.s_gui_nhat_ky_2e35a4f8, S.s_gui_0564dcf3, env.links.shareLogs, "logs_send", AdvancedCopy.SEND)
             RowLine()
             // Việc phá huỷ là hàng thường tên màu nguy hiểm (cả hàng là chỗ chạm): mỗi phần chỉ có một chữ hổ phách.
             ListItem(
-                "Xoá nhật ký", onClick = { sheets.show { dismiss -> ClearLogsSheet({ repo.clearLogs(); dismiss() }, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
-                hint = if (notice == "Đã xoá nhật ký") AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
+                S.s_xoa_nhat_ky_743fb17f, onClick = { sheets.show { dismiss -> ClearLogsSheet({ repo.clearLogs(); dismiss() }, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
+                hint = if (notice == S.s_da_xoa_nhat_ky_526f2ff7) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
             )
         }
-        ListSection("Giới thiệu") {
-            ListRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
+        ListSection(S.s_gioi_thieu_0c84d33f) {
+            ListRow(S.s_phien_ban_e055ec35) { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
-            ActionRow("Mã nguồn mở (MIT)", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
+            ActionRow(S.s_ma_nguon_mo_mit_d9c23b48, S.s_mo_741bd2c2, env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
-            NavRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
+            NavRow(S.s_thanh_phan_su_dung_46f70f05, { sheets.show { ThirdPartySheet(repo) } }, "third_party")
         }
     }
 }
@@ -119,20 +121,20 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
 /** Hỏi lại trước khi dọn: bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage("Dọn bản đọc đã làm", "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
-        DangerButton("Dọn", onClear, "clear_confirm")
+    ConfirmPage(S.s_don_ban_doc_da_lam_ba8c42a3, "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
+        DangerButton(S.s_don_6730827d, onClear, "clear_confirm")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", dismiss, "clear_cancel")
+        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "clear_cancel")
     }
 }
 
 /** Hỏi lại trước khi xoá nhật ký (không lấy lại được): cùng bước xác nhận với mọi việc phá huỷ khác. */
 @Composable
 private fun ClearLogsSheet(onClear: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage("Xoá nhật ký?", "logs_clear_sheet", listOf(AdvancedCopy.CLEAR_QUESTION), "") {
-        DangerButton("Xoá", onClear, "logs_clear_confirm")
+    ConfirmPage(S.s_xoa_nhat_ky_c85df7e1, "logs_clear_sheet", listOf(AdvancedCopy.CLEAR_QUESTION), "") {
+        DangerButton(S.s_xoa_777195ab, onClear, "logs_clear_confirm")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", dismiss, "logs_clear_cancel")
+        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "logs_clear_cancel")
     }
 }
 
@@ -145,12 +147,12 @@ private fun LogSheet(repo: SettingsRepo) {
     LaunchedEffect(round) {
         problem = ""
         try { lines = repo.logLines() }
-        catch (e: Exception) { problem = "Chưa đọc được nhật ký"; lines = emptyList() }
+        catch (e: Exception) { problem = S.s_chua_doc_duoc_nhat_ky_7425c82b; lines = emptyList() }
     }
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            BasicText("Nhật ký của ABook", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-            IconAction("Làm mới", { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
+            BasicText(S.s_nhat_ky_cua_abook_bc72fe96, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+            IconAction(S.s_lam_moi_b4c61340, { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
         }
         Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
         vn.abook.player.ui.components.Reveal(problem.isNotEmpty()) { Caption(problem) }
@@ -158,8 +160,8 @@ private fun LogSheet(repo: SettingsRepo) {
         // Mỗi lần đọc một danh sách mới, mở sẵn ở dòng cuối (mới nhất) - không cuộn sau khi đã vẽ.
         val list = remember(shown) { LazyListState(shown?.lastIndex?.coerceAtLeast(0) ?: 0) }
         when {
-            shown == null -> BasicText("Đang đọc nhật ký.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            shown.isEmpty() -> BasicText("Chưa có dòng nào.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown == null -> BasicText(S.s_dang_doc_nhat_ky_c001b4f7, style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown.isEmpty() -> BasicText(S.s_chua_co_dong_nao_88732bb0, style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp).fadeEdges(list), state = list) {
                 itemsIndexed(shown, key = { index, _ -> index }, contentType = { _, _ -> "line" }) { _, line ->
                     BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = 2.dp))
@@ -175,12 +177,12 @@ private fun ThirdPartySheet(repo: SettingsRepo) {
     var sections by remember { mutableStateOf<List<ThirdPartySection>?>(null) }
     LaunchedEffect(repo) { sections = repo.thirdParty() }
     Column(Modifier.fillMaxWidth().testTag("third_party_sheet")) {
-        BasicText("Thành phần sử dụng", style = Abook.type.sectionTitle)
+        BasicText(S.s_thanh_phan_su_dung_46f70f05, style = Abook.type.sectionTitle)
         val shown = sections
         val list = rememberLazyListState()
         when {
-            shown == null -> BasicText("Đang mở danh sách", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            shown.isEmpty() -> BasicText("Chưa mở được danh sách.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown == null -> BasicText(S.s_dang_mo_danh_sach_7f36f104, style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown.isEmpty() -> BasicText(S.s_chua_mo_duoc_danh_sach_92a6ce82, style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp).fadeEdges(list), state = list) {
                 for ((index, section) in shown.withIndex()) {
                     if (section.title.isNotEmpty()) {

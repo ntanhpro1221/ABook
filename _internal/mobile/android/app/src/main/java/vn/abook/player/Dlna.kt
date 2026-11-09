@@ -45,7 +45,7 @@ object Dlna {
     const val FEATURES = "DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000"
     private const val AV_TRANSPORT = "urn:schemas-upnp-org:service:AVTransport:"
     private const val RENDERING_CONTROL = "urn:schemas-upnp-org:service:RenderingControl:"
-    private const val AGENT = "ABook UPnP/1.0 DLNADOC/1.50"
+    private const val AGENT = S.s_abook_upnp_1_0_dlnadoc_1_50_7bb0f34b
     private const val MAX_XML = 256 * 1024
     private val GROUP = InetSocketAddress("239.255.255.250", 1900)
     private val TV = Regex("\\b(tv|television|bravia|webos|tizen|roku|fire ?tv|google ?tv|android ?tv|smart ?tv)\\b", RegexOption.IGNORE_CASE)
@@ -54,15 +54,15 @@ object Dlna {
 
     /** Lỗi UPnP AVTransport nói bằng lời người nghe hiểu - như máy tính. */
     private val ERRORS = mapOf(
-        401 to "thiết bị không có lệnh này",
-        402 to "thiết bị không nhận lệnh này",
-        701 to "thiết bị chưa sẵn sàng cho lệnh này",
-        702 to "thiết bị chưa có gì để phát",
-        710 to "thiết bị không tua được",
-        711 to "vị trí tua nằm ngoài chương",
-        714 to "thiết bị không phát được loại audio này",
-        716 to "thiết bị không tải được audio từ điện thoại",
-        717 to "thiết bị không đổi được tốc độ",
+        401 to S.s_thiet_bi_khong_co_lenh_nay_d8190c51,
+        402 to S.s_thiet_bi_khong_nhan_lenh_nay_900f2751,
+        701 to S.s_thiet_bi_chua_san_sang_cho_lenh_nay_f0736611,
+        702 to S.s_thiet_bi_chua_co_gi_de_phat_62a19b5b,
+        710 to S.s_thiet_bi_khong_tua_duoc_e626895a,
+        711 to S.s_vi_tri_tua_nam_ngoai_chuong_ce3c8f60,
+        714 to S.s_thiet_bi_khong_phat_duoc_loai_audio_nay_b95ccef9,
+        716 to S.s_thiet_bi_khong_tai_duoc_audio_tu_dien_thoa_dd2a9a6a,
+        717 to S.s_thiet_bi_khong_doi_duoc_toc_do_6a60a690,
     )
 
     data class Renderer(
@@ -225,14 +225,14 @@ object Dlna {
                 val count = source.read(buffer)
                 if (count < 0) break
                 out.write(buffer, 0, count)
-                if (out.size() > MAX_XML) throw Failure("thiết bị trả lời lạ")
+                if (out.size() > MAX_XML) throw Failure(S.s_thiet_bi_tra_loi_la_37277b3c)
             }
         }
         return out.toByteArray()
     }
 
     private fun parse(data: ByteArray): Element {
-        if (data.size > MAX_XML || DOCTYPE.containsMatchIn(String(data, Charsets.ISO_8859_1))) throw Failure("thiết bị trả lời lạ")
+        if (data.size > MAX_XML || DOCTYPE.containsMatchIn(String(data, Charsets.ISO_8859_1))) throw Failure(S.s_thiet_bi_tra_loi_la_37277b3c)
         return try {
             val factory = DocumentBuilderFactory.newInstance().apply {
                 isNamespaceAware = true
@@ -240,7 +240,7 @@ object Dlna {
             }
             factory.newDocumentBuilder().parse(data.inputStream()).documentElement
         } catch (error: Exception) {
-            throw Failure("thiết bị trả lời lạ")
+            throw Failure(S.s_thiet_bi_tra_loi_la_37277b3c)
         }
     }
 
@@ -260,10 +260,10 @@ object Dlna {
         if (uri.scheme != "http" || uri.host != host || !lan(host)) return null
         val connection = open(location, timeoutMs)
         val root = try {
-            if (connection.responseCode != 200) throw Failure("không đọc được mô tả thiết bị")
+            if (connection.responseCode != 200) throw Failure(S.s_khong_doc_duoc_mo_ta_thiet_bi_9a5b36a8)
             parse(readCapped(connection.inputStream))
         } catch (error: IOException) {
-            throw Failure("không đọc được mô tả thiết bị")
+            throw Failure(S.s_khong_doc_duoc_mo_ta_thiet_bi_9a5b36a8)
         } finally {
             connection.disconnect()
         }
@@ -307,7 +307,7 @@ object Dlna {
         val code = root.getElementsByTagNameNS("*", "errorCode").item(0)?.textContent?.trim().orEmpty()
         val description = root.getElementsByTagNameNS("*", "errorDescription").item(0)?.textContent?.trim().orEmpty()
         val number = code.toIntOrNull() ?: 0
-        return Failure(ERRORS[number] ?: clean(description, 120).ifEmpty { "thiết bị từ chối lệnh này" }, number)
+        return Failure(ERRORS[number] ?: clean(description, 120).ifEmpty { S.s_thiet_bi_tu_choi_lenh_nay_e5e5c603 }, number)
     }
 
     /** Một lệnh UPnP (SOAP 1.1) -> các tham số trả về; lỗi UPnP hay lỗi mạng -> [Failure] câu tiếng Việt. */
@@ -329,12 +329,12 @@ object Dlna {
             if (code >= 400) throw fault(reply)
             reply
         } catch (error: IOException) {
-            throw Failure("không trả lời - thiết bị đã tắt hay rời mạng?")
+            throw Failure(S.s_khong_tra_loi_thiet_bi_da_tat_hay_roi_mang_9b736dd4)
         } finally {
             connection.disconnect()
         }
         val response = parse(data).getElementsByTagNameNS("*", "${action}Response").item(0) as? Element
-            ?: throw Failure("thiết bị trả lời lạ")
+            ?: throw Failure(S.s_thiet_bi_tra_loi_la_37277b3c)
         return (0 until response.childNodes.length).map { response.childNodes.item(it) }.filterIsInstance<Element>()
             .associate { local(it) to it.textContent.orEmpty() }
     }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -10,8 +11,8 @@ Collapse {
         Row {
             width: parent.width; spacing: Theme.s8
             Icon { name: "moon"; size: 16 }
-            Text { objectName: "playerFadeText"; width: Math.max(0, parent.width - 24); text: `Sắp tắt\u00a0·\u00a0chạm phím hoặc chuột để hẹn lại ${root.extend} phút`; wrapMode: Text.Wrap; color: Theme.accentText; font.pixelSize: Theme.sizeBodySmall }
+            Text { objectName: "playerFadeText"; width: Math.max(0, parent.width - 24); text: S.s_sap_tat_u00a0_u00a0cham_phim_hoac_chuot_de_7b680793(root.extend); wrapMode: Text.Wrap; color: Theme.accentText; font.pixelSize: Theme.sizeBodySmall }
         }
-        Button { objectName: "playerFadeExtend"; text: `Hẹn lại ${root.extend} phút`; kind: "ghost"; onClicked: Player.extendSleep() }
+        Button { objectName: "playerFadeExtend"; text: S.s_hen_lai_0_phut_d6009aba(root.extend); kind: "ghost"; onClicked: Player.extendSleep() }
     }
 }

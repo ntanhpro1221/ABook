@@ -26,7 +26,7 @@ object StrictJson {
         reader.skipSpace()
         val value = reader.value(0)
         reader.skipSpace()
-        if (!reader.done()) throw ParseError("thừa chữ sau giá trị JSON")
+        if (!reader.done()) throw ParseError(S.s_thua_chu_sau_gia_tri_json_525d67a9)
         return value
     }
 
@@ -39,7 +39,7 @@ object StrictJson {
             while (at < text.length && (text[at] == ' ' || text[at] == '\t' || text[at] == '\n' || text[at] == '\r')) at++
         }
 
-        private fun fail(): Nothing = throw ParseError("JSON không hợp lệ ở vị trí $at")
+        private fun fail(): Nothing = throw ParseError(S.s_json_khong_hop_le_o_vi_tri_0_c5031150(at))
 
         fun value(depth: Int): Any? {
             if (depth > MAX_DEPTH) fail()

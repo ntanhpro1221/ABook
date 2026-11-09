@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -8,19 +9,19 @@ QtObject {
     property var player: Player
     property bool loaded: player.loaded
     property bool playing: player.playing
-    readonly property string tooltip: loaded ? player.bookTitle + "\u00a0·\u00a0" + player.chapterTitle : "ABook"
+    readonly property string tooltip: loaded ? player.bookTitle + "\u00a0·\u00a0" + player.chapterTitle : S.s_abook_1c37d334
     readonly property var actions: [
-        {action: "open", label: "Mở ABook", enabled: true},
+        {action: "open", label: S.s_mo_abook_feeae114, enabled: true},
         {separator: true},
-        {action: "play", label: playing ? "Tạm dừng" : "Phát", enabled: loaded},
-        {action: "back", label: `Lùi ${player.skipSeconds} giây`, enabled: loaded},
-        {action: "forward", label: `Tới ${player.skipSeconds} giây`, enabled: loaded},
-        {action: "previous", label: "Chương trước", enabled: loaded && player.canPrevious},
-        {action: "next", label: "Chương sau", enabled: loaded && player.canNext},
+        {action: "play", label: playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48, enabled: loaded},
+        {action: "back", label: S.s_lui_0_giay_718bdd89(player.skipSeconds), enabled: loaded},
+        {action: "forward", label: S.s_toi_0_giay_84234225(player.skipSeconds), enabled: loaded},
+        {action: "previous", label: S.s_chuong_truoc_4750f9e9, enabled: loaded && player.canPrevious},
+        {action: "next", label: S.s_chuong_sau_17d1bd20, enabled: loaded && player.canNext},
         {separator: true},
-        {action: "mini", label: "Cửa sổ mini", enabled: loaded},
+        {action: "mini", label: S.s_cua_so_mini_65edeb9b, enabled: loaded},
         {separator: true},
-        {action: "quit", label: "Thoát ABook", enabled: true}
+        {action: "quit", label: S.s_thoat_abook_523599d6, enabled: true}
     ]
     function activate() { if (windowMode) windowMode.reveal() }
     function dispatch(action) {

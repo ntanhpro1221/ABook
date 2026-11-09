@@ -270,7 +270,7 @@ Item {
             theOne(page, "saveRename").clicked()
             // Trùng tên: không gửi, nói lý do, giữ ô nhập
             compare(requestsOf("POST", "/api/book-templates").length, 0)
-            tryCompare(theOne(page, "renameProblem"), "text", "Đã có mẫu tên “Đêm khuya”")
+            tryCompare(theOne(page, "renameProblem"), "text", "Đã có mẫu “Đêm khuya”")
             field.text = "  Buổi   sáng  "
             compare(live(page, "renameProblem")[0].text, "")
             theOne(page, "saveRename").clicked()

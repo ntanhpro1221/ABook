@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import kotlinx.coroutines.CoroutineScope
 import vn.abook.player.ui.data.ListenBook
 
@@ -14,7 +16,7 @@ class EditBooks(private val source: EditSource, private val scope: CoroutineScop
 /** Explicit benchmark library has no disk writes, matching the existing demo Library/Player path. */
 private class DemoEdits(book: ListenBook) : EditSource {
     private var saved = EditSnapshot(book.id, book.title, book.author,
-        (1..book.chaptersTotal).map { EditChapter(it.toLong(), "Chương $it") }, book.cover, book.textOnly)
+        (1..book.chaptersTotal).map { EditChapter(it.toLong(), S.s_chuong_0_268b0521(it)) }, book.cover, book.textOnly)
     override suspend fun load(id: String) = saved
     override suspend fun save(id: String, diff: EditDiff): EditSnapshot {
         saved = saved.copy(title = diff.title ?: saved.title, author = diff.author ?: saved.author,

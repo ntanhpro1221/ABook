@@ -7,7 +7,7 @@ import android.os.Build
 /** File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook): một chỗ lấy địa chỉ ra khỏi Intent cho NativeActivity. */
 object IncomingFile {
     /** Lời báo khi bạn chia sẻ chữ trần (vd một đường link): app nhận SEND text/plain cho file .txt nên chữ trần cũng tới đây. */
-    const val TEXT_ONLY = "Bạn gửi file EPUB, Word, PDF hoặc TXT; chưa nhận đoạn chữ chia sẻ."
+    const val TEXT_ONLY = S.s_ban_gui_file_epub_word_pdf_hoac_txt_chua_n_c1bf7b43
 
     /** Địa chỉ file của lệnh "Mở bằng" (VIEW) hay "Chia sẻ" (SEND); null khi Intent không mang file. */
     fun uri(intent: Intent?): Uri? = when (intent?.action) {

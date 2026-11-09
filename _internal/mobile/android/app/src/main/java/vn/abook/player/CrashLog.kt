@@ -26,7 +26,7 @@ object CrashLog {
             try {
                 val folder = AppLog.folder() ?: File(context.applicationContext.filesDir, "diag")
                 write(folder, System.currentTimeMillis(), thread.name, error)
-                AppLog.e("Crash", "văng ở luồng ${thread.name}: ${error.javaClass.name}: ${error.message}", error)
+                AppLog.e("Crash", S.s_vang_o_luong_0_1_2_dcfaf9bf(thread.name, error.javaClass.name, error.message), error)
             } catch (_: Throwable) {
             }
             previous?.uncaughtException(thread, error)
@@ -47,7 +47,7 @@ object CrashLog {
 
     internal fun text(now: Long, thread: String, error: Throwable): String {
         val time = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).format(Date(now))
-        return AppLog.scrub("$time luồng $thread\n" + error.stackTraceToString()).take(MAX_CHARS)
+        return AppLog.scrub(S.s_0_luong_1_dfc8ed37(time, thread) + error.stackTraceToString()).take(MAX_CHARS)
     }
 
     /** Chỉ giữ `keep` file `crash-*.txt` mới nhất (tên có giờ nên xếp theo tên là xếp theo thời gian). */

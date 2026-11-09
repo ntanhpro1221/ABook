@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Bộ máy phát. Máy tính dùng <audio> của trình duyệt; Android thay bằng bộ phát native (Media3/ExoPlayer) để
 // phát khi tắt màn hình, hiện điều khiển ở màn hình khoá và nhận nút tai nghe. Trình phát (player.tsx) chỉ biết
 // giao diện này.
@@ -165,7 +166,7 @@ export class WebAudioEngine implements AudioEngine {
     void this.audio.play().catch((error: unknown) => {
       // Đổi nguồn / bấm dừng huỷ play đang chờ (thường là AbortError): không báo lỗi của nguồn cũ.
       if (generation !== this.generation) return;
-      this.lastError = `Chưa phát được chương này. Bạn hãy bấm Phát để thử lại.${error instanceof Error ? ` (${error.message})` : ""}`;
+      this.lastError = S.s_chua_phat_duoc_chuong_nay_ban_hay_bam_phat_501d9e02(error instanceof Error ? ` (${error.message})` : "");
       this.audio.pause();
       this.audio.dispatchEvent(new Event("pause"));
       this.audio.dispatchEvent(new Event("error"));

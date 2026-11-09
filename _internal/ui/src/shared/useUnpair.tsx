@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { UnpairDialog } from "./UnpairDialog";
@@ -36,7 +37,7 @@ export function useUnpair<T>(options: {
       setError(null);
       setAsking({ target, unsent });
     } catch (problem) {
-      toast.error("Chưa bỏ ghép được", { description: (problem as Error).message });
+      toast.error(S.s_chua_bo_ghep_duoc_7e3c5ca4, { description: (problem as Error).message });
     }
   };
 

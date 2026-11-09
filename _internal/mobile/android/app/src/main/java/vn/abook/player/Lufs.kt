@@ -24,7 +24,7 @@ class Lufs(private val rate: Int, private val channels: Int, dualMono: Boolean =
 
     /** `count` mẫu PCM 16-bit xen kẽ kênh. */
     fun feed(pcm: ShortArray, count: Int = pcm.size) {
-        require(count % channels == 0) { "khối không trọn khung" }
+        require(count % channels == 0) { S.s_khoi_khong_tron_khung_c184e523 }
         var i = 0
         while (i < count) {
             for (c in 0 until channels) {

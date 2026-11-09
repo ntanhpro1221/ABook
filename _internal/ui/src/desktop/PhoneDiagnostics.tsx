@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +18,7 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › Chia sẻ thư viện › bật “Kết nối Wi-Fi”. Cùng Wi-Fi hay Tailscale.";
+const UNREACHABLE_HELP = S.s_tren_dien_thoai_cai_dat_thiet_bi_chia_se_t_ee29c754;
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
@@ -29,8 +30,8 @@ export function failureView(error: unknown): { title: string; help: string } {
 export function DiagnosticsBody({ report, error, loading, onRetry }: { report?: DiagnosticsReport; error?: unknown; loading?: boolean; onRetry: () => void }) {
   const failure = error ? failureView(error) : null;
   // Khung chờ -> báo cáo / lỗi: mờ chéo (LoadingCrossfade), không cắt cứng; lỗi hiện / ẩn mở / khép tại chỗ.
-  return <LoadingCrossfade loading={Boolean(loading && !report)} placeholder={<ContentSkeleton shape="cards" count={2} label="Đang tải chẩn đoán" />}><MotionRegion>
-    <InlineError open={Boolean(failure)} message={failure ? `${failure.title} ${failure.help || "Bạn hãy thử tải lại chẩn đoán."}` : ""} onRetry={onRetry} />
+  return <LoadingCrossfade loading={Boolean(loading && !report)} placeholder={<ContentSkeleton shape="cards" count={2} label={S.s_dang_tai_chan_doan_0427c039} />}><MotionRegion>
+    <InlineError open={Boolean(failure)} message={failure ? `${failure.title} ${failure.help || S.s_ban_hay_thu_tai_lai_chan_doan_eea0bd09}` : ""} onRetry={onRetry} />
     {report && <DiagnosticsView report={report} />}
   </MotionRegion></LoadingCrossfade>;
 }
@@ -50,18 +51,18 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
     setSaving(true);
     try {
       if (info?.dialogs) {
-        const target = await pickFolder("Chọn nơi lưu nhật ký", "").catch(() => null);
+        const target = await pickFolder(S.s_chon_noi_luu_nhat_ky_38ffebc9, "").catch(() => null);
         if (!target) return;
         await api<{ name: string; folder: string }>(`/api/remote/${computer.id}/diagnostics/save`, { method: "POST", body: { lines: SAVE_LINES, target } });
-        toast.success("Đã lưu nhật ký");
+        toast.success(S.s_da_luu_nhat_ky_65019295);
       } else {
         // Trình duyệt: không có hộp chọn thư mục - tải về qua thanh tải của trình duyệt.
         const full = await api<DiagnosticsReport>(`/api/remote/${computer.id}/diagnostics?lines=${SAVE_LINES}`);
         downloadText(reportFileName(computer.name), JSON.stringify(full, null, 2));
-        toast.success("Đã tải nhật ký về");
+        toast.success(S.s_da_tai_nhat_ky_ve_b50138e4);
       }
     } catch (error) {
-      toast.error("Chưa lưu được nhật ký", { description: failureView(error).title });
+      toast.error(S.s_chua_luu_duoc_nhat_ky_c92f8b79, { description: failureView(error).title });
     } finally {
       setSaving(false);
     }
@@ -70,18 +71,14 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Chẩn đoán ${computer.name}`}
-      description="Nhật ký có tên sách; thông tin riêng được che nhưng hãy xem lại trước khi gửi."
+      title={S.s_chan_doan_0_b8c06668(computer.name)}
+      description={S.s_nhat_ky_co_ten_sach_thong_tin_rieng_duoc_c_bbe37d25}
       width="max-w-[560px]"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="ghost" icon={RefreshCw} loading={query.isFetching} onClick={() => void query.refetch()}>
-            Làm mới
-          </Button>
-          <Button size="sm" variant="ghost" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => void save()}>
-            Lưu nhật ký
-          </Button>
+          <Button size="sm" variant="ghost" icon={RefreshCw} loading={query.isFetching} onClick={() => void query.refetch()}>{S.s_lam_moi_b4c61340}</Button>
+          <Button size="sm" variant="ghost" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => void save()}>{S.s_luu_nhat_ky_57df5372}</Button>
         </div>
         <DiagnosticsBody report={query.data} error={query.error} loading={query.isLoading} onRetry={() => void query.refetch()} />
       </div>

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.gestureBarPadding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
@@ -99,9 +101,9 @@ import kotlin.math.floor
 
 /** Ba mục của trang sách, theo thứ tự trên thanh. */
 enum class BookTab(val label: String, val tag: String) {
-    Chapters("Chương", "book_tab_chapters"),
-    History("Lịch sử", "book_tab_history"),
-    Cast("Nhân vật", "book_tab_cast"),
+    Chapters(S.s_chuong_2d157977, "book_tab_chapters"),
+    History(S.s_lich_su_0a235708, "book_tab_history"),
+    Cast(S.s_nhan_vat_d4940c17, "book_tab_cast"),
 }
 
 /**
@@ -132,7 +134,7 @@ fun RecordChip(active: ListenRecord, onClick: () -> Unit, modifier: Modifier = M
     ) {
         UserRoundIcon(colors.text2, size = 14.dp)
         Spacer(Modifier.width(6.dp))
-        BasicText("Hồ sơ nghe:", style = Abook.type.caption.copy(color = colors.text2))
+        BasicText(S.s_ho_so_nghe_a80cbba0, style = Abook.type.caption.copy(color = colors.text2))
         Spacer(Modifier.width(6.dp))
         BasicText(active.name, style = Abook.type.caption.copy(color = colors.text, fontWeight = FontWeight.Medium), modifier = Modifier.weight(1f, fill = false))
         Spacer(Modifier.width(6.dp))
@@ -219,7 +221,7 @@ private const val HISTORY_SKELETON = 3
 
 @Composable
 private fun HistoryEmpty(fade: () -> Float) =
-    EmptyNote("Chưa có lịch sử nghe", "Mỗi lượt nghe lưu lại chỗ bạn dừng.", Modifier.fade(fade), "history_empty", icon = { ink -> HistoryIcon(ink, size = 28.dp) })
+    EmptyNote(S.s_chua_co_lich_su_nghe_5823581d, S.s_moi_luot_nghe_luu_lai_cho_ban_dung_4c3bdda1, Modifier.fade(fade), "history_empty", icon = { ink -> HistoryIcon(ink, size = 28.dp) })
 
 /** "7 ngày qua: **2 giờ** nghe cuốn này." - phần thời gian đậm màu mực. */
 private fun weekText(seconds: Double): AnnotatedString {
@@ -315,7 +317,7 @@ fun LazyListScope.castItems(
     if (cast == null || cast.isEmpty) {
         item(key = "cast_empty", contentType = "empty") {
             EmptyNote(
-                "Chưa có dàn nhân vật", "Dàn nhân vật hiện ra khi truyện đã được phân vai.", Modifier.fade(fade), "cast_empty",
+                S.s_chua_co_dan_nhan_vat_6f7729cd, S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364, Modifier.fade(fade), "cast_empty",
                 icon = { ink -> VoiceIcon(ink, size = 28.dp) },
             )
         }
@@ -327,8 +329,8 @@ fun LazyListScope.castItems(
             val ahead = if (reached != null) Cast.ahead(cast.characters, reached) else 0
             val shown = Cast.visible(cast.characters, reached, later)
             Fold(
-                "Vai chính", "cast_main", Modifier.fade(fade).padding(top = Dim.s16),
-                summary = "${cast.characters.size} người có lời thoại", defaultOpen = cast.characters.size <= 4,
+                S.s_vai_chinh_b84f4098, "cast_main", Modifier.fade(fade).padding(top = Dim.s16),
+                summary = S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.size), defaultOpen = cast.characters.size <= 4,
             ) {
                 for ((n, person) in shown.withIndex()) {
                     if (n > 0) RowLine(start = PersonTextStart)
@@ -342,7 +344,7 @@ fun LazyListScope.castItems(
     }
     if (cast.extras.isNotEmpty()) {
         item(key = "cast_extras", contentType = "fold") {
-            Fold("Vai phụ", "cast_extras", Modifier.fade(fade).padding(top = Dim.s8), summary = "${cast.extras.size} người trong một cảnh") {
+            Fold(S.s_vai_phu_6e7c6bce, "cast_extras", Modifier.fade(fade).padding(top = Dim.s8), summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) {
                 for ((n, person) in cast.extras.withIndex()) {
                     if (n > 0) RowLine(start = PersonTextStart)
                     PersonRow(person, samples, onMore)
@@ -364,7 +366,7 @@ private fun NarratorRow(cast: CastView, modifier: Modifier) {
         Box(Modifier.size(40.dp).clip(CircleShape).background(colors.accentSoft), contentAlignment = Alignment.Center) { BookOpenTextIcon(colors.accentText) }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
-            BasicText("Người kể chuyện", style = Abook.type.caption.copy(color = colors.text2))
+            BasicText(S.s_nguoi_ke_chuyen_c0c2c504, style = Abook.type.caption.copy(color = colors.text2))
             BasicText(Cast.narratorName(cast.narrator), style = Abook.type.bodyStrong, modifier = Modifier.padding(top = 2.dp))
             cast.narrator.chapterVoices.forEach { RowHint(it) }
             RowHint(Cast.narratorCountLine(cast.narrator))
@@ -388,7 +390,7 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
                     BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
                 }
             }
-            person.originalName?.let { BasicText("(tên gốc: ${Cast.cleanName(it)})", style = Abook.type.caption) }
+            person.originalName?.let { BasicText(S.s_ten_goc_0_dea1648c(Cast.cleanName(it)), style = Abook.type.caption) }
             Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.Top) {
                 Box(Modifier.size(14.dp, 18.dp), contentAlignment = Alignment.CenterStart) { VoiceIcon(colors.text3, size = 14.dp) }
                 Spacer(Modifier.width(4.dp))
@@ -398,9 +400,9 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
             Cast.mergeLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 2.dp)) }
             BasicText(Cast.countLine(person), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.padding(top = Dim.s4))
         }
-        person.sampleId?.let { sample -> SampleButton(samples.playing == sample, "Nghe $name nói") { samples.toggle(sample) } }
+        person.sampleId?.let { sample -> SampleButton(samples.playing == sample, S.s_nghe_0_noi_e9307f6f(name)) { samples.toggle(sample) } }
         Box(
-            Modifier.size(Dim.touch).pressable { onMore(person) }.semantics { contentDescription = "Thêm tuỳ chọn cho $name" }.testTag("person_more"),
+            Modifier.size(Dim.touch).pressable { onMore(person) }.semantics { contentDescription = S.s_them_tuy_chon_cho_0_82a2cf4d(name) }.testTag("person_more"),
             contentAlignment = Alignment.Center,
         ) { MoreIcon(colors.text2) }
     }
@@ -411,7 +413,7 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
 private fun SampleButton(active: Boolean, label: String, onClick: () -> Unit) {
     val colors = Abook.colors
     Box(
-        Modifier.size(Dim.touch).pressable(onClick = onClick).semantics { contentDescription = if (active) "Dừng nghe thử" else label }.testTag("person_sample"),
+        Modifier.size(Dim.touch).pressable(onClick = onClick).semantics { contentDescription = if (active) S.s_dung_nghe_thu_41a2925b else label }.testTag("person_sample"),
         contentAlignment = Alignment.Center,
     ) {
         if (active) StopIcon(colors.accentText, size = 14.dp) else PlayIcon(colors.text2, size = 14.dp)

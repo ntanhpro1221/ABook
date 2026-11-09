@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
@@ -22,21 +23,21 @@ function storeDefaultVoice(voice: string): void {
 }
 /** Sự kiện: người dùng vừa đặt giọng mặc định (Cài đặt → Giọng đọc) - lõi điện thoại nhớ theo (android/readAloud.ts). */
 export const DEFAULT_VOICE_EVENT = "abook:readaloud-default-voice";
-export const ONLINE_NOTICE = "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc.";
-export const FALLBACK_NOTICE = "Chưa dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.";
+export const ONLINE_NOTICE = S.s_giong_edge_gui_chu_cua_sach_toi_may_chu_mi_7aefebec;
+export const FALLBACK_NOTICE = S.s_chua_dung_duoc_giong_truc_tuyen_tam_doc_ba_c27b7828;
 /** Sự kiện: người dùng vừa đổi khoá của giọng dùng khoá riêng (Cài đặt) - danh sách giọng phải hỏi lại. */
 export const ONLINE_KEYS_CHANGED_EVENT = "abook:readaloud-online-keys";
 /** Lý do mà giọng kế đỡ được: dịch vụ trực tuyến không với tới / không chạy, hay khoá của người dùng bị từ chối / hết hạn mức. Chữ không đọc
  *  được (`empty`) hay giọng không có (`voice`) thì không. */
 /** Mở đầu chung của thông báo mất mạng ở máy tính và điện thoại (ClipReader.NO_OFFLINE_LEAD): giao diện nhận ra thông báo này nhờ nó để đưa
  *  nút theo tình huống (“Đọc bằng …” nếu đã có giọng chạy trên máy, “Tải giọng VieNeu” nếu chưa) thay cho câu dài. */
-export const NO_OFFLINE_LEAD = "Không có mạng - giọng ";
+export const NO_OFFLINE_LEAD = S.s_khong_co_mang_giong_54121622;
 /** Câu ngắn khi mất mạng mà máy không có giọng nào đọc được khi không có mạng. `name`: tên giọng đang chọn. */
 export function noOfflineMessage(name: string): string {
-  return `${NO_OFFLINE_LEAD}${name} cần mạng.`;
+  return S.s_0_1_can_mang_ccab37d8(NO_OFFLINE_LEAD, name);
 }
 /** Bản của lõi điện thoại (ClipReader.NO_OFFLINE_VOICE) chưa biết tên giọng: giao diện thay bằng `noOfflineMessage(tên)`. */
-export const NO_OFFLINE_VOICE = "Không có mạng - giọng đang chọn cần mạng.";
+export const NO_OFFLINE_VOICE = S.s_khong_co_mang_giong_dang_chon_can_mang_6a4c7c11;
 
 export function isNoOfflineVoice(message: string): boolean {
   return message.startsWith(NO_OFFLINE_LEAD);
@@ -45,9 +46,9 @@ export function isNoOfflineVoice(message: string): boolean {
 /** Giọng trực tuyến có mạng mà vẫn không đọc được (dịch vụ từ chối, trả lỗi, không phản hồi) và máy không có giọng nào đọc không cần mạng: câu ngắn
  *  nói tên giọng, giao diện đưa cùng đường ra như khi mất mạng. Bản của lõi điện thoại (ClipReader.NO_USABLE_VOICE) chưa kèm tên giọng. */
 export function unusableVoiceMessage(name: string): string {
-  return `Giọng ${name} đang không dùng được.`;
+  return S.s_giong_0_dang_khong_dung_duoc_65353328(name);
 }
-export const NO_USABLE_VOICE = "Giọng đang chọn đang không dùng được.";
+export const NO_USABLE_VOICE = S.s_giong_dang_chon_dang_khong_dung_duoc_3c97984f;
 
 /** Lời báo "giọng đang chọn không đọc được và máy không có giọng nào khác" (mất mạng hay giọng hỏng): giao diện đưa nút "Đọc bằng …" / "Tải giọng VieNeu". */
 export function isVoiceStuck(message: string): boolean {
@@ -66,12 +67,12 @@ const TROUBLE_REASONS = new Set(["timeout", "rejected", "service"]);
 /** Nhà cung cấp vừa hỏng kiểu ấy thì nghỉ chừng này rồi mới thử lại (không để mỗi đoạn, mỗi lần mở sách đập thêm 4 kết nối + thử lại). */
 const TROUBLE_MS = 5 * 60_000;
 /** Tên nhà cung cấp của giọng dùng khoá riêng (abook/readaloud/byok.py, điện thoại OnlineVoices.kt). */
-export const KEYED_PROVIDERS: Record<string, string> = { azure: "Azure Speech", google: "Google Cloud", fpt: "FPT.AI", viettel: "Viettel AI" };
+export const KEYED_PROVIDERS: Record<string, string> = { azure: S.s_azure_speech_8bd84d93, google: S.s_google_cloud_69bd2211, fpt: "FPT.AI", viettel: S.s_viettel_ai_9094e708 };
 
 /** Câu nói rõ chữ của sách đi đâu khi chọn giọng này (giọng dùng khoá: kèm việc có thể bị tính tiền vào tài khoản của người dùng). */
 export function onlineNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {
   const keyed = KEYED_PROVIDERS[voice.provider];
-  if (keyed) return `Giọng ${keyed} gửi chữ của sách tới ${keyed} bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn.`;
+  if (keyed) return S.s_giong_0_gui_chu_cua_sach_toi_1_bang_khoa_c_3149e832(keyed, keyed);
   return voice.online ? ONLINE_NOTICE : "";
 }
 
@@ -188,7 +189,7 @@ export function chooseDefaultVoice(voice: string): void {
 }
 
 /** Câu đọc thử ("Nghe thử" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
-export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
+export const SAMPLE_TEXT = S.s_xin_chao_toi_se_doc_sach_cho_ban_nghe_ban_885b35e2;
 
 /** Giọng VieNeu kể chuyện TRUNG TÍNH của từng bản (mô-đun tải riêng), theo thứ tự ưu tiên - giọng cho người nghe chưa chọn gì. Không bao giờ lấy
  *  giọng đầu danh sách: ở cả hai bản đó là "Adam bựa" / "Adam" (giọng nam có cá tính, không hợp một lời kể đầu tiên - soát a66: tải Nano xong mọi
@@ -201,8 +202,8 @@ export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. B�
  *    Duyên" (nữ, chủ sách giữ nguyên tốc độ khi chấm giọng Studio), "Đức Trí" (nam, giọng dẫn truyện chủ sách chọn ở Studio).
  *  Cùng danh sách ở bản Android (readaloud/NarratorVoice.kt); bộ ví dụ chung tests/fixtures/default_voice. */
 export const NARRATOR_VOICES: Record<string, readonly string[]> = {
-  turbo: ["Đức Trí", "Đoan Trang", "Thanh Bình"],
-  nano: ["Ái Hân", "Mỹ Duyên", "Đức Trí"],
+  turbo: [S.s_duc_tri_c0417aaf, S.s_doan_trang_61fdcaa5, S.s_thanh_binh_6455e387],
+  nano: [S.s_ai_han_a1f0d04f, S.s_my_duyen_ad56a239, S.s_duc_tri_c0417aaf],
 };
 
 /** Giọng trên máy mặc định trong `voices`. Máy đã đo các giọng ("Giọng theo máy": mỗi giọng trên máy có `pick`) thì chỉ xét các giọng của bộ giọng
@@ -240,7 +241,7 @@ export function runsOnThisMachine(voice: Pick<ReadAloudVoice, "online"> | undefi
 /** Giọng đang đọc, viết cho người nghe: "Đức Trí", "Hoài My" - tên người, không kèm tên bộ máy đọc (Edge, VieNeu, Supertonic là chuyện kỹ thuật, soát 25-10);
  *  giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */
 export function voiceCaption(voice: ReadAloudVoice | undefined): string {
-  if (!voice || voice.provider === "device") return "Giọng đọc của máy";
+  if (!voice || voice.provider === "device") return S.s_giong_doc_cua_may_fb991f25;
   return spokenVoiceName(voice.name);
 }
 
@@ -333,11 +334,11 @@ export function fallbackChain(voices: ReadAloudVoice[], voice: ReadAloudVoice, c
 
 function fallbackNotice(failed: ReadAloudVoice, reason: string, next: ReadAloudVoice): string {
   const keyed = KEYED_PROVIDERS[failed.provider];
-  const instead = next.online ? `giọng ${next.name}` : "giọng của máy";
-  if (!keyed) return next.online ? `Chưa dùng được giọng trực tuyến - tạm đọc bằng ${instead}.` : FALLBACK_NOTICE;
-  if (reason === "auth") return `Khoá ${keyed} không dùng được - tạm đọc bằng ${instead}. Kiểm tra lại khoá trong Cài đặt.`;
-  if (reason === "quota") return `Khoá ${keyed} đã hết hạn mức - tạm đọc bằng ${instead}.`;
-  return `Chưa dùng được giọng ${keyed} lúc này - tạm đọc bằng ${instead}.`;
+  const instead = next.online ? S.s_giong_0_e048b478(next.name) : S.s_giong_cua_may_af7d0773;
+  if (!keyed) return next.online ? S.s_chua_dung_duoc_giong_truc_tuyen_tam_doc_ba_6a3ec3ba(instead) : FALLBACK_NOTICE;
+  if (reason === "auth") return S.s_khoa_0_khong_dung_duoc_tam_doc_bang_1_kiem_3aaa8960(keyed, instead);
+  if (reason === "quota") return S.s_khoa_0_da_het_han_muc_tam_doc_bang_1_f381b45b(keyed, instead);
+  return S.s_chua_dung_duoc_giong_0_luc_nay_tam_doc_ban_e4fe94da(keyed, instead);
 }
 
 /** Bộ lấy clip cho trình phát: giọng theo lựa chọn của người nghe; giọng trực tuyến hỏng (mạng, dịch vụ, khoá bị từ chối, hết hạn mức) thì
@@ -360,10 +361,10 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
     notify(fallbackNotice(failed, reason, next));
   };
   return async (requested, text, options) => {
-    if (!source.readAloudClip) throw new Error("Máy này chưa có giọng đọc.");
+    if (!source.readAloudClip) throw new Error(S.s_may_nay_chua_co_giong_doc_3449f846);
     const voices = await voicesOf(source);
     const voice = resolveVoice(voices, requested || chosenVoice(bookId));
-    if (!voice) throw new Error("Máy này chưa có giọng đọc.");
+    if (!voice) throw new Error(S.s_may_nay_chua_co_giong_doc_3449f846);
     // Báo chữ đi đâu: hộp hỏi TRƯỚC lần đọc đầu (onlineConsent.ts, trình phát) - không nhắc lại ở đây sau khi chữ đã gửi.
     const chain = options?.cachedOnly ? [voice] : [voice, ...fallbackChain(voices, voice)];
     let failed: { voice: ReadAloudVoice; reason: string } | null = null;
@@ -405,6 +406,6 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
         failed = { voice: candidate, reason: why };
       }
     }
-    throw new Error("Chưa có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy."); // cùng lời ClipReader.kt
+    throw new Error(S.s_chua_co_giong_nao_doc_duoc_kiem_tra_mang_h_111b4207); // cùng lời ClipReader.kt
   };
 }

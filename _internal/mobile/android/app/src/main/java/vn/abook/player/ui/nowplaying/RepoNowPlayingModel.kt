@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.Stable
@@ -217,14 +219,14 @@ class RepoNowPlayingModel(
             val now = state.value
             if (now.bookId == book && now.chapterId == chapter.id) {
                 text.value = ReadAlongState(book, chapter.id, paragraphs,
-                    error = if (paragraphs.isEmpty()) "Chương chưa có chữ. Bạn thử lại sau." else "")
+                    error = if (paragraphs.isEmpty()) S.s_chuong_chua_co_chu_ban_thu_lai_sau_c5852a5c else "")
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
             val now = state.value
             if (now.bookId == book && now.chapterId == chapter.id)
-                text.value = ReadAlongState(book, chapter.id, error = error.message?.takeIf { it.startsWith("Bạn cần") } ?: "Chưa tải được chữ. Bạn thử lại.")
+                text.value = ReadAlongState(book, chapter.id, error = error.message?.takeIf { it.startsWith(S.s_ban_can_5ca5f9e9) } ?: S.s_chua_tai_duoc_chu_ban_thu_lai_02f8a145)
         }
     }
 

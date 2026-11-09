@@ -101,7 +101,7 @@ class StudioClips(
         val partial = File(target.path + ".part")
         fetch(spec.computer, spec.path, partial)
         PartResume.tagFile(partial).delete()
-        if (!partial.renameTo(target)) throw IOException("Chưa ghi được bản thu vào bộ nhớ đệm")
+        if (!partial.renameTo(target)) throw IOException(S.s_chua_ghi_duoc_ban_thu_vao_bo_nho_dem_cd407762)
         trim(keep = target)
         return target
     }
@@ -135,9 +135,9 @@ object StudioDownloads {
     const val LIMIT_BYTES = 256L * 1024 * 1024
 
     fun fetch(context: Context, computer: String, path: String, partial: File) {
-        require(StudioPaths.safeMedia(path)) { "Đường không hợp lệ" }
+        require(StudioPaths.safeMedia(path)) { S.s_duong_khong_hop_le_5a2f3cf7 }
         val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
-        val dir = partial.parentFile ?: throw IOException("Thiếu thư mục cache")
+        val dir = partial.parentFile ?: throw IOException(S.s_thieu_thu_muc_cache_3d46be59)
         PeerTransfer.fetchResumable({ from, tag -> SyncLink.download(context, link, path, from, tag) }, path, partial, 0, LIMIT_BYTES, dir)
     }
 }

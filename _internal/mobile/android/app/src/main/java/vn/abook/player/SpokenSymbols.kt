@@ -16,8 +16,8 @@ object SpokenSymbols {
     /** `[^\W\d_]` của Python: chữ (cả số La Mã / số mũ dạng chữ), không phải chữ số thập phân hay gạch dưới. ICU của Android không có (?U). */
     private const val LETTER = "[\\p{L}\\p{Nl}\\p{No}]"
 
-    private val SYMBOL_WORDS = mapOf('↓' to "giảm", '↑' to "tăng", '+' to "cộng", '=' to "bằng", '≥' to "lớn hơn hoặc bằng", '≤' to "nhỏ hơn hoặc bằng",
-        '^' to "mũ", '×' to "nhân", '÷' to "chia")
+    private val SYMBOL_WORDS = mapOf('↓' to S.s_giam_b34c9d77, '↑' to S.s_tang_fbff2951, '+' to S.s_cong_0fea7fe6, '=' to S.s_bang_5b643900, '≥' to S.s_lon_hon_hoac_bang_3d061c8c, '≤' to S.s_nho_hon_hoac_bang_58cdae91,
+        '^' to S.s_mu_451bb93b, '×' to S.s_nhan_9883db89, '÷' to "chia")
     private const val SEPARATORS = "»«›‹→⇒▸▶►([{)]}|"
     private const val DROPPED = "•▪◦*"
     private val BOUNDARY_TRIM = (SEPARATORS + DROPPED + " \t\r\n").toSet()

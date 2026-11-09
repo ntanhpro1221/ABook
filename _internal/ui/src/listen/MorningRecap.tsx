@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { Button } from "@/shared/ui";
@@ -39,11 +40,11 @@ interface Marker {
 
 /** "Tối qua" chỉ đúng khi lần hẹn giờ kết thúc hôm trước hay lúc rạng sáng; hẹn giờ ban ngày (06:5x sáng nay) thì không. */
 function sessionLabel(endedAt: number | null | undefined): string {
-  if (!endedAt) return "Tối qua";
+  if (!endedAt) return S.s_toi_qua_920edeaa;
   const ended = new Date(endedAt * 1000);
   const now = new Date();
   const today = ended.toDateString() === now.toDateString();
-  return today && ended.getHours() >= 5 ? "Vừa hẹn giờ" : "Tối qua";
+  return today && ended.getHours() >= 5 ? S.s_vua_hen_gio_2234db1f : S.s_toi_qua_920edeaa;
 }
 
 function timeOf(at: number): string {
@@ -67,12 +68,12 @@ function markersOf(session: NightSession): Marker[] {
   const stopped = [...events].reverse().find((event) => event.type === "stopped");
   const phone = session.device !== "desktop";
   const list = [
-    make(timer, "timer", TimerReset, "Hẹn giờ ngủ", "chắc chắn còn thức"),
+    make(timer, "timer", TimerReset, S.s_hen_gio_ngu_21073488, S.s_chac_chan_con_thuc_097f76f4),
     lastTouch && lastTouch !== timer
-      ? make(lastTouch, "touch", Hand, phone ? "Lần cuối chạm máy" : "Lần cuối dùng máy", "chắc chắn còn thức")
+      ? make(lastTouch, "touch", Hand, phone ? S.s_lan_cuoi_cham_may_5c49b606 : S.s_lan_cuoi_dung_may_d6d0f219, S.s_chac_chan_con_thuc_097f76f4)
       : null,
-    make(still, "still", Smartphone, "Máy bắt đầu nằm yên", "có lẽ đã ngủ từ khoảng này", BEFORE_SLEEP_SECONDS),
-    make(stopped, "stopped", Moon, "Tự dừng", "lúc hết giờ hẹn"),
+    make(still, "still", Smartphone, S.s_may_bat_dau_nam_yen_ca43165f, S.s_co_le_da_ngu_tu_khoang_nay_92066e96, BEFORE_SLEEP_SECONDS),
+    make(stopped, "stopped", Moon, S.s_tu_dung_abf27f05, S.s_luc_het_gio_hen_daffbb84),
   ].filter(Boolean) as Marker[];
   const suggested = list.find((marker) => marker.key === "still") ?? list.find((marker) => marker.key === "touch") ?? list[0];
   if (suggested) suggested.suggested = true;
@@ -152,7 +153,7 @@ export function MorningRecap({ className }: { className?: string }) {
 
   return (
     <MotionRegion as="section" className={cn("relative py-4 sm:py-5", className)} aria-label={sessionLabel(session.endedAt)}>
-      <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
+      <button type="button" aria-label={S.s_an_the_nay_820c504e} onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
       {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px - không thành một dòng HOA dài; tên dài xuống dòng, không cắt. */}
@@ -161,7 +162,7 @@ export function MorningRecap({ className }: { className?: string }) {
         <span className="label-section shrink-0">{sessionLabel(session.endedAt)}</span>
         <span className="min-w-0 break-words text-xs font-medium text-fg-2">· {session.bookTitle}</span>
       </div>
-      <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
+      <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">{S.s_nghe_toi_dau_roi_thiep_di_cef0e105}</h2>
 
       {/* Nét ✕ và chữ "Tìm đúng câu" bù đệm nút (right-[2px], -mr-4) để chạm đúng mép chữ như giờ của các mốc. */}
       {/* Các mốc là hàng phẳng trong thẻ (không thẻ lồng thẻ - soát 24-10 V04): mốc gợi ý nổi bằng biểu tượng + tên màu nhấn, không khung. */}
@@ -205,11 +206,10 @@ export function MorningRecap({ className }: { className?: string }) {
           onClick={() => void resume(suggested.chapterId, suggested.seconds)}
           className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
         >
-          <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ đây
-        </button>
+          <Play className="size-4" fill="currentColor" strokeWidth={0} />{S.s_nghe_tu_day_2f4d7119}</button>
         {script?.timed && (
           <Button variant="ghost" size="lg" onClick={() => setScrubbing((value) => !value)} className="touch-box -mr-4 rounded-control px-4 text-sm" aria-expanded={scrubbing}>
-            {scrubbing ? "Thu gọn" : "Tìm đúng câu"}
+            {scrubbing ? S.s_thu_gon_1f6bf2c3 : S.s_tim_dung_cau_4bfb13c3}
           </Button>
         )}
       </div>
@@ -217,7 +217,7 @@ export function MorningRecap({ className }: { className?: string }) {
       <MotionPresence open={scrubbing && Boolean(script?.timed)}>
         {/* Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để hàng không bị cắt hay sinh cuộn ngang. */}
         {/* Lời dẫn đứng yên trên khung cuộn (không dính trong khung): mép trên mờ dần ngay dưới nó, không làm mờ chính nó. */}
-        <div className="mt-4 border-t border-line"><p className="py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p><div ref={scrollFade.ref} style={scrollFade.style} className="-mx-2 max-h-80 overflow-y-auto px-2">
+        <div className="mt-4 border-t border-line"><p className="py-2 text-xs text-fg-2">{S.s_chon_cau_cuoi_cung_con_nho_89c46fd8}</p><div ref={scrollFade.ref} style={scrollFade.style} className="-mx-2 max-h-80 overflow-y-auto px-2">
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
             <h3 className="pb-1 pt-3 text-xs font-semibold text-fg-2">{group.title}</h3>
             {group.segments.map((segment) => (

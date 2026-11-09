@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { MusicCues } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
@@ -30,11 +31,11 @@ function watchAppDrops({ hover, drop }: Parameters<NonNullable<TextImport["watch
 async function droppedItems(files: Promise<(Picked & { file: File })[]>): Promise<PickedItem[]> {
   const plan = planUpload(await files, batchName(new Date(), Math.random().toString(36).slice(2, 6)));
   const items: PickedItem[] = [
-    ...plan.rejected.map((name) => ({ name, error: "ABook chưa đọc được loại file này - chỉ nhận EPUB, Word (DOCX), PDF có chữ, TXT." })),
-    ...plan.tooBig.map((name) => ({ name, error: `File lớn hơn ${DROP_LIMIT_MB} MB - kéo vào trình duyệt chỉ gửi được file tới ${DROP_LIMIT_MB} MB. Mở bằng app ABook để thêm file lớn.` })),
+    ...plan.rejected.map((name) => ({ name, error: S.s_abook_chua_doc_duoc_loai_file_nay_chi_nhan_3088afec })),
+    ...plan.tooBig.map((name) => ({ name, error: S.s_file_lon_hon_0_mb_keo_vao_trinh_duyet_chi_6bc4bf58(DROP_LIMIT_MB, DROP_LIMIT_MB) })),
   ];
   if (!plan.groups.length) return items;
-  const sending = toast.loading("Đang gửi file lên máy tính");
+  const sending = toast.loading(S.s_dang_gui_file_len_may_tinh_2b5c3648);
   try {
     const result = await sendPlan(plan, () => undefined);
     if (result.error) throw result.error;
@@ -69,7 +70,7 @@ function watchBrowserDrops({ hover, drop }: Parameters<NonNullable<TextImport["w
     hover(false);
     // Phải đọc danh sách file ngay trong sự kiện (qua một await trình duyệt xoá nó).
     droppedItems(pickedFromDrop(event.dataTransfer!)).then(drop, (error: Error) =>
-      toast.error("Chưa đọc được các file vừa thả", { description: error.message }),
+      toast.error(S.s_chua_doc_duoc_cac_file_vua_tha_a0eba75e, { description: error.message }),
     );
   };
   window.addEventListener("dragenter", enter);
@@ -92,11 +93,11 @@ export function desktopTextImport(dialogs: boolean): TextImport {
     choose: dialogs
       ? async (kind) => {
           if (kind !== "folder") return null; // file: chooseMany (chọn được nhiều file)
-          const path = await pickFolder("Chọn thư mục có các chương TXT");
+          const path = await pickFolder(S.s_chon_thu_muc_co_cac_chuong_txt_21d4f564);
           return path ? { ref: path, name: fileName(path) } : null;
         }
       : undefined,
-    chooseMany: dialogs ? async () => (await pickFiles("Chọn file sách (chọn được nhiều file một lúc)")).map(itemFromPath) : undefined,
+    chooseMany: dialogs ? async () => (await pickFiles(S.s_chon_file_sach_chon_duoc_nhieu_file_mot_lu_309bfc98)).map(itemFromPath) : undefined,
     watchDrops: dialogs ? watchAppDrops : watchBrowserDrops,
     preview: (choice, options) =>
       api<ImportPreview>("/api/listen/import/preview", {
@@ -170,16 +171,16 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
       ? await apiOrStream<Reply, ReadAloudClip>("/api/readaloud/clip", init, CLIP_STREAM_TYPE, (response) => clipFromStream(response.body, mediaUrl, options?.signal))
       : await api<Reply>("/api/readaloud/clip", init);
   } catch (error) {
-    if (options?.signal?.aborted) throw new ReadAloudError("Đã bỏ đoạn này.", "cancelled");
+    if (options?.signal?.aborted) throw new ReadAloudError(S.s_da_bo_doan_nay_93f891ed, "cancelled");
     // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
     if (error instanceof ReadAloudError) throw error;
     if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
-    throw new ReadAloudError("Chưa gọi được giọng đọc.", "service");
+    throw new ReadAloudError(S.s_chua_goi_duoc_giong_doc_7bca0626, "service");
   }
   const tailed = stream && tail !== null ? { fromWord: from } : {};
   if ("durationMs" in clip) return { ...clip, ...tailed }; // clip phát luồng đã dựng sẵn
   // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
-  if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
+  if ("cached" in clip) throw new ReadAloudError(S.s_chua_doc_doan_nay_c25e5b41, clip.reason || "uncached");
   return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words, ...tailed };
 }
 

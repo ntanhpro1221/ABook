@@ -30,7 +30,7 @@ import java.util.zip.ZipOutputStream
 object BookDocumentWriter {
     const val EXTENSION = ".abook"
     const val PROJECT_EXTENSION = ".abookproj"
-    private const val PRODUCER = "ABook"
+    private const val PRODUCER = S.s_abook_1c37d334
     private const val FORMAT = "abook"
     private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
     private val PROJECT_STORED = STORED + listOf(".png", ".zip")
@@ -46,7 +46,7 @@ object BookDocumentWriter {
 
     /** Tên file từ tên sách, giữ tiếng Việt, bỏ ký tự Windows cấm (`bookfile.default_name` / `projectfile.default_name`). */
     fun defaultName(title: String, project: Boolean = false): String {
-        val name = title.replace(Regex("""[\\/:*?"<>|\u0000-\u001f]+"""), " ").trim(' ', '.').ifEmpty { if (project) "Dự án sách nói" else "Sách nói" }
+        val name = title.replace(Regex("""[\\/:*?"<>|\u0000-\u001f]+"""), " ").trim(' ', '.').ifEmpty { if (project) S.s_du_an_sach_noi_3a70f343 else S.s_sach_noi_65750c67 }
         val words = name.split(Regex("[\\p{Z}\\s]+")).filter { it.isNotEmpty() }.joinToString(" ")
         return BookEdits.cut(words, 150) + if (project) PROJECT_EXTENSION else EXTENSION
     }
@@ -55,15 +55,15 @@ object BookDocumentWriter {
         val book = try {
             JSONObject(File(bookDir, "book.json").readText())
         } catch (error: Exception) {
-            throw Refused("Chưa đọc được thư mục sách này.")
+            throw Refused(S.s_chua_doc_duoc_thu_muc_sach_nay_2c7f22f7)
         }
-        val listed = book.optJSONObject("package")?.optJSONObject("files") ?: throw Refused("Đây không phải một cuốn đã nhập từ file sách.")
+        val listed = book.optJSONObject("package")?.optJSONObject("files") ?: throw Refused(S.s_day_khong_phai_mot_cuon_da_nhap_tu_file_sa_3b212203)
         val files = HashMap<String, Any>() // tên mục -> File hay ByteArray
         val known = HashMap<String, JSONObject>()
         for (name in listed.keys().asSequence().toList()) {
             if (name == BookEdits.EDITS_FILE || name == BookEdits.EDITS_COVER) continue // lớp sửa suy lại từ phần sửa hiện có
             val source = runCatching { Store.contained(bookDir, name) }.getOrNull()?.takeIf { it.isFile }
-                ?: throw Refused("Thư mục sách thiếu file $name.")
+                ?: throw Refused(S.s_thu_muc_sach_thieu_file_0_756555ad(name))
             files[name] = source
             listed.optJSONObject(name)?.let { known[name] = it }
         }
@@ -75,13 +75,13 @@ object BookDocumentWriter {
             files[BookEdits.EDITS_FILE] = BookEdits.dump(edits)
             if (edits.opt("cover") is JSONObject) {
                 files[BookEdits.EDITS_COVER] = File(bookDir, BookEdits.EDITS_COVER).takeIf { it.isFile }
-                    ?: throw Refused("Thiếu ảnh bìa trong phần sửa của sách.")
+                    ?: throw Refused(S.s_thieu_anh_bia_trong_phan_sua_cua_sach_dbbd74ec)
             }
             // Bài nhạc của người nghe đã ghim: đi theo file như bài của người làm sách (music/<sha1>.<đuôi>).
             for (name in BookEdits.pinnedFiles(edits)) {
                 if (name in files) continue
                 files[name] = runCatching { Store.contained(bookDir, name) }.getOrNull()?.takeIf { it.isFile }
-                    ?: throw Refused("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
+                    ?: throw Refused(S.s_thieu_file_bai_nhac_nguoi_nghe_da_chon_tro_fec4fb4a)
             }
         }
         val version = when {
@@ -103,13 +103,13 @@ object BookDocumentWriter {
      */
     internal fun seal(book: JSONObject, files: Map<String, Any>, known: Map<String, JSONObject>, edits: JSONObject, version: Int, out: OutputStream): Written {
         if (files.keys.none { it.startsWith("chapters/") || it.startsWith("texts/") }) {
-            throw Refused("Sách chưa có chương nào nghe được hay đọc được để xuất.")
+            throw Refused(S.s_sach_chua_co_chuong_nao_nghe_duoc_hay_doc_bd4501d9)
         }
         val sorted = files.keys.sorted()
         val described = LinkedHashMap<String, Any>()
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])
         val unknown = sorted.filter { !BookFileImport.contentPattern(version).matches(it) }
-        if (unknown.isNotEmpty()) throw Refused("Chưa gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
+        if (unknown.isNotEmpty()) throw Refused(S.s_chua_goi_duoc_cac_file_co_ten_ngoai_dinh_d_a63320dc(unknown.take(3)))
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val packageInfo = LinkedHashMap<String, Any>()
         packageInfo["format"] = FORMAT
@@ -145,7 +145,7 @@ object BookDocumentWriter {
     private fun writeProject(bookDir: File, out: OutputStream, book: JSONObject, files: HashMap<String, Any>,
                              known: HashMap<String, JSONObject>, edits: JSONObject, version: Int): Written {
         val unknown = files.keys.filter { !BookFileImport.contentPattern(version).matches(it) }
-        if (unknown.isNotEmpty()) throw Refused("Chưa gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
+        if (unknown.isNotEmpty()) throw Refused(S.s_chua_goi_duoc_cac_file_co_ten_ngoai_dinh_d_a63320dc(unknown.take(3)))
         val kept = ProjectDocument.kept(bookDir)
         if (kept != null) {
             for (name in kept.files.keys().asSequence().toList()) {
@@ -153,7 +153,7 @@ object BookDocumentWriter {
                 val own = runCatching { Store.contained(bookDir, name) }.getOrNull()?.takeIf { it.isFile }
                 val target = kept.aliases.optString(name)
                 files[name] = own ?: target.takeIf { it.isNotEmpty() }?.let { runCatching { Store.contained(bookDir, it) }.getOrNull()?.takeIf { f -> f.isFile } }
-                    ?: throw Refused("Thư mục sách thiếu file $name.")
+                    ?: throw Refused(S.s_thu_muc_sach_thieu_file_0_756555ad(name))
                 kept.files.optJSONObject(name)?.let { known[name] = it }
             }
         }

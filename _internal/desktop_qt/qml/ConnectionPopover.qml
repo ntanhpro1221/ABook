@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -61,7 +62,7 @@ WindowLayer {
                 width: parent.width
                 topPadding: Theme.s4
                 text: Backend.state === Backend.Failed ? Backend.message
-                    : (Backend.state === Backend.Starting ? "ABook đang chuẩn bị, bạn chờ một chút." : "Mọi thứ đang chạy trên máy này.")
+                    : (Backend.state === Backend.Starting ? S.s_abook_dang_chuan_bi_ban_cho_mot_chut_ef7f433b : S.s_moi_thu_dang_chay_tren_may_nay_cc4df578)
                 color: Backend.state === Backend.Failed ? Theme.danger : Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -69,7 +70,7 @@ WindowLayer {
             Text {
                 topPadding: 0
                 bottomPadding: Theme.s8
-                text: "Bản " + Backend.version
+                text: S.s_ban_1080da73 + Backend.version
                 color: Theme.text3
                 font.pixelSize: Theme.sizeCaption
             }
@@ -81,7 +82,7 @@ WindowLayer {
                     id: restart
                     width: parent.width
                     icon: "refresh-cw"
-                    text: "Khởi động lại"
+                    text: S.s_khoi_dong_lai_dfddafb1
                     onClicked: { root.close(); Backend.restart() }
                 }
                 MenuRow {
@@ -89,7 +90,7 @@ WindowLayer {
                     y: restart.height
                     width: parent.width
                     icon: "folder-open"
-                    text: "Mở thư mục nhật ký"
+                    text: S.s_mo_thu_muc_nhat_ky_62d8d973
                     onClicked: { root.close(); Platform.revealFile(Backend.logPath) }
                 }
             }

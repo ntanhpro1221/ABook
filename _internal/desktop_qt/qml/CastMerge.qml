@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -14,8 +15,8 @@ CastModal {
     readonly property string shownName: person ? Logic.cleanName(person.displayName) : ""
     readonly property var others: Logic.mergeTargets(people, person, query)
     readonly property var twins: Logic.sameNames(people)
-    title: "Gộp nhân vật"
-    description: "Mọi câu của " + shownName + " và các phần sau dùng người bạn chọn."
+    title: S.s_gop_nhan_vat_37b51bd5
+    description: S.s_moi_cau_cua_b04c7e8b + shownName + S.s_va_cac_phan_sau_dung_nguoi_ban_chon_7ed4d33d
 
     function begin(data) {
         generation++
@@ -33,9 +34,9 @@ CastModal {
         root.ask("POST", "/api/books/" + bookId + "/characters/merge", {from: from.name, into: target.name}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { root.fail("Chưa gộp được", error); return }
+            if (error) { root.fail(S.s_chua_gop_duoc_3d63128a, error); return }
             root.saved()
-            Api.notice = "Đã ghi: " + (data ? data.lines : 0) + " câu của " + Logic.cleanName(from.displayName) + " là của " + Logic.cleanName(target.displayName)
+            Api.notice = S.s_da_ghi_85094402 + (data ? data.lines : 0) + S.s_cau_cua_35c4143d + Logic.cleanName(from.displayName) + S.s_la_cua_315e2a12 + Logic.cleanName(target.displayName)
             root.dismiss()
         })
     }
@@ -47,8 +48,8 @@ CastModal {
             id: search
             objectName: "mergeSearch"
             width: parent.width
-            label: "Tìm người trong truyện…"
-            placeholderText: "Tìm người trong truyện…"
+            label: S.s_tim_nguoi_trong_truyen_d2aee069
+            placeholderText: S.s_tim_nguoi_trong_truyen_d2aee069
             onTextChanged: root.query = text
         }
         // Danh sách người nhận; dài thì cuộn trong khung 256 như web (max-h-64)
@@ -64,7 +65,7 @@ CastModal {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 Accessible.role: Accessible.List
-                Accessible.name: "Gộp vào ai"
+                Accessible.name: S.s_gop_vao_ai_640d3477
                 Column {
                     id: listColumn
                     objectName: "mergeList"
@@ -117,8 +118,8 @@ CastModal {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: parent.width - x - 8
                                 horizontalAlignment: Text.AlignRight
-                                text: Logic.voiceToUse(choice.modelData) + (choice.modelData.pendingVoice && choice.modelData.pendingVoice.preset ? " (chờ áp dụng)" : "")
-                                    + "\u00a0·\u00a0" + Logic.formatNumber(choice.modelData.lines) + " câu"
+                                text: Logic.voiceToUse(choice.modelData) + (choice.modelData.pendingVoice && choice.modelData.pendingVoice.preset ? S.s_cho_ap_dung_31faa52d : "")
+                                    + "\u00a0·\u00a0" + Logic.formatNumber(choice.modelData.lines) + S.s_cau_b07e1008
                                     + (root.twins[Logic.cleanName(choice.modelData.displayName).toLowerCase()] && choice.modelData.firstChapter ? "\u00a0·\u00a0" + choice.modelData.firstChapter : "")
                                 color: Theme.text3
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -133,7 +134,7 @@ CastModal {
                         leftPadding: 12
                         topPadding: 12
                         bottomPadding: 12
-                        text: "Không có ai khớp “" + root.query + "”."
+                        text: S.s_khong_co_ai_khop_2213386e + root.query + "”."
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall
@@ -158,8 +159,8 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "mergeCancel"; text: "Thôi"; kind: "ghost"; onClicked: root.close() }
-            Button { objectName: "mergeDo"; text: "Gộp"; icon: "git-merge"; busy: root.saving; enabled: root.into !== null; onActivated: root.merge() }
+            Button { objectName: "mergeCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "mergeDo"; text: S.s_gop_2380bed6; icon: "git-merge"; busy: root.saving; enabled: root.into !== null; onActivated: root.merge() }
         }
     ]
 }

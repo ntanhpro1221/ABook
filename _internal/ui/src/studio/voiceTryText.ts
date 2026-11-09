@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { formatLength, formatNumber } from "@/shared/format";
 
 // "Nghe thử bằng câu của sách" (webui/reading_preview.py `voice_preview`): máy đọc một câu của chính nhân vật bằng giọng đang
@@ -29,14 +30,14 @@ export function byGender<V extends { gender: string }>(voices: readonly V[], fil
 /** Thời gian thu lại: số đo của chính cuốn ("trên máy này"), hay số ước khi chưa đo được - nói rõ là ước. `measured`
  *  không có (máy chủ cũ) thì coi như số đo. */
 export function estimateText(seconds: number, measured?: boolean): string {
-  const length = seconds < 60 ? "chưa tới 1 phút" : `khoảng ${formatLength(seconds)}`;
-  return measured === false ? `${length} - ước chừng, vì cuốn chưa xong chương nào để đo` : `${length} trên máy này`;
+  const length = seconds < 60 ? S.s_chua_toi_1_phut_e8b7904f : S.s_khoang_0_22035be1(formatLength(seconds));
+  return measured === false ? S.s_0_uoc_chung_vi_cuon_chua_xong_chuong_nao_d_4008a02f(length) : S.s_0_tren_may_nay_cc87f35c(length);
 }
 
 /** Một dòng trong hộp "Đổi giọng": đổi giọng tốn gì. */
 export function rerecordText(name: string, cost: Rerecord): string {
-  if (!cost.lines) return `Chưa câu nào của ${name} được thu - đổi giọng không phải thu lại gì.`;
-  return `Đổi giọng là thu lại ${formatNumber(cost.lines)} câu đã thu của ${name}, ${estimateText(cost.seconds, cost.measured)}.`;
+  if (!cost.lines) return S.s_chua_cau_nao_cua_0_duoc_thu_doi_giong_khon_ecc23040(name);
+  return S.s_doi_giong_la_thu_lai_0_cau_da_thu_cua_1_2_34198100(formatNumber(cost.lines), name, estimateText(cost.seconds, cost.measured));
 }
 
 /** Khoá bản nghe thử trong phiên: cùng sách, cùng người, cùng giọng thì phát lại, không hỏi máy chủ. */

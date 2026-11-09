@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "player.h"
 
 #include "hostwait.h"
@@ -24,9 +25,9 @@ constexpr int kHiddenSaveEveryMs = 30'000;
 constexpr double kSleepWarnMs = 30'000;
 constexpr double kListenedMinimum = 20; // phiên nghe dưới 20 giây thật thì bỏ
 
-const QString kPlayError = QStringLiteral("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+const QString kPlayError = UiStrings::s_chua_phat_duoc_chuong_nay_file_co_the_da_b_252bdb32;
 // Same sentence as the phone (ClipReader.NO_USABLE_VOICE) and the web (readAloudVoice.ts): PlayerAlert offers "Thử lại".
-const QString kVoiceStuck = QStringLiteral("Giọng đang chọn đang không dùng được.");
+const QString kVoiceStuck = UiStrings::s_giong_dang_chon_dang_khong_dung_duoc_3c97984f;
 
 Player *g_instance = nullptr;
 
@@ -418,7 +419,7 @@ void Player::openFor(const QString &bookId, int chapterId, double at, bool autop
         if (seq != m_openSeq)
             return;
         if (status < 200 || status >= 300 || body.isEmpty()) {
-            setNotice(QStringLiteral("Chưa mở được cuốn này. Bạn thử lại."));
+            setNotice(UiStrings::s_copy_230c0da4f68d);
             return;
         }
         start(parseBook(body), chapterId, at, autoplay, purpose);
@@ -468,7 +469,7 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay, co
     if (chapterId < 0) {
         const std::optional<ResumePoint> point = resumePoint(book);
         if (!point) {
-            setNotice(QStringLiteral("Cuốn này chưa có chương nào để nghe."));
+            setNotice(UiStrings::s_copy_fc7b8115fa7d);
             return;
         }
         chapterId = point->chapterId;
@@ -477,7 +478,7 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay, co
     }
     const auto found = std::find_if(book.chapters.begin(), book.chapters.end(), [chapterId](const Chapter &item) { return item.id == chapterId; });
     if (found == book.chapters.end() || !canPlay(*found)) {
-        setNotice(QStringLiteral("Chương này chưa có audio."));
+        setNotice(UiStrings::s_chuong_nay_chua_co_audio_53a41b55);
         return;
     }
     if (at == -2) {
@@ -523,7 +524,7 @@ void Player::chooseVoice(const QString &voice, bool resumeAfter) {
     m_net->request("POST", QStringLiteral("/api/listen/books/%1/voice").arg(book), {{QStringLiteral("voice"), voice}, {QStringLiteral("record"), record}},
         [this, voice, book, record, intent, resumeAfter](int status, const QJsonObject &) {
             if (book != m_book.id || record != m_book.record || intent != m_intent || !m_loaded) return;
-            if (status < 200 || status >= 300) { setNotice(QStringLiteral("Chưa lưu được giọng đọc. Bạn thử lại.")); return; }
+            if (status < 200 || status >= 300) { setNotice(UiStrings::s_copy_67532d4b8935); return; }
             m_book.voice = voice;
             emit bookChanged();
             if (speaking()) { const double at = position(); load(m_chapterId, at, resumeAfter || m_wantsPlay || m_playing); }
@@ -660,7 +661,7 @@ void Player::resume() {
         const std::optional<ResumePoint> away = newerElsewhere(m_book, m_stamp, m_chapterId, position());
         const Chapter *target = away ? chapter(away->chapterId) : nullptr;
         if (away && target && canPlay(*target)) {
-            jumpTo(away->chapterId, away->at, QStringLiteral("Nghe tiếp từ chỗ thiết bị khác đã nghe tới (%1)").arg(formatClock(away->at)));
+            jumpTo(away->chapterId, away->at, UiStrings::s_copy_6dbba0eb2a22.arg(formatClock(away->at)));
             return;
         }
         resumeNow();
@@ -681,10 +682,10 @@ void Player::resumeNow() {
         if (target >= 0) {
             load(target, 0, true);
         } else if (!m_book.complete) {
-            setNotice(QStringLiteral("Đã nghe hết phần đã có - %1").arg(m_book.producing ? QStringLiteral("chương tiếp theo sẽ nghe được khi máy làm xong chương ấy")
-                                                                                         : QStringLiteral("các chương sau chưa có audio")));
+            setNotice(UiStrings::s_copy_a3dde9dedd2d.arg(m_book.producing ? UiStrings::s_copy_9125f60a1d27
+                                                                                         : UiStrings::s_copy_43a0a92d44a2));
         } else {
-            setNotice(QStringLiteral("Đã nghe hết sách"), QStringLiteral("Nghe lại từ đầu"), QStringLiteral("restart"));
+            setNotice(UiStrings::s_da_nghe_het_sach_2fefde33, UiStrings::s_nghe_lai_tu_dau_e251d632, QStringLiteral("restart"));
         }
         return;
     }
@@ -792,8 +793,8 @@ void Player::remember(const Spot &from, const Spot &to, const QString &note) {
     emit historyChanged();
     changed();
     const bool sameChapter = from.chapterId == to.chapterId;
-    setNotice(!note.isEmpty() ? note : QStringLiteral("Đã tới %1").arg(sameChapter ? formatClock(to.seconds) : QStringLiteral("chương mới")),
-              QStringLiteral("Quay lại"), QStringLiteral("back"));
+    setNotice(!note.isEmpty() ? note : UiStrings::s_copy_ad309a7f80f1.arg(sameChapter ? formatClock(to.seconds) : UiStrings::s_chuong_moi_d272e542),
+              UiStrings::s_quay_lai_6d793582, QStringLiteral("back"));
 }
 
 void Player::goBack() {
@@ -829,7 +830,7 @@ void Player::step(int direction) {
         if (direction > 0) {
             for (int i = 0; i < m_book.chapters.size(); ++i) {
                 if (m_book.chapters[i].id == m_chapterId && i + 1 < m_book.chapters.size() && !canPlay(m_book.chapters[i + 1])) {
-                    setNotice(QStringLiteral("Chương sau chưa có audio"));
+                    setNotice(UiStrings::s_chuong_sau_chua_co_audio_e17e3d72);
                     break;
                 }
             }
@@ -1060,7 +1061,7 @@ void Player::extendSleep() {
     const double left = m_sleep.kind == Sleep::Minutes ? m_sleep.leftMs : 0;
     resetSleepMark();
     applySleepState(Sleep::Minutes, minutes, std::max(left, minutes * 60'000.0));
-    setNotice(QStringLiteral("Hẹn lại %1 phút").arg(minutes));
+    setNotice(UiStrings::s_copy_6cd66479f6e6.arg(minutes));
     emit sleepExtended();
 }
 
@@ -1342,10 +1343,10 @@ void Player::onEnded() {
     const bool caughtUp = !m_book.complete;
     setAtEnd(caughtUp ? QStringLiteral("caughtUp") : QStringLiteral("finished"));
     if (caughtUp)
-        setNotice(QStringLiteral("Đã nghe hết phần đã có - %1").arg(m_book.producing ? QStringLiteral("chương tiếp theo sẽ nghe được khi máy làm xong chương ấy")
-                                                                                     : QStringLiteral("các chương sau chưa có audio")));
+        setNotice(UiStrings::s_copy_a3dde9dedd2d.arg(m_book.producing ? UiStrings::s_copy_9125f60a1d27
+                                                                                     : UiStrings::s_copy_43a0a92d44a2));
     else
-        setNotice(QStringLiteral("Đã nghe hết sách"), QStringLiteral("Nghe lại từ đầu"), QStringLiteral("restart"));
+        setNotice(UiStrings::s_da_nghe_het_sach_2fefde33, UiStrings::s_nghe_lai_tu_dau_e251d632, QStringLiteral("restart"));
 }
 
 // ---- nhịp ----

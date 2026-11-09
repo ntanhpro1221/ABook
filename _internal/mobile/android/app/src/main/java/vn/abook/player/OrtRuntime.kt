@@ -21,7 +21,7 @@ object OrtRuntime {
     private const val JNI = "libonnxruntime4j_jni.so"
 
     private fun part(abi: String, name: String, sha256: String, size: Long, packedSha256: String, packedSize: Long) =
-        Part("$FOLDER/$name", sha256, size, remote = "$FOLDER/$VERSION/$abi/$name.gz", packed = Packed(packedSha256, packedSize), blocking = true, label = "Thư viện chạy model")
+        Part("$FOLDER/$name", sha256, size, remote = "$FOLDER/$VERSION/$abi/$name.gz", packed = Packed(packedSha256, packedSize), blocking = true, label = S.s_thu_vien_chay_model_9aa5b440)
 
     // Ghim đúng như scripts/prepare_ort_runtime.py in ra (SHA-256 + cỡ của file thật và của bản nén gzip đặt trên máy chủ).
     private val BY_ABI: Map<String, List<Part>> = mapOf(
@@ -57,7 +57,7 @@ object OrtRuntime {
         try {
             ai.onnxruntime.OrtEnvironment.getEnvironment()
         } catch (failure: Throwable) { // UnsatisfiedLinkError là Error, không phải Exception
-            throw IllegalStateException("Chưa mở được bộ đọc — bạn thử lại hoặc tải lại trong Cài đặt.", failure)
+            throw IllegalStateException(S.s_chua_mo_duoc_bo_doc_ban_thu_lai_hoac_tai_l_3e4e371b, failure)
         }
     }
 }

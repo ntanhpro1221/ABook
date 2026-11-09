@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import java.text.Normalizer
 import java.util.Locale
 
@@ -54,10 +56,10 @@ object ListenLogic {
     /** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16). */
     fun seriesOf(title: String): SeriesPlace {
         val match = seriesPattern.find(title)
-            ?: return SeriesPlace("title:${title.trim()}", title.trim(), null, "tập")
+            ?: return SeriesPlace("title:${title.trim()}", title.trim(), null, S.s_tap_f6dd4977)
         val word = match.groupValues[2].lowercase(Locale.ROOT)
         val series = match.groupValues[1].trim()
-        val unit = if (word == "quyển" || word == "phần") word else "tập"
+        val unit = if (word == S.s_quyen_99cc1029 || word == S.s_phan_87a88dd0) word else S.s_tap_f6dd4977
         return SeriesPlace("title:$series", series, match.groupValues[3].toInt(), unit)
     }
 
@@ -72,11 +74,11 @@ object ListenLogic {
         for (book in books) {
             val link = book.series ?: continue
             val name = seriesOf(titles[link.root] ?: book.title).series
-            places[book.id] = SeriesPlace("chain:${link.root}", name, link.part, "phần")
+            places[book.id] = SeriesPlace("chain:${link.root}", name, link.part, S.s_phan_87a88dd0)
         }
         val roots = books.mapNotNull { it.series?.root }.toSet()
         for (book in books) {
-            if (book.id !in places && book.id in roots) places[book.id] = SeriesPlace("chain:${book.id}", seriesOf(book.title).series, 1, "phần")
+            if (book.id !in places && book.id in roots) places[book.id] = SeriesPlace("chain:${book.id}", seriesOf(book.title).series, 1, S.s_phan_87a88dd0)
         }
         val byTitle = LinkedHashMap<String, SeriesPlace>()
         for (book in books) if (book.id !in places) byTitle[book.id] = seriesOf(book.title)
@@ -245,19 +247,19 @@ object ListenLogic {
     fun progressText(book: ListenBook): String {
         if (book.textOnly) {
             val lead = book.author.trim()
-            return (if (lead.isNotEmpty()) "$lead · " else "") + "${book.chaptersTotal} chương"
+            return (if (lead.isNotEmpty()) "$lead · " else "") + S.s_0_chuong_04093412(book.chaptersTotal)
         }
-        val chapters = "${book.chaptersAvailable}/${book.chaptersTotal} chương"
-        if (book.progress.finished) return "Đã nghe xong"
-        if (book.progress.caughtUp) return "Đã nghe hết phần đã có · $chapters"
+        val chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal)
+        if (book.progress.finished) return S.s_da_nghe_xong_d276b702
+        if (book.progress.caughtUp) return S.s_da_nghe_het_phan_da_co_0_25c1ba87(chapters)
         if (!book.complete) return chapters
         val heard = book.progress.heardSeconds
         if (heard <= 0) return Fmt.length(book.duration)
         val left = maxOf(0.0, book.duration - heard)
         // Ở tốc độ của cuốn, làm tròn lên - như số giờ còn lại ở thanh phát.
-        return "Còn ${Fmt.lengthUp(left / (book.state.rate ?: 1.0))}"
+        return S.s_con_0_f9ae9b72(Fmt.lengthUp(left / (book.state.rate ?: 1.0)))
     }
 
     /** Tên máy giữ cuốn nghe thẳng, viết như "Trên máy tính". */
-    fun remotePlace(book: ListenBook): String = "Trên ${book.remote?.deviceName ?: "máy tính"}"
+    fun remotePlace(book: ListenBook): String = S.s_tren_0_a2a4a4cb(book.remote?.deviceName ?: S.s_may_tinh_8eafc226)
 }

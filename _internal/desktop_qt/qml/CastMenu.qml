@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -25,19 +26,19 @@ Popover {
         MenuRow {
             objectName: "castMerge"
             visible: parent.canMerge
-            width: parent.width; icon: "git-merge"; text: "Gộp vào người khác…"
+            width: parent.width; icon: "git-merge"; text: S.s_gop_vao_nguoi_khac_2e03b64e
             onClicked: { root.close(); root.picked("merge", parent.p) }
         }
         MenuRow {
             objectName: "castRename"
             visible: Boolean(root.caps.rename)
-            width: parent.width; icon: "text-cursor-input"; text: "Đổi tên"
+            width: parent.width; icon: "text-cursor-input"; text: S.s_doi_ten_a2a0dc70
             onClicked: { root.close(); root.picked("rename", parent.p) }
         }
         MenuRow {
             objectName: "castGender"
             visible: parent.canGender
-            width: parent.width; icon: "user-round"; text: "Đổi giới tính"
+            width: parent.width; icon: "user-round"; text: S.s_doi_gioi_tinh_8fde2c62
             onClicked: { root.close(); root.picked("gender", parent.p) }
         }
     }

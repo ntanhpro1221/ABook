@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PrecastLogic.js" as P
@@ -17,11 +18,11 @@ Item {
         id: row
         objectName: "precastWaitRow"
         width: parent.width
-        label: "Duyệt trước khi thu"
+        label: S.s_duyet_truoc_khi_thu_74c121d0
         hint: root.book ? P.waitHint(root.book) : ""
         Switch {
             objectName: "precastWaitSwitch"
-            label: "Duyệt trước khi thu"
+            label: S.s_duyet_truoc_khi_thu_74c121d0
             checked: !!root.book && !!root.book.precast && Boolean(root.book.precast.wait)
             enabled: !root.saving && !!root.store
             onToggled: value => {

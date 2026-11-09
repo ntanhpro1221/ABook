@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "SizeFormat.js" as Size
@@ -33,11 +34,11 @@ Column {
     }
     function installText() {
         const size = Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total)
-        return failed ? "Thử lại" : module.stopped ? "Tải lại (" + size + ")" : module.state === "outdated" ? "Cập nhật (" + size + ")" : "Tải (" + Size.formatSize(module.total) + ")"
+        return failed ? S.s_thu_lai_c58d068c : module.stopped ? S.s_tai_lai_9f0787bd + size + ")" : module.state === "outdated" ? S.s_cap_nhat_000e3ccc + size + ")" : S.s_tai_40698276 + Size.formatSize(module.total) + ")"
     }
     function preciseText() {
         const p = root.precise
-        return p.state === "error" ? "Thử lại" : p.state === "missing" ? "Tải tiếp (" + Size.formatSize(p.bytes) + ")" : p.state === "ready" ? "Tắt đo cảm xúc" : p.present ? "Bật đo cảm xúc" : "Tải (" + Size.formatSize(p.bytes) + ")"
+        return p.state === "error" ? S.s_thu_lai_c58d068c : p.state === "missing" ? S.s_tai_tiep_d672e973 + Size.formatSize(p.bytes) + ")" : p.state === "ready" ? S.s_tat_do_cam_xuc_1435c1ed : p.present ? S.s_bat_do_cam_xuc_d6c6ba08 : S.s_tai_40698276 + Size.formatSize(p.bytes) + ")"
     }
 
     Timer {
@@ -71,8 +72,8 @@ Column {
                 open: Boolean(root.module) && root.module.state === "missing"
                 MoreInfo {
                     width: parent.width
-                    label: "Phân tích nhạc"
-                    HintText { width: parent.width; text: "Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay." }
+                    label: S.s_phan_tich_nhac_a0082a10
+                    HintText { width: parent.width; text: S.s_tai_mot_lan_phan_tich_tren_may_roi_dung_kh_c1fb770b }
                 }
             }
             Collapse {
@@ -87,13 +88,13 @@ Column {
                         anchors.rightMargin: cancel.visible ? 12 : 0
                         anchors.verticalCenter: parent.verticalCenter
                         value: root.module ? Music.modulePercent(root.module) / 100 : 0
-                        label: "Đang tải Phân tích nhạc"
+                        label: S.s_dang_tai_phan_tich_nhac_880839b5
                     }
                     Button {
                         id: cancel
                         anchors.right: parent.right
                         visible: Boolean(root.module) && Boolean(root.module.cancellable)
-                        text: "Huỷ"; kind: "ghost"; size: "sm"
+                        text: S.s_huy_96732485; kind: "ghost"; size: "sm"
                         busy: root.starting
                         onActivated: root.post("/api/music/local/module/cancel")
                     }
@@ -115,7 +116,7 @@ Column {
                     }
                     Button {
                         visible: root.action === "reanalyse"
-                        text: "Phân tích " + root.stale + " bài"
+                        text: S.s_phan_tich_7dc5d6d2 + root.stale + S.s_bai_43a258fa
                         kind: "ghost"; size: "sm"; wrap: true
                         width: Math.min(implicitWidth, parent.width)
                         busy: root.starting
@@ -129,7 +130,7 @@ Column {
                             id: warn
                             width: parent.width
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi."
+                            text: S.s_ban_dang_dung_du_lieu_di_dong_nen_doi_khi_4e21414f
                             color: Theme.warning
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeCaption
@@ -143,7 +144,7 @@ Column {
             width: parent.width
             open: root.precise !== null
             spacing: 6
-            Text { width: parent.width; text: "Cảm xúc chính xác"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: S.s_cam_xuc_chinh_xac_eab97dc3; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
             ClockLabel {
                 width: parent.width
                 text: root.precise ? Music.preciseLabel(root.precise) : ""
@@ -159,13 +160,13 @@ Column {
                 MyMusicBar {
                     width: parent.width
                     value: root.precise && root.precise.total > 0 ? root.precise.done / root.precise.total : 0
-                    label: "Đang tải bộ đo cảm xúc chính xác hơn"
+                    label: S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498
                 }
             }
             Collapse {
                 width: parent.width
                 open: Boolean(root.precise) && root.precise.state === "downloading" && Boolean(root.module) && Boolean(root.module.cancellable)
-                Button { text: "Huỷ"; kind: "ghost"; size: "sm"; busy: root.starting; onActivated: root.post("/api/music/local/precise/cancel") }
+                Button { text: S.s_huy_96732485; kind: "ghost"; size: "sm"; busy: root.starting; onActivated: root.post("/api/music/local/precise/cancel") }
             }
             Collapse {
                 width: parent.width
@@ -182,7 +183,7 @@ Column {
                     }
                     Button {
                         visible: Boolean(root.precise) && root.precise.removable
-                        text: root.precise ? "Xoá file (" + Size.formatSize(root.precise.bytes) + ")" : ""
+                        text: root.precise ? S.s_xoa_file_ddf600eb + Size.formatSize(root.precise.bytes) + ")" : ""
                         kind: "ghost"; size: "sm"
                         busy: root.starting
                         onActivated: root.post("/api/music/local/precise/remove")

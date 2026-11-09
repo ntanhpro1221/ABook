@@ -128,10 +128,10 @@ class CastService : Service() {
     override fun onCreate() {
         super.onCreate()
         live = this
-        AppLog.i("CastService", "dịch vụ phát trên loa / TV bật")
+        AppLog.i("CastService", S.s_dich_vu_phat_tren_loa_tv_bat_9ef6f680)
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
-            manager.createNotificationChannel(NotificationChannel(CHANNEL, "Phát trên loa / TV", NotificationManager.IMPORTANCE_LOW))
+            manager.createNotificationChannel(NotificationChannel(CHANNEL, S.s_phat_tren_loa_tv_cae0d36f, NotificationManager.IMPORTANCE_LOW))
         }
         val cast = CastPlayer(CastSessions)
         player = cast
@@ -222,7 +222,7 @@ class CastService : Service() {
     }
 
     override fun onDestroy() {
-        AppLog.i("CastService", "dịch vụ phát trên loa / TV tắt")
+        AppLog.i("CastService", S.s_dich_vu_phat_tren_loa_tv_tat_2fc14c6b)
         if (live === this) live = null
         handler.removeCallbacks(check)
         handler.removeCallbacks(tick)
@@ -247,11 +247,11 @@ class CastService : Service() {
         val toggle = if (playing) ACTION_PAUSE else ACTION_PLAY
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
-            .setContentTitle("${if (playing) "Đang phát" else "Đang dừng"} trên ${where.ifEmpty { "loa / TV" }}")
-            .setContentText(if (computer != null) "Máy tính đang phát cuốn này" else "Điện thoại đang truyền âm thanh — bạn giữ Wi-Fi bật")
+            .setContentTitle(S.s_0_tren_1_c3bdf3d1(if (playing) S.s_dang_phat_ac2dd0c2 else S.s_dang_dung_9b35aeb5, where.ifEmpty { "loa / TV" }))
+            .setContentText(if (computer != null) S.s_may_tinh_dang_phat_cuon_nay_371c11e8 else S.s_dien_thoai_dang_truyen_am_thanh_ban_giu_wi_e8b358d7)
             .setContentIntent(openApp())
-            .addAction(0, if (playing) "Tạm dừng" else "Phát tiếp", command(toggle))
-            .addAction(0, "Dừng", command(ACTION_STOP))
+            .addAction(0, if (playing) S.s_tam_dung_67635815 else S.s_phat_tiep_7d7223fc, command(toggle))
+            .addAction(0, S.s_dung_11554138, command(ACTION_STOP))
             .setOngoing(true)
             .setSilent(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

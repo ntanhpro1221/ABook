@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -19,8 +20,8 @@ Modal {
     readonly property var errors: report ? Logic.failureDetails(report) : []
     readonly property var appLog: report ? Logic.logLines(report, "log") : []
     readonly property var systemLog: report ? Logic.logLines(report, "logcat") : []
-    title: "Chẩn đoán " + shownName
-    description: "Nhật ký có tên sách; thông tin riêng được che nhưng hãy xem lại trước khi gửi."
+    title: S.s_chan_doan_738cc26b + shownName
+    description: S.s_nhat_ky_co_ten_sach_thong_tin_rieng_duoc_c_bbe37d25
     panelWidth: 560
 
     function openFor(target) {
@@ -32,7 +33,7 @@ Modal {
         reload()
     }
     function failureOf(status, data) {
-        const message = data && (data.message || data.error) || "Chưa làm được lúc này."
+        const message = data && (data.message || data.error) || S.s_chua_lam_duoc_luc_nay_2e7cacde
         return {title: message, help: status === 409 || status === 404 ? "" : Logic.UNREACHABLE_HELP}
     }
     function reload() {
@@ -50,13 +51,13 @@ Modal {
 
     FolderDialog {
         id: folder
-        title: "Chọn nơi lưu nhật ký"
+        title: S.s_chon_noi_luu_nhat_ky_38ffebc9
         onAccepted: {
             root.saving = true
             Api.transport.request("POST", "/api/remote/" + root.computer.id + "/diagnostics/save", {lines: 2000, target: DesktopApi.localPath(selectedFolder)}, function(status, data) {
                 root.saving = false
-                if (status >= 200 && status < 300) Api.notice = "Đã lưu nhật ký"
-                else Api.notice = "Chưa lưu được nhật ký"
+                if (status >= 200 && status < 300) Api.notice = S.s_da_luu_nhat_ky_65019295
+                else Api.notice = S.s_chua_luu_duoc_nhat_ky_c92f8b79
             })
         }
     }
@@ -64,18 +65,18 @@ Modal {
     Flow {
         width: parent.width
         spacing: 8
-        Button { objectName: "diagnosticsRefresh"; size: "sm"; kind: "ghost"; icon: "refresh-cw"; text: "Làm mới"; busy: root.loading; onActivated: root.reload() }
-        Button { objectName: "diagnosticsSave"; size: "sm"; kind: "ghost"; icon: "save"; text: "Lưu nhật ký"; busy: root.saving; enabled: !root.failure; onActivated: folder.open() }
+        Button { objectName: "diagnosticsRefresh"; size: "sm"; kind: "ghost"; icon: "refresh-cw"; text: S.s_lam_moi_b4c61340; busy: root.loading; onActivated: root.reload() }
+        Button { objectName: "diagnosticsSave"; size: "sm"; kind: "ghost"; icon: "save"; text: S.s_luu_nhat_ky_57df5372; busy: root.saving; enabled: !root.failure; onActivated: folder.open() }
     }
     Collapse {
         width: parent.width
         open: root.loading && !root.report
-        DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải chẩn đoán" }
+        DevicesSkeleton { width: parent.width; count: 2; label: S.s_dang_tai_chan_doan_0427c039 }
     }
     InlineError {
         width: parent.width
         open: Boolean(root.failure)
-        message: root.failure ? root.failure.title + " " + (root.failure.help || "Bạn hãy thử tải lại chẩn đoán.") : ""
+        message: root.failure ? root.failure.title + " " + (root.failure.help || S.s_ban_hay_thu_tai_lai_chan_doan_eea0bd09) : ""
         onRetry: root.reload()
     }
     Column {
@@ -102,7 +103,7 @@ Modal {
         MoreInfo {
             width: parent.width
             visible: root.errors.length > 0
-            label: "Chi tiết kỹ thuật"
+            label: S.s_chi_tiet_ky_thuat_f27eb5f6
             TextEdit {
                 width: parent.width
                 readOnly: true
@@ -116,7 +117,7 @@ Modal {
         }
         DevicesLogBox {
             width: parent.width
-            title: "Nhật ký của ABook (" + root.appLog.length + " dòng)"
+            title: S.s_nhat_ky_cua_abook_843dd2fa + root.appLog.length + S.s_dong_8fe5919d
             lines: root.appLog
             empty: root.report ? Logic.emptyLogNote(root.report, "log") : ""
             startOpen: true
@@ -124,10 +125,10 @@ Modal {
         DevicesLogBox {
             width: parent.width
             visible: root.report !== null && (root.systemLog.length > 0 || root.report.logcat !== undefined)
-            title: "Nhật ký hệ thống của app (" + root.systemLog.length + " dòng)"
+            title: S.s_nhat_ky_he_thong_cua_app_5d62b230 + root.systemLog.length + S.s_dong_8fe5919d
             lines: root.systemLog
             empty: root.report ? Logic.emptyLogNote(root.report, "logcat") : ""
         }
-        HintText { width: parent.width; visible: Boolean(root.report && root.report.truncated); color: Theme.text3; text: "Nhật ký dài nên đã cắt bớt phần cũ nhất." }
+        HintText { width: parent.width; visible: Boolean(root.report && root.report.truncated); color: Theme.text3; text: S.s_nhat_ky_dai_nen_da_cat_bot_phan_cu_nhat_ad1b7371 }
     }
 }

@@ -13,29 +13,29 @@ import java.util.Locale
 object VietnameseSyllable {
     // dài trước ngắn
     private val ONSETS = listOf(
-        "ngh", "ng", "nh", "ch", "gh", "gi", "kh", "ph", "th", "tr", "qu", "b", "c", "d", "đ", "g", "h", "k", "l", "m", "n", "p", "r", "s", "t", "v", "x", "",
+        "ngh", "ng", "nh", "ch", "gh", "gi", "kh", "ph", "th", "tr", "qu", "b", "c", "d", S.s_d_bf502a39, "g", "h", "k", "l", "m", "n", "p", "r", "s", "t", "v", "x", "",
     )
 
     private fun words(spec: String): Set<String> = spec.split(" ").toSet()
 
-    private val SIMPLE = words("a ă â e ê i y o ô ơ u ư")
-    private val DIPHTHONG = words("ia iê yê uyê ua uô ưa ươ oa oă oe uê uâ uy uơ oo")
-    private val GLIDE_END = words("ai ao au ay âu ây eo êu iu oi ôi ơi ui ưi ưu iêu yêu uôi ươi ươu oai oay oeo oao uây uyu uya")
+    private val SIMPLE = words(S.s_a_a_a_e_e_i_y_o_o_o_u_u_864b5a41)
+    private val DIPHTHONG = words(S.s_ia_ie_ye_uye_ua_uo_ua_uo_oa_oa_oe_ue_ua_uy_baaed71d)
+    private val GLIDE_END = words(S.s_ai_ao_au_ay_au_ay_eo_eu_iu_oi_oi_oi_ui_ui_d6c42ab1)
     private val NUCLEI = SIMPLE + DIPHTHONG + GLIDE_END
 
     // Nhân phải có phụ âm cuối mới thành âm tiết.
-    private val NEEDS_CODA = words("ă â iê yê uô ươ uâ oă oo uyê")
+    private val NEEDS_CODA = words(S.s_a_a_ie_ye_uo_uo_ua_oa_oo_uye_52ec1486)
 
     // Vần khép: phụ âm cuối -> nhân đi được với nó.
     private val CODA_NUCLEI: Map<String, Set<String>> = mapOf(
-        "c" to words("a ă â o ô u ư e iê uô ươ oa oă oe oo"),
-        "ch" to words("a ê i oa uê uy"),
-        "m" to words("a ă â e ê i o ô ơ u ư iê yê uô ươ oa oă"),
-        "n" to words("a ă â e ê i o ô ơ u ư iê yê uô ươ oa oă oe uâ uyê"),
-        "ng" to words("a ă â e o ô u ư iê uô ươ oa oă uâ oo"),
-        "nh" to words("a ê i oa uê uy y"),
-        "p" to words("a ă â e ê i o ô ơ u iê ươ"),
-        "t" to words("a ă â e ê i y o ô ơ u ư iê yê uô ươ oa oă oe uâ uyê uy"),
+        "c" to words(S.s_a_a_a_o_o_u_u_e_ie_uo_uo_oa_oa_oe_oo_7f02199d),
+        "ch" to words(S.s_a_e_i_oa_ue_uy_01d2a15e),
+        "m" to words(S.s_a_a_a_e_e_i_o_o_o_u_u_ie_ye_uo_uo_oa_oa_37a8fb10),
+        "n" to words(S.s_a_a_a_e_e_i_o_o_o_u_u_ie_ye_uo_uo_oa_oa_oe_c9a9db24),
+        "ng" to words(S.s_a_a_a_e_o_o_u_u_ie_uo_uo_oa_oa_ua_oo_51b9e56a),
+        "nh" to words(S.s_a_e_i_oa_ue_uy_y_07ca68bc),
+        "p" to words(S.s_a_a_a_e_e_i_o_o_o_u_ie_uo_06ae0de5),
+        "t" to words(S.s_a_a_a_e_e_i_y_o_o_o_u_u_ie_ye_uo_uo_oa_oa_c129befd),
     )
     private val CODAS = listOf("", "c", "ch", "m", "n", "ng", "nh", "p", "t")
     private val CLOSED_TONES = setOf("c", "ch", "p", "t") // chỉ thanh sắc hay nặng
@@ -88,7 +88,7 @@ object VietnameseSyllable {
             if ((onset == "gh" || onset == "ngh") && !front || onset == "ng" && front) continue
             if (onset == "qu" && (first == 'u' || first == 'o')) continue
             if (onset == "gi" && (first == 'i' || first == 'y')) continue // gi + i viết gi
-            if ((nucleus == "yê" || nucleus == "yêu") && onset != "" && onset != "qu") continue // yên, yêu, quyên
+            if ((nucleus == S.s_ye_9ffca5d4 || nucleus == S.s_yeu_3d506a76) && onset != "" && onset != "qu") continue // yên, yêu, quyên
             if (coda.isEmpty()) {
                 if (nucleus in NEEDS_CODA) continue
             } else {

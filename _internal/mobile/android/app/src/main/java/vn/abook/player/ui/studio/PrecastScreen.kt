@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -126,7 +128,7 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                         for (person in people) {
                             ListItem(
                                 person.displayName, Modifier, { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_precast_person_${person.name}",
-                                hint = person.voice?.label.orEmpty().ifEmpty { "${person.lines} câu" }, chevron = true,
+                                hint = person.voice?.label.orEmpty().ifEmpty { S.s_0_cau_2a1e6590(person.lines) }, chevron = true,
                             )
                             RowLine()
                         }

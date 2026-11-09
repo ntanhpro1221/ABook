@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // "Tốc độ giọng trên máy" (máy tính: abook/webui/voice_speed.py, điện thoại: readaloud/VoiceSpeed.kt - cùng hình trạng thái): giọng Supertonic
 // có hai bậc khi nghe trực tiếp (giọng VieNeu chỉ có một). Một lựa chọn cho cả máy. Phần thuần (không React) để thử riêng; dòng cài đặt ở VoiceSpeedSetting.tsx.
 
@@ -31,12 +32,12 @@ export interface VoiceSpeedStatus {
   voices: VoiceSpeedVoice[];
 }
 
-export const VOICE_SPEED_TITLE = "Tốc độ đọc";
+export const VOICE_SPEED_TITLE = S.s_toc_do_doc_3657e59d;
 
 export const VOICE_SPEED_OPTIONS: { value: VoiceSpeedChoice; label: string }[] = [
-  { value: "auto", label: "Tự động" },
-  { value: "quality", label: "Chất lượng cao nhất" },
-  { value: "fast", label: "Nhanh hơn" },
+  { value: "auto", label: S.s_tu_dong_a25c8028 },
+  { value: "quality", label: S.s_chat_luong_cao_nhat_74af310a },
+  { value: "fast", label: S.s_nhanh_hon_ecd73c9a },
 ];
 
 /** Tóm tắt Hiệu năng chỉ nhắc lựa chọn hiện tại; giải thích nằm trong thân gập. */
@@ -45,29 +46,29 @@ export function voiceSpeedLabel(choice: VoiceSpeedChoice): string {
 }
 
 const DESCRIPTION: Record<VoiceSpeedChoice, string> = {
-  auto: "Máy kịp thì đọc bản hay nhất.",
-  quality: "Luôn đọc bản hay nhất; máy chậm có thể phải chờ.",
-  fast: "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu.",
+  auto: S.s_may_kip_thi_doc_ban_hay_nhat_afe3d688,
+  quality: S.s_luon_doc_ban_hay_nhat_may_cham_co_the_phai_2de7d693,
+  fast: S.s_nhanh_hon_tieng_kem_hon_chut_hop_may_yeu_d7e135a1,
 };
 
 /** Câu dưới các nút chọn: lựa chọn ấy làm gì, và rằng sách bạn xuất ra luôn dùng bản hay nhất. */
 export function voiceSpeedDescription(choice: VoiceSpeedChoice): string {
-  return `${DESCRIPTION[choice]} Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất.`;
+  return S.s_0_chi_ap_cho_giong_supertonic_sach_xuat_ra_ebca17bb(DESCRIPTION[choice]);
 }
 
-const TIER_LABEL: Record<VoiceSpeedTier, string> = { quality: "Chất lượng cao nhất", fast: "Nhanh hơn" };
+const TIER_LABEL: Record<VoiceSpeedTier, string> = { quality: S.s_chat_luong_cao_nhat_74af310a, fast: S.s_nhanh_hon_ecd73c9a };
 
 function why(voice: VoiceSpeedVoice, choice: VoiceSpeedChoice): string {
-  if (choice !== "auto") return "bạn đã chọn";
-  if (voice.rtf === null) return "chưa đo được tốc độ máy này";
-  return voice.tier === "fast" ? "máy này đọc chậm hơn tốc độ nghe" : "máy này đọc kịp tốc độ nghe";
+  if (choice !== "auto") return S.s_ban_da_chon_f4117fe4;
+  if (voice.rtf === null) return S.s_chua_do_duoc_toc_do_may_nay_6a6f6928;
+  return voice.tier === "fast" ? S.s_may_nay_doc_cham_hon_toc_do_nghe_1766f852 : S.s_may_nay_doc_kip_toc_do_nghe_aa82c4ab;
 }
 
 /** Dòng của một giọng: đang dùng bậc nào và vì sao; muốn bản nhanh hơn mà chưa tải thì nói cỡ cần tải. */
 export function voiceSpeedLine(voice: VoiceSpeedVoice, choice: VoiceSpeedChoice): string {
-  const lead = `${voice.name} - Đang dùng: ${TIER_LABEL[voice.using]} (${why(voice, choice)})`;
+  const lead = S.s_0_dang_dung_1_2_44e852fc(voice.name, TIER_LABEL[voice.using], why(voice, choice));
   if (voice.tier === "fast" && voice.using !== "fast") {
-    return `${voice.name} - Đang dùng: ${TIER_LABEL.quality}. Bản nhanh hơn cần tải thêm ${formatSize(voice.fastBytes)}.`;
+    return S.s_0_dang_dung_1_ban_nhanh_hon_can_tai_them_2_59000948(voice.name, TIER_LABEL.quality, formatSize(voice.fastBytes));
   }
   return `${lead}.`;
 }

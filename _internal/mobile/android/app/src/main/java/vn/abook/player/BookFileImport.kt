@@ -70,7 +70,7 @@ object BookFileImport {
         val media = MEDIA_SUFFIXES.any { name.lowercase().endsWith(it) }
         val room = maxOf(packed, 1L)
         if ((media && size >= MEDIA_FLOOR && size > room * MEDIA_RATIO) || (text && !media && size >= TEXT_FLOOR && size > room * TEXT_RATIO)) {
-            throw Refused("Gói nén có thể gây hại hoặc bị hỏng — bạn xin người gửi gửi lại.")
+            throw Refused(S.s_goi_nen_co_the_gay_hai_hoac_bi_hong_ban_xi_cd72d580)
         }
     }
 
@@ -97,7 +97,7 @@ object BookFileImport {
         }
     }.getOrDefault(false)
 
-    const val DAMAGED = "File sách bị hỏng hoặc chép chưa xong - chép lại từ nguồn."
+    const val DAMAGED = S.s_file_sach_bi_hong_hoac_chep_chua_xong_chep_c1a56c5e
 
     /** Trần độ lồng của JSON lấy từ file lạ: org.json đệ quy nên `[[[[…` hàng chục nghìn tầng làm tràn ngăn xếp (Error, không phải Exception). */
     private const val MAX_JSON_DEPTH = 256
@@ -113,14 +113,14 @@ object BookFileImport {
                 escaped -> escaped = false
                 quoted -> if (c == '\\') escaped = true else if (c == '"') quoted = false
                 c == '"' -> quoted = true
-                c == '[' || c == '{' -> if (++depth > MAX_JSON_DEPTH) throw IllegalArgumentException("JSON lồng quá sâu")
+                c == '[' || c == '{' -> if (++depth > MAX_JSON_DEPTH) throw IllegalArgumentException(S.s_json_long_qua_sau_682e57e5)
                 c == ']' || c == '}' -> depth--
             }
         }
         return try {
             JSONObject(bytes.toString(Charsets.UTF_8))
         } catch (error: StackOverflowError) {
-            throw IllegalArgumentException("JSON lồng quá sâu")
+            throw IllegalArgumentException(S.s_json_long_qua_sau_682e57e5)
         }
     }
 
@@ -137,7 +137,7 @@ object BookFileImport {
         for (name in names.sorted()) {
             val key = name.split("/").joinToString("/") { it.trimEnd('.', ' ').lowercase(java.util.Locale.ROOT) }
             val first = seen.getOrPut(key) { name }
-            if (first != name) throw Refused("Gói có mục trùng tên — bạn xin người gửi gửi lại.")
+            if (first != name) throw Refused(S.s_goi_co_muc_trung_ten_ban_xin_nguoi_gui_gui_5790755a)
         }
     }
 
@@ -163,9 +163,9 @@ object BookFileImport {
 
     internal fun checkShape(book: JSONObject) {
         fun check(item: Any?, fields: Map<String, Kind>) {
-            if (item !is JSONObject) throw Refused("File sách hỏng hoặc không đọc được — bạn xin người gửi gửi lại.")
+            if (item !is JSONObject) throw Refused(S.s_file_sach_hong_hoac_khong_doc_duoc_ban_xin_80b98983)
             for ((key, kind) in fields) {
-                if (!fits(item.opt(key), kind)) throw Refused("File sách hỏng hoặc không đọc được — bạn xin người gửi gửi lại.")
+                if (!fits(item.opt(key), kind)) throw Refused(S.s_file_sach_hong_hoac_khong_doc_duoc_ban_xin_80b98983)
             }
         }
         check(book, BOOK_FIELDS)
@@ -190,7 +190,7 @@ object BookFileImport {
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
             sizeOf(context, uri)?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
-            val input = context.contentResolver.openInputStream(uri) ?: throw Refused("Chưa đọc được file.")
+            val input = context.contentResolver.openInputStream(uri) ?: throw Refused(S.s_chua_doc_duoc_file_6575d76b)
             input.use { source -> copy.outputStream().use { source.copyTo(it) } }
             return importFile(copy, allowOlder = allowOlder)
         } finally {
@@ -234,7 +234,7 @@ object BookFileImport {
     private fun requireRoom(dir: File, need: Long, freeSpace: (File) -> Long = { it.usableSpace }) {
         val free = freeSpace(dir)
         if (free < need) {
-            throw Refused("Thiếu chỗ mở sách (cần ${formatSize(need)}, còn ${formatSize(free)}) — bạn dọn ổ rồi thử lại.")
+            throw Refused(S.s_thieu_cho_mo_sach_can_0_con_1_ban_don_o_ro_7fa7f62b(formatSize(need), formatSize(free)))
         }
     }
 
@@ -245,53 +245,53 @@ object BookFileImport {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
-            throw Refused(if (looksCut(file)) DAMAGED else "Đây không phải file sách của app.")
+            throw Refused(if (looksCut(file)) DAMAGED else S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
         }
         zip.use {
             val entries = zip.entries().toList()
             val first = entries.firstOrNull()
             val kind = if (first == null || first.name != "mimetype" || first.method != ZipEntry.STORED) null
             else readMime(first.size) { zip.getInputStream(first) }
-            if (kind != MIMETYPE && kind != PROJECT_MIMETYPE) throw Refused("Đây không phải file sách của app.")
+            if (kind != MIMETYPE && kind != PROJECT_MIMETYPE) throw Refused(S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
             val project = kind == PROJECT_MIMETYPE
-            if (entries.size > if (project) PROJECT_MAX_ENTRIES else MAX_ENTRIES) throw Refused("File sách có quá nhiều mục.")
+            if (entries.size > if (project) PROJECT_MAX_ENTRIES else MAX_ENTRIES) throw Refused(S.s_file_sach_co_qua_nhieu_muc_eecd9377)
             val names = HashSet<String>()
             var total = 0L
             for (entry in entries) {
                 val name = entry.name
-                if (entry.isDirectory || !names.add(name)) throw Refused("Gói có mục trùng hay thư mục lạ: $name")
+                if (entry.isDirectory || !names.add(name)) throw Refused(S.s_goi_co_muc_trung_hay_thu_muc_la_0_cbf083a2(name))
                 total += maxOf(0L, entry.size)
                 checkExpansion(name, entry.size, entry.compressedSize, text = !project)
             }
-            if (!project && total > MAX_TOTAL_BYTES) throw Refused("File sách quá lớn.")
+            if (!project && total > MAX_TOTAL_BYTES) throw Refused(S.s_file_sach_qua_lon_35668818)
             checkDistinct(names)
             val layout = if (project) projectLayout(zip, names) else null
             val bookEntry = zip.getEntry("book.json") ?: throw Refused(
-                if (project) "Dự án chưa có chương nghe được — bạn mở bằng ABook Studio."
-                else "File sách thiếu phần mô tả (book.json).")
-            if (bookEntry.size > MAX_JSON_BYTES) throw Refused("book.json quá lớn.")
+                if (project) S.s_du_an_chua_co_chuong_nghe_duoc_ban_mo_bang_7d6c0d37
+                else S.s_file_sach_thieu_phan_mo_ta_book_json_73bb2def)
+            if (bookEntry.size > MAX_JSON_BYTES) throw Refused(S.s_book_json_qua_lon_d114c8fb)
             val book = try {
                 parseObject(zip.getInputStream(bookEntry).use { it.readBytes() })
             } catch (error: Exception) {
-                throw Refused("book.json hỏng.")
+                throw Refused(S.s_book_json_hong_c149af72)
             }
             val pack = book.optJSONObject("package")
-            if (pack == null || pack.optString("format") != FORMAT) throw Refused("Đây không phải file sách của app.")
+            if (pack == null || pack.optString("format") != FORMAT) throw Refused(S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
             // Phiên bản phải là số nguyên thật ("3", 3.5, true không phải) - như máy tính; org.json ép kiểu mềm nên kiểm trước.
             val declared = pack.opt("version")
             val version = if (declared is Int || declared is Long) (declared as Number).toInt() else -1
-            if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
-            if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
+            if (version < 1) throw Refused(S.s_file_sach_co_phien_ban_dinh_dang_khong_hop_3dcef37b)
+            if (version > FORMAT_VERSION) throw Refused(S.s_sach_nay_duoc_lam_bang_ban_app_moi_hon_hay_27f95a02)
             checkShape(book)
             BookEdits.scrubCoverColor(book) // màu bìa chỉ #rrggbb: `url(...)` trong file của người khác sẽ thành CSS gọi máy lạ
             // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.
-            if (!project) for (name in names - DESCRIPTIONS) if (!contentPattern(version).matches(name)) throw Refused("Gói có mục lạ: $name")
-            val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")
+            if (!project) for (name in names - DESCRIPTIONS) if (!contentPattern(version).matches(name)) throw Refused(S.s_goi_co_muc_la_0_44ad5278(name))
+            val files = pack.optJSONObject("files") ?: throw Refused(S.s_danh_sach_file_trong_sach_khong_khop_noi_d_5cc18ae2)
             // File dự án: phần nghe là những mục logic mang tên của file .abook (bí danh cũng tính); phần còn lại của gói (sổ dự án,
             // bản thu từng câu, nguồn chương) chỉ được chép nguyên byte, không bao giờ mở.
             val content = layout?.listening ?: (names - DESCRIPTIONS)
             if (files.keys().asSequence().toSet() != content) {
-                throw Refused("Danh sách file trong sách không khớp nội dung gói.")
+                throw Refused(S.s_danh_sach_file_trong_sach_khong_khop_noi_d_5cc18ae2)
             }
             if (layout != null) layout.checkListening(book, files)
             val resolve = layout?.let { it::resolve } ?: { name: String -> name }
@@ -301,10 +301,10 @@ object BookFileImport {
             val listed = if (layout == null) book.optJSONArray("chapters") else null
             for (index in 0 until (listed?.length() ?: 0)) {
                 val reference = listed?.optJSONObject(index)?.opt("file")
-                if (reference is String && reference.isNotEmpty() && reference !in content) throw Refused("File sách thiếu audio của một chương.")
+                if (reference is String && reference.isNotEmpty() && reference !in content) throw Refused(S.s_file_sach_thieu_audio_cua_mot_chuong_6e7fb960)
                 val written = listed?.optJSONObject(index)?.opt("text")
                 if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in content)) {
-                    throw Refused("File sách thiếu chữ của một chương.")
+                    throw Refused(S.s_file_sach_thieu_chu_cua_mot_chuong_859c14d2)
                 }
             }
             // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương (cuốn chưa có audio
@@ -374,7 +374,7 @@ object BookFileImport {
                     val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse)
                     if (expected == null) continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {
-                        if (layout != null || !MUSIC.matches(name)) throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
+                        if (layout != null || !MUSIC.matches(name)) throw Refused(S.s_file_sach_bi_hong_hoac_bi_sua_0_hay_chep_l_1aa6c684(name))
                         File(staging, name).delete()
                         brokenMusic.add(name)
                     }
@@ -481,7 +481,7 @@ object BookFileImport {
     internal fun readMime(size: Long, open: () -> java.io.InputStream): String {
         val allowed = listOf(MIMETYPE, PROJECT_MIMETYPE).map { it.toByteArray(Charsets.US_ASCII) }
         val cap = allowed.maxOf { it.size }
-        if (size >= 0 && allowed.none { it.size.toLong() == size }) throw Refused("File sách có mimetype không hợp lệ; bạn hãy xin người gửi gửi lại.")
+        if (size >= 0 && allowed.none { it.size.toLong() == size }) throw Refused(S.s_file_sach_co_mimetype_khong_hop_le_ban_hay_dbbaeaad)
         val bytes = open().use { input ->
             val out = java.io.ByteArrayOutputStream()
             val buffer = ByteArray(cap + 1)
@@ -493,27 +493,27 @@ object BookFileImport {
             out.toByteArray()
         }
         val match = allowed.firstOrNull { it.contentEquals(bytes) }
-            ?: throw Refused("File sách có mimetype không hợp lệ; bạn hãy xin người gửi gửi lại.")
+            ?: throw Refused(S.s_file_sach_co_mimetype_khong_hop_le_ban_hay_dbbaeaad)
         return match.toString(Charsets.US_ASCII)
     }
 
     private fun readEdits(zip: ZipFile, resolve: (String) -> String = { it }): Edits {
         var edits = BookEdits.empty()
         zip.getEntry(resolve(BookEdits.EDITS_FILE))?.let { entry ->
-            val data = readLimited(zip, entry, BookEdits.MAX_EDITS_BYTES) ?: throw Refused("Phần sửa của sách quá lớn.")
+            val data = readLimited(zip, entry, BookEdits.MAX_EDITS_BYTES) ?: throw Refused(S.s_phan_sua_cua_sach_qua_lon_723ad868)
             edits = try {
                 BookEdits.parse(data)
             } catch (error: BookEdits.EditsError) {
                 throw Refused(error.message.orEmpty())
             }
         }
-        if (BookEdits.pinnedFiles(edits).any { zip.getEntry(resolve(it)) == null }) throw Refused("File sách thiếu bài nhạc mà người nghe đã chọn.")
+        if (BookEdits.pinnedFiles(edits).any { zip.getEntry(resolve(it)) == null }) throw Refused(S.s_file_sach_thieu_bai_nhac_ma_nguoi_nghe_da_d722ea89)
         val entry = zip.getEntry(resolve(BookEdits.EDITS_COVER))
-        if ((entry != null) != (edits.opt("cover") is JSONObject)) throw Refused("Ảnh bìa trong phần sửa của sách không khớp.")
+        if ((entry != null) != (edits.opt("cover") is JSONObject)) throw Refused(S.s_anh_bia_trong_phan_sua_cua_sach_khong_khop_5c97cf40)
         if (entry == null) return Edits(edits, null)
         val cover = readLimited(zip, entry, BookEdits.MAX_COVER_BYTES)
         if (cover == null || cover.size < 3 || cover[0] != 0xFF.toByte() || cover[1] != 0xD8.toByte() || cover[2] != 0xFF.toByte()) {
-            throw Refused("Ảnh bìa trong phần sửa của sách không dùng được.")
+            throw Refused(S.s_anh_bia_trong_phan_sua_cua_sach_khong_dung_112204a9)
         }
         return Edits(edits, cover)
     }
@@ -597,16 +597,16 @@ object BookFileImport {
                 val ours = files.optJSONObject(name)
                 val theirs = listed.getJSONObject(name)
                 if (ours == null || ours.optLong("size", -1) != theirs.optLong("size", -2) || ours.optString("sha256") != theirs.optString("sha256")) {
-                    throw Refused("Phần nghe của dự án không khớp nội dung gói.")
+                    throw Refused(S.s_phan_nghe_cua_du_an_khong_khop_noi_dung_go_c725ed3b)
                 }
             }
             val chapters = book.optJSONArray("chapters")
             for (index in 0 until (chapters?.length() ?: 0)) {
                 val file = chapters?.optJSONObject(index)?.optString("file").orEmpty()
-                if (file.isNotEmpty() && file !in listening) throw Refused("Phần nghe của dự án thiếu audio của một chương.")
+                if (file.isNotEmpty() && file !in listening) throw Refused(S.s_phan_nghe_cua_du_an_thieu_audio_cua_mot_ch_9c0bdad5)
                 val written = chapters?.optJSONObject(index)?.opt("text")
                 if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in listening)) {
-                    throw Refused("Phần nghe của dự án thiếu chữ của một chương.")
+                    throw Refused(S.s_phan_nghe_cua_du_an_thieu_chu_cua_mot_chuo_37bb4070)
                 }
             }
         }
@@ -618,30 +618,30 @@ object BookFileImport {
      * bản chụp là JSON. Sai thì từ chối cả file TRƯỚC khi chép gì.
      */
     private fun projectLayout(zip: ZipFile, names: Set<String>): ProjectLayout {
-        val entry = zip.getEntry(ProjectDocument.MANIFEST) ?: throw Refused("File dự án thiếu phần mô tả (project.json).")
-        if (entry.size > MAX_JSON_BYTES) throw Refused("project.json quá lớn.")
+        val entry = zip.getEntry(ProjectDocument.MANIFEST) ?: throw Refused(S.s_file_du_an_thieu_phan_mo_ta_project_json_edffa271)
+        if (entry.size > MAX_JSON_BYTES) throw Refused(S.s_project_json_qua_lon_ef7f0f00)
         val bytes = zip.getInputStream(entry).use { it.readBytes() }
         val manifest = try {
             parseObject(bytes)
         } catch (error: Exception) {
-            throw Refused("project.json hỏng.")
+            throw Refused(S.s_project_json_hong_3c7650dd)
         }
-        if (manifest.optString("format") != ProjectDocument.FORMAT) throw Refused("Đây không phải file sách của app.")
+        if (manifest.optString("format") != ProjectDocument.FORMAT) throw Refused(S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
         val version = manifest.optInt("version", -1)
-        if (version < 1) throw Refused("File dự án có phiên bản định dạng không hợp lệ.")
-        if (version > ProjectDocument.VERSION) throw Refused("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
+        if (version < 1) throw Refused(S.s_file_du_an_co_phien_ban_dinh_dang_khong_ho_612a2fec)
+        if (version > ProjectDocument.VERSION) throw Refused(S.s_du_an_nay_duoc_goi_bang_ban_app_moi_hon_ha_433c07cb)
         if (version < ProjectDocument.VERSION) {
-            throw Refused("Dự án dùng định dạng cũ — bạn mở bằng bản app đã gói rồi gói lại.")
+            throw Refused(S.s_du_an_dung_dinh_dang_cu_ban_mo_bang_ban_ap_e8913971)
         }
         val workshop = manifest.optString("workshop")
-        if (workshop != ProjectDocument.PRESENT && workshop != ProjectDocument.PENDING) throw Refused("File dự án không nói rõ có xưởng hay chưa.")
+        if (workshop != ProjectDocument.PRESENT && workshop != ProjectDocument.PENDING) throw Refused(S.s_file_du_an_khong_noi_ro_co_xuong_hay_chua_908027bd)
         val files = manifest.optJSONObject("files")
         val aliasJson = manifest.optJSONObject("aliases")
-        if (files == null || aliasJson == null) throw Refused("Danh sách file trong dự án không khớp nội dung gói.")
+        if (files == null || aliasJson == null) throw Refused(S.s_danh_sach_file_trong_du_an_khong_khop_noi_9d051ce2)
         val content = names - setOf("mimetype", ProjectDocument.MANIFEST)
         for (name in content) {
             if (name != "book.json" && !ProjectDocument.listeningName(name) && !ProjectDocument.VIEW.matches(name) && !ProjectDocument.safeEntry(name)) {
-                throw Refused("Gói có mục lạ: $name")
+                throw Refused(S.s_goi_co_muc_la_0_44ad5278(name))
             }
         }
         val aliases = HashMap<String, String>()
@@ -651,32 +651,32 @@ object BookFileImport {
                 files.getJSONObject(alias).toString() == files.getJSONObject(target).toString()
             if (target == null || alias in content || target !in content || !ProjectDocument.aliasable(alias) || !ProjectDocument.aliasable(target) ||
                 !(ProjectDocument.safeEntry(alias) || ProjectDocument.listeningName(alias))) {
-                throw Refused("Bí danh $alias trong dự án không hợp lệ.")
+                throw Refused(S.s_bi_danh_0_trong_du_an_khong_hop_le_e886d678(alias))
             }
-            if (!sameBytes) throw Refused("Bí danh $alias không khớp mục thật của nó.")
+            if (!sameBytes) throw Refused(S.s_bi_danh_0_khong_khop_muc_that_cua_no_ca61275d(alias))
             aliases[alias] = target
         }
-        if (files.keys().asSequence().toSet() != content + aliases.keys) throw Refused("Danh sách file trong dự án không khớp nội dung gói.")
+        if (files.keys().asSequence().toSet() != content + aliases.keys) throw Refused(S.s_danh_sach_file_trong_du_an_khong_khop_noi_9d051ce2)
         for (name in files.keys()) {
             val meta = files.optJSONObject(name)
             val size = meta?.opt("size")
             if (meta == null || meta.opt("sha256") !is String || (size !is Int && size !is Long) ||
                 (name in content && zip.getEntry(name).size != meta.getLong("size"))) {
-                throw Refused("Mô tả file $name không khớp gói.")
+                throw Refused(S.s_mo_ta_file_0_khong_khop_goi_d7373bf5(name))
             }
         }
         when (workshop) {
             ProjectDocument.PRESENT -> if ("project/project.sqlite3" !in content || "project/book_settings.json" !in content) {
-                throw Refused("File dự án thiếu sổ dự án hay cài đặt sách.")
+                throw Refused(S.s_file_du_an_thieu_so_du_an_hay_cai_dat_sach_99b4e81c)
             }
-            else -> if (files.keys().asSequence().any { it.startsWith("project/") }) throw Refused("File dự án chưa có xưởng mà lại mang sổ dự án.")
+            else -> if (files.keys().asSequence().any { it.startsWith("project/") }) throw Refused(S.s_file_du_an_chua_co_xuong_ma_lai_mang_so_du_50179408)
         }
         val views = files.keys().asSequence().filter { ProjectDocument.VIEW.matches(it) }.sorted().toList()
         for (name in views) {
             val meta = files.getJSONObject(name)
             val text = if (meta.getLong("size") > ProjectDocument.MAX_VIEW_BYTES) null else readLimited(zip, zip.getEntry(name), ProjectDocument.MAX_VIEW_BYTES.toInt())
             val valid = text != null && runCatching { StrictJson.parse(text.toString(Charsets.UTF_8)) }.isSuccess
-            if (!valid) throw Refused("Bản chụp $name hỏng.")
+            if (!valid) throw Refused(S.s_ban_chup_0_hong_64dadc6a(name))
         }
         val listening = files.keys().asSequence().filter { ProjectDocument.listeningName(it) }.toSet()
         val workshopFiles = if (workshop == ProjectDocument.PRESENT) {
@@ -723,14 +723,14 @@ object BookFileImport {
 
     private fun replace(books: File, staging: File, target: File, id: String) = synchronized(Store) {
         if (!target.exists()) {
-            if (!staging.renameTo(target)) throw Refused("Chưa ghi được sách vào thư viện.")
+            if (!staging.renameTo(target)) throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
             return@synchronized
         }
         val retired = File(books, ".$id.${System.nanoTime()}.old")
-        if (!target.renameTo(retired)) throw Refused("Chưa thay được bản cũ của sách.")
+        if (!target.renameTo(retired)) throw Refused(S.s_chua_thay_duoc_ban_cu_cua_sach_ea78585e)
         if (!staging.renameTo(target)) {
             retired.renameTo(target)
-            throw Refused("Chưa ghi được sách vào thư viện.")
+            throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
         }
         retired.deleteRecursively()
     }

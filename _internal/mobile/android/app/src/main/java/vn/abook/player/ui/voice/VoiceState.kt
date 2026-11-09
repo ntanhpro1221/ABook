@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
@@ -114,7 +116,7 @@ class VoiceState(
                         else it.copy(loaded = true, tracks = done.tracks)
                     }
                 }
-                result.onFailure { error -> if (mine) musicFlow.update { it.copy(problems = listOf(message(error, "Chưa thêm được nhạc"))) } }
+                result.onFailure { error -> if (mine) musicFlow.update { it.copy(problems = listOf(message(error, S.s_chua_them_duoc_nhac_5565bc66))) } }
             }
         })
     }
@@ -190,7 +192,7 @@ class VoiceState(
         scope.launch {
             val result = attempt { source.start(kind, ids) }
             result.onSuccess { apply(kind, it) }
-            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) "Chưa tải được bản nhanh hơn" else "Chưa tải được ${kind.title}", error.message.orEmpty()).joinToString(". ")) } }
+            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) S.s_chua_tai_duoc_ban_nhanh_hon_0011ec37 else S.s_chua_tai_duoc_0_0cb3de66(kind.title), error.message.orEmpty()).joinToString(". ")) } }
         }
     }
 
@@ -199,7 +201,7 @@ class VoiceState(
 
     fun cancel(kind: ModuleKind) {
         scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) }
-            .onFailure { e -> setModule(kind) { it.copy(problem = listOf("Chưa huỷ được việc tải ${kind.title}", e.message.orEmpty()).joinToString(". ")) } } }
+            .onFailure { e -> setModule(kind) { it.copy(problem = listOf(S.s_chua_huy_duoc_viec_tai_0_d8afe625(kind.title), e.message.orEmpty()).joinToString(". ")) } } }
     }
 
     fun measure(kind: ModuleKind) {
@@ -211,7 +213,7 @@ class VoiceState(
         pickFlow.update { it.copy(measuring = true, error = "") }
         scope.launch {
             attempt { source.measurePick() }.onSuccess { pickFlow.value = it; voicesChanged() }
-                .onFailure { e -> pickFlow.update { it.copy(measuring = false, error = message(e, "Thử không được")) } }
+                .onFailure { e -> pickFlow.update { it.copy(measuring = false, error = message(e, S.s_thu_khong_duoc_d17d8afe)) } }
         }
     }
 
@@ -227,7 +229,7 @@ class VoiceState(
     fun choosePick(engine: String) {
         scope.launch {
             attempt { source.choosePick(engine) }.onSuccess { pickFlow.value = it; voicesChanged() }
-                .onFailure { e -> pickFlow.update { it.copy(error = message(e, "Chưa đổi được")) } }
+                .onFailure { e -> pickFlow.update { it.copy(error = message(e, S.s_chua_doi_duoc_a6c67cde)) } }
         }
     }
 
@@ -240,7 +242,7 @@ class VoiceState(
             refreshPick()
             for (other in ModuleKind.entries.filter { it != kind }) refresh(other)
         }
-        return result.exceptionOrNull()?.let { message(it, "Chưa gỡ được ${kind.title}") }
+        return result.exceptionOrNull()?.let { message(it, S.s_chua_go_duoc_0_f7e62539(kind.title)) }
     }
 
     /**
@@ -255,8 +257,8 @@ class VoiceState(
         }
         val toPrefix = if (suggestion.switchTo == "nano") "vieneu:nano/" else ONLINE_VOICE
         val result = attempt { source.switchVoices(VoiceText.tierVoicePrefix(suggestion.tier), toPrefix, ONLINE_VOICE) }
-        result.onSuccess { voicesChanged(); notice.value = if (suggestion.switchTo == "nano") "Đã chuyển sang giọng VieNeu Nano" else "Đã chuyển sang giọng trực tuyến" }
-        return result.exceptionOrNull()?.let { message(it, "Chưa đổi được giọng") }
+        result.onSuccess { voicesChanged(); notice.value = if (suggestion.switchTo == "nano") S.s_da_chuyen_sang_giong_vieneu_nano_78fd20a4 else S.s_da_chuyen_sang_giong_truc_tuyen_f1c06742 }
+        return result.exceptionOrNull()?.let { message(it, S.s_chua_doi_duoc_giong_5b5ed91f) }
     }
 
     // ---- đồng ý gửi chữ ---------------------------------------------------------------------------------------------------
@@ -282,10 +284,10 @@ class VoiceState(
 
     /** "Lưu": chỉ cất khoá trên máy này, không gửi gì ra mạng. Null = xong, khác null = câu lỗi. */
     suspend fun saveKey(provider: KeyProvider, key: String, region: String): String? {
-        if (key.isBlank() && !provider.hasKey) return "Dán khoá trước đã."
+        if (key.isBlank() && !provider.hasKey) return S.s_dan_khoa_truoc_da_d88da35d
         val result = attempt { source.saveKey(provider.id, key.trim(), region.trim()) }
         result.onSuccess { replace(it) }
-        return result.exceptionOrNull()?.let { message(it, "Chưa lưu được khoá") }
+        return result.exceptionOrNull()?.let { message(it, S.s_chua_luu_duoc_khoa_96a2395d) }
     }
 
     /**
@@ -300,7 +302,7 @@ class VoiceState(
             checked.provider?.let(::replace)
             voicesChanged()
         }
-        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), "Chưa kiểm tra được khoá"))
+        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), S.s_chua_kiem_tra_duoc_khoa_dba470e0))
     }
 
     /** Xoá khoá khỏi máy này. Null = xong, khác null = câu lỗi. */
@@ -310,7 +312,7 @@ class VoiceState(
             replace(it)
             voicesChanged()
         }
-        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được khoá") }
+        return result.exceptionOrNull()?.let { message(it, S.s_chua_xoa_duoc_khoa_2df56367) }
     }
 
     // ---- nghe thử ---------------------------------------------------------------------------------------------------------
@@ -330,14 +332,14 @@ class VoiceState(
             if (turn != mine) return@launch
             val path = result.getOrNull()
             if (path == null) {
-                sampleFlow.value = SampleUi(failed = SampleFailure(voice, message(result.exceptionOrNull(), "Chưa nghe thử được giọng này.")))
+                sampleFlow.value = SampleUi(failed = SampleFailure(voice, message(result.exceptionOrNull(), S.s_chua_nghe_thu_duoc_giong_nay_baf64b64)))
                 return@launch
             }
             sampleFlow.value = SampleUi(playing = voice)
             player.play(
                 path,
                 onEnded = { if (turn == mine) sampleFlow.value = SampleUi() },
-                onFailed = { if (turn == mine) sampleFlow.value = SampleUi(failed = SampleFailure(voice, "Chưa nghe thử được giọng này.")) },
+                onFailed = { if (turn == mine) sampleFlow.value = SampleUi(failed = SampleFailure(voice, S.s_chua_nghe_thu_duoc_giong_nay_baf64b64)) },
             )
         }
     }
@@ -369,7 +371,7 @@ class VoiceState(
     suspend fun removeTrack(link: String): String? {
         val result = attempt { source.removeTrack(link) }
         result.onSuccess { list -> musicFlow.update { it.copy(tracks = list) } }
-        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được bài này") }
+        return result.exceptionOrNull()?.let { message(it, S.s_chua_xoa_duoc_bai_nay_6ba1ed47) }
     }
 
     companion object {

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -17,7 +18,7 @@ Item {
     readonly property bool narrow: width < 420
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
-        let html = Music.escapeHtml(item.title || "Bài nhạc")
+        let html = Music.escapeHtml(item.title || S.s_bai_nhac_5d07657e)
         if (item.creator) html += "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + Music.escapeHtml(item.creator) + "</font>"
         if (item.duration) html += "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + Music.formatClock(item.duration) + "</font>"
         return html
@@ -50,19 +51,19 @@ Item {
         Button {
             objectName: "musicPreview"
             visible: root.canPreview
-            text: root.previewing === root.item.link ? "Dừng nghe" : "Nghe thử"
+            text: root.previewing === root.item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
             icon: root.previewing === root.item.link ? "square" : "play"
             kind: "ghost"; size: "sm"
-            Accessible.name: text + ": " + (root.item.title || "Bài nhạc")
+            Accessible.name: text + ": " + (root.item.title || S.s_bai_nhac_5d07657e)
             onActivated: root.preview(root.item.link)
         }
         Button {
             objectName: "musicChoose"
-            text: root.choosing === root.item.link ? "Đang đổi" : "Chọn"
+            text: root.choosing === root.item.link ? S.s_dang_doi_b4190199 : S.s_chon_1171ca97
             icon: "pin"; kind: "ghost"; size: "sm"
             enabled: !root.busy
             busy: root.choosing === root.item.link
-            Accessible.name: "Chọn: " + (root.item.title || "Bài nhạc")
+            Accessible.name: S.s_chon_77279ce9 + (root.item.title || S.s_bai_nhac_5d07657e)
             onActivated: root.choose(root.item.link)
         }
     }

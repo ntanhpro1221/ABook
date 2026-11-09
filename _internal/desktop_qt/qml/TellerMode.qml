@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TellerLogic.js" as T
@@ -35,7 +36,7 @@ Item {
             asking = mode
             confirm.title = T.confirmTitle(mode)
             confirm.description = T.costText(view.plan, mode === "teller")
-            confirm.actions = [{key: "later", text: "Thôi"}, {key: "go", text: T.confirmAction(mode), icon: "mic", kind: "primary"}]
+            confirm.actions = [{key: "later", text: S.s_thoi_e68f9e88}, {key: "go", text: T.confirmAction(mode), icon: "mic", kind: "primary"}]
             confirm.show()
         } else save(mode)
     }
@@ -48,7 +49,7 @@ Item {
             root.saving = false
             root.asking = ""
             confirm.dismiss()
-            if (!root.store.ok(status)) { root.store.fail("Chưa đổi được", status, data); return }
+            if (!root.store.ok(status)) { root.store.fail(S.s_chua_doi_duoc_a6c67cde, status, data); return }
             query.setData(data)
             root.store.editedCast(id)
             const note = T.savedNote(data, recorded)

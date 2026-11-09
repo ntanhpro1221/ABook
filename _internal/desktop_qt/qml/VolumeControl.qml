@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
@@ -9,7 +10,7 @@ Column {
     spacing: Theme.s4
     Item {
         width: parent.width; height: 24
-        Text { text: "Âm lượng"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
+        Text { text: S.s_am_luong_5dafca26; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
         ClockLabel { anchors.right: parent.right; text: Math.round(Player.volume * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     }
     Row {
@@ -17,7 +18,7 @@ Column {
         IconButton {
             objectName: "volumeMute"
             icon: Player.volume === 0 ? "volume-x" : Player.volume < 0.5 ? "volume-1" : "volume-2"
-            tip: Player.volume === 0 ? "Bật tiếng (M)" : "Tắt tiếng (M)"
+            tip: Player.volume === 0 ? S.s_bat_tieng_m_87e6bed5 : S.s_tat_tieng_m_5ea1a520
             onClicked: Player.toggleMute()
         }
         C.Slider {
@@ -33,8 +34,8 @@ Column {
                     event.accepted = true
                 }
             }
-            Accessible.name: "Âm lượng"
-            Accessible.description: `Âm lượng ${Math.round(Player.volume * 100)}%`
+            Accessible.name: S.s_am_luong_5dafca26
+            Accessible.description: S.s_am_luong_0_0a64b489(Math.round(Player.volume * 100))
             background: Rectangle {
                 x: slider.leftPadding; y: (slider.height - height) / 2
                 width: slider.availableWidth; height: 4; radius: height / 2; color: Theme.line

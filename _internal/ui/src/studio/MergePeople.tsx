@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { GitMerge, Search } from "lucide-react";
@@ -62,12 +63,12 @@ export function MergeDialog({
         method: "POST",
         body: { from: person.name, into: into.name },
       });
-      toast.success(`Đã ghi: ${lines} câu của ${cleanName(person.displayName)} là của ${cleanName(into.displayName)}`);
+      toast.success(S.s_da_ghi_0_cau_cua_1_la_cua_2_099ed4e5(lines, cleanName(person.displayName), cleanName(into.displayName)));
       void client.invalidateQueries();
       onSaved?.();
       close();
     } catch (error) {
-      toast.error("Chưa gộp được", { description: (error as Error).message });
+      toast.error(S.s_chua_gop_duoc_3d63128a, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -75,18 +76,14 @@ export function MergeDialog({
   const name = person ? cleanName(person.displayName) : "";
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={close}>
-          Thôi
-        </Button>
-        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => void merge()}>
-          Gộp
-        </Button>
+        <Button variant="ghost" onClick={close}>{S.s_thoi_e68f9e88}</Button>
+        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => void merge()}>{S.s_gop_2380bed6}</Button>
       </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && close()}
       width="max-w-lg"
-      title="Gộp nhân vật"
-      description={`Mọi câu của ${name} và các phần sau dùng người bạn chọn.`}
+      title={S.s_gop_nhan_vat_37b51bd5}
+      description={S.s_moi_cau_cua_0_va_cac_phan_sau_dung_nguoi_b_75a7c03f(name)}
     >
       <label className="relative block">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
@@ -95,12 +92,12 @@ export function MergeDialog({
           value={query}
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Tìm người trong truyện"
+          placeholder={S.s_tim_nguoi_trong_truyen_a1507054}
           className="h-9 w-full rounded-control border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
         />
       </label>
       <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>
-      <ul ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-64 overflow-y-auto" role="listbox" aria-label="Gộp vào ai">
+      <ul ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-64 overflow-y-auto" role="listbox" aria-label={S.s_gop_vao_ai_640d3477}>
         {others.length ? (
           others.map((other) => (
             <li key={other.name}>
@@ -117,23 +114,22 @@ export function MergeDialog({
                 <SelectionMark selected={into?.name === other.name} /><span className="min-w-0 flex-1 truncate font-medium">{cleanName(other.displayName)}</span>
                 <span className="shrink-0 text-xs text-fg-3">
                   {voiceToUse(other)}
-                  {other.pendingVoice?.preset ? " (chờ áp dụng)" : ""} · {formatNumber(other.lines)} câu
-                  {twins.has(nameKey(other.displayName)) && other.firstChapter ? ` · ${other.firstChapter}` : ""}
+                  {other.pendingVoice?.preset ? S.s_cho_ap_dung_31faa52d : ""} · {formatNumber(other.lines)}{S.s_cau_b07e1008}{twins.has(nameKey(other.displayName)) && other.firstChapter ? ` · ${other.firstChapter}` : ""}
                 </span>
               </button>
             </li>
           ))
         ) : (
-          <li className="px-3 py-3 text-sm text-fg-2">Không có ai khớp “{query}”.</li>
+          <li className="px-3 py-3 text-sm text-fg-2">{S.s_khong_co_ai_khop_2213386e}{query}”.</li>
         )}
       </ul>
       </MotionRegion>
       <MotionRegion>
       {person && into && (
         <p className="mt-3 text-sm text-pretty">
-          {formatNumber(person.lines)} câu của <span className="font-semibold">{name}</span> thành của{" "}
-          <span className="font-semibold">{cleanName(into.displayName)}</span>, đọc bằng giọng {voiceToUse(into)}
-          {into.pendingVoice?.preset ? " (giọng vừa chọn, chờ áp dụng)" : ""}.
+          {formatNumber(person.lines)}{S.s_cau_cua_35c4143d}<span className="font-semibold">{name}</span>{S.s_thanh_cua_788f02d8}{" "}
+          <span className="font-semibold">{cleanName(into.displayName)}</span>{S.s_doc_bang_giong_0e64b444}{voiceToUse(into)}
+          {into.pendingVoice?.preset ? S.s_giong_vua_chon_cho_ap_dung_23afd9d2 : ""}.
         </p>
       )}
       </MotionRegion>

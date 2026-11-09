@@ -46,7 +46,7 @@ object Store {
         val directory = context.filesDir.canonicalFile
         if (initFilesDir != null && initFilesDir != directory ||
             ::root.isInitialized && root.canonicalFile.parentFile != directory) {
-            AppLog.w("Store", "Bỏ qua init: thư mục khác với kho đã chọn.")
+            AppLog.w("Store", S.s_bo_qua_init_thu_muc_khac_voi_kho_da_chon_0860aaba)
             return false
         }
         // Pin the first directory even if recovery fails; retries must use the same directory.
@@ -70,7 +70,7 @@ object Store {
     internal fun requireBookId(id: String): String {
         require(id.isNotEmpty() && id.length <= 200 && id.all { it.code < 128 && it.isLetterOrDigit() || it == '_' || it == '-' } &&
             !Regex("(?i)CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9]").matches(id)) {
-            "Mã sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách."
+            S.s_ma_sach_khong_hop_le_ban_hay_kiem_tra_lai_f5b19175
         }
         return id
     }
@@ -79,7 +79,7 @@ object Store {
         requireBookId(id)
         val books = File(workingRoot, "books").canonicalFile
         val dir = File(books, id).canonicalFile
-        require(dir.parentFile == books) { "Thư mục sách nằm ngoài thư viện của bạn." }
+        require(dir.parentFile == books) { S.s_thu_muc_sach_nam_ngoai_thu_vien_cua_ban_5da96012 }
         return dir
     }
 
@@ -113,12 +113,12 @@ object Store {
 
     /** `relative` trong thư mục `dir`; ra ngoài thì từ chối (đường dẫn lấy từ book.json hay từ người lạ). */
     fun contained(dir: File, relative: String): File {
-        require(PeerPaths.safeRelative(relative)) { "Đường dẫn trong sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách." }
+        require(PeerPaths.safeRelative(relative)) { S.s_duong_dan_trong_sach_khong_hop_le_ban_hay_b3e8db18 }
         val target = File(dir, relative).canonicalFile
         val base = dir.canonicalFile
         // Ranh giới thành phần qua separator, dùng được cả Android 24/25 (java.nio.file cần API 26).
         require(target != base && target.path.startsWith(base.path.trimEnd(File.separatorChar) + File.separator)) {
-            "Đường dẫn nằm ngoài thư mục sách của bạn."
+            S.s_duong_dan_nam_ngoai_thu_muc_sach_cua_ban_0458e429
         }
         return target
     }
@@ -277,11 +277,11 @@ object Store {
             try {
                 preserveCorrupt(target, copyOnly = true)
             } catch (error: Exception) {
-                throw IllegalStateException("Chưa giữ được bản dữ liệu cũ của bạn. Bạn hãy thử lại.", error)
+                throw IllegalStateException(S.s_chua_giu_duoc_ban_du_lieu_cu_cua_ban_ban_h_39117d1b, error)
             }
             unpreservedData.remove(target.absolutePath)
         }
-        check(!target.isDirectory) { "Chưa ghi được dữ liệu của bạn lên thư mục: ${target.name}" }
+        check(!target.isDirectory) { S.s_chua_ghi_duoc_du_lieu_cua_ban_len_thu_muc_2a739b6c(target.name) }
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
         FileOutputStream(temporary).use { stream ->
@@ -291,7 +291,7 @@ object Store {
         try {
             AtomicFiles.replace(temporary, target)
         } catch (error: java.io.IOException) {
-            throw IllegalStateException("Chưa lưu được dữ liệu của bạn: ${target.name}", error)
+            throw IllegalStateException(S.s_chua_luu_duoc_du_lieu_cua_ban_0_4ab1f089(target.name), error)
         }
     }
 
@@ -314,19 +314,19 @@ object Store {
     private fun keepCorruptBytes(file: File, copyOnly: Boolean): File {
         val copy = File(file.path + ".corrupt-${System.currentTimeMillis()}-${UUID.randomUUID()}")
         if (copyOnly) {
-            check(copy.createNewFile()) { "Chưa giữ được bản dữ liệu cũ của bạn" }
+            check(copy.createNewFile()) { S.s_chua_giu_duoc_ban_du_lieu_cu_cua_ban_0a1d2593 }
             file.inputStream().use { input -> FileOutputStream(copy).use { output ->
                 input.copyTo(output)
                 output.fd.sync()
             } }
-        } else check(!copy.exists() && file.renameTo(copy)) { "Chưa giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
+        } else check(!copy.exists() && file.renameTo(copy)) { S.s_chua_giu_duoc_ban_du_lieu_hong_cua_ban_0_77729f9a(file.name) }
         return copy
     }
 
     fun preserveCorrupt(file: File, copyOnly: Boolean = false) {
         val copy = keepCorruptBytes(file, copyOnly)
         // A failed notice must not claim that the already-synced original is unpreserved.
-        addDataNotice("${file.name} hỏng một phần; giữ gốc ở ${copy.name} và dùng phần còn đọc được.")
+        addDataNotice(S.s_0_hong_mot_phan_giu_goc_o_1_va_dung_phan_c_d0851c51(file.name, copy.name))
     }
 
     private fun noticeRows(): JSONArray {
@@ -339,7 +339,7 @@ object Store {
         } catch (error: Exception) {
             // Keep the original independently; never recurse through preserveCorrupt/addDataNotice.
             val copy = keepCorruptBytes(file, copyOnly = true)
-            val text = "Thông báo bị hỏng; giữ gốc ở ${copy.name} và tạo danh sách mới."
+            val text = S.s_thong_bao_bi_hong_giu_goc_o_0_va_tao_danh_7852f829(copy.name)
             pendingDataNotices.add(text)
             val rows = JSONArray().put(text)
             writeAtomic(file, JSONObject().put("notices", rows).toString())
@@ -361,25 +361,25 @@ object Store {
             pendingDataNotices.clear()
             pendingDataNoticeTimes.clear()
         } catch (_: Exception) {
-            pendingDataNotices.add("Chưa lưu được thông báo; dữ liệu đã giữ vẫn dùng được — bạn thử lại.")
+            pendingDataNotices.add(S.s_chua_luu_duoc_thong_bao_du_lieu_da_giu_van_691c2a1c)
         }
     }
 
     @Synchronized
     fun dataNotices(): JSONArray {
         val rows = try { noticeRows() } catch (_: Exception) {
-            pendingDataNotices.add("Chưa đọc được thông báo; giữ nguyên file và vẫn mở thư viện.")
+            pendingDataNotices.add(S.s_chua_doc_duoc_thong_bao_giu_nguyen_file_va_a02a6231)
             JSONArray()
         }
         for (text in pendingDataNotices) if ((0 until rows.length()).none { rows.optString(it) == text }) rows.put(text)
-        if (unpreservedData.isNotEmpty()) rows.put("Chưa giữ được bản cũ; đọc phần hợp lệ, chưa ghi đè gốc — bạn thử lưu lại.")
+        if (unpreservedData.isNotEmpty()) rows.put(S.s_chua_giu_duoc_ban_cu_doc_phan_hop_le_chua_e2a1c731)
         return rows
     }
 
     /** Read-only diagnostics snapshot. No repair, writer or profile-content reads. */
     @Synchronized
     internal fun dataDiagnostics(): JSONObject {
-        check(::root.isInitialized) { "Kho chưa sẵn." }
+        check(::root.isInitialized) { S.s_kho_chua_san_3bc02288 }
         val now = System.currentTimeMillis()
         val file = File(workingRoot, "data-notices.json")
         val saved = runCatching { if (file.exists()) JSONObject(file.readText(Charsets.UTF_8)) else JSONObject() }
@@ -413,14 +413,14 @@ object Store {
             }
             unpreservedData.remove(file.absolutePath)
             try { writeAtomic(file, clean.toString()) }
-            catch (_: Exception) { addDataNotice("Chưa lưu được phần dữ liệu đọc lại; bản gốc vẫn còn — bạn thử lại.") }
+            catch (_: Exception) { addDataNotice(S.s_chua_luu_duoc_phan_du_lieu_doc_lai_ban_goc_eea3aa16) }
         }
         return clean
     }
 
     // ---- hồ sơ nghe + liên kết với sách ----------------------------------------------------------------------
 
-    private const val DEFAULT_RECORD_NAME = "Mặc định"
+    private const val DEFAULT_RECORD_NAME = S.s_mac_dinh_9a1af367
     private val RECORD_ID = Regex("r-[0-9a-f]{16}")
     private val SYNC_KEYS = listOf("record", "recordName", "nameAt", "activeAt", "movedAt", "book", "records", "active", "activeState",
         "deleted", "deletedRecords", "nameRev", "activeRev", "movedRev")
@@ -665,7 +665,7 @@ object Store {
     fun mergeRecord(bookId: String, body: JSONObject, onGone: (Set<String>) -> Unit = { Playback.recordsGone(it) }): JSONObject {
         validatePeerRevisions(body)
         val record = body.optString("record")
-        require(RECORD_ID.matches(record)) { "Thiếu mã hồ sơ nghe" }
+        require(RECORD_ID.matches(record)) { S.s_thieu_ma_ho_so_nghe_aa3ba353 }
         val book = recordsBook()
         val records = book.getJSONObject("records")
         val links = book.getJSONObject("links")
@@ -803,7 +803,7 @@ object Store {
         val links = book.getJSONObject("links")
         val link = links.optJSONObject(bookId) ?: JSONObject().put("records", JSONArray())
         val record = newRecordId()
-        val label = name.trim().take(60).ifBlank { "Hồ sơ ${(link.optJSONArray("records")?.length() ?: 0) + 1}" }
+        val label = name.trim().take(60).ifBlank { S.s_ho_so_0_f5c39f0a((link.optJSONArray("records")?.length() ?: 0) + 1) }
         val rev = metaRev(book)
         book.getJSONObject("records").put(record, JSONObject().put("name", label).put("createdAt", now()).put("nameAt", now()).put("nameRev", rev))
         addRecord(link, record)
@@ -817,7 +817,7 @@ object Store {
         val book = recordsBook()
         val link = book.getJSONObject("links").optJSONObject(bookId)
         val list = link?.optJSONArray("records") ?: JSONArray()
-        require((0 until list.length()).any { list.optString(it) == record }) { "Không có hồ sơ nghe này" }
+        require((0 until list.length()).any { list.optString(it) == record }) { S.s_khong_co_ho_so_nghe_nay_7d1d245a }
         link!!.put("active", record).put("activeAt", now()).put("activeRev", metaRev(book))
         saveRecords(book)
         return records(bookId)
@@ -826,8 +826,8 @@ object Store {
     @Synchronized
     fun renameRecord(bookId: String, record: String, name: String): JSONArray {
         val book = recordsBook()
-        val meta = book.getJSONObject("records").optJSONObject(record) ?: throw IllegalArgumentException("Không có hồ sơ nghe này")
-        require(name.isNotBlank()) { "Tên hồ sơ không được để trống" }
+        val meta = book.getJSONObject("records").optJSONObject(record) ?: throw IllegalArgumentException(S.s_khong_co_ho_so_nghe_nay_7d1d245a)
+        require(name.isNotBlank()) { S.s_ten_ho_so_khong_duoc_de_trong_7b775530 }
         meta.put("name", name.trim().take(60)).put("nameAt", now()).put("nameRev", metaRev(book))
         saveRecords(book)
         return records(bookId)
@@ -837,7 +837,7 @@ object Store {
     @Synchronized
     fun deleteRecord(bookId: String, record: String): JSONArray {
         val book = recordsBook()
-        require(book.getJSONObject("records").has(record)) { "Không có hồ sơ nghe này" }
+        require(book.getJSONObject("records").has(record)) { S.s_khong_co_ho_so_nghe_nay_7d1d245a }
         forget(book, record)
         book.getJSONObject("deleted").put(record, now())
         saveRecords(book)
@@ -852,9 +852,9 @@ object Store {
         val links = book.getJSONObject("links")
         val list = links.optJSONObject(bookId)?.optJSONArray("records") ?: JSONArray()
         require(book.getJSONObject("records").has(record) && (0 until list.length()).any { list.optString(it) == record }) {
-            "Không có hồ sơ nghe này"
+            S.s_khong_co_ho_so_nghe_nay_7d1d245a
         }
-        require(toBook.isNotEmpty() && toBook != bookId) { "Chọn một cuốn khác" }
+        require(toBook.isNotEmpty() && toBook != bookId) { S.s_chon_mot_cuon_khac_cdfbf9a0 }
         unlink(links, bookId, record)
         val link = links.optJSONObject(toBook) ?: JSONObject().put("records", JSONArray()).put("activeAt", 0.0)
         addRecord(link, record)
@@ -1040,18 +1040,18 @@ object Store {
     /** Chỗ đọc cùng hợp đồng anchor với chỗ nghe; flush của hồ sơ cũ vẫn về đúng hồ sơ ấy. */
     @Synchronized
     fun saveReading(id: String, chapterId: Int, index: Int, at: Double = now(), anchor: JSONObject? = null, record: String? = null, rev: JSONObject? = null): JSONObject {
-        require(at.isFinite() && at >= 0) { "Thời điểm chỗ đọc không hợp lệ" }
+        require(at.isFinite() && at >= 0) { S.s_thoi_diem_cho_doc_khong_hop_le_1710059f }
         val target = record ?: activeRecord(id)
-        require(records(id).let { rows -> (0 until rows.length()).any { rows.getJSONObject(it).optString("id") == target } }) { "Hồ sơ đọc không còn thuộc cuốn này" }
+        require(records(id).let { rows -> (0 until rows.length()).any { rows.getJSONObject(it).optString("id") == target } }) { S.s_ho_so_doc_khong_con_thuoc_cuon_nay_bb08951a }
         val state = recordState(target)
         val place = JSONObject().put("chapterId", chapterId).put("index", index.coerceAtLeast(0)).put("at", at)
         if (rev == null) place.put("rev", ListeningRevision.advance(state, revisionNode())) else {
             place.put("rev", rev)
-            require(ListeningRevision.revision(place).first > 0) { "Phiên bản chỗ đọc không hợp lệ" }
+            require(ListeningRevision.revision(place).first > 0) { S.s_phien_ban_cho_doc_khong_hop_le_ee53cae9 }
             val current = state.optJSONObject("reading")
             if (current != null && !ListeningRevision.newer(place, current)) {
                 if (ListeningRevision.order(place) == ListeningRevision.order(current) && chapterId == current.optInt("chapterId") && index == current.optInt("index")) return state
-                throw IllegalStateException("Chỗ đọc đã được cập nhật. Bạn hãy nạp lại sách.")
+                throw IllegalStateException(S.s_cho_doc_da_duoc_cap_nhat_ban_hay_nap_lai_s_ba92fc98)
             }
             ListeningRevision.observe(state, rev)
         }
@@ -1086,7 +1086,7 @@ object Store {
     }
 
     /** Lời báo khi một việc ghi mang hồ sơ đã xoá / chuyển sang sách khác (cùng câu với 409 của máy tính, webui/listening.py `RecordGone`). */
-    const val RECORD_GONE = "Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách."
+    const val RECORD_GONE = S.s_ho_so_nghe_nay_da_bi_xoa_hoac_chuyen_sang_310a9a7d
 
     /** Hồ sơ cho một việc ghi của người nghe: [recordId] là hồ sơ màn đang hiện đã chốt lúc bắt đầu (không nói: hồ sơ đang dùng);
      *  đã xoá / chuyển sách thì ném [IllegalStateException] - không ghi sang hồ sơ khác (đúng `Listening._named`). */
@@ -1165,10 +1165,10 @@ object Store {
      *  mục books/ (bookDir("") = root/books) - xoá theo mã ấy là mất mọi sách đã tải; "../x" ra ngoài thư viện. */
     fun deletableBookDir(id: String): File {
         require(id.isNotEmpty() && id.all { it.isLetterOrDigit() && it.code < 128 || it == '_' || it == '-' }) {
-            "mã sách không hợp lệ"
+            S.s_ma_sach_khong_hop_le_d488bd52
         }
         val dir = bookDir(id).canonicalFile
-        require(dir.parentFile == File(workingRoot, "books").canonicalFile) { "thư mục sách nằm ngoài thư viện" }
+        require(dir.parentFile == File(workingRoot, "books").canonicalFile) { S.s_thu_muc_sach_nam_ngoai_thu_vien_ead76d4b }
         return dir
     }
 
@@ -1427,7 +1427,7 @@ object Store {
         val action = JSONObject().put("to", newId).put("adopt", adopt)
         journal.put(oldId, action)
         writeAtomic(rekeyJournal, journal.toString())
-        check(rekeyJournal.isFile) { "Chưa lưu được việc đổi mã sách của bạn" }
+        check(rekeyJournal.isFile) { S.s_chua_luu_duoc_viec_doi_ma_sach_cua_ban_0bf205dc }
         // Lần đổi này báo lỗi cho nơi gọi (journal còn, lần mở sau làm tiếp); chỉ phần khôi phục lúc mở app mới nuốt lỗi.
         if (finishRekey(oldId, action)) {
             journal.remove(oldId)
@@ -1447,7 +1447,7 @@ object Store {
                     writeAtomic(rekeyJournal, journal.toString())
                 }
             } catch (error: Exception) {
-                runCatching { AppLog.w("Store", "đổi mã sách $oldId chưa xong, thử lại lần sau", error) } // Log không chạy trong test JVM
+                runCatching { AppLog.w("Store", S.s_doi_ma_sach_0_chua_xong_thu_lai_lan_sau_1451dcaa(oldId), error) } // Log không chạy trong test JVM
             }
         }
     }
@@ -1460,7 +1460,7 @@ object Store {
         if (source.isDirectory) {
             if (rawManifest(newId) != null) return true // mã mới đã thành một cuốn khác: bỏ việc đổi, cuốn cũ giữ nguyên
             target.deleteRecursively() // chỉ là cache nghe thẳng, như trước khi có journal
-            check(source.renameTo(target)) { "Chưa chuyển được thư mục sách của bạn" }
+            check(source.renameTo(target)) { S.s_chua_chuyen_duoc_thu_muc_sach_cua_ban_fd23ff64 }
         }
         if (!target.isDirectory) return true // cả hai thư mục đã mất (sách bị xoá): không còn gì để làm
         rawManifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }

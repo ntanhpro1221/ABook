@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -87,7 +88,7 @@ FocusScope {
     onViewKeyChanged: if (viewReady) restoreView()
     Timer { id: viewWrite; interval: 400; onTriggered: root.flushView() }
     Component.onDestruction: flushView()
-    readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
+    readonly property var fromLabels: ({work: S.s_viec_can_duyet_5c0c3ce1, review: S.s_can_nghe_lai_d651f6ab, precast: S.s_duyet_truoc_khi_thu_74c121d0})
     function pickTab(key) {
         workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"; scriptAt = null
         tab = Logic.tabOf(key)
@@ -143,7 +144,7 @@ FocusScope {
         const id = book.id
         store.quiet("GET", "/api/books/" + id + "/cast", null, function(cast, error) {
             if (!root.book || root.book.id !== id) return
-            if (error || !cast) { Api.notice = Edit.toastText("Chưa gộp được", error || "Chưa làm được lúc này."); return }
+            if (error || !cast) { Api.notice = Edit.toastText(S.s_chua_gop_duoc_3d63128a, error || S.s_chua_lam_duoc_luc_nay_2e7cacde); return }
             data.people = (cast.characters || []).concat(cast.extras || [])
             castDialogs.begin("merge", data)
         })
@@ -245,9 +246,9 @@ FocusScope {
     }
     function chapterMenuItems(chapter) {
         const items = []
-        if (chapter.playable && !remote) items.push(Logic.item("play", "play", "Nghe chương"))
-        items.push(Logic.item("script", "book-open-text", "Kịch bản chương này"))
-        if (chapter.segments.finished > 0) { items.push(Logic.separator()); items.push(Logic.item("retake", "refresh-cw", "Thu lại cả chương…")) }
+        if (chapter.playable && !remote) items.push(Logic.item("play", "play", S.s_nghe_chuong_7c9ab57c))
+        items.push(Logic.item("script", "book-open-text", S.s_kich_ban_chuong_nay_89b7a918))
+        if (chapter.segments.finished > 0) { items.push(Logic.separator()); items.push(Logic.item("retake", "refresh-cw", S.s_thu_lai_ca_chuong_34cdb423)) }
         return items
     }
 
@@ -260,7 +261,7 @@ FocusScope {
         width: root.contentW
         shape: "rows"
         count: 6
-        label: "Đang mở dự án"
+        label: S.s_dang_mo_du_an_b76ab67b
     }
     EmptyState {
         objectName: "projectGone"
@@ -269,9 +270,9 @@ FocusScope {
         y: 80 - 56
         width: root.contentW
         icon: "circle-alert"
-        title: "Dự án này không còn"
-        text: "Cuốn này đã bị xoá hoặc chuyển đi khỏi thư viện."
-        Button { objectName: "projectGoneBack"; text: "Về danh sách dự án"; onClicked: root.backRequested() }
+        title: S.s_du_an_nay_khong_con_94194a30
+        text: S.s_cuon_nay_da_bi_xoa_hoac_chuyen_di_khoi_thu_7f90453a
+        Button { objectName: "projectGoneBack"; text: S.s_ve_danh_sach_du_an_67552315; onClicked: root.backRequested() }
     }
     EmptyState {
         objectName: "projectError"
@@ -280,10 +281,10 @@ FocusScope {
         y: 80 - 56
         width: root.contentW
         icon: "circle-alert"
-        title: "Chưa mở được sách"
+        title: S.s_chua_mo_duoc_sach_86cc68d3
         text: root.store && root.store.bookError ? Logic.failureText(root.store.bookError.status, root.store.bookError.text) : ""
-        Button { objectName: "projectRetry"; text: "Thử lại"; kind: "ghost"; onClicked: root.store.loadBook() }
-        Button { objectName: "projectErrorBack"; text: "Về Studio"; onClicked: root.backRequested() }
+        Button { objectName: "projectRetry"; text: S.s_thu_lai_c58d068c; kind: "ghost"; onClicked: root.store.loadBook() }
+        Button { objectName: "projectErrorBack"; text: S.s_ve_studio_349a48c4; onClicked: root.backRequested() }
     }
 
     // ---- danh sách ----
@@ -312,7 +313,7 @@ FocusScope {
                     objectName: "projectHeader"
                     width: parent.width
                     showBack: true
-                    backLabel: "Về Studio"
+                    backLabel: S.s_ve_studio_349a48c4
                     title: root.book ? root.book.title : ""
                     Button {
                         id: primaryButton
@@ -329,8 +330,8 @@ FocusScope {
                         objectName: "bookMore"
                         icon: "ellipsis"
                         iconSize: 20
-                        tip: "Tuỳ chọn dự án"
-                        Accessible.name: "Tuỳ chọn dự án " + (root.book ? root.book.title : "")
+                        tip: S.s_tuy_chon_du_an_39f1aa52
+                        Accessible.name: S.s_tuy_chon_du_an_f619cf04 + (root.book ? root.book.title : "")
                         onClicked: { bookMenu.items = root.bookMenuItems(); bookMenu.anchorItem = moreButton; bookMenu.show() }
                     }
                 }
@@ -348,7 +349,7 @@ FocusScope {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
                     }
-                    Button { id: retry; size: "sm"; kind: "ghost"; text: "Thử lại"; onClicked: root.store.loadBook() }
+                    Button { id: retry; size: "sm"; kind: "ghost"; text: S.s_thu_lai_c58d068c; onClicked: root.store.loadBook() }
                 }
                 // Bìa thật (CoverEditor.tsx) bên trái; trạng thái, số liệu, tiến độ và lời nhắn bên phải. Màn hẹp: bìa 96, nút chỉ còn biểu tượng.
                 Row {
@@ -408,7 +409,7 @@ FocusScope {
                                     size: "xs"
                                     value: root.book && root.book.progress ? root.book.progress.overall : 0
                                     tone: projectProgress.moving ? "accent" : "muted"
-                                    label: "Tiến độ cả sách"
+                                    label: S.s_tien_do_ca_sach_25195f69
                                 }
                                 Text {
                                     width: 40
@@ -454,7 +455,7 @@ FocusScope {
                                 objectName: "projectBattery"
                                 visible: battery.text !== ""
                                 width: parent.width
-                                label: "Dùng pin"
+                                label: S.s_dung_pin_d9d66b55
                                 HintText { id: battery; width: parent.width; text: root.book ? Logic.batteryInfo(root.book, root.remote) : "" }
                             }
                             Flow {
@@ -471,7 +472,7 @@ FocusScope {
                                     Text {
                                         id: startErrorText
                                         width: parent.width - 16 - 8
-                                        text: root.book && root.book.startError ? "Chưa khởi động được: " + root.book.startError : ""
+                                        text: root.book && root.book.startError ? S.s_chua_khoi_dong_duoc_41fc29a4 + root.book.startError : ""
                                         color: Theme.danger
                                         wrapMode: Text.Wrap
                                         font.pixelSize: Theme.sizeBodySmall
@@ -484,7 +485,7 @@ FocusScope {
                                     size: "sm"
                                     kind: "ghost"
                                     icon: "rotate-ccw"
-                                    text: "Thử lại"
+                                    text: S.s_thu_lai_c58d068c
                                     busy: !!root.store && root.store.starting
                                     onActivated: root.store.start(root.book.id)
                                 }
@@ -530,7 +531,7 @@ FocusScope {
                         Icon { name: "circle-alert"; size: 16; color: Theme.warning; y: 2 }
                         Text {
                             width: parent.width - 16 - 8
-                            text: "Chưa tải được " + root.shownSideError + "; tự thử lại, hoặc làm mới trang."
+                            text: S.s_chua_tai_duoc_d5533c6e + root.shownSideError + S.s_tu_thu_lai_hoac_lam_moi_trang_6d8c2223
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall
@@ -601,7 +602,7 @@ FocusScope {
                     Text {
                         objectName: "activityCount"
                         x: 8; anchors.verticalCenter: parent.verticalCenter
-                        text: cell.row.count + " mục gần nhất"
+                        text: cell.row.count + S.s_muc_gan_nhat_a3225693
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
                     }
@@ -619,7 +620,7 @@ FocusScope {
                         Text {
                             id: techLabel
                             anchors.centerIn: parent
-                            text: root.activityMode === "technical" ? "Ẩn chi tiết" : "Chi tiết kỹ thuật"
+                            text: root.activityMode === "technical" ? S.s_an_chi_tiet_5df2cd32 : S.s_chi_tiet_ky_thuat_f27eb5f6
                             color: Theme.accentText
                             font.pixelSize: Theme.sizeCaption
                             font.weight: Theme.weightMedium
@@ -724,7 +725,7 @@ FocusScope {
                         size: "sm"
                         kind: "ghost"
                         icon: "arrow-left"
-                        text: "Về màn trước"
+                        text: S.s_ve_man_truoc_5bdf90b3
                         onClicked: root.jumpBack()
                     }
                 }
@@ -737,8 +738,8 @@ FocusScope {
                 y: backWrap.height
                 width: root.contentW
                 icon: "book-open-text"
-                title: parent.activityEmpty ? "Chưa có gì" : "Chưa có chương nào"
-                text: parent.activityEmpty ? "Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy." : ""
+                title: parent.activityEmpty ? S.s_chua_co_gi_adba6b1d : S.s_chua_co_chuong_nao_35e56dd1
+                text: parent.activityEmpty ? S.s_dien_bien_se_hien_o_day_khi_sach_bat_dau_c_7794dda1 : ""
                 height: visible ? implicitHeight : 0
             }
             Text {
@@ -759,7 +760,7 @@ FocusScope {
                 width: root.contentW * 2 / 3
                 shape: "rows"
                 count: 4
-                label: "Đang tải nhật ký"
+                label: S.s_dang_tai_nhat_ky_bf896330
             }
             StudioPanels {
                 id: panels
@@ -847,9 +848,9 @@ FocusScope {
             else if (key === "script") { root.pickTab("script"); root.scriptAt = {chapter: chapter.id, line: "", pick: false} }
             else if (key === "retake") {
                 root.retakeChapter = chapter
-                retake.title = "Thu lại cả " + chapter.displayTitle + "?"
-                retake.description = "Thu lại " + chapter.segments.finished + " câu; giọng giữ nguyên, cách nói đổi."
-                retake.actions = [{key: "later", text: "Thôi"}, {key: "go", text: "Thu lại " + chapter.segments.finished + " câu", icon: "refresh-cw", kind: "primary"}]
+                retake.title = S.s_thu_lai_ca_347fa716 + chapter.displayTitle + "?"
+                retake.description = S.s_thu_lai_bceb80c2 + chapter.segments.finished + S.s_cau_giong_giu_nguyen_cach_noi_doi_348109a3
+                retake.actions = [{key: "later", text: S.s_thoi_e68f9e88}, {key: "go", text: S.s_thu_lai_bceb80c2 + chapter.segments.finished + S.s_cau_b07e1008, icon: "refresh-cw", kind: "primary"}]
                 retake.show()
             }
         }
@@ -867,7 +868,7 @@ FocusScope {
         Button {
             objectName: "retakeEdit"
             kind: "ghost"
-            text: "Sửa chữ"
+            text: S.s_sua_chu_53abcaeb
             onActivated: {
                 const chapter = root.retakeChapter
                 retake.dismiss()
@@ -878,15 +879,15 @@ FocusScope {
         MoreInfo {
             objectName: "retakeMore"
             width: parent.width
-            label: "Thu lại chương"
-            HintText { width: parent.width; text: "Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được." }
+            label: S.s_thu_lai_chuong_c286c5e4
+            HintText { width: parent.width; text: S.s_dung_hat_giong_moi_cho_ca_chuong_sai_nguoi_a37ff623 }
         }
     }
     StudioDialogs {
         id: dialogs
         store: root.store
         local: !root.remote
-        computer: root.store ? root.store.computerName : "máy tính"
+        computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226
         next: root.next
         onListenRequested: id => root.listenRequested(id)
         onNewProjectRequested: (mode, id) => root.newProjectRequested(mode, id)

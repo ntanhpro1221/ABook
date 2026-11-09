@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -154,7 +156,7 @@ object PrepareAhead {
 
     /** Câu từ chối khi giọng gửi chữ đi mà người nghe chưa đồng ý (giao diện hỏi trước; đây là lưới cuối - soát a79 lỗi 6), null nếu làm được. */
     internal fun refusal(voice: String): String? =
-        if (ReadAloud.voiceNeedsConsent(voice)) "Chưa cho phép gửi chữ — bạn bấm Phát → Nghe, hoặc dùng giọng máy." else null
+        if (ReadAloud.voiceNeedsConsent(voice)) S.s_chua_cho_phep_gui_chu_ban_bam_phat_nghe_ho_a57c964e else null
 
     /** Bắt đầu (thay việc cũ). Đoạn đã có trong bộ đệm được bỏ qua, nên bấm lại sau khi dừng / mất mạng là làm tiếp. Giọng chưa được đồng ý: ném [VoiceException], không có việc nào. */
     fun start(context: Context, bookId: String, voice: String, ids: List<Int>, label: String, chargingOnly: Boolean): JSONObject {
@@ -297,17 +299,17 @@ object PrepareAhead {
         if (Build.VERSION.SDK_INT >= 26) {
             val system = context.getSystemService(NotificationManager::class.java)
             if (system.getNotificationChannel(CHANNEL) == null) {
-                system.createNotificationChannel(NotificationChannel(CHANNEL, "Làm trước để nghe", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Tiến độ đọc sẵn các chương tới"
+                system.createNotificationChannel(NotificationChannel(CHANNEL, S.s_lam_truoc_de_nghe_6845aad1, NotificationManager.IMPORTANCE_LOW).apply {
+                    description = S.s_tien_do_doc_san_cac_chuong_toi_37a22e41
                 })
             }
         }
         val ready = job.chapters.count { it.ready }
         val (title, text) = when (job.state) {
-            "running" -> "Đang làm trước ${job.label}" to "Đã sẵn sàng $ready/${job.chapters.size} chương"
-            "done" -> "Đã làm trước ${job.label}" to
-                if (job.online) "Nghe được cả khi không có mạng." else "Nghe liền mạch, không phải chờ."
-            "error" -> "Đã dừng làm trước" to "Giữ chương đã xong — bạn mở ABook để xem lỗi."
+            "running" -> S.s_dang_lam_truoc_0_cfa87758(job.label) to S.s_da_san_sang_0_1_chuong_06edeb48(ready, job.chapters.size)
+            "done" -> S.s_da_lam_truoc_0_b037e237(job.label) to
+                if (job.online) S.s_nghe_duoc_ca_khi_khong_co_mang_91b0c21c else S.s_nghe_lien_mach_khong_phai_cho_c7fd4dbf
+            "error" -> S.s_da_dung_lam_truoc_31fb32be to S.s_giu_chuong_da_xong_ban_mo_abook_de_xem_loi_649b6491
             else -> return manager.cancel(NOTIFICATION)
         }
         val open = context.packageManager.getLaunchIntentForPackage(context.packageName)

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -31,7 +32,7 @@ StudioConfirm {
     signal applyFirst()
 
     readonly property bool remote: store ? store.remote : false
-    readonly property string computer: store ? store.computerName : "máy tính"
+    readonly property string computer: store ? store.computerName : S.s_may_tinh_8eafc226
     readonly property bool dialogs: !remote                 // Studio từ xa không có hộp chọn thư mục của máy này: file nằm ở máy tính
     readonly property var stale: Logic.staleOf(history)
     readonly property var changedIds: Logic.changedChapters(stale)
@@ -47,15 +48,15 @@ StudioConfirm {
     readonly property var kinds: Logic.kindsFor(remote)
     readonly property string savePlace: Logic.savePlace({dialogs: dialogs, remote: remote, computer: computer, libraryRoot: store && store.info ? store.info.libraryRoot : ""})
 
-    title: "Xuất “" + (book.title || "") + "”"
+    title: S.s_xuat_e491a6dc + (book.title || "") + "”"
     description: plan.description
     panelWidth: 512
     actions: phase === "busy"
-        ? [{key: "cancel", text: "Huỷ xuất", kind: "ghost", enabled: !job.cancelling}, {key: "later", text: "Đóng, cứ để chạy", kind: "ghost"}]
+        ? [{key: "cancel", text: S.s_huy_xuat_ca425e96, kind: "ghost", enabled: !job.cancelling}, {key: "later", text: S.s_dong_cu_de_chay_9a342df0, kind: "ghost"}]
         : phase === "finished"
-          ? (remote ? [] : [{key: "reveal", text: "Mở thư mục", icon: "folder-open", kind: "ghost"}]).concat([{key: "done", text: "Xong", kind: "primary"}])
-          : [{key: "later", text: "Thôi", kind: "ghost"},
-             {key: "go", text: dialogs ? "Lưu và xuất" : "Xuất", icon: Logic.kindInfo(kind).icon, kind: "primary", enabled: !(plan.blocked || needsFfmpeg)}]
+          ? (remote ? [] : [{key: "reveal", text: S.s_mo_thu_muc_4bf5b127, icon: "folder-open", kind: "ghost"}]).concat([{key: "done", text: S.s_xong_a6f4543a, kind: "primary"}])
+          : [{key: "later", text: S.s_thoi_e68f9e88, kind: "ghost"},
+             {key: "go", text: dialogs ? S.s_luu_va_xuat_e274cff0 : S.s_xuat_b2ebc56b, icon: Logic.kindInfo(kind).icon, kind: "primary", enabled: !(plan.blocked || needsFfmpeg)}]
     onChosen: key => {
         if (key === "cancel") job.cancel()
         else if (key === "reveal") { if (finished && finished.folder) store.quiet("POST", "/api/reveal-export", {folder: finished.folder}) }
@@ -123,7 +124,7 @@ StudioConfirm {
     }
     function jobEnded(error, result) {
         const made = job.kind
-        if (error === Logic.CANCELLED) { store.say("Đã dừng xuất"); return }
+        if (error === Logic.CANCELLED) { store.say(S.s_da_dung_xuat_ab8ac9d1); return }
         if (error) {
             const failure = Logic.failureOf(made, error)
             store.say(failure.title, failure.description)
@@ -172,7 +173,7 @@ StudioConfirm {
             ChoiceRow {
                 objectName: "exportScope"
                 width: parent.width
-                label: "Phạm vi bản xuất"
+                label: S.s_pham_vi_ban_xuat_bcfd596b
                 options: Logic.scopeOptions(root.parts.length)
                 value: root.scope
                 onPicked: value => root.scope = value
@@ -186,14 +187,14 @@ StudioConfirm {
             ChoiceRow {
                 objectName: "exportLayout"
                 width: parent.width
-                label: "Cách chia file"
+                label: S.s_cach_chia_file_14e62e54
                 options: Logic.LAYOUTS
                 value: root.layout
                 onPicked: value => root.layout = value
             }
             Text {
                 width: parent.width
-                text: root.layout === "single" ? "Cả bộ trong một file .abook, nghe nối tiếp các phần." : "Mỗi phần một file, cùng thư mục của bộ."
+                text: root.layout === "single" ? S.s_ca_bo_trong_mot_file_abook_nghe_noi_tiep_c_a02fc82b : S.s_moi_phan_mot_file_cung_thu_muc_cua_bo_4e8f08b0
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -205,7 +206,7 @@ StudioConfirm {
             ImportCheck {
                 objectName: "exportMusic"
                 width: parent.width
-                label: "Kèm nhạc nền"
+                label: S.s_kem_nhac_nen_c616e8d2
                 help: Logic.MUSIC_MIX_HINT
                 checked: root.withMusic
                 onToggled: value => root.chosenMusic = {bookId: root.book.id, on: value}
@@ -218,8 +219,8 @@ StudioConfirm {
             Text {
                 objectName: "exportEstimate"
                 width: parent.width
-                text: "Cỡ ước tính: khoảng " + Size.formatSize(root.estimate ? root.estimate.bytes || 0 : 0)
-                      + (root.estimate && root.estimate.musicPending > 0 ? "; cộng thêm " + root.estimate.musicPending + " bài nhạc khi xuất." : "")
+                text: S.s_co_uoc_tinh_khoang_a6ece2b0 + Size.formatSize(root.estimate ? root.estimate.bytes || 0 : 0)
+                      + (root.estimate && root.estimate.musicPending > 0 ? S.s_cong_them_c1382cfe + root.estimate.musicPending + S.s_bai_nhac_khi_xuat_ea744e20 : "")
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -234,7 +235,7 @@ StudioConfirm {
                 remote: root.remote
                 computer: root.computer
                 onDownload: root.store.quiet("POST", "/api/ffmpeg", {}, function(result, error) {
-                    if (error) root.store.say("Chưa tải được công cụ", error)
+                    if (error) root.store.say(S.s_chua_tai_duoc_cong_cu_cfe422f9, error)
                     else root.ffmpeg = result
                 })
                 onStop: root.store.quiet("POST", "/api/ffmpeg/cancel", {}, function(result, error) { if (!error) root.ffmpeg = result })
@@ -244,7 +245,7 @@ StudioConfirm {
             id: timingsRegion
             width: parent.width
             open: root.kind === "abook"
-            OnComputerPill { visible: root.remote; verb: "Chữ sáng theo giọng"; computer: root.computer; maxWidth: parent.width }
+            OnComputerPill { visible: root.remote; verb: S.s_chu_sang_theo_giong_57fb4327; computer: root.computer; maxWidth: parent.width }
             Loader {
                 width: parent.width
                 active: timingsRegion.reveal > 0 && !root.remote
@@ -255,14 +256,14 @@ StudioConfirm {
         Collapse {
             width: parent.width
             open: root.plan.wholeSeries && root.kind === "mp3"
-            Text { width: parent.width; text: "Mỗi phần một thư mục con trong thư mục của bộ."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Text { width: parent.width; text: S.s_moi_phan_mot_thu_muc_con_trong_thu_muc_cua_7e868eba; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
         // Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép
         Collapse {
             width: parent.width
             open: root.stale.length > 0
             spacing: 8
-            Text { objectName: "exportStaleTitle"; width: parent.width; text: "Bản xuất đã cũ"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightBold }
+            Text { objectName: "exportStaleTitle"; width: parent.width; text: S.s_ban_xuat_da_cu_7e726524; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightBold }
             Repeater {
                 model: root.stale
                 delegate: Column {
@@ -272,7 +273,7 @@ StudioConfirm {
                     spacing: 8
                     Text {
                         width: parent.width
-                        text: modelData.target + "\u00a0·\u00a0" + modelData.changed.length + " chương đã đổi"
+                        text: modelData.target + "\u00a0·\u00a0" + modelData.changed.length + S.s_chuong_da_doi_a6114cc0
                         color: Theme.text
                         wrapMode: Text.WrapAnywhere
                         font.pixelSize: Theme.sizeBodySmall
@@ -287,7 +288,7 @@ StudioConfirm {
                     Text {
                         visible: modelData.kind === "m4b"
                         width: parent.width
-                        text: "M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi."
+                        text: S.s_m4b_gop_ca_cuon_ban_can_dung_lai_ca_file_v_6adad4ec
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
@@ -301,7 +302,7 @@ StudioConfirm {
             ImportCheck {
                 objectName: "exportChangedOnly"
                 width: parent.width
-                label: "Xuất " + root.changedIds.length + " chương đổi"
+                label: S.s_xuat_00fa2c47 + root.changedIds.length + S.s_chuong_doi_e42b9885
                 checked: root.changedOnly
                 onToggled: value => root.changedOnly = value
             }
@@ -311,7 +312,7 @@ StudioConfirm {
             open: root.kind === "abook"
             ImportCheck {
                 width: parent.width
-                label: "Xuất một phần"
+                label: S.s_xuat_mot_phan_fc85b7e5
                 checked: root.partial
                 onToggled: value => root.partial = value
             }
@@ -344,13 +345,13 @@ StudioConfirm {
                         id: pendingLine
                         x: 24
                         width: parent.width - 24
-                        text: "Còn " + root.book.pendingChanges + " thay đổi chưa áp - bản xuất đọc như TRƯỚC khi sửa."
+                        text: S.s_con_71d0e2b2 + root.book.pendingChanges + S.s_thay_doi_chua_ap_ban_xuat_doc_nhu_truoc_kh_3a7b1e79
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
                     }
                 }
-                Button { id: again; objectName: "exportApplyFirst"; size: "sm"; kind: "ghost"; icon: "refresh-cw"; text: "Áp dụng trước"; onActivated: { root.dismiss(); root.applyFirst() } }
+                Button { id: again; objectName: "exportApplyFirst"; size: "sm"; kind: "ghost"; icon: "refresh-cw"; text: S.s_ap_dung_truoc_fec0937b; onActivated: { root.dismiss(); root.applyFirst() } }
             }
         }
     }

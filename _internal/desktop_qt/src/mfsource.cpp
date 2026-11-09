@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "mfsource.h"
 
 #include <algorithm>
@@ -42,10 +43,10 @@ MfSource::MfSource(int outRate) : d(new Decoder), m_outRate(outRate) {}
 MfSource::~MfSource() = default;
 
 bool MfSource::fail(long hr) {
-    m_error = QStringLiteral("Windows không giải mã được tệp nhạc (0x%1).")
+    m_error = UiStrings::s_copy_e330542a1a10
         .arg(quint32(hr), 8, 16, QLatin1Char('0'));
     if (m_ogg)
-        m_error += QStringLiteral(" Ogg/Opus cần bộ giải mã Web Media Extensions của Windows; hãy kiểm tra bộ giải mã hoặc tệp nhạc.");
+        m_error += UiStrings::s_copy_d2b10bc91661;
     return false;
 }
 

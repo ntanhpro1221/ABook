@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.S
+
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,11 +38,11 @@ class MusicRepo(context: Context) : MusicSource {
     private fun textOnly(id: String): Boolean =
         (Store.manifest(id) ?: Store.streamManifest(id)?.let { Store.streamed(id, it) })?.let(Playlists::isTextBook) ?: false
 
-    override suspend fun menu(): MusicMenu = io("Chưa tải được các danh sách nhạc") { MusicJson.menu(LocalStudio.playlistsView()) }
+    override suspend fun menu(): MusicMenu = io(S.s_chua_tai_duoc_cac_danh_sach_nhac_bac83508) { MusicJson.menu(LocalStudio.playlistsView()) }
 
-    override suspend fun book(id: String): BookMusic = io("Chưa đọc được nhạc nền của cuốn này") { MusicJson.book(LocalStudio.bookMusic(id), textOnly(id)) }
+    override suspend fun book(id: String): BookMusic = io(S.s_chua_doc_duoc_nhac_nen_cua_cuon_nay_ee7ffa09) { MusicJson.book(LocalStudio.bookMusic(id), textOnly(id)) }
 
-    private suspend fun put(id: String, body: JSONObject): BookMusic = io("Chưa đổi được nhạc nền") {
+    private suspend fun put(id: String, body: JSONObject): BookMusic = io(S.s_chua_doi_duoc_nhac_nen_b5d19c42) {
         val view = LocalStudio.setBookMusic(id, body)
         BookActions.edited(app, id)
         MusicJson.book(view, textOnly(id))
@@ -62,5 +64,5 @@ class MusicRepo(context: Context) : MusicSource {
     }
 
     override suspend fun alternatives(id: String, key: String): List<MineTrack> =
-        io("Chưa tìm được bài để đổi") { MusicJson.mine(LocalStudio.musicAlternatives(id, key)) }
+        io(S.s_chua_tim_duoc_bai_de_doi_18da3f5e) { MusicJson.mine(LocalStudio.musicAlternatives(id, key)) }
 }

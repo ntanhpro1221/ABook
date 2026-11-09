@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -5,7 +6,7 @@ import ABook
 Column {
     id: root
     property int count: 2
-    property string label: "Đang tải"
+    property string label: S.s_dang_tai_465b1987
     spacing: Theme.s16
     Accessible.role: Accessible.StaticText
     Accessible.name: label

@@ -126,7 +126,7 @@ object ListenPrefs {
             change(stored)
             Store.writeAtomic(file(), stored.toString())
         } catch (error: Exception) {
-            AppLog.w("ABookPrefs", "không ghi được tuỳ chọn nghe", error)
+            AppLog.w("ABookPrefs", S.s_khong_ghi_duoc_tuy_chon_nghe_b308cbb4, error)
         }
     }
 

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
@@ -31,7 +32,7 @@ Column {
     property string unpairError: ""
     readonly property var computers: view ? view.computers || [] : []
     readonly property string waking: computers.filter(computer => computer.waking).map(computer => computer.id).join(",")
-    readonly property string syncLabel: "Kết nối Wi-Fi"
+    readonly property string syncLabel: S.s_ket_noi_wi_fi_7680d1aa
     readonly property var pairedAddresses: computers.filter(computer => Logic.isBluetoothHost(computer.host)).map(computer => Logic.bluetoothAddress(computer))
     readonly property var unpairedDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("release") >= 0 && pairedAddresses.indexOf(String(device.address).toUpperCase()) < 0)
     readonly property var unpairedDevDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("dev") >= 0 && pairedAddresses.indexOf((device.address + "@dev").toUpperCase()) < 0)
@@ -66,13 +67,13 @@ Column {
         const known = computers.map(computer => computer.id)
         Api.call("POST", "/api/computers", {address: address, code: code}, function(view, error) {
             root.pairBusy = false
-            if (error) { root.pairError = error; root.say("Chưa ghép được"); return }
+            if (error) { root.pairError = error; root.say(S.s_chua_ghep_duoc_e27b68c8); return }
             // Máy vừa ghép = máy có trong danh sách mới mà danh sách cũ chưa có: nói tên thật (soát UX a11).
             const added = (view.computers || []).find(computer => known.indexOf(computer.id) < 0)
             root.done(view)
             addressField.clear()
             codeField.clear()
-            root.say(added && added.name ? "Đã ghép " + added.name : "Đã ghép")
+            root.say(added && added.name ? S.s_da_ghep_7b3601f2 + added.name : S.s_da_ghep_2bd0972f)
         })
     }
     function refresh() {
@@ -87,16 +88,16 @@ Column {
         bluetoothBusy = true
         Api.call("POST", "/api/computers/" + id + "/bluetooth", {address: bluetoothAddress}, function(view, error) {
             root.bluetoothBusy = false
-            if (error) { root.say("Chưa chọn được"); return }
+            if (error) { root.say(S.s_chua_chon_duoc_078e7435); return }
             root.done(view)
-            root.say(bluetoothAddress ? "Đã chọn Bluetooth dự phòng" : "Không dùng Bluetooth dự phòng nữa")
+            root.say(bluetoothAddress ? S.s_da_chon_bluetooth_du_phong_4a0a6048 : S.s_khong_dung_bluetooth_du_phong_nua_0283e9c4)
         })
     }
     function discover() {
         discovering = true
         Api.call("GET", "/api/computers/discover", null, function(result, error) {
             root.discovering = false
-            if (error) { root.say("Chưa tìm được"); return }
+            if (error) { root.say(S.s_chua_tim_duoc_9359cd73); return }
             root.found = result.found || []
         })
     }
@@ -120,9 +121,9 @@ Column {
     }
     function startUnpair(computer) {
         Api.call("GET", "/api/computers/" + computer.id + "/unsent", null, function(unsent, error) {
-            if (error) { root.say("Chưa bỏ ghép được"); return }
-            if (Logic.unpairCopy(computer.name, "máy tính", unsent, root.reachable(computer)) === null) {
-                root.runUnpair(computer, null, function(problem) { root.say(problem ? "Chưa bỏ ghép được" : Logic.unpairDone(computer.name)) })
+            if (error) { root.say(S.s_chua_bo_ghep_duoc_7e3c5ca4); return }
+            if (Logic.unpairCopy(computer.name, S.s_may_tinh_8eafc226, unsent, root.reachable(computer)) === null) {
+                root.runUnpair(computer, null, function(problem) { root.say(problem ? S.s_chua_bo_ghep_duoc_7e3c5ca4 : Logic.unpairDone(computer.name)) })
                 return
             }
             root.unpairError = ""
@@ -156,12 +157,12 @@ Column {
     Collapse {
         width: parent.width
         open: root.view === null && !root.loadFailed
-        DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải thiết bị" }
+        DevicesSkeleton { width: parent.width; count: 2; label: S.s_dang_tai_thiet_bi_09ddbf1d }
     }
     InlineError {
         width: parent.width
         open: root.view === null && root.loadFailed
-        message: "Bạn hãy kiểm tra kết nối rồi tải lại thiết bị."
+        message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_thiet_cedab5c7
         onRetry: { root.loadFailed = false; root.load() }
     }
     Collapse {
@@ -223,15 +224,15 @@ Column {
                 objectName: "pairFold"
                 width: parent.width
                 storageKey: "other-computers.pair"
-                title: "Ghép máy"
-                summary: "Nghe sách của máy tính khác"
+                title: S.s_ghep_may_601e4c98
+                summary: S.s_nghe_sach_cua_may_tinh_khac_31628082
                 Column {
                     width: parent.width
                     spacing: 12
                     Column {
                         width: parent.width
                         spacing: 8
-                        Button { objectName: "discover"; kind: "ghost"; icon: "radar"; text: "Tự tìm"; busy: root.discovering; onActivated: root.discover() }
+                        Button { objectName: "discover"; kind: "ghost"; icon: "radar"; text: S.s_tu_tim_3f09ad05; busy: root.discovering; onActivated: root.discover() }
                         Collapse {
                             width: parent.width
                             open: root.found !== null && root.found.length > 0
@@ -261,8 +262,8 @@ Column {
                                             width: modelData.paired ? pairedText.implicitWidth : chooseButton.width
                                             height: parent.height
                                             x: parent.width - width
-                                            Text { id: pairedText; visible: modelData.paired; anchors.verticalCenter: parent.verticalCenter; text: "Đã ghép"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
-                                            Button { id: chooseButton; visible: !modelData.paired; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: "Chọn"; onClicked: root.choose(modelData.host + ":" + modelData.port) }
+                                            Text { id: pairedText; visible: modelData.paired; anchors.verticalCenter: parent.verticalCenter; text: S.s_da_ghep_2bd0972f; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                                            Button { id: chooseButton; visible: !modelData.paired; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_chon_1171ca97; onClicked: root.choose(modelData.host + ":" + modelData.port) }
                                         }
                                     }
                                 }
@@ -271,7 +272,7 @@ Column {
                         Collapse {
                             width: parent.width
                             open: root.found !== null && root.found.length === 0
-                            HintText { width: parent.width; text: "Chưa thấy thiết bị" }
+                            HintText { width: parent.width; text: S.s_chua_thay_thiet_bi_192c6e9e }
                         }
                     }
                     Flow {
@@ -283,13 +284,13 @@ Column {
                         Column {
                             width: form.stacked ? form.width : Math.max(160, form.width - form.codeWidth - 8 - connect.width - 8)
                             spacing: 4
-                            Text { width: parent.width; text: "Địa chỉ máy kia"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                            Text { width: parent.width; text: S.s_dia_chi_may_kia_e746667e; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                             FormField {
                                 id: addressField
                                 objectName: "addressField"
                                 width: parent.width
-                                label: "Địa chỉ máy kia"
-                                placeholderText: "192.168.1.20 hoặc địa chỉ Bluetooth"
+                                label: S.s_dia_chi_may_kia_e746667e
+                                placeholderText: S.s_192_168_1_20_hoac_dia_chi_bluetooth_326669dc
                                 onTextChanged: root.address = text
                                 onAccepted: if (root.canPair && !root.pairBusy) root.pair()
                             }
@@ -297,12 +298,12 @@ Column {
                         Column {
                             width: form.codeWidth
                             spacing: 4
-                            Text { width: parent.width; text: "Mã 6 số"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                            Text { width: parent.width; text: S.s_ma_6_so_a067b6d9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                             FormField {
                                 id: codeField
                                 objectName: "codeField"
                                 width: parent.width
-                                label: "Mã 6 số"
+                                label: S.s_ma_6_so_a067b6d9
                                 placeholderText: "123456"
                                 font.features: {"tnum": 1}
                                 onTextChanged: {
@@ -321,7 +322,7 @@ Column {
                                 objectName: "connectComputer"
                                 y: form.stacked ? 0 : parent.height - height
                                 kind: "ghost"
-                                text: "Kết nối"
+                                text: S.s_ket_noi_02ca3cba
                                 busy: root.pairBusy
                                 enabled: root.canPair
                                 onActivated: root.pair()
@@ -335,7 +336,7 @@ Column {
                         Text {
                             objectName: "pairError"
                             width: parent.width
-                            text: "Chưa ghép được: " + root.pairError
+                            text: S.s_chua_ghep_duoc_160c13b4 + root.pairError
                             color: Theme.danger
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: 13
@@ -347,7 +348,7 @@ Column {
                         Column {
                             width: parent.width
                             spacing: 6
-                            HintText { width: parent.width; text: "Khác Wi-Fi? Chọn máy đã ghép Bluetooth:" }
+                            HintText { width: parent.width; text: S.s_khac_wi_fi_chon_may_da_ghep_bluetooth_f451876c }
                             Flow {
                                 width: parent.width
                                 spacing: 8
@@ -373,11 +374,11 @@ Column {
                             size: "sm"
                             kind: "ghost"
                             icon: "bluetooth"
-                            text: modelData.name + "\u00a0·\u00a0bản thử"
+                            text: modelData.name + S.s_u00a0_u00a0ban_thu_175857e0
                             onClicked: root.choose(modelData.address + "@dev")
                         }
                     }
-                    HintText { width: parent.width; text: "Máy kia: Cài đặt › Thiết bị › bật “" + root.syncLabel + "” để lấy mã; ghép một chiều để nghe thư viện của máy ấy." }
+                    HintText { width: parent.width; text: S.s_may_kia_cai_dat_thiet_bi_bat_4272e84f + root.syncLabel + S.s_de_lay_ma_ghep_mot_chieu_de_nghe_thu_vien_bea7e639 }
                 }
             }
         }
@@ -387,7 +388,7 @@ Column {
     DevicesUnpair {
         id: unpairDialog
         objectName: "unpairDialog"
-        copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, "máy tính", root.asking.unsent, root.reachable(root.asking.computer)) : null
+        copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, S.s_may_tinh_8eafc226, root.asking.unsent, root.reachable(root.asking.computer)) : null
         busyChoice: root.busyChoice
         error: root.unpairError
         onChoose: choice => root.chooseUnpair(choice)

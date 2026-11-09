@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "DecisionLogic.js" as D
 .import "StudioLogic.js" as Studio
@@ -8,29 +9,29 @@
 // Thứ tự loại việc = thứ tự khoá của KIND_LABEL bản web (thanh lọc liệt kê theo thứ tự này)
 var KINDS = ["speaker", "caller", "turn", "pronunciation", "gender", "vocative", "alias", "bracket", "shared-voice", "unnamed", "audio", "narrator", "voice-wish", "snap", "teller-voice", "teller-thought", "refused"]
 var KIND_LABEL = {
-    "speaker": "Ai nói câu này",
-    "caller": "Người gọi / ngoài khung",
-    "turn": "Lượt đối đáp",
-    "pronunciation": "Cách đọc tên",
-    "gender": "Nam hay nữ",
-    "vocative": "Gọi hay nói",
-    "alias": "Một người hai tên",
-    "bracket": "Lời trong 『』",
-    "shared-voice": "Chung giọng",
-    "unnamed": "Vai phụ không tên",
-    "audio": "Bản thu lỗi",
-    "narrator": "Người kể của đoạn",
-    "voice-wish": "Giọng chưa đổi được",
-    "snap": "Tên viết khác",
-    "teller-voice": "Giọng lời dẫn",
-    "teller-thought": "Nội tâm người kể",
-    "refused": "Yêu cầu chưa được"
+    "speaker": S.s_ai_noi_cau_nay_0e00a5c7,
+    "caller": S.s_nguoi_goi_ngoai_khung_03677986,
+    "turn": S.s_luot_doi_dap_a2c055e0,
+    "pronunciation": S.s_cach_doc_ten_1c46e75d,
+    "gender": S.s_nam_hay_nu_0167dbc6,
+    "vocative": S.s_goi_hay_noi_305521d7,
+    "alias": S.s_mot_nguoi_hai_ten_9293d8ab,
+    "bracket": S.s_loi_trong_c682376b,
+    "shared-voice": S.s_chung_giong_a58df5cc,
+    "unnamed": S.s_vai_phu_khong_ten_6395f0d2,
+    "audio": S.s_ban_thu_loi_753aaed5,
+    "narrator": S.s_nguoi_ke_cua_doan_b218398e,
+    "voice-wish": S.s_giong_chua_doi_duoc_2617419d,
+    "snap": S.s_ten_viet_khac_f05542f3,
+    "teller-voice": S.s_giong_loi_dan_f8f4ea1e,
+    "teller-thought": S.s_noi_tam_nguoi_ke_0c360f80,
+    "refused": S.s_yeu_cau_chua_duoc_3c62dd70
 }
 function kindLabel(kind) { return KIND_LABEL[kind] || kind }
 var PAGE = 40
 // Nhiều hơn ngần này lựa chọn thì phần còn lại gom vào “Người khác…”
 var MAX_CHIPS = 6
-var GENERIC_PEOPLE = ["Người kể", "Người kể đọc tất cả", "Vai phụ không tên"]
+var GENERIC_PEOPLE = [S.s_nguoi_ke_fd36cd15, S.s_nguoi_ke_doc_tat_ca_97e4f69d, S.s_vai_phu_khong_ten_6395f0d2]
 // Thẻ vai phụ cả cuốn hiện ngần này câu đầu; "Xem cả N câu" mở hết để bỏ chọn - nhóm lớn thì từng trang PICK_PAGE câu
 var PICK_PREVIEW = 3
 var PICK_PAGE = 100
@@ -42,41 +43,41 @@ function isOpenWork(item) { return !item.requested && !item.redoOnly }
 
 // ---- workText.ts ----
 function narratorDecidedTitle(current, answer) {
-    if (answer === "Giữ nguyên") return current ? "Đoạn này vẫn do " + current + " kể" : "Đoạn này vẫn kể ở ngôi thứ ba"
-    if (answer === "Đổi người kể") return "Đoạn này không phải " + current + " kể"
+    if (answer === S.s_giu_nguyen_1b550a12) return current ? S.s_doan_nay_van_do_01c8f28f + current + S.s_ke_8a00bf95 : S.s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d
+    if (answer === S.s_doi_nguoi_ke_ddc42796) return S.s_doan_nay_khong_phai_1fbdf8e0 + current + S.s_ke_8a00bf95
     const name = answer.replace(/^Người kể:\s*/, "").trim()
-    return "Đoạn này do " + (name || answer) + " kể"
+    return S.s_doan_nay_do_0366d95f + (name || answer) + S.s_ke_8a00bf95
 }
 function narratorButtons(current, heading) {
-    const keep = current ? "Giữ " + current + " là người kể" : "Giữ nguyên ngôi thứ ba"
-    if (!heading) return {accept: "Không phải " + current + " kể - đoạn kể ngôi thứ ba", keep: keep, accepted: "Đổi người kể"}
+    const keep = current ? S.s_giu_d3777f80 + current + S.s_la_nguoi_ke_c2c99d76 : S.s_giu_nguyen_ngoi_thu_ba_e1160b2a
+    if (!heading) return {accept: S.s_khong_phai_adb16acb + current + S.s_ke_doan_ke_ngoi_thu_ba_79a90be7, keep: keep, accepted: S.s_doi_nguoi_ke_ddc42796}
     return heading.label
-        ? {accept: heading.label + " kể", keep: keep, accepted: "Người kể: " + heading.label}
-        : {accept: "Kể ngôi thứ ba", keep: keep, accepted: "Đổi người kể"}
+        ? {accept: heading.label + S.s_ke_8a00bf95, keep: keep, accepted: S.s_nguoi_ke_97bd6976 + heading.label}
+        : {accept: S.s_ke_ngoi_thu_ba_3ba8b1e4, keep: keep, accepted: S.s_doi_nguoi_ke_ddc42796}
 }
 // Thẻ đã quyết nói KẾT QUẢ thay vì lặp câu hỏi; null = giữ tiêu đề
 function decidedTitle(item) {
     const answer = item.requested
     if (!answer) return null
     if (item.kind === "pronunciation" && item.surface) {
-        return answer === item.current ? "Giữ: “" + item.surface + "” đọc là “" + answer + "”" : "“" + item.surface + "” sẽ đọc là “" + answer + "”"
+        return answer === item.current ? S.s_giu_c1b6fb18 + item.surface + S.s_doc_la_4c516fb0 + answer + "”" : "“" + item.surface + S.s_se_doc_la_7a286c54 + answer + "”"
     }
     if (item.voiceChoices && item.voiceChoices.length) {
         const found = item.voiceChoices.find(function(choice) { return choice.label === answer || choice.done === answer })
         return found && found.done !== undefined ? found.done : null
     }
-    if (item.kind === "alias") return "“" + (item.subject !== undefined && item.subject !== null ? item.subject : item.current) + "” là " + D.midSentence(answer)
+    if (item.kind === "alias") return "“" + (item.subject !== undefined && item.subject !== null ? item.subject : item.current) + S.s_la_8e7bd753 + D.midSentence(answer)
     if (item.kind === "narrator") return narratorDecidedTitle(item.current, answer)
-    if (item.lines && item.lines.length) return (item.lines.length > 1 ? item.lines.length + " câu này" : "Câu này") + " của " + D.midSentence(answer)
+    if (item.lines && item.lines.length) return (item.lines.length > 1 ? item.lines.length + S.s_cau_nay_499089cc : S.s_cau_nay_ee66e104) + S.s_cua_ae306eb2 + D.midSentence(answer)
     return null
 }
 function cardTitle(item) { const decided = decidedTitle(item); return decided !== null ? decided : item.title }
 function inboxLead(book) {
-    const first = book.running && book.paused ? "Sách đang tạm dừng; sửa áp khi làm tiếp."
-        : book.running ? "Máy đang chạy tiếp; sửa áp ở chương sau."
-        : book.phase === "done" ? "Sửa xong, bấm “Áp dụng thay đổi”."
-        : "Sách đang dừng; sửa áp khi làm tiếp."
-    return "Ưu tiên việc trên. " + first
+    const first = book.running && book.paused ? S.s_sach_dang_tam_dung_sua_ap_khi_lam_tiep_12a374a4
+        : book.running ? S.s_may_dang_chay_tiep_sua_ap_o_chuong_sau_5482c856
+        : book.phase === "done" ? S.s_sua_xong_bam_ap_dung_thay_doi_43042cc6
+        : S.s_sach_dang_dung_sua_ap_khi_lam_tiep_9778f9fd
+    return S.s_uu_tien_viec_tren_6f839f4c + first
 }
 // Chữ ký tự: chữ cái có hoa / thường (kể cả tiếng Việt), chữ số, hay chữ Nhật - Hàn - Trung
 function isWordChar(ch) {
@@ -129,11 +130,11 @@ function exampleHtml(example, markBg, markInk) {
 }
 // Dòng nhỏ trên câu: "Chương 1 · câu 3 · máy gán: X · lời kể · sẽ đổi · chưa thu". `html`: ra HTML cho Text.RichText ("sẽ đổi" đậm màu `ink`).
 function exampleMeta(example, willChange, html, ink) {
-    const head = example.chapterTitle + "\u00a0·\u00a0" + (example.seq === 0 ? "tiêu đề chương" : "câu " + example.seq)
-        + (example.speaker ? "\u00a0·\u00a0máy gán: " + example.speaker : "")
-        + (example.narration ? "\u00a0·\u00a0lời kể" : "")
-    const change = willChange ? (html ? "<span style=\"color:" + ink + "; font-weight:600\">&nbsp;·&nbsp;sẽ đổi</span>" : "&nbsp;·&nbsp;sẽ đổi") : ""
-    return (html ? esc(head) : head) + change + (!example.hasAudio ? "\u00a0·\u00a0chưa thu" : "")
+    const head = example.chapterTitle + "\u00a0·\u00a0" + (example.seq === 0 ? S.s_tieu_de_chuong_4f8f59f4 : S.s_cau_ac0b3a5b + example.seq)
+        + (example.speaker ? S.s_u00a0_u00a0may_gan_2f1c964c + example.speaker : "")
+        + (example.narration ? S.s_u00a0_u00a0loi_ke_824055ab : "")
+    const change = willChange ? (html ? "<span style=\"color:" + ink + S.s_font_weight_600_nbsp_nbsp_se_doi_span_b8ad82a9 : S.s_nbsp_nbsp_se_doi_b770bb5a) : ""
+    return (html ? esc(head) : head) + change + (!example.hasAudio ? S.s_u00a0_u00a0chua_thu_42d33ed7 : "")
 }
 
 // ---- minorGroups.ts ----
@@ -150,9 +151,9 @@ function keepRequests(item) {
     return []
 }
 function pickNote(picked, total) {
-    if (picked === total) return "Đang chọn cả " + total + " câu"
-    if (picked === 0) return "Chưa chọn câu nào trong " + total + " câu"
-    return "Đang chọn " + picked + "/" + total + " câu"
+    if (picked === total) return S.s_dang_chon_ca_5533ba66 + total + S.s_cau_b07e1008
+    if (picked === 0) return S.s_chua_chon_cau_nao_trong_98e427e2 + total + S.s_cau_b07e1008
+    return S.s_dang_chon_b79eb4ba + picked + "/" + total + S.s_cau_b07e1008
 }
 // Thẻ nhóm lớn chỉ mang vài câu đầu (`examplesTotal` là tổng); "Xem thêm" lấy từng trang (GET /work/examples). Trả câu đã có, tổng, và đường hỏi trang kế ("" = đã đủ).
 function examplesPage(bookId, key, first, more, total, page) {
@@ -161,7 +162,7 @@ function examplesPage(bookId, key, first, more, total, page) {
     const next = loaded.length < all ? "/api/books/" + bookId + "/work/examples?key=" + encodeURIComponent(key) + "&offset=" + loaded.length + "&limit=" + page : ""
     return {loaded: loaded, total: all, next: next}
 }
-function moreText(shown, total) { return "Xem thêm (đang hiện " + Studio.formatNumber(shown) + "/" + Studio.formatNumber(total) + " câu)" }
+function moreText(shown, total) { return S.s_xem_them_dang_hien_6f8f1101 + Studio.formatNumber(shown) + "/" + Studio.formatNumber(total) + S.s_cau_70a7137f }
 
 // ---- Chọn người nói trên thẻ ----
 // Chip hiện thẳng / chip gom vào “Người khác…”: chừa MAX_CHIPS đầu, lựa chọn đã ghi và người chung chung
@@ -186,7 +187,7 @@ function chipMarked(item, choice, index) {
     if (item.requested) return isAnswer(item, choice)
     return index === 0 && item.kind !== "unnamed" && item.suggested !== false
 }
-function keepButtonLabel(item) { return item.keepLabel || (item.kind === "unnamed" ? "Đúng là vai phụ" : "Giữ " + item.current) }
+function keepButtonLabel(item) { return item.keepLabel || (item.kind === "unnamed" ? S.s_dung_la_vai_phu_7f821afe : S.s_giu_d3777f80 + item.current) }
 // Tên người từ mã của họ, theo các lựa chọn của thẻ (báo "trước đó đang là …")
 function personOf(item, value) {
     if (value === item.currentValue) return item.current
@@ -194,46 +195,46 @@ function personOf(item, value) {
     return choice ? (choice.name !== undefined && choice.name !== null ? choice.name : choice.label) : value
 }
 function speakerBack(item, which) {
-    if (item.requested) return "Trở lại quyết định trước: " + which + " của " + D.midSentence(item.requested) + "."
-    if (item.pick) return D.sentence(which) + " trở lại chờ duyệt."
-    return D.sentence(which) + " lại là của " + D.midSentence(item.current) + "."
+    if (item.requested) return S.s_tro_lai_quyet_dinh_truoc_33162bcb + which + S.s_cua_ae306eb2 + D.midSentence(item.requested) + "."
+    if (item.pick) return D.sentence(which) + S.s_tro_lai_cho_duyet_31d037fd
+    return D.sentence(which) + S.s_lai_la_cua_e26113c4 + D.midSentence(item.current) + "."
 }
 function speakerToast(item, recorded, speaker) {
-    const which = recorded > 1 ? recorded + " câu này" : "câu này"
-    if (speaker === item.currentValue) return item.keepLabel ? "Đã ghi: " + item.keepLabel : "Giữ nguyên: " + which + " của " + D.midSentence(item.current)
+    const which = recorded > 1 ? recorded + S.s_cau_nay_499089cc : S.s_cau_nay_c70feb8f
+    if (speaker === item.currentValue) return item.keepLabel ? S.s_da_ghi_85094402 + item.keepLabel : S.s_giu_nguyen_360918a5 + which + S.s_cua_ae306eb2 + D.midSentence(item.current)
     const choice = (item.choices || []).find(function(option) { return option.value === speaker })
     const label = choice ? (choice.name !== undefined && choice.name !== null ? choice.name : choice.label) : speaker
-    return "Đã ghi: " + which + " của " + D.midSentence(label)
+    return S.s_da_ghi_85094402 + which + S.s_cua_ae306eb2 + D.midSentence(label)
 }
 function speakerAppliedLine(item, pending) {
-    if (item.kind === "alias") return "Đã ghi: “" + (item.subject !== undefined && item.subject !== null ? item.subject : item.current) + "” là " + D.midSentence(item.requested) + " - cả cuốn và các phần sau."
+    if (item.kind === "alias") return S.s_da_ghi_a2accbdb + (item.subject !== undefined && item.subject !== null ? item.subject : item.current) + S.s_la_8e7bd753 + D.midSentence(item.requested) + S.s_ca_cuon_va_cac_phan_sau_73506133
     const n = item.lines ? item.lines.length : 1
-    return "Đã ghi: " + (n > 1 ? n + " câu này" : "câu này") + " của " + D.midSentence(item.requested) + " - " + pending + "."
+    return S.s_da_ghi_85094402 + (n > 1 ? n + S.s_cau_nay_499089cc : S.s_cau_nay_c70feb8f) + S.s_cua_ae306eb2 + D.midSentence(item.requested) + " - " + pending + "."
 }
 function scopeNote(item) {
     return item.scopeLabels
-        ? item.scopeLabels[0] + " theo chương; " + item.scopeLabels[1] + " theo cả sách và các phần sau."
-        : "Câu xen kẽ chỉ đổi câu đánh dấu; cả chuỗi đổi toàn bộ người nói."
+        ? item.scopeLabels[0] + S.s_theo_chuong_fe0e612d + item.scopeLabels[1] + S.s_theo_ca_sach_va_cac_phan_sau_aaf91813
+        : S.s_cau_xen_ke_chi_doi_cau_danh_dau_ca_chuoi_d_8b814b90
 }
 
 // ---- Thẻ giọng / giới ----
-function voiceHeard(item) { return item.current === "Giọng nam" || item.current === "Giọng nữ" ? item.current.toLowerCase() : "giọng đang có" }
+function voiceHeard(item) { return item.current === S.s_giong_nam_4ab78f43 || item.current === S.s_giong_nu_cd860480 ? item.current.toLowerCase() : S.s_giong_dang_co_3b2ea3dd }
 function voiceBack(item) {
     if (item.kind === "gender" && item.subject) {
-        return item.requested ? "Trở lại quyết định trước: " + item.subject + " là " + item.requested.toLowerCase() + "."
-            : item.subject + " lại để máy quyết - vẫn đọc bằng " + voiceHeard(item) + "."
+        return item.requested ? S.s_tro_lai_quyet_dinh_truoc_33162bcb + item.subject + S.s_la_873f17ce + item.requested.toLowerCase() + "."
+            : item.subject + S.s_lai_de_may_quyet_van_doc_bang_b242963d + voiceHeard(item) + "."
     }
-    if (item.requested) return "Trở lại quyết định trước: " + item.requested + "."
-    return item.kind === "shared-voice" ? "Hai người lại dùng chung giọng như trước." : "Thẻ hỏi lại như trước khi bấm."
+    if (item.requested) return S.s_tro_lai_quyet_dinh_truoc_33162bcb + item.requested + "."
+    return item.kind === "shared-voice" ? S.s_hai_nguoi_lai_dung_chung_giong_nhu_truoc_7486498c : S.s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e
 }
 function voiceChoiceMarked(item, choice) { return item.requested ? (choice.done === item.requested || choice.label === item.requested) : !!choice.recommended }
 
 // ---- Thẻ cách đọc tên ----
 function pronunciationBack(item) {
-    return item.requested ? "Trở lại quyết định trước: “" + item.surface + "” đọc là “" + item.requested + "”." : "“" + item.surface + "” lại đọc là “" + item.current + "”."
+    return item.requested ? S.s_tro_lai_quyet_dinh_truoc_23b8f1db + item.surface + S.s_doc_la_4c516fb0 + item.requested + "”." : "“" + item.surface + S.s_lai_doc_la_fbb29ef1 + item.current + "”."
 }
 function pronunciationAppliedLine(item, pending) {
-    return item.requested === item.current ? "Giữ “" + item.requested + "” - không cần áp dụng." : "Đã ghi “" + item.requested + "” - " + pending + "."
+    return item.requested === item.current ? S.s_giu_f2a9d747 + item.requested + S.s_khong_can_ap_dung_9dc28408 : S.s_da_ghi_70e429d4 + item.requested + "” - " + pending + "."
 }
 
 // ---- Nhóm thẻ của hộp ----
@@ -267,24 +268,24 @@ function groups(items, inPrecast, kind) {
     }
 }
 function decidedSummary(decided, waiting) {
-    return waiting === decided.length ? "Đã quyết, chờ áp dụng\u00a0·\u00a0" + decided.length + " việc" : "Đã quyết\u00a0·\u00a0" + decided.length + " việc (" + waiting + " thay đổi chờ áp dụng)"
+    return waiting === decided.length ? S.s_da_quyet_cho_ap_dung_u00a0_u00a0_443dcc0a + decided.length + S.s_viec_1c50ca93 : S.s_da_quyet_u00a0_u00a0_17e896ba + decided.length + S.s_viec_1b4fd320 + waiting + S.s_thay_doi_cho_ap_dung_5e697cb8
 }
 function endLine(group, hint) {
     return group.later.length > 0
-        ? "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
-        : "Mọi việc đã có quyết định" + (group.decided.length > 0 ? " - " + hint : "") + "."
+        ? S.s_het_viec_sua_duoc_ngay_nhung_viec_ben_duoi_2b4551c3
+        : S.s_moi_viec_da_co_quyet_dinh_d64ce55d + (group.decided.length > 0 ? " - " + hint : "") + "."
 }
-function precastLine(count) { return count + " việc của các chương đầu đang chờ ở “Duyệt trước khi thu”." }
+function precastLine(count) { return count + S.s_viec_cua_cac_chuong_dau_dang_cho_o_duyet_t_ffc8b06a }
 function filterOptions(group) {
-    const options = [{value: "all", label: "Tất cả\u00a0·\u00a0" + group.open.length}]
+    const options = [{value: "all", label: S.s_tat_ca_u00a0_u00a0_85c386de + group.open.length}]
     for (const value of group.kinds) options.push({value: value, label: KIND_LABEL[value] + "\u00a0·\u00a0" + group.counts[value]})
     return options
 }
 function bulkKeepable(kind, items) {
     return items.filter(function(item) { return kind === "pronunciation" ? !!item.surface : keepRequests(item).length > 0 })
 }
-function bulkTitle(kind, count) { return "Giữ cả " + count + " thẻ “" + KIND_LABEL[kind] + "”?" }
-function bulkDescription(kind) { return kind === "pronunciation" ? "Giữ cách đọc tên, không thu lại; có thể hoàn tác." : "Giữ người nói, không thu lại; có thể hoàn tác." }
+function bulkTitle(kind, count) { return S.s_giu_ca_4b7c5467 + count + S.s_the_e2579785 + KIND_LABEL[kind] + "”?" }
+function bulkDescription(kind) { return kind === "pronunciation" ? S.s_giu_cach_doc_ten_khong_thu_lai_co_the_hoan_175ec7d0 : S.s_giu_nguoi_noi_khong_thu_lai_co_the_hoan_ta_602c8451 }
 
 // ---- workFocus.ts ----
 // Thẻ nhận tiêu điểm sau khi danh sách đổi và tiêu điểm vừa mất. before / after: {open: [khoá], decided: [khoá]}; focused: khoá thẻ chứa tiêu điểm lần gần nhất (null = ở nút "Hoàn tác" của thông báo).

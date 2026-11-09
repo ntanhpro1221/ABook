@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
 import { Pause, Pencil, Trash2, Volume2 } from "lucide-react";
@@ -37,10 +38,10 @@ function TryButton({ aloud, surface, spoken }: { aloud: ReadAloudTry; surface: s
       type="button"
       loading={aloud.loading(surface, spoken)}
       onClick={() => void aloud.play(surface, spoken)}
-      aria-label={playing ? "Dừng nghe thử" : `Nghe thử ${surface}${cleanSpoken(spoken) ? ` đọc là ${cleanSpoken(spoken)}` : ""}`}
+      aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_1_a01c666d(surface, cleanSpoken(spoken) ? S.s_doc_la_0_1fc76b3f(cleanSpoken(spoken)) : "")}
     >
       {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
-      {playing ? "Dừng" : "Nghe thử"}
+      {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
     </Button>
   );
 }
@@ -63,24 +64,24 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       { surface, spoken },
       {
         onSuccess: () => {
-          toast.success(spoken ? `“${surface}” sẽ đọc là “${cleanSpoken(spoken)}” từ đoạn sau` : `“${surface}” đọc lại như chữ trong sách từ đoạn sau`, {
+          toast.success(spoken ? S.s_0_se_doc_la_1_tu_doan_sau_da097218(surface, cleanSpoken(spoken)) : S.s_0_doc_lai_nhu_chu_trong_sach_tu_doan_sau_bb73a28d(surface), {
             id: "reading-saved",
             duration: UNDO_MS,
             action: {
-              label: "Hoàn tác",
+              label: S.s_hoan_tac_e72ff675,
               onClick: () =>
                 save.mutate(
                   { surface, spoken: current },
                   {
-                    onSuccess: () => toast.success(current ? `Đã hoàn tác: “${surface}” lại đọc là “${current}”` : `Đã hoàn tác: “${surface}” lại đọc như chữ trong sách`, { id: "reading-saved" }),
-                    onError: (error) => toast.error("Chưa hoàn tác được", { description: (error as Error).message }),
+                    onSuccess: () => toast.success(current ? S.s_da_hoan_tac_0_lai_doc_la_1_19a4cd2a(surface, current) : S.s_da_hoan_tac_0_lai_doc_nhu_chu_trong_sach_121125ec(surface), { id: "reading-saved" }),
+                    onError: (error) => toast.error(S.s_chua_hoan_tac_duoc_164b754b, { description: (error as Error).message }),
                   },
                 ),
             },
           });
           onDone();
         },
-        onError: (error) => toast.error("Chưa lưu được cách đọc", { description: (error as Error).message }),
+        onError: (error) => toast.error(S.s_chua_luu_duoc_cach_doc_484ed453, { description: (error as Error).message }),
       },
     );
   return (
@@ -92,29 +93,24 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       }}
     >
       <p className="text-xs text-fg-2">
-        <span className="font-semibold text-fg">“{surface}”</span> đọc là
-      </p>
+        <span className="font-semibold text-fg">“{surface}”</span>{S.s_doc_la_c9fec5e6}</p>
       <input
         autoFocus
         data-autofocus
         value={value}
         maxLength={200}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="vd Ha-ru-tô"
-        aria-label={`Cách đọc cho ${surface}`}
+        placeholder={S.s_vd_ha_ru_to_93151b6c}
+        aria-label={S.s_cach_doc_cho_0_e92e2d44(surface)}
         spellCheck={false}
         autoComplete="off"
         className="h-10 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
       />
       <div className="flex flex-wrap items-center gap-2">
         <TryButton aloud={aloud} surface={surface} spoken={value} />
-        <Button size="sm" variant="primary" type="submit" loading={save.isPending && Boolean(typed)} disabled={!typed || typed === current || typed === surface}>
-          Lưu cho cả cuốn
-        </Button>
+        <Button size="sm" variant="primary" type="submit" loading={save.isPending && Boolean(typed)} disabled={!typed || typed === current || typed === surface}>{S.s_luu_cho_ca_cuon_76b88dc9}</Button>
         {current && (
-          <Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>
-            Đọc như trong sách
-          </Button>
+          <Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>{S.s_doc_nhu_trong_sach_4ff053c6}</Button>
         )}
       </div>
       {aloud.failed && <p role="status" className="text-xs text-danger text-pretty">{aloud.failed}</p>}
@@ -150,21 +146,18 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
       open={word !== null && (Boolean(surface) || chips > 0)}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Đọc từ này là"
+      title={S.s_doc_tu_nay_la_00b9f99e}
       description={
         surface ? (
-          <>
-            Gõ cách đọc cho <span className="font-semibold text-fg">“{surface}”</span> - mọi chỗ có đúng {surface.includes(" ") ? "cụm" : "từ"} này (đúng chữ hoa, chữ
-            thường) trong cuốn sẽ đọc như vậy. Chữ trong sách giữ nguyên.
-          </>
+          <>{S.s_go_cach_doc_cho_b6370d0d}<span className="font-semibold text-fg">“{surface}”</span>{S.s_moi_cho_co_dung_1db69f0a}{surface.includes(" ") ? S.s_cum_8e21f94d : S.s_tu_b40c8e0d}{S.s_nay_dung_chu_hoa_chu_thuong_trong_cuon_se_2814952b}</>
         ) : (
-          "Chọn từ máy đọc sai (thường là tên riêng), rồi gõ cách đọc đúng. Áp cho cả cuốn; chữ trong sách giữ nguyên."
+          S.s_chon_tu_may_doc_sai_thuong_la_ten_rieng_ro_0021f14b
         )
       }
     ><MotionRegion>
       {chips > 1 && (
         <div ref={joinBox} className="mb-3">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Các từ trong câu">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
             {tokens.map((token, at) =>
               token.core ? (
                 <button
@@ -189,20 +182,16 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
           <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-fg-2">
             {single && !joining ? (
               <>
-                <span>Tên có nhiều chữ (vd “Hạ Vy”)?</span>
-                <Button ref={joinButton} size="sm" variant="ghost" type="button" onClick={() => setJoining(true)}>
-                  Nối thành cụm
-                </Button>
+                <span>{S.s_ten_co_nhieu_chu_vd_ha_vy_142f6dc6}</span>
+                <Button ref={joinButton} size="sm" variant="ghost" type="button" onClick={() => setJoining(true)}>{S.s_noi_thanh_cum_1d7d1f36}</Button>
               </>
             ) : joining ? (
               <>
-                <span className="text-pretty">Bấm chữ cuối của cụm - tối đa {MAX_PHRASE_WORDS} chữ liền nhau, không có dấu câu ở giữa.</span>
-                <Button size="sm" variant="ghost" type="button" onClick={() => setJoining(false)}>
-                  Thôi
-                </Button>
+                <span className="text-pretty">{S.s_bam_chu_cuoi_cua_cum_toi_da_fdc5c03d}{MAX_PHRASE_WORDS}{S.s_chu_lien_nhau_khong_co_dau_cau_o_giua_6564c36c}</span>
+                <Button size="sm" variant="ghost" type="button" onClick={() => setJoining(false)}>{S.s_thoi_e68f9e88}</Button>
               </>
             ) : (
-              <span>{picked ? "Bấm một chữ để chọn lại từ đầu." : "Bấm một chữ để chọn."}</span>
+              <span>{picked ? S.s_bam_mot_chu_de_chon_lai_tu_dau_79ffb745 : S.s_bam_mot_chu_de_chon_6e8c2251}</span>
             )}
           </div>
         </div>
@@ -225,11 +214,11 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
   const { data: info } = useAppInfo();
   const listenOnly = Boolean(info?.listenOnly);
   // Không đọc được danh sách thì nói thẳng - đừng bảo "chưa có từ nào" khi chỉ là chưa lấy được.
-  if (readings.isError && !readings.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại danh sách cách đọc." onRetry={() => void readings.refetch()} /></MotionRegion>;
-  if (readings.isPending) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải cách đọc" /></MotionRegion>;
-  if (!list.length && listenOnly) return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào.</MotionRegion>;
+  if (readings.isError && !readings.data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_thu_tai_lai_danh_sach_cach_doc_78ca66ce} onRetry={() => void readings.refetch()} /></MotionRegion>;
+  if (readings.isPending) return <MotionRegion fadeThrough><ContentSkeleton count={2} label={S.s_dang_tai_cach_doc_32d14df3} /></MotionRegion>;
+  if (!list.length && listenOnly) return <MotionRegion as="p" className="text-xs text-fg-2">{S.s_chua_co_tu_nao_b1a59234}</MotionRegion>;
   if (!list.length) {
-    return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</MotionRegion>;
+    return <MotionRegion as="p" className="text-xs text-fg-2">{S.s_chua_co_tu_nao_o_man_doc_giu_hay_bam_chuot_56927ffd}</MotionRegion>;
   }
   return (
     <MotionRegion as="ul" elementRef={editBox} className="divide-y divide-line">
@@ -238,28 +227,28 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
           <div className="flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm">
               <span className="font-semibold">{item.surface}</span>
-              <span className="text-fg-2"> đọc là </span>
+              <span className="text-fg-2">{S.s_doc_la_6f6aa509}</span>
               <span>“{item.spoken}”</span>
             </span>
             {aloud.available && (
               <IconButton
                 size="sm"
-                label={aloud.playing(item.surface, item.spoken) ? "Dừng nghe thử" : `Nghe thử ${item.surface}`}
+                label={aloud.playing(item.surface, item.spoken) ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_65a85c4d(item.surface)}
                 icon={aloud.playing(item.surface, item.spoken) ? Pause : Volume2}
                 onClick={() => void aloud.play(item.surface, item.spoken)}
               />
             )}
-            {!listenOnly && <IconButton size="sm" label={`Sửa cách đọc ${item.surface}`} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}
+            {!listenOnly && <IconButton size="sm" label={S.s_sua_cach_doc_0_683b998a(item.surface)} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}
             {!listenOnly && (
               <IconButton
                 size="sm"
-                label={`Bỏ cách đọc ${item.surface}`}
+                label={S.s_bo_cach_doc_0_c3b9bf0d(item.surface)}
                 icon={Trash2}
                 disabled={save.isPending}
                 onClick={() =>
                   save.mutate(
                     { surface: item.surface, spoken: "" },
-                    { onError: (error) => toast.error("Chưa bỏ được cách đọc", { description: (error as Error).message }) },
+                    { onError: (error) => toast.error(S.s_chua_bo_duoc_cach_doc_0fffff4e, { description: (error as Error).message }) },
                   )
                 }
               />
@@ -275,7 +264,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
       {aloud.failed && editing === null && <li className="px-3 py-2 text-xs text-danger">{aloud.failed}</li>}
       {listenOnly && (
         <li className="px-3 py-2">
-          <OnComputerOnly verb="Sửa cách đọc" />
+          <OnComputerOnly verb={S.s_sua_cach_doc_d67b7a7b} />
         </li>
       )}
     </MotionRegion>

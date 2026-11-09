@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Studio
@@ -20,8 +21,8 @@ SettingsItem {
     function shownReading(spoken) { return Studio.shownReading(spoken) }
     function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
     function line(entry) {
-        return "<span style=\"font-weight:500\">" + esc(entry.surface) + "</span> <span style=\"color:" + Theme.text3 + "\">đọc là</span> “" + esc(shownReading(entry.spokenForm)) + "”"
-            + (entry.from ? "<span style=\"font-size:12px; color:" + Theme.text3 + "\">&nbsp;·&nbsp;từ " + esc(entry.from) + "</span>" : "")
+        return "<span style=\"font-weight:500\">" + esc(entry.surface) + "</span> <span style=\"color:" + Theme.text3 + S.s_doc_la_span_604b6689 + esc(shownReading(entry.spokenForm)) + "”"
+            + (entry.from ? "<span style=\"font-size:12px; color:" + Theme.text3 + S.s_nbsp_nbsp_tu_4205cd1e + esc(entry.from) + "</span>" : "")
     }
     function load() {
         if (!Api.transport) return
@@ -34,12 +35,12 @@ SettingsItem {
         saving = true
         Api.transport.request("POST", "/api/readings", body, function(status, data) {
             saving = false
-            if (status < 200 || status >= 300) { problem = data && (data.message || data.error) || "Chưa làm được lúc này."; return }
+            if (status < 200 || status >= 300) { problem = data && (data.message || data.error) || S.s_chua_lam_duoc_luc_nay_2e7cacde; return }
             load()
-            if (body.remove) { Api.notice = "Đã bỏ “" + body.surface + "” khỏi cách đọc chung"; return }
+            if (body.remove) { Api.notice = S.s_da_bo_8ccb2051 + body.surface + S.s_khoi_cach_doc_chung_c5d82684; return }
             surfaceField.text = ""
             spokenField.text = ""
-            Api.notice = "“" + body.surface + "” đọc là “" + shownReading(body.spokenForm || "") + "” cho mọi sách"
+            Api.notice = "“" + body.surface + S.s_doc_la_4c516fb0 + shownReading(body.spokenForm || "") + S.s_cho_moi_sach_8d2e1857
         })
     }
     function add() {
@@ -48,7 +49,7 @@ SettingsItem {
     }
     Component.onCompleted: load()
 
-    Text { width: parent.width; text: "Sửa cách đọc một tên một lần, sách mới tự dùng."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
+    Text { width: parent.width; text: S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
     Collapse {
         width: parent.width
         open: root.entries.length > root.searchFrom
@@ -56,8 +57,8 @@ SettingsItem {
         FormField {
             objectName: "readingsFilter"
             width: parent.width
-            label: "Tìm cách đọc"
-            placeholderText: "Tìm tên…"
+            label: S.s_tim_cach_doc_690f3c7e
+            placeholderText: S.s_tim_ten_f777d5ea
             fill: Theme.panel
             onTextChanged: { root.filter = text; root.shown = 12 }
         }
@@ -99,7 +100,7 @@ SettingsItem {
                         iconSize: 16
                         ink: Theme.text2
                         hoverInk: Theme.text
-                        tip: "Bỏ “" + row.modelData.surface + "” khỏi cách đọc chung"
+                        tip: S.s_bo_76ce0117 + row.modelData.surface + S.s_khoi_cach_doc_chung_c5d82684
                         Accessible.name: tip
                         onClicked: root.save({surface: row.modelData.surface, remove: true})
                     }
@@ -113,7 +114,7 @@ SettingsItem {
         Item {
             width: parent.width
             height: more.height
-            Button { id: more; objectName: "readingsMore"; text: "Xem thêm"; kind: "ghost"; size: "sm"; onClicked: root.shown += 12 }
+            Button { id: more; objectName: "readingsMore"; text: S.s_xem_them_e0ac1b1e; kind: "ghost"; size: "sm"; onClicked: root.shown += 12 }
         }
     }
     Flow {
@@ -124,8 +125,8 @@ SettingsItem {
             id: surfaceField
             objectName: "readingSurface"
             width: Math.min(224, parent.width)
-            label: "Từ trong sách"
-            placeholderText: "Từ trong sách, vd Nasdell"
+            label: S.s_tu_trong_sach_e93bdaec
+            placeholderText: S.s_tu_trong_sach_vd_nasdell_e5609228
             fill: Theme.panel
             onAccepted: root.add()
         }
@@ -133,14 +134,14 @@ SettingsItem {
             id: spokenField
             objectName: "readingSpoken"
             width: Math.min(224, parent.width)
-            label: "Cách đọc"
-            placeholderText: "Đọc là, vd Hên-cơ"
+            label: S.s_cach_doc_94265da7
+            placeholderText: S.s_doc_la_vd_hen_co_6e778b3d
             fill: Theme.panel
             onAccepted: root.add()
         }
         Button {
             objectName: "addReading"
-            text: "Thêm"
+            text: S.s_them_dd92626f
             kind: "ghost"
             size: "sm"
             busy: root.saving

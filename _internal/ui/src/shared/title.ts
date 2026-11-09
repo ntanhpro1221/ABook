@@ -1,6 +1,7 @@
+import { S } from "./strings.generated";
 import { useEffect } from "react";
 
-export const APP_TITLE = "ABook";
+export const APP_TITLE = S.s_abook_1c37d334;
 
 /** Tên trang cụ thể (tên sách, tên chương...) cho thanh tiêu đề và thanh tác vụ.
  *

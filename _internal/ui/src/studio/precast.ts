@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { BookSummary, PrecastView } from "./api";
 
 // "Duyệt trước khi thu" (webui/precast.py, docs/STUDIO_REVIEW.md): phân tích xong, trước khi thu những chương đầu - lúc sửa còn
@@ -71,8 +72,8 @@ export function chapterRange(chapters: { title: string }[]): string {
 /** Sửa tới đâu thì miễn phí: chưa thu gì là mọi sửa; đã thu tới chương X thì sửa ở chương sau X không phải thu lại. */
 export function freeNote(view: Pick<PrecastView, "recordedThrough">): string {
   return view.recordedThrough
-    ? `Đã thu tới ${view.recordedThrough.title} - sửa ở chương sau đó không phải thu lại; sửa chỗ đã thu thì máy thu lại đúng các câu ấy.`
-    : "Chưa thu chương nào - sửa bây giờ không phải thu lại câu nào.";
+    ? S.s_da_thu_toi_0_sua_o_chuong_sau_do_khong_pha_fa584b22(view.recordedThrough.title)
+    : S.s_chua_thu_chuong_nao_sua_bay_gio_khong_phai_e0dc8283;
 }
 
 /** Có nên mở màn duyệt: phân tích xong, sách chưa xong. */

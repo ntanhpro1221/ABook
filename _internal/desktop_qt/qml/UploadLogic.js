@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
 
@@ -25,7 +26,7 @@ function byName(a, b) { return naturalCompare(a.name, b.name) }
 /** "Tải lên 05-10-2026 18h22 ab12": mỗi lần gửi một thư mục riêng. */
 function batchName(now, tag) {
     function two(value) { return value < 10 ? "0" + value : String(value) }
-    return "Tải lên " + two(now.getDate()) + "-" + two(now.getMonth() + 1) + "-" + now.getFullYear() + " " + two(now.getHours()) + "h" + two(now.getMinutes()) + " " + tag
+    return S.s_tai_len_e3c941d6 + two(now.getDate()) + "-" + two(now.getMonth() + 1) + "-" + now.getFullYear() + " " + two(now.getHours()) + "h" + two(now.getMinutes()) + " " + tag
 }
 
 /**
@@ -72,24 +73,24 @@ function planUpload(files, batch) {
 }
 function listed(names) {
     const shown = names.slice(0, 3).map(function(name) { return "“" + name + "”" }).join(", ")
-    return names.length > 3 ? shown + " và " + (names.length - 3) + " file khác" : shown
+    return names.length > 3 ? shown + S.s_va_79e3d3b1 + (names.length - 3) + S.s_file_khac_c25fd437 : shown
 }
 /** Lời nhắc về những file không gửi (nói ra, không bỏ âm thầm), hay "" khi không bỏ file nào. */
 function planNotice(plan) {
     const lines = [
-        plan.rejected.length ? listed(plan.rejected) + " không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf." : "",
-        plan.tooBig.length ? listed(plan.tooBig) + " lớn hơn " + LIMIT_MB + " MB nên không gửi qua mạng được. Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính." : ""
+        plan.rejected.length ? listed(plan.rejected) + S.s_khong_phai_file_truyen_chi_nhan_txt_epub_d_064d09e9 : "",
+        plan.tooBig.length ? listed(plan.tooBig) + S.s_lon_hon_5354650d + LIMIT_MB + S.s_mb_nen_khong_gui_qua_mang_duoc_ban_hay_tac_835a3c8c : ""
     ].filter(Boolean)
     return lines.join(" ")
 }
 function planFileCount(plan) { return plan.groups.reduce(function(sum, group) { return sum + group.files.length }, 0) }
 /** "Đang gửi 3/12 file · 1,2 MB / 4,5 MB". */
 function progressLabel(progress) {
-    return "Đang gửi " + progress.files + "/" + progress.totalFiles + " file\u00a0·\u00a0" + Size.formatSize(progress.bytes) + " / " + Size.formatSize(progress.totalBytes)
+    return S.s_dang_gui_231b5be2 + progress.files + "/" + progress.totalFiles + " file\u00a0·\u00a0" + Size.formatSize(progress.bytes) + " / " + Size.formatSize(progress.totalBytes)
 }
 /** "Đã gửi 3/12 file, giữ lại; 9 file chưa gửi." - nói rõ gì đã tới máy tính khi dừng giữa chừng. */
 function sendSummary(result) {
-    if (!result.sent) return "Chưa gửi file nào."
+    if (!result.sent) return S.s_chua_gui_file_nao_17f3f72a
     const rest = result.total - result.sent
-    return "Đã gửi " + result.sent + "/" + result.total + " file, giữ lại" + (rest > 0 ? "; " + rest + " file chưa gửi" : "") + "."
+    return S.s_da_gui_b15ba101 + result.sent + "/" + result.total + S.s_file_giu_lai_2e9078e4 + (rest > 0 ? "; " + rest + S.s_file_chua_gui_81d25852 : "") + "."
 }

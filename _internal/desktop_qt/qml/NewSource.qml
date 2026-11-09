@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -28,20 +29,20 @@ Column {
         }
     }
 
-    Text { objectName: "newSourceTitle"; width: parent.width; text: "Nguồn truyện"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
-    Prose { topPadding: 4; text: "Chọn TXT, EPUB, Word hoặc PDF có chữ." }
+    Text { objectName: "newSourceTitle"; width: parent.width; text: S.s_nguon_truyen_ddecd9bb; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
+    Prose { topPadding: 4; text: S.s_chon_txt_epub_word_hoac_pdf_co_chu_5e38434f }
     Item { width: 1; height: 12 }
     ImportFold {
         width: parent.width
         storageKey: "formats"
         prefix: "fold.new-project."
-        title: "Định dạng"
+        title: S.s_dinh_dang_36b746b6
         Item { width: 1; height: 8 }
         Repeater {
             model: [
-                "Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).",
-                "EPUB, Word, PDF (có chữ): chọn thẳng, máy tự tách chương.",
-                "Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”."
+                S.s_moi_file_txt_la_mot_chuong_xep_theo_ten_fi_50c79061,
+                S.s_epub_word_pdf_co_chu_chon_thang_may_tu_tac_6fe43d31,
+                S.s_ca_truyen_nam_trong_mot_file_txt_thi_may_g_67a7c9cb
             ]
             delegate: Item {
                 required property string modelData
@@ -73,14 +74,14 @@ Column {
         Column {
             width: parent.width
             topPadding: 24
-            Text { width: parent.width; text: "Tên sách"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: S.s_ten_sach_d54846eb; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
             Item { width: 1; height: 6 }
             FormField {
                 id: titleField
                 objectName: "newTitleField"
                 width: parent.width
-                label: "Tên sách"
-                placeholderText: "Tên hiển thị trong thư viện"
+                label: S.s_ten_sach_d54846eb
+                placeholderText: S.s_ten_hien_thi_trong_thu_vien_c48c7ac6
                 invalid: root.title.trim() === ""
                 text: root.title
                 font.weight: Theme.weightMedium
@@ -89,7 +90,7 @@ Column {
             Collapse {
                 width: parent.width
                 open: root.title.trim() === ""
-                Prose { objectName: "newTitleProblem"; topPadding: 4; small: true; tone: Theme.danger; text: "Sách cần có tên để hiện trong thư viện." }
+                Prose { objectName: "newTitleProblem"; topPadding: 4; small: true; tone: Theme.danger; text: S.s_sach_can_co_ten_de_hien_trong_thu_vien_49495e92 }
             }
             NewHints { width: parent.width; form: root.form; onProjectRequested: id => root.projectRequested(id) }
             // Gợi ý chia phần đứng TRƯỚC lời nhắc số chương: truyện nhiều tập đánh số lại từ 1 ở mỗi tập, lời nhắc "trùng số" chỉ là hệ quả của việc chưa chia

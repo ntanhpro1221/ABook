@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -155,7 +156,7 @@ function useFailedCommands(view: RemoteView | undefined) {
       for (const ack of phone.acks) {
         if (!ack.id || seen.current.has(ack.id)) continue;
         seen.current.add(ack.id);
-        if (primed && !ack.ok) toast.error(`${phone.name}: ${ack.message || "không làm được lệnh này"}`);
+        if (primed && !ack.ok) toast.error(`${phone.name}: ${ack.message || S.s_khong_lam_duoc_lenh_nay_9dea7638}`);
       }
     }
   }, [view]);
@@ -182,7 +183,7 @@ function useTicking(active: boolean) {
 
 /** Tên giao thức cạnh tên thiết bị: chỉ Google Cast cần nói (DLNA là loa, TV thông thường). */
 export function protocolLabel(phone: Pick<RemotePhone, "protocol">): string | null {
-  return phone.protocol === "gcast" ? "Google Cast" : null;
+  return phone.protocol === "gcast" ? S.s_google_cast_981c76f4 : null;
 }
 
 function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; receivedAt: number; onDismiss: () => void }) {
@@ -219,7 +220,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
   };
 
   return (
-    <MotionRegion as="section" aria-label={`Đang phát trên ${phone.name}`} className="relative z-20 shrink-0 border-t border-line bg-panel">
+    <MotionRegion as="section" aria-label={S.s_dang_phat_tren_0_62a989a1(phone.name)} className="relative z-20 shrink-0 border-t border-line bg-panel">
       <div
         className="absolute inset-x-0 top-0 h-[2px] bg-accent motion-progress"
         style={{ transform: `scaleX(${share / 100})` }}
@@ -232,7 +233,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
               {/* Tên máy là chỗ phân biệt máy: câu dẫn không co, tên co sau cùng (và có tooltip), cách phát chỉ hiện khi rộng. */}
-              <span className="shrink-0 whitespace-nowrap">{phone.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
+              <span className="shrink-0 whitespace-nowrap">{phone.playing ? S.s_dang_phat_tren_1088c6da : S.s_dang_dung_tren_2fa8df8a}</span>
               <ShortName name={phone.name} short={13} className="shrink" />
               {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
             </div>
@@ -243,11 +244,11 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <IconButton label={`Lùi ${SKIP_SECONDS} giây trên ${phone.name}`} icon={Back15} size="sm" onClick={() => send({ action: "skip", seconds: -SKIP_SECONDS })} />
+          <IconButton label={S.s_lui_0_giay_tren_1_6411e9f1(SKIP_SECONDS, phone.name)} icon={Back15} size="sm" onClick={() => send({ action: "skip", seconds: -SKIP_SECONDS })} />
           <button
             type="button"
             onClick={() => send({ action: "toggle" })}
-            aria-label={phone.playing ? `Tạm dừng trên ${phone.name}` : `Phát tiếp trên ${phone.name}`}
+            aria-label={phone.playing ? S.s_tam_dung_tren_0_55c295eb(phone.name) : S.s_phat_tiep_tren_0_de5ffa35(phone.name)}
             className="grid size-9 place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 press"
           >
             {phone.buffering && phone.playing ? (
@@ -258,7 +259,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
             )}
           </button>
-          <IconButton label={`Tới ${SKIP_SECONDS} giây trên ${phone.name}`} icon={Forward15} size="sm" onClick={() => send({ action: "skip", seconds: SKIP_SECONDS })} />
+          <IconButton label={S.s_toi_0_giay_tren_1_d0423a29(SKIP_SECONDS, phone.name)} icon={Forward15} size="sm" onClick={() => send({ action: "skip", seconds: SKIP_SECONDS })} />
           {/* Hẹn giờ tắt chỉ cho loa / TV: điện thoại, máy tính khác tự có hẹn giờ của chúng. */}
           {phone.via === "cast" && (
             <RemoteSleepMenu sleep={remoteSleepMode(phone.sleep, receivedAt)} name={phone.name} onSet={(request) => send(remoteSleepCommand(request))} />
@@ -269,20 +270,20 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
         </div>
         <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">
           {phone.known && (
-            <Tooltip label={`Dừng ${phone.name}, nghe tiếp ở máy này đúng chỗ ấy`}>
+            <Tooltip label={S.s_dung_0_nghe_tiep_o_may_nay_dung_cho_ay_578d8cb4(phone.name)}>
               <button
                 type="button"
                 onClick={() => void listenHere()}
                 disabled={moving}
-                aria-label="Nghe ở đây"
+                aria-label={S.s_nghe_o_day_f7f1d741}
                 className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
-                <span className="hidden lg:inline">Nghe ở đây</span>
+                <span className="hidden lg:inline">{S.s_nghe_o_day_f7f1d741}</span>
               </button>
             </Tooltip>
           )}
-          <IconButton label="Ẩn" icon={X} size="sm" onClick={onDismiss} />
+          <IconButton label={S.s_an_9c7a6c2d} icon={X} size="sm" onClick={onDismiss} />
         </div>
       </div>
     </MotionRegion>
@@ -377,7 +378,7 @@ export function HandOffButton({ className }: { className?: string }) {
   // Lời "Đang tìm / Chưa thấy thiết bị" trong menu đổi khi đang mở: nói qua vùng aria-live chung - menu chỉ được chứa mục, không chứa vùng trạng thái.
   const nothing = Boolean(track && data) && !targets.length;
   useEffect(() => {
-    if (menuOpen && nothing) announce(searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị");
+    if (menuOpen && nothing) announce(searching ? S.s_dang_tim_thiet_bi_b72cae79 : S.s_chua_thay_thiet_bi_192c6e9e);
   }, [menuOpen, nothing, searching]);
   if (!track || !data) return <MotionRegion as="span" />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
@@ -395,7 +396,7 @@ export function HandOffButton({ className }: { className?: string }) {
     const seconds = readPosition().time;
     const wasPlaying = player.playing;
     player.pause();
-    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}`) : undefined;
+    const waiting = target.via === "cast" ? toast.loading(S.s_dang_mo_tren_0_6d32dc4a(target.name)) : undefined;
     if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     command.mutate(
       // `record`: loa / TV ghi chỗ nghe vào đúng hồ sơ đang nghe ở đây, dù sau đó ai đổi hồ sơ của cuốn.
@@ -414,7 +415,7 @@ export function HandOffButton({ className }: { className?: string }) {
   };
   if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
-    const label = `Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`;
+    const label = S.s_phat_tren_0_1_757da6a7(only.name, protocolLabel(only) ? ` (${protocolLabel(only)})` : "");
     if (slot) return <MotionRegion as="span" className="block"><SlotFace aria-label={label} value={only.name} onClick={() => handOff(only)} /></MotionRegion>;
     return (
       <MotionRegion as="span"><IconButton
@@ -436,11 +437,11 @@ export function HandOffButton({ className }: { className?: string }) {
       }}
     >
       {slot ? (
-        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên thiết bị khác" value="Chọn" /></DropdownMenu.Trigger>
+        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label={S.s_phat_tren_thiet_bi_khac_79a47b35} value={S.s_chon_1171ca97} /></DropdownMenu.Trigger>
       ) : (
-      <Tooltip label="Phát trên thiết bị khác">
+      <Tooltip label={S.s_phat_tren_thiet_bi_khac_79a47b35}>
         <DropdownMenu.Trigger
-          aria-label="Phát trên thiết bị khác"
+          aria-label={S.s_phat_tren_thiet_bi_khac_79a47b35}
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
             className,
@@ -452,15 +453,15 @@ export function HandOffButton({ className }: { className?: string }) {
       )}
       <DropdownMenu.Portal>
         <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">{S.s_phat_tren_681e16e1}</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (
             <>
               {/* Trong menu chỉ được có mục / nhóm / vạch: lời báo là khối trơn (không role="status", không <p>); trình đọc màn hình nghe qua announce ở trên. */}
               <div className="px-2 py-1.5 text-sm text-fg-2">
-                {searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị"}
+                {searching ? S.s_dang_tim_thiet_bi_b72cae79 : S.s_chua_thay_thiet_bi_192c6e9e}
               </div>
-              <div className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</div>
+              <div className="px-2 pb-1 text-xs text-fg-3">{S.s_bat_may_kia_va_noi_cung_wi_fi_de_phat_e3991e2f}</div>
               <DropdownMenu.Item
                 disabled={searching}
                 onSelect={(event) => {
@@ -469,9 +470,7 @@ export function HandOffButton({ className }: { className?: string }) {
                 }}
                 className={cn(MENU_ITEM, "text-accent-text data-[disabled]:text-fg-3")}
               >
-                <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{searching ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</MotionRegion>
-                Tìm lại
-              </DropdownMenu.Item>
+                <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{searching ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</MotionRegion>{S.s_tim_lai_635fcbe8}</DropdownMenu.Item>
             </>
           )}
           {targets.map((target) => (
@@ -479,7 +478,7 @@ export function HandOffButton({ className }: { className?: string }) {
               <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
               <span className="min-w-0 flex-1 truncate">{target.name}</span>
               {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
-              {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
+              {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">{S.s_dang_phat_e3baf7da}</span>}
             </DropdownMenu.Item>
           ))}
         </MotionRegion></DropdownMenu.Content>
@@ -506,7 +505,7 @@ export function commandRunner<C extends { id: string }>(
     const done = queue.then(async () => {
       for (const command of fresh) {
         // Lệnh văng lỗi vẫn có kết quả gửi về (máy kia không chờ mãi), lệnh sau vẫn chạy.
-        const problem = await apply(command).catch(() => "Chưa làm được");
+        const problem = await apply(command).catch(() => S.s_chua_lam_duoc_8b442a06);
         ack({ id: command.id, ok: problem === null, message: problem ?? "" });
       }
       return fresh.length > 0;
@@ -569,7 +568,7 @@ export function ThisPlayerReporter() {
       switch (command.action) {
         case "play":
         case "toggle":
-          if (!loaded) return "Máy tính chưa mở cuốn nào - chọn sách trên máy tính trước";
+          if (!loaded) return S.s_may_tinh_chua_mo_cuon_nao_chon_sach_tren_m_f1765468;
           if (command.action === "toggle") now.toggle();
           else now.resume();
           return null;
@@ -600,10 +599,10 @@ export function ThisPlayerReporter() {
             now.play(book, book.chapters ?? [], command.chapterId, command.seconds);
             return null;
           } catch {
-            return "Máy tính không có cuốn này";
+            return S.s_may_tinh_khong_co_cuon_nay_02c73cb2;
           }
         default:
-          return "Máy tính chưa hiểu lệnh này - cập nhật ABook trên máy tính";
+          return S.s_may_tinh_chua_hieu_lenh_nay_cap_nhat_abook_07a8f356;
       }
     };
     const run = commandRunner<RemoteCommand & { id: string }>(handled.current, apply, (ack) => acks.current.push({ at: Date.now(), ack }));

@@ -73,7 +73,7 @@ object ListenAudio : M4bExport.AudioEncoder {
                 try {
                     extractor.setDataSource(chapter.file.absolutePath)
                     val source = (0 until extractor.trackCount).firstOrNull { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME) == MediaFormat.MIMETYPE_AUDIO_AAC }
-                        ?: throw Mp3Export.Refused("File tạm của “${chapter.fullTitle}” không đọc được — bạn xuất lại chương này.")
+                        ?: throw Mp3Export.Refused(S.s_file_tam_cua_0_khong_doc_duoc_ban_xuat_lai_d7d35f87(chapter.fullTitle))
                     val format = extractor.getTrackFormat(source)
                     val chapterRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                     val chapterChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
@@ -82,7 +82,7 @@ object ListenAudio : M4bExport.AudioEncoder {
                         channels = chapterChannels
                         output = M4bAudio.AacTrack(target, format, rate)
                     } else if (chapterRate != rate || chapterChannels != channels) {
-                        throw Mp3Export.Refused("Các chương làm ở hai lần khác nhau không cùng tần số - xuất lại từ đầu")
+                        throw Mp3Export.Refused(S.s_cac_chuong_lam_o_hai_lan_khac_nhau_khong_c_ffc59c08)
                     }
                     extractor.selectTrack(source)
                     starts += offset
@@ -97,14 +97,14 @@ object ListenAudio : M4bExport.AudioEncoder {
                         frames += 1
                         extractor.advance()
                     }
-                    if (frames == 0L) throw Mp3Export.Refused("File tạm của “${chapter.fullTitle}” rỗng - xuất lại để làm lại chương này")
+                    if (frames == 0L) throw Mp3Export.Refused(S.s_file_tam_cua_0_rong_xuat_lai_de_lam_lai_ch_ae6ea2d2(chapter.fullTitle))
                     offset += frames
                 } finally {
                     runCatching { extractor.release() }
                 }
                 progress(index + 1, plan.chapters.size, (index + 1.0) / plan.chapters.size)
             }
-            (output ?: throw Mp3Export.Refused("Không có âm thanh nào để ghi")).finish()
+            (output ?: throw Mp3Export.Refused(S.s_khong_co_am_thanh_nao_de_ghi_9998b831)).finish()
         } catch (error: Throwable) {
             output?.abort()
             target.delete()

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,7 +33,7 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
             BasicText(shown, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
             if (showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
-                TextAction("Hoàn tác", deletions::undo, "undo_delete")
+                TextAction(S.s_hoan_tac_e72ff675, deletions::undo, "undo_delete")
             }
         }
     }

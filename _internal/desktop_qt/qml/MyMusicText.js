@@ -1,13 +1,14 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
 
 // Chữ và phép tính thuần của "Nhạc của tôi" (studio/musicLocal.ts, studio/musicImport.ts, shared/format.ts, listen/prepareAhead.ts của bản web), giữ nguyên lời.
 
 var LOCAL_PREFIX = "local:"
-var MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
-var MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép. Máy chỉ tự chọn bài đã phân tích và bỏ qua bài có lời; công tắc Tự chọn đổi điều này cho từng bài."
-var CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
-var RETRYING_NOTE = "Mạng chập chờn - đang thử lại…"
+var MY_MUSIC_INTRO = S.s_them_nhac_lam_nen_bai_da_chon_di_cung_file_eefa0e8d
+var MY_MUSIC_HELP = S.s_nhac_duoc_chep_vao_kho_may_nay_dung_doi_ba_00b59983
+var CANCELLED_NOTE = S.s_da_huy_lan_tai_sau_lam_tiep_tu_cho_dung_a3bd5f77
+var RETRYING_NOTE = S.s_mang_chap_chon_dang_thu_lai_e0ce6cbb
 
 // "m:ss" hay "h:mm:ss" (formatClock của shared/format.ts)
 function formatClock(seconds) {
@@ -27,18 +28,18 @@ function modulePercent(module) {
 // Câu báo về mô-đun "Phân tích nhạc", nói bằng điều người nghe cần biết.
 function moduleLabel(module) {
     if (module.state === "error") return module.error
-    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + Size.formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
-    if (module.analysing) return "Đang phân tích nhạc đã thêm"
-    if (module.state === "unsupported") return module.reason ? "Máy này chưa phân tích được nhạc: " + module.reason + "." : "Máy này chưa phân tích được nhạc."
+    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + S.s_phan_tich_nhac_02745c2c + modulePercent(module) + "%)" : S.s_dang_tai_phan_tich_nhac_16da0da4 + Size.formatSize(module.total) + S.s_mot_lan_ca40e942 + modulePercent(module) + "%"
+    if (module.analysing) return S.s_dang_phan_tich_nhac_da_them_a2a6a13b
+    if (module.state === "unsupported") return module.reason ? S.s_may_nay_chua_phan_tich_duoc_nhac_5c389226 + module.reason + "." : S.s_may_nay_chua_phan_tich_duoc_nhac_15442fa6
     if (module.state === "outdated" && module.stopped)
-        return "Phân tích nhạc đang tắt; tải lại " + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + ". Vẫn ghim tay được."
-    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + "; bản hiện tại vẫn dùng được."
+        return S.s_phan_tich_nhac_dang_tat_tai_lai_c41e0d4b + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + S.s_van_ghim_tay_duoc_1802e446
+    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + S.s_co_ban_moi_76a8cd88 + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + S.s_ban_hien_tai_van_dung_duoc_85e16d72
     if (module.state === "ready") {
-        if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới."
-        if ((module.stale || 0) > 0) return module.stale + " bài dùng phân tích cũ; có thể phân tích lại."
+        if (module.restart) return S.s_phan_tich_nhac_da_cap_nhat_mo_lai_abook_de_0fe3cd00
+        if ((module.stale || 0) > 0) return module.stale + S.s_bai_dung_phan_tich_cu_co_the_phan_tich_lai_80822b32
         return ""
     }
-    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Máy tự chọn nhạc hợp từng đoạn."     // dung lượng chỉ ở nút "Tải (… MB)"
+    return (module.cancelled ? CANCELLED_NOTE + " " : "") + S.s_may_tu_chon_nhac_hop_tung_doan_8c88a607     // dung lượng chỉ ở nút "Tải (… MB)"
 }
 
 // Có mời bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc.
@@ -52,20 +53,20 @@ function preciseLabel(precise) {
     var size = Size.formatSize(precise.bytes)
     if (precise.state === "downloading") {
         var percent = precise.total > 0 ? Math.min(100, Math.floor((precise.done / precise.total) * 100)) : 0
-        return "Đang tải bộ đo cảm xúc chính xác hơn (" + size + ", một lần) " + percent + "%"
+        return S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_992a8222 + size + S.s_mot_lan_ca40e942 + percent + "%"
     }
     if (precise.state === "error") return precise.error
-    if (precise.state === "missing") return "Đã bật nhưng chưa tải xong - bài mới thêm tạm dùng số cũ."
+    if (precise.state === "missing") return S.s_da_bat_nhung_chua_tai_xong_bai_moi_them_ta_467bc3b6
     if (precise.state === "ready") {
         if (precise.working) {
             return precise.pending > 0
-                ? "Đang nghe kỹ " + precise.pending + " bài bạn đã thêm - bài chưa tới lượt vẫn dùng số cũ."
-                : "Đang nghe kỹ bài vừa thêm"
+                ? S.s_dang_nghe_ky_6963a9b6 + precise.pending + S.s_bai_ban_da_them_bai_chua_toi_luot_van_dung_34b5c4c6
+                : S.s_dang_nghe_ky_bai_vua_them_9d3cd7fd
         }
-        return "Đang bật - bài mới thêm sẽ được nghe kỹ ngầm vài giây."
+        return S.s_dang_bat_bai_moi_them_se_duoc_nghe_ky_ngam_66f8653c
     }
-    var how = precise.present ? "Chạy" : "Tải thêm " + size + " một lần, sau đó chạy"
-    return (precise.cancelled ? CANCELLED_NOTE + " " : "") + "Máy nghe kỹ hơn từng bài bạn thêm để chọn nhạc nền hợp không khí truyện hơn. " + how + " ngầm vài giây mỗi bài, không cần mạng."
+    var how = precise.present ? S.s_chay_67d64a17 : S.s_tai_them_76c4650b + size + S.s_mot_lan_sau_do_chay_236c7a4d
+    return (precise.cancelled ? CANCELLED_NOTE + " " : "") + S.s_may_nghe_ky_hon_tung_bai_ban_them_de_chon_b1ad40b1 + how + S.s_ngam_vai_giay_moi_bai_khong_can_mang_32f1dd9a
 }
 
 function localDigest(link) {
@@ -76,8 +77,8 @@ function localDigest(link) {
 function hasVocals(track) { return track.analysed && track.vocalsLikely === true }
 
 // Công tắc "Tự chọn" của một bài (công tắc `auto`, music_local.py): bật = máy được tự chọn bài này. Mặc định máy tự chọn bài thường, bỏ qua bài có lời.
-var AUTO_PICK_LABEL = "Tự chọn"
-var UNANALYSED = "Chưa phân tích"
+var AUTO_PICK_LABEL = S.s_tu_chon_90506961
+var UNANALYSED = S.s_chua_phan_tich_5c1c27fb
 function autoOn(track) { return track.auto === "on" || (track.auto !== "off" && !hasVocals(track)) }
 // Giá trị `auto` gửi đi khi gạt công tắc: trùng mặc định thì về mặc định (null).
 function autoNext(track) {
@@ -85,10 +86,10 @@ function autoNext(track) {
     return on === !hasVocals(track) ? null : (on ? "on" : "off")
 }
 // Nhãn ngắn cạnh công tắc - điều công tắc không nói: bài chưa phân tích (máy chưa tự chọn được), bài có lời.
-function trackNote(track) { return !track.analysed ? UNANALYSED : hasVocals(track) ? "Có lời" : "" }
+function trackNote(track) { return !track.analysed ? UNANALYSED : hasVocals(track) ? S.s_co_loi_4b381f10 : "" }
 // Dòng phụ của một bài trong "Đổi bài" (không có công tắc ở đó): có lời, đã tắt tự chọn, hợp đoạn này / chưa phân tích.
 function mineNote(item) {
-    var notes = [hasVocals(item) ? "Có lời" : null, item.auto === "off" ? "Không tự chọn" : null, item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : UNANALYSED]
+    var notes = [hasVocals(item) ? S.s_co_loi_4b381f10 : null, item.auto === "off" ? S.s_khong_tu_chon_02ae1742 : null, item.analysed ? (item.fits ? S.s_hop_khong_khi_doan_nay_44c3025b : null) : UNANALYSED]
     return notes.filter(function(note) { return !!note }).join("\u00a0·\u00a0")
 }
 
@@ -109,15 +110,15 @@ function mergeImports(results) {
 function importSummary(result) {
     var added = result.added || [], existing = result.existing || [], failed = result.failed || []
     var parts = []
-    if (added.length) parts.push(added.length + " bài mới")
-    if (existing.length) parts.push(existing.length + " bài đã có từ trước")
+    if (added.length) parts.push(added.length + S.s_bai_moi_76603364)
+    if (existing.length) parts.push(existing.length + S.s_bai_da_co_tu_truoc_2e0cbfb6)
     if (!added.length && !existing.length)
-        return {kind: "error", title: "Chưa thêm được nhạc", description: failed.join("\n")}
+        return {kind: "error", title: S.s_chua_them_duoc_nhac_5565bc66, description: failed.join("\n")}
     var unanalysed = added.filter(function(track) { return !track.analysed }).length
     var notes = []
     if (failed.length) notes.push(failed.join("\n"))
-    if (unanalysed) notes.push(unanalysed + " bài chưa phân tích - máy chưa tự chọn, bạn ghim được ở “Đổi bài”.")
-    return {kind: failed.length ? "warning" : "success", title: "Đã thêm: " + parts.join(", "), description: notes.join("\n")}
+    if (unanalysed) notes.push(unanalysed + S.s_bai_chua_phan_tich_may_chua_tu_chon_ban_gh_924e5ac5)
+    return {kind: failed.length ? "warning" : "success", title: S.s_da_them_f09915c7 + parts.join(", "), description: notes.join("\n")}
 }
 
 // Lời báo của web (toast(title, {description})) thành một chuỗi của Api.notice: tên ở dòng đầu, lý do ở dòng sau.
@@ -127,10 +128,10 @@ function toast(title, description) {
 
 // ---- Bộ nhớ (listen/prepareAhead.ts) ----
 function storageLabel(usage) {
-    return usage.total > 0 ? "Bản đọc đã làm chiếm " + Size.formatSize(usage.total) + " trên máy này." : "Chưa có bản đọc đã lưu."
+    return usage.total > 0 ? S.s_ban_doc_da_lam_chiem_69c5507d + Size.formatSize(usage.total) + S.s_tren_may_nay_606511e4 : S.s_chua_co_ban_doc_da_luu_18fe660f
 }
 function clearStorageQuestion(usage) {
-    return "Dọn " + Size.formatSize(usage.total) + " bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
+    return S.s_don_a1fe57bd + Size.formatSize(usage.total) + S.s_ban_doc_da_lam_cua_moi_cuon_may_se_doc_lai_e7218cf6
 }
 
 // ---- Cập nhật (desktop/updateCheck.ts) ----
@@ -138,12 +139,12 @@ var UPDATE_CHECK_WAIT_MS = 45000
 // Lời hiện dưới nút kiểm tra; `found` không cần lời (mục "bản mới đã có" hiện thay); vỏ im là lỗi mạng. Trả {tone, text} hay null.
 function checkLine(detail, current) {
     if (detail && detail.state === "found") return null
-    if (detail && detail.state === "latest") return {tone: "ok", text: "ABook" + (current ? " " + current : "") + " là bản mới nhất."}
-    return {tone: "error", text: (detail && detail.message) || "Chưa thấy trả lời từ trang phát hành - bạn kiểm tra mạng rồi thử lại."}
+    if (detail && detail.state === "latest") return {tone: "ok", text: S.s_abook_1c37d334 + (current ? " " + current : "") + S.s_la_ban_moi_nhat_2c45dd9f}
+    return {tone: "error", text: (detail && detail.message) || S.s_chua_thay_tra_loi_tu_trang_phat_hanh_ban_k_437de1e1}
 }
 
 // ---- Thành phần bên thứ ba (shared/thirdParty.ts) ----
-var MAINTAINER_SECTION = "Ghi chú cho người bảo trì"
+var MAINTAINER_SECTION = S.s_ghi_chu_cho_nguoi_bao_tri_c8670b77
 // Tách Markdown của THIRD_PARTY.md thành các mục theo tiêu đề `##`; phần mở đầu là mục không tên; mục của người bảo trì bị bỏ.
 function parseThirdParty(markdown) {
     var sections = [{title: "", items: []}]

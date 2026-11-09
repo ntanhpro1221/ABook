@@ -18,6 +18,7 @@ Ghép theo màn (bảng MÀN dưới): mỗi màn là vài file QML và vài fil
     python -X utf8 scripts/ui_parity_qt.py --check  # thoát 1 nếu docs/UI_PARITY_QT.md không còn khớp mã nguồn (tests/test_ui_parity_qt.py)
 """
 from __future__ import annotations
+import json
 
 import fnmatch
 import functools
@@ -482,7 +483,7 @@ def forwarded_icons(trees: dict[str, QmlObject]) -> dict[str, dict[str, str]]:
 
 
 def qml_scan_file(path: Path, scan: QtScan, forwards: dict[str, dict[str, str]] | None = None) -> None:
-    raw = path.read_bytes().decode("utf-8")
+    raw = up.expand(path.read_bytes().decode("utf-8"), "qml")
     src = up.blank_comments(raw)
     file = up.rel(path) if path.is_relative_to(ROOT) else f"desktop_qt/qml/{path.name}"  # test đọc file tạm ngoài repo
     root = parse_qml(src)
@@ -565,19 +566,19 @@ def qml_scan_file(path: Path, scan: QtScan, forwards: dict[str, dict[str, str]] 
 def qt_scan() -> QtScan:
     scan = QtScan()
     paths = [p for p in sorted(QML.glob("*.qml")) if p.name not in QML_SKIP]
-    trees = {p.stem: parse_qml(up.blank_comments(p.read_bytes().decode("utf-8"))) for p in paths}
+    trees = {p.stem: parse_qml(up.blank_comments(up.expand(p.read_bytes().decode("utf-8"), "qml"))) for p in paths}
     forwards = forwarded_icons(trees)
     for path in paths:
         qml_scan_file(path, scan, forwards)
     for path in sorted(QML.glob("*.js")):
-        if path.name != "LucidePaths.js":
+        if path.name not in ("LucidePaths.js", "UiStrings.js"):
             js_scan_file(path, scan)
     return scan
 
 
 def js_scan_file(path: Path, scan: QtScan) -> None:
     """Chữ trong file .js cạnh QML (CastLogic.js, VoiceLogic.js): chuỗi tiếng Việt, chuỗi nối thành mẫu `{}`."""
-    src = up.blank_comments(path.read_bytes().decode("utf-8"))
+    src = up.blank_comments(up.expand(path.read_bytes().decode("utf-8"), "qml"))
     file = up.rel(path) if path.is_relative_to(ROOT) else f"desktop_qt/qml/{path.name}"
     chains = joined_literals(src)
     found = [(start, text) for start, _, text in chains]
@@ -601,10 +602,10 @@ def web_scan() -> Scan:
     extra = sorted({WEB / file for _, _, sources in SCREENS for file, _ in sources if file.split("/")[0] not in WEB_DIRS})
     for d in WEB_DIRS + ("",):
         for path in (sorted((WEB / d).rglob("*")) if d else extra):
-            if path.suffix not in (".ts", ".tsx") or ".test." in path.name or path.name.endswith(".d.ts"):
+            if path.suffix not in (".ts", ".tsx") or ".test." in path.name or path.name.endswith(".d.ts") or path.name == "strings.generated.ts":
                 continue
             up.web_scan_file(path, scan)
-            src = path.read_bytes().decode("utf-8")
+            src = up.expand(path.read_bytes().decode("utf-8"), "ts")
             file = up.rel(path)
             have = {(i.line, i.text) for i in scan.items if i.file == file}
             if path.suffix == ".tsx":
@@ -741,6 +742,12 @@ def similar(a_text: str, b_text: str, shared_icon: bool) -> float | None:
     return None
 
 
+def wording_reason(screen: str, qt: str, web: str) -> str:
+    path=ROOT/'ui_strings/qt_wording_review.json'
+    reviews=json.loads(path.read_text(encoding='utf-8')) if path.exists() else []
+    return next((row['reason'] for row in reviews if (row['screen'],row['qt'],row['web'])==(screen,qt,web)), '')
+
+
 def section_a(q_items, w_screen, w_by, q_pairs, w_pairs_screen) -> list[str]:
     """Nhãn ngắn Qt chưa có nguyên văn ở web CÙNG MÀN mà giống một nhãn web của màn ấy (chung từ, gần nhau, hay chung icon)."""
     q_icons: dict[str, set[str]] = defaultdict(set)
@@ -774,9 +781,11 @@ def section_a(q_items, w_screen, w_by, q_pairs, w_pairs_screen) -> list[str]:
     out = ["## a. Cùng việc, khác chữ", "",
            f"Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà giống một nhãn web CÙNG MÀN chưa có ở Qt. {len(rows)} cặp; "
            "mỗi nhãn Qt lấy một nhãn web giống nhất. Giống không có nghĩa là cùng việc: người sửa xem mã hai bên trước khi đổi.", "",
-           "| màn | Qt | web | giống | nơi |", "|---|---|---|---|---|"]
+           "Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_review.json; cặp mới chưa duyệt làm --check đỏ.", "",
+           "| màn | Qt | web | giống | nơi | giải thích |", "|---|---|---|---|---|---|"]
     for screen, score, qi, wi in rows:
-        out.append(f"| {screen} | {up.esc(qi.text)} | {up.esc(wi.text)} | {min(1.0, -score):.2f} | {short_where([qi], 1)} ~ {short_where([wi], 1)} |")
+        reason=wording_reason(screen,qi.text,wi.text) or 'CHƯA GIẢI THÍCH'
+        out.append(f"| {screen} | {up.esc(qi.text)} | {up.esc(wi.text)} | {min(1.0, -score):.2f} | {short_where([qi], 1)} ~ {short_where([wi], 1)} | {reason} |")
     if not rows:
         out.append("| (không có) | | | | |")
     out.append("")
@@ -784,6 +793,8 @@ def section_a(q_items, w_screen, w_by, q_pairs, w_pairs_screen) -> list[str]:
 
 
 def section_b(q_pairs, w_pairs, w_pairs_screen) -> list[str]:
+    review_path=ROOT/'ui_strings/qt_icon_review.json'
+    reviews={up.key_loose(row['label']):row['reason'] for row in json.loads(review_path.read_text(encoding='utf-8'))} if review_path.exists() else {}
     q_pairs = [p for p in q_pairs if up.short(p.label)]
     w_short = [p for p in w_pairs if up.short(p.label)]
     w_lab: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
@@ -795,11 +806,12 @@ def section_b(q_pairs, w_pairs, w_pairs_screen) -> list[str]:
     diff_icon = [(k, set(w_lab[k]), set(q_lab[k])) for k in sorted(set(w_lab) & set(q_lab)) if not set(w_lab[k]) & set(q_lab[k])]
     out = ["## b. Cùng nhãn khác icon, cùng icon khác nhãn", "",
            f"**Cùng nhãn, khác icon** ({len(diff_icon)} nhãn Qt có icon mà icon ấy không đi với nhãn này ở bất cứ đâu trên web máy tính):", "",
-           "| nhãn | web | Qt | nơi |", "|---|---|---|---|"]
+           "| nhãn | web | Qt | nơi | giải thích |", "|---|---|---|---|---|"]
     for k, wi, qi in diff_icon:
         wp = [p for i in sorted(wi) for p in w_lab[k][i]]
         qp = [p for i in sorted(qi) for p in q_lab[k][i]]
-        out.append(f"| {up.esc(qp[0].label)} | {', '.join(sorted(wi))} | {', '.join(sorted(qi))} | {short_where(qp, 1)} ~ {short_where(wp, 1)} |")
+        reason=reviews.get(k,'CHƯA GIẢI THÍCH')
+        out.append(f"| {up.esc(qp[0].label)} | {', '.join(sorted(wi))} | {', '.join(sorted(qi))} | {short_where(qp, 1)} ~ {short_where(wp, 1)} | {reason} |")
     if not diff_icon:
         out.append("| (không có) | | | |")
     # cùng icon khác nhãn: theo màn, icon Qt dùng với nhãn mà web cùng màn không bao giờ ghép với icon ấy
@@ -992,7 +1004,7 @@ def web_mode_slots(src: str) -> list[list[str]]:
 def mode_switch_findings(qt_src: str | None = None, android_src: str | None = None, web_src: str | None = None) -> tuple[dict[str, list[list[str]]], list[str]]:
     """(chữ từng nền theo ô, các chỗ lệch). Tham số để bài kiểm lực đưa vào mã nguồn đã đổi một chữ."""
     def read(path: Path) -> str:
-        return path.read_bytes().decode("utf-8")
+        return up.expand(path.read_bytes().decode("utf-8"), "kt" if path.suffix == ".kt" else "ts" if path.suffix == ".tsx" else "qml")
 
     found = {
         "Qt": qt_mode_slots(qt_src if qt_src is not None else read(QT_PLAYER)),
@@ -1089,6 +1101,8 @@ def main(argv: list[str]) -> int:
     current = DOC.read_bytes().decode("utf-8") if DOC.is_file() else None
     text = render_doc(current)
     problems = mode_switch_findings()[1] + action_findings(web_scan(), qt_scan())
+    if '| CHƯA GIẢI THÍCH |' in text:
+        problems.append('cặp chữ mới chưa được giải thích trong ui_strings/qt_wording_review.json')
     for problem in problems:
         print(f"công tắc chế độ Đang nghe lệch giữa các nền: {problem}", file=sys.stderr)
     if "--check" in argv:

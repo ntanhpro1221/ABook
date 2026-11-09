@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 /** Hàng danh sách hỏng thì chỉ hàng ấy báo lỗi, không kéo cả app thành trang trắng (soát UX a10: một dự án có dữ liệu
@@ -10,7 +11,7 @@ export class RowBoundary extends Component<{ fallback: ReactNode; children: Reac
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("Hàng danh sách lỗi", error, info.componentStack);
+    console.error(S.s_hang_danh_sach_loi_72d44ea3, error, info.componentStack);
   }
 
   render() {

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -7,13 +8,13 @@ Modal {
     property var voice: ({})
     property var answer: null
     property bool choosing: false
-    title: choosing ? "Chọn giọng đọc" : "Giọng đọc trực tuyến"
+    title: choosing ? S.s_chon_giong_doc_a3941a79 : S.s_giong_doc_truc_tuyen_44ae53c1
     description: {
         const name = VoiceLogic.spokenVoiceName(voice.name || "")
         const keyed = VoiceLogic.KEYED[voice.provider]
-        const where = keyed || (voice.provider === "edge" ? "máy chủ Microsoft" : "dịch vụ ngoài")
-        if (keyed) return `Giọng ${name} dùng khoá ${where} của bạn: chữ của đoạn đang đọc được gửi tới ${where} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`
-        return `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`
+        const where = keyed || (voice.provider === "edge" ? S.s_may_chu_microsoft_1e47d07c : S.s_dich_vu_ngoai_0bb5b472)
+        if (keyed) return S.s_giong_0_dung_khoa_1_cua_ban_chu_cua_doan_d_005b3ec4(name, where, where)
+        return S.s_giong_0_la_giong_1_chu_cua_doan_dang_doc_d_48efa5c3(name, voice.provider === "edge" ? S.s_edge_0f82fe72 : S.s_truc_tuyen_ada49667, where)
     }
     function allowed(provider) {
         try { return JSON.parse(Api.store("abook-readaloud-online-ok") || "[]").includes(provider) }
@@ -45,7 +46,7 @@ Modal {
                 onClicked: root.finish(modelData)
             }
         }
-        Button { objectName: "consentOtherVoice"; visible: !root.choosing; width: parent.width; wrap: true; kind: "ghost"; text: "Chọn giọng khác"; onClicked: root.choosing = true }
-        Button { objectName: "consentListen"; visible: !root.choosing; width: parent.width; text: "Nghe"; onClicked: root.finish(root.voice) }
+        Button { objectName: "consentOtherVoice"; visible: !root.choosing; width: parent.width; wrap: true; kind: "ghost"; text: S.s_chon_giong_khac_d31cfe89; onClicked: root.choosing = true }
+        Button { objectName: "consentListen"; visible: !root.choosing; width: parent.width; text: S.s_nghe_a43aafef; onClicked: root.finish(root.voice) }
     }
 }

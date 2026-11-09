@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TemplateLogic.js" as Templates
@@ -41,13 +42,13 @@ Column {
     Component.onDestruction: Nav.closedLayer(backLayer)
     function submit() {
         const wrong = Templates.nameProblem(templates, name, existing ? existing.name : undefined) ||
-            (!existing && Templates.isFull(templates) ? "Đã có đủ 20 mẫu - xoá bớt một mẫu trong Cài đặt trước" : "")
+            (!existing && Templates.isFull(templates) ? S.s_da_co_du_20_mau_xoa_bot_mot_mau_trong_cai_c3b1c3a3 : "")
         if (wrong) { problem = wrong; return }
         if (existing && !confirming) { confirming = true; return }
         const saved = Templates.templateFromDraft(draft, name, form.autoNarrator)
         form.templateOp({op: "save", template: saved, replace: Boolean(existing)}, function(ok, message) {
             if (ok) {
-                Api.toast("Đã lưu mẫu “" + saved.name + "”")
+                Api.toast(S.s_da_luu_mau_11c50fd0 + saved.name + "”")
                 form.pickTemplate(saved)
                 root.close()
             } else root.problem = message
@@ -58,13 +59,13 @@ Column {
     Flow {
         width: parent.width
         spacing: 12
-        Text { height: 36; verticalAlignment: Text.AlignVCenter; text: "Mẫu thiết lập"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+        Text { height: 36; verticalAlignment: Text.AlignVCenter; text: S.s_mau_thiet_lap_be32f35e; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
         ChoiceRow {
             objectName: "newTemplates"
             visible: root.templates.length > 0
             width: Math.min(implicitWidth, root.width - 140)
-            label: "Mẫu thiết lập"
-            options: [{value: "", label: Templates.DEFAULT_LABEL}].concat(root.templates.map(item => ({value: item.name, label: item.name === (root.active ? root.active.name : "") && root.modified ? item.name + " (đã sửa)" : item.name})))
+            label: S.s_mau_thiet_lap_be32f35e
+            options: [{value: "", label: Templates.DEFAULT_LABEL}].concat(root.templates.map(item => ({value: item.name, label: item.name === (root.active ? root.active.name : "") && root.modified ? item.name + S.s_da_sua_a7e7e8e8 : item.name})))
             value: root.active ? root.active.name : ""
             onPicked: value => root.form.pickTemplate(value ? Templates.findTemplate(root.templates, value) : null)
         }
@@ -76,7 +77,7 @@ Column {
                 id: saveButton
                 objectName: "newTemplateSave"
                 visible: !root.saving
-                text: "Lưu thành mẫu…"
+                text: S.s_luu_thanh_mau_bd20c55a
                 icon: "bookmark-plus"
                 kind: "ghost"
                 size: "sm"
@@ -89,7 +90,7 @@ Column {
         visible: root.modified && Boolean(root.active)
         topPadding: visible ? 8 : 0
         small: true
-        text: root.active ? "Bấm lại mẫu “" + root.active.name + "” để khôi phục thiết lập đã lưu." : ""
+        text: root.active ? S.s_bam_lai_mau_26ea82c5 + root.active.name + S.s_de_khoi_phuc_thiet_lap_da_luu_095b8a08 : ""
     }
     Prose { objectName: "newTemplateLostVoice"; visible: root.lostVoice !== ""; topPadding: visible ? 8 : 0; small: true; text: Templates.missingVoiceNote(root.lostVoice) }
     Prose { objectName: "newTemplateLostModel"; visible: root.lostModel !== ""; topPadding: visible ? 8 : 0; small: true; text: Templates.missingModelNote() }
@@ -98,7 +99,7 @@ Column {
         visible: !root.templates.length && !root.saving
         topPadding: visible ? 8 : 0
         small: true
-        text: "Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau."
+        text: S.s_luu_cac_lua_chon_duoi_day_thanh_mau_de_dun_8513aa2f
     }
     // Ô đặt tên mẫu
     Collapse {
@@ -112,8 +113,8 @@ Column {
                 id: nameField
                 objectName: "newTemplateName"
                 width: Math.min(320, parent.width)
-                label: "Tên mẫu"
-                placeholderText: "Tên mẫu, ví dụ Light novel"
+                label: S.s_ten_mau_f037fdd2
+                placeholderText: S.s_ten_mau_vi_du_light_novel_aae56cfd
                 invalid: root.problem !== ""
                 text: root.name
                 onTextChanged: {
@@ -124,24 +125,24 @@ Column {
                 escapeLocal: true
                 onEscaped: root.close()
             }
-            Button { objectName: "newTemplateConfirm"; visible: root.confirming; text: "Ghi đè"; kind: "primary"; size: "sm"; busy: root.busy; onActivated: root.submit() }
-            Button { objectName: "newTemplateRename"; visible: root.confirming; text: "Đặt tên khác"; kind: "ghost"; size: "sm"; onActivated: { root.confirming = false; nameField.forceActiveFocus() } }
-            Button { objectName: "newTemplateOk"; visible: !root.confirming; text: "Lưu"; kind: "primary"; size: "sm"; busy: root.busy; enabled: Templates.cleanName(root.name) !== ""; onActivated: root.submit() }
-            Button { objectName: "newTemplateCancel"; visible: !root.confirming; text: "Huỷ"; kind: "ghost"; size: "sm"; onActivated: root.close() }
+            Button { objectName: "newTemplateConfirm"; visible: root.confirming; text: S.s_ghi_de_5e4cd1eb; kind: "primary"; size: "sm"; busy: root.busy; onActivated: root.submit() }
+            Button { objectName: "newTemplateRename"; visible: root.confirming; text: S.s_dat_ten_khac_78e8f19c; kind: "ghost"; size: "sm"; onActivated: { root.confirming = false; nameField.forceActiveFocus() } }
+            Button { objectName: "newTemplateOk"; visible: !root.confirming; text: S.s_luu_e91f26c0; kind: "primary"; size: "sm"; busy: root.busy; enabled: Templates.cleanName(root.name) !== ""; onActivated: root.submit() }
+            Button { objectName: "newTemplateCancel"; visible: !root.confirming; text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onActivated: root.close() }
         }
         Prose {
             objectName: "newTemplateAsk"
             visible: root.confirming
             topPadding: visible ? 8 : 0
             small: true
-            text: root.existing ? "Đã có mẫu “" + root.existing.name + "”. Ghi đè bằng các lựa chọn hiện tại?" : ""
+            text: root.existing ? S.s_da_co_mau_8527783b + root.existing.name + S.s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5 : ""
         }
         Prose { objectName: "newTemplateProblem"; visible: root.problem !== ""; topPadding: visible ? 8 : 0; small: true; tone: Theme.danger; text: root.problem }
-        Prose { topPadding: 8; small: true; tone: Theme.text3; text: "Mẫu lưu giọng, chất lượng và cách tạo sách." }
+        Prose { topPadding: 8; small: true; tone: Theme.text3; text: S.s_mau_luu_giong_chat_luong_va_cach_tao_sach_143fa4bf }
         MoreInfo {
             width: parent.width
-            label: "Tìm hiểu thêm"
-            Prose { small: true; text: "Gồm bộ phân tích, bắt đầu ngay và duyệt trước khi thu. Không lưu truyện, tên sách hay dòng ghi công." }
+            label: S.s_tim_hieu_them_032fe408
+            Prose { small: true; text: S.s_gom_bo_phan_tich_bat_dau_ngay_va_duyet_tru_7f1b3642 }
         }
     }
     Item { width: 1; height: 12 }

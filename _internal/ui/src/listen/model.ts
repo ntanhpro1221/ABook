@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { CoverImage } from "@/shared/cover";
@@ -178,10 +179,10 @@ export interface SeriesLink {
  * -> phần 2, tên phần sau mà "Làm tiếp cuốn này" đặt). */
 export function seriesOf(title: string): SeriesPlace {
   const match = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(\d+)\b/i);
-  if (!match) return { key: `title:${title.trim()}`, series: title.trim(), volume: null, unit: "tập" };
+  if (!match) return { key: `title:${title.trim()}`, series: title.trim(), volume: null, unit: S.s_tap_f6dd4977 };
   const word = match[2].toLowerCase();
   const series = match[1].trim();
-  return { key: `title:${series}`, series, volume: Number(match[3]), unit: word === "quyển" || word === "phần" ? word : "tập" };
+  return { key: `title:${series}`, series, volume: Number(match[3]), unit: word === S.s_quyen_99cc1029 || word === S.s_phan_87a88dd0 ? word : S.s_tap_f6dd4977 };
 }
 
 /** Cuốn kế (`next`, useNextVolume) là PHẦN sau của cùng cuốn ("Làm tiếp cuốn này"): hết phần này là nghe nối sang nó - trả nó.
@@ -189,7 +190,7 @@ export function seriesOf(title: string): SeriesPlace {
  *  kết (sách nhập từ file, máy chủ cũ) mới đoán từ hậu tố "Phần N" của tên. Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe:
  *  null (soát a26 L1, a97 V3). */
 export function continuingPart(next: ListenBook | null | undefined): ListenBook | null {
-  return next && (next.series || seriesOf(next.title).unit === "phần") ? next : null;
+  return next && (next.series || seriesOf(next.title).unit === S.s_phan_87a88dd0) ? next : null;
 }
 
 /** Hết một phần (`atEnd` "finished") mà có phần sau để nghe nối (continuingPart): trả phần ấy. */
@@ -217,13 +218,13 @@ export function seriesIndex(books: { id: string; title: string; series?: SeriesL
   for (const book of books) {
     if (!book.series) continue;
     const name = seriesOf(titles.get(book.series.root) ?? book.title).series;
-    places.set(book.id, { key: `chain:${book.series.root}`, series: name, volume: book.series.part, unit: "phần" });
+    places.set(book.id, { key: `chain:${book.series.root}`, series: name, volume: book.series.part, unit: S.s_phan_87a88dd0 });
   }
   // Phần đầu không mang `series` (máy chủ chỉ gắn cho phần nối tiếp): nó là sách mà phần khác trỏ về.
   const roots = new Set(books.map((book) => book.series?.root));
   for (const book of books) {
     if (!places.has(book.id) && roots.has(book.id)) {
-      places.set(book.id, { key: `chain:${book.id}`, series: seriesOf(book.title).series, volume: 1, unit: "phần" });
+      places.set(book.id, { key: `chain:${book.id}`, series: seriesOf(book.title).series, volume: 1, unit: S.s_phan_87a88dd0 });
     }
   }
   const byTitle = new Map(books.filter((book) => !places.has(book.id)).map((book) => [book.id, seriesOf(book.title)]));
@@ -361,7 +362,7 @@ export interface Cast {
 /** "Phần 2 · Tên": tên phần là tên cuốn không kèm hậu tố "· Phần N" mà `parts[].title` mang theo. */
 export function partHeading(part: BookPart): string {
   const name = seriesOf(part.title).series;
-  return name ? `Phần ${part.part} · ${name}` : `Phần ${part.part}`;
+  return name ? S.s_phan_0_1_8d53b7bd(part.part, name) : S.s_phan_0_7c77642d(part.part);
 }
 
 /** Danh sách chương gom theo phần: chỉ khi cuốn có nhiều hơn một phần (không thì một nhóm không tiêu đề). Chương thuộc phần
@@ -494,7 +495,7 @@ export function foldVietnamese(text: string): string {
 
 /** Nhãn cho hai cuốn cùng tên: dự án làm ở máy này, hay bản nhập từ file sách. Cuốn khác (sách chỉ-chữ, sách từ máy khác): không nhãn. */
 export function twinKind(book: Pick<ListenBook, "capabilities" | "imported">): string {
-  return book.capabilities?.workshop ? "Dự án" : book.imported ? "Đã nhập" : "";
+  return book.capabilities?.workshop ? S.s_du_an_4f139d43 : book.imported ? S.s_da_nhap_47b970fc : "";
 }
 
 /** Mã các cuốn mà thư viện còn một cuốn nữa CÙNG TÊN (hai bản của một truyện, hai lần thêm): lưới thêm một dòng phụ để phân biệt (soát UX a15). */

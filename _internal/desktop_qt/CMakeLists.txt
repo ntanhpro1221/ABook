@@ -11,6 +11,20 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(DEFINED ENV{ABOOK_PYTHON})
+    set(ABOOK_UI_PYTHON "$ENV{ABOOK_PYTHON}")
+else()
+    set(ABOOK_UI_PYTHON "D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe")
+endif()
+add_custom_target(SharedUi ALL
+    COMMAND "${ABOOK_UI_PYTHON}" -X utf8 "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/prepare_ui.py"
+    VERBATIM)
+execute_process(COMMAND "${ABOOK_UI_PYTHON}" -X utf8 "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/prepare_ui.py"
+    RESULT_VARIABLE ABOOK_UI_RESULT)
+if(NOT ABOOK_UI_RESULT EQUAL 0)
+    message(FATAL_ERROR "Shared UI source audit failed")
+endif()
+
 # Hằng số trộn nhạc nền: MỘT file cho máy chủ, web, Android và app này (abook/webui/assets/music_mix.json) -> ABOOK_MIX_* (src/musiclogic.h).
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../abook/webui/assets/music_mix.json" ABOOK_MIX_JSON)
 # Đổi một con số trong file ấy thì cấu hình lại (không thì ABOOK_MIX_* giữ số cũ và app lệch web / Android).
@@ -421,6 +435,7 @@ qt_add_qml_module(ABookDesk
         qml/PlayButton.qml
         qml/PlayerBar.qml
         qml/PlayerLabels.js
+        qml/UiStrings.js
         qml/PlayerConsent.qml
         qml/OutputPopover.qml
         qml/PlayerAlert.qml
@@ -462,6 +477,7 @@ qt_add_qml_module(ABookDesk
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
 target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate Qt6::QmlPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32 user32)
+add_dependencies(ABookDesk SharedUi)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 # Icon app máy tính = icon bo góc của Windows (scripts/make_icons.py -> abook/assets/app.ico, 16-256 px), KHÔNG phải
 # icon vuông tràn viền của web (icon maskable cho điện thoại). Cửa sổ, khay và file exe dùng chung.
@@ -653,3 +669,13 @@ target_link_libraries(TrayProbe PRIVATE Qt6::Gui Qt6::Qml user32 shell32 gdi32)
 if(MSVC)
     target_compile_options(TrayProbe PRIVATE /W3 /utf-8)
 endif()
+
+# Native tests include the generated copy header too. Finish generation before
+# any compiler can read it, including incremental builds after a catalog edit.
+get_property(ABOOK_UI_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(ABOOK_UI_TARGET IN LISTS ABOOK_UI_TARGETS)
+    get_target_property(ABOOK_UI_TARGET_TYPE ${ABOOK_UI_TARGET} TYPE)
+    if(ABOOK_UI_TARGET_TYPE MATCHES "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|OBJECT_LIBRARY)$")
+        add_dependencies(${ABOOK_UI_TARGET} SharedUi)
+    endif()
+endforeach()

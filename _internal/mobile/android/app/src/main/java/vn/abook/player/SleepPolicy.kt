@@ -51,7 +51,7 @@ internal class SleepPolicy {
 
 /** Shared, word-for-word with the web and Qt player. */
 object AutoSleepText {
-    const val SCHEDULE = "Tự hẹn theo lịch đêm"
-    const val CONTINUE = "Chạm để nghe tiếp"
+    const val SCHEDULE = S.s_tu_hen_theo_lich_dem_17ee1443
+    const val CONTINUE = S.s_cham_de_nghe_tiep_86bd1a37
     fun reason(reason: String): String = when (reason) { "schedule" -> SCHEDULE; else -> "" }
 }

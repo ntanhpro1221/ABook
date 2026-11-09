@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -31,7 +32,7 @@ Column {
                 size: "sm"
                 kind: "ghost"
                 icon: "plus"
-                text: "Thêm cách đọc"
+                text: S.s_them_cach_doc_2c703022
                 onClicked: root.openBox()
             }
         }
@@ -45,7 +46,7 @@ Column {
             Item {
                 width: parent.width
                 height: Math.max(heading.height, close.height)
-                Text { id: heading; anchors.verticalCenter: parent.verticalCenter; text: "Chữ đọc sai"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                Text { id: heading; anchors.verticalCenter: parent.verticalCenter; text: S.s_chu_doc_sai_8578dcc5; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                 IconButton {
                     id: close
                     objectName: "addWordClose"
@@ -57,8 +58,8 @@ Column {
                     iconSize: 16
                     ink: Theme.text3
                     hoverInk: Theme.text
-                    tip: "Đóng"
-                    Accessible.name: "Đóng"
+                    tip: S.s_dong_5d54c2a1
+                    Accessible.name: S.s_dong_5d54c2a1
                     onClicked: root.closeBox()
                 }
             }
@@ -67,8 +68,8 @@ Column {
                 id: field
                 objectName: "addWordField"
                 width: parent.width
-                label: "Chữ đọc sai"
-                placeholderText: "vd TP.HCM"
+                label: S.s_chu_doc_sai_8578dcc5
+                placeholderText: S.s_vd_tp_hcm_26b95779
                 escapeLocal: true
                 topPadding: 8
                 bottomPadding: 8
@@ -76,11 +77,11 @@ Column {
                 onTextChanged: root.word = text
                 onEscaped: root.closeBox()
             }
-            Text { width: parent.width; topPadding: 6; text: "Nhập một từ liền để đổi cách đọc cả cuốn, giữ chữ gốc."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; topPadding: 6; text: S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
             Collapse {
                 width: parent.width
                 open: root.typed !== "" && !root.single
-                Text { width: parent.width; topPadding: 6; text: "Gõ một chữ liền nhau, không có khoảng trắng."; color: Theme.warning; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                Text { width: parent.width; topPadding: 6; text: S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6; color: Theme.warning; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
             }
             Collapse {
                 width: parent.width

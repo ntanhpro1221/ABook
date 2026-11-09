@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -15,8 +16,8 @@ Modal {
     property bool saving: false
     property int generation: 0
     readonly property bool single: book.stage === "text" && !(book.capabilities && book.capabilities.workshop)
-    title: "Đổi tên chương"
-    description: "Chỉ đổi cái tên hiện trên màn hình - audio không đổi."
+    title: S.s_doi_ten_chuong_4c534649
+    description: S.s_chi_doi_cai_ten_hien_tren_man_hinh_audio_k_da6efdbd
 
     function begin(data, chosen) {
         generation++
@@ -33,9 +34,9 @@ Modal {
         Api.call("PUT", "/api/books/" + (book.id || book.bookId) + "/chapters/" + chapter.id + "/title", body, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { Api.notice = Logic.toastText("Chưa đổi được tên chương", error); return }
+            if (error) { Api.notice = Logic.toastText(S.s_chua_doi_duoc_ten_chuong_1ff36fe9, error); return }
             Api.editedBook(book.id || book.bookId)
-            Api.notice = "Đã đổi tên chương: " + data.fullTitle
+            Api.notice = S.s_da_doi_ten_chuong_5b029214 + data.fullTitle
             root.dismiss()
         })
     }
@@ -48,12 +49,12 @@ Modal {
         Column {
             width: parent.width
             spacing: 4
-            Text { width: parent.width; text: root.single ? "Tên chương" : "Số chương hay nhãn"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Text { width: parent.width; text: root.single ? S.s_ten_chuong_9edb6c28 : S.s_so_chuong_hay_nhan_435a3d6c; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
             FormField {
                 id: labelField
                 objectName: "renameLabel"
                 width: parent.width
-                label: root.single ? "Tên chương" : "Số chương hay nhãn"
+                label: root.single ? S.s_ten_chuong_9edb6c28 : S.s_so_chuong_hay_nhan_435a3d6c
                 topPadding: 8
                 bottomPadding: 8
                 implicitHeight: Math.max(36, contentHeight + 16)
@@ -71,11 +72,11 @@ Modal {
             Column {
                 width: parent.width
                 spacing: 4
-                Text { width: parent.width; text: "Tên chương (có thể để trống)"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                Text { width: parent.width; text: S.s_ten_chuong_co_the_de_trong_8224dabe; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                 FormField {
                     objectName: "renameName"
                     width: parent.width
-                    label: "Tên chương (có thể để trống)"
+                    label: S.s_ten_chuong_co_the_de_trong_8224dabe
                     topPadding: 8
                     bottomPadding: 8
                     implicitHeight: Math.max(36, contentHeight + 16)
@@ -92,9 +93,9 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "renameRevert"; text: "Về tên gốc"; kind: "ghost"; enabled: !root.saving; onClicked: root.save({revert: true}) }
-            Button { objectName: "renameCancel"; text: "Thôi"; kind: "ghost"; onClicked: root.close() }
-            Button { objectName: "renameSave"; text: "Lưu"; busy: root.saving; enabled: root.label.trim() !== ""; onActivated: root.submit() }
+            Button { objectName: "renameRevert"; text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onClicked: root.save({revert: true}) }
+            Button { objectName: "renameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "renameSave"; text: S.s_luu_e91f26c0; busy: root.saving; enabled: root.label.trim() !== ""; onActivated: root.submit() }
         }
     ]
 }

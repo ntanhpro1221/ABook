@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,15 +27,15 @@ fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifie
         voice.loadKeys()
         voice.loadConsents()
     }
-    SettingsPage("Khoá trực tuyến", onBack, "keys_screen", modifier) {
+    SettingsPage(S.s_khoa_truc_tuyen_b32d4988, onBack, "keys_screen", modifier) {
         ListSection(first = true) {
-            MoreInfo("Tìm hiểu thêm", "Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.", "keys_more")
+            MoreInfo(S.s_tim_hieu_them_032fe408, S.s_khoa_chi_luu_tren_may_dich_vu_co_the_tinh_a894acea, "keys_more")
             val rows = if (ui.loaded) ui.providers else VoiceText.KEYED.map { (id, name) -> KeyProvider(id, name, "", false, false, "", "", false, 0) }
             for ((index, provider) in rows.withIndex()) {
                 if (index > 0) RowLine()
                 KeyRow(provider, if (ui.loaded) ({ sheets.show { dismiss -> KeySheet(provider, voice, dismiss) } }) else null)
             }
-            InlineProblem(if (ui.failed && !ui.loaded) "Chưa đọc được các khoá" else "", voice::loadKeys, "keys_problem")
+            InlineProblem(if (ui.failed && !ui.loaded) S.s_chua_doc_duoc_cac_khoa_87b08dca else "", voice::loadKeys, "keys_problem")
         }
     }
 }

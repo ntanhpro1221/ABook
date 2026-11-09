@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { ReadAloudVoice } from "@/listen/readAloud";
 import { KEYED_PROVIDERS } from "@/listen/readAloudVoice";
 import { spokenDuration } from "@/listen/prepareAhead";
@@ -10,16 +11,16 @@ import type { ExportCopy, ExportJob } from "./bookFileExport";
 export type AudiobookFormat = "mp3" | "m4b";
 
 export const AUDIOBOOK_COPY: ExportCopy = {
-  busy: "Đang làm sách nói…",
-  done: "Đã xuất sách nói",
-  failed: "Chưa xuất được sách nói",
-  stopped: "Đã dừng xuất",
-  stoppedNote: "Phần đã làm được giữ - xuất lại để làm tiếp từ đó.",
+  busy: S.s_dang_lam_sach_noi_6c41169d,
+  done: S.s_da_xuat_sach_noi_82ff590c,
+  failed: S.s_chua_xuat_duoc_sach_noi_5468423d,
+  stopped: S.s_da_dung_xuat_ab8ac9d1,
+  stoppedNote: S.s_phan_da_lam_duoc_giu_xuat_lai_de_lam_tiep_5da9523a,
 };
 
 export const FORMAT_CHOICES: { id: AudiobookFormat; label: string; hint: string }[] = [
-  { id: "mp3", label: "MP3 theo chương", hint: "Một thư mục, mỗi chương một MP3 kèm danh sách phát. Trình phát nào cũng mở được." },
-  { id: "m4b", label: "M4B cả cuốn", hint: "Một file có mục lục chương, nhớ chỗ nghe dở. Hợp Apple Books, BookPlayer, Smart AudioBook Player." },
+  { id: "mp3", label: S.s_mp3_theo_chuong_a08d3a89, hint: S.s_mot_thu_muc_moi_chuong_mot_mp3_kem_danh_sa_d7562c0b },
+  { id: "m4b", label: S.s_m4b_ca_cuon_2cba5ce9, hint: S.s_mot_file_co_muc_luc_chuong_nho_cho_nghe_do_903bace3 },
 ];
 
 /** Phần trả lời của GET /api/listen/books/<mã>/audiobook/plan. */
@@ -48,7 +49,7 @@ export interface MusicExportState {
 }
 
 /** Lời ngắn dưới ô "Kèm nhạc nền". */
-export const MUSIC_MIX_HINT = "Nhạc được trộn thẳng vào file, không tắt riêng được khi nghe.";
+export const MUSIC_MIX_HINT = S.s_nhac_duoc_tron_thang_vao_file_khong_tat_ri_e1608133;
 
 /** Công cụ ghép âm thanh (ffmpeg): tải riêng khi máy chưa có (GET/POST /api/ffmpeg). */
 export interface FfmpegStatus {
@@ -82,27 +83,27 @@ export const audiobookBody = (format: AudiobookFormat, voice: string, music = fa
 export function wholeBookNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {
   if (!voice.online) return "";
   const keyed = KEYED_PROVIDERS[voice.provider];
-  if (keyed) return `Chữ của cả cuốn được gửi tới ${keyed} để đọc, bằng khóa của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn.`;
-  if (voice.provider === "edge") return "Chữ của cả cuốn được gửi tới máy chủ Microsoft để đọc.";
-  return "Chữ của cả cuốn được gửi tới dịch vụ ngoài để đọc.";
+  if (keyed) return S.s_chu_cua_ca_cuon_duoc_gui_toi_0_de_doc_bang_388c1afd(keyed);
+  if (voice.provider === "edge") return S.s_chu_cua_ca_cuon_duoc_gui_toi_may_chu_micro_301f6ec7;
+  return S.s_chu_cua_ca_cuon_duoc_gui_toi_dich_vu_ngoai_a88c44d1;
 }
 
 /** Dòng nói sách dài bao nhiêu và máy cần bao lâu: "12 chương · khoảng 8 giờ nghe · máy cần khoảng 2 giờ 10 phút." */
 export function planText(plan: Pick<AudiobookPlan, "chapters" | "audioSeconds" | "secondsEstimate">): string {
-  const machine = plan.secondsEstimate != null ? ` · máy cần ${spokenDuration(plan.secondsEstimate)}` : "";
-  return `${plan.chapters} chương · ${spokenDuration(plan.audioSeconds)} nghe${machine}.`;
+  const machine = plan.secondsEstimate != null ? S.s_may_can_0_6e7b3653(spokenDuration(plan.secondsEstimate)) : "";
+  return S.s_0_chuong_1_nghe_2_7610a1f8(plan.chapters, spokenDuration(plan.audioSeconds), machine);
 }
 
 /** Nói phần nào đã có sẵn (đã nghe, đã Làm trước, lần xuất trước): "Đã đọc sẵn khoảng 52% - phần này xuất ngay, không đọc lại." Tính theo phần nghe
  *  đã có trên cả cuốn, không đếm chương đủ: soát a63 huỷ khi chương 2/3 đã đọc 57% mà hộp báo "1/3 chương". */
 export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters" | "readySeconds" | "audioSeconds">): string {
   // readyChapters chỉ còn để biết đủ cả cuốn.
-  if (plan.chapters && plan.readyChapters >= plan.chapters) return "Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại.";
+  if (plan.chapters && plan.readyChapters >= plan.chapters) return S.s_da_doc_san_ca_cuon_chi_con_ghep_thanh_file_d6e392df;
   const ready = plan.readySeconds ?? 0;
   if (ready >= 60 && plan.audioSeconds > 0) {
     // Chưa đủ cả cuốn thì không nói 100% (quãng lặng giữa đoạn, làm tròn).
     const percent = Math.min(99, Math.max(1, Math.round((ready / plan.audioSeconds) * 100)));
-    return `Đã đọc sẵn khoảng ${percent}% - phần này xuất ngay, không đọc lại.`;
+    return S.s_da_doc_san_khoang_0_phan_nay_xuat_ngay_kho_6b951d4f(percent);
   }
   return "";
 }

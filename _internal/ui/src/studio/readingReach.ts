@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api } from "./api";
@@ -40,23 +41,23 @@ export function useReach(bookId: string, surface: string, enabled = true) {
 }
 
 function where(reach: Reach): string {
-  const named = reach.chapters.slice(0, 3).map((chapter) => chapter.title || `chương ${chapter.chapterId}`);
+  const named = reach.chapters.slice(0, 3).map((chapter) => chapter.title || S.s_chuong_0_55d256d1(chapter.chapterId));
   const more = reach.chapters.length - named.length;
-  return named.length ? ` · ở ${named.join(", ")}${more > 0 ? ` và ${more} chương nữa` : ""}` : "";
+  return named.length ? S.s_o_0_1_dd43afcc(named.join(", "), more > 0 ? S.s_va_0_chuong_nua_128abbd4(more) : "") : "";
 }
 
 /** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi ("Mở/đóng"), và làm gì thay vào đó. */
 export function neverText(surface: string): string {
-  return `Máy đọc ký hiệu trong “${surface}” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy.`;
+  return S.s_may_doc_ky_hieu_trong_0_thanh_mot_cho_ngun_41720519(surface);
 }
 
 /** Dòng dưới ô khi đang thêm cách đọc: có bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại. `later`: cuốn chờ Studio - thu lại khi nào
  *  (decisions.retakeWhen), để dòng này hứa cùng điều với thông báo sau khi lưu. */
 export function reachSummary(reach: Reach, later?: string): string {
   // Lời giải thích đầy đủ (`neverText`) nằm ngay dưới ô sửa, cạnh nút "Lưu" đã tắt.
-  if (reach.never) return `${reach.lines ? `Có ${reach.lines} câu có chữ này, nhưng m` : "M"}áy không dùng được cách đọc cho chữ có ký hiệu này.`;
-  if (!reach.lines) return "Chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện.";
-  const cost = reach.recorded ? `${reach.recorded} câu đã thu sẽ được thu lại${later ? ` ${later}` : ""}` : "chưa thu câu nào nên không phải thu lại";
-  const blocked = reach.blocked ? ` (${reach.blocked} câu khác không dùng được vì ký hiệu)` : "";
-  return `${reach.reached} câu có chữ này · ${cost}${where(reach)}${blocked}`;
+  if (reach.never) return S.s_0_ay_khong_dung_duoc_cach_doc_cho_chu_co_k_0fe94280(reach.lines ? S.s_co_0_cau_co_chu_nay_nhung_m_d75dd8c1(reach.lines) : "M");
+  if (!reach.lines) return S.s_chua_co_cau_nao_co_chu_nay_cach_doc_se_duo_2d730bc4;
+  const cost = reach.recorded ? S.s_0_cau_da_thu_se_duoc_thu_lai_1_597e3783(reach.recorded, later ? ` ${later}` : "") : S.s_chua_thu_cau_nao_nen_khong_phai_thu_lai_79ed2712;
+  const blocked = reach.blocked ? S.s_0_cau_khac_khong_dung_duoc_vi_ky_hieu_d0715176(reach.blocked) : "";
+  return S.s_0_cau_co_chu_nay_1_2_3_8abc27d8(reach.reached, cost, where(reach), blocked);
 }

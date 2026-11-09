@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -13,7 +14,7 @@ VoiceFold {
     signal changed()
     signal switched(string voice)
     storageKey: "voice.modules"
-    title: "Bộ giọng"
+    title: S.s_bo_giong_75b79178
     summary: VoiceLogic.moduleActivity(vieneuCard.status, supertonicCard.status)
     onAdviceChanged: if (advice.advice !== "") keptAdvice = advice.advice
     function refresh() { vieneuCard.refresh(); supertonicCard.refresh() }

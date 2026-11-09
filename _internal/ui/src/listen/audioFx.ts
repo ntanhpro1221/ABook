@@ -1,3 +1,4 @@
+import { S } from '@/shared/strings.generated';
 import { useSyncExternalStore } from 'react';
 import { toast } from '@/shared/toast';
 import { attachSilenceSkip } from './silenceSkip';
@@ -5,7 +6,7 @@ import { createStereoMatrix } from './audioFxProcessor.js';
 
 export const FX_FREQUENCIES = [80,250,1000,4000,12000];
 export const FX_BANDS = ['80 Hz','250 Hz','1 kHz','4 kHz','12 kHz'];
-export const FX_LABELS = ['Phẳng','Rõ lời','Trầm ấm','Bổng','Giảm chói'];
+export const FX_LABELS = [S.s_copy_0053dd90f780,S.s_copy_bac2d68d2977,S.s_copy_05798ad73e95,S.s_copy_66823083cf09,S.s_copy_47dbcad94daf];
 export const FX_PRESETS = [[0,0,0,0,0],[-4,-2,2,3,-2],[4,2,0,-1,-2],[-2,-1,0,2,4],[0,0,0,-3,-5]];
 export interface AudioFxSettings { enabled:boolean; preset:number; bands:number[]; bass:number; boost:number; pitch:number; volume:number; speed:number; mono:boolean; balance:number; skipSilence:boolean; silenceDb:number; silenceSeconds:number; keepSeconds:number }
 export const DEFAULT_FX: AudioFxSettings = {enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,volume:.9,speed:1,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5};
@@ -85,7 +86,7 @@ export function attachAudioFx(audio:HTMLMediaElement): ()=>void {
       worklet=new AudioWorkletNode(ctx,'abook-audio-fx',{processorOptions:{pitch:current.pitch}});
       worklet.port.postMessage({pitch:current.pitch});previousPitch=current.pitch;
       compressor.disconnect();compressor.connect(worklet);worklet.connect(ctx.destination);
-    }).catch(()=>{toast.error('Chưa bật được âm thanh. Bạn hãy mở lại app.');});
+    }).catch(()=>{toast.error(S.s_copy_95a6489bbec5);});
   }
   const dispose=()=>{
     if (disposed) return;

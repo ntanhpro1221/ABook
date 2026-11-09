@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +30,7 @@ class VoiceRepo(context: Context) : VoiceSource {
     override suspend fun measurePick() = io {
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
         try {
-            check(!ReadAloud.active) { "Bạn hãy tạm dừng đọc trước khi thử giọng" }
+            check(!ReadAloud.active) { S.s_ban_hay_tam_dung_doc_truoc_khi_thu_giong_fae1497f }
             vn.abook.player.readaloud.AndroidVoicePick.of(app).apply { measure() }.status()
         } finally { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT) }
     }
@@ -65,7 +67,7 @@ class VoiceRepo(context: Context) : VoiceSource {
     override suspend fun module(kind: ModuleKind): ModuleStatus = io { status(kind) }
 
     override suspend fun start(kind: ModuleKind, choices: List<String>?): ModuleStatus = io {
-        guard("Chưa tải được ${kind.title.replaceFirstChar { it.lowercase() }}") {
+        guard(S.s_chua_tai_duoc_0_0cb3de66(kind.title.replaceFirstChar { it.lowercase() })) {
             core(kind).start(choices)
             status(kind)
         }
@@ -82,7 +84,7 @@ class VoiceRepo(context: Context) : VoiceSource {
     }
 
     override suspend fun remove(kind: ModuleKind, choice: String): ModuleStatus = io {
-        guard("Chưa gỡ được ${kind.title.replaceFirstChar { it.lowercase() }}") {
+        guard(S.s_chua_go_duoc_0_f7e62539(kind.title.replaceFirstChar { it.lowercase() })) {
             core(kind).remove(choice)
             // Cuốn đang đọc bằng giọng vừa gỡ thì đọc tiếp bằng giọng mặc định, không chờ lần nạp kế.
             Playback.onMain { ReadAloud.voicesChanged() }
@@ -101,15 +103,15 @@ class VoiceRepo(context: Context) : VoiceSource {
     }
 
     override suspend fun saveKey(provider: String, key: String, region: String): KeyProvider = io {
-        guard("Chưa lưu được khoá") { KeyJson.provider(OnlineVoices.saveKey(app, provider, key, region)) }
+        guard(S.s_chua_luu_duoc_khoa_96a2395d) { KeyJson.provider(OnlineVoices.saveKey(app, provider, key, region)) }
     }
 
     override suspend fun removeKey(provider: String): KeyProvider = io {
-        guard("Chưa xoá được khoá") { KeyJson.provider(OnlineVoices.removeKey(app, provider)) }
+        guard(S.s_chua_xoa_duoc_khoa_2df56367) { KeyJson.provider(OnlineVoices.removeKey(app, provider)) }
     }
 
     override suspend fun checkKey(provider: String): KeyResult = io {
-        guard("Chưa kiểm tra được khoá") { KeyJson.check(OnlineVoices.checkKey(app, provider)) }
+        guard(S.s_chua_kiem_tra_duoc_khoa_dba470e0) { KeyJson.check(OnlineVoices.checkKey(app, provider)) }
     }
 
     override suspend fun consents(): Set<String> = io { ReadAloud.onlineConsents().toSet() }
@@ -117,7 +119,7 @@ class VoiceRepo(context: Context) : VoiceSource {
     override suspend fun allow(provider: String) = io { ReadAloud.grantOnline(provider) }
 
     override suspend fun sample(voice: String, text: String): String = io {
-        guard("Chưa nghe thử được giọng này") { ReadAloud.readExactly(voice, text, null, emptyMap()).file.absolutePath }
+        guard(S.s_chua_nghe_thu_duoc_giong_nay_f17da379) { ReadAloud.readExactly(voice, text, null, emptyMap()).file.absolutePath }
     }
 
     /** Kho "Nhạc của tôi" của máy này: [vn.abook.player.AppStartup.run] đặt, chưa có thì đặt ở đây (MỘT kho: [DeviceMusic.store]). */
@@ -127,12 +129,12 @@ class VoiceRepo(context: Context) : VoiceSource {
 
     override suspend fun importMusic(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImportResult = io {
         store()
-        guard("Chưa thêm được nhạc") { MusicJson.imported(MusicImport.run(app, uris.take(MusicImport.LIMIT).map(Uri::parse), progress)) }
+        guard(S.s_chua_them_duoc_nhac_5565bc66) { MusicJson.imported(MusicImport.run(app, uris.take(MusicImport.LIMIT).map(Uri::parse), progress)) }
     }
 
     override suspend fun removeTrack(link: String): List<MusicTrack> = io {
         val digest = link.removePrefix("local:")
-        if (!store().remove(digest)) throw VoiceFailure("Bài này không còn trong Nhạc của tôi")
+        if (!store().remove(digest)) throw VoiceFailure(S.s_bai_nay_khong_con_trong_nhac_cua_toi_07833cb0)
         Playback.onMain { MusicBed.refreshMine() }
         MusicJson.tracks(org.json.JSONArray(store().entries()))
     }

@@ -19,7 +19,7 @@ object BookSave {
     /** Không lưu được vì gói dựng ra không hợp lệ - câu chữ để người dùng đọc. */
     class Failed(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-    class DestinationUnavailable(cause: Throwable? = null) : Exception("Chưa mở được nơi lưu cũ của bạn. Bạn hãy chọn nơi lưu khác.", cause)
+    class DestinationUnavailable(cause: Throwable? = null) : Exception(S.s_chua_mo_duoc_noi_luu_cu_cua_ban_ban_hay_ch_ce25bbe4, cause)
 
     internal fun shouldChooseAnotherLocation(direct: Boolean, error: Throwable): Boolean = direct && error is DestinationUnavailable
 
@@ -62,7 +62,7 @@ object BookSave {
         val needed = roomNeeded(bookDir, previousSize)
         val free = spaceLeft(scratch)
         if (free < needed) {
-            throw Failed("Thiếu chỗ lưu (cần ${formatSize(needed)}, còn ${formatSize(free.coerceAtLeast(0))}); giữ file đang có.")
+            throw Failed(S.s_thieu_cho_luu_can_0_con_1_giu_file_dang_co_aa53932c(formatSize(needed), formatSize(free.coerceAtLeast(0))))
         }
         val built = File.createTempFile("save-", ".part", scratch)
         var backup: File? = null
@@ -77,12 +77,12 @@ object BookSave {
                 catch (error: DestinationUnavailable) { throw error }
                 catch (error: FileNotFoundException) { throw DestinationUnavailable(error) }
                 catch (error: SecurityException) { throw DestinationUnavailable(error) }
-                catch (error: Exception) { throw Failed("Chưa giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error) }
+                catch (error: Exception) { throw Failed(S.s_chua_giu_duoc_ban_cu_de_phong_hong_file_da_203d0a7d, error) }
             try {
                 previousStream?.use { input ->
-                    check(keepDir.isDirectory || keepDir.mkdirs()) { "Chưa mở được nơi giữ bản lưu cũ của bạn" }
+                    check(keepDir.isDirectory || keepDir.mkdirs()) { S.s_chua_mo_duoc_noi_giu_ban_luu_cu_cua_ban_0eb38c4a }
                     val pendingDir = File(keepDir, ".pending")
-                    check(pendingDir.isDirectory || pendingDir.mkdirs()) { "Chưa mở được nhật ký lưu sách của bạn" }
+                    check(pendingDir.isDirectory || pendingDir.mkdirs()) { S.s_chua_mo_duoc_nhat_ky_luu_sach_cua_ban_e7eec060 }
                     val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date(now()))
                     val extension = if (asProject) BookDocumentWriter.PROJECT_EXTENSION else BookDocumentWriter.EXTENSION
                     val title = BookDocumentWriter.defaultName(keepName, asProject).removeSuffix(extension)
@@ -90,16 +90,16 @@ object BookSave {
                     // Durable storage and fsync precede the first open("wt") on the destination.
                     FileOutputStream(temporary).use { output -> input.copyTo(output); output.fd.sync() }
                     val kept = File(keepDir, temporary.name.removeSuffix(".part") + extension)
-                    check(!kept.exists() && temporary.renameTo(kept)) { "Chưa giữ được bản lưu cũ của bạn" }
+                    check(!kept.exists() && temporary.renameTo(kept)) { S.s_chua_giu_duoc_ban_luu_cu_cua_ban_7cbd7b09 }
                     backup = kept
                     val pending = File(keepDir, ".pending/${kept.name}.json")
                     Store.writeAtomic(pending, JSONObject().put("backup", kept.name).put("uri", destination)
                         .put("title", keepName).put("startedAt", now()).toString())
                     journal = pending
                 }
-                check(previousSize <= 0 || backup != null) { "Chưa đọc được file cũ của bạn" }
+                check(previousSize <= 0 || backup != null) { S.s_chua_doc_duoc_file_cu_cua_ban_9a83e0d2 }
             } catch (error: Exception) {
-                throw Failed("Chưa giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error)
+                throw Failed(S.s_chua_giu_duoc_ban_cu_de_phong_hong_file_da_203d0a7d, error)
             }
             try {
                 openDestination(open).use { sink ->
@@ -139,7 +139,7 @@ object BookSave {
 
 
     private fun lostMessage(kept: File): String =
-        "Lưu lỗi, chưa khôi phục được; bản cũ còn ở Cài đặt → Bản lưu cũ: ${kept.name}."
+        S.s_luu_loi_chua_khoi_phuc_duoc_ban_cu_con_o_c_34784af7(kept.name)
 
     /** Reopening an interrupted save exposes the already durable backup in OldSaves. Idempotent; never opens a URI. */
     fun recover(keepDir: File): List<String> = File(keepDir, ".pending").listFiles().orEmpty()
@@ -151,34 +151,34 @@ object BookSave {
                 name
             } catch (_: Exception) {
                 // A broken journal or a backup the user already exported/deleted must not hide other saves.
-                Store.addDataNotice("Lưu chưa xong; giữ các file còn lại — bạn xem Cài đặt → Bản lưu cũ.")
+                Store.addDataNotice(S.s_luu_chua_xong_giu_cac_file_con_lai_ban_xem_8c4547d7)
                 null
             }
         }
 
     /** Gói vừa dựng mở lại được như một gói của app: `mimetype` đầu tiên và không nén, đủ cỡ như đã ghi, và (file `.abook`) từng mục khớp cỡ trong `book.json`. */
     internal fun verify(file: File, written: BookDocumentWriter.Written, asProject: Boolean) {
-        if (file.length() != written.size) throw Failed("Gói sách ghi ra chưa trọn vẹn - file đang lưu không bị thay.")
+        if (file.length() != written.size) throw Failed(S.s_goi_sach_ghi_ra_chua_tron_ven_file_dang_lu_f19837d9)
         try {
             ZipFile(file).use { zip ->
                 val entries = zip.entries().toList()
                 val first = entries.firstOrNull()
-                if (first == null || first.name != "mimetype" || first.method != ZipEntry.STORED) throw Failed("Gói sách ghi ra không đúng dạng - file đang lưu không bị thay.")
+                if (first == null || first.name != "mimetype" || first.method != ZipEntry.STORED) throw Failed(S.s_goi_sach_ghi_ra_khong_dung_dang_file_dang_8e689551)
                 val mime = zip.getInputStream(first).readBytes().toString(Charsets.US_ASCII)
-                if (mime != (if (asProject) BookFileImport.PROJECT_MIMETYPE else BookFileImport.MIMETYPE)) throw Failed("Gói sách ghi ra không đúng dạng - file đang lưu không bị thay.")
-                val book = zip.getEntry("book.json") ?: throw Failed("Gói sách ghi ra thiếu phần mô tả - file đang lưu không bị thay.")
+                if (mime != (if (asProject) BookFileImport.PROJECT_MIMETYPE else BookFileImport.MIMETYPE)) throw Failed(S.s_goi_sach_ghi_ra_khong_dung_dang_file_dang_8e689551)
+                val book = zip.getEntry("book.json") ?: throw Failed(S.s_goi_sach_ghi_ra_thieu_phan_mo_ta_file_dang_c03336e8)
                 if (!asProject) {
                     val listed = JSONObject(zip.getInputStream(book).readBytes().toString(Charsets.UTF_8)).getJSONObject("package").getJSONObject("files")
                     for (name in listed.keys()) {
                         val entry = zip.getEntry(name)
-                        if (entry == null || entry.size != listed.getJSONObject(name).getLong("size")) throw Failed("Gói sách ghi ra thiếu hay lệch file $name - file đang lưu không bị thay.")
+                        if (entry == null || entry.size != listed.getJSONObject(name).getLong("size")) throw Failed(S.s_goi_sach_ghi_ra_thieu_hay_lech_file_0_file_8349384f(name))
                     }
                 }
             }
         } catch (error: Failed) {
             throw error
         } catch (error: Exception) {
-            throw Failed("Gói sách ghi ra không đọc lại được - file đang lưu không bị thay.", error)
+            throw Failed(S.s_goi_sach_ghi_ra_khong_doc_lai_duoc_file_da_bc1b363b, error)
         }
     }
 }

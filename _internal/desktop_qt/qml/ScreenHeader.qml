@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -10,7 +11,7 @@ Item {
     property string subtitle: ""
     property bool showBack: false
     // Tên nút ← nói về đâu, như bản web (BookScreen: "Về Thư viện")
-    property string backLabel: "Quay lại"
+    property string backLabel: S.s_quay_lai_6d793582
     default property alias trailing: trailingRow.data
     readonly property real titleBaseline: titleText.y + titleText.baselineOffset    // tiêu đề cột khác canh theo chân chữ này (Cài đặt hai cột)
 

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Nhạc nền cho sách nghe bằng "Nghe ngay" (docs/LISTEN_ANYTHING.md mục 4; máy chủ: webui/music_playlist.py; Android: Playlists.kt +
 // MusicBed.kt). Sách chỉ có chữ không có không khí từng cảnh, nên người nghe chọn một DANH SÁCH PHÁT cho cả cuốn: một danh sách
 // của danh mục, "Nhạc của tôi", tắt ("off"), hay - khi chưa chọn gì (mặc định) - "Theo cảnh": nhạc đổi theo từng cảnh, máy tự dựng từ chữ.
@@ -17,7 +18,7 @@ export const OFF_PLAYLIST = "off";
 /** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ, không cần model (máy tính: music_nnscene.py + sceneCues.ts; điện thoại: lõi native, SceneDevice.kt +
  *  SceneAnchor.kt). Là mặc định khi chưa chọn gì. Máy không báo `scene` trong menu của nó thì dòng này không hiện. */
 export const SCENE_PLAYLIST = "scene";
-export const SCENE_LABEL = "Theo cảnh";
+export const SCENE_LABEL = S.s_theo_canh_6cc44c05;
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
 export const FALLBACK_SECONDS = 180;
 /** Bằng thời gian chuyển mờ của MusicBed: bài sau vào lúc bài trước bắt đầu mờ, bài trước tắt hẳn đúng lúc nó hết. */
@@ -342,17 +343,17 @@ export interface PlaylistOption {
 function hours(minutes: number): string {
   // Là độ dài cả danh sách phát, không phải giờ nào trong ngày: nói "dài" để "8 giờ" không đọc như 8 giờ sáng.
   if (minutes <= 0) return "";
-  if (minutes < 90) return `dài ${minutes} phút`;
-  return `dài ${Math.round(minutes / 60)} giờ`;
+  if (minutes < 90) return S.s_dai_0_phut_52556926(minutes);
+  return S.s_dai_0_gio_b717acba(Math.round(minutes / 60));
 }
 
 /** Mục thêm nhạc ở cuối menu "Nhạc nền" (chỉ khi máy nhập được nhạc). */
-export const ADD_MUSIC_LABEL = "Thêm nhạc của bạn";
+export const ADD_MUSIC_LABEL = S.s_them_nhac_cua_ban_dbd7d8c4;
 
 /** Lời nói khi "Nhạc của tôi" còn trống. Máy nhập được thì mục "Thêm nhạc của bạn" ngay dưới đã là đường đi (không cần nói thêm);
  *  máy không nhập được (điện thoại nghe thư viện máy tính, Studio từ xa) thì chỉ đường sang máy tính. */
 export function emptyMineHint(canImport: boolean): string | undefined {
-  return canImport ? undefined : "Máy này chưa thêm nhạc được. Thêm ở ABook trên máy tính (tab Nhạc nền của Studio), bài sẽ có ở đây.";
+  return canImport ? undefined : S.s_may_nay_chua_them_nhac_duoc_them_o_abook_t_dbab3e71;
 }
 
 /** Câu báo sau khi thêm nhạc từ menu: bao nhiêu bài vào, và có nên chọn "Nhạc của tôi" cho cuốn đang nghe không (có bài trong kho là chọn;
@@ -365,13 +366,13 @@ export function addMusicOutcome(result: Pick<ImportResult, "added" | "existing" 
 } {
   const { added, existing, failed } = result;
   const description = failed.join("\n") || undefined;
-  if (added.length) return { select: true, kind: failed.length ? "warning" : "success", title: `Đã thêm ${added.length} bài`, description };
-  if (existing.length) return { select: true, kind: failed.length ? "warning" : "success", title: "Những bài này đã có trong Nhạc của tôi", description };
-  return { select: false, kind: "error", title: "Chưa thêm được nhạc", description };
+  if (added.length) return { select: true, kind: failed.length ? "warning" : "success", title: S.s_da_them_0_bai_10cb1924(added.length), description };
+  if (existing.length) return { select: true, kind: failed.length ? "warning" : "success", title: S.s_nhung_bai_nay_da_co_trong_nhac_cua_toi_e2e46a96, description };
+  return { select: false, kind: "error", title: S.s_chua_them_duoc_nhac_5565bc66, description };
 }
 
-export const AUTO_LABEL = "Để máy chọn";
-export const OFF_LABEL = "Tắt";
+export const AUTO_LABEL = S.s_de_may_chon_44450073;
+export const OFF_LABEL = S.s_tat_3286064e;
 
 /** Mã option đang được đánh dấu: null = "Để máy chọn" (chưa chọn gì, kể cả khi máy chưa chọn được gì), còn lại là mã người nghe đã chọn. */
 export function chosenId(view: PlaylistView | undefined): string | null {
@@ -380,7 +381,7 @@ export function chosenId(view: PlaylistView | undefined): string | null {
 
 /** Tên danh sách `code` trong menu; menu chưa tải thì "" (không nói mã trần cho người nghe). */
 function nameOf(menu: PlaylistMenu | undefined, code: string): string {
-  if (code === SCENE_PLAYLIST) return "Theo cảnh";
+  if (code === SCENE_PLAYLIST) return S.s_theo_canh_6cc44c05;
   return menu?.playlists.find((item) => item.id === code)?.name ?? "";
 }
 
@@ -391,23 +392,23 @@ export function autoPlaylistName(view: PlaylistView | undefined, menu: PlaylistM
 
 /** Chữ trên nút / thông báo của lựa chọn hiện tại: "Máy chọn: <tên>" khi máy đang chọn, "Tắt", tên danh sách, hay "Nhạc của tôi". */
 export function playlistLabel(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
-  if (view?.playlistAuto) return ["Máy chọn", autoPlaylistName(view, menu)].filter(Boolean).join(": ");
-  if (!view?.playlist) return view?.autoOff ? "Chưa có nhạc" : "Máy chọn";
+  if (view?.playlistAuto) return [S.s_may_chon_4329a3f3, autoPlaylistName(view, menu)].filter(Boolean).join(": ");
+  if (!view?.playlist) return view?.autoOff ? S.s_chua_co_nhac_ed5dc66e : S.s_may_chon_4329a3f3;
   if (view.playlist === OFF_PLAYLIST) return OFF_LABEL;
-  if (view.playlist === MINE_PLAYLIST) return "Nhạc của tôi";
+  if (view.playlist === MINE_PLAYLIST) return S.s_nhac_cua_toi_f65b7ac6;
   // Danh mục chưa tải (mất mạng lần đầu): không nói mã trần ("fantasy_adventure") cho người nghe.
-  return nameOf(menu, view.playlist) || "Danh sách đã chọn";
+  return nameOf(menu, view.playlist) || S.s_danh_sach_da_chon_7b304e03;
 }
 
 /** Chữ ngắn cho chỗ hẹp (chip trên thanh trình phát, dòng của menu): bỏ "Máy chọn: " để còn đủ tên tâm trạng thay vì cắt giữa chữ; chỗ gọi
  *  để `title` là `playlistLabel` đầy đủ. */
 export function shortPlaylistLabel(label: string): string {
-  return label.startsWith("Máy chọn: ") ? label.slice("Máy chọn: ".length) : label;
+  return label.startsWith(S.s_may_chon_408553a8) ? label.slice(S.s_may_chon_408553a8.length) : label;
 }
 
 /** Công tắc "Tự chọn nhạc nền" ở Cài đặt > Nhạc nền (máy tính và điện thoại dùng chung lời). */
-export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền";
-export const AUTO_MUSIC_HINT = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh.";
+export const AUTO_MUSIC_LABEL = S.s_tu_chon_nhac_nen_a14c52b4;
+export const AUTO_MUSIC_HINT = S.s_sach_chi_co_chu_nhac_nhe_doi_theo_canh_aef4ce0c;
 
 /** Nhạc đang chạy cho cuốn này hay không (máy theo cảnh, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
 export function playlistPlaying(view: PlaylistView | undefined): boolean {
@@ -418,7 +419,7 @@ export function playlistPlaying(view: PlaylistView | undefined): boolean {
  *  được nhạc. `view`: lựa chọn hiện tại - khi máy đang chọn, dòng "Để máy chọn" nói máy chọn gì. */
 export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false, view?: PlaylistView): PlaylistOption[] {
   return [
-    { id: null, label: AUTO_LABEL, hint: view?.autoOff ? "đang tắt trong Cài đặt" : autoPlaylistName(view, menu) },
+    { id: null, label: AUTO_LABEL, hint: view?.autoOff ? S.s_dang_tat_trong_cai_dat_729d6de0 : autoPlaylistName(view, menu) },
     { id: OFF_PLAYLIST, label: OFF_LABEL, hint: "" },
     ...(menu?.scene
       ? [
@@ -426,15 +427,15 @@ export function playlistOptions(menu: PlaylistMenu | undefined, canImport = fals
             id: SCENE_PLAYLIST,
             label: SCENE_LABEL,
             hint: "",
-            description: "Máy tự dựng, đổi theo từng cảnh của truyện.",
+            description: S.s_may_tu_dung_doi_theo_tung_canh_cua_truyen_9b723646,
           },
         ]
       : []),
     ...(menu?.playlists ?? []).map((item) => ({ id: item.id, label: item.name, hint: hours(item.minutes), description: item.description || undefined })),
     {
       id: MINE_PLAYLIST,
-      label: "Nhạc của tôi",
-      hint: menu?.mine ? `${menu.mine} bài` : "chưa có bài nào",
+      label: S.s_nhac_cua_toi_f65b7ac6,
+      hint: menu?.mine ? S.s_0_bai_1e392237(menu.mine) : S.s_chua_co_bai_nao_1911af5a,
       description: menu?.mine ? undefined : emptyMineHint(canImport),
       disabled: !menu?.mine,
     },

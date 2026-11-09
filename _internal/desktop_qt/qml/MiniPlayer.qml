@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -50,13 +51,13 @@ Rectangle {
             objectName: "miniPin"
             width: 28; height: 28; iconSize: 16
             icon: root.windowMode && !root.windowMode.pinned ? "pin-off" : "pin"
-            tip: "Ghim trên cùng"
+            tip: S.s_ghim_tren_cung_2407176d
             onClicked: if (root.windowMode) root.windowMode.pinned = !root.windowMode.pinned
         }
         IconButton {
             objectName: "miniExpand"
             width: 28; height: 28; iconSize: 16
-            icon: "maximize-2"; tip: "Mở rộng"
+            icon: "maximize-2"; tip: S.s_mo_rong_65e38618
             onClicked: if (root.windowMode) root.windowMode.expand()
         }
     }
@@ -84,9 +85,9 @@ Rectangle {
         x: details.x + (details.width + Theme.s24) * Math.min(1, root.wideT * 2)
         y: details.y + (details.height + Theme.s4) * (1 - Math.max(0, root.wideT * 2 - 1))
         spacing: Theme.s8
-        SkipButton { objectName: "miniBack"; forward: false; tip: `Lùi ${Player.skipSeconds} giây` }
-        PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? "Tạm dừng" : "Phát" }
-        SkipButton { objectName: "miniForward"; forward: true; tip: `Tới ${Player.skipSeconds} giây` }
+        SkipButton { objectName: "miniBack"; forward: false; tip: S.s_lui_0_giay_718bdd89(Player.skipSeconds) }
+        PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48 }
+        SkipButton { objectName: "miniForward"; forward: true; tip: S.s_toi_0_giay_84234225(Player.skipSeconds) }
     }
     SeekBar {
         objectName: "miniSeek"

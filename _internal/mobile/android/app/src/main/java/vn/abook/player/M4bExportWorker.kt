@@ -119,7 +119,7 @@ object M4bExports {
         return event
     }
 
-    private const val OUT_OF_SPACE = "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại"
+    private const val OUT_OF_SPACE = S.s_het_cho_trong_tren_dien_thoai_hoac_o_noi_l_b00cd071
 
     /** Hết chỗ là lỗi người nghe tự xử được: nói thẳng chứ không đưa mã lỗi của hệ thống. */
     internal fun describe(error: Throwable, lowSpace: Boolean = false): String {
@@ -133,8 +133,8 @@ object M4bExports {
         if (lowSpace && error !is Mp3Export.Refused) return OUT_OF_SPACE
         return when (error) {
             is Mp3Export.Refused -> error.message.orEmpty()
-            is IOException -> "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
-            else -> "Lỗi khi làm file M4B: ${error.message ?: error.javaClass.simpleName}"
+            is IOException -> S.s_loi_khi_ghi_0_7ee7b58a(error.message ?: error.javaClass.simpleName)
+            else -> S.s_loi_khi_lam_file_m4b_0_725f2664(error.message ?: error.javaClass.simpleName)
         }
     }
 }
@@ -177,7 +177,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             } ?: 0L
             val need = M4bExport.estimatedBytes(plan, musicBytes)
             if (work.parentFile!!.usableSpace < need) {
-                throw Mp3Export.Refused("Thiếu chỗ làm M4B (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
+                throw Mp3Export.Refused(S.s_thieu_cho_lam_m4b_can_0_mb_ban_don_bot_roi_c58fa976(need shr 20))
             }
             var shown = 0L
             // Pha đang chạy (trộn nhạc / kiểm đỉnh / mã hoá lại) đi kèm mọi tin tiến độ cho tới pha sau.
@@ -187,7 +187,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 phase = { event -> M4bExports.phase(event, name, chapter, plan.chapters.size, round, over) }
                 if (name == "peaks" || name == "reencode") M4bExports.emit(phase(event()))
             }) { encoded = it }
-            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Chưa ghi được vào chỗ đã chọn")
+            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused(S.s_chua_ghi_duoc_vao_cho_da_chon_6ff57f62)
             val result = out.buffered(256 * 1024).use { stream ->
                 M4bExport.run(plan, work, stream, encoder, progress = { chapters, total, fraction ->
                     done = chapters
@@ -202,10 +202,10 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             ExportHistory.remember(Store.bookDir(bookId), "m4b", file.toString(), snapshot)
             val missing = music.mixer?.missing(ids) ?: 0
             val over = encoded?.peakOver.orEmpty()
-            if (over.isNotEmpty()) AppLog.w("M4bExport", "sau ${AacJoin.RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
-            val partial = if (result.chapters < result.chaptersTotal) " Chưa gồm chương dở." else ""
-            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
-            M4bExports.finished(context, bookId, "Đã xuất M4B", "$title · ${result.chapters} chương, ${formatSize(result.size)}.$partial$lost")
+            if (over.isNotEmpty()) AppLog.w("M4bExport", S.s_sau_0_luot_ma_hoa_lai_van_vuot_tran_1_18313a13(AacJoin.RETRIES, over))
+            val partial = if (result.chapters < result.chaptersTotal) S.s_chua_gom_chuong_do_7055aff1 else ""
+            val lost = if (missing > 0) S.s_0_doan_chua_tai_duoc_nhac_ban_tai_lai_neu_4743385d(missing) else ""
+            M4bExports.finished(context, bookId, S.s_da_xuat_m4b_76947b3a, S.s_0_1_chuong_2_3_4_4322c244(title, result.chapters, formatSize(result.size), partial, lost))
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
                 .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString()) // địa chỉ để mở / gửi file vừa xuất (màn Xuất)
             if (missing > 0) finished.put("musicMissing", missing)
@@ -225,11 +225,11 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.discard(context, file)
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): một file duy nhất không làm tiếp được, nên file dở đã xoá và người nghe xuất lại.
-                M4bExports.finished(context, bookId, "Xuất đã dừng", "$title · ${Mp3Exports.TIMEOUT_NOTE}.")
+                M4bExports.finished(context, bookId, S.s_xuat_da_dung_711f78cf, "$title · ${Mp3Exports.TIMEOUT_NOTE}.")
                 M4bExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }
-            M4bExports.finished(context, bookId, "Đã dừng xuất M4B", "$title · file dở đã được xoá")
+            M4bExports.finished(context, bookId, S.s_da_dung_xuat_m4b_642b41ce, S.s_0_file_do_da_duoc_xoa_5bc21117(title))
             M4bExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
@@ -241,7 +241,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.discard(context, file)
             val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
                 else M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
-            M4bExports.finished(context, bookId, "Chưa xuất được M4B", "$title · $message")
+            M4bExports.finished(context, bookId, S.s_chua_xuat_duoc_m4b_5a39de4c, "$title · $message")
             M4bExports.emit(event().put("error", message))
             return Result.failure()
         } finally {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
@@ -208,8 +210,8 @@ private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipS
                 }
             }
         }
-        if (sheet.narrator) MoreInfo("Tìm hiểu thêm", WorkText.VOICE_NARRATOR_MORE, "studio_voice_narrator_more")
-        else MoreInfo("Dùng chung giọng", WorkText.VOICE_SHARED_MORE, "studio_voice_shared_more")
+        if (sheet.narrator) MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.VOICE_NARRATOR_MORE, "studio_voice_narrator_more")
+        else MoreInfo(S.s_dung_chung_giong_ccea62a1, WorkText.VOICE_SHARED_MORE, "studio_voice_shared_more")
     }
 }
 

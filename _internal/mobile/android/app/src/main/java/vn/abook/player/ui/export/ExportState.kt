@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
@@ -100,7 +102,7 @@ class ExportState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
+    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b
 
     private fun edit(bookId: String, change: (ExportUi) -> ExportUi) {
         flow(bookId).update(change)
@@ -278,7 +280,7 @@ class ExportState(
         val music = ui.musicOn
         return when {
             book.textOnly -> {
-                val voice = ui.voice ?: throw ExportFailure("Máy chưa có giọng đọc nào - tải giọng ở Cài đặt rồi quay lại.")
+                val voice = ui.voice ?: throw ExportFailure(S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_b6713ac4)
                 val file = create(source.fileTitle(book, ExportKind.Audiobook)) ?: return null
                 source.startAudiobook(book, voice.id, file, music)
             }
@@ -302,7 +304,7 @@ class ExportState(
         val running = flow(book.id).value.phase as? ExportPhase.Running ?: return
         if (running.stopping) return
         edit(book.id) { it.copy(phase = running.copy(stopping = true)) }
-        setProgress(book.id, ExportProgress("Đang dừng", "Đang dừng", progressFlow(book.id).value.fraction))
+        setProgress(book.id, ExportProgress(S.s_dang_dung_9b35aeb5, S.s_dang_dung_9b35aeb5, progressFlow(book.id).value.fraction))
         scope.launch {
             attempt { source.cancel(running.kind, book.id) }.onFailure { error ->
                 edit(book.id) { it.copy(phase = running.copy(stopping = false), problem = message(error)) }
@@ -315,7 +317,7 @@ class ExportState(
     /** "Mở": file M4B / sách nói bằng app nghe sách nói của máy. */
     fun openFile(bookId: String, uri: String) {
         scope.launch {
-            if (!source.open(uri)) edit(bookId) { it.copy(problem = "Chưa mở được từ đây - mở file bằng app Tệp") }
+            if (!source.open(uri)) edit(bookId) { it.copy(problem = S.s_chua_mo_duoc_tu_day_mo_file_bang_app_tep_bba21ab6) }
         }
     }
 
@@ -328,6 +330,6 @@ class ExportState(
 
     /** "Gửi": bảng chia sẻ của hệ thống với file vừa xuất. */
     fun share(bookId: String, uri: String, name: String) {
-        if (!links.share(uri, name)) edit(bookId) { it.copy(problem = "Chưa gửi được từ đây - mở file bằng app Tệp") }
+        if (!links.share(uri, name)) edit(bookId) { it.copy(problem = S.s_chua_gui_duoc_tu_day_mo_file_bang_app_tep_4861c25e) }
     }
 }

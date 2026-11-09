@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { spokenDuration } from "@/listen/prepareAhead";
 import { fileName, formatClock, formatSize } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
@@ -25,38 +26,38 @@ export interface ExportCopy {
 
 /** File sách (.abook): việc nền có pha + "chương X/N" (webui/server.py `post_bookfile_job`, bookfile.pack). */
 export const BOOK_FILE_COPY: ExportCopy = {
-  busy: "Đang đóng gói sách…",
-  done: "Đã xuất file sách",
-  failed: "Chưa xuất được file sách",
-  stopped: "Đã dừng xuất",
-  stoppedNote: "Chưa có file sách nào được ghi.",
+  busy: S.s_dang_dong_goi_sach_c372ab53,
+  done: S.s_da_xuat_file_sach_242afa05,
+  failed: S.s_chua_xuat_duoc_file_sach_43236ec7,
+  stopped: S.s_da_dung_xuat_ab8ac9d1,
+  stoppedNote: S.s_chua_co_file_sach_nao_duoc_ghi_acffb6e0,
   progress: (job) => packView(job as unknown as PackJob, BOOK_FILE_SPAN),
 };
 /** M4B: việc nền có Huỷ ở mọi pha (tải nhạc nền, trộn, ghép - webui/server.py `post_m4b_job_cancel`); huỷ thì không còn gì trên đĩa. */
 export const M4B_COPY: ExportCopy = {
-  busy: "Đang làm file M4B…",
-  done: "Đã xuất M4B",
-  failed: "Chưa xuất được M4B",
-  stopped: "Đã dừng xuất",
-  stoppedNote: "Chưa có file M4B nào được ghi.",
-  stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào.",
+  busy: S.s_dang_lam_file_m4b_01a34d3b,
+  done: S.s_da_xuat_m4b_76947b3a,
+  failed: S.s_chua_xuat_duoc_m4b_5a39de4c,
+  stopped: S.s_da_dung_xuat_ab8ac9d1,
+  stoppedNote: S.s_chua_co_file_m4b_nao_duoc_ghi_341f690c,
+  stopping: S.s_dung_ngay_sau_buoc_dang_lam_khong_ghi_file_52bd285a,
 };
 /** Thư mục MP3 (Studio, menu Thư viện): việc nền có "chương i/N" và Huỷ ở mọi pha (webui/server.py `post_mp3_job`); huỷ thì thư mục dở bị xoá. */
 export const MP3_COPY: ExportCopy = {
-  busy: "Đang xuất MP3…",
-  done: "Đã xuất MP3",
-  failed: "Chưa xuất được MP3",
-  stopped: "Đã dừng xuất",
-  stoppedNote: "Các chương đã ghi dở được xoá.",
-  stopping: "Dừng ngay sau bước đang làm - thư mục MP3 dở được xoá.",
+  busy: S.s_dang_xuat_mp3_1f5f6554,
+  done: S.s_da_xuat_mp3_c93fc100,
+  failed: S.s_chua_xuat_duoc_mp3_1550e65a,
+  stopped: S.s_da_dung_xuat_ab8ac9d1,
+  stoppedNote: S.s_cac_chuong_da_ghi_do_duoc_xoa_55c0187f,
+  stopping: S.s_dung_ngay_sau_buoc_dang_lam_thu_muc_mp3_do_47cdbf95,
 };
 /** Gói cả dự án (.abookproj): việc nền ở máy chủ, có pha + đã/tổng và Huỷ (webui/server.py `post_projectfile_job`). */
 export const PROJECT_FILE_COPY: ExportCopy = {
-  busy: "Đang đóng gói dự án…",
-  done: "Đã gói dự án",
-  failed: "Chưa gói được dự án",
-  stopped: "Đã dừng xuất",
-  stoppedNote: "Chưa có file dự án nào được ghi.",
+  busy: S.s_dang_dong_goi_du_an_59bb0a50,
+  done: S.s_da_goi_du_an_9908b445,
+  failed: S.s_chua_goi_duoc_du_an_fd3612d5,
+  stopped: S.s_da_dung_xuat_ab8ac9d1,
+  stoppedNote: S.s_chua_co_file_du_an_nao_duoc_ghi_d4baebaa,
   progress: (job) => packView(job as unknown as PackJob),
   explain: (raw) => packError(raw).summary,
 };
@@ -66,19 +67,19 @@ export const PROJECT_FILE_COPY: ExportCopy = {
 export function defaultExportFolder(libraryRoot: string | undefined): string | null {
   if (!libraryRoot) return null;
   const separator = libraryRoot.includes("\\") ? "\\" : "/";
-  return `${libraryRoot.replace(/[\\/]+$/, "")}${separator}Đã xuất`;
+  return S.s_0_1_da_xuat_56482390(libraryRoot.replace(/[\\/]+$/, ""), separator);
 }
 
 /** Dòng phụ dưới "Xuất file sách": chọn thư mục (cửa sổ app) hay thư mục sẽ lưu (nơi khác). */
 export function exportWhereHint(dialogs: boolean, libraryRoot: string | undefined): string {
-  if (dialogs) return "Bạn chọn thư mục lưu ở bước kế";
+  if (dialogs) return S.s_ban_chon_thu_muc_luu_o_buoc_ke_c54f45be;
   const folder = defaultExportFolder(libraryRoot);
-  return folder ? `Lưu vào ${folder}` : "Lưu vào thư mục “Đã xuất” trong thư viện";
+  return folder ? S.s_luu_vao_0_278caa24(folder) : S.s_luu_vao_thu_muc_da_xuat_trong_thu_vien_49db80bb;
 }
 
 /** Chữ của thông báo đang đóng gói: số chương và thời gian đã trôi - đổi mỗi giây nên người xem biết máy chưa treo. */
 export function packingText(chapters: number, elapsedSeconds: number): string {
-  return `${chapters} chương · đã ${formatClock(elapsedSeconds)}`;
+  return S.s_0_chuong_da_1_b2b5fca7(chapters, formatClock(elapsedSeconds));
 }
 
 // ---- việc xuất chạy nền (webui/export_jobs.py: GET /api/books/<id>/bookfile-job) ----------------------------------------------
@@ -157,37 +158,37 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
   if (job.phase === "music-fetch" && job.total) {
     const done = job.done ?? 0;
     const fraction = done / job.total;
-    return { fraction, text: `Đang tải nhạc nền ${Math.min(done + 1, job.total)}/${job.total} bài`, spoken: spokenProgress("Đang tải nhạc nền", fraction) };
+    return { fraction, text: S.s_dang_tai_nhac_nen_0_1_bai_2a186c13(Math.min(done + 1, job.total), job.total), spoken: spokenProgress(S.s_dang_tai_nhac_nen_0b8c4795, fraction) };
   }
-  if (job.phase === "peaks") return { fraction: 1, text: "Đang kiểm đỉnh âm…", spoken: "Đang kiểm đỉnh âm" };
+  if (job.phase === "peaks") return { fraction: 1, text: S.s_dang_kiem_dinh_am_9eff0113, spoken: S.s_dang_kiem_dinh_am_fddf3cc5 };
   // Lượt mã hoá lại chạy lại từng chương (pha "encode" / "music" báo chương) - vẫn nói vì sao.
-  const again = job.peakOver ? `Mã hoá lại vì ${job.peakOver} chương vượt đỉnh (lượt ${job.peakRound ?? 1})` : "";
+  const again = job.peakOver ? S.s_ma_hoa_lai_vi_0_chuong_vuot_dinh_luot_1_04047057(job.peakOver, job.peakRound ?? 1) : "";
   if (job.phase === "reencode") return { fraction: 1, text: again, spoken: again };
   if (job.chapter === undefined || !job.chapters) return null;
-  const where = `Chương ${job.chapter}/${job.chapters}`;
+  const where = S.s_chuong_0_1_7e729467(job.chapter, job.chapters);
   if (job.phase === "encode") {
-    return { fraction: 1, text: again ? `${again} · ${where}` : `Đang ghép file âm thanh · ${where}`, spoken: again || "Đang ghép file âm thanh" };
+    return { fraction: 1, text: again ? `${again} · ${where}` : S.s_dang_ghep_file_am_thanh_0_a01e1ed9(where), spoken: again || S.s_dang_ghep_file_am_thanh_c3a409b3 };
   }
   if (job.phase === "chapters") {
     const fraction = (job.chapter - 1) / job.chapters;
-    return { fraction, text: `Đang ghi chương ${job.chapter}/${job.chapters}`, spoken: spokenProgress("Đang xuất MP3", fraction) };
+    return { fraction, text: S.s_dang_ghi_chuong_0_1_41650b16(job.chapter, job.chapters), spoken: spokenProgress(S.s_dang_xuat_mp3_99b61b74, fraction) };
   }
   if (job.phase === "music") {
-    const text = `Đang trộn nhạc chương ${job.chapter}/${job.chapters}`;
+    const text = S.s_dang_tron_nhac_chuong_0_1_1216281a(job.chapter, job.chapters);
     const fraction = job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters;
-    return { fraction, text: again ? `${again} · ${text}` : text, spoken: again || spokenProgress("Đang trộn nhạc nền", fraction) };
+    return { fraction, text: again ? `${again} · ${text}` : text, spoken: again || spokenProgress(S.s_dang_tron_nhac_nen_97fb2b7d, fraction) };
   }
   const parts = [where, `${job.percent ?? 0}%`];
-  if (job.waiting === "listening") parts.push("nhường cho chương đang nghe");
-  else if (job.waiting === "network") parts.push("Đang chờ mạng…");
-  else if (job.secondsLeft != null) parts.push(`còn ${spokenDuration(job.secondsLeft)}`);
+  if (job.waiting === "listening") parts.push(S.s_nhuong_cho_chuong_dang_nghe_93babd54);
+  else if (job.waiting === "network") parts.push(S.s_dang_cho_mang_d15a22d3);
+  else if (job.secondsLeft != null) parts.push(S.s_con_0_46699fed(spokenDuration(job.secondsLeft)));
   const fraction = (job.percent ?? 0) / 100;
   const spoken =
     job.waiting === "listening"
-      ? "Tạm nhường cho chương đang nghe"
+      ? S.s_tam_nhuong_cho_chuong_dang_nghe_258d655c
       : job.waiting === "network"
-        ? "Mất mạng - đang chờ mạng về để làm tiếp"
-        : spokenProgress(`Đang xuất ${job.chapters} chương`, fraction);
+        ? S.s_mat_mang_dang_cho_mang_ve_de_lam_tiep_34393630
+        : spokenProgress(S.s_dang_xuat_0_chuong_46b78449(job.chapters), fraction);
   return { fraction, text: parts.join(" · "), spoken };
 }
 
@@ -200,23 +201,23 @@ export function exportedPlace(result: ExportResult): string {
 export function missingChaptersNote(result: ExportResult): string {
   const { chapters, chaptersTotal } = result;
   if (chapters === undefined || chaptersTotal === undefined || chapters >= chaptersTotal) return "";
-  return `${chapters}/${chaptersTotal} chương - chương chưa xong không có trong file`;
+  return S.s_0_1_chuong_chuong_chua_xong_khong_co_trong_35795edf(chapters, chaptersTotal);
 }
 
 /** "3 đoạn thiếu nhạc vì chưa tải được bài" khi bản xuất kèm nhạc nền thiếu đoạn nào; rỗng khi đủ. */
 export function musicMissingNote(result: ExportResult): string {
-  return result.musicMissing ? `${result.musicMissing} đoạn thiếu nhạc vì chưa tải được bài` : "";
+  return result.musicMissing ? S.s_0_doan_thieu_nhac_vi_chua_tai_duoc_bai_66255efe(result.musicMissing) : "";
 }
 
 /** "chưa có chương nào nên bỏ qua: Phần 2" khi xuất cả bộ bỏ qua phần nào; rỗng khi không. */
 export function skippedPartsNote(result: ExportResult): string {
-  return result.skipped?.length ? `chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+  return result.skipped?.length ? S.s_chua_co_chuong_nao_nen_bo_qua_0_56da88e7(result.skipped.map((part) => S.s_phan_0_7c77642d(part.part)).join(", ")) : "";
 }
 
 /** "3 file nguồn chương đã bị dời hay xoá nên không có trong gói" khi gói dự án thiếu file nguồn; rỗng khi đủ. */
 export function missingSourcesNote(result: ExportResult): string {
   const lost = result.missingSources?.length ?? 0;
-  return lost ? `${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "";
+  return lost ? S.s_0_file_nguon_chuong_da_bi_doi_hay_xoa_nen_a83aaefb(lost) : "";
 }
 
 /** Thông báo cho một trạng thái; `announce` (mở lại trang sách): chỉ nhắc cái đã xong gần đây, không nhắc lần xuất từ lâu. */
@@ -231,12 +232,12 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
       return {
         kind: "loading",
         title: packing.title,
-        description: `đã ${formatClock(elapsed)}`,
+        description: S.s_da_0_0e900305(formatClock(elapsed)),
         spoken: spokenProgress(packing.title, packing.fraction),
         ...(packing.fraction !== null ? { progress: packing.fraction } : {}),
       };
     }
-    return { kind: "loading", title: copy.busy, description: chapters ? packingText(chapters, elapsed) : `đã ${formatClock(elapsed)}`, spoken: copy.busy };
+    return { kind: "loading", title: copy.busy, description: chapters ? packingText(chapters, elapsed) : S.s_da_0_0e900305(formatClock(elapsed)), spoken: copy.busy };
   }
   if (announce && (job.finishedAgo ?? 0) > RECENT_SECONDS) return { kind: "none" };
   if (job.state === "cancelled") return copy.stopped ? { kind: "info", title: copy.stopped, description: copy.stoppedNote ?? "" } : { kind: "none" };
@@ -244,11 +245,11 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     // Thông báo chỉ nói TÊN (file, hay thư mục khi mỗi phần một file + số file); đường đầy đủ ở gợi ý khi rê chuột và nút "Mở thư mục".
     const { file, folder } = job.result;
     const count = job.result.files ?? job.result.parts?.length;
-    const partsNote = !file && job.result.files !== undefined && job.result.parts ? `${job.result.parts.length} phần` : ""; // MP3 cả bộ: file đếm theo chương, phần đếm riêng
+    const partsNote = !file && job.result.files !== undefined && job.result.parts ? S.s_0_phan_40e8af8c(job.result.parts.length) : ""; // MP3 cả bộ: file đếm theo chương, phần đếm riêng
     // `note`: riêng phần LƯU Ý (thiếu chương / nhạc / nguồn / bìa) - thông báo "xong" chỉ một dòng, lưu ý đổi thành cảnh báo (toastDone).
     const skipped = skippedPartsNote(job.result);
     const lacks = [missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
-      job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
+      job.result.coverBroken ? S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 : ""].filter(Boolean);
     const details = [partsNote, !file && count ? `${count} file` : "", skipped, job.result.size ? formatSize(job.result.size) : "", ...lacks].filter(Boolean);
     const place = file ?? folder ?? "";
     return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(skipped || lacks.length ? { note: [skipped, ...lacks].filter(Boolean).join(" · ") } : {}), ...(fileName(place) !== place ? { place } : {}) };
@@ -268,7 +269,7 @@ const HINT_NAME_MAX = 34;
 /** Studio từ xa: file xuất nằm trên máy tính, không về máy đang xem - nói thẳng máy nào và (nếu biết) tên file / thư mục. Máy chủ chỉ trả TÊN
  *  (server.without_local_paths), không đường dẫn. `detail`: phần còn lại của dòng ("5 MB", "6 file"). */
 export function exportedOnComputer(computer: string, name: string, detail = ""): string {
-  const where = computer && computer !== "máy tính" ? `Đã xuất vào máy tính ${computer}` : "Đã xuất vào máy tính";
+  const where = computer && computer !== S.s_may_tinh_8eafc226 ? S.s_da_xuat_vao_may_tinh_0_19bf0167(computer) : S.s_da_xuat_vao_may_tinh_d121586e;
   return [name ? `${where}: ${name}` : where, detail].filter(Boolean).join(" · ");
 }
 
@@ -276,10 +277,10 @@ export function exportedOnComputer(computer: string, name: string, detail = ""):
 export function exportFormatLabel(result: ExportResult): string {
   if (result.format) return result.format.toUpperCase();
   const extension = (result.file ?? "").toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
-  if (extension === "m4b") return "M4B";
-  if (extension === "abookproj") return "Dự án";
-  if (extension === "abook") return "File sách";
-  return result.file ? "" : "MP3"; // cả thư mục, mỗi chương một file
+  if (extension === "m4b") return S.s_m4b_c793d08a;
+  if (extension === "abookproj") return S.s_du_an_4f139d43;
+  if (extension === "abook") return S.s_file_sach_ccdcf961;
+  return result.file ? "" : S.s_mp3_b84e4872; // cả thư mục, mỗi chương một file
 }
 
 /** "10/10 14:05" - ngày/tháng giờ:phút theo giờ máy. */
@@ -294,13 +295,13 @@ export function shortWhen(at: Date): string {
 export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY, now: number = Date.now()): string | null {
   if (job?.state === "running") {
     // Có phần trăm thì nói thẳng (như hàng "Đang xuất · 45%" của điện thoại); chưa có thì chỉ đường tới thông báo.
-    if (job.percent !== undefined) return `Đang xuất · ${Math.min(99, Math.max(0, Math.round(job.percent)))}%`;
-    return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
+    if (job.percent !== undefined) return S.s_dang_xuat_0_20b7b18c(Math.min(99, Math.max(0, Math.round(job.percent))));
+    return S.s_0_xem_thong_bao_o_goc_man_hinh_55cc357e(copy.busy.replace(/…$/, ""));
   }
   if (job?.state === "done" && job.result) {
     const when = job.finishedAgo === undefined ? "" : shortWhen(new Date(now - job.finishedAgo * 1000));
     const parts = [exportFormatLabel(job.result), when, clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)].filter(Boolean);
-    return `Lần xuất gần nhất: ${parts.join(" · ")}`;
+    return S.s_lan_xuat_gan_nhat_0_f94c1bcb(parts.join(" · "));
   }
   return null;
 }

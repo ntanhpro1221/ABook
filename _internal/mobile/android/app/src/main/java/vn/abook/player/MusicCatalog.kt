@@ -54,7 +54,7 @@ class MusicCatalog(
 
     /** Bài lớn hơn [TRACK_MAX_MB] (`bytes` của danh mục, Content-Length hay số byte đếm được khi tải): máy này không dùng - như
      *  `TrackTooBig` của webui/server.py. Không phải lỗi mạng: không thử lại. */
-    class TrackTooBig(val size: Long) : IOException("bài nhạc quá $TRACK_MAX_MB MB")
+    class TrackTooBig(val size: Long) : IOException(S.s_bai_nhac_qua_0_mb_e5933405(TRACK_MAX_MB))
 
     /** Nguồn trả lời nhưng báo lỗi HTTP (404, 403...): nguồn vẫn nối được, chỉ bài / file ấy hỏng - KHÔNG phải lỗi mạng (như `urllib.error.HTTPError`). */
     class HttpFailure(val code: Int) : IOException("HTTP $code")
@@ -63,18 +63,18 @@ class MusicCatalog(
     class LocalFailure(message: String) : IOException(message)
 
     /** Nguồn đóng kết nối sớm, chưa đủ Content-Length: tải cụt, KHÔNG lưu như bài tốt (`DownloadCut` của webui/server.py). Là lỗi mạng: bài vẫn tốt, thử lại. */
-    class Cut(copied: Long, length: Long) : IOException("tải đứt sau $copied/$length byte")
+    class Cut(copied: Long, length: Long) : IOException(S.s_tai_dut_sau_0_1_byte_90473664(copied, length))
 
     /** Mọi nguồn của bài hỏng vì MẠNG (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL): bài vẫn tốt, chỉ chưa
      *  tải được - người gọi không tính vào số lần bỏ bài, thử lại khi có mạng (như `network_only` của `music_track_file`). */
-    open class Offline(message: String = "không có mạng") : IOException(message)
+    open class Offline(message: String = S.s_khong_co_mang_558b7672) : IOException(message)
 
     /** Lượt tải đứng nhường ([download] `yields`) rồi đứt vì mạng (nguồn đóng kết nối nằm im lâu): bài và nguồn vẫn tốt - không tính vào sức khoẻ nguồn, lần xin sau tải tiếp. */
-    class Yielded : IOException("tải nhường chỗ rồi đứt")
+    class Yielded : IOException(S.s_tai_nhuong_cho_roi_dut_6447b32b)
 
     /** Tải đứt vì mạng sau khi đã nhận thêm byte (nguồn chậm, Wi-Fi chập chờn): phần đã tải nằm lại trong `.part`, lần xin sau tải tiếp từ đó.
      *  Nguồn vẫn trả lời nên KHÔNG bị cho nghỉ [HOST_REST_MS]; tải sẵn xin lại ngay như [Yielded]. */
-    class Progressed(kept: Long) : Offline("tải đứt, giữ $kept byte để tải tiếp")
+    class Progressed(kept: Long) : Offline(S.s_tai_dut_giu_0_byte_de_tai_tiep_546e3693(kept))
 
     /** Kết quả [lookupPartial]: dữ liệu các link tìm được + các mảnh không tải được (mạng) - bài thuộc mảnh ấy chưa biết, chờ tải lại. */
     class Lookup(val found: Map<String, JSONObject>, val missingShards: Set<String>)
@@ -164,7 +164,7 @@ class MusicCatalog(
     }
 
     private fun checkVersion(data: JSONObject) {
-        if (data.getInt("version") > FORMAT_VERSION) throw CatalogError("Danh mục nhạc nền mới hơn app - hãy cập nhật app.")
+        if (data.getInt("version") > FORMAT_VERSION) throw CatalogError(S.s_danh_muc_nhac_nen_moi_hon_app_hay_cap_nhat_bd8c6830)
     }
 
     /** Mục lục còn mới (đã đọc, cất trên đĩa chưa quá [MANIFEST_MAX_AGE_MS]) hay null. Gọi khi giữ [lock]. */
@@ -203,9 +203,9 @@ class MusicCatalog(
                     val data = accept(raw, signature)
                     val held = current
                     if (data == null) {
-                        log("danh mục nhạc: mục lục tải về sai chữ ký hay sai định dạng - giữ bản đã cất")
+                        log(S.s_danh_muc_nhac_muc_luc_tai_ve_sai_chu_ky_ha_4bb1a955)
                     } else if (held != null && data.getString("issued") < held.getString("issued")) {
-                        log("danh mục nhạc: mục lục tải về cũ hơn bản đang giữ (${data.getString("issued")} < ${held.getString("issued")}) - bỏ")
+                        log(S.s_danh_muc_nhac_muc_luc_tai_ve_cu_hon_ban_da_c8d8082a(data.getString("issued"), held.getString("issued")))
                     } else {
                         checkVersion(data)
                         Store.writeAtomic(File(dir, "manifest.json"), raw)
@@ -220,7 +220,7 @@ class MusicCatalog(
             synchronized(lock) {
                 val result = current
                 if (result == null) {
-                    throw CatalogError(if (rejected) "Danh mục nhạc nền tải về không có chữ ký hợp lệ - app không dùng." else "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
+                    throw CatalogError(if (rejected) S.s_danh_muc_nhac_nen_tai_ve_khong_co_chu_ky_h_39540189 else S.s_chua_tai_duoc_danh_muc_nhac_nen_can_mang_o_f4b1c743)
                 }
                 checkVersion(result)
                 if (manifest?.optString("revision") != result.optString("revision")) {
@@ -246,7 +246,7 @@ class MusicCatalog(
         synchronized(lock) { parts[key]?.let { return it } }
         val expected = manifest.getJSONObject("files").optString(relative).takeIf { it.isNotEmpty() }
         if (expected == null) {
-            log("danh mục nhạc: mảnh $relative không có trong mục lục đã ký - bỏ")
+            log(S.s_danh_muc_nhac_manh_0_khong_co_trong_muc_lu_54e9be7e(relative))
             return null
         }
         val path = Store.contained(File(dir, revision), relative)
@@ -256,10 +256,10 @@ class MusicCatalog(
             val fetched = try {
                 fetch(if (remote) "$relative?v=$revision" else relative)
             } catch (error: IOException) {
-                throw CatalogError("Chưa tải được danh mục nhạc nền - kiểm tra mạng.")
+                throw CatalogError(S.s_chua_tai_duoc_danh_muc_nhac_nen_kiem_tra_m_a5baaadd)
             }
             if (sha256(fetched) != expected) {
-                log("danh mục nhạc: mảnh $relative lệch sha256 của mục lục đã ký - bỏ")
+                log(S.s_danh_muc_nhac_manh_0_lech_sha256_cua_muc_l_7a07599b(relative))
                 return null
             }
             runCatching { Store.writeAtomic(path, fetched) }
@@ -268,11 +268,11 @@ class MusicCatalog(
         val value = try {
             JSONTokener(String(raw, Charsets.UTF_8)).nextValue()
         } catch (_: JSONException) {
-            log("danh mục nhạc: mảnh $relative không phải JSON - bỏ")
+            log(S.s_danh_muc_nhac_manh_0_khong_phai_json_bo_d6273b96(relative))
             return null
         }
         if (value !is JSONObject && value !is JSONArray) {
-            log("danh mục nhạc: mảnh $relative không phải JSON - bỏ")
+            log(S.s_danh_muc_nhac_manh_0_khong_phai_json_bo_d6273b96(relative))
             return null
         }
         synchronized(lock) { parts[key] = value }
@@ -297,7 +297,7 @@ class MusicCatalog(
                 try {
                     loaded[shard] = job.get()
                 } catch (error: java.util.concurrent.ExecutionException) {
-                    log("danh mục nhạc: mảnh tracks/$shard.json chưa tải được (${error.cause?.message}) - các mảnh khác vẫn dùng, thử lại sau")
+                    log(S.s_danh_muc_nhac_manh_tracks_0_json_chua_tai_814f20c0(shard, error.cause?.message))
                     missing += shard
                 }
             }
@@ -359,7 +359,7 @@ class MusicCatalog(
     private fun dropIfCut(file: File, info: JSONObject?): Boolean {
         val size = (info?.opt("bytes") as? Number)?.toLong() ?: return false
         if (file.length() == size) return false
-        log("danh mục nhạc: ${file.name} dài ${file.length()} byte, danh mục ghi $size - xoá, tải lại")
+        log(S.s_danh_muc_nhac_0_dai_1_byte_danh_muc_ghi_2_87a8cfbf(file.name, file.length(), size))
         file.delete()
         return true
     }
@@ -552,9 +552,9 @@ class MusicCatalog(
                         }
                         // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
                         if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
-                            throw LocalFailure(if (url == link) "bài tải về khác danh mục" else "bản sao khác bản gốc")
+                            throw LocalFailure(if (url == link) S.s_bai_tai_ve_khac_danh_muc_d0e04efb else S.s_ban_sao_khac_ban_goc_ae5bf25d)
                         }
-                        if (!part.renameTo(target) && !target.isFile) throw LocalFailure("không ghi được")
+                        if (!part.renameTo(target) && !target.isFile) throw LocalFailure(S.s_khong_ghi_duoc_a36f16c1)
                         note(url, failed = false) // tải được = nguồn ấy có mạng
                         return target
                     } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
@@ -581,8 +581,8 @@ class MusicCatalog(
                     }
                 }
             }
-            log("tải nhạc $link hỏng (${lastError?.javaClass?.simpleName}: ${lastError?.message}), " +
-                if (part.length() > 0) "giữ ${part.length()} byte để tải tiếp" else "không giữ gì")
+            log(S.s_tai_nhac_0_hong_1_2_5956bb72(link, lastError?.javaClass?.simpleName, lastError?.message) +
+                if (part.length() > 0) S.s_giu_0_byte_de_tai_tiep_ebcd404e(part.length()) else S.s_khong_giu_gi_2d259575)
             if (networkOnly && gained) throw Progressed(part.length())
             if (networkOnly) {
                 for (url in attempted) note(url, failed = true)
@@ -621,8 +621,8 @@ class MusicCatalog(
         /** Bài tải hỏng thật nghỉ chừng này rồi thử lại (`MUSIC_UNAVAILABLE_SECONDS`, 24 giờ). */
         const val UNAVAILABLE_MS = 24L * 3600 * 1000
         /** Chữ báo khi bài nhạc bị giữ lại vì mạng - đúng chữ `MUSIC_OFFLINE_MESSAGE` của webui/server.py. */
-        const val OFFLINE_MESSAGE = "Chưa tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
-        private const val USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
+        const val OFFLINE_MESSAGE = S.s_chua_tai_duoc_nhac_vi_mat_mang_giu_nguyen_1a300301
+        private const val USER_AGENT = S.s_abook_https_github_com_ntanhpro1221_abook_b75f3b98
         private val SHA1 = Regex("[0-9a-f]{40}")
 
         private fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }

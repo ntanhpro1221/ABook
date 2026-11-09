@@ -215,3 +215,12 @@ def thirdPartyAsset = tasks.register("nativeThirdPartyAsset", Copy) {
     into layout.buildDirectory.dir("generated/thirdPartyAssets")
 }
 tasks.named("preBuild").configure { dependsOn thirdPartyAsset }
+
+// Copy and design tokens are shared by all three UIs; raw copy fails this gate.
+def sharedUi = tasks.register("prepareSharedUi", Exec) {
+    workingDir "../../../"
+    commandLine(System.getenv("ABOOK_PYTHON") ?: "D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe",
+        "-X", "utf8", "scripts/prepare_ui.py")
+}
+tasks.named("preBuild").configure { dependsOn sharedUi }
+tasks.withType(Test).configureEach { dependsOn sharedUi }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TemplateLogic.js" as Templates
@@ -33,9 +34,9 @@ Column {
             if (ok) {
                 Api.preferences = Object.assign({}, Api.preferences, data)
             } else {
-                const message = data && (data.message || data.error) || "Chưa làm được lúc này."
+                const message = data && (data.message || data.error) || S.s_chua_lam_duoc_luc_nay_2e7cacde
                 if (status === 404 || status === 409) { Api.notice = message; Api.load() }
-                else Api.notice = "Chưa lưu được mẫu\n" + message
+                else Api.notice = S.s_chua_luu_duoc_mau_8b78bf8b + message
             }
             if (done) done(ok, status)
         })
@@ -70,15 +71,15 @@ Column {
         const index = templateIndex(template.name)
         run({op: "delete", name: template.name}, function(ok) {
             if (!ok) return
-            Api.toast("Đã xoá mẫu “" + template.name + "”", {duration: 10000, action: {label: "Hoàn tác", run: function() { root.run({op: "restore", template: template, index: index}) }}})
+            Api.toast(S.s_da_xoa_mau_1bb27002 + template.name + "”", {duration: 10000, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.run({op: "restore", template: template, index: index}) }}})
         })
     }
 
-    Text { width: parent.width; text: "Mẫu sách mới"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+    Text { width: parent.width; text: S.s_mau_sach_moi_6e860e3e; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
     Text {
         width: parent.width
         topPadding: 2
-        text: "Ở Tạo sách, chọn “Lưu thành mẫu…” để dùng lại."
+        text: S.s_o_tao_sach_chon_luu_thanh_mau_de_dung_lai_a2505ca9
         color: Theme.text2
         wrapMode: Text.Wrap
         font.pixelSize: 13
@@ -86,7 +87,7 @@ Column {
     Collapse {
         width: parent.width
         open: root.templates.length === 0
-        Text { width: parent.width; topPadding: 8; text: "Chưa có mẫu nào."; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: 13 }
+        Text { width: parent.width; topPadding: 8; text: S.s_chua_co_mau_nao_55b4683e; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: 13 }
     }
     Item {
         width: parent.width
@@ -130,8 +131,8 @@ Column {
                                 spacing: 12
                                 x: normal.stacked ? 0 : parent.width - normal.buttons
                                 y: normal.stacked ? words.height + 6 : (normal.height - height) / 2
-                                Button { id: renameButton; objectName: "renameTemplate"; text: "Đổi tên"; kind: "ghost"; size: "sm"; onClicked: root.startRename(row.modelData.name) }
-                                Button { id: removeButton; objectName: "deleteTemplate"; text: "Xoá"; kind: "ghost"; size: "sm"; onClicked: root.removeTemplate(row.modelData) }
+                                Button { id: renameButton; objectName: "renameTemplate"; text: S.s_doi_ten_a2a0dc70; kind: "ghost"; size: "sm"; onClicked: root.startRename(row.modelData.name) }
+                                Button { id: removeButton; objectName: "deleteTemplate"; text: S.s_xoa_777195ab; kind: "ghost"; size: "sm"; onClicked: root.removeTemplate(row.modelData) }
                             }
                         }
                     }
@@ -156,7 +157,7 @@ Column {
                                     id: nameField
                                     objectName: "renameField"
                                     width: editLine.stacked ? parent.width : parent.width - editLine.buttons - 8
-                                    label: "Tên mới của mẫu “" + row.modelData.name + "”"
+                                    label: S.s_ten_moi_cua_mau_981a583e + row.modelData.name + "”"
                                     invalid: root.problem !== ""
                                     escapeLocal: true
                                     // Tối đa 40 chữ (maxLength của ô nhập bên web)
@@ -173,8 +174,8 @@ Column {
                                     spacing: 8
                                     x: editLine.stacked ? 0 : parent.width - editLine.buttons
                                     y: editLine.stacked ? nameField.height + 8 : (nameField.height - height) / 2
-                                    Button { id: saveButton; objectName: "saveRename"; text: "Lưu"; size: "sm"; enabled: root.typed.trim() !== "" && !root.busy; onClicked: root.finishRename(row.modelData.name) }
-                                    Button { id: cancelButton; objectName: "cancelRename"; text: "Huỷ"; kind: "ghost"; size: "sm"; onClicked: root.cancelRename() }
+                                    Button { id: saveButton; objectName: "saveRename"; text: S.s_luu_e91f26c0; size: "sm"; enabled: root.typed.trim() !== "" && !root.busy; onClicked: root.finishRename(row.modelData.name) }
+                                    Button { id: cancelButton; objectName: "cancelRename"; text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onClicked: root.cancelRename() }
                                 }
                             }
                             Collapse {

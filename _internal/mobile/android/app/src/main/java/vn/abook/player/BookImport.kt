@@ -78,10 +78,10 @@ object BookImport {
     /** `importers.footnote_choice_from_json`: `{"hideMarks": bool, "notes": ""|"end"|"drop"}`; null = không tích gì. Dạng sai: [Failed]. */
     fun footnoteChoiceFromJson(raw: Any?): FootnoteChoice {
         if (raw == null || raw === org.json.JSONObject.NULL) return FootnoteChoice()
-        if (raw !is org.json.JSONObject) throw Failed("Lựa chọn về chú thích không hợp lệ")
+        if (raw !is org.json.JSONObject) throw Failed(S.s_lua_chon_ve_chu_thich_khong_hop_le_bcaae8eb)
         val hide = if (raw.has("hideMarks")) raw.get("hideMarks") else false
         val notes = if (raw.has("notes")) raw.get("notes") else ""
-        if (hide !is Boolean || notes !is String || notes !in listOf("", "end", "drop")) throw Failed("Lựa chọn về chú thích không hợp lệ")
+        if (hide !is Boolean || notes !is String || notes !in listOf("", "end", "drop")) throw Failed(S.s_lua_chon_ve_chu_thich_khong_hop_le_bcaae8eb)
         return FootnoteChoice(hide, notes)
     }
 
@@ -98,14 +98,14 @@ object BookImport {
     private const val MAX_TOTAL = 300L * 1024 * 1024
     private const val MAX_COVER = 20L * 1024 * 1024
     private const val MIN_CHARS = 80
-    private const val PREAMBLE = "Mở đầu"
+    private const val PREAMBLE = S.s_mo_dau_0c6f17f5
     private const val PREAMBLE_MATTER_WORDS = 60
-    private const val PREAMBLE_MATTER = "Phần đầu file (tên truyện, tác giả…)"
+    private const val PREAMBLE_MATTER = S.s_phan_dau_file_ten_truyen_tac_gia_66aa8250
     private const val MAX_HEADING = 120
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
-    private const val BROKEN = "File %s hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
-    private const val EPUB_DRM = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
+    private const val BROKEN = S.s_file_s_hong_hoac_sai_dinh_dang_tai_lai_hoa_c4fe2494
+    private const val EPUB_DRM = S.s_epub_bi_khoa_ban_quyen_ban_dung_ban_khong_1dd49df6
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))
 
@@ -123,10 +123,10 @@ object BookImport {
                 "epub" -> epub(path, choice)
                 "docx" -> docx(path, choice)
                 "txt" -> txtFile(path, splitChapters)
-                "pdf" -> throw Failed("PDF cần lấy chữ từng trang trước (fromPdfPages)")
-                else -> throw Failed("Chưa đọc được file ${if (suffix.isEmpty()) "không có đuôi" else ".$suffix"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
+                "pdf" -> throw Failed(S.s_pdf_can_lay_chu_tung_trang_truoc_frompdfpa_2d20f470)
+                else -> throw Failed(S.s_chua_doc_duoc_file_0_dung_epub_docx_pdf_tx_1a70d200(if (suffix.isEmpty()) S.s_khong_co_duoi_178f5d10 else ".$suffix"))
             }
-            else -> throw Failed("Không thấy ${path.path}.")
+            else -> throw Failed(S.s_khong_thay_0_1cd48e59(path.path))
         }
         return finish(book, keepShort, path.name)
     }
@@ -141,10 +141,10 @@ object BookImport {
      * đánh số lại. Không chọn gì, hay số chương không có / lặp: [Failed]. Trả cuốn MỚI; `book` không đổi.
      */
     fun selectChapters(book: Book, picks: List<Pair<Int, String>>): Book {
-        if (picks.isEmpty()) throw Failed("Chọn ít nhất một chương để thêm vào thư viện")
+        if (picks.isEmpty()) throw Failed(S.s_chon_it_nhat_mot_chuong_de_them_vao_thu_vi_0b75161f)
         val numbers = picks.map { it.first }
         if (numbers.toSet().size != numbers.size || numbers.any { it < 1 || it > book.chapters.size }) {
-            throw Failed("Danh sách chương đã chọn không khớp với file - mở lại file rồi chọn lại")
+            throw Failed(S.s_danh_sach_chuong_da_chon_khong_khop_voi_fi_b5a767e2)
         }
         val renumbered = HashMap<Int, Int>()
         val chapters = mutableListOf<Chapter>()
@@ -164,11 +164,11 @@ object BookImport {
         if (pages.isEmpty()) throw broken("PDF")
         val chars = pages.sumOf { page -> page.sumOf { cpLen(it) } }
         if (chars == 0) {
-            throw Failed("PDF chưa có chữ để đọc — bạn nhận dạng chữ (OCR) hoặc dùng TXT/DOCX.")
+            throw Failed(S.s_pdf_chua_co_chu_de_doc_ban_nhan_dang_chu_o_d1181273)
         }
         val result = Book(title.ifEmpty { titleFromFilename(stem) }, author = author.ifEmpty { null }, keepMatter = true)
         val empty = pages.count { it.isEmpty() }
-        if (empty > 0) result.notes.add("$empty trang không có chữ (ảnh hay trang trống) - bỏ qua.")
+        if (empty > 0) result.notes.add(S.s_0_trang_khong_co_chu_anh_hay_trang_trong_b_db5aed89(empty))
         val (stripped, removed) = stripRunning(pages)
         val (chapters, notes) = splitOnHeadings(joinParagraphs(stripped, removed.toSet()), result.title)
         result.chapters.addAll(chapters)
@@ -177,7 +177,7 @@ object BookImport {
         for ((index, chapter) in finished.chapters.withIndex()) for (line in removed) {
             if (line in chapter.text.split("\n\n")) {
                 finished.credits.add(index + 1 to line)
-                finished.notes.add("Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “$line”; bỏ chọn để giữ.")
+                finished.notes.add(S.s_goi_y_pdf_ban_co_the_bo_doc_dong_o_mep_tra_cb181454(line))
             }
         }
         for (line in removed) {
@@ -227,17 +227,17 @@ object BookImport {
         book.notes.addAll(notes)
         val short = all.count { it.short }
         if (short > 0) {
-            book.notes.add(if (keepShort) "$short mục rất ngắn chưa chọn - tích nếu muốn giữ." else "Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
+            book.notes.add(if (keepShort) S.s_0_muc_rat_ngan_chua_chon_tich_neu_muon_giu_d9e3a469(short) else S.s_bo_qua_0_muc_rat_ngan_bia_trang_ban_quyen_220ec9ac(short))
         }
         val matter = all.count { it.matter.isNotEmpty() && !it.short }
-        if (matter > 0 && keepShort) book.notes.add("$matter mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe.")
+        if (matter > 0 && keepShort) book.notes.add(S.s_0_muc_co_ve_la_bia_ban_quyen_muc_luc_chua_89878d1e(matter))
         val chapters = if (keepShort) all else all.filter { !it.short }
-        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Chưa lấy được chữ từ “${source.ifEmpty { book.title }}” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.")
+        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed(S.s_chua_lay_duoc_chu_tu_0_ban_thu_ban_khac_vo_c5458172(source.ifEmpty { book.title }))
         book.chapters.clear()
         if (chapters.size > 1) {
             // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
             // tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
-            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty() && !chapter.short) book.notes.add("Bỏ qua mục trống: ${chapter.title}")
+            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty() && !chapter.short) book.notes.add(S.s_bo_qua_muc_trong_0_33dea81c(chapter.title))
             book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() || it.short })
         } else {
             book.chapters.addAll(chapters)
@@ -246,8 +246,8 @@ object BookImport {
             // Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
             for ((line, atEnd) in chapterCreditSuggestions(chapterSource(book, chapter))) {
                 book.credits.add(index + 1 to line)
-                book.notes.add("Gợi ý: chương ${index + 1} có dòng ${if (atEnd) "ghi công, ủng hộ hay nguồn ở cuối" else "ghi công ở đầu"} - “$line”. " +
-                    "Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
+                book.notes.add(S.s_goi_y_chuong_0_co_dong_1_2_c1b8ba5b(index + 1, if (atEnd) S.s_ghi_cong_ung_ho_hay_nguon_o_cuoi_3e177025 else S.s_ghi_cong_o_dau_f9a38207, line) +
+                    S.s_co_the_bo_khoi_phan_doc_nhung_abook_khong_9b9814b2)
             }
         }
         return book
@@ -365,7 +365,7 @@ object BookImport {
     /** Tên file chương là số ("645") thì đọc thành "Chương 645"; số thứ tự đánh đầu file ("0000 Mở đầu") bỏ đi; còn lại giữ nguyên
      *  (webui/humanize.chapter_title). */
     internal fun chapterTitle(stem: String): String =
-        NUMERIC_TITLE.find(stem)?.let { "Chương ${it.groupValues[1]}" } ?: FILE_ORDER_PREFIX.find(stem)?.let { pyStrip(it.groupValues[1]) } ?: pyStrip(stem)
+        NUMERIC_TITLE.find(stem)?.let { S.s_chuong_0_268b0521(it.groupValues[1]) } ?: FILE_ORDER_PREFIX.find(stem)?.let { pyStrip(it.groupValues[1]) } ?: pyStrip(stem)
 
     /** `Path.suffix` / `Path.stem` của Python: ".txt" là tên không đuôi, "a.b.txt" có đuôi ".txt", "ten." không có đuôi. */
     private fun suffixAt(name: String): Int = name.lastIndexOf('.').takeIf { it > 0 && it < name.length - 1 } ?: -1
@@ -405,7 +405,7 @@ object BookImport {
         val files = (folder.listFiles() ?: emptyArray())
             .filter { it.isFile && suffixOf(it.name).lowercase() == ".txt" }
             .sortedWith { x, y -> naturalOrder.compare(originalNames[x.name] ?: x.name, originalNames[y.name] ?: y.name) }
-        if (files.isEmpty()) throw Failed("Thư mục này không có file .txt nào nằm ngay bên trong")
+        if (files.isEmpty()) throw Failed(S.s_thu_muc_nay_khong_co_file_txt_nao_nam_ngay_ba76d525)
         val read = files.map { txtChapter(it, originalNames[it.name] ?: it.name) }
         return Book(
             titleFromFilename(folder.canonicalFile.name), chapters = read.map { it.first }.toMutableList(), notes = encodingNotes(read.map { it.second }),
@@ -457,7 +457,7 @@ object BookImport {
         return ""
     }
 
-    private val AUTHOR_KEYS = listOf("tác giả", "author")
+    private val AUTHOR_KEYS = listOf(S.s_tac_gia_81708ac5, "author")
     private val AUTHOR_SEPARATOR = Regex("[ \t]*(?::|：|[-–—])[ \t]*(.+)")
     private const val AUTHOR_HEAD_LINES = 4
     private const val AUTHOR_MAX_CHARS = 60
@@ -562,7 +562,7 @@ object BookImport {
      *  Buổi sáng" - đúng thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). */
     private fun txtChapter(file: File, originalName: String = file.name): Pair<Chapter, String> {
         val (decoded, encoding) = try { decodeText(file.readBytes()) } catch (_: Failed) {
-            throw Failed("File “${file.name}” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại.")
+            throw Failed(S.s_file_0_hong_chu_ban_luu_lai_dang_utf_8_hoa_5deed037(file.name))
         }
         val text = cleanText(textControls(decoded))
         val first = text.split("\n").map(::pyStrip).firstOrNull { it.isNotEmpty() }.orEmpty()
@@ -576,12 +576,12 @@ object BookImport {
     private val MEANINGLESS_NAME = Pattern.compile("index_split_\\d+|untitled(?:[\\s_-]*\\d+)?|part\\d+|text\\d+|split_\\d+", Pattern.CASE_INSENSITIVE or UNICODE_CLASSES)
 
     /** `importers.ENCODING_NAMES`: bảng mã đoán được không phải UTF - báo người dùng, đoán sai thì chữ lạ và họ biết cách sửa. */
-    private val ENCODING_NAMES = linkedMapOf("cp1258" to "tiếng Việt Windows (cp1258)", "windows-1252" to "Tây Âu (cp1252)", "gb18030" to "tiếng Trung (GB18030)")
+    private val ENCODING_NAMES = linkedMapOf("cp1258" to S.s_tieng_viet_windows_cp1258_4501871c, "windows-1252" to S.s_tay_au_cp1252_323765d0, "gb18030" to S.s_tieng_trung_gb18030_e1cc1f23)
 
     private fun encodingNotes(encodings: Collection<String>): MutableList<String> {
         val names = ENCODING_NAMES.filterKeys { it in encodings }.values
         if (names.isEmpty()) return mutableListOf()
-        return mutableListOf("Đã đọc theo mã ${names.joinToString(", ")} — nếu chữ lạ, bạn lưu file dạng UTF-8 rồi nhập lại.")
+        return mutableListOf(S.s_da_doc_theo_ma_0_neu_chu_la_ban_luu_file_d_8786816f(names.joinToString(", ")))
     }
 
     internal fun decodeTextBytes(raw: ByteArray): String = decodeText(raw).first
@@ -590,7 +590,7 @@ object BookImport {
      *  trông như tiếng Việt (`looksVietnamese`), còn lại cp1252 hay gb18030 theo `encodingScore` - cp1258 nhận mọi byte. */
     internal fun decodeText(raw: ByteArray): Pair<String, String> {
         if (raw.size >= 2 && ((raw[0] == 0xFF.toByte() && raw[1] == 0xFE.toByte()) || (raw[0] == 0xFE.toByte() && raw[1] == 0xFF.toByte()))) {
-            return nfc(strictDecode(raw, "UTF-16") ?: throw Failed("Byte UTF-16 bị hỏng. Bạn hãy lưu lại file dạng UTF-8 rồi nhập lại.")) to "utf-16"
+            return nfc(strictDecode(raw, "UTF-16") ?: throw Failed(S.s_byte_utf_16_bi_hong_ban_hay_luu_lai_file_d_1181fd24)) to "utf-16"
         }
         val encodings = mutableListOf("utf-8-sig" to "utf-8-sig", "UTF-8" to "utf-8") // (tên Java, tên Python)
         if (raw.isNotEmpty()) {
@@ -612,18 +612,18 @@ object BookImport {
         val best = listOf("windows-1252", "gb18030").filter { it in guesses }.maxByOrNull { encodingScore(guesses.getValue(it), it) }
         if (best != null) return guesses.getValue(best) to best
         guesses["cp1258"]?.let { return it to "cp1258" }
-        throw Failed("Byte chữ bị hỏng. Bạn hãy lưu lại file dạng UTF-8 rồi nhập lại.")
+        throw Failed(S.s_byte_chu_bi_hong_ban_hay_luu_lai_file_dang_a850e5fa)
     }
 
     // `io_utils.VIET_LETTERS` / `VIET_ONLY` ...: chữ Việt có dấu, chữ CHỈ tiếng Việt có (Bồ Đào Nha đọc nhầm qua cp1258 chỉ ra ă / ơ).
     private val VIET_LETTERS: Set<Int> = buildSet {
-        for (vowel in "aăâeêioôơuưy") for (base in listOf(vowel.toString(), vowel.uppercase())) {
+        for (vowel in S.s_aaaeeiooouuy_d182adf0) for (base in listOf(vowel.toString(), vowel.uppercase())) {
             for (tone in listOf("", "\u0300", "\u0301", "\u0309", "\u0303", "\u0323")) add(Normalizer.normalize(base + tone, Normalizer.Form.NFC).codePointAt(0))
         }
         add('đ'.code)
         add('Đ'.code)
     }
-    private val VIET_ONLY: Set<Int> = VIET_LETTERS.filter { it >= 0x1EA0 }.toSet() + "đĐưƯĩĨũŨ".map { it.code }
+    private val VIET_ONLY: Set<Int> = VIET_LETTERS.filter { it >= 0x1EA0 }.toSet() + S.s_dduuiiuu_eb9958af.map { it.code }
     private const val VIET_WORD_MAX = 7
     private const val VIET_PLAUSIBLE = 0.9
     private const val VIET_ONLY_SHARE = 0.2
@@ -1039,7 +1039,7 @@ object BookImport {
          *  `<?xml encoding>` ở đầu file, không có là UTF-8 (`<meta charset>` là việc của trang - markupText). Byte không giải được (kể cả byte
          *  ngoài bảng mã một byte) là file hỏng, không thay bằng ký tự hỏng. */
         private fun xmlText(raw: ByteArray, kind: String): String {
-            if (declaresEntity(raw)) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            if (declaresEntity(raw)) throw Failed(S.s_co_noi_dung_xml_la_khai_bao_entity_khong_m_f231fcd2)
             var bytes = if (raw.size >= 3 && raw[0] == 0xEF.toByte() && raw[1] == 0xBB.toByte() && raw[2] == 0xBF.toByte()) raw.copyOfRange(3, raw.size) else raw
             val wide = when {
                 bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte() -> Charsets.UTF_16BE.also { bytes = bytes.copyOfRange(2, bytes.size) }
@@ -1108,7 +1108,7 @@ object BookImport {
         }
         if (zip.entries().asSequence().sumOf { maxOf(0L, it.size) } > MAX_TOTAL) {
             zip.close()
-            throw Failed("Quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
+            throw Failed(S.s_qua_lon_khi_giai_nen_tren_300_mb_khong_gio_9e9faf70(kind))
         }
         return zip
     }
@@ -1130,8 +1130,8 @@ object BookImport {
                 val count = stream.read(buffer, 0, minOf(buffer.size.toLong(), limit - size + 1, MAX_TOTAL - total - size + 1).toInt())
                 if (count < 0) break
                 size += count
-                if (size > limit) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
-                if (total + size > MAX_TOTAL) throw Failed("Quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
+                if (size > limit) throw Failed(S.s_co_mot_phan_qua_lon_tren_20_mb_khong_giong_cae2fd10(kind))
+                if (total + size > MAX_TOTAL) throw Failed(S.s_qua_lon_khi_giai_nen_tren_300_mb_khong_gio_9e9faf70(kind))
                 out.write(buffer, 0, count)
             }
         }
@@ -1149,7 +1149,7 @@ object BookImport {
 
     private fun read(zip: ZipFile, name: String, kind: String): ByteArray {
         val entry = member(zip, name) ?: throw broken(kind)
-        if (entry.size > MAX_MEMBER) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
+        if (entry.size > MAX_MEMBER) throw Failed(S.s_co_mot_phan_qua_lon_tren_20_mb_khong_giong_cae2fd10(kind))
         return readLimited(zip, entry, kind, MAX_MEMBER)
     }
 
@@ -1522,20 +1522,20 @@ object BookImport {
 
     /** Phần không phải truyện (`importers.MATTER_TYPES`): epub:type / role của trang -> lý do; cụ thể trước, chung sau. */
     private val MATTER_TYPES = listOf(
-        "cover" to "Trang bìa", "titlepage" to "Trang tên sách", "halftitlepage" to "Trang tên sách", "copyright-page" to "Trang bản quyền",
-        "imprint" to "Trang bản quyền", "colophon" to "Trang bản quyền", "toc" to "Mục lục", "landmarks" to "Mục lục",
-        "endnotes" to "Chú thích", "footnotes" to "Chú thích", "rearnotes" to "Chú thích",
-        "frontmatter" to "Phần đầu sách", "backmatter" to "Phần cuối sách",
+        "cover" to S.s_trang_bia_fb4f9069, "titlepage" to S.s_trang_ten_sach_9c6c0bf8, "halftitlepage" to S.s_trang_ten_sach_9c6c0bf8, "copyright-page" to S.s_trang_ban_quyen_6da8bd2c,
+        "imprint" to S.s_trang_ban_quyen_6da8bd2c, "colophon" to S.s_trang_ban_quyen_6da8bd2c, "toc" to S.s_muc_luc_32a748ed, "landmarks" to S.s_muc_luc_32a748ed,
+        "endnotes" to S.s_chu_thich_fc0aa279, "footnotes" to S.s_chu_thich_fc0aa279, "rearnotes" to S.s_chu_thich_fc0aa279,
+        "frontmatter" to S.s_phan_dau_sach_d48b3486, "backmatter" to S.s_phan_cuoi_sach_6e13539b,
     )
     private val MATTER_NAMES = linkedMapOf(
-        "cover" to "Trang bìa", "title" to "Trang tên sách", "titlepage" to "Trang tên sách", "toc" to "Mục lục", "nav" to "Mục lục",
-        "copyright" to "Trang bản quyền", "license" to "Trang bản quyền", "colophon" to "Trang bản quyền", "imprint" to "Trang bản quyền",
-        "about" to "Trang giới thiệu", "endnotes" to "Chú thích", "footnotes" to "Chú thích",
+        "cover" to S.s_trang_bia_fb4f9069, "title" to S.s_trang_ten_sach_9c6c0bf8, "titlepage" to S.s_trang_ten_sach_9c6c0bf8, "toc" to S.s_muc_luc_32a748ed, "nav" to S.s_muc_luc_32a748ed,
+        "copyright" to S.s_trang_ban_quyen_6da8bd2c, "license" to S.s_trang_ban_quyen_6da8bd2c, "colophon" to S.s_trang_ban_quyen_6da8bd2c, "imprint" to S.s_trang_ban_quyen_6da8bd2c,
+        "about" to S.s_trang_gioi_thieu_3a01ff79, "endnotes" to S.s_chu_thich_fc0aa279, "footnotes" to S.s_chu_thich_fc0aa279,
     )
     private val MATTER_NAME = Pattern.compile("[\\W_\\d]*(" + MATTER_NAMES.keys.joinToString("|") + ")(?:[\\W_]*page)?[\\W_\\d]*", UNICODE_CLASSES)
-    private val TOC_TITLES = setOf("mục lục", "muc luc", "contents", "table of contents")
-    private val NOTE_TITLES = setOf("chú thích", "endnotes", "end notes", "footnotes", "notes") // tên chương toàn lời chú
-    private val TOC_SUFFIX = Pattern.compile("\\s+[—–-]\\s*(?:mục lục|muc luc)\\s*$", Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES)
+    private val TOC_TITLES = setOf(S.s_muc_luc_589897d4, "muc luc", "contents", "table of contents")
+    private val NOTE_TITLES = setOf(S.s_chu_thich_22668ced, "endnotes", "end notes", "footnotes", "notes") // tên chương toàn lời chú
+    private val TOC_SUFFIX = Pattern.compile(S.s_s_s_muc_luc_muc_luc_s_c270811a, Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES)
     private const val MATTER_HEAD = 400
 
     /** `importers.name_matter`: lý do "không phải truyện" theo tên file trong gói EPUB; "" nếu không. */
@@ -1551,10 +1551,10 @@ object BookImport {
         val first = casefold(firstTextLine(text)).trimEnd(' ', ':', '.')
         val clean = pyStrip(casefold(title))
         return when {
-            clean in TOC_TITLES || first in TOC_TITLES || clean.endsWith("— mục lục") || clean.endsWith("- mục lục") -> "Mục lục"
-            clean in NOTE_TITLES || first in NOTE_TITLES -> "Chú thích"
-            "project gutenberg" in head -> "Trang của Project Gutenberg"
-            "wikisource" in head -> "Trang của Wikisource"
+            clean in TOC_TITLES || first in TOC_TITLES || clean.endsWith(S.s_muc_luc_56d30656) || clean.endsWith(S.s_muc_luc_499e7b14) -> S.s_muc_luc_32a748ed
+            clean in NOTE_TITLES || first in NOTE_TITLES -> S.s_chu_thich_fc0aa279
+            "project gutenberg" in head -> S.s_trang_cua_project_gutenberg_143fee29
+            "wikisource" in head -> S.s_trang_cua_wikisource_f7b83810
             else -> ""
         }
     }
@@ -1857,7 +1857,7 @@ object BookImport {
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
         val listedIn = tocEntries.groupBy { it.href }
         val result = Book(metaText(opf, "title") ?: titleFromFilename(stemOf(file.name)), author = metaText(opf, "creator"), language = metaText(opf, "language"))
-        if (declared && tocEntries.isEmpty()) result.notes.add("Mục lục trong file không đọc được - tên chương lấy từ chữ của từng chương.")
+        if (declared && tocEntries.isEmpty()) result.notes.add(S.s_muc_luc_trong_file_khong_doc_duoc_ten_chuo_ec2d748b)
         epubCover(zip, opf, manifest)?.let { (bytes, media) ->
             result.cover = bytes
             result.coverType = media
@@ -1900,7 +1900,7 @@ object BookImport {
                 listOf(Part(0, page.lines.size, page.heading, titles[href] ?: ""))
             }
             val pageMatter = MATTER_TYPES.firstOrNull { it.first in page.types }?.second
-                ?: nameMatter(href).ifEmpty { if (points.isEmpty() && notesOnly(page)) "Chú thích" else "" }
+                ?: nameMatter(href).ifEmpty { if (points.isEmpty() && notesOnly(page)) S.s_chu_thich_fc0aa279 else "" }
             for (part in parts) {
                 val taken = partLines(entries, notes, at, part.start, part.end, choice.notes)
                 var body = taken.body
@@ -1924,7 +1924,7 @@ object BookImport {
                 val isShort = lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty() // bìa, trang bản quyền: `finish` bỏ, hay để người dùng tích
                 var title = listed.ifEmpty { heading.ifEmpty { clipTitle(lines[0], TITLE_FROM_LINE) } }
                 val first = casefold(lines[0])
-                // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
+                // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡS.s_copy_3481988241feChương 2: Gặp gỡ"),
                 // hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
                 if (first == casefold(title) || (heading.isNotEmpty() && first == casefold(heading) && casefold(title).contains(first))) {
                     lines = lines.drop(1)
@@ -1944,8 +1944,8 @@ object BookImport {
             val text = (parts.first.asSequence() + parts.second.asSequence()).filter { it.isNotEmpty() }.joinToString("\n\n")
             result.chapters[index] = Chapter(chapter.title, text, chapter.short, chapter.name, chapter.matter)
         }
-        if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
-        if (missing > 0) result.notes.add("Bỏ qua $missing phần bị thiếu trong file (file có thể tải chưa trọn).")
+        if (images > 0) result.notes.add(S.s_bo_qua_0_trang_chi_co_anh_708219a0(images))
+        if (missing > 0) result.notes.add(S.s_bo_qua_0_phan_bi_thieu_trong_file_file_co_230726f6(missing))
         result
     }
 
@@ -2155,7 +2155,7 @@ object BookImport {
         result.footnoteFound = cited.size
         result.footnoteMarks = references
         result.footnoteExamples.addAll(examples)
-        if (tocLines > 0) result.notes.add("Bỏ qua mục lục của tài liệu ($tocLines dòng).")
+        if (tocLines > 0) result.notes.add(S.s_bo_qua_muc_luc_cua_tai_lieu_0_dong_400cf9fd(tocLines))
         if (lines.none { it.level in chapterLevels }) {
             // Không có kiểu Heading: tách theo dòng "Chương N" (như PDF), và dòng in đậm "I. KHỞI ĐẦU" khi có từ hai dòng như thế.
             val roman = lines.indices.filter { lines[it].bold && isHeadingLine(lines[it].line, BOLD_ROMAN) }
@@ -2181,38 +2181,38 @@ object BookImport {
                 when {
                     title == null -> if (section.paragraphs.isNotEmpty()) result.chapters.add(Chapter(PREAMBLE, text))
                     section.paragraphs.isNotEmpty() -> result.chapters.add(Chapter(title, text))
-                    else -> result.notes.add("Bỏ qua mục trống: $title")
+                    else -> result.notes.add(S.s_bo_qua_muc_trong_0_33dea81c(title))
                 }
             }
         }
         val first = result.chapters.firstOrNull()?.takeIf { result.chapters.size > 1 }
         if (first != null && first.title == PREAMBLE && titlePage(first.text)) {
-            result.chapters[0] = Chapter(first.title, first.text, first.short, first.name, "Trang tên sách") // không bỏ: chưa tích, kèm lý do
+            result.chapters[0] = Chapter(first.title, first.text, first.short, first.name, S.s_trang_ten_sach_9c6c0bf8) // không bỏ: chưa tích, kèm lý do
         }
         result
     }
 
     // ---- chia chương theo dòng tiêu đề (DOCX không có Heading, PDF) ---------------------------------------------------
 
-    private const val NUMBER_WORDS = "một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười|mươi|mốt|trăm|nghìn|ngàn|linh|lẻ|" +
+    private const val NUMBER_WORDS = S.s_mot_hai_ba_bon_tu_nam_lam_sau_bay_tam_chin_9625f700 +
         "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve"
 
     /** Số thứ tự chỉ đứng sau "thứ" ("Hồi thứ nhất", "Hồi thứ nhứt"): "Hồi nhất định…" là câu văn (importers._ORDINAL_WORDS). */
-    private const val ORDINAL_WORDS = "nhất|nhứt|nhì"
+    private const val ORDINAL_WORDS = S.s_nhat_nhut_nhi_78506ae6
 
     /** "Chương cuối" chỉ khi đứng một mình hay trước dấu ngăn của tiêu đề: "Chương cuối cùng tôi viết…" là câu văn (importers._LAST_WORDS). */
-    private const val LAST_WORDS = "cuối(?:\\s+cùng)?(?=\\s*(?:\$|[:：.\\-–—]))"
+    private const val LAST_WORDS = S.s_cuoi_s_cung_s_8987faf2
 
     /** Dòng tiêu đề chương: "Chương 12", "Hồi thứ hai", "Quyển 2", "第三章" (importers.HEADING). */
     private val HEADING: Pattern = Pattern.compile(
-        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan|quyển|quyen)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+[a-z]?|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+|$LAST_WORDS))(?![\\w])" +
+        S.s_s_chuong_chuong_hoi_hoi_chapter_tiet_phan_e726160f(ORDINAL_WORDS, NUMBER_WORDS, LAST_WORDS) +
             "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
 
     /** Tiêu đề chương của file TXT cả truyện: "Chương N" thôi, như trình tạo sách (importers.TXT_HEADING) - "Quyển N" là tên tập. */
     internal val TXT_HEADING: Pattern = Pattern.compile(
-        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+[a-z]?|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+|$LAST_WORDS))(?![\\w])" +
+        S.s_s_chuong_chuong_hoi_hoi_chapter_tiet_phan_69817e8b(ORDINAL_WORDS, NUMBER_WORDS, LAST_WORDS) +
             "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
@@ -2258,7 +2258,7 @@ object BookImport {
             when {
                 current == null -> if (body.isNotEmpty()) chapters.add(Chapter(if (anyHeading) PREAMBLE else bookTitle, (body + tail).joinToString("\n\n")))
                 body.isNotEmpty() -> chapters.add(Chapter(current, (body + tail).joinToString("\n\n")))
-                else -> notes.add("Bỏ qua mục trống: $current")
+                else -> notes.add(S.s_bo_qua_muc_trong_0_33dea81c(current))
             }
         }
 
@@ -2273,14 +2273,14 @@ object BookImport {
             }
         }
         close()
-        if (!anyHeading) notes.add("Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.")
+        if (!anyHeading) notes.add(S.s_khong_thay_tieu_de_chuong_chuong_n_chapter_c7fddfe2)
         return chapters to notes
     }
 
     // ---- PDF có lớp chữ: lớp luật -------------------------------------------------------------------------------------
 
     private val PAGE_NUMBER: Pattern = Pattern.compile(
-        "^[\\s\\-–—·|]*(?:trang|page|tr\\.?|p\\.?)?\\s*\\d{1,5}(?:\\s*(?:/|of|trên)\\s*\\d{1,5})?[\\s\\-–—·|]*$",
+        S.s_s_trang_page_tr_p_s_d_1_5_s_of_tren_s_d_1_7f7c4b67,
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
     private const val SENTENCE_END = ".!?…”\"»’)。"
@@ -2371,7 +2371,7 @@ object BookImport {
     // ---- dòng ghi công (text_processing.credit_lines) ----------------------------------------------------------------
 
     private val CREDIT_LINE: Pattern = Pattern.compile(
-        "^[*_~#>\\-–—\\s]*(?:edit(?:or|ed by)?|tl|t/l|trans(?:lator|lated by)?|dịch(?: giả)?|người dịch|biên tập(?: viên)?|" +
+        S.s_s_edit_or_ed_by_tl_t_l_trans_lator_lated_b_c94928c5 +
             "beta(?:[- ]?reader)?|converter|cvt|proof ?read(?:er)?|typesetter)\\s*[:：]\\s*[^\\s.!?…\"“”][^.!?…\"“”]{0,39}$",
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
@@ -2425,15 +2425,15 @@ object BookImport {
     private val TAIL_DIALOGUE: Pattern = Pattern.compile("[—–-]\\s*[^—–\\-\\s*_~#>=]")
     private val TAIL_EDGE: Pattern = Pattern.compile("^[$TAIL_DECOR]+|[$TAIL_DECOR]+\$", UNICODE_CLASSES)
     private val TAIL_SUPPORT: Pattern = Pattern.compile(
-        "^(?:(?:xin|mong|hãy|các bạn|bạn|vui lòng|mọi người)\\s+){0,2}(?:ủng hộ|ung ho|donate|donation)(?=[\\s:：,\\-–—]|\$)", TAIL_FLAGS)
+        S.s_xin_mong_hay_cac_ban_ban_vui_long_moi_nguo_508113b9, TAIL_FLAGS)
     private val TAIL_PAYMENT: Pattern = Pattern.compile("(?:^|[^a-z0-9])$TAIL_BANKS(?![a-z0-9])|$TAIL_DIGITS", TAIL_FLAGS)
     private val TAIL_BANK_LED: Pattern = Pattern.compile("^[^a-z0-9]{0,3}$TAIL_BANKS(?![a-z0-9])", TAIL_FLAGS)
     private val TAIL_DIGITS_RE: Pattern = Pattern.compile(TAIL_DIGITS)
     private val TAIL_RULES: List<Pattern> = listOf(
-        "^(?:đọc|xem|đón đọc)\\s+(?:truyện|chương|bản|full)(?:\\s+[^\\s.!?…:：]{1,12}){0,5}?\\s+(?:tại|ở|trên)\\s*[:：]?\\s*$TAIL_DOMAIN(?:\\s+[^\\s.!?…]{1,12}){0,3}\$",
-        "^(?:nguồn|source|via)(?:\\s+(?:truyện|dịch|raw|gốc|ảnh))?\\s*[:：]\\s*(?:[^\\s.!?…:：]{1,15}\\s+){0,2}$TAIL_DOMAIN(?:\\s+[^\\s.!?…]{1,15}){0,3}\$",
+        S.s_doc_xem_don_doc_s_truyen_chuong_ban_full_s_8ff4c52f(TAIL_DOMAIN),
+        S.s_nguon_source_via_s_truyen_dich_raw_goc_anh_477341c9(TAIL_DOMAIN),
         "^$TAIL_DOMAIN\$",
-        "^hết chương(?:\\s+(?:[0-9]+|[ivxlc]+))?\\s*[.!]?\$",
+        S.s_het_chuong_s_0_9_ivxlc_s_9ebb48ee,
     ).map { Pattern.compile(it, TAIL_FLAGS) }
 
     private fun tailCreditLine(line: String): Boolean {
@@ -2449,13 +2449,13 @@ object BookImport {
 
     // Ghi chú cuối chương của tác giả / người dịch (text_processing._note_start; cửa sổ = Paragraphs.CREDIT_TAIL_WINDOW = CREDIT_NOTE_WINDOW_LINES).
     private val NOTE_HEADER: Pattern = Pattern.compile(
-        "^[\\s*_~#>(\\[]*(?:tác note|lời (?:của )?(?:tác giả|người dịch|dịch giả|trans|editor)|note (?:của )?(?:tác giả|người dịch|trans)" +
-            "|ghi chú (?:của )?(?:tác giả|người dịch)|a/n|t/n|trans|tl|editor|biên tập)\\s*(?:[:：()\\]]|\$)",
+        S.s_s_tac_note_loi_cua_tac_gia_nguoi_dich_dich_d6a2e0d2 +
+            S.s_ghi_chu_cua_tac_gia_nguoi_dich_a_n_t_n_tra_bb4685c7,
         TAIL_FLAGS,
     )
-    private val NOTE_WORDS: Pattern = Pattern.compile("bản dịch hoàn thành|chương tiếp theo|donate|ủng hộ|bình luận", TAIL_FLAGS)
+    private val NOTE_WORDS: Pattern = Pattern.compile(S.s_ban_dich_hoan_thanh_chuong_tiep_theo_donat_d2a1ce18, TAIL_FLAGS)
     private val SPEECH_VERB: Pattern = Pattern.compile(
-        "\\b(?:nói|hỏi|đáp|trả lời|quát|hét|gào|thì thầm|lẩm bẩm|kêu|bảo|ra lệnh|cười)\\b", TAIL_FLAGS) // text_processing.SPEECH_VERB_PATTERN
+        S.s_b_noi_hoi_dap_tra_loi_quat_het_gao_thi_tha_dd69bfb9, TAIL_FLAGS) // text_processing.SPEECH_VERB_PATTERN
 
     private fun noteStart(line: String): Boolean {
         if (NOTE_HEADER.matcher(line).lookingAt() || (tailCreditLine(line) && !CREDIT_LINE.matcher(line).lookingAt())) return true

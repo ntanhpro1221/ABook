@@ -76,7 +76,7 @@ object SyncLink {
         val manifest = Store.playableManifest(bookId)
         val source = manifest?.optString("source").orEmpty()
         if (source.isNotEmpty()) {
-            val link = Peers.link(context, source) ?: throw IllegalStateException("Thiết bị giữ cuốn này đã bỏ ghép")
+            val link = Peers.link(context, source) ?: throw IllegalStateException(S.s_thiet_bi_giu_cuon_nay_da_bo_ghep_caede071)
             return link to manifest!!.optString("remoteId", bookId)
         }
         return Peers.Link(base(context), token(context)) to bookId
@@ -86,7 +86,7 @@ object SyncLink {
     fun holderName(context: Context, bookId: String): String {
         val source = Store.playableManifest(bookId)?.optString("source").orEmpty()
         val name = if (source.isNotEmpty()) Peers.all(context).optJSONObject(source)?.optString("name") else prefs(context).getString("name", "")
-        return name?.takeIf { it.isNotBlank() } ?: "máy tính"
+        return name?.takeIf { it.isNotBlank() } ?: S.s_may_tinh_8eafc226
     }
 
     /** Một file của cuốn `remote` trên máy giữ sách `link` (đã nhận header, có retry GET); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
@@ -180,7 +180,7 @@ object SyncLink {
     /** Ghép bằng địa chỉ gõ tay (không phải Bluetooth) với chính điện thoại này nhân đôi cả thư viện: từ chối trước khi gửi mã, như máy tính (remote_books.py `Computers.pair`). */
     fun refuseSelf(host: String, port: Int) {
         if (isOwnAddress(host, port, LibraryServer.PORT, LibraryServer.ownAddresses())) {
-            throw IllegalArgumentException("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
+            throw IllegalArgumentException(S.s_day_la_dia_chi_cua_chinh_may_nay_nhap_dia_d03ae550)
         }
     }
 
@@ -198,7 +198,7 @@ object SyncLink {
         val reply = JSONObject(text)
         val fingerprint = seen[0].orEmpty()
         if (fingerprint.isEmpty() || !reply.optString("fingerprint").equals(fingerprint, ignoreCase = true)) {
-            throw IllegalStateException("Chứng chỉ không khớp nên chưa ghép — bạn thử lại; vẫn lỗi thì kiểm tra mạng.")
+            throw IllegalStateException(S.s_chung_chi_khong_khop_nen_chua_ghep_ban_thu_637300c1)
         }
         return reply to fingerprint
     }
@@ -304,7 +304,7 @@ object SyncLink {
             if (code >= 400) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
                 // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã bỏ ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
-                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code", text)
+                throw NetErrors.Refused(code, message?.ifBlank { null } ?: S.s_may_tinh_tra_loi_0_ac543b30(code), text)
             }
             if (firstUse == null && connection is HttpsURLConnection) {
                 val credential = token ?: if (auth) SyncLink.token(context) else ""
@@ -341,7 +341,7 @@ object SyncLink {
         if (text.isNotEmpty()) try {
             require(StrictJson.parse(text).let { it is JSONObject || it is JSONArray })
         } catch (error: Exception) {
-            throw IllegalArgumentException("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", error)
+            throw IllegalArgumentException(S.s_du_lieu_may_gui_khong_hop_le_ban_hay_thu_l_d2b2ac09, error)
         }
         return text
     }

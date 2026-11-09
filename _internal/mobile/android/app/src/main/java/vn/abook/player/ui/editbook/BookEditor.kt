@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.CancellationException
@@ -43,7 +45,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 flow.value = flow.value.copy(saved = latest, draft = draft, loading = false)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(loading = false, problem = error.message ?: "Bạn hãy thử lại.")
+                flow.value = flow.value.copy(loading = false, problem = error.message ?: S.s_ban_hay_thu_lai_5fc1a02b)
             }
         } }
     }
@@ -82,12 +84,12 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
 
     fun setCover(image: ByteArray?, onDone: () -> Unit = {}): Job = scope.launch {
         if (flush()) writes.withLock {
-            if (attempt(if (image == null) "Chưa bỏ được ảnh bìa." else "Chưa đặt được ảnh bìa.") { source.cover(id, image) }) onDone()
+            if (attempt(if (image == null) S.s_chua_bo_duoc_anh_bia_96b815fa else S.s_chua_dat_duoc_anh_bia_ddae1715) { source.cover(id, image) }) onDone()
         }
     }
 
     fun revertChapter(chapterId: Long) {
-        scope.launch { if (flush()) writes.withLock { attempt("Chưa đổi được tên chương.") { source.revertChapter(id, chapterId) } } }
+        scope.launch { if (flush()) writes.withLock { attempt(S.s_chua_doi_duoc_ten_chuong_01cae915) { source.revertChapter(id, chapterId) } } }
     }
 
     fun send() {
@@ -100,8 +102,8 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result), notice = SyncText.sent(result.pending, result.holder))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                val holder = flow.value.saved?.holder ?: "máy tính"
-                flow.value = flow.value.copy(sendProblem = listOf("Chưa gửi được về $holder.", error.message.orEmpty(), "Phần sửa vẫn nằm trên máy này.")
+                val holder = flow.value.saved?.holder ?: S.s_may_tinh_8eafc226
+                flow.value = flow.value.copy(sendProblem = listOf(S.s_chua_gui_duoc_ve_0_2ac674e4(holder), error.message.orEmpty(), S.s_phan_sua_van_nam_tren_may_nay_095e7b80)
                     .filter { it.isNotBlank() }.joinToString(" "))
             } finally { flow.value = flow.value.copy(sending = false) }
         }
@@ -118,7 +120,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                     null
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
-                    "Chưa bỏ được thay đổi"
+                    S.s_chua_bo_duoc_thay_doi_e73f2d58
                 }
             }
             if (problem == null && readingsFlow.value.loaded) loadReadings()
@@ -136,7 +138,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 readingsFlow.update { it.copy(loaded = true, list = list, problem = "") }
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                readingsFlow.update { it.copy(problem = "Bạn hãy thử tải lại danh sách cách đọc.") }
+                readingsFlow.update { it.copy(problem = S.s_ban_hay_thu_tai_lai_danh_sach_cach_doc_78ca66ce) }
             }
         }
     }
@@ -154,7 +156,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 reload()
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                readingsFlow.update { it.copy(saving = false, failed = if (said.isEmpty()) "Chưa bỏ được cách đọc" else "Chưa lưu được cách đọc") }
+                readingsFlow.update { it.copy(saving = false, failed = if (said.isEmpty()) S.s_chua_bo_duoc_cach_doc_0fffff4e else S.s_chua_luu_duoc_cach_doc_484ed453) }
             }
         }
     }
@@ -230,11 +232,11 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: "Bạn hãy thử lại." else failure(what, error))
+            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: S.s_ban_hay_thu_lai_5fc1a02b else failure(what, error))
             false
         }
     }
 
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: "Bạn hãy thử lại.").joinToString(" ")
+    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: S.s_ban_hay_thu_lai_5fc1a02b).joinToString(" ")
 }

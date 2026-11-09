@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { formatSize } from "@/shared/format";
 
 // Xuất `.abookproj` chạy nền ở máy chủ (webui/server.py `post_projectfile_job`, projectfile.pack): GET .../projectfile-job báo pha + đã/tổng.
@@ -42,14 +43,14 @@ export const BOOK_FILE_SPAN: Record<PackPhase, [number, number]> = {
 };
 
 export function packView(job: PackJob | null | undefined, spans: Record<PackPhase, [number, number]> = SPAN): PackView {
-  const base = "Đang đóng gói";
+  const base = S.s_dang_dong_goi_5561df87;
   if (!job || !job.phase || job.state !== "running") return { title: `${base}…`, fraction: null };
   const [from, to] = spans[job.phase];
   const total = job.total ?? 0;
   const done = Math.min(job.done ?? 0, total);
   const inner = total > 0 ? done / total : 0;
   const fraction = from + (to - from) * inner;
-  if (job.phase === "listen" && total > 0) return { title: `${base} (${done}/${total} chương)…`, fraction };
+  if (job.phase === "listen" && total > 0) return { title: S.s_0_1_2_chuong_d4e4d0f8(base, done, total), fraction };
   if ((job.phase === "hash" || job.phase === "write") && total > 0) return { title: `${base} (${formatSize(done)}/${formatSize(total)})…`, fraction };
   return { title: `${base}…`, fraction: job.phase === "prepare" ? null : from };
 }
@@ -88,7 +89,7 @@ export async function followPackJob({
     }
     if (job.state === "done" && job.result) return job.result;
     if (job.state === "cancelled") throw new PackCancelled();
-    if (job.state !== "running") throw new Error(job.error ?? "Chưa gói được dự án.");
+    if (job.state !== "running") throw new Error(job.error ?? S.s_chua_goi_duoc_du_an_4eb38947);
     onJob(job);
     await sleep(1000);
   }
@@ -96,10 +97,10 @@ export async function followPackJob({
 }
 
 const KNOWN: { pattern: RegExp; summary: string }[] = [
-  { pattern: /No space left|ENOSPC|disk full|WinError 112|not enough space|disk quota/i, summary: "Ổ đĩa hết chỗ trống. Giải phóng dung lượng hoặc chọn thư mục ở ổ khác rồi gói lại." },
+  { pattern: /No space left|ENOSPC|disk full|WinError 112|not enough space|disk quota/i, summary: S.s_o_dia_het_cho_trong_giai_phong_dung_luong_4f636c99 },
   {
     pattern: /PermissionError|WinError 5\b|WinError 32|Access is denied|being used by another process|Errno 13/i,
-    summary: "Chưa ghi được vào thư mục đã chọn (đang bị khoá hay không đủ quyền). Chọn thư mục khác rồi gói lại.",
+    summary: S.s_chua_ghi_duoc_vao_thu_muc_da_chon_dang_bi_87fb8bb6,
   },
 ];
 
@@ -109,5 +110,5 @@ export function packError(raw: string): { summary: string; detail: string } {
   const known = KNOWN.find((entry) => entry.pattern.test(detail));
   if (known) return { summary: known.summary, detail };
   if (/[ạảãàáâấầẩẫậắằẳẵặẹẻẽèéêếềểễệỉĩịọỏõòóôốồổỗộớờởỡợụủũùúưứừửữựỳỷỹýđ]/i.test(detail)) return { summary: detail, detail: "" };
-  return { summary: "Chưa gói được dự án.", detail };
+  return { summary: S.s_chua_goi_duoc_du_an_4eb38947, detail };
 }

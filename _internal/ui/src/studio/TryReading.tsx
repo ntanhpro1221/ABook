@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation } from "@tanstack/react-query";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -73,7 +74,7 @@ export function useTryReading({
       const named = error instanceof ApiError && Boolean(error.detail.busyBook);
       setNeedsStudio(reason === "studio");
       const why = refusalText(reason, error.message, named);
-      setRefusal(why === error.message && !named ? `Chưa nghe thử được - ${why}` : why);
+      setRefusal(why === error.message && !named ? S.s_chua_nghe_thu_duoc_0_e8ba0282(why) : why);
     },
   });
   // Nghe thử bằng giọng đọc của máy (cuốn mở từ file): qua đúng phép kiểm của "Lưu" trước (POST …/pronunciation/check) - nghe được là lưu được (soát a70).
@@ -103,16 +104,16 @@ export function useTryReading({
           disabled={disabled || !spoken}
           loading={check.isPending || aloud.loading(surface, spoken)}
           onClick={() => (speaking ? void aloud.play(surface, spoken) : check.mutate())}
-          aria-label={speaking ? "Dừng nghe thử" : `Nghe thử ${surface} đọc là ${spoken}`}
+          aria-label={speaking ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_doc_la_1_3b539221(surface, spoken)}
         >
           {speaking ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
-          {speaking ? "Dừng" : "Nghe thử"}
+          {speaking ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
         </Button>
       ),
       note: aloud.failed ? (
         <p role="status" className="text-xs text-fg-2">{aloud.failed}</p>
       ) : (
-        <p className="text-xs text-fg-3">Giọng máy nghe thử có thể khác bản thu.</p>
+        <p className="text-xs text-fg-3">{S.s_giong_may_nghe_thu_co_the_khac_ban_thu_28765c4e}</p>
       ),
     };
   }
@@ -129,10 +130,10 @@ export function useTryReading({
         if (same) play(heard.preview);
         else ask.mutate();
       }}
-      aria-label={playing ? "Dừng nghe thử" : `Nghe thử ${surface} đọc là ${spoken}`}
+      aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_doc_la_1_3b539221(surface, spoken)}
     >
       {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
-      {playing ? "Dừng" : "Nghe thử"}
+      {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
     </Button>
   );
   const status = tryNote({
@@ -143,7 +144,7 @@ export function useTryReading({
     bookBusy,
   });
   const note = <MotionPresence open={Boolean(unavailable || status)}>{unavailable ? (
-    <MotionRegion as="p" className="mt-1.5 text-xs text-fg-3">Chưa nghe thử được: {unavailable}</MotionRegion>
+    <MotionRegion as="p" className="mt-1.5 text-xs text-fg-3">{S.s_chua_nghe_thu_duoc_45a0d2ad}{unavailable}</MotionRegion>
   ) : status ? (
     <MotionRegion as="p" role="status" className={cn("mt-1.5 text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
       {status}

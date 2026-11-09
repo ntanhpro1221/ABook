@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -71,7 +72,7 @@ Column {
     function finishImport(error) {
         progress = null
         const merged = results.length ? Music.mergeImports(results) : null
-        let words = error ? Music.toast("Đang thêm nhạc thì dừng", error) : ""
+        let words = error ? Music.toast(S.s_dang_them_nhac_thi_dung_8712c030, error) : ""
         if (merged) {
             refresh(merged)
             const summary = Music.importSummary(merged)
@@ -85,10 +86,10 @@ Column {
         removingNow = true
         Api.call("DELETE", "/api/music/local/" + link.slice(Music.LOCAL_PREFIX.length), null, function(data, error) {
             root.removingNow = false
-            if (error) { root.toast("Chưa xoá được bài này", error); return }
+            if (error) { root.toast(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, error); return }
             root.refresh(data)
             root.removing = ""
-            Api.notice = "Đã xoá khỏi Nhạc của tôi"
+            Api.notice = S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a
         })
     }
     // ---- công tắc tự chọn của một bài (AutoPickNote) ----
@@ -98,7 +99,7 @@ Column {
         picking = track.link
         Api.call("POST", "/api/music/local/" + digest + "/auto", {auto: next}, function(data, error) {
             root.picking = ""
-            if (error) { root.toast("Chưa đổi được", error); return }
+            if (error) { root.toast(S.s_chua_doi_duoc_a6c67cde, error); return }
             root.refresh(data)
         })
     }
@@ -116,17 +117,17 @@ Column {
     Timer { id: purge; interval: 400; onTriggered: { for (let i = rows.count - 1; i >= 0; --i) if (rows.get(i).leaving) rows.remove(i) } }
     FileDialog {
         id: files
-        title: "Chọn nhạc của bạn"
+        title: S.s_chon_nhac_cua_ban_3441200f
         fileMode: FileDialog.OpenFiles
-        nameFilters: ["Nhạc (*.mp3 *.m4a *.ogg *.opus *.flac *.wav)"]
+        nameFilters: [S.s_nhac_mp3_m4a_ogg_opus_flac_wav_fac6f919]
         onAccepted: root.importFiles(selectedFiles.map(url => DesktopApi.localPath(url)))
     }
 
     DisclosureRow {
         width: parent.width
         section: true
-        title: "Nhạc của tôi"
-        summary: root.tracks.length ? root.tracks.length + " bài" : "Chưa có bài nào"
+        title: S.s_nhac_cua_toi_f65b7ac6
+        summary: root.tracks.length ? root.tracks.length + S.s_bai_43a258fa : S.s_chua_co_bai_nao_c1c708be
         expanded: root.open
         onClicked: {
             root.open = !root.open
@@ -141,7 +142,7 @@ Column {
             width: parent.width
             visible: root.canImport
             Button {
-                text: root.progress ? "Đang thêm " + root.progress.done + "/" + root.progress.total : "Thêm nhạc của bạn"
+                text: root.progress ? S.s_dang_them_b24da066 + root.progress.done + "/" + root.progress.total : S.s_them_nhac_cua_ban_dbd7d8c4
                 icon: "upload"; kind: "ghost"; size: "sm"; wrap: true
                 width: Math.min(implicitWidth, parent.width)
                 busy: Boolean(root.progress)
@@ -150,7 +151,7 @@ Column {
         }
         // Câu giới thiệu tả nút Thêm ngay trên nó, rồi mới tới khối tải Phân tích nhạc
         HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
-        MoreInfo { width: parent.width; label: "Nhạc riêng"; HintText { width: parent.width; text: Music.MY_MUSIC_HELP } }
+        MoreInfo { width: parent.width; label: S.s_nhac_rieng_732d7761; HintText { width: parent.width; text: Music.MY_MUSIC_HELP } }
         Collapse {
             width: parent.width
             open: root.tracks.length > 0
@@ -159,7 +160,7 @@ Column {
         Collapse {
             width: parent.width
             open: !root.canImport
-            HintText { width: parent.width; text: "Thêm và xoá nhạc làm trên máy tính chủ sách." }
+            HintText { width: parent.width; text: S.s_them_va_xoa_nhac_lam_tren_may_tinh_chu_sac_bdde38b6 }
         }
         MyMusicState {
             width: parent.width

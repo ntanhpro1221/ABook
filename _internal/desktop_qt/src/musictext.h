@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 // Chữ của nhạc nền trên trình phát: mức nhạc (ui/src/shared/musicLevels.ts), giấy phép và ghi công (ui/src/shared/format.ts). Chép đúng
 // từng chữ của bản web - luật đồng nhất giao diện giữa các nền tảng.
 #pragma once
@@ -19,14 +20,14 @@ inline constexpr double DEFAULT_LEVEL_DB = double(ABOOK_MIX_LEVEL_DEFAULT_DB);
 inline double clampLevel(double value) { return std::clamp(value, LEVEL_MIN_DB, LEVEL_MAX_DB); }
 inline QString levelLabel(double value) {
     if (value >= -15.5) return QStringLiteral("To");
-    if (value >= -18.5) return QStringLiteral("Hơi to");
-    if (value >= -21.5) return QStringLiteral("Vừa");
-    if (value >= -25.5) return QStringLiteral("Nhỏ");
-    return QStringLiteral("Rất nhỏ (rõ lời)");
+    if (value >= -18.5) return UiStrings::s_hoi_to_953a7b53;
+    if (value >= -21.5) return UiStrings::s_vua_8af1c03b;
+    if (value >= -25.5) return UiStrings::s_nho_9c1511d3;
+    return UiStrings::s_rat_nho_ro_loi_0afefef2;
 }
 inline QString levelNumber(double value) {
     return QString::number(value, 'g', 15).replace(QLatin1Char('.'), QLatin1Char(',')) + QStringLiteral(" dB")
-        + (value == DEFAULT_LEVEL_DB ? QStringLiteral(" (mặc định)") : QString());
+        + (value == DEFAULT_LEVEL_DB ? UiStrings::s_mac_dinh_2a963068 : QString());
 }
 
 /// Giấy phép đọc được: "CC BY 4.0", "CC BY-SA 4.0", "CC0 1.0". Phiên bản lấy từ liên kết giấy phép nếu có, mã lạ thì giữ nguyên.
@@ -70,7 +71,7 @@ inline bool needsModifiedNote(const QString &license) {
 }
 
 inline QString modifiedNote() {
-    return QStringLiteral("Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách.");
+    return UiStrings::s_da_chinh_sua_cac_bai_nhac_duoc_cat_vong_tr_929d3f58;
 }
 
 } // namespace MusicText

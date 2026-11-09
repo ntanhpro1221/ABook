@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -36,8 +38,8 @@ fun OtherPlayersEntry(repo: CompanionRepo, sheets: SheetHost, player: PlayerRepo
     val active = ui.players.filter { it.book.isNotEmpty() && it.chapter != null && "${it.device}:${it.book}" !in hidden }
     Reveal(ui.players.isNotEmpty() || local.hasTrack) {
         Column(Modifier.fillMaxWidth().background(Abook.colors.panel).padding(horizontal = Dim.margin)) {
-            DisclosureRow("Phát trên", { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }, "other_players",
-                summary = if (active.isEmpty()) "Chọn nơi phát" else active.joinToString { it.name })
+            DisclosureRow(S.s_phat_tren_681e16e1, { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }, "other_players",
+                summary = if (active.isEmpty()) S.s_chon_noi_phat_8e4c4ed9 else active.joinToString { it.name })
         }
     }
 }
@@ -52,11 +54,11 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
     BackHandler(enabled = sleepFor != null) { sleepFor = null }
     val available = (LocalConfiguration.current.screenHeightDp * 0.8f).dp
     Column(Modifier.fillMaxWidth().heightIn(max = available).testTag("remote_players_sheet")) {
-        BasicText("Phát trên", style = Abook.type.sectionTitle)
+        BasicText(S.s_phat_tren_681e16e1, style = Abook.type.sectionTitle)
         Reveal(ui.opening.isNotBlank()) { Caption(ui.opening) }
-        Reveal(ui.busy) { Caption("Đang gửi lệnh") }
+        Reveal(ui.busy) { Caption(S.s_dang_gui_lenh_4c157686) }
         Reveal(ui.problem.isNotEmpty()) { Caption(ui.problem) }
-        Reveal(ui.players.isEmpty()) { Caption("Chưa thấy máy khác. Bạn kiểm tra kết nối.") }
+        Reveal(ui.players.isEmpty()) { Caption(S.s_chua_thay_may_khac_ban_kiem_tra_ket_noi_98a81a7f) }
         val list = rememberLazyListState()
         LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false).fadeEdges(list).testTag("remote_players_list"), state = list) {
             items(players, key = { it.item.device }, contentType = { "player" }) { row ->
@@ -67,40 +69,40 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 Column(Modifier.fillMaxWidth()) {
                     ListItem(
                         remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong,
-                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát" else "Đang dừng",
+                        hint = if (remote.book.isEmpty()) S.s_chua_phat_sach_f18215d2 else if (remote.playing) S.s_dang_phat_ac2dd0c2 else S.s_dang_dung_9b35aeb5,
                         leading = { OtherPlayerIcon(remote) },
                         below = {
-                            if (remote.protocol == "gcast") Caption("Google Cast")
+                            if (remote.protocol == "gcast") Caption(S.s_google_cast_981c76f4)
                             Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
                                 Column {
                                     BasicText(remote.title, style = Abook.type.bodySmall)
                                     Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}", ticking = true)
                                     // All playback controls belong to this device's text column, including their shared centre.
                                     Row(Modifier.fillMaxWidth().testTag("remote_transport_${remote.device}"), horizontalArrangement = Arrangement.spacedBy(Dim.s8, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                                        IconAction("Lùi 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
-                                        IconAction(if (remote.playing) "Tạm dừng trên ${remote.name}" else "Phát tiếp trên ${remote.name}",
+                                        IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
+                                        IconAction(if (remote.playing) S.s_tam_dung_tren_0_55c295eb(remote.name) else S.s_phat_tiep_tren_0_de5ffa35(remote.name),
                                             { if (!ui.busy) scope.launch { repo.send(remote, "toggle") } }, "remote_toggle_${remote.device}") {
                                             Box(Modifier.size(40.dp).background(Abook.colors.text, CircleShape), contentAlignment = Alignment.Center) {
                                                 PlayPauseGlyph(remote.playing, Abook.colors.bg, 20.dp)
                                             }
                                         }
-                                        IconAction("Tới 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
+                                        IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
                                     }
                                     Reveal(remote.known) {
-                                        TextAction("Nghe ở đây", { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart)
+                                        TextAction(S.s_nghe_o_day_f7f1d741, { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart)
                                     }
                                     Reveal(remote.cast) {
                                         Column {
-                                            TextAction("Hẹn giờ", { sleepFor = if (sleepFor == remote.device) null else remote.device }, "remote_sleep_${remote.device}", align = Alignment.CenterStart)
+                                            TextAction(S.s_hen_gio_39d9ca26, { sleepFor = if (sleepFor == remote.device) null else remote.device }, "remote_sleep_${remote.device}", align = Alignment.CenterStart)
                                             Reveal(sleepFor == remote.device) {
                                                 Column {
                                                     for (minutes in listOf(15, 30, 45, 60)) {
-                                                        TextAction("$minutes phút", {
+                                                        TextAction(S.s_0_phut_2596d212(minutes), {
                                                             if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes); sleepFor = null }
                                                         }, "remote_sleep_${remote.device}_$minutes", Modifier.fillMaxWidth(), Alignment.CenterStart)
                                                     }
-                                                    TextAction("Tắt hẹn giờ", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
-                                                    TextAction("Hết chương", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                    TextAction(S.s_tat_hen_gio_fc8af231, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                    TextAction(S.s_het_chuong_f1d590bb, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
                                                 }
                                             }
                                         }
@@ -109,9 +111,9 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                             }
                             val owner = Regex("^p([0-9a-f]{8})_").find(here.bookId)?.groupValues?.get(1) ?: "main"
                             Reveal(here.hasTrack && (remote.cast || remote.device == owner)) {
-                                TextAction("Phát trên ${remote.name}${if (remote.protocol == "gcast") " (Google Cast)" else ""}", { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
+                                TextAction(S.s_phat_tren_0_1_757da6a7(remote.name, if (remote.protocol == "gcast") " (Google Cast)" else ""), { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
                             }
-                            Reveal(remote.book.isNotEmpty()) { TextAction("Ẩn", { repo.hide(remote); dismiss() }, "remote_hide_${remote.device}", align = Alignment.CenterStart) }
+                            Reveal(remote.book.isNotEmpty()) { TextAction(S.s_an_9c7a6c2d, { repo.hide(remote); dismiss() }, "remote_hide_${remote.device}", align = Alignment.CenterStart) }
                         },
                     )
                     RowLine(start = Dim.s24 + Dim.s12)
@@ -119,7 +121,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 }
             }
         }
-        IconAction("Tìm lại thiết bị phát", { if (!ui.busy) scope.launch { repo.findPlayers() } }, "remote_retry", Modifier.align(Alignment.End)) { RefreshIcon(Abook.colors.text) }
+        IconAction(S.s_tim_lai_thiet_bi_phat_0dc4396a, { if (!ui.busy) scope.launch { repo.findPlayers() } }, "remote_retry", Modifier.align(Alignment.End)) { RefreshIcon(Abook.colors.text) }
     }
 }
 
@@ -129,14 +131,14 @@ fun StudioNotices(repo: CompanionRepo, askPermission: (() -> Unit) -> Unit, open
     val ui by repo.state.collectAsState()
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxWidth().testTag("studio_notices")) {
-        SwitchRow("Báo từ Studio", ui.notices.enabled, { on ->
+        SwitchRow(S.s_bao_tu_studio_1a19886d, ui.notices.enabled, { on ->
             val apply = { scope.launch { repo.setNotices(on) }; Unit }
             if (on) askPermission(apply) else apply()
-        }, "studio_alerts", hint = if (ui.notices.enabled && !ui.notices.permitted) "Android đang chặn thông báo của ABook." else "Sách xong hoặc có việc cần bạn.")
+        }, "studio_alerts", hint = if (ui.notices.enabled && !ui.notices.permitted) S.s_android_dang_chan_thong_bao_cua_abook_cc8b8e91 else S.s_sach_xong_hoac_co_viec_can_ban_2aca1fdb)
         Reveal(ui.notices.enabled && !ui.notices.permitted) {
             Column {
-                Caption("Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo.")
-                TextAction("Mở cài đặt", openSettings, "studio_notification_settings", align = Alignment.CenterStart)
+                Caption(S.s_bat_lai_trong_cai_dat_cua_may_ung_dung_abo_81a29820)
+                TextAction(S.s_mo_cai_dat_60ab929f, openSettings, "studio_notification_settings", align = Alignment.CenterStart)
             }
         }
         Reveal(ui.problem.isNotEmpty()) { Caption(ui.problem) }

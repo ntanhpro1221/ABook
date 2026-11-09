@@ -45,7 +45,7 @@ interface CastBackend {
     fun volume(): Int? = null
 
     fun setVolume(percent: Int) {
-        throw Dlna.Failure("thiết bị không chỉnh được âm lượng từ xa")
+        throw Dlna.Failure(S.s_thiet_bi_khong_chinh_duoc_am_luong_tu_xa_eaa5c2d2)
     }
 }
 

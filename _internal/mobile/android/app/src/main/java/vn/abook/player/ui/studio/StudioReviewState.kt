@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +18,7 @@ import vn.abook.player.StudioPolling
 import vn.abook.player.ui.data.Choice
 
 /** Bộ lọc tab "Cần nghe lại" (web `filter`): câu chưa có cách xử lý, hay đã có. */
-enum class ReviewFilter(override val key: String, override val label: String) : Choice { Todo("todo", "Chưa xem"), Done("done", "Đã xem") }
+enum class ReviewFilter(override val key: String, override val label: String) : Choice { Todo("todo", S.s_chua_xem_2fb1e370), Done("done", S.s_da_xem_95526f88) }
 
 /** Các trang đã nạp của một bộ lọc, gộp lại: đếm và chương chờ thu lại lấy của trang đầu, còn lại của trang cuối (như `ReviewQueue.tsx`). */
 data class ReviewList(

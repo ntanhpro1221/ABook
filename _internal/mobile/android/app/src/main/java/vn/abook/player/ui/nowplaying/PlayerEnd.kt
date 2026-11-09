@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.ListenLogic
@@ -33,7 +35,7 @@ object PlayerEnd {
     }
 
     /** Cuốn kế là PHẦN sau của cùng cuốn (có liên kết chuỗi, hay tên hậu tố "Phần N"): hết phần này là nghe nối sang nó. Tập khác của một bộ chỉ được mời. */
-    fun continuingPart(next: ListenBook?): ListenBook? = next?.takeIf { it.series != null || ListenLogic.seriesOf(it.title).unit == "phần" }
+    fun continuingPart(next: ListenBook?): ListenBook? = next?.takeIf { it.series != null || ListenLogic.seriesOf(it.title).unit == S.s_phan_87a88dd0 }
 
     /** Cuốn khác để mời (tối đa `limit`): chưa nghe xong, nghe được ngay (có audio, hay chỉ có chữ mà máy có giọng đọc); đang nghe dở trước, mới nhất trước. */
     fun others(books: List<ListenBook>, currentId: String, speaks: Boolean, skipId: String? = null, limit: Int = 3): List<ListenBook> {
@@ -50,7 +52,7 @@ object PlayerEnd {
         val heard = book.progress.heardSeconds
         val total = book.progress.totalSeconds
         if (heard > 0 && total > 0) return PlayerText.bookProgress(book.complete, minOf(heard, total), total, 1.0, finished = false)
-        return if (book.duration > 0) "Chưa nghe · ${Fmt.length(book.duration)}" else "Chưa nghe · ${book.chaptersTotal} chương"
+        return if (book.duration > 0) S.s_chua_nghe_0_dd595dec(Fmt.length(book.duration)) else S.s_chua_nghe_0_chuong_fbac7a78(book.chaptersTotal)
     }
 
     fun choices(books: List<ListenBook>, currentId: String, speaks: Boolean): Choices {

@@ -32,13 +32,13 @@ object TextBook {
         for ((index, name) in texts.keys.withIndex()) {
             val number = index + 1
             val chapter = book.chapters[index]
-            val title = cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương $number")
+            val title = cleanTitle(chapter.name.ifEmpty { chapter.title }, S.s_chuong_0_268b0521(number))
             chapters.put(
                 JSONObject().put("id", number).put("index", number).put("title", title).put("subtitle", "").put("fullTitle", title)
                     .put("duration", 0).put("available", false).put("size", 0).put("state", TEXT_STATE).put("text", name),
             )
         }
-        val result = JSONObject().put("format", FORMAT).put("title", cleanTitle(book.title, "Sách"))
+        val result = JSONObject().put("format", FORMAT).put("title", cleanTitle(book.title, S.s_sach_0c2b3e9b))
         book.author?.takeIf { it.isNotEmpty() }?.let { result.put("author", it) }
         book.language?.takeIf { it.isNotEmpty() }?.let { result.put("language", it) }
         val digest = sha256(texts.values.joinToString("") { sha256(it) }.toByteArray(Charsets.UTF_8))
@@ -106,13 +106,13 @@ object TextBook {
             }
             val first = source.lines().map { it.trim { c -> c.isWhitespace() || Character.isSpaceChar(c) } }.firstOrNull { it.isNotEmpty() }.orEmpty()
             rows.put(
-                JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương ${index + 1}"))
+                JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.name.ifEmpty { chapter.title }, S.s_chuong_0_268b0521(index + 1)))
                     .put("firstLine", BookEdits.cut(first, 200)).put("words", count).put("chars", BookImport.charCount(source))
                     .put("included", index + 1 in defaults).also { if (chapter.short) it.put("short", true) }
                     .also { if (chapter.matter.isNotEmpty()) it.put("matter", chapter.matter) },
             )
         }
-        return JSONObject().put("title", cleanTitle(book.title, "Sách")).put("author", book.author ?: JSONObject.NULL)
+        return JSONObject().put("title", cleanTitle(book.title, S.s_sach_0c2b3e9b)).put("author", book.author ?: JSONObject.NULL)
             .put("language", book.language ?: JSONObject.NULL).put("hasCover", book.cover != null).put("chapters", rows)
             .put("notes", JSONArray(book.notes))
             // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.

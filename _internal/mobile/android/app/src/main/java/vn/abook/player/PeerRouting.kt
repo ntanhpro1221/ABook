@@ -13,7 +13,7 @@ internal class DiscoveryAdmission : java.io.Closeable {
         { task -> Thread(task, "peer-discovery-tls").apply { isDaemon = true } })
 
     fun submit(task: () -> Unit): Boolean = try {
-        pool.execute { runCatching(task).onFailure { AppLog.w("PeerRouting", "Chưa xác minh được địa chỉ tìm thấy", it) } }
+        pool.execute { runCatching(task).onFailure { AppLog.w("PeerRouting", S.s_chua_xac_minh_duoc_dia_chi_tim_thay_55e672fe, it) } }
         true
     } catch (_: java.util.concurrent.RejectedExecutionException) { false }
 
@@ -61,15 +61,15 @@ internal object PeerRouting {
         if (damaged) preserve(prefs, "routes", JSONObject(values).toString())
         if (!hasAddresses || values["addresses"] != clean || damaged) {
             val port = values["port"]?.toString()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: BuildConfig.DEFAULT_PEER_PORT
-            check(prefs.edit().putString("addresses", clean).putInt("port", port).commit()) { "Chưa lưu được địa chỉ máy đã ghép" }
+            check(prefs.edit().putString("addresses", clean).putInt("port", port).commit()) { S.s_chua_luu_duoc_dia_chi_may_da_ghep_ddec8922 }
         }
         return peer
     }
 
     internal fun preserve(prefs: android.content.SharedPreferences, key: String, raw: Any) {
         val copy = "$key.corrupt-${System.currentTimeMillis()}-${java.util.UUID.randomUUID()}"
-        check(prefs.edit().putString(copy, raw.toString()).commit()) { "Chưa giữ được bản dữ liệu máy đã ghép" }
-        Store.addDataNotice("Địa chỉ máy đã ghép bị hỏng; đã giữ bản cũ ở $copy — bạn ghép lại máy không còn địa chỉ.")
+        check(prefs.edit().putString(copy, raw.toString()).commit()) { S.s_chua_giu_duoc_ban_du_lieu_may_da_ghep_3be1a56a }
+        Store.addDataNotice(S.s_dia_chi_may_da_ghep_bi_hong_da_giu_ban_cu_aad30264(copy))
     }
 
     fun bluetooth(peer: JSONObject): String = peer.optString("host").let { if (it.startsWith("bt:")) it.removePrefix("bt:") else peer.optString("bt") }
@@ -77,7 +77,7 @@ internal object PeerRouting {
     /** Cached, non-blocking choice for UI callers. Network workers resolve it before HTTP. */
     fun base(context: Context, peer: JSONObject): String {
         val choice = Route.pick(PeerAddresses.ordered(peer), bluetooth(peer))
-        return choice.lan?.let { "https://$it" } ?: BluetoothLink.base(context, choice.bluetooth ?: throw IllegalStateException("Máy đã ghép chưa có địa chỉ; bạn hãy ghép lại"))
+        return choice.lan?.let { "https://$it" } ?: BluetoothLink.base(context, choice.bluetooth ?: throw IllegalStateException(S.s_may_da_ghep_chua_co_dia_chi_ban_hay_ghep_l_40a8d8a7))
     }
 
     private fun find(context: Context, token: String): Pair<String?, JSONObject>? {
@@ -130,7 +130,7 @@ internal object PeerRouting {
             // Still pinned by the actual request; never learn addresses from a TCP-only probe.
             return base
         }
-        throw java.io.IOException("Chưa kết nối được máy kia; bạn hãy kiểm tra Wi-Fi hoặc Tailscale")
+        throw java.io.IOException(S.s_chua_ket_noi_duoc_may_kia_ban_hay_kiem_tra_da753e36)
     }
 
     /** Discovery is only a hint: verify the socket against each stored pin before saving a new route. */

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -8,7 +9,7 @@ import "VoiceLogic.js" as VoiceLogic
 Window {
     id: win
     visible: false          // hiện sau khi WindowChrome gắn xong (Component.onCompleted)
-    title: "ABook"
+    title: S.s_abook_1c37d334
     x: Bench.hiddenDesktop ? -10000 : 0
     y: Bench.hiddenDesktop ? -10000 : 0
     width: 1280
@@ -24,7 +25,7 @@ Window {
         miniHeight: miniPlayer.naturalHeight
         onExpanded: win.openNowPlaying()
         onExitRequested: Qt.quit()
-        onNotifyTray: if (win.tray) win.tray.showMessage("ABook", "ABook vẫn chạy ở khay")
+        onNotifyTray: if (win.tray) win.tray.showMessage(S.s_abook_1c37d334, S.s_abook_van_chay_o_khay_c4e8227a)
         onMiniChanged: chrome.setMini(mini)
     }
     readonly property bool uiVisible: visible && visibility !== Window.Minimized && visibility !== Window.Hidden
@@ -94,7 +95,7 @@ Window {
             opacity: activeFocus ? 1 : 0
             visible: enabled
             enabled: !(win.nowPlaying && win.nowPlaying.open)
-            text: "Tới nội dung"
+            text: S.s_toi_noi_dung_501e7d8d
             size: "sm"
             Behavior on y { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
@@ -318,7 +319,7 @@ Window {
         target: Backend
         function onHostEvent(name, detail) {
             if (name === "abook-update") Api.call("GET", "/api/app", null, function(data, error) { if (!error) Api.info = data })
-            else if (name === "abook-update-failed") Api.notice = "Chưa tải được bản mới" + (detail ? "\n" + detail : "")
+            else if (name === "abook-update-failed") Api.notice = S.s_chua_tai_duoc_ban_moi_ce6632c0 + (detail ? "\n" + detail : "")
         }
     }
     // Lời báo của app: góc trên bên phải, cách dải tiêu đề và mép phải 16 px; dưới mặt hộp / bảng.
@@ -374,7 +375,7 @@ Window {
 
     Component.onCompleted: {
         if (!chrome.attach(win, titleBar, titleBar.minimizeButton, titleBar.maximizeButton, titleBar.closeButton))
-            console.warn("WindowChrome: không gắn được khung cửa sổ")
+            console.warn(S.s_windowchrome_khong_gan_duoc_khung_cua_so_b990d2d6)
         chrome.keepClickable(sidebar.toggleButton)       // nút thu / mở thanh bên nằm trong dải kéo được
         Theme.mode = Platform.setting("themeMode", "auto")
         Nav.stack = stack

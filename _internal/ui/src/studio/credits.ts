@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Dòng ghi công người dịch ở ĐẦU chương và dòng xin ủng hộ / quảng cáo / nguồn ở CUỐI chương mà trình tạo sách ĐỀ XUẤT bỏ
 // khỏi phần đọc (webui/actions.scan_inputs: `credits`, `tailCredits` - luật chung với sách nhập, text_processing). Một lần đồng
 // ý bỏ cả hai loại; sách lưu hai khoá riêng (`dropCreditLines`, `dropTailCreditLines`) để sách tạo trước vẫn tách như cũ.
@@ -32,23 +33,23 @@ export function creditSummary(files: { credits?: string[]; tailCredits?: string[
   }
   const examples = [
     ...heads.slice(0, tails.length ? 2 : 3).map((line) => `“${line}”`),
-    ...tails.map((line) => `“${line}” (cuối chương)`),
+    ...tails.map((line) => S.s_0_cuoi_chuong_eb53af5d(line)),
   ].slice(0, 3);
   return { lines: head + tail, head, tail, chapters, examples };
 }
 
 /** Gọi tên các dòng theo loại có trong sách: "dòng ghi công", "dòng xin ủng hộ, quảng cáo" hay cả hai. */
 export function creditKind(credits: Credits): string {
-  if (!credits.tail) return "dòng ghi công";
-  if (!credits.head) return "dòng xin ủng hộ, quảng cáo";
-  return "dòng ghi công, xin ủng hộ, quảng cáo";
+  if (!credits.tail) return S.s_dong_ghi_cong_acaae945;
+  if (!credits.head) return S.s_dong_xin_ung_ho_quang_cao_a4165e32;
+  return S.s_dong_ghi_cong_xin_ung_ho_quang_cao_ffb87b29;
 }
 
 /** Chúng nằm ở đâu trong chương. */
 export function creditWhere(credits: Credits): string {
-  if (!credits.tail) return "dòng ghi công người dịch ở đầu chương";
-  if (!credits.head) return "dòng xin ủng hộ, quảng cáo hay nguồn ở cuối chương";
-  return "dòng ghi công ở đầu chương hay dòng xin ủng hộ, quảng cáo ở cuối chương";
+  if (!credits.tail) return S.s_dong_ghi_cong_nguoi_dich_o_dau_chuong_c94cc054;
+  if (!credits.head) return S.s_dong_xin_ung_ho_quang_cao_hay_nguon_o_cuoi_e826e333;
+  return S.s_dong_ghi_cong_o_dau_chuong_hay_dong_xin_un_a0d7e71e;
 }
 
 /** Người dùng đồng ý bỏ dòng nào: đầu chương (`dropCreditLines`) và cuối chương (`dropTailCreditLines`) chọn riêng (soát UX a24, A9). */
@@ -77,7 +78,7 @@ export function creditRows<F extends { credits?: string[]; tailCredits?: string[
 /** Một dòng trong danh sách "Xem hết": ở đâu trong chương, và - khi người dùng đã chọn bỏ một loại - dòng này bị bỏ hay vẫn được
  *  đọc (soát UX a25 T8: dưới "Sẽ bỏ 5 dòng" danh sách vẫn kể dòng đầu chương sẽ GIỮ như thể cũng bị bỏ). */
 export function creditLine(line: string, place: "head" | "tail", drop: CreditDrop): { text: string; dropped: boolean } {
-  const where = place === "head" ? "đầu chương" : "cuối chương";
+  const where = place === "head" ? S.s_dau_chuong_ef996d71 : S.s_cuoi_chuong_f95a0fda;
   if (!drop.head && !drop.tail) return { text: `“${line}” (${where})`, dropped: false };
-  return drop[place] ? { text: `“${line}” (${where}, bỏ)`, dropped: true } : { text: `“${line}” (${where}, vẫn đọc)`, dropped: false };
+  return drop[place] ? { text: S.s_0_1_bo_f774b2ee(line, where), dropped: true } : { text: S.s_0_1_van_doc_78cac460(line, where), dropped: false };
 }

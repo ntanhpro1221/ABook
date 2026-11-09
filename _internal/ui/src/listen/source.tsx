@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { MusicCues } from "./musicBed";
 import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -177,7 +178,7 @@ export function SourceProvider({ source, children }: { source: ListenSource; chi
 
 export function useSource(): ListenSource {
   const source = useContext(SourceContext);
-  if (!source) throw new Error("useSource ngoài SourceProvider");
+  if (!source) throw new Error(S.s_usesource_ngoai_sourceprovider_c31bb6ee);
   return source;
 }
 

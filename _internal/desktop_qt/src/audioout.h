@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 // Cổng ra âm thanh của bộ phát: MỘT giao diện, Player (player.cpp) chỉ biết nó. Bản thật dùng bộ trộn WASAPI chung (musicmixer.cpp);
 // bản giả trong tests/ cho phép thử Player không cần thiết bị âm thanh.
 #pragma once
@@ -15,7 +16,7 @@ public:
 
     /// Nạp một nguồn (http hoặc file), đứng ở `startSeconds` ở trạng thái DỪNG. `play()` ngay sau đó là hợp lệ: phát khi nguồn sẵn sàng.
     virtual void load(const QUrl &url, double startSeconds) = 0;
-    virtual void loadText(const QString &, int, double, const QString &) { emit failed(QStringLiteral("Máy này chưa có giọng đọc.")); }
+    virtual void loadText(const QString &, int, double, const QString &) { emit failed(UiStrings::s_may_nay_chua_co_giong_doc_3449f846); }
     virtual void play() = 0;
     virtual void pause() = 0;
     /// Bỏ nguồn (đóng sách): nhả bộ giải mã và bộ đệm.

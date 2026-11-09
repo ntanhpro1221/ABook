@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -83,7 +84,7 @@ Column {
             if (error || !data || !data.url) {
                 root.playing = ""
                 root.failedVoice = id
-                root.failedMessage = error || "Chưa làm được lúc này."
+                root.failedMessage = error || S.s_chua_lam_duoc_luc_nay_2e7cacde
                 return
             }
             DesktopApi.preview(data.url)
@@ -131,7 +132,7 @@ Column {
                         Text {
                             objectName: "voiceCurrent"
                             width: parent.width
-                            text: "Đang dùng: " + root.keptName
+                            text: S.s_dang_dung_4b1e5f4d + root.keptName
                             color: Theme.text
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -150,7 +151,7 @@ Column {
                             width: parent.width
                             spacing: 16
                             Accessible.role: Accessible.Indicator
-                            Accessible.name: "Đang tải giọng đọc"
+                            Accessible.name: S.s_dang_tai_giong_doc_ac8359a5
                             SequentialAnimation {
                                 running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
                                 loops: Animation.Infinite
@@ -187,8 +188,8 @@ Column {
                                 width: parent.width
                                 storageKey: "voice.provider." + groupBlock.modelData.provider
                                 title: groupBlock.modelData.title
-                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0·\u00a0" : "") + groupBlock.list.length + " giọng"
-                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? "\u00a0·\u00a0đang dùng" : "")
+                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0·\u00a0" : "") + groupBlock.list.length + S.s_giong_17cc0855
+                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? S.s_u00a0_u00a0dang_dung_3b84da76 : "")
                                 // Chưa có giọng nào của nhóm (máy chưa cài giọng tiếng Việt của hệ điều hành)
                                 VoiceNote { width: parent.width; gap: 0; text: groupBlock.list.length === 0 ? VoiceLogic.DEVICE_HINT : ""; px: 13 }
                                 Column {
@@ -271,8 +272,8 @@ Column {
                                 objectName: "voiceKeysHeader"
                                 width: parent.width
                                 section: true
-                                title: "Khoá trực tuyến"
-                                summary: root.keyCount > 0 ? root.keyCount + " khoá" : ""
+                                title: S.s_khoa_truc_tuyen_b32d4988
+                                summary: root.keyCount > 0 ? root.keyCount + S.s_khoa_abf42d2a : ""
                                 expanded: root.keysOpen
                                 onClicked: {
                                     root.keysOpen = !root.keysOpen
@@ -285,7 +286,7 @@ Column {
                                 Text {
                                     width: parent.width
                                     topPadding: 4
-                                    text: "Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền."
+                                    text: S.s_chu_cua_sach_gui_toi_dich_vu_ay_co_the_bi_6ecd4dfe
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: 13
@@ -293,7 +294,7 @@ Column {
                                 MoreInfo {
                                     width: parent.width
                                     topPadding: 4
-                                    HintText { width: parent.width; text: "Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy." }
+                                    HintText { width: parent.width; text: S.s_khoa_chi_luu_tren_may_dich_vu_co_the_tinh_a894acea }
                                 }
                                 Column {
                                     width: parent.width

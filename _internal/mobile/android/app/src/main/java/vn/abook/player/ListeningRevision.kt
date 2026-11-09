@@ -9,8 +9,8 @@ internal object ListeningRevision {
     /** Below half the range a counter is accepted whatever the receiver's clock (a new device takes a long-lived profile); even a
      *  forged peer can only push a profile here, still 2^39 edits from the ceiling. Above it a peer may lead by MAX_JUMP. */
     const val SAFE_COUNTER = MAX_COUNTER / 2
-    const val MISSING_REVISION = "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
-    const val JUMP_NOTICE = "Phiên bản đồng bộ bất thường; giữ bản của bạn — bạn đồng bộ từ máy có bản đúng."
+    const val MISSING_REVISION = S.s_du_lieu_dong_bo_thieu_phien_ban_ban_hay_mo_165013b1
+    const val JUMP_NOTICE = S.s_phien_ban_dong_bo_bat_thuong_giu_ban_cua_b_bb12cdb2
 
     fun validNumber(value: Any?, minimum: Long = 0L) =
         (value is Int || value is Long) && (value as Number).toLong() in minimum..MAX_COUNTER

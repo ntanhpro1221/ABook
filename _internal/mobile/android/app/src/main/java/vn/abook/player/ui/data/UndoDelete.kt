@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -70,7 +72,7 @@ class UndoDelete(
         } catch (error: Exception) {
             hiding.value = hiding.value - id
             changed()
-            return error.message?.takeIf { it.isNotBlank() } ?: "Chưa xoá được"
+            return error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_xoa_duoc_b872fff6
         }
         if (token == null) {
             // Xoá thẳng: chỉ báo, không có Hoàn tác.
@@ -109,13 +111,13 @@ class UndoDelete(
                         throw cancelled
                     } catch (error: Exception) {
                         // Tiêu đề "Chưa hoàn tác được" + lý do của lõi.
-                        say("Chưa hoàn tác được" + " - " + (error.message?.takeIf { it.isNotBlank() } ?: "bạn thử lại"), error = true)
+                        say(S.s_chua_hoan_tac_duoc_164b754b + " - " + (error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_thu_lai_dd8cbd9d), error = true)
                         continue
                     }
                     held.remove(id)?.expiry?.cancel()
                     actions.value = actions.value - id
                     hiding.value = hiding.value - id
-                    say("Đã khôi phục “${item.title}”")
+                    say(S.s_da_khoi_phuc_0_7dbdaf93(item.title))
                 }
             } finally {
                 restoring = false
@@ -150,10 +152,10 @@ class UndoDelete(
 
         /** Dòng của thanh / thông báo sau khi xoá. */
         fun removedText(count: Int, title: String, partial: Boolean): String = when {
-            count > 1 -> "Đã bỏ $count cuốn"
-            partial -> "Đã xoá phần đã tải của “$title”"
-            title.isEmpty() -> "Đã bỏ khỏi thư viện"
-            else -> "Đã bỏ “$title” khỏi thư viện"
+            count > 1 -> S.s_da_bo_0_cuon_9816ea00(count)
+            partial -> S.s_da_xoa_phan_da_tai_cua_0_2484eca2(title)
+            title.isEmpty() -> S.s_da_bo_khoi_thu_vien_3fbd2b81
+            else -> S.s_da_bo_0_khoi_thu_vien_8218fead(title)
         }
     }
 }

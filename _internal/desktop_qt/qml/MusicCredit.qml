@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -14,7 +15,7 @@ Item {
         if ((Music.credit.label || "") !== "") credit = Music.credit
         open = false
     }
-    function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;").replace(/"/g, "&quot;") }
+    function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;").split('"').join("&quot;") }
     Component.onCompleted: refresh()
     Connections {
         target: Music
@@ -48,7 +49,7 @@ Item {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 textFormat: Text.PlainText
-                text: "Nhạc nền: " + (root.credit.label || "")
+                text: S.s_nhac_nen_198fce26 + (root.credit.label || "")
                 color: toggle.hovered ? Theme.text : Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -76,14 +77,14 @@ Item {
                 Line {
                     visible: (root.credit.license || "") !== ""
                     rich: true
-                    text: "Giấy phép: " + (root.credit.licenseUrl
+                    text: S.s_giay_phep_14b585a0 + (root.credit.licenseUrl
                         ? "<a href=\"" + root.esc(root.credit.licenseUrl) + "\">" + root.esc(root.credit.license) + "</a>" : root.esc(root.credit.license))
                 }
                 Line { visible: root.credit.modified === true; text: root.credit.modifiedNote || "" }
                 Line {
                     visible: (root.credit.landing || "") !== ""
                     rich: true
-                    text: "<a href=\"" + root.esc(root.credit.landing) + "\">Trang của bài nhạc</a>"
+                    text: "<a href=\"" + root.esc(root.credit.landing) + S.s_trang_cua_bai_nhac_a_dcd03b62
                 }
             }
         }

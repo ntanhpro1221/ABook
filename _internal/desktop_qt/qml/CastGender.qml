@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -13,8 +14,8 @@ CastModal {
     readonly property string shownName: person ? Logic.cleanName(person.displayName) : ""
     readonly property string current: Logic.shownGender(person)
     readonly property int recorded: waiting || !person ? 0 : (person.recorded || 0)
-    title: "Giới tính của " + shownName
-    description: current ? "Hiện đang là nhân vật " + Logic.genderWord(current) + "." : "Máy chưa xác định được giới của người này."
+    title: S.s_gioi_tinh_cua_762995db + shownName
+    description: current ? S.s_hien_dang_la_nhan_vat_e19de586 + Logic.genderWord(current) + "." : S.s_may_chua_xac_dinh_duoc_gioi_cua_nguoi_nay_ea153abc
 
     function begin(data) {
         generation++
@@ -30,10 +31,10 @@ CastModal {
         root.ask("POST", "/api/books/" + bookId + "/voice", {character: who.name, gender: picked}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { root.fail("Chưa đổi được giới tính", error); return }
+            if (error) { root.fail(S.s_chua_doi_duoc_gioi_tinh_4eefcf7a, error); return }
             root.saved()
-            root.offerUndo("Đã ghi: " + name + " là nhân vật " + Logic.genderWord(picked), who.name, data ? data.requestedAt : 0,
-                           name + " trở lại như trước khi đổi giới tính.")
+            root.offerUndo(S.s_da_ghi_85094402 + name + S.s_la_nhan_vat_115df58b + Logic.genderWord(picked), who.name, data ? data.requestedAt : 0,
+                           name + S.s_tro_lai_nhu_truoc_khi_doi_gioi_tinh_d5dd930c)
             root.dismiss()
         })
     }
@@ -44,16 +45,16 @@ CastModal {
         ChoiceRow {
             objectName: "genderChoice"
             width: parent.width
-            label: "Giới tính"
+            label: S.s_gioi_tinh_46eb9a2c
             value: root.choice
-            options: [{value: "male", label: "Nam"}, {value: "female", label: "Nữ"}]
+            options: [{value: "male", label: S.s_nam_22dd59c8}, {value: "female", label: S.s_nu_e15bc11c}]
             onPicked: value => root.choice = value
         }
         Text {
             objectName: "genderWaiting"
             visible: root.waiting
             width: parent.width
-            text: "Giọng đọc của " + root.shownName + " chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio."
+            text: S.s_giong_doc_cua_5e7d06dc + root.shownName + S.s_chua_doi_ngay_studio_se_lam_khi_ban_mo_fil_cc8fd9a5
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -63,8 +64,8 @@ CastModal {
             objectName: "genderNote"
             visible: !root.waiting && root.recorded === 0 && root.person !== null && root.choice !== "" && root.choice !== root.current
             width: parent.width
-            text: root.person ? "Nếu giọng " + (Logic.voiceToUse(root.person) ? Logic.voiceToUse(root.person) + " " : "") + "đang đọc " + root.shownName
-                + " không hợp giới mới, máy chọn một giọng " + Logic.genderWord(root.choice) + " khác cho người ấy khi áp dụng." : ""
+            text: root.person ? S.s_neu_giong_14749bed + (Logic.voiceToUse(root.person) ? Logic.voiceToUse(root.person) + " " : "") + S.s_dang_doc_080a360c + root.shownName
+                + S.s_khong_hop_gioi_moi_may_chon_mot_giong_889c64ad + Logic.genderWord(root.choice) + S.s_khac_cho_nguoi_ay_khi_ap_dung_094fb017 : ""
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -73,7 +74,7 @@ CastModal {
             objectName: "genderRecorded"
             visible: root.recorded > 0
             width: parent.width
-            text: "Áp dụng sẽ thu lại " + Logic.formatNumber(root.recorded) + " câu của " + root.shownName + " nếu giọng chưa hợp giới mới."
+            text: S.s_ap_dung_se_thu_lai_adf61f2b + Logic.formatNumber(root.recorded) + S.s_cau_cua_35c4143d + root.shownName + S.s_neu_giong_chua_hop_gioi_moi_dce1d351
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
@@ -82,8 +83,8 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "genderCancel"; text: "Thôi"; kind: "ghost"; onClicked: root.close() }
-            Button { objectName: "genderSave"; text: "Ghi lại"; busy: root.saving; enabled: root.choice !== "" && root.choice !== root.current; onActivated: root.save() }
+            Button { objectName: "genderCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "genderSave"; text: S.s_ghi_lai_923c1fd4; busy: root.saving; enabled: root.choice !== "" && root.choice !== root.current; onActivated: root.save() }
         }
     ]
 }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.navigationClearance
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -57,11 +59,11 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
         state = list,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
-        item(key = "header", contentType = "header") { PageHeader("Nhạc của tôi", onBack) }
+        item(key = "header", contentType = "header") { PageHeader(S.s_nhac_cua_toi_f65b7ac6, onBack) }
         item(key = "add", contentType = "add") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
                 ListItem(
-                    if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else MusicText.ADD_LABEL, Modifier,
+                    if (ui.importing) S.s_dang_them_0_1_84372256(ui.done, ui.total) else MusicText.ADD_LABEL, Modifier,
                     if (ui.importing) null else ({ picker.launch(MusicImport.MIME_TYPES) }), "music_add",
                     titleColor = if (ui.importing) colors.text else colors.accentText,
                     titleStyle = Abook.type.body.copy(fontFeatureSettings = "tnum"),
@@ -70,7 +72,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                 )
                 RowLine()
                 Caption(MusicText.MY_MUSIC_INTRO, Modifier.padding(top = Dim.s8).testTag("music_intro"))
-                MoreInfo("Nhạc riêng", MusicText.MY_MUSIC_HELP, "music_help")
+                MoreInfo(S.s_nhac_rieng_732d7761, MusicText.MY_MUSIC_HELP, "music_help")
             }
         }
         item(key = "feedback", contentType = "feedback") {
@@ -79,7 +81,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                 for ((index, problem) in ui.problems.withIndex()) {
                     BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("music_problem_$index"))
                 }
-                InlineProblem(if (ui.failed && !ui.loaded) "Bạn hãy thử tải lại nhạc của bạn." else "", voice::loadMusic, "music_load_problem")
+                InlineProblem(if (ui.failed && !ui.loaded) S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139 else "", voice::loadMusic, "music_load_problem")
             }
         }
         items(ui.tracks, key = { it.link }, contentType = { "track" }) { track ->
@@ -89,7 +91,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
             }
         }
         if (ui.loaded && ui.tracks.isEmpty()) item(key = "empty", contentType = "empty") {
-            Caption("Chưa có bài nào", Modifier.padding(top = Dim.s16).testTag("music_empty"))
+            Caption(S.s_chua_co_bai_nao_c1c708be, Modifier.padding(top = Dim.s16).testTag("music_empty"))
         }
     }
 }

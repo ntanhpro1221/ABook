@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { ActionMenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -163,13 +164,13 @@ const ChapterLine = memo(function ChapterLine({
         type="button"
         onClick={onPlay}
         disabled={!canPlay(chapter)}
-        aria-label={playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
+        aria-label={playing ? S.s_tam_dung_0_43ccbbf2(chapter.fullTitle) : S.s_nghe_0_42d1e966(chapter.fullTitle)}
         className="touch-hit touch-box -ml-[8.75px] grid size-9 shrink-0 place-items-center rounded-full text-fg-2 max-sm:ml-0 max-sm:!min-w-0 max-sm:!justify-start sm:pointer-coarse:-ml-[17px] hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
         {playing ? (
           <Vu className="h-3 text-accent" />
         ) : done ? (
-          <Check className="size-4 text-success" strokeWidth={3} aria-label="Đã nghe" />
+          <Check className="size-4 text-success" strokeWidth={3} aria-label={S.s_da_nghe_1e0f8d88} />
         ) : canPlay(chapter) ? (
           <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
         ) : (
@@ -181,7 +182,7 @@ const ChapterLine = memo(function ChapterLine({
       <button
         type="button"
         onClick={canPlay(chapter) ? onPlay : () => actions.read(chapter)}
-        aria-label={canPlay(chapter) ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
+        aria-label={canPlay(chapter) ? undefined : S.s_doc_0_chua_co_audio_baeeb512(chapter.fullTitle)}
         // Nghe được thì nút tên làm đúng việc của nút phát bên trái: bàn phím dừng ở nút phát (đã có tên đầy đủ), chuột vẫn bấm cả dòng.
         tabIndex={canPlay(chapter) ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
@@ -194,9 +195,7 @@ const ChapterLine = memo(function ChapterLine({
           {chapterSubline(chapter, producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
-              <CloudDownload className="size-3" aria-hidden />
-              Đã làm sẵn
-            </span>
+              <CloudDownload className="size-3" aria-hidden />{S.s_da_lam_san_18d7d0da}</span>
           )}
         </div>
         {heard > 0 && heard < 1 && (
@@ -230,7 +229,7 @@ function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenCha
     <button
       ref={trigger}
       type="button"
-      aria-label={`Thêm tuỳ chọn cho ${chapter.fullTitle}`}
+      aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(chapter.fullTitle)}
       aria-haspopup="menu"
       aria-expanded={open}
       data-state={open ? "open" : "closed"}
@@ -263,22 +262,19 @@ function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenCha
         <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
           {canPlay(chapter) && (
             <DropdownMenu.Item onSelect={() => actions.play(chapter, 0)} className={MENU_ITEM}>
-              <Play className="size-4" /> Nghe từ đầu chương
-            </DropdownMenu.Item>
+              <Play className="size-4" />{S.s_nghe_tu_dau_chuong_d35ec3e0}</DropdownMenu.Item>
           )}
           <DropdownMenu.Item onSelect={() => actions.read(chapter)} className={MENU_ITEM}>
-            <BookOpen className="size-4" /> Đọc chương này
-          </DropdownMenu.Item>
+            <BookOpen className="size-4" />{S.s_doc_chuong_nay_b70e10a7}</DropdownMenu.Item>
           {canPlay(chapter) && (
             <DropdownMenu.Item onSelect={() => actions.done(chapter.id, !done)} className={MENU_ITEM}>
               {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
-              {done ? "Chưa nghe" : "Đã nghe xong"}
+              {done ? S.s_chua_nghe_2fbea4c8 : S.s_da_nghe_xong_d276b702}
             </DropdownMenu.Item>
           )}
           {renamable && (
             <DropdownMenu.Item onSelect={() => actions.rename(chapter)} className={MENU_ITEM}>
-              <TextCursorInput className="size-4" /> Đổi tên chương
-            </DropdownMenu.Item>
+              <TextCursorInput className="size-4" />{S.s_doi_ten_chuong_9fe7f4f4}</DropdownMenu.Item>
           )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -301,7 +297,7 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
     return <div className="mt-2"><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
   }
   return <>{groups.map((group, index) => (
-            <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
+            <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || S.s_danh_sach_chuong_7fa755f9} summary={S.s_0_chuong_1_6fd924b9(group.chapters.length, group.chapters.some(chapter => chapter.id === currentChapter) ? S.s_dang_nghe_a38a21a6 : "")} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
             }} heading="h3" className="mt-3">
@@ -321,7 +317,7 @@ function ChapterGroupList({ book, chapters, heading, memory, currentChapter, act
   const positions = useMemo(() => new Map(chapters.map((chapter, index) => [chapter.id, index + 1])), [chapters]);
   const playingChapter = player.track?.bookId === book.id ? player.track.chapterId : undefined;
   return (
-    <div role="list" aria-label={heading ?? "Danh sách chương"}>
+    <div role="list" aria-label={heading ?? S.s_danh_sach_chuong_7fa755f9}>
       <Windowed
         items={rows}
         estimate={54}
@@ -352,10 +348,10 @@ export function SampleButton({ id, url, label }: { id: string; url: string; labe
   const clip = useClip();
   const active = clip.current === id;
   return (
-    <Tooltip label={active ? "Dừng" : label}>
+    <Tooltip label={active ? S.s_dung_11554138 : label}>
       <button
         type="button"
-        aria-label={active ? "Dừng nghe thử" : label}
+        aria-label={active ? S.s_dung_nghe_thu_41a2925b : label}
         onClick={() => clip.toggle(id, url)}
         className={cn(
           // Cuối hàng: bù nửa phần ô 36 px rộng hơn icon 16 px để mực ▶ chạm mép cột như chữ các hàng khác (máy dò trailing-control-inset).
@@ -434,52 +430,49 @@ export function PersonRow({
           <span className="min-w-0 break-words font-semibold">{name}</span>
           {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
         </div>
-        {person.originalName && <div className="break-words text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
+        {person.originalName && <div className="break-words text-xs text-fg-3">{S.s_ten_goc_ece0e59a}{cleanName(person.originalName)})</div>}
         <div className="mt-0.5 break-words text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
-          {person.voice ? voiceName(person.voice) : "Chưa có giọng"}
+          {person.voice ? voiceName(person.voice) : S.s_chua_co_giong_7ce5f4b4}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
-            {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}:{" "}
-            {[person.pendingVoice.preset && `giọng ${voiceName(person.pendingVoice)}`, person.pendingVoice.gender.toLowerCase()]
+            {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}:{" "}
+            {[person.pendingVoice.preset && S.s_giong_0_e048b478(voiceName(person.pendingVoice)), person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
               .join(" · ")}
           </div>
         )}
         {person.mergedInto && (onPickVoice || waiting) && (
           <div className="mt-0.5 break-words text-xs font-medium text-accent-text">
-            {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}: gộp vào {cleanName(person.mergedInto)}
+            {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}{S.s_gop_vao_6f4014d0}{cleanName(person.mergedInto)}
             {onUnmerge && typeof person.mergedAt === "number" && (
               <button
                 type="button"
                 className="ml-2 rounded-control font-medium underline underline-offset-2 hover:text-fg"
-                aria-label={`Bỏ gộp ${name} vào ${cleanName(person.mergedInto)}`}
+                aria-label={S.s_bo_gop_0_vao_1_46630ca2(name, cleanName(person.mergedInto))}
                 onClick={() => onUnmerge(person)}
-              >
-                Bỏ gộp
-              </button>
+              >{S.s_bo_gop_d7199137}</button>
             )}
           </div>
         )}
         <div className="tabular mt-1 text-xs text-fg-2">
-          {formatNumber(person.lines)} câu
-          {person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
-          {person.firstChapter ? ` · từ ${keepTogether(person.firstChapter)}` : ""}
+          {formatNumber(person.lines)}{S.s_cau_b07e1008}{person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
+          {person.firstChapter ? S.s_tu_0_4f683e5d(keepTogether(person.firstChapter)) : ""}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={`Nghe ${name} nói`} /> : null}
+        {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={S.s_nghe_0_noi_e9307f6f(name)} /> : null}
         {onPickVoice && person.voice && person.lines > 0 ? (
-          <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
+          <IconButton label={S.s_doi_giong_0_0e34c43b(name)} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
         ) : null}
         {onRename || onGender || canMerge ? (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
-                aria-label={`Thêm tuỳ chọn cho ${name}`}
+                aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(name)}
                 className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
               >
                 <MoreHorizontal className="size-4" />
@@ -489,18 +482,15 @@ export function PersonRow({
               <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 {canMerge && (
                   <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
-                    <GitMerge className="size-4" /> Gộp vào người khác
-                  </DropdownMenu.Item>
+                    <GitMerge className="size-4" />{S.s_gop_vao_nguoi_khac_2d232c7b}</DropdownMenu.Item>
                 )}
                 {onRename && (
                   <DropdownMenu.Item onSelect={() => onRename(person)} className={MENU_ITEM}>
-                    <TextCursorInput className="size-4" /> Đổi tên
-                  </DropdownMenu.Item>
+                    <TextCursorInput className="size-4" />{S.s_doi_ten_ea9267a1}</DropdownMenu.Item>
                 )}
                 {onGender && person.voice && person.lines > 0 && (
                   <DropdownMenu.Item onSelect={() => onGender(person)} className={MENU_ITEM}>
-                    <UserRound className="size-4" /> Đổi giới tính
-                  </DropdownMenu.Item>
+                    <UserRound className="size-4" />{S.s_doi_gioi_tinh_b6d7da31}</DropdownMenu.Item>
                 )}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -551,9 +541,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-cover" />)}</MotionRegion>;
   if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
     return (
-      <MotionRegion><EmptyState icon={AudioLines} title="Chưa có dàn nhân vật" className="mt-2">
-        Dàn nhân vật hiện ra khi truyện đã được phân vai.
-      </EmptyState></MotionRegion>
+      <MotionRegion><EmptyState icon={AudioLines} title={S.s_chua_co_dan_nhan_vat_6f7729cd} className="mt-2">{S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364}</EmptyState></MotionRegion>
     );
   }
   return (
@@ -563,21 +551,21 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <BookOpenText className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="label-section text-fg-2">Người kể chuyện</div>
-          <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
+          <div className="label-section text-fg-2">{S.s_nguoi_ke_chuyen_c0c2c504}</div>
+          <div className="mt-0.5 font-semibold">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
           {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-0.5 text-xs text-fg-2">{line}</div>)}
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
+            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
           )}
-          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
+          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
-            {cast.narrator.redo ? ` · ${formatNumber(cast.narrator.redo)} câu chờ thu lại` : ""}</div>
+            {cast.narrator.redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(cast.narrator.redo)) : ""}</div>
         </div>
-        {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={`Nghe giọng ${cast.narrator.voice}`} />}
-        {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
+        {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={S.s_nghe_giong_0_1b667018(cast.narrator.voice)} />}
+        {onPickNarrator && <IconButton label={S.s_doi_giong_nguoi_ke_c2afb757} icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
-      <Fold storageKey={`book.${bookId}.cast`} title="Vai chính" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} className="mt-4">
+      <Fold storageKey={`book.${bookId}.cast`} title={S.s_vai_chinh_b84f4098} summary={S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.length)} defaultOpen={cast.characters.length <= 4} className="mt-4">
       {/* "Hiện / Ẩn chương sau": người của các chương sau mở / khép tại chỗ (hàng tự mờ khi đổi giọng - PersonRow là một vùng), không mờ cả tab. */}
       <div data-motion-live="">
       <AnimatedRows
@@ -590,19 +578,19 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       </div>
       <MotionPresence open={Boolean(reached && ahead(cast.characters, reached) > 0)}>
         <button type="button" onClick={() => setLater((value) => !value)} className="touch-row mt-3 text-sm font-medium text-fg-2 hover:text-fg">
-          <MotionRegion as="span">{later ? "Ẩn chương sau" : "Hiện chương sau"} · {reached ? ahead(cast.characters, reached) : 0} người</MotionRegion>
+          <MotionRegion as="span">{later ? S.s_an_chuong_sau_97c9aacb : S.s_hien_chuong_sau_81aa431a} · {reached ? ahead(cast.characters, reached) : 0}{S.s_nguoi_dfc3c5c7}</MotionRegion>
         </button>
       </MotionPresence>
       </Fold>
       {cast.extras.length > 0 && (
-        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} className="mt-4">
+        <Fold storageKey={`book.${bookId}.extras`} title={S.s_vai_phu_6e7c6bce} summary={S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.length)} className="mt-4">
           <div className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>
         </Fold>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
           nói câu nào - lúc ấy đây là cả dàn. */}
       {carriedPeople.length > 0 && (
-        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} className="mt-4">
+        <Fold storageKey={`book.${bookId}.carried`} title={S.s_tu_phan_truoc_aaf26cfe} summary={S.s_0_nguoi_chua_xuat_hien_e84c0de4(carriedPeople.length)} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} className="mt-4">
             <div className="mt-3 grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
               {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onRename={onRename} onGender={onGender} />)}
             </div>
@@ -621,8 +609,8 @@ function dayLabel(epoch: number): string {
     (new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) /
       86_400_000,
   );
-  if (days === 0) return "Hôm nay";
-  if (days === 1) return "Hôm qua";
+  if (days === 0) return S.s_hom_nay_e6747a82;
+  if (days === 1) return S.s_hom_qua_89bca9be;
   return date.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" });
 }
 
@@ -641,7 +629,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
   });
   const titleOf = (chapterId: number) => {
     const chapter = book.chapters?.find((item) => item.id === chapterId);
-    return chapter ? chapter.title : "chương đã gỡ";
+    return chapter ? chapter.title : S.s_chuong_da_go_d391d2d1;
   };
   // Đang hỏi lịch sử: khung chờ, không phải "Chưa có lịch sử nghe" (đọc như mất hết lịch sử) rồi mới thay bằng danh sách. Trống <-> có thì mờ hẳn qua.
   const placeholder = (
@@ -654,9 +642,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
   const historyBody = () => {
   if (!sessions?.length) {
     return (
-      <EmptyState icon={History} title="Chưa có lịch sử nghe" className="mt-2">
-        Mỗi lượt nghe lưu lại chỗ bạn dừng.
-      </EmptyState>
+      <EmptyState icon={History} title={S.s_chua_co_lich_su_nghe_5823581d} className="mt-2">{S.s_moi_luot_nghe_luu_lai_cho_ban_dung_4c3bdda1}</EmptyState>
     );
   }
   const week = sessions.filter((item) => Date.now() / 1000 - item.startedAt < 7 * 86_400).reduce((sum, item) => sum + item.listened, 0);
@@ -667,14 +653,12 @@ export function HistoryTab({ book }: { book: ListenBook }) {
   });
   return (
     <div className="mt-3">
-      <p className="text-sm text-fg-2">
-        7 ngày qua: <span className="font-semibold text-fg">{formatLength(week)}</span> nghe cuốn này.
-      </p>
+      <p className="text-sm text-fg-2">{S.s_7_ngay_qua_70c6d33d}<span className="font-semibold text-fg">{formatLength(week)}</span>{S.s_nghe_cuon_nay_8e481d62}</p>
       {/* Nhóm ngày / lượt nghe mới thêm khi đang mở tab: mở ra tại chỗ (vùng ngoài chỉ khoá "có / không có"). */}
       <AnimatedRows items={[...groups.entries()]} keyOf={([day]) => day}>
       {([day, items]) => (
         <div className="pt-3">
-        <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`}>
+        <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={S.s_0_luot_nghe_6788e770(items.length)}>
           <AnimatedRows className="mt-2 divide-y divide-line" items={items} keyOf={(item) => String(item.id)}>
             {(item) => (
               <div className="flex items-center gap-3 py-2.5">
@@ -689,8 +673,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
                   </div>
                 </div>
                 {/* Nút nhảy tới CUỐI phiên nghe ấy - nói rõ tới đâu, "Nghe từ đây" mơ hồ (soát UX 29-09). */}
-                <Button size="sm" variant="ghost" icon={Play} onClick={() => void playBook(book, item.to.chapterId, item.to.seconds)}>
-                  Nghe tiếp từ {formatClock(item.to.seconds)}
+                <Button size="sm" variant="ghost" icon={Play} onClick={() => void playBook(book, item.to.chapterId, item.to.seconds)}>{S.s_nghe_tiep_tu_b61da900}{formatClock(item.to.seconds)}
                 </Button>
               </div>
             )}
@@ -713,7 +696,7 @@ type RecordDialog = { kind: "create" | "rename" | "delete" | "move"; name: strin
 
 /** Hộp "Nghe lại từ đầu (hồ sơ mới)" mở sẵn tên gợi ý. */
 function newRecordDialog(book: ListenBook): RecordDialog {
-  return { kind: "create", name: `Lần nghe ${(book.records?.length ?? 0) + 1}` };
+  return { kind: "create", name: S.s_lan_nghe_0_10ac9e59((book.records?.length ?? 0) + 1) };
 }
 
 /** Việc làm với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (không có nút "Hồ sơ nghe:"): menu "Thêm" (…) liệt kê các việc này. Nhiều hồ sơ thì RecordPicker lo. */
@@ -721,10 +704,10 @@ export function singleRecordActions(book: ListenBook): { key: string; label: str
   if (book.records?.length !== 1) return [];
   const name = book.records[0].name;
   return [
-    { key: "create", label: "Hồ sơ mới", icon: Plus, dialog: newRecordDialog(book) },
-    { key: "move", label: "Chuyển hồ sơ", icon: ArrowRightLeft, dialog: { kind: "move", name } },
-    { key: "rename", label: "Đổi tên hồ sơ", icon: TextCursorInput, dialog: { kind: "rename", name } },
-    { key: "delete", label: "Xoá hồ sơ", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
+    { key: "create", label: S.s_ho_so_moi_5dfda9aa, icon: Plus, dialog: newRecordDialog(book) },
+    { key: "move", label: S.s_chuyen_ho_so_a1c66184, icon: ArrowRightLeft, dialog: { kind: "move", name } },
+    { key: "rename", label: S.s_doi_ten_ho_so_92440dab, icon: TextCursorInput, dialog: { kind: "rename", name } },
+    { key: "delete", label: S.s_xoa_ho_so_38a06d83, icon: Trash2, dialog: { kind: "delete", name }, danger: true },
   ];
 }
 
@@ -735,8 +718,8 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
   // Ba trạng thái (đang mở thư viện / chưa có cuốn nào khác / ô chọn) mờ qua tại chỗ trong hộp đang mở.
   return (
     <MotionRegion motionKey={isLoading ? "loading" : others.length ? "list" : "empty"}>
-    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <Select
-      aria-label="Chuyển sang cuốn"
+    {isLoading ? <p className="text-sm text-fg-2">{S.s_dang_mo_thu_vien_0faed631}</p> : !others.length ? <p className="text-sm text-fg-2">{S.s_thu_vien_chua_co_cuon_nao_khac_4bff3d9b}</p> : <Select
+      aria-label={S.s_chuyen_sang_cuon_ffe90248}
       autoFocus
       value={value}
       onChange={(event) => {
@@ -745,9 +728,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
       }}
 
     >
-      <option value="" disabled>
-        Chọn cuốn
-      </option>
+      <option value="" disabled>{S.s_chon_cuon_34833868}</option>
       {others.map((item) => (
         <option key={item.id} value={item.id}>
           {item.title}
@@ -780,17 +761,17 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
   const submit = () => {
     if (!dialog) return;
     const name = dialog.name.trim();
-    if (dialog.kind === "create") switchTo(() => mutations.createRecord.mutateAsync(name), `Hồ sơ mới “${name || "không tên"}” - nghe từ chương đầu`, true);
-    if (dialog.kind === "rename" && name) void done("Đã đổi tên hồ sơ")(mutations.renameRecord.mutateAsync({ recordId: active.id, name }));
-    if (dialog.kind === "delete") switchTo(() => mutations.removeRecord.mutateAsync(active.id), `Đã xoá hồ sơ “${active.name}”`);
+    if (dialog.kind === "create") switchTo(() => mutations.createRecord.mutateAsync(name), S.s_ho_so_moi_0_nghe_tu_chuong_dau_d9c8929e(name || S.s_khong_ten_7a5bff7f), true);
+    if (dialog.kind === "rename" && name) void done(S.s_da_doi_ten_ho_so_543ec6a6)(mutations.renameRecord.mutateAsync({ recordId: active.id, name }));
+    if (dialog.kind === "delete") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));
     // Bản làm lại của cùng truyện, hay lỡ nghe nhầm cuốn: hồ sơ (chỗ nghe, lịch sử) sang cuốn kia, thành hồ sơ đang dùng ở đó.
     const target = dialog.target;
     if (dialog.kind === "move" && target) {
       void player
         .switchRecord(book.id, () => mutations.moveRecord.mutateAsync({ recordId: active.id, toBook: target.id }))
         .then(() =>
-          toast(`Đã chuyển hồ sơ “${active.name}” sang “${target.title}”`, {
-            action: { label: "Mở cuốn ấy", onClick: () => navigate(`/book/${target.id}`) },
+          toast(S.s_da_chuyen_ho_so_0_sang_1_607c3506(active.name, target.title), {
+            action: { label: S.s_mo_cuon_ay_064ee566, onClick: () => navigate(`/book/${target.id}`) },
           }),
         )
         .catch((error: unknown) => toast.error(error instanceof Error ? error.message : String(error)));
@@ -807,21 +788,19 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
             className="mt-3 inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
           >
             <UserRound className="size-3.5 shrink-0" />
-            <span className="shrink-0">Hồ sơ nghe:</span>
+            <span className="shrink-0">{S.s_ho_so_nghe_a80cbba0}</span>
             <span className="min-w-0 break-words font-medium text-fg">{active.name}</span>
             <ChevronDown className="size-3.5 shrink-0" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-cover border border-line bg-panel p-1.5 shadow-float">
-            <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
-              Mỗi hồ sơ giữ chỗ nghe, lịch sử riêng.
-            </p>
+            <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">{S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597}</p>
             {records.map((record) => (
               <DropdownMenu.Item
                 key={record.id}
                 onSelect={() => {
-                  if (!record.active) switchTo(() => mutations.activateRecord.mutateAsync(record.id), `Đang dùng hồ sơ “${record.name}”`);
+                  if (!record.active) switchTo(() => mutations.activateRecord.mutateAsync(record.id), S.s_dang_dung_ho_so_0_59e7b339(record.name));
                 }}
                 className={cn(MENU_ITEM, "h-auto py-1.5")}
               >
@@ -830,64 +809,54 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
                   <span className="block text-pretty [overflow-wrap:anywhere]">{record.name}</span>
                   <span className="block text-xs text-fg-3">
                     {record.last
-                      ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? "Chương"} · ${formatClock(record.last.seconds)} · `
+                      ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? S.s_chuong_2d157977} · ${formatClock(record.last.seconds)} · `
                       : ""}
-                    {record.updatedAt ? `nghe gần nhất ${dayLabel(record.updatedAt).toLowerCase()}` : "chưa nghe"}
+                    {record.updatedAt ? S.s_nghe_gan_nhat_0_3ef6d860(dayLabel(record.updatedAt).toLowerCase()) : S.s_chua_nghe_2d5b1cbe}
                   </span>
                 </span>
               </DropdownMenu.Item>
             ))}
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             <DropdownMenu.Item onSelect={() => setDialog(newRecordDialog(book))} className={MENU_ITEM}>
-              <Plus className="size-4" /> Hồ sơ mới
-            </DropdownMenu.Item>
+              <Plus className="size-4" />{S.s_ho_so_moi_b25fb2e0}</DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
-              <TextCursorInput className="size-4" /> Đổi tên hồ sơ
-            </DropdownMenu.Item>
+              <TextCursorInput className="size-4" />{S.s_doi_ten_ho_so_9e97245a}</DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "move", name: active.name })} className={MENU_ITEM}>
-              <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác
-            </DropdownMenu.Item>
+              <ArrowRightLeft className="size-4" />{S.s_chuyen_sang_cuon_khac_4cf6fce5}</DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "delete", name: active.name })} className={cn(MENU_ITEM, "text-danger")}>
-              <Trash2 className="size-4" /> Xoá hồ sơ này
-            </DropdownMenu.Item>
+              <Trash2 className="size-4" />{S.s_xoa_ho_so_nay_59e25a25}</DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       )}
       <Dialog footer={<DialogActions>
-            <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
-              Huỷ
-            </Button>
+            <Button type="button" variant="ghost" onClick={() => setDialog(null)}>{S.s_huy_96732485}</Button>
             <Button
               type="submit" form={dialogForm1}
               variant={dialog?.kind === "delete" ? "danger" : "primary"}
               disabled={(dialog?.kind === "rename" && !dialog.name.trim()) || (dialog?.kind === "move" && !dialog.target)}
             >
-              {dialog?.kind === "create" ? "Tạo và nghe" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
+              {dialog?.kind === "create" ? S.s_tao_va_nghe_ee442c79 : dialog?.kind === "delete" ? S.s_xoa_ho_so_38a06d83 : dialog?.kind === "move" ? S.s_chuyen_c35a0ca1 : S.s_luu_e91f26c0}
             </Button>
           </DialogActions>}
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
         title={
           dialog?.kind === "create"
-            ? "Nghe lại từ đầu"
+            ? S.s_nghe_lai_tu_dau_e251d632
             : dialog?.kind === "rename"
-              ? "Đổi tên hồ sơ"
+              ? S.s_doi_ten_ho_so_92440dab
               : dialog?.kind === "move"
-                ? `Chuyển hồ sơ “${active.name}” sang cuốn khác`
-                : `Xoá hồ sơ “${active.name}”?`
+                ? S.s_chuyen_ho_so_0_sang_cuon_khac_dcb9ea1a(active.name)
+                : S.s_xoa_ho_so_0_14007a36(active.name)
         }
         description={
           dialog?.kind === "create"
-            ? "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên."
+            ? S.s_ho_so_moi_nghe_tu_dau_ho_so_cu_van_giu_ngu_38f1a4a4
             : dialog?.kind === "move"
-              ? `Chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia.${
-                  records.length > 1 ? " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." : " Cuốn này sẽ như chưa nghe lần nào."
-                }`
+              ? S.s_cho_nghe_lich_su_di_theo_ho_so_sang_cuon_k_b4020c7a(records.length > 1 ? S.s_cuon_nay_chuyen_sang_ho_so_nghe_gan_nhat_c_93f8e93a : S.s_cuon_nay_se_nhu_chua_nghe_lan_nao_bae846d0)
             : dialog?.kind === "delete"
-              ? `Chỗ nghe, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên${
-                  records.length > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
-                }`
+              ? S.s_cho_nghe_lich_su_cua_ho_so_nay_mat_han_tre_90bb23f3(records.length > 1 ? S.s_cuon_chuyen_sang_ho_so_nghe_gan_nhat_con_l_8cdb3e30 : S.s_day_la_ho_so_duy_nhat_nen_cuon_se_nhu_chua_75e8b48a)
               : undefined
         }
         width="max-w-md"
@@ -912,8 +881,8 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               data-autofocus
               autoFocus
               maxLength={60}
-              aria-label="Tên hồ sơ"
-              placeholder="Tên hồ sơ"
+              aria-label={S.s_ten_ho_so_0ea145bd}
+              placeholder={S.s_ten_ho_so_0ea145bd}
               value={dialog?.name ?? ""}
               onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
               className="touch-box h-10 rounded-control border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
@@ -1035,7 +1004,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   const placeholder = (
       <div className="page-x mx-auto max-w-[1180px]">
         {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
-        <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
+        <ScreenHeader back={{ label: S.s_ve_thu_vien_992fad7b, onClick: () => navigate("/") }} />
         <div className="mt-5 flex gap-6"><Skeleton className="size-36 rounded-control" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
       </div>
   );
@@ -1045,9 +1014,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   // "Không tìm thấy" và hộp thoại đang sửa dở mất theo.
   if (!book || isMissing(error)) {
     return (
-      <EmptyState icon={BookOpenText} title="Không tìm thấy sách này" className="mt-20" action={<Button onClick={() => navigate("/")}>Về thư viện</Button>}>
-        Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.
-      </EmptyState>
+      <EmptyState icon={BookOpenText} title={S.s_khong_tim_thay_sach_nay_0836038e} className="mt-20" action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_7bb3f8c2}</Button>}>{S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0}</EmptyState>
     );
   }
   const chapters = book.chapters ?? [];
@@ -1094,7 +1061,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   });
   // Nghe được ở máy này: nút chính là nghe, "Đọc" vào hàng phụ; không nghe được (sách chữ, máy không có giọng): nút chính là "Đọc".
   const listenFirst = Boolean(point);
-  const readLabel = listening ? "Đọc" : latestReading(book) ? "Đọc tiếp" : "Đọc";
+  const readLabel = listening ? S.s_doc_5709880c : latestReading(book) ? S.s_doc_tiep_633d731b : S.s_doc_5709880c;
   // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
   const read = () => navigate(`/book/${book.id}/read${listening && player.track ? `/${player.track.chapterId}` : ""}`);
   const restart = () => {
@@ -1109,10 +1076,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
     const before = point;
     void playBook(book, first.id, 0);
     if (before && (before.chapter.id !== first.id || before.at > 30)) {
-      toast("Đang nghe lại từ đầu", {
+      toast(S.s_dang_nghe_lai_tu_dau_5ad4fe3c, {
         // Có nút thao tác: đủ lâu để kịp bấm (mặc định 4 giây quá ngắn - soát UX 29-09).
         duration: 8000,
-        action: { label: "Quay lại chỗ cũ", onClick: () => void playBook(book, before.chapter.id, before.at) },
+        action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },
       });
     }
   };
@@ -1125,7 +1092,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       className={cn("motion-reveal page-x mx-auto", split ? "flex h-full flex-col pb-4" : "max-w-[1180px] pb-16")}
     >
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên sách nằm cạnh bìa bên dưới. */}
-      <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
+      <ScreenHeader back={{ label: S.s_ve_thu_vien_992fad7b, onClick: () => navigate("/") }} />
       {/* Hai cột (nội dung từ 840 px): bìa + thông tin + nút bên trái, tab Chương / Lịch sử / Nhân vật bên phải, mỗi bên cuộn riêng như Qt. Một cột: `contents`
           - hai khối nằm thẳng trong trang như trước. Cùng một cây ở cả hai bố cục nên đổi bố cục không dựng lại bìa. */}
       <div className={split ? "grid min-h-0 flex-1 grid-cols-[var(--book-left)_minmax(0,1fr)] gap-x-8" : "contents"}>
@@ -1139,12 +1106,12 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             <DotJoin
               parts={[
                 book.author,
-                book.narrator && `Giọng ${book.narrator}`,
+                book.narrator && S.s_giong_0_c554bb1b(book.narrator),
                 ...(textOnly
-                  ? [`${book.chaptersTotal} chương`]
+                  ? [S.s_0_chuong_04093412(book.chaptersTotal)]
                   : phonePartial
-                    ? [`${formatLength(book.duration)} phần đã có`] // số chương đã nằm ở dòng "Sách này có x/y chương đã thu" ngay dưới
-                    : [book.complete ? `${book.chaptersTotal} chương` : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio`, formatLength(book.duration)]),
+                    ? [S.s_0_phan_da_co_022a3375(formatLength(book.duration))] // số chương đã nằm ở dòng "Sách này có x/y chương đã thu" ngay dưới
+                    : [book.complete ? S.s_0_chuong_04093412(book.chaptersTotal) : S.s_0_1_chuong_co_audio_9706857d(book.chaptersAvailable, book.chaptersTotal), formatLength(book.duration)]),
               ]}
             />
           </p>
@@ -1154,22 +1121,22 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
-                ? "Đang thu; chương mới tự hiện khi xong."
+                ? S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2
                 : book.remote
                   ? remoteUnfinishedLine(book)
                   : book.imported
-                    ? "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
+                    ? S.s_chua_du_chuong_mo_file_sach_moi_hon_de_ngh_ca290cd2
                     : phonePartial
                       ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
-                      : "Chưa đủ chương; đang dừng thu."}
+                      : S.s_chua_du_chuong_dang_dung_thu_3653bcf7}
               {studioLink?.(book)}
             </p>
           )}
           {book.missingFiles ? (
             <p className="mt-1.5 text-sm text-warning">
-              {book.missingFiles} chương mất file trên máy này - {book.stage === "text"
-                ? "bạn hãy thêm lại đúng file sách gốc (EPUB, Word, PDF hoặc TXT) để chép bù"
-                : "bạn hãy mở lại file sách (.abook) của cuốn này để chép bù"}
+              {book.missingFiles}{S.s_chuong_mat_file_tren_may_nay_09492c4c}{book.stage === "text"
+                ? S.s_ban_hay_them_lai_dung_file_sach_goc_epub_w_0833d0ba
+                : S.s_ban_hay_mo_lai_file_sach_abook_cua_cuon_na_4efff7a0}
             </p>
           ) : null}
           {book.remote && !downloaded && (
@@ -1177,8 +1144,8 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             <p className="mt-1.5 flex items-start gap-1.5 text-sm text-fg-2">
               <span className="grid h-[1lh] shrink-0 place-items-center"><Laptop className="size-4" /></span>
               {typeof book.remote === "object"
-                ? `Nghe thẳng từ ${book.remote.computer || "máy khác"} - chương nghe tới được giữ lại trên máy này`
-                : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
+                ? S.s_nghe_thang_tu_0_chuong_nghe_toi_duoc_giu_l_a6a23b61(book.remote.computer || S.s_may_khac_95db1846)
+                : S.s_nghe_thang_tu_may_tinh_tai_ve_de_nghe_ca_k_44e792bc}
             </p>
           )}
           {notice?.(book)}
@@ -1189,11 +1156,11 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           <div className="mt-4 max-w-md">
             {!textOnly && (
               <>
-                <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
+                <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label={S.s_da_nghe_1e0f8d88} />
                 {/* Một dòng. "Còn" tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ
                     "chưa nghe" để hai con số không trông như mâu thuẫn (soát UX 29-09). */}
                 <p className="tabular mt-1.5 text-xs text-fg-2">
-                  {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[`Đã nghe ${formatLength(heard)}`, `còn ${formatLength(left)} chưa nghe`]} /></TickingValue> : listening ? (player.error ? "Chưa phát được" : "Đang nghe") : "Chưa nghe"}
+                  {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[S.s_da_nghe_0_2f78a962(formatLength(heard)), S.s_con_0_chua_nghe_4959c9c5(formatLength(left))]} /></TickingValue> : listening ? (player.error ? S.s_chua_phat_duoc_3ecb850e : S.s_dang_nghe_9310d8cf) : S.s_chua_nghe_2fbea4c8}
                 </p>
               </>
             )}
@@ -1205,7 +1172,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             chụp lại hơn nghìn nút DOM mỗi lần bấm phát trên sách 2500 chương rồi bỏ đi - docs/PERF_WEB.md). */}
         <MotionRegion as="div" className={cn("col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]", split && "col-span-1 col-start-1 sm:col-start-1 sm:w-full")}>
           {caughtUp ? (
-            <p className="text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
+            <p className="text-sm text-fg-2">{S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13}</p>
           ) : (
             // Đúng MỘT nút chính: nghe (hay nghe tiếp) - sách không nghe được ở máy này thì nút chính là "Đọc".
             <Button
@@ -1222,12 +1189,12 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
           {/* Đầu trái là "Đọc" (24,8 px) hay "Tìm" (22,1 px), đầu phải "⋯" (không nhãn, chừa chỗ nhãn): mỗi đầu một --slot để cả hai sát mép nút chính. */}
-          <div role="group" aria-label="Việc với sách" data-book-secondary className={cn("slot-row items-start [--slot:1.4rlh]", listenFirst || caughtUp ? "[--slot-start:1.0333rlh]" : "[--slot-start:0.9208rlh]")}>
+          <div role="group" aria-label={S.s_viec_voi_sach_9582a854} data-book-secondary className={cn("slot-row items-start [--slot:1.4rlh]", listenFirst || caughtUp ? "[--slot-start:1.0333rlh]" : "[--slot-start:0.9208rlh]")}>
             {/* Nhãn luôn một chữ "Đọc" (hàng cách đều theo tâm, nhãn đầu mút sát mép - "Đọc tiếp" dài gấp đôi sẽ lòi ra); "tiếp" nói cho trình đọc màn hình. */}
-            {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label="Đọc" aria-label={readLabel === "Đọc" ? undefined : readLabel} onClick={read} />}
-            <ActionButton icon={Search} label="Tìm" aria-label="Tìm chữ trong sách" disabled={!chapters.length} onClick={() => setFinding(true)} />
-            {!textOnly || point ? <ActionButton icon={RotateCcw} label="Từ đầu" aria-label="Nghe lại từ đầu" disabled={!(started && point && !finished)} onClick={restart} /> : null}
-            {moreMenu && <ActionMenu title="Việc với sách" trigger={<ActionButton icon={MoreHorizontal} label={<span aria-hidden className="inline-block h-3" />} aria-label="Thêm tuỳ chọn" />}>
+            {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label={S.s_doc_5709880c} aria-label={readLabel === S.s_doc_5709880c ? undefined : readLabel} onClick={read} />}
+            <ActionButton icon={Search} label={S.s_tim_bbe47492} aria-label={S.s_tim_chu_trong_sach_7bc2c2ee} disabled={!chapters.length} onClick={() => setFinding(true)} />
+            {!textOnly || point ? <ActionButton icon={RotateCcw} label={S.s_tu_dau_89ef6d78} aria-label={S.s_nghe_lai_tu_dau_e251d632} disabled={!(started && point && !finished)} onClick={restart} /> : null}
+            {moreMenu && <ActionMenu title={S.s_viec_voi_sach_9582a854} trigger={<ActionButton icon={MoreHorizontal} label={<span aria-hidden className="inline-block h-3" />} aria-label={S.s_them_tuy_chon_a0b4bb6e} />}>
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (
                     <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={MENU_ITEM}>
@@ -1237,15 +1204,14 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                   {!textOnly && (
                     <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                       <CheckCheck className="size-4" />
-                      {book.progress.finished ? "Chưa nghe xong" : "Đã nghe xong"}
+                      {book.progress.finished ? S.s_chua_nghe_xong_6b821209 : S.s_da_nghe_xong_d276b702}
                     </DropdownMenu.Item>
                   )}
                   {editing !== false && editable && (
                     <>
                       <DropdownMenu.Separator className="my-1 h-px bg-line" />
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
-                        <Pencil className="size-4" /> Sửa thông tin
-                      </DropdownMenu.Item>
+                        <Pencil className="size-4" />{S.s_sua_thong_tin_1a8800ae}</DropdownMenu.Item>
                       {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
                       {!remoteEdit && !workshop && !syncs && !book.capabilities?.local && saver.available && (
@@ -1255,25 +1221,22 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                             onSelect={() => void saver.save()}
                             className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
                           >
-                            <Save className="size-4" /> Lưu thay đổi
-                          </DropdownMenu.Item>
+                            <Save className="size-4" />{S.s_luu_thay_doi_db80391d}</DropdownMenu.Item>
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
-                            <FileDown className="size-4" /> Lưu thành
-                          </DropdownMenu.Item>
+                            <FileDown className="size-4" />{S.s_luu_thanh_897f6d4d}</DropdownMenu.Item>
                           {sharer.available && (
                             <DropdownMenu.Item
                               disabled={sharer.busy}
                               onSelect={() => void sharer.share()}
                               className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
                             >
-                              <Share2 className="size-4" /> Chia sẻ
-                            </DropdownMenu.Item>
+                              <Share2 className="size-4" />{S.s_chia_se_fc043a3b}</DropdownMenu.Item>
                           )}
                         </>
                       )}
                       {!remoteEdit && !workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                          <Hourglass className="size-4" /> Việc đang chờ ({book.wishes})
+                          <Hourglass className="size-4" />{S.s_viec_dang_cho_44ba5812}{book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>
@@ -1297,10 +1260,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       </header>
       {/* Đổi bố cục không dựng lại danh sách: Windowed (layout) và nhớ chỗ cuộn quan sát lại khung cuộn mới, chỗ đang xem được đặt lại (keepChapterPlace). */}
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className={split ? "mt-5 flex min-h-0 flex-col" : "mt-8"}>
-        <TabsList label="Mục của sách">
-          <TabsTrigger value="chapters" count={chapters.length}>Chương</TabsTrigger>
-          <TabsTrigger value="history">Lịch sử</TabsTrigger>
-          {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
+        <TabsList label={S.s_muc_cua_sach_37e9b664}>
+          <TabsTrigger value="chapters" count={chapters.length}>{S.s_chuong_2d157977}</TabsTrigger>
+          <TabsTrigger value="history">{S.s_lich_su_0a235708}</TabsTrigger>
+          {!textOnly && <TabsTrigger value="cast">{S.s_nhan_vat_d4940c17}</TabsTrigger>}
         </TabsList>
         {/* Hai cột: hàng tab đứng yên ở đầu cột phải, chỉ phần bên dưới cuộn. */}
         {/* -mx-4 px-4 pt-1: khung cuộn cắt mọi thứ tràn ra ngoài nó - nền rê chuột (-inset-x-3) và vòng tiêu điểm (4) của hàng mở/gập và của chính

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -148,13 +150,13 @@ object PlayerLabels {
     }
     /** `leftMs`: the time left on the timer (the clock's `sleepRemainingMs`). `clock`: the sheet's big readout instead of the button label. */
     fun sleep(sleep: PlayerSleep, leftMs: Long, clock: Boolean = false): String = when (sleep.kind) {
-        SleepKind.Off -> if (clock) "Tắt" else "Hẹn giờ"
-        SleepKind.Chapter -> "Hết chương"
+        SleepKind.Off -> if (clock) S.s_tat_3286064e else S.s_hen_gio_39d9ca26
+        SleepKind.Chapter -> S.s_het_chuong_f1d590bb
         SleepKind.Minutes -> {
             val left = leftMs.coerceAtLeast(0)
             if (clock) time(ceil(left / 1000.0).toLong() * 1000)
-            else if (left < 60_000) "${ceil(left / 1000.0).toInt().coerceAtLeast(1)} giây"
-            else "${ceil(left / 60_000.0).toInt()} phút"
+            else if (left < 60_000) S.s_0_giay_daac30d3(ceil(left / 1000.0).toInt().coerceAtLeast(1))
+            else S.s_0_phut_2596d212(ceil(left / 60_000.0).toInt())
         }
     }
 }

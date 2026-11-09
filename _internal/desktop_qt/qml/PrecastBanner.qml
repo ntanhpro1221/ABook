@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PrecastLogic.js" as P
@@ -51,7 +52,7 @@ Item {
         x: root.stacked ? 32 : root.width - width
         y: root.stacked ? 16 + words.height + 12 : 16 + (words.height - height) / 2
         kind: root.held ? "ghost" : "primary"
-        text: "Duyệt ngay"
+        text: S.s_duyet_ngay_9f97c010
         onActivated: root.opened()
     }
 }

@@ -116,7 +116,7 @@ class BtMux(
         synchronized(streams) {
             if (!alive || streams.size >= MAX_STREAMS) {
                 runCatching { local.close() }
-                throw LinkClosed(if (!alive) "đường hầm đã đóng" else "quá nhiều luồng")
+                throw LinkClosed(if (!alive) S.s_duong_ham_da_dong_ffef3266 else S.s_qua_nhieu_luong_2a88340b)
             }
             val number = next
             next += 2
@@ -139,7 +139,7 @@ class BtMux(
                 val kind = buffer.get().toInt()
                 val number = buffer.getInt()
                 val length = buffer.getInt()
-                if (length < 0 || length > MAX_DATA) throw IOException("khung quá lớn")
+                if (length < 0 || length > MAX_DATA) throw IOException(S.s_khung_qua_lon_c58d9637)
                 val payload = ByteArray(length)
                 if (length > 0) input.readFully(payload)
                 read += HEADER + length
@@ -153,14 +153,14 @@ class BtMux(
                     if (kind == ACK && amount > 0) {
                         out.acked(amount)
                     } else if (kind == WINDOW) {
-                        if (amount !in 1..LINK_WINDOW) throw IOException("tín dụng chung sai")
+                        if (amount !in 1..LINK_WINDOW) throw IOException(S.s_tin_dung_chung_sai_9b666692)
                         out.credit(amount)
                     }
                     continue
                 }
                 if (kind == DATA) synchronized(creditLock) {
                     held += length
-                    if (held + unreturned > LINK_WINDOW) throw IOException("gửi quá tín dụng chung")
+                    if (held + unreturned > LINK_WINDOW) throw IOException(S.s_gui_qua_tin_dung_chung_cce1fcf2)
                 }
                 val stream = synchronized(streams) { streams[number] }
                 when {
@@ -382,13 +382,13 @@ internal class BtOutbox(private val limit: Int = BtMux.IN_FLIGHT, credit: Int = 
     private var closed = false
 
     fun send(kind: Int, number: Int, payload: ByteArray = ByteArray(0)) = synchronized(lock) {
-        if (closed) throw LinkClosed("đường hầm đã đóng")
+        if (closed) throw LinkClosed(S.s_duong_ham_da_dong_ffef3266)
         control.addLast(frame(kind, number, payload))
         lock.notifyAll()
     }
 
     fun push(number: Int, kind: Int, payload: ByteArray = ByteArray(0)) = synchronized(lock) {
-        if (closed) throw LinkClosed("đường hầm đã đóng")
+        if (closed) throw LinkClosed(S.s_duong_ham_da_dong_ffef3266)
         val waiting = queues.getOrPut(number) {
             deficit[number] = 0
             active.addLast(number)

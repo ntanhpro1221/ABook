@@ -44,11 +44,11 @@ object SceneCues {
     internal val CUE_NUMERAL = Py.rx("""^(?:\d+|[ivxlcdm]+)\.?$""", ignoreCase = true)
     internal val CUE_NAME_PUNCT = Py.rx("""[.!?…,;:*\"“”]""")
     internal val CUE_VIET_LETTERS = Py.rx(
-        "[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]", ignoreCase = true,
+        S.s_aadeoouaaaaaaaaaaaaaaaeeeeeeeeeeiiiiiooooo_4c6d310c, ignoreCase = true,
     )
     internal val CUE_END_WORDS = setOf("end", "fin")
     internal val CUE_PLAIN_END = Py.rx("""[.!?…,;:\"”'’)]\s*$""")
-    internal val CUE_PART_NUMBERS = setOf("một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười", "cuối", "kết", "đầu")
+    internal val CUE_PART_NUMBERS = setOf(S.s_mot_0231bfca, "hai", "ba", S.s_bon_dd0bfdcc, S.s_nam_22629a25, S.s_sau_81f08909, S.s_bay_2b617348, S.s_tam_e36b1cb6, S.s_chin_888dfa55, S.s_muoi_35c274e2, S.s_cuoi_daa2ab4a, S.s_ket_ac86b30b, S.s_dau_31b04060)
     internal val CUE_TIME_PLACE = Py.rx(
         """^\W*(?:trong\s+khi\s+đó|cùng\s+lúc\s+(?:đó|ấy)|lúc\s+(?:ấy|đó)\s+ở|(?:vài|mấy|một|hai|ba)\s+(?:giờ|tiếng|phút)\s+sau|""" +
             """(?:sáng|trưa|chiều|tối|đêm)\s+(?:hôm|ngày)\s+(?:ấy|đó)|ngày\s+hôm\s+đó|quay\s+lại|trở\s+lại\s+với|(?:ở|tại)\s+một\s+nơi\s+khác)""",
@@ -72,8 +72,8 @@ object SceneCues {
     fun subheadWords(text: String): Boolean {
         if (Py.search(CUE_PLAIN_END, text) && !(text.endsWith(":") && Py.split(text).size <= 4)) return false
         val words = Py.split(text.trimEnd(':'))
-        if (words.isNotEmpty() && words[0].lowercase() == "phần") {
-            val at = if (words.size > 2 && words[1].lowercase() == "thứ") 2 else 1
+        if (words.isNotEmpty() && words[0].lowercase() == S.s_phan_87a88dd0) {
+            val at = if (words.size > 2 && words[1].lowercase() == S.s_thu_20d04b96) 2 else 1
             val number = if (words.size > at) words[at].trimEnd(':', '.').lowercase() else ""
             if (Py.match(CUE_NUMERAL, number)) return true
             return words.size <= at + 3 && number in CUE_PART_NUMBERS

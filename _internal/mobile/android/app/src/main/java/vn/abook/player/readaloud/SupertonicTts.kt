@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import ai.onnxruntime.OnnxTensor
 import android.content.Context
 import ai.onnxruntime.OrtEnvironment
@@ -248,7 +250,7 @@ class SupertonicEngine(
             val dims = json.getJSONArray("dims").let { array -> LongArray(array.length()) { array.getLong(it) } }
             val values = ArrayList<Float>()
             flatten(json.getJSONArray("data"), values)
-            require(values.size.toLong() == dims.fold(1L) { a, b -> a * b }) { "phong cách giọng sai cỡ" }
+            require(values.size.toLong() == dims.fold(1L) { a, b -> a * b }) { S.s_phong_cach_giong_sai_co_f5d6e2da }
             return values.toFloatArray() to dims
         }
 
@@ -302,7 +304,7 @@ object SupertonicVoices {
     /** Order shown: the four voices the owner liked first (desktop NAMES). F = female, M = male. */
     val NAMES = listOf("F1", "F3", "M4", "M5", "F2", "F4", "F5", "M1", "M2", "M3")
     /** The paragraph the self-benchmark reads (desktop `supertonic.BENCH_TEXT`). */
-    const val BENCH_TEXT = "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Trời hôm nay đẹp quá."
+    const val BENCH_TEXT = S.s_chiec_thuyen_nho_troi_cham_giua_dong_song_91287cbd
     /** Emulator 07-10: 1 thread RTF 0.39, 2 -> 0.33, 4 -> 0.32 (docs/research/SUPERTONIC_PHONE.md); more gains nothing on these small graphs. */
     private const val MAX_THREADS = 4
 
@@ -355,9 +357,9 @@ object SupertonicVoices {
     /** The engine of the quality tier, or of the fast one when [fast] and its file is here (else the quality tier: never no voice). */
     @Synchronized
     private fun ready(fast: Boolean = false): Pair<SupertonicEngine, SupertonicSpeaker> {
-        val ctx = context ?: throw VoiceException("Chưa khởi động", reason = "voice")
+        val ctx = context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec, reason = "voice")
         val owner = module(ctx)
-        val installed = owner.installed() ?: throw VoiceException("Giọng Supertonic chưa tải trên điện thoại này - tải trong Cài đặt → Giọng đọc.", reason = "voice")
+        val installed = owner.installed() ?: throw VoiceException(S.s_giong_supertonic_chua_tai_tren_dien_thoai_b9276616, reason = "voice")
         try {
             OrtRuntime.load(installed.ortFolder)
             val reader = installed.g2p?.let { (library, dictionary) -> SeaG2p.shared(library, dictionary) }
@@ -374,7 +376,7 @@ object SupertonicVoices {
             return loaded to SupertonicSpeaker(ClipLift.params(ctx), normalize)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
-            throw VoiceException("Giọng Supertonic chưa sẵn sàng — bạn tải lại trong Cài đặt.",
+            throw VoiceException(S.s_giong_supertonic_chua_san_sang_ban_tai_lai_fe06ed80,
                 cause = failure, reason = "voice")
         }
     }
@@ -384,18 +386,18 @@ object SupertonicVoices {
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val (voice, tag) = VoiceSpeed.split(id)
         val name = voice.removePrefix("$PREFIX:")
-        if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
+        if (name !in NAMES) throw VoiceException(S.s_khong_co_giong_supertonic_nay_edf427d1, reason = "voice")
         val (loaded, speaker) = ready(VoiceSpeed.isFast(tag))
         val live = LocalLive.here(out) { SupertonicText.units(text, origin, readings) } // the paragraph the listener waits for: unit by unit
         return try {
             val spoken = speaker.speak(loaded, name, text, origin, readings, live)
-            if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
+            if (spoken.samples.isEmpty()) throw VoiceException(S.s_doan_nay_khong_co_chu_nao_doc_duoc_6aa822e0, reason = "empty")
             val final = ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
             if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
             Clip(out, spoken.durationMs, spoken.words, voice)
         } catch (failure: OutOfMemoryError) {
             forget()
-            VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice").let {
+            VoiceException(S.s_dien_thoai_khong_du_bo_nho_cho_giong_super_9db226b6, cause = failure, reason = "voice").let {
                 live?.failed(it)
                 throw it
             }
@@ -420,7 +422,7 @@ object SupertonicVoices {
     fun benchmark(): VoiceModule.Benchmark = synchronized(this) {
         val began = System.nanoTime()
         val (loaded, speaker) = ready()
-        speaker.speak(loaded, NAMES[0], "Xin chào.")
+        speaker.speak(loaded, NAMES[0], S.s_xin_chao_0dcb19e7)
         val warmed = System.nanoTime()
         val spoken = speaker.speak(loaded, NAMES[0], BENCH_TEXT)
         VoiceModule.Benchmark.of(began, warmed, System.nanoTime(), spoken.samples.size, spoken.rate)

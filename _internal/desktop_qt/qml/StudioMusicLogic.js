@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
 .import "MyMusicText.js" as Music
@@ -6,19 +7,19 @@
 // chữ chép từng chữ của bản web, để thử riêng không cần dựng màn.
 
 /** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
-var REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút."
+var REBUILDING = S.s_dang_chon_lai_nhac_co_nua_phut_4166612f
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
-var SAVING = "Đang lưu lựa chọn"
+var SAVING = S.s_dang_luu_lua_chon_d37252de
 /** Mỗi lần "Nghe thử" ~20 giây từ đầu bài. */
 var PREVIEW_SECONDS = 20
 // Bản web viết "↳ tiếp bài của đoạn trên"; phông của app không có "↳" nên mũi tên là icon corner-down-right đứng trước chữ
-var CONTINUED_NOTE = "tiếp bài của đoạn trên"
+var CONTINUED_NOTE = S.s_tiep_bai_cua_doan_tren_6d0caf6d
 /** Lời "đã chỉnh sửa" đi kèm ghi công nhạc CC BY; cùng câu với bản xuất MP3 / M4B (`music_export.MODIFIED_NOTE`). */
-var MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách."
+var MODIFIED_NOTE = S.s_da_chinh_sua_cac_bai_nhac_duoc_cat_vong_tr_929d3f58
 
 /** Ô "Thể loại truyện": "Chưa chọn" rồi các thể loại theo thứ tự danh mục gửi. */
 function genreOptions(taxonomy) {
-    const out = [{value: "", label: "Chưa chọn"}]
+    const out = [{value: "", label: S.s_chua_chon_e5f50074}]
     const genres = (taxonomy && taxonomy.genres) || {}
     for (const key in genres) out.push({value: key, label: genres[key].vi})
     return out
@@ -33,15 +34,15 @@ function isContinuation(scene) { return Boolean(scene.continued && scene.link &&
 /** Lời nút "Đổi bài": ở mảnh nối tiếp, ghim bài mới vào đây nên đổi từ chỗ này trở đi (các mảnh sau nối theo bài mới). */
 function swapButton(scene) {
     return isContinuation(scene)
-        ? {text: "Đổi từ đây", title: "Đổi bài từ chỗ này trở đi - các đoạn nối tiếp sau đó chơi theo bài mới; phần trên giữ nguyên"}
-        : {text: "Đổi bài", title: ""}
+        ? {text: S.s_doi_tu_day_a54eee44, title: S.s_doi_bai_tu_cho_nay_tro_di_cac_doan_noi_tie_983def0c}
+        : {text: S.s_doi_bai_7b81488f, title: ""}
 }
 
 // Danh mục cũ chưa gửi tên: dùng bảng có sẵn (cùng bộ với build_catalog.EMOTION_VI).
 var EMOTION_VI = {
-    peacefulness: "bình yên", tenderness: "dịu dàng", nostalgia: "hoài niệm", sadness: "buồn", joy: "vui tươi",
-    playful: "tinh nghịch", power: "hào hùng", wonder: "kỳ vĩ", tension: "căng thẳng", fear: "rùng rợn",
-    anger: "giận dữ", mystery: "bí ẩn", moved: "xúc động"
+    peacefulness: S.s_binh_yen_9e77ef15, tenderness: S.s_diu_dang_deaaa55a, nostalgia: S.s_hoai_niem_799529ae, sadness: S.s_buon_a474e7e0, joy: S.s_vui_tuoi_8ebbee23,
+    playful: S.s_tinh_nghich_f27e1115, power: S.s_hao_hung_fec61823, wonder: S.s_ky_vi_ac54ac08, tension: S.s_cang_thang_48be6812, fear: S.s_rung_ron_e9a9ecec,
+    anger: S.s_gian_du_1565d541, mystery: S.s_bi_an_ace8c102, moved: S.s_xuc_dong_bc36f9eb
 }
 var MOOD_SHOWN = 0.5
 var MOOD_MAX = 2
@@ -57,24 +58,24 @@ function moodOf(scene, names) {
         .slice(0, MOOD_MAX)
         .map(function(key) { return (names && names[key]) || EMOTION_VI[key] || key })
     if (strong.length) return strong.join("\u00a0·\u00a0")
-    if ((scene.tension || 0) >= TENSE_FROM) return "căng thẳng"
-    if (scene.valence <= SAD_TO) return "buồn"
-    if (scene.valence >= BRIGHT_FROM) return "tươi vui"
-    return "êm"
+    if ((scene.tension || 0) >= TENSE_FROM) return S.s_cang_thang_48be6812
+    if (scene.valence <= SAD_TO) return S.s_buon_a474e7e0
+    if (scene.valence >= BRIGHT_FROM) return S.s_tuoi_vui_43fac912
+    return S.s_em_07866b70
 }
 /** Nhãn "AI" cạnh không khí: chỉ khi AI đã đọc đoạn; lời giải thích là `title` của bản web. */
 function aiNote(scene) {
-    if (scene.moodSource === "student") return "AI đã đoán đoạn này vui hơn hay buồn hơn, căng hơn hay dịu hơn so với mức của cả chương"
-    if (scene.moodSource === "chapter") return "AI đã đọc cả đoạn này để chấm không khí, rồi cân theo mức của cả chương"
-    if (scene.moodSource === "llm") return "AI đã đọc cả đoạn này để chấm không khí"
+    if (scene.moodSource === "student") return S.s_ai_da_doan_doan_nay_vui_hon_hay_buon_hon_c_e68274f5
+    if (scene.moodSource === "chapter") return S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_ro_e5ef84d5
+    if (scene.moodSource === "llm") return S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_61bd9b9d
     return ""
 }
 
 /** Dòng tiến độ: MB khi biết cỡ, không thì đếm bài. */
 function downloadText(download) {
-    const tracks = "bài " + Math.min(download.done + 1, download.total) + "/" + download.total
-    if (!download.totalBytes) return "Đang tải sẵn nhạc nền: " + tracks
-    return "Đang tải sẵn nhạc nền: " + Size.formatSize(download.doneBytes || 0) + " / " + Size.formatSize(download.totalBytes) + " (" + tracks + ")"
+    const tracks = S.s_bai_4882cdf7 + Math.min(download.done + 1, download.total) + "/" + download.total
+    if (!download.totalBytes) return S.s_dang_tai_san_nhac_nen_48c7ad71 + tracks
+    return S.s_dang_tai_san_nhac_nen_48c7ad71 + Size.formatSize(download.doneBytes || 0) + " / " + Size.formatSize(download.totalBytes) + " (" + tracks + ")"
 }
 function downloadShare(download) {
     if (download.totalBytes) return (download.doneBytes || 0) / download.totalBytes
@@ -101,7 +102,7 @@ function previewPath(link) {
 
 /** Một dòng "Ghi công" (musicCreditText; nhạc của bạn thì nói rõ không có giấy phép). */
 function creditLine(link, track) {
-    if (track.source === "local") return [track.title, track.creator].filter(Boolean).join("\u00a0·\u00a0") + " - nhạc của bạn, không có thông tin giấy phép"
+    if (track.source === "local") return [track.title, track.creator].filter(Boolean).join("\u00a0·\u00a0") + S.s_nhac_cua_ban_khong_co_thong_tin_giay_phep_2d53a0cc
     const creator = String(track.creator || "").trim()
     const attribution = String(track.attribution || "").trim()
     if (attribution && creator) return attribution
@@ -141,16 +142,16 @@ function sceneRange(scenes, index) {
 }
 function chapterTitle(chapters, id) {
     for (const chapter of chapters || []) if (chapter.id === id) return chapter.displayTitle || chapter.title
-    return "Chương " + id
+    return S.s_chuong_aad5968e + id
 }
 /** Số đoạn đang dùng một bài (đếm trước khi bỏ bài ấy). */
 function usedBy(plan, link) { return ((plan && plan.scenes) || []).filter(function(scene) { return scene.link === link }).length }
 
 /** Bảng "…" của một đoạn: im lặng / có nhạc, bỏ ghim (khi đã ghim), không dùng bài này cho cả cuốn. */
 function sceneMenu(scene) {
-    const items = [{key: "silence", icon: "volume-x", text: scene.silenced ? "Bật nhạc đoạn này" : "Tắt nhạc đoạn này"}]
-    if (scene.pinned) items.push({key: "unpin", icon: "pin-off", text: "Bỏ ghim"})
-    if (scene.link) { items.push({sep: true}); items.push({key: "ban", icon: "ban", text: "Loại khỏi cuốn", danger: true}) }
+    const items = [{key: "silence", icon: "volume-x", text: scene.silenced ? S.s_bat_nhac_doan_nay_57d716ef : S.s_tat_nhac_doan_nay_8fb1136b}]
+    if (scene.pinned) items.push({key: "unpin", icon: "pin-off", text: S.s_bo_ghim_1600e29e})
+    if (scene.link) { items.push({sep: true}); items.push({key: "ban", icon: "ban", text: S.s_loai_khoi_cuon_3b45b802, danger: true}) }
     return items
 }
 

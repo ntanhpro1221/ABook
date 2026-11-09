@@ -16,35 +16,35 @@ object ExitReasons {
 
     /** Tên của `ApplicationExitInfo.REASON_*` (số cố định của Android, nên không cần API 30 để dịch). */
     fun reasonName(reason: Int): String = when (reason) {
-        1 -> "EXIT_SELF (app tự thoát)"
-        2 -> "SIGNALED (bị tín hiệu)"
-        3 -> "LOW_MEMORY (hệ thống thiếu bộ nhớ)"
-        4 -> "CRASH (văng)"
-        5 -> "CRASH_NATIVE (văng ở mã native)"
-        6 -> "ANR (đứng, không phản hồi)"
-        7 -> "INITIALIZATION_FAILURE (khởi động hỏng)"
-        8 -> "PERMISSION_CHANGE (đổi quyền)"
-        9 -> "EXCESSIVE_RESOURCE_USAGE (dùng quá nhiều tài nguyên)"
-        10 -> "USER_REQUESTED (người dùng tắt)"
-        11 -> "USER_STOPPED (người dùng buộc dừng)"
-        12 -> "DEPENDENCY_DIED (thành phần phụ thuộc chết)"
-        13 -> "OTHER (lý do khác)"
-        14 -> "FREEZER (bị đóng băng)"
-        15 -> "PACKAGE_STATE_CHANGE (đổi trạng thái gói)"
-        16 -> "PACKAGE_UPDATED (cập nhật app)"
+        1 -> S.s_exit_self_app_tu_thoat_b7af1acb
+        2 -> S.s_signaled_bi_tin_hieu_47279cbb
+        3 -> S.s_low_memory_he_thong_thieu_bo_nho_5e59b552
+        4 -> S.s_crash_vang_b602e3e6
+        5 -> S.s_crash_native_vang_o_ma_native_7e8abd32
+        6 -> S.s_anr_dung_khong_phan_hoi_78ddf6ba
+        7 -> S.s_initialization_failure_khoi_dong_hong_29638038
+        8 -> S.s_permission_change_doi_quyen_3a5c449d
+        9 -> S.s_excessive_resource_usage_dung_qua_nhieu_ta_f542adfe
+        10 -> S.s_user_requested_nguoi_dung_tat_a7348a73
+        11 -> S.s_user_stopped_nguoi_dung_buoc_dung_fe50047b
+        12 -> S.s_dependency_died_thanh_phan_phu_thuoc_chet_521cfd9e
+        13 -> S.s_other_ly_do_khac_dbb224fb
+        14 -> S.s_freezer_bi_dong_bang_b1c480d4
+        15 -> S.s_package_state_change_doi_trang_thai_goi_bf76731d
+        16 -> S.s_package_updated_cap_nhat_app_517c77ce
         else -> "UNKNOWN ($reason)"
     }
 
     /** Tên của `RunningAppProcessInfo.IMPORTANCE_*` lúc tiến trình chết. */
     fun importanceName(importance: Int): String = when (importance) {
-        100 -> "FOREGROUND (đang ở trước mặt)"
-        125 -> "FOREGROUND_SERVICE (dịch vụ nền đang chạy)"
-        200 -> "VISIBLE (còn thấy được)"
-        230 -> "PERCEPTIBLE (người dùng còn nghe thấy)"
-        300 -> "SERVICE (dịch vụ nền)"
+        100 -> S.s_foreground_dang_o_truoc_mat_0fc3cc06
+        125 -> S.s_foreground_service_dich_vu_nen_dang_chay_cb10ab7a
+        200 -> S.s_visible_con_thay_duoc_987448fb
+        230 -> S.s_perceptible_nguoi_dung_con_nghe_thay_12e5223a
+        300 -> S.s_service_dich_vu_nen_73826efd
         325 -> "TOP_SLEEPING"
         350 -> "CANT_SAVE_STATE"
-        400 -> "CACHED (nằm trong bộ nhớ đệm)"
+        400 -> S.s_cached_nam_trong_bo_nho_dem_4fbda3ce
         1000 -> "GONE ($importance)"
         else -> "UNKNOWN ($importance)"
     }

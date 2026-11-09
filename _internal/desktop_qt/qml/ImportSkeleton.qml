@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -7,7 +8,7 @@ Column {
     id: root
     property string shape: "rows"        // "rows" | "cards"
     property int count: 1
-    property string label: "Đang tải"
+    property string label: S.s_dang_tai_465b1987
     spacing: 16
     Accessible.role: Accessible.StaticText
     Accessible.name: label

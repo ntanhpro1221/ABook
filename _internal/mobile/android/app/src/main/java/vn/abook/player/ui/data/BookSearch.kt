@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
@@ -153,17 +155,17 @@ object BookSearch {
 
     /** Câu nói tình hình tìm cho người nghe (FindInBook.tsx `findStatus`). */
     fun status(query: String, progress: FindProgress?): String {
-        if (query.isBlank()) return "Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được."
-        if (foldedQuery(query).isEmpty()) return "Gõ ít nhất $MIN_QUERY ký tự."
-        if (progress == null) return "Đang tìm"
-        val failed = if (progress.failed > 0) " ${progress.failed} chương chưa đọc được nên chưa tìm trong đó." else ""
-        if (!progress.done) return "Đang tìm - đã xem ${progress.scanned}/${progress.chapters} chương, thấy ${progress.total} chỗ."
-        if (progress.total == 0) return "Không thấy “${query.trim()}” trong sách.$failed"
+        if (query.isBlank()) return S.s_go_chu_hay_cau_can_tim_khong_can_go_dau_ho_d1bb2734
+        if (foldedQuery(query).isEmpty()) return S.s_go_it_nhat_0_ky_tu_745a8caa(MIN_QUERY)
+        if (progress == null) return S.s_dang_tim_58376830
+        val failed = if (progress.failed > 0) S.s_0_chuong_chua_doc_duoc_nen_chua_tim_trong_79d02fce(progress.failed) else ""
+        if (!progress.done) return S.s_dang_tim_da_xem_0_1_chuong_thay_2_cho_9fa24430(progress.scanned, progress.chapters, progress.total)
+        if (progress.total == 0) return S.s_khong_thay_0_trong_sach_1_1967bf94(query.trim(), failed)
         val more = if (progress.total > progress.hits.size) {
-            " Đang hiện ${progress.hits.size} kết quả đầu, còn ${progress.total - progress.hits.size} kết quả - gõ thêm chữ để thu hẹp."
+            S.s_dang_hien_0_ket_qua_dau_con_1_ket_qua_go_t_ba693cdb(progress.hits.size, progress.total - progress.hits.size)
         } else {
             ""
         }
-        return "${progress.total} kết quả.$more$failed"
+        return S.s_0_ket_qua_1_2_8dad3320(progress.total, more, failed)
     }
 }

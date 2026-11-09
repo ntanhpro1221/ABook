@@ -41,7 +41,7 @@ object TextImports {
     private fun root() = File(Store.root, "imports")
 
     private fun dir(ref: String): File {
-        require(ref.isNotEmpty() && ref.all { it.isLetterOrDigit() && it.code < 128 }) { "mã lần chọn không hợp lệ" }
+        require(ref.isNotEmpty() && ref.all { it.isLetterOrDigit() && it.code < 128 }) { S.s_ma_lan_chon_khong_hop_le_9a254152 }
         return File(root(), ref)
     }
 
@@ -65,7 +65,7 @@ object TextImports {
         if (suffix == "abook" || suffix == "abookproj") return null
         if (suffix in SUPPORTED) return name
         val kind = MIME_SUFFIX[mime?.substringBefore(';')?.trim()?.lowercase()] ?: return null
-        return "${name.ifEmpty { "Sách" }}.$kind"
+        return S.s_0_1_0adfdd23(name.ifEmpty { S.s_sach_0c2b3e9b }, kind)
     }
 
     /**
@@ -78,7 +78,7 @@ object TextImports {
         if (type != "application/octet-stream" && type != "application/zip") return null
         if (incomingName(mime, displayName) != null || isAppBookFile(mime, displayName)) return null
         if (BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))) return null
-        return "Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
+        return S.s_ban_chon_abook_abookproj_epub_word_pdf_hoa_edd3723c
     }
 
     /** File sách / dự án của app (.abook, .abookproj - theo đuôi tên, hay kiểu nội dung khi tên mất đuôi): đi đường mở file sách
@@ -127,7 +127,7 @@ object TextImports {
                 val read = source.read(buffer)
                 if (read < 0) break
                 size += read
-                if (size > budget) throw BookImport.Failed("File này quá lớn để thêm vào thư viện (tối đa ${MAX_SOURCE_BYTES shr 20} MB).")
+                if (size > budget) throw BookImport.Failed(S.s_file_nay_qua_lon_de_them_vao_thu_vien_toi_c51dc582(MAX_SOURCE_BYTES shr 20))
                 sink.write(buffer, 0, read)
             }
         }
@@ -138,11 +138,11 @@ object TextImports {
     fun stageFile(name: String, open: () -> InputStream?): Staged {
         val clean = safeName(name, "sach")
         val ext = clean.substringAfterLast('.', "").lowercase()
-        if (ext !in SUPPORTED) throw BookImport.Failed("Chưa đọc được file ${if (ext.isEmpty()) "không có đuôi" else ".$ext"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
+        if (ext !in SUPPORTED) throw BookImport.Failed(S.s_chua_doc_duoc_file_0_dung_epub_docx_pdf_tx_1a70d200(if (ext.isEmpty()) S.s_khong_co_duoi_178f5d10 else ".$ext"))
         val ref = newRef()
         val target = File(dir(ref), clean)
         try {
-            val input = open() ?: throw BookImport.Failed("Chưa đọc được file.")
+            val input = open() ?: throw BookImport.Failed(S.s_chua_doc_duoc_file_6575d76b)
             input.use { copy(it, target, MAX_SOURCE_BYTES) }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
@@ -154,22 +154,22 @@ object TextImports {
     /** Chép một thư mục TXT (chỉ các file .txt nằm ngay trong, như Studio): `files` = (tên file, luồng đọc). */
     fun stageFolder(name: String, files: List<Pair<String, () -> InputStream?>>): Staged {
         val texts = files.filter { it.first.lowercase().endsWith(".txt") }
-        if (texts.isEmpty()) throw BookImport.Failed("Thư mục này không có file .txt nào nằm ngay bên trong")
-        if (texts.size > MAX_FOLDER_FILES) throw BookImport.Failed("Thư mục có quá nhiều file (${texts.size}) - tối đa $MAX_FOLDER_FILES.")
+        if (texts.isEmpty()) throw BookImport.Failed(S.s_thu_muc_nay_khong_co_file_txt_nao_nam_ngay_ba76d525)
+        if (texts.size > MAX_FOLDER_FILES) throw BookImport.Failed(S.s_thu_muc_co_qua_nhieu_file_0_toi_da_1_842b73bc(texts.size, MAX_FOLDER_FILES))
         val ref = newRef()
-        val folder = File(dir(ref), safeName(name, "Sách"))
+        val folder = File(dir(ref), safeName(name, S.s_sach_0c2b3e9b))
         try {
             var budget = MAX_SOURCE_BYTES
             val used = HashSet<String>()
             val names = JSONObject()
             for ((fileName, open) in texts) {
                 try {
-                    val input = open() ?: throw BookImport.Failed("Chưa mở được file.")
+                    val input = open() ?: throw BookImport.Failed(S.s_chua_mo_duoc_file_8895249d)
                     val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
                     budget -= input.use { copy(it, File(folder, diskName), budget) }
                     names.put(diskName, fileName)
                 } catch (error: Exception) {
-                    throw BookImport.Failed("Chưa đọc được “$fileName” — bạn kiểm tra quyền đọc và chép đủ file rồi chọn lại.")
+                    throw BookImport.Failed(S.s_chua_doc_duoc_0_ban_kiem_tra_quyen_doc_va_9145df31(fileName))
                 }
             }
             File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)
@@ -182,8 +182,8 @@ object TextImports {
 
     /** Thứ đã chép: file duy nhất, hay thư mục TXT. */
     private fun staged(ref: String): File {
-        val children = dir(ref).listFiles()?.sortedBy { it.name } ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
-        return children.singleOrNull() ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
+        val children = dir(ref).listFiles()?.sortedBy { it.name } ?: throw BookImport.Failed(S.s_lan_chon_nay_da_het_han_chon_lai_file_fece2ec0)
+        return children.singleOrNull() ?: throw BookImport.Failed(S.s_lan_chon_nay_da_het_han_chon_lai_file_fece2ec0)
     }
 
     /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do lớp giao diện lấy.
@@ -215,7 +215,7 @@ object TextImports {
     ): BookImport.Book {
         val source = staged(ref)
         val book = if (source.isFile && source.extension.lowercase() == "pdf") {
-            BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
+            BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed(S.s_chua_lay_duoc_chu_cua_pdf_nay_thu_lai_b245b159), title, author)
         } else {
             BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes, originalNames = originalNames(source))
         }
@@ -258,7 +258,7 @@ object TextImports {
     data class Created(val id: String, val how: String, val chapters: Int)
 
     fun createBook(ref: String, title: String, cacheDir: File, separate: Boolean = false, picks: List<Pair<Int, String>>? = null): Created {
-        val candidates = kept[ref] ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
+        val candidates = kept[ref] ?: throw BookImport.Failed(S.s_lan_chon_nay_da_het_han_chon_lai_file_fece2ec0)
         val book = BookImport.selectChapters(candidates, picks ?: BookImport.defaultPicks(candidates))
         if (BookEdits.cleanText(title, 160, normalize = false).isNotEmpty()) book.title = title
         val packed = File.createTempFile("text-book-", ".abook", cacheDir)
@@ -287,7 +287,7 @@ object TextImports {
             val item = all.optJSONObject(number)
             val index = (item?.opt("index") as? Number)?.takeIf { it.toDouble() == it.toInt().toDouble() }?.toInt()
             val title = item?.opt("title") ?: ""
-            if (index == null || title !is String) throw BookImport.Failed("Danh sách chương đã chọn không hợp lệ")
+            if (index == null || title !is String) throw BookImport.Failed(S.s_danh_sach_chuong_da_chon_khong_hop_le_ccef4036)
             index to title
         }
     }

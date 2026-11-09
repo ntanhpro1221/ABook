@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
@@ -193,11 +194,9 @@ function StartError({ book }: { book: BookSummary }) {
   return (
     <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Chưa khởi động được: {book.startError}</span>
+      <span className="min-w-0 flex-1">{S.s_chua_khoi_dong_duoc_41fc29a4}{book.startError}</span>
       {!book.starting && !book.running && (
-        <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
-          Thử lại
-        </Button>
+        <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>{S.s_thu_lai_c58d068c}</Button>
       )}
     </div>
   );
@@ -216,7 +215,7 @@ function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
         </p>
         {shown.detail && (
           <details className="mt-1 text-xs">
-            <summary className="cursor-pointer select-none">Chi tiết</summary>
+            <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
             <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
           </details>
         )}
@@ -229,13 +228,13 @@ function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
  *  thay vì im lặng (soát a88 T4). Bạn bấm Dừng thì không phải sự cố - máy chủ không gửi `runEnd`. */
 export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>; redo: boolean }) {
   const info = useAppInfo().data?.studio;
-  const detail = [end.detail, end.exitCode ? `mã thoát ${end.exitCode}` : ""].filter(Boolean).join(" - ");
+  const detail = [end.detail, end.exitCode ? S.s_ma_thoat_0_5004088f(end.exitCode) : ""].filter(Boolean).join(" - ");
   const shown = friendlyError(detail, Boolean(info), redo, Boolean(info?.damagedSteps?.includes("llm")));
   const summary =
     end.state === "lost"
-      ? "Lần chạy trước bị ngắt đột ngột (tiến trình làm sách bị tắt, máy khởi động lại hay hết điện)."
-      : shown.summary === "Có lỗi khi làm sách."
-        ? "Lần chạy trước dừng vì sự cố."
+      ? S.s_lan_chay_truoc_bi_ngat_dot_ngot_tien_trinh_48f760d3
+      : shown.summary === S.s_co_loi_khi_lam_sach_469057f5
+        ? S.s_lan_chay_truoc_dung_vi_su_co_edbb6146
         : shown.summary;
   return (
     <MotionRegion as="div" role="alert" className="mt-3 flex gap-2 py-3 text-sm text-danger">
@@ -246,7 +245,7 @@ export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>;
         </p>
         {shown.detail && (
           <details className="mt-1 text-xs">
-            <summary className="cursor-pointer select-none">Chi tiết</summary>
+            <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
             <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
           </details>
         )}
@@ -261,16 +260,13 @@ function NarratorNote({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
   if (book.phase === "idle") {
     return (
-      <>
-        Giọng kể chọn lúc tạo sách, đổi được vì cuốn này chưa bắt đầu chạy.{" "}
-        <button type="button" onClick={() => navigate(`/studio/new?redo=${book.id}`)} className="font-medium text-accent-text underline underline-offset-2">
-          Đổi giọng kể
-        </button>
+      <>{S.s_giong_ke_chon_luc_tao_sach_doi_duoc_vi_cuo_7293eb77}{" "}
+        <button type="button" onClick={() => navigate(`/studio/new?redo=${book.id}`)} className="font-medium text-accent-text underline underline-offset-2">{S.s_doi_giong_ke_bbebd2a5}</button>
       </>
     );
   }
-  if (book.castLocked) return <>Đổi giọng kể không phải tạo lại sách: câu kể đã thu sẽ được thu lại bằng giọng mới.</>;
-  return <>Đổi được giọng kể khi máy phân vai xong (ngay sau bước phân tích truyện).</>;
+  if (book.castLocked) return <>{S.s_doi_giong_ke_khong_phai_tao_lai_sach_cau_k_bee3443c}</>;
+  return <>{S.s_doi_duoc_giong_ke_khi_may_phan_vai_xong_ng_d2298cde}</>;
 }
 
 /** Dòng nói còn bao lâu của cả lượt làm sách (hay vì sao đang đứng); "" khi không có gì để nói. */
@@ -278,7 +274,7 @@ function progressNote(book: BookSummary): string {
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
   // đứng yên không nói vì sao). Tạm dừng thường (pin, người bấm) đã nói ở trạng thái đầu trang - không nói lại ở đây (soát 24-10 T19).
-  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian" : "");
+  return book.stopping ? S.s_dang_dung_cd5f369b : book.paused ? (book.precast?.held ? S.s_cho_ban_duyet_roi_bam_thu_am_5f91fe4f : "") : etaOf(book) ?? (live ? S.s_dang_uoc_tinh_thoi_gian_6e128147 : "");
 }
 
 /** Tiến độ cả sách ở đầu trang dự án: thanh mảnh + phần trăm, kèm còn bao lâu (soát 25-10: trước là chữ "45% tổng" không có thanh, cách hàng tab một
@@ -290,7 +286,7 @@ export function HeaderProgress({ book }: { book: BookSummary }) {
     <MotionPresence open={book.phase !== "done" && book.phase !== "idle"}>
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-1 basis-48 items-center gap-3 sm:max-w-xs">
-          <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label="Tiến độ cả sách" />
+          <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label={S.s_tien_do_ca_sach_25195f69} />
           <span className="tabular w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
         </div>
         {note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}
@@ -304,31 +300,28 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
   const live = book.running || book.starting;
   // Dòng phụ "Các bước" nói bước đang tới - cả khi đang tạm dừng; lý do dừng đã ở trên.
   const current = [analysis, casting, synthesis].findIndex((state) => state === "active" || state === "paused");
-  const stepSummary = current >= 0 ? ["Phân tích truyện", "Phân vai", "Thu âm và kiểm tra"][current] : book.statusLabel;
+  const stepSummary = current >= 0 ? [S.s_phan_tich_truyen_36344512, S.s_phan_vai_b490d45b, S.s_thu_am_va_kiem_tra_313021dd][current] : book.statusLabel;
   return (
     <MotionRegion as="section" className="mt-6">
       {live && book.logLost && (
         <p role="status" className="mb-3 flex gap-2 py-2 text-sm text-warning">
           <CircleAlert className="mt-line-icon size-4 shrink-0" />
-          <span>
-            Sách vẫn đang chạy bình thường, nhưng nhật ký làm sách không ghi được ({book.logLost.lines} dòng đã bỏ) - thường do phần mềm diệt virus,
-            đồng bộ đám mây giữ file hoặc ổ đĩa gần đầy. Kiểm lại chỗ trống ở ổ chứa thư viện.
-          </span>
+          <span>{S.s_sach_van_dang_chay_binh_thuong_nhung_nhat_5dd24dc3}{book.logLost.lines}{S.s_dong_da_bo_thuong_do_phan_mem_diet_virus_d_9d4ae9c8}</span>
         </p>
       )}
-      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary}>
+      <Fold storageKey={`project.${book.id}.steps`} title={S.s_cac_buoc_93e33a59} summary={stepSummary}>
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}
           state={analysis}
           icon={BookOpenText}
-          title="Phân tích truyện"
+          title={S.s_phan_tich_truyen_36344512}
           detail={
             book.speakerPass?.active
-              ? `Xác định người nói từng câu: ${book.speakerPass.done}/${book.speakerPass.total} chương.`
+              ? S.s_xac_dinh_nguoi_noi_tung_cau_0_1_chuong_fa4492bd(book.speakerPass.done, book.speakerPass.total)
               : book.settings.analyzer
-                ? `Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu. ${analyzerLabel(book.settings.analyzer)}.`
-                : "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
+                ? S.s_doc_ca_truyen_de_nhan_ra_loi_thoai_ai_dang_25589143(analyzerLabel(book.settings.analyzer))
+                : S.s_doc_ca_truyen_de_nhan_ra_loi_thoai_ai_dang_46dad1fa
           }
           progress={book.progress.analysis}
         />
@@ -336,15 +329,15 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           index={2}
           state={casting}
           icon={Users}
-          title="Phân vai"
-          detail="Trao cho mỗi nhân vật một giọng riêng và khoá cách đọc tên."
+          title={S.s_phan_vai_b490d45b}
+          detail={S.s_trao_cho_moi_nhan_vat_mot_giong_rieng_va_k_9788a813}
         />
         <Step
           index={3}
           state={synthesis}
           icon={Mic2}
-          title="Thu âm và kiểm tra"
-          detail="Đọc từng câu, nghe lại bằng nhận dạng giọng nói, thu lại câu lệch."
+          title={S.s_thu_am_va_kiem_tra_313021dd}
+          detail={S.s_doc_tung_cau_nghe_lai_bang_nhan_dang_giong_a58b69c7}
           progress={book.progress.synthesis}
         />
       </div>
@@ -372,21 +365,17 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
   onResume: () => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Tiếp tục phân tích?">
+    <Dialog open={open} onOpenChange={onOpenChange} title={S.s_tiep_tuc_phan_tich_6d773a52}>
       <div className="mb-5 flex gap-3 py-4 text-sm leading-relaxed text-fg">
         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
         <div className="text-pretty">
           <p>
-            <span className="font-semibold">Phân tích của “{book.title}” đã dừng giữa chừng.</span> Làm tiếp từ chỗ ấy {ANALYSIS_CUT_COST} - khác
-            với khi phân tích liền một mạch.
-          </p>
-          <p className="mt-2 text-fg-2">Muốn chắc như chạy liền mạch: làm lại phân tích từ đầu.</p>
+            <span className="font-semibold">{S.s_phan_tich_cua_4a395adb}{book.title}{S.s_da_dung_giua_chung_df1e44a8}</span>{S.s_lam_tiep_tu_cho_ay_c42ae1b1}{ANALYSIS_CUT_COST}{S.s_khac_voi_khi_phan_tich_lien_mot_mach_a389d2e0}</p>
+          <p className="mt-2 text-fg-2">{S.s_muon_chac_nhu_chay_lien_mach_lam_lai_phan_856b2309}</p>
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Để sau
-        </Button>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_de_sau_9be0a7ab}</Button>
         <Button
           variant="ghost"
           icon={Play}
@@ -394,9 +383,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
             onOpenChange(false);
             onResume();
           }}
-        >
-          Vẫn tiếp tục
-        </Button>
+        >{S.s_van_tiep_tuc_8ba2321f}</Button>
         <Button
           variant="primary"
           icon={RotateCcw}
@@ -405,9 +392,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
             onOpenChange(false);
             onRedo();
           }}
-        >
-          Phân tích lại
-        </Button>
+        >{S.s_phan_tich_lai_745c8437}</Button>
       </div>
     </Dialog>
   );
@@ -422,15 +407,15 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={inAnalysis ? "Dừng phân tích?" : "Dừng thu âm?"}
+      title={inAnalysis ? S.s_dung_phan_tich_3fae0cc9 : S.s_dung_thu_am_c0b08972}
       description={
         // Không nêu tên nút làm tiếp: sau khi dừng nó là "Tiếp tục tạo", "Bắt đầu thu" hay "Áp dụng N thay đổi"
         // tuỳ sách đã tới đâu (soát UX 30-09). Đang tạm dừng thì nói Dừng khác Tạm dừng ở chỗ nào.
         inAnalysis
           ? undefined
           : book.paused
-            ? "Tạm dừng vẫn giữ bộ nhớ card đồ hoạ. Dừng hẳn thì nhả ra; việc đã xong giữ nguyên."
-            : "Mọi chương và câu đã xong được giữ nguyên - làm tiếp lúc nào cũng được, từ đúng chỗ dừng."
+            ? S.s_tam_dung_van_giu_bo_nho_card_do_hoa_dung_h_5c49cc06
+            : S.s_moi_chuong_va_cau_da_xong_duoc_giu_nguyen_295ff27b
       }
     >
       <MotionRegion>
@@ -441,15 +426,14 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
             <p>
               <span className="font-semibold">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
             </p>
-            <p data-motion-live className="mt-2 text-fg-2">
-              Nên để chạy hết bước này{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
+            <p data-motion-live className="mt-2 text-fg-2">{S.s_nen_de_chay_het_buoc_nay_55b34878}{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
             </p>
           </div>
         </div>
       )}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          {book.paused ? "Để nguyên" : "Để chạy tiếp"}
+          {book.paused ? S.s_de_nguyen_2f029b4a : S.s_de_chay_tiep_28b8b5b6}
         </Button>
         {inAnalysis && !book.paused && book.canPause && (
           <Button
@@ -457,9 +441,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
             icon={Pause}
             loading={pause.isPending}
             onClick={() => pause.mutate({ id: book.id, paused: true }, { onSettled: () => onOpenChange(false) })}
-          >
-            Tạm dừng
-          </Button>
+          >{S.s_tam_dung_67635815}</Button>
         )}
         <Button
           variant="danger"
@@ -468,7 +450,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           disabled={stop.isPending}
           onClick={() => stop.mutate({ id: book.id, paused: Boolean(book.paused) }, { onSettled: () => onOpenChange(false) })}
         >
-          {inAnalysis ? "Vẫn dừng" : "Dừng"}
+          {inAnalysis ? S.s_van_dung_f9d19e87 : S.s_dung_11554138}
         </Button>
       </div>
       </MotionRegion>
@@ -492,25 +474,21 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       void client.invalidateQueries({ queryKey: ["library"] });
       void client.invalidateQueries({ queryKey: ["book", book.id] });
       void client.invalidateQueries({ queryKey: ["listen"] });
-      toast.success(`Đã đổi tên thành “${summary.title}”`);
+      toast.success(S.s_da_doi_ten_thanh_0_268ec88c(summary.title));
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error("Chưa đổi được tên", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_ten_ad5b4df1, { description: error.message }),
   });
   const typed = title.trim();
   return (
     <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Huỷ
-          </Button>
-          <Button type="submit" form={dialogForm1} variant="primary" loading={rename.isPending} disabled={!typed || typed === book.title}>
-            Đổi tên
-          </Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_huy_96732485}</Button>
+          <Button type="submit" form={dialogForm1} variant="primary" loading={rename.isPending} disabled={!typed || typed === book.title}>{S.s_doi_ten_a2a0dc70}</Button>
         </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
-      title="Đổi tên sách"
-      description="Tên mới hiện ở thư viện, điện thoại và file xuất."
+      title={S.s_doi_ten_sach_bfe95826}
+      description={S.s_ten_moi_hien_o_thu_vien_dien_thoai_va_file_a0f15560}
     >
       <form id={dialogForm1}
         onSubmit={(event) => {
@@ -518,9 +496,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           if (typed && typed !== book.title) rename.mutate(typed);
         }}
       >
-        <label htmlFor="rename-book-title" className="text-sm font-medium">
-          Tên sách
-        </label>
+        <label htmlFor="rename-book-title" className="text-sm font-medium">{S.s_ten_sach_d54846eb}</label>
         <input
           id="rename-book-title"
           value={title}
@@ -552,7 +528,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       void client.invalidateQueries({ queryKey: ["listen"] });
       // "Hoàn tác" (trash_pending.py): thư mục nằm chờ vài chục giây trước khi vào Thùng rác.
       toastRemoved({
-        message: `Đã xoá dự án “${book.title}”`,
+        message: S.s_da_xoa_du_an_0_45456313(book.title),
         title: book.title,
         undo: result.undo,
         onRestored: () => {
@@ -561,13 +537,11 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
         },
       });
     },
-    onError: (error: Error) => toast.error("Chưa xoá được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_xoa_duoc_b872fff6, { description: error.message }),
   });
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Để sau
-        </Button>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_de_sau_9be0a7ab}</Button>
         <Button
           variant="danger"
           icon={Trash2}
@@ -578,19 +552,17 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
             if (player.track?.bookId === book.id) player.close();
             remove.mutate();
           }}
-        >
-          Chuyển vào Thùng rác
-        </Button>
+        >{S.s_chuyen_vao_thung_rac_8fdb5a40}</Button>
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
-      title={`Xoá dự án “${book.title}”?`}
-      description="Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên."
+      title={S.s_xoa_du_an_0_6f17ec46(book.title)}
+      description={S.s_ca_thu_muc_du_an_vao_thung_rac_cua_windows_6f78dcf8}
     >
       <MotionRegion>
       {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
       {book.path && <p className="break-all py-2 text-xs text-fg-2">{book.path}</p>}
-      {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
+      {busy && <p className="mt-3 text-sm text-warning">{S.s_sach_dang_chay_dung_sach_truoc_roi_moi_xoa_a7d1bac1}</p>}
 
       </MotionRegion>
     </Dialog>
@@ -627,7 +599,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            aria-label={`Tuỳ chọn dự án ${book.title}`}
+            aria-label={S.s_tuy_chon_du_an_0_bd8165fe(book.title)}
             className={cn(
               "touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
               className,
@@ -644,7 +616,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên</MenuItem>}
+            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>{S.s_doi_ten_a2a0dc70}</MenuItem>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
@@ -654,17 +626,16 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
                 className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
               >
-                <BookPlus className="size-4" /> Làm tiếp cuốn này
-                {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
+                <BookPlus className="size-4" />{S.s_lam_tiep_cuon_nay_c6fc93ac}{!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">{S.s_chay_phan_nay_truoc_73213667}</span>}
               </DropdownMenu.Item>
             )}
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             {remote ? (
               <div className="px-2 py-1.5">
-                <OnComputerOnly verb="Xoá dự án" />
+                <OnComputerOnly verb={S.s_xoa_du_an_6b9e7c0b} />
               </div>
             ) : (
-              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án</MenuItem>
+              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>{S.s_xoa_du_an_6b9e7c0b}</MenuItem>
             )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -721,8 +692,8 @@ export function Actions({ book }: { book: BookSummary }) {
   // Phân tích và thu âm chạy bằng Studio: máy chưa có thì giải thích ở đây, không gửi lệnh rồi nhận lỗi.
   const begin = (id: string) => {
     if (!studio.missing) return start.mutate(id);
-    toast.error(studio.repair ? "Cần sửa Studio" : studio.update ? "Cần cập nhật Studio" : "Cần cài Studio", {
-      description: "Phân tích và thu âm chạy bằng Studio.",
+    toast.error(studio.repair ? S.s_can_sua_studio_a65aa0f0 : studio.update ? S.s_can_cap_nhat_studio_0018e420 : S.s_can_cai_studio_1599eed5, {
+      description: S.s_phan_tich_va_thu_am_chay_bang_studio_ea5c7b5c,
       action: remote ? undefined : { label: studio.action, onClick: () => navigate("/studio") },
     });
   };
@@ -742,19 +713,19 @@ export function Actions({ book }: { book: BookSummary }) {
   const unpause = () => pause.mutate({ id: book.id, paused: false, battery: book.paused === "battery" });
   // Một nút, nhãn và biểu tượng đổi theo trạng thái: Button mờ chéo chữ / biểu tượng tại chỗ, không thay cả nút.
   const primary: Record<PrimaryKind, { label: string; icon?: typeof Wand2; loading?: boolean; run?: () => void }> = {
-    starting: { label: "Đang khởi động", loading: true },
+    starting: { label: S.s_dang_khoi_dong_e7a9b0e5, loading: true },
     // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
-    stopping: { label: "Đang dừng", loading: true },
+    stopping: { label: S.s_dang_dung_9b35aeb5, loading: true },
     // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - tên là "Thu âm" (soát UX a8 05-10, mục 12).
-    unpause: { label: book.precast?.held ? "Thu âm" : "Tiếp tục", icon: book.precast?.held ? Mic2 : Play, loading: pause.isPending, run: unpause },
+    unpause: { label: book.precast?.held ? S.s_thu_am_db588c2e : S.s_tiep_tuc_87a7ae88, icon: book.precast?.held ? Mic2 : Play, loading: pause.isPending, run: unpause },
     // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" (kết thúc lượt chạy) ở "…".
-    pause: { label: "Tạm dừng", icon: Pause, loading: pause.isPending, run: () => pause.mutate({ id: book.id, paused: true }) },
-    start: { label: "Bắt đầu", icon: Wand2, loading: start.isPending, run: () => begin(book.id) },
-    record: { label: "Thu âm", icon: Mic2, loading: start.isPending, run: () => begin(book.id) },
-    reanalyze: { label: "Phân tích lại", icon: RotateCcw, run: () => navigate(`/studio/new?redo=${book.id}`) },
-    continue: { label: "Tiếp tục", icon: Play, loading: start.isPending, run: () => begin(book.id) },
-    apply: { label: `Áp dụng ${book.pendingChanges ?? 0} thay đổi`, icon: RefreshCw, loading: start.isPending, run: () => setConfirmApply(true) },
-    listen: { label: "Nghe trong Thư viện", icon: Headphones, run: () => navigate(`/book/${book.id}`) },
+    pause: { label: S.s_tam_dung_67635815, icon: Pause, loading: pause.isPending, run: () => pause.mutate({ id: book.id, paused: true }) },
+    start: { label: S.s_bat_dau_b3cacc46, icon: Wand2, loading: start.isPending, run: () => begin(book.id) },
+    record: { label: S.s_thu_am_db588c2e, icon: Mic2, loading: start.isPending, run: () => begin(book.id) },
+    reanalyze: { label: S.s_phan_tich_lai_745c8437, icon: RotateCcw, run: () => navigate(`/studio/new?redo=${book.id}`) },
+    continue: { label: S.s_tiep_tuc_87a7ae88, icon: Play, loading: start.isPending, run: () => begin(book.id) },
+    apply: { label: S.s_ap_dung_0_thay_doi_fdb3a048(book.pendingChanges ?? 0), icon: RefreshCw, loading: start.isPending, run: () => setConfirmApply(true) },
+    listen: { label: S.s_nghe_trong_thu_vien_c0d6771a, icon: Headphones, run: () => navigate(`/book/${book.id}`) },
   };
   const shown = kind ? primary[kind] : null;
   const pending = book.segments.pending ?? book.segments.total - book.segments.analyzed;
@@ -769,56 +740,48 @@ export function Actions({ book }: { book: BookSummary }) {
       </MotionPresence>
       <ProjectMenu book={book}>
         {book.chapters.completed > 0 && kind !== "listen" && (
-          <MenuItem icon={Headphones} onSelect={() => navigate(`/book/${book.id}`)}>Nghe trong Thư viện</MenuItem>
+          <MenuItem icon={Headphones} onSelect={() => navigate(`/book/${book.id}`)}>{S.s_nghe_trong_thu_vien_c0d6771a}</MenuItem>
         )}
         {asksBeforeResume(book) && !live && !book.starting && !book.queuePosition && (
-          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục</MenuItem>
+          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>{S.s_van_tiep_tuc_8ba2321f}</MenuItem>
         )}
-        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng</MenuItem>}
+        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>{S.s_dung_11554138}</MenuItem>}
         {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
         {live && book.pendingChanges ? (
-          <MenuItem icon={RefreshCw} onSelect={() => setConfirmApply(true)}>{book.pendingChanges} thay đổi chờ áp</MenuItem>
+          <MenuItem icon={RefreshCw} onSelect={() => setConfirmApply(true)}>{book.pendingChanges}{S.s_thay_doi_cho_ap_e4e2c5a3}</MenuItem>
         ) : null}
-        {book.queuePosition ? <MenuItem icon={Square} onSelect={() => leaveQueue.mutate({ id: book.id })}>Bỏ xếp hàng</MenuItem> : null}
+        {book.queuePosition ? <MenuItem icon={Square} onSelect={() => leaveQueue.mutate({ id: book.id })}>{S.s_bo_xep_hang_e797cd68}</MenuItem> : null}
         {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4) - trình tạo điền sẵn mọi lựa chọn cũ. */}
         {book.phase === "idle" && !live && !book.queuePosition && (
-          <MenuItem icon={SlidersHorizontal} onSelect={() => navigate(`/studio/new?redo=${book.id}`)}>Sửa thiết lập</MenuItem>
+          <MenuItem icon={SlidersHorizontal} onSelect={() => navigate(`/studio/new?redo=${book.id}`)}>{S.s_sua_thiet_lap_96fa3435}</MenuItem>
         )}
-        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất</MenuItem>}
-        {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>Thêm {next} chương</MenuItem>}
+        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>{S.s_xuat_b2ebc56b}</MenuItem>}
+        {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>{S.s_them_3f5e8c43}{next}{S.s_chuong_9e6a01dc}</MenuItem>}
         {/* Mở thư mục chỉ có trên máy tính. */}
-        {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
-        <MenuItem icon={Info} onSelect={() => setDetails(true)}>Chi tiết</MenuItem>
+        {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>{S.s_mo_thu_muc_4bf5b127}</MenuItem>}
+        <MenuItem icon={Info} onSelect={() => setDetails(true)}>{S.s_chi_tiet_e762d926}</MenuItem>
       </ProjectMenu>
       <ProjectInfoDialog book={book} open={details} onOpenChange={setDetails} />
       {/* key: chuyển Phần 1 -> Phần 2 là một hộp mới - không mang `busy`, nút Huỷ, kết quả của cuốn trước sang cuốn này. */}
       <ExportDialog key={book.id} book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
       <MotionRegion as="div" className="basis-full text-pretty text-sm text-fg-2">
         {book.queuePosition ? (
-          <p>
-            Chờ lượt {book.queuePosition}, tự chạy khi cuốn trước xong{book.seedPending ? ", giữ giọng và cách đọc tên" : ""}.
+          <p>{S.s_cho_luot_7ff91550}{book.queuePosition}{S.s_tu_chay_khi_cuon_truoc_xong_b1556944}{book.seedPending ? S.s_giu_giong_va_cach_doc_ten_993d1078 : ""}.
             {/* Cuốn đang giữ máy tạm dừng thì hàng không tự đi: nói vì sao chờ và làm gì (soát a88 T5). */}
             {book.queueWaitsOn && <> {queueWaitNotice(book.queueWaitsOn)}</>}
           </p>
         ) : live && book.stopping ? (
-          <p>Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.</p>
+          <p>{S.s_dung_o_checkpoint_ke_giu_phan_da_xong_co_t_37dd2329}</p>
         ) : kind === "reanalyze" ? (
-          <p data-motion-live>
-            Phân tích đã dừng giữa chừng
-            {book.segments.total ? ` (còn ${formatNumber(pending)}/${formatNumber(book.segments.total)} câu)` : ""}; phân tích lại để giữ kết quả liền mạch,
-            tiếp tục thì {ANALYSIS_CUT_COST}.
+          <p data-motion-live>{S.s_phan_tich_da_dung_giua_chung_6971e0d3}{book.segments.total ? S.s_con_0_1_cau_3ea208e0(formatNumber(pending), formatNumber(book.segments.total)) : ""}{S.s_phan_tich_lai_de_giu_ket_qua_lien_mach_tie_bdf01f74}{ANALYSIS_CUT_COST}.
           </p>
         ) : redoWaiting > 0 && kind === "continue" ? (
           <p>
-            {redoWaiting === 1 ? "1 chương đang chờ thu lại" : `${redoWaiting} chương đang chờ thu lại`} theo sửa của bạn. Bản cũ vẫn nghe được cho tới khi thu xong.
-          </p>
+            {redoWaiting === 1 ? S.s_1_chuong_dang_cho_thu_lai_b9da1ca4 : S.s_0_chuong_dang_cho_thu_lai_c577313b(redoWaiting)}{S.s_theo_sua_cua_ban_ban_cu_van_nghe_duoc_cho_6adf5ab2}</p>
         ) : null}
         {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges) || redoWaiting > 0) && (
           <p className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span>
-              Máy này {studio.repair ? "cần sửa" : studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
-              sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được).
-            </span>
+            <span>{S.s_may_nay_ee46aadd}{studio.repair ? S.s_can_sua_16c9c3dd : studio.update ? S.s_can_cap_nhat_8d5ac598 : S.s_chua_cai_bd3c52e9}{S.s_studio_nen_chua_lam_tiep_duoc_phan_phan_ti_7dcb6e58}</span>
             {!remote && (
               <Button variant="ghost" size="sm" icon={Download} onClick={() => navigate("/studio")}>
                 {studio.action}
@@ -828,8 +791,8 @@ export function Actions({ book }: { book: BookSummary }) {
         )}
         {live && book.paused === "battery" && (
           <div>
-            <p>Studio tạm dừng; cắm sạc để tiếp tục.</p>
-            <MoreInfo label="Dùng pin">Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin{remote ? "." : ", hoặc đổi ở Cài đặt › Studio."}</MoreInfo>
+            <p>{S.s_studio_tam_dung_cam_sac_de_tiep_tuc_5704e36a}</p>
+            <MoreInfo label={S.s_dung_pin_d9d66b55}>{S.s_lam_sach_tren_pin_cham_va_hao_pin_bam_tiep_c6ccaf1c}{remote ? "." : S.s_hoac_doi_o_cai_dat_studio_2fab1ca2}</MoreInfo>
           </div>
         )}
       </MotionRegion>
@@ -863,8 +826,7 @@ function PartLinks({ id }: { id: string }) {
   return (
     <MotionPresence open={parts.length >= 2 && Boolean(here)}>
     {here && <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
-      <span className="font-medium text-fg">
-        Phần {here.part}/{parts.length}
+      <span className="font-medium text-fg">{S.s_phan_a17569d5}{here.part}/{parts.length}
       </span>
       {parts
         .filter((part) => !part.current)
@@ -875,7 +837,7 @@ function PartLinks({ id }: { id: string }) {
             onClick={() => navigate(`/studio/${part.id}`)}
             className="font-medium text-accent-text underline-offset-2 hover:underline"
           >
-            {part.part < here.part ? "← " : ""}Phần {part.part}
+            {part.part < here.part ? "← " : ""}{S.s_phan_a17569d5}{part.part}
             {part.part > here.part ? " →" : ""}
           </button>
         ))}
@@ -889,7 +851,7 @@ function PartLinks({ id }: { id: string }) {
 /** Dấu nhỏ trên một hàng chương, hay null. Xong (và chờ tới lượt) là mặc định: 30 viên "Đã xong" xếp cột là nhiễu che mất chương thật sự cần để ý, nên
  *  chỉ chương LỆCH khỏi mặc định mới có dấu - mất file audio, lỗi, cần xem lại, chờ thu lại theo sửa của bạn (soát 25-10). Chương đang thu có thanh riêng. */
 export function chapterMark(chapter: Pick<Chapter, "status" | "statusLabel" | "redo">): { label: string; tone: "warning" | "danger" | "muted" } | null {
-  if (chapter.statusLabel === "Mất file audio") return { label: chapter.statusLabel, tone: "warning" }; // soát UX a6 01-10: cùng màu cam với đầu trang
+  if (chapter.statusLabel === S.s_mat_file_audio_b2b0802b) return { label: chapter.statusLabel, tone: "warning" }; // soát UX a6 01-10: cùng màu cam với đầu trang
   if (chapter.status === "completed" && !chapter.redo) return null;
   if (chapter.status === "pending" || chapter.status === "analyzed" || chapter.status === "synthesizing" || chapter.status === "verifying") return null;
   return { label: chapter.statusLabel, tone: chapter.status === "failed" ? "danger" : chapter.status === "warning" ? "warning" : "muted" };
@@ -905,11 +867,11 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
   const retake = useMutation({
     mutationFn: () => api<{ lines: number }>(`/api/books/${book.id}/chapters/${chapter.id}/retake`, { method: "POST" }),
     onSuccess: ({ lines }) => {
-      toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`);
+      toast.success(S.s_da_ghi_thu_lai_0_cau_cua_1_4380d2b8(lines, chapter.displayTitle));
       void client.invalidateQueries({ queryKey: ["book", book.id] });
       void client.invalidateQueries({ queryKey: ["library"] });
     },
-    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_ghi_duoc_9fa87a7d, { description: error.message }),
   });
   return (
     <>
@@ -917,7 +879,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
+            aria-label={S.s_tuy_chon_0_1f5bbd67(chapter.displayTitle)}
             className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
             <MoreHorizontal className="glyph ink-end" />
@@ -927,30 +889,25 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
             {chapter.playable && (
               <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
-                <Play className="size-4" /> Nghe chương
-              </DropdownMenu.Item>
+                <Play className="size-4" />{S.s_nghe_chuong_a61f17fb}</DropdownMenu.Item>
             )}
             <DropdownMenu.Item
               onSelect={() => setParams({ tab: "script", chapter: String(chapter.id) })}
               className={MENU_ITEM}
             >
-              <BookOpenText className="size-4" /> Kịch bản chương này
-            </DropdownMenu.Item>
+              <BookOpenText className="size-4" />{S.s_kich_ban_chuong_nay_ea890099}</DropdownMenu.Item>
             {recorded > 0 && (
               <>
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
                 <DropdownMenu.Item onSelect={() => setConfirm(true)} className={MENU_ITEM}>
-                  <RefreshCw className="size-4" /> Thu lại cả chương
-                </DropdownMenu.Item>
+                  <RefreshCw className="size-4" />{S.s_thu_lai_ca_chuong_d415ce8c}</DropdownMenu.Item>
               </>
             )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setConfirm(false)}>
-            Thôi
-          </Button>
+          <Button variant="ghost" onClick={() => setConfirm(false)}>{S.s_thoi_e68f9e88}</Button>
           <Button
             variant="primary"
             icon={RefreshCw}
@@ -959,17 +916,15 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
               setConfirm(false);
               retake.mutate();
             }}
-          >
-            Thu lại {recorded} câu
-          </Button>
+          >{S.s_thu_lai_bceb80c2}{recorded}{S.s_cau_b07e1008}</Button>
         </DialogActions>}
         open={confirm}
         onOpenChange={setConfirm}
-        title={`Thu lại cả ${chapter.displayTitle}?`}
-        description={`Thu lại ${recorded} câu; giọng giữ nguyên, cách nói đổi.`}
+        title={S.s_thu_lai_ca_0_8a3b8fe9(chapter.displayTitle)}
+        description={S.s_thu_lai_0_cau_giong_giu_nguyen_cach_noi_do_3e72c667(recorded)}
       >
-        <Button variant="ghost" onClick={() => { setConfirm(false); setParams({ tab: "script", chapter: String(chapter.id) }); }}>Sửa chữ</Button>
-        <MoreInfo label="Thu lại chương">Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được.</MoreInfo>
+        <Button variant="ghost" onClick={() => { setConfirm(false); setParams({ tab: "script", chapter: String(chapter.id) }); }}>{S.s_sua_chu_53abcaeb}</Button>
+        <MoreInfo label={S.s_thu_lai_chuong_c286c5e4}>{S.s_dung_hat_giong_moi_cho_ca_chuong_sai_nguoi_a37ff623}</MoreInfo>
 
       </Dialog>
     </>
@@ -1004,7 +959,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
           <button
             type="button"
             onClick={onPlay}
-            aria-label={current && player.playing ? `Tạm dừng ${chapter.displayTitle}` : `Nghe ${chapter.displayTitle}`}
+            aria-label={current && player.playing ? S.s_tam_dung_0_43ccbbf2(chapter.displayTitle) : S.s_nghe_0_42d1e966(chapter.displayTitle)}
             className="touch-hit relative -ml-[9px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[9px] text-fg-2 hover:bg-panel hover:text-fg"
           >
             {/* Mực của Play / Pause bắt đầu 3,5 px trong ô 14 px: đặt ở 5,5 px để mực đứng đúng chỗ chữ số (đệm 9 px). */}
@@ -1034,10 +989,10 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       </div>
       <div role="cell">
         {working ? (
-          <div className="flex items-baseline gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
-            <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
+          <div className="flex items-baseline gap-2" title={book.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2}>
+            <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label={S.s_da_thu_am_1a6a3e8a} />
             <span className="tabular text-xs text-fg-2">
-              {book.running ? "" : "dừng ở "}
+              {book.running ? "" : S.s_dung_o_f47312a8}
               <TickingValue>{chapter.segments.finished}/{chapter.segments.total}</TickingValue>
             </span>
           </div>
@@ -1048,7 +1003,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         )}
       </div>
       <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
-        {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
+        {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? S.s_0_cau_2a1e6590(formatNumber(chapter.segments.total)) : ""}
       </div>
       <div data-motion-live role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
@@ -1074,7 +1029,7 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
     // Lề âm bù đệm của dòng; số chương căn trái trong ô rộng đúng số chữ số của chương cuối (nút phát lùi 9 px), "…" bù nửa nền thừa: cột
     // đầu và cột cuối thẳng mép nội dung như tab phía trên (soát 24-10). Căn giữa thì "10" lấn 3,5 px ra ngoài mép mà "1" thì không (25-10).
     <div data-list-edges="studio-chapters" className="mt-2">
-    <div ref={table} role="table" className="-mx-2" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}
+    <div ref={table} role="table" className="-mx-2" aria-label={S.s_danh_sach_chuong_7fa755f9} aria-rowcount={chapters.length + 1}
       style={{ "--chapter-number": `${String(chapters.length).length}ch` } as CSSProperties}>
       <div
         role="row"
@@ -1083,15 +1038,15 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
       >
         <span role="columnheader">
           <span aria-hidden>#</span>
-          <span className="sr-only">Số chương</span>
+          <span className="sr-only">{S.s_so_chuong_6e52dccd}</span>
         </span>
-        <span role="columnheader">Chương</span>
-        <span role="columnheader">Trạng thái</span>
+        <span role="columnheader">{S.s_chuong_2d157977}</span>
+        <span role="columnheader">{S.s_trang_thai_cb31de81}</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
-        <span role="columnheader" className="hidden text-right lg:block" title="Số phút khi chương đã có audio; chưa có thì số câu của chương">Độ dài</span>
-        <span role="columnheader" className="hidden text-right lg:block">Xong lúc</span>
+        <span role="columnheader" className="hidden text-right lg:block" title={S.s_so_phut_khi_chuong_da_co_audio_chua_co_thi_e936f4b1}>{S.s_do_dai_5e055f59}</span>
+        <span role="columnheader" className="hidden text-right lg:block">{S.s_xong_luc_e527f5af}</span>
         <span role="columnheader">
-          <span className="sr-only">Thêm</span>
+          <span className="sr-only">{S.s_them_dd92626f}</span>
         </span>
       </div>
       {/* Dự án vài nghìn chương: chỉ dựng các dòng gần màn hình (shared/Windowed). */}
@@ -1140,14 +1095,14 @@ function ActivityView({ book }: { book: BookSummary }) {
     <MotionRegion as="div" className="mt-5">
       {/* MỘT danh sách: diễn biến là mặc định, chi tiết kỹ thuật là phần mở thêm của chính nó - không tab lồng trong tab (DESIGN 6). */}
       <div className="flex items-center justify-between gap-3">
-        <MotionRegion as="span" className="text-xs text-fg-2">{data ? `${data.length} mục gần nhất` : ""}</MotionRegion>
+        <MotionRegion as="span" className="text-xs text-fg-2">{data ? S.s_0_muc_gan_nhat_fd2e30e0(data.length) : ""}</MotionRegion>
         <button
           type="button"
           aria-pressed={mode === "technical"}
           onClick={() => setMode(mode === "technical" ? "story" : "technical")}
           className="touch-row -mr-2 inline-flex items-center rounded-control px-2 text-xs font-medium text-accent-text hover:underline"
         >
-          {mode === "technical" ? "Ẩn chi tiết" : "Chi tiết kỹ thuật"}
+          {mode === "technical" ? S.s_an_chi_tiet_5df2cd32 : S.s_chi_tiet_ky_thuat_f27eb5f6}
         </button>
       </div>
       <MotionRegion motionKey={[mode, isLoading, groups.length > 0]} slideIndex={mode === "story" ? 0 : 1}>
@@ -1158,9 +1113,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           ))}
         </div>
       ) : !groups.length ? (
-        <EmptyState icon={BookOpenText} title="Chưa có gì" className="mt-4">
-          Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy.
-        </EmptyState>
+        <EmptyState icon={BookOpenText} title={S.s_chua_co_gi_adba6b1d} className="mt-4">{S.s_dien_bien_se_hien_o_day_khi_sach_bat_dau_c_7794dda1}</EmptyState>
       ) : mode === "technical" ? (
         <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
           <LogRows items={data ?? []}>
@@ -1210,14 +1163,14 @@ function LogRows<T extends { id: string | number }>({ items, children, className
 // ---- Trang -----------------------------------------------------------------------------------------------------------
 
 const TAB_LABEL: Record<string, string> = {
-  chapters: "Chương",
-  precast: "Duyệt trước khi thu",
-  work: "Việc cần duyệt",
-  script: "Kịch bản",
-  review: "Cần nghe lại",
-  cast: "Nhân vật",
-  music: "Nhạc nền",
-  activity: "Nhật ký",
+  chapters: S.s_chuong_2d157977,
+  precast: S.s_duyet_truoc_khi_thu_74c121d0,
+  work: S.s_viec_can_duyet_5c0c3ce1,
+  script: S.s_kich_ban_602e5f27,
+  review: S.s_can_nghe_lai_d651f6ab,
+  cast: S.s_nhan_vat_d4940c17,
+  music: S.s_nhac_nen_271fb292,
+  activity: S.s_nhat_ky_1e6c3c10,
 };
 
 /** Tab nằm trong "Thêm" không có nút tab riêng (aria-labelledby của Radix trỏ vào id không có): bảng tự mang tên. */
@@ -1244,7 +1197,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
   // thì chỉ số của tab ấy - "Kịch bản 4" mà 4 là việc ở tab khác thì đọc sai.
   const moreCount = (inMore ? counts[tab] : more.reduce((sum, key) => sum + (counts[key] ?? 0), 0)) || undefined;
   return (
-    <TabsList label="Mục của dự án">
+    <TabsList label={S.s_muc_cua_du_an_37a54f69}>
       {MAIN_TABS.map((key) => (
         <TabsTrigger key={key} value={key} count={counts[key]}>
           {TAB_LABEL[key]}
@@ -1261,7 +1214,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
             className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
           >
             <TabLabel count={moreCount}>
-              <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : "Thêm"}</MotionRegion>
+              <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : S.s_them_dd92626f}</MotionRegion>
             </TabLabel>
             <ChevronDown className="fold-chevron size-3.5 text-fg-3" aria-hidden />
           </button>
@@ -1283,7 +1236,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
 }
 
 /** Tab mở lối nhảy sang tab khác ("Đọc cả N câu trong Kịch bản") - nhãn nút "Về …" ở tab đích. */
-const FROM_LABEL: Record<string, string> = { work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu" };
+const FROM_LABEL: Record<string, string> = { work: S.s_viec_can_duyet_5c0c3ce1, review: S.s_can_nghe_lai_d651f6ab, precast: S.s_duyet_truoc_khi_thu_74c121d0 };
 
 export function ProjectScreen() {
   const { id } = useParams();
@@ -1336,7 +1289,7 @@ export function ProjectScreen() {
   const placeholder = (
       <div className="page-x mx-auto max-w-[1180px]">
         {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
-        <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
+        <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} />
         <div className="mt-5 flex gap-7">
           <Skeleton className="size-44 rounded-control" />
           <div className="flex-1 space-y-3 pt-4">
@@ -1353,12 +1306,10 @@ export function ProjectScreen() {
     return (
       <EmptyState
         icon={CircleAlert}
-        title="Dự án này không còn"
+        title={S.s_du_an_nay_khong_con_94194a30}
         className="mt-20"
-        action={<Button onClick={() => navigate("/studio")}>Về Studio</Button>}
-      >
-        Cuốn này đã bị xoá hoặc chuyển đi khỏi thư viện.
-      </EmptyState>
+        action={<Button onClick={() => navigate("/studio")}>{S.s_ve_studio_349a48c4}</Button>}
+      >{S.s_cuon_nay_da_bi_xoa_hoac_chuyen_di_khoi_thu_7f90453a}</EmptyState>
     );
   }
   // Chỉ khi chưa từng có bản nào của sách; đã có thì giữ trang và báo bằng dải bên dưới (bookFailure).
@@ -1366,14 +1317,12 @@ export function ProjectScreen() {
     return (
       <EmptyState
         icon={CircleAlert}
-        title="Chưa mở được sách"
+        title={S.s_chua_mo_duoc_sach_86cc68d3}
         className="mt-20"
         action={
           <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="ghost" loading={isFetching} onClick={() => void refetch()}>
-              Thử lại
-            </Button>
-            <Button onClick={() => navigate("/studio")}>Về Studio</Button>
+            <Button variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
+            <Button onClick={() => navigate("/studio")}>{S.s_ve_studio_349a48c4}</Button>
           </div>
         }
       >
@@ -1384,29 +1333,27 @@ export function ProjectScreen() {
 
   const { book, chapters } = data;
   const status = projectStatus(book);
-  // MỘT dòng cho người nghe: trạng thái · số chương · độ dài (+ việc cần để ý). Giọng kể, chất lượng, model, ngày tạo, lần nghe cuối ở "Chi tiết" trong "…" -
+  // MỘT dòng cho người nghe: trạng thái · số chương · độ dài (+ việc cần để ý). Giọng kể, chất lượng, model, ngày tạo, lần nghe cuối ở "Chi tiếtS.s_copy_3481988241fe…" -
   // dòng 12-13 mẩu từng làm đầu trang nặng, và viên trạng thái trên tiêu đề làm tiêu đề lệch 2 px giữa các trạng thái (soát 25-10).
   const meta = [
     <StatusText key="status" label={status.label} tone={status.tone} live={status.live} />,
-    book.phase !== "done" && book.chapters.total ? `${book.chapters.completed}/${book.chapters.total} chương` : `${book.chapters.total} chương`,
+    book.phase !== "done" && book.chapters.total ? S.s_0_1_chuong_8d58e1df(book.chapters.completed, book.chapters.total) : S.s_0_chuong_04093412(book.chapters.total),
     book.audioSeconds > 0 && formatLength(book.audioSeconds),
-    book.chapters.missingAudio ? <span key="missing" className="font-medium text-warning">{book.chapters.missingAudio} chương mất file audio</span> : false,
-    book.chapters.redo ? `${book.chapters.redo} chương chờ thu lại` : false,
+    book.chapters.missingAudio ? <span key="missing" className="font-medium text-warning">{book.chapters.missingAudio}{S.s_chuong_mat_file_audio_3ef5ceaf}</span> : false,
+    book.chapters.redo ? S.s_0_chuong_cho_thu_lai_043b38de(book.chapters.redo) : false,
   ];
 
   return (
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên dự án nằm cạnh bìa bên dưới. */}
-      <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
+      <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} />
       {failure === "stale" && !isListenOnly(error) && (
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
-            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại`}
+            {isOffline(error) ? S.s_mat_ket_noi_toi_abook_dang_thu_lai_3ea0ae2f : S.s_chua_tai_lai_duoc_sach_0_dang_thu_lai_cf6589ed(failureText(error))}
           </span>
-          <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>
-            Thử lại
-          </Button>
+          <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
         </div>
       )}
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
@@ -1437,9 +1384,7 @@ export function ProjectScreen() {
       {sideError && failure !== "stale" && (
         <div role="status" className="mt-4 flex gap-2 py-3 text-sm">
           <CircleAlert className="mt-line-icon size-4 shrink-0 text-warning" />
-          <span className="text-pretty">
-            Chưa tải được {sideError}; tự thử lại, hoặc làm mới trang.
-          </span>
+          <span className="text-pretty">{S.s_chua_tai_duoc_d5533c6e}{sideError}{S.s_tu_thu_lai_hoac_lam_moi_trang_6d8c2223}</span>
         </div>
       )}
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
@@ -1453,8 +1398,7 @@ export function ProjectScreen() {
         <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-            <ArrowLeft className="ink-start size-4" /> Về màn trước
-          </button>
+            <ArrowLeft className="ink-start size-4" />{S.s_ve_man_truoc_3be95078}</button>
         )}
         <TabsContent value="chapters">
           <ChapterList book={book} chapters={chapters} />
@@ -1488,7 +1432,7 @@ export function ProjectScreen() {
               }
             />
           ) : (
-            <p className="mt-6 text-sm text-fg-2">Màn duyệt mở được khi máy đã phân tích xong và phân vai.</p>
+            <p className="mt-6 text-sm text-fg-2">{S.s_man_duyet_mo_duoc_khi_may_da_phan_tich_xon_1220ed63}</p>
           )}
         </TabsContent>
         <TabsContent value="work">
@@ -1532,7 +1476,7 @@ export function ProjectScreen() {
           <CastList
             bookId={book.id}
             onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
-            onPickNarrator={book.castLocked ? () => setPicking({ name: "NARRATOR", displayName: "người kể" }) : undefined}
+            onPickNarrator={book.castLocked ? () => setPicking({ name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62 }) : undefined}
             onMerge={setMerging}
             onUnmerge={(person) => unmerge.mutate(person)}
             onRename={setRenaming}
@@ -1542,7 +1486,7 @@ export function ProjectScreen() {
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>
         <TabsContent value="music">
-          <MusicTab bookId={book.id} chapterTitle={(id) => chapters.find((chapter) => chapter.id === id)?.fullTitle ?? `Chương ${id}`} />
+          <MusicTab bookId={book.id} chapterTitle={(id) => chapters.find((chapter) => chapter.id === id)?.fullTitle ?? S.s_chuong_0_268b0521(id)} />
         </TabsContent>
         <TabsContent value="activity" {...moreTabName("activity")}>
           <ActivityView book={book} />

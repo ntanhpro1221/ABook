@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import android.app.ActivityManager
 import android.content.Context
 import org.json.JSONObject
@@ -28,7 +30,7 @@ import java.util.zip.ZipFile
 object VieneuVoices {
     const val PREFIX = "vieneu"
     /** The paragraph the self-benchmark reads (same as the desktop's `vieneu.BENCH_TEXT`). */
-    const val BENCH_TEXT = "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Trời hôm nay đẹp quá."
+    const val BENCH_TEXT = S.s_chiec_thuyen_nho_troi_cham_giua_dong_song_91287cbd
 
     @Volatile private var context: Context? = null
     @Volatile private var module: VieneuModule? = null
@@ -72,7 +74,7 @@ object VieneuVoices {
         presetsOf?.takeIf { it.first == key }?.let { return@synchronized it.second }
         val found = ZipFile(installed.voices).use { wheel ->
             VieneuPresets.TIERS.filter { (it == "turbo" && installed.turbo != null) || (it == "nano" && installed.nano != null) }.associateWith { tier ->
-                val entry = wheel.getEntry(VieneuModule.VOICE_MEMBERS.getValue(tier)) ?: throw IllegalStateException("thiếu danh sách giọng $tier")
+                val entry = wheel.getEntry(VieneuModule.VOICE_MEMBERS.getValue(tier)) ?: throw IllegalStateException(S.s_thieu_danh_sach_giong_0_6cd414e9(tier))
                 VieneuPresets.read(JSONObject(wheel.getInputStream(entry).use { String(it.readBytes(), Charsets.UTF_8) }))
             }
         }
@@ -99,11 +101,11 @@ object VieneuVoices {
 
     @Synchronized
     private fun ready(tier: String, name: String?): Ready {
-        val ctx = context ?: throw VoiceException("Chưa khởi động", reason = "voice")
+        val ctx = context ?: throw VoiceException(S.s_chua_khoi_dong_87924fec, reason = "voice")
         val owner = module(ctx)
-        val installed = owner.installed() ?: throw VoiceException("Giọng VieNeu chưa tải trên điện thoại này - tải trong Cài đặt → Giọng đọc.", reason = "voice")
-        val list = presets(installed)[tier] ?: throw VoiceException("Giọng VieNeu này chưa tải trên điện thoại này.", reason = "voice")
-        val preset = (if (name == null) list.firstOrNull() else list.firstOrNull { it.name == name }) ?: throw VoiceException("Không có giọng VieNeu này.", reason = "voice")
+        val installed = owner.installed() ?: throw VoiceException(S.s_giong_vieneu_chua_tai_tren_dien_thoai_nay_205cd987, reason = "voice")
+        val list = presets(installed)[tier] ?: throw VoiceException(S.s_giong_vieneu_nay_chua_tai_tren_dien_thoai_c8e739a3, reason = "voice")
+        val preset = (if (name == null) list.firstOrNull() else list.firstOrNull { it.name == name }) ?: throw VoiceException(S.s_khong_co_giong_vieneu_nay_f36b9deb, reason = "voice")
         try {
             OrtRuntime.load(owner.ortFolder())
             val reader = SeaG2p.shared(installed.g2pLibrary, installed.dictionary)
@@ -124,7 +126,7 @@ object VieneuVoices {
             return Ready(tier, loaded, reader, preset)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
-            throw VoiceException("Giọng VieNeu chưa sẵn sàng — bạn tải lại trong Cài đặt.", cause = failure, reason = "voice")
+            throw VoiceException(S.s_giong_vieneu_chua_san_sang_ban_tai_lai_tro_8725eb7d, cause = failure, reason = "voice")
         }
     }
 
@@ -143,13 +145,13 @@ object VieneuVoices {
         val live = LocalLive.here(out) { VieneuUnits.units(text, VieneuSpeaker.MAX_CHARS.getValue(tier), origin, readings) } // the paragraph the listener waits for: unit by unit
         return try {
             val spoken = VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings, live)
-            if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
+            if (spoken.samples.isEmpty()) throw VoiceException(S.s_doan_nay_khong_co_chu_nao_doc_duoc_6aa822e0, reason = "empty")
             val final = ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
             if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
             Clip(out, spoken.durationMs, spoken.words, id)
         } catch (failure: OutOfMemoryError) {
             forget()
-            VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice").let {
+            VoiceException(S.s_dien_thoai_khong_du_bo_nho_cho_giong_viene_9546b51e, cause = failure, reason = "voice").let {
                 live?.failed(it)
                 throw it
             }
@@ -169,7 +171,7 @@ object VieneuVoices {
         val began = System.nanoTime()
         val ready = ready(tier, null)
         val speaker = VieneuSpeaker(ready.g2p::phonemize)
-        speaker.speak(tier, ready.engine, ready.preset.name, ready.preset, "Xin chào.")
+        speaker.speak(tier, ready.engine, ready.preset.name, ready.preset, S.s_xin_chao_0dcb19e7)
         val loaded = System.nanoTime()
         val spoken = speaker.speak(tier, ready.engine, ready.preset.name, ready.preset, BENCH_TEXT)
         VoiceModule.Benchmark.of(began, loaded, System.nanoTime(), spoken.samples.size, spoken.rate)

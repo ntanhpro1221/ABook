@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -124,7 +126,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
     } else {
         val byChapter = view.scenes.groupBy { it.chapterId }
         items(byChapter.entries.toList(), key = { "music_chapter_${it.key}" }, contentType = { "music_chapter" }) { (chapterId, scenes) ->
-            val title = chapters.firstOrNull { it.id == chapterId }?.title ?: "Chương $chapterId"
+            val title = chapters.firstOrNull { it.id == chapterId }?.title ?: S.s_chuong_0_268b0521(chapterId)
             Fold(title, "studio_music_chapter_$chapterId", Modifier.then(slide).padding(top = Dim.s12), summary = StudioMusicText.sceneCount(scenes.size)) {
                 scenes.forEachIndexed { index, scene -> SceneRow(music, view, scenes, index, data.clip, sheets) }
             }
@@ -196,7 +198,7 @@ private fun LevelSheet(music: StudioMusicState, view: MusicView, dismiss: () -> 
 private fun RebuildSheet(music: StudioMusicState, dismiss: () -> Unit) {
     ConfirmPage(StudioMusicText.REBUILD_TITLE, "studio_music_rebuild_sheet", listOf(StudioMusicText.REBUILD_LINE), "") {
         PrimaryButton(StudioMusicText.REBUILD, { dismiss(); music.rebuild() }, Modifier.fillMaxWidth().testTag("studio_music_rebuild_confirm"))
-        QuietButton("Để sau", dismiss, "studio_music_rebuild_later")
+        QuietButton(S.s_de_sau_9be0a7ab, dismiss, "studio_music_rebuild_later")
     }
 }
 
@@ -249,7 +251,7 @@ private fun SceneMenu(music: StudioMusicState, view: MusicView, scene: MusicScen
         scene.link?.let { link ->
             val used = MusicLogic.usedIn(view, link)
             MenuRow(
-                StudioMusicText.BAN, "studio_scene_ban", danger = true, hint = "Đang dùng ở $used đoạn",
+                StudioMusicText.BAN, "studio_scene_ban", danger = true, hint = S.s_dang_dung_o_0_doan_edcc42bb(used),
                 onClick = { dismiss(); music.change(MusicLogic.ban(link)) },
             ) { }
         }

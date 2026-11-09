@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -10,7 +11,7 @@ Item {
     anchors.fill: parent
     property var store: null
     property bool local: true                  // false: Studio của máy tính khác
-    property string computer: "máy tính"
+    property string computer: S.s_may_tinh_8eafc226
     property int next: 0                       // số chương mới của truyện gốc (useContinuation)
     signal listenRequested(string id)
     signal newProjectRequested(string mode, string id)
@@ -67,15 +68,15 @@ Item {
         const title = book.title || ""
         if (kind === "delete") {
             const busy = Boolean(book.running || book.starting)
-            confirm.title = "Xoá dự án “" + title + "”?"
+            confirm.title = S.s_xoa_du_an_eb3cb62d + title + "”?"
             confirm.description = Logic.deleteDescription()
-            confirm.lines = (book.path && local ? [{text: book.path, tone: "muted"}] : []).concat(busy ? [{text: "Sách đang chạy - dừng sách trước rồi mới xoá được.", tone: "warning"}] : [])
-            confirm.actions = [{key: "later", text: "Để sau"}, {key: "go", text: "Chuyển vào Thùng rác", icon: "trash-2", kind: "danger", enabled: !busy, busy: false}]
+            confirm.lines = (book.path && local ? [{text: book.path, tone: "muted"}] : []).concat(busy ? [{text: S.s_sach_dang_chay_dung_sach_truoc_roi_moi_xoa_a7d1bac1, tone: "warning"}] : [])
+            confirm.actions = [{key: "later", text: S.s_de_sau_9be0a7ab}, {key: "go", text: S.s_chuyen_vao_thung_rac_8fdb5a40, icon: "trash-2", kind: "danger", enabled: !busy, busy: false}]
         } else if (kind === "restore") {
-            confirm.title = "Khôi phục “" + title + "” từ bản sao cũ?"
-            confirm.description = "Việc làm sau lần nâng cấp phải làm lại; chương đã thu và bản hỏng vẫn được giữ."
+            confirm.title = S.s_khoi_phuc_7d0d586f + title + S.s_tu_ban_sao_cu_d3db1729
+            confirm.description = S.s_viec_lam_sau_lan_nang_cap_phai_lam_lai_chu_7773cc03
             confirm.lines = []
-            confirm.actions = [{key: "later", text: "Để sau"}, {key: "go", text: "Khôi phục", icon: "history", kind: "primary"}]
+            confirm.actions = [{key: "later", text: S.s_de_sau_9be0a7ab}, {key: "go", text: S.s_khoi_phuc_c652d9c0, icon: "history", kind: "primary"}]
         } else if (kind === "stop") {
             const inAnalysis = book.phase === "analysis"
             const warning = Logic.stopWarning(book)
@@ -83,25 +84,25 @@ Item {
             confirm.description = Logic.stopDescription(book)
             confirm.warn = Boolean(warning)
             confirm.lines = warning ? [{text: warning.fact, tone: "bold"}, {text: warning.advice, tone: "muted"}] : []
-            const actions = [{key: "later", text: book.paused ? "Để nguyên" : "Để chạy tiếp"}]
-            if (inAnalysis && !book.paused && book.canPause) actions.push({key: "pause", text: "Tạm dừng", icon: "pause", kind: "primary"})
-            actions.push({key: "go", text: inAnalysis ? "Vẫn dừng" : "Dừng", icon: "square", kind: "danger"})
+            const actions = [{key: "later", text: book.paused ? S.s_de_nguyen_2f029b4a : S.s_de_chay_tiep_28b8b5b6}]
+            if (inAnalysis && !book.paused && book.canPause) actions.push({key: "pause", text: S.s_tam_dung_67635815, icon: "pause", kind: "primary"})
+            actions.push({key: "go", text: inAnalysis ? S.s_van_dung_f9d19e87 : S.s_dung_11554138, icon: "square", kind: "danger"})
             confirm.actions = actions
         } else if (kind === "resume") {
             const warning = Logic.resumeWarning(book)
-            confirm.title = "Tiếp tục phân tích?"
+            confirm.title = S.s_tiep_tuc_phan_tich_6d773a52
             confirm.description = ""
             confirm.warn = true
             confirm.lines = [{text: warning.fact, tone: "bold"}, {text: warning.cost.trim()}, {text: warning.advice, tone: "muted"}]
             // Studio từ xa không tạo lại sách được: chỉ còn "Vẫn tiếp tục", và đó là nút chính
             confirm.actions = local
-                ? [{key: "later", text: "Để sau"}, {key: "go", text: "Vẫn tiếp tục", icon: "play"}, {key: "redo", text: "Phân tích lại", icon: "rotate-ccw", kind: "primary"}]
-                : [{key: "later", text: "Để sau"}, {key: "go", text: "Vẫn tiếp tục", icon: "play", kind: "primary"}]
+                ? [{key: "later", text: S.s_de_sau_9be0a7ab}, {key: "go", text: S.s_van_tiep_tuc_8ba2321f, icon: "play"}, {key: "redo", text: S.s_phan_tich_lai_745c8437, icon: "rotate-ccw", kind: "primary"}]
+                : [{key: "later", text: S.s_de_sau_9be0a7ab}, {key: "go", text: S.s_van_tiep_tuc_8ba2321f, icon: "play", kind: "primary"}]
         } else if (kind === "details") {
-            confirm.title = "Chi tiết dự án"
+            confirm.title = S.s_chi_tiet_du_an_c4b7fea0
             confirm.description = title
             confirm.lines = Logic.projectDetails(book).map(function(line) { return {text: line, tone: "muted"} })
-            confirm.actions = [{key: "later", text: "Đóng", kind: "primary"}]
+            confirm.actions = [{key: "later", text: S.s_dong_5d54c2a1, kind: "primary"}]
         }
         confirm.show()
     }

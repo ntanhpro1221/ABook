@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONArray
 import org.json.JSONObject
@@ -51,7 +53,7 @@ object History {
         return out
     }
 
-    <removed>
+    private val WEEKDAYS = arrayOf(S.s_chu_nhat_d79bedd4, S.s_thu_hai_419e6e2f, S.s_thu_ba_af3bd17a, S.s_thu_tu_c906ba01, S.s_thu_nam_196d63b5, S.s_thu_sau_d2123ee5, S.s_thu_bay_c8024d2b)
 
     private fun midnight(ms: Long, zone: TimeZone): Long = Calendar.getInstance(zone).apply {
         timeInMillis = ms
@@ -65,8 +67,8 @@ object History {
     fun dayLabel(epochSeconds: Double, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): String {
         val then = (epochSeconds * 1000).toLong()
         val days = Math.round((midnight(nowMs, zone) - midnight(then, zone)) / 86_400_000.0).toInt()
-        if (days == 0) return "Hôm nay"
-        if (days == 1) return "Hôm qua"
+        if (days == 0) return S.s_hom_nay_e6747a82
+        if (days == 1) return S.s_hom_qua_89bca9be
         val date = Calendar.getInstance(zone).apply { timeInMillis = then }
         return "${WEEKDAYS[date.get(Calendar.DAY_OF_WEEK) - 1]}, ${date.get(Calendar.DAY_OF_MONTH)}/${date.get(Calendar.MONTH) + 1}"
     }
@@ -89,20 +91,20 @@ object History {
 
     /** Dòng phụ: "Chương 3 0:12 → Chương 4 1:05"; chương đã gỡ khỏi sách thì "chương đã gỡ". */
     fun route(session: ListenSession, titleOf: (Int) -> String?): String {
-        val from = titleOf(session.fromChapter) ?: "chương đã gỡ"
-        val to = titleOf(session.toChapter) ?: "chương đã gỡ"
+        val from = titleOf(session.fromChapter) ?: S.s_chuong_da_go_d391d2d1
+        val to = titleOf(session.toChapter) ?: S.s_chuong_da_go_d391d2d1
         return "$from ${Fmt.clock(session.fromSeconds)} → $to ${Fmt.clock(session.toSeconds)}"
     }
 
     /** Nút của một lượt: nghe tiếp từ CUỐI lượt ấy. */
-    fun resumeLabel(session: ListenSession): String = "Nghe tiếp từ ${Fmt.clock(session.toSeconds)}"
+    fun resumeLabel(session: ListenSession): String = S.s_nghe_tiep_tu_0_e930b100(Fmt.clock(session.toSeconds))
 
     /** Tổng thời gian nghe trong 7 ngày qua. */
     fun weekListened(sessions: List<ListenSession>, nowMs: Long = System.currentTimeMillis()): Double =
         sessions.filter { nowMs / 1000.0 - it.startedAt < 7 * 86_400 }.sumOf { it.listened }
 
     /** "7 ngày qua: 2 giờ nghe cuốn này." */
-    fun weekLine(seconds: Double): String = "7 ngày qua: ${Fmt.length(seconds)} nghe cuốn này."
+    fun weekLine(seconds: Double): String = S.s_7_ngay_qua_0_nghe_cuon_nay_291dfcc3(Fmt.length(seconds))
 
     /** Lượt mới nhất trước, gom theo ngày (thứ tự nhóm = thứ tự lần đầu gặp, tức ngày mới nhất trước). */
     fun byDay(sessions: List<ListenSession>, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): List<SessionDay> {
@@ -112,7 +114,7 @@ object History {
     }
 
     /** "3 lượt nghe". */
-    fun daySummary(day: SessionDay): String = "${day.sessions.size} lượt nghe"
+    fun daySummary(day: SessionDay): String = S.s_0_luot_nghe_6788e770(day.sessions.size)
 }
 
 // ---- hồ sơ nghe -------------------------------------------------------------------------------------------------------
@@ -139,41 +141,41 @@ object Records {
     }
 
     /** Tên gợi ý khi nghe lại từ đầu bằng hồ sơ mới: "Lần nghe 2". */
-    fun suggestedName(count: Int): String = "Lần nghe ${count + 1}"
+    fun suggestedName(count: Int): String = S.s_lan_nghe_0_10ac9e59(count + 1)
 
     const val NAME_MAX = 60
 
     /** Dòng phụ của một hồ sơ trong bộ chọn: "nghe gần nhất hôm qua" / "chưa nghe". */
     fun lastHeard(record: ListenRecord, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): String =
-        record.updatedAt?.let { "nghe gần nhất ${History.dayLabel(it, nowMs, zone).lowercase()}" } ?: "chưa nghe"
+        record.updatedAt?.let { S.s_nghe_gan_nhat_0_3ef6d860(History.dayLabel(it, nowMs, zone).lowercase()) } ?: S.s_chua_nghe_2d5b1cbe
 
-    fun createdNote(name: String): String = "Hồ sơ mới “${name.ifBlank { "không tên" }}” - nghe từ chương đầu"
-    fun switchedNote(name: String): String = "Đang dùng hồ sơ “$name”"
-    const val RENAMED_NOTE = "Đã đổi tên hồ sơ"
-    fun deletedNote(name: String): String = "Đã xoá hồ sơ “$name”"
-    fun movedNote(name: String, toTitle: String): String = "Đã chuyển hồ sơ “$name” sang “$toTitle”"
+    fun createdNote(name: String): String = S.s_ho_so_moi_0_nghe_tu_chuong_dau_d9c8929e(name.ifBlank { S.s_khong_ten_7a5bff7f })
+    fun switchedNote(name: String): String = S.s_dang_dung_ho_so_0_59e7b339(name)
+    const val RENAMED_NOTE = S.s_da_doi_ten_ho_so_543ec6a6
+    fun deletedNote(name: String): String = S.s_da_xoa_ho_so_0_54dabd55(name)
+    fun movedNote(name: String, toTitle: String): String = S.s_da_chuyen_ho_so_0_sang_1_607c3506(name, toTitle)
 
     fun title(action: RecordAction, activeName: String): String = when (action) {
-        RecordAction.Create -> "Nghe lại từ đầu"
-        RecordAction.Rename -> "Đổi tên hồ sơ"
-        RecordAction.Move -> "Chuyển hồ sơ “$activeName” sang cuốn khác"
-        RecordAction.Delete -> "Xoá hồ sơ “$activeName”?"
+        RecordAction.Create -> S.s_nghe_lai_tu_dau_e251d632
+        RecordAction.Rename -> S.s_doi_ten_ho_so_92440dab
+        RecordAction.Move -> S.s_chuyen_ho_so_0_sang_cuon_khac_dcb9ea1a(activeName)
+        RecordAction.Delete -> S.s_xoa_ho_so_0_14007a36(activeName)
     }
 
     fun description(action: RecordAction, recordCount: Int): String? = when (action) {
-        RecordAction.Create -> "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên."
-        RecordAction.Move -> "Chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia." +
-            if (recordCount > 1) " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." else " Cuốn này sẽ như chưa nghe lần nào."
-        RecordAction.Delete -> "Chỗ nghe, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên" +
-            if (recordCount > 1) " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." else "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
+        RecordAction.Create -> S.s_ho_so_moi_nghe_tu_dau_ho_so_cu_van_giu_ngu_38f1a4a4
+        RecordAction.Move -> S.s_cho_nghe_lich_su_di_theo_ho_so_sang_cuon_k_f25e60d4 +
+            if (recordCount > 1) S.s_cuon_nay_chuyen_sang_ho_so_nghe_gan_nhat_c_93f8e93a else S.s_cuon_nay_se_nhu_chua_nghe_lan_nao_bae846d0
+        RecordAction.Delete -> S.s_cho_nghe_lich_su_cua_ho_so_nay_mat_han_tre_d2b64d84 +
+            if (recordCount > 1) S.s_cuon_chuyen_sang_ho_so_nghe_gan_nhat_con_l_8cdb3e30 else S.s_day_la_ho_so_duy_nhat_nen_cuon_se_nhu_chua_75e8b48a
         RecordAction.Rename -> null
     }
 
     fun confirmLabel(action: RecordAction): String = when (action) {
-        RecordAction.Create -> "Tạo và nghe"
-        RecordAction.Delete -> "Xoá hồ sơ"
-        RecordAction.Move -> "Chuyển"
-        RecordAction.Rename -> "Lưu"
+        RecordAction.Create -> S.s_tao_va_nghe_ee442c79
+        RecordAction.Delete -> S.s_xoa_ho_so_38a06d83
+        RecordAction.Move -> S.s_chuyen_c35a0ca1
+        RecordAction.Rename -> S.s_luu_e91f26c0
     }
 }
 
@@ -284,37 +286,37 @@ object Cast {
         return value
     }
 
-    fun voiceLine(person: CastMember): String = person.voice?.shown ?: "Chưa có giọng"
+    fun voiceLine(person: CastMember): String = person.voice?.shown ?: S.s_chua_co_giong_7ce5f4b4
 
     /** Điện thoại không có xưởng: thay đổi người nghe ghi chỉ chờ máy làm sách (PersonRow `waiting`). */
-    const val WAITING = "Đang chờ máy làm sách"
+    const val WAITING = S.s_dang_cho_may_lam_sach_bad9fc96
 
     /** "Đang chờ máy làm sách: giọng Bảo Trang · nữ" (giọng/giới người nghe đã chọn mà chưa áp). null khi không chờ gì. */
     fun pendingLine(person: CastMember): String? {
         val pending = person.pendingVoice ?: return null
-        val parts = listOfNotNull(pending.preset.takeIf { it.isNotEmpty() }?.let { "giọng ${pending.shown}" }, pending.gender.lowercase().takeIf { it.isNotEmpty() })
+        val parts = listOfNotNull(pending.preset.takeIf { it.isNotEmpty() }?.let { S.s_giong_0_e048b478(pending.shown) }, pending.gender.lowercase().takeIf { it.isNotEmpty() })
         return "$WAITING:" + if (parts.isEmpty()) "" else " ${parts.dotJoined()}"
     }
 
     /** "Đang chờ máy làm sách: gộp vào Lucien". */
-    fun mergeLine(person: CastMember): String? = person.mergedInto?.let { "$WAITING: gộp vào ${cleanName(it)}" }
+    fun mergeLine(person: CastMember): String? = person.mergedInto?.let { S.s_0_gop_vao_1_9ad33c8b(WAITING, cleanName(it)) }
 
     /** Dòng đếm câu: "12 câu · 1 phút · từ Chương 3". */
     fun countLine(person: CastMember): String {
-        val parts = StringBuilder(Fmt.number(person.lines.toLong())).append(" câu")
+        val parts = StringBuilder(Fmt.number(person.lines.toLong())).append(S.s_cau_b07e1008)
         if (person.seconds > 0) parts.append(" · ").append(Fmt.length(person.seconds))
-        if (person.firstChapter.isNotEmpty()) parts.append(" · từ ").append(person.firstChapter)
+        if (person.firstChapter.isNotEmpty()) parts.append(S.s_tu_02926cd1).append(person.firstChapter)
         return parts.toString()
     }
 
     fun narratorCountLine(narrator: Narrator): String {
-        val text = StringBuilder(Fmt.number(narrator.lines.toLong())).append(" câu dẫn truyện")
+        val text = StringBuilder(Fmt.number(narrator.lines.toLong())).append(S.s_cau_dan_truyen_f0d4156b)
         if (narrator.seconds > 0) text.append(" · ").append(Fmt.length(narrator.seconds))
-        if (narrator.redo > 0) text.append(" · ").append(Fmt.number(narrator.redo.toLong())).append(" câu chờ thu lại")
+        if (narrator.redo > 0) text.append(" · ").append(Fmt.number(narrator.redo.toLong())).append(S.s_cau_cho_thu_lai_98956e55)
         return text.toString()
     }
 
-    fun narratorName(narrator: Narrator): String = narrator.voice.ifEmpty { "Mặc định" }
+    fun narratorName(narrator: Narrator): String = narrator.voice.ifEmpty { S.s_mac_dinh_9a1af367 }
 
     /** Tên (ngắn và đầy đủ) của các chương từ đầu tới chương `until` (chưa nghe gì: tới chương đầu) - dàn chỉ lộ tới chỗ đang nghe. */
     fun reachedTitles(chapters: List<ChapterLine>, until: Int?): Set<String> {
@@ -336,8 +338,8 @@ object Cast {
         people.filter { later || reached == null || it.firstChapter.isEmpty() || it.firstChapter in reached }
 
     fun laterLabel(later: Boolean, count: Int): String {
-        val action = if (later) "Ẩn chương sau" else "Hiện chương sau"
-        return "$action · $count người"
+        val action = if (later) S.s_an_chuong_sau_97c9aacb else S.s_hien_chuong_sau_81aa431a
+        return S.s_0_1_nguoi_d781549b(action, count)
     }
 
     // ---- sửa một người (Đổi tên, Đổi giới tính, Gộp vào…) ----
@@ -346,8 +348,8 @@ object Cast {
     fun shownGender(person: CastMember?): Gender? {
         val label = person?.pendingVoice?.gender?.takeIf { it.isNotEmpty() } ?: person?.gender
         return when (label) {
-            "Nam" -> Gender.Male
-            "Nữ" -> Gender.Female
+            S.s_nam_22dd59c8 -> Gender.Male
+            S.s_nu_e15bc11c -> Gender.Female
             else -> null
         }
     }
@@ -362,8 +364,8 @@ object Cast {
     }
 
     fun mergeSummary(from: CastMember, into: CastMember): String =
-        "${Fmt.number(from.lines.toLong())} câu của ${cleanName(from.displayName)} thành của ${cleanName(into.displayName)}, đọc bằng giọng ${voiceToUse(into)}" +
-            (if (into.pendingVoice?.preset?.isNotEmpty() == true) " (giọng vừa chọn, chờ áp dụng)" else "") + "."
+        S.s_0_cau_cua_1_thanh_cua_2_doc_bang_giong_3_48264c0f(Fmt.number(from.lines.toLong()), cleanName(from.displayName), cleanName(into.displayName), voiceToUse(into)) +
+            (if (into.pendingVoice?.preset?.isNotEmpty() == true) S.s_giong_vua_chon_cho_ap_dung_23afd9d2 else "") + "."
 
     /** Khoá so sánh tên hiển thị: bỏ gạch dưới, dấu cách thừa, hoa thường (workText.ts nameKey). */
     fun nameKey(name: String): String = cleanName(name).lowercase(Locale.forLanguageTag("vi"))
@@ -379,19 +381,19 @@ object Cast {
     }
 
     fun mergeTargetLine(person: CastMember, twin: Boolean = false): String =
-        voiceToUse(person) + (if (person.pendingVoice?.preset?.isNotEmpty() == true) " (chờ áp dụng)" else "") + " · ${Fmt.number(person.lines.toLong())} câu" +
+        voiceToUse(person) + (if (person.pendingVoice?.preset?.isNotEmpty() == true) S.s_cho_ap_dung_31faa52d else "") + S.s_0_cau_d6ec72ab(Fmt.number(person.lines.toLong())) +
             (if (twin && person.firstChapter.isNotEmpty()) " · ${person.firstChapter}" else "")
 
-    fun renamedNote(shown: String, renamed: Boolean): String = if (renamed) "Đã đổi tên thành ${cleanName(shown)}" else "Đã trở về tên gốc: ${cleanName(shown)}"
-    fun genderNote(name: String, gender: Gender): String = "Đã ghi: $name là nhân vật ${gender.word}"
-    fun mergedNote(lines: Int, from: String, into: String): String = "Đã ghi: $lines câu của $from là của $into"
-    fun genderUndone(name: String): String = "Đã hoàn tác. $name trở lại như trước khi đổi giới tính."
+    fun renamedNote(shown: String, renamed: Boolean): String = if (renamed) S.s_da_doi_ten_thanh_0_2ce2cbcd(cleanName(shown)) else S.s_da_tro_ve_ten_goc_0_82af9bce(cleanName(shown))
+    fun genderNote(name: String, gender: Gender): String = S.s_da_ghi_0_la_nhan_vat_1_8cc62f3d(name, gender.word)
+    fun mergedNote(lines: Int, from: String, into: String): String = S.s_da_ghi_0_cau_cua_1_la_cua_2_099ed4e5(lines, from, into)
+    fun genderUndone(name: String): String = S.s_da_hoan_tac_0_tro_lai_nhu_truoc_khi_doi_gi_308f6f6e(name)
 
     fun genderCurrent(current: Gender?): String =
-        if (current != null) "Hiện đang là nhân vật ${current.word}." else "Máy chưa xác định được giới của người này."
+        if (current != null) S.s_hien_dang_la_nhan_vat_0_cda496a1(current.word) else S.s_may_chua_xac_dinh_duoc_gioi_cua_nguoi_nay_ea153abc
 }
 
 enum class Gender(val wire: String, val label: String, val word: String) {
-    Male("male", "Nam", "nam"),
-    Female("female", "Nữ", "nữ"),
+    Male("male", S.s_nam_22dd59c8, "nam"),
+    Female("female", S.s_nu_e15bc11c, S.s_nu_316c30fd),
 }

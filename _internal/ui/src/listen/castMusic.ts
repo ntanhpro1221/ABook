@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/shared/toast";
 import { musicEditView, musicQuery } from "./EditBook";
@@ -10,7 +11,7 @@ export async function noteCastHasNoMusic(client: QueryClient, bookId: string): P
   try {
     const view = musicEditView(await client.fetchQuery(musicQuery(bookId))); // dự án Studio trả {plan, overrides}: đưa về cùng dạng
     if (view.hasMusic && view.enabled) {
-      toast.info("Loa, TV chưa phát được nhạc nền - chỉ có giọng đọc", { id: "cast-no-music" });
+      toast.info(S.s_loa_tv_chua_phat_duoc_nhac_nen_chi_co_gion_e89e0aaf, { id: "cast-no-music" });
     }
   } catch {
     // Không đọc được nhạc của cuốn thì không có gì để báo.

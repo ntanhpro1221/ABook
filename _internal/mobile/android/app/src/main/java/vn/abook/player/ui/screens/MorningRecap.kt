@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,18 +80,18 @@ fun MorningRecap(night: NightState, books: List<ListenBook>, play: (bookId: Stri
                     BasicText(NightRecap.sessionLabel(shown.endedAt, nowMs()), style = Abook.type.label.copy(color = colors.accentText))
                     RowHint(shown.bookTitle)
                 }
-                Box(Modifier.size(Dim.touch).pressable { night.dismiss() }.semantics { contentDescription = "Ẩn thẻ này" }.testTag("recap_dismiss"), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(Dim.touch).pressable { night.dismiss() }.semantics { contentDescription = S.s_an_the_nay_820c504e }.testTag("recap_dismiss"), contentAlignment = Alignment.Center) {
                     CloseIcon(colors.text2)
                 }
             }
-            BasicText("Nghe tới đâu rồi thiếp đi?", Modifier.padding(top = Dim.s4), style = Abook.type.sectionTitle)
+            BasicText(S.s_nghe_toi_dau_roi_thiep_di_cef0e105, Modifier.padding(top = Dim.s4), style = Abook.type.sectionTitle)
             Spacer(Modifier.size(Dim.s8))
             for (marker in markers) MarkerRow(marker, lines[marker.chapterId].orEmpty()) { resume(marker.chapterId, marker.seconds) }
             Spacer(Modifier.size(Dim.s8))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
-                if (suggested != null) PrimaryButton("Nghe từ đây", { resume(suggested.chapterId, suggested.seconds) }, Modifier.weight(1f).testTag("recap_resume"))
+                if (suggested != null) PrimaryButton(S.s_nghe_tu_day_6a7ff4ab, { resume(suggested.chapterId, suggested.seconds) }, Modifier.weight(1f).testTag("recap_resume"))
                 if (lines.values.any { paragraphs -> paragraphs.any { it.timed } }) {
-                    TextAction(if (scrubbing) "Thu gọn" else "Tìm đúng câu", { scrubbing = !scrubbing }, "recap_scrub_toggle")
+                    TextAction(if (scrubbing) S.s_thu_gon_1f6bf2c3 else S.s_tim_dung_cau_4bfb13c3, { scrubbing = !scrubbing }, "recap_scrub_toggle")
                 }
             }
             Reveal(scrubbing) { Scrub(markers, lines) { chapterId, seconds -> resume(chapterId, seconds) } }
@@ -155,7 +157,7 @@ private fun Scrub(markers: List<NightMarker>, lines: Map<Int, List<ReadParagraph
         }
     }
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("recap_scrub")) {
-        BasicText("Chọn câu cuối cùng còn nhớ:", Modifier.padding(bottom = Dim.s4), style = Abook.type.caption.copy(color = colors.text2))
+        BasicText(S.s_chon_cau_cuoi_cung_con_nho_89c46fd8, Modifier.padding(bottom = Dim.s4), style = Abook.type.caption.copy(color = colors.text2))
         Column(Modifier.fillMaxWidth().heightIn(max = 320.dp).fadeEdges(scroll).verticalScroll(scroll)) {
             for ((chapterId, title, paragraphs) in groups) {
                 BasicText(title, Modifier.padding(top = Dim.s12, bottom = Dim.s4), style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))

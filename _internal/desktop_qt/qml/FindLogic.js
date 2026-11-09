@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "ImportQueue.js" as Queue
 
@@ -126,14 +127,14 @@ function count(value) { return Queue.formatNumber(value) }
 
 // Câu nói tình hình tìm kiếm (FindInBook.tsx findStatus). `progress`: {hits, total, scanned, chapters, failed, done} hay null khi chưa bắt đầu.
 function findStatus(query, progress, shown) {
-    if (!String(query).trim()) return "Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được."
-    if (!foldedQuery(query)) return "Gõ ít nhất " + MIN_QUERY + " ký tự."
-    if (!progress) return "Đang tìm…"
-    const failed = progress.failed > 0 ? " " + count(progress.failed) + " chương chưa đọc được nên chưa tìm trong đó." : ""
-    if (!progress.done) return "Đang tìm… đã xem " + count(progress.scanned) + "/" + count(progress.chapters) + " chương, thấy " + count(progress.total) + " chỗ."
-    if (progress.total === 0) return "Không thấy “" + String(query).trim() + "” trong sách." + failed
-    const more = progress.total > shown ? " Đang hiện " + count(shown) + " kết quả đầu, còn " + count(progress.total - shown) + " kết quả - gõ thêm chữ để thu hẹp." : ""
-    return count(progress.total) + " kết quả." + more + failed
+    if (!String(query).trim()) return S.s_go_chu_hay_cau_can_tim_khong_can_go_dau_ho_d1bb2734
+    if (!foldedQuery(query)) return S.s_go_it_nhat_090904c8 + MIN_QUERY + S.s_ky_tu_3eb5266e
+    if (!progress) return S.s_dang_tim_430a5477
+    const failed = progress.failed > 0 ? " " + count(progress.failed) + S.s_chuong_chua_doc_duoc_nen_chua_tim_trong_do_1040b0f3 : ""
+    if (!progress.done) return S.s_dang_tim_da_xem_8f303989 + count(progress.scanned) + "/" + count(progress.chapters) + S.s_chuong_thay_c2cdfd57 + count(progress.total) + S.s_cho_72c89a7f
+    if (progress.total === 0) return S.s_khong_thay_7dda2441 + String(query).trim() + S.s_trong_sach_cda74863 + failed
+    const more = progress.total > shown ? S.s_dang_hien_1d87dc08 + count(shown) + S.s_ket_qua_dau_con_c726021c + count(progress.total - shown) + S.s_ket_qua_go_them_chu_de_thu_hep_d6894da8 : ""
+    return count(progress.total) + S.s_ket_qua_94a063ce + more + failed
 }
 
 function escapeHtml(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }

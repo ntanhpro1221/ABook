@@ -137,8 +137,8 @@ object Diagnostics {
     internal fun logText(report: JSONObject): String {
         fun lines(key: String): List<String> = report.optJSONArray(key)?.let { array -> (0 until array.length()).map { array.optString(it) } } ?: emptyList()
         return buildString {
-            append("=== Nhật ký của ABook ===\n").append(lines("log").joinToString("\n")).append("\n\n")
-            append("=== logcat của tiến trình ===\n").append(lines("logcat").joinToString("\n")).append('\n')
+            append(S.s_nhat_ky_cua_abook_1d9d82b5).append(lines("log").joinToString("\n")).append("\n\n")
+            append(S.s_logcat_cua_tien_trinh_485ec6ff).append(lines("logcat").joinToString("\n")).append('\n')
         }
     }
 
@@ -173,7 +173,7 @@ object Diagnostics {
                 .putExtra(Intent.EXTRA_TITLE, target.name)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             send.clipData = android.content.ClipData.newUri(app.contentResolver, target.name, uri)
-            return Intent.createChooser(send, "Gửi nhật ký của ABook").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) to target
+            return Intent.createChooser(send, S.s_gui_nhat_ky_cua_abook_b435382a).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) to target
         } catch (error: Exception) {
             target.parentFile?.deleteRecursively()
             throw error
@@ -184,7 +184,7 @@ object Diagnostics {
     internal fun bundleName(now: Long): String = "abook-nhat-ky-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(now)) + ".zip"
 
     /** Cắt chuỗi dài, báo đã cắt bao nhiêu. */
-    internal fun clip(text: String, max: Int): String = if (text.length <= max) text else text.take(max) + "\n… (cắt, còn ${text.length - max} ký tự)"
+    internal fun clip(text: String, max: Int): String = if (text.length <= max) text else text.take(max) + S.s_cat_con_0_ky_tu_97edb2dc(text.length - max)
 
     internal fun iso(millis: Long, zone: TimeZone = TimeZone.getDefault()): String =
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).apply { timeZone = zone }.format(Date(millis))

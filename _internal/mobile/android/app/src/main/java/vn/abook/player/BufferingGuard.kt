@@ -33,7 +33,7 @@ internal class BufferingGuard(
     }
 
     companion object {
-        const val PLAY_FAILED = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+        const val PLAY_FAILED = S.s_chua_phat_duoc_chuong_nay_file_co_the_da_b_252bdb32
 
         /**
          * Lời báo khi chờ quá hạn, cùng câu với nguồn hỏng cùng loại: chương đọc to thì giọng ([ClipReader.NO_USABLE_VOICE], giao diện thay tên giọng); nghe thẳng từ máy khác thì hết giờ chờ máy

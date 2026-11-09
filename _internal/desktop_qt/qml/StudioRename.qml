@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -13,7 +14,7 @@ Modal {
     property bool saving: false
     property int generation: 0
     readonly property bool changed: typed.trim() !== "" && typed.trim() !== (book.title || "")
-    title: "Đổi tên sách"
+    title: S.s_doi_ten_sach_bfe95826
     description: Logic.renameDescription()
 
     function begin(target) {
@@ -39,12 +40,12 @@ Modal {
     Column {
         width: parent.width
         spacing: 6
-        Text { width: parent.width; text: "Tên sách"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+        Text { width: parent.width; text: S.s_ten_sach_d54846eb; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
         FormField {
             id: field
             objectName: "studioRenameField"
             width: parent.width
-            label: "Tên sách"
+            label: S.s_ten_sach_d54846eb
             topPadding: 8
             bottomPadding: 8
             implicitHeight: Math.max(36, contentHeight + 16)
@@ -58,8 +59,8 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "studioRenameCancel"; text: "Huỷ"; kind: "ghost"; onClicked: root.close() }
-            Button { objectName: "studioRenameSave"; text: "Đổi tên"; busy: root.saving; enabled: root.changed; onActivated: root.submit() }
+            Button { objectName: "studioRenameCancel"; text: S.s_huy_96732485; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "studioRenameSave"; text: S.s_doi_ten_a2a0dc70; busy: root.saving; enabled: root.changed; onActivated: root.submit() }
         }
     ]
 }

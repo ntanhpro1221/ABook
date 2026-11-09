@@ -140,7 +140,7 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
         AppLog.init(this)
         CrashLog.install(this)
         watchNetwork()
-        AppLog.i("App", "tiến trình khởi động (Android ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})")
+        AppLog.i("App", S.s_tien_trinh_khoi_dong_android_0_1_2_75124ad7(android.os.Build.VERSION.SDK_INT, android.os.Build.MANUFACTURER, android.os.Build.MODEL))
     }
 
     /** Đổi mạng (Wi-Fi <-> 4G, có/mất IPv6) thì kết luận "họ địa chỉ nào sống" của FastConnect hết giá trị. */

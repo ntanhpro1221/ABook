@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
@@ -31,10 +32,10 @@ export function usePrecastInvites(books: BookSummary[] | undefined) {
       }
       // Đang ở chính trang dự án ấy: dải mời trên trang đã nói, không cần thêm thông báo.
       if (pathname === `/studio/${book.id}`) continue;
-      toast(book.precast?.held ? `“${book.title}” đang chờ bạn duyệt` : `“${book.title}” đã phân tích xong`, {
+      toast(book.precast?.held ? S.s_0_dang_cho_ban_duyet_9e9c32e3(book.title) : S.s_0_da_phan_tich_xong_dc9ed54d(book.title), {
         id: `precast-${book.id}`,
         duration: 30_000,
-        action: { label: "Duyệt", onClick: () => navigate(`/studio/${book.id}?tab=precast`) },
+        action: { label: S.s_duyet_272ec77c, onClick: () => navigate(`/studio/${book.id}?tab=precast`) },
       });
     }
   }, [books, navigate, pathname]);

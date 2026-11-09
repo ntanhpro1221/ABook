@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -13,7 +14,7 @@ Popover {
         spacing: Theme.s12
         Text {
             width: parent.width
-            text: "Tốc độ đọc\u00a0·\u00a0nhớ riêng cho cuốn này"
+            text: S.s_toc_do_doc_u00a0_u00a0nho_rieng_cho_cuon_n_de460f94
             wrapMode: Text.Wrap
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
@@ -35,7 +36,7 @@ Popover {
         Text {
             objectName: "speedKeyHint"
             width: parent.width
-            text: "Phím [ và ] để giảm, tăng."
+            text: S.s_phim_va_de_giam_tang_b1dca426
             wrapMode: Text.Wrap
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption

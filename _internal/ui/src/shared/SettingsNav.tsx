@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { DisclosureRow } from "./DisclosureRow";
 // Khung Cài đặt dùng chung hai nền (chủ app 23-10: "trong setting tôi như lạc vào một cái ma trận"): trang gốc là danh sách ngắn các nhóm
 // (biểu tượng + tên + một dòng giá trị hiện tại), mỗi nhóm một màn con `/settings/<nhóm>` - route thật nên Back của điện thoại, vuốt cạnh và
@@ -16,13 +17,13 @@ export type SettingsGroupId = "voice" | "listen" | "sleep" | "look" | "devices" 
 
 /** Thứ tự = tần suất dùng: giọng đọc trước, mục kỹ thuật cuối. */
 export const SETTINGS_GROUPS: readonly { id: SettingsGroupId; label: string; icon: LucideIcon }[] = [
-  { id: "voice", label: "Giọng đọc", icon: AudioLines },
-  { id: "listen", label: "Nghe", icon: Headphones },
-  { id: "sleep", label: "Hẹn giờ ngủ", icon: MoonStar },
-  { id: "look", label: "Giao diện", icon: Palette },
-  { id: "devices", label: "Thiết bị", icon: MonitorSmartphone },
-  { id: "studio", label: "Studio", icon: Clapperboard },
-  { id: "advanced", label: "Nâng cao", icon: Wrench },
+  { id: "voice", label: S.s_giong_doc_11f2548d, icon: AudioLines },
+  { id: "listen", label: S.s_nghe_a43aafef, icon: Headphones },
+  { id: "sleep", label: S.s_hen_gio_ngu_21073488, icon: MoonStar },
+  { id: "look", label: S.s_giao_dien_0813b59e, icon: Palette },
+  { id: "devices", label: S.s_thiet_bi_eb706979, icon: MonitorSmartphone },
+  { id: "studio", label: S.s_studio_0aa91af2, icon: Clapperboard },
+  { id: "advanced", label: S.s_nang_cao_d16fca15, icon: Wrench },
 ];
 
 export function isSettingsGroup(value: string | undefined): value is SettingsGroupId {
@@ -49,7 +50,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
   const replace = current !== undefined;
   const shown = SETTINGS_GROUPS.filter((group) => rows.some((row) => row.id === group.id));
   return (
-    <nav data-list-edges="settings" aria-label="Nhóm cài đặt" className={cn("settings-nav", className)}>
+    <nav data-list-edges="settings" aria-label={S.s_nhom_cai_dat_8cf2ef86} className={cn("settings-nav", className)}>
       <AnimatedRows as="ul" className="divide-y divide-line" items={shown} keyOf={group => group.id}>{({ id, label, icon: Icon }) => {
         const summary = rows.find((row) => row.id === id)?.summary;
         return (
@@ -76,7 +77,7 @@ export function useLeaveSettingsGroup(): () => void {
 export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: boolean }) {
   const leave = useLeaveSettingsGroup();
   if (!back) return <h2 className="text-2xl font-bold tracking-tight">{groupLabel(id)}</h2>;
-  return <ScreenHeader back={{ label: "Về Cài đặt", onClick: leave }} title={groupLabel(id)} />;
+  return <ScreenHeader back={{ label: S.s_ve_cai_dat_0c328887, onClick: leave }} title={groupLabel(id)} />;
 }
 
 /** Khối phẳng trong màn con: khoảng trắng + tiêu đề nhỏ. `fold` (khoá nhớ): khối ít dùng trong một nhóm dài gập lại sau tiêu đề bấm được (a120 - chủ app: nhiều
@@ -120,7 +121,7 @@ export function SettingsRow({ label, hint, children }: { label: ReactNode; hint?
 }
 
 /** Giải thích dài mà người dùng cần biết (quyền riêng tư, an toàn dữ liệu) gập sau nút "?" - không chiếm chỗ khi không cần. */
-export function MoreInfo({ children, label = "Tìm hiểu thêm", className }: { children: ReactNode; label?: string; className?: string }) {
+export function MoreInfo({ children, label = S.s_tim_hieu_them_032fe408, className }: { children: ReactNode; label?: string; className?: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   return (

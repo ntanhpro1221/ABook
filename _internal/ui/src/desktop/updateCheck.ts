@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 /** "Kiểm tra bản mới" ở Cài đặt (vỏ Tauri: shell/src-tauri/src/main.rs `check_for_update`). Lần tự kiểm lúc mở app im lặng khi mất mạng,
  *  nên người dùng có nút kiểm lại, và nút luôn trả về một lời - kể cả khi vỏ không kịp trả lời. */
 export const UPDATE_CHECKED_EVENT = "abook-update-checked";
@@ -18,6 +19,6 @@ export interface CheckLine {
 /** Lời hiện dưới nút. `found` không cần lời (mục "bản mới đã có" hiện thay); không có sự kiện (vỏ im) là lỗi mạng. */
 export function checkLine(detail: UpdateChecked | null | undefined, current: string): CheckLine | null {
   if (detail?.state === "found") return null;
-  if (detail?.state === "latest") return { tone: "ok", text: `ABook${current ? ` ${current}` : ""} là bản mới nhất.` };
-  return { tone: "error", text: detail?.message || "Chưa thấy trả lời từ trang phát hành - bạn kiểm tra mạng rồi thử lại." };
+  if (detail?.state === "latest") return { tone: "ok", text: S.s_abook_0_la_ban_moi_nhat_a57654b0(current ? ` ${current}` : "") };
+  return { tone: "error", text: detail?.message || S.s_chua_thay_tra_loi_tu_trang_phat_hanh_ban_k_437de1e1 };
 }

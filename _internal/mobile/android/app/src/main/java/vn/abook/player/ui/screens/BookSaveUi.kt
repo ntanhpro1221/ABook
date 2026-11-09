@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -35,8 +37,8 @@ import vn.abook.player.ui.theme.Dim
 
 /** Loại file của "Lưu thành" (web: EditBook.tsx SaveAsDialog). */
 enum class SaveKind(override val key: String, override val label: String, val project: Boolean) : Choice {
-    Book("abook", "Sách nghe (.abook)", false),
-    Project("abookproj", "Dự án (.abookproj)", true),
+    Book("abook", S.s_sach_nghe_abook_cb8e508e, false),
+    Project("abookproj", S.s_du_an_abookproj_71e42c40, true),
 }
 
 /**
@@ -121,16 +123,16 @@ fun rememberBookSave(bookId: String, source: BookSource, notes: BookNotes?, done
 fun SaveAsPage(detail: BookDetail, run: BookSaveRun) {
     var kind by remember(detail.book.id) { mutableStateOf(if (detail.workshop != null) SaveKind.Project else SaveKind.Book) }
     Column(Modifier.fillMaxWidth().testTag("save_as_page")) {
-        BasicText("Lưu thành", style = Abook.type.sectionTitle)
-        RowHint("Lưu cuốn này kèm những thay đổi của bạn thành một file mới. File gốc không bị đụng tới.")
+        BasicText(S.s_luu_thanh_13374e92, style = Abook.type.sectionTitle)
+        RowHint(S.s_luu_cuon_nay_kem_nhung_thay_doi_cua_ban_th_ab80dd34)
         Spacer(Modifier.height(Dim.s8))
-        BasicText("Loại file", style = Abook.type.caption.copy(color = Abook.colors.text2))
+        BasicText(S.s_loai_file_74f0a115, style = Abook.type.caption.copy(color = Abook.colors.text2))
         ChoiceRow(SaveKind.entries, kind, { picked, _ -> kind = picked }, tag = "save_kind")
         BasicText(
             SaveText.kindNote(kind.project, detail.workshop, detail.wishes),
             style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = Dim.s8).testTag("save_kind_note"),
         )
-        PrimaryButton(if (run.busy) "Đang lưu" else "Lưu", { run.saveAs(kind) }, Modifier.fillMaxWidth().testTag("save_as_go"), enabled = !run.busy) { ink -> ExportIcon(ink) }
+        PrimaryButton(if (run.busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { run.saveAs(kind) }, Modifier.fillMaxWidth().testTag("save_as_go"), enabled = !run.busy) { ink -> ExportIcon(ink) }
         if (run.problem.isNotEmpty()) {
             BasicText(run.problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("save_problem"))
         }

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useId } from "react";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ export function AutoPickNote({ track, canOverride, onView, showNote = true }: {
   const change = useMutation({
     mutationFn: (auto: "on" | "off" | null) => api<LocalMusicView>(`/api/music/local/${localDigest(track.link)}/auto`, { method: "POST", body: { auto } }),
     onSuccess: onView,
-    onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_a6c67cde, { description: error.message }),
   });
   const note = showNote ? trackNote(track) : "";
   if (!note && !canOverride) return <MotionRegion as="span" />;

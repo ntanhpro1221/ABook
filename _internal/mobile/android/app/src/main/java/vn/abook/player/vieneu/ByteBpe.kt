@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -26,7 +28,7 @@ class ByteBpe(spec: JSONObject) {
     init {
         val model = spec.getJSONObject("model")
         val normalizer = spec.optJSONObject("normalizer")?.optString("type")
-        require(model.optString("type") == "BPE" && (normalizer == null || normalizer == "NFC")) { "tokenizer.json không phải ByteLevel-BPE + NFC như VieNeu 3.8.1" }
+        require(model.optString("type") == "BPE" && (normalizer == null || normalizer == "NFC")) { S.s_tokenizer_json_khong_phai_bytelevel_bpe_nf_008360a0 }
         val words = model.getJSONObject("vocab")
         for (key in words.keys()) vocab[key] = words.getInt(key)
         val merges = model.optJSONArray("merges") ?: JSONArray()

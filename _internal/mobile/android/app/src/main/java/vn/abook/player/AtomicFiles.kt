@@ -11,7 +11,7 @@ internal object AtomicFiles {
         if (File.separatorChar == '\\') {
             WindowsAtomicReplace.move(source, target)
         } else if (!source.renameTo(target)) {
-            throw IOException("Chưa thay được file: ${target.name}")
+            throw IOException(S.s_chua_thay_duoc_file_0_50ad2750(target.name))
         }
     }
 }

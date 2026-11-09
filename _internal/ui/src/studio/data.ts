@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "@/shared/toast";
 import {
@@ -33,14 +34,14 @@ export function phaseTone(phase: Phase, running: boolean): Tone {
 
 /** Chỗ trong hàng chờ nói bằng "còn mấy việc trước" - "thứ 6" đọc thành "thứ Sáu" (ngày trong tuần) bằng tiếng Việt (soát 25-10). `position` đếm từ 1. */
 export function queueLabel(position: number): string {
-  return position <= 1 ? "Sắp tới lượt" : `Còn ${position - 1} việc trước`;
+  return position <= 1 ? S.s_sap_toi_luot_4fcc9331 : S.s_con_0_viec_truoc_7f305d79(position - 1);
 }
 
 /** Nhãn + màu + "đang chạy" của trạng thái một dự án - MỘT nơi cho dòng thông tin đầu trang dự án và bảng dự án (soát UX a8 05-10: cùng trạng thái = cùng chữ, cùng màu). */
 export function projectStatus(book: BookSummary): { label: string; tone: Tone; live: boolean } {
   const running = book.running || book.starting;
   return {
-    label: book.queuePosition ? queueLabel(book.queuePosition) : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel,
+    label: book.queuePosition ? queueLabel(book.queuePosition) : book.starting ? S.s_dang_khoi_dong_e7a9b0e5 : book.precast?.held ? S.s_cho_ban_duyet_dd9175be : book.statusLabel,
     tone: book.queuePosition || book.paused || book.stopping ? "warning" : phaseTone(book.phase, running),
     live: running && !book.paused && !book.stopping,
   };
@@ -67,7 +68,7 @@ export function useStudioMissing(): { missing: boolean; update: boolean; repair:
   const update = Boolean(studio?.installed && studio.outdated);
   const repair = Boolean(update && studio?.damaged);
   // Tên nút dẫn tới thẻ Studio ở màn Dự án: mất file (repair) là "Sửa", bản cũ là "Cập nhật", chưa có là "Cài".
-  return { missing: Boolean(studio && (!studio.installed || studio.outdated)), update, repair, action: repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio" };
+  return { missing: Boolean(studio && (!studio.installed || studio.outdated)), update, repair, action: repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : S.s_cai_studio_5fdd3bd9 };
 }
 
 /** `live`: đang ở Studio thì tiến độ sách đang chạy cập nhật 5 giây một lần; ở nơi khác (thanh bên) thì thưa hẳn -
@@ -168,12 +169,12 @@ export function useStart() {
     onSuccess: (book, id) => {
       refresh(id);
       if (book.queuePosition) {
-        toast("Đã xếp hàng - tự bắt đầu khi cuốn đang chạy xong (cần mở app)");
+        toast(S.s_da_xep_hang_tu_bat_dau_khi_cuon_dang_chay_02a64243);
         return;
       }
-      toast.success("Đang khởi động");
+      toast.success(S.s_dang_khoi_dong_e7a9b0e5);
     },
-    onError: (error: Error) => toast.error("Chưa bắt đầu được", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bat_dau_duoc_99e21669, { description: error.message }),
   });
 }
 
@@ -188,12 +189,12 @@ export function useStop() {
       api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
     onSuccess: (book, { paused }) => {
       adopt(book);
-      toast(paused ? "Đang dừng hẳn - mọi thứ đã xong được giữ nguyên" : "Sẽ dừng ở chỗ an toàn kế tiếp - mọi thứ đã xong được giữ nguyên");
+      toast(paused ? S.s_dang_dung_han_moi_thu_da_xong_duoc_giu_ngu_2ae6d285 : S.s_se_dung_o_cho_an_toan_ke_tiep_moi_thu_da_x_f2b7fc37);
     },
     // Sách đã tự dừng / tiến trình đã chết trước khi bấm: làm mới để nút đổi sang trạng thái thật.
     onError: (error: Error, { id }) => {
       refresh(id);
-      toast.error("Chưa dừng được", { description: error.message });
+      toast.error(S.s_chua_dung_duoc_27687f3d, { description: error.message });
     },
   });
 }
@@ -207,11 +208,11 @@ export function useLeaveQueue() {
     mutationFn: ({ id }: { id: string }) => api<BookSummary>(`/api/books/${id}/dequeue`, { method: "POST" }),
     onSuccess: (_book, { id }) => {
       refresh(id);
-      toast("Đã bỏ xếp hàng - cuốn này không tự bắt đầu nữa");
+      toast(S.s_da_bo_xep_hang_cuon_nay_khong_tu_bat_dau_n_f9ec176f);
     },
     onError: (error: Error, { id }) => {
       refresh(id);
-      toast.error("Chưa bỏ xếp hàng được", { description: error.message });
+      toast.error(S.s_chua_bo_xep_hang_duoc_48e75172, { description: error.message });
     },
   });
 }
@@ -232,7 +233,7 @@ export function usePause() {
     },
     onError: (error: Error, { id, paused }) => {
       refresh(id);
-      toast.error(paused ? "Chưa tạm dừng được" : "Chưa làm tiếp được", { description: error.message });
+      toast.error(paused ? S.s_chua_tam_dung_duoc_18ca46fa : S.s_chua_lam_tiep_duoc_9c01f548, { description: error.message });
     },
   });
 }
@@ -240,7 +241,7 @@ export function usePause() {
 export function useReveal() {
   return useMutation({
     mutationFn: (id: string) => api(`/api/books/${id}/reveal`, { method: "POST" }),
-    onError: (error: Error) => toast.error("Chưa mở được thư mục", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_mo_duoc_thu_muc_481da77e, { description: error.message }),
   });
 }
 
@@ -350,7 +351,7 @@ export function usePreferences() {
     },
     // Máy chủ từ chối hay file tuỳ chọn không ghi được: nói thẳng, kèm lời máy chủ (vd. thư mục thư viện không dùng được). Màn hình chỉ báo "đã xong"
     // trong `onSuccess` của lời gọi `update` (soát a100 V3), nên lời báo này không đi cùng một lời báo thành công.
-    onError: (error: Error) => toast.error("Chưa lưu được cài đặt", { id: "preferences-not-saved", description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_luu_duoc_cai_dat_4c95a228, { id: "preferences-not-saved", description: error.message }),
   });
   return { ...query, update: mutation.mutate, updating: mutation.isPending };
 }

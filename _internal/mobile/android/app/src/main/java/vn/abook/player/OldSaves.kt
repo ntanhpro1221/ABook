@@ -21,9 +21,9 @@ object OldSaves {
 
     /** File tên `name` của thư mục. Tên có dấu gạch chéo, là `..`, rỗng, hay không phải file có sẵn thì bị từ chối - không thoát ra ngoài thư mục (tên có "..." giữa chừng, vd tựa sách, vẫn là tên thường). */
     fun resolve(dir: File, name: String): File {
-        require(name.isNotBlank() && name == name.trim() && '/' !in name && '\\' !in name && name != "." && name != ".." && '\u0000' !in name) { "Tên bản lưu cũ không hợp lệ" }
+        require(name.isNotBlank() && name == name.trim() && '/' !in name && '\\' !in name && name != "." && name != ".." && '\u0000' !in name) { S.s_ten_ban_luu_cu_khong_hop_le_013feb76 }
         val file = File(dir, name)
-        require(file.isFile && file.canonicalFile.parentFile == dir.canonicalFile) { "Không thấy bản lưu cũ này" }
+        require(file.isFile && file.canonicalFile.parentFile == dir.canonicalFile) { S.s_khong_thay_ban_luu_cu_nay_059c824b }
         return file
     }
 

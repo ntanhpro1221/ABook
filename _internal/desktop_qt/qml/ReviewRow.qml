@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ReviewLogic.js" as R
@@ -79,7 +80,7 @@ Item {
         height: 40
         ringRadius: 20
         Accessible.role: Accessible.Button
-        Accessible.name: root.playing ? "Dừng" : "Nghe câu: " + (root.item.text || "")
+        Accessible.name: root.playing ? S.s_dung_11554138 : S.s_nghe_cau_22ae467f + (root.item.text || "")
         onClicked: if (root.source) Clip.toggle(root.clipId, root.source.src, root.source.start, root.source.end)
         Rectangle {
             anchors.fill: parent
@@ -195,8 +196,8 @@ Item {
                 width: parent.width - 20
                 textFormat: Text.RichText
                 text: root.item.pendingSpoken
-                    ? "Sẽ đọc là “<span style=\"color:" + W.cssColor(Theme.text) + "\">" + W.esc(root.item.pendingSpoken) + "</span>” - " + W.esc(root.work ? root.work.pendingNote : "") + "."
-                    : "Sẽ đọc lại đúng chữ sách - " + W.esc(root.work ? root.work.pendingNote : "") + "."
+                    ? S.s_se_doc_la_span_style_color_8575fdfc + W.cssColor(Theme.text) + "\">" + W.esc(root.item.pendingSpoken) + "</span>” - " + W.esc(root.work ? root.work.pendingNote : "") + "."
+                    : S.s_se_doc_lai_dung_chu_sach_4e1424be + W.esc(root.work ? root.work.pendingNote : "") + "."
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -208,7 +209,7 @@ Item {
             width: parent.width
             topPadding: 4
             textFormat: Text.RichText
-            text: "Đang đọc là: <span style=\"color:" + W.cssColor(Theme.text) + "\">" + W.esc(root.item.spoken || "") + "</span>"
+            text: S.s_dang_doc_la_span_style_color_37cddfba + W.cssColor(Theme.text) + "\">" + W.esc(root.item.spoken || "") + "</span>"
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
@@ -249,7 +250,7 @@ Item {
                     objectName: "reviewScript"
                     visible: root.item.verdict === "redo" || root.item.kind === "failed"
                     icon: "file-text"
-                    text: "Mở Kịch bản"
+                    text: S.s_mo_kich_ban_cc97745f
                     onClicked: root.openScript(root.item.chapterId, root.item.stableId)
                 }
             }
@@ -268,7 +269,7 @@ Item {
             id: okButton
             objectName: "verdictOk"
             visible: root.source !== null
-            text: "Ổn"
+            text: S.s_on_cec6d53a
             icon: "check"
             tone: "ok"
             on: root.item.verdict === "ok"
@@ -277,7 +278,7 @@ Item {
         ReviewVerdict {
             id: redoButton
             objectName: "verdictRedo"
-            text: root.source !== null ? "Cần thu lại" : "Thu lại câu này"
+            text: root.source !== null ? S.s_can_thu_lai_540b83e3 : S.s_thu_lai_cau_nay_034c2834
             icon: "rotate-ccw"
             tone: "redo"
             on: root.item.verdict === "redo"

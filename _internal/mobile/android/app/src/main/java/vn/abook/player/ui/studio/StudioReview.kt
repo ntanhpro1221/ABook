@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import vn.abook.player.ClipSpec
@@ -130,5 +132,5 @@ object ReviewLogic {
     }
 
     /** "máy nghe lại khớp 15% với chữ của câu" - bản ngắn đứng cạnh điều máy nghe được. */
-    fun matchShort(percent: String): String = "khớp $percent"
+    fun matchShort(percent: String): String = S.s_khop_0_b5c9f23d(percent)
 }

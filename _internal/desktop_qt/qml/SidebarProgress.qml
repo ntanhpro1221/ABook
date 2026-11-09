@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PrecastLogic.js" as Precast
@@ -39,7 +40,7 @@ Item {
             Platform.setSetting("precast.invited." + book.id, String(book.precast.announcedAt))
             if (book.id === openProject) continue
             const id = book.id
-            Api.toast(Precast.inviteText(book), {duration: 30000, action: {label: "Duyệt", run: () => root.precastRequested(id)}})
+            Api.toast(Precast.inviteText(book), {duration: 30000, action: {label: S.s_duyet_272ec77c, run: () => root.precastRequested(id)}})
         }
     }
     Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.visible) store.loadLibrary() } }
@@ -47,12 +48,12 @@ Item {
         id: column; width: parent.width; spacing: Theme.s4
         Collapse {
             width: parent.width; open: store.libraryLoading
-            Text { objectName: "sidebarLoading"; width: parent.width; text: "Đang tải tiến độ"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Text { objectName: "sidebarLoading"; width: parent.width; text: S.s_dang_tai_tien_do_447cd8d8; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
         InlineError {
             objectName: "sidebarError"
             width: parent.width; open: !!store.libraryError && !store.libraryData
-            message: "Bạn hãy thử tải lại tiến độ."
+            message: S.s_ban_hay_thu_tai_lai_tien_do_9dfda88d
             onRetry: store.loadLibrary()
         }
         Repeater {
@@ -82,7 +83,7 @@ Item {
                     x: Theme.s8 + 40; y: Theme.s8 + 2; size: 12
                     opacity: row.modelData.queuePosition != null || row.modelData.paused || row.modelData.stopping ? 1 : 0
                     name: row.modelData.queuePosition != null ? "clock" : row.modelData.paused || row.modelData.stopping ? "pause" : "audio-lines"
-                    Accessible.name: row.modelData.queuePosition != null ? `Đang chờ ${row.modelData.queuePosition}` : row.modelData.stopping ? "Đang dừng" : row.modelData.paused ? "Đang tạm dừng" : ""
+                    Accessible.name: row.modelData.queuePosition != null ? S.s_dang_cho_0_e941f562(row.modelData.queuePosition) : row.modelData.stopping ? S.s_dang_dung_9b35aeb5 : row.modelData.paused ? S.s_dang_tam_dung_e40cc1b7 : ""
                     color: row.modelData.paused || row.modelData.stopping ? Theme.warning : Theme.accentText
                 }
                 Column {
@@ -95,16 +96,16 @@ Item {
                             width: parent.width - percent.width - Theme.s8; height: 3; anchors.verticalCenter: parent.verticalCenter
                             color: Theme.sunken; radius: Theme.radiusControl
                             Accessible.role: Accessible.ProgressBar
-                            Accessible.name: `Tiến độ: ${row.modelData.title}`
+                            Accessible.name: S.s_tien_do_0_bebc77d0(row.modelData.title)
                             Accessible.description: percent.text
                             Rectangle { width: parent.width * Math.max(0, Math.min(1, row.modelData.progress ? row.modelData.progress.overall : 0)); height: parent.height; radius: Theme.radiusControl; color: row.modelData.queuePosition != null ? Theme.text3 : Theme.accent }   // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
                         }
-                        ClockLabel { id: percent; text: row.modelData.queuePosition != null ? "Chờ" : row.modelData.starting ? "…" : Math.round((row.modelData.progress ? row.modelData.progress.overall : 0) * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                        ClockLabel { id: percent; text: row.modelData.queuePosition != null ? S.s_cho_8de7e9a5 : row.modelData.starting ? "…" : Math.round((row.modelData.progress ? row.modelData.progress.overall : 0) * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     }
                 }
                 }
             }
         }
-        Collapse { width: parent.width; open: root.live.length > 3; Button { objectName: "sidebarAll"; width: parent.width; wrap: true; kind: "ghost"; text: "Xem tất cả"; onClicked: root.allRequested() } }
+        Collapse { width: parent.width; open: root.live.length > 3; Button { objectName: "sidebarAll"; width: parent.width; wrap: true; kind: "ghost"; text: S.s_xem_tat_ca_44aeb8cb; onClicked: root.allRequested() } }
     }
 }

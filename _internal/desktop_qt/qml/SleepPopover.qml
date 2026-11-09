@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -17,7 +18,7 @@ Popover {
         spacing: Theme.s12
         Collapse {
             width: parent.width; open: Player.sleepKind === "off"
-            Text { width: parent.width; text: "Dừng phát sau"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: S.s_dung_phat_sau_41477737; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
         }
         // Đang hẹn: dòng nhỏ "Tắt sau" / "Dừng khi" trên đồng hồ đếm lùi lớn (như web SleepPicker).
         Collapse {
@@ -25,7 +26,7 @@ Popover {
             Text {
                 objectName: "sleepCaption"
                 width: parent.width
-                text: Player.sleepKind === "chapter" ? "Dừng khi" : "Tắt sau"
+                text: Player.sleepKind === "chapter" ? S.s_dung_khi_f05a4cb5 : S.s_tat_sau_8d10e047
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -34,7 +35,7 @@ Popover {
             Text {
                 objectName: "sleepCountdown"
                 width: parent.width
-                text: Player.sleepKind === "chapter" ? "hết chương này" : Player.clockText(Player.clock.sleepLeft)
+                text: Player.sleepKind === "chapter" ? S.s_het_chuong_nay_8ccc288f : Player.clockText(Player.clock.sleepLeft)
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeTitlePhone
@@ -44,23 +45,23 @@ Popover {
         }
         Collapse {
             width: parent.width; open: Player.sleepKind === "minutes" && !Player.playing
-            Text { width: parent.width; text: "Đang tạm dừng - đồng hồ cũng dừng."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; text: S.s_dang_tam_dung_dong_ho_cung_dung_474889f9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
         }
         Text {
             visible: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
             width: parent.width
-            text: "Hẹn giờ đã tắt tiếng lúc " + Player.sleepStoppedText + "."
+            text: S.s_hen_gio_da_tat_tieng_luc_5d5e4231 + Player.sleepStoppedText + "."
             color: Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
         }
         Collapse {
             width: parent.width; open: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
-            Button { objectName: "sleepRestart"; text: "Bật lại " + Player.lastSleepMinutes + " phút"; kind: "ghost"; onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
+            Button { objectName: "sleepRestart"; text: S.s_bat_lai_0bad8bcf + Player.lastSleepMinutes + S.s_phut_cf728a6a; kind: "ghost"; onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"
-            Text { text: "Đặt lại"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Text { text: S.s_dat_lai_51a46825; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
         Flow {
             width: parent.width
@@ -70,7 +71,7 @@ Popover {
                 ChoiceChip {
                     required property var modelData
                     objectName: "sleepChoice_" + modelData
-                    text: modelData + " phút"
+                    text: modelData + S.s_phut_cf728a6a
                     selected: Player.sleepKind === "minutes" && Player.sleepMinutes === modelData
                     onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", modelData); root.close() }
                 }
@@ -80,7 +81,7 @@ Popover {
             objectName: "sleepChapter"
             fullWidthReason: "Single-column menu (DESIGN 6)"
             width: parent.width
-            text: "Hết chương này"
+            text: S.s_het_chuong_nay_918907cf
             selected: Player.sleepKind === "chapter"
             onClicked: { Feedback.play("toggle"); Player.setSleep("chapter"); root.close() }
         }
@@ -91,21 +92,21 @@ Popover {
             Button {
                 objectName: "sleepExtend"
                 kind: "text"
-                text: "Hẹn lại " + root.extendMinutes + " phút"
+                text: S.s_hen_lai_c2aae1b7 + root.extendMinutes + S.s_phut_cf728a6a
                 visible: Player.sleepKind === "minutes"
                 onClicked: Player.extendSleep()
             }
             Button {
                 objectName: "sleepOff"
                 kind: "text"
-                text: "Tắt hẹn giờ"
+                text: S.s_tat_hen_gio_fc8af231
                 onClicked: { Feedback.play("toggle"); Player.setSleep("off"); root.close() }
             }
             }
         }
         Text {
             width: parent.width
-            text: "Tiếng nhỏ dần " + root.fadeSeconds + " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để hẹn lại từ đầu."
+            text: S.s_tieng_nho_dan_39149d9b + root.fadeSeconds + S.s_giay_truoc_khi_dung_luc_do_cham_phim_hoac_00cc036f
             wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption
         }
     }

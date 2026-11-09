@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MyMusicText.js" as Music
@@ -32,9 +33,9 @@ Item {
         Api.call("POST", "/api/app/update", {}, function(data, error) {
             if (error) {
                 root.installing = false
-                Api.notice = Music.toast("Chưa cập nhật được", error)
+                Api.notice = Music.toast(S.s_chua_cap_nhat_duoc_1ceb4e4b, error)
             } else {
-                Api.notice = "Đang tải ABook " + root.update.version + " - app sẽ tự mở lại"
+                Api.notice = S.s_dang_tai_abook_36a50850 + root.update.version + S.s_app_se_tu_mo_lai_75d4ab5f
             }
         })
     }
@@ -74,7 +75,7 @@ Item {
                     Text {
                         width: parent.width
                         textFormat: Text.StyledText
-                        text: "<b>ABook " + (root.update ? root.update.version : "") + "</b> đã có" + (root.current ? "&nbsp;·&nbsp;đang dùng " + root.current : "")
+                        text: "<b>" + S.s_abook_0_555fc57e(root.update ? root.update.version : "") + S.s_b_da_co_beb7c8b1 + (root.current ? S.s_nbsp_nbsp_dang_dung_a1795199 + root.current : "")
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
@@ -91,7 +92,7 @@ Item {
                     }
                     Item { width: 1; height: 12 }
                     Button {
-                        text: root.installing ? "Đang tải bản mới…" : "Cập nhật ABook"
+                        text: root.installing ? S.s_dang_tai_ban_moi_2c868c00 : S.s_cap_nhat_abook_66fb9f08
                         icon: "download"; kind: "ghost"
                         enabled: !root.installing
                         onClicked: root.install()
@@ -104,7 +105,7 @@ Item {
             open: root.update === null
             SettingRow {
                 width: parent.width
-                label: root.current ? "ABook " + root.current : "Bản mới"
+                label: root.current ? S.s_abook_76b9d6fa + root.current : S.s_ban_moi_422f08ca
                 hint: root.line ? root.line.text : ""
                 hintColor: root.line && root.line.tone === "error" ? Theme.danger : Theme.text2
                 Behavior on implicitHeight { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
@@ -113,7 +114,7 @@ Item {
                     implicitHeight: checkButton.implicitHeight
                     Button {
                         id: checkButton
-                        text: root.checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"
+                        text: root.checking ? S.s_dang_kiem_tra_0726ac0c : S.s_kiem_tra_ban_moi_f66eda92
                         kind: "ghost"; size: "sm"
                         enabled: !root.checking
                         onClicked: root.check()

@@ -1,5 +1,7 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.S
+
 import java.io.File
 
 /** JNI entry points of `libabook_sea_g2p.so` (mobile/sea_g2p_jni/src/lib.rs). Loaded from the module folder, never from the APK. */
@@ -84,7 +86,7 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
             val before = chunk.split(' ').filter { it.isNotEmpty() }
             val after = normalised.split(' ').filter { it.isNotEmpty() }
             if (before.size != after.size) return normalised
-            return before.indices.joinToString(" ") { i -> if (LONE_O.matches(before[i]) && after[i].startsWith("ô")) "o" + after[i].substring(1) else after[i] }
+            return before.indices.joinToString(" ") { i -> if (LONE_O.matches(before[i]) && after[i].startsWith(S.s_o_cc912dbc)) "o" + after[i].substring(1) else after[i] }
         }
 
         private var shared: SeaG2p? = null

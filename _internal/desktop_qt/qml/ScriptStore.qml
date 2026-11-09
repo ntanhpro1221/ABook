@@ -1,6 +1,7 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
-import "ScriptLogic.js" as S
+import "ScriptLogic.js" as Script
 import "DecisionLogic.js" as D
 
 // Dữ liệu và lệnh của tab "Kịch bản" (ScriptTab.tsx): mục lục (/casting), MỘT chương (/casting/<id>), nhịp hỏi nhẹ /casting/stamp 6 giây khi tab đang
@@ -25,7 +26,7 @@ QtObject {
         store: root.store
         path: root.bookId ? root.path("/casting/stamp") : ""
         wanted: root.wanted && root.contents.data !== null
-        interval: S.STAMP_MS
+        interval: Script.STAMP_MS
         property var last: null
         onLoaded: data => {
             if (last !== null && last !== data.stamp) root.refresh()
@@ -52,7 +53,7 @@ QtObject {
     function warnElsewhere(count, was, takeTheirs) {
         const note = D.elsewhereNote(count, was)
         Api.toast(note.title + "\n" + note.description, {id: "edited-elsewhere", duration: 20000,
-            action: takeTheirs ? {label: "Lấy của máy kia", run: takeTheirs} : null})
+            action: takeTheirs ? {label: S.s_lay_cua_may_kia_37d97780, run: takeTheirs} : null})
     }
     // Bản lạc quan trên chương đang xem; trả hàm đặt lại đúng bản trước
     function optimistic(change) {
@@ -67,7 +68,7 @@ QtObject {
         const stack = undos.slice()
         while (!undone && stack.length) undone = stack.pop()()
         undos = stack
-        if (!undone) say("Không còn gì để hoàn tác")
+        if (!undone) say(S.s_khong_con_gi_de_hoan_tac_6b0854e7)
     }
     // Nút trên lời báo và Ctrl+Z dùng CHUNG một lần hoàn tác - bấm cả hai không hoàn tác hai lần
     function once(action) {
@@ -89,19 +90,19 @@ QtObject {
     // ---- gán người nói (useAssign) ----
     function assign(lines, person) {
         const value = person.value, label = person.label
-        const refs = lines.map(S.ref)
+        const refs = lines.map(Script.ref)
         const known = {}
         for (const line of lines) known[line.stableId] = line.wish ? line.wish.value : ""
         const ids = refs.map(item => item.stableId)
         const restore = optimistic(item => ids.indexOf(item.stableId) >= 0 ? Object.assign({}, item, {wish: {value: value, label: label, state: value === item.current ? "applied" : "pending"}}) : item)
         quietly("POST", "/speaker", {lines: refs, speaker: value, newGender: person.newGender || "", seen: D.seenFor(lines, known)}, function(answer, error) {
-            if (!answer) { restore(); root.sayError("Chưa ghi được người nói", error); root.refresh(); return }
+            if (!answer) { restore(); root.sayError(S.s_chua_ghi_duoc_nguoi_noi_5ef0be83, error); root.refresh(); return }
             const keep = lines.every(item => value === item.current)
-            const run = root.once(root.work.undoAction("speaker", [{lines: refs, requestedAt: answer.requestedAt, keep: keep}], S.assignBack(lines)))
+            const run = root.once(root.work.undoAction("speaker", [{lines: refs, requestedAt: answer.requestedAt, keep: keep}], Script.assignBack(lines)))
             root.push(run)
             const replaced = Object.entries(answer.elsewhere || {})
-            if (replaced.length) root.warnElsewhere(replaced.length, replaced[0][1] ? S.nameOf(root.script.data, replaced[0][1]) : "", run)
-            root.say(S.assignedText(answer.lines, label, lines[0], keep), {duration: D.UNDO_MS, action: {label: "Hoàn tác", run: run}})
+            if (replaced.length) root.warnElsewhere(replaced.length, replaced[0][1] ? Script.nameOf(root.script.data, replaced[0][1]) : "", run)
+            root.say(Script.assignedText(answer.lines, label, lines[0], keep), {duration: D.UNDO_MS, action: {label: S.s_hoan_tac_e72ff675, run: run}})
             root.refresh()
         })
     }
@@ -110,7 +111,7 @@ QtObject {
     function confirm(lines) {
         if (confirming) return
         confirming = true
-        const groups = S.confirmGroups(lines)
+        const groups = Script.confirmGroups(lines)
         const made = []
         const elsewhere = {}
         let count = 0
@@ -118,19 +119,19 @@ QtObject {
             root.confirming = false
             root.refresh()
             if (error) {
-                root.sayError("Chưa xác nhận được", count > 0 ? "Mới xác nhận được " + count + " câu, còn lại chưa ghi: " + error + ". Bạn bấm xác nhận lại - những câu đã ghi sẽ không bị làm lại." : error)
+                root.sayError(S.s_chua_xac_nhan_duoc_0804addb, count > 0 ? S.s_moi_xac_nhan_duoc_992971dc + count + S.s_cau_con_lai_chua_ghi_632b6cf5 + error + S.s_ban_bam_xac_nhan_lai_nhung_cau_da_ghi_se_k_0831b23f : error)
                 return
             }
-            const run = root.once(root.work.undoAction("speaker", made, count + " câu trở lại chờ duyệt."))
+            const run = root.once(root.work.undoAction("speaker", made, count + S.s_cau_tro_lai_cho_duyet_829b356e))
             root.push(run)
             const replaced = Object.values(elsewhere)
-            if (replaced.length) root.warnElsewhere(replaced.length, replaced[0] ? S.nameOf(root.script.data, replaced[0]) : "", run)
-            root.say("Đã xác nhận " + count + " câu là đúng", {duration: D.UNDO_MS, action: {label: "Hoàn tác", run: run}})
+            if (replaced.length) root.warnElsewhere(replaced.length, replaced[0] ? Script.nameOf(root.script.data, replaced[0]) : "", run)
+            root.say(S.s_da_xac_nhan_c0b382d5 + count + S.s_cau_la_dung_7a9d958e, {duration: D.UNDO_MS, action: {label: S.s_hoan_tac_e72ff675, run: run}})
         }
         function next(i) {
             if (i >= groups.length) { finish(""); return }
             const group = groups[i]
-            const refs = group.lines.map(S.ref)
+            const refs = group.lines.map(Script.ref)
             const seen = {}
             for (const line of group.lines) seen[line.stableId] = line.wish ? line.wish.value : ""
             root.quietly("POST", "/speaker", {speaker: group.speaker, lines: refs, seen: seen}, function(answer, error) {
@@ -159,7 +160,7 @@ QtObject {
             for (const entry of replaced) {
                 root.quietly("POST", "/review", {verdict: entry[1] || null, stableId: entry[0], chapterId: chapter}, function(done, error) {
                     if (!done && !failed) failed = error
-                    if (--left === 0) { if (failed) root.sayError("Chưa lấy lại được", failed); root.refreshBook() }
+                    if (--left === 0) { if (failed) root.sayError(S.s_chua_lay_lai_duoc_2e01d8a8, failed); root.refreshBook() }
                 })
             }
         })
@@ -171,17 +172,17 @@ QtObject {
         retaking = true
         quietly("POST", "/review", reviewBody("redo", lines), function(answer, error) {
             root.retaking = false
-            if (!answer) { restore(); root.sayError("Chưa ghi được", error); root.refreshBook(); return }
+            if (!answer) { restore(); root.sayError(S.s_chua_ghi_duoc_9fa87a7d, error); root.refreshBook(); return }
             root.warnReview(answer)
             const run = root.once({run: function() {
                 root.quietly("POST", "/review", root.reviewBody(null, lines), function(done, failure) {
-                    if (done) root.say(lines.length > 1 ? "Đã hoàn tác: " + lines.length + " câu không phải thu lại nữa" : "Đã hoàn tác: câu này không phải thu lại nữa")
-                    else root.sayError("Chưa hoàn tác được", failure)
+                    if (done) root.say(lines.length > 1 ? S.s_da_hoan_tac_733b86c1 + lines.length + S.s_cau_khong_phai_thu_lai_nua_50819817 : S.s_da_hoan_tac_cau_nay_khong_phai_thu_lai_nua_5ba9e5c0)
+                    else root.sayError(S.s_chua_hoan_tac_duoc_164b754b, failure)
                     root.refreshBook()
                 })
             }})
             root.push(run)
-            root.say(lines.length > 1 ? "Đã ghi: thu lại " + lines.length + " câu" : "Đã ghi: thu lại câu này", {duration: D.UNDO_MS, action: {label: "Hoàn tác", run: run}})
+            root.say(lines.length > 1 ? S.s_da_ghi_thu_lai_4303c66d + lines.length + S.s_cau_b07e1008 : S.s_da_ghi_thu_lai_cau_nay_9c9b1e4b, {duration: D.UNDO_MS, action: {label: S.s_hoan_tac_e72ff675, run: run}})
             root.refreshBook()
         })
     }
@@ -189,19 +190,19 @@ QtObject {
         const ids = lines.map(line => line.stableId)
         const restore = optimistic(item => ids.indexOf(item.stableId) >= 0 ? Object.assign({}, item, {retake: null, verdict: null}) : item)
         quietly("POST", "/review", reviewBody(null, lines), function(answer, error) {
-            if (!answer) { restore(); root.sayError("Chưa bỏ được", error); root.refreshBook(); return }
+            if (!answer) { restore(); root.sayError(S.s_chua_bo_duoc_638141d7, error); root.refreshBook(); return }
             root.warnReview(answer)
-            root.say("Đã bỏ yêu cầu thu lại")
+            root.say(S.s_da_bo_yeu_cau_thu_lai_c5881de5)
             root.refreshBook()
         })
     }
 
     // ---- sửa cách đọc một câu (useLineFix + postLineFix): người nói MỚI cần hai bước - /line trước, /speaker sau; bước sau hỏng thì rút bước đầu ----
     function postLineFix(line, change, done) {
-        const ref = S.ref(line)
+        const ref = Script.ref(line)
         const rest = {}
         for (const key in change) if (key !== "newGender" && key !== "speaker") rest[key] = change[key]
-        const seen = S.seenDelivery(line.lineWish)
+        const seen = Script.seenDelivery(line.lineWish)
         if (!change.newGender) {
             const body = Object.assign({}, ref, rest, change.speaker ? {speaker: change.speaker} : {}, {seen: seen})
             quietly("POST", "/line", body, done)
@@ -221,24 +222,24 @@ QtObject {
         if (change.spoken !== undefined) wish.spoken = change.spoken
         const restore = optimistic(item => item.stableId === line.stableId ? Object.assign({}, item, {lineWish: wish}) : item)
         postLineFix(line, change, function(answer, error) {
-            if (!answer) { restore(); root.sayError("Chưa ghi được", error); root.refresh(); return }
+            if (!answer) { restore(); root.sayError(S.s_chua_ghi_duoc_9fa87a7d, error); root.refresh(); return }
             const elsewhere = answer.elsewhere
             if (elsewhere) {
                 // "Lấy của máy kia": ghi lại những gì máy kia đã đặt (cách đọc câu không có Hoàn tác riêng); máy kia đã bỏ hết thì chỉ báo.
-                const theirs = S.theirDelivery(elsewhere.delivery)
-                root.warnElsewhere(1, elsewhere.delivery ? S.deliveryWords(elsewhere.delivery) : "", theirs ? function() {
+                const theirs = Script.theirDelivery(elsewhere.delivery)
+                root.warnElsewhere(1, elsewhere.delivery ? Script.deliveryWords(elsewhere.delivery) : "", theirs ? function() {
                     root.quietly("POST", "/line", Object.assign({stableId: line.stableId, textSha256: line.textSha256}, theirs), function(done, failure) {
-                        if (!done) root.sayError("Chưa lấy lại được", failure)
+                        if (!done) root.sayError(S.s_chua_lay_lai_duoc_2e01d8a8, failure)
                         root.refresh()
                     })
                 } : null)
             }
-            const ref = S.ref(line)
+            const ref = Script.ref(line)
             const steps = []
             if (answer.speakerAt) steps.push({endpoint: "speaker", decision: {lines: [ref], requestedAt: answer.speakerAt}})
             steps.push({endpoint: "line", decision: {stableId: ref.stableId, requestedAt: answer.requestedAt}})
-            const action = answer.requestedAt ? root.work.undoSteps(steps, "Câu này trở lại như trước khi sửa cách đọc.") : null
-            root.say("Đã ghi cách đọc câu này", {duration: D.UNDO_MS, action: action})
+            const action = answer.requestedAt ? root.work.undoSteps(steps, S.s_cau_nay_tro_lai_nhu_truoc_khi_sua_cach_doc_77690b99) : null
+            root.say(S.s_da_ghi_cach_doc_cau_nay_0db96b25, {duration: D.UNDO_MS, action: action})
             root.refresh()
         })
     }

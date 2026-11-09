@@ -1,5 +1,7 @@
 package vn.abook.player.ui.pip
 
+import vn.abook.player.S
+
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
 import android.content.Context
@@ -44,9 +46,9 @@ object PipParams {
     fun plan(playing: Boolean, hasBook: Boolean, switchOn: Boolean): PipPlan = PipPlan(
         hasBook, playing, autoEnter(hasBook, switchOn),
         if (!hasBook) emptyList() else listOf(
-            PipButton(PipKind.Back, "Lùi ${Playback.SKIP_SECONDS} giây", PlayerWidget.ACTION_BACK, 2),
-            PipButton(PipKind.Toggle, if (playing) "Tạm dừng" else "Phát", PlayerWidget.ACTION_TOGGLE, 1),
-            PipButton(PipKind.Forward, "Tới ${Playback.SKIP_SECONDS} giây", PlayerWidget.ACTION_FORWARD, 3),
+            PipButton(PipKind.Back, S.s_lui_0_giay_718bdd89(Playback.SKIP_SECONDS), PlayerWidget.ACTION_BACK, 2),
+            PipButton(PipKind.Toggle, if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48, PlayerWidget.ACTION_TOGGLE, 1),
+            PipButton(PipKind.Forward, S.s_toi_0_giay_84234225(Playback.SKIP_SECONDS), PlayerWidget.ACTION_FORWARD, 3),
         ),
     )
 

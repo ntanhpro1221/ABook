@@ -1,5 +1,7 @@
 package vn.abook.player.net
 
+import vn.abook.player.S
+
 import java.io.Closeable
 import java.io.FilterOutputStream
 import java.io.IOException
@@ -32,7 +34,7 @@ object HostWait {
     /** Chốt chặn cuối của trình phát: chờ âm thanh lâu thế này nghĩa là mọi lời gọi ở dưới đã có lượt báo lỗi của nó. */
     const val STALL_MS = ATTEMPTS * LONG_IDLE_MS + 15_000L
 
-    const val TIMEOUT_MESSAGE = "Máy chưa trả lời kịp."
+    const val TIMEOUT_MESSAGE = S.s_may_chua_tra_loi_kip_5c0e0045
     const val TIMEOUT_REASON = "timeout"
 
     /** Bài thử đặt hạn ngắn thay cho hạn của chính sách (> 0). */

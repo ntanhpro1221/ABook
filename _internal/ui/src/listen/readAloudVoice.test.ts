@@ -320,7 +320,9 @@ describe("giọng mặc định khi chưa chọn", () => {
     // Qt chạy cùng bộ ví dụ: ba danh sách không được lệch khi thêm giọng kể chuyện.
     const qtSource = readFileSync(new URL("../../../desktop_qt/qml/VoiceLogic.js", import.meta.url), "utf8")
       .replace(/^\.(pragma|import).*$/gm, "");
-    const qt = runInNewContext(qtSource + "\n({ preferred: NARRATOR, pick: narratorVoice })") as {
+    const strings = readFileSync(new URL("../../../desktop_qt/qml/UiStrings.js", import.meta.url), "utf8").replace(/^\.pragma.*$/gm, "");
+    const S = runInNewContext(strings + "\nthis");
+    const qt = runInNewContext(qtSource + "\n({ preferred: NARRATOR, pick: narratorVoice })", { S }) as {
       preferred: Record<string, string[]>;
       pick: (voices: ReadAloudVoice[], gender?: string) => ReadAloudVoice | undefined;
     };

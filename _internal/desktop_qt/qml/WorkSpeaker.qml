@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -54,14 +55,14 @@ Column {
                 id: scopeRow
                 width: parent.width
                 spacing: 8
-                Text { height: 40; verticalAlignment: Text.AlignVCenter; text: "Đổi người nói cho"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                Text { height: 40; verticalAlignment: Text.AlignVCenter; text: S.s_doi_nguoi_noi_cho_214fb622; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                 ChoiceRow {
                     objectName: "workScope"
-                    label: "Đổi người nói cho những câu nào"
+                    label: S.s_doi_nguoi_noi_cho_nhung_cau_nao_88602af5
                     value: root.scope
                     options: root.item.allLines && root.item.lines ? [
-                        {value: "alternate", label: (root.item.scopeLabels ? root.item.scopeLabels[0] : "Câu xen kẽ") + "\u00a0·\u00a0" + root.item.lines.length},
-                        {value: "all", label: (root.item.scopeLabels ? root.item.scopeLabels[1] : "Cả chuỗi") + "\u00a0·\u00a0" + root.item.allLines.length}
+                        {value: "alternate", label: (root.item.scopeLabels ? root.item.scopeLabels[0] : S.s_cau_xen_ke_a9442401) + "\u00a0·\u00a0" + root.item.lines.length},
+                        {value: "all", label: (root.item.scopeLabels ? root.item.scopeLabels[1] : S.s_ca_chuoi_2a2c3bbf) + "\u00a0·\u00a0" + root.item.allLines.length}
                     ] : []
                     onPicked: value => root.scopeChosen(value)
                 }
@@ -104,14 +105,14 @@ Column {
         DecisionButton {
             objectName: "speakerNew"
             visible: Boolean(root.item.newPerson)
-            text: root.item.newPersonLabel || "Tạo nhân vật"
+            text: root.item.newPersonLabel || S.s_tao_nhan_vat_18e9a09a
             enabled: !root.busy && !root.none
             onClicked: root.choose({speaker: root.item.newPerson, newGender: "unknown"})
         }
         DecisionButton {
             objectName: "speakerKeepGroups"
             visible: Boolean(root.item.keepGroups) && root.item.keepGroups.length > 0
-            text: root.item.keepLabel || "Giữ nguyên"
+            text: root.item.keepLabel || S.s_giu_nguyen_1b550a12
             enabled: !root.busy
             onClicked: root.keepAll()
         }
@@ -120,7 +121,7 @@ Column {
             visible: root.voicePick && root.item.kind === "unnamed" && Boolean(root.item.pickVoice)
             size: "sm"
             kind: "ghost"
-            text: "Giới / giọng"
+            text: S.s_gioi_giong_a5c7c7b7
             onClicked: root.pickVoice(root.item.pickVoice)
         }
         // Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề
@@ -130,8 +131,8 @@ Column {
             size: "sm"
             kind: "ghost"
             icon: root.item.suggestedName || root.item.kind === "caller" ? "" : "user-plus"
-            text: root.item.suggestedName ? "Đặt tên" : "Người khác"
-            Accessible.description: root.creating ? "Đang mở" : "Đang đóng"
+            text: root.item.suggestedName ? S.s_dat_ten_519d84a1 : S.s_nguoi_khac_36be042b
+            Accessible.description: root.creating ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
             onClicked: root.creating = !root.creating
         }
         // Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó
@@ -141,7 +142,7 @@ Column {
             size: "sm"
             kind: "ghost"
             icon: "search"
-            text: "Tìm người khác…"
+            text: S.s_tim_nguoi_khac_ebe0232b
             onClicked: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, true)
         }
         // Thẻ nhóm chỉ in vài câu làm ví dụ: đọc đủ ngữ cảnh ở tab Kịch bản trước khi quyết, mở đúng chương, tại câu đầu của nhóm
@@ -151,7 +152,7 @@ Column {
             size: "sm"
             kind: "ghost"
             icon: "search"
-            text: root.item.lines ? "Xem " + root.item.lines.length + " câu" : ""
+            text: root.item.lines ? S.s_xem_e7ed16f8 + root.item.lines.length + S.s_cau_b07e1008 : ""
             onClicked: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, false)
         }
     }
@@ -172,7 +173,7 @@ Column {
                     spacing: 6
                     visible: root.more.length > 0
                     Accessible.role: Accessible.Grouping
-                    Accessible.name: "Những người khác trong sách"
+                    Accessible.name: S.s_nhung_nguoi_khac_trong_sach_43124252
                     Repeater {
                         model: root.more
                         delegate: Button {
@@ -184,7 +185,7 @@ Column {
                             onClicked: root.choose({speaker: modelData.value})
                         }
                     }
-                    Text { height: 40; verticalAlignment: Text.AlignVCenter; text: "hay đặt tên một người mới:"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                    Text { height: 40; verticalAlignment: Text.AlignVCenter; text: S.s_hay_dat_ten_mot_nguoi_moi_10597c08; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                 }
                 Flow {
                     width: parent.width
@@ -197,15 +198,15 @@ Column {
                             objectName: "speakerName"
                             y: 4
                             width: parent.width
-                            label: "Tên người nói mới"
+                            label: S.s_ten_nguoi_noi_moi_9be83401
                             text: root.item.suggestedName || ""
-                            placeholderText: root.sample ? "Tên người nói (vd " + root.sample + ")" : "Tên người nói"
+                            placeholderText: root.sample ? S.s_ten_nguoi_noi_vd_e8a70692 + root.sample + ")" : S.s_ten_nguoi_noi_d3caf277
                             onTextChanged: if (text.length > 80) text = text.slice(0, 80)
                         }
                     }
-                    Text { height: 40; verticalAlignment: Text.AlignVCenter; text: "Giới (bấm để lưu):"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                    Text { height: 40; verticalAlignment: Text.AlignVCenter; text: S.s_gioi_bam_de_luu_e314c934; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     Repeater {
-                        model: [{gender: "male", label: "Nam"}, {gender: "female", label: "Nữ"}, {gender: "unknown", label: "Không rõ"}]
+                        model: [{gender: "male", label: S.s_nam_22dd59c8}, {gender: "female", label: S.s_nu_e15bc11c}, {gender: "unknown", label: S.s_khong_ro_8af7da78}]
                         delegate: Button {
                             required property var modelData
                             objectName: "speakerGender_" + modelData.gender
@@ -213,7 +214,7 @@ Column {
                             kind: "ghost"
                             text: modelData.label
                             enabled: root.typed !== "" && !root.busy && !root.none
-                            Accessible.name: "Lưu người nói mới, giới: " + modelData.label.toLowerCase()
+                            Accessible.name: S.s_luu_nguoi_noi_moi_gioi_32008e47 + modelData.label.toLowerCase()
                             onClicked: root.choose({speaker: root.typed, newGender: modelData.gender})
                         }
                     }

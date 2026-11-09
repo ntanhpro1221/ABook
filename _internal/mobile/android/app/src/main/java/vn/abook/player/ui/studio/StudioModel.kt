@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import android.content.Intent
 import androidx.compose.runtime.Immutable
 import vn.abook.player.StudioPaths
@@ -7,11 +9,11 @@ import vn.abook.player.ui.data.Choice
 
 /** Năm tab của một dự án (DESIGN.md §7, web `MAIN_TABS`): `key` là giá trị `?tab=` của đường trang Studio. */
 enum class StudioTab(override val key: String, override val label: String) : Choice {
-    Chapters("chapters", "Chương"),
-    Work("work", "Việc cần duyệt"),
-    Review("review", "Cần nghe lại"),
-    Cast("cast", "Nhân vật"),
-    Music("music", "Nhạc nền");
+    Chapters("chapters", S.s_chuong_2d157977),
+    Work("work", S.s_viec_can_duyet_5c0c3ce1),
+    Review("review", S.s_can_nghe_lai_d651f6ab),
+    Cast("cast", S.s_nhan_vat_d4940c17),
+    Music("music", S.s_nhac_nen_271fb292);
 
     companion object {
         /** Tab theo `?tab=` của web; màn con ([StudioSubKind.of]), trang chưa có ở native (activity...) hay giá trị lạ về Chương. */

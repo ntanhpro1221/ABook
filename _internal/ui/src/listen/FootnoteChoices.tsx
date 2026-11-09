@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { ChoiceRow } from "@/shared/ui";
 import { footnoteSummary, type FootnoteChoice, type FootnoteNotes, type FootnoteOffer } from "./textImport";
 
@@ -57,24 +58,24 @@ export function FootnoteChoices({
             checked={value.hideMarks}
             disabled={disabled}
             onChange={(on) => onChange({ ...value, hideMarks: on })}
-            label="Bỏ số gọi"
-            help={`${offer.marks} số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi.`}
+            label={S.s_bo_so_goi_b8d25593}
+            help={S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(offer.marks)}
           />
         )}
         {/* ChoiceRow không có trạng thái tắt: lúc đang đọc lại file, cả nhóm mờ đi và không nhận chạm / phím (như ô tích bên trên). */}
         <div inert={disabled} className={disabled ? "opacity-60" : undefined}>
-          <p className="text-sm font-medium">Lời chú</p>
+          <p className="text-sm font-medium">{S.s_loi_chu_eca33b1a}</p>
           <ChoiceRow<FootnoteNotes>
             value={value.notes}
             onChange={(notes) => onChange({ ...value, notes })}
-            label="Lời chú"
+            label={S.s_loi_chu_eca33b1a}
             options={[
-              { value: "", label: "Giữ nguyên" },
-              { value: "end", label: "Cuối chương" },
-              { value: "drop", label: "Bỏ lời chú" },
+              { value: "", label: S.s_giu_nguyen_1b550a12 },
+              { value: "end", label: S.s_cuoi_chuong_8e067450 },
+              { value: "drop", label: S.s_bo_loi_chu_b3d90294 },
             ]}
           />
-          <p className="mt-1 text-xs text-fg-2">Bạn chọn Giữ nguyên để giữ lời chú như trong file; Cuối chương đặt mỗi lời chú ở cuối chương có số gọi nó.</p>
+          <p className="mt-1 text-xs text-fg-2">{S.s_ban_chon_giu_nguyen_de_giu_loi_chu_nhu_tro_fa013ff9}</p>
         </div>
       </div>
     </div>

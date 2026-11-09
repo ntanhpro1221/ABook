@@ -22,12 +22,12 @@ object BookFiles {
     fun changed(id: String) {
         if (id.isEmpty()) return
         edited(id)
-        for (listener in listeners) runCatching { listener(id) }.onFailure { AppLog.w("BookFiles", "người nghe tin đổi file lỗi: ${it.javaClass.simpleName}", it) }
+        for (listener in listeners) runCatching { listener(id) }.onFailure { AppLog.w("BookFiles", S.s_nguoi_nghe_tin_doi_file_loi_0_352c518c(it.javaClass.simpleName), it) }
     }
 
     /** Chỉ lớp sửa (tên chương, bìa, cách đọc) của sách đổi: trình phát đọc lại nhãn của hàng chương. Nơi sửa tự làm mới Thư viện của nó. Luồng bất kỳ. */
     fun edited(id: String) {
         if (id.isEmpty()) return
-        Playback.onMain { runCatching { Playback.refreshFromDisk(id) }.onFailure { AppLog.w("BookFiles", "chưa làm mới trình phát: ${it.javaClass.simpleName}", it) } }
+        Playback.onMain { runCatching { Playback.refreshFromDisk(id) }.onFailure { AppLog.w("BookFiles", S.s_chua_lam_moi_trinh_phat_0_7b8b2e25(it.javaClass.simpleName), it) } }
     }
 }

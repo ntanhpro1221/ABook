@@ -1,5 +1,7 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.gestureSafe
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -131,7 +133,7 @@ fun BookField(
 @Composable
 fun RevertName(original: String, onRevert: () -> Unit, tag: String = "chapter_revert") {
     Column(Modifier.fillMaxWidth()) {
-        Caption("Tên gốc: $original")
-        TextAction("Về tên gốc", onRevert, tag, Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+        Caption(S.s_ten_goc_0_b27cd007(original))
+        TextAction(S.s_ve_ten_goc_643cd2e0, onRevert, tag, Modifier.fillMaxWidth(), align = Alignment.CenterStart)
     }
 }

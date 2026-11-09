@@ -18,13 +18,13 @@ import java.io.ByteArrayOutputStream
 object AndroidCoverCodec : CoverCodec {
     override fun normalize(raw: ByteArray): CoverCodec.Normalized {
         if (raw.size > Covers.MAX_UPLOAD_BYTES) throw Covers.tooLarge()
-        val unreadable = CoverCodec.CoverError("Chưa đọc được ảnh này")
+        val unreadable = CoverCodec.CoverError(S.s_chua_doc_duoc_anh_nay_96d6244e)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(raw, 0, raw.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable
         if (Covers.decodedPixels(bounds.outWidth, bounds.outHeight, bounds.outMimeType == "image/jpeg") > Covers.MAX_PIXELS) throw Covers.tooManyPixels()
         if (minOf(bounds.outWidth, bounds.outHeight) < Covers.MIN_SIDE) {
-            throw CoverCodec.CoverError("Ảnh quá nhỏ để làm bìa (cần ít nhất ${Covers.MIN_SIDE} điểm ảnh mỗi cạnh)")
+            throw CoverCodec.CoverError(S.s_anh_qua_nho_de_lam_bia_can_it_nhat_0_diem_20fcd361(Covers.MIN_SIDE))
         }
         // Ảnh chụp 12 MB không cần giải mã hết cỡ: bỏ bớt điểm ảnh sao cho cạnh dài còn >= MAX_SIDE rồi thu về đúng cỡ.
         var sample = 1

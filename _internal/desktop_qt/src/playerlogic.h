@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 // Luật thuần của bộ phát, chuyển từ ui/src/listen/model.ts + sleep.ts + player.tsx sang C++ (không đụng Qt Quick, thử được riêng).
 // Mọi hằng số và công thức giữ ĐÚNG số của bản web: hai app phải nghe tiếp cùng một chỗ.
 #pragma once
@@ -270,14 +271,14 @@ inline QString formatClock(double seconds) {
 /// Thời lượng cho con người: "45 phút", "9 giờ 12 phút", "2 giờ" (formatLength).
 inline QString formatLength(double seconds) {
     if (!std::isfinite(seconds) || seconds <= 0)
-        return QStringLiteral("0 phút");
+        return UiStrings::s_0_phut_66a3b36a;
     const qint64 minutes = qint64(std::llround(seconds / 60));
     if (minutes < 1)
-        return QStringLiteral("dưới 1 phút");
+        return UiStrings::s_duoi_1_phut_a1dd4f60;
     const qint64 hours = minutes / 60, rest = minutes % 60;
     if (!hours)
-        return QStringLiteral("%1 phút").arg(minutes);
-    return rest ? QStringLiteral("%1 giờ %2 phút").arg(hours).arg(rest) : QStringLiteral("%1 giờ").arg(hours);
+        return UiStrings::s_copy_728d747023f1.arg(minutes);
+    return rest ? UiStrings::s_copy_16f9191d6b05.arg(hours).arg(rest) : UiStrings::s_copy_197789ab8e87.arg(hours);
 }
 
 } // namespace PlayerLogic

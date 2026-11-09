@@ -1,5 +1,7 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +59,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 flow.value = flow.value.copy(preview = preview, choices = ImportLogic.retain(preview, old, choices))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(problem = failure("Chưa đọc lại được file.", error))
+                flow.value = flow.value.copy(problem = failure(S.s_chua_doc_lai_duoc_file_f399dcd5, error))
             } finally { flow.value = flow.value.copy(busy = false) }
         }
     }
@@ -83,11 +85,11 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 if (flow.value.addingRest) {
                     runCatching { source.discard(staged) }
                     finish(id, ImportStage.Error)
-                    flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Error, failure("Chưa thêm được sách.", error)))
+                    flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Error, failure(S.s_chua_them_duoc_sach_a46be70d, error)))
                     advance()
                     return@launch
                 }
-                flow.value = flow.value.copy(busy = false, problem = failure("Chưa thêm được sách.", error),
+                flow.value = flow.value.copy(busy = false, problem = failure(S.s_chua_them_duoc_sach_a46be70d, error),
                     items = ImportLogic.settle(flow.value.items, id, ImportStage.Review))
                 return@launch
             }
@@ -123,7 +125,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 advance()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                flow.value = flow.value.copy(busy = false, problem = failure("Chưa thay được sách", e))
+                flow.value = flow.value.copy(busy = false, problem = failure(S.s_chua_thay_duoc_sach_8eebed8f, e))
             }
         }
     }
@@ -146,7 +148,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
     }
 
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: "Bạn hãy thử lại.").joinToString(" ")
+    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: S.s_ban_hay_thu_lai_5fc1a02b).joinToString(" ")
 
     /**
      * "Bỏ phần còn lại" khi đóng Thêm sách giữa hàng (web AddBook `reset`): cuốn đang đọc dừng, bản tạm của cuốn đang xem bị bỏ, cả hàng về trống. Cuốn đã thêm vẫn ở
@@ -173,7 +175,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         ref = null
         flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, stage, bookId = bookId),
             currentId = null, preview = null, packageReview = null, choices = ImportChoices(), busy = false, problem = "",
-            notice = if (stage == ImportStage.Added) (if (title.isBlank()) "Đã thêm" else "Đã thêm “$title”") else flow.value.notice)
+            notice = if (stage == ImportStage.Added) (if (title.isBlank()) S.s_da_them_e26b2fcb else S.s_da_them_0_ea40abe7(title)) else flow.value.notice)
     }
 
     private fun advance() {
@@ -201,7 +203,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                         if (flow.value.addingRest && (preview.chapters.isEmpty() || preview.title.isBlank())) {
                             finish(item.id, ImportStage.Error)
                             flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error,
-                                if (preview.chapters.isEmpty()) "File này chưa có chương nào để thêm." else "File này chưa có tên sách - thêm riêng để đặt tên."))
+                                if (preview.chapters.isEmpty()) S.s_file_nay_chua_co_chuong_nao_de_them_83a1704f else S.s_file_nay_chua_co_ten_sach_them_rieng_de_da_ec9e7d95))
                             source.discard(result.ref!!)
                             continue
                         }

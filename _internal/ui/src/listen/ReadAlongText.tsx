@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { Locate } from "lucide-react";
 import { feedback } from "@/shared/feedback";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
@@ -52,7 +53,7 @@ export function useListenFrom(bookId: string, book: ListenBook | undefined, chap
     const target = canSpeak ? { segment: sentence, word: Math.max(0, word) } : undefined;
     let offset = 0;
     if (word >= 0) for (const piece of splitPieces(segment.text)) { if (piece.word === word) break; offset += piece.text.length; }
-    const note = `Nghe từ “${excerpt(segment.text.slice(offset))}”`;
+    const note = S.s_nghe_tu_0_f0b6b997(excerpt(segment.text.slice(offset)));
     if (player.track?.bookId === bookId) player.jumpTo(chapter.id, at, note, target);
     else if (book) void playBook(book, chapter.id, at, { word: target });
     else return false;
@@ -174,8 +175,7 @@ export function JumpToPlaying({ onClick, className }: { onClick: () => void; cla
       onMouseDown={(event) => event.preventDefault()}
       className={cn("pointer-events-auto inline-flex min-h-[48px] items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg shadow-float", className)}
     >
-      <Locate className="size-4" /> Tới câu đang nghe
-    </button>
+      <Locate className="size-4" />{S.s_toi_cau_dang_nghe_2632c4bb}</button>
   );
 }
 
@@ -335,8 +335,7 @@ export function ReadAlongText({
   return (
     <div className={className} onKeyDown={keys}>
       {hint && (
-        <p id={hint} className="sr-only">
-          Mũi tên lên, xuống: sang câu trước, câu sau. Enter: nghe từ câu này.{onWordMenu ? " Shift F10: sửa cách đọc." : ""}
+        <p id={hint} className="sr-only">{S.s_mui_ten_len_xuong_sang_cau_truoc_cau_sau_e_d21a29aa}{onWordMenu ? S.s_shift_f10_sua_cach_doc_fb8b912c : ""}
         </p>
       )}
       {chunks.map((chunk) => (

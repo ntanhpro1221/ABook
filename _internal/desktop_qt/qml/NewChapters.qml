@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -73,8 +74,8 @@ Column {
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
             font.features: { "tnum": 1 }
-            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + " chương</b></font>&nbsp;·&nbsp;" +
-                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + " chữ&nbsp;·&nbsp;khoảng " + Studio.formatLength(root.scan.totals.audioSeconds) : " "
+            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + S.s_chuong_b_font_nbsp_nbsp_6c9efbf2 +
+                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + S.s_chu_nbsp_nbsp_khoang_536a31ce + Studio.formatLength(root.scan.totals.audioSeconds) : " "
         }
         Flow {
             id: buttons
@@ -87,11 +88,11 @@ Column {
                 for (let i = 0; i < children.length; ++i) if (children[i].visible) sum += children[i].width + spacing
                 return Math.max(0, sum - spacing)
             }
-            Button { objectName: "newAddFiles"; visible: root.dialogs; text: "Thêm file"; icon: "file-text"; kind: "ghost"; size: "sm"; onActivated: root.filesRequested() }
+            Button { objectName: "newAddFiles"; visible: root.dialogs; text: S.s_them_file_834b1f33; icon: "file-text"; kind: "ghost"; size: "sm"; onActivated: root.filesRequested() }
             Button {
                 objectName: "newAddUpload"
                 visible: root.browser
-                text: root.uploading ? Upload.progressLabel(root.uploading) : "Thêm file"
+                text: root.uploading ? Upload.progressLabel(root.uploading) : S.s_them_file_834b1f33
                 icon: "upload"
                 kind: "ghost"
                 size: "sm"
@@ -102,13 +103,13 @@ Column {
             Button {
                 objectName: "newAddCancel"
                 visible: root.browser && Boolean(root.uploading)
-                text: root.form && root.form.stopping ? "Đang dừng…" : "Huỷ gửi"
+                text: root.form && root.form.stopping ? S.s_dang_dung_2fb8aa7c : S.s_huy_gui_4d53a582
                 kind: "ghost"
                 size: "sm"
                 enabled: !(root.form && root.form.stopping)
                 onActivated: root.form.cancelUpload()
             }
-            Button { objectName: "newReselect"; text: "Chọn lại"; kind: "ghost"; size: "sm"; onActivated: root.form.setPaths([]) }
+            Button { objectName: "newReselect"; text: S.s_chon_lai_834274af; kind: "ghost"; size: "sm"; onActivated: root.form.setPaths([]) }
         }
     }
     // Truyện dài: chọn nhanh làm N chương đầu, phần còn lại để đợt sau
@@ -124,15 +125,15 @@ Column {
                 y: 12
                 width: parent.width
                 spacing: 8
-                Text { height: 36; verticalAlignment: Text.AlignVCenter; text: "Đợt này làm"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+                Text { height: 36; verticalAlignment: Text.AlignVCenter; text: S.s_dot_nay_lam_34f9f26c; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                 ChoiceRow {
                     objectName: "newLimit"
                     width: Math.min(implicitWidth, limitRow.width)
-                    label: "Đợt này làm bao nhiêu chương"
+                    label: S.s_dot_nay_lam_bao_nhieu_chuong_fb0c6a1b
                     options: {
                         const total = root.form ? root.form.totalFound : 0
-                        return Logic.CHAPTER_LIMITS.filter(count => count < total).map(count => ({value: String(count), label: count + " chương đầu"}))
-                            .concat([{value: "all", label: "Cả " + Studio.formatNumber(total) + " chương"}])
+                        return Logic.CHAPTER_LIMITS.filter(count => count < total).map(count => ({value: String(count), label: count + S.s_chuong_dau_f616cb83}))
+                            .concat([{value: "all", label: S.s_ca_52b5e533 + Studio.formatNumber(total) + S.s_chuong_9e6a01dc}])
                     }
                     value: root.form && root.form.draft.limit ? String(root.form.draft.limit) : "all"
                     onPicked: value => root.form.update({limit: value === "all" ? null : Number(value)})
@@ -142,7 +143,7 @@ Column {
                     visible: Boolean(root.form) && Boolean(root.form.draft.limit) && root.form.later > 0
                     height: Math.max(36, implicitHeight)
                     verticalAlignment: Text.AlignVCenter
-                    detail: "còn " + Studio.formatNumber(root.form ? root.form.later : 0) + " chương cho đợt sau"
+                    detail: S.s_con_c697bae9 + Studio.formatNumber(root.form ? root.form.later : 0) + S.s_chuong_cho_dot_sau_50fbbbf5
                 }
             }
         }
@@ -152,8 +153,8 @@ Column {
         width: parent.width
         storageKey: "chapters"
         prefix: "fold.new-project."
-        title: "Danh sách chương"
-        summary: Studio.formatNumber(root.files.length) + " chương"
+        title: S.s_danh_sach_chuong_7fa755f9
+        summary: Studio.formatNumber(root.files.length) + S.s_chuong_9e6a01dc
         defaultOpen: root.files.length <= 4
         Item { width: parent.width; height: 8 }
         Item {
@@ -170,7 +171,7 @@ Column {
                 reuseItems: false
                 cacheBuffer: 240
                 Accessible.role: Accessible.List
-                Accessible.name: "Các chương sẽ làm"
+                Accessible.name: S.s_cac_chuong_se_lam_5a07f064
                 delegate: Collapse {
                     id: cell
                     objectName: "newChapterRow"
@@ -204,7 +205,7 @@ Column {
                                 Icon { y: 1; name: "layers"; size: 14; color: Theme.accentText }
                                 Text {
                                     width: cell.width - 48
-                                    text: "Phần " + (cell.part + 1) + " bắt đầu"
+                                    text: S.s_phan_a17569d5 + (cell.part + 1) + S.s_bat_dau_76545e3c
                                     color: Theme.accentText
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
@@ -261,7 +262,7 @@ Column {
                             Text {
                                 width: parent.width
                                 horizontalAlignment: Text.AlignRight
-                                text: cell.file ? Logic.approx(cell.file.words, cell.file.estimated) + " chữ" : " "
+                                text: cell.file ? Logic.approx(cell.file.words, cell.file.estimated) + S.s_chu_6117d040 : " "
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
@@ -271,7 +272,7 @@ Column {
                                 visible: Boolean(cell.file) && cell.file.chars > 0
                                 width: parent.width
                                 horizontalAlignment: Text.AlignRight
-                                text: cell.file && cell.file.chars > 0 ? Logic.approx(cell.file.chars, cell.file.estimated) + " ký tự" : ""
+                                text: cell.file && cell.file.chars > 0 ? Logic.approx(cell.file.chars, cell.file.estimated) + S.s_ky_tu_c7cc4ddf : ""
                                 color: Theme.text3
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
@@ -287,12 +288,12 @@ Column {
                             height: 32
                             icon: "trash-2"
                             iconSize: 16
-                            tip: "Bỏ chương này"
+                            tip: S.s_bo_chuong_nay_dfcadfcd
                             ink: Theme.text2
                             hoverInk: Theme.danger
                             opacity: root.narrow || over.hovered || activeFocus ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                            Accessible.name: cell.file ? "Bỏ chương " + cell.file.name : "Bỏ chương"
+                            Accessible.name: cell.file ? S.s_bo_chuong_e13b0ad2 + cell.file.name : S.s_bo_chuong_940d1030
                             onClicked: if (cell.file) root.form.removeChapter(cell.file.path)
                         }
                     }
@@ -308,11 +309,11 @@ Column {
         visible: root.scan && root.scan.skipped.length > 0
         topPadding: visible ? 8 : 0
         small: true
-        text: root.scan && root.scan.skipped.length ? "Bỏ qua " + root.scan.skipped.length + " file không phải .txt." : ""
+        text: root.scan && root.scan.skipped.length ? S.s_bo_qua_0e8d852d + root.scan.skipped.length + S.s_file_khong_phai_txt_674f8d1a : ""
     }
     // File sách hỏng / PDF scan nằm cạnh file tốt, thư mục có cả TXT lẫn EPUB, trang chỉ có ảnh bị bỏ: không chặn, nhưng nói ra
     Repeater {
-        model: root.scan ? (root.scan.errors || []).map(error => "Bỏ qua " + error).concat(root.scan.notes || []) : []
+        model: root.scan ? (root.scan.errors || []).map(error => S.s_bo_qua_0e8d852d + error).concat(root.scan.notes || []) : []
         delegate: Prose {
             required property string modelData
             objectName: "newScanNote"

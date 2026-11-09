@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -6,7 +7,7 @@ import ABook
 Interactive {
     id: root
     implicitHeight: Theme.hit
-    tip: "Trạng thái ABook"
+    tip: S.s_trang_thai_abook_110b1681
 
     readonly property bool starting: Backend.state === Backend.Starting
     readonly property bool failed: Backend.state === Backend.Failed
@@ -51,7 +52,7 @@ Interactive {
             clip: true
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.failed ? "Gặp lỗi" : (root.starting ? "Đang mở…" : "Sẵn sàng")
+                text: root.failed ? S.s_gap_loi_32d9771f : (root.starting ? S.s_dang_mo_4a027b81 : S.s_san_sang_d654065d)
                 color: Theme.text2
                 font.pixelSize: Theme.sizeBodySmall
             }

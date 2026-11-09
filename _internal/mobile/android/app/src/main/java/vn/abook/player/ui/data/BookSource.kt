@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import android.content.Intent
 import android.net.Uri
 
@@ -28,13 +30,13 @@ interface BookSource {
      * "Lưu thay đổi": ghi vào chỗ lưu đã nhớ của cuốn (giữ loại file đã đến); chưa có chỗ nhớ thì [SaveStep.Ask] mang hộp "tạo file" của hệ thống.
      * Mặc định: không lưu được (bản thử, ảnh chụp).
      */
-    suspend fun saveKept(id: String): SaveStep = SaveStep.Failed("Chưa lưu được file sách")
+    suspend fun saveKept(id: String): SaveStep = SaveStep.Failed(S.s_chua_luu_duoc_file_sach_964ff92c)
 
     /** "Lưu thành": luôn hỏi chỗ lưu; `project` = file dự án (.abookproj) thay vì sách nghe (.abook). */
     suspend fun saveAsIntent(id: String, project: Boolean): Intent? = null
 
     /** Ghi cuốn vào chỗ người nghe vừa chọn trong hộp "tạo file" (`project` null = giữ loại file cuốn đã đến); nhớ chỗ ấy cho lần "Lưu thay đổi" sau. */
-    suspend fun saveTo(id: String, project: Boolean?, uri: Uri): SaveStep = SaveStep.Failed("Chưa lưu được file sách")
+    suspend fun saveTo(id: String, project: Boolean?, uri: Uri): SaveStep = SaveStep.Failed(S.s_chua_luu_duoc_file_sach_964ff92c)
 
     /** Dàn nhân vật như người nghe thấy (tên đã đổi, việc đang chờ); null khi không đọc được. Sách chưa phân vai: dàn rỗng. */
     suspend fun cast(id: String): CastView?

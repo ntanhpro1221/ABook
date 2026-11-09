@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -8,8 +9,8 @@ SettingsItem {
     property var voices: []
     readonly property bool wide: (Window.window ? Window.window.width : 1000) >= 640
     // PROFILE_LABEL của studio/bookTemplates.ts, đúng thứ tự khoá
-    readonly property var profiles: [{value: "high_quality", label: "Chất lượng cao"}, {value: "balanced", label: "Cân bằng"}, {value: "fast", label: "Nhanh"}]
-    readonly property var narrators: [{value: "", label: "Máy đề xuất"}].concat((voices || []).map(v => ({value: v.name, label: v.name + "\u00a0·\u00a0" + v.gender + ", miền " + v.region})))
+    readonly property var profiles: [{value: "high_quality", label: S.s_chat_luong_cao_dc7017a7}, {value: "balanced", label: S.s_can_bang_8b88211d}, {value: "fast", label: S.s_nhanh_c2385879}]
+    readonly property var narrators: [{value: "", label: S.s_may_de_xuat_dbeafc87}].concat((voices || []).map(v => ({value: v.name, label: v.name + "\u00a0·\u00a0" + v.gender + S.s_mien_7b198286 + v.region})))
     padding: 12
     function load() {
         if (!Api.transport) return
@@ -25,11 +26,11 @@ SettingsItem {
             id: narrator
             width: root.wide ? (parent.width - 12) / 2 : parent.width
             spacing: 4
-            Text { width: parent.width; text: "Giọng kể"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: S.s_giong_ke_b209f686; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
             Select {
                 objectName: "newBookNarrator"
                 width: parent.width
-                label: "Giọng kể"
+                label: S.s_giong_ke_b209f686
                 options: root.narrators
                 value: Api.preferences.newBookNarrator ?? ""
                 onPicked: value => Api.update({newBookNarrator: value})
@@ -41,11 +42,11 @@ SettingsItem {
             y: root.wide ? 0 : narrator.height + 12
             width: narrator.width
             spacing: 4
-            Text { width: parent.width; text: "Chất lượng"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: S.s_chat_luong_a12ed26c; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
             Select {
                 objectName: "newBookProfile"
                 width: parent.width
-                label: "Chất lượng"
+                label: S.s_chat_luong_a12ed26c
                 options: root.profiles
                 value: Api.preferences.newBookProfile ?? "high_quality"
                 onPicked: value => Api.update({newBookProfile: value})

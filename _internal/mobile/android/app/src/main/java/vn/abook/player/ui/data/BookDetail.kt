@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONArray
 import org.json.JSONObject
@@ -82,7 +84,7 @@ class BookDetail(
                 val length = entry.optDouble("duration", 0.0)
                 val info = ChapterInfo(
                     id = id,
-                    title = field(entry, "fullTitle").ifEmpty { field(entry, "title") }.ifEmpty { "Chương $id" },
+                    title = field(entry, "fullTitle").ifEmpty { field(entry, "title") }.ifEmpty { S.s_chuong_0_268b0521(id) },
                     duration = if (isText || !length.isFinite()) 0.0 else length,
                     available = !isText && hasFile && entry.optBoolean("available"),
                     textOnly = isText,
@@ -117,11 +119,11 @@ object BookPage {
      * Tên chương KHÔNG ghép vào nhãn (tên dài làm nhãn chảy ba dòng): nó là dòng phụ riêng của nút ([primaryDetail]).
      */
     fun primaryLabel(playingHere: Boolean, finished: Boolean, resume: ResumeSpot?, heardSeconds: Double): String = when {
-        playingHere -> "Tạm dừng"
-        finished -> "Nghe lại từ đầu"
-        resume != null && (resume.at > 0 || heardSeconds > 0) -> "Nghe tiếp"
-        heardSeconds > 0 -> "Nghe tiếp"
-        else -> "Nghe"
+        playingHere -> S.s_tam_dung_67635815
+        finished -> S.s_nghe_lai_tu_dau_e251d632
+        resume != null && (resume.at > 0 || heardSeconds > 0) -> S.s_nghe_tiep_403b90a5
+        heardSeconds > 0 -> S.s_nghe_tiep_403b90a5
+        else -> S.s_nghe_a43aafef
     }
 
     /** Dòng phụ dưới nhãn nút chính: chương mà "Nghe tiếp" sẽ phát (giờ phút đã ở dòng tiến độ ngay trên); null khi nhãn tự đủ nghĩa. */
@@ -132,15 +134,15 @@ object BookPage {
     fun metaLine(book: ListenBook): String {
         val parts = ArrayList<String>(4)
         if (book.author.isNotBlank()) parts += book.author.trim()
-        if (book.narrator.isNotBlank()) parts += "Giọng ${book.narrator.trim()}"
+        if (book.narrator.isNotBlank()) parts += S.s_giong_0_c554bb1b(book.narrator.trim())
         when {
-            book.textOnly -> parts += "${book.chaptersTotal} chương"
+            book.textOnly -> parts += S.s_0_chuong_04093412(book.chaptersTotal)
             book.complete -> {
-                parts += "${book.chaptersTotal} chương"
+                parts += S.s_0_chuong_04093412(book.chaptersTotal)
                 parts += Fmt.length(book.duration)
             }
             else -> {
-                parts += "${book.chaptersAvailable}/${book.chaptersTotal} chương có audio"
+                parts += S.s_0_1_chuong_co_audio_9706857d(book.chaptersAvailable, book.chaptersTotal)
                 parts += Fmt.length(book.duration)
             }
         }
@@ -149,13 +151,13 @@ object BookPage {
 
     /** Dòng tình trạng dưới dòng trên (không hộp, không viên thuốc): sách chỉ có chữ, sách chưa đủ chương, sách nghe thẳng. null = không có gì để nói. */
     fun statusLine(book: ListenBook): String? = when {
-        book.textOnly -> "Chỉ có chữ · nghe bằng giọng đọc"
+        book.textOnly -> S.s_chi_co_chu_nghe_bang_giong_doc_edf36d64
         book.producing && book.pauseReason != null -> ProductionText.upcoming(book)
-        book.producing -> "Đang thu; chương mới tự hiện khi xong."
-        !book.complete && book.remote != null -> "Chưa đủ chương; đang dừng thu."
-        !book.complete && book.imported -> "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
-        !book.complete -> "Sách này có ${book.chaptersAvailable}/${book.chaptersTotal} chương đã thu - các chương sau chưa có audio"
-        book.remote != null -> "Nghe thẳng từ ${book.remote.deviceName} - chương nghe tới được giữ lại trên máy này"
+        book.producing -> S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2
+        !book.complete && book.remote != null -> S.s_chua_du_chuong_dang_dung_thu_3653bcf7
+        !book.complete && book.imported -> S.s_chua_du_chuong_mo_file_sach_moi_hon_de_ngh_ca290cd2
+        !book.complete -> S.s_sach_nay_co_0_1_chuong_da_thu_cac_chuong_s_b799aec1(book.chaptersAvailable, book.chaptersTotal)
+        book.remote != null -> S.s_nghe_thang_tu_0_chuong_nghe_toi_duoc_giu_l_a6a23b61(book.remote.deviceName)
         else -> null
     }
 
@@ -168,19 +170,19 @@ object BookPage {
         if (progress.finished || progress.caughtUp) return ListenLogic.progressText(book)
         val heard = progress.heardSeconds
         // Chưa nghe gì mà trình phát đang giữ cuốn này: nói đang nghe (hay không phát được), đừng nói "Chưa nghe".
-        if (heard <= 0 && listening) return if (failed) "Chưa phát được" else "Đang nghe"
-        if (heard <= 0) return "Chưa nghe · ${Fmt.length(book.duration)}"
-        return "Đã nghe ${Fmt.length(heard)} · còn ${Fmt.length(maxOf(0.0, book.duration - heard))} chưa nghe"
+        if (heard <= 0 && listening) return if (failed) S.s_chua_phat_duoc_3ecb850e else S.s_dang_nghe_9310d8cf
+        if (heard <= 0) return S.s_chua_nghe_0_dd595dec(Fmt.length(book.duration))
+        return S.s_da_nghe_0_con_1_chua_nghe_478f5195(Fmt.length(heard), Fmt.length(maxOf(0.0, book.duration - heard)))
     }
 
     /** Dòng phụ của một chương: thời lượng (chương chữ chưa nghe thì không có) + đã nghe bao nhiêu phần trăm; chưa có audio thì nói thế. */
     fun chapterLine(chapter: ChapterLine, producing: Boolean = false): String {
-        if (!chapter.playable) return if (producing) "Đang thu âm" else "Chưa có audio"
+        if (!chapter.playable) return if (producing) S.s_dang_thu_am_96160328 else S.s_chua_co_audio_4b0d19a4
         val parts = ArrayList<String>(2)
         if (chapter.duration > 0) parts += Fmt.length(chapter.duration)
         when {
-            chapter.done -> parts += "đã nghe hết"
-            chapter.heard > 0f -> parts += "đã nghe ${percent(chapter.heard)}"
+            chapter.done -> parts += S.s_da_nghe_het_f413dcae
+            chapter.heard > 0f -> parts += S.s_da_nghe_0_860c7b38(percent(chapter.heard))
         }
         return parts.dotJoined().replaceFirstChar { it.uppercase() }
     }

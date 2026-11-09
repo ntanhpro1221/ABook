@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
@@ -121,9 +122,9 @@ interface MineAlternative {
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
-const REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút.";
+const REBUILDING = S.s_dang_chon_lai_nhac_co_nua_phut_4166612f;
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
-const SAVING = "Đang lưu lựa chọn";
+const SAVING = S.s_dang_luu_lua_chon_d37252de;
 
 const PREVIEW_SECONDS = 20;
 
@@ -214,7 +215,7 @@ function TrackRow({
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <span className="min-w-0 flex-1 break-words">
         <EighthNote className="mr-1.5 inline size-4 text-fg-2" />
-        {item.title || "Bài nhạc"}
+        {item.title || S.s_bai_nhac_5d07657e}
         {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
         {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
         {note && <span className="block text-xs text-fg-2">{note}</span>}
@@ -223,12 +224,12 @@ function TrackRow({
         {canPreview && (
           <Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
             onClick={() => onPreview(item.link)}>
-            {previewing === item.link ? "Dừng nghe" : "Nghe thử"}
+            {previewing === item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
           </Button>
         )}
         <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
-          {choosing === item.link ? "Đang đổi" : "Chọn"}
+          {choosing === item.link ? S.s_dang_doi_b4190199 : S.s_chon_1171ca97}
         </Button>
       </span>
     </li>
@@ -267,8 +268,8 @@ function Alternatives({
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton label="Đang tải bài khác" /></MotionRegion>;
-  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton label={S.s_dang_tai_bai_khac_2c0e1ec8} /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_bai_n_acc346b4} onRetry={() => void refetch()} /></MotionRegion>;
   const mine = data?.mine ?? [];
   // Nhạc của tôi nằm trên máy tính chủ sách: nghe thử từ máy khác (Studio từ xa) không đi qua đường theo sách.
   const canPreviewMine = !info?.remote;
@@ -287,10 +288,10 @@ function Alternatives({
           ))}
         </ul>
       ) : (
-        <p className="text-fg-2">Không còn bài nào khác trong danh mục đủ hợp đoạn này.</p>
+        <p className="text-fg-2">{S.s_khong_con_bai_nao_khac_trong_danh_muc_du_h_970fe053}</p>
       )}
       <div>
-        <SectionHeading as="h4">Nhạc của tôi</SectionHeading>
+        <SectionHeading as="h4">{S.s_nhac_cua_toi_f65b7ac6}</SectionHeading>
         {mine.length ? (
           <ul className="mt-1 space-y-1">
             {mine.map((item) => (
@@ -306,8 +307,8 @@ function Alternatives({
         ) : (
           <p className="mt-1 text-fg-2">
             {info?.remote
-              ? "Chưa có bài nào. Thêm nhạc của bạn trên máy tính chủ sách."
-              : "Chưa có bài nào - bấm “Thêm nhạc của bạn” ở đầu trang."}
+              ? S.s_chua_co_bai_nao_them_nhac_cua_ban_tren_may_0f4b6b30
+              : S.s_chua_co_bai_nao_bam_them_nhac_cua_ban_o_da_dfd69e49}
           </p>
         )}
       </div>
@@ -338,7 +339,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
         setProgress({ done, total });
         if (latest) refresh(latest);
       });
-      if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
+      if (error) toast.error(S.s_dang_them_nhac_thi_dung_8712c030, { description: error.message });
       if (!result) return;
       const summary = importSummary(result);
       toast[summary.kind](summary.title, { description: summary.description });
@@ -353,25 +354,25 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
     onSuccess: (view) => {
       refresh(view);
       setRemoving(null);
-      toast("Đã xoá khỏi Nhạc của tôi");
+      toast(S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a);
     },
-    onError: (error: Error) => toast.error("Chưa xoá được bài này", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
   return (
     <MotionRegion as="section" elementRef={removeBox} className="space-y-3">
       <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
-      <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
+      <MoreInfo label={S.s_nhac_rieng_732d7761}>{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && (
-        <p className="text-sm text-fg-2">Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.</p>
+        <p className="text-sm text-fg-2">{S.s_nhap_xoa_tren_may_chu_o_day_dung_doi_bai_d_75127758}</p>
       )}
       {canImport && tracks.length > 0 && (
         <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
-          <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
+          <TickingValue>{progress ? S.s_dang_them_0_1_84372256(progress.done, progress.total) : S.s_them_nhac_cua_ban_dbd7d8c4}</TickingValue>
         </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
-      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={EighthNote} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
+      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_nhac_rieng_144f69a2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139} onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={EighthNote} title={S.s_them_nhac_cua_ban_dbd7d8c4} className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>{S.s_nhap_nhac_032d5f67}</Button>} /> : null}</MotionRegion>}
       {/* Xoá / nhập bài: hàng khép / mở tại chỗ (DESIGN 5.2); data-motion-live - cả khung không mờ lại theo từng hàng. */}
       <MotionPresence open={!!tracks.length}>
         <div data-motion-live="">
@@ -388,21 +389,15 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
               <MotionRegion as="span" className="settings-edge-action flex shrink-0 gap-1">
                 <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
                   onClick={() => onPreview(track.link)}>
-                  {previewing === track.link ? "Dừng nghe" : "Nghe thử"}
+                  {previewing === track.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
                 </Button>
                 {removing === track.link ? (
                   <>
-                    <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
-                      Xoá bài
-                    </Button>
-                    <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
-                      Giữ lại
-                    </Button>
+                    <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>{S.s_xoa_bai_d554a496}</Button>
+                    <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
                   </>
                 ) : (
-                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>
-                    Xoá
-                  </Button>
+                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>{S.s_xoa_777195ab}</Button>
                 )}
               </MotionRegion>
             </div>
@@ -428,40 +423,36 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const download = useMutation({
     mutationFn: () => api<MoodsModel>("/api/music/moods-model", { method: "POST" }),
     onSuccess: (result) => client.setQueryData(key, result),
-    onError: (error: Error) => toast.error("Chưa tải được phần đọc không khí", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_tai_duoc_phan_doc_khong_khi_583857f2, { description: error.message }),
   });
   const compute = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/moods`, { method: "POST" }),
     onSuccess: onCompute,
-    onError: (error: Error) => toast.error("Chưa đọc lại được không khí các đoạn", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doc_lai_duoc_khong_khi_cac_doan_b14d92fd, { description: error.message }),
   });
   if (!data) return <MotionRegion />;
   const running = Boolean(moods?.running) || compute.isPending;
   const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
   return (
     <MotionRegion as="section" className="space-y-2">
-      <p className="text-sm text-fg-2 text-pretty">
-        Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách.
-      </p>
+      <p className="text-sm text-fg-2 text-pretty">{S.s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581}</p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="ghost" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
-            {running ? "Đang đọc không khí" : "Đọc lại ngữ cảnh"}
+            {running ? S.s_dang_doc_khong_khi_0640731b : S.s_doc_lai_ngu_canh_edb18d3a}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
       ) : data.downloading ? (
-        <p data-motion-live className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
+        <p data-motion-live className="text-sm">{S.s_dang_tai_phan_doc_khong_khi_a6481b11}{percent !== null ? ` - ${percent}%` : ""}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
-            Tải thêm (3,2 GB)
-          </Button>
+          <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>{S.s_tai_them_3_2_gb_338f648d}</Button>
           {data.error && <span className="text-sm text-warning">{data.error}</span>}
         </div>
       ) : (
         <p className="text-sm text-fg-2">
-          {data.downloadable ? "Tải phần đọc không khí trên máy tính chủ sách." : "Máy này chưa có phần đọc không khí (cài qua Ollama)."}
+          {data.downloadable ? S.s_tai_phan_doc_khong_khi_tren_may_tinh_chu_s_f52208a6 : S.s_may_nay_chua_co_phan_doc_khong_khi_cai_qua_5174e4ee}
         </p>
       )}
     </MotionRegion>
@@ -485,24 +476,22 @@ function SceneMenu({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <IconButton label="Thêm tuỳ chọn cho đoạn này" icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
+        <IconButton label={S.s_them_tuy_chon_cho_doan_nay_6554b55d} icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
-            <VolumeX className="size-4" /> {scene.silenced ? "Bật nhạc đoạn này" : "Tắt nhạc đoạn này"}
+            <VolumeX className="size-4" /> {scene.silenced ? S.s_bat_nhac_doan_nay_57d716ef : S.s_tat_nhac_doan_nay_8fb1136b}
           </DropdownMenu.Item>
           {scene.pinned && (
             <DropdownMenu.Item onSelect={onUnpin} className={MENU_ITEM}>
-              <PinOff className="size-4" /> Bỏ ghim
-            </DropdownMenu.Item>
+              <PinOff className="size-4" />{S.s_bo_ghim_034b5c81}</DropdownMenu.Item>
           )}
           {onBan && (
             <>
               <DropdownMenu.Separator className="my-1 h-px bg-line" />
               <DropdownMenu.Item onSelect={onBan} className={cn(MENU_ITEM, "text-danger")}>
-                <Ban className="size-4" /> Loại khỏi cuốn
-              </DropdownMenu.Item>
+                <Ban className="size-4" />{S.s_loai_khoi_cuon_2426f728}</DropdownMenu.Item>
             </>
           )}
         </DropdownMenu.Content>
@@ -531,8 +520,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     const running = Boolean(data?.moods?.running);
     if (moodsRunning.current && !running) {
       announceChange(bookId);
-      if (data?.moods?.error) toast.error("Không đọc xong không khí các đoạn", { description: data.moods.error });
-      else toast("Đã đọc xong không khí các đoạn - nhạc đã chọn lại");
+      if (data?.moods?.error) toast.error(S.s_khong_doc_xong_khong_khi_cac_doan_f279af25, { description: data.moods.error });
+      else toast(S.s_da_doc_xong_khong_khi_cac_doan_nhac_da_cho_487aac39);
     }
     moodsRunning.current = running;
   }, [bookId, data?.moods?.running, data?.moods?.error]);
@@ -540,7 +529,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   const downloading = useRef(false);
   useEffect(() => {
     const active = Boolean(data?.download?.active);
-    if (downloading.current && !active && data?.error) toast.warning("Chưa tải được nhạc", { description: data.error });
+    if (downloading.current && !active && data?.error) toast.warning(S.s_chua_tai_duoc_nhac_e5f3ccb5, { description: data.error });
     downloading.current = active;
   }, [data?.download?.active, data?.error]);
   const change = useMutation({
@@ -551,18 +540,18 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       setSwapping(null);
       announceChange(bookId);
       refreshSoon();
-      if (result.error) toast.warning("Đã lưu lựa chọn", { description: result.error });
+      if (result.error) toast.warning(S.s_da_luu_lua_chon_3dbba0c5, { description: result.error });
     },
-    onError: (error: Error) => toast.error("Chưa đổi được nhạc nền", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_nhac_nen_b5d19c42, { description: error.message }),
   });
   const cancelDownload = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/download/cancel`, { method: "POST" }),
     onSuccess: (result) => {
       // Máy chủ dừng ở khúc kế (một phần giây): ẩn dòng tiến độ ngay thay vì đợi lần hỏi sau.
       client.setQueryData(key, { ...result, download: undefined });
-      toast("Đã dừng tải nhạc nền");
+      toast(S.s_da_dung_tai_nhac_nen_6addc23d);
     },
-    onError: (error: Error) => toast.error("Chưa dừng được việc tải nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_dung_duoc_viec_tai_nhac_76d30d55, { description: error.message }),
   });
   // Đổi bài / Chọn lại nhạc vừa xong: máy bắt đầu tải bài mới ở nền - hỏi lại ngay để hiện tiến độ.
   const refreshSoon = () => window.setTimeout(() => void client.invalidateQueries({ queryKey: key }), 600);
@@ -574,7 +563,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       announceChange(bookId);
       refreshSoon();
     },
-    onError: (error: Error) => toast.error("Chưa chọn lại được nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_chon_lai_duoc_nhac_f442d032, { description: error.message }),
   });
 
   /** Bỏ một bài cho cả cuốn: lặng lẽ thì khó hiểu vì sao các đoạn khác cũng đổi bài, nên báo (kèm số đoạn đang dùng bài
@@ -585,16 +574,16 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       { ban: [link] },
       {
         onSuccess: () =>
-          toast(`Đã bỏ “${label}” cho cả cuốn (đang dùng ở ${used} đoạn)`, {
-            action: { label: "Hoàn tác", onClick: () => change.mutate({ unban: [link] }) },
+          toast(S.s_da_bo_0_cho_ca_cuon_dang_dung_o_1_doan_388eec18(label, used), {
+            action: { label: S.s_hoan_tac_e72ff675, onClick: () => change.mutate({ unban: [link] }) },
           }),
       },
     );
   };
 
   // Lần đầu (danh mục chưa có trên máy) mất cỡ 10 giây - bài nhạc tải sau ở nền, không chờ ở đây (soát UX a60: từng mất 2,7 phút).
-  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại nhạc nền." onRetry={() => void refetch()} /></MotionRegion>;
-  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" label="Đang tải nhạc nền" className="mt-6" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message={S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_nhac_9a91e125} onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" label={S.s_dang_tai_nhac_nen_0b8c4795} className="mt-6" /></MotionRegion>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
   // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.
@@ -610,27 +599,25 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       {/* Cài đặt nhạc của cuốn: một hàng một việc, công tắc / ô chọn bên phải như trang Cài đặt - không khung bao (DESIGN 4, 6). */}
       <section className="flex flex-wrap items-end gap-x-4">
         <div className="basis-full divide-y divide-line">
-          <SettingsRow label={<span id="music-enabled-name">Nhạc nền</span>} hint={<span id="music-enabled-hint">{overrides.enabled ? "Đang bật cho cuốn này." : "Đang tắt: các đoạn dưới đây sẽ không phát."}</span>}>
+          <SettingsRow label={<span id="music-enabled-name">{S.s_nhac_nen_271fb292}</span>} hint={<span id="music-enabled-hint">{overrides.enabled ? S.s_dang_bat_cho_cuon_nay_6752e54b : S.s_dang_tat_cac_doan_duoi_day_se_khong_phat_e93d8c97}</span>}>
             <Switch id="music-enabled" labelledBy="music-enabled-name" describedBy="music-enabled-hint" checked={overrides.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
           </SettingsRow>
           <SettingsRow
-            label={<label htmlFor="music-genre">Thể loại truyện</label>}
+            label={<label htmlFor="music-genre">{S.s_the_loai_truyen_9c821aa0}</label>}
             hint={
-              <>
-                Chưa chọn thì nhạc lấy từ mọi thể loại
-                {genreName.length > 28 && <span className="mt-0.5 block sm:hidden">{genreName}</span>}
+              <>{S.s_chua_chon_thi_nhac_lay_tu_moi_the_loai_a144c9d2}{genreName.length > 28 && <span className="mt-0.5 block sm:hidden">{genreName}</span>}
               </>
             }
           >
             <Select
               id="music-genre"
               value={overrides.genre ?? ""}
-              title={genreName || "Chưa chọn"}
+              title={genreName || S.s_chua_chon_e5f50074}
               onChange={(event) => change.mutate({ genre: event.target.value || null })}
               // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
               className="max-w-full sm:w-auto sm:min-w-64"
             >
-              <option value="">Chưa chọn</option>
+              <option value="">{S.s_chua_chon_e5f50074}</option>
               {genres.map(([value, genre]) => (
                 <option key={value} value={value}>
                   {genre.vi}
@@ -640,12 +627,12 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           </SettingsRow>
           {/* Thanh trượt nằm dưới tên hàng, không bên phải: chữ mức của nó không đứng cạnh tên hàng (hai dòng chữ cạnh nhau phải cùng đường chân chữ). */}
           <div>
-            <SettingsRow label={LEVEL_TITLE} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ" />
+            <SettingsRow label={LEVEL_TITLE} hint={S.s_nho_hon_giong_doc_bay_nhieu_may_tu_bu_bai_e1b269b4} />
             <MusicLevelSlider value={overrides.levelDb} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} className="max-w-md pb-2" />
           </div>
-          <SettingsRow label="Bài cho từng đoạn" hint="Máy chọn lại theo thể loại và mức nhạc ở trên.">
+          <SettingsRow label={S.s_bai_cho_tung_doan_f2d49b48} hint={S.s_may_chon_lai_theo_the_loai_va_muc_nhac_o_t_927c2f67}>
             <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">
-              {rebuild.isPending ? "Đang chọn lại" : "Chọn lại nhạc"}
+              {rebuild.isPending ? S.s_dang_chon_lai_16e4af51 : S.s_chon_lai_nhac_ebe26dde}
             </Button>
           </SettingsRow>
         </div>
@@ -658,26 +645,22 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           {data.download && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
             {/* MB đổi mỗi 2 giây: trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
             <span role="status" className="min-w-0 flex-1">
-              <LiveText shown={downloadText(data.download)} spoken={spokenProgress("Đang tải sẵn nhạc nền", downloadShare(data.download))} />
+              <LiveText shown={downloadText(data.download)} spoken={spokenProgress(S.s_dang_tai_san_nhac_nen_3d38ca5b, downloadShare(data.download))} />
             </span>
-            <Button size="sm" variant="ghost" icon={Square} loading={cancelDownload.isPending} onClick={() => cancelDownload.mutate()}>
-              Huỷ tải
-            </Button>
-            <Progress value={downloadShare(data.download)} size="sm" label="Tải sẵn nhạc nền" className="basis-full" />
+            <Button size="sm" variant="ghost" icon={Square} loading={cancelDownload.isPending} onClick={() => cancelDownload.mutate()}>{S.s_huy_tai_1a9ff73d}</Button>
+            <Progress value={downloadShare(data.download)} size="sm" label={S.s_tai_san_nhac_nen_4474e87f} className="basis-full" />
           </div>}
         </MotionPresence>
         {/* "Dùng lại": dòng khép tại chỗ; bỏ hết thì cả mục khép lại. */}
         <MotionPresence className="basis-full" open={overrides.banned.length > 0}>
           <details className="text-sm">
-            <summary className="cursor-pointer text-fg-2">Bài đã bỏ ({overrides.banned.length})</summary>
+            <summary className="cursor-pointer text-fg-2">{S.s_bai_da_bo_4d06ea6e}{overrides.banned.length})</summary>
             <div data-motion-live="">
             <AnimatedRows className="mt-2" items={overrides.banned} keyOf={(link) => link}>
               {(link) => (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1">
                   <span className="min-w-0 flex-1 break-words">{trackLabel(link, data.bannedTracks?.[link] ?? plan?.tracks[link])}</span>
-                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ unban: [link] })}>
-                    Dùng lại
-                  </Button>
+                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ unban: [link] })}>{S.s_dung_lai_01a1973f}</Button>
                 </div>
               )}
             </AnimatedRows>
@@ -686,23 +669,23 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         </MotionPresence>
       </section>
 
-      <Fold storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
+      <Fold storageKey="studio.music.moods" title={S.s_nhac_theo_ngu_canh_566500d8} heading="h3">
         <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
       </Fold>
 
-      <Fold storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
+      <Fold storageKey="studio.music.local" title={S.s_nhac_cua_toi_f65b7ac6} heading="h3">
         <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
       </Fold>
 
       {data.error && <p className="text-sm text-warning">{data.error}</p>}
       {!overrides.enabled && !!plan?.scenes.length && (
-        <p className="text-sm text-fg-2">Nhạc nền đang tắt - các đoạn dưới đây sẽ không phát.</p>
+        <p className="text-sm text-fg-2">{S.s_nhac_nen_dang_tat_cac_doan_duoi_day_se_kho_2cc431ba}</p>
       )}
       {!plan?.scenes.length ? (
-        <p className="text-sm text-fg-2">Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích.</p>
+        <p className="text-sm text-fg-2">{S.s_chua_co_doan_nao_nhac_nen_dung_sau_khi_sac_b1bdaf8e}</p>
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
-          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length} đoạn`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
+          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={S.s_0_doan_c2eb5200(scenes.length)} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
             <ul className="divide-y divide-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
@@ -721,14 +704,12 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                           className="ml-1.5 rounded-control bg-sunken px-1 py-0.5 text-xs text-fg-2"
                           title={
                             scene.moodSource === "student"
-                              ? "AI đã đoán đoạn này vui hơn hay buồn hơn, căng hơn hay dịu hơn so với mức của cả chương"
+                              ? S.s_ai_da_doan_doan_nay_vui_hon_hay_buon_hon_c_e68274f5
                               : scene.moodSource === "chapter"
-                                ? "AI đã đọc cả đoạn này để chấm không khí, rồi cân theo mức của cả chương"
-                                : "AI đã đọc cả đoạn này để chấm không khí"
+                                ? S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_ro_e5ef84d5
+                                : S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_61bd9b9d
                           }
-                        >
-                          AI
-                        </span>
+                        >{S.s_ai_11fb682b}</span>
                       )}
                     </span>
                     <span className="min-w-0 basis-full break-words sm:flex-1 sm:basis-0">
@@ -737,18 +718,18 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       ) : scene.link ? (
                         <>
                           <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
-                          {track?.title ?? "Bài nhạc"}
+                          {track?.title ?? S.s_bai_nhac_5d07657e}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
                           {track?.source === "local" && (
-                            <span className="ml-1.5 rounded-control bg-sunken px-1.5 py-0.5 text-xs text-fg-2">Nhạc của tôi</span>
+                            <span className="ml-1.5 rounded-control bg-sunken px-1.5 py-0.5 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span>
                           )}
-                          {scene.pinned && <Pin className="ml-1.5 inline size-3.5 text-fg-2" aria-label="Đã ghim" />}
+                          {scene.pinned && <Pin className="ml-1.5 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} />}
                           {scene.pinUnavailable && (
-                            <span className="block text-xs text-warning">Bài bạn ghim không còn trên máy này - đoạn dùng bài khác.</span>
+                            <span className="block text-xs text-warning">{S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e}</span>
                           )}
                         </>
                       ) : (
-                        <span className="text-fg-2">{scene.silenced ? "Im lặng (bạn chọn)" : "Im lặng - không bài nào đủ hợp"}</span>
+                        <span className="text-fg-2">{scene.silenced ? S.s_im_lang_ban_chon_356a628b : S.s_im_lang_khong_bai_nao_du_hop_6881c83f}</span>
                       )}
                     </span>
                     {/* Một nút chính + "…": cột nút thẳng hàng ở mọi dòng (trước đây bốn nút, dòng có "Bỏ ghim" lệch cột). */}
@@ -792,12 +773,12 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       )}
       {plan && Object.keys(plan.tracks).length > 0 && (
         <details className="text-xs text-fg-2">
-          <summary className="cursor-pointer">Ghi công ({Object.keys(plan.tracks).length})</summary>
+          <summary className="cursor-pointer">{S.s_ghi_cong_153d3665}{Object.keys(plan.tracks).length})</summary>
           <ul className="mt-2 space-y-1">
             {Object.entries(plan.tracks).map(([link, track]) => (
               <li key={link} className="break-words">
                 {track.source === "local"
-                  ? `${[track.title, track.creator].filter(Boolean).join(" · ")} - nhạc của bạn, không có thông tin giấy phép`
+                  ? S.s_0_nhac_cua_ban_khong_co_thong_tin_giay_phe_71454f92([track.title, track.creator].filter(Boolean).join(" · "))
                   : musicCreditText(track) || link}
               </li>
             ))}

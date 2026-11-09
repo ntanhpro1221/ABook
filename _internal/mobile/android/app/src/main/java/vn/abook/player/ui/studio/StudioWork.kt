@@ -1,27 +1,29 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 
 /** 16 kiểu thẻ "Việc cần duyệt" (web `WorkKind`); `label` là nhãn nhỏ trên thẻ (`KIND_LABEL` của WorkInbox.tsx). */
 enum class WorkKind(val key: String, val label: String) {
-    Speaker("speaker", "Ai nói câu này"),
-    Caller("caller", "Người gọi / ngoài khung"),
-    Turn("turn", "Lượt đối đáp"),
-    Pronunciation("pronunciation", "Cách đọc tên"),
-    Gender("gender", "Nam hay nữ"),
-    Vocative("vocative", "Gọi hay nói"),
-    Alias("alias", "Một người hai tên"),
-    Bracket("bracket", "Lời trong 『』"),
-    SharedVoice("shared-voice", "Chung giọng"),
-    Unnamed("unnamed", "Vai phụ không tên"),
-    Audio("audio", "Bản thu lỗi"),
-    Narrator("narrator", "Người kể của đoạn"),
-    VoiceWish("voice-wish", "Giọng chưa đổi được"),
-    Snap("snap", "Tên viết khác"),
-    TellerVoice("teller-voice", "Giọng lời dẫn"),
-    TellerThought("teller-thought", "Nội tâm người kể"),
-    Refused("refused", "Yêu cầu chưa được");
+    Speaker("speaker", S.s_ai_noi_cau_nay_0e00a5c7),
+    Caller("caller", S.s_nguoi_goi_ngoai_khung_03677986),
+    Turn("turn", S.s_luot_doi_dap_a2c055e0),
+    Pronunciation("pronunciation", S.s_cach_doc_ten_1c46e75d),
+    Gender("gender", S.s_nam_hay_nu_0167dbc6),
+    Vocative("vocative", S.s_goi_hay_noi_305521d7),
+    Alias("alias", S.s_mot_nguoi_hai_ten_9293d8ab),
+    Bracket("bracket", S.s_loi_trong_c682376b),
+    SharedVoice("shared-voice", S.s_chung_giong_a58df5cc),
+    Unnamed("unnamed", S.s_vai_phu_khong_ten_6395f0d2),
+    Audio("audio", S.s_ban_thu_loi_753aaed5),
+    Narrator("narrator", S.s_nguoi_ke_cua_doan_b218398e),
+    VoiceWish("voice-wish", S.s_giong_chua_doi_duoc_2617419d),
+    Snap("snap", S.s_ten_viet_khac_f05542f3),
+    TellerVoice("teller-voice", S.s_giong_loi_dan_f8f4ea1e),
+    TellerThought("teller-thought", S.s_noi_tam_nguoi_ke_0c360f80),
+    Refused("refused", S.s_yeu_cau_chua_duoc_3c62dd70);
 
     companion object {
         fun of(key: String): WorkKind? = entries.firstOrNull { it.key == key }

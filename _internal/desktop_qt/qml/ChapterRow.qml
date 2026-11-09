@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -47,7 +48,7 @@ Interactive {
             anchors.centerIn: parent
             visible: !root.current && root.done
             name: "check"
-            Accessible.name: root.done ? "Đã nghe" : ""
+            Accessible.name: root.done ? S.s_da_nghe_1e0f8d88 : ""
             size: 16
             color: root.current ? Theme.accentText : Theme.success
         }
@@ -99,7 +100,7 @@ Interactive {
         iconSize: 16
         ink: Theme.text2
         hoverInk: Theme.text
-        Accessible.name: `Tuỳ chọn ${root.fullTitle}`
+        Accessible.name: S.s_tuy_chon_0_1f5bbd67(root.fullTitle)
         opacity: root.hovered || more.hovered || more.activeFocus || root.menuOpen ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         onClicked: {

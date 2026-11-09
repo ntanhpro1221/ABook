@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { ReadAloudVoice } from "./readAloud";
 import { KEYED_PROVIDERS } from "./readAloudVoice";
 
@@ -11,7 +12,7 @@ const KEY = "abook-readaloud-online-ok";
 export const ONLINE_CONSENT_EVENT = "abook-readaloud-online-ok";
 
 /** Tên công ty của các nhà cung cấp giọng trực tuyến đã biết (nhà cung cấp lạ: nói chung "dịch vụ ngoài"). */
-const COMPANIES: Record<string, string> = { edge: "Microsoft" };
+const COMPANIES: Record<string, string> = { edge: S.s_microsoft_c7bac469 };
 
 function agreed(): string[] {
   try {
@@ -58,18 +59,18 @@ export function onlineDestination(provider: string): string {
   const keyed = KEYED_PROVIDERS[provider];
   if (keyed) return keyed;
   const company = COMPANIES[provider];
-  return company ? `máy chủ ${company}` : "dịch vụ ngoài";
+  return company ? S.s_may_chu_0_085d6415(company) : S.s_dich_vu_ngoai_0bb5b472;
 }
 
 /** Lời hỏi trong hộp. */
 export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider">): string {
   const name = spokenVoiceName(voice.name);
   const where = onlineDestination(voice.provider);
-  if (KEYED_PROVIDERS[voice.provider]) return `Giọng ${name} dùng khoá ${where} của bạn: chữ của đoạn đang đọc được gửi tới ${where} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
+  if (KEYED_PROVIDERS[voice.provider]) return S.s_giong_0_dung_khoa_1_cua_ban_chu_cua_doan_d_005b3ec4(name, where, where);
   // Người nghe biết giọng này là "Edge"; chữ đi tới đâu thì vẫn nói thật: máy chủ của công ty.
   return COMPANIES[voice.provider]
-    ? `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`
-    : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`;
+    ? S.s_giong_0_la_giong_1_chu_cua_doan_dang_doc_d_48efa5c3(name, voice.provider === "edge" ? S.s_edge_0f82fe72 : S.s_truc_tuyen_ada49667, where)
+    : S.s_giong_0_la_giong_truc_tuyen_chu_cua_doan_d_eee4aa0e(name, where);
 }
 
 /** Lời trong bước "Chọn giọng đọc": đúng với danh sách đang hiện - chỉ nói "không gửi chữ" khi trong đó có giọng chạy trên máy,
@@ -77,7 +78,7 @@ export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider"
 export function chooseVoiceText(voices: readonly Pick<ReadAloudVoice, "online">[], current: Pick<ReadAloudVoice, "name" | "provider">): string {
   const hasLocal = voices.some((item) => !item.online);
   const hasOnline = voices.some((item) => item.online);
-  const local = "Giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu.";
+  const local = S.s_giong_cua_may_doc_ngay_tren_may_nay_khong_de4e8960;
   if (!hasOnline) return local;
   return hasLocal ? `${local} ${onlinePromptText(current)}` : onlinePromptText(current);
 }

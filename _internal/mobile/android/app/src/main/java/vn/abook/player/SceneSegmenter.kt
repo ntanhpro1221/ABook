@@ -67,8 +67,8 @@ object SceneSegmenter {
     private const val FRAMED_NAME_MAX_WORDS = 4
     private const val FRAMED_NAME_PUNCTUATION = ".!?…~,;"
     private val FRAMED_INTERJECTIONS: Set<String> = (
-        "hmm hm hừm khụ ừ ừm ờ à á ồ ơ ê hả hử hừ hứ hì hehe haha hihi ối ui úi ây chậc chẹp xì phù hự oa wow " +
-            "vâng dạ hế haiz haizz hây nhưng phải không được thôi"
+        S.s_hmm_hm_hum_khu_u_um_o_a_a_o_o_e_ha_hu_hu_h_a1d79f50 +
+            S.s_vang_da_he_haiz_haizz_hay_nhung_phai_khong_abbc1121
         ).split(" ").toSet()
 
     private class State(val hint: String, val closing: String)

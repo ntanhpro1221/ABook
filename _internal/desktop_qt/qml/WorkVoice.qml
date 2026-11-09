@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "WorkLogic.js" as W
@@ -25,12 +26,12 @@ Column {
     function keepAll() {
         if (busy) return
         busy = true
-        work.saveVoice(item, item.keepCharacters.map(function(character) { return {character: character} }), item.keepLabel || "Giữ nguyên", true, function() { root.busy = false })
+        work.saveVoice(item, item.keepCharacters.map(function(character) { return {character: character} }), item.keepLabel || S.s_giu_nguyen_1b550a12, true, function() { root.busy = false })
     }
 
     spacing: 0
     Item { width: 1; height: 12 }
-    WorkRequested { width: parent.width; text: root.item.requested ? "Đã ghi: " + root.item.requested + " - " + root.work.pendingNote + "." : "" }
+    WorkRequested { width: parent.width; text: root.item.requested ? S.s_da_ghi_85094402 + root.item.requested + " - " + root.work.pendingNote + "." : "" }
     Flow {
         width: parent.width
         spacing: 8
@@ -59,7 +60,7 @@ Column {
         DecisionButton {
             objectName: "voiceKeep"
             visible: Boolean(root.item.keepCharacters) && root.item.keepCharacters.length > 0
-            text: root.item.keepLabel || "Giữ nguyên"
+            text: root.item.keepLabel || S.s_giu_nguyen_1b550a12
             enabled: !root.busy
             onClicked: root.keepAll()
         }

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -7,7 +8,7 @@ Item {
     id: root
     property string shape: "rows"
     property int count: 3
-    property string label: "Đang tải"
+    property string label: S.s_dang_tai_465b1987
     readonly property int columns: shape === "covers" ? Math.max(1, Math.floor((width + 16) / (120 + 16))) : 1
     readonly property real cell: shape === "covers" ? (width - (columns - 1) * 16) / columns : width
     readonly property int lines: Math.ceil(count / columns)

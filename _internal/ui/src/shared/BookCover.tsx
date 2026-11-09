@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import { cn } from "@/shared/cn";
 import { useLayoutEffect, useRef, useState } from "react";
 import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
@@ -80,7 +81,7 @@ export function BookCover({
       data-book-cover={bookKey}
       className={cn("@container relative aspect-square shrink-0 overflow-hidden rounded-control text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
-      data-overlay="Chữ bìa trên hoạ tiết sóng"
+      data-overlay={S.s_chu_bia_tren_hoa_tiet_song_5f192030}
       data-np={morph}
       aria-hidden
     >

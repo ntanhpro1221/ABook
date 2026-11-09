@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,7 +61,7 @@ export function VoiceSpeedSetting({
       // Thẻ mô-đun mời / thôi mời tải bản nhanh hơn theo lựa chọn mới.
       void client.invalidateQueries({ queryKey: ["readaloud", SUPERTONIC_COPY.key] });
     } catch (error) {
-      toast.error("Chưa đổi được tốc độ giọng", { description: (error as Error).message });
+      toast.error(S.s_chua_doi_duoc_toc_do_giong_e3562390, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -69,11 +70,11 @@ export function VoiceSpeedSetting({
     try {
       client.setQueryData(["readaloud", SUPERTONIC_COPY.key], await supertonic.start([voice.fastChoice]));
     } catch (error) {
-      toast.error("Chưa tải được bản nhanh hơn", { description: (error as Error).message });
+      toast.error(S.s_chua_tai_duoc_ban_nhanh_hon_0011ec37, { description: (error as Error).message });
     }
   };
   return (
-    <MotionRegion><Fold storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
+    <MotionRegion><Fold storageKey="voice.performance" title={S.s_hieu_nang_8c7b7526} summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
       <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
       <ChoiceRow
         value={status.choice}
@@ -91,7 +92,7 @@ export function VoiceSpeedSetting({
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
               {needsFastDownload(voice) && (
                 <Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>
-                  {`Tải (${formatSize(voice.fastBytes)})`}
+                  {S.s_tai_0_3463a4d8(formatSize(voice.fastBytes))}
                 </Button>
               )}
             </li>

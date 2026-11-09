@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
@@ -28,7 +30,7 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
             DeviceEngine.select(tts, voiceName)
             val limit = (TextToSpeech.getMaxSpeechInputLength() - 100).coerceIn(500, 3900)
             val chunks = TextChunks.split(text, limit)
-            if (chunks.isEmpty()) throw VoiceException("Đoạn trống")
+            if (chunks.isEmpty()) throw VoiceException(S.s_doan_trong_ba06f5ce)
             val files = ArrayList<File>()
             val boundaries = ArrayList<Boundary>()
             var elapsed = 0L
@@ -38,7 +40,7 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
                     files.add(part)
                     val ranges = ArrayList<Range>()
                     val rate = speak(tts, chunk, part, ranges)
-                    val format = Wav.format(part) ?: throw VoiceException("Giọng của máy ghi file âm thanh lạ")
+                    val format = Wav.format(part) ?: throw VoiceException(S.s_giong_cua_may_ghi_file_am_thanh_la_43894488)
                     val sampleRate = if (rate > 0) rate else format.sampleRate
                     // Khung phải tăng dần và có ít nhất một khung > 0 thì mới tin; không thì bỏ, chia đều.
                     val usable = ranges.size > 1 && ranges.zipWithNext().all { (a, b) -> b.frame >= a.frame } && ranges.any { it.frame > 0 }
@@ -62,7 +64,7 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
             } finally {
                 files.forEach { it.delete() }
             }
-            val duration = (Wav.format(out) ?: throw VoiceException("Giọng của máy ghi file âm thanh lạ")).durationMs(out.length())
+            val duration = (Wav.format(out) ?: throw VoiceException(S.s_giong_cua_may_ghi_file_am_thanh_la_43894488)).durationMs(out.length())
             return Clip(out, duration, WordTokens.map(text, boundaries, duration), id)
         }
     }
@@ -77,19 +79,19 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
             override fun onStart(utteranceId: String?) = Unit
             override fun onDone(utteranceId: String?) { if (utteranceId == utterance) done.countDown() }
             @Deprecated("Deprecated in Java")
-            override fun onError(utteranceId: String?) { if (utteranceId == utterance) { failure.set("Giọng của máy báo lỗi"); done.countDown() } }
-            override fun onError(utteranceId: String?, errorCode: Int) { if (utteranceId == utterance) { failure.set("Giọng của máy báo lỗi ($errorCode)"); done.countDown() } }
+            override fun onError(utteranceId: String?) { if (utteranceId == utterance) { failure.set(S.s_giong_cua_may_bao_loi_3484d9f8); done.countDown() } }
+            override fun onError(utteranceId: String?, errorCode: Int) { if (utteranceId == utterance) { failure.set(S.s_giong_cua_may_bao_loi_0_41e7428c(errorCode)); done.countDown() } }
             override fun onBeginSynthesis(utteranceId: String?, sampleRateInHz: Int, audioFormat: Int, channelCount: Int) { if (utteranceId == utterance) sampleRate = sampleRateInHz }
             override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) { if (utteranceId == utterance) ranges.add(Range(start, end, frame.toLong())) }
         })
         file.delete()
-        if (tts.synthesizeToFile(chunk, Bundle(), file, utterance) != TextToSpeech.SUCCESS) throw VoiceException("Giọng của máy không nhận được đoạn này")
+        if (tts.synthesizeToFile(chunk, Bundle(), file, utterance) != TextToSpeech.SUCCESS) throw VoiceException(S.s_giong_cua_may_khong_nhan_duoc_doan_nay_c5c2686b)
         if (!done.await(SYNTH_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             tts.stop()
-            throw VoiceException("Giọng của máy đọc quá chậm")
+            throw VoiceException(S.s_giong_cua_may_doc_qua_cham_bbd22a3f)
         }
         failure.get()?.let { throw VoiceException(it) }
-        if (!file.isFile || file.length() < 44) throw VoiceException("Giọng của máy không ghi ra âm thanh")
+        if (!file.isFile || file.length() < 44) throw VoiceException(S.s_giong_cua_may_khong_ghi_ra_am_thanh_c175e029)
         return sampleRate
     }
 
@@ -106,7 +108,7 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
         }.getOrDefault(emptyList())
 
         /** Tên người dùng thấy: tên giọng Android là mã ("vi-vn-x-gft-local"), không nói gì với người nghe - đánh số theo thứ tự máy trả về. */
-        fun label(index: Int, count: Int): String = if (count == 1) "Tiếng Việt" else "Tiếng Việt ${index + 1}"
+        fun label(index: Int, count: Int): String = if (count == 1) S.s_tieng_viet_690829f8 else S.s_tieng_viet_0_3e248b21(index + 1)
 
         /** Giọng mặc định của máy (id), hoặc null nếu không có giọng tiếng Việt. */
         fun defaultId(context: Context): String? = voices(context).firstOrNull()?.id
@@ -132,7 +134,7 @@ internal object DeviceEngine {
         }
         if (!ready.await(INIT_TIMEOUT_MS, TimeUnit.MILLISECONDS) || status != TextToSpeech.SUCCESS) {
             created?.shutdown()
-            throw VoiceException("Thiếu bộ đọc — bạn cài ở Cài đặt → Chuyển văn bản thành giọng nói.")
+            throw VoiceException(S.s_thieu_bo_doc_ban_cai_o_cai_dat_chuyen_van_dad80a1c)
         }
         return created!!.also { tts = it }
     }
@@ -151,7 +153,7 @@ internal object DeviceEngine {
         }
         val result = engine.setLanguage(Locale.forLanguageTag("vi-VN"))
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            throw VoiceException("Thiếu giọng Việt — bạn cài ở Cài đặt → Chuyển văn bản thành giọng nói.")
+            throw VoiceException(S.s_thieu_giong_viet_ban_cai_o_cai_dat_chuyen_074f8655)
         }
     }
 }

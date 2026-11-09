@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -7,7 +8,7 @@ Item {
     id: root
     property var labels: ["", ""]
     property int index: 0
-    property string label: "Bảng"
+    property string label: S.s_bang_8f805066
     Accessible.role: Accessible.PageTabList
     Accessible.name: label
     signal picked(int index)

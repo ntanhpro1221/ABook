@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { formatLength } from "@/shared/format";
 import type { StudioGpu } from "./studioFit";
 
@@ -35,12 +36,12 @@ export function estimate(words: number, chapters: number, exact: boolean) {
 /** Nói số này từ đâu ra - đứng cạnh mọi con số thời gian. */
 export function timeBasis(exact: boolean): string {
   return exact
-    ? `Số tham khảo, đo trên máy cùng card ${MEASURED_ON}`
-    : `Số tham khảo, đo trên máy ${MEASURED_ON}; máy của bạn có thể nhanh hơn hay chậm hơn nên đây là khoảng rộng`;
+    ? S.s_so_tham_khao_do_tren_may_cung_card_0_96d8ca83(MEASURED_ON)
+    : S.s_so_tham_khao_do_tren_may_0_may_cua_ban_co_09b43893(MEASURED_ON);
 }
 
 export function lengthRange(low: number, high: number): string {
   const a = formatLength(low);
   const b = formatLength(high);
-  return a === b ? `khoảng ${a}` : `${a} - ${b}`;
+  return a === b ? S.s_khoang_0_22035be1(a) : `${a} - ${b}`;
 }

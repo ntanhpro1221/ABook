@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -89,8 +90,8 @@ Item {
             id: queryField
             objectName: "coverQuery"
             width: parent.width - find.width - 8
-            label: "Tên sách để tìm bìa"
-            placeholderText: "Tên sách (tiếng Anh thường cho nhiều kết quả hơn)"
+            label: S.s_ten_sach_de_tim_bia_4f406cde
+            placeholderText: S.s_ten_sach_tieng_anh_thuong_cho_nhieu_ket_qu_82eea1b6
             text: root.query
             onTextChanged: root.query = text
             onAccepted: root.search()
@@ -99,7 +100,7 @@ Item {
             id: find
             objectName: "coverFind"
             x: parent.width - width
-            text: "Tìm"
+            text: S.s_tim_bbe47492
             icon: "search"
             busy: root.searching
             onActivated: root.search()
@@ -126,12 +127,12 @@ Item {
                 Collapse {
                     width: parent.width
                     open: root.searching
-                    EditBookSkeleton { width: parent.width; shape: "covers"; count: 4; label: "Đang tìm ảnh bìa" }
+                    EditBookSkeleton { width: parent.width; shape: "covers"; count: 4; label: S.s_dang_tim_anh_bia_af1f4a20 }
                 }
                 InlineError {
                     width: parent.width
                     open: root.searchError && !root.searching
-                    message: "Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa."
+                    message: S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_anh_b_887a4046
                     onRetry: root.search()
                 }
                 Collapse {
@@ -235,7 +236,7 @@ Item {
                         Text {
                             width: parent.width
                             horizontalAlignment: Text.AlignHCenter
-                            text: "Bạn hãy chọn ảnh trên máy"
+                            text: S.s_ban_hay_chon_anh_tren_may_006585b2
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBody
@@ -245,7 +246,7 @@ Item {
                         Button {
                             objectName: "coverPickFile"
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Chọn ảnh"
+                            text: S.s_chon_anh_41ecf092
                             kind: "ghost"
                             onClicked: { root.cancel(); root.chooseFile() }
                         }
@@ -254,13 +255,13 @@ Item {
                 InlineError {
                     width: parent.width
                     open: root.failed.length > 0
-                    message: "Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa."
+                    message: S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_cac_n_c69012d6
                     onRetry: root.search()
                 }
                 InlineError {
                     width: parent.width
                     open: root.chooseError
-                    message: "Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa."
+                    message: S.s_ban_hay_kiem_tra_ket_noi_roi_dat_lai_anh_b_86cb5b41
                     onRetry: if (root.chosenFound) root.choose(root.chosenFound)
                 }
             }

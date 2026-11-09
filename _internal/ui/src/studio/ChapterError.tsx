@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { friendlyError } from "./errorText";
 import * as Popover from "@radix-ui/react-popover";
 import { useFadeScroller } from "@/shared/scrollFade";
@@ -10,11 +11,11 @@ export function ChapterError({ raw, studio = false }: { raw: string; studio?: bo
   return (
     <Popover.Root>
       <Popover.Trigger className="block max-w-full cursor-pointer select-none truncate text-left text-xs text-danger">
-        {shown.summary} <span className="underline underline-offset-2">Chi tiết</span>
+        {shown.summary} <span className="underline underline-offset-2">{S.s_chi_tiet_e762d926}</span>
       </Popover.Trigger>
       <Popover.Portal>
       {/* Sự kiện React nổi qua portal lên hàng chương (nhấp đúp = phát): nhấp đúp chọn chữ lỗi ở đây không được phát chương. */}
-      <Popover.Content aria-label="Lỗi chương" align="start" sideOffset={4} collisionPadding={12} onDoubleClick={(event) => event.stopPropagation()} className="z-50 w-[min(32rem,calc(100vw-3rem))] rounded-control border border-line bg-panel p-3 text-xs text-fg shadow-float">
+      <Popover.Content aria-label={S.s_loi_chuong_0aa915a2} align="start" sideOffset={4} collisionPadding={12} onDoubleClick={(event) => event.stopPropagation()} className="z-50 w-[min(32rem,calc(100vw-3rem))] rounded-control border border-line bg-panel p-3 text-xs text-fg shadow-float">
         <p className="text-fg-2">{shown.hint}</p>
         {shown.detail && <p ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[0.6875rem] text-fg-2">{shown.detail}</p>}
       </Popover.Content>

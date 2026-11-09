@@ -26,13 +26,13 @@ class TruePeak(params: MusicRender.Params, private val channels: Int, bounds: Lo
     private var filled = 0 // mẫu của khung dở dang của [write]
 
     init {
-        require(starts.isNotEmpty() && starts[0] == 0L) { "đoạn đầu phải bắt đầu ở khung 0" }
-        for (i in 1 until starts.size) require(starts[i] >= starts[i - 1]) { "mốc đoạn phải tăng dần" }
+        require(starts.isNotEmpty() && starts[0] == 0L) { S.s_doan_dau_phai_bat_dau_o_khung_0_5b5e7d80 }
+        for (i in 1 until starts.size) require(starts[i] >= starts[i - 1]) { S.s_moc_doan_phai_tang_dan_33e09f16 }
     }
 
     /** Thêm `count` mẫu (không phải khung) từ [samples]. */
     fun feed(samples: ShortArray, count: Int = samples.size) {
-        require(count % channels == 0) { "khối không trọn khung" }
+        require(count % channels == 0) { S.s_khoi_khong_tron_khung_c184e523 }
         var i = 0
         while (i < count) {
             push { c -> samples[i + c] / 32768.0 }
@@ -42,7 +42,7 @@ class TruePeak(params: MusicRender.Params, private val channels: Int, bounds: Lo
 
     /** Thêm mẫu thực chưa lượng tử (như `loudness.true_peak_dbtp` của máy tính): mẫu vượt ±1 được đo đúng, không bị cắt trước. */
     fun feed(samples: FloatArray) {
-        require(samples.size % channels == 0) { "khối không trọn khung" }
+        require(samples.size % channels == 0) { S.s_khoi_khong_tron_khung_c184e523 }
         var i = 0
         while (i < samples.size) {
             push { c -> samples[i + c].toDouble() }
@@ -94,7 +94,7 @@ class TruePeak(params: MusicRender.Params, private val channels: Int, bounds: Lo
 
     /** Hết luồng: đẩy 6 khung im để đo nốt các khung cuối. Trả đỉnh từng đoạn (dBTP; im hẳn = -inf). Gọi một lần. */
     fun finish(): DoubleArray {
-        require(low < 0 && filled == 0) { "luồng hết giữa một khung" }
+        require(low < 0 && filled == 0) { S.s_luong_het_giua_mot_khung_6a3cbb90 }
         val total = fed
         repeat(MusicRender.FIR_TAPS - MusicRender.FIR_LEFT - 1) {
             System.arraycopy(ring, channels, ring, 0, ring.size - channels)

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ReviewLogic.js" as R
@@ -99,7 +100,7 @@ Item {
         work.store.request("GET", pathFor(last.nextCursor), null, function(status, page) {
             if (mine !== root.generation) return
             root.fetchingNext = false
-            if (!root.work.ok(status) || !page) { root.work.fail("Chưa tải thêm được câu", status, page); return }
+            if (!root.work.ok(status) || !page) { root.work.fail(S.s_chua_tai_them_duoc_cau_35372122, status, page); return }
             root.pages = root.pages.concat([page])
         })
     }
@@ -163,7 +164,7 @@ Item {
         }
         if (!next) {
             continuous = false
-            work.say("Đã nghe hết các câu trong danh sách")
+            work.say(S.s_da_nghe_het_cac_cau_trong_danh_sach_3526b3a6)
             return
         }
         Clip.toggle("review-" + next.segmentId, source.src, source.start, source.end)
@@ -202,13 +203,13 @@ Item {
             y: 24
             shape: "rows"
             count: 4
-            label: "Đang tải câu nghe"
+            label: S.s_dang_tai_cau_nghe_eba43082
         }
         InlineError {
             objectName: "reviewError"
             width: parent.width
             open: first.error !== null && root.view === null
-            message: "Bạn hãy kiểm tra kết nối rồi tải lại câu cần nghe."
+            message: S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_cau_c_9183426a
             onRetry: first.load()
         }
         Column {
@@ -231,9 +232,9 @@ Item {
                 }
                 ChoiceRow {
                     objectName: "reviewFilter"
-                    label: "Lọc"
+                    label: S.s_loc_8812e325
                     value: root.filter
-                    options: [{value: "todo", label: "Chưa xem"}, {value: "done", label: "Đã xem"}]
+                    options: [{value: "todo", label: S.s_chua_xem_2fb1e370}, {value: "done", label: S.s_da_xem_95526f88}]
                     onPicked: value => { root.filter = value }
                 }
             }
@@ -250,7 +251,7 @@ Item {
                         size: "sm"
                         kind: "ghost"
                         icon: root.continuous ? "square" : "list-music"
-                        text: root.continuous ? "Dừng nghe liền" : "Nghe liền " + root.playableCount + " câu"
+                        text: root.continuous ? S.s_dung_nghe_lien_fff6a5f1 : S.s_nghe_lien_4fca5416 + root.playableCount + S.s_cau_b07e1008
                         onClicked: {
                             if (root.continuous) { root.continuous = false; Clip.stop() }
                             else { root.continuous = true; root.playAt(0) }
@@ -261,11 +262,11 @@ Item {
                         visible: root.continuous && root.wide
                         height: 40
                         spacing: 6
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Đang nghe liền:"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_dang_nghe_lien_563c9fbf; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                         LookKbd { anchors.verticalCenter: parent.verticalCenter; text: "O" }
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Ổn\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_on_u00a0_9c4c6bbd; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                         LookKbd { anchors.verticalCenter: parent.verticalCenter; text: "R" }
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Cần thu lại - rồi sang câu kế"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_can_thu_lai_roi_sang_cau_ke_1d87c5d7; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                     }
                 }
             }
@@ -287,7 +288,7 @@ Item {
                     }
                     MoreInfo {
                         width: parent.width
-                        Text { width: parent.width; text: "Chạy tiếp hoặc Áp dụng thay đổi để thu lại."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                        Text { width: parent.width; text: S.s_chay_tiep_hoac_ap_dung_thay_doi_de_thu_lai_7f582c5b; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                     }
                 }
             }
@@ -348,7 +349,7 @@ Item {
                         id: minorToggle
                         objectName: "reviewMinor"
                         y: 16
-                        text: (root.showMinor ? "Ẩn " : "Hiện ") + root.minor + " câu nhẹ"
+                        text: (root.showMinor ? S.s_an_42708d66 : S.s_hien_61ab59df) + root.minor + S.s_cau_nhe_4de0ab6f
                         onClicked: root.showMinor = !root.showMinor
                     }
                 }

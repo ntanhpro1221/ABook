@@ -1,5 +1,7 @@
 package vn.abook.player.ui.player
 
+import vn.abook.player.S
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -94,11 +96,11 @@ fun MiniPlayer(
                     drawRect(colors.accent, Offset.Zero, Size(size.width * fraction, thick))
                 }
             }
-            .semantics { contentDescription = "Trình phát"; stateDescription = "Đã nghe chương này" + ", " + heardPercent + "%" }.testTag("mini_player"),
+            .semantics { contentDescription = S.s_trinh_phat_9270993d; stateDescription = S.s_da_nghe_chuong_nay_4e1ecf11 + ", " + heardPercent + "%" }.testTag("mini_player"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = "Mở màn hình đang nghe" }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
+            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(NowPlayingPart.Cover).width(36.dp), small = true)
@@ -109,7 +111,7 @@ fun MiniPlayer(
             }
         }
         // Hộp chạm 48 dp ôm vòng vẽ 44 dp (máy dò hộp chạm BottomTouchBoxTest: nút bấm được nào cũng >= 48 dp); chỗ chuyển phần tử chung vẫn là vòng 44 dp.
-        Box(Modifier.padding(horizontal = Dim.s12 - 2.dp).size(Dim.s48).pressable { onToggle() }.semantics { contentDescription = if (state.playing) "Tạm dừng" else "Phát" }.testTag("mini_play"), contentAlignment = Alignment.Center) {
+        Box(Modifier.padding(horizontal = Dim.s12 - 2.dp).size(Dim.s48).pressable { onToggle() }.semantics { contentDescription = if (state.playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 }.testTag("mini_play"), contentAlignment = Alignment.Center) {
             Box(sharedModifier(NowPlayingPart.Play).size(Dim.touch).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
                 PlayPauseGlyph(state.playing, colors.accentInk, 22.dp)
             }

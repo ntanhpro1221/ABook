@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Mô-đun "Giọng VieNeu" (docs/LISTEN_ANYTHING.md mục 3): giọng đọc ngay trên máy cho "Nghe ngay", tải khi người dùng bấm - máy tính
 // (abook/webui/vieneu_module.py) và điện thoại (mobile/android/.../vieneu/VieneuModule.kt) cùng một hình trạng thái. Mô-đun "Giọng Supertonic" của
 // máy tính (abook/webui/supertonic_module.py) dùng cùng khung và cùng hình trạng thái, chỉ khác lời (`ModuleCopy`). Phần thuần (không React) để
@@ -97,7 +98,7 @@ export interface VieneuStatus {
 /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
 export function meteredNotice(status: Pick<VieneuStatus, "metered">, bytes: number): string | null {
   if (!status.metered || bytes <= 0) return null;
-  return `Điện thoại đang dùng dữ liệu di động - tải ${formatSize(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi.`;
+  return S.s_dien_thoai_dang_dung_du_lieu_di_dong_tai_0_8aee54f4(formatSize(bytes));
 }
 
 /** Byte phải tải cho các lựa chọn đang đánh dấu: hợp các phần còn thiếu, phần dùng chung tính một lần. */
@@ -124,14 +125,14 @@ export function toggleChoice(status: Pick<VieneuStatus, "choices">, picked: read
 
 /** Dòng mờ khi máy không chạy được bản tăng tốc (không ẩn im lặng); null khi không có gì để nói. */
 export function fastUnsupportedNote(status: Pick<VieneuStatus, "fastUnsupported">): string | null {
-  return status.fastUnsupported ? `Bản tăng tốc: máy này không chạy được (${status.fastUnsupported}).` : null;
+  return status.fastUnsupported ? S.s_ban_tang_toc_may_nay_khong_chay_duoc_0_2d47887c(status.fastUnsupported) : null;
 }
 
 /** Câu dưới công tắc bản tăng tốc: nói điều người nghe thấy (đọc nhanh hơn hay đang đọc bằng bản thường), không nói cách làm. */
 export function acceleratedNote(state: VieneuAccelerated): string {
-  if (!state.on) return "Đang đọc bằng bản thường.";
-  if (state.problem) return "Máy này chưa chạy được bản tăng tốc, đang đọc bản thường.";
-  return state.active ? "Đang đọc bằng bản tăng tốc." : "Bản tăng tốc sẽ dùng từ lần đọc kế.";
+  if (!state.on) return S.s_dang_doc_bang_ban_thuong_1621d77e;
+  if (state.problem) return S.s_may_nay_chua_chay_duoc_ban_tang_toc_dang_d_b34f3faf;
+  return state.active ? S.s_dang_doc_bang_ban_tang_toc_c2dce725 : S.s_ban_tang_toc_se_dung_tu_lan_doc_ke_12b359e4;
 }
 
 /** Lời của một mô-đun trong thẻ (giọng VieNeu hay giọng Supertonic): tên, tiêu đề, câu mời tải, các tầng đo, nơi lưu truy vấn. */
@@ -146,17 +147,17 @@ export interface ModuleCopy {
 
 export const VIENEU_COPY: ModuleCopy = {
   key: "vieneu",
-  name: "Giọng VieNeu",
-  title: "Giọng VieNeu",
-  invite: "Giọng hay, đọc ngay trên máy, không cần mạng. Chữ của sách không rời máy.",
+  name: S.s_giong_vieneu_371ad9fb,
+  title: S.s_giong_vieneu_371ad9fb,
+  invite: S.s_giong_hay_doc_ngay_tren_may_khong_can_mang_69bed8de,
   tiers: ["turbo", "nano"],
 };
 
 export const SUPERTONIC_COPY: ModuleCopy = {
   key: "supertonic",
-  name: "Giọng Supertonic",
-  title: "Giọng Supertonic",
-  invite: "Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy.",
+  name: S.s_giong_supertonic_9922ded4,
+  title: S.s_giong_supertonic_9922ded4,
+  invite: S.s_muoi_giong_nam_nu_nhe_may_khong_can_mang_c_4e018b39,
   tiers: ["supertonic"],
 };
 
@@ -172,7 +173,7 @@ export function refreshModuleSizes(client: { invalidateQueries(filters: { queryK
   for (const queryKey of MODULE_QUERY_KEYS) void client.invalidateQueries({ queryKey });
 }
 
-const TIER_NAME: Record<ModuleTier, string> = { turbo: "Giọng VieNeu", nano: "Giọng VieNeu Nano", supertonic: "Giọng Supertonic" };
+const TIER_NAME: Record<ModuleTier, string> = { turbo: S.s_giong_vieneu_371ad9fb, nano: S.s_giong_vieneu_nano_dc5fdeb6, supertonic: S.s_giong_supertonic_9922ded4 };
 
 export function tierName(tier: ModuleTier): string {
   return TIER_NAME[tier];
@@ -199,14 +200,14 @@ export interface VoiceUse {
 /** Lời hỏi trước khi gỡ một giọng khỏi máy, nói từ phía người nghe: cuốn nào còn cần, câu nào sẽ không đọc được. `use` null: không biết
  *  (máy này không có sách dùng giọng ấy, hay chưa hỏi được) - vẫn hỏi một câu ngắn. */
 export function removeAsk(use: VoiceUse | null): string {
-  if (!use) return "Giọng sẽ không còn trên máy này cho tới khi bạn tải lại.";
-  if (!use.bookCount) return "Chưa cuốn nào dùng giọng này. Bạn tải lại được bất cứ lúc nào.";
+  if (!use) return S.s_giong_se_khong_con_tren_may_nay_cho_toi_kh_cb683781;
+  if (!use.bookCount) return S.s_chua_cuon_nao_dung_giong_nay_ban_tai_lai_d_7cef0995;
   const titles = use.books.slice(0, 3).map((book) => `“${book.title}”`).join(", ");
-  const more = use.bookCount > 3 ? ` và ${use.bookCount - 3} cuốn khác` : "";
-  const who = `${use.bookCount} cuốn đang dùng giọng này (${titles}${more}), ${use.peopleCount} nhân vật.`;
+  const more = use.bookCount > 3 ? S.s_va_0_cuon_khac_718f50c0(use.bookCount - 3) : "";
+  const who = S.s_0_cuon_dang_dung_giong_nay_1_2_3_nhan_vat_3f43fca5(use.bookCount, titles, more, use.peopleCount);
   const rest = use.left
-    ? `${use.left} câu chưa thu sẽ im tới khi bạn tải lại giọng hay đổi giọng khác; câu đã thu vẫn nghe được.`
-    : "Các câu đã thu vẫn nghe được.";
+    ? S.s_0_cau_chua_thu_se_im_toi_khi_ban_tai_lai_g_e35ca678(use.left)
+    : S.s_cac_cau_da_thu_van_nghe_duoc_a3a367c7;
   return `${who} ${rest}`;
 }
 
@@ -230,7 +231,7 @@ export function moduleAdvice(vieneu: Pick<VieneuStatus, "state" | "choices" | "r
   if (has(vieneu) || has(supertonic)) return { advice: "", preselectSupertonic: false };
   const name = lowerFirst(tierName(vieneu.recommended === "nano" ? "nano" : "turbo"));
   return {
-    advice: `Nên dùng ${name}; chỉ cần tải một bộ giọng.`,
+    advice: S.s_nen_dung_0_chi_can_tai_mot_bo_giong_46fb0d74(name),
     preselectSupertonic: false,
   };
 }
@@ -261,36 +262,36 @@ export function benchmarkLabel(tier: ModuleTier, result: VieneuBenchmark, live =
   const name = tierName(tier);
   if (result.rtf >= live) {
     const hour = Math.max(1, Math.round(result.rtf * 60));
-    return `${name}: máy này không kịp đọc trực tiếp (${seconds(result.rtf)} giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~${hour} phút.`;
+    return S.s_0_may_nay_khong_kip_doc_truc_tiep_1_giay_c_1d699e69(name, seconds(result.rtf), hour);
   }
   const speed = result.rtf > 0 ? 1 / result.rtf : 0;
-  return `${name}: đọc trực tiếp được - máy này đọc nhanh gấp ${seconds(speed)} lần tốc độ nghe; đoạn đầu chương có tiếng sau khoảng ${seconds(result.firstAudioMs / 1000)} giây.`;
+  return S.s_0_doc_truc_tiep_duoc_may_nay_doc_nhanh_gap_b0ef506b(name, seconds(speed), seconds(result.firstAudioMs / 1000));
 }
 
 /** Lời đề nghị đổi giọng (không bao giờ tự đổi) và chữ trên nút. */
 export function suggestionText(suggestion: VieneuSuggestion): { message: string; action: string } {
   const slow = tierName(suggestion.tier);
-  const lead = `${slow} đọc chậm trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe). Giữ giọng này thì dùng “Làm trước”.`;
+  const lead = S.s_0_doc_cham_tren_may_nay_1_giay_cho_moi_gia_10e817a5(slow, seconds(suggestion.rtf));
   if (suggestion.switchTo === "nano") {
     return suggestion.installed
-      ? { message: `${lead} Giọng VieNeu Nano nhẹ hơn, đã có sẵn.`, action: "Dùng giọng VieNeu Nano" }
-      : { message: `${lead} Giọng VieNeu Nano nhẹ hơn, hợp máy này.`, action: "Tải giọng VieNeu Nano" };
+      ? { message: S.s_0_giong_vieneu_nano_nhe_hon_da_co_san_fef4245f(lead), action: S.s_dung_giong_vieneu_nano_b84996dd }
+      : { message: S.s_0_giong_vieneu_nano_nhe_hon_hop_may_nay_05bccaca(lead), action: S.s_tai_giong_vieneu_nano_e24acf37 };
   }
-  return { message: `${lead} Giọng trực tuyến nhẹ máy (cần mạng).`, action: "Dùng giọng trực tuyến" };
+  return { message: S.s_0_giong_truc_tuyen_nhe_may_can_mang_be7ce311(lead), action: S.s_dung_giong_truc_tuyen_a5bae2dc };
 }
 
 /** Câu chính của thẻ theo trạng thái. */
 export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY): string {
   const mid = lowerFirst(copy.name);
   if (status.state === "error") return status.error;
-  if (status.state === "downloading") return status.retrying ? `${RETRYING_NOTE} (${mid}, ${vieneuPercent(status)}%)` : `Đang tải ${formatSize(status.total)} · ${vieneuPercent(status)}%`;
+  if (status.state === "downloading") return status.retrying ? `${RETRYING_NOTE} (${mid}, ${vieneuPercent(status)}%)` : S.s_dang_tai_0_1_0d39c288(formatSize(status.total), vieneuPercent(status));
   // Chưa có số đo nào = giọng vừa tải; đã có = bật / tắt bản tăng tốc hay “Thử lại tốc độ” (không tải gì cả).
-  if (status.benchmarking) return Object.keys(status.benchmark).length === 0 ? "Đang thử giọng vừa tải trên máy này (vài giây)" : "Đang đo lại tốc độ trên máy này (vài giây)";
-  if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được: ${status.reason}.` : "Máy này chưa dùng được.";
-  if (status.restart) return `${copy.name} đã cập nhật - mở lại ABook để dùng bản mới.`;
+  if (status.benchmarking) return Object.keys(status.benchmark).length === 0 ? S.s_dang_thu_giong_vua_tai_tren_may_nay_vai_gi_1b19cd1b : S.s_dang_do_lai_toc_do_tren_may_nay_vai_giay_c7a38eb7;
+  if (status.state === "unsupported") return status.reason ? S.s_may_nay_chua_dung_duoc_0_aaad0a2a(status.reason) : S.s_may_nay_chua_dung_duoc_faf04aee;
+  if (status.restart) return S.s_0_da_cap_nhat_mo_lai_abook_de_dung_ban_moi_442e5d5d(copy.name);
   const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
-  if (status.state === "outdated") return `${cancelled}${copy.name} có bản mới - ${formatSize(status.outdatedBytes)}. Bản đang dùng vẫn đọc bình thường.`;
-  if (status.state === "ready") return `${copy.name} đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.`;
+  if (status.state === "outdated") return S.s_0_1_co_ban_moi_2_ban_dang_dung_van_doc_bin_49647651(cancelled, copy.name, formatSize(status.outdatedBytes));
+  if (status.state === "ready") return S.s_0_da_co_tren_may_chon_trong_nut_giong_doc_fef93830(copy.name);
   return `${cancelled}${copy.invite}`;
 }
 
@@ -300,7 +301,7 @@ export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY
 export function vieneuSpoken(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY): { live: string; rest: string } {
   const mid = lowerFirst(copy.name);
   if (status.state === "downloading") {
-    const phase = status.retrying ? `${RETRYING_NOTE.replace(/…$/, "")} (${mid})` : `Đang tải ${mid}`;
+    const phase = status.retrying ? `${RETRYING_NOTE.replace(/…$/, "")} (${mid})` : S.s_dang_tai_0_03db34d6(mid);
     return { live: spokenProgress(phase, vieneuPercent(status) / 100), rest: "" };
   }
   const label = vieneuLabel(status, copy);

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -62,17 +63,15 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
         <div className="space-y-1.5">
           {/* Đang tải: % đổi liên tục trong vùng role=status - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
           <p data-motion-live className={failed ? "text-danger" : undefined}>
-            {downloadingModule ? <LiveText shown={label} spoken={spokenProgress("Đang tải Phân tích nhạc", modulePercent(module) / 100)} /> : label}
+            {downloadingModule ? <LiveText shown={label} spoken={spokenProgress(S.s_dang_tai_phan_tich_nhac_880839b5, modulePercent(module) / 100)} /> : label}
           </p>
           {failed && <ErrorDetails technical={module.errorDetail} className="text-danger" />}
-          {module.state === "missing" && <MoreInfo label="Phân tích nhạc">Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay.</MoreInfo>}
+          {module.state === "missing" && <MoreInfo label={S.s_phan_tich_nhac_a0082a10}>{S.s_tai_mot_lan_phan_tich_tren_may_roi_dung_kh_c1fb770b}</MoreInfo>}
           {downloadingModule && (
             <div className="flex items-center gap-3">
-              <Progress value={modulePercent(module) / 100} size="sm" running label="Đang tải Phân tích nhạc" className="flex-1" />
+              <Progress value={modulePercent(module) / 100} size="sm" running label={S.s_dang_tai_phan_tich_nhac_880839b5} className="flex-1" />
               {module.cancellable && (
-                <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/module/cancel")}>
-                  Huỷ
-                </Button>
+                <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/module/cancel")}>{S.s_huy_96732485}</Button>
               )}
             </div>
           )}
@@ -80,15 +79,15 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
             <div className="flex flex-wrap items-center gap-2">
               {action === "install" ? (
                 <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module")}>
-                  {failed ? "Thử lại" : module.stopped ? `Tải lại (${formatSize(module.outdatedBytes ?? module.total)})` : updating ? `Cập nhật (${formatSize(module.outdatedBytes ?? module.total)})` : `Tải (${formatSize(module.total)})`}
+                  {failed ? S.s_thu_lai_c58d068c : module.stopped ? S.s_tai_lai_0_31a8bdc1(formatSize(module.outdatedBytes ?? module.total)) : updating ? S.s_cap_nhat_0_618a3fa3(formatSize(module.outdatedBytes ?? module.total)) : S.s_tai_0_3463a4d8(formatSize(module.total))}
                 </Button>
               ) : (
                 <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
-                  {`Phân tích ${stale} bài`}
+                  {S.s_phan_tich_0_bai_53fe1b94(stale)}
                 </Button>
               )}
               {module.metered && action === "install" && !failed && (
-                <span className="text-warning">Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi.</span>
+                <span className="text-warning">{S.s_ban_dang_dung_du_lieu_di_dong_nen_doi_khi_4e21414f}</span>
               )}
             </div>
           )}
@@ -96,31 +95,29 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
       )}
       {precise && (
         <div className="space-y-1.5">
-          <p className="font-medium text-fg">Cảm xúc chính xác</p>
+          <p className="font-medium text-fg">{S.s_cam_xuc_chinh_xac_eab97dc3}</p>
           <p data-motion-live className={precise.state === "error" ? "text-danger" : undefined}>
             {precise.state === "downloading" ? (
-              <LiveText shown={preciseLabel(precise)} spoken={spokenProgress("Đang tải bộ đo cảm xúc chính xác hơn", precise.total > 0 ? precise.done / precise.total : null)} />
+              <LiveText shown={preciseLabel(precise)} spoken={spokenProgress(S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498, precise.total > 0 ? precise.done / precise.total : null)} />
             ) : (
               preciseLabel(precise)
             )}
           </p>
           {precise.state === "error" && <ErrorDetails technical={precise.errorDetail} className="text-danger" />}
           {precise.state === "downloading" && (
-            <Progress value={precise.total > 0 ? precise.done / precise.total : 0} size="sm" running label="Đang tải bộ đo cảm xúc chính xác hơn" />
+            <Progress value={precise.total > 0 ? precise.done / precise.total : 0} size="sm" running label={S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498} />
           )}
           {precise.state === "downloading" && module.cancellable && (
-            <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/precise/cancel")}>
-              Huỷ
-            </Button>
+            <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/precise/cancel")}>{S.s_huy_96732485}</Button>
           )}
           {precise.state !== "downloading" && (
             <div className="flex flex-wrap items-center gap-2">
               <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/precise", { enabled: precise.state !== "ready" })}>
-                {precise.state === "error" ? "Thử lại" : precise.state === "missing" ? `Tải tiếp (${formatSize(precise.bytes)})` : precise.state === "ready" ? "Tắt đo cảm xúc" : precise.present ? "Bật đo cảm xúc" : `Tải (${formatSize(precise.bytes)})`}
+                {precise.state === "error" ? S.s_thu_lai_c58d068c : precise.state === "missing" ? S.s_tai_tiep_0_67826e5b(formatSize(precise.bytes)) : precise.state === "ready" ? S.s_tat_do_cam_xuc_1435c1ed : precise.present ? S.s_bat_do_cam_xuc_d6c6ba08 : S.s_tai_0_3463a4d8(formatSize(precise.bytes))}
               </Button>
               {precise.removable && (
                 <Button size="sm" variant="ghost" loading={starting} onClick={() => void post("/api/music/local/precise/remove")}>
-                  {`Xoá file (${formatSize(precise.bytes)})`}
+                  {S.s_xoa_file_0_22ad15c7(formatSize(precise.bytes))}
                 </Button>
               )}
             </div>

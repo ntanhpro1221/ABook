@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
@@ -53,16 +54,15 @@ function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
   const away = sync.addresses.filter((address) => sync.awayAddresses.includes(address));
   const home = sync.addresses.filter((address) => !away.includes(address));
   const show = (list: string[]) => (
-    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(" hoặc ")}</span>
+    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(S.s_hoac_cffdc32e)}</span>
   );
   return (
     <>
       {home.length > 0 && show(home)}
-      {home.length > 0 && away.length > 0 && " trong nhà, hoặc "}
+      {home.length > 0 && away.length > 0 && S.s_trong_nha_hoac_de6d3fe2}
       {away.length > 0 && (
         <>
-          {show(away)} khi ở ngoài (thiết bị kia vào cùng mạng riêng ảo)
-        </>
+          {show(away)}{S.s_khi_o_ngoai_thiet_bi_kia_vao_cung_mang_rie_d9eb417b}</>
       )}
     </>
   );
@@ -82,9 +82,9 @@ function useSync() {
     mutationFn: (enabled: boolean) => api<SyncView>("/api/sync", { method: "POST", body: { enabled } }),
     onSuccess: (data, enabled) => {
       onSuccess(data);
-      if (enabled && !data.enabled) toast.error("Chưa bật được đồng bộ", { description: data.error });
+      if (enabled && !data.enabled) toast.error(S.s_chua_bat_duoc_dong_bo_9927f58c, { description: data.error });
       // Tắt xong không có gì đổi trên màn ngoài công tắc: nói một câu để biết đã tắt thật (soát UX a17).
-      else if (!enabled && !data.enabled) toast("Đã tắt chia sẻ qua Wi-Fi");
+      else if (!enabled && !data.enabled) toast(S.s_da_tat_chia_se_qua_wi_fi_c818faf6);
     },
     onError,
   });
@@ -95,7 +95,7 @@ function useSync() {
     // Bỏ ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
     onSuccess: (data, { name }) => {
       onSuccess(data);
-      toast.success(`Đã bỏ ghép ${name}`);
+      toast.success(S.s_da_bo_ghep_0_d1ec976d(name));
     },
     onError,
   });
@@ -104,7 +104,7 @@ function useSync() {
     mutationFn: ({ id, name }: { id: string; name: string }) => api<SyncView>(`/api/sync/devices/${id}/name`, { method: "POST", body: { name } }),
     onSuccess: (data, { name }) => {
       onSuccess(data);
-      toast.success(`Đã đổi tên thành “${name}”`);
+      toast.success(S.s_da_doi_ten_thanh_0_268ec88c(name));
     },
     onError,
   });
@@ -148,36 +148,31 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
       <MotionRegion as="div" motionKey="code" className="py-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Mã ghép thiết bị</p>
-            <p className="mt-2 text-[0.8125rem] text-fg-2">Trên máy kia: Cài đặt › Thiết bị → chọn {sync.name} → nhập mã.</p>
-            <MoreInfo label="Cách dùng mã" className="mt-2">
-              Mã dùng một lần để máy kia nghe thư viện này.
-              {sync.addresses.length > 0 && <span className="block">Địa chỉ: <Where sync={sync} scheme={false} /></span>}
-              {sync.remoteStudio && <span className="block">Trình duyệt: mở <Where sync={sync} /> rồi nhập mã.</span>}
+            <p className="text-sm font-semibold">{S.s_ma_ghep_thiet_bi_02370316}</p>
+            <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_tren_may_kia_cai_dat_thiet_bi_chon_7cad8e7a}{sync.name}{S.s_nhap_ma_8a077ab3}</p>
+            <MoreInfo label={S.s_cach_dung_ma_ae1cba85} className="mt-2">{S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816}{sync.addresses.length > 0 && <span className="block">{S.s_dia_chi_9945f0f4}<Where sync={sync} scheme={false} /></span>}
+              {sync.remoteStudio && <span className="block">{S.s_trinh_duyet_mo_78712782}<Where sync={sync} />{S.s_roi_nhap_ma_fdfaf308}</span>}
             </MoreInfo>
           </div>
           {/* Mã và dòng hết hạn cùng một trục giữa (soát UX a19): khoảng cách chữ thừa sau số cuối đã được bù ở bên trái. */}
           <div className="text-center">
             <div
-              aria-label={`Mã ghép nối: ${code.split("").join(" ")}`}
+              aria-label={S.s_ma_ghep_noi_0_77e0df8a(code.split("").join(" "))}
               className="pl-[0.14em] text-[2.125rem] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
             >
               {code.slice(0, 3)}
               <span className="inline-block w-3" />
               {code.slice(3)}
             </div>
-            <div data-motion-live className="mt-2 text-xs text-fg-2 tabular">
-              Hết hạn sau {minutes}:{seconds}
+            <div data-motion-live className="mt-2 text-xs text-fg-2 tabular">{S.s_het_han_sau_34497ee1}{minutes}:{seconds}
             </div>
           </div>
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
-        {sync.fingerprint && <p className="mt-3 break-all text-xs text-fg-3" title="Đối chiếu vân tay với máy kia">Vân tay: {sync.fingerprint}</p>}
+        {sync.fingerprint && <p className="mt-3 break-all text-xs text-fg-3" title={S.s_doi_chieu_van_tay_voi_may_kia_18aa9fb1}>{S.s_van_tay_8b70c9dd}{sync.fingerprint}</p>}
         <DialogActions>
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
-          <Button size="sm" variant="ghost" onClick={onCancel}>
-            Huỷ mã
-          </Button>
+          <Button size="sm" variant="ghost" onClick={onCancel}>{S.s_huy_ma_1b0a6559}</Button>
         </DialogActions>
       </MotionRegion>
     );
@@ -187,21 +182,15 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
       <MotionRegion as="div" motionKey="blocked" className="flex items-start gap-3 py-4">
         <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Mã bị khoá</p>
-          <p className="mt-0.5 text-[0.8125rem] text-fg-2">
-            Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị.
-          </p>
+          <p className="text-sm font-semibold">{S.s_ma_bi_khoa_48579bd8}</p>
+          <p className="mt-0.5 text-[0.8125rem] text-fg-2">{S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90}</p>
         </div>
-        <Button size="sm" onClick={onPair} loading={busy}>
-          Tạo mã mới
-        </Button>
+        <Button size="sm" onClick={onPair} loading={busy}>{S.s_tao_ma_moi_0b393b03}</Button>
       </MotionRegion>
     );
   }
   return (
-    <MotionRegion motionKey="idle"><Button icon={Smartphone} onClick={onPair} loading={busy}>
-      Ghép thiết bị mới
-    </Button></MotionRegion>
+    <MotionRegion motionKey="idle"><Button icon={Smartphone} onClick={onPair} loading={busy}>{S.s_ghep_thiet_bi_moi_e22fb590}</Button></MotionRegion>
   );
 }
 
@@ -225,12 +214,12 @@ export function PhoneSync() {
     const previous = known.current;
     known.current = new Set(sync.devices.map((device) => device.id));
     const added = previous ? sync.devices.find((device) => !previous.has(device.id)) : undefined;
-    if (added) toast.success(`Đã ghép ${added.name}`);
+    if (added) toast.success(S.s_da_ghep_0_a04998dd(added.name));
   }, [sync]);
 
   // Khung chờ / lỗi và nội dung có CÙNG gốc (vùng ngoài cùng bên dưới): tải xong thì mờ qua, không gỡ cả cây làm khung chờ mất cứng.
-  if (error && !sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock></MotionRegion>;
-  if (!sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock></MotionRegion>;
+  if (error && !sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_ket_noi_db777637} onRetry={() => void refetch()} /></MotionRegion></SettingsBlock></MotionRegion>;
+  if (!sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label={S.s_dang_tai_ket_noi_e4acf571} /></MotionRegion></SettingsBlock></MotionRegion>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
@@ -239,17 +228,17 @@ export function PhoneSync() {
     // Hai khối cài đặt như mọi trang: "Máy này" (mọi thứ của chính máy tính) rồi "Máy đã ghép" - cùng nhãn mục, cùng khoảng
     // cách giữa khối (trước đây danh sách thiết bị là tiêu đề con bên trong, sát hàng trên 17 px, và "Kết nối" rơi xuống dưới nó).
     <MotionRegion as="div" className="motion-reveal">
-      <SettingsBlock title="Máy này" id="phone">
+      <SettingsBlock title={S.s_may_nay_4668c138} id="phone">
       <div className="space-y-5 py-3.5">
       <div className="flex items-center justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
           <span className="block text-[0.9375rem] font-medium">{SYNC_SWITCH_LABEL}</span>
           <span className={cn("mt-0.5 block text-xs leading-snug", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
-              ? `Máy cùng mạng thấy máy này là “${sync.name}”.`
+              ? S.s_may_cung_mang_thay_may_nay_la_0_ad5d3423(sync.name)
               : failing
-                ? sync.error || "Chưa mở được cổng đồng bộ."
-                : "Đang tắt - máy khác không thấy máy này."}
+                ? sync.error || S.s_chua_mo_duoc_cong_dong_bo_8f2a1744
+                : S.s_dang_tat_may_khac_khong_thay_may_nay_8924a002}
           </span>
         </label>
         {/* Tên ngắn cho trình đọc màn hình: nhãn bọc cả dòng mô tả dài (soát a27 lỗi 11). */}
@@ -257,14 +246,12 @@ export function PhoneSync() {
       </div>
 
       {failing && (
-        <Button size="sm" onClick={() => toggle.mutate(true)} loading={toggle.isPending}>
-          Thử lại
-        </Button>
+        <Button size="sm" onClick={() => toggle.mutate(true)} loading={toggle.isPending}>{S.s_thu_lai_c58d068c}</Button>
       )}
 
       {sync.enabled && (
         <>
-          <Fold storageKey="phone-sync.pair" title="Ghép thiết bị" summary={sync.pairing ? "Đang hiện mã ghép" : "Điện thoại, máy tính bảng"} defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
+          <Fold storageKey="phone-sync.pair" title={S.s_ghep_thiet_bi_8de1f23c} summary={sync.pairing ? S.s_dang_hien_ma_ghep_e97b43a2 : S.s_dien_thoai_may_tinh_bang_4ade8e1e} defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
           <PairingPanel
             sync={sync}
             busy={pair.isPending}
@@ -272,23 +259,21 @@ export function PhoneSync() {
             onCancel={() => cancel.mutate()}
           />
           </Fold>
-          <Fold storageKey="phone-sync.permissions" title="Quyền điều khiển" summary={studioWanted ? "Đang bật" : "Đang tắt"} bodyClassName="pb-3">
+          <Fold storageKey="phone-sync.permissions" title={S.s_quyen_dieu_khien_e895c2b8} summary={studioWanted ? S.s_dang_bat_70767620 : S.s_dang_tat_53bfa8b7} bodyClassName="pb-3">
           <div className="flex items-center justify-between gap-6">
             <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
-              <span className="block text-sm font-medium">Điều khiển từ xa</span>
+              <span className="block text-sm font-medium">{S.s_dieu_khien_tu_xa_1db316de}</span>
               <span id="remote-studio-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
                 {studioWanted ? (
-                  <>
-                    Mở <Where sync={sync} /> trên thiết bị đã ghép để làm sách từ xa.
-                  </>
+                  <>{S.s_mo_05587fd6}<Where sync={sync} />{S.s_tren_thiet_bi_da_ghep_de_lam_sach_tu_xa_b780f10e}</>
                 ) : (
-                  "Tắt: thiết bị đã ghép chỉ tải và nghe sách."
+                  S.s_tat_thiet_bi_da_ghep_chi_tai_va_nghe_sach_284777c7
                 )}
               </span>
             </label>
             <Switch
               id="remote-studio"
-              label="Điều khiển từ xa"
+              label={S.s_dieu_khien_tu_xa_1db316de}
               describedBy="remote-studio-hint"
               checked={studioWanted}
               disabled={studio.isPending}
@@ -296,9 +281,7 @@ export function PhoneSync() {
             />
           </div>
           <Dialog footer={<DialogActions>
-              <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
-                Để sau
-              </Button>
+              <Button variant="ghost" onClick={() => setConfirmStudio(false)}>{S.s_de_sau_9be0a7ab}</Button>
               <Button
                 variant="primary"
                 loading={studio.isPending}
@@ -306,84 +289,68 @@ export function PhoneSync() {
                   studio.mutate(true);
                   setConfirmStudio(false);
                 }}
-              >
-                Cho phép
-              </Button>
+              >{S.s_cho_phep_f1a437f5}</Button>
             </DialogActions>}
             open={confirmStudio}
             onOpenChange={setConfirmStudio}
-            title="Bật Studio từ xa?"
-            description="Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
+            title={S.s_bat_studio_tu_xa_46f8566d}
+            description={S.s_bat_quyen_rieng_cho_tung_thiet_bi_de_mo_st_c9ba843b}
           >
 
           </Dialog>
           </Fold>
-          <Fold storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
+          <Fold storageKey="phone-sync.connection" title={S.s_ket_noi_02ca3cba} summary={S.s_dia_chi_va_bluetooth_affb4f78} bodyClassName="space-y-2 pb-3">
           {sync.bluetooth && (
             <p className="text-xs text-fg-3">
               {sync.bluetooth.running
-                ? `Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi${
-                    sync.bluetooth.connections ? ` - ${sync.bluetooth.connections} đang kết nối` : ""
-                  }.`
+                ? S.s_bluetooth_dien_thoai_da_ghep_noi_duoc_ca_k_4e4c2f78(sync.bluetooth.connections ? S.s_0_dang_ket_noi_fb5f34f5(sync.bluetooth.connections) : "")
                 : sync.bluetooth.error}
             </p>
           )}
           {sync.addresses.length > 0 && (
-            <p className="text-xs text-fg-3">
-              Điện thoại không thấy máy này? Chọn “Nhập địa chỉ” rồi gõ{" "}
+            <p className="text-xs text-fg-3">{S.s_dien_thoai_khong_thay_may_nay_chon_nhap_di_7b0a56f9}{" "}
               <Where sync={sync} scheme={false} />.
             </p>
           )}
           {/* Chủ sách 29-09 hỏi khác mạng có dùng được không: app không cần gì riêng - mạng riêng ảo người dùng tự cài cho
               máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
-          <p className="text-xs text-fg-3">
-            Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng.
-          </p>
+          <p className="text-xs text-fg-3">{S.s_ngoai_nha_nghe_sach_da_tai_hoac_noi_mang_r_43556c4f}</p>
           </Fold>
         </>
       )}
       </div>
       </SettingsBlock>
       {sync.enabled && (
-        <SettingsBlock title="Máy đã ghép" id="paired">
+        <SettingsBlock title={S.s_may_da_ghep_c2103758} id="paired">
           <div className="py-3.5">
             {deviceRows.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
               // liên kết có thể điều hướng chính cửa sổ).
-              <p className="select-text text-[0.8125rem] leading-relaxed text-fg-2">
-                Chưa có thiết bị. App Android: file <span className="font-medium text-fg">.apk</span> ở{" "}
-                <span className="font-medium text-fg">github.com/ntanhpro1221/ABook/releases</span>. iPhone, iPad: nghe bằng trình duyệt.
-              </p>
+              <p className="select-text text-[0.8125rem] leading-relaxed text-fg-2">{S.s_chua_co_thiet_bi_app_android_file_b9da7146}<span className="font-medium text-fg">{S.s_apk_f33f6ac9}</span>{S.s_o_3584ba4c}{" "}
+                <span className="font-medium text-fg">{S.s_github_com_ntanhpro1221_abook_releases_4d97effb}</span>{S.s_iphone_ipad_nghe_bang_trinh_duyet_9ae77923}</p>
             ) : (
               <ul className="divide-y divide-line">
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={S.s_lan_cuoi_0_97f1a485(formatRelative(device.lastSeen))} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
-                      <div data-motion-live className="text-xs text-fg-2">
-                        Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}
+                      <div data-motion-live className="text-xs text-fg-2">{S.s_ket_noi_lan_cuoi_1ffb25d2}{formatRelative(device.lastSeen)}{S.s_ghep_ngay_04227336}{formatDate(device.pairedAt)}
                       </div>
                     </div>
                     {sync.remoteStudio && (
-                      <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">
-                        Điều khiển sản xuất
-                        <Switch
-                          label={`Điều khiển sản xuất từ ${device.name}`}
+                      <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">{S.s_dieu_khien_san_xuat_a7babdec}<Switch
+                          label={S.s_dieu_khien_san_xuat_tu_0_99c2c38a(device.name)}
                           checked={Boolean(device.studio)}
                           disabled={deviceStudio.isPending}
                           onCheckedChange={(enabled) => deviceStudio.mutate({ id: device.id, enabled })}
                         />
                       </label>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: device.id, draft: device.name })}>
-                      Đổi tên
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
-                      Bỏ ghép
-                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: device.id, draft: device.name })}>{S.s_doi_ten_a2a0dc70}</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>{S.s_bo_ghep_64f921f9}</Button>
                   </Fold>
                   </li>
                 ))}
@@ -394,38 +361,30 @@ export function PhoneSync() {
       )}
 
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setRemoving(null)}>
-            Giữ lại
-          </Button>
+          <Button variant="ghost" onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
           <Button
             variant="danger"
             onClick={() => {
               if (removing) revoke.mutate({ id: removing.id, name: removing.name });
               setRemoving(null);
             }}
-          >
-            Bỏ ghép
-          </Button>
+          >{S.s_bo_ghep_64f921f9}</Button>
         </DialogActions>}
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Bỏ ghép ${removing?.name ?? "thiết bị"}?`}
-        description="Dừng tải và đồng bộ; giữ sách đã tải."
+        title={S.s_bo_ghep_0_e98b86ca(removing?.name ?? S.s_thiet_bi_37816a2c)}
+        description={S.s_dung_tai_va_dong_bo_giu_sach_da_tai_b948aef5}
       >
 
       </Dialog>
       <Dialog footer={<DialogActions>
-            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
-              Để nguyên
-            </Button>
-            <Button type="submit" form={dialogForm1} variant="primary" disabled={!renaming?.draft.trim()} loading={rename.isPending}>
-              Lưu
-            </Button>
+            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>{S.s_de_nguyen_2f029b4a}</Button>
+            <Button type="submit" form={dialogForm1} variant="primary" disabled={!renaming?.draft.trim()} loading={rename.isPending}>{S.s_luu_e91f26c0}</Button>
           </DialogActions>}
         open={renaming !== null}
         onOpenChange={(open) => !open && setRenaming(null)}
-        title="Đổi tên thiết bị"
-        description="Tên hiện ở danh sách thiết bị đã ghép của máy này."
+        title={S.s_doi_ten_thiet_bi_102b76be}
+        description={S.s_ten_hien_o_danh_sach_thiet_bi_da_ghep_cua_4261490a}
       >
         <form id={dialogForm1}
           onSubmit={(event) => {
@@ -439,7 +398,7 @@ export function PhoneSync() {
             data-autofocus
             value={renaming?.draft ?? ""}
             onChange={(event) => setRenaming((current) => current && { ...current, draft: event.target.value.slice(0, 80) })}
-            aria-label="Tên thiết bị"
+            aria-label={S.s_ten_thiet_bi_525223a8}
             className="h-10 w-full rounded-control border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
           />
 

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -43,6 +45,7 @@ import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.scrim
 import java.io.ByteArrayOutputStream
 
 object CoverCrop {
@@ -51,12 +54,12 @@ object CoverCrop {
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP." }
+        require(bounds.outWidth > 0 && bounds.outHeight > 0) { S.s_chua_doc_duoc_anh_ban_hay_chon_jpeg_png_ho_4d815d29 }
         var sample = 1
         val side = displayPixels.coerceIn(360, 1600)
         while (maxOf(bounds.outWidth, bounds.outHeight) / sample > side * 2) sample *= 2
         val bitmap = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
-            ?: error("Bạn hãy chọn lại ảnh bìa.")
+            ?: error(S.s_ban_hay_chon_lai_anh_bia_ff20026e)
         val orientation = runCatching { resolver.openInputStream(uri)?.use { ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, 1) } }.getOrNull()
         val matrix = Matrix().apply {
             when (orientation) {
@@ -102,12 +105,12 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     LaunchedEffect(uri, attempt) {
         problem = ""
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
-        catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh bìa." }
+        catch (error: Exception) { problem = error.message ?: S.s_ban_hay_chon_lai_anh_bia_ff20026e }
     }
     val image = bitmap?.asImageBitmap()
-    BookForm("Cắt ảnh bìa", onBack, "cover_crop_screen", footer = {
+    BookForm(S.s_cat_anh_bia_d9d3257b, onBack, "cover_crop_screen", footer = {
         InlineProblem(problem.ifEmpty { state.problem }, if (bitmap == null) ({ attempt++ }) else null, "crop_problem")
-        PrimaryButton(if (committing) "Đang lưu" else "Dùng ảnh", {
+        PrimaryButton(if (committing) S.s_dang_luu_e93f245d else S.s_dung_anh_83d7955d, {
             val shown = bitmap ?: return@PrimaryButton
             committing = true
             scope.launch {
@@ -119,10 +122,10 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
             }
         }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing)
     }, trailing = {
-        if (image != null) TextAction("Đặt lại", { choice = CropChoice() }, "crop_reset")
+        if (image != null) TextAction(S.s_dat_lai_51a46825, { choice = CropChoice() }, "crop_reset")
     }) {
         if (image == null) {
-            if (problem.isEmpty()) Caption("Đang đọc ảnh", Modifier.padding(top = Dim.s16))
+            if (problem.isEmpty()) Caption(S.s_dang_doc_anh_df6455cf, Modifier.padding(top = Dim.s16))
         } else CropArea(image, choice) { choice = it }
     }
 }
@@ -131,7 +134,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
 @Composable
 private fun CropArea(image: ImageBitmap, choice: CropChoice, onChoice: (CropChoice) -> Unit) {
     val colors = Abook.colors
-    val scrim = if (colors.dark) Color.Black.copy(alpha = 0.6f) else Color(0xFF1A1814).copy(alpha = 0.55f)
+    val scrim = colors.scrim
     val current by rememberUpdatedState(choice)
     BoxWithConstraints(Modifier.fillMaxSize().padding(vertical = Dim.s16)) {
         val scale = minOf(constraints.maxWidth.toFloat() / image.width, constraints.maxHeight.toFloat() / image.height)
@@ -146,8 +149,8 @@ private fun CropArea(image: ImageBitmap, choice: CropChoice, onChoice: (CropChoi
                 }
                 .semantics {
                     customActions = listOf(
-                        CustomAccessibilityAction("Phóng to") { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, ZoomStep)); true },
-                        CustomAccessibilityAction("Thu nhỏ") { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, 1f / ZoomStep)); true },
+                        CustomAccessibilityAction(S.s_phong_to_65b20d37) { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, ZoomStep)); true },
+                        CustomAccessibilityAction(S.s_thu_nho_d7896922) { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, 1f / ZoomStep)); true },
                     )
                 },
         ) {

@@ -54,7 +54,8 @@ class TextWrapRulesTest {
 
     private val main = File("src/main/java/vn/abook/player")
 
-    private fun sources(): List<File> = main.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+    // Generated templates join their numbered slots; wrapping still happens in BasicText.
+    private fun sources(): List<File> = main.walkTopDown().filter { it.isFile && it.extension == "kt" && it.name != "UiStrings.kt" }.toList()
 
     // ---- hàm thuần ----
 

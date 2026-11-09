@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import java.text.Normalizer
 
 /**
@@ -10,8 +12,8 @@ import java.text.Normalizer
  */
 object NarratorVoice {
     val PREFERRED = mapOf(
-        "turbo" to listOf("Đức Trí", "Đoan Trang", "Thanh Bình"),
-        "nano" to listOf("Ái Hân", "Mỹ Duyên", "Đức Trí"),
+        "turbo" to listOf(S.s_duc_tri_c0417aaf, S.s_doan_trang_61fdcaa5, S.s_thanh_binh_6455e387),
+        "nano" to listOf(S.s_ai_han_a1f0d04f, S.s_my_duyen_ad56a239, S.s_duc_tri_c0417aaf),
     )
 
     private fun nfc(text: String) = Normalizer.normalize(text, Normalizer.Form.NFC)

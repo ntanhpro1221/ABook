@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -37,14 +38,14 @@ const count = (value: number) => value.toLocaleString("vi-VN");
 
 /** Câu nói tình hình tìm kiếm cho người nghe. */
 export function findStatus(query: string, progress: BookSearch | null, shown: number): string {
-  if (!query.trim()) return `Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được.`;
-  if (!foldedQuery(query)) return `Gõ ít nhất ${MIN_QUERY} ký tự.`;
-  if (!progress) return "Đang tìm";
-  const failed = progress.failed > 0 ? ` ${count(progress.failed)} chương chưa đọc được nên chưa tìm trong đó.` : "";
-  if (!progress.done) return `Đang tìm - đã xem ${count(progress.scanned)}/${count(progress.chapters)} chương, thấy ${count(progress.total)} chỗ.`;
-  if (progress.total === 0) return `Không thấy “${query.trim()}” trong sách.${failed}`;
-  const more = progress.total > shown ? ` Đang hiện ${count(shown)} kết quả đầu, còn ${count(progress.total - shown)} kết quả - gõ thêm chữ để thu hẹp.` : "";
-  return `${count(progress.total)} kết quả.${more}${failed}`;
+  if (!query.trim()) return S.s_go_chu_hay_cau_can_tim_khong_can_go_dau_ho_d1bb2734;
+  if (!foldedQuery(query)) return S.s_go_it_nhat_0_ky_tu_745a8caa(MIN_QUERY);
+  if (!progress) return S.s_dang_tim_58376830;
+  const failed = progress.failed > 0 ? S.s_0_chuong_chua_doc_duoc_nen_chua_tim_trong_79d02fce(count(progress.failed)) : "";
+  if (!progress.done) return S.s_dang_tim_da_xem_0_1_chuong_thay_2_cho_9fa24430(count(progress.scanned), count(progress.chapters), count(progress.total));
+  if (progress.total === 0) return S.s_khong_thay_0_trong_sach_1_1967bf94(query.trim(), failed);
+  const more = progress.total > shown ? S.s_dang_hien_0_ket_qua_dau_con_1_ket_qua_go_t_ba693cdb(count(shown), count(progress.total - shown)) : "";
+  return S.s_0_ket_qua_1_2_8dad3320(count(progress.total), more, failed);
 }
 
 export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -105,7 +106,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const status = findStatus(query, progress, hits.length);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} width="max-w-[560px]" title="Tìm trong sách" description={book.title}><MotionRegion>
+    <Dialog open={open} onOpenChange={onOpenChange} width="max-w-[560px]" title={S.s_tim_trong_sach_de3ccc5f} description={book.title}><MotionRegion>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
         <input
@@ -124,8 +125,8 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
               results.current?.querySelector<HTMLElement>("button")?.focus();
             }
           }}
-          aria-label="Chữ hay câu cần tìm"
-          placeholder="Chữ hay câu cần tìm"
+          aria-label={S.s_chu_hay_cau_can_tim_d9ab6029}
+          placeholder={S.s_chu_hay_cau_can_tim_d9ab6029}
           autoComplete="off"
           enterKeyHint="search"
           className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"

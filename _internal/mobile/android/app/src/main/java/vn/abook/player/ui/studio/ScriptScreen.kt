@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -180,7 +182,7 @@ private fun PeopleSheet(state: StudioScriptState, script: ChapterScript, line: S
         val list1 = rememberLazyListState()
         LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list1), state = list1) {
             items(ScriptLogic.people(script), key = { "person_${it.value}" }) { person ->
-                PickRow(person.label, if (person.lines > 0) "${person.lines} câu" else null, person.value == current, { dismiss(); state.assign(line, person) }, "studio_person_${person.value}")
+                PickRow(person.label, if (person.lines > 0) S.s_0_cau_2a1e6590(person.lines) else null, person.value == current, { dismiss(); state.assign(line, person) }, "studio_person_${person.value}")
             }
         }
     }

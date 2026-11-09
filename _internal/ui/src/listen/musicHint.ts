@@ -1,10 +1,11 @@
+import { S } from "../shared/strings.generated";
 import { toast } from "@/shared/toast";
 
 // Lần đầu nhạc nền theo cảnh kêu lên (máy tính và điện thoại dùng chung): người nghe chưa chọn gì mà đã có nhạc, nên nói một lần rằng nhạc tự đổi theo cảnh và đổi ở đâu.
 // Nhớ trên máy (localStorage); không đọc / ghi được thì cứ nhắc mỗi phiên một lần - không để lỗi bộ nhớ chặn trình phát.
 
 export const SCENE_MUSIC_HINT_KEY = "abook:scene-music-hint";
-export const SCENE_MUSIC_HINT = "Nhạc nền đổi theo cảnh - muốn nhạc khác thì chọn ở nút Nhạc nền";
+export const SCENE_MUSIC_HINT = S.s_nhac_nen_doi_theo_canh_muon_nhac_khac_thi_af697abf;
 
 type Store = Pick<Storage, "getItem" | "setItem">;
 

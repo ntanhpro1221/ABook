@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
@@ -71,7 +72,7 @@ async function imageToDataUrl(file: Blob): Promise<string> {
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error ?? new Error("Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP."));
+      reader.onerror = () => reject(reader.error ?? new Error(S.s_chua_doc_duoc_anh_ban_hay_chon_jpeg_png_ho_4d815d29));
       reader.readAsDataURL(file);
     });
   try {
@@ -159,7 +160,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
       refreshAfterEdit(client, bookId);
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
     },
-    onError: (error: Error) => toast.error("Chưa chỉnh được nhạc nền", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_chinh_duoc_nhac_nen_312d1561, { description: error.message }),
   });
   return { view, change };
 }
@@ -174,10 +175,10 @@ export function MusicSection({ book }: { book: ListenBook }) {
   useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapButton);
   const { view, change } = useBookMusic(book.id, () => setSwapping(null));
   const { data, isLoading } = view;
-  if (view.isError && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại nhạc nền của cuốn này." onRetry={() => void view.refetch()} /></MotionRegion>;
-  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton label="Đang tải nhạc nền" /></MotionRegion>;
+  if (view.isError && !data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_thu_tai_lai_nhac_nen_cua_cuon_nay_b4336281} onRetry={() => void view.refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton label={S.s_dang_tai_nhac_nen_0b8c4795} /></MotionRegion>;
   if (!data.hasMusic) {
-    return <MotionRegion as="p" className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</MotionRegion>;
+    return <MotionRegion as="p" className="text-sm text-fg-2">{S.s_nguoi_lam_sach_khong_gan_nhac_nen_cho_cuon_80c1a983}</MotionRegion>;
   }
   const choosing = change.isPending ? (Object.values(change.variables?.pins ?? {}).find((link): link is string => !!link) ?? null) : null;
   return (
@@ -185,8 +186,8 @@ export function MusicSection({ book }: { book: ListenBook }) {
       <div className="flex flex-wrap items-end gap-3">
         {/* Công tắc nói trạng thái ("Bật" / "Tắt"); tên mục "Nhạc nền" đã ở ngay trên, không lặp lại. */}
         <div className="flex h-9 items-center gap-2.5 text-sm">
-          <Switch id={`music-enabled-${book.id}`} label="Nhạc nền" checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
-          <label htmlFor={`music-enabled-${book.id}`}>{data.enabled ? "Bật" : "Tắt"}</label>
+          <Switch id={`music-enabled-${book.id}`} label={S.s_nhac_nen_271fb292} checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
+          <label htmlFor={`music-enabled-${book.id}`}>{data.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e}</label>
         </div>
         <div className="w-full max-w-72 text-sm">
           <span className="block text-fg-2">{LEVEL_TITLE}</span>
@@ -199,18 +200,16 @@ export function MusicSection({ book }: { book: ListenBook }) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <div className="min-w-[9rem] flex-1">
                 {/* Đoạn người nghe cho im: nói thẳng (như tab Nhạc của dự án), không gạch ngang tên - gạch ngang đọc như lỗi. */}
-                <div className={cn("truncate text-sm", cue.silenced && "text-fg-2")}>{cue.silenced ? "Im lặng (bạn chọn)" : cue.title || "Nhạc nền"}</div>
+                <div className={cn("truncate text-sm", cue.silenced && "text-fg-2")}>{cue.silenced ? S.s_im_lang_ban_chon_356a628b : cue.title || S.s_nhac_nen_271fb292}</div>
                 <div className="tabular truncate text-xs text-fg-2">
                   {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
                   {cue.creator ? ` · ${cue.creator}` : ""}
-                  {cue.pinned ? " · bài của bạn" : ""}
+                  {cue.pinned ? S.s_bai_cua_ban_c8ffb389 : ""}
                 </div>
               </div>
               <span className="flex shrink-0 gap-1">
                 {cue.pinned && (
-                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>
-                    Về bài gốc
-                  </Button>
+                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>{S.s_ve_bai_goc_dc6a21f6}</Button>
                 )}
                 <Button
                   size="sm"
@@ -219,14 +218,12 @@ export function MusicSection({ book }: { book: ListenBook }) {
                   aria-expanded={swapping === cue.key}
                   disabled={change.isPending}
                   onClick={(event) => { swapButton.current = event.currentTarget; setSwapping(swapping === cue.key ? null : cue.key); }}
-                >
-                  Đổi bài
-                </Button>
+                >{S.s_doi_bai_7b81488f}</Button>
                 <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ silence: { [cue.key]: !cue.silenced } })}>
                   {/* Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng. */}
                   <span className="grid">
-                    <span className="col-start-1 row-start-1">{cue.silenced ? "Có nhạc" : "Im lặng"}</span>
-                    <span aria-hidden className="invisible col-start-1 row-start-1">{cue.silenced ? "Im lặng" : "Có nhạc"}</span>
+                    <span className="col-start-1 row-start-1">{cue.silenced ? S.s_co_nhac_f514e0fa : S.s_im_lang_1a012238}</span>
+                    <span aria-hidden className="invisible col-start-1 row-start-1">{cue.silenced ? S.s_im_lang_1a012238 : S.s_co_nhac_f514e0fa}</span>
                   </span>
                 </Button>
               </span>
@@ -324,32 +321,32 @@ export function EditBookDialog({
   const rename = useMutation({
     mutationFn: (next: string) => api(`/api/books/${book.id}/title`, { method: "PUT", body: { title: next } }),
     // Hộp ở nguyên: toast báo đã lưu, ô còn lại giữ chữ đang gõ (trước đây lưu là đóng hộp - mất chữ gõ dở ở ô kia).
-    onSuccess: () => done("Đã đổi tên sách"),
-    onError: (error: Error) => toast.error("Chưa đổi được tên sách", { description: error.message }),
+    onSuccess: () => done(S.s_da_doi_ten_sach_d9618322),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_ten_sach_d845e696, { description: error.message }),
   });
   const changeAuthor = useMutation({
     mutationFn: (next: string) => saveAuthor(book.id, next),
-    onSuccess: (saved) => done(saved ? "Đã đổi tác giả" : "Đã bỏ tên tác giả"),
-    onError: (error: Error) => toast.error("Chưa đổi được tác giả", { description: error.message }),
+    onSuccess: (saved) => done(saved ? S.s_da_doi_tac_gia_cc6c70a5 : S.s_da_bo_ten_tac_gia_538a5212),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_tac_gia_32e393fb, { description: error.message }),
   });
   const setCover = useMutation({
     mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: "PUT", body: { image: await imageToDataUrl(picked) } }),
-    onSuccess: () => done("Đã đặt ảnh bìa"),
-    onError: (error: Error) => toast.error("Chưa đặt được ảnh bìa", { description: error.message }),
+    onSuccess: () => done(S.s_da_dat_anh_bia_90470364),
+    onError: (error: Error) => toast.error(S.s_chua_dat_duoc_anh_bia_a4afb9fa, { description: error.message }),
   });
   const removeCover = useMutation({
     mutationFn: () => api(`/api/books/${book.id}/cover`, { method: "DELETE" }),
-    onSuccess: () => done("Đã bỏ ảnh bìa - sách dùng bìa vẽ từ tên"),
-    onError: (error: Error) => toast.error("Chưa bỏ được ảnh bìa", { description: error.message }),
+    onSuccess: () => done(S.s_da_bo_anh_bia_sach_dung_bia_ve_tu_ten_f562bcab),
+    onError: (error: Error) => toast.error(S.s_chua_bo_duoc_anh_bia_a4173b5d, { description: error.message }),
   });
   const revert = useMutation({
     mutationFn: () => api(`/api/books/${book.id}/edits`, { method: "DELETE" }),
     onSuccess: () => {
       setConfirmRevert(false);
-      done("Đã bỏ mọi thay đổi - sách như người làm sách đã đóng gói");
+      done(S.s_da_bo_moi_thay_doi_sach_nhu_nguoi_lam_sach_eecea191);
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: book.id }));
     },
-    onError: (error: Error) => toast.error("Chưa bỏ được thay đổi", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bo_duoc_thay_doi_e73f2d58, { description: error.message }),
   });
   const [choosingCover, setChoosingCover] = useState(false); // ảnh bìa mạng đã chọn đang về
   const busy = rename.isPending || changeAuthor.isPending || setCover.isPending || removeCover.isPending || choosingCover;
@@ -358,22 +355,21 @@ export function EditBookDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
-      title={searching ? COVER_SEARCH_TITLE : "Sửa sách"}
+      title={searching ? COVER_SEARCH_TITLE : S.s_sua_sach_79fb71d2}
       // Không lời dẫn chung đầu hộp (điện thoại cũng không có): phần sửa chờ gửi tự nói ở dòng tình trạng dưới tên sách (SendEdits.tsx). Riêng
       // Studio từ xa nói rõ là đang sửa sách trên máy tính.
       description={
         searching
           ? COVER_SEARCH_NOTE
           : computer
-          ? `Đổi có hiệu lực ngay trên máy tính ${computer} - audio và chữ của người làm sách giữ nguyên.`
+          ? S.s_doi_co_hieu_luc_ngay_tren_may_tinh_0_audio_1381413a(computer)
           : undefined
       }
     >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
     <MotionRegion motionKey={searching}>{searching ? (
       <div>
         <button ref={searchBack} type="button" onClick={() => setSearching(false)} className="touch-hit touch-row mb-3 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-          <ArrowLeft className="ink-start size-4" /> Sửa sách
-        </button>
+          <ArrowLeft className="ink-start size-4" />{S.s_sua_sach_44914329}</button>
         <CoverSearchPanel
           bookId={book.id}
           defaultQuery={seriesOf(book.title).series || book.title}
@@ -386,7 +382,7 @@ export function EditBookDialog({
       </div>
     ) : (
       <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
-        <Section title="Tên sách">
+        <Section title={S.s_ten_sach_d54846eb}>
           <form
             className="flex gap-2"
             onSubmit={(event) => {
@@ -398,18 +394,16 @@ export function EditBookDialog({
               data-autofocus
               value={title}
               maxLength={160}
-              aria-label="Tên sách"
+              aria-label={S.s_ten_sach_d54846eb}
               onChange={(event) => setTitle(event.target.value)}
               className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
-            <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
-              Lưu tên
-            </Button>
+            <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
           </form>
         </Section>
         {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
         {book.stage === "text" && !workshop && (
-          <Section title="Tác giả">
+          <Section title={S.s_tac_gia_0ec4731b}>
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -420,49 +414,41 @@ export function EditBookDialog({
               <input
                 value={author}
                 maxLength={160}
-                aria-label="Tác giả"
-                placeholder="Không rõ tác giả"
+                aria-label={S.s_tac_gia_0ec4731b}
+                placeholder={S.s_khong_ro_tac_gia_baaa8118}
                 onChange={(event) => setAuthor(event.target.value)}
                 className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
-              <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
-                Lưu tác giả
-              </Button>
+              <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>{S.s_luu_tac_gia_cd5c8008}</Button>
             </form>
           </Section>
         )}
-        <Section title="Ảnh bìa">
+        <Section title={S.s_anh_bia_f224644d}>
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
             {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
             <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
               <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
-                {book.cover ? "Đổi ảnh bìa" : "Chọn ảnh bìa"}
+                {book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_chon_anh_bia_207ac182}
               </Button>
-              <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
-                Tìm bìa
-              </Button>
+              <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>{S.s_tim_bia_34025664}</Button>
               {book.cover && (
-                <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
-                  Bỏ ảnh bìa
-                </Button>
+                <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>{S.s_bo_anh_bia_696c6692}</Button>
               )}
               {setCover.isPending && (
-                <ContentSkeleton count={1} label="Đang đặt ảnh bìa" />
+                <ContentSkeleton count={1} label={S.s_dang_dat_anh_bia_f4a60e45} />
               )}
             </div>
           </div>
         </Section>
         {book.stage !== "text" && (
-        <Section title="Nhạc nền" fold="edit-book.music">
+        <Section title={S.s_nhac_nen_271fb292} fold="edit-book.music">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
-              <span>Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio.</span>
+              <span>{S.s_cuon_nay_co_xuong_nhac_nen_chinh_day_du_ch_b296f56d}</span>
               {onOpenStudio && (
-                <Button size="sm" variant="ghost" icon={EighthNote} onClick={onOpenStudio}>
-                  Mở tab Nhạc nền
-                </Button>
+                <Button size="sm" variant="ghost" icon={EighthNote} onClick={onOpenStudio}>{S.s_mo_tab_nhac_nen_117e60f2}</Button>
               )}
             </div>
           ) : (
@@ -471,29 +457,23 @@ export function EditBookDialog({
         </Section>
         )}
         <Section
-          title={book.stage === "text" ? "Tên chương" : "Tên riêng"}
-          hint={book.stage === "text" ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."}
+          title={book.stage === "text" ? S.s_ten_chuong_9edb6c28 : S.s_ten_rieng_8a9cd50f}
+          hint={book.stage === "text" ? S.s_bam_o_dong_chuong_de_doi_ten_chuong_d2fb9984 : S.s_bam_o_dong_chuong_de_doi_ten_chuong_o_tab_733e1523}
         />
         {book.stage === "text" && !workshop && (
-          <Section title="Cách đọc tên" hint="Dạy cách đọc từ (thường là tên riêng). Chữ giữ nguyên." fold="edit-book.readings">
+          <Section title={S.s_cach_doc_ten_1c46e75d} hint={S.s_day_cach_doc_tu_thuong_la_ten_rieng_chu_gi_69023eb0} fold="edit-book.readings">
             <BookReadingsSection bookId={book.id} />
           </Section>
         )}
         {!workshop && (book.edits ?? 0) > 0 && (
-          <Section title={`Bỏ mọi thay đổi (${book.edits})`} hint="Sách trở về đúng như người làm sách đã đóng gói.">
+          <Section title={S.s_bo_moi_thay_doi_0_af6c6828(book.edits)} hint={S.s_sach_tro_ve_dung_nhu_nguoi_lam_sach_da_don_f3a48d43}>
             {confirmRevert ? (
               <div ref={revertBox} className="flex gap-2">
-                <Button variant="danger" loading={revert.isPending} onClick={() => revert.mutate()}>
-                  Bỏ hết thay đổi
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirmRevert(false)}>
-                  Thôi
-                </Button>
+                <Button variant="danger" loading={revert.isPending} onClick={() => revert.mutate()}>{S.s_bo_het_thay_doi_b55603a1}</Button>
+                <Button variant="ghost" onClick={() => setConfirmRevert(false)}>{S.s_thoi_e68f9e88}</Button>
               </div>
             ) : (
-              <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>
-                Bỏ mọi thay đổi
-              </Button>
+              <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>{S.s_bo_moi_thay_doi_ad999cde}</Button>
             )}
           </Section>
         )}
@@ -536,27 +516,21 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
       api<{ fullTitle: string }>(`/api/books/${book.id}/chapters/${chapter?.id}/title`, { method: "PUT", body }),
     onSuccess: (answer) => {
       refreshAfterEdit(client, book.id);
-      toast.success(`Đã đổi tên chương: ${answer.fullTitle}`);
+      toast.success(S.s_da_doi_ten_chuong_0_e09362d6(answer.fullTitle));
       onClose();
     },
-    onError: (error: Error) => toast.error("Chưa đổi được tên chương", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_ten_chuong_1ff36fe9, { description: error.message }),
   });
   return (
     <Dialog footer={<DialogActions>
-          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>
-            Về tên gốc
-          </Button>
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Thôi
-          </Button>
-          <Button type="submit" form={dialogForm1} variant="primary" loading={save.isPending} disabled={!label.trim()}>
-            Lưu
-          </Button>
+          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>{S.s_ve_ten_goc_643cd2e0}</Button>
+          <Button type="button" variant="ghost" onClick={onClose}>{S.s_thoi_e68f9e88}</Button>
+          <Button type="submit" form={dialogForm1} variant="primary" loading={save.isPending} disabled={!label.trim()}>{S.s_luu_e91f26c0}</Button>
         </DialogActions>}
       open={chapter !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Tên chương"
+      title={S.s_ten_chuong_9edb6c28}
     >
       <form id={dialogForm1}
         className="space-y-3"
@@ -566,7 +540,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         }}
       >
         <label className="block text-sm">
-          <span className="text-fg-2">{single ? "Tên chương" : "Nhãn"}</span>
+          <span className="text-fg-2">{single ? S.s_ten_chuong_9edb6c28 : S.s_nhan_58861f44}</span>
           <input
             data-autofocus
             value={label}
@@ -577,7 +551,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         </label>
         {!single && (
           <label className="block text-sm">
-            <span className="text-fg-2">Tên</span>
+            <span className="text-fg-2">{S.s_ten_c8b17259}</span>
             <input
               value={name}
               maxLength={160}
@@ -606,15 +580,15 @@ export function useSaveBook(book: ListenBook) {
       if (!result.saved) return false;
       const folder = result.folder;
       // Không có thay đổi nào vẫn lưu được, nhưng file giống hệt bản gốc: nói điều đó thành cảnh báo cùng dòng.
-      toastDone("Đã lưu file sách", result.edits ? undefined : "Chưa có thay đổi nào - file giống bản gốc.", {
+      toastDone(S.s_da_luu_file_sach_baab68d2, result.edits ? undefined : S.s_chua_co_thay_doi_nao_file_giong_ban_goc_f109003f, {
         duration: 8000,
         action: folder
-          ? { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }
+          ? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }
           : undefined,
       });
       return true;
     } catch (error) {
-      toast.error("Chưa lưu được file sách", { description: (error as Error).message });
+      toast.error(S.s_chua_luu_duoc_file_sach_964ff92c, { description: (error as Error).message });
       return false;
     } finally {
       setBusy(false);
@@ -633,7 +607,7 @@ export function useShareBook(book: ListenBook) {
     try {
       await source.shareBook(book.id);
     } catch (error) {
-      toast.error("Chưa chia sẻ được sách", { description: (error as Error).message });
+      toast.error(S.s_chua_chia_se_duoc_sach_9b8501da, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -662,54 +636,46 @@ export function SaveAsDialog({
   const [folder, setFolder] = useState<string | null>(null);
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Thôi
-        </Button>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>{S.s_thoi_e68f9e88}</Button>
         <Button
           variant="primary"
           icon={FileDown}
           loading={busy}
           onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}
-        >
-          Lưu
-        </Button>
+        >{S.s_luu_e91f26c0}</Button>
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-md"
-      title="Lưu thành"
-      description="Lưu cuốn này kèm những thay đổi của bạn thành một file mới. File gốc không bị đụng tới."
+      title={S.s_luu_thanh_13374e92}
+      description={S.s_luu_cuon_nay_kem_nhung_thay_doi_cua_ban_th_ab80dd34}
     >
       <ChoiceRow<SaveKind>
         value={kind}
         onChange={setKind}
-        label="Loại file"
+        label={S.s_loai_file_74f0a115}
         options={[
-          { value: "abook", label: "Sách nghe (.abook)" },
-          { value: "abookproj", label: "Dự án (.abookproj)" },
+          { value: "abook", label: S.s_sach_nghe_abook_cb8e508e },
+          { value: "abookproj", label: S.s_du_an_abookproj_71e42c40 },
         ]}
       />
       {kind === "abookproj" ? (
         <p className="mt-3 text-sm text-fg-2">
           {book.projectFile?.workshop === "present"
-            ? "Cả dự án kèm thay đổi của bạn; mở bằng Studio để áp."
-            : "Chỉ có phần nghe và thay đổi của bạn. Studio dựng lại được dự án từ file này."}
+            ? S.s_ca_du_an_kem_thay_doi_cua_ban_mo_bang_stud_f33ca39c
+            : S.s_chi_co_phan_nghe_va_thay_doi_cua_ban_studi_09cd637e}
         </p>
       ) : (
-        <p className="mt-3 text-sm text-fg-2">
-          Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa
-          {book.wishes ? `, cùng ${book.wishes} việc đang chờ máy làm sách (chưa làm gì trong giọng đọc)` : ""}.
+        <p className="mt-3 text-sm text-fg-2">{S.s_sach_nghe_mo_duoc_bang_abook_tren_may_tinh_ef9eba65}{book.wishes ? S.s_cung_0_viec_dang_cho_may_lam_sach_chua_lam_4b0db6d4(book.wishes) : ""}.
         </p>
       )}
       {pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
-            Chọn thư mục
-          </Button>
-          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
+          <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>{S.s_chon_thu_muc_1fe47e38}</Button>
+          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
         </div>
       )}
-      {pickFolder && <p className="mt-2 text-xs text-fg-3">Đã có file cùng tên trong thư mục ấy thì file mới thêm số (2) ở cuối tên - không đè lên file cũ.</p>}
+      {pickFolder && <p className="mt-2 text-xs text-fg-3">{S.s_da_co_file_cung_ten_trong_thu_muc_ay_thi_f_ca6cb2a9}</p>}
 
     </Dialog>
   );
@@ -724,8 +690,8 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
       <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Giọng và lời đọc</span>
-        <span className="block text-xs text-fg-3">{syncs ? "Làm ở Studio trên máy tính" : need.charAt(0).toUpperCase() + need.slice(1)}</span>
+        <span className="block">{S.s_giong_va_loi_doc_450320f6}</span>
+        <span className="block text-xs text-fg-3">{syncs ? S.s_lam_o_studio_tren_may_tinh_c89f87a5 : need.charAt(0).toUpperCase() + need.slice(1)}</span>
       </span>
     </DropdownMenu.Item>
   );
@@ -739,8 +705,8 @@ export function EditBlockedItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
       <Pencil className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Sửa thông tin</span>
-        <span className="block text-xs text-fg-3">Sửa ở máy gốc.</span>
+        <span className="block">{S.s_sua_thong_tin_17e4a8a6}</span>
+        <span className="block text-xs text-fg-3">{S.s_sua_o_may_goc_1a65caf0}</span>
       </span>
     </DropdownMenu.Item>
   );

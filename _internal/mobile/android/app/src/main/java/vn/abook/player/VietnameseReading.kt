@@ -18,17 +18,17 @@ object VietnameseReading {
     private val SPOKEN_FORM = Regex("[A-Za-zÀ-ỹ]+(?:[ -][A-Za-zÀ-ỹ]+)*")
     private val NON_VIETNAMESE_CODA = Regex("[fjlrsvwz]$", RegexOption.IGNORE_CASE)
     private val ONSETS = setOf(
-        "", "b", "c", "ch", "d", "đ", "g", "gh", "gi", "h", "k", "kh", "l", "m", "n",
+        "", "b", "c", "ch", "d", S.s_d_bf502a39, "g", "gh", "gi", "h", "k", "kh", "l", "m", "n",
         "ng", "ngh", "nh", "p", "ph", "q", "qu", "r", "s", "t", "th", "tr", "v", "x",
     )
     private val NUCLEI = listOf(
-        "uyê", "uya", "uyu", "oai", "oay", "oeo", "uôi", "ươi", "ươu", "iêu", "yêu", "uây",
-        "iê", "yê", "uô", "ươ", "uơ", "uâ", "uê", "uy", "ua", "ưa", "ia", "ya", "oa", "oă", "oe", "oo",
-        "ai", "ao", "au", "ay", "âu", "ây", "eo", "êu", "iu", "oi", "ôi", "ơi", "ui", "ưi", "ưu", "ôô",
-        "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y",
+        S.s_uye_b8c0af8b, "uya", "uyu", "oai", "oay", "oeo", S.s_uoi_ceb75d13, S.s_uoi_c6a401be, S.s_uou_4d63c8dd, S.s_ieu_cbedfb4f, S.s_yeu_3d506a76, S.s_uay_f9b82d85,
+        S.s_ie_26cdb43e, S.s_ye_9ffca5d4, S.s_uo_583fc78a, S.s_uo_16cb7759, S.s_uo_6ad5bb23, S.s_ua_76e723e6, S.s_ue_0b5e570a, "uy", "ua", S.s_ua_f2a5af6c, "ia", "ya", "oa", S.s_oa_f142006f, "oe", "oo",
+        "ai", "ao", "au", "ay", S.s_au_eb3dba9a, S.s_ay_0ad342fe, "eo", S.s_eu_bdc0def3, "iu", "oi", S.s_oi_43d20d96, S.s_oi_5d8ef332, "ui", S.s_ui_8754f7b8, S.s_uu_57e8a359, S.s_oo_9f3cda10,
+        "a", S.s_a_81778924, S.s_a_115ddb37, "e", S.s_e_e87b18a0, "i", "o", S.s_o_cc912dbc, S.s_o_4769d5f6, "u", S.s_u_9802107d, "y",
     )
     private val CODAS = listOf("ngh", "ng", "nh", "ch", "c", "m", "n", "p", "t", "i", "o", "u", "y")
-    private val FRONT_WRITTEN = setOf("i", "e", "ê", "y")
+    private val FRONT_WRITTEN = setOf("i", "e", S.s_e_e87b18a0, "y")
     private val FRONT_SIMPLE = setOf('i', 'ê')
     private const val GLIDE_LETTERS = "iouy"
     private val TONE_MARKS = setOf('̣', '̀', '́', '̃', '̉')
@@ -60,7 +60,7 @@ object VietnameseReading {
         val onset = match.groupValues[1]
         val nucleus = match.groupValues[2]
         val coda = match.groupValues[3]
-        if ((nucleus == "ă" || nucleus == "â") && coda.isEmpty()) return false
+        if ((nucleus == S.s_a_81778924 || nucleus == S.s_a_115ddb37) && coda.isEmpty()) return false
         if (coda.isNotEmpty() && coda.length == 1 && coda[0] in GLIDE_LETTERS && nucleus.last() in GLIDE_LETTERS) return false
         if (onset.isNotEmpty() && nucleus.take(1) in FRONT_WRITTEN) {
             if (onset == "c" || onset == "ng") return false
@@ -79,7 +79,7 @@ object VietnameseReading {
 
     /** analysis._name_candidate_key: hạ chữ và bỏ dấu. */
     private fun nameKey(value: String): String {
-        val lowered = casefold(value.replace("’", "'")).replace("đ", "d")
+        val lowered = casefold(value.replace("’", "'")).replace(S.s_d_bf502a39, "d")
         return Normalizer.normalize(lowered, Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
     }
 
@@ -90,7 +90,7 @@ object VietnameseReading {
         val syllables = value.split(' ', '-')
         if (syllables.any { NON_VIETNAMESE_CODA.containsMatchIn(it) }) return false
         for (syllable in syllables) {
-            val normalized = Normalizer.normalize(casefold(syllable).replace("đ", "d"), Normalizer.Form.NFD)
+            val normalized = Normalizer.normalize(casefold(syllable).replace(S.s_d_bf502a39, "d"), Normalizer.Form.NFD)
                 .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
             val firstVowel = normalized.indexOfFirst { it in "aeiouy" }
             if (firstVowel < 0) return false
@@ -116,7 +116,7 @@ object VietnameseReading {
     // ---- spelling.py: phụ âm đầu theo chính tả -------------------------------------------------------------------------
 
     private val TONES = setOf('̀', '́', '̉', '̃', '̣')
-    private val BACK = "aăâoôơuư".toSet()
+    private val BACK = S.s_aaaooouu_c0638358.toSet()
 
     private class Rule(val initial: String, val fixed: String, val before: Set<Char>)
 
@@ -158,6 +158,6 @@ object VietnameseReading {
         if (pairs.isEmpty()) return ""
         val right = pairs.joinToString(", ") { "“${it.second}”" }
         val wrong = pairs.joinToString(", ") { "“${it.first}”" }
-        return "Tiếng Việt viết $right, không viết $wrong."
+        return S.s_tieng_viet_viet_0_khong_viet_1_b8bd99fa(right, wrong)
     }
 }

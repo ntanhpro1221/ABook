@@ -10,6 +10,7 @@ hệ thống (không có "nút giả" trong PiP). Luật ở đây chỉ đòi �
 """
 import re
 from pathlib import Path
+from scripts.ui_copy_source import expand
 
 ROOT = Path(__file__).resolve().parent.parent
 QML = ROOT / "desktop_qt" / "qml"
@@ -21,7 +22,7 @@ BUTTONS = ("miniBack", "miniPlay", "miniForward")
 
 
 def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+    return expand(path.read_text(encoding="utf-8"), "kt" if path.suffix == ".kt" else "ts")
 
 
 def line_of(text: str, needle: str) -> str:

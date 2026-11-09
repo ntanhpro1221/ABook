@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useEffect, useState, type ReactNode } from "react";
 import { chromeStateEvent, windowChrome, type CaptionState } from "./windowChrome";
 import "./titlebar.css";
@@ -26,15 +27,15 @@ export function TitleBar({ toggle }: { toggle?: ReactNode }) {
   }, [chrome]);
   if (!chrome) return null;
   return (
-    <header className="desktop-titlebar" data-focused={state.focused} aria-label="Điều khiển cửa sổ">
+    <header className="desktop-titlebar" data-focused={state.focused} aria-label={S.s_dieu_khien_cua_so_4e08e039}>
       <div className="titlebar-toggle">{toggle}</div>
       <div className="titlebar-drag" data-tauri-drag-region="" />
       <div className="caption-buttons">
-        <button type="button" className="caption-button" aria-label="Thu nhỏ" onClick={() => chrome.action("minimize")}><Glyph kind="minimize" /></button>
-        <button type="button" className="caption-button" data-caption-maximize data-hovered={state.snapHovered} data-pressed={state.snapPressed} aria-label={state.maximized ? "Khôi phục" : "Phóng to"} onClick={() => chrome.action("toggleMaximize")}>
+        <button type="button" className="caption-button" aria-label={S.s_thu_nho_d7896922} onClick={() => chrome.action("minimize")}><Glyph kind="minimize" /></button>
+        <button type="button" className="caption-button" data-caption-maximize data-hovered={state.snapHovered} data-pressed={state.snapPressed} aria-label={state.maximized ? S.s_khoi_phuc_c652d9c0 : S.s_phong_to_65b20d37} onClick={() => chrome.action("toggleMaximize")}>
           <Glyph kind="maximize" shown={!state.maximized} /><Glyph kind="restore" shown={state.maximized} />
         </button>
-        <button type="button" className="caption-button caption-close" aria-label="Đóng" onClick={() => chrome.action("close")}><Glyph kind="close" /></button>
+        <button type="button" className="caption-button caption-close" aria-label={S.s_dong_5d54c2a1} onClick={() => chrome.action("close")}><Glyph kind="close" /></button>
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -35,18 +36,18 @@ Column {
     Collapse {
         width: parent.width
         open: root.loading
-        EditBookSkeleton { x: 12; y: 8; width: parent.width - 24; count: 3; label: "Đang tải bài nhạc"; height: implicitHeight + 16 }
+        EditBookSkeleton { x: 12; y: 8; width: parent.width - 24; count: 3; label: S.s_dang_tai_bai_nhac_0c9498d1; height: implicitHeight + 16 }
     }
     InlineError {
         width: parent.width
         open: root.failed && !root.loading
-        message: "Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc."
+        message: S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_bai_n_acc346b4
         onRetry: root.load()
     }
     Collapse {
         width: parent.width
         open: !root.loading && !root.failed && root.mine.length === 0
-        HintText { x: 12; width: parent.width - 24; topPadding: 8; bottomPadding: 8; text: "Chưa có bài nào khác trong Nhạc của tôi." }
+        HintText { x: 12; width: parent.width - 24; topPadding: 8; bottomPadding: 8; text: S.s_chua_co_bai_nao_khac_trong_nhac_cua_toi_811d988a }
     }
     Collapse {
         width: parent.width
@@ -90,7 +91,7 @@ Column {
                     id: pin
                     x: parent.width - width - 12
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Chọn"
+                    text: S.s_chon_1171ca97
                     icon: "pin"
                     kind: "ghost"
                     size: "sm"

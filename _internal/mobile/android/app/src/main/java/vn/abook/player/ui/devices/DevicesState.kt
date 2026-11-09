@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
@@ -66,9 +68,9 @@ data class StorageUi(val loaded: Boolean = false, val storage: Storage = Storage
 @Immutable
 data class Summary(val link: Link? = null, val share: Share? = null, val storage: Storage? = null) {
     val deviceName: String get() = link?.deviceName.orEmpty()
-    val pair: String? get() = link?.let { if (it.paired) "Đã nối ${it.shownName}" else "Chưa nối" }
+    val pair: String? get() = link?.let { if (it.paired) S.s_da_noi_0_f564288f(it.shownName) else S.s_chua_noi_9278ca48 }
     val sharing: String?
-        get() = share?.let { if (it.running) (if (it.devices.isEmpty()) "Đang bật" else "Đang bật · ${it.devices.size} máy") else "Đang tắt" }
+        get() = share?.let { if (it.running) (if (it.devices.isEmpty()) S.s_dang_bat_70767620 else S.s_dang_bat_0_may_2e23392a(it.devices.size)) else S.s_dang_tat_53bfa8b7 }
     val storageLine: String? get() = storage?.line
 }
 
@@ -118,7 +120,7 @@ class DevicesState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được"
+    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06
     val notice = MutableStateFlow("")
 
     // ---- trang nhóm ----------------------------------------------------------------------------------------------------
@@ -137,8 +139,8 @@ class DevicesState(
     /** Đổi tên điện thoại này (máy kia thấy nó bằng tên ấy). Null = xong, khác null = câu lỗi. */
     suspend fun rename(name: String): String? {
         val result = attempt { source.setDeviceName(name) }
-        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) }; notice.value = "Đã đổi tên thành “$clean”" }
-        return result.exceptionOrNull()?.let { DeviceText.failure("Chưa đổi được tên", message(it)) }
+        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) }; notice.value = S.s_da_doi_ten_thanh_0_268ec88c(clean) }
+        return result.exceptionOrNull()?.let { DeviceText.failure(S.s_chua_doi_duoc_ten_ad5b4df1, message(it)) }
     }
 
     // ---- Nối máy tính --------------------------------------------------------------------------------------------------
@@ -293,7 +295,7 @@ class DevicesState(
         if (!form.ready || raw == null || state.attempt is Attempt.Working) return
         val address = if (raw.startsWith("bt:")) raw else normalizeAddress(raw)
         if (address == null) {
-            pairFlow.update { it.copy(attempt = Attempt.Failed("Địa chỉ chưa đúng - ví dụ 192.168.1.20:47630")) }
+            pairFlow.update { it.copy(attempt = Attempt.Failed(S.s_dia_chi_chua_dung_vi_du_192_168_1_20_47630_36871071)) }
             return
         }
         val name = state.choices.firstOrNull { it.address == raw }?.shown ?: address.substringBeforeLast(':')
@@ -301,11 +303,11 @@ class DevicesState(
         scope.launch {
             attempt { source.pair(address, form.digits, extra = state.paired) }
                 .onSuccess { pairedName ->
-                    notice.value = "Đã ghép $pairedName"
+                    notice.value = S.s_da_ghep_0_a04998dd(pairedName)
                     pairFlow.update { it.copy(form = PairForm(), attempt = Attempt.Idle, adding = false, found = emptyList(), bluetooth = Bluetooth.Off) }
                     reload()
                 }
-                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(DeviceText.failure("Chưa ghép được", message(error)), (error as? DeviceFailure)?.technical)) } }
+                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(DeviceText.failure(S.s_chua_ghep_duoc_e27b68c8, message(error)), (error as? DeviceFailure)?.technical)) } }
         }
     }
 
@@ -330,7 +332,7 @@ class DevicesState(
         val name = pairFlow.value.link.shownName
         val result = attempt { source.unpair() }
         if (result.isFailure) return message(result.exceptionOrNull())
-        notice.value = "Đã bỏ ghép $name"
+        notice.value = S.s_da_bo_ghep_0_d1ec976d(name)
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.main }, sections = it.sections.filterNot { s -> s.source == null }) }
         reloadJob?.cancel()
         reloadJob = scope.launch { reload() }
@@ -347,7 +349,7 @@ class DevicesState(
         val result = attempt { source.forget(key, choice) }
         if (result.isFailure) return message(result.exceptionOrNull())
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.key == key }, sections = it.sections.filterNot { s -> s.source == key }) }
-        notice.value = "Đã bỏ ghép $name"
+        notice.value = S.s_da_bo_ghep_0_d1ec976d(name)
         syncStreamed()
         return null
     }
@@ -382,7 +384,7 @@ class DevicesState(
     }
 
     fun cancelDownload(id: String) {
-        scope.launch { attempt { source.cancelDownload(id) }.onFailure { e -> pairFlow.update { it.copy(failed = it.failed + (id to DeviceText.failure("Chưa huỷ được", message(e)))) } } }
+        scope.launch { attempt { source.cancelDownload(id) }.onFailure { e -> pairFlow.update { it.copy(failed = it.failed + (id to DeviceText.failure(S.s_chua_huy_duoc_d37c34e0, message(e)))) } } }
     }
 
     private suspend fun onDownload(event: DownloadEvent) {
@@ -390,7 +392,7 @@ class DevicesState(
         val running = event.running
         pairFlow.update { state ->
             val failed = when {
-                event.error != null -> state.failed + (event.id to DeviceText.failure("Chưa tải xong về máy", event.error))
+                event.error != null -> state.failed + (event.id to DeviceText.failure(S.s_chua_tai_xong_ve_may_c8e88833, event.error))
                 event.finished || event.cancelled -> state.failed - event.id
                 else -> state.failed
             }

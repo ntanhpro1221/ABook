@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioMusicLogic.js" as Logic
@@ -76,9 +77,9 @@ Column {
                 radius: Theme.radiusControl
                 color: Theme.sunken
                 Accessible.role: Accessible.StaticText
-                Accessible.name: "AI"
+                Accessible.name: S.s_ai_11fb682b
                 Accessible.description: root.ai
-                Text { id: aiText; anchors.centerIn: parent; text: "AI"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                Text { id: aiText; anchors.centerIn: parent; text: S.s_ai_11fb682b; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
             }
         }
         Column {
@@ -104,7 +105,7 @@ Column {
             Text {
                 width: parent.width
                 visible: !root.follows && !root.scene.link
-                text: root.scene.silenced ? "Im lặng (bạn chọn)" : "Im lặng - không bài nào đủ hợp"
+                text: root.scene.silenced ? S.s_im_lang_ban_chon_356a628b : S.s_im_lang_khong_bai_nao_du_hop_6881c83f
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -118,7 +119,7 @@ Column {
                     width: Math.min(implicitWidth, parent.width - 22)
                     text: {
                         const dim = Qt.color(Theme.text2).toString()
-                        const title = (root.track && root.track.title) || "Bài nhạc"
+                        const title = (root.track && root.track.title) || S.s_bai_nhac_5d07657e
                         const by = root.track && root.track.creator ? "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + root.esc(root.track.creator) + "</font>" : ""
                         return root.esc(title) + by
                     }
@@ -133,20 +134,20 @@ Column {
                     height: mineText.implicitHeight + 4
                     radius: Theme.radiusControl
                     color: Theme.sunken
-                    Text { id: mineText; anchors.centerIn: parent; text: "Nhạc của tôi"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                    Text { id: mineText; anchors.centerIn: parent; text: S.s_nhac_cua_toi_f65b7ac6; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                 }
                 Icon {
                     objectName: "scenePinned"
                     visible: !!root.scene.pinned
                     name: "pin"; size: 14; color: Theme.text2; y: 3
                     Accessible.role: Accessible.Graphic
-                    Accessible.name: "Đã ghim"
+                    Accessible.name: S.s_da_ghim_f1645be7
                 }
             }
             Text {
                 width: parent.width
                 visible: !root.follows && !!root.scene.link && !!root.scene.pinUnavailable
-                text: "Bài bạn ghim không còn trên máy này - đoạn dùng bài khác."
+                text: S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e
                 color: Theme.warning
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -181,7 +182,7 @@ Column {
                 ink: Theme.text2
                 hoverInk: Theme.text
                 enabled: !root.busy
-                Accessible.name: "Thêm tuỳ chọn cho đoạn này"
+                Accessible.name: S.s_them_tuy_chon_cho_doan_nay_6554b55d
                 onClicked: root.menuRequested(more)
             }
         }

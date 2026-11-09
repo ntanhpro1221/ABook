@@ -1,6 +1,7 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
-import "ScriptLogic.js" as S
+import "ScriptLogic.js" as Script
 import "CastLogic.js" as Cast
 
 // Một câu của kịch bản (ScriptRow của ScriptTab.tsx): ô người nói (chip bấm được cho câu thoại; câu kể ghi "Người kể" mờ), nút nghe ngay trước chữ,
@@ -26,14 +27,14 @@ Item {
     signal retake()
     signal cancelRetake()
 
-    readonly property bool speech: S.isSpeech(line)
+    readonly property bool speech: Script.isSpeech(line)
     readonly property bool wide: width >= 640
     readonly property bool shownActions: active || hover.hovered
     readonly property string clipId: "script-" + line.segmentId
     readonly property bool playing: Clip.current === clipId
-    readonly property var suggested: S.suggestedOf(script, line)
+    readonly property var suggested: Script.suggestedOf(script, line)
     readonly property bool hasEmotion: line.emotion !== null && line.emotion !== undefined
-    readonly property bool plain: S.plainDelivery(line)
+    readonly property bool plain: Script.plainDelivery(line)
     readonly property string speakerShown: line.wish && line.wish.state === "pending" ? line.wish.label : line.label
     readonly property real textX: wide ? 160 + 8 + 28 + 8 : 28 + 8
     readonly property real textY: wide || !speech ? 6 : chipBox.height + 10
@@ -93,7 +94,7 @@ Item {
             activeFocusOnTab: false
             tip: ""
             Accessible.role: Accessible.Button
-            Accessible.name: (root.line.kind === "thought" ? "Người nghĩ" : "Người nói") + ": " + root.speakerShown + ". Bấm để đổi"
+            Accessible.name: (root.line.kind === "thought" ? S.s_nguoi_nghi_ce1afa0f : S.s_nguoi_noi_9620707b) + ": " + root.speakerShown + S.s_bam_de_doi_ee78d9fa
             onClicked: { root.activate(); root.openSpeaker(chip) }
             readonly property real hue: Cast.hueOf(root.speakerShown || "")
             Rectangle { anchors.fill: parent; radius: height / 2; color: Cast.avatarFill(chip.hue, Theme.dark) }
@@ -122,7 +123,7 @@ Item {
             width: parent.width
             height: 28
             verticalAlignment: Text.AlignVCenter
-            text: root.line.label || "Người kể"
+            text: root.line.label || S.s_nguoi_ke_fd36cd15
             color: Theme.text3
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
@@ -138,7 +139,7 @@ Item {
         width: 28; height: 28
         activeFocusOnTab: false
         Accessible.role: Accessible.Button
-        Accessible.name: root.playing ? "Dừng" : "Nghe câu: " + root.line.text
+        Accessible.name: root.playing ? S.s_dung_11554138 : S.s_nghe_cau_22ae467f + root.line.text
         onClicked: Clip.toggle(root.clipId, root.store ? root.store.path("/media/books/" + root.bookId + "/samples/" + root.line.segmentId) : "")
         Rectangle { anchors.fill: parent; radius: width / 2; color: Theme.panel; opacity: parent.hovered ? 1 : 0 }
         Icon { anchors.centerIn: parent; size: 14; name: root.playing ? "pause" : "play"; color: parent.hovered ? Theme.text : Theme.text3 }
@@ -170,14 +171,14 @@ Item {
                 height: 18
                 radius: Theme.radiusControl
                 color: Theme.hover
-                Text { id: thinkText; anchors.centerIn: parent; text: "nghĩ"; color: Theme.text2; font.pixelSize: 11; font.weight: Theme.weightMedium }
+                Text { id: thinkText; anchors.centerIn: parent; text: S.s_nghi_821be246; color: Theme.text2; font.pixelSize: 11; font.weight: Theme.weightMedium }
             }
             Text {
                 id: lineText
                 objectName: "lineText"
                 x: (root.selected ? 22 : 0) + (thinkTag.visible ? thinkTag.width + 6 : 0)
                 width: parent.width - x
-                text: root.marks.length ? S.markedHtml(root.line.text, root.marks, Theme.warningSoft) : root.line.text
+                text: root.marks.length ? Script.markedHtml(root.line.text, root.marks, Theme.warningSoft) : root.line.text
                 textFormat: root.marks.length ? Text.StyledText : Text.PlainText
                 color: root.selected ? Theme.accentText : root.speech ? Theme.text : Theme.text2
                 font.pixelSize: 15
@@ -188,7 +189,7 @@ Item {
         }
         Note_ {
             visible: !!root.line.spoken
-            text: "Đọc là: " + (root.line.spoken || "")
+            text: S.s_doc_la_4f8195e0 + (root.line.spoken || "")
         }
         Item {
             id: deliveryAnchorItem
@@ -204,13 +205,13 @@ Item {
             objectName: "lineWishNote"
             visible: !!root.line.lineWish && root.line.lineWish.state === "pending"
             icon: "clock"
-            text: visible ? S.lineWishText(root.line.lineWish, root.pendingNote) : ""
+            text: visible ? Script.lineWishText(root.line.lineWish, root.pendingNote) : ""
         }
         Note_ {
             visible: !!root.line.lineWish && root.line.lineWish.state === "refused"
             icon: "triangle-alert"
             tone: Theme.danger
-            text: visible ? "Cách đọc mới không áp được: " + root.line.lineWish.reason : ""
+            text: visible ? S.s_cach_doc_moi_khong_ap_duoc_3b993682 + root.line.lineWish.reason : ""
         }
         Item {
             objectName: "lineHint"
@@ -241,7 +242,7 @@ Item {
                     visible: !!root.suggested && root.script.castReady && root.suggested.value !== root.line.current && !(root.line.wish && root.line.wish.value === root.suggested.value)
                     size: "sm"
                     kind: "ghost"
-                    text: root.suggested ? "Gán cho " + root.suggested.label : ""
+                    text: root.suggested ? S.s_gan_cho_6fe48d05 + root.suggested.label : ""
                     onClicked: root.pick(root.suggested)
                 }
             }
@@ -256,21 +257,21 @@ Item {
                 y: 4
                 width: parent.width
                 spacing: 6
-                Note_ { width: Math.min(implicitWidth, retakeFlow.width); icon: "clock"; text: "Đã xin thu lại câu này - " + root.pendingNote + "." }
-                TextLink { objectName: "retakeCancel"; accent: true; small: true; text: "Bỏ"; onClicked: root.cancelRetake() }
+                Note_ { width: Math.min(implicitWidth, retakeFlow.width); icon: "clock"; text: S.s_da_xin_thu_lai_cau_nay_7919d78c + root.pendingNote + "." }
+                TextLink { objectName: "retakeCancel"; accent: true; small: true; text: S.s_bo_e07d3f4d; onClicked: root.cancelRetake() }
             }
         }
         Note_ {
             objectName: "wishNote"
             visible: !!root.line.wish && root.line.wish.state === "pending"
             icon: "clock"
-            text: visible ? "Đã ghi " + root.line.wish.label + " (máy gán " + root.line.label + ") - " + root.pendingNote + "." : ""
+            text: visible ? S.s_da_ghi_6b67a4c2 + root.line.wish.label + S.s_may_gan_c2531001 + root.line.label + ") - " + root.pendingNote + "." : ""
         }
         Note_ {
             visible: !!root.line.wish && root.line.wish.state === "refused"
             icon: "triangle-alert"
             tone: Theme.danger
-            text: visible ? "Yêu cầu " + root.line.wish.label + " không áp được: " + root.line.wish.reason : ""
+            text: visible ? S.s_yeu_cau_6833dc12 + root.line.wish.label + S.s_khong_ap_duoc_1fe639f0 + root.line.wish.reason : ""
         }
     }
 
@@ -287,9 +288,9 @@ Item {
             width: 28; height: 28
             opacity: root.shownActions || activeFocus ? 1 : 0
             activeFocusOnTab: false
-            tip: "Thu lại câu này (R)"
+            tip: S.s_thu_lai_cau_nay_r_04ccfef4
             Accessible.role: Accessible.Button
-            Accessible.name: "Thu lại câu: " + root.line.text
+            Accessible.name: S.s_thu_lai_cau_a4677ead + root.line.text
             onClicked: root.retake()
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
             Rectangle { anchors.fill: parent; radius: width / 2; color: Theme.panel; opacity: parent.hovered ? 1 : 0 }
@@ -336,7 +337,7 @@ Item {
         opacity: hiddenNow && !hover.hovered ? 0 : 1
         activeFocusOnTab: false
         Accessible.role: Accessible.Button
-        Accessible.name: "Cách đọc: " + deliveryText.text + ". Bấm để sửa"
+        Accessible.name: S.s_cach_doc_1f39ff9c + deliveryText.text + S.s_bam_de_sua_00d1fbb6
         onClicked: { root.activate(); root.openDelivery(delivery) }
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.panel; opacity: delivery.hovered ? 1 : 0 }
@@ -349,7 +350,7 @@ Item {
             Text {
                 id: deliveryText
                 objectName: "deliveryText"
-                text: S.deliveryChip(root.line)
+                text: Script.deliveryChip(root.line)
                 color: delivery.waiting ? Theme.text2 : delivery.hovered ? Theme.text : Theme.text3
                 font.pixelSize: 11
                 font.weight: Theme.weightMedium

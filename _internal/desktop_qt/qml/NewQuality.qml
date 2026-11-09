@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
@@ -25,13 +26,13 @@ Column {
         if (next !== index) { setProfile(Logic.PROFILE_VALUES[next]); Later.call(root, function() { rows.itemAt(next).forceActiveFocus(Qt.TabFocusReason) }) }
     }
 
-    Text { objectName: "newQualityTitle"; width: parent.width; text: "Chất lượng"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
-    Prose { topPadding: 4; text: "Cố định sau khi tạo, để mọi chương đọc giống nhau." }
+    Text { objectName: "newQualityTitle"; width: parent.width; text: S.s_chat_luong_a12ed26c; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
+    Prose { topPadding: 4; text: S.s_co_dinh_sau_khi_tao_de_moi_chuong_doc_gion_165eeae2 }
     Item { width: 1; height: 24 }
     Column {
         width: parent.width
         Accessible.role: Accessible.RadioButton
-        Accessible.name: "Chất lượng"
+        Accessible.name: S.s_chat_luong_a12ed26c
         Repeater {
             id: rows
             model: Logic.PROFILES
@@ -62,7 +63,7 @@ Column {
                         spacing: 4
                         bottomPadding: visible ? 8 : 0
                         Icon { y: 2; name: "sparkles"; size: 12; color: Theme.text2 }
-                        Text { text: "Nên dùng"; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+                        Text { text: S.s_nen_dung_84e3ecf2; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
                     }
                     Text {
                         width: parent.width
@@ -99,7 +100,7 @@ Column {
         width: parent.width
         storageKey: "quality"
         prefix: "fold.new-project."
-        title: "Chi tiết"
+        title: S.s_chi_tiet_e762d926
         summary: root.chosen ? root.chosen.title : ""
         Item { width: 1; height: 12 }
         Repeater {
@@ -126,19 +127,19 @@ Column {
         DisclosureRow {
             objectName: "newModelToggle"
             width: parent.width
-            title: "Bộ phân tích truyện"
+            title: S.s_bo_phan_tich_truyen_9a52f60b
             expanded: root.modelOpen
             onClicked: root.modelOpen = !root.modelOpen
         }
         Collapse {
             width: parent.width
             open: root.modelOpen
-            Prose { topPadding: 8; small: true; text: "Chỉ chọn bản khác khi muốn thử trên cuốn này." }
+            Prose { topPadding: 8; small: true; text: S.s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b }
             Item { width: 1; height: 8 }
             Select {
                 objectName: "newModelSelect"
                 width: Math.min(parent.width, 512)
-                label: "Bộ phân tích truyện"
+                label: S.s_bo_phan_tich_truyen_9a52f60b
                 options: root.picker.options
                 value: root.draft.analysisModel || ""
                 onPicked: value => root.form.update({analysisModel: value})
@@ -147,8 +148,8 @@ Column {
                 objectName: "newModelNote"
                 topPadding: 6
                 small: true
-                text: root.draft.analysisModel ? "Bản thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
-                                               : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."
+                text: root.draft.analysisModel ? S.s_ban_thu_nghiem_chua_duoc_kiem_tren_nhieu_t_32fc14af
+                                               : S.s_mac_dinh_may_de_xuat_cho_hau_het_cac_truye_ea11fe13
             }
         }
     }

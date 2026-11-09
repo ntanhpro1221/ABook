@@ -1,0 +1,248 @@
+[
+  {
+    "screen": "Cài đặt",
+    "qt": "Chưa lưu được mẫu{}",
+    "web": "Chưa lưu được mẫu",
+    "reason": "Same error sentence; Qt includes the error value in one expression, web renders the detail beside the heading."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Dùng Bluetooth cho",
+    "web": "Dùng Bluetooth cho {}",
+    "reason": "Same Bluetooth action; Qt renders the computer name in a separate ShortName item."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Hết hạn sau {}:{}",
+    "web": "Hết hạn sau",
+    "reason": "Same pairing-code expiry; Qt formats minutes and seconds in the expression, web places the clock after the label."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Khoá",
+    "web": "Khoá {}",
+    "reason": "The shared field label is Khoá. Web accessibility text additionally names the provider."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Mã ghép nối:",
+    "web": "Mã ghép nối: {}",
+    "reason": "Same pairing-code label; Qt places the six code digits in a separate text item."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Mở Studio của",
+    "web": "Mở Studio của {}",
+    "reason": "Same open-Studio action; Qt renders the computer name as another item in the row."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Điều khiển sản xuất từ",
+    "web": "Điều khiển sản xuất từ {}",
+    "reason": "Same production-control heading; Qt places the device name in a separate item."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Địa chỉ: {}",
+    "web": "Địa chỉ:",
+    "reason": "Same address label; web renders its address value as a JSX child."
+  },
+  {
+    "screen": "Studio dự án",
+    "qt": "Chưa khởi động được: {}",
+    "web": "Chưa khởi động được:",
+    "reason": "Same start error; web renders the error after the heading as a JSX child."
+  },
+  {
+    "screen": "Studio dự án",
+    "qt": "Chưa dừng được",
+    "web": "Chưa tải được",
+    "reason": "Different operations: Qt reports a failed stop request, the matched web text reports a failed load. Do not rename a stop failure to a load failure."
+  },
+  {
+    "screen": "Studio dự án",
+    "qt": "Đang làm tiếp",
+    "web": "Làm tiếp từ chỗ ấy",
+    "reason": "Different roles: Qt status after resuming versus the web resume action. Both phrases already exist in the shared catalog."
+  },
+  {
+    "screen": "Studio kịch bản",
+    "qt": "Gán cho {}",
+    "web": "Gán cho",
+    "reason": "Same attribution action; web renders the selected speaker after the label."
+  },
+  {
+    "screen": "Studio kịch bản",
+    "qt": "Đang chọn {} câu",
+    "web": "Đang chọn",
+    "reason": "Same selection count; web uses separate TickingValue and unit children."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Tạo trên {}",
+    "web": "Tạo trên",
+    "reason": "Same remote-create action; web renders the computer name as another child."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Bản thử nghiệm",
+    "web": "Bản thử nghiệm{}",
+    "reason": "Same model qualifier; web appends an optional model-description value."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Có file không gửi{}",
+    "web": "Có file không gửi",
+    "reason": "Same upload warning; Qt appends a detail list in the expression, web uses a separate child."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Không gửi hết các chương{} {}",
+    "web": "Không gửi hết các chương",
+    "reason": "Same upload warning; the two Qt slots are file count and detail, rendered separately on web."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Máy thấy {}",
+    "web": "Máy thấy",
+    "reason": "Same volume-detection sentence; web renders the count/source after the label."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Studio chưa xong{}",
+    "web": "Studio chưa xong",
+    "reason": "Same setup status; Qt appends optional details in the expression."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Tách theo {}",
+    "web": "Tách theo",
+    "reason": "Same chapter-split description; web renders the chosen rule after the label."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Đã có mẫu “{}”",
+    "web": "Đã có mẫu “",
+    "reason": "Same duplicate-template error; web renders the user-entered template name between JSX quote fragments."
+  },
+  {
+    "screen": "Studio tạo sách",
+    "qt": "Máy này {}.",
+    "web": "Máy thấy",
+    "reason": "Different subjects: Qt describes machine setup/capability, the matched web text describes detected book volumes."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Bỏ qua mọi việc từ",
+    "web": "Bỏ qua mọi việc từ {}?",
+    "reason": "Same destructive-confirmation question; Qt places the phone name and question mark in separate children."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Dùng “{}”",
+    "web": "Dùng “",
+    "reason": "Same use-reading action; web renders the reading value between separate JSX quote fragments."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Máy nghe ra: “{}”",
+    "web": "Máy nghe ra: “",
+    "reason": "Same ASR transcript caption; web renders the transcript as another child."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Mọi việc đã có quyết định",
+    "web": "Mọi việc đã có quyết định{}.",
+    "reason": "Same completed-review state; web appends an optional pending-change count."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Sẽ đọc là “{}”",
+    "web": "Sẽ đọc là “",
+    "reason": "Same proposed-reading caption; web renders the reading as another child."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Đã dùng",
+    "web": "Dùng “",
+    "reason": "Different states: Qt past-tense confirmation after saving, the matched web phrase is the action to use a proposed reading."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Đúng rồi, giữ “{}”",
+    "web": "Đúng rồi, giữ “",
+    "reason": "Same keep-reading action; web renders the reading between separate JSX quote fragments."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Đoạn này do",
+    "web": "Đoạn này do {} kể",
+    "reason": "Same narrator-result sentence; Qt composes prefix, narrator and suffix from separate catalog keys."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Tải tiếp · còn",
+    "web": "Tải tiếp · còn {} câu",
+    "reason": "Same review pagination; Qt renders remaining count and unit in separate items."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Nghe liền {} câu",
+    "web": "Nghe liền",
+    "reason": "Same continuous-listening action; web renders the count in a separate child."
+  },
+  {
+    "screen": "Studio việc duyệt",
+    "qt": "Xem {} câu",
+    "web": "Sửa {} câu",
+    "reason": "Different actions: Qt opens read-only context, the matched web label opens an editor for repeated lines."
+  },
+  {
+    "screen": "Studio xuất và áp dụng",
+    "qt": "Bỏ cách đọc “{}",
+    "web": "Bỏ cách đọc “{}”",
+    "reason": "Same remove-reading action; Qt closes the quotation mark in a separate literal."
+  },
+  {
+    "screen": "Studio xuất và áp dụng",
+    "qt": "Cỡ ước tính: khoảng {}",
+    "web": "Cỡ ước tính: khoảng",
+    "reason": "Same export-size estimate; web renders the size in a separate child."
+  },
+  {
+    "screen": "Studio xuất và áp dụng",
+    "qt": "Xuất “",
+    "web": "Xuất “{}”",
+    "reason": "Same export heading; Qt renders the title and closing quote in separate items."
+  },
+  {
+    "screen": "Studio xuất và áp dụng",
+    "qt": "Đang thêm chữ sáng…",
+    "web": "Đang thêm chữ sáng… {}%",
+    "reason": "Same word-timing progress; Qt places the percentage in its separate steady clock value."
+  },
+  {
+    "screen": "Studio xuất và áp dụng",
+    "qt": "Đã xuất",
+    "web": "Xuất “{}”",
+    "reason": "Different states: Qt completed-export confirmation, matched web text is an export-dialog heading."
+  },
+  {
+    "screen": "Thanh phát",
+    "qt": "Nghe bằng giọng đọc.",
+    "web": "Nghe bằng giọng đọc.{}",
+    "reason": "Same sentence; web appends an optional platform-specific pointer/editing hint."
+  },
+  {
+    "screen": "Trang sách",
+    "qt": "Lần nghe",
+    "web": "Lần nghe {}",
+    "reason": "Same listening-record name prefix; Qt renders the record number separately."
+  },
+  {
+    "screen": "Trang sách",
+    "qt": "Hồ sơ nghe: {}",
+    "web": "Đã nghe {}",
+    "reason": "Different data: Qt accessibility name for a listening profile, the matched web label is listening progress."
+  }
+]

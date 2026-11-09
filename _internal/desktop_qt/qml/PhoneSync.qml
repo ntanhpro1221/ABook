@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
@@ -30,7 +31,7 @@ Item {
     readonly property bool wanted: pendingWanted !== null ? Boolean(pendingWanted) : Boolean(sync && sync.wanted)
     readonly property bool failing: Boolean(sync && sync.wanted && !sync.enabled)
     readonly property bool studioWanted: pendingStudio !== null ? Boolean(pendingStudio) : Boolean(sync && sync.remoteStudio)
-    readonly property string syncLabel: "Kết nối Wi-Fi"
+    readonly property string syncLabel: S.s_ket_noi_wi_fi_7680d1aa
     readonly property alias deviceRows: deviceRows
 
     // Toast của web = Api.notice (cùng chữ). Lỗi của máy chủ đã được Api.call đặt vào notice.
@@ -45,7 +46,7 @@ Item {
         known = (data.devices || []).map(device => device.id)
         if (previous) {
             const added = (data.devices || []).find(device => previous.indexOf(device.id) < 0)
-            if (added) say("Đã ghép " + added.name)
+            if (added) say(S.s_da_ghep_7b3601f2 + added.name)
         }
         sync = data
         loadFailed = false
@@ -63,9 +64,9 @@ Item {
             root.pendingWanted = null
             if (error) return
             root.take(data)
-            if (enabled && !data.enabled) root.say("Chưa bật được đồng bộ")
+            if (enabled && !data.enabled) root.say(S.s_chua_bat_duoc_dong_bo_9927f58c)
             // Tắt xong không có gì đổi trên màn ngoài công tắc: nói một câu để biết đã tắt thật (soát UX a17).
-            else if (!enabled && !data.enabled) root.say("Đã tắt chia sẻ qua Wi-Fi")
+            else if (!enabled && !data.enabled) root.say(S.s_da_tat_chia_se_qua_wi_fi_c818faf6)
         })
     }
     function startPairing() {
@@ -89,7 +90,7 @@ Item {
             if (error) return
             // Bỏ ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
             root.take(data)
-            root.say("Đã bỏ ghép " + name)
+            root.say(S.s_da_bo_ghep_0977f068 + name)
         })
     }
     function rename(id, name) {
@@ -98,7 +99,7 @@ Item {
             root.renameBusy = false
             if (error) return
             root.take(data)
-            root.say("Đã đổi tên thành “" + name + "”")
+            root.say(S.s_da_doi_ten_thanh_a5653594 + name + "”")
             renameDialog.dismiss()
         })
     }
@@ -115,7 +116,7 @@ Item {
         id: thisDevice
         objectName: "thisDeviceColumn"
         width: Math.min(Theme.listMeasure, parent.width + ((parent.width - Theme.s32) / 2 - parent.width) * Math.min(1, root.wideT * 2))
-        title: "Máy này"
+        title: S.s_may_nay_4668c138
         SettingsItem {
             width: parent.width
             spacing: 0
@@ -123,12 +124,12 @@ Item {
             Collapse {
                 width: parent.width
                 open: root.sync === null && !root.loadFailed
-                DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải kết nối" }
+                DevicesSkeleton { width: parent.width; count: 2; label: S.s_dang_tai_ket_noi_e4acf571 }
             }
             InlineError {
                 width: parent.width
                 open: root.sync === null && root.loadFailed
-                message: "Bạn hãy thử tải lại cài đặt kết nối."
+                message: S.s_ban_hay_thu_tai_lai_cai_dat_ket_noi_db777637
                 onRetry: { root.loadFailed = false; root.load() }
             }
             Collapse {
@@ -140,8 +141,8 @@ Item {
                         objectName: "syncToggle"
                         width: parent.width
                         label: root.syncLabel
-                        hint: !root.sync ? "" : root.sync.enabled ? "Máy cùng mạng thấy máy này là “" + root.sync.name + "”."
-                            : root.failing ? (root.sync.error || "Chưa mở được cổng đồng bộ.") : "Đang tắt - máy khác không thấy máy này."
+                        hint: !root.sync ? "" : root.sync.enabled ? S.s_may_cung_mang_thay_may_nay_la_d52412f1 + root.sync.name + "”."
+                            : root.failing ? (root.sync.error || S.s_chua_mo_duoc_cong_dong_bo_8f2a1744) : S.s_dang_tat_may_khac_khong_thay_may_nay_8924a002
                         hintColor: root.failing ? Theme.danger : Theme.text2
                         checked: root.wanted
                         switchItem.enabled: root.pendingWanted === null
@@ -154,7 +155,7 @@ Item {
                             width: parent.width
                             implicitHeight: retry.height + 20
                             height: implicitHeight
-                            Button { id: retry; y: 20; size: "sm"; text: "Thử lại"; busy: root.pendingWanted !== null; onActivated: root.toggle(true) }
+                            Button { id: retry; y: 20; size: "sm"; text: S.s_thu_lai_c58d068c; busy: root.pendingWanted !== null; onActivated: root.toggle(true) }
                         }
                     }
                     Collapse {
@@ -168,8 +169,8 @@ Item {
                                 objectName: "pairFold"
                                 width: parent.width
                                 storageKey: "phone-sync.pair"
-                                title: "Ghép thiết bị"
-                                summary: root.sync && root.sync.pairing ? "Đang hiện mã ghép" : "Điện thoại, máy tính bảng"
+                                title: S.s_ghep_thiet_bi_8de1f23c
+                                summary: root.sync && root.sync.pairing ? S.s_dang_hien_ma_ghep_e97b43a2 : S.s_dien_thoai_may_tinh_bang_4ade8e1e
                                 defaultOpen: Boolean(root.sync && root.sync.pairing)
                                 bottomGap: 12
                                 PhoneSyncPairing {
@@ -185,17 +186,17 @@ Item {
                                 objectName: "permissionsFold"
                                 width: parent.width
                                 storageKey: "phone-sync.permissions"
-                                title: "Quyền điều khiển"
-                                summary: root.studioWanted ? "Đang bật" : "Đang tắt"
+                                title: S.s_quyen_dieu_khien_e895c2b8
+                                summary: root.studioWanted ? S.s_dang_bat_70767620 : S.s_dang_tat_53bfa8b7
                                 DevicesToggle {
                                     objectName: "studioToggle"
                                     width: parent.width
-                                    label: "Điều khiển từ xa"
+                                    label: S.s_dieu_khien_tu_xa_1db316de
                                     labelSize: Theme.sizeBodySmall
                                     hintSize: 13
                                     hintRich: root.studioWanted
-                                    hint: root.studioWanted ? "Mở " + Logic.whereHtml(root.sync || ({}), true, String(Theme.text)) + " trên thiết bị đã ghép để làm sách từ xa."
-                                        : "Tắt: thiết bị đã ghép chỉ tải và nghe sách."
+                                    hint: root.studioWanted ? S.s_mo_05587fd6 + Logic.whereHtml(root.sync || ({}), true, String(Theme.text)) + S.s_tren_thiet_bi_da_ghep_de_lam_sach_tu_xa_b780f10e
+                                        : S.s_tat_thiet_bi_da_ghep_chi_tai_va_nghe_sach_284777c7
                                     checked: root.studioWanted
                                     switchItem.enabled: root.pendingStudio === null
                                     onToggled: value => { if (value) studioDialog.show(); else root.setStudio(false) }
@@ -205,8 +206,8 @@ Item {
                                 objectName: "connectionFold"
                                 width: parent.width
                                 storageKey: "phone-sync.connection"
-                                title: "Kết nối"
-                                summary: "Địa chỉ và Bluetooth"
+                                title: S.s_ket_noi_02ca3cba
+                                summary: S.s_dia_chi_va_bluetooth_affb4f78
                                 Collapse {
                                     width: parent.width
                                     open: Boolean(root.sync && root.sync.bluetooth)
@@ -218,7 +219,7 @@ Item {
                                             id: bluetoothNote
                                             width: parent.width
                                             text: !root.sync || !root.sync.bluetooth ? "" : TextWrap.pretty(root.sync.bluetooth.running
-                                                ? "Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi" + (root.sync.bluetooth.connections ? " - " + root.sync.bluetooth.connections + " đang kết nối" : "") + "."
+                                                ? S.s_bluetooth_dien_thoai_da_ghep_noi_duoc_ca_k_b6eea9f5 + (root.sync.bluetooth.connections ? " - " + root.sync.bluetooth.connections + S.s_dang_ket_noi_f8bc93c8 : "") + "."
                                                 : root.sync.bluetooth.error)
                                             color: Theme.text3
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -238,7 +239,7 @@ Item {
                                             id: addressNote
                                             width: parent.width
                                             textFormat: Text.RichText
-                                            text: "Điện thoại không thấy máy này? Chọn “Nhập địa chỉ” rồi gõ " + Logic.whereHtml(root.sync || ({}), false, String(Theme.text)) + "."
+                                            text: S.s_dien_thoai_khong_thay_may_nay_chon_nhap_di_55b69c24 + Logic.whereHtml(root.sync || ({}), false, String(Theme.text)) + "."
                                             color: Theme.text3
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeCaption
@@ -250,7 +251,7 @@ Item {
                                 // máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện.
                                 Text {
                                     width: parent.width
-                                    text: "Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng."
+                                    text: S.s_ngoai_nha_nghe_sach_da_tai_hoac_noi_mang_r_43556c4f
                                     color: Theme.text3
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
@@ -274,7 +275,7 @@ Item {
         open: Boolean(root.sync && root.sync.enabled)
         SectionBlock {
             width: parent.width
-            title: "Máy đã ghép"
+            title: S.s_may_da_ghep_c2103758
             SettingsItem {
                 width: parent.width
                 spacing: 0
@@ -294,8 +295,8 @@ Item {
                         selectedTextColor: Theme.accentInk
                         font.family: Theme.family
                         font.pixelSize: 13
-                        text: "Chưa có thiết bị. App Android: file " + "<span style='font-weight:500;color:" + Theme.text + "'>.apk</span> ở "
-                            + "<span style='font-weight:500;color:" + Theme.text + "'>github.com/ntanhpro1221/ABook/releases</span>. iPhone, iPad: nghe bằng trình duyệt."
+                        text: S.s_chua_co_thiet_bi_app_android_file_b9da7146 + "<span style='font-weight:500;color:" + Theme.text + S.s_apk_span_o_d607c209
+                            + "<span style='font-weight:500;color:" + Theme.text + S.s_github_com_ntanhpro1221_abook_releases_spa_cbf121ce
                     }
                 }
                 Column {
@@ -333,13 +334,13 @@ Item {
     Modal {
         id: studioDialog
         objectName: "studioDialog"
-        title: "Bật Studio từ xa?"
-        description: "Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
+        title: S.s_bat_studio_tu_xa_46f8566d
+        description: S.s_bat_quyen_rieng_cho_tung_thiet_bi_de_mo_st_c9ba843b
         footer: Row {
             anchors.right: parent.right
             spacing: 8
-            Button { kind: "ghost"; text: "Để sau"; onClicked: studioDialog.dismiss() }
-            Button { text: "Cho phép"; busy: root.pendingStudio !== null; onActivated: { root.setStudio(true); studioDialog.dismiss() } }
+            Button { kind: "ghost"; text: S.s_de_sau_9be0a7ab; onClicked: studioDialog.dismiss() }
+            Button { text: S.s_cho_phep_f1a437f5; busy: root.pendingStudio !== null; onActivated: { root.setStudio(true); studioDialog.dismiss() } }
         }
     }
     Modal {
@@ -347,13 +348,13 @@ Item {
         objectName: "removeDialog"
         property string targetId: ""
         property string targetName: ""
-        title: "Bỏ ghép " + (targetName || "thiết bị") + "?"
-        description: "Dừng tải và đồng bộ; giữ sách đã tải."
+        title: S.s_bo_ghep_9139fc92 + (targetName || S.s_thiet_bi_37816a2c) + "?"
+        description: S.s_dung_tai_va_dong_bo_giu_sach_da_tai_b948aef5
         footer: Row {
             anchors.right: parent.right
             spacing: 8
-            Button { kind: "ghost"; text: "Để nguyên"; onClicked: removeDialog.dismiss() }
-            Button { kind: "danger"; text: "Bỏ ghép"; onClicked: { root.revoke(removeDialog.targetId, removeDialog.targetName); removeDialog.dismiss() } }
+            Button { kind: "ghost"; text: S.s_de_nguyen_2f029b4a; onClicked: removeDialog.dismiss() }
+            Button { kind: "danger"; text: S.s_bo_ghep_64f921f9; onClicked: { root.revoke(removeDialog.targetId, removeDialog.targetName); removeDialog.dismiss() } }
         }
     }
     Modal {
@@ -363,20 +364,20 @@ Item {
         property string draft: ""
         property bool focusPending: false
         onShownChanged: if (open && focusPending && shown > 0) { focusPending = false; field.forceActiveFocus() }
-        title: "Đổi tên thiết bị"
-        description: "Tên hiện ở danh sách thiết bị đã ghép của máy này."
+        title: S.s_doi_ten_thiet_bi_102b76be
+        description: S.s_ten_hien_o_danh_sach_thiet_bi_da_ghep_cua_4261490a
         footer: Row {
             anchors.right: parent.right
             spacing: 8
-            Button { kind: "ghost"; text: "Để nguyên"; onClicked: renameDialog.dismiss() }
-            Button { objectName: "renameSave"; text: "Lưu"; enabled: renameDialog.draft.trim() !== ""; busy: root.renameBusy; onActivated: renameDialog.save() }
+            Button { kind: "ghost"; text: S.s_de_nguyen_2f029b4a; onClicked: renameDialog.dismiss() }
+            Button { objectName: "renameSave"; text: S.s_luu_e91f26c0; enabled: renameDialog.draft.trim() !== ""; busy: root.renameBusy; onActivated: renameDialog.save() }
         }
         function save() { if (draft.trim() !== "" && !root.renameBusy) root.rename(targetId, draft.trim()) }
         FormField {
             id: field
             objectName: "renameField"
             width: parent.width
-            label: "Tên thiết bị"
+            label: S.s_ten_thiet_bi_525223a8
             onTextChanged: { if (text.length > 80) text = text.slice(0, 80); else renameDialog.draft = text }
             onAccepted: renameDialog.save()
         }

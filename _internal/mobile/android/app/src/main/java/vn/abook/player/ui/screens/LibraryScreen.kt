@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -169,7 +171,7 @@ private fun LibraryGrid(
         item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
             Column {
                 // Số cuốn + Xếp theo + Tìm nằm ở hàng dưới tên, bộ lọc có CẢ bề ngang (360 dp: bốn chữ vừa một hàng, không chữ nào bị cuộn khuất - soát điện thoại thật 02-11).
-                ScreenHeader("Thư viện", trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
+                ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
                 vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, books.size, onSortCoordinates) }
             }
         }
@@ -177,9 +179,9 @@ private fun LibraryGrid(
         if (tiles.isEmpty()) {
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
-                    BasicText("Chưa có sách trên máy", style = Abook.type.sectionTitle)
-                    RowHint("Thêm sách của bạn để bắt đầu nghe.")
-                    actions.connect?.let { TextAction("Nối máy", it, "library_connect", align = Alignment.CenterStart) }
+                    BasicText(S.s_chua_co_sach_tren_may_1b1ca653, style = Abook.type.sectionTitle)
+                    RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
+                    actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
                 } else NoMatch(ui.query.trim(), ui.filter)
             }
         } else {
@@ -197,14 +199,14 @@ private fun LibraryGrid(
 @Composable
 private fun NoMatch(query: String, filter: LibraryFilter) {
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s32)) {
-        BasicText(if (query.isEmpty()) "Không có sách ở đây" else "Không tìm thấy sách nào khớp “$query”", style = Abook.type.sectionTitle)
+        BasicText(if (query.isEmpty()) S.s_khong_co_sach_o_day_9b24f539 else S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query), style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s4))
         BasicText(
-            if (query.isNotEmpty()) "Thử tên sách hoặc tác giả khác." else when (filter) {
-                LibraryFilter.All -> "Thư viện chưa có sách nào."
-                LibraryFilter.Listening -> "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu."
-                LibraryFilter.New -> "Cuốn nào cũng đã được nghe ít nhất một đoạn."
-                LibraryFilter.Finished -> "Chưa có cuốn nào nghe xong."
+            if (query.isNotEmpty()) S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa else when (filter) {
+                LibraryFilter.All -> S.s_thu_vien_chua_co_sach_nao_0d9c9f45
+                LibraryFilter.Listening -> S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e
+                LibraryFilter.New -> S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
+                LibraryFilter.Finished -> S.s_chua_co_cuon_nao_nghe_xong_8d430580
             },
             style = Abook.type.bodySmall,
         )
@@ -245,7 +247,7 @@ private fun BookTile(
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.
                 Box(Modifier.align(Alignment.BottomEnd).padding(Dim.s4).padding(bottom = 3.dp).size(22.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                    RemoteIcon(Color.White, Modifier.semantics { contentDescription = "Có sách trên máy khác" })
+                    RemoteIcon(Color.White, Modifier.semantics { contentDescription = S.s_co_sach_tren_may_khac_3b7cdd88 })
                 }
             }
             if (series != null) {
@@ -272,7 +274,7 @@ private fun BookTile(
         val sub = when {
             !lead.textOnly && lead.chaptersAvailable == 0 -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
             lead.producing -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
-            lead.textOnly && lead.author.isBlank() -> "Chỉ có chữ"
+            lead.textOnly && lead.author.isBlank() -> S.s_chi_co_chu_bf879f2c
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }

@@ -132,7 +132,7 @@ class CastPlayer(private val source: CastSource, looper: Looper = Looper.getMain
         val items = chapters.mapIndexed { place, chapter ->
             val seconds = if (place == index && now.duration > 0) now.duration else chapter.duration
             val metadata = MediaMetadata.Builder().setTitle(chapter.title).setArtist(now.bookTitle).setAlbumTitle(now.bookTitle)
-                .setSubtitle("Trên ${now.device}").setArtworkData(art, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
+                .setSubtitle(S.s_tren_0_a2a4a4cb(now.device)).setArtworkData(art, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
             val uid = "${now.bookId}#${chapter.id}"
             MediaItemData.Builder(uid)
                 .setMediaItem(MediaItem.Builder().setMediaId(uid).setMediaMetadata(metadata).build())

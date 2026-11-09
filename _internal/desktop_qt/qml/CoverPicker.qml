@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -9,8 +10,8 @@ Item {
     function choose() { dialog.open() }
     FileDialog {
         id: dialog
-        title: "Chọn ảnh bìa"
-        nameFilters: ["Ảnh (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"]
+        title: S.s_chon_anh_bia_207ac182
+        nameFilters: [S.s_anh_png_jpg_jpeg_webp_gif_bmp_8ce57f5a]
         onAccepted: root.picked(selectedFile)
     }
 }

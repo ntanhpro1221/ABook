@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.PlayerChapter
 
@@ -9,31 +11,31 @@ import vn.abook.player.ui.data.PlayerChapter
  */
 object PlayerText {
     /** Đang chờ giọng máy đọc xong đoạn đầu (nhãn nút phát). */
-    const val PREPARING_VOICE = "Đang chuẩn bị giọng đọc"
+    const val PREPARING_VOICE = S.s_dang_chuan_bi_giong_doc_69f1b51a
 
     /** Chờ giọng ngắn hơn mức này thì không nói gì (chỉ vòng quay ở nút phát). */
     const val PREPARING_AFTER_MS = 1500L
 
-    const val CAUGHT_UP_HEAD = "Đã nghe hết phần đã có"
+    const val CAUGHT_UP_HEAD = S.s_da_nghe_het_phan_da_co_1aa0a8e0
 
     /** Điện thoại không có máy nào làm sách tiếp, nên chỉ nói điều chắc chắn: các chương sau chưa có audio. */
-    const val CAUGHT_UP_DETAIL = "Các chương sau chưa có audio."
-    const val ENDED_PART = "Đã nghe hết cuốn này."
-    const val ENDED_BOOK = "Đã nghe hết sách."
-    const val FINISHED = "Đã nghe hết cả cuốn"
+    const val CAUGHT_UP_DETAIL = S.s_cac_chuong_sau_chua_co_audio_44723dd5
+    const val ENDED_PART = S.s_da_nghe_het_cuon_nay_05edcdd9
+    const val ENDED_BOOK = S.s_da_nghe_het_sach_4a2d3bf1
+    const val FINISHED = S.s_da_nghe_het_ca_cuon_11fdce7b
 
     /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */
     fun toggleLabel(playing: Boolean, buffering: Boolean, speaking: Boolean): String = when {
-        playing && buffering -> if (speaking) PREPARING_VOICE else "Đang tải âm thanh"
-        playing -> "Tạm dừng"
-        else -> "Phát"
+        playing && buffering -> if (speaking) PREPARING_VOICE else S.s_dang_tai_am_thanh_6c7cb62f
+        playing -> S.s_tam_dung_67635815
+        else -> S.s_phat_343e7e48
     }
 
     /** Nút "Chương sau": chương cuối thì nói đó là chương cuối (nút mờ); chương sau có mà chưa nghe được thì nói vì sao. */
     fun nextLabel(hasNext: Boolean, hasLater: Boolean): String = when {
-        !hasLater -> "Đây là chương cuối"
-        hasNext -> "Chương sau"
-        else -> "Chương sau chưa có audio"
+        !hasLater -> S.s_day_la_chuong_cuoi_e4e693d4
+        hasNext -> S.s_chuong_sau_17d1bd20
+        else -> S.s_chuong_sau_chua_co_audio_e17e3d72
     }
 
     fun hasNext(chapters: List<PlayerChapter>, chapterId: Int?): Boolean {
@@ -78,9 +80,9 @@ object PlayerText {
     fun bookProgress(whole: Boolean, heard: Double, total: Double, rate: Double, finished: Boolean): String {
         if (finished) return FINISHED
         val left = (total - heard).coerceAtLeast(0.0)
-        val scope = if (whole) "cả cuốn" else "phần đã có"
-        val remaining = if (rate != 1.0 && left > 60) "còn khoảng ${Fmt.length(left / rate)} ở tốc độ ${PlayerLabels.rate(rate)}" else "còn ${Fmt.length(left)}"
-        return "Đã nghe ${percent(if (total > 0) heard / total else 0.0)} $scope · $remaining"
+        val scope = if (whole) S.s_ca_cuon_b841210a else S.s_phan_da_co_69a9b13c
+        val remaining = if (rate != 1.0 && left > 60) S.s_con_khoang_0_o_toc_do_1_21ae4e35(Fmt.length(left / rate), PlayerLabels.rate(rate)) else S.s_con_0_46699fed(Fmt.length(left))
+        return S.s_da_nghe_0_1_2_8f416814(percent(if (total > 0) heard / total else 0.0), scope, remaining)
     }
 
     /** Lệch (giây) từ đó chỗ nghe của máy khác mới là "chỗ khác" - ít hơn là cùng chỗ (lưu chậm vài giây). */
@@ -95,8 +97,8 @@ object PlayerText {
         return !(lastChapter == hereChapter && Math.abs(lastSeconds - hereSeconds) < ELSEWHERE_SECONDS)
     }
 
-    fun elsewhereLine(chapterTitle: String, seconds: Double): String = "Máy khác đã nghe tới $chapterTitle · ${Fmt.clock(seconds)}"
+    fun elsewhereLine(chapterTitle: String, seconds: Double): String = S.s_may_khac_da_nghe_toi_0_1_8d162758(chapterTitle, Fmt.clock(seconds))
 
-    const val ELSEWHERE_ACTION = "Nghe tiếp từ đó"
-    fun continueLine(title: String): String = "Nghe tiếp ${PlayerEnd.nextLabel(title)}"
+    const val ELSEWHERE_ACTION = S.s_nghe_tiep_tu_do_996183f7
+    fun continueLine(title: String): String = S.s_nghe_tiep_0_248b1487(PlayerEnd.nextLabel(title))
 }

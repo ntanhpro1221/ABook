@@ -21,9 +21,9 @@ object AndroidMusicTags : MusicStore.TagReader {
         try {
             retriever.setDataSource(file.absolutePath)
             val audio = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
-            if (audio != null && audio != "yes") throw MusicStore.ImportError("không đọc được như một bản nhạc")
+            if (audio != null && audio != "yes") throw MusicStore.ImportError(S.s_khong_doc_duoc_nhu_mot_ban_nhac_d1b22a08)
             val millis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
-            if (millis == null || millis <= 0) throw MusicStore.ImportError("không biết bài dài bao lâu")
+            if (millis == null || millis <= 0) throw MusicStore.ImportError(S.s_khong_biet_bai_dai_bao_lau_c511f4c1)
             return MusicStore.Tags(
                 millis / 1000.0,
                 retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.trim(),
@@ -34,7 +34,7 @@ object AndroidMusicTags : MusicStore.TagReader {
         } catch (error: MusicStore.ImportError) {
             throw error
         } catch (error: RuntimeException) {
-            throw MusicStore.ImportError("không đọc được như một bản nhạc")
+            throw MusicStore.ImportError(S.s_khong_doc_duoc_nhu_mot_ban_nhac_d1b22a08)
         } finally {
             runCatching { retriever.release() }
         }

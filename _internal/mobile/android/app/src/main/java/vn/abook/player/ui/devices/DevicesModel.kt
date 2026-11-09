@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 import vn.abook.player.BuildConfig
 
@@ -31,8 +33,8 @@ data class Found(val address: String, val name: String, val kind: DeviceKind, va
     /** Máy theo cách danh sách thiết bị đã ghép gọi nó: host trong Wi-Fi, "bt:địa chỉ" qua Bluetooth. */
     val host: String get() = if (bluetooth) address else address.substringBeforeLast(':')
 
-    /** Dòng phụ: địa chỉ máy trong Wi-Fi, hay "Qua Bluetooth". */
-    val detail: String get() = if (bluetooth) "Qua Bluetooth" else host
+    /** Dòng phụ: địa chỉ máy trong Wi-Fi, hay S.s_qua_bluetooth_983cecc1. */
+    val detail: String get() = if (bluetooth) S.s_qua_bluetooth_983cecc1 else host
 }
 
 /** Máy tính chính lúc này, như `Devices.connection`. */
@@ -46,7 +48,7 @@ data class Link(
     val deviceName: String = "",
     val lastAddress: String = "",
 ) {
-    val shownName: String get() = name.ifBlank { host.removePrefix("bt:") }.ifBlank { "Máy tính" }
+    val shownName: String get() = name.ifBlank { host.removePrefix("bt:") }.ifBlank { S.s_may_tinh_828ebb9d }
 }
 
 /** Máy kia có trả lời lúc này không. */
@@ -83,10 +85,10 @@ data class Paired(
     /** Dòng trạng thái dưới tên: đường nối đang thông, hay lý do không thông. */
     val state: String
         get() = when (reach) {
-            Reach.Checking -> if (via.isEmpty()) "Đang kiểm tra" else DeviceText.route(via)
-            Reach.Ok -> if (!main && books > 0) "$books cuốn nghe được · ${DeviceText.route(via)}" else DeviceText.route(via)
+            Reach.Checking -> if (via.isEmpty()) S.s_dang_kiem_tra_424c43e3 else DeviceText.route(via)
+            Reach.Ok -> if (!main && books > 0) S.s_0_cuon_nghe_duoc_1_a4f8332c(books, DeviceText.route(via)) else DeviceText.route(via)
             is Reach.Offline -> DeviceText.OFFLINE
-            Reach.Unpaired -> "$name đã bỏ ghép với điện thoại này"
+            Reach.Unpaired -> S.s_0_da_bo_ghep_voi_dien_thoai_nay_1f625c42(name)
             is Reach.Changed -> reach.message
         }
 }
@@ -117,20 +119,20 @@ data class RemoteBook(
     /** Nhãn nút: "Tải" cho cuốn chưa tải, còn lại nói thứ mới (chương trước, rồi bản thu, bìa, tên, chữ). */
     val action: String
         get() = when {
-            !downloaded -> "Tải"
-            newChapters > 0 -> "+$newChapters chương"
-            newAudio -> "Cập nhật bản thu"
-            newCover -> "Cập nhật bìa"
-            newMeta -> "Cập nhật tên"
-            else -> "Cập nhật chữ"
+            !downloaded -> S.s_tai_73be7aad
+            newChapters > 0 -> S.s_0_chuong_7d8fad7e(newChapters)
+            newAudio -> S.s_cap_nhat_ban_thu_632992d0
+            newCover -> S.s_cap_nhat_bia_ac9878fb
+            newMeta -> S.s_cap_nhat_ten_15b727cc
+            else -> S.s_cap_nhat_chu_1a3e07d8
         }
 
     /** Dòng phụ: số chương, thời lượng, cỡ khi tải (cuốn chưa tải), "đang làm" khi máy kia còn đang làm cuốn này. */
     val detail: String
         get() = buildString {
-            append("$chaptersAvailable/$chaptersTotal chương · ${Fmt.length(duration)}")
+            append(S.s_0_1_chuong_2_469dd411(chaptersAvailable, chaptersTotal, Fmt.length(duration)))
             if (!downloaded && bytes > 0) append(" · ${formatSize(bytes)}")
-            if (producing) append(" · đang làm")
+            if (producing) append(S.s_dang_lam_0fb7a8f9)
         }
 }
 
@@ -177,7 +179,7 @@ sealed interface Attempt {
 
 /** Cách nối: tự tìm trong Wi-Fi, chọn máy đã ghép Bluetooth, hay gõ địa chỉ. */
 enum class PairMethod(override val label: String) : Choice {
-    Wifi("Tự tìm"), Bluetooth("Bluetooth"), Address("Nhập địa chỉ");
+    Wifi(S.s_tu_tim_3f09ad05), Bluetooth(S.s_bluetooth_8bb29098), Address(S.s_nhap_dia_chi_4a264769);
 
     override val key: String get() = name.lowercase()
 }
@@ -222,16 +224,16 @@ data class Share(
 ) {
     /** Địa chỉ để gõ vào máy kia khi nó không tự thấy điện thoại. */
     val addressLine: String
-        get() = if (addresses.isEmpty()) "Chưa vào mạng Wi-Fi nào" else addresses.joinToString(", ") { if (':' in it) "[$it]:$port" else "$it:$port" }
+        get() = if (addresses.isEmpty()) S.s_chua_vao_mang_wi_fi_nao_7f74d463 else addresses.joinToString(", ") { if (':' in it) "[$it]:$port" else "$it:$port" }
 
     /** Bluetooth của chia sẻ báo thiếu quyền "Thiết bị ở gần". */
-    val needsNearby: Boolean get() = bluetooth.contains("Thiết bị ở gần")
+    val needsNearby: Boolean get() = bluetooth.contains(S.s_thiet_bi_o_gan_ae6fdbbc)
 
     /** Dòng Bluetooth khi nó mang tin: số máy đang nối, hay lý do không bật được. Null khi chưa bật. */
     val bluetoothLine: String?
         get() = when {
             bluetooth.isEmpty() -> null
-            bluetooth == "running" -> if (bluetoothConnections > 0) "Bluetooth: $bluetoothConnections máy đang nối" else null
+            bluetooth == "running" -> if (bluetoothConnections > 0) S.s_bluetooth_0_may_dang_noi_72627bd6(bluetoothConnections) else null
             else -> bluetooth
         }
 }
@@ -245,7 +247,7 @@ data class Stored(val id: String, val title: String, val bytes: Long, val partia
 @Immutable
 data class Storage(val bytes: Long = 0, val free: Long = 0, val entries: List<Stored> = emptyList()) {
     /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB"; chưa có sách (dưới 1 KB) thì "Chưa có sách · còn trống 20 GB" (web: storageSummary, cùng từng chữ). */
-    val line: String get() = "${if (bytes < 1024) "Chưa có sách" else "Sách ${formatSize(bytes)}"} · còn trống ${formatSize(free)}"
+    val line: String get() = S.s_0_con_trong_1_2568383f(if (bytes < 1024) S.s_chua_co_sach_30843cb2 else S.s_sach_0_529204b5(formatSize(bytes)), formatSize(free))
 }
 
 // ---- bỏ ghép ----------------------------------------------------------------------------------------------------------
@@ -274,43 +276,43 @@ object DeviceText {
     fun failure(title: String, detail: String?): String =
         listOf(title, detail?.takeIf { it.isNotBlank() }).filterNotNull().joinToString(". ")
     fun studioBlocked(names: List<String>): String = when (names.size) {
-        0 -> "Chưa ghép với máy tính nào"
+        0 -> S.s_chua_ghep_voi_may_tinh_nao_97f851e1
         1 -> listenOnly(names[0])
-        2 -> "Máy tính ${names[0]} và ${names[1]} đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
-        else -> "Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+        2 -> S.s_may_tinh_0_va_1_deu_chi_cho_nghe_tren_tung_54032487(names[0], names[1])
+        else -> S.s_cac_may_tinh_da_ghep_deu_chi_cho_nghe_tren_7b97a8d5
     }
-    const val OFFLINE = "Chưa kết nối được - máy đang tắt hoặc khác Wi-Fi"
+    const val OFFLINE = S.s_chua_ket_noi_duoc_may_dang_tat_hoac_khac_w_1aa869f3
 
     /** Trang tải ABook cho máy tính (web: DESKTOP_RELEASES của android/DevicesScreen.tsx) - "Tải ABook Windows" mở nó, "Chép địa chỉ" chép nó. */
     const val DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases"
 
     /** Tên công tắc chia sẻ trên máy tính (web: SYNC_SWITCH_LABEL của shared/syncSwitch.ts) - lời "Cách lấy mã" gọi đúng tên ấy. */
-    const val SYNC_SWITCH_LABEL = "Kết nối Wi-Fi"
+    const val SYNC_SWITCH_LABEL = S.s_ket_noi_wi_fi_7680d1aa
 
     /** "Cách lấy mã": mã 6 số lấy ở đâu trên máy tính (cùng câu với PairPanel của web). */
-    const val PAIR_CODE_HELP = "Trong Cài đặt › Thiết bị của máy tính, bật “$SYNC_SWITCH_LABEL” rồi chọn ghép thiết bị để lấy mã 6 số."
+    val PAIR_CODE_HELP = S.s_trong_cai_dat_thiet_bi_cua_may_tinh_bat_0_af63d4c8(SYNC_SWITCH_LABEL)
 
     /** "Nghe khi ra ngoài": máy đã ghép không trả lời vì khác mạng - app không cần gì riêng, mạng riêng ảo cho máy tính một địa chỉ tới được (web DevicesScreen). */
-    const val AWAY_HELP = "Cho hai máy vào cùng một mạng riêng ảo (Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này một lần khi còn ở nhà."
+    const val AWAY_HELP = S.s_cho_hai_may_vao_cung_mot_mang_rieng_ao_tai_0e231104
 
     /** Cùng chữ với shared/connectionRoute.ts: nói đường nối thành công, không lộ địa chỉ. */
     fun route(address: String?): String {
-        if (address.isNullOrEmpty()) return "Chưa kết nối"
-        if (address == "bluetooth" || address.lowercase().startsWith("bt:")) return "Đang nối qua Bluetooth"
+        if (address.isNullOrEmpty()) return S.s_chua_ket_noi_f3743a06
+        if (address == "bluetooth" || address.lowercase().startsWith("bt:")) return S.s_dang_noi_qua_bluetooth_fb6ba9e5
         val host = if (address.startsWith("[")) address.substring(1, address.indexOf(']').let { if (it < 0) address.length else it }) else address.substringBefore(':')
         val parts = host.split('.').map { it.toIntOrNull() }
         if (parts.size == 4 && parts.all { it != null && it in 0..255 }) {
             val a = parts[0]!!
             val b = parts[1]!!
-            if (a == 100 && b in 64..127) return "Đang nối qua Tailscale"
-            if (a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168)) return "Đang nối qua Wi-Fi nhà"
+            if (a == 100 && b in 64..127) return S.s_dang_noi_qua_tailscale_7de36f5d
+            if (a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168)) return S.s_dang_noi_qua_wi_fi_nha_ebf18485
         }
-        return "Đang nối qua mạng"
+        return S.s_dang_noi_qua_mang_807811f3
     }
 
     /** Dòng mốc thời gian của máy nghe thư viện này: lần cuối thấy nó. */
     fun seen(lastSeen: Double, nowMs: Long = System.currentTimeMillis()): String =
-        Fmt.whenText(lastSeen, nowMs).let { if (it.isEmpty()) "Chưa thấy" else "Thấy $it" }
+        Fmt.whenText(lastSeen, nowMs).let { if (it.isEmpty()) S.s_chua_thay_46bcd090 else S.s_thay_0_4319765d(it) }
 
     /** Giờ hết hạn của mã ghép, như "14:12" (giờ máy). */
     fun clock(epochSeconds: Double): String {
@@ -326,31 +328,31 @@ object DeviceText {
         val lines = ArrayList<String>()
         if (cache) {
             val downloaded = if (unsent.cacheBytes > 0) {
-                ", và ${if (unsent.cacheBytes < 1024L * 1024) "dưới 1 MB" else formatSize(unsent.cacheBytes)} đã tải về điện thoại này sẽ bị xoá"
+                S.s_va_0_da_tai_ve_dien_thoai_nay_se_bi_xoa_0a9ac335(if (unsent.cacheBytes < 1024L * 1024) S.s_duoi_1_mb_b59395ae else formatSize(unsent.cacheBytes))
             } else ""
-            lines += "${unsent.cacheBooks} cuốn của $device sẽ rời Thư viện$downloaded."
-            if (unsent.places > 0) lines += "Chỗ nghe của ${unsent.places} cuốn vẫn giữ - ghép lại đúng $device là nghe tiếp được."
+            lines += S.s_0_cuon_cua_1_se_roi_thu_vien_2_da517a50(unsent.cacheBooks, device, downloaded)
+            if (unsent.places > 0) lines += S.s_cho_nghe_cua_0_cuon_van_giu_ghep_lai_dung_9f62342f(unsent.places, device)
         }
         var send: String? = null
         if (edited) {
             val names = unsent.books.take(3).map { "“${it.title}”" }
             val rest = unsent.books.size - names.size
-            lines += "${unsent.books.size} cuốn có ${unsent.changes} thay đổi chưa gửi về $device sẽ mất: ${names.joinToString(", ")}${if (rest > 0) " và $rest cuốn khác" else ""}."
+            lines += S.s_0_cuon_co_1_thay_doi_chua_gui_ve_2_se_mat_74fdd211(unsent.books.size, unsent.changes, device, names.joinToString(", "), if (rest > 0) S.s_va_0_cuon_khac_718f50c0(rest) else "")
             if (!unsent.sendable) {
-                lines += "$device không nhận phần sửa - những thay đổi này chỉ có trên điện thoại này."
+                lines += S.s_0_khong_nhan_phan_sua_nhung_thay_doi_nay_c_c8a49e9f(device)
             } else if (reachable) {
-                send = "Gửi trước rồi bỏ ghép"
+                send = S.s_gui_truoc_roi_bo_ghep_99e6d1f1
             } else {
-                send = "Thử gửi trước rồi bỏ ghép"
-                lines += "$device đang tắt hay khác mạng lúc này nên chưa gửi được - mở máy ấy rồi gửi, hay bỏ thay đổi."
+                send = S.s_thu_gui_truoc_roi_bo_ghep_f12544da
+                lines += S.s_0_dang_tat_hay_khac_mang_luc_nay_nen_chua_ebd45cfe(device)
             }
         }
-        return ForgetCopy("Bỏ ghép $device?", lines, send, if (edited) "Vẫn bỏ ghép, bỏ thay đổi" else "Bỏ ghép", edited)
+        return ForgetCopy(S.s_bo_ghep_0_e98b86ca(device), lines, send, if (edited) S.s_van_bo_ghep_bo_thay_doi_64cb2e74 else S.s_bo_ghep_64f921f9, edited)
     }
 
     /** Lời khi máy tính chỉ cho điện thoại nghe (không mở được Studio) - nói trước khi bấm. */
     fun listenOnly(name: String): String =
-        "Máy tính $name chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+        S.s_may_tinh_0_chi_cho_nghe_tren_may_tinh_ay_b_ab856008(name)
 }
 
 /** Máy tính mở được Studio từ điện thoại (`Devices.studioComputers`). */

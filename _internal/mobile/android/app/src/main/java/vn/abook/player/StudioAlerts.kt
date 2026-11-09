@@ -94,8 +94,8 @@ object StudioAlerts {
         // Máy tính tuột sạc (cấp máy, kể cả khi không có sách nào chạy): báo một lần mỗi lần rút; máy bàn gửi false/null.
         val unplugged = !reply.isNull("onBattery") && reply.optBoolean("onBattery")
         if (seeded && unplugged && !wasOnBattery) {
-            out += Alert("machine:battery", "Máy tính dùng pin",
-                "${reply.optString("name").ifBlank { "Máy tính" }} đang dùng pin — bạn kiểm tra sạc.", "/#/studio")
+            out += Alert("machine:battery", S.s_may_tinh_dung_pin_3a090a56,
+                S.s_0_dang_dung_pin_ban_kiem_tra_sac_56250fc9(reply.optString("name").ifBlank { S.s_may_tinh_828ebb9d }), "/#/studio")
         }
         val books = reply.optJSONArray("books")
         val after = JSONObject()
@@ -125,46 +125,46 @@ object StudioAlerts {
     fun alerts(book: JSONObject, old: JSONObject, machineOnBattery: Boolean): List<Alert> {
         val out = mutableListOf<Alert>()
         val id = book.optString("id")
-        val title = book.optString("title").ifBlank { "Sách" }
+        val title = book.optString("title").ifBlank { S.s_sach_0c2b3e9b }
         val phase = book.optString("phase")
         val chapters = book.optJSONObject("chapters")
-        val progress = "${chapters?.optInt("completed") ?: 0}/${chapters?.optInt("total") ?: 0} chương"
+        val progress = S.s_0_1_chuong_8d58e1df(chapters?.optInt("completed") ?: 0, chapters?.optInt("total") ?: 0)
         val wasPhase = old.optString("phase")
         when {
             phase == "done" && wasPhase != "done" ->
-                out += Alert("$id:done", "Đã xong: $title", "$progress nghe được — bạn mở Studio để nghe.", "/#/studio/$id")
+                out += Alert("$id:done", S.s_da_xong_0_7aedf485(title), S.s_0_nghe_duoc_ban_mo_studio_de_nghe_eceb538a(progress), "/#/studio/$id")
             phase == "error" && wasPhase != "error" ->
-                out += Alert("$id:error", "Dừng vì lỗi: $title",
-                    "Làm sách gặp lỗi — bạn mở Studio để xem.", "/#/studio/$id?tab=activity")
+                out += Alert("$id:error", S.s_dung_vi_loi_0_c02f0076(title),
+                    S.s_lam_sach_gap_loi_ban_mo_studio_de_xem_dfb62d3c, "/#/studio/$id?tab=activity")
             // Phân tích xong, máy giữ cuốn chờ duyệt trước khi thu (webui/precast.py). Đứng trước "Đã dừng": cuốn đứng chờ
             // người duyệt không phải là dừng.
             heldOf(book) && !old.optBoolean("held") ->
-                out += Alert("$id:precast", "Sẵn sàng duyệt: $title",
-                    "Bạn duyệt giọng, tên và câu chưa chắc trước khi thu.", "/#/studio/$id?tab=precast")
+                out += Alert("$id:precast", S.s_san_sang_duyet_0_41c6c743(title),
+                    S.s_ban_duyet_giong_ten_va_cau_chua_chac_truoc_630fd971, "/#/studio/$id?tab=precast")
             old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" &&
                 !heldOf(book) ->
                 // Máy tính nói lượt chạy kết thúc ra sao (`end`): bạn bấm Dừng khác với máy sập - tin sau cần mở Studio xem nguyên nhân
                 // (soát a88 T4). Máy tính đời cũ không gửi `end` thì giữ tin cũ.
                 out += when (book.optString("end")) {
-                    "failed", "lost" -> Alert("$id:crashed", "Sự cố: $title",
-                        (if (book.optString("end") == "lost") "Làm sách bị ngắt đột ngột"
-                        else "Làm sách gặp sự cố") +
-                            " · $progress — bạn mở Studio.", "/#/studio/$id")
-                    "stopped" -> Alert("$id:stopped", "Đã dừng: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
-                    else -> Alert("$id:stopped", "Đã dừng: $title", dotJoin(book.optString("statusLabel"), progress), "/#/studio/$id")
+                    "failed", "lost" -> Alert("$id:crashed", S.s_su_co_0_f2a511ec(title),
+                        (if (book.optString("end") == "lost") S.s_lam_sach_bi_ngat_dot_ngot_497f7190
+                        else S.s_lam_sach_gap_su_co_3d9065b0) +
+                            S.s_0_ban_mo_studio_5c0b13a2(progress), "/#/studio/$id")
+                    "stopped" -> Alert("$id:stopped", S.s_da_dung_0_b9714c73(title), S.s_ban_da_bam_dung_0_0400929a(progress), "/#/studio/$id")
+                    else -> Alert("$id:stopped", S.s_da_dung_0_b9714c73(title), dotJoin(book.optString("statusLabel"), progress), "/#/studio/$id")
                 }
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
             pausedOf(book) == "battery" && pausedOf(old) != "battery" && !machineOnBattery ->
-                out += Alert("$id:battery", "Chạy pin: $title",
-                    "Tạm dừng · $progress; cắm sạc để tự làm tiếp.", "/#/studio/$id")
+                out += Alert("$id:battery", S.s_chay_pin_0_ca28e520(title),
+                    S.s_tam_dung_0_cam_sac_de_tu_lam_tiep_f6929a3d(progress), "/#/studio/$id")
         }
         if (!book.isNull("work") && !old.isNull("work")) {
             val now = book.optInt("work")
             val was = old.optInt("work")
             if (now > was) {
-                out += Alert("$id:work", "$title: $now việc cần duyệt",
-                    "Thêm ${now - was} chỗ chưa chắc — bạn sửa khi sách vẫn chạy.", "/#/studio/$id?tab=work")
+                out += Alert("$id:work", S.s_0_1_viec_can_duyet_ace8198b(title, now),
+                    S.s_them_0_cho_chua_chac_ban_sua_khi_sach_van_d53927eb(now - was), "/#/studio/$id?tab=work")
             }
         }
         return out
@@ -181,8 +181,8 @@ object StudioAlerts {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Studio trên máy tính", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                    description = "Sách xong, dừng vì lỗi, có việc mới cần duyệt"
+                NotificationChannel(CHANNEL, S.s_studio_tren_may_tinh_6c00d830, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    description = S.s_sach_xong_dung_vi_loi_co_viec_moi_can_duye_8ebdb9f2
                 },
             )
         }

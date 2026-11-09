@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -22,13 +23,9 @@ export const STORAGE_KEY = ["readaloud", "storage"] as const;
 export function ClearDialog({ open, onOpenChange, usage, busy, onClear }: { open: boolean; onOpenChange: (open: boolean) => void; usage: ReadAloudCacheUsage; busy: boolean; onClear: () => void }) {
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>
-          Giữ lại
-        </Button>
-        <Button variant="danger" loading={busy} onClick={onClear}>
-          Dọn
-        </Button>
-      </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title="Dọn bản đọc đã làm" description={clearStorageQuestion(usage)}>
+        <Button variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>{S.s_giu_lai_3c3ba2db}</Button>
+        <Button variant="danger" loading={busy} onClick={onClear}>{S.s_don_6730827d}</Button>
+      </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title={S.s_don_ban_doc_da_lam_ba8c42a3} description={clearStorageQuestion(usage)}>
 
     </Dialog>
   );
@@ -49,11 +46,11 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
       void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY });
       void client.invalidateQueries({ queryKey: ["readaloud", "cache"] });
       window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId: "", surfaces: [], all: true } }));
-      toast.success("Đã dọn bản đọc đã làm");
+      toast.success(S.s_da_don_ban_doc_da_lam_19cc9826);
       // Dọn xong thì nút "Dọn bản đọc đã làm" biến mất (không còn gì để dọn): con trỏ về lại mục này thay vì rơi về BODY khi hộp đóng.
       window.setTimeout(() => region.current?.focus(), 60);
     } catch (error) {
-      toast.error("Chưa dọn được bản đọc", { description: (error as Error).message });
+      toast.error(S.s_chua_don_duoc_ban_doc_fbc43cc6, { description: (error as Error).message });
     } finally {
       setBusy(false);
       setAsking(false);
@@ -61,13 +58,13 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
   };
   return (
     <MotionRegion as="div" data-readaloud-storage elementRef={region} tabIndex={-1} className="outline-none">
-      <SettingsRow label="Bản đọc đã làm" hint={<>
+      <SettingsRow label={S.s_ban_doc_da_lam_776edb87} hint={<>
         {/* Trạng thái luôn nằm dưới tên (cả khi trống): không đặt chữ nhỏ vào ô nút bên phải, lệch chân chữ với tên (máy dò BASELINE 25-10). */}
         <p>{storageLabel(usage)}</p>
       </>}>
-        {usage.total > 0 && <Button size="sm" onClick={() => setAsking(true)}>Dọn bản đọc</Button>}
+        {usage.total > 0 && <Button size="sm" onClick={() => setAsking(true)}>{S.s_don_ban_doc_5ae4774e}</Button>}
       </SettingsRow>
-      <MoreInfo>Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.</MoreInfo>
+      <MoreInfo>{S.s_nghe_lai_doan_da_doc_xong_thi_khong_phai_c_05c920a7}</MoreInfo>
       <ClearDialog open={asking && usage.total > 0} onOpenChange={setAsking} usage={usage} busy={busy} onClear={() => void clear()} />
     </MotionRegion>
   );

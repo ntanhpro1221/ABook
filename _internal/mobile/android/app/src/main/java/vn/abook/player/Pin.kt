@@ -31,7 +31,7 @@ import javax.net.ssl.X509TrustManager
  */
 object Pin {
     // Cùng nghĩa với webui/remote_books.py `_open`: bấm Bỏ ghép rồi ghép lại; máy kia không cài lại thì đừng ghép lại.
-    const val CHANGED = "Chứng chỉ đổi, có thể bị chen mạng — chỉ khi máy kia cài lại ABook, bạn Bỏ ghép rồi ghép lại."
+    const val CHANGED = S.s_chung_chi_doi_co_the_bi_chen_mang_chi_khi_4fcee599
 
     /** SHA-256 của chứng chỉ DER, 64 ký tự hex thường - cùng dạng với webui/tls.py `fingerprint`. */
     fun fingerprint(der: ByteArray): String =
@@ -42,7 +42,7 @@ object Pin {
 
     /** Phần thuần (test được): chứng chỉ đầu chuỗi phải có đúng vân tay `expected`; rỗng thì không bao giờ khớp. */
     fun check(chain: Array<out X509Certificate>?, expected: String) {
-        val leaf = chain?.firstOrNull() ?: throw CertificateException("Máy kia không đưa chứng chỉ")
+        val leaf = chain?.firstOrNull() ?: throw CertificateException(S.s_may_kia_khong_dua_chung_chi_859d62ee)
         if (expected.isEmpty() || fingerprint(leaf.encoded) != expected.lowercase()) throw CertificateException(CHANGED)
     }
 
@@ -200,7 +200,7 @@ object Pin {
         val deadline = nanoTime() + timeoutMs * 1_000_000L
         fun left(): Int {
             val nanos = deadline - nanoTime()
-            if (nanos <= 0) throw java.net.SocketTimeoutException("Hết thời gian nối TLS")
+            if (nanos <= 0) throw java.net.SocketTimeoutException(S.s_het_thoi_gian_noi_tls_e6af2f17)
             return ((nanos + 999_999L) / 1_000_000L).toInt()
         }
         dial(::left).use {

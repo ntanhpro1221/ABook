@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -45,7 +46,7 @@ Item {
         pressScaling: false
         enabled: root.playable
         ringRadius: Theme.radiusControl
-        Accessible.name: (root.current && Player.playing ? "Tạm dừng " : "Nghe ") + (root.chapter.displayTitle || "")
+        Accessible.name: (root.current && Player.playing ? S.s_tam_dung_e4ec3478 : S.s_nghe_b2faf200) + (root.chapter.displayTitle || "")
         onClicked: root.playRequested()
         Rectangle {
             anchors.fill: parent
@@ -118,9 +119,9 @@ Item {
                 height: Math.max(20, moreLabel.implicitHeight)
                 ringMargin: 2
                 Accessible.role: Accessible.Button
-                Accessible.name: "Chi tiết lỗi " + (root.chapter.displayTitle || "")
+                Accessible.name: S.s_chi_tiet_loi_c33fa242 + (root.chapter.displayTitle || "")
                 onClicked: root.errorRequested(errorMore)
-                Text { id: moreLabel; text: "Chi tiết"; color: Theme.danger; font.pixelSize: Theme.sizeCaption; font.underline: true }
+                Text { id: moreLabel; text: S.s_chi_tiet_e762d926; color: Theme.danger; font.pixelSize: Theme.sizeCaption; font.underline: true }
             }
         }
     }
@@ -139,8 +140,8 @@ Item {
             enabled: root.working
             onHoveredChanged: if (hovered) statusTip.restart(); else { statusTip.stop(); Nav.hideTip(statusCell) }
         }
-        Timer { id: statusTip; interval: 600; onTriggered: Nav.showTip(statusCell, root.running ? "Đang thu âm" : "Tạm dừng giữa chương") }
-        Accessible.description: root.working ? (root.running ? "Đang thu âm" : "Tạm dừng giữa chương") : ""
+        Timer { id: statusTip; interval: 600; onTriggered: Nav.showTip(statusCell, root.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2) }
+        Accessible.description: root.working ? (root.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2) : ""
         Row {
             visible: root.working
             spacing: 8
@@ -152,7 +153,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 value: Logic.chapterRecorded(root.chapter)
                 tone: root.running ? "accent" : "muted"
-                label: "Đã thu âm"
+                label: S.s_da_thu_am_1a6a3e8a
             }
             Text { text: Logic.chapterWorkingText(root.chapter, root.running); color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.features: { "tnum": 1 }; anchors.verticalCenter: parent.verticalCenter }
         }
@@ -193,7 +194,7 @@ Item {
         iconSize: 16
         ink: Theme.text2
         hoverInk: Theme.text
-        Accessible.name: "Tuỳ chọn " + (root.chapter.displayTitle || "")
+        Accessible.name: S.s_tuy_chon_d737e0db + (root.chapter.displayTitle || "")
         opacity: root.hot || !root.wide ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
         onClicked: root.menuRequested(more)

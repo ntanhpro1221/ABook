@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -89,7 +91,7 @@ fun ExportScreen(book: ListenBook, exports: ExportState, onBack: () -> Unit, for
         else -> Unit
     }
     BookForm(
-        if (book.textOnly) "Xuất sách nói" else "Xuất sách", onBack, "export_screen",
+        if (book.textOnly) S.s_xuat_sach_noi_219fb12a else S.s_xuat_sach_792effe5, onBack, "export_screen",
         footer = { Footer(book, ui, exports, last[1] as? ExportPhase.Running, last[2]) },
     ) {
         SheetPages(ui.phase.page, { it }, "export_pages") { page ->
@@ -132,7 +134,7 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
             Reveal(mp3) {
                 Column(Modifier.fillMaxWidth()) {
                     RowLine()
-                    DisclosureRow("Nơi lưu", { exports.chooseFolder(book.id) }, "export_folder", summary = ui.folder ?: "Chưa chọn")
+                    DisclosureRow(S.s_noi_luu_b6ef8cca, { exports.chooseFolder(book.id) }, "export_folder", summary = ui.folder ?: S.s_chua_chon_e5f50074)
                 }
             }
         }
@@ -140,7 +142,7 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
             Reveal(!mp3) {
                 Column(Modifier.fillMaxWidth()) {
                     RowLine()
-                    ListItem("Nơi lưu", Modifier, null, "export_place", hint = "Bạn đặt tên và chọn nơi lưu ở bước kế", titleStyle = Abook.type.bodyStrong)
+                    ListItem(S.s_noi_luu_b6ef8cca, Modifier, null, "export_place", hint = S.s_ban_dat_ten_va_chon_noi_luu_o_buoc_ke_cda7726b, titleStyle = Abook.type.bodyStrong)
                 }
             }
         }
@@ -149,9 +151,9 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
                 Column(Modifier.fillMaxWidth()) {
                     RowLine()
                     val count = ui.changedChapters.size
-                    val options = listOf(Option(true, "Chỉ $count chương đổi"), Option(false, "Cả cuốn"))
+                    val options = listOf(Option(true, S.s_chi_0_chuong_doi_9bd4c5f8(count)), Option(false, S.s_ca_cuon_7e2326c4))
                     ChoiceSetting(
-                        "Có chương đã đổi", options, options.first { it.value == ui.onlyChanged }, { picked, _ -> exports.setOnlyChanged(book.id, picked.value) }, "export_scope",
+                        S.s_co_chuong_da_doi_6d49db57, options, options.first { it.value == ui.onlyChanged }, { picked, _ -> exports.setOnlyChanged(book.id, picked.value) }, "export_scope",
                         hint = ExportText.changedAsk(count),
                     )
                 }
@@ -161,7 +163,7 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
             Reveal(ui.music.available) {
                 Column(Modifier.fillMaxWidth()) {
                     RowLine()
-                    SwitchRow("Kèm nhạc nền", ui.withMusic, { exports.setMusic(book, it) }, "export_music", hint = ExportText.MUSIC_MIX_HINT)
+                    SwitchRow(S.s_kem_nhac_nen_c616e8d2, ui.withMusic, { exports.setMusic(book, it) }, "export_music", hint = ExportText.MUSIC_MIX_HINT)
                     Note(if (ui.musicOn && kind == ExportKind.Mp3) ExportText.MP3_MUSIC_NOTE else "", "export_mp3_music")
                     val plan = ui.plan
                     Note(ExportText.chargerHint(ui.musicOn, plan?.chapters ?: book.chaptersAvailable), "export_charger")
@@ -173,7 +175,7 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
         if (book.textOnly) item("auto_note", "row") { Note(ExportText.AUDIOBOOK_NOTE, "export_audiobook_note") }
         item("background", "row") { BackgroundRow(ui, exports) }
         if (ui.history.isNotEmpty()) {
-            item("past_title", "title") { SectionTitle("Đã xuất") }
+            item("past_title", "title") { SectionTitle(S.s_da_xuat_d801674e) }
             items(ui.history, key = { "${it.kind}:${it.target}" }, contentType = { "past" }) { past ->
                 Column(Modifier.fillMaxWidth()) {
                     ListItem(ExportText.pastTitle(past), Modifier, null, "export_past", hint = ExportText.pastLine(past))
@@ -187,7 +189,7 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
 /** Đầu trang: tên sách và sách dài bao nhiêu. */
 @Composable
 private fun BookHead(book: ListenBook) {
-    val facts = if (book.textOnly) "${book.chaptersTotal} chương" else "${book.chaptersAvailable} chương · ${Fmt.length(book.duration)}"
+    val facts = if (book.textOnly) S.s_0_chuong_04093412(book.chaptersTotal) else S.s_0_chuong_1_18097463(book.chaptersAvailable, Fmt.length(book.duration))
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12)) {
         BasicText(book.title, style = Abook.type.bodyStrong, modifier = Modifier.testTag("export_book"))
         RowHint(facts, Modifier.padding(top = 2.dp))
@@ -202,10 +204,10 @@ private fun VoiceBlock(ui: ExportUi) {
     Column(Modifier.fillMaxWidth()) {
         RowLine()
         if (voice != null) {
-            ListItem("Giọng đọc", Modifier, null, "export_voice", hint = "${voice.caption} - giọng đang chọn cho cuốn này; đổi ở trình phát.", titleStyle = Abook.type.bodyStrong)
+            ListItem(S.s_giong_doc_11f2548d, Modifier, null, "export_voice", hint = S.s_0_giong_dang_chon_cho_cuon_nay_doi_o_trinh_bc47c66f(voice.caption), titleStyle = Abook.type.bodyStrong)
         } else if (ui.voiceChecked) {
             BasicText(
-                "Máy chưa có giọng đọc nào - tải giọng ở Cài đặt → Giọng đọc rồi quay lại.",
+                S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_aa7e4957,
                 style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(vertical = Dim.s12).testTag("export_no_voice"),
             )
         }
@@ -214,7 +216,7 @@ private fun VoiceBlock(ui: ExportUi) {
             when {
                 ui.planError.isNotEmpty() -> ""
                 plan != null -> ExportText.planText(plan)
-                voice != null -> "Đang tính độ dài"
+                voice != null -> S.s_dang_tinh_do_dai_65e1c661
                 else -> ""
             },
             "export_plan",
@@ -236,8 +238,8 @@ private fun BackgroundRow(ui: ExportUi, exports: ExportState) {
         Column(Modifier.fillMaxWidth()) {
             RowLine()
             DisclosureRow(
-                "Cho ABook chạy nền", exports::openBackgroundSettings, "export_background", icon = { BatteryChargingIcon(Abook.colors.text2) },
-                summary = "Xuất sách dài khi tắt màn hình có thể bị máy tạm dừng. ${ExportText.backgroundHelp(shown?.manufacturer.orEmpty())}",
+                S.s_cho_abook_chay_nen_a56d0e4e, exports::openBackgroundSettings, "export_background", icon = { BatteryChargingIcon(Abook.colors.text2) },
+                summary = S.s_xuat_sach_dai_khi_tat_man_hinh_co_the_bi_m_0406d80e(ExportText.backgroundHelp(shown?.manufacturer.orEmpty())),
             )
         }
     }
@@ -267,7 +269,7 @@ private fun RunningPage(book: ListenBook, ui: ExportUi, progress: State<ExportPr
         ProgressLine(progress, running?.folder)
         Spacer(Modifier.height(Dim.s16))
         BasicText(
-            if (stopping) "Dừng ở chỗ an toàn kế, chưa ghi thêm gì." else "Việc chạy nền: bạn có thể rời màn này, xuất vẫn tiếp tục.",
+            if (stopping) S.s_dung_o_cho_an_toan_ke_chua_ghi_them_gi_09745145 else S.s_viec_chay_nen_ban_co_the_roi_man_nay_xuat_36e64bcc,
             style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.testTag("export_background_note"),
         )
         BackgroundRow(ui, exports)
@@ -283,7 +285,7 @@ internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
             current.text, style = Abook.type.body,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = current.spoken }.testTag("export_progress_text"),
         )
-        if (folder != null) BasicText("Vào $folder", style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 2.dp).testTag("export_progress_folder"))
+        if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 2.dp).testTag("export_progress_folder"))
         val known by remember { derivedStateOf { progress.value.fraction != null } }
         if (known) StageProgress { progress.value.fraction ?: 0f } else CreepProgress()
     }
@@ -337,7 +339,7 @@ private fun Footer(book: ListenBook, ui: ExportUi, exports: ExportState, running
                     val ready = ui.loaded && ui.phase is ExportPhase.Idle &&
                         (!book.textOnly || (ui.voice != null && plan != null && plan.chapters > 0 && ui.planError.isEmpty()))
                     PrimaryButton(
-                        "Bắt đầu", { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_start"), enabled = ready,
+                        S.s_bat_dau_b3cacc46, { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_start"), enabled = ready,
                         icon = { ink ->
                             when (ui.format.kind(book.textOnly)) {
                                 ExportKind.Mp3 -> FolderDownIcon(ink)
@@ -349,12 +351,12 @@ private fun Footer(book: ListenBook, ui: ExportUi, exports: ExportState, running
                 }
                 1 -> {
                     val stopping = running?.stopping == true
-                    TextAction(if (stopping) "Đang dừng" else "Dừng", { exports.stop(book) }, "export_stop", Modifier.fillMaxWidth(), align = Alignment.Center)
+                    TextAction(if (stopping) S.s_dang_dung_9b35aeb5 else S.s_dung_11554138, { exports.stop(book) }, "export_stop", Modifier.fillMaxWidth(), align = Alignment.Center)
                 }
                 else -> when (shown) {
                     is ExportPhase.Done -> DoneButtons(book, shown, exports)
-                    is ExportPhase.Stopped -> PrimaryButton("Xuất lại", { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_retry"))
-                    is ExportPhase.Failed -> PrimaryButton("Thử lại", { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_retry"))
+                    is ExportPhase.Stopped -> PrimaryButton(S.s_xuat_lai_4ebb6635, { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_retry"))
+                    is ExportPhase.Failed -> PrimaryButton(S.s_thu_lai_c58d068c, { exports.start(book) }, Modifier.fillMaxWidth().testTag("export_retry"))
                     else -> Unit
                 }
             }
@@ -367,9 +369,9 @@ private fun Footer(book: ListenBook, ui: ExportUi, exports: ExportState, running
 private fun DoneButtons(book: ListenBook, done: ExportPhase.Done, exports: ExportState) {
     val uri = done.result.uri ?: return
     if (done.result.kind == ExportKind.Mp3) {
-        PrimaryButton("Mở thư mục", { exports.openFolder(book.id, uri, done.result.folder) }, Modifier.fillMaxWidth().testTag("export_open_folder"))
+        PrimaryButton(S.s_mo_thu_muc_4bf5b127, { exports.openFolder(book.id, uri, done.result.folder) }, Modifier.fillMaxWidth().testTag("export_open_folder"))
     } else {
-        PrimaryButton("Mở", { exports.openFile(book.id, uri) }, Modifier.fillMaxWidth().testTag("export_open"))
-        TextAction("Gửi", { exports.share(book.id, uri, book.title) }, "export_share", Modifier.fillMaxWidth(), align = Alignment.Center)
+        PrimaryButton(S.s_mo_741bd2c2, { exports.openFile(book.id, uri) }, Modifier.fillMaxWidth().testTag("export_open"))
+        TextAction(S.s_gui_0564dcf3, { exports.share(book.id, uri, book.title) }, "export_share", Modifier.fillMaxWidth(), align = Alignment.Center)
     }
 }

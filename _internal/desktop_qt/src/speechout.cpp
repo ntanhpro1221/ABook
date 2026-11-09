@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #include "speechout.h"
 #include "textscript.h"
 #include <QFile>
@@ -40,7 +41,7 @@ void SpeechOut::load(const QUrl &url, double at) {
 void SpeechOut::loadText(const QString &book, int chapter, double at, const QString &voice) {
     if (voice != m_voice) m_fetchMs.clear();
     stop(); m_text = true; m_book = book; m_chapter = chapter; m_voice = voice; m_target = at;
-    if (voice.isEmpty()) { fail(QStringLiteral("Máy này chưa có giọng đọc.")); return; }
+    if (voice.isEmpty()) { fail(UiStrings::s_may_nay_chua_co_giong_doc_3449f846); return; }
     m_voiceGain = 1;
     for (const auto &value : m_voices) {
         const auto item = value.toMap();
@@ -55,7 +56,7 @@ void SpeechOut::loadText(const QString &book, int chapter, double at, const QStr
     m_cancel.append(m_net->requestCancelable("GET", QStringLiteral("/api/listen/books/%1/chapters/%2/text").arg(book).arg(chapter), {},
         [self, generation](int status, const QJsonObject &body) {
             if (!self || generation != self->m_generation) return;
-            if (status < 200 || status >= 300) { self->fail(body.value(QStringLiteral("error")).toString(QStringLiteral("Chưa tải được chữ của chương."))); return; }
+            if (status < 200 || status >= 300) { self->fail(body.value(QStringLiteral("error")).toString(UiStrings::s_copy_8c3e5a190327)); return; }
             const auto lines = TextScript::paragraphs(body.value(QStringLiteral("text")).toString());
             bool spoken = false; int firstBreak = -1;
             for (int i = 0; i < lines.size(); ++i) {
@@ -69,7 +70,7 @@ void SpeechOut::loadText(const QString &book, int chapter, double at, const QStr
                     firstBreak = -1; spoken = true;
                 }
             }
-            if (self->m_paragraphs.isEmpty()) { self->fail(QStringLiteral("Chương này chưa có chữ để đọc.")); return; }
+            if (self->m_paragraphs.isEmpty()) { self->fail(UiStrings::s_copy_752a3d3dbce4); return; }
             self->publishScript(); emit self->durationChanged(self->duration());
             self->seek(self->m_target);
         }, false));
@@ -139,9 +140,9 @@ void SpeechOut::fetch(int index, std::function<void()> ready) {
                 if (index == self->m_index) {
                     const QString why = body.value(QStringLiteral("reason")).toString();
                     const QStringList trouble{QStringLiteral("timeout"), QStringLiteral("rejected"), QStringLiteral("service"), QStringLiteral("auth"), QStringLiteral("quota")};
-                    const QString message = why == QLatin1String("offline") ? QStringLiteral("Không có mạng - giọng đang chọn cần mạng.")
-                        : trouble.contains(why) ? QStringLiteral("Giọng đang chọn đang không dùng được.")
-                        : body.value(QStringLiteral("error")).toString(body.value(QStringLiteral("message")).toString(QStringLiteral("Giọng đang chọn đang không dùng được.")));
+                    const QString message = why == QLatin1String("offline") ? UiStrings::s_khong_co_mang_giong_dang_chon_can_mang_6a4c7c11
+                        : trouble.contains(why) ? UiStrings::s_giong_dang_chon_dang_khong_dung_duoc_3c97984f
+                        : body.value(QStringLiteral("error")).toString(body.value(QStringLiteral("message")).toString(UiStrings::s_giong_dang_chon_dang_khong_dung_duoc_3c97984f));
                     self->fail(message);
                 }
                 return;

@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -205,7 +207,7 @@ class ClipCache(
         voiceId: String, text: String, tmp: File, extension: String, durationMs: Long, words: List<Span>, origin: String? = null,
         readings: Map<String, String>? = null,
     ): Clip {
-        require(extension in EXTENSIONS) { "đuôi file lạ: $extension" }
+        require(extension in EXTENSIONS) { S.s_duoi_file_la_0_9ab9c1be(extension) }
         val key = keyOf(voiceId, text, origin, readings)
         val voice = VoiceSpeed.split(voiceId).first
         val audio = File(dir, "$key.$extension")

@@ -1,3 +1,4 @@
+#include "uistrings.generated.h"
 #pragma once
 #include <QtGlobal>
 #ifdef Q_OS_WIN
@@ -21,6 +22,6 @@ inline bool automaticSleepAllowed(qint64 osIdle, qint64 appIdle, qint64 required
 }
 
 namespace AutoSleepText {
-inline constexpr auto Schedule = "Tự hẹn theo lịch đêm";
-inline constexpr auto Continue = "Chạm để nghe tiếp";
+inline constexpr auto Schedule = UiStrings::s_tu_hen_theo_lich_dem_17ee1443_utf8;
+inline constexpr auto Continue = UiStrings::s_cham_de_nghe_tiep_86bd1a37_utf8;
 }

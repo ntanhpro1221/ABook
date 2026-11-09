@@ -91,6 +91,22 @@
 - Each platform's 75 EQ measurements has worst error <0.249 dB. Android/Qt pitch checks cover ±3/±6 semitones at 1×/1.5×; web covers ±3/±6 with a real OfflineAudioContext/AudioWorklet. All stay within 3% F0 and 0.5% duration (web has exactly the requested frame count). Limiter sample peaks stay ≤−1 dBFS; these are not true-peak or perceptual listening results.
 - Web gallery: light/dark, 0 findings/errors including 48 geometry trials. Android headless emulator captures light/dark and measures DSP CPU; no physical phone. Detailed logs and screenshots: task `scratchpad/codex/audiofx/`, report.md/result.md.
 - Quality hash before/after: `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc` (unchanged). No commit or push.
+## 08-11-2026 — strsrc: shared copy and design token sources
+
+- `ui_strings/vi.json`: 5,751 unique copy keys; generated Kotlin, Android XML, TypeScript, Qt JavaScript and C++.
+  `ui_design/tokens.json`: shared color, radius, type, spacing, width, motion, easing, reading and cover values, checked against DESIGN.md.
+- npm, Gradle and CMake run `scripts/prepare_ui.py`. Raw copy gate: 0 violations; 83 exact exceptions with reasons.
+  Mutation probes caught new handwritten copy on all three platforms (3/3). Ten web/Compose screen pairs have zero unexplained differences;
+  all 41 remaining Qt wording candidates and four icon candidates have individual explanations.
+- Complete JVM run (OpenJDK 21.0.8): 3,375 passed, 0 failed, 8 skipped. Complete Vitest run: 2,837 passed, 0 failed (319 files).
+  Qt build's pytest rules: 155 passed, 0 failed, 1 skipped. Sixteen native/QML suites: 2,065 passed, 0 failed, 1 skipped;
+  WidthTests accounts for 1,529 of those passes. Glyph, QML type and displayed-value errors: 0. Dependency/import/smoke checks passed.
+- An earlier full WidthTests run had two stale expected-label failures and one VisualReady timeout (1,526 passed, 3 failed, 1 skipped).
+  The label expectations were updated to the selected shared copy; the timeout was not widened. The three focused rechecks passed,
+  followed by the complete green build above. JVM TLS tests failed under JBR 21.0.10, then passed targeted and complete runs under the installed OpenJDK 21.0.8.
+- Offscreen evidence: four headless web images, three fresh Roborazzi images, 372 Qt matrix images and three selected long-text Qt images.
+  Logs, before/after QA hash and the handwritten detailed report are in the assigned `scratchpad/codex/strsrc` task folder.
+  QA implementation hash stayed `0f178264cdfa197d1449811716621f7319d7e3257d878b6aac3e2f237f8b27dc`. No commit or push.
 
 ## 08-11-2026 — widthbook: retry settled Qt width measurements
 

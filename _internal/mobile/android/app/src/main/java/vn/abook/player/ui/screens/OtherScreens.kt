@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -30,10 +32,10 @@ fun StudioScreen(
     LaunchedEffect(devices) { devices?.loadStudio() }
     val scroll = rememberScrollState()
     Column(modifier.fillMaxSize().fadeEdges(scroll, startInset = top).verticalScroll(scroll).padding(top = top, start = Dim.margin, end = Dim.margin).testTag("studio_screen")) {
-        ScreenHeader("Studio")
+        ScreenHeader(S.s_studio_0aa91af2)
         Reveal(pair?.studio?.isNotEmpty() == true) {
             Column {
-                Caption("Tạo sách nói từ xa")
+                Caption(S.s_tao_sach_noi_tu_xa_def2fcf7)
                 val computers = pair?.studio?.values.orEmpty().toList()
                 val openable = computers.filterNot { it.listenOnly }
                 if (openable.isEmpty()) {
@@ -42,14 +44,14 @@ fun StudioScreen(
                     Spacer(Modifier.height(Dim.s8))
                     BasicText(DeviceText.studioBlocked(computers.map { it.name }), style = line)
                     Spacer(Modifier.height(Dim.s8))
-                    BasicText("Bật Điều khiển từ xa trên máy tính.", style = line)
+                    BasicText(S.s_bat_dieu_khien_tu_xa_tren_may_tinh_4263d8db, style = line)
                 } else {
-                    TextAction("Mở Studio", {
+                    TextAction(S.s_mo_studio_84ec0a81, {
                         fun open(computer: StudioComputer) { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }
                         if (openable.size == 1) open(openable[0])
                         else sheets?.show { dismiss ->
                             Column(Modifier.fillMaxWidth()) {
-                                BasicText("Mở Studio của máy nào?", style = Abook.type.sectionTitle)
+                                BasicText(S.s_mo_studio_cua_may_nao_1e9d7740, style = Abook.type.sectionTitle)
                                 for (computer in openable) DisclosureRow(computer.name, { dismiss(); open(computer) }, "studio_${computer.key}")
                             }
                         }
@@ -59,10 +61,10 @@ fun StudioScreen(
         }
         Reveal(pair?.studio.isNullOrEmpty()) {
             Column {
-                BasicText("Studio trên máy tính", style = Abook.type.sectionTitle)
-                RowHint("Nối máy tính để làm sách nói và xem tiến độ.")
-                Caption("Chưa ghép với máy tính nào")
-                TextAction("Nối máy tính", connect, "studio_connect")
+                BasicText(S.s_studio_tren_may_tinh_6c00d830, style = Abook.type.sectionTitle)
+                RowHint(S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc)
+                Caption(S.s_chua_ghep_voi_may_tinh_nao_97f851e1)
+                TextAction(S.s_noi_may_tinh_2950692d, connect, "studio_connect")
             }
         }
         if (companion != null) {

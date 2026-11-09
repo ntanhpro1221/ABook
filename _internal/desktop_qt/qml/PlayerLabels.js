@@ -1,13 +1,14 @@
+.import "UiStrings.js" as S
 .pragma library
 
 // labels.ts readerHint, desktop pointer variant. This is a complete sentence
 // even when the chapter has no audio or this machine has no installed voice.
 function readerHint(textOnly, canSpeak, timed, tapped) {
-    const verb = "Bấm"
+    const verb = S.s_bam_457e5bf3
     if (textOnly) {
-        if (!canSpeak) return "Máy này chưa có giọng đọc."
-        return tapped ? "Nghe bằng giọng đọc." : `${verb} chữ để nghe từ đó.`
+        if (!canSpeak) return S.s_may_nay_chua_co_giong_doc_3449f846
+        return tapped ? S.s_nghe_bang_giong_doc_ad6d3d0c : S.s_0_chu_de_nghe_tu_do_f3859cf4(verb)
     }
-    if (!timed) return "Chưa có audio; bạn vẫn đọc được chữ."
-    return tapped ? "" : `${verb} chữ để nghe từ đó.`
+    if (!timed) return S.s_chua_co_audio_ban_van_doc_duoc_chu_6b728db5
+    return tapped ? "" : S.s_0_chu_de_nghe_tu_do_f3859cf4(verb)
 }

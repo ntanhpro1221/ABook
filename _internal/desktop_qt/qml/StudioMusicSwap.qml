@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioMusicLogic.js" as Logic
@@ -47,12 +48,12 @@ Column {
     Collapse {
         width: parent.width
         open: root.loading
-        EditBookSkeleton { width: parent.width; count: 3; label: "Đang tải bài khác" }
+        EditBookSkeleton { width: parent.width; count: 3; label: S.s_dang_tai_bai_khac_2c0e1ec8 }
     }
     InlineError {
         width: parent.width
         open: root.failed && !root.loading
-        message: "Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc."
+        message: S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_bai_n_acc346b4
         onRetry: root.load()
     }
     Collapse {
@@ -84,7 +85,7 @@ Column {
             Text {
                 width: parent.width
                 visible: root.alternatives.length === 0
-                text: "Không còn bài nào khác trong danh mục đủ hợp đoạn này."
+                text: S.s_khong_con_bai_nao_khac_trong_danh_muc_du_h_970fe053
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -93,7 +94,7 @@ Column {
         Column {
             width: parent.width
             spacing: 4
-            Text { text: "Nhạc của tôi"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium; Accessible.role: Accessible.Heading }
+            Text { text: S.s_nhac_cua_toi_f65b7ac6; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium; Accessible.role: Accessible.Heading }
             Repeater {
                 model: root.mine
                 StudioMusicTrackRow {
@@ -113,7 +114,7 @@ Column {
             Text {
                 width: parent.width
                 visible: root.mine.length === 0
-                text: root.remote ? "Chưa có bài nào. Thêm nhạc của bạn trên máy tính chủ sách." : "Chưa có bài nào - bấm “Thêm nhạc của bạn” ở đầu trang."
+                text: root.remote ? S.s_chua_co_bai_nao_them_nhac_cua_ban_tren_may_0f4b6b30 : S.s_chua_co_bai_nao_bam_them_nhac_cua_ban_o_da_dfd69e49
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall

@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { type QueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
 import { toast, toastDone } from "@/shared/toast";
@@ -24,30 +25,30 @@ export function applyWhen(
 
 /** Vế sau gạch nối, cho dòng "Đã ghi … - {vế}." trên thẻ và trên câu. */
 export const PENDING_NOTE: Record<ApplyWhen, string> = {
-  start: "dùng khi bắt đầu làm sách",
-  cast: "chờ phân vai xong",
-  running: "áp từ chương sau",
-  done: "bấm “Áp dụng thay đổi” ở đầu trang để áp",
-  paused: "chờ áp dụng khi sách chạy tiếp",
+  start: S.s_dung_khi_bat_dau_lam_sach_a665a71d,
+  cast: S.s_cho_phan_vai_xong_51f41859,
+  running: S.s_ap_tu_chuong_sau_8f2706c5,
+  done: S.s_bam_ap_dung_thay_doi_o_dau_trang_de_ap_fd47948b,
+  paused: S.s_cho_ap_dung_khi_sach_chay_tiep_6f0a3bc6,
 };
 
 /** Cuốn không có xưởng (mở từ file .abook): thay đổi chỉ được ghi lại, Studio mới đưa vào giọng đọc - nói thế, không nói "áp ở
  *  ranh giới chương" như dự án. */
-export const WAITING_STUDIO = "Đang chờ máy làm sách - giọng đọc chưa đổi gì. Lưu file thì thay đổi đi cùng; mở file bằng ABook Studio trên máy tính để áp.";
+export const WAITING_STUDIO = S.s_dang_cho_may_lam_sach_giong_doc_chua_doi_g_9b19e084;
 
 /** Lời hứa sau khi ghi một thay đổi chờ Studio. `holder`: cuốn tải từ máy khác (điện thoại, `caps.sync`) - tên máy ấy: thay đổi tự gửi sang và áp
  *  ngay ở đó (máy tính nhận vào chính sách ấy, không chờ ai duyệt), chỉ phần thu lại giọng chờ Studio trên máy ấy (soát a70: lời báo cũ bảo "mở
  *  file bằng Studio" với sách đã liên kết). Không có: `WAITING_STUDIO`. */
 export function waitingStudio(holder?: string | null): string {
   return holder
-    ? `Đã gửi sang ${holder}, áp ngay ở đó. Giọng đọc chưa đổi: Studio sẽ thu lại khi bạn mở dự án trên ${holder}.`
+    ? S.s_da_gui_sang_0_ap_ngay_o_do_giong_doc_chua_34b39879(holder, holder)
     : WAITING_STUDIO;
 }
 
 /** Câu đã thu được thu lại khi nào - vế cho dòng "N câu đã thu sẽ được thu lại …" của hộp sửa cách đọc, CÙNG lời hứa với `waitingStudio` (soát
  *  a70: hộp hứa "sẽ được thu lại" trong khi thông báo nói "giọng đọc chưa đổi gì"). */
 export function retakeWhen(holder?: string | null): string {
-  return holder ? `khi bạn mở dự án trên ${holder}` : "khi mở file bằng ABook Studio trên máy tính";
+  return holder ? S.s_khi_ban_mo_du_an_tren_0_9a3085b3(holder) : S.s_khi_mo_file_bang_abook_studio_tren_may_tin_42042d9b;
 }
 
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
@@ -103,14 +104,14 @@ export type UndoAnswer = { undone: number; restored: boolean; sent?: boolean };
 
 /** Thông báo sau khi hoàn tác - nói đúng điều đã xảy ra, không hứa hơn: lần bấm đã gửi sang máy giữ sách thì chưa chắc đã rút được. */
 export function undoToast(restored: boolean, sent: boolean, message?: string): [title: string, note?: string] {
-  if (sent) return ["Đã nhờ máy giữ sách rút lại", "Nếu máy ấy đã đưa vào sách, bạn sẽ thấy báo ở đây và cần chọn lại ở máy đó."];
-  return [restored ? "Đã hoàn tác - máy đọc lại theo cách cũ" : message ? `Đã hoàn tác. ${message}` : "Đã hoàn tác"];
+  if (sent) return [S.s_da_nho_may_giu_sach_rut_lai_e7afaa0b, S.s_neu_may_ay_da_dua_vao_sach_ban_se_thay_bao_8fd1a2d0];
+  return [restored ? S.s_da_hoan_tac_may_doc_lai_theo_cach_cu_15e82a15 : message ? S.s_da_hoan_tac_0_f514f778(message) : S.s_da_hoan_tac_2ef55fca];
 }
 
 /** `undoAction` cho lần bấm đã đi nhiều đường (sửa cách đọc câu kèm người mới: /line rồi /speaker): rút lần lượt từng bước, theo thứ tự đưa vào. */
 export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint: string; decision: Record<string, unknown> }[], message?: string) {
   return {
-    label: "Hoàn tác",
+    label: S.s_hoan_tac_e72ff675,
     onClick: () => {
       void (async () => {
         let done = 0;
@@ -129,7 +130,7 @@ export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint
           toastDone(...undoToast(restored, sent, message));
         } catch (error) {
           // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
-          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Chưa hoàn tác được", { description: (error as Error).message });
+          toast.error(done > 0 ? S.s_moi_hoan_tac_duoc_0_1_viec_208f7853(done, steps.length) : S.s_chua_hoan_tac_duoc_164b754b, { description: (error as Error).message });
         } finally {
           refreshAfterDecision(client, bookId);
         }

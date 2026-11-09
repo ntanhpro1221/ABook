@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "HistoryLogic.js" as History
 
@@ -6,7 +7,7 @@
 
 // Hộp "Nghe lại từ đầu (hồ sơ mới)" mở sẵn tên gợi ý
 function newDialog(book) {
-    return {kind: "create", name: "Lần nghe " + ((book.records || []).length + 1)}
+    return {kind: "create", name: S.s_lan_nghe_c5f2dfe8 + ((book.records || []).length + 1)}
 }
 
 function activeRecord(book) { return (book.records || []).filter(record => record.active)[0] }
@@ -21,23 +22,23 @@ function singleActions(book) {
     if (records.length !== 1) return []
     const name = records[0].name
     return [
-        {key: "create", label: "Hồ sơ mới", icon: "plus", dialog: newDialog(book)},
-        {key: "move", label: "Chuyển hồ sơ", icon: "arrow-right-left", dialog: {kind: "move", name: name}},
-        {key: "rename", label: "Đổi tên hồ sơ…", icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
-        {key: "delete", label: "Xoá hồ sơ…", icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
+        {key: "create", label: S.s_ho_so_moi_5dfda9aa, icon: "plus", dialog: newDialog(book)},
+        {key: "move", label: S.s_chuyen_ho_so_a1c66184, icon: "arrow-right-left", dialog: {kind: "move", name: name}},
+        {key: "rename", label: S.s_doi_ten_ho_so_502f480a, icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
+        {key: "delete", label: S.s_xoa_ho_so_e92ba944, icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
     ]
 }
 
 // Menu của nút "Hồ sơ nghe:" (nhiều hồ sơ): đầu menu một dòng giải thích, rồi mỗi hồ sơ, rồi bốn việc
-var PICKER_NOTE = "Mỗi hồ sơ giữ chỗ nghe, lịch sử riêng."
+var PICKER_NOTE = S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597
 function pickerActions(book) {
     const active = activeRecord(book)
     const name = active ? active.name : ""
     return [
-        {key: "create", label: "Hồ sơ mới", icon: "plus", dialog: newDialog(book)},
-        {key: "rename", label: "Đổi tên hồ sơ này…", icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
-        {key: "move", label: "Chuyển sang cuốn khác…", icon: "arrow-right-left", dialog: {kind: "move", name: name}},
-        {key: "delete", label: "Xoá hồ sơ này…", icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
+        {key: "create", label: S.s_ho_so_moi_5dfda9aa, icon: "plus", dialog: newDialog(book)},
+        {key: "rename", label: S.s_doi_ten_ho_so_nay_30b6b56f, icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
+        {key: "move", label: S.s_chuyen_sang_cuon_khac_b4a18454, icon: "arrow-right-left", dialog: {kind: "move", name: name}},
+        {key: "delete", label: S.s_xoa_ho_so_nay_9ab10243, icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
     ]
 }
 
@@ -46,32 +47,32 @@ function recordLine(book, record, now) {
     let where = ""
     if (record.last) {
         const found = (book.chapters || []).filter(chapter => chapter.id === record.last.chapterId)[0]
-        where = (found ? found.title : "Chương") + "\u00a0·\u00a0" + History.formatClock(record.last.seconds) + "\u00a0·\u00a0"
+        where = (found ? found.title : S.s_chuong_2d157977) + "\u00a0·\u00a0" + History.formatClock(record.last.seconds) + "\u00a0·\u00a0"
     }
-    return where + (record.updatedAt ? "nghe gần nhất " + History.dayLabel(record.updatedAt, now).toLowerCase() : "chưa nghe")
+    return where + (record.updatedAt ? S.s_nghe_gan_nhat_a3ee466b + History.dayLabel(record.updatedAt, now).toLowerCase() : S.s_chua_nghe_2d5b1cbe)
 }
 
 // ---- hộp thoại ------------------------------------------------------------------------------------------------------------
 function dialogTitle(dialog, active) {
     const name = active ? active.name : ""
-    if (dialog.kind === "create") return "Nghe lại từ đầu"
-    if (dialog.kind === "rename") return "Đổi tên hồ sơ"
-    if (dialog.kind === "move") return "Chuyển hồ sơ “" + name + "” sang cuốn khác"
-    return "Xoá hồ sơ “" + name + "”?"
+    if (dialog.kind === "create") return S.s_nghe_lai_tu_dau_e251d632
+    if (dialog.kind === "rename") return S.s_doi_ten_ho_so_92440dab
+    if (dialog.kind === "move") return S.s_chuyen_ho_so_7c2f34e0 + name + S.s_sang_cuon_khac_741d5ffa
+    return S.s_xoa_ho_so_6629c57a + name + "”?"
 }
 
 function dialogDescription(dialog, recordCount) {
-    if (dialog.kind === "create") return "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên."
+    if (dialog.kind === "create") return S.s_ho_so_moi_nghe_tu_dau_ho_so_cu_van_giu_ngu_38f1a4a4
     if (dialog.kind === "move")
-        return "Chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia." + (recordCount > 1 ? " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." : " Cuốn này sẽ như chưa nghe lần nào.")
+        return S.s_cho_nghe_lich_su_di_theo_ho_so_sang_cuon_k_f25e60d4 + (recordCount > 1 ? S.s_cuon_nay_chuyen_sang_ho_so_nghe_gan_nhat_c_93f8e93a : S.s_cuon_nay_se_nhu_chua_nghe_lan_nao_bae846d0)
     if (dialog.kind === "delete")
-        return "Chỗ nghe, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên"
-            + (recordCount > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào.")
+        return S.s_cho_nghe_lich_su_cua_ho_so_nay_mat_han_tre_d2b64d84
+            + (recordCount > 1 ? S.s_cuon_chuyen_sang_ho_so_nghe_gan_nhat_con_l_8cdb3e30 : S.s_day_la_ho_so_duy_nhat_nen_cuon_se_nhu_chua_75e8b48a)
     return ""
 }
 
 function confirmLabel(kind) {
-    return kind === "create" ? "Tạo và nghe" : kind === "delete" ? "Xoá hồ sơ" : kind === "move" ? "Chuyển" : "Lưu"
+    return kind === "create" ? S.s_tao_va_nghe_ee442c79 : kind === "delete" ? S.s_xoa_ho_so_38a06d83 : kind === "move" ? S.s_chuyen_c35a0ca1 : S.s_luu_e91f26c0
 }
 
 // Nút chính của hộp dùng được chưa: đổi tên cần tên, chuyển cần chọn cuốn nhận
@@ -100,11 +101,11 @@ function request(bookId, kind, active, dialog, record) {
 
 // Lời báo khi xong
 function doneMessage(kind, active, dialog, record) {
-    if (kind === "create") return "Hồ sơ mới “" + (String(dialog.name || "").trim() || "không tên") + "” - nghe từ chương đầu"
-    if (kind === "activate") return "Đang dùng hồ sơ “" + record.name + "”"
-    if (kind === "rename") return "Đã đổi tên hồ sơ"
-    if (kind === "delete") return "Đã xoá hồ sơ “" + active.name + "”"
-    return "Đã chuyển hồ sơ “" + active.name + "” sang “" + dialog.target.title + "”"
+    if (kind === "create") return S.s_ho_so_moi_73f39686 + (String(dialog.name || "").trim() || S.s_khong_ten_7a5bff7f) + S.s_nghe_tu_chuong_dau_88eab044
+    if (kind === "activate") return S.s_dang_dung_ho_so_179c4a9a + record.name + "”"
+    if (kind === "rename") return S.s_da_doi_ten_ho_so_543ec6a6
+    if (kind === "delete") return S.s_da_xoa_ho_so_25ce98d9 + active.name + "”"
+    return S.s_da_chuyen_ho_so_2348b1db + active.name + "” sang “" + dialog.target.title + "”"
 }
 
 // Chương đầu nghe được (nghe lại từ đầu bằng hồ sơ mới)

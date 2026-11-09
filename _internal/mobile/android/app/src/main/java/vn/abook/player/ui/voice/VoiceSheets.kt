@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import androidx.activity.compose.BackHandler
@@ -80,16 +82,16 @@ private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: Module
         if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))
         Spacer(Modifier.height(Dim.s8))
         if (choice.installed && status?.state == ModuleState.Outdated) {
-            MenuRow("Cập nhật (${formatSize(status.outdatedBytes)})", "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
+            MenuRow(S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes)), "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
         }
         if (choice.installed) {
             MenuRow(
-                if (status?.benchmarking == true) "Đang đo tốc độ" else "Thử lại tốc độ", "module_measure", unavailable = status?.benchmarking == true,
+                if (status?.benchmarking == true) S.s_dang_do_toc_do_d0876866 else S.s_thu_lai_toc_do_a69ef56d, "module_measure", unavailable = status?.benchmarking == true,
                 onClick = { voice.measure(kind); dismiss() },
             ) { ink -> RestartIcon(ink) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        MenuRow(if (choice.installed) "Gỡ giọng" else "Xoá phần đã tải", "module_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
+        MenuRow(if (choice.installed) S.s_go_giong_2f8014a9 else S.s_xoa_phan_da_tai_9f9ae26f, "module_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
     }
 }
 
@@ -100,10 +102,10 @@ private fun ModuleRemove(kind: ModuleKind, choice: ModuleChoice, voice: VoiceSta
     var problem by remember { mutableStateOf("") }
     val installed = choice.installed
     ConfirmPage(
-        if (installed) "Gỡ “${VoiceText.choiceTitle(choice)}” khỏi máy này?" else "Xoá phần đã tải?", "module_remove_confirm",
-        listOf(if (installed) VoiceText.REMOVE_ASK else "Phần đã tải dở sẽ bị xoá khỏi máy này."), problem,
+        if (installed) S.s_go_0_khoi_may_nay_be8d523b(VoiceText.choiceTitle(choice)) else S.s_xoa_phan_da_tai_0e3fd01a, "module_remove_confirm",
+        listOf(if (installed) VoiceText.REMOVE_ASK else S.s_phan_da_tai_do_se_bi_xoa_khoi_may_nay_4f5dc269), problem,
     ) {
-        DangerButton(if (working) (if (installed) "Đang gỡ" else "Đang xoá") else if (installed) "Gỡ giọng" else "Xoá phần đã tải", {
+        DangerButton(if (working) (if (installed) S.s_dang_go_eadfa314 else S.s_dang_xoa_71482e81) else if (installed) S.s_go_giong_2f8014a9 else S.s_xoa_phan_da_tai_9f9ae26f, {
             if (working) return@DangerButton
             working = true
             scope.launch {
@@ -114,17 +116,17 @@ private fun ModuleRemove(kind: ModuleKind, choice: ModuleChoice, voice: VoiceSta
             }
         }, "module_remove_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", onKeep, "module_remove_keep")
+        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "module_remove_keep")
     }
 }
 
 /** Tải một giọng khi máy đang dùng dữ liệu di động: nói cỡ cần tải, để bạn quyết ngay lúc bấm. */
 @Composable
 fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage("Dữ liệu di động", "metered_confirm", listOf(text), "") {
-        PrimaryButton("Vẫn tải", { onGo(); dismiss() }, Modifier.fillMaxWidth().testTag("metered_go"))
+    ConfirmPage(S.s_du_lieu_di_dong_7ba9c799, "metered_confirm", listOf(text), "") {
+        PrimaryButton(S.s_van_tai_b166c8ee, { onGo(); dismiss() }, Modifier.fillMaxWidth().testTag("metered_go"))
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Chờ Wi-Fi", dismiss, "metered_wait")
+        QuietButton(S.s_cho_wi_fi_60109e5c, dismiss, "metered_wait")
     }
 }
 
@@ -134,10 +136,10 @@ fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
  */
 @Composable
 fun ConsentPage(voiceName: String, provider: String, working: Boolean, onAllow: () -> Unit, onNo: () -> Unit) {
-    ConfirmPage("Giọng đọc trực tuyến", "consent_confirm", listOf(VoiceText.consent(voiceName, provider)), "") {
-        PrimaryButton(if (working) "Đang lưu" else "Đồng ý", { if (!working) onAllow() }, Modifier.fillMaxWidth().testTag("consent_yes"), enabled = !working)
+    ConfirmPage(S.s_giong_doc_truc_tuyen_44ae53c1, "consent_confirm", listOf(VoiceText.consent(voiceName, provider)), "") {
+        PrimaryButton(if (working) S.s_dang_luu_e93f245d else S.s_dong_y_1246fb97, { if (!working) onAllow() }, Modifier.fillMaxWidth().testTag("consent_yes"), enabled = !working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Không", onNo, "consent_no")
+        QuietButton(S.s_khong_5b3c9ba4, onNo, "consent_no")
     }
 }
 
@@ -201,7 +203,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
             val error = voice.saveKey(provider, key, region)
             work = KeyWork.None
             problem = error.orEmpty()
-            if (error == null) { key = ""; verdict = "Đã lưu khoá. Bấm “Kiểm tra” để thử." }
+            if (error == null) { key = ""; verdict = S.s_da_luu_khoa_bam_kiem_tra_de_thu_a21b7359 }
         }
     }
 
@@ -211,23 +213,23 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
             when (shown) {
                 KeyPage.Form -> Column(Modifier.fillMaxWidth().fadeEdges(form).verticalScroll(form)) {
                     BasicText(provider.name, style = Abook.type.sectionTitle)
-                    vn.abook.player.ui.components.MoreInfo("Nhận khoá", VoiceText.keyHelp(provider.id), "key_help")
-                    Caption(if (provider.timings == "exact") "Tô đúng từng chữ đang đọc." else "Tô từng chữ đang đọc theo ước lượng.")
+                    vn.abook.player.ui.components.MoreInfo(S.s_nhan_khoa_7ba3a705, VoiceText.keyHelp(provider.id), "key_help")
+                    Caption(if (provider.timings == "exact") S.s_to_dung_tung_chu_dang_doc_b0692da6 else S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b)
                     Spacer(Modifier.height(Dim.s16))
                     FieldGroup {
                         BookField(
-                            null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",
-                            placeholder = if (provider.hasKey) "Đã lưu ${provider.masked} - dán khoá mới để thay" else "Dán khoá của bạn",
+                            null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, S.s_khoa_0_7f56ecc3(provider.name),
+                            placeholder = if (provider.hasKey) S.s_da_luu_0_dan_khoa_moi_de_thay_1b8b024d(provider.masked) else S.s_dan_khoa_cua_ban_c390a2e9,
                             masked = !revealed,
-                            trailing = { TextAction(if (revealed) "Ẩn" else "Hiện", { revealed = !revealed }, "key_reveal") },
+                            trailing = { TextAction(if (revealed) S.s_an_9c7a6c2d else S.s_hien_79d3e7eb, { revealed = !revealed }, "key_reveal") },
                         )
                         if (provider.region) {
                             Spacer(Modifier.height(Dim.s8))
-                            BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, "Vùng", placeholder = "Vùng, ví dụ southeastasia")
+                            BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, S.s_vung_db826aa7, placeholder = S.s_vung_vi_du_southeastasia_959965a2)
                         }
                         Reveal(work == KeyWork.Checking) {
                             Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("key_checking")) {
-                                Caption("Đang kiểm tra")
+                                Caption(S.s_dang_kiem_tra_424c43e3)
                                 CreepProgress()
                             }
                         }
@@ -237,14 +239,14 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                         }
                         Spacer(Modifier.height(Dim.s24))
                         PrimaryButton(
-                            if (work == KeyWork.Saving) "Đang lưu" else "Lưu", ::save, Modifier.fillMaxWidth().testTag("key_save"),
+                            if (work == KeyWork.Saving) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, ::save, Modifier.fillMaxWidth().testTag("key_save"),
                             enabled = work == KeyWork.None && (key.isNotBlank() || (provider.region && region.trim() != provider.regionValue)),
                         )
                         Spacer(Modifier.height(Dim.s8))
-                        QuietButton("Kiểm tra", {
+                        QuietButton(S.s_kiem_tra_ff6e2891, {
                             if (work != KeyWork.None) return@QuietButton
                             if (key.isBlank() && !provider.hasKey) {
-                                problem = "Dán khoá trước đã."
+                                problem = S.s_dan_khoa_truoc_da_d88da35d
                             } else if (voice.allowed(provider.id)) {
                                 check()
                             } else {
@@ -254,10 +256,10 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     }
                     if (provider.hasKey) {
                         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
-                        MenuRow("Xoá khoá", "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
+                        MenuRow(S.s_xoa_khoa_2ec6cb1a, "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
                     }
                 }
-                KeyPage.Consent -> ConsentPage("này", provider.id, allowing, onAllow = {
+                KeyPage.Consent -> ConsentPage(S.s_nay_13127283, provider.id, allowing, onAllow = {
                     allowing = true
                     scope.launch {
                         voice.allow(provider.id)
@@ -278,10 +280,10 @@ private fun RemoveKeyPage(provider: KeyProvider, voice: VoiceState, dismiss: () 
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     ConfirmPage(
-        "Xoá khoá?", "key_remove_confirm",
-        listOf("Khoá ${provider.name} sẽ bị xoá khỏi máy này và các giọng của nó không còn trong danh sách."), problem,
+        S.s_xoa_khoa_4f5ee78b, "key_remove_confirm",
+        listOf(S.s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(provider.name)), problem,
     ) {
-        DangerButton(if (working) "Đang xoá" else "Xoá khoá", {
+        DangerButton(if (working) S.s_dang_xoa_71482e81 else S.s_xoa_khoa_2ec6cb1a, {
             if (working) return@DangerButton
             working = true
             scope.launch {
@@ -292,7 +294,7 @@ private fun RemoveKeyPage(provider: KeyProvider, voice: VoiceState, dismiss: () 
             }
         }, "key_remove_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", onKeep, "key_remove_keep")
+        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "key_remove_keep")
     }
 }
 
@@ -302,8 +304,8 @@ fun TrackSheet(track: MusicTrack, voice: VoiceState, dismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    ConfirmPage("Xoá bài này?", "track_confirm", listOf("“${track.title}” sẽ bị xoá khỏi Nhạc của tôi."), problem) {
-        DangerButton(if (working) "Đang xoá" else "Xoá bài", {
+    ConfirmPage(S.s_xoa_bai_nay_412d7001, "track_confirm", listOf(S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title)), problem) {
+        DangerButton(if (working) S.s_dang_xoa_71482e81 else S.s_xoa_bai_d554a496, {
             if (working) return@DangerButton
             working = true
             scope.launch {
@@ -314,6 +316,6 @@ fun TrackSheet(track: MusicTrack, voice: VoiceState, dismiss: () -> Unit) {
             }
         }, "track_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", dismiss, "track_keep")
+        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "track_keep")
     }
 }

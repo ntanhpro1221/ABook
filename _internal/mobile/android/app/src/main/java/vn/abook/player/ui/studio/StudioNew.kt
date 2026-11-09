@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -46,9 +48,9 @@ data class SourceRow(
 )
 
 enum class NewStep(val label: String) {
-    Source("Nguồn"),
-    Chapters("Chương"),
-    Start("Bắt đầu"),
+    Source(S.s_nguon_c76d57b3),
+    Chapters(S.s_chuong_2d157977),
+    Start(S.s_bat_dau_b3cacc46),
 }
 
 /** Phản hồi `POST /api/sources/upload`: thư mục và tham chiếu của file vừa tới máy tính. */
@@ -102,9 +104,9 @@ data class CreatedBook(val id: String, val queued: Int?)
 
 /** Ba mức chất lượng (web `PROFILES`): `key` là giá trị `profile` gửi máy tính. */
 enum class NewProfile(override val key: String, override val label: String, val summary: String) : Choice {
-    Fast("fast", "Nhanh", "Nghe thử một truyện mới, hoặc cần gấp."),
-    Balanced("balanced", "Cân bằng", "Nghe hằng ngày, chấp nhận vài câu chưa hoàn hảo."),
-    High("high_quality", "Chất lượng cao", "Sách nghe lại nhiều lần hoặc để chia sẻ."),
+    Fast("fast", S.s_nhanh_c2385879, S.s_nghe_thu_mot_truyen_moi_hoac_can_gap_7595a3d8),
+    Balanced("balanced", S.s_can_bang_8b88211d, S.s_nghe_hang_ngay_chap_nhan_vai_cau_chua_hoan_2bc0c77a),
+    High("high_quality", S.s_chat_luong_cao_dc7017a7, S.s_sach_nghe_lai_nhieu_lan_hoac_de_chia_se_c35352d9),
 }
 
 internal object StudioNewJson {
@@ -193,11 +195,11 @@ object StudioUpload {
                     if (read < 0) break
                     filled += read
                 }
-                if (filled < want) throw IOException("File ngắn hơn đã khai")
+                if (filled < want) throw IOException(S.s_file_ngan_hon_da_khai_39d732fb)
                 out.write(WebSocket.base64(if (filled == CHUNK) buffer else buffer.copyOf(filled)).toByteArray(Charsets.US_ASCII))
                 left -= filled
             }
-            if (source.read() >= 0) throw IOException("File dài hơn đã khai")
+            if (source.read() >= 0) throw IOException(S.s_file_dai_hon_da_khai_1a09b9d8)
         }
         out.write(TAIL)
     }
@@ -217,7 +219,7 @@ object StudioNewLogic {
 
     /** "Tải lên 05-10-2026 18h22 ab12": mỗi lần gửi một thư mục riêng (web `batchName`). */
     fun batchName(now: Calendar, tag: String): String = String.format(
-        Locale.ROOT, "Tải lên %02d-%02d-%d %02dh%02d %s",
+        Locale.ROOT, S.s_tai_len_02d_02d_d_02dh_02d_s_fdb3e442,
         now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.MONTH) + 1, now.get(Calendar.YEAR), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), tag,
     )
 
@@ -261,7 +263,7 @@ object StudioNewLogic {
         val approx = if (kept.any { it.estimated }) "~" else ""
         val words = kept.sumOf { it.words.toLong() }
         val seconds = kept.sumOf { it.audioSeconds }
-        return "${kept.size} chương · $approx${Fmt.number(words)} chữ · $approx${Fmt.length(seconds)} nghe"
+        return S.s_0_chuong_1_2_chu_3_4_nghe_8a32b477(kept.size, approx, Fmt.number(words), approx, Fmt.length(seconds))
     }
 
     /** Thân `POST /api/books` (web `useCreateBook`): giọng kể rỗng để máy chọn; mô hình rỗng = mặc định. */
@@ -283,62 +285,62 @@ object StudioNewLogic {
 }
 
 object StudioNewText {
-    const val TITLE = "Sách mới"
-    const val LEAD = "Chọn file truyện; máy tính đọc ra chương rồi làm sách nói."
-    const val PICK = "Chọn tệp"
-    const val PASTE = "Dán chữ"
-    const val PASTE_HINT = "Dán chữ truyện vào đây"
-    const val PASTE_ADD = "Thêm chữ này"
-    const val NEXT = "Tiếp"
-    const val BACK = "Quay lại"
-    const val CANCEL = "Huỷ"
-    const val RETRY = "Thử lại"
-    const val REMOVE = "Bỏ"
-    const val SCANNING = "Đang đọc nguồn"
-    const val NO_CHAPTER = "Chưa có chương nào"
-    const val NO_SOURCE = "Chưa có tệp nào"
-    const val LIMIT_NOTE = "Mỗi tệp tối đa 17 MB. Tệp lớn hơn thì chép vào máy tính rồi tạo sách ở đó."
-    const val SENT = "Đã gửi"
-    const val WAITING = "Đang chờ"
-    const val CHAPTERS_LEAD = "Bỏ chương không muốn đọc. Tên chương sửa sau ở trang dự án."
-    const val MATTER = "Trang phụ - chưa vào sách"
-    const val SPLIT_TITLE = "Tách chương"
-    const val SPLIT_NOTE = "File này gộp nhiều chương. Máy tính tách theo tiêu đề “Chương”; chữ không đổi."
-    const val EXISTING = "Đã có dự án làm từ những file này"
-    const val TITLE_LABEL = "Tên sách"
-    const val FIRST_PERSON = "Kể bằng “tôi”"
-    const val FIRST_PERSON_HINT = "Tên người xưng “tôi” giúp phân vai đúng lời thoại. Bỏ trống nếu truyện kể ngôi thứ ba."
-    const val FIRST_PERSON_PLACEHOLDER = "Tên người kể"
+    const val TITLE = S.s_sach_moi_099947f8
+    const val LEAD = S.s_chon_file_truyen_may_tinh_doc_ra_chuong_ro_4e2fdf23
+    const val PICK = S.s_chon_tep_7d0d2f7b
+    const val PASTE = S.s_dan_chu_97577200
+    const val PASTE_HINT = S.s_dan_chu_truyen_vao_day_b8161d6c
+    const val PASTE_ADD = S.s_them_chu_nay_22473ddc
+    const val NEXT = S.s_tiep_6e2dd224
+    const val BACK = S.s_quay_lai_6d793582
+    const val CANCEL = S.s_huy_96732485
+    const val RETRY = S.s_thu_lai_c58d068c
+    const val REMOVE = S.s_bo_e07d3f4d
+    const val SCANNING = S.s_dang_doc_nguon_86787498
+    const val NO_CHAPTER = S.s_chua_co_chuong_nao_35e56dd1
+    const val NO_SOURCE = S.s_chua_co_tep_nao_7aee9d48
+    const val LIMIT_NOTE = S.s_moi_tep_toi_da_17_mb_tep_lon_hon_thi_chep_0abd75a7
+    const val SENT = S.s_da_gui_bfc50557
+    const val WAITING = S.s_dang_cho_4257d45b
+    const val CHAPTERS_LEAD = S.s_bo_chuong_khong_muon_doc_ten_chuong_sua_sa_0a16128d
+    const val MATTER = S.s_trang_phu_chua_vao_sach_4484484b
+    const val SPLIT_TITLE = S.s_tach_chuong_2f1df570
+    const val SPLIT_NOTE = S.s_file_nay_gop_nhieu_chuong_may_tinh_tach_th_3a6f68aa
+    const val EXISTING = S.s_da_co_du_an_lam_tu_nhung_file_nay_dc6be32b
+    const val TITLE_LABEL = S.s_ten_sach_d54846eb
+    const val FIRST_PERSON = S.s_ke_bang_toi_59086487
+    const val FIRST_PERSON_HINT = S.s_ten_nguoi_xung_toi_giup_phan_vai_dung_loi_3b1dc462
+    const val FIRST_PERSON_PLACEHOLDER = S.s_ten_nguoi_ke_d492ccfb
     /** Dòng nhắc cuối bước Bắt đầu và lời gập "Vì sao?" của nó (web: StartNotes ở NewProjectScreen.tsx; phân tích không nên bị ngắt - AGENTS.md). Thiếu "Thời gian tham khảo": điện thoại chưa có số ước. */
-    const val PAUSE_NOTE = "Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng."
-    const val PAUSE_WHY = "Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục."
-    const val QUALITY = "Chất lượng"
-    const val MODEL = "Bộ phân tích truyện"
-    const val MODEL_DEFAULT = "Mặc định của ABook"
-    const val MODEL_HINT = "Chỉ chọn bản khác khi muốn thử trên cuốn này."
-    const val WAIT = "Duyệt trước khi thu"
-    const val WAIT_HINT = "Phân tích xong thì dừng để bạn duyệt trước khi thu."
-    const val START_NOW = "Bắt đầu ngay"
-    const val START_NOW_HINT = "Tắt thì sách chờ ở trang dự án."
-    const val CREATE = "Bắt đầu"
-    const val CREATING = "Đang tạo sách"
-    const val CREATE_FAILED = "Chưa tạo được sách"
+    const val PAUSE_NOTE = S.s_dang_phan_tich_ma_can_nghi_hay_dung_tam_du_ddbf5b3d
+    const val PAUSE_WHY = S.s_dung_tat_may_cho_may_ngu_hoac_bam_dung_tro_98270a3d
+    const val QUALITY = S.s_chat_luong_a12ed26c
+    const val MODEL = S.s_bo_phan_tich_truyen_9a52f60b
+    const val MODEL_DEFAULT = S.s_mac_dinh_cua_abook_2fc069a4
+    const val MODEL_HINT = S.s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b
+    const val WAIT = S.s_duyet_truoc_khi_thu_74c121d0
+    const val WAIT_HINT = S.s_phan_tich_xong_thi_dung_de_ban_duyet_truoc_ef1d1c40
+    const val START_NOW = S.s_bat_dau_ngay_281893c7
+    const val START_NOW_HINT = S.s_tat_thi_sach_cho_o_trang_du_an_8bf1fc51
+    const val CREATE = S.s_bat_dau_b3cacc46
+    const val CREATING = S.s_dang_tao_sach_cb293b07
+    const val CREATE_FAILED = S.s_chua_tao_duoc_sach_2d0ce411
 
     /** Máy đoán người kể "tôi" (web: MoreInfo "Máy đoán" của NewProjectScreen.tsx). */
     fun firstPersonGuess(hint: FirstPersonView): String =
         (if (hint.firstPerson) {
-            if (hint.chaptersSampled > 0 && hint.chaptersWithI > 0) "${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có lời kể xưng “tôi”."
-            else "${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”."
-        } else "Chọn nhân vật xưng “tôi” trong lời kể.") + " Bạn có thể sửa gợi ý này."
+            if (hint.chaptersSampled > 0 && hint.chaptersWithI > 0) S.s_0_1_chuong_dau_co_loi_ke_xung_toi_6b41741b(hint.chaptersWithI, hint.chaptersSampled)
+            else S.s_0_doan_loi_ke_co_toi_b16efe53(Math.round(hint.rate * 100))
+        } else S.s_chon_nhan_vat_xung_toi_trong_loi_ke_d47a6c20) + S.s_ban_co_the_sua_goi_y_nay_ffd074da
 
-    fun tooBig(name: String, size: Long) = "$name (${formatSize(size)}) lớn hơn 17 MB nên không gửi qua mạng được. Chép tệp vào máy tính rồi tạo sách ở đó."
-    fun notStory(name: String) = "$name không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf."
-    fun stepOf(step: NewStep) = "Bước ${step.ordinal + 1}/${NewStep.entries.size}"
-    fun sending(row: SourceRow) = "Đang gửi ${row.name}"
+    fun tooBig(name: String, size: Long) = S.s_0_1_lon_hon_17_mb_nen_khong_gui_qua_mang_d_a6a5b496(name, formatSize(size))
+    fun notStory(name: String) = S.s_0_khong_phai_file_truyen_chi_nhan_txt_epub_291c54f4(name)
+    fun stepOf(step: NewStep) = S.s_buoc_0_1_b5e91411(step.ordinal + 1, NewStep.entries.size)
+    fun sending(row: SourceRow) = S.s_dang_gui_0_94b8fa7c(row.name)
     fun percent(fraction: Float) = "${(fraction * 100).toInt().coerceIn(0, 100)}%"
-    fun splitAsk(chapters: Int) = "Tách thành $chapters chương"
-    fun uploadFailed(name: String, reason: String) = "Chưa gửi được $name. $reason".trim()
-    fun queued(position: Int) = "Vào hàng chờ, còn ${position - 1} việc trước"
+    fun splitAsk(chapters: Int) = S.s_tach_thanh_0_chuong_52d289de(chapters)
+    fun uploadFailed(name: String, reason: String) = S.s_chua_gui_duoc_0_1_8707b2e4(name, reason).trim()
+    fun queued(position: Int) = S.s_vao_hang_cho_con_0_viec_truoc_2e6d0611(position - 1)
 }
 
 /**
@@ -448,7 +450,7 @@ class StudioNewState(
     fun addText(text: String) {
         val bytes = text.trim().toByteArray(Charsets.UTF_8)
         if (bytes.isEmpty()) return
-        add(listOf(PickedFile("Chữ dán.txt", bytes.size.toLong()) { bytes.inputStream() }))
+        add(listOf(PickedFile(S.s_chu_dan_txt_a315e6cf, bytes.size.toLong()) { bytes.inputStream() }))
     }
 
     /** Bỏ một hàng: đang gửi thì dừng giữa chừng (luồng đọc ngắt) rồi bỏ. */
@@ -536,7 +538,7 @@ class StudioNewState(
         }
 
         private fun count(read: Int) {
-            if (stop()) throw IOException("Đã huỷ")
+            if (stop()) throw IOException(S.s_da_huy_5014a7d6)
             total += read
             onTotal(total)
         }

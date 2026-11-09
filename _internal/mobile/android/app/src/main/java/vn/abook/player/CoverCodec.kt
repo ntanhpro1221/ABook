@@ -42,16 +42,16 @@ object Covers {
         return (width / scale).toLong() * (height / scale)
     }
 
-    fun tooManyPixels() = CoverCodec.CoverError("Ảnh vượt ${MAX_PIXELS / 1_000_000} triệu điểm ảnh — bạn thu nhỏ rồi thử lại.")
+    fun tooManyPixels() = CoverCodec.CoverError(S.s_anh_vuot_0_trieu_diem_anh_ban_thu_nho_roi_fa09978f(MAX_PIXELS / 1_000_000))
 
-    fun tooLarge() = CoverCodec.CoverError("Ảnh quá lớn (tối đa ${MAX_UPLOAD_BYTES / (1 shl 20)} MB)")
+    fun tooLarge() = CoverCodec.CoverError(S.s_anh_qua_lon_toi_da_0_mb_473c3cc1(MAX_UPLOAD_BYTES / (1 shl 20)))
 
     /** Byte của ảnh trong một data URL (PNG, JPEG, WebP, GIF, BMP) - `covers._decode`; lỗi thì [CoverCodec.CoverError]. */
     fun decodeDataUrl(dataUrl: String): ByteArray {
         val match = DATA_URL.matchEntire(dataUrl.trim { it.isWhitespace() || Character.isSpaceChar(it) })
-            ?: throw CoverCodec.CoverError("Chỉ nhận ảnh PNG, JPEG, WebP, GIF hoặc BMP")
+            ?: throw CoverCodec.CoverError(S.s_chi_nhan_anh_png_jpeg_webp_gif_hoac_bmp_d0d69c24)
         val raw = base64(match.groupValues[2].filterNot { it.isWhitespace() || Character.isSpaceChar(it) })
-            ?: throw CoverCodec.CoverError("Dữ liệu ảnh bị hỏng")
+            ?: throw CoverCodec.CoverError(S.s_du_lieu_anh_bi_hong_9a3fb1f6)
         if (raw.size > MAX_UPLOAD_BYTES) throw tooLarge()
         return raw
     }

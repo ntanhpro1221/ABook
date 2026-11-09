@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -11,7 +12,7 @@ Item {
     property var book: ({})
     property string layoutKind: "wide"          // "wide" | "mid" | "stacked"
     property bool local: true                   // false: Studio từ xa - khôi phục / xoá chỉ làm được trên máy tính
-    property string computer: "máy tính"
+    property string computer: S.s_may_tinh_8eafc226
     property bool menuOpen: false
     signal opened()
     signal menuRequested(Item anchor)
@@ -120,7 +121,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     value: root.book.progress ? root.book.progress.overall : 0
                     tone: root.live ? "accent" : "muted"
-                    label: "Tiến độ: " + (root.book.title || "")
+                    label: S.s_tien_do_515e1f3f + (root.book.title || "")
                 }
                 Text {
                     objectName: "projectPercent"
@@ -174,7 +175,7 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            Accessible.name: "Tuỳ chọn dự án " + (root.book.title || "")
+            Accessible.name: S.s_tuy_chon_du_an_f619cf04 + (root.book.title || "")
             opacity: root.moreShown ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
             onClicked: root.menuRequested(more)
@@ -215,18 +216,18 @@ Item {
             y: 10 - 2
             spacing: 4
             // Đang bị chương trình khác giữ (diệt virus, sao lưu): KHÔNG phải hỏng - chỉ Thử lại / Mở thư mục, không mời xoá
-            IconButton { objectName: "brokenRetry"; visible: root.busy; width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: "Thử lại"; Accessible.name: "Thử lại"; onClicked: root.retried() }
-            IconButton { objectName: "brokenReveal"; visible: root.busy && root.local; width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: "Mở thư mục"; Accessible.name: "Mở thư mục"; onClicked: root.revealRequested() }
+            IconButton { objectName: "brokenRetry"; visible: root.busy; width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_thu_lai_c58d068c; Accessible.name: S.s_thu_lai_c58d068c; onClicked: root.retried() }
+            IconButton { objectName: "brokenReveal"; visible: root.busy && root.local; width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_mo_thu_muc_4bf5b127; Accessible.name: S.s_mo_thu_muc_4bf5b127; onClicked: root.revealRequested() }
             IconButton {
                 id: brokenMore
                 objectName: "projectMore"
                 visible: !root.busy && root.local
                 width: 32; height: 32; icon: "ellipsis"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text
-                Accessible.name: "Tuỳ chọn dự án " + (root.book.title || "")
+                Accessible.name: S.s_tuy_chon_du_an_f619cf04 + (root.book.title || "")
                 onClicked: root.menuRequested(brokenMore)
             }
             // Studio từ xa: khôi phục, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để chỗ trống
-            OnComputerPill { objectName: "brokenOnComputer"; visible: !root.busy && !root.local; verb: "Khôi phục hoặc xoá"; computer: root.computer; maxWidth: 260 }
+            OnComputerPill { objectName: "brokenOnComputer"; visible: !root.busy && !root.local; verb: S.s_khoi_phuc_hoac_xoa_9cc4c06f; computer: root.computer; maxWidth: 260 }
         }
     }
 }

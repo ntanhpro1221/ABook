@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { Clapperboard, Clock, Download, Library, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -37,7 +38,7 @@ function Brand() {
           <span className="h-[10px] w-[3px] rounded-full bg-current" />
         </span>
       </div>
-      <div className="text-[0.9375rem] font-bold tracking-tight">ABook</div>
+      <div className="text-[0.9375rem] font-bold tracking-tight">{S.s_abook_1c37d334}</div>
     </div>
   );
 }
@@ -104,7 +105,7 @@ export function Producing() {
     .sort((a, b) => (a.queuePosition ?? 0) - (b.queuePosition ?? 0));
   return (
     <MotionRegion className="ml-3 space-y-1" motionKey={[isLoading, isError && !data, live.length > 3]}>
-      {isLoading ? <ContentSkeleton count={2} label="Đang tải tiến độ" className="px-2 py-3" /> : isError && !data ? <InlineError message="Bạn hãy thử tải lại tiến độ." onRetry={() => void refetch()} /> : null}
+      {isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_tien_do_447cd8d8} className="px-2 py-3" /> : isError && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_tien_do_9dfda88d} onRetry={() => void refetch()} /> : null}
       <AnimatedRows className="mt-2" items={live.slice(0, 3)} keyOf={(book) => book.id}>{(book) => (
         <button
           key={book.id}
@@ -116,21 +117,21 @@ export function Producing() {
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-control" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-1.5 text-xs font-medium">
-              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center [--icon-w:0.75rem] mt-line-icon">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
-                <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
+              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center [--icon-w:0.75rem] mt-line-icon">{book.queuePosition != null ? <Clock className="size-3" aria-label={S.s_dang_cho_0_e941f562(book.queuePosition)} /> : book.paused || book.stopping ? (
+                <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? S.s_dang_dung_9b35aeb5 : S.s_dang_tam_dung_e40cc1b7} />
               ) : (
                 <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" />
               )}</MotionRegion>
               <span className="min-w-0 break-words">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
-              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2"><span data-motion-live>{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
+              <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={S.s_tien_do_0_bebc77d0(book.title)} />
+              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2"><span data-motion-live>{book.queuePosition != null ? S.s_cho_8de7e9a5 : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
             </div>
           </div>
         </button>
       )}</AnimatedRows>
-      <MotionPresence open={live.length > 3}><Link to="/studio" className="sidebar-link flex min-h-8 items-center px-2 text-xs text-accent-text" onClick={() => setExpanded(false)}>Xem tất cả</Link></MotionPresence>
+      <MotionPresence open={live.length > 3}><Link to="/studio" className="sidebar-link flex min-h-8 items-center px-2 text-xs text-accent-text" onClick={() => setExpanded(false)}>{S.s_xem_tat_ca_44aeb8cb}</Link></MotionPresence>
     </MotionRegion>
   );
 }
@@ -151,42 +152,36 @@ export function UpdateNotice() {
     >
       <Download className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.8125rem] font-semibold">Có ABook {info.update.version}</span>
-        <span className="block text-xs text-fg-2">Bấm để cập nhật</span>
+        <span className="block truncate text-[0.8125rem] font-semibold">{S.s_co_abook_39ccc742}{info.update.version}</span>
+        <span className="block text-xs text-fg-2">{S.s_bam_de_cap_nhat_2f1cdcf0}</span>
       </span>
     </MotionRegion>
   )}</MotionPresence>;
 }
 
 const TITLES: [RegExp, string][] = [
-  [/^\/$/, "Thư viện"],
-  [/^\/book\//, "Sách"],
-  [/^\/studio\/new/, "Tạo sách nói"],
-  [/^\/studio\/.+/, "Dự án"],
-  [/^\/studio$/, "Studio"],
-  [/^\/settings/, "Cài đặt"],
+  [/^\/$/, S.s_thu_vien_58145555],
+  [/^\/book\//, S.s_sach_0c2b3e9b],
+  [/^\/studio\/new/, S.s_tao_sach_noi_ab873c7a],
+  [/^\/studio\/.+/, S.s_du_an_4f139d43],
+  [/^\/studio$/, S.s_studio_0aa91af2],
+  [/^\/settings/, S.s_cai_dat_202e0e9b],
 ];
 
 export function DesktopSidebar({ listenOnly = false, collapsed = false }: { listenOnly?: boolean; collapsed?: boolean }) {
   return (
-    <aside aria-label="Thanh bên" className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
+    <aside aria-label={S.s_thanh_ben_17489268} className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
       <div data-sidebar-brand><Brand /></div>
-      <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
-        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")} collapsed={collapsed}>
-          Thư viện
-        </NavItem>
+      <nav aria-label={S.s_dieu_huong_chinh_84d2467a} className="mt-8 space-y-2">
+        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")} collapsed={collapsed}>{S.s_thu_vien_58145555}</NavItem>
         <MotionPresence open={!listenOnly}>
-          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")} collapsed={collapsed}>
-            Studio
-          </NavItem>
+          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")} collapsed={collapsed}>{S.s_studio_0aa91af2}</NavItem>
           <div data-sidebar-extra><Producing /></div>
         </MotionPresence>
       </nav>
       <div className="mt-auto pt-8">
         <div data-sidebar-extra><UpdateNotice /></div>
-        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")} collapsed={collapsed}>
-          Cài đặt
-        </NavItem>
+        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")} collapsed={collapsed}>{S.s_cai_dat_202e0e9b}</NavItem>
       </div>
     </aside>
   );
@@ -255,11 +250,9 @@ export function Shell({ children }: { children: ReactNode }) {
           type="button"
           onClick={() => main.current?.focus()}
           className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
-        >
-          Tới nội dung
-        </button>
+        >{S.s_toi_noi_dung_501e7d8d}</button>
       )}
-      <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
+      <TitleBar toggle={<IconButton size="sm" label={collapsed ? S.s_mo_rong_ctrl_b_5f11a976 : S.s_thu_gon_ctrl_b_931db193} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       <ShortcutsHost remote={remote} />
       <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />
       <div ref={content} className="desktop-content relative flex min-w-0 flex-1 flex-col">
@@ -276,20 +269,14 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="contents" inert={expanded}>
           <PlayerBar compact={compactBar} notices extra={remote ? undefined : <HandOffButton />} />
         </div>
-        <nav aria-label="Điều hướng" inert={expanded} className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
-          <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
-            Thư viện
-          </TabItem>
+        <nav aria-label={S.s_dieu_huong_9dc4e6eb} inert={expanded} className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
+          <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>{S.s_thu_vien_58145555}</TabItem>
           <MotionRegion className={cn("flex min-w-0 overflow-hidden transition-[flex-grow] duration-(--motion-medium) [&>a]:flex-1", listenOnly ? "flex-[0]" : "flex-1")} motionKey={listenOnly}>
           {!listenOnly && (
-            <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>
-              Studio
-            </TabItem>
+            <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>{S.s_studio_0aa91af2}</TabItem>
           )}
           </MotionRegion>
-          <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
-            Cài đặt
-          </TabItem>
+          <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>{S.s_cai_dat_202e0e9b}</TabItem>
         </nav>
         {/* Cùng nút "Phát trên thiết bị khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
         <NowPlaying mobile={phoneWidth} stacked={stackedPlayer} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} edit={readerEditing(info)} />

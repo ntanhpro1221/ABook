@@ -20,7 +20,7 @@ class OrtClapTower(private val model: File, private val threads: Int = min4(Runt
     private val lock = Any()
 
     override fun embed(logMel: FloatArray): DoubleArray = synchronized(lock) {
-        require(logMel.size == MusicMel.FRAMES * MusicMel.N_MELS) { "log-mel sai cỡ" }
+        require(logMel.size == MusicMel.FRAMES * MusicMel.N_MELS) { S.s_log_mel_sai_co_12c42bad }
         val environment = OrtEnvironment.getEnvironment()
         val active = session ?: environment.createSession(model.absolutePath, OrtSession.SessionOptions().apply {
             setIntraOpNumThreads(threads)

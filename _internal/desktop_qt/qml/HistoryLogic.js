@@ -1,3 +1,4 @@
+.import "UiStrings.js" as S
 .pragma library
 .import "CastLogic.js" as Cast
 .import "EditBookLogic.js" as Edit
@@ -6,7 +7,7 @@
 // "chương đã gỡ". Chữ giữ đúng từng chữ của bản web. `now` (mili giây) truyền vào để thử được; không truyền thì giờ máy.
 
 var DAY = 86400
-<removed>
+var WEEKDAYS = [S.s_chu_nhat_f8b05b5c, S.s_thu_hai_419e6e2f, S.s_thu_ba_af3bd17a, S.s_thu_tu_c906ba01, S.s_thu_nam_196d63b5, S.s_thu_sau_d2123ee5, S.s_thu_bay_c8024d2b]
 
 function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() }
 
@@ -15,8 +16,8 @@ function dayLabel(epoch, now) {
     const date = new Date(epoch * 1000)
     const today = new Date(now === undefined ? Date.now() : now)
     const days = Math.round((startOfDay(today) - startOfDay(date)) / 86400000)
-    if (days === 0) return "Hôm nay"
-    if (days === 1) return "Hôm qua"
+    if (days === 0) return S.s_hom_nay_e6747a82
+    if (days === 1) return S.s_hom_qua_89bca9be
     return WEEKDAYS[date.getDay()] + ", " + date.getDate() + "/" + (date.getMonth() + 1)
 }
 
@@ -40,7 +41,7 @@ function headline(item) { return timeRange(item) + "\u00a0·\u00a0" + formatLeng
 
 function titleOf(chapters, chapterId) {
     const found = (chapters || []).filter(chapter => chapter.id === chapterId)[0]
-    return found ? found.title : "chương đã gỡ"
+    return found ? found.title : S.s_chuong_da_go_d391d2d1
 }
 
 // "Chương 3 12:04 → Chương 4 0:20"
@@ -49,7 +50,7 @@ function where(item, chapters) {
 }
 
 // Nút nhảy tới CUỐI phiên nghe ấy
-function resumeLabel(item) { const at = formatClock(item.to.seconds); return "Nghe tiếp từ " + at }
+function resumeLabel(item) { const at = formatClock(item.to.seconds); return S.s_nghe_tiep_tu_b61da900 + at }
 
 // Số giây nghe trong 7 ngày qua
 function weekListened(sessions, now) {
@@ -69,4 +70,4 @@ function groupByDay(sessions, now) {
     return groups
 }
 
-function groupSummary(group) { return group.items.length + " lượt nghe" }
+function groupSummary(group) { return group.items.length + S.s_luot_nghe_8034dd0c }

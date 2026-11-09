@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AudioFxPanel } from './AudioFxPanel';
@@ -91,12 +92,12 @@ export function speedLabel(rate: number): string {
 }
 
 /** Tên nút Tốc độ / Giọng đọc kèm giá trị đang dùng: tên nút (aria-label) đè chữ thấy trên nút, nên phải tự mang giá trị - trước đây trình đọc màn
- *  hình chỉ nghe "Tốc độ đọc", "Giọng đọc" (soát a67). */
+ *  hình chỉ nghe S.s_toc_do_doc_3657e59d, S.s_giong_doc_11f2548d (soát a67). */
 export function speedButtonLabel(rate: number): string {
-  return `Tốc độ đọc: ${speedLabel(rate)}`;
+  return S.s_toc_do_doc_0_4a84900f(speedLabel(rate));
 }
 export function voiceButtonLabel(name: string | undefined): string {
-  return name ? `Giọng đọc: ${spokenVoiceName(name)}` : "Giọng đọc";
+  return name ? S.s_giong_doc_0_270101d9(spokenVoiceName(name)) : S.s_giong_doc_11f2548d;
 }
 
 
@@ -122,7 +123,7 @@ export function sentenceAt(script: Script | undefined, seconds: number): string 
 
 // Thanh tua / âm lượng nhỏ chỉ cao 14 px: vùng bấm nới (::after của chính thanh - bấm vào đó là bấm vào thanh) thành 24 px, phần lớn
 // dồn xuống dưới để không lấn nút phát ngay bên trên (soát a31, 2.5.8).
-/** Màn "Đang nghe" là lớp absolute inset-0: nó phủ cả phần padding biên an toàn của khung cha (android/App.tsx), nên tự chừa biên - nền màu
+/** Màn S.s_dang_nghe_9310d8cf là lớp absolute inset-0: nó phủ cả phần padding biên an toàn của khung cha (android/App.tsx), nên tự chừa biên - nền màu
  *  bìa vẫn tràn dưới thanh trạng thái, còn nút thì không (soát máy ảo C1: nút "…" nằm dưới thanh trạng thái). Bảng trượt đang mở đã
  *  chừa biên dưới (Sheet), nên khi ấy khỏi chừa lần nữa. */
 const SAFE_FRAME = "pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]";
@@ -142,7 +143,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
   // Vị trí không bao giờ vượt độ dài (soát UX a9: "1:00" trên thanh dài "0:59" - giờ phát đã làm tròn lên trước khi độ dài kịp cập nhật).
   const clamped = duration > 0 ? Math.min(shown, duration) : shown;
   const onKeyDown = (event: ReactKeyboardEvent) => {
-    // Bàn phím trên thanh tua đi theo đúng bước của trình phát (15 giây), không qua trạng thái "đang kéo".
+    // Bàn phím trên thanh tua đi theo đúng bước của trình phát (15 giây), không qua trạng thái S.s_copy_4c7d709b0e46.
     const steps: Record<string, () => void> = {
       ArrowLeft: () => skip(-SKIP_SECONDS),
       ArrowDown: () => skip(-SKIP_SECONDS),
@@ -186,7 +187,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
           <Slider.Range className={cn("absolute h-full rounded-full", large ? "bg-accent" : "bg-fg group-hover:bg-accent")} />
         </Slider.Track>
         <Slider.Thumb
-          aria-label="Vị trí trong chương"
+          aria-label={S.s_vi_tri_trong_chuong_2f741c43}
           // Đọc đúng như chữ trên thanh: "12:30 / 45:00" (vị trí / độ dài chương).
           aria-valuetext={`${formatClock(clamped)} / ${formatClock(duration)}`}
           className={cn(
@@ -201,7 +202,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
           <TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue>
         </div>
       ) : (
-        // Thời gian còn lại THẬT ở tốc độ đang nghe (như màn "Đang nghe" ghi "6 phút ở 1,5×") - soát UX 29-09.
+        // Thời gian còn lại THẬT ở tốc độ đang nghe (như màn S.s_dang_nghe_9310d8cf ghi S.s_copy_3674d38cc1fc) - soát UX 29-09.
         <span className="tabular w-12 shrink-0 text-xs text-fg-2"><TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue></span>
       )}
     </div>
@@ -265,13 +266,13 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
     <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1",
       // getBBox + nửa nét: ⏮ / ⏭ cách mép ô 2/24, nên bề rộng mực là 20/24 ô glyph-20.
       large && chapters && "[--slot-end:calc(var(--slot)*20/24)] [--slot-start:calc(var(--slot)*20/24)]")}>
-      {chapters && <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
-      <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={large ? Back15 : Back15Mini} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
+      {chapters && <IconButton label={withShortcut(S.s_chuong_truoc_4750f9e9, "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
+      <IconButton label={withShortcut(S.s_lui_0_giay_718bdd89(SKIP_SECONDS), "←")} icon={large ? Back15 : Back15Mini} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
         type="button"
         onClick={withFeedback("playPause", toggle)}
         {...keepFocus}
-        // Đang chờ đoạn đầu: nói đang chờ gì, không nói "Tạm dừng" khi chưa có tiếng nào (bấm vẫn là thôi chờ).
+        // Đang chờ đoạn đầu: nói đang chờ gì, không nói S.s_tam_dung_67635815 khi chưa có tiếng nào (bấm vẫn là thôi chờ).
         aria-label={toggleLabel(playing, buffering, speaking)}
         aria-busy={waiting || undefined}
         aria-keyshortcuts="Space"
@@ -292,7 +293,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
           <Play className={cn(large ? "size-8" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
         )}</MotionRegion>
       </button>
-      <IconButton label={withShortcut(`Tới ${SKIP_SECONDS} giây`, "→")} icon={large ? Forward15 : Forward15Mini} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
+      <IconButton label={withShortcut(S.s_toi_0_giay_84234225(SKIP_SECONDS), "→")} icon={large ? Forward15 : Forward15Mini} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
       {chapters && <IconButton
         label={nextChapterLabel(hasNext, hasLater)}
@@ -352,11 +353,11 @@ export function MenuShell({
   children: ReactNode;
   active?: boolean;
   width?: string;
-  /** Khi mở, đưa tiêu điểm tới phần tử khớp (lựa chọn đang áp dụng) thay vì phần tử đầu tiên - viền tiêu điểm ở nút đầu trông như "đang chọn". */
+  /** Khi mở, đưa tiêu điểm tới phần tử khớp (lựa chọn đang áp dụng) thay vì phần tử đầu tiên - viền tiêu điểm ở nút đầu trông như S.s_copy_d4a85bafdad9. */
   focusSelector?: string;
-  /** Tên của hộp khi mở (trình đọc màn hình đọc khi tiêu điểm vào hộp); mặc định theo nút. Nút đổi chữ theo trạng thái ("Tắt sau 4 phút") thì hộp giữ tên cố định. */
+  /** Tên của hộp khi mở (trình đọc màn hình đọc khi tiêu điểm vào hộp); mặc định theo nút. Nút đổi chữ theo trạng thái (S.s_copy_bb0eec5b08ae) thì hộp giữ tên cố định. */
   dialogLabel?: string;
-  /** Hộp do bên ngoài mở được (nút "Chọn giọng khác" ở lời báo lỗi giọng); bỏ trống thì hộp tự quản. */
+  /** Hộp do bên ngoài mở được (nút S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng); bỏ trống thì hộp tự quản. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -422,7 +423,7 @@ export function MenuShell({
             current.focus();
           }}
           aria-label={dialogLabel ?? label}
-          // Mũi tên đi giữa các nút trong bảng như menu "Tuỳ chọn khác" (soát a67: chỉ Tab).
+          // Mũi tên đi giữa các nút trong bảng như menu S.s_copy_b29e3c6b335b (soát a67: chỉ Tab).
           onKeyDown={menuArrowKeys}
           // Không bao giờ cao hơn chỗ còn lại của màn (điện thoại 375x812: danh sách nhạc / giọng từng tràn đáy): phần dài cuộn trong hộp.
           className={cn(
@@ -448,16 +449,16 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
   return (
     <MenuShell
       label={speedButtonLabel(rate)}
-      dialogLabel="Tốc độ đọc"
+      dialogLabel={S.s_toc_do_doc_3657e59d}
       active={rate !== 1}
       triggerKey={rate}
       focusSelector="[data-current-choice]"
       look={look}
-      caption="Tốc độ"
-      // Nút có nhãn của màn Đang nghe: chính con số là biểu tượng ("1,15×"), nhãn "Tốc độ" ở dưới.
+      caption={S.s_toc_do_16ee0914}
+      // Nút có nhãn của màn Đang nghe: chính con số là biểu tượng ("1,15×"), nhãn S.s_toc_do_16ee0914 ở dưới.
       trigger={look === "action" ? speedLabel(rate) : <><Gauge className="size-4" />{speedLabel(rate)}</>}
     >
-      <MenuNote title="Tốc độ đọc">nhớ riêng cho cuốn này</MenuNote>
+      <MenuNote title={S.s_toc_do_doc_3657e59d}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
       <div className={cn("grid grid-cols-3 gap-1", MENU_LIST)}>
         {speeds.map((speed) => (
           <Popover.Close asChild key={speed}>
@@ -466,7 +467,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
               onClick={() => {
                 feedback("toggle");
                 setRate(speed);
-                announce(`Đã chọn tốc độ đọc ${speedLabel(speed)}`);
+                announce(S.s_da_chon_toc_do_doc_0_529f4319(speedLabel(speed)));
               }}
               aria-pressed={speed === rate}
               data-current-choice={speed === rate ? "" : undefined}
@@ -481,17 +482,15 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
         ))}
       </div>
       {!COARSE && (
-        <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">
-          Phím <kbd className="font-semibold">[</kbd> và <kbd className="font-semibold">]</kbd> để giảm, tăng.
-        </p>
+        <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-semibold">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-semibold">]</kbd>{S.s_de_giam_tang_f47777c5}</p>
       )}
     </MenuShell>
   );
 }
 
-/** Nhạc nền ở trình phát. Chương chỉ-có-chữ ("Nghe ngay"): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
+/** Nhạc nền ở trình phát. Chương chỉ-có-chữ ("Nghe ngay"): một danh sách phát cho cả cuốn, S.s_nhac_cua_toi_f65b7ac6 hay tắt - cùng lựa chọn với
  *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Chương có audio của sách nói có nhạc người làm sách gắn: bật/tắt và mức
- *  (cùng lệnh với hộp "Sửa sách"); sách không gắn nhạc thì không hiện nút. */
+ *  (cùng lệnh với hộp S.s_sua_sach_79fb71d2); sách không gắn nhạc thì không hiện nút. */
 export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   const { track, queue } = usePlayer();
   const speaking = Boolean(track) && queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
@@ -505,7 +504,7 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   );
 }
 
-/** "Mức nhạc nền": thanh trượt chung (shared/MusicLevelSlider.tsx) dưới tên mục. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ;
+/** S.s_muc_nhac_nen_a45588ff: thanh trượt chung (shared/MusicLevelSlider.tsx) dưới tên mục. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ;
  *  menu không đóng khi kéo, đang lưu vẫn kéo tiếp được. */
 export function MusicLevelRow({ level, disabled, saving = false, onChange }: { level: number; disabled: boolean; saving?: boolean; onChange: (levelDb: number) => void }) {
   return (
@@ -524,16 +523,16 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
   // Gốc luôn là một MotionRegion: nhạc tải xong / gỡ nhạc thì nút hiện / ẩn dần, không thay gốc MotionRegion <-> MenuShell.
   return (
     <MotionRegion as="span" className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>{music?.hasMusic && <MenuShell
-      label="Nhạc nền"
+      label={S.s_nhac_nen_271fb292}
       active={music.enabled}
       width="w-64"
 
       look={look}
-      caption="Nhạc nền"
+      caption={S.s_nhac_nen_271fb292}
       icon={EighthNote}
       triggerKey={look === "row" ? music.enabled : undefined}
-      trigger={look === "row" ? (music.enabled ? "Bật" : "Tắt") :
-        // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng "nhạc tắt").
+      trigger={look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
+        // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng S.s_copy_50c73817bdd6).
         <span className="relative">
           <EighthNote className="size-4" />
           {!music.enabled && <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-0.5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />}
@@ -541,17 +540,16 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       }
     ><MotionRegion>
       <div className="flex items-center justify-between gap-3 px-2 py-2">
-        <label htmlFor={id} className="text-sm font-medium">
-          Nhạc nền: <span className="font-semibold">{music.enabled ? "Bật" : "Tắt"}</span>
+        <label htmlFor={id} className="text-sm font-medium">{S.s_nhac_nen_198fce26}<span className="font-semibold">{music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e}</span>
         </label>
-        <Switch id={id} label="Nhạc nền" checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
+        <Switch id={id} label={S.s_nhac_nen_271fb292} checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
       </div>
-      {music.enabled && broken && <p className="px-2 pb-1 text-xs text-warning">Bài nhạc chương này không phát được.</p>}
+      {music.enabled && broken && <p className="px-2 pb-1 text-xs text-warning">{S.s_bai_nhac_chuong_nay_khong_phat_duoc_e0bc4ba6}</p>}
       {music.error && <p className="px-2 pb-1 text-xs text-warning">{music.error}</p>}
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
         <MusicLevelRow level={music.levelDb} disabled={!music.enabled} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Đổi luôn trong Studio." : "Chỉ đổi trên máy này."}</p>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? S.s_doi_luon_trong_studio_20c762a6 : S.s_chi_doi_tren_may_nay_93811b69}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
   );
 }
@@ -563,20 +561,20 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
   const waiting = busy || musicLoading;
   return (
     <MenuShell
-      label="Nhạc nền"
-      tooltip={waiting ? "Đang chuẩn bị nhạc nền" : playing ? `Nhạc nền: ${shortPlaylistLabel(label)} - bấm để chọn nhạc khác` : "Nhạc nền - bấm để chọn nhạc"}
+      label={S.s_nhac_nen_271fb292}
+      tooltip={waiting ? S.s_dang_chuan_bi_nhac_nen_2e3197d1 : playing ? S.s_nhac_nen_0_bam_de_chon_nhac_khac_2c0ebda2(shortPlaylistLabel(label)) : S.s_nhac_nen_bam_de_chon_nhac_538c2c84}
       active={playing || waiting}
       look={look}
-      caption="Nhạc nền"
+      caption={S.s_nhac_nen_271fb292}
       icon={EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
       trigger={look === "row"
-        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? "Tắt" : ""}</span>)
+        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
-      <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>
-      <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label="Danh sách nhạc nền" className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
+      <MenuNote title={S.s_nhac_nen_271fb292}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
+      <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label={S.s_danh_sach_nhac_nen_61c9c58b} className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
             <button
@@ -602,11 +600,11 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
             </button>
           </Popover.Close>
         )}
-        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc</p>}
+        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">{S.s_dang_tai_cac_danh_sach_nhac_b9297500}</p>}
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <MusicLevelRow level={levelDb} disabled={false} saving={levelBusy} onChange={setLevel} />}
-      {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">Có bài nhạc chưa phát được, máy sẽ thử lại sau.</p>}
+      {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">{S.s_co_bai_nhac_chua_phat_duoc_may_se_thu_lai_27ed64dd}</p>}
       {(error || musicOffline) && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
   );
@@ -614,7 +612,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
 
 /** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
  *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
-/** Mở Cài đặt › Giọng đọc (nơi tải thêm giọng): đóng màn "Đang nghe" nếu đang mở, rồi cuộn tới mục giọng khi trang đã dựng xong. `anchor`: mã của chỗ cần cuộn
+/** Mở Cài đặt › Giọng đọc (nơi tải thêm giọng): đóng màn S.s_dang_nghe_9310d8cf nếu đang mở, rồi cuộn tới mục giọng khi trang đã dựng xong. `anchor`: mã của chỗ cần cuộn
  *  tới (mặc định đầu mục Giọng đọc; "vieneu-module" = thẻ tải giọng VieNeu). */
 function useOpenVoiceSettings() {
   const navigate = useNavigate();
@@ -626,7 +624,7 @@ function useOpenVoiceSettings() {
   }, [navigate, setExpanded]);
 }
 
-/** Vùng cuộn có dấu hiệu "còn nữa": bóng mờ ở đáy kèm dòng nhắc khi phần dưới chưa cuộn tới - danh sách giọng dài hơn khung của menu mà không
+/** Vùng cuộn có dấu hiệu S.s_copy_6bdbb2e6d51e: bóng mờ ở đáy kèm dòng nhắc khi phần dưới chưa cuộn tới - danh sách giọng dài hơn khung của menu mà không
  *  có dấu hiệu nào thì người nghe tưởng chỉ có bấy nhiêu giọng (soát điện thoại 03-10). */
 function ScrollHint({ className, children }: { className: string; children: ReactNode }) {
   const box = useRef<HTMLDivElement | null>(null);
@@ -655,21 +653,21 @@ function ScrollHint({ className, children }: { className: string; children: Reac
       <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-panel to-transparent transition-opacity duration-motion-fast", above ? "opacity-100" : "opacity-0")} />
       {/* Luôn dựng, chỉ đổi độ mờ: cuộn tới đáy thì dòng nhắc mờ đi, không bật tắt cứng. */}
       <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1 transition-opacity duration-motion-fast", more ? "opacity-100" : "opacity-0")}>
-        <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
+        <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">{S.s_keo_xuong_con_giong_khac_d4bb507b}</span>
       </div>
     </div>
   );
 }
 
-/** Nút "Chọn giọng khác" ở lời báo lỗi giọng mở menu Giọng đọc của cùng chỗ: `scope` = thanh phát hay màn "Đang nghe" (cả hai cùng nằm trong cây khi màn mở). */
+/** Nút S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng mở menu Giọng đọc của cùng chỗ: `scope` = thanh phát hay màn S.s_dang_nghe_9310d8cf (cả hai cùng nằm trong cây khi màn mở). */
 const OPEN_VOICE_MENU_EVENT = "abook:open-voice-menu";
 type VoiceMenuScope = "bar" | "screen";
-/** Thanh gọn không có menu giọng: bấm nút ở đó mở màn "Đang nghe" rồi menu của màn ấy mở ngay khi dựng xong. */
+/** Thanh gọn không có menu giọng: bấm nút ở đó mở màn S.s_dang_nghe_9310d8cf rồi menu của màn ấy mở ngay khi dựng xong. */
 let voiceMenuWaiting: VoiceMenuScope | null = null;
 
 export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuScope; look?: MenuLook }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  // Mở từ lời báo lỗi giọng ("Chọn giọng khác"): chọn xong là đọc tiếp bằng giọng mới, như nút "Đọc bằng …" (soát a67: lời báo mất mà không phát gì).
+  // Mở từ lời báo lỗi giọng (S.s_chon_giong_khac_d31cfe89): chọn xong là đọc tiếp bằng giọng mới, như nút S.s_copy_6ae181e1a9d5 (soát a67: lời báo mất mà không phát gì).
   const fromAlert = useRef(false);
   useEffect(() => {
     if (voiceMenuWaiting === scope) {
@@ -688,7 +686,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
   const { track, queue, resume } = usePlayer();
   const source = useSource();
   const { data: voices } = useReadAloudVoices();
-  const chosen = useChosenVoice(track?.bookId); // thanh phát và màn "Đang nghe" đều có menu này: đổi ở một nơi, nơi kia cũng đổi nhãn ngay
+  const chosen = useChosenVoice(track?.bookId); // thanh phát và màn S.s_dang_nghe_9310d8cf đều có menu này: đổi ở một nơi, nơi kia cũng đổi nhãn ngay
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   const sample = useVoiceSample((voiceId, text) => source.readAloudSample!(voiceId, text));
   const openVoiceSettings = useOpenVoiceSettings();
@@ -699,7 +697,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
   return (
     <MenuShell
       label={voiceButtonLabel(current?.name)}
-      dialogLabel="Giọng đọc"
+      dialogLabel={S.s_giong_doc_11f2548d}
       // Mở ở giọng đang đọc, không ở giọng đầu danh sách (soát a67).
       focusSelector="[data-current-choice]"
       open={menuOpen}
@@ -708,7 +706,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         setMenuOpen(open);
       }}
       look={look}
-      caption="Giọng đọc"
+      caption={S.s_giong_doc_11f2548d}
       icon={AudioLines}
       triggerKey={look === "row" ? current?.id : undefined}
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
@@ -717,8 +715,8 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         : <><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
-      <MenuNote title="Giọng đọc">nhớ riêng cho cuốn này</MenuNote>
-      {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
+      <MenuNote title={S.s_giong_doc_11f2548d}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
+      {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; S.s_thu_77e1c0d9 dùng cùng cách nghe thử. */}
       <ScrollHint className={cn("min-h-0 flex-1 overflow-y-auto", MENU_LIST)}>
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={groupLabel(group)} className="mb-1.5">
@@ -746,8 +744,8 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             void pickVoiceWithConsent(voice, voices).then((id) => {
                               if (!id) return;
                               chooseVoice(track.bookId, id, track.recordId);
-                              announce(`Đã chọn giọng ${spokenVoiceName(voices.find((item) => item.id === id)?.name ?? voice.name)}`);
-                              // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát (như "Đọc bằng …").
+                              announce(S.s_da_chon_giong_0_acf4481e(spokenVoiceName(voices.find((item) => item.id === id)?.name ?? voice.name)));
+                              // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát (như S.s_copy_6ae181e1a9d5).
                               if (resumeAfter) window.setTimeout(resume, 300);
                             });
                           }}
@@ -768,13 +766,13 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           data-arrow-side
                           data-voice-try
                           onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
-                          aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
+                          aria-label={S.s_0_giong_1_85dee2ac(playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9, voice.name)}
                           className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-control px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
                         >
                           {/* Vùng riêng cho nhãn: nghe thử chỉ mờ qua nút này, không mờ lại cả menu giọng. */}
                           <MotionRegion as="span" className="inline-flex items-center gap-1">
                             {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
-                            {playing ? "Dừng" : "Thử"}
+                            {playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9}
                           </MotionRegion>
                         </button>
                       )}
@@ -792,9 +790,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         onClick={() => openVoiceSettings()}
         data-sheet-choice
         className="flex min-h-9 w-full items-center rounded-control px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
-      >
-        Thêm giọng
-      </button>
+      >{S.s_them_giong_15d3a618}</button>
       {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
@@ -806,7 +802,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
   return <MotionRegion as="span" className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>{menu()}</MotionRegion>;
 }
 
-/** Trạng thái "Làm trước" (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
+/** Trạng thái S.s_copy_7d00f642cba3 (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
 function usePrepareStatus(enabled = true) {
   const source = useSource();
   return useQuery({
@@ -817,17 +813,17 @@ function usePrepareStatus(enabled = true) {
   });
 }
 
-/** Các chương của cuốn này đã làm sẵn bằng giọng của cuốn (dấu "Đã làm sẵn" ở danh sách chương). */
+/** Các chương của cuốn này đã làm sẵn bằng giọng của cuốn (dấu S.s_da_lam_san_18d7d0da ở danh sách chương). */
 export function usePreparedChapters(bookId: string, enabled: boolean): Set<number> {
-  // Chỉ nguồn báo từng chương (điện thoại, có "Chỉ khi đang sạc"); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
+  // Chỉ nguồn báo từng chương (điện thoại, có S.s_chi_khi_dang_sac_a636fa3a); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
   const source = useSource();
   const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPrepareOptions));
-  const voice = useChosenVoice(bookId); // đổi giọng thì dấu "Đã làm sẵn" theo giọng mới, không giữ dấu của giọng cũ
+  const voice = useChosenVoice(bookId); // đổi giọng thì dấu S.s_da_lam_san_18d7d0da theo giọng mới, không giữ dấu của giọng cũ
   return useMemo(() => readyChapterIds(data, bookId, voice), [data, bookId, voice]);
 }
 
-/** "Làm trước": máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe (VieNeu) vẫn nghe liền mạch; trên điện thoại cả giọng trực tuyến,
- *  để nghe khi không có mạng. Nói rõ còn bao lâu; người nghe bấm mới làm, bấm "Dừng" là thôi. */
+/** S.s_copy_7d00f642cba3: máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe (VieNeu) vẫn nghe liền mạch; trên điện thoại cả giọng trực tuyến,
+ *  để nghe khi không có mạng. Nói rõ còn bao lâu; người nghe bấm mới làm, bấm S.s_dung_11554138 là thôi. */
 function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; bookId: string; chapterId: number }) {
   const source = useSource();
   const client = useQueryClient();
@@ -840,7 +836,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
     voice: voice.id,
     bookId,
     chapters: upcoming.map(({ id, title, skip }) => ({ id, title, skip })),
-    label: upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`,
+    label: upcoming.length === 1 ? upcoming[0].title : S.s_0_chuong_toi_8b81be6f(upcoming.length),
   };
   const mine = Boolean(status && status.voice === voice.id && (!status.bookId || status.bookId === bookId));
   const running = status?.state === "running";
@@ -849,7 +845,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
     queryFn: () => source.readAloudPreparePlan!(request),
     enabled: Boolean(source.readAloudPreparePlan) && request.chapters.length > 0 && !(mine && running),
   });
-  // "Làm trước" <-> "Dừng làm trước" thay chỗ nhau: tiêu điểm theo sang nút mới (soát a67).
+  // S.s_copy_7d00f642cba3 <-> S.s_dung_lam_truoc_632af923 thay chỗ nhau: tiêu điểm theo sang nút mới (soát a67).
   const follow = useFocusFollows(mine && running);
   if (!source.readAloudPrepare) return <MotionRegion />;
   const chargingOnly = status?.chargingOnly ?? true;
@@ -857,7 +853,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   const start = async () => {
     setBusy(true);
     try {
-      // Giọng trực tuyến chưa đồng ý: "Làm trước" gửi chữ cả loạt chương đi ở nền - hỏi trước như lúc bấm phát (soát a79 lỗi 6). Chọn giọng khác trong hộp thì đổi giọng, chưa làm trước.
+      // Giọng trực tuyến chưa đồng ý: S.s_copy_7d00f642cba3 gửi chữ cả loạt chương đi ở nền - hỏi trước như lúc bấm phát (soát a79 lỗi 6). Chọn giọng khác trong hộp thì đổi giọng, chưa làm trước.
       if (voice.online && !onlineConsentGiven(voice.provider)) {
         const picked = await askOnlineConsent(voice, voices ?? [voice]);
         if (!picked) return;
@@ -868,12 +864,12 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
       }
       settle(await source.readAloudPrepare!({ ...request, chargingOnly }));
     } catch (error) {
-      toast.error("Chưa làm trước được", { description: (error as Error).message });
+      toast.error(S.s_chua_lam_truoc_duoc_54f36d9c, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
-  const label = mine && status ? prepareLabel(status) : running ? "Đang làm trước cho một cuốn hay giọng khác - làm ở đây thì việc ấy dừng." : "";
+  const label = mine && status ? prepareLabel(status) : running ? S.s_dang_lam_truoc_cho_mot_cuon_hay_giong_khac_31f0b03e : "";
   // Chương cuối: không còn chương nào để làm trước thì không mời (câu mời không có nút nào theo sau chỉ làm người nghe tìm nút).
   if (!label && upcoming.length === 0) return <MotionRegion />;
   return (
@@ -882,13 +878,11 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
       {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         {mine && running ? (
-          <button type="button" data-focus-next className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
-            Dừng làm trước
-          </button>
+          <button type="button" data-focus-next className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>
         ) : (
           upcoming.length > 0 && (
             <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
-              {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương`}
+              {upcoming.length === 1 ? S.s_lam_truoc_chuong_sau_38defcbd : S.s_lam_truoc_0_chuong_08803833(upcoming.length)}
             </button>
           )
         )}
@@ -899,9 +893,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
               className="size-4 accent-[var(--accent)]"
               checked={chargingOnly}
               onChange={(event) => void source.readAloudPrepareOptions!({ chargingOnly: event.target.checked }).then(settle)}
-            />
-            Chỉ khi đang sạc
-          </label>
+            />{S.s_chi_khi_dang_sac_a636fa3a}</label>
         )}
       </div>
     </MotionRegion>
@@ -926,10 +918,10 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
     setBusy(true);
     try {
       client.setQueryData(key, await source.readAloudCacheClear!(bookId));
-      void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY }); // máy chủ đã bỏ dòng "Đã làm trước ..." của cuốn này cùng bản đọc
+      void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY }); // máy chủ đã bỏ dòng S.s_copy_ee4b1c2c4a26 của cuốn này cùng bản đọc
       window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [], all: true } }));
     } catch (error) {
-      toast.error("Chưa xoá được bản đọc", { description: (error as Error).message });
+      toast.error(S.s_chua_xoa_duoc_ban_doc_b429734e, { description: (error as Error).message });
     } finally {
       setBusy(false);
       setAsking(false);
@@ -940,21 +932,15 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
       <p tabIndex={-1} data-focus-fallback className="text-pretty">{cacheLabel(usage)}</p>
       {usage.book > 0 &&
         (asking ? (
-          <div ref={askBox} role="alertdialog" aria-label="Xoá bản đọc" className="mt-1.5">
+          <div ref={askBox} role="alertdialog" aria-label={S.s_xoa_ban_doc_1eb88b99} className="mt-1.5">
             <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-control px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>
-                Xoá
-              </button>
-              <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>
-                Giữ lại
-              </button>
+              <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-control px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>{S.s_xoa_777195ab}</button>
+              <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>{S.s_giu_lai_3c3ba2db}</button>
             </div>
           </div>
         ) : (
-          <button type="button" data-focus-next className="mt-1.5 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>
-            Xoá bản đọc
-          </button>
+          <button type="button" data-focus-next className="mt-1.5 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>{S.s_xoa_ban_doc_1eb88b99}</button>
         ))}
     </MotionRegion>
   );
@@ -962,7 +948,7 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
 
 export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
   const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleepMinutes, track } = usePlayer();
-  // Thẻ "Tối qua" chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
+  // Thẻ S.s_toi_qua_920edeaa chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
   const hadNight = Boolean(useLastNight().data);
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
   const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
@@ -978,8 +964,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       idle={
         recentlyStopped ? (
           <div className="px-2 pb-2 pt-1.5">
-            <div className="text-sm">
-              Hẹn giờ đã tắt tiếng lúc{" "}
+            <div className="text-sm">{S.s_hen_gio_da_tat_tieng_luc_ac7c0df9}{" "}
               <span className="tabular font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
             </div>
             <Popover.Close asChild>
@@ -987,17 +972,13 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
                 type="button"
                 onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
                 className="mt-2 h-9 w-full rounded-control text-sm font-semibold text-accent-text"
-              >
-                Bật lại {lastSleepMinutes} phút
-              </button>
+              >{S.s_bat_lai_0bad8bcf}{lastSleepMinutes}{S.s_phut_cf728a6a}</button>
             </Popover.Close>
           </div>
         ) : null
       }
       note={
-        <>
-          Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để hẹn lại từ đầu.
-          {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
+        <>{S.s_tieng_nho_dan_39149d9b}{options.fadeSeconds}{S.s_giay_truoc_khi_dung_luc_do_bd65541f}{EXTEND_GESTURE}{S.s_de_hen_lai_tu_dau_78b355e2}{hadNight && S.s_sang_hom_sau_the_toi_qua_giup_tim_lai_doan_9c2d2ff0}
         </>
       }
     /></MotionRegion>
@@ -1005,7 +986,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
 }
 
 /**
- * Hẹn giờ ngủ cho loa / TV đang phát (thanh "Đang phát trên…" của máy tính và điện thoại): cùng nút, cùng lựa chọn với hẹn
+ * Hẹn giờ ngủ cho loa / TV đang phát (thanh S.s_copy_55d4ca388c1e của máy tính và điện thoại): cùng nút, cùng lựa chọn với hẹn
  * giờ của trình phát ở đây, nhưng máy giữ phiên phát mới là bên đếm - nút chỉ đọc lại và gửi lệnh.
  */
 export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name: string; onSet: (request: SleepRequest) => void }) {
@@ -1024,7 +1005,7 @@ export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name
         if (longer.kind === "minutes" && (sleepLeftMs(longer, now) ?? 0) > (sleepLeftMs(sleep, now) ?? 0)) onSet({ kind: "minutes", minutes: longer.minutes });
       }}
       onSet={onSet}
-      note={`Hết giờ thì ${name} tạm dừng, chỗ đang nghe được lưu.`}
+      note={S.s_het_gio_thi_0_tam_dung_cho_dang_nghe_duoc_7bbd133a(name)}
     />
   );
 }
@@ -1050,7 +1031,7 @@ function SleepPicker({
   extendMinutes: number;
   onExtend: () => void;
   onSet: (request: SleepRequest) => void;
-  /** Hiện thay phần "đang hẹn" khi chưa hẹn gì. */
+  /** Hiện thay phần S.s_copy_90638c7194c5 khi chưa hẹn gì. */
   idle?: ReactNode;
   note: ReactNode;
 }) {
@@ -1059,20 +1040,20 @@ function SleepPicker({
   const onSet = withFeedback("toggle", handlers.onSet);
   const active = sleep.kind !== "off";
   const left = sleepLeftMs(sleep, now);
-  const spoken = active ? sleepSpoken(sleep, now) : "Hẹn giờ ngủ";
+  const spoken = active ? sleepSpoken(sleep, now) : S.s_hen_gio_ngu_21073488;
   return (
     <MenuShell
-      label={name ? `${spoken} trên ${name}` : spoken}
-      dialogLabel={name ? `Hẹn giờ ngủ trên ${name}` : "Hẹn giờ ngủ"}
+      label={name ? S.s_0_tren_1_c3bdf3d1(spoken, name) : spoken}
+      dialogLabel={name ? S.s_hen_gio_ngu_tren_0_2cac5015(name) : S.s_hen_gio_ngu_21073488}
       active={active}
       width="w-[300px]"
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
       // Countdown changes in place; choosing a sleep mode still changes the trigger.
-      caption={look === "row" ? "Hẹn giờ ngủ" : <TickingValue>{active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}</TickingValue>}
+      caption={look === "row" ? S.s_hen_gio_ngu_21073488 : <TickingValue>{active ? sleepButtonLabel(sleep, now) : S.s_hen_gio_39d9ca26}</TickingValue>}
       triggerKey={sleep.kind === "minutes" ? [sleep.kind, sleep.minutes] : sleep.kind}
-      trigger={look === "row" ? <TickingValue>{active ? sleepButtonLabel(sleep, now) : "Tắt"}</TickingValue> :
+      trigger={look === "row" ? <TickingValue>{active ? sleepButtonLabel(sleep, now) : S.s_tat_3286064e}</TickingValue> :
         <>
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
             <Moon className={look === "action" ? "size-5" : "size-4"} />
@@ -1083,12 +1064,12 @@ function SleepPicker({
     ><MotionRegion>
       {active ? (
         <div className="px-2 pb-2 pt-1.5">
-          <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? "Dừng khi" : "Tắt sau"}</div>
+          <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? S.s_dung_khi_f05a4cb5 : S.s_tat_sau_8d10e047}</div>
           <div className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
-            <TickingValue>{sleep.kind === "chapter" ? "hết chương này" : sleepLabel(sleep, now)}</TickingValue>
+            <TickingValue>{sleep.kind === "chapter" ? S.s_het_chuong_nay_8ccc288f : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
-            <div className="mt-0.5 text-xs text-fg-2">Đang tạm dừng - đồng hồ cũng dừng.</div>
+            <div className="mt-0.5 text-xs text-fg-2">{S.s_dang_tam_dung_dong_ho_cung_dung_474889f9}</div>
           )}
           <div className="mt-3 flex gap-1.5">
             <Popover.Close asChild>
@@ -1101,22 +1082,20 @@ function SleepPicker({
               </button>
             </Popover.Close>
             <Popover.Close asChild>
-              <button type="button" onClick={() => onSet({ kind: "off" })} className="h-9 flex-1 rounded-control text-sm font-medium text-danger hover:bg-hover">
-                Tắt hẹn giờ
-              </button>
+              <button type="button" onClick={() => onSet({ kind: "off" })} className="h-9 flex-1 rounded-control text-sm font-medium text-danger hover:bg-hover">{S.s_tat_hen_gio_fc8af231}</button>
             </Popover.Close>
           </div>
         </div>
       ) : (
         idle
       )}
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? S.s_dat_lai_51a46825 : S.s_dung_phat_sau_41477737}</div>
       {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt, ô đang hẹn luôn sáng (chữ nhấn + dấu tích). Máy tính hai cột: mục này còn mở ngay
           trong menu "…" rộng 280 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
       <div data-choice-grid="sleep" className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
-        {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
+        {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: S.s_0_phut_2596d212(minutes), request: { kind: "minutes", minutes } as SleepRequest,
           current: sleep.kind === "minutes" && sleep.minutes === minutes })),
-          { key: "chapter", label: "Hết chương này", request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
+          { key: "chapter", label: S.s_het_chuong_nay_918907cf, request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
           <Popover.Close asChild key={choice.key}>
             <button
               type="button"
@@ -1168,8 +1147,8 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
         <Slider.Range className="absolute h-full rounded-full bg-fg-2 group-hover:bg-accent" />
       </Slider.Track>
       <Slider.Thumb
-        aria-label="Âm lượng"
-        aria-valuetext={`Âm lượng ${Math.round(volume * 100)}%`}
+        aria-label={S.s_am_luong_5dafca26}
+        aria-valuetext={S.s_am_luong_0_0a64b489(Math.round(volume * 100))}
         className="block size-3 rounded-full bg-fg opacity-0 shadow group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-focus"
       />
     </Slider.Root>
@@ -1179,9 +1158,9 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
     return (
       <div data-volume-row className="flex min-h-10 items-center gap-1 max-sm:min-h-[48px]">
         {/* Một biểu tượng cho cả dòng: loa đổi theo mức, bấm tên để tắt / bật tiếng; thanh trượt bên phải chỉnh mức (trước đây loa đầu dòng + loa ở nút tắt tiếng). */}
-        <button type="button" data-player-menu-row aria-label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} className={cn(MENU_ROW, "min-w-0 flex-1")} {...keepFocus} onClick={toggleMute}>
+        <button type="button" data-player-menu-row aria-label={withShortcut(volume === 0 ? S.s_bat_tieng_2eac184c : S.s_tat_tieng_0bb2a472, "M")} className={cn(MENU_ROW, "min-w-0 flex-1")} {...keepFocus} onClick={toggleMute}>
           <Icon className="size-4 shrink-0 text-fg-2" />
-          <span className="min-w-0 flex-1 truncate">Âm lượng</span>
+          <span className="min-w-0 flex-1 truncate">{S.s_am_luong_5dafca26}</span>
         </button>
         <span className="flex shrink-0 px-2">{slider("flex w-28")}</span>
       </div>
@@ -1193,7 +1172,7 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
         <Popover.Trigger asChild>
           <button
             type="button"
-            aria-label={`Âm lượng ${Math.round(volume * 100)}%`}
+            aria-label={S.s_am_luong_0_0a64b489(Math.round(volume * 100))}
             className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover max-sm:size-[48px]"
           >
             <Icon className="glyph" />
@@ -1201,7 +1180,7 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content side="top" sideOffset={8} className="z-50 flex items-center gap-2 rounded-cover border border-line bg-panel p-2 shadow-float">
-            <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" onClick={toggleMute} />
+            <IconButton label={withShortcut(volume === 0 ? S.s_bat_tieng_2eac184c : S.s_tat_tieng_0bb2a472, "M")} icon={Icon} size="sm" onClick={toggleMute} />
             {slider("flex w-32")}
             <span className="tabular w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
           </Popover.Content>
@@ -1209,7 +1188,7 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
       </MotionRegion></Popover.Root>
     ) : (
     <MotionRegion as="div" className="flex items-center gap-1">
-      <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" {...keepFocus} onClick={toggleMute} />
+      <IconButton label={withShortcut(volume === 0 ? S.s_bat_tieng_2eac184c : S.s_tat_tieng_0bb2a472, "M")} icon={Icon} size="sm" {...keepFocus} onClick={toggleMute} />
       {slider("flex w-20")}
     </MotionRegion>
   )}</MotionRegion>;
@@ -1252,7 +1231,7 @@ function FadingNotice({ className }: { className?: string }) {
   return (
     <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để hẹn lại {again} phút</span>
+      <span className="min-w-0 flex-1">{S.s_sap_tat_e76c49b1}{EXTEND_GESTURE}{S.s_de_hen_lai_f1a3acdc}{again}{S.s_phut_cf728a6a}</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
         {sleepExtendLabel(again)}
       </button>
@@ -1264,7 +1243,7 @@ function FadingNotice({ className }: { className?: string }) {
 
 /** Ghi công nhạc nền đang nghe (CC BY đòi nêu tác giả ở nơi nhạc phát): một dòng nhỏ, mờ, chỉ hiện khi đang phát; không
  *  có bài thì không hiện gì. Chạm (hay Enter) vào dòng để xem đủ ghi công: tên bài, tác giả, giấy phép (có liên kết) -
- *  màn cảm ứng không có chỗ "giữ chuột" để xem chú thích. */
+ *  màn cảm ứng không có chỗ S.s_copy_75e3f713a7d5 để xem chú thích. */
 function MusicCreditLine() {
   const { musicCredit, playing } = usePlayer();
   const [open, setOpen] = useState(false);
@@ -1280,14 +1259,12 @@ function MusicCreditLine() {
         onClick={() => setOpen((value) => !value)}
         title={musicCreditText(musicCredit) || label}
         className="max-w-full truncate rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        Nhạc nền: {label}
+      >{S.s_nhac_nen_198fce26}{label}
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>
           {musicCredit.license && (
-            <p>
-              Giấy phép:{" "}
+            <p>{S.s_giay_phep_de087bac}{" "}
               {musicCredit.licenseUrl ? (
                 <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.licenseUrl!, event)} className="underline">
                   {licenseLabel(musicCredit.license, musicCredit.licenseUrl)}
@@ -1300,9 +1277,7 @@ function MusicCreditLine() {
           {musicNeedsModifiedNote(musicCredit.license) && <p>{MUSIC_MODIFIED_NOTE}</p>}
           {musicCredit.landing && (
             <p>
-              <a href={musicCredit.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.landing!, event)} className="underline">
-                Trang của bài nhạc
-              </a>
+              <a href={musicCredit.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.landing!, event)} className="underline">{S.s_trang_cua_bai_nhac_50968bde}</a>
             </p>
           )}
         </Collapse>
@@ -1316,26 +1291,26 @@ function MusicCreditLine() {
 function TrackSubtitle() {
   const { track, purpose, atEnd, playing, buffering } = usePlayer();
   const speaking = useSpeaking();
-  // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy "Đang chuẩn bị giọng đọc…" rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
+  // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy S.s_dang_chuan_bi_giong_doc_25f86ccf rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
   const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
   if (!track) return <MotionRegion />;
   return (
     <MotionRegion>
       {purpose === "review" && (
-        <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">Nghe kiểm</span>
+        <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
-      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
+      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : track.bookTitle}
     </MotionRegion>
   );
 }
 
-/** Không phát được (mất mạng, giọng đọc không phản hồi, file hỏng): một khối riêng đọc màn hình đọc ngay (role="alert") kèm "Thử lại" - không
+/** Không phát được (mất mạng, giọng đọc không phản hồi, file hỏng): một khối riêng đọc màn hình đọc ngay (role="alert") kèm S.s_thu_lai_c58d068c - không
  *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn.
  *  Mất mạng mà máy không có giọng đọc không cần mạng: một câu ngắn nói tên giọng, nút chính theo tình huống - đã có giọng chạy trên máy (VieNeu…) thì
- *  "Đọc bằng …" (đổi giọng cuốn này rồi phát tiếp), chưa thì "Tải giọng VieNeu" (tới thẻ tải giọng trong Cài đặt). Mạng về thì tự "Thử lại" (onlineRetry.ts).
+ *  S.s_copy_6ae181e1a9d5 (đổi giọng cuốn này rồi phát tiếp), chưa thì S.s_tai_giong_vieneu_94c86884 (tới thẻ tải giọng trong Cài đặt). Mạng về thì tự S.s_thu_lai_c58d068c (onlineRetry.ts).
  *  Hiện ở MỌI màn, kể cả Cài đặt (soát a67: đổi sang giọng cần mạng ở Cài đặt khi mất mạng - trình phát dừng im lặng, bấm Phát không lời nào). Bấm phát
  *  khi lời báo đang hiện: khối dựng lại (`errorRepeat`) để trình đọc màn hình đọc lại.
- *  `overlay`: trong màn "Đang nghe". */
+ *  `overlay`: trong màn S.s_dang_nghe_9310d8cf. */
 function PlayerAlert({ className, overlay = false, compact = false }: { className?: string; overlay?: boolean; compact?: boolean }) {
   const { error, errorRepeat, notice, resume, retry, dismissError, wantsPlay, track } = usePlayer();
   const { setExpanded } = useNowPlaying();
@@ -1367,13 +1342,10 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
               }}
               {...keepFocus}
               className={button}
-            >
-              Đọc bằng {voiceCaption(local)}
+            >{S.s_doc_bang_f7f5f3b1}{voiceCaption(local)}
             </button>
           )}
-          <button type="button" onClick={retry} {...keepFocus} className={button}>
-            Thử lại
-          </button>
+          <button type="button" onClick={retry} {...keepFocus} className={button}>{S.s_thu_lai_c58d068c}</button>
           {stuck && Boolean(voices?.length) && (
             <button
               type="button"
@@ -1387,16 +1359,14 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
               }}
               {...keepFocus}
               className={button}
-            >
-              Chọn giọng khác
-            </button>
+            >{S.s_chon_giong_khac_d31cfe89}</button>
           )}
-          {stuck && !local && <VieneuDownload button="Tải giọng VieNeu" onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
+          {stuck && !local && <VieneuDownload button={S.s_tai_giong_vieneu_94c86884} onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
         </div>
         {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
         <button
           type="button"
-          aria-label="Đóng lời báo"
+          aria-label={S.s_dong_loi_bao_d13d19ff}
           onClick={dismissError}
           {...keepFocus}
           className="-my-1 -mr-1 grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg max-sm:size-[48px]"
@@ -1421,14 +1391,14 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
 function CompactProgress() {
   const fraction = useClock((time, duration) => (duration > 0 ? Math.min(1, Math.round((time / duration) * 400) / 400) : 0));
   return (
-    <div {...heardBarProps(fraction)} aria-label="Đã nghe chương này" aria-valuetext={`đã nghe ${Math.round(fraction * 100)}% chương`} className="absolute inset-x-0 top-0 h-[2px] bg-line">
+    <div {...heardBarProps(fraction)} aria-label={S.s_da_nghe_chuong_nay_4e1ecf11} aria-valuetext={S.s_da_nghe_0_chuong_474d875d(Math.round(fraction * 100))} className="absolute inset-x-0 top-0 h-[2px] bg-line">
       <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${fraction * 100 / 100})` }} />
     </div>
   );
 }
 
 /** Thiết bị khác (điện thoại) đã nghe xa hơn chỗ đang nạp ở đây: hỏi, đừng lặng lẽ nhảy - và đừng để lần lưu kế tiếp
- *  của máy này ghi đè vị trí mới hơn ấy (Audible hỏi "tới vị trí xa nhất?"; Audiobookshelf bị chê vì không hỏi). */
+ *  của máy này ghi đè vị trí mới hơn ấy (Audible hỏi S.s_copy_017fdc2c7b87; Audiobookshelf bị chê vì không hỏi). */
 function FurtherElsewhere() {
   const { track, playing, queue, positionStamp, jumpTo, purpose } = usePlayer();
   const { data: book } = useListenBook(track?.bookId);
@@ -1439,17 +1409,17 @@ function FurtherElsewhere() {
   useEffect(() => {
     // Cả khi ĐANG PHÁT (soát a27 lỗi 2): máy này đã bấm nghe trước khi chỗ của máy kia về tới - lần lưu kế của nó sẽ đè, nên vẫn phải hỏi.
     if (!track || !last || purpose !== "listen") return;
-    // chỗ nghe trên máy chủ là của hồ sơ khác (máy khác vừa đổi hồ sơ): FollowRecord lo, đây không phải "nghe xa hơn"
+    // chỗ nghe trên máy chủ là của hồ sơ khác (máy khác vừa đổi hồ sơ): FollowRecord lo, đây không phải S.s_copy_fb1cac73cb2b
     if (track.recordId && active && track.recordId !== active) return;
     const key = `${track.bookId}:${last.at}`;
     if (asked.current === key || !newerElsewhere(last, positionStamp(), { chapterId: track.chapterId, seconds: readClock().time })) return;
     asked.current = key;
     const chapter = queue.find((item) => item.id === last.chapterId);
     if (!chapter || !canPlay(chapter)) return;
-    toast(`Máy khác đã nghe tới ${chapter.title} · ${formatClock(last.seconds)}`, {
+    toast(S.s_may_khac_da_nghe_toi_0_1_8d162758(chapter.title, formatClock(last.seconds)), {
       id: "further-elsewhere",
       duration: 20_000,
-      action: { label: "Nghe tiếp từ đó", onClick: () => jumpTo(last.chapterId, last.seconds) },
+      action: { label: S.s_nghe_tiep_tu_do_996183f7, onClick: () => jumpTo(last.chapterId, last.seconds) },
     });
   }, [active, jumpTo, last, playing, positionStamp, purpose, queue, readClock, track]);
   return null;
@@ -1476,7 +1446,7 @@ function FollowRecord() {
         const chosen = fresh.records?.find((record) => record.active);
         if (!chosen || chosen.id === held) return;
         return switchRecord(bookId, async () => undefined).then(() =>
-          toast(`Đang dùng hồ sơ nghe “${chosen.name}” - vừa chọn ở máy khác`),
+          toast(S.s_dang_dung_ho_so_nghe_0_vua_chon_o_may_khac_cbd9c751(chosen.name)),
         );
       })
       .catch(() => undefined);
@@ -1486,7 +1456,7 @@ function FollowRecord() {
 
 // ---- Menu "…" của trình phát -----------------------------------------------------------------------------
 
-/** Khung danh sách trong menu nổi: tràn hết lề p-1.5 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng ("Thêm giọng…") và chữ dòng
+/** Khung danh sách trong menu nổi: tràn hết lề p-1.5 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng (S.s_them_giong_bbe0caf9) và chữ dòng
  *  (px-2) thẳng chữ ghi chú của bảng; còn 5,25 px cho khung tiêu điểm. Bảng trượt điện thoại đặt lại lề theo lớp p-1 (styles.css). */
 const MENU_LIST = "p-1 -mx-1.5 px-1.5";
 /** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,
@@ -1506,11 +1476,11 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
 }
 
 /** "…" của trình phát: mọi việc ít dùng (nhạc nền, giọng, âm lượng, gợi ý, phát trên máy khác...) nằm trong một bảng, hàng chính chỉ giữ việc
- *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: "Chọn giọng khác" ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
+ *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
  *  khi dựng (voiceMenuWaiting). */
 function AudioFxMenu() {
   const {volume,setVolume}=usePlayer();
-  return <MenuShell label="Âm thanh" caption="Âm thanh" icon={SlidersHorizontal} trigger="Chỉnh" look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel volume={volume} setVolume={setVolume}/></MenuShell>;
+  return <MenuShell label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel volume={volume} setVolume={setVolume}/></MenuShell>;
 }
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -1529,11 +1499,11 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
   }, [scope]);
   return (
     <MenuShell
-      label="Thêm tuỳ chọn"
+      label={S.s_them_tuy_chon_a0b4bb6e}
       trigger={<MoreHorizontal className="glyph" />}
-      // 20rem (280 px máy tính): 252 px làm tên lựa chọn gãy dòng ("Nhạc của tôi", "An (Windows)") và ghi chú đầu mục gãy đôi.
+      // 20rem (280 px máy tính): 252 px làm tên lựa chọn gãy dòng (S.s_nhac_cua_toi_f65b7ac6, "An (Windows)") và ghi chú đầu mục gãy đôi.
       width="w-80 max-w-[calc(100vw-1.5rem)]"
-      // Mở ra: tiêu điểm vào chính bảng, không vào nút đầu tiên - nút đầu bật chú thích và trông như "đang chọn".
+      // Mở ra: tiêu điểm vào chính bảng, không vào nút đầu tiên - nút đầu bật chú thích và trông như S.s_copy_d4a85bafdad9.
       focusSelector="[data-player-more]"
       open={open}
       onOpenChange={(value) => {
@@ -1548,14 +1518,14 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
 
 // ---- Thanh phát nhỏ ------------------------------------------------------------------------------------
 
-/** `extra`: nút riêng của từng nền, đặt trước nhóm nút phải (máy tính: "Phát trên điện thoại"). */
+/** `extra`: nút riêng của từng nền, đặt trước nhóm nút phải (máy tính: S.s_copy_3c36d421d6d3). */
 export function PlayerBar({
   compact = false,
   notices = false,
   extra,
 }: {
   compact?: boolean;
-  /** Thanh gọn trên máy tính (cửa sổ hẹp): vẫn cần các báo "đang nghe xa hơn ở máy khác" và hồ sơ - app Android có đường riêng. */
+  /** Thanh gọn trên máy tính (cửa sổ hẹp): vẫn cần các báo S.s_copy_ae5a0668de64 và hồ sơ - app Android có đường riêng. */
   notices?: boolean;
   extra?: ReactNode;
 }) {
@@ -1568,7 +1538,7 @@ export function PlayerBar({
   if (!track) return null;
   if (compact) {
     return (
-      <section aria-label="Trình phát" data-np-source className="relative z-20 shrink-0 border-t border-line bg-panel">
+      <section aria-label={S.s_trinh_phat_9270993d} data-np-source className="relative z-20 shrink-0 border-t border-line bg-panel">
         <CompactProgress />
         {notices && (
           <>
@@ -1579,12 +1549,12 @@ export function PlayerBar({
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" compact />
         <div className="flex h-16 items-center gap-3 px-3">
-          {/* title: tên chương / sách bị cắt "Chương 3 · Đ…" khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
+          {/* title: tên chương / sách bị cắt S.s_copy_e825d35cde60 khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
           <button
             type="button"
             onClick={() => setExpanded(true)}
             className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
-            aria-label="Mở màn hình đang nghe"
+            aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
             title={`${track.chapterTitle} · ${track.bookTitle}`}
           >
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
@@ -1616,7 +1586,7 @@ export function PlayerBar({
     );
   }
   return (
-    <section aria-label="Trình phát" data-np-source className="@container relative z-20 shrink-0 border-t border-line bg-panel">
+    <section aria-label={S.s_trinh_phat_9270993d} data-np-source className="@container relative z-20 shrink-0 border-t border-line bg-panel">
       <FurtherElsewhere />
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
@@ -1624,7 +1594,7 @@ export function PlayerBar({
       {/* Cột giữa theo bề rộng CỦA THANH (min(36%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
           chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). Cột tên sách có tối thiểu 10rem (soát UX a16: còn ~30 px khi đủ chip nhạc / giọng / hẹn giờ); cột giữa co trước, rồi nhãn chữ của chip ẩn theo bề rộng thanh.
           Thanh hẹp (cửa sổ 1024): cột giữa đứng ở mức tối thiểu 14rem, phần còn lại cho tên chương; cụm nút không bao giờ xuống dòng -
-          thiếu chỗ thì tên co trước các nút (soát a26 L11: "Chương…" cạnh thanh tua 260 px, chip "Hết chương" rớt dòng).
+          thiếu chỗ thì tên co trước các nút (soát a26 L11: S.s_copy_8275f9f0e95e cạnh thanh tua 260 px, chip S.s_het_chuong_f1d590bb rớt dòng).
           Mốc bề rộng tính bằng rem, không px: người đặt cỡ chữ trình duyệt 150 % / 200 % thì thanh đổi bố cục sớm hơn theo chữ. Thanh dưới 48rem (cỡ chữ to,
           hay cửa sổ hẹp): hai hàng - tên + cụm nút (cụm nút được xuống dòng) ở trên, nút phát + thanh tua cả hàng dưới - không nút nào chồng nút nào (soát a67:
           150 % chồng 9 cặp, 200 % chồng 12 cặp). Cao theo nội dung, tối thiểu 76 px như cũ. */}
@@ -1633,7 +1603,7 @@ export function PlayerBar({
           type="button"
           onClick={() => setExpanded(true)}
           className="flex min-w-0 items-center gap-3 rounded-control p-1 text-left hover:bg-hover"
-          aria-label="Mở màn hình đang nghe"
+          aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad}
           title={`${track.chapterTitle} · ${track.bookTitle}`}
         >
           <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
@@ -1655,13 +1625,13 @@ export function PlayerBar({
           <MoreMenu scope="bar">
             <AudioFxMenu/>
             <SleepMenu look="row" />
-            <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>Chương trước</MenuRow>
-            <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>Chương sau</MenuRow>
+            <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>{S.s_chuong_truoc_4750f9e9}</MenuRow>
+            <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>{S.s_chuong_sau_17d1bd20}</MenuRow>
             <MusicMenu look="row" />
             <VoiceMenu look="row" />
-            <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>Mở màn hình đang nghe</MenuRow>
-            <MenuRow icon={X} onClick={close}>Đóng trình phát</MenuRow>
-            <MenuSlot label="Thiết bị phát">{extra}</MenuSlot>
+            <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>{S.s_mo_man_hinh_dang_nghe_2426b4ad}</MenuRow>
+            <MenuRow icon={X} onClick={close}>{S.s_dong_trinh_phat_8a833838}</MenuRow>
+            <MenuSlot label={S.s_thiet_bi_phat_c8cfc7a8}>{extra}</MenuSlot>
           </MoreMenu>
         </div>
       </div>
@@ -1673,7 +1643,7 @@ export function PlayerBar({
 
 // ---- Bảng bên của màn hình đang nghe ---------------------------------------------------------------------
 
-/** Tab "Đọc theo" của trình phát: cùng văn bản với màn đọc (ReadAlongText) - câu và chữ đang đọc sáng lên, bấm một chữ là nghe từ chữ ấy, tự cuộn
+/** Tab S.s_doc_theo_df342819 của trình phát: cùng văn bản với màn đọc (ReadAlongText) - câu và chữ đang đọc sáng lên, bấm một chữ là nghe từ chữ ấy, tự cuộn
  *  theo giọng; thêm nhãn người nói và câu đã nghe nhạt đi. Cùng thanh việc với màn đọc (SentenceMenu): bấm câu thì câu được chọn, giữ / bấm chuột
  *  phải một chữ thì sửa chữ ấy - sửa câu đang phát không phải rời màn này (soát a70). */
 function ReadAlong({ edit }: { edit?: SentenceEditing }) {
@@ -1696,7 +1666,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   } });
   const nearEnd = useClock((time, duration) => duration > 0 && duration - time < 30);
 
-  // Sắp hết chương: nạp sẵn văn bản chương kế để sang chương không bị chớp "đang mở".
+  // Sắp hết chương: nạp sẵn văn bản chương kế để sang chương không bị chớp S.s_copy_6235f0aa09fa.
   useEffect(() => {
     if (!nearEnd || !track) return;
     const index = queue.findIndex((chapter) => chapter.id === track.chapterId);
@@ -1704,18 +1674,18 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
     if (upcoming) void client.prefetchQuery(chapterScriptQuery(source, track.bookId, upcoming));
   }, [client, nearEnd, queue, source, track]);
 
-  if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang tải chữ</MotionRegion>;
+  if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">{S.s_dang_tai_chu_d97dd379}</MotionRegion>;
   // Cùng lời với điện thoại native (RepoNowPlayingModel): không tải được chữ khác với chương không có chữ.
   if (!script) {
-    return <MotionRegion as="p" className="p-10 text-center text-sm text-fg-2">{error ? "Chưa tải được chữ. Bạn thử lại." : "Chương chưa có chữ. Bạn thử lại sau."}</MotionRegion>;
+    return <MotionRegion as="p" className="p-10 text-center text-sm text-fg-2">{error ? S.s_chua_tai_duoc_chu_ban_thu_lai_02f8a145 : S.s_chuong_chua_co_chu_ban_thu_lai_sau_c5852a5c}</MotionRegion>;
   }
   return (
     <MotionRegion as="div" className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
         <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
-          {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
+          {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải S.s_copy_815d3b923a95. */}
           {!script.timed && current?.state !== "text" && (
-            <p className="mb-5 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
+            <p className="mb-5 py-3 text-sm text-fg-2">{S.s_chuong_nay_chua_co_audio_hoan_chinh_dang_h_15f33c5e}</p>
           )}
           <ReadAlongText
             script={script}
@@ -1736,8 +1706,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
           />
         </div>
       </div>
-      {/* Thanh việc của câu / nút "Tới câu đang nghe" hiện / ẩn dần (MotionPresence). Vùng con có khoá cố định: chúng không làm vùng của cả bài
-          thấy "nội dung đổi" mà mờ chéo cả văn bản mỗi lần chọn câu hay cuộn khỏi câu đang nghe (W2). */}
+      {/* Thanh việc của câu / nút S.s_toi_cau_dang_nghe_4526cf38 hiện / ẩn dần (MotionPresence). Vùng con có khoá cố định: chúng không làm vùng của cả bài
+          thấy S.s_copy_6f47156dbf52 mà mờ chéo cả văn bản mỗi lần chọn câu hay cuộn khỏi câu đang nghe (W2). */}
       {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
@@ -1804,14 +1774,14 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
         {playing ? (
           <Vu className="h-3 text-accent" />
         ) : done ? (
-          <Check className="size-4 text-success" aria-label="Đã nghe" />
+          <Check className="size-4 text-success" aria-label={S.s_da_nghe_1e0f8d88} />
         ) : <span aria-hidden />}
       </MotionRegion>
       <span className="min-w-0 flex-1">
         <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
           {chapter.subtitle || chapter.title}
         </span>
-        {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
+        {/* Dòng phụ đổi khi chương thu xong (S.s_copy_7e63dd84fb6c -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
         <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
         </MotionRegion>
@@ -1823,8 +1793,8 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
 type Panel = "text" | "chapters";
 /** `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô icon - tab kéo icon ra chừng ấy để mực đứng đúng mép chữ của bảng bên dưới. */
 const PANELS: { value: Panel; label: string; icon: typeof Text; ink: number }[] = [
-  { value: "text", label: "Đọc theo", icon: Text, ink: 2 },
-  { value: "chapters", label: "Chương", icon: ListOrdered, ink: 3 },
+  { value: "text", label: S.s_doc_theo_df342819, icon: Text, ink: 2 },
+  { value: "chapters", label: S.s_chuong_2d157977, icon: ListOrdered, ink: 3 },
 ];
 const PANEL_KEY = "abook-now-playing-panel";
 
@@ -1838,14 +1808,14 @@ function initialPanel(): Panel {
   return "text";
 }
 
-/** Tiến độ cả cuốn (phần đã có audio): "Đã nghe 42% cả cuốn · còn khoảng 2 giờ 32 phút ở tốc độ 1,5×". */
+/** Tiến độ cả cuốn (phần đã có audio): S.s_copy_c21ecde32b7f. */
 function BookProgressLine({ className }: { className?: string }) {
   const { queue, track, rate, atEnd } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
   const { before, total, inside } = useMemo(() => bookHeardBase(queue, track?.chapterId), [queue, track?.chapterId]);
   const shown = Boolean(track) && total > 0;
   const heard = Math.min(total, before + (inside ? tens * 10 : 0));
-  // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
+  // Sách chưa thu xong: S.s_copy_3f03b566d1f4 đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
   const whole = queue.every((chapter) => chapter.available);
   const finished = atEnd === "finished";
   const text = shown ? bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished }) : "";
@@ -1857,22 +1827,22 @@ function BookProgressLine({ className }: { className?: string }) {
   );
 }
 
-/** "Tập 17", "Phần 2" - hay cả tên khi cuốn kế không đánh số. */
+/** S.s_copy_39388d5bbda7, S.s_copy_e978c94ddc2d - hay cả tên khi cuốn kế không đánh số. */
 function nextLabel(title: string): string {
   const { volume, unit } = seriesOf(title);
   return volume === null ? title : `${unit.charAt(0).toUpperCase()}${unit.slice(1)} ${volume}`;
 }
 
-/** Các phần của CÙNG một cuốn ("Làm tiếp cuốn này": "Tên", "Tên · Phần 2"...) nối liền như một cuốn - hết phần này tự nghe
- *  phần sau, từ chỗ nghe tiếp của nó. Tập khác của một bộ ("Tập 17") thì chỉ mời (CaughtUpNotice): sang tập mới là việc người
- *  nghe chọn. Hẹn giờ "hết chương" dừng trước khi tới đây (atEnd không thành "finished"). Gọi ở PlayerBar - có mặt ở mọi
+/** Các phần của CÙNG một cuốn (S.s_lam_tiep_cuon_nay_18bbf3cc: S.s_ten_c8b17259, S.s_copy_027c931582e1...) nối liền như một cuốn - hết phần này tự nghe
+ *  phần sau, từ chỗ nghe tiếp của nó. Tập khác của một bộ (S.s_copy_39388d5bbda7) thì chỉ mời (CaughtUpNotice): sang tập mới là việc người
+ *  nghe chọn. Hẹn giờ S.s_het_chuong_13b507b4 dừng trước khi tới đây (atEnd không thành "finished"). Gọi ở PlayerBar - có mặt ở mọi
  *  màn của máy tính lẫn điện thoại. */
 function useContinueIntoNextPart() {
   const { atEnd, track, rate, setContinues } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
   const playBook = usePlayListenBook();
   const continued = useRef("");
-  // Báo trước cho trình phát: hết cuốn này không phải hết sách - nó khỏi nói "Đã nghe hết sách / Nghe lại từ đầu" (soát a26 L1).
+  // Báo trước cho trình phát: hết cuốn này không phải hết sách - nó khỏi nói S.s_copy_c5d9c65b4e91 (soát a26 L1).
   const continues = continuingPart(next) && track ? track.bookId : null;
   useEffect(() => setContinues(continues), [continues, setContinues]);
   useEffect(() => {
@@ -1881,13 +1851,13 @@ function useContinueIntoNextPart() {
     if (continued.current === track.bookId) return;
     continued.current = track.bookId;
     // Phần sau chưa đặt tốc độ riêng thì nghe tiếp đúng tốc độ phần trước (soát a26 L3).
-    toast(`Nghe tiếp ${nextLabel(part.title)}`);
+    toast(S.s_nghe_tiep_0_248b1487(nextLabel(part.title)));
     void playBook(part, undefined, undefined, { rate });
   }, [atEnd, track, next, playBook, rate]);
 }
 
-/** Cuối màn "Đã nghe hết sách": mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện.
- *  `skipId`: tập kế đã có nút "Nghe tiếp" riêng ngay trên - không mời lần nữa. */
+/** Cuối màn S.s_da_nghe_het_sach_2fefde33: mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện.
+ *  `skipId`: tập kế đã có nút S.s_nghe_tiep_403b90a5 riêng ngay trên - không mời lần nữa. */
 function AfterTheEnd({ skipId }: { skipId?: string }) {
   const { track } = usePlayer();
   const { data: books } = useListenLibrary(false);
@@ -1901,16 +1871,16 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
   );
   return (
     <div className="mt-3 border-t border-accent/20 pt-2.5 text-left">
-      {/* Thư viện về muộn (truy vấn của riêng khối này - vùng cha không thấy): cụm "Nghe cuốn khác" mở ra, không bật cứng. */}
+      {/* Thư viện về muộn (truy vấn của riêng khối này - vùng cha không thấy): cụm S.s_nghe_cuon_khac_cc5cf8a7 mở ra, không bật cứng. */}
       <MotionPresence open={others.length > 0}>
-          <div className="px-1 pb-1 text-xs font-medium text-fg-2">Nghe cuốn khác</div>
+          <div className="px-1 pb-1 text-xs font-medium text-fg-2">{S.s_nghe_cuon_khac_cc5cf8a7}</div>
           <ul className="space-y-1">
             {others.map((book) => (
               <li key={book.id}>
                 <button
                   type="button"
                   onClick={() => void playBook(book)}
-                  aria-label={`Nghe ${book.title}`}
+                  aria-label={S.s_nghe_0_42d1e966(book.title)}
                   className="flex min-h-[48px] w-full items-center gap-3 rounded-control px-1 py-1 text-left hover:bg-hover"
                 >
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
@@ -1931,9 +1901,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
           navigate("/");
         }}
         className="mt-1 min-h-[48px] w-full text-center font-semibold text-accent-text underline underline-offset-2"
-      >
-        Về thư viện
-      </button>
+      >{S.s_ve_thu_vien_7bb3f8c2}</button>
     </div>
   );
 }
@@ -1946,9 +1914,8 @@ function CaughtUpNotice() {
   if (atEnd === "finished" && next) {
     return (
       <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
-        <div className="text-fg">Đã nghe hết cuốn này.</div>
-        <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
-          Nghe tiếp {nextLabel(next.title)}
+        <div className="text-fg">{S.s_da_nghe_het_cuon_nay_05edcdd9}</div>
+        <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
         </button>
         <AfterTheEnd skipId={next.id} />
       </div>
@@ -1957,18 +1924,15 @@ function CaughtUpNotice() {
   if (atEnd === "finished") {
     return (
       <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
-        <div className="text-fg">Đã nghe hết sách.</div>
-        <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">
-          Nghe lại từ đầu
-        </button>
+        <div className="text-fg">{S.s_da_nghe_het_sach_4a2d3bf1}</div>
+        <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">{S.s_nghe_lai_tu_dau_e251d632}</button>
         <AfterTheEnd />
       </div>
     );
   }
   if (atEnd !== "caughtUp") return null;
   return (
-    <p className="mt-3 py-2 text-center text-sm text-fg-2">
-      Đã nghe hết phần đã có. {caughtUpDetail()}
+    <p className="mt-3 py-2 text-center text-sm text-fg-2">{S.s_da_nghe_het_phan_da_co_a328f168}{caughtUpDetail()}
     </p>
   );
   };
@@ -1978,10 +1942,10 @@ function CaughtUpNotice() {
 
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------
 
-/** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: "Phát trên <máy tính>"). */
-/** `edit`: sửa được gì ở tab "Đọc theo" (như màn đọc của cùng thiết bị - SentenceMenu.SentenceEditing). */
-/** Bìa to của màn "Đang nghe" là nút phát / dừng. Component riêng: nhãn đổi theo mỗi lần phát / dừng không làm cả màn (một MotionRegion)
- *  thấy "nội dung đổi" và mờ chéo theo (W1). */
+/** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: S.s_copy_b8156bf6401a). */
+/** `edit`: sửa được gì ở tab S.s_doc_theo_df342819 (như màn đọc của cùng thiết bị - SentenceMenu.SentenceEditing). */
+/** Bìa to của màn S.s_dang_nghe_9310d8cf là nút phát / dừng. Component riêng: nhãn đổi theo mỗi lần phát / dừng không làm cả màn (một MotionRegion)
+ *  thấy S.s_copy_6f47156dbf52 và mờ chéo theo (W1). */
 function CoverToggle({ title, image }: { title: string; image: ComponentProps<typeof BookCover>["image"] }) {
   const { playing, buffering, toggle } = usePlayer();
   const speaking = useSpeaking();
@@ -1989,7 +1953,7 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
     <button
       type="button"
       onClick={withFeedback("playPause", toggle)}
-      aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
+      aria-label={S.s_0_cham_bia_0f645d0d(toggleLabel(playing, buffering, speaking))}
       className="size-[min(480px,100cqw,100cqh)] shrink-0 rounded-cover transition-transform press"
     >
       <BookCover title={title} image={image} size="xl" morph="cover" className="w-full rounded-cover shadow-float" />
@@ -1997,15 +1961,15 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
   );
 }
 
-/** Công tắc hai chế độ của màn "Đang nghe" ở khổ điện thoại: "Nghe" / "Đọc theo". Đọc theo là một chế độ của chính màn này (thanh điều khiển và
+/** Công tắc hai chế độ của màn S.s_dang_nghe_9310d8cf ở khổ điện thoại: "Nghe" / S.s_doc_theo_df342819. Đọc theo là một chế độ của chính màn này (thanh điều khiển và
  *  Back ở lại trong nó), nên công tắc nằm ở thanh trên của màn - như Android (PlayerModeSwitch) và Qt (PageSwitch). Hai ô bằng nhau, viên chỉ
  *  báo trượt từ ô này sang ô kia. */
 function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {
   return (
-    <div role="tablist" aria-label="Đang nghe" data-player-mode className="relative inline-grid h-9 grid-cols-2 rounded-full bg-sunken p-[3px]">
+    <div role="tablist" aria-label={S.s_dang_nghe_9310d8cf} data-player-mode className="relative inline-grid h-9 grid-cols-2 rounded-full bg-sunken p-[3px]">
       <span aria-hidden className="absolute inset-y-[3px] left-[3px] w-[calc((100%-6px)/2)] rounded-full bg-panel shadow-sm transition-transform duration-motion-medium"
         style={{ transform: reading ? "translateX(100%)" : "translateX(0)" }} />
-      {([["Nghe", false], ["Đọc theo", true]] as const).map(([label, value]) => (
+      {([[S.s_nghe_a43aafef, false], [S.s_doc_theo_df342819, true]] as const).map(([label, value]) => (
         <button
           key={label}
           type="button"
@@ -2023,7 +1987,7 @@ function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (
   );
 }
 
-/** Cột trái của màn "Đang nghe" (bìa, tên chương, thanh tua, nút). Tách + memo để mở / đóng màn (đổi `expanded`) không dựng lại cả cột ở khung chạm:
+/** Cột trái của màn S.s_dang_nghe_9310d8cf (bìa, tên chương, thanh tua, nút). Tách + memo để mở / đóng màn (đổi `expanded`) không dựng lại cả cột ở khung chạm:
  *  chỉ trạng thái trình phát (usePlayer) và bảng đang chọn mới làm nó vẽ lại. `selected`: bảng đang hiện (null = đang hiện bìa). */
 const NowPlayingColumn = memo(function NowPlayingColumn({
   player,
@@ -2045,7 +2009,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   selected: Panel | null;
   onCollapse: () => void;
   onToggle: (value: Panel) => void;
-  /** Điện thoại: màn đang ở chế độ "Đọc theo" (chữ thay bìa; thanh điều khiển đứng nguyên chỗ). */
+  /** Điện thoại: màn đang ở chế độ S.s_doc_theo_df342819 (chữ thay bìa; thanh điều khiển đứng nguyên chỗ). */
   reading: boolean;
   onReading: (reading: boolean) => void;
   edit?: SentenceEditing;
@@ -2067,8 +2031,8 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Mực hai đầu đứng đúng mép cột (bìa, thanh tua): mực ⌄ bắt đầu 5/24 trong ô
           icon (glyph), mực "…" dừng 3/24 trước mép phải - mỗi đầu lùi ít hơn chừng ấy. */}
       <div className="slot-row [--g:clamp(1.125rem,0.75rlh,1.96875rem)] [--slot-end:calc(var(--g)*18/24)] [--slot-start:calc(var(--g)*14/24)]">
-        <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box" onClick={onCollapse} />
-        {mobile ? <PlayerModeSwitch reading={reading} onSelect={onReading} /> : <span className="label-section text-fg-2">Đang nghe</span>}
+        <IconButton label={withShortcut(S.s_thu_nho_d7896922, S.s_esc_52f878ed)} icon={ChevronDown} className="touch-box" onClick={onCollapse} />
+        {mobile ? <PlayerModeSwitch reading={reading} onSelect={onReading} /> : <span className="label-section text-fg-2">{S.s_dang_nghe_9310d8cf}</span>}
         <div>
           <MoreMenu scope="screen">
             <AudioFxMenu/>
@@ -2076,11 +2040,11 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <MusicMenu look="row" />
             <VoiceMenu scope="screen" look="row" />
             <VolumeControl look="row" />
-            {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>Về chỗ vừa nghe</MenuRow>}
+            {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>{S.s_ve_cho_vua_nghe_8da3c710}</MenuRow>}
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
-            {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>Phím tắt</MenuRow>}
-            <MenuSlot label="Gợi ý đọc" icon={Lightbulb}><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
-            <MenuSlot label="Thiết bị phát">{actions}</MenuSlot>
+            {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}
+            <MenuSlot label={S.s_goi_y_doc_346ac8be} icon={Lightbulb}><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
+            <MenuSlot label={S.s_thiet_bi_phat_c8cfc7a8}>{actions}</MenuSlot>
           </MoreMenu>
         </div>
       </div>
@@ -2089,9 +2053,9 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div data-np-stage data-reading={reading || undefined} className={cn("flex min-h-16 min-w-0 flex-1 flex-col", reading && "min-h-[16rem]")}>
         <div className={cn("flex min-w-0", reading ? "mt-4 shrink-0 items-start gap-3" : "min-h-0 flex-1 flex-col")}>
           {/* Bìa vuông, to nhất 480px (điện thoại: cả bề ngang) nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) -
-              nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10). */}
+              nút bìa không co theo chiều cao thì đè lên S.s_dang_nghe_8bb22da4 khi cửa sổ thấp (soát UX 05-10). */}
           {reading ? (
-            <button type="button" aria-label="Về chế độ nghe" onClick={() => onReading(false)} {...keepFocus} className="touch-hit motion-reveal size-12 shrink-0 rounded-control transition-transform press">
+            <button type="button" aria-label={S.s_ve_che_do_nghe_a0052a89} onClick={() => onReading(false)} {...keepFocus} className="touch-hit motion-reveal size-12 shrink-0 rounded-control transition-transform press">
               <BookCover title={track.bookTitle} image={track.bookCover} size="xs" morph="cover" className="size-12 rounded-control" />
             </button>
           ) : (
@@ -2122,15 +2086,15 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div className="mt-3 flex justify-center">
         <Transport large />
       </div>
-      {/* Một hàng nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px,
-          "Hẹn giờ" 44,6 px ở rlh 24 px) để chữ chạm đúng mép cột. Máy tính: "Chương" và "Đọc theo" đã là hai tab của bảng bên phải - không lặp ở cột này. */}
-      <div role="group" aria-label="Điều khiển phụ" data-player-secondary className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
+      {/* Một hàng nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút (S.s_toc_do_16ee0914 41,8 px, S.s_chuong_2d157977 46,2 px,
+          S.s_hen_gio_39d9ca26 44,6 px ở rlh 24 px) để chữ chạm đúng mép cột. Máy tính: S.s_chuong_2d157977 và S.s_doc_theo_df342819 đã là hai tab của bảng bên phải - không lặp ở cột này. */}
+      <div role="group" aria-label={S.s_dieu_khien_phu_bf325663} data-player-secondary className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
         <SpeedMenu look="action" />
         <SleepMenu look="action" />
-        {mobile && <ActionButton icon={ListOrdered} label="Chương" aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}
+        {mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}
       </div>
-      {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
-      <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p></MotionPresence>
+      {/* Đang nhỏ dần thì S.s_copy_920dc24f8105 đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
+      <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">{S.s_se_dung_khi_het_chuong_nay_9c1f8c30}</p></MotionPresence>
       <FadingNotice className="mt-3" />
       <PlayerAlert className="mt-3" overlay />
       <CaughtUpNotice />
@@ -2139,7 +2103,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
 });
 
 let warmedUp = false;
-/** Lần mở đầu tiên của màn Đang nghe trả giá "khởi động nguội" (biên dịch JS của ~120 thành phần, bộ nhớ đệm chữ / bố cục): đo 150-180 ms ở 6x chậm, còn
+/** Lần mở đầu tiên của màn Đang nghe trả giá S.s_copy_4affb6449897 (biên dịch JS của ~120 thành phần, bộ nhớ đệm chữ / bố cục): đo 150-180 ms ở 6x chậm, còn
  *  từ lần hai chỉ ~45 ms. Dựng thử ruột một lần lúc máy rảnh (ẩn hẳn: .now-playing[data-state="warm"]) rồi gỡ, để lần chạm đầu cũng nhẹ như các lần sau. */
 function useWarmUp(wanted: boolean): boolean {
   const [warming, setWarming] = useState(false);
@@ -2178,8 +2142,8 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
   // The shell measures content after the sidebar before paint. A class change moves
   // the existing panel between the side column and the chapter sheet.
   useEffect(() => setShowPanelNow(!stacked), [stacked]);
-  // Điện thoại: "Đọc theo" là một CHẾ ĐỘ của chính màn này (như Android NowPlayingWindow.reading, Qt NowPlaying.page), không phải màn riêng: thanh điều khiển
-  // và Back ở lại trong cửa sổ. Bìa và tên morph tại stage. Máy tính: bảng "Đọc theo" bên phải (panel).
+  // Điện thoại: S.s_doc_theo_df342819 là một CHẾ ĐỘ của chính màn này (như Android NowPlayingWindow.reading, Qt NowPlaying.page), không phải màn riêng: thanh điều khiển
+  // và Back ở lại trong cửa sổ. Bìa và tên morph tại stage. Máy tính: bảng S.s_doc_theo_df342819 bên phải (panel).
   const [reading, setReadingNow] = useState(false);
   const setReading = (value: boolean) => morphPlayerMode(section.current, () => setReadingNow(value));
   // Sheets and the panel's own MotionRegion own their motion; the window stays still.
@@ -2222,7 +2186,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
   }, [presence.mounted]);
   // Register the overlay on desktop too, above any open state layer in the underlying page.
   useBackLayer(open, () => setExpanded(false), section);
-  // Back từ "Đọc theo" về "Nghe" trước khi thu nhỏ màn (lớp đăng ký sau nên đứng trên lớp đóng màn).
+  // Back từ S.s_doc_theo_df342819 về "Nghe" trước khi thu nhỏ màn (lớp đăng ký sau nên đứng trên lớp đóng màn).
   useBackLayer(stacked && open && reading, () => setReading(false));
   // Màn đã thu xuống hẳn: lần mở sau bắt đầu ở "Nghe", như Android.
   useEffect(() => {
@@ -2238,7 +2202,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
     }
   };
 
-  // Tên cửa sổ / thẻ trình duyệt theo chương đang nghe ("Chương 3 · Tên sách · ABook"); đóng màn này thì trả lại tên của trang bên dưới.
+  // Tên cửa sổ / thẻ trình duyệt theo chương đang nghe (S.s_copy_12bc212690c3); đóng màn này thì trả lại tên của trang bên dưới.
   const titleChapter = track?.chapterTitle;
   const titleBook = track?.bookTitle;
   useEffect(() => {
@@ -2250,7 +2214,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
     };
   }, [open, titleChapter, titleBook]);
 
-  // Mở: đưa focus vào nút Phát; đóng: trả focus về chỗ đã mở. Mở ra kèm một menu (nút "Chọn giọng khác" ở thanh gọn mở luôn menu Giọng đọc):
+  // Mở: đưa focus vào nút Phát; đóng: trả focus về chỗ đã mở. Mở ra kèm một menu (nút S.s_chon_giong_khac_d31cfe89 ở thanh gọn mở luôn menu Giọng đọc):
   // focus đã vào menu ấy thì để yên - kéo focus đi là menu tự đóng (soát a66: phải bấm lần hai).
   useEffect(() => {
     if (!open) return;
@@ -2266,7 +2230,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
   }, [open]);
 
   // Esc đóng màn này ở MỌI chỗ đang có tiêu điểm (soát UX 29-09: bấm vào chỗ trống, tiêu điểm về trang, Esc không ăn - mà
-  // Cài đặt ghi "Dùng được ở mọi màn hình"). Một lần Esc đóng một lớp: menu, popover hay hộp thoại đang mở thì chỉ đóng nó.
+  // Cài đặt ghi S.s_copy_08209c062f9c). Một lần Esc đóng một lớp: menu, popover hay hộp thoại đang mở thì chỉ đóng nó.
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -2299,7 +2263,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
     event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
   };
   const panelTabs = (
-    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="relative flex min-w-0 gap-4">
+    <div role="tablist" aria-label={S.s_bang_8f805066} onKeyDown={onTabKeys} className="relative flex min-w-0 gap-4">
       <SlidingIndicator variant="line" />
       {PANELS.map((item) => {
         const selected = panel === item.value && showPanel;
@@ -2364,20 +2328,20 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
       inert={!open}
       aria-hidden={!open || undefined}
       onAnimationEnd={presence.onAnimationEnd}
-      // Ruột dựng sau vỏ (điện thoại) và cột có thể đổi theo trạng thái phát: "đổi nội dung" của cả màn không được chụp mờ chéo - mỗi vùng con (tên chương,
+      // Ruột dựng sau vỏ (điện thoại) và cột có thể đổi theo trạng thái phát: S.s_copy_e17f4bb77700 của cả màn không được chụp mờ chéo - mỗi vùng con (tên chương,
       // tiến độ, lời báo...) có MotionRegion riêng. Chỉ đổi cuốn thì cả màn mờ chéo sang cuốn mới.
       motionKey={track.bookId}
       // Màn điện thoại thuộc viewport: gutter cuộn không được làm document rộng ra rồi khiến Radix bù scrollbar giả.
       className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, SAFE_BOTTOM, mobile ? "fixed" : "absolute", stacked && "flex-col")}
       // Bảng trượt (tốc độ, hẹn giờ, thêm tuỳ chọn...) phủ LÊN màn này; màn bên dưới đứng yên, không co bìa để chừa chỗ (chủ sách 26-10).
       style={tint}
-      // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
-      // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
+      // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím S.s_copy_15c713b96535 của
+      // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>{S.s_copy_a62aee8f61a8}<main>.
       role="main"
-      aria-label="Đang nghe"
+      aria-label={S.s_dang_nghe_9310d8cf}
     >
       {fill && <NowPlayingColumn player={player} mobile={stacked} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}
-      {fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title="Chương" className={panel === "chapters" ? "chapter-sheet" : undefined}>
+      {fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={S.s_chuong_2d157977} className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}
       {fill && !stacked && (

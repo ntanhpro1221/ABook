@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.Option
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.RowLine
@@ -56,23 +58,23 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.components.fadeEdges
 
-private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
-private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it phút") }
-private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) "1 phút" else "$it giây") }
+private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, S.s_0_phut_2596d212(it)) }
+private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, S.s_0_phut_2596d212(it)) }
+private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) S.s_1_phut_eca10dbb else S.s_0_giay_daac30d3(it)) }
 
 /** Lời của các hàng. */
 private object GroupCopy {
-    const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
-    const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
-    const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
-    const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
-    const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
-    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại."
-    const val SCHEDULE = "Máy rảnh 2 phút trong khung giờ này mới tự hẹn."
-    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để hẹn lại từ đầu."
-    const val SURFACE = "Nền của chữ khi đọc theo."
-    const val HAPTICS = "Rung nhẹ khi bạn chọn hay giữ."
-    const val AUTO_PIP = "Rời app khi có sách mở thì sách thu vào cửa sổ mini."
+    const val NOTIFY = S.s_dang_tat_khong_bao_khi_sach_xong_nut_tam_d_1db703e7
+    const val REWIND = S.s_nghi_qua_30_giay_thi_lui_5_giay_qua_10_phu_328c3ffd
+    const val HEADSET = S.s_bat_nut_truoc_sau_lui_toi_15_giay_tat_chuy_6fc6ddb5
+    const val AUTO_MUSIC = S.s_sach_chi_co_chu_nhac_nhe_doi_theo_canh_aef4ce0c
+    const val FLIP = S.s_lat_len_trong_10_phut_la_nghe_tiep_6a636fb0
+    const val SOUNDS = S.s_copy_34fb8bbc7719
+    const val SCHEDULE = S.s_may_ranh_2_phut_trong_khung_gio_nay_moi_tu_93ce72b6
+    const val SHAKE = S.s_dang_hen_gio_lac_nhe_hai_lan_de_hen_lai_tu_c3c8f5c5
+    const val SURFACE = S.s_nen_cua_chu_khi_doc_theo_d0cbef86
+    const val HAPTICS = S.s_rung_nhe_khi_ban_chon_hay_giu_5292ace9
+    const val AUTO_PIP = S.s_roi_app_khi_co_sach_mo_thi_sach_thu_vao_cu_7f4e317e
 }
 
 /** Nghe: thông báo (chỉ khi đang tắt), tự lùi, nút tai nghe; khối Nhạc nền. */
@@ -93,22 +95,22 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
         ListSection(first = true) {
             Reveal(!allowed) {
                 Column {
-                    ActionRow("Thông báo", "Cho phép", env.links.openNotificationSettings, "notify_allow", hint = GroupCopy.NOTIFY)
+                    ActionRow(S.s_thong_bao_a9b656f5, S.s_cho_phep_f1a437f5, env.links.openNotificationSettings, "notify_allow", hint = GroupCopy.NOTIFY)
                     RowLine()
                 }
             }
-            SwitchRow("Tự lùi", settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
+            SwitchRow(S.s_tu_lui_6fc7685a, settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
             RowLine()
-            SwitchRow("Nút tai nghe lùi/tới", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
+            SwitchRow(S.s_nut_tai_nghe_lui_toi_973e4a19, settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
             if (env.pip?.available == true) {
                 RowLine()
-                SwitchRow("Tự mở cửa sổ mini", settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
+                SwitchRow(S.s_tu_mo_cua_so_mini_a93a51d2, settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
             }
         }
-        ListSection("Nhạc nền") {
-            SwitchRow("Tự chọn nhạc nền", settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
+        ListSection(S.s_nhac_nen_271fb292) {
+            SwitchRow(S.s_tu_chon_nhac_nen_a14c52b4, settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
             RowLine()
-            DisclosureRow("Nhạc của tôi", { if (voice != null) openVoice(VoicePage.Music) }, "my_music", summary = summary.music)
+            DisclosureRow(S.s_nhac_cua_toi_f65b7ac6, { if (voice != null) openVoice(VoicePage.Music) }, "my_music", summary = summary.music)
         }
     }
 }
@@ -132,50 +134,50 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
     SettingsPage(SettingsGroup.Sleep.label, onBack, SettingsGroup.Sleep.screenTag, modifier) {
         ListSection(first = true) {
             SwitchRow(
-                "Lịch đêm", settings.schedule != null,
+                S.s_lich_dem_5f61612f, settings.schedule != null,
                 { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule", GroupCopy.SCHEDULE,
             )
             Reveal(settings.schedule != null) {
                 Column(Modifier.fillMaxWidth().testTag("schedule_editor")) {
                     Row(Modifier.fillMaxWidth()) {
-                        TimeField("Từ", schedule.from, "schedule_from", Modifier.weight(1f)) {
-                            pickTime("Từ", schedule.from) { plan, time -> plan.copy(from = time) }
+                        TimeField(S.s_tu_c2634aaa, schedule.from, "schedule_from", Modifier.weight(1f)) {
+                            pickTime(S.s_tu_c2634aaa, schedule.from) { plan, time -> plan.copy(from = time) }
                         }
                         Spacer(Modifier.width(Dim.s16))
-                        TimeField("Đến", schedule.to, "schedule_to", Modifier.weight(1f)) {
-                            pickTime("Đến", schedule.to) { plan, time -> plan.copy(to = time) }
+                        TimeField(S.s_den_4f14ac22, schedule.to, "schedule_to", Modifier.weight(1f)) {
+                            pickTime(S.s_den_4f14ac22, schedule.to) { plan, time -> plan.copy(to = time) }
                         }
                     }
                     ChoiceSetting(
-                        "Hẹn", ScheduleOptions, ScheduleOptions.firstOrNull { it.value == schedule.minutes } ?: ScheduleOptions[1],
+                        S.s_hen_244e495e, ScheduleOptions, ScheduleOptions.firstOrNull { it.value == schedule.minutes } ?: ScheduleOptions[1],
                         { option, _ -> repo.change { now -> now.schedule?.let { now.copy(schedule = it.copy(minutes = option.value)) } ?: now } },
                         "schedule_minutes",
                     )
                 }
             }
         }
-        ListSection("Cử chỉ") {
-            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
+        ListSection(S.s_cu_chi_0ae3f7ba) {
+            SwitchRow(S.s_lac_de_nghe_them_405614ff, settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
             Reveal(settings.shakeToExtend) {
                 Column {
                     RowLine()
                     ChoiceSetting(
-                        "Độ nhạy", ShakeSensitivity.entries, settings.shakeSensitivity,
+                        S.s_do_nhay_5af83fde, ShakeSensitivity.entries, settings.shakeSensitivity,
                         { level, _ -> repo.change { it.copy(shakeSensitivity = level) } }, "shake_sensitivity",
                     )
                 }
             }
             RowLine()
-            SwitchRow("Úp máy để dừng", settings.flipToPause, { on -> repo.change { it.copy(flipToPause = on) } }, "flip_pause", GroupCopy.FLIP)
+            SwitchRow(S.s_up_may_de_dung_f4c69dd7, settings.flipToPause, { on -> repo.change { it.copy(flipToPause = on) } }, "flip_pause", GroupCopy.FLIP)
         }
-        ListSection("Khi sắp tắt") {
+        ListSection(S.s_khi_sap_tat_ac78648f) {
             ChoiceSetting(
-                "Mỗi lần nghe thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
+                S.s_moi_lan_nghe_them_9a74fcef, ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
                 { option, _ -> repo.change { it.copy(sleepExtendMinutes = option.value) } }, "sleep_extend",
             )
             RowLine()
             ChoiceSetting(
-                "Nhỏ dần", FadeOptions, FadeOptions.first { it.value == settings.sleepFadeSeconds },
+                S.s_nho_dan_ae8f3a2d, FadeOptions, FadeOptions.first { it.value == settings.sleepFadeSeconds },
                 { option, _ -> repo.change { it.copy(sleepFadeSeconds = option.value) } }, "sleep_fade",
             )
         }
@@ -218,7 +220,7 @@ private fun TimeSheet(title: String, value: String, onPick: (String) -> Unit) {
 }
 
 /**
- * Giao diện: màu (Tự động / Sáng / Tối - đổi ngay cả app, vòng lan từ chữ vừa chạm), nền đọc, tiếng chạm, rung. Chọn "Tự động" -> "Sáng" khi máy đang sáng thì không
+ * Giao diện: màu (Tự động / Sáng / Tối - đổi ngay cả app, vòng lan từ chữ vừa chạm), nền đọc, tiếng chạm, rung. Chọn S.s_tu_dong_a25c8028 -> S.s_sang_8f0c677d khi máy đang sáng thì không
  * có gì để lan: đổi thẳng.
  */
 @Composable
@@ -229,7 +231,7 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
     SettingsPage(SettingsGroup.Look.label, onBack, SettingsGroup.Look.screenTag, modifier) {
         ListSection(first = true) {
             ChoiceSetting(
-                "Màu", ThemeMode.entries, settings.theme,
+                S.s_mau_bf45a510, ThemeMode.entries, settings.theme,
                 { mode, at ->
                     val flips = mode.dark(systemDark) != repo.state.value.theme.dark(systemDark)
                     env.reveal.change(at, flips) { repo.change { it.copy(theme = mode) } }
@@ -238,13 +240,13 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
             )
             RowLine()
             ChoiceSetting(
-                "Nền đọc", ReadingSurface.entries, settings.readingSurface,
+                S.s_nen_doc_25ec1519, ReadingSurface.entries, settings.readingSurface,
                 { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface", GroupCopy.SURFACE,
             )
             RowLine()
-            SwitchRow("Âm thanh chạm", settings.touchSounds, { on -> repo.change { it.copy(touchSounds = on) } }, "touch_sounds", GroupCopy.SOUNDS)
+            SwitchRow(S.s_am_thanh_cham_a33e2a3c, settings.touchSounds, { on -> repo.change { it.copy(touchSounds = on) } }, "touch_sounds", GroupCopy.SOUNDS)
             RowLine()
-            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics", GroupCopy.HAPTICS)
+            SwitchRow(S.s_rung_24cfaa21, settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics", GroupCopy.HAPTICS)
         }
     }
 }
@@ -259,16 +261,16 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPag
     LaunchedEffect(devices) { devices?.loadSummary() }
     SettingsPage(SettingsGroup.Devices.label, onBack, SettingsGroup.Devices.screenTag, modifier) {
         ListSection(first = true) {
-            DisclosureRow("Nối máy tính", { open(DevicesPage.Pair) }, "devices_pair", summary = summary.pair)
+            DisclosureRow(S.s_noi_may_tinh_2950692d, { open(DevicesPage.Pair) }, "devices_pair", summary = summary.pair)
             RowLine()
-            DisclosureRow("Chia sẻ thư viện", { open(DevicesPage.Share) }, "devices_share", summary = summary.sharing)
+            DisclosureRow(S.s_chia_se_thu_vien_940de671, { open(DevicesPage.Share) }, "devices_share", summary = summary.sharing)
             RowLine()
-            DisclosureRow("Dung lượng", { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
+            DisclosureRow(S.s_dung_luong_32009349, { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
             RowLine()
         }
-        ListSection("Điện thoại này") {
+        ListSection(S.s_dien_thoai_nay_94875d9a) {
             ActionRow(
-                "Tên thiết bị", "Đổi tên", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
+                S.s_ten_thiet_bi_525223a8, S.s_doi_ten_a2a0dc70, { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
                 hint = summary.deviceName,
             )
         }

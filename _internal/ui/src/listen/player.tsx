@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { appVolume, selectAudioBook, setAudioFx, getAudioFx, onAudioFx } from './audioFx';
@@ -49,7 +50,7 @@ export type { SleepMode, SleepRequest } from "./sleep";
 
 // Trình phát sách nói - chung cho máy tính và Android. Hành vi theo chuẩn Audible / Apple Books / Smart AudioBook
 // Player: nhớ vị trí và tốc độ từng cuốn, tự sang chương kế, hẹn giờ ngủ nhỏ dần và gia hạn được, tự lùi khi nghe
-// lại theo độ dài lần dừng, "quay lại chỗ vừa nghe" sau mỗi cú nhảy xa, phím tắt, nút media.
+// lại theo độ dài lần dừng, S.s_copy_07f5305085f8 sau mỗi cú nhảy xa, phím tắt, nút media.
 //
 // Bộ máy web (máy tính): trình phát tự lo hàng đợi, hẹn giờ, nhật ký đêm, lưu vị trí.
 // Bộ máy native (Android): lõi Media3 lo hết những việc đó - trình phát chỉ chuyển lệnh và phản chiếu trạng thái.
@@ -124,7 +125,7 @@ interface PlayerState {
   sleep: SleepMode;
   /** Đang nhỏ dần trước khi tự tắt. */
   fading: boolean;
-  /** Lúc hẹn giờ vừa dừng phát (ms) - để nói "Đã tắt lúc 23:42" và mời bật lại. */
+  /** Lúc hẹn giờ vừa dừng phát (ms) - để nói S.s_copy_3e0e261e4faa và mời bật lại. */
   sleepStoppedAt: number | null;
   lastSleepMinutes: number;
   purpose: Purpose;
@@ -132,11 +133,11 @@ interface PlayerState {
   atEnd: "none" | "caughtUp" | "finished";
   /** Ghi công bài nhạc nền đang nghe được (CC BY): null = không có nhạc / bài chưa có thông tin. */
   musicCredit: MusicCredit | null;
-  /** Bài nhạc nền của chương đang nghe không phát được (file hỏng, mất kết nối): đoạn ấy im lặng - hộp "Nhạc nền" nói ra. */
+  /** Bài nhạc nền của chương đang nghe không phát được (file hỏng, mất kết nối): đoạn ấy im lặng - hộp S.s_nhac_nen_271fb292 nói ra. */
   musicBroken: boolean;
-  /** Lời báo "mất mạng" khi nhạc nền đang bị giữ lại vì mạng (điện thoại, MusicBed.kt): bài còn lại tải khi có mạng - hộp "Nhạc nền" nói ra; rỗng khi ổn. */
+  /** Lời báo S.s_copy_24d15872aa59 khi nhạc nền đang bị giữ lại vì mạng (điện thoại, MusicBed.kt): bài còn lại tải khi có mạng - hộp S.s_nhac_nen_271fb292 nói ra; rỗng khi ổn. */
   musicOffline: string;
-  /** Máy đang xếp hàng bài của danh sách nhạc vừa chọn (150 bài mất vài giây): nút "Nhạc nền" quay vòng chờ tới khi nhạc sẵn sàng. */
+  /** Máy đang xếp hàng bài của danh sách nhạc vừa chọn (150 bài mất vài giây): nút S.s_nhac_nen_271fb292 quay vòng chờ tới khi nhạc sẵn sàng. */
   musicLoading: boolean;
   canGoBack: boolean;
   error: string;
@@ -154,11 +155,11 @@ interface PlayerActions {
   prepare: (book: BookRef, chapters: ListenChapter[], chapterId: number, at: number) => void;
   toggle: () => void;
   resume: () => void;
-  /** "Thử lại" sau lỗi phát: nạp lại nguồn ở đúng chỗ đang đứng (resume chỉ bấm phát lại nguồn đã hỏng - soát a27 lỗi 3). */
+  /** S.s_thu_lai_c58d068c sau lỗi phát: nạp lại nguồn ở đúng chỗ đang đứng (resume chỉ bấm phát lại nguồn đã hỏng - soát a27 lỗi 3). */
   retry: () => void;
-  /** Bỏ thông báo lỗi đang hiện mà không phát gì (vd. mạng đã về: lời "không có mạng" hết đúng, nhưng đừng tự phát lại giữa chừng). */
+  /** Bỏ thông báo lỗi đang hiện mà không phát gì (vd. mạng đã về: lời S.s_khong_co_mang_558b7672 hết đúng, nhưng đừng tự phát lại giữa chừng). */
   dismissError: () => void;
-  /** Người nghe đang muốn nghe: đã bấm phát (ở app, thông báo, xe…) và chưa bấm dừng. Mạng về chỉ tự "Thử lại" khi đúng vậy - lỗi sinh lúc mở
+  /** Người nghe đang muốn nghe: đã bấm phát (ở app, thông báo, xe…) và chưa bấm dừng. Mạng về chỉ tự S.s_thu_lai_c58d068c khi đúng vậy - lỗi sinh lúc mở
    *  app, chưa bấm phát gì, thì chỉ gỡ lời báo (soát a66: cuốn tự đọc khi người nghe đang ở Cài đặt). */
   wantsPlay: () => boolean;
   pause: () => void;
@@ -166,16 +167,16 @@ interface PlayerActions {
   skip: (delta: number) => void;
   next: () => void;
   previous: () => void;
-  /** `note`: chỗ tới nói bằng lời ("Nghe từ “…”") thay cho giờ trong toast "Đã tới 0:41" - người vừa bấm một câu nhận ra câu,
+  /** `note`: chỗ tới nói bằng lời (S.s_copy_e268753d6184) thay cho giờ trong toast S.s_copy_b8c2f68e0da4 - người vừa bấm một câu nhận ra câu,
    *  không nhận ra con số (soát UX 29-09). */
   jumpTo: (chapterId: number, at?: number, note?: string, word?: WordTarget) => void;
   goBack: () => void;
-  /** Nghe lại cuốn đang nạp từ chương đầu (hết sách: "Nghe lại từ đầu"). */
+  /** Nghe lại cuốn đang nạp từ chương đầu (hết sách: S.s_nghe_lai_tu_dau_e251d632). */
   restart: () => void;
   setRate: (rate: number) => void;
   setVolume: (volume: number) => void;
   setSleep: (request: SleepRequest) => void;
-  /** Hẹn lại: đồng hồ về số phút đã hẹn (hết chương: "Mỗi lần nghe thêm"), không cộng thêm - bản điện thoại: SleepTimer.extend. */
+  /** Hẹn lại: đồng hồ về số phút đã hẹn (hết chương: S.s_moi_lan_nghe_them_9a74fcef), không cộng thêm - bản điện thoại: SleepTimer.extend. */
   extendSleep: () => void;
   close: () => void;
   /** Đổi hồ sơ nghe của một cuốn (`change` gọi máy chủ); cuốn đang nạp thì trình phát theo sang hồ sơ mới.
@@ -183,7 +184,7 @@ interface PlayerActions {
   switchRecord: (bookId: string, change: () => Promise<unknown>, startOver?: boolean) => Promise<void>;
   /** Lần cuối vị trí trên máy này được nạp hoặc lưu (ms) - vị trí trên máy chủ mới hơn mốc này là từ thiết bị khác. */
   positionStamp: () => number;
-  /** Cuốn `bookId` có phần sau nghe nối (useContinueIntoNextPart; null = không): hết nó thì đừng nói "Đã nghe hết sách" (soát a26 L1). */
+  /** Cuốn `bookId` có phần sau nghe nối (useContinueIntoNextPart; null = không): hết nó thì đừng nói S.s_da_nghe_het_sach_2fefde33 (soát a26 L1). */
   setContinues: (bookId: string | null) => void;
 }
 
@@ -194,18 +195,18 @@ const NowPlayingContext = createContext<{ expanded: boolean; setExpanded: (expan
 
 export function usePlayer(): PlayerValue {
   const value = useContext(PlayerContext);
-  if (!value) throw new Error("usePlayer ngoài PlayerProvider");
+  if (!value) throw new Error(S.s_useplayer_ngoai_playerprovider_38b689f6);
   return value;
 }
 
-/** Màn hình "Đang nghe" mở hay đóng - tách khỏi trình phát để mở/đóng không render lại cả cây. */
+/** Màn hình S.s_dang_nghe_9310d8cf mở hay đóng - tách khỏi trình phát để mở/đóng không render lại cả cây. */
 export function useNowPlaying() {
   const value = useContext(NowPlayingContext);
-  if (!value) throw new Error("useNowPlaying ngoài PlayerProvider");
+  if (!value) throw new Error(S.s_usenowplaying_ngoai_playerprovider_37ffa625);
   return value;
 }
 
-/** Trang nằm dưới màn "Đang nghe" chỉ bị khoá (inert) khi màn đã trượt lên xong, và mở khoá ngay khi bắt đầu đóng. Khoá/mở khoá inert
+/** Trang nằm dưới màn S.s_dang_nghe_9310d8cf chỉ bị khoá (inert) khi màn đã trượt lên xong, và mở khoá ngay khi bắt đầu đóng. Khoá/mở khoá inert
  *  tính lại style cả cây trang bên dưới (đo 25-70 ms ở 6x chậm): làm cùng lúc màn đang trượt thì vỡ khung. Trong ~300 ms trượt, màn phủ
  *  lên nên chạm không lọt xuống; phím Tab đã được đưa vào màn (NowPlaying focus). */
 export function useCoveredAfterOpen(expanded: boolean): boolean {
@@ -227,12 +228,12 @@ export const SKIP_SECONDS = 15;
 const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
 /** Lời báo khi nguồn âm thanh không phát được mà không có lý do nào cụ thể hơn (cùng câu với Qt Player::kPlayError). */
-const PLAY_ERROR = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+const PLAY_ERROR = S.s_chua_phat_duoc_chuong_nay_file_co_the_da_b_252bdb32;
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
 const NOTICE_MS = 12_000;
-/** Nhảy xa hơn chừng này (tua, chương) thì mời "quay lại chỗ vừa nghe". */
+/** Nhảy xa hơn chừng này (tua, chương) thì mời S.s_copy_07f5305085f8. */
 const JUMP_SECONDS = 30;
 const HISTORY = 5;
 
@@ -272,7 +273,7 @@ export function PlayerProvider({
   sleepSchedule?: SleepSchedule | null;
   systemIdleReader?: () => Promise<number | null>;
   autoRewind?: boolean;
-  /** Mở / đóng "Đang nghe" chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
+  /** Mở / đóng S.s_dang_nghe_9310d8cf chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
    *  cảnh RỖNG đã chiếm khung 70-140 ms vì phải chụp và dọn cả tài liệu (đo 6x chậm, docs/DESIGN.md 5.2 "60 fps"). Đổi lại bìa không bay. */
   plainOpen?: boolean;
 }) {
@@ -347,7 +348,7 @@ export function PlayerProvider({
     lastActivityPosition: null as NightPosition | null,
     scheduleOffFor: "",
     atEnd: "none" as PlayerState["atEnd"],
-    /** Màn "Đang nghe" đang mở: nó đã có khối báo hết sách / hết phần đã có, toast chỉ nói lại. */
+    /** Màn S.s_dang_nghe_9310d8cf đang mở: nó đã có khối báo hết sách / hết phần đã có, toast chỉ nói lại. */
     expanded: false,
     /** Cuốn có phần sau nghe nối (setContinues). */
     continues: null as string | null,
@@ -461,7 +462,7 @@ export function PlayerProvider({
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
   /** Cái bộ máy đọc to cần để đọc một chương chỉ-có-chữ: kịch bản chữ, giọng, nơi lấy clip, nơi ghi mốc thời gian (khoá đúng của màn đọc).
-   *  Lời nhắn của bộ lấy clip hiện ngay trong trình phát (PlayerAlert); lời báo "giọng trực tuyến gửi chữ đi" thì không - người nghe đã được
+   *  Lời nhắn của bộ lấy clip hiện ngay trong trình phát (PlayerAlert); lời báo S.s_copy_0a70fa31dbf5 thì không - người nghe đã được
    *  hỏi TRƯỚC khi phát (withConsent). */
   const speechOf = useCallback((bookId: string, chapter: ListenChapter): SpeechTrack => {
     const query = chapterScriptQuery(source, bookId, chapter);
@@ -582,12 +583,12 @@ export function PlayerProvider({
     if (history.length > HISTORY) history.shift();
     setCanGoBack(true);
     const sameChapter = from.chapterId === to.chapterId;
-    toast(note ? "Đã tới câu chọn" : `Đã tới ${sameChapter ? formatClock(to.seconds) : "chương mới"}`, {
+    toast(note ? S.s_da_toi_cau_chon_c63df9f4 : S.s_da_toi_0_773f4122(sameChapter ? formatClock(to.seconds) : S.s_chuong_moi_d272e542), {
       id: "jump",
       duration: 8000,
       // Vị trí đã hiện trong trình phát; thông báo chỉ xác nhận và giữ MỘT đường quay về.
       action: {
-        label: "Quay lại",
+        label: S.s_quay_lai_6d793582,
         onClick: () => goBackRef.current(),
       },
     });
@@ -597,7 +598,7 @@ export function PlayerProvider({
   // nguồn trả không mốc nào - trình phát chạy như cũ.
   const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed(undefined, source.musicWarm && ((link) => source.musicWarm?.(link)))), [native, source]);
   // Tải sẵn bài mốc đầu của chương kế ngay khi chương này bắt đầu (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ. Lời đáp
-  // giữ lại ("cuốn:chương"): sang chương ấy thì mốc đặt ngay ở giây 0, không chờ lời hỏi lúc sang chương (về sau 0,25 s thì nhạc đợi tới câu kế).
+  // giữ lại (S.s_copy_67712d9fb359): sang chương ấy thì mốc đặt ngay ở giây 0, không chờ lời hỏi lúc sang chương (về sau 0,25 s thì nhạc đợi tới câu kế).
   const aheadCues = useRef<{ key: string; result: MusicCues } | null>(null);
   const nextWarm = useMemo(
     () =>
@@ -650,7 +651,7 @@ export function PlayerProvider({
         const offline = native.musicOffline;
         if (offline !== lastOffline) {
           // Như máy tính (Studio báo khi tải nhạc dừng vì mất mạng): nói một lần lúc nhạc vừa bị giữ lại, không im lặng.
-          if (offline) toast.warning("Chưa tải được nhạc", { id: "music-offline", description: offline });
+          if (offline) toast.warning(S.s_chua_tai_duoc_nhac_e5f3ccb5, { id: "music-offline", description: offline });
           lastOffline = offline;
           setMusicOffline(offline);
         }
@@ -731,7 +732,7 @@ export function PlayerProvider({
     }
     // Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` (giọng không chờ nhạc) - hỏi lại, xong thì nhạc vào ở đầu câu kế.
     let retry: ReturnType<typeof setTimeout> | undefined;
-    // `misses`: số lần hỏi đã trả "chưa có" (unavailable / hỏng) - hỏi lại sau quãng lùi dần ([sceneRetryDelay]), không đợi tới chương sau.
+    // `misses`: số lần hỏi đã trả S.s_chua_co_e995e679 (unavailable / hỏng) - hỏi lại sau quãng lùi dần ([sceneRetryDelay]), không đợi tới chương sau.
     const askAgain = (misses: number) => {
       const delay = sceneRetryDelay(misses);
       if (delay !== null) retry = setTimeout(() => void chapterCues(0, misses + 1), delay);
@@ -741,7 +742,7 @@ export function PlayerProvider({
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
-          setMusicOffline(result.unavailable || playlistFault.current); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
+          setMusicOffline(result.unavailable || playlistFault.current); // danh mục chưa tải được: hộp S.s_nhac_nen_271fb292 nói lý do (rỗng thì thôi)
           const poll = result.pending ? scenePollDelay(attempt) : null;
           if (poll !== null) {
             retry = setTimeout(() => void chapterCues(attempt + 1, misses), poll);
@@ -752,7 +753,7 @@ export function PlayerProvider({
             sceneHeard.current = true;
             scene.arrive(result.cues, result.estSeconds ?? 0, result.levelDb, engine.time);
           } else {
-            scene?.reset(); // nhạc theo cảnh vừa tắt ("Tự chọn nhạc nền"): mốc thô cũ không được đặt lại khi clip về
+            scene?.reset(); // nhạc theo cảnh vừa tắt (S.s_tu_chon_nhac_nen_a14c52b4): mốc thô cũ không được đặt lại khi clip về
             bed.setCues(result.cues, result.levelDb);
           }
           setMusicBroken(bed.failing);
@@ -908,7 +909,7 @@ export function PlayerProvider({
     }
     setQueue(chapters);
     refs.current.queue = chapters;
-    // Sách chỉ-có-chữ không "đang làm": hết chương cuối là hết cuốn, không phải "chờ Studio làm tiếp".
+    // Sách chỉ-có-chữ không S.s_dang_lam_e22cfa2e: hết chương cuối là hết cuốn, không phải S.s_copy_de92c414c43f.
     refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true), remote: book.remote, record: activeRecord(book) };
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
@@ -918,7 +919,7 @@ export function PlayerProvider({
     return bookRate;
   }, [applyRate, native, source]);
 
-  /** Giây lùi lại khi nghe tiếp sau lần dừng `pausedMs`; 0 nếu người nghe tắt "Tự lùi khi nghe lại" (ba đường nghe tiếp đều qua đây). */
+  /** Giây lùi lại khi nghe tiếp sau lần dừng `pausedMs`; 0 nếu người nghe tắt S.s_copy_7cd73e3a9845 (ba đường nghe tiếp đều qua đây). */
   const rewindBy = useCallback((pausedMs: number) => (options.autoRewind ? rewindAfter(pausedMs) : 0), [options.autoRewind]);
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
@@ -993,9 +994,9 @@ export function PlayerProvider({
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
-    // Màn "Đang nghe" đang mở thì khối trong màn đã nói (kèm "Nghe lại từ đầu"): một chỗ báo, không thêm toast (soát UX 03-10).
+    // Màn S.s_dang_nghe_9310d8cf đang mở thì khối trong màn đã nói (kèm S.s_nghe_lai_tu_dau_e251d632): một chỗ báo, không thêm toast (soát UX 03-10).
     if (refs.current.expanded) return;
-    toast("Đã nghe hết sách", { id: "finished", duration: 8000, action: { label: "Nghe lại từ đầu", onClick: () => restartRef.current() } });
+    toast(S.s_da_nghe_het_sach_2fefde33, { id: "finished", duration: 8000, action: { label: S.s_nghe_lai_tu_dau_e251d632, onClick: () => restartRef.current() } });
   }, []);
   const caughtUpToast = useCallback(() => {
     if (refs.current.expanded) return;
@@ -1047,7 +1048,7 @@ export function PlayerProvider({
         ? newerElsewhere(book?.state.last, refs.current.stamp, { chapterId: current.chapterId, seconds: engine.time })
         : null;
       if (away && refs.current.queue.some((chapter) => chapter.id === away.chapterId && canPlay(chapter))) {
-        jumpToRef.current(away.chapterId, away.seconds, `Nghe tiếp từ chỗ thiết bị khác đã nghe tới (${formatClock(away.seconds)})`);
+        jumpToRef.current(away.chapterId, away.seconds, S.s_nghe_tiep_tu_cho_thiet_bi_khac_da_nghe_toi_fd51588a(formatClock(away.seconds)));
         return;
       }
       resumeHere();
@@ -1066,7 +1067,7 @@ export function PlayerProvider({
     if (!current) return;
     ++refs.current.playIntent;
     refs.current.wantsPlay = true;
-    forgetVoiceTrouble(); // "Thử lại" gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến
+    forgetVoiceTrouble(); // S.s_thu_lai_c58d068c gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến
     stopPeerWatch.current();
     if (native) {
       resume();
@@ -1116,7 +1117,7 @@ export function PlayerProvider({
     const current = refs.current.track;
     if (!current) return;
     const from = engine.time;
-    // Tua (về đầu chương bằng Home, "Nghe từ đây") sau khi đã nghe hết: bỏ dòng "Đã nghe hết phần đã có" - soát UX
+    // Tua (về đầu chương bằng Home, S.s_nghe_tu_day_6a7ff4ab) sau khi đã nghe hết: bỏ dòng S.s_da_nghe_het_phan_da_co_1aa0a8e0 - soát UX
     // 29-09: dòng ấy còn nguyên trong lúc chương đang phát lại ở 4:52, tới khi tải lại trang.
     setAtEnd("none");
     engine.seek(seconds);
@@ -1217,9 +1218,9 @@ export function PlayerProvider({
       const queue = refs.current.queue;
       const waiting = direction === 1 ? queue[queue.findIndex((chapter) => chapter.id === current.chapterId) + 1] : undefined;
       if (waiting && !canPlay(waiting)) {
-        toast("Chương sau chưa có audio", {
+        toast(S.s_chuong_sau_chua_co_audio_e17e3d72, {
           duration: 8000,
-          action: { label: "Đọc chương ấy", onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
+          action: { label: S.s_doc_chuong_ay_7699b649, onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
         });
       }
       return;
@@ -1251,8 +1252,8 @@ export function PlayerProvider({
     night.touch("rate", position());
     const current = refs.current.track;
     if (current && refs.current.purpose !== "review") {
-      // Tốc độ nhớ riêng của cuốn cũng nằm trong bộ nhớ của trang sách / thư viện (ListenBook.state.rate): đổi ngay ở đó, không thì "Nghe lại từ đầu" /
-      // "Nghe tiếp" ngay sau phím [ ] nạp lại tốc độ cũ của cuốn đè lên tốc độ vừa chọn (adoptBook).
+      // Tốc độ nhớ riêng của cuốn cũng nằm trong bộ nhớ của trang sách / thư viện (ListenBook.state.rate): đổi ngay ở đó, không thì S.s_nghe_lai_tu_dau_e251d632 /
+      // S.s_nghe_tiep_403b90a5 ngay sau phím [ ] nạp lại tốc độ cũ của cuốn đè lên tốc độ vừa chọn (adoptBook).
       // Chỉ bộ nhớ của hồ sơ đang nghe: cửa sổ khác đã chuyển cuốn sang người khác thì tốc độ vừa chọn không phải của họ.
       const remember = (book: ListenBook): ListenBook =>
         current.recordId && activeRecord(book) !== current.recordId ? book : { ...book, state: { ...(book.state ?? { chapters: {} }), rate: value } };
@@ -1267,7 +1268,7 @@ export function PlayerProvider({
     if (!Number.isFinite(value)) return;
     awakeRef.current();
     const clamped = Math.max(0, Math.min(1, value));
-    try { setAudioFx({volume:clamped}); } catch { toast.error('Chưa lưu được âm lượng.'); }
+    try { setAudioFx({volume:clamped}); } catch { toast.error(S.s_copy_f408d3f2b0ef); }
     refs.current.volume = clamped;
     setVolumeState(clamped);
     engine.setVolume(clamped * refs.current.sleepGain);
@@ -1360,7 +1361,7 @@ export function PlayerProvider({
     if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
     const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
     close();
-    toast.info(`“${book.title}” đã rời Thư viện vì đã bỏ ghép ${computer || "máy kia"}`);
+    toast.info(S.s_0_da_roi_thu_vien_vi_da_bo_ghep_1_901be30e(book.title, computer || S.s_may_kia_d1eb7142));
   }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);
@@ -1368,7 +1369,7 @@ export function PlayerProvider({
   const splitSessionRef = useRef<(at: { chapterId: number; seconds: number }) => void>(() => undefined);
 
   // Phiên nghe (bộ máy web; lõi native chưa ghi): mở lúc bắt đầu phát, đóng lúc dừng. Phiên dưới 20 giây nghe
-  // thật thì bỏ - bấm phát rồi dừng ngay không phải là "đã nghe".
+  // thật thì bỏ - bấm phát rồi dừng ngay không phải là S.s_copy_46f9f2c1c452.
   const openSession = useCallback(() => {
     const current = refs.current.track;
     if (native || !current || refs.current.purpose !== "listen" || !source.addSession) return;
@@ -1482,7 +1483,7 @@ export function PlayerProvider({
     if (!engine.paused) window.setTimeout(() => openSession(), 0);
   };
 
-  /** Hẹn giờ vừa hết: dừng, trả âm lượng, ghi mốc "tự dừng" cho buổi sáng. */
+  /** Hẹn giờ vừa hết: dừng, trả âm lượng, ghi mốc S.s_copy_4f3e8869ba5d cho buổi sáng. */
   const stopBySleep = useCallback(() => {
     ++refs.current.playIntent;
     stopPeerWatch.current();
@@ -1510,13 +1511,13 @@ export function PlayerProvider({
       clearTimeout(stall);
       stall = undefined;
     };
-    // Nguồn âm thanh hỏng, hay chờ quá lâu ([STALL_MS]): cùng một lời báo, cùng "Thử lại" ở PlayerAlert.
+    // Nguồn âm thanh hỏng, hay chờ quá lâu ([STALL_MS]): cùng một lời báo, cùng S.s_thu_lai_c58d068c ở PlayerAlert.
     const failed = (fallback: string) => {
       stopStall();
       const intent = refs.current.playIntent;
       setError(fallback);
       setBuffering(false);
-      // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
+      // Không có tiếng thì không phải S.s_dang_phat_e3baf7da: nút chính về S.s_phat_343e7e48, thẻ thôi ghi S.s_dang_phat_e3baf7da (soát a27 lỗi 3).
       if (!native) {
         if (!engine.paused) engine.pause();
         setPlaying(false);
@@ -1529,7 +1530,7 @@ export function PlayerProvider({
         void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
           .then((answer) => {
             if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
-            const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
+            const message = S.s_may_0_khong_tra_loi_tat_hay_mat_mang_chuon_e92480f9(remote.computer || "kia");
             setError((current) => (current === fallback ? message : current));
             // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
             const chapterId = refs.current.track?.chapterId;
@@ -1606,7 +1607,7 @@ export function PlayerProvider({
         }
         save(true);
         if (refs.current.sleep.kind === "chapter") {
-          // Hẹn "hết chương": dừng ở đây, nhưng nạp sẵn chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - sáng mai
+          // Hẹn S.s_het_chuong_13b507b4: dừng ở đây, nhưng nạp sẵn chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - sáng mai
           // bấm Tiếp tục là vào chương mới, không phải nghe lại chương vừa xong từ đầu.
           stopBySleep();
           if (target) {
@@ -1659,8 +1660,8 @@ export function PlayerProvider({
         setAtEnd("none");
         refreshLists(native.bookId);
         // Lõi native khôi phục bài đang nghe (mở lại app) chỉ biết tên sách: hỏi kho sách để có ảnh bìa và giọng kể,
-        // nếu không thanh phát và màn "Đang nghe" hiện bìa vẽ dù sách có ảnh bìa thật (27-09, thấy trên máy ảo).
-        // Máy tính bấm "Phát trên điện thoại" cũng đổi sách từ lõi: khi ấy danh sách chương còn là của cuốn cũ.
+        // nếu không thanh phát và màn S.s_dang_nghe_9310d8cf hiện bìa vẽ dù sách có ảnh bìa thật (27-09, thấy trên máy ảo).
+        // Máy tính bấm S.s_copy_3c36d421d6d3 cũng đổi sách từ lõi: khi ấy danh sách chương còn là của cuốn cũ.
         if (!same) {
           const bookId = native.bookId;
           void source.book(bookId).then((book) => {
@@ -1764,7 +1765,7 @@ export function PlayerProvider({
     return () => window.clearInterval(timer);
   }, [bed, endFade, engine, native, night, options.fadeSeconds, playing, position, sleep.kind, stopBySleep]);
 
-  // Máy tính: chạm phím/chuột lúc đang nhỏ dần = "lắc máy" - nghe thêm. Phím ấy không làm gì khác (không tạm dừng).
+  // Máy tính: chạm phím/chuột lúc đang nhỏ dần = S.s_copy_358b56a940b2 - nghe thêm. Phím ấy không làm gì khác (không tạm dừng).
   useEffect(() => {
     if (native || !fading) return;
     const names = ["keydown", "pointerdown", "pointermove", "wheel"] as const;
@@ -1861,7 +1862,7 @@ export function PlayerProvider({
     };
     const onTab = (event: KeyboardEvent) => {
       // Mũi tên chỉ dời tiêu điểm trong một nhóm (tab, ô chọn, menu, thanh trượt); trên nút thường hay trang thì nó là tua của trình phát - không tính là
-      // đi bằng bàn phím, không thì Space ngay sau đó "bấm" lại nút vừa bấm chuột (mở lại chương) thay vì phát / tạm dừng.
+      // đi bằng bàn phím, không thì Space ngay sau đó S.s_copy_904474800b1f lại nút vừa bấm chuột (mở lại chương) thay vì phát / tạm dừng.
       const target = event.target instanceof HTMLElement ? event.target : null;
       const arrowInGroup = event.key.startsWith("Arrow") && Boolean(target?.closest('[role="slider"],[role="tab"],[role="radio"],[role="option"],[role="menuitem"],[role="menu"],[role="listbox"],[role="radiogroup"],[role="tablist"]'));
       if (event.key === "Tab" || arrowInGroup) keyboardNavigation = true;
@@ -1989,7 +1990,7 @@ export function PlayerProvider({
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 
-  // Mở/đóng "Đang nghe": màn tự nở ra từ thanh phát nhỏ và thu về (PlayerViews.NowPlaying + nowPlayingMorph.ts), cả máy tính lẫn điện thoại -
+  // Mở/đóng S.s_dang_nghe_9310d8cf: màn tự nở ra từ thanh phát nhỏ và thu về (PlayerViews.NowPlaying + nowPlayingMorph.ts), cả máy tính lẫn điện thoại -
   // không qua View Transition. `plainOpen` (điện thoại) chỉ còn quyết việc dựng sẵn / dựng hoãn ruột màn.
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;

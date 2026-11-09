@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
@@ -12,7 +13,7 @@ Popover {
     Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
         width: parent.width; spacing: Theme.s8
-        Text { width: parent.width; text: "Giọng đọc\u00a0·\u00a0nhớ riêng cho cuốn này"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+        Text { width: parent.width; text: S.s_giong_doc_u00a0_u00a0nho_rieng_cho_cuon_na_ae337d03; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         Repeater {
             model: Api.voiceList
             MenuRow {
@@ -27,7 +28,7 @@ Popover {
                 }
             }
         }
-        Button { width: parent.width; wrap: true; text: "Thêm giọng…"; icon: "plus"; kind: "ghost"; onClicked: { root.close(); root.settingsRequested() } }
+        Button { width: parent.width; wrap: true; text: S.s_them_giong_bbe0caf9; icon: "plus"; kind: "ghost"; onClicked: { root.close(); root.settingsRequested() } }
     }
     PlayerConsent { id: consent; parent: root.parent }
 }

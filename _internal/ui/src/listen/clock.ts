@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { createContext, useContext, useSyncExternalStore } from "react";
 
 // Đồng hồ phát nằm NGOÀI context của trình phát.
@@ -31,7 +32,7 @@ export const ClockContext = createContext<Clock | null>(null);
 
 function useClockInstance(): Clock {
   const clock = useContext(ClockContext);
-  if (!clock) throw new Error("useClock ngoài PlayerProvider");
+  if (!clock) throw new Error(S.s_useclock_ngoai_playerprovider_d808fe26);
   return clock;
 }
 

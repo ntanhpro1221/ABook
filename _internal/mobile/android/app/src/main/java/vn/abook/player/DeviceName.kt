@@ -23,10 +23,10 @@ object DeviceName {
         val raw = model.trim()
         val chosen = userSet?.trim().orEmpty()
         if (chosen.isNotEmpty() && !chosen.equals(raw, ignoreCase = true) && !emulator(chosen)) return chosen.take(MAX_LENGTH)
-        if (emulator(raw)) return listOf("Điện thoại", brand, "(máy ảo)").filter { it.isNotEmpty() }.joinToString(" ")
+        if (emulator(raw)) return listOf(S.s_dien_thoai_8185f4c9, brand, S.s_may_ao_fb9167b7).filter { it.isNotEmpty() }.joinToString(" ")
         // Đời máy hay lặp lại tên hãng ("samsung SM-A525F" thì không, "Xiaomi Xiaomi 13" thì có): bỏ phần lặp.
         val bare = (if (brand.isEmpty()) raw else raw.replace(Regex("^" + Regex.escape(brand) + """\s*""", RegexOption.IGNORE_CASE), "")).trim().replace('_', ' ')
-        return listOf("Điện thoại", brand, bare).filter { it.isNotEmpty() }.joinToString(" ").take(MAX_LENGTH)
+        return listOf(S.s_dien_thoai_8185f4c9, brand, bare).filter { it.isNotEmpty() }.joinToString(" ").take(MAX_LENGTH)
     }
 
     private fun emulator(name: String): Boolean = Regex("""(^|[_\s])(sdk|gphone|emulator)""", RegexOption.IGNORE_CASE).containsMatchIn(name)

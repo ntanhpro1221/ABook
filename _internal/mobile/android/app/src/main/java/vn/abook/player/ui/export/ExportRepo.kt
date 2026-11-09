@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.S
+
 import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +53,7 @@ class ExportRepo(private val context: Context) : ExportSource {
         val voices = ReadAloud.voices(context)
         val info = voices.firstOrNull { it.optString("id") == chosen } ?: voices.firstOrNull { it.optBoolean("default") } ?: voices.firstOrNull() ?: return@io null
         val provider = info.optString("provider")
-        ExportVoice(info.optString("id"), if (provider == "device") "Giọng đọc của máy" else VoiceText.spokenName(info.optString("name")), provider, info.optBoolean("online"))
+        ExportVoice(info.optString("id"), if (provider == "device") S.s_giong_doc_cua_may_fb991f25 else VoiceText.spokenName(info.optString("name")), provider, info.optBoolean("online"))
     }
 
     override suspend fun plan(bookId: String, voice: String, music: Boolean?): AudiobookPlan = io {
@@ -67,7 +69,7 @@ class ExportRepo(private val context: Context) : ExportSource {
     override suspend fun keepFolder(tree: String): String = io {
         val uri = Uri.parse(tree)
         Mp3Exports.remember(context, uri)
-        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
+        Mp3Exports.treeName(context, uri) ?: throw ExportFailure(S.s_chua_mo_duoc_thu_muc_da_chon_chon_lai_noi_23fb5dbe)
     }
 
     override suspend fun fileTitle(book: ListenBook, kind: ExportKind): String = io {
@@ -82,7 +84,7 @@ class ExportRepo(private val context: Context) : ExportSource {
     }
 
     override suspend fun startMp3(book: ListenBook, chapterIds: List<Int>?, music: Boolean): Started = io {
-        val tree = Mp3Exports.remembered(context) ?: throw ExportFailure("Chọn thư mục để lưu trước")
+        val tree = Mp3Exports.remembered(context) ?: throw ExportFailure(S.s_chon_thu_muc_de_luu_truoc_8de01c85)
         started(ExportStart.mp3(context, book.id, tree, drawn(book), chapterIds, music))
     }
 

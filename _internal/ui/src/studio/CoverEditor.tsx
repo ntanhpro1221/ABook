@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Globe, ImagePlus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ function readAsDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error ?? new Error("Chưa đọc được file ảnh"));
+    reader.onerror = () => reject(reader.error ?? new Error(S.s_chua_doc_duoc_file_anh_09736d91));
     reader.readAsDataURL(file);
   });
 }
@@ -52,17 +53,17 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
       api<{ cover: CoverImage | null }>(`/api/books/${book.id}/cover`, { method: "PUT", body: { image: await readAsDataUrl(file) } }),
     onSuccess: () => {
       refresh();
-      toast.success("Đã đặt ảnh bìa");
+      toast.success(S.s_da_dat_anh_bia_90470364);
     },
-    onError: (error: Error) => toast.error("Chưa đặt được ảnh bìa", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_dat_duoc_anh_bia_a4afb9fa, { description: error.message }),
   });
   const remove = useMutation({
     mutationFn: () => api(`/api/books/${book.id}/cover`, { method: "DELETE" }),
     onSuccess: () => {
       refresh();
-      toast.success("Đã bỏ ảnh bìa");
+      toast.success(S.s_da_bo_anh_bia_dc2da6ed);
     },
-    onError: (error: Error) => toast.error("Chưa bỏ được ảnh bìa", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_bo_duoc_anh_bia_a4173b5d, { description: error.message }),
   });
 
   // Dán ảnh (Ctrl+V) ở bất kỳ đâu trên trang sách - trừ khi đang gõ vào ô chữ.
@@ -99,7 +100,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           setDragging(false);
           const file = imageFromFiles(event.dataTransfer.files);
           if (file) upload.mutate(file);
-          else toast.error("Chỉ thả được file ảnh (PNG, JPEG, WebP…)");
+          else toast.error(S.s_chi_tha_duoc_file_anh_png_jpeg_webp_2d5d7caf);
         }}
       >
         <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
@@ -113,18 +114,18 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           type="button"
           disabled={busy}
           onClick={() => input.current?.click()}
-          aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
+          aria-label={book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265}
           className="touch-box inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
           <ImagePlus className="ink-start size-4" /> {/* Hai chữ, không xuống dòng: nút đứng dưới bìa 154 px cạnh hai nút biểu tượng ("Đổi ảnh bìa" gãy dòng đè lên dòng gợi ý, soát 24-10). */}
-          <span className="whitespace-nowrap max-sm:hidden">{book.cover ? "Đổi bìa" : "Đặt bìa"}</span>
+          <span className="whitespace-nowrap max-sm:hidden">{book.cover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7}</span>
         </button>
         <button
           type="button"
           disabled={busy}
           onClick={() => setSearching(true)}
-          aria-label="Tìm ảnh bìa trên mạng"
-          title="Tìm ảnh bìa trên mạng"
+          aria-label={S.s_tim_anh_bia_tren_mang_a87bd41b}
+          title={S.s_tim_anh_bia_tren_mang_a87bd41b}
           className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
         >
           <Globe className="size-4" />
@@ -134,15 +135,15 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             type="button"
             disabled={busy}
             onClick={() => remove.mutate()}
-            aria-label="Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách"
-            title="Bỏ ảnh bìa"
+            aria-label={S.s_bo_anh_bia_dung_lai_bia_ve_tu_ten_sach_95de3f45}
+            title={S.s_bo_anh_bia_696c6692}
             className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             <Trash2 className="size-4" />
           </button>
         )}
       </div>
-      <p className="text-xs text-fg-3 max-sm:hidden">Kéo hoặc dán ảnh</p>
+      <p className="text-xs text-fg-3 max-sm:hidden">{S.s_keo_hoac_dan_anh_71bf1343}</p>
       <CoverSearchDialog
         bookId={book.id}
         defaultQuery={seriesOf(book.title).series || book.title}

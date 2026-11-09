@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -172,7 +174,7 @@ class VoiceSheetState(private val project: StudioProjectState, val character: St
         if (asking != null) return
         session.clips?.stop()
         asking = voice.key
-        said = "Máy đang đọc thử giọng ${voice.name} - lần đầu có thể mất vài chục giây"
+        said = S.s_may_dang_doc_thu_giong_0_lan_dau_co_the_ma_c13230cd(voice.name)
         session.scope.launch {
             try {
                 val step = WorkStep("voice/preview", JSONObject().put("character", now.character.value).put("preset", voice.key))
@@ -184,9 +186,9 @@ class VoiceSheetState(private val project: StudioProjectState, val character: St
                     is PreviewOutcome.Rejected -> said = outcome.message
                     is PreviewOutcome.Refused -> if (outcome.reason == "no-line" && voice.preview) {
                         playSample(voice)
-                        said = "Người này chưa có câu nào để đọc thử - đang phát câu mẫu chung của giọng"
+                        said = S.s_nguoi_nay_chua_co_cau_nao_de_doc_thu_dang_85cfd8f2
                     } else {
-                        said = if (voice.preview) "${outcome.text} - nút phát vẫn nghe được câu mẫu chung của giọng" else outcome.text
+                        said = if (voice.preview) S.s_0_nut_phat_van_nghe_duoc_cau_mau_chung_cua_8895276e(outcome.text) else outcome.text
                     }
                 }
             } finally {

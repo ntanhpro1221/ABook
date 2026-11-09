@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.S
+
 import vn.abook.player.formatSize
 
 import androidx.compose.animation.core.Animatable
@@ -66,7 +68,7 @@ fun DeviceRow(device: Paired, onOpen: () -> Unit, onRetry: () -> Unit) {
         tickingHint = true,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { DeviceIcon(device.kind, colors.text2) },
-        trailing = if (failed && device.reach !is Reach.Unpaired) ({ TextAction("Thử lại", onRetry, "retry_${device.key.ifEmpty { "main" }}") }) else null,
+        trailing = if (failed && device.reach !is Reach.Unpaired) ({ TextAction(S.s_thu_lai_c58d068c, onRetry, "retry_${device.key.ifEmpty { "main" }}") }) else null,
         chevron = !failed || device.reach is Reach.Unpaired,
     )
 }
@@ -84,15 +86,15 @@ fun RemoteBookRow(
         tickingHint = true,
         hint = when {
             failure != null -> failure
-            downloading -> "Đang tải"
+            downloading -> S.s_dang_tai_465b1987
             else -> book.detail
         },
         hintColor = if (failure != null) colors.danger else colors.text2,
         trailing = {
             when {
-                downloading -> TextAction("Huỷ tải", onCancel, "cancel_${book.id}")
-                failure != null -> TextAction("Thử lại", onDownload, "download_${book.id}")
-                book.upToDate -> BasicText("Đã tải về máy", style = Abook.type.caption.copy(color = colors.success))
+                downloading -> TextAction(S.s_huy_tai_1a9ff73d, onCancel, "cancel_${book.id}")
+                failure != null -> TextAction(S.s_thu_lai_c58d068c, onDownload, "download_${book.id}")
+                book.upToDate -> BasicText(S.s_da_tai_ve_may_a3ac321b, style = Abook.type.caption.copy(color = colors.success))
                 else -> TextAction(book.action, onDownload, "download_${book.id}")
             }
         },
@@ -129,12 +131,12 @@ fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
 @Composable
 fun CodeRow(code: Code, onCancel: () -> Unit) {
     Column {
-        Caption("Nhập mã này trên máy kia", Modifier.padding(top = Dim.s8))
+        Caption(S.s_nhap_ma_nay_tren_may_kia_113245f6, Modifier.padding(top = Dim.s8))
         ListItem(
             code.digits.chunked(3).joinToString(" "), Modifier, null, "share_code",
-            hint = "Dùng được đến ${DeviceText.clock(code.expiresAt)}",
+            hint = S.s_dung_duoc_den_0_90292ae2(DeviceText.clock(code.expiresAt)),
             titleStyle = Abook.type.sectionTitle.copy(lineHeight = 24.sp, letterSpacing = 2.sp),
-            trailing = { TextAction("Huỷ mã", onCancel, "share_cancel_code") },
+            trailing = { TextAction(S.s_huy_ma_1b0a6559, onCancel, "share_cancel_code") },
         )
     }
 }
@@ -146,8 +148,8 @@ fun StoredRow(item: Stored, busy: Boolean, onDelete: () -> Unit) {
     ListItem(
         item.title, Modifier, if (busy) null else onDelete, "stored_${item.id}",
         hint = when {
-            busy -> "Đang tải"
-            item.partial -> "Phần đã tải, chưa thành sách"
+            busy -> S.s_dang_tai_465b1987
+            item.partial -> S.s_phan_da_tai_chua_thanh_sach_992f1af6
             else -> null
         },
         trailing = { BasicText(formatSize(item.bytes), style = Abook.type.bodySmall.copy(color = colors.text2)) },

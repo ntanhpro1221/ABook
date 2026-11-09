@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 // Mẫu thiết lập có tên cho sách mới (backlog H4): lưu một bộ lựa chọn của trình tạo sách dưới một cái tên rồi dùng lại.
 // Phần thuần ở đây - máy chủ kiểm lại cùng luật (webui/library.py clean_book_templates).
 //
@@ -10,7 +11,7 @@ const PROFILES: readonly string[] = ["fast", "balanced", "high_quality"];
 export const MAX_TEMPLATES = 20;
 export const NAME_MAX = 40;
 /** Nhãn của lựa chọn "không mẫu" (giá trị mặc định của app) - không đặt được làm tên mẫu. */
-export const DEFAULT_LABEL = "Mặc định";
+export const DEFAULT_LABEL = S.s_mac_dinh_9a1af367;
 
 export interface BookTemplate {
   name: string;
@@ -53,12 +54,12 @@ export function missingVoice(template: Pick<BookTemplate, "narrator"> | undefine
 
 /** Lời nhắc khi áp mẫu mà giọng kể của nó không còn. */
 export function missingVoiceNote(voice: string): string {
-  return `Giọng ${voice} trong mẫu không còn trên máy - giữ giọng đang chọn.`;
+  return S.s_giong_0_trong_mau_khong_con_tren_may_giu_g_cc960509(voice);
 }
 
 /** Lời nhắc khi áp mẫu mà bỏ qua model của nó. */
 export function missingModelNote(): string {
-  return "Bộ phân tích trong mẫu không còn trên máy - giữ bộ đang chọn.";
+  return S.s_bo_phan_tich_trong_mau_khong_con_tren_may_a85891ce;
 }
 
 export function cleanName(value: string): string {
@@ -94,11 +95,11 @@ export function findTemplate(templates: readonly BookTemplate[], name: string | 
 /** Lời báo cho một cái tên không dùng được, "" nếu được. `except`: tên đang được đổi (không tính là trùng với chính nó). */
 export function nameProblem(templates: readonly BookTemplate[], raw: string, except?: string): string {
   const name = cleanName(raw);
-  if (!name) return "Đặt cho mẫu một cái tên";
-  if (name.length > NAME_MAX) return `Tên mẫu tối đa ${NAME_MAX} chữ`;
-  if (same(name, DEFAULT_LABEL)) return `“${DEFAULT_LABEL}” là mẫu có sẵn của app - chọn tên khác`;
+  if (!name) return S.s_dat_cho_mau_mot_cai_ten_acc6e254;
+  if (name.length > NAME_MAX) return S.s_ten_mau_toi_da_0_chu_8fdacc15(NAME_MAX);
+  if (same(name, DEFAULT_LABEL)) return S.s_0_la_mau_co_san_cua_app_chon_ten_khac_f9bf4515(DEFAULT_LABEL);
   if (templates.some((item) => same(item.name, name) && !(except !== undefined && same(item.name, except)))) {
-    return `Đã có mẫu tên “${name}”`;
+    return S.s_da_co_mau_ten_0_d7ec5872(name);
   }
   return "";
 }
@@ -168,11 +169,11 @@ export function templateChoices(draft: TemplateChoices): TemplateChoices {
 }
 
 const CHOICE_LABELS: [keyof TemplateChoices, string][] = [
-  ["narrator", "giọng kể"],
-  ["profile", "chất lượng"],
-  ["analysisModel", "model đọc hiểu"],
-  ["startNow", "bắt đầu ngay"],
-  ["precastWait", "chờ bạn duyệt trước khi thu"],
+  ["narrator", S.s_giong_ke_cc1476e9],
+  ["profile", S.s_chat_luong_7c01566d],
+  ["analysisModel", S.s_model_doc_hieu_97027daf],
+  ["startNow", S.s_bat_dau_ngay_83137873],
+  ["precastWait", S.s_cho_ban_duyet_truoc_khi_thu_35299b41],
 ];
 
 /** Áp mẫu đã đổi những lựa chọn nào (nói như người dùng thấy); rỗng khi không đổi gì mà họ đã chọn. */
@@ -217,7 +218,7 @@ export function staleTemplateError(error: unknown): boolean {
 
 /** Tên mức chất lượng như người dùng thấy (Cài đặt, danh sách mẫu). */
 export const PROFILE_LABEL: Record<Profile, string> = {
-  high_quality: "Chất lượng cao",
-  balanced: "Cân bằng",
-  fast: "Nhanh",
+  high_quality: S.s_chat_luong_cao_dc7017a7,
+  balanced: S.s_can_bang_8b88211d,
+  fast: S.s_nhanh_c2385879,
 };

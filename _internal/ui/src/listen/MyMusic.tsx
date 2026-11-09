@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
@@ -68,11 +69,11 @@ export function SwapTrack({
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="px-3 py-2" label="Đang tải bài nhạc" /></MotionRegion>;
-  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="px-3 py-2" label={S.s_dang_tai_bai_nhac_0c9498d1} /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message={S.s_ban_hay_kiem_tra_ket_noi_roi_tim_lai_bai_n_acc346b4} onRetry={() => void refetch()} /></MotionRegion>;
   const mine = data?.mine ?? [];
   if (!mine.length) {
-    return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi.</MotionRegion>;
+    return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">{S.s_chua_co_bai_nao_khac_trong_nhac_cua_toi_811d988a}</MotionRegion>;
   }
   return (
     <MotionRegion as="ul" className="divide-y divide-line border-t border-line bg-bg/40">
@@ -85,9 +86,7 @@ export function SwapTrack({
             </div>
             {mineNote(item) && <div className="text-xs text-fg-2">{mineNote(item)}</div>}
           </div>
-          <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>
-            Chọn
-          </Button>
+          <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>{S.s_chon_1171ca97}</Button>
         </li>
       ))}
     </MotionRegion>
@@ -117,7 +116,7 @@ export function MyMusicSection() {
         setProgress({ done, total });
         if (latest) refresh(latest);
       });
-      if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
+      if (error) toast.error(S.s_dang_them_nhac_thi_dung_8712c030, { description: error.message });
       if (!result) return;
       refresh(result);
       const summary = importSummary(result);
@@ -133,27 +132,27 @@ export function MyMusicSection() {
     onSuccess: (view) => {
       refresh(view);
       setRemoving(null);
-      toast("Đã xoá khỏi Nhạc của tôi");
+      toast(S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a);
     },
-    onError: (error: Error) => toast.error("Chưa xoá được bài này", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={tracks.length ? `${tracks.length} bài` : "Chưa có bài nào"} bodyClassName="space-y-2">
+    <MotionRegion><Fold storageKey="my-music.library" title={S.s_nhac_cua_toi_f65b7ac6} summary={tracks.length ? S.s_0_bai_1e392237(tracks.length) : S.s_chua_co_bai_nao_c1c708be} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {canImport && (
           <Button size="sm" variant="ghost" icon={Upload} className={`edge-start-action ${WRAP_LABEL}`} loading={Boolean(progress)} onClick={() => void importFiles()}>
-            <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
+            <TickingValue>{progress ? S.s_dang_them_0_1_84372256(progress.done, progress.total) : S.s_them_nhac_cua_ban_dbd7d8c4}</TickingValue>
           </Button>
         )}
       </div>
       {/* Câu giới thiệu tả nút Thêm ngay trên nó, rồi mới tới khối tải Phân tích nhạc */}
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
-      <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
+      <MoreInfo label={S.s_nhac_rieng_732d7761}>{MY_MUSIC_HELP}</MoreInfo>
       {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
-      {!canImport && <p className="text-xs text-fg-2">Thêm và xoá nhạc làm trên máy tính chủ sách.</p>}
-      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title="Chưa có bài nào" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Thêm nhạc của bạn</Button>} /> : null}</MotionRegion>
+      {!canImport && <p className="text-xs text-fg-2">{S.s_them_va_xoa_nhac_lam_tren_may_tinh_chu_sac_bdde38b6}</p>}
+      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_nhac_rieng_144f69a2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139} onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title={S.s_chua_co_bai_nao_c1c708be} className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>{S.s_them_nhac_cua_ban_dbd7d8c4}</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
         <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
@@ -169,17 +168,11 @@ export function MyMusicSection() {
               {canImport &&
                 (removing === track.link ? (
                   <span ref={removeBox} className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá bài: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
-                      Xoá bài
-                    </Button>
-                    <Button size="sm" variant="ghost" aria-label={`Giữ lại: ${track.title}`} disabled={remove.isPending} onClick={() => setRemoving(null)}>
-                      Giữ lại
-                    </Button>
+                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_bai_0_d2cc8ffb(track.title)} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>{S.s_xoa_bai_d554a496}</Button>
+                    <Button size="sm" variant="ghost" aria-label={S.s_giu_lai_0_9b038c0f(track.title)} disabled={remove.isPending} onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
                   </span>
                 ) : (
-                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá: ${track.title}`} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>
-                    Xoá
-                  </Button>
+                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>{S.s_xoa_777195ab}</Button>
                 ))}
             </div></li>
           ))}

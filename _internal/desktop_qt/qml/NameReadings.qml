@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -61,7 +62,7 @@ Item {
                 height: Math.max(56, implicitHeight)
                 verticalAlignment: Text.AlignVCenter
                 textFormat: Text.RichText
-                text: "Cách đọc tên&nbsp;<span style=\"color:" + W.cssColor(Theme.text2) + "; font-weight:400\">·&nbsp;" + W.esc(N.heading(root.analyzed, N.countedNames(root.items))) + "</span>"
+                text: S.s_cach_doc_ten_nbsp_span_style_color_defd27bd + W.cssColor(Theme.text2) + "; font-weight:400\">·&nbsp;" + W.esc(N.heading(root.analyzed, N.countedNames(root.items))) + "</span>"
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeSection
@@ -79,8 +80,8 @@ Item {
                     id: search
                     objectName: "nameSearch"
                     width: parent.width
-                    label: "Tìm tên"
-                    placeholderText: "Tìm tên, hoặc gõ một chữ để thêm cách đọc"
+                    label: S.s_tim_ten_260c6baf
+                    placeholderText: S.s_tim_ten_hoac_go_mot_chu_de_them_cach_doc_ed4f8b38
                     fill: Theme.panel
                     topPadding: 8
                     bottomPadding: 8
@@ -100,8 +101,8 @@ Item {
                     iconSize: 14
                     ink: Theme.text3
                     hoverInk: Theme.text
-                    tip: "Xoá ô tìm"
-                    Accessible.name: "Xoá ô tìm"
+                    tip: S.s_xoa_o_tim_0bafa7ad
+                    Accessible.name: S.s_xoa_o_tim_0bafa7ad
                     opacity: root.query !== "" ? 1 : 0
                     visible: opacity > 0
                     enabled: root.query !== ""

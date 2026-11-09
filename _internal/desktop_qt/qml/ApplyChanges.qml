@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
@@ -25,7 +26,7 @@ StudioConfirm {
     description: Logic.applyDescription(running !== "")
     actions: running !== ""
         ? [{key: "later", text: Logic.applyClose(true), kind: "ghost"}]
-        : [{key: "later", text: Logic.applyClose(false), kind: "ghost"}, {key: "go", text: "Áp dụng", icon: "refresh-cw", kind: "primary"}]
+        : [{key: "later", text: Logic.applyClose(false), kind: "ghost"}, {key: "go", text: S.s_ap_dung_ff631576, icon: "refresh-cw", kind: "primary"}]
     onChosen: key => {
         if (key === "go") { dismiss(); applied() }
         else close()
@@ -52,13 +53,13 @@ StudioConfirm {
         const remaining = count
         store.quiet("POST", "/api/books/" + bookId + "/pending-changes/withdraw", {section: item.section, key: item.key, keys: item.keys, requestedAt: item.requestedAt}, function(result, error) {
             root.dropping = ""
-            if (error) { root.store.say("Chưa bỏ được thay đổi này", error); return }
+            if (error) { root.store.say(S.s_chua_bo_duoc_thay_doi_nay_eccfaf9b, error); return }
             if (remaining <= 1) root.dismiss()
             root.store.refresh(root.bookId)
             root.load()
         })
     }
-    function tryItem(item) { tryVoice.ask(item.voice, item.voiceLabel || "mới", Logic.pendingKey(item), null) }
+    function tryItem(item) { tryVoice.ask(item.voice, item.voiceLabel || S.s_moi_54e203ba, Logic.pendingKey(item), null) }
 
     VoiceTry { id: tryVoice; store: root.store; bookId: root.bookId }
 
@@ -66,7 +67,7 @@ StudioConfirm {
         objectName: "applyLoading"
         width: parent.width
         open: root.data === null
-        Text { width: parent.width; text: "Đang xem các thay đổi…"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+        Text { width: parent.width; text: S.s_dang_xem_cac_thay_doi_3038d753; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
     }
     Collapse {
         objectName: "applyBody"

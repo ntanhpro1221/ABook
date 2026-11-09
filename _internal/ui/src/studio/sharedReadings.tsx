@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,12 +58,12 @@ export function SharedReadingsSettings() {
     onSuccess: (_answer, body) => {
       void client.invalidateQueries({ queryKey: ["shared-readings"] });
       if (body.remove) {
-        toast.success(`Đã bỏ “${body.surface}” khỏi cách đọc chung`);
+        toast.success(S.s_da_bo_0_khoi_cach_doc_chung_77f7c603(body.surface));
         return;
       }
       setSurface("");
       setSpoken("");
-      toast.success(`“${body.surface}” đọc là “${shownReading(body.spokenForm ?? "")}” cho mọi sách`);
+      toast.success(S.s_0_doc_la_1_cho_moi_sach_35251e6e(body.surface, shownReading(body.spokenForm ?? "")));
     },
     onError: (error: Error) => setProblem(error.message),
   });
@@ -71,9 +72,9 @@ export function SharedReadingsSettings() {
   return (
     // Nằm trong khối gập "Cách đọc chung" của Cài đặt › Studio: lời dẫn trước, ô tìm chỉ khi danh sách đủ dài để cần tìm.
     <MotionRegion as="div" className="py-3">
-      <p className="text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
+      <p className="text-[0.8125rem] text-fg-2 text-pretty">{S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e}</p>
       {entries.length > SEARCH_FROM && (
-        <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder="Tìm tên" />
+        <input aria-label={S.s_tim_cach_doc_690f3c7e} value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder={S.s_tim_ten_260c6baf} />
       )}
       {/* Lọc / bỏ / thêm: hàng khép / mở tại chỗ; data-motion-live - khối không mờ lại cả theo từng phím gõ. */}
       <div data-motion-live="">
@@ -82,10 +83,10 @@ export function SharedReadingsSettings() {
             <div className="flex items-center gap-3 py-1.5 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
-                {entry.from && <span className="text-xs text-fg-3"> · từ {entry.from}</span>}
+                {entry.from && <span className="text-xs text-fg-3">{S.s_tu_02926cd1}{entry.from}</span>}
               </span>
               <IconButton
-                label={`Bỏ “${entry.surface}” khỏi cách đọc chung`}
+                label={S.s_bo_0_khoi_cach_doc_chung_7cb754b6(entry.surface)}
                 icon={Trash2}
                 onClick={() => save.mutate({ surface: entry.surface, remove: true })}
               />
@@ -93,7 +94,7 @@ export function SharedReadingsSettings() {
           )}
         </AnimatedRows>
       </div>
-      <MotionPresence open={filtered.length > shown}><Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>Xem thêm</Button></MotionPresence>
+      <MotionPresence open={filtered.length > shown}><Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>{S.s_xem_them_e0ac1b1e}</Button></MotionPresence>
       <form
         className="mt-2 flex flex-wrap items-center gap-2"
         onSubmit={(event) => {
@@ -106,8 +107,8 @@ export function SharedReadingsSettings() {
           id="shared-reading-surface"
           value={surface}
           onChange={(event) => setSurface(event.target.value)}
-          placeholder="Từ trong sách, vd Nasdell"
-          aria-label="Từ trong sách"
+          placeholder={S.s_tu_trong_sach_vd_nasdell_e5609228}
+          aria-label={S.s_tu_trong_sach_e93bdaec}
           autoComplete="off"
           spellCheck={false}
           className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
@@ -116,15 +117,13 @@ export function SharedReadingsSettings() {
           id="shared-reading-spoken"
           value={spoken}
           onChange={(event) => setSpoken(event.target.value)}
-          placeholder="Đọc là, vd Hên-cơ"
-          aria-label="Cách đọc"
+          placeholder={S.s_doc_la_vd_hen_co_6e778b3d}
+          aria-label={S.s_cach_doc_94265da7}
           autoComplete="off"
           spellCheck={false}
           className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
         />
-        <Button size="sm" variant="ghost" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>
-          Thêm
-        </Button>
+        <Button size="sm" variant="ghost" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>{S.s_them_dd92626f}</Button>
       </form>
       {problem && <p className="mt-1 text-[0.8125rem] text-danger">{problem}</p>}
     </MotionRegion>
@@ -144,9 +143,9 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
       refreshAfterDecision(client, bookId);
       void client.invalidateQueries({ queryKey: ["shared-readings", bookId] });
       // Sách chưa thu câu nào (chưa bắt đầu, đang phân tích) thì không có gì để "thu lại" (soát UX 01-10).
-      toast.success(`Đã dùng ${applied.length} cách đọc chung`);
+      toast.success(S.s_da_dung_0_cach_doc_chung_f3c4cdb8(applied.length));
     },
-    onError: (error: Error) => toast.error("Chưa dùng được cách đọc chung", { description: error.message }),
+    onError: (error: Error) => toast.error(S.s_chua_dung_duoc_cach_doc_chung_cb8d8746, { description: error.message }),
   });
   const entries = data?.entries ?? [];
   if (!entries.length) return <MotionRegion />;
@@ -162,13 +161,10 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
   return (
     <MotionRegion>
     <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-3 py-2 text-sm">
-      <span className="min-w-0 flex-1 text-pretty">
-        Cách đọc chung khác cách cuốn này đang đọc: {shown}
-        {entries.length > 3 ? `, và ${entries.length - 3} tên khác` : ""}
+      <span className="min-w-0 flex-1 text-pretty">{S.s_cach_doc_chung_khac_cach_cuon_nay_dang_doc_82c45e55}{shown}
+        {entries.length > 3 ? S.s_va_0_ten_khac_27b80d61(entries.length - 3) : ""}
       </span>
-      <Button size="sm" variant="ghost" icon={BookOpenCheck} loading={apply.isPending} onClick={() => apply.mutate()}>
-        Dùng {entries.length} cách đọc chung
-      </Button>
+      <Button size="sm" variant="ghost" icon={BookOpenCheck} loading={apply.isPending} onClick={() => apply.mutate()}>{S.s_dung_5c3730f4}{entries.length}{S.s_cach_doc_chung_c315f242}</Button>
     </div>
     </MotionRegion>
   );

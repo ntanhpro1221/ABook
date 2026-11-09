@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import type { ScanResult } from "./api";
 
 /**
@@ -23,5 +24,5 @@ export function createGate({ title, reading, unfit }: { title: string; reading: 
   reading: boolean;
   label: string | null;
 } {
-  return { disabled: reading || !title.trim() || unfit, reading, label: reading ? "Đang đọc nguồn" : null };
+  return { disabled: reading || !title.trim() || unfit, reading, label: reading ? S.s_dang_doc_nguon_86787498 : null };
 }

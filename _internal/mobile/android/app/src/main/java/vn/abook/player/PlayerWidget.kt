@@ -67,7 +67,7 @@ class PlayerWidget : AppWidgetProvider() {
                 val sleep = state.getJSONObject("sleep")
                 val sleepText = when (sleep.optString("mode")) {
                     "minutes" -> "${Math.ceil(sleep.optDouble("remaining") / 60).toInt()}′"
-                    "chapter" -> "hết chương"
+                    "chapter" -> S.s_het_chuong_13b507b4
                     else -> ""
                 }
                 val duration = state.optDouble("duration")
@@ -77,7 +77,7 @@ class PlayerWidget : AppWidgetProvider() {
                     state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off",
                 )
             }
-            val recent = Playback.lastListened() ?: return View("ABook", "Chưa nghe sách nào", 0.0, false, "", false)
+            val recent = Playback.lastListened() ?: return View(S.s_abook_1c37d334, S.s_chua_nghe_sach_nao_595a4141, 0.0, false, "", false)
             val (manifest, last) = recent
             val chapter = chapterOf(manifest, last.optInt("chapterId"))
             // Chương chữ (đọc to) không có thời lượng trong gói: lấy độ dài ảo đã lưu cùng chỗ nghe (Store.progress).

@@ -140,12 +140,12 @@ class NnLite private constructor(
 
         /** Đọc `nnlite.bin`; ném [IllegalArgumentException] khi sai magic / hình / cỡ (người gọi coi như không có model và quay về N0). */
         fun parse(raw: ByteArray): NnLite {
-            require(raw.size >= 16 && MAGIC.indices.all { raw[it] == MAGIC[it] }) { "không phải file NN-lite" }
+            require(raw.size >= 16 && MAGIC.indices.all { raw[it] == MAGIC[it] }) { S.s_khong_phai_file_nn_lite_2fce09b5 }
             val head = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN)
             val buckets = head.getInt(4).toLong() and 0xFFFFFFFFL
-            require(head.getInt(8) == N_OUT && head.getInt(12) == N_DENSE) { "hình model lạ" }
+            require(head.getInt(8) == N_OUT && head.getInt(12) == N_DENSE) { S.s_hinh_model_la_edb53cea }
             val tail = N_DENSE * N_OUT + 5 * N_OUT + 3 + 1
-            require(buckets in 1..(Int.MAX_VALUE / N_OUT).toLong() && 16L + buckets * N_OUT * 2 + tail * 4 == raw.size.toLong()) { "cỡ file sai" }
+            require(buckets in 1..(Int.MAX_VALUE / N_OUT).toLong() && 16L + buckets * N_OUT * 2 + tail * 4 == raw.size.toLong()) { S.s_co_file_sai_b067b1a1 }
             val count = buckets.toInt()
             val wh = ShortArray(count * N_OUT)
             head.position(16)

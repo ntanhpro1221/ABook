@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.S
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -78,8 +80,8 @@ fun ConfirmPage(title: String, tag: String, lines: List<String>, problem: String
 
 /** Lời xác nhận "Xoá khỏi máy" của một cuốn: `holder` = tên máy còn giữ cuốn (cuốn chỉ nghe thẳng / tải dở), null = cuốn của riêng máy này. */
 fun deleteBookLine(title: String, holder: String?): String =
-    if (holder != null) "Phần đã tải của “$title” sẽ bị xoá khỏi máy này. Sách vẫn còn trên $holder."
-    else "“$title” sẽ bị xoá khỏi máy này. Muốn nghe lại, bạn cần thêm lại file sách."
+    if (holder != null) S.s_phan_da_tai_cua_0_se_bi_xoa_khoi_may_nay_s_b8ffe200(title, holder)
+    else S.s_0_se_bi_xoa_khoi_may_nay_muon_nghe_lai_ban_419448e3(title)
 
 /**
  * Bước xác nhận xoá một cuốn khỏi máy - MỘT chỗ cho menu "Thêm" của trang sách và danh sách Dung lượng: nói rõ cái gì mất, nút đỏ "Xoá khỏi điện thoại", nút chữ
@@ -90,8 +92,8 @@ fun DeleteBookPage(title: String, holder: String?, delete: suspend () -> String?
     val scope = rememberCoroutineScope()
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    ConfirmPage(if (holder != null) "Xoá phần đã tải của “$title”?" else "Bỏ “$title” khỏi thư viện?", "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
-        DangerButton(if (working) "Đang xoá" else if (holder != null) "Xoá phần đã tải" else "Xoá khỏi thư viện", {
+    ConfirmPage(if (holder != null) S.s_xoa_phan_da_tai_cua_0_6f21ef48(title) else S.s_bo_0_khoi_thu_vien_fe842224(title), "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
+        DangerButton(if (working) S.s_dang_xoa_71482e81 else if (holder != null) S.s_xoa_phan_da_tai_9f9ae26f else S.s_xoa_khoi_thu_vien_79dbd32b, {
             if (working) return@DangerButton
             working = true
             scope.launch {
@@ -102,7 +104,7 @@ fun DeleteBookPage(title: String, holder: String?, delete: suspend () -> String?
             }
         }, "delete_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton("Giữ lại", onKeep, "delete_keep")
+        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "delete_keep")
     }
 }
 

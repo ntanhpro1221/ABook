@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Bắt đầu",
+    "reason": "Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones)."
+  },
+  {
+    "label": "Chi tiết",
+    "reason": "Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information."
+  },
+  {
+    "label": "Quay lại",
+    "reason": "Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen."
+  },
+  {
+    "label": "Tạm dừng {}",
+    "reason": "Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause."
+  }
+]

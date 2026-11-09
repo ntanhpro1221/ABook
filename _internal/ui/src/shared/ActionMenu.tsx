@@ -1,3 +1,4 @@
+import { S } from "./strings.generated";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronLeft } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
@@ -123,7 +124,7 @@ function Step({ label, itemClassName, children }: { label: string; itemClassName
   return <>
     <DropdownMenu.Item ref={back} className={itemClassName} onSelect={(event) => { event.preventDefault(); go(null); }}>
       <ChevronLeft className="size-4" />
-      <span className="flex-1">Quay lại</span>
+      <span className="flex-1">{S.s_quay_lai_6d793582}</span>
       <span className="max-w-[45%] text-right text-xs text-fg-2 [overflow-wrap:anywhere]">{label}</span>
     </DropdownMenu.Item>
     <DropdownMenu.Separator className="my-1 h-px bg-line" />

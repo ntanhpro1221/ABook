@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
@@ -10,8 +11,8 @@ CastModal {
     property var person: null
     property string typed: ""
     readonly property string shownName: person ? Logic.cleanName(person.displayName) : ""
-    title: "Đổi tên " + shownName
-    description: "Chỉ đổi tên hiển thị, giữ giọng và audio."
+    title: S.s_doi_ten_7bbd9ee1 + shownName
+    description: S.s_chi_doi_ten_hien_thi_giu_giong_va_audio_1f7110c8
 
     function begin(data) {
         generation++
@@ -29,9 +30,9 @@ CastModal {
         root.ask("POST", "/api/books/" + bookId + "/characters/rename", {character: person.name, name: next}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
-            if (error) { root.fail("Chưa đổi được tên", error); return }
+            if (error) { root.fail(S.s_chua_doi_duoc_ten_ad5b4df1, error); return }
             root.saved()
-            Api.notice = data && data.renamed ? "Đã đổi tên thành " + Logic.cleanName(data.name) : "Đã trở về tên gốc: " + Logic.cleanName(data ? data.name : "")
+            Api.notice = data && data.renamed ? S.s_da_doi_ten_thanh_a1f19e74 + Logic.cleanName(data.name) : S.s_da_tro_ve_ten_goc_8af81ee8 + Logic.cleanName(data ? data.name : "")
             root.dismiss()
         })
     }
@@ -44,7 +45,7 @@ CastModal {
             id: nameField
             objectName: "personName"
             width: parent.width
-            label: "Tên mới của " + root.shownName
+            label: S.s_ten_moi_cua_b5ff555e + root.shownName
             onTextChanged: {
                 if (text.length > 80) { text = text.slice(0, 80); return }
                 root.typed = text
@@ -54,7 +55,7 @@ CastModal {
         Text {
             visible: !!(root.person && root.person.originalName)
             width: parent.width
-            text: "Tên gốc: " + (root.person ? Logic.cleanName(root.person.originalName) : "")
+            text: S.s_ten_goc_893370ef + (root.person ? Logic.cleanName(root.person.originalName) : "")
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
@@ -63,9 +64,9 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "personNameOriginal"; visible: !!(root.person && root.person.originalName); text: "Về tên gốc"; kind: "ghost"; enabled: !root.saving; onClicked: root.save("") }
-            Button { objectName: "personNameCancel"; text: "Thôi"; kind: "ghost"; onClicked: root.close() }
-            Button { objectName: "personNameSave"; text: "Lưu"; busy: root.saving; enabled: root.typed.trim() !== ""; onActivated: root.submit() }
+            Button { objectName: "personNameOriginal"; visible: !!(root.person && root.person.originalName); text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onClicked: root.save("") }
+            Button { objectName: "personNameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "personNameSave"; text: S.s_luu_e91f26c0; busy: root.saving; enabled: root.typed.trim() !== ""; onActivated: root.submit() }
         }
     ]
 }

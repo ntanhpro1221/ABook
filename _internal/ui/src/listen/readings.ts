@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/studio/api";
@@ -158,7 +159,7 @@ export function useReadAloudTry(bookId: string) {
       // Ô trống / đúng chữ của sách: {} - nghe từ ấy đọc như thường, không lấy cách đọc đã lưu.
       clip.toggle(id, await source.readAloudSample(voice.id, wordCore(surface), { bookId, readings: trialReadings(surface, spoken) ?? {} }));
     } catch (error) {
-      setFailed((error as Error)?.message || "Chưa nghe thử được lúc này.");
+      setFailed((error as Error)?.message || S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5);
     } finally {
       setLoading("");
     }

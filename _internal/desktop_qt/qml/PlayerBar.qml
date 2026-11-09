@@ -1,10 +1,11 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
 
 // Thanh phát ở đáy khung nội dung (chỉ khi có sách đang nạp). Bìa nhỏ · tên sách · tên chương (xuống dòng, thanh cao lên) · lùi 15 s · phát / dừng · tới 15 s.
 // Tiến độ là đường mảnh ở mép trên thanh: rê chuột thì dày lên và hiện giờ ở chỗ con trỏ, bấm hay kéo là tua. Tốc độ, hẹn giờ, nhạc nền, giọng KHÔNG ở đây.
-// Bấm vào thanh (ngoài các nút) mở "Đang nghe": bìa nhỏ lớn dần thành bìa lớn (NowPlaying.qml).
+// Bấm vào thanh (ngoài các nút) mở S.s_dang_nghe_9310d8cf: bìa nhỏ lớn dần thành bìa lớn (NowPlaying.qml).
 Item {
     id: root
     property alias thumb: thumb
@@ -12,14 +13,14 @@ Item {
     property alias bookLabel: subtitle.bookLabel
     property alias playButton: playButton
     property bool sharedShown: true
-    /// Phần chữ + nút mờ dần khi "Đang nghe" mở ra (0..1 = còn thấy).
+    /// Phần chữ + nút mờ dần khi S.s_dang_nghe_9310d8cf mở ra (0..1 = còn thấy).
     property real contentOpacity: 1
     property real contentShift: 0
     /// Bìa nhỏ ẩn khi bìa lớn của Đang nghe đã thế chỗ nó.
     property bool thumbShown: true
     signal settingsRequested(string group)
     Accessible.role: Accessible.Pane
-    Accessible.name: "Trình phát"
+    Accessible.name: S.s_trinh_phat_9270993d
     readonly property real transportHeight: Math.max(84, Math.max(titles.implicitHeight, thumb.height) + 2 * Theme.s12)
     readonly property real natural: transportHeight + alerts.height
     property real appear: Player.loaded ? 1 : 0
@@ -47,7 +48,7 @@ Item {
         Rectangle { width: parent.width; height: 1; color: Theme.line }
     }
 
-    // Vùng bấm mở "Đang nghe": bìa + chữ (không phủ lên nút phát)
+    // Vùng bấm mở S.s_dang_nghe_9310d8cf: bìa + chữ (không phủ lên nút phát)
     Interactive {
         id: openArea
         x: 0
@@ -57,7 +58,7 @@ Item {
         pressScaling: false
         ringRadius: 0
         ringMargin: -2
-        Accessible.name: "Mở màn hình đang nghe"
+        Accessible.name: S.s_mo_man_hinh_dang_nghe_2426b4ad
         Rectangle {
             anchors.fill: parent
             color: Theme.text
@@ -117,12 +118,12 @@ Item {
             PlayButton { id: playButton; size: 44; anchors.verticalCenter: parent.verticalCenter; opacity: root.sharedShown ? 1 : 0 }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
             IconButton {
-                icon: "picture-in-picture-2"; tip: "Cửa sổ mini"
+                icon: "picture-in-picture-2"; tip: S.s_cua_so_mini_65edeb9b
                 enabled: Player.loaded
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: Nav.windowMode.enter()
             }
-            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: "Thêm tuỳ chọn"; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
+            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
         }
     }
 
@@ -145,15 +146,15 @@ Item {
         id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
         Column {
             width: parent.width
-            MenuRow { width: parent.width; text: "Âm thanh"; value: "Chỉnh"; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
-            MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
-            MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
-            MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
-            MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
-            MenuRow { width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
-            MenuRow { width: parent.width; text: "Mở màn hình đang nghe"; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
-            MenuRow { objectName: "barClose"; width: parent.width; text: "Đóng trình phát"; icon: "x"; onClicked: { more.close(); Player.close() } }
-            MenuRow { objectName: "barOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
+            MenuRow { width: parent.width; text: S.s_copy_c1303271503d; value: S.s_copy_cc27613e0895; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
+            MenuRow { width: parent.width; text: S.s_hen_gio_39d9ca26; icon: "moon"; onClicked: { more.close(); sleep.show() } }
+            MenuRow { width: parent.width; text: S.s_chuong_truoc_4750f9e9; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
+            MenuRow { width: parent.width; text: S.s_chuong_sau_17d1bd20; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
+            MenuRow { width: parent.width; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+            MenuRow { width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { width: parent.width; text: S.s_mo_man_hinh_dang_nghe_2426b4ad; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
+            MenuRow { objectName: "barClose"; width: parent.width; text: S.s_dong_trinh_phat_8a833838; icon: "x"; onClicked: { more.close(); Player.close() } }
+            MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
         }
     }
     SleepPopover { id: sleep; anchorItem: moreButton }

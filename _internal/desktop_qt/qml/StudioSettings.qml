@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioSetupLogic.js" as Setup
@@ -29,7 +30,7 @@ Item {
     // Bấm là cài luôn rồi sang màn Studio xem tiến độ - không phải bấm "Cài Studio" lần hai ở đó
     function install() {
         setup.install(function(ok, data) {
-            if (!ok) { setup.failure("Chưa cài được Studio", data); return }
+            if (!ok) { setup.failure(S.s_chua_cai_duoc_studio_ee5900df, data); return }
             studioRequested()
         })
     }
@@ -37,8 +38,8 @@ Item {
         if (!armed) { arm(true); return }
         arm(false)
         setup.remove(function(ok, data) {
-            if (!ok) { setup.failure("Chưa gỡ được Studio", data); return }
-            Api.notice = "Đã gỡ Studio"
+            if (!ok) { setup.failure(S.s_chua_go_duoc_studio_1b3d65b8, data); return }
+            Api.notice = S.s_da_go_studio_63706a8a
             setup.refreshInfo()
         })
     }
@@ -67,13 +68,13 @@ Item {
                         width: parent.width
                         height: Math.max(56, implicitHeight)
                         verticalAlignment: Text.AlignVCenter
-                        text: "Studio trên máy này"
+                        text: S.s_studio_tren_may_nay_e2fb04aa
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeSection
                         font.weight: Theme.weightMedium
                     }
-                    Text { objectName: "studioState"; width: parent.width; topPadding: 4; text: root.status && root.status.running ? "Đang cài." : "Chưa cài."; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                    Text { objectName: "studioState"; width: parent.width; topPadding: 4; text: root.status && root.status.running ? S.s_dang_cai_4ea651d1 : S.s_chua_cai_6003057a; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                     Text { width: parent.width; topPadding: 4; text: root.needs; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13; lineHeight: 1.3 }
                     Text {
                         objectName: "studioFit"
@@ -96,7 +97,7 @@ Item {
                             y: 12
                             readonly property bool running: Boolean(root.status && root.status.running)
                             readonly property bool unfit: !running && root.fit.level === "no"
-                            text: running ? "Xem tiến độ cài" : unfit ? "Vẫn cài" : "Cài Studio"
+                            text: running ? S.s_xem_tien_do_cai_42e94c00 : unfit ? S.s_van_cai_ef098464 : S.s_cai_studio_5fdd3bd9
                             kind: running || unfit ? "ghost" : "primary"
                             size: unfit ? "sm" : "md"
                             icon: running ? "" : "download"
@@ -113,14 +114,14 @@ Item {
             open: root.present && root.installed
             SettingRow {
                 width: parent.width
-                label: "Studio trên máy này"
-                hint: "Đã cài" + (root.status && root.status.gpu ? "\u00a0·\u00a0" + root.status.gpu.name : "") + "\n" + (root.status ? root.status.root : "")
+                label: S.s_studio_tren_may_nay_e2fb04aa
+                hint: S.s_da_cai_e0159635 + (root.status && root.status.gpu ? "\u00a0·\u00a0" + root.status.gpu.name : "") + "\n" + (root.status ? root.status.root : "")
                 Button {
                     objectName: "studioRemove"
                     size: "sm"
                     kind: root.armed ? "danger" : "ghost"
                     icon: "trash"
-                    text: root.busy ? "Đang gỡ…" : root.armed ? "Xác nhận gỡ" : "Gỡ Studio"
+                    text: root.busy ? S.s_dang_go_063a61fd : root.armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10
                     enabled: !root.busy
                     onClicked: root.remove()
                 }
@@ -136,7 +137,7 @@ Item {
                     topPadding: 4
                     Text {
                         width: Math.min(implicitWidth, outdated.width)
-                        text: (outdated.damaged ? "Mất " + root.status.damaged.join(", ") + " (file đã bị xoá hay hỏng)" : "Cần cập nhật " + ((root.status && root.status.outdated) || []).join(", ")) + " - "
+                        text: (outdated.damaged ? S.s_mat_185abbd8 + root.status.damaged.join(", ") + S.s_file_da_bi_xoa_hay_hong_bbfea488 : S.s_can_cap_nhat_1655056f + ((root.status && root.status.outdated) || []).join(", ")) + " - "
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13
@@ -151,7 +152,7 @@ Item {
                         onClicked: root.studioRequested()
                         Text {
                             id: fixText
-                            text: outdated.damaged ? "Sửa Studio" : "Cập nhật Studio"
+                            text: outdated.damaged ? S.s_sua_studio_2f99394d : S.s_cap_nhat_studio_b3acc7e7
                             color: Theme.accentText
                             font.pixelSize: 13
                             font.weight: Theme.weightMedium
@@ -169,7 +170,7 @@ Item {
                     objectName: "studioArmedNote"
                     width: parent.width
                     bottomPadding: 12
-                    text: "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài."
+                    text: S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224
                     lineHeight: 1.15
                 }
             }

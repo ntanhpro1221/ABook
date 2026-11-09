@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
@@ -6,8 +7,8 @@ import "StudioLogic.js" as Logic
 // "Xoá dự án ở máy tính <tên máy>" thay vì ẩn nút im lặng hay để nút bấm ra lỗi 403. Chữ xuống dòng, không cắt.
 Rectangle {
     id: root
-    property string verb: "Làm"
-    property string computer: "máy tính"
+    property string verb: S.s_lam_0b6fa4c2
+    property string computer: S.s_may_tinh_8eafc226
     implicitWidth: Math.min(maxWidth, icon.width + 6 + line.implicitWidth + 20)
     implicitHeight: Math.max(26, line.implicitHeight + 8)
     property real maxWidth: 480

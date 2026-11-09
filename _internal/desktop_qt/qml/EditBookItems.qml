@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
@@ -55,7 +56,7 @@ Column {
         width: parent.width
         visible: root.editable
         height: root.editable ? implicitHeight : 0
-        text: "Sửa thông tin"
+        text: S.s_sua_thong_tin_17e4a8a6
         icon: "pencil"
         onClicked: root.editRequested()
     }
@@ -67,7 +68,7 @@ Column {
         height: root.showSave ? implicitHeight : 0
         enabled: Boolean(root.book.unsaved !== undefined ? root.book.unsaved : root.book.edits) && !root.saving
         opacity: enabled ? 1 : 0.5
-        text: "Lưu thay đổi"
+        text: S.s_luu_thay_doi_48ee3bfe
         icon: "save"
         onClicked: if (enabled) root.saveRequested()
     }
@@ -77,7 +78,7 @@ Column {
         width: parent.width
         visible: root.showSave
         height: root.showSave ? implicitHeight : 0
-        text: "Lưu thành…"
+        text: S.s_luu_thanh_d9ea985e
         icon: "file-down"
         onClicked: root.saveAsRequested()
     }
@@ -87,8 +88,8 @@ Column {
         visible: root.showBlocked
         height: root.showBlocked ? implicitHeight : 0
         icon: "pencil"
-        label: "Sửa thông tin"
-        caption: "Sửa ở máy gốc."
+        label: S.s_sua_thong_tin_17e4a8a6
+        caption: S.s_sua_o_may_goc_1a65caf0
     }
     NoteRow {
         id: studioOnly
@@ -96,7 +97,7 @@ Column {
         visible: root.showStudio
         height: root.showStudio ? implicitHeight : 0
         icon: "wrench"
-        label: "Giọng và lời đọc"
-        caption: root.syncs ? "Làm ở Studio trên máy tính" : root.need.charAt(0).toUpperCase() + root.need.slice(1)
+        label: S.s_giong_va_loi_doc_450320f6
+        caption: root.syncs ? S.s_lam_o_studio_tren_may_tinh_c89f87a5 : root.need.charAt(0).toUpperCase() + root.need.slice(1)
     }
 }

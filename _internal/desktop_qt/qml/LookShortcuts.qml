@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -8,18 +9,18 @@ Column {
     id: root
     property bool letters: true
     property bool inSettings: true
-    readonly property string tailText: letters ? "Tắt phím một chữ cái ở Cài đặt › Giao diện."
-        : "Phím một chữ cái đang tắt" + (inSettings ? "" : " (bật ở Cài đặt › Giao diện)") + ". Space, mũi tên, Esc vẫn chạy."
+    readonly property string tailText: letters ? S.s_tat_phim_mot_chu_cai_o_cai_dat_giao_dien_dea67281
+        : S.s_phim_mot_chu_cai_dang_tat_e4f92ede + (inSettings ? "" : S.s_bat_o_cai_dat_giao_dien_e4e0ca4b) + S.s_space_mui_ten_esc_van_chay_94acd406
     // phím theo thứ tự, việc, có là phím một chữ cái không; "+" là chữ nối giữa các phím
     readonly property var rows: [
-        {keys: ["Ctrl", "+", "Shift", "+", "M"], label: "Cửa sổ mini", letter: false},
-        {keys: ["Space"], label: "Phát / tạm dừng", letter: false},
-        {keys: ["←", "→"], label: "Lùi / tới 15 giây", letter: false},
-        {keys: ["Shift", "+", "←", "→"], label: "Chương trước / sau", letter: false},
-        {keys: ["M"], label: "Tắt / bật tiếng", letter: true},
-        {keys: ["[", "]"], label: "Giảm / tăng tốc độ đọc", letter: true},
-        {keys: ["Esc"], label: "Thu nhỏ màn hình đang nghe", letter: false},
-        {keys: ["?"], label: "Xem các phím tắt này", letter: true}
+        {keys: ["Ctrl", "+", "Shift", "+", "M"], label: S.s_cua_so_mini_65edeb9b, letter: false},
+        {keys: ["Space"], label: S.s_phat_tam_dung_563530d1, letter: false},
+        {keys: ["←", "→"], label: S.s_lui_toi_15_giay_5f952fd6, letter: false},
+        {keys: ["Shift", "+", "←", "→"], label: S.s_chuong_truoc_sau_1f7a3d2b, letter: false},
+        {keys: ["M"], label: S.s_tat_bat_tieng_152563ae, letter: true},
+        {keys: ["[", "]"], label: S.s_giam_tang_toc_do_doc_484ba2e5, letter: true},
+        {keys: [S.s_esc_52f878ed], label: S.s_thu_nho_man_hinh_dang_nghe_ec2467a0, letter: false},
+        {keys: ["?"], label: S.s_xem_cac_phim_tat_nay_bdc607f4, letter: true}
     ]
     Column {
         width: parent.width
@@ -36,7 +37,7 @@ Column {
                     id: label
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - keys.width - 16
-                    text: entry.modelData.label + (entry.off ? " (đang tắt)" : "")
+                    text: entry.modelData.label + (entry.off ? S.s_dang_tat_3aac6b7f : "")
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall

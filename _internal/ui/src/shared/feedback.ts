@@ -1,5 +1,6 @@
+import { S } from "./strings.generated";
 // Phản hồi giác quan của giao diện (DESIGN.md 5.3 âm thanh, 5.4 rung): MỘT chỗ cho mọi tiếng chạm và mọi cú rung.
-// Tiếng tự tổng hợp bằng Web Audio (không file thu âm), cùng một âm sắc "đồng thau gõ nhẹ", ngắn <= 250 ms, ~ -24 dB. Tiếng tự im khi sách
+// Tiếng tự tổng hợp bằng Web Audio (không file thu âm), cùng một âm sắc S.s_copy_894390e1b4d8, ngắn <= 250 ms, ~ -24 dB. Tiếng tự im khi sách
 // đang phát - trừ báo hẹn giờ ngủ sắp tắt và xác nhận hẹn lại. Rung chỉ trên điện thoại: android/main.tsx nối `haptic` tới EbookPlayer.haptic (Haptics.kt chọn
 // hằng số cũ hơn khi máy chưa có). Máy tính không rung. Chỉ gọi cho việc NGƯỜI DÙNG vừa làm; không cho tiến độ chạy, sự kiện nền, tự cuộn,
 // hẹn giờ ngủ tắt.
@@ -63,11 +64,11 @@ export const SOUNDS: Readonly<Record<FeedbackKind, readonly Note[] | null>> = {
   playPause: null,
 };
 
-/** Dòng mô tả công tắc "Âm thanh chạm" (Cài đặt > Giao diện, cả hai nền tảng). */
-export const TOUCH_SOUNDS_HINT = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại.";
+/** Dòng mô tả công tắc S.s_am_thanh_cham_a33e2a3c (Cài đặt > Giao diện, cả hai nền tảng). */
+export const TOUCH_SOUNDS_HINT = S.s_copy_34fb8bbc7719;
 
 interface FeedbackOptions {
-  /** Cài đặt > Giao diện > "Âm thanh chạm" (mặc định bật). */
+  /** Cài đặt > Giao diện > S.s_am_thanh_cham_a33e2a3c (mặc định bật). */
   sounds: boolean;
   /** Cài đặt > Giao diện > "Rung" (mặc định bật; chỉ điện thoại). */
   haptics: boolean;
@@ -120,7 +121,7 @@ function context(): AudioContext | null {
   } catch {
     return null;
   }
-  // Âm sắc "đồng thau gõ nhẹ": cơ bản + vài hoạ âm giảm dần (bậc 2-3 đậm như kèn đồng, bậc cao rất nhẹ cho khỏi chói).
+  // Âm sắc S.s_copy_894390e1b4d8: cơ bản + vài hoạ âm giảm dần (bậc 2-3 đậm như kèn đồng, bậc cao rất nhẹ cho khỏi chói).
   const harmonics = [0, 1, 0.55, 0.35, 0.18, 0.08];
   timbre = audio.createPeriodicWave(new Float32Array(harmonics.length), new Float32Array(harmonics));
   return audio;
@@ -148,7 +149,7 @@ function play(notes: readonly Note[]): void {
   }
 }
 
-/** Kéo thanh tua qua một mốc (mỗi `step` giây, hay chạm đầu / cuối chương) - lúc rung "tích" (5.4 CLOCK_TICK). Chỉ gọi khi đang kéo. */
+/** Kéo thanh tua qua một mốc (mỗi `step` giây, hay chạm đầu / cuối chương) - lúc rung S.s_copy_55fa94ecaa40 (5.4 CLOCK_TICK). Chỉ gọi khi đang kéo. */
 export function crossedSeekMark(from: number, to: number, duration: number, step: number): boolean {
   if (from === to) return false;
   const edge = (value: number) => value <= 0 || (duration > 0 && value >= duration);

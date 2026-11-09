@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "PeerStudio.js" as Peer
@@ -38,7 +39,7 @@ Item {
                 root.silent = false
                 return
             }
-            root.trouble = data && (data.message || data.error) || "Máy kia không trả lời"
+            root.trouble = data && (data.message || data.error) || S.s_may_kia_khong_tra_loi_aabbe89f
             root.silent = Boolean(data && data.unreachable)
         })
     }
@@ -194,7 +195,7 @@ Item {
         }
     }
     function listen(id) {
-        if (root.peer) { Api.notice = "Sách của máy ấy nghe ở Thư viện của máy ấy."; return }
+        if (root.peer) { Api.notice = S.s_sach_cua_may_ay_nghe_o_thu_vien_cua_may_ay_f35fec7d; return }
         Nav.bookRequested(id)
     }
 
@@ -206,7 +207,7 @@ Item {
         x: (parent.width - root.bodyWidth) / 2
         y: bar.height
         width: root.bodyWidth
-        title: "Studio"
+        title: S.s_studio_0aa91af2
     }
     Item {
         id: body
@@ -226,8 +227,8 @@ Item {
             width: parent.width
             icon: "clapperboard"
             title: Peer.listenOnlyLine(Peer.listenOnlyOwner(root.peerInfo))
-            text: "Sách của máy ấy vẫn nghe được ở Thư viện."
-            Button { objectName: "studioClosedLibrary"; text: "Về Thư viện"; onClicked: { root.home(); if (Nav.stack) Nav.stack.show(0) } }
+            text: S.s_sach_cua_may_ay_van_nghe_duoc_o_thu_vien_04fff8ae
+            Button { objectName: "studioClosedLibrary"; text: S.s_ve_thu_vien_992fad7b; onClicked: { root.home(); if (Nav.stack) Nav.stack.show(0) } }
         }
         // Chưa vào được Studio của máy kia (PeerTrouble): lời máy chủ; máy ấy im thì tự mở lại khi nó trả lời
         EmptyState {
@@ -237,8 +238,8 @@ Item {
             width: parent.width
             icon: "laptop"
             title: root.trouble
-            text: root.silent ? "Studio tự mở khi máy ấy trả lời lại." : ""
-            Button { objectName: "peerTroubleHome"; text: "Về máy này"; onClicked: root.home() }
+            text: root.silent ? S.s_studio_tu_mo_khi_may_ay_tra_loi_lai_f4f4f246 : ""
+            Button { objectName: "peerTroubleHome"; text: S.s_ve_may_nay_d9404884; onClicked: root.home() }
         }
     }
 }

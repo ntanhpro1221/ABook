@@ -78,7 +78,7 @@ object Mp3Exports {
     }
 
     /** Lời cho người nghe khi hệ thống dừng việc xuất vì dịch vụ nền hết 6 giờ. */
-    const val TIMEOUT_NOTE = "Android dừng xuất sau 6 giờ — bạn bấm Xuất lại."
+    const val TIMEOUT_NOTE = S.s_android_dung_xuat_sau_6_gio_ban_bam_xuat_l_b1775145
 
     private const val CHANNEL = "export"
 
@@ -189,8 +189,8 @@ object Mp3Exports {
     private fun channel(context: Context, id: String = CHANNEL) {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(id) == null) {
-            val (name, text) = if (id == DOWNLOAD_CHANNEL) "Tải sách" to "Tiến độ khi tải sách về điện thoại"
-            else "Xuất sách" to "Tiến độ khi xuất MP3 / M4B để nghe ở app khác"
+            val (name, text) = if (id == DOWNLOAD_CHANNEL) S.s_tai_sach_3c83e586 to S.s_tien_do_khi_tai_sach_ve_dien_thoai_a10d45e3
+            else S.s_xuat_sach_792effe5 to S.s_tien_do_khi_xuat_mp3_m4b_de_nghe_o_app_kha_12afea1e
             manager.createNotificationChannel(NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW).apply { description = text })
         }
     }
@@ -208,14 +208,14 @@ object Mp3Exports {
      * (xuất M4B - một chương có thể mất vài phút), không thì theo số chương. `heading`, `stopLabel`, `channelId`: lời và kênh khác cho việc tải sách.
      */
     internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int,
-                            tag: String = "mp3-export", fraction: Double? = null, heading: String = "Đang xuất sách…",
-                            stopLabel: String = "Dừng", channelId: String = CHANNEL): ForegroundInfo {
+                            tag: String = "mp3-export", fraction: Double? = null, heading: String = S.s_dang_xuat_sach_20990a99,
+                            stopLabel: String = S.s_dung_11554138, channelId: String = CHANNEL): ForegroundInfo {
         channel(context, channelId)
         val stop = ExportCancellation.stopIntent(context, work)
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle(heading)
-            .setContentText(if (total > 0) "$title · $done/$total chương" else title)
+            .setContentText(if (total > 0) S.s_0_1_2_chuong_ad930f12(title, done, total) else title)
             .apply { if (fraction != null) setProgress(1000, (fraction * 1000).toInt(), false) else setProgress(total, done, total == 0) }
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -260,7 +260,7 @@ class SafDestination(private val resolver: ContentResolver, private val tree: Ur
         val existing = children(resolver, tree, root)
         val fresh = Mp3Export.freshFolderName(name) { existing.containsKey(it) }
         val dir = DocumentsContract.createDocument(resolver, root, DocumentsContract.Document.MIME_TYPE_DIR, fresh)
-            ?: throw Mp3Export.Refused("Chưa tạo được thư mục trong chỗ đã chọn")
+            ?: throw Mp3Export.Refused(S.s_chua_tao_duoc_thu_muc_trong_cho_da_chon_8b406ffc)
         return SafFolder(resolver, tree, dir, "$treeName/$fresh")
     }
 
@@ -303,10 +303,10 @@ private class SafFolder(private val resolver: ContentResolver, private val tree:
 
     private fun create(name: String): Uri =
         DocumentsContract.createDocument(resolver, dir, "application/octet-stream", name)
-            ?: throw Mp3Export.Refused("Chưa ghi được vào thư mục đã chọn")
+            ?: throw Mp3Export.Refused(S.s_chua_ghi_duoc_vao_thu_muc_da_chon_b4c0874a)
 
     private fun stream(target: Uri): OutputStream =
-        resolver.openOutputStream(target, "w") ?: throw Mp3Export.Refused("Chưa ghi được vào thư mục đã chọn")
+        resolver.openOutputStream(target, "w") ?: throw Mp3Export.Refused(S.s_chua_ghi_duoc_vao_thu_muc_da_chon_b4c0874a)
 
     override fun write(name: String, body: (OutputStream) -> Unit) {
         val partName = "$name.part"
@@ -358,7 +358,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             title = base.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
             runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, base.chapters.size)).get() }
-            val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
+            val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused(S.s_chua_mo_duoc_thu_muc_da_chon_chon_lai_noi_23fb5dbe)
             val ids = base.chapters.map { it.id }
             Mp3Exports.live.note(bookId, run, JSONObject().put("folder", "$treeName/${Mp3Export.folderName(title)}").put("music", Mp3Exports.music(inputData)))
             // "Kèm nhạc nền" (soát a99 V3): cùng bộ trộn, mức âm và ghi công với M4B; sách không có nhạc thì mỗi chương vẫn là MP3 như cũ.
@@ -392,7 +392,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 } ?: 0L
                 val need = M4bExport.estimatedBytes(Mp3Export.Plan(plan.title, plan.narrator, listOf(longest), 1, plan.chaptersTotal, plan.cover, plan.coverName, plan.music, plan.guard), musicBytes)
                 if (work.parentFile!!.usableSpace < need) {
-                    throw Mp3Export.Refused("Thiếu chỗ trộn nhạc (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
+                    throw Mp3Export.Refused(S.s_thieu_cho_tron_nhac_can_0_mb_ban_don_bot_r_befe564e(need shr 20))
                 }
                 var offset = 0
                 var phase: (JSONObject) -> JSONObject = { it }
@@ -417,9 +417,9 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             ExportHistory.remember(Store.bookDir(bookId), "mp3", result.uri ?: result.folder, snapshot)
             // Nói chỗ lưu trước (người nghe cần biết đi đâu tìm), rồi mới tới lưu ý chương thiếu.
             val selection = inputData.getIntArray("chapterIds") != null
-            val partial = if (!selection && result.files < result.chaptersTotal) " Chưa gồm chương dở." else ""
-            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
-            Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial$lost")
+            val partial = if (!selection && result.files < result.chaptersTotal) S.s_chua_gom_chuong_do_7055aff1 else ""
+            val lost = if (missing > 0) S.s_0_doan_chua_tai_duoc_nhac_ban_tai_lai_neu_4743385d(missing) else ""
+            Mp3Exports.finished(context, bookId, S.s_da_xuat_0_chuong_8de90dcc(result.files), S.s_0_luu_o_1_2_3_bc4aa521(title, result.folder, partial, lost))
             val finished = event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
                 .put("selection", selection)
                 .put("folder", result.folder).put("uri", result.uri)
@@ -437,11 +437,11 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             }
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): các chương đã xuất còn nguyên; không chạy lại vô hạn.
-                Mp3Exports.finished(context, bookId, "Xuất đã dừng", "$title · đã xuất $done chương. ${Mp3Exports.TIMEOUT_NOTE}.")
+                Mp3Exports.finished(context, bookId, S.s_xuat_da_dung_711f78cf, S.s_0_da_xuat_1_chuong_2_be9792db(title, done, Mp3Exports.TIMEOUT_NOTE))
                 Mp3Exports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }
-            Mp3Exports.finished(context, bookId, "Đã dừng xuất", "$title · đã xuất $done chương")
+            Mp3Exports.finished(context, bookId, S.s_da_dung_xuat_ab8ac9d1, S.s_0_da_xuat_1_chuong_5cc40dd2(title, done))
             Mp3Exports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Exception) {
@@ -453,9 +453,9 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             val message = when {
                 isStopped && Mp3Exports.timedOut(this) -> Mp3Exports.TIMEOUT_NOTE
                 error is Mp3Export.Refused -> error.message.orEmpty()
-                else -> "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
+                else -> S.s_loi_khi_ghi_0_7ee7b58a(error.message ?: error.javaClass.simpleName)
             }
-            Mp3Exports.finished(context, bookId, "Chưa xuất được MP3", "$title · $message")
+            Mp3Exports.finished(context, bookId, S.s_chua_xuat_duoc_mp3_1550e65a, "$title · $message")
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {

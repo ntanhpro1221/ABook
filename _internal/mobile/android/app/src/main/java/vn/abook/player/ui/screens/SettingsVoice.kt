@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.PageHeader
@@ -86,7 +88,7 @@ import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Máy chưa có giọng tiếng Việt của hệ điều hành. */
-private const val DEVICE_HINT = "Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
+private const val DEVICE_HINT = S.s_dien_thoai_chua_co_giong_tieng_viet_cai_o_36fbedfa
 
 private val NoSample: StateFlow<SampleUi> = MutableStateFlow(SampleUi())
 private val NoModules: StateFlow<Map<ModuleKind, ModuleUi>> = MutableStateFlow(emptyMap())
@@ -137,21 +139,21 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
         when (val list = voices) {
             VoiceList.Loading -> item(key = "loading", contentType = "loading") { VoiceSkeleton() }
             VoiceList.Failed -> item(key = "failed", contentType = "failed") {
-                ListRow("Chưa tải được giọng", hint = "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.") {
-                    TextAction("Thử lại", repo::loadVoices, "voices_retry")
+                ListRow(S.s_chua_tai_duoc_giong_728a140d, hint = S.s_ban_hay_kiem_tra_ket_noi_roi_tai_lai_giong_46330dab) {
+                    TextAction(S.s_thu_lai_c58d068c, repo::loadVoices, "voices_retry")
                 }
             }
             is VoiceList.Ready -> {
                 item(key = "current", contentType = "current") {
                     BasicText(
-                        "Đang dùng: ${list.chosenVoice?.name ?: "giọng mặc định"}",
+                        S.s_dang_dung_0_b3abfb1e(list.chosenVoice?.name ?: S.s_giong_mac_dinh_29916c49),
                         style = Abook.type.bodyStrong,
                         modifier = Modifier.padding(top = Dim.s16).testTag("voice_current"),
                     )
                 }
                 for (group in list.groups) {
                     item(key = "group:${group.provider}", contentType = "group") {
-                        val detail = if (group.detail.isEmpty()) "${group.voices.size} giọng" else "${group.detail} · ${group.voices.size} giọng"
+                        val detail = if (group.detail.isEmpty()) S.s_0_giong_7be1af23(group.voices.size) else S.s_0_1_giong_ac9c4363(group.detail, group.voices.size)
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24, bottom = Dim.s4)) {
                             BasicText(group.title, style = Abook.type.sectionTitle)
                             RowHint(detail)
@@ -172,7 +174,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                 if (list.groups.none { it.provider == "device" }) {
                     item(key = "device_hint", contentType = "hint") {
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
-                            BasicText("Giọng của máy", style = Abook.type.sectionTitle)
+                            BasicText(S.s_giong_cua_may_2404d649, style = Abook.type.sectionTitle)
                             RowHint(DEVICE_HINT)
                         }
                     }
@@ -182,16 +184,16 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
         item(key = "speed", contentType = "speed") {
             Reveal(speed != null) {
                 val state = speed ?: return@Reveal
-                ListSection("Hiệu năng") {
+                ListSection(S.s_hieu_nang_8c7b7526) {
                     ChoiceSetting(
-                        "Tốc độ đọc", VoiceSpeedChoice.entries, state.choice,
+                        S.s_toc_do_doc_3657e59d, VoiceSpeedChoice.entries, state.choice,
                         { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed",
                     )
                     for (line in state.lines) {
                         BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
                     }
                     for ((choice, bytes) in state.downloads) {
-                        TextAction("Tải (${vn.abook.player.formatSize(bytes)})", { voice?.download(ModuleKind.Supertonic, listOf(choice)) }, "speed_download")
+                        TextAction(S.s_tai_0_3463a4d8(vn.abook.player.formatSize(bytes)), { voice?.download(ModuleKind.Supertonic, listOf(choice)) }, "speed_download")
                     }
                 }
             }
@@ -199,8 +201,8 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
         if (voice != null) {
             item(key = "modules_intro", contentType = "title") {
                 Column(Modifier.padding(top = Dim.s24)) {
-                    BasicText("Bộ giọng", style = Abook.type.sectionTitle)
-                    Caption("Tải, đo và quản lý")
+                    BasicText(S.s_bo_giong_75b79178, style = Abook.type.sectionTitle)
+                    Caption(S.s_tai_do_va_quan_ly_5d6c8c8d)
                     VoiceText.advice(modules[ModuleKind.Vieneu]?.status, modules[ModuleKind.Supertonic]?.status)?.let { Caption(it) }
                     val notice by voice.notice.collectAsState()
                     Reveal(notice.isNotBlank()) { Caption(notice) }
@@ -210,7 +212,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
             item(key = "voice_pick", contentType = "voice_pick") { vn.abook.player.ui.voice.VoicePickCard(voice) }
             item(key = "keys", contentType = "keys") {
                 ListSection {
-                    DisclosureRow("Khoá trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
+                    DisclosureRow(S.s_khoa_truc_tuyen_b32d4988, { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
                 }
             }
         }
@@ -282,12 +284,12 @@ private fun VoiceRow(
     val mark by animateFloatAsState(if (chosen) 1f else 0f, Motion.Expand, label = "mark")
     val trailing: (@Composable () -> Unit)? = when {
         !canHear -> null
-        failure != null -> ({ TextAction("Thử lại", onHear, "sample_retry_${voice.id}") })
-        else -> ({ SampleButton(loading || playing, "Nghe thử ${voice.name}", "sample_${voice.id}", onHear) })
+        failure != null -> ({ TextAction(S.s_thu_lai_c58d068c, onHear, "sample_retry_${voice.id}") })
+        else -> ({ SampleButton(loading || playing, S.s_nghe_thu_0_65a85c4d(voice.name), "sample_${voice.id}", onHear) })
     }
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
-        hint = failure ?: if (loading) "Đang lấy giọng" else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) "Mặc định" else null).dotJoined().ifBlank { null },
+        hint = failure ?: if (loading) S.s_dang_lay_giong_330fa743 else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) S.s_mac_dinh_9a1af367 else null).dotJoined().ifBlank { null },
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {

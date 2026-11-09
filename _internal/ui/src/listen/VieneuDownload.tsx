@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -33,7 +34,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
     try {
       client.setQueryData(["readaloud", VIENEU_COPY.key], await backend.start(choices));
     } catch (error) {
-      toast.error("Chưa tải được giọng VieNeu", { description: (error as Error).message });
+      toast.error(S.s_chua_tai_duoc_giong_vieneu_7fd2908f, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -43,7 +44,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
     try {
       client.setQueryData(["readaloud", VIENEU_COPY.key], await backend.cancel!());
     } catch (error) {
-      toast.error("Chưa huỷ được việc tải giọng VieNeu", { description: (error as Error).message });
+      toast.error(S.s_chua_huy_duoc_viec_tai_giong_vieneu_aa6dbb90, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
@@ -58,7 +59,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
     <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className={idle ? "flex flex-wrap items-center gap-2" : "flex basis-full flex-col gap-2"}>
       {downloading && (
         <div className="flex items-center gap-3">
-          <Progress value={vieneuPercent(status) / 100} size="sm" running label="Đang tải giọng VieNeu" className="flex-1" />
+          <Progress value={vieneuPercent(status) / 100} size="sm" running label={S.s_dang_tai_giong_vieneu_ba98a3a0} className="flex-1" />
           {backend.cancel && (
             <button
               type="button"
@@ -67,9 +68,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
               onClick={busyClick(busy, () => void cancel())}
               onMouseDown={(event) => event.preventDefault()}
               className="min-h-9 shrink-0 rounded-control px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg aria-disabled:opacity-60 max-sm:min-h-[48px]"
-            >
-              Huỷ
-            </button>
+            >{S.s_huy_96732485}</button>
           )}
         </div>
       )}
@@ -86,7 +85,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
             onMouseDown={(event) => event.preventDefault()}
             className="min-h-[40px] shrink-0 rounded-control px-3 text-sm font-medium text-accent-text hover:bg-hover aria-disabled:opacity-60 max-sm:min-h-[48px]"
           >
-            {failed ? "Thử lại" : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
+            {failed ? S.s_thu_lai_c58d068c : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
           </button>
         )}
         {!downloading && !failed && status.state !== "unsupported" && light.length > 0 && fullBytes > bytes && (
@@ -96,8 +95,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
             onClick={busyClick(busy, () => void start(full))}
             onMouseDown={(event) => event.preventDefault()}
             className="min-h-9 shrink-0 rounded-control px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg aria-disabled:opacity-60 max-sm:min-h-[48px]"
-          >
-            Gói đầy đủ ({formatSize(fullBytes)})
+          >{S.s_goi_day_du_b5f9d00a}{formatSize(fullBytes)})
           </button>
         )}
         <button
@@ -106,9 +104,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
           data-focus-fallback
           onMouseDown={(event) => event.preventDefault()}
           className="min-h-9 shrink-0 rounded-control px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg max-sm:min-h-[48px]"
-        >
-          Xem trong Cài đặt
-        </button>
+        >{S.s_xem_trong_cai_dat_a83e130c}</button>
       </div>
     </MotionRegion>
   );

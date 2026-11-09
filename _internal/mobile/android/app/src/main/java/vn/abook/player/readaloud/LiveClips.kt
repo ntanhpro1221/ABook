@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -81,19 +83,19 @@ object LiveClips {
                 var seen = written
                 while (true) {
                     if (position < written) return written - position
-                    error?.let { if (written > 0) return 0 else throw IOException(it.message ?: "Clip đọc hỏng", it) }
+                    error?.let { if (written > 0) return 0 else throw IOException(it.message ?: S.s_clip_doc_hong_d02111e6, it) }
                     if (finished) return 0
                     if (written != seen) {
                         seen = written
                         left = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(stallMs)
                     }
-                    if (left <= 0) throw IOException("Clip đọc dở không có thêm âm thanh")
+                    if (left <= 0) throw IOException(S.s_clip_doc_do_khong_co_them_am_thanh_4ffac768)
                     try {
                         val slice = minOf(left, 200_000_000L)
                         left -= slice - changed.awaitNanos(slice)
                     } catch (interrupted: InterruptedException) {
                         Thread.currentThread().interrupt()
-                        throw InterruptedIOException("Lần nạp bị huỷ")
+                        throw InterruptedIOException(S.s_lan_nap_bi_huy_cae67fb1)
                     }
                 }
             } finally {
@@ -119,7 +121,7 @@ object LiveClips {
             val want = minOf(length.toLong(), available).toInt()
             file.seek(position)
             val got = file.read(buffer, offset, want)
-            if (got < 0) throw IOException("File clip ngắn hơn số byte đã ghi")
+            if (got < 0) throw IOException(S.s_file_clip_ngan_hon_so_byte_da_ghi_30781044)
             position += got
             return got
         }
@@ -129,7 +131,7 @@ object LiveClips {
             raf?.let { return it }
             var lastError: IOException? = null
             repeat(25) {
-                val file = entry.file() ?: throw IOException("Clip chưa có file")
+                val file = entry.file() ?: throw IOException(S.s_clip_chua_co_file_775c3126)
                 try {
                     return RandomAccessFile(file, "r").also {
                         raf = it
@@ -141,11 +143,11 @@ object LiveClips {
                         Thread.sleep(20)
                     } catch (interrupted: InterruptedException) {
                         Thread.currentThread().interrupt()
-                        throw InterruptedIOException("Lần nạp bị huỷ")
+                        throw InterruptedIOException(S.s_lan_nap_bi_huy_cae67fb1)
                     }
                 }
             }
-            throw lastError ?: IOException("Chưa mở được file clip")
+            throw lastError ?: IOException(S.s_chua_mo_duoc_file_clip_b1fec5a7)
         }
 
         fun close() {

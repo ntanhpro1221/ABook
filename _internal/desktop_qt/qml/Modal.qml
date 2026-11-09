@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
@@ -101,8 +102,8 @@ WindowLayer {
             iconSize: 20
             ink: Theme.text3
             hoverInk: Theme.text
-            tip: "Đóng"
-            Accessible.name: "Đóng"
+            tip: S.s_dong_5d54c2a1
+            Accessible.name: S.s_dong_5d54c2a1
             onClicked: root.close()
         }
         Flickable {

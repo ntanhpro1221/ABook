@@ -29,9 +29,9 @@ internal object PeerPaths {
             book.optJSONArray("samples")?.let { samples -> for (i in 0 until samples.length()) names += samples.getString(i) }
             book.optJSONObject("cover")?.let { add(it, "file") }
             book.optJSONObject("music")?.optJSONObject("tracks")?.keys()?.forEach { names += it }
-            require(names.all(::safeRelative)) { "Đường dẫn trong sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách." }
+            require(names.all(::safeRelative)) { S.s_duong_dan_trong_sach_khong_hop_le_ban_hay_b3e8db18 }
         } catch (error: Exception) {
-            throw IllegalArgumentException("Dữ liệu sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách.", error)
+            throw IllegalArgumentException(S.s_du_lieu_sach_khong_hop_le_ban_hay_kiem_tra_9809c0fc, error)
         }
     }
 }

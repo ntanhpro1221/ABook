@@ -26,13 +26,13 @@ object ExportStart {
 
     /** Sách đã có trên máy; không thì câu cho người dùng. */
     fun requireBook(id: String) {
-        if (Store.manifest(id) == null) throw Mp3Export.Refused("Sách này chưa tải về điện thoại")
+        if (Store.manifest(id) == null) throw Mp3Export.Refused(S.s_sach_nay_chua_tai_ve_dien_thoai_bdad1754)
     }
 
     /** Bắt đầu xuất cuốn `bookId` thành thư mục MP3 trong `tree`; `chapterIds`: chỉ các chương ấy; sách không có gì để xuất thì [Mp3Export.Refused] ngay, chưa bắt đầu việc nền. */
     fun mp3(context: Context, bookId: String, tree: Uri, drawn: ByteArray?, chapterIds: List<Int>?, music: Boolean): Started {
         val plan = Mp3Export.plan(bookId, drawn, chapterIds)
-        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
+        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused(S.s_chua_mo_duoc_thu_muc_da_chon_chon_lai_noi_23fb5dbe)
         val run = Mp3Exports.start(context, bookId, tree, coverFile(context, "mp3-export", drawn), chapterIds, music)
         return Started(run, folder = "$treeName/${Mp3Export.folderName(plan.title)}", chapters = plan.chapters.size)
     }
@@ -64,8 +64,8 @@ object ExportStart {
 
     /** Tên sách để hệ thống hỏi tên file; sách chưa tải hay không có chương nào đọc được thì từ chối ngay, TRƯỚC khi hỏi chỗ lưu. */
     fun audiobookTitle(bookId: String): String {
-        val book = Store.manifest(bookId) ?: throw Mp3Export.Refused("Sách này chưa tải về điện thoại")
-        if (ListenExport.chapters(bookId).isEmpty()) throw Mp3Export.Refused("Sách chưa có chương nào có chữ để đọc")
+        val book = Store.manifest(bookId) ?: throw Mp3Export.Refused(S.s_sach_nay_chua_tai_ve_dien_thoai_bdad1754)
+        if (ListenExport.chapters(bookId).isEmpty()) throw Mp3Export.Refused(S.s_sach_chua_co_chuong_nao_co_chu_de_doc_8d6e72e1)
         return book.optString("title").ifEmpty { bookId }
     }
 

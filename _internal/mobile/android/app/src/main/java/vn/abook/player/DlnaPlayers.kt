@@ -235,7 +235,7 @@ class DlnaPlayers(
 
     /** Lệnh cùng hình dạng RemotePlayers gửi máy khác; lỗi -> [Dlna.Failure] "<tên thiết bị>: <vì sao>". */
     override fun send(id: String, command: JSONObject): JSONObject {
-        val renderer = synchronized(lock) { renderers[id]?.first } ?: throw Dlna.Failure("Không còn thấy thiết bị này trong mạng")
+        val renderer = synchronized(lock) { renderers[id]?.first } ?: throw Dlna.Failure(S.s_khong_con_thay_thiet_bi_nay_trong_mang_9b620713)
         val device = deviceLocks.getOrPut(id) { ReentrantLock() }
         device.lock()
         try {
@@ -256,8 +256,8 @@ class DlnaPlayers(
     private fun apply(renderer: Dlna.Renderer, session: Session?, command: JSONObject) {
         val action = command.optString("action")
         if (action == "load") {
-            val chosen = book(command.optString("bookId")) ?: throw Dlna.Failure("điện thoại không có cuốn này")
-            val chapter = chosen.chapters.firstOrNull { it.id == command.optInt("chapterId", -1) } ?: throw Dlna.Failure("chương này chưa nghe được")
+            val chosen = book(command.optString("bookId")) ?: throw Dlna.Failure(S.s_dien_thoai_khong_co_cuon_nay_25a8c552)
+            val chapter = chosen.chapters.firstOrNull { it.id == command.optInt("chapterId", -1) } ?: throw Dlna.Failure(S.s_chuong_nay_chua_nghe_duoc_20228ec8)
             val bookId = command.optString("bookId")
             load(renderer, bookId, chosen.title, chosen.chapters, chapter, command.optDouble("seconds", 0.0), chosen.cover,
                 command.optString("record").ifEmpty { null } ?: recordOf(bookId))
@@ -268,7 +268,7 @@ class DlnaPlayers(
             return
         }
         if (action == "rate") {
-            if (Math.abs(command.optDouble("rate", 1.0) - 1.0) > 0.01) throw Dlna.Failure("loa, TV chỉ phát ở tốc độ 1x")
+            if (Math.abs(command.optDouble("rate", 1.0) - 1.0) > 0.01) throw Dlna.Failure(S.s_loa_tv_chi_phat_o_toc_do_1x_9aa457df)
             return
         }
         // Hẹn giờ tắt: `minutes` > 0 (đếm khi đang phát) hay `endOfChapter`; không có gì = tắt hẹn giờ.
@@ -277,7 +277,7 @@ class DlnaPlayers(
         if (session == null) {
             // "Nghe trên máy này" / tắt hẹn giờ sau khi thiết bị đã bị chiếm hay tự hết: không còn gì để làm
             if (action == "stop" || action == "sleep" && !chapterEnd && minutes <= 0) return
-            throw Dlna.Failure("chưa phát gì từ điện thoại này")
+            throw Dlna.Failure(S.s_chua_phat_gi_tu_dien_thoai_nay_9853ac0e)
         }
         val client = backendOf(renderer)
         val now = System.currentTimeMillis()
@@ -303,7 +303,7 @@ class DlnaPlayers(
             }
             "volume" -> {
                 val level = command.optInt("level", -1)
-                if (level !in 0..100) throw Dlna.Failure("âm lượng phải từ 0 tới 100")
+                if (level !in 0..100) throw Dlna.Failure(S.s_am_luong_phai_tu_0_toi_100_fbc8dad2)
                 client.setVolume(level)
                 session.volume = level
                 session.volumeAt = now
@@ -340,14 +340,14 @@ class DlnaPlayers(
             }
             "next", "previous", "jump" -> {
                 val chapter = if (action == "jump") {
-                    session.chapters.firstOrNull { it.id == command.optInt("chapterId", -1) } ?: throw Dlna.Failure("chương này chưa nghe được")
+                    session.chapters.firstOrNull { it.id == command.optInt("chapterId", -1) } ?: throw Dlna.Failure(S.s_chuong_nay_chua_nghe_duoc_20228ec8)
                 } else {
                     neighbour(session, if (action == "next") 1 else -1)
-                        ?: throw Dlna.Failure(if (action == "next") "đã là chương cuối" else "đã là chương đầu")
+                        ?: throw Dlna.Failure(if (action == "next") S.s_da_la_chuong_cuoi_7e46e973 else S.s_da_la_chuong_dau_85551ff9)
                 }
                 reload(renderer, session, chapter, if (action == "jump") command.optDouble("seconds", 0.0) else 0.0)
             }
-            else -> throw Dlna.Failure("thiết bị chưa làm được lệnh này")
+            else -> throw Dlna.Failure(S.s_thiet_bi_chua_lam_duoc_lenh_nay_f1a62961)
         }
     }
 
@@ -399,7 +399,7 @@ class DlnaPlayers(
      */
     private fun load(renderer: Dlna.Renderer, bookId: String, bookTitle: String, chapters: List<Chapter>, chapter: Chapter, seconds: Double,
                      cover: File?, record: String?) {
-        if (!chapter.file.isFile) throw Dlna.Failure("chương này chưa có trên điện thoại")
+        if (!chapter.file.isFile) throw Dlna.Failure(S.s_chuong_nay_chua_co_tren_dien_thoai_a7fc54f5)
         val url = media.share(chapter.file, renderer.host)
         val mime = if (chapter.file.extension.equals("mp3", true)) "audio/mpeg" else "audio/mp4"
         val art = cover?.takeIf { it.isFile }?.let { runCatching { media.share(it, renderer.host) }.getOrNull() }.orEmpty()

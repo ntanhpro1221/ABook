@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -130,7 +132,7 @@ class StudioDecisions(
             error is StudioError.Busy -> WorkText.STALE
             else -> StudioText.failure(error)
         }
-        return if (done > 0 && total > 1) "Mới ghi được $done/$total việc. $why" else why
+        return if (done > 0 && total > 1) S.s_moi_ghi_duoc_0_1_viec_2_d1370bff(done, total, why) else why
     }
 }
 

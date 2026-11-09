@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
@@ -40,12 +41,12 @@ Column {
                     id: left
                     width: codeBox.sideBySide ? probe.implicitWidth : parent.width
                     anchors.verticalCenter: codeBox.sideBySide ? parent.verticalCenter : undefined
-                    Text { width: parent.width; text: "Mã ghép thiết bị"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                    Text { width: parent.width; text: S.s_ma_ghep_thiet_bi_02370316; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
                     Item { width: 1; height: 8 }
                     Text {
                         id: instruction
                         width: parent.width
-                        text: TextWrap.keepDots("Trên máy kia: Cài đặt › Thiết bị › chọn " + (root.sync.name || "") + " › nhập mã.")
+                        text: TextWrap.keepDots(S.s_tren_may_kia_cai_dat_thiet_bi_chon_3c0003fa + (root.sync.name || "") + S.s_nhap_ma_84cf2ece)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13
@@ -53,10 +54,10 @@ Column {
                     Item { width: 1; height: 8 }
                     MoreInfo {
                         width: parent.width
-                        label: "Cách dùng mã"
-                        HintText { width: parent.width; text: "Mã dùng một lần để máy kia nghe thư viện này." }
-                        HintText { width: parent.width; visible: (root.sync.addresses || []).length > 0; textFormat: Text.RichText; text: "Địa chỉ: " + Logic.whereHtml(root.sync, false, root.ink) }
-                        HintText { width: parent.width; visible: Boolean(root.sync.remoteStudio); textFormat: Text.RichText; text: "Trình duyệt: mở " + Logic.whereHtml(root.sync, true, root.ink) + " rồi nhập mã." }
+                        label: S.s_cach_dung_ma_ae1cba85
+                        HintText { width: parent.width; text: S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816 }
+                        HintText { width: parent.width; visible: (root.sync.addresses || []).length > 0; textFormat: Text.RichText; text: S.s_dia_chi_9945f0f4 + Logic.whereHtml(root.sync, false, root.ink) }
+                        HintText { width: parent.width; visible: Boolean(root.sync.remoteStudio); textFormat: Text.RichText; text: S.s_trinh_duyet_mo_78712782 + Logic.whereHtml(root.sync, true, root.ink) + S.s_roi_nhap_ma_fdfaf308 }
                     }
                 }
                 Column {
@@ -69,7 +70,7 @@ Column {
                         id: codeRow
                         x: 4.76
                         objectName: "pairingCode"
-                        Accessible.name: "Mã ghép nối: " + (root.sync.pairing ? root.sync.pairing.code.split("").join(" ") : "")
+                        Accessible.name: S.s_ma_ghep_noi_c00b217d + (root.sync.pairing ? root.sync.pairing.code.split("").join(" ") : "")
                         Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76; font.features: {"tnum": 1} }
                         Item { width: 12; height: 1 }
                         Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76; font.features: {"tnum": 1} }
@@ -78,7 +79,7 @@ Column {
                         objectName: "pairingExpiry"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: "Hết hạn sau " + Math.floor(root.secondsLeft / 60) + ":" + String(root.secondsLeft % 60).padStart(2, "0")
+                        text: S.s_het_han_sau_34497ee1 + Math.floor(root.secondsLeft / 60) + ":" + String(root.secondsLeft % 60).padStart(2, "0")
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
                         font.features: {"tnum": 1}
@@ -93,7 +94,7 @@ Column {
                     y: 12
                     width: parent.width
                     visible: Boolean(root.sync.fingerprint)
-                    text: "Vân tay: " + (root.sync.fingerprint || "")
+                    text: S.s_van_tay_8b70c9dd + (root.sync.fingerprint || "")
                     color: Theme.text3
                     wrapMode: Text.WrapAnywhere
                     font.pixelSize: Theme.sizeCaption
@@ -103,7 +104,7 @@ Column {
                 width: parent.width
                 height: cancelButton.height
                 // Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09).
-                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: "Huỷ mã"; onClicked: root.cancel() }
+                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: S.s_huy_ma_1b0a6559; onClicked: root.cancel() }
             }
         }
     }
@@ -122,16 +123,16 @@ Column {
                 x: 32
                 y: 16
                 width: parent.width - 32 - 12 - again.width
-                Text { width: parent.width; text: "Mã bị khoá"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                Text { width: parent.width; text: S.s_ma_bi_khoa_48579bd8; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
                 Item { width: 1; height: 2 }
-                Text { width: parent.width; text: "Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị."; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 13 }
+                Text { width: parent.width; text: S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 13 }
             }
             Button {
                 id: again
                 x: parent.width - width
                 y: 16
                 size: "sm"
-                text: "Tạo mã mới"
+                text: S.s_tao_ma_moi_0b393b03
                 busy: root.busy
                 onActivated: root.pair()
             }
@@ -146,7 +147,7 @@ Column {
             width: parent.width
             implicitHeight: start.height
             height: implicitHeight
-            Button { id: start; icon: "smartphone"; text: "Ghép thiết bị mới"; busy: root.busy; onActivated: root.pair() }
+            Button { id: start; icon: "smartphone"; text: S.s_ghep_thiet_bi_moi_e22fb590; busy: root.busy; onActivated: root.pair() }
         }
     }
 }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+
 import vn.abook.player.ui.data.dotJoin
 import vn.abook.player.ui.data.dotJoined
 import android.content.Context
@@ -250,7 +252,7 @@ private fun StartStep(state: StudioNewState) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
                 BookField(StudioNewText.FIRST_PERSON, state.firstPerson, state::editFirstPerson, "studio_new_first_person", placeholder = StudioNewText.FIRST_PERSON_PLACEHOLDER)
                 RowHint(StudioNewText.FIRST_PERSON_HINT, Modifier.padding(top = Dim.s4))
-                if (hint != null) MoreInfo("Máy đoán", StudioNewText.firstPersonGuess(hint), "studio_new_guess")
+                if (hint != null) MoreInfo(S.s_may_doan_0f0472f0, StudioNewText.firstPersonGuess(hint), "studio_new_guess")
                 Reveal(hint != null && hint.suggestions.isNotEmpty() && state.firstPerson.isBlank()) {
                     Column(Modifier.fillMaxWidth()) {
                         for (name in hint?.suggestions.orEmpty().take(4)) {
@@ -288,7 +290,7 @@ private fun StartStep(state: StudioNewState) {
         item("pause", "field") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
                 RowHint(StudioNewText.PAUSE_NOTE, Modifier.testTag("studio_new_pause_note"))
-                MoreInfo("Vì sao?", StudioNewText.PAUSE_WHY, "studio_new_pause_why")
+                MoreInfo(S.s_vi_sao_3f6469f9, StudioNewText.PAUSE_WHY, "studio_new_pause_why")
             }
         }
     }

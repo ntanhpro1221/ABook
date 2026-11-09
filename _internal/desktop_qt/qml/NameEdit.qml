@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "NameLogic.js" as N
@@ -56,8 +57,8 @@ Column {
             id: field
             objectName: "nameField"
             width: root.width < 400 ? root.width : 176
-            label: "Cách đọc mới cho " + root.item.surface
-            placeholderText: "vd Hên-khơ"
+            label: S.s_cach_doc_moi_cho_c1e4a60a + root.item.surface
+            placeholderText: S.s_vd_hen_kho_bdb381fc
             invalid: root.problem !== ""
             escapeLocal: true
             onEscaped: root.finish()
@@ -65,12 +66,12 @@ Column {
             onTextChanged: { root.problem = ""; root.suggestion = "" }
         }
         // "Huỷ" trước "Lưu": nút ở đúng chỗ nút "Sửa" vừa bấm là "Lưu" (mờ khi chưa đổi gì) - bấm đúp không huỷ ngay
-        Button { objectName: "nameCancel"; size: "sm"; kind: "ghost"; text: "Huỷ"; onClicked: root.finish() }
+        Button { objectName: "nameCancel"; size: "sm"; kind: "ghost"; text: S.s_huy_96732485; onClicked: root.finish() }
         TryButton { objectName: "nameTry"; reading: tryIt }
         Button {
             objectName: "nameSave"
             size: "sm"
-            text: "Lưu"
+            text: S.s_luu_e91f26c0
             busy: root.saving
             enabled: root.canSave
             onActivated: root.save(N.asStored(root.item, root.typed))
@@ -84,12 +85,12 @@ Column {
             objectName: "nameEverywhere"
             anchors.verticalCenter: parent.verticalCenter
             checked: root.everywhere
-            label: "Dùng cho mọi sách"
+            label: S.s_dung_cho_moi_sach_fd10b5e6
             onToggled: value => root.everywhere = value
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: "Dùng cho mọi sách"
+            text: S.s_dung_cho_moi_sach_fd10b5e6
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
             TapHandler { onTapped: root.everywhere = !root.everywhere }

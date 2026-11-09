@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
@@ -43,7 +44,7 @@ Collapse {
             width: parent.width
             storageKey: "phone-sync.device." + root.rowId
             title: root.device.name || ""
-            summary: "Lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock)
+            summary: S.s_lan_cuoi_b70cb038 + Logic.formatRelative(root.device.lastSeen, root.clock)
             Item {
                 id: body
                 width: parent.width
@@ -60,7 +61,7 @@ Collapse {
                     Text { width: parent.width; text: TextWrap.keepDots(root.device.name || ""); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                     Text {
                         width: parent.width
-                        text: "Kết nối lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock) + "\u00a0·\u00a0ghép ngày " + Logic.formatDate(root.device.pairedAt)
+                        text: S.s_ket_noi_lan_cuoi_1ffb25d2 + Logic.formatRelative(root.device.lastSeen, root.clock) + S.s_u00a0_u00a0ghep_ngay_495f597d + Logic.formatDate(root.device.pairedAt)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption
@@ -77,21 +78,21 @@ Collapse {
                         height: 40
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Điều khiển sản xuất"
+                            text: S.s_dieu_khien_san_xuat_a7babdec
                             color: Theme.text2
                             font.pixelSize: Theme.sizeCaption
                             TapHandler { enabled: !root.studioBusy; onTapped: root.studioToggled(root.rowId, !root.device.studio) }
                         }
                         Switch {
                             anchors.verticalCenter: parent.verticalCenter
-                            label: "Điều khiển sản xuất từ " + (root.device.name || "")
+                            label: S.s_dieu_khien_san_xuat_tu_9dea1e9e + (root.device.name || "")
                             checked: Boolean(root.device.studio)
                             enabled: !root.studioBusy
                             onToggled: value => root.studioToggled(root.rowId, value)
                         }
                     }
-                    Button { size: "sm"; kind: "ghost"; text: "Đổi tên"; onClicked: root.rename(root.rowId, root.device.name || "") }
-                    Button { size: "sm"; kind: "ghost"; text: "Bỏ ghép"; onClicked: root.remove(root.rowId, root.device.name || "") }
+                    Button { size: "sm"; kind: "ghost"; text: S.s_doi_ten_a2a0dc70; onClicked: root.rename(root.rowId, root.device.name || "") }
+                    Button { size: "sm"; kind: "ghost"; text: S.s_bo_ghep_64f921f9; onClicked: root.remove(root.rowId, root.device.name || "") }
                 }
             }
         }

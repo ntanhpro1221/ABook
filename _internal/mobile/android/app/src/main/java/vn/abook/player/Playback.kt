@@ -351,7 +351,7 @@ object Playback {
         val inText = ReadAloud.inText()
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
         val message = BufferingGuard.message(inText, streamed, if (streamed) SyncLink.holderName(appContext, bookId) else "")
-        AppLog.w("Playback", "chờ âm thanh quá ${HostWait.STALL_MS / 1000} giây (sách $bookId, chương ${currentChapter?.id}): $message")
+        AppLog.w("Playback", S.s_cho_am_thanh_qua_0_giay_sach_1_chuong_2_3_025a4b3c(HostWait.STALL_MS / 1000, bookId, currentChapter?.id, message))
         if (inText) return ReadAloud.giveUp(message)
         main.removeCallbacks(reconnect)
         reconnectDelayMs = 0L
@@ -367,23 +367,23 @@ object Playback {
     fun onError(error: Throwable? = null) {
         // Đoạn đọc to hỏng (file bị Android dọn khỏi bộ nhớ đệm...): đọc lại đúng chỗ, tối đa vài lần liền.
         if (ReadAloud.recoverFromPlayerError()) return
-        AppLog.w("Playback", "lỗi phát (sách $bookId, chương ${currentChapter?.id}): ${error?.javaClass?.simpleName ?: "?"}: ${error?.message.orEmpty().take(200)}", error)
+        AppLog.w("Playback", S.s_loi_phat_sach_0_chuong_1_2_3_3b06d1e0(bookId, currentChapter?.id, error?.javaClass?.simpleName ?: "?", error?.message.orEmpty().take(200)), error)
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
         val retrying = reconnectDelayMs > 0
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
         } else if (streamed && error != null && NetErrors.unpaired(error)) {
-            "${SyncLink.holderName(appContext, bookId)} đã bỏ ghép — bạn ghép lại để nghe tiếp."
+            S.s_0_da_bo_ghep_ban_ghep_lai_de_nghe_tiep_f80f2ab1(SyncLink.holderName(appContext, bookId))
         } else if (streamed) {
             // Phần đã đệm đã phát hết: không bỏ cuộc - hỏi lại thưa dần, máy kia trả lời là phát tiếp đúng chỗ (soát a68 lỗi 3).
             scheduleReconnect()
-            "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
+            S.s_mat_ket_noi_voi_0_dang_thu_lai_3a8519d9(SyncLink.holderName(appContext, bookId))
         } else {
             BufferingGuard.PLAY_FAILED
         }
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.
-        emit(if (retrying && lastError.startsWith("Mất kết nối")) "state" else "error")
+        emit(if (retrying && lastError.startsWith(S.s_mat_ket_noi_f892c115)) "state" else "error")
     }
 
     /** Chờ trước lần nối lại kế (0 = không đang nối lại): 3 giây rồi gấp đôi, tối đa 30 giây. */
@@ -411,7 +411,7 @@ object Playback {
         if (reconnectDelayMs == 0L) return
         reconnectDelayMs = 0L
         main.removeCallbacks(reconnect)
-        if (lastError.startsWith("Mất kết nối")) lastError = ""
+        if (lastError.startsWith(S.s_mat_ket_noi_f892c115)) lastError = ""
     }
 
     /**
@@ -756,7 +756,7 @@ object Playback {
             return
         }
         if (stalledSince != 0L && now - stalledSince >= STALL_LOG_MS) {
-            AppLog.i("ABookStall", "giọng chờ đoạn kế ${now - stalledSince} ms (chương ${currentChapter?.id}, ${"%.1f".format(positionSeconds)} s)")
+            AppLog.i("ABookStall", S.s_giong_cho_doan_ke_0_ms_chuong_1_2_s_130ba2e6(now - stalledSince, currentChapter?.id, "%.1f".format(positionSeconds)))
         }
         stalledSince = 0L
     }
@@ -784,7 +784,7 @@ object Playback {
         if (speed == knownSpeed) return
         knownSpeed = speed
         if (kotlin.math.abs(AudioFx.current.speed - speed.toDouble()) > 1e-6) AudioFx.update(AudioFx.current.copy(speed = speed.toDouble()))
-        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { AppLog.w("ABookSave", "không lưu được tốc độ", it) }
+        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { AppLog.w("ABookSave", S.s_khong_luu_duoc_toc_do_d116f1e4, it) }
         emit("rateChanged")
     }
 
@@ -939,7 +939,7 @@ object Playback {
 
     /** Lần lưu chỗ nghe gần nhất hỏng (bộ nhớ đầy, ghi/đổi tên lỗi): đang báo người nghe rồi, chưa báo lần nữa tới khi lưu được. */
     private var saveFailing = false
-    private const val SAVE_FAILED = "Chưa lưu được chỗ nghe, có thể hết bộ nhớ — bạn vẫn nghe được; app sẽ thử lưu lại."
+    private const val SAVE_FAILED = S.s_chua_luu_duoc_cho_nghe_co_the_het_bo_nho_b_d3f40944
 
     /**
      * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả
@@ -956,7 +956,7 @@ object Playback {
             if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
             Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor(), recordId.ifEmpty { null })
         } catch (error: Exception) {
-            AppLog.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
+            AppLog.w("ABookSave", S.s_khong_luu_duoc_cho_nghe_chuong_0_1_s_435b78f0(chapter.id, "%.1f".format(positionSeconds)), error)
             if (!saveFailing) {
                 saveFailing = true
                 emit("saveFailed")

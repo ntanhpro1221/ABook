@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -18,7 +19,7 @@ Item {
     signal precastRequested(string bookId)
     property string openProject: ""
     Accessible.role: Accessible.Pane
-    Accessible.name: "Điều hướng chính"
+    Accessible.name: S.s_dieu_huong_chinh_84d2467a
 
     readonly property real railWidth: 56            // tâm biểu tượng ở 28: lề mục 8 + lề biểu tượng 11 + nửa biểu tượng 9
     readonly property real fullWidth: 232
@@ -89,7 +90,7 @@ Item {
             height: Theme.hit
             icon: root.expanded ? "panel-left-close" : "panel-left-open"
             iconSize: 18
-            tip: root.expanded ? "Thu gọn (Ctrl+B)" : "Mở rộng (Ctrl+B)"
+            tip: root.expanded ? S.s_thu_gon_ctrl_b_8388742c : S.s_mo_rong_ctrl_b_efa58bb4
             onClicked: root.toggle()
         }
 
@@ -117,7 +118,7 @@ Item {
             x: Theme.s8
             y: 48
             width: panel.width - 2 * Theme.s8
-            text: "Thư viện"
+            text: S.s_thu_vien_58145555
             icon: "library"
             shortcut: "Ctrl+1"
             current: root.currentSection === 0
@@ -128,7 +129,7 @@ Item {
             x: Theme.s8
             y: library.y + library.height + Theme.s4
             width: panel.width - 2 * Theme.s8
-            text: "Studio"
+            text: S.s_studio_0aa91af2
             icon: "clapperboard"
             shortcut: "Ctrl+2"
             current: root.currentSection === 1
@@ -160,7 +161,7 @@ Item {
                 open: !!Api.info.update && !Api.info.remote
                 Button {
                     objectName: "sidebarUpdate"; width: parent.width; wrap: true; kind: "ghost"; icon: "download"
-                    text: "Có ABook " + (Api.info.update ? Api.info.update.version : "") + "\nBấm để cập nhật"
+                    text: S.s_co_abook_39ccc742 + (Api.info.update ? Api.info.update.version : "") + S.s_bam_de_cap_nhat_186823a8
                     onClicked: { root.choose(2); if (Nav.stack) Nav.stack.rootContent(2).active = "advanced" }
                 }
             }
@@ -171,7 +172,7 @@ Item {
             x: Theme.s8
             y: root.height - height - Theme.s16
             width: panel.width - 2 * Theme.s8
-            text: "Cài đặt"
+            text: S.s_cai_dat_202e0e9b
             icon: "settings"
             shortcut: "Ctrl+3"
             current: root.currentSection === 2

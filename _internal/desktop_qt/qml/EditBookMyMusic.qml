@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import QtQuick.Dialogs
 import ABook
@@ -67,7 +68,7 @@ Column {
     }
     function finishImport(error) {
         importing = false
-        if (error) Api.notice = Logic.toastText("Đang thêm nhạc thì dừng", error)
+        if (error) Api.notice = Logic.toastText(S.s_dang_them_nhac_thi_dung_8712c030, error)
         else {
             const summary = Music.importSummary({added: added, existing: existing, failed: lost})
             Api.notice = Logic.toastText(summary.title, summary.description)
@@ -82,8 +83,8 @@ Column {
         removeBusy = true
         Api.call("DELETE", "/api/music/local/" + link.slice(6), null, function(data, error) {
             root.removeBusy = false
-            if (error) { Api.notice = Logic.toastText("Chưa xoá được bài này", error); return }
-            root.apply(data); root.dropRemoving(); Api.notice = "Đã xoá khỏi Nhạc của tôi"; root.changed()
+            if (error) { Api.notice = Logic.toastText(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, error); return }
+            root.apply(data); root.dropRemoving(); Api.notice = S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a; root.changed()
         })
     }
     function post(path, body) {
@@ -111,17 +112,17 @@ Column {
     }
     FileDialog {
         id: files
-        title: "Chọn nhạc của bạn"
+        title: S.s_chon_nhac_cua_ban_3441200f
         fileMode: FileDialog.OpenFiles
-        nameFilters: ["Nhạc (*.mp3 *.m4a *.ogg *.opus *.flac *.wav)"]
+        nameFilters: [S.s_nhac_mp3_m4a_ogg_opus_flac_wav_fac6f919]
         onAccepted: root.startImport(selectedFiles)
     }
 
     DisclosureRow {
         width: parent.width
         section: true
-        title: "Nhạc của tôi"
-        summary: root.tracks.length ? root.tracks.length + " bài" : "Chưa có bài nào"
+        title: S.s_nhac_cua_toi_f65b7ac6
+        summary: root.tracks.length ? root.tracks.length + S.s_bai_43a258fa : S.s_chua_co_bai_nao_c1c708be
         expanded: root.expanded
         onClicked: { root.expanded = !root.expanded; Platform.setSetting("fold.my-music.library", root.expanded ? "1" : "0") }
     }
@@ -130,7 +131,7 @@ Column {
         open: root.expanded
         spacing: 8
         Button {
-            text: root.importing ? "Đang thêm " + root.done + "/" + root.total : "Thêm nhạc của bạn"
+            text: root.importing ? S.s_dang_them_b24da066 + root.done + "/" + root.total : S.s_them_nhac_cua_ban_dbd7d8c4
             icon: "upload"
             kind: "ghost"
             size: "sm"
@@ -142,7 +143,7 @@ Column {
         HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
         MoreInfo {
             width: parent.width
-            label: "Nhạc riêng"
+            label: S.s_nhac_rieng_732d7761
             HintText { width: parent.width; text: Music.MY_MUSIC_HELP }
         }
         // Thẻ Phân tích nhạc: chỉ khi đã có bài
@@ -154,9 +155,9 @@ Column {
             HintText { width: parent.width; font.features: {"tnum": 1}; text: root.module ? Music.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
             MoreInfo {
                 width: parent.width
-                label: "Phân tích nhạc"
+                label: S.s_phan_tich_nhac_a0082a10
                 visible: !!root.module && root.module.state === "missing"
-                HintText { width: parent.width; text: "Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay." }
+                HintText { width: parent.width; text: S.s_tai_mot_lan_phan_tich_tren_may_roi_dung_kh_c1fb770b }
             }
             Item {
                 width: parent.width
@@ -170,7 +171,7 @@ Column {
                     id: cancel
                     x: parent.width - width
                     visible: !!root.module && !!root.module.cancellable
-                    text: "Huỷ"; kind: "ghost"; size: "sm"; busy: root.starting
+                    text: S.s_huy_96732485; kind: "ghost"; size: "sm"; busy: root.starting
                     onActivated: root.post("/api/music/local/module/cancel")
                 }
             }
@@ -178,24 +179,24 @@ Column {
                 readonly property string action: !root.module || root.module.state === "downloading" || root.module.analysing || root.module.state === "unsupported" || root.module.restart ? "" : ((root.module.stale || 0) > 0 && root.module.state === "ready" ? "reanalyse" : "install")
                 visible: action !== ""
                 size: "sm"; kind: "ghost"; wrap: true; busy: root.starting
-                text: !root.module ? "" : action === "reanalyse" ? "Phân tích " + root.module.stale + " bài"
-                      : root.module.state === "error" ? "Thử lại"
-                      : root.module.stopped ? "Tải lại (" + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
-                      : root.module.state === "outdated" ? "Cập nhật (" + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
-                      : "Tải (" + Size.formatSize(root.module.total) + ")"
+                text: !root.module ? "" : action === "reanalyse" ? S.s_phan_tich_7dc5d6d2 + root.module.stale + S.s_bai_43a258fa
+                      : root.module.state === "error" ? S.s_thu_lai_c58d068c
+                      : root.module.stopped ? S.s_tai_lai_9f0787bd + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
+                      : root.module.state === "outdated" ? S.s_cap_nhat_000e3ccc + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
+                      : S.s_tai_40698276 + Size.formatSize(root.module.total) + ")"
                 onActivated: root.post(action === "reanalyse" ? "/api/music/local/reanalyse" : "/api/music/local/module")
             }
-            HintText { width: parent.width; color: Theme.warning; text: "Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi."; visible: !!root.module && !!root.module.metered && root.module.state !== "ready" && root.module.state !== "error" }
+            HintText { width: parent.width; color: Theme.warning; text: S.s_ban_dang_dung_du_lieu_di_dong_nen_doi_khi_4e21414f; visible: !!root.module && !!root.module.metered && root.module.state !== "ready" && root.module.state !== "error" }
         }
         Collapse {
             width: parent.width
             open: root.loading
-            EditBookSkeleton { width: parent.width; count: 2; label: "Đang tải nhạc riêng" }
+            EditBookSkeleton { width: parent.width; count: 2; label: S.s_dang_tai_nhac_rieng_144f69a2 }
         }
         InlineError {
             width: parent.width
             open: root.failed && !root.loading
-            message: "Bạn hãy thử tải lại nhạc của bạn."
+            message: S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139
             onRetry: { root.loading = true; root.load() }
         }
         Collapse {
@@ -211,11 +212,11 @@ Column {
                     Icon { anchors.centerIn: parent; name: "eighth-note"; size: 28; color: Theme.accentText }
                 }
                 Item { width: 1; height: 16 }
-                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: "Chưa có bài nào"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBody; font.weight: 600 }
+                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: S.s_chua_co_bai_nao_c1c708be; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBody; font.weight: 600 }
                 Item { width: 1; height: 20 }
                 Button {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: root.importing ? "Đang thêm " + root.done + "/" + root.total : "Thêm nhạc của bạn"
+                    text: root.importing ? S.s_dang_them_b24da066 + root.done + "/" + root.total : S.s_them_nhac_cua_ban_dbd7d8c4
                     icon: "upload"
                     kind: "ghost"
                     busy: root.importing
@@ -285,8 +286,8 @@ Column {
                                 opacity: ask.asking ? 0 : 1
                                 enabled: !ask.asking
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                                text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
-                                Accessible.name: "Xoá: " + item.track.title
+                                text: S.s_xoa_777195ab; icon: "trash"; kind: "ghost"; size: "sm"
+                                Accessible.name: S.s_xoa_81a43b8a + item.track.title
                                 onClicked: root.askRemove(item.link)
                             }
                             Row {
@@ -299,16 +300,16 @@ Column {
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                                 Button {
                                     id: drop
-                                    text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
+                                    text: S.s_xoa_bai_d554a496; icon: "trash"; kind: "ghost"; size: "sm"
                                     busy: root.removeBusy
-                                    Accessible.name: "Xoá bài: " + item.track.title
+                                    Accessible.name: S.s_xoa_bai_ccd757ca + item.track.title
                                     onActivated: root.removeTrack(item.link)
                                 }
                                 Button {
                                     id: keep
-                                    text: "Giữ lại"; kind: "ghost"; size: "sm"
+                                    text: S.s_giu_lai_3c3ba2db; kind: "ghost"; size: "sm"
                                     enabled: !root.removeBusy
-                                    Accessible.name: "Giữ lại: " + item.track.title
+                                    Accessible.name: S.s_giu_lai_28cdd2d4 + item.track.title
                                     onClicked: root.dropRemoving()
                                 }
                             }

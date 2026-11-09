@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
@@ -75,10 +76,10 @@ export function usePairedComputers(enabled: boolean): { id: string; name: string
 }
 
 /** Studio là gì và máy cần gì để cài - MỘT chỗ viết, thẻ "Cài Studio" ở màn Dự án và khối nhắc ở trình tạo sách nói dùng chung để hai nơi không lệch nhau. */
-export const STUDIO_WHAT = "Studio biến truyện chữ thành sách nói.";
+export const STUDIO_WHAT = S.s_studio_bien_truyen_chu_thanh_sach_noi_59542b09;
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử, phân tích + thu (docs/ANALYSIS_RESEARCH.md, mục máy Mac mini).
 export const STUDIO_NEEDS =
-  "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương.";
+  S.s_nvidia_tu_8_gb_tai_25_gb_trong_35_gb_710_p_26788445;
 
 /** Máy thiếu cấu hình: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
  *  webui/peer_studio.py). Không mời "tạo rồi chờ cài xong": dự án ấy sẽ không bao giờ chạy trên máy này (soát a64). */
@@ -87,21 +88,20 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
   const peers = usePairedComputers(!remote);
   return (
     <MotionRegion>
-    <section aria-label="Máy thiếu cấu hình" className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
+    <section aria-label={S.s_may_thieu_cau_hinh_df5ae9ef} className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1 basis-[16rem]">
-        <p className="font-semibold text-pretty">Máy thiếu cấu hình</p>
+        <p className="font-semibold text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
           {noStudioLine(fit.reason ?? "").replace(/\.$/, "")}; {peers.length
-            ? "tạo trên máy đã ghép có Studio, sách xong nghe ở cả hai máy."
-            : "cài Studio trên máy khác rồi ghép tại Cài đặt → Thiết bị."}
+            ? S.s_tao_tren_may_da_ghep_co_studio_sach_xong_n_816bfc37
+            : S.s_cai_studio_tren_may_khac_roi_ghep_tai_cai_ae8031d9}
         </p>
       </div>
       {peers.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {peers.map((peer) => (
-            <Button key={peer.id} variant="ghost" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>
-              Tạo trên {peer.name}
+            <Button key={peer.id} variant="ghost" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>{S.s_tao_tren_91f136e2}{peer.name}
             </Button>
           ))}
         </div>
@@ -124,13 +124,11 @@ export function StudioInstallNotice({ className }: { className?: string }) {
   if (fit?.level === "no") return <MotionRegion><NoStudioHere fit={fit} className={className} /></MotionRegion>;
   return (
     <MotionRegion>
-    <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
+    <section aria-label={S.s_can_studio_4b14a373} className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{studio.repair ? "Cần sửa Studio" : studio.update ? "Studio cần cập nhật" : "Chưa cài Studio"}</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
-          Dự án giữ thiết lập và chờ Studio sẵn sàng.
-        </p>
+        <p className="font-semibold">{studio.repair ? S.s_can_sua_studio_a65aa0f0 : studio.update ? S.s_studio_can_cap_nhat_c0338642 : S.s_chua_cai_studio_029df34a}</p>
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{S.s_du_an_giu_thiet_lap_va_cho_studio_san_sang_e878c6ea}</p>
       </div>
       {!info?.remote && (
         <Button variant="ghost" size="sm" icon={Download} onClick={() => navigate("/studio")}>
@@ -158,10 +156,10 @@ export function StudioSetupCard({ className }: { className?: string }) {
     if (!status) return;
     if (wasRunning.current && !status.running) {
       if (status.installed && status.outdated.length === 0) {
-        toast.success("Studio đã sẵn sàng");
+        toast.success(S.s_studio_da_san_sang_eb109553);
         void client.invalidateQueries({ queryKey: ["app"] });
       } else if (status.error) {
-        toast.error("Studio chưa xong", { description: friendlySetupError(status.error).summary });
+        toast.error(S.s_studio_chua_xong_6d0dab40, { description: friendlySetupError(status.error).summary });
       }
     }
     wasRunning.current = status.running;
@@ -172,7 +170,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>(path, { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Chưa cài được Studio", { description: (error as Error).message });
+      toast.error(S.s_chua_cai_duoc_studio_ee5900df, { description: (error as Error).message });
     }
   };
   const damaged = status.damaged ?? [];
@@ -194,13 +192,13 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="min-w-0 flex-1 basis-[16rem]">
           <h2 id="studio-setup-title" className="text-base font-semibold">
-            {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio"}
+            {repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : S.s_cai_studio_5fdd3bd9}
           </h2>
           <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
             {repair
-              ? `Tải lại ${[...damaged, ...stale].join(", ")}; sách giữ nguyên.`
+              ? S.s_tai_lai_0_sach_giu_nguyen_0ea0e553([...damaged, ...stale].join(", "))
               : update
-              ? `Cập nhật ${status.outdated.join(", ")}; sách giữ nguyên.`
+              ? S.s_cap_nhat_0_sach_giu_nguyen_691dff0f(status.outdated.join(", "))
               : `${STUDIO_NEEDS}`}
           </p>
           {fit && (
@@ -211,26 +209,18 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="flex items-center gap-2">
           {status.running ? (
-            <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>
-              Dừng
-            </Button>
+            <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>{S.s_dung_11554138}</Button>
           ) : status.leftover ? (
             status.leftover.orphan ? (
-              <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>
-                Dừng lượt cũ
-              </Button>
+              <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>{S.s_dung_luot_cu_98c3e5d1}</Button>
             ) : (
-              <Button variant="primary" icon={Download} disabled>
-                Cài tiếp
-              </Button>
+              <Button variant="primary" icon={Download} disabled>{S.s_cai_tiep_f4243054}</Button>
             )
           ) : unfit ? (
-            <Button variant="ghost" size="sm" icon={Download} onClick={() => void call("/api/studio/setup")}>
-              Vẫn cài
-            </Button>
+            <Button variant="ghost" size="sm" icon={Download} onClick={() => void call("/api/studio/setup")}>{S.s_van_cai_ef098464}</Button>
           ) : (
             <Button variant="primary" icon={Download} onClick={() => void call("/api/studio/setup")}>
-              {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : started ? "Cài tiếp" : "Cài Studio"}
+              {repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : started ? S.s_cai_tiep_f4243054 : S.s_cai_studio_5fdd3bd9}
             </Button>
           )}
         </div>
@@ -247,7 +237,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
           <p>{friendlySetupError(status.error).summary}</p>
           {friendlySetupError(status.error).detail && (
             <details className="mt-1 text-xs">
-              <summary className="cursor-pointer select-none">Chi tiết</summary>
+              <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
               <p className="mt-1 select-text break-words font-mono">{friendlySetupError(status.error).detail}</p>
             </details>
           )}
@@ -261,9 +251,9 @@ export function StudioSetupCard({ className }: { className?: string }) {
             return (
               <li key={step.id} className="flex min-w-0 items-center gap-2.5 text-[0.8125rem]">
                 {step.done ? (
-                  <Check className="size-4 shrink-0 text-accent-text" aria-label="xong" />
+                  <Check className="size-4 shrink-0 text-accent-text" aria-label={S.s_xong_a6f4543a} />
                 ) : active ? (
-                  <LoaderCircle className="size-4 shrink-0 animate-spin text-accent-text motion-reduce:animate-none" aria-label="đang làm" />
+                  <LoaderCircle className="size-4 shrink-0 animate-spin text-accent-text motion-reduce:animate-none" aria-label={S.s_dang_lam_e22cfa2e} />
                 ) : (
                   <span className="size-4 shrink-0 rounded-full border border-line-strong" aria-hidden />
                 )}
@@ -277,7 +267,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
 
       {status.running && current && (
         <div className="mt-4">
-          <Progress value={progress ?? 0} running={progress === null} size="sm" label={`Tiến độ: ${current.label}`} />
+          <Progress value={progress ?? 0} running={progress === null} size="sm" label={S.s_tien_do_0_bebc77d0(current.label)} />
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
             <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (
@@ -316,31 +306,25 @@ export function StudioSettings() {
         client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "POST", body: {} }));
         navigate("/studio");
       } catch (error) {
-        toast.error("Chưa cài được Studio", { description: (error as Error).message });
+        toast.error(S.s_chua_cai_duoc_studio_ee5900df, { description: (error as Error).message });
       } finally {
         setBusy(false);
       }
     };
     return (
       <MotionRegion as="div" className="max-w-xl py-3.5">
-        <SectionHeading as="h3">Studio trên máy này</SectionHeading>
-        <p className="mt-1 text-sm">{status.running ? "Đang cài." : "Chưa cài."}</p>
+        <SectionHeading as="h3">{S.s_studio_tren_may_nay_e2fb04aa}</SectionHeading>
+        <p className="mt-1 text-sm">{status.running ? S.s_dang_cai_4ea651d1 : S.s_chua_cai_6003057a}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
         <p className={cn("mt-1 text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
           {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
         </p>
         {status.running ? (
-          <Button className="mt-3" variant="ghost" onClick={() => navigate("/studio")}>
-            Xem tiến độ cài
-          </Button>
+          <Button className="mt-3" variant="ghost" onClick={() => navigate("/studio")}>{S.s_xem_tien_do_cai_42e94c00}</Button>
         ) : fit.level === "no" ? (
-          <Button className="mt-3" variant="ghost" size="sm" icon={Download} disabled={busy} onClick={() => void install()}>
-            Vẫn cài
-          </Button>
+          <Button className="mt-3" variant="ghost" size="sm" icon={Download} disabled={busy} onClick={() => void install()}>{S.s_van_cai_ef098464}</Button>
         ) : (
-          <Button className="mt-3" variant="primary" icon={Download} disabled={busy} onClick={() => void install()}>
-            Cài Studio
-          </Button>
+          <Button className="mt-3" variant="primary" icon={Download} disabled={busy} onClick={() => void install()}>{S.s_cai_studio_5fdd3bd9}</Button>
         )}
       </MotionRegion>
     );
@@ -354,36 +338,36 @@ export function StudioSettings() {
     setBusy(true);
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "DELETE" }));
-      toast.success("Đã gỡ Studio");
+      toast.success(S.s_da_go_studio_63706a8a);
       void client.invalidateQueries({ queryKey: ["app"] });
     } catch (error) {
-      toast.error("Chưa gỡ được Studio", { description: (error as Error).message });
+      toast.error(S.s_chua_go_duoc_studio_1b3d65b8, { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
   return (
     <MotionRegion as="div">
-      <SettingsRow label="Studio trên máy này" hint={<>
-        <p>Đã cài{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
+      <SettingsRow label={S.s_studio_tren_may_nay_e2fb04aa} hint={<>
+        <p>{S.s_da_cai_e0159635}{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
         <Button size="sm" variant={armed ? "danger" : "ghost"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-          {busy ? "Đang gỡ" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
+          {busy ? S.s_dang_go_eadfa314 : armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10}
         </Button>
       </SettingsRow>
       {status.outdated.length > 0 && (
         <p className="mt-1 text-[0.8125rem] text-fg-2">
-          {status.damaged?.length ? `Mất ${status.damaged.join(", ")} (file đã bị xoá hay hỏng)` : `Cần cập nhật ${status.outdated.join(", ")}`} -{" "}
+          {status.damaged?.length ? S.s_mat_0_file_da_bi_xoa_hay_hong_a1da54d6(status.damaged.join(", ")) : S.s_can_cap_nhat_0_ab9a2c84(status.outdated.join(", "))} -{" "}
           <button type="button" onClick={() => navigate("/studio")} className="font-medium text-accent-text underline">
-            {status.damaged?.length ? "Sửa Studio" : "Cập nhật Studio"}
+            {status.damaged?.length ? S.s_sua_studio_2f99394d : S.s_cap_nhat_studio_b3acc7e7}
           </button>
           .
         </p>
       )}
       {/* Hậu quả của việc gỡ chỉ cần lúc đang xác nhận - không treo thường trực dưới nút. */}
       <MotionPresence open={armed}>
-        <p className="pb-3 text-xs leading-snug text-fg-2 text-pretty">Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.</p>
+        <p className="pb-3 text-xs leading-snug text-fg-2 text-pretty">{S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224}</p>
       </MotionPresence>
     </MotionRegion>
   );

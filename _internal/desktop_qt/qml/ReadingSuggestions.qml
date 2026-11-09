@@ -1,3 +1,4 @@
+import "UiStrings.js" as S
 import QtQuick
 import ABook
 
@@ -5,7 +6,7 @@ import ABook
 // repeated credit line is one choice across its chapters. Never edit raw text.
 Modal {
     id: root
-    title: "Gợi ý cho phần đọc"
+    title: S.s_goi_y_cho_phan_doc_8d550ff1
     property string bookId: ""
     property var groups: []
     property bool loading: false
@@ -45,7 +46,7 @@ Modal {
     Column {
         width: parent.width; spacing: Theme.s12
         Text {
-            width: parent.width; text: "Bỏ khỏi phần đọc, giữ chữ gốc; bỏ chọn để đọc lại. Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."
+            width: parent.width; text: S.s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_53aadf4d
             color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
         }
         Repeater {
@@ -53,11 +54,11 @@ Modal {
             SettingRow {
                 required property var modelData
                 width: parent.width
-                label: "Bỏ dòng"
-                hint: "“" + modelData.line + "”\u00a0·\u00a0" + modelData.chapters.length + " chương"
+                label: S.s_bo_dong_3643dad2
+                hint: "“" + modelData.line + "”\u00a0·\u00a0" + modelData.chapters.length + S.s_chuong_9e6a01dc
                 Switch {
                     objectName: "suggestionSkip"
-                    label: "Bỏ dòng"
+                    label: S.s_bo_dong_3643dad2
                     Accessible.description: modelData.line
                     checked: modelData.skipped
                     enabled: !root.saving && !Api.info.listenOnly
@@ -73,8 +74,8 @@ Modal {
         }
         Collapse {
             width: parent.width; open: !!Api.info.listenOnly
-            Text { width: parent.width; text: "Bạn đổi phần đọc trên máy làm sách."; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; text: S.s_ban_doi_phan_doc_tren_may_lam_sach_9cc4c3a9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
         }
     }
-    footer: Button { text: "Đóng"; kind: "ghost"; onClicked: root.close() }
+    footer: Button { text: S.s_dong_5d54c2a1; kind: "ghost"; onClicked: root.close() }
 }

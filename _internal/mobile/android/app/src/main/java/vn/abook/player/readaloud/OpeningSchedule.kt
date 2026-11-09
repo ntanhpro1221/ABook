@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.S
+
 import kotlin.math.ceil
 
 /** Giây máy cho MỖI khúc: hai hệ số đo từ [VoiceSpeeds], không suy chi phí cố định từ một giọng hay một máy khác. */
@@ -54,7 +56,7 @@ object OpeningSchedule {
     ): Long {
         val shapes = paragraphs.mapIndexed { index, paragraph ->
             if (isBreak(index)) OpeningParagraph(emptyList(), silenceMs = gaps[index].toLong()) else {
-                val (tokens, units) = LocalLive.unitsOf(voice, paragraph, origin, readings) ?: error("Giọng không đọc theo khúc")
+                val (tokens, units) = LocalLive.unitsOf(voice, paragraph, origin, readings) ?: error(S.s_giong_khong_doc_theo_khuc_9aa6b209)
                 OpeningParagraph(units.map { it.text(tokens).length }, paragraph.length, cached(paragraph))
             }
         }

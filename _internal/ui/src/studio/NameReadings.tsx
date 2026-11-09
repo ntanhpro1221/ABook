@@ -1,3 +1,4 @@
+import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
@@ -112,15 +113,12 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   const counted = data.items.filter((item) => item.lines > 0).length;
   return (
     <MotionRegion as="section" className="mt-8" aria-labelledby="name-readings-title">
-      <SectionHeading as="h3" id="name-readings-title" className="scroll-mt-16">
-        Cách đọc tên{" "}
+      <SectionHeading as="h3" id="name-readings-title" className="scroll-mt-16">{S.s_cach_doc_ten_1c46e75d}{" "}
         <span data-motion-live className="font-normal text-fg-2">
-          · {analyzed ? `${formatNumber(counted)} tên trong phần này` : "chưa phân tích - tên hiện ra sau bước ấy"}
+          · {analyzed ? S.s_0_ten_trong_phan_nay_e81c3ccb(formatNumber(counted)) : S.s_chua_phan_tich_ten_hien_ra_sau_buoc_ay_32656b4c}
         </span>
       </SectionHeading>
-      <p className="mt-1 max-w-prose text-sm text-fg-2">
-        Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại.
-      </p>
+      <p className="mt-1 max-w-prose text-sm text-fg-2">{S.s_nghe_va_sua_cach_doc_ten_cau_da_thu_co_ten_957bce51}</p>
       <SharedReadingsOffer bookId={bookId} />
       <AddAnyWord bookId={bookId} open={adding} onOpenChange={setAdding} />
       <div className="relative mt-3 max-w-sm">
@@ -133,8 +131,8 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
             setQuery(event.target.value);
             setLimit(PAGE);
           }}
-          placeholder="Tìm hoặc thêm tên"
-          aria-label="Tìm tên"
+          placeholder={S.s_tim_hoac_them_ten_27507006}
+          aria-label={S.s_tim_ten_260c6baf}
           autoComplete="off"
           spellCheck={false}
           className="h-9 w-full rounded-control border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-focus [&::-webkit-search-cancel-button]:hidden"
@@ -143,7 +141,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         <button
           type="button"
           onClick={() => setQuery("")}
-          aria-label="Xoá ô tìm"
+          aria-label={S.s_xoa_o_tim_0bafa7ad}
           aria-hidden={!query || undefined}
           tabIndex={query ? undefined : -1}
           data-state={query ? "open" : "closed"}
@@ -163,17 +161,13 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         </ul>
       )}
       {!found.length && !addable && typed && (
-        <p className="mt-3 text-sm text-fg-2">
-          Không khớp “{typed}”; dùng “Thêm cách đọc” cho một từ khác.
-        </p>
+        <p className="mt-3 text-sm text-fg-2">{S.s_khong_khop_be597abb}{typed}{S.s_dung_them_cach_doc_cho_mot_tu_khac_a96aa798}</p>
       )}
       {found.length > limit && (
-        <button type="button" onClick={() => setLimit((value) => value + PAGE * 3)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
-          Xem thêm {formatNumber(found.length - limit)} tên
-        </button>
+        <button type="button" onClick={() => setLimit((value) => value + PAGE * 3)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">{S.s_xem_them_58c3f515}{formatNumber(found.length - limit)}{S.s_ten_0fd957e9}</button>
       )}
       {data.unseen > 0 && !typed && (
-        <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)} tên khác của cuốn không có câu nào trong phần này.</p>
+        <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)}{S.s_ten_khac_cua_cuon_khong_co_cau_nao_trong_p_f3b0713b}</p>
       )}
       </MotionRegion>
     </MotionRegion>
@@ -187,25 +181,21 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
   const typed = word.trim();
   if (!open) {
     return (
-      <MotionRegion><Button size="sm" variant="ghost" className="mt-2" icon={Plus} onClick={() => onOpenChange(true)}>
-        Thêm cách đọc
-      </Button></MotionRegion>
+      <MotionRegion><Button size="sm" variant="ghost" className="mt-2" icon={Plus} onClick={() => onOpenChange(true)}>{S.s_them_cach_doc_2c703022}</Button></MotionRegion>
     );
   }
   const single = /^\S{1,80}$/u.test(typed);
   return (
     <MotionRegion><div className="mt-3 max-w-xl py-3" data-add-any-word>
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor="add-any-word" className="text-sm font-medium">
-          Chữ đọc sai
-        </label>
+        <label htmlFor="add-any-word" className="text-sm font-medium">{S.s_chu_doc_sai_8578dcc5}</label>
         <button
           type="button"
           onClick={() => {
             setWord("");
             onOpenChange(false);
           }}
-          aria-label="Đóng"
+          aria-label={S.s_dong_5d54c2a1}
           className="grid size-6 place-items-center rounded-control text-fg-3 hover:text-fg"
         >
           <X className="size-3.5" />
@@ -216,15 +206,13 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
         autoFocus
         value={word}
         onChange={(event) => setWord(event.target.value)}
-        placeholder="vd TP.HCM"
+        placeholder={S.s_vd_tp_hcm_26b95779}
         spellCheck={false}
         autoComplete="off"
         className="mt-1.5 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
       />
-      <p className="mt-1.5 text-xs text-fg-2">
-        Nhập một từ liền để đổi cách đọc cả cuốn, giữ chữ gốc.
-      </p>
-      {typed && !single && <p className="mt-1.5 text-xs text-warning">Gõ một chữ liền nhau, không có khoảng trắng.</p>}
+      <p className="mt-1.5 text-xs text-fg-2">{S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5}</p>
+      {typed && !single && <p className="mt-1.5 text-xs text-warning">{S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6}</p>}
       {single && (
         <ul className="mt-2 divide-y divide-line">
           <ReadingRow key={typed} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />
@@ -263,8 +251,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         <button
           type="button"
           onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
-          aria-label={playing ? "Dừng" : `Nghe câu có ${item.surface}: ${example.text}`}
-          title={`${example.chapterTitle} · câu ${example.seq}`}
+          aria-label={playing ? S.s_dung_11554138 : S.s_nghe_cau_co_0_1_c134a9ca(item.surface, example.text)}
+          title={S.s_0_cau_1_92f2b173(example.chapterTitle, example.seq)}
           className="grid size-8 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
           <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -277,7 +265,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
           <span className="font-semibold">{item.surface}</span>
           {item.spoken && (
             <>
-              <span className="text-sm text-fg-2">đọc là</span>
+              <span className="text-sm text-fg-2">{S.s_doc_la_f7c6afb9}</span>
               <span className="whitespace-nowrap font-medium">“{shownReading(item.spoken)}”</span>
             </>
           )}
@@ -286,15 +274,14 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
           {fresh
             ? reach
               ? reachSummary(reach)
-              : "Không có trong danh sách - máy đọc theo chữ"
+              : S.s_khong_co_trong_danh_sach_may_doc_theo_chu_935ca799
             : !analyzed && !item.lines
-              ? "chưa phân tích tới"
-              : `${formatNumber(item.lines)} câu · ${item.never ? "máy không dùng được cách đọc này (ký hiệu)" : item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
-          {sharedHere && <span className="text-fg-3"> · dùng chung</span>}
+              ? S.s_chua_phan_tich_toi_34530fdc
+              : S.s_0_cau_1_01615307(formatNumber(item.lines), item.never ? S.s_may_khong_dung_duoc_cach_doc_nay_ky_hieu_2038583b : item.byListener ? S.s_da_chon_a0788df6 : item.spoken ? S.s_may_doan_7217169e : S.s_chua_co_trong_sach_5fecd5a8)}
+          {sharedHere && <span className="text-fg-3">{S.s_dung_chung_9b5fc850}</span>}
           {item.requested && (
             <span className="font-medium text-accent-text">
-              {" "}
-              · chờ áp dụng: <span className="whitespace-nowrap">“{item.requested}”</span>
+              {" "}{S.s_cho_ap_dung_7bd8f667}<span className="whitespace-nowrap">“{item.requested}”</span>
             </span>
           )}
         </div>
@@ -302,8 +289,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
       {editing ? (
         <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} reach={fresh ? reach : undefined} />
       ) : (
-        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
-          {fresh ? `Đọc “${item.surface}”` : "Sửa"}
+        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={S.s_0_cach_doc_1_e272adf9(fresh ? S.s_them_dd92626f : S.s_sua_d4e07603, item.surface)}>
+          {fresh ? S.s_doc_0_5067e74c(item.surface) : S.s_sua_d4e07603}
         </Button>
       )}
     </MotionRegion>
@@ -335,12 +322,11 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
     <MotionRegion as="div" className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
       <span className="min-w-0 flex-1 text-sm">
         <span className="font-semibold">{item.surface}</span>
-        {item.spoken && <span className="text-fg-2"> đọc là </span>}
+        {item.spoken && <span className="text-fg-2">{S.s_doc_la_6f6aa509}</span>}
         {item.spoken && <span className="whitespace-nowrap font-medium">“{shownReading(item.spoken)}”</span>}
         {item.requested && (
           <span className="text-xs font-medium text-accent-text">
-            {" "}
-            · chờ áp dụng: <span className="whitespace-nowrap">“{item.requested}”</span>
+            {" "}{S.s_cho_ap_dung_7bd8f667}<span className="whitespace-nowrap">“{item.requested}”</span>
           </span>
         )}
       </span>
@@ -350,9 +336,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
           <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={false} />
         </div>
       ) : (
-        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`Sửa cách đọc ${item.surface}`}>
-          Sửa
-        </Button>
+        <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={S.s_sua_cach_doc_0_683b998a(item.surface)}>{S.s_sua_d4e07603}</Button>
       )}
     </MotionRegion>
   );
@@ -407,15 +391,15 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
       if (everywhere) void client.invalidateQueries({ queryKey: ["shared-readings"] });
       if (elsewhere?.spokenForm !== undefined) {
         // "Lấy của máy kia": bỏ lần ghi này - yêu cầu nó thay (của máy kia) trở lại.
-        const back = undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `“${item.surface}” trở lại cách đọc máy kia đã ghi.`);
+        const back = undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], S.s_0_tro_lai_cach_doc_may_kia_da_ghi_78dfdeb3(item.surface));
         warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", back.onClick);
       }
       onDone();
       const keep = spokenForm === item.spoken;
       if (waiting) {
         // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
-      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
-          action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `Đã bỏ cách đọc vừa ghi cho “${item.surface}”.`),
+      toast.success(S.s_da_ghi_0_doc_la_1_2c14f196(item.surface, spokenForm), {
+          action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], S.s_da_bo_cach_doc_vua_ghi_cho_0_ad32bc87(item.surface)),
           duration: UNDO_MS,
         });
         return;
@@ -429,19 +413,19 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
           // `shared`: lần lưu này cũng đưa cách đọc vào từ điển chung - hoàn tác gỡ luôn mục ấy (soát UX 01-10).
           [{ surface: item.surface, requestedAt, previous: item.spoken, keep, ...(everywhere ? { shared: spokenForm } : {}) }],
           (item.requested
-            ? `Trở lại cách đọc chờ áp trước đó: “${shownReading(item.requested)}”.`
+            ? S.s_tro_lai_cach_doc_cho_ap_truoc_do_0_6eb7e545(shownReading(item.requested))
             : item.spoken
-              ? `“${item.surface}” lại đọc là “${shownReading(item.spoken)}”.`
-              : `Đã bỏ cách đọc vừa thêm cho “${item.surface}”.`) + (everywhere ? " Đã bỏ khỏi cách đọc chung." : ""),
+              ? S.s_0_lai_doc_la_1_734123f6(item.surface, shownReading(item.spoken))
+              : S.s_da_bo_cach_doc_vua_them_cho_0_8fc39f24(item.surface)) + (everywhere ? S.s_da_bo_khoi_cach_doc_chung_76683f71 : ""),
         ),
         duration: UNDO_MS,
       };
       if (keep) {
-        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { ...undo });
+        toast.success(S.s_giu_cach_doc_0_ad3b6d08(shownReading(spokenForm)), { ...undo });
         return;
       }
       // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
-      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
+      toast.success(S.s_da_ghi_0_doc_la_1_2c14f196(item.surface, spokenForm), {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         // Câu mẫu là câu ĐÃ THU nếu có (name_readings.py) - mẫu chưa thu nghĩa là chưa thu câu nào có tên này (soát UX a23).
         ...undo,
@@ -498,8 +482,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         onKeyDown={(event) => {
           if (event.key === "Escape") onDone();
         }}
-        placeholder="vd Hên-khơ"
-        aria-label={`Cách đọc mới cho ${item.surface}`}
+        placeholder={S.s_vd_hen_kho_bdb381fc}
+        aria-label={S.s_cach_doc_moi_cho_0_d68a75c3(item.surface)}
         aria-invalid={problem ? true : undefined}
         aria-describedby={problem ? `${inputId}-problem` : undefined}
         spellCheck={false}
@@ -510,9 +494,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         )}
       />
       {/* "Huỷ" trước "Lưu": nút ở đúng chỗ nút "Sửa" vừa bấm là "Lưu" (mờ khi chưa đổi gì) - bấm đúp không huỷ ngay. */}
-      <Button size="sm" variant="ghost" type="button" onClick={onDone}>
-        Huỷ
-      </Button>
+      <Button size="sm" variant="ghost" type="button" onClick={onDone}>{S.s_huy_96732485}</Button>
       {tryIt.button}
       <Button
         size="sm"
@@ -521,9 +503,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         loading={save.isPending}
         // Chưa đổi gì (ô hiện chữ đầu viết hoa - so không phân biệt hoa thường) thì chỉ lưu khi đưa vào cách đọc chung.
         disabled={!typed || never || (!fresh && !everywhere && asStored(typed) === (item.requested ?? item.spoken))}
-      >
-        Lưu
-      </Button>
+      >{S.s_luu_e91f26c0}</Button>
       <label className="flex basis-full items-center gap-1.5 text-xs text-fg-2">
         <input
           type="checkbox"
@@ -532,7 +512,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
           onChange={(event) => setEverywhere(event.target.checked)}
           className="accent-[var(--color-accent)]"
         />
-        <span className={cn(waiting && "opacity-60")}>Dùng cho mọi sách{waiting ? ` - ${waiting}` : ""}</span>
+        <span className={cn(waiting && "opacity-60")}>{S.s_dung_cho_moi_sach_fd10b5e6}{waiting ? ` - ${waiting}` : ""}</span>
       </label>
     </form>
       {tryIt.note}
