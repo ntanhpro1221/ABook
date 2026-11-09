@@ -66,6 +66,10 @@ sealed interface Destination {
     /** Một màn con của dự án Studio (Duyệt trước khi thu, Kịch bản, Cách đọc tên): đi từ "Thêm" của dự án, Back về lại dự án. */
     @Immutable
     data class StudioSub(val computer: String, val book: String, val kind: StudioSubKind) : Destination
+
+    /** Kho nhạc ở chế độ chọn cho đoạn `scene` của cuốn `book` ("Xem cả kho" cuối "Đổi bài"): chọn xong ghim bài rồi quay lại. */
+    @Immutable
+    data class MusicPick(val book: String, val scene: String) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */

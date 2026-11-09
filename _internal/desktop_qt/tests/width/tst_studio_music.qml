@@ -488,12 +488,10 @@ Item {
             tryCompare(tab, "previewing", "")
         }
         function test_leavingTheTabStopsThePreview() {
-            reply("GET /api/music/local", {status: 200, data: {tracks: [localTrack()], module: {state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false}}})
-            const page = openMusic(musicData(), {local: true})
+            const page = openMusic(musicData())
             const tab = music(page)
-            tryVerify(function() { return all(tab, "musicPreview").filter(shown).length === 1 })
-            all(tab, "musicPreview").filter(shown)[0].clicked()
-            compare(DesktopApi.previews, ["/api/music/local/" + "ab".repeat(20) + "/file"])
+            tab.togglePreview(trackA)
+            tryCompare(tab, "previewing", trackA)
             one(page, "tab_chapters").clicked()
             tryCompare(page, "shownTab", "chapters")
             tryCompare(Clip, "current", "")
@@ -528,40 +526,14 @@ Item {
             const page = openMusic(musicData(), {moods: true})
             tryVerify(function() { return hasText(music(page), "Máy này chưa có phần đọc không khí (cài qua Ollama).") })
         }
-        function test_myMusicListPreviewAndRemove() {
-            const view = {tracks: [localTrack(), localTrack({link: "local:" + "cd".repeat(20), title: "Bài hai", analysed: false})], module: {state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false}}
-            reply("GET /api/music/local", {status: 200, data: view})
-            const page = openMusic(musicData(), {local: true})
+        // "Nhạc của tôi" không còn là một khối của Studio › Nhạc nền (chủ sách 09-11: nhạc là nội dung): chỉ còn lối "Mở Nhạc ›" sang màn Nhạc,
+        // nơi nó là một phần của "Đã lưu" (danh sách, nghe thử, xoá: tst_d2_settings.qml, test_myMusic*). Máy đã ghép không có lối ấy.
+        function test_myMusicIsReachedThroughTheMusicScreen() {
+            const page = openMusic(musicData())
             const tab = music(page)
-            tryVerify(function() { return all(tab, "musicPreview").filter(shown).length === 2 })
-            for (const line of ["Thêm nhạc làm nền; bài đã chọn đi cùng file sách.", "Nhạc riêng", "Thêm nhạc của bạn"]) tryVerify(function() { return hasText(tab, line) }, 2000, line)
-            verify(hasPart(tab, "Bài riêng"))
-            scrollTo(page, one(tab, "studioMyMusic"))
-            both("mymusic", page)
-            // xoá hai bước, Back lùi bước hỏi lại
-            const list = one(tab, "studioTrackList")
-            const first = all(list, "track:" + mineLink)[0]
-            texts(first)
-            const ask = all(first, "").filter(n => n.text === "Xoá" && shown(n))[0]
-            verify(ask !== undefined)
-            ask.clicked()
-            tryVerify(function() { return hasText(first, "Xoá bài") })
-            Nav.back()
-            tryVerify(function() { return !first.confirming })
-            ask.clicked()
-            tryVerify(function() { return first.confirming })
-            reply("DELETE /api/music/local/" + "ab".repeat(20), {status: 200, data: {tracks: [view.tracks[1]], module: view.module}})
-            all(first, "").filter(n => n.text === "Xoá bài")[0].clicked()
-            tryVerify(function() { return calls("DELETE", "/api/music/local/" + "ab".repeat(20)).length === 1 })
-            tryCompare(Api, "notice", "Đã xoá khỏi Nhạc của tôi")
-        }
-        function test_myMusicEmptyInvitesImport() {
-            reply("GET /api/music/local", {status: 200, data: {tracks: [], module: {state: "missing", done: 0, total: 900000000, error: "", ready: false, analysing: false, metered: false}}})
-            const page = openMusic(musicData(), {local: true})
-            const tab = music(page)
-            tryVerify(function() { return hasText(tab, "Nhập nhạc") })
-            verify(hasText(tab, "Thêm nhạc của bạn"))
-            verify(all(tab, "musicImport").filter(shown).length === 0, "chưa có bài: nút nằm trong lời mời")
+            verify(all(tab, "studioMyMusic").length === 0)
+            tryVerify(function() { return shown(one(tab, "openMusic")) })
+            compare(one(tab, "openMusic").title, "Mở Nhạc")
         }
 
         // ================= Studio của máy đã ghép =================
@@ -573,7 +545,8 @@ Item {
             const page = openMusic(musicData(), {peer: true, folds: [1], local: true})
             const tab = music(page)
             verify(calls("GET", peerBase + "/api/books/b/music").length >= 1)
-            tryVerify(function() { return hasText(tab, "Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.") })
+            // máy đã ghép: không có lối "Mở Nhạc" (Nhạc của tôi nằm ở máy chủ), không nút nhập nhạc
+            compare(all(tab, "openMusic").filter(shown).length, 0)
             compare(all(tab, "musicImport").filter(shown).length, 0)
             tryVerify(function() { return sceneRows(page).length === 3 })
             const row = sceneByKey(page, "1:0")

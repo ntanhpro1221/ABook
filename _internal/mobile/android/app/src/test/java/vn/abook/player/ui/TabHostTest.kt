@@ -94,10 +94,10 @@ class TabHostTest {
         rule.waitForIdle()
         // Tab nằm ngoài màn vẫn được đặt (có trong cây, không đổi dàn trang khi trượt) nhưng trợ năng chỉ thấy tab đang chọn.
         fun hidden(tab: Tab) = rule.onNodeWithTag("content_${tab.name}").onParent().fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility)
-        assertEquals(listOf(false, true, true), Tab.entries.map { hidden(it) })
+        assertEquals(listOf(false, true, true, true), Tab.entries.map { hidden(it) })
         rule.onNodeWithTag(Tab.Studio.tag).performClick()
         rule.waitForIdle()
-        assertEquals(listOf(true, false, true), Tab.entries.map { hidden(it) })
+        assertEquals(listOf(true, true, false, true), Tab.entries.map { hidden(it) })
     }
 
     @Test

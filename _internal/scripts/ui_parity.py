@@ -42,7 +42,7 @@ BEGIN = "<!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - kh
 END = "<!-- ui_parity:end -->"
 
 # Web: thư mục có giao diện thật; gallery/ là thư viện mẫu của người làm. Phía điện thoại web chỉ tính listen / android / shared khi so "chỉ một phía".
-WEB_DIRS = ("desktop", "listen", "shared", "studio")
+WEB_DIRS = ("desktop", "listen", "music", "shared", "studio")
 PHONE_WEB_DIRS = ("listen", "shared")
 
 # Thuộc tính / khoá đối tượng mang chữ cho người nghe.

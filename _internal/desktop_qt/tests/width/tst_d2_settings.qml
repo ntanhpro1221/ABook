@@ -16,6 +16,8 @@ Item {
     Component { id: lookFactory; SettingsLook {} }
     Component { id: advancedFactory; SettingsAdvanced {} }
     Component { id: screenFactory; SettingsScreen {} }
+    // "Nhạc của tôi" không còn ở Cài đặt › Nghe (chỉ còn lối "Mở Nhạc"): nó là một phần của màn Nhạc › Đã lưu (MusicScreen.qml)
+    Component { id: myMusicFactory; Column { MyMusicSettings { width: parent.width } } }
 
     TestCase {
         id: test
@@ -121,7 +123,7 @@ Item {
         function test_myMusicFoldAndStates() {
             musicApi()
             DesktopApi.delayed = true
-            const page = make(listenFactory)
+            const page = make(myMusicFactory)
             const mine = named(page, "myMusic")
             compare(mine.phase, "loading")
             DesktopApi.finish()
@@ -137,7 +139,7 @@ Item {
             tryVerify(function() { return hasText(mine, "Nhạc riêng") })
             tryVerify(function() { return hasText(mine, "Chưa có bài nào") })
             // tải lỗi -> câu lỗi + Thử lại
-            const failing = make(listenFactory)
+            const failing = make(myMusicFactory)
             const broken = named(failing, "myMusic")
             reply("GET /api/music/local", 500, {error: "Máy chủ chưa sẵn sàng"})
             broken.load()
@@ -152,7 +154,7 @@ Item {
         function test_myMusicTracksRemoveAndBack() {
             view = {tracks: tracks(), analyzer: true}
             musicApi()
-            const page = make(listenFactory)
+            const page = make(myMusicFactory)
             const mine = named(page, "myMusic")
             compare(mine.tracks.length, 4)
             compare(find(mine, i => i.title === "Nhạc của tôi" && typeof i.clicked === "function").summary, "4 bài")
@@ -198,7 +200,7 @@ Item {
         }
         function test_myMusicImportSummary() {
             musicApi()
-            const page = make(listenFactory)
+            const page = make(myMusicFactory)
             const mine = named(page, "myMusic")
             let n = 0
             replyWith("POST /api/music/local/import", body => {
@@ -226,7 +228,7 @@ Item {
         function test_myMusicModuleCard() {
             view = {tracks: tracks(), analyzer: false, module: moduleMissing()}
             musicApi()
-            const page = make(listenFactory)
+            const page = make(myMusicFactory)
             const mine = named(page, "myMusic")
             mine.open = true
             tryVerify(function() { return named(mine, "musicModule") !== null })
@@ -553,8 +555,12 @@ Item {
             musicApi()
             both(function() {
                 const page = screen("listen")
+                verify(named(page, "openMusic") !== null)
+                verify(named(page, "myMusic") === null)
                 shot("settings_listen_folded")
-                const mine = named(page, "myMusic")
+                page.destroy()
+                // Nhạc của tôi (màn Nhạc › Đã lưu)
+                const mine = named(make(myMusicFactory, {width: host.width}), "myMusic")
                 mine.open = true
                 ready()
                 shot("settings_listen_music")
@@ -562,14 +568,14 @@ Item {
                 ready()
                 shot("settings_listen_remove_confirm")
                 mine.removing = ""
-                page.destroy()
+                mine.parent.destroy()
                 // chưa có bài nào
                 view = {tracks: [], analyzer: false}
-                const empty = screen("listen")
-                named(empty, "myMusic").open = true
+                const empty = named(make(myMusicFactory, {width: host.width}), "myMusic")
+                empty.open = true
                 ready()
                 shot("settings_listen_empty")
-                empty.destroy()
+                empty.parent.destroy()
                 view = {tracks: tracks(), analyzer: true, module: moduleMissing()}
             })
         }
@@ -585,7 +591,7 @@ Item {
             both(function() {
                 for (const [name, module] of states) {
                     view = {tracks: tracks().slice(0, 2), analyzer: true, module: module}
-                    const page = screen("listen")
+                    const page = make(myMusicFactory, {width: host.width})
                     named(page, "myMusic").open = true
                     ready()
                     shot("settings_listen_module_" + name)

@@ -153,9 +153,9 @@ Item {
             mouseMove(sb, 20, 200)
             tryCompare(sb, "peek", true, 1000)
             tryCompare(sb.panel, "width", 232, 1500)
-            mouseClick(sb, 100, 112)              // mục "Studio" (y 92..132) trong phần đè
+            mouseClick(sb, 100, 112)              // mục "Nhạc" (y 92..132, ngay sau Thư viện; trong ngăn xếp là roots[3]) trong phần đè
             compare(spy.count, 1)
-            compare(spy.signalArguments[0][0], 1)
+            compare(spy.signalArguments[0][0], 3)
             compare(sb.peek, false)
             wait(450) // fixed: proves absence
             compare(sb.peek, false)               // con trỏ còn trên thanh nhưng không mở lại cho tới khi rời

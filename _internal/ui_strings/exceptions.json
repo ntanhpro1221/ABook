@@ -5,11 +5,6 @@
     "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
   },
   {
-    "file": "desktop_qt/qml/EditBookMyMusic.qml",
-    "text": "<font color='{}'>&nbsp;·&nbsp;{}</font>",
-    "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."
-  },
-  {
     "file": "desktop_qt/qml/EditBookReadings.qml",
     "text": "<b><font color='{}'>“{}",
     "reason": "Rich-text markup or a data-only expression; all visible copy is supplied through S keys or book data."

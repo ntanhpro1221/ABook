@@ -292,11 +292,31 @@ fun AppShell(
             openBook = { id -> (libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { shell.nav.push(Destination.Book(it)) } },
         )
     }
+    // Màn Nhạc từ nơi khác: Kho nhạc ở chế độ chọn cho một đoạn ("Xem cả kho" của "Đổi bài"), sheet "Bài đang phát" (chạm ghi công Nhạc nền)
+    val musicLibrary = settings.musicLibrary
+    val toMusic = remember(shell, window) { { shell.sheets.dismiss(); window.closeSheet(); window.close() } }
+    val musicEntry = remember(shell, window, musicLibrary) {
+        musicLibrary?.let { lib ->
+            val openPick: (String, String) -> Unit = { book, scene -> toMusic(); shell.nav.push(Destination.MusicPick(book, scene)) }
+            vn.abook.player.ui.music.library.MusicEntry(
+                openPick = openPick,
+                openPlaying = { credit, book ->
+                    shell.sheets.show { dismiss ->
+                        vn.abook.player.ui.music.library.TrackSheet(lib, credit.link, dismiss, playing = vn.abook.player.ui.music.library.PlayingActions(
+                            onOpenLibrary = { title -> toMusic(); shell.nav.popToRoot(); lib.showInLibrary(title); shell.tabs.select(Tab.Music) },
+                            onSwap = if (credit.scene.isNotEmpty() && book.isNotEmpty()) ({ openPick(book, credit.scene) }) else null,
+                        ))
+                    }
+                },
+            )
+        }
+    }
+    settings.openMusic = remember(shell) { { shell.nav.popToRoot(); shell.tabs.select(Tab.Music) } }
     if (inPip) {
         PipContent(playerState, { player.clock.positionMs.value }, covers)
         return
     }
-    CompositionLocalProvider(LocalBookCoverFlight provides shell.coverFlight) {
+    CompositionLocalProvider(LocalBookCoverFlight provides shell.coverFlight, vn.abook.player.ui.music.library.LocalMusicEntry provides musicEntry) {
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
         PlayerCoverProvider(covers) {
@@ -311,7 +331,12 @@ fun AppShell(
                             when (destination) {
                                 is Destination.Book -> BookScreen(
                                     destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
+                                    bookMusic = musicLibrary?.let { lib -> { id -> vn.abook.player.ui.music.library.BookMusicFor(lib, shell.sheets, id, vn.abook.player.LocalStudio::bookScenes) } },
                                 )
+                                is Destination.MusicPick -> musicLibrary?.let { lib ->
+                                    vn.abook.player.ui.music.library.MusicScreen(lib, shell.sheets, onBack = nav::pop,
+                                        pick = vn.abook.player.ui.music.library.PickTarget(onUse = { link -> settings.music?.pin(destination.scene, link); nav.pop() }))
+                                } ?: Unavailable(destination, nav::pop)
                                 is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format) else Unavailable(destination, nav::pop)
                                 Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                                     { nav.push(Destination.ImportReview(it)) }, { id ->
@@ -515,6 +540,10 @@ private fun RootTabs(
                         recap = night?.let { n -> { books -> vn.abook.player.ui.screens.MorningRecap(n, books, repo::playChapter) } },
                     )
                 }
+                Tab.Music -> settings.musicLibrary?.let { lib ->
+                    vn.abook.player.ui.music.library.MusicScreen(lib, shell.sheets,
+                        onMyMusic = if (settings.voice != null) ({ shell.nav.push(Destination.Voice(VoicePage.Music)) }) else null)
+                } ?: Unit
                 Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
                     sheets = shell.sheets,
                     openNotificationSettings = settings.links.openNotificationSettings,

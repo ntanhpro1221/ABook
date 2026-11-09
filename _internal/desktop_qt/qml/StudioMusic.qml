@@ -332,19 +332,7 @@ Column {
                 onComputed: next => root.accept(next)
             }
         }
-        VoiceFold {
-            objectName: "musicLocalFold"
-            width: parent.width
-            storageKey: "studio.music.local"
-            title: S.s_nhac_cua_toi_f65b7ac6
-            StudioMyMusic {
-                width: parent.width
-                store: root.store
-                previewing: root.previewing
-                onPreview: link => root.togglePreview(link)
-                onLibraryChanged: root.libraryVersion++
-            }
-        }
+        MusicOpenRow { width: parent.width; visible: !Nav.studioPeer }
 
         Text {
             width: parent.width

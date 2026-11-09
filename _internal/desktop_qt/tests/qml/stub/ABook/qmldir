@@ -192,7 +192,6 @@ EditBookActions 1.0 ../../../../qml/EditBookActions.qml
 EditBookSection 1.0 ../../../../qml/EditBookSection.qml
 EditBookSkeleton 1.0 ../../../../qml/EditBookSkeleton.qml
 EditBookSwap 1.0 ../../../../qml/EditBookSwap.qml
-EditBookMyMusic 1.0 ../../../../qml/EditBookMyMusic.qml
 EditBookReadings 1.0 ../../../../qml/EditBookReadings.qml
 EditBookRename 1.0 ../../../../qml/EditBookRename.qml
 CastDialogs 1.0 ../../../../qml/CastDialogs.qml
@@ -273,7 +272,6 @@ StudioMusicSwap 1.0 ../../../../qml/StudioMusicSwap.qml
 StudioMusicTrackRow 1.0 ../../../../qml/StudioMusicTrackRow.qml
 StudioMusicMoods 1.0 ../../../../qml/StudioMusicMoods.qml
 StudioMusicDetails 1.0 ../../../../qml/StudioMusicDetails.qml
-StudioMyMusic 1.0 ../../../../qml/StudioMyMusic.qml
 ScriptTab 1.0 ../../../../qml/ScriptTab.qml
 ScriptRow 1.0 ../../../../qml/ScriptRow.qml
 ScriptStore 1.0 ../../../../qml/ScriptStore.qml

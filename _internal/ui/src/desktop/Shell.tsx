@@ -1,5 +1,5 @@
 import { S } from "../shared/strings.generated";
-import { Clapperboard, Clock, Download, Library, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
+import { Clapperboard, Clock, Download, Library, ListMusic, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
@@ -165,6 +165,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/studio\/new/, S.s_tao_sach_noi_ab873c7a],
   [/^\/studio\/.+/, S.s_du_an_4f139d43],
   [/^\/studio$/, S.s_studio_0aa91af2],
+  [/^\/music/, S.s_nhac_0e4413e9],
   [/^\/settings/, S.s_cai_dat_202e0e9b],
 ];
 
@@ -174,6 +175,7 @@ export function DesktopSidebar({ listenOnly = false, collapsed = false }: { list
       <div data-sidebar-brand><Brand /></div>
       <nav aria-label={S.s_dieu_huong_chinh_84d2467a} className="mt-8 space-y-2">
         <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")} collapsed={collapsed}>{S.s_thu_vien_58145555}</NavItem>
+        <NavItem to="/music" icon={ListMusic} ink={2.5} match={(path) => path.startsWith("/music")} collapsed={collapsed}>{S.s_nhac_0e4413e9}</NavItem>
         <MotionPresence open={!listenOnly}>
           <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")} collapsed={collapsed}>{S.s_studio_0aa91af2}</NavItem>
           <div data-sidebar-extra><Producing /></div>
@@ -271,6 +273,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         <nav aria-label={S.s_dieu_huong_9dc4e6eb} inert={expanded} className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>{S.s_thu_vien_58145555}</TabItem>
+          <TabItem to="/music" icon={ListMusic} match={(path) => path.startsWith("/music")}>{S.s_nhac_0e4413e9}</TabItem>
           <MotionRegion className={cn("flex min-w-0 overflow-hidden transition-[flex-grow] duration-(--motion-medium) [&>a]:flex-1", listenOnly ? "flex-[0]" : "flex-1")} motionKey={listenOnly}>
           {!listenOnly && (
             <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>{S.s_studio_0aa91af2}</TabItem>

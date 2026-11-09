@@ -12,7 +12,7 @@ import { MotionPresence } from "../shared/MotionPresence";
 import { ScreenHeader } from "../shared/ScreenHeader";
 import { SectionHeading } from "../shared/SectionHeading";
 import { S } from "../shared/strings.generated";
-import { Button, ContentSkeleton, EmptyState, IconButton, InlineError, SelectionMark, Tabs, TabsList, TabsPanels, TabsTrigger } from "../shared/ui";
+import { Button, ContentSkeleton, EmptyState, IconButton, InlineError, SelectionMark, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger } from "../shared/ui";
 import { Windowed } from "../shared/Windowed";
 import { api } from "../studio/api";
 import {
@@ -48,7 +48,8 @@ export function MusicScreen() {
             <TabsTrigger value="library">{S.s_kho_nhac_94affa81}</TabsTrigger>
           </TabsList>
           <TabsPanels value={tab} className="mt-6">
-            {tab === "saved" ? <Saved preview={preview} onBrowse={() => setTab("library")} /> : <Library preview={preview} />}
+            <TabsContent value="saved"><Saved preview={preview} onBrowse={() => setTab("library")} /></TabsContent>
+            <TabsContent value="library"><Library preview={preview} /></TabsContent>
           </TabsPanels>
         </Tabs>
       )}
@@ -276,6 +277,7 @@ export function TrackRow({
   onOpen,
   onUse,
   as: Item = "li",
+  nested = false,
 }: {
   track: LibraryTrack;
   preview: LibraryPreview;
@@ -285,6 +287,8 @@ export function TrackRow({
   onOpen: (link: string) => void;
   onUse?: (link: string) => void;
   as?: "li" | "div";
+  /** Hàng nằm trong một `<li>` của danh sách khác (Nhạc trong sách) - khi ấy chính nó không phải mục danh sách. */
+  nested?: boolean;
 }) {
   const { save, unsave } = useSaveTracks();
   const load = loadOf(track, downloads);
@@ -292,7 +296,7 @@ export function TrackRow({
   const playable = online || track.downloaded;
   const title = track.title || S.s_bai_nay_d9683a01;
   return (
-    <Item role={Item === "div" ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-1.5 last:border-b-0">
+    <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-1.5 last:border-b-0">
       <IconButton
         label={previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         icon={previewing ? Square : Play}

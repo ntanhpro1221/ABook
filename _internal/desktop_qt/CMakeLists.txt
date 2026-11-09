@@ -375,14 +375,12 @@ qt_add_qml_module(ABookDesk
         qml/EditBookSection.qml
         qml/EditBookSkeleton.qml
         qml/EditBookSwap.qml
-        qml/EditBookMyMusic.qml
         qml/StudioMusic.qml
         qml/StudioMusicScene.qml
         qml/StudioMusicSwap.qml
         qml/StudioMusicTrackRow.qml
         qml/StudioMusicMoods.qml
         qml/StudioMusicDetails.qml
-        qml/StudioMyMusic.qml
         qml/StudioMusicLogic.js
         qml/ScriptTab.qml
         qml/ScriptRow.qml

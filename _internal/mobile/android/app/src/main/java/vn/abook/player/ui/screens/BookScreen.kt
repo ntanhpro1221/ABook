@@ -210,9 +210,11 @@ fun BookScreen(
     modifier: Modifier = Modifier,
     music: MusicState? = null,
     prepare: vn.abook.player.ui.data.PrepareState? = null,
+    /** "Nhạc trong sách" dưới danh sách chương (mã cuốn -> phần ấy); null = bản thử. */
+    bookMusic: (@Composable (String) -> Unit)? = null,
 ) {
     BoxWithConstraints(modifier.fillMaxSize()) {
-        BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth)
+        BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth, bookMusic)
     }
 }
 
@@ -238,6 +240,7 @@ private fun BookScreenBody(
     music: MusicState?,
     prepare: vn.abook.player.ui.data.PrepareState?,
     width: androidx.compose.ui.unit.Dp,
+    bookMusic: (@Composable (String) -> Unit)? = null,
 ) {
     val wide = widthClass(width.value) >= WidthClass.EXPANDED
     val ui = remember(book.id, source) { BookUiState(book.id, source) }
@@ -370,6 +373,9 @@ private fun BookScreenBody(
                             )
                         }
                     }
+                }
+                if (bookMusic != null && !chapters.isNullOrEmpty()) item(key = "book_music", contentType = "book_music") {
+                    bookMusic(shown.id)
                 }
             }
             BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }

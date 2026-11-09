@@ -4,7 +4,8 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { ArrowLeft, ChevronRight, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { Link } from "react-router";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -21,7 +22,8 @@ import { Switch } from "@/desktop/Switch";
 import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
-import { MyMusicSection, SwapTrack } from "./MyMusic";
+import { OpenMusicRow } from "@/music/OpenMusicRow";
+import { SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
@@ -237,10 +239,16 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 onChoose={(link) => change.mutate({ pins: { [cue.key]: link }, ...(cue.silenced ? { silence: { [cue.key]: false } } : {}) })}
               />
             )}
+            {/* Cuối "Đổi bài": cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
+            {swapping === cue.key && (
+              <Link to={`/music?pick=${encodeURIComponent(book.id)}&scene=${encodeURIComponent(cue.key)}`} className="inline-flex min-h-10 items-center gap-1 px-3 text-sm font-medium text-accent-text">
+                {S.s_xem_ca_kho_fa30b353}<ChevronRight aria-hidden className="size-4" />
+              </Link>
+            )}
           </li>
         ))}
       </ul>
-      <MyMusicSection />
+      <OpenMusicRow />
     </MotionRegion>
   );
 }

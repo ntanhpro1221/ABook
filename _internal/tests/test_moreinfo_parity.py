@@ -493,11 +493,8 @@ ROWS: tuple[Row, ...] = (
         why_qt="hộp 'Việc chờ gửi / Việc chờ Studio' chưa có ở Qt", why_phone="điện thoại chưa có hộp 'Việc chờ gửi'; hàng trạng thái gửi ở Sửa sách (editbook/SyncText.kt) có nút Gửi nên nói khác"),
     Row("diagnostics-errors", ("shared/DiagnosticsView.tsx", "Chi tiết kỹ thuật"), (("PhoneDiagnostics.qml", "Chi tiết kỹ thuật"),), None, qt_text="label",
         why_phone="chẩn đoán điện thoại của máy tính; điện thoại xem nhật ký Studio có công tắc 'Chi tiết kỹ thuật' (studio/StudioLog.kt), không phải lời gập"),
-    Row("music-module", ("studio/MusicModuleNotice.tsx", "Phân tích nhạc"), (("MyMusicModule.qml", "Phân tích nhạc"), ("EditBookMyMusic.qml", "Phân tích nhạc")), None,
+    Row("music-module", ("studio/MusicModuleNotice.tsx", "Phân tích nhạc"), (("MyMusicModule.qml", "Phân tích nhạc"),), None,
         why_phone="thẻ mô-đun 'Phân tích nhạc' chưa có giao diện ở điện thoại (lõi LocalStudio.kt có, chưa có màn)"),
-    Row("studio-my-music", ("studio/MusicTab.tsx", "Nhạc riêng"), (("StudioMyMusic.qml", "Nhạc riêng"), ("EditBookMyMusic.qml", "Nhạc riêng")), None,
-        why_phone="tab Nhạc Studio của điện thoại không có nhạc riêng (kho nhạc ở máy tính, điện thoại là máy từ xa); bảng nhạc nền của trình phát / trang sách là "
-                  "chọn nhanh như menu nhạc của web, không có lời gập - lời ấy ở Nhạc của tôi (dòng my-music)"),
     Row("first-person-guess", ("studio/NewProjectScreen.tsx", "Máy đoán"), (("NewVoice.qml", "Máy đoán"),), ("studio/StudioNewScreen.kt", "studio_new_guess")),
     Row("pause-why", ("studio/NewProjectScreen.tsx", "Vì sao?"), (("NewStartNotes.qml", "Vì sao?"),), ("studio/StudioNewScreen.kt", "studio_new_pause_why"),
         web_not_on_phone=("Thời gian tham khảo",), why_phone="điện thoại chưa có số ước thời gian phân tích khi tạo sách, nên không có câu 'Thời gian tham khảo'"),
@@ -598,7 +595,7 @@ def test_every_more_info_in_code_has_a_row():
 def test_the_readers_found_the_real_screens():
     # Phép đọc hỏng im lặng (không thấy gì) sẽ làm các test trên xanh giả.
     tree = real_tree()
-    assert len(tree.web) >= 20 and len(tree.qt) >= 20 and len(tree.phone) >= 10, (len(tree.web), len(tree.qt), len(tree.phone))
+    assert len(tree.web) >= 20 and len(tree.qt) >= 18 and len(tree.phone) >= 10, (len(tree.web), len(tree.qt), len(tree.phone))
     assert all(info.pieces for info in tree.web if info.file != "shared/DiagnosticsView.tsx" and info.file != "studio/ScriptTab.tsx"), "một MoreInfo web không đọc ra chữ"
     assert all(info.pieces for info in tree.phone), "một MoreInfo điện thoại không đọc ra chữ"
     assert default_label_web() == default_label_qt() == "Tìm hiểu thêm"

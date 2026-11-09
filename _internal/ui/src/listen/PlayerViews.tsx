@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
+import { NowPlayingMusic } from "@/music/NowPlayingMusic";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
@@ -1245,9 +1246,12 @@ function FadingNotice({ className }: { className?: string }) {
  *  có bài thì không hiện gì. Chạm (hay Enter) vào dòng để xem đủ ghi công: tên bài, tác giả, giấy phép (có liên kết) -
  *  màn cảm ứng không có chỗ S.s_copy_75e3f713a7d5 để xem chú thích. */
 function MusicCreditLine() {
-  const { musicCredit, playing } = usePlayer();
+  const { musicCredit, playing, track } = usePlayer();
   const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState<string | null>(null);
   const label = [musicCredit?.title, musicCredit?.creator].filter(Boolean).join(" · ");
+  // Bài của danh mục mở "Bài đang phát" (cảm xúc, Lưu, Xem trong kho, Đổi bài); bài tự nhập (local:) mở dần lời ghi công như trước
+  const catalogLink = musicCredit?.link && !musicCredit.link.startsWith("local:") ? musicCredit.link : null;
   useEffect(() => setOpen(false), [musicCredit]);
   const content = () => {
   if (!playing || !musicCredit || !label) return null;
@@ -1255,8 +1259,9 @@ function MusicCreditLine() {
     <div className="motion-appear mt-0.5 text-xs text-fg-2">
       <button
         type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        aria-expanded={catalogLink ? undefined : open}
+        aria-haspopup={catalogLink ? "dialog" : undefined}
+        onClick={() => (catalogLink ? setSheet(catalogLink) : setOpen((value) => !value))}
         title={musicCreditText(musicCredit) || label}
         className="max-w-full truncate rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >{S.s_nhac_nen_198fce26}{label}
@@ -1284,7 +1289,12 @@ function MusicCreditLine() {
     </div>
   );
   };
-  return <MotionPresence open={Boolean(playing && musicCredit && label)}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
+  return (
+    <>
+      <MotionPresence open={Boolean(playing && musicCredit && label)}><MotionRegion>{content()}</MotionRegion></MotionPresence>
+      <NowPlayingMusic link={sheet} bookId={track?.bookId ?? null} scene={musicCredit?.scene ?? null} onClose={() => setSheet(null)} />
+    </>
+  );
 }
 
 /** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert). */

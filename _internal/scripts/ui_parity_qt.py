@@ -64,6 +64,8 @@ QML_SKIP = {"BenchScenario.qml"}
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
     ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None))),
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
+    ("Nhạc", ("MusicScreen.qml", "MusicTrackRow.qml", "MusicTrackDetail.qml", "MusicBookSection.qml", "MusicOpenRow.qml", "MusicLibraryLogic.js"),
+     (("music/MusicScreen.tsx", None), ("music/TrackSheet.tsx", None), ("music/BookMusic.tsx", None), ("music/NowPlayingMusic.tsx", None), ("music/OpenMusicRow.tsx", None), ("music/library.ts", None))),
     ("Thư viện", ("Library*.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),
       ("shared/BookCover.tsx", None))),

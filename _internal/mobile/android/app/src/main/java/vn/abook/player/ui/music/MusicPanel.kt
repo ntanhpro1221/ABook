@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.ui.music.library.inCatalog
+
 import vn.abook.player.S
 
 import android.net.Uri
@@ -156,7 +158,7 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
             if (note.isNotEmpty()) lastNote = note
             Reveal(note.isNotEmpty()) { Caption(lastNote, Modifier.padding(top = Dim.s12).testTag("music_note")) }
         }
-        MusicCreditBlock(player?.credit)
+        MusicCreditBlock(player?.credit, ui.bookId)
         if (book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty()) CueList(book, enabled = !ui.busy, onCue)
     }
 }
@@ -302,6 +304,15 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
                     )
                 } }
             }
+            // Dòng cuối: cả Kho nhạc ở chế độ chọn cho đoạn này ("Dùng" ghim bài như "Chọn" ở trên)
+            val entry = vn.abook.player.ui.music.library.LocalMusicEntry.current
+            if (entry != null && shown != 0) {
+                ListItem(
+                    MusicText.OPEN_LIBRARY, Modifier, { entry.openPick(ui.bookId, ui.swapKey) }, "music_open_library",
+                    titleColor = colors.accentText, chevron = true,
+                    leading = { vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.LIBRARY, colors.accentText) },
+                )
+            }
         }
     }
 }
@@ -399,7 +410,9 @@ fun LevelMeter(level: Double, enabled: Boolean = true, onPick: (Double) -> Unit,
  * "đã chỉnh sửa" và trang của bài. Không có bài thì khép lại.
  */
 @Composable
-fun MusicCreditBlock(credit: MusicCredit?) {
+fun MusicCreditBlock(credit: MusicCredit?, bookId: String = "") {
+    // Bài của danh mục: chạm mở sheet "Bài đang phát" (màn Nhạc) thay cho phần mở ghi công tại chỗ
+    val entry = vn.abook.player.ui.music.library.LocalMusicEntry.current
     var last by remember { mutableStateOf(credit) }
     if (credit != null) last = credit
     var open by remember(credit) { mutableStateOf(false) }
@@ -418,9 +431,10 @@ fun MusicCreditBlock(credit: MusicCredit?) {
         Column(Modifier.fillMaxWidth().padding(top = Dim.s12).bringIntoViewRequester(into).testTag("music_credit")) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
             ListItem(
-                S.s_dang_phat_ac2dd0c2, Modifier, { open = !open }, "music_credit_toggle",
+                S.s_dang_phat_ac2dd0c2, Modifier,
+                { if (entry != null && shown.inCatalog()) entry.openPlaying(shown, bookId) else open = !open }, "music_credit_toggle",
                 hint = MusicText.creditLine(shown),
-                trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
+                trailing = { ChevronIcon(Abook.colors.text3, turn = { if (entry != null && shown.inCatalog()) 0f else turn }) },
             )
             Reveal(open) {
                 Column(Modifier.fillMaxWidth().testTag("music_credit_detail")) {

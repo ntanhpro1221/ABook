@@ -678,7 +678,8 @@ export function PlayerProvider({
     }
     const off = bed.onActiveChange((link) => {
       if (link && sceneHeard.current) tellSceneMusic();
-      setMusicCredit(link ? bedCredits.current[link] ?? null : null);
+      const credit = link ? bedCredits.current[link] : undefined;
+      setMusicCredit(credit && link ? { ...credit, link, scene: bed.activeKey ?? undefined } : null);
       setMusicBroken(bed.failing);
     });
     const offLoad = bed.onLoadResult(() => setMusicBroken(bed.failing));

@@ -66,7 +66,8 @@ const playerMore = async () => {
 };
 // Máy tính: sách chữ giọng Edge hỏi đồng ý gửi chữ ra ngoài trước lần nghe đầu.
 const desktopTextMore = async () => {
-  await click(/^Nghe/, document.querySelector("main")!);
+  // "Nghe thử" của phần "Nhạc trong sách" cũng ở trang sách: chỉ nút nghe sách
+  await click(/^Nghe(?! thử)/, document.querySelector("main")!);
   const consent = await waitFor(() => document.querySelector('[role="dialog"]'), "hộp đồng ý giọng đọc");
   await click("Nghe", consent);
   await playerMore();

@@ -39,7 +39,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
   const unsaved = tracks.filter((track) => !track.saved);
   return (
     <MotionPresence open={tracks.length > 0}>
-      <section aria-labelledby="book-music" className="space-y-3">
+      <section aria-labelledby="book-music" className="mt-8 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <SectionHeading id="book-music">{S.s_nhac_trong_sach_9070d53a}</SectionHeading>
           {unsaved.length > 0 && (
@@ -52,7 +52,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
           {tracks.map((track) => (
             <li key={track.link} className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
-                <TrackRow track={track} preview={preview} downloads={downloads} online styles={meta?.styles} onOpen={() => setOpen(track)} as="div" />
+                <TrackRow track={track} preview={preview} downloads={downloads} online styles={meta?.styles} onOpen={() => setOpen(track)} as="div" nested />
               </div>
               <span className="shrink-0 text-xs tabular-nums text-fg-2">{S.s_0_doan_c2eb5200(track.scenes)}</span>
             </li>
