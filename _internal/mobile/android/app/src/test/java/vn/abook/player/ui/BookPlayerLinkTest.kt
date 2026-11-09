@@ -201,6 +201,18 @@ class BookPlayerLinkTest {
         assertEquals(Destination.Book(book), shell.nav.stack.top?.destination)
     }
 
+    /** Màn con (không thanh tab): dưới thanh phát nhỏ chỉ có MỘT lần chừa đáy (vạch cử chỉ, sàn 24 dp khi máy báo 0) cộng đệm của chính thanh, không phải hai lần. */
+    @Test
+    fun miniBarOnASubScreenLeavesOneBottomClearance() {
+        show()
+        push(Destination.Book(book))
+        val root = rule.onRoot().getUnclippedBoundsInRoot()
+        val mini = rule.onNodeWithTag("mini_play").getUnclippedBoundsInRoot()
+        val gap = root.bottom - mini.bottom
+        assertTrue("nút phát của thanh nhỏ cách mép dưới $gap, cần >= 24 dp (ngoài dải vuốt)", gap >= vn.abook.player.ui.components.GestureBar - 0.5.dp)
+        assertTrue("nút phát của thanh nhỏ cách mép dưới $gap, cần <= 24 + 16 dp (một lần chừa + đệm thanh)", gap <= vn.abook.player.ui.components.GestureBar + 16.dp)
+    }
+
     @Test
     fun shots() {
         show()

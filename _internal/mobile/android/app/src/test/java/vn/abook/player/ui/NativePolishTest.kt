@@ -206,6 +206,8 @@ class NativePolishTest {
         val indicator = rule.onNodeWithTag("tab_indicator").getUnclippedBoundsInRoot()
         // Robolectric không có thanh điều hướng (inset 0) = đúng ca của ColorOS giấu vạch cử chỉ.
         assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần >= 24 dp", root.bottom - indicator.bottom >= GestureBar - 0.5.dp)
+        // Và không chừa hai lần: từ vạch tới mép dưới chỉ là một lần chừa đáy + chút đệm của hàng tab (<= 8 dp), không phải một dải trống thứ hai.
+        assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần <= 24 + 8 dp", root.bottom - indicator.bottom <= GestureBar + 8.dp)
         rule.onNodeWithTag(Tab.Library.tag).getUnclippedBoundsInRoot()
     }
 

@@ -2567,6 +2567,7 @@ var s_tra_ve_chu_cua_sach_0451f8ec = "trả về chữ của sách";
 var s_tra_ve_chu_cua_sach_b10a6f5a = " - trả về chữ của sách";
 var s_trang_cua_bai_nhac_a_dcd03b62 = "\">Trang của bài nhạc</a>";
 var s_trang_phu_chua_chon_fa525053 = " trang phụ chưa chọn";
+var s_trang_sach_2b6c8e51 = "Trang sách";
 var s_trang_thai_abook_110b1681 = "Trạng thái ABook";
 var s_trang_thai_cb31de81 = "Trạng thái";
 var s_trao_cho_moi_nhan_vat_mot_giong_rieng_va_k_9788a813 = "Trao cho mỗi nhân vật một giọng riêng và khoá cách đọc tên.";

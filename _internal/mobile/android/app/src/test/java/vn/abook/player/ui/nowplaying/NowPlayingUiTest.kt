@@ -247,6 +247,18 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("player_sheet_more").assertDoesNotExist()
     }
 
+    /** Dòng Trang sách gọi đúng đường tới trang sách mà tên sách trong trình phát dùng (window.bookPage), rồi đóng tấm. */
+    @Test fun moreSheetBookRowOpensTheBookPage() {
+        show()
+        var opened = 0
+        rule.runOnIdle { window.bookPage = { opened++ }; window.openSheet(PlayerSheet.More) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("more_book").performClick()
+        rule.waitForIdle()
+        assertEquals(1, opened)
+        rule.onNodeWithTag("player_sheet_more").assertDoesNotExist()
+    }
+
     /** Âm thanh: Giọng đọc 0-200 %, Âm sắc một hàng (không xuống dòng ở 360 dp), dải tần chỉ khi Tự chỉnh, Cao độ rồi Về mặc định ở cuối. */
     @Test fun audioPageOrderAndToneRow() {
         vn.abook.player.AudioFx.update(vn.abook.player.AudioFxSettings())

@@ -65,6 +65,17 @@ Item {
             click(findChild(made, "playerBookLink"))
             compare(first.count, 1)
         }
+        function test_morePageRowRequestsTheBookPage() {
+            const made = createTemporaryObject(now, host, {width: host.width, height: host.height})
+            made.show()
+            tryVerify(function() { return made.visible && findChild(made, "nowMore").visible })
+            click(findChild(made, "nowMore"))
+            tryCompare(findChild(made, "nowMoreMenu"), "open", true)
+            first.target = made; first.signalName = "bookRequested"
+            click(findChild(made, "nowBookPage"))
+            compare(first.count, 1)
+            tryCompare(findChild(made, "nowMoreMenu"), "open", false)
+        }
         function test_coverOfTheLoadedBookOpensThePlayer() {
             const made = bookPage()
             first.target = made; first.signalName = "nowPlayingRequested"
