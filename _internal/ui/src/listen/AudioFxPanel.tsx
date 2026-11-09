@@ -7,6 +7,7 @@ import { TonePage, type ToneLeaveGuard } from './TonePage';
 import { toast } from '@/shared/toast';
 import { Button } from '@/shared/ui';
 import { Collapse } from '@/shared/Collapse';
+import { signedNumber } from './labels';
 import { VOICE_MAX, resetAudioFx, setAudioFx, useAudioFx, voiceLevel, withVoiceLevel, audioBookOnly, setAudioBookOnly, useTones } from './audioFx';
 
 /** Trang Âm thanh (DESIGN.md "Âm thanh khi nghe"), cùng thứ tự với Android / Qt: Giọng đọc 0-200 % (100 % = gốc) → Nhạc nền (`music`, ngay dưới) →
@@ -44,11 +45,13 @@ function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChang
   </label>;
 }
 function FxSlider({label,value,min,max,step=1,suffix=' dB',disabled=false,onChange}:{label:string;value:number;min:number;max:number;step?:number;suffix?:string;disabled?:boolean;onChange:(value:number)=>void}) {
+  // Thanh có hai phía (Cân bằng, Cao độ, ngưỡng dBFS): số có dấu, dấu trừ thật.
+  const shown=min<0?signedNumber(value):value.toLocaleString('vi-VN',{maximumFractionDigits:1});
   return <div aria-disabled={disabled || undefined} className={`min-w-0 transition-opacity duration-motion-fast ${disabled?'opacity-50':''}`}>
-    <div className="flex items-center justify-between gap-3 text-sm"><span>{label}</span><span className="tabular text-fg-2">{value.toLocaleString('vi-VN',{maximumFractionDigits:1})}{suffix}</span></div>
+    <div className="flex items-center justify-between gap-3 text-sm"><span>{label}</span><span className="tabular text-fg-2">{shown}{suffix}</span></div>
     <Slider.Root aria-label={label} min={min} max={max} step={step} value={[value]} disabled={disabled} onValueChange={([v])=>onChange(v)} className="relative flex h-11 w-full touch-none items-center">
       <Slider.Track className="relative h-1 grow rounded-full bg-line"><Slider.Range className="absolute h-full rounded-full bg-accent"/></Slider.Track>
-      <Slider.Thumb aria-label={label} aria-valuetext={`${value}${suffix}`} className="block size-3.5 rounded-full bg-accent outline-none focus-visible:ring-2 focus-visible:ring-focus"/>
+      <Slider.Thumb aria-label={label} aria-valuetext={`${shown}${suffix}`} className="block size-3.5 rounded-full bg-accent outline-none focus-visible:ring-2 focus-visible:ring-focus"/>
     </Slider.Root>
   </div>;
 }

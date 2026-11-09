@@ -99,9 +99,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                 Column(Modifier.fillMaxWidth().testTag("player_sheet_grip")) {
                     Box(Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(4.dp)
                         .background(Abook.colors.line, CircleShape))
-                    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
-                        RollingLabel(sheetTitle(window.sheet), style = Abook.type.sectionTitle)
-                    }
+                    SheetTitle(sheetTitle(window.sheet), if (parents.isNotEmpty()) ::back else null)
                 }
                 SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown -> Column(Modifier.fillMaxWidth()) { when (shown) {
                     PlayerSheet.Speed -> {
@@ -251,6 +249,25 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
         // S.s_copy_7d00f642cba3 chỉ có với giọng tải về đọc trên máy (chậm hơn tốc độ nghe trên máy yếu).
         val prepare = model.prepare
         if (prepare != null && PrepareText.canPrepare(state.voiceId)) PrepareBlock(state, prepare)
+    }
+}
+
+/**
+ * Đầu tấm, cao 64: tên tấm. Trang con (mở từ một tấm khác: Âm thanh, Âm sắc, Giọng đọc...) có nút ← ngay trước tên, chân chữ không đổi;
+ * nút ấy và Back của hệ thống cùng về tấm cha. Nút trượt ra / vào cùng tên, không bật tắt cứng.
+ */
+@Composable
+internal fun SheetTitle(title: String, onBack: (() -> Unit)?) {
+    var last by remember { mutableStateOf(onBack) }
+    if (onBack != null) last = onBack
+    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+        AnimatedVisibility(onBack != null,
+            enter = androidx.compose.animation.fadeIn(tween(MotionMs.MEDIUM)) + androidx.compose.animation.expandHorizontally(tween(MotionMs.MEDIUM)),
+            exit = androidx.compose.animation.fadeOut(tween(MotionMs.MEDIUM)) + androidx.compose.animation.shrinkHorizontally(tween(MotionMs.MEDIUM))) {
+            // Ô chạm 48 mà nét mũi tên chỉ ở nửa trái: tên lùi vào nửa trống ấy, sát sau mũi tên như PageHeader.
+            vn.abook.player.ui.components.BackButton({ last?.invoke() }, Modifier.width(36.dp).wrapContentWidth(Alignment.Start, unbounded = true).testTag("sheet_back"))
+        }
+        RollingLabel(title, style = Abook.type.sectionTitle)
     }
 }
 

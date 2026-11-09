@@ -1,6 +1,13 @@
 .import "UiStrings.js" as S
 .pragma library
 
+// labels.ts signedNumber / Android PlayerLabels.signed: real minus sign "−" (never a hyphen), "+" when positive,
+// decimal comma, at most one decimal - every two-sided value of the Audio and Tone pages.
+function signed(value) {
+    const text = String(Math.round(Math.abs(value) * 10) / 10).replace(".", ",")
+    return text === "0" ? "0" : (value < 0 ? "−" : "+") + text
+}
+
 // labels.ts readerHint, desktop pointer variant. This is a complete sentence
 // even when the chapter has no audio or this machine has no installed voice.
 function readerHint(textOnly, canSpeak, timed, tapped) {

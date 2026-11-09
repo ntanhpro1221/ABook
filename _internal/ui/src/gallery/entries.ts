@@ -106,7 +106,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: playerMore },
   { id: "desktop/player-audiofx", group: "Trình phát", title: "Âm thanh · lời đọc", route: "/", act: async () => { await playerMore(); await click("Âm thanh"); } },
-  { id: "desktop/player-tone", group: "Trình phát", title: "Âm sắc · preset", route: "/", act: async () => { await playerMore(); await click("Âm thanh"); await click("Âm sắc"); await click("Giọng rõ"); } },
+  { id: "desktop/player-tone", group: "Trình phát", title: "Âm sắc", route: "/", storage: {"abook.audioFx.tones":JSON.stringify({mine:[{id:"user:dem",name:"Đêm khuya",bands:[3,2,0,-1,-5]},{id:"user:cu",name:"Tai nghe cũ",bands:[0,0,1,-2,-4]}]})}, act: async () => { await playerMore(); await click("Âm thanh"); await click("Âm sắc"); await click("Giọng rõ"); } },
   { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
     await playerMore(); await click("Phát trên thiết bị khác");
   } },

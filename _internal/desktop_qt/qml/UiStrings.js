@@ -2451,6 +2451,7 @@ var s_them_phan_tu_chuong_cba5b511 = "Thêm phần từ chương";
 var s_them_sach_2a9d3708 = "Thêm sách";
 var s_them_truyen_hoac_tao_sach_noi_4fff75be = "Thêm truyện hoặc tạo sách nói.";
 var s_them_tuy_chon_a0b4bb6e = "Thêm tuỳ chọn";
+function s_them_tuy_chon_cho_0_82a2cf4d(p0) { return "Thêm tuỳ chọn cho " + String(p0); }
 var s_them_tuy_chon_cho_5ddcac37 = "Thêm tuỳ chọn cho ";
 var s_them_tuy_chon_cho_doan_nay_6554b55d = "Thêm tuỳ chọn cho đoạn này";
 var s_them_va_xoa_nhac_lam_tren_may_tinh_chu_sac_bdde38b6 = "Thêm và xoá nhạc làm trên máy tính chủ sách.";
@@ -2806,17 +2807,17 @@ var s_tone_speaker = "Loa ngoài";
 var s_tone_builtins = "Có sẵn";
 var s_tone_mine = "Của tôi";
 var s_tone_draft = "Tự chỉnh (chưa lưu)";
-var s_tone_save = "Lưu thành preset";
+var s_tone_save = "Lưu âm sắc";
 var s_tone_overwrite = "Lưu đè";
 var s_tone_new = "Lưu thành mới";
 var s_tone_duplicate = "Nhân bản";
+var s_tone_add = "Tạo âm sắc";
 var s_tone_scope = "Dùng riêng cho sách này";
-var s_tone_name = "Tên preset";
+var s_tone_name = "Tên âm sắc";
 var s_tone_back = "Trở lại";
-var s_tone_deleted = "Đã xoá preset";
+var s_tone_deleted = "Đã xoá âm sắc";
 var s_tone_leave = "Lưu thay đổi?";
 function s_tone_suggest(p0) { return "Của tôi " + String(p0); }
-var s_tone_drag = "Kéo để sắp xếp";
 var s_tone_reset = "Chạm đúp để về 0 dB";
 var s_tone_discard = "Bỏ thay đổi";
 function s_tone_db(p0) { return String(p0) + " dB"; }

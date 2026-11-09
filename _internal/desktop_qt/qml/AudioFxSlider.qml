@@ -1,3 +1,4 @@
+import "PlayerLabels.js" as Labels
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
@@ -11,13 +12,15 @@ Column {
     property real step: 1
     property string suffix: " dB"
     signal picked(real value)
+    // Thanh hai phía (Cân bằng, Cao độ, ngưỡng dBFS): số có dấu, dấu trừ thật.
+    readonly property string shown: root.from < 0 ? Labels.signed(slider.value) : String(slider.value)
     spacing: 0
     opacity: enabled ? 1 : 0.5
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     Row {
         width: parent.width
         Text { width: parent.width - number.width; text: root.label; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
-        ClockLabel { id: number; text: slider.value + root.suffix; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
+        ClockLabel { id: number; text: root.shown + root.suffix; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
     }
     C.Slider {
         id: slider
@@ -27,7 +30,7 @@ Column {
         snapMode: C.Slider.SnapAlways
         onMoved: root.picked(value)
         Accessible.name: root.label
-        Accessible.description: value + root.suffix
+        Accessible.description: root.shown + root.suffix
         background: Rectangle {
             x: slider.leftPadding; y: (slider.height-height)/2
             width: slider.availableWidth; height: 4; radius: height/2; color: Theme.line

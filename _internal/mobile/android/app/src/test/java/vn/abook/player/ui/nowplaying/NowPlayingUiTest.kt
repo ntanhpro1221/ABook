@@ -266,7 +266,7 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("audiofx_tones").performClick()
         rule.waitForIdle()
         rule.runOnIdle { vn.abook.player.AudioFx.changeTone { it.save("Mine");it.edit(2,7.0) } }
-        rule.onNodeWithTag("tone_back").performScrollTo().performClick()
+        rule.onNodeWithTag("sheet_back").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("tone_overwrite").performScrollTo().performClick()
         rule.waitForIdle()

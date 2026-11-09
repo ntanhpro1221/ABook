@@ -144,6 +144,11 @@ object PlayerLabels {
     val sleepMinutes = listOf(5, 10, 15, 30, 45, 60)
     fun rate(value: Double): String = BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
         .stripTrailingZeros().toPlainString().replace('.', ',') + "×"
+    /** Số có dấu của trang Âm thanh / Âm sắc (web labels.ts signedNumber): dấu trừ thật "−", dấu "+" khi dương, phẩy thập phân, tối đa một số lẻ. */
+    fun signed(value: Double): String {
+        val text = BigDecimal.valueOf(kotlin.math.abs(value)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString().replace('.', ',')
+        return when { text == "0" -> "0"; value < 0 -> "−$text"; else -> "+$text" }
+    }
     fun time(milliseconds: Long): String {
         val seconds = milliseconds.coerceAtLeast(0) / 1000
         return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"

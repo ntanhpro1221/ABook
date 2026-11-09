@@ -53,20 +53,20 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         }
         Spacer(Modifier.height(Dim.s8))
         SwitchRow(S.s_copy_6f00156cec07, fx.mono, { update(fx.copy(mono = it)) }, "audiofx_mono")
-        FxSlider(S.s_can_bang_8b88211d, fx.balance * 100, -100.0, 100.0, 1.0, S.s_copy_45aac78838e4((fx.balance * 100).roundToInt()), default = 0.0) {
+        FxSlider(S.s_can_bang_8b88211d, fx.balance * 100, -100.0, 100.0, 1.0, S.s_copy_45aac78838e4(PlayerLabels.signed((fx.balance * 100).roundToInt().toDouble())), default = 0.0) {
             update(fx.copy(balance = it / 100))
         }
         SwitchRow(S.s_copy_289e1cff4cbc, fx.skipSilence, { update(fx.copy(skipSilence = it)) }, "audiofx_silence", hint = S.s_copy_b09b5fb2264a)
         Reveal(fx.skipSilence) {
             Column(Modifier.fillMaxWidth()) {
-                FxSlider(S.s_copy_8e18e6dd7fd9, fx.silenceDb, -80.0, -45.0, 1.0, "${fx.silenceDb.roundToInt()} dBFS") { update(fx.copy(silenceDb = it)) }
+                FxSlider(S.s_copy_8e18e6dd7fd9, fx.silenceDb, -80.0, -45.0, 1.0, "${PlayerLabels.signed(fx.silenceDb.roundToInt().toDouble())} dBFS") { update(fx.copy(silenceDb = it)) }
                 FxSlider(S.s_copy_19adc1b298a9, fx.silenceSeconds, 2.0, 10.0, .5, "${fx.silenceSeconds} s") { update(fx.copy(silenceSeconds = it)) }
                 FxSlider(S.s_copy_483cdfec9d5f, fx.keepSeconds, 1.5, minOf(3.0, fx.silenceSeconds), .1, "${fx.keepSeconds} s") { update(fx.copy(keepSeconds = it)) }
             }
         }
         SwitchRow(S.s_copy_0aedb2b2cf2b, bookOnly, AudioFx::setBookOnly, "audiofx_book")
         // Cao độ ở cuối, gọn: kéo chỉ đổi số; giọng nghe giá trị cuối khi thả tay (hay tay dừng lâu) - mỗi lần đổi cao độ, máy phát phải xả hết tiếng đang xử lý.
-        FxSlider(S.s_copy_519c2d65ca4c, fx.pitch, -6.0, 6.0, 0.5, S.s_copy_e4902bd61bb7(fx.pitch), tag = "audiofx_pitch", default = 0.0,
+        FxSlider(S.s_copy_519c2d65ca4c, fx.pitch, -6.0, 6.0, 0.5, S.s_copy_e4902bd61bb7(PlayerLabels.signed(fx.pitch)), tag = "audiofx_pitch", default = 0.0,
             onMove = { AudioFx.update(fx.copy(pitch = it), AudioFx.DRAG_SETTLE_MS) }) { update(fx.copy(pitch = it)) }
         TextAction(S.s_ve_mac_dinh_4eb6b300, {
             AudioFx.reset()

@@ -157,7 +157,8 @@
       "sentences": true,
       "native_also": [
         "music/*.kt",
-        "data/BookDetail.kt"
+        "data/BookDetail.kt",
+        "components/Components.kt"
       ]
     },
     {

@@ -1,9 +1,14 @@
 import "UiStrings.js" as S
 import "ToneLabels.js" as ToneLabels
+import "PlayerLabels.js" as Labels
+import "TextWrap.js" as TextWrap
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
 
+// Trang Âm sắc (cùng bố cục Android / web): đầu trang ← + tên; vùng chỉnh ở trên (tên đang dùng, đường cong trong khung có vạch 0 dB,
+// năm thanh dọc) để chọn một âm sắc là thấy ngay đường cong đổi, không phải cuộn; danh sách Có sẵn / Của tôi ở dưới. Dòng: dấu chọn tròn,
+// tên, đường cong nhỏ; dòng Của tôi có nút … (Đổi tên / Nhân bản / Xoá); "Tạo âm sắc" ở cuối nhóm.
 Column {
     id: root
     property var library: Player.tones
@@ -11,11 +16,13 @@ Column {
     property var deleted: null; onDeletedChanged: if(deleted!==null)Later.call(root,showLast)
     property string form: ""
     property string target: ""
+    property string menu: ""
     property bool afterName: false
     readonly property var current: library.selected
     readonly property string toneName: library.dirty || current.id === "draft" ? S.s_tone_draft : (library.preset.name || ToneLabels.label(current.id) || S.s_tat_3286064e)
+    readonly property string suggest: S.s_tone_suggest(library.mine.length+1)
     signal backRequested()
-    spacing: Theme.s4
+    spacing: 0
     function leave(action) {
         if(form !== "") { form="";afterName=false;return }
         if(pending !== null) { pending=null;return }
@@ -26,80 +33,131 @@ Column {
     onFormChanged: if(form!=="")Later.call(root,showLast)
     function close() { leave(() => root.backRequested()) }
     function finish() { if(Player.tones.hasEdits){Player.toneAction("prepareLeave");return} const action = pending; pending = null; if (action) action() }
-    function namePreset(kind, id, value, thenLeave) { form = kind; target = id; nameField.text = value; afterName = thenLeave; nameField.forceActiveFocus() }
+    function namePreset(kind, id, value, thenLeave) { menu = ""; form = kind; target = id; nameField.text = value; afterName = thenLeave; nameField.forceActiveFocus() }
     function saveName() {
         if (!nameField.text.trim()) return
         Player.toneAction(form, {id:target, name:nameField.text})
         form = ""
         if (afterName) { afterName = false; finish() }
     }
-    TextLink { text: S.s_tone_back; onClicked: root.close() }
-    Text { width: parent.width; text: S.s_am_sac_8c2f4e1a; color: Theme.text; font.pixelSize: Theme.sizeSection; wrapMode: Text.Wrap }
-    Text { width: parent.width; text: S.s_tone_builtins; color: Theme.text2; font.pixelSize: Theme.sizeCaption; topPadding: Theme.s12 }
-    Repeater {
-        model: root.library.builtins
-        MenuRow { required property var modelData; width: root.width; height: Math.max(48, implicitHeight); text: ToneLabels.label(modelData.id); selected: root.current.id === modelData.id; icon: selected ? "check" : ""; onClicked: Player.toneAction("select",{id:modelData.id}) }
+
+    // Một đường cong âm sắc (lớn và nhỏ dùng chung): điểm i ở tâm cột i trong năm cột, ±12 dB chạm mép, nối mềm, hai đầu kéo phẳng ra mép.
+    component ToneCurve: Canvas {
+        property var bands: [0,0,0,0,0]
+        property color ink: Theme.accent
+        property real stroke: 2
+        property bool dots: false
+        property bool zeroLine: false
+        onBandsChanged: requestPaint(); onInkChanged: requestPaint(); onWidthChanged: requestPaint(); onHeightChanged: requestPaint()
+        onPaint: {
+            const c=getContext("2d");c.clearRect(0,0,width,height)
+            if(zeroLine){c.strokeStyle=Theme.line;c.lineWidth=1;c.setLineDash([4,4]);c.beginPath();c.moveTo(0,height/2);c.lineTo(width,height/2);c.stroke();c.setLineDash([])}
+            const half=height/2-stroke,p=[];for(let i=0;i<5;i++)p.push([width*(i+.5)/5,height/2-bands[i]/12*half])
+            c.strokeStyle=ink;c.lineWidth=stroke;c.lineCap="round";c.beginPath();c.moveTo(0,p[0][1]);c.lineTo(p[0][0],p[0][1])
+            for(let i=1;i<5;i++){const mid=(p[i-1][0]+p[i][0])/2;c.bezierCurveTo(mid,p[i-1][1],mid,p[i][1],p[i][0],p[i][1])}
+            c.lineTo(width,p[4][1]);c.stroke()
+            if(dots){c.fillStyle=ink;for(const [x,y] of p){c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.fill()}}
+        }
     }
-    Text { width: parent.width; text: S.s_tone_mine; color: Theme.text2; font.pixelSize: Theme.sizeCaption; topPadding: Theme.s12 }
-    Repeater {
-        model: root.library.mine
-        Row {
-            id: userRow
-            required property var modelData
-            required property int index
-            width: root.width; height: Math.max(48, choice.implicitHeight)
-            MenuRow { id: choice; width: parent.width - 48; height: parent.height; text: userRow.modelData.name; selected: root.current.id === userRow.modelData.id; icon: selected ? "check" : ""; onClicked: Player.toneAction("select",{id:userRow.modelData.id}) }
-            Item {
-                width: 48; height: parent.height
-                Accessible.name: S.s_tone_drag
-                Canvas { anchors.centerIn: parent; width: 16; height: 16; onPaint: { const c=getContext("2d");c.clearRect(0,0,width,height);c.strokeStyle=Theme.text2;c.lineWidth=2;for(let i=0;i<3;i++){c.beginPath();c.moveTo(0,3+i*5);c.lineTo(16,3+i*5);c.stroke()} } }
-                MouseArea { anchors.fill: parent; property real start: 0; onPressed: event => { start = mapToItem(root,0,event.y).y }; onReleased: event => { const distance=mapToItem(root,0,event.y).y-start;Player.toneAction("move",{id:userRow.modelData.id,to:userRow.index+Math.round(distance/userRow.height)}) } }
+    // Một âm sắc: dấu chọn tròn (đầy khi đang dùng), tên, đường cong nhỏ; dòng Của tôi thêm nút … mở hàng Đổi tên / Nhân bản / Xoá ngay dưới.
+    component ToneRow: Column {
+        id: row
+        required property var modelData
+        readonly property var preset: modelData
+        property bool mine: false
+        readonly property bool chosen: root.current.id === preset.id
+        readonly property string name: mine ? preset.name : ToneLabels.label(preset.id)
+        width: root.width
+        Item {
+            width: parent.width; height: Math.max(56, label.implicitHeight + Theme.s16)
+            Accessible.role: Accessible.RadioButton; Accessible.name: row.name; Accessible.checked: row.chosen
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Player.toneAction("select",{id:row.preset.id}) }
+            Rectangle {
+                width: 20; height: 20; radius: width / 2; anchors.verticalCenter: parent.verticalCenter
+                color: "transparent"; border.width: 2; border.color: row.chosen ? Theme.accent : Theme.text2
+                Rectangle { anchors.centerIn: parent; width: 10; height: 10; radius: width / 2; color: Theme.accent; scale: row.chosen ? 1 : 0; Behavior on scale { NumberAnimation { duration: Theme.motionFast } } }
+            }
+            Text { id: label; x: 32; width: thumb.x - x - Theme.s8; anchors.verticalCenter: parent.verticalCenter; text: TextWrap.keepDots(row.name); wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
+            ToneCurve { id: thumb; x: parent.width - width - (row.mine ? 44 : 4); anchors.verticalCenter: parent.verticalCenter; width: 48; height: 24; bands: row.preset.bands; ink: row.chosen ? Theme.accent : Theme.text2; stroke: 1.5 }
+            IconButton {
+                objectName: row.mine ? "toneMore" : ""; visible: row.mine; icon: "ellipsis"; ink: Theme.text2; x: parent.width - width + 10; anchors.verticalCenter: parent.verticalCenter
+                tip: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name); Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name)
+                onClicked: root.menu = root.menu === row.preset.id ? "" : row.preset.id
             }
         }
+        Item {
+            width: parent.width; height: root.menu === row.preset.id ? actions.implicitHeight : 0; clip: true; visible: row.mine && height > 0
+            Behavior on height { NumberAnimation { duration: Theme.motionFast } }
+            Flow {
+                id: actions; x: 32; width: parent.width - x; spacing: Theme.s24
+                TextLink { accent: true; text: S.s_doi_ten_a2a0dc70; onClicked: root.namePreset("rename",row.preset.id,row.preset.name,false) }
+                TextLink { accent: true; text: S.s_tone_duplicate; onClicked: root.namePreset("duplicate",row.preset.id,root.suggest,false) }
+                TextLink { objectName: row.mine ? "toneDelete" : ""; accent: true; text: S.s_xoa_777195ab; onClicked: { root.menu=""; root.deleted=Player.toneAction("delete",{id:row.preset.id}); undoLife.restart() } }
+            }
+        }
+        Rectangle { width: parent.width; height: 1; color: Theme.line }
     }
-    Flow {
-        width: parent.width; spacing: Theme.s12; visible: root.current.id.indexOf("user:") === 0
-        TextLink { text:S.s_doi_ten_a2a0dc70; onClicked:root.namePreset("rename",root.current.id,root.library.preset.name,false) }
-        TextLink { text:S.s_tone_duplicate; onClicked:root.namePreset("duplicate",root.current.id,S.s_tone_suggest(root.library.mine.length+1),false) }
-        TextLink { objectName:"toneDelete";text:S.s_xoa_777195ab; onClicked:{root.deleted=Player.toneAction("delete",{id:root.current.id});undoLife.restart()} }
+    component Group: Text { width: root.width; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; topPadding: Theme.s16; bottomPadding: Theme.s4 }
+
+    Item {
+        width: parent.width; height: 48
+        IconButton { id: back; x: -10; anchors.verticalCenter: parent.verticalCenter; icon: "arrow-left"; tip: S.s_quay_lai_6d793582; Accessible.name: S.s_quay_lai_6d793582; onClicked: root.close() }
+        Text { x: back.width - 10 + Theme.s8; width: parent.width - x; anchors.verticalCenter: parent.verticalCenter; text: S.s_am_sac_8c2f4e1a; color: Theme.text; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
     }
-    Text { width: parent.width; text: root.toneName; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap; topPadding: Theme.s12 }
-    Canvas {
-        id: curve
-        width: parent.width; height: 96
-        property var bands: root.current.bands
-        onBandsChanged: requestPaint()
-        onPaint: {
-            const c=getContext("2d");c.clearRect(0,0,width,height);c.strokeStyle=Theme.line;c.beginPath();c.moveTo(0,48);c.lineTo(width,48);c.stroke()
-            c.strokeStyle=Theme.accent;c.lineWidth=2;c.beginPath()
-            for(let i=0;i<5;i++){const x=12+(width-24)*i/4,y=48-bands[i]*3.4;if(i===0)c.moveTo(x,y);else c.lineTo(x,y)}c.stroke()
+    Item {
+        width: parent.width; height: Math.max(48, nowName.implicitHeight)
+        Text { id: nowName; width: parent.width - (saveLink.visible ? saveLink.width + Theme.s12 : 0); anchors.verticalCenter: parent.verticalCenter; text: root.toneName; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium; wrapMode: Text.Wrap; Accessible.role: Accessible.StaticText }
+        TextLink {
+            id: saveLink; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; accent: true; text: S.s_tone_save
+            visible: opacity > 0; opacity: root.current.id==="draft"||root.library.dirty ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+            onClicked: root.namePreset("save","",root.suggest,false)
         }
     }
+    Rectangle {
+        width: parent.width; height: 104; radius: Theme.radiusControl; color: "transparent"; border.width: 1; border.color: Theme.line
+        ToneCurve { y: Theme.s12; width: parent.width; height: parent.height - 2*Theme.s12; bands: root.current.bands; dots: true; zeroLine: true; Accessible.name: S.s_am_sac_8c2f4e1a }
+    }
     Row {
-        width: parent.width
+        width: parent.width; topPadding: Theme.s8
         Repeater {
             model: [S.s_tone_band_0,S.s_tone_band_1,S.s_tone_band_2,S.s_tone_band_3,S.s_tone_band_4]
             Column {
                 required property string modelData
                 required property int index
                 width: root.width/5
-                ClockLabel { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: S.s_tone_db(root.current.bands[index]); color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                ClockLabel { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: S.s_tone_db(Labels.signed(root.current.bands[index])); color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                 C.Slider {
                     id: band
-                    width: parent.width; height: 144; orientation: Qt.Vertical
+                    width: parent.width; height: 136; orientation: Qt.Vertical
                     from:-12;to:12;stepSize:1;value:root.current.bands[parent.index]
                     Accessible.name: parent.modelData
+                    Accessible.description: S.s_tone_db(Labels.signed(value))
                     onMoved:Player.toneAction("edit",{index:parent.index,value:value})
-                    background: Rectangle { x:band.width/2-2;y:8;width:4;height:128;radius:width/2;color:Theme.line }
-                    handle: Rectangle { x:band.width/2-7;y:8+band.visualPosition*(128-height);width:14;height:14;radius:height/2;color:Theme.accent }
+                    readonly property real thumbY: 10+band.visualPosition*(height-20)
+                    // Rãnh, vạch 0 giữa rãnh và đoạn tô từ 0 tới núm.
+                    background: Item {
+                        x: band.width/2-2; y: 10; width: 4; height: band.height-20
+                        Rectangle { anchors.fill: parent; radius: width / 2; color: Theme.line }
+                        Rectangle { x: -6; y: parent.height/2; width: 16; height: 1; color: Theme.text2 }
+                        Rectangle { width: 4; radius: width / 2; color: Theme.accent; y: Math.min(band.thumbY, band.height/2)-10; height: Math.abs(band.thumbY-band.height/2) }
+                    }
+                    handle: Rectangle { x:band.width/2-7;y:band.thumbY-7;width:14;height:14;radius:height/2;color:Theme.accent }
                     TapHandler { onDoubleTapped:Player.toneAction("edit",{index:band.parent.index,value:0}) }
                 }
                 Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: parent.modelData; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
             }
         }
     }
-    Text { width:parent.width;text:S.s_tone_reset;color:Theme.text2;font.pixelSize:Theme.sizeCaption;wrapMode:Text.Wrap }
-    TextLink { visible:root.current.id==="draft"||root.library.dirty;text:S.s_tone_save;onClicked:root.namePreset("save","",S.s_tone_suggest(root.library.mine.length+1),false) }
+    Text { width:parent.width;topPadding:Theme.s8;horizontalAlignment:Text.AlignHCenter;text:S.s_tone_reset;color:Theme.text2;font.pixelSize:Theme.sizeCaption;wrapMode:Text.Wrap }
+    Group { text: S.s_tone_builtins }
+    Repeater { model: root.library.builtins; ToneRow {} }
+    Group { text: S.s_tone_mine }
+    Repeater { model: root.library.mine; ToneRow { mine: true } }
+    Interactive {
+        objectName: "toneAdd"; width: addRow.width; height: 48; tip: S.s_tone_add; Accessible.name: S.s_tone_add
+        onClicked: root.namePreset("save","",root.suggest,false)
+        Row { id: addRow; height: parent.height; spacing: Theme.s12; Icon { anchors.verticalCenter: parent.verticalCenter; name: "plus"; color: Theme.accentText } Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_tone_add; color: Theme.accentText; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium } }
+    }
     Row {
         width: parent.width; height: Math.max(48, scopeLabel.implicitHeight)
         Text { id:scopeLabel;width:parent.width-48;anchors.verticalCenter:parent.verticalCenter;text:S.s_tone_scope;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
@@ -109,7 +167,7 @@ Column {
         width:parent.width;visible:root.pending!==null
         Text { width:parent.width;text:S.s_tone_leave;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
         TextLink { text:S.s_tone_overwrite;onClicked:{Player.toneAction("save",{name:root.library.preset.name,overwrite:true});root.finish()} }
-        TextLink { text:S.s_tone_new;onClicked:root.namePreset("save","",S.s_tone_suggest(root.library.mine.length+1),true) }
+        TextLink { text:S.s_tone_new;onClicked:root.namePreset("save","",root.suggest,true) }
         TextLink { text:S.s_tone_discard;onClicked:{Player.toneAction("discard");root.finish()} }
     }
     Column {
