@@ -36,6 +36,7 @@ class VoiceConstants:
     o_db: float  # lệch độ to (dB), đo ở x = 1, sau tempo
     ref_lufs: float  # LUFS trung bình của bản thô (sau tempo) của giọng
     engine_speed: float | None = None  # tham số tốc độ của chính máy đọc (ENGINE_SPEED_RANGE), None = máy kéo bằng WSOLA
+    word_break_gate: dict[str, Any] | None = None
 
 
 def voice_key(engine: str, version: str, preset: str) -> str:
@@ -80,13 +81,23 @@ def _validate(table: Any) -> dict[str, Any]:
     for key, record in voices.items():
         if not isinstance(record, dict):
             raise VoiceBalanceError(f"voice_balance.json: {key} phải là object")
-        if set(record) - {"r", "o_db", "ref_lufs", "engine_speed"}:
+        if set(record) - {"r", "o_db", "ref_lufs", "engine_speed", "word_break_gate"}:
             raise VoiceBalanceError(f"voice_balance.json: {key} có trường ngoài hợp đồng preset")
         if key.count("/") != 1 or not key.partition("/")[2]:
             raise VoiceBalanceError(f"voice_balance.json: khoá preset không hợp lệ: {key}")
         r = number(record, "r", R_RANGE, key)
         number(record, "o_db", O_DB_RANGE, key)
         number(record, "ref_lufs", REF_LUFS_RANGE, key)
+        if "word_break_gate" in record:
+            gate = record["word_break_gate"]
+            if not isinstance(gate, dict) or gate.get("metric") not in {"silence_ms", "closure_hgb_v1"}:
+                raise VoiceBalanceError(f"voice_balance.json: {key} có cổng ngắt trong từ không hợp lệ")
+            fields = {"metric", "threshold"} if gate["metric"] == "silence_ms" else {"metric", "threshold", "model"}
+            if set(gate) != fields:
+                raise VoiceBalanceError(f"voice_balance.json: {key} có trường cổng ngắt ngoài hợp đồng")
+            number(gate, "threshold", (0.001, 1000.0 if gate["metric"] == "silence_ms" else 1.0), key)
+            if gate["metric"] == "closure_hgb_v1" and (key != "vieneu@3.8.3/Đức Trí" or gate["model"] != "word_break_duc_tri.json"):
+                raise VoiceBalanceError(f"voice_balance.json: {key} chưa có thước closure hợp lệ")
         if not SPEED_FACTOR_MIN <= x * r <= SPEED_FACTOR_MAX:
             raise VoiceBalanceError(
                 f"voice_balance.json: tempo x*r = {x * r:.3f} của {key} ngoài "
@@ -175,6 +186,7 @@ def constants_for_key(key: str) -> VoiceConstants:
         o_db=float(record["o_db"]),
         ref_lufs=float(record["ref_lufs"]),
         engine_speed=float(record["engine_speed"]) if "engine_speed" in record else None,
+        word_break_gate=dict(record["word_break_gate"]) if "word_break_gate" in record else None,
     )
 
 

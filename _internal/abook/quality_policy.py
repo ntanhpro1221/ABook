@@ -105,6 +105,9 @@ QUALITY_IMPLEMENTATION_FILES = (
     "assets/voice_rank.json",
     "voice_catalog.py",
     "vietnamese_syllable.py",
+    "word_break.py",
+    "assets/word_break_tokenizer.json.gz",
+    "assets/word_break_duc_tri.json",
     "../pyproject.toml",
     "../uv.lock",
 )
@@ -180,8 +183,15 @@ def voice_preview_assets_hash() -> str:
 
 
 def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
+    from .webui import word_timing
+
+    aligner_folder = word_timing.model_dir()
     return {
         "policy_version": QUALITY_POLICY_VERSION,
+        "word_break_aligner": {
+            name: external_file_hash(str(aligner_folder / name)) if aligner_folder is not None else "MISSING"
+            for name in word_timing.MODEL_FILES
+        },
         "implementation_hash": quality_implementation_hash(),
         "stage_fingerprints": {
             TEXT_SEGMENTATION_STAGE: text_segmentation_implementation_hash(),

@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tự sinh lại tối đa một lần khi phát hiện ngắt giữa các âm tiết cùng từ ở giọng đã hiệu chỉnh, giữ nguyên chữ và cách đọc.
+
 ## [0.4.165] - 2026-11-08
 
 - Bỏ tự hẹn giờ và tự dừng khi lâu không tương tác. Chỉ dừng theo số phút, hết chương hoặc lịch đêm bạn đã bật; sửa thao tác hẹn lại và huỷ hẹn giờ trên điện thoại, máy tính và web.

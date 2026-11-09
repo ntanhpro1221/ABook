@@ -1,5 +1,12 @@
 # Test report
 
+## 09-11-2026 — word-break retry gate
+
+- Enable the balanced-WAV in-word pause gate only for individually calibrated presets: Ngọc Linh (72.8 ms) and Đức Trí (frozen voice-local closure classifier). Kim Thanh and Đoan Trang remain disabled after failing independent validation/holdout; no sampling or source-text change.
+- The existing candidate selector reserves one durable retry before inference, retains separate WAVs and records measurements plus before/after retry history in `signal_json.word_break_gate`. Reopening cannot spend another retry. An inconclusive retry alignment cannot displace a measured incumbent with otherwise equal signal quality.
+- Focused gate tests: **16 passed, 0 failed**. Related regression: **796 passed, 0 failed**, `pytest -vv -rf`, 148.54 s. Coverage includes actual phonemizer invariance through a fake waveform engine, clean/inserted/persistent gaps, punctuation/newline exclusion, crash/reopen, ASR candidate isolation, signal-cache recovery, voice constants, locked policy and packaged assets. This is a development change, not a release check.
+- Private frozen calibration and app-path measurement artifacts are retained in the wbgate task dossier; final sentence-bootstrap rates, PhoWhisper CER and observed CPU overhead are reported there separately from these regression results.
+
 ## 08-11-2026 — rel165 integration regression
 
 - Integrated timerbug2, ui165, nomig165 and audiofx into dev/integ165. The first full pytest run reported 39 failed, 10,612 passed, 14 skipped and 2 xfailed; its raw `-rf` summary is retained in the rel165 task dossier.

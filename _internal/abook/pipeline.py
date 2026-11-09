@@ -294,6 +294,7 @@ SPOKEN_TEXT_DRIFT_MESSAGE = (
 )
 SEGMENT_CANDIDATE_DIRECTORY = "candidates"
 TTS_SIGNAL_PROVENANCE_FIELDS = (
+    "word_break_gate",
     "tts_delivery_mode",
     ASR_CLARITY_REPAIR_ROUND_METRIC,
     "spoken_text_sha256",
@@ -3959,7 +3960,10 @@ class BookPipeline:
         repair_round: int,
         tts_attempt: int,
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
+        *, word_break: bool = False,
     ) -> str:
+        if word_break:
+            return f"word_break_candidate_{int(repair_round)}_{int(tts_attempt)}"
         prefix = f"asr_clarity_candidate_{int(repair_round)}"
         if pronunciation_delivery_variant == PRONUNCIATION_DELIVERY_LOCKED:
             return f"{prefix}_{int(tts_attempt)}"
@@ -3986,7 +3990,43 @@ class BookPipeline:
         *,
         candidate_repair_requirement: str = STANDARD_CANDIDATE_GATE_REQUIREMENT,
         repair_trigger_check_id: int | None = None,
+        word_break_source: tuple[Path, str, dict[str, Any], int] | None = None,
+        word_break_parent: Any = None,
     ) -> Any:
+        if word_break_source is not None:
+            output, checksum, metrics, source_seed = word_break_source
+            key = self._word_break_candidate_key(row, metrics)
+            if self.db.artifact_by_key(key) is not None:
+                return None
+            salt = self._segment_candidate_seed_salt(0, 0, word_break=True)
+            candidate_path = self._segment_candidate_root() / (hashlib.sha256(key.encode()).hexdigest()+".word_break.wav")
+            if word_break_parent is not None:
+                import shutil
+                salt = self._segment_candidate_seed_salt(int(word_break_parent["repair_round"]),
+                    int(word_break_parent["tts_attempt"])+1, str(word_break_parent["pronunciation_delivery_variant"]))
+                candidate_path = Path(str(word_break_parent["wav_path"]))
+                retained = output.with_name(output.stem+f".word_break_before.{checksum[:16]}.wav")
+                staged = retained.with_suffix(".part")
+                shutil.copyfile(output, staged)
+                with staged.open("rb+") as handle:
+                    os.fsync(handle.fileno())
+                if sha256_file(staged) != checksum:
+                    raise AudioQualityError("word-break source changed before reservation")
+                os.replace(staged, retained)
+                output = retained
+            metadata = dict(state="reserved", retry_count=1, seed_salt=salt,
+                            parent_candidate_id=int(word_break_parent["id"]) if word_break_parent is not None else None,
+                            generation_seed=self.tts.generation_seed(row, salt), source_seed=source_seed,
+                            source_path=str(output), source_sha256=checksum, before=metrics["word_break_gate"],
+                            spoken_text_sha256=metrics["spoken_text_sha256"], voice_profile_id=metrics["voice_profile_id"],
+                            generation_policy_hash=self.quality_policy_hash)
+            reserved = self.db.reserve_word_break_retry(
+                artifact_key=key, segment_id=int(row["id"]),
+                incumbent_sha256=str(self.db.get_segment(int(row["id"]))["wav_sha256"]) if word_break_parent is not None else checksum,
+                output=candidate_path, metadata=metadata,
+                parent_candidate_id=int(word_break_parent["id"]) if word_break_parent is not None else None,
+            )
+            return None if reserved is None else dict(reserved, key=key, wav_path=candidate_path)
         source_variant_requested = False
         force_clause_split = False
         prior_decode_evidence: list[dict[str, Any]] = []
@@ -4333,7 +4373,8 @@ class BookPipeline:
             raise RuntimeError("segment candidate TTS attempt exceeds the finite retry schedule")
         last_error = ""
 
-        for attempt in (range(0) if is_split else range(current_attempt, retries)):
+        attempt = current_attempt
+        while not is_split and attempt < retries:
             self._wait_pause_or_stop()
             seed_salt = self._segment_candidate_seed_salt(
                 repair_round,
@@ -4371,6 +4412,17 @@ class BookPipeline:
                 if int(seed) != expected_seed:
                     raise RuntimeError("TTS returned a seed that differs from the candidate ledger")
                 self._archive_usable_take(row, output, checksum, metrics, seed)
+                candidate, retried = self._retry_candidate_word_break_once(
+                    row, candidate, output, checksum, metrics, seed,
+                    repair_short_utterance=repair_short_utterance,
+                )
+                if retried is None:
+                    return self.db.mark_segment_candidate_tts_failed(
+                        int(candidate["id"]), expected_generation_seed=int(candidate["generation_seed"]),
+                        error="word-break retry failed; single retry budget spent",
+                    )
+                checksum, metrics, seed = retried
+                self._archive_usable_take(row, output, checksum, metrics, seed)
                 if (
                     self.settings.get("quality_profile") == "high_quality"
                     and metrics.get("pace_outlier")
@@ -4400,8 +4452,8 @@ class BookPipeline:
                     f"TTS candidate {row['stable_id']} round {repair_round + 1} "
                     f"failed attempt {attempt + 1}/{retries}: {last_error}"
                 )
-                if attempt + 1 < retries:
-                    next_attempt = attempt + 1
+                next_attempt = int(candidate["tts_attempt"]) + 1
+                if next_attempt < retries:
                     next_salt = self._segment_candidate_seed_salt(
                         repair_round,
                         next_attempt,
@@ -4414,6 +4466,9 @@ class BookPipeline:
                         tts_attempt=next_attempt,
                     )
                     time.sleep(min(8, 2**attempt))
+                    attempt = next_attempt
+                else:
+                    break
 
         if is_short_utterance(spoken_text):
             last_error = f"{last_error}; split=short utterance is not splittable"
@@ -4881,6 +4936,9 @@ class BookPipeline:
         asr_repair_round: int | None = None,
         prefetched: dict[str, Any] | None = None,
     ) -> None:
+        if self._resume_word_break_retry(row):
+            self._accept_retained_take(row)
+            return
         base_output = self._chunk_path(row)
         output = base_output
         last_error = ""
@@ -4919,6 +4977,13 @@ class BookPipeline:
                 if asr_repair_round is not None:
                     metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
                 self._keep_usable_take(row, output, checksum, metrics, seed)
+                self._retry_word_break_once(
+                    row, output, checksum, metrics, seed,
+                    repair_short_utterance=repair_short_utterance, delivery_mode=delivery_mode,
+                )
+                if (metrics.get("word_break_gate") or {}).get("fired"):
+                    selected = self.db.get_segment(int(row["id"]))
+                    metrics = json.loads(str(selected["signal_json"]))
                 if self.settings.get("quality_profile") == "high_quality":
                     retry_reasons = []
                     if metrics.get("pace_outlier"):
@@ -5093,13 +5158,130 @@ class BookPipeline:
             return False
 
     @staticmethod
-    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float]:
+    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float, float]:
         """Bản tốt nhất có ít cờ tín hiệu/QA đã biết hơn, rồi ít lặp hơn; bằng nhau giữ bản trước."""
         repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
         flags = sum(bool(metrics.get(key)) for key in (
             "pace_outlier",  GENERATION_CEILING_METRIC, "signal_rejected",
         )) + int(repeated > REPEATED_UTTERANCE_THRESHOLD) + int(qa_failed)
-        return flags, repeated
+        gate = metrics.get("word_break_gate") or {}
+        inconclusive = gate.get("status") == "inconclusive"
+        flags += int(bool(gate.get("fired")) or inconclusive)
+        gap_rank = float("inf") if inconclusive else float(gate.get("max_gap_ms", 0.)) if gate.get("fired") else 0.
+        return flags, repeated, gap_rank
+
+    def _word_break_candidate_key(self, row: Any, metrics: dict[str, Any]) -> str:
+        identity = [int(row["id"]), self.quality_policy_hash, metrics.get("spoken_text_sha256"),
+                    metrics.get("voice_profile_id"), int(_segment_value(row, "listener_retakes", 0) or 0)]
+        return "word_break_retry:" + hashlib.sha256(json.dumps(identity).encode()).hexdigest()
+
+    def _retry_candidate_word_break_once(self, row: Any, parent: Any, output: Path,
+                                        checksum: str, metrics: dict[str, Any], seed: int, *,
+                                        repair_short_utterance: bool) -> tuple[Any, Any]:
+        gate = metrics.get("word_break_gate") or {}
+        if not gate.get("fired"):
+            return parent, (checksum, metrics, seed)
+        retry = self._allocate_segment_candidate(row, 0, 1,
+            word_break_source=(output, checksum, metrics, seed), word_break_parent=parent)
+        if retry is None:
+            return parent, (checksum, metrics, seed)
+        parent = self.db.restart_segment_candidate_generation(
+            int(parent["id"]), expected_generation_seed=int(parent["generation_seed"]),
+            generation_seed=int(retry["generation_seed"]), tts_attempt=int(parent["tts_attempt"])+1,
+        )
+        try:
+            result = self._synthesize_atomic_with_pronunciation_variant(row, output,
+                pronunciation_delivery_variant=str(parent["pronunciation_delivery_variant"]),
+                seed_salt=retry["seed_salt"], repair_short_utterance=repair_short_utterance,
+                delivery_mode=DELIVERY_CLARITY)
+            digest, measured, new_seed = result
+            if new_seed != int(parent["generation_seed"]) or new_seed == seed:
+                raise RuntimeError("word-break candidate retry seed differs from reservation")
+            for field in ("spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant", "tts_delivery_mode"):
+                if measured.get(field) != metrics.get(field):
+                    raise RuntimeError("word-break candidate retry changed input: " + field)
+            after = json.loads(json.dumps(measured["word_break_gate"]))
+            measured["word_break_gate"].update(retry_count=1, triggered=True, before=gate, after=after,
+                                                retry_state="complete", candidate_key=retry["key"], retry_seed=new_seed)
+            self.db.finish_word_break_retry(retry["key"], checksum=digest, result={"metrics": measured})
+            return parent, result
+        except Exception as exc:
+            self.db.finish_word_break_retry(retry["key"], result={"error": str(exc)})
+            return parent, None
+
+    def _resume_word_break_retry(self, row: Any) -> bool:
+        current = self.db.get_segment(int(row["id"]))
+        if not self._has_real_audio(current):
+            return False
+        signal = json.loads(str(current["signal_json"] or "{}"))
+        gate = signal.get("word_break_gate") or {}
+        if not gate.get("retry_count"):
+            return False
+        # Source/voice edits and explicit listener retakes get another identity.
+        spoken, _ = self._spoken_text_with_pronunciation_variant(row, PRONUNCIATION_DELIVERY_LOCKED)
+        if signal.get("spoken_text_sha256") != hashlib.sha256(spoken.encode()).hexdigest():
+            return False
+        if int(signal.get("voice_profile_id", -1)) != int(self.tts.locked_voice_provenance(row)["voice_profile_id"]):
+            return False
+        artifact = self.db.artifact_by_key(self._word_break_candidate_key(row, signal))
+        if artifact is None:
+            return False
+        metadata = json.loads(str(artifact["metadata_json"]))
+        if metadata.get("parent_candidate_id") is not None:
+            # ASR candidates must still pass their own beam/greedy/perceptual
+            # promotion transaction. This ledger only owns their retry budget.
+            return False
+        if metadata["state"] == "complete":
+            result = metadata["result"]
+            path = Path(str(artifact["path"]))
+            if path.is_file() and sha256_file(path) == artifact["sha256"]:
+                self._keep_usable_take(row, path, str(artifact["sha256"]), result["metrics"], int(metadata["generation_seed"]))
+        elif metadata["state"] == "reserved":
+            self.db.finish_word_break_retry(str(artifact["artifact_key"]), result={"error": "interrupted after reservation; budget spent"})
+            metadata["state"] = "failed"
+        current = self.db.get_segment(int(row["id"]))
+        self.db.annotate_word_break_retry(int(row["id"]), str(current["wav_sha256"]),
+                                         dict(retry_count=1, triggered=True, retry_state=metadata["state"],
+                                              before=metadata["before"]))
+        return True
+
+    def _retry_word_break_once(self, row: Any, output: Path, checksum: str,
+                               metrics: dict[str, Any], seed: int, *,
+                               repair_short_utterance: bool, delivery_mode: str) -> None:
+        gate = metrics.get("word_break_gate") or {}
+        if not gate.get("fired"):
+            return
+        current = self.db.get_segment(int(row["id"]))
+        # The existing selector may already be retaining a cleaner take.
+        if str(current["wav_sha256"]) != checksum:
+            return
+        candidate = self._allocate_segment_candidate(row, 0, 1, word_break_source=(output, checksum, metrics, seed))
+        if candidate is None:
+            return
+        key = candidate["key"]
+        summary: dict[str, Any] = dict(retry_count=1, triggered=True, before=gate, candidate_key=key)
+        try:
+            retry_checksum, retry_metrics, retry_seed = self.tts.synthesize_atomic(
+                row, candidate["wav_path"], seed_salt=candidate["seed_salt"],
+                repair_short_utterance=repair_short_utterance, delivery_mode=delivery_mode,
+            )
+            if retry_seed != candidate["generation_seed"] or retry_seed == seed:
+                raise RuntimeError("word-break retry did not use its reserved new seed")
+            for field in ("spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant", "tts_delivery_mode"):
+                if retry_metrics.get(field) != metrics.get(field):
+                    raise RuntimeError("word-break retry changed engine input provenance: " + field)
+            summary.update(retry_state="complete", after=json.loads(json.dumps(retry_metrics.get("word_break_gate"))), retry_seed=retry_seed)
+            retry_metrics["word_break_gate"].update(summary)
+            self.db.finish_word_break_retry(key, checksum=retry_checksum, result={"metrics": retry_metrics})
+            self._keep_usable_take(row, candidate["wav_path"], retry_checksum, retry_metrics, retry_seed)
+        except Exception as exc:  # Preserve the incumbent; this gate has no third take.
+            artifact = self.db.artifact_by_key(key)
+            if json.loads(str(artifact["metadata_json"]))["state"] == "reserved":
+                self.db.finish_word_break_retry(key, result={"error": str(exc)})
+            summary.update(retry_state="failed", error=str(exc))
+            self.log(f"Sinh lại vì ngắt trong từ {row['stable_id']} chưa đạt: {exc}")
+        current = self.db.get_segment(int(row["id"]))
+        self.db.annotate_word_break_retry(int(row["id"]), str(current["wav_sha256"]), summary)
 
     def _archive_usable_take(self, row: Any, output: Path, checksum: str,
                              metrics: dict[str, Any], seed: int) -> None:

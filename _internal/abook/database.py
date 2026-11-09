@@ -9449,6 +9449,76 @@ class ProjectDB:
                 "SELECT * FROM artifacts WHERE artifact_key=?", (artifact_key,)
             ).fetchone()
 
+    def reserve_word_break_retry(
+        self, *, artifact_key: str, segment_id: int, incumbent_sha256: str,
+        output: Path, metadata: dict[str, Any], parent_candidate_id: int | None = None,
+    ) -> dict[str, Any] | None:
+        """Spend the one retry before inference, in the existing artifact ledger.
+
+        The key binds policy, spoken text, voice and listener retake. A crash after
+        reservation spends the retry too; reopening cannot mint a second one.
+        """
+        if metadata.get("state") != "reserved" or metadata.get("retry_count") != 1:
+            raise ValueError("word-break reservation must spend exactly one attempt")
+        now = time.time()
+        with self.transaction() as conn:
+            segment = conn.execute("SELECT * FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if segment is None or str(segment["wav_sha256"] or "") != incumbent_sha256:
+                raise RuntimeError("word-break incumbent checksum CAS failed")
+            signal = self._json_object(segment["signal_json"], "word-break incumbent signal")
+            binding = signal
+            if parent_candidate_id is not None:
+                parent = self._candidate_row_conn(conn, parent_candidate_id)
+                self._require_candidate_incumbent_conn(conn, parent)
+                if int(parent["segment_id"]) != segment_id or parent["state"] != SEGMENT_CANDIDATE_GENERATING:
+                    raise RuntimeError("word-break parent candidate is not generating this segment")
+                binding = dict(spoken_text_sha256=parent["expected_spoken_text_sha256"],
+                               voice_profile_id=parent["expected_voice_profile_id"], generation_policy_hash=parent["policy_hash"])
+            for field in ("spoken_text_sha256", "voice_profile_id", "generation_policy_hash"):
+                if str(binding.get(field)) != str(metadata[field]):
+                    raise RuntimeError("word-break reservation differs from locked " + field)
+            existing = conn.execute("SELECT id FROM artifacts WHERE artifact_key=?", (artifact_key,)).fetchone()
+            if existing is not None:
+                return None
+            conn.execute(
+                "INSERT INTO artifacts(artifact_key,kind,path,verified,metadata_json,created_at,updated_at) VALUES(?,?,?,0,?,?,?)",
+                (artifact_key, "word_break_candidate", str(output.resolve()), json.dumps(metadata, ensure_ascii=False), now, now),
+            )
+            gate = dict(signal.get("word_break_gate") or {})
+            gate.update(retry_count=1, triggered=True, retry_state="reserved", candidate_key=artifact_key)
+            signal["word_break_gate"] = gate
+            conn.execute("UPDATE segments SET signal_json=?,updated_at=? WHERE id=? AND wav_sha256=?",
+                         (json.dumps(signal, ensure_ascii=False), now, segment_id, incumbent_sha256))
+        return metadata
+
+    def finish_word_break_retry(self, artifact_key: str, *, result: dict[str, Any],
+                                checksum: str | None = None) -> None:
+        with self.transaction() as conn:
+            artifact = conn.execute("SELECT * FROM artifacts WHERE artifact_key=?", (artifact_key,)).fetchone()
+            if artifact is None or artifact["kind"] != "word_break_candidate":
+                raise RuntimeError("word-break retry reservation is missing")
+            metadata = self._json_object(artifact["metadata_json"], "word-break reservation")
+            if metadata["state"] != "reserved":
+                raise RuntimeError("word-break retry is already terminal")
+            if checksum and (not Path(artifact["path"]).is_file() or sha256_file(Path(artifact["path"])) != checksum):
+                raise RuntimeError("word-break retry checksum differs before checkpoint")
+            metadata.update(state="complete" if checksum else "failed", result=result)
+            conn.execute("UPDATE artifacts SET sha256=?,metadata_json=?,updated_at=? WHERE id=?",
+                         (checksum, json.dumps(metadata, ensure_ascii=False), time.time(), artifact["id"]))
+
+    def annotate_word_break_retry(self, segment_id: int, expected_sha256: str, summary: dict[str, Any]) -> None:
+        """Attach retry history to the selected take without replacing its measurements."""
+        with self.transaction() as conn:
+            row = conn.execute("SELECT signal_json,wav_sha256 FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if row is None or str(row["wav_sha256"] or "") != expected_sha256:
+                raise RuntimeError("word-break selected take CAS failed")
+            signal = self._json_object(row["signal_json"], "selected signal")
+            gate = dict(signal.get("word_break_gate") or {})
+            gate.update(summary)
+            signal["word_break_gate"] = gate
+            conn.execute("UPDATE segments SET signal_json=?,updated_at=? WHERE id=?",
+                         (json.dumps(signal, ensure_ascii=False), time.time(), segment_id))
+
     def set_current_quality_policy(
         self,
         *,
