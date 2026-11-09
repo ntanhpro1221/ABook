@@ -736,10 +736,13 @@ export function Sheet({
   focusSelector,
   onKeyDown,
   className,
+  leading,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
+  /** Nút đứng trước tiêu đề (← của trang con trong tấm): hiện / ẩn có chuyển cảnh cùng hàng tiêu đề. */
+  leading?: ReactNode;
   trigger?: ReactNode;
   children: ReactNode;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
@@ -750,9 +753,9 @@ export function Sheet({
   className?: string;
 }) {
   useArrivalOnOpen(open);
-  const lastContent = useRef({ title, children, description, footer });
-  if (open) lastContent.current = { title, children, description, footer };
-  const shown = open ? { title, children, description, footer } : lastContent.current;
+  const lastContent = useRef({ title, children, description, footer, leading });
+  if (open) lastContent.current = { title, children, description, footer, leading };
+  const shown = open ? { title, children, description, footer, leading } : lastContent.current;
   const opener = useRef<Element | null>(null);
   const start = useRef<number | null>(null);
   const dragged = useRef(false);
@@ -845,11 +848,12 @@ export function Sheet({
               <span className="h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
             </button>
           </DialogPrimitive.Close>
-          <div className="flex items-center justify-between gap-3">
-            <DialogPrimitive.Title data-surface-title className="text-lg font-bold">
+          <MotionRegion className="flex min-w-0 items-center" motionKey={Boolean(shown.leading)}>
+            {shown.leading}
+            <DialogPrimitive.Title data-surface-title className="min-w-0 text-lg font-bold">
               <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
             </DialogPrimitive.Title>
-          </div>
+          </MotionRegion>
           </div>
           <div ref={setBody} style={fade} className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
             {/* Mô tả / chân bảng hiện / ẩn lúc bảng đang mở: mở / khép tại chỗ (lúc mở bảng thì đứng yên cùng bảng - useArrivalOnOpen). */}

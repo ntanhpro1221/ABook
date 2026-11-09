@@ -4,6 +4,7 @@ import * as Slider from '@radix-ui/react-slider';
 import * as Switch from '@radix-ui/react-switch';
 import { S } from '@/shared/strings.generated';
 import { Button } from '@/shared/ui';
+import { useSheetPage } from './sheetPages';
 import { BackButton } from '@/shared/ScreenHeader';
 import { Collapse } from '@/shared/Collapse';
 import { toast } from '@/shared/toast';
@@ -47,6 +48,8 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
   const finish=()=>{if(getTones().hasEdits){run(l=>l.prepareLeave());setAsking(true);return;}setAsking(false);const action=pending.current;pending.current=null;action?.();};
   useEffect(()=>{if(asking||naming)page.current?.lastElementChild?.scrollIntoView({block:'end'});},[asking,naming]);
   useBackLayer(true,()=>naming?setNaming(null):asking?setAsking(false):leave(onBack),page);
+  // Trong tấm trượt (điện thoại) đầu tấm thành "← Âm sắc"; hộp nổi máy tính không có đầu tấm nên trang tự vẽ.
+  const inSheet=useSheetPage(true,S.s_am_sac_8c2f4e1a,()=>leave(onBack));
   const suggest=()=>S.s_tone_suggest(lib.data.mine.length+1);
   const form=(value:string,kind:NonNullable<typeof naming>)=>{setMenu(null);setName(value);setNaming(kind);};
   const current=lib.selected;
@@ -70,7 +73,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     </div></Collapse>}
   </div>;};
   return <div ref={page} data-tone-page className="flex min-w-0 flex-col">
-    <div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><h2 className="font-semibold">{S.s_am_sac_8c2f4e1a}</h2></div>
+    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><h2 className="font-semibold">{S.s_am_sac_8c2f4e1a}</h2></div>}
     <div className="flex min-h-12 items-center justify-between gap-3"><p className="min-w-0 font-semibold" aria-live="polite">{lib.name}</p>
       {(current.id==='draft'||lib.dirty)&&<button type="button" className={LINK} onClick={()=>form(suggest(),{})}>{S.s_tone_save}</button>}</div>
     <svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={S.s_am_sac_8c2f4e1a} className="box-content h-20 w-full rounded-control border border-line py-3 text-accent">

@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 5854 chữ (2798 khác nhau), 325 cặp nhãn-icon; Qt 3470 chữ (2591 khác nhau), 282 cặp nhãn-icon (icon dùng ở 391 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 5857 chữ (2798 khác nhau), 325 cặp nhãn-icon; Qt 3470 chữ (2591 khác nhau), 282 cặp nhãn-icon (icon dùng ở 391 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -152,7 +152,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Âm thanh
 
 - chỉ Qt (4): Tắt* (`qt/AudioFxPanel.qml:13`); Tự chỉnh (chưa lưu)* (`qt/AudioFxPanel.qml:13`); Âm thanh* (`qt/AudioFxPanel.qml:47`); Nhạc nền* (`qt/AudioFxPanel.qml:49`)
-- chỉ web (3): 1 kHz (`17`); 250 Hz (`17`); Kéo để sắp xếp (`59`)
+- chỉ web (3): 1 kHz (`18`); 250 Hz (`18`); Kéo để sắp xếp (`62`)
 
 ### Khay và cửa sổ mini
 
@@ -167,17 +167,17 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thanh phát
 
 - chỉ Qt (10): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:121`); Chỉnh* (`qt/PlayerBar.qml:149`); Âm thanh* (`qt/PlayerBar.qml:149`); Hẹn giờ* (`qt/PlayerBar.qml:150`); Giọng đọc* (`qt/PlayerBar.qml:153`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:17`); Thêm giọng…* (`qt/PlayerVoicePopover.qml:31`)
-- chỉ web (8): Shift+← (`270`); Sắp tắt · (`1235`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (8): Shift+← (`273`); Sắp tắt · (`1267`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
 - chỉ Qt (19): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {} (chưa có audio)* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:34`); Đang tải chương… (`qt/ChapterReader.qml:87`); Đã nghe* (`qt/ChapterRow.qml:51`); Tuỳ chọn {}* (`qt/ChapterRow.qml:103`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:239`); Giọng {}* (`qt/NowPlaying.qml:295`); Thử lại* (`qt/NowPlaying.qml:338`); Danh sách chương* (`qt/NowPlaying.qml:455`); Nhạc nền* (`qt/NowPlaying.qml:466`); Chỉnh* (`qt/NowPlaying.qml:604`); Âm thanh* (`qt/NowPlaying.qml:604`); Cửa sổ mini (`qt/NowPlaying.qml:611`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`)
-- chỉ web (18): Shift+← (`270`); Đã chọn tốc độ đọc {} (`471`); Phím (`486`); Đã chọn giọng {} (`748`); Hẹn giờ đã tắt tiếng lúc (`968`); Bật lại (`976`); Tiếng nhỏ dần (`982`); Hẹn giờ ngủ trên {} (`1048`); Trang sách (`2053`); Về chế độ nghe (`2069`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); ...
+- chỉ web (18): Shift+← (`273`); Đã chọn tốc độ đọc {} (`503`); Phím (`518`); Đã chọn giọng {} (`780`); Hẹn giờ đã tắt tiếng lúc (`1000`); Bật lại (`1008`); Tiếng nhỏ dần (`1014`); Hẹn giờ ngủ trên {} (`1080`); Trang sách (`2085`); Về chế độ nghe (`2101`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); ...
 
 ### Đọc theo
 
 - chỉ Qt (1): Đang mở văn bản chương… (`qt/ReadAlongView.qml:361`)
-- chỉ web (3): Đang tải chữ (`1685`); Nghe từ “{}” (`56`); Shift F10: sửa cách đọc. (`338`)
+- chỉ web (3): Đang tải chữ (`1717`); Nghe từ “{}” (`56`); Shift F10: sửa cách đọc. (`338`)
 
 ### Trang sách
 

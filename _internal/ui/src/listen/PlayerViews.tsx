@@ -2,6 +2,9 @@ import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AudioFxPanel } from './AudioFxPanel';
+import { createPortal } from "react-dom";
+import { BackButton } from "@/shared/ScreenHeader";
+import { SheetPageDepth, SheetPages, useSheetPage, useSheetPageStack } from './sheetPages';
 import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -383,8 +386,24 @@ export function MenuShell({
     }
     (onOpenChange ?? setLocalOpen)(next);
   };
-  // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước.
-  useBackLayer(inline && isOpen, () => changeOpen(false), inlineRef, triggerRef);
+  // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước. Trong tấm trượt (điện thoại) dòng mở thành TRANG
+  // con: thân thay danh sách của tấm, tiêu đề thay tên tấm ("← Âm thanh") - sheetPages.tsx.
+  const page = useSheetPage(inline && isOpen, dialogLabel ?? label, () => changeOpen(false), true);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useBackLayer(inline && isOpen, () => changeOpen(false), page ? pageRef : inlineRef, triggerRef);
+  const wasPage = useRef(false);
+  useEffect(() => {
+    // Khép trang: danh sách hiện lại sau lần vẽ của tấm, tiêu điểm về đúng dòng vừa mở.
+    if (wasPage.current && !isOpen) requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
+    wasPage.current = Boolean(page) && isOpen;
+  }, [page, isOpen]);
+  const pages = useSheetPageStack();
+  const topTitle = pages.top?.title;
+  const sheetRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // Dòng vừa bấm đã ẩn cùng danh sách: tiêu điểm sang ← của đầu tấm (Android: tấm con nhận tiêu điểm).
+    if (topTitle) requestAnimationFrame(() => sheetRef.current?.closest("[role=dialog]")?.querySelector<HTMLElement>(".back-button")?.focus({ preventScroll: true }));
+  }, [topTitle]);
   const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
@@ -393,6 +412,12 @@ export function MenuShell({
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
+  if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
+    <div ref={inlineRef} data-player-inline>{button}</div>
+    {isOpen && page.slot && createPortal(<SheetPageDepth.Provider value={page.depth}>
+      <div ref={pageRef} id={sheetId} data-sheet-page hidden={page.contentDepth !== page.depth} className="pb-2">{children}{footer}</div>
+    </SheetPageDepth.Provider>, page.slot)}
+  </Popover.Root>;
   if (inline) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>
       {button}
@@ -400,9 +425,16 @@ export function MenuShell({
     </div>
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
-    <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
+    <Sheet open={isOpen} onOpenChange={changeOpen} title={pages.top?.title ?? dialogLabel ?? label} trigger={button}
+      leading={pages.top && <BackButton label={S.s_quay_lai_6d793582} onClick={pages.top.back} />}
       focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} className="player-sheet">
-      <InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider>
+      <SheetPages.Provider value={pages.api}>
+        {/* Danh sách gốc ẩn (không tháo: dòng đang mở giữ thân của trang) khi một trang có thân riêng đang mở; trượt sang như tấm con Android. */}
+        <MotionRegion elementRef={sheetRef} motionKey={pages.api.contentDepth} slideIndex={pages.api.contentDepth}>
+          <div hidden={pages.api.contentDepth > 0}><InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider></div>
+          <div ref={pages.setSlot} />
+        </MotionRegion>
+      </SheetPages.Provider>
     </Sheet>
   </Popover.Root>;
   return (
