@@ -199,6 +199,8 @@ public slots:
         feedback = std::make_unique<Feedback>([] { return new FakeOut; }, nullptr);
         Feedback::setInstance(feedback.get());
         QObject::connect(player.get(), &Player::playingChanged, feedback.get(), [this] { feedback->setBookPlaying(player->playing()); });
+        QObject::connect(player.get(), &Player::sleepWarning, feedback.get(), [this] { feedback->play(QStringLiteral("sleepWarn")); });
+        QObject::connect(player.get(), &Player::sleepExtended, feedback.get(), [this] { feedback->play(QStringLiteral("sleepExtend")); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
         qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());

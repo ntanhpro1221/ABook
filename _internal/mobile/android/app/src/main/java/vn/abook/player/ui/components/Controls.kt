@@ -93,6 +93,7 @@ fun <T : Choice> ChoiceRow(
     tag: String = "choice",
 ) {
     val colors = Abook.colors
+    val feedbackView = androidx.compose.ui.platform.LocalView.current
     val index = options.indexOf(value).coerceAtLeast(0)
     val position = remember { Animatable(index.toFloat()) }
     LaunchedEffect(index) { position.animateTo(index.toFloat(), Motion.TabSlide) }
@@ -108,6 +109,7 @@ fun <T : Choice> ChoiceRow(
                     Modifier.heightIn(min = Dim.s48)
                         .pressable(Role.RadioButton) {
                             val center = Offset(spans[i * 4] + inks[i] / 2, spans[i * 4 + 1] + spans[i * 4 + 3] / 2)
+                            vn.abook.player.Feedback.play("toggle", feedbackView)
                             onPick(option, where[0]?.takeIf { it.isAttached }?.localToRoot(center) ?: Offset.Unspecified)
                         }
                         .semantics { selected = chosen }

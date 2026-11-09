@@ -14,7 +14,7 @@ object ListenPrefs {
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeSensitivity", "flipToPause",
         "headsetSkips", "autoRewind", "schedule", "theme",
-        // Tiếng chạm, rung, nền đọc: do giao diện áp; lõi chỉ nhớ để trả lại (như theme).
+        // Feedback is also used by screen-off gestures in the playback process.
         "touchSounds", "haptics", "readingSurface",
         // Chỉ giao diện của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở; bảng chung ranges.json không liệt kê.
         "autoPip",
@@ -81,6 +81,8 @@ object ListenPrefs {
      */
     fun apply(raw: JSONObject, startup: Boolean = false) {
         val json = clean(raw)
+        if (json.has("touchSounds")) Feedback.sounds = json.getBoolean("touchSounds")
+        if (json.has("haptics")) Feedback.haptics = json.getBoolean("haptics")
         if (json.has("sleepExtendMinutes")) SleepTimer.extendMinutes = json.getInt("sleepExtendMinutes")
         if (json.has("sleepFadeSeconds")) SleepTimer.fadeMs = json.getInt("sleepFadeSeconds") * 1000L
         if (json.has("shakeToExtend")) SleepTimer.shakeEnabled = json.getBoolean("shakeToExtend")

@@ -154,15 +154,17 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 
 ### 5.3 Âm thanh giao diện (SFX)
 
-App nghe sách: âm thanh giao diện KHÔNG bao giờ trộn vào lời đọc.
+App nghe sách: âm thanh giao diện giữ thưa để không ngắt mạch nghe.
 
-- **Tự im khi đang phát**: mọi tiếng chạm tắt khi sách đang phát, trừ một: báo hẹn giờ ngủ sắp tắt.
+- **Tự im khi đang phát**: mọi tiếng chạm tắt khi sách đang phát, trừ báo hẹn giờ ngủ sắp tắt và xác nhận hẹn lại chủ động (lắc máy, nút/phím gia hạn).
 - **Bộ tiếng** (ngắn ≤ 250 ms, mềm, cùng một âm sắc "đồng thau gõ nhẹ", tự tổng hợp bằng mã - Web Audio / Android AudioTrack -
-  không file thu âm, không giấy phép ngoài; mức −24 dB so với lời đọc):
+  không file thu âm, không giấy phép ngoài; nốt xác nhận có đỉnh −24 dBFS, không tự cân theo nội dung sách):
   - *chạm* (tick rất khẽ): chỉ cho công tắc, chọn mức tốc độ/hẹn giờ; KHÔNG cho mọi nút.
   - *xác nhận* (hai nốt đi lên, quãng ba): thêm sách xong, ghép máy xong.
   - *xong việc* (ba nốt): sách nói Studio làm xong (máy tính phát; điện thoại qua thông báo).
   - *hẹn giờ* (một nốt trầm, 30 giây trước khi tắt, rồi lời đọc nhỏ dần 10 giây).
+  - *hẹn lại* dùng đúng hai nốt xác nhận C6/E6 (1046,5/1318,5 Hz, 250 ms, −24 dBFS), nổi khác nốt trầm báo sắp hết; phát một lần cùng rung CONFIRM, kể cả khi đang mờ dần. Không tăng âm lượng sách, không xin audio focus, không dùng luồng báo thức. Android AudioTrack dùng USAGE_ASSISTANCE_SONIFICATION, chạy từ lõi phát khi màn tắt; mức chuông im/rung và công tắc Âm thanh chạm vẫn được tôn trọng. Mức −24 dBFS là biên độ tín hiệu tổng hợp, không bảo đảm chênh −24 dB với mọi bản thu/thiết bị.
+  - *hết hẹn* im cả âm lẫn rung: người nghe có thể đã ngủ. Không lặp tiếng trong pha mờ dần; chỉ báo trước 30 giây một lần, hẹn lại vượt mốc cho phép báo lại. Áp dụng cả hẹn phút và hết chương.
   - Lỗi: không tiếng - dùng chữ + rung.
 - Theo âm lượng/chế độ im của hệ thống (Android: USAGE_ASSISTANCE_SONIFICATION). Cài đặt > "Âm thanh chạm" bật/tắt, mặc
   định bật.
@@ -171,6 +173,7 @@ App nghe sách: âm thanh giao diện KHÔNG bao giờ trộn vào lời đọc.
 
 Dùng hằng số phản hồi xúc giác của hệ điều hành (`View.performHapticFeedback`) - tự theo cài đặt rung của máy, cảm giác
 giống app hệ thống; không tự chế chuỗi rung dài.
+Riêng cử chỉ khi màn tắt không có View: dùng hiệu ứng CLICK sẵn của Vibrator (API 29+; 20 ms ở API cũ), kiểm công tắc Rung và cài đặt xúc giác hệ thống. Âm bắt đầu rồi gửi rung ngay cùng lượt; không delay hay chuyến đi qua Activity.
 
 | Lúc | Hằng số Android | Ghi chú |
 |---|---|---|
@@ -180,6 +183,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 | chạm giữ (menu bìa, sửa câu) | LONG_PRESS | |
 | vuốt đóng trình phát / bảng trượt qua ngưỡng | GESTURE_THRESHOLD_ACTIVATE (34+) / bỏ qua | |
 | thêm sách xong | CONFIRM (30+) | |
+| lắc / bấm hẹn lại | CONFIRM (30+) | âm xác nhận cùng lượt; màn tắt dùng CLICK như trên |
 | lỗi cần người dùng làm gì | REJECT (30+) | |
 
 - Không rung: hẹn giờ ngủ tắt (người có thể đã ngủ), tiến độ chạy, sự kiện nền, cuộn đọc.

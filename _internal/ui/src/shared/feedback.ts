@@ -1,10 +1,10 @@
 // Phản hồi giác quan của giao diện (DESIGN.md 5.3 âm thanh, 5.4 rung): MỘT chỗ cho mọi tiếng chạm và mọi cú rung.
 // Tiếng tự tổng hợp bằng Web Audio (không file thu âm), cùng một âm sắc "đồng thau gõ nhẹ", ngắn <= 250 ms, ~ -24 dB. Tiếng tự im khi sách
-// đang phát - trừ báo hẹn giờ ngủ sắp tắt. Rung chỉ trên điện thoại: android/main.tsx nối `haptic` tới EbookPlayer.haptic (Haptics.kt chọn
+// đang phát - trừ báo hẹn giờ ngủ sắp tắt và xác nhận hẹn lại. Rung chỉ trên điện thoại: android/main.tsx nối `haptic` tới EbookPlayer.haptic (Haptics.kt chọn
 // hằng số cũ hơn khi máy chưa có). Máy tính không rung. Chỉ gọi cho việc NGƯỜI DÙNG vừa làm; không cho tiến độ chạy, sự kiện nền, tự cuộn,
 // hẹn giờ ngủ tắt.
 
-export type FeedbackKind = "tap" | "toggle" | "tick" | "confirm" | "done" | "sleepWarn" | "reject" | "longPress" | "playPause";
+export type FeedbackKind = "tap" | "toggle" | "tick" | "confirm" | "done" | "sleepWarn" | "sleepExtend" | "reject" | "longPress" | "playPause";
 
 /** Tên hằng số HapticFeedbackConstants mà lõi native hiểu (Haptics.kt). */
 export type HapticEffect = "CONTEXT_CLICK" | "CLOCK_TICK" | "SEGMENT_TICK" | "LONG_PRESS" | "CONFIRM" | "REJECT" | "GESTURE_THRESHOLD_ACTIVATE";
@@ -17,6 +17,7 @@ export const HAPTICS: Readonly<Record<FeedbackKind, HapticEffect | null>> = {
   confirm: "CONFIRM",
   done: "CONFIRM",
   sleepWarn: null,
+  sleepExtend: "CONFIRM",
   reject: "REJECT",
   longPress: "LONG_PRESS",
   playPause: "CONTEXT_CLICK",
@@ -53,13 +54,17 @@ export const SOUNDS: Readonly<Record<FeedbackKind, readonly Note[] | null>> = {
     { pitch: G6, at: 0.16, length: 0.09, level: -24 },
   ],
   sleepWarn: [{ pitch: A3, at: 0, length: 0.25, level: -22 }],
+  sleepExtend: [
+    { pitch: C6, at: 0, length: 0.12, level: -24 },
+    { pitch: E6, at: 0.09, length: 0.16, level: -24 },
+  ],
   reject: null,
   longPress: null,
   playPause: null,
 };
 
 /** Dòng mô tả công tắc "Âm thanh chạm" (Cài đặt > Giao diện, cả hai nền tảng). */
-export const TOUCH_SOUNDS_HINT = "Tiếng khẽ khi bạn chọn. Im khi đang nghe.";
+export const TOUCH_SOUNDS_HINT = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại.";
 
 interface FeedbackOptions {
   /** Cài đặt > Giao diện > "Âm thanh chạm" (mặc định bật). */
@@ -102,7 +107,7 @@ export function feedback(kind: FeedbackKind): void {
     }
   }
   const notes = SOUNDS[kind];
-  if (notes && options.sounds && (!bookPlaying || kind === "sleepWarn")) play(notes);
+  if (notes && options.sounds && (!bookPlaying || kind === "sleepWarn" || kind === "sleepExtend")) play(notes);
 }
 
 function context(): AudioContext | null {

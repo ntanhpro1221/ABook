@@ -255,6 +255,7 @@ int main(int argc, char *argv[]) {
     Feedback::setInstance(&feedback);
     QObject::connect(&player, &Player::playingChanged, &feedback, [&player, &feedback] { feedback.setBookPlaying(player.playing()); });
     QObject::connect(&player, &Player::sleepWarning, &feedback, [&feedback] { feedback.play(QStringLiteral("sleepWarn")); });
+    QObject::connect(&player, &Player::sleepExtended, &feedback, [&feedback] { feedback.play(QStringLiteral("sleepExtend")); });
     ReadAlong readAlong(&player, &hostNet, nullptr);
     QObject::connect(&speech, &SpeechOut::scriptReady, &readAlong, &ReadAlong::narrationScript);
     ReadAlong::setInstance(&readAlong);

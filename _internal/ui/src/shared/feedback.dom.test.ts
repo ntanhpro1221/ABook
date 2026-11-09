@@ -72,6 +72,7 @@ it("mỗi việc gửi đúng hằng số rung của bảng 5.4, cả khi sách 
     confirm: "CONFIRM",
     done: "CONFIRM",
     sleepWarn: null,
+    sleepExtend: "CONFIRM",
     reject: "REJECT",
     longPress: "LONG_PRESS",
     playPause: "CONTEXT_CLICK",
@@ -120,4 +121,12 @@ it("withFeedback phản hồi trước rồi mới làm việc được bọc", 
   configureFeedback({ haptic: (effect) => order.push(effect) });
   withFeedback("playPause", (value: number) => order.push(`toggle ${value}`))(1);
   expect(order).toEqual(["CONTEXT_CLICK", "toggle 1"]);
+});
+
+it("hẹn lại dùng tiếng xác nhận cùng một cú rung ngay cả khi sách đang phát", () => {
+  const haptic = vi.fn(); configureFeedback({ haptic }); setBookPlaying(true);
+  expect(SOUNDS.sleepExtend).toEqual(SOUNDS.confirm);
+  feedback("sleepExtend");
+  expect(oscillators.map(osc => osc.frequency.value)).toEqual([1046.5, 1318.5]);
+  expect(haptic).toHaveBeenCalledExactlyOnceWith("CONFIRM");
 });

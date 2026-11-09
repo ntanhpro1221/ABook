@@ -9,7 +9,8 @@ import { SourceProvider, type ListenSource } from "./source";
 import { PlayerProvider, usePlayer } from "./player";
 import { AUTO_SLEEP_SCHEDULE } from "./sleepActivity";
 
-const h = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { dismiss: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() }) }));
+const h = vi.hoisted(() => ({ feedback: vi.fn(), toast: Object.assign(vi.fn(), { dismiss: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() }) }));
+vi.mock("@/shared/feedback", async original => ({ ...await original<typeof import("@/shared/feedback")>(), feedback: h.feedback }));
 vi.mock("sonner", () => ({ toast: h.toast }));
 vi.mock("./OnlineVoicePrompt", () => ({ OnlineVoicePrompt: () => null }));
 vi.mock("./readAloudVoice", async original => ({ ...await original<typeof import("./readAloudVoice")>(), voicesOf: async () => [] }));
@@ -64,6 +65,29 @@ it("default playback stays without a timer after three idle hours", async () => 
   expect(paused).toBe(false);
   expect(engine.pause).not.toHaveBeenCalled();
   expect(h.toast).not.toHaveBeenCalled();
+});
+
+it("the extend button makes exactly one timer confirmation and an off timer stays silent", async () => {
+  await mount();
+  await act(async () => actions.extendSleep());
+  expect(h.feedback).not.toHaveBeenCalled();
+  await act(async () => actions.setSleep({ kind: "minutes", minutes: 10 }));
+  await act(async () => actions.extendSleep());
+  expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepExtend");
+});
+
+it("a key during chapter fade confirms once and stops the fade", async () => {
+  await mount();
+  await act(async () => actions.setSleep({ kind: "chapter" }));
+  Object.assign(engine, { time: 95 });
+  await elapsed(1000);
+  expect(actions.fading).toBe(true);
+  expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepWarn");
+  h.feedback.mockClear();
+  await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "+", cancelable: true })); });
+  expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepExtend");
+  expect(actions.fading).toBe(false);
+  expect(actions.sleep.kind).toBe("minutes");
 });
 
 it("three hours in another app cannot arm any timer", async () => {

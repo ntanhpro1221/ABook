@@ -178,7 +178,7 @@ class PlayerWidget : AppWidgetProvider() {
                         ACTION_TOGGLE -> Playback.toggle()
                         ACTION_BACK -> Playback.skip(-Playback.SKIP_SECONDS.toDouble())
                         ACTION_FORWARD -> Playback.skip(Playback.SKIP_SECONDS.toDouble())
-                        ACTION_SLEEP -> if (!hadTimer) SleepTimer.setMinutes(30) else SleepTimer.cancel()
+                        ACTION_SLEEP -> if (!hadTimer) SleepTimer.setMinutes(30) else { SleepTimer.cancel(); Feedback.play("toggle") }
                     }
                 }
                 refresh(context)

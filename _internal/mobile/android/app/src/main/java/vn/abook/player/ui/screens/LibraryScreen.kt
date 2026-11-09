@@ -53,12 +53,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -223,7 +222,7 @@ private fun BookTile(
     sheets: SheetHost,
     actions: LibraryActions,
 ) {
-    val haptic = LocalHapticFeedback.current
+    val view = LocalView.current
     val series = tile as? ShelfTile.Series
     val single = tile as? ShelfTile.Single
     val lead = series?.first ?: single!!.book
@@ -232,7 +231,7 @@ private fun BookTile(
         if (series != null) sheets.show { dismiss -> SeriesSheet(series, covers, actions.openBook, dismiss) } else actions.openBook(lead)
     }
     val onLong = {
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        vn.abook.player.Feedback.play("longPress", view)
         actions.playNow((series?.playTarget ?: lead).id)
     }
     Column(

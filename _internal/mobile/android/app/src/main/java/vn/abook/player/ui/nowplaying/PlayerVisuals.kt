@@ -219,7 +219,7 @@ fun PlayMorph(
     val right = remember { Path() }
     val buttonSize = if (large) 72.dp else 44.dp
     Box(modifier.size(buttonSize).pressable {
-        view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+        vn.abook.player.Feedback.play("playPause", view)
         onClick()
     }
         .semantics { contentDescription = description ?: if (playing) "Tạm dừng" else "Phát" }

@@ -146,9 +146,10 @@ fun ListRow(
 /** Hàng công tắc: CẢ hàng là chỗ chạm (không chỉ cái núm). */
 @Composable
 fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, tag: String, hint: String? = null) {
+    val view = androidx.compose.ui.platform.LocalView.current
     ListRow(
         label,
-        Modifier.pressable(Role.Switch) { onChange(!checked) }
+        Modifier.pressable(Role.Switch) { vn.abook.player.Feedback.play("toggle", view); onChange(!checked) }
             .semantics { stateDescription = if (checked) "Bật" else "Tắt" }
             .testTag(tag),
         hint = hint,

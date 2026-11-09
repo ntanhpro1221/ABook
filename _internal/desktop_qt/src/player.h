@@ -252,6 +252,7 @@ signals:
     void outputGainChanged();
     /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
     void sleepWarning();
+    void sleepExtended();
     void sleepChanged();
     void fadingChanged();
     void errorChanged();
