@@ -165,6 +165,73 @@ int ticksFor(double seconds) {
 class MusicTest : public QObject {
     Q_OBJECT
 private slots:
+    void chapterMusicMatrix_data() {
+        QTest::addColumn<QString>("from");
+        QTest::addColumn<QString>("to");
+        QTest::addColumn<QString>("mode");
+        const QString a = QStringLiteral("a"), b = QStringLiteral("b");
+        const QList<QPair<QString, QString>> transitions = {{QString(), QString()}, {QString(), a}, {a, QString()}, {a, b}, {a, a}};
+        for (const auto &transition : transitions)
+            for (const QString &mode : {QStringLiteral("continuous"), QStringLiteral("manual"), QStringLiteral("seek"), QStringLiteral("resume"), QStringLiteral("buffering")}) {
+                const auto name = QStringLiteral("%1-%2/%3").arg(transition.first.isEmpty() ? QStringLiteral("quiet") : transition.first,
+                    transition.second.isEmpty() ? QStringLiteral("quiet") : transition.second, mode).toUtf8();
+                QTest::newRow(name.constData()) << transition.first << transition.second << mode;
+            }
+    }
+
+    void chapterMusicMatrix() {
+        QFETCH(QString, from);
+        QFETCH(QString, to);
+        QFETCH(QString, mode);
+        BookRig rig;
+        const auto answer = [](const QString &link) {
+            return link.isEmpty() ? QJsonObject{{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -20}} : chapterCues(link, link);
+        };
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/1")] = answer(from);
+        const int destination = mode == QLatin1String("buffering") ? 4 : 2;
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/%1").arg(destination)] = answer(to);
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/3")] = answer(QStringLiteral("a"));
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCOMPARE(rig.music->bed()->activeLink(), from);
+        rig.out.pos = 20;
+        emit rig.player->clock()->positionChanged();
+        for (const auto &voice : rig.voices) if (voice) voice->pos = 55;
+        if (mode == QLatin1String("resume")) rig.player->toggle();
+        if (mode == QLatin1String("buffering")) { rig.net.hold = true; rig.player->jumpTo(destination); }
+        else if (mode == QLatin1String("continuous")) rig.out.finish();
+        else if (mode == QLatin1String("seek")) rig.player->jumpTo(2, 40);
+        else rig.player->next();
+        if (mode == QLatin1String("resume")) {
+            QVERIFY(!rig.player->playing());
+            for (const auto &voice : rig.voices) QVERIFY(!voice || !voice->isPlaying);
+            rig.player->toggle();
+        }
+        if (mode == QLatin1String("buffering")) {
+            emit rig.out.buffering(true); // stream waits, no position events
+            QVERIFY(rig.player->buffering());
+            QCoreApplication::processEvents();
+            rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+            QCOMPARE(rig.music->bed()->activeLink(), QString());
+            rig.net.hold = false;
+            rig.net.releaseHeld();
+        }
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCOMPARE(rig.player->chapterId(), destination);
+        QCOMPARE(rig.music->bed()->activeLink(), to);
+        QStringList sounding;
+        for (const auto &voice : rig.voices)
+            if (voice && voice->isPlaying && voice->volume > 0) sounding << voice->url.path();
+        QCOMPARE(sounding, to.isEmpty() ? QStringList() : QStringList{QStringLiteral("/api/music/") + to});
+        if (!to.isEmpty()) QCOMPARE(rig.voices.last()->pos, mode == QLatin1String("seek") ? 40.0 : 0.0);
+        rig.player->jumpTo(3); // include music -> quiet -> music, not just one boundary
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("a"));
+    }
+
     void deadlinesHonorStepsRateAndCueEdges() {
         Rig rig(200);
         auto cue = plain(0, 90, QStringLiteral("one"));

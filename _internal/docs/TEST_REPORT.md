@@ -1,5 +1,15 @@
 # Test report
 
+## 09-11-2026 — musicclass chapter transitions
+
+- From origin/main c128d6885, added 25 chapter transition cases per player: quiet/quiet, quiet/music, music/quiet, different tracks and the same track, each through continuous play, manual selection, seeking, pause/resume and voice buffering. Every case also enters a third musical chapter. Assertions cover active/audible tracks, old-track release, new chapter position and paused music. Qt/web also delay the cue response.
+- The 75 matrix cells pass. Main's Android voice ticker already calls syncMusic unconditionally; the needsVoiceClock optimization described in the perf165 review is absent here. Playback.kt, Qt playback/mixer logic and web playback logic are unchanged. Android only adds a codec factory override for JVM integration tests, null by default.
+- Full Android testDebugUnitTest: XML 3,418 tests, 3,410 passed, 8 skipped, zero failures/errors across 392 suites; the 36 music suites contain 351 passing tests. The new Robolectric matrix disables Conscrypt, since its codec doubles need no TLS. This removes two order-dependent FastConnectTest failures exposed by the initial full run; the isolated 22 TLS tests, the coupled music/TLS run and the final full run pass without changing network code.
+- Qt MusicTests, MixTests, VoiceTests, PlayerNativeTests and MusicWindowActivityTests pass offscreen. Final MusicTests rebuilt with position/pause assertions: 79 passed, zero failed/skipped (including setup/cleanup).
+- Full vitest passed 320 files / 2,645 tests; readingForms could not start because the new worktree has no local Python venv. Rerunning readingForms plus the final chapter matrix with the explicit shared ABOOK_TEST_PYTHON path passed 252/252. This covers all 321 files and 2,872 unique tests. TypeScript noEmit passes.
+- listen_audit analyze accepts explicit --quiet-chapters IDs, rejects missing music elsewhere and music leaking into quiet chapters after the fade, and treats an empty music: credit mark as a clear rather than a song selection. Planted quiet-middle/missing-return/leak controls pass its selftest. Related audio-sink pytest: JUnit XML 35 passed, zero failed/errors/skipped, with -rf.
+- Heavy runs started only after at least 5 GiB free RAM, with at most two test jobs from this task. No emulator, migration, push or release. Tests use codec/device doubles; no new physical-device audio claim is made. Quality hash before/after is 67f8c360d80b19c73b66e6beaf2146e28179f2abcf1df200be15ef90e7d9febc; the implementation list read from code has 56 entries.
+
 ## 08-11-2026 — rel165 integration regression
 
 - Integrated timerbug2, ui165, nomig165 and audiofx into dev/integ165. The first full pytest run reported 39 failed, 10,612 passed, 14 skipped and 2 xfailed; its raw `-rf` summary is retained in the rel165 task dossier.

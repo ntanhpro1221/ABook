@@ -7,6 +7,7 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
 
   python -X utf8 tools/listen_audit.py run <out_dir> <label> --text 001.txt 002.txt ... --music on|off [--exe dist/ABookDesk.exe]
   python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B> [--control <out_dir>/<B2>]
+    [--quiet-chapters 2]: explicitly expect a silent middle chapter; music must return in chapter 3.
   python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần) hay giọng lặng
                                                                  > VOICE_HOLE_S giữa chương vì chờ clip
   --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
@@ -450,7 +451,17 @@ def source_tracks(run_dir: Path, rate: int, hop: int) -> dict[str, np.ndarray]:
     return out
 
 
-def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
+def chapter_music_pick(marks: list[dict], chapter: int) -> int | None:
+    """An empty music: mark clears the credit; it does not select a song."""
+    return next((m["frame"] for m in marks if m["chapter"] == chapter and m["tag"].startswith("music:") and m["tag"] != "music:"), None)
+
+
+def chapter_music_ok(expected: bool, delay: float | None, limit: float, early: bool, picked: bool, leaked: bool) -> bool:
+    """Expected silence must come from the scenario, never from a missing music event."""
+    return bool(delay is not None and delay <= limit and not early) if expected else not picked and not leaked
+
+
+def analyze(a_dir: Path, b_dir: Path, control: Path | None = None, quiet_chapters: set[int] | None = None) -> dict:
     A, B = load(a_dir), load(b_dir)
     hop_s = A["hop"] / A["rate"]
     voice_db = float(np.median(B["db"][B["db"] > VOICE_FLOOR_DB]))
@@ -470,24 +481,33 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     music_events = [dict(t=round(m["frame"] / A["rate"], 2), chapter=m["chapter"], position=m["position"], credit=m["tag"][len("music:"):])
                     for m in A["marks"] if m["tag"].startswith("music:")]
     arrivals = []
-    for i, ch in enumerate(chapters(A)):
+    quiet_chapters = quiet_chapters or set()
+    chapter_spans = chapters(A)
+    if quiet_chapters - {ch["chapter"] for ch in chapter_spans}:
+        raise ValueError("quiet chapters must exist in the recorded run")
+    fade_s = json.loads((INTERNAL / "abook/webui/assets/music_mix.json").read_text(encoding="utf-8"))["fadeSeconds"]
+    for i, ch in enumerate(chapter_spans):
         v = first_voice(A["db"], voice_db, ch["start"])
         # tai: khung được nâng đầu tiên mà cửa sổ bắt đầu ở nó có nhạc. Chỉ nghe được ở chỗ giọng lặng, nên trễ hơn lúc mixer phát 1,5-3 s ở
         # đoạn đọc dày (đo 01-11 A1/A2/NA2). Mixer báo phát (mix_playing đầu tiên sau lúc app chọn bài của chương) và tai xác nhận trong
         # ARRIVE_CONFIRM_S: nhạc tới lúc mixer phát; không thì theo tai.
         hit = np.flatnonzero((pres_a & lift_a)[v: ch["end"]]) if v is not None else []
         heard = v + int(hit[0]) if len(hit) else None
-        picked = next((m["frame"] for m in A["marks"] if m["tag"].startswith("music:") and m["chapter"] == ch["chapter"]), None)
+        picked = chapter_music_pick(A["marks"], ch["chapter"])
         started = next((f // A["hop"] for f in A["mixes"] if picked is not None and f >= picked), None)
         confirmed = heard is not None and started is not None and started <= heard <= started + ARRIVE_CONFIRM_S / hop_s
         at = started if confirmed else heard
         delay = round(float(at - v) * hop_s, 2) if at is not None else None
         early = bool(heard is not None and picked is not None and heard < picked // A["hop"])
         limit = ARRIVE_FIRST_S if i == 0 else ARRIVE_NEXT_S
+        expected = ch["chapter"] not in quiet_chapters
+        leaked = bool((pres_a & lift_a)[(v if v is not None else ch["start"]) + int(np.ceil(fade_s / hop_s)): ch["end"]].any())
         rel = lambda frame: None if frame is None or v is None else round(float(frame - v) * hop_s, 2)
         arrivals.append(dict(chapter=ch["chapter"], first_voice_s=None if v is None else round(v * hop_s, 2), music_after_s=delay,
                              picked_after_s=rel(None if picked is None else picked // A["hop"]), mixer_after_s=rel(started), heard_after_s=rel(heard),
-                             heard_before_pick=early, ok=bool(delay is not None and delay <= limit and not early)))
+                             heard_before_pick=early, expected_music=expected,
+                             quiet_leak=leaked if not expected else False,
+                             ok=chapter_music_ok(expected, delay, limit, early, picked is not None, leaked)))
     control_s = None
     if control is not None:
         C = load(control)
@@ -591,6 +611,21 @@ def selftest() -> int:
     middle = head + ticks(5, [float(i) for i in range(70)] + [70.0] * 14) + ticks(89, [70.0] * 15, 0) + [[104000.0, "done"]]
     never = head + ticks(5, [0.0] * 3590) + [[3600300.0, "timeout"]]
     failures = []
+    marks = [dict(chapter=1, frame=0, tag="music:a"), dict(chapter=2, frame=20000, tag="music:"),
+             dict(chapter=3, frame=40000, tag="music:"), dict(chapter=3, frame=41000, tag="music:b")]
+    if [chapter_music_pick(marks, chapter) for chapter in (1, 2, 3)] != [0, None, 41000]:
+        failures.append("empty credit marks must not count as selected music")
+    # Music -> intentionally quiet -> music: the final missing arrival must fail,
+    # even without a music: event (the exact quiet-clock regression).
+    for name, expected, delays, picks, leaks, want in (
+        ("quiet middle", [True, False, True], [1.0, None, 1.0], [True, False, True], [False]*3, True),
+        ("missing after quiet", [True, False, True], [1.0, None, None], [True, False, False], [False]*3, False),
+        ("music leaks into quiet", [True, False, True], [1.0, None, 1.0], [True, False, True], [False, True, False], False),
+        ("quiet not declared", [True]*3, [1.0, None, 1.0], [True, False, True], [False]*3, False),
+    ):
+        got = all(chapter_music_ok(e, d, ARRIVE_NEXT_S, False, p, leak) for e, d, p, leak in zip(expected, delays, picks, leaks))
+        if got != want:
+            failures.append(f"chapter music {name}: expected {want}, got {got}")
     for name, events, want in (("clean", clean, []), ("error", error, ["error"]), ("I3", middle, ["stall"]),
                                ("I4", never, ["timeout", "unfinished", "stall"])):
         got = [p["kind"] for p in run_problems(events)]
@@ -769,6 +804,7 @@ def main() -> int:
     r.add_argument("--slow-music", help="<KB/s>[/<KB/s sau>@<giây>]:<thư mục music/files của một lượt trước> - bài nhạc tải từ các file ấy với tốc độ trần (tools/stall_host)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     a.add_argument("--control", type=Path, help="lượt nhạc tắt thứ hai: so với B không được thấy nhạc ở đâu (kiểm thước luật 1)")
+    a.add_argument("--quiet-chapters", type=int, nargs="*", default=[], help="chapter IDs explicitly silent in the scenario; missing music elsewhere still fails")
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
     sub.add_parser("selftest")
     args = ap.parse_args()
@@ -783,7 +819,7 @@ def main() -> int:
     elif args.cmd == "selftest":
         return selftest()
     else:
-        print(json.dumps(analyze(args.a.resolve(), args.b.resolve(), args.control.resolve() if args.control else None), ensure_ascii=False, indent=1))
+        print(json.dumps(analyze(args.a.resolve(), args.b.resolve(), args.control.resolve() if args.control else None, set(args.quiet_chapters)), ensure_ascii=False, indent=1))
     return 0
 
 
