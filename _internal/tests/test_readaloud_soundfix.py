@@ -41,6 +41,36 @@ def test_shared_policy_is_in_quality_hash_and_cache_namespace():
 
 def test_long_laughter_is_bounded_and_names_and_units_are_guarded():
     said = shouts.stretch_reading('a' + 'ha' * 100)
-    assert len(said.split()) == shouts.POLICY['max_laugh_syllables']
+    assert said.split()[0] == 'a'  # the opening vowel is not one of the bounded laugh syllables
+    assert len(said.split()) == shouts.POLICY['max_laugh_syllables'] + 1
+    assert len(shouts.stretch_reading('ha' * 100).split()) == shouts.POLICY['max_laugh_syllables']
     for raw in ('Weisss', 'www', 'MMM', 'III', 'SSS', 'UH'):
         assert shouts.stretch_reading(raw) is None
+
+
+@pytest.mark.parametrize("word", ["Hee", "Hii", "Mee", "Ii", "Heh", "Hihi", "Hehe"])
+def test_generated_sound_never_spells_an_english_word_unmeasured(word):
+    """A generated syllable that spells an English word is said in English by sea-g2p."""
+    from abook.readaloud import names, vieneu
+
+    said = vieneu.spoken_tokens([word], "ja", direct_english=True)[0]
+    for syllable in said.replace("…", "").replace("-", " ").split():
+        low = syllable.casefold()
+        assert low not in names.english_words() or low in shouts.POLICY["english_safe"], (word, said)
+    assert said.casefold() not in shouts.POLICY["english_collisions"] or said == shouts.POLICY["english_collisions"][said.casefold()]
+
+
+def test_collision_targets_are_vietnamese_and_measured_safe_readings_stay_vietnamese():
+    pytest.importorskip("sea_g2p")
+    from abook.readaloud import vieneu_engine
+
+    assert "iː" not in vieneu_engine.phonemize(["hê"]) and "aɪ" not in vieneu_engine.phonemize(["hy"]) and "iː" not in vieneu_engine.phonemize(["mê"])
+    for said in shouts.POLICY["english_safe"]:
+        assert not {"ɑː", "aɪ", "iː"} & {said_phone for said_phone in ("ɑː", "aɪ", "iː") if said_phone in vieneu_engine.phonemize([said])}
+
+
+@pytest.mark.parametrize("listener", ["Yuuki[note1] bước vào.", "Senpai[ note12 ]!"])
+def test_reference_marks_pasted_into_listener_text_are_never_said(listener):
+    from abook.text_processing import INLINE_REFERENCE_MARKER_PATTERN, spoken_symbols_to_words
+
+    assert "note" not in spoken_symbols_to_words(INLINE_REFERENCE_MARKER_PATTERN.sub("", listener)).lower()

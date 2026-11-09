@@ -68,7 +68,7 @@ RANGE_CODES = frozenset("lớp phòng tầng combo feed số thắng thua truy�
 RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])[!?]+(?=[^\W\d_])|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
-STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
+STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph", "sh": "s", "ts": "x", "gh": "g"}
 STUTTER = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
 STUTTER_ALONE = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\w]*)$")
 # Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
@@ -424,6 +424,21 @@ def stutter_sound(frag: str, rest: str) -> str:
     return STUTTER_SOUND.get(onset, onset) + "ờ"
 
 
+def _said_stutter(frag: str, said: str) -> str | None:
+    """Tiếng lắp theo CÁCH ĐỌC đã tính của phần sau, không theo chữ viết ("Sh-Shouta" đọc "Sâu-ta" nên lắp "sờ"; "Ts-Tsubasa" là "xờ"). Phần lắp mang âm "y" ("Ky-Kyouko", "Y-Yuuki")
+    không có phụ âm đọc được với "ờ" nên nhắc lại âm tiết đầu ("ki", "giu"; riêng "gia" gọn thành "gi"). Cách đọc mở đầu bằng nguyên âm ("W-Waka" -> "Oa-ca") cũng vậy."""
+    first = re.split(r"[-\s…]", said.strip(OPENERS + CLOSERS + PUNCT_MARKS), maxsplit=1)[0].replace("_", "").lower()
+    first = unicodedata.normalize("NFC", first)
+    if not first or not first.isalpha():
+        return None
+    if frag.lower().endswith("y"):
+        return "gi" if first == "gia" else first
+    onset = next((o for o in STUTTER_ONSETS if first.startswith(o)), first[0])
+    if unicodedata.normalize("NFD", onset)[0] in "aeiouy":
+        return first
+    return STUTTER_SOUND.get(onset, onset) + "ờ"
+
+
 def _stars(out: list[str]) -> None:
     """"*" là trang trí / nhấn ("*từ*", "(*)", "*Kà-ran*"): bỏ. Chữ cái đứng trước dấu kiểm duyệt ("đ*") đọc như nói lắp ("đờ…"); dấu che giữa các chữ cái ("hent*i", "E**alibur") đọc phần
     thấy được với một quãng ngắt ở chỗ che ("hent… i"), không dính thành một từ sai; giữa hai tiếng nhấn liền nhau ("*Khụ*Khụ*") là dấu phẩy ("Khụ, Khụ")."""
@@ -469,7 +484,8 @@ def _question_runs(out: list[str]) -> None:
             out[index] = _QUESTION_BANG.sub(lambda match: "?" if "?" in match.group() else match.group(), token)
 
 
-def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
+def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_english: bool,
+              readings: Mapping[str, str] | None = None, direct_english: bool = False) -> None:
     """Nói lắp "T-tôi", "C-Chuyện", "Ng-ngài", "E-em", "[Kh- Không": phần lắp đọc bằng âm ("tờ… tôi", "chờ… chuyện", "e… em") thay vì tên chữ cái; phần còn lại của chữ đọc như bình thường
     (nên "T-Tsukinoki-senpai" vẫn qua luật tên). Chỉ khi phần lắp là phần đầu của chữ sau và không phải một âm tiết đầy đủ ("Hà-Hà")."""
     for index, token in enumerate(toks):
@@ -486,7 +502,11 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
         before, frag = match.group(1), match.group(2)
         if not unicodedata.normalize("NFC", rest).lower().startswith(frag.lower()):
             continue
-        syllable = len(frag) > 1 and any(char in "aeiouy" for char in unicodedata.normalize("NFD", frag.lower()))
+        said = _stutter_rest(rest, origin, speaks_english, readings, direct_english)
+        # Only a romaji reading of the rest may decide; a word left as written keeps the written rule.
+        vowelless = not any(char in "aeiou" for char in unicodedata.normalize("NFD", frag.lower()))
+        heard = _said_stutter(frag, said) if vowelless and origin == "ja" and said.casefold() != rest.casefold() else None
+        syllable = heard is None and len(frag) > 1 and any(char in "aeiouy" for char in unicodedata.normalize("NFD", frag.lower()))
         if syllable:
             from ..analysis import is_vietnamese_syllable
 
@@ -494,11 +514,21 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
             if (rest_core.lower() == frag.lower() or not is_vietnamese_syllable(frag)
                     or not is_vietnamese_syllable(rest_core)):
                 continue
-        sound = frag.lower() if syllable else stutter_sound(frag, rest)
+        sound = heard or (frag.lower() if syllable else stutter_sound(frag, rest))
         if alone:
             out[index] = before + sound + ("" if tail.lstrip(CLOSERS)[:1] in tuple(PUNCT_MARKS) else "…") + tail
         else:
-            out[index] = before + sound + "… " + spoken_tokens([rest], origin, speaks_english)[0]
+            out[index] = before + sound + "… " + said
+
+
+def _stutter_rest(rest: str, origin: str | None, speaks_english: bool, readings: Mapping[str, str] | None, direct_english: bool) -> str:
+    """Cách đọc phần sau chỗ lắp. Sau gạch lắp, chữ thường vẫn là chính từ ấy ("B-baka" như "Baka"): cuốn gốc Nhật thử dạng viết hoa, luật chữ hoa vẫn chặn từ Anh và chữ Việt."""
+    plain = spoken_tokens([rest], origin, speaks_english, readings, direct_english=direct_english)[0]
+    if origin != "ja" or not rest[:1].islower() or plain != rest:
+        return plain
+    titled = rest[:1].upper() + rest[1:]
+    said = spoken_tokens([titled], origin, speaks_english, readings, direct_english=direct_english)[0]
+    return plain if said == titled else said.lower()
 
 
 def _fullwidth(out: list[str]) -> None:
@@ -671,7 +701,7 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
         book_readings.apply_tokens(toks, rebuilt, readings)
         return rebuilt
     out = list(toks)
-    _stutters(toks, out, origin, speaks_english)
+    _stutters(toks, out, origin, speaks_english, readings, direct_english)
     shouts.read_shouts(toks, out, origin)
     vocalized = {index for index, (source, said) in enumerate(zip(toks, out)) if source != said}
     vocalized.update(_read_words(toks, out, origin, speaks_english))

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from ..text_processing import STRETCHED_SIGH_PATTERN, VOCAL_CUE_PATTERN
 from . import vieneu
@@ -37,7 +37,8 @@ def separate_digit_quotes(text: str) -> str:
 
 
 def studio_tn(text: str, origin: str | None, speaks_english: bool,
-              protected_spans: Sequence[tuple[int, int]] = (), *, direct_english: bool = False) -> tuple[str, list[int]]:
+              protected_spans: Sequence[tuple[int, int]] = (), *, direct_english: bool = False,
+              readings: Mapping[str, str] | None = None) -> tuple[str, list[int]]:
     """(chữ đem đọc, bảng dịch vị trí). `protected_spans`: các khoảng [bắt đầu, kết thúc) của `text` đã là cách đọc của bảng phát âm - mọi chữ chạm vào một
     khoảng được giữ nguyên. Bảng dịch vị trí có `len(text) + 1` phần tử: phần tử `i` là vị trí mới của vị trí cũ `i` (vị trí nằm trong chữ đã đổi dồn về đầu chữ mới,
     vị trí nằm trong khoảng trắng đã bỏ dồn về chỗ bỏ); biên của khoảng được giữ nguyên dịch đúng theo độ lệch các chữ đứng trước."""
@@ -56,7 +57,7 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
         return re.sub(r"(?<!\w)o_(?=[-.,!?;:\s]|$)|_",
                       lambda match: "o_" if match.group() == "o_" else "", word)
 
-    said = [w if w == t else voice_markers(w) for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]
+    said = [w if w == t else voice_markers(w) for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, readings, direct_english=direct_english))]
     segmented: dict[int, list[tuple[int, int, str]]] = {}
     for index, match in enumerate(matches):
         spans = [(max(0, start - match.start()), min(len(match.group()), end - match.start()))
@@ -135,6 +136,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
                      changed_words: list[tuple[int, int, int, int]] | None = None,
                      unprotected_anchors: frozenset[int] = frozenset(),
                      direct_english: bool = False,
+                     readings: Mapping[str, str] | None = None,
                      ) -> tuple[str, list[frozenset[int]]]:
     """`studio_tn` cho chuỗi Studio đang mang dấu anchor theo từng ký tự (`anchor_tags[i]`: các anchor có ký tự `i` là cách đọc của bảng phát âm). Khoảng của mỗi
     anchor là chữ được giữ nguyên; trả chuỗi mới cùng dấu anchor đã dịch theo để các bước sau (`_normalize_with_anchor_spans`) vẫn tìm đúng khoảng của anchor."""
@@ -147,7 +149,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
     # và "Haizzz" (Studio đọc "Hầy", sách chữ đọc "hai").
     cues = [match.span() for pattern in (VOCAL_CUE_PATTERN, STRETCHED_SIGH_PATTERN) for match in pattern.finditer(text)]
     protected = [span for index, span in bounds.items() if index not in unprotected_anchors]
-    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues], direct_english=direct_english)
+    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues], direct_english=direct_english, readings=readings)
     if changed_words is not None:
         from ..webui.word_timing import _TOKEN
 

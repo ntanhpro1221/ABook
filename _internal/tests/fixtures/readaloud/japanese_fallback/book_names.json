@@ -1,0 +1,48 @@
+[
+ {
+  "note": "Honorific proves a guarded name; a Western name has no romaji route and stays out.",
+  "texts": [
+   "Gặp Kate-san, Mike-san.",
+   "Anna-sama đi cùng Mira-san."
+  ],
+  "characters": [],
+  "readings": {
+   "Mira": "Mi-ra",
+   "MIRA": "Mi-ra"
+  }
+ },
+ {
+  "note": "A character name whose other word is plainly Japanese proves the guarded word; a lone one does not.",
+  "texts": [
+   "Không có kính ngữ."
+  ],
+  "characters": [
+   "Mira Tanaka",
+   "Mike",
+   "Kate Smith"
+  ],
+  "readings": {
+   "Mira": "Mi-ra",
+   "MIRA": "Mi-ra"
+  }
+ },
+ {
+  "note": "Short capitals need the titled word somewhere in the book; acronyms and Vietnamese never qualify.",
+  "texts": [
+   "Yui và Aoi đến. Rồi YUI! AOI! HP MP SAO RPG. Sao vậy?"
+  ],
+  "characters": [],
+  "readings": {
+   "YUI": "Giu-i",
+   "AOI": "a-o_-i"
+  }
+ },
+ {
+  "note": "No evidence, no readings.",
+  "texts": [
+   "YUI! AOI! Mike đến."
+  ],
+  "characters": [],
+  "readings": {}
+ }
+]

@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "namespace": "jp-fallback4",
+  "version": 5,
+  "namespace": "jp-fallback5",
   "provenance": "auto",
   "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
   "delivery": {
@@ -136,6 +136,11 @@
       ]
     ]
   },
+  "known_names": [
+    "abe", "baba", "hara", "honda", "ida", "mari", "mina", "nana", "naomi", "nissan",
+    "osaka", "suzuki", "tokyo", "toyota", "yuri"
+  ],
+  "particles": ["yo", "zo", "ze"],
   "suffixes": [
     "san",
     "kun",

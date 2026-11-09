@@ -42,6 +42,7 @@ from .models import (
 )
 from .resource_manager import trim_process_working_set
 from .text_processing import (
+    INLINE_REFERENCE_MARKER_PATTERN,
     is_standalone_ha_gasp,
     normalize_vocalizations_for_tts,
     spoken_symbols_to_words,
@@ -899,6 +900,7 @@ class TTSCoordinator:
         self._exact_pronunciation_metadata: dict[str, Any] = {}
         self._has_kept_english = False
         self._book_origin: tuple[str | None] | None = None  # gốc cuốn ("ja" / "ko" / None), đoán một lần từ chữ các chương
+        self._book_names: dict[str, str] | None = None  # tên cuốn tự chứng minh (chỉ cuốn gốc Nhật), tính một lần
 
     @property
     def vieneu(self) -> EngineAdapter:
@@ -981,7 +983,7 @@ class TTSCoordinator:
             pronunciations = self.db.list_pronunciations(minimum)
             from .studio_names import japanese_pronunciations
 
-            pronunciations = japanese_pronunciations(pronunciations, self._origin_of_book())
+            pronunciations = japanese_pronunciations(pronunciations, self._origin_of_book(), self._book_name_readings())
             exact_pronunciations = [
                 item
                 for item in pronunciations
@@ -1241,6 +1243,14 @@ class TTSCoordinator:
             self._book_origin = (book_origin_for_project(self.db),)
         return self._book_origin[0]
 
+    def _book_name_readings(self) -> dict[str, str]:
+        """Tên cuốn tự chứng minh (`japanese_policy.book_name_readings`), tính một lần: một nhân vật một cách đọc ở mọi chỗ."""
+        if self._book_names is None:
+            from .studio_names import book_name_readings_for_project
+
+            self._book_names = book_name_readings_for_project(self.db, self._origin_of_book())
+        return self._book_names
+
     def _row_speaks_english(self, row: Any) -> bool:
         """Máy đọc của đoạn có đọc được chữ Anh để nguyên không (`EngineAdapter.speaks_english`). Chỉ hỏi giọng của đoạn khi bảng cách đọc
         có mục `keep_english` - không có thì câu trả lời không đổi gì."""
@@ -1279,7 +1289,11 @@ class TTSCoordinator:
         # text is not what changes, only what is handed to the voice. A line the listener
         # re-worded in the Studio (`listener_text`: a typo, an odd spelling) is read in
         # their words; every consumer of this function sees the same string.
-        source_text = spoken_symbols_to_words(str(_row_value(row, "listener_text", "") or row["text"]))
+        # `spoken_symbols_to_words` would turn a reference mark pasted into listener_text
+        # into the words "note one"; it is not speech in any form.
+        source_text = spoken_symbols_to_words(
+            INLINE_REFERENCE_MARKER_PATTERN.sub("", str(_row_value(row, "listener_text", "") or row["text"]))
+        )
         origins = [(index, index + 1) for index in range(len(source_text))]
         anchor_tags = [frozenset() for _character in source_text]
         anchors: list[dict[str, Any]] = []
@@ -1323,6 +1337,7 @@ class TTSCoordinator:
             text, anchor_tags, self._origin_of_book(), speaks_english,
             changed_words=changed_words,
             direct_english=direct_english,
+            readings=self._book_name_readings(),
             unprotected_anchors=frozenset(
                 int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
                 and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {

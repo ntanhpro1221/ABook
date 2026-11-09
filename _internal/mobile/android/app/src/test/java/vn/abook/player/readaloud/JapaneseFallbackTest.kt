@@ -15,7 +15,8 @@ class JapaneseFallbackTest {
             val origin = if (c.isNull("origin")) null else c.getString("origin")
             val toks = text.split(" ")
             assertEquals(text, c.getString("said"), VieneuUnits.spokenTokens(toks, origin, directEnglish = true).joinToString(" "))
-            assertEquals("đã-chọn", VieneuUnits.spokenTokens(toks, origin, readings = mapOf(toks.first() to "đã chọn"), directEnglish = true).first())
+            val first = Names.splitToken(toks.first()).second
+            assertTrue(text, "đã-chọn" in VieneuUnits.spokenTokens(toks, origin, readings = mapOf(first to "đã chọn"), directEnglish = true).first())
         }
     }
 
