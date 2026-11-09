@@ -365,8 +365,9 @@ def book_name_readings(texts: Iterable[str], character_names: Iterable[str] = ()
             elif len(parts) == 1 and core[:1].isupper() and core[1:].islower():
                 titled.add(core)
     for surface in character_names:
-        words = surface.split()
-        if len(words) > 1 and any(_reading_word(word, "ja") for word in words):
+        # The character list writes names in capitals ("ABE TAKESHI").
+        words = [word.capitalize() if word.isupper() else word for word in surface.split()]
+        if len(words) > 1 and all(word.isascii() for word in words) and any(_reading_word(word, "ja") for word in words):
             guarded.update(words)
     found: dict[str, str] = {}
     for word in guarded:
