@@ -5,7 +5,6 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { VoicePicker } from "@/studio/VoicePicker";
 import { MyMusicSection } from "@/listen/MyMusic";
-import { MyMusic } from "@/studio/MusicTab";
 import { dismissTopLayer } from "@/shared/backLayers";
 import { installBackOrder } from "./backOrder";
 import { MotionHashRouter } from "./MotionRouter";
@@ -43,12 +42,13 @@ it("V3 đổi giới: Esc chỉ huỷ xác nhận, giữ Dialog và trả focus 
   expect(document.activeElement).toBe(choose);
 });
 
-it.each(["listen", "studio"])("V3 xoá nhạc %s: Back huỷ riêng câu hỏi và focus nút Xoá được dựng lại", async (where) => {
-  await mount(where === "listen" ? <MyMusicSection /> : <MyMusic bookId="b" previewing={null} onPreview={() => {}} />, [
+// "Nhạc của tôi" chỉ còn MỘT thành phần (màn Nhạc › Đã lưu): bản sao trong Studio › Nhạc nền đã bỏ.
+it("V3 xoá nhạc: Back huỷ riêng câu hỏi và focus nút Xoá được dựng lại", async () => {
+  await mount(<MyMusicSection />, [
     [["app"], { dialogs: true }],
     [["music-local"], { tracks: [{ link: "local:test", title: "Bài A", creator: "", analysed: true }], module: { installed: true } }],
   ]);
-  if (where === "listen") await click("Nhạc của tôi1 bài");
+  await click("Nhạc của tôi1 bài");
   await click("Xoá");
   expect(button("Xoá bài")).toBeDefined();
   await act(() => { expect(dismissTopLayer()).toBe(true); });

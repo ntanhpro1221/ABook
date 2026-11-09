@@ -1,0 +1,41 @@
+{
+  "about": "Bảng ca lọc / tìm của Kho nhạc - một nguồn cho máy chủ (abook/webui/music_library.py, test_music_library.py), Android (MusicLibrary.kt, MusicLibraryCasesTest) và Qt (qua máy chủ, tests/test_musiclibrary.cpp). expect = link theo đúng thứ tự hiện.",
+  "tracks": {
+    "https://a/1": {"title": "Đêm trăng", "creator": "Lê Văn Ánh", "bpm": 72, "duration": 95, "style": "piano", "emotions": {"peacefulness": 0.9, "sadness": 0.4, "joy": 0.1}},
+    "https://a/2": {"title": "Dawn Patrol", "creator": "Kevin MacLeod", "bpm": 90, "duration": 120, "style": "orchestral_epic", "emotions": {"power": 0.8, "tension": 0.6, "joy": 0.5}},
+    "https://a/3": {"title": "anh sáng", "creator": "Nguyễn Đức", "bpm": 130, "duration": 300, "style": "piano", "emotions": {"joy": 0.7, "peacefulness": 0.5}},
+    "https://a/4": {"title": "Battle Theme", "creator": "Scott Buckley", "bpm": 130.1, "duration": 301, "style": "orchestral_epic", "emotions": {"power": 0.95, "tension": 0.9, "fear": 0.2}},
+    "https://a/5": {"title": "Mưa Đêm", "creator": "Kevin MacLeod", "bpm": 89.9, "duration": 119, "style": "ambient", "emotions": {"sadness": 0.85, "mystery": 0.49}},
+    "https://a/6": {"title": "Không nhịp", "creator": "Vô danh", "duration": 200, "style": "ambient", "emotions": {}},
+    "https://a/7": {"title": "Ánh Sáng", "creator": "Ánh", "bpm": 140, "duration": 60, "style": "electronic", "emotions": {"joy": 0.7}}
+  },
+  "playlists": {
+    "calm": ["https://a/5", "https://a/1", "https://a/9"],
+    "battle": ["https://a/4", "https://a/2"]
+  },
+  "downloaded": ["https://a/2", "https://a/6"],
+  "cases": [
+    {"name": "không lọc: theo tên bỏ dấu, rồi người sáng tác", "filter": {}, "expect": ["https://a/7", "https://a/3", "https://a/4", "https://a/2", "https://a/1", "https://a/6", "https://a/5"]},
+    {"name": "tìm không dấu khớp có dấu", "filter": {"q": "dem"}, "expect": ["https://a/1", "https://a/5"]},
+    {"name": "tìm hoa thường + đ", "filter": {"q": "ĐÊM TRĂNG"}, "expect": ["https://a/1"]},
+    {"name": "tìm người sáng tác", "filter": {"q": "macleod"}, "expect": ["https://a/2", "https://a/5"]},
+    {"name": "mọi từ phải có (tên + người sáng tác)", "filter": {"q": "kevin mua"}, "expect": ["https://a/5"]},
+    {"name": "từ không có", "filter": {"q": "zzz"}, "expect": []},
+    {"name": "khoảng trắng thừa", "filter": {"q": "  anh   sang "}, "expect": ["https://a/7", "https://a/3"]},
+    {"name": "danh sách phát (bài vắng trong danh mục bị bỏ)", "filter": {"playlist": "calm"}, "expect": ["https://a/1", "https://a/5"]},
+    {"name": "danh sách phát lạ", "filter": {"playlist": "nope"}, "expect": []},
+    {"name": "phong cách", "filter": {"style": "piano"}, "expect": ["https://a/3", "https://a/1"]},
+    {"name": "cảm xúc: >= 0,5, theo điểm giảm dần", "filter": {"emotion": "joy"}, "expect": ["https://a/7", "https://a/3", "https://a/2"]},
+    {"name": "cảm xúc: 0,49 không qua", "filter": {"emotion": "mystery"}, "expect": []},
+    {"name": "cảm xúc + tìm", "filter": {"emotion": "power", "q": "a"}, "expect": ["https://a/4", "https://a/2"]},
+    {"name": "nhịp chậm < 90", "filter": {"tempo": "slow"}, "expect": ["https://a/1", "https://a/5"]},
+    {"name": "nhịp vừa 90-130", "filter": {"tempo": "mid"}, "expect": ["https://a/3", "https://a/2"]},
+    {"name": "nhịp nhanh > 130", "filter": {"tempo": "fast"}, "expect": ["https://a/7", "https://a/4"]},
+    {"name": "độ dài < 2 phút", "filter": {"length": "short"}, "expect": ["https://a/7", "https://a/1", "https://a/5"]},
+    {"name": "độ dài 2-5 phút", "filter": {"length": "mid"}, "expect": ["https://a/3", "https://a/2", "https://a/6"]},
+    {"name": "độ dài > 5 phút", "filter": {"length": "long"}, "expect": ["https://a/4"]},
+    {"name": "đã tải", "filter": {"downloaded": true}, "expect": ["https://a/2", "https://a/6"]},
+    {"name": "kết hợp: playlist + nhịp", "filter": {"playlist": "battle", "tempo": "fast"}, "expect": ["https://a/4"]},
+    {"name": "kết hợp: phong cách + độ dài + đã tải", "filter": {"style": "ambient", "length": "mid", "downloaded": true}, "expect": ["https://a/6"]}
+  ]
+}

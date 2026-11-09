@@ -29,7 +29,7 @@ import { LocalVoiceModules } from "@/listen/VieneuModuleCard";
 import { VoiceSpeedSetting } from "@/listen/VoiceSpeedSetting";
 import { EXTEND_GESTURE } from "@/listen/extendGesture";
 import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
-import { MyMusicSection } from "@/listen/MyMusic";
+import { OpenMusicRow } from "@/music/OpenMusicRow";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
 import { ReadAloudStorage } from "@/listen/ReadAloudStorage";
@@ -234,7 +234,7 @@ function ListenGroup() {
           <Switch id="auto-rewind" label={S.s_tu_lui_6fc7685a} checked={preferences?.autoRewind !== false} onCheckedChange={(value) => update({ autoRewind: value })} />
         </SettingsRow>
       </SettingsBlock>
-      {/* "Nhạc của tôi" là kho chung mọi cuốn: ở đây, không chỉ trong hộp "Sửa sách" của từng cuốn. */}
+      {/* "Nhạc của tôi" ở màn Nhạc (nội dung, không phải cài đặt): ở đây chỉ công tắc tự chọn và lối sang đó. */}
       <SettingsBlock title={S.s_nhac_nen_271fb292} id="music">
         <SettingsRow label={<span id="auto-music-name">{AUTO_MUSIC_LABEL}</span>} hint={<span id="auto-music-hint">{AUTO_MUSIC_HINT}</span>}>
           <Switch
@@ -256,9 +256,7 @@ function ListenGroup() {
             }
           />
         </SettingsRow>
-        <div className="py-3.5">
-          <MyMusicSection />
-        </div>
+        <OpenMusicRow />
       </SettingsBlock>
     </>
   );

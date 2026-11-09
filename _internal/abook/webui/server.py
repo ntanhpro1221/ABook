@@ -46,7 +46,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, diagnostics, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
-               listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
+               listen_export, music_bounds, music_catalog, music_export, music_cache, music_library, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_module, voice_pick, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
@@ -444,6 +444,10 @@ class App:
                                 lambda value: self.preferences.update({"preciseMusicMood": value}))
         music_valence.kick()
         self._music_catalog: music_catalog.MusicCatalog | None = None
+        # Kho nhạc (màn "Nhạc", music_library.py): sổ bài người dùng lưu (bài ghim: bộ dọn bộ đệm không xoá) + hàng tải của chúng.
+        self.music_saved = music_library.SavedTracks(self.music_dir / "saved.json")
+        self.music_downloads = music_library.Downloads(self.music_track_file, export_jobs.Cancelled)
+        self._music_index: tuple[str, dict[str, dict[str, Any]], dict[str, str]] | None = None  # (revision, bài, link -> tên file đệm)
         self._music_lock = threading.Lock()
         # Thao tác bìa của từng cuốn xếp theo lúc BẮT ĐẦU (`cover_ticket`): ảnh mạng tải chậm về sau một ảnh khác đã đặt xong thì bị bỏ.
         self._cover_lock = threading.Lock()
@@ -2411,6 +2415,155 @@ class App:
         music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
         return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks)}
 
+    # ---- Kho nhạc: lướt / tìm / lưu cả danh mục (music_library.py) --------------------------------------------------------
+    def _music_library_index(self) -> tuple[str, dict[str, dict[str, Any]], dict[str, str]]:
+        """(revision, {link: thông tin bài}, {link: tên file trong bộ đệm}) của cả danh mục - dựng một lần mỗi revision."""
+        catalog = self.music_catalog()
+        revision = str(catalog.manifest().get("revision") or "")
+        with self._music_lock:
+            if self._music_index is not None and self._music_index[0] == revision:
+                return self._music_index
+        tracks = catalog.everything()
+        names = {link: self._music_file(link).name for link in tracks}
+        with self._music_lock:
+            self._music_index = (revision, tracks, names)
+        return self._music_index
+
+    def _music_downloaded(self, names: dict[str, str]) -> set[str]:
+        """Link các bài đã có file trong bộ đệm (một lần liệt kê thư mục, không stat từng bài)."""
+        try:
+            present = {path.name for path in (self.music_dir / "files").iterdir()}
+        except OSError:
+            return set()
+        return {link for link, name in names.items() if name in present}
+
+    def music_library_meta(self) -> dict[str, Any]:
+        """Phần tĩnh của màn Kho nhạc: nhãn tiếng Việt của phong cách / cảm xúc (taxonomy của danh mục) và các danh sách phát."""
+        try:
+            manifest = self.music_catalog().manifest()
+            playlists = self.music_catalog().playlists()
+        except music_catalog.CatalogError as exc:
+            return {"styles": [], "emotions": [], "playlists": [], "error": str(exc)}
+        taxonomy = manifest.get("taxonomy") if isinstance(manifest.get("taxonomy"), dict) else {}
+        styles = taxonomy.get("styles") if isinstance(taxonomy.get("styles"), dict) else {}
+        emotions = taxonomy.get("emotions") if isinstance(taxonomy.get("emotions"), dict) else {}
+        return {"styles": [{"id": key, "label": str(label)} for key, label in styles.items()],
+                "emotions": [{"id": key, "label": str(label)} for key, label in emotions.items()],
+                "playlists": [{"id": item["id"], "name": item["name"], "count": len(item.get("tracks") or [])} for item in playlists],
+                "error": ""}
+
+    def music_library(self, filters: dict[str, Any]) -> dict[str, Any]:
+        """Danh sách Kho nhạc theo bộ lọc (music_library.select): dòng thu gọn + đã lưu / đã tải, đếm, MB đã lưu và MB còn phải tải
+        của các bài đang hiện ("Tải cả playlist"). Mất mạng: dùng mảnh đã đệm; chưa từng tải danh mục thì `error`."""
+        started = time.perf_counter()
+        try:
+            _revision, tracks, names = self._music_library_index()
+            playlists = {item["id"]: list(item.get("tracks") or []) for item in self.music_catalog().playlists()}
+        except music_catalog.CatalogError as exc:
+            return {"tracks": [], "count": 0, "error": str(exc), "saved": {"count": 0, "bytes": 0}, "missingBytes": 0}
+        downloaded = self._music_downloaded(names)
+        saved = set(self.music_saved.links())
+        links = music_library.select(tracks, filters, playlists, downloaded)
+        if filters.get("saved"):  # phần "Đã lưu" của màn Nhạc: bài người dùng lưu, mới lưu trước
+            order = {link: index for index, link in enumerate(reversed(self.music_saved.links()))}
+            links = sorted((link for link in links if link in order), key=order.__getitem__)
+        rows, missing = [], 0
+        for link in links:
+            item = music_library.row(link, tracks[link])
+            item["saved"], item["downloaded"] = link in saved, link in downloaded
+            if not item["downloaded"]:
+                missing += int(tracks[link].get("bytes") or 0)
+            rows.append(item)
+        kept = [link for link in saved if link in downloaded]
+        return {"tracks": rows, "count": len(rows), "error": "", "missingBytes": missing,
+                "saved": {"count": len(kept), "bytes": sum(int(tracks.get(link, {}).get("bytes") or 0) for link in kept)},
+                "elapsedMs": round((time.perf_counter() - started) * 1000, 2)}
+
+    def music_library_track(self, link: str, book: str | None = None, scene: str | None = None) -> dict[str, Any]:
+        """Sheet chi tiết bài: 13 cảm xúc, bpm, phong cách, giấy phép / ghi công / nguồn, danh sách phát chứa bài, đã lưu / đã tải.
+        Mở từ bài đang phát hay "Nhạc trong sách" (`book` + `scene` = khoá đoạn): thêm `why` - cảm xúc máy đọc được ở đoạn ấy
+        cạnh cảm xúc bài (music_library.why); đoạn không có dữ liệu cảm xúc thì không có `why`."""
+        try:
+            info = self.music_catalog().lookup([link]).get(link)
+            playlists = self.music_catalog().playlists()
+        except music_catalog.CatalogError as exc:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(exc)) from exc
+        if not isinstance(info, dict):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
+        out = music_library.detail(link, info, playlists)
+        out["saved"] = link in self.music_saved.links()
+        out["downloaded"] = self._music_file(link).is_file()
+        if book and scene:
+            with contextlib.suppress(ApiError, OSError, ValueError):
+                path = self._listenable(book)
+                plan = None if packages.is_package(path) else music_plan.read_plan(path)
+                found = next((item for item in (plan or {}).get("scenes") or [] if item.get("key") == scene), None)
+                reason = music_library.why((found or {}).get("emotions"), info.get("emotions"), music_select.emotion_cosine)
+                if reason is not None:
+                    out["why"] = reason
+        return out
+
+    def music_library_downloads(self) -> dict[str, Any]:
+        return self.music_downloads.state()
+
+    def music_library_save(self, links: list[str]) -> dict[str, Any]:
+        """"Tải về" / "Lưu": ghim các bài (bộ dọn bộ đệm không xoá) và tải bài chưa có. Chỉ bài có trong danh mục."""
+        try:
+            _revision, tracks, _names = self._music_library_index()
+        except music_catalog.CatalogError as exc:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(exc)) from exc
+        wanted = [link for link in links if link in tracks]
+        self.music_saved.add(wanted)
+        self.music_downloads.enqueue([link for link in wanted if not self._music_file(link).is_file()])
+        return self.music_downloads.state()
+
+    def music_library_unsave(self, links: list[str]) -> dict[str, Any]:
+        """"Bỏ lưu" / "Xoá bản tải" / huỷ tải: thôi ghim, dừng tải, xoá file - trừ bài sách nào đó đang ghim hay mang theo (vẫn cần khi nghe)."""
+        self.music_downloads.cancel(links)
+        self.music_saved.remove(links)
+        keep = self._music_pinned_names() | self.music_cache.owned()
+        for link in links:
+            target = self._music_file(link)
+            if target.name in keep:
+                continue
+            for path in (target, target.with_suffix(music_plan.LUFS_SIDECAR), target.with_suffix(music_plan.MEASURE_SIDECAR)):
+                with contextlib.suppress(OSError):
+                    path.unlink(missing_ok=True)
+        return self.music_downloads.state()
+
+    def music_book_tracks(self, value: str) -> dict[str, Any]:
+        """"Nhạc trong sách" của trang sách: các bài cuốn này dùng (gộp trùng, đếm số đoạn), đã lưu / đã tải, MB còn phải tải để lưu tất cả."""
+        path = self._listenable(value)
+        scenes: list[dict[str, Any]] = []
+        if packages.is_package(path):
+            music = packages.edited_manifest(path).get("music")
+            if isinstance(music, dict):
+                carried = music.get("tracks") if isinstance(music.get("tracks"), dict) else {}
+                for cues in (music.get("chapters") or {}).values():
+                    for cue in cues or []:
+                        track = carried.get(cue.get("track")) if isinstance(cue, dict) else None
+                        if isinstance(track, dict) and isinstance(track.get("link"), str):
+                            scenes.append({"link": track["link"]})
+        else:
+            scenes = (music_plan.read_plan(path) or {}).get("scenes") or []
+        used = [item for item in music_library.book_tracks(scenes) if str(item["link"]).startswith("https://")]
+        try:
+            info = self.music_catalog().lookup([item["link"] for item in used]) if used else {}
+        except music_catalog.CatalogError:
+            info = {}
+        saved = set(self.music_saved.links())
+        rows, missing = [], 0
+        for item in used:
+            known = info.get(item["link"])
+            if not isinstance(known, dict):
+                continue
+            entry = {**music_library.row(item["link"], known), "scenes": item["scenes"], "scene": item["scene"],
+                     "saved": item["link"] in saved, "downloaded": self._music_file(item["link"]).is_file()}
+            if not entry["downloaded"]:
+                missing += int(known.get("bytes") or 0)
+            rows.append(entry)
+        return {"tracks": rows, "missingBytes": missing}
+
     # ---- danh sách phát cho sách nghe bằng "Nghe ngay" (music_playlist.py) ---------------------------------------------
     def music_playlists(self) -> dict[str, Any]:
         """Menu "Nhạc nền" của sách chỉ có chữ: các danh sách phát của danh mục + số bài trong "Nhạc của tôi". Chưa tải được
@@ -2637,7 +2790,7 @@ class App:
             for link in music_plan.read_overrides(project)["pins"].values():
                 if link.startswith("https://"):
                     names.add(self._music_file(link).name)
-        return names
+        return names | {self._music_file(link).name for link in self.music_saved.links()}  # bài người dùng lưu ở Kho nhạc
 
     def _music_prune(self, keep: Path | None = None) -> None:
         """Bộ đệm nhạc quá trần (music_cache.CAP_BYTES) thì dọn bài lâu không nghe; bài vừa tải (`keep`) và các bài được bảo vệ ở music_cache.py ở lại."""
@@ -5271,6 +5424,38 @@ class Handler(BaseHTTPRequestHandler):
         self.app.music_cache.touch(target)
         self._send_file(target, cache=True)
 
+    def get_music_library(self, query: dict[str, list[str]]) -> None:
+        filters = {key: (query.get(key) or [""])[0] for key in ("q", "playlist", "style", "emotion", "tempo", "length")}
+        filters["downloaded"] = (query.get("downloaded") or [""])[0] == "1"
+        filters["saved"] = (query.get("saved") or [""])[0] == "1"
+        self._send_json(HTTPStatus.OK, self.app.music_library(filters))
+
+    def get_music_library_meta(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_library_meta())
+
+    def get_music_library_track(self, query: dict[str, list[str]]) -> None:
+        link = (query.get("link") or [""])[0]
+        self._send_json(HTTPStatus.OK, self.app.music_library_track(link, (query.get("book") or [""])[0] or None,
+                                                                    (query.get("scene") or [""])[0] or None))
+
+    def get_music_library_downloads(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_library_downloads())
+
+    def _music_links(self) -> list[str]:
+        links = self._body().get("links")
+        if not isinstance(links, list) or not all(isinstance(link, str) for link in links):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu danh sách bài (links)")
+        return links
+
+    def post_music_library_save(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_library_save(self._music_links()))
+
+    def post_music_library_unsave(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_library_unsave(self._music_links()))
+
+    def get_music_book_tracks(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_book_tracks(value))
+
     def get_my_music(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_view())
 
@@ -7039,6 +7224,13 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/music/warm"), Handler.post_music_warm),
     ("POST", re.compile(r"/api/readaloud/warm"), Handler.post_readaloud_warm),
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).
+    ("GET", re.compile(r"/api/music/library"), Handler.get_music_library),
+    ("GET", re.compile(r"/api/music/library/meta"), Handler.get_music_library_meta),
+    ("GET", re.compile(r"/api/music/library/track"), Handler.get_music_library_track),
+    ("GET", re.compile(r"/api/music/library/downloads"), Handler.get_music_library_downloads),
+    ("POST", re.compile(r"/api/music/library/save"), Handler.post_music_library_save),
+    ("POST", re.compile(r"/api/music/library/unsave"), Handler.post_music_library_unsave),
+    ("GET", re.compile(BOOK + r"/music/library"), Handler.get_music_book_tracks),
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
     ("POST", re.compile(r"/api/music/local/module"), Handler.post_my_music_module),

@@ -40,6 +40,9 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L11 | Theo dõi / can thiệp Studio | 1 | tiến độ ở thanh bên (máy tính) và ở Studio (điện thoại ghép); "Việc cần bạn" chỉ hiện khi có, không chặn dây chuyền |
 | L12 | Sửa cách đọc / ai nói | 2 | đang đọc theo -> chạm giữ câu -> sửa -> ghi vào hàng chờ Studio (mọi player đều sửa được) |
 | L13 | Cài đặt | ≤ 2 cấp | Cài đặt -> nhóm -> mục. Không cấp ba |
+| L14 | Tìm / nghe thử / tải một bài nhạc | 3 | Nhạc -> "Kho nhạc" -> gõ tên hay chạm chip lọc -> nút nghe thử / nút tải trên dòng |
+| L15 | Lưu bài đang phát trong sách | 2 | trình phát: chạm dòng "Nhạc nền" -> "Lưu" (tải + ghim vào Đã lưu; chạm lại = bỏ lưu) |
+| L16 | Đổi bài một đoạn bằng cả kho | 3 | "Đổi bài" của đoạn -> "Xem cả kho ›" -> "Dùng" trên bài (quay lại, đoạn đã đổi) |
 
 Số chạm do máy đếm (`ui/src/gallery/flowTaps.phone.dom.test.tsx`, `flowTaps.desktop.dom.test.tsx`): mỗi cú bấm trong app một chạm, mỗi lần mở
 hộp chọn file của hệ thống cũng một chạm. Hộp hỏi trước lần đầu gửi chữ tới giọng trực tuyến là quyết định quyền riêng tư, tính riêng.
@@ -56,12 +59,15 @@ Hai nền tảng cùng một mô hình; khác nhau ở bố cục, không ở ch
   ở đây. Trang sách là tầng con.
 - **Studio** - dự án tạo sách nói. Máy tính: đầy đủ. Điện thoại: Studio từ xa khi đã ghép máy tính; chưa ghép thì thẻ
   Studio giải thích một câu + "Nối máy tính".
+- **Nhạc** - nhạc là NỘI DUNG, không phải cài đặt: "Đã lưu" (bài người dùng lưu / tải từ kho + "Nhạc của tôi" = nhạc tự nhập, một
+  chỗ duy nhất) và "Kho nhạc" (cả danh mục nhạc nền ký số: tìm, lọc, nghe thử, tải về). Cài đặt › Nghe chỉ còn công tắc "Tự chọn
+  nhạc nền"; Sửa sách / Studio › Nhạc nền chỉ còn lối "Mở Nhạc ›".
 - **Cài đặt** - gồm cả Thiết bị (ghép máy, chẩn đoán).
 - **Trình phát** - lớp nổi trên mọi màn (thu nhỏ / đầy đủ), không phải một tab.
 
-Điện thoại: thanh tab đáy 3 mục **Thư viện · Studio · Cài đặt** (bỏ tab "Tải sách": sách máy kia vào Thư viện, ghép máy vào
-Cài đặt > Thiết bị, nút Studio vào tab Studio). Máy tính: thanh bên **Thư viện · Studio** (+ danh sách dự án đang chạy rút
-gọn dưới Studio) và **Cài đặt** ở đáy; không nhóm tiêu đề "NGHE / STUDIO" thừa.
+Điện thoại: thanh tab đáy 4 mục **Thư viện · Nhạc · Studio · Cài đặt** (bỏ tab "Tải sách": sách máy kia vào Thư viện, ghép máy vào
+Cài đặt > Thiết bị, nút Studio vào tab Studio). Máy tính (web / Qt): thanh bên **Thư viện · Nhạc · Studio** (+ danh sách dự án đang
+chạy rút gọn dưới Studio) và **Cài đặt** ở đáy, cùng thứ tự; không nhóm tiêu đề "NGHE / STUDIO" thừa.
 Tab đang mở của thanh tab đáy điện thoại: icon + chữ hổ phách (quy ước nền tảng). Mọi điều hướng khác theo mục "Điều hướng" ở §6.
 
 ## 4. Nguyên tắc
@@ -301,6 +307,28 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   thay đổi"), còn lại vào "…"; tab hiện: Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền, phần còn lại (Duyệt
   trước khi thu, Kịch bản, Nhật ký) vào "Thêm" - tab đang chọn nằm trong "Thêm" thì nút ấy mang tên tab.
 - **Cài đặt**: danh sách nhóm phẳng (Giọng đọc · Nghe · Hẹn giờ ngủ · Giao diện · Thiết bị · Nâng cao), máy tính hai cột.
+- **Nhạc**: tiêu đề "Nhạc"; hai tab **Đã lưu** | **Kho nhạc**.
+  - *Đã lưu*: dòng "Đã tải X bài · Y MB", danh sách bài đã lưu (dòng như Kho nhạc), rồi khối gập "Nhạc của tôi" (nhập / xoá / tự chọn -
+    thành phần duy nhất, không bản sao ở chỗ khác). Rỗng: một câu + nút "Kho nhạc".
+  - *Kho nhạc*: ô tìm (tên bài + người sáng tác, không dấu / hoa thường đều được) + MỘT hàng chip cuộn ngang: Danh sách phát · Phong cách ·
+    Cảm xúc · Nhịp (Chậm < 90 / Vừa / Nhanh > 130 nhịp/phút) · Độ dài (Dưới 2 / 2-5 / Trên 5 phút) · Đã tải. Chip có danh sách chạm mở
+    menu chọn ("Tất cả" + mục); đang lọc thì chip mang tên mục và tô màu nhấn. Dưới hàng chip: "N bài" (+ "Đã tải X bài · Y MB") bên trái,
+    "Bỏ lọc" và - khi lọc theo danh sách phát - "Tải cả danh sách (Z MB)" bên phải. Luật lọc / xếp một nguồn:
+    tests/fixtures/music_library/cases.json (máy chủ, Android, Qt chạy cùng bảng).
+  - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, một dòng, cắt) / người sáng tác · thời lượng · chip phong cách (màn rộng) · trạng
+    thái tải (nút tải / vòng % chạm để huỷ / dấu đã tải / dấu cảnh báo "Chưa tải xong" chạm để tải tiếp). Danh sách ảo hoá (2.387 dòng).
+    Mất mạng: bài chưa tải mờ nút nghe thử và nút tải; danh mục đã lưu vẫn mở được.
+  - *Nghe thử*: từ chỗ bắt đầu nghe được, tối đa 30 giây, cùng một độ to; sách đang phát thì TẠM DỪNG sách (không tự phát lại); một bài
+    một lúc; rời màn là dừng. Thanh nhỏ "Đang nghe thử · tên · ■" nổi ở đáy màn.
+  - *Chi tiết bài* (sheet): nút Nghe thử · Tải về | Xoá bản tải (đang tải: Huỷ tải + %) · (chế độ chọn) Dùng, Không tự chọn bài này; khối
+    "Vì sao bài này" (chỉ khi mở từ bài đang phát / Nhạc trong sách và đoạn có cảm xúc máy đọc được: 3 cảm xúc khớp nhất, thanh "Đoạn này"
+    cạnh "Bài này", "Khớp N %"); đủ 13 cảm xúc dạng thanh 0-100 % xếp giảm dần; bảng: Năng lượng · Nhịp · Phong cách · Độ dài · Có lời ·
+    Giấy phép · Có trong (danh sách phát); Ghi công đầy đủ + "Mở trang nguồn".
+  - *Chế độ chọn* (từ "Xem cả kho ›" cuối sheet "Đổi bài" của một đoạn): tiêu đề "Chọn bài cho đoạn" + nút ←, không tab, mỗi dòng có nút
+    "Dùng"; chọn xong quay lại (Back), cùng đường lưu với chọn bài gợi ý.
+  - *Bài đang phát* (chạm dòng Nhạc nền của trình phát): sheet chi tiết với tiêu đề "Bài đang phát", nút Lưu / Bỏ lưu · Xem trong kho ·
+    Đổi bài. *Nhạc trong sách* (trang sách): danh sách bài cuốn dùng, mỗi dòng thêm "N đoạn", nút "Lưu tất cả (X MB)".
+  - Bài người dùng lưu / tải tay là bài GHIM: bộ dọn bộ đệm nhạc không xoá. Điện thoại trên mạng tính phí: hỏi trước khi tải.
 
 ### Việc cần duyệt: vai phụ và người gọi (HITL mốc 2)
 

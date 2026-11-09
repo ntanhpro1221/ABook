@@ -225,6 +225,19 @@ class MusicCatalog:
                     found[link] = data[link]
         return found
 
+    def everything(self) -> dict[str, dict[str, Any]]:
+        """Mọi bài của danh mục (cả 256 mảnh `tracks/`, tải song song lần đầu, sau đó từ bộ đệm theo `revision`) - Kho nhạc
+        (music_library.py) lướt / tìm trên đó. Mảnh không qua kiểm sha256 thì các bài trong đó vắng; mất mạng mà mảnh chưa từng
+        tải thì ném CatalogError như `lookup`."""
+        shards = [str(shard) for shard in self.manifest().get("shards") or []]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=SHARD_WORKERS) as pool:
+            parts = list(pool.map(lambda shard: self._part(f"tracks/{shard}.json"), shards))
+        found: dict[str, dict[str, Any]] = {}
+        for data in parts:
+            if isinstance(data, dict):
+                found.update({link: info for link, info in data.items() if isinstance(info, dict)})
+        return found
+
     def playlists(self) -> list[dict[str, Any]]:
         """Danh sách phát của danh mục (mục `playlists` của mục lục), đã kiểm hình dạng: [{id, name, description, minutes,
         tracks: [link theo thứ tự trộn sẵn]}]. Mục lục cũ chưa có thì rỗng."""
