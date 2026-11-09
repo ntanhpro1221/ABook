@@ -606,6 +606,7 @@ object VieneuUnits {
         }
         romanNumbers(pieces, said)
         Abbreviations.readLevels(pieces, said)
+        Abbreviations.readVietnameseTitles(pieces, said)
         Abbreviations.readTitles(pieces, said)
         Abbreviations.readShoutedHonorifics(pieces, said, origin)
         Abbreviations.spellAbbreviations(pieces, said)

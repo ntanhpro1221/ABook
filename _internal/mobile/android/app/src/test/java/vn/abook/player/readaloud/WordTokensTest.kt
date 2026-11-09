@@ -16,8 +16,9 @@ class WordTokensTest {
         if (!it.isDirectory) fail("Không thấy bộ ví dụ dùng chung: ${it.absoluteFile}")
     }
 
+    // reading_punctuation.json is the shared spacing fixture (a list of cases), not a timing case.
     private fun cases(): List<Pair<String, JSONObject>> =
-        dir.listFiles { f -> f.name.endsWith(".json") }!!.sortedBy { it.name }.map { it.name to JSONObject(it.readText(Charsets.UTF_8)) }
+        dir.listFiles { f -> f.name.endsWith(".json") && f.name != "reading_punctuation.json" }!!.sortedBy { it.name }.map { it.name to JSONObject(it.readText(Charsets.UTF_8)) }
 
     private fun boundaries(json: JSONObject): List<Boundary> {
         val array = json.getJSONArray("boundaries")

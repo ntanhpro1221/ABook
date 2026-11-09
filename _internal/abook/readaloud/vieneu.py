@@ -797,6 +797,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
                 break
     _roman_numbers(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
+    abbreviations.read_vietnamese_titles(pieces, said)
     abbreviations.read_titles(pieces, said, speaks_english)
     abbreviations.read_shouted_honorifics(pieces, said, origin)
     abbreviations.spell_abbreviations(pieces, said)

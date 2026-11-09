@@ -96,7 +96,15 @@ def test_coordinator_preserves_hello_and_source_and_does_not_make_space_alias():
 def test_phone_and_desktop_share_reading_boundary_cases():
     fixture = Path(__file__).parent / "fixtures/readaloud/reading_punctuation.json"
     for case in json.loads(fixture.read_text(encoding="utf-8")):
-        assert reading_punctuation(case["source"])[0] == case["reading"]
+        source = case["source"]
+        actual, mapping = reading_punctuation(source)
+        assert actual == case["reading"], source
+        assert reading_punctuation(actual)[0] == actual, source
+        assert len(mapping) == len(source) + 1
+        assert all(actual[mapping[i]] == c for i, c in enumerate(source))
+        if "spoken" in case:
+            assert studio_tn(source, None, True)[0] == case["spoken"], source
+            assert " ".join(spoken_tokens(source.split())) == case["spoken"], source
 
 
 def test_coordinator_does_not_reinterpret_a_url_after_symbols_remove_its_scheme():

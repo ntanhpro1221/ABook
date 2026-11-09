@@ -142,4 +142,60 @@ object Abbreviations {
             out[index] = before + TITLES.getValue(key) + tail
         }
     }
+
+    private val VIETNAMESE_TITLES = mapOf(
+        "PGS" to "phó giáo sư", "GS" to "giáo sư", "TS" to "tiến sĩ",
+        "ThS" to "thạc sĩ", "Th.S" to "thạc sĩ", "BS" to "bác sĩ",
+        "KS" to "kỹ sư", "CN" to "cử nhân", "TP" to "thành phố", "Tp" to "thành phố",
+        "P" to "phường", "Q" to "quận", "H" to "huyện", "TX" to "thị xã", "ĐH" to "đại học",
+    )
+    // Explicit whitespace also works on Android ICU (no Java UNICODE_CHARACTER_CLASS).
+    private const val VI_SPACE = """[\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]"""
+    private const val VI_TITLE = """(?:PGS|GS|TS|ThS|BS|KS|CN|TP|Tp|TX|ĐH|P|Q|H)\.|Th\.S\.?"""
+    private val VI_CHAIN = Regex("""(?<![\p{L}\p{N}_.])(?:(?:$VI_TITLE)$VI_SPACE*)+""")
+    private val VI_PART = Regex(VI_TITLE)
+    private val VI_HEAD = Regex("""^\p{L}+""")
+    private val ADDRESS_HEADS = setOf("Bến", "Bình", "Tân", "Thạnh", "Phú", "Long", "Quảng", "Thủ")
+    private val ADDRESS_CONTEXT = Regex("""(?i)(?:tại|ở|thuộc|đến|địa chỉ|địa bàn|khu vực)$VI_SPACE*$""")
+    private val ADDRESS_NUMBER = Regex("""[0-9]+(?![\p{L}\p{N}_])""")
+    private data class TitleEdit(val start: Int, val end: Int, val word: String)
+
+    /** Vietnamese dotted titles before spelling; preserve source-token ownership. */
+    fun readVietnameseTitles(toks: List<String>, out: MutableList<String>) {
+        val text = toks.joinToString(" ")
+        val edits = mutableListOf<TitleEdit>()
+        for (chain in VI_CHAIN.findAll(text)) {
+            val tail = text.substring(chain.range.last + 1)
+            // An all-capital word after the title is another abbreviation (TP.HCM, PGS.TS), not a name.
+            val head = VI_HEAD.find(tail)?.value
+            val named = head != null && head[0].isUpperCase() && !(head.length > 1 && head == head.uppercase())
+            val number = ADDRESS_NUMBER.find(tail)?.range?.first == 0
+            for (part in VI_PART.findAll(chain.value)) {
+                val key = part.value.trimEnd('.')
+                val locality = tail.split(Regex("$VI_SPACE+")).take(2)
+                val addressName = ADDRESS_CONTEXT.containsMatchIn(text.substring(0, chain.range.first)) ||
+                    (locality.size == 2 && locality[0] in ADDRESS_HEADS && locality[1].firstOrNull()?.isUpperCase() == true)
+                if (!named && !(number && key in setOf("P", "Q", "H", "TP", "Tp", "TX"))) continue
+                if (key in setOf("P", "Q", "H") && !number && !addressName) continue
+                val start = chain.range.first + part.range.first
+                val end = chain.range.first + part.range.last + 1
+                val word = VIETNAMESE_TITLES.getValue(key) +
+                    (if (end < text.length && !Regex(VI_SPACE).matches(text[end].toString())) " " else "")
+                edits.add(TitleEdit(start, end, word))
+            }
+        }
+        var offset = 0
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] == token) {
+                var value = token
+                for (edit in edits.asReversed()) {
+                    if (offset <= edit.start && edit.end <= offset + token.length)
+                        value = value.substring(0, edit.start - offset) + edit.word + value.substring(edit.end - offset)
+                }
+                out[index] = value
+            }
+            offset += token.length + 1
+        }
+    }
+
 }

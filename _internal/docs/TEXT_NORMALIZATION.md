@@ -19,11 +19,25 @@ xuất, người nghe đồng ý mới áp).
 Studio chạy bước này trước chuẩn hoá ký hiệu (để còn nhận được URL/email), giữ nguyên các surface có cách đọc của cuốn;
 `studio_tn` dùng bảng dịch cho anchor. `spoken_tokens` của Nghe ngay đọc các từ đã tách rồi gộp lại theo chữ hiện,
 không đổi số chữ hiện hay văn bản nguồn. Python và Kotlin dùng chung fixture `readaloud/reading_punctuation.json`;
-cache đọc tăng 8 → 9. Bộ chia khúc Studio nhận chuỗi đọc đã có ranh giới, không sửa bộ nhập/chia đoạn nguồn.
+cache đọc tăng 8 → 9 ở tnfix167, rồi 10 khi sửa review tnfix167b. Bộ chia khúc Studio nhận chuỗi đọc đã có ranh giới, không sửa bộ nhập/chia đoạn nguồn.
 
 Giữ dấu bên trong số, giờ, URL/email, tên miền ASCII viết thường, chữ cái đầu/viết tắt có chấm và mã có số.
 Một chuỗi ASCII viết thường như tên miền có thể cũng là câu thiếu cách: giữ nguyên khi không phân biệt được.
 Chấm lửng giữa hai chữ, kể cả trước chữ hoa, vẫn theo luật ngập ngừng cũ; chỉ thêm cách khi có ngoặc đóng làm rõ biên.
+Các regex bảo vệ chạy riêng để nhận được cả các khoảng chồng nhau (`a.b.example.com`). Chuỗi chữ cái đầu được nhận lại
+sau dấu chấm đầu tiên (`Dr.A.B` → `Dr. A.B`, `đi.A.B.C` → `đi. A.B.C`). Ngoặc thẳng ngay sau `:`, `,`, `;` là ngoặc mở:
+không thêm cách sau ngoặc. Kotlin dùng lớp khoảng trắng Unicode liệt kê tường minh (không dùng cờ Java `(?U)` mà ICU
+Android không hỗ trợ) và tính cả Nl/No như Python khi xét chữ đứng trước dấu câu.
+
+Trước bước đánh vần, `abbreviations.read_vietnamese_titles` / Kotlin `readVietnameseTitles` mở rộng chức danh/hành chính
+có dấu chấm trước tên viết hoa: GS, PGS, TS, ThS, Th.S (cả dạng không chấm cuối), BS, KS, CN, TP/Tp, TX, ĐH.
+Chuỗi nhiều chức danh cũng được mở rộng, cả dạng dính và đã cách (`PGS.TS.Lê`, `PGS. TS. Lê`). P/Q/H đi với số là địa chỉ;
+trước tên thì cần ngữ cảnh `tại`, `ở`, `thuộc`, `đến`, `địa chỉ`, `địa bàn`, `khu vực`, hoặc hai chữ viết hoa bắt đầu bằng
+Bến/Bình/Tân/Thạnh/Phú/Long/Quảng/Thủ. Chữ toàn hoa từ hai ký tự theo sau (`TP.HCM`, `PGS.TS ngành`) là viết tắt khác,
+không phải tên: giữ nguyên để VieNeu tự đọc như trước. Đây là heuristic có giới hạn, không phải nhận diện địa danh hoàn chỉnh.
+`H. Nguyễn`, `P. Nguyễn`, `Q. Nguyễn` thiếu ngữ cảnh nên giữ hành vi trước bản sửa review, không tự đoán thành huyện/phường/quận.
+Bảng cách đọc riêng của cuốn vẫn thắng. Thay đổi chuỗi nói khiến các đoạn tương ứng của project dở phải thu lại khi resume,
+mất hiệu lực bằng chứng QA và phán quyết nghe của bản thu cũ; chỉ tích hợp sau khi hết run, không migrate hay thêm mã tương thích.
 Không đặt luật riêng cho từ “Hello”: kiểm tra main vẫn giữ chữ này trong chuỗi gửi máy và phoneme; bằng chứng audio/ASR/CTC
 được lưu ngoài repo. Chưa có bằng chứng để quy lỗi bỏ đọc cho chuẩn hoá hay G2P.
 

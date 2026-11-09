@@ -24,7 +24,8 @@ from abook.readaloud.model import Synthesis, Voice, VoiceError
 from abook.readaloud.service import ReadAloud
 
 FIXTURES = Path(__file__).parent / "fixtures" / "readaloud"
-CASES = sorted(FIXTURES.glob("*.json"))
+# reading_punctuation.json is the shared spacing fixture (a list of cases), not a timing case.
+CASES = sorted(path for path in FIXTURES.glob("*.json") if path.name != "reading_punctuation.json")
 NET = pytest.mark.skipif(os.environ.get("ABOOK_NET_TESTS") != "1", reason="gọi dịch vụ thật: ABOOK_NET_TESTS=1")
 
 

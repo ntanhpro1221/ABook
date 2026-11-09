@@ -14,17 +14,18 @@ from . import vieneu
 
 # These patterns protect lexical punctuation, never the displayed/source string.
 # A bare lower-case ASCII dotted name is ambiguous ("hello.world"): abstain.
-_LEXICAL_PUNCTUATION = re.compile(
-    r"(?i:https?://|ftp://|www\.)[^\s<>\"“”]+"
-    r"|[\w.+-]+@[\w-]+(?:\.[\w-]+)+"
-    r"|(?<![\w.])(?:[A-Za-z]\.){2,}(?:[A-Za-z](?![\w]))?"
-    r"|(?<![\w.])[vV]\.v\.?(?![\w.])"
-    r"|(?<![\w.])[A-Z]+(?:\.[A-Z]+)+\.?(?![\w.])"
-    r"|(?<![\w.])(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]*\d[A-Za-z0-9_-]*(?![\w.])"
-    r"|(?<![\w.])(?:[A-Za-z0-9-]+\.)+[a-z]{2,63}(?![\w])"
-    r"|(?<![\w.])(?:[A-Za-z0-9-]+\.)+(?i:com|org|net|edu|gov|io|co|vn|jp|uk|ai|dev|app|info|me|tv)(?![\w])"
-    r"|(?<=\d)[.,:](?=\d)"
-)
+_LEXICAL_PUNCTUATION = tuple(re.compile(pattern) for pattern in (
+    r'(?i:https?://|ftp://|www\.)[^\s<>"“”]+',
+    r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',
+    r'(?<!\w)(?:[A-Za-z]\.){2,}(?:[A-Za-z](?!\w))?',
+    r'(?<![\w.])[vV]\.v\.?(?![\w.])',
+    r'(?<!\w)[A-Z]+(?:\.[A-Z]+)+\.?(?![\w.])',
+    r'(?<![\w.])(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]*\d[A-Za-z0-9_-]*(?![\w.])',
+    r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+[a-z]{2,63}(?!\w)',
+    r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+(?i:com|org|net|edu|gov|io|co|vn|jp|uk|ai|dev|app|info|me|tv)(?!\w)',
+    r'(?<=\d)[.,:](?=\d)',
+    r'(?<![\w.])Th\.S(?!\w)',
+))
 _JOINED_PUNCTUATION = re.compile(r"[.!?,:;…]+[\"'”’»\])]*(?P<opening>[“‘«\[]*)(?=[^\W\d_])")
 
 
@@ -35,7 +36,7 @@ def reading_punctuation(text: str, protected_spans: Sequence[tuple[int, int]] = 
     syllables) retain the existing reading rules, even before capitals. Only a
     closing quotation makes that boundary unambiguous. Pronunciation spans win.
     """
-    protected = [match.span() for match in _LEXICAL_PUNCTUATION.finditer(text)]
+    protected = [match.span() for pattern in _LEXICAL_PUNCTUATION for match in pattern.finditer(text)]
     protected.extend(protected_spans)
     insertions: set[int] = set()
     for match in _JOINED_PUNCTUATION.finditer(text):
@@ -45,6 +46,10 @@ def reading_punctuation(text: str, protected_spans: Sequence[tuple[int, int]] = 
         if any(match.start() < end and at > start for start, end in protected):
             continue
         punctuation = match.group().rstrip('"\'”’»])“‘«[')
+        # Straight quotes after a clause separator open the quotation.
+        following = text[match.start() + len(punctuation):][:1]
+        if punctuation[-1:] in {":", ",", ";"} and following in {'"', "'"}:
+            continue
         if "…" in punctuation or ".." in punctuation:
             if not any(c in match.group() for c in '"”’»])'):
                 continue
