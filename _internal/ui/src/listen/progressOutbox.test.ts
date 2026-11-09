@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { ProgressOutbox } from "./progressOutbox";
+import { eventually } from "@/testing/eventually";
 
 function storage() {
   const data = new Map<string, string>();
@@ -24,7 +25,7 @@ it("ACK cũ không gỡ chỗ mới còn chờ", async () => {
   const disk = storage();
   const queue = new ProgressOutbox(send, disk);
   const first = queue.put(spot);
-  await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+  await eventually(() => expect(send).toHaveBeenCalledTimes(1));
   const second = queue.put({ ...spot, seconds: 60 });
   ack();
   await first;

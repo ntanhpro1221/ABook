@@ -4,6 +4,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import vn.abook.player.TestTime
 
 class OpeningScheduleTest {
     @get:Rule val temp = TemporaryFolder()
@@ -228,7 +229,7 @@ class OpeningScheduleTest {
             assertEquals("lần tính đã cũ bị bỏ, lần sau vẫn chạy", "failed: null", seen.poll(5, java.util.concurrent.TimeUnit.SECONDS))
             planner.plan({ true }, { 1 }) { seen.put("done") }
             assertEquals("done", seen.poll(5, java.util.concurrent.TimeUnit.SECONDS))
-            val until = System.nanoTime() + 5_000_000_000
+            val until = System.nanoTime() + TestTime.nanos(5_000_000_000)
             while (FetchWake.heldCount() > 0 && System.nanoTime() < until) Thread.sleep(5)
             assertEquals(0, FetchWake.heldCount())
             assertFalse("tính xong thì nhả", locks.held)

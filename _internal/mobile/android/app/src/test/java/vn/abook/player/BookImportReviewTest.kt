@@ -32,7 +32,7 @@ class BookImportReviewTest {
         val digest = MessageDigest.getInstance("SHA-256").digest(chapter.text.toByteArray()).joinToString("") { "%02x".format(it) }
         assertEquals(case.getString("sha256"), digest)
         println("5000 parts: ${elapsed}s")
-        assertTrue("5000 parts: ${elapsed}s", elapsed < case.getDouble("max_seconds"))
+        TestTime.perf { assertTrue("5000 parts: ${elapsed}s", elapsed < case.getDouble("max_seconds")) } // ngân sách giờ thật: chỉ khi ABOOK_PERF=1
     }
 
     @Test

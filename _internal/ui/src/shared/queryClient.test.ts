@@ -1,11 +1,12 @@
 import { MutationObserver, onlineManager, QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, it } from "vitest";
 import { createAppQueryClient } from "./queryClient";
+import { scaledMs } from "@/testing/timeScale";
 
 // Soát a66 mục 1: mất Wi-Fi giữa phiên làm đứng mọi truy vấn chưa có cache (thẻ giọng, nút tải giọng, thanh tải 0 %),
 // dù chúng chỉ gọi máy chủ cục bộ / plugin. Hai nền dùng chung createAppQueryClient.
 
-const settle = <T,>(p: Promise<T>, ms = 200) =>
+const settle = <T,>(p: Promise<T>, ms = scaledMs(200)) =>
   Promise.race([p.then(() => "xong" as const), new Promise<"đứng">((r) => setTimeout(() => r("đứng"), ms))]);
 
 afterEach(() => onlineManager.setOnline(true));

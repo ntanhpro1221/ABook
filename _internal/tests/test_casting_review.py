@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 from abook.webui.casting_review import casting_chapter, casting_chapters
+from tests.timing import assert_within
 
 
 def make_book(root: Path, *, cast: bool = True) -> Path:
@@ -86,7 +87,7 @@ def test_a_chapter_reads_as_a_script_with_who_says_each_line(tmp_path: Path) -> 
     assert view["firstPerson"] == {"value": "LUCIEN", "label": "Lucien", "chip": "LUCIEN"}
     assert view["previous"] is None and view["next"] == 2 and view["castReady"] is True
     assert casting_chapter(project, 99) is None
-    assert time.time() - started < 5
+    assert_within(5, started, clock=time.time)
 
 
 def test_the_script_marks_where_the_machine_doubts_and_suggests_someone(tmp_path: Path) -> None:

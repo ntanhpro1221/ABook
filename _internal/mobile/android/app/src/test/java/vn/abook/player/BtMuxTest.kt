@@ -97,7 +97,7 @@ class BtMuxTest {
         val pool = Executors.newFixedThreadPool(8)
         val started = System.currentTimeMillis()
         val results = (1..8).map { pool.submit<Pair<Int, ByteArray>> { get(local.port, "/nho") } }.map { it.get(10, TimeUnit.SECONDS) }
-        assertTrue("luồng nghẽn làm các luồng khác đứng", System.currentTimeMillis() - started < 5000)
+        assertTrue("luồng nghẽn làm các luồng khác đứng", System.currentTimeMillis() - started < TestTime.ms(5000, blockedMs = 10_000))
         results.forEach { (code, body) -> assertEquals(200, code); assertArrayEquals("nho".toByteArray(), body) }
 
         // Luồng lớn đọc tiếp thì nhận đủ, đúng từng byte.
@@ -140,12 +140,12 @@ class BtMuxTest {
         assertTrue(caller.getInputStream().read() >= 0)
         server.shutdown() // ra ngoài tầm Bluetooth
         val buffer = ByteArray(1 shl 16)
-        val deadline = System.currentTimeMillis() + 10_000
+        val deadline = System.currentTimeMillis() + TestTime.ms(10_000)
         try {
             while (caller.getInputStream().read(buffer) >= 0) assertTrue(System.currentTimeMillis() < deadline)
         } catch (_: java.io.IOException) {
         }
-        val until = System.currentTimeMillis() + 5000
+        val until = System.currentTimeMillis() + TestTime.ms(5000)
         while (client.alive && System.currentTimeMillis() < until) Thread.sleep(50)
         assertTrue("đầu bên này không biết đường hầm đã đứt", !client.alive)
     }
@@ -164,7 +164,7 @@ class BtMuxTest {
             if (abrupt) player.setSoLinger(true, 0) // RST như app bị giết
             player.close()
         }
-        val until = System.currentTimeMillis() + 10_000
+        val until = System.currentTimeMillis() + TestTime.ms(10_000)
         while ((client.openStreams > 0 || server.openStreams > 0) && System.currentTimeMillis() < until) Thread.sleep(50)
         assertEquals("luồng bị bỏ vẫn giữ chỗ", 0 to 0, client.openStreams to server.openStreams)
         val (code, body) = get(local.port, "/nho")
@@ -218,7 +218,7 @@ class BtMuxTest {
     fun aNegativeWindowResetsTheStream() {
         val (near, mux) = rawPeer()
         near.getOutputStream().write(frame(BtMux.OPEN, 3))
-        val until = System.currentTimeMillis() + 5000
+        val until = System.currentTimeMillis() + TestTime.ms(5000)
         while (mux.openStreams == 0 && System.currentTimeMillis() < until) Thread.sleep(20)
         near.getOutputStream().write(frame(BtMux.WINDOW, 3, java.nio.ByteBuffer.allocate(4).putInt(-1).array()))
         assertEquals(Triple(BtMux.RESET, 3, 0), readFrame(near))
@@ -437,8 +437,10 @@ class BtMuxTest {
         Thread.sleep(1000)
         val rate = (got.get() - before) / ((System.nanoTime() - started) / 1e9) / 1024
         println("BtMux ống 150 KB/s: yêu cầu nhỏ ${"%.3f".format(took)} s, tải ${"%.0f".format(rate)} KB/s")
-        assertTrue("yêu cầu nhỏ chờ $took s sau luồng tải", took < 0.3)
-        assertTrue("tải chỉ còn $rate KB/s", rate > 90)
+        TestTime.perf { // đo độ trễ và tốc độ thật trên ống giả ~150 KB/s: ngưỡng cố định, chỉ chạy khi ABOOK_PERF=1
+            assertTrue("yêu cầu nhỏ chờ $took s sau luồng tải", took < 0.3)
+            assertTrue("tải chỉ còn $rate KB/s", rate > 90)
+        }
     }
 
     /** Nói chuyện với đầu Python thật (webui/bluetooth.py) - chạy tay: BTMUX_PY_PORT=<cổng> gradlew testDebugUnitTest. */

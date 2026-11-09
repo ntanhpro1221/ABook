@@ -30,6 +30,7 @@ import org.robolectric.shadows.ShadowToast
 import vn.abook.player.AbookApplication
 import vn.abook.player.IncomingFile
 import java.io.File
+import vn.abook.player.TestTime
 
 /** "Mở bằng" / chia sẻ file tới app: NativeActivity đưa file vào hàng nhập sách và mở "Thêm sách", như file chọn từ bộ chọn. */
 @RunWith(RobolectricTestRunner::class)
@@ -74,7 +75,7 @@ class NativeIncomingFileTest {
      * mà Robolectric chỉ chạy Looper khi có ai bơm (`waitUntil` của Compose không bơm khi màn đã đứng yên).
      */
     private fun until(what: String, condition: () -> Boolean) {
-        val end = System.currentTimeMillis() + 60_000
+        val end = System.currentTimeMillis() + TestTime.ms(60_000)
         while (!condition()) {
             if (System.currentTimeMillis() > end) throw AssertionError("Chưa thấy: $what; hàng nhập = ${app.imports.state.value.items}")
             rule.mainClock.advanceTimeByFrame()

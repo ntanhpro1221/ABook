@@ -67,6 +67,7 @@ vi.mock("@/studio/api", () => ({ api: (...args: unknown[]) => h.api(...args) }))
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: h.error, loading: vi.fn(() => "t"), dismiss: vi.fn() }) }));
 
 import { HandOffButton, RemoteBars } from "@/desktop/RemotePhone";
+import { eventually } from "@/testing/eventually";
 
 const tv = {
   device: "dev", name: "Google TV", kind: "tv", via: "cast", protocol: "gcast", bookId: "book", localBookId: "book", bookTitle: "Sach",
@@ -94,14 +95,14 @@ describe("Nghe ở đây", () => {
     expect(h.api).toHaveBeenCalledWith("/api/remote/dev", expect.objectContaining({ body: { action: "stop" } }));
     expect(h.play).not.toHaveBeenCalled(); // lệnh dừng chưa xong
     finish({ id: "ack" });
-    await vi.waitFor(() => expect(h.play).toHaveBeenCalledTimes(1));
+    await eventually(() => expect(h.play).toHaveBeenCalledTimes(1));
   });
 
   it("không phát ở đây khi máy kia không dừng được", async () => {
     h.api.mockRejectedValue(new Error("Google TV: không trả lời"));
     renderToString(<RemoteBars />);
     h.listen!();
-    await vi.waitFor(() => expect(h.error).toHaveBeenCalledWith("Google TV: không trả lời")); // lời báo của lệnh, một lần
+    await eventually(() => expect(h.error).toHaveBeenCalledWith("Google TV: không trả lời")); // lời báo của lệnh, một lần
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(h.error).toHaveBeenCalledTimes(1);
     expect(h.play).not.toHaveBeenCalled();

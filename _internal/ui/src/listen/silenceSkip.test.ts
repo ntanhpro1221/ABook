@@ -2,6 +2,7 @@
 import {expect,it,vi} from 'vitest';
 import {DEFAULT_FX} from './audioFx';
 import {CHUNK_FRAMES,WARMUP_FRAMES,attachSilenceSkip,mp3Frame,scanSilence,silenceCuts} from './silenceSkip';
+import { eventually } from "@/testing/eventually";
 
 const FX={...DEFAULT_FX,skipSilence:true};
 
@@ -83,7 +84,7 @@ it.each([
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue(response));
   const unavailable=vi.fn();
   const detach=attachSilenceSkip(audio,{decodeAudioData:vi.fn()} as unknown as AudioContext,()=>FX,()=>()=>{},unavailable);
-  try {await vi.waitFor(()=>expect(unavailable).toHaveBeenCalledTimes(1));}
+  try {await eventually(()=>expect(unavailable).toHaveBeenCalledTimes(1));}
   finally {detach();vi.unstubAllGlobals();}
 });
 
@@ -96,14 +97,14 @@ it('tells the listener when the decoder refuses a chunk, but not after the chapt
   const ctx={decodeAudioData:vi.fn(()=>new Promise((_,reject)=>{refuse=reject;}))} as unknown as AudioContext;
   const detach=attachSilenceSkip(audio,ctx,()=>FX,()=>()=>{},unavailable);
   try {
-    await vi.waitFor(()=>expect(ctx.decodeAudioData).toHaveBeenCalled());
+    await eventually(()=>expect(ctx.decodeAudioData).toHaveBeenCalled());
     refuse(new Error('EncodingError'));
-    await vi.waitFor(()=>expect(unavailable).toHaveBeenCalledTimes(1));
+    await eventually(()=>expect(unavailable).toHaveBeenCalledTimes(1));
   } finally {detach();vi.unstubAllGlobals();}
   const left=vi.fn();
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,body:null,arrayBuffer:async()=>mp3(Array(40).fill(true)).buffer}));
   const again=attachSilenceSkip(audio,ctx,()=>FX,()=>()=>{},left);
-  await vi.waitFor(()=>expect(ctx.decodeAudioData).toHaveBeenCalledTimes(2));
+  await eventually(()=>expect(ctx.decodeAudioData).toHaveBeenCalledTimes(2));
   again();refuse(new Error('EncodingError'));
   // The refusal reaches the scan's catch within a fixed number of microtasks; no timer involved.
   for(let i=0;i<50;i++)await Promise.resolve();
@@ -124,8 +125,8 @@ it('scans when metadata arrives after attaching, then seeks on the original cloc
   try {
     expect(fetcher).not.toHaveBeenCalled();
     Object.defineProperty(audio,'duration',{value:6.8});audio.dispatchEvent(new Event('loadedmetadata'));
-    await vi.waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1));
+    await eventually(()=>expect(fetcher).toHaveBeenCalledTimes(1));
     audio.currentTime=2.46;Object.defineProperty(audio,'paused',{value:false});audio.dispatchEvent(new Event('play'));
-    await vi.waitFor(()=>expect(audio.currentTime).toBe(5.95));
+    await eventually(()=>expect(audio.currentTime).toBe(5.95));
   } finally {detach();vi.unstubAllGlobals();}
 });

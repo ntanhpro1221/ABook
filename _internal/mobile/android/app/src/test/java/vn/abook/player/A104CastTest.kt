@@ -100,7 +100,7 @@ class A104CastTest {
         }
         out = Harness(players, backends, saved)
         players.scan()
-        val deadline = System.currentTimeMillis() + 8000
+        val deadline = System.currentTimeMillis() + TestTime.ms(8000)
         while (players.view().length() < devices.size && System.currentTimeMillis() < deadline) Thread.sleep(30)
         assertEquals(devices.size, players.view().length())
         return out
@@ -138,7 +138,7 @@ class A104CastTest {
         val first = Thread { h.players.send("dev", command("next")) }.apply { start() }
         assertTrue(backend.entered.await(5, TimeUnit.SECONDS))
         val second = Thread { h.players.send("dev", command("next")) }.apply { start() }
-        val deadline = System.currentTimeMillis() + 5000
+        val deadline = System.currentTimeMillis() + TestTime.ms(5000)
         while (second.state != Thread.State.WAITING && second.state != Thread.State.TIMED_WAITING && System.currentTimeMillis() < deadline) Thread.sleep(10)
         backend.release.countDown()
         first.join(5000)

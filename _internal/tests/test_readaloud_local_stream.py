@@ -211,7 +211,7 @@ def test_a_failed_read_cancels_the_pending_release(local_voices, monkeypatch: py
         return calls[0] > 2
 
     listener = Listener()
-    listener.reach = time.perf_counter() + 60
+    listener.reach = time.perf_counter() + 60  # wallclock-ok: a point in the future handed to the stream, not a wait
     with pytest.raises(VoiceError):
         make("cache").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=1, stream=listener, cancelled=gone)
     assert later, "đã hẹn"
@@ -234,7 +234,7 @@ def test_failure_before_local_close_drops_the_stream(local_voices, monkeypatch: 
     if failure == "close":
         monkeypatch.setattr(local_stream.LocalStream, "close", fail)
     listener = Listener()
-    listener.reach = time.perf_counter() + 3600
+    listener.reach = time.perf_counter() + 3600  # wallclock-ok: a point in the future handed to the stream, not a wait
     with pytest.raises(RuntimeError, match="post-synthesis failed"):
         make("cache").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=1, stream=listener)
     assert pending and not listener.events
@@ -473,7 +473,7 @@ def test_the_server_passes_the_sound_left_as_the_moment_to_stop_holding(local_vo
         post_clip(server.port, {**body, "soundLeft": 7.5})
         post_clip(server.port, {**body, "text": "Đoạn khác. " + LONG.strip()})
         post_clip(server.port, {**body, "text": "Đoạn nữa. " + LONG.strip(), "soundLeft": "7"})
-        assert before + 7.5 <= seen[0] <= time.perf_counter() + 7.5, "giây còn nghe -> lúc hết tiếng"
+        assert before + 7.5 <= seen[0] <= time.perf_counter() + 7.5, "giây còn nghe -> lúc hết tiếng"  # wallclock-ok: compares timestamps the server reported; no wait
         assert seen[1:] == [float("inf"), float("inf")], "không nói / sai kiểu: không biết"
     finally:
         server.stop()

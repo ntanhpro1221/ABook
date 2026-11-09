@@ -16,6 +16,7 @@ from abook.readaloud.supertonic import Installed, SupertonicProvider
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_api import CALM, CALM2, _with_catalog
 from tests.test_music_truncated_download import _FULL, _cut_server, _to_local
+from tests.timing import scaled
 
 
 class _Engine:
@@ -140,7 +141,7 @@ def test_the_idle_timer_does_not_keep_a_thread_forever(tmp_path: Path, monkeypat
     service, _made, _clock = _local_voice(tmp_path)
     service._clock = time.monotonic
     service.clip("supertonic:F1", "Một đoạn đầu.")
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + scaled(5)
     while service.providers["supertonic"]._engine is not None and time.monotonic() < deadline:
         time.sleep(0.02)
     assert service.providers["supertonic"]._engine is None, "hẹn giờ tự nhả"

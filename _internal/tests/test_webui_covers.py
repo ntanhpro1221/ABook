@@ -11,6 +11,7 @@ import pytest
 from PIL import Image
 
 from abook.webui import covers
+from tests.timing import assert_within
 
 
 def data_url(image: Image.Image, kind: str = "PNG") -> str:
@@ -123,7 +124,7 @@ def test_a_source_that_trickles_cannot_hold_the_whole_search_past_its_deadline(m
     started = time.monotonic()
     try:
         found = cover_search.search("Tên sách")
-        assert time.monotonic() - started < 3, "ra khỏi khối tìm không được chờ luồng của nguồn treo"
+        assert_within(3, started, blocked=30, message="ra khỏi khối tìm không được chờ luồng của nguồn treo")
     finally:
         release.set()
     assert [item["url"] for item in found["results"]] == [hit["url"]] and found["failed"] == ["trickles"]

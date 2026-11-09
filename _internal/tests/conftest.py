@@ -92,6 +92,20 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "real_sleep: test này cần time.sleep nguyên bản, đừng bọc nó",
     )
+    config.addinivalue_line(
+        "markers",
+        "perf: đo hiệu năng bằng ngưỡng giờ thật cố định - ngoài cổng thường (bỏ qua trừ khi chạy `pytest -m perf`)",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Test `perf` (ngưỡng giờ thật cố định) chỉ chạy khi người chạy chọn nó bằng `-m perf`: ngoài ra là cổng thường."""
+    if "perf" in (config.getoption("-m") or ""):
+        return
+    skip = pytest.mark.skip(reason="test đo hiệu năng: chạy bằng `pytest -m perf`")
+    for item in items:
+        if item.get_closest_marker("perf") is not None:
+            item.add_marker(skip)
 
 
 @pytest.fixture(autouse=True, scope="session")

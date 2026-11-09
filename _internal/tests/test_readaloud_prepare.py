@@ -9,6 +9,7 @@ from pathlib import Path
 from abook.readaloud import cache as clip_cache
 from abook.readaloud.model import VoiceError
 from abook.readaloud.prepare import Prepare
+from tests.timing import assert_within
 
 
 def _prepare(clip) -> Prepare:
@@ -69,7 +70,7 @@ def test_replacing_a_job_does_not_wait_for_the_old_clip_nor_get_its_late_results
     assert entered.wait(5)
     began = time.perf_counter()
     prepare.start("fake:ngoc", ["mới"], "Mới")
-    assert time.perf_counter() - began < 10, "việc mới không phải đợi 30 giây cho đoạn cũ"
+    assert_within(10, began, clock=time.perf_counter, blocked=30, message="việc mới không phải đợi 30 giây cho đoạn cũ")
     release.set()
     prepare.join(10)
     time.sleep(0.2)
@@ -90,7 +91,7 @@ def test_cancel_returns_quickly_even_when_a_clip_is_stuck() -> None:
     assert entered.wait(5)
     began = time.perf_counter()
     prepare.cancel()
-    assert time.perf_counter() - began < 10
+    assert_within(10, began, clock=time.perf_counter, blocked=20)
     assert prepare.status()["state"] == "cancelled"
     release.set()
     prepare.join(10)

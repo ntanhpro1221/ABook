@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from abook.webui import diagnostics, peer_addresses as pa, peer_routing as pr, remote_books as rb, route, tls
+from tests.timing import scaled
 
 PIN = "ab" * 32
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -51,10 +52,10 @@ def test_f2_waiter_redial_uses_slot_deadline_and_closes_late_socket():
         attempts.append(target)
         if len(attempts) == 1:
             entered.set()
-            release.wait(1)
+            release.wait(scaled(1))
             return SimpleNamespace(close=lambda: None)
         redial.set()
-        finish.wait(1)
+        finish.wait(scaled(1))
         return SimpleNamespace(close=close.set)
     def leader():
         winners.append(resolver.connect("peer", ["phone:1"], dial, .08)[0])
@@ -66,20 +67,20 @@ def test_f2_waiter_redial_uses_slot_deadline_and_closes_late_socket():
     first, second = threading.Thread(target=leader), threading.Thread(target=waiter)
     try:
         first.start()
-        assert entered.wait(1)
+        assert entered.wait(scaled(1))
         second.start()
         time.sleep(.01)
         release.set()
-        assert redial.wait(1)
-        second.join(.3)
+        assert redial.wait(scaled(1))
+        second.join(scaled(.3))
         assert not second.is_alive() and errors == [True]
         assert len(resolver.peers["peer"].pending) == 1
         finish.set()
-        assert close.wait(1)
+        assert close.wait(scaled(1))
         assert attempts == ["phone:1", "phone:1"]
     finally:
         release.set(); finish.set()
-        first.join(1); second.join(1)
+        first.join(scaled(1)); second.join(scaled(1))
         for connection in winners:
             connection.close()
         dispose(resolver)
@@ -93,13 +94,13 @@ def test_f3_tcp_hints_drop_surplus_jobs_without_a_queue(monkeypatch):
         attempts.append(target)
         if len(attempts) == 2:
             started.set()
-        release.wait(1)
+        release.wait(scaled(1))
         return False
     monkeypatch.setattr(route, "_pool", pool)
     route.reset()
     try:
         route.pick(["10.0.0.1:1", "10.0.0.2:1"], None, probe=probe)
-        assert started.wait(1)
+        assert started.wait(scaled(1))
         for i in range(20):
             route.pick([f"peer-{i}-{j}:1" for j in range(8)], None, probe=probe)
         assert pool._work_queue.qsize() == 0

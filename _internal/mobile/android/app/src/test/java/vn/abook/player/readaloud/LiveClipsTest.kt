@@ -27,6 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import vn.abook.player.TestTime
 
 /** Clip Edge đang lớn (uxfix57): đọc chờ / hết / hỏng / ngắt, đổi chỗ file, và bộ tách mp3 của ExoPlayer phát được + tua được trong phần đã ghi khi chưa biết độ dài. */
 class LiveClipsTest {
@@ -52,7 +53,7 @@ class LiveClipsTest {
         Thread.sleep(150)
         assertTrue("chưa có byte mới thì phải chờ", worker.isAlive)
         entry.grew(file, 10)
-        worker.join(5_000)
+        worker.join(TestTime.ms(5_000))
         assertEquals(6, late.get())
         assertEquals((0 until 10).map { it.toByte() }, buffer.take(10))
         reader.close()
@@ -71,7 +72,7 @@ class LiveClipsTest {
         Thread.sleep(150)
         assertTrue(worker.isAlive) // hết byte mà clip chưa xong: chờ
         entry.finish(10)
-        worker.join(5_000)
+        worker.join(TestTime.ms(5_000))
         assertEquals(-1, end.get())
         assertEquals(-1, entry.reader(10).read(buffer, 0, 100)) // mở lại sau khi xong, ở cuối file
         assertEquals(10, entry.reader(0).read(buffer, 0, 100)) // hay từ đầu
@@ -140,7 +141,7 @@ class LiveClipsTest {
         val worker = Thread { try { reader.read(ByteArray(10), 0, 10) } catch (error: Throwable) { outcome.set(error) } }.also { it.start() }
         Thread.sleep(150)
         worker.interrupt()
-        worker.join(5_000)
+        worker.join(TestTime.ms(5_000))
         assertTrue(outcome.get() is InterruptedIOException)
     }
 
@@ -220,7 +221,7 @@ class LiveClipsTest {
             ended.set(result)
             done.countDown()
         }.also { it.start() }
-        val end = System.nanoTime() + 5_000_000_000L
+        val end = System.nanoTime() + TestTime.nanos(5_000_000_000L)
         while (samples.times.size < frames && System.nanoTime() < end) Thread.sleep(20)
         assertEquals("phát được mọi khung đã ghi", frames, samples.times.size)
         assertTrue("chưa xong thì còn chờ byte mới", worker.isAlive)

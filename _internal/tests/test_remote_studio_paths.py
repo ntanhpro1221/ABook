@@ -19,6 +19,7 @@ from abook.webui.server import is_local_path, without_local_paths
 from tests.test_remote_studio import _pair_browser, studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401
 from tests.test_webui_listen_and_sync import _request, _sync_request
+from tests.timing import scaled
 
 ABSOLUTE = re.compile(r"^[A-Za-z]:[\\/]")
 # Chỗ giữ cho từng nhóm ký tự của danh sách trắng khi dựng một đường thật để gọi (cùng bảng với test_every_allowed_route_exists_on_the_computer).
@@ -107,7 +108,7 @@ def test_no_remote_get_answers_with_an_absolute_path(studio, tmp_path: Path) -> 
     # Một lượt xuất đã xong: kết quả của nó (file, folder) cũng là lời đáp GET.
     status, _data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={"partial": True})
     assert status == 202
-    deadline = time.time() + 20
+    deadline = time.time() + scaled(20)
     while time.time() < deadline:
         _status, data, _ = _sync_request(port, "GET", f"/api/books/{identifier}/bookfile-job", headers=cookie)
         if json.loads(data)["state"] != "running":
@@ -157,7 +158,7 @@ def test_a_finished_export_tells_a_remote_device_only_the_file_name(studio) -> N
     identifier = book_id(project)
     status, data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={"target": str(project), "partial": True})
     assert status == 202
-    deadline = time.time() + 20
+    deadline = time.time() + scaled(20)
     while time.time() < deadline:
         _status, data, _ = _sync_request(port, "GET", f"/api/books/{identifier}/bookfile-job", headers=cookie)
         if json.loads(data)["state"] != "running":

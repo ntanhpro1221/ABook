@@ -17,6 +17,7 @@ from abook.webui import install_lock, studio_setup
 from abook.webui.install_lock import InstallLock
 from abook.webui.server import App
 from abook.webui.studio_setup import StudioSetup
+from tests.timing import scaled
 
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
@@ -30,7 +31,7 @@ def _sleeper(seconds: int = 40) -> subprocess.Popen:
 
 
 def _wait_gone(pids: list[int], seconds: float = 8.0) -> bool:
-    end = time.monotonic() + seconds
+    end = time.monotonic() + scaled(seconds)
     while time.monotonic() < end:
         if not any(psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE for pid in pids):
             return True

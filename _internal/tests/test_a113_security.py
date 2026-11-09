@@ -14,6 +14,7 @@ from abook import importers
 from abook.webui import actions, book_edits, covers, package_share, txt_split
 from abook.webui import cast
 from tests.test_a109_security import _book_with_cover_colour, _junction
+from tests.timing import scaled
 
 
 @pytest.mark.parametrize('color, expected', [('url(https://tracker.invalid/x)', ''), (' #AABBCC ', '#aabbcc')])
@@ -152,7 +153,7 @@ def test_cast_paused_receiver_and_stalled_receiver_release_slots(tmp_path, monke
             received.extend(chunk)
         body = received.split(b'\r\n\r\n', 1)[1]
         assert (len(body) == audio.stat().st_size) is complete
-        deadline = time.monotonic() + 2
+        deadline = time.monotonic() + scaled(2)
         while server.budget._held and time.monotonic() < deadline:
             time.sleep(0.01)
         assert not server.budget._held

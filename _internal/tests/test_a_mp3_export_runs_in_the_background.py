@@ -15,6 +15,7 @@ from abook.webui.library import book_id
 from tests.test_export_music import _studio_book
 from tests.test_webui_listen_and_sync import _request
 from tests.test_export_series import _get, _mp3_job, _part, _post, _studio, fake_ffmpeg, series  # noqa: F401 - fixture
+from tests.timing import assert_within
 
 
 def _wait(predicate, seconds: float = 20.0) -> bool:
@@ -37,7 +38,8 @@ def test_the_job_answers_202_at_once_and_reports_chapter_progress(series, tmp_pa
     try:
         started = time.monotonic()
         status, job = _post(server, parts[0], "mp3-job", {"target": str(tmp_path / "xuat")})
-        assert status == 202 and job["state"] == "running" and time.monotonic() - started < 2.0
+        assert status == 202 and job["state"] == "running"
+        assert_within(2.0, started, blocked=20)
         assert seen.wait(20)
         running = _get(server, parts[0], "mp3-job")[1]
         assert (running["state"], running["phase"], running["chapter"], running["chapters"]) == ("running", "chapters", 1, 1)
@@ -73,7 +75,7 @@ def test_cancelling_between_chapters_ends_cancelled_within_two_seconds_and_remov
         asked = time.monotonic()
         gate.set()
         assert _wait(lambda: _get(server, project, "mp3-job")[1]["state"] == "cancelled")
-        assert time.monotonic() - asked < 2.0
+        assert_within(2.0, asked)
     finally:
         gate.set()
         server.stop()
@@ -99,7 +101,7 @@ def test_closing_the_app_stops_a_running_mp3_job(tmp_path: Path, monkeypatch: py
         assert started.wait(20)
         begun = time.monotonic()
         app.close()
-        assert time.monotonic() - begun < 5.0
+        assert_within(5.0, begun)
         assert app.mp3_jobs.status(str(project))["state"] in ("cancelled", "done"), "luồng đã dừng, không còn chạy"
     finally:
         server.stop()

@@ -13,6 +13,7 @@ import time
 import scripts.bells as bells
 import scripts.heartbeat_event as event
 import scripts.heartbeat_timeout as timeout_bell
+from tests.timing import scaled
 
 
 def shot(roots=("boundary.sh 18",), done=3, last_done=(), problems=(), battery=False, letters=()):
@@ -184,7 +185,7 @@ def test_a_second_bell_of_the_same_kind_is_refused(tmp_path) -> None:
     sleeper = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)  # bell_marker_probe"],
                                creationflags=flags)
     try:
-        deadline = time.time() + 20
+        deadline = time.time() + scaled(20)
         while not bells.alive(sleeper.pid, "bell_marker_probe") and time.time() < deadline:
             time.sleep(0.1)
         bells.write_state(state, {"pid": sleeper.pid, "started_at": 1.0})

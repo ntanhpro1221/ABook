@@ -11,10 +11,11 @@ vi.mock("./api", () => ({ api: h.api }));
 vi.mock("./data", () => ({ useCachedBook: () => undefined }));
 
 import { undoAction, undoToast } from "./decisions";
+import { eventually } from "@/testing/eventually";
 
 async function click(action: { onClick: () => void }) {
   action.onClick();
-  await vi.waitFor(() => expect(h.success.mock.calls.length + h.warning.mock.calls.length + h.error.mock.calls.length).toBeGreaterThan(0));
+  await eventually(() => expect(h.success.mock.calls.length + h.warning.mock.calls.length + h.error.mock.calls.length).toBeGreaterThan(0));
 }
 
 describe("hoàn tác một thay đổi đã gửi", () => {

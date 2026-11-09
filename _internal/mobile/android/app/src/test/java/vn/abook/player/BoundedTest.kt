@@ -24,12 +24,12 @@ class BoundedTest {
         val started = System.nanoTime()
         Bounded.map((1..8).toList(), 4, 10_000) { _, _ ->
             peak.accumulateAndGet(running.incrementAndGet(), ::maxOf)
-            Thread.sleep(100)
+            Thread.sleep(200)
             running.decrementAndGet()
         }
         val tookMs = (System.nanoTime() - started) / 1_000_000
         assertTrue("peak ${peak.get()}", peak.get() in 2..4)
-        assertTrue("took $tookMs ms: 8 x 100 ms in one line would be 800", tookMs < 600)
+        assertTrue("took $tookMs ms: 8 x 200 ms in one line would be 1600", tookMs < TestTime.ms(600, blockedMs = 1600))
     }
 
     @Test

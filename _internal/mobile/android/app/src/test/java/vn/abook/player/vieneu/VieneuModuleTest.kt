@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import vn.abook.player.TestTime
 
 /**
  * The phone's "Giọng VieNeu" module with tiny stand-in files on a local server: nothing is fetched until a tap, the size shown is what this phone
@@ -463,7 +464,7 @@ class VieneuModuleTest {
         assertEquals("downloading", module.status().getString("state"))
         // wait until the phone has taken the first bytes in (the cancel is seen at the next read, not before the first)
         val partial0 = File(File(root, VieneuModule.FOLDER), "nano/nano.bin.part")
-        val until = System.currentTimeMillis() + 20_000
+        val until = System.currentTimeMillis() + TestTime.ms(20_000)
         while (partial0.length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
         module.cancel()
         held.gate.countDown()
@@ -500,7 +501,7 @@ class VieneuModuleTest {
         module.start(listOf("nano"))
         assertTrue(first.reached.await(20, TimeUnit.SECONDS))
         val partial = File(File(root, VieneuModule.FOLDER), "nano/nano.bin.part")
-        var until = System.currentTimeMillis() + 20_000
+        var until = System.currentTimeMillis() + TestTime.ms(20_000)
         while (partial.length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
         module.cancel()
         first.gate.countDown()
@@ -511,7 +512,7 @@ class VieneuModuleTest {
         val resumed = Stall("nano.bin", 10_000, from = 31_000).also { stall = it }
         module.start(listOf("nano"))
         assertTrue(resumed.reached.await(20, TimeUnit.SECONDS))
-        until = System.currentTimeMillis() + 20_000
+        until = System.currentTimeMillis() + TestTime.ms(20_000)
         while (partial.length() < 41_000 && System.currentTimeMillis() < until) Thread.sleep(10)
         Thread.sleep(50)
         val status = module.status()

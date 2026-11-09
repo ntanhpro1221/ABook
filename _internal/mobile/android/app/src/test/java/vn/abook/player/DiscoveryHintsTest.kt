@@ -29,10 +29,10 @@ class DiscoveryHintsTest {
                 for (i in 1..3) assertTrue(hints.add("192.168.1.$i", 47630, "pin"))
                 assertEquals(2L, started.count) // no TLS while UDP collection is open
                 hints.finish()
-                assertTrue(started.await(1, TimeUnit.SECONDS))
+                assertTrue(started.await(TestTime.seconds(1L), TimeUnit.SECONDS))
                 assertEquals(1L, third.count)
                 release.countDown()
-                assertTrue(third.await(1, TimeUnit.SECONDS))
+                assertTrue(third.await(TestTime.seconds(1L), TimeUnit.SECONDS))
                 hints.finish() // idempotent
                 assertFalse(hints.add("192.168.1.4", 47630, "pin"))
             } finally { release.countDown() }
@@ -56,12 +56,12 @@ class DiscoveryHintsTest {
             }
             try {
                 repeat(2) { assertTrue(admission.submit(task)) }
-                assertTrue(started.await(1, TimeUnit.SECONDS))
+                assertTrue(started.await(TestTime.seconds(1L), TimeUnit.SECONDS))
                 repeat(16) { assertTrue(admission.submit(task)) }
                 repeat(100) { assertFalse(admission.submit(task)) }
                 assertEquals(2, peak.get())
                 release.countDown()
-                assertTrue(done.await(1, TimeUnit.SECONDS))
+                assertTrue(done.await(TestTime.seconds(1L), TimeUnit.SECONDS))
                 assertTrue(peak.get() <= 2)
             } finally { release.countDown() }
         }

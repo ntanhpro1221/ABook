@@ -830,7 +830,7 @@ def test_a_download_round_that_loses_every_track_to_the_network_keeps_the_plan_a
     status, view = _call(server, "GET", f"/api/books/{book}/music")
     assert status == 200 and view["error"] == MUSIC_OFFLINE_MESSAGE and view["download"]["active"] is False
     # Hết cửa sổ offline thì lời báo hết giá trị; dựng lại được thì cũng xoá.
-    app._music_clock = lambda: time.time() + 10_000
+    app._music_clock = lambda: time.time() + 10_000  # wallclock-ok: the music clock is faked ten thousand seconds ahead; no wait
     assert _call(server, "GET", f"/api/books/{book}/music")[1]["error"] == ""
 
 

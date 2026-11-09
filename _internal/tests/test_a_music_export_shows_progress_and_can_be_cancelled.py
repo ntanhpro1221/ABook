@@ -12,6 +12,7 @@ from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_bookfile_music import BATTLE, CALM, _plan
 from tests.test_webui_listen_and_sync import make_project
+from tests.timing import scaled
 
 
 def _slow_app(app, tmp_path: Path, gate: threading.Event | None = None):
@@ -74,7 +75,7 @@ def test_cancel_stops_before_the_next_download_and_writes_no_book_file(studio, t
 
     worker = threading.Thread(target=pack)
     worker.start()
-    for _ in range(100):
+    for _ in range(round(scaled(100))):  # 0,05 s một nhịp
         if app.music_export_status(key)["active"]:
             break
         threading.Event().wait(0.05)
@@ -106,7 +107,7 @@ def test_the_http_cancel_of_a_projectfile_export_answers_with_the_cancelled_reas
 
     worker = threading.Thread(target=export)
     worker.start()
-    for _ in range(100):
+    for _ in range(round(scaled(100))):  # 0,05 s một nhịp
         _status, data = _call(server, "GET", f"/api/books/{book}/music-export?kind=projectfile")
         if data.get("active"):
             break

@@ -15,6 +15,7 @@ import pytest
 from abook.io_utils import ffmpeg_available, ffmpeg_executable
 from abook.webui import covers, export
 from tests.test_export_series import _get, _part, _post, _studio
+from tests.timing import scaled
 
 FFPROBE = shutil.which("ffprobe")
 pytestmark = pytest.mark.skipif(not ffmpeg_available() or FFPROBE is None, reason="cần ffmpeg + ffprobe")
@@ -125,7 +126,7 @@ def test_the_m4b_job_runs_in_the_background_and_reports_the_file(tmp_path: Path)
     try:
         assert _get(server, project, "m4b-job") == (200, {"state": "idle"})
         status, started = _post(server, project, "m4b-job", {"target": str(tmp_path / "xuat")})
-        deadline = time.monotonic() + 60
+        deadline = time.monotonic() + scaled(60)
         job = started
         while job["state"] == "running" and time.monotonic() < deadline:
             time.sleep(0.1)

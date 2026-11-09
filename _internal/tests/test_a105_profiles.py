@@ -13,6 +13,7 @@ import pytest
 from abook.webui import remote_books, server, sync
 from abook.webui.listening import Listening, RecordGone
 from abook.webui.listening_revision import meta_items, observe
+from tests.timing import scaled
 
 BOOK = "sach"
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "sync" / "records_host.json").read_text(encoding="utf-8"))
@@ -157,7 +158,7 @@ def test_computer_reply_after_profile_switch_stays_with_the_profile_it_was_sent_
 
     def send(body: dict) -> dict:
         sender.activate(BOOK, b)  # người dùng đổi sang B trong lúc chờ mạng
-        return {"record": body["record"], "book": BOOK, "last": {"chapterId": 1, "seconds": 700, "at": time.time() + 10,
+        return {"record": body["record"], "book": BOOK, "last": {"chapterId": 1, "seconds": 700, "at": time.time() + scaled(10),
                 "rev": {"counter": body["last"]["rev"]["counter"] + 1, "node": "holder"}}}
 
     server.App.sync_remote_state(paired_computer(monkeypatch, tmp_path, sender, send), BOOK, wait=True)
@@ -175,7 +176,7 @@ def test_a_reply_for_a_deleted_record_does_not_create_or_fall_to_another(tmp_pat
 
     def send(body: dict) -> dict:
         sender.delete_record(body["record"])  # hồ sơ vừa gửi bị xoá trong lúc chờ mạng
-        return {"record": body["record"], "book": BOOK, "last": {"chapterId": 1, "seconds": 999, "at": time.time() + 10,
+        return {"record": body["record"], "book": BOOK, "last": {"chapterId": 1, "seconds": 999, "at": time.time() + scaled(10),
                 "rev": {"counter": body["last"]["rev"]["counter"] + 1, "node": "holder"}}}
 
     server.App.sync_remote_state(paired_computer(monkeypatch, tmp_path, sender, send), BOOK, wait=True, record=b)

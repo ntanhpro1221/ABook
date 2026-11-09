@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from abook.webui.work_items import work_items
+from tests.timing import assert_within
 
 
 def make_book(root: Path) -> Path:
@@ -74,7 +75,7 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     assert not any("Lucien" in item["title"] and item["kind"] == "pronunciation" for item in view["items"]), "0,99 là chắc"
     scores = [item["score"] for item in view["items"]]
     assert scores == sorted(scores, reverse=True), "xếp theo lợi trên mỗi lần bấm"
-    assert time.time() - started < 5
+    assert_within(5, started, clock=time.time)
 
 
 def test_the_vocative_card_also_asks_about_a_thought_that_calls_its_thinker_with_an_honorific(tmp_path: Path) -> None:

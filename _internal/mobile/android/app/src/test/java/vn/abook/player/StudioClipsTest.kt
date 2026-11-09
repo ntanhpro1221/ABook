@@ -60,7 +60,7 @@ class StudioClipsTest {
     }
 
     private fun until(what: String, condition: () -> Boolean) {
-        val end = System.currentTimeMillis() + 5_000
+        val end = System.currentTimeMillis() + TestTime.ms(5_000)
         while (!condition()) {
             if (System.currentTimeMillis() > end) throw AssertionError("Hết giờ chờ: $what")
             Thread.sleep(5)

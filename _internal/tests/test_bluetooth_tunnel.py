@@ -20,6 +20,7 @@ from abook.webui.bluetooth import HEADER, BluetoothServer, LocalPort, Mux
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
 from tests.async_wait import wait_until
+from tests.timing import scaled
 
 BIG = bytes(range(256)) * 16 * 1024  # 4 MB, lớn hơn nhiều lần cửa sổ 256 KB
 
@@ -178,7 +179,7 @@ def test_a_broken_link_closes_every_stream_and_a_dead_port_refuses_the_stream(fi
 
 def _drain(sock: socket.socket) -> None:
     """Đọc tới khi socket hết (EOF hoặc bị cắt) - cả hai đều là "đường hầm đã đóng luồng này"."""
-    deadline = time.time() + 10
+    deadline = time.time() + scaled(10)
     try:
         while sock.recv(1 << 20):
             assert time.time() < deadline, "luồng không đóng khi đường hầm đứt"

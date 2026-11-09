@@ -21,6 +21,7 @@ from abook.webui.remote_books import Computers, RemoteError
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
 from tests.async_wait import wait_until
+from tests.timing import assert_within
 
 PHONE = "AA:BB:CC:DD:EE:FF"
 
@@ -469,7 +470,7 @@ def test_route_probes_in_the_background_and_remembers(monkeypatch) -> None:
 
     started = time.time()
     first = route.pick(["h:1"], PHONE, probe=probe)
-    assert time.time() - started < 1, "pick không chờ mạng"
+    assert_within(1, started, clock=time.time, blocked=5, message="pick không chờ mạng")
     assert first == route.Choice("h:1", None), "chưa biết: Wi-Fi trước"
     assert route.pick(["h:1"], PHONE, probe=probe) == first and _eventually(lambda: probed == ["h:1"]), "một lần thử một lúc"
     gate.set()

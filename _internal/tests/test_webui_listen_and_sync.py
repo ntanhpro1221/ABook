@@ -23,6 +23,7 @@ from abook.webui.listening import Listening, book_progress, merge_states, text_b
 from abook.webui.server import App, Server
 from abook.webui.actions import FakeRunner
 from abook.webui.sync import PAIRING_ATTEMPTS, Devices, Remote, SyncApp, SyncServer, manifest, remote_command
+from tests.timing import assert_between, assert_within, scaled
 
 
 def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
@@ -352,7 +353,7 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}}  # chương 1 dài 9,7 giây
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
         assert status == 200 and listening.get(identifier)["last"]["seconds"] == 4.2
-        legacy = {"last": {"chapterId": 1, "seconds": 7, "at": time.time() + 10}}
+        legacy = {"last": {"chapterId": 1, "seconds": 7, "at": time.time() + scaled(10)}}
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=legacy)
         assert status == 400
         assert json.loads(data)["error"] == "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
@@ -395,7 +396,8 @@ def test_a_command_reaches_a_waiting_phone_at_once() -> None:
     assert _waiting(remote) and [phone["device"] for phone in remote.view()] == ["dev1"], "đang hỏi dài là đang có mặt"
     remote.send("dev1", {"action": "pause"})
     waiter.join(5)
-    assert got and got[0][0]["action"] == "pause" and time.monotonic() - started < 3
+    assert got and got[0][0]["action"] == "pause"
+    assert_within(3, started, blocked=20)
     assert remote.report("dev1", "Pixel", state) == [], "lệnh vừa giao thì không giao lại ngay"
 
 
@@ -430,7 +432,8 @@ def test_a_waiting_phone_gets_a_lost_command_again_without_asking_twice(monkeypa
     (first,) = remote.report("dev1", "Pixel", {})
     started = time.monotonic()
     (again,) = remote.report("dev1", "Pixel", {}, wait=10)
-    assert again["id"] == first["id"] and 0.2 < time.monotonic() - started < 3
+    assert again["id"] == first["id"]
+    assert_between(0.2, 3, started, blocked=10)
 
 
 def test_commands_never_go_to_a_phone_that_left_or_arrive_late(monkeypatch) -> None:

@@ -3,11 +3,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests import async_wait
+from tests import async_wait, timing
 
 
 @pytest.fixture
 def scheduler(monkeypatch):
+    monkeypatch.setattr(timing, "SCALE", 1.0)  # các số giây bên dưới là số giây thật của đồng hồ giả
     state = SimpleNamespace(now=0.0, waits=[])
 
     class Wake:

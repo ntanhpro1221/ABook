@@ -34,12 +34,17 @@ def test_ui_parity_doc_uses_lf_and_keeps_markers():
     assert text.count(tool.BEGIN) == 1 and text.count(tool.END) == 1
 
 
-def test_ui_parity_is_deterministic_and_fast():
+def test_ui_parity_is_deterministic():
+    tool = _tool()
+    assert tool.render_body() == tool.render_body()
+
+
+@pytest.mark.perf
+def test_ui_parity_renders_fast():
     tool = _tool()
     start = time.monotonic()
-    first = tool.render_body()
-    assert time.monotonic() - start < 30
-    assert first == tool.render_body()
+    tool.render_body()
+    assert time.monotonic() - start < 30  # wallclock-ok: perf marker, off the normal gate (pytest -m perf)
 
 
 def test_ui_parity_extracts_both_sides_and_pairs_icons():

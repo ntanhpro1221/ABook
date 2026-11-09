@@ -15,6 +15,7 @@ from abook import background_runner, power_source
 from abook.background_runner import BackgroundPaths, _pause_reason, get_status, run_supervisor, tail_log
 from abook.io_utils import atomic_write_json
 from abook.power_source import BatteryWatch
+from tests.timing import scaled
 
 
 def _make_project(tmp_path: Path) -> Path:
@@ -99,7 +100,7 @@ def _fake_worker_waits_for_a_pause(
         message_queue.put({"kind": "finished", "ok": False, "text": "never paused"})
         return
     Path(project_root, "saw_pause").touch()
-    deadline = time.monotonic() + 10.0
+    deadline = time.monotonic() + scaled(10.0)
     while pause_event.is_set() and time.monotonic() < deadline:
         time.sleep(0.02)
     text = "never resumed" if pause_event.is_set() else "paused and resumed"
@@ -155,7 +156,7 @@ def _fake_worker_presses_continue(
     request_path = BackgroundPaths.for_project(project_root).pause_request
     request = json.loads(request_path.read_text(encoding="utf-8"))
     atomic_write_json(request_path, {**request, "paused": False, "requested_at_epoch": time.time()})
-    deadline = time.monotonic() + 10.0
+    deadline = time.monotonic() + scaled(10.0)
     while pause_event.is_set() and time.monotonic() < deadline:
         time.sleep(0.02)
     text = "never resumed" if pause_event.is_set() else "paused and resumed"

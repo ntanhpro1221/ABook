@@ -12,6 +12,7 @@ from abook.webui import export_jobs
 from abook.webui import server as server_module
 from abook.webui import actions, trash_pending
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
+from tests.timing import assert_took_within, scaled
 
 MAIN_RS = Path(__file__).resolve().parents[1] / "shell" / "src-tauri" / "src" / "main.rs"
 
@@ -47,8 +48,10 @@ def test_closing_with_all_slow_exports_finishes_inside_the_shell_grace_and_sweep
         for jobs in groups:
             jobs.shutdown()
 
-    assert took < server_module.CLOSE_SECONDS + 1.0 < grace, f"đóng app mất {took:.1f} giây"
-    assert swept and swept[0] - begun < 1.0, "Thùng rác trước, không chờ các lượt xuất"
+    assert server_module.CLOSE_SECONDS + 1.0 < grace
+    assert_took_within(took, server_module.CLOSE_SECONDS + 1.0, blocked=grace, message=f"đóng app mất {took:.1f} giây")
+    assert swept, "Thùng rác phải được quét"
+    assert_took_within(swept[0] - begun, 1.0, blocked=grace, message="Thùng rác trước, không chờ các lượt xuất")
 
 
 def test_slow_trash_does_not_hold_close_past_the_shared_deadline(studio, monkeypatch):
@@ -59,7 +62,7 @@ def test_slow_trash_does_not_hold_close_past_the_shared_deadline(studio, monkeyp
     def slow_sweep(**kwargs):
         workers.append(threading.current_thread())
         entered.set()
-        release.wait(1.0)
+        release.wait(scaled(1.0))
 
     monkeypatch.setattr(server_module, "CLOSE_SECONDS", 0.05)
     monkeypatch.setattr(app, "sweep_trash", slow_sweep)
@@ -68,7 +71,7 @@ def test_slow_trash_does_not_hold_close_past_the_shared_deadline(studio, monkeyp
         app.close()
         took = time.monotonic() - begun
         assert entered.is_set()
-        assert took < 0.5
+        assert_took_within(took, 0.5, blocked=scaled(1.0))
     finally:
         release.set()
         for thread in workers:

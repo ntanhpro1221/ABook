@@ -22,6 +22,7 @@ import pytest
 from abook.readaloud import vieneu, vieneu_gguf
 from abook.readaloud.vieneu_gguf import AcceleratedEngine, GgufEngine, GgufError, GgufFiles
 from abook.webui import music_module, studio_setup, vieneu_module, word_timing
+from tests.timing import assert_within, scaled
 
 pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
 
@@ -195,7 +196,8 @@ def test_a_server_that_never_answers_health_gives_up_once_without_a_second_wait(
     began = time.monotonic()
     with pytest.raises(GgufError, match="không sẵn sàng"):
         hanging.speak("a", _voice(files), 1)
-    assert hanging.starts == 1 and time.monotonic() - began < 2.5 and not hanging.running()
+    assert hanging.starts == 1 and not hanging.running()
+    assert_within(2.5, began)
 
 
 class FakeOnnx:
@@ -258,7 +260,7 @@ def test_an_idle_server_stops_by_itself_and_the_next_chunk_starts_it_again(fake)
     voice = _voice(files)
     engine.speak("a", voice, 1)
     pid = engine._process.pid
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + scaled(10)
     while engine.running() and time.monotonic() < deadline:
         time.sleep(0.1)
     assert not engine.running() and not _alive(pid)
@@ -303,7 +305,7 @@ def test_the_server_dies_with_the_app(fake, how: str) -> None:
     done = subprocess.run([sys.executable, str(tmp / "child.py"), how], capture_output=True, timeout=60, text=True)
     assert done.returncode == 0, done.stderr
     pid = int(done.stdout.split()[0])
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + scaled(10)
     while _alive(pid) and time.monotonic() < deadline:
         time.sleep(0.1)
     assert not _alive(pid), "server vẫn sống sau khi app thoát"

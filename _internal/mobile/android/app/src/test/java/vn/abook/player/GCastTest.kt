@@ -62,7 +62,7 @@ class GCastTest {
         }
 
     private fun <T> until(seconds: Double = 8.0, check: () -> T?): T {
-        val deadline = System.currentTimeMillis() + (seconds * 1000).toLong()
+        val deadline = System.currentTimeMillis() + TestTime.ms((seconds * 1000).toLong())
         while (System.currentTimeMillis() < deadline) {
             check()?.takeIf { it != false }?.let { return it }
             Thread.sleep(50)

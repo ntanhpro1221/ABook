@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from abook.webui import actions, host
+from tests.timing import assert_within, scaled
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -177,8 +178,8 @@ def test_the_host_process_exits_when_the_shell_goes_away(app_data: Path) -> None
         assert _request(ready["ready"], "/api/app")["version"] == "9.9.9"
         started = time.monotonic()
         process.stdin.close()
-        assert process.wait(15) == 0
-        assert time.monotonic() - started < 15
+        assert process.wait(scaled(15)) == 0
+        assert_within(15, started)
         assert process.stdout.read() == "", "không có gì ngoài giao thức trên stdout"
     finally:
         if process.poll() is None:

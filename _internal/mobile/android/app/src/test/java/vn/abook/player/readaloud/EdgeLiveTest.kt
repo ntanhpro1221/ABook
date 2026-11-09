@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import vn.abook.player.TestTime
 
 /**
  * Clip Edge phát luồng (uxfix57; máy tính: `edge.py` bộ phát theo thứ tự): file ghi dần và mốc báo dần phải GIỐNG HỆT file / mốc của đường thường trên cùng máy chủ giả; byte đầu ra ngay khi mảnh đứng
@@ -147,7 +148,7 @@ class EdgeLiveTest {
             assertTrue(recorder.boundaries.size == words) // mảnh sau chưa tới lượt: mốc của chúng chưa báo
         } finally {
             gate.countDown()
-            worker.join(10_000)
+            worker.join(TestTime.ms(10_000))
         }
         assertNull(recorder.failure)
         val normal = EdgeTts("v", connector(true)).synthesize(sentences, File(dir, "normal.mp3"))
@@ -212,14 +213,14 @@ class EdgeLiveTest {
         }.also { it.start() }
         val before = pieces[0].split(" ").size + pieces[1].split(" ").size
         try {
-            val deadline = System.nanoTime() + 5_000_000_000L
+            val deadline = System.nanoTime() + TestTime.nanos(5_000_000_000L)
             while (recorder.cuts.isEmpty() && System.nanoTime() < deadline) Thread.sleep(10)
             assertEquals(listOf(before), recorder.cuts.toList()) // báo khi mảnh 1 còn đứng ở cổng
             assertTrue(worker.isAlive)
             assertNull(recorder.failure)
         } finally {
             gate.countDown()
-            worker.join(10_000)
+            worker.join(TestTime.ms(10_000))
         }
         assertTrue(error.get() is VoiceException)
         assertTrue(recorder.failure is VoiceException)

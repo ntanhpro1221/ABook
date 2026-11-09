@@ -16,6 +16,7 @@ from abook.webui.actions import FakeRunner
 from abook.webui.library import book_id
 from abook.webui.server import ROUTES, App, Server, is_local_path
 from tests.test_webui_listen_and_sync import _request, _sync_request, library, make_project  # noqa: F401 - fixture dùng chung
+from tests.timing import scaled
 
 
 @pytest.fixture()
@@ -348,7 +349,7 @@ def test_a_series_export_reconnects_after_the_forward_deadline(studio, tmp_path,
         status, raw, _ = _sync_request(app.sync_server.port, "GET", url, headers=cookie)
         assert status == 200 and json.loads(raw)["id"] == started["id"]
         release.set()
-        deadline = time.monotonic() + 10
+        deadline = time.monotonic() + scaled(10)
         while time.monotonic() < deadline:
             status, raw, _ = _sync_request(app.sync_server.port, "GET", url, headers=cookie)
             job = json.loads(raw)
@@ -439,7 +440,7 @@ def test_create_and_start_waits_in_the_queue(studio, tmp_path: Path) -> None:
     port = app.sync_server.port
     cookie = {"Cookie": _pair_browser(app)}
     app.start(book_id(project))
-    deadline = time.time() + 10
+    deadline = time.time() + scaled(10)
     while not app.runner.running(project) and time.time() < deadline:
         time.sleep(0.1)  # FakeRunner "khởi động" 1,2 giây, như một worker thật cần thời gian
     assert app.runner.running(project)

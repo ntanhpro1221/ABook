@@ -1,10 +1,11 @@
 // Thao tác trên trang đã dựng để đưa nó tới trạng thái của mục trưng bày (mở menu, mở hộp thoại, gõ chữ...): bấm như người dùng
 // bấm, tìm phần tử theo nhãn trợ năng hay chữ hiện ra - không với vào trong thành phần của app.
 import { tracePhase } from "./state";
+import { scaledMs } from "@/testing/timeScale";
 
 const CLICKABLE = "button, a, [role=button], [role=menuitem], [role=menuitemradio], [role=tab], [role=option], [role=switch], [role=radio], summary, label";
 
-export async function waitFor<T>(find: () => T | null | undefined | false, what: string, timeout = 6000): Promise<T> {
+export async function waitFor<T>(find: () => T | null | undefined | false, what: string, timeout = scaledMs(6000)): Promise<T> {
   const started = performance.now();
   for (;;) {
     const found = find();
