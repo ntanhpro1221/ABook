@@ -72,7 +72,7 @@ data class AppSettings(
     val headsetSkips: Boolean = true,
     val autoMusic: Boolean = true,
     /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
-    val autoPip: Boolean = true,
+    val autoPip: Boolean = false,
     val schedule: SleepSchedule? = null,
     val shakeToExtend: Boolean = true,
     val shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Normal,

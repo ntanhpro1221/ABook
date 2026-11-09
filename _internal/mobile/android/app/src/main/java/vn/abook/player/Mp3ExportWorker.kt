@@ -213,7 +213,7 @@ object Mp3Exports {
         channel(context, channelId)
         val stop = ExportCancellation.stopIntent(context, work)
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(heading)
             .setContentText(if (total > 0) S.s_0_1_2_chuong_ad930f12(title, done, total) else title)
             .apply { if (fraction != null) setProgress(1000, (fraction * 1000).toInt(), false) else setProgress(total, done, total == 0) }
@@ -233,7 +233,7 @@ object Mp3Exports {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         channel(context, channelId)
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

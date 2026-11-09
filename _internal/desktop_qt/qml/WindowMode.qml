@@ -9,7 +9,8 @@ Item {
     property bool mini: false
     property bool pinned: true
     property bool closeToTray: Platform.setting("closeToTray", "true") !== "false"
-    property bool autoMini: Platform.setting("autoMini", "true") !== "false"
+    // Tự thu nhỏ thành cửa sổ mini: mặc định tắt, và chỉ khi sách đang phát (đang dừng thì thu nhỏ như thường).
+    property bool autoMini: Platform.setting("autoMini", "false") === "true"
     property bool quitting: false
     property bool notified: Platform.setting("trayNotified", "false") === "true"
     property real miniHeight: 112
@@ -112,7 +113,7 @@ Item {
         if (loaded) expanded()
     }
     function minimize() {
-        if (loaded && autoMini) enter()
+        if (loaded && autoMini && Player.playing) enter()
         else { fullMaximized = window.visibility === Window.Maximized; window.showMinimized() }
     }
     function hideToTray() {

@@ -10,7 +10,7 @@ data class AudioFxSettings(
     val bass: Double = 0.0,
     val boost: Double = 0.0,
     val pitch: Double = 0.0,
-    val volume: Double = 0.9,
+    val volume: Double = 1.0,
     val speed: Double = 1.0,
     val mono: Boolean = false,
     val balance: Double = 0.0,
@@ -19,21 +19,31 @@ data class AudioFxSettings(
     val silenceSeconds: Double = 3.0,
     val keepSeconds: Double = 1.5,
 ) {
-    fun safe() = copy(preset = preset.coerceIn(-1, 4),
+    fun safe() = copy(preset = preset.coerceIn(-1, ToneCatalog.presets.lastIndex),
         bands = List(5) { bands.getOrNull(it).finite(0.0, -12.0, 12.0) },
         bass = bass.finite(0.0, 0.0, 12.0), boost = boost.finite(0.0, 0.0, 12.0),
-        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(0.9, 0.0, 1.0),
+        pitch = pitch.finite(0.0, -6.0, 6.0), volume = volume.finite(1.0, 0.0, 1.0),
         speed = speed.finite(1.0, 0.5, 4.0), balance = balance.finite(0.0, -1.0, 1.0),
         silenceDb = silenceDb.finite(-60.0, -80.0, -45.0),
         silenceSeconds = silenceSeconds.finite(3.0, 2.0, 10.0),
         keepSeconds = keepSeconds.finite(1.5, 1.5, 3.0).coerceAtMost(silenceSeconds.finite(3.0, 2.0, 10.0)))
     fun withPreset(index: Int) = copy(preset = index, bands = PRESETS[index].toList(), bass = 0.0)
+    /** "Giọng đọc" một thanh 0..[VOICE_MAX] (1 = gốc): dưới gốc là âm lượng, trên gốc là tăng âm có chặn đỉnh. */
+    val voiceLevel: Double get() = if (boost > 0) 10.0.pow(boost / 20) else volume
+    fun withVoiceLevel(level: Double) = if (level <= 1.0) copy(volume = level.coerceAtLeast(0.0), boost = 0.0)
+        else copy(volume = 1.0, boost = 20 * log10(level.coerceAtMost(VOICE_MAX)))
+    /** Âm sắc đang chọn: -1 Tự chỉnh, 0 Phẳng (tắt), 1..4 các kiểu sẵn. */
+    val tone: Int get() = if (!enabled) 0 else preset
+    fun withTone(index: Int) = when {
+        index == 0 -> copy(enabled = false, preset = 0)
+        index < 0 -> copy(enabled = true, preset = -1)
+        else -> withPreset(index).copy(enabled = true)
+    }
     companion object {
-        val FREQUENCIES = doubleArrayOf(80.0, 250.0, 1000.0, 4000.0, 12000.0)
-        val LABELS = listOf("Phẳng", "Rõ lời", "Trầm ấm", "Bổng", "Giảm chói")
-        val PRESETS = listOf(doubleArrayOf(0.0, 0.0, 0.0, 0.0, 0.0),
-            doubleArrayOf(-4.0, -2.0, 2.0, 3.0, -2.0), doubleArrayOf(4.0, 2.0, 0.0, -1.0, -2.0),
-            doubleArrayOf(-2.0, -1.0, 0.0, 2.0, 4.0), doubleArrayOf(0.0, 0.0, 0.0, -3.0, -5.0))
+        val FREQUENCIES = ToneCatalog.frequencies
+        const val VOICE_MAX = 2.0
+        val LABELS = ToneCatalog.presets.map { it.name }
+        val PRESETS = ToneCatalog.presets.map { it.bands.toDoubleArray() }
         val BAND_LABELS = listOf("80 Hz", "250 Hz", "1 kHz", "4 kHz", "12 kHz")
     }
 }
@@ -55,7 +65,7 @@ class AudioFxDsp(private val rate: Int, private val channels: Int) {
             fun make(rate: Int, frequency: Double, db: Double, channels: Int, shelf: Boolean = false): Biquad {
                 val w = 2 * PI * min(frequency, rate * 0.45) / rate
                 val a = 10.0.pow(db / 40); val c = cos(w); val s = sin(w)
-                val alpha = s / (2 * 1.4)
+                val alpha = s / (2 * ToneCatalog.Q)
                 if (!shelf) {
                     val a0 = 1 + alpha / a
                     return Biquad((1 + alpha * a) / a0, -2*c/a0, (1-alpha*a)/a0, -2*c/a0, (1-alpha/a)/a0, channels)
@@ -82,6 +92,7 @@ class AudioFxDsp(private val rate: Int, private val channels: Int) {
     }
     /** Caller reuses its PCM frame; no allocations per sample. Instant attack, 80 ms release, -1 dBFS ceiling. */
     fun process(frame: DoubleArray) {
+        if (!settings.enabled && settings.boost == 0.0 && !settings.mono && settings.balance == 0.0) { limiter = 1.0; return }
         if (channels >= 2) {
             if (settings.mono) { val mid = (frame[0] + frame[1]) * 0.5; frame[0] = mid; frame[1] = mid }
             frame[0] *= 1.0 - max(0.0, settings.balance)

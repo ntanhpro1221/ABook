@@ -106,6 +106,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: playerMore },
   { id: "desktop/player-audiofx", group: "Trình phát", title: "Âm thanh · lời đọc", route: "/", act: async () => { await playerMore(); await click("Âm thanh"); } },
+  { id: "desktop/player-tone", group: "Trình phát", title: "Âm sắc", route: "/", storage: {"abook.audioFx.tones":JSON.stringify({mine:[{id:"user:dem",name:"Đêm khuya",bands:[3,2,0,-1,-5]},{id:"user:cu",name:"Tai nghe cũ",bands:[0,0,1,-2,-4]}]})}, act: async () => { await playerMore(); await click("Âm thanh"); await click("Âm sắc"); await click("Giọng rõ"); } },
   { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
     await playerMore(); await click("Phát trên thiết bị khác");
   } },
@@ -119,14 +120,14 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await desktopTextMore(); await click(/^Giọng đọc:/);
   } },
   { id: "desktop/player-music", group: "Trình phát", title: "Hộp nhạc nền", route: "/book/gac-xep", act: async () => {
-    await desktopTextMore(); await click("Nhạc nền");
+    await desktopTextMore(); await click("Âm thanh"); await click("Nhạc nền");
   } },
   { id: "desktop/book-edit-music-level", group: "Trang sách", title: "Sửa sách · mức nhạc nền", route: "/book/suong-mu-2", scenario: { music: true, packagedMusic: true }, act: async () => {
     await clickFirst("Thêm tuỳ chọn"); await click("Sửa thông tin");
     await click("Nhạc nền", document.querySelector('[role="dialog"]')!);
   } },
   { id: "desktop/player-music-level", group: "Trình phát", title: "Hộp nhạc nền · thanh trượt mức", route: "/book/gac-xep", scenario: { music: true }, act: async () => {
-    await desktopTextMore(); await click("Nhạc nền");
+    await desktopTextMore(); await click("Âm thanh"); await click("Nhạc nền");
   } },
   { id: "desktop/player-full-speed", group: "Trình phát", title: "Tốc độ ở màn nghe", route: "/", storage: {"abook.audioFx.book:suong-mu-2":JSON.stringify({speed:1.15})}, act: async () => {
     await playerOpen(); await click(/^Tốc độ đọc/, document.querySelector('.now-playing')!);

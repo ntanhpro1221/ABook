@@ -53,13 +53,26 @@ class PipParamsTest {
     }
 
     @Test
-    fun autoEnterNeedsABookAndTheSwitch() {
-        assertTrue(PipParams.autoEnter(hasBook = true, switchOn = true))
-        assertFalse(PipParams.autoEnter(hasBook = true, switchOn = false))
-        assertFalse(PipParams.autoEnter(hasBook = false, switchOn = true))
-        // Đang phát hay tạm dừng đều được, miễn có sách mở.
-        assertTrue(PipParams.plan(playing = false, hasBook = true, switchOn = true).autoEnter)
+    fun autoEnterNeedsABookTheSwitchAndPlayback() {
+        assertTrue(PipParams.autoEnter(hasBook = true, switchOn = true, playing = true))
+        assertFalse(PipParams.autoEnter(hasBook = true, switchOn = false, playing = true))
+        assertFalse(PipParams.autoEnter(hasBook = false, switchOn = true, playing = true))
+        // Đang dừng thì rời app là rời hẳn, kể cả khi công tắc bật.
+        assertFalse(PipParams.autoEnter(hasBook = true, switchOn = true, playing = false))
+        assertFalse(PipParams.plan(playing = false, hasBook = true, switchOn = true).autoEnter)
         assertTrue(PipParams.plan(playing = true, hasBook = true, switchOn = true).autoEnter)
+    }
+
+    /** Ba trường hợp chủ sách nêu: mặc định tắt -> không PiP; bật + đang phát -> PiP; bật + dừng -> không. Nút tay vẫn dựng được params khi dừng. */
+    @Test
+    fun theThreeOwnerCasesReachTheSystemParams() {
+        val default = vn.abook.player.ui.data.AppSettings.Default.autoPip
+        assertFalse(default)
+        assertFalse(PipParams.build(context, PipParams.plan(playing = true, hasBook = true, switchOn = default)).isAutoEnterEnabled)
+        assertTrue(PipParams.build(context, PipParams.plan(playing = true, hasBook = true, switchOn = true)).isAutoEnterEnabled)
+        val paused = PipParams.build(context, PipParams.plan(playing = false, hasBook = true, switchOn = true))
+        assertFalse(paused.isAutoEnterEnabled)
+        assertEquals(3, paused.actions.size)
     }
 
     @Test

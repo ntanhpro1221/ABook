@@ -51,6 +51,14 @@ class NowPlayingLogicTest {
         assertEquals("0,75×", PlayerLabels.rate(0.75))
         assertEquals("1,1×", PlayerLabels.rate(1.1))
     }
+    /** Số âm của Âm thanh / Âm sắc là dấu trừ thật (U+2212), không gạch nối; dương có "+", 0 trơn - như web signedNumber. */
+    @Test fun signedNumbersUseTheMinusSign() {
+        assertEquals("−4", PlayerLabels.signed(-4.0))
+        assertEquals("+2", PlayerLabels.signed(2.0))
+        assertEquals("0", PlayerLabels.signed(-0.0))
+        assertEquals("−1,5", PlayerLabels.signed(-1.5))
+        assertEquals("+0,5", PlayerLabels.signed(0.5))
+    }
     @Test fun timeClampsAndDoesNotWrapAtHour() {
         assertEquals("0:00", PlayerLabels.time(-1))
         assertEquals("1:05", PlayerLabels.time(65_999))

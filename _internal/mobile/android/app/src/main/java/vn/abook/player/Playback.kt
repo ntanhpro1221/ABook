@@ -369,6 +369,7 @@ object Playback {
         if (ReadAloud.recoverFromPlayerError()) return
         AppLog.w("Playback", S.s_loi_phat_sach_0_chuong_1_2_3_3b06d1e0(bookId, currentChapter?.id, error?.javaClass?.simpleName ?: "?", error?.message.orEmpty().take(200)), error)
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
+        if (!streamed && error != null && !ReadAloud.inText() && reloadInPlace()) return
         val retrying = reconnectDelayMs > 0
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
@@ -384,6 +385,38 @@ object Playback {
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.
         emit(if (retrying && lastError.startsWith(S.s_mat_ket_noi_f892c115)) "state" else "error")
+    }
+
+    /** Giờ các lần nạp lại chương trên máy gần đây ([reloadInPlace]). */
+    internal val reloads = ArrayDeque<Long>() // internal: mỗi test bắt đầu với hạn mức trống
+
+    /**
+     * Chương có file trên máy mà ExoPlayer báo lỗi (tiếng kẹt quá lâu, giải mã hỏng một lần): nạp lại đúng chỗ đang nghe, đang phát thì phát tiếp.
+     * Tối đa 2 lần mỗi phút - hỏng hơn nữa là file hỏng thật, để [onError] báo người nghe.
+     */
+    private fun reloadInPlace(): Boolean {
+        val exo = player ?: return false
+        if (exo.currentMediaItem == null) return false
+        val now = SystemClock.elapsedRealtime()
+        while (reloads.isNotEmpty() && now - reloads.first() > 60_000L) reloads.removeFirst()
+        if (reloads.size >= 2) return false
+        reloads.addLast(now)
+        exo.seekTo(exo.currentMediaItemIndex, exo.currentPosition)
+        exo.prepare()
+        return true
+    }
+
+    /**
+     * Về mặc định ở trang Âm thanh: giọng đang chờ mãi (BUFFERING khi muốn phát) hay đã dừng vì lỗi thì gỡ ngay tại chỗ - tua tại chỗ xoá bộ xử lý tiếng đang chờ,
+     * lỗi thì nạp lại. Chương nghe thẳng từ máy tính có đường nối lại riêng ([scheduleReconnect]).
+     */
+    fun unstick() {
+        val exo = player ?: return
+        if (ReadAloud.inText() || exo.currentMediaItem?.localConfiguration?.uri?.scheme == "https") return
+        when {
+            exo.playbackState == Player.STATE_IDLE && exo.playerError != null -> { reloads.clear(); reloadInPlace(); clearError(); emit("state") }
+            exo.playbackState == Player.STATE_BUFFERING && exo.playWhenReady -> exo.seekTo(exo.currentMediaItemIndex, exo.currentPosition)
+        }
     }
 
     /** Chờ trước lần nối lại kế (0 = không đang nối lại): 3 giây rồi gấp đôi, tối đa 30 giây. */

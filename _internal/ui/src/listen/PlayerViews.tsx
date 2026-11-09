@@ -2,6 +2,9 @@ import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AudioFxPanel } from './AudioFxPanel';
+import { createPortal } from "react-dom";
+import { BackButton } from "@/shared/ScreenHeader";
+import { SheetPageDepth, SheetPages, useSheetPage, useSheetPageStack } from './sheetPages';
 import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -12,6 +15,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AudioLines,
+  BookOpen,
   Check,
   ChevronDown,
   Gauge,
@@ -382,8 +386,24 @@ export function MenuShell({
     }
     (onOpenChange ?? setLocalOpen)(next);
   };
-  // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước.
-  useBackLayer(inline && isOpen, () => changeOpen(false), inlineRef, triggerRef);
+  // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước. Trong tấm trượt (điện thoại) dòng mở thành TRANG
+  // con: thân thay danh sách của tấm, tiêu đề thay tên tấm ("← Âm thanh") - sheetPages.tsx.
+  const page = useSheetPage(inline && isOpen, dialogLabel ?? label, () => changeOpen(false), true);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useBackLayer(inline && isOpen, () => changeOpen(false), page ? pageRef : inlineRef, triggerRef);
+  const wasPage = useRef(false);
+  useEffect(() => {
+    // Khép trang: danh sách hiện lại sau lần vẽ của tấm, tiêu điểm về đúng dòng vừa mở.
+    if (wasPage.current && !isOpen) requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
+    wasPage.current = Boolean(page) && isOpen;
+  }, [page, isOpen]);
+  const pages = useSheetPageStack();
+  const topTitle = pages.top?.title;
+  const sheetRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // Dòng vừa bấm đã ẩn cùng danh sách: tiêu điểm sang ← của đầu tấm (Android: tấm con nhận tiêu điểm).
+    if (topTitle) requestAnimationFrame(() => sheetRef.current?.closest("[role=dialog]")?.querySelector<HTMLElement>(".back-button")?.focus({ preventScroll: true }));
+  }, [topTitle]);
   const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
@@ -392,6 +412,12 @@ export function MenuShell({
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
+  if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
+    <div ref={inlineRef} data-player-inline>{button}</div>
+    {isOpen && page.slot && createPortal(<SheetPageDepth.Provider value={page.depth}>
+      <div ref={pageRef} id={sheetId} data-sheet-page hidden={page.contentDepth !== page.depth} className="pb-2">{children}{footer}</div>
+    </SheetPageDepth.Provider>, page.slot)}
+  </Popover.Root>;
   if (inline) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>
       {button}
@@ -399,9 +425,16 @@ export function MenuShell({
     </div>
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
-    <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
+    <Sheet open={isOpen} onOpenChange={changeOpen} title={pages.top?.title ?? dialogLabel ?? label} trigger={button}
+      leading={pages.top && <BackButton label={S.s_quay_lai_6d793582} onClick={pages.top.back} />}
       focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} className="player-sheet">
-      <InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider>
+      <SheetPages.Provider value={pages.api}>
+        {/* Danh sách gốc ẩn (không tháo: dòng đang mở giữ thân của trang) khi một trang có thân riêng đang mở; trượt sang như tấm con Android. */}
+        <MotionRegion elementRef={sheetRef} motionKey={pages.api.contentDepth} slideIndex={pages.api.contentDepth}>
+          <div hidden={pages.api.contentDepth > 0}><InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider></div>
+          <div ref={pages.setSlot} />
+        </MotionRegion>
+      </SheetPages.Provider>
     </Sheet>
   </Popover.Root>;
   return (
@@ -1502,12 +1535,19 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
 /** "…" của trình phát: mọi việc ít dùng (nhạc nền, giọng, âm lượng, gợi ý, phát trên máy khác...) nằm trong một bảng, hàng chính chỉ giữ việc
  *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: S.s_chon_giong_khac_d31cfe89 ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
  *  khi dựng (voiceMenuWaiting). */
+const ToneExitGuard = createContext<React.MutableRefObject<((leave:()=>void)=>void)|null>|null>(null);
 function AudioFxMenu() {
-  const {volume,setVolume}=usePlayer();
-  return <MenuShell label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel volume={volume} setVolume={setVolume}/></MenuShell>;
+  const {setVolume}=usePlayer();
+  const [open,setOpen]=useState(false);
+  const localGuard=useRef<((leave:()=>void)=>void)|null>(null);
+  const toneGuard=useContext(ToneExitGuard)??localGuard;
+  const change=(next:boolean)=>{if(!next&&toneGuard.current)toneGuard.current(()=>setOpen(false));else setOpen(next);};
+  // Nhạc nền ngay dưới Giọng đọc (không còn dòng riêng trong "…"): to nhỏ của lời và nhạc ở cùng một chỗ.
+  return <MenuShell open={open} onOpenChange={change} label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel leaveGuard={toneGuard} setVolume={setVolume} music={<MusicMenu look="row" />}/></MenuShell>;
 }
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const toneGuard=useRef<((leave:()=>void)=>void)|null>(null);
   const openRef = useRef(open);
   openRef.current = open;
   useEffect(() => {
@@ -1531,11 +1571,12 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
       focusSelector="[data-player-more]"
       open={open}
       onOpenChange={(value) => {
+        if(!value&&toneGuard.current){toneGuard.current(()=>setOpen(false));return;}
         if (!value && voiceMenuWaiting === scope) voiceMenuWaiting = null;
         setOpen(value);
       }}
     >
-      <div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div>
+      <ToneExitGuard.Provider value={toneGuard}><div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div></ToneExitGuard.Provider>
     </MenuShell>
   );
 }
@@ -1659,7 +1700,6 @@ export function PlayerBar({
             <SleepMenu look="row" />
             <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>{S.s_chuong_truoc_4750f9e9}</MenuRow>
             <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>{S.s_chuong_sau_17d1bd20}</MenuRow>
-            <MusicMenu look="row" />
             <VoiceMenu look="row" />
             <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>{S.s_mo_man_hinh_dang_nghe_2426b4ad}</MenuRow>
             <MenuRow icon={X} onClick={close}>{S.s_dong_trinh_phat_8a833838}</MenuRow>
@@ -2047,8 +2087,12 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   edit?: SentenceEditing;
 }) {
   const scrollFade = useFadeScroller<HTMLElement>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { track, sleep, fading, canGoBack, goBack } = player;
   if (!track) return null;
+  // Trang sách của cuốn đang nghe: thu màn Đang nghe; đang ở đúng trang ấy thì không mở chồng thêm một lần.
+  const bookPage = `/book/${encodeURIComponent(track.bookId)}`;
   return (
     // Chỉ cột điện thoại cuộn (máy tính: cột cố định có viền phải - mặt nạ sẽ xoá cả viền).
     <aside ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
@@ -2069,9 +2113,8 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           <MoreMenu scope="screen">
             <AudioFxMenu/>
             <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
-            <MusicMenu look="row" />
             <VoiceMenu scope="screen" look="row" />
-            <VolumeControl look="row" />
+            <MenuRow icon={BookOpen} onClick={() => { onCollapse(); if (location.pathname !== bookPage) navigate(bookPage); }}>{S.s_trang_sach_2b6c8e51}</MenuRow>
             {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>{S.s_ve_cho_vua_nghe_8da3c710}</MenuRow>}
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
             {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}

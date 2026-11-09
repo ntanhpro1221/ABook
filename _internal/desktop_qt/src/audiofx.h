@@ -6,11 +6,11 @@
 #include <deque>
 #include <vector>
 #include <cstdint>
+#include "tonecatalog.generated.h"
 
 namespace AudioFx {
-inline constexpr std::array<double, 5> frequencies{80, 250, 1000, 4000, 12000};
-inline constexpr std::array<std::array<double, 5>, 5> presets{{
-    {0,0,0,0,0}, {-4,-2,2,3,-2}, {4,2,0,-1,-2}, {-2,-1,0,2,4}, {0,0,0,-3,-5}}};
+inline constexpr auto frequencies = ToneCatalog::frequencies;
+inline const auto presets = [] { std::array<std::array<double,5>,ToneCatalog::presets.size()> p{};for(size_t i=0;i<p.size();++i)p[i]=ToneCatalog::presets[i].bands;return p;}();
 struct Settings {
     bool enabled = false;
     int preset = 0;
@@ -28,7 +28,7 @@ struct Biquad {
     }
     static Biquad make(int rate, double frequency, double db, bool shelf=false) {
         const double w=2*std::numbers::pi*(std::min)(frequency,rate*.45)/rate;
-        const double a=std::pow(10,db/40), c=std::cos(w), s=std::sin(w), alpha=s/(2*1.4);
+        const double a=std::pow(10,db/40), c=std::cos(w), s=std::sin(w), alpha=s/(2*ToneCatalog::q);
         if (!shelf) {
             const double a0=1+alpha/a;
             return {(1+alpha*a)/a0,-2*c/a0,(1-alpha*a)/a0,-2*c/a0,(1-alpha/a)/a0};
@@ -52,6 +52,7 @@ public:
         settings=s; rate=hz; gain=std::pow(10,s.boost/20); release=std::exp(-1.0/(hz*.08));
     }
     void process(float *stereo, size_t frames) {
+        if (!settings.enabled && settings.boost==0 && !settings.mono && settings.balance==0) { envelope=1; return; }
         constexpr double ceiling=.8912509381337456; // -1 dBFS
         for (size_t i=0;i<frames;++i) {
             if (settings.mono) { const float mid=(stereo[2*i]+stereo[2*i+1])*.5f; stereo[2*i]=stereo[2*i+1]=mid; }

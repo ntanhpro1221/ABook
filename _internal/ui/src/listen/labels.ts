@@ -11,6 +11,12 @@ export const PREPARING_VOICE = S.s_dang_chuan_bi_giong_doc_69f1b51a;
 export const PREPARING_VOICE_AFTER_MS = 1500;
 
 /** Câu thoại đã mang ngoặc của sách - bỏ trước khi bọc ngoặc trích (soát UX 29-09: ““…””). Thẻ "Tối qua" (soát a26 L6). */
+/** Số có dấu của Âm thanh / Âm sắc (Android/Qt PlayerLabels.signed): dấu trừ thật "−" (không gạch nối), "+" khi dương, phẩy thập phân, tối đa một số lẻ. */
+export function signedNumber(value: number): string {
+  const text = Math.abs(value).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+  return text === "0" ? "0" : `${value < 0 ? "−" : "+"}${text}`;
+}
+
 export function unquoted(sentence: string): string {
   return sentence.replace(/^[\s“"«「『]+|[\s”"»」』]+$/g, "");
 }

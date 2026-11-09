@@ -1671,3 +1671,9 @@ button[data-variant] { min-height: 2.5rem; height: auto; }
 .player-sheet:has([data-player-inline]) { max-height: 50dvh; }
 .player-sheet [data-player-inline] [data-sheet-choice],
 .player-sheet [data-player-inline] [data-sheet-current] { background: transparent; }
+@media (max-width: 640px) {
+  .player-sheet:has([data-tone-page]) {
+    height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - 0.5rem));
+    max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - 0.5rem));
+  }
+}

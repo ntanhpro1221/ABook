@@ -315,7 +315,7 @@ object PrepareAhead {
         val open = context.packageManager.getLaunchIntentForPackage(context.packageName)
         val tap = open?.let { PendingIntent.getActivity(context, NOTIFICATION, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT) }
         val builder = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

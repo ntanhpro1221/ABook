@@ -233,12 +233,11 @@ private fun NowPlayingBody(
                     GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,
                         Modifier.playerReveal(windowProgress), dimmed = !state.hasNext && !state.moreChapters)
                 }
-                // Các ô bằng nhau (ba, hoặc bốn khi máy có PiP): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau.
+                // Ba ô bằng nhau: tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau. Cửa sổ mini ở cuối tấm Thêm tuỳ chọn.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
                     PlayerAction(S.s_toc_do_16ee0914, PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
                     SleepAction(state.sleep, model.position, { window.openSheet(PlayerSheet.Sleep) }, Modifier.weight(1f))
                     PlayerAction(S.s_chuong_2d157977, "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
-                    window.miniWindow?.let { enter -> PlayerAction(S.s_cua_so_mini_65edeb9b, MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
             SleepNotice(state, model, Modifier.playerReveal(windowProgress))

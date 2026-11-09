@@ -176,13 +176,13 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() > 55);
         rig.run(52); // còn ~7 giây: đang nhỏ dần
         QVERIFY(rig.player->fading());
-        QVERIFY(rig.out.volume < 0.9);
+        QVERIFY(rig.out.volume < 1.0);
         QVERIFY(rig.out.volume > 0);
         rig.run(9);
         QVERIFY(!rig.player->playing());
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
         QVERIFY(!rig.player->fading());
-        QCOMPARE(rig.out.volume, 0.9);
+        QCOMPARE(rig.out.volume, 1.0);
         QVERIFY(!rig.player->sleepStoppedText().isEmpty());
         // Chỗ nghe đã được lưu khi dừng.
         QVERIFY(!rig.net.callsTo(QStringLiteral("/progress")).isEmpty());
@@ -223,13 +223,13 @@ private slots:
         Rig rig;
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         QSignalSpy changed(rig.player.get(), &Player::volumeChanged);
-        QCOMPARE(rig.player->volume(), 0.9);
+        QCOMPARE(rig.player->volume(), 1.0);
         rig.player->toggleMute();
         QCOMPARE(rig.player->volume(), 0.0);
         QCOMPARE(rig.out.volume, 0.0);
         rig.player->toggleMute();
-        QCOMPARE(rig.player->volume(), 0.9);
-        QCOMPARE(rig.out.volume, 0.9);
+        QCOMPARE(rig.player->volume(), 1.0);
+        QCOMPARE(rig.out.volume, 1.0);
         rig.player->setVolume(0.4);
         rig.player->toggleMute();
         rig.player->toggleMute();

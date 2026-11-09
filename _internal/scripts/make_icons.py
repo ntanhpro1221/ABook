@@ -14,7 +14,8 @@ Ra (vẽ lại toàn bộ mỗi lần chạy):
     abook/assets/book_file.ico + .png      file .abook
     abook/assets/project_file.ico + .png   file .abookproj
     abook/assets/icon/*.svg                bản vector gốc: phóng to bao nhiêu cũng không vỡ
-    mobile/android/app/src/main/res/...           launcher (thường, tròn, thích ứng + đơn sắc Android 13), màn chờ
+    mobile/android/app/src/main/res/...           launcher thường + tròn (PNG, Android 7); lớp thích ứng, đơn sắc Android 13, màn chờ,
+                                                  icon thông báo là VectorDrawable - nét luôn sắc dù hệ thống phóng bao nhiêu
     ui/public/*.png                       "Thêm vào màn hình chính" của trình duyệt (iPhone, iPad, Android): tràn viền, hệ điều hành tự bo
 
 Cỡ 16-32 px vẽ bản GIẢN LƯỢC (ba tay sách, nét dày, không đường trang): thu nhỏ bản đầy đủ xuống 16 px chỉ còn vệt nhoè.
@@ -25,6 +26,8 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -45,13 +48,8 @@ FLAP, FLAP_EDGE = "#fbf3e2", "#e3d2ae"
 
 WINDOWS_SIZES = (16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 SMALL_MAX = 32
-# (thư mục, cỡ icon 48dp, cỡ lớp thích ứng 108dp)
-DENSITIES = (("mdpi", 48, 108), ("hdpi", 72, 162), ("xhdpi", 96, 216), ("xxhdpi", 144, 324), ("xxxhdpi", 192, 432))
-SPLASHES = {"drawable": (480, 320)} | {
-    f"drawable-{o}-{d}": size for d, (p, l) in {"mdpi": ((320, 480), (480, 320)), "hdpi": ((480, 800), (800, 480)),
-                                                "xhdpi": ((720, 1280), (1280, 720)), "xxhdpi": ((960, 1600), (1600, 960)),
-                                                "xxxhdpi": ((1280, 1920), (1920, 1280))}.items()
-    for o, size in (("port", p), ("land", l))}
+# (thư mục, cỡ icon 48dp)
+DENSITIES = (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192))
 
 Pt = tuple[float, float]
 
@@ -173,16 +171,9 @@ def file_icon(*, small: bool = False, dashed: bool = False) -> str:
     return _svg(f'<path d="{outline}" fill="url(#forest)"/>{body}{shadow}{flap}', _forest())
 
 
-def adaptive_foreground(*, mono: str | None = None) -> str:
+def adaptive_foreground_body(*, mono: str | None = None) -> str:
     """Lớp trước của icon thích ứng (108dp, launcher cắt lấy 72dp giữa): hình thu 72/108 để trông như ô icon app."""
-    return _svg(_placed(glyph(mono=mono), 72 / 108))
-
-
-def splash(width: int, height: int) -> str:
-    scale = min(width, height) / 1024 * 0.55
-    body = _placed(glyph(), scale, (width / 2, height / 2))
-    background = f'<rect width="{width}" height="{height}" fill="url(#forest)"/>'
-    return _svg(background + body, _forest(), width, height)
+    return _placed(glyph(mono=mono), 72 / 108)
 
 
 # ---- vẽ + ghi --------------------------------------------------------------------------------------------------
@@ -207,38 +198,143 @@ def write_ico(path: Path, full: str, small: str) -> None:
     images[-1].save(path.with_suffix(".png"))
 
 
+# ---- VectorDrawable (Android) ----------------------------------------------------------------------------------
+# Chỉ những gì glyph() dùng: <g transform="translate() scale()">, <path> (nét / tô, opacity), <circle>.
+
+ANDROID_NS = 'xmlns:android="http://schemas.android.com/apk/res/android"'
+# Màn chờ Android 12+ (và core-splashscreen ở bản cũ): khung 240 dp, hệ thống chỉ giữ vòng tròn 160 dp giữa khung. Logo là icon app
+# tròn vẽ đúng trong vòng ấy: hãng nào cắt ô vuông bo góc (OPPO) cũng thấy trọn hình, và vector thì không nhoè khi phóng.
+SPLASH_FRAME_DP, SPLASH_LOGO_DP = 240.0, 160.0
+# Nút Đóng trên thông báo phát (Lucide "x", khung 24).
+CLOSE_PATH = "M18,6L6,18M6,6L18,18"
+
+
+def _vector_path(d: str) -> str:
+    """'M x y x y ...' của SVG (các cặp sau M là đường thẳng) -> pathData có L tường minh."""
+    def one(match: re.Match[str]) -> str:
+        numbers = match.group(1).split()
+        pairs = [f"{numbers[i]},{numbers[i + 1]}" for i in range(0, len(numbers), 2)]
+        return "M" + pairs[0] + ("L" + " ".join(pairs[1:]) if len(pairs) > 1 else "")
+    return re.sub(r"M\s*([-\d.\s]+)", one, d).replace(" Z", "Z").strip()
+
+
+def _vector_body(markup: str, depth: int = 1) -> str:
+    out: list[str] = []
+
+    def walk(node: ET.Element, level: int) -> None:
+        pad = "    " * level
+        tag = node.tag.rsplit("}", 1)[-1]
+        if tag == "g":
+            move = re.search(r"translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)", node.get("transform", ""))
+            dx, dy, s = move.groups() if move else ("0", "0", "1")
+            out.append(f'{pad}<group android:translateX="{dx}" android:translateY="{dy}" android:scaleX="{s}" android:scaleY="{s}">')
+            for child in node:
+                walk(child, level + 1)
+            out.append(f"{pad}</group>")
+            return
+        if tag == "circle":
+            cx, cy, r = (float(node.get(k)) for k in ("cx", "cy", "r"))
+            data = f"M{cx - r:g},{cy:g}A{r:g},{r:g} 0 1,1 {cx + r:g},{cy:g}A{r:g},{r:g} 0 1,1 {cx - r:g},{cy:g}Z"
+        elif tag == "path":
+            data = _vector_path(node.get("d", ""))
+        else:
+            for child in node:
+                walk(child, level)
+            return
+        alpha = node.get("opacity")
+        attrs = [f'android:pathData="{data}"']
+        fill, stroke = node.get("fill"), node.get("stroke")
+        if fill and fill != "none":
+            attrs.append(f'android:fillColor="{fill}"')
+            if alpha and float(alpha) < 1:
+                attrs.append(f'android:fillAlpha="{alpha}"')
+        if stroke:
+            attrs += [f'android:strokeColor="{stroke}"', f'android:strokeWidth="{node.get("stroke-width", "1")}"']
+            if node.get("stroke-linecap"):
+                attrs.append(f'android:strokeLineCap="{node.get("stroke-linecap")}"')
+            if alpha and float(alpha) < 1:
+                attrs.append(f'android:strokeAlpha="{alpha}"')
+        out.append(f"{pad}<path " + " ".join(attrs) + " />")
+
+    walk(ET.fromstring(f'<svg xmlns="http://www.w3.org/2000/svg">{markup}</svg>'), depth)
+    return "\n".join(out)
+
+
+def _vector(note: str, size_dp: float, body: str, viewport: float = 1024.0, aapt: bool = False) -> str:
+    extra = '\n    xmlns:aapt="http://schemas.android.com/aapt"' if aapt else ""
+    return ('<?xml version="1.0" encoding="utf-8"?>\n'
+            f'<!-- {note} Sinh bởi scripts/make_icons.py - đừng sửa tay. -->\n'
+            f'<vector {ANDROID_NS}{extra}\n    android:width="{size_dp:g}dp" android:height="{size_dp:g}dp"\n'
+            f'    android:viewportWidth="{viewport:g}" android:viewportHeight="{viewport:g}">\n{body}\n</vector>\n')
+
+
+def splash_icon() -> str:
+    scale = SPLASH_LOGO_DP / SPLASH_FRAME_DP
+    offset = 1024 * (1 - scale) / 2
+    circle = ('        <path android:pathData="M0,512A512,512 0 1,1 1024,512A512,512 0 1,1 0,512Z">\n'
+              '            <aapt:attr name="android:fillColor">\n'
+              '                <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="1024"\n'
+              f'                    android:startColor="{FOREST_TOP}" android:endColor="{FOREST_BOTTOM}" />\n'
+              '            </aapt:attr>\n        </path>')
+    body = (f'    <group android:translateX="{offset:.2f}" android:translateY="{offset:.2f}" android:scaleX="{scale:.4f}" android:scaleY="{scale:.4f}">\n'
+            f'{circle}\n{_vector_body(_placed(glyph(), 0.92), depth=2)}\n    </group>')
+    return _vector("Màn chờ: icon app tròn trong vòng 160 dp của khung 240 dp (Android 12+ chỉ giữ vòng ấy).", SPLASH_FRAME_DP, body, aapt=True)
+
+
+def notification_icon() -> str:
+    """Icon nhỏ của mọi thông báo: hình giản lược (đọc được ở 24 dp), một màu - hệ thống tự nhuộm."""
+    return _vector("Icon nhỏ của mọi thông báo (một màu, hệ thống nhuộm).", 24,
+                   _vector_body(_placed(glyph(small=True, mono="#ffffff"), 1.45)))
+
+
+def close_icon() -> str:
+    return _vector("Nút Đóng trên thông báo phát (Lucide x).", 24,
+                   f'    <path android:pathData="{CLOSE_PATH}" android:strokeColor="#ffffff" android:strokeWidth="2"'
+                   ' android:strokeLineCap="round" android:strokeLineJoin="round" />', viewport=24)
+
+
+def _write(path: Path, text: str) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+    return path
+
+
 def write_android() -> list[Path]:
+    """Launcher thường / tròn vẫn là PNG theo mật độ (Android 7 chưa có icon thích ứng); mọi thứ còn lại là vector."""
     written = []
-    monochrome = adaptive_foreground(mono="#ffffff")
-    for folder, launcher, layer in DENSITIES:
+    for folder, launcher in DENSITIES:
         target = RES / f"mipmap-{folder}"
-        for name, markup, size in (("ic_launcher.png", app_icon(small=launcher < 96), launcher),
-                                   ("ic_launcher_round.png", app_icon(small=launcher < 96, round_=True), launcher),
-                                   ("ic_launcher_foreground.png", adaptive_foreground(), layer),
-                                   ("ic_launcher_monochrome.png", monochrome, layer)):
-            rasterize(markup, size).save(target / name)
+        for name, markup in (("ic_launcher.png", app_icon(small=launcher < 96)),
+                             ("ic_launcher_round.png", app_icon(small=launcher < 96, round_=True))):
+            rasterize(markup, launcher).save(target / name)
             written.append(target / name)
-    (RES / "drawable" / "ic_launcher_background.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<!-- Nền icon thích ứng: xanh rừng, đậm dần xuống dưới (scripts/make_icons.py). -->\n'
-        '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n'
-        f'    <gradient android:angle="270" android:startColor="{FOREST_TOP}" android:endColor="{FOREST_BOTTOM}" />\n'
-        '</shape>\n', encoding="utf-8", newline="\n")
+    drawable = RES / "drawable"
+    written += [
+        _write(drawable / "ic_launcher_foreground.xml", _vector(
+            "Lớp trước icon thích ứng (108 dp, launcher giữ 72 dp giữa).", 108, _vector_body(adaptive_foreground_body()))),
+        _write(drawable / "ic_launcher_monochrome.xml", _vector(
+            "Icon đơn sắc Android 13 (hệ thống tự nhuộm).", 108, _vector_body(adaptive_foreground_body(mono="#ffffff")))),
+        _write(drawable / "splash_icon.xml", splash_icon()),
+        _write(drawable / "ic_notification.xml", notification_icon()),
+        _write(drawable / "ic_notification_close.xml", close_icon()),
+        _write(drawable / "ic_launcher_background.xml",
+               '<?xml version="1.0" encoding="utf-8"?>\n'
+               '<!-- Nền icon thích ứng: xanh rừng, đậm dần xuống dưới (scripts/make_icons.py). -->\n'
+               '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n'
+               f'    <gradient android:angle="270" android:startColor="{FOREST_TOP}" android:endColor="{FOREST_BOTTOM}" />\n'
+               '</shape>\n'),
+    ]
     for name in ("ic_launcher.xml", "ic_launcher_round.xml"):
-        (RES / "mipmap-anydpi-v26" / name).write_text(
+        written.append(_write(RES / "mipmap-anydpi-v26" / name,
             '<?xml version="1.0" encoding="utf-8"?>\n'
             '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
             '    <background android:drawable="@drawable/ic_launcher_background" />\n'
-            '    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n'
-            '    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />\n'
-            '</adaptive-icon>\n', encoding="utf-8", newline="\n")
-    (RES / "values" / "ic_launcher_background.xml").write_text(
+            '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'
+            '    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />\n'
+            '</adaptive-icon>\n'))
+    written.append(_write(RES / "values" / "ic_launcher_background.xml",
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-        f'    <color name="ic_launcher_background">{FOREST_TOP.upper()}</color>\n</resources>\n',
-        encoding="utf-8", newline="\n")
-    for folder, (width, height) in SPLASHES.items():
-        rasterize(splash(width, height), width, height).convert("RGB").save(RES / folder / "splash.png")
-        written.append(RES / folder / "splash.png")
+        f'    <color name="ic_launcher_background">{FOREST_TOP.upper()}</color>\n</resources>\n'))
     return written
 
 

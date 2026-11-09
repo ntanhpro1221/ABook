@@ -103,6 +103,29 @@ class LibraryTreeTest {
         assertEquals(listOf("15 phút"), LibraryTree.chapterNodes(single, state()).map { it.subtitle })
     }
 
+    /**
+     * Thẻ phát ở thanh thông báo / màn khoá: tiêu đề = tên chương, dòng phụ = tên sách, có dấu. Gói làm từ tệp nghe chỉ có `title` (không `fullTitle`) từng cho
+     * tiêu đề rỗng, Android tự điền "ABook is running".
+     */
+    @Test
+    fun the_notification_card_names_the_chapter_and_the_book_with_their_marks() {
+        val manifest = JSONObject().put("id", "s").put("title", "Sách nhạc nền").put("chapters", JSONArray()
+            .put(JSONObject().put("id", 1).put("title", "Chương 1 · Mưa đêm").put("available", true).put("file", "chapters/1.mp3"))
+            .put(JSONObject().put("id", 2).put("fullTitle", "Chương 2 · Gió sớm").put("title", "Chương 2").put("available", true).put("file", "chapters/2.mp3"))
+            .put(JSONObject().put("id", 3).put("title", JSONObject.NULL).put("available", true).put("file", "chapters/3.mp3")))
+        val chapters = LibraryTree.chapters(manifest)
+        assertEquals(listOf("Chương 1 · Mưa đêm", "Chương 2 · Gió sớm", "Chương 3"), chapters.map { it.title })
+        val card = androidx.media3.common.MediaItem.Builder().setMediaId("1").build()
+        for (chapter in chapters) {
+            val metadata = withBookMetadata(card, "Sách nhạc nền", "", chapter.title, ByteArray(0)).mediaMetadata
+            assertEquals(chapter.title, metadata.title.toString())
+            assertEquals(chapter.title, metadata.displayTitle.toString())
+            assertEquals("Sách nhạc nền", metadata.subtitle.toString())
+            assertEquals("Sách nhạc nền", metadata.artist.toString()) // chưa có người đọc: dòng phụ của thẻ là tên sách
+        }
+        assertEquals("Chương 1 · Mưa đêm", ComputerCasts.chaptersOf(manifest).first().title)
+    }
+
     private fun chapter(id: Int, part: Int, file: String) = JSONObject().put("id", id).put("part", part)
         .put("fullTitle", "Chương $id").put("available", true).put("file", file).put("duration", 900.0)
 }

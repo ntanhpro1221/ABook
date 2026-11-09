@@ -118,7 +118,7 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect(screen.textContent).not.toContain("Âm lượng");
   await press(named("Thêm tuỳ chọn", screen)!);
   const more = document.querySelector<HTMLElement>("[data-player-more]")!;
-  expect(more.textContent).toContain("Âm lượng");
+  expect(more.textContent).toContain("Trang sách");
   expect(more.textContent).toContain("Về chỗ vừa nghe");
   // "Đọc theo" là chế độ của chính màn này: công tắc Nghe / Đọc theo ở thanh trên, không còn nút rộng cả hàng ở đáy (readAlongMode.dom.test.tsx).
   const modes = [...screen.querySelectorAll("button")].filter((button) => button.textContent === "Đọc theo");

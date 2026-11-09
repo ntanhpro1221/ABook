@@ -24,6 +24,7 @@ fun RangeSlider(value: Double, min: Double, max: Double, step: Double, default: 
     val commit by rememberUpdatedState(onCommit)
     var dragged by remember { mutableDoubleStateOf(value) }
     fun snap(v: Double) = (min + round((v - min) / step) * step).coerceIn(min, max)
+    fun at(x: Float, width: Int, thumb: Float) = snap(min + RangeTrack.fraction(x, width.toFloat(), thumb) * (max - min))
     Canvas(modifier.fillMaxWidth().height(44.dp)
         .semantics {
             contentDescription = title
@@ -33,12 +34,12 @@ fun RangeSlider(value: Double, min: Double, max: Double, step: Double, default: 
             setProgress { if (enabled) { commit(snap(it.toDouble())); true } else false }
         }
         .pointerInput(min, max, step, enabled) {
-            if (enabled) detectTapGestures { commit(snap(min + (it.x / size.width).coerceIn(0f, 1f) * (max - min))) }
+            if (enabled) detectTapGestures { commit(at(it.x, size.width, RangeTrack.THUMB.toPx())) }
         }
         .pointerInput(min, max, step, enabled) {
             if (enabled) detectDragGestures(
-                onDragStart = { dragged = snap(min + (it.x / size.width).coerceIn(0f, 1f) * (max - min)); move(dragged) },
-                onDrag = { change, _ -> change.consume(); dragged = snap(min + (change.position.x / size.width).coerceIn(0f, 1f) * (max - min)); move(dragged) },
+                onDragStart = { dragged = at(it.x, size.width, RangeTrack.THUMB.toPx()); move(dragged) },
+                onDrag = { change, _ -> change.consume(); dragged = at(change.position.x, size.width, RangeTrack.THUMB.toPx()); move(dragged) },
                 onDragEnd = { commit(dragged) },
                 onDragCancel = { move(value); onCancel() },
             )

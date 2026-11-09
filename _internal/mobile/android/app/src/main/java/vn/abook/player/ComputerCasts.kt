@@ -119,7 +119,7 @@ object ComputerCasts : CastSource {
     fun chaptersOf(manifest: JSONObject): List<CastChapter> {
         val list = manifest.optJSONArray("chapters") ?: return emptyList()
         return (0 until list.length()).mapNotNull { list.optJSONObject(it) }.filter { it.optBoolean("available", true) && it.has("id") }
-            .map { CastChapter(it.getInt("id"), it.optString("fullTitle").ifEmpty { it.optString("title") }, it.optDouble("duration", 0.0)) }
+            .map { CastChapter(it.getInt("id"), LibraryTree.chapterTitle(it), it.optDouble("duration", 0.0)) }
     }
 
     /**

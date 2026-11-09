@@ -114,7 +114,7 @@ class NativeActivity : ComponentActivity() {
         pip = PipControl(PipSupport.available(this)) { enterPip() }
         if (pip.available) {
             addOnPictureInPictureModeChangedListener { info -> pip.active = info.isInPictureInPictureMode }
-            // Params của PiP luôn khớp trạng thái phát: nút Phát / Tạm dừng đổi theo, và tự vào PiP chỉ khi có sách mở + công tắc bật (Android 12+ hệ thống tự vào, nên phải đặt trước khi bạn rời app).
+            // Params của PiP luôn khớp trạng thái phát: nút Phát / Tạm dừng đổi theo, và tự vào PiP chỉ khi công tắc bật + sách đang phát - dừng ở đâu (nút, thông báo, tai nghe) cũng đặt lại ngay (Android 12+ hệ thống tự vào, nên phải đặt trước khi bạn rời app).
             lifecycleScope.launch {
                 combine(
                     player.state.map { it.hasTrack to it.playing }.distinctUntilChanged(), settings.state.map { it.autoPip }.distinctUntilChanged(),

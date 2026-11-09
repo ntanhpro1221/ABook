@@ -401,7 +401,7 @@ Item {
             verify(keys.handle(key(Qt.Key_M, "m")))
             compare(Player.volume, 0)
             verify(keys.handle(key(Qt.Key_M, "M", Qt.ShiftModifier)))
-            compare(Player.volume, 0.9)
+            compare(Player.volume, 1)
             const rate = Player.rate
             verify(keys.handle(key(Qt.Key_BracketRight, "]")))
             verify(Player.rate > rate)
@@ -422,7 +422,7 @@ Item {
             const keys = createTemporaryObject(keysFactory, host, {letters: false})
             spy.clear(); spy.target = keys; spy.signalName = "shortcutsRequested"
             verify(!keys.handle(key(Qt.Key_M, "m")))
-            compare(Player.volume, 0.9)
+            compare(Player.volume, 1)
             verify(!keys.handle(key(Qt.Key_BracketRight, "]")))
             verify(!keys.handle(key(Qt.Key_Question, "?")))
             compare(spy.count, 0)

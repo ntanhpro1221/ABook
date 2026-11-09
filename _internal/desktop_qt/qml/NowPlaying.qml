@@ -603,7 +603,6 @@ Item {
                 }
             }
             MenuRow { objectName: "nowAudioFxButton"; width: parent.width; text: S.s_copy_c1303271503d; value: S.s_copy_cc27613e0895; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
-            MenuRow { width: parent.width; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
             MenuRow { objectName: "nowVoice"; width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
             MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
             MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
@@ -614,6 +613,6 @@ Item {
         }
     }
     OutputPopover { id: output; anchorItem: moreButton }
-    Popover { id: audioFx; objectName: "nowAudioFx"; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel {} }
+    Popover { id: audioFx; closeGuard: action => audioSettings.requestClose(action); objectName: "nowAudioFx"; anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { id:audioSettings; openMusic: () => { audioFx.close(); music.show() } } }
     PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
 }

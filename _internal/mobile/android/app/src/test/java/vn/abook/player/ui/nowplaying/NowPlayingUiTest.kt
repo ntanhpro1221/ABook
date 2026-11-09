@@ -195,6 +195,111 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("player_sheet_speed").assertDoesNotExist()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
     }
+    /** Chủ sách 09-11: chạm chỗ trống TRONG tấm không đóng tấm - chỉ nền tối đóng. */
+    private fun tapInsideKeepsOpen(sheet: PlayerSheet) {
+        show(sheet = sheet)
+        val tag = "player_sheet_${sheet.name.lowercase()}"
+        // Dòng tên tấm, mép phải: không nút nào ở đó.
+        rule.onNodeWithTag(tag).performTouchInput { click(Offset(width - 12f, 48.dp.toPx())) }
+        rule.waitForIdle()
+        rule.onNodeWithTag(tag).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Đóng").performClick() // nền tối thì đóng
+        rule.waitForIdle()
+        rule.onNodeWithTag(tag).assertDoesNotExist()
+    }
+    @Test fun aTapOnEmptySpaceInsideSpeedKeepsItOpen() = tapInsideKeepsOpen(PlayerSheet.Speed)
+    @Test fun aTapOnEmptySpaceInsideChaptersKeepsItOpen() = tapInsideKeepsOpen(PlayerSheet.Chapters)
+
+    /** Kéo xuống từ GIỮA tấm (không chỉ vạch kéo) 30 % chiều cao, chậm (không phải vuốt nhanh): tấm đóng - cả tấm có danh sách cuộn (Chương). */
+    private fun middleDragCloses(sheet: PlayerSheet) {
+        show(sheet = sheet)
+        val tag = "player_sheet_${sheet.name.lowercase()}"
+        rule.onNodeWithTag(tag).performTouchInput { swipeDown(startY = centerY, endY = centerY + height * .3f, durationMillis = 900) }
+        rule.waitForIdle()
+        rule.onNodeWithTag(tag).assertDoesNotExist()
+    }
+    @Test fun aThirtyPercentDragFromTheMiddleClosesSpeed() = middleDragCloses(PlayerSheet.Speed)
+    @Test fun aThirtyPercentDragFromTheMiddleClosesChapters() = middleDragCloses(PlayerSheet.Chapters)
+
+    @Test fun aShortDragFromTheMiddleSnapsBack() {
+        show(sheet = PlayerSheet.Chapters)
+        rule.onNodeWithTag("player_sheet_chapters").performTouchInput { swipeDown(startY = centerY, endY = centerY + height * .1f, durationMillis = 900) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_chapters").assertIsDisplayed()
+    }
+
+    /** Thêm tuỳ chọn: mọi dòng một icon; Trang sách và Cửa sổ mini (cuối) có khi có đường; hàng nút chính chỉ còn ba ô. */
+    @Test fun moreSheetRowsAllHaveIconsAndMiniWindowIsLast() {
+        show()
+        var entered = 0
+        var opened = 0
+        rule.runOnIdle { window.miniWindow = { entered++ }; window.bookPage = { opened++ }; window.openSheet(PlayerSheet.More) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_mini").assertDoesNotExist()
+        val rows = listOf("more_audio", "more_voice", "more_book", "more_mini").map { rule.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        rows.zipWithNext().forEach { (a, b) -> assertTrue("thứ tự dòng: $rows", a.top < b.top) }
+        val icons = rule.onAllNodesWithTag("sheet_row_icon", useUnmergedTree = true).fetchSemanticsNodes()
+        assertEquals(rule.onAllNodes(hasTestTag("more_audio") or hasTestTag("more_voice") or hasTestTag("more_look") or hasTestTag("more_devices")
+            or hasTestTag("more_book") or hasTestTag("more_mini")).fetchSemanticsNodes().size, icons.size)
+        rule.onNodeWithTag("more_mini").performClick()
+        rule.waitForIdle()
+        assertEquals(1, entered)
+        rule.onNodeWithTag("player_sheet_more").assertDoesNotExist()
+    }
+
+    /** Âm thanh: Giọng đọc 0-200 %, Âm sắc một hàng (không xuống dòng ở 360 dp), dải tần chỉ khi Tự chỉnh, Cao độ rồi Về mặc định ở cuối. */
+    @Test fun audioPageOrderAndToneRow() {
+        vn.abook.player.AudioFx.update(vn.abook.player.AudioFxSettings())
+        show(sheet = PlayerSheet.Audio)
+        shot("audio_light")
+        rule.onNodeWithTag("audiofx_voice").assertIsDisplayed()
+        rule.onNodeWithTag("audiofx_tones").assertExists()
+        assertTrue(rule.onAllNodesWithText("80 Hz").fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithTag("audiofx_tones").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("tone_clear").performClick()
+        rule.runOnIdle { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_audio").assertExists()
+        rule.onNodeWithTag("tone_page").assertDoesNotExist()
+        rule.onNodeWithText("Giọng rõ").assertExists()
+        rule.onNodeWithTag("audiofx_tones").performClick()
+        rule.waitForIdle()
+        rule.runOnIdle { vn.abook.player.AudioFx.changeTone { it.save("Mine");it.edit(2,7.0) } }
+        rule.onNodeWithTag("sheet_back").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("tone_overwrite").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_audio").assertExists()
+        assertEquals(7.0,vn.abook.player.AudioFx.current.bands[2],0.0)
+        val voice = rule.onNodeWithTag("audiofx_voice").getUnclippedBoundsInRoot()
+        val pitch = rule.onNodeWithTag("audiofx_pitch").getUnclippedBoundsInRoot()
+        val reset = rule.onNodeWithTag("audiofx_reset").getUnclippedBoundsInRoot()
+        assertTrue(voice.top < pitch.top && pitch.top < reset.top)
+        listOf("Equalizer", "Preset", "Tăng âm", "Âm lượng").forEach {
+            assertTrue("còn \"$it\"", rule.onAllNodesWithText(it).fetchSemanticsNodes().isEmpty())
+        }
+        rule.onNodeWithTag("audiofx_reset").performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals(vn.abook.player.AudioFxSettings(), vn.abook.player.AudioFx.current)
+    }
+
+    /** Hai tấm làm lại ở bề ngang máy phổ biến (412 dp): Âm sắc vẫn một hàng, mọi dòng Thêm tuỳ chọn có icon. */
+    @Config(qualifiers = "w412dp-h892dp-xxhdpi")
+    @Test fun moreAndAudioAt412() {
+        vn.abook.player.AudioFx.update(vn.abook.player.AudioFxSettings())
+        show(sheet = PlayerSheet.More)
+        shot("more_412_light")
+        rule.runOnIdle { window.openSheet(PlayerSheet.Audio) }
+        rule.waitForIdle()
+        shot("audio_412_light")
+        rule.onNodeWithTag("audiofx_tones").assertIsDisplayed()
+        rule.onNodeWithTag("audiofx_tones").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("tone_page").assertExists()
+
+    }
+
     /** Chủ sách 30-10: giờ đổi tại chỗ, không có khung nào mà dòng cũ và dòng mới cùng hiện (trượt). */
     @Test fun timeReadoutsChangeInPlaceWithoutRolling() {
         show(playing = true)

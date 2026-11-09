@@ -67,7 +67,7 @@ class ShareService : Service() {
         val stop = PendingIntent.getService(this, ACTION_STOP.hashCode(),
             Intent(this, ShareService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(S.s_chia_se_thu_vien_940de671)
             .setContentText(S.s_may_da_ghep_nghe_duoc_sach_tren_dien_thoai_060e1527)
             .setContentIntent(open)

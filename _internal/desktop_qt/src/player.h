@@ -8,6 +8,7 @@
 #pragma once
 
 #include "audioout.h"
+#include "tonepresets.h"
 #include "chaptersmodel.h"
 #include "playerlogic.h"
 #include "playernet.h"
@@ -151,6 +152,9 @@ public:
     double volume() const { return m_volume; }
     QVariantMap audioFx() const;
     Q_INVOKABLE void setAudioFx(const QVariantMap &value);
+    Q_PROPERTY(QVariantMap tones READ tones NOTIFY audioFxChanged)
+    QVariantMap tones() const { return m_tones.view(); }
+    Q_INVOKABLE QVariantMap toneAction(const QString &action, const QVariantMap &args = {});
     QVariantMap audioProfiles() const;
     void restoreAudioProfiles(const QVariantMap &profiles);
     QString sleepKind() const;
@@ -360,8 +364,9 @@ private:
     bool m_loadingSource = false;  // đang gọi m_out->load: bỏ sự kiện dừng đồng bộ của nguồn cũ
     double m_rate = PlayerLogic::kDefaultRate;
     double m_defaultRate = PlayerLogic::kDefaultRate;
-    double m_volume = 0.9;
+    double m_volume = 1.0;
     AudioFx::Settings m_audioFx;
+    ToneLibrary m_tones;
     QVariantMap m_sharedAudio, m_bookAudio;
     bool m_bookOnly = false, m_applyingAudio = false;
     void rememberAudioProfile();

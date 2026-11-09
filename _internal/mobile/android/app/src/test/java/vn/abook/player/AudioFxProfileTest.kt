@@ -16,6 +16,19 @@ import java.nio.ByteOrder
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = android.app.Application::class)
 class AudioFxProfileTest {
+    @Test fun offProcessorPreservesEveryPcm16ValueAfterFiltering() {
+        val processor=AudioFxProcessor()
+        processor.configure(AudioFormat(48000,2,C.ENCODING_PCM_16BIT));processor.flush(StreamMetadata.DEFAULT)
+        AudioFx.update(AudioFxSettings(enabled=true,bands=List(5){12.0},boost=12.0))
+        val peak=ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).putShort(32767).putShort(-32768)
+        peak.flip();processor.queueInput(peak);processor.output
+        AudioFx.update(AudioFxSettings())
+        val input=ByteBuffer.allocateDirect(65536*4).order(ByteOrder.nativeOrder())
+        for(i in -32768..32767){input.putShort(i.toShort());input.putShort((-i-1).toShort())}
+        input.flip();val expected=ByteArray(input.remaining());input.duplicate().get(expected)
+        processor.queueInput(input);val output=processor.output;val actual=ByteArray(output.remaining());output.get(actual)
+        assertArrayEquals(expected,actual)
+    }
     @Test fun monoSourceCanBeBalancedToEitherEar() {
         for(balance in listOf(-1.0,0.0,1.0)) {
             AudioFx.update(AudioFxSettings(balance=balance))
@@ -26,7 +39,7 @@ class AudioFxProfileTest {
             input.flip();processor.queueInput(input)
             val output=processor.output.order(ByteOrder.nativeOrder());assertEquals(4,output.remaining())
             val left=output.short.toInt();val right=output.short.toInt()
-            assertEquals(if(balance==1.0)0 else 5999,left);assertEquals(if(balance== -1.0)0 else 5999,right)
+            assertEquals(if(balance==1.0)0 else 6000,left);assertEquals(if(balance== -1.0)0 else 6000,right)
         }
         AudioFx.update(AudioFxSettings())
     }
@@ -44,6 +57,48 @@ class AudioFxProfileTest {
         assertEquals(6_700_000,chain.getMediaDuration(3_200_000))
         processor.flush(StreamMetadata.DEFAULT)
         assertEquals(200_000,chain.getMediaDuration(200_000)) // seek starts a fresh map
+        AudioFx.update(AudioFxSettings())
+    }
+    /** DefaultAudioSink drains the chain before every pitch/speed change; the pipeline re-sends end of stream to each
+     *  processor on every pass, so a processor that emits again on each call never ends and the voice stops for good. */
+    @Test fun everyChainProcessorStaysEndedWhenEndOfStreamIsResent() {
+        // Sonic at -4.5 semitones (0.7711) adds one frame of rounding carry on every resent end of stream (seen on the
+        // phone: outputFrameCount 0, 1, 2 ... while the drain spun); the silence trimmer re-armed its tail each time.
+        AudioFx.update(AudioFxSettings(skipSilence = true))
+        val chain = AudioFxChain()
+        chain.applyPlaybackParameters(androidx.media3.common.PlaybackParameters(1f, .7711054f))
+        for (processor in chain.audioProcessors) {
+            processor.configure(AudioFormat(24000, 1, C.ENCODING_PCM_16BIT)); processor.flush(StreamMetadata.DEFAULT)
+            processor.queueInput(ByteBuffer.allocateDirect(4608).order(ByteOrder.nativeOrder()))
+            processor.queueEndOfStream(); processor.output
+            var extra = 0
+            repeat(30) { processor.queueEndOfStream(); extra += processor.output.remaining() }
+            assertEquals("$processor emitted again after a resent end of stream", 0, extra)
+            assertTrue(processor.isEnded)
+        }
+        AudioFx.update(AudioFxSettings())
+    }
+    @Test fun drainForPitchChangeEndsEvenWhenEndOfStreamIsResent() {
+        for (skip in listOf(false, true)) for (pitch in listOf(.75f, .7711054f, 1.2f)) {
+            AudioFx.update(AudioFxSettings(skipSilence = skip))
+            val chain = AudioFxChain()
+            chain.applyPlaybackParameters(androidx.media3.common.PlaybackParameters(1f, pitch))
+            val head = object : androidx.media3.common.audio.BaseAudioProcessor() { // stands in for Media3's trimming step
+                override fun onConfigure(inputAudioFormat: AudioFormat) = inputAudioFormat
+                override fun queueInput(inputBuffer: ByteBuffer) {
+                    val out = replaceOutputBuffer(inputBuffer.remaining()); out.put(inputBuffer); out.flip()
+                }
+            }
+            val pipeline = androidx.media3.common.audio.AudioProcessingPipeline(
+                com.google.common.collect.ImmutableList.copyOf(listOf(head) + chain.audioProcessors))
+            pipeline.configure(AudioFormat(24000, 1, C.ENCODING_PCM_16BIT)); pipeline.flush(StreamMetadata.DEFAULT)
+            val input = ByteBuffer.allocateDirect(4608).order(ByteOrder.nativeOrder()) // one decoder buffer, as on the phone
+            while (input.hasRemaining()) { pipeline.queueInput(input); while (pipeline.output.hasRemaining()) pipeline.output.position(pipeline.output.limit()) }
+            pipeline.queueEndOfStream()
+            var passes = 0
+            while (!pipeline.isEnded && passes < 1000) { val out = pipeline.output; out.position(out.limit()); passes++ }
+            assertTrue("skipSilence=$skip pitch=$pitch: drain never ended", pipeline.isEnded)
+        }
         AudioFx.update(AudioFxSettings())
     }
     @Test fun sharedBookAndReopenDoNotLeak() {

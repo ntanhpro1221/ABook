@@ -34,7 +34,7 @@ object ListenPrefs {
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true, "autoPip" to true)
+    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true, "autoPip" to false)
 
     private fun choiceOr(json: JSONObject, key: String, allowed: List<Int>, default: Int): Int {
         val value = json.opt(key) as? Number ?: return default

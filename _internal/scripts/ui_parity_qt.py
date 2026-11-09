@@ -62,7 +62,7 @@ QML_SKIP = {"BenchScenario.qml"}
 
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
-    ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None))),
+    ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml", "TonePage.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None), ("listen/TonePage.tsx", None))),
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
     ("Thư viện", ("Library*.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),
@@ -1047,7 +1047,7 @@ ACTION_CONTRACTS = (
     ("record-create", "Tạo và nghe", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-delete", "Xoá hồ sơ", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-move", "Chuyển", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
-    ("mini-enter", "Cửa sổ mini", (("Qt", "desktop_qt/qml/NowPlaying.qml", "picture-in-picture-2"), ("Android", up.NATIVE_ROOT + "nowplaying/NowPlayingScreen.kt", ""))),
+    ("mini-enter", "Cửa sổ mini", (("Qt", "desktop_qt/qml/NowPlaying.qml", "picture-in-picture-2"), ("Android", up.NATIVE_ROOT + "nowplaying/PlayerSheets.kt", ""))),
     ("mini-auto", "Tự mở cửa sổ mini", (("Qt", "desktop_qt/qml/SettingsLook.qml", ""), ("Android", up.NATIVE_ROOT + "screens/SettingsGroups.kt", ""))),
 )
 

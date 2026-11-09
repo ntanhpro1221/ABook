@@ -50,9 +50,9 @@ export function galleryCases(platform: Platform): void {
         }
         // Soát Studio 25-10 (stu140b): mỗi điều dưới đây là một LOẠI lỗi đã sửa ở thành phần chung - giữ cho khỏi quay lại.
         const text = container.textContent ?? "";
-        // C10: nhóm trong hộp đã có mặt nổi, không dựng thêm khung.
+        // C10: nhóm trong hộp đã có mặt nổi, không dựng thêm khung. Khung vùng vẽ của biểu đồ (svg) là trục đọc số, không phải thẻ.
         const nestedCards = [...document.querySelectorAll<HTMLElement>('.border')].filter(el =>
-          /\brounded-(control|cover)\b/.test(el.className) && !el.matches('button,a,input,select,textarea,[role="menu"],[role="tooltip"]')
+          /\brounded-(control|cover)\b/.test(el.className) && !el.matches('button,a,input,select,textarea,svg,[role="menu"],[role="tooltip"]')
           && !el.classList.contains('h-9') && !el.classList.contains('h-10') && !el.querySelector('input:not([type="checkbox"]):not([type="radio"])')
           && el.parentElement?.closest('[role="dialog"],.border.rounded-cover'));
         expect(nestedCards.map(el => el.outerHTML.slice(0, 200))).toEqual([]);

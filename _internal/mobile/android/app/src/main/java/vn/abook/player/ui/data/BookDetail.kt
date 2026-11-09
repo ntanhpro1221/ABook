@@ -84,7 +84,7 @@ class BookDetail(
                 val length = entry.optDouble("duration", 0.0)
                 val info = ChapterInfo(
                     id = id,
-                    title = field(entry, "fullTitle").ifEmpty { field(entry, "title") }.ifEmpty { S.s_chuong_0_268b0521(id) },
+                    title = LibraryTree.chapterTitle(entry),
                     duration = if (isText || !length.isFinite()) 0.0 else length,
                     available = !isText && hasFile && entry.optBoolean("available"),
                     textOnly = isText,
