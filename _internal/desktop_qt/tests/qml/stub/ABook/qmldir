@@ -292,3 +292,8 @@ PendingList 1.0 ../../../../qml/PendingList.qml
 PendingRow 1.0 ../../../../qml/PendingRow.qml
 VoiceTry 1.0 ../../../../qml/VoiceTry.qml
 WordTimings 1.0 ../../../../qml/WordTimings.qml
+MusicScreen 1.0 ../../../../qml/MusicScreen.qml
+MusicTrackDetail 1.0 ../../../../qml/MusicTrackDetail.qml
+MusicTrackRow 1.0 ../../../../qml/MusicTrackRow.qml
+MusicBookSection 1.0 ../../../../qml/MusicBookSection.qml
+MusicOpenRow 1.0 ../../../../qml/MusicOpenRow.qml

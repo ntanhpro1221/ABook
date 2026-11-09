@@ -358,6 +358,12 @@ qt_add_qml_module(ABookDesk
         qml/MyMusicModule.qml
         qml/AutoPickLine.qml
         qml/MyMusicTrack.qml
+        qml/MusicScreen.qml
+        qml/MusicTrackRow.qml
+        qml/MusicTrackDetail.qml
+        qml/MusicBookSection.qml
+        qml/MusicOpenRow.qml
+        qml/MusicLibraryLogic.js
         qml/MyMusicState.qml
         qml/AdvancedUpdate.qml
         qml/AdvancedStorage.qml
@@ -645,6 +651,15 @@ if(MSVC)
     target_compile_options(MusicWindowActivityTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME MusicWindowActivityTests COMMAND MusicWindowActivityTests)
+# Kho nhạc (qml/MusicLibraryLogic.js): bảng ca chung tests/fixtures/music_library/cases.json qua chuỗi truy vấn của máy chủ
+qt_add_executable(MusicLibraryTests tests/test_musiclibrary.cpp)
+target_compile_definitions(MusicLibraryTests PRIVATE MUSICLIBRARY_QML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml"
+    MUSICLIBRARY_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures/music_library/cases.json")
+target_link_libraries(MusicLibraryTests PRIVATE Qt6::Test Qt6::Qml)
+if(MSVC)
+    target_compile_options(MusicLibraryTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME MusicLibraryTests COMMAND MusicLibraryTests)
 # Khay Win32 tự viết (thay Qt.labs.platform, bỏ Qt6Widgets.dll): menu, tooltip, lệnh chọn trên khay GIẢ, không icon nào vào khay thật
 qt_add_executable(TrayTests tests/test_tray.cpp src/trayicon.cpp src/trayicon.h)
 target_include_directories(TrayTests PRIVATE src)

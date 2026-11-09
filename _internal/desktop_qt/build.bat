@@ -118,6 +118,10 @@ rem Music scheduling observes main, mini and any later application windows.
 call :test "%HERE%build\MusicWindowActivityTests.exe" "%HERE%build\musicwindowactivity-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Music library filters/search: the shared case table tests/fixtures/music_library/cases.json
+call :test "%HERE%build\MusicLibraryTests.exe" "%HERE%build\musiclibrary-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
 call :test "%HERE%build\SkipGlyphTests.exe" "%HERE%build\skipglyph-test.txt"
 if errorlevel 1 exit /b 1
