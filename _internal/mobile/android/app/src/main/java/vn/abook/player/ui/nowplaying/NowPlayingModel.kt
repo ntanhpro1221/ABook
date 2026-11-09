@@ -141,8 +141,6 @@ interface NowPlayingModel {
 private val NoNote: StateFlow<PlayerNote?> = kotlinx.coroutines.flow.MutableStateFlow(null)
 
 object PlayerLabels {
-    val rates = listOf(0.75, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2.0, 2.5, 3.0)
-    val sleepMinutes = listOf(5, 10, 15, 30, 45, 60)
     fun rate(value: Double): String = BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
         .stripTrailingZeros().toPlainString().replace('.', ',') + "×"
     fun time(milliseconds: Long): String {

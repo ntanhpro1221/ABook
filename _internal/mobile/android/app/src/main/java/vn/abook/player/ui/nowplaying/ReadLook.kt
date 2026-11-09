@@ -7,7 +7,7 @@ import vn.abook.player.ui.components.ValuePickerLogic
 import vn.abook.player.ui.components.ValueSpecs
 
 /**
- * Dáng chữ của chế độ Đọc theo (web: ReaderScreen `SIZES`, `LEADINGS`, `ReaderPrefs`): cỡ chữ, giãn dòng, và người đọc đã chạm chữ để nghe từ đó lần nào chưa
+ * Dáng chữ của chế độ Đọc theo (web: ReaderScreen, `ReaderPrefs`; miền ở ValueSpecs.readSize / readLeading): cỡ chữ, giãn dòng, và người đọc đã chạm chữ để nghe từ đó lần nào chưa
  * (chưa thì lời nhắc ở đầu chữ còn hiện). Mặc định 20 / 1,7 như web.
  */
 @Immutable
@@ -23,9 +23,6 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
     val summary: String get() = S.s_0_gian_dong_1_c148910e(size, leadingLabel(leading))
 
     companion object {
-        val SIZES = listOf(16, 18, 20, 22, 24)
-        val LEADINGS = listOf(1.5, 1.7, 1.9)
-
         /** Giãn dòng đúng lưới (cả số đọc lại từ Float của SharedPreferences, lệch chừng 1e-7); ngoài miền / lệch lưới thì null. */
         fun gridLeading(value: Double): Double? {
             val spec = ValueSpecs.readLeading
