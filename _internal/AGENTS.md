@@ -42,7 +42,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 
 ## Invariant an toàn
 
-- Nhạc nền đổi chương phải khám phá mốc của đúng sách/chương mới, kể cả khi chương cũ im. Không được bỏ đồng bộ chỉ vì `cues`/bài đang phát/danh sách phát cũ rỗng trước khi đối chiếu identity sách/chương. Khi giọng vẫn đang tạm dừng, nhạc cũng phải giữ dừng; mốc trả về muộn không được khôi phục nhạc chương cũ. Kiểm bằng `ChapterMusicTest` (JVM), `MusicTests::chapterMusicMatrix` (Qt) và `chapterMusic.dom.test.tsx` (web).
+- Nhạc nền đổi chương phải khám phá mốc của đúng sách/chương mới, kể cả khi chương cũ im. Không được bỏ đồng bộ chỉ vì `cues`/bài đang phát/danh sách phát cũ rỗng trước khi đối chiếu identity sách/chương. Khi giọng vẫn đang tạm dừng, nhạc cũng phải giữ dừng; mốc trả về muộn không được khôi phục nhạc chương cũ. Kiểm bằng `ChapterMusicTest` + `ChapterMusicEdgeTest` (JVM), `MusicTests::chapterMusicMatrix` + các ô biên kề nó (Qt) và `chapterMusic.dom.test.tsx` (web); sáu chế độ mang cùng nghĩa ở cả ba nền, sửa một nền thì sửa cả ba.
 - Cập nhật Studio dùng `_busy_elsewhere()` và khoá hàng đợi để từ chối khi sách đang chạy/khởi động/tạm dừng; kiểm lại ngay trước thay runtime, không dừng sách để cập nhật.
 - Bộ gỡ Windows đọc `preferences.json.libraryRoot` trước mọi xoá đệ quy trong hook; không đọc được vị trí thì giữ dữ liệu. Chế độ nâng cấp truyền bằng cờ rõ ràng từ callback GUI trước PageReinstall hoặc `/UPDATE`, không suy tên bộ cài.
 - Thư viện tuỳ chọn giải trong staging riêng; chỉ công bố `lib.next` có dấu hoàn tất. Caller dùng chung phải giữ khoá đích xuyên suốt tải, giải và commit, rồi kiểm lại dưới khoá.

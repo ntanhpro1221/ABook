@@ -56,6 +56,8 @@ public:
     double position() const override { return pos; }
     double duration() const override { return dur; }
     bool playing() const override { return isPlaying; }
+    /// Giây giọng đã sẵn phía trước: chương stream đang đệm có ít (Music không xin sẵn mốc chương kế khi dưới NEXT_CHAPTER_VOICE_SECONDS).
+    double voiceAhead() const override { return ahead; }
 
     /// Hết nguồn như bộ phát thật: dừng rồi báo ended.
     void finish() {
@@ -72,6 +74,7 @@ public:
     double rate = 1;
     double volume = 1;
     double until = std::numeric_limits<double>::infinity();
+    double ahead = std::numeric_limits<double>::infinity();
     bool isPlaying = false;
     bool loop = false;
     int loads = 0;
@@ -110,6 +113,7 @@ public:
         for (const auto &item : list)
             item();
     }
+    int heldCount() const { return int(held.size()); }
     void releaseFirst() {
         if (!held.isEmpty())
             held.takeFirst()();

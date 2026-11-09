@@ -65,6 +65,10 @@ class FakeExo {
                 if (args.size == 2) index = args[0] as Int
                 null
             }
+            "hasNextMediaItem" -> index + 1 < items.size
+            "hasPreviousMediaItem" -> index > 0 && items.isNotEmpty()
+            "seekToNextMediaItem" -> { if (index + 1 < items.size) { index += 1; position = 0 }; null }
+            "seekToPreviousMediaItem" -> { if (index > 0) { index -= 1; position = 0 }; null }
             "getPlaybackParameters" -> PlaybackParameters(speed)
             "setPlaybackParameters" -> { speed = (args!![0] as PlaybackParameters).speed; null }
             "getVolume" -> volume

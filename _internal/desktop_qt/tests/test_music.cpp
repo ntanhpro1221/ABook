@@ -172,13 +172,17 @@ private slots:
         const QString a = QStringLiteral("a"), b = QStringLiteral("b");
         const QList<QPair<QString, QString>> transitions = {{QString(), QString()}, {QString(), a}, {a, QString()}, {a, b}, {a, a}};
         for (const auto &transition : transitions)
-            for (const QString &mode : {QStringLiteral("continuous"), QStringLiteral("manual"), QStringLiteral("seek"), QStringLiteral("resume"), QStringLiteral("buffering")}) {
+            for (const QString &mode : {QStringLiteral("continuous"), QStringLiteral("manual"), QStringLiteral("jump"), QStringLiteral("seek"),
+                                        QStringLiteral("resume"), QStringLiteral("buffering")}) {
                 const auto name = QStringLiteral("%1-%2/%3").arg(transition.first.isEmpty() ? QStringLiteral("quiet") : transition.first,
                     transition.second.isEmpty() ? QStringLiteral("quiet") : transition.second, mode).toUtf8();
                 QTest::newRow(name.constData()) << transition.first << transition.second << mode;
             }
     }
 
+    /// Cùng tên chế độ ở cả ba nền (Android ChapterMusicTest, web chapterMusic.dom.test.tsx): continuous = giọng tự sang chương; manual = next();
+    /// jump = jumpTo(n, 0); seek = jumpTo(n, 40) rồi tua trong chương qua cuối mốc và tua lùi qua mốc; resume = dừng, next(), phát; buffering =
+    /// jumpTo(n) lúc giọng đệm VÀ lời đáp mốc bị giữ. Chặng sang chương 3 lặp đúng chế độ của ô.
     void chapterMusicMatrix() {
         QFETCH(QString, from);
         QFETCH(QString, to);
@@ -188,48 +192,226 @@ private slots:
             return link.isEmpty() ? QJsonObject{{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -20}} : chapterCues(link, link);
         };
         rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/1")] = answer(from);
-        const int destination = mode == QLatin1String("buffering") ? 4 : 2;
-        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/%1").arg(destination)] = answer(to);
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/2")] = answer(to);
         rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/3")] = answer(QStringLiteral("a"));
-        rig.player->open(QStringLiteral("a"), -1, -1, true);
-        QCoreApplication::processEvents();
-        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
-        QCOMPARE(rig.music->bed()->activeLink(), from);
-        rig.out.pos = 20;
-        emit rig.player->clock()->positionChanged();
-        for (const auto &voice : rig.voices) if (voice) voice->pos = 55;
-        if (mode == QLatin1String("resume")) rig.player->toggle();
-        if (mode == QLatin1String("buffering")) { rig.net.hold = true; rig.player->jumpTo(destination); }
-        else if (mode == QLatin1String("continuous")) rig.out.finish();
-        else if (mode == QLatin1String("seek")) rig.player->jumpTo(2, 40);
-        else rig.player->next();
-        if (mode == QLatin1String("resume")) {
-            QVERIFY(!rig.player->playing());
-            for (const auto &voice : rig.voices) QVERIFY(!voice || !voice->isPlaying);
-            rig.player->toggle();
-        }
-        if (mode == QLatin1String("buffering")) {
-            emit rig.out.buffering(true); // stream waits, no position events
-            QVERIFY(rig.player->buffering());
+        // Chương stream đang đệm có ít giọng phía trước: Music không xin sẵn mốc chương kế, nên lời đáp giữ lại thật sự là lời đáp muộn.
+        if (mode == QLatin1String("buffering")) rig.out.ahead = 0;
+        const auto settle = [&] {
             QCoreApplication::processEvents();
             rig.music->bed()->tick(ticksFor(FADE_SECONDS));
-            QCOMPARE(rig.music->bed()->activeLink(), QString());
-            rig.net.hold = false;
-            rig.net.releaseHeld();
+        };
+        const auto sounding = [&] {
+            QList<FakeOut *> live;
+            for (const auto &voice : rig.voices)
+                if (voice && voice->isPlaying && voice->volume > 0) live << voice.data();
+            return live;
+        };
+        const auto go = [&](int target, const QString &link) {
+            if (mode == QLatin1String("continuous")) rig.out.finish();
+            else if (mode == QLatin1String("manual")) rig.player->next();
+            else if (mode == QLatin1String("jump")) rig.player->jumpTo(target);
+            else if (mode == QLatin1String("seek")) rig.player->jumpTo(target, 40);
+            else if (mode == QLatin1String("resume")) {
+                rig.player->toggle();
+                rig.player->next();
+                settle();
+                QVERIFY(!rig.player->playing());
+                QVERIFY(sounding().isEmpty());
+                for (const auto &voice : rig.voices) QVERIFY(!voice || !voice->isPlaying);
+                rig.player->toggle();
+            } else if (mode == QLatin1String("buffering")) {
+                rig.net.hold = true;
+                rig.player->jumpTo(target);
+                emit rig.out.buffering(true); // stream waits, no position events
+                QVERIFY(rig.player->buffering());
+                settle();
+                QCOMPARE(rig.music->bed()->activeLink(), QString());
+                QVERIFY(sounding().isEmpty());
+                rig.net.hold = false;
+                rig.net.releaseHeld();
+                QTRY_COMPARE(rig.music->bed()->activeLink(), link); // the late answer starts the bed while the voice still stalls
+                QCoreApplication::processEvents();
+                rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+                QCOMPARE(int(sounding().size()), link.isEmpty() ? 0 : 1);
+                emit rig.out.buffering(false);
+            }
+            settle();
+            QCOMPARE(rig.player->chapterId(), target);
+            if (mode == QLatin1String("seek")) {
+                QCOMPARE(rig.out.pos, 40.0);
+                rig.player->seek(95); // past the cue end inside the chapter
+                settle();
+                QCOMPARE(rig.music->bed()->activeLink(), QString());
+                rig.player->seek(40); // back across the cue edge
+                settle();
+            }
+            QTRY_COMPARE(rig.music->bed()->activeLink(), link);
+            QCoreApplication::processEvents();
+            rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+            QStringList heard;
+            for (FakeOut *voice : sounding()) heard << voice->url.path();
+            QCOMPARE(heard, link.isEmpty() ? QStringList() : QStringList{QStringLiteral("/api/music/") + link});
+            if (!link.isEmpty()) QCOMPARE(sounding().first()->pos, mode == QLatin1String("seek") ? 40.0 : 0.0);
+        };
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QTRY_COMPARE(rig.music->bed()->activeLink(), from);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        rig.out.pos = 20;
+        emit rig.player->clock()->positionChanged();
+        for (const auto &voice : rig.voices) if (voice) voice->pos = 55; // a reused old player would still stand here
+        go(2, to);
+        if (QTest::currentTestFailed()) return;
+        go(3, QStringLiteral("a")); // music -> quiet -> music, not just one boundary
+    }
+
+    /// a -> b -> a trong lúc mờ chéo: đúng một bài kêu sau khi mờ xong, mọi phần tử khác đã nhả.
+    void chapterChangeInsideTheFade() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        rig.player->next();
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS) / 2);
+        rig.player->previous();
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QCOMPARE(rig.player->chapterId(), 1);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QStringList heard, alive;
+        for (const auto &voice : rig.voices) {
+            if (!voice) continue;
+            alive << voice->url.path();
+            if (voice->isPlaying && voice->volume > 0) heard << voice->url.path();
         }
+        QCOMPARE(heard, QStringList{QStringLiteral("/api/music/Bai1")});
+        QCOMPARE(alive, heard); // the old elements were released, not left paused
+    }
+
+    /// Mốc chương 2 bắt đầu ở giây 30: nhạc vào nhờ nhịp m_tick (nextSyncSeconds), không nhờ sự kiện đổi chương hay vị trí.
+    void cueStartingAtThirtySecondsUsesTheSyncTimer() {
+        BookRig rig;
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/1")] = {{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -20}};
+        QJsonObject late = chapterCues(QStringLiteral("a"), QStringLiteral("a"));
+        QJsonArray lateCues = late[QStringLiteral("cues")].toArray();
+        QJsonObject cue = lateCues.first().toObject();
+        cue[QStringLiteral("start")] = 30;
+        late[QStringLiteral("cues")] = QJsonArray{cue};
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/2")] = late;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCoreApplication::processEvents();
+        rig.out.finish();
+        QTRY_COMPARE(rig.player->chapterId(), 2);
         QCoreApplication::processEvents();
         rig.music->bed()->tick(ticksFor(FADE_SECONDS));
-        QCOMPARE(rig.player->chapterId(), destination);
-        QCOMPARE(rig.music->bed()->activeLink(), to);
-        QStringList sounding;
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+        rig.out.pos = 29.7;
+        emit rig.player->clock()->positionChanged(); // the last position event before the cue
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+        QSignalSpy positions(rig.player->clock(), &PlayerClock::positionChanged);
+        rig.out.pos = 30.2; // silently: only the music sync timer can notice
+        QTRY_COMPARE_WITH_TIMEOUT(rig.music->bed()->activeLink(), QStringLiteral("a"), 3000);
+        QCOMPARE(int(positions.count()), 0);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        int heard = 0;
         for (const auto &voice : rig.voices)
-            if (voice && voice->isPlaying && voice->volume > 0) sounding << voice->url.path();
-        QCOMPARE(sounding, to.isEmpty() ? QStringList() : QStringList{QStringLiteral("/api/music/") + to});
-        if (!to.isEmpty()) QCOMPARE(rig.voices.last()->pos, mode == QLatin1String("seek") ? 40.0 : 0.0);
-        rig.player->jumpTo(3); // include music -> quiet -> music, not just one boundary
+            if (voice && voice->isPlaying && voice->volume > 0) {
+                ++heard;
+                QVERIFY(voice->pos > 0 && voice->pos < 1);
+            }
+        QCOMPARE(heard, 1);
+    }
+
+    /// Đang dừng, sang chương, mốc về muộn: kiểm SAU lời đáp - nhạc vẫn im, bài chương cũ không sống lại; phát thì bài chương mới vào.
+    void lateCueWhilePausedStaysSilent() {
+        BookRig rig;
+        rig.out.ahead = 0; // no prefetched answer for chapter 2
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
         QCoreApplication::processEvents();
         rig.music->bed()->tick(ticksFor(FADE_SECONDS));
-        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("a"));
+        rig.player->toggle();
+        rig.net.hold = true;
+        rig.player->next();
+        QCoreApplication::processEvents();
+        rig.net.hold = false;
+        QVERIFY(rig.net.heldCount() > 0);
+        rig.net.releaseHeld();
+        QTRY_COMPARE(rig.net.heldCount(), 0);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCOMPARE(rig.player->chapterId(), 2);
+        QVERIFY(!rig.player->playing());
+        QVERIFY(rig.music->bed()->activeLink() != QStringLiteral("https://x/1"));
+        for (const auto &voice : rig.voices) QVERIFY(!voice || !voice->isPlaying);
+        rig.player->toggle();
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QStringList heard;
+        for (const auto &voice : rig.voices)
+            if (voice && voice->isPlaying && voice->volume > 0) heard << voice->url.path();
+        QCOMPARE(heard, QStringList{QStringLiteral("/api/music/Bai2")});
+    }
+
+    /// Dừng ở chương im (tới đó lúc đang phát) rồi chọn chương có nhạc, mốc về muộn: vẫn im tới khi phát.
+    void pausedInQuietChapterThenNextStaysSilent() {
+        BookRig rig;
+        rig.out.ahead = 0; // no prefetched answer: chapter 3 cues arrive late
+        rig.net.answers[QStringLiteral("GET /api/books/a/music/chapters/2")] = {{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -20}};
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        rig.player->jumpTo(2);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QString());
+        rig.player->toggle();
+        rig.net.hold = true;
+        rig.player->next();
+        QCoreApplication::processEvents();
+        rig.net.hold = false;
+        rig.net.releaseHeld();
+        QTRY_COMPARE(rig.net.heldCount(), 0);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QCOMPARE(rig.player->chapterId(), 3);
+        QVERIFY(!rig.player->playing());
+        for (const auto &voice : rig.voices) QVERIFY(!voice || !voice->isPlaying);
+        rig.player->toggle();
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/3"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QStringList heard;
+        for (const auto &voice : rig.voices)
+            if (voice && voice->isPlaying && voice->volume > 0) heard << voice->url.path();
+        QCOMPARE(heard, QStringList{QStringLiteral("/api/music/Bai3")});
+    }
+
+    /// Đổi tốc độ giữa lúc mờ chéo: vẫn đúng một bài của chương mới.
+    void rateChangeInsideTheFade() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        rig.player->next();
+        QTRY_COMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS) / 2);
+        rig.player->setRate(1.5);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QStringList heard;
+        for (const auto &voice : rig.voices)
+            if (voice && voice->isPlaying && voice->volume > 0) heard << voice->url.path();
+        QCOMPARE(heard, QStringList{QStringLiteral("/api/music/Bai2")});
     }
 
     void deadlinesHonorStepsRateAndCueEdges() {
