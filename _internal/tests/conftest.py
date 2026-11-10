@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import os
 import time
+from collections import namedtuple
 from collections.abc import Iterator
 
 import pytest
@@ -240,6 +241,30 @@ def _enough_ram_for_the_gate(monkeypatch: pytest.MonkeyPatch) -> None:
         return memory._replace(available=_RAM_FLOOR, free=max(memory.free, _RAM_FLOOR))
 
     monkeypatch.setattr(psutil, "virtual_memory", virtual_memory)
+
+
+# Ổ đĩa mà mọi bài thử nhìn thấy: 1 TB, còn trống một nửa - hằng số, không đọc gì của máy đang chạy test.
+DISK_TOTAL_BYTES = 1024 * 1024**3
+DISK_FREE_BYTES = 512 * 1024**3
+_ShutilUsage = namedtuple("usage", "total used free")
+_PsutilUsage = namedtuple("sdiskusage", "total used free percent")
+
+
+@pytest.fixture(autouse=True)
+def _roomy_disk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Không bài thử nào được đổi kết quả theo chỗ trống thật của ổ đĩa: 11-11, ổ D: còn 17 GB thì 16 bài cài Studio đỏ
+    (`studio_setup.MIN_FREE_BYTES` 35 GB), và cổng tài nguyên của pipeline (`resources.min_free_disk_gb` 12) cũng đọc ổ thật.
+    Mọi `shutil.disk_usage` / `psutil.disk_usage` trả một ổ rộng cố định, với mọi đường dẫn. Vá thẳng hai module ấy (mã app
+    gọi `shutil.disk_usage(...)` qua chính module, nên một chỗ vá phủ hết). Bài chủ đích thử ổ đầy thì tự
+    `monkeypatch.setattr(shutil, "disk_usage", ...)` với số nhỏ - đặt sau fixture này nên thắng.
+    tests/test_disk_independent.py chạy lại các bài cài Studio với ổ thật giả 1 GB và 100 GB."""
+    import shutil
+
+    import psutil
+
+    used = DISK_TOTAL_BYTES - DISK_FREE_BYTES
+    monkeypatch.setattr(shutil, "disk_usage", lambda _path: _ShutilUsage(DISK_TOTAL_BYTES, used, DISK_FREE_BYTES))
+    monkeypatch.setattr(psutil, "disk_usage", lambda _path: _PsutilUsage(DISK_TOTAL_BYTES, used, DISK_FREE_BYTES, 50.0))
 
 
 @pytest.fixture(autouse=True)
