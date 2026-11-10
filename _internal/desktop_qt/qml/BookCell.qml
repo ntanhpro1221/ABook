@@ -25,7 +25,7 @@ Interactive {
     // Bìa vẽ từ tên (không ảnh) đã in tên sách lên bìa.
     readonly property bool drawnTitle: coverKey === ""
     readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.subtitle]
-        .filter(part => part !== "").join(" · ")
+        .filter(part => part !== "").join("\u00a0·\u00a0")
     readonly property real textBlock: 12 + root.titleHeight + 4 + subtitleText.height
 
     activeFocusOnTab: false

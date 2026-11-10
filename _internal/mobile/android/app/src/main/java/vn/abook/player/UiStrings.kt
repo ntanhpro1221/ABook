@@ -14,7 +14,6 @@ internal object S {
     fun s_0_1_chuong_8d58e1df(p0: Any?, p1: Any?): String = p0.toString() + "/" + p1.toString() + " chương"
     fun s_0_1_chuong_a776ede8(p0: Any?, p1: Any?): String = p0.toString() + " (" + p1.toString() + " chương)"
     fun s_0_1_chuong_chuong_chua_xong_khong_co_trong_35795edf(p0: Any?, p1: Any?): String = p0.toString() + "/" + p1.toString() + " chương - chương chưa xong không có trong file"
-    fun s_0_1_chuong_co_audio_9706857d(p0: Any?, p1: Any?): String = p0.toString() + "/" + p1.toString() + " chương có audio"
     fun s_0_1_chuong_dau_co_loi_ke_xung_toi_6b41741b(p0: Any?, p1: Any?): String = p0.toString() + "/" + p1.toString() + " chương đầu có lời kể xưng “tôi”."
     fun s_0_1_cut_08d7e7aa(p0: Any?, p1: Any?): String = p0.toString() + ": " + p1.toString() + " cụt"
     fun s_0_1_da_doi_khac_truoc_do_ban_cua_ban_da_th_e5aac6b4(p0: Any?, p1: Any?): String = p0.toString() + ": " + p1.toString() + " đã đổi khác trước đó, bản của bạn đã thay vào"
