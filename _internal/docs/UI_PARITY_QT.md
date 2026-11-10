@@ -109,8 +109,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:49` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
-| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:201` |
-| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:497` |
+| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:203` |
+| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:499` |
 | Cài đặt | upload | Đang thêm {}/{} | Thêm nhạc của bạn | `qt/MyMusicSettings.qml:146` |
 | Cài đặt | play | Nghe thử | Dừng / Nghe thử | `qt/MyMusicTrack.qml:82` |
 | Studio tạo sách | layers | Phần | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewChapters.qml:205` |
@@ -161,7 +161,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (8): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:404`); Chưa mở được ABook (`qt/LibraryScreen.qml:450`); Chưa tải được thư viện (`qt/LibraryScreen.qml:450`); Thử lại* (`qt/LibraryScreen.qml:467`)
+- chỉ Qt (8): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:406`); Chưa mở được ABook (`qt/LibraryScreen.qml:452`); Chưa tải được thư viện (`qt/LibraryScreen.qml:452`); Thử lại* (`qt/LibraryScreen.qml:469`)
 - chỉ web (8): Đang tạm dừng {} (`330`); Đang làm {} (`331`); Đang tạm dừng{} (`335`); Chưa có chương nghe được{} (`337`); Đang làm · {} (`337`); Thư viện chưa có sách nào. (`456`); Chưa có sách trên máy (`562`); Chữ bìa trên hoạ tiết sóng (`84`)
 
 ### Thanh phát
@@ -321,7 +321,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang mở thư viện… (`qt/RecordDialogs.qml:98`) - web: `Đang mở thư viện`
 - Đang mở văn bản chương… (`qt/ReadAlongView.qml:374`) - web: (không có)
 - Đang mở… (`qt/ConnectionChip.qml:55`) - web: `Đang mở`
-- Đang mở… (`qt/LibraryScreen.qml:484`) - web: `Đang mở`
+- Đang mở… (`qt/LibraryScreen.qml:486`) - web: `Đang mở`
 - Đang thêm chữ sáng… (`qt/ExportLogic.js:258`) - web: (không có)
 - Đang thử giọng vừa tải trên máy này (vài giây)… (`qt/VoiceLogic.js:250`) - web: `Đang thử giọng vừa tải trên máy này (và…`
 - Đang tìm… (`qt/FindLogic.js:132`) - web: `Đang tìm`

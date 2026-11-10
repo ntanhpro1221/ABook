@@ -49,7 +49,9 @@ FocusScope {
     readonly property var filtered: LibraryLogic.sort(books.filter(b => LibraryLogic.matches(b, filter, query)), sortOrder)
     readonly property var sections: LibraryLogic.sections(filtered)
     property var shownSections: []
-    property string appliedSelection: "all\u0000\u0000recent"
+    // JSON, not a "\u0000" separator: qmlcachegen cuts the AOT C++ at a NUL inside a string literal and the build breaks.
+    function selectionKey() { return JSON.stringify([filter, query, sortOrder]) }
+    property string appliedSelection: '["all","","recent"]'
     readonly property int count: shownSections.length
     property real contentOpacity: !loading && !failed && !libraryError ? 1 : 0
     Behavior on contentOpacity { NumberAnimation { duration: Theme.motionMedium } }
@@ -62,7 +64,7 @@ FocusScope {
     property int appliedFilter: 0
     readonly property int filterIndex: ["all", "listening", "new", "finished"].indexOf(filter)
     function applyResults() {
-        const selection = root.filter + "\u0000" + root.query + "\u0000" + root.sortOrder
+        const selection = selectionKey()
         const changed = selection !== appliedSelection
         const previousY = list.contentY
         shownSections = sections
@@ -72,7 +74,7 @@ FocusScope {
         appliedFilter = filterIndex
     }
     onSectionsChanged: {
-        const selection = filter + "\u0000" + query + "\u0000" + sortOrder
+        const selection = selectionKey()
         if (selection === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) { shownSections = sections; return }
         const generation = ++resultGeneration
         resultMotion.stop()
