@@ -126,6 +126,29 @@ def test_an_abbreviation_added_to_a_table_stops_being_a_cry(monkeypatch: pytest.
         shouts.stretch_reading.cache_clear()
 
 
+@pytest.mark.parametrize(("core", "reading"), [("Mmmph", "mph…"), ("MMMMPH", "mph…"), ("mmmph", "mph…"), ("Ssst", "st…"), ("drrr", "dr…"), ("Tssssk", "tsk…")])
+def test_a_vowel_less_sound_outside_the_tables_keeps_its_reading(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading, "chỉ chữ HOA không nguyên âm (\"SSSR\", \"PCCC\") mới bị coi là viết tắt"
+
+
+@pytest.mark.parametrize("core", ["PCCC", "PPPH", "DRRRR", "AK", "KO", "IG", "EK", "OG", "IH", "EEG", "UGG", "FIFA", "Fifi", "HIFI", "Ahifa", "Fifu"])
+def test_capital_codes_and_f_names_are_not_breaths_or_laughs(core: str) -> None:
+    assert shouts.stretch_reading(core) is None
+
+
+@pytest.mark.parametrize(("core", "reading"), [("Fufu", "phu phu"), ("Fuhaha", "phu ha ha"), ("Fwahaha", "phu ha ha"), ("Fahaha", "phu ha ha"), ("Fofofo", "phu phu phu"),
+                                               ("AH", "a"), ("OH", "ô"), ("EEEK", "e…"), ("EEK", "e"), ("EGGG", "e…"), ("Ek", "e")])
+def test_real_laughs_and_breaths_keep_their_reading(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading
+
+
+def test_three_equal_capitals_are_a_cry_only_with_a_cry_mark() -> None:
+    assert _said("Kết quả: AAA là cao nhất") == ["Kết", "quả:", "a a a", "là", "cao", "nhất"]  # tên chữ, không phải "a… a"
+    assert _said("Rider OOO, tài khoản YYY.") == ["Rider", "ô ô ô,", "tài", "khoản", "i-dài i-dài i-dài."]
+    assert _said("『AAA――――』 AAA──") == ["『a… a――――』", "a… a──"]
+    assert _said("AAA! OOO…! UUU~ EEE?! Aaa, AAAA") == ["a… a!", "o… o_…!", "u… u,", "e… e?", "a… a,", "a… a"]
+
+
 @pytest.mark.parametrize(("core", "reading"), [("Hmmm", "hừm…"), ("HMMM", "hừm…"), ("Shhh", "suỵt…"), ("Grrr", "gừ…"), ("Pffft", "phụt…"), ("Kkkk", "khà khà…")])
 def test_a_listed_cry_without_a_vowel_is_still_a_cry(core: str, reading: str) -> None:
     assert shouts.stretch_reading(core) == reading

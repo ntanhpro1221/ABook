@@ -49,9 +49,10 @@ object Shouts {
         if (word.isEmpty() || word.any { it !in 'a'..'z' }) return null
         if (upper(core) && (word.all { it in ROMAN_LETTERS } || word in SHORT_CASED || (word.toSet().size == 1 && word[0] !in VOWELS))) return null
         val vowels = POLICY.getString("vowels")
-        if (Regex(POLICY.getString("laugh_pattern")).matches(word)) {
-            return Regex(POLICY.getString("laugh_atom")).findAll(word).take(POLICY.getInt("max_laugh_syllables")).joinToString(" ") {
-                val atom = it.value
+        val atoms = if (Regex(POLICY.getString("laugh_pattern")).matches(word)) Regex(POLICY.getString("laugh_atom")).findAll(word).map { it.value }.toList() else emptyList()
+        // "FIFA", "Fifi", "Ahifa", "HIFI": a laugh in "f" is "fu" / "fw" ("Fufu", "Fuhaha", "Fwahaha"); a bare "fa", "fi", "fo" needs three beats ("Fahaha", "Fofofo")
+        if (atoms.isNotEmpty() && (atoms.size >= 3 || atoms.all { it[0] == 'h' || it[1] in "uw" })) {
+            return atoms.take(POLICY.getInt("max_laugh_syllables")).joinToString(" ") { atom ->
                 val vowel = atom.first { ch -> ch in vowels }
                 if (atom[0] == 'f') "phu" else POLICY.getJSONObject("laugh_vowels").getString(vowel.toString())
             }
@@ -60,7 +61,8 @@ object Shouts {
         val run = Regex("(.)\\1{" + (POLICY.getInt("min_run") - 1) + ",}")
         val stretched = run.containsMatchIn(word)
         val base = run.replace(word) { it.groupValues[1] }
-        val soundCase = !(core.any(Char::isUpperCase) && core.none(Char::isLowerCase)) || word.length == 2 || Regex("(.)\\1").containsMatchIn(word)
+        // "AK", "KO", "IG", "EK": two capitals are an abbreviation unless listed ("AH", "OH"); "EEG", "UGG": a doubled letter closed by "g" is one too ("EEK", "AHH", "EGGG" are cries)
+        val soundCase = !(core.any(Char::isUpperCase) && core.none(Char::isLowerCase)) || (Regex("(.)\\1").containsMatchIn(word) && (stretched || !word.endsWith("g")))
         val patterned = soundCase && word !in EnglishWords.ALL && !VietnameseReading.isSyllable(word) && word.all { it in vowels + "hkgwy" }
         val reading = when {
             stretched && Regex(POLICY.getString("growl_pattern")).matches(base) -> base.dropLast(1)
@@ -98,6 +100,8 @@ object Shouts {
     private val MIN_RUN = POLICY.getInt("min_run")
     private val ROMAN_LETTERS = "ivx".toSet()
     private val RANK_NOUNS = setOf("hạng", "cấp", "rank", "class", "loại", "bậc")
+    private val CRY_MARK = Regex("[!?！？…~～—–―─]|\\.\\.") // the mark of a cry right after the letters
+    private val CONSONANT_CRIES = setOf("mph", "tsk") // cries with no vowel outside the interjection table, also in capitals ("MMMMPH!", "TSSSK!")
     private val GLUE = Regex("(?:\\.{2,}|[…~—–])+")
     private const val CLOSING = "\"'“”‘’()[]«»"
     private val JAPANESE_CRY = Regex("(?:^|[bcdfghjklmnpqrstvxz])y|w")
@@ -169,9 +173,13 @@ object Shouts {
         val hit = readings[core]
         if (hit != null) return hit.ifEmpty { null }
         val lower = core.lowercase(Locale.ROOT)
-        // "CCCD", "CMND": a listed abbreviation is never a cry; with no vowel ("cccd" -> "cd", "SSSR") only a listed cry ("Hmmm", "Shhh", "Grrr") is a sound
+        // "CCCD", "CMND": a listed abbreviation is never a cry. With no vowel, capitals are a cry only when listed ("HMMM", "GRRR", "MMMMPH"; not "SSSR", "PCCC"),
+        // and small letters are one unless they spell a listed abbreviation ("cccd"; "Mmmph", "Ssst", "drrr" stay sounds)
         val found = if (upper(core) && lower in Abbreviations.LISTED) null
-            else (compute(core) ?: expandedReading(core))?.takeIf { lower.any { c -> plain(c).singleOrNull() in VOWELS } || dedupe(lower) in DEDUPED }
+            else (compute(core) ?: expandedReading(core))?.takeIf {
+                lower.any { c -> plain(c).singleOrNull() in VOWELS } || dedupe(lower) in DEDUPED ||
+                    (if (upper(core)) dedupe(lower) in CONSONANT_CRIES else lower !in Abbreviations.LISTED)
+            }
         if (readings.size > 4096) readings.clear()
         readings[core] = found ?: ""
         return found
@@ -240,6 +248,8 @@ object Shouts {
         val previous = if (first && index > 0) toks[index - 1] else ""
         if (core.isEmpty() || (before + after).any { it.isDigit() } ||
             (upper(core) && (after.startsWith("+") || previous.lowercase(Locale.ROOT).trim { it in CLOSING } in RANK_NOUNS))) return segment // a word glued to a number ("55mm", "ss1") is no cry
+        // "Kỳ tích: AAA", "Kamen Rider OOO", "tài khoản YYY": three equal capitals are a rank / name / blank; only a cry mark ("AAA!") makes them a cry
+        if (upper(core) && core.all { it.code < 128 } && core.length == MIN_RUN && core.toSet().size == 1 && !CRY_MARK.containsMatchIn(after + rest)) return segment
         var reading = honorificStretch(core, origin) ?: stretchReading(core) ?: return segment
         if (core.lowercase(Locale.ROOT) == "mm" && counted(previous)) return segment // "127 mm", "vài mm" is a unit, "Mm…" is a cry
         if (rest.isNotEmpty()) {

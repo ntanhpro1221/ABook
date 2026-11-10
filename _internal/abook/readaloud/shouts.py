@@ -65,9 +65,11 @@ def _expanded_reading(core: str) -> str | None:
     if core.isupper() and (ROMAN_LETTERS.issuperset(word) or word in SHORT_CASED
                            or (len(set(word)) == 1 and word[0] not in VOWELS)):
         return None
-    if re.fullmatch(POLICY["laugh_pattern"], word):
+    atoms = re.findall(POLICY["laugh_atom"], word) if re.fullmatch(POLICY["laugh_pattern"], word) else []
+    # "FIFA", "Fifi", "Ahifa", "HIFI": a laugh in "f" is "fu" / "fw" ("Fufu", "Fuhaha", "Fwahaha"); a bare "fa", "fi", "fo" needs three beats ("Fahaha", "Fofofo")
+    if atoms and (len(atoms) >= 3 or all(atom[0] == "h" or atom[1] in "uw" for atom in atoms)):
         sounds = []
-        for atom in re.findall(POLICY["laugh_atom"], word):
+        for atom in atoms:
             vowel = next(c for c in atom if c in POLICY["vowels"])
             sounds.append("phu" if atom[0] == "f" else POLICY["laugh_vowels"][vowel])
         return " ".join(sounds[:POLICY["max_laugh_syllables"]])
@@ -78,7 +80,8 @@ def _expanded_reading(core: str) -> str | None:
     # Lexical words are not short cries merely because their letters fit a pattern.
     from ..analysis import is_vietnamese_syllable
 
-    sound_case = not core.isupper() or len(word) == 2 or bool(re.search(r"(.)\1", word))
+    # "AK", "KO", "IG", "EK": two capitals are an abbreviation unless listed ("AH", "OH"); "EEG", "UGG": a doubled letter closed by "g" is one too ("EEK", "AHH", "EGGG" are cries)
+    sound_case = not core.isupper() or (bool(re.search(r"(.)\1", word)) and (bool(stretched) or not word.endswith("g")))
     patterned = sound_case and word not in names.english_words() and not is_vietnamese_syllable(word) and not any(
         c not in POLICY["vowels"] + "hkgwy" for c in word)
     reading = None
@@ -118,6 +121,8 @@ VOWELS = frozenset("aăâeêioôơuưy")
 MIN_RUN = int(POLICY["min_run"])
 ROMAN_LETTERS = frozenset("ivx")
 RANK_NOUNS = frozenset(("hạng", "cấp", "rank", "class", "loại", "bậc"))  # "hạng AAA", "hạng SSS": chữ hạng, không phải tiếng kéo
+CRY_MARK = re.compile(r"[!?！？…~～—–―─]|\.\.")  # dấu của tiếng kêu ngay sau chữ
+CONSONANT_CRIES = frozenset(("mph", "tsk"))  # tiếng kêu không nguyên âm ngoài bảng thán từ, nhận cả khi viết HOA ("MMMMPH!", "TSSSK!")
 GLUE = re.compile(r"(?:\.{2,}|[…~—–])+")  # chỗ ngắt dính liền giữa tiếng kêu và chữ sau nó
 CLOSING = "\"'“”‘’()[]«»"  # dấu bao quanh chữ đứng trước
 JAPANESE_CRY = re.compile(r"(?:^|[bcdfghjklmnpqrstvxz])y|w")  # kya, nya, ya, uwa: tiếng kêu Nhật, không phải âm tiết Việt dù hình thức hợp lệ ("kya" qua phép kiểm âm tiết)
@@ -225,8 +230,12 @@ def stretch_reading(core: str) -> str | None:
     if core.isupper() and core.casefold() in listed_abbreviations():
         return None  # "CCCD", "CMND": a listed abbreviation is never a cry, whatever its letters
     reading = _basic_reading(core) or _expanded_reading(core)
-    if reading and not any(_plain(char) in VOWELS for char in core.lower()) and dedupe(core.lower()) not in _DEDUPED:
-        return None  # "cccd" -> "cd", "SSSR" -> "sr": with no vowel only a listed cry ("Hmmm", "Shhh", "Grrr") is a sound
+    word = core.lower()
+    if reading and not any(_plain(char) in VOWELS for char in word) and dedupe(word) not in _DEDUPED:
+        if core.isupper() and dedupe(word) not in CONSONANT_CRIES:
+            return None  # "SSSR" -> "sr", "PCCC" -> "pc": capitals with no vowel are a cry only when listed ("HMMM", "GRRR", "MMMMPH")
+        if word in listed_abbreviations():
+            return None  # "cccd": a listed abbreviation in small letters; "Mmmph", "Ssst", "drrr" stay sounds
     return reading
 
 
@@ -278,6 +287,8 @@ def _read_segment(segment: str, toks: list[str], index: int, first: bool, origin
     previous = toks[index - 1] if first and index else ""
     if not core or any(char.isdigit() for char in before + after) or (core.isupper() and (after.startswith("+") or previous.lower().strip(CLOSING) in RANK_NOUNS)):
         return segment  # chữ dính số ("55mm", "ss1") không phải tiếng kêu
+    if core.isupper() and core.isascii() and len(core) == MIN_RUN and len(set(core)) == 1 and not CRY_MARK.search(after + rest):
+        return segment  # "Kỳ tích: AAA", "Kamen Rider OOO", "tài khoản YYY": ba chữ hoa giống nhau là hạng / tên / chỗ trống; có dấu kêu ("AAA!") mới là tiếng kêu
     reading = honorific_stretch(core, origin) or stretch_reading(core)
     if not reading or (core.lower() == "mm" and _counted(previous)):  # "127 mm", "vài mm" là mi-li-mét, "Mm…" là tiếng ừm
         return segment
