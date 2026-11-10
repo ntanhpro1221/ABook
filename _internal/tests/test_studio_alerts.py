@@ -37,7 +37,7 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
         assert {"id", "title", "phase", "statusLabel", "running", "paused", "precast", "chapters", "work", "lastError"} <= set(book)
         assert book["paused"] is None and book["precast"]["held"] is False
         assert book["chapters"]["total"] >= 1 and book["running"] is False
-        assert book["work"] is None, "sách đời cũ của fixture không dựng được hộp việc: 'không biết', vẫn có mặt"
+        assert book["work"] == 0, "sổ của fixture đủ cột như sổ thật nên hộp việc dựng được: chưa có việc nào"
         status, _data, _ = _sync_request(server.port, "GET", "/sync/v1/studio")
         assert status == 401, "chưa ghép thì không thấy gì"
     finally:
