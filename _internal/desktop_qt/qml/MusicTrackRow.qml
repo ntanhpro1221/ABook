@@ -18,6 +18,8 @@ Interactive {
     property bool first: false
     signal preview()
     signal use()
+    signal save()
+    signal cancelDownload()
     readonly property var load: Logic.loadOf(track, downloads)
     readonly property bool canPlay: online || !!track.downloaded
     implicitHeight: Math.max(words.height, 40) + 2 * Theme.s12 + 1
@@ -53,41 +55,50 @@ Interactive {
             text: TextWrap.keepDots(root.track.title || "")
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+            maximumLineCount: 2 // text-cut-ok: owner requests two title lines in music rows; details show the full title.
+            elide: Text.ElideRight // text-cut-ok: the full title is in the detail sheet.
             font.pixelSize: Theme.sizeBody
         }
-        Text {
+        Row {
             width: parent.width
-            text: [root.track.creator || "", root.track.duration ? Logic.clock(root.track.duration) : "",
-                   root.track.style ? Logic.labelOf(root.styles, root.track.style) : ""].filter(part => part !== "").join("\u00a0·\u00a0")
-            color: Theme.text2
-            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            font.pixelSize: Theme.sizeBodySmall
-            font.features: {"tnum": 1}
+            Text {
+                width: Math.min(implicitWidth, Math.max(0, parent.width - duration.width))
+                text: TextWrap.keepDots(root.track.creator || "")
+                color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
+                elide: Text.ElideRight // text-cut-ok: only the creator yields space to the duration in the compact music row.
+            }
+            ClockLabel {
+                id: duration
+                text: root.track.duration ? (root.track.creator ? "\u00a0·\u00a0" : "") + Logic.clock(root.track.duration) : ""
+                color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
+            }
         }
     }
     Row {
         id: tail
         anchors.right: parent.right
-        y: 1 + Theme.s12 + 8
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.s8
-        Text {
-            objectName: "musicRowLoading"
-            visible: root.load.kind === "loading"
-            text: root.load.percent === null || root.load.percent === undefined ? S.s_dang_tai_465b1987 : root.load.percent + " %"
-            color: Theme.text2
-            font.pixelSize: Theme.sizeBodySmall
-            font.features: {"tnum": 1}
-            Accessible.name: S.s_dang_tai_0_e9a97892(root.load.percent || 0)
-        }
-        Icon { visible: root.load.kind === "done"; name: "circle-check"; size: 18; color: Theme.success }
-        Icon { visible: root.load.kind === "failed"; name: "circle-alert"; size: 18; color: Theme.danger }
         Button {
             objectName: "musicRowUse"
             visible: root.picking
-            y: -8
             text: S.s_dung_7927ca4e; kind: "ghost"; size: "sm"
             Accessible.name: S.s_dung_7927ca4e + ": " + (root.track.title || "")
             onActivated: root.use()
+        }
+        IconButton {
+            objectName: "musicRowDownload"
+            icon: root.load.kind === "done" ? "circle-check" : root.load.kind === "failed" ? "circle-alert" : root.load.kind === "loading" ? "" : "download"
+            ink: root.load.kind === "done" ? Theme.success : root.load.kind === "failed" ? Theme.danger : Theme.text2
+            enabled: root.load.kind === "loading" || (root.online && root.load.kind !== "done")
+            opacity: enabled || root.load.kind === "done" ? 1 : 0.45
+            tip: root.load.kind === "loading" ? S.s_huy_tai_1a9ff73d : root.load.kind === "done" ? S.s_da_tai_b7362bbf : S.s_tai_ve_9b5bdb44
+            onClicked: root.load.kind === "loading" ? root.cancelDownload() : root.save()
+            DownloadRing {
+                objectName: "musicRowLoading"
+                anchors.centerIn: parent; visible: root.load.kind === "loading"
+                percent: root.load.kind === "loading" && root.load.percent !== null && root.load.percent !== undefined ? root.load.percent : -1
+            }
         }
     }
 }

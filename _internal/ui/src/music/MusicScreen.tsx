@@ -1,22 +1,22 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "../shared/toast";
 import { useBookMusic } from "../listen/EditBook";
 import { MyMusicSection } from "../listen/MyMusic";
 import { cn } from "../shared/cn";
+import { DotJoin } from "../shared/DotJoin";
 import { formatClock, formatSize } from "../shared/format";
 import { MotionPresence } from "../shared/MotionPresence";
 import { ScreenHeader } from "../shared/ScreenHeader";
-import { SectionHeading } from "../shared/SectionHeading";
 import { S } from "../shared/strings.generated";
 import { Button, ContentSkeleton, EmptyState, IconButton, InlineError, SelectionMark, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger } from "../shared/ui";
 import { Windowed } from "../shared/Windowed";
 import { api } from "../studio/api";
 import {
-  filtering, labelOf, LENGTH_OPTIONS, loadOf, NO_FILTERS, TEMPO_OPTIONS, useDownloads, useLibrary, useLibraryMeta, useSaveTracks,
+  filtering, LENGTH_OPTIONS, loadOf, NO_FILTERS, TEMPO_OPTIONS, useDownloads, useLibrary, useLibraryMeta, useSaveTracks,
   type DownloadState, type LibraryFilters, type LibraryTrack,
 } from "./library";
 import { useLibraryPreview, type LibraryPreview } from "./preview";
@@ -95,9 +95,8 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
   const { data: meta } = useLibraryMeta();
   return (
     <div className="space-y-10">
-      <section aria-labelledby="music-saved" className="space-y-3">
+      <section aria-label={S.s_da_luu_6379aeba} className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <SectionHeading id="music-saved">{S.s_da_luu_6379aeba}</SectionHeading>
           {data && data.saved.count > 0 && <p className="text-sm text-fg-2">{S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</p>}
         </div>
         {isLoading ? (
@@ -105,7 +104,7 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
         ) : error && !data ? (
           <InlineError message={S.s_chua_tai_duoc_kho_nhac_9577b7c7} onRetry={() => void refetch()} />
         ) : data?.tracks.length ? (
-          <ul aria-labelledby="music-saved">
+          <ul aria-label={S.s_da_luu_6379aeba}>
             {data.tracks.map((track) => (
               <TrackRow key={track.link} track={track} preview={preview} downloads={downloads} online={online} styles={meta?.styles} onOpen={setOpen} />
             ))}
@@ -228,8 +227,8 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
 
 function chipClass(active: boolean): string {
   return cn(
-    "press inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors duration-motion-fast touch-reach",
-    active ? "border-transparent bg-accent text-accent-ink" : "border-line text-fg-2 hover:bg-hover hover:text-fg",
+    "press inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-control px-3.5 text-sm font-medium transition-colors duration-motion-fast touch-reach",
+    active ? "bg-accent text-accent-ink" : "bg-hover text-fg-2 hover:text-fg",
   );
 }
 
@@ -246,7 +245,7 @@ function ChipMenu({ label, value, onChange, options }: {
       <DropdownMenu.Trigger asChild>
         <button type="button" aria-label={chosen ? `${label}: ${chosen.label}` : label} className={chipClass(Boolean(chosen))}>
           {chosen ? chosen.label : label}
-          <ChevronDown aria-hidden className="size-4" />
+          <ChevronDown aria-hidden className="ink-end [--icon-w:16px] size-4" />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -273,7 +272,6 @@ export function TrackRow({
   preview,
   downloads,
   online,
-  styles,
   onOpen,
   onUse,
   as: Item = "li",
@@ -303,15 +301,11 @@ export function TrackRow({
         aria-pressed={previewing}
         disabled={!playable}
         onClick={() => preview.toggle(track)}
-        className={cn(previewing && "text-accent-text")}
+        className={cn("music-row-preview", previewing && "text-accent-text")}
       />
       <button type="button" onClick={() => onOpen(track.link)} className="min-w-0 flex-1 rounded-control py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
-        <span className="block truncate text-sm font-medium">{title}</span>
-        <span className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-fg-2">
-          <span className="min-w-0 truncate">{track.creator}</span>
-          {typeof track.duration === "number" && <span className="shrink-0 tabular-nums">{formatClock(track.duration)}</span>}
-          {track.style && <span className="hidden shrink-0 rounded-full bg-sunken px-2 py-0.5 sm:inline">{labelOf(styles, track.style)}</span>}
-        </span>
+        <span className="line-clamp-2 text-sm font-medium">{title}</span>
+        <DotJoin singleLine className="mt-0.5 text-xs text-fg-2 tabular-nums" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
       </button>
       {onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
       {load.kind === "loading" ? (
@@ -322,7 +316,7 @@ export function TrackRow({
         </button>
       ) : load.kind === "done" ? (
         <span className="grid size-9 shrink-0 place-items-center text-success" title={S.s_da_tai_b7362bbf}>
-          <Download aria-hidden className="size-4" />
+          <Check aria-hidden className="size-4" />
           <span className="sr-only">{S.s_da_tai_b7362bbf}</span>
         </span>
       ) : (
@@ -340,12 +334,13 @@ export function TrackRow({
 
 function ProgressRing({ percent }: { percent: number | null }) {
   if (percent === null) return <Loader2 aria-hidden className="size-5 animate-spin" />;
-  const circumference = 2 * Math.PI * 9;
+  const circumference = 2 * Math.PI * 16;
   return (
-    <svg aria-hidden viewBox="0 0 24 24" className="size-6 -rotate-90">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth={2.5} />
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"
+    <svg aria-hidden viewBox="0 0 36 36" className="size-9">
+      <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth={2.5} />
+      <circle cx="18" cy="18" r="16" transform="rotate(-90 18 18)" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"
         strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)} />
+      <text x="18" y="18" textAnchor="middle" dominantBaseline="central" className="fill-current text-xs tabular-nums">{percent}%</text>
     </svg>
   );
 }

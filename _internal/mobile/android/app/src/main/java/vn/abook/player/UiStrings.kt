@@ -1346,6 +1346,7 @@ internal object S {
     fun s_doan_nay_van_do_0_ke_1aa31bd2(p0: Any?): String = "Đoạn này vẫn do " + p0.toString() + " kể"
     const val s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d = "Đoạn này vẫn kể ở ngôi thứ ba"
     const val s_doan_trong_ba06f5ce = "Đoạn trống"
+    fun s_doan_va_bai_cung_0_music(p0: Any?): String = "Đoạn này " + p0.toString() + ", bài cũng " + p0.toString() + "."
     fun s_doc_0_5067e74c(p0: Any?): String = "Đọc “" + p0.toString() + "”"
     const val s_doc_bang_f7f5f3b1 = "Đọc bằng "
     const val s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850 = "Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
@@ -1859,7 +1860,6 @@ internal object S {
     const val s_khong_tu_lui_8aec206c = "Không tự lùi"
     fun s_khong_vao_duoc_cua_so_nho_0_00b1c99d(p0: Any?): String = "không vào được cửa sổ nhỏ: " + p0.toString()
     fun s_khop_0_b5c9f23d(p0: Any?): String = "khớp " + p0.toString()
-    fun s_khop_0_de400d49(p0: Any?): String = "Khớp " + p0.toString() + " %"
     const val s_khung_aac_rong_c5204824 = "khung AAC rỗng"
     const val s_khung_noi_tiep_khong_co_khung_dau_a52d498f = "khung nối tiếp không có khung đầu"
     const val s_khung_qua_lon_c58d9637 = "khung quá lớn"

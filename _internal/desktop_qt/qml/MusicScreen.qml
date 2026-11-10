@@ -142,6 +142,7 @@ FocusScope {
                 }
             }
             ChoiceChip {
+                normalFill: Theme.hover
                 objectName: "musicFilterDownloaded"
                 text: S.s_da_tai_b7362bbf
                 selected: root.filters.downloaded
@@ -203,6 +204,8 @@ FocusScope {
             picking: root.picking
             onPreview: root.togglePreview(modelData)
             onUse: root.use(modelData.link)
+            onSave: root.save([modelData.link])
+            onCancelDownload: root.unsave([modelData.link])
             onClicked: detail.show(modelData.link, root.picking ? {book: root.pickBook, scene: root.pickScene} : null)
         }
         footer: Column {

@@ -20,10 +20,11 @@ Interactive {
     FontMetrics { id: metrics; font: label.font }
     readonly property bool primary: kind === "primary"
     readonly property bool danger: kind === "danger"
+    readonly property bool outline: kind === "outline"
     readonly property int pad: size === "sm" ? 12 : size === "lg" ? 20 : 14
     readonly property bool showsIcon: icon !== "" || busy
     readonly property real iconBox: showsIcon ? 16 + (size === "sm" ? 6 : 8) : 0
-    readonly property color ink: primary ? Theme.accentInk : danger ? Theme.danger : Theme.accentText
+    readonly property color ink: primary ? Theme.accentInk : danger ? Theme.danger : outline ? Theme.text : Theme.accentText
     // `wrap`: dòng cao 1,25 mà Qt dồn phần dư xuống DƯỚI chữ - chữ nổi cao hơn tâm nút 1/8 dòng. Hạ khối chữ đúng phần ấy (leading-[1.25]
     // của web chia đều hai bên), icon đứng giữa dòng đầu khi chữ gãy nhiều dòng (máy dò IconText).
     readonly property real slot: label.implicitHeight / Math.max(1, label.lineCount)
@@ -45,6 +46,8 @@ Interactive {
         anchors.fill: parent
         radius: root.size === "lg" ? Theme.radiusCover : Theme.radiusControl
         color: root.primary ? Theme.accent : root.danger ? Theme.dangerSoft : "transparent"
+        border.width: root.outline ? 1 : 0
+        border.color: Theme.controlLine
         Rectangle {
             anchors.fill: parent
             radius: parent.radius

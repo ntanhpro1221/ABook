@@ -315,15 +315,20 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
     menu chọn ("Tất cả" + mục); đang lọc thì chip mang tên mục và tô màu nhấn. Dưới hàng chip: "N bài" (+ "Đã tải X bài · Y MB") bên trái,
     "Bỏ lọc" và - khi lọc theo danh sách phát - "Tải cả danh sách (Z MB)" bên phải. Luật lọc / xếp một nguồn:
     tests/fixtures/music_library/cases.json (máy chủ, Android, Qt chạy cùng bảng).
-  - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, một dòng, cắt) / người sáng tác · thời lượng · chip phong cách (màn rộng) · trạng
-    thái tải (nút tải / vòng % chạm để huỷ / dấu đã tải / dấu cảnh báo "Chưa tải xong" chạm để tải tiếp). Danh sách ảo hoá (2.387 dòng).
+  - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, tối đa hai dòng, ellipsis) / người sáng tác · thời lượng (một dòng, chỉ người sáng tác
+    ellipsis) · cột trạng thái tải cố định (nút tải / vòng % chạm để huỷ / dấu đã tải / dấu cảnh báo "Chưa tải xong" chạm để tải tiếp).
+    Bỏ phong cách khỏi hàng trên cả ba nền tảng để giữ chỗ cho tên và cột tải; phong cách đầy đủ ở Thông tin. Đây là ngoại lệ cắt chữ
+    có chủ ý theo soát musiclib2; sheet giữ nguyên tên đầy đủ. Danh sách ảo hoá (2.387 dòng).
     Mất mạng: bài chưa tải mờ nút nghe thử và nút tải; danh mục đã lưu vẫn mở được.
   - *Nghe thử*: từ chỗ bắt đầu nghe được, tối đa 30 giây, cùng một độ to; sách đang phát thì TẠM DỪNG sách (không tự phát lại); một bài
     một lúc; rời màn là dừng. Thanh nhỏ "Đang nghe thử · tên · ■" nổi ở đáy màn.
-  - *Chi tiết bài* (sheet): nút Nghe thử · Tải về | Xoá bản tải (đang tải: Huỷ tải + %) · (chế độ chọn) Dùng, Không tự chọn bài này; khối
-    "Vì sao bài này" (chỉ khi mở từ bài đang phát / Nhạc trong sách và đoạn có cảm xúc máy đọc được: 3 cảm xúc khớp nhất, thanh "Đoạn này"
-    cạnh "Bài này", "Khớp N %"); đủ 13 cảm xúc dạng thanh 0-100 % xếp giảm dần; bảng: Năng lượng · Nhịp · Phong cách · Độ dài · Có lời ·
-    Giấy phép · Có trong (danh sách phát); Ghi công đầy đủ + "Mở trang nguồn".
+  - *Chi tiết bài* (sheet): ngay dưới tên + người sáng tác là một hàng hai nút cùng cao: Nghe thử (chính, icon phát/dừng) · Tải về |
+    Xoá bản tải (viền, icon / tiến độ tải). Dùng biến thể chung của nút; nút viền chỉ đi cặp với nút chính (web `data-action-pair`),
+    không dùng cho bộ lọc hay nút đơn. Chế độ chọn: Dùng, Không tự chọn bài này ở hàng phụ phía sau.
+    "Vì sao bài này" chỉ hiện khi đoạn có cảm xúc: câu ngắn từ cảm xúc khớp nhất, không in độ khớp tổng. Ba cảm xúc khớp nhất, mỗi
+    cảm xúc một hàng, hai thanh mảnh chồng (đoạn / bài), chú giải màu một lần. Thanh cảm xúc dùng kiểu tiến độ phẳng chung: rãnh màu
+    vạch, không viền; đủ 13 cảm xúc 0-100 % xếp giảm dần. Khối "Thông tin" gồm hàng nhãn-giá trị: Năng lượng · Nhịp · Phong cách ·
+    Độ dài · Có lời · Giấy phép · Có trong (playlist) · Ghi công đầy đủ · Mở trang nguồn.
   - *Chế độ chọn* (từ "Xem cả kho ›" cuối sheet "Đổi bài" của một đoạn): tiêu đề "Chọn bài cho đoạn" + nút ←, không tab, mỗi dòng có nút
     "Dùng"; chọn xong quay lại (Back), cùng đường lưu với chọn bài gợi ý.
   - *Bài đang phát* (chạm dòng Nhạc nền của trình phát): sheet chi tiết với tiêu đề "Bài đang phát", nút Lưu / Bỏ lưu · Xem trong kho ·

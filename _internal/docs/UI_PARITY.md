@@ -157,11 +157,11 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ (1544 khác nhau), 76 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6370 chữ (3078 khác nhau), 358 cặp nhãn-icon; native 2022 chữ (1544 khác nhau), 78 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
-426 gợi ý tương tự chữ trên toàn cây; đây không phải số thao tác lệch. Mỗi dòng dưới có phân loại từ giao ước màn và lý do riêng. Số lệch thực và chữ chờ quyết nằm ở mục e; chúng phải bằng 0 thì --check mới qua. `icon` = cùng hình lucide.
+425 gợi ý tương tự chữ trên toàn cây; đây không phải số thao tác lệch. Mỗi dòng dưới có phân loại từ giao ước màn và lý do riêng. Số lệch thực và chữ chờ quyết nằm ở mục e; chúng phải bằng 0 thì --check mới qua. `icon` = cùng hình lucide.
 
 | native | web | giống | nơi | giải thích native | giải thích web |
 |---|---|---|---|---|---|
@@ -208,7 +208,7 @@ Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ
 | Chưa đọc được nhật ký | Chưa lưu được nhật ký | 0.86 | `native/screens/SettingsAdvanced.kt:150` ~ `desktop/PhoneDiagnostics.tsx:65` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; settings.missing: in-app log viewer of the phone (see, refresh, delete, crash records); the computer only saves a diagnostics package (desktop/OwnDiagnostics.tsx) | devices.missing: computer reading a phone's diagnostics over the network (PhoneDiagnostics.tsx) |
 | Chỉ {} chương đổi | Chờ chương mới | 0.86 | `native/export/ExportScreen.kt:154` ~ `listen/LibraryScreen.tsx:285` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.missing: re-export of only the chapters that changed since the last MP3 export (phone feature); the computer re-exports the whole book | library-book.missing: The web library has a caught-up badge; the phone has no matching badge. This is a missing surface, not alternative wording. |
 | Chờ gộp vào {} | Bỏ gộp {} vào {} | 0.86 | `native/studio/WorkText.kt:159` ~ `listen/BookScreen.tsx:452` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio inbox / review / script / readings sentences: the computer's own Studio (WorkInbox, ReviewQueue, ScriptTab, ReadingSuggestions) has no identical sentence for these - not compared sentence by sentence | library-book.allow: Studio / workshop only: the book page of the phone never gets the unmerge, voice-pick or narrator callbacks (only Studio passes them), the cast is always 'waiting' (shown as 'Đang chờ máy làm sách'), nothing is recorded on the phone, and a book is never being recorded here |
-| Vẫn tải | Vẫn cài | 0.86 | `native/music/library/MusicScreen.kt:403` (+1) ~ `studio/StudioSetup.tsx:220` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; music-library.allow: phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
+| Vẫn tải | Vẫn cài | 0.86 | `native/music/library/MusicScreen.kt:350` (+1) ~ `studio/StudioSetup.tsx:220` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; music-library.allow: phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang ghi | Đã ghi | 0.86 | `native/screens/BookPeople.kt:187` ~ `studio/ScriptTab.tsx:1138` (+2) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; library-book.allow: web shows a spinner or a toast from the core's own error text; native writes a busy word / retry hint in the sheet | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang ghi | Đã ghi “{}” - {}. | 0.86 | `native/screens/BookPeople.kt:187` ~ `studio/WorkInbox.tsx:369` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; library-book.allow: web shows a spinner or a toast from the core's own error text; native writes a busy word / retry hint in the sheet | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang lấy giọng | Đang tải giọng ({}) {}% | 0.86 | `native/screens/SettingsVoice.kt:292` ~ `studio/voiceEngines.ts:81` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; voice.missing: web shows a spinner in the button, no busy word | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -280,7 +280,7 @@ Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ
 | Sách nói | Tạo sách nói | 0.80 | `native/export/ExportModel.kt:382` ~ `desktop/App.tsx:115` (+6) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.allow: native export screen / menu hint states: web reports the same steps through toasts built from ExportCopy ('Đang đóng gói…', 'Đã xuất MP3', 'Đang xuất · 45%') and has no screen with these rows | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Thêm chữ này | Thêm chữ sáng | 0.80 | `native/studio/StudioNew.kt:293` ~ `studio/WordTimings.tsx:54` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's new-project flow (upload a file or paste text to the computer's Studio); the computer's NewProjectScreen is a larger flow with its own sentences - not compared sentence by sentence | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Tạo sách nói từ xa | Tạo sách nói | 0.80 | `native/screens/OtherScreens.kt:38` ~ `desktop/App.tsx:115` (+6) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: phone Studio tab rows and chooser: the computer reaches Studio from its own sidebar / OtherComputers row | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
-| Vẫn tải | Đang tải {} | 0.80 | `native/music/library/MusicScreen.kt:403` (+1) ~ `listen/VieneuModuleCard.tsx:244` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; music-library.allow: phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network | voice.allow: Desktop moduleStatusAnnouncement only (aria-live status); Android module rows show the same download with size and progress and Compose announces the row, without this duplicate live-region fragment. |
+| Vẫn tải | Đang tải {} | 0.80 | `native/music/library/MusicScreen.kt:350` (+1) ~ `listen/VieneuModuleCard.tsx:244` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; music-library.allow: phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network | voice.allow: Desktop moduleStatusAnnouncement only (aria-live status); Android module rows show the same download with size and progress and Compose announces the row, without this duplicate live-region fragment. |
 | Xuất lại | Xuất lại M4B | 0.80 | `native/export/ExportScreen.kt:358` (+1) ~ `studio/ExportBook.tsx:542` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.allow: native export screen / menu hint states: web reports the same steps through toasts built from ExportCopy ('Đang đóng gói…', 'Đã xuất MP3', 'Đang xuất · 45%') and has no screen with these rows | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang dùng ở {} đoạn | Đang đóng gói dự án… | 0.80 | `native/studio/MusicTab.kt:254` ~ `desktop/bookFileExport.ts:56` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: web lists the track's use in a different sentence (MusicTab) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.missing: book-file and project packaging export (.abook / .abookproj) of the computer; the phone saves through 'Lưu thay đổi' / 'Lưu thành' (library-book pair) |
 | Đang lấy giọng | Đã ghi | 0.80 · icon | `native/screens/SettingsVoice.kt:292` ~ `studio/ScriptTab.tsx:1138` (+2) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; voice.missing: web shows a spinner in the button, no busy word | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -524,7 +524,6 @@ Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ
 | Cập nhật bản thu | Đã cập nhật | 0.59 | `native/devices/DevicesModel.kt:124` ~ `desktop/App.tsx:244` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: row status words of the phone's download list for books held from another machine (what was fetched: cover, recording, text, name) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang gửi {} | Đang gửi các chương | 0.59 | `native/studio/StudioNew.kt:339` ~ `studio/NewProjectScreen.tsx:459` (+2) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: new-project flow: native shows its own progress / error lines on one screen; web NewProjectScreen words the same steps through upload.ts ('Đang gửi 3/12 file · …', 'Đã gửi … file') | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Máy đã nối | Máy này | 0.59 | `native/devices/PairScreen.kt:116` ~ `desktop/PhoneSync.tsx:221` (+4) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: web Nối máy tính has no 'Cách nối' choice (Wi-Fi / Bluetooth / Địa chỉ), no 'Máy đã nối' list with each computer's books, no in-row progress | devices.missing: computer hosting its library for phones: Wi-Fi sharing state, pairing code panel, remote-control permission (PhoneSync.tsx); the phone has its own share page |
-| Nguồn | Nguồn truyện | 0.59 | `native/studio/StudioNew.kt:51` ~ `studio/NewProjectScreen.tsx:399` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's new-project flow (upload a file or paste text to the computer's Studio); the computer's NewProjectScreen is a larger flow with its own sentences - not compared sentence by sentence | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang gửi {} | Đang phát · {} | 0.59 | `native/studio/StudioNew.kt:339` ~ `studio/previewText.ts:37` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: new-project flow: native shows its own progress / error lines on one screen; web NewProjectScreen words the same steps through upload.ts ('Đang gửi 3/12 file · …', 'Đã gửi … file') | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang nối {} | Đang phát · {} | 0.59 | `native/devices/PairScreen.kt:197` ~ `studio/previewText.ts:37` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: web Nối máy tính has no 'Cách nối' choice (Wi-Fi / Bluetooth / Địa chỉ), no 'Máy đã nối' list with each computer's books, no in-row progress | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đã duyệt hết | Duyệt | 0.59 | `native/studio/WorkText.kt:30` ~ `studio/ScriptTab.tsx:1508` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio inbox / review / script / readings sentences: the computer's own Studio (WorkInbox, ReviewQueue, ScriptTab, ReadingSuggestions) has no identical sentence for these - not compared sentence by sentence | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -598,7 +597,7 @@ Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ
 
 | nhãn | web | native | nơi |
 |---|---|---|---|
-| Mở Nhạc | eighth-note | list-music | `music/OpenMusicRow.tsx:8` ~ `native/music/library/OpenMusicRow.kt:14` |
+| Dừng nghe | play, square | native:LucideIcon | `music/MusicScreen.tsx:298` ~ `native/music/library/TrackSheet.kt:130` |
 
 **Cùng icon, khác nhãn** (11 icon dùng ở cả hai phía mà không chung nhãn nào):
 
@@ -616,15 +615,15 @@ Quét: web 6361 chữ (3076 khác nhau), 360 cặp nhãn-icon; native 2016 chữ
 | share-2 | Chia sẻ | Đang đóng file sách |
 | upload | Chọn file, Thêm file, Thêm nhạc của bạn | Đang thêm {}/{} |
 
-Phủ của bộ ghép: icon dùng ở 163 chỗ trong mã native, ghép được với nhãn chữ ở 74; web 510 chỗ, ghép được 313. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
-Icon native chưa quy về lucide (3): `native:ChevronIcon`, `native:OtherPlayerIcon`, `native:PlayerGlyph`.
-Số cặp: web 313, native 74; icon lucide dùng: web 97, native 40.
+Phủ của bộ ghép: icon dùng ở 164 chỗ trong mã native, ghép được với nhãn chữ ở 76; web 508 chỗ, ghép được 311. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
+Icon native chưa quy về lucide (4): `native:ChevronIcon`, `native:LucideIcon`, `native:OtherPlayerIcon`, `native:PlayerGlyph`.
+Số cặp: web 311, native 76; icon lucide dùng: web 97, native 41.
 
 ## c. Nhãn chỉ có ở một phía, theo màn
 
 Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể cả chữ giống chữ ở mục a. Để phân biệt tính năng thiếu với chữ trôi: một màn native có nhiều nhãn chỉ-native mà web cùng màn không có thường là tính năng mới; vài nhãn lẻ thường là chữ trôi (mục a).
 
-### c1. Chỉ có ở native (240 nhãn)
+### c1. Chỉ có ở native (238 nhãn)
 
 - `native/NativeActivity.kt` (2): Chưa mở được trình duyệt (`344`); Chưa gửi được nhật ký (`356`)
 - `native/addbook/BookForms.kt` (1): Tên gốc: {} (`136`)
@@ -662,7 +661,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/export/ExportState.kt` (1): Bạn hãy thử lại. (`105`)
 - `native/music/MusicPanel.kt` (1): Đang đóng (`248`)
 - `native/music/MusicRepo.kt` (1): Chưa tìm được bài để đổi (`67`)
-- `native/music/library/MusicScreen.kt` (2): Tải qua mạng tính phí? (`399`); Vẫn tải (`403`)
+- `native/music/library/MusicScreen.kt` (2): Tải qua mạng tính phí? (`346`); Vẫn tải (`350`)
 - `native/nowplaying/FakeNowPlayingModel.kt` (5): Chương 1 · Một buổi sớm (`82`); Những ngày gió hát (`82`); Chương {} · {} (`84`); Giọng thử A (`104`); Giọng thử B (`104`)
 - `native/nowplaying/NowPlayingScreen.kt` (1): Cửa sổ mini (`235`)
 - `native/nowplaying/PlayerSheets.kt` (2): Chọn giọng (`209`); Giọng thu sẵn (`209`)
@@ -683,9 +682,9 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/studio/StudioCover.kt` (1): Sách đã có ảnh bìa. (`106`)
 - `native/studio/StudioDecisions.kt` (1): Mới ghi được {}/{} việc. {} (`135`)
 - `native/studio/StudioExport.kt` (10): Đã gom {}/{} chương (`198`); Cỡ ước tính: khoảng {}{}. (`245`); Còn mới (`286`); Xuất sách (`297`); Xuất lại (`302`); Đang mở hộp Xuất (`303`); Máy tính chưa có ffmpeg (`309`); Đã xuất (`311`); Tiếp tục xuất (`314`); Chưa xuất được (`316`)
-- `native/studio/StudioLog.kt` (3): Thông tin (`55`); Dài (`58`); Đang mở nhật ký (`61`)
+- `native/studio/StudioLog.kt` (2): Dài (`58`); Đang mở nhật ký (`61`)
 - `native/studio/StudioMusic.kt` (4): Chọn lại nhạc cho cả cuốn? (`267`); Bài đã bỏ (`295`); Chọn thể loại (`305`); Đang tải phần đọc không khí{} (`309`)
-- `native/studio/StudioNew.kt` (16): Nguồn (`51`); Chọn tệp (`290`); Dán chữ (`291`); Dán chữ truyện vào đây (`292`); Thêm chữ này (`293`); Tiếp (`294`); Chưa có chương nào (`300`); Chưa có tệp nào (`301`); Đã gửi (`303`); Trang phụ - chưa vào sách (`306`); Đang tạo sách (`326`); Bước {}/{} (`338`); Đang gửi {} (`339`); Tách thành {} chương (`341`); Chưa gửi được {}. {} (`342`); Chữ dán.txt (`453`)
+- `native/studio/StudioNew.kt` (15): Chọn tệp (`290`); Dán chữ (`291`); Dán chữ truyện vào đây (`292`); Thêm chữ này (`293`); Tiếp (`294`); Chưa có chương nào (`300`); Chưa có tệp nào (`301`); Đã gửi (`303`); Trang phụ - chưa vào sách (`306`); Đang tạo sách (`326`); Bước {}/{} (`338`); Đang gửi {} (`339`); Tách thành {} chương (`341`); Chưa gửi được {}. {} (`342`); Chữ dán.txt (`453`)
 - `native/studio/StudioPrecast.kt` (2): Duyệt xong (`151`); Bước {}/{} (`159`)
 - `native/studio/StudioReadings.kt` (6): Đang tải cách đọc tên (`213`); Máy tính đang đọc thử (`219`); Cách đọc mới (`221`); Dòng nên bỏ khỏi phần đọc (`227`); Xem thêm {} tên (`233`); Dùng {} cách đọc chung (`235`)
 - `native/studio/StudioScript.kt` (4): Máy nghi (`123`); Giữ nguyên: câu này của {} (`189`); Chương này chưa có câu nào. (`241`); Đổi chương (`243`)
@@ -753,7 +752,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/hostWait.ts` (1): Máy chưa trả lời kịp. (`45`)
 - `shared/peerStudio.ts` (1): Đang mở Studio của {} (`53`)
 - `shared/trashUndo.ts` (1): Chưa mang theo chỗ nghe. (`25`)
-- `shared/ui.tsx` (2): Xem các tab trước (`516`); Xem các tab sau (`521`)
+- `shared/ui.tsx` (2): Xem các tab trước (`525`); Xem các tab sau (`530`)
 
 ### c3. Chỉ có ở web phía máy tính / Studio (chỉ đếm)
 
@@ -806,23 +805,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6361 | 0 / 2016 |
-| dấu ba chấm `…` | 37 / 6361 | 0 / 2016 |
-| kết thúc bằng dấu chấm `.` | 1088 / 6361 | 397 / 2016 |
-| kết thúc bằng `!` | 0 / 6361 | 0 / 2016 |
-| kết thúc bằng `:` | 86 / 6361 | 3 / 2016 |
-| dấu thanh kiểu cũ `oà oá uý` | 471 / 6361 | 183 / 2016 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6361 | 0 / 2016 |
-| số thập phân dấu phẩy `1,5` | 2 / 6361 | 0 / 2016 |
-| số thập phân dấu chấm `1.5` | 0 / 6361 | 0 / 2016 |
-| nhân bằng `×` | 0 / 6361 | 0 / 2016 |
-| nhân bằng `x` sau số | 0 / 6361 | 0 / 2016 |
-| ngăn cách `·` | 146 / 6361 | 35 / 2016 |
-| ngăn cách ` - ` | 277 / 6361 | 81 / 2016 |
-| gạch dài `—`/`–` | 12 / 6361 | 1 / 2016 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6361 | 2 / 2016 |
-| dấu `%` dính số | 0 / 6361 | 1 / 2016 |
-| dấu `%` cách số | 0 / 6361 | 0 / 2016 |
+| dấu ba chấm ASCII `...` | 6 / 6370 | 0 / 2022 |
+| dấu ba chấm `…` | 37 / 6370 | 0 / 2022 |
+| kết thúc bằng dấu chấm `.` | 1090 / 6370 | 398 / 2022 |
+| kết thúc bằng `!` | 0 / 6370 | 0 / 2022 |
+| kết thúc bằng `:` | 86 / 6370 | 3 / 2022 |
+| dấu thanh kiểu cũ `oà oá uý` | 473 / 6370 | 185 / 2022 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6370 | 0 / 2022 |
+| số thập phân dấu phẩy `1,5` | 2 / 6370 | 0 / 2022 |
+| số thập phân dấu chấm `1.5` | 0 / 6370 | 0 / 2022 |
+| nhân bằng `×` | 0 / 6370 | 0 / 2022 |
+| nhân bằng `x` sau số | 0 / 6370 | 0 / 2022 |
+| ngăn cách `·` | 146 / 6370 | 35 / 2022 |
+| ngăn cách ` - ` | 277 / 6370 | 81 / 2022 |
+| gạch dài `—`/`–` | 12 / 6370 | 1 / 2022 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6370 | 2 / 2022 |
+| dấu `%` dính số | 0 / 6370 | 1 / 2022 |
+| dấu `%` cách số | 0 / 6370 | 0 / 2022 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
@@ -885,7 +884,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | studio | 2164 | 429 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
 | music | 33 | 51 | 0 | 0 | 9 | 8 | 0 |
-| music-library | 62 | 65 | 0 | 0 | 7 | 1 | 0 |
+| music-library | 64 | 67 | 0 | 0 | 7 | 1 | 0 |
 
 Thiếu thật ở native - `now-playing`: Đổi luôn trong Studio.
 

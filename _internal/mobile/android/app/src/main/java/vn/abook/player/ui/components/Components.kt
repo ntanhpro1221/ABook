@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -165,21 +166,33 @@ fun PlaceholderTab(title: String, line: String, modifier: Modifier = Modifier) {
 
 /** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). `enabled` = false: nhạt hơn và không bấm được (việc đang chạy). */
 @Composable
-fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: (@Composable (Color) -> Unit)? = null) {
+fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, compact: Boolean = false, icon: (@Composable (Color) -> Unit)? = null) =
+    ActionButton(label, onClick, modifier, enabled, icon, compact, false)
+
+/** Secondary action paired with a primary button: same height, compact label and a control outline. */
+@Composable
+fun OutlineButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: (@Composable (Color) -> Unit)? = null) =
+    ActionButton(label, onClick, modifier, enabled, icon, true, true)
+
+@Composable
+private fun ActionButton(label: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean, icon: (@Composable (Color) -> Unit)?, compact: Boolean, outline: Boolean) {
     val accent = Abook.colors.accent
+    val shape = RoundedCornerShape(Dim.radiusControl)
+    val ink = if (outline) Abook.colors.text else Abook.colors.accentInk
     Box(
         modifier.height(Dim.s48)
             .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
-            .clip(RoundedCornerShape(Dim.radiusControl)).background(if (enabled) accent else accent.copy(alpha = 0.45f))
-            .padding(horizontal = Dim.s24),
+            .clip(shape).background(if (outline) Color.Transparent else if (enabled) accent else accent.copy(alpha = 0.45f))
+            .then(if (outline) Modifier.border(1.dp, Abook.colors.controlLine, shape) else Modifier)
+            .padding(horizontal = if (compact) Dim.s12 else Dim.s24),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {
-                icon(Abook.colors.accentInk)
+                icon(ink)
                 Spacer(Modifier.width(Dim.s8))
             }
-            BasicText(label, style = Abook.type.bodyStrong.copy(color = Abook.colors.accentInk))
+            BasicText(label, style = (if (compact) Abook.type.label else Abook.type.bodyStrong).copy(color = ink))
         }
     }
 }

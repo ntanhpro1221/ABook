@@ -360,6 +360,8 @@ qt_add_qml_module(ABookDesk
         qml/MyMusicTrack.qml
         qml/MusicScreen.qml
         qml/MusicTrackRow.qml
+        qml/DownloadRing.qml
+        qml/LevelBar.qml
         qml/MusicTrackDetail.qml
         qml/MusicBookSection.qml
         qml/MusicOpenRow.qml

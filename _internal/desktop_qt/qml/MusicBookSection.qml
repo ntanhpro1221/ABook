@@ -78,6 +78,8 @@ Column {
                 styles: root.meta ? root.meta.styles : []
                 previewing: root.previewing === modelData.link
                 onPreview: { const start = Number(modelData.audibleStart) || 0; Clip.toggle("library:" + modelData.link, Logic.previewPath(modelData.link), start, start + Logic.PREVIEW_SECONDS) }
+                onSave: root.change("/api/music/library/save", [modelData.link])
+                onCancelDownload: root.change("/api/music/library/unsave", [modelData.link])
                 onClicked: detail.show(modelData.link, modelData.scene ? {book: root.bookId, scene: modelData.scene} : null)
             }
             Text {

@@ -2,6 +2,8 @@ package vn.abook.player.ui.music.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +26,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.json.JSONObject
 import vn.abook.player.MusicLibrary
+import vn.abook.player.MusicCredits
+import vn.abook.player.ui.components.DownloadRing
+import vn.abook.player.ui.components.LinearProgress
+import vn.abook.player.ui.components.OutlineButton
+import vn.abook.player.ui.components.LucideIcon
+import vn.abook.player.ui.components.LucidePaths
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.S
 import vn.abook.player.ui.components.BasicText
 import vn.abook.player.ui.components.Caption
@@ -76,13 +85,20 @@ fun TrackSheet(
         val why = MusicLibrary.why(scene, track.emotions)
         if (why != null) {
             Section(S.s_vi_sao_bai_nay_f681e004)
-            Caption(S.s_khop_0_de400d49(MusicLibrary.percent(why.fit)), Modifier.testTag("track_fit"))
+            if (why.matches.isNotEmpty()) Caption(S.s_doan_va_bai_cung_0_music(index.emotionLabel(why.matches.first().id)), Modifier.testTag("track_fit"))
+            Row(horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
+                Legend(S.s_doan_nay_82d01522, colors.text3)
+                Legend(S.s_bai_nay_d9683a01, colors.accent)
+            }
             Spacer(Modifier.height(Dim.s8))
             for (match in why.matches) {
-                BasicText(index.emotionLabel(match.id), style = Abook.type.label)
-                Bar(S.s_doan_nay_82d01522, match.scene)
-                Bar(S.s_bai_nay_d9683a01, match.track)
-                Spacer(Modifier.height(Dim.s8))
+                Row(Modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
+                    BasicText(index.emotionLabel(match.id), style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(104.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        LinearProgress(Modifier.height(4.dp), ink = colors.text3) { match.scene.toFloat() }
+                        LinearProgress(Modifier.height(4.dp)) { match.track.toFloat() }
+                    }
+                }
             }
         }
         val ranked = track.rankedEmotions()
@@ -90,7 +106,7 @@ fun TrackSheet(
             Section(S.s_cam_xuc_05c1aee0)
             for ((id, score) in ranked) Bar(index.emotionLabel(id), score, Modifier.testTag("emotion_$id"))
         }
-        Section("")
+        Section(S.s_thong_tin_4aa16c92)
         Facts(track, index)
         Credit(track.info)
     }
@@ -103,10 +119,6 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
     val downloaded = link in ui.downloaded
     val saved = link in ui.savedSet
     Column {
-        if (pick != null) {
-            PrimaryButton(S.s_dung_7927ca4e, { dismiss(); pick.onUse(link) }, Modifier.fillMaxWidth().testTag("track_use"))
-            Spacer(Modifier.height(Dim.s8))
-        }
         if (playing != null) {
             if (saved) QuietButton(S.s_bo_luu_2fd51455, { state.unsave(listOf(link)) }, "track_unsave")
             else PrimaryButton(S.s_luu_e91f26c0, { state.save(listOf(link)) }, Modifier.fillMaxWidth().testTag("track_save"))
@@ -114,16 +126,25 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
             playing.onSwap?.let { swap -> QuietButton(S.s_doi_bai_7b81488f, { dismiss(); swap() }, "track_swap") }
             return@Column
         }
-        val canPlay = ui.online || downloaded
-        if (canPlay) {
-            QuietButton(if (ui.previewing == link) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065, { state.togglePreview(link) }, "track_preview")
-        }
-        when {
-            load != null -> QuietButton(listOfNotNull(S.s_huy_tai_1a9ff73d, load.percent?.let { "$it %" }).dotJoined(), { state.cancel(listOf(link)) }, "track_cancel")
-            downloaded -> DangerButton(S.s_xoa_ban_tai_4b461f4a, { state.forget(link) }, "track_forget", Modifier.fillMaxWidth())
-            else -> QuietButton(if (link in ui.failed) S.s_tai_tiep_1efbd854 else S.s_tai_ve_9b5bdb44, { state.save(listOf(link)) }, "track_download")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8)) {
+            PrimaryButton(
+                if (ui.previewing == link) S.s_dung_nghe_f20939be else S.s_nghe_thu_fa024065,
+                { state.togglePreview(link) }, Modifier.weight(1f).testTag("track_preview"), enabled = ui.online || downloaded, compact = true,
+                icon = { ink -> LucideIcon(if (ui.previewing == link) LucidePaths.SQUARE else LucidePaths.PLAY, ink) },
+            )
+            OutlineButton(
+                when { load != null -> S.s_huy_tai_1a9ff73d; downloaded -> S.s_xoa_ban_tai_4b461f4a; link in ui.failed -> S.s_tai_tiep_1efbd854; else -> S.s_tai_ve_9b5bdb44 },
+                { when { load != null -> state.cancel(listOf(link)); downloaded -> state.forget(link); else -> state.save(listOf(link)) } },
+                Modifier.weight(1f).testTag(when { load != null -> "track_cancel"; downloaded -> "track_forget"; else -> "track_download" }),
+                enabled = load != null || downloaded || ui.online,
+                icon = { ink -> if (load != null) DownloadRing(load.percent, S.s_dang_tai_0_e9a97892(load.percent ?: 0)) else LucideIcon(if (downloaded) LucidePaths.TRASH_2 else LucidePaths.DOWNLOAD, ink) },
+            )
         }
         if (link in ui.failed) Caption(S.s_chua_tai_xong_b257419d, Modifier.testTag("track_failed"), color = Abook.colors.danger)
+        if (pick != null) {
+            Spacer(Modifier.height(Dim.s8))
+            QuietButton(S.s_dung_7927ca4e, { dismiss(); pick.onUse(link) }, "track_use")
+        }
         if (pick?.onBan != null) {
             QuietButton(S.s_khong_tu_chon_bai_nay_ab3af35f, { dismiss(); pick.onBan.invoke(link) }, "track_ban")
         }
@@ -149,10 +170,8 @@ private fun Bar(label: String, score: Double, modifier: Modifier = Modifier) {
     val fraction = score.coerceIn(0.0, 1.0).toFloat()
     Row(modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
         BasicText(label, style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(104.dp))
-        Box(Modifier.weight(1f).height(8.dp).insetSurface(colors, CircleShape)) {
-            if (fraction > 0f) Box(Modifier.fillMaxWidth(fraction).height(8.dp).clip(CircleShape).background(colors.accent))
-        }
-        BasicText("${MusicLibrary.percent(score)} %", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(48.dp).padding(start = Dim.s8))
+        LinearProgress(Modifier.weight(1f).height(6.dp)) { fraction }
+        ClockLabel("${MusicLibrary.percent(score)} %", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(48.dp).padding(start = Dim.s8))
     }
 }
 
@@ -167,14 +186,28 @@ private fun Facts(track: MusicLibrary.Track, index: LibraryIndex) {
         track.style.takeIf { it.isNotEmpty() }?.let { S.s_phong_cach_d80ae8d9 to index.styleLabel(it) },
         track.duration?.let { S.s_do_dai_5e055f59 to Fmt.clock(it) },
         if (vocals >= 0.5) S.s_co_loi_4b381f10 to null else null,
-        info.optString("license").takeIf { it.isNotEmpty() && !info.isNull("license") }?.let { S.s_giay_phep_b609ade1 to it.uppercase() },
+        info.optString("license").takeIf { it.isNotEmpty() && !info.isNull("license") }?.let { S.s_giay_phep_b609ade1 to MusicCredits.licenseLabel(it, info.optString("licenseUrl")) },
         playlists.takeIf { it.isNotEmpty() }?.let { S.s_co_trong_1312af9f to it.joinToString(", ") },
     )
-    for ((label, value) in rows) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 32.dp).testTag("fact"), verticalAlignment = Alignment.Top) {
-            BasicText(label, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.width(120.dp))
-            if (value != null) BasicText(value, style = Abook.type.body, modifier = Modifier.weight(1f)) else CheckIcon(Abook.colors.success)
-        }
+    for ((label, value) in rows) Fact(label) {
+        if (value != null) BasicText(value, style = Abook.type.bodySmall) else CheckIcon(Abook.colors.success)
+    }
+}
+
+@Composable
+private fun Fact(label: String, content: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Dim.s4).testTag("fact"), verticalAlignment = Alignment.Top) {
+        BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.width(104.dp))
+        Column(Modifier.weight(1f)) { content() }
+    }
+}
+
+@Composable
+private fun Legend(label: String, ink: androidx.compose.ui.graphics.Color) {
+    Row(Modifier.padding(vertical = Dim.s4), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(16.dp).height(4.dp).background(ink))
+        Spacer(Modifier.width(Dim.s4))
+        Caption(label)
     }
 }
 
@@ -183,12 +216,10 @@ private fun Credit(info: JSONObject) {
     val uri = LocalUriHandler.current
     val attribution = info.optString("attribution").takeIf { it.isNotEmpty() && !info.isNull("attribution") }
     val landing = info.optString("landing").takeIf { it.startsWith("https://") }
-    if (attribution == null && landing == null) return
-    Spacer(Modifier.height(Dim.s16))
-    if (attribution != null) {
-        BasicText(S.s_ghi_cong_9c291f64, style = Abook.type.bodyStrong)
-        Spacer(Modifier.height(Dim.s4))
-        BasicText(attribution, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.testTag("track_credit"))
+    if (attribution != null) Fact(S.s_ghi_cong_9c291f64) {
+        BasicText(attribution, style = Abook.type.bodySmall, modifier = Modifier.testTag("track_credit"))
     }
-    if (landing != null) TextAction(S.s_mo_trang_nguon_af980960, { runCatching { uri.openUri(landing) } }, "track_source", align = Alignment.CenterStart)
+    if (landing != null) Fact(S.s_nguon_c76d57b3) {
+        TextAction(S.s_mo_trang_nguon_af980960, { runCatching { uri.openUri(landing) } }, "track_source", align = Alignment.CenterStart)
+    }
 }

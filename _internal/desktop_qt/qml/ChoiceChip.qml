@@ -6,6 +6,7 @@ Interactive {
     id: root
     property string text: ""
     property bool selected: false
+    property color normalFill: Theme.sunken
     // Full-width is reserved for a single-column menu, never a filter segment.
     property string fullWidthReason: ""
     implicitHeight: 36
@@ -14,7 +15,7 @@ Interactive {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusControl
-        color: root.selected ? Theme.accentSoft : Theme.sunken
+        color: root.selected ? Theme.accentSoft : root.normalFill
         Behavior on color { ColorAnimation { duration: Theme.motionFast } }
         Rectangle {
             anchors.fill: parent

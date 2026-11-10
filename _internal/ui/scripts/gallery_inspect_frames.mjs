@@ -8,6 +8,7 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     if (!box) continue;
     const s = css(el);
     if (el.matches('button:not([role="switch"]):not([role="radio"]):not([role="checkbox"])')
+      && !(el.dataset.variant === 'outline' && el.closest('[data-action-pair]')?.querySelector('[data-variant="primary"]'))
       && ['Top','Right','Bottom','Left'].every(side => Number.parseFloat(s[`border${side}Width`]) > 0 && s[`border${side}Style`] !== 'none' && !transparent(s[`border${side}Color`])))
       add('SIBLING CONSISTENCY', el, el.textContent, [box], { metric: 'outlined-button', reason: 'Actions use plain text or a fill; borders belong to inputs' });
     if (el.matches('select[data-select-layout="column"]')) {

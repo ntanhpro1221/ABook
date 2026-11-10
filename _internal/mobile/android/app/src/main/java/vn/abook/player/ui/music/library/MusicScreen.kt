@@ -73,6 +73,7 @@ import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.insetSurface
+import vn.abook.player.ui.theme.hover
 
 /** Hai phần của màn Nhạc: bài đã lưu (+ "Nhạc của tôi") và cả kho. */
 enum class MusicPart(val label: String, val tag: String) {
@@ -285,8 +286,7 @@ private fun Chip(label: String, on: Boolean, tag: String, chevron: Boolean, onCl
     val shape = RoundedCornerShape(Dim.radiusControl)
     Box(Modifier.heightIn(min = Dim.touch).pressable(onClick = onClick).testTag(tag), contentAlignment = Alignment.Center) {
         Row(
-            Modifier.height(36.dp).clip(shape).background(if (on) colors.accentSoft else colors.panel)
-                .border(1.dp, if (on) colors.accent else colors.controlLine, shape).padding(horizontal = Dim.s12),
+            Modifier.height(36.dp).clip(shape).background(if (on) colors.accentSoft else colors.hover).padding(horizontal = Dim.s12),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (on && !chevron) {
@@ -318,59 +318,6 @@ private fun ChipOptions(title: String, options: List<Label>, value: String, onPi
             }
         }
     }
-}
-
-/**
- * Một dòng bài: nút nghe thử · tên (xuống dòng, không cắt) + người sáng tác · thời lượng · phong cách · trạng thái tải (dấu tích / phần trăm / lỗi).
- * Chế độ chọn: thêm nút "Dùng" cuối dòng. Mất mạng: nút nghe thử của bài chưa tải mờ đi.
- */
-@Composable
-fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick: PickTarget? = null, onOpen: () -> Unit) {
-    val colors = Abook.colors
-    val playing = ui.previewing == track.link
-    val canPlay = ui.online || track.link in ui.downloaded
-    val load = ui.active[track.link]
-    val failed = track.link in ui.failed
-    val hint = listOf(track.creator, track.duration?.let { Fmt.clock(it) }, ui.index?.styleLabel(track.style)?.takeIf { track.style.isNotEmpty() }).dotJoined()
-    ListItem(
-        track.title.ifEmpty { track.link.substringAfterLast('/') },
-        onClick = onOpen,
-        tag = "track_${track.link.hashCode()}",
-        hint = hint,
-        leadingWidth = 40.dp,
-        leading = {
-            Box(
-                (if (playing) Modifier.size(40.dp).clip(CircleShape).background(colors.accentSoft) else Modifier.size(40.dp).insetSurface(colors, CircleShape))
-                    .then(if (canPlay) Modifier.pressable { state.togglePreview(track.link) } else Modifier)
-                    .semantics { contentDescription = if (playing) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065 }
-                    .testTag("preview_${track.link.hashCode()}"),
-                contentAlignment = Alignment.Center,
-            ) {
-                val tint = when {
-                    !canPlay -> colors.text3.copy(alpha = 0.5f)
-                    playing -> colors.accentText
-                    else -> colors.text
-                }
-                LucideIcon(if (playing) LucidePaths.SQUARE else LucidePaths.PLAY, tint, size = 18.dp)
-            }
-        },
-        trailing = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                when {
-                    load != null -> Caption(
-                        load.percent?.let { "$it %" } ?: S.s_dang_tai_465b1987,
-                        Modifier.semantics { contentDescription = S.s_dang_tai_0_e9a97892(load.percent ?: 0) }.testTag("track_loading"), ticking = true,
-                    )
-                    failed -> LucideIcon(LucidePaths.CIRCLE_ALERT, colors.danger, size = 18.dp)
-                    track.link in ui.downloaded -> LucideIcon(LucidePaths.CIRCLE_CHECK, colors.success, size = 18.dp)
-                }
-                if (pick != null) {
-                    Spacer(Modifier.width(Dim.s8))
-                    TextAction(S.s_dung_7927ca4e, { pick.onUse(track.link) }, "use_${track.link.hashCode()}")
-                }
-            }
-        },
-    )
 }
 
 /** Thanh "Đang nghe thử · tên · ■" ở đáy màn (nổi trên danh sách). */

@@ -164,6 +164,10 @@ Item {
                     tryVerify(function() { return detail.detail !== null })
                     tryVerify(function() { return detail.shown === 1 }, 3000, "tấm chi tiết mở hẳn trước khi chụp")
                     shot("music_track_" + w)
+                    detail.scroll.contentY = (detail.scroll.contentHeight - detail.scroll.height) / 2
+                    shot("music_track_middle_" + w)
+                    detail.scroll.contentY = detail.scroll.contentHeight - detail.scroll.height
+                    shot("music_track_bottom_" + w)
                     detail.open = false
                     pick.destroy()
                     test.downloading = [track(1).link, track(2).link]

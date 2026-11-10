@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { openExternal } from "../shared/openExternal";
 import { SectionHeading } from "../shared/SectionHeading";
 import { S } from "../shared/strings.generated";
-import { Button, ContentSkeleton, InlineError, Sheet } from "../shared/ui";
+import { ActionPair, Button, ContentSkeleton, InlineError, Progress, Sheet } from "../shared/ui";
+import { DotJoin } from "../shared/DotJoin";
 import { formatClock, licenseLabel, musicCreditText } from "../shared/format";
 import { labelOf, loadOf, useDownloads, useLibraryMeta, useSaveTracks, useTrackDetail, type TrackDetail } from "./library";
 import type { LibraryPreview } from "./preview";
@@ -23,9 +24,7 @@ function Bar({ label, value, tone = "accent" }: { label: ReactNode; value: numbe
   return (
     <div className="grid grid-cols-[minmax(6.5rem,9rem)_1fr_2.75rem] items-center gap-3 text-sm">
       <span className="min-w-0 truncate text-fg-2">{label}</span>
-      <span className="h-1.5 overflow-hidden rounded-full bg-sunken" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={value} aria-label={typeof label === "string" ? label : undefined}>
-        <span className={tone === "accent" ? "block h-full rounded-full bg-accent" : "block h-full rounded-full bg-fg-2"} style={{ width: `${value}%` }} />
-      </span>
+      <Progress value={value / 100} size="sm" tone={tone} label={typeof label === "string" ? label : S.s_cam_xuc_05c1aee0} />
       <span className="text-right tabular-nums text-fg-2">{value} %</span>
     </div>
   );
@@ -121,38 +120,43 @@ function TrackBody({
           {playing.onSwap && <Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button>}
         </div>
       ) : (
-      <div className="flex flex-wrap gap-2">
-        {onUse && <Button variant="primary" icon={Check} loading={busy} onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
-        <Button variant="ghost" icon={previewing ? Square : Play} aria-pressed={previewing} onClick={() => preview.toggle(track)}>
+      <div className="space-y-2">
+      <ActionPair primary={
+        <Button icon={previewing ? Square : Play} aria-pressed={previewing} onClick={() => preview.toggle(track)}>
           {previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         </Button>
-        {load.kind === "loading" ? (
-          <Button variant="ghost" icon={X} onClick={() => unsave.mutate([track.link])}>
+        } secondary={load.kind === "loading" ? (
+          <Button icon={X} onClick={() => unsave.mutate([track.link])}>
             {S.s_huy_tai_1a9ff73d}
             <span className="tabular-nums text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : `${load.percent} %`}</span>
           </Button>
         ) : track.saved || load.kind === "done" ? (
-          <Button variant="ghost" icon={Trash2} loading={unsave.isPending} onClick={() => unsave.mutate([track.link])}>{S.s_xoa_ban_tai_4b461f4a}</Button>
+          <Button icon={Trash2} loading={unsave.isPending} onClick={() => unsave.mutate([track.link])}>{S.s_xoa_ban_tai_4b461f4a}</Button>
         ) : (
-          <Button variant="ghost" icon={Download} loading={save.isPending} onClick={() => save.mutate([track.link])}>
+          <Button icon={Download} loading={save.isPending} onClick={() => save.mutate([track.link])}>
             {load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44}
           </Button>
-        )}
-        {onBan && <Button variant="ghost" icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_bai_nay_ab3af35f}</Button>}
+        )} />
+        {onUse && <Button icon={Check} loading={busy} onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
+        {onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_bai_nay_ab3af35f}</Button>}
       </div>
       )}
       {track.why && track.why.matches.length > 0 && (
         <section aria-labelledby="track-why">
-          <div className="flex items-baseline justify-between gap-3">
-            <SectionHeading as="h3" id="track-why">{S.s_vi_sao_bai_nay_f681e004}</SectionHeading>
-            <span className="text-sm text-fg-2">{S.s_khop_0_de400d49(percent(track.why.fit))}</span>
+          <SectionHeading as="h3" id="track-why">{S.s_vi_sao_bai_nay_f681e004}</SectionHeading>
+          <p className="text-sm text-fg-2">{S.s_doan_va_bai_cung_0_music(labelOf(emotions, track.why.matches[0].id))}</p>
+          <div className="mt-3 flex gap-4 text-xs text-fg-2" aria-hidden>
+            <span className="flex items-center gap-1.5"><span className="h-1 w-4 rounded-full bg-fg-3" />{S.s_doan_nay_82d01522}</span>
+            <span className="flex items-center gap-1.5"><span className="h-1 w-4 rounded-full bg-accent" />{S.s_bai_nay_d9683a01}</span>
           </div>
-          <ul className="mt-3 space-y-3">
+          <ul className="mt-2 space-y-2">
             {track.why.matches.map((match) => (
-              <li key={match.id} className="space-y-1.5">
-                <p className="text-sm font-medium">{labelOf(emotions, match.id)}</p>
-                <Bar label={S.s_doan_nay_82d01522} value={percent(match.scene)} tone="muted" />
-                <Bar label={S.s_bai_nay_d9683a01} value={percent(match.track)} />
+              <li key={match.id} className="grid grid-cols-[minmax(6.5rem,9rem)_1fr] items-center gap-3 text-sm">
+                <span className="text-fg-2">{labelOf(emotions, match.id)}</span>
+                <div className="space-y-1">
+                  <Progress size="xs" tone="muted" label={`${labelOf(emotions, match.id)}: ${S.s_doan_nay_82d01522}`} value={match.scene} />
+                  <Progress size="xs" label={`${labelOf(emotions, match.id)}: ${S.s_bai_nay_d9683a01}`} value={match.track} />
+                </div>
               </li>
             ))}
           </ul>
@@ -164,26 +168,24 @@ function TrackBody({
           {track.emotions.map((item) => <Bar key={item.id} label={labelOf(emotions, item.id)} value={percent(item.score)} />)}
         </div>
       </section>
-      <dl className="divide-y divide-line">
+      <section aria-labelledby="track-info">
+      <SectionHeading as="h3" id="track-info">{S.s_thong_tin_4aa16c92}</SectionHeading>
+      <dl>
         {energy !== null && <Fact label={S.s_nang_luong_1b9cc9af}>{energy} %</Fact>}
         {typeof track.bpm === "number" && track.bpm > 0 && <Fact label={S.s_nhip_8a75919d}>{S.s_0_nhip_phut_3c154e09(Math.round(track.bpm))}</Fact>}
         {track.style && <Fact label={S.s_phong_cach_d80ae8d9}>{labelOf(styles, track.style)}</Fact>}
         {typeof track.duration === "number" && <Fact label={S.s_do_dai_5e055f59}>{formatClock(track.duration)}</Fact>}
         {(track.vocals ?? 0) >= 0.5 && <Fact label={S.s_co_loi_4b381f10}><Check aria-hidden className="ml-auto size-4" /></Fact>}
         {license && <Fact label={S.s_giay_phep_b609ade1}>{license}</Fact>}
-        {track.playlists.length > 0 && <Fact label={S.s_co_trong_1312af9f}>{track.playlists.map((item) => item.name).join(" · ")}</Fact>}
-      </dl>
-      {credit && (
-        <section aria-labelledby="track-credit" className="space-y-2">
-          <SectionHeading as="h3" id="track-credit">{S.s_ghi_cong_9c291f64}</SectionHeading>
-          <p className="select-text text-sm text-fg-2 [overflow-wrap:anywhere]">{credit}</p>
-          {track.landing && (
+        {track.playlists.length > 0 && <Fact label={S.s_co_trong_1312af9f}><DotJoin parts={track.playlists.map((item) => item.name)} /></Fact>}
+        {credit && <Fact label={S.s_ghi_cong_9c291f64}>{credit}</Fact>}
+        {track.landing && <Fact label={S.s_nguon_c76d57b3}>
             <a href={track.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(track.landing!, event)} className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              <ExternalLink className="size-4" />{S.s_mo_trang_nguon_af980960}
+              <ExternalLink aria-hidden className="size-4" />{S.s_mo_trang_nguon_af980960}
             </a>
-          )}
-        </section>
-      )}
+        </Fact>}
+      </dl>
+      </section>
     </div>
   );
 }

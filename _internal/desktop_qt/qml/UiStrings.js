@@ -1123,7 +1123,6 @@ var s_dang_phan_tich_nhac_da_them_a2a6a13b = "Đang phân tích nhạc đã thê
 var s_dang_phat_e3baf7da = "đang phát";
 var s_dang_phat_u00a0_u00a0_6c88d17d = "Đang phát · ";
 var s_dang_sua_thiet_lap_cua_e2a5f0e6 = "Đang sửa thiết lập của ";
-function s_dang_tai_0_e9a97892(p0) { return "Đang tải " + String(p0) + " %"; }
 var s_dang_tai_1fd8b1ef = "đang tải";
 var s_dang_tai_42d77f3a = "Đang tải…";
 var s_dang_tai_4568372a = "Đang tải ";
@@ -1251,6 +1250,7 @@ var s_doan_nay_van_do_01c8f28f = "Đoạn này vẫn do ";
 var s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d = "Đoạn này vẫn kể ở ngôi thứ ba";
 var s_doan_thieu_nhac_vi_chua_tai_duoc_bai_b1268efd = " đoạn thiếu nhạc vì chưa tải được bài";
 var s_doan_trang_61fdcaa5 = "Đoan Trang";
+function s_doan_va_bai_cung_0_music(p0) { return "Đoạn này " + String(p0) + ", bài cũng " + String(p0) + "."; }
 function s_doc_0_2e6ee219(p0) { return "Đọc " + String(p0); }
 function s_doc_0_chua_co_audio_baeeb512(p0) { return "Đọc " + String(p0) + " (chưa có audio)"; }
 var s_doc_3edddc37 = "Đọc “";
@@ -1749,7 +1749,6 @@ var s_khong_tim_thay_sach_nay_0836038e = "Không tìm thấy sách này";
 var s_khong_tu_chon_02ae1742 = "Không tự chọn";
 var s_khong_tu_chon_bai_nay_ab3af35f = "Không tự chọn bài này";
 var s_khong_tu_lui_8aec206c = "Không tự lùi";
-function s_khop_0_de400d49(p0) { return "Khớp " + String(p0) + " %"; }
 var s_khop_4cfe8500 = "khớp ";
 var s_khuyen_dung_b1d3dec8 = "Khuyên dùng";
 var s_kich_ban_602e5f27 = "Kịch bản";
@@ -2113,6 +2112,7 @@ var s_nguoi_nghi_ce1afa0f = "Người nghĩ";
 var s_nguoi_noi_9620707b = "Người nói";
 var s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7 = "Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả";
 var s_nguoi_trong_mot_canh_516e46e7 = " người trong một cảnh";
+var s_nguon_c76d57b3 = "Nguồn";
 var s_nguon_truyen_ddecd9bb = "Nguồn truyện";
 var s_nhac_0e4413e9 = "Nhạc";
 var s_nhac_cua_ban_khong_co_thong_tin_giay_phep_2d53a0cc = " - nhạc của bạn, không có thông tin giấy phép";
@@ -2523,6 +2523,7 @@ var s_thoi_gian_lam_ba044b40 = "Thời gian làm";
 var s_thoi_gian_lam_tham_khao_95d55912 = "Thời gian làm (tham khảo)";
 var s_thoi_gian_tham_khao_5c7b5a20 = " Thời gian tham khảo: ";
 var s_thong_bao_a9b656f5 = "Thông báo";
+var s_thong_tin_4aa16c92 = "Thông tin";
 var s_thu_77e1c0d9 = "Thử";
 var s_thu_am_1382b7bf = "thu âm";
 var s_thu_am_db588c2e = "Thu âm";

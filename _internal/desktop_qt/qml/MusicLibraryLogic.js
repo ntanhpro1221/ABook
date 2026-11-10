@@ -8,6 +8,17 @@ var LENGTHS = ["short", "mid", "long"]
 var KEYS = ["q", "playlist", "style", "emotion", "tempo", "length"]
 var PREVIEW_SECONDS = 30
 
+// Render the catalog's license code and version, as MusicCredits/format.licenseLabel do on phone/web.
+function licenseLabel(code, url) {
+    const match = String(url || "").match(/creativecommons\.org\/(licenses|publicdomain)\/([a-z-]+)\/(\d+(?:\.\d+)?)/i)
+    if (match) {
+        if (match[1].toLowerCase() === "licenses") return "CC " + match[2].toUpperCase() + " " + match[3]
+        if (match[2].toLowerCase() === "zero") return "CC0 " + match[3]
+    }
+    const raw = String(code || "").trim()
+    return /^by(-(nc|nd|sa))*$/i.test(raw) ? "CC " + raw.toUpperCase() : raw.toLowerCase() === "cc0" ? "CC0" : raw
+}
+
 function noFilters() {
     return { q: "", playlist: "", style: "", emotion: "", tempo: "", length: "", downloaded: false }
 }

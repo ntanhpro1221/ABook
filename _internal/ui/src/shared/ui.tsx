@@ -3,8 +3,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactNode, Ref, SelectHTMLAttributes } from "react";
+import { cloneElement, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactElement, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
 import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
@@ -32,12 +32,13 @@ export function SelectionMark({ selected, className }: { selected: boolean; clas
 
 // ---- Nút --------------------------------------------------------------------------------------------------
 
-type Variant = "primary" | "ghost" | "danger";
+type Variant = "primary" | "ghost" | "danger" | "outline";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent-hover [box-shadow:inset_0_1px_0_var(--button-shine)]",
   ghost: "text-accent-text hover:bg-hover",
+  outline: "border border-control-line text-fg hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger hover:text-danger-ink",
 };
 
@@ -54,6 +55,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   /** React 19: `ref` đi như một prop thường - đủ để chỗ gọi đặt tiêu điểm về nút (vd TemplateBar sau khi lưu mẫu). */
   ref?: Ref<HTMLButtonElement>;
+}
+
+/** A primary action paired with a secondary outline: one row, equal height, one primary. */
+export function ActionPair({ primary, secondary }: { primary: ReactElement<ButtonProps>; secondary: ReactElement<ButtonProps> }) {
+  return <div data-action-pair className="grid grid-cols-2 items-stretch gap-2">
+    {cloneElement(primary, { variant: "primary" })}
+    {cloneElement(secondary, { variant: "outline" })}
+  </div>;
 }
 
 /** Nút đang chạy việc (`loading`): KHÔNG `disabled` - nút disabled mất tiêu điểm, người đi bằng bàn phím / trình đọc màn hình rơi về đầu trang

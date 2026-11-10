@@ -8,11 +8,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.text.TextLayoutResult
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +34,8 @@ import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.MusicLibrary
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
+import vn.abook.player.ui.components.hasOrphanLastLine
+import vn.abook.player.ui.components.separatorsAtLineEnd
 import vn.abook.player.ui.createAndroidComposeRule
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
@@ -188,7 +196,51 @@ class MusicLibraryScreenTest {
     @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
     fun libraryLargeText() {
         show()
+        checkRowText()
         shot("music_library_font130_light")
+    }
+
+    /** Inspect the real TextWrap layouts rather than inferring line breaks from screenshots. */
+    private fun checkRowText() {
+        for ((tag, maxLines) in listOf("music_row_title" to 2, "music_row_creator" to 1, "music_row_duration" to 1)) {
+            val nodes = rule.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes()
+            assertTrue("no measured $tag", nodes.isNotEmpty())
+            for (node in nodes) {
+                val measured = ArrayList<TextLayoutResult>()
+                node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(measured)
+                val layout = measured.single()
+                assertTrue("$tag: ${layout.layoutInput.text}", layout.lineCount <= maxLines)
+                if (tag != "music_row_title") {
+                    val text = layout.layoutInput.text.text
+                    val ends = (0 until layout.lineCount).map { layout.getLineEnd(it) }
+                    assertTrue("separator at a metadata break: $text", separatorsAtLineEnd(text, ends).isEmpty())
+                    assertTrue("orphan in metadata: $text", !hasOrphanLastLine(listOf(text)))
+                }
+            }
+        }
+        val columns = rule.onAllNodesWithTag("music_row_duration", useUnmergedTree = true).fetchSemanticsNodes()
+        assertTrue("metadata must be measured", columns.isNotEmpty())
+        val downloads = rule.onAllNodes(SemanticsMatcher("download column") {
+            it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("download_") == true
+        }, useUnmergedTree = true).fetchSemanticsNodes()
+        assertTrue("every measured row has a download status", downloads.size >= columns.size)
+        val right = downloads.filter { it.boundsInRoot.width > 0f && it.boundsInRoot.height > 0f }.map { it.boundsInRoot.right }
+        assertTrue("no visible download statuses", right.isNotEmpty())
+        assertTrue("download column moved: $right", right.max() - right.min() < 1f)
+        println("MUSIC_ROW_TEXT: measured ${columns.size} metadata rows; creator/duration <= 1 line; title <= 2 lines; separator detector clean; download column spread=${right.max() - right.min()} px")
+    }
+
+    @Test fun rowTextAt360dp100Percent() { show(); checkRowText() }
+
+    @Test
+    fun rowDownloadsAndCancellationUseTheExistingQueue() {
+        show()
+        rule.onNodeWithTag("music_list").performScrollToNode(hasTestTag("download_${link(1).hashCode()}"))
+        tap("download_${link(1).hashCode()}")
+        assertTrue(link(1) in state.ui.value.downloaded)
+        rule.runOnUiThread { stateWithActive(link(1), 44) }
+        tap("download_${link(1).hashCode()}")
+        assertTrue(link(1) !in state.ui.value.active)
     }
 
     private fun pick(dark: Boolean) {
@@ -206,6 +258,11 @@ class MusicLibraryScreenTest {
         rule.onNodeWithTag("track_title").assertIsDisplayed()
         rule.onNodeWithTag("track_fit").assertIsDisplayed()
         shot("music_track_${theme(dark)}")
+        rule.onNodeWithTag("emotion_anger").performScrollTo()
+        shot("music_track_middle_${theme(dark)}")
+        rule.onNodeWithTag("track_source").performScrollTo()
+        rule.onNodeWithTag("track_credit").assertIsDisplayed()
+        shot("music_track_bottom_${theme(dark)}")
     }
 
     @Test fun detailLight() = detail(false)

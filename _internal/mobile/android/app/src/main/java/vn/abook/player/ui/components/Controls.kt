@@ -4,6 +4,12 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -186,5 +192,18 @@ fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = 
                 drawLucide(LucidePaths.CHEVRON_DOWN, color, unit)
             }
         }
+    }
+}
+
+@Composable
+fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
+    val colors = Abook.colors
+    Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+            val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
+            drawArc(colors.line, 0f, 360f, false, style = stroke)
+            drawArc(colors.accent, -90f, (percent ?: 12) * 3.6f, false, style = stroke)
+        }
+        if (percent != null) ClockLabel("$percent %", style = Abook.type.caption.copy(color = colors.text2))
     }
 }
