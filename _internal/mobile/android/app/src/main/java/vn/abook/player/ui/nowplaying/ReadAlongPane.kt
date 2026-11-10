@@ -139,7 +139,8 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
+                state = list, modifier = Modifier.fillMaxSize().padding(bottom = Dim.s48).testTag("reading_scroll")
+                    .drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
                     .fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 // Đáy chừa đủ để cả dòng cuối vẫn lên được tới vùng đọc, không kẹt ở nửa dưới màn.
                 contentPadding = PaddingValues(start = InkBleed, end = InkBleed, top = 12.dp, bottom = third * 2), verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -196,8 +197,9 @@ fun ReadAlongPane(
                 }
             }
         }
-        // A pill above the text, never bare words over it; slides through a clipped slot like "Về chỗ cũ".
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp).clipToBounds()) {
+        // The fixed dock owns its space; the text viewport ends above it.
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(Dim.s48).background(Abook.colors.bg)
+            .testTag("reading_dock").clipToBounds(), contentAlignment = Alignment.Center) {
             AnimatedVisibility(showJump,
                 enter = slideInVertically(tween(MotionMs.MEDIUM)) { it },
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {

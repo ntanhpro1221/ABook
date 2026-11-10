@@ -1753,8 +1753,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
     return <MotionRegion as="p" className="p-10 text-center text-sm text-fg-2">{error ? S.s_chua_tai_duoc_chu_ban_thu_lai_02f8a145 : S.s_chuong_chua_co_chu_ban_thu_lai_sau_c5852a5c}</MotionRegion>;
   }
   return (
-    <MotionRegion as="div" className="relative h-full">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
+    <MotionRegion as="div" className="relative flex h-full flex-col">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
         <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải S.s_copy_815d3b923a95. */}
           {!script.timed && current?.state !== "text" && (
@@ -1784,8 +1784,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
       {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
-      <MotionRegion motionKey="floating" className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-12 h-6 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
+      <MotionRegion motionKey="floating" data-reading-dock className="flex h-12 shrink-0 flex-col items-center justify-center bg-bg">
         <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </MotionRegion>
