@@ -4,8 +4,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
-import { Link } from "react-router";
+import { ArrowLeft, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -23,6 +22,7 @@ import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError 
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { OpenMusicRow } from "@/music/OpenMusicRow";
+import { BrowseLibraryLink } from "@/music/BrowseLibraryLink";
 import { SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
@@ -241,9 +241,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
             )}
             {/* Cuối "Đổi bài": cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
             {swapping === cue.key && (
-              <Link to={`/music?pick=${encodeURIComponent(book.id)}&scene=${encodeURIComponent(cue.key)}`} className="inline-flex min-h-10 items-center gap-1 px-3 text-sm font-medium text-accent-text">
-                {S.s_xem_ca_kho_fa30b353}<ChevronRight aria-hidden className="size-4" />
-              </Link>
+              <BrowseLibraryLink bookId={book.id} scene={cue.key} className="px-3" />
             )}
           </li>
         ))}

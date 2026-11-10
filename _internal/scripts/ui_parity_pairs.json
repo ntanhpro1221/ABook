@@ -1733,6 +1733,7 @@
         "listen/PlayerViews.tsx",
         "listen/labels.ts",
         "listen/EditBook.tsx",
+        "music/BrowseLibraryLink.tsx",
         "shared/format.ts",
         "shared/musicLevels.ts",
         "studio/musicScenes.ts"

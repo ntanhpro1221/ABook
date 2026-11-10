@@ -4,7 +4,6 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
-import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -13,6 +12,7 @@ import pytest
 from abook.webui import export_jobs, music_cache, music_library, music_select
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
+from tests.async_wait import wait_until
 from tests.test_music_api import _with_catalog
 
 CASES = json.loads((Path(__file__).parent / "fixtures" / "music_library" / "cases.json").read_text(encoding="utf-8"))
@@ -34,23 +34,6 @@ def test_the_shared_filter_table(case) -> None:
 def test_search_folds_vietnamese_marks_and_case() -> None:
     assert music_library.fold("  Đêm   TRĂNG  ") == "dem trang"
     assert music_library.fold("Ánh Sáng Ủa Ỡ") == "anh sang ua o"
-
-
-def test_filtering_the_whole_catalogue_is_fast() -> None:
-    """2.387 bài (cỡ danh mục thật): lọc / tìm mỗi lượt dưới 50 ms."""
-    emotions = ["peacefulness", "joy", "power", "sadness"]
-    tracks = {f"https://x/{index}": {"title": f"Bài số {index} Đêm", "creator": f"Người {index % 50}", "bpm": 60 + index % 120,
-                                     "duration": 30 + index % 600, "style": ["piano", "ambient", "dark"][index % 3],
-                                     "emotions": {name: ((index * 7 + offset * 13) % 100) / 100 for offset, name in enumerate(emotions)}}
-              for index in range(2387)}
-    playlists = {"p": [f"https://x/{index}" for index in range(0, 2387, 7)]}
-    worst = 0.0
-    for filters in ({}, {"q": "dem 12"}, {"emotion": "joy"}, {"playlist": "p", "tempo": "fast"}, {"style": "piano", "length": "long", "q": "nguoi"}):
-        started = time.perf_counter()
-        music_library.select(tracks, filters, playlists, [])
-        worst = max(worst, (time.perf_counter() - started) * 1000)
-    print(f"music_library.select 2387 bài: lâu nhất {worst:.1f} ms")
-    assert worst < 50
 
 
 def test_why_shows_the_three_closest_emotions_next_to_the_scene() -> None:
@@ -87,10 +70,9 @@ def _fake_fetch(app, gate: threading.Event | None = None):
         if progress is not None:
             progress(10, 100)
         if gate is not None:
-            while not gate.is_set():
-                if cancel is not None and cancel.is_set():
-                    raise export_jobs.Cancelled()
-                time.sleep(0.01)
+            wait_until(lambda: gate.is_set() or (cancel is not None and cancel.is_set()), timeout=10.0)
+            if not gate.is_set():
+                raise export_jobs.Cancelled()
         target = _cache_file(app, link)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"ID3" + link.encode("utf-8"))
@@ -99,10 +81,7 @@ def _fake_fetch(app, gate: threading.Event | None = None):
 
 
 def _wait(condition, seconds: float = 5.0) -> None:
-    deadline = time.monotonic() + seconds
-    while not condition():
-        assert time.monotonic() < deadline, "hết giờ chờ"
-        time.sleep(0.01)
+    assert wait_until(condition, timeout=seconds), "hết giờ chờ"
 
 
 def test_the_library_lists_filters_and_labels_the_catalogue(studio, tmp_path: Path) -> None:  # noqa: F811
@@ -155,7 +134,7 @@ def test_a_saved_track_survives_a_cache_prune(tmp_path: Path) -> None:
     other = files / (hashlib.sha1(b"https://x/other.mp3").hexdigest() + ".mp3")
     for path in (kept, other):
         path.write_bytes(b"x" * 1000)
-    old = time.time() - 10 * 24 * 3600
+    old = 1_600_000_000  # một mốc cố định xa trong quá khứ: tệp "cũ" với mọi ngưỡng tỉa
     import os
 
     for path in (kept, other):

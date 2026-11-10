@@ -9,7 +9,7 @@ import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Ban, ChevronRight, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
+import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
@@ -22,8 +22,8 @@ import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, moodOf, swapButton, type MusicDownload } from "./musicScenes";
 import { mineNote, previewPath } from "./musicLocal";
+import { BrowseLibraryLink } from "@/music/BrowseLibraryLink";
 import { OpenMusicRow } from "@/music/OpenMusicRow";
-import { Link } from "react-router";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
 // của truyện, mức nhạc), từng đoạn (im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây
@@ -303,9 +303,7 @@ function Alternatives({
       </div>
       {/* Cuối danh sách gợi ý: cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
       {!info?.remote && (
-        <Link to={`/music?pick=${encodeURIComponent(bookId)}&scene=${encodeURIComponent(sceneKey)}`} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-accent-text">
-          {S.s_xem_ca_kho_fa30b353}<ChevronRight aria-hidden className="size-4" />
-        </Link>
+        <BrowseLibraryLink bookId={bookId} scene={sceneKey} />
       )}
     </MotionRegion>
   );

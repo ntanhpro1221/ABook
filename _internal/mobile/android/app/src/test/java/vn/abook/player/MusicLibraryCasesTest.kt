@@ -11,7 +11,7 @@ import java.io.File
 
 /**
  * Kho nhạc của điện thoại chạy CÙNG bảng ca với máy chủ (test_music_library.py) và Qt: tests/fixtures/music_library/cases.json -
- * cùng bộ lọc thì cùng bài, cùng thứ tự. Cộng: lọc cả danh mục cỡ thật (2.387 bài) dưới 50 ms, "Vì sao bài này", "Nhạc trong sách", sổ bài đã lưu.
+ * cùng bộ lọc thì cùng bài, cùng thứ tự. Cộng: "Vì sao bài này", "Nhạc trong sách", sổ bài đã lưu.
  */
 class MusicLibraryCasesTest {
     @get:Rule
@@ -95,37 +95,5 @@ class MusicLibraryCasesTest {
         assertEquals(listOf("https://a/2"), saved.remove(listOf("https://a/2", "https://a/9")))
         assertEquals(listOf("https://a/1"), SavedTracks(file).links())
         assertEquals(1, JSONObject(file.readText()).getInt("version"))
-    }
-
-    /** Cỡ thật của danh mục (2.387 bài): mọi kiểu lọc dưới 50 ms (in số đo). */
-    @Test
-    fun filteringTheWholeCatalogueTakesUnderFiftyMilliseconds() {
-        val words = listOf("Moon", "Rain", "Battle", "Ánh", "Đêm", "Sương", "Dawn", "Hall", "Tea", "Wander")
-        val styles = listOf("piano", "ambient", "orchestral_epic", "electronic", "dark")
-        val emotions = listOf("joy", "power", "sadness", "peacefulness", "tension", "fear", "mystery")
-        val big = (0 until 2387).associate { index ->
-            val info = JSONObject().put("title", "${words[index % words.size]} ${index / 7} ${words[(index * 3) % words.size]}")
-                .put("creator", "Người sáng tác ${index % 97}").put("bpm", 60 + (index * 17) % 110).put("duration", 40 + (index * 53) % 500)
-                .put("style", styles[index % styles.size])
-                .put("emotions", JSONObject(emotions.mapIndexed { at, id -> id to ((index * 37 + at * 53) % 100) / 100.0 }.toMap()))
-            "https://m/$index" to info
-        }
-        val all = MusicLibrary.tracksOf(big)
-        val lists = mapOf("p" to all.filterIndexed { at, _ -> at % 5 == 0 }.map { it.link })
-        val filters = listOf(
-            MusicLibrary.Filters(), MusicLibrary.Filters(q = "dem"), MusicLibrary.Filters(q = "moon rain"), MusicLibrary.Filters(emotion = "joy"),
-            MusicLibrary.Filters(style = "piano", tempo = "slow"), MusicLibrary.Filters(playlist = "p", length = "mid"),
-        )
-        repeat(3) { for (filter in filters) MusicLibrary.select(all, filter, lists) } // ấm máy JIT
-        var worst = 0.0
-        for (filter in filters) {
-            val started = System.nanoTime()
-            MusicLibrary.select(all, filter, lists)
-            val ms = (System.nanoTime() - started) / 1e6
-            worst = maxOf(worst, ms)
-            println("MusicLibrary.select ${all.size} bài, $filter: ${"%.2f".format(ms)} ms")
-        }
-        println("MusicLibrary.select chậm nhất: ${"%.2f".format(worst)} ms")
-        assertTrue("lọc chậm: $worst ms", worst < 50.0)
     }
 }

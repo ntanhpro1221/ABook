@@ -162,7 +162,7 @@ Item {
                     const detail = named(host.Window.window.contentItem, "musicTrackDetail")
                     detail.show(track(5).link, {book: "b", scene: "1:0"})
                     tryVerify(function() { return detail.detail !== null })
-                    wait(400) // fixed: chờ tấm mở hẳn trước khi chụp
+                    tryVerify(function() { return detail.shown === 1 }, 3000, "tấm chi tiết mở hẳn trước khi chụp")
                     shot("music_track_" + w)
                     detail.open = false
                     pick.destroy()
