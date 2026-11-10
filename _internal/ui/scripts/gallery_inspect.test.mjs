@@ -357,6 +357,7 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..22
   expect(normalizeRule("rule23")).toBe("NESTED CARD");
   expect(normalizeRule("rule24")).toBe("CROSS CENTER");
   expect(normalizeRule("rule25")).toBe("SHEET GEOMETRY");
-  expect(() => normalizeRule("rule26")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule26")).toBe("PICKER GEOMETRY");
+  expect(() => normalizeRule("rule27")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

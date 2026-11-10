@@ -31,10 +31,10 @@ const chapterChoice = () => document.querySelector<HTMLButtonElement>("[data-sle
 
 it("chip tiêu biểu, thước, gõ số và hàng Hết chương này; chạm chip / hàng là đặt", async () => {
   const onSet = await open({ kind: "off" });
-  expect(chips().map((button) => button.textContent)).toEqual(["5", "10", "15", "30", "45", "60", "90"]);
+  expect(chips().map((button) => button.textContent)).toEqual(["5", "15", "30", "45", "60", "90"]);
   expect(document.querySelector('[role="slider"][data-value-ruler]')).not.toBeNull();
   expect(document.querySelector("[data-value-display]")).not.toBeNull();
-  await act(async () => chips()[3].click());
+  await act(async () => chips()[2].click());
   expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 30 });
   // Loa / TV chỉ biết hết chương này: không có -/+ số chương.
   expect(document.querySelectorAll("[data-sleep-chapters] button").length).toBe(1);

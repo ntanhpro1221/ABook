@@ -5854,7 +5854,10 @@
     "s_yeu_cau_chua_duoc_3c62dd70": "Yêu cầu chưa được",
     "s_yeu_cau_thiet_bi_26f11a4f": "Yêu cầu thiết bị",
     "s_yeu_cau_thiet_bi_bf94d986": " Yêu cầu thiết bị",
-    "s_z_bbeebd87": "Z"
+    "s_z_bbeebd87": "Z",
+    "s_value_middle": "Giữa",
+    "s_value_left": "Trái {0} %",
+    "s_value_right": "Phải {0} %"
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

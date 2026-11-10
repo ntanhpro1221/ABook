@@ -20,6 +20,17 @@ Item {
         onPicked: v => value = v
     }
     SignalSpy { id: picks; target: picker; signalName: "picked" }
+    Component {
+        id: extraPickerComponent
+        ValuePicker {
+            width: 328
+            spec: Logic.SPECS.sleepMinutes
+            Text { objectName: "specialLabel"; text: "Số chương"; font.pixelSize: 14 }
+            Row { objectName: "specialRow"; height: 48; Rectangle { width: 48; height: 48 } }
+        }
+    }
+    Component { id: sleepPopoverComponent; SleepPopover { width: 360; height: 600; open: true; shown: 1 } }
+    Component { id: speedPopoverComponent; SpeedPopover { width: 360; height: 600; open: true; shown: 1 } }
 
     TestCase {
         name: "ValuePicker"
@@ -27,6 +38,8 @@ Item {
         readonly property var fixture: JSON.parse(qtValuePickerCases)
 
         function init() {
+            picker.dense = false
+            picker.fontScale = 1
             picker.spec = Logic.SPECS.sleepMinutes
             picker.format = Logic.minutesLabel
             picker.value = 30
@@ -34,6 +47,71 @@ Item {
             picker.typing = false
             picker.clampNote = false
             picks.clear()
+        }
+
+        function test_balancedRowsAndInverse() {
+            for (const c of fixture.chipRows) compare(Logic.chipRows(c.widths, c.available, c.gap).map(row => row.length), c.out)
+            for (const name in Logic.SPECS) {
+                const spec = Logic.SPECS[name]
+                for (let i = 0; i <= Math.round((spec.max - spec.min) / spec.step); i++) {
+                    const value = Logic.stepValue(spec, spec.min, i)
+                    compare(Logic.fromFraction(spec, Logic.toFraction(spec, value)), value, name + " " + value)
+                }
+                if (spec.min > 0 && spec.max / spec.min >= 8) for (let i = 1; i < spec.typical.length; i++)
+                    verify((Logic.toFraction(spec, spec.typical[i]) - Logic.toFraction(spec, spec.typical[i-1])) * 200 >= 24, name)
+            }
+        }
+
+        function test_everyPickerAt360() {
+            for (const fontScale of [1, 1.3]) for (const name in Logic.SPECS) {
+                picker.spec = Logic.SPECS[name]
+                picker.fontScale = fontScale
+                picker.value = picker.spec.min
+                waitForRendering(picker)
+                const rows = findChild(picker, "valueChips").rows
+                if (fontScale === 1) compare(rows.length, 1, name + " at normal font size")
+                for (const row of rows) verify(row.length > 1, name + " at " + fontScale)
+            }
+        }
+
+        function test_specialChildrenStackWithoutOverlap() {
+            const extra = createTemporaryObject(extraPickerComponent, host)
+            verify(extra !== null)
+            verify(waitForRendering(extra))
+            const label = findChild(extra, "specialLabel")
+            const row = findChild(extra, "specialRow")
+            verify(row.y >= label.y + label.height + Theme.s4)
+            verify(extra.height >= row.mapToItem(extra, 0, row.height).y)
+        }
+
+        function test_phonePopoversReserveOneMeasuredRow() {
+            for (const data of [{component: sleepPopoverComponent, name: "sleepPicker"}, {component: speedPopoverComponent, name: "speedPicker"}]) {
+                const popover = createTemporaryObject(data.component, host)
+                verify(popover !== null)
+                verify(waitForRendering(popover))
+                const control = findChild(popover, data.name)
+                const chips = findChild(control, "valueChips")
+                compare(chips.rows.length, 1, data.name + " in a 360px window")
+                verify(control.width >= control.minimumWidth)
+                popover.destroy()
+            }
+        }
+
+        function test_denseLabelsStayOnTicksAndPick() {
+            picker.dense = true
+            for (const name in Logic.SPECS) {
+                picker.spec = Logic.SPECS[name]
+                picker.value = picker.spec.min
+                waitForRendering(picker)
+                const ruler = findChild(picker, "valueRuler")
+                for (const v of picker.spec.typical) {
+                    const chip = findChild(picker, "valueChip_" + Logic.formatNumber(picker.spec, v))
+                    compare(chip.width, 48); compare(chip.height, 48)
+                    fuzzyCompare(chip.x + chip.width / 2, ruler.inset + Logic.toFraction(picker.spec, v) * (ruler.width - 2 * ruler.inset), 0.5)
+                    mouseClick(chip, chip.width / 2, chip.height / 2)
+                    compare(picker.value, v, name)
+                }
+            }
         }
 
         function sameSpec(a, b) {
@@ -97,6 +175,11 @@ Item {
         }
 
         function test_stepButtonsAndKeys() {
+            for (const name of ["valueDown", "valueUp"]) {
+                const button = findChild(picker, name)
+                compare(button.width, 48); compare(button.height, 48)
+                compare(button.y + button.height / 2, findChild(picker, "valueRuler").height / 2)
+            }
             mouseClick(findChild(picker, "valueUp"))
             compare(picker.value, 31)
             mouseClick(findChild(picker, "valueDown"))

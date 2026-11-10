@@ -1,5 +1,34 @@
 // Hộp thoại đã là mặt nổi; nhóm bên trong dùng khoảng trắng thay khung (DESIGN 4–6).
 export function inspectFrames({ all, css, rect, visible, selector, add }) {
+  for (const picker of all.filter(el => el.matches('[data-value-picker]'))) {
+    const box = visible(picker, rect(picker.getBoundingClientRect()));
+    if (!box) continue;
+    const rows = [...picker.querySelectorAll('[data-value-chip-row]')];
+    const counts = rows.map(row => row.querySelectorAll('[data-value-chip]').length);
+    for (const row of rows) {
+      const chips = [...row.querySelectorAll('[data-value-chip]')].map(el => el.getBoundingClientRect());
+      const bounds = row.getBoundingClientRect();
+      const gaps = chips.slice(1).map((chip, i) => chip.left - chips[i].right);
+      if (chips.length > 1 && (Math.abs(chips[0].left - bounds.left) > 1 || Math.abs(chips.at(-1).right - bounds.right) > 1 || Math.max(...gaps) - Math.min(...gaps) > 1))
+        add('PICKER GEOMETRY', row, row.textContent, [rect(bounds)], {metric: 'picker-chip-spread', reason: 'Numeric rows distribute their cells across the full ruler width with equal gaps'});
+    }
+    const fontScale = Number.parseFloat(css(document.documentElement).fontSize) / 16;
+    if (counts.some(count => count === 1) || (window.innerWidth === 360 && fontScale <= 1.01 && rows.length > 1))
+      add('PICKER GEOMETRY', picker, picker.textContent, [box], {metric: 'picker-chip-rows', counts, reason: '360dp normal text uses one row; wrapped rows must be balanced without a singleton'});
+    for (const chip of picker.querySelectorAll('[data-value-chip]')) {
+      if (!/^-?\d+(,\d+)?$/.test(chip.textContent.trim()))
+        add('PICKER GEOMETRY', chip, chip.textContent, [rect(chip.getBoundingClientRect())], {metric: 'picker-numeric-label', reason: 'Units belong to the value or row label, once'});
+    }
+    const labels = [...picker.querySelectorAll('[data-value-tick-label]')];
+    const ticks = [...picker.querySelectorAll('[data-value-detent]')];
+    labels.forEach((label, i) => {
+      const a = label.getBoundingClientRect(), b = ticks[i]?.getBoundingClientRect();
+      if (b && Math.abs(a.x + a.width / 2 - b.x - b.width / 2) > 0.6)
+        add('PICKER GEOMETRY', label, label.textContent, [rect(a), rect(b)], {metric: 'picker-tick-centre', reason: 'Compact labels must be centred directly under their detent'});
+      if (a.width < 48 || a.height < 48)
+        add('PICKER GEOMETRY', label, label.textContent, [rect(a)], {metric: 'picker-tick-target', reason: 'Detent targets must be at least 48px'});
+    });
+  }
   const transparent = value => value === "transparent" || /rgba\([^)]*,\s*0\)$/.test(value);
   // Cùng token cho tiêu đề mục đứng riêng / gập mở, ở mọi frame (kể cả người dùng phóng chữ).
   const rem = Number.parseFloat(css(document.documentElement).fontSize);

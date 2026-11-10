@@ -1,5 +1,6 @@
 .import "UiStrings.js" as S
 .pragma library
+.import "UiNumber.js" as UiNumber
 .import "SizeFormat.js" as Size
 .import "StudioLogic.js" as Studio
 .import "TemplateLogic.js" as Templates
@@ -354,7 +355,7 @@ function modelLabel(name) { return String(name).replace(/:latest$/, "") }
 function modelHint(model, defaultSize) {
     const parts = []
     const billions = Number.parseFloat(model.parameters)
-    if (isFinite(billions) && /b$/i.test(String(model.parameters).trim())) parts.push(String(Math.round(billions * 10) / 10).replace(".", ",") + S.s_ti_tham_so_fa61447f)
+    if (isFinite(billions) && /b$/i.test(String(model.parameters).trim())) parts.push(UiNumber.decimal(billions, 1) + S.s_ti_tham_so_fa61447f)
     else if (model.parameters) parts.push(model.parameters)
     if (model.size) {
         parts.push(S.s_khoang_934859d7 + Size.formatSize(model.size) + S.s_bo_nho_card_f09d305c)

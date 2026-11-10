@@ -1,4 +1,5 @@
 import "UiStrings.js" as S
+import "UiNumber.js" as UiNumber
 import QtQuick
 import ABook
 import "LibraryLogic.js" as LibraryLogic
@@ -421,7 +422,7 @@ Item {
                         ControlChip {
                             id: speedChip
                             objectName: "nowSpeed"
-                            text: Player.rate === 1 ? S.s_toc_do_16ee0914 : String(Player.rate).replace(".", ",") + "×"
+                            text: Player.rate === 1 ? S.s_toc_do_16ee0914 : UiNumber.decimal(Player.rate) + "×"
                             active: Player.rate !== 1
                             tip: S.s_toc_do_doc_3657e59d
                             onClicked: speed.toggle()
@@ -597,7 +598,7 @@ Item {
                     if (!total) return S.s_chua_nghe_u00a0_u00a0_0_chuong_af6b9134(root.currentBook.chaptersTotal || 0)
                     if (!heard) return S.s_chua_nghe_u00a0_u00a0_0_2ada9121(Player.lengthText(total))
                     const scope = root.currentBook.complete ? S.s_ca_cuon_b841210a : S.s_phan_da_co_69a9b13c
-                    const remaining = Player.rate === 1 ? S.s_con_c697bae9 + Player.lengthText(total - heard) : S.s_con_khoang_f88c6a5c + Player.lengthText((total - heard) / Player.rate) + S.s_o_toc_do_46172629 + String(Player.rate).replace(".", ",") + "×"
+                    const remaining = Player.rate === 1 ? S.s_con_c697bae9 + Player.lengthText(total - heard) : S.s_con_khoang_f88c6a5c + Player.lengthText((total - heard) / Player.rate) + S.s_o_toc_do_46172629 + UiNumber.decimal(Player.rate) + "×"
                     return S.s_da_nghe_0_1_u00a0_u00a0_2_12a8bc8c(Math.round(heard / total * 100) + "%", scope, remaining)
                 }
             }

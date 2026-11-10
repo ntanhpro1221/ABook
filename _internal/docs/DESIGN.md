@@ -275,14 +275,14 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
      biên thì kẹp vào biên và báo nhẹ "Trong khoảng a–b" (dòng mờ dưới số, tiếng `reject`); chữ không ra số thì giữ giá trị cũ;
   2. **thước kéo tự do** giữa nút −/+: kéo một tay ra MỌI giá trị trong biên theo bước mịn; vạch mảnh ở các giá trị tiêu
      biểu, kéo qua thì hút nhẹ (rộng 0,75 bước, không nuốt bước kề) + tiếng / rung `tick`; thang có thể không đều (hẹn
-     giờ: nửa trái thước là 1-60 phút). −/+ đổi đúng một bước, giữ để lặp (chờ 400 ms, rồi mỗi 80 ms). Bàn phím / TalkBack:
+     giờ: phần chính của thước dành cho các mốc hay dùng; xem quy tắc ValuePicker 10-11 dưới đây). −/+ đổi đúng một bước, giữ để lặp (chờ 400 ms, rồi mỗi 80 ms). Bàn phím / TalkBack:
      mũi tên một bước, PageUp/PageDown mười bước, Home/End hai đầu;
   3. **hàng chip giá trị tiêu biểu** (một chạm), chip trùng giá trị hiện tại chữ hổ phách đậm; giá trị chưa phải lựa chọn
      đang áp (hẹn giờ đang "Hết chương") thì không chip nào sáng;
   4. **lựa chọn đặc biệt không phải số** ("Hết chương này" / "Hết N chương" với −/+ chọn N 1-10) là hàng riêng dưới cùng.
   Đổi là áp ngay (thả tay, chạm chip, −/+, Enter); bảng chứa nó không tự đóng (kéo thước cần bảng đứng yên); khi kéo, chữ
   lớn và thước chạy theo tay, chỗ cần nghe ngay (núm âm thanh) áp luôn lúc kéo. Kiểu gọn `dense` cho danh sách nhiều núm
-  (âm thanh, Cài đặt): tên + giá trị một hàng, thước, chip nhỏ. Miền + giá trị tiêu biểu của từng cài đặt nằm ở bảng
+  (âm thanh, Cài đặt): tên + giá trị một hàng, thước có số ngay dưới từng vạch; không có hàng chip riêng. Miền + giá trị tiêu biểu của từng cài đặt nằm ở bảng
   `specs` của file ca chung (ba bên có test so bảng của mình với nó); lưu trữ nhận mọi số trong miền đúng lưới bước.
 - **Nút chữ đầu hàng** (nút ghost đứng đầu một cột chữ, "Tải" dưới thẻ sách): bù đệm trái bằng `edge-start-action` để mực thẳng mép chữ của cột (máy dò INK EDGE leading-control-inset). **Icon cạnh khối chữ canh đầu** đứng giữa DÒNG ĐẦU: `mt-line-icon` (theo 1lh), không đặt cứng mt-0.5; hàng có nút thì dòng đầu đứng giữa chiều cao nút `--button-h` (InlineError) (máy dò INK EDGE icon-off-first-line).
 - **Cột anh em**: điều khiển lặp ở mọi hàng của một danh sách (công tắc "Tự chọn", nút cùng tên) đứng cùng một cột; chữ dài ngắn khác nhau theo hàng đứng SAU nó, không trước (máy dò SIBLING CONSISTENCY sibling-column; Qt tst_list_measure sameColumn).
@@ -358,3 +358,12 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
 4. Test DOM cho chuyển động/Back như hiện có; bản phát hành đính kèm bộ ảnh mọi màn.
 5. chạy gallery_inspect, không còn phát hiện thật ở các quy tắc 1-3.
+
+
+### ValuePicker: numeric labels and compact rulers (10-11)
+
+- Chip labels contain numbers only; show the unit once with the current value or row label. Sleep timers offer six phone shortcuts: 5, 15, 30, 45, 60, 90. Drop 10 because 5 and 15 already cover nearby quick choices; 10 remains reachable by dragging, stepping or typing.
+- At 360 dp and normal font size every picker has one chip row. Measure the actual text and balance any necessary wrapping (4+3 or 3+3, never 6+1). Full picker rows distribute the chips across the whole ruler width.
+- Dense pickers have two rows: label and editable value, then minus/ruler/plus. Small numeric labels sit directly under their detents, with 48 dp hit regions extending into padding. There is no extra chip row; the ruler adds only 12 dp over the old 44 dp slider.
+- Wide positive domains (max/min >= 8) put internal typical anchors evenly between 10% and 90% of the ruler. If the minimum is itself typical, include its anchor at 0 and share the remaining space evenly. Use the same mapping for crowded narrow domains (linear typical gaps below 12% of the range), so compact labels also have room. Both directions interpolate the same anchors; every quantized value remains reachable. At 360 dp, adjacent wide-domain detents are at least 24 dp apart. Shared cases live in tests/fixtures/value_picker/cases.json.
+- Visible decimals use one formatter per platform (UiNumber / formatDecimal), always with a comma and no redundant zero in pitch. Balance reads Giữa, Trái N %, or Phải N %. The source gate rejects local decimal formatters. Sleep chapter controls show Số chương and a number; the top status owns Hết N chương.

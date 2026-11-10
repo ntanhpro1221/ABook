@@ -2806,3 +2806,6 @@ var s_xuc_dong_bc36f9eb = "xúc động";
 var s_yeu_cau_6833dc12 = "Yêu cầu ";
 var s_yeu_cau_chua_duoc_3c62dd70 = "Yêu cầu chưa được";
 var s_yeu_cau_thiet_bi_26f11a4f = "Yêu cầu thiết bị";
+var s_value_middle = "Giữa";
+function s_value_left(p0) { return "Trái " + String(p0) + " %"; }
+function s_value_right(p0) { return "Phải " + String(p0) + " %"; }

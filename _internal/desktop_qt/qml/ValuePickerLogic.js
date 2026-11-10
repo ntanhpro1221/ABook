@@ -1,4 +1,5 @@
 .import "UiStrings.js" as S
+.import "UiNumber.js" as UiNumber
 .pragma library
 
 // Bộ chọn giá trị số - phần tính toán. MỘT hợp đồng cho ba nền (tests/fixtures/value_picker/cases.json): web shared/valuePickerLogic.ts,
@@ -12,7 +13,7 @@ var PAGE_STEPS = 10
 
 // Miền của một giá trị: biên, bước, giá trị tiêu biểu (chip một chạm, nấc hút khi kéo), thang của thước (mốc [vị trí 0..1, giá trị]).
 var SPECS = {
-    sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 10, 15, 30, 45, 60, 90], scale: [[0, 1], [0.5, 60], [0.75, 120], [1, 240]] },
+    sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 15, 30, 45, 60, 90] },
     sleepChapters: { min: 1, max: 10, step: 1, typical: [1, 2, 3] },
     speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.6, 1.5], [1, 3]] },
     readSize: { min: 12, max: 40, step: 1, typical: [16, 18, 20, 22, 24] },
@@ -61,7 +62,28 @@ function stepValue(spec, value, steps) {
 }
 
 function scaleOf(spec) {
+    var crowded = spec.typical.some(function(v, i) { return i > 0 && (v - spec.typical[i - 1]) / (spec.max - spec.min) < 0.12 })
+    if (!spec.scale && (spec.min > 0 && spec.max / spec.min >= 8 || crowded) && spec.typical.length > 1) {
+        var inner = spec.typical.filter(function(v) { return v > spec.min && v < spec.max })
+        var first = spec.typical[0] === spec.min ? 0.9 / inner.length : 0.1
+        return [[0, spec.min]].concat(inner.map(function(v, i) { return [first + (0.9 - first) * i / Math.max(1, inner.length - 1), v] }), [[1, spec.max]])
+    }
     return spec.scale || [[0, spec.min], [1, spec.max]]
+}
+
+function chipRows(widths, available, gap) {
+    for (var rows = 1; rows <= widths.length; rows++) {
+        var groups = [], start = 0, fits = true
+        for (var row = 0; row < rows; row++) {
+            var count = Math.floor(widths.length / rows) + (row < widths.length % rows ? 1 : 0)
+            var group = [], total = gap * (count - 1)
+            for (var i = 0; i < count; i++) { group.push(start); total += widths[start++] }
+            if (total > available) fits = false
+            groups.push(group)
+        }
+        if (fits) return groups
+    }
+    return widths.map(function(_, i) { return [i] })
 }
 
 // Giá trị thô (chưa về lưới) ở vị trí `fraction` của thước.
@@ -118,10 +140,7 @@ function isDetent(spec, previous, next) {
 
 // Số kiểu Việt: "1,35", "1,5", "1".
 function formatNumber(spec, value) {
-    var decimals = decimalsOf(spec.step)
-    var text = roundTo(value, decimals).toFixed(decimals)
-    if (text.indexOf(".") >= 0) text = text.replace(/0+$/, "").replace(/\.$/, "")
-    return text.replace(".", ",")
+    return UiNumber.decimal(roundTo(value, decimalsOf(spec.step)), decimalsOf(spec.step))
 }
 
 // Bản kẹp trần thấp hơn ("Giữ khoảng nghỉ" không quá "Dài tối thiểu").

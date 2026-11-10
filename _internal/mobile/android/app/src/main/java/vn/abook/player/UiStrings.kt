@@ -2843,4 +2843,7 @@ internal object S {
     const val s_ye_9ffca5d4 = "yê"
     const val s_yeu_3d506a76 = "yêu"
     const val s_yeu_cau_chua_duoc_3c62dd70 = "Yêu cầu chưa được"
+    const val s_value_middle = "Giữa"
+    fun s_value_left(p0: Any?): String = "Trái " + p0.toString() + " %"
+    fun s_value_right(p0: Any?): String = "Phải " + p0.toString() + " %"
 }

@@ -1,6 +1,7 @@
 package vn.abook.player.ui.components
 
 import vn.abook.player.S
+import vn.abook.player.UiNumber
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.abs
@@ -32,7 +33,7 @@ object ValueSpecs {
     private fun spec(min: Number, max: Number, step: Number, typical: List<Number>, scale: List<Pair<Number, Number>> = emptyList()) =
         ValueSpec(min.toDouble(), max.toDouble(), step.toDouble(), typical.map { it.toDouble() }, scale.map { it.first.toDouble() to it.second.toDouble() })
 
-    val sleepMinutes = spec(1, 240, 1, listOf(5, 10, 15, 30, 45, 60, 90), listOf(0 to 1, 0.5 to 60, 0.75 to 120, 1 to 240))
+    val sleepMinutes = spec(1, 240, 1, listOf(5, 15, 30, 45, 60, 90))
     val sleepChapters = spec(1, 10, 1, listOf(1, 2, 3))
     val speed = spec(0.5, 3, 0.05, listOf(0.8, 1, 1.25, 1.5, 2), listOf(0 to 0.5, 0.6 to 1.5, 1 to 3))
     val readSize = spec(12, 40, 1, listOf(16, 18, 20, 22, 24))
@@ -85,7 +86,34 @@ object ValuePickerLogic {
 
     fun step(spec: ValueSpec, value: Double, steps: Int): Double = quantize(spec, quantize(spec, value) + steps * spec.step)
 
-    private fun scaleOf(spec: ValueSpec) = spec.scale.ifEmpty { listOf(0.0 to spec.min, 1.0 to spec.max) }
+    private fun scaleOf(spec: ValueSpec): List<Pair<Double, Double>> {
+        if (spec.scale.isNotEmpty()) return spec.scale
+        // Reserve 80% of a wide positive domain for the frequently used values.
+        // Equal anchor spacing prevents small minute values bunching at the left.
+        val crowded = spec.typical.zipWithNext().any { (a, b) -> (b - a) / (spec.max - spec.min) < 0.12 }
+        if ((spec.min > 0 && spec.max / spec.min >= 8 || crowded) && spec.typical.size > 1) {
+            val inner = spec.typical.filter { it > spec.min && it < spec.max }
+            val first = if (spec.typical.first() == spec.min) 0.9 / inner.size else 0.1
+            return listOf(0.0 to spec.min) + inner.mapIndexed { i, v ->
+                (first + (0.9 - first) * i / maxOf(1, inner.size - 1)) to v
+            } + listOf(1.0 to spec.max)
+        }
+        return listOf(0.0 to spec.min, 1.0 to spec.max)
+    }
+
+    /** Balanced consecutive rows; never leave a single chip on the last row. */
+    fun chipRows(widths: List<Int>, available: Int, gap: Int): List<IntRange> {
+        if (widths.isEmpty()) return emptyList()
+        for (rows in 1..widths.size) {
+            var start = 0
+            val groups = (0 until rows).map { row ->
+                val count = widths.size / rows + if (row < widths.size % rows) 1 else 0
+                (start until start + count).also { start += count }
+            }
+            if (groups.all { group -> group.sumOf { widths[it] } + gap * (group.count() - 1) <= available }) return groups
+        }
+        return widths.indices.map { it..it }
+    }
 
     /** Giá trị thô (chưa về lưới) ở vị trí `fraction` của thước. */
     fun rawAt(spec: ValueSpec, fraction: Double): Double {
@@ -136,7 +164,7 @@ object ValuePickerLogic {
 
     /** Số kiểu Việt: "1,35", "1,5", "1". */
     fun format(spec: ValueSpec, value: Double): String =
-        BigDecimal.valueOf(roundTo(value, decimalsOf(spec.step))).stripTrailingZeros().toPlainString().replace('.', ',')
+        UiNumber.decimal(value, decimalsOf(spec.step))
 
     /** Số giây kiểu người đọc: "45 giây", tròn phút thì "1 phút", "2 phút". */
     fun secondsLabel(seconds: Int): String =

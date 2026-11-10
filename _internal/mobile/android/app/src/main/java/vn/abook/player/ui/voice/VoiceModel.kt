@@ -218,7 +218,7 @@ object VoiceText {
         val name = tierName(if (vieneu.recommended == "nano") "nano" else "turbo").replaceFirstChar { it.lowercase() }
         return S.s_nen_dung_0_chi_can_tai_mot_bo_giong_46fb0d74(name)
     }
-    private fun seconds(value: Double): String = String.format(Locale.ROOT, "%.1f", value).replace('.', ',')
+    private fun seconds(value: Double): String = vn.abook.player.UiNumber.decimal(value, 1, fixed = true)
 
     /** Tên một tầng giọng (vieneuModule.ts `tierName`). */
     fun tierName(tier: String): String = when (tier) {

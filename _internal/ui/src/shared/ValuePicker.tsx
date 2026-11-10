@@ -1,11 +1,11 @@
 import { Minus, Plus } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { S } from "./strings.generated";
 import { cn } from "./cn";
 import { feedback } from "./feedback";
 import { MotionPresence } from "./MotionPresence";
 import { announce } from "./ui";
-import { PAGE_STEPS, chipIndex, formatNumber, fromFraction, isDetent, parseValue, quantize, stepValue, toFraction, type ValueSpec } from "./valuePickerLogic";
+import { PAGE_STEPS, chipRows, chipIndex, formatNumber, fromFraction, isDetent, parseValue, quantize, stepValue, toFraction, type ValueSpec } from "./valuePickerLogic";
 
 /** Giữ nút -/+: chờ chừng này rồi lặp. */
 const REPEAT_DELAY_MS = 400;
@@ -18,7 +18,7 @@ const REPEAT_EVERY_MS = 80;
  *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn tô hổ phách;
  *  4. `children`: lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
  * `onChange` là lúc áp (thả tay, chạm chip, -/+, Enter, phím); khi kéo, chữ lớn và thước chạy theo tay, `onPreview` nếu cần nghe ngay.
- * `dense`: hàng gọn cho danh sách nhiều núm (âm thanh) - tên + giá trị một hàng, thước, chip nhỏ.
+ * `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
  */
 export function ValuePicker({
   spec,
@@ -66,6 +66,7 @@ export function ValuePicker({
   const track = useRef<HTMLDivElement>(null);
   const repeat = useRef<{ timer: ReturnType<typeof setTimeout> | null; pressed: boolean }>({ timer: null, pressed: false });
   const input = useRef<HTMLInputElement>(null);
+  const tickGesture = useRef({x: 0, dragged: false});
 
   useEffect(() => () => {
     if (repeat.current.timer) clearTimeout(repeat.current.timer);
@@ -91,7 +92,8 @@ export function ValuePicker({
   const fractionAt = (clientX: number) => {
     const rect = track.current?.getBoundingClientRect();
     if (!rect || rect.width <= 0) return toFraction(spec, shown);
-    return (clientX - rect.left) / rect.width;
+    const inset = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) / 2;
+    return (clientX - rect.left - inset) / (rect.width - 2 * inset);
   };
   const drag = (clientX: number) => {
     const next = fromFraction(spec, fractionAt(clientX));
@@ -101,17 +103,17 @@ export function ValuePicker({
     setMoving(next);
     onPreview?.(next);
   };
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (disabled || event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.focus({ preventScroll: true });
     drag(event.clientX);
   };
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     if (moving === null || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
     drag(event.clientX);
   };
-  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     event.currentTarget.releasePointerCapture(event.pointerId);
     if (moving !== null) commit(moving);
@@ -173,7 +175,7 @@ export function ValuePicker({
         className={cn(
           "press touch-reach inline-flex shrink-0 items-center justify-center rounded-control text-fg-2 transition-[color,background-color,scale,opacity] duration-motion-fast hover:bg-hover hover:text-fg disabled:pointer-events-none disabled:opacity-40 pointer-coarse:min-w-[48px]",
           // Kiểu gọn: mực của "−" / "+" thẳng mép cột chữ (nút 32, icon 12: đệm 10 px - máy dò INK EDGE).
-          dense ? cn("size-8", steps < 0 ? "-ml-2.5" : "-mr-2.5") : "size-9",
+          "size-12",
         )}
       >
         <Icon className="glyph" strokeWidth={2} />
@@ -230,16 +232,16 @@ export function ValuePicker({
         setClampNote(false);
         setTyping(true);
       }}
-      className={cn("press touch-reach rounded-control px-2 hover:bg-hover disabled:opacity-40", dense ? "-mr-2 h-8" : "min-h-12")}
+      className={cn("press touch-reach min-w-12 rounded-control px-2 hover:bg-hover disabled:opacity-40", dense ? "-mr-2 h-5" : "min-h-12")}
     >
       {big}
     </button>
   );
 
   return (
-    <div data-value-picker aria-disabled={disabled || undefined} className={cn("flex min-w-0 flex-col", dense ? "gap-0.5" : "gap-2", disabled && "opacity-50", className)}>
+    <div data-value-picker data-value-dense={dense || undefined} aria-disabled={disabled || undefined} className={cn("flex min-w-0 flex-col", dense ? "gap-0" : "gap-2", disabled && "opacity-50", className)}>
       {dense ? (
-        <div className="flex min-h-8 items-center justify-between gap-3">
+        <div className="flex min-h-5 items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium text-pretty">{label}</div>
             {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
@@ -254,9 +256,9 @@ export function ValuePicker({
           {S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))}
         </p>
       </MotionPresence>
-      <div className="flex items-center gap-1">
+      <div className="flex items-start gap-1">
         {stepButton(-1)}
-        <div
+        <div className={cn("relative min-w-0 flex-1", dense ? "h-14" : "h-12")}><div
           ref={track}
           role="slider"
           tabIndex={disabled ? -1 : 0}
@@ -272,7 +274,7 @@ export function ValuePicker({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onKeyDown={onKeyDown}
-          className="group relative h-11 min-w-0 flex-1 cursor-pointer touch-none select-none rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="group relative h-12 w-full cursor-pointer touch-none select-none rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <span aria-hidden className="absolute inset-x-2 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-line-strong">
             {/* Chỉ transform (không transition bề rộng / vị trí - luật gallery_jank_policy). */}
@@ -299,10 +301,42 @@ export function ValuePicker({
             <span className="absolute left-0 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow transition-[scale] duration-motion-fast group-active:scale-125" />
           </span>
         </div>
+        {dense && spec.typical.map((typical, index) => <button
+          key={typical} type="button" data-value-chip={typical} data-value-tick-label
+          aria-label={format(typical)} aria-pressed={index === selected} disabled={disabled} aria-disabled={busy || undefined}
+          onPointerDown={event => {
+            if (event.button !== 0) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            tickGesture.current = {x: event.clientX, dragged: false};
+            const fraction = fractionAt(event.clientX);
+            const nearest = spec.typical.reduce((best, v) => Math.abs(toFraction(spec, v) - fraction) < Math.abs(toFraction(spec, best) - fraction) ? v : best);
+            last.current = nearest;
+            setMoving(nearest);
+          }}
+          onPointerMove={event => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+            if (Math.abs(event.clientX - tickGesture.current.x) > 4) tickGesture.current.dragged = true;
+            if (tickGesture.current.dragged) drag(event.clientX);
+          }}
+          onPointerUp={event => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+            if (!tickGesture.current.dragged) feedback("toggle");
+            setClampNote(false);
+            const fraction = fractionAt(event.clientX);
+            const nearest = spec.typical.reduce((best, v) => Math.abs(toFraction(spec, v) - fraction) < Math.abs(toFraction(spec, best) - fraction) ? v : best);
+            commit(tickGesture.current.dragged ? last.current : nearest);
+          }}
+          onPointerCancel={() => setMoving(null)}
+          onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
+          className={cn("absolute top-2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 text-xs tabular hover:bg-hover", index === selected ? "font-semibold text-accent-text" : "text-fg-2")}
+          style={{left: `calc(0.5rem + (100% - 1rem) * ${toFraction(spec, typical)})`}}
+        >{formatNumber(spec, typical)}</button>)}
+        </div>
         {stepButton(1)}
       </div>
-      {spec.typical.length > 0 && (
-        <div role="group" aria-label={label} className={cn("flex flex-wrap", dense ? "-ml-2.5 gap-1" : "justify-center gap-1.5")}>
+      {!dense && spec.typical.length > 0 && (
+        <BalancedChips label={label}>
           {spec.typical.map((typical, index) => (
             <button
               key={typical}
@@ -324,12 +358,43 @@ export function ValuePicker({
                 index === selected ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
-              {(chipLabel ?? format)(typical)}
+              <span data-value-chip-measure className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
             </button>
           ))}
-        </div>
+        </BalancedChips>
       )}
       {children}
     </div>
   );
+}
+
+/** Measure the rendered numerals, including the current font scale, before balancing rows. */
+function BalancedChips({label, children}: {label: string; children: ReactNode}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [rows, setRows] = useState<number[][]>([]);
+  const items = Array.isArray(children) ? children : [children];
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => {
+      if (element.clientWidth <= 0) return;
+      const widths = [...element.querySelectorAll<HTMLElement>("[data-value-chip-measure]")].map(node => {
+        const style = getComputedStyle(node.parentElement!);
+        return Math.max(Number.parseFloat(style.minWidth) || 48, node.getBoundingClientRect().width + Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight));
+      });
+      const gap = Number.parseFloat(getComputedStyle(element.firstElementChild!).columnGap) || 4;
+      const next = chipRows(widths, element.clientWidth, gap);
+      setRows(old => JSON.stringify(old) === JSON.stringify(next) ? old : next);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    element.querySelectorAll("[data-value-chip-measure]").forEach(node => observer.observe(node));
+    return () => observer.disconnect();
+  }, [label, items.length]);
+  const groups = rows.length ? rows : [items.map((_, i) => i)];
+  return <div ref={ref} role="group" aria-label={label} data-value-chips className="flex flex-col">
+    {groups.map((group, i) => <div key={i} data-value-chip-row className="flex justify-between gap-1">{group.map(index => items[index])}</div>)}
+  </div>;
 }

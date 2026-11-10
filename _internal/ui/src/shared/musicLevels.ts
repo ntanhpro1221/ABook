@@ -1,4 +1,5 @@
 import { S } from "./strings.generated";
+import { formatDecimal } from "./number";
 import mix from "../../../abook/webui/assets/music_mix.json";
 
 /** Mức nhạc nền dưới giọng đọc (dB, nhỏ hơn giọng bấy nhiêu): thanh trượt "Mức nhạc nền" của tab Nhạc nền trong Studio, hộp sửa
@@ -33,6 +34,6 @@ export function levelLabel(value: number): string {
 
 /** Số của mức như người Việt viết: "-18,5 dB"; đúng mức mặc định thì thêm "(mặc định)". */
 export function levelNumber(value: number): string {
-  const text = `${String(value).replace(".", ",")} dB`;
+  const text = `${formatDecimal(value)} dB`;
   return value === DEFAULT_LEVEL_DB ? S.s_0_mac_dinh_8b7237cd(text) : text;
 }

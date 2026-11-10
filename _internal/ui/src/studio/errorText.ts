@@ -1,3 +1,4 @@
+import { formatDecimal } from "@/shared/number";
 import { S } from "../shared/strings.generated";
 // Lỗi của lần làm sách (`book.lastError`) là dòng đầu của lỗi Python - đúng nguyên văn nhà phát triển, không phải lời cho người nghe.
 // Lỗi hay gặp đổi sang câu tiếng Việt kèm việc nên làm; nguyên văn thu vào "Chi tiết" cho ai cần gửi đi hỏi.
@@ -20,7 +21,7 @@ const KNOWN: { pattern: RegExp; summary: string | ((match: RegExpMatchArray) => 
   {
     // Dây chuyền chờ (hay dừng) vì ổ chứa thư viện gần đầy: "disk free 8.0 GB" từ cổng tài nguyên (resource_manager).
     pattern: /disk free (\d+(?:[.,]\d+)?) GB/i,
-    summary: (match) => S.s_o_dia_chua_thu_vien_sach_chi_con_0_gb_c664fd95(match[1].replace(",", ".")),
+    summary: (match) => S.s_o_dia_chua_thu_vien_sach_chi_con_0_gb_c664fd95(formatDecimal(Number(match[1].replace(",", ".")), 1)),
     hint: S.s_giai_phong_them_dung_luong_o_o_do_lam_sach_0ae5c6e8,
   },
   {

@@ -3252,4 +3252,7 @@ export const S = {
   s_yeu_cau_thiet_bi_26f11a4f: "Yêu cầu thiết bị",
   s_yeu_cau_thiet_bi_bf94d986: " Yêu cầu thiết bị",
   s_z_bbeebd87: "Z",
+  s_value_middle: "Giữa",
+  s_value_left: (p0: unknown) => "Trái " + String(p0) + " %",
+  s_value_right: (p0: unknown) => "Phải " + String(p0) + " %",
 } as const;

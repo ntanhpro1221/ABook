@@ -1,3 +1,4 @@
+import { formatDecimal } from "./number";
 import { S } from "./strings.generated";
 
 // Bộ chọn giá trị số - phần tính toán. MỘT hợp đồng cho ba nền (tests/fixtures/value_picker/cases.json): Android ValuePickerLogic.kt,
@@ -18,7 +19,7 @@ export const SNAP_STEPS = 0.75;
 export const PAGE_STEPS = 10;
 
 export const VALUE_SPECS = {
-  sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 10, 15, 30, 45, 60, 90], scale: [[0, 1], [0.5, 60], [0.75, 120], [1, 240]] },
+  sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 15, 30, 45, 60, 90] },
   sleepChapters: { min: 1, max: 10, step: 1, typical: [1, 2, 3] },
   speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.6, 1.5], [1, 3]] },
   readSize: { min: 12, max: 40, step: 1, typical: [16, 18, 20, 22, 24] },
@@ -67,7 +68,23 @@ export function stepValue(spec: ValueSpec, value: number, steps: number): number
 }
 
 function scaleOf(spec: ValueSpec): readonly (readonly [number, number])[] {
+  const crowded = spec.typical.some((v, i) => i > 0 && (v - spec.typical[i - 1]) / (spec.max - spec.min) < 0.12);
+  if (!spec.scale && (spec.min > 0 && spec.max / spec.min >= 8 || crowded) && spec.typical.length > 1) {
+    const inner = spec.typical.filter(v => v > spec.min && v < spec.max);
+    const first = spec.typical[0] === spec.min ? 0.9 / inner.length : 0.1;
+    return [[0, spec.min], ...inner.map((v, i): [number, number] => [first + (0.9 - first) * i / Math.max(1, inner.length - 1), v]), [1, spec.max]];
+  }
   return spec.scale ?? [[0, spec.min], [1, spec.max]];
+}
+
+/** Balance consecutive rows instead of leaving an orphan at the end. */
+export function chipRows(widths: readonly number[], available: number, gap: number): number[][] {
+  for (let rows = 1; rows <= widths.length; rows++) {
+    let start = 0;
+    const groups = Array.from({length: rows}, (_, row) => Array.from({length: Math.floor(widths.length / rows) + (row < widths.length % rows ? 1 : 0)}, () => start++));
+    if (groups.every(group => group.reduce((sum, i) => sum + widths[i], 0) + gap * (group.length - 1) <= available)) return groups;
+  }
+  return widths.map((_, i) => [i]);
 }
 
 /** Giá trị thô (chưa về lưới) ở vị trí `fraction` của thước. */
@@ -123,10 +140,7 @@ export function isDetent(spec: ValueSpec, previous: number, next: number): boole
 
 /** Số kiểu Việt: "1,35", "1,5", "1". */
 export function formatNumber(spec: ValueSpec, value: number): string {
-  const decimals = decimalsOf(spec.step);
-  let text = roundTo(value, decimals).toFixed(decimals);
-  if (text.includes(".")) text = text.replace(/0+$/, "").replace(/\.$/, "");
-  return text.replace(".", ",");
+  return formatDecimal(roundTo(value, decimalsOf(spec.step)), decimalsOf(spec.step));
 }
 
 /** Số giây kiểu người đọc: "45 giây", tròn phút thì "1 phút", "2 phút". */

@@ -141,8 +141,7 @@ interface NowPlayingModel {
 private val NoNote: StateFlow<PlayerNote?> = kotlinx.coroutines.flow.MutableStateFlow(null)
 
 object PlayerLabels {
-    fun rate(value: Double): String = BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
-        .stripTrailingZeros().toPlainString().replace('.', ',') + "×"
+    fun rate(value: Double): String = vn.abook.player.UiNumber.decimal(value) + "×"
     fun time(milliseconds: Long): String {
         val seconds = milliseconds.coerceAtLeast(0) / 1000
         return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"

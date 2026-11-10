@@ -17,14 +17,14 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicTextField
@@ -56,6 +56,9 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -98,9 +101,8 @@ private const val REPEAT_EVERY_MS = 80L
  *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn chữ hổ phách đậm;
  *  4. `special`: lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
  * `onChange` là lúc áp (thả tay, chạm chip, -/+, Xong, phím); khi kéo, chữ lớn và thước chạy theo tay, `onPreview` nếu cần nghe ngay.
- * `dense`: hàng gọn cho danh sách nhiều núm (âm thanh, Cài đặt) - tên + giá trị một hàng, thước, chip.
+ * `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ValuePicker(
     spec: ValueSpec,
@@ -110,7 +112,7 @@ fun ValuePicker(
     label: String,
     tag: String,
     modifier: Modifier = Modifier,
-    chipLabel: (Double) -> String = format,
+    chipLabel: (Double) -> String = { ValuePickerLogic.format(spec, it) },
     hint: String? = null,
     dense: Boolean = false,
     enabled: Boolean = true,
@@ -173,7 +175,7 @@ fun ValuePicker(
         if (dense) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    BasicText(label, style = Abook.type.body)
+                    BasicText(label, style = Abook.type.bodySmall)
                     if (hint != null) RowHint(hint)
                 }
                 display()
@@ -186,12 +188,14 @@ fun ValuePicker(
             BasicText(range, Modifier.fillMaxWidth().testTag("${tag}_clamped"),
                 style = Abook.type.caption.copy(color = colors.text2, textAlign = if (dense) TextAlign.Start else TextAlign.Center))
         }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
             val fraction = ValuePickerLogic.toFraction(spec, shown).toFloat()
             val drawn by animateFloatAsState(fraction, if (moving != null) tween(0) else Motion.Expand, label = "ruler")
             val ticks = remember(spec) { spec.typical.map { ValuePickerLogic.toFraction(spec, it).toFloat() } }
-            Canvas(Modifier.weight(1f).height(Dim.s48).testTag("${tag}_ruler")
+            BoxWithConstraints(Modifier.weight(1f).height(if (dense) 56.dp else Dim.s48)) {
+            val rulerWidth = constraints.maxWidth
+            Canvas(Modifier.fillMaxWidth().height(Dim.s48).testTag("${tag}_ruler")
                 .semantics {
                     contentDescription = label
                     stateDescription = format(shown)
@@ -216,12 +220,12 @@ fun ValuePicker(
                 }
                 .focusable(enabled)
                 .pointerInput(spec, enabled) {
-                    if (enabled) detectTapGestures { offset -> drag(offset.x / size.width); moving?.let(::commit) }
+                    if (enabled) detectTapGestures { offset -> drag((offset.x - 8.dp.toPx()) / (size.width - 16.dp.toPx())); moving?.let(::commit) }
                 }
                 .pointerInput(spec, enabled) {
                     if (enabled) detectHorizontalDragGestures(
-                        onDragStart = { offset -> drag(offset.x / size.width) },
-                        onHorizontalDrag = { pointer, _ -> pointer.consume(); drag(pointer.position.x / size.width) },
+                        onDragStart = { offset -> drag((offset.x - 8.dp.toPx()) / (size.width - 16.dp.toPx())) },
+                        onHorizontalDrag = { pointer, _ -> pointer.consume(); drag((pointer.position.x - 8.dp.toPx()) / (size.width - 16.dp.toPx())) },
                         onDragEnd = { moving?.let(::commit) },
                         onDragCancel = { moving = null },
                     )
@@ -238,11 +242,47 @@ fun ValuePicker(
                 }
                 drawCircle(colors.accent, (if (moving != null) 9 else 7).dp.toPx(), Offset(x, y))
             }
+            if (dense) spec.typical.forEachIndexed { index, typical ->
+                val chosen = current && index == ValuePickerLogic.chipIndex(spec, shown)
+                Box(Modifier.offset { IntOffset((8.dp.toPx() + ValuePickerLogic.toFraction(spec, typical) * (rulerWidth - 16.dp.toPx()) - 24.dp.toPx()).roundToInt(), 8.dp.roundToPx()) }
+                    .size(48.dp)
+                    .pointerInput(spec, enabled, rulerWidth) {
+                        if (enabled) detectTapGestures { offset ->
+                            val fraction = ValuePickerLogic.toFraction(spec, typical) + (offset.x - 24.dp.toPx()) / (rulerWidth - 16.dp.toPx())
+                            val nearest = spec.typical.minBy { kotlin.math.abs(ValuePickerLogic.toFraction(spec, it) - fraction) }
+                            Feedback.play("toggle", view); clampNote = false; commit(nearest)
+                        }
+                    }
+                    .pointerInput(spec, enabled) {
+                        if (enabled) {
+                            fun at(x: Float): Float = (x - 24.dp.toPx()) / (rulerWidth - 16.dp.toPx()) + ValuePickerLogic.toFraction(spec, typical).toFloat()
+                            detectHorizontalDragGestures(onDragStart = { drag(at(it.x)) },
+                                onHorizontalDrag = { pointer, _ -> pointer.consume(); drag(at(pointer.position.x)) },
+                                onDragEnd = { moving?.let(::commit) }, onDragCancel = { moving = null })
+                        }
+                    }
+                    .semantics {
+                        role = Role.Button; selected = chosen; contentDescription = format(typical)
+                        if (!enabled) disabled()
+                        onClick { if (enabled) { commit(typical); true } else false }
+                    }
+                    .onKeyEvent { event ->
+                        if (enabled && event.type == KeyEventType.KeyDown && event.key in listOf(Key.Enter, Key.NumPadEnter, Key.Spacebar)) {
+                            commit(typical); true
+                        } else false
+                    }.focusable(enabled)
+                    .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
+                    .padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                    BasicText(ValuePickerLogic.format(spec, typical), style = Abook.type.caption.copy(
+                        color = if (chosen) colors.accentText else colors.text2, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Normal))
+                }
+            }
+            }
             StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
         }
-        if (spec.typical.isNotEmpty()) {
+        if (!dense && spec.typical.isNotEmpty()) {
             val selected = if (current) ValuePickerLogic.chipIndex(spec, shown) else -1
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(if (dense) 0.dp else Dim.s4, if (dense) Alignment.Start else Alignment.CenterHorizontally)) {
+            BalancedPickerChips(Modifier.fillMaxWidth().testTag("${tag}_chips")) {
                 spec.typical.forEachIndexed { index, typical ->
                     val chosen = index == selected
                     val color by animateColorAsState(if (chosen) colors.accentText else colors.text, tween(MotionMs.MEDIUM), label = "chip")
@@ -250,7 +290,7 @@ fun ValuePicker(
                         .then(if (enabled) Modifier.pressable { Feedback.play("toggle", view); clampNote = false; commit(typical) } else Modifier)
                         .semantics { this.selected = chosen; contentDescription = format(typical); if (!enabled) disabled() }
                         .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
-                        .padding(horizontal = Dim.s12), contentAlignment = Alignment.Center) {
+                        .padding(horizontal = Dim.s8), contentAlignment = Alignment.Center) {
                         BasicText(chipLabel(typical), style = (if (dense) Abook.type.bodySmall else Abook.type.body)
                             .copy(color = color, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Normal))
                     }
@@ -258,6 +298,30 @@ fun ValuePicker(
             }
         }
         special?.invoke()
+    }
+}
+
+/** Measure real text at the current font scale, then distribute balanced rows across the ruler's width. */
+@Composable
+private fun BalancedPickerChips(modifier: Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val gap = 4.dp.roundToPx()
+        val chips = measurables.map { it.measure(Constraints(maxWidth = constraints.maxWidth)) }
+        val rows = ValuePickerLogic.chipRows(chips.map { it.width }, constraints.maxWidth, gap)
+        val heights = rows.map { row -> row.maxOf { chips[it].height } }
+        layout(constraints.maxWidth, heights.sum()) {
+            var y = 0
+            rows.forEachIndexed { r, row ->
+                val extra = constraints.maxWidth - row.sumOf { chips[it].width }
+                var used = 0
+                row.forEachIndexed { i, index ->
+                    val x = if (row.count() == 1) extra / 2 else used + extra * i / (row.count() - 1)
+                    chips[index].placeRelative(x, y)
+                    used += chips[index].width
+                }
+                y += heights[r]
+            }
+        }
     }
 }
 
@@ -298,7 +362,7 @@ private fun ValueDisplay(text: String, typing: Boolean, dense: Boolean, enabled:
     val colors = Abook.colors
     val style = if (dense) Abook.type.bodySmall.copy(color = colors.text2) else Abook.type.screenTitle
     if (!typing) {
-        Box(Modifier.heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)
+        Box(Modifier.widthIn(min = 48.dp).heightIn(min = if (dense) 20.dp else Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)
             .semantics { contentDescription = description }.testTag(tag).padding(horizontal = Dim.s8), contentAlignment = Alignment.Center) {
             BasicText(text, style = style)
         }

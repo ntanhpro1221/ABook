@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  PAGE_STEPS, SNAP_STEPS, VALUE_SPECS, chipIndex, clampValue, formatNumber, fromFraction, isDetent, parseValue, stepValue, toFraction,
+  PAGE_STEPS, SNAP_STEPS, VALUE_SPECS, chipRows, chipIndex, clampValue, formatNumber, fromFraction, isDetent, parseValue, stepValue, toFraction,
   type ValueSpec,
 } from "./valuePickerLogic";
 
@@ -12,9 +12,25 @@ const fixture = JSON.parse(readFileSync(new URL("../../../tests/fixtures/value_p
   pageSteps: number;
   specs: Record<string, ValueSpec>;
   cases: Case[];
+  chipRows: {widths: number[]; available: number; gap: number; out: number[]}[];
 };
 
 describe("bộ chọn giá trị: hợp đồng chung", () => {
+  it("balances overflowing rows and never leaves an orphan", () => {
+    for (const c of fixture.chipRows) expect(chipRows(c.widths, c.available, c.gap).map(row => row.length)).toEqual(c.out);
+  });
+
+  it("inverts every step and spaces wide-domain detents by at least 24dp at 360dp", () => {
+    for (const [name, spec] of Object.entries(fixture.specs)) {
+      for (let i = 0; i <= Math.round((spec.max - spec.min) / spec.step); i++) {
+        const value = stepValue(spec, spec.min, i);
+        expect(fromFraction(spec, toFraction(spec, value)), `${name} ${value}`).toBe(value);
+      }
+      if (spec.min > 0 && spec.max / spec.min >= 8) {
+        for (let i = 1; i < spec.typical.length; i++) expect((toFraction(spec, spec.typical[i]) - toFraction(spec, spec.typical[i - 1])) * 200, name).toBeGreaterThanOrEqual(24);
+      }
+    }
+  });
   it("bảng miền của web là bảng của fixture", () => {
     expect(SNAP_STEPS).toBe(fixture.snapSteps);
     expect(PAGE_STEPS).toBe(fixture.pageSteps);

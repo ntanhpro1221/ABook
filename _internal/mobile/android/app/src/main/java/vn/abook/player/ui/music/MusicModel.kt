@@ -170,7 +170,7 @@ object MusicLevels {
         else -> S.s_rat_nho_ro_loi_0afefef2
     }
     private fun decibels(value: Double): String =
-        if (value == Math.rint(value)) value.toLong().toString() else value.toString().replace('.', ',')
+        vn.abook.player.UiNumber.decimal(value)
     fun number(value: Double): String = "${decibels(value)} dB" + if (value == DEFAULT_DB) S.s_mac_dinh_2a963068 else ""
 }
 

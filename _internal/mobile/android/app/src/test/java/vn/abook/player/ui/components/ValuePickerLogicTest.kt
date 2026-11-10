@@ -16,6 +16,27 @@ class ValuePickerLogicTest {
 
     private fun numbers(array: JSONArray) = (0 until array.length()).map { array.getDouble(it) }
 
+    @Test fun balancedRowsUseTheSharedCases() {
+        val cases = fixture.getJSONArray("chipRows")
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            assertEquals(numbers(c.getJSONArray("out")).map { it.toInt() },
+                ValuePickerLogic.chipRows(numbers(c.getJSONArray("widths")).map { it.toInt() }, c.getInt("available"), c.getInt("gap")).map { it.count() })
+        }
+    }
+
+    @Test fun everyStepInvertsAndWideDetentsHaveRoom() {
+        for ((name, spec) in ValueSpecs.all) {
+            for (i in 0..Math.round((spec.max - spec.min) / spec.step).toInt()) {
+                val value = ValuePickerLogic.step(spec, spec.min, i)
+                assertEquals("$name $value", value, ValuePickerLogic.fromFraction(spec, ValuePickerLogic.toFraction(spec, value)), 0.0)
+            }
+            if (spec.min > 0 && spec.max / spec.min >= 8) spec.typical.zipWithNext().forEach { (a, b) ->
+                org.junit.Assert.assertTrue(name, (ValuePickerLogic.toFraction(spec, b) - ValuePickerLogic.toFraction(spec, a)) * 200 >= 24)
+            }
+        }
+    }
+
     private fun specOf(json: JSONObject) = ValueSpec(
         json.getDouble("min"), json.getDouble("max"), json.getDouble("step"), numbers(json.getJSONArray("typical")),
         json.optJSONArray("scale")?.let { scale -> (0 until scale.length()).map { scale.getJSONArray(it).getDouble(0) to scale.getJSONArray(it).getDouble(1) } }.orEmpty(),

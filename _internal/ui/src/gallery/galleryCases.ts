@@ -89,9 +89,9 @@ export function galleryCases(platform: Platform): void {
           if (selected) { expect(selected.classList.contains('text-fg')).toBe(true); expect(selected.classList.contains('text-accent-text')).toBe(false); }
         }
         if (/player-(?:full-)?sleep(?:-active)?$/.test(entry.id)) {
-          // Bộ chọn giá trị (DESIGN mục 6): bảy chip tiêu biểu, thước, hàng riêng "Hết chương này".
+          // Six numeric shortcuts, a free ruler and a separate chapter count row.
           const choices = [...document.querySelectorAll<HTMLButtonElement>('[role="group"][aria-label="Hẹn giờ ngủ"] [data-value-chip]')];
-          expect(choices).toHaveLength(7);
+          expect(choices).toHaveLength(6);
           expect(document.querySelector('[data-value-ruler][role="slider"]')).not.toBeNull();
           expect(document.querySelector('[data-sleep-chapters]')).not.toBeNull();
           expect(choices.every(el => !/(?:^|\s)bg-|\bborder\b/.test(el.className))).toBe(true);

@@ -9,7 +9,7 @@ import ABook
 //  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn tô màu nhấn;
 //  4. con của nó (`data` mặc định): lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
 // `picked(value)` là lúc áp (thả tay, chạm chip, -/+, Enter, phím); khi kéo, chữ lớn và thước chạy theo tay, `previewed(value)` nếu cần nghe ngay.
-// `dense`: hàng gọn cho danh sách nhiều núm (âm thanh, Cài đặt) - tên + giá trị một hàng, thước, chip nhỏ.
+// `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
 Column {
     id: root
     required property var spec
@@ -17,6 +17,7 @@ Column {
     property string label: ""
     property string hint: ""
     property bool dense: false
+    property real fontScale: 1
     // false: giá trị này chưa phải lựa chọn đang áp (hẹn giờ đang "Hết chương") - không tô chip nào, chọn đúng giá trị đang đứng vẫn là đặt.
     property bool current: true
     // Chữ của một giá trị kèm đơn vị ("23 phút", "1,35×"); chữ trên chip (mặc định như `format`).
@@ -33,8 +34,10 @@ Column {
     readonly property int selectedChip: current ? Logic.chipIndex(spec, shown) : -1
     readonly property string rangeText: S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))
     property real latest: shown
+    // Hosts can reserve one measured shortcut row before deciding their panel width.
+    readonly property real minimumWidth: dense ? 0 : chips.widths.reduce(function(sum, width) { return sum + width }, 0) + Math.max(0, chips.widths.length - 1) * 4
 
-    spacing: dense ? 2 : Theme.s8
+    spacing: dense ? 0 : Theme.s8
     opacity: enabled ? 1 : 0.5
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     onShownChanged: if (moving === null) latest = shown
@@ -73,7 +76,7 @@ Column {
     // 1. Tên + giá trị (hàng gọn) hay chữ lớn ở giữa.
     Item {
         width: root.width
-        height: Math.max(root.dense ? 32 : 48, nameColumn.implicitHeight, valueBox.height)
+        height: Math.max(root.dense ? 20 : 48, nameColumn.implicitHeight, valueBox.height)
         Column {
             id: nameColumn
             visible: root.dense
@@ -87,14 +90,15 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             x: root.dense ? parent.width - width : (parent.width - width) / 2
             width: root.typing ? input.width : display.width
-            height: root.typing ? input.height : display.height
+            height: root.typing ? input.height : root.dense ? 20 : 48
             Interactive {
                 id: display
                 objectName: "valueDisplay"
                 visible: !root.typing
                 enabled: root.enabled
-                width: bigText.implicitWidth + 2 * Theme.s8
-                height: root.dense ? 32 : 48
+                width: Math.max(48, bigText.implicitWidth + 2 * Theme.s8)
+                height: 48
+                y: (valueBox.height - height) / 2
                 tip: S.s_cham_de_go_so_adc1d0d1
                 Accessible.role: Accessible.Button
                 Accessible.name: root.label + ": " + root.format(root.shown) + ". " + S.s_cham_de_go_so_adc1d0d1
@@ -143,10 +147,11 @@ Column {
     // 2. Thước giữa nút - / +.
     Row {
         width: root.width
-        height: 44
+        height: root.dense ? 56 : 48
         IconButton {
             objectName: "valueDown"
-            anchors.verticalCenter: parent.verticalCenter
+            width: 48; height: 48
+            y: 0
             icon: "minus"; iconSize: 18
             tip: S.s_giam_a6c2901a
             Accessible.name: S.s_giam_a6c2901a
@@ -165,8 +170,8 @@ Column {
         Item {
             id: ruler
             objectName: "valueRuler"
-            width: parent.width - 2 * Theme.buttonHeight
-            height: parent.height
+            width: parent.width - 96
+            height: 48
             activeFocusOnTab: root.enabled
             readonly property real inset: 8
             readonly property real fraction: Logic.toFraction(root.spec, root.shown)
@@ -224,10 +229,68 @@ Column {
                 onReleased: if (root.moving !== null) root.commit(root.moving)
                 onCanceled: root.moving = null
             }
+            Repeater {
+                model: root.dense ? root.spec.typical : []
+                Item {
+                    id: tickLabel
+                    required property var modelData
+                    required property int index
+                    objectName: "valueChip_" + Logic.formatNumber(root.spec, modelData)
+                    property bool selected: index === root.selectedChip
+                    width: 48; height: 48; y: 8
+                    x: ruler.inset + Logic.toFraction(root.spec, modelData) * track.width - width / 2
+                    enabled: root.enabled
+                    activeFocusOnTab: root.enabled
+                    Accessible.role: Accessible.Button
+                    Accessible.name: root.format(modelData)
+                    Accessible.onPressAction: root.commit(modelData)
+                    Keys.onReturnPressed: root.commit(modelData)
+                    Keys.onEnterPressed: root.commit(modelData)
+                    Keys.onSpacePressed: root.commit(modelData)
+                    Rectangle {
+                        anchors.fill: parent; anchors.margins: -2
+                        radius: Theme.radiusControl
+                        color: "transparent"; border.width: 2; border.color: Theme.accent
+                        visible: tickLabel.activeFocus && Platform.keyboardNav
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        preventStealing: true
+                        property real startX: 0
+                        property bool dragged: false
+                        function fraction(x) { return (tickLabel.x + x - ruler.inset) / track.width }
+                        onPressed: mouse => { startX = mouse.x; dragged = false }
+                        onPositionChanged: mouse => {
+                            if (!pressed) return
+                            if (Math.abs(mouse.x - startX) > 4) dragged = true
+                            if (dragged) root.dragTo(fraction(mouse.x))
+                        }
+                        onReleased: mouse => {
+                            if (dragged && root.moving !== null) root.commit(root.moving)
+                            else {
+                                const f = fraction(mouse.x)
+                                const nearest = root.spec.typical.reduce(function(best, v) { return Math.abs(Logic.toFraction(root.spec, v) - f) < Math.abs(Logic.toFraction(root.spec, best) - f) ? v : best })
+                                Feedback.play("toggle"); root.clampNote = false; root.commit(nearest)
+                            }
+                        }
+                        onCanceled: root.moving = null
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 22
+                        text: Logic.formatNumber(root.spec, tickLabel.modelData)
+                        color: tickLabel.selected ? Theme.accentText : Theme.text2
+                        font.pixelSize: Theme.sizeCaption * root.fontScale
+                        font.weight: tickLabel.selected ? 600 : Theme.weightRegular
+                    }
+                }
+            }
         }
         IconButton {
             objectName: "valueUp"
-            anchors.verticalCenter: parent.verticalCenter
+            width: 48; height: 48
+            y: 0
             icon: "plus"; iconSize: 18
             tip: S.s_tang_a2363bce
             Accessible.name: S.s_tang_a2363bce
@@ -245,32 +308,56 @@ Column {
         }
     }
 
-    // 3. Chip giá trị tiêu biểu.
-    Flow {
-        visible: root.spec.typical.length > 0
+    // 3. Numeric chips, balanced with the actual font metrics.
+    Item {
+        id: chips
+        objectName: "valueChips"
+        visible: !root.dense && root.spec.typical.length > 0
         width: root.width
-        spacing: root.dense ? Theme.s4 : Theme.s8
+        readonly property var widths: root.spec.typical.map(function(v) { return Math.max(48, metrics.advanceWidth(Logic.formatNumber(root.spec, v)) + 16) })
+        readonly property var rows: Logic.chipRows(widths, width, 4)
+        height: visible ? rows.length * 48 : 0
+        FontMetrics { id: metrics; font.pixelSize: Theme.sizeBodySmall * root.fontScale; font.weight: Theme.weightMedium }
         Repeater {
-            model: root.spec.typical
-            ChoiceChip {
+            model: chips.rows
+            Item {
+                id: chipRow
                 required property var modelData
                 required property int index
-                objectName: "valueChip_" + Logic.formatNumber(root.spec, modelData)
-                enabled: root.enabled
-                implicitHeight: root.dense ? 28 : 36
-                text: root.chipLabel ? root.chipLabel(modelData) : root.format(modelData)
-                selected: index === root.selectedChip
-                Accessible.name: root.format(modelData)
-                onClicked: { Feedback.play("toggle"); root.clampNote = false; root.commit(modelData) }
+                y: index * 48; width: chips.width; height: 48
+                property var indices: modelData
+                property real total: indices.reduce(function(sum, i) { return sum + chips.widths[i] }, 0)
+                Repeater {
+                    model: chipRow.indices
+                    ChoiceChip {
+                        required property var modelData
+                        required property int index
+                        readonly property real typical: root.spec.typical[modelData]
+                        objectName: "valueChip_" + Logic.formatNumber(root.spec, typical)
+                        enabled: root.enabled
+                        textScale: root.fontScale
+                        implicitWidth: chips.widths[modelData]
+                        width: implicitWidth; height: 48
+                        x: {
+                            var before = 0
+                            for (var i = 0; i < index; i++) before += chips.widths[chipRow.indices[i]]
+                            return chipRow.indices.length === 1 ? (chips.width - width) / 2 : before + (chips.width - chipRow.total) * index / (chipRow.indices.length - 1)
+                        }
+                        text: Logic.formatNumber(root.spec, typical)
+                        selected: modelData === root.selectedChip
+                        Accessible.name: root.format(typical)
+                        onClicked: { Feedback.play("toggle"); root.clampNote = false; root.commit(typical) }
+                    }
+                }
             }
         }
     }
 
     // 4. Lựa chọn đặc biệt (con do chỗ dùng đặt vào).
-    Item {
+    Column {
         id: specialSlot
         visible: children.length > 0
         width: root.width
-        height: childrenRect.height
+        spacing: Theme.s4
     }
 }

@@ -176,6 +176,7 @@ qt_add_qml_module(ABookDesk
         qml/AudioFxSlider.qml
         qml/ValuePicker.qml
         qml/ValuePickerLogic.js
+        qml/UiNumber.js
         qml/AudioFxPanel.qml
         qml/MusicLevelSlider.qml
         qml/ReadingSuggestions.qml

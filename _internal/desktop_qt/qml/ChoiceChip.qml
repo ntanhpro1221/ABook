@@ -6,6 +6,7 @@ Interactive {
     id: root
     property string text: ""
     property bool selected: false
+    property real textScale: 1
     // Full-width is reserved for a single-column menu, never a filter segment.
     property string fullWidthReason: ""
     implicitHeight: 36
@@ -30,7 +31,7 @@ Interactive {
         text: root.text
         color: root.selected ? Theme.accentText : Theme.text
         Behavior on color { ColorAnimation { duration: Theme.motionFast } }
-        font.pixelSize: Theme.sizeBodySmall
+        font.pixelSize: Theme.sizeBodySmall * root.textScale
         font.weight: root.selected ? Theme.weightMedium : Theme.weightRegular
     }
 }

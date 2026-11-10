@@ -47,7 +47,7 @@ fun VoicePickCard(voice: VoiceState) {
 }
 
 object EnginePickText {
-    private fun number(value: Double) = String.format(Locale.forLanguageTag("vi"), "%.1f", value)
+    private fun number(value: Double) = vn.abook.player.UiNumber.decimal(value, 1, fixed = true)
 
     fun headline(status: EnginePickStatus): String {
         if (status.measuring) return S.s_dang_thu_cac_giong_872881f6
