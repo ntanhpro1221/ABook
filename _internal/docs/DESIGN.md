@@ -240,7 +240,13 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   (điện thoại) / 48 (máy tính); trong một phần: 12-16.
 - **Chữ** (Be Vietnam Pro): 12 phụ chú · 14 thân phụ · 16 thân · 18 tiêu đề mục · 24 tiêu đề màn điện thoại · 32 tiêu đề màn
   máy tính · 20/1.7 chữ đọc theo. Đậm: 400 / 500 / 700 - tối đa ba mức một màn. Chữ hoa giãn chỉ cho nhãn phần (12, 600, +0.06em).
-- **Bo góc**: 8 điều khiển · 12 bìa/ảnh · 20 bảng trượt/hộp thoại · tròn cho nút tròn. Danh sách không bo khung.
+- **Chữ số**: chữ số đều độ rộng (`tnum`) chỉ dùng cho số đang đổi tại chỗ (đồng hồ phát, đếm ngược, phần trăm đang chạy) và cột số của bảng.
+  Số trong câu ("12 chương", "5 giờ", "0 dB", "1,15×") dùng số tỉ lệ. Giá trị bằng 0 viết "0" kèm đơn vị, không "0.0" hay "0,0". Dấu thập phân là
+  dấu phẩy; dấu nhân "×" cùng cỡ với số, không khoảng trắng. Trong code: điện thoại `ClockLabel`, Qt `ClockLabel` + ô bảng đánh dấu `// tnum-ok:`, web
+  `.tabular-cell`; máy dò `TabularDigitsRulesTest.kt`, `tests/test_qt_tabular_digits.py`, `shared/tabularDigits.test.ts` (soát 10-11 L2).
+- **Bo góc**: 8 điều khiển · 12 bìa/ảnh · 20 bảng trượt/hộp thoại · tròn cho nút tròn. Danh sách không bo khung. Theo vai: ô lựa chọn, nền câu
+  đang đọc, phím, chip, menu = 8; bìa, thẻ, ô nhập, nút = 12; sheet, hộp thoại = 20; nút phát, công tắc, núm = tròn. Nền câu đang đọc: một khối
+  ôm chữ, đệm ngang 4, không vượt lề chữ; cả ba nền tảng cùng hình (Qt `ReadingInk.js`, web `readingInk.ts`, điện thoại `ReadAlongPane`).
 - **Viền**: 1px `--line` chỉ làm vạch chia hàng trong danh sách dài, thụt theo nội dung.
 - **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại). Bóng không thấy được trên nền tối (bảng `--panel` #1b1a18 chỉ hơn nền #121110 một bậc),
   nên bờ của bảng trượt / hộp ở chế độ tối do ba thứ: màn mờ `--scrim` tối rgb(6 5 4 / .62) (sáng rgb(20 17 13 / .45); điện thoại `AbookColors.scrim`), vạch 1 px
@@ -268,6 +274,8 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   `screen-title-baseline`). Màn con: một kiểu nút ← (`BackButton`), nét mũi tên thẳng mép nội dung, tiêu đề sát sau, vùng chạm 48 / 40.
 - **Hàng danh sách**: trái biểu tượng/bìa nhỏ hay trạng thái, giữa tên (16) + phụ (14, `--fg-2`), phải một hành động hay "…".
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
+- **Trạng thái nhỏ**: thanh tiến độ dưới 2 % không vẽ phần đã tô (điện thoại `ProgressFill`, web `progressFill`, Qt `Theme.progressFillMin`). Hành
+  động xoá luôn màu nguy hiểm (`--danger`; `--danger-ink` là mực TRÊN nền đỏ đặc), dạng chữ; nút tô đỏ chỉ dùng trong hộp xác nhận xoá sách.
   Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích ĐẦU dòng (`SelectionMark`, luôn giữ chỗ, mờ vào / ra; máy dò SIBLING CONSISTENCY check-mark-trailing). Ô chọn dạng lưới (tốc độ, mức hẹn giờ): ô đang chọn chữ hổ phách đậm, không dấu tích - ô hẹp, dấu tích đè hay đẩy chữ lệch tâm.
 - **Điều hướng** (thanh bên máy tính, danh sách nhóm Cài đặt hai cột): mục đang mở = nền trung tính nhạt + chữ đậm màu thường; không dấu tích, không nền hổ phách, không chữ hổ phách (máy dò rule22 NAV ACCENT).
 - **Dòng menu** (menu "…", bảng Thêm tuỳ chọn): mọi dòng trọn bề ngang menu, giá trị bên phải ("Tắt", tên giọng) cùng một mép; dòng mở ra tại chỗ không co theo chữ, không bị danh sách con đẩy tràn (máy dò INK EDGE menu-row-short). Menu con nổi cách mép ngoài bảng cha 8 px, thẳng đỉnh (bảng mở xuống) hay đáy (bảng mở lên); chỉ dịch khi cần tránh mép màn. **Nhãn của lựa chọn** không bao giờ cắt "…" - xuống dòng (máy dò CLIPPED TEXT choice-label-truncated).
@@ -275,7 +283,13 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Nút chữ đầu hàng** (nút ghost đứng đầu một cột chữ, "Tải" dưới thẻ sách): bù đệm trái bằng `edge-start-action` để mực thẳng mép chữ của cột (máy dò INK EDGE leading-control-inset). **Icon cạnh khối chữ canh đầu** đứng giữa DÒNG ĐẦU: `mt-line-icon` (theo 1lh), không đặt cứng mt-0.5; hàng có nút thì dòng đầu đứng giữa chiều cao nút `--button-h` (InlineError) (máy dò INK EDGE icon-off-first-line).
 - **Cột anh em**: điều khiển lặp ở mọi hàng của một danh sách (công tắc "Tự chọn", nút cùng tên) đứng cùng một cột; chữ dài ngắn khác nhau theo hàng đứng SAU nó, không trước (máy dò SIBLING CONSISTENCY sibling-column; Qt tst_list_measure sameColumn).
 - **Nút chữ cuối hàng** chạm mép phải của cột như mọi nút cùng cột (bù đệm bằng `settings-edge-action`); không lặp icon đã có ở đầu hàng (máy dò INK EDGE ink-right, REPEATED LABEL row-icon-twice).
-- **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
+- **Xuống dòng**: không dòng cuối nào chỉ có một từ. Cụm nối bằng " · " không gãy giữa cụm. Lưới lựa chọn không có hàng cuối thiếu ô: chọn số cột
+  chia hết, hoặc cuộn ngang. Ô lưới bìa luôn cao bằng nhau: tên 2 dòng (dành sẵn), phụ 1 dòng cắt "…". Mô tả của một hàng cài đặt chiếm trọn bề
+  ngang dưới tên; điều khiển bên phải chỉ ngang hàng với tên.
+- **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa 2 dòng dành sẵn, phụ một dòng cắt "…"; mọi ô một hàng cao bằng nhau. Điện thoại 2-3 cột, máy tính
+  tự giãn 160-200 px.
+- **Bìa và tên**: bìa không có ảnh vẽ tên sách trên bìa; khi đó chú thích dưới bìa chỉ còn dòng phụ. Bìa có ảnh thì tên nằm dưới bìa. Không bao
+  giờ in tên hai lần trong một ô. Nhãn tập ("Tập 2") chỉ in một chỗ.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;
   Tìm là icon mở rộng thành ô. Trong code: `FilterRow` (shared/ui.tsx) - mọi bộ lọc hai-ba mục trong tab (Kịch bản, Cần nghe lại, Việc cần duyệt) dùng nó, không `Segmented`. Một tab không chứa tab / bộ lọc thứ hai chỉ để đổi kiểu xem cùng một danh sách (Nhật ký: danh sách diễn biến + nút "Chi tiết kỹ thuật" mở thêm).
 - **Mục đang chọn của tab và bộ lọc**: cùng một kiểu - chữ `--text` đậm màu thường + gạch chân hổ phách; hổ phách chỉ ở gạch, không ở chữ (soát 25-10: tab chữ tối, bộ lọc chữ hổ phách trông như hai app).
@@ -284,6 +298,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Bảng trượt / hộp thoại**: điện thoại = bảng trượt từ đáy có tay nắm; máy tính = hộp giữa màn rộng ≤ 560. Nút chính ở
   đáy, luôn thấy (đáy dính khi nội dung cuộn).
   Lớp phủ nằm LÊN trên: màn bên dưới đứng yên, không co hay chừa chỗ theo bảng (máy kiểm: gallery/overlayStill.phone.dom.test.tsx).
+- **Lớp phủ và mép cắt**: không phần tử nổi nào nằm trên chữ đọc; nút "Tới câu đang nghe" đứng trong dải đáy riêng cao 48 có nền `--bg`. Mép sheet
+  và mép vùng cuộn không cắt ngang một dòng chữ: chiều cao sheet làm tròn theo hàng, phần dưới lớp mờ là nguyên hàng. Sửa ở thành phần chung
+  (điện thoại `sheetSurface`, web `Sheet`), không vá từng màn.
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Dòng phụ nhiều cụm** (`A · B · C`): cụm giữa hai "·" không gãy, chỉ xuống dòng ngay sau dấu; cụm dài hơn cả dòng mới được gãy bên trong. Điện thoại `keepClustersTogether` (ClusterLabel), web `DotJoin`, Qt `Flow` + `FlowDetail`; máy kiểm: TextWrapRulesTest, gallery_inspect `cluster-broken`, test_qt_layout_lints.py.
@@ -298,11 +315,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
   "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng. Cuốn đang nạp:
   bìa và dòng chương đang phát mở trình phát (L3b).
-- **Trình phát đầy đủ**: thanh đầu: thu nhỏ · "ĐANG NGHE" · "…"; bìa lớn; tên chương (20) + tên sách (nút "›" tới trang sách, L3c); thanh tiến độ + thời gian;
+- **Trình phát đầy đủ**: thanh đầu: thu nhỏ · viên chọn chế độ "Nghe / Đọc theo" (chương chưa có chữ đọc theo: chữ "Đang nghe") · "…"; bìa lớn; tên chương (20) + tên sách (nút "›" tới trang sách, L3c); thanh tiến độ + thời gian;
   hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 3 nút có nhãn (Tốc độ · Hẹn giờ ·
-  Chương); đáy: một nút "Đọc theo" rộng cả hàng. Mọi việc khác (nhạc nền, giọng, âm lượng, quay
+  Chương); không nút "Đọc theo" ở đáy - Đọc theo là một chế độ của chính cửa sổ, đổi bằng viên ở thanh đầu. Mọi việc khác (nhạc nền, giọng, âm lượng, quay
   lại chỗ vừa nghe, gợi ý, phát trên thiết bị khác) ở "…" của thanh đầu - "Thêm" ở thanh đầu chứ không chiếm một ô hàng phụ, để
-  "Chương" (L4) còn 2 chạm. Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe. Máy tính: trình phát bên trái, đọc theo bên phải.
+  "Chương" (L4) còn 2 chạm. Điện thoại: chọn "Đọc theo" thu bìa về ô nhỏ cạnh tên và mở chữ của chương đang nghe tại chỗ. Máy tính: trình phát bên trái, đọc theo bên phải.
 - **Đọc theo**: chữ 20/1.7, rộng ≤ 68 ký tự; đầu màn chỉ nút về + tên chương (nền đặc, không chồng lên chữ); thanh dưới mờ
   khi cuộn đọc, chạm hiện lại; câu đang đọc tô nhạt, từ đang đọc tô đậm hơn.
 - **Studio (máy tính)**: danh sách dự án là bảng gọn (tên · trạng thái · tiến độ · cập nhật); dự án: tiêu đề + trạng thái +
