@@ -169,7 +169,7 @@ def test_a_suffix_word_alone_or_a_look_alike_is_left_alone(token: str) -> None:
 
 
 # ---- TN "Nghe ngay" lượt 3 (bộ thử Corpus/research/tn, gold_spec): tiếng cười, thán từ, nói lắp, Lv, từ mượn, đơn vị tiền ------------------------------
-@pytest.mark.parametrize("token, reading", [("Haha", "ha ha"), ("hahaha", "ha ha ha"), ("HAHA", "ha ha"), ("Hehe", "hê hê"), ("Hihi", "hi hi"), ("fufu", "phu phu"),
+@pytest.mark.parametrize("token, reading", [("Haha", "ha ha"), ("hahaha", "ha ha ha"), ("HAHA", "ha ha"), ("Hehe", "hê hê"), ("Hihi", "hy hy"), ("fufu", "phu phu"),
                                              ("Hm", "hừm"), ("Huh", "hả"), ("Hic", "hích"), ("Ooh", "ô"), ("Urgh", "ức")])
 def test_a_laugh_or_an_interjection_is_read_as_sounds(token: str, reading: str) -> None:
     assert _said(f"Rồi {token}, đến.") == ["Rồi", f"{reading},", "đến."]
@@ -196,7 +196,7 @@ def test_a_stutter_is_read_as_the_sound_it_starts(text: str, said: str) -> None:
 
 
 def test_the_word_after_a_stutter_still_goes_through_the_name_rules() -> None:
-    assert " ".join(_said("“T-Tsukinoki-senpai cho", "ja")) == "“tờ… Xu-ki-nô-ki-xen-pai cho"
+    assert " ".join(_said("“T-Tsukinoki-senpai cho", "ja")) == "“xờ… Xu-ki-nô-ki-xen-pai cho"
     assert " ".join(_said("A-anime")) == "a… a-ni-me"
 
 

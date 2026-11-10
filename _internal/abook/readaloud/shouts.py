@@ -24,6 +24,14 @@ POLICY = json.loads(Path(__file__).with_name("sound_policy.json").read_text(enco
 NOTE = re.compile(POLICY["note_pattern"], re.IGNORECASE)
 
 
+def distinct_from_english(reading: str) -> str:
+    """A generated syllable that spells an English word ("he", "hi", "I") is said in English by sea-g2p.
+
+    Respell it as the same Vietnamese sound; `english_safe` readings were measured to stay Vietnamese.
+    """
+    return POLICY["english_collisions"].get(reading.casefold(), reading)
+
+
 def presentation_tokens(toks: list[str]) -> tuple[list[str], list[int]]:
     """Split note anchors only in voice text; keep one owner per displayed token.
 
@@ -70,7 +78,9 @@ def _expanded_reading(core: str) -> str | None:
         for atom in re.findall(POLICY["laugh_atom"], word):
             vowel = next(c for c in atom if c in POLICY["vowels"])
             sounds.append("phu" if atom[0] == "f" else POLICY["laugh_vowels"][vowel])
-        return " ".join(sounds[:POLICY["max_laugh_syllables"]])
+        # The opening vowel tells "Ehehe" from "Hehe"; it does not count toward the ceiling.
+        lead = [POLICY["laugh_leads"][word[0]]] if word[0] in POLICY["laugh_leads"] else []
+        return " ".join(lead + sounds[:POLICY["max_laugh_syllables"]])
     if re.fullmatch(POLICY["nasal_pattern"], word):
         return romanized_reading(dedupe(word), "ja")
     stretched = re.search(r"(.)\1{" + str(POLICY["min_run"] - 1) + r",}", word)
@@ -100,17 +110,19 @@ def _expanded_reading(core: str) -> str | None:
             reading = base if base in names.english_words() else None
     if not reading:
         return None
+    reading = distinct_from_english(reading)
     if "…" in reading:
         return reading
     return reading + "…" if stretched else reading
 
 INTERJECTIONS = {"umm": "ừm", "ugh": "ức", "boom": "bùm", "oh": "ô", "hmm": "hừm", "shh": "suỵt", "ah": "a", "eh": "ê", "hm": "hừm", "huh": "hả", "ooh": "ô",
                  "hic": "hích", "urgh": "ức", "um": "ừm", "uhm": "ừm", "uh": "ờ", "mm": "ừm",  # "Um", "Uh", "Mm" (sea-g2p đọc "mm" là "mi li mét")
-                 "grr": "gừ", "pff": "phụt", "pfft": "phụt", "kkk": "khà khà", "hhh": "ha ha", "sss": "xì"}  # chữ phụ âm lặp: "grrr", "pfffft", "kkkk", "hhhh", "ssss" ("mmm" là "mm" ở trên)
+                 "grr": "gừ", "pff": "phụt", "pfft": "phụt", "kkk": "khà khà", "hhh": "ha ha", "sss": "xì",
+                 "hmph": "hừm", "hmpf": "hừm", "tsk": "chậc", "tch": "chậc"}  # chữ phụ âm lặp: "grrr", "pfffft", "kkkk", "hhhh", "ssss" ("mmm" là "mm" ở trên)
 SHORT_CASED = frozenset(("um", "uhm", "uh", "mm"))  # chữ ngắn này viết HOA cả ("UH-60", "MM", "SSS") là viết tắt / hạng, không phải tiếng kêu
 COUNT_WORDS = frozenset(("vài", "mấy", "mười"))  # ngoài `names.NUMBER_WORDS`: "vài mm"
 PAIR_LETTERS = "hzm"  # chữ cuối lặp HAI lần cũng là kéo ("Ahh", "Haizz", "Hừmm"): ba lần thì mọi chữ, hai lần chỉ ba chữ này (Boss, Class, Jess là từ thật)
-LAUGH_SYLLABLES = {"ha": "ha", "he": "hê", "hi": "hi", "ho": "hô", "fu": "phu"}  # tiếng cười lặp ("Haha" -> "ha ha", "Hehe" -> "hê hê", "fufu" -> "phu phu")
+LAUGH_SYLLABLES = {"ha": "ha", "he": "hê", "hi": POLICY["laugh_vowels"]["i"], "ho": "hô", "fu": "phu"}  # tiếng cười lặp ("Haha" -> "ha ha", "Hehe" -> "hê hê", "fufu" -> "phu phu")
 LAUGH = re.compile(r"(?:ha|he|hi|ho|fu){2,}", re.IGNORECASE)
 TONE_MARKS = "\u0300\u0301\u0303\u0309\u0323"  # huyền, sắc, ngã, hỏi, nặng (còn lại là dấu mũ / móc / trăng: thuộc về chữ)
 STANDALONE = frozenset("aeêioôơuư")  # nguyên âm đứng riêng được thành một âm tiết: chữ kéo là chữ này thì nhắc lại nó sau "…"

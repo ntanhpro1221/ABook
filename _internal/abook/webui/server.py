@@ -4179,6 +4179,14 @@ class ClipStream:
         self.handler.close_connection = True
 
 
+def _package_texts(app: Any, book: str) -> Any:
+    """Chữ từng chương của cuốn nhập từ file, theo thứ tự, đọc lười."""
+    path = app._listenable(book)
+    chapters = packages.edited_manifest(path).get("chapters") or [] if packages.is_package(path) else []
+    ids = [chapter["id"] for chapter in chapters if isinstance(chapter, dict) and isinstance(chapter.get("id"), int)]
+    return (text for text in (packages.chapter_text(path, chapter) for chapter in ids) if text)
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "ABook"
     protocol_version = "HTTP/1.1"
@@ -6625,22 +6633,26 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(book, str) or not book:
             return None
 
-        def texts() -> Any:
-            path = self.app._listenable(book)
-            chapters = packages.edited_manifest(path).get("chapters") or [] if packages.is_package(path) else []
-            ids = [chapter["id"] for chapter in chapters if isinstance(chapter, dict) and isinstance(chapter.get("id"), int)]
-            return (text for text in (packages.chapter_text(path, chapter) for chapter in ids) if text)
-
         try:
-            return self.app.readaloud.origins.origin(book, texts)
+            return self.app.readaloud.origins.origin(book, lambda: _package_texts(self.app, book))
         except ApiError:
             return None
+
+    def _proven_names(self, body: dict[str, Any]) -> dict[str, str]:
+        """Tên cuốn gốc Nhật tự chứng minh; cách đọc riêng của người nghe chồng lên trên."""
+        book = body.get("bookId")
+        if not isinstance(book, str) or not book or self._reading_origin(body) != "ja":
+            return {}
+        try:
+            return self.app.readaloud.origins.name_readings(book, lambda: _package_texts(self.app, book))
+        except ApiError:
+            return {}
 
     def _book_readings(self, body: dict[str, Any]) -> dict[str, str]:
         """Cách đọc riêng cho lần đọc này: `readings` trong yêu cầu ("Nghe thử" một cách đọc chưa lưu - kiểm như lớp sửa) thắng; không có thì
         của cuốn `bookId` (lớp sửa `readings` của cuốn nhập từ file)."""
         if "readings" in body:  # {} = nghe chữ của sách, không cách đọc riêng nào ("Nghe thử" khi ô cách đọc trống)
-            return book_edits.validate_readings(body["readings"]) if body["readings"] != {} else {}
+            return {**self._proven_names(body), **(book_edits.validate_readings(body["readings"]) if body["readings"] != {} else {})}
         book = body.get("bookId")
         if not isinstance(book, str) or not book:
             return {}
@@ -6648,7 +6660,7 @@ class Handler(BaseHTTPRequestHandler):
             path = self.app._listenable(book)
         except ApiError:
             return {}
-        return dict(book_edits.load(path).get("readings") or {}) if packages.is_package(path) else {}
+        return {**self._proven_names(body), **(dict(book_edits.load(path).get("readings") or {}) if packages.is_package(path) else {})}
 
     @staticmethod
     def _clip_book(body: dict[str, Any]) -> str | None:

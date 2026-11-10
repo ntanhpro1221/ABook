@@ -2664,21 +2664,21 @@
   },
   {
    "sentences": [
-    "tờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+    "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
     "cờ… Ken-gi, đờ… Điều này."
    ],
-   "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
   },
   {
    "sentences": [
-    "tờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+    "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
     "cờ… Ken-gi, đờ… Điều này."
    ],
-   "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
   },
   {
    "sentences": [
-    "ha ha, ha ha ha, hê hê, phu phu, hi hi, hừm, hả, hích, ô, ức.",
+    "ha ha, ha ha ha, hê hê, phu phu, hy hy, hừm, hả, hích, ô, ức.",
     "ha ha.",
     "chào… ò sáng… bam…."
    ],
@@ -2686,7 +2686,7 @@
   },
   {
    "sentences": [
-    "ha ha, ha ha ha, hê hê, phu phu, hi hi, hừm, hả, hích, ô, ức.",
+    "ha ha, ha ha ha, hê hê, phu phu, hy hy, hừm, hả, hích, ô, ức.",
     "ha ha.",
     "chào… ò sáng… bam…."
    ],
@@ -9263,10 +9263,10 @@
      "first": 0,
      "last": 5,
      "pieces": [
-      "tờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
       "cờ… Ken-gi, đờ… Điều này."
      ],
-     "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
     }
    ],
    "origin": "ja"
@@ -9280,10 +9280,10 @@
      "first": 0,
      "last": 5,
      "pieces": [
-      "tờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
       "cờ… Ken-gi, đờ… Điều này."
      ],
-     "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
     }
    ],
    "origin": "ja"
@@ -9297,9 +9297,9 @@
      "first": 0,
      "last": 2,
      "pieces": [
-      "tờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me."
+      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me."
      ],
-     "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ."
+     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ."
     },
     {
      "first": 3,
@@ -9321,7 +9321,7 @@
      "first": 0,
      "last": 13,
      "pieces": [
-      "ha ha, ha ha ha, hê hê, phu phu, hi hi, hừm, hả, hích, ô, ức.",
+      "ha ha, ha ha ha, hê hê, phu phu, hy hy, hừm, hả, hích, ô, ức.",
       "ha ha.",
       "chào… ò sáng… bam…."
      ],
@@ -9338,7 +9338,7 @@
      "first": 0,
      "last": 13,
      "pieces": [
-      "ha ha, ha ha ha, hê hê, phu phu, hi hi, hừm, hả, hích, ô, ức.",
+      "ha ha, ha ha ha, hê hê, phu phu, hy hy, hừm, hả, hích, ô, ức.",
       "ha ha.",
       "chào… ò sáng… bam…."
      ],
@@ -9355,7 +9355,7 @@
      "first": 0,
      "last": 5,
      "pieces": [
-      "ha ha, ha ha ha, hê hê, phu phu, hi hi, hừm,"
+      "ha ha, ha ha ha, hê hê, phu phu, hy hy, hừm,"
      ],
      "phonemes": "hˈaː hˈaː, hˈaː hˈaː hˈaː, hˈe hˈe, fˈu fˈu, hˈi hˈi, hˈy2m."
     },
@@ -11262,6 +11262,11 @@
    "cap": 234
   },
   {
+   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j.",
+   "syllables": 18,
+   "cap": 214
+  },
+  {
    "phonemes": "sˈɛ bwˈiɜt̪ sˈoɜ bˈaː mˈyəj hˈaːj tʃˈa6j t̪ˌy2 bˈeɜn sˈɛ mˈi5 ɗˈi2ɲ.",
    "syllables": 12,
    "cap": 160
@@ -11570,11 +11575,6 @@
    "phonemes": "t̪ˈə6p mˈo6t̪, xˈəː4j ɗˈə2w.",
    "syllables": 4,
    "cap": 28
-  },
-  {
-   "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j.",
-   "syllables": 18,
-   "cap": 216
   },
   {
    "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn.",

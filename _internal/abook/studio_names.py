@@ -10,7 +10,7 @@ Mọi phần ở đây là luật dùng lại của "Nghe ngay"; không chép l�
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from .models import KEEP_ENGLISH_PRONUNCIATION_SOURCE, RULE_ROMANIZATION_PRONUNCIATION_SOURCE
 from .readaloud import names as readaloud_names
@@ -41,6 +41,15 @@ def book_origin_for_project(db: Any) -> str | None:
     """"ja" / "ko" / None cho cả dự án, đoán như "Nghe ngay" (`readaloud.names.book_origin`, cùng số chương mẫu và ngưỡng). Studio chưa có chỗ
     cho người dùng ghi đè gốc; chữ dự án không đổi nên lần đoán lặp lại y hệt."""
     return readaloud_names.book_origin(chapter_texts(db))
+
+
+def book_name_readings_for_project(db: Any, origin: str | None) -> dict[str, str]:
+    """Tên cuốn gốc Nhật tự chứng minh, từ chữ các chương và sổ nhân vật (`japanese_policy.book_name_readings`); cuốn khác không có."""
+    if origin != "ja":
+        return {}
+    from .readaloud.japanese_policy import book_name_readings
+
+    return book_name_readings(chapter_texts(db), [str(row["canonical_name"]) for row in db.list_characters()])
 
 
 def rule_reading(surface: str, origin: str | None) -> str | None:
@@ -114,7 +123,8 @@ def _direct_word(word: str, origin: str | None) -> bool:
     return keeps_word(word, origin)
 
 
-def japanese_pronunciations(pronunciations: list[Any], origin: str | None) -> list[Any]:
+def japanese_pronunciations(pronunciations: list[Any], origin: str | None,
+                            book_names: Mapping[str, str] | None = None) -> list[Any]:
     """Materialize automatic Japanese readings by component without rewriting a DB.
 
     A full machine row must not shadow the same component's listener reading.
@@ -135,7 +145,8 @@ def japanese_pronunciations(pronunciations: list[Any], origin: str | None) -> li
         words = str(row["surface"]).split()
         row_origin = routing_origin(str(row["surface"]), origin)
         contextual = contextual_names(words, origin) if row_origin == "ja" else set()
-        readings = [japanese_reading(word, origin, contextual=i in contextual) if row_origin == "ja" else None for i, word in enumerate(words)]
+        readings = [(book_names or {}).get(word) or (japanese_reading(word, origin, contextual=i in contextual) if row_origin == "ja" else None)
+                    for i, word in enumerate(words)]
         if str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE or not any(readings):
             untouched.append(row)
             continue

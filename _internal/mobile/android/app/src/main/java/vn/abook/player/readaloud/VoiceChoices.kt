@@ -90,6 +90,23 @@ class VoiceChoices(private val file: File) {
         return if (guess in Names.ORIGINS) guess else ""
     }
 
+    /** Tên cuốn gốc Nhật tự chứng minh ([JapanesePolicy.bookNameReadings]), tính một lần trên cả cuốn rồi lưu cạnh gốc; đổi luật thì tính lại. */
+    fun nameReadingsFor(bookId: String, texts: () -> Sequence<String>): Map<String, String> {
+        synchronized(this) {
+            val entry = origins().optJSONObject(bookId)
+            val names = if (entry?.optInt("namesRule", 0) == JapanesePolicy.VERSION) entry.optJSONObject("names") else null
+            if (names != null) return names.keys().asSequence().associateWith { names.getString(it) }
+        }
+        // Đọc cả cuốn ngoài khoá: luồng chính cũng hỏi VoiceChoices.
+        val found = JapanesePolicy.bookNameReadings(texts())
+        synchronized(this) {
+            val entry = origins().optJSONObject(bookId) ?: JSONObject().also { origins().put(bookId, it) }
+            entry.put("names", JSONObject(found)).put("namesRule", JapanesePolicy.VERSION)
+            save()
+        }
+        return found
+    }
+
     /** Người dùng chọn gốc của cuốn: "ja" / "ko" / "none"; null bỏ ghi đè (theo máy đoán). */
     @Synchronized
     fun setOriginOverride(bookId: String, value: String?) {

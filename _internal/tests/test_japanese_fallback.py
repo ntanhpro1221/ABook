@@ -77,7 +77,7 @@ def test_general_evidence_and_short_homographs():
     assert " ".join(vieneu.spoken_tokens("Tanaka Abe đến.".split(), None, direct_english=True)) == "Ta-na-ca a-be đến."
     for word in ("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel"):
         assert reading(word, None) is None
-        assert (reading(word, "ja") is None) == (word != "Aya")
+        assert (reading(word, "ja") is None) == (word not in ("Aya", "Abe"))
     assert reading("Anime", None) is not None
     assert reading("Anime", "ja") is not None
     assert vieneu.spoken_tokens(["T-Tanaka"], "ja", direct_english=True) == ["tờ… Ta-na-ca"]
@@ -104,7 +104,7 @@ def test_long_vowels_remain_auto_without_name_lists():
         assert metadata(word)["provenance"] == "auto"
         assert set(metadata(word)) == {"provenance", "reading_namespace", "source_spelling", "long_vowels"}
     assert set(POLICY["fixed"]) == {"onigiri"}
-    assert set(POLICY) <= {"version", "namespace", "provenance", "description", "delivery", "choices", "long_vowels", "long_o", "vowels", "internal_vowels", "vowel", "simple", "allowed", "onsets", "geminate_coda", "fixed", "suffixes", "honorifics", "common", "emit", "vowel_pairs", "routing"}
+    assert set(POLICY) <= {"version", "namespace", "provenance", "description", "delivery", "choices", "long_vowels", "long_o", "vowels", "internal_vowels", "vowel", "simple", "allowed", "onsets", "geminate_coda", "fixed", "suffixes", "honorifics", "common", "emit", "vowel_pairs", "routing", "known_names", "particles"}
 
 
 @pytest.mark.parametrize("core,count", [("Tanaka", 3), ("Satou", 2), ("Yuuki", 2), ("Shinji", 2), ("Ryu", 1), ("Sappa", 2), ("English", 0), ("Nnka", 0), ("Kkaka", 0)])
