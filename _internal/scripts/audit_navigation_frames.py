@@ -112,7 +112,7 @@ def track_covers(frame, templates, check):
 
 def evaluate(manifest, output):
     video = Path(manifest["video"])
-    timing = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(video), "-vf", "showinfo", "-vsync", "0", "-an", "-f", "null", "-"], capture_output=True, text=True, timeout=60, check=True)
+    timing = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(video), "-vf", "showinfo", "-vsync", "0", "-an", "-f", "null", "-"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=True)
     pts = [float(value) for value in re.findall(r"\bn:\s*\d+.*?\bpts_time:([\d.e+-]+)", timing.stderr)]
     checks = manifest["checks"]
     needed = {int(c["reference"]) for c in checks if "reference" in c}
