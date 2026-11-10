@@ -18,7 +18,7 @@
     {"text": "What the hell?", "origin": null, "said": "What <en>the</en> hell?"},
     {"text": "Hmmm Ahhh Haizzz Haha.", "origin": null, "said": "hừm… a… hai… ha ha."},
     {"text": "Tờ nhãn ghi MADE IN CHINA.", "origin": null, "said": "Tờ nhãn ghi made in china."},
-    {"text": "Tôi mở video và kiểm logic.", "origin": null, "said": "Tôi mở video và kiểm logic."},
+    {"text": "Tôi mở video và kiểm logic.", "origin": null, "said": "Tôi mở vi-đê-ô và kiểm lô-gích."},
     {"text": "Haruto-kun gặp Rose.", "origin": "ja", "said": "Ha-ru-tô-cun gặp Rose."},
     {"text": "Seo-yeon gặp Ji-ho.", "origin": "ko", "said": "Xeo-gion gặp Gi-hô."},
     {"text": "Shinji Tanaka đi học.", "origin": null, "said": "Sin-gi Ta-na-ca đi học."},
@@ -42,15 +42,21 @@
     {"text": "Ngành IT đang hot, STOP IT!", "origin": null, "said": "Ngành IT đang <en>hot</en>, stop <en>it</en>!"},
     {"text": "Tôi no rồi, mọi chuyện thật gay go.", "origin": null, "said": "Tôi no rồi, mọi chuyện thật gay go."},
     {"text": "Con boss to quá, team ta lo rồi.", "origin": null, "said": "Con boss to quá, team ta lo rồi."},
-    {"text": "Game over em ơi, chơi game hay sao?", "origin": null, "said": "Game over em ơi, chơi game hay sao?"},
+    {"text": "Game over em ơi, chơi game hay sao?", "origin": null, "said": "Game over em ơi, chơi ghêm hay sao?"},
     {"text": "Elsa sao rồi? Edward than thở, Will bay.", "origin": null, "said": "Elsa sao rồi? Edward than thở, Will bay."},
     {"text": "Anh em oi, cho em hoi mot chut that su rat vui.", "origin": null, "said": "Anh em oi, cho em hoi mot chut that su rat vui."},
     {"text": "Yamata no Orochi và Maximilian no baka.", "origin": null, "said": "Yamata no Orochi và Maximilian no baka."},
-    {"text": "Vị bạc hà the the mix với kem, ăng ten radio hỏng.", "origin": null, "said": "Vị bạc hà the the mix với kem, ăng ten radio hỏng."},
+    {"text": "Vị bạc hà the the mix với kem, ăng ten radio hỏng.", "origin": null, "said": "Vị bạc hà the the mix với kem, ăng ten ra-đi-ô hỏng."},
     {"text": "Khái niệm \"no\" với nó không tồn tại.", "origin": null, "said": "Khái niệm \"no\" với nó không tồn tại."},
     {"text": "Ars nhìn No. 7 rồi quay đi.", "origin": null, "said": "Ars nhìn No. 7 rồi quay đi."},
     {"text": "Nó là con hot girl mà.", "origin": null, "said": "Nó là con <en>hot</en> girl mà."},
     {"text": "Hi vọng con an tâm, so với me thì ban đó in ít hơn.", "origin": null, "said": "Hi vọng con an tâm, so với me thì ban đó in ít hơn."},
-    {"text": "Go Kyung-min và Gi Go đi qua.", "origin": "ko", "said": "Go Ki-ung-min và Gi Go đi qua."}
+    {"text": "Go Kyung-min và Gi Go đi qua.", "origin": "ko", "said": "Go Ki-ung-min và Gi Go đi qua."},
+    {"text": "Tôi đã thấy Y ở đây.", "origin": null, "said": "Tôi đã thấy <en>Y</en> ở đây."},
+    {"text": "Hôm qua ông X đến, cô gái tên K đi cùng.", "origin": null, "said": "Hôm qua ông <en>X</en> đến, cô gái tên <en>K</en> đi cùng."},
+    {"text": "Y đã đi, còn y thì ở lại.", "origin": null, "said": "Y đã đi, còn y thì ở lại."},
+    {"text": "Sư phụ và Thần Y hẹn Y Mặc.", "origin": null, "said": "Sư phụ và Thần Y hẹn Y Mặc."},
+    {"text": "Học sinh lớp A đứng cùng tia X.", "origin": null, "said": "Học sinh lớp A đứng cùng tia X."},
+    {"text": "Bạn của Waldo K. Maskelyne.", "origin": null, "said": "Bạn của Waldo K. Maskelyne."}
   ]
 }

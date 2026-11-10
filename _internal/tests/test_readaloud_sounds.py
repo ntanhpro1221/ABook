@@ -213,7 +213,7 @@ def test_lv_is_vietnamised_with_the_other_english_words_for_a_voice_that_cannot_
 
 
 @pytest.mark.parametrize("token, reading", [
-    ("sofa", "xô-pha"), ("Logic", "lô-gích"), ("video", "vi-đê-ô"), ("violin", "vi-ô-lông"), ("piano", "pi-a-nô"), ("sandal", "xăng-đan"), ("vali", "va-li"), ("robot", "rô-bốt"),
+    ("sofa", "xô-pha"), ("logic", "lô-gích"), ("video", "vi-đê-ô"), ("violin", "vi-ô-lông"), ("piano", "pi-a-nô"), ("sandal", "xăng-đan"), ("vali", "va-li"), ("robot", "rô-bốt"),
     ("gorilla", "gô-ri-la"), ("anime", "a-ni-me"), ("Ninja", "nin-gia"), ("manga", "man-ga"), ("bento", "ben-tô"), ("kimono", "ki-mô-nô"), ("sake", "xa-ke"),
     ("takoyaki", "ta-cô-gia-ki"), ("senpai", "xen-pai"), ("Umu", "u-mu"), ("tsukkomi", "xúc-cô-mi"),
 ])

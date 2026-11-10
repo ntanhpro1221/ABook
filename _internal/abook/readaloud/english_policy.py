@@ -35,6 +35,26 @@ def english_letters(core: str) -> str:
     return "<en>" + " ".join(POLICY["english_letter_words"].get(ch, ch) for ch in core.upper()) + "</en>"
 
 
+def letter_name(toks: list[str], index: int) -> bool:
+    """A lone capital letter used as a person's or thing's name ("thấy Y ở đây", "ông X", "cô gái tên K"): read its English letter name.
+
+    Owner 10-11: a codename may be read as the English letter. Only after a word from
+    "letter_name_cues" inside the sentence, and never beside another capitalised word:
+    "Y Mặc", "Thần Y" and "Waldo K. Maskelyne" are pieces of names, "lớp A", "tia X" labels.
+    Lowercase "y" and a sentence-initial "Y" stay the Vietnamese pronoun.
+    """
+    before, core, after = names.split_token(toks[index])
+    if len(core) != 1 or not "A" <= core <= "Z" or index == 0 or names.sentence_start(toks, index):
+        return False
+    if any(ch.isalnum() or ch in "-'’" for ch in before + after) or after[:1] == "." and index + 1 < len(toks) and toks[index + 1][:1].isupper():
+        return False
+    previous = names.split_token(toks[index - 1])
+    if previous[2] or previous[1].casefold() not in POLICY["letter_name_cues"]:
+        return False
+    following = names.split_token(toks[index + 1])[1] if index + 1 < len(toks) and not after else ""
+    return not following[:1].isupper() and not following[:1].isdigit()
+
+
 def vietnamese(surface: str) -> bool:
     from ..analysis import is_vietnamese_syllable
 
@@ -144,6 +164,40 @@ def english_context(toks: list[str]) -> set[int]:
     return found
 
 
+def loanword_english(toks: list[str]) -> set[int]:
+    """Indices of `names.LOANWORDS` words that sit inside an English run and so stay English ("Game over", "the net", "talk show").
+
+    A run is the same stretch of ASCII words as in `english_context`. It is English when it holds a
+    word that is not itself a loanword and is certainly English (kind "e") or proven English by the
+    sentence (`english_context`). A capitalised English word inside the sentence beside a lowercase
+    loanword is a name ("fan Rose"), not evidence; at the start of a sentence it is ("Talk show"). Loanwords never count as evidence for each other: "chơi game online".
+    """
+    loan = {i for i, token in enumerate(toks) if names.split_token(token)[1].lower() in names.LOANWORDS}
+    if not loan:
+        return set()
+    kinds = [_kind(token) for token in toks]
+    flagged = english_context(toks)
+    found: set[int] = set()
+    index = 0
+    while index < len(toks):
+        if kinds[index][0] not in ("e", "h", "o"):
+            index += 1
+            continue
+        start = index
+        while (index + 1 < len(toks) and kinds[index + 1][0] in ("e", "h", "o")
+               and not kinds[index][4] and not kinds[index + 1][3]):
+            index += 1
+        span = range(start, index + 1)
+        index += 1
+        for i in span:
+            if i not in loan:
+                continue
+            if any(j not in loan and (j in flagged or (kinds[j][0] == "e" and (
+                    kinds[j][2] != "T" or kinds[i][2] != "l" or names.sentence_start(toks, j)))) for j in span):
+                found.add(i)
+    return found
+
+
 def keeps_word(core: str, origin: str | None) -> bool:
     """Keep lexical English and Western spelling; abstain on ambiguous Asian names.
 
@@ -232,7 +286,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
         before, core, after = names.split_token(token)
         from .abbreviations import contextual_letters, pronoun_ai, standard_reading
 
-        if contextual_letters(core, toks, index):
+        if contextual_letters(core, toks, index) or (out[index] == token and index not in english and letter_name(toks, index)):
             out[index] = before + english_letters(core) + after
             continue
         if pronoun_ai(toks, index) or standard_reading(core, toks, index, before, after):
@@ -241,7 +295,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
             continue
         if core in POLICY["preserve_acronyms"]:
             continue
-        if asian[index] != token and core.lower() not in names.DICTIONARY_WORDS:
+        if asian[index] != token:
             continue
         if index in english:
             from .abbreviations import spelled
@@ -279,8 +333,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
                 out[index] = out[index].replace(core, choice[0], 1)
             continue
         if (choice[1] == "keep_english" and out[index] != token
-                and out[index].casefold() != token.casefold()
-                and core.lower() not in names.DICTIONARY_WORDS):
+                and out[index].casefold() != token.casefold()):
             # A foreign spelling decision cannot undo structural/sound-effect TN.
             continue
         # A changed chapter/volume/level label is structural, not a foreign word.

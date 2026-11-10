@@ -175,7 +175,7 @@ class SoundsTest {
 
     @Test
     fun aCommonLoanwordIsReadWithAnyBookOrigin() {
-        val cases = listOf("sofa" to "xô-pha", "Logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan", "vali" to "va-li",
+        val cases = listOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan", "vali" to "va-li",
             "robot" to "rô-bốt", "gorilla" to "gô-ri-la", "anime" to "a-ni-me", "Ninja" to "nin-gia", "manga" to "man-ga", "bento" to "ben-tô", "kimono" to "ki-mô-nô", "sake" to "xa-ke",
             "takoyaki" to "ta-cô-gia-ki", "senpai" to "xen-pai", "Umu" to "u-mu", "tsukkomi" to "xúc-cô-mi")
         for ((token, reading) in cases) for (origin in listOf(null, "ja", "ko")) assertEquals("$token $origin", "$reading.", said("Rồi $token.", origin)[1].lowercase())

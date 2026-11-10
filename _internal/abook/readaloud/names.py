@@ -57,9 +57,15 @@ KOREAN_ALONE = ("oppa", "unnie", "noona", "hyung")  # đứng riêng cũng đọ
 KOREAN_SURNAMES = frozenset(("park", "kim", "lee", "song", "han", "hong", "min", "moon", "oh", "shin", "choi", "jung", "kang", "cho", "yoon", "jang", "lim", "seo", "kwon", "hwang", "ahn", "yoo",
                              "baek", "bae", "jeon", "ryu", "nam", "im"))  # họ Hàn thường gặp: đọc theo RR khi bên cạnh là một tên Hàn (park, kim, lee, song, han, hong, min, moon, oh trùng từ tiếng Anh nên cuốn gốc Hàn cũng để nguyên chữ Anh)
 _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
-# Từ đã vào từ điển tiếng Việt (gold_spec: "từ điển thắng"): đọc như từ Việt với MỌI cuốn và giọng, không để sea-g2p đọc âm Anh.
-DICTIONARY_WORDS = {"sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
-                    "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la"}
+# Từ mượn người Việt đã thống nhất một cách đọc Việt ("quán net" -> nét, "taxi" -> tắc-xi; chủ sách 10-11: "còn tốt hơn là bọc thẻ để đọc chuẩn tiếng anh"):
+# đọc như từ Việt với MỌI cuốn và giọng, kể cả giọng nói được âm Anh. Bảng nằm trong english_policy.json ("loanwords"), Kotlin đọc cùng file.
+# Không đổi khi từ ở trong một cụm tiếng Anh ("Game over", "the net": `english_policy.loanword_english`) hay viết hoa giữa câu như tên riêng ("Net cười"),
+# trừ từ trong "loanword_capitals" (người Việt hay viết hoa mà vẫn là danh từ chung: "mạng Internet").
+_LOANWORD_POLICY = json.loads(Path(__file__).with_name("english_policy.json").read_text(encoding="utf-8"))
+LOANWORDS: dict[str, str] = dict(_LOANWORD_POLICY["loanwords"])
+LOANWORD_CAPITALS = frozenset(_LOANWORD_POLICY["loanword_capitals"])
+SENTENCE_ENDS = ".!?…:"
+OPENERS = "\"“‘'([{-–—*«"
 # Từ Nhật rất quen trong truyện dịch: đọc theo luật phiên âm với MỌI cuốn (cuốn không rõ gốc cũng vậy), dù có trong danh sách từ Anh (anime, manga, sake).
 JAPANESE_COMMON = frozenset(JAPANESE_POLICY["common"])
 CURRENCY = {"won": "guôn", "yen": "yên", "kwan": "quan"}  # đơn vị tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số (cuốn không rõ gốc)
@@ -307,11 +313,33 @@ def read_english(toks: list[str], out: list[str]) -> None:
 
 
 def loanword_reading(core: str) -> str | None:
-    """Cách đọc của từ đã vào từ điển tiếng Việt (`DICTIONARY_WORDS`) hay từ Nhật rất quen (`JAPANESE_COMMON`, theo luật phiên âm), None khi không phải."""
+    """Cách đọc của từ mượn đọc Việt (`LOANWORDS`) hay từ Nhật rất quen (`JAPANESE_COMMON`, theo luật phiên âm), None khi không phải. Không xét ngữ cảnh: xem `read_loanwords`."""
     lowered = core.lower()
-    if lowered in DICTIONARY_WORDS:
-        return DICTIONARY_WORDS[lowered]
+    if lowered in LOANWORDS:
+        return LOANWORDS[lowered]
     return lone_syllable(romanized_reading(lowered, "ja")) if lowered in JAPANESE_COMMON else None
+
+
+def sentence_start(toks: list[str], index: int) -> bool:
+    """Token đứng đầu câu: đầu đoạn, sau dấu kết câu / hai chấm (kể cả có ngoặc đóng theo sau: "đi." / "đi.”"), sau gạch thoại, hay mở bằng ngoặc / gạch."""
+    before = split_token(toks[index])[0]
+    if index == 0 or (before and before[0] in OPENERS):
+        return True
+    previous = toks[index - 1].rstrip("\"”’'»)]}*")
+    return previous[-1:] in SENTENCE_ENDS or previous in ("-", "–", "—", "")
+
+
+def common_loanword(core: str, toks: list[str], index: int) -> bool:
+    """`core` (đã bỏ dấu câu quanh) viết như một danh từ chung của bảng `LOANWORDS`: chữ thường, hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong `LOANWORD_CAPITALS`).
+    Hoa chữ đầu giữa câu là tên riêng ("Net cười"); TOÀN HOA và hoa lẫn lộn là việc của luật viết tắt (OK, GAME) - để nguyên."""
+    lowered = core.lower()
+    if lowered not in LOANWORDS:
+        return False
+    if core == lowered:
+        return True
+    if core[0].isupper() and core[1:] == core[1:].lower() and len(core) > 1:
+        return lowered in LOANWORD_CAPITALS or sentence_start(toks, index)
+    return False
 
 
 def _after_number(toks: list[str], index: int) -> bool:
@@ -320,8 +348,10 @@ def _after_number(toks: list[str], index: int) -> bool:
 
 
 def read_loanwords(toks: list[str], out: list[str]) -> None:
-    """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen (sofa, anime, ninja...) bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị
-    đọc Việt; giữ dấu câu quanh, số chữ không đổi."""
+    """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen (net, taxi, sofa, anime, ninja...) bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị
+    đọc Việt; giữ dấu câu quanh, số chữ không đổi. Từ của `LOANWORDS` chỉ đổi khi viết như danh từ chung (`common_loanword`) và không nằm trong cụm tiếng Anh
+    (`english_policy.loanword_english`)."""
+    english: set[int] | None = None
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
@@ -329,6 +359,16 @@ def read_loanwords(toks: list[str], out: list[str]) -> None:
         if not core:
             continue
         reading = loanword_reading(core)
+        if reading and core.lower() in LOANWORDS:
+            if not common_loanword(core, toks, index):
+                reading = None
+            else:
+                if english is None:
+                    from .english_policy import loanword_english
+
+                    english = loanword_english(toks)
+                if index in english:
+                    reading = None
         if reading is None and core.lower() in CURRENCY and core.isalpha() and _after_number(toks, index):
             reading = CURRENCY[core.lower()]
         if reading:

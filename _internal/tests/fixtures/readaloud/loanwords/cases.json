@@ -1,0 +1,26 @@
+{
+  "provenance": "Self-written sentences, each output reviewed by hand. Owner verdict 10-11: a loanword Vietnamese readers settled on one Vietnamese reading (quán net -> nét) is read that way by every voice. direct = VieNeu (direct English), plain = every other voice before its own engine step.",
+  "cases": [
+    {"text": "Cậu ta lang thang ở quán net cả ngày.", "origin": null, "direct": "Cậu ta lang thang ở quán nét cả ngày.", "plain": "Cậu ta lang thang ở quán nét cả ngày."},
+    {"text": "Chơi game online với bạn.", "origin": null, "direct": "Chơi ghêm on-lai với bạn.", "plain": "Chơi ghêm on-lai với bạn."},
+    {"text": "Gửi email rồi bật wifi.", "origin": null, "direct": "Gửi i-meo rồi bật oai-phai.", "plain": "Gửi i-meo rồi bật oai-phai."},
+    {"text": "Gọi taxi rồi xem clip.", "origin": null, "direct": "Gọi tắc-xi rồi xem cờ-líp.", "plain": "Gọi tắc-xi rồi xem cờ-líp."},
+    {"text": "Bật radio, ăn pizza, hát karaoke.", "origin": null, "direct": "Bật ra-đi-ô, ăn pi-da, hát ca-ra-ô-kê.", "plain": "Bật ra-đi-ô, ăn pi-da, hát ca-ra-ô-kê."},
+    {"text": "Mở camera, ăn chocolate.", "origin": null, "direct": "Mở ca-mê-ra, ăn sô-cô-la.", "plain": "Mở ca-mê-ra, ăn sô-cô-la."},
+    {"text": "Fan của idol đi xem show.", "origin": null, "direct": "phan của ai-đôn đi xem sô.", "plain": "phan của ai-đôn đi xem sô."},
+    {"text": "Mạng Internet chậm quá.", "origin": null, "direct": "Mạng in-tơ-nét chậm quá.", "plain": "Mạng in-tơ-nét chậm quá."},
+    {"text": "Cái laptop hết pin khi offline.", "origin": null, "direct": "Cái láp-tốp hết pin khi óp-lai.", "plain": "Cái láp-tốp hết pin khi óp-lai."},
+    {"text": "Hết gas, xe nằm trong garage.", "origin": null, "direct": "Hết ga, xe nằm trong ga-ra.", "plain": "Hết ga, xe nằm trong ga-ra."},
+    {"text": "Uống cafe, ăn sandwich và hamburger.", "origin": null, "direct": "Uống cà-phê, ăn xăng-uých và hăm-bơ-gơ.", "plain": "Uống cà-phê, ăn xăng-uých và hăm-bơ-gơ."},
+    {"text": "Xem video trên sofa.", "origin": null, "direct": "Xem vi-đê-ô trên xô-pha.", "plain": "Xem vi-đê-ô trên xô-pha."},
+    {"text": "Okay, đi thôi.", "origin": null, "direct": "ô-kê, đi thôi.", "plain": "ô-kê, đi thôi."},
+    {"text": "“Game này hay quá.”", "origin": null, "direct": "“ghêm này hay quá.”", "plain": "“ghêm này hay quá.”"},
+    {"text": "Gửi e-mail cho tôi.", "origin": null, "direct": "Gửi i-meo cho tôi.", "plain": "Gửi i-meo cho tôi."},
+    {"text": "Màn hình hiện Game over.", "origin": null, "direct": "Màn hình hiện Game over.", "plain": "Màn hình hiện Game over."},
+    {"text": "Hắn gọi đó là the net.", "origin": null, "direct": "Hắn gọi đó là <en>the</en> <en>net</en>.", "plain": "Hắn gọi đó là the net."},
+    {"text": "Tôi gặp Net hôm qua.", "origin": null, "direct": "Tôi gặp <en>Net</en> hôm qua.", "plain": "Tôi gặp Net hôm qua."},
+    {"text": "Cửa hàng Online Store mở cửa.", "origin": null, "direct": "Cửa hàng Online Store mở cửa.", "plain": "Cửa hàng Online Store mở cửa."},
+    {"text": "Talk show tối nay.", "origin": null, "direct": "Talk show tối nay.", "plain": "Talk show tối nay."},
+    {"text": "fan Rose rất đông.", "origin": null, "direct": "phan Rose rất đông.", "plain": "phan Rose rất đông."}
+  ]
+}

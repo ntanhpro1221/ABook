@@ -1,9 +1,19 @@
 {
-  "version": 5,
+  "version": 6,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
   "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "GVCN", "TP", "HCM", "VIP", "TV", "OK"],
   "english_words": ["nanobot"],
+  "loanwords": {
+    "sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
+    "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la",
+    "net": "nét", "internet": "in-tơ-nét", "wifi": "oai-phai", "wi-fi": "oai-phai", "online": "on-lai", "offline": "óp-lai",
+    "email": "i-meo", "e-mail": "i-meo", "laptop": "láp-tốp", "taxi": "tắc-xi", "radio": "ra-đi-ô", "pizza": "pi-da",
+    "karaoke": "ca-ra-ô-kê", "camera": "ca-mê-ra", "chocolate": "sô-cô-la", "game": "ghêm", "gameshow": "ghêm-sô", "show": "sô",
+    "clip": "cờ-líp", "fan": "phan", "okay": "ô-kê", "idol": "ai-đôn", "gas": "ga", "garage": "ga-ra", "cafe": "cà-phê",
+    "café": "cà-phê", "sandwich": "xăng-uých", "hamburger": "hăm-bơ-gơ"
+  },
+  "loanword_capitals": ["internet"],
   "mode": "keep_english",
   "acronym_mode": "spell_english",
   "spoken_abbreviations": {
@@ -30,6 +40,8 @@
     "ktx": ["tàu", "hỏa", "ga", "train", "railway"]
   },
   "english_letter_words": {"Z": "zed"},
+  "letter_name_cues": ["thấy", "gặp", "gọi", "hỏi", "bảo", "nhìn", "với", "của", "cho", "cùng", "theo", "giết", "cứu", "đợi", "chờ", "tìm",
+                       "mời", "giúp", "ơn", "ông", "bà", "cô", "anh", "chị", "cậu", "ngài", "gã", "lão", "tên", "danh", "nàng", "chàng", "thằng"],
   "context": {
     "only": [
       "at", "bat", "bet", "bit", "boat", "boot", "but", "cap", "cat", "chip", "coach", "coat", "cop", "cup", "cut",

@@ -15,6 +15,9 @@ object EnglishPolicy {
     val ACRONYMS = BuildConfig.ENGLISH_ACRONYMS.split(" ").toSet()
     private val preserveAcronyms = BuildConfig.PRESERVE_ACRONYMS.split(" ").toSet()
     internal val sharedVietnamese by lazy { policy.getJSONObject("shared_vietnamese") }
+    internal fun stringMap(key: String): Map<String, String> =
+        policy.getJSONObject(key).let { o -> o.keys().asSequence().associateWith(o::getString) }
+    internal fun stringList(key: String): List<String> = policy.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }
     internal fun context(key: String): Set<String> =
         policy.getJSONObject("context").getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
     private val englishOnly by lazy { context("only") }
@@ -30,6 +33,20 @@ object EnglishPolicy {
     private fun englishLetters(core: String): String {
         val names = policy.getJSONObject("english_letter_words")
         return "<en>" + core.uppercase(Locale.ROOT).map { names.optString(it.toString(), it.toString()) }.joinToString(" ") + "</en>"
+    }
+
+    private val letterNameCues by lazy { stringList("letter_name_cues").toSet() }
+
+    /** english_policy.letter_name: a lone capital letter used as a name after a cue word ("thấy Y ở đây", "ông X"), never beside another capitalised word. */
+    fun letterName(toks: List<String>, index: Int): Boolean {
+        val (before, core, after) = Names.splitToken(toks[index])
+        if (core.length != 1 || core[0] !in 'A'..'Z' || index == 0 || Names.sentenceStart(toks, index)) return false
+        if ((before + after).any { it.isLetterOrDigit() || it in "-'’" } ||
+            (after.startsWith(".") && index + 1 < toks.size && toks[index + 1].firstOrNull()?.isUpperCase() == true)) return false
+        val previous = Names.splitToken(toks[index - 1])
+        if (previous.third.isNotEmpty() || previous.second.lowercase(Locale.ROOT) !in letterNameCues) return false
+        val following = if (index + 1 < toks.size && after.isEmpty()) Names.splitToken(toks[index + 1]).second else ""
+        return following.firstOrNull()?.let { !it.isUpperCase() && !it.isDigit() } ?: true
     }
 
     fun vietnamese(surface: String): Boolean {
@@ -125,6 +142,37 @@ object EnglishPolicy {
         return found
     }
 
+    /**
+     * english_policy.loanword_english: indices of [Names.LOANWORDS] words inside an English run ("Game over", "the net", "Talk show").
+     * Evidence is a non-loanword that is certainly English or proven English by [englishContext]; a capitalised word inside the
+     * sentence beside a lowercase loanword is a name ("fan Rose"). Loanwords never count for each other ("chơi game online").
+     */
+    fun loanwordEnglish(toks: List<String>): Set<Int> {
+        val loan = toks.indices.filter { Names.splitToken(toks[it]).second.lowercase(Locale.ROOT) in Names.LOANWORDS }.toSet()
+        if (loan.isEmpty()) return emptySet()
+        val kinds = toks.map(::kind)
+        val flagged = englishContext(toks)
+        fun word(i: Int) = kinds[i].kind == 'e' || kinds[i].kind == 'h' || kinds[i].kind == 'o'
+        val found = mutableSetOf<Int>()
+        var index = 0
+        while (index < toks.size) {
+            if (!word(index)) {
+                index++
+                continue
+            }
+            val start = index
+            while (index + 1 < toks.size && word(index + 1) && kinds[index].after.isEmpty() && kinds[index + 1].before.isEmpty()) index++
+            val span = start..index
+            index++
+            for (i in span) {
+                if (i !in loan) continue
+                if (span.any { j -> j !in loan && (j in flagged || (kinds[j].kind == 'e' &&
+                        (kinds[j].case != 'T' || kinds[i].case != 'l' || Names.sentenceStart(toks, j)))) }) found += i
+            }
+        }
+        return found
+    }
+
     fun keepsWord(core: String, origin: String?): Boolean {
         if (core in preserveAcronyms) return false
         val vocalized = mutableListOf(core)
@@ -173,14 +221,14 @@ object EnglishPolicy {
         for ((index, token) in toks.withIndex()) {
             if (index in protected) continue
             val (before, core, after) = Names.splitToken(token)
-            if (Abbreviations.contextualLetters(core, toks, index)) {
+            if (Abbreviations.contextualLetters(core, toks, index) || (out[index] == token && index !in english && letterName(toks, index))) {
                 out[index] = before + englishLetters(core) + after
                 continue
             }
             if (Abbreviations.pronounAi(toks, index) || Abbreviations.standardReading(core, toks, index, before, after) != null) continue
             if (core.isEmpty() || before.lastOrNull()?.isDigit() == true || Regex("^[-–]?[0-9]").containsMatchIn(after)) continue
             if (core in preserveAcronyms) continue
-            if (asian[index] != token && core.lowercase(Locale.ROOT) !in Names.DICTIONARY_WORDS) continue
+            if (asian[index] != token) continue
             if (index in english) {
                 val shouted = core.length > 1 && core.all { it in 'A'..'Z' }
                 val marked = "<en>" + (if (shouted) core.lowercase(Locale.ROOT) else core) + "</en>"
@@ -209,8 +257,7 @@ object EnglishPolicy {
                 continue
             }
             if (choice.second == "keep_english" && out[index] != token &&
-                out[index].lowercase(Locale.ROOT) != token.lowercase(Locale.ROOT) &&
-                core.lowercase(Locale.ROOT) !in Names.DICTIONARY_WORDS) continue
+                out[index].lowercase(Locale.ROOT) != token.lowercase(Locale.ROOT)) continue
             if (core.lowercase(Locale.ROOT) in setOf("chap", "vol", "lv", "lvl") && out[index] != token) continue
             out[index] = before + choice.first + after
         }
