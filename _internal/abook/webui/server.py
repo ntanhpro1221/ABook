@@ -7000,8 +7000,6 @@ class Handler(BaseHTTPRequestHandler):
             allowed["autoMusic"] = body["autoMusic"]
         if isinstance(body.get("letterShortcuts"), bool):
             allowed["letterShortcuts"] = body["letterShortcuts"]
-        if isinstance(body.get("autoRewind"), bool):
-            allowed["autoRewind"] = body["autoRewind"]
         if isinstance(body.get("touchSounds"), bool):
             allowed["touchSounds"] = body["touchSounds"]
         if body.get("readingSurface") in READING_SURFACES:

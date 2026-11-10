@@ -128,16 +128,6 @@ export function remoteSleepAfter(command: RemoteSleepCommand, playing: boolean):
   return minutes > 0 ? { kind: "minutes", minutes, left: minutes * 60, counting: playing } : null;
 }
 
-/** Tự lùi khi nghe lại (giây), theo độ dài lần dừng: dưới nửa phút thì thôi; tới 10 phút lùi 5 giây; lâu hơn lùi 10 giây. MỘT luật cho hai nền:
- *  điện thoại AutoRewind.kt cùng số, bộ ví dụ chung tests/fixtures/auto_rewind/cases.json. */
-export const REWIND_SHORT_MS = 30_000;
-export const REWIND_LONG_MS = 10 * 60_000;
-export function rewindAfter(pausedMs: number): number {
-  if (pausedMs < REWIND_SHORT_MS) return 0;
-  if (pausedMs <= REWIND_LONG_MS) return 5;
-  return 10;
-}
-
 /** Lịch đêm: bấm nghe trong khung giờ này thì tự hẹn giờ ngủ (giờ dạng "22:00", khung có thể qua nửa đêm). */
 export interface SleepSchedule {
   from: string;

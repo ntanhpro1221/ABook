@@ -17,11 +17,9 @@ import org.junit.Test
  */
 class ListenPrefsTest {
     private fun sleep(name: String) = SleepTimer::class.java.getDeclaredField(name).also { it.isAccessible = true }
-    private fun playback(name: String) = Playback::class.java.getDeclaredField(name).also { it.isAccessible = true }
 
     private fun defaults() {
         Playback.headsetSkips = true
-        Playback.configure(true)
         SleepTimer.extendMinutes = 10
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
@@ -49,7 +47,7 @@ class ListenPrefsTest {
     }
 
     private fun chosen() = JSONObject(
-        """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,
+        """{"headsetSkips":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,
             "shakeSensitivity":"firm","flipToPause":false,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
     )
 
@@ -61,7 +59,6 @@ class ListenPrefsTest {
         assertTrue(Playback.headsetSkips)
         ListenPrefs.load()
         assertFalse("nút tai nghe chuyển chương vẫn là lựa chọn của bạn", Playback.headsetSkips)
-        assertFalse("tự lùi vẫn tắt", playback("autoRewind").getBoolean(Playback))
         assertEquals(15, SleepTimer.extendMinutes)
         assertEquals(10_000L, SleepTimer.fadeMs)
         assertFalse(SleepTimer.shakeEnabled)
@@ -86,17 +83,17 @@ class ListenPrefsTest {
 
     @Test fun theInterfaceCanReadBackWhatNativeRememberedWithItsStamp() {
         assertEquals("chưa có file thì không có gì", 0, ListenPrefs.stored().length())
-        ListenPrefs.apply(JSONObject("""{"autoRewind":false,"sleepFadeSeconds":60,"schedule":null,"settingsStamp":1700000000123,"readAloudVoice":"edge:x"}"""))
+        ListenPrefs.apply(JSONObject("""{"headsetSkips":false,"sleepFadeSeconds":60,"schedule":null,"settingsStamp":1700000000123,"readAloudVoice":"edge:x"}"""))
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
         sleep("remainingMs").setLong(SleepTimer, 10 * 60_000L)
         SleepTimer.persist(1_000_000_000L)
         val stored = ListenPrefs.stored()
-        assertEquals(false, stored.getBoolean("autoRewind"))
+        assertEquals(false, stored.getBoolean("headsetSkips"))
         assertEquals(60, stored.getInt("sleepFadeSeconds"))
         assertEquals(1700000000123L, stored.getLong("settingsStamp"))
         assertFalse("hẹn giờ đang chạy không phải tuỳ chọn", stored.has("timer"))
         assertFalse("giọng đọc có đường riêng", stored.has("readAloudVoice"))
-        ListenPrefs.apply(JSONObject("""{"autoRewind":true,"settingsStamp":1700000000999}"""))
+        ListenPrefs.apply(JSONObject("""{"headsetSkips":true,"settingsStamp":1700000000999}"""))
         assertEquals("bản sau gộp vào bản trước", 60, ListenPrefs.stored().getInt("sleepFadeSeconds"))
         assertEquals(1700000000999L, ListenPrefs.stored().getLong("settingsStamp"))
     }

@@ -229,11 +229,6 @@ function ListenGroup() {
   const client = useQueryClient();
   return (
     <>
-      <SettingsBlock>
-        <SettingsRow label={S.s_tu_lui_6fc7685a} hint={S.s_nghi_qua_30_giay_thi_lui_5_giay_qua_10_phu_328c3ffd}>
-          <Switch id="auto-rewind" label={S.s_tu_lui_6fc7685a} checked={preferences?.autoRewind !== false} onCheckedChange={(value) => update({ autoRewind: value })} />
-        </SettingsRow>
-      </SettingsBlock>
       {/* "Nhạc của tôi" ở màn Nhạc (nội dung, không phải cài đặt): ở đây chỉ công tắc tự chọn và lối sang đó. */}
       <SettingsBlock title={S.s_nhac_nen_271fb292} id="music">
         <SettingsRow label={<span id="auto-music-name">{AUTO_MUSIC_LABEL}</span>} hint={<span id="auto-music-hint">{AUTO_MUSIC_HINT}</span>}>
@@ -490,7 +485,7 @@ function useRows(groups: readonly SettingsGroupId[], info: AppInfo | undefined):
   const { data: sync } = useQuery({ queryKey: ["sync"], queryFn: () => api<SyncView>("/api/sync"), enabled: groups.includes("devices") });
   const summary: Record<SettingsGroupId, string | undefined> = {
     voice: voiceName,
-    listen: `${preferences?.autoRewind !== false ? S.s_tu_lui_6fc7685a : S.s_khong_tu_lui_8aec206c} · ${preferences?.autoMusic !== false ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623}`,
+    listen: preferences?.autoMusic !== false ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623,
     sleep: sleepSummary(preferences?.sleepSchedule),
     look: info?.remote ? S.s_phim_tat_7baaed2f : themeSummary(preferences?.theme, S.s_tu_dong_a25c8028),
     devices: sync ? (sync.enabled ? S.s_0_thiet_bi_da_ghep_2fe2b8a5(sync.devices.length) : S.s_dang_tat_53bfa8b7) : undefined,

@@ -591,7 +591,6 @@ export function App() {
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
-          autoRewind={preferences?.autoRewind !== false}
         >
           <ClipBridge>
             <MotionHashRouter>

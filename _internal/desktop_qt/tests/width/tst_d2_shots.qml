@@ -21,7 +21,7 @@ Item {
         function init() {
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
-            Api.preferences = {theme: "system", autoRewind: true, autoMusic: true, sleepSchedule: {from: "22:00", to: "06:00", minutes: 30}}
+            Api.preferences = {theme: "system", autoMusic: true, sleepSchedule: {from: "22:00", to: "06:00", minutes: 30}}
             Api.info = {version: "0.4.40", studio: {installed: true}}
             DesktopApi.responses = {"/api/sync": {status: 200, data: {enabled: true, name: "NGDtuanh-PC", devices: [{}, {}]}}}   // name: sync_view luôn trả
             Api.loaded = true

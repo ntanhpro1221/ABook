@@ -75,14 +75,14 @@ private slots:
     }
     void init() { g_now = 1'800'000'000'000; }
 
-    void resumePointRewindsAfterLongPause() {
+    void resumePointStaysExactAfterLongPause() {
         Rig rig;
-        // Nghe dở chương 2 ở 40 s, cách đây 2 phút: lùi 5 giây (30 s < 2 phút <= 10 phút).
+        // Reopening a book preserves the saved position even after a long pause.
         rig.net.books.insert(QStringLiteral("a"), makeBook(QStringLiteral("a"), 4, true, 2, 40, double(g_now) / 1000 - 120));
         rig.player->open(QStringLiteral("a"), -1, -1, false);
         QVERIFY(rig.player->loaded());
         QCOMPARE(rig.player->chapterId(), 2);
-        QCOMPARE(rig.out.pos, 35.0);
+        QCOMPARE(rig.out.pos, 40.0);
         QVERIFY(!rig.player->playing());
         QVERIFY(!rig.out.log.contains(QStringLiteral("play")));
         QCOMPARE(rig.player->chapterTitle(), QStringLiteral("Chương 2"));
@@ -358,7 +358,7 @@ private slots:
     void defaultPlaybackNeverArmsAnUnrequestedTimer() {
         for (bool configure : {false, true}) {
             Rig rig;
-            if (configure) rig.player->configure({{QStringLiteral("autoRewind"), true}});
+            if (configure) rig.player->configure({});
             rig.player->open(QStringLiteral("a"), -1, -1, true);
             rig.run(1);
             g_now += 3 * 3'600'000;
@@ -432,9 +432,9 @@ private slots:
         }
     }
 
-    void configuredExtendAndAutoRewind() {
+    void configuredExtendKeepsTheCursor() {
         Rig rig;
-        rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 15}, {QStringLiteral("autoRewind"), false}});
+        rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 15}});
         rig.player->open(QStringLiteral("a"), 1, 0, true);
         rig.player->setSleep(QStringLiteral("chapter"));
         rig.player->extendSleep();
@@ -712,15 +712,15 @@ private slots:
         QVERIFY(rig.player->playing());
     }
 
-    void rewindAfterPause() {
+    void resumeNeverRewinds() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 1, 0, true);
         rig.run(60);
         rig.player->pause();
         const double at = rig.out.pos;
-        g_now += 5 * 60'000; // dừng 5 phút: lùi 5 giây
+        g_now += 5 * 60'000; // A long pause must not replay any content.
         rig.player->resume();
-        QVERIFY(qAbs(rig.out.pos - (at - 5)) < 0.2);
+        QCOMPARE(rig.out.pos, at);
         rig.player->pause();
         g_now += 10'000; // dừng 10 giây: không lùi
         const double again = rig.out.pos;

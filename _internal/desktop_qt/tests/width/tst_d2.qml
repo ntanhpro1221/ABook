@@ -18,7 +18,7 @@ Item {
             Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
-            Api.preferences = {theme: "system", autoRewind: true, sleepSchedule: null}
+            Api.preferences = {theme: "system", sleepSchedule: null}
             Api.info = {version: "fixture"}
             Api.loaded = true
             Api.saving = false

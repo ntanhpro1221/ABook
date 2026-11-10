@@ -587,6 +587,16 @@ struct MusicMixer::Impl {
         std::vector<float> out;
         std::deque<Span> tails;
         std::vector<std::shared_ptr<MixVoiceState>> staged;
+        // Voices pausing in this plan: only the old clock mapping, not another copy of the PCM. The device can
+        // consume beyond the planned fade while preparing/waiting for the commit.
+        struct PauseSpan { quint64 device, frames, voice; double media, speed; };
+        struct PauseClock {
+            std::shared_ptr<MixVoiceState> state;
+            quint64 heard;
+            double media;
+            std::vector<PauseSpan> spans;
+        };
+        std::vector<PauseClock> paused;
     };
     void remix(const std::vector<std::shared_ptr<MixVoiceState>> &voices, std::unique_lock<std::mutex> &engine);
     Remix prepare(const std::vector<std::shared_ptr<MixVoiceState>> &voices);
@@ -1436,12 +1446,16 @@ MusicMixer::Impl::Remix MusicMixer::Impl::prepare(const std::vector<std::shared_
         plan.staged.push_back(s);
         dropHeard(*s, at);
         splitAt(s->spans, pivot, s->rate);
+        const bool holdPause = s->flush && !s->want && !s->seeking;
         if (s->flush) {
             const bool pausing = !s->want, seeking = s->want && (s->seeking || s->reposition);
             if (pausing || seeking) {
-                // Vị trí dừng là lúc bấm (con trỏ nghe); 30 ms đã mờ ra được phát lại khi nghe tiếp.
-                if (pausing && !s->seeking)
-                    s->target = s->streaming ? mediaHeard(*source, at) : double(s->frameAt(heard(*s, at))) / s->rate;
+                if (pausing && !s->seeking) {
+                    Remix::PauseClock clock{source, s->heard, s->mediaHeard, {}};
+                    for (const auto &span : s->spans)
+                        clock.spans.push_back({span.device, span.frames, span.voice, span.media, span.speed});
+                    plan.paused.push_back(std::move(clock));
+                }
                 cutInto(s->spans, tails, pivot + (pausing ? fade : cross), pausing ? fade : cross);
                 s->reposition = s->fadeIn = true; s->joining = false; s->joinAt = 0;
             } else if (s->speedDirty && s->streaming && !s->spans.empty()) {
@@ -1454,7 +1468,10 @@ MusicMixer::Impl::Remix MusicMixer::Impl::prepare(const std::vector<std::shared_
             }
         }
         // Không còn gì xếp để bắc cầu: tốc độ mới áp ngay ở đầu ghi, Sonic đổi tốc độ liền mạch.
-        s->flush = s->speedDirty = false;
+        // The reader must not seek to the provisional pause target while the
+        // device is still consuming old audio. Publish the final target first.
+        s->flush = holdPause;
+        s->speedDirty = false;
         if (s->spans.empty()) continue;
         if (s->volumeDirty) {
             // Âm lượng mới trượt 50 ms từ đúng mức đang nghe ở pivot; trước pivot giữ nguyên.
@@ -1527,6 +1544,32 @@ void MusicMixer::Impl::commit(const Remix &plan, const Began &began) {
     running = wrote && device->start();
     played = now; sampled = Clock::now();
     written = std::max(plan.last, now);
+    // Update source clocks after restarting the device; keep the Stop..Start
+    // window limited to the audio commit itself. A pause resumes where the faded tail
+    // ended (or at the cursor when no tail was submitted), so resuming repeats nothing.
+    const quint32 fade = quint32(rate / 100);
+    for (const auto &clock : plan.paused) {
+        const auto &s = clock.state;
+        Guard guard(s->mutex);
+        const quint64 resumeAt = running ? std::max(now, std::min(plan.end, plan.pivot + fade)) : now;
+        quint64 voiceAt = clock.heard;
+        double mediaAt = clock.media;
+        for (const auto &span : clock.spans) {
+            if (resumeAt <= span.device) break;
+            const quint64 consumed = std::min(span.frames, resumeAt - span.device);
+            voiceAt = span.voice + consumed;
+            mediaAt = span.media + double(consumed) * span.speed / s->rate;
+        }
+        if (s->streaming) {
+            if (s->stretch) mediaAt = s->timelineStart + s->stretch->sourceSeconds(mediaAt - s->timelineStart);
+            s->target = s->loop ? mediaAt : std::min(mediaAt, s->duration);
+        } else {
+            s->target = double(s->frameAt(voiceAt)) / s->rate;
+        }
+        s->reposition = true;
+        s->flush = false;
+    }
+    if (!plan.paused.empty()) owner->wake(true);
     if (running) for (const auto &entry : began) {
         const auto &s = entry.first;
         Guard guard(s->mutex);

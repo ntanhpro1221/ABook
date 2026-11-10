@@ -338,7 +338,6 @@ private:
     void changed(); // một thay đổi ảnh chụp đã xảy ra (đếm)
     void updateTicker();
     const PlayerLogic::Chapter *chapter(int id) const;
-    int rewindBy(qint64 pausedMs) const;
     std::shared_ptr<Session> newSession();
 
     AudioOut *m_out;
@@ -382,7 +381,6 @@ private:
     int m_lastSleepMinutes = 30;
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
-    bool m_autoRewind = true;
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
     QString m_scheduleOffFor;
@@ -390,7 +388,6 @@ private:
     qint64 m_sleepMarkAt = 0;
     double m_sleepMarkSeconds = 0;
     bool m_sleepWarned = false;
-    qint64 m_pausedAt = 0;
     qint64 m_lastAttempt = 0;
     qint64 m_lastFlush = 0;
     qint64 m_lastSaved = 0;

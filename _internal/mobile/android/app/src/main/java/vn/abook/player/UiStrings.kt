@@ -1852,7 +1852,6 @@ internal object S {
     const val s_khong_tim_thay_sach_nay_trong_thu_vien_74a995af = "Không tìm thấy sách này trong thư viện"
     const val s_khong_tra_loi_thiet_bi_da_tat_hay_roi_mang_9b736dd4 = "không trả lời - thiết bị đã tắt hay rời mạng?"
     const val s_khong_tu_chon_bai_nay_ab3af35f = "Không tự chọn bài này"
-    const val s_khong_tu_lui_8aec206c = "Không tự lùi"
     fun s_khong_vao_duoc_cua_so_nho_0_00b1c99d(p0: Any?): String = "không vào được cửa sổ nhỏ: " + p0.toString()
     fun s_khop_0_b5c9f23d(p0: Any?): String = "khớp " + p0.toString()
     const val s_khung_aac_rong_c5204824 = "khung AAC rỗng"
@@ -2188,7 +2187,6 @@ internal object S {
     const val s_nghe_va_chinh_giong_cho_nhung_nhan_vat_noi_cc91379e = "Nghe và chỉnh giọng cho những nhân vật nói nhiều nhất."
     fun s_nghe_va_sua_0_cach_doc_ten_ten_kem_chac_o_bc275c71(p0: Any?): String = "Nghe và sửa " + p0.toString() + " cách đọc tên, tên kém chắc ở trên."
     const val s_nghe_va_sua_cach_doc_ten_cau_da_thu_co_ten_957bce51 = "Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại."
-    const val s_nghi_qua_30_giay_thi_lui_5_giay_qua_10_phu_328c3ffd = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val s_ngo_tat_to_354f581c = "Ngô Tất Tố"
     const val s_nguoi_dung_xoa_nhat_ky_fc9587f3 = "người dùng xoá nhật ký"
     const val s_nguoi_goi_ngoai_khung_03677986 = "Người gọi / ngoài khung"
@@ -2742,7 +2740,6 @@ internal object S {
     fun s_tu_gui_khi_0_tra_loi_lai_bam_gui_ve_1_de_g_47a67376(p0: Any?, p1: Any?): String = "Tự gửi khi " + p0.toString() + " trả lời lại; bấm “Gửi về " + p1.toString() + "” để gửi ngay."
     fun s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(p0: Any?, p1: Any?): String = "Tự gửi khi tới được " + p0.toString() + "; bấm “Gửi về " + p1.toString() + "” để gửi ngay."
     const val s_tu_hen_theo_lich_dem_17ee1443 = "Tự hẹn theo lịch đêm"
-    const val s_tu_lui_6fc7685a = "Tự lùi"
     const val s_tu_mo_cua_so_mini_a93a51d2 = "Tự mở cửa sổ mini"
     fun s_tu_nhien_0_5_876223ac(p0: Any?): String = "Tự nhiên " + p0.toString() + "/5"
     const val s_tu_nhien_chua_do_3eaed012 = "Tự nhiên: chưa đo"

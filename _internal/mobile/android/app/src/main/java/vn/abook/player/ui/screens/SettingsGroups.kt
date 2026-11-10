@@ -66,7 +66,6 @@ private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60
 /** Lời của các hàng. */
 private object GroupCopy {
     const val NOTIFY = S.s_dang_tat_khong_bao_khi_sach_xong_nut_tam_d_1db703e7
-    const val REWIND = S.s_nghi_qua_30_giay_thi_lui_5_giay_qua_10_phu_328c3ffd
     const val HEADSET = S.s_bat_nut_truoc_sau_lui_toi_15_giay_tat_chuy_6fc6ddb5
     const val AUTO_MUSIC = S.s_sach_chi_co_chu_nhac_nhe_doi_theo_canh_aef4ce0c
     const val FLIP = S.s_lat_len_trong_10_phut_la_nghe_tiep_6a636fb0
@@ -97,8 +96,6 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
                     RowLine()
                 }
             }
-            SwitchRow(S.s_tu_lui_6fc7685a, settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
-            RowLine()
             SwitchRow(S.s_nut_tai_nghe_lui_toi_973e4a19, settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
             if (env.pip?.available == true) {
                 RowLine()

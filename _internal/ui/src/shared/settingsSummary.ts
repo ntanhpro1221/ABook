@@ -6,10 +6,9 @@ export function sleepSummary(schedule: { from: string; to: string } | null | und
   return S.s_tat_3286064e;
 }
 
-/** Nhóm Nghe: tự lùi · nhạc nền tự chọn (SettingsSummary.listen bên native). */
-export function listenSummary(autoRewind: boolean, autoMusic: boolean): string {
-  const rewind = autoRewind ? S.s_tu_lui_6fc7685a : S.s_khong_tu_lui_8aec206c;
-  return `${rewind} · ${autoMusic ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623}`;
+/** Listening summary, shared with native settings. */
+export function listenSummary(autoMusic: boolean): string {
+  return autoMusic ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623;
 }
 
 /** `system`: tên của "theo hệ thống" trên nền ấy ("Tự động" trên điện thoại, "Theo Windows" trên máy tính). */

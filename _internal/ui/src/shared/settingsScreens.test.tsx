@@ -68,15 +68,12 @@ describe("Cài đặt", () => {
     expect(wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />)).toMatch(/<button[^>]*id="auto-music"[^>]*aria-describedby="auto-music-hint"/);
   });
 
-  it("máy tính có công tắc Tự lùi như điện thoại (soát a100 T1), mô tả đúng luật lùi", async () => {
+  it("does not offer automatic rewind in listening settings", async () => {
     const { SettingsScreen } = await import("@/desktop/SettingsScreen");
     const html = wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />);
-    const control = html.match(/<button[^>]*id="auto-rewind"[^>]*>/)?.[0] ?? "";
-    expect(control).toContain('role="switch"');
-    expect(control).toContain('aria-label="Tự lùi"');
-    expect(control).toContain('aria-checked="true"'); // mặc định bật
-    expect(html).toContain("Nghỉ quá 30 giây thì lùi 5 giây");
-    expect(html).not.toContain("Luôn bật");
+    expect(html).not.toContain('id="auto-rewind"');
+    expect(html).not.toContain("Nghỉ quá 30 giây thì lùi 5 giây");
+    expect(html).toContain('id="auto-music"');
   });
 });
 
