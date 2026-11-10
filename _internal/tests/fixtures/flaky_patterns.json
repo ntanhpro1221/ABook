@@ -356,6 +356,7 @@
   "ui/src/listen/autoRewind.test.tsx|fixed-delay|setInterval: (...args: Parameters<typeof setInterval>) => setInterval(...args),": 1,
   "ui/src/listen/autoRewind.test.tsx|fixed-delay|setTimeout: (...args: Parameters<typeof setTimeout>) => setTimeout(...args),": 1,
   "ui/src/listen/autoRewind.test.tsx|wall-clock|const lastHeard = { id: \"test\", title: \"Sách\", complete: true, chapters, state: { chapters: {}, last: { chapterId: 1, seconds: 60, at: Date.now() / 1000 - 3600 } } } as never;": 1,
+  "ui/src/listen/chapterMusic.dom.test.tsx|fixed-delay|addEventListener: (kind: string, fn: () => void) => { if (kind === \"loadedmetadata\") setTimeout(fn, 0); }, removeAttribute: () => { audio.released = true; }, load() {} });": 1,
   "ui/src/listen/lateProgressAck.test.tsx|fixed-delay|await new Promise(resolve=>setTimeout(resolve,0));": 1,
   "ui/src/listen/liveClip.test.ts|fixed-delay|const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));": 1,
   "ui/src/listen/morningRecap.test.tsx|wall-clock|vi.useFakeTimers();const now=Date.now()/1000;": 1,
