@@ -170,7 +170,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         if (state.readAlongAvailable) Box(Modifier.semantics { contentDescription = S.s_co_chu_va_gian_dong_7dfe48ac }) {
                             SheetRow(S.s_co_chu_d7b231e3, window.look.summary, LucidePaths.CAPTIONS, tag = "more_look") { deeper(PlayerSheet.Look) }
                         }
-                        if (window.otherPlayers != null) SheetRow(S.s_thiet_bi_phat_c8cfc7a8, S.s_chon_1171ca97, LucidePaths.CAST, tag = "more_devices") {
+                        if (window.otherPlayers != null) SheetRow(S.s_phat_tren_681e16e1, S.s_chon_1171ca97, LucidePaths.CAST, tag = "more_devices") {
                             window.closeSheet()
                             window.otherPlayers?.invoke()
                         }

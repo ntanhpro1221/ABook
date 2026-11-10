@@ -112,7 +112,7 @@ fun MiniPlayer(
             }
         }
         onDevices?.let { open ->
-            vn.abook.player.ui.components.IconAction(S.s_thiet_bi_phat_c8cfc7a8, open, "mini_devices") {
+            vn.abook.player.ui.components.IconAction(S.s_phat_tren_681e16e1, open, "mini_devices") {
                 vn.abook.player.ui.components.CastIcon(colors.text2)
             }
         }

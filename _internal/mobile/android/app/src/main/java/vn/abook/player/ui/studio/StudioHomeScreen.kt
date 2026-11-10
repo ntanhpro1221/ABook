@@ -1,6 +1,7 @@
 package vn.abook.player.ui.studio
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,17 +49,14 @@ import vn.abook.player.ui.theme.Dim
  * để mở. Hỏi máy tính 5 giây một lần khi có sách chạy, 15 giây khi rảnh, và chỉ khi màn đang hiện (`active`).
  */
 @Composable
-fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (StudioBook) -> Unit, active: Boolean = true, onNew: (() -> Unit)? = null) {
+fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (StudioBook) -> Unit, active: Boolean = true, embeddedHeader: (@Composable () -> Unit)? = null, onNew: (() -> Unit)? = null) {
     val session = state.session
     val poll by state.poll.collectAsState()
     PollWhileVisible(active, session.retries) { state.run() }
     val books = poll.data
     val blocked = session.listenOnly || poll.error is StudioError.ListenOnly
     val groups = remember(books) { books?.let(StudioLogic::groups).orEmpty() }
-    BookForm(
-        StudioText.TITLE, onBack, "studio_home",
-        footer = if (onNew != null && !blocked && books != null) ({ PrimaryButton(StudioNewText.TITLE, onNew, Modifier.fillMaxWidth().testTag("studio_new")) }) else null,
-    ) {
+    val content: @Composable ColumnScope.() -> Unit = {
         val list = rememberLazyListState()
         when {
             blocked -> PermissionCard(session.name, session::retry)
@@ -83,6 +81,19 @@ fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (Studio
                 }
             }
         }
+    }
+    if (embeddedHeader != null) {
+        Column(Modifier.fillMaxSize().testTag("studio_home")) {
+            embeddedHeader()
+            if (onNew != null && !blocked && books != null) vn.abook.player.ui.components.TextAction(StudioNewText.TITLE, onNew, "studio_new")
+            Column(Modifier.weight(1f), content = content)
+        }
+    } else {
+        BookForm(
+            StudioText.TITLE, onBack, "studio_home",
+            footer = if (onNew != null && !blocked && books != null) ({ PrimaryButton(StudioNewText.TITLE, onNew, Modifier.fillMaxWidth().testTag("studio_new")) }) else null,
+            content = content,
+        )
     }
 }
 

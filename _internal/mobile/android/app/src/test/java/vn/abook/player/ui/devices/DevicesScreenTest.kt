@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTextInput
@@ -141,7 +142,7 @@ class DevicesScreenTest {
     // ---- Nối máy tính: chỉ dẫn như PairPanel / ComputerIntro của web ----
 
     private fun scrollTo(tag: String) {
-        rule.onNodeWithTag("pair_list").performScrollToNode(hasTestTag(tag))
+        rule.onNodeWithTag(tag).performScrollTo()
         rule.waitForIdle()
     }
 
@@ -546,7 +547,7 @@ class DevicesScreenTest {
         show(DevicesPage.Pair)
         source.events.tryEmit(DownloadEvent("e", 0.2f, error = "Mất mạng giữa chừng."))
         rule.waitForIdle()
-        rule.onNodeWithTag("pair_list").performScrollToNode(hasTestTag("book_e"))
+        rule.onNodeWithTag("book_e").performScrollTo()
         rule.onNodeWithText("Chưa tải xong về máy. Mất mạng giữa chừng.").assertIsDisplayed()
         assertFirstLine("book_e", trailing = true)
         tap("download_e")
@@ -686,7 +687,7 @@ class DevicesScreenTest {
             val env = remember { SettingsEnv(repo, ThemeReveal(scope), devices = if (withDevices) devices else null) }
             AbookTheme(dark) {
                 Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
-                    SettingsGroupScreen(SettingsGroup.Devices, env, sheets, onBack = {}, openDevices = { opened = it })
+                    SettingsGroupScreen(SettingsGroup.Devices, env, sheets, onBack = {})
                     SheetLayer(sheets)
                 }
             }
@@ -699,7 +700,7 @@ class DevicesScreenTest {
         group()
         rule.onNodeWithText("Đã nối Máy bàn").assertIsDisplayed()
         rule.onNodeWithText("Đang bật · 1 máy").assertIsDisplayed()
-        rule.onNodeWithText("Sách 300 MB · còn trống 10 GB").assertIsDisplayed()
+        rule.onNodeWithTag("devices_storage").assertDoesNotExist()
         rule.onNodeWithText("Điện thoại của tôi").assertIsDisplayed()
         shot("settings_devices_filled_light")
     }
@@ -712,14 +713,19 @@ class DevicesScreenTest {
     }
 
     @Test
-    fun groupPageRowsOpenTheirScreens() {
+    fun groupPageRowsExpandInPlace() {
         group()
         tap("devices_pair")
-        assertEquals(DevicesPage.Pair, opened)
+        rule.onNodeWithTag("pair_screen").assertIsDisplayed()
+        shot("settings_devices_pair_expanded_light")
+        tap("devices_pair")
+        rule.onNodeWithTag("pair_screen").assertDoesNotExist()
         tap("devices_share")
-        assertEquals(DevicesPage.Share, opened)
-        tap("devices_storage")
-        assertEquals(DevicesPage.Storage, opened)
+        rule.onNodeWithTag("share_screen").assertIsDisplayed()
+        shot("settings_devices_share_expanded_light")
+        tap("devices_share")
+        rule.onNodeWithTag("share_screen").assertDoesNotExist()
+        rule.onNodeWithTag("devices_storage").assertDoesNotExist()
     }
 
     @Test
@@ -739,7 +745,7 @@ class DevicesScreenTest {
     @Test
     fun groupPageWithoutACoreStillDrawsItsRows() {
         group(withDevices = false)
-        for (tag in listOf("devices_pair", "devices_share", "devices_storage", "devices_name")) rule.onNodeWithTag(tag).assertIsDisplayed()
+        for (tag in listOf("devices_pair", "devices_share", "devices_name")) rule.onNodeWithTag(tag).assertIsDisplayed()
         rule.onNodeWithText("Nối máy tính").assertIsDisplayed()
     }
 

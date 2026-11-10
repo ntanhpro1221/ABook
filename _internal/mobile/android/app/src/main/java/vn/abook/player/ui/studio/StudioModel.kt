@@ -147,4 +147,4 @@ data class StudioRoute(val book: String? = null, val tab: StudioTab = StudioTab.
 
 /** Mở Studio của máy `computer` ("" = máy tính chính) ở `route`. */
 @Immutable
-data class StudioRequest(val computer: String, val route: StudioRoute)
+data class StudioRequest(val computer: String, val route: StudioRoute, val fromNotification: Boolean = true)

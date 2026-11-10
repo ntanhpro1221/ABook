@@ -604,7 +604,7 @@ Item {
             }
             MenuRow { objectName: "nowAudioFxButton"; width: parent.width; text: S.s_copy_c1303271503d; value: S.s_copy_cc27613e0895; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
             MenuRow { objectName: "nowVoice"; width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
-            MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
+            MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }
             MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
             MenuRow { objectName: "nowKeys"; width: parent.width; text: S.s_phim_tat_7baaed2f; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
             MenuRow { objectName: "nowAddVoice"; width: parent.width; text: S.s_them_giong_bbe0caf9; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }

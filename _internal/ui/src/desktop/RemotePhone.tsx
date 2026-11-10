@@ -343,7 +343,7 @@ export function RemoteBars() {
         <span aria-hidden>›</span>
       </button>
     </MotionPresence>
-    <Dialog open={open} onOpenChange={setOpen} title={S.s_thiet_bi_phat_c8cfc7a8}>
+    <Dialog open={open} onOpenChange={setOpen} title={S.s_phat_tren_681e16e1}>
       {(data?.phones ?? []).filter(phone => phone.bookId && phone.chapterId !== null).map((phone) => (
         <RemoteBar
           key={phone.device}
@@ -372,7 +372,7 @@ export function HandOffButton({ className }: { className?: string }) {
   const client = useQueryClient();
   const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Trong dòng "Thiết bị phát" của menu "…": nút là cả dòng (một biểu tượng, giá trị chữ bên phải), danh sách mở cạnh menu cha (PlayerViews SlotFace / besideParentMenu).
+  // Trong dòng "Phát trên" của menu "…": nút là cả dòng (một biểu tượng, giá trị chữ bên phải), danh sách mở cạnh menu cha (PlayerViews SlotFace / besideParentMenu).
   const slot = useMenuSlot();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [beside, setBeside] = useState<BesideParent | null>(null);

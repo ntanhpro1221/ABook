@@ -29,7 +29,7 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | # | Luồng | Đích | Các bước |
 |---|---|---|---|
 | L1 | **Lần đầu mở** -> nghe được | ≤ 4 chạm | Thư viện trống: một lời mời "Thêm sách" (nút chính) + dòng phụ "Có máy tính? Nối máy" -> chọn file -> hộp xác nhận (tên, bìa đoán sẵn; chỉ hỏi khi thật cần) -> trang sách -> "Nghe ngay" (đọc máy) hay "Tạo sách nói" (Studio, máy tính) |
-| L2 | **Nghe tiếp** | 1 chạm | Đầu Thư viện: hàng "Đang nghe" (bìa, tên, chương, còn bao lâu, nút phát). Thanh phát thu nhỏ luôn ở đáy mọi màn, kể cả màn con (trang sách, Cài đặt, Studio); chỉ nhường chỗ ở màn có thanh hành động đáy riêng (Thêm sách, Rà soát, Sửa, Cắt bìa, Tìm bìa, Xuất, Dự án mới). Trang sách ↔ trình phát 1 chạm (L3b, L3c) |
+| L2 | **Nghe tiếp** | 1 chạm | Đầu Thư viện: hàng "Đang nghe" (bìa, tên, chương, còn bao lâu, nút phát). Thanh phát thu nhỏ luôn ở đáy mọi màn, kể cả màn con (trang sách, Cài đặt, Studio); chỉ nhường chỗ ở màn có thanh hành động đáy riêng (Thêm sách, Rà soát, Sửa, Cắt bìa, Tìm bìa, Xuất, Dự án mới). Trang sách ↔ trình phát 1 chạm (L3b, L3c). Gốc tab Studio là danh sách dự án, giữ cả thanh phát và thanh tab |
 | L3 | Mở trình phát | 1 | chạm thanh phát thu nhỏ -> trình phát trượt lên; vuốt xuống / Back để thu |
 | L3b | Trang sách -> trình phát của cuốn đó | 1 | cuốn đang nạp: chạm bìa hay dòng chương đang phát (icon đầu dòng vẫn chỉ phát / dừng); nút chính "Nghe tiếp" phát rồi mở trình phát. Nút đang là "Tạm dừng" thì chỉ dừng |
 | L3c | Trình phát -> trang sách | 1 | chạm tên sách dưới tên chương -> trình phát thu lại, tới trang sách (đã có trong ngăn thì quay về đó, không đẩy trùng); Back về màn trước. Máy tính: tên sách trên thanh phát cũng vậy |
@@ -41,7 +41,7 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L10 | Tạo sách nói (máy tính) | ≤ 3 | Studio -> "Dự án mới" -> chọn file -> "Bắt đầu" (một trang; giọng, chất lượng, cách bắt đầu chọn sẵn theo mặc định tốt, gập dưới "Tuỳ chọn"; chỉnh được nhưng không bắt chỉnh) |
 | L11 | Theo dõi / can thiệp Studio | 1 | tiến độ ở thanh bên (máy tính) và ở Studio (điện thoại ghép); "Việc cần bạn" chỉ hiện khi có, không chặn dây chuyền |
 | L12 | Sửa cách đọc / ai nói | 2 | đang đọc theo -> chạm giữ câu -> sửa -> ghi vào hàng chờ Studio (mọi player đều sửa được) |
-| L13 | Cài đặt | ≤ 2 cấp | Cài đặt -> nhóm -> mục. Không cấp ba |
+| L13 | Cài đặt | ≤ 2 cấp | Cài đặt -> nhóm; mục gập tại chỗ có chuyển động, không đẩy màn thứ hai. Bảng trượt đóng trước khi Back rời nhóm. Ngoại lệ tạm thời: Nhạc của tôi giữ đường cũ để nhánh dev/musiclib chuyển sang tab Nhạc |
 
 Số chạm do máy đếm (`ui/src/gallery/flowTaps.phone.dom.test.tsx`, `flowTaps.desktop.dom.test.tsx`): mỗi cú bấm trong app một chạm, mỗi lần mở
 hộp chọn file của hệ thống cũng một chạm. Hộp hỏi trước lần đầu gửi chữ tới giọng trực tuyến là quyết định quyền riêng tư, tính riêng.
@@ -56,8 +56,8 @@ Hai nền tảng cùng một mô hình; khác nhau ở bố cục, không ở ch
 
 - **Thư viện** - mọi cuốn nghe được: file trên máy này + sách của máy đã ghép (một danh sách, dấu nguồn nhỏ). Thêm sách
   ở đây. Trang sách là tầng con.
-- **Studio** - dự án tạo sách nói. Máy tính: đầy đủ. Điện thoại: Studio từ xa khi đã ghép máy tính; chưa ghép thì thẻ
-  Studio giải thích một câu + "Nối máy tính".
+- **Studio** - dự án tạo sách nói. Máy tính: đầy đủ. Điện thoại: Studio từ xa khi đã ghép máy tính; tab mở thẳng danh sách dự án (một chạm), từ hai máy trở lên có bộ chọn tên máy ở đầu; chưa ghép thì
+  một câu + "Nối máy tính". Danh sách tại gốc giữ thanh tab và thanh phát; mở dự án rồi Back về đúng máy đã chọn.
 - **Cài đặt** - gồm cả Thiết bị (ghép máy, chẩn đoán).
 - **Trình phát** - lớp nổi trên mọi màn (thu nhỏ / đầy đủ), không phải một tab.
 
@@ -309,7 +309,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   MỘT nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện; sách xong còn sửa chờ áp: "Áp dụng N
   thay đổi"), còn lại vào "…"; tab hiện: Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền, phần còn lại (Duyệt
   trước khi thu, Kịch bản, Nhật ký) vào "Thêm" - tab đang chọn nằm trong "Thêm" thì nút ấy mang tên tab.
-- **Cài đặt**: danh sách nhóm phẳng (Giọng đọc · Nghe · Hẹn giờ ngủ · Giao diện · Thiết bị · Nâng cao), máy tính hai cột.
+- **Studio (điện thoại)**: tab nhúng thẳng danh sách dự án, một chạm từ Thư viện; từ hai máy trở lên có bộ chọn tên máy ở đầu. Chưa ghép = một câu + Nối máy tính; mở dự án rồi Back về đúng máy đã chọn. `Destination.Studio` chỉ dùng cho thông báo.
+- **Cài đặt**: sáu nhóm phẳng trên điện thoại: Giọng đọc · Nghe · Hẹn giờ ngủ · Giao diện · Thiết bị · Nâng cao; máy tính thêm Studio trước Nâng cao, từ khổ expanded bố cục hai cột.
+  Giọng đọc có giọng mặc định, Chất lượng giọng, Bộ giọng, Khoá trực tuyến gập tại chỗ. Nghe giữ Nhạc của tôi cho nhánh dev/musiclib chuyển sang tab Nhạc (không thay ở đợt này).
+  Thiết bị gồm Nối máy tính và Chia sẻ thư viện gập tại chỗ, rồi Tên thiết bị; không còn Dung lượng. Nâng cao có Bộ nhớ (sách trên máy, chỗ trống và bản đọc đã làm trong cùng một khối gập), Cập nhật, Chẩn đoán, Giới thiệu.
+  Mọi khối mở/khép bằng chuyển động chiều cao; không đẩy màn mới. Chọn giá trị hay nhập khoá dùng bảng trượt: Back đóng bảng trước, rồi rời trang nhóm về danh sách Cài đặt.
 
 ### Việc cần duyệt: vai phụ và người gọi (HITL mốc 2)
 
@@ -347,7 +351,7 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 
 ### Thêm tuỳ chọn (trình phát `…`)
 
-- Dòng tiến độ cả cuốn ở đầu, rồi các dòng, MỌI dòng có icon 20 dp cách chữ 16 dp, cao tối thiểu 48 dp: **Âm thanh** (sliders-horizontal) → **Giọng đọc** (mic-vocal) → **Cỡ chữ** (captions, khi có Đọc theo) → **Thiết bị phát** (cast) → **Trang sách** (book-open: thu trình phát rồi tới trang của cuốn; đang ở trang ấy thì không mở chồng) → **Cửa sổ mini** (picture-in-picture-2) LUÔN ở cuối. Nhạc nền không còn dòng riêng (nằm trong Âm thanh). Hàng nút chính của trình phát giữ ba ô, không có nút cửa sổ mini.
+- Dòng tiến độ cả cuốn ở đầu, rồi các dòng, MỌI dòng có icon 20 dp cách chữ 16 dp, cao tối thiểu 48 dp: **Âm thanh** (sliders-horizontal) → **Giọng đọc** (mic-vocal) → **Cỡ chữ** (captions, khi có Đọc theo) → **Phát trên** (cast) → **Trang sách** (book-open: thu trình phát rồi tới trang của cuốn; đang ở trang ấy thì không mở chồng) → **Cửa sổ mini** (picture-in-picture-2) LUÔN ở cuối. Nhạc nền không còn dòng riêng (nằm trong Âm thanh). Hàng nút chính của trình phát giữ ba ô, không có nút cửa sổ mini.
 - **Tự mở cửa sổ mini** mặc định TẮT (điện thoại và máy tính). Bật thì chỉ tự thu khi sách ĐANG PHÁT lúc rời app; nút Cửa sổ mini bấm tay thì mở được cả khi đang dừng.
 
 ### Bảng trượt: cử chỉ chung

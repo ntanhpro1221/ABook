@@ -88,7 +88,7 @@ Rectangle {
         spacing: Theme.s8
         SkipButton { objectName: "miniBack"; forward: false; tip: S.s_lui_0_giay_718bdd89(Player.skipSeconds) }
         PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48 }
-        IconButton { id: deviceButton; objectName: "miniDevices"; icon: "cast"; tip: S.s_thiet_bi_phat_c8cfc7a8; onClicked: output.show() }
+        IconButton { id: deviceButton; objectName: "miniDevices"; icon: "cast"; tip: S.s_phat_tren_681e16e1; onClicked: output.show() }
         SkipButton { objectName: "miniForward"; forward: true; tip: S.s_toi_0_giay_84234225(Player.skipSeconds) }
     }
     SeekBar {

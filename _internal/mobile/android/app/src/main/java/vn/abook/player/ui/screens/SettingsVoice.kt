@@ -5,6 +5,8 @@ import vn.abook.player.S
 import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.PageHeader
+import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.voice.KeysScreen
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.ListItem
@@ -100,7 +102,7 @@ private val NoSummary: StateFlow<VoiceSummary> = MutableStateFlow(VoiceSummary()
  * `env.voice` null (ảnh chụp không có lõi): danh sách giọng vẫn dựng, chưa có nghe thử, giọng tải về hay khoá.
  */
 @Composable
-fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val repo = env.repo
     val voice = env.voice
     val voices by repo.voices.collectAsState()
@@ -186,7 +188,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                 val state = speed ?: return@Reveal
                 ListSection(S.s_hieu_nang_8c7b7526) {
                     ChoiceSetting(
-                        S.s_toc_do_doc_3657e59d, VoiceSpeedChoice.entries, state.choice,
+                        S.s_chat_luong_giong_5d1c8e07, VoiceSpeedChoice.entries, state.choice,
                         { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed",
                     )
                     for (line in state.lines) {
@@ -211,8 +213,8 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
             for (kind in ModuleKind.entries) moduleItems(kind, modules[kind] ?: ModuleUi(), voice, sheets)
             item(key = "voice_pick", contentType = "voice_pick") { vn.abook.player.ui.voice.VoicePickCard(voice) }
             item(key = "keys", contentType = "keys") {
-                ListSection {
-                    DisclosureRow(S.s_khoa_truc_tuyen_b32d4988, { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
+                Fold(S.s_khoa_truc_tuyen_b32d4988, "voice_keys", Modifier.padding(top = Dim.sectionGap), summary = summary.keys) {
+                    KeysScreen(voice, sheets, {}, embedded = true)
                 }
             }
         }

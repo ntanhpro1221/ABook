@@ -55,12 +55,12 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.WrenchIcon
 import vn.abook.player.ui.components.ThemeIcon
 import vn.abook.player.ui.components.VoiceIcon
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.data.AppSettings
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.SettingsRepo
 import vn.abook.player.ui.data.SettingsSummary
 import vn.abook.player.ui.data.VoiceList
-import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.devices.DevicesState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.voice.VoicePage
@@ -99,7 +99,7 @@ class SettingsEnv(
  * trượt vào ([onOpen] đẩy lên ngăn xếp), Back trượt ra đúng đường ấy. Không có cấp ba.
  *
  * Từ khổ expanded của bề ngang nội dung (DESIGN.md §5.5 "Khổ cửa sổ", như Qt): nhóm ở cột trái (260 dp), màn con của nhóm đang chọn ở cột phải, tối đa
- * 1180 dp cả hai. Chọn nhóm KHÔNG đẩy màn lên ngăn xếp (Back vẫn chỉ rời tab); việc mở tiếp từ trong nhóm ([openDevices], [openVoice]) vẫn là màn riêng.
+ * 1180 dp cả hai. Chọn nhóm KHÔNG đẩy màn lên ngăn xếp (Back vẫn chỉ rời tab); Nối máy, Chia sẻ, Bộ nhớ và Khoá trực tuyến gập tại chỗ. Chỉ [openVoice] cho Music còn giữ để nhánh dev/musiclib chuyển đi.
  *
  * `shown`: tab đang được thấy (đọc ngoài composition): danh sách giọng (cho dòng "Giọng đọc") chỉ hỏi lõi khi bạn mở tab lần đầu, không lúc tab được dựng
  * trước lúc rảnh.
@@ -107,7 +107,7 @@ class SettingsEnv(
 @Composable
 fun SettingsScreen(
     env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: Modifier = Modifier, shown: () -> Boolean = { true },
-    sheets: SheetHost = SheetHost(), openDevices: (DevicesPage) -> Unit = {}, openVoice: (VoicePage) -> Unit = {},
+    sheets: SheetHost = SheetHost(), openVoice: (VoicePage) -> Unit = {},
 ) {
     val repo = env.repo
     val settings by repo.state.collectAsState()
@@ -128,7 +128,7 @@ fun SettingsScreen(
                         // Đổi nhóm thì màn con trượt như đổi khổ; mỗi màn con tự cuộn.
                         AnimatedContent(selected, Modifier.weight(1f).fillMaxHeight().testTag("settings_pane"), transitionSpec = { Motion.layoutSwitch(true) }, label = "settings-pane") { group ->
                             CompositionLocalProvider(LocalEmbeddedPane provides true) {
-                                SettingsGroupScreen(group, env, sheets, onBack = {}, openDevices = openDevices, openVoice = openVoice)
+                                SettingsGroupScreen(group, env, sheets, onBack = {}, openVoice = openVoice)
                             }
                         }
                     }
@@ -188,7 +188,7 @@ private fun summary(group: SettingsGroup, settings: AppSettings, voices: VoiceLi
     SettingsGroup.Listen -> SettingsSummary.listen(settings)
     SettingsGroup.Sleep -> SettingsSummary.sleep(settings)
     SettingsGroup.Look -> SettingsSummary.look(settings)
-    SettingsGroup.Devices -> S.s_noi_may_chia_se_dung_luong_52ae8caa
+    SettingsGroup.Devices -> listOf(S.s_noi_may_tinh_2950692d, S.s_chia_se_thu_vien_940de671).dotJoined()
     SettingsGroup.Advanced -> S.s_phien_ban_0_164b4cda(version)
 }
 
@@ -206,14 +206,14 @@ private fun GroupIcon(group: SettingsGroup, color: Color) = when (group) {
 @Composable
 fun SettingsGroupScreen(
     group: SettingsGroup, env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier,
-    openDevices: (DevicesPage) -> Unit = {}, openVoice: (VoicePage) -> Unit = {},
+    openVoice: (VoicePage) -> Unit = {},
 ) {
     when (group) {
-        SettingsGroup.Voice -> VoiceSettings(env, sheets, openVoice, onBack, modifier)
+        SettingsGroup.Voice -> VoiceSettings(env, sheets, onBack, modifier)
         SettingsGroup.Listen -> ListenSettings(env, openVoice, onBack, modifier)
         SettingsGroup.Sleep -> SleepSettings(env.repo, sheets, onBack, modifier)
         SettingsGroup.Look -> LookSettings(env, onBack, modifier)
-        SettingsGroup.Devices -> DevicesSettings(env.devices, sheets, openDevices, onBack, modifier)
+        SettingsGroup.Devices -> DevicesSettings(env.devices, sheets, onBack, modifier)
         SettingsGroup.Advanced -> AdvancedSettings(env, sheets, onBack, modifier)
     }
 }

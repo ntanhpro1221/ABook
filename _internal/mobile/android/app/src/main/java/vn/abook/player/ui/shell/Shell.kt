@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
@@ -131,6 +132,7 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
     val coverFlight = BookCoverFlight(nav)
     val window = NowPlayingWindowState(scope)
     val tabs = TabState(scope)
+    var studioComputer by mutableStateOf<String?>(null)
     val libraryGrid = LazyGridState()
     val library = LibraryUiState(scope, onSortChanged = onSortChanged)
     val sheets = SheetHost()
@@ -164,6 +166,12 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
         sheets.dismiss()
         window.close()
         val route = request.route
+        if (!request.fromNotification && route.book == null) {
+            studioComputer = request.computer
+            tabs.select(Tab.Studio)
+            nav.popToRoot()
+            return
+        }
         val project = route.book?.let { Destination.StudioProject(request.computer, it, route.tab) }
         val sub = route.sub?.let { kind -> route.book?.let { Destination.StudioSub(request.computer, it, kind) } }
         val target = sub ?: project ?: Destination.Studio(request.computer)
@@ -248,7 +256,7 @@ fun AppShell(
             },
             playNow = player::playNow,
             addBook = { shell.nav.push(Destination.AddBook) },
-            connect = if (settings.devices != null) ({ shell.nav.push(Destination.Devices(DevicesPage.Pair)) }) else null,
+            connect = if (settings.devices != null) ({ shell.nav.push(Destination.Settings(SettingsGroup.Devices)) }) else null,
         )
     }
     val window = shell.window
@@ -335,7 +343,7 @@ fun AppShell(
                     stack = { insets ->
                     ScreenStack(
                         nav = nav, insets = insets,
-                        root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
+                        root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications, studio) },
                         screen = { destination ->
                             when (destination) {
                                 is Destination.Book -> CompositionLocalProvider(vn.abook.player.ui.screens.LocalBookPageState provides shell.bookPages[destination.book.id]) { BookScreen(
@@ -356,19 +364,11 @@ fun AppShell(
                                 is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.Settings -> SettingsGroupScreen(
-                                    destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
+                                    destination.group, settings, shell.sheets, onBack = nav::pop,
                                     openVoice = { nav.push(Destination.Voice(it)) },
                                 )
-                                is Destination.Devices -> settings.devices?.let { devices ->
-                                    when (destination.page) {
-                                        DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
-                                        DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
-                                        DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
-                                    }
-                                } ?: Unavailable(destination, nav::pop)
                                 is Destination.Voice -> settings.voice?.let { voice ->
                                     when (destination.page) {
-                                        VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
                                         VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
                                     }
                                 } ?: Unavailable(destination, nav::pop)
@@ -599,6 +599,7 @@ private fun RootTabs(
     settings: SettingsEnv,
     companion: vn.abook.player.ui.devices.CompanionRepo?,
     askNotifications: (() -> Unit) -> Unit,
+    studio: StudioHub?,
 ) {
     val tabs = shell.tabs
     // Lambda đọc trạng thái (không phải giá trị): đổi tab / đẩy màn không làm RootTabs hay nội dung các tab dựng lại - chỉ chỗ gọi nó đọc, ở BackHandler của Thư viện.
@@ -618,15 +619,16 @@ private fun RootTabs(
                     )
                 }
                 Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
-                    sheets = shell.sheets,
+                    hub = studio, computerKey = shell.studioComputer, pickComputer = { shell.studioComputer = it }, active = tabs.selected == Tab.Studio.ordinal && !shell.nav.canPop,
+                    onOpen = { computer, book -> shell.nav.push(Destination.StudioProject(computer, book)) },
+                    onNew = { computer -> shell.nav.push(Destination.StudioNew(computer)) },
                     openNotificationSettings = settings.links.openNotificationSettings,
-                    connect = { shell.nav.push(Destination.Devices(DevicesPage.Pair)) })
+                    connect = { shell.nav.push(Destination.Settings(SettingsGroup.Devices)) })
                 Tab.Settings -> SettingsScreen(
                     settings,
                     onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
                     shown = { tabs.selected == Tab.Settings.ordinal },
                     sheets = shell.sheets,
-                    openDevices = { shell.nav.push(Destination.Devices(it)) },
                     openVoice = { shell.nav.push(Destination.Voice(it)) },
                 )
             }

@@ -45,13 +45,7 @@ internal fun unavailableTitle(destination: Destination): String = when (destinat
     is Destination.Book -> destination.book.title
     is Destination.Export -> if (destination.book.textOnly) S.s_xuat_sach_noi_219fb12a else S.s_xuat_sach_792effe5
     is Destination.Settings -> destination.group.label
-    is Destination.Devices -> when (destination.page) {
-        DevicesPage.Pair -> S.s_noi_may_tinh_2950692d
-        DevicesPage.Share -> S.s_chia_se_thu_vien_940de671
-        DevicesPage.Storage -> S.s_dung_luong_32009349
-    }
     is Destination.Voice -> when (destination.page) {
-        VoicePage.Keys -> S.s_khoa_truc_tuyen_b32d4988
         VoicePage.Music -> S.s_nhac_cua_toi_f65b7ac6
     }
     is Destination.Studio, is Destination.StudioProject -> StudioText.TITLE

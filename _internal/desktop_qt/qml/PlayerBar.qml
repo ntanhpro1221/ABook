@@ -118,7 +118,7 @@ Item {
             spacing: Theme.s8
             SkipButton { forward: false; anchors.verticalCenter: parent.verticalCenter }
             IconButton {
-                id: deviceButton; objectName: "barDevices"; icon: "cast"; tip: S.s_thiet_bi_phat_c8cfc7a8
+                id: deviceButton; objectName: "barDevices"; icon: "cast"; tip: S.s_phat_tren_681e16e1
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: output.show()
             }
@@ -160,7 +160,7 @@ Item {
             MenuRow { width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
             MenuRow { width: parent.width; text: S.s_mo_man_hinh_dang_nghe_2426b4ad; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
             MenuRow { objectName: "barClose"; width: parent.width; text: S.s_dong_trinh_phat_8a833838; icon: "x"; onClicked: { more.close(); Player.close() } }
-            MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_thiet_bi_phat_c8cfc7a8; icon: "cast"; onClicked: { more.close(); output.show() } }
+            MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }
         }
     }
     SleepPopover { id: sleep; anchorItem: moreButton }

@@ -274,7 +274,7 @@ class GapSurfacesTest {
         val host = SheetHost()
         theme(false) {
             Column {
-                Box(Modifier.weight(1f)) { StorageScreen(devices, host, {}) }
+                Box(Modifier.weight(1f)) { StorageScreen(devices, host, onBack = {}) }
                 UndoBar(deletes)
             }
             SheetLayer(host)
@@ -305,7 +305,7 @@ class GapSurfacesTest {
         }
         rule.onNodeWithTag("mini_player").performClick()
         rule.runOnUiThread { shell.window.openSheet(PlayerSheet.More) }
-        rule.onNode(hasText("Thiết bị phát") and hasAnyAncestor(hasTestTag("player_sheet_more"))).performClick()
+        rule.onNode(hasText("Phát trên") and hasAnyAncestor(hasTestTag("player_sheet_more"))).performClick()
         rule.onNodeWithTag("remote_players_sheet").assertIsDisplayed()
         rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
