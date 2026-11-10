@@ -6,6 +6,7 @@ import gzip
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Iterable
 
 POLICY = json.loads(Path(__file__).with_suffix(".json").read_text(encoding="utf-8"))
 VERSION = int(POLICY["version"])
@@ -14,6 +15,7 @@ PROVENANCE = str(POLICY["provenance"])
 _LETTERS = "A-Za-zāīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 _WORD = re.compile(rf"[{_LETTERS}]+(?:[-'][{_LETTERS}]+)*")
 _NOTE = re.compile(r"\[note\d+\]", re.IGNORECASE)
+_KNOWN_NAMES = frozenset(POLICY["known_names"])
 
 
 @lru_cache(maxsize=1)
@@ -29,7 +31,7 @@ def _lexically_guarded(head: str) -> bool:
     # A Japanese onset plus a complete parse can preserve an established name
     # reading in a Japanese book. Ordinary English vocabulary still wins first.
     marked = any(onset in low for onset in [*POLICY["onsets"], "wa"])
-    return low in lexical_guard() and not marked
+    return low in lexical_guard() and not marked and low not in _KNOWN_NAMES
 
 
 def _normalized(core: str, origin: str | None) -> str:
@@ -107,7 +109,8 @@ def _candidate(core: str, origin: str | None = None) -> tuple[int, bool]:
     parts = head.split("-")
     if (len(head) < 2 or not head[:1].isupper()
             or any(part[1:] != part[1:].lower() for part in parts)
-            or is_vietnamese_syllable(head) or head.casefold() in english_words()
+            or is_vietnamese_syllable(head)
+            or (head.casefold() in english_words() and not (origin == "ja" and head.casefold() in _KNOWN_NAMES))
             or (origin == "ja" and _lexically_guarded(head))
             or head.casefold() in POLICY["common"] or re.search(r"(.)\1\1", head.casefold())):
         return 0, False
@@ -152,6 +155,9 @@ def _reading_word(core: str, origin: str | None, *, contextual: bool = False) ->
     core = _normalized(core, origin)
     if origin == "ko":
         return None
+    # A suffix only Korean has settles the whole name, even in a Japanese book.
+    if term_origin(core) == "ko" and "-" in core:
+        return name_reading(core, "ko")
     # Lexical Japanese and joined addresses have their own evidence. A name
     # detector's negative result must not erase either earlier reading.
     lexical = loanword_reading(core)
@@ -173,7 +179,7 @@ def _reading_word(core: str, origin: str | None, *, contextual: bool = False) ->
     long_sound = origin == "ja" and count == 1 and bool(re.search(r"([aiueo])\1", core.casefold()))
     if not count or not (contextual or honorific or count >= minimum or long_sound):
         if origin == "ja" and not _lexically_guarded(_head(core)[0]):
-            return name_reading(core, origin)
+            return _spoken_syllable(name_reading(core, origin))
         return None
     head, _ = _head(core)
     parts = core.split("-")
@@ -182,7 +188,13 @@ def _reading_word(core: str, origin: str | None, *, contextual: bool = False) ->
         if full:
             mora = full.split("-")[0]
             return "-".join([mora] * (len(parts) - 1) + [full.lower()])
-    return lone_syllable(romanized_reading(core, "ja"))
+    return _spoken_syllable(lone_syllable(romanized_reading(core, "ja")))
+
+
+def _spoken_syllable(said: str | None) -> str | None:
+    from .shouts import distinct_from_english
+
+    return distinct_from_english(said) if said else said
 
 
 def reading(core: str, origin: str | None, *, contextual: bool = False) -> str | None:
@@ -213,27 +225,162 @@ def reading(core: str, origin: str | None, *, contextual: bool = False) -> str |
     return "".join([*pieces, core[end:]])
 
 
+def _spelled_output(core: str, before: str, after: str) -> str | None:
+    """What letter TN already emitted for a capitalized word, if anything."""
+    from .abbreviations import spelled
+    from .names import closing
+
+    said = spelled(core)
+    return before + said + closing(after, said) if said else None
+
+
+def _titled_names(toks: list[str], origin: str | None) -> set[str]:
+    """Words of this text written as a readable name ("Yui"): evidence for their capitals ("YUI")."""
+    from .names import split_token
+
+    found = set()
+    for token in toks:
+        core = split_token(token)[1]
+        if core[:1].isupper() and core[1:].islower() and _reading_word(core, origin):
+            found.add(core.casefold())
+    return found
+
+
+def _korean_reading(toks: list[str], index: int, core: str) -> str | None:
+    """A Korean-only suffix ("Ji-eun-ssi") or a hyphenated name beside a Korean surname ("Park Seo-joon") is Korean in any book."""
+    from .names import KOREAN_SURNAMES, korean_hyphenated_name, name_reading, split_token, term_origin
+
+    if "-" in core and term_origin(core) == "ko":
+        return name_reading(core, "ko")
+    if not index:
+        return None
+    _, surname, tail = split_token(toks[index - 1])
+    if tail or surname.lower() not in KOREAN_SURNAMES or surname != surname.capitalize():
+        return None
+    return korean_hyphenated_name(core)
+
+
 def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
     """VieNeu-only routing, before keep-English and explicit listener readings."""
     from .names import name_reading, split_token
 
     contextual = contextual_names(toks, origin) if origin != "ko" else set()
+    titled = _titled_names(toks, origin) if origin == "ja" else set()
+    said_here: dict[str, str] = {}
+    read_indices: set[int] = set()
     for index, token in enumerate(toks):
         source = _NOTE.sub("", token) if origin == "ja" else token
         before, core, after = split_token(source)
         if not core or before[-1:].isdigit() or re.match(r"^[-–]?\d", after):
             continue
+        korean = _korean_reading(toks, index, core) if origin == "ja" else None
+        if korean:
+            out[index] = before + korean + after
+            continue
         previous_name = name_reading(core, origin)
-        if out[index] != token and out[index] != before + str(previous_name) + after:
+        # Letter TN only lowercased a word it had judged readable ("YUUKI"), or a
+        # capitalized form stands beside its own titled spelling ("Yui ... YUI").
+        evidence = False
+        if origin == "ja" and core.isupper() and out[index] == _spelled_output(core, before, after):
+            from .abbreviations import spelled
+
+            evidence = (spelled(core) == core.lower() and len(core) >= 4) or core.casefold() in titled
+        if out[index] != token and out[index] != before + str(previous_name) + after and not evidence:
             # Structural TN, letter spelling, loanwords and honorifics own their
             # output. Only an earlier name reading may be replaced or rejected.
             continue
-        said = reading(core, origin, contextual=index in contextual)
+        said = reading(core, origin, contextual=index in contextual or evidence)
         if said:
             out[index] = before + said + after
+            said_here[core.casefold()] = said
+            read_indices.add(index)
         elif (origin == "ja" and _lexically_guarded(_head(_normalized(core, origin))[0])
               and out[index] == before + str(previous_name) + after):
             out[index] = token
+    if origin == "ja":
+        _echoes(toks, out, said_here, read_indices)
+
+
+def _echoes(toks: list[str], out: list[str], said_here: dict[str, str], read_indices: set[int]) -> None:
+    """A lowercase word repeats a reading this text already gave ("Doki doki"), and a sentence
+    particle stays Japanese right after a read word ("Ii yo"). Capital evidence still keeps
+    English words and unaccented Vietnamese out: neither ever enters `said_here`."""
+    from ..romanization import romanized_reading
+    from .names import split_token
+
+    said_here = dict(said_here)
+    for token, spoken in zip(toks, out):  # "D-Doki doki": the stutter already read the word
+        if "… " in spoken:
+            said_here.setdefault(split_token(token)[1].rsplit("-", 1)[-1].casefold(), split_token(spoken.rsplit("… ", 1)[1])[1])
+    for index, token in enumerate(toks):
+        before, core, after = split_token(token)
+        if not core.islower() or out[index] != token:
+            continue
+        said = said_here.get(core)
+        if said is None and core in POLICY["particles"] and index - 1 in read_indices and not split_token(toks[index - 1])[2]:
+            said = romanized_reading(core, "ja")
+        if said:
+            out[index] = before + said.lower() + after
+
+
+def _evidenced_reading(word: str) -> str | None:
+    """The reading of a guarded word once the book shows it is a name. It must equal what the same
+    word says with an honorific: otherwise (Mike-san -> "Mike-xan") it has no romaji route at all."""
+    from ..analysis import is_vietnamese_syllable
+    from ..romanization import romanized_reading
+    from .names import honorific_reading, lone_syllable
+
+    if not word[:1].isupper() or not word[1:].islower() or is_vietnamese_syllable(word) or not syllables(word):
+        return None
+    said = lone_syllable(romanized_reading(word, "ja"))
+    address = honorific_reading(word + "-san", "ja")
+    return said if said and address and address.casefold().startswith(said.casefold() + "-") else None
+
+
+def book_name_readings(texts: Iterable[str], character_names: Iterable[str] = ()) -> dict[str, str]:
+    """{surface: reading} for names a Japanese book proves by itself, so that one character is never
+    read two ways. Fed to the per-book `readings` route, which listener readings still override.
+
+    Evidence for a word the English lexicon guards ("Abe"): a joined honorific anywhere in the book
+    ("Abe-san"), or a character name whose other word is plainly Japanese ("Abe Takeshi"). A lone
+    guarded name in the character list is not enough: it may be Western ("Mike").
+    Evidence for capitals of at most four letters ("YUI"): the same word written as a name ("Yui").
+    """
+    from .names import split_token
+
+    guarded: set[str] = set()
+    titled: set[str] = set()
+    capitals: set[str] = set()
+    for text in texts:
+        for token in text.split():
+            core = split_token(_NOTE.sub("", token))[1]
+            if not core.isascii():
+                continue
+            parts = core.split("-")
+            if len(parts) == 2 and parts[1].casefold() in POLICY["honorifics"]:
+                guarded.add(parts[0])
+            elif len(parts) == 1 and core.isupper():
+                if 2 <= len(core) <= 4:
+                    capitals.add(core)
+            elif len(parts) == 1 and core[:1].isupper() and core[1:].islower():
+                titled.add(core)
+    for surface in character_names:
+        # The character list writes names in capitals ("ABE TAKESHI").
+        words = [word.capitalize() if word.isupper() else word for word in surface.split()]
+        if len(words) > 1 and all(word.isascii() for word in words) and any(_reading_word(word, "ja") for word in words):
+            guarded.update(words)
+    found: dict[str, str] = {}
+    for word in guarded:
+        said = None if _reading_word(word, "ja") else _evidenced_reading(word)
+        if said:
+            found[word] = found[word.upper()] = said
+    for capital in capitals:
+        word = capital.capitalize()
+        if word in titled or word in found:
+            said = found.get(word) or _reading_word(word, "ja")
+            if said:
+                found[capital] = said
+    return found
 
 
 def read_unmodified(source: str, spoken: str, origin: str | None, *, contextual: bool = False) -> str:

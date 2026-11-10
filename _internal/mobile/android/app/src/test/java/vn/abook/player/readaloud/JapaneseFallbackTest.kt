@@ -15,7 +15,8 @@ class JapaneseFallbackTest {
             val origin = if (c.isNull("origin")) null else c.getString("origin")
             val toks = text.split(" ")
             assertEquals(text, c.getString("said"), VieneuUnits.spokenTokens(toks, origin, directEnglish = true).joinToString(" "))
-            assertEquals("đã-chọn", VieneuUnits.spokenTokens(toks, origin, readings = mapOf(toks.first() to "đã chọn"), directEnglish = true).first())
+            val first = Names.splitToken(toks.first()).second
+            assertTrue(text, "đã-chọn" in VieneuUnits.spokenTokens(toks, origin, readings = mapOf(first to "đã chọn"), directEnglish = true).first())
         }
     }
 
@@ -27,6 +28,17 @@ class JapaneseFallbackTest {
             val origin = if (c.isNull("origin")) null else c.getString("origin")
             assertEquals(token, if (c.isNull("reading")) null else c.getString("reading"), JapanesePolicy.reading(token, origin))
             if (c.has("spoken")) assertEquals(token, listOf(c.getString("spoken")), VieneuUnits.spokenTokens(listOf(token), origin, directEnglish = true))
+        }
+    }
+
+    @Test fun sharedBookNameReadings() {
+        val cases = org.json.JSONArray(File("../../../tests/fixtures/readaloud/japanese_fallback/book_names.json").readText(Charsets.UTF_8))
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val texts = c.getJSONArray("texts").let { a -> (0 until a.length()).map { a.getString(it) } }
+            val characters = c.getJSONArray("characters").let { a -> (0 until a.length()).map { a.getString(it) } }
+            val readings = c.getJSONObject("readings").let { o -> o.keys().asSequence().associateWith { o.getString(it) } }
+            assertEquals(c.getString("note"), readings, JapanesePolicy.bookNameReadings(texts.asSequence(), characters))
         }
     }
 
@@ -69,7 +81,7 @@ class JapaneseFallbackTest {
         }
         for (word in listOf("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel")) {
             assertNull(word, JapanesePolicy.reading(word, null))
-            if (word == "Aya") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
+            if (word == "Aya" || word == "Abe") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
             else assertNull(word, JapanesePolicy.reading(word, "ja"))
         }
         assertNotNull(JapanesePolicy.reading("Anime", null))

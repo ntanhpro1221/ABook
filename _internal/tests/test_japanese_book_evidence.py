@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.readaloud import english_policy, japanese_policy as jp, vieneu
+from abook.readaloud import english_policy, japanese_policy as jp, names, vieneu
 from abook.studio_names import planned_reading, rule_reading
 
 
@@ -17,6 +17,25 @@ def test_shared_book_evidence(case):
     assert jp.reading(case["token"], case["origin"]) == case["reading"]
     if "spoken" in case:
         assert vieneu.spoken_tokens([case["token"]], case["origin"], direct_english=True) == [case["spoken"]]
+
+
+@pytest.mark.parametrize("case", json.loads((Path(__file__).parent / "fixtures/readaloud/japanese_fallback/book_names.json").read_text(encoding="utf-8")))
+def test_shared_book_name_readings(case):
+    assert jp.book_name_readings(case["texts"], case["characters"]) == case["readings"]
+
+
+def test_a_proven_name_reads_one_way_everywhere_and_a_listener_reading_still_wins():
+    found = jp.book_name_readings(["Mira-san vẫy tay."])
+    said = vieneu.spoken_tokens("Mira gọi MIRA và Mira-san.".split(), "ja", readings=found, direct_english=True)
+    assert said[4] == "Mi-ra-xan."
+    assert said[0] == said[2] == "Mi-ra"
+    mine = vieneu.spoken_tokens(["Mira"], "ja", readings={**found, "Mira": "Đan"}, direct_english=True)
+    assert mine == ["Đan"]
+
+
+def test_book_name_scan_is_order_independent():
+    texts = ["Yui và Aoi. YUI! AOI!", "Mira-san"]
+    assert jp.book_name_readings(texts) == jp.book_name_readings(list(reversed(texts)))
 
 
 @pytest.mark.parametrize("word", ["Nopi", "NOPIKA", "Nopi-kunn", "NOPI-CHAAAN"])
@@ -88,4 +107,5 @@ def test_reading_ownership_and_independent_name_evidence(case):
     _, units = vieneu.units(text, 256, case["origin"], direct_english=True)
     assert " ".join(piece for unit in units for piece in unit.pieces) == case["said"]
     # A listener's explicit choice still wins over every automatic stage.
-    assert vieneu.spoken_tokens(toks, case["origin"], readings={toks[0]: "đã chọn"}, direct_english=True)[0] == "đã-chọn"
+    first = names.split_token(toks[0])[1]
+    assert "đã-chọn" in vieneu.spoken_tokens(toks, case["origin"], readings={first: "đã chọn"}, direct_english=True)[0]

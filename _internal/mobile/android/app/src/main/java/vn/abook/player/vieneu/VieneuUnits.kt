@@ -55,7 +55,7 @@ object VieneuUnits {
     private val RANGE_RATIO = "tỉ tỷ lệ".split(" ").toSet()
     private val EMOTICON = Regex("""(?:[:;=]['\-^o]?[()dDpP3vV/\\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)""")
     private val STUTTER_ONSETS = listOf("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")
-    private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph")
+    private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph", "sh" to "s", "ts" to "x", "gh" to "g")
     private val STUTTER = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
     private val STUTTER_ALONE = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+([^$W]*)""")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
@@ -404,6 +404,26 @@ object VieneuUnits {
         return (STUTTER_SOUND[onset] ?: onset) + "ờ"
     }
 
+    /** The stutter follows the computed reading of the word after it, not its spelling ("Sh-Shouta" reads "Sâu-ta", so "sờ"; "Ky-Kyouko" repeats its first syllable, "ki") - `_said_stutter`. */
+    private fun saidStutter(frag: String, said: String): String? {
+        val stripped = said.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }
+        val first = Normalizer.normalize(stripped.split(Regex("[-\\s…]"), 2)[0].replace("_", "").lowercase(Locale.ROOT), Normalizer.Form.NFC)
+        if (first.isEmpty() || !first.all(Char::isLetter)) return null
+        if (frag.lowercase(Locale.ROOT).endsWith("y")) return if (first == "gia") "gi" else first
+        val onset = STUTTER_ONSETS.firstOrNull { first.startsWith(it) } ?: first.take(1)
+        if (Normalizer.normalize(onset, Normalizer.Form.NFD)[0] in "aeiouy") return first
+        return (STUTTER_SOUND[onset] ?: onset) + "ờ"
+    }
+
+    /** The reading of the word after a stutter: lowercase after the dash is still that word ("B-baka" like "Baka"); capitals still keep English and Vietnamese out - `_stutter_rest`. */
+    private fun stutterRest(rest: String, origin: String?, readings: Map<String, String>?, directEnglish: Boolean): String {
+        val plain = spokenTokens(listOf(rest), origin, readings, directEnglish)[0]
+        if (origin != "ja" || rest.firstOrNull()?.isLowerCase() != true || plain != rest) return plain
+        val titled = rest.replaceFirstChar { it.uppercaseChar() }
+        val said = spokenTokens(listOf(titled), origin, readings, directEnglish)[0]
+        return if (said == titled) plain else said.lowercase(Locale.ROOT)
+    }
+
     /** "*" is decoration ("*từ*", "(*)"): it goes; a letter before a censoring star ("đ*") is read like a stutter ("đờ…"); a mask between letters ("hent*i") leaves a pause ("hent… i"); between two
      *  stressed words ("*Khụ*Khụ*") a comma - `_stars`. */
     private fun stars(out: MutableList<String>) {
@@ -457,7 +477,7 @@ object VieneuUnits {
     }
 
     /** Stuttering "T-tôi", "C-Chuyện", "E-em", "[Kh- Không": the stutter is read as a sound ("tờ… tôi", "chờ… chuyện", "e… em"), the rest of the word as usual - `_stutters`. */
-    private fun stutters(toks: List<String>, out: MutableList<String>, origin: String?) {
+    private fun stutters(toks: List<String>, out: MutableList<String>, origin: String?, readings: Map<String, String>? = null, directEnglish: Boolean = false) {
         for ((index, token) in toks.withIndex()) {
             var match = STUTTER.matchEntire(token)
             val alone = match == null
@@ -474,17 +494,21 @@ object VieneuUnits {
             val before = match.groupValues[1]
             val frag = match.groupValues[2]
             if (!Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT).startsWith(frag.lowercase(Locale.ROOT))) continue
-            val syllable = frag.length > 1 && Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD).any { it in "aeiouy" }
+            val said = stutterRest(rest, origin, readings, directEnglish)
+            // Only a romaji reading of the rest may decide; a word left as written keeps the written rule.
+            val fragLetters = Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD)
+            val heard = if (fragLetters.none { it in "aeiou" } && origin == "ja" && !said.equals(rest, ignoreCase = true)) saidStutter(frag, said) else null
+            val syllable = heard == null && frag.length > 1 && fragLetters.any { it in "aeiouy" }
             if (syllable) {
                 val restCore = Names.splitToken(rest).second
                 if (restCore.equals(frag, ignoreCase = true) || !vn.abook.player.VietnameseReading.isSyllable(frag) || !vn.abook.player.VietnameseReading.isSyllable(restCore)) continue
             }
-            val sound = if (syllable) frag.lowercase(Locale.ROOT) else stutterSound(frag, rest)
+            val sound = heard ?: if (syllable) frag.lowercase(Locale.ROOT) else stutterSound(frag, rest)
             out[index] = if (alone) {
                 val next = tail.trimStart { it in CLOSERS }.firstOrNull()
                 before + sound + (if (next != null && next in PUNCT_MARKS) "" else "…") + tail
             } else {
-                before + sound + "… " + spokenTokens(listOf(rest), origin)[0]
+                before + sound + "… " + said
             }
         }
     }
@@ -776,7 +800,7 @@ object VieneuUnits {
             return rebuilt
         }
         val out = toks.toMutableList()
-        stutters(toks, out, origin)
+        stutters(toks, out, origin, readings, directEnglish)
         Shouts.readShouts(toks, out, origin)
         val vocalized = toks.indices.filter { toks[it] != out[it] }.toMutableSet()
         vocalized.addAll(readWords(toks, out, origin))

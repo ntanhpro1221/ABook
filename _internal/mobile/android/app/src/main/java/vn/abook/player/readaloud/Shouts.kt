@@ -19,6 +19,10 @@ object Shouts {
     val POLICY = JSONObject(BuildConfig.SOUND_POLICY)
     private val NOTE = Regex(POLICY.getString("note_pattern"), RegexOption.IGNORE_CASE)
 
+    /** A generated syllable that spells an English word ("he", "hi", "I") is said in English by sea-g2p: respell it as the same Vietnamese sound - `distinct_from_english`. */
+    fun distinctFromEnglish(reading: String): String =
+        POLICY.getJSONObject("english_collisions").optString(reading.lowercase(Locale.ROOT), reading)
+
     /** Presentation is removed from voice text only; owners retain displayed word positions. */
     fun presentationTokens(toks: List<String>): Pair<List<String>, List<Int>> {
         val prepared = ArrayList<String>()
@@ -52,10 +56,13 @@ object Shouts {
         val atoms = if (Regex(POLICY.getString("laugh_pattern")).matches(word)) Regex(POLICY.getString("laugh_atom")).findAll(word).map { it.value }.toList() else emptyList()
         // "FIFA", "Fifi", "Ahifa", "HIFI": a laugh in "f" is "fu" / "fw" ("Fufu", "Fuhaha", "Fwahaha"); a bare "fa", "fi", "fo" needs three beats ("Fahaha", "Fofofo")
         if (atoms.isNotEmpty() && (atoms.size >= 3 || atoms.all { it[0] == 'h' || it[1] in "uw" })) {
-            return atoms.take(POLICY.getInt("max_laugh_syllables")).joinToString(" ") { atom ->
+            val sounds = atoms.take(POLICY.getInt("max_laugh_syllables")).map { atom ->
                 val vowel = atom.first { ch -> ch in vowels }
                 if (atom[0] == 'f') "phu" else POLICY.getJSONObject("laugh_vowels").getString(vowel.toString())
-            }
+            }.toList()
+            // The opening vowel tells "Ehehe" from "Hehe"; it does not count toward the ceiling.
+            val lead = POLICY.getJSONObject("laugh_leads").optString(word.take(1), "")
+            return (if (lead.isNotEmpty()) listOf(lead) + sounds else sounds).joinToString(" ")
         }
         if (Regex(POLICY.getString("nasal_pattern")).matches(word)) return Romanization.reading(dedupe(word), "ja")
         val run = Regex("(.)\\1{" + (POLICY.getInt("min_run") - 1) + ",}")
@@ -78,13 +85,14 @@ object Shouts {
                 if (VietnameseReading.isSyllable(base)) base else Romanization.reading(base, "ja") ?: base.takeIf { it in EnglishWords.ALL }
             }
             else -> null
-        } ?: return null
+        }?.let(::distinctFromEnglish) ?: return null
         return if ("…" in reading || !stretched) reading else "$reading…"
     }
     private val INTERJECTIONS = mapOf("umm" to "ừm", "ugh" to "ức", "boom" to "bùm", "oh" to "ô", "hmm" to "hừm", "shh" to "suỵt", "ah" to "a", "eh" to "ê",
         "hm" to "hừm", "huh" to "hả", "ooh" to "ô", "hic" to "hích", "urgh" to "ức",
         // "Um", "Uh", "Mm" (sea-g2p reads "mm" as "mi li mét"); repeated consonants: "grrr", "pfffft", "kkkk", "hhhh", "ssss" ("mmm" is "mm" above)
-        "um" to "ừm", "uhm" to "ừm", "uh" to "ờ", "mm" to "ừm", "grr" to "gừ", "pff" to "phụt", "pfft" to "phụt", "kkk" to "khà khà", "hhh" to "ha ha", "sss" to "xì")
+        "um" to "ừm", "uhm" to "ừm", "uh" to "ờ", "mm" to "ừm", "grr" to "gừ", "pff" to "phụt", "pfft" to "phụt", "kkk" to "khà khà", "hhh" to "ha ha", "sss" to "xì",
+        "hmph" to "hừm", "hmpf" to "hừm", "tsk" to "chậc", "tch" to "chậc")
     /** Short words that are abbreviations or a rank when written all in capitals ("UH-60", "MM", "SSS"), not a cry. */
     private val SHORT_CASED = setOf("um", "uhm", "uh", "mm")
     /** A last letter written TWICE is a stretch too ("Ahh", "Haizz", "Hừmm") - three times any letter, twice only these (Boss, Class, Jess are real words). */
@@ -92,7 +100,7 @@ object Shouts {
     /** Besides the number words: "vài mm". */
     private val COUNT_WORDS = setOf("nghìn", "ngàn", "triệu", "tỷ", "tỉ", "trăm", "vạn", "chục", "mươi", "mười", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "vài", "mấy")
     /** Tiếng cười lặp ("Haha" -> "ha ha", "Hehe" -> "hê hê", "fufu" -> "phu phu"). */
-    private val LAUGH_SYLLABLES = mapOf("ha" to "ha", "he" to "hê", "hi" to "hi", "ho" to "hô", "fu" to "phu")
+    private val LAUGH_SYLLABLES = mapOf("ha" to "ha", "he" to "hê", "hi" to POLICY.getJSONObject("laugh_vowels").getString("i"), "ho" to "hô", "fu" to "phu")
     private val LAUGH = Regex("(?:ha|he|hi|ho|fu){2,}", RegexOption.IGNORE_CASE)
     private const val TONE_MARKS = "̣̀́̃̉"
     private val STANDALONE = "aeêioôơuư".toSet()

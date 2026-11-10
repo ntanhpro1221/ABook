@@ -355,9 +355,15 @@ object ReadAloud {
 
     /**
      * Cách đọc riêng người nghe đặt cho cuốn ("Đọc từ này là…", lớp sửa `readings` - [BookEdits]). Nhớ theo giờ sửa + cỡ của `edits.json`: lưu một cách đọc
-     * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính.
+     * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính. Tên cuốn gốc Nhật tự chứng minh ([provenNames]) nằm dưới cách đọc của người nghe.
      */
     fun readingsOf(bookId: String): Map<String, String> {
+        val proven = provenNames[bookId].orEmpty()
+        val own = listenerReadings(bookId)
+        return if (proven.isEmpty()) own else proven + own
+    }
+
+    private fun listenerReadings(bookId: String): Map<String, String> {
         if (bookId.isBlank()) return emptyMap()
         val dir = Store.bookDir(bookId)
         // The holder's readings (BookEdits.HOLDER_FILE) apply here too; the sent ledger (EditsSync.STATE_FILE) decides which side is newer.
@@ -372,6 +378,7 @@ object ReadAloud {
     }
 
     private val origins = ConcurrentHashMap<String, String>()
+    private val provenNames = ConcurrentHashMap<String, Map<String, String>>()
 
     private val guesser = Executors.newSingleThreadExecutor { Thread(it, "read-aloud-origin").apply { isDaemon = true } }
     private val guessing = ConcurrentHashMap.newKeySet<String>()
@@ -392,6 +399,9 @@ object ReadAloud {
     fun originNow(bookId: String): String? {
         if (bookId.isBlank()) return null
         val found = origins[bookId] ?: (runCatching { choices?.originFor(bookId) { sampleTexts(bookId) } }.getOrNull() ?: "").also { origins[bookId] = it }
+        if (found == "ja" && !provenNames.containsKey(bookId)) {
+            provenNames[bookId] = runCatching { choices?.nameReadingsFor(bookId) { sampleTexts(bookId, null) } }.getOrNull().orEmpty()
+        }
         return found.ifEmpty { null }
     }
 
@@ -399,13 +409,14 @@ object ReadAloud {
     fun setOrigin(bookId: String, value: String?) {
         choices?.setOriginOverride(bookId, value)
         origins.remove(bookId)
+        provenNames.remove(bookId)
     }
 
     /** Chữ của các chương chữ đầu tiên (đủ để đoán gốc). */
-    private fun sampleTexts(bookId: String): Sequence<String> {
+    private fun sampleTexts(bookId: String, limit: Int? = Names.SAMPLE_CHAPTERS): Sequence<String> {
         val array = runCatching { Store.manifest(bookId) }.getOrNull()?.optJSONArray("chapters") ?: return emptySequence()
         val ids = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.filter { it.optString("text").startsWith("texts/") }
-            .map { it.optInt("id") }.take(Names.SAMPLE_CHAPTERS)
+            .map { it.optInt("id") }.let { if (limit != null) it.take(limit) else it }
         val texts = textChapters(bookId, ids)
         return ids.asSequence().mapNotNull { texts[it]?.second?.joinToString("\n") }.filter { it.isNotEmpty() }
     }

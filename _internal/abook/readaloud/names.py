@@ -493,6 +493,18 @@ class BookOrigins:
                 self._save(data)
             return guess if guess in ORIGINS else None
 
+    def name_readings(self, book_id: str, texts: Callable[[], Iterable[str]]) -> dict[str, str]:
+        """Tên cuốn gốc Nhật tự chứng minh (`japanese_policy.book_name_readings`), tính một lần trên cả cuốn rồi lưu; đổi luật thì tính lại."""
+        from .japanese_policy import VERSION, book_name_readings
+
+        with self._lock:
+            data = self._load()
+            entry = data.setdefault(book_id, {})
+            if entry.get("names_rule") != VERSION or not isinstance(entry.get("names"), dict):
+                entry["names"], entry["names_rule"] = book_name_readings(texts()), VERSION
+                self._save(data)
+            return dict(entry["names"])
+
     def override(self, book_id: str, value: str | None) -> None:
         """Người dùng chọn gốc của cuốn: "ja" / "ko" / "none" (không phiên âm gì); None = bỏ ghi đè, theo máy đoán."""
         if value is not None and value not in (*ORIGINS, "none"):
