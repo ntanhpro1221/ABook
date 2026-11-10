@@ -23,6 +23,8 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+# design-lint chỉ báo cáo cho tới khi dev/design1 gộp (docs/RELEASING.md); Lead đổi thành True để chặn.
+DESIGN_LINT_BLOCKS = False
 # Từ của chính máy dò không phải mã chuyển đổi; chỉ miễn đúng dòng khai báo này.
 FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
 
@@ -172,6 +174,8 @@ def checks() -> list[Check]:
               ui, 3600, "gallery", ("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
+        # Sau android-unit / qt-tests: hai bước ấy vừa ghi lại ảnh và cây UI mà máy đo thiết kế đọc.
+        Check("design-lint", worker_command("design-lint"), timeout=600, parser="json"),
     ]
     definitions += [Check(name, worker_command(name), parser="json") for name in
                     ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "batch-crlf",
@@ -245,6 +249,8 @@ def worker(name: str) -> dict:
         return {"counts": counts, "status": "PASS" if ok else "FAIL", "detail": "Gradle: đối chiếu exit và XML"}
     if name == "qt-tests":
         return qt_tests()
+    if name == "design-lint":
+        return design_lint_report()
     if name == "quality-hash":
         sys.path.insert(0, str(ROOT))
         from abook.quality_policy import QUALITY_IMPLEMENTATION_FILES, quality_implementation_hash
@@ -349,6 +355,39 @@ def worker(name: str) -> dict:
             function()
         return {"counts": {"checks": len(functions)}}
     raise ValueError(f"không có worker {name}")
+
+
+def design_lint_report() -> dict:
+    """Máy đo thiết kế trên ảnh đã vẽ (scripts/design_lint.py, docs/DESIGN.md §8).
+
+    Chế độ BÁO CÁO: số ảnh đỏ theo từng luật vào bảng gate, không chặn phát hành. Lead bật DESIGN_LINT_BLOCKS
+    sau khi dev/design1 gộp; khi ấy còn ô đỏ hay ngoại lệ thừa là FAIL. Lỗi đo hay không có ảnh luôn FAIL.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import design_lint
+
+    fresh_android = ROOT / "mobile/android/app/build/design_lint"
+    android = fresh_android if any(fresh_android.glob("*.png")) else design_lint.ANDROID_SHOTS
+    web_dir = os.environ.get("ABOOK_DESIGN_LINT_WEB")
+    shots = design_lint.collect(android, design_lint.QT_SHOTS, Path(web_dir) if web_dir else None)
+    require(bool(shots), "design-lint: không có ảnh Android/Qt để đo")
+    report = design_lint.run(shots, design_lint.load_groups(), design_lint.load_exceptions())
+    red = sum(report["red_images"].values())
+    problems = list(report["errors"])
+    missing = sum(v["images"] - v["sidecars"] for v in report["tree_coverage"].values())
+    if DESIGN_LINT_BLOCKS and (missing or not all(report["platforms"][p] for p in ("android", "qt", "web"))):
+        problems.append(f"thiếu cây UI {missing} ảnh hoặc thiếu nền tảng Android/Qt/web")
+    if DESIGN_LINT_BLOCKS and (red or report["stale_exceptions"]):
+        problems.append(f"{red} ảnh đỏ, {len(report['stale_exceptions'])} ngoại lệ thừa")
+    counts = {"images": report["images"], "trees": report["trees"], "red": red, "waived": report["waived"]}
+    counts["unmeasured_trees"] = missing
+    counts.update({rule.lower(): number for rule, number in report["red_images"].items()})
+    return {"counts": counts, "status": "FAIL" if problems else "PASS", "mode": "block" if DESIGN_LINT_BLOCKS else "report",
+            "seconds": report["seconds"], "platforms": report["platforms"], "findings": report["findings"],
+            "tree_coverage": report["tree_coverage"],
+            "stale_exceptions": report["stale_exceptions"], "errors": report["errors"],
+            "detail": "design-lint: " + ("; ".join(problems) if problems else
+                                         f"{red} ảnh đỏ (chế độ {'chặn' if DESIGN_LINT_BLOCKS else 'báo cáo'})")}
 
 
 def load_module(path: Path, name: str):
