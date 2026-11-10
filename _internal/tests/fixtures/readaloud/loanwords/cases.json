@@ -1,5 +1,5 @@
 {
-  "provenance": "Self-written sentences, each output reviewed by hand. Owner verdict 10-11: a loanword Vietnamese readers settled on one Vietnamese reading (quán net -> nét) is read that way by every voice; verdict 10-11 on \"admin BAN nick\": capitals written for emphasis keep that reading (ban), they do not make the word English or an abbreviation. English runs (\"Game over\", \"BAN THE HAMMER\", \"I like you\") and names inside a sentence (\"gặp Net\", \"biết Admin\") keep their own route. direct = VieNeu (direct English), plain = every other voice before its own engine step.",
+  "provenance": "Self-written sentences, each output reviewed by hand. Owner verdict 10-11: a loanword Vietnamese readers settled on one Vietnamese reading (quán net -> nét) is read that way by every voice; verdict 10-11 on \"admin BAN nick\": capitals written for emphasis keep that reading (ban), they do not make the word English or an abbreviation. English runs (\"Game over\", \"BAN THE HAMMER\", \"I like you\") and names inside a sentence (\"gặp Net\", \"biết Nick\", \"Code Breaker\") keep their own route. direct = VieNeu (direct English), plain = every other voice before its own engine step.",
   "cases": [
     {"text": "Cậu ta lang thang ở quán net cả ngày.", "origin": null, "direct": "Cậu ta lang thang ở quán nét cả ngày.", "plain": "Cậu ta lang thang ở quán nét cả ngày."},
     {"text": "Chơi game online với bạn.", "origin": null, "direct": "Chơi ghêm ôn-lai với bạn.", "plain": "Chơi ghêm ôn-lai với bạn."},
@@ -29,7 +29,7 @@
     {"text": "Tôi ghét GAME lắm!", "origin": null, "direct": "Tôi ghét ghêm lắm!", "plain": "Tôi ghét ghêm lắm!"},
     {"text": "GAME OVER rồi.", "origin": null, "direct": "game over rồi.", "plain": "game over rồi."},
     {"text": "Mở APP rồi bấm OK, xem TV.", "origin": null, "direct": "Mở áp rồi bấm ô kê, xem ti vi.", "plain": "Mở áp rồi bấm ô kê, xem ti vi."},
-    {"text": "Hắn like và share bài post.", "origin": null, "direct": "Hắn lai và se bài pốt.", "plain": "Hắn lai và se bài pốt."},
+    {"text": "Hắn share bài post rồi.", "origin": null, "direct": "Hắn se bài pốt rồi.", "plain": "Hắn se bài pốt rồi."},
     {"text": "Team mình lên level 5 rồi đi farm.", "origin": null, "direct": "tim mình lên le-vồ 5 rồi đi phám.", "plain": "tim mình lên le-vồ 5 rồi đi phám."},
     {"text": "Nó chat với hacker trên server.", "origin": null, "direct": "Nó chát với hách-cơ trên xơ-vơ.", "plain": "Nó chát với hách-cơ trên xơ-vơ."},
     {"text": "Check code đi, buff máu cho tôi.", "origin": null, "direct": "chéc cốt đi, búp máu cho tôi.", "plain": "chéc cốt đi, búp máu cho tôi."},
@@ -45,7 +45,7 @@
     {"text": "Đi massage, sửa motor trong gara, dài mười centimet.", "origin": null, "direct": "Đi mát-xa, sửa mô-tơ trong ga-ra, dài mười xen-ti-mét.", "plain": "Đi mát-xa, sửa mô-tơ trong ga-ra, dài mười xen-ti-mét."},
     {"text": "Trưởng ban marketing họp.", "origin": null, "direct": "Trưởng ban marketing họp.", "plain": "Trưởng ban marketing họp."},
     {"text": "Fan Club họp mặt.", "origin": null, "direct": "Fan Club họp mặt.", "plain": "Fan Club họp mặt."},
-    {"text": "Cả server đều biết Admin là ai.", "origin": null, "direct": "Cả xơ-vơ đều biết Admin là ai.", "plain": "Cả xơ-vơ đều biết Admin là ai."},
+    {"text": "Cả server đều biết Nick là admin.", "origin": null, "direct": "Cả xơ-vơ đều biết Nick là át-min.", "plain": "Cả xơ-vơ đều biết Nick là át-min."},
     {"text": "Ngồi trên sofa xem TV.", "origin": null, "direct": "Ngồi trên xô-pha xem ti vi.", "plain": "Ngồi trên xô-pha xem ti vi."},
     {"text": "Chơi game hay xem anime?", "origin": null, "direct": "Chơi ghêm hay xem a-ni-me?", "plain": "Chơi ghêm hay xem a-ni-me?"},
     {"text": "West vung tay robot đánh loạn xạ.", "origin": null, "direct": "West vung tay rô-bốt đánh loạn xạ.", "plain": "West vung tay rô-bốt đánh loạn xạ."},
@@ -53,6 +53,14 @@
     {"text": "Đạt Level 10 rồi Level Up.", "origin": null, "direct": "Đạt le-vồ 10 rồi Level <en>Up</en>.", "plain": "Đạt le-vồ 10 rồi Level Up."},
     {"text": "Chơi board game và game mobile.", "origin": null, "direct": "Chơi board game và game mobile.", "plain": "Chơi board game và game mobile."},
     {"text": "Màn fan service của nhóm chat.", "origin": null, "direct": "Màn fan service của nhóm chát.", "plain": "Màn fan service của nhóm chát."},
-    {"text": "Lv 5 hay level 5 cũng thế.", "origin": null, "direct": "le-vồ 5 hay le-vồ 5 cũng thế.", "plain": "le-vồ 5 hay le-vồ 5 cũng thế."}
+    {"text": "Lv 5 hay level 5 cũng thế.", "origin": null, "direct": "le-vồ 5 hay le-vồ 5 cũng thế.", "plain": "le-vồ 5 hay le-vồ 5 cũng thế."},
+    {"text": "Show a little love đi.", "origin": null, "direct": "Show a little love đi.", "plain": "Show a little love đi."},
+    {"text": "Bị 《Code Breaker》 tiêu diệt.", "origin": null, "direct": "Bị, Code Breaker, tiêu diệt.", "plain": "Bị, Code Breaker, tiêu diệt."},
+    {"text": "Nick chẳng dám nhìn. Cái nick này mất rồi.", "origin": null, "direct": "Nick chẳng dám nhìn. Cái ních này mất rồi.", "plain": "Nick chẳng dám nhìn. Cái ních này mất rồi."},
+    {"text": "Admin ơi admin, cứu.", "origin": null, "direct": "át-min ơi át-min, cứu.", "plain": "át-min ơi át-min, cứu."},
+    {"text": "Game Master đến rồi. Game này hay.", "origin": null, "direct": "Game Master đến rồi. ghêm này hay.", "plain": "Game Master đến rồi. ghêm này hay."},
+    {"text": "Mạng Internet và Internet Explorer.", "origin": null, "direct": "Mạng in-tơ-nét và Internet Explorer.", "plain": "Mạng in-tơ-nét và Internet Explorer."},
+    {"text": "Chọn game A hay game B?", "origin": null, "direct": "Chọn ghêm A hay ghêm B?", "plain": "Chọn ghêm A hay ghêm B?"},
+    {"text": "Team Rocket đến, team mình thua.", "origin": null, "direct": "Team Rocket đến, tim mình thua.", "plain": "Team Rocket đến, tim mình thua."}
   ]
 }

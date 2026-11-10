@@ -205,6 +205,8 @@ object Names {
     internal val LOANWORDS: Map<String, String> by lazy { EnglishPolicy.stringMap("loanwords") }
     /** Từ mượn viết hoa giữa câu mà vẫn là danh từ chung ("mạng Internet") - `LOANWORD_CAPITALS`. */
     private val LOANWORD_CAPITALS: Set<String> by lazy { EnglishPolicy.stringList("loanword_capitals").toSet() }
+    /** Từ mượn mà viết hoa chữ đầu thì luôn là tên người ("Nick") - `LOANWORD_NAMES`. */
+    private val LOANWORD_NAMES: Set<String> by lazy { EnglishPolicy.stringList("loanword_names").toSet() }
     private const val SENTENCE_ENDS = ".!?…:"
     private const val OPENERS = "\"“‘'([{-–—*«"
     /** Từ Nhật rất quen: đọc theo luật phiên âm với mọi cuốn, dù có trong danh sách từ Anh - `JAPANESE_COMMON`. */
@@ -275,12 +277,19 @@ object Names {
     }
 
     /** [core] viết như danh từ chung của [LOANWORDS]: chữ thường, TOÀN HOA để nhấn mạnh ("bị admin BAN nick"), hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong
-     *  [LOANWORD_CAPITALS]) - `common_loanword`. */
+     *  [LOANWORD_CAPITALS]). Viết hoa chữ đầu mà chữ liền sau cũng là chữ Latin viết hoa thì là tên / nhan đề ("Code Breaker"); từ trong [LOANWORD_NAMES] viết hoa chữ đầu
+     *  luôn là tên ("Nick") - `common_loanword`. */
     fun commonLoanword(core: String, toks: List<String>, index: Int): Boolean {
         val lowered = lower(core)
         if (lowered !in LOANWORDS) return false
-        if (core == lowered || (core.length > 1 && core == core.uppercase(Locale.ROOT)) || lowered in LOANWORD_CAPITALS) return true
-        return core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1)) && sentenceStart(toks, index)
+        if (core == lowered || (core.length > 1 && core == core.uppercase(Locale.ROOT))) return true
+        if (lowered in LOANWORD_NAMES || !(lowered in LOANWORD_CAPITALS ||
+                (core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1)) && sentenceStart(toks, index)))) return false
+        if (index + 1 < toks.size && splitToken(toks[index]).third.isEmpty()) {
+            val (before, following, _) = splitToken(toks[index + 1])
+            if (before.isEmpty() && following.firstOrNull()?.let { it.code < 128 && it.isUpperCase() } == true) return false
+        }
+        return true
     }
 
     /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt. Từ của [LOANWORDS]

@@ -60,10 +60,12 @@ _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
 # Từ mượn người Việt đã thống nhất một cách đọc Việt ("quán net" -> nét, "taxi" -> tắc-xi; chủ sách 10-11: "còn tốt hơn là bọc thẻ để đọc chuẩn tiếng anh"):
 # đọc như từ Việt với MỌI cuốn và giọng, kể cả giọng nói được âm Anh. Bảng nằm trong english_policy.json ("loanwords"), Kotlin đọc cùng file.
 # Không đổi khi từ ở trong một cụm tiếng Anh ("Game over", "the net": `english_policy.loanword_english`) hay viết hoa giữa câu như tên riêng ("Net cười"),
-# trừ từ trong "loanword_capitals" (người Việt hay viết hoa mà vẫn là danh từ chung: "mạng Internet").
+# trừ từ trong "loanword_capitals" (người Việt hay viết hoa mà vẫn là danh từ chung: "mạng Internet"). Từ trong "loanword_names" viết hoa chữ đầu thì luôn là tên người
+# ("Nick cười" đầu câu vẫn là Nick): trên kho chữ hoa giữa câu của chúng nhiều hơn chữ thường.
 _LOANWORD_POLICY = json.loads(Path(__file__).with_name("english_policy.json").read_text(encoding="utf-8"))
 LOANWORDS: dict[str, str] = dict(_LOANWORD_POLICY["loanwords"])
 LOANWORD_CAPITALS = frozenset(_LOANWORD_POLICY["loanword_capitals"])
+LOANWORD_NAMES = frozenset(_LOANWORD_POLICY["loanword_names"])
 SENTENCE_ENDS = ".!?…:"
 OPENERS = "\"“‘'([{-–—*«"
 # Từ Nhật rất quen trong truyện dịch: đọc theo luật phiên âm với MỌI cuốn (cuốn không rõ gốc cũng vậy), dù có trong danh sách từ Anh (anime, manga, sake).
@@ -333,13 +335,21 @@ def common_loanword(core: str, toks: list[str], index: int) -> bool:
     """`core` (đã bỏ dấu câu quanh) viết như một danh từ chung của bảng `LOANWORDS`: chữ thường, TOÀN HOA, hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong `LOANWORD_CAPITALS`).
     Hoa chữ đầu giữa câu là tên riêng ("Net cười"). TOÀN HOA là viết để nhấn mạnh ("bị admin BAN nick", chủ sách 10-11: "phải đọc là ban thuần việt"), không biến từ thành chữ Anh
     hay chữ viết tắt: bảng không chứa từ nào trùng bảng viết tắt (OK, TV... - test giữ điều đó). Từ trong `LOANWORD_CAPITALS` viết hoa kiểu gì cũng là
-    danh từ chung ("mạng Internet", "Wi-Fi", "WiFi", "Level 5"); hoa lẫn lộn khác để nguyên cho luật khác."""
+    danh từ chung ("mạng Internet", "Wi-Fi", "WiFi", "Level 5"); hoa lẫn lộn khác để nguyên cho luật khác. Viết hoa chữ đầu mà chữ liền sau (không cách dấu câu) cũng là
+    chữ Latin viết hoa thì là tên / nhan đề ("Code Breaker", "Game Master", "Internet Explorer"); từ trong `LOANWORD_NAMES` viết hoa chữ đầu luôn là tên ("Nick")."""
     lowered = core.lower()
     if lowered not in LOANWORDS:
         return False
-    if core == lowered or (len(core) > 1 and core.isupper()) or lowered in LOANWORD_CAPITALS:
+    if core == lowered or (len(core) > 1 and core.isupper()):
         return True
-    return len(core) > 1 and core[0].isupper() and core[1:] == core[1:].lower() and sentence_start(toks, index)
+    if lowered in LOANWORD_NAMES or not (lowered in LOANWORD_CAPITALS or (
+            len(core) > 1 and core[0].isupper() and core[1:] == core[1:].lower() and sentence_start(toks, index))):
+        return False
+    if index + 1 < len(toks) and not split_token(toks[index])[2]:
+        before, following, _ = split_token(toks[index + 1])
+        if not before and following[:1].isascii() and following[:1].isupper():
+            return False
+    return True
 
 
 def _after_number(toks: list[str], index: int) -> bool:

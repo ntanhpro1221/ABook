@@ -32,6 +32,7 @@ def test_every_loanword_reading_is_a_valid_vietnamese_spoken_form():
     bad = {word: said for word, said in names.LOANWORDS.items() if not valid_spoken_form(said)}
     assert not bad
     assert names.LOANWORD_CAPITALS <= set(names.LOANWORDS)
+    assert names.LOANWORD_NAMES <= set(names.LOANWORDS) and not names.LOANWORD_NAMES & names.LOANWORD_CAPITALS
 
 
 def test_no_loanword_is_also_an_abbreviation():
