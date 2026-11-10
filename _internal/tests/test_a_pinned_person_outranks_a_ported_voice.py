@@ -94,8 +94,8 @@ def test_a_pinned_person_outranks_a_ported_voice(tmp_path: Path) -> None:
     assert "IVAN" in sink.said[0] and "cấp lại" in sink.said[0]
 
 
-def test_a_child_uses_the_same_gender_pin_rule_as_an_adult(tmp_path: Path) -> None:
-    """Tuổi không tạo ngoại lệ chọn preset sai phái."""
+def test_a_boy_keeps_a_pinned_female_voice(tmp_path: Path) -> None:
+    """Chủ sách 05-11: trẻ con (cả bé trai) đọc giọng nữ, nên giọng nữ ghim cho bé trai không trái ghim."""
     db = ProjectDB(tmp_path / "project.sqlite3")
     sink = _Events()
     db.event = sink.event  # type: ignore[method-assign]
@@ -108,8 +108,8 @@ def test_a_child_uses_the_same_gender_pin_rule_as_an_adult(tmp_path: Path) -> No
         sink.log,
     )
 
-    assert kept == {}
-    assert [e[1] for e in sink.events] == ["CASTING_PIN_CONTRADICTS_A_PERSON"]
+    assert kept == {"EVERAN": "vieneu@3.8.3/Ngọc Linh"}
+    assert sink.events == []
 
 
 def test_a_pin_nobody_ruled_on_is_left_alone(tmp_path: Path) -> None:

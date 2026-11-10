@@ -88,12 +88,15 @@ def test_pause_between_lines_ignores_emotion_intensity_and_speech_tags(tmp_path,
 
 
 @pytest.mark.parametrize('gender', ['male', 'female'])
-def test_age_does_not_change_preset_choice(gender):
+def test_only_a_child_changes_the_preset_choice(gender):
     choices = []
-    for age in ['child', 'teen', 'adult', 'elderly', 'unknown']:
+    for age in ['teen', 'adult', 'elderly', 'unknown']:
         allocator = PresetAllocator('Đức Trí')
         choices.append(allocator.choose(gender, npc=False, age=age)['name'])
     assert len(set(choices)) == 1
+    child = PresetAllocator('Đức Trí').choose(gender, npc=False, age='child')
+    assert child['gender'] == 'female'
+    assert child['name'] == PresetAllocator('Đức Trí').choose('female', npc=False, age='adult')['name']
 
 
 def test_presets_are_used_once_before_sharing_and_share_one_profile():

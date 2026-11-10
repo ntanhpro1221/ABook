@@ -1,4 +1,4 @@
-"""A pinned voice survives unless its preset is the wrong gender for the person (a child excepted).
+"""A pinned voice survives unless its preset is the wrong gender for the person; a female preset fits any child.
 
 This file used to hold a second rule, "a voice carrying the child pitch is dropped for a pinned adult". Children are no
 longer pitch-shifted (05-11), so no voice carries that pitch and the rule is gone; what is left is the gender rule.
@@ -31,15 +31,40 @@ def test_a_pinned_man_loses_a_womans_voice() -> None:
 
 
 def test_a_pinned_child_keeps_a_female_preset_even_as_a_boy() -> None:
-    logs: list[str] = []
+    """Chủ sách 05-11: "trẻ con thì dùng giọng của nữ đi" - cả bé trai."""
+    events = _Events()
     kept = _drop_pins_that_contradict_a_person(
-        _Events(),
+        events,
         {"EVERAN": "vieneu@3.8.3/Ngọc Linh"},
         {"EVERAN": "male"},
         {"EVERAN": "child"},
+        lambda line: None,
+    )
+    assert kept == {"EVERAN": "vieneu@3.8.3/Ngọc Linh"}
+    assert events.rows == []
+
+
+def test_a_pinned_boy_keeps_a_male_preset_someone_chose() -> None:
+    kept = _drop_pins_that_contradict_a_person(
+        _Events(),
+        {"EVERAN": "vieneu@3.8.3/Thái Sơn"},
+        {"EVERAN": "male"},
+        {"EVERAN": "child"},
+        lambda line: None,
+    )
+    assert kept == {"EVERAN": "vieneu@3.8.3/Thái Sơn"}
+
+
+def test_a_pinned_girl_loses_a_male_preset() -> None:
+    logs: list[str] = []
+    kept = _drop_pins_that_contradict_a_person(
+        _Events(),
+        {"MIA": "vieneu@3.8.3/Thái Sơn"},
+        {"MIA": "female"},
+        {"MIA": "child"},
         logs.append,
     )
-    assert kept == {}, "tuổi không tạo ngoại lệ chọn preset khác phái"
+    assert kept == {}
     assert logs
 
 

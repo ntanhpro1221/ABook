@@ -1,6 +1,6 @@
 # Giọng trẻ em: phép biến đổi mất gần 1,0 MOS
 
-> **05-11: phép biến đổi đã bỏ.** Chủ sách: "trẻ con thì dùng giọng của nữ đi, đừng bóp nữa, bóp đem đến âm thanh quá tệ". Trẻ con (trai hay gái) nay được phân vai bằng preset nữ theo bậc `character` nữ trong `assets/voice_rank.json`, cao độ +0 và formant 1,0. Teen và người già vẫn theo `AGE_TARGET_PITCH_HZ` / `VOCAL_TRACT_CM_BY_AGE`. Phần dưới là lịch sử đo.
+> **05-11: phép biến đổi đã bỏ.** Chủ sách: "trẻ con thì dùng giọng của nữ đi, đừng bóp nữa, bóp đem đến âm thanh quá tệ". Trẻ con (trai hay gái) được phân vai bằng preset nữ theo bậc `character` nữ trong `assets/voice_rank.json`, giọng nguyên bản (`character_registry.casting_gender`). 06-11 chủ sách bỏ mọi chỉnh cao độ/formant theo tuổi ("bỏ hết trừ cân bằng tốc độ"), nên teen và người già cũng đọc giọng nguyên bản theo phái. Luật giọng nữ cho bé trai bị xoá nhầm ở 09b303a70 và được khôi phục ở cast167. Phần dưới là lịch sử đo.
 
 ## Phát hiện
 

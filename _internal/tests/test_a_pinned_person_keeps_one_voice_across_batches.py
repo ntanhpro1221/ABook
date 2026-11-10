@@ -45,7 +45,9 @@ def test_the_rule_is_the_same_as_casting() -> None:
     assert voice_contradicts_a_person(MALE, "female", None) is True
     assert voice_contradicts_a_person(FEMALE_A, "female", None) is False
     assert voice_contradicts_a_person(CHILD, "female", "adult") is False, "trẻ con không còn pitch riêng (05-11)"
-    assert voice_contradicts_a_person(CHILD, "male", "child") is True, "mọi tuổi đều chọn preset đúng phái"
+    assert voice_contradicts_a_person(CHILD, "male", "child") is False, "bé trai đọc giọng nữ (05-11)"
+    assert voice_contradicts_a_person(MALE, "male", "child") is False, "giọng nam ghim cho bé trai vẫn giữ"
+    assert voice_contradicts_a_person(MALE, "female", "child") is True, "bé gái không đọc giọng nam"
     assert voice_contradicts_a_person(MALE, "female", "adult") is True
     assert voice_contradicts_a_person(MALE, None, None) is False, "không ai ghim thì không kết tội"
 

@@ -352,8 +352,8 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int,
 # The default female narrator is Ngọc Linh. Rejected automatic choices are data-driven;
 # they remain available when a listener explicitly chooses them.
 #
-# Children are cast from the female presets by the female `character` tiers: there is no
-# child role.
+# Children, boys included, are cast from the female presets by the female `character` tiers,
+# untouched (`character_registry.casting_gender`, owner 05-11): there is no child role.
 #
 # Only what was actually judged goes in. A preset absent from a list is unheard rather
 # than rejected, and sorts after every ranked one, so the theory still decides among the
@@ -407,7 +407,8 @@ NEVER_AUTO = load_never_auto()
 def listener_rank(preset_name: str, gender: str, role: str = "character") -> int:
     """The listener's tier for a preset in this role (0 = best); unranked = the number of tiers, after every ranked one.
 
-    A child is ranked by the caller as female (`PresetAllocator.choose` casts children from the female presets).
+    A child, boy or girl, is ranked by the caller as female (`PresetAllocator.choose` casts children from the female
+    presets through `character_registry.casting_gender`).
     """
     tiers = VOICE_RANK[role].get(str(gender), ())
     name = str(preset_name)

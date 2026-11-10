@@ -97,8 +97,8 @@ def _book(root: Path, entries: list[tuple[str, str, str]]) -> Path:
     return book
 
 
-def test_a_child_uses_the_same_gender_rule_as_an_adult(tmp_path: Path) -> None:
-    """Mọi tuổi dùng cùng phái preset nguyên bản, không ngoại lệ giọng trẻ con."""
+def test_a_boy_on_a_female_voice_is_not_reported(tmp_path: Path) -> None:
+    """Chủ sách 05-11: trẻ con (cả bé trai) đọc bằng giọng nữ nguyên bản - không phải giọng sai phái."""
     project = _project(
         tmp_path,
         "lo04_x",
@@ -109,7 +109,7 @@ def test_a_child_uses_the_same_gender_rule_as_an_adult(tmp_path: Path) -> None:
 
     assert len(rows) == 1 and rows[0]["lines"] == 13
     assert preset_gender("vieneu@3.8.3/Ngọc Linh") == "female"
-    assert [(r["name"], r["lines"]) for r in wrong_gender(rows)] == [("EVERAN", 13)]
+    assert wrong_gender(rows) == []
 
 
 def test_an_adult_man_on_a_womans_voice_is_reported(tmp_path: Path) -> None:

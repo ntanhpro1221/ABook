@@ -12,6 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Đọc đủ chức danh và đơn vị hành chính có dấu chấm trước tên (như `PGS.TS. Lê`, `TS.Nguyễn`, `TP. Hồ Chí Minh`, `Q.1`), cả khi chữ dính liền. Giữ cách đọc cũ khi chữ cái đầu và tên địa phương còn mơ hồ.
 - Giữ ngoặc thẳng mở sau dấu hai chấm, phẩy, chấm phẩy; sửa tách nhầm tên miền, chuỗi chữ cái đầu sau dấu chấm và các trường hợp khoảng trắng Unicode để máy tính và Nghe ngay trên Android đọc giống nhau.
 - Tự sinh lại tối đa một lần khi phát hiện ngắt giữa các âm tiết cùng từ ở giọng đã hiệu chỉnh, giữ nguyên chữ và cách đọc. Tắt máy giữa chừng hay thiếu bộ nhớ không làm sách đọc khác đi, và bản sinh lại chỉ được dùng khi tốt hơn bản đầu.
+- Trẻ con, cả bé trai, lại đọc bằng giọng nữ nguyên bản, không bóp giọng; nhân vật mang tên Nhật dùng cho cả nam lẫn nữ (như Mizuho, Chihiro) được nhận giới theo lời văn thay vì theo tên.
 
 ### Lưu ý khi tích hợp
 

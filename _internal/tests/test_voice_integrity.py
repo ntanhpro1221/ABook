@@ -66,6 +66,25 @@ def test_named_female_cast_to_male_is_blocked_even_if_signal_agrees(tmp_path):
     assert {'VOICE_OWNER_MISMATCH', 'VOICE_GENDER_MISMATCH'} <= codes(paths)
 
 
+@pytest.mark.parametrize('age,expected', [('child', set()), ('adult', {'VOICE_GENDER_MISMATCH'}),
+                                        ('unknown', {'VOICE_GENDER_MISMATCH'})])
+def test_a_boy_in_a_female_preset_passes_the_export_gate_only_as_a_child(tmp_path, age, expected):
+    paths, db, _ = ready(tmp_path)
+    # Keep the female preset and its recorded provenance. Only the person's traits change.
+    with db.transaction() as conn:
+        conn.execute("UPDATE characters SET gender='male',age=? WHERE canonical_name='MAI'", (age,))
+        conn.execute("UPDATE segments SET gender='male',age=? WHERE speaker='MAI'", (age,))
+    assert codes(paths) == expected
+
+
+def test_a_childs_female_preset_does_not_excuse_another_recorded_voice(tmp_path):
+    paths, db, _ = ready(tmp_path)
+    with db.transaction() as conn:
+        conn.execute("UPDATE characters SET gender='male',age='child' WHERE canonical_name='MAI'")
+        conn.execute("UPDATE segments SET gender='male',age='child',signal_json='{}' WHERE speaker='MAI'")
+    assert codes(paths) == {'RECORDED_VOICE_MISMATCH'}
+
+
 @pytest.mark.parametrize('signal', [None, {'voice_profile_id': 999},
                                     {'split_parts': 'invalid'}, {'parts': ['invalid']},
                                     {'split_parts': [{'voice_profile_id': 999}]},
