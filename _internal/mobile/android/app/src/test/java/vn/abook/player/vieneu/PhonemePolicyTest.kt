@@ -87,8 +87,11 @@ class PhonemePolicyTest {
         assertEquals("", PhonemePolicy.rulingsTag("Do trans sắp thi.", null))
         assertEquals("", PhonemePolicy.rulingsTag("Trời hôm nay đẹp quá.", rulings))
         assertTrue(Regex("w[0-9a-f]{16}").matches(PhonemePolicy.rulingsTag("Do trans sắp thi.", rulings)))
-        assertEquals(null, PhonemePolicy.Rulings.of(JSONObject("{\"version\":2,\"contexts\":{},\"names\":[\"an\"]}")))
-        assertEquals(setOf("an"), PhonemePolicy.Rulings.of(JSONObject("{\"version\":1,\"contexts\":{\"a|do|b\":\"v\"},\"names\":[\"an\"]}"))!!.names)
+        assertEquals(null, PhonemePolicy.Rulings.of(JSONObject("{\"version\":1,\"contexts\":{},\"names\":[\"an\"],\"foreign\":[]}")))
+        assertEquals(null, PhonemePolicy.Rulings.of(JSONObject("{\"version\":2,\"contexts\":{},\"names\":[\"an\"]}")))  // no `foreign`: not this shape
+        val read = PhonemePolicy.Rulings.of(JSONObject("{\"version\":2,\"contexts\":{\"a|do|b\":\"v\"},\"names\":[\"an\"],\"foreign\":[\"dan\"]}"))!!
+        assertEquals(setOf("an"), read.names)
+        assertEquals(setOf("dan"), read.foreign)
     }
 
     @Test fun aCapitalInsideASentenceIsANameAndTheFirstWordIsNot() {

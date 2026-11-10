@@ -6,6 +6,7 @@ import math
 import os
 import random
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
@@ -626,6 +627,7 @@ def keep_vieneu_final_mark() -> None:
             value = respell_rare_rimes(value)  # "gi ưn" -> "gi ân": a rime the voice cannot say (name_sounds.json)
             raw = original_phonemize(value, final)
 
+            @lru_cache(maxsize=1)
             def given() -> str:
                 return phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final)
 
@@ -633,7 +635,7 @@ def keep_vieneu_final_mark() -> None:
             named = remembered_named()
             if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): its English sound
                 out = english_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
-            out = repair_level_tone(value, out)
+            out = repair_level_tone(given(), out)  # the words sea-g2p saw: "nô-pa-mi" is three of them
             if final and out.endswith(".") and ("?" in value or "!" in value):
                 written = original_phonemize(value, False).rstrip()
                 if written.endswith(("?", "!")):

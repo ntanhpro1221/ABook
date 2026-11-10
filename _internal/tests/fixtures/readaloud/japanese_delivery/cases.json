@@ -7,15 +7,15 @@
         "na-ca-nô"
       ],
       "marked": "Hôm nay <en>Nô‿pa‿mi</en> <en>Na‿ca‿nô</en> đã về.",
-      "phonemes": "hˈom nˈaj nˈopˌaː2mˌi nˈaːkˌaːnˌo ɗˌaː5 vˈe2.",
-      "ordinary": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
+      "phonemes": "hˈom nˈaj nˈopˌaːmˌi nˈaːkˌaːnˌo ɗˌaː5 vˈe2.",
+      "ordinary": "hˈom nˈaj nˈo pˈaː mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
       "calls": {
-        "Hôm nay Nô-pa-mi Na-ca-nô đã về.|1": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
+        "Hôm nay Nô-pa-mi Na-ca-nô đã về.|1": "hˈom nˈaj nˈo pˈaː mˈi nˈaː kˈaː nˈo ɗˌaː5 vˈe2.",
         "nam|0": "nˈaːm",
         "Hôm nay  nam|0": "hˈom nˈaj nˈaːm",
-        "Hôm nay Nô-pa-mi nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaːm",
-        "Hôm nay Nô-pa-mi  nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaːm",
-        "Hôm nay Nô-pa-mi Na-ca-nô nam|0": "hˈom nˈaj nˈo pˈaː2 mˈi nˈaː kˈaː nˈo nˈaːm"
+        "Hôm nay Nô-pa-mi nam|0": "hˈom nˈaj nˈo pˈaː mˈi nˈaːm",
+        "Hôm nay Nô-pa-mi  nam|0": "hˈom nˈaj nˈo pˈaː mˈi nˈaːm",
+        "Hôm nay Nô-pa-mi Na-ca-nô nam|0": "hˈom nˈaj nˈo pˈaː mˈi nˈaː kˈaː nˈo nˈaːm"
       }
     },
     {
@@ -24,13 +24,13 @@
         "nô-pa-mi"
       ],
       "marked": "<en>Nô‿pa‿mi</en>?",
-      "phonemes": "nˈopˌaː2mˌi?",
-      "ordinary": "nˈo pˈaː2 mˈi?",
+      "phonemes": "nˈopˌaːmˌi?",
+      "ordinary": "nˈo pˈaː mˈi?",
       "calls": {
-        "Nô-pa-mi?|1": "nˈo pˈaː2 mˈi?",
+        "Nô-pa-mi?|1": "nˈo pˈaː mˈi?",
         "nam|0": "nˈaːm",
         " nam|0": "nˈaːm",
-        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm"
+        "Nô-pa-mi nam|0": "nˈo pˈaː mˈi nˈaːm"
       }
     },
     {
@@ -39,13 +39,13 @@
         "nô-pa-mi"
       ],
       "marked": "<en>Nô‿pa‿mi</en>!",
-      "phonemes": "nˈopˌaː2mˌi!",
-      "ordinary": "nˈo pˈaː2 mˈi!",
+      "phonemes": "nˈopˌaːmˌi!",
+      "ordinary": "nˈo pˈaː mˈi!",
       "calls": {
-        "Nô-pa-mi!|1": "nˈo pˈaː2 mˈi!",
+        "Nô-pa-mi!|1": "nˈo pˈaː mˈi!",
         "nam|0": "nˈaːm",
         " nam|0": "nˈaːm",
-        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm"
+        "Nô-pa-mi nam|0": "nˈo pˈaː mˈi nˈaːm"
       }
     },
     {
@@ -55,15 +55,15 @@
         "na-ca-nô"
       ],
       "marked": "<en>Nô‿pa‿mi</en>, <en>Na‿ca‿nô</en>.",
-      "phonemes": "nˈopˌaː2mˌi, nˈaːkˌaːnˌo.",
-      "ordinary": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo.",
+      "phonemes": "nˈopˌaːmˌi, nˈaːkˌaːnˌo.",
+      "ordinary": "nˈo pˈaː mˈi, nˈaː kˈaː nˈo.",
       "calls": {
-        "Nô-pa-mi, Na-ca-nô.|1": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo.",
+        "Nô-pa-mi, Na-ca-nô.|1": "nˈo pˈaː mˈi, nˈaː kˈaː nˈo.",
         "nam|0": "nˈaːm",
         " nam|0": "nˈaːm",
-        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm",
-        "Nô-pa-mi,  nam|0": "nˈo pˈaː2 mˈi, nˈaːm",
-        "Nô-pa-mi, Na-ca-nô nam|0": "nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo nˈaːm"
+        "Nô-pa-mi nam|0": "nˈo pˈaː mˈi nˈaːm",
+        "Nô-pa-mi,  nam|0": "nˈo pˈaː mˈi, nˈaːm",
+        "Nô-pa-mi, Na-ca-nô nam|0": "nˈo pˈaː mˈi, nˈaː kˈaː nˈo nˈaːm"
       }
     },
     {
@@ -72,25 +72,25 @@
         "nô-pa-mi"
       ],
       "marked": "<en>Nô‿pa‿mi</en> và <en>Nô‿pa‿mi</en>.",
-      "phonemes": "nˈopˌaː2mˌi vˌaː2 nˈopˌaː2mˌi.",
-      "ordinary": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+      "phonemes": "nˈopˌaːmˌi vˌaː2 nˈopˌaːmˌi.",
+      "ordinary": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi.",
       "calls": {
-        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi.",
         "nam|0": "nˈaːm",
         " nam|0": "nˈaːm",
-        "Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi nˈaːm",
-        "Nô-pa-mi và  nam|0": "nˈo pˈaː2 mˈi vˌaː2 nˈaːm",
-        "Nô-pa-mi và Nô-pa-mi nam|0": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi nˈaːm"
+        "Nô-pa-mi nam|0": "nˈo pˈaː mˈi nˈaːm",
+        "Nô-pa-mi và  nam|0": "nˈo pˈaː mˈi vˌaː2 nˈaːm",
+        "Nô-pa-mi và Nô-pa-mi nam|0": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi nˈaːm"
       }
     },
     {
       "text": "Nô-pa-mi và Nô-pa-mi.",
       "words": [],
       "marked": "Nô-pa-mi và Nô-pa-mi.",
-      "phonemes": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
-      "ordinary": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi.",
+      "phonemes": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi.",
+      "ordinary": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi.",
       "calls": {
-        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː2 mˈi vˌaː2 nˈo pˈaː2 mˈi."
+        "Nô-pa-mi và Nô-pa-mi.|1": "nˈo pˈaː mˈi vˌaː2 nˈo pˈaː mˈi."
       }
     },
     {
@@ -109,13 +109,13 @@
         "nô-pa-mi"
       ],
       "marked": "Tên <en>Nô‿pa‿mi</en>, 2026 người.",
-      "phonemes": "t̪ˈen nˈopˌaː2mˌi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
-      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+      "phonemes": "t̪ˈen nˈopˌaːmˌi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+      "ordinary": "t̪ˈen nˈo pˈaː mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
       "calls": {
-        "Tên Nô-pa-mi, 2026 người.|1": "t̪ˈen nˈo pˈaː2 mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
+        "Tên Nô-pa-mi, 2026 người.|1": "t̪ˈen nˈo pˈaː mˈi, hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw ŋˈyə2j.",
         "nam|0": "nˈaːm",
         "Tên  nam|0": "t̪ˈen nˈaːm",
-        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm"
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː mˈi nˈaːm"
       }
     },
     {
@@ -124,13 +124,13 @@
         "nô-pa-mi"
       ],
       "marked": "Tên <en>Nô‿pa‿mi</en>, Na-ca-nô?",
-      "phonemes": "t̪ˈen nˈopˌaː2mˌi, nˈaː kˈaː nˈo?",
-      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo?",
+      "phonemes": "t̪ˈen nˈopˌaːmˌi, nˈaː kˈaː nˈo?",
+      "ordinary": "t̪ˈen nˈo pˈaː mˈi, nˈaː kˈaː nˈo?",
       "calls": {
-        "Tên Nô-pa-mi, Na-ca-nô?|1": "t̪ˈen nˈo pˈaː2 mˈi, nˈaː kˈaː nˈo?",
+        "Tên Nô-pa-mi, Na-ca-nô?|1": "t̪ˈen nˈo pˈaː mˈi, nˈaː kˈaː nˈo?",
         "nam|0": "nˈaːm",
         "Tên  nam|0": "t̪ˈen nˈaːm",
-        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm"
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː mˈi nˈaːm"
       }
     },
     {
@@ -140,15 +140,15 @@
         "na-ca-nô"
       ],
       "marked": "Tên <en>Nô‿pa‿mi</en>. Ngày mai <en>Na‿ca‿nô</en> đến.",
-      "phonemes": "t̪ˈen nˈopˌaː2mˌi. ŋˈa2j mˈaːj nˈaːkˌaːnˌo ɗˌeɜn.",
-      "ordinary": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
+      "phonemes": "t̪ˈen nˈopˌaːmˌi. ŋˈa2j mˈaːj nˈaːkˌaːnˌo ɗˌeɜn.",
+      "ordinary": "t̪ˈen nˈo pˈaː mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
       "calls": {
-        "Tên Nô-pa-mi. Ngày mai Na-ca-nô đến.|1": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
+        "Tên Nô-pa-mi. Ngày mai Na-ca-nô đến.|1": "t̪ˈen nˈo pˈaː mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo ɗˌeɜn.",
         "nam|0": "nˈaːm",
         "Tên  nam|0": "t̪ˈen nˈaːm",
-        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː2 mˈi nˈaːm",
-        "Tên Nô-pa-mi. Ngày mai  nam|0": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaːm",
-        "Tên Nô-pa-mi. Ngày mai Na-ca-nô nam|0": "t̪ˈen nˈo pˈaː2 mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo nˈaːm"
+        "Tên Nô-pa-mi nam|0": "t̪ˈen nˈo pˈaː mˈi nˈaːm",
+        "Tên Nô-pa-mi. Ngày mai  nam|0": "t̪ˈen nˈo pˈaː mˈi. ŋˈa2j mˈaːj nˈaːm",
+        "Tên Nô-pa-mi. Ngày mai Na-ca-nô nam|0": "t̪ˈen nˈo pˈaː mˈi. ŋˈa2j mˈaːj nˈaː kˈaː nˈo nˈaːm"
       }
     },
     {
@@ -157,13 +157,13 @@
         "nô-pa-mi"
       ],
       "marked": "tờ… <en>Nô‿pa‿mi</en> đến.",
-      "phonemes": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
-      "ordinary": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
+      "phonemes": "t̪ˈəː2, nˈo pˈaː mˈi ɗˌeɜn.",
+      "ordinary": "t̪ˈəː2, nˈo pˈaː mˈi ɗˌeɜn.",
       "calls": {
-        "tờ… Nô-pa-mi đến.|1": "t̪ˈəː2, nˈo pˈaː2 mˈi ɗˌeɜn.",
+        "tờ… Nô-pa-mi đến.|1": "t̪ˈəː2, nˈo pˈaː mˈi ɗˌeɜn.",
         "nam|0": "nˈaːm",
         "tờ…  nam|0": "t̪ˈəː2. nˈaːm",
-        "tờ… Nô-pa-mi nam|0": "t̪ˈəː2. nˈo pˈaː2 mˈi nˈaːm"
+        "tờ… Nô-pa-mi nam|0": "t̪ˈəː2. nˈo pˈaː mˈi nˈaːm"
       }
     },
     {

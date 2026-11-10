@@ -24,7 +24,10 @@ frequency in Vietnamese prose, which is what VieNeu learned from.
 | rime | name syllables (occurrences) | in Vietnamese prose |
 |---|---|---|
 | ưn /ɯn/ | ưn 486, nưn 259, xưn 223, cưn 44, gưn 17 | 0.8 per million syllables |
-| ưm /ɯm/ | rưm 225, ưm 32, cưm 25, xưm 8, nưm 5 | under 1 per million |
+| ưm /ɯm/ | rưm 225, ưm 32, cưm 25, xưm 8, nưm 5 | with an onset: under 0.1 per million; bare "ưm": 35.5 per million |
+
+The bare syllable "ưm" is a Vietnamese interjection ("Ưm, được rồi."): 2,173 occurrences in prose against 32 in
+names (Soleum). It and "hưm" are in the `keep` list and stay as written, so "Xôn-ưm" is NOT repaired.
 
 Everything else the romanizers emit is a common Vietnamese syllable or was heard right ("éc", "eng" as rimes: no
 change).
@@ -53,8 +56,9 @@ trained on 80 real Vietnamese syllables (-n against -ng; leave-one-rime-out 98.7
 
 "ân" /ən/ is the nearest vowel to /ɯ/ that keeps the final in every seed (short, central, unrounded; "ơn" is long
 and is heard as English "Zion"). The same holds in other names: Ha-nưn -> "Ninh", "Nưng"; Ha-nân 6/6 -n; Xưn-ki ->
-"Xin", "Sưng"; Xân-ki 6/6; Ân-gi 6/6. "ưm": rưm -> "dưng", "rừng", "Rương"; râm keeps -m. So `rimes` is
-`{"ưn": "ân", "ưm": "âm"}`; "ưng" is a common rime and is not touched.
+"Xin", "Sưng"; Xân-ki 6/6; Ân-gi 6/6. "ưm": A-rưm -> "dưng", "rừng", "Rương"; A-râm keeps -m 6/6; Cưm ->
+"Cương", "Cưng", "cơm" (0/6 right); Câm 6/6; "ươm" is heard "ương" / "ơm". So `rimes` is
+`{"ưn": "ân", "ưm": "âm"}`, `keep` is `["ưm", "hưm"]`; "ưng" is a common rime and is not touched.
 
 ## The gap between the two syllables
 
@@ -74,6 +78,12 @@ and swallows syllables on Nano - "Gi‿ưn" is heard "Xin", "Dinh", "Jim"; "Ha�
 
 ## What is not done
 
+- Bare "ưm" in a name ("Xôn-ưm", Soleum; 32 occurrences) stays /ɯm/: the same letters are a Vietnamese interjection.
+- A short English name inside a sentence can be swallowed by Nano: "Rồi Dan quay sang nhìn Tom." lost "Dan" in one
+  seed of three, "Rồi Ben ..." likewise; 2 of 27 clips (Dan, Ben, Ken in three carriers by three seeds), both right
+  after "Rồi"; Jack and Bob, English before this branch, 0 of 18.
+- "Hi-un U" (Hyun Woo): the tone is level now, but the transcriber writes "Hinh U" / "Hiêng U" in two seeds of
+  three - three vowels in a row; not judged right.
 - "min", "pin" are read with English /ɪ/ by sea-g2p; not in the `level` list (a different fault, not measured here).
 - The numbers are Nano on CPU. The rime is absent from the training speech of every VieNeu tier, but the other
   tiers were not measured.

@@ -38,6 +38,7 @@ object PhonemePolicy {
     private class Sounds {
         private val data = org.json.JSONObject(BuildConfig.NAME_SOUNDS)
         val rimes: Map<String, String> = data.getJSONObject("rimes").let { all -> all.keys().asSequence().associateWith(all::getString) }
+        val keep: Set<String> = data.getJSONArray("keep").let { a -> (0 until a.length()).map(a::getString).toSet() }
         val level: Set<String> = data.getJSONArray("level").let { a -> (0 until a.length()).map(a::getString).toSet() }
         val rime = Regex("(?<!\\p{L})([bcdđghklmnpqrstvx]{0,3})(" + rimes.keys.sorted().joinToString("|") + ")(?!\\p{L})")
     }
@@ -46,10 +47,11 @@ object PhonemePolicy {
 
     /**
      * phoneme_policy.respell_rare_rimes: a rime Vietnamese hardly has ("ưn", "ưm": Korean eun, eum) is given to the phonemizer as the nearest
-     * one the voice can say ("ân", "âm") - VieNeu drags "ưn" to "ưng" and hesitates before it. [text] is normalized (lower case); the spoken
-     * text is not touched.
+     * one the voice can say ("ân", "âm") - VieNeu drags "ưn" to "ưng" and hesitates before it. [text] is normalized (lower case); the
+     * interjections "ưm", "hưm" are Vietnamese words and stay as written; the spoken text is not touched.
      */
-    fun respellRareRimes(text: String): String = sounds.rime.replace(text) { it.groupValues[1] + sounds.rimes.getValue(it.groupValues[2]) }
+    fun respellRareRimes(text: String): String =
+        sounds.rime.replace(text) { if (it.value in sounds.keep) it.value else it.groupValues[1] + sounds.rimes.getValue(it.groupValues[2]) }
 
     /**
      * phoneme_policy.repair_level_tone: sea-g2p gives a few syllables written without a tone mark a tone ("un" /ˈu2n/, "gin" /zˈi2n/, "pa"

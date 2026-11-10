@@ -503,6 +503,7 @@ class _Sounds:
 
         data = json.loads(Path(__file__).with_name("name_sounds.json").read_text(encoding="utf-8"))
         self.rimes: dict[str, str] = data["rimes"]
+        self.keep = frozenset(data["keep"])  # whole syllables that are Vietnamese words of their own: the interjections "ưm", "hưm"
         self.level = frozenset(data["level"])
         self.rime = re.compile(r"(?<![^\W\d_])([bcdđghklmnpqrstvx]{0,3})(" + "|".join(sorted(self.rimes)) + r")(?![^\W\d_])")
 
@@ -519,10 +520,11 @@ def respell_rare_rimes(text: str) -> str:
     the syllable to a common neighbour ("Gi-ưn" is heard "ưng", "Ha-nưn" "ninh") and hesitates before it. The
     phonemizer is given the nearest rime that keeps the final consonant ("ân", "âm") in every measured seed - still a
     Vietnamese spelling, so the phonemes are sea-g2p's own. `text` is normalized (lower case); a syllable is an onset
-    and the rime with no tone mark, which is how the name rules write it. The spoken text is not touched.
+    and the rime with no tone mark, which is how the name rules write it. The interjections "ưm" and "hưm" are
+    Vietnamese words (35 in a million words of prose) and stay as written. The spoken text is not touched.
     """
     sounds = _sounds()
-    return sounds.rime.sub(lambda match: match.group(1) + sounds.rimes[match.group(2)], text)
+    return sounds.rime.sub(lambda match: match.group(0) if match.group(0) in sounds.keep else match.group(1) + sounds.rimes[match.group(2)], text)
 
 
 def repair_level_tone(text: str, phonemes: str) -> str:
