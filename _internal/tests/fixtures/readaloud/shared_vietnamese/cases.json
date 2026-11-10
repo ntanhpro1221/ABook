@@ -88,6 +88,27 @@
     {"text": "Chúng tôi check in phòng khách sạn.", "claimed": [], "phonemes": "tʃˈuɜŋ t̪ˈoj tʃˈɛk ˈɪn fˈɔ2ŋ xˈe-ɜc sˈaː6n."},
     {"text": "Cô hét lên: Girls can do anything!", "claimed": [], "phonemes": "kˈo hˈɛɜt̪ lˈen, ɡˈɜːlz kˈæn dˈuː ˈɛnɪθˌɪŋ!"},
     {"text": "Cậu ấy lập hat trick ở phút cuối.", "claimed": [], "phonemes": "kˈə6w ˈəɪɜ lˈə6p hˈæt tɹˈɪk ˈəː4 fˈuɜt̪ kˈuəɜj."},
-    {"text": "Đó là tập một của No Game No Life.", "claimed": [], "phonemes": "ɗˈɔɜ lˌaː2 t̪ˈə6p mˈo6t̪ kˌuə4 nˈoʊ ɡˈeɪm nˈoʊ lˈaɪf."}
+    {"text": "Đó là tập một của No Game No Life.", "claimed": [], "phonemes": "ɗˈɔɜ lˌaː2 t̪ˈə6p mˈo6t̪ kˌuə4 nˈoʊ ɡˈeɪm nˈoʊ lˈaɪf."},
+    {"text": "Hắn bị admin ban nick rồi.", "source": "Hắn bị admin BAN nick rồi.", "claimed": [], "doubtful": ["ban"], "phonemes": "hˈaɜn bˌi6 ˈædmɪn bˈæn nˈɪk ɹˈo2j."},
+    {"text": "Cửa hàng ở Lalaport tokyo bay rất đông.", "source": "Cửa hàng ở Lalaport TOKYO BAY rất đông.", "claimed": [], "doubtful": ["bay"], "phonemes": "kˈyə4 hˈaː2ŋ ˈəː4 lˈaː lˈæpɔːɹt tˈoʊkɪˌoʊ bˈeɪ ɹˈəɜt̪ ɗˈoŋ."},
+    {"text": "LUNG lay! LUNG lay!", "source": "LUNG LAY! LUNG LAY!", "claimed": ["lung", "lay", "lung", "lay"], "doubtful": [], "phonemes": "lˈuŋ lˈaj! lˈuŋ lˈaj!"},
+    {"text": "\"bay ĐI!\" Cô hét.", "source": "\"BAY ĐI!\" Cô hét.", "claimed": ["bay"], "doubtful": [], "phonemes": "bˈaj ɗˈi! kˈo hˈɛɜt̪."},
+    {"text": "Người của gia tộc de Valis.", "claimed": [], "doubtful": ["de"], "phonemes": "ŋˈyə2j kˌuə4 zˈaː t̪ˈo6k də vˈɑːliz."},
+    {"text": "Cậu ta đọc Hikaru no Go mỗi tối.", "claimed": [], "doubtful": [], "phonemes": "kˈə6w t̪ˈaː ɗˈɔ6k hˈɪkɑːɹɹˌuː nˈoʊ ɡˈoʊ mˌo5j t̪ˈoɜj."},
+    {"text": "An An.", "claimed": [], "doubtful": [], "phonemes": "æn æn."},
+    {"text": "An An.", "rulings": {"names": ["an"]}, "claimed": ["an", "an"], "doubtful": [], "phonemes": "ˈaːn ˈaːn."},
+    {"text": "Ban?", "claimed": [], "doubtful": [], "phonemes": "bˈæn?"},
+    {"text": "Ban?", "rulings": {"names": ["ban"]}, "claimed": ["ban"], "doubtful": [], "phonemes": "bˈaːn?"},
+    {"text": "Son!", "rulings": {"names": ["son"]}, "claimed": ["son"], "doubtful": [], "phonemes": "sˈɔn!"},
+    {"text": "Ben?", "claimed": [], "doubtful": [], "phonemes": "bˈɛnz?"},
+    {"text": "Sau đó An quay sang nhìn Ben.", "rulings": {"names": ["an"]}, "claimed": ["an", "sang"], "doubtful": [], "phonemes": "sˈaw ɗˈɔɜ ˈaːn kwˈaj sˈaːŋ ɲˈi2n bˈen."},
+    {"text": "An apple a day.", "rulings": {"names": ["an"]}, "claimed": [], "doubtful": [], "phonemes": "æn ˈæpəl ɐ dˈeɪ."},
+    {"text": "<en>Can</en> you help <en>me</en>?", "source": "Can you help me?", "rulings": {"names": ["can"]}, "claimed": [], "doubtful": [], "phonemes": "kˈæn juː hˈɛlp mˈiː?"},
+    {"text": "Do trans sắp thi.", "rulings": {"contexts": {"^|do|trans sắp": "v"}}, "claimed": ["do"], "doubtful": [], "phonemes": "zˈɔ tɹˈænz sˈaɜp tˈi."},
+    {"text": "Yuna no đâu.", "claimed": [], "doubtful": [], "phonemes": "jˈuːnə nˈoʊ ɗˈə1w."},
+    {"text": "Yuna no đâu.", "rulings": {"contexts": {"^ yuna|no|đâu ^": "v"}}, "claimed": ["no"], "doubtful": [], "phonemes": "jˈuːnə nˈɔ ɗˈə1w."},
+    {"text": "Hội quán của guild Say xỉn.", "claimed": [], "doubtful": ["say"], "phonemes": "hˈo6j kwˈaːɜn kˌuə4 ɡˈɪld sˈeɪ sˈi4n."},
+    {"text": "Hội quán của guild Say xỉn.", "rulings": {"contexts": {"của guild|say|xỉn ^": "v"}}, "claimed": ["say"], "doubtful": [], "phonemes": "hˈo6j kwˈaːɜn kˌuə4 ɡˈɪld sˈaj sˈi4n."},
+    {"text": "Do exercise đi.", "rulings": {"contexts": {"^|do|exercise đi": "e"}}, "claimed": [], "doubtful": [], "phonemes": "dˈuː ˈɛksɚsˌaɪz ɗˈi."}
   ]
 }

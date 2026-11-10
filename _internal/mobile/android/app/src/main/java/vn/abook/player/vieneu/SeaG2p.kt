@@ -58,23 +58,25 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
      * without the final-punctuation rule, joined with spaces, the unit's final punctuation settled, then the pipeline (normalise with
      * punc_norm + G2P). "" when nothing is left to read. One difference from vieneu: a unit that ends in "?" / "!" keeps that mark (punc_norm
      * would turn a short "Thật sao?" into "Thật sao." and lose the question tone); a unit without a final mark still gets ".".
+     * [source]: the unit as WRITTEN, for the capital rule of shared words; [rulings]: the book's second-tier answers ([PhonemePolicy.Rulings]).
      */
-    fun phonemize(sentences: List<String>): String {
+    fun phonemize(sentences: List<String>, source: String? = null, rulings: PhonemePolicy.Rulings? = null): String {
         val text = sentences.joinToString(" ")
         val joiner = vn.abook.player.readaloud.JapanesePolicy.data.getJSONObject("delivery").getString("joiner")
-        val capitals = PhonemePolicy.capitalised(text)
-        if (joiner !in text) return phonemizePlain(sentences, capitals = capitals)
+        val capitals = PhonemePolicy.capitalised(text, source)
+        if (joiner !in text) return phonemizePlain(sentences, capitals = capitals, rulings = rulings)
         return vn.abook.player.readaloud.JapaneseDelivery.phonemes(text, true) { value, final ->
-            phonemizePlain(listOf(value), final, capitals)
+            phonemizePlain(listOf(value), final, capitals, rulings)
         }
     }
 
-    private fun phonemizePlain(sentences: List<String>, final: Boolean = true, capitals: Set<String> = emptySet()): String {
+    private fun phonemizePlain(sentences: List<String>, final: Boolean = true, capitals: Set<String> = emptySet(),
+                               rulings: PhonemePolicy.Rulings? = null): String {
         val text = normalizeUnit(sentences)
         val chunk = if (final) puncNorm(text) else text
         if (chunk.isBlank()) return ""
         val given = keepLoneO(chunk, normalize(chunk, final))
-        var phonemes = PhonemePolicy.restoreVietnamese(chunk, g2p(given), given, ::g2p, capitals)
+        var phonemes = PhonemePolicy.restoreVietnamese(chunk, g2p(given), given, ::g2p, capitals, rulings)
         if (final && phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()

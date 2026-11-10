@@ -236,7 +236,7 @@ class LocalVoiceClipsTest {
         val tier = CountingTier(cancel)
         val preset = VieneuPreset("Adam", "male", FloatArray(192), null, FloatArray(50 * 256))
         val result = ClipRetry.run(online = false, delaysMs = LongArray(0), sleep = { false }, cancel = cancel) {
-            VieneuSpeaker { it.joinToString(" ") }.speak("nano", tier, "Adam", preset, long)
+            VieneuSpeaker { pieces, _, _ -> pieces.joinToString(" ") }.speak("nano", tier, "Adam", preset, long)
             throw AssertionError("not reached")
         }
         assertTrue(result.exceptionOrNull() is CancellationException)

@@ -564,6 +564,7 @@ class App:
                                              spare=power_source.spare_for_preload,
                                              # giọng mặc định trên máy theo số đo của máy này (voice_pick.py)
                                              machine_pick=voice_pick.chosen, zerotts_locate=zerotts_module.installed)
+        self.readaloud.rulings = self._shared_rulings  # phán quyết chữ trùng Việt / Anh đi theo cuốn làm từ Studio
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=lambda tier: self.readaloud.benchmark("vieneu", tier),
                                 after_install=lambda: self.readaloud.forget("vieneu"))
@@ -793,6 +794,22 @@ class App:
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
         return path
+
+    def _shared_words(self, value: str) -> dict[str, Any] | None:
+        """Mục `sharedWords` của cuốn nhập từ file `.abook` (Studio ghi: readaloud/shared_rulings.py), None khi cuốn không có hay mục sai dạng."""
+        from ..readaloud import shared_rulings
+
+        try:
+            path = self._listenable(value)
+        except ApiError:
+            return None
+        found = packages.manifest(path).get("sharedWords") if packages.is_package(path) else None
+        return found if shared_rulings.valid(found) else None
+
+    def _shared_rulings(self, value: str) -> Any:
+        from ..readaloud import shared_rulings
+
+        return shared_rulings.rulings_of(self._shared_words(value))
 
     def _editable(self, value: str) -> Path:
         """Sách người dùng sửa được ("áp ngay", docs/EDITING.md): dự án có xưởng, cuốn nhập từ file `.abook` (lớp sửa
@@ -6463,7 +6480,10 @@ class Handler(BaseHTTPRequestHandler):
             path = self.app._listenable(book)
         except ApiError:
             return {}
-        return dict(book_edits.load(path).get("readings") or {}) if packages.is_package(path) else {}
+        if not packages.is_package(path):
+            return {}
+        # gốc từng tên do Studio quyết (`sharedWords.readings`: "Chiaki" đọc kiểu Nhật trong cuốn không rõ gốc) đứng dưới cách đọc người nghe đặt
+        return {**((self.app._shared_words(book) or {}).get("readings") or {}), **(book_edits.load(path).get("readings") or {})}
 
     @staticmethod
     def _clip_book(body: dict[str, Any]) -> str | None:

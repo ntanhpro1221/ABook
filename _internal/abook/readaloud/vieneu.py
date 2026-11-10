@@ -959,6 +959,7 @@ class VieneuProvider:
 
     id = PREFIX
     speaks_english = True  # sea-g2p cho âm vị Anh: chữ Anh để nguyên (đo 04-10)
+    shared_rulings = True  # đi qua sea-g2p: phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh có tác dụng (service.clip)
 
     def __init__(self, locate: Callable[[], Installed | None], *, engines: Callable[[str, Installed], Any] | None = None,
                  aligner: Callable[[], Any] | None = None) -> None:
@@ -1054,7 +1055,7 @@ class VieneuProvider:
             from . import japanese_delivery
 
             groups = japanese_delivery.groups(unit.text(toks).split(), origin, readings)
-            phonemes = ve.phonemize([japanese_delivery.mark(piece, groups) for piece in unit.pieces])
+            phonemes = ve.phonemize([japanese_delivery.mark(piece, groups) for piece in unit.pieces], source=unit.text(toks))
             seed = seed_of(tier, name, " ".join(unit.pieces))
             if not phonemes:
                 audio = np.zeros(0, dtype=np.float32)

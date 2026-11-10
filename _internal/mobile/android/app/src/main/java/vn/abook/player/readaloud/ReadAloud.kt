@@ -361,12 +361,15 @@ object ReadAloud {
         if (bookId.isBlank()) return emptyMap()
         val dir = Store.bookDir(bookId)
         // The holder's readings (BookEdits.HOLDER_FILE) apply here too; the sent ledger (EditsSync.STATE_FILE) decides which side is newer.
-        val stamp = listOf(BookEdits.EDITS_FILE, BookEdits.HOLDER_FILE, EditsSync.STATE_FILE).map { name ->
+        val stamp = listOf(BookEdits.EDITS_FILE, BookEdits.HOLDER_FILE, EditsSync.STATE_FILE, "book.json").map { name ->
             File(dir, name).let { if (it.isFile) it.lastModified() to it.length() else 0L to -1L }
         }
         bookReadings[bookId]?.takeIf { it.first == stamp }?.let { return it.second }
-        val found = if (stamp[0].second < 0 && stamp[1].second < 0) emptyMap()
+        val own = if (stamp[0].second < 0 && stamp[1].second < 0) emptyMap()
         else runCatching { BookEdits.readingsOf(EditsSync.experienced(dir)) }.getOrDefault(emptyMap())
+        // Cuốn làm từ Studio mang `sharedWords` (shared_rulings.py): gốc từng tên thành cách đọc đứng dưới cách đọc người nghe đặt, phán quyết chữ
+        // trùng Việt / Anh đi kèm bảng cách đọc xuống tới máy đọc ([BookReadings]).
+        val found = runCatching { BookReadings.of(own, Store.rawManifest(bookId)?.optJSONObject("sharedWords")) }.getOrDefault(own)
         bookReadings[bookId] = stamp to found
         return found
     }

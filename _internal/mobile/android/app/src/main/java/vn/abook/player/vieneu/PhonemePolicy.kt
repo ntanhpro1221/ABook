@@ -20,6 +20,8 @@ object PhonemePolicy {
     private val spaces = Regex("\\s+")
     private val token = Regex("(<en>.*?</en>)|([$W]+(?:['’][$W]+)*)|([^$W\\s\\p{Z}])", RegexOption.IGNORE_CASE)
     private val capital = Regex("(?<![$W'’<>/])[A-Z][A-Za-z]*(?![$W'’])")
+    private val letterRun = Regex("\\p{L}+")
+    private val sentence = Regex("[^.!?…;:\\n\"“”«»「」『』]+")  // a quoted shout is a sentence of its own
     private const val QUOTES = " \t\r\n\"'“”‘’«»()[]{}「」『』〈〉《》【】—–-*"
     private const val SENTENCE_END = ".!?…:;"
     private const val PHONEME_MARKS = ".,!?"
@@ -53,6 +55,11 @@ object PhonemePolicy {
         val englishShare = data.getInt("english_share")
         val vietnameseShare = data.getInt("vietnamese_share")
         val threshold = data.getInt("threshold")
+        // Tier 1 is sure outside [doubtFrom, doubtTo); a word written as a name is Vietnamese from nameThreshold, in doubt from nameDoubt.
+        val doubtFrom = data.getJSONArray("doubt").getInt(0)
+        val doubtTo = data.getJSONArray("doubt").getInt(1)
+        val nameThreshold = data.getInt("name_threshold")
+        val nameDoubt = data.getInt("name_doubt")
         val sentinels = strings("sentinels")
         val english = EnglishPolicy.context("only") + EnglishPolicy.context("function")
         val find = Regex("(?<![$W'’])(?:" + words.keys.sorted().joinToString("|") + ")(?![$W'’])", RegexOption.IGNORE_CASE)
@@ -99,15 +106,64 @@ object PhonemePolicy {
         return out
     }
 
-    /** phoneme_policy.capitalised: ASCII words written with a capital inside a sentence, lower-cased - names, not prose. */
-    fun capitalised(text: String): Set<String> {
+    /**
+     * phoneme_policy.capitalised: ASCII words written as a name, lower-cased - a capital inside a sentence, or shouting ("admin BAN nick"). Read
+     * from the spoken [text] and from [source], the text as it was WRITTEN (the text layer lower-cases a shouted word before it is spoken). A
+     * sentence shouted from end to end ("BAY ĐI!") is prose.
+     */
+    fun capitalised(text: String, source: String? = null): Set<String> {
         val found = mutableSetOf<String>()
-        for (match in capital.findAll(text)) {
-            val head = text.substring(0, match.range.first).trimEnd { it in QUOTES }
-            if (head.isNotEmpty() && head.last() !in SENTENCE_END) found.add(match.value.lowercase(Locale.ROOT))
+        for (value in listOf(text, source)) {
+            if (value.isNullOrEmpty()) continue
+            for (match in capital.findAll(value)) {
+                val word = match.value
+                if (word.length > 1 && word.all { it in 'A'..'Z' }) {
+                    if (!source.isNullOrEmpty() && value !== source) continue  // only the written text can tell a shouted sentence
+                    val around = sentence.findAll(value).first { match.range.first in it.range }.value
+                    if (letterRun.findAll(around).any { it.value != it.value.uppercase(Locale.ROOT) }) found.add(word.lowercase(Locale.ROOT))
+                    continue
+                }
+                val head = value.substring(0, match.range.first).trimEnd { it in QUOTES }
+                if (head.isNotEmpty() && head.last() !in SENTENCE_END) found.add(word.lowercase(Locale.ROOT))
+            }
         }
         return found
     }
+
+    /**
+     * phoneme_policy.Rulings: what a book already knows about its shared words (the second tier ran in Studio; `sharedWords` of book.json) -
+     * answers by context ([sharedWordContexts] key -> Vietnamese?) and the roster's Vietnamese names, lower-case.
+     */
+    class Rulings(val contexts: Map<String, Boolean> = emptyMap(), val names: Set<String> = emptySet()) {
+        val empty get() = contexts.isEmpty() && names.isEmpty()
+
+        /** One mark for a clip key: every ruling of the book (they come with the book and do not change). */
+        val mark: String by lazy {
+            val lines = contexts.entries.sortedBy { it.key }.map { "${it.key}\t${if (it.value) 1 else 0}" } + names.sorted().map { "name\t$it" }
+            java.security.MessageDigest.getInstance("SHA-256").digest(lines.joinToString("\n").toByteArray(Charsets.UTF_8)).take(8).joinToString("") { "%02x".format(it) }
+        }
+
+        companion object {
+            /** The `sharedWords` entry of book.json (shared_rulings.shared), null when absent, of another version or with nothing in it. */
+            fun of(found: org.json.JSONObject?): Rulings? {
+                if (found == null || found.optInt("version") != 1) return null
+                val contexts = found.optJSONObject("contexts") ?: return null
+                val names = found.optJSONArray("names") ?: return null
+                val answers = HashMap<String, Boolean>()
+                for (key in contexts.keys()) when (contexts.optString(key)) {
+                    "v" -> answers[key] = true
+                    "e" -> answers[key] = false
+                    else -> return null
+                }
+                val rulings = Rulings(answers, (0 until names.length()).map { names.optString(it) }.toSet())
+                return if (rulings.empty) null else rulings
+            }
+        }
+    }
+
+    /** "w" + the book's mark when [text] holds a word of the table and the book has rulings, else "" (ClipCache.reading). */
+    fun rulingsTag(text: String, rulings: Rulings?): String =
+        if (rulings == null || rulings.empty || !shared.find.containsMatchIn(text)) "" else "w" + rulings.mark
 
     private fun ascii(word: String) = word.all { it.code < 128 }
 
@@ -149,23 +205,25 @@ object PhonemePolicy {
         return out
     }
 
+    class Scored(val word: String, val score: Int, val name: Boolean)
+
+    class Verdict(val word: String, val vietnamese: Boolean, val sure: Boolean, val who: String)
+
     /**
-     * phoneme_policy.vietnamese_shared: positions, among the table's words of normalized [text], of those the sentence makes Vietnamese. A learned
-     * score (docs/SHARED_WORDS.md): the word's own corpus behaviour, each neighbour's class and identity, the two neighbours together, the word one further out, the chunk's
-     * share of certain English and certain Vietnamese, a tag, a doubled word. A capital mid-sentence is a name and is never claimed.
+     * phoneme_policy.shared_word_scores: every table word of normalized [text], in order, with its learned score (docs/SHARED_WORDS.md): the
+     * word's own corpus behaviour, each neighbour's class and identity, the two neighbours together, the word one further out, the chunk's
+     * share of certain English and certain Vietnamese, a tag, a doubled word. `name`: the word is one of [capitals] (its score is the one it
+     * would have as prose).
      */
-    fun vietnameseShared(text: String, capitals: Set<String> = emptySet()): List<Int> {
+    fun sharedWordScores(text: String, capitals: Set<String> = emptySet()): List<Scored> {
         val shared = shared
         val tokens = sharedTokens(text, capitals)
         val english = tokens.count { it.kind == 'e' || it.kind == 'X' }
         val accented = tokens.count { it.kind == 'V' }
         val others = tokens.size - 1
-        val proven = ArrayList<Int>()
-        var position = -1
+        val out = ArrayList<Scored>()
         for ((index, target) in tokens.withIndex()) {
             val entry = shared.words[target.word] ?: continue
-            position++
-            if (target.kind == 'n') continue
             var score = entry.prior
             var foreign = 0
             var pair = 0
@@ -194,10 +252,78 @@ object PhonemePolicy {
                 Math.floorDiv(shared.vietnameseShare * accented, others)
             if (target.kind == 'X') score += shared.tagged
             if (listOf(index - 1, index + 1).any { it in tokens.indices && tokens[it].word == target.word }) score += entry.doubled
-            if (score >= shared.threshold) proven.add(position)
+            out.add(Scored(target.word, score, target.kind == 'n'))
         }
-        return proven
+        return out
     }
+
+    /**
+     * phoneme_policy.shared_word_contexts: the key of every table word of normalized [text], in order - two words each side as the phonemizer
+     * sees them; "^" is the edge of the chunk or a `. ! ? ; : …`, a comma is kept as ",". A second-tier ruling is stored under this key.
+     */
+    fun sharedWordContexts(text: String): List<String> {
+        val tokens = sharedTokens(text, emptySet())
+        fun side(index: Int, step: Int): List<String> {
+            val found = ArrayList<String>()
+            var at = index
+            while (found.size < 2) {
+                val other = at + step
+                if (other !in tokens.indices) {
+                    found.add("^")
+                    break
+                }
+                val gap = tokens[maxOf(at, other)].gap
+                if (gap.any { it in STRONG }) {
+                    found.add("^")
+                    break
+                }
+                val comma = if (gap.isEmpty()) "" else ","
+                found.add(if (step < 0) comma + tokens[other].word else tokens[other].word + comma)
+                at = other
+            }
+            return found
+        }
+        return tokens.indices.filter { tokens[it].word in shared.words }
+            .map { side(it, -1).reversed().joinToString(" ") + "|" + tokens[it].word + "|" + side(it, 1).joinToString(" ") }
+    }
+
+    /**
+     * phoneme_policy.shared_word_verdicts: tier 1 is the score - prose is Vietnamese from the threshold up and sure outside the doubt band, a
+     * word written as a name is only in doubt from `name_doubt` up, and a word that opens a sentence before an English word and an accented
+     * Vietnamese one ("Do trans sắp thi") is in doubt whatever its score. Then what the book knows ([rulings]): a ruling for this very context, the
+     * roster's Vietnamese names (every occurrence written as a name, and a doubtful one in prose), else tier 1's own best guess.
+     */
+    fun sharedWordVerdicts(text: String, capitals: Set<String> = emptySet(), rulings: Rulings? = null): List<Verdict> {
+        val shared = shared
+        val keys = if (rulings != null) sharedWordContexts(text) else emptyList()
+        val tokens = sharedTokens(text, capitals)
+        val listed = tokens.indices.filter { tokens[it].word in shared.words }
+        fun opens(index: Int) = tokens[index].gap.let { gap -> '^' in gap || gap.any { it in STRONG } }
+        fun english(index: Int) = index + 1 < tokens.size && tokens[index + 1].gap.isEmpty() && tokens[index + 1].kind in "eX"
+        // a roster name that opens a sentence, unless an English word follows it directly ("An nói." but "An apple")
+        val heads = listed.map { opens(it) && !english(it) }
+        // opens a sentence, then an English word, then an accented Vietnamese one: a borrowed noun in a Vietnamese sentence
+        val borrowed = listed.map { opens(it) && english(it) && it + 2 < tokens.size && tokens[it + 2].gap.isEmpty() && tokens[it + 2].kind == 'V' }
+        return sharedWordScores(text, capitals).mapIndexed { position, scored ->
+            var claimed = scored.score >= (if (scored.name) shared.nameThreshold else shared.threshold)
+            var sure = if (scored.name) !(scored.score >= shared.nameDoubt && scored.score < shared.nameThreshold)
+                else !((scored.score >= shared.doubtFrom && scored.score < shared.doubtTo) || (borrowed[position] && !claimed))
+            var who = "table"
+            if (rulings != null) {
+                val ruled = rulings.contexts[keys[position]]
+                if (ruled != null) {
+                    claimed = ruled; sure = true; who = "ruling"
+                } else if (scored.word in rulings.names && (scored.name || !sure || heads[position])) {
+                    claimed = true; sure = true; who = "roster"
+                }
+            }
+            Verdict(scored.word, claimed, sure, who)
+        }
+    }
+
+    /** phoneme_policy.vietnamese_shared: positions, among the table's words of normalized [text], of those that are Vietnamese ([sharedWordVerdicts]). */
+    fun vietnameseShared(text: String, capitals: Set<String> = emptySet(), rulings: Rulings? = null): List<Int> =
+        sharedWordVerdicts(text, capitals, rulings).withIndex().filter { it.value.vietnamese }.map { it.index }
 
     /** (Vietnamese, English) phonemes of one shared word, from the dictionary that is loaded. */
     private fun reading(word: String, g2p: (String) -> String): Pair<String, String> = readings.getOrPut(word) {
@@ -210,11 +336,12 @@ object PhonemePolicy {
      * for another shared word that is not in the sentence. sea-g2p resolves a run of shared words as one unit, so the swap changes no other
      * word's language, and the stand-in's phonemes mark the exact place. A result that differs anywhere else is thrown away.
      */
-    fun restoreVietnamese(text: String, phonemes: String, source: String, g2p: (String) -> String, capitals: Set<String> = emptySet()): String {
+    fun restoreVietnamese(text: String, phonemes: String, source: String, g2p: (String) -> String, capitals: Set<String> = emptySet(),
+                          rulings: Rulings? = null): String {
         val shared = shared
         val present = shared.find.findAll(text).map { it.value.lowercase(Locale.ROOT) }.toSet()
         if (present.isEmpty() || present.none { reading(it, g2p).second in phonemes }) return phonemes  // nothing was read as English
-        val proven = vietnameseShared(text, capitals)
+        val proven = vietnameseShared(text, capitals, rulings)
         if (proven.isEmpty()) return phonemes
         fun listed(value: String): List<Pair<IntRange, String>> = token.findAll(value).mapNotNull { match ->
             if (match.groups[3] != null) return@mapNotNull null

@@ -25,7 +25,7 @@ class VieneuSpeakerTest {
     fun aParagraphBecomesOneClipWithAWordTimingPerShownWord() {
         val tier = FakeTier()
         val text = "Trời hôm nay đẹp quá. Cô gái đứng bên cửa sổ,  lặng lẽ nhìn mưa rơi suốt buổi chiều hôm ấy, rồi cô đứng dậy đi ra phía cửa sau của ngôi nhà nhỏ."
-        val spoken = VieneuSpeaker { pieces -> pieces.joinToString(" ").lowercase() }.speak("nano", tier, "Adam", preset, text)
+        val spoken = VieneuSpeaker { pieces, _, _ -> pieces.joinToString(" ").lowercase() }.speak("nano", tier, "Adam", preset, text)
         val (_, units) = VieneuUnits.units(text, 140)
         assertEquals(units.size, tier.calls.size)
         assertEquals(units.map { VieneuSpeaker.seedOf("nano", "Adam", it.pieces.joinToString(" ")) }, tier.calls.map { it.second })
@@ -49,7 +49,7 @@ class VieneuSpeakerTest {
     @Test
     fun aUnitEndingOnACommaGetsTheShortPauseAndASentenceTheLongOne() {
         val tier = FakeTier()
-        val speaker = VieneuSpeaker { pieces -> pieces.joinToString(" ") }
+        val speaker = VieneuSpeaker { pieces, _, _ -> pieces.joinToString(" ") }
         val first = "Một hai ba bốn năm sáu bảy tám chín mười mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám"
         val second = "hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy."
         val comma = speaker.speak("nano", tier, "Adam", preset, "$first, $second")
@@ -64,7 +64,7 @@ class VieneuSpeakerTest {
     fun aUnitWithNothingToReadKeepsItsWordsInPlace() {
         val tier = FakeTier()
         val text = "*** *** *** *** *** *** ***. Đoạn này có chữ thật để đọc, khá dài để thành một khúc riêng biệt, vì cả đoạn vượt quá giới hạn của giọng Nano, thêm vài chữ."
-        val spoken = VieneuSpeaker { pieces -> if (pieces.joinToString("").all { it == '.' || it.isWhitespace() }) "" else "ʔa1 ʔa1." }.speak("nano", tier, "Adam", preset, text)
+        val spoken = VieneuSpeaker { pieces, _, _ -> if (pieces.joinToString("").all { it == '.' || it.isWhitespace() }) "" else "ʔa1 ʔa1." }.speak("nano", tier, "Adam", preset, text)
         assertEquals(2, spoken.spans.size)
         assertEquals(WordTokens.count(text), spoken.words.size)
         assertTrue("the silent unit's words sit at its place", spoken.words.take(7).all { it.start == 0L && it.end == 0L })

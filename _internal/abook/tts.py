@@ -617,7 +617,8 @@ def keep_vieneu_final_mark() -> None:
     def phonemize(text: str, punc_norm: bool = True) -> str:
         from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import (
-            emphasize_english_interjections, remembered_case, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
+            emphasize_english_interjections, remembered_case, remembered_rulings, repair_syllabic_gi, repair_syllabic_o,
+            restore_vietnamese,
         )
 
         def plain(value: str, final: bool) -> str:
@@ -625,7 +626,7 @@ def keep_vieneu_final_mark() -> None:
             out = restore_vietnamese(
                 value, original_phonemize(value, final),
                 lambda: phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final),
-                phonemize_text._get_g2p().convert, remembered_case(),
+                phonemize_text._get_g2p().convert, remembered_case(), remembered_rulings(),
             )
             if final and out.endswith(".") and ("?" in value or "!" in value):
                 written = original_phonemize(value, False).rstrip()
@@ -705,7 +706,8 @@ class VieNeuEngine(EngineAdapter):
 
             materialized = _row_value(row, "_materialized_spoken", None)
             inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
-            with sentence_case(inference_text):
+            # The capital rule reads the line as WRITTEN (the text layer lower-cases shouting); the book's second-tier rulings ride along.
+            with sentence_case(inference_text, _row_value(row, "_source_text", None), _row_value(row, "_shared_rulings", None)):
                 return np.asarray(
                     self.tts.infer(
                         inference_text,
@@ -908,6 +910,7 @@ class TTSCoordinator:
         self._exact_pronunciation_metadata: dict[str, Any] = {}
         self._has_kept_english = False
         self._book_origin: tuple[str | None] | None = None  # gốc cuốn ("ja" / "ko" / None), đoán một lần từ chữ các chương
+        self._shared_rulings: tuple[Any] | None = None  # phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh, đọc một lần
 
     @property
     def vieneu(self) -> EngineAdapter:
@@ -1257,6 +1260,16 @@ class TTSCoordinator:
             return True
         return bool(self.engine_for_profile(self._voice_profile_for_row(row)).speaks_english)
 
+    def shared_rulings(self) -> Any:
+        """The book's second-tier rulings on words that are both Vietnamese and English (readaloud/shared_rulings.py), read once;
+        None when the project has none - the table alone decides."""
+        if self._shared_rulings is None:
+            from .readaloud.shared_rulings import load
+
+            path = getattr(self.db, "path", None)
+            self._shared_rulings = (load(Path(path).parent) if path else None,)
+        return self._shared_rulings[0]
+
     def spoken_text_with_anchors(
         self,
         row: Any,
@@ -1426,6 +1439,9 @@ class TTSCoordinator:
         result["_materialized_spoken"] = (
             str(pronunciation_delivery_variant).strip().casefold(), text, anchors,
         )
+        # the line as written; a row that was already materialized keeps the one it has (its "text" is the spoken text by now)
+        result["_source_text"] = str(_row_value(row, "_source_text", None) or _row_value(row, "listener_text", "") or row["text"])
+        result["_shared_rulings"] = self.shared_rulings()
         if self._thought_reads_as_narrator(row):
             narrator_profile = self.db.voice_profile_by_key("narrator")
             result["speaker"] = "NARRATOR"

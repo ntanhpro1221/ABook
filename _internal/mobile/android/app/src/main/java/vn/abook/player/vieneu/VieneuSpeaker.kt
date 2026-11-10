@@ -115,8 +115,8 @@ class TurboTier(private val engine: VieneuTurbo, private val tokenizer: ByteBpe,
  * ([SyllableSpread], like FPT.AI / Viettel AI).
  */
 class VieneuSpeaker(
-    /** Sentences of one unit -> phonemes ([SeaG2p.phonemize]). */
-    private val phonemize: (List<String>) -> String,
+    /** Sentences of one unit, the unit as written, the book's rulings on shared words -> phonemes ([SeaG2p.phonemize]). */
+    private val phonemize: (List<String>, String?, PhonemePolicy.Rulings?) -> String,
 ) {
     class Spoken(val samples: FloatArray, val rate: Int, val durationMs: Long, val words: List<Span>, val spans: List<IntArray>)
 
@@ -126,11 +126,12 @@ class VieneuSpeaker(
         val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin, readings, directEnglish = true)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
+        val rulings = (readings as? vn.abook.player.readaloud.BookReadings)?.rulings // a book made in Studio brings its second-tier answers
         for (unit in units) {
             ClipBudget.stopIfCancelled() // a cancelled read stops between chunks (the engines also check between their steps)
             val delivery = vn.abook.player.readaloud.JapaneseDelivery
             val groups = delivery.groups(unit.text(tokens).split(" "), origin, readings)
-            val phonemes = phonemize(unit.pieces.map { delivery.mark(it, groups) })
+            val phonemes = phonemize(unit.pieces.map { delivery.mark(it, groups) }, unit.text(tokens), rulings)
             val audio = if (phonemes.isEmpty()) FloatArray(0) else tierEngine.infer(phonemes, preset, seedOf(tier, name, unit.pieces.joinToString(" ")))
             waves.add(audio)
             pauses.add(VieneuAudio.gapAfter(phonemes))

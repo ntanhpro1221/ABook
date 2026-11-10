@@ -228,6 +228,33 @@ def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log
         raise failure
 
 
+def run_shared_rulings_after_analysis(root: Path, db: ProjectDB, tts: Any, base_url: str, stop_requested: Any, log: Any, emit: Any, *,
+                                      pause_requested: Any, model: str | None = None) -> None:
+    """Sau pha phân tích, tầng hai của chữ trùng Việt / Anh và gốc từng tên (readaloud/shared_rulings.py): chính model phân tích của dự án
+    (`model`) phán những chỗ bảng điểm còn nghi ngờ và gốc các tên trong sổ nhân vật, ghi `shared_rulings.json` cạnh sổ dự án. Chữ đem hỏi
+    là đúng chuỗi máy đọc sẽ nhận (`tts.spoken_text`), nên khoá ngữ cảnh khớp lúc thu. Không model, lỗi: bỏ qua, bảng điểm tự quyết như trước."""
+    from .readaloud import shared_rulings
+    from .studio_names import book_origin_for_project
+
+    model = model or shared_rulings.MODEL
+    if shared_rulings.model_digest(base_url, model) is None:
+        return
+    rows = [row for row in db.list_segments() if str(row["status"]) != "pending"]
+
+    def stretches() -> Any:
+        for row in rows:
+            yield str(row["listener_text"] or row["text"]), tts.spoken_text(row)
+
+    roster = [str(row["display_name"]) for row in db.list_characters()]
+    try:
+        counts = shared_rulings.compute(root, stretches(), roster, base_url, book_origin=book_origin_for_project(db), model=model,
+                                        stop_requested=stop_requested, pause_requested=pause_requested, log=log)
+        emit("shared_rulings_done", counts)
+    finally:
+        tts._shared_rulings = None  # lượt thu đọc lại file vừa ghi
+        shared_rulings.release(base_url, model)
+
+
 def _emit_pipeline_result(message_queue: Queue, db: ProjectDB) -> None:
     book = db.book()
     if str(book["status"]) == BookStatus.ERROR.value:
@@ -646,6 +673,12 @@ def run_worker(
 
         def music_moods_after_analysis(base_url: str) -> None:
             apply_teller_voice(paths.root, db, settings, pipeline.log)  # trước nhạc: nhạc có thể bị dừng giữa chừng và không chạy lại
+            try:  # trước nhạc, cùng lý do; lỗi ở đây không chặn nhạc và không làm hỏng pha phân tích
+                run_shared_rulings_after_analysis(paths.root, db, pipeline.tts, base_url, stop_event.is_set, pipeline.log, emit,
+                                                  pause_requested=pause_event.is_set, model=str((settings or {}).get("analysis", {}).get("model", "")))
+            except Exception as exc:  # noqa: BLE001
+                pipeline.log(f"Bỏ qua tầng hai chữ trùng Việt / Anh: {exc}")
+                emit("shared_rulings_skipped", {"reason": str(exc)})
             run_music_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
                                      pause_requested=pause_event.is_set)
 

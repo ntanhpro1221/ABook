@@ -5,9 +5,20 @@ from pathlib import Path
 import pytest
 
 from abook.readaloud import phoneme_policy
-from abook.readaloud.phoneme_policy import capitalised, restore_vietnamese, sentence_case, vietnamese_shared
+from abook.readaloud.phoneme_policy import (Rulings, capitalised, restore_vietnamese, sentence_case, shared_word_scores, shared_word_verdicts,
+                                             vietnamese_shared)
 
 CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/shared_vietnamese/cases.json").read_text("utf8"))["cases"]
+
+
+def rulings_of(case: dict) -> Rulings | None:
+    """The book's second-tier answers a case comes with (`rulings`: contexts {key: "v" / "e"}, names), as shared_rulings.rulings_of reads them."""
+    given = case.get("rulings")
+    return Rulings({key: answer == "v" for key, answer in given.get("contexts", {}).items()}, set(given.get("names", ()))) if given else None
+
+
+def case_id(case: dict) -> str:
+    return case["text"] + (" +rulings" if case.get("rulings") else "")
 
 
 def listed(text: str) -> list[str]:
@@ -47,18 +58,21 @@ def studio(monkeypatch):
     return pt
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda case: case["text"])
+@pytest.mark.parametrize("case", CASES, ids=case_id)
 def test_the_sentence_decides_which_shared_words_are_vietnamese(case):
     words = listed(case["text"].lower())
-    assert [words[i] for i in vietnamese_shared(case["text"].lower(), capitalised(case["text"]))] == case["claimed"]
+    capitals = capitalised(case["text"], case.get("source"))
+    assert [words[i] for i in vietnamese_shared(case["text"].lower(), capitals, rulings_of(case))] == case["claimed"]
+    if "doubtful" in case:  # what tier 1 leaves to the second tier
+        assert [word for word, _, sure, _ in shared_word_verdicts(case["text"].lower(), capitals, rulings_of(case)) if not sure] == case["doubtful"]
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda case: case["text"])
+@pytest.mark.parametrize("case", CASES, ids=case_id)
 def test_both_desktop_frontends_give_the_shared_phonemes(case, studio):
     from abook.readaloud.vieneu_engine import phonemize
 
-    assert phonemize([case["text"]]) == case["phonemes"]
-    with sentence_case(case["text"]):  # as VieNeuEngine.generate_one does around infer
+    assert phonemize([case["text"]], case.get("source"), rulings_of(case)) == case["phonemes"]
+    with sentence_case(case["text"], case.get("source"), rulings_of(case)):  # as VieNeuEngine.generate_one does around infer
         chunks = studio.normalize_to_chunks_v3_with_gaps(case["text"])[0]
         assert " ".join(studio.phonemize_text_with_emotions(chunk) for chunk in chunks) == case["phonemes"]
 
@@ -81,6 +95,44 @@ def test_a_capital_inside_a_sentence_is_a_name_and_the_first_word_is_not():
     assert capitalised("<en>G M</en> nói Go.") == {"m", "go"}
     assert vietnamese_shared("leo lên xe đi.") == [0]
     assert vietnamese_shared("leo lên xe đi.", frozenset({"leo"})) == []
+
+
+def test_a_shouted_word_is_a_name_unless_its_whole_sentence_is_shouted():
+    assert capitalised("Hắn bị admin BAN nick rồi.") == {"ban"}
+    assert capitalised("Cửa hàng ở Lalaport TOKYO BAY.") == {"lalaport", "tokyo", "bay"}
+    assert capitalised("LUNG LAY! LUNG LAY!") == capitalised("“BAY ĐI!” Cô hét.") == capitalised("Hắn hét: BAY ĐI!") == frozenset()
+    # the text layer lower-cases a shouted English word before it is spoken: only the written text can tell
+    assert capitalised("Hắn bị admin ban nick rồi.", "Hắn bị admin BAN nick rồi.") == {"ban"}
+    assert capitalised("LUNG lay! LUNG lay!", "LUNG LAY! LUNG LAY!") == frozenset()
+    assert capitalised("LUNG lay! LUNG lay!") == {"lung"}
+
+
+def test_tier_one_is_sure_outside_the_band_and_the_book_answers_inside():
+    shared = phoneme_policy._shared()
+    assert shared.threshold == 0 and shared.doubt == (-100, 0) and shared.name_doubt == 0 and shared.name_threshold > 100_000
+    text, key = "do trans sắp thi.", "^|do|trans sắp"
+    assert phoneme_policy.shared_word_contexts(text) == [key]
+    assert shared_word_scores(text)[0][1] < shared.doubt[0]  # a short sentence: below the band, in doubt by its shape
+    assert shared_word_verdicts(text) == [("do", False, False, "table")]
+    assert shared_word_verdicts("do you know?") == [("do", False, True, "table")]  # English follows English: sure
+    assert shared_word_verdicts("yuna no đâu.") == [("no", False, True, "table")]  # below the band, no such shape: sure
+    assert shared_word_verdicts(text, rulings=Rulings({key: True})) == [("do", True, True, "ruling")]
+    assert shared_word_verdicts(text, rulings=Rulings({key: False})) == [("do", False, True, "ruling")]
+    assert shared_word_verdicts(text, rulings=Rulings({"another|do|sentence": True})) == [("do", False, False, "table")]
+    # a capital is never Vietnamese at tier 1; it is in doubt only where the same words in prose would be Vietnamese
+    assert shared_word_verdicts("danh hiệu kỵ sĩ tự do.", frozenset({"do"})) == [("do", False, False, "table")]
+    assert shared_word_verdicts("iron man đã đến.", frozenset({"man"})) == [("man", False, True, "table")]
+
+
+def test_a_name_of_the_roster_is_vietnamese_where_it_is_written_as_a_name():
+    names = Rulings(names={"an", "can"})
+    assert shared_word_verdicts("an an.", frozenset({"an"}), names) == [("an", True, True, "roster")] * 2
+    assert shared_word_verdicts("an nói.", rulings=names) == [("an", True, True, "roster")]  # opens the sentence
+    assert shared_word_verdicts("cô hỏi: can đâu rồi?", rulings=names) == [("can", True, True, "roster")]
+    assert shared_word_verdicts("can you help me?", rulings=names)[0] == ("can", False, True, "table")  # an English word follows
+    assert shared_word_verdicts("i can do it.", rulings=names)[0] == ("can", False, True, "table")  # sure English prose stays
+    assert shared_word_verdicts("an an.", frozenset({"an"})) == [("an", False, True, "table")] * 2  # no roster: tier 1 alone
+    assert not Rulings() and Rulings(names={"an"}) and Rulings({"a|an|b": True})
 
 
 def test_the_remembered_case_ends_with_the_utterance():
