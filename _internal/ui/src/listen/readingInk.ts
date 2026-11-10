@@ -1,6 +1,6 @@
 export type InkLine = { left: number; top: number; right: number; bottom: number };
 
-/** A single rounded contour around adjacent lines, matching Compose's ReadInk. */
+/** A single contour with 8 px corners (the control radius) around adjacent lines, matching Compose's ReadInk. */
 export function sentenceOutline(lines: InkLine[], radius = 8): string {
   const solid = lines.filter(r => r.right > r.left && r.bottom > r.top);
   if (!solid.length) return '';
