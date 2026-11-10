@@ -415,7 +415,7 @@ tiếng Việt.
 
 **Thiết kế: chuỗi nói không đổi một byte; chỉ dòng âm vị đổi.** `phoneme_policy.vietnamese_shared` (Python) =
 `PhonemePolicy.vietnameseShared` (Kotlin) quyết định trên khúc đã chuẩn hoá; `restore_vietnamese` / `restoreVietnamese` thực hiện.
-Dữ liệu ở khoá `shared_vietnamese` của `english_policy.json` (version 4), ca chung `tests/fixtures/readaloud/shared_vietnamese/cases.json`.
+Dữ liệu ở khoá `shared_vietnamese` của `english_policy.json` (mốc g2pvi: version 4; phần mở rộng bên dưới: version 5), ca chung `tests/fixtures/readaloud/shared_vietnamese/cases.json`.
 
 - *Thực hiện.* Mỗi từ được chứng minh là Việt bị thay, **chỉ trong đầu vào của G2P**, bằng một từ chung khác không có trong
   câu (`sentinels`: nach, sich, trac). sea-g2p xử cả chuỗi từ chung như một khối nên phép thay không đổi tiếng của từ nào
@@ -463,3 +463,40 @@ Phần còn lại chủ yếu là từ Anh thật và tên (the, kit, on, cup, "
 Anh mà không thuộc `before_english` ("có **in** logo"); câu không có bằng chứng nào ("“**An** An.”"). Chiều ngược lại đã biết: tên
 đứng đầu câu trùng một từ `strong` bị đọc kiểu Việt khi theo sau là tên lạ ("**Do** Cheol-ho nói" đầu câu), và 1 / 150 ca đổi soát
 mắt ở bộ thiết kế ("Reconguista **in** G"). Câu hoàn toàn không dấu ("Simon quay sang Stephanie.") giữ nguyên đáp án của sea-g2p.
+
+### Mở rộng cặp ghép sau g2pvi (10-11)
+
+Khai thác cả 227 từ chung khác âm trên phần kho đã lộ (hash dư 1), chỉ lấy cặp liền nhau với một thành viên chỉ-Việt trong
+từ điển: 22.856 cặp, 7.590 cặp có ít nhất 3 lần ở ít nhất 2 bộ. Soát 145 ứng viên từ ghép/láy bằng văn bản, nhận 143 cặp
+có 100% nhãn Việt trong tối đa 5 ngữ cảnh/cặp; loại cặp có tên hoặc văn bản chưa rõ. Cộng 3 cặp cũ thành 146 cặp.
+Tiêu chí, giới hạn nhãn và bảng tần suất: [SHARED_VIETNAMESE_PAIRS.md](SHARED_VIETNAMESE_PAIRS.md).
+
+- `pairs` chứng minh cặp như "ôi chao", "le lưỡi", "the thé", "in ấn", "bình an", "do dự"; `the` chỉ được nhận trong
+  "the thé". Không đổi chữ Hoa giữa câu hoặc từ trong/kề thẻ Anh; không ghép qua dấu câu.
+- `pair_words` chỉ gồm từ thuộc bảng chung, không đưa thành viên chỉ-Việt vào phép thay. `pair_only_words` giữ phân loại
+  ngữ cảnh cũ cho các từ mới khi chưa được chứng minh bằng cặp, để không gây tác dụng phụ trên "thin man".
+- Chỉ nhận "do trans" ở đầu mệnh đề khi ngay sau `trans` là một chữ Việt có dấu, và `in logo` khi trước `in` là chữ Việt
+  đã được chứng minh. Không mở rộng tùy ý sang "So cute quá", "Do exercise đi" hoặc mọi cặp `in` + Anh.
+- Policy/cache 4 -> 5 (`direct-en5`), phiên bản app giữ nguyên. Bảy khoá clip fixture được sinh lại. Không migrate dữ liệu.
+
+Luật đóng băng ở `3da9d086b` trước khi rút bộ thứ ba; commit cache `493ed6ceb` chỉ đổi version và khoá, không đổi quyết định.
+Bộ thứ ba lấy hash tên bộ dư 2 (truyen/sang-tac modulo 12, ai-dich modulo 30); bỏ merged vì hai phần modulo 2 đã dùng hết.
+587 bộ, 9.990 chương, 32.170.158 chữ, rút 350 ca bằng chính extract2/sample2. Không có tên bộ trùng với hai pool cũ trong
+các reservoir. Nhãn gán từ văn bản trước khi chạy âm vị, chốt hash nhãn và không sửa luật sau khi xem kết quả. Nhãn do model
+gán, chủ sách chưa chấm. Mốc trước của bảng này là `3644901a5`, khác mốc trước của bảng g2pvi phía trên.
+
+| Bộ | Việt đọc Anh trước -> sau | Anh thật đọc Anh trước -> sau | Tên/romaji/tiếng động đọc Anh |
+|---|---|---|---|
+| Thiết kế | 1 -> 0 / 68 | 66 -> 66 / 68 | 9 -> 9 / 15 |
+| Giữ lại mới của g2pvi | 6 -> 2 / 144 | 89 -> 89 / 98 | 37 -> 37 / 53 |
+| Giữ lại thứ ba | 14 -> 13 / 121 | 111 -> 111 / 115 | 36 -> 36 / 67 |
+
+Không có ca Anh thật hoặc tên/romaji mới bị kéo sang Việt trên ba bộ. Mục tiêu 0 lỗi Việt **chưa đạt**: hai ca của bộ 144 là
+"Ban" Hoa giữa câu và "An An" đứng riêng, giữ nguyên theo ràng buộc. Bộ thứ ba còn `so vs` (4 ca), `so` trước tên, `day trán`,
+`tan chocolate`, `robot bay`, `An` Hoa giữa câu, `may` cuối mệnh đề, `Bang Texas`, và hai ca đã bị luật chữ cũ bọc `<en>`
+(`met`, `hi vọng`); sửa chúng cần thí nghiệm tiếp, không được điều chỉnh theo bộ mù này.
+
+Chuỗi nói và chuỗi chuẩn hoá trùng từng byte trên 1.310 cửa sổ và 12 câu nghe. Cùng script latency cũ, 2.294 câu/5 lượt CPU:
+best 1,161 -> 1,068 ms/câu; median 1,258 -> 1,275 ms/câu (+1,4%), dưới trần +20%. Không suy mức giảm best thành tăng tốc chắc
+chắn vì máy có tải nền. Ước lượng có trọng số (lần đọc Anh, gồm cả Anh/tên thật, không phải số lỗi): pool cũ 4.313 -> 4.290;
+pool g2pvi dư 1: 3.768 -> 3.722; pool thứ ba: 11.197 -> 11.149. Không cộng ba pool hay so tỷ lệ giữa các pool để suy hiệu quả.

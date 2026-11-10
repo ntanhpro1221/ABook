@@ -252,6 +252,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   câu và từ trong/kề `<en>` không bao giờ đổi. Studio chỉ thấy khúc chữ thường nên `generate_one` phải bọc `infer` trong `sentence_case`.
   Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python. Cả chuỗi đầy đủ và tiền tố dùng để
   xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
+  Cặp ghép được khai thác từ kho chỉ là dữ liệu `pairs`; chỉ thành viên từ điển chung trong `pair_words` được thay âm.
+  Từ mới trong `pair_only_words` giữ phân loại ngữ cảnh Anh khi chưa có cặp chứng minh, tránh kéo "thin man" sang Việt.
+  Tiêu chí chọn, nhãn và tần suất tổng hợp: `docs/SHARED_VIETNAMESE_PAIRS.md`; không đưa cửa sổ truyện vào repo.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
