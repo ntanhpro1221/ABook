@@ -372,14 +372,16 @@ def design_lint_report() -> dict:
     shots = design_lint.collect(android, design_lint.QT_SHOTS, Path(web_dir) if web_dir else None)
     require(bool(shots), "design-lint: không có ảnh Android/Qt để đo")
     report = design_lint.run(shots, design_lint.load_groups(), design_lint.load_exceptions())
-    red = sum(report["red_images"].values())
+    red = len({f["image"] for f in report["findings"]})   # ảnh khác nhau có ít nhất một luật đỏ
+    cells = sum(report["red_images"].values())             # cặp ảnh x luật
     problems = list(report["errors"])
     missing = sum(v["images"] - v["sidecars"] for v in report["tree_coverage"].values())
     if DESIGN_LINT_BLOCKS and (missing or not all(report["platforms"][p] for p in ("android", "qt", "web"))):
         problems.append(f"thiếu cây UI {missing} ảnh hoặc thiếu nền tảng Android/Qt/web")
     if DESIGN_LINT_BLOCKS and (red or report["stale_exceptions"]):
         problems.append(f"{red} ảnh đỏ, {len(report['stale_exceptions'])} ngoại lệ thừa")
-    counts = {"images": report["images"], "trees": report["trees"], "red": red, "waived": report["waived"]}
+    counts = {"images": report["images"], "trees": report["trees"], "red": red, "red_cells": cells,
+              "waived": report["waived"]}
     counts["unmeasured_trees"] = missing
     counts.update({rule.lower(): number for rule, number in report["red_images"].items()})
     return {"counts": counts, "status": "FAIL" if problems else "PASS", "mode": "block" if DESIGN_LINT_BLOCKS else "report",
@@ -387,7 +389,7 @@ def design_lint_report() -> dict:
             "tree_coverage": report["tree_coverage"],
             "stale_exceptions": report["stale_exceptions"], "errors": report["errors"],
             "detail": "design-lint: " + ("; ".join(problems) if problems else
-                                         f"{red} ảnh đỏ (chế độ {'chặn' if DESIGN_LINT_BLOCKS else 'báo cáo'})")}
+                                         f"{red} ảnh đỏ, {cells} ô ảnh x luật (chế độ {'chặn' if DESIGN_LINT_BLOCKS else 'báo cáo'})")}
 
 
 def load_module(path: Path, name: str):
