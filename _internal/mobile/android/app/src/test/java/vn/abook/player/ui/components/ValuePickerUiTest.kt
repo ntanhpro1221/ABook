@@ -40,22 +40,36 @@ class ValuePickerUiTest {
                 }
             }
         }
-        for (fontScale in listOf(1f, 1.3f)) for ((name, spec) in ValueSpecs.all) {
-            rule.runOnIdle { selected.value = spec; scale.value = fontScale; dense.value = false; value.value = spec.min }
+        for (fontScale in listOf(1f, 1.3f)) for ((name, spec) in ValueSpecs.all) for (compact in listOf(false, true)) {
+            rule.runOnIdle { selected.value = spec; scale.value = fontScale; dense.value = compact; value.value = spec.min }
             rule.waitForIdle()
+            val ruler = rule.onNodeWithTag("probe_ruler").fetchSemanticsNode().boundsInRoot
+            val ticks = spec.typical.indices.mapNotNull { i ->
+                rule.onAllNodesWithTag("probe_tick_$i", useUnmergedTree = true).fetchSemanticsNodes().singleOrNull()?.boundsInRoot
+            }
+            val labels = spec.typical.indices.map { i -> rule.onNodeWithTag("probe_label_$i", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+            fun check(captions: List<androidx.compose.ui.geometry.Rect>) {
+                assertTrue("$name: count", ticks.isEmpty() || ticks.size == captions.size)
+                captions.forEachIndexed { i, label ->
+                    assertTrue("$name label under a step button", label.left >= ruler.left - 1 && label.right <= ruler.right + 1)
+                    if (ticks.isNotEmpty()) assertEquals("$name $fontScale dense=$compact caption $i", ticks[i].center.x.toDouble(), label.center.x.toDouble(), 2.0)
+                }
+            }
+            check(labels)
+            // Prove the same rendered-layout check rejects the original spread-across-buttons regression.
+            if (ticks.isNotEmpty()) {
+                val broken = labels.mapIndexed { i, r -> if (i == 0) r.translate(9f, 0f) else r }
+                assertThrows(AssertionError::class.java) { check(broken) }
+                val missing = labels.dropLast(1)
+                assertThrows(AssertionError::class.java) { check(missing) }
+            }
             val bounds = spec.typical.map { rule.onNodeWithTag("probe_chip_${ValuePickerLogic.format(spec, it)}").getUnclippedBoundsInRoot() }
             val rows = bounds.groupBy { it.top.value.toInt() }
-            if (fontScale == 1f) assertEquals("$name at 360dp", 1, rows.size)
             assertTrue("$name at $fontScale: orphan", rows.values.none { it.size == 1 })
-            rule.runOnIdle { dense.value = true }
-            rule.waitForIdle()
-            val ruler = rule.onNodeWithTag("probe_ruler").getUnclippedBoundsInRoot()
             for (typical in spec.typical) {
                 val tag = "probe_chip_${ValuePickerLogic.format(spec, typical)}"
-                val tick = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-                val expected = ruler.left.value + 8 + ValuePickerLogic.toFraction(spec, typical) * (ruler.right.value - ruler.left.value - 16)
-                assertEquals("$name tick centre", expected, (tick.left.value + tick.right.value) / 2.0, 0.6)
-                assertTrue("$name touch target", tick.right - tick.left >= 48.dp && tick.bottom - tick.top >= 48.dp)
+                val chip = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+                assertTrue("$name touch target", chip.right - chip.left >= 48.dp && chip.bottom - chip.top >= 48.dp)
                 rule.onNodeWithTag(tag).performClick()
                 rule.runOnIdle { assertEquals(typical, value.value, 0.0) }
             }

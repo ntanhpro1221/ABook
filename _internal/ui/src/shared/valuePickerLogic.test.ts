@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  PAGE_STEPS, SNAP_STEPS, VALUE_SPECS, chipRows, chipIndex, clampValue, formatNumber, fromFraction, isDetent, parseValue, stepValue, toFraction,
+  PAGE_STEPS, SNAP_STEPS, VALUE_SPECS, chipRows, chipIndex, tickLabels, clampValue, formatNumber, fromFraction, isDetent, parseValue, stepValue, toFraction,
   type ValueSpec,
 } from "./valuePickerLogic";
 
@@ -13,11 +13,20 @@ const fixture = JSON.parse(readFileSync(new URL("../../../tests/fixtures/value_p
   specs: Record<string, ValueSpec>;
   cases: Case[];
   chipRows: {widths: number[]; available: number; gap: number; out: number[]}[];
+  tickLabels: {fractions: number[]; widths: number[]; total: number; minInset: number; gap: number; inset: number; aligned: boolean}[];
 };
 
 describe("bộ chọn giá trị: hợp đồng chung", () => {
   it("balances overflowing rows and never leaves an orphan", () => {
     for (const c of fixture.chipRows) expect(chipRows(c.widths, c.available, c.gap).map(row => row.length)).toEqual(c.out);
+  });
+
+  it("centres each label under its detent, or drops the detents", () => {
+    for (const c of fixture.tickLabels) {
+      const plan = tickLabels(c.fractions, c.widths, c.total, c.minInset, c.gap);
+      expect(plan.inset).toBeCloseTo(c.inset, 9);
+      expect(plan.aligned, JSON.stringify(c.fractions)).toBe(c.aligned);
+    }
   });
 
   it("inverts every step and spaces wide-domain detents by at least 24dp at 360dp", () => {

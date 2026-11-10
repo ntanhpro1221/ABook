@@ -15,7 +15,7 @@ var PAGE_STEPS = 10
 var SPECS = {
     sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 15, 30, 45, 60, 90] },
     sleepChapters: { min: 1, max: 10, step: 1, typical: [1, 2, 3] },
-    speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.6, 1.5], [1, 3]] },
+    speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.12, 0.8], [0.3, 1], [0.48, 1.25], [0.66, 1.5], [0.84, 2], [1, 3]] },
     readSize: { min: 12, max: 40, step: 1, typical: [16, 18, 20, 22, 24] },
     readLeading: { min: 1.2, max: 2.4, step: 0.05, typical: [1.5, 1.7, 1.9] },
     sleepFadeSeconds: { min: 5, max: 120, step: 5, typical: [10, 30, 60] },
@@ -69,6 +69,38 @@ function scaleOf(spec) {
         return [[0, spec.min]].concat(inner.map(function(v, i) { return [first + (0.9 - first) * i / Math.max(1, inner.length - 1), v] }), [[1, spec.max]])
     }
     return spec.scale || [[0, spec.min], [1, spec.max]]
+}
+
+// Labels under the ruler are captions of its detents: label i is centred on detent i, so the track inset grows until
+// every label stays inside the ruler (never under the -/+ buttons). `aligned` false = the labels cannot sit under their
+// detents without touching (`gap`) - then the ruler draws no detents and the labels fall back to rows.
+function tickLabels(fractions, widths, total, minInset, gap) {
+    var EPSILON = 1e-6
+    var inset = minInset
+    for (var i = 0; i < fractions.length; i++) {
+        var f = fractions[i], half = widths[i] / 2
+        if (f < 0.5) inset = Math.max(inset, (half - f * total) / (1 - 2 * f))
+        if (f > 0.5) inset = Math.max(inset, (half - (1 - f) * total) / (2 * f - 1))
+    }
+    var width = total - 2 * inset
+    var aligned = width > 0
+    for (var j = 0; j < fractions.length; j++) {
+        var c = inset + fractions[j] * width
+        if (c - widths[j] / 2 < -EPSILON || c + widths[j] / 2 > total + EPSILON) aligned = false
+        if (j > 0 && c - (inset + fractions[j - 1] * width) + EPSILON < (widths[j] + widths[j - 1]) / 2 + gap) aligned = false
+    }
+    return { inset: inset, aligned: aligned }
+}
+
+// Narrowest ruler whose labels still sit under their detents (hosts size popovers with it); 0 when nothing fits below 2000.
+function minAlignedWidth(fractions, widths, minInset, gap) {
+    if (!tickLabels(fractions, widths, 2000, minInset, gap).aligned) return 0
+    var lo = 0, hi = 2000
+    while (hi - lo > 0.5) {
+        var mid = (lo + hi) / 2
+        if (tickLabels(fractions, widths, mid, minInset, gap).aligned) hi = mid; else lo = mid
+    }
+    return Math.ceil(hi)
 }
 
 function chipRows(widths, available, gap) {

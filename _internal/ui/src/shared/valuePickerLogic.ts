@@ -21,7 +21,7 @@ export const PAGE_STEPS = 10;
 export const VALUE_SPECS = {
   sleepMinutes: { min: 1, max: 240, step: 1, typical: [5, 15, 30, 45, 60, 90] },
   sleepChapters: { min: 1, max: 10, step: 1, typical: [1, 2, 3] },
-  speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.6, 1.5], [1, 3]] },
+  speed: { min: 0.5, max: 3, step: 0.05, typical: [0.8, 1, 1.25, 1.5, 2], scale: [[0, 0.5], [0.12, 0.8], [0.3, 1], [0.48, 1.25], [0.66, 1.5], [0.84, 2], [1, 3]] },
   readSize: { min: 12, max: 40, step: 1, typical: [16, 18, 20, 22, 24] },
   readLeading: { min: 1.2, max: 2.4, step: 0.05, typical: [1.5, 1.7, 1.9] },
   sleepFadeSeconds: { min: 5, max: 120, step: 5, typical: [10, 30, 60] },
@@ -85,6 +85,29 @@ export function chipRows(widths: readonly number[], available: number, gap: numb
     if (groups.every(group => group.reduce((sum, i) => sum + widths[i], 0) + gap * (group.length - 1) <= available)) return groups;
   }
   return widths.map((_, i) => [i]);
+}
+
+/** Where the ruler's track starts (px from each end) and whether the labels sit under their detents. */
+export type TickLabels = { inset: number; aligned: boolean };
+
+/**
+ * Labels under the ruler are captions of its detents: label i is centred on detent i, so the track inset grows until
+ * every label stays inside the ruler (never under the -/+ buttons). `aligned` false = the labels cannot sit under their
+ * detents without touching (`gap`) - then the ruler draws no detents and the labels fall back to rows.
+ */
+export function tickLabels(fractions: readonly number[], widths: readonly number[], total: number, minInset: number, gap: number): TickLabels {
+  const EPSILON = 1e-6;
+  let inset = minInset;
+  fractions.forEach((f, i) => {
+    const half = widths[i] / 2;
+    if (f < 0.5) inset = Math.max(inset, (half - f * total) / (1 - 2 * f));
+    if (f > 0.5) inset = Math.max(inset, (half - (1 - f) * total) / (2 * f - 1));
+  });
+  const width = total - 2 * inset;
+  const centres = fractions.map(f => inset + f * width);
+  const inside = centres.every((c, i) => c - widths[i] / 2 >= -EPSILON && c + widths[i] / 2 <= total + EPSILON);
+  const apart = centres.every((c, i) => i === 0 || c - centres[i - 1] + EPSILON >= (widths[i] + widths[i - 1]) / 2 + gap);
+  return { inset, aligned: width > 0 && inside && apart };
 }
 
 /** Giá trị thô (chưa về lưới) ở vị trí `fraction` của thước. */

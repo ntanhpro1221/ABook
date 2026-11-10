@@ -277,7 +277,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
      biểu, kéo qua thì hút nhẹ (rộng 0,75 bước, không nuốt bước kề) + tiếng / rung `tick`; thang có thể không đều (hẹn
      giờ: phần chính của thước dành cho các mốc hay dùng; xem quy tắc ValuePicker 10-11 dưới đây). −/+ đổi đúng một bước, giữ để lặp (chờ 400 ms, rồi mỗi 80 ms). Bàn phím / TalkBack:
      mũi tên một bước, PageUp/PageDown mười bước, Home/End hai đầu;
-  3. **hàng chip giá trị tiêu biểu** (một chạm), chip trùng giá trị hiện tại chữ hổ phách đậm; giá trị chưa phải lựa chọn
+  3. **hàng nhãn giá trị tiêu biểu** (một chạm): tâm mỗi nhãn nằm dưới đúng một vạch (sai số ≤2 px), kể cả mốc ở
+     hai đầu rãnh. Số nhãn bằng số vạch; chữ ở trong vùng giữa hai nút −/+, không lấn dưới nút. Đo chữ thật ở cả
+     trạng thái đậm và cỡ chữ hiện hành; không đủ chỗ thì bỏ toàn bộ vạch và chia nhãn thành hàng cân bằng trong vùng ấy.
+     Chip trùng giá trị hiện tại chữ hổ phách đậm; giá trị chưa phải lựa chọn
      đang áp (hẹn giờ đang "Hết chương") thì không chip nào sáng;
   4. **lựa chọn đặc biệt không phải số** ("Hết chương này" / "Hết N chương" với −/+ chọn N 1-10) là hàng riêng dưới cùng.
   Đổi là áp ngay (thả tay, chạm chip, −/+, Enter); bảng chứa nó không tự đóng (kéo thước cần bảng đứng yên); khi kéo, chữ

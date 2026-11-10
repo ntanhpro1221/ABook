@@ -29,13 +29,18 @@ data class ValueSpec(
 
 data class Parsed(val value: Double, val clamped: Boolean)
 
+/** Where the ruler's track starts (px from each end) and whether the labels sit under their detents. */
+data class TickLabels(val inset: Double, val aligned: Boolean) {
+    fun centre(fraction: Double, total: Double): Double = inset + fraction * (total - 2 * inset)
+}
+
 object ValueSpecs {
     private fun spec(min: Number, max: Number, step: Number, typical: List<Number>, scale: List<Pair<Number, Number>> = emptyList()) =
         ValueSpec(min.toDouble(), max.toDouble(), step.toDouble(), typical.map { it.toDouble() }, scale.map { it.first.toDouble() to it.second.toDouble() })
 
     val sleepMinutes = spec(1, 240, 1, listOf(5, 15, 30, 45, 60, 90))
     val sleepChapters = spec(1, 10, 1, listOf(1, 2, 3))
-    val speed = spec(0.5, 3, 0.05, listOf(0.8, 1, 1.25, 1.5, 2), listOf(0 to 0.5, 0.6 to 1.5, 1 to 3))
+    val speed = spec(0.5, 3, 0.05, listOf(0.8, 1, 1.25, 1.5, 2), listOf(0 to 0.5, 0.12 to 0.8, 0.3 to 1, 0.48 to 1.25, 0.66 to 1.5, 0.84 to 2, 1 to 3))
     val readSize = spec(12, 40, 1, listOf(16, 18, 20, 22, 24))
     val readLeading = spec(1.2, 2.4, 0.05, listOf(1.5, 1.7, 1.9))
     val sleepFadeSeconds = spec(5, 120, 5, listOf(10, 30, 60))
@@ -114,6 +119,27 @@ object ValuePickerLogic {
         }
         return widths.indices.map { it..it }
     }
+
+    /**
+     * Labels under the ruler are captions of its detents: label i is centred on detent i, so the track inset grows
+     * until every label stays inside the ruler (never under the -/+ buttons). `aligned` false = the labels cannot sit
+     * under their detents without touching (gap) - then the ruler draws no detents and the labels fall back to rows.
+     */
+    fun tickLabels(fractions: List<Double>, widths: List<Double>, total: Double, minInset: Double, gap: Double): TickLabels {
+        var inset = minInset
+        for ((f, w) in fractions.zip(widths)) {
+            val half = w / 2
+            if (f < 0.5) inset = maxOf(inset, (half - f * total) / (1 - 2 * f))
+            if (f > 0.5) inset = maxOf(inset, (half - (1 - f) * total) / (2 * f - 1))
+        }
+        val width = total - 2 * inset
+        val centres = fractions.map { inset + it * width }
+        val inside = centres.zip(widths).all { (c, w) -> c - w / 2 >= -EPSILON && c + w / 2 <= total + EPSILON }
+        val apart = centres.indices.drop(1).all { i -> centres[i] - centres[i - 1] + EPSILON >= (widths[i] + widths[i - 1]) / 2 + gap }
+        return TickLabels(inset, width > 0 && inside && apart)
+    }
+
+    private const val EPSILON = 1e-6
 
     /** Giá trị thô (chưa về lưới) ở vị trí `fraction` của thước. */
     fun rawAt(spec: ValueSpec, fraction: Double): Double {

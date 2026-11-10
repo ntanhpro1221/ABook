@@ -7,4 +7,20 @@ button{min-width:48px;height:48px;border:0;background:none;color:#222;font:inher
 <div id="balanced" data-value-picker><div data-value-chips><div data-value-chip-row><button data-value-chip>5</button><button data-value-chip>15</button><button data-value-chip>30</button></div><div data-value-chip-row><button data-value-chip>45</button><button data-value-chip>60</button><button data-value-chip>90</button></div></div></div>
 <div id="orphan" data-value-picker><div data-value-chips><div data-value-chip-row><button data-value-chip>5</button><button data-value-chip>15</button><button data-value-chip>30</button><button data-value-chip>45</button><button data-value-chip>60</button></div><div data-value-chip-row><button data-value-chip>90</button></div></div></div>
 <div id="unit" data-value-picker><div data-value-chips><div data-value-chip-row><button data-value-chip>15 phút</button><button data-value-chip>30</button></div></div></div>
+<div id="aligned" data-value-picker><div data-value-ruler style="position:relative;width:216px;height:80px">
+<i data-value-detent style="position:absolute;left:9px;top:15px;width:2px;height:12px"></i><i data-value-detent style="position:absolute;left:199px;top:15px;width:2px;height:12px"></i>
+<button data-value-chip data-value-tick-label style="position:absolute;left:-14px;top:30px"><span data-value-label>5</span></button><button data-value-chip data-value-tick-label style="position:absolute;left:176px;top:30px"><span data-value-label>90</span></button>
+</div></div>
+<div id="shifted" data-value-picker><div data-value-ruler style="position:relative;width:216px;height:80px">
+<i data-value-detent style="position:absolute;left:9px;top:15px;width:2px;height:12px"></i><i data-value-detent style="position:absolute;left:199px;top:15px;width:2px;height:12px"></i>
+<button data-value-chip data-value-tick-label style="position:absolute;left:-14px;top:30px"><span data-value-label style="display:inline-block;transform:translateX(9px)">5</span></button><button data-value-chip data-value-tick-label style="position:absolute;left:176px;top:30px"><span data-value-label>90</span></button>
+</div></div>
+<div id="missing" data-value-picker><div data-value-ruler style="position:relative;width:216px;height:80px">
+<i data-value-detent style="position:absolute;left:199px;top:15px;width:2px;height:12px"></i>
+<button data-value-chip data-value-tick-label style="position:absolute;left:-14px;top:30px"><span data-value-label>5</span></button><button data-value-chip data-value-tick-label style="position:absolute;left:176px;top:30px"><span data-value-label>90</span></button>
+</div></div>
+<div id="under-button" data-value-picker><div data-value-ruler style="position:relative;width:216px;height:80px">
+<i data-value-detent style="position:absolute;left:9px;top:15px;width:2px;height:12px"></i><i data-value-detent style="position:absolute;left:199px;top:15px;width:2px;height:12px"></i>
+<button data-value-chip data-value-tick-label style="position:absolute;left:-14px;top:30px"><span data-value-label style="display:inline-block;transform:translateX(-30px)">5</span></button><button data-value-chip data-value-tick-label style="position:absolute;left:176px;top:30px"><span data-value-label>90</span></button>
+</div></div>
 </body></html>

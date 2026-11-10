@@ -5,7 +5,7 @@ import { cn } from "./cn";
 import { feedback } from "./feedback";
 import { MotionPresence } from "./MotionPresence";
 import { announce } from "./ui";
-import { PAGE_STEPS, chipRows, chipIndex, formatNumber, fromFraction, isDetent, parseValue, quantize, stepValue, toFraction, type ValueSpec } from "./valuePickerLogic";
+import { PAGE_STEPS, tickLabels, chipRows, chipIndex, formatNumber, fromFraction, isDetent, parseValue, quantize, stepValue, toFraction, type ValueSpec } from "./valuePickerLogic";
 
 /** Giữ nút -/+: chờ chừng này rồi lặp. */
 const REPEAT_DELAY_MS = 400;
@@ -67,6 +67,29 @@ export function ValuePicker({
   const repeat = useRef<{ timer: ReturnType<typeof setTimeout> | null; pressed: boolean }>({ timer: null, pressed: false });
   const input = useRef<HTMLInputElement>(null);
   const tickGesture = useRef({x: 0, dragged: false});
+  const rulerHost = useRef<HTMLDivElement>(null);
+  const [plan, setPlan] = useState({inset: 8, aligned: false});
+  const labels = spec.typical.map(chipLabel ?? (v => formatNumber(spec, v)));
+  const labelKey = JSON.stringify(labels);
+  useLayoutEffect(() => {
+    const host = rulerHost.current;
+    if (!host) return;
+    const measure = () => {
+      const width = host.getBoundingClientRect().width;
+      if (width <= 0) return;
+      const widths = [...host.querySelectorAll<HTMLElement>("[data-value-label-measure]")].map(node => node.getBoundingClientRect().width);
+      const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const next = tickLabels(spec.typical.map(v => toFraction(spec, v)), widths, width, rem / 2, rem / 4);
+      setPlan(old => old.inset === next.inset && old.aligned === next.aligned ? old : next);
+    };
+    measure();
+    void document.fonts?.ready.then(measure);
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(host);
+    host.querySelectorAll("[data-value-label-measure]").forEach(node => observer.observe(node));
+    return () => observer.disconnect();
+  }, [spec, labelKey, dense]);
 
   useEffect(() => () => {
     if (repeat.current.timer) clearTimeout(repeat.current.timer);
@@ -92,7 +115,7 @@ export function ValuePicker({
   const fractionAt = (clientX: number) => {
     const rect = track.current?.getBoundingClientRect();
     if (!rect || rect.width <= 0) return toFraction(spec, shown);
-    const inset = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) / 2;
+    const inset = plan.inset;
     return (clientX - rect.left - inset) / (rect.width - 2 * inset);
   };
   const drag = (clientX: number) => {
@@ -256,9 +279,11 @@ export function ValuePicker({
           {S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))}
         </p>
       </MotionPresence>
-      <div className="flex items-start gap-1">
+      <div className="flex items-start">
         {stepButton(-1)}
-        <div className={cn("relative min-w-0 flex-1", dense ? "h-14" : "h-12")}><div
+        <div ref={rulerHost} className={cn("relative min-w-0 flex-1", !plan.aligned ? "h-12" : dense ? "h-14" : "h-16")}>
+          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold", dense ? "text-xs" : "text-sm")}>{text}</span>)}
+          <div
           ref={track}
           role="slider"
           tabIndex={disabled ? -1 : 0}
@@ -276,32 +301,32 @@ export function ValuePicker({
           onKeyDown={onKeyDown}
           className="group relative h-12 w-full cursor-pointer touch-none select-none rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
-          <span aria-hidden className="absolute inset-x-2 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-line-strong">
+          <span aria-hidden className="absolute top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-line-strong" style={{left: plan.inset, right: plan.inset}}>
             {/* Chỉ transform (không transition bề rộng / vị trí - luật gallery_jank_policy). */}
             <span
               className={cn("absolute inset-0 origin-left rounded-full bg-accent", moving === null && "transition-transform duration-motion-fast")}
               style={{ transform: `scaleX(${fraction})` }}
             />
           </span>
-          {spec.typical.map((typical) => (
+          {plan.aligned && spec.typical.map((typical) => (
             <span
               key={typical}
               aria-hidden
               data-value-detent
               className="pointer-events-none absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fg-2 opacity-60"
-              style={{ left: `calc(0.5rem + (100% - 1rem) * ${toFraction(spec, typical)})` }}
+              style={{ left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})` }}
             />
           ))}
           {/* Lớp rộng đúng bằng thanh, dịch theo phần trăm của chính nó = phần trăm của thanh; núm đứng ở mép trái lớp ấy. */}
           <span
             aria-hidden
-            className={cn("pointer-events-none absolute inset-x-2 inset-y-0", moving === null && "transition-transform duration-motion-fast")}
-            style={{ transform: `translateX(${fraction * 100}%)` }}
+            className={cn("pointer-events-none absolute inset-y-0", moving === null && "transition-transform duration-motion-fast")}
+            style={{ left: plan.inset, right: plan.inset, transform: `translateX(${fraction * 100}%)` }}
           >
             <span className="absolute left-0 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow transition-[scale] duration-motion-fast group-active:scale-125" />
           </span>
         </div>
-        {dense && spec.typical.map((typical, index) => <button
+        {plan.aligned && spec.typical.map((typical, index) => <button
           key={typical} type="button" data-value-chip={typical} data-value-tick-label
           aria-label={format(typical)} aria-pressed={index === selected} disabled={disabled} aria-disabled={busy || undefined}
           onPointerDown={event => {
@@ -329,14 +354,14 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute top-2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 text-xs tabular hover:bg-hover", index === selected ? "font-semibold text-accent-text" : "text-fg-2")}
-          style={{left: `calc(0.5rem + (100% - 1rem) * ${toFraction(spec, typical)})`}}
-        >{formatNumber(spec, typical)}</button>)}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 tabular hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-accent-text" : "text-fg-2")}
+          style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
+        ><span data-value-label>{labels[index]}</span></button>)}
         </div>
         {stepButton(1)}
       </div>
-      {!dense && spec.typical.length > 0 && (
-        <BalancedChips label={label}>
+      {!plan.aligned && spec.typical.length > 0 && (
+        <div className="mx-12"><BalancedChips label={label}>
           {spec.typical.map((typical, index) => (
             <button
               key={typical}
@@ -358,10 +383,10 @@ export function ValuePicker({
                 index === selected ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
-              <span data-value-chip-measure className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
+              <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
             </button>
           ))}
-        </BalancedChips>
+        </BalancedChips></div>
       )}
       {children}
     </div>

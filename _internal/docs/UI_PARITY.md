@@ -746,7 +746,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/RowBoundary.tsx` (1): Hàng danh sách lỗi (`14`)
 - `shared/SettingsNav.tsx` (2): Nhóm cài đặt (`53`); Về Cài đặt (`80`)
 - `shared/ToastDetails.tsx` (1): Chi tiết thông báo (`43`)
-- `shared/ValuePicker.tsx` (1): Chạm để gõ số (`224`)
+- `shared/ValuePicker.tsx` (1): Chạm để gõ số (`247`)
 - `shared/backLayers.ts` (1): Escape (`48`)
 - `shared/diagnostics.ts` (16): Tải sách (`51`); Việc nền (`59`); Việc {} (`60`); Pha: {} (`62`); Bản ABook (`104`); Điện thoại (`108`); Giờ trên máy (`112`); Pin (`116`); Mạng (`120`); Wi-Fi (`123`); Chỗ trống (`126`); Chạy nền (`131`); Cho máy khác nghe thư viện (`147`); Lần tắt gần nhất (`151`); Lần văng (`155`); Phục hồi dữ liệu (`156`)
 - `shared/editsKept.ts` (1): Đã gộp {} sửa từ file (`13`)

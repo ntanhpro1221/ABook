@@ -25,6 +25,17 @@ class ValuePickerLogicTest {
         }
     }
 
+    @Test fun labelsSitUnderTheirDetentsOrTheDetentsGo() {
+        val cases = fixture.getJSONArray("tickLabels")
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val plan = ValuePickerLogic.tickLabels(numbers(c.getJSONArray("fractions")), numbers(c.getJSONArray("widths")),
+                c.getDouble("total"), c.getDouble("minInset"), c.getDouble("gap"))
+            assertEquals("case $i inset", c.getDouble("inset"), plan.inset, 1e-9)
+            assertEquals("case $i aligned", c.getBoolean("aligned"), plan.aligned)
+        }
+    }
+
     @Test fun everyStepInvertsAndWideDetentsHaveRoom() {
         for ((name, spec) in ValueSpecs.all) {
             for (i in 0..Math.round((spec.max - spec.min) / spec.step).toInt()) {

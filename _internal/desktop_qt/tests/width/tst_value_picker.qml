@@ -51,6 +51,11 @@ Item {
 
         function test_balancedRowsAndInverse() {
             for (const c of fixture.chipRows) compare(Logic.chipRows(c.widths, c.available, c.gap).map(row => row.length), c.out)
+            for (const c of fixture.tickLabels) {
+                const plan = Logic.tickLabels(c.fractions, c.widths, c.total, c.minInset, c.gap)
+                fuzzyCompare(plan.inset, c.inset, 1e-9, "tickLabels inset " + JSON.stringify(c.fractions))
+                compare(plan.aligned, c.aligned, "tickLabels aligned " + JSON.stringify(c.fractions))
+            }
             for (const name in Logic.SPECS) {
                 const spec = Logic.SPECS[name]
                 for (let i = 0; i <= Math.round((spec.max - spec.min) / spec.step); i++) {
@@ -62,16 +67,49 @@ Item {
             }
         }
 
+        function captionFaults(control) {
+            const ruler = findChild(control, "valueRuler")
+            let faults = 0
+            for (let i = 0; i < control.spec.typical.length; i++) {
+                const label = findChild(control, "valueLabel_" + i)
+                const tick = findChild(control, "valueTick_" + i)
+                if (!control.labelPlan.aligned) { if (tick) faults++; continue }
+                if (!label || !tick) { faults++; continue }
+                const p = label.mapToItem(ruler, label.width / 2, 0)
+                if (Math.abs(p.x - tick.x - tick.width / 2) > 2) faults++
+                if (p.x - label.width / 2 < -0.01 || p.x + label.width / 2 > ruler.width + 0.01) faults++
+            }
+            return faults
+        }
+
         function test_everyPickerAt360() {
-            for (const fontScale of [1, 1.3]) for (const name in Logic.SPECS) {
+            for (const compact of [false, true]) for (const fontScale of [1, 1.3]) for (const name in Logic.SPECS) {
+                picker.dense = compact
                 picker.spec = Logic.SPECS[name]
                 picker.fontScale = fontScale
                 picker.value = picker.spec.min
                 waitForRendering(picker)
-                const rows = findChild(picker, "valueChips").rows
-                if (fontScale === 1) compare(rows.length, 1, name + " at normal font size")
-                for (const row of rows) verify(row.length > 1, name + " at " + fontScale)
+                compare(captionFaults(picker), 0, name + " captions " + compact + "/" + fontScale)
+                if (!picker.labelPlan.aligned) {
+                    const rows = findChild(picker, "valueChips").rows
+                    for (const row of rows) verify(row.length > 1, name + " at " + fontScale)
+                }
             }
+        }
+
+        function test_captionDetectorRejectsShiftedAndMissingTicks() {
+            verify(waitForRendering(picker))
+            compare(captionFaults(picker), 0)
+            const label = findChild(picker, "valueLabel_0")
+            const oldX = label.x
+            label.x += 9
+            verify(captionFaults(picker) > 0, "a deliberate 9px misalignment must be red")
+            label.x = oldX
+            const tick = findChild(picker, "valueTick_0")
+            tick.objectName = "brokenTick"
+            verify(captionFaults(picker) > 0, "a missing tick must be red")
+            tick.objectName = "valueTick_0"
+            compare(captionFaults(picker), 0)
         }
 
         function test_specialChildrenStackWithoutOverlap() {
@@ -91,7 +129,7 @@ Item {
                 verify(waitForRendering(popover))
                 const control = findChild(popover, data.name)
                 const chips = findChild(control, "valueChips")
-                compare(chips.rows.length, 1, data.name + " in a 360px window")
+                verify(control.labelPlan.aligned || chips.rows.length === 1, data.name + " in a 360px window")
                 verify(control.width >= control.minimumWidth)
                 popover.destroy()
             }
@@ -103,11 +141,10 @@ Item {
                 picker.spec = Logic.SPECS[name]
                 picker.value = picker.spec.min
                 waitForRendering(picker)
-                const ruler = findChild(picker, "valueRuler")
+                compare(captionFaults(picker), 0, name)
                 for (const v of picker.spec.typical) {
                     const chip = findChild(picker, "valueChip_" + Logic.formatNumber(picker.spec, v))
-                    compare(chip.width, 48); compare(chip.height, 48)
-                    fuzzyCompare(chip.x + chip.width / 2, ruler.inset + Logic.toFraction(picker.spec, v) * (ruler.width - 2 * ruler.inset), 0.5)
+                    verify(chip.width >= 48); compare(chip.height, 48)
                     mouseClick(chip, chip.width / 2, chip.height / 2)
                     compare(picker.value, v, name)
                 }

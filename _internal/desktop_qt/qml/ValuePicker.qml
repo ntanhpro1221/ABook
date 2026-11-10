@@ -37,6 +37,10 @@ Column {
     // Hosts can reserve one measured shortcut row before deciding their panel width.
     readonly property real minimumWidth: dense ? 0 : chips.widths.reduce(function(sum, width) { return sum + width }, 0) + Math.max(0, chips.widths.length - 1) * 4
 
+    readonly property var labelWidths: spec.typical.map(function(v) { return labelMetrics.advanceWidth(Logic.formatNumber(root.spec, v)) })
+    readonly property var labelPlan: Logic.tickLabels(spec.typical.map(function(v) { return Logic.toFraction(root.spec, v) }), labelWidths, ruler.width, 8, 4)
+    FontMetrics { id: labelMetrics; font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale; font.weight: 600 }
+
     spacing: dense ? 0 : Theme.s8
     opacity: enabled ? 1 : 0.5
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
@@ -147,7 +151,7 @@ Column {
     // 2. Thước giữa nút - / +.
     Row {
         width: root.width
-        height: root.dense ? 56 : 48
+        height: !root.labelPlan.aligned ? 48 : root.dense ? 56 : 64
         IconButton {
             objectName: "valueDown"
             width: 48; height: 48
@@ -173,7 +177,7 @@ Column {
             width: parent.width - 96
             height: 48
             activeFocusOnTab: root.enabled
-            readonly property real inset: 8
+            readonly property real inset: root.labelPlan.inset
             readonly property real fraction: Logic.toFraction(root.spec, root.shown)
             Accessible.role: Accessible.Slider
             Accessible.name: root.label
@@ -198,9 +202,11 @@ Column {
                 }
             }
             Repeater {
-                model: root.spec.typical
+                model: root.labelPlan.aligned ? root.spec.typical : []
                 Rectangle {
                     required property var modelData
+                    required property int index
+                    objectName: "valueTick_" + index
                     x: ruler.inset + Logic.toFraction(root.spec, modelData) * track.width - width / 2
                     // y theo ruler, không theo parent: lúc tấm bị huỷ, delegate của Repeater mất parent trước (TypeError).
                     y: (ruler.height - height) / 2
@@ -230,14 +236,14 @@ Column {
                 onCanceled: root.moving = null
             }
             Repeater {
-                model: root.dense ? root.spec.typical : []
+                model: root.labelPlan.aligned ? root.spec.typical : []
                 Item {
                     id: tickLabel
                     required property var modelData
                     required property int index
                     objectName: "valueChip_" + Logic.formatNumber(root.spec, modelData)
                     property bool selected: index === root.selectedChip
-                    width: 48; height: 48; y: 8
+                    width: Math.max(48, root.labelWidths[index]); height: 48; y: root.dense ? 8 : 16
                     x: ruler.inset + Logic.toFraction(root.spec, modelData) * track.width - width / 2
                     enabled: root.enabled
                     activeFocusOnTab: root.enabled
@@ -277,11 +283,12 @@ Column {
                         onCanceled: root.moving = null
                     }
                     Text {
+                        objectName: "valueLabel_" + tickLabel.index
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: 22
                         text: Logic.formatNumber(root.spec, tickLabel.modelData)
                         color: tickLabel.selected ? Theme.accentText : Theme.text2
-                        font.pixelSize: Theme.sizeCaption * root.fontScale
+                        font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale
                         font.weight: tickLabel.selected ? 600 : Theme.weightRegular
                     }
                 }
@@ -312,8 +319,9 @@ Column {
     Item {
         id: chips
         objectName: "valueChips"
-        visible: !root.dense && root.spec.typical.length > 0
-        width: root.width
+        visible: !root.labelPlan.aligned && root.spec.typical.length > 0
+        x: 48
+        width: root.width - 96
         readonly property var widths: root.spec.typical.map(function(v) { return Math.max(48, metrics.advanceWidth(Logic.formatNumber(root.spec, v)) + 16) })
         readonly property var rows: Logic.chipRows(widths, width, 4)
         height: visible ? rows.length * 48 : 0

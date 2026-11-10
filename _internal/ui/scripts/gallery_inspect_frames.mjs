@@ -21,13 +21,23 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     }
     const labels = [...picker.querySelectorAll('[data-value-tick-label]')];
     const ticks = [...picker.querySelectorAll('[data-value-detent]')];
-    labels.forEach((label, i) => {
+    if (ticks.length && ticks.length !== picker.querySelectorAll('[data-value-chip]').length)
+      add('PICKER GEOMETRY', picker, picker.textContent, [box], {metric: 'picker-tick-count', reason: 'Every quick value has exactly one detent, including track endpoints'});
+    const ruler = picker.querySelector('[data-value-ruler]')?.getBoundingClientRect();
+    labels.forEach((button, i) => {
+      const label = button.querySelector('[data-value-label]') ?? button;
       const a = label.getBoundingClientRect(), b = ticks[i]?.getBoundingClientRect();
-      if (b && Math.abs(a.x + a.width / 2 - b.x - b.width / 2) > 0.6)
-        add('PICKER GEOMETRY', label, label.textContent, [rect(a), rect(b)], {metric: 'picker-tick-centre', reason: 'Compact labels must be centred directly under their detent'});
-      if (a.width < 48 || a.height < 48)
-        add('PICKER GEOMETRY', label, label.textContent, [rect(a)], {metric: 'picker-tick-target', reason: 'Detent targets must be at least 48px'});
+      if (b && Math.abs(a.x + a.width / 2 - b.x - b.width / 2) > 2)
+        add('PICKER GEOMETRY', label, label.textContent, [rect(a), rect(b)], {metric: 'picker-tick-centre', reason: 'Each label must be centred directly under its detent within 2px'});
+      const target = button.getBoundingClientRect();
+      if (target.width < 48 || target.height < 48)
+        add('PICKER GEOMETRY', button, button.textContent, [rect(target)], {metric: 'picker-tick-target', reason: 'Detent targets must be at least 48px'});
     });
+    for (const label of picker.querySelectorAll('[data-value-label]')) {
+      const a = label.getBoundingClientRect();
+      if (ruler && (a.left < ruler.left - 0.01 || a.right > ruler.right + 0.01))
+        add('PICKER GEOMETRY', label, label.textContent, [rect(a), rect(ruler)], {metric: 'picker-label-bounds', reason: 'Labels stay between the step buttons'});
+    }
   }
   const transparent = value => value === "transparent" || /rgba\([^)]*,\s*0\)$/.test(value);
   // Cùng token cho tiêu đề mục đứng riêng / gập mở, ở mọi frame (kể cả người dùng phóng chữ).
