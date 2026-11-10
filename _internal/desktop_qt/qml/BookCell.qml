@@ -62,7 +62,7 @@ Interactive {
             Behavior on opacity { NumberAnimation { duration: Theme.motionFastOut } }
         }
         Rectangle {          // vạch tiến độ
-            visible: root.progress > 0.005 && root.progress < 0.995
+            visible: root.progress >= Theme.progressFillMin && root.progress < 0.995
             x: 8
             y: parent.height - 11
             width: parent.width - 16

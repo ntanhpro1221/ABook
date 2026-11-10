@@ -134,7 +134,7 @@ Interactive {
     }
     Rectangle {
         objectName: "chapterProgress"
-        visible: root.progress > 0.01 && !root.done
+        visible: root.progress >= Theme.progressFillMin && !root.done
         x: Theme.s12 + 20 + Theme.s12
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 4

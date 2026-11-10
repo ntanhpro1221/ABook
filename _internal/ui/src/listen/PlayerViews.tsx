@@ -50,7 +50,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, progressFill, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/Switch";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
@@ -1449,7 +1449,7 @@ function CompactProgress() {
   const fraction = useClock((time, duration) => (duration > 0 ? Math.min(1, Math.round((time / duration) * 400) / 400) : 0));
   return (
     <div {...heardBarProps(fraction)} aria-label={S.s_da_nghe_chuong_nay_4e1ecf11} aria-valuetext={S.s_da_nghe_0_chuong_474d875d(Math.round(fraction * 100))} className="absolute inset-x-0 top-0 h-[2px] bg-line">
-      <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${fraction * 100 / 100})` }} />
+      <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${progressFill(fraction)})` }} />
     </div>
   );
 }

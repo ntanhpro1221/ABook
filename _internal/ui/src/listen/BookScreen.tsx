@@ -21,7 +21,7 @@ import { useElementWidth } from "@/shared/elementWidth";
 import { useFadeScroller } from "@/shared/scrollFade";
 import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
-import { formatClock, formatLength, formatNumber } from "@/shared/format";
+import { formatClock, formatLength, formatNumber, progressFill } from "@/shared/format";
 import { DialogActions, Select, SelectionMark, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
@@ -202,7 +202,7 @@ const ChapterLine = memo(function ChapterLine({
               <CloudDownload className="size-3" aria-hidden />{S.s_da_lam_san_18d7d0da}</span>
           )}
         </div>
-        {heard > 0 && heard < 1 && (
+        {progressFill(heard) > 0 && heard < 1 && (
           <div {...heardBarProps(heard)} className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
             <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${heard * 100 / 100})` }} />
           </div>

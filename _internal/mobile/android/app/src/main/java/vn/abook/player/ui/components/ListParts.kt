@@ -179,12 +179,13 @@ fun <T : Choice> ChoiceSetting(
 
 /** Nút chữ (DESIGN.md §6 "Nút (c)": màu chữ nhấn), cao 48, mép chữ chạm mép phải của cột. */
 @Composable
-fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd) {
+fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false) {
     Box(
         modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).pressable(onClick = onClick).testTag(tag),
         contentAlignment = align,
     ) {
-        BasicText(label, style = Abook.type.label.copy(color = Abook.colors.accentText))
+        // Xoá / dọn: chữ màu nguy hiểm, không hổ phách như các việc thường cạnh nó (soát 10-11 L13).
+        BasicText(label, style = Abook.type.label.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
     }
 }
 
@@ -358,6 +359,13 @@ fun ListItem(
     }
 }
 
+/** Phần đã tô của một thanh tiến độ: dưới 2 % không vẽ - một gạch hổ phách vài điểm ảnh dưới chữ trông như lỗi (DESIGN.md §6, soát 10-11 L13).
+ *  Cùng ngưỡng với web `PROGRESS_FILL_MIN` và Qt `Theme.progressFillMin`. */
+object ProgressFill {
+    const val MIN = 0.02f
+    fun of(fraction: Float): Float = fraction.coerceIn(0f, 1f).let { if (it < MIN) 0f else it }
+}
+
 /** Thanh tiến độ mảnh dưới một hàng: mốc, không phải phần trăm byte đoán. Giá trị đổi chỉ được đọc trong pha vẽ. */
 @Composable
 fun StageProgress(progress: () -> Float) {
@@ -365,7 +373,7 @@ fun StageProgress(progress: () -> Float) {
     val ink = Abook.colors.accent
     Canvas(Modifier.fillMaxWidth().padding(top = Dim.s8).height(3.dp)) {
         drawRect(track)
-        drawRect(ink, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
+        drawRect(ink, size = size.copy(width = size.width * ProgressFill.of(progress())))
     }
 }
 

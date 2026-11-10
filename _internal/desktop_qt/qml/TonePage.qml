@@ -94,7 +94,7 @@ Column {
                 id: actions; x: 32; width: parent.width - x; spacing: Theme.s24
                 TextLink { accent: true; text: S.s_doi_ten_a2a0dc70; onClicked: root.namePreset("rename",row.preset.id,row.preset.name,false) }
                 TextLink { accent: true; text: S.s_tone_duplicate; onClicked: root.namePreset("duplicate",row.preset.id,root.suggest,false) }
-                TextLink { objectName: row.mine ? "toneDelete" : ""; accent: true; text: S.s_xoa_777195ab; onClicked: root.deleteTone(row.preset.id) }
+                TextLink { objectName: row.mine ? "toneDelete" : ""; danger: true; text: S.s_xoa_777195ab; onClicked: root.deleteTone(row.preset.id) }
             }
         }
         Rectangle { width: parent.width; height: 1; color: Theme.line }

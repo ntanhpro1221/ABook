@@ -19,7 +19,7 @@ import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
-import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
+import { formatLength, formatLengthUp, formatWhen, progressFill } from "@/shared/format";
 import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, SelectionMark, Sheet, Skeleton } from "@/shared/ui";
 import { caughtUpLine, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
@@ -226,7 +226,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
             <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
           )}
         </button>
-        {book.progress.fraction > 0 && !book.progress.finished && (
+        {progressFill(book.progress.fraction) > 0 && !book.progress.finished && (
           // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-control): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
           // của bìa thành khe hở ở mép dưới (chủ sách 25-10).
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-control">

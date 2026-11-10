@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.ConfirmPage
-import vn.abook.player.ui.components.DangerButton
 import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.components.keepUrlTogether
 import vn.abook.player.ui.components.SheetHost
@@ -122,7 +121,8 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
     ConfirmPage(S.s_don_ban_doc_da_lam_ba8c42a3, "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
-        DangerButton(S.s_don_6730827d, onClear, "clear_confirm")
+        // Dọn bản đọc làm lại được: chữ đỏ, không nút tô đỏ cả bề ngang - nút đặc chỉ cho xoá sách (DESIGN.md §6, soát 10-11 L13).
+        QuietButton(S.s_don_6730827d, onClear, "clear_confirm", danger = true)
         Spacer(Modifier.height(Dim.s8))
         QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "clear_cancel")
     }
@@ -132,7 +132,7 @@ private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
 @Composable
 private fun ClearLogsSheet(onClear: () -> Unit, dismiss: () -> Unit) {
     ConfirmPage(S.s_xoa_nhat_ky_c85df7e1, "logs_clear_sheet", listOf(AdvancedCopy.CLEAR_QUESTION), "") {
-        DangerButton(S.s_xoa_777195ab, onClear, "logs_clear_confirm")
+        QuietButton(S.s_xoa_777195ab, onClear, "logs_clear_confirm", danger = true)
         Spacer(Modifier.height(Dim.s8))
         QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "logs_clear_cancel")
     }

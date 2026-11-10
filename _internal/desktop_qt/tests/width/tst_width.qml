@@ -102,6 +102,12 @@ Item {
             tryVerify(function() { return Math.abs(fill.width - row.width) <= 0.5 })
             tryVerify(function() { return Math.abs(progress.width - (row.width - progress.x - Theme.s12) * 0.4) <= 0.5 })
             verify(progress.visible)
+            // Soát 10-11 L13: dưới 2 % không vẽ gạch tiến độ (trông như lỗi dưới tên chương).
+            row.progress = 0.015
+            verify(!progress.visible)
+            row.progress = Theme.progressFillMin
+            verify(progress.visible)
+            row.progress = 0.4
             // Render at the far end of the row, beyond the short title's ink.
             mouseMove(host, 1500, 1000)
             tryCompare(row, "hovered", false)

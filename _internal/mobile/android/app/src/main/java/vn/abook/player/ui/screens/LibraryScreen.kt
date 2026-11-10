@@ -3,6 +3,7 @@ package vn.abook.player.ui.screens
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.components.ProgressFill
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import vn.abook.player.ui.data.CoverArt
@@ -276,7 +277,7 @@ private fun BookTile(
                 CoverChip(single.badge, Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
             }
             val fraction = if (series == null) lead.progress.fraction else 0f
-            if (fraction > 0.005f && fraction < 0.995f) {
+            if (ProgressFill.of(fraction) > 0f && fraction < 0.995f) {
                 val accent = Abook.colors.accent
                 Box(
                     Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).drawBehind {

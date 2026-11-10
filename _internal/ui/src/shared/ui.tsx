@@ -14,7 +14,7 @@ import { MotionPresence } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
-import { clampFraction, percentOf } from "./format";
+import { clampFraction, percentOf, progressFill } from "./format";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -275,7 +275,7 @@ export function Progress({
       ) : (
         <div
           className={cn("motion-progress relative h-full overflow-hidden rounded-full", BAR[tone], running && "sheen")}
-          style={{ transform: `scaleX(${clamped})` }}
+          style={{ transform: `scaleX(${progressFill(clamped)})` }}
         />
       )}
       </MotionRegion>

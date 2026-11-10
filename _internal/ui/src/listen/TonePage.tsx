@@ -15,6 +15,8 @@ import { BUILTIN_TONES, type ToneLibrary } from './tonePresets';
 
 /** Việc chữ của trang (Lưu, Đổi tên, Tạo âm sắc): chữ nhấn, ô chạm 48 - như TextAction của Android, TextLink accent của Qt. */
 const LINK='flex min-h-12 items-center text-sm font-medium text-accent-text hover:underline';
+// Xoá: chữ màu nguy hiểm, không hổ phách như Đổi tên / Nhân bản cạnh nó (soát 10-11 L13).
+const DANGER_LINK='flex min-h-12 items-center text-sm font-medium text-danger hover:underline';
 const BANDS=[S.s_tone_band_0,S.s_tone_band_1,S.s_tone_band_2,S.s_tone_band_3,S.s_tone_band_4];
 const db=(value:number)=>S.s_tone_db(signedNumber(value));
 
@@ -69,7 +71,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     {mine&&<Collapse open={menu===p.id}><div className="flex flex-wrap gap-x-6 pb-1 pl-8">
       <button type="button" className={LINK} onClick={()=>form(p.name,{id:p.id})}>{S.s_doi_ten_a2a0dc70}</button>
       <button type="button" className={LINK} onClick={()=>form(suggest(),{id:p.id,duplicate:true})}>{S.s_tone_duplicate}</button>
-      <button type="button" className={LINK} onClick={()=>remove(p.id)}>{S.s_xoa_777195ab}</button>
+      <button type="button" className={DANGER_LINK} onClick={()=>remove(p.id)}>{S.s_xoa_777195ab}</button>
     </div></Collapse>}
   </div>;};
   return <div ref={page} data-tone-page className="flex min-w-0 flex-col">
