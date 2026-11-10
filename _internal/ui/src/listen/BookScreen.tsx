@@ -1215,7 +1215,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label={S.s_doc_5709880c} aria-label={readLabel === S.s_doc_5709880c ? undefined : readLabel} onClick={read} />}
             <ActionButton icon={Search} label={S.s_tim_bbe47492} aria-label={S.s_tim_chu_trong_sach_7bc2c2ee} disabled={!chapters.length} onClick={() => setFinding(true)} />
             {!textOnly || point ? <ActionButton icon={RotateCcw} label={S.s_tu_dau_89ef6d78} aria-label={S.s_nghe_lai_tu_dau_e251d632} disabled={!(started && point && !finished)} onClick={restart} /> : null}
-            {moreMenu && <ActionMenu title={S.s_viec_voi_sach_9582a854} trigger={<ActionButton icon={MoreHorizontal} label={<span aria-hidden className="inline-block h-3" />} aria-label={S.s_them_tuy_chon_a0b4bb6e} />}>
+            {moreMenu && <ActionMenu title={S.s_viec_voi_sach_9582a854} trigger={<ActionButton icon={MoreHorizontal} label={S.s_them_dd92626f} aria-label={S.s_them_tuy_chon_a0b4bb6e} />}>
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (
                     <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={MENU_ITEM}>

@@ -116,7 +116,7 @@ class BookDetail(
 object BookPage {
     /**
      * Nhãn nút chính - một động từ ngắn: đang phát cuốn này = "Tạm dừng"; nghe hết = "Nghe lại từ đầu"; đã nghe = "Nghe tiếp"; chưa nghe = "Nghe".
-     * Tên chương KHÔNG ghép vào nhãn (tên dài làm nhãn chảy ba dòng): nó là dòng phụ riêng của nút ([primaryDetail]).
+     * Tên chương ([primaryDetail]) đi sau nhãn trên CÙNG một dòng ("Nghe tiếp · Chương 4", như Qt), cắt "…" phía tên chương - nút luôn cao 48.
      */
     fun primaryLabel(playingHere: Boolean, finished: Boolean, resume: ResumeSpot?, heardSeconds: Double): String = when {
         playingHere -> S.s_tam_dung_67635815
@@ -126,7 +126,7 @@ object BookPage {
         else -> S.s_nghe_a43aafef
     }
 
-    /** Dòng phụ dưới nhãn nút chính: chương mà "Nghe tiếp" sẽ phát (giờ phút đã ở dòng tiến độ ngay trên); null khi nhãn tự đủ nghĩa. */
+    /** Phần sau " · " của nút chính: chương mà "Nghe tiếp" sẽ phát (giờ phút đã ở dòng tiến độ ngay trên); null khi nhãn tự đủ nghĩa. */
     fun primaryDetail(playingHere: Boolean, finished: Boolean, resume: ResumeSpot?, heardSeconds: Double): String? =
         if (!playingHere && !finished && resume != null && (resume.at > 0 || heardSeconds > 0)) resume.chapterTitle else null
 

@@ -1320,6 +1320,7 @@ internal object S {
     const val s_doan_nay_van_ke_o_ngoi_thu_ba_ad31af6d = "Đoạn này vẫn kể ở ngôi thứ ba"
     const val s_doan_trong_ba06f5ce = "Đoạn trống"
     fun s_doc_0_5067e74c(p0: Any?): String = "Đọc “" + p0.toString() + "”"
+    const val s_doc_5709880c = "Đọc"
     const val s_doc_bang_f7f5f3b1 = "Đọc bằng "
     const val s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850 = "Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
     const val s_doc_khong_khi_ca_doan_bang_ai_f0aaaea4 = "Đọc không khí cả đoạn bằng AI"
