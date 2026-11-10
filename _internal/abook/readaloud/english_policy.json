@@ -52,5 +52,17 @@
       "we", "we're", "were", "what", "what's", "when", "where", "which", "while", "who", "whom", "whose", "why",
       "will", "with", "won't", "would", "wouldn't", "you", "you'll", "you're", "you've", "your", "yours"
     ]
+  },
+  "shared_vietnamese": {
+    "words": [
+      "am", "an", "ban", "bang", "bay", "cam", "can", "day", "do", "gay", "hi", "im", "in", "lay", "leo", "loan",
+      "lung", "man", "may", "neo", "no", "non", "sang", "say", "so", "son", "tan", "than", "to", "van"
+    ],
+    "strong": ["ban", "bay", "do", "lay", "sang", "say"],
+    "before_english": ["ban", "bay", "do", "lay", "leo", "sang"],
+    "nouns": ["bang", "day", "man", "son", "van"],
+    "echo": ["he", "hi"],
+    "pairs": [["cam", "go"], ["gay", "go"], ["lung", "lay"]],
+    "sentinels": ["nach", "sich", "trac"]
   }
 }
