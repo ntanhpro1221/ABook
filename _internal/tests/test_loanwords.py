@@ -34,10 +34,24 @@ def test_every_loanword_reading_is_a_valid_vietnamese_spoken_form():
     assert names.LOANWORD_CAPITALS <= set(names.LOANWORDS)
 
 
+def test_no_loanword_is_also_an_abbreviation():
+    """Capitals written for emphasis ("BAN", "GAME") are read as the loanword; that is only safe while no table word is also a listed abbreviation (OK, TV...)."""
+    policy = english_policy.POLICY
+    listed = {word.casefold() for key in ("acronyms", "preserve_acronyms", "spoken_abbreviations", "vietnamese_abbreviations", "contextual_abbreviations",
+                                          "case_sensitive_abbreviations", "contextual_letter_names") for word in policy[key]}
+    assert not listed & set(names.LOANWORDS)
+
+
+def test_capitals_for_emphasis_keep_the_vietnamese_reading_before_the_abbreviation_rule():
+    said = vieneu.spoken_tokens(tokens("Hắn bị admin BAN nick, mở APP chơi GAME."), None, False)
+    assert said == ["Hắn", "bị", "át-min", "ban", "ních,", "mở", "áp", "chơi", "ghêm."]
+    assert vieneu.spoken_tokens(tokens("GAME OVER"), None) == ["game", "over"]
+
+
 @pytest.mark.parametrize("origin", [None, "ja", "ko"])
 def test_a_voice_that_cannot_say_english_gets_the_same_loanword_reading(origin):
     said = vieneu.spoken_tokens(tokens("Ra quán net chơi game online."), origin, False)
-    assert said == ["Ra", "quán", "nét", "chơi", "ghêm", "on-lai."]
+    assert said == ["Ra", "quán", "nét", "chơi", "ghêm", "ôn-lai."]
 
 
 def test_a_capitalised_loanword_starts_a_sentence_or_is_a_name():

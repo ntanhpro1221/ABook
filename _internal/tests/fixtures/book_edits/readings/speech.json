@@ -1,504 +1,504 @@
 {
-  "readings": {
-    "Haruto": "Ha ru tô",
-    "Kate": "Kết",
-    "Lucien": "Lu-xi-en",
-    "Tôkyô": "Tô ky ô",
-    "MP": "ma lực",
-    "Hạ Vy": "Hà Vi",
-    "Hạ": "Há",
-    "Lý Tiểu": "Lý Tiểu Long",
-    "ông Tư": "Tứ"
+ "readings": {
+  "Haruto": "Ha ru tô",
+  "Kate": "Kết",
+  "Lucien": "Lu-xi-en",
+  "Tôkyô": "Tô ky ô",
+  "MP": "ma lực",
+  "Hạ Vy": "Hà Vi",
+  "Hạ": "Há",
+  "Lý Tiểu": "Lý Tiểu Long",
+  "ông Tư": "Tứ"
+ },
+ "cases": [
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "“Haruto,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "d3be9b8a9e27ab0b1d1af54d028ea0f45aba3f1397df800b89963f07a170dff5"
   },
-  "cases": [
-    {
-      "voice": "edge:vi-VN-HoaiMyNeural",
-      "text": "“Haruto,” Kate nói.",
-      "origin": null,
-      "tokens": [
-        "“Haruto,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Ha-ru-tô,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r8c771f618eb8ec75",
-      "key": "50ac30f4661f7a832d73c62f39100d73479ef691344cec5164c8de60beed2c0c"
-    },
-    {
-      "voice": "vieneu:turbo/Thường",
-      "text": "“Haruto,” Kate nói.",
-      "origin": null,
-      "tokens": [
-        "“Haruto,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Ha-ru-tô,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r8c771f618eb8ec75",
-      "key": "149a4250d0b032c1ee08d9c05e1b1e362376a60398baaea857a9a6e9c05fee49"
-    },
-    {
-      "voice": "vieneu:turbo/Thường",
-      "text": "“Haruto,” Kate nói.",
-      "origin": "ja",
-      "tokens": [
-        "“Haruto,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Ha-ru-tô,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r8c771f618eb8ec75",
-      "key": "84f919dca34c25e1d3bbf85d67110e63c0be4048b87998bae3f4d03ddade2b4b"
-    },
-    {
-      "voice": "edge:vi-VN-NamMinhNeural",
-      "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
-      "origin": null,
-      "tokens": [
-        "Kate",
-        "gặp",
-        "Kate",
-        "ở",
-        "Tôkyô",
-        "-",
-        "còn",
-        "haruto,",
-        "Harutoo",
-        "và",
-        "Haruto-kun",
-        "thì",
-        "không."
-      ],
-      "spokenTokens": [
-        "Kết",
-        "gặp",
-        "Kết",
-        "ở",
-        "Tô-ky-ô",
-        "-",
-        "còn",
-        "haruto,",
-        "Harutoo",
-        "và",
-        "Ha-ru-tô-cun",
-        "thì",
-        "không."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r669e9aea4c533d44",
-      "key": "0c436ba96e9a4ca6c3457f7f876ee2fa231ea10890f1be1b60cf96c1d1f1991a"
-    },
-    {
-      "voice": "vieneu:nano/Nhẹ",
-      "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
-      "origin": "ja",
-      "tokens": [
-        "Kate",
-        "gặp",
-        "Kate",
-        "ở",
-        "Tôkyô",
-        "-",
-        "còn",
-        "haruto,",
-        "Harutoo",
-        "và",
-        "Haruto-kun",
-        "thì",
-        "không."
-      ],
-      "spokenTokens": [
-        "Kết",
-        "gặp",
-        "Kết",
-        "ở",
-        "Tô-ky-ô",
-        "-",
-        "còn",
-        "haruto,",
-        "Ha-ru-tô",
-        "và",
-        "Ha-ru-tô-cun",
-        "thì",
-        "không."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r669e9aea4c533d44",
-      "key": "8618cfeeb1ccb50644057fe39c634cc9e13505baa630c4b63c84e6718d2fcbfc"
-    },
-    {
-      "voice": "edge:vi-VN-HoaiMyNeural",
-      "text": "Không có tên nào cả.",
-      "origin": null,
-      "tokens": [
-        "Không",
-        "có",
-        "tên",
-        "nào",
-        "cả."
-      ],
-      "spokenTokens": [
-        "Không",
-        "có",
-        "tên",
-        "nào",
-        "cả."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "",
-      "key": "5851326c7fbc7a2038ede3da23b8d484820d3de8f628e87cb914966e4ea8527e"
-    },
-    {
-      "voice": "vieneu:turbo/Thường",
-      "text": "Lucien còn 30 MP… (Lucien!)",
-      "origin": "ko",
-      "tokens": [
-        "Lucien",
-        "còn",
-        "30",
-        "MP…",
-        "(Lucien!)"
-      ],
-      "spokenTokens": [
-        "Lu-xi-en",
-        "còn",
-        "30",
-        "ma-lực…",
-        "(Lu-xi-en!)"
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r2370bda33939e04a",
-      "key": "b5035558a5a7496c6432378c663465cb65656b9c334798443f396b0315e99169"
-    },
-    {
-      "voice": "azure:vi-VN-HoaiMyNeural",
-      "text": "[Lucien]\nKate\tđi tiếp.",
-      "origin": null,
-      "tokens": [
-        "[Lucien]",
-        "Kate",
-        "đi",
-        "tiếp."
-      ],
-      "spokenTokens": null,
-      "spokenText": "[Lu-xi-en]\nKết\tđi tiếp.",
-      "spokenSlots": [
-        0,
-        1,
-        2,
-        3
-      ],
-      "tag": "r6e74ef10f0bb4e8c",
-      "key": "0671c4fb5403789b713c44e8b7fae040d7acf10a0f5c0c98319c3a91fed27153"
-    },
-    {
-      "voice": "supertonic:F1",
-      "text": "“Haruto,” Kate nói.",
-      "origin": "ja",
-      "tokens": [
-        "“Haruto,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Ha-ru-tô,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r8c771f618eb8ec75",
-      "key": "f2595b7b7a52bff389265bbda2558187905e5a43b6e45316739991465ae542cf"
-    },
-    {
-      "voice": "supertonic:M4",
-      "text": "Haruto gặp Kyouko ở Tôkyô, còn 30 MP.",
-      "origin": "ja",
-      "tokens": [
-        "Haruto",
-        "gặp",
-        "Kyouko",
-        "ở",
-        "Tôkyô,",
-        "còn",
-        "30",
-        "MP."
-      ],
-      "spokenTokens": [
-        "Ha-ru-tô",
-        "gặp",
-        "Ki-âu-cô",
-        "ở",
-        "Tô-ky-ô,",
-        "còn",
-        "30",
-        "ma-lực."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r633c865c060faef6",
-      "key": "f1cc47f8406a531832cc70ae019b9823a803709dc78c885bf75f9006a85fbc23"
-    },
-    {
-      "voice": "supertonic:F3",
-      "text": "Không có tên nào cả.",
-      "origin": "ja",
-      "tokens": [
-        "Không",
-        "có",
-        "tên",
-        "nào",
-        "cả."
-      ],
-      "spokenTokens": [
-        "Không",
-        "có",
-        "tên",
-        "nào",
-        "cả."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "",
-      "key": "50879a6ffac8cb11e2bc899a29d9adc7a870547a52421ee76cc2d338058ab140"
-    },
-    {
-      "voice": "edge:vi-VN-HoaiMyNeural",
-      "text": "“Hạ Vy,” Kate nói.",
-      "origin": null,
-      "tokens": [
-        "“Hạ",
-        "Vy,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Hà",
-        "Vi,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r81c6e74e07144399",
-      "key": "56f188a547ece282e209b472ac14a0622fe92175b6dc15b390ef7003c8d71e09"
-    },
-    {
-      "voice": "vieneu:turbo/Thường",
-      "text": "“Hạ Vy,” Kate nói.",
-      "origin": null,
-      "tokens": [
-        "“Hạ",
-        "Vy,”",
-        "Kate",
-        "nói."
-      ],
-      "spokenTokens": [
-        "“Hà",
-        "Vi,”",
-        "Kết",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r81c6e74e07144399",
-      "key": "8014682c2a5a501f23592bbb12c255ff34aae1c6ce3df357f96910cc8a843a92"
-    },
-    {
-      "voice": "edge:vi-VN-NamMinhNeural",
-      "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
-      "origin": null,
-      "tokens": [
-        "Lý",
-        "Tiểu",
-        "gặp",
-        "ông",
-        "Tư",
-        "rồi",
-        "Hạ",
-        "Vy",
-        "và",
-        "Hạ."
-      ],
-      "spokenTokens": [
-        "Lý-Tiểu",
-        "Long",
-        "gặp",
-        "Tứ",
-        "",
-        "rồi",
-        "Hà",
-        "Vi",
-        "và",
-        "Há."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r3e4375453368fca7",
-      "key": "b41ed0d6d30e5becb20b5f8c53338fcef564ffb3f6326598ef0897b6dfbe14eb"
-    },
-    {
-      "voice": "vieneu:nano/Nhẹ",
-      "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
-      "origin": null,
-      "tokens": [
-        "Lý",
-        "Tiểu",
-        "gặp",
-        "ông",
-        "Tư",
-        "rồi",
-        "Hạ",
-        "Vy",
-        "và",
-        "Hạ."
-      ],
-      "spokenTokens": [
-        "Lý-Tiểu",
-        "Long",
-        "gặp",
-        "Tứ",
-        "",
-        "rồi",
-        "Hà",
-        "Vi",
-        "và",
-        "Há."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r3e4375453368fca7",
-      "key": "a70039c51b03d166d5a357c3fc0c93fc22f59f9bf0cea71aa381b66097e17df7"
-    },
-    {
-      "voice": "edge:vi-VN-HoaiMyNeural",
-      "text": "Anh gọi: ông Tư! Ông Tư nói.",
-      "origin": null,
-      "tokens": [
-        "Anh",
-        "gọi:",
-        "ông",
-        "Tư!",
-        "Ông",
-        "Tư",
-        "nói."
-      ],
-      "spokenTokens": [
-        "Anh",
-        "gọi:",
-        "Tứ!",
-        "",
-        "Ông",
-        "Tư",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "raff1e6190a9d81a9",
-      "key": "1ceb07058c9e74c0839f7f259facc1f5f03ee885e807fc97f1de6654e2179ba5"
-    },
-    {
-      "voice": "supertonic:F1",
-      "text": "Anh gọi: ông Tư! Ông Tư nói.",
-      "origin": null,
-      "tokens": [
-        "Anh",
-        "gọi:",
-        "ông",
-        "Tư!",
-        "Ông",
-        "Tư",
-        "nói."
-      ],
-      "spokenTokens": [
-        "Anh",
-        "gọi:",
-        "Tứ!",
-        "",
-        "Ông",
-        "Tư",
-        "nói."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "raff1e6190a9d81a9",
-      "key": "fe899d1fce7ce009dd416dd7f66955755a6fe31cb18d010eb6f13af2f1e91b5f"
-    },
-    {
-      "voice": "edge:vi-VN-HoaiMyNeural",
-      "text": "Hạ, Vy đi; hạ vy ở lại.",
-      "origin": null,
-      "tokens": [
-        "Hạ,",
-        "Vy",
-        "đi;",
-        "hạ",
-        "vy",
-        "ở",
-        "lại."
-      ],
-      "spokenTokens": [
-        "Há,",
-        "Vy",
-        "đi;",
-        "hạ",
-        "vy",
-        "ở",
-        "lại."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r7f137f8486d33d82",
-      "key": "3d08ca69cdef4d2ecb3e9b225affbaaa4e76408bd26ee60b9334cb3547eb5654"
-    },
-    {
-      "voice": "vieneu:turbo/Thường",
-      "text": "Hạ, Vy đi; hạ vy ở lại.",
-      "origin": null,
-      "tokens": [
-        "Hạ,",
-        "Vy",
-        "đi;",
-        "hạ",
-        "vy",
-        "ở",
-        "lại."
-      ],
-      "spokenTokens": [
-        "Há,",
-        "Vy",
-        "đi;",
-        "hạ",
-        "vy",
-        "ở",
-        "lại."
-      ],
-      "spokenText": null,
-      "spokenSlots": null,
-      "tag": "r7f137f8486d33d82",
-      "key": "072612fca61dea7d1aaa0c490ee0a0e433701339ed1e3a72c9c88283bac7775e"
-    }
-  ]
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Haruto,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "883eb0d745cdd624cfb4ec217677a4509f5e4ec0f03db1dc7b8e884afd6d3a78"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Haruto,” Kate nói.",
+   "origin": "ja",
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "3297da60d25d27cbd8e38ceb52abaa66f4cc5613473141809360b2cca3ab39ca"
+  },
+  {
+   "voice": "edge:vi-VN-NamMinhNeural",
+   "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "origin": null,
+   "tokens": [
+    "Kate",
+    "gặp",
+    "Kate",
+    "ở",
+    "Tôkyô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Haruto-kun",
+    "thì",
+    "không."
+   ],
+   "spokenTokens": [
+    "Kết",
+    "gặp",
+    "Kết",
+    "ở",
+    "Tô-ky-ô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Ha-ru-tô-cun",
+    "thì",
+    "không."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r669e9aea4c533d44",
+   "key": "c2ff2572301cd48e75d3e3a9b3d6c16411d96a0e8b465989128a2d5575176ac8"
+  },
+  {
+   "voice": "vieneu:nano/Nhẹ",
+   "text": "Kate gặp Kate ở Tôkyô - còn haruto, Harutoo và Haruto-kun thì không.",
+   "origin": "ja",
+   "tokens": [
+    "Kate",
+    "gặp",
+    "Kate",
+    "ở",
+    "Tôkyô",
+    "-",
+    "còn",
+    "haruto,",
+    "Harutoo",
+    "và",
+    "Haruto-kun",
+    "thì",
+    "không."
+   ],
+   "spokenTokens": [
+    "Kết",
+    "gặp",
+    "Kết",
+    "ở",
+    "Tô-ky-ô",
+    "-",
+    "còn",
+    "haruto,",
+    "Ha-ru-tô",
+    "và",
+    "Ha-ru-tô-cun",
+    "thì",
+    "không."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r669e9aea4c533d44",
+   "key": "b66d735c36d665b288500a566ac79b4455595fa593e320e4418e21f4570083ad"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Không có tên nào cả.",
+   "origin": null,
+   "tokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenTokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "",
+   "key": "e87de58de9e8d73e4529f05c096b530874bc7097e5f0932643a6bed1d4accb1c"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "Lucien còn 30 MP… (Lucien!)",
+   "origin": "ko",
+   "tokens": [
+    "Lucien",
+    "còn",
+    "30",
+    "MP…",
+    "(Lucien!)"
+   ],
+   "spokenTokens": [
+    "Lu-xi-en",
+    "còn",
+    "30",
+    "ma-lực…",
+    "(Lu-xi-en!)"
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r2370bda33939e04a",
+   "key": "2513466285f0c1b94d1e50343a761534c12b06b8672e7081da9b231fdf574161"
+  },
+  {
+   "voice": "azure:vi-VN-HoaiMyNeural",
+   "text": "[Lucien]\nKate\tđi tiếp.",
+   "origin": null,
+   "tokens": [
+    "[Lucien]",
+    "Kate",
+    "đi",
+    "tiếp."
+   ],
+   "spokenTokens": null,
+   "spokenText": "[Lu-xi-en]\nKết\tđi tiếp.",
+   "spokenSlots": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tag": "r6e74ef10f0bb4e8c",
+   "key": "59bf3230c9a7a4782caa3ec056d45a9ca16530cca3dd06b88a3696227e9893c5"
+  },
+  {
+   "voice": "supertonic:F1",
+   "text": "“Haruto,” Kate nói.",
+   "origin": "ja",
+   "tokens": [
+    "“Haruto,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Ha-ru-tô,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r8c771f618eb8ec75",
+   "key": "98426e9751c1463a6db3bb16bb6b0eccad4019544d2f63f955702dd9c4e00254"
+  },
+  {
+   "voice": "supertonic:M4",
+   "text": "Haruto gặp Kyouko ở Tôkyô, còn 30 MP.",
+   "origin": "ja",
+   "tokens": [
+    "Haruto",
+    "gặp",
+    "Kyouko",
+    "ở",
+    "Tôkyô,",
+    "còn",
+    "30",
+    "MP."
+   ],
+   "spokenTokens": [
+    "Ha-ru-tô",
+    "gặp",
+    "Ki-âu-cô",
+    "ở",
+    "Tô-ky-ô,",
+    "còn",
+    "30",
+    "ma-lực."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r633c865c060faef6",
+   "key": "2b061a16ee10edbb118dfff859b7edf8f8139cbd432ed9231e50429b0a445405"
+  },
+  {
+   "voice": "supertonic:F3",
+   "text": "Không có tên nào cả.",
+   "origin": "ja",
+   "tokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenTokens": [
+    "Không",
+    "có",
+    "tên",
+    "nào",
+    "cả."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "",
+   "key": "9f8a95804341cf35aa548b3846a00976bd621f9bbe063d1b59cb334b4e69a427"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "“Hạ Vy,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Hạ",
+    "Vy,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Hà",
+    "Vi,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r81c6e74e07144399",
+   "key": "9cf9b0e84f1a9b4ab079474abf7491f0135b987b2a118d8ee6567cbb950c5708"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "“Hạ Vy,” Kate nói.",
+   "origin": null,
+   "tokens": [
+    "“Hạ",
+    "Vy,”",
+    "Kate",
+    "nói."
+   ],
+   "spokenTokens": [
+    "“Hà",
+    "Vi,”",
+    "Kết",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r81c6e74e07144399",
+   "key": "b6f9a900154c40a508ef6dedae6dad9416ee501789b3b9545859671e9b971ced"
+  },
+  {
+   "voice": "edge:vi-VN-NamMinhNeural",
+   "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
+   "origin": null,
+   "tokens": [
+    "Lý",
+    "Tiểu",
+    "gặp",
+    "ông",
+    "Tư",
+    "rồi",
+    "Hạ",
+    "Vy",
+    "và",
+    "Hạ."
+   ],
+   "spokenTokens": [
+    "Lý-Tiểu",
+    "Long",
+    "gặp",
+    "Tứ",
+    "",
+    "rồi",
+    "Hà",
+    "Vi",
+    "và",
+    "Há."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r3e4375453368fca7",
+   "key": "d7769e228f8e9cceb4610862f1210fe2272c79b0fa41f1d02e426a23b8c39690"
+  },
+  {
+   "voice": "vieneu:nano/Nhẹ",
+   "text": "Lý Tiểu gặp ông Tư rồi Hạ Vy và Hạ.",
+   "origin": null,
+   "tokens": [
+    "Lý",
+    "Tiểu",
+    "gặp",
+    "ông",
+    "Tư",
+    "rồi",
+    "Hạ",
+    "Vy",
+    "và",
+    "Hạ."
+   ],
+   "spokenTokens": [
+    "Lý-Tiểu",
+    "Long",
+    "gặp",
+    "Tứ",
+    "",
+    "rồi",
+    "Hà",
+    "Vi",
+    "và",
+    "Há."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r3e4375453368fca7",
+   "key": "74805c365a875fdc030b61c399a0cc6d78a9cb0900f16207988e981eb00c26d3"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Anh gọi: ông Tư! Ông Tư nói.",
+   "origin": null,
+   "tokens": [
+    "Anh",
+    "gọi:",
+    "ông",
+    "Tư!",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenTokens": [
+    "Anh",
+    "gọi:",
+    "Tứ!",
+    "",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "raff1e6190a9d81a9",
+   "key": "70312d699eafa8bf7262a757cd68cbdb9f1deb9e7a10ea4cf2d948e3022ac7bc"
+  },
+  {
+   "voice": "supertonic:F1",
+   "text": "Anh gọi: ông Tư! Ông Tư nói.",
+   "origin": null,
+   "tokens": [
+    "Anh",
+    "gọi:",
+    "ông",
+    "Tư!",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenTokens": [
+    "Anh",
+    "gọi:",
+    "Tứ!",
+    "",
+    "Ông",
+    "Tư",
+    "nói."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "raff1e6190a9d81a9",
+   "key": "0869dd1cd8f15203a5e8c2fa09b1f3009d20f4f8b61dfab5510dbdc734a63c80"
+  },
+  {
+   "voice": "edge:vi-VN-HoaiMyNeural",
+   "text": "Hạ, Vy đi; hạ vy ở lại.",
+   "origin": null,
+   "tokens": [
+    "Hạ,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenTokens": [
+    "Há,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r7f137f8486d33d82",
+   "key": "086fc3929350fedbf27f37988deb18657f1338726defb98dee51a625627e5270"
+  },
+  {
+   "voice": "vieneu:turbo/Thường",
+   "text": "Hạ, Vy đi; hạ vy ở lại.",
+   "origin": null,
+   "tokens": [
+    "Hạ,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenTokens": [
+    "Há,",
+    "Vy",
+    "đi;",
+    "hạ",
+    "vy",
+    "ở",
+    "lại."
+   ],
+   "spokenText": null,
+   "spokenSlots": null,
+   "tag": "r7f137f8486d33d82",
+   "key": "f82bcee0f0f34e820b4af7a66b0afcf8620c858692a5e5df61cb31646185821b"
+  }
+ ]
 }

@@ -87,7 +87,7 @@ object Abbreviations {
     }
 
     /**
-     * "Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: để chữ "level". Không đi với số thì không chắc nghĩa gì: đọc tên chữ cái ("lờ vê").
+     * "Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: đọc như chữ "level" viết đủ - cách đọc Việt của bảng từ mượn ([Names.LOANWORDS]). Không đi với số thì không chắc nghĩa gì: đọc tên chữ cái ("lờ vê").
      * Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi - `read_levels`.
      */
     fun readLevels(toks: List<String>, out: MutableList<String>) {
@@ -99,7 +99,7 @@ object Abbreviations {
             val glued = after.trimStart { it == '.' || it == ':' }
             val following = if (index + 1 < toks.size) toks[index + 1].trimStart { it in "([“\"'" } else ""
             out[index] = if (glued.firstOrNull()?.isDigit() == true || (after in listOf("", ".", ":") && following.firstOrNull()?.isDigit() == true)) {
-                before + "level" + (if (glued.firstOrNull()?.isDigit() == true) " $glued" else "")
+                before + (Names.LOANWORDS["level"] ?: "level") + (if (glued.firstOrNull()?.isDigit() == true) " $glued" else "")
             } else {
                 before + name + Names.closing(after, name)
             }

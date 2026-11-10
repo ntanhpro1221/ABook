@@ -799,6 +799,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
     abbreviations.read_levels(pieces, said, speaks_english)
     abbreviations.read_titles(pieces, said, speaks_english)
     abbreviations.read_shouted_honorifics(pieces, said, origin)
+    names.read_loanwords(pieces, said, shouted=True)
     abbreviations.spell_abbreviations(pieces, said)
     names.spoken_names(pieces, origin, speaks_english, said)
     rebuilt = [""] * len(toks)

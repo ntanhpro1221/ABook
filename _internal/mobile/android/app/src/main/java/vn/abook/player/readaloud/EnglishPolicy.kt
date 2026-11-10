@@ -152,7 +152,7 @@ object EnglishPolicy {
         if (loan.isEmpty()) return emptySet()
         val kinds = toks.map(::kind)
         val flagged = englishContext(toks)
-        fun word(i: Int) = kinds[i].kind == 'e' || kinds[i].kind == 'h' || kinds[i].kind == 'o'
+        fun word(i: Int) = i in loan || i in flagged || kinds[i].kind == 'e'
         val found = mutableSetOf<Int>()
         var index = 0
         while (index < toks.size) {
@@ -167,7 +167,7 @@ object EnglishPolicy {
             for (i in span) {
                 if (i !in loan) continue
                 if (span.any { j -> j !in loan && (j in flagged || (kinds[j].kind == 'e' &&
-                        (kinds[j].case != 'T' || kinds[i].case != 'l' || Names.sentenceStart(toks, j)))) }) found += i
+                        (kinds[j].case != 'T' || kinds[i].case == 'T' || Names.sentenceStart(toks, j)))) }) found += i
             }
         }
         return found

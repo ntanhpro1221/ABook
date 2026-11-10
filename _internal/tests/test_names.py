@@ -56,7 +56,7 @@ def test_a_japanese_name_in_a_japanese_book_is_read_by_the_rules(token: str, rea
     assert _said(f"Rồi {token}.", "ja")[1] == f"{reading}."
 
 
-@pytest.mark.parametrize("token", ["Kate", "Mike", "Rose", "Anne", "Emma", "Nina", "Sara", "Mario", "Level", "Okay", "Smith"])
+@pytest.mark.parametrize("token", ["Kate", "Mike", "Rose", "Anne", "Emma", "Nina", "Sara", "Mario", "Server", "Okay", "Smith"])
 def test_an_english_name_is_left_to_the_voice_even_in_a_japanese_book(token: str) -> None:
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
 

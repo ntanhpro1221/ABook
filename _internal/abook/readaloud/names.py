@@ -330,16 +330,16 @@ def sentence_start(toks: list[str], index: int) -> bool:
 
 
 def common_loanword(core: str, toks: list[str], index: int) -> bool:
-    """`core` (đã bỏ dấu câu quanh) viết như một danh từ chung của bảng `LOANWORDS`: chữ thường, hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong `LOANWORD_CAPITALS`).
-    Hoa chữ đầu giữa câu là tên riêng ("Net cười"); TOÀN HOA và hoa lẫn lộn là việc của luật viết tắt (OK, GAME) - để nguyên."""
+    """`core` (đã bỏ dấu câu quanh) viết như một danh từ chung của bảng `LOANWORDS`: chữ thường, TOÀN HOA, hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong `LOANWORD_CAPITALS`).
+    Hoa chữ đầu giữa câu là tên riêng ("Net cười"). TOÀN HOA là viết để nhấn mạnh ("bị admin BAN nick", chủ sách 10-11: "phải đọc là ban thuần việt"), không biến từ thành chữ Anh
+    hay chữ viết tắt: bảng không chứa từ nào trùng bảng viết tắt (OK, TV... - test giữ điều đó). Từ trong `LOANWORD_CAPITALS` viết hoa kiểu gì cũng là
+    danh từ chung ("mạng Internet", "Wi-Fi", "WiFi", "Level 5"); hoa lẫn lộn khác để nguyên cho luật khác."""
     lowered = core.lower()
     if lowered not in LOANWORDS:
         return False
-    if core == lowered:
+    if core == lowered or (len(core) > 1 and core.isupper()) or lowered in LOANWORD_CAPITALS:
         return True
-    if core[0].isupper() and core[1:] == core[1:].lower() and len(core) > 1:
-        return lowered in LOANWORD_CAPITALS or sentence_start(toks, index)
-    return False
+    return len(core) > 1 and core[0].isupper() and core[1:] == core[1:].lower() and sentence_start(toks, index)
 
 
 def _after_number(toks: list[str], index: int) -> bool:
@@ -347,16 +347,17 @@ def _after_number(toks: list[str], index: int) -> bool:
     return bool(before) and (before[-1].isdigit() or before.lower() in NUMBER_WORDS)
 
 
-def read_loanwords(toks: list[str], out: list[str]) -> None:
+def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False) -> None:
     """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen (net, taxi, sofa, anime, ninja...) bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị
     đọc Việt; giữ dấu câu quanh, số chữ không đổi. Từ của `LOANWORDS` chỉ đổi khi viết như danh từ chung (`common_loanword`) và không nằm trong cụm tiếng Anh
-    (`english_policy.loanword_english`)."""
+    (`english_policy.loanword_english`). `shouted`: chỉ xét từ của `LOANWORDS` viết TOÀN HOA - bước chạy trước luật viết tắt, để "BAN", "GAME", "APP" không bị đánh vần hay
+    hạ thành chữ Anh trước khi tới đây."""
     english: set[int] | None = None
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
         before, core, after = split_token(token)
-        if not core:
+        if not core or (shouted and not (len(core) > 1 and core.isupper() and core.lower() in LOANWORDS)):
             continue
         reading = loanword_reading(core)
         if reading and core.lower() in LOANWORDS:

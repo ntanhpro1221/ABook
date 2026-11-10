@@ -6,14 +6,20 @@
   "english_words": ["nanobot"],
   "loanwords": {
     "sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
-    "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la",
-    "net": "nét", "internet": "in-tơ-nét", "wifi": "oai-phai", "wi-fi": "oai-phai", "online": "on-lai", "offline": "óp-lai",
-    "email": "i-meo", "e-mail": "i-meo", "laptop": "láp-tốp", "taxi": "tắc-xi", "radio": "ra-đi-ô", "pizza": "pi-da",
-    "karaoke": "ca-ra-ô-kê", "camera": "ca-mê-ra", "chocolate": "sô-cô-la", "game": "ghêm", "gameshow": "ghêm-sô", "show": "sô",
-    "clip": "cờ-líp", "fan": "phan", "okay": "ô-kê", "idol": "ai-đôn", "gas": "ga", "garage": "ga-ra", "cafe": "cà-phê",
-    "café": "cà-phê", "sandwich": "xăng-uých", "hamburger": "hăm-bơ-gơ"
+    "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la", "net": "nét", "internet": "in-tơ-nét", "wifi": "oai-phai",
+    "wi-fi": "oai-phai", "online": "ôn-lai", "offline": "óp-lai", "email": "i-meo", "e-mail": "i-meo", "laptop": "láp-tốp",
+    "taxi": "tắc-xi", "radio": "ra-đi-ô", "pizza": "pi-da", "karaoke": "ca-ra-ô-kê", "camera": "ca-mê-ra", "chocolate": "sô-cô-la",
+    "game": "ghêm", "gameshow": "ghêm-sô", "show": "sô", "clip": "cờ-líp", "fan": "phan", "okay": "ô-kê",
+    "idol": "ai-đôn", "gas": "ga", "garage": "ga-ra", "cafe": "cà-phê", "café": "cà-phê", "sandwich": "xăng-uých",
+    "hamburger": "hăm-bơ-gơ", "ban": "ban", "admin": "át-min", "nick": "ních", "level": "le-vồ", "farm": "phám",
+    "buff": "búp", "team": "tim", "check": "chéc", "post": "pốt", "like": "lai", "share": "se",
+    "comment": "com-men", "chat": "chát", "code": "cốt", "hack": "hách", "hacker": "hách-cơ", "server": "xơ-vơ",
+    "app": "áp", "gara": "ga-ra", "guitar": "ghi-ta", "virus": "vi-rút", "massage": "mát-xa", "laser": "la-de",
+    "laze": "la-de", "radar": "ra-đa", "nilon": "ni-lông", "nylon": "ni-lông", "socola": "sô-cô-la", "marathon": "ma-ra-tông",
+    "motor": "mô-tơ", "balo": "ba-lô", "carton": "các-tông", "cacao": "ca-cao", "tivi": "ti-vi", "dollar": "đô-la",
+    "cowboy": "cao-bồi", "golf": "gôn", "centimet": "xen-ti-mét"
   },
-  "loanword_capitals": ["internet"],
+  "loanword_capitals": ["internet", "wifi", "wi-fi", "level"],
   "mode": "keep_english",
   "acronym_mode": "spell_english",
   "spoken_abbreviations": {

@@ -274,23 +274,23 @@ object Names {
         return (previous.isNotEmpty() && previous.last() in SENTENCE_ENDS) || previous in setOf("-", "–", "—", "")
     }
 
-    /** [core] viết như danh từ chung của [LOANWORDS]: chữ thường, hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong [LOANWORD_CAPITALS]) - `common_loanword`. */
+    /** [core] viết như danh từ chung của [LOANWORDS]: chữ thường, TOÀN HOA để nhấn mạnh ("bị admin BAN nick"), hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong
+     *  [LOANWORD_CAPITALS]) - `common_loanword`. */
     fun commonLoanword(core: String, toks: List<String>, index: Int): Boolean {
         val lowered = lower(core)
         if (lowered !in LOANWORDS) return false
-        if (core == lowered) return true
-        if (core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1))) return lowered in LOANWORD_CAPITALS || sentenceStart(toks, index)
-        return false
+        if (core == lowered || (core.length > 1 && core == core.uppercase(Locale.ROOT)) || lowered in LOANWORD_CAPITALS) return true
+        return core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1)) && sentenceStart(toks, index)
     }
 
     /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt. Từ của [LOANWORDS]
-     *  chỉ đổi khi viết như danh từ chung ([commonLoanword]) và không nằm trong cụm tiếng Anh ([EnglishPolicy.loanwordEnglish]) - `read_loanwords`. */
-    fun readLoanwords(toks: List<String>, out: MutableList<String>) {
+     *  chỉ đổi khi viết như danh từ chung ([commonLoanword]) và không nằm trong cụm tiếng Anh ([EnglishPolicy.loanwordEnglish]). [shouted]: chỉ xét từ của [LOANWORDS] viết TOÀN HOA (chạy trước luật viết tắt) - `read_loanwords`. */
+    fun readLoanwords(toks: List<String>, out: MutableList<String>, shouted: Boolean = false) {
         var english: Set<Int>? = null
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val (before, core, after) = splitToken(token)
-            if (core.isEmpty()) continue
+            if (core.isEmpty() || (shouted && !(core.length > 1 && core == core.uppercase(Locale.ROOT) && core != lower(core) && lower(core) in LOANWORDS))) continue
             var reading = loanwordReading(core)
             if (reading != null && lower(core) in LOANWORDS) {
                 if (!commonLoanword(core, toks, index)) reading = null

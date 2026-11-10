@@ -167,10 +167,14 @@ def english_context(toks: list[str]) -> set[int]:
 def loanword_english(toks: list[str]) -> set[int]:
     """Indices of `names.LOANWORDS` words that sit inside an English run and so stay English ("Game over", "the net", "talk show").
 
-    A run is the same stretch of ASCII words as in `english_context`. It is English when it holds a
-    word that is not itself a loanword and is certainly English (kind "e") or proven English by the
-    sentence (`english_context`). A capitalised English word inside the sentence beside a lowercase
-    loanword is a name ("fan Rose"), not evidence; at the start of a sentence it is ("Talk show"). Loanwords never count as evidence for each other: "chơi game online".
+    A run here is a stretch, with no punctuation inside, of loanwords and words that are certainly English
+    (kind "e") or proven English by the sentence (`english_context`). A toneless Vietnamese syllable or an
+    unknown ASCII word ends it: in "ngồi trên sofa xem TV" and "chơi game hay xem anime" the loanword stands
+    alone (measured 11-11: the wider run of `english_context` kept those English). The run is English when it
+    holds such a word that is not itself a loanword: "board game", "fan service", "nick name", "I like you".
+    A capitalised English word inside the sentence beside a lowercase or shouted loanword is a name
+    ("fan Rose", "BAN Rose"), not evidence; at the start of a sentence it is ("Talk show"). Loanwords never
+    count as evidence for each other: "chơi game online", "admin BAN nick".
     """
     loan = {i for i, token in enumerate(toks) if names.split_token(token)[1].lower() in names.LOANWORDS}
     if not loan:
@@ -178,14 +182,14 @@ def loanword_english(toks: list[str]) -> set[int]:
     kinds = [_kind(token) for token in toks]
     flagged = english_context(toks)
     found: set[int] = set()
+    member = [i in loan or i in flagged or kinds[i][0] == "e" for i in range(len(toks))]
     index = 0
     while index < len(toks):
-        if kinds[index][0] not in ("e", "h", "o"):
+        if not member[index]:
             index += 1
             continue
         start = index
-        while (index + 1 < len(toks) and kinds[index + 1][0] in ("e", "h", "o")
-               and not kinds[index][4] and not kinds[index + 1][3]):
+        while index + 1 < len(toks) and member[index + 1] and not kinds[index][4] and not kinds[index + 1][3]:
             index += 1
         span = range(start, index + 1)
         index += 1
@@ -193,7 +197,7 @@ def loanword_english(toks: list[str]) -> set[int]:
             if i not in loan:
                 continue
             if any(j not in loan and (j in flagged or (kinds[j][0] == "e" and (
-                    kinds[j][2] != "T" or kinds[i][2] != "l" or names.sentence_start(toks, j)))) for j in span):
+                    kinds[j][2] != "T" or kinds[i][2] == "T" or names.sentence_start(toks, j)))) for j in span):
                 found.add(i)
     return found
 
