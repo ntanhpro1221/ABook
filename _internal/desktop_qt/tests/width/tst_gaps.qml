@@ -400,6 +400,23 @@ Item {
             cell.book = {bookId: "a", stage: "audio"}
             compare(play.tip, "Nghe Truyện chữ")
         }
+        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ đã in tên thì không in lại dưới bìa.
+        function test_everyCellHasTheSameHeight() {
+            const cells = [
+                {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
+                {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Tô Hoài, Nhà xuất bản Kim Đồng, bản in lần thứ mười", coverKey: "b"},
+                {title: "Nhật ký trong tù", subtitle: "Hồ Chí Minh", source: "máy tính", coverKey: "c"},
+                {title: "Bìa vẽ", subtitle: "", coverKey: ""},
+            ].map(p => createTemporaryObject(cellFactory, host, Object.assign({book: {bookId: p.title}, coverWidth: 160}, p)))
+            for (const cell of cells) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
+            const long = one(cells[1], "bookCellSubtitle")
+            compare(long.lineCount, 1)
+            verify(long.truncated)
+            verify(one(cells[1], "bookCellTitle").lineCount <= 2)
+            verify(one(cells[0], "bookCellTitle").visible)
+            verify(!one(cells[3], "bookCellTitle").visible)     // bìa vẽ đã in tên
+            compare(one(cells[2], "bookCellSubtitle").text, "Trên máy tính · Hồ Chí Minh")
+        }
         // Nút phát trên bìa như web: tròn 44, nền panel, shadow-card, cách góc bìa 10 - bìa tối hay sáng vẫn nổi; ẩn tới khi rê chuột
         function test_coverPlayButtonStandsOutOnAnyCover() {
             const cell = createTemporaryObject(cellFactory, host, {title: "Bìa tối", book: {bookId: "a", stage: "audio"}, playVisible: true})

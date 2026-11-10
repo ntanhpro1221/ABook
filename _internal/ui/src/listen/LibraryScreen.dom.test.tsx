@@ -166,6 +166,16 @@ it("bìa bộ luôn mở, chạm mở các tập và Back đóng hộp trước 
   expect(main.querySelector('[aria-label="Mở bộ Truyện thử"]')).toBe(cover);
 });
 
+it('reserves two title lines and one subtitle without repeating drawn cover titles', async () => {
+  state.books = [state.books[0], { ...state.books[1], cover: { url: 'data:image/png;base64,AA==' }, author: 'A long subtitle' }];
+  await draw();
+  const names = [...main.querySelectorAll('[data-tile-name]')];
+  expect(names).toHaveLength(2);
+  expect(names.every(name => name.className.includes('h-[2.75em]'))).toBe(true);
+  expect(names.filter(name => name.querySelector('.sr-only'))).toHaveLength(1);
+  expect(main.querySelectorAll('[data-tile-sub] .truncate')).toHaveLength(2);
+});
+
 it("sách máy kia có dấu máy tính đầu dòng trạng thái, không đè lên bìa (audit140 V8)", async () => {
   state.books = [{ ...state.books[0], remote: { computer: "Máy phòng khách" } }];
   await draw();

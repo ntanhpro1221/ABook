@@ -3,6 +3,10 @@ package vn.abook.player.ui.screens
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.style.TextOverflow
+import vn.abook.player.ui.data.CoverArt
+import vn.abook.player.ui.data.dotJoined
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -225,7 +229,11 @@ private fun NoMatch(query: String, filter: LibraryFilter) {
     }
 }
 
-/** Một ô của lưới: bìa 2:3 (kèm dấu nguồn / số tập / vạch tiến độ), tên tối đa 2 dòng, dòng phụ. The pager moves whole pages without deforming individual covers. */
+/**
+ * Một ô của lưới: bìa 2:3 (kèm dấu nguồn / số tập / vạch tiến độ), tên 2 dòng DÀNH SẴN, dòng phụ 1 dòng cắt "…" - mọi ô một hàng cao bằng nhau
+ * (DESIGN.md §6, soát 10-11 L5/L11). Bìa tự vẽ đã in tên (và nhãn tập) thì dưới bìa chỉ còn dòng phụ, chỗ của tên vẫn giữ: không in tên hai lần, không in
+ * "Tập 2" hai lần. The pager moves whole pages without deforming individual covers.
+ */
 @Composable
 private fun BookTile(
     tile: ShelfTile,
@@ -240,6 +248,8 @@ private fun BookTile(
     val single = tile as? ShelfTile.Single
     val lead = series?.first ?: single!!.book
     val title = series?.label ?: lead.title
+    // Bìa tự vẽ (không ảnh) in tên sách ngay trên bìa: dưới bìa khỏi in lại.
+    val drawn = lead.cover?.path == null
     val onClick = {
         if (series != null) sheets.show { dismiss -> SeriesSheet(series, covers, actions.openBook, dismiss) } else actions.openBook(lead)
     }
@@ -262,7 +272,7 @@ private fun BookTile(
             }
             if (series != null) {
                 CoverChip("${series.books.size} ${series.unit}", Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
-            } else if (single?.badge != null) {
+            } else if (single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty())) {
                 CoverChip(single.badge, Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
             }
             val fraction = if (series == null) lead.progress.fraction else 0f
@@ -277,18 +287,31 @@ private fun BookTile(
             }
         }
         Spacer(Modifier.height(Dim.s8))
-        BasicText(title, style = Abook.type.label)
-        vn.abook.player.ui.components.Reveal(series?.hasRemote ?: (lead.remote != null)) {
-            BasicText(ListenLogic.remotePlace(lead), style = Abook.type.caption)
-        }
-        val sub = when {
+        val detail = when {
             !lead.textOnly && lead.chaptersAvailable == 0 -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
             lead.producing -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
             lead.textOnly && lead.author.isBlank() -> S.s_chi_co_chu_bf879f2c
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }
-        if (sub.isNotEmpty()) ClockLabel(sub, style = Abook.type.caption)
+        // Sách ở máy khác: nơi để đứng đầu cùng dòng phụ ("Trên máy tính · Tô Hoài"), không thành dòng thứ hai.
+        val sub = listOfNotNull(ListenLogic.remotePlace(lead).takeIf { series?.hasRemote ?: (lead.remote != null) }, detail.ifEmpty { null }).dotJoined()
+        val name: @Composable () -> Unit = {
+            // cắt-có-chủ-ý: tên dưới bìa giữ đúng 2 dòng để mọi ô một hàng cao bằng nhau; tên đầy đủ ở trang sách và trình đọc màn hình.
+            BasicText(title, Modifier.fillMaxWidth().testTag("tile_title"), style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        val line: @Composable () -> Unit = {
+            // cắt-có-chủ-ý: dòng phụ một dòng (tác giả / tình trạng), phần đầu là thứ quan trọng.
+            BasicText(sub, Modifier.fillMaxWidth().testTag("tile_sub"), style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (drawn) {
+            line()
+            // Chỗ của tên vẫn dành sẵn (trong suốt, không đọc lên) để ô cao bằng ô có ảnh bìa bên cạnh.
+            Box(Modifier.alpha(0f).clearAndSetSemantics { }) { name() }
+        } else {
+            name()
+            line()
+        }
     }
 }
 
