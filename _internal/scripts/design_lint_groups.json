@@ -1,0 +1,11 @@
+{
+ "_doc": "R7: nhóm trạng thái của cùng một màn. Neo (bìa, thanh tiến độ, nút phát, nút chính, chiều cao thanh) phải đứng cùng toạ độ ± 1 dp trong cả nhóm (DESIGN.md câu 3.5 của soát 10-11). Thành viên = tên ảnh bỏ đuôi biến thể.",
+ "groups": [
+  {"name": "trình phát", "platform": "android", "variants": ["_light", "_dark"],
+   "members": ["np_playing", "np_paused", "np_long", "np_note", "np_caught_up"]},
+  {"name": "thanh phát thu nhỏ", "platform": "android", "variants": ["_light", "_dark"],
+   "members": ["mini_playing", "mini_paused", "mini_short", "mini_long_title"]},
+  {"name": "đầu trang sách", "platform": "android", "variants": ["_light", "_dark"],
+   "members": ["book_listening", "book_playing", "book_fresh", "book_partial"]}
+ ]
+}
