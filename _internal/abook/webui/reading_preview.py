@@ -172,7 +172,9 @@ def run_job(request, state, emit):
     coordinator.vieneu.load()
     state["engine"] = coordinator.vieneu
     emit({"event": "loaded", "id": request["id"]})
-    _checksum, _metrics, seed = coordinator.synthesize_atomic(row, Path(request["output"]), seed_salt=request["salt"])
+    _checksum, _metrics, seed = coordinator.synthesize_atomic(
+        row, Path(request["output"]), seed_salt=request["salt"], measure_word_break=False,
+    )
     return {"ok": True, "seed": int(seed)}
 
 

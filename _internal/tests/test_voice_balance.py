@@ -270,19 +270,28 @@ def test_the_import_script_round_trips_the_table_byte_for_byte() -> None:
     assert script.render(json.loads(raw.decode("utf-8"))) == raw
 
 
+def test_the_import_script_cannot_retune_a_voice_under_its_word_break_gate() -> None:
+    script = _import_script()
+    table = json.loads(voice_balance.TABLE_PATH.read_text(encoding="utf-8"))
+    script.merge(table, {"voices": {OTHER_KEY: {"r": 1.14}}}, {"voices": {}})
+    with pytest.raises(voice_balance.VoiceBalanceError, match="calibrated_r"):
+        voice_balance._validate(json.loads(script.render(table).decode("utf-8")))
+
+
 def test_the_import_script_turns_measurements_into_constants() -> None:
     script = _import_script()
     table = json.loads(voice_balance.TABLE_PATH.read_text(encoding="utf-8"))
+    other = "vieneu@3.8.3/Xuân Vĩnh"  # no word-break gate: its tempo may be measured again freely
     rates = {
         "median_syll_per_s": 4.56,
-        "voices": {OTHER_KEY: {"syll_per_s": 4.0}, KEY: {"r": 1.0}},
+        "voices": {other: {"syll_per_s": 4.0}, KEY: {"r": 1.0}},
     }
-    gains = {"voices": {OTHER_KEY: {"lufs": -21.5, "o_db": 0.4}}}
+    gains = {"voices": {other: {"lufs": -21.5, "o_db": 0.4}}}
     touched = script.merge(table, rates, gains)
-    assert set(touched) == {OTHER_KEY, KEY}
-    assert table["voices"][OTHER_KEY]["r"] == pytest.approx(1.14)
-    assert table["voices"][OTHER_KEY]["ref_lufs"] == -21.5
-    assert table["voices"][OTHER_KEY]["o_db"] == 0.4
+    assert set(touched) == {other, KEY}
+    assert table["voices"][other]["r"] == pytest.approx(1.14)
+    assert table["voices"][other]["ref_lufs"] == -21.5
+    assert table["voices"][other]["o_db"] == 0.4
     voice_balance._validate(json.loads(script.render(table).decode("utf-8")))
     with pytest.raises(SystemExit):
         script.merge(table, {"voices": {"vieneu@3.8.3/Giọng mới": {"r": 1.0}}}, {"voices": {}})

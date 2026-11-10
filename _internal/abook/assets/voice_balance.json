@@ -105,7 +105,13 @@
     "vieneu@3.8.3/Ngọc Linh": {
       "r": 1.0447,
       "o_db": 3.0095101,
-      "ref_lufs": -19.5114388
+      "ref_lufs": -19.5114388,
+      "word_break_gate": {
+        "metric": "silence_ms",
+        "threshold": 72.8,
+        "calibrated_r": 1.0447,
+        "calibrated_x": 1.0
+      }
     },
     "vieneu@3.8.3/Ngọc Trân": {
       "r": 1.0917,
@@ -175,7 +181,14 @@
     "vieneu@3.8.3/Đức Trí": {
       "r": 1.2643,
       "o_db": -0.0546289,
-      "ref_lufs": -20.4809559
+      "ref_lufs": -20.4809559,
+      "word_break_gate": {
+        "metric": "closure_hgb_v1",
+        "threshold": 0.09294049196233728,
+        "model": "word_break_duc_tri.json",
+        "calibrated_r": 1.2643,
+        "calibrated_x": 1.0
+      }
     },
     "zerotts@0.1.5/baotrang": {
       "r": 1.0427,
