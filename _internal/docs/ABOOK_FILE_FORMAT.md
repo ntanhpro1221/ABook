@@ -57,6 +57,25 @@ older apps still open it.
 | 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
 | 5 | chapters that have only text: `texts/<n>.txt` entries and `chapters[i].state` / `chapters[i].text`, described after version 4. A book without a single audio chapter is valid. Only written when a chapter has text; an ordinary audiobook stays at version 1-4 |
 
+### `sharedWords`: what the book knows about words Vietnamese and English share
+
+Optional, any version, written by Studio only when it has something to say (`readaloud/shared_rulings.py`; the method is
+[SHARED_WORDS.md](SHARED_WORDS.md)). A reader without it, or one that finds another `version`, decides by its own table.
+
+```json
+"sharedWords": {"version": 1,
+                "contexts": {"^|do|trans sắp": "v", "của guild|say|xỉn ^": "v"},
+                "names": ["an", "long"],
+                "readings": {"Chiaki": "Chi-a-ki"}}
+```
+
+- `contexts`: one answer per doubtful occurrence, `"v"` = Vietnamese word, `"e"` = not. The key is
+  `<two words before>|<word>|<two words after>`, lower case, NFC, `^` at a sentence edge
+  (`phoneme_policy.shared_word_contexts` = `PhonemePolicy.sharedWordContexts`).
+- `names`: lower-case shared words that are Vietnamese names of this book's characters.
+- `readings`: `{shown name: spoken form}` for names read by their own origin; same matching as `readings` of
+  `edits.json`, and a listener's own reading of the same word wins.
+
 ### Version 3: a series in one file
 
 - **Chapter paths.** Audio is `chapters/<part>/<name>.mp3`. Each part keeps its own audio file names, which are not unique

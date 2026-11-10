@@ -1,5 +1,23 @@
 # Test report
 
+## 10-11-2026 — g2pvi5: shared words in two tiers, each roster name by its own origin
+
+- Design: `docs/SHARED_WORDS.md` ("Two tiers"). Frozen at `2029f2b8d` BEFORE the sixth sample was drawn; baseline `2caf9af4c` (g2pvi4). Labels are model-only (two blind keys, Sonnet 5.5 then Opus 5.5, from the written window alone; they agree on Vietnamese-or-not for 1,170 / 1,210 rows, the 40 disputes were settled from the text before scoring against the final key). The owner has not judged them.
+- Sixth sample: every shared-word occurrence with `sha256("g2pvi5-holdout6|...") % 100 < 12` in the five test pools, minus earlier samples: 3,936 windows, 1,210 asked. Key: 499 English words, 381 Vietnamese words, 58 Western names, 258 romaji / sounds, 14 mixed.
+
+  | | Vietnamese read English | real English kept | Western names kept | romaji / sounds read Vietnamese |
+  |---|---|---|---|---|
+  | `2caf9af4c` | 22 / 381 | 497 / 499 | 56 / 58 | 32 / 258 |
+  | tier 1 (listen-now) | 22 / 381 | 497 / 499 | 56 / 58 | 32 / 258 |
+  | tier 1 + tier 2 | **18 / 381** | **495 / 499** | 56 / 58 | 35 / 258 |
+
+  Tier 1 marks 60 rows (5 %) as doubtful. The sure part is 889 / 901 = **98.67 %** right on Vietnamese / English / Western rows: the 99.5 % goal was **not** reached. In the doubtful part tier 2 (analysis model `abook-analyzer:v5`) finds 4 of 14 Vietnamese words and loses 2 of 9 English ones ("Cresent Moon Bay", "Stairway to Heaven"), 0 of 14 Western names. The 18 Vietnamese errors left: 8 capitalised in doubt, 6 sure prose (scores -210 to -608), 2 prose in doubt, 2 sure capitals.
+- g2pvi4 regressions repaired at tier 1 (the capital rule reads the written text): "admin BAN nick", "Lalaport TOKYO BAY" English again; name particles ("gia tộc de Valis", "Hikaru no Go") not claimed.
+- Roster names (227 names, analysis model, CPU, 0.68 s per name): 222 right (Japanese 99 / 102, Korean 53 / 55, Western 40 / 40, Vietnamese 30 / 30); every miss answers "other" = no change. Self-written must-cases through the real road: with a Vietnamese roster "An An.", "Ban?", "Bin!", "Son!" read Vietnamese; "Do trans sắp thi.", "guild Say xỉn", "[Bay Lv0]" Vietnamese by tier 2; Chiaki / Haruto / Sakura read Japanese in a mixed roster, Jieun / Seojun / Minho Korean in a Japanese roster. Tier 2 also calls the invented "Do exercise đi." Vietnamese (wrong). Listen-now (no tier 2): "An An." and "Do trans sắp thi." read English, as before.
+- Spoken strings identical on **1,210 / 1,210** rows against `2caf9af4c`. CPU phonemize of the 1,210 windows, best of alternating runs: 0.739 s -> 0.754 s (+2 %, noise). Tier 2 itself: 2.45 s per doubtful occurrence on CPU; whole books of 291k to 2.4M words hold 0, 0, 0, 3 and 26 doubtful occurrences (scan 4 to 56 s).
+- Related pytest (117 files, junit): **4,664 tests, 0 failures, 3 skipped**. Related JVM with the real sea-g2p JNI: **70 classes / 571 tests / 0 failures / 1 skipped**. Full JVM: **408 classes / 3,505 tests / 0 failures / 4 skipped**. Shared fixture `shared_vietnamese/cases.json` carries rulings cases, same claims, doubts and phonemes in Python and Kotlin.
+- Quality hash `7d3ab0d7...` -> **`8690a3c96a8e2c3ba212b01aa6232126a0cabd00584d1596b850d6ae256dd60f`** (`shared_rulings.py` joins the list): dev branch only until running books finish.
+
 ## 10-11-2026 — g2pvi4: shared words decided by a corpus-learned score table
 
 - Design and method: `docs/SHARED_WORDS.md`. Implementation and table frozen at `f773607b9` BEFORE the fifth sample was drawn (sha1 residue 4, 486 series, 7,503 chapters, 350 stratified windows, labels written from text only and sealed before any phoneme run). Baseline is `5820f3232`. Labels are model-only; the owner has not judged them.
