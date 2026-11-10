@@ -106,7 +106,7 @@ QtObject {
     // Nhấn: thu 0,97 + tối nền 6 % trong 90 ms, thả về trong 120 ms (5.2)
     readonly property real pressScale: 0.97
     readonly property real pressShade: 0.06
-    // Thanh tiến độ dưới 2 % không vẽ phần đã tô (soát 10-11 L13; web PROGRESS_FILL_MIN, Android ProgressFill.MIN)
+    // Thanh tiến độ dưới 2 % không vẽ phần đã tô (DESIGN.md §6 Trạng thái nhỏ; web PROGRESS_FILL_MIN, Android ProgressFill.MIN)
     readonly property real progressFillMin: 0.02
 
     // ---- bìa tự sinh khi sách chưa có ảnh (cover.ts PALETTES: từ, đến, mực) ----

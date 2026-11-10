@@ -286,8 +286,8 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Xuống dòng**: không dòng cuối nào chỉ có một từ. Cụm nối bằng " · " không gãy giữa cụm. Lưới lựa chọn không có hàng cuối thiếu ô: chọn số cột
   chia hết, hoặc cuộn ngang. Ô lưới bìa luôn cao bằng nhau: tên 2 dòng (dành sẵn), phụ 1 dòng cắt "…". Mô tả của một hàng cài đặt chiếm trọn bề
   ngang dưới tên; điều khiển bên phải chỉ ngang hàng với tên.
-- **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa 2 dòng dành sẵn, phụ một dòng cắt "…"; mọi ô một hàng cao bằng nhau. Điện thoại 2-3 cột, máy tính
-  tự giãn 160-200 px.
+- **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa 2 dòng dành sẵn, phụ một dòng cắt "…"; mọi ô một hàng cao bằng nhau.
+  Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
 - **Bìa và tên**: bìa không có ảnh vẽ tên sách trên bìa; khi đó chú thích dưới bìa chỉ còn dòng phụ. Bìa có ảnh thì tên nằm dưới bìa. Không bao
   giờ in tên hai lần trong một ô. Nhãn tập ("Tập 2") chỉ in một chỗ.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;
