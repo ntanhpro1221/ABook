@@ -1,6 +1,6 @@
 import { S } from '@/shared/strings.generated';
 import * as Slider from '@radix-ui/react-slider';
-import * as Switch from '@radix-ui/react-switch';
+import { Switch } from '@/desktop/Switch';
 import { useState, type ReactNode } from 'react';
 import { MotionRegion } from '@/shared/MotionRegion';
 import { TonePage, type ToneLeaveGuard } from './TonePage';
@@ -39,9 +39,7 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
 }
 function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}) {
   return <label className="flex min-h-12 items-center justify-between gap-4 text-sm">{label}
-    <Switch.Root aria-label={label} checked={checked} onCheckedChange={onChange} className="relative h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
-      <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-panel transition-transform duration-motion-fast data-[state=checked]:translate-x-[18px]"/>
-    </Switch.Root>
+    <Switch label={label} checked={checked} onCheckedChange={onChange}/>
   </label>;
 }
 function FxSlider({label,value,min,max,step=1,suffix=' dB',disabled=false,onChange}:{label:string;value:number;min:number;max:number;step?:number;suffix?:string;disabled?:boolean;onChange:(value:number)=>void}) {

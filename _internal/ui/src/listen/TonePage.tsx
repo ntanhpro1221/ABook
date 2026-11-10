@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { MoreHorizontal, Plus } from 'lucide-react';
 import * as Slider from '@radix-ui/react-slider';
-import * as Switch from '@radix-ui/react-switch';
+import { Switch } from '@/desktop/Switch';
 import { S } from '@/shared/strings.generated';
 import { Button } from '@/shared/ui';
 import { useSheetPage } from './sheetPages';
@@ -95,7 +95,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     <h3 className="pt-4 pb-1 text-sm text-fg-2">{S.s_tone_mine}</h3>
     <div role="radiogroup" aria-label={S.s_tone_mine}>{lib.data.mine.map(p=>row(p,true))}</div>
     <button type="button" data-tone-add className={`${LINK} gap-3`} onClick={()=>form(suggest(),{})}><Plus aria-hidden className="size-5"/>{S.s_tone_add}</button>
-    <label className="mt-2 flex min-h-12 items-center justify-between gap-3 text-sm">{S.s_tone_scope}<Switch.Root aria-label={S.s_tone_scope} checked={lib.scoped} onCheckedChange={value=>run(l=>l.scope(value))} className="h-6 w-10 shrink-0 rounded-full bg-line data-[state=checked]:bg-accent"><Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-panel transition-transform duration-motion-fast data-[state=checked]:translate-x-[18px]"/></Switch.Root></label>
+    <label className="mt-2 flex min-h-12 items-center justify-between gap-3 text-sm">{S.s_tone_scope}<Switch label={S.s_tone_scope} checked={lib.scoped} onCheckedChange={value=>run(l=>l.scope(value))}/></label>
     {asking&&<div className="flex flex-col gap-2 rounded-control border border-line p-3" role="group" aria-label={S.s_tone_leave}><p>{S.s_tone_leave}</p><Button onClick={()=>{if(run(l=>l.save(l.preset?.name??suggest(),true)))finish();}}>{S.s_tone_overwrite}</Button><Button onClick={()=>form(suggest(),{leave:true})}>{S.s_tone_new}</Button><Button variant="ghost" onClick={()=>{if(run(l=>l.discard()))finish();}}>{S.s_tone_discard}</Button></div>}
     {naming&&<form className="flex flex-col gap-2 border-t border-line py-3" onSubmit={e=>{e.preventDefault();const kind=naming;if(run(l=>{if(kind.duplicate)l.duplicate(kind.id!,name);else if(kind.id)l.rename(kind.id,name);else l.save(name);})){setNaming(null);if(kind.leave)finish();}}}><label className="text-sm">{S.s_tone_name}<input autoFocus maxLength={80} value={name} onChange={e=>setName(e.target.value)} className="mt-2 min-h-12 w-full rounded-control border border-line bg-panel px-3 text-fg"/></label><Button type="submit" disabled={!name.trim()}>{S.s_luu_e91f26c0}</Button><Button type="button" variant="ghost" onClick={()=>setNaming(null)}>{S.s_tone_back}</Button></form>}
   </div>;
