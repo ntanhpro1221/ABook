@@ -1,3 +1,4 @@
+import "UiNumber.js" as UiNumber
 import "UiStrings.js" as S
 import "ValuePickerLogic.js" as Logic
 import QtQuick
@@ -24,7 +25,7 @@ Column {
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_6f00156cec07; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
         Switch { anchors.verticalCenter: parent.verticalCenter; label: S.s_copy_6f00156cec07; checked: root.fx.mono; onToggled: value => Player.setAudioFx({mono:value}) }
     }
-    AudioFxSlider { width: parent.width; label: S.s_can_bang_8b88211d; spec: Logic.SPECS.balance; value: Math.round(root.fx.balance*100); suffix: S.s_copy_9bf94b95eb12; onPicked: value => Player.setAudioFx({balance:value/100}) }
+    AudioFxSlider { width: parent.width; label: S.s_can_bang_8b88211d; spec: Logic.SPECS.balance; value: Math.round(root.fx.balance*100); format: UiNumber.balance; onPicked: value => Player.setAudioFx({balance:value/100}) }
     Row {
         width: parent.width; height: 48
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_289e1cff4cbc; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }

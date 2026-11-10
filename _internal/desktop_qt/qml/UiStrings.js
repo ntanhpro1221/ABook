@@ -793,7 +793,6 @@ var s_copy_8f79b50d9ab1 = "Thục Đoan";
 var s_copy_91f4af3123f0 = "khoá";
 var s_copy_998bbb22cf19 = "khóa";
 var s_copy_9ac1ef13c8d5 = "Nhẹ (VieNeu Nano)";
-var s_copy_9bf94b95eb12 = "% (trái / phải)";
 var s_copy_9ce4f6d91ba0 = "Ngọc Linh";
 var s_copy_b09b5fb2264a = "Giữ nhịp nghỉ; chỉ rút khoảng lặng dài.";
 var s_copy_bac2d68d2977 = "Rõ lời";
@@ -1586,7 +1585,6 @@ var s_hen_lai_c2aae1b7 = "Hẹn lại ";
 function s_het_0_chuong_79433c77(p0) { return "Hết " + String(p0) + " chương"; }
 var s_het_chuong_f1d590bb = "Hết chương";
 var s_het_chuong_nay_8ccc288f = "hết chương này";
-var s_het_chuong_nay_918907cf = "Hết chương này";
 var s_het_han_sau_34497ee1 = "Hết hạn sau ";
 var s_het_viec_sua_duoc_ngay_nhung_viec_ben_duoi_2b4551c3 = "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu.";
 var s_hien_61ab59df = "Hiện ";

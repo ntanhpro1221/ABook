@@ -925,7 +925,6 @@ internal object S {
     const val s_copy_19adc1b298a9 = "Dài tối thiểu"
     const val s_copy_289e1cff4cbc = "Bỏ khoảng lặng"
     const val s_copy_34fb8bbc7719 = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại."
-    fun s_copy_45aac78838e4(p0: Any?): String = p0.toString() + "% (trái / phải)"
     const val s_copy_483cdfec9d5f = "Giữ khoảng nghỉ"
     const val s_copy_4a2a3696181b = "+N phút"
     const val s_copy_519c2d65ca4c = "Cao độ"
@@ -1666,7 +1665,6 @@ internal object S {
     const val s_het_chuong_13b507b4 = "hết chương"
     const val s_het_chuong_f1d590bb = "Hết chương"
     const val s_het_chuong_nay_8ccc288f = "hết chương này"
-    const val s_het_chuong_nay_918907cf = "Hết chương này"
     const val s_het_chuong_s_0_9_ivxlc_s_9ebb48ee = "^hết chương(?:\\s+(?:[0-9]+|[ivxlc]+))?\\s*[.!]?\$"
     fun s_het_gio_cho_0_tra_loi_mang_cham_hay_may_ay_2780801f(p0: Any?): String = "Hết giờ chờ " + p0.toString() + " trả lời - mạng chậm hay máy ấy đang bận, thử lại"
     fun s_het_gio_noi_toi_0_1_bf436963(p0: Any?, p1: Any?): String = "hết giờ nối tới " + p0.toString() + ":" + p1.toString()
@@ -2401,6 +2399,7 @@ internal object S {
     const val s_service_dich_vu_nen_73826efd = "SERVICE (dịch vụ nền)"
     const val s_signaled_bi_tin_hieu_47279cbb = "SIGNALED (bị tín hiệu)"
     const val s_so_485ed077 = "Sợ"
+    const val s_so_chuong_6e52dccd = "Số chương"
     const val s_so_do_8c497a89 = "Số đỏ"
     const val s_so_phut_hen_40312361 = "Số phút hẹn"
     const val s_studio_0aa91af2 = "Studio"

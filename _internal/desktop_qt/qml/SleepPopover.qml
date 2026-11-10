@@ -6,7 +6,7 @@ import ABook
 // Hẹn giờ tắt: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: tắt sau bao lâu, hẹn lại N phút (về số đã chọn, không cộng thêm), tắt hẹn giờ. Chữ như bản web (SleepPicker).
 Popover {
     id: root
-    panelWidth: 296
+    panelWidth: Math.max(296, sleepPicker.minimumWidth + 2 * pad)
     maxHeight: Math.max(280, Math.min(600, height - 32))
     readonly property int fadeSeconds: Logic.quantize(Logic.SPECS.sleepFadeSeconds, Number(Api.preferences.sleepFadeSeconds || 30))
     // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
@@ -67,6 +67,7 @@ Popover {
         // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
         // Chọn là đặt ngay, bảng không tự đóng (kéo thước cần bảng đứng yên).
         ValuePicker {
+            id: sleepPicker
             objectName: "sleepPicker"
             width: parent.width
             spec: Logic.SPECS.sleepMinutes
@@ -77,6 +78,7 @@ Popover {
             chipLabel: function(v) { return String(v) }
             onPicked: value => { Feedback.play("toggle"); Player.setSleep("minutes", value) }
             // "Hết chương này", -/+ thành "Hết N chương" (N 1-10). Chạm tên là đặt; -/+ đổi N và đặt luôn.
+            Text { text: S.s_so_chuong_6e52dccd; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
             Row {
                 id: chapterRow
                 objectName: "sleepChapters"
@@ -95,7 +97,7 @@ Popover {
                     fullWidthReason: "Single-column menu (DESIGN 6)"
                     width: parent.width - 2 * Theme.buttonHeight
                     height: Theme.buttonHeight
-                    text: chapterRow.count > 1 ? S.s_het_0_chuong_79433c77(chapterRow.count) : S.s_het_chuong_nay_918907cf
+                    text: String(chapterRow.count)
                     selected: chapterRow.active
                     onClicked: chapterRow.pick(chapterRow.count)
                 }

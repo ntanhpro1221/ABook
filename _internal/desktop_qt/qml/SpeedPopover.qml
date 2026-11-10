@@ -6,7 +6,7 @@ import ABook
 // Tốc độ đọc: bộ chọn giá trị. Tốc độ nhớ riêng cho từng cuốn (như bản web).
 Popover {
     id: root
-    panelWidth: 296
+    panelWidth: Math.max(296, speedPicker.minimumWidth + 2 * pad)
 
     function label(value) { return Logic.formatNumber(Logic.SPECS.speed, value) + "×" }
 
@@ -23,6 +23,7 @@ Popover {
         }
         // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi tốc độ 0,5-3× bước 0,05. Đổi là áp ngay.
         ValuePicker {
+            id: speedPicker
             objectName: "speedPicker"
             width: parent.width
             spec: Logic.SPECS.speed

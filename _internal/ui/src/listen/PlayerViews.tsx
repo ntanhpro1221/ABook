@@ -1124,9 +1124,9 @@ function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMo
     setChapters(next);
     onSet({ kind: "chapter", chapters: next });
   };
-  const text = chapters > 1 ? S.s_het_0_chuong_79433c77(chapters) : S.s_het_chuong_nay_918907cf;
+  const text = String(chapters);
   return (
-    <div data-sleep-chapters className="mt-1 flex items-center gap-1 border-t border-line pt-2">
+    <div><div className="text-sm text-fg-2">{S.s_so_chuong_6e52dccd}</div><div data-sleep-chapters className="mt-1 flex items-center gap-1 border-t border-line pt-2">
       {counts && (
         <IconButton label={S.s_giam_a6c2901a} icon={Minus} disabled={disabled || chapters <= spec.min} onClick={() => pick(stepValue(spec, chapters, -1))} />
       )}
@@ -1146,7 +1146,7 @@ function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMo
       {counts && (
         <IconButton label={S.s_tang_a2363bce} icon={Plus} disabled={disabled || chapters >= spec.max} onClick={() => pick(stepValue(spec, chapters, 1))} />
       )}
-    </div>
+    </div></div>
   );
 }
 

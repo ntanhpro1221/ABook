@@ -1,3 +1,4 @@
+import { formatBalance } from "@/shared/number";
 import { S } from '@/shared/strings.generated';
 import { ValuePicker } from '@/shared/ValuePicker';
 import { VALUE_SPECS, formatNumber, type ValueSpec } from '@/shared/valuePickerLogic';
@@ -17,7 +18,7 @@ export function AudioFxPanel({volume,setVolume}:{volume:number;setVolume:(value:
     <FxSlider label={S.s_copy_519c2d65ca4c} spec={VALUE_SPECS.pitch} value={fx.pitch} suffix={S.s_copy_e9d6329e8255} onChange={pitch=>update({pitch})}/>
     <Button variant="ghost" size="sm" className="self-start px-0" onClick={()=>update({pitch:0})}>{S.s_ve_mac_dinh_4eb6b300}</Button>
     <FxSwitch label={S.s_copy_6f00156cec07} checked={fx.mono} onChange={mono=>update({mono})}/>
-    <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} suffix={S.s_copy_9bf94b95eb12} onChange={v=>update({balance:v/100})}/>
+    <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} format={formatBalance} onChange={v=>update({balance:v/100})}/>
     <FxSwitch label={S.s_copy_289e1cff4cbc} checked={fx.skipSilence} onChange={skipSilence=>update({skipSilence})}/>
     <p className="text-xs text-fg-2">{S.s_copy_b09b5fb2264a}</p>
     <FxSlider label={S.s_copy_8e18e6dd7fd9} spec={VALUE_SPECS.silenceDb} value={fx.silenceDb} suffix=" dBFS" disabled={!fx.skipSilence} onChange={silenceDb=>update({silenceDb})}/>
@@ -42,8 +43,8 @@ function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChang
   </label>;
 }
 /** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu. */
-function FxSlider({label,spec,value,suffix=' dB',disabled=false,onChange}:{label:string;spec:ValueSpec;value:number;suffix?:string;disabled?:boolean;onChange:(value:number)=>void}) {
-  return <ValuePicker dense className="py-1" spec={spec} value={value} disabled={disabled} label={label} format={v=>`${formatNumber(spec,v)}${suffix}`} chipLabel={v=>formatNumber(spec,v)} onPreview={onChange} onChange={onChange}/>;
+function FxSlider({format,label,spec,value,suffix=' dB',disabled=false,onChange}:{label:string;spec:ValueSpec;value:number;suffix?:string;format?:(v:number)=>string;disabled?:boolean;onChange:(value:number)=>void}) {
+  return <ValuePicker dense spec={spec} value={value} disabled={disabled} label={label} format={format ?? (v=>`${formatNumber(spec,v)}${suffix}`)} chipLabel={v=>formatNumber(spec,v)} onPreview={onChange} onChange={onChange}/>;
 }
 /** "Giữ khoảng nghỉ" không quá "Dài tối thiểu". */
 function capped(spec:ValueSpec,max:number):ValueSpec {

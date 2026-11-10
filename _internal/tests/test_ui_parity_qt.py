@@ -56,7 +56,7 @@ def test_extracts_qt_text_and_pairs_icons():
     assert ("Tới câu đang nghe", "locate") in pairs                # Icon cạnh Text trong một Row
     assert ("Về Thư viện", "arrow-left") in pairs                  # ScreenHeader { backLabel } -> IconButton của ScreenHeader
     texts = {i.text for i in qt.items}
-    assert {"Chưa có sách", "Hết chương này", "Tốc độ đọc"} <= texts      # "Chưa có sách": EmptyLibrary của desktop/App.tsx
+    assert {"Chưa có sách", "Số chương", "Tốc độ đọc"} <= texts      # "Chưa có sách": EmptyLibrary của desktop/App.tsx
     assert not any(i.file.endswith("BenchScenario.qml") for i in qt.items)
     assert all(not t.startswith("Ctrl+") for t in texts)
 

@@ -24,6 +24,7 @@ import org.junit.Assert.assertTrue
 import androidx.compose.ui.unit.width
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.boundsInRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -133,10 +134,20 @@ class NowPlayingUiTest {
     @Test fun pickerSleepLargeDark() { show(dark = true, sheet = PlayerSheet.Sleep, fontScale = 1.3f); shot("picker_sleep_font130_dark") }
     @Test fun pickerLookLargeLight() { show(sheet = PlayerSheet.Look, fontScale = 1.3f); shot("picker_look_font130_light") }
     @Test fun pickerLookLargeDark() { show(dark = true, sheet = PlayerSheet.Look, fontScale = 1.3f); shot("picker_look_font130_dark") }
-    @Test @Config(qualifiers = "w360dp-h1900dp-xxhdpi") fun pickerAudioLight() { show(sheet = PlayerSheet.Audio); shot("picker_audio_light") }
-    @Test @Config(qualifiers = "w360dp-h1900dp-xxhdpi") fun pickerAudioDark() { show(dark = true, sheet = PlayerSheet.Audio); shot("picker_audio_dark") }
-    @Test @Config(qualifiers = "w360dp-h2400dp-xxhdpi") fun pickerAudioLargeLight() { show(sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_light") }
-    @Test @Config(qualifiers = "w360dp-h2400dp-xxhdpi") fun pickerAudioLargeDark() { show(dark = true, sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_dark") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLight() {
+        show(sheet = PlayerSheet.Audio)
+        println("PICKER2_AUDIO_SHEET_DP=${bounds("player_sheet_audio").height.value}")
+        val layout = rule.onNodeWithTag("player_sheet_audio").fetchSemanticsNode().layoutInfo
+        val frames = (layout.getModifierInfo().map { it.coordinates } + layout.coordinates).map { it.boundsInRoot() }
+        val frame = androidx.compose.ui.geometry.Rect(frames.minOf { it.left }, frames.minOf { it.top }, frames.maxOf { it.right }, frames.maxOf { it.bottom })
+        val rootFrame = rule.onRoot().fetchSemanticsNode().layoutInfo.coordinates.boundsInRoot()
+        println("PICKER2_AUDIO_FRAME_PX=${frame.left},${frame.top},${frame.right},${frame.bottom};ROOT_TOP_PX=${rootFrame.top}")
+        println("PICKER2_AUDIO_OUTER_DP=${frame.height / rule.density.density}")
+        shot("picker_audio_light")
+    }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioDark() { show(dark = true, sheet = PlayerSheet.Audio); shot("picker_audio_dark") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLargeLight() { show(sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_light") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLargeDark() { show(dark = true, sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_dark") }
     @Test fun pickerSleepChaptersLight() {
         show(sheet = PlayerSheet.Sleep)
         rule.onNodeWithTag("sleep_chapters_up").performClick()
@@ -145,7 +156,8 @@ class NowPlayingUiTest {
         assertEquals(SleepKind.Chapter, model.state.value.sleep.kind)
         assertEquals(3, model.state.value.sleep.minutes)
         rule.onNodeWithTag("sleep_chapter").assertIsSelected()
-        rule.onNode(hasTestTag("sleep_chapter") and hasAnyDescendant(hasText("Hết 3 chương")), useUnmergedTree = true).assertExists()
+        rule.onNode(hasTestTag("sleep_chapter") and hasAnyDescendant(hasText("3")), useUnmergedTree = true).assertExists()
+        rule.onAllNodes(hasText("Hết 3 chương") and hasAnyAncestor(hasTestTag("player_sheet_sleep"))).assertCountEquals(1)
         shot("picker_sleep_chapters_light")
     }
     @Test fun chaptersLight() { show(sheet = PlayerSheet.Chapters); shot("chapters_light") }
