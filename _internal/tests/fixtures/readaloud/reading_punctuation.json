@@ -1,0 +1,663 @@
+[
+ {
+  "source": "lại.Khoảnh",
+  "reading": "lại. Khoảnh"
+ },
+ {
+  "source": "Hello?What",
+  "reading": "Hello? What"
+ },
+ {
+  "source": "Đúng!Được",
+  "reading": "Đúng! Được"
+ },
+ {
+  "source": "nói,lại:Được;Rồi",
+  "reading": "nói, lại: Được; Rồi"
+ },
+ {
+  "source": "3.Người",
+  "reading": "3. Người"
+ },
+ {
+  "source": "xong?!Đúng",
+  "reading": "xong?! Đúng"
+ },
+ {
+  "source": "xong.”“Đúng",
+  "reading": "xong.” “Đúng"
+ },
+ {
+  "source": "rồi...Khoảnh",
+  "reading": "rồi...Khoảnh"
+ },
+ {
+  "source": "rồi…Senpai",
+  "reading": "rồi…Senpai"
+ },
+ {
+  "source": "rồi…”Khoảnh",
+  "reading": "rồi…” Khoảnh"
+ },
+ {
+  "source": "3.5 1.234.567 3,5 12:30",
+  "reading": "3.5 1.234.567 3,5 12:30"
+ },
+ {
+  "source": "https://example.com/a?x=yes,b=no",
+  "reading": "https://example.com/a?x=yes,b=no"
+ },
+ {
+  "source": "www.example.com/a!b",
+  "reading": "www.example.com/a!b"
+ },
+ {
+  "source": "HTTPS://Example.COM/a?x=Hi!Y",
+  "reading": "HTTPS://Example.COM/a?x=Hi!Y"
+ },
+ {
+  "source": "Example.COM Example.Com sub.Example.VN",
+  "reading": "Example.COM Example.Com sub.Example.VN"
+ },
+ {
+  "source": "a.b+tag@example.com",
+  "reading": "a.b+tag@example.com"
+ },
+ {
+  "source": "example.com sub.example.org hello.world",
+  "reading": "example.com sub.example.org hello.world"
+ },
+ {
+  "source": "T.P. U.S.A. v.v. v.v V.v.",
+  "reading": "T.P. U.S.A. v.v. v.v V.v."
+ },
+ {
+  "source": "T.P.HCM",
+  "reading": "T.P.HCM"
+ },
+ {
+  "source": "TP.HCM PGS.TS. A.B",
+  "reading": "TP.HCM PGS.TS. A.B"
+ },
+ {
+  "source": "v.v2 build.v3",
+  "reading": "v.v2 build.v3"
+ },
+ {
+  "source": "Tôi...tôi T...Tôi ừm…ừm",
+  "reading": "Tôi...tôi T...Tôi ừm…ừm"
+ },
+ {
+  "source": "Đã. Có? Cách!",
+  "reading": "Đã. Có? Cách!"
+ },
+ {
+  "source": "",
+  "reading": ""
+ },
+ {
+  "source": "GS.Nguyễn",
+  "reading": "GS. Nguyễn",
+  "spoken": "giáo sư Nguyễn"
+ },
+ {
+  "source": "GS. Nguyễn",
+  "reading": "GS. Nguyễn",
+  "spoken": "giáo sư Nguyễn"
+ },
+ {
+  "source": "PGS.Nguyễn",
+  "reading": "PGS. Nguyễn",
+  "spoken": "phó giáo sư Nguyễn"
+ },
+ {
+  "source": "PGS. Nguyễn",
+  "reading": "PGS. Nguyễn",
+  "spoken": "phó giáo sư Nguyễn"
+ },
+ {
+  "source": "TS.Nguyễn",
+  "reading": "TS. Nguyễn",
+  "spoken": "tiến sĩ Nguyễn"
+ },
+ {
+  "source": "TS. Nguyễn",
+  "reading": "TS. Nguyễn",
+  "spoken": "tiến sĩ Nguyễn"
+ },
+ {
+  "source": "ThS.Nguyễn",
+  "reading": "ThS. Nguyễn",
+  "spoken": "thạc sĩ Nguyễn"
+ },
+ {
+  "source": "ThS. Nguyễn",
+  "reading": "ThS. Nguyễn",
+  "spoken": "thạc sĩ Nguyễn"
+ },
+ {
+  "source": "Th.S.Nguyễn",
+  "reading": "Th.S. Nguyễn",
+  "spoken": "thạc sĩ Nguyễn"
+ },
+ {
+  "source": "Th.S. Nguyễn",
+  "reading": "Th.S. Nguyễn",
+  "spoken": "thạc sĩ Nguyễn"
+ },
+ {
+  "source": "BS.Nguyễn",
+  "reading": "BS. Nguyễn",
+  "spoken": "bác sĩ Nguyễn"
+ },
+ {
+  "source": "BS. Nguyễn",
+  "reading": "BS. Nguyễn",
+  "spoken": "bác sĩ Nguyễn"
+ },
+ {
+  "source": "KS.Nguyễn",
+  "reading": "KS. Nguyễn",
+  "spoken": "kỹ sư Nguyễn"
+ },
+ {
+  "source": "KS. Nguyễn",
+  "reading": "KS. Nguyễn",
+  "spoken": "kỹ sư Nguyễn"
+ },
+ {
+  "source": "CN.Nguyễn",
+  "reading": "CN. Nguyễn",
+  "spoken": "cử nhân Nguyễn"
+ },
+ {
+  "source": "CN. Nguyễn",
+  "reading": "CN. Nguyễn",
+  "spoken": "cử nhân Nguyễn"
+ },
+ {
+  "source": "TP.Hồ Chí Minh",
+  "reading": "TP. Hồ Chí Minh",
+  "spoken": "thành phố Hồ Chí Minh"
+ },
+ {
+  "source": "TP. Hồ Chí Minh",
+  "reading": "TP. Hồ Chí Minh",
+  "spoken": "thành phố Hồ Chí Minh"
+ },
+ {
+  "source": "Tp.Hồ Chí Minh",
+  "reading": "Tp. Hồ Chí Minh",
+  "spoken": "thành phố Hồ Chí Minh"
+ },
+ {
+  "source": "Tp. Hồ Chí Minh",
+  "reading": "Tp. Hồ Chí Minh",
+  "spoken": "thành phố Hồ Chí Minh"
+ },
+ {
+  "source": "TX.Sơn Tây",
+  "reading": "TX. Sơn Tây",
+  "spoken": "thị xã Sơn Tây"
+ },
+ {
+  "source": "TX. Sơn Tây",
+  "reading": "TX. Sơn Tây",
+  "spoken": "thị xã Sơn Tây"
+ },
+ {
+  "source": "ĐH.Bách Khoa",
+  "reading": "ĐH. Bách Khoa",
+  "spoken": "đại học Bách Khoa"
+ },
+ {
+  "source": "ĐH. Bách Khoa",
+  "reading": "ĐH. Bách Khoa",
+  "spoken": "đại học Bách Khoa"
+ },
+ {
+  "source": "GS.TS.Nguyễn Văn A",
+  "reading": "GS. TS. Nguyễn Văn A",
+  "spoken": "giáo sư tiến sĩ Nguyễn Văn A"
+ },
+ {
+  "source": "PGS.TS.Lê",
+  "reading": "PGS. TS. Lê",
+  "spoken": "phó giáo sư tiến sĩ Lê"
+ },
+ {
+  "source": "PGS. TS. Lê",
+  "reading": "PGS. TS. Lê",
+  "spoken": "phó giáo sư tiến sĩ Lê"
+ },
+ {
+  "source": "Th.S Nguyễn",
+  "reading": "Th.S Nguyễn",
+  "spoken": "thạc sĩ Nguyễn"
+ },
+ {
+  "source": "P.Bến Thành",
+  "reading": "P. Bến Thành",
+  "spoken": "phường Bến Thành"
+ },
+ {
+  "source": "P. Bến Thành",
+  "reading": "P. Bến Thành",
+  "spoken": "phường Bến Thành"
+ },
+ {
+  "source": "P.1",
+  "reading": "P.1",
+  "spoken": "phường 1"
+ },
+ {
+  "source": "P. 1",
+  "reading": "P. 1",
+  "spoken": "phường 1"
+ },
+ {
+  "source": "Q.Bình Thạnh",
+  "reading": "Q. Bình Thạnh",
+  "spoken": "quận Bình Thạnh"
+ },
+ {
+  "source": "Q. Bình Thạnh",
+  "reading": "Q. Bình Thạnh",
+  "spoken": "quận Bình Thạnh"
+ },
+ {
+  "source": "Q.1",
+  "reading": "Q.1",
+  "spoken": "quận 1"
+ },
+ {
+  "source": "Q. 1",
+  "reading": "Q. 1",
+  "spoken": "quận 1"
+ },
+ {
+  "source": "H.Bình Chánh",
+  "reading": "H. Bình Chánh",
+  "spoken": "huyện Bình Chánh"
+ },
+ {
+  "source": "H. Bình Chánh",
+  "reading": "H. Bình Chánh",
+  "spoken": "huyện Bình Chánh"
+ },
+ {
+  "source": "H.1",
+  "reading": "H.1",
+  "spoken": "huyện 1"
+ },
+ {
+  "source": "H. 1",
+  "reading": "H. 1",
+  "spoken": "huyện 1"
+ },
+ {
+  "source": "H. Nguyễn",
+  "reading": "H. Nguyễn",
+  "spoken": "H. Nguyễn"
+ },
+ {
+  "source": "P. Nguyễn",
+  "reading": "P. Nguyễn",
+  "spoken": "P. Nguyễn"
+ },
+ {
+  "source": "Q. Nguyễn",
+  "reading": "Q. Nguyễn"
+ },
+ {
+  "source": "H.Nguyễn",
+  "reading": "H. Nguyễn"
+ },
+ {
+  "source": "P.Nguyễn",
+  "reading": "P. Nguyễn"
+ },
+ {
+  "source": "TS. thường",
+  "reading": "TS. thường"
+ },
+ {
+  "source": "XTS.Nguyễn",
+  "reading": "XTS. Nguyễn"
+ },
+ {
+  "source": "TS.foo@example.com",
+  "reading": "TS.foo@example.com"
+ },
+ {
+  "source": "tại H. Đông Anh",
+  "reading": "tại H. Đông Anh",
+  "spoken": "tại huyện Đông Anh"
+ },
+ {
+  "source": "ở P. Nguyễn Du",
+  "reading": "ở P. Nguyễn Du",
+  "spoken": "ở phường Nguyễn Du"
+ },
+ {
+  "source": "nói:\"Được",
+  "reading": "nói:\"Được"
+ },
+ {
+  "source": "nói:\"Được\"",
+  "reading": "nói:\"Được\""
+ },
+ {
+  "source": "nói:'Được",
+  "reading": "nói:'Được"
+ },
+ {
+  "source": "nói:'Được'",
+  "reading": "nói:'Được'"
+ },
+ {
+  "source": "nói,\"Được",
+  "reading": "nói,\"Được"
+ },
+ {
+  "source": "nói,\"Được\"",
+  "reading": "nói,\"Được\""
+ },
+ {
+  "source": "nói,'Được",
+  "reading": "nói,'Được"
+ },
+ {
+  "source": "nói,'Được'",
+  "reading": "nói,'Được'"
+ },
+ {
+  "source": "nói;\"Được",
+  "reading": "nói;\"Được"
+ },
+ {
+  "source": "nói;\"Được\"",
+  "reading": "nói;\"Được\""
+ },
+ {
+  "source": "nói;'Được",
+  "reading": "nói;'Được"
+ },
+ {
+  "source": "nói;'Được'",
+  "reading": "nói;'Được'"
+ },
+ {
+  "source": "nói,\"Được rồi\"",
+  "reading": "nói,\"Được rồi\""
+ },
+ {
+  "source": "\"Đi.\"Anh",
+  "reading": "\"Đi.\" Anh"
+ },
+ {
+  "source": "a.b.example.com",
+  "reading": "a.b.example.com"
+ },
+ {
+  "source": "k.k.example.com",
+  "reading": "k.k.example.com"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com　Xem.Đây",
+  "reading": "https://a.com　Xem. Đây"
+ },
+ {
+  "source": "https://a.comXem.Đây",
+  "reading": "https://a.comXem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com Xem.Đây",
+  "reading": "https://a.com Xem. Đây"
+ },
+ {
+  "source": "https://a.com\u001cXem.Đây",
+  "reading": "https://a.com\u001cXem. Đây"
+ },
+ {
+  "source": "x²,y",
+  "reading": "x², y"
+ },
+ {
+  "source": "Ⅳ.Anh",
+  "reading": "Ⅳ. Anh"
+ },
+ {
+  "source": "Dr.A.B",
+  "reading": "Dr. A.B"
+ },
+ {
+  "source": "đi.A.B.C",
+  "reading": "đi. A.B.C"
+ },
+ {
+  "source": "Ng.V.A",
+  "reading": "Ng. V.A"
+ },
+ {
+  "source": "TP.HCM",
+  "reading": "TP.HCM"
+ },
+ {
+  "source": "T.P.Hồ",
+  "reading": "T.P.Hồ"
+ },
+ {
+  "source": "J.K.Rowling",
+  "reading": "J.K.Rowling"
+ },
+ {
+  "source": "J.R.R.Tolkien",
+  "reading": "J.R.R.Tolkien"
+ },
+ {
+  "source": "U.S.Army",
+  "reading": "U.S.Army"
+ },
+ {
+  "source": "i.e.Tôi",
+  "reading": "i.e.Tôi"
+ },
+ {
+  "source": "v.v.Anh",
+  "reading": "v.v.Anh"
+ },
+ {
+  "source": "F.B.I.Đây",
+  "reading": "F.B.I.Đây"
+ },
+ {
+  "source": "Tôi...Khoảnh",
+  "reading": "Tôi...Khoảnh"
+ },
+ {
+  "source": "Anh?...Em",
+  "reading": "Anh?...Em"
+ },
+ {
+  "source": "Anh.…Em",
+  "reading": "Anh.…Em"
+ },
+ {
+  "source": "3.5kg",
+  "reading": "3.5kg"
+ },
+ {
+  "source": "12:30am",
+  "reading": "12:30am"
+ },
+ {
+  "source": "10.000đ",
+  "reading": "10.000đ"
+ },
+ {
+  "source": "v1.2.3",
+  "reading": "v1.2.3"
+ },
+ {
+  "source": "Node.js",
+  "reading": "Node.js"
+ },
+ {
+  "source": "ASP.NET",
+  "reading": "ASP.NET"
+ },
+ {
+  "source": "Shopee.vn",
+  "reading": "Shopee.vn"
+ },
+ {
+  "source": "Tiki.VN",
+  "reading": "Tiki.VN"
+ },
+ {
+  "source": "Google.Com",
+  "reading": "Google.Com"
+ },
+ {
+  "source": "readme.txt",
+  "reading": "readme.txt"
+ },
+ {
+  "source": "T.T",
+  "reading": "T.T"
+ },
+ {
+  "source": ":D",
+  "reading": ":D"
+ },
+ {
+  "source": "ok :v",
+  "reading": "ok :v"
+ },
+ {
+  "source": "e.g.",
+  "reading": "e.g."
+ },
+ {
+  "source": "a.m.",
+  "reading": "a.m."
+ },
+ {
+  "source": "你好。世界",
+  "reading": "你好。世界"
+ },
+ {
+  "source": "你好，世界",
+  "reading": "你好，世界"
+ },
+ {
+  "source": "7:30.Anh",
+  "reading": "7:30. Anh"
+ },
+ {
+  "source": "1.000.000,Anh",
+  "reading": "1.000.000, Anh"
+ },
+ {
+  "source": "1.Mở đầu",
+  "reading": "1. Mở đầu"
+ },
+ {
+  "source": "I.Mở đầu",
+  "reading": "I. Mở đầu"
+ },
+ {
+  "source": "Chương IV.Anh",
+  "reading": "Chương IV. Anh"
+ },
+ {
+  "source": "Mr.Smith",
+  "reading": "Mr. Smith"
+ },
+ {
+  "source": "khoản 2.b",
+  "reading": "khoản 2. b"
+ },
+ {
+  "source": "o.O",
+  "reading": "o. O"
+ },
+ {
+  "source": "O.o",
+  "reading": "O. o"
+ },
+ {
+  "source": "Ph.D",
+  "reading": "Ph. D"
+ },
+ {
+  "source": "haha:v",
+  "reading": "haha: v"
+ },
+ {
+  "source": "Amazon.De",
+  "reading": "Amazon. De"
+ },
+ {
+  "source": "Report.PDF",
+  "reading": "Report. PDF"
+ },
+ {
+  "source": "你好.世界",
+  "reading": "你好. 世界"
+ },
+ {
+  "source": "BS.Hà",
+  "reading": "BS. Hà",
+  "spoken": "bác sĩ Hà"
+ },
+ {
+  "source": "KS.Minh",
+  "reading": "KS. Minh",
+  "spoken": "kỹ sư Minh"
+ },
+ {
+  "source": "Rồi TP.HCM đến.",
+  "reading": "Rồi TP.HCM đến.",
+  "spoken": "Rồi TP.HCM đến."
+ },
+ {
+  "source": "Ông là PGS.TS ngành Vật lý.",
+  "reading": "Ông là PGS.TS ngành Vật lý.",
+  "spoken": "Ông là PGS.TS ngành Vật lý."
+ },
+ {
+  "source": "PGS.TS Lê đến.",
+  "reading": "PGS.TS Lê đến.",
+  "spoken": "PGS.TS Lê đến."
+ }
+]

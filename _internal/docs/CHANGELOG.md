@@ -8,6 +8,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 - Điện thoại dùng cử chỉ giấu vạch (như OPPO): thanh tab và thanh phát nhỏ nằm thấp hơn, bớt khoảng trống ở đáy mà vẫn bấm trúng.
+- Tách đúng chỗ đọc khi chữ nguồn thiếu khoảng cách sau dấu câu; giữ nguyên chữ trong sách, số, địa chỉ mạng và chữ viết tắt.
+- Đọc đủ chức danh và đơn vị hành chính có dấu chấm trước tên (như `PGS.TS. Lê`, `TS.Nguyễn`, `TP. Hồ Chí Minh`, `Q.1`), cả khi chữ dính liền. Giữ cách đọc cũ khi chữ cái đầu và tên địa phương còn mơ hồ.
+- Giữ ngoặc thẳng mở sau dấu hai chấm, phẩy, chấm phẩy; sửa tách nhầm tên miền, chuỗi chữ cái đầu sau dấu chấm và các trường hợp khoảng trắng Unicode để máy tính và Nghe ngay trên Android đọc giống nhau.
+
+### Lưu ý khi tích hợp
+
+- Thay đổi chuỗi nói làm dự án đang dở phải thu lại những đoạn đổi chuỗi khi resume: WAV, kết quả QA audio và phán quyết nghe gắn với bản thu cũ không còn hiệu lực trên các đoạn đó. Chỉ tích hợp sau khi hết run, áp cho dự án mới hoặc đã hoàn tất; sách đã đóng không bị ảnh hưởng nếu không chạy lại. Không chuyển đổi dữ liệu hay thêm mã tương thích.
 
 ## [0.4.166] - 2026-11-09
 

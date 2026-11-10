@@ -200,3 +200,53 @@ def read_titles(toks: list[str], out: list[str], speaks_english: bool = True) ->
         if not speaks_english:
             word = VIETNAMISED_TITLES.get(key) or names.english_reading(word) or word
         out[index] = before + word + tail
+
+
+# Dotted Vietnamese titles need a name; single-letter address labels need more
+# evidence because H./P./Q. can also be a person's initial.
+VIETNAMESE_TITLES = {
+    "PGS": "phó giáo sư", "GS": "giáo sư", "TS": "tiến sĩ",
+    "ThS": "thạc sĩ", "Th.S": "thạc sĩ", "BS": "bác sĩ",
+    "KS": "kỹ sư", "CN": "cử nhân", "TP": "thành phố", "Tp": "thành phố",
+    "P": "phường", "Q": "quận", "H": "huyện", "TX": "thị xã", "ĐH": "đại học",
+}
+_VI_TITLE = r"(?:PGS|GS|TS|ThS|BS|KS|CN|TP|Tp|TX|ĐH|P|Q|H)\.|Th\.S\.?"
+_VI_CHAIN = re.compile(r"(?<![\w.])(?:(?:" + _VI_TITLE + r")\s*)+")
+_VI_PART = re.compile(_VI_TITLE)
+_ADDRESS_HEADS = {"Bến", "Bình", "Tân", "Thạnh", "Phú", "Long", "Quảng", "Thủ"}
+_ADDRESS_CONTEXT = re.compile(r"(?:tại|ở|thuộc|đến|địa chỉ|địa bàn|khu vực)\s*$", re.I)
+
+
+def read_vietnamese_titles(toks: list[str], out: list[str]) -> None:
+    """Expand dotted titles before spelling, retaining one result per source token."""
+    text = " ".join(toks)
+    edits: list[tuple[int, int, str]] = []
+    for chain in _VI_CHAIN.finditer(text):
+        tail = text[chain.end():]
+        # An all-capital word after the title is another abbreviation (TP.HCM, PGS.TS), not a name.
+        head = re.match(r"[^\W\d_]+", tail)
+        named = bool(head and head.group()[0].isupper() and not (len(head.group()) > 1 and head.group().isupper()))
+        number = bool(re.match(r"[0-9]+(?!\w)", tail))
+        for part in _VI_PART.finditer(text, chain.start(), chain.end()):
+            key = part.group().rstrip(".")
+            address = key in {"P", "Q", "H"}
+            locality = tail.split()[:2]
+            address_name = (bool(_ADDRESS_CONTEXT.search(text[:chain.start()])) or
+                            (len(locality) == 2 and locality[0] in _ADDRESS_HEADS and locality[1][:1].isupper()))
+            if not (named or (number and key in {"P", "Q", "H", "TP", "Tp", "TX"})):
+                continue
+            if address and not (number or address_name):
+                continue
+            word = VIETNAMESE_TITLES[key]
+            if part.end() < len(text) and not text[part.end()].isspace():
+                word += " "
+            edits.append((part.start(), part.end(), word))
+    offset = 0
+    for index, token in enumerate(toks):
+        if out[index] == token:
+            value = token
+            for start, end, word in reversed(edits):
+                if offset <= start and end <= offset + len(token):
+                    value = value[:start-offset] + word + value[end-offset:]
+            out[index] = value
+        offset += len(token) + 1

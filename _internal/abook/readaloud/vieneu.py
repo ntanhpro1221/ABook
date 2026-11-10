@@ -654,6 +654,26 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
 
 def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bool = True,
                   readings: Mapping[str, str] | None = None, *, direct_english: bool = False) -> list[str]:
+    """Read punctuation-separated words while retaining one result per displayed token."""
+    from .studio_tn import reading_punctuation
+
+    parts: list[str] = []
+    owners: list[int] = []
+    for index, token in enumerate(toks):
+        separated = reading_punctuation(token)[0].split()
+        parts.extend(separated)
+        owners.extend([index] * len(separated))
+    said = _spoken_tokens(parts, origin, speaks_english, readings, direct_english=direct_english)
+    grouped: list[list[str]] = [[] for _token in toks]
+    for owner, word in zip(owners, said):
+        grouped[owner].append(word)
+    out = [" ".join(words) for words in grouped]
+    book_readings.apply_tokens(toks, out, readings)
+    return out
+
+
+def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bool = True,
+                   readings: Mapping[str, str] | None = None, *, direct_english: bool = False) -> list[str]:
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
@@ -664,7 +684,7 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     người nghe đặt cho cuốn (`readings`, readings.py) thắng mọi bước trên. Sau cùng `reading_marks` sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     prepared, owners = shouts.presentation_tokens(toks)
     if prepared != toks:
-        said = spoken_tokens(prepared, origin, speaks_english, readings, direct_english=direct_english)
+        said = _spoken_tokens(prepared, origin, speaks_english, readings, direct_english=direct_english)
         rebuilt = [""] * len(toks)
         for word, owner in zip(said, owners):
             rebuilt[owner] += (" " if rebuilt[owner] and word else "") + word
@@ -797,6 +817,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
     vocalized = {index for before, after, index in zip(before_sounds, said, owner) if before != after}
     _roman_numbers(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
+    abbreviations.read_vietnamese_titles(pieces, said)
     abbreviations.read_titles(pieces, said, speaks_english)
     abbreviations.read_shouted_honorifics(pieces, said, origin)
     abbreviations.spell_abbreviations(pieces, said)

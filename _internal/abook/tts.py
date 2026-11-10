@@ -47,7 +47,7 @@ from .text_processing import (
     spoken_symbols_to_words,
 )
 from . import voice_balance
-from .readaloud.studio_tn import studio_tn_tagged
+from .readaloud.studio_tn import reading_punctuation, studio_tn_tagged
 from .voice_catalog import (
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
@@ -1279,7 +1279,12 @@ class TTSCoordinator:
         # text is not what changes, only what is handed to the voice. A line the listener
         # re-worded in the Studio (`listener_text`: a typo, an odd spelling) is read in
         # their words; every consumer of this function sees the same string.
-        source_text = spoken_symbols_to_words(str(_row_value(row, "listener_text", "") or row["text"]))
+        raw = str(_row_value(row, "listener_text", "") or row["text"])
+        # Recognize URL/email before symbol TN replaces their punctuation. Explicit
+        # book readings still match their complete surface before inserting spaces.
+        protected = [match.span() for pattern in (self._exact_pronunciation_pattern, self._pronunciation_pattern)
+                     if pattern is not None for match in pattern.finditer(raw)]
+        source_text = spoken_symbols_to_words(reading_punctuation(raw, protected)[0])
         origins = [(index, index + 1) for index in range(len(source_text))]
         anchor_tags = [frozenset() for _character in source_text]
         anchors: list[dict[str, Any]] = []
@@ -1323,6 +1328,7 @@ class TTSCoordinator:
             text, anchor_tags, self._origin_of_book(), speaks_english,
             changed_words=changed_words,
             direct_english=direct_english,
+            punctuation_prepared=True,
             unprotected_anchors=frozenset(
                 int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
                 and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {

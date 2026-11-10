@@ -12,6 +12,63 @@ from ..text_processing import STRETCHED_SIGH_PATTERN, VOCAL_CUE_PATTERN
 from . import vieneu
 
 
+# These patterns protect lexical punctuation, never the displayed/source string.
+# A bare lower-case ASCII dotted name is ambiguous ("hello.world"): abstain.
+_LEXICAL_PUNCTUATION = tuple(re.compile(pattern) for pattern in (
+    r'(?i:https?://|ftp://|www\.)[^\s<>"“”]+',
+    r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',
+    r'(?<!\w)(?:[A-Za-z]\.){2,}(?:[A-Za-z](?!\w))?',
+    r'(?<![\w.])[vV]\.v\.?(?![\w.])',
+    r'(?<!\w)[A-Z]+(?:\.[A-Z]+)+\.?(?![\w.])',
+    r'(?<![\w.])(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]*\d[A-Za-z0-9_-]*(?![\w.])',
+    r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+[a-z]{2,63}(?!\w)',
+    r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+(?i:com|org|net|edu|gov|io|co|vn|jp|uk|ai|dev|app|info|me|tv)(?!\w)',
+    r'(?<=\d)[.,:](?=\d)',
+    r'(?<![\w.])Th\.S(?!\w)',
+))
+_JOINED_PUNCTUATION = re.compile(r"[.!?,:;…]+[\"'”’»\])]*(?P<opening>[“‘«\[]*)(?=[^\W\d_])")
+
+
+def reading_punctuation(text: str, protected_spans: Sequence[tuple[int, int]] = ()) -> tuple[str, list[int]]:
+    """Insert missing reading spaces and return original-to-reading boundaries.
+
+    No letters/marks are deleted. Internal ellipses (hesitation, interrupted
+    syllables) retain the existing reading rules, even before capitals. Only a
+    closing quotation makes that boundary unambiguous. Pronunciation spans win.
+    """
+    protected = [match.span() for pattern in _LEXICAL_PUNCTUATION for match in pattern.finditer(text)]
+    protected.extend(protected_spans)
+    insertions: set[int] = set()
+    for match in _JOINED_PUNCTUATION.finditer(text):
+        at = match.start("opening")
+        if not match.start() or not text[match.start() - 1].isalnum():
+            continue
+        if any(match.start() < end and at > start for start, end in protected):
+            continue
+        punctuation = match.group().rstrip('"\'”’»])“‘«[')
+        # Straight quotes after a clause separator open the quotation.
+        following = text[match.start() + len(punctuation):][:1]
+        if punctuation[-1:] in {":", ",", ";"} and following in {'"', "'"}:
+            continue
+        if "…" in punctuation or ".." in punctuation:
+            if not any(c in match.group() for c in '"”’»])'):
+                continue
+        insertions.add(at)
+    if not insertions:
+        return text, list(range(len(text) + 1))
+    parts: list[str] = []
+    mapping: list[int] = []
+    added = 0
+    for index in range(len(text) + 1):
+        if index in insertions:
+            parts.append(" ")
+            added += 1
+        mapping.append(index + added)
+        if index < len(text):
+            parts.append(text[index])
+    return "".join(parts), mapping
+
+
 def separate_digit_quotes(text: str) -> str:
     """Keep quote/prime marks away from numbers in voice text only.
 
@@ -37,6 +94,16 @@ def separate_digit_quotes(text: str) -> str:
 
 
 def studio_tn(text: str, origin: str | None, speaks_english: bool,
+              protected_spans: Sequence[tuple[int, int]] = (), *, direct_english: bool = False,
+              punctuation_prepared: bool = False) -> tuple[str, list[int]]:
+    spaced, boundaries = ((text, list(range(len(text) + 1))) if punctuation_prepared
+                          else reading_punctuation(text, protected_spans))
+    protected = [(boundaries[start], boundaries[end]) for start, end in protected_spans]
+    said, mapping = _studio_tn(spaced, origin, speaks_english, protected, direct_english=direct_english)
+    return said, [mapping[position] for position in boundaries]
+
+
+def _studio_tn(text: str, origin: str | None, speaks_english: bool,
               protected_spans: Sequence[tuple[int, int]] = (), *, direct_english: bool = False) -> tuple[str, list[int]]:
     """(chữ đem đọc, bảng dịch vị trí). `protected_spans`: các khoảng [bắt đầu, kết thúc) của `text` đã là cách đọc của bảng phát âm - mọi chữ chạm vào một
     khoảng được giữ nguyên. Bảng dịch vị trí có `len(text) + 1` phần tử: phần tử `i` là vị trí mới của vị trí cũ `i` (vị trí nằm trong chữ đã đổi dồn về đầu chữ mới,
@@ -56,7 +123,7 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
         return re.sub(r"(?<!\w)o_(?=[-.,!?;:\s]|$)|_",
                       lambda match: "o_" if match.group() == "o_" else "", word)
 
-    said = [w if w == t else voice_markers(w) for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]
+    said = [w if w == t else voice_markers(w) for t, w in zip(toks, vieneu._spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]  # Already separated, including lexical/protected spans.
     segmented: dict[int, list[tuple[int, int, str]]] = {}
     for index, match in enumerate(matches):
         spans = [(max(0, start - match.start()), min(len(match.group()), end - match.start()))
@@ -135,6 +202,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
                      changed_words: list[tuple[int, int, int, int]] | None = None,
                      unprotected_anchors: frozenset[int] = frozenset(),
                      direct_english: bool = False,
+                     punctuation_prepared: bool = False,
                      ) -> tuple[str, list[frozenset[int]]]:
     """`studio_tn` cho chuỗi Studio đang mang dấu anchor theo từng ký tự (`anchor_tags[i]`: các anchor có ký tự `i` là cách đọc của bảng phát âm). Khoảng của mỗi
     anchor là chữ được giữ nguyên; trả chuỗi mới cùng dấu anchor đã dịch theo để các bước sau (`_normalize_with_anchor_spans`) vẫn tìm đúng khoảng của anchor."""
@@ -147,7 +215,8 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
     # và "Haizzz" (Studio đọc "Hầy", sách chữ đọc "hai").
     cues = [match.span() for pattern in (VOCAL_CUE_PATTERN, STRETCHED_SIGH_PATTERN) for match in pattern.finditer(text)]
     protected = [span for index, span in bounds.items() if index not in unprotected_anchors]
-    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues], direct_english=direct_english)
+    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues], direct_english=direct_english,
+                                  punctuation_prepared=punctuation_prepared)
     if changed_words is not None:
         from ..webui.word_timing import _TOKEN
 
@@ -158,7 +227,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
                          for part in re.finditer(r"[^\W\d_]+", match.group())]
             for start, end in spans:
                 before, after = text[start:end], new_text[mapping[start]:mapping[end]]
-                if (before != after and any(c.isalpha() for c in before)
+                if (before.replace(" ", "") != after.replace(" ", "") and any(c.isalpha() for c in before)
                         and not any(c.isdigit() for c in before)
                         and any(c.isalpha() for c in after)
                         and not any(anchor_tags[start:end])
