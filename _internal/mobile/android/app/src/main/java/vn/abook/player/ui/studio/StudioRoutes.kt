@@ -13,7 +13,7 @@ import vn.abook.player.ui.export.DrawnCover
 @Composable
 fun StudioHomeRoute(hub: StudioHub, computer: String, onBack: () -> Unit, onOpen: (String) -> Unit, active: Boolean, onNew: (() -> Unit)? = null) {
     val state = remember(hub, computer) { StudioHomeState(hub.session(computer)) }
-    StudioHomeScreen(state, onBack, { onOpen(it.id) }, active, onNew)
+    StudioHomeScreen(state, onBack, { onOpen(it.id) }, active, onNew = onNew)
 }
 
 /** Một dự án ở tab `tab`. `listen`: sang phần Nghe (Thư viện) khi sách đã có chương nghe được. */

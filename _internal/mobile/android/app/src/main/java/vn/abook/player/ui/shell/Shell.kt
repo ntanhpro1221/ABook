@@ -127,6 +127,7 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
     val coverFlight = BookCoverFlight(nav)
     val window = NowPlayingWindowState(scope)
     val tabs = TabState(scope)
+    var studioComputer by mutableStateOf<String?>(null)
     val libraryGrid = LazyGridState()
     val library = LibraryUiState(scope, onSortChanged = onSortChanged)
     val sheets = SheetHost()
@@ -160,6 +161,12 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
         sheets.dismiss()
         window.close()
         val route = request.route
+        if (!request.fromNotification && route.book == null) {
+            studioComputer = request.computer
+            tabs.select(Tab.Studio)
+            nav.popToRoot()
+            return
+        }
         val project = route.book?.let { Destination.StudioProject(request.computer, it, route.tab) }
         val sub = route.sub?.let { kind -> route.book?.let { Destination.StudioSub(request.computer, it, kind) } }
         val target = sub ?: project ?: Destination.Studio(request.computer)
@@ -330,7 +337,7 @@ fun AppShell(
                     stack = { insets, carried ->
                     ScreenStack(
                         nav = nav, insets = insets, carried = carried,
-                        root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
+                        root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications, studio) },
                         screen = { destination ->
                             when (destination) {
                                 is Destination.Book -> BookScreen(
@@ -575,6 +582,7 @@ private fun RootTabs(
     settings: SettingsEnv,
     companion: vn.abook.player.ui.devices.CompanionRepo?,
     askNotifications: (() -> Unit) -> Unit,
+    studio: StudioHub?,
 ) {
     val tabs = shell.tabs
     // Lambda đọc trạng thái (không phải giá trị): đổi tab / đẩy màn không làm RootTabs hay nội dung các tab dựng lại - chỉ chỗ gọi nó đọc, ở BackHandler của Thư viện.
@@ -594,9 +602,11 @@ private fun RootTabs(
                     )
                 }
                 Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
-                    sheets = shell.sheets,
+                    hub = studio, computerKey = shell.studioComputer, pickComputer = { shell.studioComputer = it }, active = tabs.selected == Tab.Studio.ordinal && !shell.nav.canPop,
+                    onOpen = { computer, book -> shell.nav.push(Destination.StudioProject(computer, book)) },
+                    onNew = { computer -> shell.nav.push(Destination.StudioNew(computer)) },
                     openNotificationSettings = settings.links.openNotificationSettings,
-                    connect = { shell.nav.push(Destination.Devices(DevicesPage.Pair)) })
+                    connect = { shell.nav.push(Destination.Settings(SettingsGroup.Devices)) })
                 Tab.Settings -> SettingsScreen(
                     settings,
                     onOpen = { group -> shell.nav.push(Destination.Settings(group)) },

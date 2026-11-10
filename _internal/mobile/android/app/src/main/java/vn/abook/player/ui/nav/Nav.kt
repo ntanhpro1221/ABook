@@ -51,7 +51,7 @@ sealed interface Destination {
     @Immutable
     data class Voice(val page: VoicePage) : Destination
 
-    /** Studio của máy tính `computer` ("" = máy tính chính): danh sách dự án. Đi từ hàng "Studio" ở Thiết bị, Back về lại trang ấy. */
+    /** Studio của máy tính `computer` ("" = máy tính chính): danh sách dự án mở từ thông báo; tab Studio nhúng danh sách trực tiếp. */
     @Immutable
     data class Studio(val computer: String) : Destination
 

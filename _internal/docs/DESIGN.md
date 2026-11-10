@@ -56,8 +56,8 @@ Hai nền tảng cùng một mô hình; khác nhau ở bố cục, không ở ch
 
 - **Thư viện** - mọi cuốn nghe được: file trên máy này + sách của máy đã ghép (một danh sách, dấu nguồn nhỏ). Thêm sách
   ở đây. Trang sách là tầng con.
-- **Studio** - dự án tạo sách nói. Máy tính: đầy đủ. Điện thoại: Studio từ xa khi đã ghép máy tính; chưa ghép thì thẻ
-  Studio giải thích một câu + "Nối máy tính".
+- **Studio** - dự án tạo sách nói. Máy tính: đầy đủ. Điện thoại: Studio từ xa khi đã ghép máy tính; tab mở thẳng danh sách dự án (một chạm), từ hai máy trở lên có bộ chọn tên máy ở đầu; chưa ghép thì
+  một câu + "Nối máy tính". Danh sách tại gốc giữ thanh tab và thanh phát; mở dự án rồi Back về đúng máy đã chọn.
 - **Cài đặt** - gồm cả Thiết bị (ghép máy, chẩn đoán).
 - **Trình phát** - lớp nổi trên mọi màn (thu nhỏ / đầy đủ), không phải một tab.
 
