@@ -80,6 +80,7 @@ class ShellRoutesTest {
         Destination.StudioNew(""),
         Destination.StudioProject("", "b", StudioTab.Chapters),
         *StudioSubKind.entries.map { Destination.StudioSub("", "b", it) }.toTypedArray(),
+        Destination.MusicPick("b", "c1-s0"),
     )
 
     @Test

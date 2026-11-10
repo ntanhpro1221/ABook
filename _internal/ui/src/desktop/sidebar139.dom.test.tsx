@@ -25,19 +25,19 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); host.remove(); vi.clearAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
-it.each(["/", "/book/a", "/studio/new", "/settings/devices"])("ba điểm đến, trang con chọn đúng mục: %s", async path => {
+it.each(["/", "/book/a", "/music", "/studio/new", "/settings/devices"])("bốn điểm đến, trang con chọn đúng mục: %s", async path => {
   await draw(path);
   const links = [...host.querySelectorAll<HTMLAnchorElement>("[data-sidebar-top]")];
-  expect(links.map(link => link.textContent)).toEqual(["Thư viện", "Studio", "Cài đặt"]);
-  expect(links.map(link => link.getAttribute("href"))).toEqual(["/", "/studio", "/settings"]);
-  const active = path.startsWith("/studio") ? "Studio" : path.startsWith("/settings") ? "Cài đặt" : "Thư viện";
+  expect(links.map(link => link.textContent)).toEqual(["Thư viện", "Nhạc", "Studio", "Cài đặt"]);
+  expect(links.map(link => link.getAttribute("href"))).toEqual(["/", "/music", "/studio", "/settings"]);
+  const active = path.startsWith("/music") ? "Nhạc" : path.startsWith("/studio") ? "Studio" : path.startsWith("/settings") ? "Cài đặt" : "Thư viện";
   expect(links.filter(link => link.getAttribute("aria-current") === "page").map(link => link.textContent)).toEqual([active]);
   // Điều hướng: nền trung tính + chữ đậm thường, không dấu tích (dấu tích là của danh sách chọn).
   expect(links.find(link => link.textContent === active)?.className).toContain("bg-hover font-semibold text-fg");
   expect(host.querySelector("aside svg.lucide-check, nav svg.lucide-check")).toBeNull();
   expect(host.querySelector(".bg-accent-soft")).toBeNull();
   expect(host.textContent).not.toMatch(/Nghe|Dự án|Tạo sách nói/);
-  expect(links[2].parentElement?.className).toContain("mt-auto");
+  expect(links[3].parentElement?.className).toContain("mt-auto");
 });
 
 it("ba dự án chạy/chờ, tiến độ mảnh, mở tất cả và thu player khi chọn", async () => {

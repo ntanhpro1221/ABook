@@ -244,5 +244,17 @@
     "qt": "Hồ sơ nghe: {}",
     "web": "Đã nghe {}",
     "reason": "Different data: Qt accessibility name for a listening profile, the matched web label is listening progress."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Tải lại ({})",
+    "web": "Giữ lại: {}",
+    "reason": "Different operations: Qt re-downloads the music-analysis module with its size; the web label names the keep button of a two-step track delete (Qt MyMusicTrack.qml has the same Giữ lại button)."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Xoá file ({})",
+    "web": "Xoá bài: {}",
+    "reason": "Different operations: Qt deletes the precise-emotion model file with its size; the web label names a track's delete button (Qt MyMusicTrack.qml builds the same name as prefix + title)."
   }
 ]

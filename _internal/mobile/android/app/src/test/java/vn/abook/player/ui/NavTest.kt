@@ -98,8 +98,8 @@ class NavTest {
 
     @Test
     fun `tabs slide by index`() {
-        assertEquals(listOf("Thư viện", "Studio", "Cài đặt"), Tab.entries.map { it.label })
-        assertEquals(listOf(0, 1, 2), Tab.entries.map { it.ordinal })
+        assertEquals(listOf("Thư viện", "Nhạc", "Studio", "Cài đặt"), Tab.entries.map { it.label })
+        assertEquals(listOf(0, 1, 2, 3), Tab.entries.map { it.ordinal })
     }
 
     @Test

@@ -67,6 +67,9 @@ export interface MusicCredit {
   landing?: string;
   license?: string;
   licenseUrl?: string;
+  /** Bài đang phát của danh mục và khoá đoạn của nó (trình phát điền khi bài vào): chạm dòng Nhạc nền mở "Bài đang phát". */
+  link?: string;
+  scene?: string;
 }
 
 /** MusicTab phát khi người dùng sửa / chọn lại nhạc của một cuốn (detail = mã sách): trình phát đang mở nạp lại mốc nhạc. */
@@ -726,6 +729,11 @@ export class MusicBed {
   /** Bài đang phát (null = im lặng) - cho giao diện và bài thử. */
   get activeLink(): string | null {
     return this.current?.cue.link ?? null;
+  }
+
+  /** Khoá đoạn của bài đang phát ("Vì sao bài này" của Bài đang phát). */
+  get activeKey(): string | null {
+    return this.current?.cue.key ?? null;
   }
 
   /** Báo mỗi khi bài đang phát đổi (kể cả thành im lặng = null): giao diện vẽ dòng ghi công theo đó. */

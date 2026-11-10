@@ -20,6 +20,10 @@ QtObject {
 
     // Mở trang một cuốn ở Thư viện ("Nghe trong Thư viện" của Studio); Main.qml nối với openBookId
     signal bookRequested(string id)
+    // Màn Nhạc (mục gốc thứ tư, roots[3]): `query` mở Kho nhạc đã tìm sẵn ("Xem trong kho" của Bài đang phát); "" = mở như bấm thanh bên
+    signal musicRequested(string query)
+    // Kho nhạc ở chế độ chọn cho một đoạn ("Xem cả kho" cuối "Đổi bài"): chọn xong lưu ghim như bài gợi ý rồi quay lại
+    signal musicPickRequested(string book, string scene)
 
     function openLayer(layer) { layers = layers.concat([layer]) }
     function closedLayer(layer) { layers = layers.filter(l => l !== layer) }

@@ -2,6 +2,7 @@ import type { ActivityItem, AppInfo, BookSummary, Cast as StudioCast, Chapter, P
 import { BOOKS, bookCast, chapterScript, chapterText, findBook, importPreview, lastNight, listenBook, sessions, type GalleryBook } from "./data";
 import { NOW_SECONDS } from "./clock";
 import { galleryState, never } from "./state";
+import { bookMusicTracks, libraryDownloads, libraryList, libraryMeta, librarySave, libraryTrack } from "./musicLibrary";
 
 // Máy chủ cục bộ giả của app máy tính (abook/webui/server.py): `fetch("/api/...")` đi vào bảng đường dưới đây, trả JSON cùng hình
 // dạng máy chủ thật. Đường nào chưa có thì trả 404 và ghi vào `galleryState.missing`.
@@ -343,6 +344,14 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/books\/([^/]+)\/(bookfile|m4b|mp3|projectfile)-job$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/audiobook$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/music\/playlists$/, () => ({ playlists: [], mine: 0, error: "" })],
+  // Màn Nhạc (Kho nhạc): danh mục giả ở gallery/musicLibrary.ts.
+  ["GET", /^\/api\/music\/library$/, (_match, _body, query) => libraryList(query)],
+  ["GET", /^\/api\/music\/library\/meta$/, () => libraryMeta()],
+  ["GET", /^\/api\/music\/library\/track$/, (_match, _body, query) => libraryTrack(query)],
+  ["GET", /^\/api\/music\/library\/downloads$/, () => libraryDownloads()],
+  ["POST", /^\/api\/music\/library\/save$/, (_match, body) => librarySave(body.links, true)],
+  ["POST", /^\/api\/music\/library\/unsave$/, (_match, body) => librarySave(body.links, false)],
+  ["GET", /^\/api\/books\/([^/]+)\/music\/library$/, () => bookMusicTracks()],
   // Hộp chọn của cửa sổ app (Tauri): trả một file / thư mục tự đặt, hay không gì khi kịch bản là bạn huỷ.
   ["POST", /^\/api\/dialog\/files$/, () => ({ paths: galleryState.scenario.pickCancelled ? [] : ["D:/Truyện/Tiệm sách trên gác xép.epub"] })],
   ["POST", /^\/api\/dialog\/folder$/, () => ({ path: galleryState.scenario.pickCancelled ? null : "D:/Truyện/Tiệm sách trên gác xép" })],

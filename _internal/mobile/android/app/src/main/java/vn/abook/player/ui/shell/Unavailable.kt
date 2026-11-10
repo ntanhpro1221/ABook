@@ -58,6 +58,7 @@ internal fun unavailableTitle(destination: Destination): String = when (destinat
         StudioSubKind.Activity -> StudioLogText.TITLE
         StudioSubKind.Cover -> StudioCoverText.TITLE
     }
+    is Destination.MusicPick -> S.s_chon_bai_cho_doan_840afc40
 }
 
 /** Câu duy nhất của màn trống, bằng lời người nghe ("ở đây" như web: "Ở đây chưa mở được file sách"), không nói về "bản thử" hay cách dựng app. */

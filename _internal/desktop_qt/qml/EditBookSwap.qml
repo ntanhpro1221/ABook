@@ -102,4 +102,12 @@ Column {
             }
         }
     }
+    // Dòng cuối: cả Kho nhạc ở chế độ chọn cho đoạn này (Main.qml đẩy MusicScreen {pickBook, pickScene}; cùng đường lưu ghim)
+    DisclosureRow {
+        objectName: "swapOpenLibrary"
+        width: parent.width
+        icon: "library"
+        title: S.s_xem_ca_kho_fa30b353
+        onClicked: Nav.musicPickRequested(root.bookId, root.cueKey)
+    }
 }

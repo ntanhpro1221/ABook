@@ -34,6 +34,6 @@ Column {
                 })
             }
         }
-        SettingsItem { width: parent.width; MyMusicSettings { width: parent.width } }
+        SettingsItem { width: parent.width; MusicOpenRow { width: parent.width } }
     }
 }

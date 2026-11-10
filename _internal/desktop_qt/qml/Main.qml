@@ -86,6 +86,13 @@ Window {
     Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book, sourceItem) => stack.push(bookPage, { book: book }, sourceItem); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
+    Component { id: musicScreen; MusicScreen {} }
+    Connections {
+        target: Nav
+        // Từ Bài đang phát (trong Đang nghe): đóng Đang nghe trước để thấy màn Nhạc
+        function onMusicRequested(query) { if (win.nowPlaying) win.nowPlaying.close(); stack.show(3); if (query !== "") stack.rootContent(3).search(query) }
+        function onMusicPickRequested(book, scene) { if (win.nowPlaying) win.nowPlaying.close(); stack.push(musicScreen, {pickBook: book, pickScene: scene}) }
+    }
     Component { id: bookPage; BookPage { onNowPlayingRequested: win.openNowPlaying(); onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter); onCastRequested: (kind, data) => castDialogs.begin(kind, data); onRecordRequested: (kind, data) => recordDialogs.begin(kind, data) } }
 
     Item {
@@ -147,7 +154,7 @@ Window {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: playerBar.top
-                roots: [libraryScreen, studioScreen, settingsScreen]
+                roots: [libraryScreen, studioScreen, settingsScreen, musicScreen]
             }
             PlayerBar {
                 id: playerBar
@@ -214,6 +221,7 @@ Window {
         Shortcut { sequences: ["Ctrl+1"]; onActivated: stack.show(0) }
         Shortcut { sequences: ["Ctrl+2"]; onActivated: stack.show(1) }
         Shortcut { sequences: ["Ctrl+3"]; onActivated: stack.show(2) }
+        Shortcut { sequences: ["Ctrl+4"]; onActivated: stack.show(3) }
         Shortcut { sequences: ["Ctrl+Left"]; enabled: Player.loaded; onActivated: Player.previous() }
         Shortcut { sequences: ["Ctrl+Right"]; enabled: Player.loaded; onActivated: Player.next() }
         // Trình phát + "?" khi không có ô nào đang nhận phím đó (danh sách Thư viện giữ mũi tên của nó, ô nhập giữ chữ của nó)

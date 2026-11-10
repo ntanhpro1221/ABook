@@ -1,17 +1,15 @@
 import { S } from "../shared/strings.generated";
-import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
-import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
+import { SettingsRow } from "@/shared/SettingsNav";
 import { Switch } from "@/desktop/Switch";
-import { MY_MUSIC_HELP } from "./musicLocal";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX } from "lucide-react";
+import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
@@ -19,22 +17,13 @@ import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNo
 import { spokenProgress } from "@/shared/progressSpeech";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
 import { LEVEL_TITLE } from "@/shared/musicLevels";
-import { Select, Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
+import { Select, Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
-import { importMusic } from "./musicImport";
 import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, moodOf, swapButton, type MusicDownload } from "./musicScenes";
-import {
-  importSummary,
-  LOCAL_PREFIX,
-  MY_MUSIC_INTRO,
-  mineNote,
-  previewPath,
-  type LocalMusicView,
-  type LocalTrack,
-} from "./musicLocal";
-import { AutoPickNote } from "./AutoPickNote";
-import { MusicModuleNotice } from "./MusicModuleNotice";
+import { mineNote, previewPath } from "./musicLocal";
+import { BrowseLibraryLink } from "@/music/BrowseLibraryLink";
+import { OpenMusicRow } from "@/music/OpenMusicRow";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
 // của truyện, mức nhạc), từng đoạn (im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây
@@ -308,103 +297,14 @@ function Alternatives({
           <p className="mt-1 text-fg-2">
             {info?.remote
               ? S.s_chua_co_bai_nao_them_nhac_cua_ban_tren_may_0f4b6b30
-              : S.s_chua_co_bai_nao_bam_them_nhac_cua_ban_o_da_dfd69e49}
+              : S.s_chua_co_bai_nao_them_nhac_cua_ban_o_man_nh_abedf8f3}
           </p>
         )}
       </div>
-    </MotionRegion>
-  );
-}
-
-/** "Nhạc của tôi": nhạc bạn tự có, làm nhạc nền ngoài danh mục. Nhập, xem, xoá, nghe thử ở đây; ghim cho từng đoạn ở "Đổi bài". */
-export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing: string | null; onPreview: (link: string) => void }) {
-  const client = useQueryClient();
-  const { data: info } = useAppInfo();
-  const canImport = Boolean(info?.dialogs); // hộp chọn file là của máy tính chủ sách, không có ở Studio từ xa
-  const key = ["music-local"];
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
-  const removeBox = useRef<HTMLElement>(null);
-  const removeButton = useRef<HTMLButtonElement>(null);
-  const removeLink = useRef<string | null>(null);
-  useBackLayer(removing !== null, () => setRemoving(null), removeBox, removeButton);
-  const refresh = (view: LocalMusicView) => {
-    client.setQueryData(key, view);
-    void client.invalidateQueries({ queryKey: ["music-alternatives", bookId] });
-  };
-  const importFiles = async () => {
-    try {
-      const { result, error } = await importMusic((done, total, latest) => {
-        setProgress({ done, total });
-        if (latest) refresh(latest);
-      });
-      if (error) toast.error(S.s_dang_them_nhac_thi_dung_8712c030, { description: error.message });
-      if (!result) return;
-      const summary = importSummary(result);
-      toast[summary.kind](summary.title, { description: summary.description });
-    } catch (error) {
-      toast.error((error as Error).message);
-    } finally {
-      setProgress(null);
-    }
-  };
-  const remove = useMutation({
-    mutationFn: (link: string) => api<LocalMusicView>(`/api/music/local/${link.slice(LOCAL_PREFIX.length)}`, { method: "DELETE" }),
-    onSuccess: (view) => {
-      refresh(view);
-      setRemoving(null);
-      toast(S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a);
-    },
-    onError: (error: Error) => toast.error(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, { description: error.message }),
-  });
-  const tracks = data?.tracks ?? [];
-  return (
-    <MotionRegion as="section" elementRef={removeBox} className="space-y-3">
-      <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
-      <MoreInfo label={S.s_nhac_rieng_732d7761}>{MY_MUSIC_HELP}</MoreInfo>
-      {!canImport && (
-        <p className="text-sm text-fg-2">{S.s_nhap_xoa_tren_may_chu_o_day_dung_doi_bai_d_75127758}</p>
+      {/* Cuối danh sách gợi ý: cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
+      {!info?.remote && (
+        <BrowseLibraryLink bookId={bookId} scene={sceneKey} />
       )}
-      {canImport && tracks.length > 0 && (
-        <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
-          <TickingValue>{progress ? S.s_dang_them_0_1_84372256(progress.done, progress.total) : S.s_them_nhac_cua_ban_dbd7d8c4}</TickingValue>
-        </Button>
-      )}
-      <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
-      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_nhac_rieng_144f69a2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139} onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={EighthNote} title={S.s_them_nhac_cua_ban_dbd7d8c4} className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>{S.s_nhap_nhac_032d5f67}</Button>} /> : null}</MotionRegion>}
-      {/* Xoá / nhập bài: hàng khép / mở tại chỗ (DESIGN 5.2); data-motion-live - cả khung không mờ lại theo từng hàng. */}
-      <MotionPresence open={!!tracks.length}>
-        <div data-motion-live="">
-        <AnimatedRows className="divide-y divide-line" items={tracks} keyOf={(track: LocalTrack) => track.link}>
-          {(track: LocalTrack) => (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
-              <span className="min-w-0 flex-1 break-words">
-                <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
-                {track.title}
-                {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
-                {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
-                <AutoPickNote track={track} canOverride={canImport} onView={refresh} />
-              </span>
-              <MotionRegion as="span" className="settings-edge-action flex shrink-0 gap-1">
-                <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
-                  onClick={() => onPreview(track.link)}>
-                  {previewing === track.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
-                </Button>
-                {removing === track.link ? (
-                  <>
-                    <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>{S.s_xoa_bai_d554a496}</Button>
-                    <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
-                  </>
-                ) : (
-                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>{S.s_xoa_777195ab}</Button>
-                )}
-              </MotionRegion>
-            </div>
-          )}
-        </AnimatedRows>
-        </div>
-      </MotionPresence>
     </MotionRegion>
   );
 }
@@ -673,9 +573,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
       </Fold>
 
-      <Fold storageKey="studio.music.local" title={S.s_nhac_cua_toi_f65b7ac6} heading="h3">
-        <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
-      </Fold>
+      <OpenMusicRow />
 
       {data.error && <p className="text-sm text-warning">{data.error}</p>}
       {!overrides.enabled && !!plan?.scenes.length && (

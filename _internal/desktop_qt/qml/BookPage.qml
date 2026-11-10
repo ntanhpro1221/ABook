@@ -574,6 +574,8 @@ Item {
                 model: bookDetail.chapters
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
+                // "Nhạc trong sách" dưới danh sách chương (DESIGN.md §7 "Nhạc"); cuốn không có nhạc danh mục thì cao 0
+                footer: MusicBookSection { width: list.width; topPadding: Theme.s24; bookId: root.book.bookId || "" }
                 delegate: ChapterRow {
                     id: row
                     required property var model

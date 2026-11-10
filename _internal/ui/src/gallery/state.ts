@@ -27,6 +27,8 @@ export interface Scenario {
   music?: boolean;
   /** Cuốn audio nhập từ file, có nhạc người làm sách gắn. */
   packagedMusic?: boolean;
+  /** Kho nhạc: hai bài đang tải (vòng phần trăm trên dòng, nút Huỷ tải ở chi tiết). */
+  musicDownloading?: boolean;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };

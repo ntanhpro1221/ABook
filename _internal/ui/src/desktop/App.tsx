@@ -57,7 +57,8 @@ const ProjectsScreen = lazyComponent(() => import("@/studio/ProjectsScreen").the
 const NewProjectScreen = lazyComponent(() => import("@/studio/NewProjectScreen").then((module) => module.NewProjectScreen), PAGE_LOADING);
 const ProjectScreen = lazyComponent(() => import("@/studio/ProjectScreen").then((module) => module.ProjectScreen), PAGE_LOADING);
 const SettingsScreen = lazyComponent(() => import("./SettingsScreen").then((module) => module.SettingsScreen), PAGE_LOADING);
-const LAZY_SCREENS = [ProjectsScreen, NewProjectScreen, ProjectScreen, SettingsScreen];
+const MusicScreen = lazyComponent(() => import("@/music/MusicScreen").then((module) => module.MusicScreen), PAGE_LOADING);
+const LAZY_SCREENS = [ProjectsScreen, NewProjectScreen, ProjectScreen, SettingsScreen, MusicScreen];
 
 /** Nạp ngay mọi màn tải lười (phòng trưng bày: mở thẳng một màn Studio / Cài đặt rồi chụp - không chụp giữa lúc chunk đang về). */
 export function preloadScreens(): Promise<unknown> {
@@ -675,6 +676,7 @@ export function App() {
                   <Route path="/studio/new" element={<StudioClosed><NewProjectScreen /></StudioClosed>} />
                   <Route path="/studio/:id" element={<StudioClosed><ProjectScreen /></StudioClosed>} />
                   <Route path="/settings/:group?" element={<SettingsScreen />} />
+                  <Route path="/music" element={<MusicScreen />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Shell>

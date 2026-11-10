@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { readFileSync } from "node:fs";
 import type { ReactNode } from "react";
 import { renderToString } from "react-dom/server";
+import { MemoryRouter } from "react-router";
 import { beforeAll, describe, expect, it } from "vitest";
 import mix from "../../../abook/webui/assets/music_mix.json";
 import type { ListenBook } from "@/listen/model";
@@ -22,7 +23,8 @@ beforeAll(() => {
 });
 
 function wrap(children: ReactNode, client = new QueryClient()) {
-  return renderToString(<QueryClientProvider client={client}>{children}</QueryClientProvider>);
+  // MemoryRouter: hộp Sửa sách có lối "Mở Nhạc ›" (một Link)
+  return renderToString(<QueryClientProvider client={client}><MemoryRouter>{children}</MemoryRouter></QueryClientProvider>);
 }
 
 describe("mức nhạc nền", () => {

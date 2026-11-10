@@ -38,6 +38,7 @@ class AbookColors(
  * bóng đổ không thấy được trên nền tối, nên bờ của bảng là do màn mờ này (cộng vạch [AbookColors.line] ở mép trên) chứ không phải do bóng.
  */
 val AbookColors.scrim: Color get() = Color(if (dark) DarkPalette.SCRIM else LightPalette.SCRIM)
+val AbookColors.hover: Color get() = Color(if (dark) DarkPalette.HOVER else LightPalette.HOVER)
 
 internal val LightColors = AbookColors(
     Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE), Color(LightPalette.CONTROL_LINE),

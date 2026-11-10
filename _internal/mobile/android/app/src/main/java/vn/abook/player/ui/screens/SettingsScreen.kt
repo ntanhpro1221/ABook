@@ -92,7 +92,12 @@ class SettingsEnv(
     val prepare: vn.abook.player.ui.data.PrepareState? = null,
     /** Nhật ký đêm: thẻ "Tối qua" ở Thư viện, và tấm Hẹn giờ nhắc thẻ ấy; null = bản thử. */
     val night: vn.abook.player.ui.data.NightState? = null,
-)
+    /** Kho nhạc (tab Nhạc); null = bản thử. */
+    val musicLibrary: vn.abook.player.ui.music.library.LibraryState? = null,
+) {
+    /** Mở tab Nhạc (dòng "Mở Nhạc" của Cài đặt › Nghe); Shell gán. */
+    var openMusic: () -> Unit = {}
+}
 
 /**
  * Tab Cài đặt (cấp một): danh sách phẳng sáu nhóm - biểu tượng + tên + một dòng giá trị hiện tại (DESIGN.md §7 "Cài đặt"); chạm một nhóm thì màn con của nó

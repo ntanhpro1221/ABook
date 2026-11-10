@@ -360,10 +360,13 @@ fun ListItem(
 
 /** Thanh tiến độ mảnh dưới một hàng: mốc, không phải phần trăm byte đoán. Giá trị đổi chỉ được đọc trong pha vẽ. */
 @Composable
-fun StageProgress(progress: () -> Float) {
+fun StageProgress(progress: () -> Float) = LinearProgress(Modifier.padding(top = Dim.s8).height(3.dp), progress = progress)
+
+/** Flat progress track shared by stage progress and the music emotion meters. */
+@Composable
+fun LinearProgress(modifier: Modifier = Modifier.height(6.dp), ink: Color = Abook.colors.accent, progress: () -> Float) {
     val track = Abook.colors.line
-    val ink = Abook.colors.accent
-    Canvas(Modifier.fillMaxWidth().padding(top = Dim.s8).height(3.dp)) {
+    Canvas(modifier.fillMaxWidth()) {
         drawRect(track)
         drawRect(ink, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
     }

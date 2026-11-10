@@ -221,6 +221,6 @@ Column {
             ScrollEdges { target: cues; color: Theme.panel; x: cues.x; y: cues.y; width: cues.width; height: cues.height }
             Scrollbar { target: cues }
         }
-        EditBookMyMusic { width: parent.width; onChanged: if (root.swapping !== "") root.load() }
+        MusicOpenRow { width: parent.width }
     }
 }

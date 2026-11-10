@@ -315,7 +315,11 @@ void Music::updateCredit(const QString &link) {
                       {QStringLiteral("licenseUrl"), c.licenseUrl},
                       {QStringLiteral("modified"), MusicText::needsModifiedNote(c.license)},
                       {QStringLiteral("modifiedNote"), MusicText::modifiedNote()},
-                      {QStringLiteral("landing"), c.landing}};
+                      {QStringLiteral("landing"), c.landing},
+                      // Bài đang phát (MusicTrackDetail): bài nào, của cuốn nào, ở đoạn nào
+                      {QStringLiteral("link"), link},
+                      {QStringLiteral("book"), m_bookId},
+                      {QStringLiteral("scene"), m_bed.activeKey()}};
         }
     }
     if (credit == m_credit)

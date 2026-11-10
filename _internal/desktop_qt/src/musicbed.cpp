@@ -247,6 +247,10 @@ QString MusicBed::activeLink() const {
     return m_current ? m_current->cue.link : QString();
 }
 
+QString MusicBed::activeKey() const {
+    return m_current ? m_current->cue.key : QString();
+}
+
 void MusicBed::stop() {
     cancelLoopTicket();
     cancelStandby();

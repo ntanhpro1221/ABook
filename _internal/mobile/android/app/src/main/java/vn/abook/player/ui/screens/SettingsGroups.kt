@@ -57,7 +57,6 @@ import vn.abook.player.ui.data.ThemeMode
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.VoicePage
-import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.components.fadeEdges
 
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, S.s_0_phut_2596d212(it)) }
@@ -84,9 +83,6 @@ private object GroupCopy {
 fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val repo = env.repo
     val settings by repo.state.collectAsState()
-    val voice = env.voice
-    val summary by (voice?.summary ?: NoVoiceSummary).collectAsState()
-    LaunchedEffect(voice) { voice?.loadMusic() }
     val allowed by repo.notificationsAllowed.collectAsState()
     // Mở màn và mỗi lần quay lại từ Cài đặt Android: hỏi lại quyền - cho phép xong thì dòng khép lại tại chỗ.
     LifecycleResumeEffect(repo) {
@@ -112,7 +108,7 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
         ListSection(S.s_nhac_nen_271fb292) {
             SwitchRow(S.s_tu_chon_nhac_nen_a14c52b4, settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
             RowLine()
-            DisclosureRow(S.s_nhac_cua_toi_f65b7ac6, { if (voice != null) openVoice(VoicePage.Music) }, "my_music", summary = summary.music)
+            vn.abook.player.ui.music.library.OpenMusicRow(env.openMusic)
         }
     }
 }
@@ -282,4 +278,3 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, onBack: () -> Uni
 }
 
 private val NoSummary = kotlinx.coroutines.flow.MutableStateFlow(Summary())
-private val NoVoiceSummary = kotlinx.coroutines.flow.MutableStateFlow(VoiceSummary())

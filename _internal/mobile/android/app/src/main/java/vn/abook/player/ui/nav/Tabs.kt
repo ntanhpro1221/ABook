@@ -13,9 +13,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.motion.Motion
 
-/** Ba tab đáy, theo thứ tự trái -> phải (chỉ số tab quyết định chiều trượt). */
+/** Bốn tab đáy, theo thứ tự trái -> phải (chỉ số tab quyết định chiều trượt). Nhạc là nội dung, không phải cài đặt: ngay sau Thư viện. */
 enum class Tab(val label: String, val tag: String) {
     Library(S.s_thu_vien_58145555, "tab_library"),
+    Music(S.s_nhac_0e4413e9, "tab_music"),
     Studio(S.s_studio_0aa91af2, "tab_studio"),
     Settings(S.s_cai_dat_202e0e9b, "tab_settings"),
 }

@@ -1745,13 +1745,15 @@
         "listen/PlayerViews.tsx",
         "listen/labels.ts",
         "listen/EditBook.tsx",
+        "music/BrowseLibraryLink.tsx",
         "shared/format.ts",
         "shared/musicLevels.ts",
         "studio/musicScenes.ts"
       ],
       "native": [
         "music/*.kt",
-        "voice/MyMusicScreen.kt"
+        "voice/MyMusicScreen.kt",
+        "!music/library/*.kt"
       ],
       "native_also": [
         "screens/SettingsGroups.kt",
@@ -1820,6 +1822,67 @@
           "side": "web",
           "match": "^(nhạc\\ riêng|thêm\\ và\\ xoá\\ nhạc\\ làm\\ trên\\ máy\\ tính\\ chủ\\ sách|máy\\ này\\ chưa\\ thêm\\ nhạc\\ được\\.\\ thêm\\ ở\\ abook\\ trên\\ máy\\ tính\\ \\(tab\\ nhạc\\ nền\\ của\\ studio\\),\\ bài\\ sẽ\\ có\\ ở\\ đây)$",
           "reason": "help fold and hints for a machine that cannot import music (a library viewed from another machine); the phone always imports into its own store"
+        }
+      ]
+    },
+    {
+      "id": "music-library",
+      "web": [
+        "music/*.tsx",
+        "music/library.ts",
+        "music/preview.ts",
+        "!music/*.test.ts"
+      ],
+      "web_also": [
+        "shared/format.ts",
+        "listen/MyMusic.tsx",
+        "studio/MusicTab.tsx"
+      ],
+      "native": [
+        "music/library/*.kt"
+      ],
+      "native_also": [
+        "music/*.kt",
+        "voice/MyMusicScreen.kt"
+      ],
+      "sentences": true,
+      "allow": [
+        {
+          "side": "web",
+          "label": "Quay lại",
+          "reason": "web pick mode has a written back button; native pick mode uses the page header's back arrow (its screen-reader name lives in components/ListParts.kt)"
+        },
+        {
+          "side": "native",
+          "match": "^(tải\\ qua\\ mạng\\ tính\\ phí\\?|tải\\ \\{\\}\\ qua\\ dữ\\ liệu\\ di\\ động\\.|vẫn\\ tải|để\\ sau)$",
+          "reason": "phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network"
+        },
+        {
+          "side": "native",
+          "label": "Xoá ô tìm",
+          "reason": "native clear button of the search box; the web search input clears with the browser's own control and Esc"
+        },
+        {
+          "side": "native",
+          "label": "Đang tải",
+          "reason": "native writes a word while the catalogue index loads; the web list shows a skeleton"
+        },
+        {
+          "side": "native",
+          "label": "Tải qua mạng tính phí?",
+          "reason": "phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network"
+        },
+        {
+          "side": "native",
+          "label": "Tải {} qua dữ liệu di động.",
+          "reason": "phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network"
+        }
+      ],
+      "missing": [
+        {
+          "side": "web",
+          "label": "Đã chọn bài cho đoạn này",
+          "reason": "toast of the computer after picking; native returns to the 'Đổi bài' sheet, which shows the new track as the scene's current one"
         }
       ]
     }

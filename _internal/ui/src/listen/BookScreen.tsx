@@ -33,6 +33,7 @@ import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
+import { BookMusic } from "@/music/BookMusic";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
@@ -1293,6 +1294,8 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} layout={split ? "split" : "stacked"} />
+          {/* "Nhạc trong sách" dưới danh sách chương (DESIGN.md mục Nhạc); cuốn không có nhạc danh mục thì không hiện gì */}
+          <BookMusic bookId={book.id} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab book={book} />

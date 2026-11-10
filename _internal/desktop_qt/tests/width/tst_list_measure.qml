@@ -29,7 +29,7 @@ Item {
         }
     }
     Component { id: studio; Column { spacing: 24; BookTemplates { width: parent.width } SharedReadingsSettings { width: parent.width } } }
-    Component { id: music; Column { spacing: 24; MyMusicSettings { width: parent.width } EditBookMyMusic { width: parent.width } } }
+    Component { id: music; Column { spacing: 24; MyMusicSettings { width: parent.width } } }
     Component { id: chapters; ChapterList { model: Player.chapters } }
     Component {
         id: voices
@@ -61,7 +61,7 @@ Item {
         function cleanup() { Theme.mode = "auto"; Theme.reduceMotion = false; Nav.layers = [] }
         function check(item) {
             if (!item.visible || item.opacity === 0) return
-            if (["measuredStudioRow", "importQueueViewport", "importChapterViewport", "musicTrackList", "bookMusicList", "voiceListRow"].includes(item.objectName)) {
+            if (["measuredStudioRow", "importQueueViewport", "importChapterViewport", "musicTrackList", "voiceListRow"].includes(item.objectName)) {
                 verify(item.width <= Theme.listMeasure + 0.5, item.objectName + " exceeds readable measure")
                 verify(item.width <= content.width + 0.5, item.objectName + " exceeds available width")
             }
@@ -115,7 +115,8 @@ Item {
             check(page)
             sameColumn(d.scene === "chapter_list" ? page.contentItem : page) // mọi cảnh: phần tử lặp ở các hàng anh em cùng cột
             if (d.scene === "music_lists")
-                for (const name of ["musicTrackList", "bookMusicList"]) {
+                // Nhạc của tôi chỉ còn ở màn Nhạc › Đã lưu (MyMusicSettings); bản sao ở Sửa sách (EditBookMyMusic, bookMusicList) đã bỏ
+                for (const name of ["musicTrackList"]) {
                     const list = findNamed(page, name)
                     verify(list !== null, name)
                     verify(sameColumn(list) > 0, name + ": không có phần tử lặp nào để so")

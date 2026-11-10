@@ -21,7 +21,9 @@ import { Switch } from "@/desktop/Switch";
 import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
-import { MyMusicSection, SwapTrack } from "./MyMusic";
+import { OpenMusicRow } from "@/music/OpenMusicRow";
+import { BrowseLibraryLink } from "@/music/BrowseLibraryLink";
+import { SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
@@ -237,10 +239,14 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 onChoose={(link) => change.mutate({ pins: { [cue.key]: link }, ...(cue.silenced ? { silence: { [cue.key]: false } } : {}) })}
               />
             )}
+            {/* Cuối "Đổi bài": cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
+            {swapping === cue.key && (
+              <BrowseLibraryLink bookId={book.id} scene={cue.key} className="px-3" />
+            )}
           </li>
         ))}
       </ul>
-      <MyMusicSection />
+      <OpenMusicRow />
     </MotionRegion>
   );
 }

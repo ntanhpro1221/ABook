@@ -8,6 +8,10 @@
     "reason": "Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information."
   },
   {
+    "label": "Huỷ tải",
+    "reason": "Different controls: Qt Studio stops a whole-playlist download with a stop square; the web track sheet cancels one track's download with x (Qt's own track detail uses x too)."
+  },
+  {
     "label": "Quay lại",
     "reason": "Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen."
   },

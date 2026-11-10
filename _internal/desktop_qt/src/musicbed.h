@@ -72,6 +72,7 @@ public:
     bool failing() const;
     /// Bài đang phát ("" = im lặng).
     QString activeLink() const;
+    QString activeKey() const;  // khoá đoạn nhạc đang kêu ("Vì sao bài này" của Bài đang phát)
 
     /// Bộ thử: số phần tử còn sống (đang kêu + đang mờ đi + tạo sẵn).
     int voices() const;

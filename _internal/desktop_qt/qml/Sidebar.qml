@@ -97,7 +97,7 @@ Item {
         // Khối nền của mục đang mở
         Rectangle {
             id: selector
-            readonly property Item target: root.currentSection === 0 ? library : (root.currentSection === 1 ? studio : settings)
+            readonly property Item target: [library, studio, settings, music][root.currentSection] || library
             x: target.x
             y: target.y
             width: target.width
@@ -124,10 +124,23 @@ Item {
             current: root.currentSection === 0
             onClicked: root.choose(0)
         }
+        // Nhạc là nội dung, không phải cài đặt: mục gốc ngay sau Thư viện (DESIGN.md §7 "Nhạc"); trong ngăn xếp là roots[3]
+        NavItem {
+            id: music
+            objectName: "sidebarMusic"
+            x: Theme.s8
+            y: library.y + library.height + Theme.s4
+            width: panel.width - 2 * Theme.s8
+            text: S.s_nhac_0e4413e9
+            icon: "list-music"
+            shortcut: "Ctrl+4"
+            current: root.currentSection === 3
+            onClicked: root.choose(3)
+        }
         NavItem {
             id: studio
             x: Theme.s8
-            y: library.y + library.height + Theme.s4
+            y: music.y + music.height + Theme.s4
             width: panel.width - 2 * Theme.s8
             text: S.s_studio_0aa91af2
             icon: "clapperboard"

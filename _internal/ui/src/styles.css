@@ -1677,3 +1677,11 @@ button[data-variant] { min-height: 2.5rem; height: auto; }
     max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - 0.5rem));
   }
 }
+
+/* One metadata line: the creator yields space to the duration; the dot stays with its following part. */
+.dot-join-single > span { flex-wrap: nowrap; }
+.dot-join-single > span > span { white-space: nowrap; }
+.dot-join-single > span > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.dot-join-single > span > span + span { flex-shrink: 0; }
+/* Keep the preview glyph on the same ink edge as the content column. */
+.music-row-preview { margin-inline-start: -12px; }
