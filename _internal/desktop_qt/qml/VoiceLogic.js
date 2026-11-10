@@ -271,7 +271,7 @@ function removeAsk(use) {
 
 // ---- Hiệu năng (voiceSpeed.ts) ----
 
-var SPEED_TITLE = S.s_toc_do_doc_3657e59d
+var SPEED_TITLE = S.s_chat_luong_giong_5d1c8e07
 var SPEED_OPTIONS = [
     {value: "auto", label: S.s_tu_dong_a25c8028},
     {value: "quality", label: S.s_chat_luong_cao_nhat_74af310a},

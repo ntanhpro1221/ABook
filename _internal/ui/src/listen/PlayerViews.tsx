@@ -1703,7 +1703,7 @@ export function PlayerBar({
             <VoiceMenu look="row" />
             <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>{S.s_mo_man_hinh_dang_nghe_2426b4ad}</MenuRow>
             <MenuRow icon={X} onClick={close}>{S.s_dong_trinh_phat_8a833838}</MenuRow>
-            <MenuSlot label={S.s_thiet_bi_phat_c8cfc7a8}>{extra}</MenuSlot>
+            <MenuSlot label={S.s_phat_tren_681e16e1}>{extra}</MenuSlot>
           </MoreMenu>
         </div>
       </div>
@@ -2119,7 +2119,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
             {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}
             <MenuSlot label={S.s_goi_y_doc_346ac8be} icon={Lightbulb}><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
-            <MenuSlot label={S.s_thiet_bi_phat_c8cfc7a8}>{actions}</MenuSlot>
+            <MenuSlot label={S.s_phat_tren_681e16e1}>{actions}</MenuSlot>
           </MoreMenu>
         </div>
       </div>

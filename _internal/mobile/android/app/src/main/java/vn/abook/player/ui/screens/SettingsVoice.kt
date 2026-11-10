@@ -186,7 +186,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                 val state = speed ?: return@Reveal
                 ListSection(S.s_hieu_nang_8c7b7526) {
                     ChoiceSetting(
-                        S.s_toc_do_doc_3657e59d, VoiceSpeedChoice.entries, state.choice,
+                        S.s_chat_luong_giong_5d1c8e07, VoiceSpeedChoice.entries, state.choice,
                         { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed",
                     )
                     for (line in state.lines) {

@@ -342,7 +342,7 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 
 ### Thêm tuỳ chọn (trình phát `…`)
 
-- Dòng tiến độ cả cuốn ở đầu, rồi các dòng, MỌI dòng có icon 20 dp cách chữ 16 dp, cao tối thiểu 48 dp: **Âm thanh** (sliders-horizontal) → **Giọng đọc** (mic-vocal) → **Cỡ chữ** (captions, khi có Đọc theo) → **Thiết bị phát** (cast) → **Trang sách** (book-open: thu trình phát rồi tới trang của cuốn; đang ở trang ấy thì không mở chồng) → **Cửa sổ mini** (picture-in-picture-2) LUÔN ở cuối. Nhạc nền không còn dòng riêng (nằm trong Âm thanh). Hàng nút chính của trình phát giữ ba ô, không có nút cửa sổ mini.
+- Dòng tiến độ cả cuốn ở đầu, rồi các dòng, MỌI dòng có icon 20 dp cách chữ 16 dp, cao tối thiểu 48 dp: **Âm thanh** (sliders-horizontal) → **Giọng đọc** (mic-vocal) → **Cỡ chữ** (captions, khi có Đọc theo) → **Phát trên** (cast) → **Trang sách** (book-open: thu trình phát rồi tới trang của cuốn; đang ở trang ấy thì không mở chồng) → **Cửa sổ mini** (picture-in-picture-2) LUÔN ở cuối. Nhạc nền không còn dòng riêng (nằm trong Âm thanh). Hàng nút chính của trình phát giữ ba ô, không có nút cửa sổ mini.
 - **Tự mở cửa sổ mini** mặc định TẮT (điện thoại và máy tính). Bật thì chỉ tự thu khi sách ĐANG PHÁT lúc rời app; nút Cửa sổ mini bấm tay thì mở được cả khi đang dừng.
 
 ### Bảng trượt: cử chỉ chung

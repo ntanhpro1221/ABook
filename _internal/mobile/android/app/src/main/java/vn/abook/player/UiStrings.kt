@@ -482,6 +482,7 @@ internal object S {
     const val s_chat_luong_cao_d8a057c6 = " chất lượng cao"
     const val s_chat_luong_cao_dc7017a7 = "Chất lượng cao"
     const val s_chat_luong_cao_nhat_74af310a = "Chất lượng cao nhất"
+    const val s_chat_luong_giong_5d1c8e07 = "Chất lượng giọng"
     const val s_chay_nen_dung_van_giu_phan_da_lam_b5b35b4d = "Chạy nền; dừng vẫn giữ phần đã làm."
     fun s_chay_pin_0_ca28e520(p0: Any?): String = "Chạy pin: " + p0.toString()
     const val s_chay_tiep_hoac_ap_dung_thay_doi_de_thu_lai_7f582c5b = "Chạy tiếp hoặc Áp dụng thay đổi để thu lại."
@@ -2535,7 +2536,6 @@ internal object S {
     const val s_thiet_bi_nay_chua_ghep_4b9b7c59 = "Thiết bị này chưa ghép"
     const val s_thiet_bi_nay_da_bo_ghep_ae51d316 = "Thiết bị này đã bỏ ghép"
     const val s_thiet_bi_o_gan_ae6fdbbc = "Thiết bị ở gần"
-    const val s_thiet_bi_phat_c8cfc7a8 = "Thiết bị phát"
     const val s_thiet_bi_tra_loi_la_37277b3c = "thiết bị trả lời lạ"
     const val s_thiet_bi_tu_choi_lenh_nay_e5e5c603 = "thiết bị từ chối lệnh này"
     fun s_thieu_0_cad4dc74(p0: Any?): String = "thiếu " + p0.toString()

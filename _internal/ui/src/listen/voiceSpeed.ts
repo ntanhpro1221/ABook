@@ -32,7 +32,7 @@ export interface VoiceSpeedStatus {
   voices: VoiceSpeedVoice[];
 }
 
-export const VOICE_SPEED_TITLE = S.s_toc_do_doc_3657e59d;
+export const VOICE_SPEED_TITLE = S.s_chat_luong_giong_5d1c8e07;
 
 export const VOICE_SPEED_OPTIONS: { value: VoiceSpeedChoice; label: string }[] = [
   { value: "auto", label: S.s_tu_dong_a25c8028 },
