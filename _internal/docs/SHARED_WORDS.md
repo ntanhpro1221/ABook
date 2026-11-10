@@ -87,5 +87,9 @@ fifth (verdict) sample drawn after the table was frozen, latency and the corpus-
   against "Yang Hye **in** lập tức"): the context kinds are identical; only knowing the name's language would tell.
 - **A sentence-initial word before an English noun** ("**Do** trans sắp thi" against "**Do** exercise đi"): same kinds on
   both sides; the rules had a hand list of borrowed nouns for it.
+- **ALL-CAPS words** ("admin BAN nick", "TOKYO BAY"): the text layer lower-cases shouting before the capital rule sees
+  it, so the word is scored like prose. Two English words were lost this way in a 6,874-window scan.
+- **Typos that split a word** ("Sauk hi" for "Sau khi"): `hi` after an unknown ASCII word now stays English.
+- **A name followed by a two-syllable Vietnamese word whose first syllable is in the table** ("Regulus bang hoàng"): mostly right ("Lisa hi vọng", "Albert say mê"), not always.
 - **Text that is ambiguous to a reader too**: stutters ("to, to, toire"), a lone "Ban.", sounds that work in either
   language ("pa pa pa", "bang bang").
