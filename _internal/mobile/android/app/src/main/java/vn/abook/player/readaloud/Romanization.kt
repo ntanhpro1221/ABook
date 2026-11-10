@@ -107,9 +107,9 @@ object Romanization {
     private fun jaEmit(onset: String, vowel: Char, syllables: MutableList<Syl>, flags: MutableList<String>) {
         val plain = JA_VOWEL.getValue(vowel)
         when {
-            onset == "" -> { // chỉ là nguyên âm: o đầu từ hay sau a / e -> o (Osaka -> O-xa-ca, Aoi -> A-o-i), sau i / u -> ô (Fumio -> Phu-mi-ô, Fukuoka -> Phu-cu-ô-ca)
+            onset == "" -> { // chỉ là nguyên âm: o ĐẦU TỪ -> ô (chủ sách 10-11: Osaka -> Ô-xa-ca, Onee -> Ô-ne), sau a / e -> o (Aoi -> A-o-i), sau i / u -> ô (Fumio -> Phu-mi-ô, Fukuoka -> Phu-cu-ô-ca)
                 val afterIu = syllables.isNotEmpty() && syllables.last().coda.isEmpty() && syllables.last().nucleus.takeLast(1) in listOf("i", "u")
-                syllables.add(Syl("", if (vowel == 'o' && !afterIu) "o" else plain))
+                syllables.add(Syl("", if (vowel == 'o' && syllables.isNotEmpty() && !afterIu) "o" else plain))
             }
             onset in JA_SIMPLE -> syllables.add(Syl(JA_SIMPLE.getValue(onset), plain))
             onset == "sh" -> syllables.add(Syl(JapanesePolicy.choice("sh"), plain)) // shi shu sha sho -> si su sa sô (chủ sách 04-10: shu giữ s + u)
@@ -180,6 +180,8 @@ object Romanization {
             if (c in JA_GEMINATE_CODA && (after == c || (c == "t" && sub(word, i + 1, i + 3) == "ch"))) {
                 if (c == "s") flags.add("analogy:ss_t")
                 if (!close(syllables, JA_GEMINATE_CODA.getValue(c))) return null
+                // ô đầu từ là của âm tiết mở; khép bằng phụ âm đôi thì o ngắn (chủ sách 04-10: "Oppa o ngắn" -> Óp-pa; Otto -> Ót-tô)
+                if (syllables.size == 1 && syllables[0].onset.isEmpty() && syllables[0].nucleus == "ô") syllables[0].nucleus = "o"
                 i += 1
                 continue
             }

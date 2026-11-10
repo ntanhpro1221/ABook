@@ -799,6 +799,14 @@ object VieneuUnits {
             Readings.applyTokens(toks, rebuilt, readings)
             return rebuilt
         }
+        Abbreviations.capitalWords(toks, origin, readings)?.let { named ->
+            // "YUI!" is read as "Yui!" is everywhere else in the book. A reading that is only the word's own
+            // capitalized spelling is that evidence, not a sound: it must not replace what the route says.
+            val sounds = readings.orEmpty().filter { (surface, said) -> !Abbreviations.provesName(surface, said) }
+            val said = spokenTokens(named, origin, sounds, directEnglish).toMutableList()
+            Readings.applyTokens(toks, said, sounds)
+            return said
+        }
         val out = toks.toMutableList()
         stutters(toks, out, origin, readings, directEnglish)
         Shouts.readShouts(toks, out, origin)

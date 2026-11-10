@@ -176,10 +176,11 @@ def _ja_spelling(word: str, flags: list[str]) -> str:
 
 def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) -> bool:
     if onset == "":
-        # chỉ là nguyên âm: o -> o khi đầu từ hay sau a / e (chủ sách 04-10: Osaka -> O-xa-ca, Aoi -> A-o-i, Naoki -> Na-o-ki), ô khi sau i / u như vần iô / uô
+        # chỉ là nguyên âm: o ĐẦU TỪ -> ô (chủ sách 10-11 nghe "Osaka" đọc o: "ngày trước quyết luật đọc nó là ô"; Lead chốt: Osaka -> Ô-xa-ca, Onee -> Ô-ne, Okaa -> Ô-ca,
+        # Onigiri -> Ô-ni-ghi-ri - thay "o (alt ô)" của 04-10); o sau a / e -> o (chủ sách 04-10: Aoi -> A-o-i, Naoki -> Na-o-ki); ô khi sau i / u như vần iô / uô
         # (Fumio -> Phu-mi-ô, Fukuoka -> Phu-cu-ô-ca); có phụ âm đầu thì o -> ô
         after_iu = bool(syllables) and not syllables[-1].coda and syllables[-1].nucleus[-1:] in ("i", "u")
-        syllables.append(_Syl("", "o" if vowel == "o" and not after_iu else _JA_VOWEL[vowel]))
+        syllables.append(_Syl("", "o" if vowel == "o" and syllables and not after_iu else _JA_VOWEL[vowel]))
     elif onset in _JA_SIMPLE:
         syllables.append(_Syl(_JA_SIMPLE[onset], _JA_VOWEL[vowel]))
     elif onset == "sh":  # shi shu sha sho -> si su sa sô (luật 1.4; chủ sách 04-10: shu giữ s + u, không xiu)
@@ -225,6 +226,8 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
                 flags.append("analogy:ss_t")
             if not _close(syllables, CHOICES["ss"] if c == "s" else _JA_GEMINATE_CODA[c]):
                 return None
+            if len(syllables) == 1 and not syllables[0].onset and syllables[0].nucleus == "ô":
+                syllables[0].nucleus = "o"  # ô đầu từ là của âm tiết mở; khép bằng phụ âm đôi thì o ngắn (chủ sách 04-10: "Oppa o ngắn" -> Óp-pa; Otto -> Ót-tô)
             i += 1
             continue
         if c == "f" and after == "f":

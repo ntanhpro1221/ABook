@@ -90,18 +90,19 @@ class VoiceChoices(private val file: File) {
         return if (guess in Names.ORIGINS) guess else ""
     }
 
-    /** Tên cuốn gốc Nhật tự chứng minh ([JapanesePolicy.bookNameReadings]), tính một lần trên cả cuốn rồi lưu cạnh gốc; đổi luật thì tính lại. */
-    fun nameReadingsFor(bookId: String, texts: () -> Sequence<String>): Map<String, String> {
+    /** Tên cuốn tự chứng minh ([JapanesePolicy.bookNameReadings]: tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA của mọi cuốn), tính một lần trên cả cuốn rồi lưu cạnh gốc; đổi luật hay đổi gốc thì tính lại. */
+    fun nameReadingsFor(bookId: String, origin: String?, texts: () -> Sequence<String>): Map<String, String> {
+        val rule = "${JapanesePolicy.BOOK_NAMES_RULE}:${origin ?: "none"}"
         synchronized(this) {
             val entry = origins().optJSONObject(bookId)
-            val names = if (entry?.optInt("namesRule", 0) == JapanesePolicy.VERSION) entry.optJSONObject("names") else null
+            val names = if (entry?.opt("namesRule") == rule) entry.optJSONObject("names") else null
             if (names != null) return names.keys().asSequence().associateWith { names.getString(it) }
         }
         // Đọc cả cuốn ngoài khoá: luồng chính cũng hỏi VoiceChoices.
-        val found = JapanesePolicy.bookNameReadings(texts())
+        val found = JapanesePolicy.bookNameReadings(texts(), origin = origin)
         synchronized(this) {
             val entry = origins().optJSONObject(bookId) ?: JSONObject().also { origins().put(bookId, it) }
-            entry.put("names", JSONObject(found)).put("namesRule", JapanesePolicy.VERSION)
+            entry.put("names", JSONObject(found)).put("namesRule", rule)
             save()
         }
         return found

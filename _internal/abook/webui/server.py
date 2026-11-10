@@ -6454,12 +6454,12 @@ class Handler(BaseHTTPRequestHandler):
             return None
 
     def _proven_names(self, body: dict[str, Any]) -> dict[str, str]:
-        """Tên cuốn gốc Nhật tự chứng minh; cách đọc riêng của người nghe chồng lên trên."""
+        """Tên cuốn tự chứng minh (tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA của mọi cuốn); cách đọc riêng của người nghe chồng lên trên."""
         book = body.get("bookId")
-        if not isinstance(book, str) or not book or self._reading_origin(body) != "ja":
+        if not isinstance(book, str) or not book:
             return {}
         try:
-            return self.app.readaloud.origins.name_readings(book, lambda: _package_texts(self.app, book))
+            return self.app.readaloud.origins.name_readings(book, lambda: _package_texts(self.app, book), self._reading_origin(body))
         except ApiError:
             return {}
 

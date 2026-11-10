@@ -70,8 +70,8 @@ class NamesTest {
 
     @Test
     fun aLoneOSyllableOfANameIsMarkedSoTheNormaliserKeepsItAnO() {
-        assertEquals(listOf("o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
-        assertEquals(listOf("Ca-o_-ri,", "o_-cô-nô-mi-a-ki"), said("Kaori, okonomiyaki", "ja"))
+        assertEquals(listOf("ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki"), said("Kaori, okonomiyaki, Naoki", "ja"))
         assertEquals("o_-xu-ki-xan", Names.loneSyllable("O-xu-ki-xan"))
         assertEquals("a-ri", Names.loneSyllable("A-ri"))
         assertEquals("ca-o_-ri", Names.loneSyllable("ca-o-ri"))

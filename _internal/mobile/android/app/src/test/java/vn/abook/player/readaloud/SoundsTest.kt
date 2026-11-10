@@ -39,7 +39,7 @@ class SoundsTest {
         for (token in listOf("NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
         assertEquals(listOf("“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
-        assertEquals(listOf("o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
+        assertEquals(listOf("ô-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
         assertEquals(listOf("hát pê", "mờ pê", "ét pê"), said("HP MP SP"))
         assertEquals(listOf("Chương", "bốn,", "hát pê."), said("Chương IV, HP."))
         assertEquals("i i i i", Abbreviations.spelled("IIII"))
@@ -189,7 +189,7 @@ class SoundsTest {
 
     @Test
     fun aCapitalOStartingAHyphenatedNameIsASyllableNotALetter() {
-        assertEquals(listOf("o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
     }
 
     @Test
@@ -202,7 +202,7 @@ class SoundsTest {
     // ---- TN "Nghe ngay" lượt 4 (cùng các ca với tests/test_readaloud_sounds.py): gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ ----
     @Test
     fun aShoutedHonorificIsReadLikeItsLowerCaseForm() {
-        assertEquals("o_-ni-chan, o_-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
+        assertEquals("ô-ni-chan, ô-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
         assertEquals("“ne-xan!” và óp-pa, ariel-xa-ma.", said("“NEE-SAN!” và OPPA, ARIEL-SAMA.").joinToString(" "))
         assertEquals("Kiểm tra ét a en và xen-pai", said("Kiểm tra SAN và SENPAI").joinToString(" "))
     }

@@ -258,7 +258,7 @@ def listed_abbreviations() -> frozenset[str]:
     from .english_policy import POLICY as ENGLISH
 
     words = set(ENGLISH["vietnamese_abbreviations"]) | set(ENGLISH["spoken_abbreviations"]) | set(ENGLISH["contextual_abbreviations"])
-    words |= {word.casefold() for word in ENGLISH["preserve_acronyms"] + ENGLISH["acronyms"]}
+    words |= {word.casefold() for word in ENGLISH["preserve_acronyms"] + ENGLISH["acronyms"] + ENGLISH["capital_codes"]}
     return frozenset(words | set(abbreviations.AS_WORDS) | abbreviations.SPELLED_ENGLISH | set(abbreviations.LEVEL_NAMES))
 
 

@@ -16,6 +16,8 @@ _LETTERS = "A-Za-zāīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 _WORD = re.compile(rf"[{_LETTERS}]+(?:[-'][{_LETTERS}]+)*")
 _NOTE = re.compile(r"\[note\d+\]", re.IGNORECASE)
 _KNOWN_NAMES = frozenset(POLICY["known_names"])
+BOOK_NAMES_RULE = f"{VERSION}.2"  # `book_name_readings`: 2 = capitals of any book that the book writes as a name ("KAEL" -> "Kael")
+_SENTENCE_END = re.compile(r"[.!?…:;\"”’」』)\]】*~—–-]$")
 
 
 @lru_cache(maxsize=1)
@@ -337,49 +339,65 @@ def _evidenced_reading(word: str) -> str | None:
     return said if said and address and address.casefold().startswith(said.casefold() + "-") else None
 
 
-def book_name_readings(texts: Iterable[str], character_names: Iterable[str] = ()) -> dict[str, str]:
-    """{surface: reading} for names a Japanese book proves by itself, so that one character is never
+def book_name_readings(texts: Iterable[str], character_names: Iterable[str] = (), origin: str | None = "ja") -> dict[str, str]:
+    """{surface: reading} for names a book proves by itself, so that one character is never
     read two ways. Fed to the per-book `readings` route, which listener readings still override.
 
-    Evidence for a word the English lexicon guards ("Abe"): a joined honorific anywhere in the book
-    ("Abe-san"), or a character name whose other word is plainly Japanese ("Abe Takeshi"). A lone
-    guarded name in the character list is not enough: it may be Western ("Mike").
-    Evidence for capitals of at most four letters ("YUI"): the same word written as a name ("Yui").
+    A Japanese book (`origin` "ja"). Evidence for a word the English lexicon guards ("Abe"): a
+    joined honorific anywhere in the book ("Abe-san"), or a character name whose other word is
+    plainly Japanese ("Abe Takeshi"). A lone guarded name in the character list is not enough: it
+    may be Western ("Mike"). Evidence for capitals of at most four letters ("YUI"): the same word
+    written as a name ("Yui").
+    Any book. Capitals that would be spelled letter by letter ("KAEL", "LYRA") are a shouted name
+    when the book writes the same word capitalized inside a sentence at least twice, or lists it as
+    a word of a character name. Their reading is that capitalized spelling itself ("Kael"):
+    `abbreviations.capital_words` then reads the capitals exactly as the name is read elsewhere.
     """
+    from .abbreviations import WORD_FROM, _capital_word
     from .names import split_token
 
     guarded: set[str] = set()
-    titled: set[str] = set()
+    titled: dict[str, int] = {}
     capitals: set[str] = set()
     for text in texts:
+        previous = ""
         for token in text.split():
-            core = split_token(_NOTE.sub("", token))[1]
+            before, core, _ = split_token(_NOTE.sub("", token))
+            inside = bool(previous) and not before and not _SENTENCE_END.search(previous)
+            previous = token
             if not core.isascii():
                 continue
             parts = core.split("-")
             if len(parts) == 2 and parts[1].casefold() in POLICY["honorifics"]:
                 guarded.add(parts[0])
             elif len(parts) == 1 and core.isupper():
-                if 2 <= len(core) <= 4:
-                    capitals.add(core)
+                capitals.add(core)
             elif len(parts) == 1 and core[:1].isupper() and core[1:].islower():
-                titled.add(core)
+                titled[core] = titled.get(core, 0) + inside
+    listed: set[str] = set()
     for surface in character_names:
         # The character list writes names in capitals ("ABE TAKESHI").
         words = [word.capitalize() if word.isupper() else word for word in surface.split()]
-        if len(words) > 1 and all(word.isascii() for word in words) and any(_reading_word(word, "ja") for word in words):
+        listed.update(word for word in words if word.isascii() and word.isalpha() and word == word.capitalize())
+        if origin == "ja" and len(words) > 1 and all(word.isascii() for word in words) and any(_reading_word(word, "ja") for word in words):
             guarded.update(words)
     found: dict[str, str] = {}
-    for word in guarded:
-        said = None if _reading_word(word, "ja") else _evidenced_reading(word)
-        if said:
-            found[word] = found[word.upper()] = said
+    if origin == "ja":
+        for word in guarded:
+            said = None if _reading_word(word, "ja") else _evidenced_reading(word)
+            if said:
+                found[word] = found[word.upper()] = said
+        for capital in capitals:
+            word = capital.capitalize()
+            if 2 <= len(capital) <= 4 and (word in titled or word in found):
+                said = found.get(word) or _reading_word(word, "ja")
+                if said:
+                    found[capital] = said
     for capital in capitals:
         word = capital.capitalize()
-        if word in titled or word in found:
-            said = found.get(word) or _reading_word(word, "ja")
-            if said:
-                found[capital] = said
+        if (capital not in found and len(capital) >= WORD_FROM and capital.isalpha()
+                and (titled.get(word, 0) >= 2 or word in listed) and _capital_word(capital)):
+            found[capital] = word
     return found
 
 

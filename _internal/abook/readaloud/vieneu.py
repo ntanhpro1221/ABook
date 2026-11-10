@@ -700,6 +700,14 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
             rebuilt[owner] += (" " if rebuilt[owner] and word else "") + word
         book_readings.apply_tokens(toks, rebuilt, readings)
         return rebuilt
+    named = abbreviations.capital_words(toks, origin, readings)
+    if named is not None:
+        # "YUI!" is read as "Yui!" is everywhere else in the book. A reading that is only the word's own
+        # capitalized spelling is that evidence, not a sound: it must not replace what the route says.
+        sounds = {surface: said for surface, said in (readings or {}).items() if not abbreviations.proves_name(surface, said)}
+        said = spoken_tokens(named, origin, speaks_english, sounds, direct_english=direct_english)
+        book_readings.apply_tokens(toks, said, sounds)
+        return said
     out = list(toks)
     _stutters(toks, out, origin, speaks_english, readings, direct_english)
     shouts.read_shouts(toks, out, origin)

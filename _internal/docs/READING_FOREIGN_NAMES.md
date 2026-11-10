@@ -58,8 +58,8 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 
 | romaji | đọc | mức | bằng chứng |
 |---|---|---|---|
-| a, i, o | a, i, ô khi có phụ âm đầu; **o đứng một mình (không phụ âm đầu) → o, trừ sau i / u thì → ô** | Có nguồn; o một mình: **Chủ sách** | Tô-ky-ô, Hi-rô-si-ma; chủ sách 04-10 (lần 4): "Osaka => o-xa-ca (alt ô-xa-ca)", "Aoi => a-o-i", "Okaa-san => o-ca-xan", "Onigiri => o-ni-gi-ri". Âm tiết "ô" tách từ kyo / ryo vẫn là ô (ki-ô, ri-ô). Lần 5: "Fukuoka => phu-cu-ô-ca", "Fumio => phu-mi-ô" (o sau i / u là ô), "Naoki => na-o-ki" (o sau a / e và đầu từ là o) |
-| **ee, ii, aa viết lặp** | **e, i, a** (gộp một, như oo → ô, uu → u) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Onee-san => o-ne-xan", "Onii-chan => o-ni-chan", "Hiiragi => hi-ra-ghi", "Okaa-san => o-ca-xan", "Ojii-san => o-gi-xan" |
+| a, i, o | a, i, ô khi có phụ âm đầu; **o đứng một mình (không phụ âm đầu): ĐẦU TỪ → ô (chủ sách 10-11 đổi o đầu từ -> ô: Ô-xa-ca, Ô-ne-xan, Ô-ni-gi-ri, Ô-ca-xan); sau a / e → o (Na-o-ki, A-o-i); sau i / u → ô** | Có nguồn; o một mình: **Chủ sách** | Tô-ky-ô, Hi-rô-si-ma; chủ sách 04-10 (lần 4, phần o đầu từ đã bị 10-11 thay): "Osaka => o-xa-ca (alt ô-xa-ca)", "Aoi => a-o-i", "Okaa-san => o-ca-xan", "Onigiri => o-ni-gi-ri". Âm tiết "ô" tách từ kyo / ryo vẫn là ô (ki-ô, ri-ô). Lần 5: "Fukuoka => phu-cu-ô-ca", "Fumio => phu-mi-ô" (o sau i / u là ô), "Naoki => na-o-ki" (o sau a / e là o). 10-11: o đầu từ → ô; ō vẫn → ô; "Oppa" (Hàn, o ngắn trước phụ âm đôi) vẫn Óp-pa |
+| **ee, ii, aa viết lặp** | **e, i, a** (gộp một, như oo → ô, uu → u) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Onee-san => o-ne-xan", "Onii-chan => o-ni-chan", "Hiiragi => hi-ra-ghi", "Okaa-san => o-ca-xan", "Ojii-san => o-gi-xan" (10-11: o đầu từ nay là ô: ô-ne-xan, ô-ni-chan, ô-ca-xan, ô-gi-xan) |
 | **ao** | cuối từ: một âm tiết **ao** (Nao); giữa từ: tách **a-o** (Aoi, Kaori; Naoki theo analogy, cờ `analogy:ao_split`) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Nao => nao", "Aoi => a-o-i", "Kaori => ca-o-ri" |
 | e | **e** ở mọi chỗ (Xa-na-e, Cô-be, E-đô; ge → ghe, ke → ke) | **Chủ sách** | Chủ sách 04-10 (lần 2): "Hajime => Ha-gi-me", "Kenji => Ken-gi". Bỏ kiểu "ê" của SGK / Bộ Ngoại giao (Cô-bê, Sa-na-ê, Mô-tê-gi, Ha-kô-ne) |
 | u | **u** ở mọi chỗ (fu → phu, ku → cu, ru → ru) | **Chủ sách** | Chủ sách 04-10: "Fukushima => phu-cu-si-ma", "haruto-kun => ha-ru-tô-cun". Khớp SGK (Phu-cu-ô-ca, Mu-rô-ran, Cu-si-rô, Chu-bu); bỏ kiểu "ư" của Bộ Ngoại giao (Phư-mi-ô, Ê-xư-kê) |
@@ -70,7 +70,7 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | ei | **ây** | **Chủ sách** | Chủ sách 04-10 (lần 2): "Rei => Rây", "sensei => xen-xây". Khớp SGK cũ Kô-mây; bỏ ê (Bộ Ngoại giao Ê-xư-kê) và ay |
 | ai | ai (tách "a-i" khi hai âm tiết: Ta-ca-i-chi) | Có nguồn | Sai-ta-ma, Ta-ca-i-chi |
 | k | c / k theo luật 1.5 | Có nguồn | Ca-oa-xa-ki, Ki-si-đa |
-| g | g; trước i đọc **"ghi"**, trước e đọc "ghe" (ji vẫn → gi) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Hiiragi => hi-ra-ghi". "Gin" → Ghin, "Jin" → Gin. Từ quen onigiri là ca ghi đè cố định (o-ni-gi-ri), không đổi luật |
+| g | g; trước i đọc **"ghi"**, trước e đọc "ghe" (ji vẫn → gi) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Hiiragi => hi-ra-ghi". "Gin" → Ghin, "Jin" → Gin. Từ quen onigiri là ca ghi đè cố định (ô-ni-gi-ri từ 10-11), không đổi luật |
 | s | x | Chọn (luật 1.4) | Ô-xa-ca, Na-ga-xa-ki |
 | shi, sha, sho, shu | si, sa, sô, su | Có nguồn (shu: **Chủ sách**) | Hi-rô-si-ma, Sô-gun; shu → su theo chủ sách 04-10 (lần 4) |
 | z, j | d / gi (zu → du, ji → gi) | Có nguồn (ji: **Chủ sách** 04-10, Ha-gi-me, Ken-gi) | Ma-xa-ca-du, Sin-dô |
@@ -117,6 +117,8 @@ tố khác áp cùng cách]
 - Lần 8 (Nhật): Ohto → ô-tô, Ohka → ô-ca ("oh" trước phụ âm / cuối từ là o dài → ô, KỂ CẢ đầu từ; ō đầu từ vẫn o); Sanjyo → xan-giô (jy → j); Hiiraghi → hi-ra-ghi (gh → g);
 - Lần 8 (Hàn): tokki → tô-ki (alt to-ki; kk là phụ âm đầu căng nên to-kki thắng tok-ki khi RR không phân; chỉ kk, Oppa vẫn không đoán); Gangwon → kang-guôn (cố định gang-won, viết cang
   theo chính tả vì bộ kiểm âm tiết không nhận kang; w giữa từ → gu theo analogy `ko_w_gu`).
+- 10-11 (Nhật): chủ sách đổi o đầu từ -> ô. Osaka → ô-xa-ca, Onee-san → ô-ne-xan, Onii-chan → ô-ni-chan, Okaa-san → ô-ca-xan, Ojii-san → ô-gi-xan, Onigiri → ô-ni-gi-ri,
+  Ohayou → ô-ha-giâu. GIỮ: o sau a / e → o (Naoki na-o-ki, Aoi a-o-i, Kaori ca-o-ri), o sau i / u → ô, ō → ô. Dấu "o_" của đường đọc chỉ còn dùng cho o sau a / e.
 - Lần 9 (Nhật, 04-10 trưa): xem các dòng ya / yu / yo, oi, phụ âm đôi, m, di ở bảng trên; thêm Yukinoshita → giu-ki-nô-si-ta, Poh-chan → pô-chan.
 - Lần 9 (Hàn): oppa → óp-pa, unnie → un-ni (ie cuối → i), noona → nu-na, Ahn → an, Yeeun → de-ưn (= gie-ưn), Yejin → de-din, Yerin → de-rin (**ye đầu từ → gie**,
   e mở), Muyoung → mu-giong, Young → giong, Chaeyeon → che-gion, Seoyeon → xeo-gion (**yeo + phụ âm cuối → gi + o + coda**; "young" viết = yeong), Namgung → nam-gung,
@@ -321,6 +323,19 @@ dựng đáp án.
 - Ví dụ: HP "hát pê", MP "em pê", NPC "en pê xê", VTV "vê tê vê", EXP "e ích pê".
 - Chữ viết tắt đã thành từ thì đọc như từ: OK "ô kê", TV "ti vi". [Có nguồn: từ điển]
 - Mọi chữ viết tắt trong một cuốn dùng cùng một hệ. Người nghe sửa được từng mục (bảng cách đọc của cuốn).
+- **Tên / từ bị hét viết HOA cả không phải chữ viết tắt** (`abbreviations.capital_words`, 10-11; Kotlin `Abbreviations.capitalWords`; ca chung
+  `tests/fixtures/readaloud/capitals/cases.json`). Chữ HOA từ ba chữ, có nguyên âm, KHÔNG có trong bảng viết tắt nào (kể cả `capital_codes` của
+  `english_policy.json`: AGI, DEX, AOE, UFO, CPU...), đang bị đọc tên chữ cái:
+  1. **Có bằng chứng là tên → luôn đọc như tên**, không cần dấu kêu: dạng viết hoa đầu đứng ngay trong đoạn ("Yui chạy tới. YUI"), hay cuốn chứng minh
+     (`japanese_policy.book_name_readings`, mọi gốc: dạng viết hoa đầu đứng GIỮA câu từ hai lần, hay là một từ của tên nhân vật → `{"KAEL": "Kael"}`).
+  2. **Không bằng chứng → chỉ khi đọc được thành từ VÀ đang hét**. Đọc được: romaji trọn vẹn (cuốn gốc Nhật hay chưa rõ gốc: YUI, AKI), từ Anh trong bộ từ
+     vựng chung (BUG), từ bốn chữ trở lên có dáng một từ (KAEL, LYRA), chính các dạng ấy kéo dài (NORDDDDD viết lại "Nord…"; YESSSS thì bộ đọc tiếng kêu đã tự đọc), thán từ kết bằng "h" (WAH), chữ có dáng tiếng kêu mà bộ đọc tiếng kêu nhận (AHHH; UKG, EEG thì không). Đang hét: dấu "!" / "?" ngay sau chữ (không tính
+     "(AOE)!"), hay đứng cạnh một từ viết hoa cả khác đang gào ("I LOVE YUI", "ĐỪNG ĐI YUI").
+  3. Còn lại giữ đường đọc tên chữ cái: NPC!, HP?, USA!, AGI!, "Rồi YUI đến." (không bằng chứng, không hét), hai chữ hoa.
+  Chữ được nhận viết lại thành dạng viết hoa đầu rồi đi tiếp đường đọc thường: tên Nhật ra romaji ("Giu-i!"), tên Anh để sea-g2p đọc ("Kael!").
+  Số đo 10-11 (73.679 chữ HOA khác nhau theo ngữ cảnh / 681.144 lần của corpus, không có bằng chứng cấp cuốn): 2.550 dòng / 5.292 lần (gốc Nhật) thôi bị đánh vần, 0 dòng
+  đang đọc được bị đổi thành đánh vần. Mẫu 200 băm cố định: 100 chữ vừa đổi - 0 viết tắt rõ ràng bị đọc thành từ (2 lưỡng lự: KRAS, ECMO); 100 chữ còn đánh vần có dấu kêu -
+  77 viết tắt thật, 23 còn sai (13 tiếng động ba chữ / cụm lạ như TAK, PAK, YIP, OOF; 6 tiếng động không nguyên âm như TCH, WRRRR; 3 tên ba chữ không bằng chứng TYR, NAV, VORX; FXXK).
 
 ## 6. Từ mượn và thuật ngữ game
 
@@ -333,7 +348,7 @@ dựng đáp án.
 - Giọng miền Bắc đọc s và x như nhau. Luật 1.4 chỉ có tác dụng với giọng miền Nam; kiểm lại khi đã có số đo.
 - Các nguyên âm Hàn chưa có ví dụ chính thức (oe, wi, ui, we, wae).
 - Hai nguyên âm rồi ya / yu / yo cuối từ mà vần không thành (Kouya, Raiya): hiện y → gi (Câu-gia); chưa có phán quyết.
-- Chữ "o" đầu từ của Nhật: chủ sách viết "o" cho Osaka / Onee / Okaa (alt "ô"); luật hiện tại o không phụ âm đầu → o. Kyo / ryo tách vẫn ki-ô / ri-ô.
+- Chữ "o" đầu từ của Nhật: chủ sách 10-11 đổi o đầu từ -> ô (Ô-xa-ca, Ô-ne-xan; trước đó 04-10 là "o", alt "ô"). O không phụ âm đầu sau a / e vẫn → o. Kyo / ryo tách vẫn ki-ô / ri-ô.
 
 ## 8. Nối vào "Nghe ngay" (04-10)
 

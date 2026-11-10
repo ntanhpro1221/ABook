@@ -873,10 +873,10 @@
     {
       "token": "Onigiri",
       "origin": "ja",
-      "reading": "O-ni-gi-ri",
+      "reading": "Ô-ni-gi-ri",
       "flags": [],
       "text": "Tôi ghi Onigiri vào sổ.",
-      "said": "Tôi ghi o_-ni-gi-ri vào sổ.",
+      "said": "Tôi ghi ô-ni-gi-ri vào sổ.",
       "metadata": {
         "provenance": "auto",
         "reading_namespace": "jp-fallback5",
@@ -887,10 +887,10 @@
     {
       "token": "Onii-chan",
       "origin": "ja",
-      "reading": "O-ni-chan",
+      "reading": "Ô-ni-chan",
       "flags": [],
       "text": "Tôi ghi Onii-chan vào sổ.",
-      "said": "Tôi ghi o_-ni-chan vào sổ.",
+      "said": "Tôi ghi ô-ni-chan vào sổ.",
       "metadata": {
         "provenance": "auto",
         "reading_namespace": "jp-fallback5",
@@ -903,10 +903,10 @@
     {
       "token": "Onee-san",
       "origin": "ja",
-      "reading": "O-ne-xan",
+      "reading": "Ô-ne-xan",
       "flags": [],
       "text": "Tôi ghi Onee-san vào sổ.",
-      "said": "Tôi ghi o_-ne-xan vào sổ.",
+      "said": "Tôi ghi ô-ne-xan vào sổ.",
       "metadata": {
         "provenance": "auto",
         "reading_namespace": "jp-fallback5",

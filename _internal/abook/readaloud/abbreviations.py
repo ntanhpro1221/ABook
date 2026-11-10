@@ -29,6 +29,17 @@ from .shouts import POLICY as SOUND_POLICY
 
 MIN_LETTERS, MAX_LETTERS = 2, int(SOUND_POLICY["max_acronym_letters"])
 ROMAJI_FROM = 4  # từ bấy nhiêu chữ, đọc được bằng luật romaji ("BAKA", "SUGOI") thì là chữ Nhật viết hoa, không phải viết tắt
+WORD_FROM = 3  # tên / từ hét viết hoa ("YUI!", "BUG!") ngắn nhất; hai chữ hoa luôn là viết tắt
+_CAPITALS = re.compile(r"(?<![\w'’/@#&+])(?<!(?<!\.)\.)(?<!\w-)[A-Z]{%d,}(?![\w'’/@#&+])(?![-.]\w)" % WORD_FROM)  # chữ đứng riêng: không dính số, gạch nối tên, đường dẫn
+_VOWEL = re.compile(r"[aeiou]|(?<=[^aeiouy])y")  # "y" sau phụ âm là nguyên âm ("MYTHS", "LYNX"); "YYDS" không có nguyên âm nào
+_INTERJECTION = re.compile(r"[^aeiou]{0,2}[aeiou]+h")  # "WAH!?", "YAH!", "UOH!": thán từ kết bằng "h"
+_STRETCH = re.compile(r"(.)\1{2,}")  # chữ kéo dài: "NORDDDDD", "WUTTTT"
+_CRY_SHAPED = re.compile(r"(.)\1\1|[aeiouh]$")  # tiếng kêu: có chữ kéo dài ("AHHH", "KENGGG") hay kết bằng nguyên âm / "h"; "UKG", "EEG" là mã
+_CRY = re.compile(r"[^\w()]*[!?]")  # dấu kêu ngay sau chữ: "YUI!", "YUI…!", "YUI~!?"; "(AOE)!" là chú giải
+_ONSETS = frozenset("bl br by ch cl cr dr dw fl fr gh gl gr gw gy hy jh kh kl kn kr kw ky my ny ph pl pr py rh ry sc sh sk sl sm sn sp st sv sw th tr ts tw vl wh wr zh"
+                    " chr sch scr shr spl spr str thr thw".split())
+_CODAS = frozenset("bb ch ck ct dd ds ff ft gg gh gs ht ks ld lf lk ll lm lp ls lt mb mm mp ms nd ng nk nn ns nt ph pp ps pt rb rc rd rf rg rk rl rm rn rp rs rt sh sk sp ss st th ts tt tz wk wl wn ws xt zz"
+                   " cks ght lls lms lts mph mps nch nds ngh ngs nks nth nts rch rds rgh rks rld rms rns rst rth rts sts tch".split())
 
 
 def _caps(core: str) -> bool:
@@ -94,6 +105,106 @@ def spelled(core: str) -> str | None:
     if len(lower) >= ROMAJI_FROM and romanized_reading(lower, "ja") is not None:
         return lower if len(lower) <= 5 else None
     return " ".join(LETTERS[ch] for ch in lower)
+
+
+def _letters(lower: str) -> str:
+    return " ".join(LETTERS[ch] for ch in lower)
+
+
+def _word_shaped(lower: str) -> bool:
+    """Chữ có dáng một từ đọc được ("kwang", "thud", "combo", "lyra"), không phải một mã ("crce", "ussr", "lmao", "oecd"): có nguyên âm, cụm phụ âm đầu / cuối là cụm quen."""
+    first, *middle, last = re.split("[aeiouy]+", lower)
+    if first == lower:
+        return False
+    return (len(first) < 2 or first in _ONSETS) and (len(last) < 2 or last in _CODAS) and all(len(run) <= 3 for run in middle)
+
+
+def _capital_word(core: str) -> bool:
+    """Chữ HOA cả đang bị đọc tên chữ cái mà CÓ THỂ là một tên / từ: từ ba chữ, có nguyên âm, không có trong bảng viết tắt nào, không phải âm tiết Việt (đã có đường riêng),
+    không phải một chữ lặp ("AAA", "OOO": hạng hay tiếng kêu, `shouts` quyết)."""
+    from ..analysis import is_vietnamese_syllable
+    from .shouts import listed_abbreviations
+
+    lower = core.lower()
+    return (len(core) <= MAX_LETTERS and bool(_VOWEL.search(lower)) and len(set(lower)) > 1 and lower not in listed_abbreviations()
+            and not ROMAN_LETTERS.issuperset(lower) and spelled(core) == _letters(lower) and not is_vietnamese_syllable(lower))
+
+
+def _written_as_word(lower: str, origin: str | None) -> str | None:
+    """Dạng viết của chữ HOA cả đọc được thành từ ("yui" -> "Yui", "norddddd" -> "Nord…"), None khi không đọc được. Không có bằng chứng trong cuốn: romaji trọn vẹn (cuốn gốc Nhật hay chưa rõ gốc: "yui", "aki"), từ Anh trong bộ từ vựng chung ("bug", "idol"), từ bốn chữ trở lên có dáng một từ
+    ("kael", "kwang"), thán từ kết bằng "h" ("wah"), hay chữ có dáng tiếng kêu (`_CRY_SHAPED`) mà bộ đọc tiếng kêu nhận ở dạng viết hoa đầu ("Ahhh" -> "a…"; "Ukg" bị nó đọc "u" nên không tính)."""
+    from . import shouts
+    from .japanese_policy import lexical_guard, syllables
+
+    word = lower.capitalize()
+    short = _STRETCH.sub(r"\1", lower)
+    if short != lower and len(short) >= WORD_FROM and _VOWEL.search(short) and (short in lexical_guard() or _word_shaped(short)):
+        # "NORDDDDD!" là "Nord" kéo dài: viết "Nord…". Chữ mà bộ đọc tiếng kêu đã tự đọc ở dạng HOA ("YESSSS" -> "yes…", "MARYYYY" -> "mary…") thì để nó.
+        cry = [lower.upper()]
+        shouts.read_shouts(list(cry), cry, origin)
+        if cry != [lower.upper()]:
+            return None
+        return short.capitalize() + ("…" if list(_STRETCH.finditer(lower))[-1].end() == len(lower) else "")
+    if origin in (None, "ja") and syllables(lower) and romanized_reading(lower, "ja") is not None:
+        return word
+    if lower in lexical_guard() or (len(lower) >= 4 and _word_shaped(lower)) or _INTERJECTION.fullmatch(lower):
+        return word
+    if not _CRY_SHAPED.search(lower):
+        return None
+    cry = [word]
+    shouts.read_shouts(list(cry), cry, origin)
+    return word if cry != [word] else None
+
+
+def _shouted_word(core: str) -> bool:
+    """Chữ HOA cả bên cạnh là một từ đang gào: có dấu ("CÚT"), hay từ Anh / Nhật / tên từ bốn chữ ("LOVE", "MISAKI") - không phải một viết tắt khác ("STR, AGI")."""
+    if not _caps(core):
+        return False
+    if not core.isascii():
+        return True
+    return core.isalpha() and len(core) >= 4 and spelled(core) != _letters(core.lower())
+
+
+def proves_name(surface: str, said: str) -> bool:
+    """A per-book reading that is only the capitals' own capitalized spelling ("KAEL": "Kael") is the book's proof that the capitals are a name, not a sound to say."""
+    return surface.isascii() and surface.isupper() and said == surface.capitalize()
+
+
+def capital_words(toks: list[str], origin: str | None = None, readings: dict | None = None) -> list[str] | None:
+    """Tên / từ bị hét viết HOA cả ("YUI!", "KAEL!", "BUG!") viết lại ở dạng viết hoa đầu ("Yui!") để đọc như chính từ ấy ở chỗ khác của cuốn, không đọc tên chữ cái. None khi không có chữ nào.
+    Có bằng chứng thì luôn đổi: cuốn chứng minh nó là tên (`readings` mang cách đọc là chính dạng viết hoa đầu, `japanese_policy.book_name_readings`) hay dạng viết hoa đầu đứng ngay trong đoạn này
+    ("Yui chạy tới. YUI!"). Không bằng chứng: chỉ khi đọc được thành từ (`_written_as_word`) VÀ đang hét - dấu "!" / "?" ngay sau, hay đứng cạnh một từ viết hoa cả khác ("I LOVE YUI").
+    Viết tắt trong bảng ("USA!", "AGI"), chữ không đọc được thành từ ("NPC!", "HP?") và hai chữ hoa giữ đường đọc tên chữ cái."""
+    named: list[str] | None = None
+    cores: list[str] | None = None
+    for index, token in enumerate(toks):
+        if not any("A" <= ch <= "Z" for ch in token):
+            continue
+        rewritten = token
+        for match in reversed(list(_CAPITALS.finditer(token))):
+            core = match.group()
+            if not _capital_word(core):
+                continue
+            before, after = token[:match.start()], token[match.end():]
+            if cores is None:
+                cores = [split_token(other)[1] for other in toks]
+            word = core.capitalize()
+            proven = (readings is not None and readings.get(core) == word) or word in cores
+            if not proven:
+                word = _written_as_word(core.lower(), origin)
+                if word is None:
+                    continue
+                cried = bool(_CRY.match(after)) and not before.endswith("(")
+                beside = ((not before and index > 0 and _shouted_word(cores[index - 1]))
+                          or (not after and index + 1 < len(toks) and _shouted_word(cores[index + 1])))
+                if not (cried or beside):
+                    continue
+            rewritten = rewritten[:match.start()] + word + rewritten[match.end():]
+        if rewritten != token:
+            if named is None:
+                named = list(toks)
+            named[index] = rewritten
+    return named
 
 
 def read_levels(toks: list[str], out: list[str], speaks_english: bool = True) -> None:

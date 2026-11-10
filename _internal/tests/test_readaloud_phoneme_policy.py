@@ -88,8 +88,8 @@ def test_explicit_whole_name_and_embedded_subword_remain_protected():
 
 
 @pytest.mark.parametrize("source,spoken", [
-    ("Onii-chan.", "o_-ni-chan."),
-    ("Otsuki-san.", "o_-xu-ki-xan."),
+    ("Naoki-kun.", "Na-o_-ki-cun."),
+    ("Naoto đến.", "Na-o_-tô đến."),
     ("Kaori.", "Ca-o_-ri."),
 ])
 def test_studio_retains_syllabic_o_through_the_first_normalizer(source, spoken):
