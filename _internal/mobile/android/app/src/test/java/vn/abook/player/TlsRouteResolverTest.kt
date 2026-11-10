@@ -173,7 +173,7 @@ class TlsRouteResolverTest {
                 assertEquals(targets.first(), resolver.resolve("waiter-success", targets.take(1), probe))
                 assertEquals(targets.first(), first.get(30, TimeUnit.SECONDS))
                 assertEquals(1, attempts.get())
-            } finally { release.countDown(); releaser.join(30_000) }
+            } finally { release.countDown(); releaser.join(TimeUnit.SECONDS.toMillis(30)) }
         } finally { release.countDown(); caller.shutdownNow(); resolver.close() }
     }
 
