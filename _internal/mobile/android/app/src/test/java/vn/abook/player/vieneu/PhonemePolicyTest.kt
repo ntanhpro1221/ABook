@@ -23,16 +23,17 @@ class PhonemePolicyTest {
     private fun sharedCases() = JSONObject(File("../../../tests/fixtures/readaloud/shared_vietnamese/cases.json").readText(Charsets.UTF_8)).getJSONArray("cases")
 
     @Test fun theSentenceDecidesWhichSharedWordsAreVietnamese() {
-        val data = JSONObject(File("../../../abook/readaloud/english_policy.json").readText(Charsets.UTF_8)).getJSONObject("shared_vietnamese")
-        fun list(key: String) = data.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }
-        val listed = (list("words") + list("echo") + list("pair_words")).toSet()
+        val table = File("../../../abook/readaloud/shared_words.json").readText(Charsets.UTF_8).trim()
+        assertEquals("SharedWords.kt is not the table: run scripts/build_shared_words.py", table, SharedWords.JSON)
+        val listed = JSONObject(table).getJSONObject("words").keys().asSequence().toSet()
         val word = Regex("(<en>.*?</en>)|([\\p{L}\\p{N}_]+(?:['’][\\p{L}\\p{N}_]+)*)")
         val cases = sharedCases()
         assertTrue(cases.length() >= 30)
         for (i in 0 until cases.length()) {
             val case = cases.getJSONObject(i)
             val text = case.getString("text")
-            val words = word.findAll(text.lowercase()).mapNotNull { it.groups[2]?.value }.filter { it in listed }.toList()
+            val words = word.findAll(text.lowercase()).map { m -> m.groups[1]?.value?.let { it.substring(4, it.length - 5).trim() } ?: m.groups[2]!!.value }
+                .filter { it in listed }.toList()
             val expected = case.getJSONArray("claimed").let { a -> (0 until a.length()).map(a::getString) }
             assertEquals(text, expected, PhonemePolicy.vietnameseShared(text.lowercase(), PhonemePolicy.capitalised(text)).map { words[it] })
         }

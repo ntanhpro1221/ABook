@@ -247,14 +247,15 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - `readaloud/phoneme_policy.py` sửa ở biên phoneme chung của Studio/Nghe ngay/Kotlin: âm tiết `gi` phải còn nguyên âm `/i/`,
   và `o` của tên đã qua lượt chuẩn hoá đầu không được lượt sau đổi thành tên chữ `ô`. Từ cảm thán/hỏi Anh ngắn,
   có từ điển và không trùng âm tiết Việt, giữ trọng âm mạnh/nguyên âm kéo dài trước `?!`; không thêm từ, đổi dấu câu hay chia riêng để đọc.
-  Từ có ở cả hai từ điển của sea-g2p (do, sang, bay, to...) giữ âm Việt khi câu chứng minh nó là chữ Việt (`restore_vietnamese`,
-  dữ liệu `shared_vietnamese` trong `english_policy.json`): chỉ dòng âm vị đổi, chuỗi nói giữ nguyên từng byte; chữ viết Hoa giữa
-  câu và từ trong/kề `<en>` không bao giờ đổi. Studio chỉ thấy khúc chữ thường nên `generate_one` phải bọc `infer` trong `sentence_case`.
+  Từ có ở cả hai từ điển của sea-g2p (do, sang, bay, to...) giữ âm Việt khi bảng điểm học từ kho nhận nó là chữ Việt
+  (`restore_vietnamese`, bảng `readaloud/shared_words.json` = `vieneu/SharedWords.kt`, cách học và trần: `docs/SHARED_WORDS.md`):
+  chỉ dòng âm vị đổi, chuỗi nói giữ nguyên từng byte; chữ viết Hoa giữa câu không bao giờ đổi. KHÔNG vá bảng bằng tay hay thêm
+  luật riêng cho một ca: thêm nhãn rồi học lại, sau đó chạy `scripts/build_shared_words.py` để chép sang Kotlin.
+  Studio chỉ thấy khúc chữ thường nên `generate_one` phải bọc `infer` trong `sentence_case`.
   Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python. Cả chuỗi đầy đủ và tiền tố dùng để
   xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
-  Cặp ghép được khai thác từ kho chỉ là dữ liệu `pairs`; chỉ thành viên từ điển chung trong `pair_words` được thay âm.
-  Từ mới trong `pair_only_words` giữ phân loại ngữ cảnh Anh khi chưa có cặp chứng minh, tránh kéo "thin man" sang Việt.
-  Tiêu chí chọn, nhãn và tần suất tổng hợp: `docs/SHARED_VIETNAMESE_PAIRS.md`; không đưa cửa sổ truyện vào repo.
+  Chỉ 72 từ mà từ điển Việt của sea-g2p đọc thành âm tiết thanh ngang nằm trong bảng (cat -> "cát", pa -> "pà" thì không:
+  âm "Việt" của chúng là đoán dấu). Văn bản truyện và nhãn huấn luyện không vào repo.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây

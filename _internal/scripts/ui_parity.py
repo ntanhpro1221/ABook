@@ -1232,7 +1232,7 @@ ICON_TABLE_END = "<!-- ui_parity:icons:end -->"
 # Chữ giả / mẫu của thư viện mẫu và dữ liệu thử không phải chữ giao diện (có trích sách thật): không quét luật chữ.
 COPY_SKIP_WEB = ("gallery/",)
 # Chuỗi của lõi native KHÔNG phải chữ giao diện (so khớp chữ trong truyện, mã giọng): đổi dấu thanh sẽ làm hỏng việc khớp.
-COPY_TONE_DATA = ("BookImport.kt:2241", "readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt")
+COPY_TONE_DATA = ("BookImport.kt:2241", "readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt", "vieneu/SharedWords.kt")  # SharedWords.kt: bảng từ kho truyện, sinh tự động
 # components/TextWrap.kt: chỉ giữ biểu thức chính quy xuống dòng (danh sách đơn vị "chương|giờ|..."), không có chữ giao diện.
 COPY_SKIP_NATIVE = ("nowplaying/FakeNowPlayingModel.kt", "data/DemoLibrary.kt", "data/DemoPlayback.kt", "components/TextWrap.kt",
                     "shell/Unavailable.kt")  # màn thay của bản thử: tên lặp lại tên màn thật (đã so ở cặp của nó) + một câu chỉ bản thử có

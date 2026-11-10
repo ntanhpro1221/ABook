@@ -100,6 +100,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "readaloud/symbols.py",
     "readaloud/vieneu.py",
     "readaloud/phoneme_policy.py",
+    "readaloud/shared_words.json",
     "webui/word_timing.py",
     "webui/store.py",
     "readaloud/english_words.txt",

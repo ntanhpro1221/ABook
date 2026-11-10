@@ -1,5 +1,8 @@
 # Vietnamese shared-word compounds
 
+> **Superseded (g2pvi4, policy version 6).** The `pairs` data described here was removed from `english_policy.json`; the decision is now the
+> learned table of [SHARED_WORDS.md](SHARED_WORDS.md). This file is kept as the record of how the compound list was mined and what it measured.
+
 Read-only mining covered all 227 different-sounding shared dictionary words in the exposed g2pvi residue-1 partition: 523 series, 9,212 chapters, 30,917,405 regex word tokens. The original whitespace-token count was 30,808,762; the tokenizer difference is intentional. The third holdout is excluded from mining.
 
 Selection requires at least three occurrences in at least two series, an adjacent Vietnamese-only dictionary partner, a recognizable Vietnamese compound or reduplication, and 100% Vietnamese labels in the text-only reservoir (up to five windows per pair). Labels describe intended language, not the old engine output. Labels are model-only, not owner annotations; five windows do not prove population precision. Contexts stay outside git.

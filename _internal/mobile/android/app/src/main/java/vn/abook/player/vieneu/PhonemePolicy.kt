@@ -23,30 +23,40 @@ object PhonemePolicy {
     private const val QUOTES = " \t\r\n\"'“”‘’«»()[]{}「」『』〈〉《》【】—–-*"
     private const val SENTENCE_END = ".!?…:;"
     private const val PHONEME_MARKS = ".,!?"
+    private const val STRONG = ".!?;:…"  // a neighbour beyond one of these is no neighbour
+    private const val IDENTITY = "Vahs"  // word classes whose very word is evidence, not only its kind
+    private const val FOREIGN = "efnX"
+    private val letters = Regex("[a-z]+")
     private val readings = java.util.concurrent.ConcurrentHashMap<String, Pair<String, String>>()
 
+    /** The learned table shared_words.json (scripts/build_shared_words.py writes the Kotlin copy; docs/SHARED_WORDS.md). */
+    private class Entry(val prior: Int, val left: IntArray, val right: IntArray, val bothForeign: Int, val doubled: Int, val leftWords: Map<String, Int>, val rightWords: Map<String, Int>)
+
     private class Shared {
-        private val data = EnglishPolicy.sharedVietnamese
-        private fun list(key: String): List<String> = data.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }
-        val words = list("words").toSet()
-        val strong = list("strong").toSet()
-        val beforeEnglish = list("before_english").toSet()
-        val beforeEnglishBorrowings = data.getJSONObject("before_english_borrowings").let { obj -> obj.keys().asSequence().associateWith { key ->
-            obj.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
+        private val data = org.json.JSONObject(SharedWords.JSON)
+        private fun strings(key: String): List<String> = data.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }
+        private fun ints(a: org.json.JSONArray) = IntArray(a.length()) { a.getInt(it) }
+        private fun weights(o: org.json.JSONObject): Map<String, Int> = HashMap<String, Int>().also { m -> o.keys().forEach { m[it] = o.getInt(it) } }
+        val words: Map<String, Entry> = data.getJSONObject("words").let { all -> all.keys().asSequence().associateWith { word ->
+            val e = all.getJSONObject(word)
+            Entry(e.getInt("p"), ints(e.getJSONArray("l")), ints(e.getJSONArray("r")), e.getInt("f"), e.getInt("x"), weights(e.getJSONObject("L")), weights(e.getJSONObject("R")))
         } }
-        val nouns = list("nouns").toSet()
-        val echo = list("echo").toSet()
-        val pairs = data.getJSONArray("pairs").let { a -> (0 until a.length()).map { a.getJSONArray(it).getString(0) to a.getJSONArray(it).getString(1) }.toSet() }
-        val clauseBeforeEnglish = data.getJSONObject("clause_before_english").let { obj -> obj.keys().asSequence().associateWith { key ->
-            obj.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
-        } }
-        val sentinels = list("sentinels")
-        // Only shared dictionary words are targets; Vietnamese-only partners are evidence.
-        val listed = words + echo + list("pair_words")
-        val pairOnly = list("pair_only_words").toSet()
+        val both = strings("shared").toSet()  // every word sea-g2p holds in both dictionaries with two sounds
+        val classes = strings("classes").withIndex().associate { it.value to it.index }
+        val foreign = FOREIGN.map { classes.getValue(it.toString()) }.toSet()
+        val secondLeft = weights(data.getJSONObject("second").getJSONObject("L"))
+        val secondRight = weights(data.getJSONObject("second").getJSONObject("R"))
+        val coarse = ints(data.getJSONArray("coarse"))  // the two neighbours taken together, each as one of five kinds
+        val pair = ints(data.getJSONArray("pair"))
+        val noDiacritics = data.getInt("no_diacritics")
+        val tagged = data.getInt("tagged")
+        val englishShare = data.getInt("english_share")
+        val vietnameseShare = data.getInt("vietnamese_share")
+        val threshold = data.getInt("threshold")
+        val sentinels = strings("sentinels")
         val english = EnglishPolicy.context("only") + EnglishPolicy.context("function")
-        val neverToneless = english + EnglishPolicy.context("weak") + EnglishPolicy.context("letters") + listed
-        val find = Regex("(?<![$W'’])(?:" + listed.sorted().joinToString("|") + ")(?![$W'’])", RegexOption.IGNORE_CASE)
+        val find = Regex("(?<![$W'’])(?:" + words.keys.sorted().joinToString("|") + ")(?![$W'’])", RegexOption.IGNORE_CASE)
+        val kinds = java.util.concurrent.ConcurrentHashMap<String, Char>()
     }
 
     private val shared by lazy { Shared() }
@@ -101,83 +111,92 @@ object PhonemePolicy {
 
     private fun ascii(word: String) = word.all { it.code < 128 }
 
-    /** phoneme_policy.vietnamese_shared: positions, among the listed shared words of normalized [text], of those the sentence proves Vietnamese. */
-    fun vietnameseShared(text: String, capitals: Set<String> = emptySet()): List<Int> {
-        val shared = shared
-        val words = mutableListOf<String>()
-        val joined = mutableListOf<Boolean>()  // no punctuation between this word and the one before
-        val explicit = mutableListOf<Boolean>()
-        var gap = true
+    /**
+     * phoneme_policy._word_class: V a Vietnamese syllable with a diacritic, o other non-ASCII, e certainly English, s in both sea-g2p dictionaries
+     * with two sounds, h a toneless Vietnamese syllable that is also an English word, a a toneless syllable that is not, f any other ASCII word.
+     */
+    private fun wordClass(word: String): Char = shared.kinds.getOrPut(word) {
+        when {
+            !ascii(word) -> if (EnglishPolicy.vietnamese(word)) 'V' else 'o'
+            word in shared.english -> 'e'
+            word in shared.both -> 's'
+            letters.matches(word) && EnglishPolicy.vietnamese(word) -> if (word in EnglishWords.ALL) 'h' else 'a'
+            word in EnglishWords.ALL || word.split('\'', '’')[0] in EnglishWords.ALL -> 'e'
+            else -> 'f'
+        }
+    }
+
+    private class Word(val word: String, val kind: Char, val gap: String)
+
+    /** phoneme_policy._shared_tokens: every sea-g2p word of [text] with its class and the punctuation before it; an <en> span is one token X. */
+    private fun sharedTokens(text: String, capitals: Set<String>): List<Word> {
+        val out = ArrayList<Word>()
+        val gap = StringBuilder("^")
         for (match in token.findAll(text)) {
-            if (match.groups[3] != null) {
-                gap = true
+            val mark = match.groups[3]
+            if (mark != null) {
+                gap.append(mark.value)
                 continue
             }
             val tagged = match.groups[1]?.value
-            words.add(if (tagged != null) "" else match.groups[2]!!.value.lowercase(Locale.ROOT))
-            // Spelled letters ("<en>G M</en>") name something; only a tagged word proves an English phrase.
-            explicit.add(tagged != null && tagged.substring(4, tagged.length - 5).split(spaces).any { it.length > 1 })
-            joined.add(!gap)
-            gap = false
-        }
-        val accented = words.any { !ascii(it) && EnglishPolicy.vietnamese(it) }
-        val kinds = HashMap<Int, Char>()
-
-        /** E explicit English, n a name, s listed, V Vietnamese, e certainly English, o anything else. */
-        fun kind(index: Int): Char = kinds.getOrPut(index) {
-            val word = words[index]
-            when {
-                explicit[index] -> 'E'
-                word.isEmpty() || word in capitals -> 'n'
-                word in shared.listed && word !in shared.pairOnly -> 's'
-                !ascii(word) -> if (EnglishPolicy.vietnamese(word)) 'V' else 'o'
-                accented && word.length > 1 && word !in shared.neverToneless && EnglishPolicy.vietnamese(word) -> 'V'  // "quay", "con", "ninh"
-                word in shared.english || (word.all(Char::isLetter) && word in EnglishWords.ALL) -> 'e'
-                else -> 'o'
+            if (tagged != null) out.add(Word(tagged.substring(4, tagged.length - 5).trim().lowercase(Locale.ROOT), 'X', gap.toString()))
+            else {
+                val word = match.groups[2]!!.value.lowercase(Locale.ROOT)
+                out.add(Word(word, if (word in capitals && ascii(word)) 'n' else wordClass(word), gap.toString()))
             }
+            gap.setLength(0)
         }
+        return out
+    }
 
-        val listed = words.indices.filter { words[it] in shared.listed }
-        val open = listed.filter { words[it] !in capitals && !explicit[it] }
-        val proven = mutableSetOf<Int>()
-        fun side(index: Int, step: Int): Int? {
-            val other = index + step
-            return if (other !in words.indices || !joined[maxOf(index, other)]) null else other
-        }
-        fun vietnameseAt(index: Int?) = index != null && (index in proven || kind(index) == 'V')
-
-        var changed = true
-        while (changed) {
-            changed = false
-            for (index in open) {
-                if (index in proven) continue
-                val word = words[index]
-                val left = side(index, -1)
-                val right = side(index, 1)
-                val beside = listOf(left, right).map { if (it != null) kind(it) else ' ' }
-                if ('E' in beside) continue
-                var found = false
-                if (word in shared.words) {
-                    if (vietnameseAt(right)) found = !(word in shared.nouns && beside[0] == 'e')  // "Lost Day là", "Big Bang ấy"
-                    else if (vietnameseAt(left)) found = beside[1] in " ns" || word in shared.beforeEnglish ||
-                        (right != null && words[right] in (shared.beforeEnglishBorrowings[word] ?: emptySet()))
-                    // "Julius sang Emily", "do Kaori"; not "say goodbye", not a bare "So, ..."
-                    else if (word in shared.strong && accented) found = 'e' !in beside && ('n' in beside || 'o' in beside)
-                }
-                if (!found && word in shared.echo) found = listOf(index - 1, index + 1).any { it in words.indices && words[it] == word }
-                if (!found) found = (right != null && kind(right) != 'n' && (word to words[right]) in shared.pairs) || (left != null && kind(left) != 'n' && (words[left] to word) in shared.pairs)
-                if (!found && left == null && right != null && words[right] in (shared.clauseBeforeEnglish[word] ?: emptySet())) {
-                    // A measured borrowed noun, not an arbitrary English imperative ("Do exercise đi").
-                    val following = side(right, 1)
-                    found = kind(right) == 'e' && following != null && !ascii(words[following]) && kind(following) == 'V'
-                }
-                if (found) {
-                    proven.add(index)
-                    changed = true
-                }
+    /**
+     * phoneme_policy.vietnamese_shared: positions, among the table's words of normalized [text], of those the sentence makes Vietnamese. A learned
+     * score (docs/SHARED_WORDS.md): the word's own corpus behaviour, each neighbour's class and identity, the two neighbours together, the word one further out, the chunk's
+     * share of certain English and certain Vietnamese, a tag, a doubled word. A capital mid-sentence is a name and is never claimed.
+     */
+    fun vietnameseShared(text: String, capitals: Set<String> = emptySet()): List<Int> {
+        val shared = shared
+        val tokens = sharedTokens(text, capitals)
+        val english = tokens.count { it.kind == 'e' || it.kind == 'X' }
+        val accented = tokens.count { it.kind == 'V' }
+        val others = tokens.size - 1
+        val proven = ArrayList<Int>()
+        var position = -1
+        for ((index, target) in tokens.withIndex()) {
+            val entry = shared.words[target.word] ?: continue
+            position++
+            if (target.kind == 'n') continue
+            var score = entry.prior
+            var foreign = 0
+            var pair = 0
+            for (step in intArrayOf(-1, 1)) {
+                val table = if (step < 0) entry.left else entry.right
+                val other = index + step
+                val beside = tokens.getOrNull(other)
+                val gap = if (beside == null) "" else tokens[maxOf(index, other)].gap
+                val found = shared.classes.getValue(
+                    if (beside == null) "^" else if (gap.isEmpty()) beside.kind.toString() else if (gap.any { it in STRONG }) "^" else if (beside.kind in IDENTITY) ",v" else ",x"
+                )
+                score += table[found]
+                pair = pair * 5 + shared.coarse[found]
+                if (beside == null || gap.isNotEmpty()) continue
+                if (found in shared.foreign) foreign++
+                if (beside.kind in IDENTITY) score += (if (step < 0) entry.leftWords else entry.rightWords)[beside.word] ?: 0
+                val further = other + step
+                val second = if (further !in tokens.indices || tokens[maxOf(other, further)].gap.isNotEmpty()) "|"
+                    else if (tokens[further].kind == 'V') "v" else if (tokens[further].kind in "ahs") "t" else "x"
+                score += (if (step < 0) shared.secondLeft else shared.secondRight).getValue(second)
             }
+            score += shared.pair[pair]
+            if (foreign == 2) score += entry.bothForeign
+            if (accented == 0) score += shared.noDiacritics
+            if (others > 0) score += Math.floorDiv(shared.englishShare * (english - (if (target.kind == 'X') 1 else 0)), others) +
+                Math.floorDiv(shared.vietnameseShare * accented, others)
+            if (target.kind == 'X') score += shared.tagged
+            if (listOf(index - 1, index + 1).any { it in tokens.indices && tokens[it].word == target.word }) score += entry.doubled
+            if (score >= shared.threshold) proven.add(position)
         }
-        return listed.indices.filter { listed[it] in proven }
+        return proven
     }
 
     /** (Vietnamese, English) phonemes of one shared word, from the dictionary that is loaded. */
@@ -198,7 +217,10 @@ object PhonemePolicy {
         val proven = vietnameseShared(text, capitals)
         if (proven.isEmpty()) return phonemes
         fun listed(value: String): List<Pair<IntRange, String>> = token.findAll(value).mapNotNull { match ->
-            match.groups[2]?.let { it.range to it.value.lowercase(Locale.ROOT) }?.takeIf { it.second in shared.listed }
+            if (match.groups[3] != null) return@mapNotNull null
+            val tagged = match.groups[1]?.value
+            val word = (tagged?.let { it.substring(4, it.length - 5).trim() } ?: match.groups[2]!!.value).lowercase(Locale.ROOT)
+            if (word in shared.words) match.range to word else null  // the stand-in takes the place of the whole <en> tag
         }.toList()
         val spans = listed(source)
         if (spans.map { it.second } != listed(text).map { it.second }) return phonemes  // the second normalization moved a shared word: do not guess

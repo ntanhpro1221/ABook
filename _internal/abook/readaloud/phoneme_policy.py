@@ -20,6 +20,11 @@ _CAPITAL = re.compile(r"(?<![\w'’<>/])[A-Z][A-Za-z]*(?![\w'’])")
 _QUOTES = " \t\r\n\"'“”‘’«»()[]{}「」『』〈〉《》【】—–-*"
 _SENTENCE_END = ".!?…:;"
 _PHONEME_MARKS = ".,!?"
+_STRONG = frozenset(".!?;:…")  # a neighbour beyond one of these is no neighbour
+_IDENTITY = frozenset("Vahs")  # word classes whose very word is evidence, not only its kind
+_FOREIGN = "efnX"
+_LETTERS = re.compile("[a-z]+")
+_APOSTROPHE = re.compile("['’]")
 _readings: dict[str, tuple[str, str]] = {}
 _case = threading.local()
 
@@ -84,30 +89,53 @@ def emphasize_english_interjections(text: str, phonemes: str, g2p: Callable[[str
 
 
 class _Shared:
-    def __init__(self) -> None:
-        from .english_policy import ENGLISH_ONLY, FUNCTION, POLICY, SINGLE, WEAK
+    """The learned table `shared_words.json` (scripts/build_shared_words.py, _internal/docs/SHARED_WORDS.md)."""
 
-        data = POLICY["shared_vietnamese"]
-        self.words = frozenset(data["words"])
-        self.strong = frozenset(data["strong"])
-        self.before_english = frozenset(data["before_english"])
-        self.before_english_borrowings = {word: frozenset(following) for word, following in data["before_english_borrowings"].items()}
-        self.nouns = frozenset(data["nouns"])
-        self.echo = frozenset(data["echo"])
-        self.pairs = frozenset((first, second) for first, second in data["pairs"])
-        self.clause_before_english = {word: frozenset(following) for word, following in data["clause_before_english"].items()}
+    def __init__(self) -> None:
+        import json
+        from pathlib import Path
+
+        data = json.loads(Path(__file__).with_name("shared_words.json").read_text(encoding="utf-8"))
+        self.words: dict[str, dict] = data["words"]
+        self.listed = frozenset(self.words)  # the words the table may call Vietnamese
+        self.shared = frozenset(data["shared"])  # every word sea-g2p holds in both dictionaries with two sounds
+        self.classes = {name: index for index, name in enumerate(data["classes"])}
+        self.foreign = frozenset(self.classes[name] for name in _FOREIGN)
+        self.second = data["second"]
+        self.coarse, self.pair = data["coarse"], data["pair"]  # the two neighbours taken together, each as one of five kinds
+        self.no_diacritics, self.tagged = int(data["no_diacritics"]), int(data["tagged"])
+        self.english_share, self.vietnamese_share = int(data["english_share"]), int(data["vietnamese_share"])
+        self.threshold = int(data["threshold"])
         self.sentinels = tuple(data["sentinels"])
-        # Only shared dictionary words are targets; Vietnamese-only partners are evidence.
-        self.listed = self.words | self.echo | frozenset(data["pair_words"])
-        self.pair_only = frozenset(data["pair_only_words"])
-        self.never_toneless = ENGLISH_ONLY | WEAK | FUNCTION | SINGLE | self.listed
-        self.english = ENGLISH_ONLY | FUNCTION
         self.find = re.compile(r"(?<![\w'’])(?:" + "|".join(sorted(self.listed)) + r")(?![\w'’])", re.IGNORECASE)
 
 
 @lru_cache(maxsize=1)
 def _shared() -> _Shared:
     return _Shared()
+
+
+@lru_cache(maxsize=8192)
+def _word_class(word: str) -> str:
+    """The kind of one lower-case word of a normalized chunk.
+
+    V a Vietnamese syllable with a diacritic, o other non-ASCII, e certainly
+    English, s in both sea-g2p dictionaries with two sounds, h a toneless
+    Vietnamese syllable that is also an English word, a a toneless syllable
+    that is not, f any other ASCII word (a name, romaji).
+    """
+    from .english_policy import ENGLISH_ONLY, FUNCTION, vietnamese
+    from .names import english_words
+
+    if not word.isascii():
+        return "V" if vietnamese(word) else "o"
+    if word in ENGLISH_ONLY or word in FUNCTION:
+        return "e"
+    if word in _shared().shared:
+        return "s"
+    if _LETTERS.fullmatch(word) and vietnamese(word):
+        return "h" if word in english_words() else "a"
+    return "e" if word in english_words() or _APOSTROPHE.split(word)[0] in english_words() else "f"
 
 
 def capitalised(text: str) -> frozenset[str]:
@@ -140,111 +168,93 @@ def remembered_case() -> frozenset[str]:
     return getattr(_case, "capitals", frozenset())
 
 
+def _shared_tokens(text: str, capitals: frozenset[str]) -> list[tuple[str, str, str]]:
+    """(word, class, punctuation before it) for every sea-g2p word of `text`; an <en> span is one token of class X."""
+    out: list[tuple[str, str, str]] = []
+    gap = "^"
+    for match in _TOKEN.finditer(text):
+        if match.group(3):
+            gap += match.group(3)
+            continue
+        if match.group(1):
+            out.append((match.group(1)[4:-5].strip().lower(), "X", gap))
+        else:
+            word = match.group(2).lower()
+            out.append((word, "n" if word in capitals and word.isascii() else _word_class(word), gap))
+        gap = ""
+    return out
+
+
 def vietnamese_shared(text: str, capitals: frozenset[str] = frozenset()) -> list[int]:
-    """Which listed shared words of normalized `text` the sentence proves Vietnamese.
+    """Which shared words of normalized `text` the sentence makes Vietnamese.
 
     sea-g2p holds 231 words in both dictionaries and gives each the language of
     its nearest unambiguous neighbour, English on a tie, and an unknown name
     counts as English: "con boss to quá", "quay sang Susan", "Lucy bay" come
-    out /tuː/, /sæŋ/, /beɪ/. Returned are positions among the listed words of
-    `text`, in order. Evidence, each rule measured on the corpus
-    (_internal/docs/TEXT_NORMALIZATION.md): a Vietnamese word right after it;
-    a Vietnamese word right before it unless an English word follows; a word
-    that is a Vietnamese verb or preposition far more often than anything else
-    standing between names; written laughter; a measured Vietnamese compound.
-    A word inside <en>, beside one, or written with a capital mid-sentence is
-    never claimed.
+    out /tuː/, /sæŋ/, /beɪ/. Returned are positions among the table's words of
+    `text`, in order (a word alone in an <en> tag counts, a longer tag does not).
+
+    The decision is a learned score, not a rule list (_internal/docs/SHARED_WORDS.md):
+    what the word is over a million corpus occurrences, the kind of each
+    neighbour and of the two together, how much more often that very neighbour
+    stands beside the word when it is Vietnamese, the kind of the word one
+    further out, whether the chunk has any Vietnamese diacritic and what share
+    of it is certainly English or certainly Vietnamese, whether the text layer
+    tagged the word, whether it is doubled. A word written with a capital
+    mid-sentence is a name and is never claimed.
     """
-    from .english_policy import vietnamese
-    from .names import english_words
-
     shared = _shared()
-    words: list[str] = []
-    joined: list[bool] = []  # no punctuation between this word and the one before
-    explicit: list[bool] = []
-    gap = True
-    for match in _TOKEN.finditer(text):
-        if match.group(3):
-            gap = True
+    tokens = _shared_tokens(text, capitals)
+    english = sum(kind in "eX" for _, kind, _ in tokens)
+    accented = sum(kind == "V" for _, kind, _ in tokens)
+    others = len(tokens) - 1
+    proven: list[int] = []
+    position = -1
+    for index, (word, kind, _) in enumerate(tokens):
+        entry = shared.words.get(word)
+        if entry is None:
             continue
-        words.append("" if match.group(1) else match.group(2).lower())
-        # Spelled letters ("<en>G M</en>") name something; only a tagged word proves an English phrase.
-        explicit.append(bool(match.group(1)) and any(len(part) > 1 for part in match.group(1)[4:-5].split()))
-        joined.append(not gap)
-        gap = False
-    accented = any(not word.isascii() and vietnamese(word) for word in words)
-    dictionary = english_words()
-    kinds: dict[int, str] = {}
-
-    def kind(index: int) -> str:
-        """E explicit English, n a name, s listed, V Vietnamese, e certainly English, o anything else."""
-        if index not in kinds:
-            word = words[index]
-            if explicit[index]:
-                found = "E"
-            elif not word or word in capitals:
-                found = "n"
-            elif word in shared.listed and word not in shared.pair_only:
-                found = "s"
-            elif not word.isascii():
-                found = "V" if vietnamese(word) else "o"
-            elif accented and len(word) > 1 and word not in shared.never_toneless and vietnamese(word):
-                found = "V"  # a toneless syllable in a Vietnamese sentence: "quay", "con", "ninh"
-            elif word in shared.english or (word.isalpha() and word in dictionary):
-                found = "e"
+        position += 1
+        if kind == "n":
+            continue
+        score = entry["p"]
+        foreign = 0
+        pair = 0
+        for side, step in (("l", -1), ("r", 1)):
+            other = index + step
+            if not 0 <= other < len(tokens):
+                found = shared.classes["^"]
             else:
-                found = "o"
-            kinds[index] = found
-        return kinds[index]
-
-    listed = [index for index, word in enumerate(words) if word in shared.listed]
-    open_ = [index for index in listed if words[index] not in capitals and not explicit[index]]
-    proven: set[int] = set()
-
-    def side(index: int, step: int) -> int | None:
-        other = index + step
-        if not 0 <= other < len(words) or not joined[max(index, other)]:
-            return None
-        return other
-
-    def vietnamese_at(index: int | None) -> bool:
-        return index is not None and (index in proven or kind(index) == "V")
-
-    changed = True
-    while changed:
-        changed = False
-        for index in open_:
-            if index in proven:
+                gap = tokens[max(index, other)][2]
+                beside, its = tokens[other][0], tokens[other][1]
+                found = shared.classes[its if not gap else "^" if _STRONG.intersection(gap) else ",v" if its in _IDENTITY else ",x"]
+            score += entry[side][found]
+            pair = pair * 5 + shared.coarse[found]
+            if not 0 <= other < len(tokens) or gap:
                 continue
-            word = words[index]
-            left, right = side(index, -1), side(index, 1)
-            beside = [kind(other) if other is not None else "" for other in (left, right)]
-            if "E" in beside:
-                continue
-            found = False
-            if word in shared.words:
-                if vietnamese_at(right):
-                    found = not (word in shared.nouns and beside[0] == "e")  # "Lost Day là", "Big Bang ấy"
-                elif vietnamese_at(left):
-                    found = (beside[1] in ("", "n", "s") or word in shared.before_english
-                             or (right is not None and words[right] in shared.before_english_borrowings.get(word, ())))
-                elif word in shared.strong and accented:
-                    # "Julius sang Emily", "do Kaori"; not "say goodbye", not a bare "So, ..."
-                    found = "e" not in beside and ("n" in beside or "o" in beside)
-            if not found and word in shared.echo:
-                found = any(0 <= other < len(words) and words[other] == word for other in (index - 1, index + 1))
-            if not found:
-                found = ((right is not None and kind(right) != "n" and (word, words[right]) in shared.pairs)
-                         or (left is not None and kind(left) != "n" and (words[left], word) in shared.pairs))
-            if not found and left is None and right is not None and words[right] in shared.clause_before_english.get(word, ()):
-                # A measured borrowed noun, not an arbitrary English imperative ("Do exercise đi").
-                following = side(right, 1)
-                found = (kind(right) == "e" and following is not None and not words[following].isascii()
-                         and kind(following) == "V")
-            if found:
-                proven.add(index)
-                changed = True
-    return [position for position, index in enumerate(listed) if index in proven]
+            foreign += found in shared.foreign
+            if its in _IDENTITY:
+                score += entry[side.upper()].get(beside, 0)
+            further = other + step
+            if not 0 <= further < len(tokens) or tokens[max(other, further)][2]:
+                second = "|"
+            else:
+                second = "v" if tokens[further][1] == "V" else "t" if tokens[further][1] in "ahs" else "x"
+            score += shared.second[side.upper()][second]
+        score += shared.pair[pair]
+        if foreign == 2:
+            score += entry["f"]
+        if not accented:
+            score += shared.no_diacritics
+        if others:  # how much of the chunk is certainly English, how much certainly Vietnamese
+            score += shared.english_share * (english - (kind == "X")) // others + shared.vietnamese_share * accented // others
+        if kind == "X":
+            score += shared.tagged
+        if any(0 <= other < len(tokens) and tokens[other][0] == word for other in (index - 1, index + 1)):
+            score += entry["x"]
+        if score >= shared.threshold:
+            proven.append(position)
+    return proven
 
 
 def _reading(word: str, g2p: Callable[[str], str]) -> tuple[str, str]:
@@ -277,8 +287,14 @@ def restore_vietnamese(text: str, phonemes: str, source: str | Callable[[], str]
     given = source() if callable(source) else source
 
     def listed(value: str) -> list[tuple[int, int, str]]:
-        return [(*match.span(2), match.group(2).lower()) for match in _TOKEN.finditer(value)
-                if match.group(2) and match.group(2).lower() in shared.listed]
+        found = []
+        for match in _TOKEN.finditer(value):
+            if match.group(3):
+                continue
+            word = (match.group(1)[4:-5].strip() if match.group(1) else match.group(2)).lower()
+            if word in shared.listed:
+                found.append((*match.span(), word))  # the stand-in takes the place of the whole <en> tag
+        return found
 
     spans = listed(given)
     if [word for *_, word in spans] != [word for *_, word in listed(text)]:

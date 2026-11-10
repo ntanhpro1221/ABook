@@ -12,7 +12,27 @@ CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/shared_vietnames
 
 def listed(text: str) -> list[str]:
     shared = phoneme_policy._shared()
-    return [m.group(2).lower() for m in phoneme_policy._TOKEN.finditer(text) if m.group(2) and m.group(2).lower() in shared.listed]
+    return [word for word, _, _ in phoneme_policy._shared_tokens(text, frozenset()) if word in shared.listed]
+
+
+def test_the_kotlin_copy_is_the_same_table():
+    import importlib.util
+
+    path = Path(__file__).parents[1] / "scripts" / "build_shared_words.py"
+    spec = importlib.util.spec_from_file_location("build_shared_words", path)
+    build = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(build)
+    assert build.KOTLIN.read_text(encoding="utf-8") == build.kotlin(build.table_text())
+    assert build.TABLE.stat().st_size <= 1_000_000  # the phone carries it too
+
+
+def test_the_table_is_whole_and_integer():
+    shared = phoneme_policy._shared()
+    assert len(shared.classes) == 12 and set(shared.sentinels).isdisjoint(shared.listed) and shared.listed <= shared.shared
+    for entry in shared.words.values():
+        assert len(entry["l"]) == len(entry["r"]) == 12
+        numbers = [entry["p"], entry["f"], *entry["l"], *entry["r"], *entry["L"].values(), *entry["R"].values()]
+        assert all(type(number) is int for number in numbers)
 
 
 @pytest.fixture
