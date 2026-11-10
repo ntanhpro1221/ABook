@@ -618,11 +618,12 @@ def keep_vieneu_final_mark() -> None:
         from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import (
             emphasize_english_interjections, english_names, remembered_case, remembered_named, remembered_rulings,
-            repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
+            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_vietnamese,
         )
 
         def plain(value: str, final: bool) -> str:
             # `value` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
+            value = respell_rare_rimes(value)  # "gi ưn" -> "gi ân": a rime the voice cannot say (name_sounds.json)
             raw = original_phonemize(value, final)
 
             def given() -> str:
@@ -632,6 +633,7 @@ def keep_vieneu_final_mark() -> None:
             named = remembered_named()
             if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): its English sound
                 out = english_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
+            out = repair_level_tone(value, out)
             if final and out.endswith(".") and ("?" in value or "!" in value):
                 written = original_phonemize(value, False).rstrip()
                 if written.endswith(("?", "!")):

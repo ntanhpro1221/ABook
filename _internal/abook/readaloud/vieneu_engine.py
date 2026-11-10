@@ -364,15 +364,19 @@ def _phonemize_plain(sentences: Sequence[str], *, final: bool = True, capitals: 
     from sea_g2p import punc_norm
 
     text = normalize(sentences)
-    chunk = punc_norm(text) if final else text
+    from .phoneme_policy import (
+        emphasize_english_interjections, english_names, repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes,
+        restore_vietnamese,
+    )
+
+    chunk = respell_rare_rimes(punc_norm(text) if final else text)  # "gi ưn" -> "gi ân": vần máy đọc không nói được (name_sounds.json)
     if not chunk.strip():
         return ""
-    from .phoneme_policy import emphasize_english_interjections, english_names, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese
-
     pipeline = _sea()
     given = keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=final))
     raw = pipeline.g2p.convert(given)
     phonemes = english_names(given, raw, restore_vietnamese(chunk, raw, given, pipeline.g2p.convert, capitals, rulings), pipeline.g2p.convert, named)
+    phonemes = repair_level_tone(given, phonemes)
     if final and phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

@@ -119,6 +119,8 @@
     {"text": "Tom, Sam, Ken, Tim!", "rulings": {"foreign": ["ken", "sam", "tim", "tom"]}, "claimed": [], "doubtful": [], "phonemes": "tˈɑːm, sˈæm, kˈɛn, tˈɪm!"},
     {"text": "Van và Son đi.", "rulings": {"foreign": ["son", "van"]}, "claimed": [], "doubtful": [], "phonemes": "vˈæn vˌaː2 sˈʌn ɗˈi."},
     {"text": "Van và Son đi.", "rulings": {"names": ["son", "van"]}, "claimed": ["van", "son"], "doubtful": [], "phonemes": "vˈaːn vˌaː2 sˈɔn ɗˈi."},
-    {"text": "DAN ƠI!", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn ˈəːj!"}
+    {"text": "DAN ƠI!", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn ˈəːj!"},
+    {"text": "‘Giant Leo’, một loài săn mồi.", "rulings": {"foreign": ["leo"]}, "claimed": [], "doubtful": [], "phonemes": "dʒˈaɪənt lˈiːoʊ, mˈo6t̪ lwˈaː2j sˈan mˈo2j."},
+    {"text": "Bé leo lên cây.", "rulings": {"foreign": ["leo"]}, "claimed": ["leo"], "doubtful": [], "phonemes": "bˈɛɜ lˈɛw lˈen kˈəɪ."}
   ]
 }

@@ -21,6 +21,7 @@ def japaneseLexicon = file("../../../abook/readaloud/japanese_lexicon.txt.gz").b
 
 def englishPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/english_policy.json"))
 def soundPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/sound_policy.json"))
+def nameSounds = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/name_sounds.json"))
 def voiceRank = new groovy.json.JsonSlurper().parse(file("../../../abook/assets/voice_rank.json"))
 
 android {
@@ -42,6 +43,7 @@ android {
         buildConfigField "String", "ENGLISH_READING_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(englishPolicy))
         buildConfigField "String", "VOICE_RANK_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(voiceRank))
         buildConfigField "String", "SOUND_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(soundPolicy))
+        buildConfigField "String", "NAME_SOUNDS", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(nameSounds))
         buildConfigField "String", "ENGLISH_ACRONYMS", '"' + englishPolicy.acronyms.join(' ') + '"'
         buildConfigField "String", "PRESERVE_ACRONYMS", '"' + englishPolicy.preserve_acronyms.join(' ') + '"'
         buildConfigField "String", "DIRECT_ENGLISH_WORDS", '"' + englishPolicy.english_words.join(' ') + '"'

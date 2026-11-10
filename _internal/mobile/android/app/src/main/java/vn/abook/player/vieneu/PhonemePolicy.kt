@@ -30,7 +30,45 @@ object PhonemePolicy {
     private const val FOREIGN = "efnX"
     private val letters = Regex("[a-z]+")
     private val lowerWord = Regex("(?<![$W'’<>/])[a-z]+(?![$W'’])")
+    private val writtenName = Regex("(?<![$W'’<>/])[A-Z][A-Za-z]*(?![$W]|['’][$W])")  // as capital, and a closing quote may follow ("‘Giant Leo’")
     private val tone = Regex("[2-6ɜ]")  // sea-g2p's tone marks: a Vietnamese reading has one unless its tone is level
+    private const val WORD_EDGE = ".,!?;:…\"'“”‘’()[]{}«»-–—"
+
+    /** name_sounds.json (the build hands it over): what a romanized name may hold that the VieNeu road cannot say as written (docs/NAME_SOUNDS.md). */
+    private class Sounds {
+        private val data = org.json.JSONObject(BuildConfig.NAME_SOUNDS)
+        val rimes: Map<String, String> = data.getJSONObject("rimes").let { all -> all.keys().asSequence().associateWith(all::getString) }
+        val level: Set<String> = data.getJSONArray("level").let { a -> (0 until a.length()).map(a::getString).toSet() }
+        val rime = Regex("(?<!\\p{L})([bcdđghklmnpqrstvx]{0,3})(" + rimes.keys.sorted().joinToString("|") + ")(?!\\p{L})")
+    }
+
+    private val sounds by lazy { Sounds() }
+
+    /**
+     * phoneme_policy.respell_rare_rimes: a rime Vietnamese hardly has ("ưn", "ưm": Korean eun, eum) is given to the phonemizer as the nearest
+     * one the voice can say ("ân", "âm") - VieNeu drags "ưn" to "ưng" and hesitates before it. [text] is normalized (lower case); the spoken
+     * text is not touched.
+     */
+    fun respellRareRimes(text: String): String = sounds.rime.replace(text) { it.groupValues[1] + sounds.rimes.getValue(it.groupValues[2]) }
+
+    /**
+     * phoneme_policy.repair_level_tone: sea-g2p gives a few syllables written without a tone mark a tone ("un" /ˈu2n/, "gin" /zˈi2n/, "pa"
+     * /pˈaː2/); a name's syllable written without a mark has the level tone. Words of normalized [text] and of [phonemes] are aligned one to
+     * one, or nothing is touched.
+     */
+    fun repairLevelTone(text: String, phonemes: String): String {
+        val words = text.split(spaces).filter { it.isNotEmpty() }
+        val phones = phonemes.split(spaces).filter { it.isNotEmpty() }.toMutableList()
+        if (words.size != phones.size) return phonemes
+        var changed = false
+        for ((index, word) in words.withIndex()) {
+            if (word.trim { it in WORD_EDGE } in sounds.level && tone.containsMatchIn(phones[index])) {
+                phones[index] = tone.replace(phones[index], "")
+                changed = true
+            }
+        }
+        return if (changed) phones.joinToString(" ") else phonemes
+    }
     private val readings = java.util.concurrent.ConcurrentHashMap<String, Pair<String, String>>()
 
     /** The learned table shared_words.json (scripts/build_shared_words.py writes the Kotlin copy; docs/SHARED_WORDS.md). */
@@ -350,7 +388,7 @@ object PhonemePolicy {
         val lower = HashSet<String>()
         for (value in listOf(text, source)) {
             if (value.isNullOrEmpty()) continue
-            capital.findAll(value).forEach { upper.add(it.value.lowercase(Locale.ROOT)) }
+            writtenName.findAll(value).forEach { upper.add(it.value.lowercase(Locale.ROOT)) }
             lowerWord.findAll(value).forEach { lower.add(it.value) }
         }
         return upper - lower

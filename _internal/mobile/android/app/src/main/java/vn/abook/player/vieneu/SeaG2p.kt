@@ -75,11 +75,12 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     private fun phonemizePlain(sentences: List<String>, final: Boolean = true, capitals: Set<String> = emptySet(),
                                rulings: PhonemePolicy.Rulings? = null, named: Set<String> = emptySet()): String {
         val text = normalizeUnit(sentences)
-        val chunk = if (final) puncNorm(text) else text
+        val chunk = PhonemePolicy.respellRareRimes(if (final) puncNorm(text) else text)  // "gi ưn" -> "gi ân": a rime the voice cannot say
         if (chunk.isBlank()) return ""
         val given = keepLoneO(chunk, normalize(chunk, final))
         val raw = g2p(given)
         var phonemes = PhonemePolicy.englishNames(given, raw, PhonemePolicy.restoreVietnamese(chunk, raw, given, ::g2p, capitals, rulings), ::g2p, named)
+        phonemes = PhonemePolicy.repairLevelTone(given, phonemes)
         if (final && phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()

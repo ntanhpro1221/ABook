@@ -27,7 +27,9 @@ _IDENTITY = frozenset("Vahs")  # word classes whose very word is evidence, not o
 _FOREIGN = "efnX"
 _LETTERS = re.compile("[a-z]+")
 _LOWER = re.compile(r"(?<![\w'’<>/])[a-z]+(?![\w'’])")
+_NAME = re.compile(r"(?<![\w'’<>/])[A-Z][A-Za-z]*(?!\w|['’]\w)")  # as _CAPITAL, and a closing quote may follow ("‘Giant Leo’")
 _TONE = re.compile("[2-6ɜ]")  # sea-g2p's tone marks: a Vietnamese reading has one unless its tone is level
+_WORD_EDGE = ".,!?;:…\"'“”‘’()[]{}«»-–—"
 _APOSTROPHE = re.compile("['’]")
 _readings: dict[str, tuple[str, str]] = {}
 _case = threading.local()
@@ -455,7 +457,7 @@ def written_names(text: str, source: str | None = None) -> frozenset[str]:
     lower: set[str] = set()
     for value in (text, source):
         if value:
-            upper.update(match.group().lower() for match in _CAPITAL.finditer(value))
+            upper.update(match.group().lower() for match in _NAME.finditer(value))
             lower.update(_LOWER.findall(value))
     return frozenset(upper - lower)
 
@@ -490,6 +492,55 @@ def english_names(given: str, raw: str, phonemes: str, g2p: Callable[[str], str]
         out[index] = said[:-1] + out[index][len(out[index].rstrip(_PHONEME_MARKS)):]
         changed = True
     return " ".join(out) if changed else phonemes
+
+
+class _Sounds:
+    """`name_sounds.json`: what a romanized name may hold that the VieNeu road cannot say as written (docs/NAME_SOUNDS.md)."""
+
+    def __init__(self) -> None:
+        import json
+        from pathlib import Path
+
+        data = json.loads(Path(__file__).with_name("name_sounds.json").read_text(encoding="utf-8"))
+        self.rimes: dict[str, str] = data["rimes"]
+        self.level = frozenset(data["level"])
+        self.rime = re.compile(r"(?<![^\W\d_])([bcdđghklmnpqrstvx]{0,3})(" + "|".join(sorted(self.rimes)) + r")(?![^\W\d_])")
+
+
+@lru_cache(maxsize=1)
+def _sounds() -> _Sounds:
+    return _Sounds()
+
+
+def respell_rare_rimes(text: str) -> str:
+    """Spell a rime Vietnamese hardly has ("ưn", "ưm": Korean eun, eum) as the nearest one the voice can say.
+
+    VieNeu learned from Vietnamese speech, where "ưn" is all but absent (under one syllable in a million): it drags
+    the syllable to a common neighbour ("Gi-ưn" is heard "ưng", "Ha-nưn" "ninh") and hesitates before it. The
+    phonemizer is given the nearest rime that keeps the final consonant ("ân", "âm") in every measured seed - still a
+    Vietnamese spelling, so the phonemes are sea-g2p's own. `text` is normalized (lower case); a syllable is an onset
+    and the rime with no tone mark, which is how the name rules write it. The spoken text is not touched.
+    """
+    sounds = _sounds()
+    return sounds.rime.sub(lambda match: match.group(1) + sounds.rimes[match.group(2)], text)
+
+
+def repair_level_tone(text: str, phonemes: str) -> str:
+    """Take back the tone sea-g2p gives a few syllables written without a tone mark ("un" /ˈu2n/ as if "ùn", "gin"
+    /zˈi2n/, "pa" /pˈaː2/): its dictionary holds them as other words. A syllable of a name written without a mark
+    ("Hi-un", "Gin", "Pa-pa") has the level tone, as "xun" /sˈun/ and "xa" /sˈaː/ have. Words of normalized `text`
+    and of `phonemes` are aligned one to one, or nothing is touched.
+    """
+    level = _sounds().level
+    words, phones = text.split(), phonemes.split()
+    if len(words) != len(phones):
+        return phonemes
+    changed = False
+    for index, (word, phone) in enumerate(zip(words, phones)):
+        if word.strip(_WORD_EDGE) in level and _TONE.search(phone):
+            phones[index] = _TONE.sub("", phone)
+            changed = True
+    return " ".join(phones) if changed else phonemes
 
 
 def restore_vietnamese(text: str, phonemes: str, source: str | Callable[[], str], g2p: Callable[[str], str],
