@@ -76,7 +76,7 @@ fun Destination.ownsBottomBar(): Boolean = when (this) {
     is Destination.EditBook, is Destination.EditChapter, is Destination.CropCover, is Destination.CoverSearch,
     is Destination.Export, is Destination.StudioNew -> true
     is Destination.Book, is Destination.Settings, is Destination.Voice,
-    is Destination.Studio, is Destination.StudioProject, is Destination.StudioSub -> false
+    is Destination.Studio, is Destination.StudioProject, is Destination.StudioSub, is Destination.MusicPick -> false
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
