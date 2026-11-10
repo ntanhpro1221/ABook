@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
   "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "GVCN", "TP", "HCM", "VIP", "TV", "OK"],
@@ -29,5 +29,28 @@
   "contextual_letter_names": {
     "ktx": ["tàu", "hỏa", "ga", "train", "railway"]
   },
-  "english_letter_words": {"Z": "zed"}
+  "english_letter_words": {"Z": "zed"},
+  "context": {
+    "only": [
+      "at", "bat", "bet", "bit", "boat", "boot", "but", "cap", "cat", "chip", "coach", "coat", "cop", "cup", "cut",
+      "gap", "get", "got", "gut", "hat", "hip", "hit", "hop", "hot", "it", "kit", "let", "lip", "lit", "lot", "map",
+      "met", "much", "net", "not", "pat", "pet", "pit", "poet", "pop", "pot", "put", "quit", "rap", "rat", "rich",
+      "set", "sit", "soap", "such", "suit", "tech", "that", "tip", "top", "trap", "trip", "up",
+      "boom", "buy", "by", "chain", "coin", "gun", "guy", "gym", "hey", "key", "main", "moon", "on",
+      "pain", "pay", "pen", "poem", "rain", "room", "soon", "they", "train", "try"
+    ],
+    "weak": ["be", "go", "he", "hi", "him", "i", "man", "me", "mom", "my", "no", "sun", "the", "them", "too"],
+    "alone": ["go", "no"],
+    "followed": ["no"],
+    "letters": ["a", "i"],
+    "function": [
+      "about", "and", "are", "aren't", "as", "at", "because", "been", "being", "but", "can't", "cannot", "could",
+      "did", "didn't", "does", "doesn't", "don't", "each", "every", "for", "from", "had", "has", "have", "haven't",
+      "he's", "her", "here", "here's", "his", "how", "i'd", "i'll", "i'm", "i've", "if", "into", "is", "isn't", "it",
+      "it's", "its", "let's", "not", "of", "or", "our", "shall", "she", "she's", "should", "some", "that",
+      "that's", "their", "there", "there's", "these", "they", "they're", "this", "those", "very", "was", "wasn't",
+      "we", "we're", "were", "what", "what's", "when", "where", "which", "while", "who", "whom", "whose", "why",
+      "will", "with", "won't", "would", "wouldn't", "you", "you'll", "you're", "you've", "your", "yours"
+    ]
+  }
 }

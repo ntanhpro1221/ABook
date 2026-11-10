@@ -346,3 +346,39 @@ Ràng buộc:
 - Studio đụng file khoá (`tts.py`, `text_processing.py`) nên làm ở nhánh dev, kèm sự kiện phiên bản.
 - Nghe ngay cũng có file khoá (`readaloud/symbols.py`, `readaloud/vieneu.py`...): đọc `QUALITY_IMPLEMENTATION_FILES` từ code,
   đo `quality_implementation_hash()` trước/sau; thay đổi hash chỉ nằm ở nhánh dev và chờ hết run trước khi tích hợp.
+
+## 5. Từ tiếng Anh viết giống một âm tiết Việt (10-11)
+
+Chủ sách: "thi thoảng có mấy từ tiếng nước ngoài có ký tự như một từ tiếng việt thì app không phân nó vào là từ nước ngoài
+để đọc". 223 từ trong `english_words.txt` cũng là âm tiết Việt hợp lệ (to, con, ban, the, my, go, hot, top...). sea-g2p đọc
+chúng theo tiếng Việt; muốn đọc tiếng Anh phải bọc `<en>…</en>`. Riêng việc có trong từ điển Anh vẫn KHÔNG là bằng chứng
+("con", "to", "ban" xuất hiện hàng trăm nghìn lần là tiếng Việt). Bằng chứng là câu chứa nó: `english_policy.english_context`
+(Python) = `EnglishPolicy.englishContext` (Kotlin), dữ liệu ở khoá `context` của `english_policy.json`, ca chung
+`tests/fixtures/readaloud/english_direct/cases.json`.
+
+Một **chuỗi** = các chữ ASCII đứng liền, không có dấu câu và không có chữ Việt (chữ có dấu, kể cả dấu tổ hợp NFD) xen giữa.
+
+| Luật | Điều kiện | Ví dụ đổi | Ví dụ giữ |
+|---|---|---|---|
+| 1. Từ chỉ-Anh (`only`) | dáng âm tiết nhưng không thể là chữ Việt viết đúng: đuôi p/t/c/ch không dấu, hoặc không có nghĩa (gym, main, on, by) | "bản hit", "đang hot", "phòng gym", "STOP IT!" | "ngành IT" (hai chữ hoa đứng riêng = viết tắt) |
+| 2. Chuỗi có từ ngữ pháp Anh (`function`: you, is, of, what, don't...) | chuỗi >= 2 chữ, chữ lạ <= 1/3; một từ ngữ pháp viết Hoa đơn lẻ không tính | "Do you want to go with me?", "Thank you so much" | "Will bay." (Will là tên); từ ở mép chuỗi chạm thẳng chữ Việt ("...you con ạ") |
+| 3. Từ hiếm khi là Việt (`weak`: the, my, me, no, go, he, be, hi...) | kề một từ Anh chắc chắn viết cùng kiểu hoa/thường | "My Lord", "The Fool", "no comment", "Let's go" | "the the mix" (lặp), "ăng ten radio", "Maximilian no baka" (`followed`: chỉ tính từ Anh đứng SAU), "Sienna sao?" |
+| 4. Đứng riêng (`alone`: go, no) | là cả câu hô, hai bên là dấu ngắt | "Go!", "No.", "Go, go, go!" | khái niệm "no" (trong nháy giữa câu Việt), "No. 7", "gay go" |
+
+Dòng không có chữ Việt nào mà âm tiết Việt không dấu nhiều hơn từ Anh chắc chắn ("Anh em oi, cho em hoi...") thì bỏ qua cả dòng.
+Từ điển Anh có cả tên riêng (Sienna, Edward, Elsa) nên "đứng cạnh một từ trong từ điển" không bao giờ đủ: "Sienna sao?",
+"con Wyvern", "lo stress", "Boss gay cấn" đều là tiếng Việt.
+
+**Đo** (kho riêng tư `Corpus`, 598 bộ, 9.342 chương, 32,4 triệu chữ, 791.497 lần một từ trùng xuất hiện; 30% số bộ giữ lại
+theo hash tên bộ, không nhìn khi thiết kế; nhãn do agent gán, chủ sách không chấm):
+
+| Bộ | Ca hợp lệ | Từ Anh thật | Trước: đọc Anh | Sau: đọc Anh đúng | Đọc nhầm Việt -> Anh | Precision | Recall |
+|---|---|---|---|---|---|---|---|
+| Thiết kế (phân tầng) | 406 | 107 | 0 | 98 | 0 / 256 | 100% | 91,6% |
+| Giữ lại (phân tầng) | 157 | 30 | 0 | 27 | 0 / 116 | 100% | 90,0% |
+| Giữ lại: 200 ca bị đổi bốc ngẫu nhiên | 200 | - | - | - | 6 trước khi sửa, 0 sau | 97,0% -> 100% | - |
+
+6 ca sai của lần soát thứ ba là "No. III" / "No. VI" (No. = số; 5 ca, một bộ) và tiếng động "Gain!"; cả hai đã sửa SAU khi
+nhìn bộ giữ lại, nên con số 100% sau sửa không còn là số giữ lại sạch. Luật đổi khoảng 0,6% số lần một từ trùng xuất hiện.
+Sót đã biết: "MADE IN CHINA" (in), "I am" (am), "So, what..." (So đứng trước dấu phẩy), từ trong nháy đơn lẻ ('gay'), chuỗi mà
+từ Anh bên cạnh không có trong từ điển ("Alligator Man").
