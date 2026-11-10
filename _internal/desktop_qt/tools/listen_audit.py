@@ -7,6 +7,10 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
 
   python -X utf8 tools/listen_audit.py run <out_dir> <label> --text 001.txt 002.txt ... --music on|off [--exe dist/ABookDesk.exe]
   python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B> [--control <out_dir>/<B2>]
+    [--quiet-chapters 2]: chương im theo kịch bản (mặc định: đọc từ run.json của lượt A, do `run --quiet-chapter` ghi); chương khác vẫn phải có nhạc.
+  --quiet-chapter 2 (run, lặp được): làm im mọi đoạn nhạc của chương ấy qua API nhạc của sách (PUT /api/books/<id>/music {"silence": ...}, như nút
+    "Im lặng" ở tab Nhạc) - lượt ghi có một chương im xen giữa thật. Chương chưa có đoạn nhạc nào (danh mục chưa tải) thì dừng, không ghi lượt giả.
+    Máy dò này chỉ chạy trên app Qt (dist/ABookDesk.exe); nó không thay ChapterMusicTest (JVM) của Android, nơi lỗi needsVoiceClock nằm.
   python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần) hay giọng lặng
                                                                  > VOICE_HOLE_S giữa chương vì chờ clip
   --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
@@ -125,8 +129,18 @@ def private_env(stage: Path) -> dict:
                 ABOOK_PREFERENCES=str(stage / "prefs.json"), PYTHONIOENCODING="utf-8")
 
 
-def prepare(stage: Path, texts: list[Path], music: bool) -> str:
-    """Nhập các chương thành một cuốn chỉ có chữ; trả mã sách. Giọng Edge mặc định được đồng ý trước như người dùng đã bấm "Nghe"."""
+def quiet_silence(view: dict, chapter: int) -> dict[str, bool]:
+    """Lệnh im lặng (PUT /api/books/<id>/music `silence`) cho mọi đoạn nhạc của chương `chapter` trong rãnh nhạc `view` (GET .../music)."""
+    keys = sorted({s["key"] for s in ((view.get("plan") or {}).get("scenes") or []) if s.get("chapterId") == chapter and s.get("key")})
+    if not keys:
+        raise SystemExit(f"--quiet-chapter {chapter}: chương này chưa có đoạn nhạc nào để làm im ({view.get('error') or 'rãnh nhạc rỗng'}); "
+                         "luật chương im không có kịch bản trên lượt này")
+    return {key: True for key in keys}
+
+
+def prepare(stage: Path, texts: list[Path], music: bool, quiet: list[int] | None = None) -> str:
+    """Nhập các chương thành một cuốn chỉ có chữ; trả mã sách. Giọng Edge mặc định được đồng ý trước như người dùng đã bấm "Nghe".
+    `quiet`: các chương làm im bằng nút "Im lặng" của từng đoạn (quiet_silence); máy chủ phải trả mốc rỗng cho chúng."""
     (stage / "library").mkdir(parents=True, exist_ok=True)
     (stage / "prefs.json").write_bytes(json.dumps({"libraryRoot": str(stage / "library")}).encode("utf-8"))
     ini = stage / "local" / "ABook" / "desktop_qt.ini"
@@ -140,16 +154,24 @@ def prepare(stage: Path, texts: list[Path], music: bool) -> str:
         book = added["id"]
         if not music:
             host.call("PUT", f"/api/books/{book}/music", {"playlist": "off"})
+        for chapter in quiet or []:
+            host.call("PUT", f"/api/books/{book}/music", {"silence": quiet_silence(host.call("GET", f"/api/books/{book}/music"), chapter)})
+            left = host.call("GET", f"/api/books/{book}/music/chapters/{chapter}").get("cues")
+            if left:
+                raise SystemExit(f"--quiet-chapter {chapter}: đã im lặng mọi đoạn mà máy chủ vẫn trả {len(left)} mốc")
         chapters = next((b for b in host.call("GET", "/api/listen/library") if b.get("id") == book), None)
     finally:
         host.stop()
-    (stage / "book.json").write_text(json.dumps(dict(id=book, music=music, info=chapters), ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    (stage / "book.json").write_text(json.dumps(dict(id=book, music=music, quiet_chapters=quiet or [], info=chapters), ensure_ascii=False, indent=1),
+                                     encoding="utf-8", newline="\n")
     return book
 
 
 def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None,
-        music_files: Path | None = None, slow_music: str | None = None, slow_trace: Path | None = None) -> None:
+        music_files: Path | None = None, slow_music: str | None = None, slow_trace: Path | None = None, quiet: list[int] | None = None) -> None:
     import measure
+    if quiet and not music:
+        raise SystemExit("--quiet-chapter cần --music on")
     stage = out / label
     if (stage / "bench.json").exists():
         raise SystemExit(f"{stage} đã có kết quả; chọn nhãn khác")
@@ -158,7 +180,7 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
         (stage / "music/files").mkdir(parents=True, exist_ok=True)
         for track in sorted(music_files.glob("*.mp3")):
             shutil.copyfile(track, stage / "music/files" / track.name)
-    book = prepare(stage, texts, music)
+    book = prepare(stage, texts, music, quiet)
     sink = stage / "sink.wav"
     env = dict(private_env(stage), ABOOK_HOST_PYTHON=PYTHON, ABOOK_HOST_APP=str(INTERNAL), ABOOK_BENCH_SCENARIO="listen",
                ABOOK_BENCH_BOOK=book, ABOOK_AUDIO_SINK=str(sink), ABOOK_SMTC="1", QT_SCALE_FACTOR="1", QT_QPA_PLATFORM="offscreen",
@@ -170,7 +192,7 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
     got = measure.launch(exe.resolve(), env, True, timeout_seconds=3700, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
-    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music, slow_trace=str(slow_trace) if slow_trace else None,
+    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music, slow_trace=str(slow_trace) if slow_trace else None, quiet_chapters=quiet or [],
                                                     exit_code=got.get("exit_code"), forced=got.get("forced_termination"),
                                                     # tải lạ (bộ thử, dựng, gradle) chen vào giữa lượt: số giây thời gian thực có thể lệch
                                                     shared_busy=sorted({b["name"] for _, busy in got.get("shared_busy", []) for b in busy})), ensure_ascii=False),
@@ -450,7 +472,17 @@ def source_tracks(run_dir: Path, rate: int, hop: int) -> dict[str, np.ndarray]:
     return out
 
 
-def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
+def chapter_music_pick(marks: list[dict], chapter: int) -> int | None:
+    """An empty music: mark clears the credit; it does not select a song."""
+    return next((m["frame"] for m in marks if m["chapter"] == chapter and m["tag"].startswith("music:") and m["tag"] != "music:"), None)
+
+
+def chapter_music_ok(expected: bool, delay: float | None, limit: float, early: bool, picked: bool, leaked: bool) -> bool:
+    """Expected silence must come from the scenario, never from a missing music event."""
+    return bool(delay is not None and delay <= limit and not early) if expected else not picked and not leaked
+
+
+def analyze(a_dir: Path, b_dir: Path, control: Path | None = None, quiet_chapters: set[int] | None = None) -> dict:
     A, B = load(a_dir), load(b_dir)
     hop_s = A["hop"] / A["rate"]
     voice_db = float(np.median(B["db"][B["db"] > VOICE_FLOOR_DB]))
@@ -470,24 +502,35 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     music_events = [dict(t=round(m["frame"] / A["rate"], 2), chapter=m["chapter"], position=m["position"], credit=m["tag"][len("music:"):])
                     for m in A["marks"] if m["tag"].startswith("music:")]
     arrivals = []
-    for i, ch in enumerate(chapters(A)):
+    if quiet_chapters is None:  # kịch bản ghi trong lượt (run --quiet-chapter)
+        meta = json.loads((a_dir / "run.json").read_bytes()) if (a_dir / "run.json").exists() else {}
+        quiet_chapters = set(meta.get("quiet_chapters") or [])
+    chapter_spans = chapters(A)
+    if quiet_chapters - {ch["chapter"] for ch in chapter_spans}:
+        raise ValueError("quiet chapters must exist in the recorded run")
+    fade_s = json.loads((INTERNAL / "abook/webui/assets/music_mix.json").read_text(encoding="utf-8"))["fadeSeconds"]
+    for i, ch in enumerate(chapter_spans):
         v = first_voice(A["db"], voice_db, ch["start"])
         # tai: khung được nâng đầu tiên mà cửa sổ bắt đầu ở nó có nhạc. Chỉ nghe được ở chỗ giọng lặng, nên trễ hơn lúc mixer phát 1,5-3 s ở
         # đoạn đọc dày (đo 01-11 A1/A2/NA2). Mixer báo phát (mix_playing đầu tiên sau lúc app chọn bài của chương) và tai xác nhận trong
         # ARRIVE_CONFIRM_S: nhạc tới lúc mixer phát; không thì theo tai.
         hit = np.flatnonzero((pres_a & lift_a)[v: ch["end"]]) if v is not None else []
         heard = v + int(hit[0]) if len(hit) else None
-        picked = next((m["frame"] for m in A["marks"] if m["tag"].startswith("music:") and m["chapter"] == ch["chapter"]), None)
+        picked = chapter_music_pick(A["marks"], ch["chapter"])
         started = next((f // A["hop"] for f in A["mixes"] if picked is not None and f >= picked), None)
         confirmed = heard is not None and started is not None and started <= heard <= started + ARRIVE_CONFIRM_S / hop_s
         at = started if confirmed else heard
         delay = round(float(at - v) * hop_s, 2) if at is not None else None
         early = bool(heard is not None and picked is not None and heard < picked // A["hop"])
         limit = ARRIVE_FIRST_S if i == 0 else ARRIVE_NEXT_S
+        expected = ch["chapter"] not in quiet_chapters
+        leaked = bool((pres_a & lift_a)[(v if v is not None else ch["start"]) + int(np.ceil(fade_s / hop_s)): ch["end"]].any())
         rel = lambda frame: None if frame is None or v is None else round(float(frame - v) * hop_s, 2)
         arrivals.append(dict(chapter=ch["chapter"], first_voice_s=None if v is None else round(v * hop_s, 2), music_after_s=delay,
                              picked_after_s=rel(None if picked is None else picked // A["hop"]), mixer_after_s=rel(started), heard_after_s=rel(heard),
-                             heard_before_pick=early, ok=bool(delay is not None and delay <= limit and not early)))
+                             heard_before_pick=early, expected_music=expected,
+                             quiet_leak=leaked if not expected else False,
+                             ok=chapter_music_ok(expected, delay, limit, early, picked is not None, leaked)))
     control_s = None
     if control is not None:
         C = load(control)
@@ -580,6 +623,61 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     return report
 
 
+def synthetic_run(stage: Path, music: dict[int, tuple[float, float]], seconds: int = 30, rate: int = 8000) -> None:
+    """Một lượt giả trên đĩa (sink.wav + .clock + bench.json) như app ghi: 3 chương liền, giọng 0,6 s có tiếng / 0,4 s lặng, nhịp mỗi giây.
+    `music[ch]` = (từ, tới) giây trong chương có nhạc nền -40 dB, kèm dấu chọn bài `music:` ở đầu chương; chương không có thì im (dấu xoá ghi công)."""
+    import struct
+    rng = np.random.default_rng(7)
+    n = 3 * seconds * rate
+    t = np.arange(n) / rate
+    voice = np.where((t % 1.0) < 0.6, 0.14 * np.sin(2 * np.pi * 220 * t), 0.0)
+    bed = np.zeros(n)
+    events: list[list] = [[0.0, "main"]]
+    for chapter in (1, 2, 3):
+        base = (chapter - 1) * seconds
+        span = music.get(chapter)
+        if span is not None:
+            a, b = int((base + span[0]) * rate), int((base + span[1]) * rate)
+            bed[a:b] = rng.normal(0, 0.01, b - a)
+            events.append([base * 1000.0 + 50, f"audio:music:bai{chapter}:{chapter}:0.000:1"])
+        else:
+            events.append([base * 1000.0 + 50, f"audio:music::{chapter}:0.000:1"])  # dấu xoá ghi công: không phải chọn bài
+        events += [[(base + i) * 1000.0, f"audio:tick:{chapter}:{float(i):.3f}:1"] for i in range(seconds)]
+    events.append([3 * seconds * 1000.0, "done"])
+    pcm = (np.clip(voice + bed, -1, 1) * 32767).astype("<i2")
+    data = np.repeat(pcm, 2).tobytes()
+    stage.mkdir(parents=True, exist_ok=True)
+    (stage / "sink.wav").write_bytes(b"RIFF" + struct.pack("<I", 36 + len(data)) + b"WAVEfmt " + struct.pack("<IHHIIHH", 16, 1, 2, rate, rate * 4, 4, 16)
+                                     + b"data" + struct.pack("<I", len(data)) + data)
+    (stage / "sink.wav.clock").write_text(f"0 {rate}")
+    (stage / "bench.json").write_text(json.dumps(dict(events=sorted(events, key=lambda e: e[0]))), encoding="utf-8")
+
+
+def quiet_chapter_failures() -> list[str]:
+    """analyze() thật trên sink tổng hợp: nhạc ch1, ch2 im theo kịch bản (đọc từ run.json), ch3 nhạc trở lại / mất / nhạc tràn sang ch2 / không khai ch2."""
+    failures = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        synthetic_run(root / "B", {})
+        cases = (("quiet middle", {1: (0.5, 30), 3: (0.5, 30)}, {2}, [True, True, True]),
+                 ("missing after quiet", {1: (0.5, 30)}, {2}, [True, True, False]),
+                 ("music leaks into quiet", {1: (0.5, 30), 2: (0, 30), 3: (0.5, 30)}, {2}, [True, False, True]),
+                 ("quiet not declared", {1: (0.5, 30), 3: (0.5, 30)}, set(), [True, False, True]))
+        for name, music, quiet, want in cases:
+            stage = root / name.replace(" ", "_")
+            synthetic_run(stage, music)
+            (stage / "run.json").write_text(json.dumps(dict(quiet_chapters=sorted(quiet))), encoding="utf-8")
+            got = [x["ok"] for x in analyze(stage, root / "B")["rules"]["1_arrival"]["chapters"]]
+            if got != want:
+                failures.append(f"analyze chương im ({name}): chờ {want}, được {got}")
+        try:
+            analyze(root / "quiet_middle", root / "B", quiet_chapters={5})
+            failures.append("analyze: chương im không có trong lượt phải báo lỗi")
+        except ValueError:
+            pass
+    return failures
+
+
 def selftest() -> int:
     """run_problems trên mốc giả: lượt sạch im; lỗi Player, clip kẹt giữa chương (I3), kẹt từ đầu tới trần (I4) đều bị bắt."""
     def ticks(start_s, positions, playing=1):
@@ -591,6 +689,21 @@ def selftest() -> int:
     middle = head + ticks(5, [float(i) for i in range(70)] + [70.0] * 14) + ticks(89, [70.0] * 15, 0) + [[104000.0, "done"]]
     never = head + ticks(5, [0.0] * 3590) + [[3600300.0, "timeout"]]
     failures = []
+    marks = [dict(chapter=1, frame=0, tag="music:a"), dict(chapter=2, frame=20000, tag="music:"),
+             dict(chapter=3, frame=40000, tag="music:"), dict(chapter=3, frame=41000, tag="music:b")]
+    if [chapter_music_pick(marks, chapter) for chapter in (1, 2, 3)] != [0, None, 41000]:
+        failures.append("empty credit marks must not count as selected music")
+    # Nhạc -> chương im theo kịch bản -> nhạc: bảng chân trị của chapter_music_ok; phần đo thật (analyze trên sink) ở quiet_chapter_failures.
+    for name, expected, delays, picks, leaks, want in (
+        ("quiet middle", [True, False, True], [1.0, None, 1.0], [True, False, True], [False]*3, True),
+        ("missing after quiet", [True, False, True], [1.0, None, None], [True, False, False], [False]*3, False),
+        ("music leaks into quiet", [True, False, True], [1.0, None, 1.0], [True, False, True], [False, True, False], False),
+        ("quiet not declared", [True]*3, [1.0, None, 1.0], [True, False, True], [False]*3, False),
+    ):
+        got = all(chapter_music_ok(e, d, ARRIVE_NEXT_S, False, p, leak) for e, d, p, leak in zip(expected, delays, picks, leaks))
+        if got != want:
+            failures.append(f"chapter music {name}: expected {want}, got {got}")
+    failures += quiet_chapter_failures()
     for name, events, want in (("clean", clean, []), ("error", error, ["error"]), ("I3", middle, ["stall"]),
                                ("I4", never, ["timeout", "unfinished", "stall"])):
         got = [p["kind"] for p in run_problems(events)]
@@ -766,15 +879,19 @@ def main() -> int:
     r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip>[:<âm lượng>] - giọng giả không ra mạng thay Edge; âm lượng 0 = lượt chỉ nhạc (tools/stall_host)")
     r.add_argument("--music-files", type=Path, help="thư mục music/files của một lượt trước: gieo sẵn các bài đã tải trọn")
     r.add_argument("--slow-trace", type=Path, help="log HSDPA (datasets.simula.no/hsdpa): tốc độ của --slow-music theo vết thật, co cho trung bình = <KB/s>")
+    r.add_argument("--quiet-chapter", type=int, action="append", default=[], help="làm im mọi đoạn nhạc của chương này qua API nhạc của sách (lặp được)")
     r.add_argument("--slow-music", help="<KB/s>[/<KB/s sau>@<giây>]:<thư mục music/files của một lượt trước> - bài nhạc tải từ các file ấy với tốc độ trần (tools/stall_host)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     a.add_argument("--control", type=Path, help="lượt nhạc tắt thứ hai: so với B không được thấy nhạc ở đâu (kiểm thước luật 1)")
+    a.add_argument("--quiet-chapters", type=int, nargs="*", default=None,
+                   help="chương im theo kịch bản (bỏ trống: đọc run.json của lượt A); chương khác thiếu nhạc vẫn là trượt")
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
     sub.add_parser("selftest")
     args = ap.parse_args()
     if args.cmd == "run":
         INTERNAL = args.host_app.resolve()
-        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files, args.slow_music, args.slow_trace)
+        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files, args.slow_music, args.slow_trace,
+            args.quiet_chapter)
     elif args.cmd == "check":
         loaded = load(args.dir)
         problems = loaded["problems"] + [dict(kind="voice_hole", **hole) for hole in voice_holes(loaded)]
@@ -783,7 +900,7 @@ def main() -> int:
     elif args.cmd == "selftest":
         return selftest()
     else:
-        print(json.dumps(analyze(args.a.resolve(), args.b.resolve(), args.control.resolve() if args.control else None), ensure_ascii=False, indent=1))
+        print(json.dumps(analyze(args.a.resolve(), args.b.resolve(), args.control.resolve() if args.control else None, None if args.quiet_chapters is None else set(args.quiet_chapters)), ensure_ascii=False, indent=1))
     return 0
 
 

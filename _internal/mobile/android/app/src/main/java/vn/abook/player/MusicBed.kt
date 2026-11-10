@@ -432,6 +432,9 @@ object MusicBed {
     /** Bài đang kêu (tên trong gói, hay link với danh sách phát) hay null khi im lặng - cho kiểm thử trên máy. */
     val activeTrack: String? get() = current?.track
 
+    /** JVM tests replace codecs only; chapter selection, fades and player lifecycle stay real. */
+    @VisibleForTesting internal var testPlayerFactory: (() -> ExoPlayer)? = null
+
     /** Ghi công bài đang kêu (CC BY đòi nêu tên ở nơi nhạc phát) - cùng khoá với máy tính (`_music_credits` của webui/server.py):
      *  title, creator, attribution, landing, license, licenseUrl, chỉ khoá nào có. null khi im lặng hay bài không có thông tin. */
     fun credit(): JSONObject? {
@@ -1467,24 +1470,26 @@ object MusicBed {
         testCreating = k
         val trackRef = TrackRef()
         // Cờ P3 bật thì cả bài a87 cũng giữ AudioTrack + mốc của nó ([TrackRef]): lúc chuyển sang P3, vị trí a87 đo cùng cách với P3 ([legacyPosition]). Cờ tắt: renderers mặc định như cũ.
-        val renderers = if (built == null && testAudioProcessor == null && testEvents == null && !musicSeamP3) {
-            DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
-        } else {
-            hookedRenderers(appContext, k, seam = built != null, trackRef) { loopSink = it }
-        }
-        val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
         val streamed = uri.scheme == "http" || uri.scheme == "https"
-        val player = ExoPlayer.Builder(appContext, renderers)
-            .apply { if (streamed) setLoadControl(StreamPace.loadControl()) }
-            .setAudioAttributes(
-                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
-                false,
-            )
-            .setMediaSourceFactory(if (built == null) sourceFactory else LoopSeam.mediaSourceFactory(sourceFactory))
-            // media3 1.11 bật dynamic scheduling mặc định: luồng phát chỉ thức khi bộ đệm cần, currentPosition đứng yên rồi nhảy ~250 ms -
-            // hẹn giờ lặp đọc vị trí ấy nên lệch tới chừng đó. Tắt đi, bước vị trí còn 10-40 ms (đo trên máy 22-10, PLAN_loop §37.1).
-            .experimentalSetDynamicSchedulingEnabled(false)
-            .build()
+        val player = testPlayerFactory?.invoke() ?: run {
+            val renderers = if (built == null && testAudioProcessor == null && testEvents == null && !musicSeamP3) {
+                DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
+            } else {
+                hookedRenderers(appContext, k, seam = built != null, trackRef) { loopSink = it }
+            }
+            val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
+            ExoPlayer.Builder(appContext, renderers)
+                .apply { if (streamed) setLoadControl(StreamPace.loadControl()) }
+                .setAudioAttributes(
+                    AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
+                    false,
+                )
+                .setMediaSourceFactory(if (built == null) sourceFactory else LoopSeam.mediaSourceFactory(sourceFactory))
+                // media3 1.11 bật dynamic scheduling mặc định: luồng phát chỉ thức khi bộ đệm cần, currentPosition đứng yên rồi nhảy ~250 ms -
+                // hẹn giờ lặp đọc vị trí ấy nên lệch tới chừng đó. Tắt đi, bước vị trí còn 10-40 ms (đo trên máy 22-10, PLAN_loop §37.1).
+                .experimentalSetDynamicSchedulingEnabled(false)
+                .build()
+        }
         if (built == null) player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường; bài P3 tự lặp trong hàng phát
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
