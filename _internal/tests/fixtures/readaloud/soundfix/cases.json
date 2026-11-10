@@ -2,7 +2,7 @@
   "provenance": "Self-authored sentences; no story excerpts.",
   "cases": [
     {"text": "Ah~Nopi, đợi tôi.", "said": "a Nô-pi, đợi tôi."},
-    {"text": "Haha!Rita đến.", "said": "ha ha!Rita đến."},
+    {"text": "Haha!Rita đến.", "said": "ha ha! Rita đến."},
     {"text": "Haha, Nopi!", "said": "ha ha, Nô-pi!"},
     {"text": "Ehehe, tôi đi đây.", "said": "ê hê hê, tôi đi đây."},
     {"text": "Ahaha, thật sao?", "said": "a ha ha, thật sao?"},
@@ -15,7 +15,7 @@
     {"text": "Hmpf, tùy cậu.", "said": "hừm, tùy cậu."},
     {"text": "Tsk. Phiền thật.", "said": "chậc. Phiền thật."},
     {"text": "Tch, chậm rồi.", "said": "chậc, chậm rồi."},
-    {"text": "Haha!Nopi đến.", "said": "ha ha!Nô-pi đến."},
+    {"text": "Haha!Nopi đến.", "said": "ha ha! Nô-pi đến."},
     {"text": "N-Nopika, chờ tôi.", "said": "nờ… Nô-pi-ca, chờ tôi."},
     {"text": "NOPI-CHAAAN, đợi tôi.", "said": "Nô-pi-chan…, đợi tôi."},
     {"text": "Umu, tôi nghe rồi.", "said": "u-mu, tôi nghe rồi."},
@@ -25,7 +25,7 @@
     {"text": "Sa-sao chiếc ghế lại nằm ở ngoài sân?", "said": "sa… sao chiếc ghế lại nằm ở ngoài sân?"},
     {"text": "Cô ấy bật cười hahaha rồi khép cửa lại.", "said": "Cô ấy bật cười ha ha ha rồi khép cửa lại."},
     {"text": "Ufufufu, bí mật ấy vẫn còn ở trong hộp.", "said": "u phu phu phu, bí mật ấy vẫn còn ở trong hộp."},
-    <removed>
+    {"text": "AHAHAHAHAHAHAHAH!HAHAHAHAHA! Căn phòng đầy tiếng cười.", "said": "a ha ha ha ha ha ha ha! ha ha ha ha ha! Căn phòng đầy tiếng cười."},
     {"text": "Anh viết XD rồi cất điện thoại vào túi.", "said": "Anh viết ha ha rồi cất điện thoại vào túi."},
     {"text": "Dòng cuối có :v và một dấu chấm nhỏ.", "said": "Dòng cuối có hề hề và một dấu chấm nhỏ."},
     {"text": "Cô gửi :D rồi quay lại bàn làm việc.", "said": "Cô gửi ha ha rồi quay lại bàn làm việc."},
