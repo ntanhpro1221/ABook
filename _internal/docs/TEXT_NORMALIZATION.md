@@ -350,8 +350,9 @@ Ràng buộc:
 ## 5. Từ tiếng Anh viết giống một âm tiết Việt (10-11)
 
 Chủ sách: "thi thoảng có mấy từ tiếng nước ngoài có ký tự như một từ tiếng việt thì app không phân nó vào là từ nước ngoài
-để đọc". 223 từ trong `english_words.txt` cũng là âm tiết Việt hợp lệ (to, con, ban, the, my, go, hot, top...). sea-g2p đọc
-chúng theo tiếng Việt; muốn đọc tiếng Anh phải bọc `<en>…</en>`. Riêng việc có trong từ điển Anh vẫn KHÔNG là bằng chứng
+để đọc". 223 từ trong `english_words.txt` cũng là âm tiết Việt hợp lệ (to, con, ban, the, my, go, hot, top...). sea-g2p tự
+chọn tiếng cho chúng theo chữ đứng cạnh (xem "Đo ở mức âm vị" bên dưới): đứng giữa chữ Việt thì đọc kiểu Việt; muốn chắc
+chắn đọc tiếng Anh phải bọc `<en>…</en>`. Riêng việc có trong từ điển Anh vẫn KHÔNG là bằng chứng
 ("con", "to", "ban" xuất hiện hàng trăm nghìn lần là tiếng Việt). Bằng chứng là câu chứa nó: `english_policy.english_context`
 (Python) = `EnglishPolicy.englishContext` (Kotlin), dữ liệu ở khoá `context` của `english_policy.json`, ca chung
 `tests/fixtures/readaloud/english_direct/cases.json`.
@@ -372,7 +373,7 @@ Từ điển Anh có cả tên riêng (Sienna, Edward, Elsa) nên "đứng cạn
 **Đo** (kho riêng tư `Corpus`, 598 bộ, 9.342 chương, 32,4 triệu chữ, 791.497 lần một từ trùng xuất hiện; 30% số bộ giữ lại
 theo hash tên bộ, không nhìn khi thiết kế; nhãn do agent gán, chủ sách không chấm):
 
-| Bộ | Ca hợp lệ | Từ Anh thật | Trước: đọc Anh | Sau: đọc Anh đúng | Đọc nhầm Việt -> Anh | Precision | Recall |
+| Bộ | Ca hợp lệ | Từ Anh thật | Trước: có thẻ `<en>` | Sau: có thẻ `<en>` đúng | Gắn thẻ nhầm chữ Việt | Precision | Recall |
 |---|---|---|---|---|---|---|---|
 | Thiết kế (phân tầng) | 406 | 107 | 0 | 98 | 0 / 256 | 100% | 91,6% |
 | Giữ lại (phân tầng) | 157 | 30 | 0 | 27 | 0 / 116 | 100% | 90,0% |
@@ -382,3 +383,23 @@ theo hash tên bộ, không nhìn khi thiết kế; nhãn do agent gán, chủ s
 nhìn bộ giữ lại, nên con số 100% sau sửa không còn là số giữ lại sạch. Luật đổi khoảng 0,6% số lần một từ trùng xuất hiện.
 Sót đã biết: "MADE IN CHINA" (in), "I am" (am), "So, what..." (So đứng trước dấu phẩy), từ trong nháy đơn lẻ ('gay'), chuỗi mà
 từ Anh bên cạnh không có trong từ điển ("Alligator Man").
+
+**Đo ở mức âm vị** (cái tai nghe được). Bảng trên đếm THẺ, không đếm âm. sea-g2p là máy đọc "Việt có chen Anh": một từ
+trùng đứng sát một chữ nó coi là tiếng Anh (kể cả tên riêng, kể cả cách một dấu phẩy hay dấu chấm) thì nó tự đọc kiểu Anh,
+không cần thẻ. Nên nhiều cụm Anh vốn đã đọc đúng ("Oh my god", "I love you", "bản hit", "My Lord"), và thẻ chỉ đổi âm ở những
+từ đứng lẻ giữa chữ Việt ("Go! Go! Go!", "No!", set, net, chip, up, tech). Phép đo: một từ "đọc Anh" khi âm vị cả cửa sổ không
+đổi lúc ép `<en>` lên nó; bỏ các từ mà âm Anh và âm Việt trùng nhau (sao, con, em, theo, ma, ai...: 82% số lần xuất hiện).
+
+| Bộ | Từ Anh thật: đọc Anh trước -> sau | Chữ Việt/tên/tiếng động: đọc Anh trước -> sau |
+|---|---|---|
+| Thiết kế | 53 -> 66 / 68 (mất 0) | 28 -> 28 / 83 |
+| Giữ lại | 14 -> 20 / 20 (mất 0) | 17 -> 17 / 41 |
+
+Cột phải là lỗi CÓ SẴN của sea-g2p, luật này không thêm ca nào và cũng KHÔNG sửa: chữ Việt đứng sát tên/từ Anh bị đọc kiểu
+Anh - "con boss to quá" (to -> /tuː/), "quay sang Susan", "Lucy bay ngang", "Edward than vãn", "Tin đồn do Carlos tung ra",
+"Shaell leo lên giường". Hai bộ mẫu lấy dày ở tầng "kề từ Anh" nên tỉ lệ 28/83 không phải tỉ lệ của kho; ước lượng có trọng số
+theo số lần xuất hiện thật (8.741 mẫu, 3.105 ô từ x ngữ cảnh): khoảng 6% số lần một từ trùng KHÁC ÂM bị đọc kiểu Anh, tức
+khoảng 1,1% mọi lần từ trùng xuất hiện (~8.600 / 791.497; sau luật này ~9.100). Nặng nhất: do (~5% số lần), sang (~9%),
+bay (~4%), to (~3%), ban, an (~2%). Phần lớn trong số đó là chữ Việt. Không có thẻ `<vi>`; bọc `<en>` cho chữ Anh bên cạnh
+không cách ly được; ký tự vô hình (ZWSP, WJ, soft hyphen) cũng không. Chỉ dấu ngắt thật (`;`, `:`, `.`) hoặc ngoặc đơn quanh
+chữ ấy mới giữ được âm Việt - cả hai đều đổi chuỗi nói, nên chưa làm. Đây là việc kế tiếp, cần đo riêng.
