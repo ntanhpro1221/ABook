@@ -59,7 +59,7 @@ private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, p
 }
 
 /** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt, và khung chữ của trình phát (PlayerTextArea) cũng chừa ngang chừng này. */
-internal val InkBleed = 8.dp
+internal val InkBleed = 4.dp
 
 @Composable
 fun ReadAlongPane(
@@ -157,9 +157,9 @@ fun ReadAlongPane(
                     // Cùng độ đậm với --read-along / --read-along-word của web và along / word của Qt.
                     val sentenceColor = colors.accent.copy(alpha = if (colors.dark) 0.18f else 0.26f)
                     val wordColor = colors.accent.copy(alpha = if (colors.dark) 0.30f else 0.62f)
-                    val radius = with(density) { Dim.radiusControl.toPx() }
+                    val radius = with(density) { 8.dp.toPx() }
                     val geometry = remember(layout, paragraph, radius) {
-                        layout?.let { with(density) { ParagraphInk(it, paragraph, 0.2f * look.size.sp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
+                        layout?.let { with(density) { ParagraphInk(it, paragraph, 4.dp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
                     }
                     BasicText(
                         paragraph.text,

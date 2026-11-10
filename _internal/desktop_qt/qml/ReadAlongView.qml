@@ -1,5 +1,7 @@
 import "UiStrings.js" as S
 import QtQuick
+import QtQuick.Shapes
+import "ReadingInk.js" as ReadingInk
 import ABook
 import "PlayerLabels.js" as Labels
 
@@ -263,14 +265,13 @@ Item {
                         opacity: 0.05
                     }
                 }
-                Repeater {
-                    model: del.sentRects.length
-                    Rectangle {
-                        required property int index
-                        readonly property var r: del.sentRects[index]
-                        x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
-                        radius: Theme.radiusControl
-                        color: Qt.alpha(root.surface.accent, root.surface.along)
+                Shape {
+                    anchors.fill: parent
+                    ShapePath {
+                        strokeWidth: 0
+                        strokeColor: "transparent"
+                        fillColor: Qt.alpha(root.surface.accent, root.surface.along)
+                        PathSvg { path: ReadingInk.sentenceOutline(del.sentRects) }
                     }
                 }
                 Repeater {

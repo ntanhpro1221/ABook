@@ -149,6 +149,7 @@ qt_add_qml_module(ABookDesk
         qml/MiniPlayer.qml
         qml/Icon.qml
         qml/LucidePaths.js
+        qml/ReadingInk.js
         qml/Interactive.qml
         qml/Button.qml
         qml/IconButton.qml
