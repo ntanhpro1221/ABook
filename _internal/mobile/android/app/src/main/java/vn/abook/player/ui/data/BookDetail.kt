@@ -142,7 +142,8 @@ object BookPage {
                 parts += Fmt.length(book.duration)
             }
             else -> {
-                parts += S.s_0_1_chuong_co_audio_9706857d(book.chaptersAvailable, book.chaptersTotal)
+                // Availability is stated beside the chapter list, keeping the header stable.
+                parts += S.s_0_chuong_04093412(book.chaptersTotal)
                 parts += Fmt.length(book.duration)
             }
         }
