@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { eventually } from "../testing/eventually";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 
@@ -23,7 +24,7 @@ it("số thanh đổi thì thông báo lên đúng mép, hết thanh / rời mà
   let cleanup = mount(2); expect(el.style.getPropertyValue("--toast-bottom")).toBe("132px"); cleanup?.();
   cleanup = mount(1); expect(el.style.getPropertyValue("--toast-bottom")).toBe("132px");
   const late = el.cloneNode() as HTMLElement; late.style.removeProperty("--toast-bottom"); document.body.append(late);
-  await new Promise(resolve => setTimeout(resolve, 0)); expect(late.style.getPropertyValue("--toast-bottom")).toBe("132px");
+  await eventually(() => expect(late.style.getPropertyValue("--toast-bottom")).toBe("132px"));
   cleanup?.(); expect(el.style.getPropertyValue("--toast-bottom")).toBe(""); expect(late.style.getPropertyValue("--toast-bottom")).toBe("");
   cleanup = mount(0); expect(cleanup).toBeUndefined(); expect(el.style.getPropertyValue("--toast-bottom")).toBe("");
   expect(root).not.toHaveBeenCalled();
