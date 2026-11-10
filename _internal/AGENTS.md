@@ -247,6 +247,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - `readaloud/phoneme_policy.py` sửa ở biên phoneme chung của Studio/Nghe ngay/Kotlin: âm tiết `gi` phải còn nguyên âm `/i/`,
   và `o` của tên đã qua lượt chuẩn hoá đầu không được lượt sau đổi thành tên chữ `ô`. Từ cảm thán/hỏi Anh ngắn,
   có từ điển và không trùng âm tiết Việt, giữ trọng âm mạnh/nguyên âm kéo dài trước `?!`; không thêm từ, đổi dấu câu hay chia riêng để đọc.
+  Từ có ở cả hai từ điển của sea-g2p (do, sang, bay, to...) giữ âm Việt khi câu chứng minh nó là chữ Việt (`restore_vietnamese`,
+  dữ liệu `shared_vietnamese` trong `english_policy.json`): chỉ dòng âm vị đổi, chuỗi nói giữ nguyên từng byte; chữ viết Hoa giữa
+  câu và từ trong/kề `<en>` không bao giờ đổi. Studio chỉ thấy khúc chữ thường nên `generate_one` phải bọc `infer` trong `sentence_case`.
   Luật này nằm trong quality hash và namespace cache; test qua cả JNI thật và hai đường Python. Cả chuỗi đầy đủ và tiền tố dùng để
   xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được

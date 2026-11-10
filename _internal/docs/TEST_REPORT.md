@@ -1,5 +1,13 @@
 # Test report
 
+## 10-11-2026 — g2pvi: Vietnamese words beside English names keep their Vietnamese phonemes
+
+- sea-g2p gives a word found in both of its dictionaries the language of its nearest unambiguous neighbour, and an unknown name counts as English, so "con boss to quá", "quay sang Susan", "Lucy bay ngang" were phonemized as English. `phoneme_policy.restore_vietnamese` (Python, both desktop frontends) and `PhonemePolicy.restoreVietnamese` (Kotlin, real JNI) restore the Vietnamese phonemes; the text handed to the voice is byte-identical. Rules, data and measurements: `docs/TEXT_NORMALIZATION.md` section 6.
+- Shared cases `tests/fixtures/readaloud/shared_vietnamese/cases.json` (39): decision, phonemes of Nghe ngay and Studio, and "only the claimed words change" in `tests/test_shared_vietnamese.py`; decision and real-JNI phonemes in `PhonemePolicyTest.kt`. The JNI tests ran (not skipped) against the host library.
+- Related pytest (41 files, `-rf`): **2,244 passed, 0 failed, 3 skipped**. Related JVM (`vieneu.*` + `readaloud.*`, 70 classes): **569 tests, 0 failed, 1 skipped**.
+- New held-out set (523 series never read before, labels assigned before the phonemizer was run, rule frozen): Vietnamese words read as English **60 -> 6 of 144**; real English words read as English **89 -> 89 of 98**. Phonemize latency on CPU 0.894 -> 0.920 ms per sentence (+2.9%). Labels are the agent's; the book owner has not scored them.
+- `english_policy.json` version 3 -> 4 (clip cache namespace `direct-en4`); the quality implementation hash changes, so this stays on a dev branch until no book is mid-run.
+
 ## 09-11-2026 — mixfix Qt remix review
 
 - The gated two-thread control regression failed on the original mixer (the control only returned when the two-second fake pull expired). The final test covers volume, seek and stop while the render thread is waiting, records control duration, verifies the new volume in the same PCM commit and rejects an extra reset on the next pass. Remix preparation now stages queue edits without consuming joining PCM or publishing voice state; after the unlocked wait, changed controls or an advanced cursor rebuild the plan before publication. Two deterministic cursor advances, 25 and 45 ms, preserve the entire 20 ms pivot budget after the wait. The call-order test was renamed to describe its first-padding-sample assertion; join retries are paced by the engine outside the lock.
