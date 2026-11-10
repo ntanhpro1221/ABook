@@ -21,6 +21,7 @@ from scripts.voice_matches_the_person import (
     shipped_rows,
     wrong_gender,
 )
+from tests.project_tables import create_project_tables
 
 # rows = [(chương, tên, phái, tuổi, voice_key, số câu)]
 Row = tuple[str, str, str, str, str, int]
@@ -31,19 +32,7 @@ def _project(root: Path, name: str, rows: list[Row]) -> Path:
     project.mkdir(parents=True)
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.executescript(
-            """
-            CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT);
-            CREATE TABLE characters (
-                id INTEGER PRIMARY KEY, canonical_name TEXT, gender TEXT, age TEXT
-            );
-            CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT);
-            CREATE TABLE segments (
-                id INTEGER PRIMARY KEY, chapter_id INTEGER, canonical_character_id INTEGER,
-                voice_profile_id INTEGER, kind TEXT
-            );
-            """
-        )
+        create_project_tables(conn, "chapters", "characters", "voice_profiles", "segments")
         ids: dict[tuple[str, str], int] = {}
 
         def chapter(title: str) -> int:

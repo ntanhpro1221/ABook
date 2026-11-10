@@ -117,7 +117,6 @@ def test_a_whole_chapter_retake_is_one_change_and_drops_as_one(tmp_path: Path) -
     root = tmp_path / "thu_vien"
     project = _project(root)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE segments ADD COLUMN text_sha256 TEXT")
     db.execute("UPDATE segments SET text_sha256 = 'h' || id")
     db.commit()
     db.close()
@@ -165,11 +164,9 @@ def test_a_line_given_to_someone_with_the_same_voice_is_not_counted_as_a_retake(
     giữ bản thu ấy. Hộp đếm theo đúng luật đặt lại ấy; người khác giọng vẫn tính."""
     project = _project(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    for column in ("text_sha256 TEXT",):
-        db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
     db.execute("UPDATE segments SET text_sha256 = 'x', canonical_character_id = CASE speaker WHEN 'LUCIEN' THEN 1 END")
-    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3, 'preset_mai_huong', 'Mai Hương', 0, 1.0)")
-    db.executemany("INSERT INTO characters VALUES (?, ?, ?, ?, 'young', 'main', 5, '')",
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,engine) VALUES (3, 'preset_mai_huong', 'Mai Hương', 'vieneu')")
+    db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (?, ?, ?, ?, 'young', 'main', 5, '')",
                    [(2, "RHINE", "Rhine", "male"), (3, "HEIDI", "Heidi", "female")])
     db.executemany(
         "INSERT INTO segments (id, chapter_id, seq, text, kind, speaker, voice_profile_id, status, canonical_character_id,"

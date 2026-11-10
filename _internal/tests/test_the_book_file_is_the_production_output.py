@@ -51,7 +51,9 @@ def _finished_project(tmp_path: Path) -> Path:
     with sqlite3.connect(project / "project.sqlite3") as connection:
         connection.execute("UPDATE chapters SET status='completed',output_mp3=? WHERE id=2", (str(second),))
         connection.execute("UPDATE segments SET status='verified',wav_duration=3,wav_sha256='synthetic-take' WHERE id=5")
-        connection.execute("INSERT INTO artifacts SELECT 'chapter_mp3:2',kind,?,sha256,size_bytes,verified,metadata_json,created_at,updated_at FROM artifacts WHERE artifact_key='chapter_mp3:1'", (str(second),))
+        connection.execute("INSERT INTO artifacts (artifact_key,kind,path,sha256,size_bytes,verified,metadata_json,created_at,updated_at)"
+                           " SELECT 'chapter_mp3:2',kind,?,sha256,size_bytes,verified,metadata_json,created_at,updated_at"
+                           " FROM artifacts WHERE artifact_key='chapter_mp3:1'", (str(second),))
     return project
 
 

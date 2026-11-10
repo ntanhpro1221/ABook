@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 import scripts.ship_only_recasts_that_help as gate
+from tests.project_tables import create_project_tables, project_tables_sql
 
 
 def _rows(*items: tuple[str, str, str, int], project: str = "book") -> list[dict]:
@@ -57,8 +58,8 @@ def _project(tmp_path: Path, name: str, chapter: str = "094") -> Path:
     target = tmp_path / "_versions" / "v0.3.0-lo02r" / name
     target.mkdir(parents=True)
     connection = sqlite3.connect(target / "project.sqlite3")
-    connection.execute("CREATE TABLE chapters (title TEXT, status TEXT)")
-    connection.execute("INSERT INTO chapters VALUES (?, 'completed')", (chapter,))
+    create_project_tables(connection, "chapters")
+    connection.execute("INSERT INTO chapters (title, status) VALUES (?, 'completed')", (chapter,))
     connection.commit()
     connection.close()
     return target
@@ -195,16 +196,13 @@ def test_the_pair_count_reads_npcs_the_shared_reader_leaves_out(tmp_path: Path) 
     target.mkdir()
     connection = sqlite3.connect(target / "project.sqlite3")
     connection.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, status TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT);
-        CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, chapter_id INT, canonical_character_id INT,
-                               voice_profile_id INT, kind TEXT);
-        INSERT INTO chapters VALUES (1, '228', 'completed');
-        INSERT INTO characters VALUES (1, 'LUCIEN'), (2, 'NPC_LOCAL::C00010::R2401::ÔNG GIÀ'), (3, 'NARRATOR');
-        INSERT INTO voice_profiles VALUES (1, 'vieneu@3.8.3/Thanh Bình'), (2, 'narrator');
-        INSERT INTO segments VALUES (1, 1, 1, 1, 'dialogue'), (2, 1, 2, 1, 'dialogue'), (3, 1, 3, 2, 'narration');
+        project_tables_sql("chapters", "characters", "voice_profiles", "segments") + """
+        INSERT INTO chapters (id, title, status) VALUES (1, '228', 'completed');
+        INSERT INTO characters (id, canonical_name)
+            VALUES (1, 'LUCIEN'), (2, 'NPC_LOCAL::C00010::R2401::ÔNG GIÀ'), (3, 'NARRATOR');
+        INSERT INTO voice_profiles (id, voice_key) VALUES (1, 'vieneu@3.8.3/Thanh Bình'), (2, 'narrator');
+        INSERT INTO segments (id, chapter_id, canonical_character_id, voice_profile_id, kind)
+            VALUES (1, 1, 1, 1, 'dialogue'), (2, 1, 2, 1, 'dialogue'), (3, 1, 3, 2, 'narration');
         """
     )
     connection.commit()
@@ -221,11 +219,8 @@ def test_the_pair_count_reads_npcs_the_shared_reader_leaves_out(tmp_path: Path) 
 def _failed_db(folder: Path, chapter: str, failed: int, ok: int = 3) -> Path:
     folder.mkdir(parents=True)
     connection = sqlite3.connect(folder / "project.sqlite3")
-    connection.executescript(
-        "CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, status TEXT);"
-        "CREATE TABLE segments (id INTEGER PRIMARY KEY, chapter_id INT, status TEXT);"
-    )
-    connection.execute("INSERT INTO chapters VALUES (1, ?, 'completed')", (chapter,))
+    create_project_tables(connection, "chapters", "segments")
+    connection.execute("INSERT INTO chapters (id, title, status) VALUES (1, ?, 'completed')", (chapter,))
     for status in ["failed"] * failed + ["verified"] * ok:
         connection.execute("INSERT INTO segments (chapter_id, status) VALUES (1, ?)", (status,))
     connection.commit()

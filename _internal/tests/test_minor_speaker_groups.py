@@ -15,6 +15,7 @@ import pytest
 
 from abook.listener_overrides import NARRATOR, read_overrides, request_speakers, speaker_requests
 from abook.webui.work_items import minor_role_groups, role_key, work_items
+from tests.project_tables import create_project_tables
 
 GUARD_1 = "NPC_LOCAL::c00001::r1::lính gác"
 GUARD_2 = "NPC_LOCAL::c00002::r7::Lính  gác"  # cùng nhãn, viết khác hoa/thường và dấu cách
@@ -27,18 +28,8 @@ def make_book(root: Path, name: str = "sach") -> Path:
     project.mkdir()
     (project / "book_settings.json").write_text("{}", encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
-                               kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        """
-    )
-    db.executemany("INSERT INTO chapters VALUES (?,?,?)", [(1, 1, "001"), (2, 2, "002")])
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.executemany("INSERT INTO chapters (id, chapter_index, title) VALUES (?,?,?)", [(1, 1, "001"), (2, 2, "002")])
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
         (1, "LUCIEN", "Lucien", "male", 0),
         (2, "RHINE", "Rhine", "male", 0),

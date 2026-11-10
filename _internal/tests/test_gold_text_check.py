@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.project_tables import project_tables_sql
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts" / "model_eval"))
 
@@ -43,20 +45,16 @@ def make_project(root: Path, chapters: dict[str, list[str]], name: str = "projec
     folder.mkdir(parents=True)
     connection = sqlite3.connect(folder / "project.sqlite3")
     connection.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, chapter_index INTEGER);
-        CREATE TABLE segments (chapter_id INTEGER, seq INTEGER, kind TEXT, speaker TEXT, gender TEXT, age TEXT,
-                               emotion TEXT, intensity INTEGER, pace TEXT, volume TEXT, confidence REAL,
-                               status TEXT, text TEXT);
-        CREATE TABLE book (settings_json TEXT, analysis_model_name TEXT);
-        INSERT INTO book VALUES ('{"analysis": {"model": "m"}}', 'm');
+        project_tables_sql("chapters", "segments", "book") + """
+        INSERT INTO book (settings_json, analysis_model_name) VALUES ('{"analysis": {"model": "m"}}', 'm');
         """
     )
     for index, (title, texts) in enumerate(chapters.items(), 1):
-        connection.execute("INSERT INTO chapters VALUES (?, ?, ?)", (index, title, index))
+        connection.execute("INSERT INTO chapters (id, title, chapter_index) VALUES (?, ?, ?)", (index, title, index))
         for seq, text in enumerate(texts, 1):
             connection.execute(
-                "INSERT INTO segments VALUES (?, ?, 'narration', 'NARRATOR', 'unknown', '', 'neutral', 0, 'normal', "
+                "INSERT INTO segments (chapter_id, seq, kind, speaker, gender, age, emotion, intensity, pace, volume,"
+                " confidence, status, text) VALUES (?, ?, 'narration', 'NARRATOR', 'unknown', '', 'neutral', 0, 'normal', "
                 "'normal', 1.0, 'analyzed', ?)",
                 (index, seq, text),
             )

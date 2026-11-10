@@ -472,10 +472,7 @@ def test_every_build_logs_the_rate_and_announces_it_only_above_the_cap(tmp_path:
 def test_the_rate_and_the_high_event_land_in_the_projects_runtime_events(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import sqlite3
 
-    project = make_project(tmp_path)  # có project.sqlite3 với bảng runtime_events (bản rút gọn); dựng lại đủ cột như sổ thật
-    with sqlite3.connect(project / "project.sqlite3") as connection:
-        connection.executescript("DROP TABLE runtime_events; CREATE TABLE runtime_events (id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                 "timestamp REAL NOT NULL, level TEXT NOT NULL, code TEXT NOT NULL, message TEXT NOT NULL, details_json TEXT);")
+    project = make_project(tmp_path)  # có project.sqlite3 với bảng runtime_events đủ cột như sổ thật
 
     def events() -> list[tuple]:
         with sqlite3.connect(project / "project.sqlite3") as connection:

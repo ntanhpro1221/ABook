@@ -17,6 +17,7 @@ from scripts.source_spellings import (
     source_paths,
     source_text,
 )
+from tests.project_tables import create_project_tables
 
 # Đúng tỉ lệ lô 3: bản sai nói nhiều hơn bản đúng.
 LINES = {"SELNE": 32, "SELENE": 7, "SELNE VALKRYN": 3, "SAMAEL": 19, "SAMAELE": 1}
@@ -32,7 +33,7 @@ def _book(root: Path, chapters: dict[str, str]) -> Path:
     project.mkdir()
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.execute("CREATE TABLE chapters (id INTEGER PRIMARY KEY, input_path TEXT)")
+        create_project_tables(conn, "chapters")
         conn.executemany(
             "INSERT INTO chapters (input_path) VALUES (?)",
             [(str(text_dir / f"{name}.txt"),) for name in chapters],
@@ -103,7 +104,7 @@ def test_a_one_chapter_repair_project_still_reads_the_whole_book(tmp_path: Path)
     only_one.mkdir()
     conn = sqlite3.connect(str(only_one / "project.sqlite3"))
     try:
-        conn.execute("CREATE TABLE chapters (id INTEGER PRIMARY KEY, input_path TEXT)")
+        create_project_tables(conn, "chapters")
         conn.execute(
             "INSERT INTO chapters (input_path) VALUES (?)", (str(text_dir / "001.txt"),)
         )
@@ -124,7 +125,7 @@ def test_no_source_on_disk_means_no_folding_at_all(tmp_path: Path) -> None:
     project.mkdir()
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.execute("CREATE TABLE chapters (id INTEGER PRIMARY KEY, input_path TEXT)")
+        create_project_tables(conn, "chapters")
         conn.execute("INSERT INTO chapters (input_path) VALUES (?)", ("D:/khong-co-that.txt",))
         conn.commit()
     finally:

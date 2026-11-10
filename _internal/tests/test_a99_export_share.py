@@ -171,7 +171,7 @@ def _imported_audio_book(tmp_path):
         from abook.io_utils import sha256_file
         for index, name in enumerate(('00001_645.mp3', '00002_646.mp3'), 1):
             audio = project / 'output' / 'chapters' / name
-            db.execute("INSERT OR REPLACE INTO artifacts VALUES (?, 'chapter_mp3', ?, ?, ?, 1, NULL, 0, 0)",
+            db.execute("INSERT OR REPLACE INTO artifacts (artifact_key, kind, path, sha256, size_bytes, verified, metadata_json, created_at, updated_at) VALUES (?, 'chapter_mp3', ?, ?, ?, 1, NULL, 0, 0)",
                        (f'chapter_mp3:{index}', str(audio), sha256_file(audio), audio.stat().st_size))
     covers.save_cover_bytes(project, image_bytes("red"))
     packed = bookfile.pack(project, tmp_path / "gửi.abook", partial=True)

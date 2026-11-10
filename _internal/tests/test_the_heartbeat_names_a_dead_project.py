@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import scripts.heartbeat_tick as tick
+from tests.project_tables import create_project_tables
 
 
 def _project(root: Path, name: str, status: str, stage: str, error: str | None, idle_minutes: float) -> None:
@@ -14,8 +15,8 @@ def _project(root: Path, name: str, status: str, stage: str, error: str | None, 
     folder.mkdir(parents=True)
     database = folder / "project.sqlite3"
     connection = sqlite3.connect(database)
-    connection.execute("CREATE TABLE book (status TEXT, stage TEXT, last_error TEXT)")
-    connection.execute("INSERT INTO book VALUES (?, ?, ?)", (status, stage, error))
+    create_project_tables(connection, "book")
+    connection.execute("INSERT INTO book (status, stage, last_error) VALUES (?, ?, ?)", (status, stage, error))
     connection.commit()
     connection.close()
     stamp = time.time() - idle_minutes * 60
@@ -53,13 +54,8 @@ def test_a_finished_project_touched_by_the_ledger_is_not_flying(tmp_path: Path, 
         folder = root / "v0.3.0-x" / name
         folder.mkdir(parents=True)
         connection = sqlite3.connect(folder / "project.sqlite3")
-        connection.executescript(
-            "CREATE TABLE book (status TEXT, stage TEXT, last_error TEXT);"
-            "CREATE TABLE segments (id INTEGER PRIMARY KEY, status TEXT, wav_path TEXT, wav_sha256 TEXT);"
-            "CREATE TABLE chapters (id INTEGER PRIMARY KEY, status TEXT);"
-            "CREATE TABLE worker_leases (heartbeat_at REAL);"
-        )
-        connection.execute("INSERT INTO book VALUES (?, ?, NULL)", (status, stage))
+        create_project_tables(connection, "book", "segments", "chapters", "worker_leases")
+        connection.execute("INSERT INTO book (status, stage, last_error) VALUES (?, ?, NULL)", (status, stage))
         connection.commit()
         connection.close()
     monkeypatch.setattr(tick, "VERSIONS", root)

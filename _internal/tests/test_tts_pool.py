@@ -17,6 +17,7 @@ from abook.tts_pool import (
     ReadOnlyVoiceDB,
     SynthesisPool,
 )
+from tests.project_tables import project_tables_sql
 
 
 @pytest.fixture()
@@ -24,19 +25,13 @@ def voice_db(tmp_path):
     path = tmp_path / "project.sqlite3"
     connection = sqlite3.connect(path)
     connection.executescript(
-        """
-        CREATE TABLE voice_profiles (
-            id INTEGER PRIMARY KEY, voice_key TEXT, engine TEXT, preset_name TEXT,
-            pitch_semitones INTEGER
-        );
-        CREATE TABLE pronunciations (
-            id INTEGER PRIMARY KEY, surface TEXT, normalized_surface TEXT,
-            spoken_form TEXT, confidence REAL, locked INTEGER
-        );
-        INSERT INTO voice_profiles VALUES (1, 'narrator', 'vieneu', 'Thanh Bình', -4);
-        INSERT INTO voice_profiles VALUES (2, 'sd_01', 'vieneu', 'Đoan Trang', 0);
-        INSERT INTO pronunciations VALUES (1, 'Lucien', 'lucien', 'Lu-si-en', 0.9, 1);
-        INSERT INTO pronunciations VALUES (2, 'Aalto', 'aalto', 'An-tô', 0.2, 0);
+        project_tables_sql("voice_profiles", "pronunciations") + """
+        INSERT INTO voice_profiles (id, voice_key, engine, preset_name) VALUES (1, 'narrator', 'vieneu', 'Thanh Bình');
+        INSERT INTO voice_profiles (id, voice_key, engine, preset_name) VALUES (2, 'sd_01', 'vieneu', 'Đoan Trang');
+        INSERT INTO pronunciations (id, surface, normalized_surface, spoken_form, confidence, locked)
+            VALUES (1, 'Lucien', 'lucien', 'Lu-si-en', 0.9, 1);
+        INSERT INTO pronunciations (id, surface, normalized_surface, spoken_form, confidence, locked)
+            VALUES (2, 'Aalto', 'aalto', 'An-tô', 0.2, 0);
         """
     )
     connection.commit()
@@ -77,7 +72,7 @@ def test_a_worker_cannot_write_the_database(voice_db) -> None:
     db = ReadOnlyVoiceDB(voice_db)
     with pytest.raises(sqlite3.OperationalError):
         with db._connect() as connection:
-            connection.execute("INSERT INTO voice_profiles VALUES (3, 'x', 'v', 'p', 0)")
+            connection.execute("INSERT INTO voice_profiles (id, voice_key, engine, preset_name) VALUES (3, 'x', 'v', 'p')")
 
 
 def test_the_shim_exposes_no_way_to_write(voice_db) -> None:

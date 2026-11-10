@@ -19,6 +19,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import what_blocks_publication as report  # noqa: E402
+from tests.project_tables import create_project_tables
 
 WAV = "a" * 64
 
@@ -26,12 +27,8 @@ WAV = "a" * 64
 def _connection(verdict: str | None, *, accepted_wav: str | None = None):
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT)")
+    create_project_tables(conn, "segments", "quality_checks")
     conn.execute("INSERT INTO segments (id, stable_id) VALUES (1, 'c1s1')")
-    conn.execute(
-        "CREATE TABLE quality_checks (id INTEGER PRIMARY KEY, scope TEXT, stage TEXT, "
-        "segment_id INTEGER, verdict TEXT)"
-    )
     if verdict is not None:
         conn.execute(
             "INSERT INTO quality_checks (scope, stage, segment_id, verdict) "
@@ -92,7 +89,7 @@ def test_a_project_without_the_table_is_not_an_error() -> None:
     invent a new way to fail."""
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT)")
+    create_project_tables(conn, "segments")
 
     assert report._stale_qa_failure(conn, _row(), set()) is False
 

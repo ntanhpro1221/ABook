@@ -11,6 +11,7 @@ from pathlib import Path
 
 from abook.webui.address_cues import address_doubts, tokens
 from abook.webui.work_items import work_items
+from tests.project_tables import create_project_tables
 
 TOMOBE = [
     "“Tôi hiểu rồi, thưa tiểu thư. Tôi sẽ đi ngay.”",
@@ -35,18 +36,8 @@ def make_book(root: Path, narrator: str) -> Path:
     voices = {"first_person_identity": narrator} if narrator else {}
     (project / "book_settings.json").write_text(json.dumps({"voices": voices}), encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
-                               kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        """
-    )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '141')")
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (1, 1, '141')")
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)",
                    [(1, "TOMOBE", "Tomobe", "male", 0), (2, "HINA", "Hina", "female", 0)])
     lines = [(text, "TOMOBE") for text in TOMOBE] + [(text, "HINA") for text in HINA] + [(WRONG, "TOMOBE")]
@@ -168,18 +159,8 @@ def test_the_inbox_asks_once_for_the_whole_odd_group(tmp_path: Path) -> None:
     project.mkdir()
     (project / "book_settings.json").write_text(json.dumps({"voices": {"first_person_identity": "Krai"}}), encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
-                               kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        """
-    )
-    db.executemany("INSERT INTO chapters VALUES (?, ?, ?)", [(1, 1, '61'), (2, 2, '62')])
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.executemany("INSERT INTO chapters (id, chapter_index, title) VALUES (?, ?, ?)", [(1, 1, '61'), (2, 2, '62')])
     db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (1, 'LUCIA', 'Lucia', 'female', 0)")
     rows, _ = split_rows()
     db.executemany(

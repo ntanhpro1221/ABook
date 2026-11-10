@@ -120,7 +120,6 @@ def test_a_studio_project_gives_the_sentences_of_its_reader_script(tmp_path: Pat
     library.mkdir()
     project = make_project(library)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE segments ADD COLUMN scene_break INTEGER")
     db.execute("UPDATE segments SET scene_break=1 WHERE id=2")
     db.execute("UPDATE segments SET seq=9 WHERE id=1")  # thứ tự đọc là `seq`, không phải mã câu
     db.commit()

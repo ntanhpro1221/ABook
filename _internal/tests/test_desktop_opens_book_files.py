@@ -45,7 +45,7 @@ def _finish_second_chapter(project: Path) -> None:
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET status='completed', output_mp3=?, completed_at=? WHERE id=2", (str(mp3), time.time()))
     db.execute("UPDATE segments SET status='verified', wav_duration=3.0, wav_sha256='synthetic-take' WHERE id=5")
-    db.execute("INSERT INTO artifacts VALUES ('chapter_mp3:2','chapter_mp3',?,?,?,1,NULL,0,0)",
+    db.execute("INSERT INTO artifacts (artifact_key, kind, path, sha256, size_bytes, verified, metadata_json, created_at, updated_at) VALUES ('chapter_mp3:2','chapter_mp3',?,?,?,1,NULL,0,0)",
                (str(mp3), sha256_file(mp3), mp3.stat().st_size))
     db.commit()
     db.close()

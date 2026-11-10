@@ -12,6 +12,7 @@ from pathlib import Path
 from abook import aliases
 from abook.listener_overrides import read_overrides, request_speakers, requests_made_at, withdraw_requests
 from abook.webui.work_items import work_items
+from tests.project_tables import create_project_tables
 
 GIRL = "NPC_LOCAL::c00001::r1::cô gái tóc đỏ"
 
@@ -23,17 +24,8 @@ def make_book(root: Path, voiceless: tuple[str, ...] = ()) -> Path:
     project.mkdir(parents=True)
     (project / "book_settings.json").write_bytes(b"{}")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, paragraph_index INTEGER,
-                               text TEXT, kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT DEFAULT 'unknown', age TEXT DEFAULT 'unknown');
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT, locked INTEGER, age TEXT);
-        """
-    )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '001')")
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (1, 1, '001')")
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,0)", [
         (1, "ARYA", "Arya", "female"), (2, "ARIA", "Aria", "unknown"), (3, "MIRA", "Mira", "female"), (4, "LENA", "Lena", "female"),
     ])

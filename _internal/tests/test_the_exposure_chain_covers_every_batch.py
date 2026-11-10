@@ -34,6 +34,7 @@ from pathlib import Path
 import pytest
 
 from scripts import seed_chain
+from tests.project_tables import create_project_tables
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +43,7 @@ def _project(folder: Path, created: float) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(folder / "project.sqlite3")
     try:
-        connection.execute("CREATE TABLE book(created_at REAL)")
+        create_project_tables(connection, "book")
         connection.execute("INSERT INTO book(created_at) VALUES(?)", (created,))
         connection.commit()
     finally:

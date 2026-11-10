@@ -275,7 +275,7 @@ def test_the_book_package_reads_chapter_lengths_in_one_go_and_only_for_chapters_
     mp3 = store.chapter_audio_path(project, 1)
     soundfile.write(mp3, np.zeros(8000 * 12, dtype="float32"), 8000, format="WAV")
     with sqlite3.connect(project / "project.sqlite3") as db:
-        db.executemany("INSERT INTO chapters VALUES (?, ?, 'x', 'x.txt', 'completed', 1, ?, 0, 0, '')",
+        db.executemany("INSERT INTO chapters (id, chapter_index, title, input_path, status, total_segments, output_mp3, started_at, completed_at, last_error) VALUES (?, ?, 'x', 'x.txt', 'completed', 1, ?, 0, 0, '')",
                        [(chapter, chapter, str(mp3)) for chapter in range(3, 43)])
     folder = tmp_path / "cache"
     folder.mkdir()

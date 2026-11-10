@@ -542,8 +542,7 @@ def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tm
     for name in ("645.txt", "646.txt", "647.txt"):
         (story / name).write_text(f"Chương {name[:3]}\nLucien đi tiếp.\n", encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE voice_profiles ADD COLUMN description TEXT DEFAULT ''")
-    db.execute("ALTER TABLE voice_profiles ADD COLUMN seed INTEGER DEFAULT 1")
+    db.execute("UPDATE voice_profiles SET seed=1")
     db.execute("UPDATE chapters SET input_path=? WHERE id=1", (str(story / "645.txt"),))
     db.execute("UPDATE chapters SET input_path=? WHERE id=2", (str(story / "646.txt"),))
     db.commit()

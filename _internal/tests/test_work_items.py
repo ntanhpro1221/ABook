@@ -11,6 +11,7 @@ from pathlib import Path
 
 from abook.webui.work_items import work_items
 from tests.timing import assert_within
+from tests.project_tables import create_project_tables
 
 
 def make_book(root: Path) -> Path:
@@ -18,19 +19,8 @@ def make_book(root: Path) -> Path:
     project.mkdir()
     (project / "book_settings.json").write_text("{}", encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
-                               kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT, confidence REAL, locked INTEGER);
-        """
-    )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '001')")
+    create_project_tables(db, "chapters", "segments", "characters", "pronunciations")
+    db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (1, 1, '001')")
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
         (1, "LUCIEN", "Lucien", "male", 0),
         (2, "HEIDI", "Heidi", "female", 0),
@@ -53,8 +43,8 @@ def make_book(root: Path) -> Path:
         rows,
     )
     db.execute("UPDATE segments SET text_sha256='sha-' || stable_id")
-    db.execute("INSERT INTO pronunciations VALUES ('Hailkes', 'Hain', 0.72, 1)")
-    db.execute("INSERT INTO pronunciations VALUES ('Lucien', 'Lu-xi-ên', 0.99, 1)")
+    db.execute("INSERT INTO pronunciations (surface, spoken_form, confidence, locked) VALUES ('Hailkes', 'Hain', 0.72, 1)")
+    db.execute("INSERT INTO pronunciations (surface, spoken_form, confidence, locked) VALUES ('Lucien', 'Lu-xi-ên', 0.99, 1)")
     db.commit()
     db.close()
     return project
@@ -311,18 +301,8 @@ def make_dialogue_book(root: Path, first_person: str = "") -> Path:
     voices = {"first_person_identity": first_person} if first_person else {}
     (project / "book_settings.json").write_text(json.dumps({"voices": voices}), encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER,
-                               paragraph_index INTEGER, text TEXT, kind TEXT, speaker TEXT, voice_profile_id INTEGER,
-                               canonical_character_id INTEGER, status TEXT, asr_text TEXT, asr_similarity REAL,
-                               warning_code TEXT, wav_path TEXT, text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        """
-    )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '062')")
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (1, 1, '062')")
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
         (1, "GLAST", "Glast", "male", 0), (2, "ED ROSTAILER", "Ed Rostailer", "male", 0),
     ])
@@ -490,7 +470,7 @@ def make_bracket_book(root: Path) -> Path:
     project = make_book(root)
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("DELETE FROM segments")
-    db.execute("INSERT INTO chapters VALUES (2, 2, '002')")
+    db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (2, 2, '002')")
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
         (21, "TỌA PHU ĐỒNG TỬ", "Tọa Phu Đồng Tử", "female", 0),
         (22, "HINA", "Hina", "female", 0),
@@ -550,7 +530,6 @@ def make_epithet_book(root: Path) -> Path:
         "Giáo sư Glast gật đầu. Giáo sư Krayd lắc đầu. Rồi Giáo sư Glast nói. Giáo sư Krayd im.\n",
         encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE chapters ADD COLUMN input_path TEXT")
     db.execute("UPDATE chapters SET input_path = ?", (str(source / "001.txt"),))
     db.execute("DELETE FROM segments")
     rows = [
@@ -759,8 +738,8 @@ def test_without_the_logprob_files_nothing_is_asked(tmp_path: Path) -> None:
 def with_voices(project: Path) -> None:
     """Sổ giọng của make_book: hồ sơ 2 (Lucien + Rhine) có khoá giọng - thẻ trùng giọng mới có nút "Đổi giọng …"."""
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT, preset_name TEXT)")
-    db.executemany("INSERT INTO voice_profiles VALUES (?,?,?)", [(2, "vieneu:pham-tuyen", "Phạm Tuyên"),
+    create_project_tables(db, "voice_profiles")
+    db.executemany("INSERT INTO voice_profiles (id, voice_key, preset_name) VALUES (?,?,?)", [(2, "vieneu:pham-tuyen", "Phạm Tuyên"),
                                                                  (4, "vieneu:hai-dang", "Hải Đăng")])
     db.commit()
     db.close()
@@ -799,10 +778,6 @@ def test_the_bad_recording_card_drops_the_lines_already_judged(tmp_path: Path) -
     root = tmp_path / "thu_vien"
     project = make_project(root)
     db = sqlite3.connect(project / "project.sqlite3")
-    for column in ("text_sha256 TEXT", "asr_text TEXT",
-                   "asr_similarity REAL", "warning_code TEXT"):
-        db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
-    db.execute("ALTER TABLE characters ADD COLUMN locked INTEGER")
     db.execute("UPDATE segments SET stable_id = 's' || id, text_sha256 = 'h' || id")
     db.execute("UPDATE segments SET status='warning', asr_text='Đi thối', asr_similarity=0.5 WHERE id IN (2, 3)")
     db.commit()

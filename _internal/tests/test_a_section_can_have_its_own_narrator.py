@@ -27,6 +27,7 @@ from abook.config import build_settings
 from abook.io_utils import decode_text_bytes
 from abook.text_processing import segment_chapter_text
 from test_analysis_required import FakeDB
+from tests.project_tables import create_project_tables
 
 CORPUS = Path("D:/Novels/ABook/Corpus")
 
@@ -229,18 +230,7 @@ def _book(root: Path, identity: str = "Kakeru", text: str = "", chapters: dict[s
     settings = {"voices": voices, "tts": {"max_segment_chars": 340}}
     (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT, input_path TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
-                               kind TEXT, kind_hint TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
-                               text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT, confidence REAL, locked INTEGER);
-        """
-    )
+    create_project_tables(db, "chapters", "segments", "characters", "pronunciations")
     first_rows: list[dict[str, Any]] = []
     segment_id = 0
     for number, chapter_text in enumerate((text, *more), start=1):
@@ -248,7 +238,7 @@ def _book(root: Path, identity: str = "Kakeru", text: str = "", chapters: dict[s
         source.write_bytes(chapter_text.encode("utf-8"))
         rows = segment_chapter_text(number, chapter_text, max_chars=340)
         first_rows = first_rows or rows
-        db.execute("INSERT INTO chapters VALUES (?, ?, ?, ?)", (number, number, f"{number:03d}", str(source)))
+        db.execute("INSERT INTO chapters (id, chapter_index, title, input_path) VALUES (?, ?, ?, ?)", (number, number, f"{number:03d}", str(source)))
         db.executemany(
             "INSERT INTO segments (id, stable_id, chapter_id, seq, text, kind, kind_hint, speaker, status, text_sha256)"
             " VALUES (?,?,?,?,?,?,?,?,'pending',?)",
@@ -351,7 +341,7 @@ def test_a_card_that_only_a_redo_can_apply_goes_last_and_stops_saying_the_machin
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE segments SET status='verified'")
     # Một thẻ khác, điểm thấp hơn hẳn: một cách đọc tên máy kém chắc.
-    db.execute("INSERT INTO pronunciations VALUES ('Zed', 'zét', 0.2, 0)")
+    db.execute("INSERT INTO pronunciations (surface, spoken_form, confidence, locked) VALUES ('Zed', 'zét', 0.2, 0)")
     db.execute("UPDATE segments SET text = text || ' Zed.' WHERE seq = 1")
     db.commit()
     db.close()
@@ -416,7 +406,7 @@ def test_a_pov_heading_takes_the_name_the_project_already_uses(tmp_path: Path) -
 
     project, _rows = _book(tmp_path, text=HEADED)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("INSERT INTO characters VALUES (1, 'MAI SAKURA', 'Mai Sakura', 'female', 0, '')")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, locked, age) VALUES (1, 'MAI SAKURA', 'Mai Sakura', 'female', 0, '')")
     db.commit()
     db.close()
     card = _narrator_cards(project)[0]

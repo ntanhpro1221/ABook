@@ -9,6 +9,7 @@ import sqlite3
 from pathlib import Path
 
 from abook.webui.store import chapter_names
+from tests.project_tables import create_project_tables
 
 
 def test_an_unsegmented_chapter_takes_its_heading_from_the_file(tmp_path: Path) -> None:
@@ -16,12 +17,10 @@ def test_an_unsegmented_chapter_takes_its_heading_from_the_file(tmp_path: Path) 
     source.write_text("\n\nChương 768 - Mô hình chân không mới\nNội dung…\n" + "chữ " * 3000, encoding="utf-8")
     db = sqlite3.connect(":memory:")
     db.row_factory = sqlite3.Row
-    db.executescript(
-        "CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT, input_path TEXT);"
-        "CREATE TABLE segments (chapter_id INTEGER, seq INTEGER, text TEXT);"
-    )
-    db.execute("INSERT INTO chapters VALUES (1, 1, '767', ?)", (str(source),))
-    db.execute("INSERT INTO chapters VALUES (2, 2, '768', ?)", (str(tmp_path / "missing.txt"),))
+    create_project_tables(db, "chapters", "segments")
+    db.execute("INSERT INTO chapters (id, chapter_index, title, input_path) VALUES (1, 1, '767', ?)", (str(source),))
+    db.execute("INSERT INTO chapters (id, chapter_index, title, input_path) VALUES (2, 2, '768', ?)",
+               (str(tmp_path / "missing.txt"),))
 
     names = chapter_names(db)
 

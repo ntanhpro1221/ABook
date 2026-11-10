@@ -801,10 +801,9 @@ def make_base_project(root: Path) -> Path:
 
     project = make_project(root)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("INSERT INTO characters VALUES (2, 'HEIDI', 'Heidi', 'female', 'young', 'main', 12, '')")
-    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3,'female','Đoan Trang',0,1)")
-    db.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào anh.”', 'dialogue', 'HEIDI', 3, 'verified', '', 'x', 2.5, 0, 'c1s4',2,'female','{\"voice_profile_id\":3}')")
-    db.execute("ALTER TABLE segments ADD COLUMN text_sha256 TEXT")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (2, 'HEIDI', 'Heidi', 'female', 'young', 'main', 12, '')")
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,engine) VALUES (3,'female','Đoan Trang','vieneu')")
+    db.execute("INSERT INTO segments (id, chapter_id, seq, paragraph_index, break_ms, text, kind, speaker, voice_profile_id, status, wav_path, wav_sha256, wav_duration, updated_at, stable_id, canonical_character_id, gender, signal_json) VALUES (6, 1, 4, 1, 0, '“Chào anh.”', 'dialogue', 'HEIDI', 3, 'verified', '', 'x', 2.5, 0, 'c1s4',2,'female','{\"voice_profile_id\":3}')")
     for row, text in db.execute("SELECT id, text FROM segments").fetchall():
         import hashlib
 
@@ -1063,7 +1062,6 @@ def write_python_projects(workshop: Path, pending: Path) -> None:
         db = sqlite3.connect(project / "project.sqlite3")
         try:
             with db:
-                db.execute("ALTER TABLE book ADD COLUMN project_root TEXT")
                 db.execute("UPDATE book SET project_root = ?", (str(project.resolve()),))
                 db.execute("UPDATE chapters SET input_path = ? WHERE id = 1", (str(sources / "645.txt"),))
                 db.execute("UPDATE chapters SET input_path = ? WHERE id = 2", (str(sources / "646.txt"),))

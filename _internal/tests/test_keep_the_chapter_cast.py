@@ -11,6 +11,7 @@ import pytest
 
 import scripts.keep_the_chapter_cast as keeper
 from abook.database import ProjectDB
+from tests.project_tables import create_project_tables
 
 
 def _rows(*items: tuple[str, str, str, int]) -> list[dict]:
@@ -169,10 +170,9 @@ def _take(versions: Path, folder: str, created: float, chapters: dict[str, str])
     project = versions / "v0.3.0-lo06" / folder
     project.mkdir(parents=True)
     connection = sqlite3.connect(project / "project.sqlite3")
-    connection.execute("CREATE TABLE book (created_at REAL)")
-    connection.execute("INSERT INTO book VALUES (?)", (created,))
-    connection.execute("CREATE TABLE chapters (title TEXT, status TEXT)")
-    connection.executemany("INSERT INTO chapters VALUES (?, ?)", list(chapters.items()))
+    create_project_tables(connection, "book", "chapters")
+    connection.execute("INSERT INTO book (created_at) VALUES (?)", (created,))
+    connection.executemany("INSERT INTO chapters (title, status) VALUES (?, ?)", list(chapters.items()))
     connection.commit()
     connection.close()
     return project

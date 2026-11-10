@@ -19,7 +19,7 @@ def role_book(tmp_path: Path) -> Path:
     with sqlite3.connect(project / "project.sqlite3") as db:
         db.execute("UPDATE characters SET canonical_name=?, display_name='người gác', gender='male' WHERE id=3", (ROLE.upper(),))
         db.execute("UPDATE segments SET speaker=? WHERE id IN (4,5)", (ROLE,))
-        db.execute("INSERT INTO chapters VALUES (2,2,'002')")
+        db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES (2,2,'002')")
         db.execute("INSERT INTO segments (id,stable_id,chapter_id,seq,text,kind,speaker,status,text_sha256)"
                    " VALUES (20,'other-chapter',2,0,'Xin chào.','dialogue',?,'analyzed','sha-other')",
                    ("NPC_LOCAL::c00002::người gác",))
@@ -101,7 +101,7 @@ def test_mentions_in_dialogue_and_other_chapters_do_not_create_remote_voice_revi
     project = make_book(tmp_path)
     with sqlite3.connect(project / "project.sqlite3") as db:
         db.execute("UPDATE segments SET text='Đầu dây bên kia có ai không?' WHERE id=2")
-        db.execute("INSERT INTO chapters VALUES(2,2,'002')")
+        db.execute("INSERT INTO chapters (id, chapter_index, title) VALUES(2,2,'002')")
         db.execute("INSERT INTO segments(id,chapter_id,seq,text,kind) VALUES(20,2,0,'Đầu dây bên kia.','narration')")
     assert not any(item["kind"] == "caller" for item in work_items(project)["items"])
 

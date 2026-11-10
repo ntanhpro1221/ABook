@@ -15,6 +15,7 @@ from scripts.name_is_read_the_same_way import (
     duplicate_ledger_rows,
     read_anchors,
 )
+from tests.project_tables import create_project_tables
 
 
 def _project(root: Path, name: str, checks: list[list[dict[str, object]]]) -> Path:
@@ -23,10 +24,7 @@ def _project(root: Path, name: str, checks: list[list[dict[str, object]]]) -> Pa
     folder.mkdir(parents=True)
     conn = sqlite3.connect(str(folder / "project.sqlite3"))
     try:
-        conn.execute(
-            "CREATE TABLE quality_checks (id INTEGER PRIMARY KEY, metrics_json TEXT,"
-            " failure_codes_json TEXT)"
-        )
+        create_project_tables(conn, "quality_checks")
         for anchors in checks:
             conn.execute(
                 "INSERT INTO quality_checks (metrics_json, failure_codes_json) VALUES (?,?)",

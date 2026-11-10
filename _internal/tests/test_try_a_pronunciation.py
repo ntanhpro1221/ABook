@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 
 from scripts.try_a_pronunciation import heard_forms, report, slug
+from tests.project_tables import create_project_tables
 
 
 def _project(root: Path, anchors_per_check: list[list[dict[str, object]]]) -> Path:
@@ -17,10 +18,7 @@ def _project(root: Path, anchors_per_check: list[list[dict[str, object]]]) -> Pa
     project.mkdir(parents=True)
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.execute(
-            "CREATE TABLE quality_checks (id INTEGER PRIMARY KEY, metrics_json TEXT,"
-            " failure_codes_json TEXT)"
-        )
+        create_project_tables(conn, "quality_checks")
         for anchors in anchors_per_check:
             conn.execute(
                 "INSERT INTO quality_checks (metrics_json, failure_codes_json) VALUES (?,?)",

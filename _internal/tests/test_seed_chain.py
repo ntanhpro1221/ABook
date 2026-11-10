@@ -12,6 +12,7 @@ import sqlite3
 from pathlib import Path
 
 from scripts.seed_chain import TAG_PREFIX, batch_project, chain, repairs, seed_project
+from tests.project_tables import create_project_tables
 
 # Tên thư mục theo tiền tố của CUỐN đang cấu hình (scripts/book_paths.py), không cứng v0.2.0:
 # từ 2026-09-13 tiền tố mặc định là của cuốn 2, và một test cứng tên cuốn 1 đỏ ở mọi cuốn khác.
@@ -22,8 +23,8 @@ def _project(root: Path, tag: str, name: str, created: float) -> Path:
     folder.mkdir(parents=True)
     conn = sqlite3.connect(str(folder / "project.sqlite3"))
     try:
-        conn.execute("CREATE TABLE book (created_at REAL)")
-        conn.execute("INSERT INTO book VALUES (?)", (created,))
+        create_project_tables(conn, "book")
+        conn.execute("INSERT INTO book (created_at) VALUES (?)", (created,))
         conn.commit()
     finally:
         conn.close()

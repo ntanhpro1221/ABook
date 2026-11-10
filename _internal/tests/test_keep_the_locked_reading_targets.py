@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 
 from scripts.keep_the_locked_reading import shipped_projects
+from tests.project_tables import create_project_tables
 
 
 def _project(root: Path, name: str, chapters: list[tuple[str, float]]) -> Path:
@@ -17,10 +18,7 @@ def _project(root: Path, name: str, chapters: list[tuple[str, float]]) -> Path:
     (project / "output").mkdir(parents=True)
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.execute(
-            "CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, status TEXT,"
-            " output_mp3 TEXT, completed_at REAL)"
-        )
+        create_project_tables(conn, "chapters")
         for title, completed_at in chapters:
             mp3 = project / "output" / f"{title}.mp3"
             mp3.write_bytes(b"x" * 16)

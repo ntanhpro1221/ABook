@@ -7,6 +7,7 @@ from pathlib import Path
 
 from abook.listener_overrides import overrides_path, request_pronunciation, request_speakers
 from abook.webui.store import pending_changes
+from tests.project_tables import project_tables_sql
 
 
 def test_only_requests_written_after_the_last_run_are_pending(tmp_path: Path) -> None:
@@ -50,11 +51,9 @@ def test_keeping_what_the_book_already_has_is_not_a_change(tmp_path: Path) -> No
 
     db = sqlite3.connect(tmp_path / "project.sqlite3")
     db.executescript(
-        """
-        CREATE TABLE segments (stable_id TEXT, speaker TEXT);
-        CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT);
-        INSERT INTO segments VALUES ('s1', 'Banus'), ('s2', 'Banus'), ('s3', 'NPC_LOCAL::c1::r1::trộm');
-        INSERT INTO pronunciations VALUES ('Naseden', 'Na-xờ-đên'), ('Maltimus', 'Man-ti-mu');
+        project_tables_sql("segments", "pronunciations") + """
+        INSERT INTO segments (stable_id, speaker) VALUES ('s1', 'Banus'), ('s2', 'Banus'), ('s3', 'NPC_LOCAL::c1::r1::trộm');
+        INSERT INTO pronunciations (surface, spoken_form) VALUES ('Naseden', 'Na-xờ-đên'), ('Maltimus', 'Man-ti-mu');
         """
     )
     db.commit()

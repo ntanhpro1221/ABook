@@ -826,7 +826,11 @@ def test_a_project_script_carries_the_stable_id_and_text_hash(tmp_path: Path) ->
     (tmp_path / "q").mkdir()
     plain = make_project(tmp_path / "q")
     with sqlite3.connect(plain / 'project.sqlite3') as connection:
-        connection.execute('ALTER TABLE segments DROP COLUMN stable_id')
+        # Test này CỐ Ý cần một sổ thiếu cột `stable_id`. Bảng dựng từ schema thật có UNIQUE(stable_id) nên SQLite
+        # không cho DROP COLUMN; chép bảng sang bản không có cột ấy.
+        kept = ','.join(row[1] for row in connection.execute('PRAGMA table_info(segments)') if row[1] != 'stable_id')
+        connection.executescript(f'CREATE TABLE plain_segments AS SELECT {kept} FROM segments;'
+                                 'DROP TABLE segments; ALTER TABLE plain_segments RENAME TO segments;')
     assert "stableId" not in store.chapter_script(plain, 1)["segments"][0], "sổ cũ không có cột thì không có khoá - chỉ cộng thêm"
 
 

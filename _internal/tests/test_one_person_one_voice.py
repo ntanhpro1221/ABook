@@ -21,6 +21,7 @@ from scripts.one_person_one_voice import (
     shipped_voices,
     split_voices,
 )
+from tests.project_tables import create_project_tables
 
 
 def _project(root: Path, name: str, rows: list[tuple[str, str, str, int]]) -> Path:
@@ -29,17 +30,7 @@ def _project(root: Path, name: str, rows: list[tuple[str, str, str, int]]) -> Pa
     project.mkdir(parents=True)
     conn = sqlite3.connect(str(project / "project.sqlite3"))
     try:
-        conn.executescript(
-            """
-            CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT);
-            CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT);
-            CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT);
-            CREATE TABLE segments (
-                id INTEGER PRIMARY KEY, chapter_id INTEGER, canonical_character_id INTEGER,
-                voice_profile_id INTEGER, kind TEXT
-            );
-            """
-        )
+        create_project_tables(conn, "chapters", "characters", "voice_profiles", "segments")
         ids: dict[tuple[str, str], int] = {}
 
         def key(table: str, column: str, value: str) -> int:

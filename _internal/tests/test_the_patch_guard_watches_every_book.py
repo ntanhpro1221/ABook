@@ -20,6 +20,7 @@ import sqlite3
 import time
 from pathlib import Path
 from types import ModuleType
+from tests.project_tables import create_project_tables
 
 ROOT = Path(__file__).resolve().parents[1]
 APPLY_ALL = ROOT / "scripts" / "pending_patches" / "apply_all.py"
@@ -38,12 +39,9 @@ def _project_with_a_live_lease(root: Path, *, state: str, age: float) -> Path:
     project.mkdir(parents=True)
     connection = sqlite3.connect(project / "project.sqlite3")
     try:
+        create_project_tables(connection, "worker_leases")
         connection.execute(
-            "CREATE TABLE worker_leases (worker_name TEXT, pid INTEGER, state TEXT,"
-            " heartbeat_at REAL)"
-        )
-        connection.execute(
-            "INSERT INTO worker_leases VALUES (?, ?, ?, ?)",
+            "INSERT INTO worker_leases (worker_name, pid, state, heartbeat_at) VALUES (?, ?, ?, ?)",
             ("pipeline", 4242, state, time.time() - age),
         )
         connection.commit()

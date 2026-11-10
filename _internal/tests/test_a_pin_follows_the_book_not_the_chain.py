@@ -18,6 +18,7 @@ from pathlib import Path
 
 from abook.character_registry import canonical_key
 from scripts.pin_the_book_cast import chapters_by_voice, pins_that_drifted, project_chapters
+from tests.project_tables import create_project_tables
 
 F090 = "vieneu@3.8.3/Thanh Bình"
 F104 = "vieneu@3.8.3/Thái Sơn"
@@ -143,7 +144,7 @@ def test_project_chapters_reads_the_project(tmp_path: Path) -> None:
     project.mkdir()
     connection = sqlite3.connect(project / "project.sqlite3")
     try:
-        connection.execute("CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT)")
+        create_project_tables(connection, "chapters")
         connection.executemany(
             "INSERT INTO chapters (title) VALUES (?)", [("114",), ("115",)]
         )

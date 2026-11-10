@@ -12,6 +12,7 @@ from pathlib import Path
 
 from abook.webui.casting_review import casting_chapter, casting_chapters
 from tests.timing import assert_within
+from tests.project_tables import create_project_tables
 
 
 def make_book(root: Path, *, cast: bool = True) -> Path:
@@ -20,17 +21,8 @@ def make_book(root: Path, *, cast: bool = True) -> Path:
     (project / "book_settings.json").write_text(json.dumps({"voices": {"first_person_identity": "LUCIEN"}}),
                                                 encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript(
-        """
-        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER,
-                               paragraph_index INTEGER, text TEXT, kind TEXT, speaker TEXT, voice_profile_id INTEGER,
-                               canonical_character_id INTEGER, status TEXT, wav_path TEXT, text_sha256 TEXT, gender TEXT);
-        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER, age TEXT);
-        """
-    )
-    db.executemany("INSERT INTO chapters VALUES (?, ?, ?)", [(1, 1, "001"), (2, 2, "002"), (3, 3, "003")])
+    create_project_tables(db, "chapters", "segments", "characters")
+    db.executemany("INSERT INTO chapters (id, chapter_index, title) VALUES (?, ?, ?)", [(1, 1, "001"), (2, 2, "002"), (3, 3, "003")])
     db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender) VALUES (?,?,?,?)", [
         (1, "LUCIEN", "Lucien", "male"),
         (2, "HEIDI", "Heidi", "female"),
@@ -242,7 +234,6 @@ def test_a_line_waiting_for_a_retake_says_so_until_the_pipeline_has_done_it(tmp_
     assert waiting["b"] == "pending" and waiting["c"] is None and waiting["d"] is None
 
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE segments ADD COLUMN listener_retake_at REAL NOT NULL DEFAULT 0")
     db.execute("UPDATE segments SET listener_retake_at = 50 WHERE stable_id = 'b'")
     db.commit()
     assert casting_chapter(project, 1)["lines"][1]["retake"] == "pending", "lần thu lại gần nhất cũ hơn yêu cầu"
@@ -365,9 +356,6 @@ def test_a_delivery_or_a_retake_another_machine_just_changed_is_told_from_the_sc
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_book(tmp_path)
-    db = sqlite3.connect(project / "project.sqlite3")
-    db.executescript("ALTER TABLE segments ADD COLUMN emotion TEXT; ALTER TABLE segments ADD COLUMN intensity INTEGER;")
-    db.close()
     preferences = Preferences(tmp_path / "prefs" / "preferences.json")
     preferences.update({"libraryRoot": str(tmp_path)})
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))

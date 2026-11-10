@@ -26,7 +26,6 @@ def _project(tmp_path: Path) -> Path:
     (project / ".worker.lock").write_text("", encoding="utf-8")
     (project / "output" / "Sách thử.abook").write_bytes(b"PK")
     with sqlite3.connect(project / store.DB_NAME) as db:
-        db.execute("ALTER TABLE book ADD COLUMN project_root TEXT")
         db.execute("UPDATE book SET project_root = ?", (str(project.resolve()),))
         db.execute("UPDATE chapters SET input_path = ? WHERE id = 1", (str(sources / "645.txt"),))
         db.execute("UPDATE chapters SET input_path = ? WHERE id = 2", (str(sources / "646.txt"),))

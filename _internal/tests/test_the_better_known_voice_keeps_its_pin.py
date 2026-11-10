@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 
 from abook.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
+from tests.project_tables import create_project_tables
 
 VOICE = "vieneu@3.8.3/Thái Sơn"
 
@@ -44,8 +45,8 @@ class _DB:
 def test_the_ledger_is_read_by_canonical_key_and_is_optional(tmp_path: Path) -> None:
     database = tmp_path / "project.sqlite3"
     connection = sqlite3.connect(database)
-    connection.execute("CREATE TABLE character_exposure (canonical_name TEXT, dialogue_lines INT, batches INT)")
-    connection.executemany("INSERT INTO character_exposure VALUES (?, ?, ?)", [("Victor", 329, 18), ("MORRIS", 54, 5)])
+    create_project_tables(connection, "character_exposure")
+    connection.executemany("INSERT INTO character_exposure (canonical_name, dialogue_lines, batches) VALUES (?, ?, ?)", [("Victor", 329, 18), ("MORRIS", 54, 5)])
     connection.commit()
     connection.close()
 

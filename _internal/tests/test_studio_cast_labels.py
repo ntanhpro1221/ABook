@@ -13,7 +13,7 @@ from tests.test_webui_listen_and_sync import make_project
 def test_the_reserved_unknown_speaker_is_shown_as_an_unnamed_extra(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("INSERT INTO characters VALUES (2, 'UNKNOWN', 'Unknown', 'unknown', '', 'minor', 1, '')")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (2, 'UNKNOWN', 'Unknown', 'unknown', '', 'minor', 1, '')")
     db.execute("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (6, 1, 4, 2, 0, '“Ai đó?”', 'dialogue', 'UNKNOWN', 2, 'verified', '', '', 1.0, ?)",
                (time.time(),))
     db.commit()
@@ -28,7 +28,7 @@ def test_a_person_merged_into_another_shows_the_merge_is_waiting(tmp_path: Path)
 
     project = make_project(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("INSERT INTO characters VALUES (2, 'GIAO_SU', 'Giáo sư', 'male', '', 'minor', 1, '')")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (2, 'GIAO_SU', 'Giáo sư', 'male', '', 'minor', 1, '')")
     db.execute("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (6, 1, 4, 2, 0, '“Ngồi xuống.”', 'dialogue', 'GIAO_SU', 2, 'verified', '', '', 1.0, ?)",
                (time.time(),))
     db.commit()

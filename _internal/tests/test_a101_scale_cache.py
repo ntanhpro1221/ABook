@@ -13,6 +13,7 @@ from abook.webui.library import Library, Preferences
 from abook.webui.listening import Listening
 from abook.webui.sync import Devices, SyncApp
 from tests.test_webui_listen_and_sync import make_project
+from tests.project_tables import create_project_tables
 
 
 def _age(project: Path, seconds: float = 120.0) -> None:
@@ -95,8 +96,8 @@ def test_a_row_of_a_book_in_production_is_never_remembered(app, monkeypatch) -> 
     """Nhịp tim của worker hết hạn theo đồng hồ chứ không theo file: dòng "đang làm" nhớ thì còn "đang làm" mãi sau khi worker chết."""
     shared, project = app
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("CREATE TABLE worker_leases (id INTEGER PRIMARY KEY, heartbeat_at REAL)")
-    db.execute("INSERT INTO worker_leases VALUES (1, ?)", (time.time(),))
+    create_project_tables(db, "worker_leases")
+    db.execute("INSERT INTO worker_leases (worker_name, heartbeat_at) VALUES ('tts', ?)", (time.time(),))
     db.commit()
     db.close()
     _age(project)
@@ -135,7 +136,7 @@ def test_the_summaries_of_the_store_are_remembered_and_follow_the_book(app, monk
     assert store.chapters(project) == chapters and store.cast(project) == cast
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET status = 'completed', output_mp3 = '00002_646.mp3' WHERE id = 2")
-    db.execute("INSERT INTO characters VALUES (2, 'MAI', 'MAI', 'female', 'young', 'main', 3, '')")
+    db.execute("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (2, 'MAI', 'MAI', 'female', 'young', 'main', 3, '')")
     db.execute("UPDATE segments SET speaker = 'MAI', kind = 'dialogue' WHERE id = 5")
     db.commit()
     db.close()

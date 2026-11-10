@@ -368,9 +368,9 @@ def _series(tmp_path: Path, *, parts: int = 2) -> tuple[Path, list[Path]]:
                                (sha256_file(project / "output" / "chapters" / "00001_645.mp3"),))
     second = sqlite3.connect(projects[1] / "project.sqlite3")
     (projects[1] / "work" / "s6.wav").write_bytes(b"RIFF" + b"\6" * 400)
-    second.execute("INSERT INTO characters VALUES (2, 'NATASHA', 'NATASHA', 'female', 'young', 'main', 9, '')")
-    second.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3,'female','Đoan Trang',0,1)")
-    second.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào.”', 'dialogue', 'NATASHA', 3, 'verified', ?, 'x', 4.0, 1, 'c1s4', 2, 'female', '{\"voice_profile_id\":3}')",
+    second.execute("INSERT INTO characters (id, canonical_name, display_name, gender, age, importance, mention_count, locked_voice_key) VALUES (2, 'NATASHA', 'NATASHA', 'female', 'young', 'main', 9, '')")
+    second.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,engine) VALUES (3,'female','Đoan Trang','vieneu')")
+    second.execute("INSERT INTO segments (id, chapter_id, seq, paragraph_index, break_ms, text, kind, speaker, voice_profile_id, status, wav_path, wav_sha256, wav_duration, updated_at, stable_id, canonical_character_id, gender, signal_json) VALUES (6, 1, 4, 1, 0, '“Chào.”', 'dialogue', 'NATASHA', 3, 'verified', ?, 'x', 4.0, 1, 'c1s4', 2, 'female', '{\"voice_profile_id\":3}')",
                    (str(projects[1] / "work" / "s6.wav"),))
     second.commit()
     second.close()
@@ -560,7 +560,7 @@ def _long_project(tmp_path: Path, chapters: int, *, heard: bool = False) -> Path
     project = make_project(tmp_path / str(chapters))
     db = sqlite3.connect(project / "project.sqlite3")
     mp3 = str(project / "output" / "chapters" / "00001_645.mp3") if heard else ""
-    db.executemany("INSERT INTO chapters VALUES (?, ?, ?, '', ?, 1, ?, NULL, NULL, '')",
+    db.executemany("INSERT INTO chapters (id, chapter_index, title, input_path, status, total_segments, output_mp3, started_at, completed_at, last_error) VALUES (?, ?, ?, '', ?, 1, ?, NULL, NULL, '')",
                    [(c, c, str(c), "completed" if heard else "analyzed", mp3) for c in range(3, chapters + 1)])
     db.executemany("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,"
                    "status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (?,?,1,0,0,?,'narration','NARRATOR',1,'analyzed','','',NULL,0)",

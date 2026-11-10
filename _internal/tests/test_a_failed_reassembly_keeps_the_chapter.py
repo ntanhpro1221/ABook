@@ -16,6 +16,7 @@ import pytest
 
 from abook.models import ChapterStatus
 from scripts.keep_the_locked_reading import reassemble, restore_shipped_state, shipped_state
+from tests.project_tables import create_project_tables
 
 SHIPPED_AT = 1_789_000_000.0
 
@@ -26,25 +27,15 @@ class _DB:
     def __init__(self, path: Path) -> None:
         self.path = path
         with self.connect() as conn:
-            conn.executescript(
-                """
-                CREATE TABLE chapters (
-                    id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT, status TEXT,
-                    completed_at REAL, last_error TEXT
-                );
-                CREATE TABLE artifacts (
-                    artifact_key TEXT PRIMARY KEY, kind TEXT, path TEXT, sha256 TEXT,
-                    verified INTEGER, metadata_json TEXT
-                );
-                """
-            )
+            create_project_tables(conn, "chapters", "artifacts")
             conn.execute(
                 "INSERT INTO chapters (id, chapter_index, title, status, completed_at, last_error)"
                 " VALUES (1, 1, '084', 'completed', ?, NULL)",
                 (SHIPPED_AT,),
             )
             conn.execute(
-                "INSERT INTO artifacts VALUES ('chapter_mp3:1','chapter_mp3',?,'abc123',1,?)",
+                "INSERT INTO artifacts (artifact_key, kind, path, sha256, verified, metadata_json)"
+                " VALUES ('chapter_mp3:1','chapter_mp3',?,'abc123',1,?)",
                 (str(path.parent / "084.mp3"), json.dumps({"quality": {"verdict": "pass"}})),
             )
 
@@ -67,7 +58,7 @@ class _DB:
     def register_artifact(self, *, artifact_key, kind, path, sha256, verified, metadata=None):
         with self.connect() as conn:
             conn.execute(
-                "INSERT INTO artifacts VALUES (?,?,?,?,?,?)"
+                "INSERT INTO artifacts (artifact_key, kind, path, sha256, verified, metadata_json) VALUES (?,?,?,?,?,?)"
                 " ON CONFLICT(artifact_key) DO UPDATE SET path=excluded.path,"
                 " sha256=excluded.sha256, verified=excluded.verified,"
                 " metadata_json=excluded.metadata_json",

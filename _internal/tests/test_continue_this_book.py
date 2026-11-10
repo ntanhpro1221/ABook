@@ -14,6 +14,7 @@ import pytest
 
 from abook import continuation
 from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
+from tests.project_tables import create_project_tables
 
 VOICE_A = "vieneu@3.8.3/Thanh Bình"
 VOICE_B = "vieneu@3.8.3/Ngọc Linh"
@@ -217,7 +218,7 @@ def test_a_project_without_the_newer_tables_seeds_what_it_has(tmp_path: Path) ->
     old = tmp_path / "library" / "cu"
     old.mkdir(parents=True)
     connection = sqlite3.connect(old / "project.sqlite3")
-    connection.execute("CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, input_path TEXT, chapter_index INT)")
+    create_project_tables(connection, "chapters")
     connection.commit()
     connection.close()
     folder = _source_folder(tmp_path)

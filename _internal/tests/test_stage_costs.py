@@ -12,24 +12,14 @@ import sqlite3
 from pathlib import Path
 
 from scripts.stage_costs import MAX_ATTRIBUTABLE_GAP_SECONDS, read_costs
+from tests.project_tables import create_project_tables
 
 
 def _database(tmp_path: Path, rows: list[tuple]) -> Path:
     """A project with just the two tables this reads, and the columns it names."""
     path = tmp_path / "project.sqlite3"
     connection = sqlite3.connect(path)
-    connection.executescript(
-        """
-        CREATE TABLE segments (id INTEGER PRIMARY KEY, chapter_id INTEGER);
-        CREATE TABLE quality_checks (
-            id INTEGER PRIMARY KEY,
-            chapter_id INTEGER,
-            segment_id INTEGER,
-            stage TEXT,
-            created_at TEXT
-        );
-        """
-    )
+    create_project_tables(connection, "segments", "quality_checks")
     for segment_id, chapter_id in {(row[1], row[0]) for row in rows if row[1] is not None}:
         connection.execute(
             "INSERT OR IGNORE INTO segments (id, chapter_id) VALUES (?, ?)",

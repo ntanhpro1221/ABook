@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 
 from scripts.prove_a_patch import compare, read_segments, text_key, verdict
+from tests.project_tables import create_project_tables
 
 
 def _project(
@@ -25,20 +26,9 @@ def _project(
     folder.mkdir(parents=True)
     conn = sqlite3.connect(str(folder / "project.sqlite3"))
     try:
-        conn.executescript(
-            """
-            CREATE TABLE chapters (id INTEGER PRIMARY KEY, title TEXT, status TEXT);
-            CREATE TABLE segments (
-                id INTEGER PRIMARY KEY, chapter_id INTEGER, stable_id TEXT, status TEXT,
-                warning_code TEXT, error TEXT, attempt_count INTEGER, text TEXT
-            );
-            CREATE TABLE machine_audio_acceptances (
-                id INTEGER PRIMARY KEY, segment_stable_id TEXT, warning_code TEXT
-            );
-            """
-        )
+        create_project_tables(conn, "chapters", "segments", "machine_audio_acceptances")
         for index, (title, (status, segments)) in enumerate(chapters.items(), 1):
-            conn.execute("INSERT INTO chapters VALUES (?,?,?)", (index, title, status))
+            conn.execute("INSERT INTO chapters (id, title, status) VALUES (?,?,?)", (index, title, status))
             for seq, segment in enumerate(segments, 1):
                 conn.execute(
                     "INSERT INTO segments (chapter_id, stable_id, status, warning_code, error,"

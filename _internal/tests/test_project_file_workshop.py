@@ -323,7 +323,9 @@ def test_without_studio_a_project_file_opens_as_a_book_that_can_be_saved_again(t
     folder = app.library.resolve_listenable(opened["id"])
     assert packages.is_package(folder) and (folder / "project" / "project.sqlite3").is_file()
     view = app.listen_book(opened["id"])
-    assert view["projectFile"] == {"workshop": "present", "views": ["names"]}
+    # Sổ dự án của fixture nay đủ cột như sổ thật, nên cả ba màn đều chụp được (trước đây bảng chép tay thiếu cột làm
+    # "work" và "casting" lỗi và bị bỏ).
+    assert view["projectFile"] == {"workshop": "present", "views": ["work", "casting", "names"]}
 
     server = Server(app, port=0).start()
     try:
