@@ -65,7 +65,7 @@ class PipScreenTest {
 
     private fun repo(playing: Boolean = true, position: Double = 150.0): PlayerRepo {
         val core = FakePlaybackCore(playerSnapshot(chapter = 1, playing = playing, position = position, duration = 600.0))
-        return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
     }
 
     private fun showShell(pip: PipControl?, dark: Boolean = false, player: PlayerRepo = repo()) {

@@ -213,9 +213,11 @@ class PlayerRepo(
 
     @Volatile
     private var attached = false
+    private val owners = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Any, Boolean>())
 
-    /** Bắt đầu theo dõi lõi phát và lấy ngay trạng thái hiện tại (cuốn đang phát từ trước khi mở app). Gọi ở luồng chính. */
-    fun attach() {
+    /** Main thread. Each visible Activity owns one token, even while two instances overlap. */
+    fun attach(owner: Any) {
+        if (!owners.add(owner)) return
         if (attached) return
         attached = true
         core.addListener(listener)
@@ -235,9 +237,9 @@ class PlayerRepo(
         }
     }
 
-    /** Thôi theo dõi (giao diện ẩn). Trạng thái cuối giữ nguyên; [attach] lần sau làm mới nó. */
-    fun detach() {
-        if (!attached) return
+    /** Only the last visible owner removes the shared listener. Repeated/stale stops are harmless. */
+    fun detach(owner: Any) {
+        if (!owners.remove(owner) || owners.isNotEmpty()) return
         attached = false
         core.removeListener(listener)
     }

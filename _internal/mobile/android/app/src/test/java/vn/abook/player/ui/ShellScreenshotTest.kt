@@ -67,7 +67,7 @@ class ShellScreenshotTest {
 
     private fun repo(playing: Boolean? = null): PlayerRepo {
         val core = FakePlaybackCore(playerSnapshot(chapter = if (playing == null) null else 1, playing = playing == true))
-        return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
     }
 
     private fun show(dark: Boolean = false, library: LibraryState = LibraryState.Ready(books), player: PlayerRepo = repo(), readAlong: ReadAlongSource = ReadAlongSource.None) {
@@ -281,7 +281,7 @@ class ShellScreenshotTest {
     fun readAlongFromTheBookMenuLoadsTheBookPausedAndOpensTheWindowInReadingMode() {
         val core = FakePlaybackCore(playerSnapshot(book = "", chapter = null), simulate = true)
         val readable = List(3) { ListenBook("b$it", "Tên sách số ${it + 1}", "Tác giả", chaptersTotal = 5, chaptersAvailable = 5) }
-        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { id -> LoadRequest(id, "Tên sách", "", listOf(Playback.Chapter(1, "Chương 1", "", 600.0, "texts/1.txt")), 1, 30.0, 1.0) }).also { it.attach() }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { id -> LoadRequest(id, "Tên sách", "", listOf(Playback.Chapter(1, "Chương 1", "", 600.0, "texts/1.txt")), 1, 30.0, 1.0) }).also { it.attach(this) }
         show(library = LibraryState.Ready(readable), player = repo, readAlong = DemoReadAlongSource)
         rule.waitForIdle()
         rule.onNodeWithTag("mini_player").assertDoesNotExist()
@@ -306,7 +306,7 @@ class ShellScreenshotTest {
     @Test
     fun theWindowOpenOrClosedLeavesExactlyOneListenerOnThePlaybackCore() {
         val core = FakePlaybackCore(playerSnapshot(playing = false))
-        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
         show(player = repo)
         rule.waitForIdle()
         assertEquals(1, core.listeners.size)
@@ -323,7 +323,7 @@ class ShellScreenshotTest {
     @Test
     fun clockTicksRecomposeNeitherTheShellNorTheOpenWindow() {
         val core = FakePlaybackCore(playerSnapshot(playing = true))
-        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
         show(player = repo)
         rule.waitForIdle()
         fun ticks(at: Double, step: Double) = rule.runOnUiThread { repeat(20) { core.emit(playerSnapshot(playing = true, position = at + it * step, kind = "tick")) } }
@@ -368,7 +368,7 @@ class ShellScreenshotTest {
     @Test
     fun theMiniPlayerButtonTogglesPlayback() {
         val core = FakePlaybackCore(playerSnapshot(playing = false))
-        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
         show(player = repo)
         rule.waitForIdle()
         rule.onNodeWithTag("mini_play").performClick()
@@ -382,7 +382,7 @@ class ShellScreenshotTest {
         // App vừa mở, lõi phát trống, người dùng đã nghe cuốn b3 tới chương 7, 12:04.
         val core = FakePlaybackCore(playerSnapshot(book = "", chapter = null), simulate = true)
         val last = LoadRequest("b3", books[3].title, "", emptyList(), 7, 724.0, 1.0)
-        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }, { last }).also { it.attach() }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }, { last }).also { it.attach(this) }
         show(player = repo)
         rule.waitForIdle()
         rule.onNodeWithTag("mini_player").assertIsDisplayed()

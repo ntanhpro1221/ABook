@@ -96,7 +96,7 @@ class ShellRoutesTest {
 
     private fun show(dark: Boolean) {
         val core = FakePlaybackCore(playerSnapshot(chapter = null, playing = false))
-        val player = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        val player = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
         val settings = SettingsRepo(FakeSettingsCore(), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
         rule.setContent {
             AbookTheme(dark) {

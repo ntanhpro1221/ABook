@@ -37,7 +37,7 @@ class IA2NavigationTest {
                 shell = remember { ShellState(scope) }
                 val settings = remember { SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined) }
                 val devices = remember { DevicesState(devicesSource, scope) }
-                val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }).also { it.attach() } }
+                val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) } }
                 val hub = remember { StudioHub(source, scope) }
                 AppShell(shell, LibraryState.Ready(emptyList()), player, CoverLoader(1 shl 20),
                     SettingsEnv(settings, ThemeReveal(scope), devices = devices), studio = hub, sampleClock = false)

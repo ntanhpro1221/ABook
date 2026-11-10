@@ -260,9 +260,10 @@ fun AppShell(
         )
     }
     val window = shell.window
-    DisposableEffect(shell) {
-        settings.repo.openAdvanced = { shell.nav.push(Destination.Settings(SettingsGroup.Advanced)) }
-        onDispose { settings.repo.openAdvanced = {} }
+    DisposableEffect(shell, settings.repo) {
+        val open: () -> Unit = { shell.nav.push(Destination.Settings(SettingsGroup.Advanced)) }
+        settings.repo.openAdvanced = open
+        onDispose { if (settings.repo.openAdvanced === open) settings.repo.openAdvanced = {} }
     }
     window.otherPlayers = companion?.let { repo ->
         { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(repo, player, dismiss) } }

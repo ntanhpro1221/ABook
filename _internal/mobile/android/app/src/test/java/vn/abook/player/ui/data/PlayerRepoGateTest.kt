@@ -48,7 +48,7 @@ class PlayerRepoGateTest {
         }
 
     private fun repo(core: FakePlaybackCore, plans: Map<String, LoadRequest> = emptyMap()) =
-        PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { plans[it] }, { null }, { id, chapter, _ -> plans[id]?.copy(startChapterId = chapter) }, gate).also { it.attach() }
+        PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { plans[it] }, { null }, { id, chapter, _ -> plans[id]?.copy(startChapterId = chapter) }, gate).also { it.attach(this) }
 
     @Test
     fun `play on a paused text chapter waits for the answer, then reaches the core`() {
@@ -122,7 +122,7 @@ class PlayerRepoGateTest {
         assertEquals("b1" to true, gate.asked.last())
         val audioFirst = makeCore(chapter = 2).also { it.position = 2_000 }
         gate.cancel()
-        val second = PlayerRepo(audioFirst, scope, Dispatchers.Unconfined, { null }, { null }, { null }, { _, _, _ -> null }, gate).also { it.attach() }
+        val second = PlayerRepo(audioFirst, scope, Dispatchers.Unconfined, { null }, { null }, { null }, { _, _, _ -> null }, gate).also { it.attach(this) }
         second.previous()
         assertEquals("về chương audio trước", "b1" to false, gate.asked.last())
     }

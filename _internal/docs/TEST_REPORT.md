@@ -1692,3 +1692,10 @@ Validation: 2,881 Vitest tests passed; TypeScript passed; 26 focused Android JVM
 Qt `build.bat` compiled the app and ran all 18 suites: 2,141 passed, 3 failed, 1 skipped. Two failures reproduce the phonefix baseline (`Mini::test_minimizeSetting`, obsolete `Player.play()`, and `PlayerParity::test_more_help_history_tabs_and_back`). The third, `TitleBar::test_3_glyphsAreDrawnCentredAndNotFontsOrImages`, passed on a focused rerun. New tone suites passed: 8 core cases and 4 QML/gallery cases, including undo visibility. The full build gate remains red on the baseline fixtures; no release was made.
 
 Gallery: light/dark, 360 dp, 130% text, list and bands on all three platforms; enlarged images reviewed. Final Android rerun includes the tone page's own Back button after editing a user preset (26 passed, no failures/errors/skips). The final Qt app loaded and drew Main.qml on a private hidden desktop without QML warnings. Locked implementation hash remains `0157775d5c45d0fb6100014adc0ed2828b2b9090b1c73725b7723eb5f44e4e16`.
+
+
+## Activity ownership of native player subscriptions (2026-11-10)
+
+PlayerRepo now tracks identity tokens for visible Activity instances. Starting B before stopping A keeps one core listener; duplicate starts/stops are idempotent and the last owner releases it. NativeActivity owns a token without retaining the Activity in the shared repo. AppShell only clears its own SettingsRepo.openAdvanced callback. PrepareState already counts watchers, AndroidPrepareSource removes its own listener, and device/export links already check identity before cleanup.
+
+Validation: PlayerRepoTest 28 tests passed, including two overlapping-owner regressions. Restoring the old boolean behavior while retaining the test API caused exactly those two tests to fail (listener count 0 instead of 1). Physical-device bootstrap and the complete JVM suite are recorded in the external oppofix result.

@@ -22,7 +22,7 @@ class GapLogicTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         val core = FakePlaybackCore(playerSnapshot(playing = true), simulate = true)
         val repo = PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { null })
-        repo.attach()
+        repo.attach(this)
         val deletes = UndoDelete(scope, { "token" }, {}, {}, repo::bookRemoved)
         deletes.remove("b1")
         assertFalse(repo.state.value.hasTrack)
@@ -36,14 +36,14 @@ class GapLogicTest {
     @Test fun removalClearsTheCoreTheRepoAndItsClockAndCannotReviveOnAttach() {
         val core = FakePlaybackCore(playerSnapshot(playing = true), simulate = true)
         val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null })
-        repo.attach()
+        repo.attach(this)
         repo.reconcile(listOf(ListenBook("b1", "Sách", remote = RemoteRef("Máy tính"))))
         assertTrue(repo.state.value.hasTrack)
         repo.reconcile(emptyList())
         assertEquals(listOf("close"), core.calls)
         assertEquals(PlayerState.Empty, repo.state.value)
         assertEquals(0L, repo.clock.positionMs.value)
-        repo.detach(); repo.attach()
+        repo.detach(this); repo.attach(this)
         assertFalse(repo.state.value.hasTrack)
     }
 

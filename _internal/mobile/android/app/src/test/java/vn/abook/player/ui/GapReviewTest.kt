@@ -46,7 +46,7 @@ class GapReviewTest {
                 scope = rememberCoroutineScope()
                 val shell = remember { ShellState(scope) }
                 val player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, { null }) }
-                LaunchedEffect(Unit) { player.attach() }
+                LaunchedEffect(Unit) { player.attach(this) }
                 deletes = remember { UndoDelete(scope, { "t-$it" }, { if (failure) throw IllegalStateException("Chỗ cũ đã có sách cùng mã nên chưa hoàn tác được.") }, {
                     library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) })
                 }, player::bookRemoved) }
