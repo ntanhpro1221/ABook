@@ -10,7 +10,7 @@ Only shared dictionary members enter pair_words. Newly added pair_only_words ret
 
 The clause-start experiment accepts only do + trans + an immediately adjacent accented Vietnamese word. Arbitrary do + English and so + English are unsafe ("Do exercise đi", "So cute quá"). A separate bounded borrowing entry allows in + logo with a proven Vietnamese word immediately before in; other in + English phrases keep their old behavior. All lists live in the same shared JSON, with matching Python/Kotlin consumers.
 
-No app or policy version bump was made. The cache version remains 4 under the user constraint; any later integration must decide cache invalidation before use with previously synthesized clips. The quality implementation hash changes.
+The app version is unchanged. The pronunciation policy version changes from 4 to 5, giving cached clips the direct-en5 namespace so old audio cannot hide the phoneme correction. This cache-only follow-up does not alter the frozen decisions or spoken bytes. The quality implementation hash changes.
 
 | Pair | Corpus occurrences | Series | V labels / total | Accepted |
 |---|---:|---:|---:|---|
