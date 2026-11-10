@@ -772,7 +772,6 @@ var s_copy_0aedb2b2cf2b = "Riêng sách này";
 var s_copy_19adc1b298a9 = "Dài tối thiểu";
 var s_copy_1e37d64a785f = "Nghe / Đọc theo";
 var s_copy_289e1cff4cbc = "Bỏ khoảng lặng";
-var s_copy_3481988241fe = " trong ";
 var s_copy_34fb8bbc7719 = "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại.";
 var s_copy_3d89e39b9ae7 = "Quỳnh Anh";
 var s_copy_483cdfec9d5f = "Giữ khoảng nghỉ";

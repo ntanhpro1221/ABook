@@ -158,7 +158,7 @@ Item {
             slide.restart()
             return
         }
-        const magnitude = reduced ? 0 : (kind.indexOf("peer") === 0 ? 16 : 24)
+        const magnitude = reduced ? 0 : (kind.indexOf("peer") === 0 ? height : width)
         let sx = 0, sy = 0
         if (kind === "forward") sx = -1
         else if (kind === "back") sx = 1
@@ -171,22 +171,13 @@ Item {
         zoomOut = reduced ? 1 : 0.98
         outMs = reduced ? 90 : Theme.motionFastOut
         inMs = reduced ? 120 : Theme.motionMedium
-        _stage = 0
-        seq.restart()
-    }
-    function _swap() {
+        _neutral(outW)
+        _neutral(inW)
+        inW.dx = inDx0; inW.dy = inDy0
+        inW.opacity = reduced ? 0 : 1
+        inW.visible = true
         _stage = 1
-        if (_out) {
-            _out.visible = false
-            _neutral(_out)
-            if (_destroyOut) _out.destroy()
-            _out = null
-        }
-        _in.opacity = 0
-        _in.dx = inDx0
-        _in.dy = inDy0
-        _in.zoom = zoomOut
-        _in.visible = true
+        seq.restart()
     }
     function _done() {
         _neutral(_in)
@@ -203,11 +194,10 @@ Item {
         if (!from || !to) return
         _coverStart = _coverBox(from)
         _coverEnd = _coverBox(to)
-        sharedCover.coverKey = to.coverKey || from.coverKey || ""
-        sharedCover.title = to.title || from.title || ""
         _coverFrom = from
         _coverTo = to
-        from.opacity = 0
+        // The source remains painted until covered by the destination. The
+        // overlay may still be decoding its size-specific artwork.
         to.opacity = 0
         coverT = 0
     }
@@ -228,19 +218,22 @@ Item {
         if (slide.running) { slide.stop(); _slideDone(); return }
         if (_stage === 2 && !seq.running) return
         seq.stop()
-        if (_stage === 0) _swap()
-        _done()
+        _slideDone()
     }
 
-    CoverView {
+    ShaderEffectSource {
         id: sharedCover
         objectName: "navigationCoverMorph"
+        sourceItem: root._coverFrom
+        hideSource: false
+        live: true
+        recursive: true
         z: 100
         visible: root._coverFrom !== null && root._coverTo !== null
         x: root._coverStart.x + (root.liveCoverEnd.x - root._coverStart.x) * root.coverT
         y: root._coverStart.y + (root.liveCoverEnd.y - root._coverStart.y) * root.coverT
         width: root._coverStart.width + (root.liveCoverEnd.width - root._coverStart.width) * root.coverT
-        height: root._coverStart.height + (root.liveCoverEnd.height - root._coverStart.height) * root.coverT
+        height: width * Theme.coverRatio
     }
     ParallelAnimation {
         id: slide
@@ -250,21 +243,14 @@ Item {
         NumberAnimation { target: root; property: "coverT"; to: 1; duration: Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
 
-    SequentialAnimation {
+    ParallelAnimation {
         id: seq
-        ParallelAnimation {
-            NumberAnimation { target: root._out; property: "opacity"; to: 0; duration: root.outMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-            NumberAnimation { target: root._out; property: "dx"; to: root.outDx; duration: root.outMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-            NumberAnimation { target: root._out; property: "dy"; to: root.outDy; duration: root.outMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-            NumberAnimation { target: root._out; property: "zoom"; to: root.zoomOut; duration: root.outMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        }
-        ScriptAction { script: root._swap() }
-        ParallelAnimation {
-            NumberAnimation { target: root._in; property: "opacity"; to: 1; duration: root.inMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-            NumberAnimation { target: root._in; property: "dx"; to: 0; duration: root.inMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-            NumberAnimation { target: root._in; property: "dy"; to: 0; duration: root.inMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-            NumberAnimation { target: root._in; property: "zoom"; to: 1; duration: root.inMs; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-        }
-        ScriptAction { script: root._done() }
+        onFinished: root._slideDone()
+        NumberAnimation { target: root._out; property: "opacity"; to: Theme.reduceMotion ? 0 : 1; duration: Theme.motionMedium }
+        NumberAnimation { target: root._out; property: "dx"; to: root.outDx; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        NumberAnimation { target: root._out; property: "dy"; to: root.outDy; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        NumberAnimation { target: root._in; property: "opacity"; to: 1; duration: Theme.motionMedium }
+        NumberAnimation { target: root._in; property: "dx"; to: 0; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        NumberAnimation { target: root._in; property: "dy"; to: 0; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
 }

@@ -9,12 +9,10 @@ FocusScope {
     id: root
     readonly property bool expanded: Theme.widthClass(width) >= 2
     property bool layoutExpanded: expanded
-    property real layoutPhase: 1
+    readonly property real layoutPhase: navigationSwap.phase
     property string active: ""
     property string displayedActive: ""
-    property real navigationPhase: 1
-    property int navigationDirection: 1
-    property bool navigationEntering: false
+    readonly property real navigationPhase: navigationSwap.phase
     signal studioRequested()
     readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, layoutExpanded ? 1180 : 760)
     readonly property var groups: {
@@ -44,30 +42,14 @@ FocusScope {
     }
     onActiveChanged: {
         syncLayer()
-        if (!layoutExpanded && !Theme.reduceMotion) {
-            if (navigationSwap.running) navigationSwap.complete()
-            navigationDirection = active === "" ? -1 : 1
-            navigationEntering = false
-            navigationSwap.restart()
-        } else { displayedActive = active; page.contentY = 0 }
+        const target = active
+        navigationSwap.change(function() { root.displayedActive = target; page.contentY = 0 }, active === "")
     }
     onExpandedChanged: {
-        if (navigationSwap.running) navigationSwap.complete()
-        if (Theme.reduceMotion) { layoutSwap.stop(); layoutExpanded = expanded; layoutPhase = 1; syncLayer() }
-        else layoutSwap.restart()
+        const target = expanded
+        navigationSwap.change(function() { root.layoutExpanded = target; root.syncLayer() }, !expanded)
     }
-    SequentialAnimation {
-        id: navigationSwap
-        NumberAnimation { target: root; property: "navigationPhase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        ScriptAction { script: { root.displayedActive = root.active; page.contentY = 0; root.navigationEntering = true } }
-        NumberAnimation { target: root; property: "navigationPhase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-    }
-    SequentialAnimation {
-        id: layoutSwap
-        NumberAnimation { target: root; property: "layoutPhase"; to: 0; duration: Theme.motionFastOut }
-        ScriptAction { script: { root.layoutExpanded = root.expanded; root.syncLayer() } }
-        NumberAnimation { target: root; property: "layoutPhase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-    }
+    ContentSlide { id: navigationSwap; objectName: "settingsContentSlide"; anchors.fill: parent; sourceItem: page }
     Component.onDestruction: Nav.closedLayer(backLayer)
     Component.onCompleted: {
         displayedActive = active
@@ -97,6 +79,8 @@ FocusScope {
     Flickable {
         id: page
         anchors.fill: parent
+        transform: Translate { x: navigationSwap.incomingShift }
+        opacity: Theme.reduceMotion ? root.navigationPhase : 1
         contentWidth: width
         contentHeight: frame.height + 64
         boundsBehavior: Flickable.StopAtBounds
@@ -106,9 +90,6 @@ FocusScope {
         Item {
             id: frame
             objectName: "settingsFrame"
-            opacity: root.layoutPhase * root.navigationPhase
-            scale: Theme.reduceMotion ? 1 : 0.98 + 0.02 * root.layoutPhase
-            transform: Translate { x: Theme.reduceMotion ? 0 : (root.navigationEntering ? 1 : -1) * root.navigationDirection * 24 * (1 - root.navigationPhase) }
             x: (root.width - root.bodyWidth) / 2
             width: root.bodyWidth
             height: Math.max(navigation.visible ? navigation.y + navigation.height : 0, content.visible ? content.y + content.height : 0)

@@ -117,6 +117,11 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.s8
             SkipButton { forward: false; anchors.verticalCenter: parent.verticalCenter }
+            IconButton {
+                id: deviceButton; objectName: "barDevices"; icon: "cast"; tip: S.s_thiet_bi_phat_c8cfc7a8
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: output.show()
+            }
             PlayButton { id: playButton; size: 44; anchors.verticalCenter: parent.verticalCenter; opacity: root.sharedShown ? 1 : 0 }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
             IconButton {
@@ -161,6 +166,6 @@ Item {
     SleepPopover { id: sleep; anchorItem: moreButton }
     MusicPopover { id: music; anchorItem: moreButton }
     PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
-    OutputPopover { id: output; anchorItem: moreButton }
+    OutputPopover { id: output; anchorItem: deviceButton }
     Popover { id: audioFx; closeGuard: action => audioSettings.requestClose(action); anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { id:audioSettings; openMusic: () => { audioFx.close(); music.show() } } }
 }

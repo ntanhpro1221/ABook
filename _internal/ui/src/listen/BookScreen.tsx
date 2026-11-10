@@ -1118,7 +1118,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pb-6 sm:gap-x-0")}>
         {/* Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b). Lớp nút phủ lên bìa, nên bắt đầu / thôi nghe không dựng lại bìa. */}
         <div className={cn("press relative w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")}>
-          <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-full" />
+          <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="aspect-[2/3] w-full" />
           {listening && <button type="button" data-book-cover-open aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad} onClick={() => setExpanded(true)} className="absolute inset-0 rounded-cover" />}
         </div>
         <div className={cn("min-w-0", split && "mt-5")}>

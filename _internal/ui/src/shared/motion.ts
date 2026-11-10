@@ -33,7 +33,7 @@ export function scrollMotion(animate = true): ScrollBehavior {
 // để chụp cả tài liệu, cộng thời gian dựng trang mới là màn đứng ~170 ms rồi mới mờ (video chủ sách 25-10 "mở tab thư viện bị giật").
 // Thay vào đó: khung nội dung `.page-motion` mờ đi ngay khi bấm (chỉ opacity/transform - chạy trên GPU), trang mới dựng trong lúc khung
 // đã khuất, rồi hiện vào theo hướng (sâu vào / lùi ra / ngang hàng). Thanh tab, thanh phát đứng yên. Xin giảm chuyển động: chỉ mờ / hiện.
-let leaving: Promise<void> | null = null;
+let departure: HTMLElement | undefined;
 let entering: NavMotion | null = null;
 
 function pageSurface(doc: TransitionDocument | undefined): HTMLElement | null {
@@ -62,39 +62,47 @@ export function pageSettling(): boolean {
 
 /** Mờ trang hiện tại đi rồi mới đổi. Đang mờ dở (bấm liên tiếp) thì dùng lại lần mờ ấy - lần đổi cuối cùng thắng. */
 export function leavePage(nav: NavMotion, doc: TransitionDocument | undefined = browserDocument()): Promise<void> {
+  removeMotionSnapshot(departure); departure = undefined;
   const page = pageSurface(doc);
-  if (nav === "none" || !page || typeof page.animate !== "function" || doc?.visibilityState === "hidden") return Promise.resolve();
-  entering = nav;
-  if (leaving) return leaving;
-  const reduced = prefersReducedMotion();
-  const shift = nav === "back" || nav === "tab-back" ? 12 : -12;
-  const end = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${shift}px)`;
-  const animation = page.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: end }], {
-    duration: MOTION.fastOut,
-    easing: EASE.accelerate,
-    fill: "forwards",
-  });
-  leaving = animation.finished.then(() => undefined, () => undefined).then(() => {
-    leaving = null;
-  });
-  return leaving;
+  entering = nav === "none" ? null : nav;
+  if (nav !== "none" && page && typeof page.animate === "function" && doc?.visibilityState !== "hidden") {
+    // Keep the old pixels while React commits the destination. Navigation never
+    // waits for an exit animation, and the footer is outside this snapshot.
+    departure = captureMotionSnapshot(page, doc, 19);
+    if (departure) holdMotionSnapshot(departure, MOTION.slow + 500);
+  }
+  return Promise.resolve();
 }
 
-/** Sau commit của trang mới (layout effect của router, trước khi vẽ): bỏ lớp mờ của lần rời và cho trang hiện vào. */
+/** Old and new content move on the same clock through adjacent rectangles. */
 export function enterPage(doc: TransitionDocument | undefined = browserDocument(), prepared?: () => void): void {
   const nav = entering;
   entering = null;
+  const old = departure; departure = undefined;
   const page = pageSurface(doc);
-  if (!nav || !page || typeof page.animate !== "function") { prepared?.(); return; }
+  if (!nav || !page || typeof page.animate !== "function") { removeMotionSnapshot(old); prepared?.(); return; }
   for (const animation of page.getAnimations?.() ?? []) animation.cancel();
-  // Thứ dựng cùng trang mới (nội dung hiện dần, dòng nhô lên, khung chờ) đi theo chuyển cảnh của trang, không chồng thêm một lượt hiện của riêng nó.
   for (const animation of page.getAnimations?.({ subtree: true }) ?? []) if (justEntering(animation)) animation.finish();
   prepared?.();
   const reduced = prefersReducedMotion();
-  const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" || nav === "tab-back" ? -32 : 32}px)`;
-  const duration = reduced ? MOTION.fast : nav === "through" || nav.startsWith("tab-") ? MOTION.medium : nav === "back" ? MOTION.slowOut : MOTION.slow;
+  const back = nav === "back" || nav === "tab-back";
+  const width = page.getBoundingClientRect().width;
+  const duration = reduced ? MOTION.fast : nav === "through" || nav.startsWith("tab-") ? MOTION.medium : back ? MOTION.slowOut : MOTION.slow;
+  const easing = back ? EASE.accelerate : EASE.decelerate;
   markArrival(duration);
-  page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration, easing: EASE.decelerate });
+  const direction = back ? -1 : 1;
+  const from = reduced ? "none" : `translateX(${direction * width}px)`;
+  const to = reduced ? "none" : `translateX(${-direction * width}px)`;
+  if (old) {
+    holdMotionSnapshot(old, duration + 80);
+    const cut = (left: number, right: number) => `inset(0px ${right}px 0px ${left}px)`;
+    const animation = old.animate?.([{ transform: "none", opacity: 1, clipPath: cut(0, 0) },
+      { transform: to, opacity: reduced ? 0 : 1, clipPath: reduced ? cut(0, 0) : direction > 0 ? cut(width, 0) : cut(0, width) }], { duration, easing, fill: "forwards" });
+    if (animation) { animation.onfinish = () => removeMotionSnapshot(old); animation.oncancel = () => removeMotionSnapshot(old); }
+  }
+  page.animate([{ opacity: reduced || !old ? 0 : 1, transform: from,
+    clipPath: reduced ? "inset(0px)" : direction > 0 ? `inset(0px ${width}px 0px 0px)` : `inset(0px 0px 0px ${width}px)` },
+    { opacity: 1, transform: "none", clipPath: "inset(0px)" }], { duration, easing });
 }
 
 /** Hoạt ảnh hiện vào vừa bắt đầu ở nhịp này: hữu hạn, ngắn, chưa chạy. Vòng lặp (khung chờ nhấp nháy) và hoạt ảnh dài (đếm ngược) giữ nguyên. */

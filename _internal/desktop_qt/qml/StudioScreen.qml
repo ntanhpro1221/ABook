@@ -4,7 +4,7 @@ import ABook
 import "PeerStudio.js" as Peer
 
 // Studio: danh sách dự án (ProjectsScreen), trang một dự án (ProjectScreen) và trình tạo dự án (NewProjectScreen), DESIGN.md mục 7. Ba màn con là MỘT lớp
-// của Back (Esc / Alt+Left về danh sách) và đổi qua nhau bằng mờ + trượt 8 px; chọn lại "Studio" ở thanh bên cũng về danh sách.
+// of Back (Esc / Alt+Left returns to the list), sharing ContentSlide; reselecting Studio also returns to the list.
 // Studio của máy tính đã ghép (Nav.studioPeer, "Mở Studio" ở Máy tính khác; desktop/App.tsx + PeerBar.tsx): hỏi /api/app của máy ấy qua cầu nối
 // (webui/peer_studio.py) - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này" và CÙNG các màn con ấy, mọi lời gọi đi qua
 // /api/peers/<mã>/studio/... (StudioStore); máy ấy chỉ cho nghe thì nói bật quyền ở đâu (StudioClosed); chưa vào được thì nói vì sao (PeerTrouble),
@@ -49,7 +49,7 @@ Item {
         goList()
         if (peer) ask(); else asked++
     }
-    Component.onCompleted: if (peer) ask()
+    Component.onCompleted: { shownKey = screenKey; navigationReady = true; if (peer) ask() }
     // Máy kia im: hỏi lại mỗi 5 giây, thôi sau 30 phút (watchUntilBack)
     Timer {
         interval: Peer.WATCH_EVERY_MS
@@ -115,22 +115,20 @@ Item {
     Component.onDestruction: if (layerOpen) Nav.closedLayer(routeLayer)
     Connections { target: Nav.stack; function onReselected(index) { if (index === 1) root.goList() } }
 
-    // Màn đang hiện: mờ qua kèm trượt 8 px (MotionRegion của web); cái cũ khép hết rồi cái mới mới vào, không hai lớp chồng nhau
+    // Capture the old page and slide both pages on one clock. Initial creation has no outgoing page.
     readonly property string screenKey: (view === "own" || view === "open") ? "route:" + route : view
-    property string shownKey: screenKey
-    property real phase: 1
-    property int motionDirection: 1
-    property bool motionEntering: false
+    property string shownKey: "route:list"
+    property bool navigationReady: false
+    readonly property real phase: swap.phase
     onScreenKeyChanged: {
-        motionDirection = screenKey === "route:list" && shownKey !== "route:list" ? -1 : 1
-        motionEntering = false
-        swap.restart()
+        if (!navigationReady) return
+        const target = screenKey
+        const back = screenKey === "route:list" && shownKey !== "route:list"
+        swap.change(function() { root.shownKey = target }, back)
     }
-    SequentialAnimation {
-        id: swap
-        NumberAnimation { target: root; property: "phase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        ScriptAction { script: { root.shownKey = root.screenKey; root.motionEntering = true } }      // màn MỚI NHẤT lúc cái cũ đã khép (đổi liền hai lần vẫn ra đúng màn cuối)
-        NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
+    ContentSlide {
+        id: swap; objectName: "studioContentSlide"; x: 0; y: bar.height; width: root.width; height: root.height - y
+        sourceItem: content.visible ? content : body
     }
     readonly property string shownView: shownKey.indexOf("route:") === 0 ? (peer ? "open" : "own") : shownKey
 
@@ -142,8 +140,8 @@ Item {
         width: parent.width
         height: parent.height - y
         visible: root.shownView === "own" || root.shownView === "open"
-        opacity: root.phase
-        transform: Translate { x: Theme.reduceMotion ? 0 : (root.motionEntering ? 1 : -1) * root.motionDirection * 24 * (1 - root.phase) }
+        opacity: Theme.reduceMotion ? root.phase : 1
+        transform: Translate { x: swap.incomingShift }
         // Dữ liệu của trình tạo sách: dựng muộn, sống tiếp khi rời trang (nháp không mất)
         Loader {
             id: newLoader
@@ -217,8 +215,8 @@ Item {
         width: root.bodyWidth
         height: parent.height - y
         visible: !content.visible
-        opacity: root.phase
-        transform: Translate { x: Theme.reduceMotion ? 0 : (root.motionEntering ? 1 : -1) * root.motionDirection * 24 * (1 - root.phase) }
+        opacity: Theme.reduceMotion ? root.phase : 1
+        transform: Translate { x: swap.incomingShift }
         // Thiết bị này chỉ được nghe ở máy kia (StudioClosed): nói bật quyền ở đâu
         EmptyState {
             objectName: "studioClosed"

@@ -1,6 +1,8 @@
 package vn.abook.player.ui.shell
 
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.SharedTransitionLayout
+import vn.abook.player.ui.motion.LocalCoverOverlay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
@@ -22,7 +22,6 @@ import vn.abook.player.ui.motion.LocalBookCoverFlight
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -123,6 +122,11 @@ import kotlin.math.max
 /** Mọi trạng thái sống của khung (ngăn xếp, tab, vị trí cuộn từng tab) ở MỘT chỗ - tab rời khỏi cây vẫn giữ chỗ cuộn. */
 @Stable
 class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {}) {
+    val bookPages = mutableMapOf<String, vn.abook.player.ui.screens.BookUiState>()
+    fun prefetchBook(id: String, source: BookSource) {
+        val page = bookPages.getOrPut(id) { vn.abook.player.ui.screens.BookUiState(id, source) }
+        scope.launch { page.load() }
+    }
     val nav = NavState(scope)
     val coverFlight = BookCoverFlight(nav)
     val window = NowPlayingWindowState(scope)
@@ -238,6 +242,7 @@ fun AppShell(
                     vn.abook.player.ui.screens.RemoteBookSheet(book, devices) { dismiss(); player.playNow(book.id) }
                 } else {
                     shell.coverFlight.capture(book.id)
+                    shell.prefetchBook(book.id, books)
                     shell.nav.push(Destination.Book(book))
                 }
             },
@@ -319,23 +324,23 @@ fun AppShell(
         PipContent(playerState, { player.clock.positionMs.value }, covers)
         return
     }
-    CompositionLocalProvider(LocalBookCoverFlight provides shell.coverFlight) {
+    SharedTransitionLayout {
+    CompositionLocalProvider(LocalBookCoverFlight provides shell.coverFlight, LocalCoverOverlay provides this) {
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
         PlayerCoverProvider(covers) {
             NowPlayingLayer(nowPlaying, window, sampleClock) {
                 ShellFrame(
                     nav,
-                    hasTrack = playerState.hasTrack,
-                    stack = { insets, carried ->
+                    stack = { insets ->
                     ScreenStack(
-                        nav = nav, insets = insets, carried = carried,
+                        nav = nav, insets = insets,
                         root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
                         screen = { destination ->
                             when (destination) {
-                                is Destination.Book -> BookScreen(
+                                is Destination.Book -> CompositionLocalProvider(vn.abook.player.ui.screens.LocalBookPageState provides shell.bookPages[destination.book.id]) { BookScreen(
                                     destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
-                                )
+                                ) }
                                 is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format) else Unavailable(destination, nav::pop)
                                 Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                                     { nav.push(Destination.ImportReview(it)) }, { id ->
@@ -387,7 +392,7 @@ fun AppShell(
                     },
                     bars = {
                         // Thanh báo đứng ngay trên thanh của khung (thanh tab ở gốc, thanh phát nhỏ ở màn con): chúng đã chừa vạch cử chỉ.
-                        val covered = !nav.canPop || (playerState.hasTrack && nav.stack.top?.destination?.ownsBottomBar() == false)
+                        val covered = nav.stack.top?.destination?.ownsBottomBar() != true
                         CompositionLocalProvider(LocalBottomCovered provides covered) {
                             if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
                                 backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = covered)
@@ -395,11 +400,15 @@ fun AppShell(
                         }
                     },
                     miniBar = { MiniBarArea(shell, playerState, player, covers, openPlayer, companion) },
-                    tabBar = { TabBar(shell.tabs) },
+                    tabBar = { TabBar(shell.tabs, onSelect = { tab ->
+                        if (nav.canPop) { shell.coverFlight.clear(); nav.popToRoot() }
+                        shell.tabs.select(tab)
+                    }) },
                 )
             }
             SheetLayer(shell.sheets)
         }
+    }
     }
     }
 }
@@ -428,25 +437,29 @@ private fun Modifier.layerInset(insets: LayerInsets, destination: Destination?):
     layout(constraints.maxWidth, height) { placeable.place(0, 0) }
 }
 
-/** Phần thanh tab đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con đầu tiên trượt vào thì thanh trượt xuống theo (1 - p); sâu hơn nữa thì đã khuất. */
+/** Persistent tabs keep their baseline. A destination with bottom actions hides them on the navigation clock. */
 internal fun tabBarShown(nav: NavState): Float = when (nav.stack.size) {
     0 -> 1f
-    1 -> 1f - nav.progress.value
-    else -> 0f
+    else -> {
+        val entries = nav.stack.entries
+        val top = if (entries.last().destination.ownsBottomBar()) 0f else 1f
+        val below = if (entries.size == 1 || !entries[entries.size - 2].destination.ownsBottomBar()) 1f else 0f
+        below + (top - below) * nav.progress.value
+    }
 }
 
 /**
- * Phần khối thanh phát nhỏ đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con giữ thanh khi có sách đang nạp (`carried` chạy 0..1 theo [PlayerState.hasTrack]), màn có thanh nút đáy
- * riêng thì không ([ownsBottomBar]). Đổi màn: đi theo tiến trình của màn trên cùng từ giá trị của màn dưới tới giá trị của nó, nên Back dự đoán kéo thanh theo ngón tay.
+ * Mini-player visibility follows bottom-action ownership, just like the tabs.
+ * Predictive back interpolates between the two destinations, including cancellation.
  */
-internal fun miniBarShown(nav: NavState, carried: Float): Float {
+internal fun miniBarShown(nav: NavState): Float {
     val entries = nav.stack.entries
     if (entries.isEmpty()) return 1f
-    val top = if (entries.last().destination.ownsBottomBar()) 0f else carried
+    val top = if (entries.last().destination.ownsBottomBar()) 0f else 1f
     val below = when {
         entries.size == 1 -> 1f
         entries[entries.size - 2].destination.ownsBottomBar() -> 0f
-        else -> carried
+        else -> 1f
     }
     return below + (top - below) * nav.progress.value
 }
@@ -460,24 +473,22 @@ internal fun miniBarShown(nav: NavState, carried: Float): Float {
 @Composable
 private fun ShellFrame(
     nav: NavState,
-    hasTrack: Boolean,
-    stack: @Composable (LayerInsets, State<Float>) -> Unit,
+    stack: @Composable (LayerInsets) -> Unit,
     bars: @Composable () -> Unit,
     miniBar: @Composable () -> Unit,
     tabBar: @Composable () -> Unit,
 ) {
     val insets = remember { LayerInsets() }
-    val carried = animateFloatAsState(if (hasTrack) 1f else 0f, if (hasTrack) Motion.Expand else Motion.Collapse, label = "mini-bar-carried")
     val colors = Abook.colors
     val clearance = navigationClearance()
     Layout(
         content = {
             Box(Modifier.layoutId(TAB_BAR).semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
-            Column(Modifier.layoutId(MINI_BAR).fillMaxWidth().semantics { if (miniBarShown(nav, carried.value) <= 0f) hideFromAccessibility() }) {
+            Column(Modifier.layoutId(MINI_BAR).fillMaxWidth().semantics { if (miniBarShown(nav) <= 0f) hideFromAccessibility() }) {
                 miniBar()
                 Box(Modifier.fillMaxWidth().height(clearance).background(colors.panel))
             }
-            Box(Modifier.layoutId(STACK)) { stack(insets, carried) }
+            Box(Modifier.layoutId(STACK)) { stack(insets) }
             Column(Modifier.layoutId(BARS).fillMaxWidth()) { bars() }
         },
         modifier = Modifier.fillMaxSize(),
@@ -491,18 +502,25 @@ private fun ShellFrame(
         val strip = clearance.roundToPx()
         // Phần thanh tab đứng trên dải chừa đáy của khối thanh phát nhỏ.
         val tabAbove = tabPlaceable.height - strip
-        insets.root = tabAbove + miniPlaceable.height + barsPlaceable.height
-        insets.screen = (miniPlaceable.height * carried.value).toInt() + barsPlaceable.height
-        insets.bare = barsPlaceable.height
+        // Lookahead and the actual pass can measure different animated bar
+        // heights. Publishing both into one State oscillates forever during
+        // Undo/notice reveals inside SharedTransitionLayout.
+        if (!isLookingAhead) {
+            insets.root = tabAbove + miniPlaceable.height + barsPlaceable.height
+            insets.screen = insets.root
+            insets.bare = barsPlaceable.height
+        }
         val stackPlaceable = measurables.first { it.layoutId == STACK }.measure(Constraints.fixed(width, height))
         layout(width, height) {
+            // Chrome paints above every content layer, including a destination
+            // with its own bottom actions while shell bars slide away.
+            stackPlaceable.place(0, 0)
             miniPlaceable.placeWithLayer(0, height - miniPlaceable.height) {
-                translationY = miniPlaceable.height * (1f - miniBarShown(nav, carried.value)) - tabAbove * tabBarShown(nav)
+                translationY = miniPlaceable.height * (1f - miniBarShown(nav)) - tabAbove * tabBarShown(nav)
             }
             tabPlaceable.placeWithLayer(0, height - tabPlaceable.height) { translationY = tabPlaceable.height * (1f - tabBarShown(nav)) }
-            stackPlaceable.place(0, 0)
             barsPlaceable.placeWithLayer(0, height - barsPlaceable.height) {
-                translationY = -(tabAbove * tabBarShown(nav) + miniPlaceable.height * miniBarShown(nav, carried.value))
+                translationY = -(tabAbove * tabBarShown(nav) + miniPlaceable.height * miniBarShown(nav))
             }
         }
     }
@@ -522,10 +540,11 @@ private const val ROOT_KEY = -1
  * đọc trong graphicsLayer (pha vẽ). Lớp bên dưới đã khuất hẳn thì đẩy ra ngoài màn (không vẽ) nhưng vẫn giữ trong cây: Back không phải dựng lại nó.
  */
 @Composable
-fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets? = null, carried: State<Float>? = null, screen: @Composable (Destination) -> Unit) {
+fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets? = null, screen: @Composable (Destination) -> Unit) {
     val entries = nav.stack.entries
     val count = entries.size
     val background = Abook.colors.bg
+    val container = (entries.lastOrNull()?.destination as? Destination.Book)?.let { LocalBookCoverFlight.current?.active(it.book.id) } == true
     Box(Modifier.fillMaxSize()) {
         for (index in max(ROOT_KEY, count - 2) until count) {
             val id = if (index < 0) ROOT_KEY else entries[index].key
@@ -536,8 +555,8 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                     else -> Layer.Below
                 }
                 val destination = if (index < 0) null else entries[index].destination
-                // Thanh phát nhỏ nằm dưới lớp này thì nó đã chừa vạch cử chỉ. Chỉ đọc qua mốc 0: `carried` chạy theo khung lúc thanh hiện ra.
-                val covered by remember(destination, carried) { derivedStateOf { destination == null || ((carried?.value ?: 0f) > 0f && !destination.ownsBottomBar()) } }
+                // Shell chrome below this page already includes gesture clearance.
+                val covered = destination == null || !destination.ownsBottomBar()
                 Box(
                     // Chừa chỗ cho thanh báo / chân ở đáy NGAY TRONG lớp (kích cỡ lớp cố định suốt chuyển cảnh): xem [LayerInsets].
                     (if (insets == null) Modifier.fillMaxSize() else Modifier.layerInset(insets, destination))
@@ -547,7 +566,12 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                                 Layer.Top -> ScreenGeometry.topFraction(nav.progress.value)
                                 Layer.Below -> nav.progress.value.let { p -> if (p >= 1f) -1f else ScreenGeometry.belowFraction(p) }
                             }
-                            translationX = fraction * size.width
+                            translationX = if (container) 0f else fraction * size.width
+                            alpha = if (!container) 1f else when (layer) {
+                                Layer.Top -> ScreenGeometry.incomingAlpha(nav.progress.value)
+                                Layer.Below -> ScreenGeometry.outgoingAlpha(nav.progress.value)
+                                Layer.Alone -> 1f
+                            }
                         }
                         .background(background)
                         .testTag(if (index < 0) "screen_root" else if (layer == Layer.Top) "screen_top" else "screen_below")
@@ -621,10 +645,11 @@ private fun MiniBarArea(shell: ShellState, player: PlayerState, repo: PlayerRepo
     val position = remember(clock) { { clock.positionMs.value } }
     Column(Modifier.fillMaxWidth()) {
         if (companion != null) vn.abook.player.ui.devices.OtherPlayersEntry(companion, shell.sheets, repo)
-        if (last[0].hasTrack) {
-            MiniPlayerSlot(visible = player.hasTrack || shell.window.expanded) {
-                MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
-            }
+        // Keep the slot mounted before the first track, so first playback
+        // reveals it instead of constructing an already fully visible bar.
+        MiniPlayerSlot(visible = player.hasTrack || shell.window.expanded) {
+            if (last[0].hasTrack) MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying,
+                onDevices = companion?.let { remote -> { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(remote, repo, dismiss) } } })
         }
     }
 }
@@ -668,7 +693,7 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
 
 /** Thanh tab đáy: chữ đổi màu theo khoảng cách tới vị trí trượt, vạch hổ phách trượt theo cùng giá trị ấy. */
 @Composable
-fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
+fun TabBar(tabs: TabState, modifier: Modifier = Modifier, onSelect: (Tab) -> Unit = { tabs.select(it) }) {
     val colors = Abook.colors
     // Vạch hổ phách nằm đáy hàng tab: dưới nó là chỗ chừa đáy chung - thanh điều hướng, hay vùng hệ thống nuốt chạm + khoảng thở khi máy giấu thanh (components/Insets.kt).
     val clearance = navigationClearance()
@@ -676,7 +701,7 @@ fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
         Box(Modifier.fillMaxWidth().height(Dim.s48 + Dim.s8)) {
             Row(Modifier.fillMaxSize()) {
-                for (tab in Tab.entries) TabItem(tab, tabs, Modifier.weight(1f))
+                for (tab in Tab.entries) TabItem(tab, tabs, Modifier.weight(1f), onSelect)
             }
             Box(
                 Modifier.fillMaxWidth(1f / Tab.entries.size).height(3.dp).align(Alignment.BottomStart)
@@ -691,11 +716,11 @@ fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TabItem(tab: Tab, tabs: TabState, modifier: Modifier) {
+private fun TabItem(tab: Tab, tabs: TabState, modifier: Modifier, onSelect: (Tab) -> Unit) {
     val colors = Abook.colors
     Box(
         modifier.fillMaxSize()
-            .pressable(Role.Tab) { tabs.select(tab) }
+            .pressable(Role.Tab) { onSelect(tab) }
             .semantics { selected = tabs.selected == tab.ordinal }
             .testTag(tab.tag),
         contentAlignment = Alignment.Center,

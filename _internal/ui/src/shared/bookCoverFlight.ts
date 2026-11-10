@@ -31,7 +31,8 @@ export function captureBookCover(from: string, to: string): void {
   Object.assign(clone.style, { position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`,
     height: `${rect.height}px`, margin: "0", zIndex: "45", transform: "none", transformOrigin: "0 0", pointerEvents: "none", animation: "none" });
   const visibility = source.style.visibility;
-  source.style.visibility = "hidden";
+  // Retain the source until the route actually replaces it. The overlay owns
+  // the moving copy; a delayed destination must never punch a blank cell.
   document.body.append(clone);
   pending = { key, clone, from: rect, restore: () => { source.style.visibility = visibility; clone.remove(); } };
 }
@@ -80,7 +81,7 @@ export function landBookCover(back: boolean): void {
     flight.clone.dataset.flightTo = JSON.stringify(to);
     const animation = flight.clone.animate([
       { transform: "none", opacity: 1 },
-      { transform: `translate(${to.left - flight.from.left}px, ${to.top - flight.from.top}px) scale(${to.width / flight.from.width}, ${to.height / flight.from.height})`, opacity: 1 },
+      { transform: `translate(${to.left - flight.from.left}px, ${to.top - flight.from.top}px) scale(${to.width / flight.from.width})`, opacity: 1 },
     ], { duration: back ? MOTION.slowOut : MOTION.slow, easing: back ? EASE.accelerate : EASE.decelerate, fill: "forwards" });
     void animation.finished.then(clean, clean);
   };

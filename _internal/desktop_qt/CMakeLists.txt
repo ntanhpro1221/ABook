@@ -167,6 +167,7 @@ qt_add_qml_module(ABookDesk
         qml/ConnectionPopover.qml
         qml/MenuRow.qml
         qml/ScreenStack.qml
+        qml/ContentSlide.qml
         qml/ScreenHeader.qml
         qml/LibraryScreen.qml
         qml/LibraryContinue.qml

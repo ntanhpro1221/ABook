@@ -156,6 +156,7 @@ val NoExportHint: StateFlow<String?> = MutableStateFlow(null)
  */
 @Stable
 class BookUiState(val bookId: String, private val source: BookSource) {
+    private val loadLock = kotlinx.coroutines.sync.Mutex()
     var detail by mutableStateOf<BookDetail?>(null)
         private set
 
@@ -171,11 +172,14 @@ class BookUiState(val bookId: String, private val source: BookSource) {
     private var castWanted = false
 
     suspend fun load() {
+        loadLock.lock()
+        try {
         val next = source.detail(bookId)
         // Cuốn vừa bị xoá (trang đang đóng): giữ trang cuối, không nháy sang "Không tìm thấy sách này".
         if (next != null || detail == null) detail = next
         loaded = true
         if (castWanted) loadCast()
+        } finally { loadLock.unlock() }
     }
 
     suspend fun wantCast() {
@@ -243,7 +247,8 @@ private fun BookScreenBody(
     width: androidx.compose.ui.unit.Dp,
 ) {
     val wide = widthClass(width.value) >= WidthClass.EXPANDED
-    val ui = remember(book.id, source) { BookUiState(book.id, source) }
+    val prefetched = vn.abook.player.ui.screens.LocalBookPageState.current
+    val ui = remember(book.id, source, prefetched) { prefetched?.takeIf { it.bookId == book.id } ?: BookUiState(book.id, source) }
     // Chương đã "Làm trước" (dấu "Đã làm sẵn"): lắng nghe lõi chỉ khi trang đang hiện.
     androidx.compose.runtime.DisposableEffect(prepare) {
         prepare?.watch(true)
@@ -267,6 +272,8 @@ private fun BookScreenBody(
     val tabsItem = if (wide) 0 else TABS_ITEM
     val current = BookPage.currentChapter(shown, player)
     val chapters = detail?.chapters
+    val arrival = remember(ui) { Animatable(if (detail != null) 1f else 0f) }
+    LaunchedEffect(detail != null) { if (detail != null) arrival.animateTo(1f, tween(MotionMs.MEDIUM_OUT, easing = Motion.Decelerate)) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val notes = remember(book.id) { BookNotes(scope) }
@@ -353,7 +360,7 @@ private fun BookScreenBody(
                     else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
                         val here = chapter.id == current
                         val live = here && player.bookId == shown.id
-                        Box(Modifier.fade { fade.value }) {
+                        Box(Modifier.fade { fade.value * arrival.value }) {
                             ChapterRow(
                                 chapter = chapter,
                                 current = here,

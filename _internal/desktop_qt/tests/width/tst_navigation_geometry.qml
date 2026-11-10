@@ -41,16 +41,14 @@ Item {
             const frame = findChild(settings, "settingsFrame")
             const origin = frame.mapToItem(host, 0, 0).x
             settings.active = "listen"
-            tryVerify(() => settings.navigationPhase < 1 && !settings.navigationEntering)
-            verify(frame.mapToItem(host, 0, 0).x < origin)
-            tryVerify(() => settings.navigationEntering && settings.navigationPhase < 1)
+            tryVerify(() => settings.navigationPhase > 0 && settings.navigationPhase < 1)
             verify(frame.mapToItem(host, 0, 0).x > origin)
+            verify(findChild(settings, "settingsContentSlide").image !== null)
             tryCompare(settings, "navigationPhase", 1)
             settings.active = ""
-            tryVerify(() => settings.navigationPhase < 1 && !settings.navigationEntering)
-            verify(frame.mapToItem(host, 0, 0).x > origin)
-            tryVerify(() => settings.navigationEntering && settings.navigationPhase < 1)
+            tryVerify(() => settings.navigationPhase > 0 && settings.navigationPhase < 1)
             verify(frame.mapToItem(host, 0, 0).x < origin)
+            verify(findChild(settings, "settingsContentSlide").image !== null)
             tryCompare(settings, "navigationPhase", 1)
             compare(settings.shown, "")
         }
@@ -58,16 +56,14 @@ Item {
             const studio = createTemporaryObject(studioFactory, host)
             const content = findChild(studio, "studioContent")
             studio.openProject("width")
-            tryVerify(() => studio.phase < 1 && !studio.motionEntering)
-            verify(content.mapToItem(host, 0, 0).x < 0)
-            tryVerify(() => studio.motionEntering && studio.phase < 1)
+            tryVerify(() => studio.phase > 0 && studio.phase < 1)
             verify(content.mapToItem(host, 0, 0).x > 0)
+            verify(findChild(studio, "studioContentSlide").image !== null)
             tryCompare(studio, "phase", 1)
             studio.goList()
-            tryVerify(() => studio.phase < 1 && !studio.motionEntering)
-            verify(content.mapToItem(host, 0, 0).x > 0)
-            tryVerify(() => studio.motionEntering && studio.phase < 1)
+            tryVerify(() => studio.phase > 0 && studio.phase < 1)
             verify(content.mapToItem(host, 0, 0).x < 0)
+            verify(findChild(studio, "studioContentSlide").image !== null)
             tryCompare(studio, "phase", 1)
         }
         function test_bookTabsMoveAndReverseInsteadOfOnlyFading() {

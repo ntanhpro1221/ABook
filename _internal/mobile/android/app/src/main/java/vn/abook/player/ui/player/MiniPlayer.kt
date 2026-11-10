@@ -74,6 +74,7 @@ fun MiniPlayer(
     onOpenNowPlaying: () -> Unit,
     modifier: Modifier = Modifier,
     sharedModifier: @Composable (NowPlayingPart) -> Modifier = { Modifier },
+    onDevices: (() -> Unit)? = null,
 ) {
     val colors = Abook.colors
     val durationMs = state.durationMs
@@ -110,6 +111,11 @@ fun MiniPlayer(
                 BasicText(state.bookTitle, sharedModifier(NowPlayingPart.Book), Abook.type.caption)
             }
         }
+        onDevices?.let { open ->
+            vn.abook.player.ui.components.IconAction(S.s_thiet_bi_phat_c8cfc7a8, open, "mini_devices") {
+                vn.abook.player.ui.components.CastIcon(colors.text2)
+            }
+        }
         // Hộp chạm 48 dp ôm vòng vẽ 44 dp (máy dò hộp chạm BottomTouchBoxTest: nút bấm được nào cũng >= 48 dp); chỗ chuyển phần tử chung vẫn là vòng 44 dp.
         Box(Modifier.padding(horizontal = Dim.s12 - 2.dp).size(Dim.s48).pressable { onToggle() }.semantics { contentDescription = if (state.playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 }.testTag("mini_play"), contentAlignment = Alignment.Center) {
             Box(sharedModifier(NowPlayingPart.Play).size(Dim.touch).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
@@ -131,9 +137,10 @@ fun MorphingMiniPlayer(
     onToggle: () -> Unit,
     onOpenNowPlaying: () -> Unit,
     modifier: Modifier = Modifier,
+    onDevices: (() -> Unit)? = null,
 ) {
     NowPlayingSource { bounds, part ->
-        MiniPlayer(state, positionMs, covers, onToggle, onOpenNowPlaying, modifier.then(bounds), part)
+        MiniPlayer(state, positionMs, covers, onToggle, onOpenNowPlaying, modifier.then(bounds), part, onDevices)
     }
 }
 

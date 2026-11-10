@@ -84,7 +84,7 @@ Item {
             Backend.library.revision++; tryVerify(function() { return Math.abs((page.list.contentY) - (before)) <= 1 })
             page.list.forceActiveFocus(); keyClick(Qt.Key_Right); compare(page.current, 1)
             Theme.reduceMotion = false
-            page.filter = "finished"; tryVerify(function() { return page.resultsOpacity > 0 && page.resultsOpacity < 1 })
+            page.filter = "finished"; tryVerify(function() { return page.resultProgress > 0 && page.resultProgress < 1 })
             tryCompare(page, "count", 0)
             page.destroy()
         }

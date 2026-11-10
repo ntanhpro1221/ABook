@@ -564,7 +564,6 @@ internal object S {
     const val s_chon_nguoi_noi_f64cfd5e = "Chọn người nói"
     const val s_chon_nhac_4e9b1d72 = "Chọn nhạc"
     const val s_chon_nhan_vat_xung_toi_trong_loi_ke_d47a6c20 = "Chọn nhân vật xưng “tôi” trong lời kể."
-    const val s_chon_noi_phat_8e4c4ed9 = "Chọn nơi phát"
     const val s_chon_tep_7d0d2f7b = "Chọn tệp"
     const val s_chon_the_loai_0b964b7a = "Chọn thể loại"
     const val s_chon_thu_muc_de_luu_truoc_8de01c85 = "Chọn thư mục để lưu trước"
@@ -1177,6 +1176,7 @@ internal object S {
     const val s_dang_noi_qua_wi_fi_nha_ebf18485 = "Đang nối qua Wi-Fi nhà"
     const val s_dang_phan_tich_ma_can_nghi_hay_dung_tam_du_ddbf5b3d = "Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng."
     const val s_dang_phat_ac2dd0c2 = "Đang phát"
+    fun s_dang_phat_tren_0_62a989a1(p0: Any?): String = "Đang phát trên " + p0.toString()
     fun s_dang_tai_0_1_0d39c288(p0: Any?, p1: Any?): String = "Đang tải " + p0.toString() + " · " + p1.toString() + "%"
     fun s_dang_tai_0_c19ce634(p0: Any?): String = "Đang tải " + p0.toString() + "%"
     const val s_dang_tai_465b1987 = "Đang tải"

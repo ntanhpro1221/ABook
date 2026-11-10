@@ -1,6 +1,8 @@
 package vn.abook.player.ui.screens
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,13 +14,7 @@ import vn.abook.player.ui.data.LibraryFilter
 import vn.abook.player.ui.data.LibrarySort
 import vn.abook.player.ui.motion.Motion
 
-/**
- * Trạng thái của màn Thư viện sống ở khung (ShellState) để rời tab / quay lại không mất: bộ lọc, cách xếp, ô tìm và ba giá trị chạy theo khung -
- * vạch hổ phách dưới bộ lọc ([position]), nội dung lưới trượt theo chiều bộ lọc ([slide]), ô tìm nở ra ([search]). Cả ba chỉ đọc trong pha vẽ / dàn trang.
- *
- * Đổi bộ lọc: vạch trượt sang chữ mới ngay, còn lưới trượt RA (90 ms) theo chiều ngón tay rồi đổi dữ liệu và trượt VÀO (220 ms) từ phía kia - chỉ dịch ngang,
- * không mờ. Lưới lười không giữ được hai bộ ô chồng nhau nên hai nửa nối tiếp (xem NATIVE_P1A_PROGRESS.md).
- */
+/** Library filter pages and their indicator share one continuous pager position. */
 @Stable
 class LibraryUiState(
     private val scope: CoroutineScope,
@@ -29,9 +25,8 @@ class LibraryUiState(
     var filter by mutableStateOf(LibraryFilter.All)
         private set
 
-    /** Bộ lọc của dữ liệu đang vẽ: theo [filter] sau nửa trượt ra. */
-    var shown by mutableStateOf(LibraryFilter.All)
-        private set
+    /** Selected page; each resident page builds content from its own filter. */
+    val shown: LibraryFilter get() = filter
 
     var sort by mutableStateOf(sort)
         private set
@@ -43,10 +38,9 @@ class LibraryUiState(
         private set
 
     /** Chỉ số bộ lọc theo đơn vị chữ (0f..3f): vị trí vạch hổ phách và độ đậm màu chữ. */
-    val position = Animatable(0f)
+    val pager = PagerState(pageCount = { LibraryFilter.entries.size })
+    val position = derivedStateOf { pager.currentPage + pager.currentPageOffsetFraction }
 
-    /** Dịch ngang của các ô bìa theo bề rộng lưới: 0 = đúng chỗ. */
-    val slide = Animatable(0f)
 
     /** Ô tìm: 0 = chỉ là biểu tượng, 1 = nở hết hàng. */
     val search = Animatable(0f)
@@ -56,17 +50,12 @@ class LibraryUiState(
 
     fun select(target: LibraryFilter) {
         if (target == filter) return
-        val direction = if (target.ordinal > filter.ordinal) 1f else -1f
         filter = target
         job?.cancel()
-        job = scope.launch {
-            launch { position.animateTo(target.ordinal.toFloat(), Motion.TabSlide) }
-            slide.animateTo(-direction, Motion.SlideOut)
-            shown = target
-            slide.snapTo(direction)
-            slide.animateTo(0f, Motion.SlideIn)
-        }
+        job = scope.launch { pager.animateScrollToPage(target.ordinal, animationSpec = Motion.TabSlide) }
     }
+
+    fun settled(page: Int) { filter = LibraryFilter.entries[page] }
 
     fun openMenu() {
         menuOpen = true

@@ -14,6 +14,11 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.rememberPresence
 import vn.abook.player.ui.theme.MotionMs
 import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,44 +158,51 @@ private fun LibraryGrid(
     recap: (@Composable (List<ListenBook>) -> Unit)?,
     onSortCoordinates: (LayoutCoordinates) -> Unit,
 ) {
-    val view = remember(books, ui.shown, ui.query, ui.sort) { Library.view(books, ui.shown, ui.query, ui.sort) }
-    val tiles = rememberPresence(view.tiles) { it.key }
     val widthDp = LocalConfiguration.current.screenWidthDp
     val columns = libraryColumns(widthDp)
     val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).dp
-    val gridWidthPx = with(LocalDensity.current) { widthDp.dp.toPx() }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = grid,
-        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid, startInset = top),
-        contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = Dim.s24),
-        horizontalArrangement = Arrangement.spacedBy(Dim.s12),
-        verticalArrangement = Arrangement.spacedBy(Dim.s16),
-    ) {
-        // Đầu trang + hàng lọc là MỘT ô: khoảng cách lưới (16) không cộng thêm vào lề dưới của đầu trang thành một khoảng trống lớn trên hàng lọc.
-        item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
-            Column {
-                // Số cuốn + Xếp theo + Tìm nằm ở hàng dưới tên, bộ lọc có CẢ bề ngang (360 dp: bốn chữ vừa một hàng, không chữ nào bị cuộn khuất - soát điện thoại thật 02-11).
-                ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
-                vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, books.size, onSortCoordinates) }
-            }
+    val selected = remember(books, ui.filter, ui.query, ui.sort) { Library.view(books, ui.filter, ui.query, ui.sort) }
+    LaunchedEffect(ui) { snapshotFlow { ui.pager.settledPage }.collect { ui.settled(it) } }
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxWidth().padding(top = top, start = Dim.margin, end = Dim.margin)) {
+            ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
+            vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
         }
-        if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
-        if (tiles.isEmpty()) {
-            item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
-                if (books.isEmpty()) Column {
-                    BasicText(S.s_chua_co_sach_tren_may_1b1ca653, style = Abook.type.sectionTitle)
-                    RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
-                    actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
-                } else NoMatch(ui.query.trim(), ui.filter)
-            }
-        } else {
-            items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
-                AnimatedVisibility(tile.visible, modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
-                    enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
-                    exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it / 4 }) {
-                    BookTile(tile.item, ui, covers, cell, gridWidthPx, sheets, actions)
+        HorizontalPager(state = ui.pager, beyondViewportPageCount = if (books.isEmpty()) 0 else 1,
+            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds().testTag("library_pages"),
+            key = { LibraryFilter.entries[it] }) { page ->
+            val filter = LibraryFilter.entries[page]
+            val view = remember(books, filter, ui.query, ui.sort) { Library.view(books, filter, ui.query, ui.sort) }
+            val tiles = rememberPresence(view.tiles) { it.key }
+            val pageGrid = if (page == 0) grid else rememberLazyGridState()
+            val active = page == ui.pager.currentPage
+            Box(Modifier.fillMaxSize().then(if (active) Modifier else Modifier.clearAndSetSemantics {})) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns), state = pageGrid,
+                // The fixed header already keeps this viewport below the status bar.
+                modifier = Modifier.fillMaxSize().then(if (active) Modifier.testTag("library_grid") else Modifier).fadeEdges(pageGrid, startInset = 0.dp),
+                contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s16, bottom = Dim.s24),
+                horizontalArrangement = Arrangement.spacedBy(Dim.s12), verticalArrangement = Arrangement.spacedBy(Dim.s16),
+            ) {
+                if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
+                if (tiles.isEmpty()) {
+                    item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
+                        if (books.isEmpty()) Column {
+                            BasicText(S.s_chua_co_sach_tren_may_1b1ca653, style = Abook.type.sectionTitle)
+                            RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
+                            actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
+                        } else NoMatch(ui.query.trim(), filter)
+                    }
+                } else {
+                    items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
+                        androidx.compose.animation.AnimatedVisibility(tile.visible, modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                            enter = androidx.compose.animation.fadeIn(tween(MotionMs.MEDIUM_OUT)) + slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 4 },
+                            exit = androidx.compose.animation.fadeOut(tween(MotionMs.MEDIUM_OUT)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { it / 4 }) {
+                            BookTile(tile.item, covers, cell, sheets, actions, active)
+                        }
+                    }
                 }
+            }
             }
         }
     }
@@ -213,16 +225,15 @@ private fun NoMatch(query: String, filter: LibraryFilter) {
     }
 }
 
-/** Một ô của lưới: bìa 2:3 (kèm dấu nguồn / số tập / vạch tiến độ), tên tối đa 2 dòng, dòng phụ. Trượt ngang theo bộ lọc qua [LibraryUiState.slide]. */
+/** Một ô của lưới: bìa 2:3 (kèm dấu nguồn / số tập / vạch tiến độ), tên tối đa 2 dòng, dòng phụ. The pager moves whole pages without deforming individual covers. */
 @Composable
 private fun BookTile(
     tile: ShelfTile,
-    ui: LibraryUiState,
     covers: CoverLoader,
     cell: Dp,
-    gridWidthPx: Float,
     sheets: SheetHost,
     actions: LibraryActions,
+    active: Boolean,
 ) {
     val view = LocalView.current
     val series = tile as? ShelfTile.Series
@@ -238,11 +249,10 @@ private fun BookTile(
     }
     Column(
         Modifier.fillMaxWidth()
-            .graphicsLayer { translationX = ui.slide.value * gridWidthPx }
             .pressable(onLongClick = onLong, onClick = onClick)
-            .testTag(if (series != null) "series_cell" else "book_cell"),
+            .then(if (active) Modifier.testTag(if (series != null) "series_cell" else "book_cell") else Modifier),
     ) {
-        Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).testTag("library_cover")) {
+        Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).then(if (active) Modifier.testTag("library_cover") else Modifier)) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.

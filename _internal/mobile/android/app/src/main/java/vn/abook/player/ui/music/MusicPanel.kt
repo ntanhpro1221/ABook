@@ -15,8 +15,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -211,8 +211,8 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
         FlowRow(Modifier.fillMaxWidth().padding(vertical = Dim.s4), horizontalArrangement = Arrangement.spacedBy(Dim.s24)) {
             AnimatedVisibility(
                 cue.pinned,
-                enter = expandHorizontally(tween(MotionMs.MEDIUM, easing = Motion.Decelerate), Alignment.Start) + fadeIn(tween(MotionMs.MEDIUM)),
-                exit = shrinkHorizontally(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate), Alignment.Start) + fadeOut(tween(MotionMs.FAST_OUT)),
+                enter = slideInHorizontally(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { -it / 8 } + fadeIn(tween(MotionMs.MEDIUM)),
+                exit = slideOutHorizontally(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)),
             ) {
                 CueAction(MusicText.ORIGINAL_LABEL, enabled, "music_cue_original") { music.pin(cue.key, null) }
             }
