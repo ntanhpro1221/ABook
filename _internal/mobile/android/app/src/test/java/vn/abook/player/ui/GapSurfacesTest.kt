@@ -51,7 +51,13 @@ class GapSurfacesTest {
         core.noticeState = StudioNoticeState(true, false)
         runBlocking { companion.refresh() }
         var opened = 0
-        theme(dark) { StudioScreen(companion = companion, openNotificationSettings = { opened++ }) }
+        theme(dark) {
+            val scope = rememberCoroutineScope()
+            val devices = remember { DevicesState(FakeDevicesSource().apply {
+                studio = listOf(StudioComputer("", "Máy tính", listenOnly = true))
+            }, scope) }
+            StudioScreen(companion = companion, devices = devices, openNotificationSettings = { opened++ })
+        }
         rule.onNodeWithText("Báo từ Studio").assertIsDisplayed()
         rule.onNodeWithText("Android đang chặn thông báo của ABook.").assertIsDisplayed()
         rule.onNodeWithTag("studio_notification_settings").performClick()

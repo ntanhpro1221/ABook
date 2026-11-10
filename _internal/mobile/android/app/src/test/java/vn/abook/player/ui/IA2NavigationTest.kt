@@ -39,8 +39,9 @@ class IA2NavigationTest {
                 val devices = remember { DevicesState(devicesSource, scope) }
                 val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) } }
                 val hub = remember { StudioHub(source, scope) }
+                val companion = remember { CompanionRepo(FakeCompanionCore()) { 1_000L } }
                 AppShell(shell, LibraryState.Ready(emptyList()), player, CoverLoader(1 shl 20),
-                    SettingsEnv(settings, ThemeReveal(scope), devices = devices), studio = hub, sampleClock = false)
+                    SettingsEnv(settings, ThemeReveal(scope), devices = devices), companion = companion, studio = hub, sampleClock = false)
             }
         }
     }
@@ -56,6 +57,7 @@ class IA2NavigationTest {
         var taps = 0
         rule.onNodeWithTag("tab_studio").performClick(); taps++
         rule.onNodeWithTag("studio_book_b1").assertIsDisplayed()
+        rule.onNodeWithTag("studio_notices").assertExists()
         assertEquals(1, taps)
         assertEquals(0, shell.nav.stack.size)
         rule.onNodeWithTag("studio_open").assertDoesNotExist()
@@ -108,6 +110,7 @@ class IA2NavigationTest {
         assertEquals(0, shell.nav.stack.size)
         rule.onNodeWithTag("studio_computer_").performClick()
         rule.onNodeWithTag("studio_retry").assertIsDisplayed()
+        rule.onNodeWithTag("studio_notices").assertExists()
         assertEquals(0, shell.nav.stack.size)
     }
 
@@ -115,6 +118,9 @@ class IA2NavigationTest {
         show(computers = 0, dark = true)
         rule.onNodeWithTag("tab_studio").performClick()
         rule.onNodeWithTag("studio_connect").assertIsDisplayed()
+        rule.onNodeWithTag("studio_notices").assertDoesNotExist()
+        rule.onNodeWithTag("studio_alerts").assertDoesNotExist()
+        rule.onNodeWithText("Nối máy tính để làm sách nói và xem tiến độ.").assertIsDisplayed()
         rule.onRoot().captureRoboImage("src/test/snapshots/shell_studio_dark.png")
         rule.onNodeWithTag("studio_connect").performClick()
         assertEquals(Destination.Settings(SettingsGroup.Devices), shell.nav.stack.top?.destination)

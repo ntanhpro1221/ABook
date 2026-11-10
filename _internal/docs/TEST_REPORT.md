@@ -1699,3 +1699,8 @@ Gallery: light/dark, 360 dp, 130% text, list and bands on all three platforms; e
 PlayerRepo now tracks identity tokens for visible Activity instances. Starting B before stopping A keeps one core listener; duplicate starts/stops are idempotent and the last owner releases it. NativeActivity owns a token without retaining the Activity in the shared repo. AppShell only clears its own SettingsRepo.openAdvanced callback. PrepareState already counts watchers, AndroidPrepareSource removes its own listener, and device/export links already check identity before cleanup.
 
 Validation: PlayerRepoTest 28 tests passed, including two overlapping-owner regressions. Restoring the old boolean behavior while retaining the test API caused exactly those two tests to fail (listener count 0 instead of 1). Physical-device bootstrap and the complete JVM suite are recorded in the external oppofix result.
+
+
+## Unpaired native Studio (2026-11-10)
+
+The Studio tab only offers notification preferences after a computer has been paired. An unpaired phone shows its header, one connection hint and the Connect computer action. Paired and listen-only computers retain their notification controls. IA2NavigationTest now supplies a CompanionRepo; omitting it previously hid the faulty branch in tests. Five cases passed; restoring the old condition makes the unpaired case fail on studio_notices. Web desktop App.tsx/StudioClosed and Qt StudioScreen.qml were inspected: both use the local Studio or an existing remote computer and have no unpaired-phone notification opt-in block. No web or Qt source change was necessary.
