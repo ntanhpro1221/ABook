@@ -91,11 +91,15 @@ class _Shared:
         self.words = frozenset(data["words"])
         self.strong = frozenset(data["strong"])
         self.before_english = frozenset(data["before_english"])
+        self.before_english_borrowings = {word: frozenset(following) for word, following in data["before_english_borrowings"].items()}
         self.nouns = frozenset(data["nouns"])
         self.echo = frozenset(data["echo"])
         self.pairs = frozenset((first, second) for first, second in data["pairs"])
+        self.clause_before_english = {word: frozenset(following) for word, following in data["clause_before_english"].items()}
         self.sentinels = tuple(data["sentinels"])
-        self.listed = self.words | self.echo | {word for pair in self.pairs for word in pair}
+        # Only shared dictionary words are targets; Vietnamese-only partners are evidence.
+        self.listed = self.words | self.echo | frozenset(data["pair_words"])
+        self.pair_only = frozenset(data["pair_only_words"])
         self.never_toneless = ENGLISH_ONLY | WEAK | FUNCTION | SINGLE | self.listed
         self.english = ENGLISH_ONLY | FUNCTION
         self.find = re.compile(r"(?<![\w'’])(?:" + "|".join(sorted(self.listed)) + r")(?![\w'’])", re.IGNORECASE)
@@ -147,7 +151,7 @@ def vietnamese_shared(text: str, capitals: frozenset[str] = frozenset()) -> list
     (_internal/docs/TEXT_NORMALIZATION.md): a Vietnamese word right after it;
     a Vietnamese word right before it unless an English word follows; a word
     that is a Vietnamese verb or preposition far more often than anything else
-    standing between names; written laughter; a compound of two shared words.
+    standing between names; written laughter; a measured Vietnamese compound.
     A word inside <en>, beside one, or written with a capital mid-sentence is
     never claimed.
     """
@@ -180,7 +184,7 @@ def vietnamese_shared(text: str, capitals: frozenset[str] = frozenset()) -> list
                 found = "E"
             elif not word or word in capitals:
                 found = "n"
-            elif word in shared.listed:
+            elif word in shared.listed and word not in shared.pair_only:
                 found = "s"
             elif not word.isascii():
                 found = "V" if vietnamese(word) else "o"
@@ -194,7 +198,7 @@ def vietnamese_shared(text: str, capitals: frozenset[str] = frozenset()) -> list
         return kinds[index]
 
     listed = [index for index, word in enumerate(words) if word in shared.listed]
-    open_ = [index for index in listed if kind(index) == "s"]
+    open_ = [index for index in listed if words[index] not in capitals and not explicit[index]]
     proven: set[int] = set()
 
     def side(index: int, step: int) -> int | None:
@@ -222,15 +226,21 @@ def vietnamese_shared(text: str, capitals: frozenset[str] = frozenset()) -> list
                 if vietnamese_at(right):
                     found = not (word in shared.nouns and beside[0] == "e")  # "Lost Day là", "Big Bang ấy"
                 elif vietnamese_at(left):
-                    found = beside[1] in ("", "n", "s") or word in shared.before_english  # "leo rank", not "rất so cute"
+                    found = (beside[1] in ("", "n", "s") or word in shared.before_english
+                             or (right is not None and words[right] in shared.before_english_borrowings.get(word, ())))
                 elif word in shared.strong and accented:
                     # "Julius sang Emily", "do Kaori"; not "say goodbye", not a bare "So, ..."
                     found = "e" not in beside and ("n" in beside or "o" in beside)
             if not found and word in shared.echo:
                 found = any(0 <= other < len(words) and words[other] == word for other in (index - 1, index + 1))
             if not found:
-                found = ((right is not None and (word, words[right]) in shared.pairs)
-                         or (left is not None and (words[left], word) in shared.pairs))
+                found = ((right is not None and kind(right) != "n" and (word, words[right]) in shared.pairs)
+                         or (left is not None and kind(left) != "n" and (words[left], word) in shared.pairs))
+            if not found and left is None and right is not None and words[right] in shared.clause_before_english.get(word, ()):
+                # A measured borrowed noun, not an arbitrary English imperative ("Do exercise đi").
+                following = side(right, 1)
+                found = (kind(right) == "e" and following is not None and not words[following].isascii()
+                         and kind(following) == "V")
             if found:
                 proven.add(index)
                 changed = True

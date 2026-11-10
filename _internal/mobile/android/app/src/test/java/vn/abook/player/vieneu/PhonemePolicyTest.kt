@@ -25,8 +25,7 @@ class PhonemePolicyTest {
     @Test fun theSentenceDecidesWhichSharedWordsAreVietnamese() {
         val data = JSONObject(File("../../../abook/readaloud/english_policy.json").readText(Charsets.UTF_8)).getJSONObject("shared_vietnamese")
         fun list(key: String) = data.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }
-        val pairs = data.getJSONArray("pairs")
-        val listed = (list("words") + list("echo") + (0 until pairs.length()).flatMap { i -> listOf(pairs.getJSONArray(i).getString(0), pairs.getJSONArray(i).getString(1)) }).toSet()
+        val listed = (list("words") + list("echo") + list("pair_words")).toSet()
         val word = Regex("(<en>.*?</en>)|([\\p{L}\\p{N}_]+(?:['’][\\p{L}\\p{N}_]+)*)")
         val cases = sharedCases()
         assertTrue(cases.length() >= 30)

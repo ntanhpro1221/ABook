@@ -31,11 +31,19 @@ object PhonemePolicy {
         val words = list("words").toSet()
         val strong = list("strong").toSet()
         val beforeEnglish = list("before_english").toSet()
+        val beforeEnglishBorrowings = data.getJSONObject("before_english_borrowings").let { obj -> obj.keys().asSequence().associateWith { key ->
+            obj.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
+        } }
         val nouns = list("nouns").toSet()
         val echo = list("echo").toSet()
         val pairs = data.getJSONArray("pairs").let { a -> (0 until a.length()).map { a.getJSONArray(it).getString(0) to a.getJSONArray(it).getString(1) }.toSet() }
+        val clauseBeforeEnglish = data.getJSONObject("clause_before_english").let { obj -> obj.keys().asSequence().associateWith { key ->
+            obj.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
+        } }
         val sentinels = list("sentinels")
-        val listed = words + echo + pairs.flatMap { listOf(it.first, it.second) }
+        // Only shared dictionary words are targets; Vietnamese-only partners are evidence.
+        val listed = words + echo + list("pair_words")
+        val pairOnly = list("pair_only_words").toSet()
         val english = EnglishPolicy.context("only") + EnglishPolicy.context("function")
         val neverToneless = english + EnglishPolicy.context("weak") + EnglishPolicy.context("letters") + listed
         val find = Regex("(?<![$W'’])(?:" + listed.sorted().joinToString("|") + ")(?![$W'’])", RegexOption.IGNORE_CASE)
@@ -121,7 +129,7 @@ object PhonemePolicy {
             when {
                 explicit[index] -> 'E'
                 word.isEmpty() || word in capitals -> 'n'
-                word in shared.listed -> 's'
+                word in shared.listed && word !in shared.pairOnly -> 's'
                 !ascii(word) -> if (EnglishPolicy.vietnamese(word)) 'V' else 'o'
                 accented && word.length > 1 && word !in shared.neverToneless && EnglishPolicy.vietnamese(word) -> 'V'  // "quay", "con", "ninh"
                 word in shared.english || (word.all(Char::isLetter) && word in EnglishWords.ALL) -> 'e'
@@ -130,7 +138,7 @@ object PhonemePolicy {
         }
 
         val listed = words.indices.filter { words[it] in shared.listed }
-        val open = listed.filter { kind(it) == 's' }
+        val open = listed.filter { words[it] !in capitals && !explicit[it] }
         val proven = mutableSetOf<Int>()
         fun side(index: Int, step: Int): Int? {
             val other = index + step
@@ -151,12 +159,18 @@ object PhonemePolicy {
                 var found = false
                 if (word in shared.words) {
                     if (vietnameseAt(right)) found = !(word in shared.nouns && beside[0] == 'e')  // "Lost Day là", "Big Bang ấy"
-                    else if (vietnameseAt(left)) found = beside[1] in " ns" || word in shared.beforeEnglish  // "leo rank", not "rất so cute"
+                    else if (vietnameseAt(left)) found = beside[1] in " ns" || word in shared.beforeEnglish ||
+                        (right != null && words[right] in (shared.beforeEnglishBorrowings[word] ?: emptySet()))
                     // "Julius sang Emily", "do Kaori"; not "say goodbye", not a bare "So, ..."
                     else if (word in shared.strong && accented) found = 'e' !in beside && ('n' in beside || 'o' in beside)
                 }
                 if (!found && word in shared.echo) found = listOf(index - 1, index + 1).any { it in words.indices && words[it] == word }
-                if (!found) found = (right != null && (word to words[right]) in shared.pairs) || (left != null && (words[left] to word) in shared.pairs)
+                if (!found) found = (right != null && kind(right) != 'n' && (word to words[right]) in shared.pairs) || (left != null && kind(left) != 'n' && (words[left] to word) in shared.pairs)
+                if (!found && left == null && right != null && words[right] in (shared.clauseBeforeEnglish[word] ?: emptySet())) {
+                    // A measured borrowed noun, not an arbitrary English imperative ("Do exercise đi").
+                    val following = side(right, 1)
+                    found = kind(right) == 'e' && following != null && !ascii(words[following]) && kind(following) == 'V'
+                }
                 if (found) {
                     proven.add(index)
                     changed = true
