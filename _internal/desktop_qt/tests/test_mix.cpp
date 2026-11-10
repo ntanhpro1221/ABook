@@ -578,8 +578,9 @@ private slots:
         QVERIFY(rig.device->resets > resets); QCOMPARE(rig.device->queued, size_t(1440 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->consume(rig.device->queued); rig.mixer.service(0); QVERIFY(!rig.device->running);
-        QCOMPARE(playing.size(), 2); QCOMPARE(playing[1][0].toBool(), false); QCOMPARE(voice.position(), 5.05);
-        voice.play(); rig.mixer.serviceReader(); rig.serve(480); QCOMPARE(voice.position(), 5.05);
+        QCOMPARE(playing.size(), 2); QCOMPARE(playing[1][0].toBool(), false);
+        QCOMPARE(voice.position(), 5.08); // chỗ dừng là hết đuôi đã ra loa (20 ms tới pivot + 10 ms mờ): nghe tiếp không phát lại đuôi
+        voice.play(); rig.mixer.serviceReader(); rig.serve(480); QCOMPARE(voice.position(), 5.08);
         voice.seek(voice.duration() - 0.01); rig.mixer.service(0); rig.mixer.serviceReader();
         rig.serve(1024); QCOMPARE(ended.size(), 0); // đuôi còn nằm trong thiết bị
         rig.device->consume(rig.device->queued); rig.mixer.service(0); QCoreApplication::processEvents();

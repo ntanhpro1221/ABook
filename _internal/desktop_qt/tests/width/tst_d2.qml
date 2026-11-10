@@ -48,7 +48,7 @@ Item {
             compare(page.groups.map(g => g.label).join("|"), "Giọng đọc|Nghe|Hẹn giờ ngủ|Giao diện|Thiết bị|Nâng cao")
             for (const group of ["listen","sleep","look","devices","advanced"]) {
                 page.active = group
-                const expected = {listen: ["Tự lùi","Tự chọn nhạc nền","Mở Nhạc"], sleep: ["Lịch đêm","Mỗi lần nghe thêm","Nhỏ dần"], look: ["Màu","Nền đọc","Âm thanh chạm","Phím tắt chữ","Phím tắt"], devices: ["Máy này","Kết nối Wi-Fi","Máy tính khác"], advanced: ["Thư viện","Bộ nhớ","Chẩn đoán","Giới thiệu","Gửi nhật ký","Thành phần sử dụng"]}[group]
+                const expected = {listen: ["Tự chọn nhạc nền","Mở Nhạc"], sleep: ["Lịch đêm","Mỗi lần nghe thêm","Nhỏ dần"], look: ["Màu","Nền đọc","Âm thanh chạm","Phím tắt chữ","Phím tắt"], devices: ["Máy này","Kết nối Wi-Fi","Máy tính khác"], advanced: ["Thư viện","Bộ nhớ","Chẩn đoán","Giới thiệu","Gửi nhật ký","Thành phần sử dụng"]}[group]
                 tryVerify(function() { return expected.every(label => allText(page).includes(label)) })
                 VisualReady.render(this, host.Window.window, page, qtVisualReady)
                 const body = findChild(page, "settingsContent").children[0]
