@@ -14,7 +14,8 @@ object EnglishPolicy {
     const val PROVENANCE = BuildConfig.ENGLISH_READING_PROVENANCE
     val ACRONYMS = BuildConfig.ENGLISH_ACRONYMS.split(" ").toSet()
     private val preserveAcronyms = BuildConfig.PRESERVE_ACRONYMS.split(" ").toSet()
-    private fun context(key: String): Set<String> =
+    internal val sharedVietnamese by lazy { policy.getJSONObject("shared_vietnamese") }
+    internal fun context(key: String): Set<String> =
         policy.getJSONObject("context").getJSONArray(key).let { a -> (0 until a.length()).map(a::getString).toSet() }
     private val englishOnly by lazy { context("only") }
     private val weak by lazy { context("weak") }

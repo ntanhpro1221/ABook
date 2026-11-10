@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
   "preserve_acronyms": ["UBND", "CLB", "VND", "THPT", "THCS", "GVCN", "TP", "HCM", "VIP", "TV", "OK"],
