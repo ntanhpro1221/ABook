@@ -103,12 +103,26 @@ digest and the prompt, JSON schema, eight questions per call. It answers two kin
 - **each roster name**: Vietnamese, Japanese, Korean or other. A Vietnamese name ("An", "Long", "Sơn" typed "Son")
   is read Vietnamese when written as a name, when in doubt in prose, or when it opens a sentence with no English
   word after it ("An An.", "Ban?"). A Japanese or Korean name gets its own romanization reading, name by name:
-  "Chiaki" in a book of unknown origin, "Jieun" in a Japanese book. "Other" changes nothing.
+  "Chiaki" in a book of unknown origin, "Jieun" in a Japanese book. An "other" (Western) name whose spelling is a
+  valid Vietnamese syllable - "Dan", "Tom", "Ben", "Ken", "Sam", "Tim" - is kept as `foreign` and read in English
+  wherever it is written as a name (next section but one); any other Western name changes nothing, sea-g2p reads it
+  in English already.
 
 The answers are stored in the project (`shared_rulings.json`) and travel in the `.abook` as `sharedWords` of
 `book.json` ([ABOOK_FILE_FORMAT.md](ABOOK_FILE_FORMAT.md)), so the phone and the PC player apply them without a model.
 An occurrence is keyed by its two words on each side (`shared_word_contexts`), so the same answer is found again
 wherever the same words meet. A book with rulings puts a `w` + 16 hex tag in its clip keys.
+
+**A Western name spelled like a Vietnamese syllable** (koeun, 2026-11-10). The owner heard "Dan!" - a Western
+character - read /zˈaːn/. sea-g2p has no English entry for such a word even inside `<en>`, and the table cannot know
+whose name it is; the roster can. `shared_rulings.foreign_names` keeps the single words of names tier 2 called
+"other" that pass `is_vietnamese_syllable`, unless a Vietnamese character of the book carries the same word.
+`phoneme_policy.written_names` (= `PhonemePolicy.writtenNames`) finds where the word stands as a name (a capital,
+also at a sentence start; a closing quote may follow: "‘Giant Leo’"), and `english_names` asks sea-g2p for the
+possessive ("dan's" /dˈænz/, which it does read in English) and drops the closing /z/ or /s/. If the answer still
+carries a Vietnamese tone mark the word is left alone. Lower-case "dan" in prose is never touched. On the sixth
+sample (1,210 rows, roster names simulated per series): Western names kept English 56/58 -> 57/58, Vietnamese words
+read English 22/381 unchanged, English kept 497/499 unchanged; the row still lost is lower-case "giant leo".
 
 **Listen-now** (a text-only book that never went through Studio) has tier 1 only: "An An." and "Do trans sắp thi."
 read English there, and a name is read by the book-level guess as before.

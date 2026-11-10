@@ -63,9 +63,10 @@ Optional, any version, written by Studio only when it has something to say (`rea
 [SHARED_WORDS.md](SHARED_WORDS.md)). A reader without it, or one that finds another `version`, decides by its own table.
 
 ```json
-"sharedWords": {"version": 1,
+"sharedWords": {"version": 2,
                 "contexts": {"^|do|trans sắp": "v", "của guild|say|xỉn ^": "v"},
                 "names": ["an", "long"],
+                "foreign": ["dan", "tom"],
                 "readings": {"Chiaki": "Chi-a-ki"}}
 ```
 
@@ -73,6 +74,10 @@ Optional, any version, written by Studio only when it has something to say (`rea
   `<two words before>|<word>|<two words after>`, lower case, NFC, `^` at a sentence edge
   (`phoneme_policy.shared_word_contexts` = `PhonemePolicy.sharedWordContexts`).
 - `names`: lower-case shared words that are Vietnamese names of this book's characters.
+- `foreign` (version 2, required, may be empty): lower-case ASCII words that are names of this book's Western
+  characters and are spelled like a Vietnamese syllable ("Dan", "Tom", "Ben"). Written as a name (capital, or opening
+  a sentence) the word is read in English, /dˈæn/; the lower-case prose word ("dan tay") stays Vietnamese. Version 1
+  had no such list; a version 1 object is "another version" and is not read.
 - `readings`: `{shown name: spoken form}` for names read by their own origin; same matching as `readings` of
   `edits.json`, and a listener's own reading of the same word wins.
 
