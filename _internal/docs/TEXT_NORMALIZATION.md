@@ -500,3 +500,37 @@ Chuỗi nói và chuỗi chuẩn hoá trùng từng byte trên 1.310 cửa sổ 
 best 1,161 -> 1,068 ms/câu; median 1,258 -> 1,275 ms/câu (+1,4%), dưới trần +20%. Không suy mức giảm best thành tăng tốc chắc
 chắn vì máy có tải nền. Ước lượng có trọng số (lần đọc Anh, gồm cả Anh/tên thật, không phải số lỗi): pool cũ 4.313 -> 4.290;
 pool g2pvi dư 1: 3.768 -> 3.722; pool thứ ba: 11.197 -> 11.149. Không cộng ba pool hay so tỷ lệ giữa các pool để suy hiệu quả.
+
+## 7. Từ mượn đã có cách đọc Việt quen (11-11)
+
+Phán quyết chủ sách 10-11: "quán net" phải nghe là "nét". Từ mượn mà người Việt đã có MỘT cách đọc quen thì viết lại thành âm
+tiết Việt trước khi ra âm vị, với mọi giọng; không bọc `<en>`. Bảng nằm ở `abook/readaloud/english_policy.json` (`loanwords`,
+một file cho Python `names.py` và Kotlin `Names.kt`), ca chung ở `tests/fixtures/readaloud/loanwords/cases.json`.
+
+- **Nhận một từ khi** (a) có một cách đọc Việt hoá phổ biến, và (b) trong văn bản Việt nó gần như luôn mang nghĩa mượn. Từ
+  trượt (b) không vào bảng: `like` chỉ 57,6% lần viết thường đứng theo trật tự Việt, phần còn lại là câu Anh thật.
+- **Viết thường và VIẾT HOA cả chữ** (nhấn mạnh: "bị admin BAN nick") đọc Việt. Lượt này chạy trước bảng viết tắt, nên chữ
+  IN HOA trùng bảng từ mượn không bị đánh vần.
+- **Hoa chữ đầu:** đầu câu là từ thường ("Game này hay"); giữa câu là tên riêng, giữ nguyên ("gặp Net"), trừ các từ ở
+  `loanword_capitals` (Internet, Wifi, Level, Admin). Hoa chữ đầu mà chữ sau cũng Latin viết Hoa là nhan đề/tên ("Code
+  Breaker", "Game Master"). Từ ở `loanword_names` (nick, nylon, motor) hoa chữ đầu luôn là tên, kể cả đầu câu.
+- **Trong cụm Anh thì giữ Anh:** từ đứng trong một chuỗi có ít nhất một từ Anh thật kề nó ("game over", "the net", "Ban the
+  bomb", "I like you"). Âm tiết Việt không dấu ("xem", "hay", "tay") không nối chuỗi; chỉ "a" và "I" được nối.
+- **Một chữ cái Hoa làm mật danh** ("thấy Y ở đây", "ông X", "tên K") đọc tên chữ cái tiếng Anh; "y" thường và "Y" đầu câu
+  vẫn là đại từ.
+- "Lv 5" và "level 5" đọc như nhau ("le-vồ 5"). Policy/cache 5 -> 6, luật clip 15; không migrate.
+
+Đo trên mẫu kho (truyện gốc + `_gold` + 1/10 `_full` nhân 10; 56.490 file; 803.235 lần xuất hiện có trọng số của các từ
+trong bảng, không tính "ban" vốn là chữ Việt). Mốc trước `5820f3232`, sau `da852c492`:
+
+| Đường | Đọc Việt trước -> sau | Bọc `<en>` trước -> sau | Giữ nguyên chữ sau |
+|---|---|---|---|
+| VieNeu (direct) | 1.379 -> 732.457 (91,2%) | 9.292 -> 553 | 69.122 |
+| Giọng khác (plain) | 202.892 -> 732.457 | - | 69.694 |
+
+Mẫu 200 lần đổi (hash cố định, tự chấm, chủ sách chưa chấm): 0 lần đổi sai. Bộ nhãn foreignword (thiết kế, giữ lại) và g2pvi
+(giữ lại mới), 898 ca: 2 ca đổi, đều là "net" nhãn Anh cũ nay thành "nét" theo phán quyết; nhãn Việt, tên, romaji không đổi ca nào.
+
+**Còn sai, đã biết:** cụm lai theo trật tự Việt mà từ sau là chữ Anh giữ nguyên cả cụm ("game mobile", "file video", "farm
+boss", "board game") - phần lớn của 69.122 lần giữ nguyên. "team" -> "tim" trùng âm "tim" (trái tim). sea-g2p đọc "min" trong
+"át-min" bằng /ɪ/ ngắn. Tên riêng trùng từ mượn đứng đầu câu, ngoài `loanword_names`, vẫn bị đọc như từ thường.
