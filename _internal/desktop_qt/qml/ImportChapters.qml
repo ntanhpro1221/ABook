@@ -57,7 +57,7 @@ Item {
 
     // Hàng trôi ra ngoài khung cuộn thì không vẽ icon của nó (Shape của bộ vẽ phần mềm không theo khung cắt)
     function inside(top, size) { return top >= view.contentY && top + size <= view.contentY + view.height }
-    Text { id: digitProbe; visible: false; text: "0".repeat(root.digits); font.pixelSize: Theme.sizeCaption; font.features: { "tnum": 1 } }
+    Text { id: digitProbe; visible: false; text: "0".repeat(root.digits); font.pixelSize: Theme.sizeCaption; font.features: { "tnum": 1 } }   // tnum-ok: cột số của bảng
 
     Flickable {
         id: view
@@ -109,7 +109,7 @@ Item {
                         text: row.index + 1
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
-                        font.features: { "tnum": 1 }
+                        font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                         lineHeight: 20
                         lineHeightMode: Text.FixedHeight
                         height: 20
@@ -220,7 +220,7 @@ Item {
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeCaption
-                            font.features: { "tnum": 1 }
+                            font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                             topPadding: 2
                         }
                     }

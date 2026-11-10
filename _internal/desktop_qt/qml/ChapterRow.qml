@@ -110,7 +110,6 @@ Interactive {
         color: Theme.text3
         horizontalAlignment: Text.AlignRight
         font.pixelSize: Theme.sizeCaption
-        font.features: { "tnum": 1 }
     }
     IconButton {
         id: more

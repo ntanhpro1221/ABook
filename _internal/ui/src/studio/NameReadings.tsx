@@ -270,7 +270,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
             </>
           )}
         </div>
-        <div className="tabular text-xs text-fg-2">
+        <div className="text-xs text-fg-2">
           {fresh
             ? reach
               ? reachSummary(reach)

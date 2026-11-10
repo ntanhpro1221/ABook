@@ -548,7 +548,7 @@ export function TabLabel({ count, children }: { count?: number; children: ReactN
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
       <MotionRegion as="span" className="inline-flex" motionKey={count ?? null}>{count !== undefined && (
-        <span className="tabular text-xs font-normal text-fg-2">
+        <span className="text-xs font-normal text-fg-2">
           <span className="sr-only">, </span>
           {count}
           <span className="sr-only">{S.s_muc_7fbec4ee}</span>
@@ -980,7 +980,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   return (
     <div className="min-w-0">
       <div className="text-xs font-medium text-fg-3">{label}</div>
-      <div className="tabular mt-1 truncate text-xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-1 truncate text-xl font-semibold tracking-tight">{value}</div>
       {hint && <div className="mt-0.5 truncate text-xs text-fg-2">{hint}</div>}
     </div>
   );
@@ -1066,7 +1066,7 @@ export function TimeSelect({
     <Select inline aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
       onPointerDown={(event) => { if (ariaDisabled) event.preventDefault(); }}
       onKeyDown={(event) => { if (ariaDisabled && event.key !== "Tab") event.preventDefault(); }}
-      onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("tabular aria-disabled:opacity-50", className)}>
+      onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("aria-disabled:opacity-50", className)}>
       {options.map((time) => (
         <option key={time} value={time}>
           {time}

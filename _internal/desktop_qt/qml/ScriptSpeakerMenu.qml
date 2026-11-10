@@ -157,7 +157,6 @@ Column {
                 text: Studio.formatNumber(option.person.lines || 0)
                 color: Theme.text3
                 font.pixelSize: Theme.sizeCaption
-                font.features: {"tnum": 1}
             }
         }
     }

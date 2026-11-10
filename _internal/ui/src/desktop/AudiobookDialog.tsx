@@ -51,7 +51,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} size="sm" running label={S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc} />
-          <span className="tabular shrink-0 text-xs text-fg-2">{status.retrying ? `${RETRYING_NOTE} ${ffmpegPercent(status)}%` : `${ffmpegPercent(status)}%`}</span>
+          <span data-motion-live className="shrink-0 text-xs text-fg-2">{status.retrying ? `${RETRYING_NOTE} ${ffmpegPercent(status)}%` : `${ffmpegPercent(status)}%`}</span>
           <Button size="sm" variant="ghost" onClick={onStop}>{S.s_dung_11554138}</Button>
         </div>
       ) : remote ? (

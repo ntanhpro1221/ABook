@@ -202,7 +202,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
           </MotionRegion>
           <MotionPresence open={Boolean(reach && reach.surface === word)}>
             {reach && (
-              <p className={cn("tabular mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
+              <p className={cn("mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
                 {reachSummary(reach, later)}
               </p>
             )}

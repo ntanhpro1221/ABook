@@ -674,7 +674,7 @@ export function AddBookDialog({
           </label>
           {preview.author && <p className="mt-1.5 text-sm text-fg-2">{S.s_tac_gia_3fe05994}{preview.author}</p>}
           <SectionHeading as="h3" className="mt-2">{S.s_chuong_2d157977}</SectionHeading>
-          <div className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
             <span>
               <span className="font-semibold text-fg">
                 {totals.chapters}

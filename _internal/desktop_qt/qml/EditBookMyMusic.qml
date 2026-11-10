@@ -152,7 +152,7 @@ Column {
             readonly property bool calm: !root.module || (root.module.state === "ready" && !root.module.analysing && !root.module.restart && (root.module.stale || 0) === 0)
             open: root.tracks.length > 0 && !calm
             spacing: 6
-            HintText { width: parent.width; font.features: {"tnum": 1}; text: root.module ? Music.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
+            ClockLabel { width: parent.width; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.3; text: root.module ? Music.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
             MoreInfo {
                 width: parent.width
                 label: S.s_phan_tich_nhac_a0082a10

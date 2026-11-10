@@ -272,7 +272,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
         <div className="label-section text-fg-2">{S.s_dang_nghe_9310d8cf}</div>
         <h2 className="mt-2 break-words text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
-        <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
+        <MotionRegion as="p" className="mt-1 break-words text-sm text-fg-2">
           {where}
           {current ? (playingHere ? S.s_dang_phat_e6ea5044 : S.s_tam_dung_4b55ce49) : last ? <TickingValue>{S.s_nghe_lan_cuoi_0_d055df7b(formatWhen(last.at))}</TickingValue> : ""}
         </MotionRegion>

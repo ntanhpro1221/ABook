@@ -150,14 +150,14 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
             <>
               <div className="flex items-center gap-2">
                 <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={S.s_tien_do_0_bebc77d0(book.title)} />
-                <span className="tabular w-9 text-right text-xs font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
+                <span className="w-9 text-right text-xs font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
               </div>
               <div className="mt-1 line-clamp-2 text-xs text-fg-2"><TickingValue>{detail}</TickingValue></div>
             </>
           )}
         </MotionRegion>
         <div
-          className={cn("project-updated tabular hidden text-right text-xs transition-opacity duration-motion-fast group-focus-within:opacity-0 group-hover:opacity-0 xl:block text-fg-2")}
+          className={cn("project-updated tabular-cell hidden text-right text-xs transition-opacity duration-motion-fast group-focus-within:opacity-0 group-hover:opacity-0 xl:block text-fg-2")}
         >
           {/* Trạng thái đã ở cột Trạng thái - cột này chỉ nói lúc nào (soát 24-10: "đang chạy" lặp lại "Đang thu âm"). */}
           {live ? S.s_vua_xong_b46f7a2b : formatRelative(book.updatedAt)}

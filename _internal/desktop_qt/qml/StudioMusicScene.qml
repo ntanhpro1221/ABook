@@ -42,7 +42,7 @@ Column {
         width: parent.width
         height: root.wide ? Math.max(32, cell.height) + 2 * root.pad
                           : root.pad + Math.max(timeText.height, mood.height) + 6 + cell.height + 6 + buttons.height + root.pad
-        Text {
+        ClockLabel {
             id: timeText
             objectName: "sceneTime"
             y: root.wide ? root.pad + (Math.max(32, cell.height) - height) / 2 : root.pad
@@ -50,7 +50,6 @@ Column {
             text: Logic.sceneRange(root.scenes, root.position)
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
-            font.features: {"tnum": 1}
             wrapMode: Text.Wrap
         }
         Row {

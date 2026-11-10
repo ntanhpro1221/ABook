@@ -17,7 +17,6 @@ FormField {
     horizontalAlignment: TextEdit.AlignHCenter
     invalid: bad
     inputMethodHints: Qt.ImhDigitsOnly
-    font.features: { "tnum": 1 }
     function commitNow() {
         const raw = text.trim()
         if (mode === "edit" && raw === String(value)) return

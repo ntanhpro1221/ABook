@@ -7,7 +7,8 @@ import QtQuick
 Text {
     id: root
     property var reserve: []
-    font.features: {"tnum": 1}
+    property bool tabular: true
+    font.features: tabular ? ({"tnum": 1}) : ({})
     FontMetrics { id: metrics; font: root.font }
     readonly property real reservedWidth: {
         root.font

@@ -71,18 +71,17 @@ Column {
                         x: 4.76
                         objectName: "pairingCode"
                         Accessible.name: S.s_ma_ghep_noi_c00b217d + (root.sync.pairing ? root.sync.pairing.code.split("").join(" ") : "")
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76; font.features: {"tnum": 1} }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76 }
                         Item { width: 12; height: 1 }
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76; font.features: {"tnum": 1} }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76 }
                     }
-                    Text {
+                    ClockLabel {
                         objectName: "pairingExpiry"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
                         text: S.s_het_han_sau_34497ee1 + Math.floor(root.secondsLeft / 60) + ":" + String(root.secondsLeft % 60).padStart(2, "0")
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
-                        font.features: {"tnum": 1}
                     }
                 }
             }

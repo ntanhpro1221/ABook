@@ -81,7 +81,7 @@ export function SwapTrack({
         <li key={item.link} className="flex items-center gap-3 px-3 py-2">
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm">{item.title}</div>
-            <div className="tabular truncate text-xs text-fg-2">
+            <div className="truncate text-xs text-fg-2">
               {[item.creator, item.duration ? formatClock(item.duration) : ""].filter(Boolean).join(" · ")}
             </div>
             {mineNote(item) && <div className="text-xs text-fg-2">{mineNote(item)}</div>}
@@ -161,7 +161,7 @@ export function MyMusicSection() {
                 <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
-                {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
+                {track.duration ? <span className="text-fg-2"> · {formatClock(track.duration)}</span> : null}
                 {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
                 <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>

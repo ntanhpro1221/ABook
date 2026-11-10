@@ -266,7 +266,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
             <RemoteSleepMenu sleep={remoteSleepMode(phone.sleep, receivedAt)} name={phone.name} onSet={(request) => send(remoteSleepCommand(request))} />
           )}
         </div>
-        <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
+        <div className="hidden w-28 text-right text-xs text-fg-2 md:block">
           <TickingValue>{formatClock(at)} / {formatClock(phone.duration)}</TickingValue>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">

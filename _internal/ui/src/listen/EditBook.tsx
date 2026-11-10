@@ -201,7 +201,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
               <div className="min-w-[9rem] flex-1">
                 {/* Đoạn người nghe cho im: nói thẳng (như tab Nhạc của dự án), không gạch ngang tên - gạch ngang đọc như lỗi. */}
                 <div className={cn("truncate text-sm", cue.silenced && "text-fg-2")}>{cue.silenced ? S.s_im_lang_ban_chon_356a628b : cue.title || S.s_nhac_nen_271fb292}</div>
-                <div className="tabular truncate text-xs text-fg-2">
+                <div className="truncate text-xs text-fg-2">
                   {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
                   {cue.creator ? ` · ${cue.creator}` : ""}
                   {cue.pinned ? S.s_bai_cua_ban_c8ffb389 : ""}

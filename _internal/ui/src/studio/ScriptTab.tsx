@@ -830,7 +830,7 @@ export function SpeakerMenu({
         <span className="min-w-0 flex-1 truncate">
           {current ? S.s_dung_la_0_32e8685a(person.label) : person.label}
         </span>
-        {current ? <Check className="size-4 shrink-0 text-success" /> : person.lines > 0 && <span className="tabular shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span>}
+        {current ? <Check className="size-4 shrink-0 text-success" /> : person.lines > 0 && <span className="shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span>}
       </button>
     );
   };
@@ -1722,7 +1722,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
             className="h-full min-w-0 flex-1 bg-transparent px-2 text-sm text-fg outline-none placeholder:text-fg-3 [&::-webkit-search-cancel-button]:hidden"
           />
           {/* Ô đếm hiện / ẩn và "k/n" <-> "Không có" mờ qua tại chỗ; số đổi thì không mờ. */}
-          <MotionRegion as="span" motionKey={!find.text.trim() ? "" : found ? "n" : "none"} className="tabular mr-2 shrink-0 text-xs text-fg-2" role="status" aria-live="polite">
+          <MotionRegion as="span" motionKey={!find.text.trim() ? "" : found ? "n" : "none"} className="mr-2 shrink-0 text-xs text-fg-2" role="status" aria-live="polite">
             {find.text.trim() ? (found ? `${wrapIndex(find.at, found) + 1}/${found}` : S.s_khong_co_af48b64f) : null}
           </MotionRegion>
         </div>
@@ -1760,7 +1760,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                   {badge}
                 </span>
                 {person.label}
-                <span className="tabular text-fg-3">{formatNumber(person.lines)}</span>
+                <span className="text-fg-3">{formatNumber(person.lines)}</span>
               </button>
             ),
           )}

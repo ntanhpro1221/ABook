@@ -12,7 +12,6 @@ Interactive {
     property string label: ""           // tên cho trình đọc màn hình
     property string placeholder: ""     // chữ mờ khi chưa chọn mục nào ("Chọn cuốn…")
     property bool inline: false
-    property bool tabular: false
     signal picked(var value)
     readonly property var choices: options || []  // người gọi chưa có dữ liệu (undefined) = danh sách rỗng
     readonly property int currentIndex: {
@@ -48,7 +47,6 @@ Interactive {
         color: root.currentLabel !== "" ? Theme.text : Theme.text3
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall
-        font.features: root.tabular ? {"tnum": 1} : {}
     }
     Icon {
         anchors.right: parent.right
@@ -159,7 +157,6 @@ Interactive {
                     color: row.header ? Theme.text2 : row.selected ? Theme.accentText : Theme.text
                     font.pixelSize: row.header ? Theme.sizeCaption : Theme.sizeBodySmall
                     font.weight: row.header ? Font.DemiBold : Theme.weightRegular
-                    font.features: root.tabular ? {"tnum": 1} : {}
                 }
             }
         }

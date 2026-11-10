@@ -222,7 +222,7 @@ function Row({
         {item.heard && !sameText(item.heard, item.text) && (
           <p className="mt-1 text-[0.8125rem] leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />{S.s_may_nghe_ra_31219589}{item.heard}”
-            {item.similarity !== null && <span className="tabular text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
+            {item.similarity !== null && <span className="text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
           </p>
         )}
         {!source && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}

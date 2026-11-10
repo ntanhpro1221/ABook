@@ -437,7 +437,6 @@ Item {
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
-                    font.features: { "tnum": 1 }
                 }
                 Item {          // "Hồ sơ nghe: {tên}" (chỉ khi cuốn có từ hai hồ sơ)
                     visible: Records.hasPicker(root.fullBook)

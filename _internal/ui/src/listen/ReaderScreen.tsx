@@ -369,7 +369,7 @@ export function ReaderScreen(edit: SentenceEditing) {
                   aria-pressed={prefs.size === size}
                   aria-label={S.s_co_chu_0_21809038(size)}
                   onClick={() => setPrefs({ ...prefs, size })}
-                  className={cn("tabular relative h-9 min-w-[48px] text-left text-sm font-medium transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "text-accent-text" : "hover:bg-hover")}
+                  className={cn("relative h-9 min-w-[48px] text-left text-sm font-medium transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "text-accent-text" : "hover:bg-hover")}
                 >
                   <span data-indicator-target className="inline-block">{size}</span>
                 </button>
@@ -384,7 +384,7 @@ export function ReaderScreen(edit: SentenceEditing) {
                   type="button"
                   aria-pressed={prefs.leading === leading}
                   onClick={() => setPrefs({ ...prefs, leading })}
-                  className={cn("tabular relative h-9 text-left text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
+                  className={cn("relative h-9 text-left text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
                 >
                   <span data-indicator-target className="inline-block">{leading.toLocaleString("vi-VN")}</span>
                 </button>

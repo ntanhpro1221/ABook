@@ -220,7 +220,6 @@ FocusScope {
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
-                                    font.features: { "tnum": 1 }
                                 }
                             }
                             Rectangle {

@@ -738,7 +738,6 @@ Item {
                         text: Script.findCount(root.findText, root.findAt, root.matchIds.length)
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
-                        font.features: {"tnum": 1}
                         Accessible.role: Accessible.StaticText
                     }
                 }
@@ -789,7 +788,7 @@ Item {
                                 Text { anchors.centerIn: parent; text: chip.modelData.badge; color: Cast.avatarInk(badge.hue, Theme.dark); font.pixelSize: 11; font.weight: Theme.weightBold }
                             }
                             Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.text; font.pixelSize: 13; font.weight: Theme.weightMedium }
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 13; font.features: {"tnum": 1} }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 13 }
                         }
                     }
                 }

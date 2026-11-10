@@ -195,7 +195,7 @@ const ChapterLine = memo(function ChapterLine({
           {name}
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
-        <div className="tabular min-h-[1rem] break-words text-xs text-fg-2">
+        <div className="min-h-[1rem] break-words text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
@@ -461,7 +461,7 @@ export function PersonRow({
             )}
           </div>
         )}
-        <div className="tabular mt-1 text-xs text-fg-2">
+        <div className="mt-1 text-xs text-fg-2">
           {formatNumber(person.lines)}{S.s_cau_b07e1008}{person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
           {person.firstChapter ? S.s_tu_0_4f683e5d(keepTogether(person.firstChapter)) : ""}
         </div>
@@ -561,7 +561,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
             <div className="mt-0.5 truncate text-xs font-medium text-accent-text">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
           )}
-          <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
+          <div className="text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
             {cast.narrator.redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(cast.narrator.redo)) : ""}</div>
         </div>
@@ -667,12 +667,12 @@ export function HistoryTab({ book }: { book: ListenBook }) {
             {(item) => (
               <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <div className="tabular text-sm font-medium">
+                  <div className="text-sm font-medium">
                     {/* Cùng phút thì một mốc giờ, không "13:57-13:57" (soát UX 29-09). */}
                     {clockOf(item.startedAt) === clockOf(item.endedAt) ? clockOf(item.startedAt) : `${clockOf(item.startedAt)}-${clockOf(item.endedAt)}`} ·{" "}
                     {formatLength(item.listened)}
                   </div>
-                  <div className="tabular break-words text-xs text-fg-2">
+                  <div className="break-words text-xs text-fg-2">
                     {titleOf(item.from.chapterId)} {formatClock(item.from.seconds)} → {titleOf(item.to.chapterId)} {formatClock(item.to.seconds)}
                   </div>
                 </div>
@@ -1123,7 +1123,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         </div>
         <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
-          <p className="tabular mt-1.5 text-sm text-fg-2">
+          <p className="mt-1.5 text-sm text-fg-2">
             <DotJoin
               parts={[
                 book.author,
@@ -1180,7 +1180,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                 <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label={S.s_da_nghe_1e0f8d88} />
                 {/* Một dòng. "Còn" tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ
                     "chưa nghe" để hai con số không trông như mâu thuẫn (soát UX 29-09). */}
-                <p className="tabular mt-1.5 text-xs text-fg-2">
+                <p className="mt-1.5 text-xs text-fg-2">
                   {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[S.s_da_nghe_0_2f78a962(formatLength(heard)), S.s_con_0_chua_nghe_4959c9c5(formatLength(left))]} /></TickingValue> : listening ? (player.error ? S.s_chua_phat_duoc_3ecb850e : S.s_dang_nghe_9310d8cf) : S.s_chua_nghe_2fbea4c8}
                 </p>
               </>

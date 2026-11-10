@@ -41,13 +41,13 @@ Item {
                 width: parent.width
                 spacing: 8
                 Select {
-                    tabular: true; inline: true; label: S.s_tu_c2634aaa; enabled: !root.locked
+                    inline: true; label: S.s_tu_c2634aaa; enabled: !root.locked
                     options: root.times(root.last.from); value: root.last.from
                     onPicked: value => root.changed({from: value, to: root.last.to, minutes: root.last.minutes})
                 }
                 Item { width: toWord.implicitWidth; height: 40; Text { id: toWord; anchors.verticalCenter: parent.verticalCenter; text: S.s_den_80b69c87; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall } }
                 Select {
-                    tabular: true; inline: true; label: S.s_den_4f14ac22; enabled: !root.locked
+                    inline: true; label: S.s_den_4f14ac22; enabled: !root.locked
                     options: root.times(root.last.to); value: root.last.to
                     onPicked: value => root.changed({from: root.last.from, to: value, minutes: root.last.minutes})
                 }

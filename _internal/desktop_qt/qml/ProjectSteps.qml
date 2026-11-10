@@ -127,14 +127,13 @@ Column {
                             tone: step.look === "done" ? "success" : step.look === "paused" ? "muted" : "accent"
                             label: step.title
                         }
-                        Text {
+                        ClockLabel {
                             width: 36
                             horizontalAlignment: Text.AlignRight
                             text: Logic.formatPercent(step.value || 0)
                             color: Theme.text
                             font.pixelSize: Theme.sizeCaption
                             font.weight: Font.DemiBold
-                            font.features: { "tnum": 1 }
                         }
                     }
                 }

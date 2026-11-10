@@ -305,7 +305,6 @@ Column {
                                 width: parent.width
                                 label: S.s_ma_6_so_a067b6d9
                                 placeholderText: "123456"
-                                font.features: {"tnum": 1}
                                 onTextChanged: {
                                     const digits = text.replace(/\D/g, "").slice(0, 6)
                                     if (text !== digits) { text = digits; return }

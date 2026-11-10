@@ -32,7 +32,7 @@ Popover {
                 font.pixelSize: Theme.sizeCaption
                 font.weight: Theme.weightMedium
             }
-            Text {
+            ClockLabel {
                 objectName: "sleepCountdown"
                 width: parent.width
                 text: Player.sleepKind === "chapter" ? S.s_het_chuong_nay_8ccc288f : Player.clockText(Player.clock.sleepLeft)
@@ -40,7 +40,6 @@ Popover {
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeTitlePhone
                 font.weight: 600
-                font.features: { "tnum": 1 }
             }
         }
         Collapse {

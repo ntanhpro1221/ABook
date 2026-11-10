@@ -9,7 +9,7 @@
 @import "@fontsource/be-vietnam-pro/400-italic.css";
 
 /* Chữ số đều độ rộng cắt từ chính Be Vietnam Pro (ui/scripts/make_tabular_digits.py): bản fontsource không có
-   tính năng tnum nên đồng hồ trình phát nhảy vị trí mỗi giây. Chỉ áp cho chữ số, qua lớp .tabular. */
+   tính năng tnum nên đồng hồ trình phát nhảy vị trí mỗi giây. Chỉ áp cho chữ số, qua lớp .tabular-cell và giá trị tự đổi. */
 @font-face {
   font-family: "Be Vietnam Pro Digits";
   src: url("./assets/fonts/be-vietnam-pro-digits-400.woff") format("woff");
@@ -335,7 +335,9 @@ select[class~="border-line"] {
 }
 
 @layer utilities {
-  .tabular, .tabular-nums, .ticking-value, [data-motion-live] {
+  .tabular-cell, .ticking-value, [data-motion-live] {
+    /* DESIGN.md 5.5 (soát 10-11, R2): chữ số đều chỉ cho giá trị tự đổi tại chỗ (TickingValue / data-motion-live) và ô cột số của bảng (.tabular-cell).
+       Số trong câu dùng số tỉ lệ; tabularDigits.test.ts giữ danh sách chỗ được dùng .tabular-cell. */
     font-family: "Be Vietnam Pro Digits", var(--font-sans);
     font-variant-numeric: tabular-nums;
   }

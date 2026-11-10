@@ -271,7 +271,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
             <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (
-              <span data-motion-live className="tabular shrink-0">
+              <span data-motion-live className="shrink-0">
                 {formatSize(status.progress.done)} / {formatSize(status.progress.total)}
               </span>
             )}

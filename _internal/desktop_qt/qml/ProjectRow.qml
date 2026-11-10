@@ -123,7 +123,7 @@ Item {
                     tone: root.live ? "accent" : "muted"
                     label: S.s_tien_do_515e1f3f + (root.book.title || "")
                 }
-                Text {
+                ClockLabel {
                     objectName: "projectPercent"
                     width: 36
                     horizontalAlignment: Text.AlignRight
@@ -131,7 +131,6 @@ Item {
                     color: Theme.text
                     font.pixelSize: Theme.sizeCaption
                     font.weight: Theme.weightMedium
-                    font.features: { "tnum": 1 }
                 }
             }
             ClockLabel {
@@ -160,7 +159,7 @@ Item {
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
-            font.features: { "tnum": 1 }
+            font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
             opacity: root.hot ? 0 : 1
             Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
         }

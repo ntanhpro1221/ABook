@@ -82,7 +82,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
       {tonePoints(current.bands,300,80,2).map(([x,y],i)=><path key={i} d={dotPath(x,y)} stroke="currentColor" strokeWidth="6" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>)}
     </svg>
     <div className="flex pt-2">{BANDS.map((label,i)=><div key={label} className="flex min-w-0 flex-1 flex-col items-center gap-1 text-xs text-fg-2">
-      <span className="tabular">{db(current.bands[i])}</span>
+      {db(current.bands[i])}
       <Slider.Root orientation="vertical" aria-label={label} min={-12} max={12} step={1} value={[current.bands[i]]} onValueChange={([v])=>run(l=>l.edit(i,v))} onDoubleClick={()=>run(l=>l.edit(i,0))}
         className="relative flex h-32 w-12 touch-none flex-col items-center">
         <Slider.Track className="relative w-1 grow rounded-full bg-line"><span aria-hidden className="absolute top-1/2 -left-1.5 h-px w-4 bg-fg-2"/><span aria-hidden className="absolute inset-x-0 rounded-full bg-accent" style={{top:`${50-Math.max(0,current.bands[i])/24*100}%`,height:`${Math.abs(current.bands[i])/24*100}%`}}/></Slider.Track>

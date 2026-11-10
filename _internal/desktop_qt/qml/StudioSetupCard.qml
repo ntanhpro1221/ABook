@@ -217,7 +217,7 @@ Item {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeCaption
                     }
-                    Text {
+                    ClockLabel {
                         id: sizes
                         objectName: "studioSetupSizes"
                         visible: !!root.status && !!root.status.progress && root.status.progress.total > 0
@@ -225,7 +225,6 @@ Item {
                         text: root.status && root.status.progress ? Size.formatSize(root.status.progress.done) + " / " + Size.formatSize(root.status.progress.total) : ""
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
-                        font.features: { "tnum": 1 }
                     }
                 }
             }
