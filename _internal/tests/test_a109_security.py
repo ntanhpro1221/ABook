@@ -23,6 +23,7 @@ from tests.test_remote_studio import studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401
 from tests.test_remote_studio_paths import _cookie_with_studio, _upload
 from tests.test_webui_listen_and_sync import _sync_request
+from tests.timing import assert_within, scaled
 
 TRACKER = "url(https://tracker.invalid/a109-reader-unique)"
 
@@ -232,7 +233,7 @@ def test_cast_port_closes_hanging_sockets_over_the_cap_and_still_serves(tmp_path
         assert not any(_closed(client, 0.05) for client in held[:cap]), "các kết nối trong trần chưa bị cắt trước deadline"
         # Vượt deadline: socket treo bị cắt, slot trả lại, request hợp lệ chạy.
         assert all(_closed(client, media._server.header_deadline + 3) for client in held[:cap])
-        deadline = time.time() + 2  # worker vừa đóng socket cần một nhịp để trả slot
+        deadline = time.time() + scaled(2)  # worker vừa đóng socket cần một nhịp để trả slot
         while media._server.budget._held and time.time() < deadline:
             time.sleep(0.05)
         assert not media._server.budget._held, "mọi slot đã được trả sau khi socket treo bị cắt"
@@ -258,7 +259,7 @@ def test_cast_slow_header_trickle_is_cut_at_the_total_deadline(tmp_path: Path) -
         client = socket.create_connection(("127.0.0.1", server.server_port), timeout=3)
         started = time.time()
         cut = False
-        while time.time() - started < 6:
+        while time.time() - started < scaled(6):
             try:
                 client.sendall(b"X")  # mỗi byte một lần, chưa bao giờ xong header
             except OSError:
@@ -267,7 +268,8 @@ def test_cast_slow_header_trickle_is_cut_at_the_total_deadline(tmp_path: Path) -
             if _closed(client, 0.2):
                 cut = True
                 break
-        assert cut and time.time() - started < 4, "đọc từng byte chậm không giữ worker mãi: cắt theo deadline TỔNG, không theo từng lần đọc"
+        assert cut, "đọc từng byte chậm không giữ worker mãi: cắt theo deadline TỔNG, không theo từng lần đọc"
+        assert_within(4, started, clock=time.time, message="cắt theo deadline TỔNG, không theo từng lần đọc")
         client.close()
     finally:
         media.close()

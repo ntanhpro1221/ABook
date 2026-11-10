@@ -31,6 +31,7 @@ from abook.webui.server import App, Server
 from tests.test_listener_speakers import _book
 from tests.test_voice_profile_lock import FakeVieNeuRuntime
 from tests.test_webui_listen_and_sync import _request
+from tests.timing import assert_within, scaled
 
 <removed>
 
@@ -322,7 +323,8 @@ def test_a_hung_process_is_killed_at_the_deadline(tmp_path: Path) -> None:
         _ask(previews, paths)
 
     assert raised.value.reason == "timeout" and raised.value.status == 422
-    assert launcher.children[0].killed and time.monotonic() - started < 5
+    assert launcher.children[0].killed
+    assert_within(5, started)
     assert not list((tmp_path / "previews").glob("**/*.wav")), "không cất bản dở"
 
 
@@ -345,7 +347,7 @@ def test_the_process_leaves_after_it_has_been_idle(tmp_path: Path) -> None:
     previews = _previews(tmp_path, launcher, idle_seconds=0.2)
     _ask(previews, paths)
 
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + scaled(5)
     while not launcher.children[0].killed and time.monotonic() < deadline:
         time.sleep(0.05)
 

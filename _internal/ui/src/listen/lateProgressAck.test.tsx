@@ -9,6 +9,7 @@ vi.mock('@/listen/OnlineVoicePrompt',()=>({OnlineVoicePrompt:()=>null}));
 vi.mock('sonner',()=>({toast:Object.assign(vi.fn(),{error:vi.fn(),warning:vi.fn(),dismiss:vi.fn()})}));
 import {SourceProvider} from '@/listen/source';
 import {PlayerProvider,usePlayer} from '@/listen/player';
+import { eventually } from "@/testing/eventually";
 const chapters=[1,2].map(id=>({id,index:id,title:`Chương ${id}`,fullTitle:`Chương ${id}`,subtitle:'',duration:100,available:true}));
 const book={id:'b',title:'Sách',narrator:'Giọng',complete:true,chapters,state:{chapters:{}}} as any;
 beforeEach(()=>{
@@ -32,12 +33,12 @@ it('ACK muộn của chương cũ không che việc lưu đầu chương mới',
   h.effects.find(e=>e.run.toString().includes('syncClock')).run();
   engine.time=50; // đã nghe tới 0:50 rồi dừng
   player.next(); // rời chương 1: lưu 0:50 của chương 1
-  await vi.waitFor(()=>expect(saveProgress).toHaveBeenCalledTimes(1));
+  await eventually(()=>expect(saveProgress).toHaveBeenCalledTimes(1));
   expect(saveProgress.mock.calls[0].slice(0,3)).toEqual(['b',1,50]);
   engine.time=0;
   waiting.shift()!(); // máy chủ trả lời lần lưu chương 1 sau khi đã sang chương 2
   await new Promise(resolve=>setTimeout(resolve,0));
   handlers.get('duration')!(); // chương 2 nạp xong, vẫn đang dừng: lưu đầu chương 2
-  await vi.waitFor(()=>expect(saveProgress).toHaveBeenCalledTimes(2));
+  await eventually(()=>expect(saveProgress).toHaveBeenCalledTimes(2));
   expect(saveProgress.mock.calls[1].slice(0,3)).toEqual(['b',2,0]);
 });

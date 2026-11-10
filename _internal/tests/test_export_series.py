@@ -16,6 +16,7 @@ from abook.webui import bookfile, export
 from abook.webui.library import Preferences, book_id
 from abook.webui.listening import Listening
 from tests.test_webui_listen_and_sync import FakeRunner, _request, make_project
+from tests.timing import scaled
 
 
 def _part(tmp_path: Path, library: Path, name: str, title: str, previous: Path | None = None, *,
@@ -115,7 +116,7 @@ def _mp3_job(server, project: Path, body: dict, seconds: float = 30.0) -> dict:
     """"Xuất MP3" của Studio là việc nền (POST mp3-job -> 202, GET mp3-job): bắt đầu rồi chờ xong, trả trạng thái cuối (state, result / error)."""
     status, started = _post(server, project, "mp3-job", body)
     assert status == 202 and started["state"] in ("running", "done"), started
-    deadline = time.monotonic() + seconds
+    deadline = time.monotonic() + scaled(seconds)
     while time.monotonic() < deadline:
         job = _get(server, project, "mp3-job")[1]
         if job["state"] != "running":

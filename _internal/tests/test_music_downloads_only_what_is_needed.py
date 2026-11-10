@@ -10,6 +10,7 @@ from pathlib import Path
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_api import CALM, CALM2, _forced_plan, _with_catalog
+from tests.timing import scaled
 
 MB = 1024 * 1024
 
@@ -124,7 +125,7 @@ def test_the_music_tab_shows_download_progress_and_can_cancel_it(studio, tmp_pat
     plan["scenes"][1]["link"] = CALM2
     (paths.root / "music_plan.json").write_bytes(json.dumps(plan).encode("utf-8"))
     app._warm_music(plan, book)
-    for _ in range(200):
+    for _ in range(round(scaled(200))):  # 0,01 s một nhịp
         if calls:
             break
         threading.Event().wait(0.01)

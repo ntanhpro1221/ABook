@@ -16,6 +16,7 @@ import vn.abook.player.StudioErrors
 import vn.abook.player.StreamBody
 import vn.abook.player.SyncLink
 import java.io.File
+import vn.abook.player.TestTime
 
 /**
  * Lời gọi THẬT của điện thoại tới máy đã ghép ([SyncLink.request]) với máy giả trên vòng lặp: im thì gửi lại một lần rồi báo "timeout"; tải về chậm mà đều thì không bị cắt; lỗi của
@@ -118,7 +119,7 @@ class HostWaitSyncTest {
             }.exceptionOrNull()
             assertTrue("$error", error is HostWait.Timeout)
             assertEquals(1, host.connections)
-            assertTrue((System.nanoTime() - started) / 1e9 < 6)
+            assertTrue((System.nanoTime() - started) / 1e9 < TestTime.seconds(6.0))
         }
     }
 

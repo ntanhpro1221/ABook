@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class A113SecurityTest {
     private fun await(message: String, timeoutMs: Long = 4000, check: () -> Boolean) {
-        val end = System.nanoTime() + timeoutMs * 1_000_000
+        val end = System.nanoTime() + TestTime.ms(timeoutMs) * 1_000_000
         while (!check() && System.nanoTime() < end) Thread.sleep(10)
         assertTrue(message, check())
     }

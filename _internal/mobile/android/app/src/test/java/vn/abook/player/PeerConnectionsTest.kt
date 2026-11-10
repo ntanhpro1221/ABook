@@ -12,7 +12,7 @@ import org.junit.After
 class PeerConnectionsTest {
     @After fun drain() {
         val field = LibraryServer::class.java.getDeclaredField("connections").apply { isAccessible = true }
-        val until = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        val until = System.nanoTime() + TestTime.nanos(TimeUnit.SECONDS.toNanos(5))
         while (field.getInt(LibraryServer) != 0 && System.nanoTime() < until) Thread.sleep(5)
         assertEquals(0, field.getInt(LibraryServer))
     }
@@ -27,7 +27,7 @@ class PeerConnectionsTest {
         }
         val done = CountDownLatch(1)
         LibraryServer.dispatch(Client("192.0.2.100")) { done.countDown() }
-        assertTrue(done.await(1, TimeUnit.SECONDS))
+        assertTrue(done.await(TestTime.seconds(1L), TimeUnit.SECONDS))
     }
     private class Client(private val ip: String) : Socket() {
         val closed = CountDownLatch(1)
@@ -45,11 +45,11 @@ class PeerConnectionsTest {
             clients.take(cap).forEach { LibraryServer.dispatch(it) { started.countDown(); release.await(5, TimeUnit.SECONDS) } }
             assertTrue(started.await(5, TimeUnit.SECONDS))
             LibraryServer.dispatch(clients[cap]) { release.await(5, TimeUnit.SECONDS) }
-            assertTrue("excess socket queued or served", clients[cap].closed.await(1, TimeUnit.SECONDS))
+            assertTrue("excess socket queued or served", clients[cap].closed.await(TestTime.seconds(1L), TimeUnit.SECONDS))
             val other = Client("192.0.2.2")
             val served = CountDownLatch(1)
             LibraryServer.dispatch(other) { served.countDown() }
-            assertTrue(served.await(1, TimeUnit.SECONDS))
+            assertTrue(served.await(TestTime.seconds(1L), TimeUnit.SECONDS))
         } finally { release.countDown() }
     }
 
@@ -87,10 +87,10 @@ class PeerConnectionsTest {
             repeat(LibraryServer.PEER_MAX_QUEUED) { LibraryServer.dispatch(Client(ip)) { served.countDown() } }
             val excess = Client(ip)
             LibraryServer.dispatch(excess) { fail("excess served") }
-            assertTrue(excess.closed.await(1, TimeUnit.SECONDS))
+            assertTrue(excess.closed.await(TestTime.seconds(1L), TimeUnit.SECONDS))
             val other = CountDownLatch(1)
             LibraryServer.dispatch(Client("192.0.2.82")) { other.countDown() }
-            assertTrue(other.await(1, TimeUnit.SECONDS))
+            assertTrue(other.await(TestTime.seconds(1L), TimeUnit.SECONDS))
         } finally { release.countDown() }
         assertTrue(served.await(5, TimeUnit.SECONDS))
     }
@@ -123,7 +123,7 @@ class PeerConnectionsTest {
             assertTrue(active.await(5, TimeUnit.SECONDS))
             val excess = Client("192.0.2.150")
             LibraryServer.dispatch(excess) { fail("over total worker limit") }
-            assertTrue(excess.closed.await(1, TimeUnit.SECONDS))
+            assertTrue(excess.closed.await(TestTime.seconds(1L), TimeUnit.SECONDS))
         } finally { release.countDown() }
     }
 }

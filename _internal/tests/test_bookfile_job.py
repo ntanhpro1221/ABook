@@ -11,6 +11,7 @@ from tests.async_wait import wait_for
 from abook.webui import bookfile
 from abook.webui.export_jobs import BookFileJobs
 from tests.test_export_series import _get, _part, _post, _studio
+from tests.timing import scaled
 
 
 def _wait(server, project: Path, state: str = "done") -> dict:
@@ -115,7 +116,7 @@ def test_a_second_start_while_running_returns_the_running_job() -> None:
     assert first["state"] == "running" and second["id"] == first["id"] and second["elapsed"] == 7.5
     assert other["id"] != first["id"], "mỗi cuốn một bản ghi"
     release.set()
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + scaled(5)
     while jobs.status("a")["state"] == "running" and time.monotonic() < deadline:
         time.sleep(0.01)
     assert jobs.status("a")["state"] == "done" and calls == [1], "không đóng gói hai lần cùng lúc"
@@ -150,7 +151,7 @@ def test_the_server_lists_the_exports_still_running_whatever_page_the_app_opens_
         assert running["m4b"] == [] and running["mp3"] == [] and running["audiobook"] == []
         assert [(job["bookId"], job["state"]) for job in running["bookfile"]] == [(book_id(book), "running")]
         release.set()
-        deadline = time.monotonic() + 10
+        deadline = time.monotonic() + scaled(10)
         while listing()["bookfile"] and time.monotonic() < deadline:
             time.sleep(0.05)
         assert listing()["bookfile"] == [], "xong (hay hỏng) thì không còn trong danh sách đang chạy"
@@ -164,7 +165,7 @@ def test_running_lists_only_the_jobs_that_have_not_finished() -> None:
     release = threading.Event()
     jobs.start("dang-chay", lambda: (release.wait(5), {"file": "x", "folder": "d"})[1])
     jobs.start("da-xong", lambda: {"file": "y", "folder": "d"})
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + scaled(5)
     while jobs.status("da-xong")["state"] == "running" and time.monotonic() < deadline:
         time.sleep(0.01)
     assert [key for key, _status in jobs.running()] == ["dang-chay"]

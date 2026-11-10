@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from abook.webui import peer_addresses as addresses, remote_books, route, tls
+from tests.timing import scaled
 
 PIN = "ab" * 32
 
@@ -82,7 +83,7 @@ def test_slow_dns_for_one_peer_never_occupies_another_peers_slots(monkeypatch):
     with ThreadPoolExecutor(max_workers=1) as pool:
         job = pool.submit(remote_books._connect, slow, 4)
         try:
-            assert both_started.wait(1)
+            assert both_started.wait(scaled(1))
             assert remote_books._connect(good, 4) is connection
         finally:
             release.set()
@@ -309,7 +310,7 @@ def test_slow_first_lookup_has_a_total_deadline_and_late_socket_is_closed(monkey
         assert remote_books._connect(endpoint, 60) is winner
     finally:
         release.set()
-    assert closed.wait(1), "a late DNS/TLS result must not leak its socket"
+    assert closed.wait(scaled(1)), "a late DNS/TLS result must not leak its socket"
 
 
 @pytest.mark.skipif(not socket.has_dualstack_ipv6(), reason="OS has no dual-stack listener")

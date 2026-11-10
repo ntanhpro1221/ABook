@@ -2,6 +2,7 @@
 vi.mock("@/shared/ToastDetails", () => ({ prepareToast: (args: unknown[]) => args }));
 import { beforeAll, expect, it, vi } from "vitest";
 import { ReadCancelled, readSessions } from "@/listen/importQueue";
+import { eventually } from "@/testing/eventually";
 
 const mocks = vi.hoisted(() => ({ navigate: vi.fn(), invalidate: vi.fn(), api: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
 vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useCallback: (callback: unknown) => callback }));
@@ -28,7 +29,7 @@ it("hỏi trước khi thay bằng file cũ và chỉ gửi xác nhận khi bạ
   expect(mocks.api).toHaveBeenCalledTimes(1);
   mocks.api.mockResolvedValueOnce({ id: "book", how: "updated" });
   options.action.onClick();
-  await vi.waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/book/book"));
+  await eventually(() => expect(mocks.navigate).toHaveBeenCalledWith("/book/book"));
   expect(mocks.api).toHaveBeenLastCalledWith("/api/listen/open-book-file", { method: "POST", body: { path: "old.abook", allowOlder: true } });
 });
 

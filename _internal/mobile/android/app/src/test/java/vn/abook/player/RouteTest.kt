@@ -74,7 +74,7 @@ class RouteTest {
         assertEquals(target, Route.pick(listOf(target), "bt").lan)
         Route.markDown(target)
         assertEquals("bt", Route.pick(listOf(target), "bt").bluetooth)
-        assertEquals(target, Route.pick(listOf(target), "bt", now = System.currentTimeMillis() + Route.FRESH_MS + 1).lan)
+        assertEquals(target, Route.pick(listOf(target), "bt", now = System.currentTimeMillis() + Route.FRESH_MS + 1).lan) // wallclock-ok: a `now` handed to the router, not a wait
     }
 
 }

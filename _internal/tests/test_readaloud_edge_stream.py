@@ -16,6 +16,7 @@ from abook.readaloud import websocket as ws
 from abook.readaloud.mapping import Boundary
 from abook.readaloud.model import VoiceError
 from tests.test_readaloud import FakeEdge, _server_frame, fake_edge  # noqa: F401 - fixture dùng chung
+from tests.timing import scaled
 
 WORD_FRAMES = 10  # mỗi chữ 10 khung = 240 ms, chữ đọc 200 ms
 TAIL_FRAMES = 60  # lặng đuôi 1,44 s: `trim_join_tail` luôn cắt được
@@ -300,7 +301,7 @@ def test_read_turn_reports_each_frame_and_each_message_as_it_arrives() -> None:
     wire = Wire([(ws.TEXT, meta), (ws.BINARY, struct.pack(">H", len(head)) + head + b"xx"), (ws.BINARY, struct.pack(">H", len(head)) + head + b"yy"),
                  (ws.TEXT, b"Path:turn.end\r\n\r\n{}")])
     seen: list[object] = []
-    audio, bounds = edge.read_turn(wire, 0, time.monotonic() + 5, on_audio=lambda data: seen.append(data), on_boundaries=lambda found: seen.append(found))
+    audio, bounds = edge.read_turn(wire, 0, time.monotonic() + scaled(5), on_audio=lambda data: seen.append(data), on_boundaries=lambda found: seen.append(found))
     assert seen == [[Boundary("a", 1, 3)], b"xx", b"yy"] and audio == b"xxyy" and bounds == [Boundary("a", 1, 3)]
 
 
@@ -626,7 +627,7 @@ def test_a_listener_who_hangs_up_does_not_spoil_the_clip(streaming, tmp_path) ->
             got += sock.recv(4096)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # đóng bằng RST giữa lúc đang phát
         sock.close()
-        deadline = time.monotonic() + 15
+        deadline = time.monotonic() + scaled(15)
         while time.monotonic() < deadline:
             try:
                 clip = service.clip(VOICE, SENTENCES, cached_only=True)

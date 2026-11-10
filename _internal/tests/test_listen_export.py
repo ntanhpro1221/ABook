@@ -28,6 +28,7 @@ from abook.webui import export, export_jobs, ffmpeg_setup, listen_export
 from abook.webui.server import Server
 from tests.test_project_file import _app
 from tests.test_webui_listen_and_sync import _request
+from tests.timing import scaled
 
 FFPROBE = shutil.which("ffprobe")
 pytestmark = pytest.mark.skipif(not ffmpeg_available() or FFPROBE is None, reason="cần ffmpeg + ffprobe")
@@ -313,7 +314,7 @@ def test_the_server_cancels_a_running_export(tmp_path: Path) -> None:
         body = {"format": "mp3", "voice": VOICE, "target": str(tmp_path / "xuat")}
         assert _request(server.port, "POST", f"/api/listen/books/{book_id}/audiobook", headers=TOKEN, body=body)[0] == 202
         running = _wait(server.port, book_id, ("running",))
-        deadline = time.time() + 20
+        deadline = time.time() + scaled(20)
         while running.get("waiting") != "listening" and time.time() < deadline:
             time.sleep(0.05)
             running = _wait(server.port, book_id, ("running",))
@@ -404,7 +405,7 @@ def test_a_job_reports_progress_and_ends_cancelled_when_asked() -> None:
         raise export_jobs.Cancelled()
 
     jobs.start("k", work)
-    deadline = time.time() + 5
+    deadline = time.time() + scaled(5)
     while jobs.status("k").get("percent") != 40 and time.time() < deadline:
         time.sleep(0.01)
     assert jobs.status("k")["state"] == "running" and jobs.status("k")["percent"] == 40

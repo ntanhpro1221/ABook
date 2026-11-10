@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { backLayerCount, pushBackLayer, topBackLayer } from "@/shared/backStack";
 import { backStep, closingLayers, dismissTopLayer, hasActionToast, hasOpenLayer, historyIndex, isOpenLayer, parentPath } from "./backLayers";
+import { scaledMs } from "@/testing/timeScale";
 
 class FakeKeyboardEvent {
   constructor(
@@ -216,7 +217,7 @@ describe("Back khi một lớp đang chạy hiệu ứng đóng (a120)", () => {
     const waits: (() => void)[] = [];
     dismissTopLayer(doc, undefined, undefined, (step) => waits.push(step));
     const started = Date.now();
-    while (!events.length && Date.now() - started < 2000) {
+    while (!events.length && Date.now() - started < scaledMs(2000)) {
       await new Promise((resolve) => setTimeout(resolve, 50));
       waits.shift()?.();
     }

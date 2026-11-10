@@ -18,6 +18,7 @@ from abook.readaloud import mp3
 from abook.webui import export, export_jobs
 from tests.test_export_music import LINK_A, LINK_B, _studio_book as _music_book
 from tests.test_export_series import _get, _mp3_job, _post, _studio
+from tests.timing import assert_within
 
 pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
 
@@ -96,7 +97,7 @@ def test_the_m4b_job_says_it_is_downloading_music_and_cancel_there_writes_nothin
         asked = time.monotonic()
         gate.set()  # bài đang tải xong; bài kế không được tải nữa
         assert _wait(lambda: _get(server, project, "m4b-job")[1]["state"] == "cancelled")
-        assert time.monotonic() - asked < 2.0
+        assert_within(2.0, asked)
     finally:
         gate.set()
         server.stop()
@@ -129,7 +130,7 @@ def test_the_m4b_job_can_be_cancelled_while_mixing_and_leaves_no_scratch(tmp_pat
         asked = time.monotonic()
         release.set()
         assert _wait(lambda: _get(server, project, "m4b-job")[1]["state"] == "cancelled")
-        assert time.monotonic() - asked < 2.0
+        assert_within(2.0, asked)
     finally:
         release.set()
         server.stop()
@@ -248,7 +249,7 @@ def test_the_mp3_job_reports_its_downloads_and_cancel_ends_it_cancelled_with_not
         asked = time.monotonic()
         gate.set()  # bài đang tải xong; bài kế không được tải nữa
         assert _wait(lambda: _get(server, project, "mp3-job")[1]["state"] == "cancelled")
-        assert time.monotonic() - asked < 2.0
+        assert_within(2.0, asked)
     finally:
         gate.set()
         server.stop()

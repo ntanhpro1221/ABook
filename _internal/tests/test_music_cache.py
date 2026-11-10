@@ -13,6 +13,7 @@ from abook.webui import music_cache, music_plan
 from abook.webui.music_cache import MusicCache
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_api import CALM, CALM2, _with_catalog
+from tests.timing import assert_took_within
 
 DAY = 24 * 3600
 
@@ -166,10 +167,10 @@ def test_listening_marks_the_track_as_recently_heard(studio, tmp_path: Path) -> 
     files.mkdir(parents=True, exist_ok=True)
     played = _track(files, app._music_file(CALM).name, 500, 5, time.time())
     app.music_track_file(CALM)  # trình phát lấy file bài (đã có trong bộ đệm)
-    assert time.time() - played.stat().st_mtime < 5
+    assert_took_within(time.time() - played.stat().st_mtime, 5)
     old = _track(files, app._music_file(CALM2).name, 500, 5, time.time())
     app._music_src("sach", CALM2)  # mốc nhạc của chương đang nghe trỏ tới bài này
-    assert time.time() - old.stat().st_mtime < 5
+    assert_took_within(time.time() - old.stat().st_mtime, 5)
 
 
 def test_opening_a_project_file_records_its_music_as_the_books_own(tmp_path: Path) -> None:

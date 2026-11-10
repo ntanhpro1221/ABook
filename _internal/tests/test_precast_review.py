@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from tests.test_listener_speakers import _book
+from tests.timing import scaled
 
 
 def _fresh_cast(db) -> None:
@@ -190,7 +191,7 @@ def _fake_worker_reviewed(project_root, message_queue, pause_event, _stop_event,
     state = _json.loads(paths.state.read_text(encoding="utf-8"))
     precast.release(Path(project_root))
     background_runner._write_pause_request(paths, state, False)
-    deadline = time.monotonic() + 5.0
+    deadline = time.monotonic() + scaled(5.0)
     while pause_event.is_set() and time.monotonic() < deadline:
         time.sleep(0.02)
     time.sleep(0.5)  # vài nhịp kiểm nữa: không được giữ lại

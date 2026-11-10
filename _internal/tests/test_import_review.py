@@ -90,14 +90,20 @@ def test_package_xml_is_strict(part, tmp_path):
         importers.import_text(path)
 
 
-def test_5000_parts_merge_within_budget():
+def test_5000_parts_merge_into_one_chapter():
     case = json.loads((shared.FIXTURES / 'expected/many_parts.json').read_text(encoding='utf-8'))
-    started = time.perf_counter()
     book = importers.import_text(shared.FIXTURES / 'many_parts.epub')
-    elapsed = time.perf_counter() - started
     assert len(book.chapters) == 1
     assert book.chapters[0].title == case['title']
     assert len(book.chapters[0].text) == case['length']
     assert hashlib.sha256(book.chapters[0].text.encode()).hexdigest() == case['sha256']
+
+
+@pytest.mark.perf
+def test_5000_parts_merge_within_budget():
+    case = json.loads((shared.FIXTURES / 'expected/many_parts.json').read_text(encoding='utf-8'))
+    started = time.perf_counter()
+    importers.import_text(shared.FIXTURES / 'many_parts.epub')
+    elapsed = time.perf_counter() - started
     print(f'5000 parts: {elapsed:.3f}s')
-    assert elapsed < case['max_seconds']
+    assert elapsed < case['max_seconds']  # wallclock-ok: perf marker, off the normal gate (pytest -m perf)

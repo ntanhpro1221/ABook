@@ -24,6 +24,7 @@ import vn.abook.player.StudioPaths
 import vn.abook.player.ui.voice.SamplePlayer
 import java.io.File
 import java.nio.file.Files
+import vn.abook.player.TestTime
 
 /** Trạng thái ba tab nội dung với nguồn giả: bộ bài và hoàn tác, nghe lại (phán quyết, phân trang, nghe liền), nhân vật và bảng giọng. */
 @RunWith(RobolectricTestRunner::class)
@@ -62,7 +63,7 @@ class StudioTabsStateTest {
     }
 
     private fun until(what: String, condition: () -> Boolean) {
-        val end = System.currentTimeMillis() + 5_000
+        val end = System.currentTimeMillis() + TestTime.ms(5_000)
         while (!condition()) {
             if (System.currentTimeMillis() > end) throw AssertionError("Hết giờ chờ: $what")
             Thread.sleep(5)

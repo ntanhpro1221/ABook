@@ -9,6 +9,7 @@ vi.mock('sonner',()=>({toast:Object.assign(vi.fn(),{error:vi.fn(),warning:vi.fn(
 import {SourceProvider,chapterScriptQuery} from '@/listen/source';
 import {PlayerProvider,usePlayer} from '@/listen/player';
 import {textScript} from '@/listen/textScript';
+import { eventually } from "@/testing/eventually";
 const chapters=[1,2].map(id=>({id,index:id,title:`Chương ${id}`,fullTitle:`Chương ${id}`,subtitle:'',duration:id===1?100:0,available:id===1}));
 const book={id:'b',title:'Sách',narrator:'Giọng',complete:false,chapters,state:{chapters:{}}} as any;
 beforeEach(()=>{
@@ -71,7 +72,7 @@ it('desktop giữ bản chữ đang phát qua thay skip và nhận bản mới k
   client.removeQueries({queryKey:['listen','script','b']});
   expect(client.getQueryData<any>(['playing-script','b']).segments[1].text).toBe('Trans: Lan');
   player.play(h.fresh,h.fresh.chapters,1,0);
-  await vi.waitFor(()=>expect(engine.load).toHaveBeenCalledTimes(2));
+  await eventually(()=>expect(engine.load).toHaveBeenCalledTimes(2));
   const next=await engine.load.mock.calls[1][0].speech.script();
   expect(next.segments[1].text).toBe('Câu truyện.');
   client.clear();

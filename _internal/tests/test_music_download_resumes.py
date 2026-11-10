@@ -17,6 +17,7 @@ import pytest
 from abook.webui.server import ApiError, LiveTrack
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_api import CALM, CALM2, _with_catalog
+from tests.timing import scaled
 
 _URLOPEN = urllib.request.urlopen  # bản thật, lấy trước mọi monkeypatch (đổi cổng lần hai không được gọi qua bản vá lần một)
 FULL = b"ID3" + bytes(range(256)) * 3 + b"\x07" * 229  # 1000 byte, mỗi chỗ một giá trị khác nhau đủ để thấy nối sai chỗ
@@ -151,7 +152,7 @@ def test_a_reader_following_the_download_reads_on_across_a_resume(tmp_path: Path
     live.grew(300)
     reader = threading.Thread(target=read)
     reader.start()
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + scaled(5)
     while sum(map(len, got)) < 300 and time.monotonic() < deadline:
         time.sleep(0.01)
     live.discard(part, keep=True)  # đứt
@@ -199,7 +200,7 @@ def test_the_warm_queue_retries_a_track_whose_download_made_progress(studio, tmp
     monkeypatch.setattr(app, "music_track_available", lambda *_a, **_k: True)
     with caplog.at_level("WARNING"):
         assert app.music_warm(CALM)
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + scaled(5)
         while (app._music_warm_thread is not None or len(calls) < 2) and time.monotonic() < deadline:
             time.sleep(0.01)
     assert calls == [CALM, CALM], "bài có tiến triển không được xếp lại / bài không tiến triển bị xếp lại mãi"

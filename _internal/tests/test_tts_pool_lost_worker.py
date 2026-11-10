@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from abook.tts_pool import SynthesisPool
+from tests.timing import assert_within
 
 
 class FakeCoordinator:
@@ -107,6 +108,6 @@ def test_close_does_not_hang_on_a_pool_holding_a_lost_task() -> None:
     try:
         started = time.monotonic()
         pool.close()
-        assert time.monotonic() - started < 30
+        assert_within(30, started)
     finally:
         module.TTS_POOL_JOIN_SECONDS = original

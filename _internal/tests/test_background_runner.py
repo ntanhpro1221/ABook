@@ -25,6 +25,7 @@ from abook.background_runner import (
     tail_log,
 )
 from abook.io_utils import atomic_write_json
+from tests.timing import assert_within
 
 
 def test_default_startup_timeout_envelops_strict_worker_bootstrap() -> None:
@@ -646,7 +647,7 @@ def test_supervisor_forwards_persistent_stop_and_records_clean_stop(tmp_path: Pa
     )
 
     status = get_status(project)
-    assert time.monotonic() - started < 5.0
+    assert_within(5.0, started)
     assert exit_code == 0
     assert status.state == "stopped"
     assert status.stop_requested is True

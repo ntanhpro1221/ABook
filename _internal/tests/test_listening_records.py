@@ -18,6 +18,7 @@ from abook.webui.listening import DEFAULT_RECORD_NAME, SYNC_KEYS, Listening, def
 from abook.webui.server import App, Server
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import _request, _sync_request, library  # noqa: F401 - library là fixture
+from tests.timing import scaled
 
 # Bộ ví dụ dùng chung với test JVM (StoreRecordSyncTest.kt): chuyển hồ sơ rồi đồng bộ, lần chuyển sau thắng.
 MOVE_SYNC = json.loads((Path(__file__).parent / "fixtures" / "listening_records" / "move_sync.json").read_text(encoding="utf-8"))
@@ -174,7 +175,7 @@ def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path)
         code = devices.start_pairing()["code"]
         _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
-        moved = time.time() + 5
+        moved = time.time() + scaled(5)
         body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": moved, "movedAt": moved,
                 "deletedRecords": {}, "chapters": {}}
 

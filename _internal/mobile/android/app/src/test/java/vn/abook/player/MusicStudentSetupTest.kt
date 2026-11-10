@@ -337,7 +337,7 @@ class MusicStudentSetupTest {
             assertTrue("máy chủ giữ big.bin giữa chừng", reached.await(20, TimeUnit.SECONDS))
             assertEquals("downloading", setup.status().getString("state"))
             // chờ máy nhận xong 30 000 byte đầu (huỷ được thấy ở nhịp đọc kế, không phải trước nhịp đầu)
-            val until = System.currentTimeMillis() + 20_000
+            val until = System.currentTimeMillis() + TestTime.ms(20_000)
             while (File(root, "music/student/big.bin.part").length() < 30_000 && System.currentTimeMillis() < until) Thread.sleep(10)
             // đường của giao diện: POST /api/music/local/module/cancel trả view mới
             val (code, view) = LocalStudio.handle("POST", "/api/music/local/module/cancel", null)
@@ -498,11 +498,11 @@ class MusicStudentSetupTest {
         val worker = Thread { store.analyzePending() }.apply { start() }
         assertTrue(started.await(10, TimeUnit.SECONDS))
         val reader = Thread { store.entries() }.apply { start() }
-        reader.join(2_000)
+        reader.join(TestTime.ms(2_000))
         assertFalse("đang phân tích mà danh sách vẫn đọc được", reader.isAlive)
         assertTrue(store.remove(track.getString("link").removePrefix("local:")))
         release.countDown()
-        worker.join(10_000)
+        worker.join(TestTime.ms(10_000))
         assertTrue(store.entries().isEmpty())
     }
 }

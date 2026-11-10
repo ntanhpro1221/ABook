@@ -20,6 +20,7 @@ from abook.webui.library import Library, Preferences, book_id
 from abook.webui.listening import Listening
 from abook.webui.sync import Devices, SyncApp, manifest
 from tests.test_webui_listen_and_sync import make_project
+from tests.timing import scaled
 
 
 def _pack(tmp_path: Path) -> tuple[Path, Path]:
@@ -529,7 +530,7 @@ def test_a_merge_or_voice_change_not_yet_applied_never_leaves_this_machine(tmp_p
 
     project = make_project(tmp_path)
     aliases.add(project, "LUCIEN", "Giáo sư Lucien", now=1.0)
-    request_voice(project, "LUCIEN", preset="Thanh Bình", now=time.time() + 60)
+    request_voice(project, "LUCIEN", preset="Thanh Bình", now=time.time() + scaled(60))
     (person,) = store.cast(project)["characters"]
     assert person["mergedInto"] and person["pendingVoice"], "trên máy này tab Nhân vật vẫn hiện hai dấu"
 

@@ -450,7 +450,7 @@ def test_an_imported_book_can_be_undone_too(tmp_path: Path, recycled: list[Path]
     assert _pending(elsewhere.resolve()) == [] and file.is_file()
 
     again = app.remove_imported(opened["id"], undo=True)
-    app.trash.clock = lambda: time.time() + 3600
+    app.trash.clock = lambda: time.time() + 3600  # wallclock-ok: the trash clock is faked an hour ahead; no wait
     assert app.trash.sweep(elsewhere.resolve()) == 0
     assert len(recycled) == 1 and recycled[0].parent.name == "Sách đã nhập"
     assert again["undo"]

@@ -135,3 +135,57 @@ def test_refused_port_is_unlistening_and_stays_reserved(refused_tcp_port):
             competitor.bind(("127.0.0.1", refused_tcp_port))
     with pytest.raises(ConnectionRefusedError):
         socket.create_connection(("127.0.0.1", refused_tcp_port), timeout=5)
+
+
+WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor"}
+
+
+def test_hard_wall_clock_limits_are_banned_outside_the_shared_helpers():
+    """Hạn theo giờ thật đi qua tests/timing.py (Python), TestTime.kt (JVM), ui/src/testing (web) - không có ngoại lệ trong baseline."""
+    stray = [f"{f.path}:{f.line} {f.rule}: {f.code}" for f in scan() if f.rule in WALLCLOCK_RULES]
+    assert not stray, "Dùng assert_within / scaled / TestTime / scaledMs / eventually (docs/WALLCLOCK_TESTS.md):\n" + "\n".join(stray)
+    assert not [key for key in json.loads(BASELINE.read_text(encoding="utf-8")) if key.split("|")[1] in WALLCLOCK_RULES]
+
+
+def test_python_elapsed_upper_bounds_and_fixed_deadlines_are_detected():
+    source = '''
+import time
+from time import monotonic as clock
+def test():
+    started = time.monotonic()
+    assert time.monotonic() - started < 2
+    took = clock() - started
+    assert took <= 0.5
+    assert 1.4 < clock() - started < 5
+    deadline = time.time() + 10
+    until = clock() + timeout
+    assert time.monotonic() - started >= 0.09
+    assert clock() - started < scaled(2)
+    ok = time.monotonic() + scaled(5)
+    remaining = deadline - time.monotonic()
+    assert remaining <= 0
+    stamp = time.time() + 3600  # wallclock-ok: fake clock, no wait
+'''
+    found = [(line, rule) for line, rule, _ in python_patterns(source) if rule in WALLCLOCK_RULES]
+    assert found == [(6, "elapsed-bound"), (8, "elapsed-bound"), (9, "elapsed-bound"), (10, "fixed-deadline"), (11, "fixed-deadline")]
+
+
+@pytest.mark.parametrize(("suffix", "source", "expected"), [
+    (".kt", '''val deadline = System.currentTimeMillis() + 5000
+val ok = System.currentTimeMillis() + TestTime.ms(5000)
+assertTrue(System.nanoTime() - began < 5_000_000_000L)
+assertTrue((System.nanoTime() - began) / 1e9 < 6)
+assertTrue(System.nanoTime() - began < TestTime.nanos(5_000_000_000L))
+assertTrue((System.nanoTime() - began) / 1_000_000 >= 250)
+val fake = System.currentTimeMillis() + 3600_000 // wallclock-ok: fake clock
+''', ["fixed-deadline", "elapsed-bound", "elapsed-bound"]),
+    (".tsx", '''await vi.waitFor(() => expect(a).toBe(1));
+await eventually(() => expect(a).toBe(1));
+while (Date.now() - started < 2000) {}
+while (Date.now() - started < scaledMs(2000)) {}
+expect(Date.now() - clickStarted).toBeGreaterThanOrEqual(150);
+''', ["raw-waitfor", "elapsed-bound"]),
+])
+def test_other_languages_wall_clock_limits_are_detected(suffix, source, expected):
+    rules = [rule for _, rule, _ in other_patterns(source, suffix) if rule in WALLCLOCK_RULES]
+    assert rules == expected

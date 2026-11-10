@@ -21,6 +21,7 @@ from abook.readaloud.model import VoiceError
 from abook.readaloud.service import EdgeProvider, ReadAloud
 from abook.webui import export_jobs, listen_export
 from tests.test_listen_export import EXPECTED, GAP, VOICE, WORD, FakeVoice, _library, _run, tmp_work
+from tests.timing import assert_within, scaled
 
 pytestmark = pytest.mark.skipif(not listen_export.ffmpeg_available(), reason="cần ffmpeg")
 
@@ -52,7 +53,7 @@ class HangingEdge(edge.EdgeClient):
 
     def _speak_piece(self, voice: str, piece: str, deadline: float, clip: Any = None, rank: int = edge.RANK_BACKGROUND, part: Any = None) -> Any:
         self.started.set()
-        end = time.monotonic() + 20
+        end = time.monotonic() + scaled(20)
         while time.monotonic() < end:
             if clip is not None and clip.aborted:
                 self.cut.append(piece)
@@ -86,7 +87,7 @@ def test_cancel_cuts_the_edge_read_in_flight_within_a_second_and_caches_nothing(
     assert not worker.is_alive()
     assert isinstance(outcome.get("error"), export_jobs.Cancelled), outcome
     assert outcome["at"] - asked <= 1.5, outcome["at"] - asked
-    deadline = time.monotonic() + 2
+    deadline = time.monotonic() + scaled(2)
     while not hanging.cut and time.monotonic() < deadline:  # luồng của mảnh thấy cắt ở lần hỏi kế của nó
         time.sleep(0.01)
     assert hanging.cut, "ổ cắm của mảnh đang đọc bị cắt"
@@ -136,7 +137,8 @@ def test_waiting_for_another_read_of_the_same_paragraph_can_be_cancelled(tmp_pat
 
     with pytest.raises(VoiceError) as caught:
         service._take(gate, flag.is_set)
-    assert caught.value.reason == "cancelled" and time.monotonic() - began < 1.0
+    assert caught.value.reason == "cancelled"
+    assert_within(1.0, began)
 
 
 # ---- 3. "còn khoảng ..." chỉ khi đã đo đủ, theo phần chưa có clip -----------------------------------------------------------------
@@ -356,7 +358,7 @@ def test_the_app_sweeps_work_at_start_and_when_a_book_is_removed(tmp_path: Path,
         assert mine.exists(), "lượt đang chạy: không dọn dù cũ"
     finally:
         release.set()
-    deadline = time.time() + 10
+    deadline = time.time() + scaled(10)
     while app.listen_exports.running() and time.time() < deadline:
         time.sleep(0.02)
     mine = _work_with_file(root, book_id)  # vừa ghép lại (ở trên đã lùi 30 ngày để thử luật lượt đang chạy)

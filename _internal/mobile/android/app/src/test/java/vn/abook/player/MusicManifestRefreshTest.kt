@@ -84,6 +84,6 @@ class MusicManifestRefreshTest {
         Thread { catalog.usable("https://x/calm.mp3", null); catalog.available("https://x/calm.mp3"); answered.countDown() }.start()
         assertTrue("usable / available không chờ lượt làm mới", answered.await(2, TimeUnit.SECONDS))
         gate.countDown()
-        refreshing.join(5_000)
+        refreshing.join(TestTime.ms(5_000))
     }
 }

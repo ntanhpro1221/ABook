@@ -23,6 +23,7 @@ from abook.readaloud.model import Synthesis, Voice, VoiceError, cancellable
 from abook.readaloud.service import ReadAloud
 from abook.webui import music_module, studio_setup, supertonic_module, vieneu_module, voice_module
 from abook.webui.studio_setup import Download
+from tests.timing import scaled
 
 pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
 
@@ -323,7 +324,7 @@ def test_the_player_closing_the_connection_frees_the_cpu_within_a_fraction_of_a_
         time.sleep(0.1)
         closed = time.monotonic()
         client.close()  # trình phát bỏ đoạn này (nhảy đi nơi khác)
-        deadline = time.monotonic() + 3
+        deadline = time.monotonic() + scaled(3)
         while local.stopped_at is None and time.monotonic() < deadline:
             time.sleep(0.01)
         assert local.stopped_at is not None, "lượt đọc phải dừng"

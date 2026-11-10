@@ -15,6 +15,13 @@ import re
 
 INTERNAL = Path(__file__).resolve().parents[1]
 BASELINE = INTERNAL / "tests/fixtures/flaky_patterns.json"
+# Hai file Android mà nhánh dev/tlsleak đang viết lại (timer TLS): luật hạn-giờ-thật bỏ qua chúng để hai nhánh không xung đột.
+# Bỏ khỏi danh sách này (và sửa hai file theo docs/WALLCLOCK_TESTS.md) khi tlsleak đã vào.
+WALLCLOCK_DEFERRED = {
+    "mobile/android/app/src/test/java/vn/abook/player/TlsRouteResolverTest.kt",
+    "mobile/android/app/src/test/java/vn/abook/player/net/FastConnectTest.kt",
+}
+WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor"}
 
 
 @dataclass(frozen=True)
@@ -65,6 +72,10 @@ def python_patterns(text):
         elif isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant):
             constants.update((t.id, node.value.value) for t in node.targets if isinstance(t, ast.Name))
 
+    def resolve(node):
+        head, *tail = _name(node).split(".")
+        return ".".join([aliases.get(head, head), *tail])
+
     def value(node):
         if isinstance(node, ast.Name):
             return constants.get(node.id)
@@ -110,6 +121,8 @@ def python_patterns(text):
             rules.append("process-state")
         for rule in rules:
             yield node.lineno, rule, code
+    lines = text.splitlines()
+    yield from _wallclock_bounds(tree, resolve, lines)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign) or len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
             continue
@@ -136,6 +149,61 @@ def python_patterns(text):
             yield node.lineno, "released-port", ast.unparse(node) + f"; {sock} closed before first use"
 
 
+CLOCKS = {"time.time", "time.monotonic", "time.perf_counter"}
+# Dòng ghi dấu này được bỏ qua: nó nói rõ vì sao ngưỡng giờ thật ở đó là đúng (dòng nào cũng phải có lý do sau dấu).
+WALLCLOCK_OK = re.compile(r"wallclock-ok: \S")
+
+
+def _wallclock_bounds(tree, resolve, lines):
+    """Hạn theo giờ thật phải đi qua tests/timing.py (nhân hệ số máy tải), không rải ngưỡng cứng trong test.
+
+    elapsed-bound: so một khoảng thời gian đã trôi (đồng hồ - mốc, hay biến lấy từ đó) với cận TRÊN - "xong trong 2 giây".
+    fixed-deadline: `đồng hồ + hằng số` (hạn chờ một điều kiện). Cận dưới (`>= 0.09`: đã chờ thật) không bị cấm.
+    """
+    def clock(node):
+        return isinstance(node, ast.Call) and resolve(node.func) in CLOCKS
+
+    def has_clock(node):
+        return any(clock(n) for n in ast.walk(node))
+
+    def uses_scale(node):
+        return any(isinstance(n, ast.Call) and _name(n.func).split(".")[-1] in {"scaled", "deadline"} for n in ast.walk(node))
+
+    def exempt(line):
+        return 0 < line <= len(lines) and WALLCLOCK_OK.search(lines[line - 1])
+
+    scopes = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module))]
+    seen = set()
+    for scope in scopes:
+        tainted = {t.id for n in ast.walk(scope) if isinstance(n, ast.Assign) and isinstance(n.value, ast.BinOp)
+                   and isinstance(n.value.op, ast.Sub) and has_clock(n.value.left) for t in n.targets if isinstance(t, ast.Name)}
+
+        def timed(node):
+            return (isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) and has_clock(node.left)) or (
+                isinstance(node, ast.Name) and node.id in tainted)
+
+        for node in ast.walk(scope):
+            if id(node) in seen:
+                continue
+            if isinstance(node, ast.Compare):
+                operands = [node.left, *node.comparators]
+                for i, operand in enumerate(operands):
+                    upper = (i < len(node.ops) and isinstance(node.ops[i], (ast.Lt, ast.LtE)) and operands[i + 1]) or (
+                        i > 0 and isinstance(node.ops[i - 1], (ast.Gt, ast.GtE)) and operands[i - 1])
+                    if timed(operand) and upper is not False and not uses_scale(upper) and not exempt(node.lineno):
+                        seen.add(id(node))
+                        yield node.lineno, "elapsed-bound", ast.unparse(node)
+                        break
+            elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+                for near, far in ((node.left, node.right), (node.right, node.left)):
+                    number = isinstance(far, ast.Constant) and isinstance(far.value, (int, float))
+                    if clock(near) and (number or isinstance(far, ast.Name)):
+                        if not uses_scale(far) and not exempt(node.lineno):
+                            seen.add(id(node))
+                            yield node.lineno, "fixed-deadline", ast.unparse(node)
+                        break
+
+
 def masked(text):
     """Mask comments and strings, preserving offsets/newlines for call matching."""
     pattern = r'//[^\n]*|/\*[\s\S]*?\*/|"""[\s\S]*?"""|"(?:\\.|[^"\\])*"|\x27(?:\\.|[^\x27\\])*\x27|`(?:\\.|[^`\\])*`'
@@ -152,6 +220,15 @@ def other_patterns(text, suffix):
         "shared-temp": r"\bFile\s*\(\s*System\s*\.\s*getProperty\s*\(" if suffix == ".kt" else r"\b(?:tmpdir|tmpName|mktemp)\s*\(",
         "released-port": r"\bServerSocket\s*\([^\n]*\)\s*\.use\s*\{\s*it\.localPort\s*\}",
     }
+    # Hạn chờ theo giờ thật phải qua hệ số máy tải (Kotlin: TestTime.ms/nanos/seconds, web: scaledMs/eventually), không ngưỡng trần.
+    # Dòng ghi `wallclock-ok: <lý do>` được bỏ qua.
+    if suffix == ".kt":
+        clock = r"\bSystem\s*\.\s*(?:currentTimeMillis|nanoTime)\s*\(\s*\)"
+        rules["fixed-deadline"] = clock + r"\s*\+(?!\s*TestTime\b)\s*\S"
+        rules["elapsed-bound"] = clock + r"\s*-\s*\w+\s*\)?\s*(?:/\s*[\w.]+\s*)?<(?!\s*TestTime\b)"
+    elif suffix in {".ts", ".tsx", ".mjs", ".js"}:
+        rules["raw-waitfor"] = r"\bvi\s*\.\s*waitFor\s*\("
+        rules["elapsed-bound"] = r"\b(?:Date\s*\.\s*now|performance\s*\.\s*now)\s*\(\s*\)\s*-\s*\w+\s*<(?!\s*scaledMs\b)"
     if suffix in {".qml", ".cpp"}:
         rules = {"qt-fixed-delay": r"(?<![\w.])wait\s*\(" if suffix == ".qml" else r"\bQTest::qWait\s*\("}
     for rule, pattern in rules.items():
@@ -160,6 +237,8 @@ def other_patterns(text, suffix):
             # Keep the entire source line so literal paths/ports are reviewable.
             snippet = text.splitlines()[line - 1].strip()
             if rule == "shared-temp" and suffix == ".kt" and not re.search(r'getProperty\s*\(\s*"java\.io\.tmpdir"', snippet):
+                continue
+            if WALLCLOCK_OK.search(snippet):
                 continue
             if rule == "qt-fixed-delay" and ("// fixed: proves absence" in snippet or re.search(r"// fixed: samples timing - \S", snippet)):
                 continue  # checked more strictly by test_qt_fixed_waits.py
@@ -180,7 +259,8 @@ def scan(root=INTERNAL, sources=None):
         relative = path.relative_to(root).as_posix()
         text = sources[relative] if sources and relative in sources else path.read_text(encoding="utf-8-sig")
         patterns = python_patterns(text) if path.suffix == ".py" else other_patterns(text, path.suffix)
-        findings.extend(Finding(relative, line, rule, code) for line, rule, code in patterns)
+        findings.extend(Finding(relative, line, rule, code) for line, rule, code in patterns
+                        if not (rule in WALLCLOCK_RULES and relative in WALLCLOCK_DEFERRED))
     return sorted(findings, key=lambda f: (f.path, f.line, f.rule))
 
 

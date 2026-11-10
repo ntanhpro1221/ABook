@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicInteger
+import vn.abook.player.TestTime
 
 /**
  * Đọc song song các câu của một đoạn (uxfix47): luật cắt mảnh trên bộ ví dụ DÙNG CHUNG với pytest (tests/fixtures/readaloud/edge/pieces.json), mốc chữ sau khi nối, trần
@@ -341,7 +342,7 @@ class EdgePiecesTest {
 
     /** Chờ tới khi `condition` đúng (tối đa 5 giây) - bài thử đa luồng không đoán giờ. */
     private fun waitUntil(what: String, condition: () -> Boolean) {
-        val end = System.nanoTime() + 5_000_000_000L
+        val end = System.nanoTime() + TestTime.nanos(5_000_000_000L)
         while (!condition()) {
             assertTrue("hết 5 giây mà chưa $what", System.nanoTime() < end)
             Thread.sleep(10)
@@ -406,7 +407,7 @@ class EdgePiecesTest {
         waitUntil("mọi mảnh đã nối") { opened.get() == expected }
         assertEquals("đang chờ trả lời nên chưa ổ cắm nào đóng", 0, closed.get())
         cancel.cancel()
-        reader.join(5_000)
+        reader.join(TestTime.ms(5_000))
         assertFalse("luồng đọc phải thoát ngay khi huỷ", reader.isAlive)
         assertTrue(result.get().exceptionOrNull() is CancellationException)
         waitUntil("mọi ổ cắm đã đóng") { closed.get() == expected }
@@ -439,7 +440,7 @@ class EdgePiecesTest {
                     firstWaiting.countDown()
                     // Đọc ổ cắm thật không bị Thread.interrupt đánh thức, chỉ đóng ổ cắm mới thả nó: chờ cổng mà nuốt ngắt, để bài thử chỉ xanh khi ổ cắm bị đóng thật
                     // (ngắt luồng một mình, vẫn xảy ra khi clip hỏng, không đủ).
-                    val end = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+                    val end = System.nanoTime() + TestTime.nanos(TimeUnit.SECONDS.toNanos(10))
                     while (gate.count > 0 && System.nanoTime() < end) {
                         try { gate.await(end - System.nanoTime(), TimeUnit.NANOSECONDS) } catch (_: InterruptedException) { }
                     }
@@ -456,7 +457,7 @@ class EdgePiecesTest {
         } catch (error: VoiceException) {
             assertTrue(error.message, error.message!!.contains("tin hỏng"))
         }
-        assertTrue("không được đợi mảnh đứng trước", (System.nanoTime() - began) < 5_000_000_000L)
+        assertTrue("không được đợi mảnh đứng trước", (System.nanoTime() - began) < TestTime.nanos(5_000_000_000L))
         val firstDone = firstClosed.await(5, TimeUnit.SECONDS)
         assertTrue("ổ cắm của mảnh đứng trước phải đóng ngay, không đợi hết lượt (mảnh $total, mở ${opened.get()}, đóng ${closed.get()})", firstDone)
         waitUntil("mọi ổ cắm đã mở đều đóng") { opened.get() >= 2 && closed.get() == opened.get() }
@@ -481,7 +482,7 @@ class EdgePiecesTest {
             slots.release()
             waitUntil("chỗ thứ $n đã trao") { granted.size == n + 1 }
         }
-        threads.forEach { it.join(2_000) }
+        threads.forEach { it.join(TestTime.ms(2_000)) }
         assertEquals(listOf("target", "ahead1", "ahead1b", "ahead2", "ahead3", "bg"), granted)
     }
 
@@ -546,7 +547,7 @@ class EdgePiecesTest {
         assertEquals(0, slots.availablePermits())
         slots.release()
         waitUntil("clip rank 1 đã được chỗ") { granted.size == 4 }
-        threads.forEach { it.join(2_000) }
+        threads.forEach { it.join(TestTime.ms(2_000)) }
         assertEquals(listOf("b1", "b2", "b3", "sibling"), granted.toList()) // rank 0 trước theo thứ tự đến, rồi rank 1
     }
 
@@ -574,7 +575,7 @@ class EdgePiecesTest {
             waitUntil("chỗ thứ $n đã trao") { granted.size == n + 1 }
             assertTrue(slots.availablePermits() <= slots.size)
         }
-        threads.forEach { it.join(2_000) }
+        threads.forEach { it.join(TestTime.ms(2_000)) }
         assertEquals(listOf("ahead1", "ahead2", "bg"), granted.toList())
         while (slots.availablePermits() < slots.size) slots.release()
         assertEquals(slots.size, slots.availablePermits())
@@ -606,7 +607,7 @@ class EdgePiecesTest {
             waitUntil("$text đã xếp hàng") { slots.waiting() == before + 1 }
         }
         slots.release()
-        threads.forEach { it.join(10_000) }
+        threads.forEach { it.join(TestTime.ms(10_000)) }
         assertEquals(listOf("Người nghe chờ.", "Đọc trước một.", "Đọc trước hai."), order.toList())
     }
 

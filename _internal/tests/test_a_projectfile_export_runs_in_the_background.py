@@ -15,6 +15,7 @@ from abook.webui import export_jobs, projectfile
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import make_project
+from tests.timing import assert_within
 
 
 def _frozen_clock(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -99,7 +100,7 @@ def test_starting_answers_at_once_and_the_state_moves_to_done(studio, tmp_path: 
     _slow_views(monkeypatch, gate)
     started = time.perf_counter()
     status, data = _call(server, "POST", f"/api/books/{book}/projectfile-job", {"target": str(tmp_path / "ra")})
-    assert time.perf_counter() - started < 1.0, "bắt đầu trả ngay, không chờ đóng gói"
+    assert_within(1.0, started, clock=time.perf_counter, message="bắt đầu trả ngay, không chờ đóng gói")
     assert status == 202 and data["state"] == "running" and data["id"]
     assert _wait(lambda: _call(server, "GET", f"/api/books/{book}/projectfile-job")[1].get("phase") == "views")
     status, running = _call(server, "GET", f"/api/books/{book}/projectfile-job")
@@ -170,7 +171,7 @@ def test_closing_the_app_in_the_middle_cancels_cleanly_within_seconds(studio, tm
 
     def slow(project_root, tick=None, verdicts=None):
         reached.set()
-        _wait(lambda: False, 1.0)  # chụp màn xem lâu hơn một chút, chưa tới băm
+        time.sleep(1.0)  # chụp màn xem lâu hơn một chút, chưa tới băm
         return real(project_root, tick, verdicts)
 
     monkeypatch.setattr(projectfile.project_views, "snapshot", slow)
@@ -178,7 +179,7 @@ def test_closing_the_app_in_the_middle_cancels_cleanly_within_seconds(studio, tm
     assert reached.wait(10)
     started = time.perf_counter()
     app.close()
-    assert time.perf_counter() - started < 5.0, "đóng app không chờ lâu"
+    assert_within(5.0, started, clock=time.perf_counter, message="đóng app không chờ lâu")
     assert app.projectfile_jobs.running() == [], "việc đã dừng, không còn luồng đóng gói chạy"
     assert _call(server, "GET", f"/api/books/{book}/projectfile-job")[1]["state"] == "cancelled"
     assert _leftovers(tmp_path / "ra") == []

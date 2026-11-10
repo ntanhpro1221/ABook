@@ -14,6 +14,7 @@ from tests.async_wait import wait_until
 from abook.readaloud import edge
 from abook.readaloud.mapping import Boundary
 from tests.test_readaloud import FakeEdge, fake_edge  # noqa: F401 - fixture dùng chung
+from tests.timing import assert_within
 
 CASES = json.loads((Path(__file__).parent / "fixtures" / "readaloud" / "edge" / "pieces.json").read_text(encoding="utf-8"))["cases"]
 SENTENCES = ("Trời đã sẩm tối khi đoàn người tới được cổng làng. Người gác cổng đứng chờ sẵn, tay cầm chiếc đèn dầu cũ. "
@@ -266,7 +267,7 @@ def test_a_failing_piece_fails_the_clip_with_the_same_exception() -> None:
         started = time.monotonic()
         with pytest.raises(edge.EdgeRejected):
             client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
-        assert time.monotonic() - started < 0.8
+        assert_within(0.8, started)
     finally:
         client.release()
 
@@ -316,7 +317,7 @@ def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatc
     started = time.monotonic()
     with pytest.raises(edge.EdgeRejected):
         _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE)
-    assert time.monotonic() - started < 2.0
+    assert_within(2.0, started)
     assert wait_until(lambda: edge._connections.free == edge.EDGE_CONNECTIONS, timeout=2, interval=0.05)
     assert edge._connections.free == edge.EDGE_CONNECTIONS  # noqa: SLF001 - mọi chỗ đã trả
     assert sorted(aborted) == sorted(piece for n, piece in enumerate(pieces) if n != 1)
@@ -401,7 +402,7 @@ def test_waiting_for_a_connection_slot_past_the_deadline_is_a_timeout(monkeypatc
     taken.acquire()
     monkeypatch.setattr(edge, "_connections", taken)
     with pytest.raises(edge.EdgeTimeout):
-        edge.EdgeClient()._speak_one(edge.DEFAULT_VOICE, "Xin chào", 0, time.monotonic() + 0.05)
+        edge.EdgeClient()._speak_one(edge.DEFAULT_VOICE, "Xin chào", 0, time.monotonic() + 0.05)  # wallclock-ok: a deadline that must expire: the test expects the timeout
 
 
 # ---- chỗ kết nối: clip người nghe đang chờ đi trước clip đọc trước (uxfix51) ---------------------------------------------------------
@@ -486,7 +487,7 @@ def test_rank_zero_takes_a_slot_at_once_when_eight_are_held_by_rank_three_and_th
     for _ in range(edge.TARGET_PIECES):
         began = time.monotonic()
         assert slots.acquire(5.0, 0)
-        assert time.monotonic() - began < 0.2
+        assert_within(0.2, began, blocked=5)
     assert slots.free == -edge.TARGET_PIECES
     began = time.monotonic()
     assert not slots.acquire(0.1, 0)  # trần cứng size + TARGET_PIECES: rank 0 cũng phải chờ
@@ -752,7 +753,7 @@ def test_a_handshake_that_hangs_once_is_retried_and_the_clip_succeeds(fake_edge,
     result = _client(server).synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert result.audio == b"A" * 12000
     assert len(server.requests) == 1  # kết nối treo không bao giờ gửi yêu cầu tới máy chủ giả
-    assert time.monotonic() - started < 3.0  # hết giờ ở 0,3 s, không phải 10 s
+    assert_within(3.0, started, blocked=10)  # hết giờ ở 0,3 s, không phải 10 s
 
 
 def test_a_hanging_handshake_in_one_piece_does_not_fail_the_whole_clip(fake_edge, monkeypatch) -> None:
@@ -772,7 +773,7 @@ def test_a_handshake_that_always_hangs_ends_as_a_timeout_not_offline_after_the_r
         _client(server).synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert caught.value.reason == "timeout"  # có mạng mà dịch vụ không trả lời: giao diện báo "Giọng ... đang không dùng được.", không báo mất mạng
     assert len(server.hung) == edge.RETRIES + 1  # đã thử đủ lần, mỗi lần một kết nối mới
-    assert time.monotonic() - started < 6.0
+    assert_within(6.0, started)
 
 
 def test_a_dns_failure_or_a_refused_connection_stays_offline_at_once(monkeypatch) -> None:

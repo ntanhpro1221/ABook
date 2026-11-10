@@ -40,6 +40,8 @@ from private_profile import isolate  # noqa: E402
 from smoke_dist import run as run_app  # noqa: E402
 import smoke_open  # noqa: E402
 from update_site import Site, TestKey  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # _internal: hạn chờ chung của bộ test
+from tests.timing import scaled  # noqa: E402
 
 HERE = Path(__file__).resolve().parents[1]
 INSTALLER = HERE / "installer"
@@ -226,7 +228,7 @@ def processes_from(path: Path) -> list[psutil.Process]:
 
 
 def wait_for(predicate, seconds: float) -> bool:
-    deadline = time.monotonic() + seconds
+    deadline = time.monotonic() + scaled(seconds)
     while time.monotonic() < deadline:
         if predicate():
             return True
@@ -266,7 +268,7 @@ def selftest_watch() -> int:
         early = offscreen(title) if not want else None
         with DefaultDesktopWatch(root) as watch:
             hwnd = offscreen(title) if want else None
-            deadline = time.monotonic() + 5
+            deadline = time.monotonic() + scaled(5)
             while want and not watch.seen and time.monotonic() < deadline:
                 time.sleep(0.05)
             if hwnd:

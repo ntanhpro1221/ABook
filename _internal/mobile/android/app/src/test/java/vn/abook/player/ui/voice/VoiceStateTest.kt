@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import vn.abook.player.TestTime
 
 /**
  * Việc của Giọng đọc làm thêm với nguồn giả: tải / huỷ / gỡ giọng trên máy (kể cả tiến độ chỉ đi tới và danh sách giọng đọc lại khi xong), đồng ý gửi chữ, khoá (lưu trước khi
@@ -26,7 +27,7 @@ class VoiceStateTest {
     private fun state(pollMs: Long = 3_600_000) = VoiceState(source, scope, player, { changed++ }, pollMs, imports)
 
     private fun eventually(what: String, condition: () -> Boolean) {
-        val until = System.currentTimeMillis() + 5_000
+        val until = System.currentTimeMillis() + TestTime.ms(5_000)
         while (!condition()) {
             if (System.currentTimeMillis() > until) throw AssertionError("không xảy ra: $what")
             Thread.sleep(5)

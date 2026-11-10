@@ -15,6 +15,7 @@ from abook.webui import bluetooth
 from abook.webui.bluetooth import (ACK, CLOSE, DATA, HEADER, LINK_WINDOW, MAX_DATA, OPEN, RESET, STREAM_WINDOW, WINDOW,
                                    LinkClosed, Mux, _Outbox)
 from tests.test_bluetooth_tunnel import _tunnel, files  # noqa: F401 - fixture dùng chung
+from tests.timing import scaled
 
 
 def _frames(box: _Outbox, count: int = 1000) -> list[tuple[int, int, int]]:
@@ -214,7 +215,7 @@ def test_too_much_data_against_the_link_credit_ends_the_link() -> None:
             raw.send(OPEN, number)
         for _ in range(LINK_WINDOW // MAX_DATA + 1):
             raw.send(DATA, 1 + 2 * (_ % 6), b"x" * MAX_DATA)
-        deadline = time.time() + 5
+        deadline = time.time() + scaled(5)
         while mux.alive and time.time() < deadline:
             time.sleep(0.05)
         assert not mux.alive
@@ -302,7 +303,9 @@ def small_request_during_download(port: int, mux_class=Mux) -> tuple[float, floa
         local.close()
 
 
+@pytest.mark.perf  # đo độ trễ và tốc độ thật trên ống giả ~150 KB/s: ngưỡng cứng, ngoài cổng thường (pytest -m perf)
+@pytest.mark.perf  # đo độ trễ và tốc độ thật trên ống giả ~150 KB/s: ngưỡng cứng, ngoài cổng thường (pytest -m perf)
 def test_a_small_request_is_quick_while_a_big_download_fills_a_slow_link(files: int) -> None:  # noqa: F811
     took, rate = small_request_during_download(files)
-    assert took < 0.3, f"yêu cầu nhỏ chờ {took:.2f} s sau luồng tải"
+    assert took < 0.3, f"yêu cầu nhỏ chờ {took:.2f} s sau luồng tải"  # wallclock-ok: perf marker, off the normal gate
     assert rate > 0.6 * RATE / 1024, f"tải chỉ còn {rate:.0f} KB/s"

@@ -8,6 +8,7 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/studio/api", () => ({ api }));
 
 import { UNDO_SECONDS, UNDO_TOAST_MS, restoredMessage, restoredNote, toastRemoved } from "./trashUndo";
+import { eventually } from "@/testing/eventually";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -36,7 +37,7 @@ describe("xoá sách có Hoàn tác", () => {
     expect(options.action.label).toBe("Hoàn tác");
 
     options.action.onClick();
-    await vi.waitFor(() => expect(restored).toHaveBeenCalledOnce());
+    await eventually(() => expect(restored).toHaveBeenCalledOnce());
     expect(api).toHaveBeenCalledWith(`/api/trash/${"ab".repeat(16)}/undo`, { method: "POST", body: {} });
     expect(toast.warning).toHaveBeenLastCalledWith("Đã khôi phục “Sách”", { description: expect.stringContaining("hàng chờ") });
   });
@@ -46,7 +47,7 @@ describe("xoá sách có Hoàn tác", () => {
     const restored = vi.fn();
     toastRemoved({ message: "Đã xoá", title: "Sách", undo: "cd".repeat(16), onRestored: restored });
     toast.success.mock.calls[0][1].action.onClick();
-    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith("Chưa hoàn tác được", { description: "Đã có sách trùng tên ở đó" }));
+    await eventually(() => expect(toast.error).toHaveBeenCalledWith("Chưa hoàn tác được", { description: "Đã có sách trùng tên ở đó" }));
     expect(restored).not.toHaveBeenCalled();
   });
 
@@ -62,7 +63,7 @@ describe("xoá sách có Hoàn tác", () => {
     const restored = vi.fn();
     toastRemoved({ message: "Đã xoá", title: "Sách", undo: "ef".repeat(16), restore, onRestored: restored });
     toast.success.mock.calls[0][1].action.onClick();
-    await vi.waitFor(() => expect(restored).toHaveBeenCalledOnce());
+    await eventually(() => expect(restored).toHaveBeenCalledOnce());
     expect(restore).toHaveBeenCalledWith("ef".repeat(16));
     expect(api).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenLastCalledWith("Đã khôi phục “Sách”", {});
@@ -73,7 +74,7 @@ describe("xoá sách có Hoàn tác", () => {
     const restored = vi.fn();
     toastRemoved({ message: "Đã xoá", title: "Sách", undo: "ef".repeat(16), restore, onRestored: restored });
     toast.success.mock.calls[0][1].action.onClick();
-    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith("Chưa hoàn tác được", { description: "Cuốn này không còn để hoàn tác" }));
+    await eventually(() => expect(toast.error).toHaveBeenCalledWith("Chưa hoàn tác được", { description: "Cuốn này không còn để hoàn tác" }));
     expect(restored).not.toHaveBeenCalled();
   });
 
@@ -180,10 +181,10 @@ it("hoàn tác nhiều cuốn lần lượt, cũ trước: cuốn sau chỉ bắ
   const onRestored = vi.fn();
   for (const undo of ["cu", "moi"]) toastRemoved({ message: "Đã xoá", title: undo, undo, restore, onRestored });
   const clicked = toast.success.mock.calls.at(-1)![1].action.onClick();
-  await vi.waitFor(() => expect(restore).toHaveBeenCalledOnce());
+  await eventually(() => expect(restore).toHaveBeenCalledOnce());
   expect(restore).toHaveBeenLastCalledWith("cu");
   waiting.get("cu")!();
-  await vi.waitFor(() => expect(restore).toHaveBeenCalledTimes(2));
+  await eventually(() => expect(restore).toHaveBeenCalledTimes(2));
   expect(restore).toHaveBeenLastCalledWith("moi");
   waiting.get("moi")!();
   await clicked;

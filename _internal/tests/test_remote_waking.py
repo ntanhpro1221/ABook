@@ -15,6 +15,7 @@ from abook.webui import bluetooth, remote_books, route
 from abook.webui.remote_books import Computers, RemoteError
 from tests.test_bluetooth_desktop_client import PHONE, FakePhone, _clean_routes, _sync  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
+from tests.timing import assert_between, assert_within
 
 
 class FrozenApp:
@@ -135,7 +136,7 @@ def test_waiting_runs_out_with_a_plain_message_and_wifi_is_not_blamed(library, t
         frozen.freeze()
         started = time.monotonic()
         assert remote_books.refresh(tmp_path / "thu_vien", computers, asked=True) == {computer: {"error": remote_books.STILL_ASLEEP}}
-        assert 1.4 < time.monotonic() - started < 5
+        assert_between(1.4, 5, started)
         assert _view(computers, computer)["error"] == remote_books.STILL_ASLEEP
         assert route._seen.get(f"127.0.0.1:{frozen.port}", (True, 0))[0] is not False, "Wi-Fi thông, chỉ app đang ngủ"
         # Lần hỏi nền ngay sau đó không chờ lại (không giữ sóng / pin), người dùng bấm hỏi lại thì chờ.
@@ -162,7 +163,8 @@ def test_the_listener_can_stop_waiting(library, tmp_path: Path, monkeypatch, mul
         started = time.monotonic()
         remote_books.stop_waiting(computer)
         worker.join(5)
-        assert not worker.is_alive() and time.monotonic() - started < 2, "thôi chờ là thôi ngay"
+        assert not worker.is_alive()
+        assert_within(2, started, message="thôi chờ là thôi ngay")
         assert result == {computer: {"error": remote_books.STOPPED_WAITING}}
         assert "waking" not in _view(computers, computer)
     finally:
@@ -179,7 +181,7 @@ def test_quick_questions_still_fail_fast(library, tmp_path: Path) -> None:  # no
         started = time.monotonic()
         with pytest.raises(RemoteError):
             remote_books.player(computers.get(computer), timeout=1.0)
-        assert time.monotonic() - started < 3
+        assert_within(3, started)
         assert "waking" not in _view(computers, computer)
     finally:
         frozen.thaw()

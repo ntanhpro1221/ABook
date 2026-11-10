@@ -15,12 +15,13 @@ import org.robolectric.Shadows.shadowOf
 import vn.abook.player.Store
 import vn.abook.player.ui.data.*
 import java.io.File
+import vn.abook.player.TestTime
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class LibraryMembershipTest {
     private fun awaitTrue(what: String, condition: () -> Boolean) {
-        val until = System.currentTimeMillis() + 5_000
+        val until = System.currentTimeMillis() + TestTime.ms(5_000)
         while (!condition()) {
             shadowOf(Looper.getMainLooper()).idle()
             check(System.currentTimeMillis() < until) { "hết giờ chờ: $what" }
