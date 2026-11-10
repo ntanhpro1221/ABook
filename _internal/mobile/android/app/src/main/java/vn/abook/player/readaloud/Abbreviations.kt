@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import java.util.Locale
+
 /**
  * Spoken abbreviations, with unchanged display text. Owner readings, Vietnamese
  * expansions and contextual cues come from the same english_policy.json as Python.
@@ -58,6 +60,13 @@ object Abbreviations {
     private val PAREN_ABBREVIATION = Regex("""(?<=.)\(([A-Z]{2,5})\)""")
     /** Chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê. */
     private val LEVEL_NAMES = mapOf("lv" to "lờ vê", "lvl" to "lờ vê lờ")
+    /** Every abbreviation the reading tables know (english_policy.json, the tables here), lower-cased - `shouts.listed_abbreviations`: never a cry ("CCCD"). */
+    val LISTED: Set<String> by lazy {
+        val root = Locale.ROOT
+        val keys = listOf("vietnamese_abbreviations", "spoken_abbreviations", "contextual_abbreviations").flatMap { policy.getJSONObject(it).keys().asSequence().toList() }
+        val acronyms = listOf("preserve_acronyms", "acronyms").flatMap { key -> policy.getJSONArray(key).let { a -> (0 until a.length()).map { a.getString(it).lowercase(root) } } }
+        (keys + acronyms + AS_WORDS.keys + SPELLED_ENGLISH + LEVEL_NAMES.keys).toSet()
+    }
     private const val MIN_LETTERS = 2
     private val MAX_LETTERS = Shouts.POLICY.getInt("max_acronym_letters")
     private const val ROMAJI_FROM = 4

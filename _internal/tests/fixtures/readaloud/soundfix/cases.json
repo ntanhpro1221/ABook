@@ -40,6 +40,24 @@
     {"text": "Gia tốc là một khái niệm trong vật lý.", "said": "Gia tốc là một khái niệm trong vật lý."},
     {"text": "Hạng AAA và 55mm được ghi trong bảng.", "said": "Hạng <en>A A A</en> và 55mm được ghi trong bảng."},
     {"text": "Chương III có hai dòng để đọc.", "said": "Chương ba có hai dòng để đọc."},
-    {"text": "UMU vẫn là chữ do người nghe chọn.", "said": "ừm vẫn là chữ do người nghe chọn.", "readings": {"UMU": "ừm"}}
+    {"text": "UMU vẫn là chữ do người nghe chọn.", "said": "ừm vẫn là chữ do người nghe chọn.", "readings": {"UMU": "ừm"}},
+    {"text": "Lâm Cẩn rút CCCD từ túi ra.", "said": "Lâm Cẩn rút căn cước công dân từ túi ra."},
+    {"text": "Anh ấy đưa CMND và CCCD cho tôi.", "said": "Anh ấy đưa chứng minh nhân dân và căn cước công dân cho tôi."},
+    {"text": "Trang WWW đó đã đóng.", "said": "Trang <en>W W W</en> đó đã đóng."},
+    {"text": "Bọn KKK kéo đến.", "said": "Bọn <en>K K K</en> kéo đến."},
+    {"text": "Pin hạng AAA rất bền.", "said": "Pin hạng <en>A A A</en> rất bền."},
+    {"text": "Mã SSSR ghi ở đó.", "said": "Mã <en>S S S R</en> ghi ở đó."},
+    {"text": "Tôi mất cccd rồi.", "said": "Tôi mất căn cước công dân rồi."},
+    {"text": "Thẻ CCCD-12 của tôi.", "said": "Thẻ căn cước công dân-12 của tôi."},
+    {"text": "AAAAA, cứu tôi!", "said": "a… a, cứu tôi!"},
+    {"text": "KHÔNGGG, đừng đi!", "said": "không…, đừng đi!"},
+    {"text": "Hừmmm, để xem.", "said": "hừm…, để xem."},
+    {"text": "Kyaaa, con gián!", "said": "ki-a… a, con gián!"},
+    {"text": "HMMM, lạ thật.", "said": "hừm…, lạ thật."},
+    {"text": "Shhh, im nào.", "said": "suỵt…, im nào."},
+    {"text": "YESSS, thắng rồi!", "said": "yes…, thắng rồi!"},
+    {"text": "Grrr, tức quá.", "said": "gừ…, tức quá."},
+    {"text": "Hmmm, được thôi.", "said": "hừm…, được thôi."},
+    {"text": "Kkkk, buồn cười quá.", "said": "khà khà…, buồn cười quá."}
   ]
 }

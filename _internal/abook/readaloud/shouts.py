@@ -222,7 +222,23 @@ def _basic_reading(core: str) -> str | None:
 
 @lru_cache(maxsize=4096)
 def stretch_reading(core: str) -> str | None:
-    return _basic_reading(core) or _expanded_reading(core)
+    if core.isupper() and core.casefold() in listed_abbreviations():
+        return None  # "CCCD", "CMND": a listed abbreviation is never a cry, whatever its letters
+    reading = _basic_reading(core) or _expanded_reading(core)
+    if reading and not any(_plain(char) in VOWELS for char in core.lower()) and dedupe(core.lower()) not in _DEDUPED:
+        return None  # "cccd" -> "cd", "SSSR" -> "sr": with no vowel only a listed cry ("Hmmm", "Shhh", "Grrr") is a sound
+    return reading
+
+
+@lru_cache(maxsize=1)
+def listed_abbreviations() -> frozenset[str]:
+    """Every abbreviation the reading tables know (english_policy.json, abbreviations.py), lower-cased."""
+    from . import abbreviations
+    from .english_policy import POLICY as ENGLISH
+
+    words = set(ENGLISH["vietnamese_abbreviations"]) | set(ENGLISH["spoken_abbreviations"]) | set(ENGLISH["contextual_abbreviations"])
+    words |= {word.casefold() for word in ENGLISH["preserve_acronyms"] + ENGLISH["acronyms"]}
+    return frozenset(words | set(abbreviations.AS_WORDS) | abbreviations.SPELLED_ENGLISH | set(abbreviations.LEVEL_NAMES))
 
 
 def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:

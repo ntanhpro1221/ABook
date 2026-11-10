@@ -168,7 +168,10 @@ object Shouts {
     fun stretchReading(core: String): String? {
         val hit = readings[core]
         if (hit != null) return hit.ifEmpty { null }
-        val found = compute(core) ?: expandedReading(core)
+        val lower = core.lowercase(Locale.ROOT)
+        // "CCCD", "CMND": a listed abbreviation is never a cry; with no vowel ("cccd" -> "cd", "SSSR") only a listed cry ("Hmmm", "Shhh", "Grrr") is a sound
+        val found = if (upper(core) && lower in Abbreviations.LISTED) null
+            else (compute(core) ?: expandedReading(core))?.takeIf { lower.any { c -> plain(c).singleOrNull() in VOWELS } || dedupe(lower) in DEDUPED }
         if (readings.size > 4096) readings.clear()
         readings[core] = found ?: ""
         return found

@@ -34,7 +34,7 @@ def test_studio_offsets_and_explicit_readings_survive_note_boundaries():
 
 def test_shared_policy_is_in_quality_hash_and_cache_namespace():
     assert 'readaloud/sound_policy.json' in QUALITY_IMPLEMENTATION_FILES
-    assert cache.CACHE_RULES == 14
+    assert cache.CACHE_RULES == 15
     assert 'readaloud/phoneme_policy.py' in QUALITY_IMPLEMENTATION_FILES
     assert shouts.POLICY['version'] == 1
 

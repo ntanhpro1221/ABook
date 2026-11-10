@@ -110,6 +110,27 @@ def test_what_cannot_be_traced_to_a_sound_is_left_alone(core: str) -> None:
     assert shouts.stretch_reading(core) is None
 
 
+@pytest.mark.parametrize("core", ["CCCD", "cccd", "Cccd", "SSSR", "BBBC", "WWW", "KKK", "CMND"])
+def test_a_listed_or_vowel_less_abbreviation_is_never_a_cry(core: str) -> None:
+    assert shouts.stretch_reading(core) is None, "gộp ra không nguyên âm (\"cd\") hay có trong bảng viết tắt: để bước viết tắt đọc"
+
+
+def test_an_abbreviation_added_to_a_table_stops_being_a_cry(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert shouts.stretch_reading("AAAA") == "a… a"
+    shouts.stretch_reading.cache_clear()
+    monkeypatch.setattr(shouts, "listed_abbreviations", lambda: frozenset({"aaaa"}))
+    try:
+        assert shouts.stretch_reading("AAAA") is None, "toàn hoa và có trong bảng viết tắt: không bao giờ là tiếng kêu"
+        assert shouts.stretch_reading("Aaaa") == "a… a", "chữ thường vẫn là tiếng kêu"
+    finally:
+        shouts.stretch_reading.cache_clear()
+
+
+@pytest.mark.parametrize(("core", "reading"), [("Hmmm", "hừm…"), ("HMMM", "hừm…"), ("Shhh", "suỵt…"), ("Grrr", "gừ…"), ("Pffft", "phụt…"), ("Kkkk", "khà khà…")])
+def test_a_listed_cry_without_a_vowel_is_still_a_cry(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading
+
+
 def test_two_stretched_words_in_a_row_and_a_stretch_inside_quotes() -> None:
     assert _said("“Aaaa… Uuu!” ‘nhaaa’ (Hmmm)") == ["“a… a…", "u… u!”", "‘nha… a”", "(hừm…)"], "nháy đơn sau MỘT chữ cái sea-g2p đọc là phẩy: đổi sang ngoặc kép đóng"
 
