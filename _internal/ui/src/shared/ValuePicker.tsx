@@ -30,6 +30,8 @@ export function ValuePicker({
   label,
   hint,
   dense = false,
+  stepperOnly = false,
+  stepButtons = true,
   disabled = false,
   busy = false,
   current = true,
@@ -49,6 +51,9 @@ export function ValuePicker({
   /** Dòng giải thích dưới tên (hàng `dense` của Cài đặt). */
   hint?: ReactNode;
   dense?: boolean;
+  /** A labelled count with the shared editable value between the step buttons. */
+  stepperOnly?: boolean;
+  stepButtons?: boolean;
   disabled?: boolean;
   /** Đang lưu lần đổi trước: vẫn focus được (aria-disabled), nhưng không đổi gì. */
   busy?: boolean;
@@ -171,6 +176,7 @@ export function ValuePicker({
   };
   // Nút trơn (không Tooltip): bộ chọn nằm cả ở chỗ không có TooltipProvider (Cài đặt, hộp sửa sách); tên nằm ở aria-label + title.
   const stepButton = (steps: number) => {
+    if (!stepButtons) return null;
     const Icon = steps < 0 ? Minus : Plus;
     const name = steps < 0 ? S.s_giam_a6c2901a : S.s_tang_a2363bce;
     return (
@@ -247,11 +253,13 @@ export function ValuePicker({
     <button
       type="button"
       data-value-display
+      aria-pressed={stepperOnly ? current : undefined}
       disabled={disabled}
       aria-disabled={busy || undefined}
       title={S.s_cham_de_go_so_adc1d0d1}
       aria-label={`${label}: ${format(shown)}. ${S.s_cham_de_go_so_adc1d0d1}`}
       onClick={() => {
+        if (stepperOnly && !current) { commit(shown); return; }
         setClampNote(false);
         setTyping(true);
       }}
@@ -260,6 +268,12 @@ export function ValuePicker({
       {big}
     </button>
   );
+
+  if (stepperOnly) return <div data-value-picker data-value-stepper className={cn("flex flex-col gap-2", className)}>
+    <div data-value-section-label className="text-sm text-fg-2">{label}</div>
+    <div className="flex items-center">{stepButton(-1)}<div className="flex min-w-0 flex-1 justify-center">{valueField}</div>{stepButton(1)}</div>
+    <MotionPresence open={clampNote}><p data-value-clamped className="text-center text-xs text-fg-2">{S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))}</p></MotionPresence>
+  </div>;
 
   return (
     <div data-value-picker data-value-dense={dense || undefined} aria-disabled={disabled || undefined} className={cn("flex min-w-0 flex-col", dense ? "gap-0" : "gap-2", disabled && "opacity-50", className)}>

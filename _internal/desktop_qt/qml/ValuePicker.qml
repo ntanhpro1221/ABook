@@ -17,6 +17,8 @@ Column {
     property string label: ""
     property string hint: ""
     property bool dense: false
+    // The same editable value and step controls, with a label above, for counts without a ruler.
+    property bool stepperOnly: false
     property real fontScale: 1
     // false: giá trị này chưa phải lựa chọn đang áp (hẹn giờ đang "Hết chương") - không tô chip nào, chọn đúng giá trị đang đứng vẫn là đặt.
     property bool current: true
@@ -77,10 +79,34 @@ Column {
         commit(parsed.value)
     }
 
+    Text {
+        objectName: "valueSectionLabel"
+        visible: root.stepperOnly
+        text: root.label
+        color: Theme.text2
+        font.pixelSize: Theme.sizeBodySmall
+    }
+
     // 1. Tên + giá trị (hàng gọn) hay chữ lớn ở giữa.
     Item {
         width: root.width
         height: Math.max(root.dense ? 20 : 48, nameColumn.implicitHeight, valueBox.height)
+        IconButton {
+            objectName: "valueCountDown"
+            visible: root.stepperOnly
+            width: 48; height: 48
+            icon: "minus"; iconSize: 18; tip: S.s_giam_a6c2901a
+            enabled: root.enabled && root.shown > root.spec.min
+            onClicked: root.nudge(-1)
+        }
+        IconButton {
+            objectName: "valueCountUp"
+            visible: root.stepperOnly
+            x: parent.width - width; width: 48; height: 48
+            icon: "plus"; iconSize: 18; tip: S.s_tang_a2363bce
+            enabled: root.enabled && root.shown < root.spec.max
+            onClicked: root.nudge(1)
+        }
         Column {
             id: nameColumn
             visible: root.dense
@@ -106,7 +132,7 @@ Column {
                 tip: S.s_cham_de_go_so_adc1d0d1
                 Accessible.role: Accessible.Button
                 Accessible.name: root.label + ": " + root.format(root.shown) + ". " + S.s_cham_de_go_so_adc1d0d1
-                onClicked: { root.clampNote = false; root.typing = true; input.text = Logic.formatNumber(root.spec, root.shown); input.selectAll(); input.forceActiveFocus() }
+                onClicked: { if (root.stepperOnly && !root.current) { root.commit(root.shown); return }; root.clampNote = false; root.typing = true; input.text = Logic.formatNumber(root.spec, root.shown); input.selectAll(); input.forceActiveFocus() }
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.text; opacity: display.hovered ? 0.05 : 0 }
                 Text {
                     id: bigText
@@ -151,6 +177,7 @@ Column {
     // 2. Thước giữa nút - / +.
     Row {
         width: root.width
+        visible: !root.stepperOnly
         height: !root.labelPlan.aligned ? 48 : root.dense ? 56 : 64
         IconButton {
             objectName: "valueDown"
@@ -319,7 +346,7 @@ Column {
     Item {
         id: chips
         objectName: "valueChips"
-        visible: !root.labelPlan.aligned && root.spec.typical.length > 0
+        visible: !root.stepperOnly && !root.labelPlan.aligned && root.spec.typical.length > 0
         x: 48
         width: root.width - 96
         readonly property var widths: root.spec.typical.map(function(v) { return Math.max(48, metrics.advanceWidth(Logic.formatNumber(root.spec, v)) + 16) })

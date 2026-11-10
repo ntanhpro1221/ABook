@@ -282,7 +282,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
      trạng thái đậm và cỡ chữ hiện hành; không đủ chỗ thì bỏ toàn bộ vạch và chia nhãn thành hàng cân bằng trong vùng ấy.
      Chip trùng giá trị hiện tại chữ `--text` đậm (có thể thêm nền `--accent-soft`); hổ phách chỉ ở rãnh/núm; giá trị chưa phải lựa chọn
      đang áp (hẹn giờ đang "Hết chương") thì không chip nào sáng;
-  4. **lựa chọn đặc biệt không phải số** ("Hết chương này" / "Hết N chương" với −/+ chọn N 1-10) là hàng riêng dưới cùng.
+  4. **lựa chọn đặc biệt** ("Số chương", N 1-10) dùng chế độ `stepperOnly` của cùng ValuePicker:
+     nhãn → giá trị và hai nút −/+ cách 8; giá trị dùng cùng chữ lớn / ô gõ cao 48 như phần phút phía trên.
+     Không cộng thêm đệm ở chỗ gọi; không có một kiểu chữ chọn hay nhịp dọc riêng cho số chương.
   Đổi là áp ngay (thả tay, chạm chip, −/+, Enter); bảng chứa nó không tự đóng (kéo thước cần bảng đứng yên); khi kéo, chữ
   lớn và thước chạy theo tay, chỗ cần nghe ngay (núm âm thanh) áp luôn lúc kéo. Kiểu gọn `dense` cho danh sách nhiều núm
   (âm thanh, Cài đặt): tên + giá trị một hàng, thước có số ngay dưới từng vạch; không có hàng chip riêng. Miền + giá trị tiêu biểu của từng cài đặt nằm ở bảng

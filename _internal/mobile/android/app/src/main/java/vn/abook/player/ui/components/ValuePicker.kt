@@ -119,6 +119,8 @@ fun ValuePicker(
     chipLabel: (Double) -> String = { ValuePickerLogic.format(spec, it) },
     hint: String? = null,
     dense: Boolean = false,
+    /** A labelled count with the same value field between the step buttons, without a ruler. */
+    stepperOnly: Boolean = false,
     enabled: Boolean = true,
     /** false: giá trị này chưa phải lựa chọn đang áp (hẹn giờ đang "Hết chương") - không tô chip nào, chọn đúng giá trị đang đứng vẫn là đặt. */
     current: Boolean = true,
@@ -170,12 +172,20 @@ fun ValuePicker(
     }
 
     val range = S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))
-    Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(.5f)).testTag(tag),
+    Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(.5f)).testTag(tag).semantics { if (stepperOnly) selected = current },
         verticalArrangement = Arrangement.spacedBy(if (dense) 0.dp else Dim.s8)) {
         val display: @Composable () -> Unit = {
             ValueDisplay(format(shown), typing, dense, enabled, "$label: ${format(shown)}. ${S.s_cham_de_go_so_adc1d0d1}",
-                ValuePickerLogic.format(spec, shown), "${tag}_value", onStart = { clampNote = false; typing = true }, onDone = ::finishTyping)
+                ValuePickerLogic.format(spec, shown), "${tag}_value", onStart = { if (stepperOnly && !current) commit(shown) else { clampNote = false; typing = true } }, onDone = ::finishTyping)
         }
+        if (stepperOnly) {
+            BasicText(label, Modifier.testTag("${tag}_section_label"), style = Abook.type.bodySmall.copy(color = colors.text2))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
+                Box(Modifier.weight(1f).semantics { selected = current }, contentAlignment = Alignment.Center) { display() }
+                StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
+            }
+        } else {
         if (dense) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -313,6 +323,7 @@ fun ValuePicker(
                 }
             }
         }
+        }
         special?.invoke()
     }
 }
@@ -388,7 +399,7 @@ private fun ValueDisplay(text: String, typing: Boolean, dense: Boolean, enabled:
     if (!typing) {
         Box(Modifier.widthIn(min = 48.dp).heightIn(min = if (dense) 20.dp else Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)
             .semantics { contentDescription = description }.testTag(tag).padding(horizontal = Dim.s8), contentAlignment = Alignment.Center) {
-            BasicText(text, style = style)
+            BasicText(text, Modifier.testTag("${tag}_text"), style = style)
         }
         return
     }

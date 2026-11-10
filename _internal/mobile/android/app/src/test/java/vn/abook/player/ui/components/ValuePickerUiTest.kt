@@ -25,6 +25,24 @@ import vn.abook.player.ui.theme.AbookTheme
 class ValuePickerUiTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
+    @Test fun countUsesTheSameValueFieldAndEightDpLabelGap() {
+        val value = mutableStateOf(3.0)
+        rule.setContent { AbookTheme(false) {
+            Box(Modifier.width(360.dp).padding(horizontal = 24.dp)) {
+                ValuePicker(ValueSpecs.sleepChapters, value.value, { value.value = it }, { it.toInt().toString() }, "Count", "count", stepperOnly = true)
+            }
+        } }
+        rule.waitForIdle()
+        val label = rule.onNodeWithTag("count_section_label").getUnclippedBoundsInRoot()
+        val field = rule.onNodeWithTag("count_value").getUnclippedBoundsInRoot()
+        assertEquals(8f, (field.top - label.bottom).value, 0.1f)
+        assertTrue(field.height >= 48.dp)
+        rule.onNodeWithTag("count_up").performClick()
+        rule.runOnIdle { assertEquals(4.0, value.value, 0.0) }
+        rule.onNodeWithTag("count_down").performClick()
+        rule.runOnIdle { assertEquals(3.0, value.value, 0.0) }
+    }
+
     @Test fun everyPickerAt100And130Percent() {
         var expectedText = androidx.compose.ui.graphics.Color.Unspecified
         val selected = mutableStateOf(ValueSpecs.speed)

@@ -38,6 +38,7 @@ Item {
         readonly property var fixture: JSON.parse(qtValuePickerCases)
 
         function init() {
+            picker.stepperOnly = false
             picker.dense = false
             picker.fontScale = 1
             picker.spec = Logic.SPECS.sleepMinutes
@@ -110,6 +111,24 @@ Item {
             verify(captionFaults(picker) > 0, "a missing tick must be red")
             tick.objectName = "valueTick_0"
             compare(captionFaults(picker), 0)
+        }
+
+        function test_countUsesSharedValueFieldAndSpacing() {
+            picker.stepperOnly = true
+            picker.label = "Count"
+            picker.spec = Logic.SPECS.sleepChapters
+            picker.format = function(v) { return String(v) }
+            picker.value = 3
+            verify(waitForRendering(picker))
+            const label = findChild(picker, "valueSectionLabel")
+            const display = findChild(picker, "valueDisplay")
+            const at = display.mapToItem(picker, 0, 0)
+            compare(at.y - label.y - label.height, 8)
+            compare(display.height, 48)
+            mouseClick(findChild(picker, "valueCountUp")); compare(picker.value, 4)
+            mouseClick(findChild(picker, "valueCountDown")); compare(picker.value, 3)
+            picker.stepperOnly = false
+            picker.label = "Hẹn giờ ngủ"
         }
 
         function test_specialChildrenStackWithoutOverlap() {
