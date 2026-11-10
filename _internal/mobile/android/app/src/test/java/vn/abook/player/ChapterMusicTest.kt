@@ -15,7 +15,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.LooperMode
 import java.io.File
 import java.time.Duration
@@ -24,9 +23,6 @@ import java.time.Duration
  * Real Playback clock -> MusicBed chapter selection. MusicBed reads the owner's music from the book's own `book.json` (Store.playableManifest)
  * and the mix constants from the packaged asset (MusicBed.init); only the codec players are [FakeExo]. Playback's ExoPlayer listener lives
  * inside PlaybackService.onCreate, so [voicePlaying]/[arrive] forward the same two events it forwards.
- *
- * Shared-JVM note: Conscrypt is off because these codec doubles need no TLS. Turning it on here once made two FastConnectTest cases fail
- * depending on suite order, so some TLS-provider state leaks across Robolectric suites (separate task, not fixed here).
  */
 internal class ChapterMusicRig(music: Map<Int, JSONArray>) {
     val voice = FakeExo()
@@ -95,7 +91,6 @@ internal class ChapterMusicRig(music: Map<Int, JSONArray>) {
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @Config(sdk = [35])
-@ConscryptMode(ConscryptMode.Mode.OFF)
 @LooperMode(LooperMode.Mode.PAUSED)
 class ChapterMusicTest(private val from: String, private val to: String, private val mode: String) {
     companion object {
@@ -169,7 +164,6 @@ class ChapterMusicTest(private val from: String, private val to: String, private
 /** Cells a listener meets that the from/to matrix does not: changing chapter mid-fade, a cue that starts late in the chapter, a late answer while paused, rate change mid-fade. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
-@ConscryptMode(ConscryptMode.Mode.OFF)
 @LooperMode(LooperMode.Mode.PAUSED)
 class ChapterMusicEdgeTest {
     private var rig: ChapterMusicRig? = null
