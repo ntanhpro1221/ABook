@@ -109,6 +109,16 @@
     {"text": "Yuna no đâu.", "rulings": {"contexts": {"^ yuna|no|đâu ^": "v"}}, "claimed": ["no"], "doubtful": [], "phonemes": "jˈuːnə nˈɔ ɗˈə1w."},
     {"text": "Hội quán của guild Say xỉn.", "claimed": [], "doubtful": ["say"], "phonemes": "hˈo6j kwˈaːɜn kˌuə4 ɡˈɪld sˈeɪ sˈi4n."},
     {"text": "Hội quán của guild Say xỉn.", "rulings": {"contexts": {"của guild|say|xỉn ^": "v"}}, "claimed": ["say"], "doubtful": [], "phonemes": "hˈo6j kwˈaːɜn kˌuə4 ɡˈɪld sˈaj sˈi4n."},
-    {"text": "Do exercise đi.", "rulings": {"contexts": {"^|do|exercise đi": "e"}}, "claimed": [], "doubtful": [], "phonemes": "dˈuː ˈɛksɚsˌaɪz ɗˈi."}
+    {"text": "Do exercise đi.", "rulings": {"contexts": {"^|do|exercise đi": "e"}}, "claimed": [], "doubtful": [], "phonemes": "dˈuː ˈɛksɚsˌaɪz ɗˈi."},
+    {"text": "Dan!", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn!"},
+    {"text": "Dan!", "claimed": [], "doubtful": [], "phonemes": "zˈaːn!"},
+    {"text": "Dan cười.", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn kˈyə2j."},
+    {"text": "“Dan?” cô hỏi.", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn? kˈo hˈɔ4j."},
+    {"text": "Bà ngồi đan len, dan tay cháu.", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "bˈaː2 ŋˈo2j ɗˈaːn lˈɛn, zˈaːn t̪ˈaj tʃˈaɜw."},
+    {"text": "Rồi Dan nhìn Tom và Ben.", "rulings": {"foreign": ["ben", "dan", "tom"]}, "claimed": [], "doubtful": [], "phonemes": "ɹˈo2j dˈæn ɲˈi2n tˈɑːm vˌaː2 bˈɛn."},
+    {"text": "Tom, Sam, Ken, Tim!", "rulings": {"foreign": ["ken", "sam", "tim", "tom"]}, "claimed": [], "doubtful": [], "phonemes": "tˈɑːm, sˈæm, kˈɛn, tˈɪm!"},
+    {"text": "Van và Son đi.", "rulings": {"foreign": ["son", "van"]}, "claimed": [], "doubtful": [], "phonemes": "vˈæn vˌaː2 sˈʌn ɗˈi."},
+    {"text": "Van và Son đi.", "rulings": {"names": ["son", "van"]}, "claimed": ["van", "son"], "doubtful": [], "phonemes": "vˈaːn vˌaː2 sˈɔn ɗˈi."},
+    {"text": "DAN ƠI!", "rulings": {"foreign": ["dan"]}, "claimed": [], "doubtful": [], "phonemes": "dˈæn ˈəːj!"}
   ]
 }

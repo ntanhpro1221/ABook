@@ -617,17 +617,21 @@ def keep_vieneu_final_mark() -> None:
     def phonemize(text: str, punc_norm: bool = True) -> str:
         from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import (
-            emphasize_english_interjections, remembered_case, remembered_rulings, repair_syllabic_gi, repair_syllabic_o,
-            restore_vietnamese,
+            emphasize_english_interjections, english_names, remembered_case, remembered_named, remembered_rulings,
+            repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
         )
 
         def plain(value: str, final: bool) -> str:
             # `value` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
-            out = restore_vietnamese(
-                value, original_phonemize(value, final),
-                lambda: phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final),
-                phonemize_text._get_g2p().convert, remembered_case(), remembered_rulings(),
-            )
+            raw = original_phonemize(value, final)
+
+            def given() -> str:
+                return phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final)
+
+            out = restore_vietnamese(value, raw, given, phonemize_text._get_g2p().convert, remembered_case(), remembered_rulings())
+            named = remembered_named()
+            if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): its English sound
+                out = english_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
             if final and out.endswith(".") and ("?" in value or "!" in value):
                 written = original_phonemize(value, False).rstrip()
                 if written.endswith(("?", "!")):

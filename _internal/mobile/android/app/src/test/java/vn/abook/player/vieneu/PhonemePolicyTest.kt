@@ -20,12 +20,13 @@ class PhonemePolicyTest {
         }
     }
 
-    /** A case's `rulings` (contexts {key: "v" / "e"}, names) in the shape `sharedWords` of book.json carries them. */
+    /** A case's `rulings` (contexts {key: "v" / "e"}, names, foreign) in the shape `sharedWords` of book.json carries them. */
     private fun rulingsOf(case: JSONObject): PhonemePolicy.Rulings? =
         case.optJSONObject("rulings")?.let { given ->
-            val full = JSONObject(given.toString()).put("version", 1)
+            val full = JSONObject(given.toString()).put("version", 2)
             if (!full.has("contexts")) full.put("contexts", JSONObject())
             if (!full.has("names")) full.put("names", org.json.JSONArray())
+            if (!full.has("foreign")) full.put("foreign", org.json.JSONArray())
             PhonemePolicy.Rulings.of(full)
         }
 

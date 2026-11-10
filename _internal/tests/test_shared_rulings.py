@@ -102,8 +102,8 @@ def test_the_pass_writes_the_answers_and_a_second_run_asks_nothing(tmp_path: Pat
     stored = json.loads((tmp_path / sr.FILE).read_text("utf8"))
     assert stored["complete"] is True and stored["digest"] == "digest-one" and stored["prompt"] == sr.PROMPT_VERSION
     assert stored["contexts"] == {DO_TRANS: "v", "^|do|exercise đi": "v", "của guild|say|xỉn ^": "v"}
-    assert stored["origins"] == {"An An": "vi", "Ben": "en"} and stored["names"] == ["an"]
-    assert sr.valid(stored) and sr.shared(stored).keys() == {"version", "contexts", "names", "readings"}
+    assert stored["origins"] == {"An An": "vi", "Ben": "en"} and stored["names"] == ["an"] and stored["foreign"] == ["ben"]
+    assert sr.valid(stored) and sr.shared(stored).keys() == {"version", "contexts", "names", "foreign", "readings"}
     asked = len(ollama.bodies)
     assert sr.compute(tmp_path, text, ["AN AN", "Lâm phu nhân", "BEN"], "http://ollama", session=ollama, log=lambda _: None)["asked"] == 0
     assert len(ollama.bodies) == asked
@@ -172,10 +172,20 @@ def test_a_name_is_read_by_its_own_origin_where_the_book_would_read_it_otherwise
     assert sr.name_item("An An", ["Alice", "An An", "Edward"]) == "An An (cùng truyện: Alice, Edward)"
 
 
+def test_a_foreign_name_spelled_like_a_vietnamese_syllable_is_kept_for_the_reader():
+    origins = {"Dan": "en", "Tom Riddle": "en", "Alice": "en", "Ben": "en", "Lan": "vi", "Kim Dokja": "ko", "Mai": "ja", "An An": "vi"}
+    assert sr.foreign_names(origins) == ["ben", "dan", "tom"]  # "Alice", "Riddle" are no Vietnamese syllable: sea-g2p reads them in English already
+    assert sr.foreign_names({"Dan": "vi"}) == [] and sr.foreign_names({"Dan Brown": "en", "Dan": "vi"}) == []  # a Vietnamese Dan; two characters disagree
+    rulings = Rulings(foreign={"dan"})
+    assert sr.tag("Dan cười.", rulings).startswith("w") and sr.tag("Lan cười.", rulings) == ""
+
+
 def test_only_a_file_of_this_shape_is_read(tmp_path: Path):
-    good = {"version": sr.VERSION, "contexts": {DO_TRANS: "v"}, "names": ["an"], "readings": {"Chiaki": "Chi-a-ki"}}
-    assert sr.valid(good) and sr.rulings_of(good).contexts == {DO_TRANS: True}
-    for bad in ({**good, "version": 0}, {**good, "contexts": {DO_TRANS: "x"}}, {**good, "names": "an"}, {**good, "readings": {"a": 1}}, [], None):
+    good = {"version": sr.VERSION, "contexts": {DO_TRANS: "v"}, "names": ["an"], "foreign": ["dan"], "readings": {"Chiaki": "Chi-a-ki"}}
+    assert sr.valid(good) and sr.rulings_of(good).contexts == {DO_TRANS: True} and sr.rulings_of(good).foreign == {"dan"}
+    assert sr.rulings_of({**good, "contexts": {}, "names": []}).foreign == {"dan"}  # a book with nothing but a foreign name still has rulings
+    for bad in ({**good, "version": 0}, {**good, "contexts": {DO_TRANS: "x"}}, {**good, "names": "an"}, {**good, "foreign": "dan"},
+                {key: value for key, value in good.items() if key != "foreign"}, {**good, "readings": {"a": 1}}, [], None):
         assert not sr.valid(bad)
     (tmp_path / sr.FILE).write_text("{", encoding="utf8")
     assert sr.read(tmp_path / sr.FILE) is None and sr.load(tmp_path) is None and sr.load(tmp_path / "missing") is None
@@ -189,8 +199,8 @@ def test_the_book_file_carries_the_answers(tmp_path: Path):
     paths, _ = _recorded(tmp_path)
     assert "sharedWords" not in bookfile.listening_layer(paths.root)[0]
     stored = {"version": sr.VERSION, "prompt": sr.PROMPT_VERSION, "model": sr.MODEL, "digest": "d", "complete": True, "bookOrigin": None,
-              "origins": {"An An": "vi"}, "names": ["an"], "readings": {}, "contexts": {DO_TRANS: "v"}}
+              "origins": {"An An": "vi", "Dan": "en"}, "names": ["an"], "foreign": ["dan"], "readings": {}, "contexts": {DO_TRANS: "v"}}
     atomic_write_json(paths.root / sr.FILE, stored)
     book, _ = bookfile.listening_layer(paths.root)
-    assert book["sharedWords"] == {"version": sr.VERSION, "contexts": {DO_TRANS: "v"}, "names": ["an"], "readings": {}}
+    assert book["sharedWords"] == {"version": sr.VERSION, "contexts": {DO_TRANS: "v"}, "names": ["an"], "foreign": ["dan"], "readings": {}}
     assert isinstance(book["sharedWords"], bookfile._BOOK_FIELDS["sharedWords"])

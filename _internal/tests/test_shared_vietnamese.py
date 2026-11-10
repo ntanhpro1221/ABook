@@ -12,9 +12,10 @@ CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/shared_vietnames
 
 
 def rulings_of(case: dict) -> Rulings | None:
-    """The book's second-tier answers a case comes with (`rulings`: contexts {key: "v" / "e"}, names), as shared_rulings.rulings_of reads them."""
+    """The book's second-tier answers a case comes with (`rulings`: contexts {key: "v" / "e"}, names, foreign), as shared_rulings.rulings_of reads them."""
     given = case.get("rulings")
-    return Rulings({key: answer == "v" for key, answer in given.get("contexts", {}).items()}, set(given.get("names", ()))) if given else None
+    return Rulings({key: answer == "v" for key, answer in given.get("contexts", {}).items()}, set(given.get("names", ())),
+                   set(given.get("foreign", ()))) if given else None
 
 
 def case_id(case: dict) -> str:

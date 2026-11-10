@@ -29,6 +29,8 @@ object PhonemePolicy {
     private const val IDENTITY = "Vahs"  // word classes whose very word is evidence, not only its kind
     private const val FOREIGN = "efnX"
     private val letters = Regex("[a-z]+")
+    private val lowerWord = Regex("(?<![$W'’<>/])[a-z]+(?![$W'’])")
+    private val tone = Regex("[2-6ɜ]")  // sea-g2p's tone marks: a Vietnamese reading has one unless its tone is level
     private val readings = java.util.concurrent.ConcurrentHashMap<String, Pair<String, String>>()
 
     /** The learned table shared_words.json (scripts/build_shared_words.py writes the Kotlin copy; docs/SHARED_WORDS.md). */
@@ -132,30 +134,34 @@ object PhonemePolicy {
 
     /**
      * phoneme_policy.Rulings: what a book already knows about its shared words (the second tier ran in Studio; `sharedWords` of book.json) -
-     * answers by context ([sharedWordContexts] key -> Vietnamese?) and the roster's Vietnamese names, lower-case.
+     * answers by context ([sharedWordContexts] key -> Vietnamese?), the roster's Vietnamese names and its foreign names that are spelled
+     * like a Vietnamese syllable ("dan", "tom": [englishNames]), lower-case.
      */
-    class Rulings(val contexts: Map<String, Boolean> = emptyMap(), val names: Set<String> = emptySet()) {
-        val empty get() = contexts.isEmpty() && names.isEmpty()
+    class Rulings(val contexts: Map<String, Boolean> = emptyMap(), val names: Set<String> = emptySet(), val foreign: Set<String> = emptySet()) {
+        val empty get() = contexts.isEmpty() && names.isEmpty() && foreign.isEmpty()
 
         /** One mark for a clip key: every ruling of the book (they come with the book and do not change). */
         val mark: String by lazy {
-            val lines = contexts.entries.sortedBy { it.key }.map { "${it.key}\t${if (it.value) 1 else 0}" } + names.sorted().map { "name\t$it" }
+            val lines = contexts.entries.sortedBy { it.key }.map { "${it.key}\t${if (it.value) 1 else 0}" } + names.sorted().map { "name\t$it" } +
+                foreign.sorted().map { "foreign\t$it" }
             java.security.MessageDigest.getInstance("SHA-256").digest(lines.joinToString("\n").toByteArray(Charsets.UTF_8)).take(8).joinToString("") { "%02x".format(it) }
         }
 
         companion object {
             /** The `sharedWords` entry of book.json (shared_rulings.shared), null when absent, of another version or with nothing in it. */
             fun of(found: org.json.JSONObject?): Rulings? {
-                if (found == null || found.optInt("version") != 1) return null
+                if (found == null || found.optInt("version") != 2) return null
                 val contexts = found.optJSONObject("contexts") ?: return null
                 val names = found.optJSONArray("names") ?: return null
+                val foreign = found.optJSONArray("foreign") ?: return null
                 val answers = HashMap<String, Boolean>()
                 for (key in contexts.keys()) when (contexts.optString(key)) {
                     "v" -> answers[key] = true
                     "e" -> answers[key] = false
                     else -> return null
                 }
-                val rulings = Rulings(answers, (0 until names.length()).map { names.optString(it) }.toSet())
+                val rulings = Rulings(answers, (0 until names.length()).map { names.optString(it) }.toSet(),
+                    (0 until foreign.length()).map { foreign.optString(it) }.toSet())
                 return if (rulings.empty) null else rulings
             }
         }
@@ -163,7 +169,8 @@ object PhonemePolicy {
 
     /** "w" + the book's mark when [text] holds a word of the table and the book has rulings, else "" (ClipCache.reading). */
     fun rulingsTag(text: String, rulings: Rulings?): String =
-        if (rulings == null || rulings.empty || !shared.find.containsMatchIn(text)) "" else "w" + rulings.mark
+        if (rulings == null || rulings.empty || !(shared.find.containsMatchIn(text) ||
+                (rulings.foreign.isNotEmpty() && letters.findAll(text.lowercase(Locale.ROOT)).any { it.value in rulings.foreign }))) "" else "w" + rulings.mark
 
     private fun ascii(word: String) = word.all { it.code < 128 }
 
@@ -315,6 +322,8 @@ object PhonemePolicy {
                     claimed = ruled; sure = true; who = "ruling"
                 } else if (scored.word in rulings.names && (scored.name || !sure || heads[position])) {
                     claimed = true; sure = true; who = "roster"
+                } else if (scored.word in rulings.foreign && (scored.name || heads[position])) {
+                    claimed = false; sure = true; who = "roster"
                 }
             }
             Verdict(scored.word, claimed, sure, who)
@@ -336,6 +345,45 @@ object PhonemePolicy {
      * for another shared word that is not in the sentence. sea-g2p resolves a run of shared words as one unit, so the swap changes no other
      * word's language, and the stand-in's phonemes mark the exact place. A result that differs anywhere else is thrown away.
      */
+    fun writtenNames(text: String, source: String? = null): Set<String> {
+        val upper = HashSet<String>()
+        val lower = HashSet<String>()
+        for (value in listOf(text, source)) {
+            if (value.isNullOrEmpty()) continue
+            capital.findAll(value).forEach { upper.add(it.value.lowercase(Locale.ROOT)) }
+            lowerWord.findAll(value).forEach { lower.add(it.value) }
+        }
+        return upper - lower
+    }
+
+    /**
+     * phoneme_policy.english_names: a foreign roster name that is spelled like a Vietnamese syllable gets its English sound ("Dan" /zaːn/ ->
+     * /dæn/). sea-g2p has no English entry for such a word, not even inside an <en> tag; it does read the possessive in English ("dan's" ->
+     * /dˈænz/), so each of [words] is swapped for its possessive in the phonemizer's input only ([given]; [raw] is its output) and the closing
+     * /z/ or /s/ is dropped. A swap that moves any other word, or that does not come back as one English word, is thrown away.
+     */
+    fun englishNames(given: String, raw: String, phonemes: String, g2p: (String) -> String, words: Set<String>): String {
+        if (words.isEmpty()) return phonemes
+        val tokens = given.split(spaces).filter { it.isNotEmpty() }
+        val before = raw.split(spaces).filter { it.isNotEmpty() }
+        val out = phonemes.split(spaces).filter { it.isNotEmpty() }.toMutableList()
+        if (tokens.size != before.size || tokens.size != out.size) return phonemes
+        var changed = false
+        for ((index, token) in tokens.withIndex()) {
+            val match = letterRun.find(token) ?: continue
+            if (match.value !in words || letterRun.find(token, match.range.last + 1) != null) continue
+            val marked = tokens.toMutableList()
+            marked[index] = token.substring(0, match.range.last + 1) + "'s" + token.substring(match.range.last + 1)
+            val after = g2p(marked.joinToString(" ")).split(spaces).filter { it.isNotEmpty() }
+            if (after.size != before.size || after.indices.any { it != index && after[it] != before[it] }) continue
+            val said = after[index].trimEnd { it in PHONEME_MARKS }
+            if (said.length < 3 || said.last() !in "zs" || tone.containsMatchIn(said)) continue
+            out[index] = said.dropLast(1) + out[index].substring(out[index].trimEnd { it in PHONEME_MARKS }.length)
+            changed = true
+        }
+        return if (changed) out.joinToString(" ") else phonemes
+    }
+
     fun restoreVietnamese(text: String, phonemes: String, source: String, g2p: (String) -> String, capitals: Set<String> = emptySet(),
                           rulings: Rulings? = null): String {
         val shared = shared

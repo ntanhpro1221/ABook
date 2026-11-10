@@ -19,7 +19,7 @@ class BookReadings(private val readings: Map<String, String>, val rulings: Phone
          * ("Chiaki" read the Japanese way in a book of no settled origin) stand under the listener's own. No usable entry: [own] itself.
          */
         fun of(own: Map<String, String>, shared: JSONObject?): Map<String, String> {
-            if (shared == null || shared.optInt("version") != 1) return own
+            if (shared == null || shared.optInt("version") != 2) return own
             val names = shared.optJSONObject("readings")
             val origin = HashMap<String, String>()
             if (names != null) for (key in names.keys()) names.optString(key).takeIf { it.isNotEmpty() && Readings.isKey(key) }?.let { origin[key] = it }

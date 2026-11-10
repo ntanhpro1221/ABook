@@ -341,20 +341,22 @@ def phonemize(sentences: Sequence[str], source: str | None = None, rulings: Any 
     """Phoneme của một khúc. `source`: chữ HIỆN của khúc (trước lớp chữ đem đọc) - luật viết hoa của từ trùng Việt / Anh nhìn chữ gốc, vì lớp chữ hạ chữ IN HOA
     ("admin BAN nick") trước khi tới đây. `rulings`: phán quyết tầng hai của cuốn (`shared_rulings.py`), không có thì chỉ tầng một."""
     from . import japanese_delivery
-    from .phoneme_policy import capitalised, remembered_rulings
+    from .phoneme_policy import capitalised, remembered_rulings, written_names
 
     text = " ".join(sentences)
     capitals = capitalised(text, source)
     if rulings is None:
         rulings = remembered_rulings()  # của cuốn đang nghe (service.clip)
+    named = written_names(text, source) & rulings.foreign if rulings else frozenset()  # tên ngoại của danh sách nhân vật viết như âm tiết Việt ("Dan")
     if japanese_delivery.POLICY["delivery"]["joiner"] in text:
         return japanese_delivery.phonemes(
-            text, True, lambda value, final: _phonemize_plain([value], final=final, capitals=capitals, rulings=rulings),
+            text, True, lambda value, final: _phonemize_plain([value], final=final, capitals=capitals, rulings=rulings, named=named),
         )
-    return _phonemize_plain(sentences, capitals=capitals, rulings=rulings)
+    return _phonemize_plain(sentences, capitals=capitals, rulings=rulings, named=named)
 
 
-def _phonemize_plain(sentences: Sequence[str], *, final: bool = True, capitals: frozenset[str] = frozenset(), rulings: Any = None) -> str:
+def _phonemize_plain(sentences: Sequence[str], *, final: bool = True, capitals: frozenset[str] = frozenset(), rulings: Any = None,
+                     named: frozenset[str] = frozenset()) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
     của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
     Khác vieneu ở MỘT điểm: `punc_norm` ép dấu cuối của khúc dưới 5 từ về "." ("Thật sao?" thành "Thật sao.") nên câu hỏi / cảm thán ngắn mất giọng
@@ -365,11 +367,12 @@ def _phonemize_plain(sentences: Sequence[str], *, final: bool = True, capitals: 
     chunk = punc_norm(text) if final else text
     if not chunk.strip():
         return ""
-    from .phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese
+    from .phoneme_policy import emphasize_english_interjections, english_names, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese
 
     pipeline = _sea()
     given = keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=final))
-    phonemes = restore_vietnamese(chunk, pipeline.g2p.convert(given), given, pipeline.g2p.convert, capitals, rulings)
+    raw = pipeline.g2p.convert(given)
+    phonemes = english_names(given, raw, restore_vietnamese(chunk, raw, given, pipeline.g2p.convert, capitals, rulings), pipeline.g2p.convert, named)
     if final and phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

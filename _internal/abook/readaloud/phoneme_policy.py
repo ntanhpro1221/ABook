@@ -26,6 +26,8 @@ _STRONG = frozenset(".!?;:…")  # a neighbour beyond one of these is no neighbo
 _IDENTITY = frozenset("Vahs")  # word classes whose very word is evidence, not only its kind
 _FOREIGN = "efnX"
 _LETTERS = re.compile("[a-z]+")
+_LOWER = re.compile(r"(?<![\w'’<>/])[a-z]+(?![\w'’])")
+_TONE = re.compile("[2-6ɜ]")  # sea-g2p's tone marks: a Vietnamese reading has one unless its tone is level
 _APOSTROPHE = re.compile("['’]")
 _readings: dict[str, tuple[str, str]] = {}
 _case = threading.local()
@@ -122,16 +124,19 @@ def _shared() -> _Shared:
 
 class Rulings:
     """What a book already knows about its shared words (shared_rulings.py): the second tier's answers by context
-    (`shared_word_contexts` key -> Vietnamese?) and the roster's Vietnamese names ("an", "long"), lower-case."""
+    (`shared_word_contexts` key -> Vietnamese?), the roster's Vietnamese names ("an", "long") and its foreign names
+    that are spelled like a Vietnamese syllable ("dan", "tom": `english_names`), lower-case."""
 
-    __slots__ = ("contexts", "names")
+    __slots__ = ("contexts", "names", "foreign")
 
-    def __init__(self, contexts: dict[str, bool] | None = None, names: frozenset[str] | set[str] | None = None) -> None:
+    def __init__(self, contexts: dict[str, bool] | None = None, names: frozenset[str] | set[str] | None = None,
+                 foreign: frozenset[str] | set[str] | None = None) -> None:
         self.contexts = dict(contexts or {})
         self.names = frozenset(names or ())
+        self.foreign = frozenset(foreign or ())
 
     def __bool__(self) -> bool:
-        return bool(self.contexts or self.names)
+        return bool(self.contexts or self.names or self.foreign)
 
 
 @lru_cache(maxsize=8192)
@@ -189,12 +194,13 @@ def capitalised(text: str, source: str | None = None) -> frozenset[str]:
 @contextmanager
 def sentence_case(text: str, source: str | None = None, rulings: "Rulings | None" = None) -> Iterator[None]:
     """Remember `capitalised(text, source)` and the book's rulings for a frontend that only hands over normalized chunks (Studio)."""
-    previous = getattr(_case, "capitals", frozenset()), getattr(_case, "rulings", None)
+    previous = getattr(_case, "capitals", frozenset()), getattr(_case, "rulings", None), getattr(_case, "named", frozenset())
     _case.capitals, _case.rulings = capitalised(text, source), rulings
+    _case.named = written_names(text, source) & rulings.foreign if rulings else frozenset()
     try:
         yield
     finally:
-        _case.capitals, _case.rulings = previous
+        _case.capitals, _case.rulings, _case.named = previous
 
 
 @contextmanager
@@ -215,6 +221,11 @@ def remembered_case() -> frozenset[str]:
 
 def remembered_rulings() -> "Rulings | None":
     return getattr(_case, "rulings", None)
+
+
+def remembered_named() -> frozenset[str]:
+    """The roster's foreign names this utterance writes as a name (`english_names`)."""
+    return getattr(_case, "named", frozenset())
 
 
 def _shared_tokens(text: str, capitals: frozenset[str]) -> list[tuple[str, str, str]]:
@@ -371,6 +382,8 @@ def shared_word_verdicts(text: str, capitals: frozenset[str] = frozenset(),
                 claimed, sure, who = ruled, True, "ruling"
             elif word in rulings.names and (name or not sure or heads[position]):
                 claimed, sure, who = True, True, "roster"
+            elif word in rulings.foreign and (name or heads[position]):
+                claimed, sure, who = False, True, "roster"
         out.append((word, claimed, sure, who))
     return out
 
@@ -433,6 +446,50 @@ def english_read(given: str, phonemes: str, g2p: Callable[[str], str]) -> list[b
         if all(core in (vietnamese, english) for core in cores):
             return [core == english for core in cores]
     return None
+
+
+def written_names(text: str, source: str | None = None) -> frozenset[str]:
+    """ASCII words written with a capital wherever they stand, lower-cased - also the one that opens a sentence
+    ("Dan!", "Dan cười."), which `capitalised` leaves out. A word that is also there in lower case is not one."""
+    upper: set[str] = set()
+    lower: set[str] = set()
+    for value in (text, source):
+        if value:
+            upper.update(match.group().lower() for match in _CAPITAL.finditer(value))
+            lower.update(_LOWER.findall(value))
+    return frozenset(upper - lower)
+
+
+def english_names(given: str, raw: str, phonemes: str, g2p: Callable[[str], str], words: frozenset[str]) -> str:
+    """Give a foreign roster name that is spelled like a Vietnamese syllable its English sound ("Dan" /zaːn/ -> /dæn/).
+
+    sea-g2p has no English entry for such a word, not even inside an <en> tag: the Vietnamese syllable wins. It does
+    read the possessive in English ("dan's" -> /dˈænz/, "tom's" -> /tˈɑːmz/), so each of `words` is swapped for its
+    possessive in the phonemizer's input only (`given`; `raw` is its output) and the closing /z/ or /s/ is dropped:
+    every phoneme is sea-g2p's own. A swap that moves any other word, or that does not come back as one English
+    word, is thrown away and the name stays as it was in `phonemes`.
+    """
+    if not words:
+        return phonemes
+    tokens, before, out = given.split(), raw.split(), phonemes.split()
+    if not len(tokens) == len(before) == len(out):
+        return phonemes
+    changed = False
+    for index, token in enumerate(tokens):
+        match = _LETTER_RUN.search(token)
+        if match is None or match.group() not in words or _LETTER_RUN.search(token, match.end()):
+            continue
+        marked = list(tokens)
+        marked[index] = token[:match.end()] + "'s" + token[match.end():]
+        after = g2p(" ".join(marked)).split()
+        if len(after) != len(before) or any(new != old for at, (new, old) in enumerate(zip(after, before)) if at != index):
+            continue
+        said = after[index].rstrip(_PHONEME_MARKS)
+        if len(said) < 3 or said[-1] not in "zs" or _TONE.search(said):
+            continue
+        out[index] = said[:-1] + out[index][len(out[index].rstrip(_PHONEME_MARKS)):]
+        changed = True
+    return " ".join(out) if changed else phonemes
 
 
 def restore_vietnamese(text: str, phonemes: str, source: str | Callable[[], str], g2p: Callable[[str], str],

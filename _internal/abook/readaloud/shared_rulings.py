@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,7 +35,7 @@ from typing import Any, Callable, Iterable, Sequence
 from .phoneme_policy import Rulings
 
 FILE = "shared_rulings.json"
-VERSION = 1
+VERSION = 2
 MODEL = "abook-analyzer:v5"  # the analysis model (the worker passes the project's own): every Studio has it, and it answers both questions better than the music model (TEST_REPORT)
 PROMPT_VERSION = "sw-2+no-3"
 BATCH = 8  # items per request
@@ -309,6 +310,16 @@ def vietnamese_names(origins: dict[str, str]) -> list[str]:
     return sorted({word.lower() for word, origin in word_origins(origins).items() if origin == "vi" and word.lower() in listed})
 
 
+def foreign_names(origins: dict[str, str]) -> list[str]:
+    """Words of the roster's names of the "en" origin ("Dan", "Tom" of a Western character) that are spelled like a
+    Vietnamese syllable, lower-case (`Rulings.foreign`): sea-g2p reads such a word as that syllable wherever it
+    stands, table word or not, so the book has to say it is a name (`phoneme_policy.english_names`)."""
+    from ..analysis import is_vietnamese_syllable
+
+    return sorted({word.lower() for word, origin in word_origins(origins).items()
+                   if origin == "en" and word.isascii() and is_vietnamese_syllable(word.lower())})
+
+
 def name_readings(origins: dict[str, str], book_origin: str | None) -> dict[str, str]:
     """{name word: what to say} where the name's own origin reads it differently from the book's origin: a Japanese or
     Korean name by its own romanization ("Chiaki" in a book of no origin, "Jieun" in a Japanese book), a Vietnamese
@@ -337,6 +348,7 @@ def valid(value: Any) -> bool:
             and isinstance(value.get("contexts"), dict)
             and all(isinstance(key, str) and answer in ("v", "e") for key, answer in value["contexts"].items())
             and isinstance(value.get("names"), list) and all(isinstance(name, str) for name in value["names"])
+            and isinstance(value.get("foreign"), list) and all(isinstance(name, str) for name in value["foreign"])
             and isinstance(value.get("readings"), dict)
             and all(isinstance(key, str) and isinstance(said, str) for key, said in value["readings"].items()))
 
@@ -354,7 +366,7 @@ def rulings_of(value: dict[str, Any] | None) -> Rulings | None:
     if not value:
         return None
     contexts = {key: answer == "v" for key, answer in value["contexts"].items()}
-    return Rulings(contexts, set(value["names"])) if contexts or value["names"] else None
+    return Rulings(contexts, set(value["names"]), set(value["foreign"])) if contexts or value["names"] or value["foreign"] else None
 
 
 def load(project_root: Path | str) -> Rulings | None:
@@ -364,7 +376,7 @@ def load(project_root: Path | str) -> Rulings | None:
 
 def shared(value: dict[str, Any]) -> dict[str, Any]:
     """What travels in the `.abook` (`book.json` `sharedWords`): the answers only, not which model gave them."""
-    return {"version": VERSION, "contexts": value["contexts"], "names": value["names"], "readings": value["readings"]}
+    return {"version": VERSION, "contexts": value["contexts"], "names": value["names"], "foreign": value["foreign"], "readings": value["readings"]}
 
 
 def tag(text: str, rulings: Rulings | None) -> str:
@@ -380,9 +392,10 @@ def tag(text: str, rulings: Rulings | None) -> str:
     chunk = punc_norm(ve.normalize([text]))
     found = sorted({(key, rulings.contexts[key]) for key in shared_word_contexts(chunk) if key in rulings.contexts})
     named = sorted({word for *_, word in _listed_spans(chunk) if word in rulings.names})
-    if not found and not named:
+    foreign = sorted(set(re.findall("[a-z]+", chunk)) & rulings.foreign)
+    if not found and not named and not foreign:
         return ""
-    lines = [f"{key}\t{int(answer)}" for key, answer in found] + [f"name\t{word}" for word in named]
+    lines = [f"{key}\t{int(answer)}" for key, answer in found] + [f"name\t{word}" for word in named] + [f"foreign\t{word}" for word in foreign]
     return "w" + hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()[:16]
 
 
@@ -422,7 +435,7 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
         kept_origins = {name: origins[name] for name in named if name in origins}
         atomic_write_json(project_root / FILE, {
             "version": VERSION, "prompt": PROMPT_VERSION, "model": model, "digest": digest, "complete": complete,
-            "bookOrigin": book_origin, "origins": kept_origins, "names": vietnamese_names(kept_origins),
+            "bookOrigin": book_origin, "origins": kept_origins, "names": vietnamese_names(kept_origins), "foreign": foreign_names(kept_origins),
             "readings": name_readings(kept_origins, book_origin), "contexts": kept})
 
     def counts() -> dict[str, int]:

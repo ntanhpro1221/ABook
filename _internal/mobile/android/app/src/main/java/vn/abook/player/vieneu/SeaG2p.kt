@@ -64,19 +64,22 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
         val text = sentences.joinToString(" ")
         val joiner = vn.abook.player.readaloud.JapanesePolicy.data.getJSONObject("delivery").getString("joiner")
         val capitals = PhonemePolicy.capitalised(text, source)
-        if (joiner !in text) return phonemizePlain(sentences, capitals = capitals, rulings = rulings)
+        // the roster's foreign names that are spelled like a Vietnamese syllable ("Dan"), where this unit writes them as a name
+        val named = if (rulings == null || rulings.foreign.isEmpty()) emptySet() else PhonemePolicy.writtenNames(text, source).intersect(rulings.foreign)
+        if (joiner !in text) return phonemizePlain(sentences, capitals = capitals, rulings = rulings, named = named)
         return vn.abook.player.readaloud.JapaneseDelivery.phonemes(text, true) { value, final ->
-            phonemizePlain(listOf(value), final, capitals, rulings)
+            phonemizePlain(listOf(value), final, capitals, rulings, named)
         }
     }
 
     private fun phonemizePlain(sentences: List<String>, final: Boolean = true, capitals: Set<String> = emptySet(),
-                               rulings: PhonemePolicy.Rulings? = null): String {
+                               rulings: PhonemePolicy.Rulings? = null, named: Set<String> = emptySet()): String {
         val text = normalizeUnit(sentences)
         val chunk = if (final) puncNorm(text) else text
         if (chunk.isBlank()) return ""
         val given = keepLoneO(chunk, normalize(chunk, final))
-        var phonemes = PhonemePolicy.restoreVietnamese(chunk, g2p(given), given, ::g2p, capitals, rulings)
+        val raw = g2p(given)
+        var phonemes = PhonemePolicy.englishNames(given, raw, PhonemePolicy.restoreVietnamese(chunk, raw, given, ::g2p, capitals, rulings), ::g2p, named)
         if (final && phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()
