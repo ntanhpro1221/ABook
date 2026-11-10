@@ -148,7 +148,9 @@ class BookPlayerLinkTest {
         val screen = rule.onNodeWithTag("screen_top").getUnclippedBoundsInRoot()
         val bar = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
         assertEquals("màn dừng ngay trên thanh", bar.top.value, screen.bottom.value, 1f)
-        assertEquals("thanh chừa đáy đúng một lần dưới nó", 780f - vn.abook.player.ui.components.bottomClearance(0.dp, 0.dp).value, bar.bottom.value, 1f)
+        // Màn con giữ thanh tab ở đúng đường gốc: thanh phát nhỏ đứng ngay trên vạch kẻ của thanh tab, không tự chừa đáy lần nữa.
+        val tab = rule.onNodeWithTag("tab_library").getUnclippedBoundsInRoot()
+        assertEquals("thanh phát nhỏ đứng trên thanh tab", tab.top.value - 1f, bar.bottom.value, 1f)
     }
 
     @Test
@@ -203,24 +205,29 @@ class BookPlayerLinkTest {
         assertEquals(Destination.Book(book), shell.nav.stack.top?.destination)
     }
 
-    /** Màn con (không thanh tab): dưới thanh phát nhỏ chỉ có MỘT lần chừa đáy theo inset đo trên máy thật, không phải hai lần, không phải sàn 24 dp cũ. */
-    private fun miniBarGap(insets: BottomInsets, expected: Float) {
+    /**
+     * Màn con: thanh tab + thanh phát nhỏ đứng đúng đường gốc. Dưới hàng tab chỉ MỘT lần chừa đáy theo inset đo trên máy thật (không phải hai lần, không phải sàn 24 dp cũ),
+     * thanh phát nhỏ ngồi ngay trên vạch kẻ của thanh tab.
+     */
+    private fun subScreenBottomGap(insets: BottomInsets, expected: Float) {
         show()
         push(Destination.Book(book))
         rule.applyBottomInsets(insets)
         val root = rule.onRoot().getUnclippedBoundsInRoot()
+        val tab = rule.onNodeWithTag("tab_library").getUnclippedBoundsInRoot()
         val mini = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
-        assertEquals("${insets.name}: thanh phát nhỏ cách mép dưới", expected, (root.bottom - mini.bottom).value, 0.5f)
+        assertEquals("${insets.name}: hàng tab cách mép dưới", expected, (root.bottom - tab.bottom).value, 0.5f)
+        assertEquals("${insets.name}: thanh phát nhỏ đứng trên thanh tab", tab.top.value - 1f, mini.bottom.value, 0.5f)
         assertEquals(expected, insets.clearance(rule.density.density).value, 0.5f)
     }
 
-    @Test fun miniBarOnASubScreenOppo() = miniBarGap(OppoHiddenBar, 12f)
+    @Test fun subScreenBottomBarsOppo() = subScreenBottomGap(OppoHiddenBar, 12f)
 
     @Test @Config(sdk = [35], qualifiers = "w411dp-h914dp-420dpi")
-    fun miniBarOnASubScreenEmulatorGesture() = miniBarGap(EmulatorGesture, 24f)
+    fun subScreenBottomBarsEmulatorGesture() = subScreenBottomGap(EmulatorGesture, 24f)
 
     @Test @Config(sdk = [35], qualifiers = "w411dp-h914dp-420dpi")
-    fun miniBarOnASubScreenEmulatorThreeButton() = miniBarGap(EmulatorThreeButton, 48f)
+    fun subScreenBottomBarsEmulatorThreeButton() = subScreenBottomGap(EmulatorThreeButton, 48f)
 
     @Test
     fun shots() {
