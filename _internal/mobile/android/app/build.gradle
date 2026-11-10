@@ -219,6 +219,8 @@ tasks.withType(Test).configureEach {
     dependsOn "prepareRobolectricJars"
     systemProperty "robolectric.offline", "true"
     systemProperty "robolectric.dependency.dir", robolectricDir.get().asFile.path
+    // PristineJvmTls dựng lại verifier mặc định riêng của JDK: Robolectric và Pin thay nó cho cả JVM.
+    jvmArgs "--add-opens=java.base/javax.net.ssl=ALL-UNNAMED"
 }
 
 def thirdPartyAsset = tasks.register("nativeThirdPartyAsset", Copy) {

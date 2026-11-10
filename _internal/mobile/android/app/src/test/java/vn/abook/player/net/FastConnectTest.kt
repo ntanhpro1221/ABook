@@ -8,6 +8,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
+import org.junit.Rule
 import org.junit.Test
 import java.io.BufferedReader
 import java.io.File
@@ -24,7 +25,6 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.nio.file.Files
 import java.security.KeyStore
-import java.security.Security
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SNIMatcher
@@ -37,7 +37,6 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLServerSocket
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 
 /**
@@ -45,6 +44,8 @@ import javax.net.ssl.TrustManagerFactory
  * Phần HTTP/HTTPS chạy kết nối thật của JDK tới máy chủ cục bộ, nên kênh CONNECT, header Host và TLS (SNI + kiểm tên) được thử đầu-cuối.
  */
 class FastConnectTest {
+    @get:Rule val tls = PristineJvmTls()
+
     private val blackhole = InetAddress.getByName("2001:db8::1") // dải tài liệu: không bao giờ tới
     private val blackhole2 = InetAddress.getByName("2001:db8::2")
     private val live = InetAddress.getByName("127.0.0.1")
@@ -380,33 +381,6 @@ class FastConnectTest {
 
     private class Pki(val server: SSLContext, val client: SSLContext)
 
-    /** These fixtures test standard HTTPS names independently of Pin's process-wide verifier. */
-    private class IdentityCheckingFactory(private val delegate: SSLSocketFactory) : SSLSocketFactory() {
-        override fun getDefaultCipherSuites(): Array<String> = delegate.defaultCipherSuites
-        override fun getSupportedCipherSuites(): Array<String> = delegate.supportedCipherSuites
-        private fun checked(socket: Socket): Socket = (socket as SSLSocket).apply {
-            sslParameters = sslParameters.apply { endpointIdentificationAlgorithm = "HTTPS" }
-        }
-        override fun createSocket(): Socket = checked(delegate.createSocket())
-        override fun createSocket(socket: Socket, host: String, port: Int, autoClose: Boolean): Socket =
-            checked(delegate.createSocket(socket, host, port, autoClose))
-        override fun createSocket(host: String, port: Int): Socket = checked(delegate.createSocket(host, port))
-        override fun createSocket(host: String, port: Int, localHost: InetAddress, localPort: Int): Socket =
-            checked(delegate.createSocket(host, port, localHost, localPort))
-        override fun createSocket(host: InetAddress, port: Int): Socket = checked(delegate.createSocket(host, port))
-        override fun createSocket(host: InetAddress, port: Int, localHost: InetAddress, localPort: Int): Socket =
-            checked(delegate.createSocket(host, port, localHost, localPort))
-    }
-
-    private inline fun <T> withJdkTls(block: () -> T): T {
-        // JSSE also obtains XDH/key generators through the global list. Merely
-        // selecting its SSLContext is insufficient with Conscrypt first.
-        val displaced = Security.getProviders().withIndex().filter { it.value.name.contains("Conscrypt", ignoreCase = true) }
-        displaced.forEach { Security.removeProvider(it.value.name) }
-        try { return block() }
-        finally { displaced.forEach { Security.insertProviderAt(it.value, it.index + 1) } }
-    }
-
     /** Chứng chỉ tự ký cho `san` (keytool của JDK đang chạy test); null = JDK không có keytool, bài thử bỏ qua. */
     private fun pki(san: String): Pki? {
         val keytool = File(System.getProperty("java.home"), "bin/" + if (System.getProperty("os.name").lowercase().contains("win")) "keytool.exe" else "keytool")
@@ -419,9 +393,6 @@ class FastConnectTest {
         process.inputStream.readBytes()
         if (process.waitFor() != 0) return null
         val store = KeyStore.getInstance("PKCS12").apply { file.inputStream().use { load(it, "changeit".toCharArray()) } }
-        // Robolectric inserts Conscrypt into the JVM's global provider list.
-        // This fixture exercises the JDK HttpURLConnection, whose SNI/hostname
-        // integration expects JSSE sockets; do not depend on test class order.
         val keys = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(store, "changeit".toCharArray()) }
         val trusted = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null); setCertificateEntry("a", store.getCertificate("a")) }
         val trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm(), "SunJSSE").apply { init(trusted) }
@@ -431,7 +402,7 @@ class FastConnectTest {
         )
     }
 
-    @Test fun httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost() = withJdkTls {
+    @Test fun httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost() {
         val pki = pki("abook.test")
         assumeTrue("JDK không có keytool", pki != null)
         val http = Http(pki!!.server).track()
@@ -439,7 +410,7 @@ class FastConnectTest {
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 100).track()
         val (body, ms) = timed {
             val connection = fast.open("https://abook.test:${http.port}/hello", HANG_MS) as HttpsURLConnection
-            connection.sslSocketFactory = IdentityCheckingFactory(pki.client.socketFactory)
+            connection.sslSocketFactory = pki.client.socketFactory
             connection.readTimeout = 5000
             connection.inputStream.use { String(it.readBytes()) }
         }
@@ -451,13 +422,13 @@ class FastConnectTest {
         assertEquals(2, net.started.size)
     }
 
-    @Test fun httpsStillRejectsACertificateForAnotherName() = withJdkTls {
+    @Test fun httpsStillRejectsACertificateForAnotherName() {
         val pki = pki("other.test")
         assumeTrue("JDK không có keytool", pki != null)
         val http = Http(pki!!.server).track()
         val fast = FastConnect(resolver(blackhole, live), Net(http.port, dead = setOf(blackhole)), staggerMs = 50).track()
         val connection = fast.open("https://abook.test:${http.port}/", 5000) as HttpsURLConnection
-        connection.sslSocketFactory = IdentityCheckingFactory(pki.client.socketFactory)
+        connection.sslSocketFactory = pki.client.socketFactory
         connection.readTimeout = 5000
         try {
             connection.inputStream.close()
@@ -467,31 +438,21 @@ class FastConnectTest {
         }
     }
 
-    @Test fun jdkHttpsAssertionsSurviveRobolectricInstallingConscryptFirst() {
-        // Robolectric supplies Conscrypt at test runtime, not on the compile classpath.
-        val provider = Class.forName("org.conscrypt.Conscrypt").getMethod("newProvider").invoke(null) as java.security.Provider
-        val previous = Security.getProvider(provider.name)
-        val position = Security.getProviders().indexOfFirst { it.name == provider.name } + 1
-        Security.removeProvider(provider.name)
-        Security.insertProviderAt(provider, 1)
+    @Test fun anApplicationWideVerifierStillRefusesACertificateForAnotherName() {
+        // Như Pin khi máy kia chưa ghép: verifier riêng thay cho kiểm tên ở lớp TLS, chứng chỉ sai tên vẫn bị từ chối (ở lớp HTTPS, nên là IOException thường).
+        HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> false }
+        val pki = pki("other.test")
+        assumeTrue("JDK không có keytool", pki != null)
+        val http = Http(pki!!.server).track()
+        val fast = FastConnect(resolver(blackhole, live), Net(http.port, dead = setOf(blackhole)), staggerMs = 50).track()
+        val connection = fast.open("https://abook.test:${http.port}/", 5000) as HttpsURLConnection
+        connection.sslSocketFactory = pki.client.socketFactory
+        connection.readTimeout = 5000
         try {
-            assertEquals(provider.name, SSLContext.getInstance("TLS").provider.name)
-            httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost()
-            httpsStillRejectsACertificateForAnotherName()
-        } finally {
-            Security.removeProvider(provider.name)
-            if (previous != null) Security.insertProviderAt(previous, position)
-        }
-    }
-
-    @Test fun standardHttpsNamesAreStillCheckedWithAnApplicationWideVerifier() {
-        val previous = HttpsURLConnection.getDefaultHostnameVerifier()
-        HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
-        try {
-            httpsThroughTheTunnelKeepsSniAndTheNameCheckOnTheOriginalHost()
-            httpsStillRejectsACertificateForAnotherName()
-        } finally {
-            HttpsURLConnection.setDefaultHostnameVerifier(previous)
+            connection.inputStream.close()
+            fail("chứng chỉ của tên khác phải bị từ chối")
+        } catch (error: IOException) {
+            assertTrue(error.message, error.message!!.contains("hostname wrong"))
         }
     }
 

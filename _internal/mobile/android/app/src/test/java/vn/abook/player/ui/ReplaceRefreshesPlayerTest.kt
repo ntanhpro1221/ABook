@@ -39,7 +39,6 @@ import java.nio.file.Files
  * file thay qua đúng đường của app ([ImportRepo.replace] -> [BookFileImport]), rồi trạng thái của [PlayerRepo] phải có độ dài mới ngay, cùng chương, cùng giây,
  * đang phát vẫn phát, đang dừng vẫn dừng.
  */
-// Paket ui (không phải vn.abook.player): Robolectric chạy TRƯỚC FastConnectTest trong cùng JVM làm hỏng TLS của JDK (Conscrypt chèn lên đầu), nên test Robolectric không được xếp trước gói net.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class ReplaceRefreshesPlayerTest {
