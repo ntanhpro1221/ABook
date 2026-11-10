@@ -6,6 +6,8 @@
   {"name": "thanh phát thu nhỏ", "platform": "android", "variants": ["_light", "_dark"],
    "members": ["mini_playing", "mini_paused", "mini_short", "mini_long_title"]},
   {"name": "đầu trang sách", "platform": "android", "variants": ["_light", "_dark"],
-   "members": ["book_listening", "book_playing", "book_fresh", "book_partial"]}
+   "members": ["book_listening", "book_playing", "book_fresh", "book_partial"]},
+  {"name": "thanh phát thu nhỏ Qt", "platform": "qt", "variants": ["_light", "_dark"],
+   "members": ["mini_short", "mini_long"]}
  ]
 }

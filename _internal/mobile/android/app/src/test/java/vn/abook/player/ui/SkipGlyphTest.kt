@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ApplicationProvider
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test

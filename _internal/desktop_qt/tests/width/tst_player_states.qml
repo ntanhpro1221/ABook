@@ -145,8 +145,10 @@ Item {
                 Theme.mode = mode
                 VisualReady.render(this, host.Window.window, frame, qtVisualReady)
                 const img = grabImage(VisualReady.grabTarget(host.Window.window, frame))
-                img.save(Qt.resolvedUrl("../../build/d2shots/d3_sidebar_error_" + mode + ".png").toString()
-                    .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, ""))
+                const path = Qt.resolvedUrl("../../build/d2shots/d3_sidebar_error_" + mode + ".png").toString()
+                    .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
+                img.save(path)
+                verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, frame)))   // cây UI cạnh ảnh cho scripts/design_lint.py
             }
             Theme.mode = "auto"
         }

@@ -4,7 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.unit.dp
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject

@@ -22,7 +22,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import vn.abook.player.ui.screens.screenTag
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

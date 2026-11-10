@@ -1,0 +1,17 @@
+{
+ "_doc": "R9 của design_lint: cặp ẢNH cùng màn trên các nền tảng, gắn với một cặp nguồn trong ui_parity_pairs.json (`pair` = id ở đó). Mỗi khoá nền tảng là tên ảnh bỏ đuôi biến thể; `variants` mặc định [_light, _dark]. design_lint đọc cây UI cạnh hai ảnh, ghép nút theo nhãn rồi so vai, số dòng, token màu chữ; cao lệch > 4 dp là đỏ. Ngoại lệ ghi có tên trong design_lint_exceptions.json (luật R9).",
+ "pairs": [
+  {"pair": "settings", "android": "settings_listen", "qt": "settings_listen"},
+  {"pair": "settings", "android": "settings_look", "qt": "settings_look"},
+  {"pair": "settings", "android": "settings_sleep", "qt": "settings_sleep"},
+  {"pair": "settings", "android": "settings_voice", "qt": "settings_voice"},
+  {"pair": "settings", "android": "settings_advanced", "qt": "settings_advanced"},
+  {"pair": "settings", "android": "settings_devices", "qt": "settings_devices"},
+  {"pair": "library-book", "android": "book_listening", "qt": "gaps_book", "variants": ["_light"]},
+  {"pair": "now-playing", "android": "np_audio", "qt": "audiofx"},
+  {"pair": "now-playing", "android": "mini_short", "qt": "mini_short"},
+  {"pair": "now-playing", "android": "mini_long_title", "qt": "mini_long"},
+  {"pair": "now-playing", "android": "tone_360_130", "qt": "tone_360_130", "variants": ["_light_mine", "_light_presets", "_light_top", "_dark_mine", "_dark_presets", "_dark_top"]},
+  {"pair": "library-book", "android": "library_30", "qt": "addbook_library_header"}
+ ]
+}

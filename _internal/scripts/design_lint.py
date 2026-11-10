@@ -9,10 +9,11 @@ Máy này đo chính điểm ảnh (và cây UI xuất cạnh ảnh, xem design_
   R7  nhóm trạng thái (np_*, mini_*, book_*): bìa, thanh tiến độ, nút phát, nút chính cùng toạ độ ± 1 dp
   R8  mép sheet / mép vùng cuộn không cắt ngang một dòng chữ
   R10 không dải trống dọc > 40 % màn, không nửa ngang trống > 40 % ở khổ rộng
+Cây UI ghi cạnh ảnh (bước 2) thêm R1, R3, R8 (hộp chữ), R9, R11, R14: xem design_lint_tree.py. Tài liệu: docs/DESIGN_LINT.md.
 
 Ngoại lệ chỉ có dạng "ảnh này, luật này, lý do này" trong design_lint_exceptions.json; không có ngưỡng nới chung.
 Chạy từ _internal:
-  runtime/.venv/Scripts/python.exe -X utf8 scripts/design_lint.py [--qt DIR] [--web DIR] [--json OUT] [--strict]
+  runtime/.venv/Scripts/python.exe -X utf8 scripts/design_lint.py [--qt DIR] [--web DIR] [--json OUT] [--strict] [--audit-cases]
 Mặc định chỉ BÁO CÁO (exit 0 khi đo được); --strict thoát 1 khi còn ô đỏ.
 """
 from __future__ import annotations
@@ -34,8 +35,10 @@ from scipy import ndimage
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_SHOTS = ROOT / "mobile/android/app/src/test/snapshots"
 QT_SHOTS = ROOT / "desktop_qt/build/d2shots"
+PROBE_SHOT = "design_lint_capture_probe"
 EXCEPTIONS = Path(__file__).with_name("design_lint_exceptions.json")
 GROUPS = Path(__file__).with_name("design_lint_groups.json")
+AUDIT_CASES = Path(__file__).with_name("design_lint_audit_cases.json")
 
 # Điểm ảnh trên một dp: Roborazzi chụp xxhdpi (w360dp = 1080 px); Qt và web chụp px logic.
 SCALE = {"android": 3.0, "qt": 1.0, "web": 1.0}
@@ -49,8 +52,8 @@ TOKENS = {
     "switch-thumb": ("#ffffff", "#1b1204"),
 }
 
-# Nút chính: điện thoại 48 (soát 10-11: 44-56), máy tính 40 (DESIGN.md §6 "cao 48 / 40") ± 4.
-BUTTON_HEIGHT = {"android": (44, 56), "qt": (36, 44), "web": (36, 44)}
+# The audit requires the same measured range on every platform.
+BUTTON_HEIGHT = (44, 56)
 
 KEYLINE_SLACK_DP = 3
 INK = 40            # tổng |Δ| ba kênh so với nền của hàng: điểm có mực
@@ -585,7 +588,7 @@ def rule_r4(a: Analysis) -> list[Finding]:
         out.append(Finding("R4", a.shot.key, f"{len(buttons)} nút nền --accent trong một màn",
                            [min(b[0][0] for b in buttons), min(b[0][1] for b in buttons),
                             max(b[0][2] for b in buttons), max(b[0][3] for b in buttons)]))
-    low, high = BUTTON_HEIGHT[a.shot.platform]
+    low, high = BUTTON_HEIGHT
     for box, h in buttons:
         if not low <= a.dp(h) <= high:
             out.append(Finding("R4", a.shot.key, f"nút chính cao {a.dp(h):.0f} dp (chuẩn {low}-{high})", box))
@@ -602,7 +605,9 @@ def anchors(a: Analysis) -> dict[str, float]:
               and (sl[0].stop - sl[0].start) * (sl[1].stop - sl[1].start) > 0.06 * a.h * a.w
               and 0.6 <= (sl[1].stop - sl[1].start) / (sl[0].stop - sl[0].start) <= 1.7]
     if covers:
-        found["cover_top"] = a.dp(max(covers, key=lambda sl: (sl[0].stop - sl[0].start) * (sl[1].stop - sl[1].start))[0].start)
+        cover = max(covers, key=lambda sl: (sl[0].stop - sl[0].start) * (sl[1].stop - sl[1].start))
+        found["cover_top"] = a.dp(cover[0].start)
+        found["cover_left"] = a.dp(cover[1].start)
     labels, objects = a.colour_components(token("accent", a.shot.dark))
     circles = []
     for index, sl in enumerate(objects, start=1):
@@ -613,15 +618,22 @@ def anchors(a: Analysis) -> dict[str, float]:
     if circles:
         sl = max(circles, key=lambda sl: sl[0].stop - sl[0].start)
         found["play_centre"] = a.dp((sl[0].start + sl[0].stop) / 2)
+        found["play_centre_x"] = a.dp((sl[1].start + sl[1].stop) / 2)
     buttons = accent_buttons(a)
     if buttons:
         box, h = max(buttons, key=lambda b: (b[0][2] - b[0][0]) * b[1])
         found["button_top"] = a.dp(box[1])
+        found["button_left"] = a.dp(box[0])
         found["button_height"] = a.dp(h)
     # Thanh tiến độ: dải mảnh (<= 4 dp) có nền hàng khác nền màn, kẹp giữa hai hàng nền màn.
     for top, bottom in runs(~a.page_rows):
         if bottom - top + 1 <= a.px(4) and top > a.h * 0.1 and 0 < top and bottom + 1 < a.h:
             found["track_y"] = a.dp(top)
+            spans = runs(a.page_diff[top] > INK)
+            if spans:
+                left, right = max(spans, key=lambda span: span[1] - span[0])
+                found["track_left"] = a.dp(left)
+                found["track_right"] = a.dp(right)
             break
     return found
 
@@ -663,7 +675,8 @@ def collect(android: Path | None, qt: Path | None, web: Path | None) -> list[Sho
     shots = []
     for platform, directory in (("android", android), ("qt", qt), ("web", web)):
         if directory and directory.is_dir():
-            shots += [Shot(platform, p) for p in sorted(directory.glob("*.png"))]
+            # Ảnh dò của tst_uitree.qml chỉ kiểm bộ ghi cây, không phải một màn của app.
+            shots += [Shot(platform, p) for p in sorted(directory.glob("*.png")) if p.stem != PROBE_SHOT]
     return shots
 
 
@@ -694,11 +707,24 @@ def run(shots: list[Shot], groups: dict[str, list[str]], exceptions: list[dict],
     findings: list[Finding] = []
     group_anchors: dict[str, dict] = {}
     errors: list[str] = []
-    if workers > 1 and len(shots) > 8:
-        with ProcessPoolExecutor(max_workers=workers) as pool:
+    tree_result = None
+    coverage = {}
+    measurements = {}
+    if trees:
+        import design_lint_tree
+    # Một bể tiến trình (tối đa bốn) cho cả lượt ảnh lẫn lượt cây.
+    pool = ProcessPoolExecutor(max_workers=min(workers, 4)) if workers > 1 and len(shots) > 8 else None
+    try:
+        if pool is not None:
             results = list(pool.map(analyse, shots, [members] * len(shots), chunksize=8))
-    else:
-        results = [analyse(shot, members) for shot in shots]
+        else:
+            results = [analyse(shot, members) for shot in shots]
+        if trees:
+            tree_result = design_lint_tree.lint_shots(shots, measurements, pool)
+            coverage = design_lint_tree.coverage(shots)
+    finally:
+        if pool is not None:
+            pool.shutdown()
     for shot, (found, anchor, error) in zip(shots, results):
         findings += found
         if anchor is not None:
@@ -707,10 +733,8 @@ def run(shots: list[Shot], groups: dict[str, list[str]], exceptions: list[dict],
             errors.append(error)
     findings += rule_r7(group_anchors, groups)
     tree_count = 0
-    if trees:
-        import design_lint_tree
-
-        tree_findings, tree_count, tree_errors = design_lint_tree.lint_shots(shots)
+    if tree_result is not None:
+        tree_findings, tree_count, tree_errors = tree_result
         findings += tree_findings
         errors += tree_errors
     waived = {(e["image"], e["rule"]) for e in exceptions}
@@ -724,6 +748,8 @@ def run(shots: list[Shot], groups: dict[str, list[str]], exceptions: list[dict],
         "images": len(shots),
         "platforms": {p: sum(s.platform == p for s in shots) for p in SCALE},
         "trees": tree_count,
+        "tree_coverage": coverage,
+        "tree_measurements": measurements,
         "seconds": round(time.monotonic() - start, 2),
         "red_images": {rule: len(v) for rule, v in red_images.items()},
         "findings": [asdict(f) for f in kept],
@@ -732,6 +758,20 @@ def run(shots: list[Shot], groups: dict[str, list[str]], exceptions: list[dict],
         "errors": errors,
         "anchors": group_anchors,
     }
+
+
+def print_audit_cases(report: dict, scanned: set[str]) -> None:
+    cases = json.loads(AUDIT_CASES.read_text(encoding="utf-8"))["cases"]
+    red = {(f["rule"], f["image"]) for f in report["findings"]}
+    print("\n| luật | ảnh | đỏ? | lỗi báo cáo |\n|---|---|---|---|")
+    hits = 0
+    for case in cases:
+        key = (case["rule"], case["image"])
+        state = "không quét" if case["image"] not in scanned else "ĐỎ" if key in red else "xanh"
+        hits += state == "ĐỎ"
+        print(f"| {case['rule']} | {case['image']} | {state} | {case['why']} |")
+    images = {c["image"] for c in cases if (c["rule"], c["image"]) in red}
+    print(f"\nđỏ đúng {hits}/{len(cases)} ca, {len(images)} ảnh khác nhau")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -745,11 +785,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", type=Path, help="ghi báo cáo đầy đủ ra tệp này")
     parser.add_argument("--strict", action="store_true", help="thoát 1 khi còn ô đỏ (chế độ chặn)")
     parser.add_argument("--workers", type=int, default=min(4, os.cpu_count() or 1))
+    parser.add_argument("--no-trees", action="store_true", help="chỉ đo ảnh (bước 1)")
     parser.add_argument("--only", help="chỉ in phát hiện của các luật này, phân cách dấu phẩy")
     parser.add_argument("--summary", action="store_true", help="dòng cuối là JSON tóm tắt (cho release_gate)")
+    parser.add_argument("--audit-cases", action="store_true",
+                        help="in bảng luật -> ảnh -> đỏ? cho các ảnh soát 10-11 (design_lint_audit_cases.json)")
     args = parser.parse_args(argv)
     shots = collect(args.android, args.qt, args.web)
-    report = run(shots, load_groups(), load_exceptions(), args.workers)
+    if not 1 <= args.workers <= 4:
+        parser.error("--workers phải trong 1..4")
+    report = run(shots, load_groups(), load_exceptions(), args.workers, trees=not args.no_trees)
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -760,17 +805,22 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n{report['images']} ảnh {report['platforms']}, {report['trees']} cây UI, {report['seconds']} s, "
           f"{report['waived']} phát hiện được miễn có tên")
     print("ảnh đỏ theo luật: " + ", ".join(f"{r}={n}" for r, n in report["red_images"].items()))
+    if report["tree_coverage"]:
+        print("phủ cây UI: " + json.dumps(report["tree_coverage"], ensure_ascii=False))
     for e in report["stale_exceptions"]:
         print(f"ngoại lệ thừa (ảnh không còn đỏ): {e['rule']} {e['image']}")
     for e in report["errors"]:
         print(f"LỖI ĐO: {e}")
+    if args.audit_cases:
+        print_audit_cases(report, {s.key for s in shots})
     red = sum(report["red_images"].values())
     if args.summary:
         print(json.dumps({"images": report["images"], "red_images": report["red_images"], "errors": len(report["errors"]),
                           "stale_exceptions": len(report["stale_exceptions"]), "seconds": report["seconds"]}))
     if not shots or report["errors"]:
         return 2
-    return 1 if args.strict and (red or report["stale_exceptions"]) else 0
+    missing = any(v["sidecars"] < v["images"] for v in report["tree_coverage"].values())
+    return 1 if args.strict and (red or report["stale_exceptions"] or missing) else 0
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ Item {
             const path = Qt.resolvedUrl("../../build/d2shots/sm_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
+            verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         // Cuộn trang dự án để `item` nằm gần đầu khung (ảnh chụp chỉ thấy phần đang hiện)
         property var scrolled: null

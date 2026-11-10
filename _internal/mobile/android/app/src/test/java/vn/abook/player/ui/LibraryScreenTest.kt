@@ -20,7 +20,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziTaskType
 import org.junit.Assert.assertEquals

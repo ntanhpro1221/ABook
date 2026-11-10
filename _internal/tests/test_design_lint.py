@@ -305,3 +305,111 @@ def test_runs_on_every_android_snapshot_without_error():
     report = dl.run(shots, dl.load_groups(), dl.load_exceptions(), workers=4)
     assert report["images"] == len(shots) > 300
     assert report["errors"] == []
+
+
+# ================================================================ bước 2: luật trên cây UI
+
+import design_lint_tree as dt  # noqa: E402
+
+
+def tree(*nodes, width=360, height=780) -> dict:
+    """Cây giả: mỗi nút (parent, bounds, **thuộc tính); id theo thứ tự."""
+    out = []
+    for i, (parent, bounds, extra) in enumerate(nodes):
+        node = {"id": i, "parent": parent, "bounds": list(bounds), "visible": list(extra.pop("visible", bounds)), "children": []}
+        node.update(extra)
+        out.append(node)
+    for node in out:
+        if node["parent"] >= 0:
+            out[node["parent"]]["children"].append(node["id"])
+    return {"width": width, "height": height, "nodes": out}
+
+
+ROOT = (-1, (0, 0, 360, 780), {})
+
+
+def n(parent, l, t, r, b, **extra):
+    return (parent, (l, t, r, b), extra)
+
+
+def test_r1_tab_row_and_choice_row_and_list_are_green():
+    tabs = tree(ROOT, *[n(0, 20 + i * 80, 100, 90 + i * 80, 148, role="tab", selected=i == 0) for i in range(3)])
+    choice = tree(ROOT, *[n(0, 20 + i * 64, 100, 80 + i * 64, 144, role="radiobutton", selected=i == 1) for i in range(5)])
+    listing = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, role="listitem", selected=i == 2) for i in range(8)])
+    for t in (tabs, choice, listing):
+        assert dt.rule_r1("k", t) == []
+
+
+def test_r1_grid_of_choices_and_long_choice_row_are_red():
+    grid = tree(ROOT, *[n(0, 20 + (i % 3) * 110, 100 + (i // 3) * 50, 120 + (i % 3) * 110, 144 + (i // 3) * 50,
+                          selected=i == 2) for i in range(11)])
+    long_row = tree(ROOT, *[n(0, i * 40, 100, 38 + i * 40, 144, role="radiobutton", selected=i == 0) for i in range(7)])
+    mixed = tree(ROOT, n(0, 0, 100, 100, 148, role="tab", selected=True), n(0, 100, 100, 200, 148, role="radiobutton", selected=False))
+    for t in (grid, long_row, mixed):
+        assert [f.rule for f in dt.rule_r1("k", t)] == ["R1"]
+
+
+def test_r3_gaps_on_scale_green_off_scale_red():
+    good = tree(ROOT, n(0, 20, 100, 340, 124, text="Tiêu đề"), n(0, 20, 140, 340, 160, text="Dòng"),
+                n(0, 20, 164, 340, 184, text="Phụ"))
+    assert dt.rule_r3("k", good) == []
+    bad = tree(ROOT, n(0, 20, 100, 340, 124, text="Tiêu đề"), n(0, 20, 142.3, 340, 160, text="Dòng"))
+    findings = dt.rule_r3("k", bad)
+    assert [f.rule for f in findings] == ["R3"] and "18.3" in findings[0].detail
+
+
+def test_r8_cut_text_and_overlap_red_clean_green():
+    clean = tree(ROOT, n(0, 20, 100, 340, 124, text="Một"), n(0, 20, 130, 340, 150, text="Hai"))
+    assert dt.rule_r8("k", clean) == []
+    cut = tree(ROOT, n(0, 20, 760, 340, 790, text="-20 dB (mặc định)", visible=(20, 760, 340, 780)))
+    assert "bị cắt" in dt.rule_r8("k", cut)[0].detail
+    overlap = tree(ROOT, n(0, 20, 500, 340, 540, text="Câu đang đọc"), n(0, 120, 520, 260, 560, text="Tới câu đang nghe"))
+    assert "chồng nhau" in dt.rule_r8("k", overlap)[0].detail
+
+
+def test_r11_font_scale_and_row_title_style():
+    good = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True) for i in range(3)],
+                *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Hàng {i}", font_size=16, font_weight=400, color="#1a1814")
+                  for i in range(3)])
+    assert dt.rule_r11("k", good) == []
+    small = tree(ROOT, n(0, 20, 100, 200, 112, text="TẬP 2", font_size=10))
+    assert "ngoài thang" in dt.rule_r11("k", small)[0].detail
+    mixed = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True) for i in range(3)],
+                 *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Hàng {i}", font_size=14 if i == 0 else 16,
+                     font_weight=400, color="#1a1814") for i in range(3)])
+    assert "khác kiểu" in dt.rule_r11("k", mixed)[0].detail
+
+
+def test_r14_label_word_count_ignores_numbers_and_units():
+    good = tree(ROOT, n(0, 20, 100, 200, 148, role="button", text="Nghe tiếp · Chương 4"),
+                n(0, 20, 160, 200, 208, role="button", text="Tải (48 MB)"))
+    assert dt.rule_r14("k", good) == []
+    bad = tree(ROOT, n(0, 20, 100, 300, 148, role="button", text="Mở màn hình đang nghe"))
+    assert "5 chữ" in dt.rule_r14("k", bad)[0].detail
+    # Nút biểu tượng: mô tả trợ năng dài là đúng, không phải nhãn hiện; hàng danh sách mang dữ liệu, không xét.
+    icon = tree(ROOT, n(0, 300, 100, 348, 148, role="button", description="Thêm tuỳ chọn cho Chương 4: Một cái tên"),
+                n(0, 0, 160, 360, 216, role="listitem", text="Dế Mèn phiêu lưu ký tập hai"))
+    assert dt.rule_r14("k", icon) == []
+    unnamed = tree(ROOT, n(0, 300, 100, 348, 148, role="button"))
+    assert "0 chữ" in dt.rule_r14("k", unnamed)[0].detail
+
+
+def test_r9_parity_pair_compares_role_lines_token_height():
+    a = tree(ROOT, n(0, 20, 100, 340, 148, role="button", text="Nghe tiếp", line_count=1, font_size=16, color="#1d1304"))
+    same = tree(ROOT, n(0, 20, 100, 340, 147, role="button", text="Nghe tiếp", line_count=1, font_size=16, color="#1d1304"))
+    other = tree(ROOT, n(0, 20, 100, 340, 181, role="button", text="Nghe tiếp", line_count=3, font_size=16, color="#1d1304"))
+    pairs = [{"pair": "library-book", "android": "x", "qt": "y", "variants": ["_light"]}]
+    assert dt.rule_r9({"android/x_light.png": a, "qt/y_light.png": same}, pairs) == []
+    findings = dt.rule_r9({"android/x_light.png": a, "qt/y_light.png": other}, pairs)
+    assert len(findings) == 1 and "lines 1 ≠ 3" in findings[0].detail and "cao" in findings[0].detail
+
+
+def test_tree_files_are_found_next_to_qt_shots_and_in_android_build(tmp_path):
+    png = tmp_path / "settings_listen_light.png"
+    Image.new("RGB", (20, 20), BG).save(png)
+    (tmp_path / "settings_listen_light.tree.json").write_text(json.dumps(
+        tree(ROOT, n(0, 20, 100, 300, 148, role="button", text="Một hai ba bốn năm"))), encoding="utf-8")
+    findings, count, errors = dt.lint_shots([dl.Shot("qt", png)])
+    assert count == 1 and errors == [] and [f.rule for f in findings] == ["R14"]
+    assert dt.tree_path(dl.Shot("android", Path("x/np_speed_light.png"))) == Path("x/np_speed_light.tree.json")
+    assert len(dt.load_parity()) >= 10
