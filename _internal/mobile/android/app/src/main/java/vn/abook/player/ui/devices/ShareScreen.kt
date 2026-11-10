@@ -3,13 +3,11 @@ package vn.abook.player.ui.devices
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.DisclosureRow
 import vn.abook.player.ui.components.InlineProblem
@@ -35,8 +32,6 @@ import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
-import vn.abook.player.ui.components.fadeEdges
-import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Chia sẻ thư viện. Công tắc bật / tắt; khi bật: địa chỉ để gõ vào máy kia, mã ghép 6 số (hay "Tạo mã ghép"), Bluetooth nếu có tin, rồi danh sách máy đã ghép
@@ -44,7 +39,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
  */
 
 @Composable
-fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
+fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = false, onBack: () -> Unit) {
     val ui by devices.share.collectAsState()
     LaunchedEffect(devices) { devices.openShare() }
     // Quay lại từ Cài đặt Android (quyền "Thiết bị ở gần", chạy nền): đọc lại trạng thái.
@@ -57,10 +52,9 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     val lastCode = remember { arrayOf<Code?>(null) }
     share.code?.let { lastCode[0] = it }
     val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90 else "" }
-    BookForm(S.s_chia_se_thu_vien_940de671, onBack, "share_screen") {
-        val list = rememberLazyListState()
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("share_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
-            item("switch", "switch") {
+    DeviceSettingsContent(S.s_chia_se_thu_vien_940de671, onBack, "share_screen", embedded) {
+        if (ui.loaded) Column(Modifier.fillMaxWidth().testTag("share_list").padding(bottom = Dim.s16)) {
+            key("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
                     SwitchRow(S.s_ket_noi_wi_fi_7680d1aa, share.running, { on ->
                         if (!on) devices.setSharing(false) else sheets.show { dismiss ->
@@ -93,14 +87,14 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                 }
             }
             if (share.running) {
-                share.bluetoothLine?.takeIf { !share.needsNearby }?.let { line -> item("bluetooth", "note") { Caption(line, Modifier.padding(top = Dim.s8).testTag("share_bluetooth")) } }
-                if (share.needsNearby) item("nearby", "status") {
+                share.bluetoothLine?.takeIf { !share.needsNearby }?.let { line -> key("bluetooth", "note") { Caption(line, Modifier.padding(top = Dim.s8).testTag("share_bluetooth")) } }
+                if (share.needsNearby) key("nearby", "status") {
                     ListItem(
                         S.s_can_quyen_thiet_bi_o_gan_ea24d4e0, Modifier.testTag("share_nearby"), titleColor = Abook.colors.danger,
                         trailing = { TextAction(S.s_mo_cai_dat_60ab929f, devices::openAppSettings, "share_open_settings") },
                     )
                 }
-                if (!share.backgroundAllowed) item("background", "background") {
+                if (!share.backgroundAllowed) key("background", "background") {
                     DisclosureRow(
                         S.s_cho_abook_chay_nen_a56d0e4e, devices::openAppSettings, "share_background",
                         summary = S.s_khi_tat_man_hinh_may_co_the_tam_dung_chia_9a8ee70e,
@@ -108,8 +102,8 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                 }
             }
             if (share.devices.isNotEmpty()) {
-                item("devices_title", "title") { SectionTitle(S.s_may_da_ghep_c2103758) }
-                items(share.devices, key = { "sharer_${it.id}" }, contentType = { "sharer" }) { sharer ->
+                key("devices_title", "title") { SectionTitle(S.s_may_da_ghep_c2103758) }
+                for (sharer in share.devices) key("sharer_${sharer.id}") {
                     Column(Modifier.fillMaxWidth()) {
                         SharerRow(sharer, onOpen = { sheets.show { dismiss -> RevokeSheet(sharer, devices, dismiss) } })
                         RowLine(start = 36.dp)

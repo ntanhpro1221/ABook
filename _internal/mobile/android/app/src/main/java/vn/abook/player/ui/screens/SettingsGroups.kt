@@ -10,7 +10,9 @@ import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.DisclosureRow
-import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.devices.PairScreen
+import vn.abook.player.ui.devices.ShareScreen
 import vn.abook.player.ui.devices.DevicesState
 import vn.abook.player.ui.devices.RenameSheet
 import vn.abook.player.ui.devices.Summary
@@ -252,20 +254,22 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
 }
 
 /**
- * Thiết bị: ba màn riêng (Nối máy tính, Chia sẻ thư viện, Dung lượng - [vn.abook.player.ui.devices]) mỗi cái một hàng có mũi tên và một dòng giá trị hiện tại,
- * rồi tên của máy này (máy kia thấy điện thoại bằng tên ấy; chạm mở bảng đổi tên). `devices` null (ảnh chụp không có lõi): hàng vẫn dựng, chưa có dòng giá trị.
+ * Pairing and library sharing expand inside this group. Storage lives only in Advanced > Memory.
+ * The device name opens a sheet; Back dismisses the sheet before leaving the group.
  */
 @Composable
-fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val summary by (devices?.summary ?: NoSummary).collectAsState()
     LaunchedEffect(devices) { devices?.loadSummary() }
     SettingsPage(SettingsGroup.Devices.label, onBack, SettingsGroup.Devices.screenTag, modifier) {
         ListSection(first = true) {
-            DisclosureRow(S.s_noi_may_tinh_2950692d, { open(DevicesPage.Pair) }, "devices_pair", summary = summary.pair)
+            Fold(S.s_noi_may_tinh_2950692d, "devices_pair", summary = summary.pair) {
+                if (devices != null) PairScreen(devices, sheets, embedded = true, onBack = {})
+            }
             RowLine()
-            DisclosureRow(S.s_chia_se_thu_vien_940de671, { open(DevicesPage.Share) }, "devices_share", summary = summary.sharing)
-            RowLine()
-            DisclosureRow(S.s_dung_luong_32009349, { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
+            Fold(S.s_chia_se_thu_vien_940de671, "devices_share", summary = summary.sharing) {
+                if (devices != null) ShareScreen(devices, sheets, embedded = true, onBack = {})
+            }
             RowLine()
         }
         ListSection(S.s_dien_thoai_nay_94875d9a) {

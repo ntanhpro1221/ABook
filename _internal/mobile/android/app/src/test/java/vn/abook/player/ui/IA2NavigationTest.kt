@@ -27,10 +27,10 @@ class IA2NavigationTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
     private lateinit var shell: ShellState
     private val devicesSource = FakeDevicesSource()
-    private val source = FakeStudioSource(listOf(studioBook("b1", title = "Dự án đang làm")))
+    private val source = FakeStudioSource(listOf(studioBook("b1", title = "Dự án đang làm", running = true, canPause = true)))
 
-    private fun show(computers: Int = 1, dark: Boolean = false) {
-        devicesSource.studio = (0 until computers).map { StudioComputer(if (it == 0) "" else "desk$it", "Máy tính ${it + 1}", false) }
+    private fun show(computers: Int = 1, dark: Boolean = false, blockedFirst: Boolean = false) {
+        devicesSource.studio = (0 until computers).map { StudioComputer(if (it == 0) "" else "desk$it", "Máy tính ${it + 1}", blockedFirst && it == 0) }
         rule.setContent {
             AbookTheme(dark) {
                 val scope = rememberCoroutineScope()
@@ -46,6 +46,7 @@ class IA2NavigationTest {
     }
 
     private fun back() {
+        rule.waitForIdle()
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
     }
@@ -97,6 +98,17 @@ class IA2NavigationTest {
         rule.mainClock.advanceTimeBy(30_000)
         rule.waitForIdle()
         assertEquals(calls, source.libraryCalls.size)
+    }
+
+    @Test fun aListenOnlyMachineDoesNotHideAnotherMachinesProjects() {
+        show(computers = 2, blockedFirst = true)
+        rule.onNodeWithTag("tab_studio").performClick()
+        rule.onNodeWithTag("studio_book_b1").assertIsDisplayed()
+        rule.onNodeWithTag("studio_computer_desk1").assertIsSelected()
+        assertEquals(0, shell.nav.stack.size)
+        rule.onNodeWithTag("studio_computer_").performClick()
+        rule.onNodeWithTag("studio_retry").assertIsDisplayed()
+        assertEquals(0, shell.nav.stack.size)
     }
 
     @Test fun unpairedStudioConnectsToTheDevicesGroup() {

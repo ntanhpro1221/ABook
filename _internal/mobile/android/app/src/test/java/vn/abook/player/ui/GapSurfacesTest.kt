@@ -274,7 +274,7 @@ class GapSurfacesTest {
         val host = SheetHost()
         theme(false) {
             Column {
-                Box(Modifier.weight(1f)) { StorageScreen(devices, host, {}) }
+                Box(Modifier.weight(1f)) { StorageScreen(devices, host, onBack = {}) }
                 UndoBar(deletes)
             }
             SheetLayer(host)

@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.*
 import vn.abook.player.ui.devices.*
 import vn.abook.player.ui.studio.*
@@ -35,7 +36,8 @@ fun StudioScreen(
     LaunchedEffect(devices, active) { if (active) devices?.loadStudio() }
     val computers = pair?.studio?.values.orEmpty().toList()
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
-    val computer = computers.firstOrNull { it.key == (computerKey ?: selected) } ?: computers.firstOrNull()
+    val computer = computers.firstOrNull { it.key == (computerKey ?: selected) }
+        ?: computers.firstOrNull { !it.listenOnly } ?: computers.firstOrNull()
     val header: @Composable () -> Unit = {
         ScreenHeader(S.s_studio_0aa91af2)
         Reveal(computers.size >= 2) {
@@ -53,7 +55,7 @@ fun StudioScreen(
             }
         } else {
             val scroll = rememberScrollState()
-            Column(Modifier.fillMaxSize().fadeEdges(scroll).verticalScroll(scroll).padding(bottom = Dim.s24)) {
+            Column(Modifier.fillMaxSize().fadeEdges(scroll, startInset = 0.dp).verticalScroll(scroll).padding(bottom = Dim.s24)) {
                 header()
                 if (computer == null) {
                     RowHint(S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc)

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
@@ -250,7 +251,7 @@ fun AppShell(
             },
             playNow = player::playNow,
             addBook = { shell.nav.push(Destination.AddBook) },
-            connect = if (settings.devices != null) ({ shell.nav.push(Destination.Devices(DevicesPage.Pair)) }) else null,
+            connect = if (settings.devices != null) ({ shell.nav.push(Destination.Settings(SettingsGroup.Devices)) }) else null,
         )
     }
     val window = shell.window
@@ -358,19 +359,11 @@ fun AppShell(
                                 is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.Settings -> SettingsGroupScreen(
-                                    destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
+                                    destination.group, settings, shell.sheets, onBack = nav::pop,
                                     openVoice = { nav.push(Destination.Voice(it)) },
                                 )
-                                is Destination.Devices -> settings.devices?.let { devices ->
-                                    when (destination.page) {
-                                        DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
-                                        DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
-                                        DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
-                                    }
-                                } ?: Unavailable(destination, nav::pop)
                                 is Destination.Voice -> settings.voice?.let { voice ->
                                     when (destination.page) {
-                                        VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
                                         VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
                                     }
                                 } ?: Unavailable(destination, nav::pop)
@@ -612,7 +605,6 @@ private fun RootTabs(
                     onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
                     shown = { tabs.selected == Tab.Settings.ordinal },
                     sheets = shell.sheets,
-                    openDevices = { shell.nav.push(Destination.Devices(it)) },
                     openVoice = { shell.nav.push(Destination.Voice(it)) },
                 )
             }

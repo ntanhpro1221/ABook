@@ -75,7 +75,6 @@ class ShellRoutesTest {
         Destination.Export(book, ExportFormat.M4b),
         Destination.Export(textBook),
         *SettingsGroup.entries.map { Destination.Settings(it) }.toTypedArray(),
-        *DevicesPage.entries.map { Destination.Devices(it) }.toTypedArray(),
         *VoicePage.entries.map { Destination.Voice(it) }.toTypedArray(),
         Destination.Studio(""),
         Destination.StudioNew(""),
@@ -159,7 +158,7 @@ class ShellRoutesTest {
     @Test
     fun theUnavailableScreenLooksRight() {
         show(dark = true)
-        rule.runOnUiThread { shell.nav.push(Destination.Devices(DevicesPage.Pair)) }
+        rule.runOnUiThread { shell.nav.push(Destination.Studio("")) }
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("src/test/snapshots/shell_unavailable_dark.png")
     }

@@ -4,6 +4,8 @@ import vn.abook.player.S
 
 import vn.abook.player.formatSize
 
+import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.devices.StorageScreen
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.ListRow
@@ -81,7 +83,8 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
     LaunchedEffect(repo) { repo.loadCache() }
     SettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
         MaintenanceSections(env, sheets)
-        ListSection(S.s_bo_nho_e3d4d2b2, first = true) {
+        Fold(S.s_bo_nho_e3d4d2b2, "advanced_memory", Modifier.padding(top = Dim.s16)) {
+            env.devices?.let { StorageScreen(it, sheets, embedded = true, onBack = {}) }
             val bytes = cache
             ListRow(S.s_ban_doc_da_lam_776edb87, hint = AdvancedCopy.cache(bytes)) {
                 if (bytes != null && bytes > 0) {

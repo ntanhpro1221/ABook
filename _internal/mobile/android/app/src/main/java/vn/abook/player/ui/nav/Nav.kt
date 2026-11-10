@@ -11,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.ListenBook
-import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
@@ -43,11 +42,7 @@ sealed interface Destination {
     @Immutable
     data class Settings(val group: SettingsGroup) : Destination
 
-    /** Một màn của nhóm Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng): đi từ trang nhóm Thiết bị, Back về lại trang ấy. */
-    @Immutable
-    data class Devices(val page: DevicesPage) : Destination
-
-    /** Một màn của nhóm Giọng đọc (Khoá giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
+    /** Nhạc của tôi: đường hiện có giữ cho nhánh dev/musiclib chuyển sang tab Nhạc. Khoá trực tuyến đã gập tại chỗ. */
     @Immutable
     data class Voice(val page: VoicePage) : Destination
 
@@ -76,7 +71,7 @@ fun Destination.ownsBottomBar(): Boolean = when (this) {
     Destination.AddBook, is Destination.ImportReview, is Destination.ImportChapter,
     is Destination.EditBook, is Destination.EditChapter, is Destination.CropCover, is Destination.CoverSearch,
     is Destination.Export, is Destination.StudioNew -> true
-    is Destination.Book, is Destination.Settings, is Destination.Devices, is Destination.Voice,
+    is Destination.Book, is Destination.Settings, is Destination.Voice,
     is Destination.Studio, is Destination.StudioProject, is Destination.StudioSub -> false
 }
 

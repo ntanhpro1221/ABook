@@ -16,7 +16,7 @@ import java.util.Locale
  */
 
 /** Màn con của nhóm Giọng đọc (cấp hai, cũng là cấp cuối: Cài đặt -> Giọng đọc -> màn này). Bảng trượt là lớp nổi, không phải cấp ba. */
-enum class VoicePage { Keys, Music }
+enum class VoicePage { Music }
 
 /** Hai mô-đun giọng chạy trên máy, tải khi bạn bấm. `invite`: lời mời dưới tên khi chưa tải - cùng lời thẻ giọng bên web (vieneuModule.ts `invite`). */
 enum class ModuleKind(val key: String, val title: String, val invite: String) {

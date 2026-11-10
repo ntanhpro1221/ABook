@@ -400,13 +400,18 @@ class VoiceScreenTest {
     @Test fun keysSavedDark() = keysSaved(true)
 
     @Test
-    fun theKeysRowOnTheVoicePageSummarisesAndOpensTheKeysScreen() {
+    fun theKeysRowOnTheVoicePageSummarisesAndExpandsInPlace() {
         source.keys = source.keys.map { if (it.id == "fpt") it.copy(hasKey = true, masked = "••••1234") else it }.toMutableList()
         showVoice()
         scrollTo("voice_keys")
         rule.onNodeWithText("FPT.AI").assertIsDisplayed()
         tap("voice_keys")
-        assertEquals(VoicePage.Keys, opened)
+        rule.onNodeWithTag("keys_screen").assertIsDisplayed()
+        assertEquals(null, opened)
+        rule.onNodeWithTag("settings_voice_screen").performScrollToNode(hasTestTag("key_azure"))
+        shot("settings_keys_expanded_light")
+        tap("key_azure")
+        rule.onNodeWithTag("key_sheet").assertIsDisplayed()
     }
 
     private fun keySheet(dark: Boolean) {
