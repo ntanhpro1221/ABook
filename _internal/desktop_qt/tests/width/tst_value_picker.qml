@@ -147,6 +147,11 @@ Item {
                     verify(chip.width >= 48); compare(chip.height, 48)
                     mouseClick(chip, chip.width / 2, chip.height / 2)
                     compare(picker.value, v, name)
+                    waitForRendering(picker)
+                    const label = picker.labelPlan.aligned ? findChild(picker, "valueLabel_" + picker.spec.typical.indexOf(v)) : chip.children.find(child => child.text === Logic.formatNumber(picker.spec, v))
+                    verify(label !== undefined && label !== null)
+                    tryCompare(label, "color", Theme.text)
+                    compare(label.font.weight, 600)
                 }
             }
         }

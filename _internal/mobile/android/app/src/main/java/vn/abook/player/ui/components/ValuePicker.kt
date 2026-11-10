@@ -102,7 +102,7 @@ private const val REPEAT_EVERY_MS = 80L
  *  1. giá trị hiện tại chữ lớn - chạm vào là gõ số (bàn phím số, Xong / Enter xác nhận, kẹp trong biên và báo nhẹ "Trong khoảng a–b");
  *  2. thước kéo tự do giữa nút - / + (giữ để lặp); nấc hút + rung CLOCK_TICK ở các giá trị tiêu biểu; TalkBack kéo lên/xuống một bước, phím mũi tên
  *     một bước, PageUp/PageDown mười bước;
- *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn chữ hổ phách đậm;
+ *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn chữ --text đậm;
  *  4. `special`: lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
  * `onChange` là lúc áp (thả tay, chạm chip, -/+, Xong, phím); khi kéo, chữ lớn và thước chạy theo tay, `onPreview` nếu cần nghe ngay.
  * `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
@@ -321,7 +321,7 @@ fun ValuePicker(
 @Composable
 private fun PickerLabel(text: String, style: androidx.compose.ui.text.TextStyle, chosen: Boolean, modifier: Modifier) {
     val colors = Abook.colors
-    val color by animateColorAsState(if (chosen) colors.accentText else colors.text2, tween(MotionMs.MEDIUM), label = "chip")
+    val color by animateColorAsState(if (chosen) colors.text else colors.text2, tween(MotionMs.MEDIUM), label = "chip")
     BasicText(text, modifier, style = style.copy(color = color, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Normal))
 }
 

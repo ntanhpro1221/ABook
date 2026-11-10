@@ -6,6 +6,8 @@ Interactive {
     id: root
     property string text: ""
     property bool selected: false
+    property color selectedTextColor: Theme.accentText
+    property int selectedTextWeight: Theme.weightMedium
     property real textScale: 1
     // Full-width is reserved for a single-column menu, never a filter segment.
     property string fullWidthReason: ""
@@ -29,9 +31,9 @@ Interactive {
         id: label
         anchors.centerIn: parent
         text: root.text
-        color: root.selected ? Theme.accentText : Theme.text
+        color: root.selected ? root.selectedTextColor : Theme.text
         Behavior on color { ColorAnimation { duration: Theme.motionFast } }
         font.pixelSize: Theme.sizeBodySmall * root.textScale
-        font.weight: root.selected ? Theme.weightMedium : Theme.weightRegular
+        font.weight: root.selected ? root.selectedTextWeight : Theme.weightRegular
     }
 }

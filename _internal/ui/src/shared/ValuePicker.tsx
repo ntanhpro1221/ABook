@@ -15,7 +15,7 @@ const REPEAT_EVERY_MS = 80;
  * Bộ chọn giá trị số - MỘT kiểu cho cả app (DESIGN mục 6 "Chọn giá trị"; Android ValuePicker.kt, Qt ValuePicker.qml cùng cấu trúc), từ trên xuống:
  *  1. giá trị hiện tại chữ lớn - chạm vào là gõ số (Enter xác nhận, Esc bỏ, kẹp trong biên và báo nhẹ "Trong khoảng a–b");
  *  2. thước kéo tự do giữa nút - / + (giữ để lặp); nấc hút + tiếng/rung ở các giá trị tiêu biểu; phím mũi tên một bước, PageUp/PageDown mười bước;
- *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn tô hổ phách;
+ *  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn chữ --text đậm;
  *  4. `children`: lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
  * `onChange` là lúc áp (thả tay, chạm chip, -/+, Enter, phím); khi kéo, chữ lớn và thước chạy theo tay, `onPreview` nếu cần nghe ngay.
  * `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
@@ -354,7 +354,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 tabular hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-accent-text" : "text-fg-2")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 tabular hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-fg" : "text-fg-2")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>
@@ -380,7 +380,7 @@ export function ValuePicker({
               className={cn(
                 "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-2.5 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
-                index === selected ? "font-semibold text-accent-text" : "text-fg",
+                index === selected ? "font-semibold text-fg" : "text-fg",
               )}
             >
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>

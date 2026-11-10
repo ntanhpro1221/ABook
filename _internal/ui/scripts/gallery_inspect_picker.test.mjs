@@ -10,6 +10,8 @@ describe.skipIf(!browserAvailable)("value picker gallery gate", () => {
       expect(found.filter(f => f.metric === "picker-chip-rows").map(f => f.selector)).toEqual(["#orphan"]);
       expect(found.filter(f => f.metric === "picker-numeric-label")).toHaveLength(1);
       expect(found.some(f => f.selector.startsWith("#balanced") || f.selector.startsWith("#aligned"))).toBe(false);
+      expect(found.some(f => f.selector.startsWith("#selected-good"))).toBe(false);
+      expect(found.filter(f => f.metric === "picker-selected-text").map(f => f.selector)).toEqual(["#selected-amber > button", "#selected-thin > button"]);
       expect(found.some(f => f.selector.startsWith("#shifted") && f.metric === "picker-tick-centre")).toBe(true);
       expect(found.some(f => f.selector.startsWith("#missing") && f.metric === "picker-tick-count")).toBe(true);
       expect(found.some(f => f.selector.startsWith("#under-button") && f.metric === "picker-label-bounds")).toBe(true);

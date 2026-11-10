@@ -26,6 +26,7 @@ class ValuePickerUiTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     @Test fun everyPickerAt100And130Percent() {
+        var expectedText = androidx.compose.ui.graphics.Color.Unspecified
         val selected = mutableStateOf(ValueSpecs.speed)
         val scale = mutableStateOf(1f)
         val dense = mutableStateOf(false)
@@ -34,6 +35,7 @@ class ValuePickerUiTest {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale.value)) {
                 AbookTheme(false) {
+                    expectedText = vn.abook.player.ui.theme.Abook.colors.text
                     Box(Modifier.width(360.dp).padding(horizontal = 24.dp)) {
                         ValuePicker(selected.value, value.value, { value.value = it }, { ValuePickerLogic.format(selected.value, it) }, "Number", "probe", dense = dense.value)
                     }
@@ -72,6 +74,14 @@ class ValuePickerUiTest {
                 assertTrue("$name touch target", chip.right - chip.left >= 48.dp && chip.bottom - chip.top >= 48.dp)
                 rule.onNodeWithTag(tag).performClick()
                 rule.runOnIdle { assertEquals(typical, value.value, 0.0) }
+                rule.mainClock.advanceTimeBy(1000)
+                val index = spec.typical.indexOf(typical)
+                val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+                rule.onNodeWithTag("probe_label_$index", useUnmergedTree = true)
+                    .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                val style = layouts.single().layoutInput.style
+                assertEquals("$name selected text", expectedText, style.color)
+                assertEquals("$name selected weight", androidx.compose.ui.text.font.FontWeight.Bold, style.fontWeight)
             }
         }
     }

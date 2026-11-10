@@ -6,7 +6,7 @@ import ABook
 // Bộ chọn giá trị số - MỘT kiểu cho cả app (DESIGN mục 6 "Chọn giá trị"; web shared/ValuePicker.tsx, Android ValuePicker.kt cùng cấu trúc), từ trên xuống:
 //  1. giá trị hiện tại chữ lớn - bấm vào là gõ số (Enter xác nhận, Esc bỏ, kẹp trong biên và báo nhẹ "Trong khoảng a–b");
 //  2. thước kéo tự do giữa nút - / + (giữ để lặp); nấc hút + tiếng ở các giá trị tiêu biểu; mũi tên một bước, PageUp/PageDown mười bước, Home/End hai đầu;
-//  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn tô màu nhấn;
+//  3. hàng chip giá trị tiêu biểu, chip trùng giá trị đang chọn chữ --text đậm;
 //  4. con của nó (`data` mặc định): lựa chọn đặc biệt không phải số ("Hết chương này"), hàng riêng dưới cùng.
 // `picked(value)` là lúc áp (thả tay, chạm chip, -/+, Enter, phím); khi kéo, chữ lớn và thước chạy theo tay, `previewed(value)` nếu cần nghe ngay.
 // `dense`: two rows: label + editable value, then ruler with numeric labels centred below its detents.
@@ -287,7 +287,7 @@ Column {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: 22
                         text: Logic.formatNumber(root.spec, tickLabel.modelData)
-                        color: tickLabel.selected ? Theme.accentText : Theme.text2
+                        color: tickLabel.selected ? Theme.text : Theme.text2
                         font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale
                         font.weight: tickLabel.selected ? 600 : Theme.weightRegular
                     }
@@ -338,6 +338,8 @@ Column {
                 Repeater {
                     model: chipRow.indices
                     ChoiceChip {
+                        selectedTextColor: Theme.text
+                        selectedTextWeight: 600
                         required property var modelData
                         required property int index
                         readonly property real typical: root.spec.typical[modelData]

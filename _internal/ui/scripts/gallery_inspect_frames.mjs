@@ -19,6 +19,14 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
       if (!/^-?\d+(,\d+)?$/.test(chip.textContent.trim()))
         add('PICKER GEOMETRY', chip, chip.textContent, [rect(chip.getBoundingClientRect())], {metric: 'picker-numeric-label', reason: 'Units belong to the value or row label, once'});
     }
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--text)'; picker.append(probe);
+    const textColor = css(probe).color; probe.remove();
+    for (const chip of picker.querySelectorAll('[data-value-chip][aria-pressed="true"]')) {
+      const label = chip.querySelector('[data-value-label]') ?? chip;
+      if (css(label).color !== textColor || Number(css(label).fontWeight) < 600)
+        add('PICKER GEOMETRY', label, label.textContent, [rect(label.getBoundingClientRect())], {metric: 'picker-selected-text', reason: 'Selected numerals use bold --text; amber belongs to track and thumb'});
+    }
     const labels = [...picker.querySelectorAll('[data-value-tick-label]')];
     const ticks = [...picker.querySelectorAll('[data-value-detent]')];
     if (ticks.length && ticks.length !== picker.querySelectorAll('[data-value-chip]').length)
