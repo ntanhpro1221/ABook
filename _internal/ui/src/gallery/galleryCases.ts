@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { installPlatform } from "./boot";
 import { ENTRIES, type Platform } from "./entries";
 import { galleryState } from "./state";
+import { waitFor } from "./actions";
 
 // Phần chung của hai bài thử phòng trưng bày (gallery.desktop.dom.test.tsx): mọi mục của một nền tảng dựng
 // được trên dữ liệu giả, không console.error, không lỗi không bắt, thao tác của mục chạy hết, không gọi tới đường / phương thức chưa giả.
@@ -144,6 +145,9 @@ export function galleryCases(platform: Platform): void {
             expect([...(content?.querySelectorAll(".animate-spin") ?? [])].filter(spinner => !spinner.closest("button"))).toEqual([]);
           }
           if (states.includes("error")) {
+            // A quiet DOM can fall between a request retry and React's error commit.
+            // Wait for the required state; a missing alert still fails the test.
+            await waitFor(() => container.querySelector('[role="alert"]'), `${entry.id} error alert`);
             expect(container.querySelector('[role="alert"]')?.textContent).toContain("Thử lại");
           }
         }

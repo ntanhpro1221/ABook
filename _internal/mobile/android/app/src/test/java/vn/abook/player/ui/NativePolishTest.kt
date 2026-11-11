@@ -114,7 +114,7 @@ class NativePolishTest {
     }
 
     /** Mọi chữ lọc (kể cả "Xong") nằm TRỌN trong hàng ngay khi mở, không cần cuộn (soát điện thoại thật 02-11: "Xong" bị khuất ở 360 dp). */
-    private fun assertEveryFilterIsFullyVisible(widthDp: Int, dark: Boolean) {
+    private fun assertEveryFilterIsFullyVisible(widthDp: Int, dark: Boolean, snapshotSuffix: String = "") {
         rule.setContent {
             AbookTheme(dark) {
                 val scope = rememberCoroutineScope()
@@ -130,7 +130,7 @@ class NativePolishTest {
             val chip = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
             assertTrue("$tag ($chip) ra ngoài hàng lọc ($row) ở $widthDp dp", chip.left + 6.dp >= row.left - 0.5.dp && chip.right - 6.dp <= row.right + 0.5.dp)
         }
-        rule.onRoot().captureRoboImage("src/test/snapshots/filters_${widthDp}_${if (dark) "dark" else "light"}.png")
+        rule.onRoot().captureRoboImage("src/test/snapshots/filters_${widthDp}${snapshotSuffix}_${if (dark) "dark" else "light"}.png")
     }
 
     @Test fun everyFilterIsFullyVisibleAt360Light() = assertEveryFilterIsFullyVisible(360, dark = false)
@@ -138,7 +138,8 @@ class NativePolishTest {
     @Test fun everyFilterIsFullyVisibleAt360Dark() = assertEveryFilterIsFullyVisible(360, dark = true)
 
     @Test @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
-    fun everyFilterIsFullyVisibleAt360WithBigSystemText() = assertEveryFilterIsFullyVisible(360, dark = true)
+    // A different font scale needs its own reference; sharing the 100% path makes record order decide which verify fails.
+    fun everyFilterIsFullyVisibleAt360WithBigSystemText() = assertEveryFilterIsFullyVisible(360, dark = true, snapshotSuffix = "_font130")
 
     @Test fun filterRowIsRoomyAt320() = assertFilterRowIsRoomy(320)
 

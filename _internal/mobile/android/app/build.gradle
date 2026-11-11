@@ -222,6 +222,11 @@ tasks.register("prepareRobolectricJars", Copy) {
 }
 tasks.withType(Test).configureEach {
     dependsOn "prepareRobolectricJars"
+    // Verification holds the reference, actual, diff and three-panel comparison at once.
+    // The 1080 x 10200 audio sheets exceed the default 512 MiB test-worker heap.
+    // org.gradle.jvmargs only configures Gradle itself, not this separate JVM.
+    maxHeapSize = "2g"
+    maxParallelForks = 1
     systemProperty "robolectric.offline", "true"
     systemProperty "robolectric.dependency.dir", robolectricDir.get().asFile.path
     // PristineJvmTls dựng lại verifier mặc định riêng của JDK: Robolectric và Pin thay nó cho cả JVM.
