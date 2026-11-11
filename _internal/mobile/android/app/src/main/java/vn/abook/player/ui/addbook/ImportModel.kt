@@ -1,6 +1,10 @@
 package vn.abook.player.ui.addbook
 
 import vn.abook.player.S
+import vn.abook.player.Work
+import vn.abook.player.WorkStep
+import vn.abook.player.formatSize
+import vn.abook.player.ui.data.dotJoined
 
 import androidx.compose.runtime.Immutable
 
@@ -67,6 +71,19 @@ object ImportLogic {
         items.map { if (it.id == id) it.copy(stage = stage, problem = problem, bookId = bookId) else it }
 
     fun next(items: List<ImportItem>) = items.firstOrNull { it.stage == ImportStage.Waiting }
+
+    /** Chữ dưới tên của hàng đang làm: bước thật ("Đang chép", "Đang kiểm tra"...) kèm phần đã làm khi biết tổng ("412 MB / 1,5 GB", "3/12"). */
+    fun workLabel(work: Work): String {
+        val step = when (work.step) {
+            WorkStep.Copy -> S.s_dang_chep_2a13e1c3
+            WorkStep.Check -> S.s_dang_kiem_tra_424c43e3
+            WorkStep.Read -> S.s_dang_doc_1b09d2d9
+            WorkStep.Add -> S.s_dang_them_457edcc3
+        }
+        if (work.total <= 0) return step
+        val done = work.done.coerceIn(0, work.total)
+        return listOf(step, if (work.bytes) "${formatSize(done)} / ${formatSize(work.total)}" else "$done/${work.total}").dotJoined()
+    }
 
     /** Chỗ của một gợi ý bỏ đọc dòng: "chương 3" hay "12 chương" (cùng chữ với `where` của web, listen/ReadingSuggestions.tsx). */
     fun where(chapters: List<Int>): String = if (chapters.size == 1) S.s_chuong_0_55d256d1(chapters[0]) else S.s_0_chuong_04093412(chapters.size)

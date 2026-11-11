@@ -50,7 +50,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
       <p className="mt-0.5 text-fg-2">{status.outdated ? S.s_co_ban_moi_de_ghep_loi_doc_thanh_file_mp3_e3f81f2c : S.s_tai_mot_lan_de_ghep_mp3_m4b_2e0a2a50}{S.s_khoang_05ede49e}{formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
-          <Progress value={ffmpegPercent(status) / 100} size="sm" running label={S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc} />
+          <Progress value={ffmpegPercent(status) / 100} indeterminate={status.total <= 0} size="sm" running label={S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc} />
           <span className="tabular shrink-0 text-xs text-fg-2">{status.retrying ? `${RETRYING_NOTE} ${ffmpegPercent(status)}%` : `${ffmpegPercent(status)}%`}</span>
           <Button size="sm" variant="ghost" onClick={onStop}>{S.s_dung_11554138}</Button>
         </div>

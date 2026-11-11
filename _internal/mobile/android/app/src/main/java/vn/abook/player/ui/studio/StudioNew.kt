@@ -515,9 +515,10 @@ class StudioNewState(
     }
 
     /** Phần đã gửi của một hàng, 0..1. */
-    fun progressOf(row: SourceRow): Float = when {
+    /** Phần đã gửi của một hàng theo byte thật; null khi hàng đang gửi mà hệ thống không cho biết cỡ file (thanh chạy liên tục, không đứng ở 0). */
+    fun progressOf(row: SourceRow): Float? = when {
         row.status == UploadStatus.Sent -> 1f
-        row.id == sendingId && row.size > 0 -> (sendingBytes.toFloat() / row.size).coerceIn(0f, 1f)
+        row.id == sendingId -> if (row.size > 0) (sendingBytes.toFloat() / row.size).coerceIn(0f, 1f) else null
         else -> 0f
     }
 

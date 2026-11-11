@@ -164,6 +164,11 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
   dùng useListPresence, vùng lớn quanh nó mang `data-motion-live` để không mờ cả khối theo từng hàng (`shared/motionLint.test.ts`).
 - **Câu đang đọc**: dải tô nhạt trượt sang câu kế (120 ms), từ đang đọc tô đậm hơn; tự cuộn mềm giữ câu ở 1/3 trên màn.
 - **Đang tải**: khung xám đúng hình nội dung, nhịp mờ 0,6 <-> 1 chu kỳ 1,6 s; không vòng xoay giữa màn, không ánh lấp lánh.
+- **Thanh tiến độ chạy theo việc thật** (chủ sách 11-11): byte đã chép / kiểm, mục đã xong trên tổng - không gán mốc cứng, không bò tới một số
+  rồi đứng. Chưa biết tổng thì dạng không xác định: một đoạn 2/5 rãnh chạy qua lại liên tục (1,4 s, web `.indeterminate-bar`, Android
+  `StageProgress(known = false)`, Qt `StudioBar.indeterminate`); đổi giữa hai dạng mờ chéo motionMedium; giảm chuyển động thì đoạn đứng giữa rãnh.
+  Việc nhiều bước (nhập file sách: chép rồi kiểm) chia thanh thành khoảng theo bước, chữ dưới tên nói bước ("Đang chép · 412 MB / 1,5 GB");
+  cập nhật tối đa 10 lần/giây.
 - **Chỉ animate transform/opacity** (và chiều cao trong Collapse/MotionRegion); 60 fps trên máy Android tầm trung.
 - **Giảm chuyển động** (cài đặt hệ điều hành): bỏ trượt/bay/tween cỡ, giữ mờ ≤ 120 ms.
 - Không: thị sai, hạt, hiệu ứng nền chạy mãi, chuyển trang kiểu lật sách.

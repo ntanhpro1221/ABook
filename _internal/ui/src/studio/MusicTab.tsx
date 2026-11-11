@@ -548,7 +548,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               <LiveText shown={downloadText(data.download)} spoken={spokenProgress(S.s_dang_tai_san_nhac_nen_3d38ca5b, downloadShare(data.download))} />
             </span>
             <Button size="sm" variant="ghost" icon={Square} loading={cancelDownload.isPending} onClick={() => cancelDownload.mutate()}>{S.s_huy_tai_1a9ff73d}</Button>
-            <Progress value={downloadShare(data.download)} size="sm" label={S.s_tai_san_nhac_nen_4474e87f} className="basis-full" />
+            <Progress value={downloadShare(data.download)} indeterminate={!data.download.totalBytes && !data.download.total} size="sm" label={S.s_tai_san_nhac_nen_4474e87f} className="basis-full" />
           </div>}
         </MotionPresence>
         {/* "Dùng lại": dòng khép tại chỗ; bỏ hết thì cả mục khép lại. */}

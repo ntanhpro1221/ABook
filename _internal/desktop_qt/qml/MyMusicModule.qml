@@ -88,6 +88,7 @@ Column {
                         anchors.rightMargin: cancel.visible ? 12 : 0
                         anchors.verticalCenter: parent.verticalCenter
                         value: root.module ? Music.modulePercent(root.module) / 100 : 0
+                        indeterminate: !(root.module && root.module.total > 0)
                         label: S.s_dang_tai_phan_tich_nhac_880839b5
                     }
                     Button {
@@ -160,6 +161,7 @@ Column {
                 MyMusicBar {
                     width: parent.width
                     value: root.precise && root.precise.total > 0 ? root.precise.done / root.precise.total : 0
+                    indeterminate: !(root.precise && root.precise.total > 0)
                     label: S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498
                 }
             }

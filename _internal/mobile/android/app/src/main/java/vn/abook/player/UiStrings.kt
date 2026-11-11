@@ -1114,6 +1114,7 @@ internal object S {
     const val s_dang_bat_70767620 = "Đang bật"
     const val s_dang_bat_cho_cuon_nay_6752e54b = "Đang bật cho cuốn này."
     const val s_dang_bo_ghep_f640bfd2 = "Đang bỏ ghép"
+    const val s_dang_chep_2a13e1c3 = "Đang chép"
     const val s_dang_cho_4257d45b = "Đang chờ"
     const val s_dang_cho_mang_4e41560e = "Đang chờ mạng"
     const val s_dang_cho_may_lam_sach_bad9fc96 = "Đang chờ máy làm sách"

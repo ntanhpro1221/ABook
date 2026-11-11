@@ -100,6 +100,7 @@ Column {
             y: 2 + (parent.height - 4 - height) / 2
             width: parent.width - (cancel.visible ? cancel.width + 12 : 0)
             value: root.status ? Voice.percent(root.status) / 100 : 0
+            indeterminate: !(root.status && root.status.total > 0)
             label: root.note
         }
         Button {

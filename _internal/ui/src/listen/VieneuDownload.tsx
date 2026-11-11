@@ -59,7 +59,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
     <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className={idle ? "flex flex-wrap items-center gap-2" : "flex basis-full flex-col gap-2"}>
       {downloading && (
         <div className="flex items-center gap-3">
-          <Progress value={vieneuPercent(status) / 100} size="sm" running label={S.s_dang_tai_giong_vieneu_ba98a3a0} className="flex-1" />
+          <Progress value={vieneuPercent(status) / 100} indeterminate={status.total <= 0} size="sm" running label={S.s_dang_tai_giong_vieneu_ba98a3a0} className="flex-1" />
           {backend.cancel && (
             <button
               type="button"

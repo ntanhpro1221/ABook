@@ -146,6 +146,14 @@ Item {
                         color: Theme.accent
                         // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
                     }
+                    // Máy chủ chưa báo tổng byte: đoạn chạy liên tục thay cho thanh rỗng đứng yên (mờ vào / ra cùng StudioBar).
+                    StudioBar {
+                        anchors.fill: parent
+                        color: "transparent"
+                        indeterminate: !(root.shown && root.shown.total > 0)
+                        label: track.Accessible.name
+                        Accessible.ignored: true
+                    }
                 }
                 Button {
                     id: cancelButton

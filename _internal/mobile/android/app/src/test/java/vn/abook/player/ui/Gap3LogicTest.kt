@@ -117,8 +117,8 @@ class Gap3LogicTest {
         val scope=CoroutineScope(SupervisorJob()+Dispatchers.Unconfined)
         var replacements=0
         val source=object: ImportSource by FakeImportSource(ImportPreview("B",chapters=emptyList())) {
-            override suspend fun prepare(item:ImportItem)=PreparedImport(null,"B.abook",packageReview=PackageReview("b","B","C","older"))
-            override suspend fun replace(item:ImportItem): PreparedImport { replacements++; return PreparedImport(null,item.name,bookId="b") }
+            override suspend fun prepare(item:ImportItem,progress:vn.abook.player.WorkSink)=PreparedImport(null,"B.abook",packageReview=PackageReview("b","B","C","older"))
+            override suspend fun replace(item:ImportItem,progress:vn.abook.player.WorkSink): PreparedImport { replacements++; return PreparedImport(null,item.name,bookId="b") }
         }
         try {
             val queue=ImportQueue(source,scope); queue.enqueue(listOf("uri"))

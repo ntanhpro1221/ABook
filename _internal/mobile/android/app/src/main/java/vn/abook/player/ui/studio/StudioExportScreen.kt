@@ -41,7 +41,7 @@ import vn.abook.player.ui.components.StageProgress
 import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.fadeEdges
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.export.ExportText
 import vn.abook.player.ui.studio.parts.PermissionCard
 import vn.abook.player.ui.studio.parts.PollWhileVisible
@@ -154,7 +154,7 @@ private fun JobBlock(state: StudioProjectState, kind: StudioExportKind, job: Stu
                     Abook.type.body,
                 )
                 val fraction = progress.fraction
-                if (fraction != null) StageProgress { fraction } else CreepProgress()
+                StageProgress(fraction != null) { fraction ?: 0f }
                 RowHint(if (export.stopping) StudioExportText.STOPPING_NOTE else StudioExportText.LEAD, Modifier.padding(top = Dim.s8).testTag("studio_export_note"))
             }
             job.state == "done" && job.result != null -> {

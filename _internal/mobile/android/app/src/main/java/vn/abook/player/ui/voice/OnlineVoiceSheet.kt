@@ -36,7 +36,7 @@ import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.fadeEdges
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
@@ -108,7 +108,7 @@ private fun ChoosePage(request: ConsentRequest, voice: VoiceState?, openVoiceSet
                             Modifier.semantics { contentDescription = OnlineConsent.sampleLabel(playing, item.name) },
                         )
                     }),
-                    below = if (sample.loading == item.id) ({ CreepProgress() }) else null,
+                    below = if (sample.loading == item.id) ({ WorkingProgress() }) else null,
                     role = Role.RadioButton,
                 )
                 RowLine()

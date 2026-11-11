@@ -218,10 +218,11 @@ object MusicLogic {
     }
 
     /** Phần đã xong (0-1) cho vạch tiến độ. */
-    fun downloadShare(download: MusicDownload): Float = when {
+    /** Phần đã tải theo byte (không có thì theo số bài); null khi máy chủ chưa báo tổng nào - thanh chạy liên tục. */
+    fun downloadShare(download: MusicDownload): Float? = when {
         download.totalBytes > 0L -> download.doneBytes.toFloat() / download.totalBytes
         download.total > 0 -> download.done.toFloat() / download.total
-        else -> 0f
+        else -> null
     }
 
     /** Thân `PUT /music` cho từng việc (đúng khoá của web). */

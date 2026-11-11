@@ -1,6 +1,9 @@
 package vn.abook.player.ui.addbook
 
 import vn.abook.player.S
+import vn.abook.player.Work
+import vn.abook.player.WorkStep
+import vn.abook.player.WorkThrottle
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
@@ -10,22 +13,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/** One parsed book at a time; Back does not cancel imports or lose choices. No unbounded parsed-book cache. */
+/**
+ * One parsed book at a time; Back does not cancel imports or lose choices. No unbounded parsed-book cache.
+ * Thanh của mỗi hàng chạy theo việc thật ([progress]): byte đã chép / kiểm, số file, số trang; bước chưa biết tổng thì thanh chạy liên tục.
+ * `now` (ms) cho test JVM đặt đồng hồ giả của bộ thưa lời báo (tối đa 10 lần/giây).
+ */
 @Stable
-class ImportQueue(private val source: ImportSource, private val scope: CoroutineScope, private val changed: suspend () -> Unit = {}) {
+class ImportQueue(
+    private val source: ImportSource, private val scope: CoroutineScope,
+    private val now: () -> Long = { System.nanoTime() / 1_000_000 },
+    private val changed: suspend () -> Unit = {},
+) {
     private val flow = MutableStateFlow(ImportState())
     val state: StateFlow<ImportState> = flow
     private var nextId = 1L
     private var ref: String? = null
     private var worker: Job? = null
-    private val progress = HashMap<Long, MutableStateFlow<Float>>()
+    private val progress = HashMap<Long, MutableStateFlow<Work>>()
     private val reviewed = HashSet<Long>()
     private val opened = HashSet<Long>()
 
     fun takeAutoReview(id: Long): Boolean = reviewed.add(id)
     fun takeAutoOpen(id: Long): Boolean = opened.add(id)
 
-    fun progress(id: Long): StateFlow<Float> = progress.getOrPut(id) { MutableStateFlow(0f) }
+    fun progress(id: Long): StateFlow<Work> = bar(id)
+
+    private fun bar(id: Long): MutableStateFlow<Work> = synchronized(progress) { progress.getOrPut(id) { MutableStateFlow(Work(WorkStep.Read)) } }
+
+    /** Nơi nhận tiến độ của một hàng, đã thưa còn tối đa 10 lần/giây. */
+    private fun sink(id: Long): WorkThrottle { val flow = bar(id); return WorkThrottle({ flow.value = it }, now = now) }
 
     fun enqueue(sources: List<String>, folder: Boolean = false) {
         val items = sources.take(40).map { ImportItem(nextId++, it, folder = folder) }
@@ -72,6 +88,8 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         val staged = ref ?: return
         val preview = current.preview ?: return
         flow.value = current.copy(busy = true, problem = "", items = ImportLogic.settle(current.items, id, ImportStage.Adding))
+        // Ghi sách vào thư viện không báo được phần đã làm: thanh chạy liên tục, không đứng ở số của bước trước.
+        bar(id).value = Work(WorkStep.Add)
         worker = scope.launch {
             try {
                 val (bookId, existing) = if (preview.existingId != null && !current.choices.separate) {
@@ -115,17 +133,19 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
 
     private fun replacePackage() {
         val item = flow.value.items.firstOrNull { it.id == flow.value.currentId } ?: return
-        flow.value = flow.value.copy(busy = true, problem = "")
+        flow.value = flow.value.copy(busy = true, problem = "", items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Adding))
+        bar(item.id).value = Work(WorkStep.Copy)
         worker = scope.launch {
             try {
-                val result = source.replace(item)
+                val result = source.replace(item, sink(item.id))
                 changed()
                 finish(item.id, ImportStage.Added, result.bookId)
                 flow.value = flow.value.copy(notice = result.notice)
                 advance()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                flow.value = flow.value.copy(busy = false, problem = failure(S.s_chua_thay_duoc_sach_8eebed8f, e))
+                flow.value = flow.value.copy(busy = false, problem = failure(S.s_chua_thay_duoc_sach_8eebed8f, e),
+                    items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Review))
             }
         }
     }
@@ -161,7 +181,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         val staged = ref
         ref = null
         flow.value = ImportState()
-        progress.clear()
+        synchronized(progress) { progress.clear() }
         reviewed.clear()
         opened.clear()
         if (staged != null) scope.launch {
@@ -171,7 +191,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
     }
 
     private fun finish(id: Long, stage: ImportStage, bookId: String? = null, title: String = "") {
-        progress.getOrPut(id) { MutableStateFlow(0f) }.value = 1f
+        bar(id).value = Work(bar(id).value.step, 1, 1)
         ref = null
         flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, stage, bookId = bookId),
             currentId = null, preview = null, packageReview = null, choices = ImportChoices(), busy = false, problem = "",
@@ -185,9 +205,10 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 val item = ImportLogic.next(flow.value.items) ?: break
                 flow.value = flow.value.copy(currentId = item.id, busy = true,
                     items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Reading))
-                progress.getOrPut(item.id) { MutableStateFlow(0f) }.value = 0.2f
+                // Chưa có lời báo nào của lõi: thanh chạy liên tục với chữ "Đang đọc", không phải một con số đứng yên.
+                bar(item.id).value = Work(WorkStep.Read)
                 try {
-                    val result = source.prepare(item)
+                    val result = source.prepare(item, sink(item.id))
                     ref = result.ref
                     flow.value = flow.value.copy(items = flow.value.items.map { if (it.id == item.id) it.copy(name = result.name) else it })
                     if (result.packageReview != null) {
@@ -207,7 +228,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                             source.discard(result.ref!!)
                             continue
                         }
-                        progress.getValue(item.id).value = 0.55f
+                        bar(item.id).value = Work(WorkStep.Read, 1, 1)
                         flow.value = flow.value.copy(preview = preview, choices = ImportLogic.defaults(preview), busy = false,
                             items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Review))
                         if (flow.value.addingRest) { add(); return@launch }

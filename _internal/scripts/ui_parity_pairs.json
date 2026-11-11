@@ -1328,6 +1328,11 @@
         },
         {
           "side": "native",
+          "match": "^(đang chép|đang kiểm tra)$",
+          "reason": "điện thoại chép file người dùng chọn (content://) vào máy rồi giải và kiểm mã băm từng phần; hàng của Thêm sách nói bước thật dưới tên. Máy tính đọc thẳng đường dẫn trên ổ, không có bước chép"
+        },
+        {
+          "side": "native",
           "match": "^bạn\\ hãy\\ thử\\ lại$",
           "reason": "điện thoại: câu thay khi lỗi của lõi không có chữ; máy tính luôn có lời của máy chủ trong toast"
         },

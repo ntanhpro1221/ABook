@@ -72,6 +72,19 @@ Item {
             fuzzyCompare(fill.width, 140, 0.5)
         }
 
+        function test_unknown_total_runs_instead_of_standing_still() {
+            // Việc chưa biết tổng (cài Studio đang dựng môi trường, tải chưa có Content-Length): một đoạn chạy liên tục, không phải thanh rỗng đứng yên
+            const bar = createTemporaryObject(barComponent, host, {value: 0, indeterminate: true}), runner = findChild(bar, "studioBarRunner")
+            ready()
+            tryVerify(function() { return runner.opacity === 1 }, 1000)
+            const seen = {}
+            tryVerify(function() { seen[Math.round(runner.x)] = true; return Object.keys(seen).length >= 4 }, 2000, "đoạn chạy đứng yên")
+            // Biết tổng: đoạn chạy mờ đi, phần tô theo giá trị hiện lại (mờ chéo, không bật tắt cứng)
+            bar.indeterminate = false; bar.value = 0.5
+            tryVerify(function() { return runner.opacity === 0 && findChild(bar, "studioBarFill").opacity === 1 }, 1000)
+            fuzzyCompare(findChild(bar, "studioBarFill").width, 100, 0.5)
+        }
+
         function test_sleep_countdown_chip_keeps_its_place() {
             const now = open()
             const chip = findChild(now, "nowSleep"), flow = chip.parent

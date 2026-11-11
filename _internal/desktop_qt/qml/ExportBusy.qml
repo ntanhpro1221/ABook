@@ -25,28 +25,13 @@ Column {
             value: root.fraction
             label: root.title
         }
-        Rectangle {
-            id: track
+        StudioBar {
             objectName: "exportIndeterminate"
             visible: root.fraction < 0
             width: parent.width
-            height: 8
-            radius: height / 2
-            color: Theme.line
-            clip: true
-            Rectangle {
-                id: runner
-                width: parent.width * 0.3
-                height: parent.height
-                radius: height / 2
-                color: Theme.accent
-                x: parent.width * 0.35
-                SequentialAnimation on x {
-                    running: track.visible && Nav.uiVisible && !Theme.reduceMotion
-                    loops: Animation.Infinite
-                    NumberAnimation { from: -runner.width; to: track.width; duration: 1400; easing.type: Easing.InOutSine }
-                }
-            }
+            size: "md"
+            indeterminate: true
+            label: root.title
         }
     }
     Text {

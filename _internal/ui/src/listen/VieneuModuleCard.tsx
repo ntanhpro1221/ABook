@@ -241,7 +241,7 @@ export function VieneuModuleCard({
       )}
       {status.state === "downloading" && (
         <div className="flex items-center gap-3">
-          <Progress value={vieneuPercent(shown) / 100} size="sm" running label={S.s_dang_tai_0_03db34d6(lowerName)} className="flex-1" />
+          <Progress value={vieneuPercent(shown) / 100} indeterminate={shown.total <= 0} size="sm" running label={S.s_dang_tai_0_03db34d6(lowerName)} className="flex-1" />
           {backend.cancel && (
             <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => void run(() => backend.cancel!(), S.s_chua_huy_duoc_viec_tai_0_d8afe625(lowerName))}>{S.s_huy_96732485}</Button>
           )}

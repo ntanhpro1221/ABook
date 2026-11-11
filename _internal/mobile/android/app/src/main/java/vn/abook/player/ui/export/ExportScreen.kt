@@ -59,7 +59,7 @@ import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.ListenBook
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.fadeEdges
@@ -287,7 +287,7 @@ internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
         )
         if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 2.dp).testTag("export_progress_folder"))
         val known by remember { derivedStateOf { progress.value.fraction != null } }
-        if (known) StageProgress { progress.value.fraction ?: 0f } else CreepProgress()
+        StageProgress(known) { progress.value.fraction ?: 0f }
     }
 }
 

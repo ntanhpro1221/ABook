@@ -116,6 +116,7 @@ Item {
                     width: parent.width
                     size: "sm"
                     value: root.form && root.form.uploading && root.form.uploading.totalBytes ? root.form.uploading.bytes / root.form.uploading.totalBytes : 0
+                    indeterminate: !(root.form && root.form.uploading && root.form.uploading.totalBytes)
                     label: S.s_dang_gui_cac_chuong_d7b47553
                 }
                 Prose { objectName: "newUploadLabel"; small: true; horizontalAlignment: Text.AlignHCenter; text: root.form && root.form.uploading ? Upload.progressLabel(root.form.uploading) : "" }

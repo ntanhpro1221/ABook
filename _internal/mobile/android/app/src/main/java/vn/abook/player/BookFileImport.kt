@@ -180,19 +180,24 @@ object BookFileImport {
      *  diện nói "giữ nguyên N chỉnh sửa của bạn". */
     data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0, val how: String = "new", val incomingTitle: String = "")
 
-    /** Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. */
-    fun import(context: Context, uri: Uri, allowOlder: Boolean = false): Imported {
+    /**
+     * Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. `progress`: byte đã chép / cỡ file (nửa đầu thanh),
+     * rồi byte đã giải và kiểm mã băm / tổng phần cần giải (nửa sau). File dự án mở tại chỗ không có bước chép: bước kiểm chiếm cả thanh.
+     */
+    fun import(context: Context, uri: Uri, allowOlder: Boolean = false, progress: WorkSink = {}): Imported {
         Store.init(context)
         // File dự án có thể vài chục GB (sổ dự án, từng câu đã thu): đọc thẳng từ chỗ nó nằm, chỉ phần nghe mới được chép.
         openInPlace(context, uri)?.let { descriptor ->
-            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}"), allowOlder = allowOlder) }
+            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}"), allowOlder = allowOlder, progress = progress) }
         }
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
-            sizeOf(context, uri)?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
+            val size = sizeOf(context, uri)
+            size?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
+            val total = size ?: 0L
             val input = context.contentResolver.openInputStream(uri) ?: throw Refused(S.s_chua_doc_duoc_file_6575d76b)
-            input.use { source -> copy.outputStream().use { source.copyTo(it) } }
-            return importFile(copy, allowOlder = allowOlder)
+            input.use { source -> copy.outputStream().use { sink -> copyCounting(source, sink) { done -> progress(copyWork(done, total, COPY_SHARE)) } } }
+            return importFile(copy, allowOlder = allowOlder, progress = progress, from = COPY_SHARE)
         } finally {
             copy.delete()
         }
@@ -222,12 +227,20 @@ object BookFileImport {
         return descriptor
     }
 
-    /** Cỡ file theo trình quản lý file (content://), nếu nó cho biết. */
+    /** Phần của thanh dành cho bước chép (phần còn lại là bước kiểm): hai bước đi qua cùng chừng ấy byte. */
+    private const val COPY_SHARE = 0.5f
+
+    /**
+     * Cỡ file: độ dài thật của bộ mô tả (fstat) trước, không có thì cột SIZE của trình quản lý file. Cột SIZE có thể cũ (MediaStore quét
+     * lúc file còn đang chép vào máy báo 918 MB cho file 1,46 GB - máy ảo 11-11), nên không đi trước số của chính file.
+     */
     private fun sizeOf(context: Context, uri: Uri): Long? = runCatching {
+        context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length.takeIf { length -> length > 0 } }
+    }.getOrNull() ?: runCatching {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
             if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
         }
-    }.getOrNull()
+    }.getOrNull()?.takeIf { it > 0 }
 
     /** Ổ chứa `dir` còn đủ `need` byte không? Không thì từ chối, nói cần bao nhiêu và còn bao nhiêu (`File.usableSpace` là
      *  số StatFs báo cho ứng dụng). `freeSpace` cho test JVM đặt số khác. */
@@ -241,7 +254,9 @@ object BookFileImport {
 
     /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng.
      *  `refreshBase = false` chỉ giữ lớp nền khi nhập lại chữ từ EPUB/TXT; gói có audio luôn so và cập nhật lớp nền. */
-    fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+    /** `progress`: byte đã giải và kiểm mã băm / tổng phần cần giải, chiếm khoảng [from, 1] của thanh. */
+    fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true,
+                   progress: WorkSink = {}, from: Float = 0f, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
@@ -367,11 +382,17 @@ object BookFileImport {
                 val expectedFiles = layout?.files ?: files
                 val wanted = if (layout != null) listOf("book.json") + layout.materialize
                 else DESCRIPTIONS.filter { it != "mimetype" && it in names } + content.sorted()
+                // Bước kiểm: byte thật đọc qua mã băm trên tổng cỡ giải nén của những mục sẽ giải.
+                val checkTotal = wanted.sumOf { maxOf(0L, zip.getEntry(resolve(it))?.size ?: 0L) }
+                var checked = 0L
+                progress(Work(WorkStep.Check, 0, checkTotal, from, 1f))
                 for (name in wanted) {
                     val expected = expectedFiles.optJSONObject(name)
                     val previous = if (name.startsWith("chapters/")) Store.file(target, name) else null
                     val reuse = previous?.takeIf { expected != null && AudioRevision.matches(it, expected.optLong("size", -1), expected.optString("sha256")) }
-                    val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse)
+                    val base = checked
+                    val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse) { read -> progress(Work(WorkStep.Check, base + read, checkTotal, from, 1f)) }
+                    checked = base + size
                     if (expected == null) continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {
                         if (layout != null || !MUSIC.matches(name)) throw Refused(S.s_file_sach_bi_hong_hoac_bi_sua_0_hay_chep_l_1aa6c684(name))
@@ -698,7 +719,7 @@ object BookFileImport {
         return "f-" + digest.joinToString("") { "%02x".format(it) }.take(24)
     }
 
-    private fun extract(zip: ZipFile, name: String, target: File, reuse: File? = null): Pair<Long, String> {
+    private fun extract(zip: ZipFile, name: String, target: File, reuse: File? = null, counted: (Long) -> Unit = {}): Pair<Long, String> {
         target.parentFile?.mkdirs()
         val digest = MessageDigest.getInstance("SHA-256")
         var size = 0L
@@ -711,6 +732,7 @@ object BookFileImport {
                     digest.update(buffer, 0, read)
                     sink?.write(buffer, 0, read)
                     size += read
+                    counted(size)
                 }
             }
         }

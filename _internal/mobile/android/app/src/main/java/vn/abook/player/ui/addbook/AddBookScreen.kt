@@ -1,6 +1,8 @@
 package vn.abook.player.ui.addbook
 
 import vn.abook.player.S
+import vn.abook.player.Work
+import vn.abook.player.WorkStep
 
 import vn.abook.player.ui.data.dotJoined
 import android.content.Intent
@@ -97,9 +99,7 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
         choosingAgain = choosingAgain,
         addRest = queue::addRest,
     ) { id ->
-        val progress = queue.progress(id).collectAsState()
-        val read: () -> Float = { progress.value }
-        read
+        queue.progress(id).collectAsState()
     }
 }
 
@@ -116,7 +116,7 @@ fun AddBookScreen(
     leaving: Int = 0, stay: () -> Unit = {}, dropRest: () -> Unit = {},
     addRest: () -> Unit = {},
     choosingAgain: Boolean = false,
-    progress: @Composable (Long) -> (() -> Float) = { { 0.35f } },
+    progress: @Composable (Long) -> State<Work> = { remember { mutableStateOf(Work(WorkStep.Read)) } },
 ) {
     // Số cuốn giữ lại trong lúc lời hỏi khép (không đổi thành "Còn 0 cuốn" giữa chừng).
     val lastCount = remember { intArrayOf(0) }
@@ -165,10 +165,12 @@ fun AddBookScreen(
 @Composable
 private fun ImportRow(
     item: ImportItem, review: (Long) -> Unit, retry: (Long) -> Unit, openBook: (String) -> Unit,
-    progress: @Composable (Long) -> (() -> Float),
+    progress: @Composable (Long) -> State<Work>,
 ) {
     val colors = Abook.colors
     val failed = item.stage == ImportStage.Error
+    val working = item.stage == ImportStage.Reading || item.stage == ImportStage.Adding
+    val work = if (working) progress(item.id) else null
     val open: (() -> Unit)? = when {
         item.stage == ImportStage.Review -> ({ review(item.id) })
         item.stage in setOf(ImportStage.Added, ImportStage.Existing) && item.bookId != null -> ({ openBook(item.bookId) })
@@ -178,12 +180,17 @@ private fun ImportRow(
         title = item.name,
         onClick = open,
         tag = if (item.stage == ImportStage.Review) "review_${item.id}" else "open_${item.id}",
-        hint = if (failed) item.problem.ifEmpty { item.stage.label } else item.stage.label,
+        hint = if (failed) item.problem.ifEmpty { item.stage.label } else if (working) ImportLogic.workLabel(work!!.value) else item.stage.label,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { if (item.folder) FolderIcon(colors.text2) else FileIcon(colors.text2) },
         trailing = if (failed) ({ TextAction(S.s_thu_lai_c58d068c, { retry(item.id) }, "retry_${item.id}") }) else null,
         chevron = open != null,
-        below = if (item.stage == ImportStage.Reading || item.stage == ImportStage.Adding) ({ StageProgress(progress(item.id)) }) else null,
+        below = if (working) ({
+            // Thanh theo việc thật: phần đã xong của cả hàng; bước chưa biết tổng thì chạy liên tục.
+            val bar = work!!
+            val known by remember { derivedStateOf { bar.value.fraction != null } }
+            StageProgress(known) { bar.value.fraction ?: 0f }
+        }) else null,
     )
 }
 

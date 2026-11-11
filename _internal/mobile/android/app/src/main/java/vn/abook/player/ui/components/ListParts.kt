@@ -3,7 +3,10 @@ package vn.abook.player.ui.components
 import vn.abook.player.S
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -39,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -358,9 +362,38 @@ fun ListItem(
     }
 }
 
-/** Thanh tiến độ mảnh dưới một hàng: mốc, không phải phần trăm byte đoán. Giá trị đổi chỉ được đọc trong pha vẽ. */
+/**
+ * Thanh tiến độ mảnh dưới một hàng, theo việc THẬT (byte đã chép, mục đã xong trên tổng) - không phải số đoán hay mốc gán cứng.
+ * `known = false`: việc chưa biết tổng - một đoạn chạy qua lại liên tục (như `.indeterminate-bar` của web, 1,4 s), không đứng yên.
+ * Đổi giữa hai dạng mờ chéo (motionMedium, không bật/tắt cứng); giảm chuyển động thì đoạn đứng giữa rãnh. Giá trị chỉ được đọc trong pha vẽ.
+ */
 @Composable
-fun StageProgress(progress: () -> Float) = LinearProgress(Modifier.padding(top = Dim.s8).height(3.dp), progress = progress)
+fun StageProgress(known: Boolean = true, progress: () -> Float) {
+    val track = Abook.colors.line
+    val ink = Abook.colors.accent
+    val mode = animateFloatAsState(if (known) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "stage-mode")
+    val moving = remember { android.os.Build.VERSION.SDK_INT < 26 || android.animation.ValueAnimator.areAnimatorsEnabled() }
+    val sweep = if (!known && moving) {
+        rememberInfiniteTransition(label = "stage-run").animateFloat(0f, 1f, infiniteRepeatable(tween(INDETERMINATE_MS, easing = Motion.Standard)), label = "stage-x")
+    } else null
+    Canvas(Modifier.padding(top = Dim.s8).height(3.dp).fillMaxWidth().testTag(if (known) "stage_progress" else "stage_progress_running")) {
+        drawRect(track)
+        val shown = mode.value
+        if (shown > 0f) drawRect(ink.copy(alpha = ink.alpha * shown), size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
+        if (shown < 1f) {
+            // Đoạn rộng 2/5 rãnh, đi từ ngoài mép trái (-100 % bề rộng đoạn) tới ngoài mép phải (250 %), như keyframes `indeterminate` của web.
+            val width = size.width * 0.4f
+            val left = sweep?.let { -width + it.value * (size.width + width) } ?: (size.width - width) / 2
+            clipRect { drawRect(ink.copy(alpha = ink.alpha * (1f - shown)), Offset(left, 0f), size.copy(width = width)) }
+        }
+    }
+}
+
+/** Thanh của việc đang làm mà chưa biết còn bao nhiêu (đang tìm, đang nối, đang ghép): chạy liên tục tới khi việc xong. */
+@Composable
+fun WorkingProgress() = StageProgress(known = false) { 0f }
+
+private const val INDETERMINATE_MS = 1400
 
 /** Flat progress track shared by stage progress and the music emotion meters. */
 @Composable
