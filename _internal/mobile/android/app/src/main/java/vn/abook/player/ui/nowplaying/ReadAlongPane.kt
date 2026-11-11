@@ -97,9 +97,11 @@ fun ReadAlongPane(
             maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + 2 * bleed else constraints.maxWidth))
         layout(placeable.width - 2 * bleed, placeable.height) { placeable.place(-bleed, 0) }
     }.clipToBounds()) {
-        val third = maxHeight / 3
+        // The list ends above the jump dock, so placement measures the list's own viewport.
+        val listHeight = maxHeight - Dim.s48
+        val third = listHeight / 3
         val density = LocalDensity.current
-        val viewportPx = with(density) { maxHeight.roundToPx() }
+        val viewportPx = with(density) { listHeight.roundToPx() }
         val placeAt = (viewportPx * ReadFollow.PLACE_AT).roundToInt()
         val tracker = remember(list) { LineTracker(list, layouts, position) }
         tracker.paragraphs = state.paragraphs
@@ -157,7 +159,7 @@ fun ReadAlongPane(
                     // Cùng độ đậm với --read-along / --read-along-word của web và along / word của Qt.
                     val sentenceColor = colors.accent.copy(alpha = if (colors.dark) 0.18f else 0.26f)
                     val wordColor = colors.accent.copy(alpha = if (colors.dark) 0.30f else 0.62f)
-                    val radius = with(density) { 8.dp.toPx() }
+                    val radius = with(density) { Dim.radiusControl.toPx() }
                     val geometry = remember(layout, paragraph, radius) {
                         layout?.let { with(density) { ParagraphInk(it, paragraph, 4.dp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
                     }

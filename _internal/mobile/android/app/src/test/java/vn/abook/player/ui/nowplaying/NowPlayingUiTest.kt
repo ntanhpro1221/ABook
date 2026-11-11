@@ -564,7 +564,7 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
         // Nút chỉ hiện khi câu đang nghe đã ra khỏi khung (như web): cuộn đi đủ xa.
         repeat(3) {
-            rule.onNodeWithTag("read_along_text").performTouchInput {
+            rule.onNodeWithTag("reading_scroll").performTouchInput {
                 swipe(Offset(width * 0.5f, height * 0.9f), Offset(width * 0.5f, height * 0.1f), 200)
             }
         }
