@@ -52,10 +52,17 @@ def test_capitals_for_emphasis_keep_the_vietnamese_reading_before_the_abbreviati
 @pytest.mark.parametrize("origin", [None, "ja", "ko"])
 def test_a_voice_that_cannot_say_english_gets_the_same_loanword_reading(origin):
     said = vieneu.spoken_tokens(tokens("Ra quán net chơi game online."), origin, False)
-    assert said == ["Ra", "quán", "nét", "chơi", "ghêm", "ôn-lai."]
+    assert said == ["Ra", "quán", "nét", "chơi", "ghêm", "on-lai."]
 
 
 def test_a_capitalised_loanword_starts_a_sentence_or_is_a_name():
     toks = tokens("Net là thứ hắn sống cùng. Hôm qua tôi gặp Net.")
     said = vieneu.spoken_tokens(toks, None)
     assert said[0] == "nét" and said[-1] == "Net."
+
+
+def test_a_voice_that_speaks_english_keeps_the_owner_kept_words_and_one_that_cannot_reads_the_table():
+    # Owner 11-11: share / post / comment / hacker / app / check / code sound right in English.
+    text = "Hắn share bài post, mở APP rồi check code."
+    assert vieneu.spoken_tokens(tokens(text), None, True, direct_english=True) == ["Hắn", "share", "bài", "post,", "mở", "app", "rồi", "check", "code."]
+    assert vieneu.spoken_tokens(tokens(text), None, False) == ["Hắn", "se", "bài", "pốt,", "mở", "áp", "rồi", "chéc", "cốt."]

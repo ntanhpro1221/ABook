@@ -64,6 +64,8 @@ _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
 # ("Nick cười" đầu câu vẫn là Nick): trên kho chữ hoa giữa câu của chúng nhiều hơn chữ thường.
 _LOANWORD_POLICY = json.loads(Path(__file__).with_name("english_policy.json").read_text(encoding="utf-8"))
 LOANWORDS: dict[str, str] = dict(_LOANWORD_POLICY["loanwords"])
+# Owner 11-11: a voice that speaks English says these in English ("share", "comment"); the table reading is for voices that cannot.
+ENGLISH_VOICE_KEEPS: frozenset[str] = frozenset(_LOANWORD_POLICY["english_voice_keeps"])
 LOANWORD_CAPITALS = frozenset(_LOANWORD_POLICY["loanword_capitals"])
 LOANWORD_NAMES = frozenset(_LOANWORD_POLICY["loanword_names"])
 SENTENCE_ENDS = ".!?…:"
@@ -357,17 +359,21 @@ def _after_number(toks: list[str], index: int) -> bool:
     return bool(before) and (before[-1].isdigit() or before.lower() in NUMBER_WORDS)
 
 
-def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False) -> None:
+def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False, speaks_english: bool = False) -> None:
     """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen (net, taxi, sofa, anime, ninja...) bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị
     đọc Việt; giữ dấu câu quanh, số chữ không đổi. Từ của `LOANWORDS` chỉ đổi khi viết như danh từ chung (`common_loanword`) và không nằm trong cụm tiếng Anh
     (`english_policy.loanword_english`). `shouted`: chỉ xét từ của `LOANWORDS` viết TOÀN HOA - bước chạy trước luật viết tắt, để "BAN", "GAME", "APP" không bị đánh vần hay
-    hạ thành chữ Anh trước khi tới đây."""
+    hạ thành chữ Anh trước khi tới đây. `speaks_english`: giọng nói được tiếng Anh giữ chữ Anh cho từ của `ENGLISH_VOICE_KEEPS`."""
     english: set[int] | None = None
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
         before, core, after = split_token(token)
         if not core or (shouted and not (len(core) > 1 and core.isupper() and core.lower() in LOANWORDS)):
+            continue
+        if speaks_english and core.lower() in ENGLISH_VOICE_KEEPS:
+            if core.isupper() and len(core) > 1:  # "APP" for emphasis: the English word, not spelled "A P P"
+                out[index] = before + core.lower() + after
             continue
         reading = loanword_reading(core)
         if reading and core.lower() in LOANWORDS:
@@ -395,7 +401,7 @@ def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out:
     read_names(toks, out, origin)
     read_korean_names(toks, out, origin)
     read_honorifics(toks, out, origin)
-    read_loanwords(toks, out)
+    read_loanwords(toks, out, speaks_english=speaks_english)
     if not speaks_english:
         read_english(toks, out)
     return out

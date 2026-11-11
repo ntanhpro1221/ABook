@@ -7,11 +7,11 @@
   "loanwords": {
     "sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
     "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la", "net": "nét", "internet": "in-tơ-nét", "wifi": "oai-phai",
-    "wi-fi": "oai-phai", "online": "ôn-lai", "offline": "óp-lai", "email": "i-meo", "e-mail": "i-meo", "laptop": "láp-tốp",
+    "wi-fi": "oai-phai", "online": "on-lai", "offline": "óp-lai", "email": "i-meo", "e-mail": "i-meo", "laptop": "láp-tốp",
     "taxi": "tắc-xi", "radio": "ra-đi-ô", "pizza": "pi-da", "karaoke": "ca-ra-ô-kê", "camera": "ca-mê-ra", "chocolate": "sô-cô-la",
     "game": "ghêm", "gameshow": "ghêm-sô", "show": "sô", "clip": "cờ-líp", "fan": "phan", "okay": "ô-kê",
-    "idol": "ai-đôn", "gas": "ga", "garage": "ga-ra", "cafe": "cà-phê", "café": "cà-phê", "sandwich": "xăng-uých",
-    "hamburger": "hăm-bơ-gơ", "ban": "ban", "admin": "át-min", "nick": "ních", "level": "le-vồ", "farm": "phám",
+    "idol": "ai-đồ", "gas": "ga", "garage": "ga-ra", "cafe": "cà-phê", "café": "cà-phê", "sandwich": "xăng-uých",
+    "hamburger": "hăm-bơ-gơ", "ban": "ban", "admin": "át-min", "nick": "ních", "level": "le-vồ", "farm": "pham",
     "buff": "búp", "team": "tim", "check": "chéc", "post": "pốt", "share": "se",
     "comment": "com-men", "chat": "chát", "code": "cốt", "hack": "hách", "hacker": "hách-cơ", "server": "xơ-vơ",
     "app": "áp", "gara": "ga-ra", "guitar": "ghi-ta", "virus": "vi-rút", "massage": "mát-xa", "laser": "la-de",
@@ -47,6 +47,8 @@
     "ktx": ["tàu", "hỏa", "ga", "train", "railway"]
   },
   "english_letter_words": {"Z": "zed"},
+  "vietnamese_letter_names": ["K"],
+  "english_voice_keeps": ["app", "check", "code", "comment", "hack", "hacker", "post", "share"],
   "letter_name_cues": ["thấy", "gặp", "gọi", "hỏi", "bảo", "nhìn", "với", "của", "cho", "cùng", "theo", "giết", "cứu", "đợi", "chờ", "tìm",
                        "mời", "giúp", "ơn", "ông", "bà", "cô", "anh", "chị", "cậu", "ngài", "gã", "lão", "tên", "danh", "nàng", "chàng", "thằng"],
   "context": {

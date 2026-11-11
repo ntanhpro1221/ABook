@@ -46,6 +46,8 @@ def letter_name(toks: list[str], index: int) -> bool:
     before, core, after = names.split_token(toks[index])
     if len(core) != 1 or not "A" <= core <= "Z" or index == 0 or names.sentence_start(toks, index):
         return False
+    if core in POLICY["vietnamese_letter_names"]:  # owner 11-11: "K" as Vietnamese "ca" sounds more natural than "kei"
+        return False
     if any(ch.isalnum() or ch in "-'’" for ch in before + after) or after[:1] == "." and index + 1 < len(toks) and toks[index + 1][:1].isupper():
         return False
     previous = names.split_token(toks[index - 1])

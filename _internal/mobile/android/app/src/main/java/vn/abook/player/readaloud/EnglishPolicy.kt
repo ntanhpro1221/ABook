@@ -36,11 +36,13 @@ object EnglishPolicy {
     }
 
     private val letterNameCues by lazy { stringList("letter_name_cues").toSet() }
+    private val vietnameseLetterNames by lazy { stringList("vietnamese_letter_names").toSet() }
 
     /** english_policy.letter_name: a lone capital letter used as a name after a cue word ("thấy Y ở đây", "ông X"), never beside another capitalised word. */
     fun letterName(toks: List<String>, index: Int): Boolean {
         val (before, core, after) = Names.splitToken(toks[index])
         if (core.length != 1 || core[0] !in 'A'..'Z' || index == 0 || Names.sentenceStart(toks, index)) return false
+        if (core in vietnameseLetterNames) return false  // owner 11-11: "K" as Vietnamese "ca" sounds more natural than "kei"
         if ((before + after).any { it.isLetterOrDigit() || it in "-'’" } ||
             (after.startsWith(".") && index + 1 < toks.size && toks[index + 1].firstOrNull()?.isUpperCase() == true)) return false
         val previous = Names.splitToken(toks[index - 1])

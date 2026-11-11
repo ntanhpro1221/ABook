@@ -203,6 +203,8 @@ object Names {
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
     /** Từ mượn đọc Việt với mọi cuốn và giọng (english_policy.json "loanwords", cùng file với Python) - `LOANWORDS`. */
     internal val LOANWORDS: Map<String, String> by lazy { EnglishPolicy.stringMap("loanwords") }
+    /** Owner 11-11: VieNeu speaks English, so these stay English ("share", "comment"); the table reading is for voices that cannot - `ENGLISH_VOICE_KEEPS`. */
+    internal val ENGLISH_VOICE_KEEPS: Set<String> by lazy { EnglishPolicy.stringList("english_voice_keeps").toSet() }
     /** Từ mượn viết hoa giữa câu mà vẫn là danh từ chung ("mạng Internet") - `LOANWORD_CAPITALS`. */
     private val LOANWORD_CAPITALS: Set<String> by lazy { EnglishPolicy.stringList("loanword_capitals").toSet() }
     /** Từ mượn mà viết hoa chữ đầu thì luôn là tên người ("Nick") - `LOANWORD_NAMES`. */
@@ -300,6 +302,10 @@ object Names {
             if (out[index] != token) continue
             val (before, core, after) = splitToken(token)
             if (core.isEmpty() || (shouted && !(core.length > 1 && core == core.uppercase(Locale.ROOT) && core != lower(core) && lower(core) in LOANWORDS))) continue
+            if (lower(core) in ENGLISH_VOICE_KEEPS) {  // the only Android voice speaks English; "APP" for emphasis is the English word, not "A P P"
+                if (core.length > 1 && core == core.uppercase(Locale.ROOT)) out[index] = before + lower(core) + after
+                continue
+            }
             var reading = loanwordReading(core)
             if (reading != null && lower(core) in LOANWORDS) {
                 if (!commonLoanword(core, toks, index)) reading = null
