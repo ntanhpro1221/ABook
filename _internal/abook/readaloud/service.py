@@ -13,7 +13,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping, Protocol
 
-from . import azure, edge, engine_pick, fpt, google, local_stream, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
+from . import azure, edge, engine_pick, fpt, google, local_stream, loudness, names, readings as book_readings, shared_rulings, spoken, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
@@ -21,6 +21,7 @@ from .local_engine import LocalEngine, ProviderEngine
 from .zerotts import ZeroTTSProvider
 from .mapping import Boundary, fold, map_boundaries, tokens
 from .model import Synthesis, Voice, VoiceError, cancellable, hearing
+from .phoneme_policy import book_rulings
 from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
 
@@ -244,6 +245,8 @@ class ReadAloud:
             self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate, aligner=local_stream.remembering_aligner)
         self._speed = speed
         self._model_mark = model_mark
+        # mã cuốn -> phán quyết tầng hai của cuốn (`phoneme_policy.Rulings`) hay None; máy chủ giao diện gắn vào (đọc `sharedWords` của gói)
+        self.rulings: Callable[[str], Any] | None = None
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
@@ -518,7 +521,11 @@ class ReadAloud:
             name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
         # giọng VieNeu / Supertonic: khúc dưới trần đỉnh thật, câu ngắn nhỏ được nâng ngay trong clip (loudness.under_ceiling, lift_wav) - dấu riêng trong khoá
         lifted = loudness.lifts(voice_id)
-        tags = (name_tag, book_readings.tag(text, readings), loudness.clip_tag(voice_id))
+        # Phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh (shared_rulings.py; cuốn làm từ Studio mang theo): chỉ giọng qua sea-g2p (VieNeu) dùng,
+        # dấu riêng trong khoá chỉ khi đoạn có chỗ được phán.
+        rulings = self.rulings(book) if book and self.rulings is not None and getattr(provider, "shared_rulings", False) else None
+        rulings_tag = shared_rulings.tag(text, rulings)
+        tags = (name_tag, book_readings.tag(text, readings), loudness.clip_tag(voice_id), rulings_tag)
 
         def key_at(tier_tag: str) -> str:
             """Khoá của đoạn ở bậc `tier_tag` ("" = chất lượng): dấu đọc + dấu bậc + dấu model (chỉ giọng trên máy)."""
@@ -566,7 +573,7 @@ class ReadAloud:
                                 if stream is not None and not background and getattr(stream, "local", False):  # mọi rank: đoạn đọc trước cũng nhập luồng được khi người nghe tới nó lúc còn đang đọc dở
                                     local = local_stream.for_clip(stream, provider, native, text, origin, readings if tags[1] else None, getattr(stream, "speed", 1.0),
                                                                   getattr(stream, "reach", math.inf))
-                                with cancellable(cancelled), hearing(local):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
+                                with cancellable(cancelled), hearing(local), book_rulings(rulings if rulings_tag else None):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
                                     made = provider.synthesize(text, native, origin, readings) if tags[1] else provider.synthesize(text, native, origin)
                             if lifted and made.ext == "wav":
                                 made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))

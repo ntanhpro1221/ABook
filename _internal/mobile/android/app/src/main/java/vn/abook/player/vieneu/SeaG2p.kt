@@ -58,14 +58,22 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
      * without the final-punctuation rule, joined with spaces, the unit's final punctuation settled, then the pipeline (normalise with
      * punc_norm + G2P). "" when nothing is left to read. One difference from vieneu: a unit that ends in "?" / "!" keeps that mark (punc_norm
      * would turn a short "Thật sao?" into "Thật sao." and lose the question tone); a unit without a final mark still gets ".".
+     * [source]: the unit as WRITTEN, for the capital rule of shared words; [rulings]: the book's second-tier answers ([PhonemePolicy.Rulings]).
      */
-    fun phonemize(sentences: List<String>): String {
-        val capitals = PhonemePolicy.capitalised(sentences.joinToString(" "))
+    fun phonemize(sentences: List<String>, source: String? = null, rulings: PhonemePolicy.Rulings? = null): String {
+        val shown = sentences.joinToString(" ")
+        val capitals = PhonemePolicy.capitalised(shown, source)
+        // the roster's foreign names that are spelled like a Vietnamese syllable ("Dan"), where this unit writes them as a name
+        val named = if (rulings == null || rulings.foreign.isEmpty()) emptySet() else PhonemePolicy.writtenNames(shown, source).intersect(rulings.foreign)
         val text = normalizeUnit(sentences)
-        val chunk = puncNorm(text)
+        val chunk = PhonemePolicy.respellRareRimes(puncNorm(text))  // "gi ưn" -> "gi ân": a rime the voice cannot say
         if (chunk.isBlank()) return ""
         val given = keepLoneO(chunk, normalize(chunk, true))
-        var phonemes = PhonemePolicy.restoreVietnamese(chunk, g2p(given), given, ::g2p, capitals)
+        val raw = g2p(given)
+        var phonemes = PhonemePolicy.restoreVietnamese(chunk, raw, given, ::g2p, capitals, rulings)
+        phonemes = PhonemePolicy.restoreUnreadWords(given, phonemes, ::g2p)  // "hết pin" /pˈɪn/ -> /pˈin/: a Vietnamese word sea-g2p only reads in English
+        phonemes = PhonemePolicy.foreignNames(given, raw, phonemes, ::g2p, named)  // "Dan" of a Western roster: "đan" /ɗaːn/, not /zaːn/
+        phonemes = PhonemePolicy.repairLevelTone(given, phonemes)
         if (phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()

@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "description": "Syllables written without a tone mark that the VieNeu road cannot say as written: rimes of romanized names (Korean RR, romaji) the voice does not know, syllables sea-g2p gives a tone, Vietnamese words sea-g2p has no Vietnamese sound for, and the onset letters of a foreign roster name spelled like a Vietnamese syllable that are read as another Vietnamese letter (Dan: đan). Measured 2026-11-10/11 on VieNeu v3 Nano and heard by the owner 2026-11-11; method and numbers in docs/NAME_SOUNDS.md. Read by phoneme_policy.py and PhonemePolicy.kt.",
+  "rimes": {
+    "ưn": "ân"
+  },
+  "level": [
+    "un",
+    "gin",
+    "pa",
+    "pan",
+    "sun",
+    "gun",
+    "nun",
+    "mum",
+    "eng",
+    "toe",
+    "vin",
+    "toong",
+    "sia",
+    "poong",
+    "vim"
+  ],
+  "unread": {
+    "pin": "pìn",
+    "veo": "vèo",
+    "boa": "boà",
+    "min": "mìn",
+    "qui": "quì",
+    "quim": "quìm",
+    "quinh": "quình",
+    "gim": "gìm",
+    "ginh": "gình"
+  },
+  "foreign_onsets": {
+    "d": "đ"
+  }
+}

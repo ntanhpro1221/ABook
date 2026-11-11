@@ -274,7 +274,7 @@ def test_finished_local_stream_cancels_and_releases_its_timer(monkeypatch: pytes
 # ---- clip qua ReadAloud: bất biến byte ---------------------------------------------------------------------------------------------
 @pytest.fixture
 def local_voices(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(vieneu_engine, "phonemize", lambda pieces: " ".join(pieces).lower().rstrip(".!?,") + ".")
+    monkeypatch.setattr(vieneu_engine, "phonemize", lambda pieces, **_: " ".join(pieces).lower().rstrip(".!?,") + ".")
     found = {"": Installed(_voices(tmp_path / "voices"), (tmp_path, tmp_path), tmp_path, False)}  # bài thử đổi được (bộ căn chữ)
     engines = {"turbo": FakeEngine(48_000), "nano": FakeEngine(24_000)}
 

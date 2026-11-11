@@ -77,7 +77,7 @@ class LocalLiveTest {
             val (tokens, units) = VieneuUnits.units(text, 140)
             LocalLive(it, out, tokens, units, it.speed().toDouble(), clock)
         }
-        val spoken = VieneuSpeaker(phonemize).speak("nano", FakeTier(), "Adam", preset, text, live = live)
+        val spoken = VieneuSpeaker { pieces, _, _ -> phonemize(pieces) }.speak("nano", FakeTier(), "Adam", preset, text, live = live)
         val final = lift(spoken.samples, spoken.rate)
         if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
         return out to spoken

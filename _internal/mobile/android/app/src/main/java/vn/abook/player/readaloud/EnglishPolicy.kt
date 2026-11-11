@@ -14,7 +14,6 @@ object EnglishPolicy {
     const val PROVENANCE = BuildConfig.ENGLISH_READING_PROVENANCE
     val ACRONYMS = BuildConfig.ENGLISH_ACRONYMS.split(" ").toSet()
     private val preserveAcronyms = BuildConfig.PRESERVE_ACRONYMS.split(" ").toSet()
-    internal val sharedVietnamese by lazy { policy.getJSONObject("shared_vietnamese") }
     internal fun stringMap(key: String): Map<String, String> =
         policy.getJSONObject(key).let { o -> o.keys().asSequence().associateWith(o::getString) }
     internal fun stringList(key: String): List<String> = policy.getJSONArray(key).let { a -> (0 until a.length()).map(a::getString) }

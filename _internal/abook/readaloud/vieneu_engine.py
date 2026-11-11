@@ -337,22 +337,36 @@ def keep_lone_o(chunk: str, normalised: str) -> str:
     return " ".join("o" + word[1:] if LONE_O.fullmatch(was) and word[:1] == "ô" else word for was, word in zip(before, after))
 
 
-def phonemize(sentences: Sequence[str]) -> str:
+def phonemize(sentences: Sequence[str], source: str | None = None, rulings: Any = None) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
     của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
     Khác vieneu ở MỘT điểm: `punc_norm` ép dấu cuối của khúc dưới 5 từ về "." ("Thật sao?" thành "Thật sao.") nên câu hỏi / cảm thán ngắn mất giọng
-    hỏi, giọng cảm (đo 10-10 trên Turbo của app: F0 cuối câu hỏi ngắn +0,1 đến +0,5 st tuỳ giọng khi giữ dấu - nhỏ nhưng đúng chiều, và phoneme đúng chữ). Khúc kết bằng "?" / "!" giữ dấu ấy; khúc thiếu dấu vẫn được thêm "."."""
+    hỏi, giọng cảm (đo 10-10 trên Turbo của app: F0 cuối câu hỏi ngắn +0,1 đến +0,5 st tuỳ giọng khi giữ dấu - nhỏ nhưng đúng chiều, và phoneme đúng chữ). Khúc kết bằng "?" / "!" giữ dấu ấy; khúc thiếu dấu vẫn được thêm ".".
+    `source`: chữ HIỆN của khúc (trước lớp chữ đem đọc) - luật viết hoa của từ trùng Việt / Anh nhìn chữ gốc, vì lớp chữ hạ chữ IN HOA
+    ("admin BAN nick") trước khi tới đây. `rulings`: phán quyết tầng hai của cuốn (`shared_rulings.py`), không có thì chỉ tầng một."""
     from sea_g2p import punc_norm
 
+    from .phoneme_policy import (
+        capitalised, emphasize_english_interjections, foreign_names, remembered_rulings, repair_level_tone, repair_syllabic_gi,
+        repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese, written_names,
+    )
+
+    shown = " ".join(sentences)
+    capitals = capitalised(shown, source)
+    if rulings is None:
+        rulings = remembered_rulings()  # của cuốn đang nghe (service.clip)
+    named = written_names(shown, source) & rulings.foreign if rulings else frozenset()  # tên ngoại của danh sách nhân vật viết như âm tiết Việt ("Dan")
     text = normalize(sentences)
-    chunk = punc_norm(text)
+    chunk = respell_rare_rimes(punc_norm(text))  # "gi ưn" -> "gi ân": vần máy đọc không nói được (name_sounds.json)
     if not chunk.strip():
         return ""
-    from .phoneme_policy import capitalised, emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese
-
     pipeline = _sea()
     given = keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=True))
-    phonemes = restore_vietnamese(chunk, pipeline.g2p.convert(given), given, pipeline.g2p.convert, capitalised(" ".join(sentences)))
+    raw = pipeline.g2p.convert(given)
+    phonemes = restore_vietnamese(chunk, raw, given, pipeline.g2p.convert, capitals, rulings)
+    phonemes = restore_unread_words(given, phonemes, pipeline.g2p.convert)  # "hết pin" /pˈɪn/ -> /pˈin/: từ Việt chỉ có âm Anh trong sea-g2p
+    phonemes = foreign_names(given, raw, phonemes, pipeline.g2p.convert, named)  # "Dan" của danh sách nhân vật Tây: "đan" /ɗaːn/, không /zaːn/
+    phonemes = repair_level_tone(given, phonemes)
     if phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

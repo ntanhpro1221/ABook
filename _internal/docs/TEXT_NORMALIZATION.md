@@ -443,7 +443,14 @@ tiếng Việt.
 
 **Thiết kế: chuỗi nói không đổi một byte; chỉ dòng âm vị đổi.** `phoneme_policy.vietnamese_shared` (Python) =
 `PhonemePolicy.vietnameseShared` (Kotlin) quyết định trên khúc đã chuẩn hoá; `restore_vietnamese` / `restoreVietnamese` thực hiện.
-Dữ liệu ở khoá `shared_vietnamese` của `english_policy.json` (mốc g2pvi: version 4; phần mở rộng bên dưới: version 5), ca chung `tests/fixtures/readaloud/shared_vietnamese/cases.json`.
+Ca chung `tests/fixtures/readaloud/shared_vietnamese/cases.json`.
+
+> **Từ g2pvi4 (policy version 6) phần QUYẾT ĐỊNH không còn là luật tay.** Bảng luật, các danh sách `words` / `strong` /
+> `before_english` / `nouns` / `echo` / `pairs` và khoá `shared_vietnamese` của `english_policy.json` mô tả bên dưới đã bị gỡ;
+> thay bằng một bảng điểm học từ kho, `abook/readaloud/shared_words.json` - xem [SHARED_WORDS.md](SHARED_WORDS.md). Phần *Thực hiện*
+> và *Chữ hoa* dưới đây vẫn đúng nguyên; bảng luật và các số đo còn lại của mục này là lịch sử của ba vòng luật tay (g2pvi, g2pvi2).
+> Thay đổi thấy được: một từ đứng MỘT MÌNH trong thẻ `<en>` giờ có thể được nhận là Việt ("`<en>the</en>` thé"); 72 từ có âm Việt
+> thanh ngang trong từ điển sea-g2p đều được chấm điểm thay vì 45 từ trong danh sách.
 
 - *Thực hiện.* Mỗi từ được chứng minh là Việt bị thay, **chỉ trong đầu vào của G2P**, bằng một từ chung khác không có trong
   câu (`sentinels`: nach, sich, trac). sea-g2p xử cả chuỗi từ chung như một khối nên phép thay không đổi tiếng của từ nào

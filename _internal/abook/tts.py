@@ -6,6 +6,7 @@ import math
 import os
 import random
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
@@ -617,21 +618,30 @@ def keep_vieneu_final_mark() -> None:
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
         from .readaloud.phoneme_policy import (
-            emphasize_english_interjections, remembered_case, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
+            emphasize_english_interjections, foreign_names, remembered_case, remembered_named, remembered_rulings,
+            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese,
         )
 
         # `text` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
-        out = restore_vietnamese(
-            text, original_phonemize(text, punc_norm),
-            lambda: phonemize_text._get_pipeline().normalizer.normalize(text, punc_norm=punc_norm),
-            phonemize_text._get_g2p().convert, remembered_case(),
-        )
-        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
-            written = original_phonemize(text, False).rstrip()
+        value = respell_rare_rimes(text)  # "gi ưn" -> "gi ân": a rime the voice cannot say (name_sounds.json)
+        raw = original_phonemize(value, punc_norm)
+
+        @lru_cache(maxsize=1)
+        def given() -> str:
+            return phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=punc_norm)
+
+        out = restore_vietnamese(value, raw, given, phonemize_text._get_g2p().convert, remembered_case(), remembered_rulings())
+        out = restore_unread_words(given(), out, phonemize_text._get_g2p().convert)  # "hết pin" /pˈɪn/ -> /pˈin/: a Vietnamese word sea-g2p only reads in English
+        named = remembered_named()
+        if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): "đan", the syllable with the name's onset
+            out = foreign_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
+        out = repair_level_tone(given(), out)  # the words sea-g2p saw: "nô-pa-mi" is three of them
+        if punc_norm and out.endswith(".") and ("?" in value or "!" in value):
+            written = original_phonemize(value, False).rstrip()
             if written.endswith(("?", "!")):
                 out = out[:-1] + written[-1]
         return emphasize_english_interjections(
-            text, repair_syllabic_o(text, repair_syllabic_gi(text, out)),
+            value, repair_syllabic_o(value, repair_syllabic_gi(value, out)),
             phonemize_text._get_g2p().convert,
         )
 
@@ -700,7 +710,8 @@ class VieNeuEngine(EngineAdapter):
             from .readaloud.phoneme_policy import sentence_case
 
             inference_text = str(row["text"])
-            with sentence_case(inference_text):
+            # The capital rule reads the line as WRITTEN (the text layer lower-cases shouting); the book's second-tier rulings ride along.
+            with sentence_case(inference_text, _row_value(row, "_source_text", None), _row_value(row, "_shared_rulings", None)):
                 return np.asarray(
                     self.tts.infer(
                         inference_text,
@@ -904,6 +915,7 @@ class TTSCoordinator:
         self._has_kept_english = False
         self._book_origin: tuple[str | None] | None = None  # gốc cuốn ("ja" / "ko" / None), đoán một lần từ chữ các chương
         self._book_names: dict[str, str] | None = None  # tên cuốn tự chứng minh (chỉ cuốn gốc Nhật), tính một lần
+        self._shared_rulings: tuple[Any] | None = None  # phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh, đọc một lần
 
     @property
     def vieneu(self) -> EngineAdapter:
@@ -1261,6 +1273,16 @@ class TTSCoordinator:
             return True
         return bool(self.engine_for_profile(self._voice_profile_for_row(row)).speaks_english)
 
+    def shared_rulings(self) -> Any:
+        """The book's second-tier rulings on words that are both Vietnamese and English (readaloud/shared_rulings.py), read once;
+        None when the project has none - the table alone decides."""
+        if self._shared_rulings is None:
+            from .readaloud.shared_rulings import load
+
+            path = getattr(self.db, "path", None)
+            self._shared_rulings = (load(Path(path).parent) if path else None,)
+        return self._shared_rulings[0]
+
     def spoken_text_with_anchors(
         self,
         row: Any,
@@ -1439,6 +1461,9 @@ class TTSCoordinator:
         result["_materialized_spoken"] = (
             str(pronunciation_delivery_variant).strip().casefold(), text, anchors,
         )
+        # the line as written; a row that was already materialized keeps the one it has (its "text" is the spoken text by now)
+        result["_source_text"] = str(_row_value(row, "_source_text", None) or _row_value(row, "listener_text", "") or row["text"])
+        result["_shared_rulings"] = self.shared_rulings()
         if self._thought_reads_as_narrator(row):
             narrator_profile = self.db.voice_profile_by_key("narrator")
             result["speaker"] = "NARRATOR"

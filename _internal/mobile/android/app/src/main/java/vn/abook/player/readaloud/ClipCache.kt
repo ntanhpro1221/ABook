@@ -74,6 +74,8 @@ class ClipCache(
                     else -> ""
                 },
                 Readings.tag(text, readings),
+                // phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh (sách làm từ Studio mang theo): chỉ giọng qua sea-g2p, chỉ đoạn có chữ trong bảng
+                if (voiceId.startsWith("vieneu:")) vn.abook.player.vieneu.PhonemePolicy.rulingsTag(text, (readings as? BookReadings)?.rulings) else "",
                 ClipLift.tag(voiceId), // giọng VieNeu / Supertonic: khúc dưới trần đỉnh thật, câu ngắn nhỏ được nâng trong clip (service.clip: loudness.clip_tag)
             ).filter { it.isNotEmpty() }.joinToString("+")
 

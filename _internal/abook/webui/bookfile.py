@@ -195,6 +195,13 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
         level_report = Path(project_root) / "output" / "reports" / "levelQa.json"
         if level_report.is_file():
             book["levelQa"] = json.loads(level_report.read_text(encoding="utf-8"))
+        # Phán quyết tầng hai của chữ trùng Việt / Anh và gốc từng tên (readaloud/shared_rulings.py): đi theo cuốn để máy nghe
+        # không có model (điện thoại) đọc chương chỉ-chữ đúng như Studio đã quyết.
+        from ..readaloud import shared_rulings
+
+        rulings = shared_rulings.read(Path(project_root) / shared_rulings.FILE)
+        if rulings is not None:
+            book["sharedWords"] = shared_rulings.shared(rulings)
         cover = covers.cover_file(project_root)
         if cover is not None:
             files[covers.COVER_FILE] = cover
@@ -890,7 +897,7 @@ class BookFile:
 # Kiểu của những trường book.json mà phía nghe đọc thẳng (`packages.listen`, `_parts`, `skip`...). Sai kiểu thì `listen()` ném TypeError và
 # kéo sập cả thư viện: từ chối ngay lúc nhập. None (thiếu / null) luôn được. "number" = số hữu hạn, không phải True/False.
 _BOOK_FIELDS = {"title": str, "author": str, "narrator": str, "cast": str, "chaptersTotal": int, "chaptersAvailable": int,
-                "duration": "number", "complete": bool, "chapters": list, "parts": list, "samples": list}
+                "duration": "number", "complete": bool, "chapters": list, "parts": list, "samples": list, "sharedWords": dict}
 _CHAPTER_FIELDS = {"id": int, "index": int, "part": int, "title": str, "subtitle": str, "fullTitle": str, "file": str, "text": str,
                    "script": str, "state": str, "duration": "number", "available": bool, "skip": list}
 _PART_FIELDS = {"part": int, "title": str, "narrator": str, "duration": "number", "chapters": list}

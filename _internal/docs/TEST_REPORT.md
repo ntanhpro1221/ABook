@@ -9,6 +9,45 @@
 - Full Vitest **3,110 passed / 0 failed / 0 pending**, direct Node exit 0; TypeScript exit 0. Offscreen Qt width **1,606 passed / 0 failed / 1 existing skip**, with 0 missing glyphs, QML type errors or text leaks; 44 previous tested Qt source fingerprints match current files. The first Vitest run had three gallery-state failures before the condition-based wait fix; all three and the complete suite passed afterwards.
 - Every Gradle launch checked at least 6 GiB available RAM. Locked implementation list read from code (66 entries); quality hash unchanged before/after: `e151a0d2e4fd932915d70603d311bc0d81b97aaadf5898051c32c8d8e63686a2`. No phone, push, release, version bump or migration.
 
+## 10-11-2026 — g2pvi5: shared words in two tiers, each roster name by its own origin
+
+- Design: `docs/SHARED_WORDS.md` ("Two tiers"). Frozen at `2029f2b8d` BEFORE the sixth sample was drawn; baseline `2caf9af4c` (g2pvi4). Labels are model-only (two blind keys, Sonnet 5.5 then Opus 5.5, from the written window alone; they agree on Vietnamese-or-not for 1,170 / 1,210 rows, the 40 disputes were settled from the text before scoring against the final key). The owner has not judged them.
+- Sixth sample: every shared-word occurrence with `sha256("g2pvi5-holdout6|...") % 100 < 12` in the five test pools, minus earlier samples: 3,936 windows, 1,210 asked. Key: 499 English words, 381 Vietnamese words, 58 Western names, 258 romaji / sounds, 14 mixed.
+
+  | | Vietnamese read English | real English kept | Western names kept | romaji / sounds read Vietnamese |
+  |---|---|---|---|---|
+  | `2caf9af4c` | 22 / 381 | 497 / 499 | 56 / 58 | 32 / 258 |
+  | tier 1 (listen-now) | 22 / 381 | 497 / 499 | 56 / 58 | 32 / 258 |
+  | tier 1 + tier 2 | **18 / 381** | **495 / 499** | 56 / 58 | 35 / 258 |
+
+  Tier 1 marks 60 rows (5 %) as doubtful. The sure part is 889 / 901 = **98.67 %** right on Vietnamese / English / Western rows: the 99.5 % goal was **not** reached. In the doubtful part tier 2 (analysis model `abook-analyzer:v5`) finds 4 of 14 Vietnamese words and loses 2 of 9 English ones ("Cresent Moon Bay", "Stairway to Heaven"), 0 of 14 Western names. The 18 Vietnamese errors left: 8 capitalised in doubt, 6 sure prose (scores -210 to -608), 2 prose in doubt, 2 sure capitals.
+- g2pvi4 regressions repaired at tier 1 (the capital rule reads the written text): "admin BAN nick", "Lalaport TOKYO BAY" English again; name particles ("gia tộc de Valis", "Hikaru no Go") not claimed.
+- Roster names (227 names, analysis model, CPU, 0.68 s per name): 222 right (Japanese 99 / 102, Korean 53 / 55, Western 40 / 40, Vietnamese 30 / 30); every miss answers "other" = no change. Self-written must-cases through the real road: with a Vietnamese roster "An An.", "Ban?", "Bin!", "Son!" read Vietnamese; "Do trans sắp thi.", "guild Say xỉn", "[Bay Lv0]" Vietnamese by tier 2; Chiaki / Haruto / Sakura read Japanese in a mixed roster, Jieun / Seojun / Minho Korean in a Japanese roster. Tier 2 also calls the invented "Do exercise đi." Vietnamese (wrong). Listen-now (no tier 2): "An An." and "Do trans sắp thi." read English, as before.
+- Spoken strings identical on **1,210 / 1,210** rows against `2caf9af4c`. CPU phonemize of the 1,210 windows, best of alternating runs: 0.739 s -> 0.754 s (+2 %, noise). Tier 2 itself: 2.45 s per doubtful occurrence on CPU; whole books of 291k to 2.4M words hold 0, 0, 0, 3 and 26 doubtful occurrences (scan 4 to 56 s).
+- Related pytest (117 files, junit): **4,664 tests, 0 failures, 3 skipped**. Related JVM with the real sea-g2p JNI: **70 classes / 571 tests / 0 failures / 1 skipped**. Full JVM: **408 classes / 3,505 tests / 0 failures / 4 skipped**. Shared fixture `shared_vietnamese/cases.json` carries rulings cases, same claims, doubts and phonemes in Python and Kotlin.
+- Quality hash `7d3ab0d7...` -> **`8690a3c96a8e2c3ba212b01aa6232126a0cabd00584d1596b850d6ae256dd60f`** (`shared_rulings.py` joins the list): dev branch only until running books finish.
+
+## 10-11-2026 — g2pvi4: shared words decided by a corpus-learned score table
+
+- Design and method: `docs/SHARED_WORDS.md`. Implementation and table frozen at `f773607b9` BEFORE the fifth sample was drawn (sha1 residue 4, 486 series, 7,503 chapters, 350 stratified windows, labels written from text only and sealed before any phoneme run). Baseline is `5820f3232`. Labels are model-only; the owner has not judged them.
+- Target-level readings, before -> after. "V" = Vietnamese word read English (errors), "E" = real English read English (must not fall), "N/S en->vi" = names, romaji, sounds that lost their English reading.
+
+  | sample | V read English | E read English | E en->vi | N/S en->vi |
+  |---|---|---|---|---|
+  | design (68 V / 68 E) | 0 -> 1 | 66 -> 66 | 0 | 0 |
+  | holdout 1 (39 / 20) | 0 -> 0 | 20 -> 20 | 0 | 0 |
+  | holdout 2 (144 / 98) | 3 -> 5 | 89 -> 89 | 0 | 0 |
+  | holdout 3 (121 / 115) | 15 -> 2 | 111 -> 111 | 0 | 0 |
+  | holdout 4 (145 / 84) | 8 -> 3 | 78 -> 79 | 0 | 0 |
+  | **holdout 5, verdict (150 / 88)** | **7 -> 3** | **82 -> 83** | **0** | **0** |
+
+  Holdouts 3 and 4 supplied training rows, so only holdout 5 is a clean verdict: 4 of 7 fixed, none lost; the 3 left are Vietnamese words written with a capital mid-sentence ("Kỵ Sĩ Tự Do,", "(Bay),", "[Bay Lv0]"). Leave-one-sample-out over the five earlier samples: V 26 -> 11 (19 fixed, 4 lost), E en->vi 0, names en->vi 0. Zero Vietnamese errors was **not** reached; design and holdout 2 lose 4 cases the hand rules had ("Do trans sắp tới", "Leila in qua", "orc non một", "Yuna no đâu").
+- Unlabelled scan of the whole fifth pool (6,874 windows, judged by hand after the verdict, so not blind): 73 readings moved. 29 Vietnamese fixed, 8 Vietnamese lost ("Regulus bang hoàng", "Copy, in và in poster", "hăm he Aria"...), 4 English fixed, **2 English lost** ("admin BAN nick", "Lalaport TOKYO BAY": all-caps words are lower-cased before the capital rule sees them), 3 name particles lost ("gia tộc de Valis" x2, "Hikaru no Go'"), 3 typos "Sauk hi" now English, 24 sounds / romaji either way. Corpus-weighted: about 59 occurrences fixed and 9 lost per 133,714 shared-word occurrences; total read English 3,830 -> 3,834 (2.87 % both), because most of that mass is real English and names.
+- Spoken pieces and normalized strings identical on **2,010 / 2,010** windows of the six samples (baseline code exported from `5820f3232`); phonemes changed in 46. CPU phonemize latency on the same 2,294 corpus lines, two alternating runs: best 0.993 / 1.058 -> 1.069 / 1.034 ms per sentence, median 1.064 / 1.123 -> 1.090 / 1.216 ms (**about +2 to +8 %**, within +20 %; machine under load). Android data: `SharedWords.kt` 428 KB (limit 1 MB).
+- Related pytest (`-k` readaloud / vieneu / shared / phoneme / english / quality / parity / book_edits..., junit): **3,472 tests, 0 failures, 0 errors, 3 skipped**. Related JVM with the real sea-g2p JNI: **70 classes / 569 tests / 0 failures / 1 skipped**. Full JVM: **408 classes / 3,503 tests / 0 failures / 0 errors / 4 skipped** (the first full run had 1 failure: `CopyRulesTest` read the generated corpus table as interface text; `vieneu/SharedWords.kt` is now on its data-file list, as in `scripts/ui_parity.py`).
+- Shared fixture: 89 self-written cases, same claims and phonemes in Python and Kotlin. Two fixture readings changed on purpose: "Do trans sắp thi." is now a recorded miss (English "do"), "Cô nói `<en>the</en>` thé." is now Vietnamese. Policy version 5 -> 6; seven clip keys of `book_edits/readings/speech.json` regenerated. Quality hash **dc2aad8128c6124b9ecd132df906f7b22a9f1af36d684ef6f8576fb59e55bc0b -> 7d3ab0d732bee7dbd035b2b9df484f855356210dbb5ff9fe0a8b25a2f4ee3192** (phoneme_policy.py, english_policy.json, quality_policy.py + new locked entry `readaloud/shared_words.json`): the change must wait on a dev branch for running projects to finish.
+- CPU listening page outside git: 12 sentences (8 seeded-random among the 38 changed windows, 4 counter-examples), RAW / `5820f3232` / `f773607b9`, spoken string, G2P input, engine phonemes.
+
 ## 10-11-2026 — Vietnamese compound phonemes after g2pvi
 
 - Mined all 227 different-sounding shared sea-g2p words in the exposed residue-1 corpus. The shared JSON now contains 146 compounds/reduplications (143 text-reviewed additions, 3 retained pairs); aggregate counts and label criteria are in `docs/SHARED_VIETNAMESE_PAIRS.md`. Python and Kotlin use the same data. Newly searched words keep their previous contextual language until a pair proves them Vietnamese; Vietnamese-only partners are evidence rather than replacement targets. Mid-sentence capitals and explicit English remain protected. Bounded `do trans` and `in logo` contexts address the known examples without generalizing to arbitrary English phrases.

@@ -27,7 +27,7 @@ def test_real_studio_and_readaloud_phonemizers_agree(case, monkeypatch):
 
 @pytest.mark.parametrize("case", [case for case in CASES if case["words"]])
 def test_every_syllable_of_a_name_is_its_own_word(case):
-    """Joined names ("nˈopˌaː2mˌi") lost syllables on both engines; the model gets "nˈo pˈaː2 mˈi"."""
+    """Joined names ("nˈopˌaː2mˌi") lost syllables on both engines; the model gets "nˈo pˈaː mˈi" (level tone: `repair_level_tone`)."""
     words = case["phonemes"].split()
     assert not any(word.count("ˈ") + word.count("ˌ") > 1 for word in words)
     assert "<" not in case["phonemes"] and "‿" not in case["phonemes"]
@@ -83,5 +83,5 @@ def test_a_name_after_a_comma_reaches_the_model_split():
     pytest.importorskip("sea_g2p")
     phones = vieneu_engine.phonemize(["Cậu đã về, Nô-pa-mi-na."])
     name = phones.rsplit(", ", 1)[1]
-    assert name == "nˈo pˈaː2 mˈi nˈaː."
+    assert name == "nˈo pˈaː mˈi nˈaː."  # "pa" keeps its level tone (phoneme_policy.repair_level_tone), not sea-g2p's "pà"
     assert "vˈe2," in phones

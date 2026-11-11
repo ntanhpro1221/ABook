@@ -1022,6 +1022,7 @@ class VieneuProvider:
 
     id = PREFIX
     speaks_english = True  # sea-g2p cho âm vị Anh: chữ Anh để nguyên (đo 04-10)
+    shared_rulings = True  # đi qua sea-g2p: phán quyết tầng hai của cuốn cho chữ trùng Việt / Anh có tác dụng (service.clip)
 
     def __init__(self, locate: Callable[[], Installed | None], *, engines: Callable[[str, Installed], Any] | None = None,
                  aligner: Callable[[], Any] | None = None) -> None:
@@ -1114,7 +1115,7 @@ class VieneuProvider:
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
-            phonemes = ve.phonemize(unit.pieces)
+            phonemes = ve.phonemize(unit.pieces, source=unit.text(toks))
             seed = seed_of(tier, name, " ".join(unit.pieces))
             if not phonemes:
                 audio = np.zeros(0, dtype=np.float32)

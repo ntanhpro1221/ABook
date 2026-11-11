@@ -257,7 +257,7 @@ def _voices(folder: Path) -> Path:
 
 @pytest.fixture
 def fake_voices(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(vieneu_engine, "phonemize", lambda pieces: " ".join(pieces).lower().rstrip(".!?,") + ".")
+    monkeypatch.setattr(vieneu_engine, "phonemize", lambda pieces, **_: " ".join(pieces).lower().rstrip(".!?,") + ".")
     found = Installed(_voices(tmp_path / "voices"), (tmp_path, tmp_path), tmp_path, False)
     engines = {"turbo": FakeEngine(48_000), "nano": FakeEngine(24_000)}
     provider = VieneuProvider(lambda: found, engines=lambda tier, _found: engines[tier], aligner=lambda: None)

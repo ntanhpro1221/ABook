@@ -1,5 +1,5 @@
 {
-  "description": "Syllable preservation and emphatic short English delivery; shared native frontend checks.",
+  "description": "Syllable preservation, emphatic short English delivery, the sounds of romanized names and the Vietnamese words sea-g2p only reads in English (name_sounds.json); shared native frontend checks.",
   "cases": [
     {"text": "what!", "phonemes": "wˈʌt!"},
     {"text": "wait!", "phonemes": "wˈeːɪt!"},
@@ -13,6 +13,28 @@
     {"text": "gì?", "phonemes": "zˈi2?"},
     {"text": "gi.", "phonemes": "zˈi."},
     {"text": "Ha-gi-me.", "phonemes": "hˈaː zˈi mˈɛ."},
-    {"text": "o_-ghi-u-e.", "phonemes": "ˈɔ ɣˈi ˈu ˈɛ."}
+    {"text": "o_-ghi-u-e.", "phonemes": "ˈɔ ɣˈi ˈu ˈɛ."},
+    {"text": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w."},
+    {"text": "Ưn-gi và Ha-nưn cười.", "phonemes": "ˈən zˈi vˌaː2 hˈaː nˈən kˈyə2j."},
+    {"text": "Xưn-ki nhìn Ta-ưn.", "phonemes": "sˈən kˈi ɲˈi2n t̪ˈaː ˈən."},
+    {"text": "a-rưm, Cưm, Xôn-ưm-xi!", "phonemes": "ˈaː ɹˈym, kˈym, sˈon ˈym sˈi!"},
+    {"text": "Xưng-hô, ưng ý, bưng bê.", "phonemes": "sˈyŋ hˈo, ˈyŋ ˈiɜ, bˈyŋ bˈe."},
+    {"text": "Hi-un và Gin đến Xe-un.", "phonemes": "hˈi ˈun vˌaː2 zˈin ɗˌeɜn sˈɛ ˈun."},
+    {"text": "Pa-pa, Pan, Xô-gun.", "phonemes": "pˈaː pˈaː, pˈaːn, sˈo ɣˈun."},
+    {"text": "Sun, nun, mum, eng.", "phonemes": "sˈun, nˈun, mˈum, ˈɛŋ."},
+    {"text": "Ùn ùn kéo đến, gìn giữ.", "phonemes": "ˈu2n ˈu2n kˈɛɜw ɗˌeɜn, zˈi2n zˈy5."},
+    {"text": "Xun-mi cười.", "phonemes": "sˈun mˈi kˈyə2j."},
+    {"text": "Ưm, được rồi. Hưm! Xưm-ha nói ưm.", "phonemes": "ˈym, ɗˌyə6c ɹˈo2j. hˈym! sˈym hˈaː nˈɔɜj ˈym."},
+    {"text": "Hết pin rồi, đèn pin đâu?", "phonemes": "hˈeɜt̪ pˈin ɹˈo2j, ɗˈɛ2n pˈin ɗˈə1w?"},
+    {"text": "Bầu trời trong veo.", "phonemes": "bˈə2w tʃˈəː2j tʃˈɔŋ vˈɛw."},
+    {"text": "Tiền boa, bánh qui.", "phonemes": "t̪ˈiɛ2n bwˈaː, bˈe-ɜɲ kwˈi."},
+    {"text": "Min-gi và Ha-min cười.", "phonemes": "mˈin zˈi vˌaː2 hˈaː mˈin kˈyə2j."},
+    {"text": "Gim-in cười.", "phonemes": "zˈim ˈin kˈyə2j."},
+    {"text": "Nó cười toe toét.", "phonemes": "nˈɔɜ kˈyə2j t̪wˈɛ t̪wˈɛɜt̪."},
+    {"text": "Cô vin vào ba toong.", "phonemes": "kˈo vˈin vˈaː2w bˈaː t̪wˈɔŋ."},
+    {"text": "Chị Sia cười.", "phonemes": "tʃˈi6 sˈiə kˈyə2j."},
+    {"text": "Pin it on the board.", "phonemes": "pˈɪn ɪt ˈɔn ðə bˈɔːɹd."},
+    {"text": "Min max là gì?", "phonemes": "mˈɪn mˈæks lˌaː2 zˈi2?"},
+    {"text": "Hết pin. It is over.", "phonemes": "hˈeɜt̪ pˈin, ɪt ɪz ˈoʊvɚ."}
   ]
 }

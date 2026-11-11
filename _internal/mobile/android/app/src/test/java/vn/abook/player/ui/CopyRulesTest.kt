@@ -17,7 +17,7 @@ class CopyRulesTest {
     private val sampleText = setOf("data/DemoLibrary.kt", "data/DemoPlayback.kt", "nowplaying/FakeNowPlayingModel.kt")
 
     /** Lõi: file có chuỗi không phải chữ giao diện (đổi dấu thanh sẽ làm hỏng việc khớp truyện / mã giọng / lời gửi giọng đọc). */
-    private val notUiText = setOf("readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt", "readaloud/FptTts.kt")
+    private val notUiText = setOf("readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt", "vieneu/SharedWords.kt", "readaloud/FptTts.kt")
     /** Chiếm hữu (`++`, `*+`): dòng dài của lõi không làm tràn ngăn xếp của regex. */
     private val literal = Regex(""""(?:[^"\\\n]++|\\.)*+"""")
     private val newTone = Regex("[òóỏõọ][ae]|[ùúủũụ]y|[ÒÓỎÕỌ][AEae]|[ÙÚỦŨỤ][Yy]")
