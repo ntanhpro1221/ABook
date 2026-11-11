@@ -616,28 +616,24 @@ def keep_vieneu_final_mark() -> None:
         return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
-        from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import (
             emphasize_english_interjections, remembered_case, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
         )
 
-        def plain(value: str, final: bool) -> str:
-            # `value` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
-            out = restore_vietnamese(
-                value, original_phonemize(value, final),
-                lambda: phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final),
-                phonemize_text._get_g2p().convert, remembered_case(),
-            )
-            if final and out.endswith(".") and ("?" in value or "!" in value):
-                written = original_phonemize(value, False).rstrip()
-                if written.endswith(("?", "!")):
-                    out = out[:-1] + written[-1]
-            return emphasize_english_interjections(
-                value, repair_syllabic_o(value, repair_syllabic_gi(value, out)),
-                phonemize_text._get_g2p().convert,
-            )
-
-        return phonemes(text, punc_norm, plain)
+        # `text` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
+        out = restore_vietnamese(
+            text, original_phonemize(text, punc_norm),
+            lambda: phonemize_text._get_pipeline().normalizer.normalize(text, punc_norm=punc_norm),
+            phonemize_text._get_g2p().convert, remembered_case(),
+        )
+        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
+            written = original_phonemize(text, False).rstrip()
+            if written.endswith(("?", "!")):
+                out = out[:-1] + written[-1]
+        return emphasize_english_interjections(
+            text, repair_syllabic_o(text, repair_syllabic_gi(text, out)),
+            phonemize_text._get_g2p().convert,
+        )
 
     phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
     phonemize_text._abook_keeps_final_mark = True
@@ -701,11 +697,9 @@ class VieNeuEngine(EngineAdapter):
             else vieneu_sampling_for_segment(row, self.settings)
         )
         try:
-            from .readaloud.japanese_delivery import mark_anchors
             from .readaloud.phoneme_policy import sentence_case
 
-            materialized = _row_value(row, "_materialized_spoken", None)
-            inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
+            inference_text = str(row["text"])
             with sentence_case(inference_text):
                 return np.asarray(
                     self.tts.infer(

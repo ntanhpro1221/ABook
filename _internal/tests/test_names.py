@@ -220,7 +220,7 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     provider, engines = fake_voices
     assert clip_key("p", "v", "t") == clip_key("p", "v", "t", "")
     assert clip_key("p", "v", "t", "ja") != clip_key("p", "v", "t")
-    direct = f"direct-en{english_policy.VERSION}+jp-fallback5+jp-name-audio1-plain"
+    direct = f"direct-en{english_policy.VERSION}+jp-fallback6+jp-name-audio1-plain"
     assert provider.reading_tag("Haruto đến.", "ja") == f"ja+{direct}" and provider.reading_tag("Haruto đến.", None) == direct
     assert provider.reading_tag("Kate đến.", "ja") == direct and provider.reading_tag("Hoa đến.", "ko") == direct
     service = ReadAloud(tmp_path / "cache", [provider])
@@ -228,7 +228,8 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     plain = service.clip(voice, "Haruto đến cùng Kate và Mike.")
     named = service.clip(voice, "Haruto đến cùng Kate và Mike.", origin="ja")
     assert plain["file"] != named["file"]
-    assert " ".join(engines["turbo"].calls).count("<en>ha‿ru‿tô</en>") == 1
+    said = " ".join(engines["turbo"].calls)
+    assert said.count("ha-ru-tô") == 1 and "‿" not in said and "<en>ha" not in said
     count = len(engines["turbo"].calls)
     assert service.clip(voice, "Haruto đến cùng Kate và Mike.", origin="ja") == named and len(engines["turbo"].calls) == count
     same = service.clip(voice, "Kate và Mike đến.")

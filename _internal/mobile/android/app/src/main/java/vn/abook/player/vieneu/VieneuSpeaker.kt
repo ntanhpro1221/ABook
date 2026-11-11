@@ -128,9 +128,7 @@ class VieneuSpeaker(
         val pauses = ArrayList<Double>()
         for (unit in units) {
             ClipBudget.stopIfCancelled() // a cancelled read stops between chunks (the engines also check between their steps)
-            val delivery = vn.abook.player.readaloud.JapaneseDelivery
-            val groups = delivery.groups(unit.text(tokens).split(" "), origin, readings)
-            val phonemes = phonemize(unit.pieces.map { delivery.mark(it, groups) })
+            val phonemes = phonemize(unit.pieces)
             val audio = if (phonemes.isEmpty()) FloatArray(0) else tierEngine.infer(phonemes, preset, seedOf(tier, name, unit.pieces.joinToString(" ")))
             waves.add(audio)
             pauses.add(VieneuAudio.gapAfter(phonemes))
