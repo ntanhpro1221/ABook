@@ -338,17 +338,6 @@ def keep_lone_o(chunk: str, normalised: str) -> str:
 
 
 def phonemize(sentences: Sequence[str]) -> str:
-    from . import japanese_delivery
-
-    text = " ".join(sentences)
-    if japanese_delivery.POLICY["delivery"]["joiner"] in text:
-        return japanese_delivery.phonemes(
-            text, True, lambda value, final: _phonemize_plain([value], final=final),
-        )
-    return _phonemize_plain(sentences)
-
-
-def _phonemize_plain(sentences: Sequence[str], *, final: bool = True) -> str:
     """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
     của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`.
     Khác vieneu ở MỘT điểm: `punc_norm` ép dấu cuối của khúc dưới 5 từ về "." ("Thật sao?" thành "Thật sao.") nên câu hỏi / cảm thán ngắn mất giọng
@@ -356,12 +345,12 @@ def _phonemize_plain(sentences: Sequence[str], *, final: bool = True) -> str:
     from sea_g2p import punc_norm
 
     text = normalize(sentences)
-    chunk = punc_norm(text) if final else text
+    chunk = punc_norm(text)
     if not chunk.strip():
         return ""
     pipeline = _sea()
-    phonemes = pipeline.g2p.convert(keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=final)))
-    if final and phonemes.endswith(".") and ("?" in text or "!" in text):
+    phonemes = pipeline.g2p.convert(keep_lone_o(chunk, pipeline.normalizer.normalize(chunk, punc_norm=True)))
+    if phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):
             phonemes = phonemes[:-1] + written[-1]

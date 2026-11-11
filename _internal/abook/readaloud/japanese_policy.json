@@ -1,13 +1,8 @@
 {
-  "version": 5,
-  "namespace": "jp-fallback5",
+  "version": 6,
+  "namespace": "jp-fallback6",
   "provenance": "auto",
   "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
-  "delivery": {
-    "joiner": "‿",
-    "context_word": "nam",
-    "stress": "secondary"
-  },
   "choices": {
     "s": "x",
     "sh": "s",

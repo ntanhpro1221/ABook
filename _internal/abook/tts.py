@@ -616,21 +616,17 @@ def keep_vieneu_final_mark() -> None:
         return out[:-1] + found.group(0)[0] if found and out.endswith(".") else out
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
-        from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o
 
-        def plain(value: str, final: bool) -> str:
-            out = original_phonemize(value, final)
-            if final and out.endswith(".") and ("?" in value or "!" in value):
-                written = original_phonemize(value, False).rstrip()
-                if written.endswith(("?", "!")):
-                    out = out[:-1] + written[-1]
-            return emphasize_english_interjections(
-                value, repair_syllabic_o(value, repair_syllabic_gi(value, out)),
-                phonemize_text._get_g2p().convert,
-            )
-
-        return phonemes(text, punc_norm, plain)
+        out = original_phonemize(text, punc_norm)
+        if punc_norm and out.endswith(".") and ("?" in text or "!" in text):
+            written = original_phonemize(text, False).rstrip()
+            if written.endswith(("?", "!")):
+                out = out[:-1] + written[-1]
+        return emphasize_english_interjections(
+            text, repair_syllabic_o(text, repair_syllabic_gi(text, out)),
+            phonemize_text._get_g2p().convert,
+        )
 
     phonemize_text.punc_norm, phonemize_text._phonemize_cached = punc_norm, phonemize
     phonemize_text._abook_keeps_final_mark = True
@@ -694,13 +690,9 @@ class VieNeuEngine(EngineAdapter):
             else vieneu_sampling_for_segment(row, self.settings)
         )
         try:
-            from .readaloud.japanese_delivery import mark_anchors
-
-            materialized = _row_value(row, "_materialized_spoken", None)
-            inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
             return np.asarray(
                 self.tts.infer(
-                    inference_text,
+                    str(row["text"]),
                     voice=voice,
                     style=style,
                     **effective_sampling,
