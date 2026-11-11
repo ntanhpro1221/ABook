@@ -44,6 +44,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import vn.abook.player.ui.components.CheckIcon
+import vn.abook.player.ui.components.ValuePicker
+import vn.abook.player.ui.components.ValuePickerLogic
+import vn.abook.player.ui.components.ValueSpecs
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.AppSettings
@@ -59,9 +62,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.components.fadeEdges
 
-private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, S.s_0_phut_2596d212(it)) }
-private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, S.s_0_phut_2596d212(it)) }
-private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) S.s_1_phut_eca10dbb else S.s_0_giay_daac30d3(it)) }
+private fun minutesLabel(minutes: Double) = S.s_0_phut_2596d212(minutes.toInt())
 
 /** Lời của các hàng. */
 private object GroupCopy {
@@ -143,10 +144,11 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
                             pickTime(S.s_den_4f14ac22, schedule.to) { plan, time -> plan.copy(to = time) }
                         }
                     }
-                    ChoiceSetting(
-                        S.s_hen_244e495e, ScheduleOptions, ScheduleOptions.firstOrNull { it.value == schedule.minutes } ?: ScheduleOptions[1],
-                        { option, _ -> repo.change { now -> now.schedule?.let { now.copy(schedule = it.copy(minutes = option.value)) } ?: now } },
-                        "schedule_minutes",
+                    // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do, miền ValueSpecs.scheduleMinutes.
+                    ValuePicker(
+                        ValueSpecs.scheduleMinutes, schedule.minutes.toDouble(),
+                        { minutes -> repo.change { now -> now.schedule?.let { now.copy(schedule = it.copy(minutes = minutes.toInt())) } ?: now } },
+                        ::minutesLabel, S.s_so_phut_hen_40312361, "schedule_minutes", Modifier.padding(vertical = Dim.s12), dense = true,
                     )
                 }
             }
@@ -166,14 +168,16 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             SwitchRow(S.s_up_may_de_dung_f4c69dd7, settings.flipToPause, { on -> repo.change { it.copy(flipToPause = on) } }, "flip_pause", GroupCopy.FLIP)
         }
         ListSection(S.s_khi_sap_tat_ac78648f) {
-            ChoiceSetting(
-                S.s_moi_lan_nghe_them_9a74fcef, ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
-                { option, _ -> repo.change { it.copy(sleepExtendMinutes = option.value) } }, "sleep_extend",
+            ValuePicker(
+                ValueSpecs.sleepExtendMinutes, settings.sleepExtendMinutes.toDouble(),
+                { minutes -> repo.change { it.copy(sleepExtendMinutes = minutes.toInt()) } },
+                ::minutesLabel, S.s_moi_lan_nghe_them_9a74fcef, "sleep_extend", Modifier.padding(vertical = Dim.s12), dense = true,
             )
             RowLine()
-            ChoiceSetting(
-                S.s_nho_dan_ae8f3a2d, FadeOptions, FadeOptions.first { it.value == settings.sleepFadeSeconds },
-                { option, _ -> repo.change { it.copy(sleepFadeSeconds = option.value) } }, "sleep_fade",
+            ValuePicker(
+                ValueSpecs.sleepFadeSeconds, settings.sleepFadeSeconds.toDouble(),
+                { seconds -> repo.change { it.copy(sleepFadeSeconds = seconds.toInt()) } },
+                { seconds -> ValuePickerLogic.secondsLabel(seconds.toInt()) }, S.s_nho_dan_ae8f3a2d, "sleep_fade", Modifier.padding(vertical = Dim.s12), dense = true,
             )
         }
     }

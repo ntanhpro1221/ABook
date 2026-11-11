@@ -3,7 +3,9 @@ import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { SettingsRow } from "@/shared/SettingsNav";
-import { Select, TimeSelect } from "@/shared/ui";
+import { TimeSelect } from "@/shared/ui";
+import { ValuePicker } from "@/shared/ValuePicker";
+import { VALUE_SPECS } from "@/shared/valuePickerLogic";
 import { usePreferences } from "@/studio/data";
 import type { Preferences } from "@/studio/api";
 import { Switch } from "./Switch";
@@ -38,14 +40,17 @@ export function SleepSchedule() {
         <TimeSelect ariaDisabled={draft !== null} label={S.s_tu_c2634aaa} value={schedule.from} onChange={(from) => change({ ...schedule, from })} />
         <span className="text-fg-2">{S.s_den_80b69c87}</span>
         <TimeSelect ariaDisabled={draft !== null} label={S.s_den_4f14ac22} value={schedule.to} onChange={(to) => change({ ...schedule, to })} />
-        <span className="text-fg-2">{S.s_hen_791f3d1e}</span>
-        <Select inline aria-label={S.s_hen_244e495e} value={schedule.minutes} aria-disabled={draft !== null || undefined}
-          onPointerDown={(event) => { if (draft !== null) event.preventDefault(); }}
-          onKeyDown={(event) => { if (draft !== null && event.key !== "Tab") event.preventDefault(); }}
-          onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="aria-disabled:opacity-50">
-          {[15, 30, 45, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes}{S.s_phut_cf728a6a}</option>)}
-        </Select>
       </div>}
+      {schedule && <ValuePicker
+        dense
+        className="pb-3"
+        spec={VALUE_SPECS.scheduleMinutes}
+        value={schedule.minutes}
+        busy={draft !== null}
+        label={S.s_so_phut_hen_40312361}
+        format={(minutes) => S.s_0_phut_2596d212(minutes)}
+        onChange={(minutes) => change({ ...schedule, minutes })}
+      />}
     </MotionPresence>
   </>;
 }

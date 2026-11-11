@@ -3,6 +3,8 @@ import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { SleepSchedule } from "./SleepSchedule";
+import { ValuePicker } from "@/shared/ValuePicker";
+import { VALUE_SPECS, secondsLabel } from "@/shared/valuePickerLogic";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -259,35 +261,29 @@ function ListenGroup() {
 
 function SleepGroup() {
   const { data: preferences, update } = usePreferences();
-  const fade = String(preferences?.sleepFadeSeconds ?? 30) as "10" | "30" | "60";
-  const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
+  // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do; miền ở VALUE_SPECS, cùng hợp đồng với webui/library.py SLEEP_RANGES.
   return (
     <SettingsBlock>
       <SleepSchedule />
-      <SettingsRow label={S.s_moi_lan_nghe_them_9a74fcef} hint={S.s_luc_dang_nho_dan_0_69c5209a(EXTEND_GESTURE)}>
-        <ChoiceRow<"5" | "10" | "15">
-          label={S.s_so_phut_nghe_them_92256232}
-          value={extend}
-          onChange={(value) => update({ sleepExtendMinutes: Number(value) })}
-          options={[
-            { value: "5", label: S.s_5_phut_e98d21d5 },
-            { value: "10", label: S.s_10_phut_ed33fe6a },
-            { value: "15", label: S.s_15_phut_43786c01 },
-          ]}
-        />
-      </SettingsRow>
-      <SettingsRow label={S.s_nho_dan_ae8f3a2d}>
-        <ChoiceRow<"10" | "30" | "60">
-          label={S.s_do_dai_nho_dan_7c53ef6a}
-          value={fade}
-          onChange={(value) => update({ sleepFadeSeconds: Number(value) })}
-          options={[
-            { value: "10", label: S.s_10_giay_942f8aa9 },
-            { value: "30", label: S.s_30_giay_03dbee33 },
-            { value: "60", label: S.s_1_phut_eca10dbb },
-          ]}
-        />
-      </SettingsRow>
+      <ValuePicker
+        dense
+        className="py-3"
+        spec={VALUE_SPECS.sleepExtendMinutes}
+        value={preferences?.sleepExtendMinutes ?? 10}
+        label={S.s_moi_lan_nghe_them_9a74fcef}
+        hint={S.s_luc_dang_nho_dan_0_69c5209a(EXTEND_GESTURE)}
+        format={(minutes) => S.s_0_phut_2596d212(minutes)}
+        onChange={(minutes) => update({ sleepExtendMinutes: minutes })}
+      />
+      <ValuePicker
+        dense
+        className="py-3"
+        spec={VALUE_SPECS.sleepFadeSeconds}
+        value={preferences?.sleepFadeSeconds ?? 30}
+        label={S.s_nho_dan_ae8f3a2d}
+        format={secondsLabel}
+        onChange={(seconds) => update({ sleepFadeSeconds: seconds })}
+      />
     </SettingsBlock>
   );
 }

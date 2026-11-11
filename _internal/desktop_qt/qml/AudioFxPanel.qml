@@ -1,5 +1,7 @@
+import "UiNumber.js" as UiNumber
 import "UiStrings.js" as S
 import "ToneLabels.js" as ToneLabels
+import "ValuePickerLogic.js" as Logic
 import QtQuick
 import ABook
 
@@ -45,7 +47,7 @@ Column {
     onVisibleChanged:if(visible)backSlide.restart()
     NumberAnimation { id:backSlide;target:audioMain;property:"x";from:-24;to:0;duration:Theme.reduceMotion?0:Theme.motionMedium }
     Text { width: parent.width; text: S.s_copy_c1303271503d; color: Theme.text; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
-    AudioFxSlider { objectName: "audioFxVoice"; width: parent.width; label: S.s_giong_doc_11f2548d; value: Math.round(root.voice*100); from: 0; to: 200; step: 5; suffix: "%"; onPicked: value => root.setVoice(value/100) }
+    AudioFxSlider { objectName: "audioFxVoice"; width: parent.width; label: S.s_giong_doc_11f2548d; spec: Logic.SPECS.voice; value: Math.round(root.voice*100); suffix: "%"; onPicked: value => root.setVoice(value/100) }
     MenuRow { width: parent.width; visible: root.openMusic !== null && Music.hasMusic; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; onClicked: root.openMusic() }
     MenuRow { objectName:"audioFxTones";width:parent.width;valueLimit:width*.55;text:S.s_am_sac_8c2f4e1a;value:root.toneName+(root.library.scoped ? "\u00a0·\u00a0"+S.s_copy_0aedb2b2cf2b : "");icon:"sliders-horizontal";onClicked:root.toneOpen=true }
     Row {
@@ -53,7 +55,7 @@ Column {
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_6f00156cec07; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
         Switch { anchors.verticalCenter: parent.verticalCenter; label: S.s_copy_6f00156cec07; checked: root.fx.mono; onToggled: value => Player.setAudioFx({mono:value}) }
     }
-    AudioFxSlider { width: parent.width; label: S.s_can_bang_8b88211d; value: root.fx.balance*100; from: -100; to: 100; suffix: S.s_copy_9bf94b95eb12; onPicked: value => Player.setAudioFx({balance:value/100}) }
+    AudioFxSlider { width: parent.width; label: S.s_can_bang_8b88211d; spec: Logic.SPECS.balance; value: Math.round(root.fx.balance*100); format: UiNumber.balance; onPicked: value => Player.setAudioFx({balance:value/100}) }
     Row {
         width: parent.width; height: 48
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_289e1cff4cbc; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
@@ -62,16 +64,16 @@ Column {
     Text { width: parent.width; text: S.s_copy_b09b5fb2264a; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     Column {
         width: parent.width; visible: root.fx.skipSilence
-        AudioFxSlider { width: parent.width; label: S.s_copy_8e18e6dd7fd9; value: root.fx.silenceDb; from: -80; to: -45; suffix: " dBFS"; onPicked: value => Player.setAudioFx({silenceDb:value}) }
-        AudioFxSlider { width: parent.width; label: S.s_copy_19adc1b298a9; value: root.fx.silenceSeconds; from: 2; to: 10; step: 0.5; suffix: " s"; onPicked: value => Player.setAudioFx({silenceSeconds:value}) }
-        AudioFxSlider { width: parent.width; label: S.s_copy_483cdfec9d5f; value: root.fx.keepSeconds; from: 1.5; to: Math.min(3,root.fx.silenceSeconds); step: 0.1; suffix: " s"; onPicked: value => Player.setAudioFx({keepSeconds:value}) }
+        AudioFxSlider { width: parent.width; label: S.s_copy_8e18e6dd7fd9; spec: Logic.SPECS.silenceDb; value: root.fx.silenceDb; suffix: " dBFS"; onPicked: value => Player.setAudioFx({silenceDb:value}) }
+        AudioFxSlider { width: parent.width; label: S.s_copy_19adc1b298a9; spec: Logic.SPECS.silenceSeconds; value: root.fx.silenceSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({silenceSeconds:value}) }
+        AudioFxSlider { width: parent.width; label: S.s_copy_483cdfec9d5f; spec: Logic.capped(Logic.SPECS.keepSeconds, root.fx.silenceSeconds); value: root.fx.keepSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({keepSeconds:value}) }
     }
     Row {
         width: parent.width; height: 48
         Text { width: parent.width-44; anchors.verticalCenter: parent.verticalCenter; text: S.s_copy_0aedb2b2cf2b; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
         Switch { anchors.verticalCenter: parent.verticalCenter; label: S.s_copy_0aedb2b2cf2b; checked: root.fx.bookOnly; onToggled: value => Player.setAudioFx({bookOnly:value}) }
     }
-    AudioFxSlider { objectName: "audioFxPitch"; width: parent.width; label: S.s_copy_519c2d65ca4c; value: root.fx.pitch; from: -6; to: 6; step: 0.5; suffix: S.s_copy_e9d6329e8255; onPicked: value => Player.setAudioFx({pitch:value}) }
+    AudioFxSlider { objectName: "audioFxPitch"; width: parent.width; label: S.s_copy_519c2d65ca4c; spec: Logic.SPECS.pitch; value: root.fx.pitch; suffix: S.s_copy_e9d6329e8255; onPicked: value => Player.setAudioFx({pitch:value}) }
     TextLink { objectName: "audioFxReset"; text: S.s_ve_mac_dinh_4eb6b300; accent: true; onClicked: root.reset() }
     }
 }

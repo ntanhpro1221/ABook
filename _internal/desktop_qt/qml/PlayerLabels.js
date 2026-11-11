@@ -1,10 +1,11 @@
 .import "UiStrings.js" as S
+.import "UiNumber.js" as UiNumber
 .pragma library
 
 // labels.ts signedNumber / Android PlayerLabels.signed: real minus sign "−" (never a hyphen), "+" when positive,
 // decimal comma, at most one decimal - every two-sided value of the Audio and Tone pages.
 function signed(value) {
-    const text = String(Math.round(Math.abs(value) * 10) / 10).replace(".", ",")
+    const text = UiNumber.decimal(Math.abs(value), 1)
     return text === "0" ? "0" : (value < 0 ? "−" : "+") + text
 }
 

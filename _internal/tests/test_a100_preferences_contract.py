@@ -1,6 +1,6 @@
 """Tuỳ chọn hẹn giờ ngủ khi ĐỌC file (soát a100 V2): lịch đêm sai cấu trúc, số âm, sai kiểu không được lọt qua bước nạp - trình phát
 (`scheduleWindow`) tách "HH:mm" và hẹn theo các số ấy. Trường sai về mặc định RIÊNG trường ấy, các trường còn lại giữ nguyên; bản hỏng
-được giữ lại và báo. PUT /api/preferences dùng cùng bảng giá trị (library.SLEEP_CHOICES, clean_sleep_schedule)."""
+được giữ lại và báo. PUT /api/preferences dùng cùng bảng giá trị (library.SLEEP_RANGES, clean_sleep_schedule)."""
 from __future__ import annotations
 
 import json
@@ -27,7 +27,8 @@ def _load(tmp_path: Path, stored: dict) -> tuple[Preferences, Path]:
     {"from": "22:00", "to": "6:00", "minutes": 30},
     {"from": "24:00", "to": "06:00", "minutes": 30},
     {"from": "22:00", "to": "06:00", "minutes": -10},
-    {"from": "22:00", "to": "06:00", "minutes": 20},
+    {"from": "22:00", "to": "06:00", "minutes": 22},
+    {"from": "22:00", "to": "06:00", "minutes": 245},
     {"from": "22:00", "to": "06:00", "minutes": True},
     {"from": "22:00", "to": "06:00"},
     [GOOD],
@@ -50,7 +51,7 @@ def test_a_valid_night_schedule_is_kept_untouched(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("key,value", [
-    ("sleepFadeSeconds", -30), ("sleepFadeSeconds", 45), ("sleepFadeSeconds", True),
+    ("sleepFadeSeconds", -30), ("sleepFadeSeconds", 42), ("sleepFadeSeconds", 125), ("sleepFadeSeconds", 45.0), ("sleepFadeSeconds", True),
     ("sleepExtendMinutes", -10), ("sleepExtendMinutes", 0), ("sleepExtendMinutes", "10"),
     ("playbackRate", 0), ("playbackRate", 9), ("volume", -1), ("volume", 2),
 ])
@@ -65,6 +66,7 @@ def test_out_of_range_or_wrong_type_numbers_fall_back_to_their_own_default(tmp_p
 @pytest.mark.parametrize("stored", [
     {"sleepFadeSeconds": 10, "sleepExtendMinutes": 5, "playbackRate": 0.5, "volume": 0.0},
     {"sleepFadeSeconds": 60, "sleepExtendMinutes": 15, "playbackRate": 3.0, "volume": 1.0},
+    {"sleepFadeSeconds": 45, "sleepExtendMinutes": 23, "playbackRate": 1.35, "volume": 0.5},
     {"sleepSchedule": None},
 ])
 def test_every_choice_the_interface_offers_is_accepted(tmp_path: Path, stored: dict) -> None:

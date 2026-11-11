@@ -39,9 +39,9 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
     val update: (AudioFxSettings) -> Unit = { AudioFx.update(it) }
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("audiofx_page")) {
-        val voice = fx.voiceLevel * 100
-        FxSlider(S.s_giong_doc_11f2548d, voice, 0.0, AudioFxSettings.VOICE_MAX * 100, 5.0, "${voice.roundToInt()}%", tag = "audiofx_voice",
-            default = 100.0) { update(fx.withVoiceLevel(it / 100)) }
+        FxSlider(S.s_giong_doc_11f2548d, ValueSpecs.voice, (fx.voiceLevel * 100).roundToInt().toDouble(), "audiofx_voice", { "${it.roundToInt()}%" }) {
+            update(fx.withVoiceLevel(it / 100))
+        }
         if (music != null && bookId.isNotEmpty()) MusicBlock(music, bookId, openMusic)
         val toneRevision by AudioFx.toneChanges.collectAsState()
         val tones = remember(toneRevision) { AudioFx.tones }
@@ -53,21 +53,24 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         }
         Spacer(Modifier.height(Dim.s8))
         SwitchRow(S.s_copy_6f00156cec07, fx.mono, { update(fx.copy(mono = it)) }, "audiofx_mono")
-        FxSlider(S.s_can_bang_8b88211d, fx.balance * 100, -100.0, 100.0, 1.0, S.s_copy_45aac78838e4(PlayerLabels.signed((fx.balance * 100).roundToInt().toDouble())), default = 0.0) {
+        FxSlider(S.s_can_bang_8b88211d, ValueSpecs.balance, (fx.balance * 100).roundToInt().toDouble(), "audiofx_balance", { vn.abook.player.UiNumber.balance(it) }) {
             update(fx.copy(balance = it / 100))
         }
         SwitchRow(S.s_copy_289e1cff4cbc, fx.skipSilence, { update(fx.copy(skipSilence = it)) }, "audiofx_silence", hint = S.s_copy_b09b5fb2264a)
         Reveal(fx.skipSilence) {
             Column(Modifier.fillMaxWidth()) {
-                FxSlider(S.s_copy_8e18e6dd7fd9, fx.silenceDb, -80.0, -45.0, 1.0, "${PlayerLabels.signed(fx.silenceDb.roundToInt().toDouble())} dBFS") { update(fx.copy(silenceDb = it)) }
-                FxSlider(S.s_copy_19adc1b298a9, fx.silenceSeconds, 2.0, 10.0, .5, "${fx.silenceSeconds} s") { update(fx.copy(silenceSeconds = it)) }
-                FxSlider(S.s_copy_483cdfec9d5f, fx.keepSeconds, 1.5, minOf(3.0, fx.silenceSeconds), .1, "${fx.keepSeconds} s") { update(fx.copy(keepSeconds = it)) }
+                // Thanh hai phía (ngưỡng dBFS, Cao độ): số có dấu, dấu trừ thật.
+                FxSlider(S.s_copy_8e18e6dd7fd9, ValueSpecs.silenceDb, fx.silenceDb, "audiofx_silence_db", { "${PlayerLabels.signed(it)} dBFS" }) { update(fx.copy(silenceDb = it)) }
+                FxSlider(S.s_copy_19adc1b298a9, ValueSpecs.silenceSeconds, fx.silenceSeconds, "audiofx_silence_seconds", { "${ValuePickerLogic.format(ValueSpecs.silenceSeconds, it)} s" }) { update(fx.copy(silenceSeconds = it)) }
+                // "Giữ khoảng nghỉ" không quá "Dài tối thiểu".
+                val keep = ValueSpecs.keepSeconds.cappedAt(fx.silenceSeconds)
+                FxSlider(S.s_copy_483cdfec9d5f, keep, fx.keepSeconds, "audiofx_keep_seconds", { "${ValuePickerLogic.format(keep, it)} s" }) { update(fx.copy(keepSeconds = it)) }
             }
         }
         SwitchRow(S.s_copy_0aedb2b2cf2b, bookOnly, AudioFx::setBookOnly, "audiofx_book")
         // Cao độ ở cuối, gọn: kéo chỉ đổi số; giọng nghe giá trị cuối khi thả tay (hay tay dừng lâu) - mỗi lần đổi cao độ, máy phát phải xả hết tiếng đang xử lý.
-        FxSlider(S.s_copy_519c2d65ca4c, fx.pitch, -6.0, 6.0, 0.5, S.s_copy_e4902bd61bb7(PlayerLabels.signed(fx.pitch)), tag = "audiofx_pitch", default = 0.0,
-            onMove = { AudioFx.update(fx.copy(pitch = it), AudioFx.DRAG_SETTLE_MS) }) { update(fx.copy(pitch = it)) }
+        FxSlider(S.s_copy_519c2d65ca4c, ValueSpecs.pitch, fx.pitch, "audiofx_pitch", { S.s_copy_e4902bd61bb7(PlayerLabels.signed(it)) },
+            onPreview = { AudioFx.update(fx.copy(pitch = it), AudioFx.DRAG_SETTLE_MS) }) { update(fx.copy(pitch = it)) }
         TextAction(S.s_ve_mac_dinh_4eb6b300, {
             AudioFx.reset()
             if (music != null && bookId.isNotEmpty()) music.setLevel(MusicLevels.DEFAULT_DB)
@@ -107,7 +110,7 @@ private fun MusicBlock(music: MusicState, bookId: String, openMusic: () -> Unit)
                 Column(Modifier.fillMaxWidth()) {
                     var moving by remember(book.levelDb) { mutableStateOf<Double?>(null) }
                     val shown = moving ?: MusicLevels.clamp(book.levelDb)
-                    FxSlider(MusicLevels.TITLE, shown, MusicLevels.MIN_DB, MusicLevels.MAX_DB, MusicLevels.STEP_DB, "${MusicLevels.percent(shown)}%",
+                    LevelSlider(MusicLevels.TITLE, shown, MusicLevels.MIN_DB, MusicLevels.MAX_DB, MusicLevels.STEP_DB, "${MusicLevels.percent(shown)}%",
                         enabled = !ui.busy, tag = "audiofx_music_level", default = MusicLevels.DEFAULT_DB, onMove = { moving = it }) { moving = it; music.setLevel(it) }
                     TextAction(S.s_chon_nhac_4e9b1d72, openMusic, "audiofx_music_more", align = Alignment.CenterStart)
                 }
@@ -116,21 +119,24 @@ private fun MusicBlock(music: MusicState, bookId: String, openMusic: () -> Unit)
     }
 }
 
+/** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6; web AudioFxPanel FxSlider): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu.
+ *  Kéo là nghe ngay (`onPreview`). */
 @Composable
-private fun Section(title: String) {
-    BasicText(title, style = Abook.type.bodySmall, modifier = Modifier.padding(top = Dim.s16, bottom = Dim.s4))
+private fun FxSlider(title: String, spec: ValueSpec, value: Double, tag: String, format: (Double) -> String,
+                     onPreview: ((Double) -> Unit)? = null, update: (Double) -> Unit) {
+    ValuePicker(spec, value, update, format, title, tag, Modifier.padding(top = Dim.s8), dense = true,
+        chipLabel = { ValuePickerLogic.format(spec, it) }, onPreview = onPreview ?: update)
 }
 
-/** Một thanh: tên trái, số phải, thanh 44 dp. `onMove` khi đang kéo (mặc định như thả tay). */
+/** Mức nhạc nền (dB, hiện %): thanh trượt như MusicLevelSlider của web / Qt - tên trái, số phải, thanh 44 dp. `onMove` khi đang kéo. */
 @Composable
-private fun FxSlider(title: String, value: Double, min: Double, max: Double, step: Double, label: String,
-                     enabled: Boolean = true, tag: String? = null, default: Double? = null,
-                     onMove: ((Double) -> Unit)? = null, update: (Double) -> Unit) {
-    Column(Modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(.5f)).then(if (tag != null) Modifier.testTag(tag) else Modifier)) {
+private fun LevelSlider(title: String, value: Double, min: Double, max: Double, step: Double, label: String,
+                        enabled: Boolean, tag: String, default: Double, onMove: (Double) -> Unit, update: (Double) -> Unit) {
+    Column(Modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(.5f)).testTag(tag)) {
         Row(Modifier.fillMaxWidth().padding(top = Dim.s8), horizontalArrangement = Arrangement.SpaceBetween) {
             BasicText(title, style = Abook.type.bodySmall)
             ClockLabel(label, style = Abook.type.bodySmall)
         }
-        RangeSlider(value, min, max, step, default, title, label, enabled, onMove ?: update, update)
+        RangeSlider(value, min, max, step, default, title, label, enabled, onMove, update)
     }
 }

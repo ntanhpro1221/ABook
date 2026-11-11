@@ -17,11 +17,16 @@ afterEach(async () => { await act(() => root.unmount()); document.body.replaceCh
 
 it("V5 đang lưu: controls vẫn focus được, báo aria-disabled và chặn đổi lịch", async () => {
   await act(() => root.render(<SleepSchedule />));
-  const minutes = host.querySelector<HTMLSelectElement>('[aria-label="Hẹn"]')!;
-  await act(() => { minutes.value = "45"; minutes.dispatchEvent(new Event("change", { bubbles: true })); });
+  // Số phút hẹn là bộ chọn giá trị (chip tiêu biểu + chọn tự do, DESIGN mục 6).
+  await act(() => host.querySelector<HTMLButtonElement>('[data-value-chip="45"]')!.click());
   expect(h.update).toHaveBeenCalledOnce();
+  expect(h.update.mock.calls[0][0]).toEqual({ sleepSchedule: { from: "22:00", to: "06:00", minutes: 45 } });
   const controls = [...host.querySelectorAll<HTMLElement>('[role="switch"], select')];
-  expect(controls).toHaveLength(4);
+  expect(controls).toHaveLength(3);
+  const ruler = host.querySelector<HTMLElement>("[data-value-ruler]")!;
+  expect(ruler.getAttribute("aria-disabled")).toBe("true");
+  await act(() => { ruler.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })); });
+  await act(() => host.querySelector<HTMLButtonElement>('[data-value-chip="60"]')!.click());
   for (const control of controls) {
     expect(control.hasAttribute("disabled")).toBe(false);
     expect(control.getAttribute("aria-disabled")).toBe("true");

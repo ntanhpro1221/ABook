@@ -16,9 +16,9 @@ import { inspectEdges } from "./gallery_inspect_edges.mjs";
 import { inspectFrames } from "./gallery_inspect_frames.mjs";
 import { inspectSheets, SHEET_RULE } from "./gallery_inspect_sheet.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE, "PICKER GEOMETRY"];
 // Gate đã có fixture hai phía; quy tắc 16–17 dùng cả đối chứng gallery gốc (rules144).
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE, "PICKER GEOMETRY"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
@@ -157,8 +157,8 @@ export async function main(argv = process.argv.slice(2)) {
     const themes = args.theme === "both" ? ["light", "dark"] : [args.theme];
     console.log(`${entries.length} mục × ${themes.length} chủ đề · ${executable}`);
     const inspectStatic = async (entry, theme) => {
-      const mobile = entry.platform === "phone";
-      const width = mobile ? 412 : 1440, height = mobile ? 915 : 900;
+      const mobile = args.width ? args.width <= 640 : entry.platform === "phone";
+      const width = args.width ?? (mobile ? 412 : 1440), height = args.height ?? (mobile ? 915 : 900);
       const page = await openPage(cdp, { width, height, scale: mobile ? 2 : 1, mobile, theme, newWindow: true, isolated: true });
       const stem = `${entry.id.replaceAll("/", "__")}-${theme}`;
       const story = { ...entry, theme, sheet: `contacts/${stem}.html`, contacts: [], overlays: [] };
@@ -166,6 +166,7 @@ export async function main(argv = process.argv.slice(2)) {
       try {
         await cdp.send("Page.navigate", { url: `${base}?frame=${encodeURIComponent(entry.id)}&theme=${theme}` }, page.sessionId);
         await waitUntil(cdp, page.sessionId, "Boolean(window.__gallery?.ready)", args.timeout, entry.id);
+        if (args.fontScale) await evaluate(cdp, page.sessionId, `document.documentElement.style.fontSize = ${JSON.stringify(`${16 * args.fontScale}px`)}`);
         await settle(cdp, page.sessionId, args.timeout);
         const gallery = await evaluate(cdp, page.sessionId, "window.__gallery");
         story.known = gallery.known;

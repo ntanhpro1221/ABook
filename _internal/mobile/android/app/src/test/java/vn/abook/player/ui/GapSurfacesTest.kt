@@ -118,20 +118,21 @@ class GapSurfacesTest {
             }
         }
         rule.onNodeWithTag("remote_sleep_main").performClick()
-        rule.onNodeWithText("30 phút").assertIsDisplayed()
+        rule.onNodeWithTag("remote_sleep_main_minutes_value").assertIsDisplayed()
         rule.onNodeWithTag("remote_main", useUnmergedTree = true).assertIconLedTextColumn()
         assertRemoteTransport("main")
         // It is a scrollable list, not a compressed grid: scroll the final option into view.
         rule.onNodeWithTag("remote_players_list").performScrollToNode(hasTestTag("remote_sleep_chapter"))
         val left = rule.onNodeWithTag("remote_sleep_main").getUnclippedBoundsInRoot().left
-        for (tag in listOf("remote_sleep_main_15", "remote_sleep_main_30", "remote_sleep_main_45", "remote_sleep_main_60", "remote_sleep_off", "remote_sleep_chapter")) {
+        for (tag in listOf("remote_sleep_main_minutes", "remote_sleep_off", "remote_sleep_chapter")) {
             rule.onNodeWithTag(tag).assertIsDisplayed()
             assertEquals(left, rule.onNodeWithTag(tag).getUnclippedBoundsInRoot().left)
         }
+        for (minutes in listOf(5, 15, 30, 60, 90)) rule.onNodeWithTag("remote_sleep_main_minutes_chip_$minutes").assertExists()
         shot("remote_sleep_$suffix")
         rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
-        rule.onNodeWithText("30 phút").assertDoesNotExist()
+        rule.onNodeWithTag("remote_sleep_main_minutes").assertDoesNotExist()
         rule.onNodeWithTag("remote_players_sheet").assertIsDisplayed()
     }
 

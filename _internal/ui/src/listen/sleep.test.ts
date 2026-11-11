@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepAfterChapter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -9,7 +9,7 @@ describe("hẹn giờ tắt của loa / TV", () => {
     expect(sleepLabel(counting, at + 30_000)).toBe("9:30");
     const paused = remoteSleepMode({ kind: "minutes", minutes: 15, left: 600, counting: false }, at);
     expect(sleepLabel(paused, at + 30_000)).toBe("10:00");
-    expect(remoteSleepMode({ kind: "chapter" }, at)).toEqual({ kind: "chapter" });
+    expect(remoteSleepMode({ kind: "chapter" }, at)).toEqual({ kind: "chapter", chapters: 1 });
     expect(remoteSleepMode(null, at)).toEqual({ kind: "off" });
     expect(remoteSleepMode(undefined, at)).toEqual({ kind: "off" });
   });
@@ -36,7 +36,7 @@ describe("nhãn trên nút hẹn giờ", () => {
     expect(sleepButtonLabel(mode, at + 40_000)).toBe("15 phút");
     expect(sleepButtonLabel(mode, at + 120_000)).toBe("13 phút");
     expect(sleepButtonLabel(mode, at + 850_000)).toBe("41 giây");
-    expect(sleepButtonLabel({ kind: "chapter" }, at)).toBe("Hết chương");
+    expect(sleepButtonLabel({ kind: "chapter", chapters: 1 }, at)).toBe("Hết chương");
     expect(sleepButtonLabel({ kind: "off" }, at)).toBe("");
   });
 
@@ -84,15 +84,29 @@ describe("nghe thêm là hẹn lại, không cộng dồn", () => {
   });
 
   it("hết chương: đếm \"Mỗi lần nghe thêm\" từ bây giờ, bấm tiếp vẫn không cộng dồn", () => {
-    const first = sleepExtended({ kind: "chapter" }, 15, true, at);
+    const first = sleepExtended({ kind: "chapter", chapters: 1 }, 15, true, at);
     expect(first).toEqual({ kind: "minutes", minutes: 15, leftMs: 15 * 60_000, since: at });
     expect(minutesLeft(sleepExtended(first, 15, true, at + 60_000), at + 60_000)).toBeCloseTo(15, 5);
-    expect(sleepExtendMinutes({ kind: "chapter" }, 15)).toBe(15);
+    expect(sleepExtendMinutes({ kind: "chapter", chapters: 1 }, 15)).toBe(15);
     expect(sleepExtendMinutes({ kind: "off" }, 15)).toBe(15);
   });
 
 
   it("nhãn nút chung một chữ cho mọi nơi", () => {
     expect(sleepExtendLabel(10)).toBe("Hẹn lại 10 phút");
+  });
+});
+
+describe("Hết N chương", () => {
+  it("mỗi chương hết đếm xuống một, chương cuối của hẹn thì dừng", () => {
+    const three = sleepFrom({ kind: "chapter", chapters: 3 }, true, 0);
+    expect(three).toEqual({ kind: "chapter", chapters: 3 });
+    expect(sleepButtonLabel(three, 0)).toBe("Hết 3 chương");
+    const two = sleepAfterChapter(three);
+    expect(two).toEqual({ kind: "chapter", chapters: 2 });
+    const one = sleepAfterChapter(two!);
+    expect(sleepButtonLabel(one!, 0)).toBe("Hết chương");
+    expect(sleepAfterChapter(one!)).toBeNull();
+    expect(sleepFrom({ kind: "chapter" }, true, 0)).toEqual({ kind: "chapter", chapters: 1 });
   });
 });

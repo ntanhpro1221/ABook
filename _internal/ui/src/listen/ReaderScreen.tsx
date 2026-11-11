@@ -1,6 +1,7 @@
 import { S } from "../shared/strings.generated";
+import { ValuePicker } from "@/shared/ValuePicker";
+import { VALUE_SPECS, formatNumber, quantize } from "@/shared/valuePickerLogic";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowRight, BookOpenText, SkipBack, SkipForward, Headphones, Search, Type } from "lucide-react";
@@ -38,8 +39,6 @@ interface ReaderPrefs {
 }
 
 const PREFS_KEY = "abook-reader";
-const SIZES = [16, 18, 20, 22, 24];
-const LEADINGS = [1.5, 1.7, 1.9];
 /** Chữ đọc theo mặc định: 20 px / 1,7 (docs/DESIGN.md 5.5). */
 const DEFAULT_PREFS: ReaderPrefs = { size: 20, leading: 1.7 };
 /** Điện thoại: nút của thanh điều khiển đủ 48 px để chạm. */
@@ -51,7 +50,11 @@ const FLOATING_BODY = "absolute inset-x-0 bottom-0 flex";
 
 function loadPrefs(): ReaderPrefs {
   try {
-    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+    const stored = { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") } as ReaderPrefs;
+    // Số lạ (sửa tay, bản app khác) về trong miền của bộ chọn giá trị.
+    const size = typeof stored.size === "number" ? quantize(VALUE_SPECS.readSize, stored.size) : DEFAULT_PREFS.size;
+    const leading = typeof stored.leading === "number" ? quantize(VALUE_SPECS.readLeading, stored.leading) : DEFAULT_PREFS.leading;
+    return { ...stored, size, leading };
   } catch {
     return DEFAULT_PREFS;
   }
@@ -359,37 +362,24 @@ export function ReaderScreen(edit: SentenceEditing) {
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[288px] max-w-[calc(100vw-24px)] rounded-cover border border-line bg-panel p-3 shadow-float">
-            <div className="text-xs font-medium text-fg-2">{S.s_co_chu_d7b231e3}</div>
-            <div role="group" aria-label={S.s_co_chu_d7b231e3} className="relative mt-1.5 grid grid-cols-5 gap-1">
-              <SlidingIndicator variant="line" />
-              {SIZES.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  aria-pressed={prefs.size === size}
-                  aria-label={S.s_co_chu_0_21809038(size)}
-                  onClick={() => setPrefs({ ...prefs, size })}
-                  className={cn("tabular relative h-9 min-w-[48px] text-left text-sm font-medium transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "text-accent-text" : "hover:bg-hover")}
-                >
-                  <span data-indicator-target className="inline-block">{size}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mt-3 text-xs font-medium text-fg-2">{S.s_gian_dong_db0409d5}</div>
-            <div className="relative mt-1.5 grid grid-cols-3 gap-1">
-              <SlidingIndicator variant="line" />
-              {LEADINGS.map((leading) => (
-                <button
-                  key={leading}
-                  type="button"
-                  aria-pressed={prefs.leading === leading}
-                  onClick={() => setPrefs({ ...prefs, leading })}
-                  className={cn("tabular relative h-9 text-left text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
-                >
-                  <span data-indicator-target className="inline-block">{leading.toLocaleString("vi-VN")}</span>
-                </button>
-              ))}
-            </div>
+            {/* Bộ chọn giá trị (DESIGN mục 6): cỡ chữ 12-40, giãn dòng 1,2-2,4 - chip tiêu biểu một chạm, kéo / -,+ / gõ số ra mọi mức. */}
+            <ValuePicker
+              dense
+              spec={VALUE_SPECS.readSize}
+              value={prefs.size}
+              label={S.s_co_chu_d7b231e3}
+              format={(size) => String(size)}
+              onChange={(size) => setPrefs({ ...prefs, size })}
+            />
+            <ValuePicker
+              dense
+              className="mt-3"
+              spec={VALUE_SPECS.readLeading}
+              value={prefs.leading}
+              label={S.s_gian_dong_db0409d5}
+              format={(leading) => formatNumber(VALUE_SPECS.readLeading, leading)}
+              onChange={(leading) => setPrefs({ ...prefs, leading })}
+            />
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

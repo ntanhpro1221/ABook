@@ -1,5 +1,8 @@
 package vn.abook.player
 
+import vn.abook.player.ui.components.ValuePickerLogic
+import vn.abook.player.ui.components.ValueSpec
+import vn.abook.player.ui.components.ValueSpecs
 import org.json.JSONObject
 import java.io.File
 
@@ -25,22 +28,25 @@ object ListenPrefs {
 
     private fun file() = File(Store.root, FILE)
 
-    // Miền giá trị và mặc định: cùng bảng với giao diện (listen/sleep.ts, android/settings.ts) và Python (webui/library.py) - tests/fixtures/settings/ranges.json,
-    // ListenPrefsRangesTest so khớp. Giá trị ngoài miền về mặc định RIÊNG trường ấy (soát a102 B3), không giữ giá trị cũ.
-    private val FADE_SECONDS = listOf(10, 30, 60)
-    private val EXTEND_MINUTES = listOf(5, 10, 15)
-    private val SCHEDULE_MINUTES = listOf(15, 30, 45, 60)
+    // Miền giá trị và mặc định: cùng bảng với giao diện (listen/sleep.ts) và Python (webui/library.py) - tests/fixtures/settings/ranges.json,
+    // ListenPrefsRangesTest so khớp. Số chọn tự do (bộ chọn giá trị, ValueSpecs): mọi số nguyên trong miền, đúng bước. Giá trị ngoài miền về
+    // mặc định RIÊNG trường ấy (soát a102 B3), không giữ giá trị cũ.
+    private val FADE_SECONDS = ValueSpecs.sleepFadeSeconds
+    private val EXTEND_MINUTES = ValueSpecs.sleepExtendMinutes
+    private val SCHEDULE_MINUTES = ValueSpecs.scheduleMinutes
     private val SHAKE_SENSITIVITIES = listOf("gentle", "normal", "firm")
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
     private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "touchSounds" to true, "haptics" to true, "autoPip" to false)
 
-    private fun choiceOr(json: JSONObject, key: String, allowed: List<Int>, default: Int): Int {
-        val value = json.opt(key) as? Number ?: return default
-        val number = value.toDouble()
-        return allowed.firstOrNull { it.toDouble() == number } ?: default
+    /** Số nguyên trong miền `spec`, đúng lưới bước; không thì null. */
+    private fun onGrid(value: Any?, spec: ValueSpec): Int? {
+        val number = (value as? Number)?.toDouble() ?: return null
+        return number.toInt().takeIf { it.toDouble() == number && ValuePickerLogic.quantize(spec, number) == number }
     }
+
+    private fun rangeOr(json: JSONObject, key: String, spec: ValueSpec, default: Int): Int = onGrid(json.opt(key), spec) ?: default
 
     private fun wordOr(json: JSONObject, key: String, allowed: List<String>, default: String): String = (json.opt(key) as? String)?.takeIf { it in allowed } ?: default
 
@@ -55,16 +61,15 @@ object ListenPrefs {
     private fun cleanSchedule(value: Any?): JSONObject? {
         val schedule = value as? JSONObject ?: return null
         if (clockMinutes(schedule.opt("from")) == null || clockMinutes(schedule.opt("to")) == null) return null
-        val minutes = (schedule.opt("minutes") as? Number)?.toDouble() ?: return null
-        val planned = SCHEDULE_MINUTES.firstOrNull { it.toDouble() == minutes } ?: return null
+        val planned = onGrid(schedule.opt("minutes"), SCHEDULE_MINUTES) ?: return null
         return JSONObject().put("from", schedule.getString("from")).put("to", schedule.getString("to")).put("minutes", planned)
     }
 
     /** Các trường CÓ trong `json` đã đưa về miền giá trị (trường vắng vẫn vắng; trường lạ bỏ đi). */
     internal fun clean(json: JSONObject): JSONObject {
         val out = JSONObject()
-        if (json.has("sleepExtendMinutes")) out.put("sleepExtendMinutes", choiceOr(json, "sleepExtendMinutes", EXTEND_MINUTES, 10))
-        if (json.has("sleepFadeSeconds")) out.put("sleepFadeSeconds", choiceOr(json, "sleepFadeSeconds", FADE_SECONDS, 30))
+        if (json.has("sleepExtendMinutes")) out.put("sleepExtendMinutes", rangeOr(json, "sleepExtendMinutes", EXTEND_MINUTES, 10))
+        if (json.has("sleepFadeSeconds")) out.put("sleepFadeSeconds", rangeOr(json, "sleepFadeSeconds", FADE_SECONDS, 30))
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
         // Giao diện sáng/tối do giao diện áp; lõi chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))

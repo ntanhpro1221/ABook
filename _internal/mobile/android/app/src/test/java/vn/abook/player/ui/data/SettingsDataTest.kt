@@ -37,7 +37,7 @@ class SettingsDataTest {
 
     @Test
     fun `a bad field falls back alone`() {
-        val raw = JSONObject().put("theme", "neon").put("sleepFadeSeconds", 45).put("autoMusic", "yes").put("haptics", false)
+        val raw = JSONObject().put("theme", "neon").put("sleepFadeSeconds", 47).put("autoMusic", "yes").put("haptics", false)
             .put("schedule", JSONObject().put("from", "25:00").put("to", "06:00").put("minutes", 30)).put("readingSurface", "ivory")
         val s = AppSettings.from(raw)
         assertEquals(ThemeMode.System, s.theme)

@@ -1,3 +1,4 @@
+import { formatDecimal } from "@/shared/number";
 import { S } from "../shared/strings.generated";
 import { formatSize } from "@/shared/format";
 import { Select } from "@/shared/ui";
@@ -34,7 +35,7 @@ export function modelHint(model: AnalysisModel, defaultSize = 0): string {
   const parts: string[] = [];
   // "4.0B" -> "4 tỉ tham số": người đọc không cần biết ký hiệu B (soát UX a5 01-10).
   const billions = Number.parseFloat(model.parameters);
-  if (Number.isFinite(billions) && /b$/i.test(model.parameters.trim())) parts.push(S.s_0_ti_tham_so_b28c5d22(String(Math.round(billions * 10) / 10).replace(".", ",")));
+  if (Number.isFinite(billions) && /b$/i.test(model.parameters.trim())) parts.push(S.s_0_ti_tham_so_b28c5d22(formatDecimal(billions, 1)));
   else if (model.parameters) parts.push(model.parameters);
   if (model.size) {
     parts.push(S.s_khoang_0_bo_nho_card_58802271(formatSize(model.size)));

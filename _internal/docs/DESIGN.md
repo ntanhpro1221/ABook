@@ -85,6 +85,9 @@ Tab đang mở của thanh tab đáy điện thoại: icon + chữ hổ phách (
    useListPresence và token MOTION. Mọi lớp vào ngăn xếp Back; Back không bao giờ thoát app khi còn lớp mở.
 7. **Chữ ngắn** - nhãn 1-4 chữ, mô tả tối đa một dòng; xưng "bạn".
 8. **Hai nền tảng một giọng** - cùng tên, cùng biểu tượng, cùng thứ tự cho cùng một việc.
+9. **Mọi giá trị số = chip tiêu biểu + chọn tự do** (chủ sách 09-11) - không cài đặt số nào chỉ cho một danh sách mức cố
+   định (lưới ô, menu, segmented, ô chọn). Luôn dùng bộ chọn giá trị (mục 6 "Chọn giá trị"): vài giá trị tiêu biểu chạm
+   một lần, và mọi giá trị khác trong miền ra được trong ≤ 2 thao tác (mở + kéo, hay mở + chạm số + gõ).
 
 ## 5. Token
 
@@ -274,10 +277,31 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   `screen-title-baseline`). Màn con: một kiểu nút ← (`BackButton`), nét mũi tên thẳng mép nội dung, tiêu đề sát sau, vùng chạm 48 / 40.
 - **Hàng danh sách**: trái biểu tượng/bìa nhỏ hay trạng thái, giữa tên (16) + phụ (14, `--fg-2`), phải một hành động hay "…".
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
-  Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích ĐẦU dòng (`SelectionMark`, luôn giữ chỗ, mờ vào / ra; máy dò SIBLING CONSISTENCY check-mark-trailing). Ô chọn dạng lưới (tốc độ, mức hẹn giờ): ô đang chọn chữ hổ phách đậm, không dấu tích - ô hẹp, dấu tích đè hay đẩy chữ lệch tâm.
+  Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích ĐẦU dòng (`SelectionMark`, luôn giữ chỗ, mờ vào / ra; máy dò SIBLING CONSISTENCY check-mark-trailing). Chip giá trị tiêu biểu của bộ chọn giá trị: chip đang chọn chữ hổ phách đậm, không dấu tích - chip hẹp, dấu tích đè hay đẩy chữ lệch tâm.
 - **Điều hướng** (thanh bên máy tính, danh sách nhóm Cài đặt hai cột): mục đang mở = nền trung tính nhạt + chữ đậm màu thường; không dấu tích, không nền hổ phách, không chữ hổ phách (máy dò rule22 NAV ACCENT).
 - **Dòng menu** (menu "…", bảng Thêm tuỳ chọn): mọi dòng trọn bề ngang menu, giá trị bên phải ("Tắt", tên giọng) cùng một mép; dòng mở ra tại chỗ không co theo chữ, không bị danh sách con đẩy tràn (máy dò INK EDGE menu-row-short). Menu con nổi cách mép ngoài bảng cha 8 px, thẳng đỉnh (bảng mở xuống) hay đáy (bảng mở lên); chỉ dịch khi cần tránh mép màn. **Nhãn của lựa chọn** không bao giờ cắt "…" - xuống dòng (máy dò CLIPPED TEXT choice-label-truncated).
 - **Ô chọn**: trải hết cột nội dung như ô nhập; các mảnh giờ/phút của một giá trị trong hàng lịch đêm giữ chiều rộng nội tại.
+- **Chọn giá trị** (bộ chọn giá trị số - MỘT thành phần, cùng tên và cấu trúc ở ba nền: web `shared/ValuePicker.tsx`, Android
+  `ui/components/ValuePicker.kt`, Qt `qml/ValuePicker.qml`; phần tính toán `valuePickerLogic.ts` / `ValuePickerLogic.kt` /
+  `ValuePickerLogic.js` chạy cùng bộ ca `tests/fixtures/value_picker/cases.json`). Từ trên xuống:
+  1. **giá trị hiện tại chữ lớn** ("23 phút", "1,35×") - chạm là gõ số (bàn phím số, Enter / Xong xác nhận, Esc bỏ); gõ ngoài
+     biên thì kẹp vào biên và báo nhẹ "Trong khoảng a–b" (dòng mờ dưới số, tiếng `reject`); chữ không ra số thì giữ giá trị cũ;
+  2. **thước kéo tự do** giữa nút −/+: kéo một tay ra MỌI giá trị trong biên theo bước mịn; vạch mảnh ở các giá trị tiêu
+     biểu, kéo qua thì hút nhẹ (rộng 0,75 bước, không nuốt bước kề) + tiếng / rung `tick`; thang có thể không đều (hẹn
+     giờ: phần chính của thước dành cho các mốc hay dùng; xem quy tắc ValuePicker 10-11 dưới đây). −/+ đổi đúng một bước, giữ để lặp (chờ 400 ms, rồi mỗi 80 ms). Bàn phím / TalkBack:
+     mũi tên một bước, PageUp/PageDown mười bước, Home/End hai đầu;
+  3. **hàng nhãn giá trị tiêu biểu** (một chạm): tâm mỗi nhãn nằm dưới đúng một vạch (sai số ≤2 px), kể cả mốc ở
+     hai đầu rãnh. Số nhãn bằng số vạch; chữ ở trong vùng giữa hai nút −/+, không lấn dưới nút. Đo chữ thật ở cả
+     trạng thái đậm và cỡ chữ hiện hành; không đủ chỗ thì bỏ toàn bộ vạch và chia nhãn thành hàng cân bằng trong vùng ấy.
+     Chip trùng giá trị hiện tại chữ `--text` đậm (có thể thêm nền `--accent-soft`); hổ phách chỉ ở rãnh/núm; giá trị chưa phải lựa chọn
+     đang áp (hẹn giờ đang "Hết chương") thì không chip nào sáng;
+  4. **lựa chọn đặc biệt** ("Số chương", N 1-10) dùng chế độ `stepperOnly` của cùng ValuePicker:
+     nhãn → giá trị và hai nút −/+ cách 8; giá trị dùng cùng chữ lớn / ô gõ cao 48 như phần phút phía trên.
+     Không cộng thêm đệm ở chỗ gọi; không có một kiểu chữ chọn hay nhịp dọc riêng cho số chương.
+  Đổi là áp ngay (thả tay, chạm chip, −/+, Enter); bảng chứa nó không tự đóng (kéo thước cần bảng đứng yên); khi kéo, chữ
+  lớn và thước chạy theo tay, chỗ cần nghe ngay (núm âm thanh) áp luôn lúc kéo. Kiểu gọn `dense` cho danh sách nhiều núm
+  (âm thanh, Cài đặt): tên + giá trị một hàng, thước có số ngay dưới từng vạch; không có hàng chip riêng. Miền + giá trị tiêu biểu của từng cài đặt nằm ở bảng
+  `specs` của file ca chung (ba bên có test so bảng của mình với nó); lưu trữ nhận mọi số trong miền đúng lưới bước.
 - **Nút chữ đầu hàng** (nút ghost đứng đầu một cột chữ, "Tải" dưới thẻ sách): bù đệm trái bằng `edge-start-action` để mực thẳng mép chữ của cột (máy dò INK EDGE leading-control-inset). **Icon cạnh khối chữ canh đầu** đứng giữa DÒNG ĐẦU: `mt-line-icon` (theo 1lh), không đặt cứng mt-0.5; hàng có nút thì dòng đầu đứng giữa chiều cao nút `--button-h` (InlineError) (máy dò INK EDGE icon-off-first-line).
 - **Cột anh em**: điều khiển lặp ở mọi hàng của một danh sách (công tắc "Tự chọn", nút cùng tên) đứng cùng một cột; chữ dài ngắn khác nhau theo hàng đứng SAU nó, không trước (máy dò SIBLING CONSISTENCY sibling-column; Qt tst_list_measure sameColumn).
 - **Nút chữ cuối hàng** chạm mép phải của cột như mọi nút cùng cột (bù đệm bằng `settings-edge-action`); không lặp icon đã có ở đầu hàng (máy dò INK EDGE ink-right, REPEATED LABEL row-icon-twice).
@@ -404,3 +428,12 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
 4. Test DOM cho chuyển động/Back như hiện có; bản phát hành đính kèm bộ ảnh mọi màn.
 5. chạy gallery_inspect, không còn phát hiện thật ở các quy tắc 1-3.
+
+
+### ValuePicker: numeric labels and compact rulers (10-11)
+
+- Chip labels contain numbers only; show the unit once with the current value or row label. Sleep timers offer six phone shortcuts: 5, 15, 30, 45, 60, 90. Drop 10 because 5 and 15 already cover nearby quick choices; 10 remains reachable by dragging, stepping or typing.
+- At 360 dp and normal font size every picker has one chip row. Measure the actual text and balance any necessary wrapping (4+3 or 3+3, never 6+1). Full picker rows distribute the chips across the whole ruler width.
+- Dense pickers have two rows: label and editable value, then minus/ruler/plus. Small numeric labels sit directly under their detents, with 48 dp hit regions extending into padding. There is no extra chip row; the ruler adds only 12 dp over the old 44 dp slider.
+- Wide positive domains (max/min >= 8) put internal typical anchors evenly between 10% and 90% of the ruler. If the minimum is itself typical, include its anchor at 0 and share the remaining space evenly. Use the same mapping for crowded narrow domains (linear typical gaps below 12% of the range), so compact labels also have room. Both directions interpolate the same anchors; every quantized value remains reachable. At 360 dp, adjacent wide-domain detents are at least 24 dp apart. Shared cases live in tests/fixtures/value_picker/cases.json.
+- Visible decimals use one formatter per platform (UiNumber / formatDecimal), always with a comma and no redundant zero in pitch. Balance reads Giữa, Trái N %, or Phải N %. The source gate rejects local decimal formatters. Sleep chapter controls show Số chương and a number; the top status owns Hết N chương.

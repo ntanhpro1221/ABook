@@ -1,13 +1,14 @@
 import "UiStrings.js" as S
+import "ValuePickerLogic.js" as Logic
 import QtQuick
 import ABook
 
-// Tốc độ đọc: lưới ô, ô đang chọn nhạt màu nhấn. Tốc độ nhớ riêng cho từng cuốn (như bản web).
+// Tốc độ đọc: bộ chọn giá trị. Tốc độ nhớ riêng cho từng cuốn (như bản web).
 Popover {
     id: root
-    panelWidth: 296
+    panelWidth: Math.max(296, speedPicker.minimumWidth + 2 * pad)
 
-    function label(value) { return String(value).replace(".", ",") + "×" }
+    function label(value) { return Logic.formatNumber(Logic.SPECS.speed, value) + "×" }
 
     Column {
         width: parent.width
@@ -20,18 +21,16 @@ Popover {
             font.pixelSize: Theme.sizeCaption
             font.weight: Theme.weightMedium
         }
-        Flow {
+        // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi tốc độ 0,5-3× bước 0,05. Đổi là áp ngay.
+        ValuePicker {
+            id: speedPicker
+            objectName: "speedPicker"
             width: parent.width
-            spacing: Theme.s8
-            Repeater {
-                model: Player.speeds
-                ChoiceChip {
-                    required property var modelData
-                    text: root.label(modelData)
-                    selected: Math.abs(modelData - Player.rate) < 0.001
-                    onClicked: { Feedback.play("toggle"); Player.setRate(modelData) }
-                }
-            }
+            spec: Logic.SPECS.speed
+            value: Player.rate
+            label: S.s_toc_do_doc_3657e59d
+            format: root.label
+            onPicked: value => Player.setRate(value)
         }
         Text {
             objectName: "speedKeyHint"

@@ -13,7 +13,6 @@ import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.music.PlayerMusic
 import vn.abook.player.ui.data.PrepareState
 import vn.abook.player.ui.voice.VoiceState
-import java.math.BigDecimal
 import kotlin.math.ceil
 
 /** Public shared keys: the real library mini bar uses these without depending on the window's implementation. */
@@ -24,7 +23,8 @@ data class PlayerVoice(val id: String, val name: String, val gender: String = ""
 
 enum class SleepKind { Off, Minutes, Chapter }
 
-/** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here. */
+/** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here.
+ *  `minutes`: số phút đã chọn ([SleepKind.Minutes]) hay số chương còn phải nghe hết ([SleepKind.Chapter], 1 = "Hết chương này"). */
 @Immutable
 data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L, val automaticReason: String = "")
 
@@ -140,13 +140,10 @@ interface NowPlayingModel {
 private val NoNote: StateFlow<PlayerNote?> = kotlinx.coroutines.flow.MutableStateFlow(null)
 
 object PlayerLabels {
-    val rates = listOf(0.75, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2.0, 2.5, 3.0)
-    val sleepMinutes = listOf(5, 10, 15, 30, 45, 60)
-    fun rate(value: Double): String = BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
-        .stripTrailingZeros().toPlainString().replace('.', ',') + "×"
+    fun rate(value: Double): String = vn.abook.player.UiNumber.decimal(value) + "×"
     /** Số có dấu của trang Âm thanh / Âm sắc (web labels.ts signedNumber): dấu trừ thật "−", dấu "+" khi dương, phẩy thập phân, tối đa một số lẻ. */
     fun signed(value: Double): String {
-        val text = BigDecimal.valueOf(kotlin.math.abs(value)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString().replace('.', ',')
+        val text = vn.abook.player.UiNumber.decimal(kotlin.math.abs(value), 1)
         return when { text == "0" -> "0"; value < 0 -> "−$text"; else -> "+$text" }
     }
     fun time(milliseconds: Long): String {
@@ -156,7 +153,7 @@ object PlayerLabels {
     /** `leftMs`: the time left on the timer (the clock's `sleepRemainingMs`). `clock`: the sheet's big readout instead of the button label. */
     fun sleep(sleep: PlayerSleep, leftMs: Long, clock: Boolean = false): String = when (sleep.kind) {
         SleepKind.Off -> if (clock) S.s_tat_3286064e else S.s_hen_gio_39d9ca26
-        SleepKind.Chapter -> S.s_het_chuong_f1d590bb
+        SleepKind.Chapter -> if (sleep.minutes > 1) S.s_het_0_chuong_79433c77(sleep.minutes) else S.s_het_chuong_f1d590bb
         SleepKind.Minutes -> {
             val left = leftMs.coerceAtLeast(0)
             if (clock) time(ceil(left / 1000.0).toLong() * 1000)

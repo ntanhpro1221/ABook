@@ -21,6 +21,9 @@ export function parseArgs(argv) {
     else if (flag === "--theme") args.theme = value();
     else if (flag === "--fail-on") args.failOn = value().split(",").map((item) => item.trim().toUpperCase());
     else if (flag === "--scale") args.scale = Number(value());
+    else if (flag === "--width") args.width = Number(value());
+    else if (flag === "--height") args.height = Number(value());
+    else if (flag === "--font-scale") args.fontScale = Number(value());
     else if (flag === "--timeout") args.timeout = Number(value());
     else if (flag === "--probe") args.probe = readFileSync(path.resolve(value()), "utf8");
     else if (flag === "--static-only") args.staticOnly = true;

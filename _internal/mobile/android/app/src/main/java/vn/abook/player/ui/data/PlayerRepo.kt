@@ -28,6 +28,7 @@ data class PlayerChapter(val id: Int, val title: String, val durationMs: Long, v
 
 /** Hẹn giờ ngủ đã đặt (chỉ phần đổi chậm; thời gian còn lại chạy theo giây nằm ở [PlayerClock.sleepRemainingMs]). */
 @Immutable
+/** `minutes`: số phút đã chọn, hay số chương còn phải nghe hết khi `mode` là "chapter". */
 data class SleepSetting(val mode: String = "off", val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L, val reason: String = "") {
     val active: Boolean get() = mode != "off"
 
@@ -89,7 +90,7 @@ data class PlayerState(
                 durationMs = Math.round(json.optDouble("duration", 0.0) * 1000),
                 rate = json.optDouble("rate", 1.0),
                 sleep = if (sleep == null) SleepSetting.Off else SleepSetting(
-                    sleep.optString("mode", "off"), sleep.optInt("minutes"), sleep.optBoolean("counting"),
+                    sleep.optString("mode", "off"), if (sleep.optString("mode") == "chapter") sleep.optInt("chapters", 1) else sleep.optInt("minutes"), sleep.optBoolean("counting"),
                     Math.round(sleep.optDouble("stoppedAt", 0.0) * 1000), sleep.optString("reason"),
                 ),
                 error = json.optString("error").ifBlank { json.optString("saveError") },

@@ -1,3 +1,4 @@
+import { formatDecimal } from "@/shared/number";
 import { S } from "../shared/strings.generated";
 // Mô-đun "Giọng VieNeu" (docs/LISTEN_ANYTHING.md mục 3): giọng đọc ngay trên máy cho "Nghe ngay", tải khi người dùng bấm - máy tính
 // (abook/webui/vieneu_module.py) và điện thoại (mobile/android/.../vieneu/VieneuModule.kt) cùng một hình trạng thái. Mô-đun "Giọng Supertonic" của
@@ -251,7 +252,7 @@ export function vieneuPercent(status: Pick<VieneuStatus, "done" | "total">): num
 }
 
 export function seconds(value: number): string {
-  return value.toFixed(1).replace(".", ",");
+  return formatDecimal(value, 1, true);
 }
 
 /** Dưới mức này giọng đọc trực tiếp được (còn chỗ cho đọc trước, nghe nhanh); trên thì nên "Làm trước" (vieneu_module.SLOW_RTF). */

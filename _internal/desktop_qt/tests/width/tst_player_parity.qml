@@ -55,14 +55,17 @@ Item {
         function test_sleep_choices_and_extend() {
             const menu = createTemporaryObject(sleep, host, {width: host.width, height: host.height})
             menu.show(); tryCompare(menu, "fadeSeconds", 45); tryCompare(menu, "extendMinutes", 15)
-            clickReady(findChild(menu, "sleepChoice_30")); compare(Player.sleepKind, "minutes"); verify(!menu.open)
-            menu.show(); tryCompare(menu, "open", true); ready()
+            // Bộ chọn giá trị: chip "30" là đặt ngay, bảng đứng yên (kéo thước cần bảng không tự đóng).
+            clickReady(findChild(menu, "valueChip_30")); compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 30); verify(menu.open)
             // Hẹn lại về số đã chọn (30), không phải "Mỗi lần nghe thêm" (15) và không cộng thêm.
             compare(findChild(menu, "sleepExtend").text, "Hẹn lại 30 phút")
             clickReady(findChild(menu, "sleepExtend"))
             fuzzyCompare(Player.clock.sleepLeft, 1800, 1)
             clickReady(findChild(menu, "sleepOff")); compare(Player.sleepKind, "off")
-            menu.show(); tryCompare(menu, "open", true); ready(); clickReady(findChild(menu, "sleepChapter")); compare(Player.sleepKind, "chapter")
+            menu.show(); tryCompare(menu, "open", true); ready(); clickReady(findChild(findChild(menu, "sleepChapterPicker"), "valueDisplay")); compare(Player.sleepKind, "chapter")
+            compare(Player.sleepChapters, 1)
+            clickReady(findChild(findChild(menu, "sleepChapterPicker"), "valueCountUp")); compare(Player.sleepChapters, 2)
+            compare(findChild(menu, "sleepCountdown").text, "Hết 2 chương")
         }
         function test_fade_restart_and_geometric_bounds() {
             const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})
@@ -126,7 +129,7 @@ Item {
             page.show(); tryVerify(function() { return page.wide }); tryVerify(function() { return (Nav.layers.length) === (1) })
             clickReady(findChild(page, "nowMore")); tryVerify(function() { return (Nav.layers.length) === (2) }); ready()
             clickReady(findChild(page, "nowAudioFxButton")); tryCompare(findChild(page, "nowAudioFx"), "open", true); ready()
-            const volumeSlider = findChild(findChild(page, "audioFxVoice"), "audioFxRange")
+            const volumeSlider = findChild(findChild(page, "audioFxVoice"), "valueRuler")
             verify(volumeSlider); volumeSlider.forceActiveFocus(); verify(volumeSlider.activeFocus)
             keyClick(Qt.Key_Right); fuzzyCompare(Player.volume, 0.75, 0.001)
             tryVerify(function() { return (Nav.layers.length) === (2) })

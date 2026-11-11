@@ -26,10 +26,12 @@ import {
   sleepExtendLabel,
   sleepExtended,
   sleepFrom,
+  sleepAfterChapter,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
 } from "./sleep";
+import { VALUE_SPECS, stepValue } from "@/shared/valuePickerLogic";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
 import { STALL_MS } from "@/shared/hostWait";
 import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, NO_USABLE_VOICE, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
@@ -219,7 +221,6 @@ export function useCoveredAfterOpen(expanded: boolean): boolean {
   return expanded && settled;
 }
 
-export const SPEEDS = [0.75, 0.9, 1, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 2.5, 3];
 export const SKIP_SECONDS = 15;
 /** Báo hẹn giờ ngủ sắp tắt trước chừng này (DESIGN 5.3). */
 const SLEEP_WARN_MS = 30_000;
@@ -242,10 +243,6 @@ function availableAfter(queue: ListenChapter[], chapterId: number, step: 1 | -1)
   return undefined;
 }
 
-function nearestSpeed(rate: number, step: 1 | -1): number {
-  if (step === 1) return SPEEDS.find((speed) => speed > rate + 1e-6) ?? SPEEDS[SPEEDS.length - 1];
-  return [...SPEEDS].reverse().find((speed) => speed < rate - 1e-6) ?? SPEEDS[0];
-}
 
 export function PlayerProvider({
   engine,
@@ -1590,7 +1587,10 @@ export function PlayerProvider({
           return;
         }
         save(true);
-        if (refs.current.sleep.kind === "chapter") {
+        // "Hết N chương": còn chương nữa thì đếm xuống và nghe tiếp như thường.
+        const afterChapter = sleepAfterChapter(refs.current.sleep);
+        if (afterChapter && afterChapter !== refs.current.sleep) applySleep(afterChapter);
+        if (afterChapter === null) {
           // Hẹn S.s_het_chuong_13b507b4: dừng ở đây, nhưng nạp sẵn chương kế ở 0:00 và lưu nó làm chỗ nghe tiếp - sáng mai
           // bấm Tiếp tục là vào chương mới, không phải nghe lại chương vừa xong từ đầu.
           stopBySleep();
@@ -1901,7 +1901,7 @@ export function PlayerProvider({
         case "[":
         case "]":
           event.preventDefault();
-          setRate(nearestSpeed(refs.current.rate, event.key === "]" ? 1 : -1));
+          setRate(stepValue(VALUE_SPECS.speed, refs.current.rate, event.key === "]" ? 1 : -1));
           break;
         default:
           break;

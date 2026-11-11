@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -75,7 +76,8 @@ fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modif
     val bottom = navigationClearance()
     val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag(tag).fadeEdges(scroll, startInset = top).verticalScroll(scroll)
+        // imePadding: ô gõ số của bộ chọn giá trị (DESIGN mục 6) nằm trên bàn phím, cuộn tới khi chạm.
+        modifier.fillMaxSize().imePadding().testTag(tag).fadeEdges(scroll, startInset = top).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         PageHeader(title, onBack)

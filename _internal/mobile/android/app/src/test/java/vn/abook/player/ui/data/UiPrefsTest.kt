@@ -27,8 +27,14 @@ class UiPrefsTest {
     }
 
     @Test
-    fun `a size nobody offers falls back to the default`() {
-        context.getSharedPreferences("native_ui", android.content.Context.MODE_PRIVATE).edit().putInt("read_size", 33).putFloat("read_leading", 3f).commit()
+    fun `a size outside the picker range falls back to the default`() {
+        context.getSharedPreferences("native_ui", android.content.Context.MODE_PRIVATE).edit().putInt("read_size", 41).putFloat("read_leading", 3f).commit()
         assertEquals(ReadLook(), UiPrefs(context).readLook())
+    }
+
+    @Test
+    fun `any size and spacing inside the picker range is kept`() {
+        context.getSharedPreferences("native_ui", android.content.Context.MODE_PRIVATE).edit().putInt("read_size", 33).putFloat("read_leading", 1.85f).commit()
+        assertEquals(ReadLook(size = 33, leading = 1.85), UiPrefs(context).readLook())
     }
 }

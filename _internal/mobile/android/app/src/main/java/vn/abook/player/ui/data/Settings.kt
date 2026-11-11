@@ -4,6 +4,9 @@ import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
+import vn.abook.player.ui.components.ValuePickerLogic
+import vn.abook.player.ui.components.ValueSpec
+import vn.abook.player.ui.components.ValueSpecs
 import java.util.Locale
 
 /*
@@ -57,7 +60,6 @@ data class SleepSchedule(val from: String, val to: String, val minutes: Int) {
     companion object {
         /** Bật lịch đêm lần đầu. */
         val Default = SleepSchedule("22:00", "06:00", 30)
-        val MINUTES = listOf(15, 30, 45, 60)
     }
 }
 
@@ -83,8 +85,6 @@ data class AppSettings(
 ) {
     companion object {
         val Default = AppSettings()
-        val EXTEND_MINUTES = listOf(5, 10, 15)
-        val FADE_SECONDS = listOf(10, 30, 60)
         private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
 
         private inline fun <reified T> word(json: JSONObject, key: String, fallback: T): T where T : Enum<T>, T : Choice =
@@ -92,9 +92,13 @@ data class AppSettings(
 
         private fun flag(json: JSONObject, key: String, fallback: Boolean): Boolean = json.opt(key) as? Boolean ?: fallback
 
-        private fun pick(json: JSONObject, key: String, allowed: List<Int>, fallback: Int): Int {
+        /** Số nguyên trong miền của bộ chọn giá trị (ValueSpecs), đúng lưới bước; không thì null. */
+        private fun onGrid(value: Double, spec: ValueSpec): Int? =
+            value.toInt().takeIf { it.toDouble() == value && ValuePickerLogic.quantize(spec, value) == value }
+
+        private fun pick(json: JSONObject, key: String, spec: ValueSpec, fallback: Int): Int {
             val value = (json.opt(key) as? Number)?.toDouble() ?: return fallback
-            return allowed.firstOrNull { it.toDouble() == value } ?: fallback
+            return onGrid(value, spec) ?: fallback
         }
 
         private fun schedule(value: Any?): SleepSchedule? {
@@ -103,7 +107,7 @@ data class AppSettings(
             val to = json.opt("to") as? String ?: return null
             if (!CLOCK.matches(from) || !CLOCK.matches(to)) return null
             val minutes = (json.opt("minutes") as? Number)?.toDouble() ?: return null
-            return SleepSchedule(from, to, SleepSchedule.MINUTES.firstOrNull { it.toDouble() == minutes } ?: return null)
+            return SleepSchedule(from, to, onGrid(minutes, ValueSpecs.scheduleMinutes) ?: return null)
         }
 
         /**
@@ -122,8 +126,8 @@ data class AppSettings(
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
             shakeSensitivity = word(json, "shakeSensitivity", Default.shakeSensitivity),
             flipToPause = flag(json, "flipToPause", Default.flipToPause),
-            sleepExtendMinutes = pick(json, "sleepExtendMinutes", EXTEND_MINUTES, Default.sleepExtendMinutes),
-            sleepFadeSeconds = pick(json, "sleepFadeSeconds", FADE_SECONDS, Default.sleepFadeSeconds),
+            sleepExtendMinutes = pick(json, "sleepExtendMinutes", ValueSpecs.sleepExtendMinutes, Default.sleepExtendMinutes),
+            sleepFadeSeconds = pick(json, "sleepFadeSeconds", ValueSpecs.sleepFadeSeconds, Default.sleepFadeSeconds),
             stamp = (json.opt("settingsStamp") as? Number)?.toLong()?.takeIf { it > 0 } ?: 0L,
         )
     }

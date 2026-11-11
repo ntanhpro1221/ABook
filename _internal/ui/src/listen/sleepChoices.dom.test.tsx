@@ -5,8 +5,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/shared/ui";
 import type { SleepMode } from "./sleep";
 
-// Soát 140 V3: bảng hẹn giờ từng có ba cách chọn (ô 5′…90′, bộ −/+ "30 phút" kèm nút "Đặt 30 phút", nút "Hết chương này") và ô đang hẹn không sáng.
-// Giờ một cách: bấm một ô là đặt, ô đang hẹn sáng, đơn vị một kiểu "phút".
+// Chủ sách 09-11: bảng hẹn giờ là bộ chọn giá trị chung (DESIGN mục 6) - chip tiêu biểu một chạm + thước kéo / -,+ / gõ số ra mọi số phút 1-240,
+// và hàng riêng dưới cùng "Hết chương này" (loa / TV: chỉ chương này; trình phát ở đây: -/+ thành "Hết N chương").
 vi.mock("./player", async (original) => ({
   ...(await original<typeof import("./player")>()),
   usePlayer: () => ({ options: {}, sleep: { kind: "off" }, track: null, volume: 1, setVolume: () => undefined }),
@@ -26,24 +26,62 @@ async function open(sleep: SleepMode, onSet = vi.fn()) {
   await act(async () => trigger.click());
   return onSet;
 }
-const choices = () => [...document.querySelectorAll<HTMLButtonElement>("button[aria-pressed]")];
+const chips = () => [...document.querySelectorAll<HTMLButtonElement>("[data-value-chip]")];
+const chapterChoice = () => document.querySelector<HTMLButtonElement>("[data-sleep-chapters] button[aria-pressed]")!;
 
-it("một lưới ô chọn, không bộ −/+ hay nút Đặt riêng; bấm Hết chương này là đặt", async () => {
+it("chip tiêu biểu, thước, gõ số và hàng Hết chương này; chạm chip / hàng là đặt", async () => {
   const onSet = await open({ kind: "off" });
-  expect(choices().map((button) => button.textContent)).toEqual(["5 phút", "10 phút", "15 phút", "30 phút", "45 phút", "60 phút", "Hết chương này"]);
-  expect(document.querySelector('[aria-label="Bớt 5 phút"], [aria-label="Thêm 5 phút"]')).toBeNull();
-  expect([...document.querySelectorAll("button")].some((button) => /^Đặt \d+ phút$/.test(button.textContent ?? ""))).toBe(false);
-  await act(async () => choices().at(-1)!.click());
-  expect(onSet).toHaveBeenCalledWith({ kind: "chapter" });
+  expect(chips().map((button) => button.textContent)).toEqual(["5", "15", "30", "45", "60", "90"]);
+  expect(document.querySelector('[role="slider"][data-value-ruler]')).not.toBeNull();
+  expect(document.querySelector("[data-value-display]")).not.toBeNull();
+  await act(async () => chips()[2].click());
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 30 });
+  // Loa / TV chỉ biết hết chương này: không có -/+ số chương.
+  expect(document.querySelectorAll("[data-sleep-chapters] button").length).toBe(1);
+  await act(async () => chapterChoice().click());
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "chapter", chapters: 1 });
 });
 
-it("ô đang hẹn sáng, kể cả Hết chương này", async () => {
-  await open({ kind: "chapter" });
-  expect(choices().filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.textContent)).toEqual(["Hết chương này"]);
-  for (const button of choices()) {
-    expect(button.classList.contains("bg-accent-soft")).toBe(false);
+it("số phút tự do: gõ 23 rồi Enter là đặt 23 phút; ngoài biên thì kẹp và báo nhẹ", async () => {
+  const onSet = await open({ kind: "off" });
+  await act(async () => document.querySelector<HTMLButtonElement>("[data-value-display]")!.click());
+  const input = document.querySelector<HTMLInputElement>("[data-value-input]")!;
+  input.value = "23";
+  await act(async () => input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 23 });
+  await act(async () => document.querySelector<HTMLButtonElement>("[data-value-display]")!.click());
+  const again = document.querySelector<HTMLInputElement>("[data-value-input]")!;
+  again.value = "999";
+  await act(async () => again.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 240 });
+  expect(document.querySelector("[data-value-clamped]")?.textContent).toBe("Trong khoảng 1 phút–240 phút");
+});
+
+it("phím trên thước: mũi tên một bước, PageUp mười bước", async () => {
+  const onSet = await open({ kind: "minutes", minutes: 23, leftMs: 23 * 60_000, since: null });
+  const ruler = document.querySelector<HTMLElement>("[data-value-ruler]")!;
+  await act(async () => ruler.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })));
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 24 });
+  await act(async () => ruler.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp", bubbles: true })));
+  expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 33 });
+});
+
+it("chip trùng giá trị đang hẹn sáng; đang hẹn hết chương thì chỉ hàng ấy sáng", async () => {
+  await open({ kind: "minutes", minutes: 30, leftMs: 30 * 60_000, since: null });
+  expect(chips().filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.textContent)).toEqual(["30"]);
+  act(() => root.unmount());
+  const host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  await open({ kind: "chapter", chapters: 1 });
+  expect(chips().some((button) => button.getAttribute("aria-pressed") === "true")).toBe(false);
+  expect(chapterChoice().getAttribute("aria-pressed")).toBe("true");
+  for (const button of [...chips(), chapterChoice()]) {
     const selected = button.getAttribute("aria-pressed") === "true";
     expect(button.querySelector(".lucide-check")).toBeNull(); // ô hẹp: dấu tích đẩy chữ lệch tâm (soát 141), ô chọn chỉ đổi chữ
-    expect(button.classList.contains("text-accent-text")).toBe(selected);
+    const label = button.querySelector("[data-value-label], span") ?? button;
+    expect(label.classList.contains("text-accent-text")).toBe(false);
+    if (selected) {
+      expect(label.classList.contains("text-fg")).toBe(true);
+      expect(label.classList.contains("font-semibold")).toBe(true);
+    }
   }
 });

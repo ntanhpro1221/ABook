@@ -4,6 +4,11 @@ import vn.abook.player.S
 
 import vn.abook.player.ui.components.gestureBarPadding
 import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.components.IconAction
+import vn.abook.player.ui.components.LucideIcon
+import vn.abook.player.ui.components.LucidePaths
+import vn.abook.player.ui.components.ValuePicker
+import vn.abook.player.ui.components.ValueSpecs
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
@@ -30,8 +35,6 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.RowHint
-import vn.abook.player.ui.components.LucideIcon
-import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.SheetPages
@@ -102,14 +105,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     SheetTitle(sheetTitle(window.sheet), if (parents.isNotEmpty()) ::back else null)
                 }
                 SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown -> Column(Modifier.fillMaxWidth()) { when (shown) {
-                    PlayerSheet.Speed -> {
-                        for (row in PlayerLabels.rates.chunked(3)) Row(Modifier.fillMaxWidth()) {
-                            for (rate in row) ChoiceCell(PlayerLabels.rate(rate), rate == state.rate, Modifier.weight(1f)) {
-                                vn.abook.player.Feedback.play("toggle"); model.setRate(rate); window.closeSheet()
-                            }
-                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-                        }
-                    }
+                    // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi tốc độ 0,5-3× bước 0,05.
+                    // Đổi là áp ngay, tấm không tự đóng (kéo thước cần tấm đứng yên).
+                    PlayerSheet.Speed -> ValuePicker(ValueSpecs.speed, state.rate, { rate -> model.setRate(rate) }, PlayerLabels::rate,
+                        S.s_toc_do_doc_3657e59d, "speed_picker", Modifier.padding(bottom = Dim.s8))
                     PlayerSheet.Sleep -> {
                         val options = model.sleepOptions
                         val active = state.sleep.kind != SleepKind.Off
@@ -131,15 +130,15 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             }
                         }
                         RowHint(SleepText.gridHeading(active), Modifier.padding(top = Dim.s8))
-                        for (row in PlayerLabels.sleepMinutes.chunked(3)) Row(Modifier.fillMaxWidth()) {
-                            for (minutes in row) ChoiceCell(S.s_0_phut_2596d212(minutes), state.sleep.kind == SleepKind.Minutes && state.sleep.minutes == minutes, Modifier.weight(1f)) {
-                                window.lastSleepMinutes = minutes
-                                model.setSleep(SleepKind.Minutes, minutes); window.closeSheet()
-                            }
-                        }
-                        SheetRow(S.s_het_chuong_nay_918907cf, if (state.sleep.kind == SleepKind.Chapter) S.s_dang_chon_ad61dc23 else "") {
-                            model.setSleep(SleepKind.Chapter); window.closeSheet()
-                        }
+                        // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
+                        val minutesNow = state.sleep.kind == SleepKind.Minutes
+                        ValuePicker(
+                            ValueSpecs.sleepMinutes, (if (minutesNow) state.sleep.minutes else window.lastSleepMinutes).toDouble(),
+                            { minutes -> window.lastSleepMinutes = minutes.toInt(); model.setSleep(SleepKind.Minutes, minutes.toInt()) },
+                            { minutes -> S.s_0_phut_2596d212(minutes.toInt()) }, S.s_hen_gio_ngu_21073488, "sleep_picker",
+                            chipLabel = { minutes -> minutes.toInt().toString() }, current = minutesNow,
+                            special = { SleepChapterChoice(state.sleep) { count -> model.setSleep(SleepKind.Chapter, count) } },
+                        )
                         BasicText(SleepText.note(options, model.hadNight), style = Abook.type.caption.copy(color = Abook.colors.text2),
                             modifier = Modifier.padding(top = Dim.s8).testTag("sleep_note"))
                     }
@@ -280,23 +279,21 @@ private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
 @Composable
 private fun LookPage(window: NowPlayingWindowState) {
     val look = window.look
-    Row(Modifier.fillMaxWidth()) {
-        for (size in ReadLook.SIZES) ChoiceCell("$size", size == look.size, Modifier.weight(1f), S.s_co_chu_0_21809038(size)) { window.changeLook(look.sized(size)) }
-    }
-    // Nhãn của hàng dưới: cách hàng cỡ chữ phía trên rộng hơn cách hàng nó gọi tên (s16 trên, s4 dưới) - không kẹp đều giữa hai hàng (soát điện thoại thật 02-11).
-    RowHint(S.s_gian_dong_db0409d5, Modifier.padding(top = Dim.s16, bottom = Dim.s4))
-    Row(Modifier.fillMaxWidth()) {
-        for (leading in ReadLook.LEADINGS) ChoiceCell(ReadLook.leadingLabel(leading), leading == look.leading, Modifier.weight(1f),
-            S.s_gian_dong_8c920943 + ReadLook.leadingLabel(leading)) { window.changeLook(look.spaced(leading)) }
-    }
+    // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do (cỡ 12-40, giãn dòng 1,2-2,4 bước 0,05); hàng gọn như web ReaderScreen.
+    ValuePicker(ValueSpecs.readSize, look.size.toDouble(), { size -> window.changeLook(window.look.sized(size.toInt())) },
+        { size -> size.toInt().toString() }, S.s_co_chu_d7b231e3, "read_size", dense = true)
+    ValuePicker(ValueSpecs.readLeading, look.leading, { leading -> window.changeLook(window.look.spaced(leading)) },
+        ReadLook::leadingLabel, S.s_gian_dong_db0409d5, "read_leading", Modifier.padding(top = Dim.s16), dense = true)
 }
 
+/** Chapter counts share the same value field, text color and label rhythm as the minutes picker. */
 @Composable
-private fun ChoiceCell(label: String, chosen: Boolean, modifier: Modifier, description: String? = null, onClick: () -> Unit) {
-    Box(modifier.heightIn(min = 56.dp).pressable(onClick = onClick).semantics { selected = chosen; if (description != null) contentDescription = description }, contentAlignment = Alignment.Center) {
-        BasicText(label, style = Abook.type.body.copy(color = if (chosen) Abook.colors.accentText else Abook.colors.text,
-            fontWeight = if (chosen) FontWeight.Bold else FontWeight.Normal))
-    }
+private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
+    var chapters by remember { mutableIntStateOf(if (sleep.kind == SleepKind.Chapter) sleep.minutes.coerceAtLeast(1) else 1) }
+    val active = sleep.kind == SleepKind.Chapter && sleep.minutes.coerceAtLeast(1) == chapters
+    ValuePicker(ValueSpecs.sleepChapters, chapters.toDouble(), { next ->
+        chapters = next.toInt(); vn.abook.player.Feedback.play("toggle"); onSet(chapters)
+    }, { it.toInt().toString() }, S.s_so_chuong_6e52dccd, "sleep_chapters", current = active, stepperOnly = true)
 }
 
 /** Một dòng của tấm: `icon` (Lucide, 20 dp, cách chữ 16 dp) - trong một tấm hoặc mọi dòng có icon hoặc không dòng nào có. */
@@ -318,7 +315,8 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
 @Composable
 private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
     // Hẹn theo chương không có đồng hồ để đọc: số lớn là S.s_het_chuong_nay_8ccc288f (web: SleepPicker).
-    fun readout(left: Long) = if (sleep.kind == SleepKind.Chapter) SleepText.CHAPTER_END else PlayerLabels.sleep(sleep, left, clock = true)
+    fun readout(left: Long) = if (sleep.kind == SleepKind.Chapter) (if (sleep.minutes > 1) S.s_het_0_chuong_79433c77(sleep.minutes) else SleepText.CHAPTER_END)
+        else PlayerLabels.sleep(sleep, left, clock = true)
     var label by remember(sleep) { mutableStateOf(readout(position.sleepRemainingMs.value)) }
     LaunchedEffect(sleep, position) { snapshotFlow { position.sleepRemainingMs.value }.collect {
         label = readout(it)

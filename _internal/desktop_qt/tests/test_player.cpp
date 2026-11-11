@@ -253,6 +253,47 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() < before);
     }
 
+    // "Hết N chương" (bộ chọn giá trị): mỗi chương hết là đếm xuống và nghe tiếp; chương cuối của hẹn mới dừng.
+    void sleepEndOfThreeChaptersCountsDownThenStops() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("chapter"), 3);
+        QCOMPARE(rig.player->sleepChapters(), 3);
+        rig.out.finish();
+        QVERIFY(rig.player->playing());
+        QCOMPARE(rig.player->chapterId(), 2);
+        QCOMPARE(rig.player->sleepChapters(), 2);
+        rig.out.finish();
+        QCOMPARE(rig.player->chapterId(), 3);
+        QCOMPARE(rig.player->sleepChapters(), 1);
+        rig.out.finish();
+        QVERIFY(!rig.player->playing());
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QCOMPARE(rig.player->chapterId(), 4);
+        rig.player->setSleep(QStringLiteral("chapter"), 99);
+        QCOMPARE(rig.player->sleepChapters(), 10);
+    }
+
+    // Hẹn giờ và tốc độ nhận mọi số trong miền tự do (không chỉ các chip): 23 phút, 1,35×; ngoài miền thì bỏ.
+    void freeSleepMinutesAndSpeed() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 23);
+        QCOMPARE(rig.player->sleepMinutes(), 23);
+        QCOMPARE(rig.player->clock()->sleepLeft(), 23 * 60.0);
+        rig.player->setSleep(QStringLiteral("minutes"), 240);
+        QCOMPARE(rig.player->sleepMinutes(), 240);
+        rig.player->setRate(1.35);
+        QCOMPARE(rig.player->rate(), 1.35);
+        rig.player->setRate(3.5);
+        QCOMPARE(rig.player->rate(), 1.35);
+        rig.player->stepRate(1);
+        QCOMPARE(rig.player->rate(), 1.4);
+        rig.player->setRate(3.0);
+        rig.player->stepRate(1);
+        QCOMPARE(rig.player->rate(), 3.0);
+    }
+
     void sleepEndOfChapterPreparesNext() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 2, 0, true);
@@ -446,11 +487,15 @@ private slots:
         g_now += 5 * 60'000;
         rig.player->resume();
         QCOMPARE(rig.out.pos, stopped); // tắt Tự lùi: nghỉ 5 phút cũng không lùi
-        // Giá trị ngoài các mức giao diện đưa ra bị kẹp vào khoảng hợp lệ.
+        // Giá trị ngoài miền của bộ chọn giá trị (1-60 phút) bị kẹp vào miền.
         rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 99}});
         rig.player->setSleep(QStringLiteral("chapter"));
         rig.player->extendSleep();
-        QCOMPARE(rig.player->clock()->sleepLeft(), 900.0);
+        QCOMPARE(rig.player->clock()->sleepLeft(), 3600.0);
+        rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 23}});
+        rig.player->setSleep(QStringLiteral("chapter"));
+        rig.player->extendSleep();
+        QCOMPARE(rig.player->clock()->sleepLeft(), 23 * 60.0); // số tự do giữa các chip
     }
 
     void rateIsSharedUnlessBookOverride() {

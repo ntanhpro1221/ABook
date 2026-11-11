@@ -1,3 +1,4 @@
+.import "UiNumber.js" as UiNumber
 .import "UiStrings.js" as S
 .pragma library
 .import "SizeFormat.js" as Size
@@ -146,7 +147,7 @@ function percent(status) {
     return status.total > 0 ? Math.min(100, Math.floor((status.done / status.total) * 100)) : 0
 }
 
-function seconds(value) { return value.toFixed(1).replace(".", ",") }
+function seconds(value) { return UiNumber.decimal(value, 1, true) }
 
 function working(status) { return Boolean(status) && (status.state === "downloading" || Boolean(status.benchmarking)) }
 

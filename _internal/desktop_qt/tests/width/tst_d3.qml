@@ -480,12 +480,10 @@ Item {
             toggle.enabled = false               // công tắc mờ: không tiếng
             toggle.clicked()
             compare(Feedback.played, before + 1)
-            // Tốc độ đọc: chọn một mức là "toggle"
+            // Tốc độ đọc: chạm chip tiêu biểu của bộ chọn giá trị là "toggle"
             loadAt(1, 0)
             const speed = createTemporaryObject(speedFactory, host)
-            const choices = all(speed, "").filter(i => i.clicked !== undefined && i.modelData === 1.5)
-            verify(choices.length > 0)
-            choices[0].clicked()
+            one(speed, "valueChip_1,5").clicked()
             compare(Feedback.played, before + 2)
             compare(Player.rate, 1.5)
         }

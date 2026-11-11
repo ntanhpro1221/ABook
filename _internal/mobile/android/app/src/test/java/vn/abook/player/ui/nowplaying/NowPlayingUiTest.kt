@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import vn.abook.player.ui.createAndroidComposeRule
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -22,6 +24,7 @@ import org.junit.Assert.assertTrue
 import androidx.compose.ui.unit.width
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.boundsInRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -58,12 +61,14 @@ class NowPlayingUiTest {
 
     private fun show(dark: Boolean = false, expanded: Boolean = true, reading: Boolean = false,
                      playing: Boolean = false, sheet: PlayerSheet? = null, longTitles: Boolean = false, base: NowPlayingState? = null,
-                     prepare: vn.abook.player.ui.data.PrepareState? = null) {
+                     prepare: vn.abook.player.ui.data.PrepareState? = null, fontScale: Float = 1f) {
         val initial = (base ?: FakeNowPlayingModel.demoState()).copy(playing = playing,
             chapterTitle = if (longTitles) LONG_CHAPTER else FakeNowPlayingModel.demoState().chapterTitle,
             bookTitle = if (longTitles) LONG_BOOK else FakeNowPlayingModel.demoState().bookTitle)
         model = FakeNowPlayingModel(initial, prepare = prepare)
         rule.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 window = rememberNowPlayingWindowState()
@@ -90,12 +95,26 @@ class NowPlayingUiTest {
                     }
                 }
             }
+            }
         }
         rule.waitForIdle()
     }
     /** The real mini player stays composed under the window (hidden from accessibility), so text of the window itself is looked up inside it. */
     private fun inWindow(matcher: SemanticsMatcher) = matcher and hasAnyAncestor(hasTestTag("now_playing"))
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
+    private fun shot(name: String) {
+        if (name.contains("sleep") || name.contains("speed") || name.contains("audio")) {
+            val origin = rule.onRoot().fetchSemanticsNode().boundsInRoot.topLeft
+            val key = androidx.compose.ui.semantics.SemanticsProperties.TestTag
+            for (node in rule.onAllNodes(SemanticsMatcher.keyIsDefined(key), useUnmergedTree = true).fetchSemanticsNodes()) {
+                val tag = node.config[key]
+                if (tag.contains("_tick_") || tag.contains("_label_") || tag.endsWith("_section_label") || tag.endsWith("_value_text") || tag.endsWith("_ruler")) {
+                    val r = node.boundsInRoot.translate(-origin.x, -origin.y)
+                    println("PICKER3_COORD image=np_$name.png tag=$tag x=${r.left} y=${r.top} w=${r.width} h=${r.height}")
+                }
+            }
+        }
+        rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
+    }
     private fun bounds(tag: String): DpRect {
         if (tag != "now_playing") return rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
         // The window is laid out at its final size and clipped by a rectangle that grows out of the bar (graphicsLayer only), so the container's
@@ -121,6 +140,39 @@ class NowPlayingUiTest {
     @Test fun speedDark() { show(dark = true, sheet = PlayerSheet.Speed); shot("speed_dark") }
     @Test fun sleepLight() { show(sheet = PlayerSheet.Sleep); shot("sleep_light") }
     @Test fun sleepDark() { show(dark = true, sheet = PlayerSheet.Sleep); shot("sleep_dark") }
+    // Bộ chọn giá trị (DESIGN mục 6): ảnh gallery mỗi tấm đã chuyển, sáng / tối, 360 dp, chữ 130 %.
+    @Test fun pickerSpeedLargeLight() { show(sheet = PlayerSheet.Speed, fontScale = 1.3f); shot("picker_speed_font130_light") }
+    @Test fun pickerSpeedLargeDark() { show(dark = true, sheet = PlayerSheet.Speed, fontScale = 1.3f); shot("picker_speed_font130_dark") }
+    @Test fun pickerSleepLargeLight() { show(sheet = PlayerSheet.Sleep, fontScale = 1.3f); shot("picker_sleep_font130_light") }
+    @Test fun pickerSleepLargeDark() { show(dark = true, sheet = PlayerSheet.Sleep, fontScale = 1.3f); shot("picker_sleep_font130_dark") }
+    @Test fun pickerLookLargeLight() { show(sheet = PlayerSheet.Look, fontScale = 1.3f); shot("picker_look_font130_light") }
+    @Test fun pickerLookLargeDark() { show(dark = true, sheet = PlayerSheet.Look, fontScale = 1.3f); shot("picker_look_font130_dark") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLight() {
+        show(sheet = PlayerSheet.Audio)
+        println("PICKER2_AUDIO_SHEET_DP=${bounds("player_sheet_audio").height.value}")
+        val layout = rule.onNodeWithTag("player_sheet_audio").fetchSemanticsNode().layoutInfo
+        val frames = (layout.getModifierInfo().map { it.coordinates } + layout.coordinates).map { it.boundsInRoot() }
+        val frame = androidx.compose.ui.geometry.Rect(frames.minOf { it.left }, frames.minOf { it.top }, frames.maxOf { it.right }, frames.maxOf { it.bottom })
+        val rootFrame = rule.onRoot().fetchSemanticsNode().layoutInfo.coordinates.boundsInRoot()
+        println("PICKER2_AUDIO_FRAME_PX=${frame.left},${frame.top},${frame.right},${frame.bottom};ROOT_TOP_PX=${rootFrame.top}")
+        println("PICKER2_AUDIO_OUTER_DP=${frame.height / rule.density.density}")
+        shot("picker_audio_light")
+    }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioDark() { show(dark = true, sheet = PlayerSheet.Audio); shot("picker_audio_dark") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLargeLight() { show(sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_light") }
+    @Test @Config(qualifiers = "w360dp-h3400dp-xxhdpi") fun pickerAudioLargeDark() { show(dark = true, sheet = PlayerSheet.Audio, fontScale = 1.3f); shot("picker_audio_font130_dark") }
+    @Test fun pickerSleepChaptersLight() {
+        show(sheet = PlayerSheet.Sleep)
+        rule.onNodeWithTag("sleep_chapters_up").performClick()
+        rule.onNodeWithTag("sleep_chapters_up").performClick()
+        rule.waitForIdle()
+        assertEquals(SleepKind.Chapter, model.state.value.sleep.kind)
+        assertEquals(3, model.state.value.sleep.minutes)
+        rule.onNodeWithTag("sleep_chapters").assertIsSelected()
+        rule.onNode(hasTestTag("sleep_chapters") and hasAnyDescendant(hasText("3")), useUnmergedTree = true).assertExists()
+        rule.onAllNodes(hasText("Hết 3 chương") and hasAnyAncestor(hasTestTag("player_sheet_sleep"))).assertCountEquals(1)
+        shot("picker_sleep_chapters_light")
+    }
     @Test fun chaptersLight() { show(sheet = PlayerSheet.Chapters); shot("chapters_light") }
     @Test fun chaptersDark() { show(dark = true, sheet = PlayerSheet.Chapters); shot("chapters_dark") }
     @Test fun longTitlesLight() { show(longTitles = true); rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed(); shot("long_light") }
@@ -210,11 +262,12 @@ class NowPlayingUiTest {
     @Test fun aTapOnEmptySpaceInsideSpeedKeepsItOpen() = tapInsideKeepsOpen(PlayerSheet.Speed)
     @Test fun aTapOnEmptySpaceInsideChaptersKeepsItOpen() = tapInsideKeepsOpen(PlayerSheet.Chapters)
 
-    /** Kéo xuống từ GIỮA tấm (không chỉ vạch kéo) 30 % chiều cao, chậm (không phải vuốt nhanh): tấm đóng - cả tấm có danh sách cuộn (Chương). */
+    /** Kéo xuống từ GIỮA tấm (không chỉ vạch kéo) 30 % chiều cao, chậm (không phải vuốt nhanh): tấm đóng - cả tấm có danh sách cuộn (Chương).
+     *  Tay đi thêm đúng ngưỡng nhận kéo để TẤM đi 30 %: tấm Tốc độ (bộ chọn giá trị) thấp, ngưỡng 16 dp của Robolectric ăn hết phần dư 5 %. */
     private fun middleDragCloses(sheet: PlayerSheet) {
         show(sheet = sheet)
         val tag = "player_sheet_${sheet.name.lowercase()}"
-        rule.onNodeWithTag(tag).performTouchInput { swipeDown(startY = centerY, endY = centerY + height * .3f, durationMillis = 900) }
+        rule.onNodeWithTag(tag).performTouchInput { swipeDown(startY = centerY, endY = centerY + height * .3f + viewConfiguration.touchSlop, durationMillis = 900) }
         rule.waitForIdle()
         rule.onNodeWithTag(tag).assertDoesNotExist()
     }
@@ -529,17 +582,25 @@ class NowPlayingUiTest {
         assertEquals(1f, windowAlpha(0.2f), 0f)
     }
 
-    @Test fun controlsUseRealModelActionsAndChoiceClosesSheet() {
+    @Test fun controlsUseRealModelActionsAndValuesApplyAtOnce() {
         show()
         rule.onNodeWithContentDescription("Tới 15 giây").performClick()
         assertTrue(model.actions.contains("skip:15"))
         rule.onNodeWithTag("player_speed").performClick()
-        rule.onNodeWithText("1,5×").performClick()
+        rule.onNodeWithTag("speed_picker_chip_1,5").performClick()
         assertEquals(1.5, model.state.value.rate, 0.0)
-        rule.onNodeWithTag("player_sheet_speed").assertDoesNotExist()
+        // Áp ngay, tấm đứng yên để chỉnh tiếp: một bước + là 1,55×.
+        rule.onNodeWithTag("speed_picker_up").performClick()
+        assertEquals(1.55, model.state.value.rate, 1e-9)
+        rule.onNodeWithTag("player_sheet_speed").assertIsDisplayed()
+        rule.runOnIdle { window.closeSheet() }
+        rule.waitForIdle()
         rule.onNodeWithTag("player_sleep").performClick()
-        rule.onNodeWithText("15 phút").performClick()
+        rule.onNodeWithTag("sleep_picker_chip_15").performClick()
         assertEquals(SleepKind.Minutes, model.state.value.sleep.kind)
+        assertEquals(15, model.state.value.sleep.minutes)
+        rule.runOnIdle { window.closeSheet() }
+        rule.waitForIdle()
         rule.onNodeWithTag("player_chapters").performClick()
         rule.onNodeWithText("Chương 2 · Trên con đường").performClick()
         assertEquals(2, model.state.value.chapterId)
@@ -673,9 +734,9 @@ class NowPlayingUiTest {
         show(sheet = PlayerSheet.Look)
         var saved: ReadLook? = null
         window.onLook = { saved = it }
-        rule.onNodeWithContentDescription("Cỡ chữ 24").assertIsDisplayed().performClick()
+        rule.onNodeWithTag("read_size_chip_24").assertIsDisplayed().performClick()
         assertEquals(24, window.look.size)
-        rule.onNodeWithContentDescription("Giãn dòng 1,9").assertIsDisplayed().performClick()
+        rule.onNodeWithTag("read_leading_chip_1,9").assertIsDisplayed().performClick()
         assertEquals(1.9, window.look.leading, 0.0)
         assertEquals(ReadLook(24, 1.9), saved)
         shot("look_light")
@@ -683,14 +744,31 @@ class NowPlayingUiTest {
 
     @Test fun lookSheetLabelsTheLineSpacingRowWithRoomAboveAndItsOwnRowRightBelow() {
         show(sheet = PlayerSheet.Look, dark = true)
-        val sizes = rule.onNodeWithContentDescription("Cỡ chữ 20").getUnclippedBoundsInRoot()
+        val sizes = rule.onNodeWithTag("read_size").getUnclippedBoundsInRoot()
         val label = rule.onNodeWithText("Giãn dòng").getUnclippedBoundsInRoot()
-        val spacing = rule.onNodeWithContentDescription("Giãn dòng 1,5").getUnclippedBoundsInRoot()
+        val spacing = rule.onNodeWithTag("read_leading_ruler").getUnclippedBoundsInRoot()
         val above = label.top - sizes.bottom
         val below = spacing.top - label.bottom
         assertTrue("chỗ trên nhãn ($above) phải >= 12 dp", above >= 12.dp)
-        assertTrue("nhãn gần hàng nó gọi tên ($below) hơn hàng trên ($above)", below < above)
+        assertTrue("nhãn gần thước nó gọi tên ($below) hơn hàng trên ($above)", below < above)
         shot("look_dark")
+    }
+
+    @Test fun anyFreeSizeIsTwoTouchesAway() {
+        show(sheet = PlayerSheet.Look)
+        // Mở tấm (đã mở) + chạm số + gõ: cỡ 23 không có chip nào.
+        rule.onNodeWithTag("read_size_value").performClick()
+        rule.onNodeWithTag("read_size_value_input").performTextReplacement("23")
+        rule.onNodeWithTag("read_size_value_input").performImeAction()
+        rule.waitForIdle()
+        assertEquals(23, window.look.size)
+        // Gõ quá biên: kẹp về 40 và báo nhẹ khoảng.
+        rule.onNodeWithTag("read_size_value").performClick()
+        rule.onNodeWithTag("read_size_value_input").performTextReplacement("99")
+        rule.onNodeWithTag("read_size_value_input").performImeAction()
+        rule.waitForIdle()
+        assertEquals(40, window.look.size)
+        rule.onNodeWithTag("read_size_clamped").assertIsDisplayed()
     }
 
     @Test fun moreSheetOffersTheTextLookOnlyWhereThereIsTextToRead() {

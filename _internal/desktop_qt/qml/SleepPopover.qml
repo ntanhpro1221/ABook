@@ -1,13 +1,14 @@
 import "UiStrings.js" as S
+import "ValuePickerLogic.js" as Logic
 import QtQuick
 import ABook
 
 // Hẹn giờ tắt: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: tắt sau bao lâu, hẹn lại N phút (về số đã chọn, không cộng thêm), tắt hẹn giờ. Chữ như bản web (SleepPicker).
 Popover {
     id: root
-    panelWidth: 296
+    panelWidth: Math.max(296, sleepPicker.minimumWidth + 2 * pad)
     maxHeight: Math.max(280, Math.min(600, height - 32))
-    readonly property int fadeSeconds: Math.max(10, Math.min(60, Number(Api.preferences.sleepFadeSeconds || 30)))
+    readonly property int fadeSeconds: Logic.quantize(Logic.SPECS.sleepFadeSeconds, Number(Api.preferences.sleepFadeSeconds || 30))
     // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
     readonly property int extendMinutes: Player.sleepExtendMinutes
 
@@ -35,7 +36,7 @@ Popover {
             Text {
                 objectName: "sleepCountdown"
                 width: parent.width
-                text: Player.sleepKind === "chapter" ? S.s_het_chuong_nay_8ccc288f : Player.clockText(Player.clock.sleepLeft)
+                text: Player.sleepKind === "chapter" ? (Player.sleepChapters > 1 ? S.s_het_0_chuong_79433c77(Player.sleepChapters) : S.s_het_chuong_nay_8ccc288f) : Player.clockText(Player.clock.sleepLeft)
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeTitlePhone
@@ -63,27 +64,30 @@ Popover {
             width: parent.width; open: Player.sleepKind !== "off"
             Text { text: S.s_dat_lai_51a46825; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
-        Flow {
+        // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
+        // Chọn là đặt ngay, bảng không tự đóng (kéo thước cần bảng đứng yên).
+        ValuePicker {
+            id: sleepPicker
+            objectName: "sleepPicker"
             width: parent.width
-            spacing: Theme.s8
-            Repeater {
-                model: Player.sleepChoices
-                ChoiceChip {
-                    required property var modelData
-                    objectName: "sleepChoice_" + modelData
-                    text: modelData + S.s_phut_cf728a6a
-                    selected: Player.sleepKind === "minutes" && Player.sleepMinutes === modelData
-                    onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", modelData); root.close() }
-                }
+            spec: Logic.SPECS.sleepMinutes
+            value: Player.sleepKind === "minutes" ? Player.sleepMinutes : Player.lastSleepMinutes
+            current: Player.sleepKind === "minutes"
+            label: S.s_hen_gio_ngu_21073488
+            format: Logic.minutesLabel
+            chipLabel: function(v) { return String(v) }
+            onPicked: value => { Feedback.play("toggle"); Player.setSleep("minutes", value) }
+            ValuePicker {
+                objectName: "sleepChapterPicker"
+                width: parent.width
+                spec: Logic.SPECS.sleepChapters
+                value: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : 1
+                current: Player.sleepKind === "chapter"
+                stepperOnly: true
+                label: S.s_so_chuong_6e52dccd
+                format: function(v) { return String(v) }
+                onPicked: value => { Feedback.play("toggle"); Player.setSleep("chapter", value) }
             }
-        }
-        ChoiceChip {
-            objectName: "sleepChapter"
-            fullWidthReason: "Single-column menu (DESIGN 6)"
-            width: parent.width
-            text: S.s_het_chuong_nay_918907cf
-            selected: Player.sleepKind === "chapter"
-            onClicked: { Feedback.play("toggle"); Player.setSleep("chapter"); root.close() }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"

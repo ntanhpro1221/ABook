@@ -144,6 +144,9 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     const result = partial ? null : union(pieces); iconCache.set(cacheKey, result); return result;
   }
   function controlInk(el) {
+    // Numeric composites centre their detents and chip cells. PICKER GEOMETRY
+    // measures their rows and tick alignment instead of a prose column's left edge.
+    if (el.closest('[data-value-picker]')) return null;
     const pieces = inkTexts.filter((t) => t.control === el).map((t) => t.ink);
     for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg, svg.hasAttribute("data-selection-mark")));
     return union(pieces.filter(Boolean));
@@ -197,6 +200,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   // body chỉ lấy cạnh ngoài của hàng, không lấy chữ nằm sau icon hay trong ô nhập.
   const edgeSeen = new Set();
   function edge(el, ink, side, value, reference, scope, metric = `surface-ink-${side}`) {
+    if (el.closest('[data-value-picker]')) return;
     if (!ink || !reference) return;
     const actual = side === "left" ? ink.x : right(ink), delta = actual - value;
     columns.push({ selector: selector(el), side, value: actual, referenceValue: value, delta, metric });

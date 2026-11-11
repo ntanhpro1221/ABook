@@ -940,7 +940,7 @@ object ReadAloud {
                     return
                 }
                 // Hẹn giờ "hết chương": dừng nạp ở cuối chương này để ExoPlayer tự dừng đúng chỗ (handleEnded).
-                if (SleepTimer.mode == SleepTimer.Mode.CHAPTER && waiting == null) return
+                if (SleepTimer.stopsAtChapterEnd && waiting == null) return
                 feedChapter += 1
                 feedSegment = 0
                 continue
@@ -1641,7 +1641,7 @@ object ReadAloud {
         if (inFlight || waiting != null || failure != null) return true
         val current = Playback.currentChapter
         val index = if (current == null) -1 else chapters().indexOfFirst { it.id == current.id }
-        if (SleepTimer.mode == SleepTimer.Mode.CHAPTER) {
+        if (SleepTimer.stopsAtChapterEnd) {
             SleepTimer.onPausedAtChapterEnd()
             parkAtNextChapter(index)
             Playback.saveNow()

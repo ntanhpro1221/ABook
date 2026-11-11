@@ -49,7 +49,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_library, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_module, voice_pick, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
+from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_RANGES, on_grid, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
@@ -6989,9 +6989,9 @@ class Handler(BaseHTTPRequestHandler):
             value = body.get(key)
             if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= float(value) <= high:
                 allowed[key] = float(value)
-        # Ba tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra (cùng bảng với lúc đọc file: library.SLEEP_CHOICES).
-        for key, choices in SLEEP_CHOICES.items():
-            if not isinstance(body.get(key), bool) and body.get(key) in choices:
+        # Tuỳ chọn hẹn giờ ngủ chỉ nhận số trong miền của bộ chọn giá trị (cùng bảng với lúc đọc file: library.SLEEP_RANGES).
+        for key, bounds in SLEEP_RANGES.items():
+            if on_grid(body.get(key), bounds):
                 allowed[key] = body[key]
         # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
         if isinstance(body.get("pauseOnBattery"), bool):

@@ -34,6 +34,7 @@ VolumeControl 1.0 ../../../../qml/VolumeControl.qml
 AudioFxPanel 1.0 ../../../../qml/AudioFxPanel.qml
 TonePage 1.0 ../../../../qml/TonePage.qml
 AudioFxSlider 1.0 ../../../../qml/AudioFxSlider.qml
+ValuePicker 1.0 ../../../../qml/ValuePicker.qml
 ReadingSuggestions 1.0 ../../../../qml/ReadingSuggestions.qml
 NowPlaying 1.0 ../../../../qml/NowPlaying.qml
 SettingsScreen 1.0 ../../../../qml/SettingsScreen.qml

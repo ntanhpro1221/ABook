@@ -7,15 +7,22 @@
         "listen/PlayerViews.tsx",
         "listen/AudioFxPanel.tsx",
         "listen/ReadAlongText.tsx",
-        "listen/TonePage.tsx"
+        "listen/TonePage.tsx",
+        "shared/ValuePicker.tsx"
       ],
       "native": [
         "nowplaying/*.kt",
+        "components/ValuePicker.kt",
         "!nowplaying/FakeNowPlayingModel.kt",
         "player/MiniPlayer.kt",
         "pip/*.kt"
       ],
       "allow": [
+        {
+          "side": "web",
+          "label": "Chạm để gõ số",
+          "reason": "value picker: the web shows it as the hover tooltip of the big value; Compose appends the same S key inside the TalkBack description template (ValuePicker.kt ValueDisplay), which the label reader does not split"
+        },
         {
           "side": "web",
           "label": "Chưa lưu được âm thanh. Bạn hãy thử lại.",

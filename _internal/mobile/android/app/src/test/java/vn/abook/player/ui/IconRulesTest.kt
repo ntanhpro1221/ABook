@@ -17,6 +17,7 @@ class IconRulesTest {
         "components/BookCover.kt" to "nền bìa sinh",
         "components/Sheet.kt" to "viền mảnh cạnh trên của tờ ở nền tối (sheetEdge)",
         "components/Controls.kt" to "công tắc, mũi tên > (lucide qua drawLucide)",
+        "components/ValuePicker.kt" to "thước kéo của bộ chọn giá trị: rãnh, vạch giá trị tiêu biểu, núm",
         "components/PlayPauseGlyph.kt" to "biến hình phát <-> dừng (mực = lucide Play / Pause)",
         "nowplaying/PlayerVisuals.kt" to "nút ±15 hình riêng của web, nút phát lớn biến hình",
         "nowplaying/NowPlayingScreen.kt" to "thanh tua, công tắc Nghe | Đọc theo",

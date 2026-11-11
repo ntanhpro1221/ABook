@@ -74,11 +74,12 @@ it('bản local mới hơn thắng reading cũ của nguồn',()=>{
   h.effects.find(e=>e.run.toString().includes('restored.current')).run();
   expect(box.querySelector).toHaveBeenCalledWith('[data-index="50"]');
 });
-it('năm nút cỡ chữ có nhãn số riêng',()=>{
+it('cỡ chữ là bộ chọn giá trị chung: chip tiêu biểu + chọn tự do',()=>{
   const {tree}=mount();
-  const sizes=walk(tree,n=>n.type==='button' && /^Cỡ chữ \d+$/.test(n.props['aria-label']??''));
-  expect(sizes).toHaveLength(5);
-  expect(sizes.map(n=>n.props['aria-label']??n.props.children)).toEqual([16,18,20,22,24].map(size=>`Cỡ chữ ${size}`));
+  const pickers=walk(tree,n=>n.props?.label==='Cỡ chữ' && n.props?.spec!==undefined);
+  expect(pickers).toHaveLength(1);
+  expect(pickers[0].props.spec.typical).toEqual([16,18,20,22,24]);
+  expect([pickers[0].props.spec.min,pickers[0].props.spec.max]).toEqual([12,40]);
 });
 it('vị trí thông báo chỉ đổi style của toaster, không lan biến qua html xuống cả chương',()=>{
   const style={getPropertyValue:()=>'',setProperty:vi.fn(),removeProperty:vi.fn()};

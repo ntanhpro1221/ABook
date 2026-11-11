@@ -29,7 +29,7 @@ describe("explicit timer routes", () => {
     expect(sleepExtended({ kind: "off" }, 10, true, 1000)).toEqual({ kind: "off" });
   });
   it("manual minutes, chapter mode and remote commands require an explicit request", () => {
-    expect(sleepFrom({ kind: "chapter" }, true, 1000)).toEqual({ kind: "chapter" });
+    expect(sleepFrom({ kind: "chapter" }, true, 1000)).toEqual({ kind: "chapter", chapters: 1 });
     expect(sleepFrom({ kind: "minutes", minutes: 30 }, true, 1000)).toMatchObject({ minutes: 30 });
     expect(remoteSleepAfter(remoteSleepCommand({ kind: "off" }), true)).toBeNull();
     expect(remoteSleepAfter(remoteSleepCommand({ kind: "minutes", minutes: 15 }), true)).toMatchObject({ minutes: 15 });
