@@ -35,6 +35,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
@@ -545,7 +546,8 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
     val entries = nav.stack.entries
     val count = entries.size
     val background = Abook.colors.bg
-    val container = (entries.lastOrNull()?.destination as? Destination.Book)?.let { LocalBookCoverFlight.current?.active(it.book.id) } == true
+    val coverFlight = LocalBookCoverFlight.current
+    val container = (entries.lastOrNull()?.destination as? Destination.Book)?.let { coverFlight?.active(it.book.id) } == true
     Box(Modifier.fillMaxSize()) {
         for (index in max(ROOT_KEY, count - 2) until count) {
             val id = if (index < 0) ROOT_KEY else entries[index].key
@@ -561,6 +563,7 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                 Box(
                     // Chừa chỗ cho thanh báo / chân ở đáy NGAY TRONG lớp (kích cỡ lớp cố định suốt chuyển cảnh): xem [LayerInsets].
                     (if (insets == null) Modifier.fillMaxSize() else Modifier.layerInset(insets, destination))
+                        .onPlaced { if (layer == Layer.Top && !container) nav.entryReady(id) }
                         .graphicsLayer {
                             val fraction = when (layer) {
                                 Layer.Alone -> 0f

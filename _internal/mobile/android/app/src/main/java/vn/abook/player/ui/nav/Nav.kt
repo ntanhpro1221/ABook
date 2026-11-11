@@ -1,6 +1,8 @@
 package vn.abook.player.ui.nav
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -9,13 +11,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
+import vn.abook.player.ui.motion.RenderedFrameClock
 import vn.abook.player.ui.studio.StudioSubKind
 import vn.abook.player.ui.studio.StudioTab
 
@@ -117,11 +124,17 @@ class NavState(private val scope: CoroutineScope) {
 
     val canPop: Boolean get() = !stack.isEmpty
 
-    /** Đang chạy một chuyển cảnh (kể cả hai khung chờ dựng của [push]). */
+    /** Includes waiting for the incoming entry's actual layout. */
     val busy: Boolean get() = job?.isActive == true
 
-    /** Hai khung chờ dựng của [push]: màn mới còn nằm ngoài màn, chưa trượt - một màn nối tiếp (màn tự mở màn sau) vẫn được đẩy. */
+    /** An entry may redirect while its initial layout is still being staged. */
     private var staging = false
+    private var entering: Pair<Int, CompletableDeferred<Unit>>? = null
+
+    /** A keyed layout acknowledgment; a stale entry cannot start another entry's animation. */
+    fun entryReady(key: Int) {
+        entering?.takeIf { it.first == key }?.second?.complete(Unit)
+    }
 
     fun push(destination: Destination) {
         if (busy && !staging) return // đang trượt: chạm đúp không đẩy hai màn
@@ -137,13 +150,20 @@ class NavState(private val scope: CoroutineScope) {
     private fun enter(next: (BackStack) -> BackStack) {
         job?.cancel()
         job = scope.launch {
-            stack = next(stack)
+            val incoming = next(stack)
             progress.snapTo(0f)
-            // Màn mới được dựng + dàn trang + ghi ở khung đầu khi nó còn nằm ngoài màn (p = 0); hoạt ảnh chỉ bắt đầu sau đó. Nếu chạy ngay, khung nặng nhất
-            // (dựng cả màn) là khung đầu của hoạt ảnh: đồng hồ hoạt ảnh nhảy qua nó và cả đường trượt giật một nhịp.
+            val ready = incoming.top!!.key to CompletableDeferred<Unit>()
+            entering = ready
             staging = true
-            try { repeat(BUILD_FRAMES) { withFrameNanos { } } } finally { staging = false }
-            progress.animateTo(1f, Motion.PushIn)
+            try {
+                stack = incoming
+                // Bounded: an entry that never reports placement must not hold navigation.
+                withTimeoutOrNull(ENTRY_READY_MAX_MS) { ready.second.await() }
+                withFrameNanos { }
+            } finally {
+                if (entering === ready) { entering = null; staging = false }
+            }
+            animateTo(1f, Motion.PushIn)
         }
     }
 
@@ -159,7 +179,7 @@ class NavState(private val scope: CoroutineScope) {
         if (!canPop) return
         job?.cancel()
         job = scope.launch {
-            progress.animateTo(0f, Motion.popOut(progress.value))
+            animateTo(0f, Motion.popOut(progress.value))
             stack = BackStack()
             progress.snapTo(1f)
         }
@@ -175,7 +195,7 @@ class NavState(private val scope: CoroutineScope) {
         if (at == stack.size - 1) return true
         job?.cancel()
         job = scope.launch {
-            progress.animateTo(0f, Motion.popOut(progress.value))
+            animateTo(0f, Motion.popOut(progress.value))
             stack = stack.keep(at + 1)
             progress.snapTo(1f)
         }
@@ -193,17 +213,22 @@ class NavState(private val scope: CoroutineScope) {
 
     /** Thả trước ngưỡng / huỷ: màn quay lại hẳn. */
     suspend fun cancelBack() {
-        progress.animateTo(1f, Motion.PushIn)
+        animateTo(1f, Motion.PushIn)
     }
 
     private suspend fun finishPop() {
-        progress.animateTo(0f, Motion.popOut(progress.value))
+        animateTo(0f, Motion.popOut(progress.value))
         stack = stack.pop()
         progress.snapTo(1f)
     }
 
+    private suspend fun animateTo(target: Float, spec: FiniteAnimationSpec<Float>) {
+        val clock = checkNotNull(currentCoroutineContext()[MonotonicFrameClock])
+        withContext(RenderedFrameClock(clock)) { progress.animateTo(target, spec) }
+    }
+
     private companion object {
-        /** Số khung để màn mới dựng xong trước khi trượt. */
-        const val BUILD_FRAMES = 2
+        /** A cold cover decode on a slow phone stays well under this; past it the page slides without its cover. */
+        const val ENTRY_READY_MAX_MS = 1_500L
     }
 }

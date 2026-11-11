@@ -3,6 +3,7 @@ package vn.abook.player.ui.motion
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.testTag
 import vn.abook.player.ui.components.BookCover
@@ -57,10 +59,15 @@ class BookCoverFlight(private val nav: NavState) {
     }
 
     fun origin(id: String): Rect? = captured?.takeIf { it.first == id }?.second
-    fun clear() { captured = null }
+    fun clear() {
+        captured = null
+        nav.stack.top?.key?.let(nav::entryReady)
+    }
     fun active(id: String): Boolean = origin(id) != null &&
         (nav.stack.top?.destination as? Destination.Book)?.book?.id == id
     fun progress(): Float = nav.progress.value
+    fun entryKey(id: String): Int? = nav.stack.top?.takeIf { (it.destination as? Destination.Book)?.book?.id == id }?.key
+    fun destinationPlaced(key: Int?) { if (key != null) nav.entryReady(key) }
 }
 
 val LocalBookCoverFlight = staticCompositionLocalOf<BookCoverFlight?> { null }
@@ -82,17 +89,24 @@ fun Modifier.bookCoverSource(id: String): Modifier {
 fun FlyingBookCover(book: ListenBook, covers: CoverLoader, width: Dp, modifier: Modifier = Modifier) {
     val flight = LocalBookCoverFlight.current
     val overlay = LocalCoverOverlay.current
-    var destination by remember { mutableStateOf<Rect?>(null) }
-    Box(modifier.onGloballyPositioned { coordinates ->
+    val entry = flight?.entryKey(book.id)
+    var destination by remember(book.id, entry) { mutableStateOf<Rect?>(null) }
+    var placed by remember(book.id, entry) { mutableStateOf(false) }
+    // The page's cover decodes at its own size. After a memory trim the cache is empty: flying the sunken
+    // placeholder would cover the library cell with a blank card until the decode lands.
+    var painted by remember(book.id, entry) { mutableStateOf(false) }
+    LaunchedEffect(entry, placed, painted) { if (placed && painted) flight?.destinationPlaced(entry) }
+    Box(modifier.onPlaced { coordinates ->
         val origin = coordinates.localToRoot(Offset.Zero)
         destination = Rect(origin.x, origin.y, origin.x + coordinates.size.width, origin.y + coordinates.size.height)
+        if (coordinates.size.width > 0 && coordinates.size.height > 0) placed = true
     }) {
         val shared = if (overlay == null) Modifier else with(overlay) {
             Modifier.renderInSharedTransitionScopeOverlay(renderInOverlay = { flight?.active(book.id) == true && flight.progress() < 1f })
         }
         BookCover(book.cover, book.title, book.part, covers, width, Modifier.width(width).then(shared).graphicsLayer {
             if (flight?.active(book.id) != true) return@graphicsLayer
-            val target = destination ?: return@graphicsLayer
+            val target = destination?.takeIf { painted } ?: run { alpha = 0f; return@graphicsLayer }
             val source = flight.origin(book.id) ?: return@graphicsLayer
             val p = flight.progress()
             transformOrigin = TransformOrigin(0f, 0f)
@@ -100,6 +114,6 @@ fun FlyingBookCover(book: ListenBook, covers: CoverLoader, width: Dp, modifier: 
             translationY = (source.top - target.top) * (1f - p)
             scaleX = source.width / size.width + (1f - source.width / size.width) * p
             scaleY = scaleX
-        }.testTag("flying_book_cover"))
+        }.testTag("flying_book_cover"), settled = { painted = true })
     }
 }

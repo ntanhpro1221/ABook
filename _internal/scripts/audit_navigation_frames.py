@@ -2,7 +2,7 @@
 
 Run with the project's Python venv and a JSON manifest. Frame numbers are zero
 based DECODED frames. Manifest checks: cover (multi-size template tracking with
-independent aspect probes), bar (fixed-size template tracking), grid (coloured
+independent aspect probes), flight (cover plus position continuity), bar (fixed-size template tracking), grid (coloured
 artwork occupancy), fade (projection between recorded before/after pixels).
 Each check supplies frames [first,last], reference frame/rect, search rect,
 threshold and optional widths/aspects. Coordinates are source-video pixels.
@@ -110,6 +110,46 @@ def track_covers(frame, templates, check):
         "measured_covers": measured, "unmatched_templates": [match["template"] for match in matches if match not in measured]}
 
 
+def flight_continuity(rows, check):
+    """Gate decoded adjacent frames in either direction, preserving their PTS.
+
+    Endpoint dwell/jitter is not intermediate motion. A missing frame cannot be
+    bridged, and a stationary cover cannot pass a flight check.
+    """
+    good = [r for r in rows if r["matched"]]
+    if len(good) < 2:
+        return {"continuity_pass": False, "intermediate_positions": 0, "jump_pairs": []}
+    start = np.array(good[0]["rect"][:2])
+    end = np.array(good[-1]["rect"][:2])
+    vector = end - start
+    distance = float(np.linalg.norm(vector))
+    # The checked-in 300 ms deceleration curve travels about 46% on its first
+    # 16 ms frame. Half the path admits that curve; the independent four-position
+    # minimum still rejects two-step jumps and endpoint jitter.
+    limit = check.get("max_step_px", distance * check.get("max_step_fraction", .5))
+    steps = []
+    for a, b in zip(rows, rows[1:]):
+        if not (a["matched"] and b["matched"]):
+            continue
+        step = float(np.linalg.norm(np.array(b["rect"][:2]) - a["rect"][:2]))
+        steps.append({"frames": [a["frame"], b["frame"]], "step_px": round(step, 2),
+                      "dt_ms": round((b["time"] - a["time"]) * 1000, 3)})
+    intermediate = []
+    if distance > 0:
+        for row in good:
+            position = np.array(row["rect"][:2])
+            progress = float(np.dot(position - start, vector) / distance ** 2)
+            if .05 < progress < .95 and all(np.linalg.norm(position - p) > check.get("position_tolerance_px", 3) for p in intermediate):
+                intermediate.append(position)
+    jumps = [s for s in steps if s["step_px"] > limit]
+    return {"travel_px": round(distance, 2), "max_step_limit_px": round(limit, 2),
+            "max_position_step": max(steps, key=lambda s: s["step_px"], default=None),
+            "jump_pairs": jumps, "intermediate_positions": len(intermediate),
+            "min_intermediate_positions": check.get("min_intermediate_positions", 4),
+            "continuity_pass": len(good) == len(rows) and distance >= check.get("min_travel_px", 20)
+                and not jumps and len(intermediate) >= check.get("min_intermediate_positions", 4)}
+
+
 def evaluate(manifest, output):
     video = Path(manifest["video"])
     timing = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(video), "-vf", "showinfo", "-vsync", "0", "-an", "-f", "null", "-"], capture_output=True, text=True, timeout=60, check=True)
@@ -139,8 +179,10 @@ def evaluate(manifest, output):
                 continue
             row = {"frame": index, "time": pts[index] if index < len(pts) else None}
             kind = check["kind"]
-            if kind in ("cover", "bar"):
-                row.update(track_covers(frame, templates[check["name"]], check) if kind == "cover" else track(frame, templates[check["name"]][0], check))
+            if kind in ("cover", "flight", "bar"):
+                if kind == "flight" and len(templates[check["name"]]) != 1:
+                    raise ValueError("a flight must track exactly one cover")
+                row.update(track_covers(frame, templates[check["name"]], check) if kind != "bar" else track(frame, templates[check["name"]][0], check))
                 row["matched"] = row["score"] >= check.get("threshold", .7)
             elif kind == "grid":
                 area = crop(frame, check["rect"]).astype(float)
@@ -180,13 +222,16 @@ def evaluate(manifest, output):
         rows = records[check["name"]]
         kind = check["kind"]
         item = {"kind": kind, "measured_frames": len(rows)}
-        if kind in ("cover", "bar"):
+        if kind in ("cover", "flight", "bar"):
             good = [r for r in rows if r["matched"]]
             item["missing_frames"] = [r["frame"] for r in rows if not r["matched"]]
-            if kind == "cover":
+            if kind in ("cover", "flight"):
                 item["max_aspect_error"] = max((r["aspect_error"] for r in good), default=None)
                 item["aspect_unknown_frames"] = item["missing_frames"]
                 item["pass"] = bool(rows) and not item["missing_frames"] and item["max_aspect_error"] <= .05
+                if kind == "flight":
+                    item.update(flight_continuity(rows, check))
+                    item["pass"] = item["pass"] and item["continuity_pass"]
             else:
                 ys = [r["rect"][1] for r in good]
                 item["y_range_px"] = round(max(ys) - min(ys), 2) if ys else None

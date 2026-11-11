@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +65,7 @@ fun BookCover(
     width: Dp,
     modifier: Modifier = Modifier,
     small: Boolean = false,
+    settled: (() -> Unit)? = null,
 ) {
     val density = LocalDensity.current
     val widthPx = with(density) { width.roundToPx() }
@@ -72,8 +74,14 @@ fun BookCover(
     val stamp = cover?.stamp ?: 0L
     val key = remember(path, stamp, widthPx) { path?.let { covers.key(it, stamp, widthPx) } }
     val image = remember(path, stamp) { mutableStateOf(key?.let(covers::peek) ?: path?.let { covers.peek(it, stamp) }) }
+    // Final pixels are known: decoded, generated, or the decode gave up. Until then this cover is only the sunken placeholder.
+    val decided = remember(key) { mutableStateOf(key == null || path == null || image.value != null) }
     if (key != null && path != null) {
-        LaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it } }
+        LaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it }; decided.value = true }
+    }
+    if (settled != null && decided.value) {
+        val current = rememberUpdatedState(settled)
+        LaunchedEffect(Unit) { current.value() }
     }
     val shape = if (small) SmallShape else BookCoverShape
     val sunken = Abook.colors.bgSunken
