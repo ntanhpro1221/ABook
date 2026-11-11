@@ -82,7 +82,7 @@ export function ValuePicker({
     const measure = () => {
       const width = host.getBoundingClientRect().width;
       if (width <= 0) return;
-      const widths = [...host.querySelectorAll<HTMLElement>("[data-value-label-measure]")].map(node => node.getBoundingClientRect().width);
+      const widths = [...host.querySelectorAll<HTMLElement>("[data-value-label-measure]")].map(node => Math.ceil(node.getBoundingClientRect().width) + 1); // + 1px: centred text snaps to device pixels
       const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
       const next = tickLabels(spec.typical.map(v => toFraction(spec, v)), widths, width, rem / 2, rem / 4);
       setPlan(old => old.inset === next.inset && old.aligned === next.aligned ? old : next);
@@ -296,7 +296,7 @@ export function ValuePicker({
       <div className="flex items-start">
         {stepButton(-1)}
         <div ref={rulerHost} className={cn("relative min-w-0 flex-1", !plan.aligned ? "h-12" : dense ? "h-14" : "h-16")}>
-          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold", dense ? "text-xs" : "text-sm")}>{text}</span>)}
+          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold tabular", dense ? "text-xs" : "text-sm")}>{text}</span>)}
           <div
           ref={track}
           role="slider"
@@ -434,6 +434,6 @@ function BalancedChips({label, children}: {label: string; children: ReactNode}) 
   }, [label, items.length]);
   const groups = rows.length ? rows : [items.map((_, i) => i)];
   return <div ref={ref} role="group" aria-label={label} data-value-chips className="flex flex-col">
-    {groups.map((group, i) => <div key={i} data-value-chip-row className="flex justify-between gap-1">{group.map(index => items[index])}</div>)}
+    {groups.map((group, i) => <div key={i} data-value-chip-row className={cn("flex gap-1", group.length === 1 ? "justify-center" : "justify-between")}>{group.map(index => items[index])}</div>)}
   </div>;
 }

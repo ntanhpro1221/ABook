@@ -10,7 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -265,7 +265,7 @@ fun ValuePicker(
                             // Detents are real nodes so the label-under-detent rule is measured on the layout, not recomputed.
                             if (plan.aligned) fractions.forEachIndexed { index, f ->
                                 Box(Modifier.offset { IntOffset((plan.centre(f, rulerWidth) - 1.dp.toPx()).roundToInt(), 19.dp.roundToPx()) }
-                                    .size(2.dp, 10.dp).background(colors.text2.copy(alpha = .6f), RoundedCornerShape(1.dp)).testTag("${tag}_tick_$index"))
+                                    .size(2.dp, 10.dp).background(colors.text2.copy(alpha = .6f), CircleShape).testTag("${tag}_tick_$index"))
                             }
                             Canvas(Modifier.matchParentSize()) {
                                 drawCircle(colors.accent, (if (moving != null) 9 else 7).dp.toPx(), Offset(inset + drawn * (size.width - 2 * inset), size.height / 2))

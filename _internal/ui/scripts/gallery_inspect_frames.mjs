@@ -22,14 +22,22 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     const probe = document.createElement('span');
     probe.style.color = 'var(--text)'; picker.append(probe);
     const textColor = css(probe).color; probe.remove();
-    for (const chip of picker.querySelectorAll('[data-value-chip][aria-pressed="true"]')) {
-      const label = chip.querySelector('[data-value-label]') ?? chip;
+    for (const chip of picker.querySelectorAll('[data-value-chip][aria-pressed="true"], [data-value-display][aria-pressed="true"]')) {
+      const label = chip.querySelector('[data-value-label], span') ?? chip;
       if (css(label).color !== textColor || Number(css(label).fontWeight) < 600)
         add('PICKER GEOMETRY', label, label.textContent, [rect(label.getBoundingClientRect())], {metric: 'picker-selected-text', reason: 'Selected numerals use bold --text; amber belongs to track and thumb'});
     }
-    const labels = [...picker.querySelectorAll('[data-value-tick-label]')];
+    if (picker.hasAttribute('data-value-stepper')) {
+      const label = picker.querySelector('[data-value-section-label]')?.getBoundingClientRect();
+      const value = picker.querySelector('[data-value-display], [data-value-input]')?.getBoundingClientRect();
+      const expected = Number.parseFloat(css(document.documentElement).fontSize) / 2;
+      if (label && value && Math.abs(value.top - label.bottom - expected) > 0.6)
+        add('PICKER GEOMETRY', picker, picker.textContent, [rect(label), rect(value)], {metric: 'picker-count-rhythm', reason: 'Count labels use the same eight-point gap above a 48px value field'});
+    }
     const ticks = [...picker.querySelectorAll('[data-value-detent]')];
-    if (ticks.length && ticks.length !== picker.querySelectorAll('[data-value-chip]').length)
+    const chips = [...picker.querySelectorAll('[data-value-chip]')];
+    const labels = ticks.length ? chips : [...picker.querySelectorAll('[data-value-tick-label]')];
+    if ((ticks.length || labels.length) && ticks.length !== chips.length)
       add('PICKER GEOMETRY', picker, picker.textContent, [box], {metric: 'picker-tick-count', reason: 'Every quick value has exactly one detent, including track endpoints'});
     const ruler = picker.querySelector('[data-value-ruler]')?.getBoundingClientRect();
     labels.forEach((button, i) => {

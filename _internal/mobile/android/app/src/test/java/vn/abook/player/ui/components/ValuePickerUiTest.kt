@@ -36,7 +36,7 @@ class ValuePickerUiTest {
         val label = rule.onNodeWithTag("count_section_label").getUnclippedBoundsInRoot()
         val field = rule.onNodeWithTag("count_value").getUnclippedBoundsInRoot()
         assertEquals(8f, (field.top - label.bottom).value, 0.1f)
-        assertTrue(field.height >= 48.dp)
+        assertTrue(field.bottom - field.top >= 48.dp)
         rule.onNodeWithTag("count_up").performClick()
         rule.runOnIdle { assertEquals(4.0, value.value, 0.0) }
         rule.onNodeWithTag("count_down").performClick()
@@ -68,6 +68,8 @@ class ValuePickerUiTest {
                 rule.onAllNodesWithTag("probe_tick_$i", useUnmergedTree = true).fetchSemanticsNodes().singleOrNull()?.boundsInRoot
             }
             val labels = spec.typical.indices.map { i -> rule.onNodeWithTag("probe_label_$i", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
+            val fallback = rule.onAllNodesWithTag("probe_chips", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            assertEquals("$name detent count", if (fallback) 0 else labels.size, ticks.size)
             fun check(captions: List<androidx.compose.ui.geometry.Rect>) {
                 assertTrue("$name: count", ticks.isEmpty() || ticks.size == captions.size)
                 captions.forEachIndexed { i, label ->

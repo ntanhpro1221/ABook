@@ -37,9 +37,34 @@ Column {
     readonly property string rangeText: S.s_trong_khoang_0_1_5313ae3f(format(spec.min), format(spec.max))
     property real latest: shown
     // Hosts can reserve one measured shortcut row before deciding their panel width.
-    readonly property real minimumWidth: dense ? 0 : chips.widths.reduce(function(sum, width) { return sum + width }, 0) + Math.max(0, chips.widths.length - 1) * 4
+    // The shortcuts live between the -/+ buttons (96px), either as captions under their detents or as one chip row - whichever is narrower.
+    readonly property real minimumWidth: {
+        if (dense) return 0
+        const row = chips.widths.reduce(function(sum, width) { return sum + width }, 0) + Math.max(0, chips.widths.length - 1) * 4
+        const captions = Logic.minAlignedWidth(spec.typical.map(function(v) { return Logic.toFraction(root.spec, v) }), labelWidths, 8, 4)
+        return 96 + (captions > 0 ? Math.min(captions, row) : row)
+    }
 
-    readonly property var labelWidths: spec.typical.map(function(v) { return labelMetrics.advanceWidth(Logic.formatNumber(root.spec, v)) })
+    // Measured on real Text items in the selected (bold) weight: a Text is up to 2px wider than FontMetrics.advanceWidth, which let "1,5" hang
+    // past the ruler. + 1px: a centred Text snaps to whole pixels.
+    readonly property var labelWidths: {
+        const count = labelMeasure.count
+        return spec.typical.map(function(v, i) {
+            const item = i < count ? labelMeasure.itemAt(i) : null
+            return 1 + (item ? item.implicitWidth : labelMetrics.advanceWidth(Logic.formatNumber(root.spec, v)) + 2)
+        })
+    }
+    Repeater {
+        id: labelMeasure
+        model: root.spec.typical
+        Text {
+            required property var modelData
+            visible: false
+            text: Logic.formatNumber(root.spec, modelData)
+            font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale
+            font.weight: 600
+        }
+    }
     readonly property var labelPlan: Logic.tickLabels(spec.typical.map(function(v) { return Logic.toFraction(root.spec, v) }), labelWidths, ruler.width, 8, 4)
     FontMetrics { id: labelMetrics; font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale; font.weight: 600 }
 
@@ -136,6 +161,7 @@ Column {
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.text; opacity: display.hovered ? 0.05 : 0 }
                 Text {
                     id: bigText
+                    objectName: "valueNumber"
                     anchors.centerIn: parent
                     text: root.format(root.shown)
                     color: root.dense ? Theme.text2 : Theme.text
@@ -276,10 +302,12 @@ Column {
                     activeFocusOnTab: root.enabled
                     Accessible.role: Accessible.Button
                     Accessible.name: root.format(modelData)
-                    Accessible.onPressAction: root.commit(modelData)
-                    Keys.onReturnPressed: root.commit(modelData)
-                    Keys.onEnterPressed: root.commit(modelData)
-                    Keys.onSpacePressed: root.commit(modelData)
+                    // Same entry point as the fallback ChoiceChip, so keyboard, assistive tech and tests activate either form alike.
+                    function clicked() { Feedback.play("toggle"); root.clampNote = false; root.commit(modelData) }
+                    Accessible.onPressAction: clicked()
+                    Keys.onReturnPressed: clicked()
+                    Keys.onEnterPressed: clicked()
+                    Keys.onSpacePressed: clicked()
                     Rectangle {
                         anchors.fill: parent; anchors.margins: -2
                         radius: Theme.radiusControl

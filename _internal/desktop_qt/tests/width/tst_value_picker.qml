@@ -71,6 +71,12 @@ Item {
         function captionFaults(control) {
             const ruler = findChild(control, "valueRuler")
             let faults = 0
+            function countTicks(item) {
+                let count = String(item.objectName).startsWith("valueTick_") ? 1 : 0
+                for (const child of item.children || []) count += countTicks(child)
+                return count
+            }
+            if (countTicks(control) !== (control.labelPlan.aligned ? control.spec.typical.length : 0)) faults++
             for (let i = 0; i < control.spec.typical.length; i++) {
                 const label = findChild(control, "valueLabel_" + i)
                 const tick = findChild(control, "valueTick_" + i)
@@ -99,13 +105,12 @@ Item {
         }
 
         function test_captionDetectorRejectsShiftedAndMissingTicks() {
-            verify(waitForRendering(picker))
+            waitForRendering(picker)
             compare(captionFaults(picker), 0)
             const label = findChild(picker, "valueLabel_0")
-            const oldX = label.x
-            label.x += 9
+            label.anchors.horizontalCenterOffset = 9
             verify(captionFaults(picker) > 0, "a deliberate 9px misalignment must be red")
-            label.x = oldX
+            label.anchors.horizontalCenterOffset = 0
             const tick = findChild(picker, "valueTick_0")
             tick.objectName = "brokenTick"
             verify(captionFaults(picker) > 0, "a missing tick must be red")
@@ -125,6 +130,8 @@ Item {
             const at = display.mapToItem(picker, 0, 0)
             compare(at.y - label.y - label.height, 8)
             compare(display.height, 48)
+            compare(findChild(picker, "valueNumber").color, Theme.text)
+            compare(findChild(picker, "valueNumber").font.weight, 600)
             mouseClick(findChild(picker, "valueCountUp")); compare(picker.value, 4)
             mouseClick(findChild(picker, "valueCountDown")); compare(picker.value, 3)
             picker.stepperOnly = false
