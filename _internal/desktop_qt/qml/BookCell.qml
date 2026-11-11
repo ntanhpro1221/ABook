@@ -3,9 +3,10 @@ import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
 
-// Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, tên và dòng phụ dưới bìa xuống dòng đủ (không bao giờ cắt chữ của
-// người dùng), nên ô cao theo chữ; hàng lưới (LibraryScreen) cao theo ô cao nhất của hàng.
-// Tiến độ nghe = vạch mảnh ở đáy bìa; sách của máy khác có nhãn nhỏ ở góc bìa.
+// Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, dưới bìa tên 2 dòng DÀNH SẴN + dòng phụ 1 dòng cắt "…" - mọi ô cao bằng
+// nhau, hàng lưới phẳng (soát thiết kế 10-11 L5/L11, như điện thoại). Bìa vẽ (không ảnh) đã in tên: dưới bìa chỉ còn dòng phụ, chỗ của tên vẫn
+// giữ - không in tên hai lần. Tên đầy đủ ở trang sách và Accessible.name. Tiến độ nghe = vạch mảnh ở đáy bìa; sách của máy khác: "Trên <máy>"
+// đứng đầu dòng phụ, có icon máy tính.
 Interactive {
     id: root
     property string title: ""
@@ -21,7 +22,11 @@ Interactive {
     property bool onPlayButton: false
     property real coverWidth: Theme.coverMin
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
-    readonly property real textBlock: 12 + titleText.implicitHeight + (subtitleText.visible ? 4 + subtitleText.implicitHeight : 0) + (sourceText.visible ? 4 + sourceText.implicitHeight : 0)
+    // Bìa vẽ từ tên (không ảnh) đã in tên sách lên bìa.
+    readonly property bool drawnTitle: coverKey === ""
+    readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.subtitle]
+        .filter(part => part !== "").join("\u00a0·\u00a0")
+    readonly property real textBlock: 12 + root.titleHeight + 4 + subtitleText.height
 
     activeFocusOnTab: false
     ringRadius: Theme.radiusCover
@@ -57,7 +62,7 @@ Interactive {
             Behavior on opacity { NumberAnimation { duration: Theme.motionFastOut } }
         }
         Rectangle {          // vạch tiến độ
-            visible: root.progress > 0.005 && root.progress < 0.995
+            visible: root.progress >= Theme.progressFillMin && root.progress < 0.995
             x: 8
             y: parent.height - 11
             width: parent.width - 16
@@ -94,43 +99,44 @@ Interactive {
             }
         }
     }
+    // Hai dòng tên mẫu: chiều cao dành sẵn cho tên, có hay không có tên dưới bìa.
+    FontMetrics { id: titleMetrics; font: titleText.font }
+    readonly property real titleHeight: titleMetrics.height * 1.3 * 2
     Text {
         id: titleText
+        objectName: "bookCellTitle"
+        visible: !root.drawnTitle
         x: 0
-        y: root.coverHeight + 12
+        y: root.subtitleFirst ? subtitleText.y + subtitleText.height + 4 : root.coverHeight + 12
         width: root.coverWidth
+        height: root.titleHeight
         text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
+        maximumLineCount: 2   // text-cut-ok: tên dưới bìa giữ đúng 2 dòng để mọi ô cao bằng nhau (DESIGN.md mục 6); tên đầy đủ ở trang sách và Accessible.name
+        elide: Text.ElideRight   // text-cut-ok: như trên
         lineHeight: 1.3
         font.pixelSize: Theme.sizeBodySmall
         font.weight: Theme.weightMedium
     }
+    readonly property bool subtitleFirst: root.drawnTitle
     Text {
         id: subtitleText
-        visible: text !== ""
-        x: 0
-        y: titleText.y + titleText.implicitHeight + 4
-        width: root.coverWidth
-        text: TextWrap.keepDots(root.subtitle)
+        objectName: "bookCellSubtitle"
+        x: root.source !== "" ? 18 : 0
+        y: root.subtitleFirst ? root.coverHeight + 12 : titleText.y + titleText.height + 4
+        width: root.coverWidth - x
+        text: TextWrap.keepDots(root.subLine)
         color: Theme.text3
-        wrapMode: Text.Wrap
+        wrapMode: Text.NoWrap
+        maximumLineCount: 1   // text-cut-ok: dòng phụ ô lưới một dòng (DESIGN.md mục 6), phần đầu là thứ quan trọng
+        elide: Text.ElideRight   // text-cut-ok: như trên
         font.pixelSize: Theme.sizeCaption
     }
-    // Same laptop mark and source placement as web: below the title, leaving
-    // the cover's printed title unobstructed.
-    Text {
-        id: sourceText
-        visible: root.source !== ""
-        x: 18
-        y: subtitleText.y + (subtitleText.visible ? subtitleText.implicitHeight + 4 : 0)
-        width: root.coverWidth - x
-        text: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
-        color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
-    }
+    // Same laptop mark as web, leading the one subtitle line.
     Icon {
-        x: 0; y: sourceText.y + 2; size: 12; name: "laptop"; color: Theme.text3
-        visible: sourceText.visible
+        x: 0; y: subtitleText.y + 2; size: 12; name: "laptop"; color: Theme.text3
+        visible: root.source !== ""
         Accessible.name: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
     }
 }

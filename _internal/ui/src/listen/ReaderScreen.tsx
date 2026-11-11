@@ -454,12 +454,14 @@ export function ReaderScreen(edit: SentenceEditing) {
         <MotionRegion motionKey="floating" className={FLOATING}>
           <div className={cn(FLOATING_BODY, "flex-col items-center")}>
             <MotionPresence open={Boolean(menu.bar)} className="w-full">{menu.bar}</MotionPresence>
-            <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} className="mb-2" /></MotionPresence>
             {/* Đang chọn câu thì thanh việc của câu thay chỗ thanh này. */}
             {/* Vùng có khoá riêng: "Nghe từ đây" tới / đi (giọng máy sẵn sàng muộn) mờ qua cả thanh, không bật vào đẩy các nút khác. */}
             <MotionPresence open={controls && !menu.bar}><MotionRegion motionKey={canListen}>{bar}</MotionRegion></MotionPresence>
           </div>
         </MotionRegion>
+      </div>
+      <div data-reading-dock className="flex h-12 shrink-0 items-center justify-center bg-bg">
+        <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />
       {menu.dialogs}

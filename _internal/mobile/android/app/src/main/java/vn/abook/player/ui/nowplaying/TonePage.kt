@@ -109,7 +109,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
                         Row(Modifier.fillMaxWidth().padding(start=32.dp),horizontalArrangement=Arrangement.spacedBy(Dim.s24)) {
                             TextAction(S.s_doi_ten_a2a0dc70,{menu=null;target=preset.id;name=preset.name;form="rename"},"tone_rename",align=Alignment.CenterStart)
                             TextAction(S.s_tone_duplicate,{menu=null;target=preset.id;name=suggest;form="duplicate"},"tone_duplicate",align=Alignment.CenterStart)
-                            TextAction(S.s_xoa_777195ab,{menu=null;AudioFx.changeTone { undo=it.delete(preset.id) }},"tone_delete",align=Alignment.CenterStart)
+                            TextAction(S.s_xoa_777195ab,{menu=null;AudioFx.changeTone { undo=it.delete(preset.id) }},"tone_delete",align=Alignment.CenterStart,danger=true)
                         }
                     }
                     RowLine()

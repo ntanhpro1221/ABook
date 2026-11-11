@@ -167,7 +167,6 @@ Column {
                     color: root.dense ? Theme.text2 : Theme.text
                     font.pixelSize: root.dense ? Theme.sizeBodySmall : Theme.sizeTitlePhone
                     font.weight: root.dense ? Theme.weightRegular : 600
-                    font.features: { "tnum": 1 }
                 }
             }
             FormField {
@@ -179,7 +178,6 @@ Column {
                 horizontalAlignment: TextEdit.AlignHCenter
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                 escapeLocal: true
-                font.features: { "tnum": 1 }
                 onAccepted: root.finishTyping(text)
                 onEscaped: root.finishTyping(null)
                 onActiveFocusChanged: if (!activeFocus && root.typing) root.finishTyping(text)

@@ -158,7 +158,7 @@ describe("ticking numbers stay in place", () => {
   });
   it("live-value CSS uses tabular digits, including the real fallback font, without value transitions", () => {
     const css = readFileSync(join(root, "styles.css"), "utf8");
-    for (const selector of [".tabular", ".tabular-nums", ".ticking-value", "[data-motion-live]"]) {
+    for (const selector of [".tabular-cell", ".ticking-value", "[data-motion-live]"]) {
       const rule = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(match => match[1].split(",").map(s => s.trim()).includes(selector));
       expect(rule, selector).toBeDefined();
       expect(rule![2]).toMatch(/font-variant-numeric:\s*tabular-nums/);

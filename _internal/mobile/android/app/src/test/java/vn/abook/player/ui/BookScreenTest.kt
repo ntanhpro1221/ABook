@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.width
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -169,7 +170,7 @@ class BookScreenTest {
     fun listeningLight() {
         show(detail(listening()))
         rule.onNodeWithText("Nghe tiếp").assertIsDisplayed()
-        rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng") and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
+        rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng", substring = true) and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
             .assertIsDisplayed()
         rule.onNodeWithTag("chapter_3").assertIsSelected()
         shot("book_listening_light")
@@ -440,6 +441,59 @@ class BookScreenTest {
         assertTrue(played.isEmpty())
         // Không còn hàng nào ghi "Sắp có": Xuất MP3 / M4B đã là việc thật.
         rule.onAllNodesWithText("Sắp có").assertCountEquals(0)
+    }
+
+    /**
+     * Soát thiết kế 10-11 việc 3 (L4, L7): nút chính một dòng "Nghe tiếp · Chương N", cao ĐÚNG 48 ở mọi trạng thái; hàng phụ bốn mục đều có nhãn (như Qt);
+     * Tab Chương must stay in place for partial books as well; their production note belongs with the chapter list.
+     */
+    private fun assertPrimaryIsOneFixedLine() {
+        val playing = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
+        val states = listOf(
+            "fresh" to (detail() to PlayerState.Empty),
+            "listening" to (detail(listening()) to PlayerState.Empty),
+            "playing" to (detail(listening()) to playing),
+            "partial" to (detail(complete = false) to PlayerState.Empty),
+            "finished" to (detail(finished()) to PlayerState.Empty),
+        )
+        var which by mutableStateOf(0)
+        source = FakeSource(states[0].second.first)
+        rule.setContent {
+            AbookTheme(false) {
+                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                    key(which) {
+                        val (shown, player) = states[which].second
+                        BookScreen(shown.book, LibraryState.Ready(listOf(shown.book)), player, PlayerClock(), CoverLoader(1 shl 20), source, sheets, actions)
+                    }
+                }
+            }
+        }
+        val tabs = states.indices.map { i ->
+            source.detail = states[i].second.first
+            which = i
+            rule.waitForIdle()
+            val name = states[i].first
+            val primary = rule.onNodeWithTag("book_primary").getUnclippedBoundsInRoot()
+            assertEquals("$name: nút chính cao 48", 48f, (primary.bottom - primary.top).value, 0.5f)
+            for (tag in listOf("book_read", "book_find", "book_restart", "book_more")) rule.onNodeWithTag(tag).assertExists()
+            name to rule.onNodeWithTag("book_tab_chapters", useUnmergedTree = true).getUnclippedBoundsInRoot().top.value
+        }
+        val first = tabs.first().second
+        for ((name, top) in tabs) assertEquals("$name: tab Chương đứng yên", first, top, 1f)
+    }
+
+    @Test fun primaryIsOneFixedLineInEveryState() = assertPrimaryIsOneFixedLine()
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun primaryIsOneFixedLineAtLargeFontScale() = assertPrimaryIsOneFixedLine()
+
+    @Test
+    fun secondaryRowHasFourLabelledActions() {
+        show(detail(listening()))
+        for (label in listOf("Đọc", "Tìm", "Từ đầu", "Thêm")) {
+            rule.onNode(hasText(label) and hasAnyAncestor(hasTestTag("book_secondary")), useUnmergedTree = true).assertIsDisplayed()
+        }
     }
 
     @Test

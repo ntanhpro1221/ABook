@@ -466,7 +466,7 @@ export function SourceStep({
               >
                 <div className="motion-progress h-full rounded-full bg-accent" style={{ transform: `scaleX(${percent / 100})` }} />
               </div>
-              <p className="tabular mt-1.5 text-xs text-fg-2">
+              <p className="mt-1.5 text-xs text-fg-2">
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress(S.s_dang_gui_cac_chuong_d7b47553, uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
               <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
@@ -623,7 +623,7 @@ export function SourceStep({
           />
           <CreditSuggestion files={files} drop={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-            <div className="tabular text-sm text-fg-2">
+            <div className="text-sm text-fg-2">
               <span className="font-semibold text-fg">{files.length}{S.s_chuong_9e6a01dc}</span> · {approx(scan!.totals.words, scan!.totals.estimated)}{S.s_chu_khoang_7a1a54c6}{" "}
               {formatLength(scan!.totals.audioSeconds)}{S.s_audio_7024c69b}</div>
             <div className="flex gap-1">
@@ -683,7 +683,7 @@ export function SourceStep({
                   <div
                     className="group grid grid-cols-[auto_minmax(0,1fr)_90px_36px] items-center gap-2 px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto]"
                   >
-                    <span className="tabular text-right text-xs text-fg-2" style={{ width: `${String(files.length).length}ch` }}>
+                    <span className="tabular-cell text-right text-xs text-fg-2" style={{ width: `${String(files.length).length}ch` }}>
                       {part >= 0 && <span className="sr-only">{S.s_phan_a17569d5}{part + 1}{S.s_bat_dau_85cad92e}</span>}
                       {index >= 0 ? index + 1 : ""}
                     </span>
@@ -691,7 +691,7 @@ export function SourceStep({
                       <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
                       <div className="truncate text-xs text-fg-2">{file.name}</div>
                     </div>
-                    <div className="tabular text-right text-xs text-fg-2">
+                    <div className="tabular-cell text-right text-xs text-fg-2">
                       <div>{approx(file.words, file.estimated)}{S.s_chu_6117d040}</div>
                       {file.chars > 0 && <div className="text-fg-3">{approx(file.chars, file.estimated)}{S.s_ky_tu_c7cc4ddf}</div>}
                     </div>

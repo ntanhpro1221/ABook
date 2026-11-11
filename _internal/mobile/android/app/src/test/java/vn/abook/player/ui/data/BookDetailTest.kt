@@ -65,7 +65,7 @@ class BookDetailTest {
     @Test
     fun `meta, status and progress lines`() {
         val book = BookDetail.of(manifest(audio(1), audio(2), complete = false).put("chaptersTotal", 5), null, { null }).book
-        assertEquals("Tác giả · Giọng Hoài My · 2/5 chương có audio · 20 phút", BookPage.metaLine(book))
+        assertEquals("Tác giả · Giọng Hoài My · 5 chương · 20 phút", BookPage.metaLine(book))
         assertEquals("Sách này có 2/5 chương đã thu - các chương sau chưa có audio", BookPage.statusLine(book))
         assertEquals("Chưa nghe · 20 phút", BookPage.progressLine(book))
         val heard = BookDetail.of(manifest(audio(1), audio(2)), state(1 to JSONObject().put("heard", 600.0).put("done", true)), { null }).book

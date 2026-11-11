@@ -17,12 +17,13 @@ describe("TabLabel", () => {
     const html = renderToStaticMarkup(<TabLabel count={24}>Chương</TabLabel>);
     expect(html).toMatch(/\bitems-baseline\b/);
     expect(html).not.toMatch(/rounded-full|bg-hover|px-1\.5/);
-    expect(html).toMatch(/tabular[^"]*text-fg-2/);
+    expect(html).toMatch(/font-normal[^"]*text-fg-2/);
+    expect(html).not.toMatch(/tabular/);   // số trong nhãn là số tỉ lệ (DESIGN.md 5.5)
     expect(html).toContain('<span class="sr-only">, </span>24<span class="sr-only"> mục</span>');
   });
 
   it("không có số thì không có gì sau tên tab", () => {
-    expect(renderToStaticMarkup(<TabLabel>Nhân vật</TabLabel>)).not.toContain("tabular");
+    expect(renderToStaticMarkup(<TabLabel>Nhân vật</TabLabel>)).not.toContain("sr-only");
   });
 });
 

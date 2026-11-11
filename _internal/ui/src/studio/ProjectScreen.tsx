@@ -179,7 +179,7 @@ function Step({
       {progress !== undefined && state !== "pending" && (
         <div className="mt-3 flex items-center gap-2">
           <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" label={title} />
-          <span className="tabular w-9 text-right text-xs font-semibold"><TickingValue>{formatPercent(progress)}</TickingValue></span>
+          <span className="w-9 text-right text-xs font-semibold"><TickingValue>{formatPercent(progress)}</TickingValue></span>
         </div>
       )}
     </MotionRegion>
@@ -287,7 +287,7 @@ export function HeaderProgress({ book }: { book: BookSummary }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-1 basis-48 items-center gap-3 sm:max-w-xs">
           <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label={S.s_tien_do_ca_sach_25195f69} />
-          <span className="tabular w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
+          <span className="w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
         </div>
         {note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}
       </div>
@@ -970,13 +970,13 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
               </>
             ) : (
               <>
-                <span className="tabular w-[var(--chapter-number)] text-left text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
+                <span className="tabular-cell w-[var(--chapter-number)] text-left text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
                 <Play className="absolute left-[5.5px] top-1/2 size-4 -translate-y-1/2 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             )}
           </button>
         ) : (
-          <span className="tabular w-[var(--chapter-number)] text-xs text-fg-3">{chapter.index}</span>
+          <span className="tabular-cell w-[var(--chapter-number)] text-xs text-fg-3">{chapter.index}</span>
         )}
       </div>
       <div role="cell" className="min-w-0">
@@ -991,7 +991,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         {working ? (
           <div className="flex items-baseline gap-2" title={book.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2}>
             <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label={S.s_da_thu_am_1a6a3e8a} />
-            <span className="tabular text-xs text-fg-2">
+            <span className="text-xs text-fg-2">
               {book.running ? "" : S.s_dung_o_f47312a8}
               <TickingValue>{chapter.segments.finished}/{chapter.segments.total}</TickingValue>
             </span>
@@ -1002,10 +1002,10 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
           <span className="sr-only">{chapter.statusLabel}</span>
         )}
       </div>
-      <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
+      <div role="cell" className="tabular-cell hidden text-right text-xs text-fg-2 lg:block">
         {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? S.s_0_cau_2a1e6590(formatNumber(chapter.segments.total)) : ""}
       </div>
-      <div data-motion-live role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
+      <div data-motion-live role="cell" className="tabular-cell hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
       <div role="cell" className="flex justify-end [&>button]:-mr-[5px]">
@@ -1139,7 +1139,7 @@ function ActivityView({ book }: { book: BookSummary }) {
                   <div className="relative py-1.5 pl-8 text-sm">
                     {/* Chấm đứng đúng TRÊN vạch: tâm chấm = tâm vạch (mép trái ol + 0,5 px): nội dung bắt đầu sau vạch 1 px + lề pl-5 (5 đơn vị), nửa chấm = 1 đơn vị, nên lùi 6 đơn vị + 0,5 px tính từ chữ - tức 2 đơn vị - 0,5 px từ mép hộp hàng (đã lùi 8); tâm dọc = tâm dòng chữ đầu (top-3.5). */}
                     <span className={cn("absolute left-[calc(var(--spacing)*2-0.5px)] top-3.5 size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
-                    <span className="tabular mr-3 text-xs text-fg-3">{formatTime(item.at).split(" · ")[0]}</span>
+                    <span className="tabular-cell mr-3 text-xs text-fg-3">{formatTime(item.at).split(" · ")[0]}</span>
                     <span className={cn(item.level === "warning" && "text-fg", item.level === "info" && "text-fg-2")}>{item.text}</span>
                   </div>
                 )}
@@ -1225,7 +1225,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
               <DropdownMenu.Item key={key} onSelect={() => onTab(key)} className={MENU_ITEM}>
                 <span className="grid size-4 place-items-center" aria-hidden>{key === tab && <Check className="size-4 text-accent-text" />}</span>
                 {TAB_LABEL[key]}
-                {counts[key] ? <span className="tabular ml-auto pl-3 text-xs text-fg-2">{counts[key]}</span> : null}
+                {counts[key] ? <span className="ml-auto pl-3 text-xs text-fg-2">{counts[key]}</span> : null}
               </DropdownMenu.Item>
             ))}
           </DropdownMenu.Content>
@@ -1364,7 +1364,7 @@ export function ProjectScreen() {
         <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
           <div className="min-w-0 sm:contents">
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{book.title}</h1>
-          <DotJoin className="tabular mt-2 text-sm text-fg-2" parts={meta} />
+          <DotJoin className="mt-2 text-sm text-fg-2" parts={meta} />
           <PartLinks id={book.id} />
           <HeaderProgress book={book} />
           </div>

@@ -90,7 +90,7 @@ export function PendingList({
               {item.from && <span className="text-fg-3">{S.s_tu_02926cd1}{item.from}</span>}
             </span>
             {showLines && (
-              <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
+              <span className="shrink-0 pt-0.5 text-xs text-fg-3">
                 {item.lines ? S.s_0_cau_thu_lai_372ad9c3(formatNumber(item.lines)) : S.s_chua_thu_khong_ton_gi_d0da00cf}
               </span>
             )}

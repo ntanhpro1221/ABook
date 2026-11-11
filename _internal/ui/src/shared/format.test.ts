@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, joinParts, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading, storageSummary } from "./format";
+import { MUSIC_MODIFIED_NOTE, PROGRESS_FILL_MIN, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, joinParts, licenseLabel, musicCreditText, musicNeedsModifiedNote, progressFill, shownReading, storageSummary } from "./format";
 
 describe("joinParts", () => {
   it("nối các phần bằng đúng một dấu \" · \" và bỏ phần rỗng", () => {
@@ -163,5 +163,15 @@ describe("storageSummary", () => {
     expect(storageSummary(0, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
     expect(storageSummary(300, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
     expect(storageSummary(2 * 1024 ** 2, 10 * 1024 ** 3)).toBe("Sách 2 MB · còn trống 10 GB");
+  });
+});
+
+describe("progressFill", () => {
+  // Soát 10-11 L13: dưới 2 % một gạch hổ phách vài điểm ảnh dưới chữ trông như lỗi - không vẽ phần đã tô. Cùng ngưỡng Android / Qt.
+  it("draws no fill below 2 % and keeps the fraction from 2 % up", () => {
+    expect(PROGRESS_FILL_MIN).toBe(0.02);
+    for (const f of [-1, 0, 0.001, 0.01, 0.0199, Number.NaN]) expect(progressFill(f)).toBe(0);
+    for (const f of [0.02, 0.4, 0.995, 1]) expect(progressFill(f)).toBe(f);
+    expect(progressFill(3)).toBe(1);
   });
 });

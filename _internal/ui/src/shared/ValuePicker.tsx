@@ -225,7 +225,7 @@ export function ValuePicker({
   const fraction = toFraction(spec, shown);
   const selected = current ? chipIndex(spec, shown) : -1;
   const big = (
-    <span className={cn("tabular", dense ? "text-sm text-fg-2" : "text-3xl font-semibold leading-tight text-fg")}>{format(shown)}</span>
+    <span className={cn(dense ? "text-sm text-fg-2" : "text-3xl font-semibold leading-tight text-fg")}>{format(shown)}</span>
   );
   const valueField = typing ? (
     <input
@@ -245,7 +245,7 @@ export function ValuePicker({
       }}
       onBlur={(event) => finishTyping(event.currentTarget.value)}
       className={cn(
-        "tabular rounded-control border border-line-strong bg-panel px-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        "rounded-control border border-line-strong bg-panel px-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-focus",
         dense ? "h-8 w-20 text-sm" : "h-12 w-32 text-2xl font-semibold",
       )}
     />
@@ -296,7 +296,7 @@ export function ValuePicker({
       <div className="flex items-start">
         {stepButton(-1)}
         <div ref={rulerHost} className={cn("relative min-w-0 flex-1", !plan.aligned ? "h-12" : dense ? "h-14" : "h-16")}>
-          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold tabular", dense ? "text-xs" : "text-sm")}>{text}</span>)}
+          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
           <div
           ref={track}
           role="slider"
@@ -368,7 +368,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 tabular hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-fg" : "text-fg-2")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-fg" : "text-fg-2")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>

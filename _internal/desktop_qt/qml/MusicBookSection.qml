@@ -86,7 +86,7 @@ Column {
                 id: scenes
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 text: S.s_0_doan_c2eb5200(modelData.scenes)
-                color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.features: {"tnum": 1}
+                color: Theme.text2; font.pixelSize: Theme.sizeCaption
             }
         }
     }

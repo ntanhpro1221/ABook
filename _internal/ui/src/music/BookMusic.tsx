@@ -54,7 +54,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
               <div className="min-w-0 flex-1">
                 <TrackRow track={track} preview={preview} downloads={downloads} online styles={meta?.styles} onOpen={() => setOpen(track)} as="div" nested />
               </div>
-              <span className="shrink-0 text-xs tabular-nums text-fg-2">{S.s_0_doan_c2eb5200(track.scenes)}</span>
+              <span className="shrink-0 text-xs text-fg-2">{S.s_0_doan_c2eb5200(track.scenes)}</span>
             </li>
           ))}
         </ul>

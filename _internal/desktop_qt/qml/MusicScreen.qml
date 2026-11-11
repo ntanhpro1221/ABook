@@ -158,7 +158,7 @@ FocusScope {
                 objectName: "musicCount"
                 anchors.verticalCenter: parent.verticalCenter
                 text: S.s_0_bai_1e392237(root.list ? root.list.count : 0)
-                color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; font.features: {"tnum": 1}
+                color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
             }
             Row {
                 anchors.right: parent.right

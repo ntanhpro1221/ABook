@@ -101,7 +101,6 @@ Collapse {
                         color: Theme.text3
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 11
-                        font.features: {"tnum": 1}
                     }
                 }
                 Row {

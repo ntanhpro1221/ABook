@@ -693,11 +693,9 @@ Modal {
                                 color: Theme.text
                                 font.pixelSize: Theme.sizeBodySmall
                                 font.weight: 600
-                                font.features: { "tnum": 1 }
                             }
                             FlowDetail {
                                 detail: Queue.formatNumber(root.totals.words) + S.s_chu_6117d040
-                                font.features: { "tnum": 1 }
                             }
                         }
                         Row {

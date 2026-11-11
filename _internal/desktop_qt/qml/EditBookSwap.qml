@@ -72,11 +72,10 @@ Column {
                     Text {
                         width: parent.width
                         visible: text !== ""
-                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0·\u00a0")
+                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0·\u00a0")   // tick-ok: độ dài cố định của bài
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption
-                        font.features: {"tnum": 1}
                     }
                     Text {
                         width: parent.width

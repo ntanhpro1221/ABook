@@ -49,7 +49,7 @@ function NumberBox({ value, label, onCommit }: { value: number; label: string; o
         }
       }}
       className={cn(
-        "h-8 w-16 rounded-control border bg-bg px-2 text-center text-sm tabular-nums outline-none focus:border-focus",
+        "h-8 w-16 rounded-control border bg-bg px-2 text-center text-sm outline-none focus:border-focus",
         bad ? "border-danger" : "border-line",
       )}
     />
@@ -150,7 +150,7 @@ export function VolumeSplit({
               )}
             </div>
             <label className="flex items-center gap-2 text-fg-2">{S.s_tu_chuong_e2536d03}{index === 0 ? (
-                <span className="grid h-8 w-16 place-items-center tabular-nums text-fg">1</span>
+                <span className="grid h-8 w-16 place-items-center text-fg">1</span>
               ) : (
                 <NumberBox
                   value={part.start}
@@ -159,7 +159,7 @@ export function VolumeSplit({
                 />
               )}
             </label>
-            <span className="tabular text-right text-xs text-fg-2 max-sm:col-start-1 max-sm:text-left">{formatNumber(part.chapters)}{S.s_chuong_9e6a01dc}</span>
+            <span className="text-right text-xs text-fg-2 max-sm:col-start-1 max-sm:text-left">{formatNumber(part.chapters)}{S.s_chuong_9e6a01dc}</span>
             {index > 0 ? (
               <button
                 type="button"
@@ -211,7 +211,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           }
         }}
         className={cn(
-          "h-8 w-28 rounded-control border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-focus",
+          "h-8 w-28 rounded-control border bg-bg px-2 text-center text-sm outline-none placeholder:text-fg-3 focus:border-focus",
           bad ? "border-danger" : "border-line",
         )}
       />

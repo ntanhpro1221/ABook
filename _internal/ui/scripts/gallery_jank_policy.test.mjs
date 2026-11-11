@@ -29,7 +29,7 @@ it("không đưa group-has qua :is hay selector focus ở html trở lại: chú
   expect(css).toContain('.project-row:has([data-state="open"]) .project-updated { opacity: 0; }');
   const projects=readFileSync(path.join(src,'studio/ProjectsScreen.tsx'),'utf8');
   expect(projects).toContain('className="project-row group relative"');
-  expect(projects).toContain('"project-updated tabular');
+  expect(projects).toContain('"project-updated tabular-cell');
   expect(css).toMatch(/\[data-pointer-focus\]:focus-visible:not\(input, textarea, select, \[contenteditable\]\)/);
 });
 it("cấm thêm transition layout/all; giữ hai ngoại lệ đã đo: gạch chân rỗng và chỗ bảng Đang nghe",()=>{

@@ -29,7 +29,6 @@ Item {
         text: root.count
         color: Theme.text3
         font.pixelSize: Theme.sizeCaption
-        font.features: { "tnum": 1 }
     }
     Icon {
         visible: root.chevron

@@ -39,7 +39,6 @@ Item {
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
-            font.features: {"tnum": 1}
         }
         HintText { width: parent.width; visible: root.note !== ""; text: root.note }
     }

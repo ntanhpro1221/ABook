@@ -185,10 +185,10 @@ export function MorningRecap({ className }: { className?: string }) {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
                     <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
-                    <span className="tabular shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
+                    <span className="shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
                   <span className="block truncate text-xs text-fg-2">{marker.hint}</span>
-                  <span className="tabular block min-w-0 break-words text-xs text-fg-2">
+                  <span className="block min-w-0 break-words text-xs text-fg-2">
                     {marker.chapterTitle}
                     <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>

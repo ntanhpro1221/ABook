@@ -77,7 +77,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -89,6 +89,7 @@ import vn.abook.player.ui.components.ClusterLabel
 import vn.abook.player.ui.components.CloudDownloadIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
+import vn.abook.player.ui.components.BookOpenIcon
 import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.RestartIcon
 import vn.abook.player.ui.components.RowHint
@@ -195,7 +196,7 @@ class BookUiState(val bookId: String, private val source: BookSource) {
 
 /**
  * Trang sách (DESIGN.md §7): đầu trang (bìa · tên · tác giả · giọng · thời lượng, tập / bộ, tiến độ mảnh), MỘT nút chính hổ phách (Nghe / Nghe tiếp · chương /
- * Tạm dừng / Nghe lại từ đầu), hàng phụ cùng kiểu (Tìm · Từ đầu · Thêm), rồi danh sách chương phẳng - chạm chương là phát chương ấy.
+ * Tạm dừng / Nghe lại từ đầu), hàng phụ cùng kiểu (Đọc · Tìm · Từ đầu · Thêm, như Qt), rồi danh sách chương phẳng - chạm chương là phát chương ấy.
  * Nối với trình phát (DESIGN.md L3b): cuốn đang nạp thì bìa và dòng chương đang phát mở trình phát, icon đầu dòng vẫn phát / dừng; nút chính phát rồi mở trình phát.
  *
  * Danh sách là MỘT LazyColumn (đầu trang là các mục đầu của nó), mọi mục có `key` + `contentType`. Vạch tiến độ của chương đang phát đọc đồng hồ phát
@@ -357,7 +358,12 @@ private fun BookScreenBody(
                 // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
                 val noChapters = ui.loaded && chapters.isNullOrEmpty()
                 if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
-                    ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+                    Column {
+                        BookPage.statusLine(shown)?.let { line ->
+                            ClockLabel(line, Modifier.padding(vertical = Dim.s8), style = Abook.type.bodySmall)
+                        }
+                        ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+                    }
                 }
                 when {
                     chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
@@ -483,10 +489,6 @@ private fun BookHead(
         BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
         Spacer(Modifier.height(Dim.s8))
         ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
-        BookPage.statusLine(book)?.let { line ->
-            Spacer(Modifier.height(Dim.s8))
-            ClockLabel(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
-        }
     }
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
         if (stacked) {
@@ -591,9 +593,12 @@ private fun BookButtons(
             )
         }
         Spacer(Modifier.height(Dim.s12))
-        // Hàng phụ: luôn cùng ba chỗ, cùng thứ tự - nút chưa dùng được thì nhạt đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe).
+        // Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự, mọi mục có nhãn (như Qt) - nút chưa dùng được thì nhạt đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe).
         Row(Modifier.fillMaxWidth().testTag("book_secondary"), horizontalArrangement = Arrangement.SpaceBetween) {
-            SecondaryButton(S.s_tim_bbe47492, S.s_tim_chu_trong_sach_7bc2c2ee, enabled = !detail?.chapters.isNullOrEmpty(), tag = "book_find", edge = -1, onClick = {
+            SecondaryButton(S.s_doc_5709880c, S.s_doc_theo_df342819, enabled = book.canReadAlong, tag = "book_read", edge = -1, onClick = { actions.readAlong(book.id) }) { color ->
+                BookOpenIcon(color)
+            }
+            SecondaryButton(S.s_tim_bbe47492, S.s_tim_chu_trong_sach_7bc2c2ee, enabled = !detail?.chapters.isNullOrEmpty(), tag = "book_find", edge = 0, onClick = {
                 val loaded = detail ?: return@SecondaryButton
                 sheets.show { dismiss ->
                     FindInBookSheet(loaded, source, onPick = { hit ->
@@ -605,7 +610,7 @@ private fun BookButtons(
             SecondaryButton(
                 S.s_tu_dau_89ef6d78, S.s_nghe_lai_tu_dau_e251d632, enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
-            SecondaryButton("", S.s_them_tuy_chon_a0b4bb6e, enabled = true, tag = "book_more", edge = 1, onClick = {
+            SecondaryButton(S.s_them_dd92626f, S.s_them_tuy_chon_a0b4bb6e, enabled = true, tag = "book_more", edge = 1, onClick = {
                 sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }, notes = notes) }
             }) { color -> MoreIcon(color) }
         }
@@ -613,9 +618,9 @@ private fun BookButtons(
 }
 
 /**
- * Nút chính hổ phách, rộng cả hàng, cao tối thiểu 48. Dòng nhãn = biểu tượng phát / dừng (biến hình nét vẽ) + một động từ ngắn, luôn một dòng;
- * dòng phụ (chương sẽ phát) nằm riêng bên dưới, chữ nhỏ, tên dài thì xuống dòng - không cắt, và không bao giờ đẩy biểu tượng lệch khỏi nhãn của nó.
- * Nhãn / dòng phụ đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
+ * Nút chính hổ phách, rộng cả hàng, cao ĐÚNG 48 ở mọi trạng thái và mọi cỡ chữ (soát thiết kế 10-11 L4/L7: nút 3 dòng 81 dp kéo cả trang). MỘT dòng:
+ * biểu tượng phát / dừng (biến hình nét vẽ) + động từ + " · chương sẽ phát" ("Nghe tiếp · Chương 4", như Qt); tên chương dài thì cắt "…" ở phía tên chương,
+ * động từ không bao giờ bị cắt. Tên đầy đủ nằm ở danh sách chương ngay dưới. Nhãn đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
  */
 @Composable
 private fun ListenButton(label: String, detail: String?, playing: Boolean, restart: Boolean, onClick: () -> Unit) {
@@ -628,8 +633,8 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
         animated = true
     }
     Box(
-        Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl))
-            .background(colors.accent).padding(horizontal = Dim.s16, vertical = Dim.s12).testTag("book_primary"),
+        Modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl))
+            .background(colors.accent).padding(horizontal = Dim.s16).testTag("book_primary"),
         contentAlignment = Alignment.Center,
     ) {
         if (animated) {
@@ -649,20 +654,20 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
     }
 }
 
-/** Nội dung nút chính: biểu tượng + động từ, dòng phụ bên dưới. */
+/** Nội dung nút chính, một dòng: biểu tượng + động từ (không cắt) + " · chương" (cắt "…" khi hết chỗ). */
 @Composable
 private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean) {
     val colors = Abook.colors
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-                if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
-            }
-            Spacer(Modifier.width(Dim.s8))
-            BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk))
+    val ink = Abook.type.bodyStrong.copy(color = colors.accentInk)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
+            if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
         }
+        Spacer(Modifier.width(Dim.s8))
+        BasicText(text, style = ink, softWrap = false)
         if (sub != null) {
-            BasicText(sub, style = Abook.type.caption.copy(color = colors.accentInk, textAlign = TextAlign.Center))
+            // cắt-có-chủ-ý: tên chương sau động từ của nút chính; nút luôn một dòng cao 48, tên đầy đủ ở danh sách chương ngay dưới (DESIGN.md §7, soát 10-11 việc 3).
+            BasicText("\u00a0·\u00a0" + sub, Modifier.weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

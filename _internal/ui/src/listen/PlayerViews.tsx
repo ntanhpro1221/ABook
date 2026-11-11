@@ -51,7 +51,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, progressFill, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/Switch";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
@@ -169,7 +169,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
   };
   return (
     <div className={cn("w-full", large ? "space-y-1.5" : "flex items-center gap-3")}>
-      {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span>}
+      {!large && <span className="w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span>}
       <Slider.Root
         className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : cn("h-4 flex-1", SLIDER_REACH))}
         min={0}
@@ -204,13 +204,13 @@ function SeekBar({ large = false }: { large?: boolean }) {
         />
       </Slider.Root>
       {large ? (
-        <div className="tabular flex justify-between text-xs text-fg-2">
+        <div className="flex justify-between text-xs text-fg-2">
           <span><TickingValue>{formatClock(clamped)}</TickingValue></span>
           <TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue>
         </div>
       ) : (
         // Thời gian còn lại THẬT ở tốc độ đang nghe (như màn S.s_dang_nghe_9310d8cf ghi S.s_copy_3674d38cc1fc) - soát UX 29-09.
-        <span className="tabular w-12 shrink-0 text-xs text-fg-2"><TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue></span>
+        <span className="w-12 shrink-0 text-xs text-fg-2"><TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue></span>
       )}
     </div>
   );
@@ -238,7 +238,7 @@ function skipIcon(forward: boolean) {
           fontSize="14.5"
           fontWeight="600"
           letterSpacing="-0.2"
-          style={{ fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+          style={{ fontFamily: "inherit" }}
         >
           {SKIP_SECONDS}
         </text>
@@ -410,9 +410,9 @@ export function MenuShell({
   const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
-        : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
+        : "inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
       {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
-      <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
+      <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
   if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
@@ -993,7 +993,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
         recentlyStopped ? (
           <div className="px-2 pb-2 pt-1.5">
             <div className="text-sm">{S.s_hen_gio_da_tat_tieng_luc_ac7c0df9}{" "}
-              <span className="tabular font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
+              <span className="font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
             </div>
             <Popover.Close asChild>
               <button
@@ -1101,7 +1101,7 @@ function SleepPicker({
       {active ? (
         <div className="px-2 pb-2 pt-1.5">
           <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? S.s_dung_khi_f05a4cb5 : S.s_tat_sau_8d10e047}</div>
-          <div className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
+          <div className="mt-0.5 text-2xl font-semibold tracking-tight">
             <TickingValue>{sleep.kind === "chapter" ? (sleep.chapters > 1 ? S.s_het_0_chuong_79433c77(sleep.chapters) : S.s_het_chuong_nay_8ccc288f) : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
@@ -1221,7 +1221,7 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
           <Popover.Content side="top" sideOffset={8} className="z-50 flex items-center gap-2 rounded-cover border border-line bg-panel p-2 shadow-float">
             <IconButton label={withShortcut(volume === 0 ? S.s_bat_tieng_2eac184c : S.s_tat_tieng_0bb2a472, "M")} icon={Icon} size="sm" onClick={toggleMute} />
             {slider("flex w-32")}
-            <span className="tabular w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
+            <span className="w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
           </Popover.Content>
         </Popover.Portal>
       </MotionRegion></Popover.Root>
@@ -1464,7 +1464,7 @@ function CompactProgress() {
   const fraction = useClock((time, duration) => (duration > 0 ? Math.min(1, Math.round((time / duration) * 400) / 400) : 0));
   return (
     <div {...heardBarProps(fraction)} aria-label={S.s_da_nghe_chuong_nay_4e1ecf11} aria-valuetext={S.s_da_nghe_0_chuong_474d875d(Math.round(fraction * 100))} className="absolute inset-x-0 top-0 h-[2px] bg-line">
-      <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${fraction * 100 / 100})` }} />
+      <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${progressFill(fraction)})` }} />
     </div>
   );
 }
@@ -1768,8 +1768,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
     return <MotionRegion as="p" className="p-10 text-center text-sm text-fg-2">{error ? S.s_chua_tai_duoc_chu_ban_thu_lai_02f8a145 : S.s_chuong_chua_co_chu_ban_thu_lai_sau_c5852a5c}</MotionRegion>;
   }
   return (
-    <MotionRegion as="div" className="relative h-full">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
+    <MotionRegion as="div" className="relative flex h-full flex-col">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
         <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải S.s_copy_815d3b923a95. */}
           {!script.timed && current?.state !== "text" && (
@@ -1799,8 +1799,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
       {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
-      <MotionRegion motionKey="floating" className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-12 h-6 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
+      <MotionRegion motionKey="floating" data-reading-dock className="flex h-12 shrink-0 flex-col items-center justify-center bg-bg">
         <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </MotionRegion>
@@ -1870,7 +1870,7 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
           {chapter.subtitle || chapter.title}
         </span>
         {/* Dòng phụ đổi khi chương thu xong (S.s_copy_7e63dd84fb6c -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
-        <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
+        <MotionRegion as="span" className="block truncate text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
         </MotionRegion>
       </span>
@@ -1909,7 +1909,7 @@ function BookProgressLine({ className }: { className?: string }) {
   const text = shown ? bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished }) : "";
   // Clock and unit changes stay in place; visibility, scope, completion and user speed changes retain motion.
   return (
-    <MotionRegion as="p" motionKey={[rate, shown, whole, finished]} className={cn("tabular text-xs text-fg-2", className)}>
+    <MotionRegion as="p" motionKey={[rate, shown, whole, finished]} className={cn("text-xs text-fg-2", className)}>
       <TickingValue>{text}</TickingValue>
     </MotionRegion>
   );
@@ -1974,7 +1974,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
                     <span className="block break-words text-sm font-semibold text-fg">{book.title}</span>
-                    <span className="tabular block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
+                    <span className="block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
                   </span>
                   <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
                 </button>

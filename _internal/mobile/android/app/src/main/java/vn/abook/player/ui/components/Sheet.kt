@@ -42,6 +42,8 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -163,7 +165,16 @@ fun rememberSheetDrag(close: () -> Unit): SheetDrag {
  * Chạm chỗ trống trong bảng không đóng: chỉ chạm nền tối mới đóng. Thanh trượt, hàng cuộn ngang giữ cử chỉ của chúng.
  * Đặt TRƯỚC graphicsLayer dịch bảng: bộ dò nằm trong lớp dịch thì bảng chạy theo tay làm tay "đứng yên" so với bảng, kéo chậm không bao giờ tới ngưỡng.
  */
-fun Modifier.sheetSurface(drag: SheetDrag): Modifier = this
+@Composable
+fun Modifier.sheetSurface(drag: SheetDrag): Modifier {
+    // The band sits over the dimmed screen, so it fades into the scrim as composited on the page, not into the bright page itself.
+    val background = Abook.colors.scrim.compositeOver(Abook.colors.bg)
+    return this
+    .drawBehind {
+        val edge = Dim.s24.toPx()
+        drawRect(Brush.verticalGradient(0f to Color.Transparent, .67f to background, 1f to background, startY = -edge, endY = 0f),
+            topLeft = Offset(0f, -edge), size = Size(size.width, edge))
+    }
     .onSizeChanged { drag.height = it.height.coerceAtLeast(1).toFloat() }
     .nestedScroll(object : NestedScrollConnection {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
@@ -186,6 +197,7 @@ fun Modifier.sheetSurface(drag: SheetDrag): Modifier = this
         )
     }
     .pointerInput(Unit) { detectTapGestures { } }
+}
 
 /** Vạch 1 dp theo mép trên (cả hai góc bo) của bảng trượt tối: bóng đổ không thấy trên nền tối, vạch này tách bảng khỏi trang (DESIGN.md §5.5 Bóng). */
 internal fun Modifier.sheetEdge(color: Color): Modifier = drawWithContent {

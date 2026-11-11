@@ -73,7 +73,6 @@ Column {
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
-            font.features: { "tnum": 1 }
             text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + S.s_chuong_b_font_nbsp_nbsp_6c9efbf2 +
                               Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + S.s_chu_nbsp_nbsp_khoang_536a31ce + Studio.formatLength(root.scan.totals.audioSeconds) : " "
         }
@@ -229,7 +228,7 @@ Column {
                             text: cell.at >= 0 ? cell.at + 1 : ""
                             color: Theme.text2
                             font.pixelSize: Theme.sizeCaption
-                            font.features: { "tnum": 1 }
+                            font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                             lineHeight: 1.4
                         }
                         Column {
@@ -266,7 +265,7 @@ Column {
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
-                                font.features: { "tnum": 1 }
+                                font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                             }
                             Text {
                                 visible: Boolean(cell.file) && cell.file.chars > 0
@@ -276,7 +275,7 @@ Column {
                                 color: Theme.text3
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
-                                font.features: { "tnum": 1 }
+                                font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                             }
                         }
                         IconButton {

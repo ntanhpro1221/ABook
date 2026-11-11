@@ -45,7 +45,7 @@ export function MusicLevelSlider({ value, disabled = false, saving = false, onCh
     <div data-music-level className={cn("w-full", className)}>
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <MotionRegion as="span" motionKey={levelLabel(shown)} className="min-w-0">{levelLabel(shown)}</MotionRegion>
-        <span className="tabular shrink-0 text-xs text-fg-2">{levelNumber(shown)}</span>
+        <span className="shrink-0 text-xs text-fg-2">{levelNumber(shown)}</span>
       </div>
       <Slider.Root
         className="group relative flex h-8 w-full touch-none select-none items-center"

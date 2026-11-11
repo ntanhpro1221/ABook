@@ -319,6 +319,8 @@ def render() -> str:
     a("    // Nhấn: thu 0,97 + tối nền 6 % trong 90 ms, thả về trong 120 ms (5.2)")
     a("    readonly property real pressScale: 0.97")
     a("    readonly property real pressShade: 0.06")
+    a("    // Thanh tiến độ dưới 2 % không vẽ phần đã tô (DESIGN.md §6 Trạng thái nhỏ; web PROGRESS_FILL_MIN, Android ProgressFill.MIN)")
+    a("    readonly property real progressFillMin: 0.02")
     a("")
     a("    // ---- bìa tự sinh khi sách chưa có ảnh (cover.ts PALETTES: từ, đến, mực) ----")
     a("    readonly property var coverPalettes: [")

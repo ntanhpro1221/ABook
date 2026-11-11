@@ -19,7 +19,7 @@ import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
-import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
+import { formatLength, formatLengthUp, formatWhen, progressFill } from "@/shared/format";
 import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, SelectionMark, Sheet, Skeleton } from "@/shared/ui";
 import { caughtUpLine, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
@@ -183,6 +183,15 @@ export function useRestoreLastListening() {
   }, [books, player, source]);
 }
 
+/** Tên dưới bìa: đúng 2 dòng (dành sẵn, cắt "…" sau dòng 2). `drawn`: bìa vẽ đã in tên - chữ chỉ còn cho trình đọc màn hình, chỗ vẫn giữ ở cuối ô. */
+function TileName({ drawn, className, children }: { drawn: boolean; className?: string; children: ReactNode }) {
+  return drawn ? (
+    <span data-tile-name="" className="relative order-2 mt-1 block h-[2.75em] text-sm leading-snug"><span className="sr-only">{children}</span></span>
+  ) : (
+    <span data-tile-name="" className={cn("order-1 block h-[2.75em] break-words text-sm font-medium leading-snug line-clamp-2", className)}>{children}</span>
+  );
+}
+
 /** Một bìa của lưới. Nhớ (memo): trình phát đổi, thư viện được hỏi lại, lưới cuộn - chỉ bìa có giá trị đổi vẽ lại (docs/PERF_WEB.md).
  *  `current`: cuốn đang nạp trong trình phát; `speaks`: máy có giọng đọc. */
 const BookTile = memo(function BookTile({ book, badge, twin, current, playingHere, speaks }: {
@@ -217,7 +226,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
             <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
           )}
         </button>
-        {book.progress.fraction > 0 && !book.progress.finished && (
+        {progressFill(book.progress.fraction) > 0 && !book.progress.finished && (
           // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-control): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
           // của bìa thành khe hở ở mép dưới (chủ sách 25-10).
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-control">
@@ -228,20 +237,16 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         )}
         {extras.cover?.(book)}
       </div>
-      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-2.5 block w-full text-left">
-        <div className={cn("break-words text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
-        {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
-        <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
+      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-2.5 flex w-full flex-col text-left">
+        {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
+            Bìa vẽ (không ảnh) đã in tên: tên dưới bìa chỉ còn cho trình đọc màn hình, chỗ của nó vẫn giữ ở cuối ô. */}
+        <TileName drawn={!book.cover?.url} className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
+        {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
+            Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
+        <div data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", book.cover?.url ? "order-2 mt-1" : "order-1")}>
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
-          <TickingValue className="min-w-0 truncate">{progressText(book, speaks)}</TickingValue>
+          <TickingValue className="min-w-0 truncate">{[progressText(book, speaks), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
         </div>
-        {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
-            (tác giả, nếu có, đã nằm ở dòng trên). */}
-        {twin && (twinKind(book) || book.addedAt) ? (
-          <div data-motion-live className="mt-0.5 text-xs text-fg-3">
-            {[twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""].filter(Boolean).join(" · ")}
-          </div>
-        ) : null}
       </button>
       {extras.actions?.(book)}
     </MotionRegion>
@@ -272,7 +277,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
         <div className="label-section text-fg-2">{S.s_dang_nghe_9310d8cf}</div>
         <h2 className="mt-2 break-words text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
-        <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
+        <MotionRegion as="p" className="mt-1 break-words text-sm text-fg-2">
           {where}
           {current ? (playingHere ? S.s_dang_phat_e6ea5044 : S.s_tam_dung_4b55ce49) : last ? <TickingValue>{S.s_nghe_lan_cuoi_0_d055df7b(formatWhen(last.at))}</TickingValue> : ""}
         </MotionRegion>
@@ -419,10 +424,12 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
-    <span className="mt-2.5 block break-words text-sm font-medium leading-snug">{item.label}</span>
-    <span className="mt-1 flex items-center gap-1 text-xs text-fg-2">
-      {item.items.some(book => book.remote) && <Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" />}
-      {item.items.length}{S.s_tap_269b0b3d}</span>
+    <span className="mt-2.5 flex flex-col">
+      <TileName drawn={!item.items[0].cover?.url}>{item.label}</TileName>
+      <span data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", item.items[0].cover?.url ? "order-2 mt-1" : "order-1")}>
+        {item.items.some(book => book.remote) && <Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" />}
+        <span className="min-w-0 truncate">{item.items.length}{S.s_tap_269b0b3d}</span></span>
+    </span>
   </button>;
   const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
   return <MotionRegion data-book-tile="" motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>

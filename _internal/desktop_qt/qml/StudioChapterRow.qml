@@ -67,7 +67,7 @@ Item {
             text: root.chapter.index
             color: root.current ? Theme.accentText : Theme.text3
             font.pixelSize: Theme.sizeCaption
-            font.features: { "tnum": 1 }
+            font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
             anchors.verticalCenter: parent.verticalCenter
         }
         Item { visible: root.current && Player.playing && !(root.playable && root.hot); width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
@@ -155,7 +155,7 @@ Item {
                 tone: root.running ? "accent" : "muted"
                 label: S.s_da_thu_am_1a6a3e8a
             }
-            Text { text: Logic.chapterWorkingText(root.chapter, root.running); color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.features: { "tnum": 1 }; anchors.verticalCenter: parent.verticalCenter }
+            ClockLabel { text: Logic.chapterWorkingText(root.chapter, root.running); color: Theme.text2; font.pixelSize: Theme.sizeCaption; anchors.verticalCenter: parent.verticalCenter }
         }
         StatusPill { visible: !root.working && root.mark !== null; label: root.mark ? root.mark.label : ""; tone: root.mark ? root.mark.tone : "muted"; anchors.verticalCenter: parent.verticalCenter }
     }
@@ -169,7 +169,7 @@ Item {
         text: Logic.chapterLength(root.chapter)
         color: Theme.text2
         font.pixelSize: Theme.sizeCaption
-        font.features: { "tnum": 1 }
+        font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
     }
     Text {
         objectName: "chapterDone"
@@ -181,7 +181,7 @@ Item {
         text: Logic.chapterDone(root.chapter)
         color: Theme.text3
         font.pixelSize: Theme.sizeCaption
-        font.features: { "tnum": 1 }
+        font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
     }
     IconButton {
         id: more

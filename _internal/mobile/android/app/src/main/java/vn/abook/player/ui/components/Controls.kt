@@ -40,6 +40,9 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookColors
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.switchOn
+import vn.abook.player.ui.theme.switchOff
+import vn.abook.player.ui.theme.switchThumb
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -74,8 +77,7 @@ internal fun DrawScope.drawRangeTrack(value: Double, min: Double, max: Double, d
 }
 
 /**
- * Công tắc (vẽ tay, 48 x 28): núm TRƯỢT sang phải khi bật, rãnh đổi từ mực mờ sang mực theo cùng tiến trình - đọc trong pha vẽ. Không hổ phách: màn Cài đặt
- * chỉ có tối đa một khối hổ phách (nút chính), công tắc là trạng thái chứ không phải lời mời. Chỉ là hình: cả hàng chứa nó mới là chỗ chạm ([SwitchRow]).
+ * Switch track and thumb use the shared switch tokens. The containing SwitchRow owns the touch target.
  */
 @Composable
 fun Switch(checked: Boolean, modifier: Modifier = Modifier) {
@@ -86,9 +88,9 @@ fun Switch(checked: Boolean, modifier: Modifier = Modifier) {
         val k = knob.value
         val inset = 2.dp.toPx()
         val radius = size.height / 2 - inset
-        drawRoundRect(lerp(colors.fg3, colors.text, k), cornerRadius = CornerRadius(size.height / 2))
+        drawRoundRect(lerp(colors.switchOff, colors.switchOn, k), cornerRadius = CornerRadius(size.height / 2))
         val x = inset + radius + (size.width - 2 * (inset + radius)) * k
-        drawCircle(colors.bg, radius, Offset(x, size.height / 2))
+        drawCircle(colors.switchThumb, radius, Offset(x, size.height / 2))
     }
 }
 

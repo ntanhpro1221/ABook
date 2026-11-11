@@ -9,7 +9,7 @@
 @import "@fontsource/be-vietnam-pro/400-italic.css";
 
 /* Chữ số đều độ rộng cắt từ chính Be Vietnam Pro (ui/scripts/make_tabular_digits.py): bản fontsource không có
-   tính năng tnum nên đồng hồ trình phát nhảy vị trí mỗi giây. Chỉ áp cho chữ số, qua lớp .tabular. */
+   tính năng tnum nên đồng hồ trình phát nhảy vị trí mỗi giây. Chỉ áp cho chữ số, qua lớp .tabular-cell và giá trị tự đổi. */
 @font-face {
   font-family: "Be Vietnam Pro Digits";
   src: url("./assets/fonts/be-vietnam-pro-digits-400.woff") format("woff");
@@ -335,7 +335,9 @@ select[class~="border-line"] {
 }
 
 @layer utilities {
-  .tabular, .tabular-nums, .ticking-value, [data-motion-live] {
+  .tabular-cell, .ticking-value, [data-motion-live] {
+    /* DESIGN.md 5.5 (soát 10-11, R2): chữ số đều chỉ cho giá trị tự đổi tại chỗ (TickingValue / data-motion-live) và ô cột số của bảng (.tabular-cell).
+       Số trong câu dùng số tỉ lệ; tabularDigits.test.ts giữ danh sách chỗ được dùng .tabular-cell. */
     font-family: "Be Vietnam Pro Digits", var(--font-sans);
     font-variant-numeric: tabular-nums;
   }
@@ -731,17 +733,13 @@ select[class~="border-line"] {
    đều mờ dần - không bật tắt cứng. Chỉ màu: không đổi bố cục, chương dài không phải dàn trang lại. */
 [data-sentence] {
   background-color: transparent;
-  box-shadow: -0.2em 0 0 transparent, 0.2em 0 0 transparent;
   transition: background-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard),
     color var(--motion-fast) var(--ease-standard), text-decoration-color var(--motion-fast) var(--ease-standard);
 }
 
 /* Câu đang đọc ở Đọc theo: đủ đậm để nổi lên ở cả hai giao diện (giao diện sáng trước đây chỉ 1,06:1). */
 .read-along-active {
-  background: var(--read-along);
-  /* Nền thở 0,2em hai bên mà chữ không dời: bóng lệch ngang cùng màu chỉ vẽ ngoài hộp (box-decoration-break: clone - từng dòng một),
-     chữ đầu dòng không còn chạm mép nền (soát 25-10). */
-  box-shadow: -0.2em 0 0 var(--read-along), 0.2em 0 0 var(--read-along);
+  /* ReadAlongText draws one rounded SVG contour with 4 px horizontal padding. */
   color: var(--text);
 }
 
@@ -1555,6 +1553,21 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   transition: background-color var(--motion-fast), opacity var(--motion-fast);
 }
 .ui-switch[data-state="checked"] { background: var(--switch-on); }
+
+/* A sheet edge obscures the complete crossing line inside this shared 24 px band. The band lies over the dimmed page,
+   so it fades into the scrim laid over --bg (scrim layer on top of the page layer), never into the bright page alone. */
+.sheet-surface::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  left: 0;
+  right: 0;
+  top: -24px;
+  height: 24px;
+  background:
+    linear-gradient(to bottom, transparent, var(--scrim) 67%, var(--scrim)),
+    linear-gradient(to bottom, transparent, var(--bg) 67%, var(--bg));
+}
 .ui-switch-large {
   --switch-width: 3rem;
   --switch-height: 1.75rem;

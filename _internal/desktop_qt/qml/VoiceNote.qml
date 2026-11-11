@@ -14,13 +14,13 @@ VoiceBlock {
     property bool tabular: false         // chữ có giá trị tự đổi (% đang tải): chữ số đều độ rộng
     show: text !== ""
     onTextChanged: if (text !== "") shown = text
-    Text {
+    ClockLabel {
         width: parent.width
         text: TextWrap.pretty(root.shown)
         color: root.ink
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         font.pixelSize: root.px
         font.weight: root.weight
-        font.features: root.tabular ? ({"tnum": 1}) : ({})
+        tabular: root.tabular
     }
 }

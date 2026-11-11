@@ -1,5 +1,7 @@
 import "UiStrings.js" as S
 import QtQuick
+import QtQuick.Shapes
+import "ReadingInk.js" as ReadingInk
 import ABook
 import "PlayerLabels.js" as Labels
 
@@ -181,6 +183,7 @@ Item {
         id: list
         objectName: "readAlongParagraphs"
         anchors.fill: parent
+        anchors.bottomMargin: 48
         anchors.topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 0
         model: ReadAlong.timed ? ReadAlong.paragraphs : null
         clip: true
@@ -262,14 +265,13 @@ Item {
                         opacity: 0.05
                     }
                 }
-                Repeater {
-                    model: del.sentRects.length
-                    Rectangle {
-                        required property int index
-                        readonly property var r: del.sentRects[index]
-                        x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
-                        radius: Theme.radiusControl
-                        color: Qt.alpha(root.surface.accent, root.surface.along)
+                Shape {
+                    anchors.fill: parent
+                    ShapePath {
+                        strokeWidth: 0
+                        strokeColor: "transparent"
+                        fillColor: Qt.alpha(root.surface.accent, root.surface.along)
+                        PathSvg { path: ReadingInk.sentenceOutline(del.sentRects) }
                     }
                 }
                 Repeater {
@@ -357,8 +359,9 @@ Item {
     }
     Rectangle {
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: 48
         width: parent.width
-        height: 48
+        height: 24
         gradient: Gradient {
             GradientStop { position: 0; color: Qt.rgba(root.surfaceBg.r, root.surfaceBg.g, root.surfaceBg.b, 0) }
             GradientStop { position: 1; color: root.surfaceBg }
@@ -378,10 +381,18 @@ Item {
 
     // "Tới câu đang nghe" (JumpToPlaying của web: icon locate, viên tròn): trượt lên từ đáy khung khi người đã cuộn đi chỗ khác
     Rectangle {
+        id: jumpDock
+        objectName: "readingDock"
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: 48
+        color: Theme.bg
+    }
+    Rectangle {
         id: chip
         readonly property bool shown: root.showChip
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height - height - Theme.s24 + (shown ? 0 : 16)
+        y: jumpDock.y + (jumpDock.height - height) / 2 + (shown ? 0 : 16)
         width: chipRow.implicitWidth + 2 * Theme.s16
         height: 40
         radius: height / 2

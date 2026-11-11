@@ -9,6 +9,7 @@ import vn.abook.player.ui.components.LucideIcon
 import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.components.ValuePicker
 import vn.abook.player.ui.components.ValueSpecs
+import vn.abook.player.ui.components.ProgressFill
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
@@ -153,7 +154,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                     RowHint(if (current) S.s_dang_nghe_9310d8cf else PlayerLabels.time(chapter.durationMs))
                                     if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
                                         val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
-                                        drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * fraction.coerceIn(0f, 1f), size.height))
+                                        drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * ProgressFill.of(fraction), size.height))
                                     })
                                 }
                             }

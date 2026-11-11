@@ -307,7 +307,7 @@ internal fun skipNumberLayout(measurer: TextMeasurer, density: Density, color: C
     val style = with(density) {
         TextStyle(
             fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
-            letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
+            letterSpacing = (-0.2).dp.toSp(), color = color,
         )
     }
     return measurer.measure(Playback.SKIP_SECONDS.toString(), style)

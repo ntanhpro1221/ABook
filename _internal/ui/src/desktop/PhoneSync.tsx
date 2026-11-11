@@ -54,7 +54,7 @@ function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
   const away = sync.addresses.filter((address) => sync.awayAddresses.includes(address));
   const home = sync.addresses.filter((address) => !away.includes(address));
   const show = (list: string[]) => (
-    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(S.s_hoac_cffdc32e)}</span>
+    <span className="font-medium text-fg">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(S.s_hoac_cffdc32e)}</span>
   );
   return (
     <>
@@ -158,13 +158,13 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
           <div className="text-center">
             <div
               aria-label={S.s_ma_ghep_noi_0_77e0df8a(code.split("").join(" "))}
-              className="pl-[0.14em] text-[2.125rem] font-semibold leading-none tracking-[0.14em] text-accent-text tabular-nums"
+              className="pl-[0.14em] text-[2.125rem] font-semibold leading-none tracking-[0.14em] text-accent-text"
             >
               {code.slice(0, 3)}
               <span className="inline-block w-3" />
               {code.slice(3)}
             </div>
-            <div data-motion-live className="mt-2 text-xs text-fg-2 tabular">{S.s_het_han_sau_34497ee1}{minutes}:{seconds}
+            <div data-motion-live className="mt-2 text-xs text-fg-2">{S.s_het_han_sau_34497ee1}{minutes}:{seconds}
             </div>
           </div>
         </div>

@@ -40,6 +40,10 @@ class AbookColors(
 val AbookColors.scrim: Color get() = Color(if (dark) DarkPalette.SCRIM else LightPalette.SCRIM)
 val AbookColors.hover: Color get() = Color(if (dark) DarkPalette.HOVER else LightPalette.HOVER)
 
+val AbookColors.switchOn: Color get() = Color(if (dark) DarkPalette.FOCUS else LightPalette.FOCUS)
+val AbookColors.switchOff: Color get() = Color(if (dark) DarkPalette.SWITCH_OFF else LightPalette.SWITCH_OFF)
+val AbookColors.switchThumb: Color get() = Color(if (dark) DarkPalette.SWITCH_THUMB else LightPalette.SWITCH_THUMB)
+
 internal val LightColors = AbookColors(
     Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE), Color(LightPalette.CONTROL_LINE),
     Color(LightPalette.TEXT), Color(LightPalette.TEXT_2), Color(LightPalette.TEXT_3), Color(LightPalette.FG_3),

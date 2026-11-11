@@ -206,7 +206,7 @@ function TrackRow({
         <EighthNote className="mr-1.5 inline size-4 text-fg-2" />
         {item.title || S.s_bai_nhac_5d07657e}
         {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
-        {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
+        {item.duration ? <span className="text-fg-2"> · {formatClock(item.duration)}</span> : null}
         {note && <span className="block text-xs text-fg-2">{note}</span>}
       </span>
       <span className="flex shrink-0 gap-1">
@@ -591,7 +591,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                 const swap = swapButton(scene);
                 return (
                   <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm", follows ? "py-1.5" : "py-2.5")}>
-                    <span className="tabular w-28 shrink-0 text-fg-2">
+                    <span className="tabular-cell w-28 shrink-0 text-fg-2">
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
                     </span>

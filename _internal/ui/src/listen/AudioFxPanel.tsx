@@ -2,7 +2,7 @@ import { formatBalance } from "@/shared/number";
 import { S } from '@/shared/strings.generated';
 import { ValuePicker } from '@/shared/ValuePicker';
 import { VALUE_SPECS, formatNumber, type ValueSpec } from '@/shared/valuePickerLogic';
-import * as Switch from '@radix-ui/react-switch';
+import { Switch } from '@/desktop/Switch';
 import { useState, type ReactNode } from 'react';
 import { MotionRegion } from '@/shared/MotionRegion';
 import { TonePage, type ToneLeaveGuard } from './TonePage';
@@ -41,9 +41,7 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
 }
 function FxSwitch({label,checked,onChange}:{label:string;checked:boolean;onChange:(value:boolean)=>void}) {
   return <label className="flex min-h-12 items-center justify-between gap-4 text-sm">{label}
-    <Switch.Root aria-label={label} checked={checked} onCheckedChange={onChange} className="relative h-6 w-10 rounded-full bg-line data-[state=checked]:bg-accent">
-      <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-panel transition-transform duration-motion-fast data-[state=checked]:translate-x-[18px]"/>
-    </Switch.Root>
+    <Switch label={label} checked={checked} onCheckedChange={onChange}/>
   </label>;
 }
 /** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu.

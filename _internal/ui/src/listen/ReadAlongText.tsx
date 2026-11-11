@@ -14,6 +14,7 @@ import { estimatedStarts } from "./readAloud";
 import { scrollMotion } from "@/shared/motion";
 import { wordAtPoint } from "./wordTap";
 import { sentenceIndexAt, splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
+import { sentenceOutline, type InkLine } from './readingInk';
 
 // Văn bản chương đi cùng giọng đọc - MỘT chỗ cho màn đọc (ReaderScreen) và tab "Đọc theo" của trình phát (PlayerViews): câu đang nghe sáng lên,
 // chữ đang đọc sáng đậm hơn, bấm một chữ là nghe từ đúng chữ ấy, khung tự cuộn theo giọng (luật ở follow.ts), bàn phím đi qua các câu bằng mũi
@@ -484,6 +485,33 @@ const Paragraph = memo(function Paragraph({
   actions,
   hint,
 }: { paragraph: ParagraphItems } & Marks & Shared) {
+  const inkHost = useRef<HTMLElement | null>(null);
+  const [outline, setOutline] = useState('');
+  useLayoutEffect(() => {
+    const host = inkHost.current;
+    const active = host?.querySelector<HTMLElement>('.read-along-active');
+    if (!host || !active) { setOutline(''); return; }
+    const measure = () => {
+      const range = document.createRange();
+      range.selectNodeContents(active);
+      if (typeof range.getClientRects !== 'function') return;
+      const origin = host.getBoundingClientRect();
+      const lines: InkLine[] = [];
+      for (const r of Array.from(range.getClientRects())) {
+        if (!r.width || !r.height) continue;
+        const line = lines.find(l => Math.abs(l.top - (r.top - origin.top)) < 1);
+        if (line) { line.left = Math.min(line.left, r.left - origin.left - 4); line.right = Math.max(line.right, r.right - origin.left + 4); line.bottom = Math.max(line.bottom, r.bottom - origin.top); }
+        else lines.push({ left: Math.max(-4, r.left - origin.left - 4), right: Math.min(origin.width + 4, r.right - origin.left + 4), top: r.top - origin.top, bottom: r.bottom - origin.top });
+      }
+      setOutline(sentenceOutline(lines.sort((a, b) => a.top - b.top)));
+    };
+    measure();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    observer?.observe(host);
+    document.fonts?.ready.then(measure);
+    return () => observer?.disconnect();
+  }, [playing, paragraph]);
+  const ink = outline && <svg aria-hidden data-sentence-ink className="pointer-events-none absolute inset-0 -z-10 size-full overflow-visible"><path d={outline} fill="var(--read-along)" /></svg>;
   const sentence = (index: number, segment: ScriptSegment) => ({
     "data-index": index,
     "data-sentence": "",
@@ -497,7 +525,7 @@ const Paragraph = memo(function Paragraph({
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
       // Nền / màu / gạch chân của câu luôn có (trong suốt khi không dùng) và chuyển tiếp (styles.css [data-sentence]): sang câu kế, câu đã
       // nghe nhạt đi, chọn / bỏ chọn câu đều mờ dần, không bật tắt cứng.
-      "scroll-mt-20 rounded-control outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus underline decoration-transparent decoration-2 underline-offset-[0.22em]",
+      "scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-focus underline decoration-transparent decoration-2 underline-offset-[0.22em]",
       tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
       index === playing && "read-along-active",
@@ -510,7 +538,8 @@ const Paragraph = memo(function Paragraph({
   if (first.segment.kind === "heading") {
     const props = sentence(first.index, first.segment);
     return (
-      <Heading {...props} className={cn(props.className, headingClassName)}>
+      <Heading ref={node => { inkHost.current = node; }} {...props} className={cn('relative isolate', props.className, headingClassName)}>
+        {ink}
         {first.segment.text}
       </Heading>
     );
@@ -518,7 +547,8 @@ const Paragraph = memo(function Paragraph({
   // Dòng ngăn cảnh ("***", "* * *") đứng giữa trang như sách in - chỉ cách bày, chữ giữ nguyên.
   const sceneBreak = paragraph.items.length === 1 && (first.segment.sceneBreak || SCENE_BREAK.test(first.segment.text));
   return (
-    <p className={sceneBreak ? "pl-[0.3em] text-center tracking-[0.3em] text-fg-2" : "text-pretty"}>
+    <p ref={node => { inkHost.current = node; }} className={cn('relative isolate', sceneBreak ? "pl-[0.3em] text-center tracking-[0.3em] text-fg-2" : "text-pretty")}>
+      {ink}
       {paragraph.items.map(({ index, segment, showSpeaker }) => (
         <span key={index}>
           {speakers && segment.speaker && showSpeaker && (

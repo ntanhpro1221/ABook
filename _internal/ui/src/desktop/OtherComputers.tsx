@@ -193,7 +193,7 @@ export function OtherComputers() {
                 )}
                 {computer.fingerprint && (
                   // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
-                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>{S.s_van_tay_8abdcdf0}<span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
+                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>{S.s_van_tay_8abdcdf0}{formatFingerprint(computer.fingerprint).slice(0, 9)}…
                   </div>
                 )}
               </div>
@@ -288,7 +288,7 @@ export function OtherComputers() {
             placeholder="123456"
             inputMode="numeric"
             autoComplete="off"
-            className="tabular mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>{S.s_ket_noi_02ca3cba}</Button>

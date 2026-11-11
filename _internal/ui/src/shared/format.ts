@@ -41,6 +41,14 @@ export function clampFraction(fraction: number): number {
   return Number.isFinite(fraction) ? Math.max(0, Math.min(1, fraction)) : fraction === Infinity ? 1 : 0;
 }
 
+/** Phần đã tô của một thanh tiến độ: dưới 2 % không vẽ - một gạch hổ phách vài điểm ảnh dưới chữ trông như lỗi (DESIGN.md §6, soát 10-11 L13).
+ *  Cùng ngưỡng với Android `ProgressFill.MIN` và Qt `Theme.progressFillMin`. */
+export const PROGRESS_FILL_MIN = 0.02;
+export function progressFill(fraction: number): number {
+  const clamped = clampFraction(fraction);
+  return clamped < PROGRESS_FILL_MIN ? 0 : clamped;
+}
+
 /** Số phần trăm nguyên của thanh tiến độ (aria-valuenow): làm tròn XUỐNG như chữ `formatPercent` - chưa xong thì không bao giờ 100. */
 export function percentOf(fraction: number): number {
   return Math.floor(clampFraction(fraction) * 100);

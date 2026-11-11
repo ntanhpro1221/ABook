@@ -932,7 +932,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
       <MotionRegion motionKey={scope} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
-        <span>{S.s_anh_huong_f9ba35dd}<span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
+        <span>{S.s_anh_huong_f9ba35dd}<span className="font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
         <span>
           {item.kind === "audio" ? S.s_trang_thai_cb31de81 : item.kind === "narrator" ? S.s_may_coi_nguoi_ke_la_f1309939 : S.s_may_dang_dung_d9ef0879}:{" "}
           <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? S.s_khong_ai_chuong_ke_o_ngoi_thu_ba_209ef4df : item.current}</span>

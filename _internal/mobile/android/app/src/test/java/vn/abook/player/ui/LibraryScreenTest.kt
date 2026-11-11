@@ -62,6 +62,26 @@ class LibraryScreenTest {
     private var expectedBackground = 0
     private var expectedAccent = 0
     private val sheets = SheetHost()
+
+    @Test fun gridCellsReserveEqualTitleAndSubtitleHeights() = assertGridTextSlots()
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun gridCellsReserveEqualTextSlotsAtLargeScale() = assertGridTextSlots()
+
+    private fun assertGridTextSlots() {
+        show(listOf(
+            ListenBook("short", "Chí Phèo", "Nam Cao"),
+            ListenBook("long", "Dế Mèn phiêu lưu ký với tên sách rất dài", "Một tên tác giả rất dài để phải cắt ở cuối dòng"),
+        ))
+        val names = rule.onAllNodesWithTag("tile_title", useUnmergedTree = true).fetchSemanticsNodes()
+        val subs = rule.onAllNodesWithTag("tile_sub", useUnmergedTree = true).fetchSemanticsNodes()
+        assertEquals(2, names.size)
+        assertEquals(2, subs.size)
+        assertEquals(names[0].boundsInRoot.height, names[1].boundsInRoot.height, 0f)
+        assertEquals(subs[0].boundsInRoot.height, subs[1].boundsInRoot.height, 0f)
+        assertEquals(names[0].boundsInRoot.bottom, names[1].boundsInRoot.bottom, 0f)
+    }
     private val actions = LibraryActions(
         openBook = { opened += it.id },
         playNow = { played += it },

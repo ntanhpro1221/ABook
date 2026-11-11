@@ -55,6 +55,14 @@ class ReadAlongFollowUiTest {
     private fun paragraphTop(index: Int) = rule.onNodeWithTag("paragraph_$index").getUnclippedBoundsInRoot().top
     private fun viewport() = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
 
+    @Test fun theJumpDockHasItsOwnSpaceBelowTheTextViewport() {
+        rule.setContent { AbookTheme(false) { ReadAlongPane(text(), Clock(1_230_000), Modifier.fillMaxSize()) } }
+        val scroll = rule.onNodeWithTag("reading_scroll").getUnclippedBoundsInRoot()
+        val dock = rule.onNodeWithTag("reading_dock").getUnclippedBoundsInRoot()
+        assertEquals(48f, dock.height.value, 0.5f)
+        assertTrue(scroll.bottom <= dock.top)
+    }
+
     @Test fun openingMidChapterStandsAtTheCurrentLineWithoutScrollingThroughTheChapter() {
         val clock = Clock(1_230_000)
         rule.mainClock.autoAdvance = false

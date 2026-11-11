@@ -176,7 +176,7 @@ class GapSurfacesTest {
             val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope), devices = devices) }
             AppShell(shell, LibraryState.Ready(listOf(book, remoteBook)), player, CoverLoader(), settings, sampleClock = false)
         }
-        rule.onNodeWithText("Trên máy tính").assertIsDisplayed()
+        rule.onNodeWithText("Trên máy tính · Một người viết").assertIsDisplayed()
         shot("library_remote_${if (dark) "dark" else "light"}")
         rule.onAllNodesWithTag("book_cell")[1].performClick()
         rule.onNodeWithTag("remote_book_sheet").assertIsDisplayed()

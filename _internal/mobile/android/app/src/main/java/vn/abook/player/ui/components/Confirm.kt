@@ -126,8 +126,8 @@ fun DangerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
 
 /** Nút chữ "Giữ lại" dưới các nút khác: cao 48, chữ nhấn, canh giữa. */
 @Composable
-fun QuietButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier) {
+fun QuietButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, danger: Boolean = false) {
     Box(modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick).testTag(tag), contentAlignment = Alignment.Center) {
-        BasicText(label, style = Abook.type.bodyStrong.copy(color = Abook.colors.accentText))
+        BasicText(label, style = Abook.type.bodyStrong.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
     }
 }

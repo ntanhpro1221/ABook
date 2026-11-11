@@ -6,6 +6,7 @@ Interactive {
     id: root
     property string text: ""
     property bool accent: false          // chữ màu nhấn (đường dẫn tới việc) thay vì mực phụ
+    property bool danger: false          // xoá / dọn: chữ màu nguy hiểm (soát 10-11 L13)
     property bool small: false
     implicitWidth: label.implicitWidth
     implicitHeight: Math.max(Theme.hit, label.height + 8)
@@ -17,7 +18,7 @@ Interactive {
         width: parent.width
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
-        color: root.accent ? Theme.accentText : root.hovered ? Theme.text : Theme.text2
+        color: root.danger ? Theme.danger : root.accent ? Theme.accentText : root.hovered ? Theme.text : Theme.text2
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         font.pixelSize: root.small ? 13 : Theme.sizeBodySmall
         font.weight: root.accent ? Theme.weightMedium : Theme.weightRegular

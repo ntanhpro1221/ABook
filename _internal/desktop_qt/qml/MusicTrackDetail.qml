@@ -199,9 +199,9 @@ Modal {
             anchors.verticalCenter: parent.verticalCenter
             score: parent.score; label: parent.label
         }
-        Text {
+        ClockLabel {
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-            text: Logic.percent(parent.score) + " %"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; font.features: {"tnum": 1}
+            text: Logic.percent(parent.score) + " %"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
         }
     }
 }

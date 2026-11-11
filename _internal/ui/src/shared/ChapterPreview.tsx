@@ -101,7 +101,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
             )}
             {/* Cột số rộng đúng số chữ số của số lớn nhất, canh phải: khoảng tới ô chọn và tới tên chương như nhau ở mọi hàng (cột 36 px canh
                 trái để "1" cách tên 34 px mà cách ô chọn 12 px). */}
-            <span className="tabular text-right text-xs leading-5 pt-[2px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>
+            <span className="tabular-cell text-right text-xs leading-5 pt-[2px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>
             <div className="min-w-0">
               {choice && editing === index ? (
                 <input
@@ -153,7 +153,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                 chapter.short && <div className="text-xs text-fg-3">{S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0}</div>
               )}
             </div>
-            <div className="tabular text-right text-xs text-fg-2">
+            <div className="tabular-cell text-right text-xs text-fg-2">
               <div className="pt-[2px] leading-5">{formatNumber(chapter.words)}{S.s_chu_6117d040}</div>
               {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)}{S.s_ky_tu_c7cc4ddf}</div>}
             </div>

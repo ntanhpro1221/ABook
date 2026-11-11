@@ -305,7 +305,7 @@ export function TrackRow({
       />
       <button type="button" onClick={() => onOpen(track.link)} className="min-w-0 flex-1 rounded-control py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
-        <DotJoin singleLine className="mt-0.5 text-xs text-fg-2 tabular-nums" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
+        <DotJoin singleLine className="mt-0.5 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
       </button>
       {onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
       {load.kind === "loading" ? (
@@ -340,7 +340,7 @@ function ProgressRing({ percent }: { percent: number | null }) {
       <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth={2.5} />
       <circle cx="18" cy="18" r="16" transform="rotate(-90 18 18)" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"
         strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)} />
-      <text x="18" y="18" textAnchor="middle" dominantBaseline="central" className="fill-current text-xs tabular-nums">{percent}%</text>
+      <text data-motion-live x="18" y="18" textAnchor="middle" dominantBaseline="central" className="fill-current text-xs">{percent}%</text>
     </svg>
   );
 }

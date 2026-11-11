@@ -57,7 +57,7 @@ Column {
             width: parent.width
             open: root.showModule
             spacing: 6
-            Text {
+            ClockLabel {
                 width: parent.width
                 text: root.label
                 visible: text !== ""

@@ -168,8 +168,7 @@ Column {
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
-                                        font.features: {"tnum": 1}
-                                        text: cue.modelData.chapter + "\u00a0·\u00a0" + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
+                                        text: cue.modelData.chapter + "\u00a0·\u00a0" + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)   // tick-ok: mốc cố định của bài, số tỉ lệ như chữ chạy
                                               + (cue.modelData.creator ? "\u00a0·\u00a0" + cue.modelData.creator : "") + (cue.modelData.pinned ? S.s_u00a0_u00a0bai_cua_ban_b647eb20 : "")
                                     }
                                 }

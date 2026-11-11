@@ -183,12 +183,13 @@ fun <T : Choice> ChoiceSetting(
 
 /** Nút chữ (DESIGN.md §6 "Nút (c)": màu chữ nhấn), cao 48, mép chữ chạm mép phải của cột. */
 @Composable
-fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd) {
+fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false) {
     Box(
         modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).pressable(onClick = onClick).testTag(tag),
         contentAlignment = align,
     ) {
-        BasicText(label, style = Abook.type.label.copy(color = Abook.colors.accentText))
+        // Xoá / dọn: chữ màu nguy hiểm, không hổ phách như các việc thường cạnh nó (soát 10-11 L13).
+        BasicText(label, style = Abook.type.label.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
     }
 }
 
@@ -362,6 +363,13 @@ fun ListItem(
     }
 }
 
+/** Phần đã tô của một thanh tiến độ: dưới 2 % không vẽ - một gạch hổ phách vài điểm ảnh dưới chữ trông như lỗi (DESIGN.md §6, soát 10-11 L13).
+ *  Cùng ngưỡng với web `PROGRESS_FILL_MIN` và Qt `Theme.progressFillMin`. */
+object ProgressFill {
+    const val MIN = 0.02f
+    fun of(fraction: Float): Float = fraction.coerceIn(0f, 1f).let { if (it < MIN) 0f else it }
+}
+
 /**
  * Thanh tiến độ mảnh dưới một hàng, theo việc THẬT (byte đã chép, mục đã xong trên tổng) - không phải số đoán hay mốc gán cứng.
  * `known = false`: việc chưa biết tổng - một đoạn chạy qua lại liên tục (như `.indeterminate-bar` của web, 1,4 s), không đứng yên.
@@ -379,7 +387,7 @@ fun StageProgress(known: Boolean = true, progress: () -> Float) {
     Canvas(Modifier.padding(top = Dim.s8).height(3.dp).fillMaxWidth().testTag(if (known) "stage_progress" else "stage_progress_running")) {
         drawRect(track)
         val shown = mode.value
-        if (shown > 0f) drawRect(ink.copy(alpha = ink.alpha * shown), size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
+        if (shown > 0f) drawRect(ink.copy(alpha = ink.alpha * shown), size = size.copy(width = size.width * ProgressFill.of(progress())))
         if (shown < 1f) {
             // Đoạn rộng 2/5 rãnh, đi từ ngoài mép trái (-100 % bề rộng đoạn) tới ngoài mép phải (250 %), như keyframes `indeterminate` của web.
             val width = size.width * 0.4f
@@ -401,7 +409,7 @@ fun LinearProgress(modifier: Modifier = Modifier.height(6.dp), ink: Color = Aboo
     val track = Abook.colors.line
     Canvas(modifier.fillMaxWidth()) {
         drawRect(track)
-        drawRect(ink, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
+        drawRect(ink, size = size.copy(width = size.width * ProgressFill.of(progress())))
     }
 }
 

@@ -411,14 +411,13 @@ FocusScope {
                                     tone: projectProgress.moving ? "accent" : "muted"
                                     label: S.s_tien_do_ca_sach_25195f69
                                 }
-                                Text {
+                                ClockLabel {
                                     width: 40
                                     horizontalAlignment: Text.AlignRight
                                     text: Logic.formatPercent(root.book && root.book.progress ? root.book.progress.overall : 0)
                                     color: Theme.text
                                     font.pixelSize: Theme.sizeBodySmall
                                     font.weight: Theme.weightMedium
-                                    font.features: { "tnum": 1 }
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
@@ -661,7 +660,7 @@ FocusScope {
                         text: Logic.activityTime(cell.row.entry)
                         color: Theme.text3
                         font.pixelSize: Theme.sizeCaption
-                        font.features: { "tnum": 1 }
+                        font.features: { "tnum": 1 }   // tnum-ok: cột giờ của nhật ký
                         height: 24; verticalAlignment: Text.AlignVCenter
                     }
                     Text {

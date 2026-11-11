@@ -69,13 +69,13 @@ fun BasicText(
 }
 
 /**
- * Dòng phụ nối bằng " · " (trang sách): mỗi cụm là một khối, chỉ xuống dòng sau dấu ([keepClustersTogether]); số đều như [ClockLabel]. Đo từng cụm theo bề ngang thật của chỗ đặt nên
+ * Dòng phụ nối bằng " · " (trang sách): mỗi cụm là một khối, chỉ xuống dòng sau dấu ([keepClustersTogether]); số tỉ lệ như chữ chạy (DESIGN.md 5.5: tnum chỉ ở [ClockLabel]). Đo từng cụm theo bề ngang thật của chỗ đặt nên
  * cụm dài hơn cả dòng mới được ngắt bên trong. Trợ năng và test đọc chữ gốc.
  */
 @Composable
 fun ClusterLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = TextStyle.Default) {
     val measurer = rememberTextMeasurer()
-    val shown = style.merge(TextStyle(fontFeatureSettings = "tnum"))
+    val shown = style
     BoxWithConstraints(modifier.clearAndSetSemantics { this.text = AnnotatedString(text) }) {
         val width = constraints.maxWidth
         val shaped = remember(text, width, shown) {

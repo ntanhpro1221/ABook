@@ -29,7 +29,7 @@
 
   // Số đếm tab: chữ trơn (không nền, không bo), thẳng đường chân chữ với tên tab.
   for (const tab of document.querySelectorAll('[role="tablist"] button')) {
-    const count = tab.querySelector(".tabular");
+    const count = tab.querySelector("span.font-normal");
     const label = firstText(tab, count);
     const digits = count && firstText(count);
     if (!count || !label || !digits) continue;
@@ -51,7 +51,7 @@
     const centre = lineBox.left + parseFloat(getComputedStyle(line).borderLeftWidth) / 2;
     for (const item of line.querySelectorAll("li")) {
       const dot = item.querySelector("span.absolute");
-      const time = item.querySelector("span.tabular");
+      const time = item.querySelector("span.tabular-cell");
       if (!dot || !time) continue;
       const d = box(dot);
       const t = textBox(time);

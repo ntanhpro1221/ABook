@@ -122,6 +122,8 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun ArrowRightLeftIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.ARROW_RIGHT_LEFT, color, modifier, size)
 @Composable fun TextCursorInputIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.TEXT_CURSOR_INPUT, color, modifier, size)
 @Composable fun BookOpenTextIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_OPEN_TEXT, color, modifier, size)
+/** "Đọc" ở hàng phụ trang sách (web / Qt: BookOpen). */
+@Composable fun BookOpenIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_OPEN, color, modifier, size)
 @Composable fun ChevronDownIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.CHEVRON_DOWN, color, modifier, size)
 
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */

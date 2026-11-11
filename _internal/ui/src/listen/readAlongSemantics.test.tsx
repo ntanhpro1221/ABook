@@ -40,7 +40,7 @@ describe("trình đọc chương", () => {
     const { ReadAlongText } = await import("./ReadAlongText");
     const html = renderToString(<ReadAlongText script={script} playingIndex={-1} focusIndex={2} onTap={() => undefined} headingClassName="" />);
     expect(html).not.toContain('role="button"');
-    expect(html.match(/<p class="text-pretty">/g)).toHaveLength(2);
+    expect(html.match(/<p class="[^"]*text-pretty[^"]*">/g)).toHaveLength(2);
     expect(html.match(/tabindex="0"/g)).toHaveLength(1);
     const stop = html.match(/<span[^>]*tabindex="0"[^>]*>/)?.[0] ?? "";
     expect(stop).toContain('data-index="2"');

@@ -138,7 +138,7 @@ Column {
                             Item {
                                 width: 64; height: 32
                                 anchors.verticalCenter: parent.verticalCenter
-                                Text { visible: row.modelData.index === 0; anchors.centerIn: parent; text: "1"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.features: { "tnum": 1 } }
+                                Text { visible: row.modelData.index === 0; anchors.centerIn: parent; text: "1"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
                                 NumberBox {
                                     visible: row.modelData.index > 0
                                     objectName: "newCutBox"
@@ -156,7 +156,6 @@ Column {
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption
-                                font.features: { "tnum": 1 }
                             }
                             Item {
                                 width: 32; height: 32

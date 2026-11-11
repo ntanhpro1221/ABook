@@ -59,7 +59,7 @@ private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, p
 }
 
 /** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt, và khung chữ của trình phát (PlayerTextArea) cũng chừa ngang chừng này. */
-internal val InkBleed = 8.dp
+internal val InkBleed = 4.dp
 
 @Composable
 fun ReadAlongPane(
@@ -97,9 +97,11 @@ fun ReadAlongPane(
             maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + 2 * bleed else constraints.maxWidth))
         layout(placeable.width - 2 * bleed, placeable.height) { placeable.place(-bleed, 0) }
     }.clipToBounds()) {
-        val third = maxHeight / 3
+        // The list ends above the jump dock, so placement measures the list's own viewport.
+        val listHeight = maxHeight - Dim.s48
+        val third = listHeight / 3
         val density = LocalDensity.current
-        val viewportPx = with(density) { maxHeight.roundToPx() }
+        val viewportPx = with(density) { listHeight.roundToPx() }
         val placeAt = (viewportPx * ReadFollow.PLACE_AT).roundToInt()
         val tracker = remember(list) { LineTracker(list, layouts, position) }
         tracker.paragraphs = state.paragraphs
@@ -139,7 +141,8 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
+                state = list, modifier = Modifier.fillMaxSize().padding(bottom = Dim.s48).testTag("reading_scroll")
+                    .drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
                     .fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 // Đáy chừa đủ để cả dòng cuối vẫn lên được tới vùng đọc, không kẹt ở nửa dưới màn.
                 contentPadding = PaddingValues(start = InkBleed, end = InkBleed, top = 12.dp, bottom = third * 2), verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -158,7 +161,7 @@ fun ReadAlongPane(
                     val wordColor = colors.accent.copy(alpha = if (colors.dark) 0.30f else 0.62f)
                     val radius = with(density) { Dim.radiusControl.toPx() }
                     val geometry = remember(layout, paragraph, radius) {
-                        layout?.let { with(density) { ParagraphInk(it, paragraph, 0.2f * look.size.sp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
+                        layout?.let { with(density) { ParagraphInk(it, paragraph, 4.dp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
                     }
                     BasicText(
                         paragraph.text,
@@ -196,8 +199,9 @@ fun ReadAlongPane(
                 }
             }
         }
-        // A pill above the text, never bare words over it; slides through a clipped slot like "Về chỗ cũ".
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp).clipToBounds()) {
+        // The fixed dock owns its space; the text viewport ends above it.
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(Dim.s48).background(Abook.colors.bg)
+            .testTag("reading_dock").clipToBounds(), contentAlignment = Alignment.Center) {
             AnimatedVisibility(showJump,
                 enter = slideInVertically(tween(MotionMs.MEDIUM)) { it },
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {

@@ -25,7 +25,7 @@ function Bar({ label, value, tone = "accent" }: { label: ReactNode; value: numbe
     <div className="grid grid-cols-[minmax(6.5rem,9rem)_1fr_2.75rem] items-center gap-3 text-sm">
       <span className="min-w-0 truncate text-fg-2">{label}</span>
       <Progress value={value / 100} size="sm" tone={tone} label={typeof label === "string" ? label : S.s_cam_xuc_05c1aee0} />
-      <span className="text-right tabular-nums text-fg-2">{value} %</span>
+      <span className="text-right text-fg-2">{value} %</span>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function TrackBody({
           <Button variant="primary" icon={track.saved ? BookmarkCheck : Bookmark} aria-pressed={track.saved} loading={save.isPending || unsave.isPending}
             onClick={() => (track.saved ? unsave.mutate([track.link]) : save.mutate([track.link]))}>
             {track.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0}
-            {load.kind === "loading" && load.percent !== null && <span className="tabular-nums">{load.percent} %</span>}
+            {load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}
           </Button>
           <Button variant="ghost" icon={Library} onClick={() => playing.onOpenLibrary(track.title ?? "")}>{S.s_xem_trong_kho_2a139d05}</Button>
           {playing.onSwap && <Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button>}
@@ -128,7 +128,7 @@ function TrackBody({
         } secondary={load.kind === "loading" ? (
           <Button icon={X} onClick={() => unsave.mutate([track.link])}>
             {S.s_huy_tai_1a9ff73d}
-            <span className="tabular-nums text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : `${load.percent} %`}</span>
+            <span data-motion-live className="text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : `${load.percent} %`}</span>
           </Button>
         ) : track.saved || load.kind === "done" ? (
           <Button icon={Trash2} loading={unsave.isPending} onClick={() => unsave.mutate([track.link])}>{S.s_xoa_ban_tai_4b461f4a}</Button>
