@@ -50,6 +50,12 @@ Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscree
 Gallery inspect có deadline 3600 giây cho toàn bộ ma trận sáng/tối, hai khổ cửa sổ và các lượt mở/đóng sheet;
 thời hạn 1800 giây đã ngắt lượt 0.4.165 sau 3312 trial sạch, khi còn hai trạng thái chưa kiểm xong.
 
+Check `design-lint` (sau `android-unit` và `qt-tests`, vì hai bước ấy vừa ghi lại ảnh Roborazzi, ảnh `build/d2shots` và
+cây UI cạnh ảnh) chạy `scripts/design_lint.py` trên ảnh đã vẽ của Android và Qt, ghi số ảnh đỏ theo từng luật (R1-R14,
+[DESIGN_LINT.md](DESIGN_LINT.md)) vào bảng và JSON của gate. Hiện ở **chế độ báo cáo**: đỏ không chặn phát hành; lỗi đo
+hay không có ảnh vẫn FAIL. Lead bật chặn bằng `DESIGN_LINT_BLOCKS = True` trong `release_gate.py` sau khi `dev/design1`
+gộp; từ đó còn ảnh đỏ hay ngoại lệ thừa là FAIL. Ảnh web (`npm run gallery:shots`) chạy tay: `design_lint.py --web <thư mục>`.
+
 Ý nghĩa các bằng chứng (lệnh cụ thể xem `--list`):
 
 - Python: compile, toàn bộ pytest (`-q -rf`, số passed/failed/error từ summary); UI: typecheck và Vitest (đọc dòng Tests).

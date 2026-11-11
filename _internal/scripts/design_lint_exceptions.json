@@ -1,0 +1,100 @@
+{
+ "_doc": "Ngoại lệ của design_lint: mỗi mục nêu đúng MỘT ảnh (<nền tảng>/<tệp>), MỘT luật và lý do. Không mẫu, không ngưỡng nới chung. Ảnh hết đỏ thì xoá mục (máy báo 'ngoại lệ thừa').",
+ "exceptions": [
+  {
+   "image": "android/tone_360_130_light_presets.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "android/tone_360_130_light_top.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_light_mine.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_light_presets.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_light_top.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/s2_builder_continue_light.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/s2_builder_nostudio_light.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/s2_project_cover_light.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/sgaps_side_error_light.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "android/tone_360_130_dark_presets.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "android/tone_360_130_dark_top.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_dark_mine.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_dark_presets.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/tone_360_130_dark_top.png",
+   "rule": "R6",
+   "reason": "Chú thích 'Chạm đúp để về 0 dB' căn giữa dưới năm thanh dọc của khối Âm sắc (DESIGN.md §8 Âm thanh): khối thanh dọc là một hình căn giữa, chú thích thuộc khối ấy, không phải một dòng căn giữa giữa danh sách căn trái."
+  },
+  {
+   "image": "qt/s2_builder_continue_dark.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/s2_builder_nostudio_dark.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/s2_project_cover_dark.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/sgaps_side_error_dark.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  },
+  {
+   "image": "qt/s3_long_names_1024_light.png",
+   "rule": "R6",
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+  }
+ ]
+}

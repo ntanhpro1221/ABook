@@ -28,6 +28,7 @@ Item {
                 const image=grabImage(VisualReady.grabTarget(host.Window.window,host))
                 verify(image.width>0)
                 image.save(path)
+                verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, host)))   // cây UI cạnh ảnh cho scripts/design_lint.py
                 Nav.back();tryCompare(panel,"open",false)
                 panel.destroy()
             }

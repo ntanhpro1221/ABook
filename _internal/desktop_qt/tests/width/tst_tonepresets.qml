@@ -30,7 +30,7 @@ Item {
         function shot(name) {
             VisualReady.render(this,host.Window.window,host,qtVisualReady)
             const file=Qt.resolvedUrl("../../build/d2shots/"+name+".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/,"$1").replace(/^file:\/\//,"")
-            const image=grabImage(VisualReady.grabTarget(host.Window.window,host));verify(image.width>0);image.save(file)
+            const image=grabImage(VisualReady.grabTarget(host.Window.window,host));verify(image.width>0);image.save(file);verify(qtUiTree.save(file,VisualReady.grabTarget(host.Window.window,host)))
         }
         function test_gallery360At130Percent() {
             // Như Android / web: hai dòng Của tôi, rồi chọn Giọng rõ.

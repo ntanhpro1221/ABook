@@ -233,6 +233,7 @@ Item {
             const path = Qt.resolvedUrl("../../build/d2shots/gaps_" + name + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             before.save(path)
+            verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, host)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         function shootBoth(name) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shoot(name + "_" + mode) } Theme.mode = "auto" }
 

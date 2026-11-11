@@ -311,6 +311,7 @@ Item {
                     const path = Qt.resolvedUrl("../../build/d2shots/mini_" + length + "_" + theme + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
                     qtGlyphAudit.scan()
                     grabImage(mini).save(path)
+                    verify(qtUiTree.save(path, mini))   // cây UI cạnh ảnh cho scripts/design_lint.py
                 }
                 mini.destroy()
             }

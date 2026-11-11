@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.width
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.boundsInRoot
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.junit.Assert.*

@@ -46,6 +46,7 @@ Item {
             const path = Qt.resolvedUrl("../../build/d2shots/s3_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
+            verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         // Cuộn danh sách của màn dự án tới một phần tử để ảnh chụp thấy đúng chỗ cần xem
         function scrollTo(page, item) {

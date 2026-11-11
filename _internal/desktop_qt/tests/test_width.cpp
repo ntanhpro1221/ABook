@@ -9,6 +9,7 @@
 #include "later.h"
 #include "appfonts.h"
 #include "visualready.h"
+#include "uitree.h"
 #include "shadowprovider.h"
 #include <QFontDatabase>
 #include <QAbstractAnimation>
@@ -165,6 +166,7 @@ public slots:
         engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
+        engine->rootContext()->setContextProperty(QStringLiteral("qtUiTree"), new UiTree(engine));   // cây UI cạnh ảnh (design_lint)
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
         // Bộ ảnh soát phát hành chụp thêm khổ khác (vd "1280,960"); rỗng = bốn khổ của test.

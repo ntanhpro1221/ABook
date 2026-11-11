@@ -445,6 +445,12 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 
 ### Danh sách kiểm giao diện
 
+Một thay đổi giao diện chỉ được gộp khi: (1) `design_lint` ([DESIGN_LINT.md](DESIGN_LINT.md), việc 10 của soát thiết kế 10-11)
+xanh trên ảnh của cả ba nền tảng; (2) tờ ghép cạnh nhau Android | Qt | web của mỗi màn bị đụng được đính vào yêu cầu duyệt,
+kèm bản tối và 130 %; (3) người duyệt ghi rõ đã so từng cặp. Cho tới khi Lead bật chặn (sau khi `dev/design1` gộp),
+`design_lint` chạy ở chế độ báo cáo: thay đổi không được thêm ảnh đỏ mới so với nhánh gốc; ngoại lệ chỉ có dạng một ảnh,
+một luật, một lý do trong `scripts/design_lint_exceptions.json`.
+
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
