@@ -26,6 +26,8 @@ from tests.test_pipeline_mock import _short_tts_pipeline, ScriptedShortTTS
 
 def test_generated_tables_materialize_idempotently_and_split_without_cascading(tmp_path, monkeypatch):
     rng = random.Random(731)
+    # Bảng cách đọc nằm trong một ProjectDB thật: bộ đọc tên còn hỏi chữ các chương và sổ nhân vật của cùng DB ấy.
+    db = ProjectDB(tmp_path / "project.sqlite3")
     for trial in range(40):
         surface = f"Zed{trial}"
         middle = f"Ry{rng.randrange(100)}"
@@ -37,8 +39,12 @@ def test_generated_tables_materialize_idempotently_and_split_without_cascading(t
             entry['normalized_surface'] = entry['surface'].casefold()
         if trial % 2:
             table[0]['source'] = CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
-        coordinator = TTSCoordinator(build_settings(), SimpleNamespace(list_pronunciations=lambda _minimum: table), lambda _: None)
-        coordinator._book_origin = (None,)
+        with db.connect() as conn:
+            conn.execute("DELETE FROM pronunciations")
+            conn.executemany(
+                "INSERT INTO pronunciations(id,surface,normalized_surface,spoken_form,confidence,source,locked,created_at,updated_at)"
+                " VALUES(:id,:surface,:normalized_surface,:spoken_form,1.0,:source,:locked,0,0)", table)
+        coordinator = TTSCoordinator(build_settings(), db, lambda _: None)
         source = f"{surface} mang chiếc túi màu xanh đi qua con đường nhỏ trước căn nhà. Sau đó người ấy đặt túi xuống chiếc ghế gỗ bên cạnh cửa sổ. Người bạn mang thêm một ấm trà nóng ra bàn và mời mọi người ngồi xuống."
         row = {"text": source, "stable_id": "invented"}
         spoken, anchors = coordinator.spoken_text_with_anchors(row)

@@ -42,6 +42,7 @@ trên: khi `sleep` là no-op, vòng `_wait_for_resources` quay tít và gọi `s
 from __future__ import annotations
 
 import os
+import sys
 import time
 from collections import namedtuple
 from collections.abc import Iterator
@@ -292,6 +293,20 @@ def _no_real_bluetooth(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(bluetooth, "paired_devices", paired_devices)
     monkeypatch.setattr(bluetooth, "connect_rfcomm", connect_rfcomm)
     monkeypatch.setattr(bluetooth, "find_channel", find_channel)
+
+
+@pytest.fixture(autouse=True)
+def _whole_voice_database() -> None:
+    """`TTSCoordinator` chỉ nhận một DB có ĐỦ mọi phép đọc nó gọi (danh sách rút từ mã nguồn: tests/voice_db_surface.py). Bản giả
+    chỉ có `list_pronunciations` chạy được tới ngày bộ đọc tên hỏi thêm sổ nhân vật, rồi đỏ ở một chỗ không nêu tên bản giả
+    (11-11: 3 bài thử, cùng lúc với "Nghe thử" trả 422 vì `ReadOnlyVoiceDB` thiếu `list_characters`). Bọc một lần, ngay khi
+    `abook.tts` đã được nạp; không nạp nó thay cho bài thử không dùng tới."""
+    module = sys.modules.get("abook.tts")
+    if module is None or getattr(module.TTSCoordinator.__init__, "whole_database_only", False):
+        return
+    from tests.voice_db_surface import whole_database_only
+
+    module.TTSCoordinator.__init__ = whole_database_only(module.TTSCoordinator.__init__)
 
 
 @pytest.fixture

@@ -85,6 +85,7 @@ def test_the_shim_exposes_no_way_to_write(voice_db) -> None:
         "list_pronunciations",
         "list_chapters",  # hai phép đọc cho bước đoán gốc cuốn của Studio (`studio_names.chapter_texts`)
         "list_segments",
+        "list_characters",  # sổ nhân vật cho tên cuốn tự chứng minh (`studio_names.book_name_readings_for_project`)
     }
 
 

@@ -9,6 +9,7 @@ from abook.readaloud.studio_tn import reading_punctuation, studio_tn, studio_tn_
 from abook.readaloud.vieneu import spoken_tokens
 from abook.tts import TTSCoordinator, plan_chunks
 from abook.config import build_settings
+from abook.database import ProjectDB
 
 
 @pytest.mark.parametrize("source, expected", [
@@ -79,11 +80,8 @@ def test_chunk_planning_uses_sentence_boundaries_in_reading_string():
         ("Một câu đủ dài rồi.", "."), ("Khoảnh khắc khác đến.", ".")]
 
 
-def test_coordinator_preserves_hello_and_source_and_does_not_make_space_alias():
-    class Reader:
-        def list_pronunciations(self, minimum): return []
-    coordinator = TTSCoordinator(build_settings(), Reader(), lambda _: None)
-    coordinator._book_origin = (None,)
+def test_coordinator_preserves_hello_and_source_and_does_not_make_space_alias(tmp_path):
+    coordinator = TTSCoordinator(build_settings(), ProjectDB(tmp_path / "project.sqlite3"), lambda _: None)
     source = '“Anh hỏi thế hả? Hello? What a day!”'
     row = {"text": source}
     assert coordinator.spoken_text(row) == source
@@ -107,10 +105,7 @@ def test_phone_and_desktop_share_reading_boundary_cases():
             assert " ".join(spoken_tokens(source.split())) == case["spoken"], source
 
 
-def test_coordinator_does_not_reinterpret_a_url_after_symbols_remove_its_scheme():
-    class Reader:
-        def list_pronunciations(self, minimum): return []
-    coordinator = TTSCoordinator(build_settings(), Reader(), lambda _: None)
-    coordinator._book_origin = (None,)
+def test_coordinator_does_not_reinterpret_a_url_after_symbols_remove_its_scheme(tmp_path):
+    coordinator = TTSCoordinator(build_settings(), ProjectDB(tmp_path / "project.sqlite3"), lambda _: None)
     source = "3.5 12:30 https://example.com/a?x=1 a@example.com"
     assert coordinator.spoken_text({"text": source}) == "3.5 12:30 đường dẫn, a?x bằng 1 a@example.com"

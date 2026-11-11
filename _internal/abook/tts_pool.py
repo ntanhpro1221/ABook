@@ -160,6 +160,11 @@ class ReadOnlyVoiceDB:
 
     ProjectDB cannot be used here: its constructor runs the schema script, so merely
     building one in a worker would write to the database the parent owns.
+
+    Every read `TTSCoordinator` makes of its database, directly or through `studio_names`,
+    must exist here with ProjectDB's own statement: a missing one fails the worker and the
+    voice preview, a different one reads a name another way than the parent does.
+    `tests/test_voice_db_surface.py` derives that list from the source and compares the rows.
     """
 
     def __init__(self, path: Path) -> None:
@@ -217,6 +222,11 @@ class ReadOnlyVoiceDB:
     def list_segments(self) -> list[sqlite3.Row]:
         with self._connect() as connection:
             return list(connection.execute("SELECT * FROM segments ORDER BY chapter_id,seq"))
+
+    # Danh sách nhân vật cho tên cuốn tự chứng minh (`studio_names.book_name_readings_for_project`): cùng câu lệnh với ProjectDB.
+    def list_characters(self) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            return list(connection.execute("SELECT * FROM characters ORDER BY importance,mention_count DESC,id"))
 
 
 TTS_POOL_POLL_SECONDS = 1.0
