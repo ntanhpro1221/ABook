@@ -453,6 +453,23 @@ object MusicBed {
      *  "Nhạc nền: Bật" (ui/src/listen/musicBed.ts `failing`, soát a26 L7). */
     fun brokenHere(): Boolean = playlist == null && cues.any { isFailed(it.track) }
 
+    /** Những gì nhạc nền đọc từ đĩa khi đổi cuốn: `music` của gói, lựa chọn nhạc của người nghe (BookEdits) và `book.json` gốc (chế độ theo cảnh). */
+    class BookMusic internal constructor(val book: String, val music: JSONObject?, val changes: JSONObject, val raw: JSONObject)
+
+    /** Đọc [BookMusic] của cuốn - ở luồng nền ([Playback.prepareBook]). */
+    fun read(bookId: String): BookMusic {
+        val dir = Store.bookDir(bookId)
+        return BookMusic(bookId, Store.playableManifest(bookId)?.optJSONObject("music"),
+            BookEdits.load(dir).optJSONObject("music") ?: JSONObject(), BookEdits.rawBookOrNull(dir) ?: JSONObject())
+    }
+
+    /** [BookMusic] của cuốn sắp nạp, đã đọc ở luồng nền: lần [sync] đầu của cuốn ấy không đọc đĩa trên luồng chính. Luồng chính. */
+    private var prepared: BookMusic? = null
+
+    fun prepare(music: BookMusic) {
+        prepared = music
+    }
+
     /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. `stopNow`: giọng dừng là do người nghe
      *  (nút, rút tai nghe, mất focus, cuộc gọi) chứ không phải khe nối hai đoạn - danh sách phát dừng ngay, không chờ [PAUSE_GRACE_MS]. `ended`: giọng dừng vì
      *  tự hết cuốn (ExoPlayer ENDED) - nhạc theo mốc mờ ra như khi đổi đoạn thay vì tắt phụt cùng giọng. */
@@ -464,11 +481,15 @@ object MusicBed {
             stop()
             failed.clear()
             book = bookId
-            music = if (bookId.isEmpty()) null else Store.playableManifest(bookId)?.optJSONObject("music")
+            // Closing ("") must not drop the snapshot of the book being loaded; any other book replaces it.
+            val ready = prepared?.takeIf { it.book == bookId }
+            if (ready != null || bookId.isNotEmpty()) prepared = null
+            val found = if (bookId.isEmpty()) null else ready ?: read(bookId)
+            music = found?.music
             val level = music?.optDouble("levelDb", BuildConfig.levelDefaultDb) ?: BuildConfig.levelDefaultDb
             gain = 10.0.pow(level.coerceIn(BuildConfig.levelMinDb, BuildConfig.levelMaxDb) / 20.0).toFloat()
             chapter = Int.MIN_VALUE
-            if (music == null && bookId.isNotEmpty()) openPlaylist(appContext, bookId)
+            if (music == null && found != null) openPlaylist(appContext, found)
         }
         if (playlist != null) {
             if (!isPlaying && ended) quietPlaylist() else syncPlaylist(isPlaying, stopNow)
@@ -1043,11 +1064,10 @@ object MusicBed {
 
     /** Cuốn không có nhạc của người làm sách: nhạc theo cảnh ([Playlists.sceneMode]: người nghe chọn "Theo cảnh", hay chưa chọn gì mà "Tự chọn nhạc nền" còn bật - mặc định) hay nạp
      *  hàng bài của danh sách phát người nghe đã chọn ở luồng nền; "off" (hay chưa chọn mà máy không tự chọn) là không nhạc. */
-    private fun openPlaylist(appContext: Context, bookId: String) {
-        val dir = Store.bookDir(bookId)
-        val changes = BookEdits.load(dir).optJSONObject("music") ?: JSONObject()
+    private fun openPlaylist(appContext: Context, read: BookMusic) {
+        val changes = read.changes
         val choice = changes.optString("playlist")
-        if (Playlists.sceneMode(BookEdits.rawBookOrNull(dir) ?: JSONObject(), choice, Playlists.autoEnabled)) {
+        if (Playlists.sceneMode(read.raw, choice, Playlists.autoEnabled)) {
             sceneMode = true // mốc từng chương được hỏi ở lần `sync` kế (chương mới)
             autoPicked = Playlists.isAutomatic(true, choice)
             return

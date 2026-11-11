@@ -25,7 +25,7 @@ object Artwork {
         Triple("#1f4d2c", "#0e2615", "#b8e986"), Triple("#3d3d46", "#1b1b20", "#e8d5a3"),
         Triple("#123f5c", "#081f2e", "#7fd1ff"), Triple("#4b3a14", "#241b07", "#ffd76a"),
     )
-    private val cache = mutableMapOf<String, ByteArray>()
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
 
     private fun hash(text: String): Long {
         var value = 2166136261L

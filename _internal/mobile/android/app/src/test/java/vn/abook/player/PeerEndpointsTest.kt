@@ -34,6 +34,7 @@ class PeerEndpointsTest {
             assertNotEquals(dev.getInt("port"), LibraryServer.PORT)
             assertNotEquals(dev.getInt("discoveryPort"), LibraryServer.DISCOVERY_PORT)
             assertEquals(BluetoothLink.SERVICE, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
+            assertEquals("com.ngdtuanh.abook", BuildConfig.APPLICATION_ID)
         }
         assertEquals(BuildConfig.DEBUG, BuildConfig.APPLICATION_ID.endsWith(".dev"))
     }

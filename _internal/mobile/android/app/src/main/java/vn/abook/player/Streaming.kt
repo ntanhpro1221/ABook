@@ -83,10 +83,15 @@ object Streaming {
             spec.withUri(Uri.parse(selected + original.toString().removePrefix(root)))
                 .withAdditionalHeaders(mapOf("Authorization" to "Bearer $token"))
         }
-        val cached = CacheDataSource.Factory()
-            .setCache(cache(context))
-            .setUpstreamDataSourceFactory(authorized)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        // Media3 constructs data sources on its playback/loading thread. Opening the
+        // disk cache here would instead charge Service.onCreate on the main looper.
+        val cached = DataSource.Factory {
+            CacheDataSource.Factory()
+                .setCache(cache(context))
+                .setUpstreamDataSourceFactory(authorized)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                .createDataSource()
+        }
         val normal = DefaultDataSource.Factory(context, cached)
         // Clip Edge đang đọc dở của Nghe ngay (abooklive://, uxfix57) đi qua nguồn riêng; mọi thứ khác như cũ.
         val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }
@@ -212,8 +217,12 @@ object Streaming {
     /** Chương đang phát của cuốn nghe thẳng: đệm chữ đọc theo của nó ở nền, cùng lúc với audio - máy tính tắt sau đó thì "Đọc theo" vẫn mở
      *  được chương đã nghe (như máy tính, webui/packages.chapter_file; soát a27 lỗi 12). */
     fun keepScript(context: Context, id: String, chapterId: Long) {
-        val script = missingScript(id, chapterId) ?: return
-        Thread({ fetchSmall(context, id, script) }, "abook-keep-script").apply { isDaemon = true }.start()
+        // Media transitions arrive on the player looper: even the manifest check reads disk, so all of it runs here.
+        scripts.execute { missingScript(id, chapterId)?.let { fetchSmall(context, id, it) } }
+    }
+
+    private val scripts = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-keep-script").apply { isDaemon = true }
     }
 
     /**

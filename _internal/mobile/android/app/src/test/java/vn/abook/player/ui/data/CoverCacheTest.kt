@@ -23,15 +23,15 @@ class CoverCacheTest {
         bitmap.eraseColor(0xffb24932.toInt())
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         val loader = CoverLoader(4 shl 20)
-        val cell = loader.load(loader.key(file.path, 1, 100), file.path, 100, 150)
+        val cell = loader.load(loader.key(file.path, 1, 100, 150), file.path, 100, 150)
         assertNotNull(cell)
         assertSame(cell, loader.peek(file.path, 1))
         assertNull(loader.peek(file.path, 2))
-        val header = loader.load(loader.key(file.path, 1, 200), file.path, 200, 300)
+        val header = loader.load(loader.key(file.path, 1, 200, 300), file.path, 200, 300)
         assertNotNull(header)
         assertTrue(header!!.width >= cell!!.width)
         assertSame(header, loader.peek(file.path, 1))
-        assertSame(cell, loader.peek(loader.key(file.path, 1, 100)))
-        assertSame(header, loader.load(loader.key(file.path, 1, 150), file.path, 150, 225))
+        assertSame(cell, loader.peek(loader.key(file.path, 1, 100, 150)))
+        assertSame(header, loader.load(loader.key(file.path, 1, 150, 225), file.path, 150, 225))
     }
 }

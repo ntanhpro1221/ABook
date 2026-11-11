@@ -45,7 +45,7 @@ class StudioClipsTest {
     private var gate: CompletableDeferred<Unit>? = null
     private var failure: Throwable? = null
     private val clips = StudioClips(
-        dir,
+        { dir },
         { _, path, partial ->
             fetched += path
             gate?.await()
@@ -68,6 +68,14 @@ class StudioClipsTest {
     }
 
     private val chapter = "/media/books/b1/chapters/1/audio"
+
+    @Test fun creatingTheStudioDoesNotAccessItsStorageDirectory() {
+        var accessed = false
+        val cold = StudioClips({ accessed = true; dir }, { _, _, _ -> }, player, CoroutineScope(Dispatchers.Unconfined))
+        assertFalse("constructing the UI must not resolve cacheDir", accessed)
+        cold.trim()
+        assertTrue("the I/O operation resolves the directory", accessed)
+    }
 
     @Test fun aChapterIsDownloadedOnceAndEachSentencePlaysItsOwnWindow() {
         clips.toggle("a", ClipSpec("", chapter, 1000, 2500))

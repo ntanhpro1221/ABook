@@ -484,7 +484,7 @@ class NowPlayingUiTest {
         val initials = vn.abook.player.ui.data.CoverArt.label(FakeNowPlayingModel.demoState().bookTitle, null)
         val px = with(rule.density) { 36.dp.roundToPx() }
         // The art is decoded off the main thread: wait for it, then the bar must show it (no initials text) before anything opens.
-        rule.waitUntil(5_000) { miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)) != null }
+        rule.waitUntil(5_000) { miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px, px * 3 / 2)) != null }
         rule.waitForIdle()
         rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
         rule.mainClock.autoAdvance = false
@@ -500,7 +500,7 @@ class NowPlayingUiTest {
         rule.mainClock.advanceTimeBy(1000)
         rule.onNodeWithTag("now_playing").assertDoesNotExist()
         // The bar kept its decoded artwork the whole time (it is still the cached image, not re-decoded or dropped).
-        assertNotNull(miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)))
+        assertNotNull(miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px, px * 3 / 2)))
         rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
         rule.mainClock.autoAdvance = true
     }

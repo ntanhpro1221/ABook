@@ -91,8 +91,8 @@ fun PrefetchPlayerCover(cover: kotlinx.coroutines.flow.Flow<CoverRef?>) {
     LaunchedEffect(cover, covers, requestPx) {
         cover.collect { ref ->
             if (ref == null) return@collect
-            covers.load(covers.key(ref.path, ref.stamp, requestPx), ref.path, requestPx, requestPx)
-            covers.load(covers.key(ref.path, ref.stamp, 32), ref.path, 32, 32)
+            covers.load(covers.key(ref.path, ref.stamp, requestPx, requestPx), ref.path, requestPx, requestPx)
+            covers.load(covers.key(ref.path, ref.stamp, 32, 32), ref.path, 32, 32)
         }
     }
 }
@@ -111,7 +111,7 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
         }
         val width = requestPx
         val height = requestPx
-        val cacheKey = ref?.let { covers.key(it.path, it.stamp, width) }
+        val cacheKey = ref?.let { covers.key(it.path, it.stamp, width, height) }
         val bitmap by produceState<ImageBitmap?>(cacheKey?.let(covers::peek), cacheKey) {
             value = if (ref != null && cacheKey != null) covers.load(cacheKey, ref.path, width, height) else null
         }
@@ -133,7 +133,7 @@ fun rememberPlayerBackground(ref: CoverRef?): State<Color> {
     val dominant by produceState<Color?>(tintKey?.let { CoverTints.values.get(it)?.color }, ref) {
         val cached = tintKey?.let(CoverTints.values::get)
         value = if (cached != null) cached.color else if (ref == null) null else {
-            val cacheKey = covers.key(ref.path, ref.stamp, 32)
+            val cacheKey = covers.key(ref.path, ref.stamp, 32, 32)
             val image = covers.load(cacheKey, ref.path, 32, 32)
             withContext(Dispatchers.Default) {
                 image?.asAndroidBitmap()?.let { bitmap ->

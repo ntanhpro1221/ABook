@@ -159,7 +159,7 @@ class NativeActivity : ComponentActivity() {
                 // The cached library is enough for the first frame. Network catalogues
                 // publish their updates afterwards, without competing with its disk read.
                 firstContent.await()
-                vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity)
+                kotlinx.coroutines.withContext(Dispatchers.IO) { vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity) }
                 launch {
                     while (true) {
                         app.companion.refresh()

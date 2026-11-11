@@ -72,7 +72,7 @@ fun BookCover(
     val heightPx = widthPx * 3 / 2
     val path = cover?.path
     val stamp = cover?.stamp ?: 0L
-    val key = remember(path, stamp, widthPx) { path?.let { covers.key(it, stamp, widthPx) } }
+    val key = remember(path, stamp, widthPx, heightPx) { path?.let { covers.key(it, stamp, widthPx, heightPx) } }
     val image = remember(path, stamp) { mutableStateOf(key?.let(covers::peek) ?: path?.let { covers.peek(it, stamp) }) }
     // Final pixels are known: decoded, generated, or the decode gave up. Until then this cover is only the sunken placeholder.
     val decided = remember(key) { mutableStateOf(key == null || path == null || image.value != null) }

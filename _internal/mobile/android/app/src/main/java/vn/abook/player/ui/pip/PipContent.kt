@@ -118,7 +118,7 @@ private fun PipCover(player: PlayerState, covers: CoverLoader, maxWidthPx: Int, 
         GeneratedCover(player.bookTitle, null, with(LocalDensity.current) { maxWidthPx.toDp() }, modifier)
         return
     }
-    val key = remember(ref.path, ref.stamp, maxWidthPx) { covers.key(ref.path, ref.stamp, maxWidthPx) }
+    val key = remember(ref.path, ref.stamp, maxWidthPx) { covers.key(ref.path, ref.stamp, maxWidthPx, maxWidthPx * 3 / 2) }
     val image = remember(key) { mutableStateOf(covers.peek(key)) }
     if (image.value == null) LaunchedEffect(key) { image.value = covers.load(key, ref.path, maxWidthPx, maxWidthPx * 3 / 2) }
     image.value?.let { Image(it, null, modifier, contentScale = ContentScale.Crop) }

@@ -39,7 +39,7 @@ class CoverLoader(
         override fun sizeOf(key: String, value: Cached) = value.bytes
     }
 
-    fun key(path: String, stamp: Long, width: Int) = "$path|$stamp|$width"
+    fun key(path: String, stamp: Long, width: Int, height: Int) = "$path|$stamp|$width|$height"
 
     /** Đã có trong bộ nhớ đệm thì lấy ngay (không chờ giải mã) - để ô cuộn vào không nháy khung trống. */
     fun peek(key: String): ImageBitmap? = cache.get(key)?.image
@@ -52,9 +52,9 @@ class CoverLoader(
     /** Giải mã bìa ở `path` cho ô `width` x `height` px; null khi file hỏng / mất. */
     suspend fun load(key: String, path: String, width: Int, height: Int): ImageBitmap? {
         cache.get(key)?.let { return it.image }
-        val asset = key.substringBeforeLast('|')
+        val asset = key.substringBeforeLast('|').substringBeforeLast('|')
         val reusable = cache.snapshot().entries.filter {
-            it.key.substringBeforeLast('|') == asset && it.value.image.width >= width && it.value.image.height >= height
+            it.key.substringBeforeLast('|').substringBeforeLast('|') == asset && it.value.image.width >= width && it.value.image.height >= height
         }.minByOrNull { it.value.bytes }
         // Sampling often leaves the cell image large enough for the header.
         // Reuse that bitmap and touch its LRU entry without charging it twice.
@@ -71,8 +71,24 @@ class CoverLoader(
         val options = BitmapFactory.Options().apply {
             inSampleSize = CoverSampling.sampleSize(bounds.outWidth, bounds.outHeight, width, height)
             inPreferredConfig = Bitmap.Config.RGB_565
+            // Let the native decoder scale into its result instead of retaining a sampled
+            // bitmap and then allocating a second bitmap in createScaledBitmap.
+            val sampledWidth = kotlin.math.ceil(bounds.outWidth.toDouble() / inSampleSize).toInt()
+            val sampledHeight = kotlin.math.ceil(bounds.outHeight.toDouble() / inSampleSize).toInt()
+            if (sampledWidth > 0 && sampledHeight > 0 && width > 0 && height > 0) {
+                val useWidth = width.toDouble() / sampledWidth >= height.toDouble() / sampledHeight
+                val source = if (useWidth) sampledWidth else sampledHeight
+                val target = if (useWidth) width else height
+                if (target < source) {
+                    inScaled = true
+                    inDensity = source
+                    inTargetDensity = target
+                }
+            }
         }
-        return BitmapFactory.decodeFile(path, options)
+        val image = BitmapFactory.decodeFile(path, options) ?: return null
+        image.density = Bitmap.DENSITY_NONE
+        return image
     }
 
     /** Hệ điều hành xin bớt bộ nhớ (UI ẩn / thiếu RAM): bỏ bìa đã nạp. */
