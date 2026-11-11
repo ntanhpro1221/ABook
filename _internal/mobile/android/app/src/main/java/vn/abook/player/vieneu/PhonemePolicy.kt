@@ -39,6 +39,7 @@ object PhonemePolicy {
         private val data = org.json.JSONObject(BuildConfig.NAME_SOUNDS)
         val rimes: Map<String, String> = data.getJSONObject("rimes").let { all -> all.keys().asSequence().associateWith(all::getString) }
         val level: Set<String> = data.getJSONArray("level").let { a -> (0 until a.length()).map(a::getString).toSet() }
+        val unread: Map<String, String> = data.getJSONObject("unread").let { all -> all.keys().asSequence().associateWith(all::getString) }
         val rime = Regex("(?<!\\p{L})([bcdđghklmnpqrstvx]{0,3})(" + rimes.keys.sorted().joinToString("|") + ")(?!\\p{L})")
     }
 
@@ -65,6 +66,51 @@ object PhonemePolicy {
         for ((index, word) in words.withIndex()) {
             if (word.trim { it in WORD_EDGE } in sounds.level && tone.containsMatchIn(phones[index])) {
                 phones[index] = tone.replace(phones[index], "")
+                changed = true
+            }
+        }
+        return if (changed) phones.joinToString(" ") else phonemes
+    }
+
+    private val unreadReadings = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /**
+     * phoneme_policy.restore_unread_words: a Vietnamese word sea-g2p has no Vietnamese sound for - "pin" /pˈɪn/, "veo" /vˈiːəʊ/, "boa", the name
+     * syllable "min" (English dictionary only), "qui" /kwj/, "gim" /zm/ (no vowel at all) - gets sea-g2p's own reading of the same syllable
+     * written with a tone mark ("pìn"), less the tone. It keeps its English sound where the word right before or right after it, with no
+     * punctuation between, is certainly English ("pin it", an <en> span). Words of normalized [text] and of [phonemes] are aligned one to one,
+     * or nothing is touched.
+     */
+    fun restoreUnreadWords(text: String, phonemes: String, g2p: (String) -> String): String {
+        val tokens = text.split(spaces).filter { it.isNotEmpty() }
+        val phones = phonemes.split(spaces).filter { it.isNotEmpty() }.toMutableList()
+        if (tokens.size != phones.size) return phonemes
+        val words = ArrayList<String>(tokens.size)
+        val english = BooleanArray(tokens.size)
+        val opens = BooleanArray(tokens.size)  // punctuation before / after the word: the word beyond it is no neighbour
+        val closes = BooleanArray(tokens.size)
+        var inside = false
+        for ((index, token) in tokens.withIndex()) {
+            inside = inside || "<en>" in token
+            val bare = token.replace("<en>", "").replace("</en>", "")
+            val word = bare.trim { it in WORD_EDGE }.lowercase(Locale.ROOT)
+            words.add(word)
+            english[index] = inside || wordClass(word) == 'e'
+            opens[index] = bare.trimStart { it in WORD_EDGE } != bare
+            closes[index] = bare.trimEnd { it in WORD_EDGE } != bare
+            inside = inside && "</en>" !in token
+        }
+        var changed = false
+        for ((index, word) in words.withIndex()) {
+            val marked = sounds.unread[word]
+            if (marked == null || english[index]) continue
+            val before = index > 0 && !opens[index] && !closes[index - 1] && english[index - 1]
+            val after = index + 1 < words.size && !closes[index] && !opens[index + 1] && english[index + 1]
+            if (before || after) continue
+            val reading = unreadReadings.getOrPut(word) { tone.replace(g2p("ạ $marked ạ").trim().split(spaces)[1], "") }
+            val core = phones[index].trimEnd { it in PHONEME_MARKS }
+            if (core != reading) {
+                phones[index] = reading + phones[index].substring(core.length)
                 changed = true
             }
         }

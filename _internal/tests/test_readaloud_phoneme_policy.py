@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.readaloud.phoneme_policy import repair_syllabic_gi
+from abook.readaloud.phoneme_policy import repair_syllabic_gi, restore_unread_words
 from abook.readaloud.vieneu_engine import phonemize
 
 CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/phoneme_delivery/cases.json").read_text("utf8"))["cases"]
@@ -104,3 +104,16 @@ def test_studio_retains_syllabic_o_through_the_first_normalizer(source, spoken):
     studio = pt.phonemize_text_with_emotions(chunks[0])
     assert studio == phonemize([spoken])
     assert "ˈɔ" in studio
+
+
+@pytest.mark.parametrize("text,before,after", [
+    ("hết pin rồi", "hˈeɜt̪ pˈɪn ɹˈo2j", "hˈeɜt̪ pˈin ɹˈo2j"),
+    ("pin, it is over", "pˈɪn, ɪt ɪz ˈoʊvɚ", "pˈin, ɪt ɪz ˈoʊvɚ"),  # punctuation between: "it" is no neighbour
+    ("pin it now", "pˈɪn ɪt nˈaʊ", "pˈɪn ɪt nˈaʊ"),  # an English word right after
+    ("<en>the pin</en> rồi", "ðə pˈɪn ɹˈo2j", "ðə pˈɪn ɹˈo2j"),  # inside a span the reader marked English
+    ("hết pin rồi", "hˈeɜt̪ pˈɪn", "hˈeɜt̪ pˈɪn"),  # words and phonemes do not line up: nothing is guessed
+])
+def test_a_vietnamese_word_with_only_an_english_sound_gets_the_sound_of_its_spelling(text, before, after):
+    from abook.readaloud.vieneu_engine import _sea
+
+    assert restore_unread_words(text, before, _sea().g2p.convert) == after

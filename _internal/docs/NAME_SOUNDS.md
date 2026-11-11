@@ -1,8 +1,9 @@
 # Name sounds: syllables of a romanized name the voice cannot say as written
 
 2026-11-10, revised 2026-11-11 after the owner listened; branch `dev/koeun`. Data: `abook/readaloud/name_sounds.json`. Code: `phoneme_policy.respell_rare_rimes`,
-`repair_level_tone` (Python) = `PhonemePolicy.respellRareRimes`, `repairLevelTone` (Kotlin, the build hands the JSON
-over as `BuildConfig.NAME_SOUNDS`). Shared cases: `tests/fixtures/readaloud/phoneme_delivery/cases.json`.
+`repair_level_tone`, `restore_unread_words` (Python) = `PhonemePolicy.respellRareRimes`, `repairLevelTone`,
+`restoreUnreadWords` (Kotlin, the build hands the JSON over as `BuildConfig.NAME_SOUNDS`). Shared cases:
+`tests/fixtures/readaloud/phoneme_delivery/cases.json`.
 
 ## The complaint
 
@@ -92,6 +93,53 @@ inside the range of ordinary words. The joined delivery (`a‿b`, `japanese_deli
 and swallows syllables on Nano - "Gi‿ưn" is heard "Xin", "Dinh", "Jim"; "Ha‿ru‿tô" "Hà tô", "How to"; "Chi‿a‿ki"
 "Chi thi" in one seed of three - so names stay spaced, as "Chi-a-ki" (which the owner confirmed) already was.
 
+## Vietnamese words sea-g2p has no Vietnamese sound for (`unread`, and more of `level`)
+
+"min" and "pin" were noticed in names (Min-ji, Ha-min); the fault is a class. Every valid Vietnamese syllable that
+is written in plain ASCII letters without a tone mark (1,125: onsets by open and nasal-final rimes) was phonemized
+as written and again with a grave mark; the two must agree once the tone is taken off. 1,024 agree, 15 differ
+only by a tone, 85 otherwise, one is split in two. The ones that differ were counted in the corpus sample
+(13,374 files, 61 M words; "lower" = standing alone in lower case, "Vietnamese" = of those, beside a word with a
+Vietnamese diacritic; capitalized and hyphenated uses are names).
+
+| word | sea-g2p as written | now | lower / Vietnamese | capitalized / in a hyphenated name | seen in |
+|---|---|---|---|---|---|
+| pin | `pˈɪn` (English "pin") | `pˈin` | 441 / 332 | 772 / 0 | đèn pin, hết pin |
+| veo | `vˈiːəʊ` | `vˈɛw` | 210 / 150 | 0 / 0 | trong veo, sạch veo |
+| boa | `bˈoʊə` | `bwˈaː` | 18 / 17 | 14 / 0 | tiền boa |
+| min | `mˈɪn` | `mˈin` | 35 / 1 | 210 / 392 | Min-ji, Ha-min, Kim Min-jun |
+| qui | `kwj` (no vowel) | `kwˈi` | 34 / 26 | 1 / 1 | bánh qui, qui định |
+| gim | `zm` (no vowel) | `zˈim` | 2 / 1 | 9 / 0 | kẹp gim; "Jim-in" is spoken "Gim-in" |
+| quim, quinh, ginh | `kwjm`, `kwjɲ`, `zɲ` (no vowel) | `kwˈim`, `kwˈiɲ`, `zˈiɲ` | 1-2 / 0 | 0 | same broken class, kept whole |
+
+The reading is sea-g2p's own for the same syllable written with a grave mark ("pìn", "vèo", "boà", "mìn", "quì"),
+less the tone - the rule above. ("bòa", the new-style placement, is itself misread `bˈɔ2`; "boà" is right.)
+The word keeps its English sound where the word right before or right after it, with no punctuation between, is
+certainly English ("Pin it on the board.", "Min max", an `<en>` span); "Hết pin. It is over." is Vietnamese then
+English.
+
+The same audit found six more syllables that sea-g2p gives a tone; they joined `level`:
+
+| word | sea-g2p as written | now | lower / Vietnamese | seen in |
+|---|---|---|---|---|
+| toe | `t̪wˈɛɜ` (as "toé") | `t̪wˈɛ` | 590 / 582 | cười toe toét |
+| vin | `vˈi6n` | `vˈin` | 26 / 25 | vin vào |
+| toong | `t̪wˈɔ2ŋ` | `t̪wˈɔŋ` | 23 / 13 | ba toong |
+| sia | `sˈiə6` | `sˈiə` | 3 / 0 (capitalized 88) | the name Sia |
+| poong, vim | `pwˈɔ6ŋ`, `vˈi6m` | `pwˈɔŋ`, `vˈim` | 1-2 / 0 | - |
+
+Found and left alone, with the reason:
+
+- "poi" `pˈɔɪ` (10 / 8): the English diphthong is the same sound as Vietnamese "oi".
+- "moe" `mˈoʊ` (112 / 65): the Japanese loan "moe", not a Vietnamese word; neither reading is right.
+- "trim", "by", "buy", "try", "pay", "guy", "on", "them": English words that only look like a toneless syllable;
+  0-3 uses beside a Vietnamese word, except "them" (8, the unmarked typing of "thêm").
+- "ten" `t̪ˈen` (60 / 51, "tèn ten"), "ben", "den", "din", "gong", "pong": sea-g2p's Vietnamese dictionary reads
+  them with a close vowel. A different fault (no English sound, no tone), not measured.
+- "quin", "gum", "pun", "pam", "pom", "pon", "doe", "roe", "loen": 0 uses beside a Vietnamese word.
+- "cho", "khi", "la", "ma", "thi", "va", "vi", "du" differ only in stress (function words); "boong", "xoong",
+  "coong" are read `ˈɔŋ` both ways. Not faults.
+
 ## What is not done
 
 - A short English name inside a sentence can be swallowed by Nano: "Rồi Dan quay sang nhìn Tom." lost "Dan" in one
@@ -99,6 +147,5 @@ and swallows syllables on Nano - "Gi‿ưn" is heard "Xin", "Dinh", "Jim"; "Ha�
   after "Rồi"; Jack and Bob, English before this branch, 0 of 18.
 - "Hi-un U" (Hyun Woo): the tone is level now, but the transcriber writes "Hinh U" / "Hiêng U" in two seeds of
   three - three vowels in a row; not judged right.
-- "min", "pin" are read with English /ɪ/ by sea-g2p; not in the `level` list (a different fault, not measured here).
 - The numbers are Nano on CPU. The rime is absent from the training speech of every VieNeu tier, but the other
   tiers were not measured.

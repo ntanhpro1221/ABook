@@ -619,7 +619,7 @@ def keep_vieneu_final_mark() -> None:
         from .readaloud.japanese_delivery import phonemes
         from .readaloud.phoneme_policy import (
             emphasize_english_interjections, english_names, remembered_case, remembered_named, remembered_rulings,
-            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_vietnamese,
+            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese,
         )
 
         def plain(value: str, final: bool) -> str:
@@ -632,6 +632,7 @@ def keep_vieneu_final_mark() -> None:
                 return phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final)
 
             out = restore_vietnamese(value, raw, given, phonemize_text._get_g2p().convert, remembered_case(), remembered_rulings())
+            out = restore_unread_words(given(), out, phonemize_text._get_g2p().convert)  # "hết pin" /pˈɪn/ -> /pˈin/: a Vietnamese word sea-g2p only reads in English
             named = remembered_named()
             if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): its English sound
                 out = english_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
