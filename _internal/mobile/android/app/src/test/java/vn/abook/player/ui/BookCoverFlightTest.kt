@@ -198,7 +198,7 @@ class BookCoverFlightTest {
     }
 
     @Test fun anUnreadableCoverStillOpensTheBook() {
-        val art = artworkStage(CoverRef(java.io.File(System.getProperty("java.io.tmpdir"), "abook-missing-cover-${System.nanoTime()}.png").absolutePath, 1L), CoverLoader(1 shl 20))
+        val art = artworkStage(CoverRef(java.nio.file.Files.createTempDirectory("abook-missing-cover").resolve("cover.png").toString(), 1L), CoverLoader(1 shl 20))
         rule.runOnUiThread { flight.capture(art.id); nav.push(Destination.Book(art)) }
         rule.waitUntil(10_000) { nav.progress.value == 1f && !nav.busy }
     }

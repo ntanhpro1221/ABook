@@ -53,37 +53,37 @@ class PlaybackIoOffMainTest {
         val holding = CountDownLatch(1)
         val release = CountDownLatch(1)
         val disk = Thread { synchronized(Store) { holding.countDown(); release.await() } }.apply { start() }
-        assertTrue(holding.await(5, TimeUnit.SECONDS))
+        assertTrue(holding.await(TestTime.seconds(5), TimeUnit.SECONDS))
         val done = CountDownLatch(1)
         val caller = Thread { event(); done.countDown() }.apply { start() }
         try {
-            return done.await(2, TimeUnit.SECONDS)
+            // An event that waits for Store never returns while the disk thread holds it: any limit tells the two apart.
+            return done.await(TestTime.seconds(2), TimeUnit.SECONDS)
         } finally {
             release.countDown()
-            caller.join(5_000)
-            disk.join(5_000)
+            caller.join(TestTime.ms(5_000))
+            disk.join(TestTime.ms(5_000))
         }
     }
 
-    private fun savedSeconds(expected: Double): Double {
-        val deadline = System.nanoTime() + 5_000_000_000
-        var seconds = Store.state("io-book").getJSONObject("last").getDouble("seconds")
-        while (seconds != expected && System.nanoTime() < deadline) {
-            Thread.sleep(10)
-            seconds = Store.state("io-book").getJSONObject("last").getDouble("seconds")
-        }
-        return seconds
+    /**
+     * The place on disk once the place writer has drained. The event handed its snapshot to the writer before it
+     * returned, so the writer's own "nothing left" signal is the moment to read - no polling of the file.
+     */
+    private fun savedSeconds(): Double {
+        assertTrue("the place was not written after the disk was released", Playback.flushSaves(TestTime.ms(2_000)))
+        return Store.state("io-book").getJSONObject("last").getDouble("seconds")
     }
 
     @Test fun aSeekWhilePausedDoesNotWaitForTheDiskAndStillSaves() {
         assertTrue("seek on the main looper waited for Store", returnsWhileDiskIsBusy { Playback.seekTo(600.0) })
-        assertEquals(600.0, savedSeconds(600.0), 0.001)
+        assertEquals(600.0, savedSeconds(), 0.001)
     }
 
     @Test fun aPauseEventDoesNotWaitForTheDiskAndStillSaves() {
         voice.position = 900_000
         assertTrue("pause on the main looper waited for Store", returnsWhileDiskIsBusy { Playback.onPlayingChanged(false) })
-        assertEquals(900.0, savedSeconds(900.0), 0.001)
+        assertEquals(900.0, savedSeconds(), 0.001)
     }
 
     @Test fun aChapterTransitionDoesNotReadTheManifestOnTheCaller() {
