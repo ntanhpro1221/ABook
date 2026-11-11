@@ -109,6 +109,7 @@ Item {
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)
+            verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, host)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         function both(fn) { for (const mode of ["light", "dark"]) { Theme.mode = mode; fn() } }
 

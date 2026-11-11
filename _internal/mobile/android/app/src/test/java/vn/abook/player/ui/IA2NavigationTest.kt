@@ -3,7 +3,7 @@ package vn.abook.player.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
-import com.github.takahirom.roborazzi.captureRoboImage
+import vn.abook.player.ui.snapshot.captureRoboImage
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Rule
