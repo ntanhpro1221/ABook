@@ -81,7 +81,7 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
         val raw = g2p(given)
         var phonemes = PhonemePolicy.restoreVietnamese(chunk, raw, given, ::g2p, capitals, rulings)
         phonemes = PhonemePolicy.restoreUnreadWords(given, phonemes, ::g2p)  // "hết pin" /pˈɪn/ -> /pˈin/: a Vietnamese word sea-g2p only reads in English
-        phonemes = PhonemePolicy.englishNames(given, raw, phonemes, ::g2p, named)
+        phonemes = PhonemePolicy.foreignNames(given, raw, phonemes, ::g2p, named)  // "Dan" of a Western roster: "đan" /ɗaːn/, not /zaːn/
         phonemes = PhonemePolicy.repairLevelTone(given, phonemes)
         if (final && phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()

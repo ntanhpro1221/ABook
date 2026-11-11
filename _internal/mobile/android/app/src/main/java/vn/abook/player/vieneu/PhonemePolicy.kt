@@ -40,6 +40,8 @@ object PhonemePolicy {
         val rimes: Map<String, String> = data.getJSONObject("rimes").let { all -> all.keys().asSequence().associateWith(all::getString) }
         val level: Set<String> = data.getJSONArray("level").let { a -> (0 until a.length()).map(a::getString).toSet() }
         val unread: Map<String, String> = data.getJSONObject("unread").let { all -> all.keys().asSequence().associateWith(all::getString) }
+        /** Onset letters of a foreign roster name spelled like a Vietnamese syllable that are read as another letter ("d" -> "đ"), longest first. */
+        val foreignOnsets: List<Pair<String, String>> = data.getJSONObject("foreign_onsets").let { all -> all.keys().asSequence().map { it to all.getString(it) }.sortedByDescending { it.first.length }.toList() }
         val rime = Regex("(?<!\\p{L})([bcdđghklmnpqrstvx]{0,3})(" + rimes.keys.sorted().joinToString("|") + ")(?!\\p{L})")
     }
 
@@ -220,7 +222,7 @@ object PhonemePolicy {
     /**
      * phoneme_policy.Rulings: what a book already knows about its shared words (the second tier ran in Studio; `sharedWords` of book.json) -
      * answers by context ([sharedWordContexts] key -> Vietnamese?), the roster's Vietnamese names and its foreign names that are spelled
-     * like a Vietnamese syllable ("dan", "tom": [englishNames]), lower-case.
+     * like a Vietnamese syllable ("dan", "tom": [foreignNames]), lower-case.
      */
     class Rulings(val contexts: Map<String, Boolean> = emptyMap(), val names: Set<String> = emptySet(), val foreign: Set<String> = emptySet()) {
         val empty get() = contexts.isEmpty() && names.isEmpty() && foreign.isEmpty()
@@ -442,13 +444,15 @@ object PhonemePolicy {
     }
 
     /**
-     * phoneme_policy.english_names: a foreign roster name that is spelled like a Vietnamese syllable gets its English sound ("Dan" /zaːn/ ->
-     * /dæn/). sea-g2p has no English entry for such a word, not even inside an <en> tag; it does read the possessive in English ("dan's" ->
-     * /dˈænz/), so each of [words] is swapped for its possessive in the phonemizer's input only ([given]; [raw] is its output) and the closing
-     * /z/ or /s/ is dropped. A swap that moves any other word, or that does not come back as one English word, is thrown away.
+     * phoneme_policy.foreign_names: a foreign roster name that is spelled like a Vietnamese syllable is read as that syllable with the onset the
+     * name has ("Dan": "đan" /ɗaːn/ - not Vietnamese "dan" /zaːn/, not English /dæn/, which the voice swallows after "Rồi"; docs/NAME_SOUNDS.md).
+     * Only an onset of name_sounds.json "foreign_onsets" is respelled, in the phonemizer's input only ([given]; [raw] is its output); a tone
+     * sea-g2p gives the respelled syllable is dropped (a name written without a mark has the level tone). A swap that moves any other word is
+     * thrown away.
      */
-    fun englishNames(given: String, raw: String, phonemes: String, g2p: (String) -> String, words: Set<String>): String {
+    fun foreignNames(given: String, raw: String, phonemes: String, g2p: (String) -> String, words: Set<String>): String {
         if (words.isEmpty()) return phonemes
+        val onsets = sounds.foreignOnsets
         val tokens = given.split(spaces).filter { it.isNotEmpty() }
         val before = raw.split(spaces).filter { it.isNotEmpty() }
         val out = phonemes.split(spaces).filter { it.isNotEmpty() }.toMutableList()
@@ -457,13 +461,15 @@ object PhonemePolicy {
         for ((index, token) in tokens.withIndex()) {
             val match = letterRun.find(token) ?: continue
             if (match.value !in words || letterRun.find(token, match.range.last + 1) != null) continue
+            val (onset, letter) = onsets.firstOrNull { match.value.startsWith(it.first) } ?: continue
             val marked = tokens.toMutableList()
-            marked[index] = token.substring(0, match.range.last + 1) + "'s" + token.substring(match.range.last + 1)
+            marked[index] = token.substring(0, match.range.first) + letter + token.substring(match.range.first + onset.length)
             val after = g2p(marked.joinToString(" ")).split(spaces).filter { it.isNotEmpty() }
             if (after.size != before.size || after.indices.any { it != index && after[it] != before[it] }) continue
-            val said = after[index].trimEnd { it in PHONEME_MARKS }
-            if (said.length < 3 || said.last() !in "zs" || tone.containsMatchIn(said)) continue
-            out[index] = said.dropLast(1) + out[index].substring(out[index].trimEnd { it in PHONEME_MARKS }.length)
+            val said = tone.replace(after[index].trimEnd { it in PHONEME_MARKS }, "")
+            val core = out[index].trimEnd { it in PHONEME_MARKS }
+            if (said.isEmpty() || said == core) continue
+            out[index] = said + out[index].substring(core.length)
             changed = true
         }
         return if (changed) out.joinToString(" ") else phonemes

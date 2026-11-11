@@ -313,7 +313,7 @@ def vietnamese_names(origins: dict[str, str]) -> list[str]:
 def foreign_names(origins: dict[str, str]) -> list[str]:
     """Words of the roster's names of the "en" origin ("Dan", "Tom" of a Western character) that are spelled like a
     Vietnamese syllable, lower-case (`Rulings.foreign`): sea-g2p reads such a word as that syllable wherever it
-    stands, table word or not, so the book has to say it is a name (`phoneme_policy.english_names`)."""
+    stands, table word or not, so the book has to say it is a name (`phoneme_policy.foreign_names`)."""
     from ..analysis import is_vietnamese_syllable
 
     return sorted({word.lower() for word, origin in word_origins(origins).items()

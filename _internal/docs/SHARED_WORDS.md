@@ -118,9 +118,12 @@ character - read /zˈaːn/. sea-g2p has no English entry for such a word even in
 whose name it is; the roster can. `shared_rulings.foreign_names` keeps the single words of names tier 2 called
 "other" that pass `is_vietnamese_syllable`, unless a Vietnamese character of the book carries the same word.
 `phoneme_policy.written_names` (= `PhonemePolicy.writtenNames`) finds where the word stands as a name (a capital,
-also at a sentence start; a closing quote may follow: "‘Giant Leo’"), and `english_names` asks sea-g2p for the
-possessive ("dan's" /dˈænz/, which it does read in English) and drops the closing /z/ or /s/. If the answer still
-carries a Vietnamese tone mark the word is left alone. Lower-case "dan" in prose is never touched. On the sixth
+also at a sentence start; a closing quote may follow: "‘Giant Leo’"), and `foreign_names` reads the name as the
+Vietnamese syllable it is spelled as, with a "d" onset respelled "đ" ("Dan" /ɗˈaːn/, `name_sounds.json`
+"foreign_onsets"). koeun first gave such a name its English sound through the possessive ("dan's" /dˈænz/ less the
+/z/); on 2026-11-11 the owner heard "Dan" swallowed after "Rồi" at the app's seed, and the measurement in
+docs/NAME_SOUNDS.md found the English syllables lost in 1-2 clips of 30 and the Vietnamese ones in none. Lower-case
+"dan" in prose is never touched. On the sixth
 sample (1,210 rows, roster names simulated per series): Western names kept English 56/58 -> 57/58, Vietnamese words
 read English 22/381 unchanged, English kept 497/499 unchanged; the row still lost is lower-case "giant leo".
 

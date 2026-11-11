@@ -128,7 +128,7 @@ def _shared() -> _Shared:
 class Rulings:
     """What a book already knows about its shared words (shared_rulings.py): the second tier's answers by context
     (`shared_word_contexts` key -> Vietnamese?), the roster's Vietnamese names ("an", "long") and its foreign names
-    that are spelled like a Vietnamese syllable ("dan", "tom": `english_names`), lower-case."""
+    that are spelled like a Vietnamese syllable ("dan", "tom": `foreign_names`), lower-case."""
 
     __slots__ = ("contexts", "names", "foreign")
 
@@ -227,7 +227,7 @@ def remembered_rulings() -> "Rulings | None":
 
 
 def remembered_named() -> frozenset[str]:
-    """The roster's foreign names this utterance writes as a name (`english_names`)."""
+    """The roster's foreign names this utterance writes as a name (`foreign_names`)."""
     return getattr(_case, "named", frozenset())
 
 
@@ -463,17 +463,22 @@ def written_names(text: str, source: str | None = None) -> frozenset[str]:
     return frozenset(upper - lower)
 
 
-def english_names(given: str, raw: str, phonemes: str, g2p: Callable[[str], str], words: frozenset[str]) -> str:
-    """Give a foreign roster name that is spelled like a Vietnamese syllable its English sound ("Dan" /zaːn/ -> /dæn/).
+def foreign_names(given: str, raw: str, phonemes: str, g2p: Callable[[str], str], words: frozenset[str]) -> str:
+    """Read a foreign roster name that is spelled like a Vietnamese syllable as that syllable, with the onset the name
+    has ("Dan": "đan" /ɗaːn/ - not Vietnamese "dan" /zaːn/, and not the English /dæn/ either).
 
-    sea-g2p has no English entry for such a word, not even inside an <en> tag: the Vietnamese syllable wins. It does
-    read the possessive in English ("dan's" -> /dˈænz/, "tom's" -> /tˈɑːmz/), so each of `words` is swapped for its
-    possessive in the phonemizer's input only (`given`; `raw` is its output) and the closing /z/ or /s/ is dropped:
-    every phoneme is sea-g2p's own. A swap that moves any other word, or that does not come back as one English
-    word, is thrown away and the name stays as it was in `phonemes`.
+    The voice knows Vietnamese syllables. Measured on VieNeu v3 Nano (docs/NAME_SOUNDS.md), the English sound sea-g2p
+    can be made to give such a name (/dˈæn/, /bˈɛn/, /kˈɛn/) was swallowed right after "Rồi" in 1-2 clips of 30 per
+    name, and lost in the owner's own sentence at the seed the app uses; the Vietnamese syllable /ɗˈaːn/ was swallowed
+    in 0 of 35. So the name keeps the phonemes sea-g2p gives its spelling, and only an onset listed in
+    `name_sounds.json` "foreign_onsets" is respelled ("d" -> "đ": the Vietnamese letter "d" is /z/, the name's /d/) in
+    the phonemizer's input only (`given`; `raw` is its output). A tone sea-g2p gives the respelled syllable is dropped,
+    as in `repair_level_tone`: a name written without a mark has the level tone. Every phoneme is sea-g2p's own. A swap
+    that moves any other word is thrown away and the name stays as it was in `phonemes`.
     """
     if not words:
         return phonemes
+    onsets = _sounds().foreign_onsets
     tokens, before, out = given.split(), raw.split(), phonemes.split()
     if not len(tokens) == len(before) == len(out):
         return phonemes
@@ -482,16 +487,19 @@ def english_names(given: str, raw: str, phonemes: str, g2p: Callable[[str], str]
         match = _LETTER_RUN.search(token)
         if match is None or match.group() not in words or _LETTER_RUN.search(token, match.end()):
             continue
+        onset = next((letters for letters in onsets if match.group().startswith(letters)), None)
+        if onset is None:
+            continue
         marked = list(tokens)
-        marked[index] = token[:match.end()] + "'s" + token[match.end():]
+        marked[index] = token[:match.start()] + onsets[onset] + token[match.start() + len(onset):]
         after = g2p(" ".join(marked)).split()
         if len(after) != len(before) or any(new != old for at, (new, old) in enumerate(zip(after, before)) if at != index):
             continue
-        said = after[index].rstrip(_PHONEME_MARKS)
-        if len(said) < 3 or said[-1] not in "zs" or _TONE.search(said):
-            continue
-        out[index] = said[:-1] + out[index][len(out[index].rstrip(_PHONEME_MARKS)):]
-        changed = True
+        said = _TONE.sub("", after[index].rstrip(_PHONEME_MARKS))
+        core = out[index].rstrip(_PHONEME_MARKS)
+        if said and said != core:
+            out[index] = said + out[index][len(core):]
+            changed = True
     return " ".join(out) if changed else phonemes
 
 
@@ -506,6 +514,7 @@ class _Sounds:
         self.rimes: dict[str, str] = data["rimes"]
         self.level = frozenset(data["level"])
         self.unread: dict[str, str] = data["unread"]
+        self.foreign_onsets: dict[str, str] = dict(sorted(data["foreign_onsets"].items(), key=lambda item: -len(item[0])))  # longest first
         self.rime = re.compile(r"(?<![^\W\d_])([bcdđghklmnpqrstvx]{0,3})(" + "|".join(sorted(self.rimes)) + r")(?![^\W\d_])")
 
 

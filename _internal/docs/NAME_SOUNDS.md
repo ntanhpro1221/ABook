@@ -1,8 +1,8 @@
 # Name sounds: syllables of a romanized name the voice cannot say as written
 
 2026-11-10, revised 2026-11-11 after the owner listened; branch `dev/koeun`. Data: `abook/readaloud/name_sounds.json`. Code: `phoneme_policy.respell_rare_rimes`,
-`repair_level_tone`, `restore_unread_words` (Python) = `PhonemePolicy.respellRareRimes`, `repairLevelTone`,
-`restoreUnreadWords` (Kotlin, the build hands the JSON over as `BuildConfig.NAME_SOUNDS`). Shared cases:
+`repair_level_tone`, `restore_unread_words`, `foreign_names` (Python) = `PhonemePolicy.respellRareRimes`, `repairLevelTone`,
+`restoreUnreadWords`, `foreignNames` (Kotlin, the build hands the JSON over as `BuildConfig.NAME_SOUNDS`). Shared cases:
 `tests/fixtures/readaloud/phoneme_delivery/cases.json`.
 
 ## The complaint
@@ -140,12 +140,70 @@ Found and left alone, with the reason:
 - "cho", "khi", "la", "ma", "thi", "va", "vi", "du" differ only in stress (function words); "boong", "xoong",
   "coong" are read `ˈɔŋ` both ways. Not faults.
 
+## A Western roster name spelled like a Vietnamese syllable (`foreign_onsets`)
+
+"Dan", "Tom", "Ben", "Ken" of a Western roster are Vietnamese syllables to sea-g2p ("dan" /zaːn/), and no `<en>` tag
+changes that. koeun (2026-11-10) gave them the English sound through the possessive ("dan's" /dˈænz/ less the /z/):
+/dˈæn/, /tˈɑːm/, /bˈɛn/, /kˈɛn/. The owner heard "Rồi Dan quay sang nhìn Tom." at the app's seed with no "Dan" at all,
+and koeun had already lost "Dan" and "Ben" right after "Rồi" in 2 clips of 27.
+
+Measured (VieNeu v3 Nano, CPU, voice Adam; transcriber faster-whisper large-v3-turbo with word timestamps; the slot
+between the carrier's neighbour words is "swallowed" when no word is written there, "short" when the word there
+lasts under 0.12 s). Six carriers per name - "Rồi X quay sang nhìn tôi.", "Và X cũng gật đầu.", "Nếu vậy thì X sẽ đi
+trước.", "X mở cửa bước vào.", "Tôi thấy X đứng ở cổng trường.", "Người mở cửa là X." - plus the owner's "Rồi X quay
+sang nhìn Tom." for Dan; five seeds each: the app's seed of the sentence, then 1-4.
+
+| name | phonemes | from | clips | right | swallowed | short | other word | bad at the app's seed |
+|---|---|---|---|---|---|---|---|---|
+| Dan | `dˈæn` | English possessive (koeun) | 35 | 32 | 1 | 1 | 1 | 1 ("Rồi, quay sang nhìn Tom.") |
+| Dan | `zˈaːn` | Vietnamese "dan" | 35 | 0 | 0 | 0 | 34 ("Gian") | - |
+| Dan | `ɗˈaːn` | Vietnamese "đan" | 35 | 34 | 0 | 1 | 0 | 0 |
+| Dan | `ɗˈɛn` | Vietnamese "đen" | 35 | 35 | 0 | 0 | 0 | 0 |
+| Ben | `bˈɛn` | English possessive | 30 | 28 | 2 | 0 | 0 | 1 |
+| Ben | `bˈen` | Vietnamese "ben" | 30 | 26 | 1 | 2 | 1 | 0 |
+| Ken | `kˈɛn` | English = Vietnamese "ken" | 30 | 29 | 1 | 0 | 0 | 1 ("Rồi, quay sang nhìn tôi.") |
+| Tom | `tˈɑːm` | English possessive | 30 | 28 | 0 | 0 | 2 | 0 |
+| Tom | `t̪ˈɔm` | Vietnamese "tom" | 30 | 30 | 0 | 0 | 0 | 0 |
+| Sam | `sˈæm` / `sˈaːm` | English / Vietnamese | 30 / 30 | 30 / 30 | 0 | 0 | 0 | 0 |
+| Lan, Nam (Vietnamese names) | `lˈaːn`, `nˈaːm` | Vietnamese | 30 / 30 | 29 / 30 | 0 | 0 | 1 / 0 | 0 |
+
+A second round put one syllable at a time into the same slot of three carriers ("Rồi X quay sang nhìn tôi.", "Sau
+đó X quay sang nhìn tôi.", "Và X cũng gật đầu.") by ten seeds (the app's, then 1-9), 30 clips a syllable:
+
+| syllable | from | swallowed | short | note |
+|---|---|---|---|---|
+| `ɗˈaːn` | "đan" | 0 | 0 | |
+| `lˈaːn` | "lan" (control) | 0 | 0 | |
+| `t̪ˈɔm` | "tom" | 0 | 1 | |
+| `kˈɛn` | "ken" = English | 1 | 0 | at the app's seed of "Rồi Ken ..." |
+| `ɗˈɛn` | "đen" | 1 | 1 | |
+| `dˈɛn` | English "den" | 1 | 1 | heard "đen" otherwise |
+| `dˈæn` | English possessive "dan's" | 2 | 1 | |
+| `tˈɑːm` | English "tom's" | 0 | 3 | |
+| `bˈɛn` | English "ben's" | 2 | 2 | |
+| `bˈen` | "ben" | 3 | 2 | |
+
+The place is the cause as much as the syllable: every swallowed clip of both rounds but one stands right after "Rồi"
+(the voice breaks after "Rồi" as after a comma, and a short level syllable with a close or front vowel - "en", "ɛn",
+"æn" - is lost in the break); after "Sau đó" or "Và" nothing is swallowed. The syllables never lost have a long open
+vowel the voice knows well (/aː/, /ɔ/): /ɗaːn/ 0 of 65, /laːn/ 0 of 60.
+
+**Decision.** Such a name is read as the Vietnamese syllable it is spelled as, and only an onset letter that
+Vietnamese reads otherwise is respelled: "d" -> "đ" (`name_sounds.json` "foreign_onsets"). "Dan" is "đan" /ɗˈaːn/ -
+the owner's "đan", 0 swallowed in 35 - not "đen": /æ/ is between the two and "Đan" is how Vietnamese writes the name.
+"Tom", "Ben", "Ken", "Sam" keep sea-g2p's Vietnamese reading of their spelling (`t̪ˈɔm`, `bˈen`, `kˈɛn`, `sˈaːm`), as
+before koeun. The spoken text and the transcript keep "Dan"; the roster still decides which Dan is Western
+(`shared_rulings.foreign_names`), and lower-case "dan" in prose is never touched.
+
 ## What is not done
 
-- A short English name inside a sentence can be swallowed by Nano: "Rồi Dan quay sang nhìn Tom." lost "Dan" in one
-  seed of three, "Rồi Ben ..." likewise; 2 of 27 clips (Dan, Ben, Ken in three carriers by three seeds), both right
-  after "Rồi"; Jack and Bob, English before this branch, 0 of 18.
-- "Hi-un U" (Hyun Woo): the tone is level now, but the transcriber writes "Hinh U" / "Hiêng U" in two seeds of
-  three - three vowels in a row; not judged right.
+- "Ben" is still lost or shortened in 3 clips of 30 as `bˈen` (2 of 30 as English `bˈɛn`): neither reading is a
+  Vietnamese word the voice knows; no in-distribution spelling of "Ben" does better. "Jack" and "Bob", English
+  before this branch, 0 of 18.
+- "Hi-un U" (Hyun Woo) stays. Seven spellings were measured in four carriers by six seeds (`hˈi ˈun ˈu`, "Hiu-un U",
+  "Hi-ơn U", "Hi-ân U", "Hiun U", "Hiên U", and `hˈiˌun ˈu` joined): the transcriber keeps the three sounds hi / un /
+  u apart for the current spelling in 19 of 24 (17 as "hi un u", 4 of 4 at the app's seeds); "Hiu-un U" 18 of 24 but
+  never with "hi" ("hiếu", "hu"), "Hi-ơn U" 18 of 24 but never with "un" ("an"), "Hiên U" 0. The five misses are
+  all at the end of a sentence ("vị cứu tinh của Hyun Woo.": "hinh u", "hiêng u", "hyung u").
 - The numbers are Nano on CPU. The rime is absent from the training speech of every VieNeu tier, but the other
   tiers were not measured.
