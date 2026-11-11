@@ -357,13 +357,7 @@ object ReadAloud {
      * Cách đọc riêng người nghe đặt cho cuốn ("Đọc từ này là…", lớp sửa `readings` - [BookEdits]). Nhớ theo giờ sửa + cỡ của `edits.json`: lưu một cách đọc
      * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính. Tên cuốn tự chứng minh ([provenNames]: tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA của mọi cuốn) nằm dưới cách đọc của người nghe.
      */
-    fun readingsOf(bookId: String): Map<String, String> {
-        val proven = provenNames[bookId].orEmpty()
-        val own = listenerReadings(bookId)
-        if (proven.isEmpty()) return own
-        // a Studio book's rulings ([BookReadings]) must survive the layering: a plain `proven + own` would drop them
-        return if (own is BookReadings) BookReadings(proven + own, own.rulings) else proven + own
-    }
+    fun readingsOf(bookId: String): Map<String, String> = BookReadings.over(provenNames[bookId].orEmpty(), listenerReadings(bookId))
 
     private fun listenerReadings(bookId: String): Map<String, String> {
         if (bookId.isBlank()) return emptyMap()

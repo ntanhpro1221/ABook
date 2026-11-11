@@ -26,5 +26,12 @@ class BookReadings(private val readings: Map<String, String>, val rulings: Phone
             val rulings = PhonemePolicy.Rulings.of(shared)
             return if (origin.isEmpty() && rulings == null) own else BookReadings(origin + own, rulings)
         }
+
+        /**
+         * [proven]: the names the book proves by itself (JapanesePolicy.bookNameReadings), standing under [own] (what [of] gave). A Studio
+         * book's rulings survive the layering: a plain `proven + own` is a bare map and would drop them.
+         */
+        fun over(proven: Map<String, String>, own: Map<String, String>): Map<String, String> =
+            if (proven.isEmpty()) own else if (own is BookReadings) BookReadings(proven + own, own.rulings) else proven + own
     }
 }
