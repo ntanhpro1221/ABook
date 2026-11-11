@@ -90,7 +90,7 @@ class SymbolsTest {
     @Test
     fun theSymbolConventionsOfTn11() = check(
         "Họp 8:00 → 10:00 sáng. Lv3 → Lv4, đỏ → xanh." to
-            "Họp 8:00 đến 10:00 sáng. level 3 thành level 4, đỏ thành xanh.",
+            "Họp 8:00 đến 10:00 sáng. le-vồ 3 thành le-vồ 4, đỏ thành xanh.",
         "Nhấn ↑↑↓↓←→←→BABA nhé, bay →→→→ đi." to
             "Nhấn lên lên xuống xuống trái phải trái phải bê a bê a nhé, bay  đi.",
         "Sức mạnh 9↓, DEF↓ và (9↓) nữa." to

@@ -56,7 +56,7 @@ def test_a_japanese_name_in_a_japanese_book_is_read_by_the_rules(token: str, rea
     assert _said(f"Rồi {token}.", "ja")[1] == f"{reading}."
 
 
-@pytest.mark.parametrize("token", ["Kate", "Mike", "Rose", "Anne", "Emma", "Nina", "Sara", "Mario", "Level", "Okay", "Smith"])
+@pytest.mark.parametrize("token", ["Kate", "Mike", "Rose", "Anne", "Emma", "Nina", "Sara", "Mario", "Server", "Okay", "Smith"])
 def test_an_english_name_is_left_to_the_voice_even_in_a_japanese_book(token: str) -> None:
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
 
@@ -302,7 +302,7 @@ def _said_en(text: str, origin: str | None = None, speaks_english: bool = False)
 
 
 def test_a_voice_that_speaks_english_keeps_english_words_exactly_as_before() -> None:
-    text = "Tôi gặp Rose và Mike. Anh ấy mở laptop, dùng skill Fireball cho Haruto-kun, Kyouko."
+    text = "Tôi gặp Rose và Mike. Anh ấy mở notebook, dùng skill Fireball cho Haruto-kun, Kyouko."
     toks = word_timing.tokens(text)
     for origin in (None, "ja", "ko"):
         assert vieneu.spoken_tokens(toks, origin, True) == vieneu.spoken_tokens(toks, origin) == names.spoken_names(toks, origin, True)
@@ -311,10 +311,10 @@ def test_a_voice_that_speaks_english_keeps_english_words_exactly_as_before() -> 
 
 
 def test_english_words_and_names_become_syllables_for_a_voice_that_cannot_say_them() -> None:
-    words = ["laptop", "Facebook", "email", "Jennifer", "Rose"]
-    said = _said_en("Anh ấy mở laptop, vào Facebook rồi gửi email cho Jennifer và Rose.")
-    assert said[3] == english_vi.vietnamized_english("laptop") + "," and said[5] == english_vi.vietnamized_english("Facebook")
-    assert said[8] == english_vi.vietnamized_english("email") and said[10] == english_vi.vietnamized_english("Jennifer")
+    words = ["notebook", "Facebook", "message", "Jennifer", "Rose"]
+    said = _said_en("Anh ấy mở notebook, vào Facebook rồi gửi message cho Jennifer và Rose.")
+    assert said[3] == english_vi.vietnamized_english("notebook") + "," and said[5] == english_vi.vietnamized_english("Facebook")
+    assert said[8] == english_vi.vietnamized_english("message") and said[10] == english_vi.vietnamized_english("Jennifer")
     assert said[12] == english_vi.vietnamized_english("Rose") + "." and not set(words) & set(said), "chữ Anh không còn trong chữ đem đọc"
     assert [said[i] for i in (0, 1, 2, 4, 6, 7, 9, 11)] == ["Anh", "ấy", "mở", "vào", "rồi", "gửi", "cho", "và"], "chữ Việt không đổi"
     # ca chủ sách chốt (english_vi.OWNER): đứng trên mọi luật
@@ -332,7 +332,7 @@ def test_a_unit_after_a_number_is_left_to_the_text_normalizer() -> None:
 
 
 def test_punctuation_is_kept_and_the_shown_words_and_their_count_never_change() -> None:
-    assert _said_en("“Rose,” Mike! (laptop)") == [f"“{english_vi.vietnamized_english('Rose')},”", "Mi-ke!", f"({english_vi.vietnamized_english('laptop')})"]
+    assert _said_en("“Rose,” Mike! (notebook)") == [f"“{english_vi.vietnamized_english('Rose')},”", "Mi-ke!", f"({english_vi.vietnamized_english('notebook')})"]
     text = "Rose gặp Mike ở quán. Haruto-kun, Kyouko-san đến. Anh mở laptop rồi gửi email cho Jennifer!"
     for origin in (None, "ja", "ko"):
         toks, parts = vieneu.units(text, 256, origin, False)

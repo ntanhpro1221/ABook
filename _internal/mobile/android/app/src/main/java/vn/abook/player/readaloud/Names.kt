@@ -201,9 +201,16 @@ object Names {
     /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
     private val KOREAN_TERMS = mapOf("oppa" to "óp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "xi", "nim" to "nim")
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
-    /** Từ đã vào từ điển tiếng Việt: đọc như từ Việt với mọi cuốn - `DICTIONARY_WORDS`. */
-    internal val DICTIONARY_WORDS = mapOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan",
-        "vali" to "va-li", "robot" to "rô-bốt", "gorilla" to "gô-ri-la")
+    /** Từ mượn đọc Việt với mọi cuốn và giọng (english_policy.json "loanwords", cùng file với Python) - `LOANWORDS`. */
+    internal val LOANWORDS: Map<String, String> by lazy { EnglishPolicy.stringMap("loanwords") }
+    /** Owner 11-11: VieNeu speaks English, so these stay English ("share", "comment"); the table reading is for voices that cannot - `ENGLISH_VOICE_KEEPS`. */
+    internal val ENGLISH_VOICE_KEEPS: Set<String> by lazy { EnglishPolicy.stringList("english_voice_keeps").toSet() }
+    /** Từ mượn viết hoa giữa câu mà vẫn là danh từ chung ("mạng Internet") - `LOANWORD_CAPITALS`. */
+    private val LOANWORD_CAPITALS: Set<String> by lazy { EnglishPolicy.stringList("loanword_capitals").toSet() }
+    /** Từ mượn mà viết hoa chữ đầu thì luôn là tên người ("Nick") - `LOANWORD_NAMES`. */
+    private val LOANWORD_NAMES: Set<String> by lazy { EnglishPolicy.stringList("loanword_names").toSet() }
+    private const val SENTENCE_ENDS = ".!?…:"
+    private const val OPENERS = "\"“‘'([{-–—*«"
     /** Từ Nhật rất quen: đọc theo luật phiên âm với mọi cuốn, dù có trong danh sách từ Anh - `JAPANESE_COMMON`. */
     internal val JAPANESE_COMMON = JapanesePolicy.list("common").toSet()
     /** Tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số - `CURRENCY`. */
@@ -254,7 +261,7 @@ object Names {
     /** Cách đọc của từ đã vào từ điển tiếng Việt hay từ Nhật rất quen, null khi không phải - `loanword_reading`. */
     fun loanwordReading(core: String): String? {
         val lowered = lower(core)
-        DICTIONARY_WORDS[lowered]?.let { return it }
+        LOANWORDS[lowered]?.let { return it }
         return if (lowered in JAPANESE_COMMON) loneSyllable(Romanization.reading(lowered, "ja")) else null
     }
 
@@ -263,13 +270,50 @@ object Names {
         return before.isNotEmpty() && (before.last().isDigit() || lower(before) in NUMBER_WORDS)
     }
 
-    /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt - `read_loanwords`. */
-    fun readLoanwords(toks: List<String>, out: MutableList<String>) {
+    /** Token đứng đầu câu: đầu đoạn, sau dấu kết câu / hai chấm (kể cả ngoặc đóng theo sau), sau gạch thoại, hay mở bằng ngoặc / gạch - `sentence_start`. */
+    fun sentenceStart(toks: List<String>, index: Int): Boolean {
+        val before = splitToken(toks[index]).first
+        if (index == 0 || (before.isNotEmpty() && before[0] in OPENERS)) return true
+        val previous = toks[index - 1].trimEnd { it in "\"”’'»)]}*" }
+        return (previous.isNotEmpty() && previous.last() in SENTENCE_ENDS) || previous in setOf("-", "–", "—", "")
+    }
+
+    /** [core] viết như danh từ chung của [LOANWORDS]: chữ thường, TOÀN HOA để nhấn mạnh ("bị admin BAN nick"), hay hoa chữ đầu khi đứng đầu câu (hoặc từ trong
+     *  [LOANWORD_CAPITALS]). Viết hoa chữ đầu mà chữ liền sau cũng là chữ Latin viết hoa thì là tên / nhan đề ("Code Breaker"); từ trong [LOANWORD_NAMES] viết hoa chữ đầu
+     *  luôn là tên ("Nick") - `common_loanword`. */
+    fun commonLoanword(core: String, toks: List<String>, index: Int): Boolean {
+        val lowered = lower(core)
+        if (lowered !in LOANWORDS) return false
+        if (core == lowered || (core.length > 1 && core == core.uppercase(Locale.ROOT))) return true
+        if (lowered in LOANWORD_NAMES || !(lowered in LOANWORD_CAPITALS ||
+                (core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1)) && sentenceStart(toks, index)))) return false
+        if (index + 1 < toks.size && splitToken(toks[index]).third.isEmpty()) {
+            val (before, following, _) = splitToken(toks[index + 1])
+            if (before.isEmpty() && following.firstOrNull()?.let { it.code < 128 && it.isUpperCase() } == true) return false
+        }
+        return true
+    }
+
+    /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt. Từ của [LOANWORDS]
+     *  chỉ đổi khi viết như danh từ chung ([commonLoanword]) và không nằm trong cụm tiếng Anh ([EnglishPolicy.loanwordEnglish]). [shouted]: chỉ xét từ của [LOANWORDS] viết TOÀN HOA (chạy trước luật viết tắt) - `read_loanwords`. */
+    fun readLoanwords(toks: List<String>, out: MutableList<String>, shouted: Boolean = false) {
+        var english: Set<Int>? = null
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val (before, core, after) = splitToken(token)
-            if (core.isEmpty()) continue
+            if (core.isEmpty() || (shouted && !(core.length > 1 && core == core.uppercase(Locale.ROOT) && core != lower(core) && lower(core) in LOANWORDS))) continue
+            if (lower(core) in ENGLISH_VOICE_KEEPS) {  // the only Android voice speaks English; "APP" for emphasis is the English word, not "A P P"
+                if (core.length > 1 && core == core.uppercase(Locale.ROOT)) out[index] = before + lower(core) + after
+                continue
+            }
             var reading = loanwordReading(core)
+            if (reading != null && lower(core) in LOANWORDS) {
+                if (!commonLoanword(core, toks, index)) reading = null
+                else {
+                    val found = english ?: EnglishPolicy.loanwordEnglish(toks).also { english = it }
+                    if (index in found) reading = null
+                }
+            }
             if (reading == null && lower(core) in CURRENCY && core.all { it.isLetter() } && afterNumber(toks, index)) reading = CURRENCY[lower(core)]
             if (reading != null) out[index] = before + reading + after
         }

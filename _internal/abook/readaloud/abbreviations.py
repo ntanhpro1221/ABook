@@ -97,7 +97,7 @@ def spelled(core: str) -> str | None:
 
 
 def read_levels(toks: list[str], out: list[str], speaks_english: bool = True) -> None:
-    """"Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: để chữ "level" (giọng không nói được âm Anh thì Việt hoá như từ Anh khác). Không đi với số thì không
+    """"Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: đọc như chữ "level" viết đủ - cách đọc Việt của bảng từ mượn (`names.LOANWORDS`: "le-vồ"), để "Lv 5" và "level 5" trong cùng cuốn nghe như nhau. Không đi với số thì không
     chắc nghĩa gì: đọc tên chữ cái ("lờ vê"). Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi."""
     for index, token in enumerate(toks):
         if out[index] != token:
@@ -109,7 +109,7 @@ def read_levels(toks: list[str], out: list[str], speaks_english: bool = True) ->
         glued = after.lstrip(".:")
         following = toks[index + 1].lstrip("([“\"'") if index + 1 < len(toks) else ""
         if glued[:1].isdigit() or (after in ("", ".", ":") and following[:1].isdigit()):
-            level = "level" if speaks_english else names.english_reading("level") or "level"
+            level = names.LOANWORDS.get("level") or ("level" if speaks_english else names.english_reading("level") or "level")
             out[index] = before + level + (" " + glued if glued[:1].isdigit() else "")
         else:
             out[index] = before + LEVEL_NAMES[word] + names.closing(after, LEVEL_NAMES[word])

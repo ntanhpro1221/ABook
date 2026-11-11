@@ -42,7 +42,7 @@ def test_other_tokens_are_left_alone(token: str) -> None:
 
 
 def test_punctuation_around_an_abbreviation_is_kept_and_a_number_before_it_stops_it() -> None:
-    assert _said("“HP,” (MP) NPC! 3MP LV5 5HP") == ["“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "level 5", "5HP"]
+    assert _said("“HP,” (MP) NPC! 3MP LV5 5HP") == ["“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "le-vồ 5", "5HP"]
 
 
 def test_a_shouted_sentence_is_not_a_row_of_abbreviations() -> None:
@@ -201,7 +201,7 @@ def test_the_word_after_a_stutter_still_goes_through_the_name_rules() -> None:
 
 
 @pytest.mark.parametrize("text, said", [
-    ("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.", "level 5, level 15], level 1 level 5 và level 40."),
+    ("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.", "le-vồ 5, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ 40."),
     ("Lv ơi, LVL. LV", "lờ vê ơi, lờ vê lờ. lờ vê"),  # chủ sách 04-10: không đi với số thì không chắc là cấp độ: đọc tên chữ cái
 ])
 def test_lv_is_a_level_only_right_before_a_number(text: str, said: str) -> None:
@@ -209,11 +209,11 @@ def test_lv_is_a_level_only_right_before_a_number(text: str, said: str) -> None:
 
 
 def test_lv_is_vietnamised_with_the_other_english_words_for_a_voice_that_cannot_say_english() -> None:
-    assert _said("Lv 5", None, False) == [names.english_reading("level") or "level", "5"]
+    assert _said("Lv 5", None, False) == ["le-vồ", "5"]
 
 
 @pytest.mark.parametrize("token, reading", [
-    ("sofa", "xô-pha"), ("Logic", "lô-gích"), ("video", "vi-đê-ô"), ("violin", "vi-ô-lông"), ("piano", "pi-a-nô"), ("sandal", "xăng-đan"), ("vali", "va-li"), ("robot", "rô-bốt"),
+    ("sofa", "xô-pha"), ("logic", "lô-gích"), ("video", "vi-đê-ô"), ("violin", "vi-ô-lông"), ("piano", "pi-a-nô"), ("sandal", "xăng-đan"), ("vali", "va-li"), ("robot", "rô-bốt"),
     ("gorilla", "gô-ri-la"), ("anime", "a-ni-me"), ("Ninja", "nin-gia"), ("manga", "man-ga"), ("bento", "ben-tô"), ("kimono", "ki-mô-nô"), ("sake", "xa-ke"),
     ("takoyaki", "ta-cô-gia-ki"), ("senpai", "xen-pai"), ("Umu", "u-mu"), ("tsukkomi", "xúc-cô-mi"),
 ])

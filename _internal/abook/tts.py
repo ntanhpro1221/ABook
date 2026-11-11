@@ -617,10 +617,17 @@ def keep_vieneu_final_mark() -> None:
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
         from .readaloud.japanese_delivery import phonemes
-        from .readaloud.phoneme_policy import emphasize_english_interjections, repair_syllabic_gi, repair_syllabic_o
+        from .readaloud.phoneme_policy import (
+            emphasize_english_interjections, remembered_case, repair_syllabic_gi, repair_syllabic_o, restore_vietnamese,
+        )
 
         def plain(value: str, final: bool) -> str:
-            out = original_phonemize(value, final)
+            # `value` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
+            out = restore_vietnamese(
+                value, original_phonemize(value, final),
+                lambda: phonemize_text._get_pipeline().normalizer.normalize(value, punc_norm=final),
+                phonemize_text._get_g2p().convert, remembered_case(),
+            )
             if final and out.endswith(".") and ("?" in value or "!" in value):
                 written = original_phonemize(value, False).rstrip()
                 if written.endswith(("?", "!")):
@@ -695,18 +702,20 @@ class VieNeuEngine(EngineAdapter):
         )
         try:
             from .readaloud.japanese_delivery import mark_anchors
+            from .readaloud.phoneme_policy import sentence_case
 
             materialized = _row_value(row, "_materialized_spoken", None)
             inference_text = mark_anchors(str(row["text"]), materialized[2]) if materialized else str(row["text"])
-            return np.asarray(
-                self.tts.infer(
-                    inference_text,
-                    voice=voice,
-                    style=style,
-                    **effective_sampling,
-                ),
-                dtype=np.float32,
-            ).reshape(-1)
+            with sentence_case(inference_text):
+                return np.asarray(
+                    self.tts.infer(
+                        inference_text,
+                        voice=voice,
+                        style=style,
+                        **effective_sampling,
+                    ),
+                    dtype=np.float32,
+                ).reshape(-1)
         except Exception as exc:  # noqa: BLE001
             raise AudioQualityError(str(exc)) from exc
 

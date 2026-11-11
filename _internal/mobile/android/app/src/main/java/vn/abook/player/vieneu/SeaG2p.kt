@@ -62,17 +62,19 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
     fun phonemize(sentences: List<String>): String {
         val text = sentences.joinToString(" ")
         val joiner = vn.abook.player.readaloud.JapanesePolicy.data.getJSONObject("delivery").getString("joiner")
-        if (joiner !in text) return phonemizePlain(sentences)
+        val capitals = PhonemePolicy.capitalised(text)
+        if (joiner !in text) return phonemizePlain(sentences, capitals = capitals)
         return vn.abook.player.readaloud.JapaneseDelivery.phonemes(text, true) { value, final ->
-            phonemizePlain(listOf(value), final)
+            phonemizePlain(listOf(value), final, capitals)
         }
     }
 
-    private fun phonemizePlain(sentences: List<String>, final: Boolean = true): String {
+    private fun phonemizePlain(sentences: List<String>, final: Boolean = true, capitals: Set<String> = emptySet()): String {
         val text = normalizeUnit(sentences)
         val chunk = if (final) puncNorm(text) else text
         if (chunk.isBlank()) return ""
-        var phonemes = g2p(keepLoneO(chunk, normalize(chunk, final)))
+        val given = keepLoneO(chunk, normalize(chunk, final))
+        var phonemes = PhonemePolicy.restoreVietnamese(chunk, g2p(given), given, ::g2p, capitals)
         if (final && phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()

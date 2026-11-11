@@ -374,3 +374,191 @@ Ràng buộc:
 - Studio đụng file khoá (`tts.py`, `text_processing.py`) nên làm ở nhánh dev, kèm sự kiện phiên bản.
 - Nghe ngay cũng có file khoá (`readaloud/symbols.py`, `readaloud/vieneu.py`...): đọc `QUALITY_IMPLEMENTATION_FILES` từ code,
   đo `quality_implementation_hash()` trước/sau; thay đổi hash chỉ nằm ở nhánh dev và chờ hết run trước khi tích hợp.
+
+## 5. Từ tiếng Anh viết giống một âm tiết Việt (10-11)
+
+Chủ sách: "thi thoảng có mấy từ tiếng nước ngoài có ký tự như một từ tiếng việt thì app không phân nó vào là từ nước ngoài
+để đọc". 223 từ trong `english_words.txt` cũng là âm tiết Việt hợp lệ (to, con, ban, the, my, go, hot, top...). sea-g2p tự
+chọn tiếng cho chúng theo chữ đứng cạnh (xem "Đo ở mức âm vị" bên dưới): đứng giữa chữ Việt thì đọc kiểu Việt; muốn chắc
+chắn đọc tiếng Anh phải bọc `<en>…</en>`. Riêng việc có trong từ điển Anh vẫn KHÔNG là bằng chứng
+("con", "to", "ban" xuất hiện hàng trăm nghìn lần là tiếng Việt). Bằng chứng là câu chứa nó: `english_policy.english_context`
+(Python) = `EnglishPolicy.englishContext` (Kotlin), dữ liệu ở khoá `context` của `english_policy.json`, ca chung
+`tests/fixtures/readaloud/english_direct/cases.json`.
+
+Một **chuỗi** = các chữ ASCII đứng liền, không có dấu câu và không có chữ Việt (chữ có dấu, kể cả dấu tổ hợp NFD) xen giữa.
+
+| Luật | Điều kiện | Ví dụ đổi | Ví dụ giữ |
+|---|---|---|---|
+| 1. Từ chỉ-Anh (`only`) | dáng âm tiết nhưng không thể là chữ Việt viết đúng: đuôi p/t/c/ch không dấu, hoặc không có nghĩa (gym, main, on, by) | "bản hit", "đang hot", "phòng gym", "STOP IT!" | "ngành IT" (hai chữ hoa đứng riêng = viết tắt) |
+| 2. Chuỗi có từ ngữ pháp Anh (`function`: you, is, of, what, don't...) | chuỗi >= 2 chữ, chữ lạ <= 1/3; một từ ngữ pháp viết Hoa đơn lẻ không tính | "Do you want to go with me?", "Thank you so much" | "Will bay." (Will là tên); từ ở mép chuỗi chạm thẳng chữ Việt ("...you con ạ") |
+| 3. Từ hiếm khi là Việt (`weak`: the, my, me, no, go, he, be, hi...) | kề một từ Anh chắc chắn viết cùng kiểu hoa/thường | "My Lord", "The Fool", "no comment", "Let's go" | "the the mix" (lặp), "ăng ten radio", "Maximilian no baka" (`followed`: chỉ tính từ Anh đứng SAU), "Sienna sao?" |
+| 4. Đứng riêng (`alone`: go, no) | là cả câu hô, hai bên là dấu ngắt | "Go!", "No.", "Go, go, go!" | khái niệm "no" (trong nháy giữa câu Việt), "No. 7", "gay go" |
+
+Dòng không có chữ Việt nào mà âm tiết Việt không dấu nhiều hơn từ Anh chắc chắn ("Anh em oi, cho em hoi...") thì bỏ qua cả dòng.
+Từ điển Anh có cả tên riêng (Sienna, Edward, Elsa) nên "đứng cạnh một từ trong từ điển" không bao giờ đủ: "Sienna sao?",
+"con Wyvern", "lo stress", "Boss gay cấn" đều là tiếng Việt.
+
+**Đo** (kho riêng tư `Corpus`, 598 bộ, 9.342 chương, 32,4 triệu chữ, 791.497 lần một từ trùng xuất hiện; 30% số bộ giữ lại
+theo hash tên bộ, không nhìn khi thiết kế; nhãn do agent gán, chủ sách không chấm):
+
+| Bộ | Ca hợp lệ | Từ Anh thật | Trước: có thẻ `<en>` | Sau: có thẻ `<en>` đúng | Gắn thẻ nhầm chữ Việt | Precision | Recall |
+|---|---|---|---|---|---|---|---|
+| Thiết kế (phân tầng) | 406 | 107 | 0 | 98 | 0 / 256 | 100% | 91,6% |
+| Giữ lại (phân tầng) | 157 | 30 | 0 | 27 | 0 / 116 | 100% | 90,0% |
+| Giữ lại: 200 ca bị đổi bốc ngẫu nhiên | 200 | - | - | - | 6 trước khi sửa, 0 sau | 97,0% -> 100% | - |
+
+6 ca sai của lần soát thứ ba là "No. III" / "No. VI" (No. = số; 5 ca, một bộ) và tiếng động "Gain!"; cả hai đã sửa SAU khi
+nhìn bộ giữ lại, nên con số 100% sau sửa không còn là số giữ lại sạch. Luật đổi khoảng 0,6% số lần một từ trùng xuất hiện.
+Sót đã biết: "MADE IN CHINA" (in), "I am" (am), "So, what..." (So đứng trước dấu phẩy), từ trong nháy đơn lẻ ('gay'), chuỗi mà
+từ Anh bên cạnh không có trong từ điển ("Alligator Man").
+
+**Đo ở mức âm vị** (cái tai nghe được). Bảng trên đếm THẺ, không đếm âm. sea-g2p là máy đọc "Việt có chen Anh": một từ
+trùng đứng sát một chữ nó coi là tiếng Anh (kể cả tên riêng, kể cả cách một dấu phẩy hay dấu chấm) thì nó tự đọc kiểu Anh,
+không cần thẻ. Nên nhiều cụm Anh vốn đã đọc đúng ("Oh my god", "I love you", "bản hit", "My Lord"), và thẻ chỉ đổi âm ở những
+từ đứng lẻ giữa chữ Việt ("Go! Go! Go!", "No!", set, net, chip, up, tech). Phép đo: một từ "đọc Anh" khi âm vị cả cửa sổ không
+đổi lúc ép `<en>` lên nó; bỏ các từ mà âm Anh và âm Việt trùng nhau (sao, con, em, theo, ma, ai...: 82% số lần xuất hiện).
+
+| Bộ | Từ Anh thật: đọc Anh trước -> sau | Chữ Việt/tên/tiếng động: đọc Anh trước -> sau |
+|---|---|---|
+| Thiết kế | 53 -> 66 / 68 (mất 0) | 28 -> 28 / 83 |
+| Giữ lại | 14 -> 20 / 20 (mất 0) | 17 -> 17 / 41 |
+
+Cột phải là lỗi CÓ SẴN của sea-g2p, luật này không thêm ca nào và cũng KHÔNG sửa: chữ Việt đứng sát tên/từ Anh bị đọc kiểu
+Anh - "con boss to quá" (to -> /tuː/), "quay sang Susan", "Lucy bay ngang", "Edward than vãn", "Tin đồn do Carlos tung ra",
+"Shaell leo lên giường". Hai bộ mẫu lấy dày ở tầng "kề từ Anh" nên tỉ lệ 28/83 không phải tỉ lệ của kho; ước lượng có trọng số
+theo số lần xuất hiện thật (8.741 mẫu, 3.105 ô từ x ngữ cảnh): khoảng 6% số lần một từ trùng KHÁC ÂM bị đọc kiểu Anh, tức
+khoảng 1,1% mọi lần từ trùng xuất hiện (~8.600 / 791.497; sau luật này ~9.100). Nặng nhất: do (~5% số lần), sang (~9%),
+bay (~4%), to (~3%), ban, an (~2%). Phần lớn trong số đó là chữ Việt. Không có thẻ `<vi>`; bọc `<en>` cho chữ Anh bên cạnh
+không cách ly được; ký tự vô hình (ZWSP, WJ, soft hyphen) cũng không. Chỉ dấu ngắt thật (`;`, `:`, `.`) hoặc ngoặc đơn quanh
+chữ ấy mới giữ được âm Việt - cả hai đều đổi chuỗi nói, nên chưa làm. Mục 6 sửa lỗi này ở biên âm vị.
+
+## 6. Chữ Việt đứng sát tên hay từ tiếng Anh (10-11)
+
+**Gốc** (sea-g2p 0.10.0, lõi Rust, `src/g2p/mod.rs:477-568 propagate_language`; Android chạy cùng crate qua JNI nên cùng lỗi).
+Từ điển của sea-g2p có 231 từ nằm ở CẢ hai bảng Việt và Anh ("common", gán ở dòng 388-396), 227 từ khác âm. Mỗi chuỗi từ
+chung liền nhau được gán một tiếng theo **mỏ neo gần nhất** - một từ chỉ-Việt hay chỉ-Anh; dấu phẩy không tính, chỉ
+`.!?;:()[]{}` chặn việc tìm. Hai mỏ neo cách đều thì chọn Anh (541-553). Một từ lạ không dấu (tên: Zix, Chiaki, Carlos) là
+mỏ neo Anh (399-402). Câu không có từ chỉ-Việt nào thì cả câu là Anh (482-486: "Lung lay!"). Không có tham số hay thẻ nào ép
+tiếng Việt.
+
+**Thiết kế: chuỗi nói không đổi một byte; chỉ dòng âm vị đổi.** `phoneme_policy.vietnamese_shared` (Python) =
+`PhonemePolicy.vietnameseShared` (Kotlin) quyết định trên khúc đã chuẩn hoá; `restore_vietnamese` / `restoreVietnamese` thực hiện.
+Dữ liệu ở khoá `shared_vietnamese` của `english_policy.json` (mốc g2pvi: version 4; phần mở rộng bên dưới: version 5), ca chung `tests/fixtures/readaloud/shared_vietnamese/cases.json`.
+
+- *Thực hiện.* Mỗi từ được chứng minh là Việt bị thay, **chỉ trong đầu vào của G2P**, bằng một từ chung khác không có trong
+  câu (`sentinels`: nach, sich, trac). sea-g2p xử cả chuỗi từ chung như một khối nên phép thay không đổi tiếng của từ nào
+  khác, và âm của từ thế chỗ đánh dấu đúng vị trí; ở đó đặt âm Việt của từ gốc (lấy từ chính từ điển đang nạp:
+  `g2p("ạ <từ> ạ")`). Kết quả lệch ở bất kỳ chỗ nào khác thì bỏ, giữ nguyên đáp án của sea-g2p. Câu mà sea-g2p không đọc từ
+  nào kiểu Anh dừng ngay ở một phép dò chuỗi con, không tốn lượt G2P thứ hai.
+- *Chữ hoa.* Bộ chuẩn hoá hạ hết về chữ thường trước khi tới máy đọc, nên `capitalised(text)` lấy từ câu gốc các chữ ASCII viết
+  Hoa giữa câu (= tên, không bao giờ bị đổi). Nghe ngay và Kotlin truyền thẳng; Studio chỉ nhận khúc đã chuẩn hoá nên
+  `VieNeuEngine.generate_one` bọc `tts.infer` trong `sentence_case(inference_text)`.
+
+| Bằng chứng | Điều kiện | Ví dụ đổi | Ví dụ giữ |
+|---|---|---|---|
+| Từ Việt ngay sau | từ trong `words`, chữ liền sau là chữ Việt (có dấu, hay âm tiết không dấu trong câu có chữ có dấu) | "Lucy **bay** ngang", "Chiaki **so** sánh", "Erica **ban** nãy", "Orc **to** lớn" | "Lost **Day** là", "Big **Bang** ấy" (`nouns` đứng sau một từ Anh chắc chắn) |
+| Từ Việt ngay trước | chữ liền trước là chữ Việt và chữ sau là hết câu / dấu câu / tên / từ chung khác | "con boss **to** quá", "ngủ **say**, Zix", "ăn **no**, Sarah" | "rất **so** cute", "pay **to** win" |
+| ... và trước một từ Anh | chỉ `before_english` (ban, bay, do, lay, leo, sang) | "cùng nhau **leo** rank" | - |
+| Động từ/giới từ giữa các tên | `strong` (ban, bay, do, lay, sang, say), câu có chữ có dấu, không kề từ Anh chắc chắn | "Julius **sang** Emily", "**Do** Abel khởi xướng" | "**Say** goodbye đi", "**So**, what..." |
+| Tiếng cười | `echo` (hi, he) lặp lại | "Hi hi hi!", "E he he" | "He said" |
+| Từ ghép | `pairs`: lung lay, gay go, cam go | "Lung lay!" | - |
+
+Không bao giờ đổi: từ trong `<en>…</en>` hay kề một từ có thẻ (chữ cái đánh vần như `<en>G M</en>` không tính), và chữ viết Hoa
+giữa câu ("Iron **Man**", "Tháp chủ **Leo** Bright", "Reinhard **van** Astrea").
+
+**Đo ở mức âm vị** (cách đo của mục 5; chỉ các từ khác âm). Bộ thiết kế và bộ giữ-lại-cũ là của mục 5 (đã nhìn khi thiết kế
+luật này). **Bộ giữ lại mới**: 523 bộ truyện chưa từng đọc (hash tên bộ dư 1 thay vì dư 0), 9.212 chương, 30,8 triệu chữ, 350
+ca phân tầng; luật đóng băng trước khi rút mẫu, nhãn gán khi chưa chạy máy đọc, không sửa luật sau khi nhìn. Nhãn do agent
+gán, chủ sách không chấm.
+
+| Bộ | (a) Chữ Việt bị đọc kiểu Anh: trước -> sau | (b) Từ Anh thật đọc kiểu Anh: trước -> sau | Tên / romaji / tiếng động đọc kiểu Anh |
+|---|---|---|---|
+| Thiết kế (mục 5) | 19 -> 1 / 68 | 66 -> 66 / 68 | 9 -> 9 / 15 |
+| Giữ-lại-cũ (mục 5) | 15 -> 0 / 39 | 20 -> 20 / 20 | 2 -> 2 / 2 |
+| **Giữ lại mới** | **60 -> 6 / 144** | **89 -> 89 / 98** | 39 -> 37 / 53 (2 ca là "hi hi", "he he") |
+
+(c) Chuỗi gửi TTS: y hệt từng byte trên mọi ca - luật chạy sau khi chuỗi đã chốt và không có đường nào ghi ngược lại.
+(d) Độ trễ phonemize trên CPU, 2.294 dòng thường của 60 bộ chưa đọc: 0,894 -> 0,920 ms/câu (+0,026 ms, +2,9%); 0,5% số câu cần
+lượt G2P thứ hai.
+
+Ước lượng có trọng số theo số lần xuất hiện thật: trên bộ mới (157.031 lần một từ chung khác âm) số lần bị đọc kiểu Anh giảm
+8.930 -> 3.768 (5,71% -> 2,41%); riêng 32 từ trong danh sách 6.855 -> 1.694 (4,56% -> 1,13%). Trên kho của mục 5 (cùng vũ trụ
+với con số ~8.600 ở trên): 9.071 -> 4.313 (6,40% -> 3,04% phần phân biệt được; 1,15% -> 0,54% mọi lần từ trùng xuất hiện).
+Phần còn lại chủ yếu là từ Anh thật và tên (the, kit, on, cup, "no" tiếng Nhật, "Son"/"Sang"/"Bang" trong tên Hàn).
+
+**Còn sai** (6 / 144 ở bộ giữ lại mới, không sửa để giữ bộ sạch): từ ngoài danh sách ("Krum **le** lưỡi", "Ôi **chao**, Ludwig",
+"Flitwick **the** thé"); chữ Việt viết Hoa giữa câu vì đứng đầu một vế ("RustMonster **Ban** đầu là..."); từ Việt trước một từ
+Anh mà không thuộc `before_english` ("có **in** logo"); câu không có bằng chứng nào ("“**An** An.”"). Chiều ngược lại đã biết: tên
+đứng đầu câu trùng một từ `strong` bị đọc kiểu Việt khi theo sau là tên lạ ("**Do** Cheol-ho nói" đầu câu), và 1 / 150 ca đổi soát
+mắt ở bộ thiết kế ("Reconguista **in** G"). Câu hoàn toàn không dấu ("Simon quay sang Stephanie.") giữ nguyên đáp án của sea-g2p.
+
+### Mở rộng cặp ghép sau g2pvi (10-11)
+
+Khai thác cả 227 từ chung khác âm trên phần kho đã lộ (hash dư 1), chỉ lấy cặp liền nhau với một thành viên chỉ-Việt trong
+từ điển: 22.856 cặp, 7.590 cặp có ít nhất 3 lần ở ít nhất 2 bộ. Soát 145 ứng viên từ ghép/láy bằng văn bản, nhận 143 cặp
+có 100% nhãn Việt trong tối đa 5 ngữ cảnh/cặp; loại cặp có tên hoặc văn bản chưa rõ. Cộng 3 cặp cũ thành 146 cặp.
+Tiêu chí, giới hạn nhãn và bảng tần suất: [SHARED_VIETNAMESE_PAIRS.md](SHARED_VIETNAMESE_PAIRS.md).
+
+- `pairs` chứng minh cặp như "ôi chao", "le lưỡi", "the thé", "in ấn", "bình an", "do dự"; `the` chỉ được nhận trong
+  "the thé". Không đổi chữ Hoa giữa câu hoặc từ trong/kề thẻ Anh; không ghép qua dấu câu.
+- `pair_words` chỉ gồm từ thuộc bảng chung, không đưa thành viên chỉ-Việt vào phép thay. `pair_only_words` giữ phân loại
+  ngữ cảnh cũ cho các từ mới khi chưa được chứng minh bằng cặp, để không gây tác dụng phụ trên "thin man".
+- Chỉ nhận "do trans" ở đầu mệnh đề khi ngay sau `trans` là một chữ Việt có dấu, và `in logo` khi trước `in` là chữ Việt
+  đã được chứng minh. Không mở rộng tùy ý sang "So cute quá", "Do exercise đi" hoặc mọi cặp `in` + Anh.
+- Policy/cache 4 -> 5 (`direct-en5`), phiên bản app giữ nguyên. Bảy khoá clip fixture được sinh lại. Không migrate dữ liệu.
+
+Luật đóng băng ở `3da9d086b` trước khi rút bộ thứ ba; commit cache `493ed6ceb` chỉ đổi version và khoá, không đổi quyết định.
+Bộ thứ ba lấy hash tên bộ dư 2 (truyen/sang-tac modulo 12, ai-dich modulo 30); bỏ merged vì hai phần modulo 2 đã dùng hết.
+587 bộ, 9.990 chương, 32.170.158 chữ, rút 350 ca bằng chính extract2/sample2. Không có tên bộ trùng với hai pool cũ trong
+các reservoir. Nhãn gán từ văn bản trước khi chạy âm vị, chốt hash nhãn và không sửa luật sau khi xem kết quả. Nhãn do model
+gán, chủ sách chưa chấm. Mốc trước của bảng này là `3644901a5`, khác mốc trước của bảng g2pvi phía trên.
+
+| Bộ | Việt đọc Anh trước -> sau | Anh thật đọc Anh trước -> sau | Tên/romaji/tiếng động đọc Anh |
+|---|---|---|---|
+| Thiết kế | 1 -> 0 / 68 | 66 -> 66 / 68 | 9 -> 9 / 15 |
+| Giữ lại mới của g2pvi | 6 -> 2 / 144 | 89 -> 89 / 98 | 37 -> 37 / 53 |
+| Giữ lại thứ ba | 14 -> 13 / 121 | 111 -> 111 / 115 | 36 -> 36 / 67 |
+
+Không có ca Anh thật hoặc tên/romaji mới bị kéo sang Việt trên ba bộ. Mục tiêu 0 lỗi Việt **chưa đạt**: hai ca của bộ 144 là
+"Ban" Hoa giữa câu và "An An" đứng riêng, giữ nguyên theo ràng buộc. Bộ thứ ba còn `so vs` (4 ca), `so` trước tên, `day trán`,
+`tan chocolate`, `robot bay`, `An` Hoa giữa câu, `may` cuối mệnh đề, `Bang Texas`, và hai ca đã bị luật chữ cũ bọc `<en>`
+(`met`, `hi vọng`); sửa chúng cần thí nghiệm tiếp, không được điều chỉnh theo bộ mù này.
+
+Chuỗi nói và chuỗi chuẩn hoá trùng từng byte trên 1.310 cửa sổ và 12 câu nghe. Cùng script latency cũ, 2.294 câu/5 lượt CPU:
+best 1,161 -> 1,068 ms/câu; median 1,258 -> 1,275 ms/câu (+1,4%), dưới trần +20%. Không suy mức giảm best thành tăng tốc chắc
+chắn vì máy có tải nền. Ước lượng có trọng số (lần đọc Anh, gồm cả Anh/tên thật, không phải số lỗi): pool cũ 4.313 -> 4.290;
+pool g2pvi dư 1: 3.768 -> 3.722; pool thứ ba: 11.197 -> 11.149. Không cộng ba pool hay so tỷ lệ giữa các pool để suy hiệu quả.
+
+## 7. Từ mượn đã có cách đọc Việt quen (11-11)
+
+Phán quyết chủ sách 10-11: "quán net" phải nghe là "nét". Từ mượn mà người Việt đã có MỘT cách đọc quen thì viết lại thành âm
+tiết Việt trước khi ra âm vị, với mọi giọng; không bọc `<en>`. Bảng nằm ở `abook/readaloud/english_policy.json` (`loanwords`,
+một file cho Python `names.py` và Kotlin `Names.kt`), ca chung ở `tests/fixtures/readaloud/loanwords/cases.json`.
+
+- **Nhận một từ khi** (a) có một cách đọc Việt hoá phổ biến, và (b) trong văn bản Việt nó gần như luôn mang nghĩa mượn. Từ
+  trượt (b) không vào bảng: `like` chỉ 57,6% lần viết thường đứng theo trật tự Việt, phần còn lại là câu Anh thật.
+- **Viết thường và VIẾT HOA cả chữ** (nhấn mạnh: "bị admin BAN nick") đọc Việt. Lượt này chạy trước bảng viết tắt, nên chữ
+  IN HOA trùng bảng từ mượn không bị đánh vần.
+- **Hoa chữ đầu:** đầu câu là từ thường ("Game này hay"); giữa câu là tên riêng, giữ nguyên ("gặp Net"), trừ các từ ở
+  `loanword_capitals` (Internet, Wifi, Level, Admin). Hoa chữ đầu mà chữ sau cũng Latin viết Hoa là nhan đề/tên ("Code
+  Breaker", "Game Master"). Từ ở `loanword_names` (nick, nylon, motor) hoa chữ đầu luôn là tên, kể cả đầu câu.
+- **Trong cụm Anh thì giữ Anh:** từ đứng trong một chuỗi có ít nhất một từ Anh thật kề nó ("game over", "the net", "Ban the
+  bomb", "I like you"). Âm tiết Việt không dấu ("xem", "hay", "tay") không nối chuỗi; chỉ "a" và "I" được nối.
+- **Một chữ cái Hoa làm mật danh** ("thấy Y ở đây", "ông X", "tên K") đọc tên chữ cái tiếng Anh; "y" thường và "Y" đầu câu
+  vẫn là đại từ.
+- "Lv 5" và "level 5" đọc như nhau ("le-vồ 5"). Policy/cache 5 -> 6, luật clip 15; không migrate.
+
+Đo trên mẫu kho (truyện gốc + `_gold` + 1/10 `_full` nhân 10; 56.490 file; 803.235 lần xuất hiện có trọng số của các từ
+trong bảng, không tính "ban" vốn là chữ Việt). Mốc trước `5820f3232`, sau `da852c492`:
+
+| Đường | Đọc Việt trước -> sau | Bọc `<en>` trước -> sau | Giữ nguyên chữ sau |
+|---|---|---|---|
+| VieNeu (direct) | 1.379 -> 732.457 (91,2%) | 9.292 -> 553 | 69.122 |
+| Giọng khác (plain) | 202.892 -> 732.457 | - | 69.694 |
+
+Mẫu 200 lần đổi (hash cố định, tự chấm, chủ sách chưa chấm): 0 lần đổi sai. Bộ nhãn foreignword (thiết kế, giữ lại) và g2pvi
+(giữ lại mới), 898 ca: 2 ca đổi, đều là "net" nhãn Anh cũ nay thành "nét" theo phán quyết; nhãn Việt, tên, romaji không đổi ca nào.
+
+**Còn sai, đã biết:** cụm lai theo trật tự Việt mà từ sau là chữ Anh giữ nguyên cả cụm ("game mobile", "file video", "farm
+boss", "board game") - phần lớn của 69.122 lần giữ nguyên. "team" -> "tim" trùng âm "tim" (trái tim). sea-g2p đọc "min" trong
+"át-min" bằng /ɪ/ ngắn. Tên riêng trùng từ mượn đứng đầu câu, ngoài `loanword_names`, vẫn bị đọc như từ thường.

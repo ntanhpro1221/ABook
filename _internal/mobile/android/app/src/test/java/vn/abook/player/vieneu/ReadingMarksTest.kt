@@ -79,7 +79,7 @@ class ReadingMarksTest {
     @Test
     fun longNumericOrUnclosedAngleBrackets() = check(
         "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết" to "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài, thôi kệ, hết",
-        "Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y." to "Tên game 50 trên 50. Thật Tuyệt vời. Còn x < y.",
+        "Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y." to "Tên ghêm 50 trên 50. Thật Tuyệt vời. Còn x < y.",
     )
 
     @Test

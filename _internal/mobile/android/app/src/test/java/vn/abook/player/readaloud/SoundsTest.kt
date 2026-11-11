@@ -37,7 +37,7 @@ class SoundsTest {
     @Test
     fun otherTokensAreLeftAlone() {
         for (token in listOf("NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
-        assertEquals(listOf("“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
+        assertEquals(listOf("“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "le-vồ 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
         assertEquals(listOf("o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
         assertEquals(listOf("hát pê", "mờ pê", "ét pê"), said("HP MP SP"))
@@ -169,13 +169,13 @@ class SoundsTest {
 
     @Test
     fun lvIsALevelOnlyRightBeforeANumber() {
-        assertEquals("level 5, level 15], level 1 level 5 và level 40.", said("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.").joinToString(" "))
+        assertEquals("le-vồ 5, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ 40.", said("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.").joinToString(" "))
         assertEquals("lờ vê ơi, lờ vê lờ. lờ vê", said("Lv ơi, LVL. LV").joinToString(" "))
     }
 
     @Test
     fun aCommonLoanwordIsReadWithAnyBookOrigin() {
-        val cases = listOf("sofa" to "xô-pha", "Logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan", "vali" to "va-li",
+        val cases = listOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan", "vali" to "va-li",
             "robot" to "rô-bốt", "gorilla" to "gô-ri-la", "anime" to "a-ni-me", "Ninja" to "nin-gia", "manga" to "man-ga", "bento" to "ben-tô", "kimono" to "ki-mô-nô", "sake" to "xa-ke",
             "takoyaki" to "ta-cô-gia-ki", "senpai" to "xen-pai", "Umu" to "u-mu", "tsukkomi" to "xúc-cô-mi")
         for ((token, reading) in cases) for (origin in listOf(null, "ja", "ko")) assertEquals("$token $origin", "$reading.", said("Rồi $token.", origin)[1].lowercase())

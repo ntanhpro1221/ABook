@@ -113,7 +113,7 @@ def test_the_symbol_conventions_of_tn10(text: str, said: str) -> None:
 
 # ---- Vòng 3 (tn11): khoảng giờ, chuỗi phím, ↓ ↑, × dấu / nhân, x sau số, dấu trừ, chia, trên ------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Họp 8:00 → 10:00 sáng. Lv3 → Lv4, đỏ → xanh.", "Họp 8:00 đến 10:00 sáng. level 3 thành level 4, đỏ thành xanh."),  # hai giờ là khoảng "đến", không phải bảng chỉ số
+    ("Họp 8:00 → 10:00 sáng. Lv3 → Lv4, đỏ → xanh.", "Họp 8:00 đến 10:00 sáng. le-vồ 3 thành le-vồ 4, đỏ thành xanh."),  # hai giờ là khoảng "đến", không phải bảng chỉ số
     ("Nhấn ↑↑↓↓←→←→BABA nhé, bay →→→→ đi.", "Nhấn lên lên xuống xuống trái phải trái phải bê a bê a nhé, bay  đi."),
     ("Sức mạnh 9↓, DEF↓ và (9↓) nữa.", "Sức mạnh 9 giảm, đê e ép giảm và (9 giảm) nữa."),
     ("↓ = Có", "xuống là Có"),

@@ -640,6 +640,7 @@ object VieneuUnits {
         Abbreviations.readVietnameseTitles(pieces, said)
         Abbreviations.readTitles(pieces, said)
         Abbreviations.readShoutedHonorifics(pieces, said, origin)
+        Names.readLoanwords(pieces, said, shouted = true)
         Abbreviations.spellAbbreviations(pieces, said)
         Names.readNames(pieces, said, origin)
         Names.readKoreanNames(pieces, said, origin)

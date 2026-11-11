@@ -754,4 +754,4 @@ def test_a_system_frame_glued_to_words_gets_a_pause_at_both_ends(text: str, said
 def test_long_or_numeric_or_unclosed_angle_brackets() -> None:
     long_thought = "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết"
     assert _said(long_thought) == "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài, thôi kệ, hết"
-    assert _said("Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y.") == "Tên game 50 trên 50. Thật Tuyệt vời. Còn x < y."
+    assert _said("Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y.") == "Tên ghêm 50 trên 50. Thật Tuyệt vời. Còn x < y."
