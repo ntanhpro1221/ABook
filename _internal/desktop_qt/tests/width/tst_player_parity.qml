@@ -62,9 +62,9 @@ Item {
             clickReady(findChild(menu, "sleepExtend"))
             fuzzyCompare(Player.clock.sleepLeft, 1800, 1)
             clickReady(findChild(menu, "sleepOff")); compare(Player.sleepKind, "off")
-            menu.show(); tryCompare(menu, "open", true); ready(); clickReady(findChild(menu, "sleepChapter")); compare(Player.sleepKind, "chapter")
+            menu.show(); tryCompare(menu, "open", true); ready(); clickReady(findChild(findChild(menu, "sleepChapterPicker"), "valueDisplay")); compare(Player.sleepKind, "chapter")
             compare(Player.sleepChapters, 1)
-            clickReady(findChild(menu, "sleepChaptersUp")); compare(Player.sleepChapters, 2)
+            clickReady(findChild(findChild(menu, "sleepChapterPicker"), "valueCountUp")); compare(Player.sleepChapters, 2)
             compare(findChild(menu, "sleepCountdown").text, "Hết 2 chương")
         }
         function test_fade_restart_and_geometric_bounds() {

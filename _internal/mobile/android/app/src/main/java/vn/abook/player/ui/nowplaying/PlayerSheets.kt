@@ -300,31 +300,14 @@ private fun LookPage(window: NowPlayingWindowState) {
         ReadLook::leadingLabel, S.s_gian_dong_db0409d5, "read_leading", Modifier.padding(top = Dim.s16), dense = true)
 }
 
-/** Hàng lựa chọn đặc biệt của hẹn giờ ngủ (web: SleepChapterChoice): "Hết chương này", -/+ thành "Hết N chương" (N 1-10, ValueSpecs.sleepChapters).
- *  Chạm tên là đặt; -/+ đổi N và đặt luôn. Đang hẹn đúng số chương ấy thì chữ hổ phách đậm như chip đang chọn. */
+/** Chapter counts share the same value field, text color and label rhythm as the minutes picker. */
 @Composable
 private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
-    val spec = ValueSpecs.sleepChapters
     var chapters by remember { mutableIntStateOf(if (sleep.kind == SleepKind.Chapter) sleep.minutes.coerceAtLeast(1) else 1) }
     val active = sleep.kind == SleepKind.Chapter && sleep.minutes.coerceAtLeast(1) == chapters
-    fun pick(next: Int) { chapters = next; vn.abook.player.Feedback.play("toggle"); onSet(next) }
-    val text = chapters.toString()
-    val canDown = chapters > spec.min.toInt()
-    val canUp = chapters < spec.max.toInt()
-    BasicText(S.s_so_chuong_6e52dccd, style = Abook.type.bodySmall)
-    Row(Modifier.fillMaxWidth().padding(top = Dim.s4).testTag("sleep_chapters"), verticalAlignment = Alignment.CenterVertically) {
-        IconAction(S.s_giam_a6c2901a, { if (canDown) pick(chapters - 1) }, "sleep_chapters_down") {
-            LucideIcon(LucidePaths.MINUS, if (canDown) Abook.colors.text2 else Abook.colors.text3)
-        }
-        Box(Modifier.weight(1f).heightIn(min = 56.dp).pressable { pick(chapters) }.semantics { selected = active }.testTag("sleep_chapter"),
-            contentAlignment = Alignment.Center) {
-            RollingLabel(text, style = Abook.type.body.copy(color = if (active) Abook.colors.accentText else Abook.colors.text,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Normal))
-        }
-        IconAction(S.s_tang_a2363bce, { if (canUp) pick(chapters + 1) }, "sleep_chapters_up") {
-            LucideIcon(LucidePaths.PLUS, if (canUp) Abook.colors.text2 else Abook.colors.text3)
-        }
-    }
+    ValuePicker(ValueSpecs.sleepChapters, chapters.toDouble(), { next ->
+        chapters = next.toInt(); vn.abook.player.Feedback.play("toggle"); onSet(chapters)
+    }, { it.toInt().toString() }, S.s_so_chuong_6e52dccd, "sleep_chapters", current = active, stepperOnly = true)
 }
 
 @Composable

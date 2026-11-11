@@ -101,7 +101,20 @@ class NowPlayingUiTest {
     }
     /** The real mini player stays composed under the window (hidden from accessibility), so text of the window itself is looked up inside it. */
     private fun inWindow(matcher: SemanticsMatcher) = matcher and hasAnyAncestor(hasTestTag("now_playing"))
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
+    private fun shot(name: String) {
+        if (name.contains("sleep") || name.contains("speed") || name.contains("audio")) {
+            val origin = rule.onRoot().fetchSemanticsNode().boundsInRoot.topLeft
+            val key = androidx.compose.ui.semantics.SemanticsProperties.TestTag
+            for (node in rule.onAllNodes(SemanticsMatcher.keyIsDefined(key), useUnmergedTree = true).fetchSemanticsNodes()) {
+                val tag = node.config[key]
+                if (tag.contains("_tick_") || tag.contains("_label_") || tag.endsWith("_section_label") || tag.endsWith("_value_text") || tag.endsWith("_ruler")) {
+                    val r = node.boundsInRoot.translate(-origin.x, -origin.y)
+                    println("PICKER3_COORD image=np_$name.png tag=$tag x=${r.left} y=${r.top} w=${r.width} h=${r.height}")
+                }
+            }
+        }
+        rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
+    }
     private fun bounds(tag: String): DpRect {
         if (tag != "now_playing") return rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
         // The window is laid out at its final size and clipped by a rectangle that grows out of the bar (graphicsLayer only), so the container's
@@ -155,8 +168,8 @@ class NowPlayingUiTest {
         rule.waitForIdle()
         assertEquals(SleepKind.Chapter, model.state.value.sleep.kind)
         assertEquals(3, model.state.value.sleep.minutes)
-        rule.onNodeWithTag("sleep_chapter").assertIsSelected()
-        rule.onNode(hasTestTag("sleep_chapter") and hasAnyDescendant(hasText("3")), useUnmergedTree = true).assertExists()
+        rule.onNodeWithTag("sleep_chapters").assertIsSelected()
+        rule.onNode(hasTestTag("sleep_chapters") and hasAnyDescendant(hasText("3")), useUnmergedTree = true).assertExists()
         rule.onAllNodes(hasText("Hết 3 chương") and hasAnyAncestor(hasTestTag("player_sheet_sleep"))).assertCountEquals(1)
         shot("picker_sleep_chapters_light")
     }

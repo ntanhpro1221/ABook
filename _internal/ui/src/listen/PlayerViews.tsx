@@ -20,7 +20,6 @@ import {
   Lightbulb,
   Loader2,
   Maximize2,
-  Minus,
   Moon,
   MoreHorizontal,
   EighthNote,
@@ -60,7 +59,7 @@ import { useBookMusic } from "./EditBook";
 import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type ListenChapter, type Script } from "./model";
 import { SKIP_SECONDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { ValuePicker } from "@/shared/ValuePicker";
-import { VALUE_SPECS, formatNumber, stepValue } from "@/shared/valuePickerLogic";
+import { VALUE_SPECS, formatNumber } from "@/shared/valuePickerLogic";
 import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
@@ -453,6 +452,8 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
       label={speedButtonLabel(rate)}
       dialogLabel={S.s_toc_do_doc_3657e59d}
       active={rate !== 1}
+      // Five numeric chips need three 48px cells between the -/+ buttons (3 + 2 rows, no lone chip).
+      width="w-72"
       triggerKey={rate}
       focusSelector="[data-value-ruler]"
       look={look}
@@ -1114,40 +1115,13 @@ function SleepPicker({
   );
 }
 
-/** Hàng lựa chọn đặc biệt của hẹn giờ ngủ: "Hết chương này", và -/+ để thành "Hết N chương" (N 1-10, VALUE_SPECS.sleepChapters). Chạm tên là đặt;
- *  -/+ đổi N và đặt luôn. Đang hẹn hết chương thì chữ hổ phách đậm như chip đang chọn. */
+/** Counts use the shared value field and label rhythm, including remote players with one chapter only. */
 function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMode; disabled: boolean; counts: boolean; onSet: (request: SleepRequest) => void }) {
   const [chapters, setChapters] = useState(() => Math.max(1, chaptersOf(sleep)));
   const active = sleep.kind === "chapter" && chaptersOf(sleep) === chapters;
-  const spec = VALUE_SPECS.sleepChapters;
-  const pick = (next: number) => {
-    setChapters(next);
-    onSet({ kind: "chapter", chapters: next });
-  };
-  const text = String(chapters);
-  return (
-    <div><div className="text-sm text-fg-2">{S.s_so_chuong_6e52dccd}</div><div data-sleep-chapters className="mt-1 flex items-center gap-1 border-t border-line pt-2">
-      {counts && (
-        <IconButton label={S.s_giam_a6c2901a} icon={Minus} disabled={disabled || chapters <= spec.min} onClick={() => pick(stepValue(spec, chapters, -1))} />
-      )}
-      <button
-        type="button"
-        disabled={disabled}
-        aria-pressed={active}
-        data-current-choice={active ? "" : undefined}
-        onClick={() => pick(chapters)}
-        className={cn(
-          "touch-row inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-control px-2 text-sm transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
-          active ? "font-semibold text-accent-text" : "text-fg",
-        )}
-      >
-        <MotionRegion as="span" motionKey={chapters}>{text}</MotionRegion>
-      </button>
-      {counts && (
-        <IconButton label={S.s_tang_a2363bce} icon={Plus} disabled={disabled || chapters >= spec.max} onClick={() => pick(stepValue(spec, chapters, 1))} />
-      )}
-    </div></div>
-  );
+  return <div data-sleep-chapters><ValuePicker spec={VALUE_SPECS.sleepChapters} value={chapters} current={active} disabled={disabled}
+    stepperOnly stepButtons={counts} label={S.s_so_chuong_6e52dccd} format={String}
+    onChange={next => { setChapters(next); onSet({kind: "chapter", chapters: next}); }} /></div>;
 }
 
 function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {

@@ -77,35 +77,16 @@ Popover {
             format: Logic.minutesLabel
             chipLabel: function(v) { return String(v) }
             onPicked: value => { Feedback.play("toggle"); Player.setSleep("minutes", value) }
-            // "Hết chương này", -/+ thành "Hết N chương" (N 1-10). Chạm tên là đặt; -/+ đổi N và đặt luôn.
-            Text { text: S.s_so_chuong_6e52dccd; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
-            Row {
-                id: chapterRow
-                objectName: "sleepChapters"
+            ValuePicker {
+                objectName: "sleepChapterPicker"
                 width: parent.width
-                height: 40
-                property int count: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : 1
-                readonly property bool active: Player.sleepKind === "chapter" && Player.sleepChapters === count
-                function pick(n) { count = n; Feedback.play("toggle"); Player.setSleep("chapter", n) }
-                IconButton {
-                    objectName: "sleepChaptersDown"; icon: "minus"; iconSize: 18; tip: S.s_giam_a6c2901a; Accessible.name: S.s_giam_a6c2901a
-                    enabled: chapterRow.count > Logic.SPECS.sleepChapters.min; opacity: enabled ? 1 : 0.4
-                    onClicked: chapterRow.pick(chapterRow.count - 1)
-                }
-                ChoiceChip {
-                    objectName: "sleepChapter"
-                    fullWidthReason: "Single-column menu (DESIGN 6)"
-                    width: parent.width - 2 * Theme.buttonHeight
-                    height: Theme.buttonHeight
-                    text: String(chapterRow.count)
-                    selected: chapterRow.active
-                    onClicked: chapterRow.pick(chapterRow.count)
-                }
-                IconButton {
-                    objectName: "sleepChaptersUp"; icon: "plus"; iconSize: 18; tip: S.s_tang_a2363bce; Accessible.name: S.s_tang_a2363bce
-                    enabled: chapterRow.count < Logic.SPECS.sleepChapters.max; opacity: enabled ? 1 : 0.4
-                    onClicked: chapterRow.pick(chapterRow.count + 1)
-                }
+                spec: Logic.SPECS.sleepChapters
+                value: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : 1
+                current: Player.sleepKind === "chapter"
+                stepperOnly: true
+                label: S.s_so_chuong_6e52dccd
+                format: function(v) { return String(v) }
+                onPicked: value => { Feedback.play("toggle"); Player.setSleep("chapter", value) }
             }
         }
         Collapse {

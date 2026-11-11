@@ -77,6 +77,11 @@ it("chip trùng giá trị đang hẹn sáng; đang hẹn hết chương thì ch
   for (const button of [...chips(), chapterChoice()]) {
     const selected = button.getAttribute("aria-pressed") === "true";
     expect(button.querySelector(".lucide-check")).toBeNull(); // ô hẹp: dấu tích đẩy chữ lệch tâm (soát 141), ô chọn chỉ đổi chữ
-    expect(button.classList.contains("text-accent-text")).toBe(selected);
+    const label = button.querySelector("[data-value-label], span") ?? button;
+    expect(label.classList.contains("text-accent-text")).toBe(false);
+    if (selected) {
+      expect(label.classList.contains("text-fg")).toBe(true);
+      expect(label.classList.contains("font-semibold")).toBe(true);
+    }
   }
 });
