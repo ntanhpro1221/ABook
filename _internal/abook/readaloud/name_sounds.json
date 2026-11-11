@@ -1,14 +1,9 @@
 {
   "version": 1,
-  "description": "Syllables of romanized names (Korean RR, romaji) that the VieNeu road cannot say as written. Measured 2026-11-10 on VieNeu v3 Nano; method and numbers in docs/NAME_SOUNDS.md. Read by phoneme_policy.py and PhonemePolicy.kt.",
+  "description": "Syllables of romanized names (Korean RR, romaji) that the VieNeu road cannot say as written. Measured 2026-11-10 on VieNeu v3 Nano and heard by the owner 2026-11-11; method and numbers in docs/NAME_SOUNDS.md. Read by phoneme_policy.py and PhonemePolicy.kt.",
   "rimes": {
-    "ưn": "ân",
-    "ưm": "âm"
+    "ưn": "ân"
   },
-  "keep": [
-    "ưm",
-    "hưm"
-  ],
   "level": [
     "un",
     "gin",

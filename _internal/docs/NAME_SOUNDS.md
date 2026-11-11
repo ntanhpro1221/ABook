@@ -1,6 +1,6 @@
 # Name sounds: syllables of a romanized name the voice cannot say as written
 
-2026-11-10, branch `dev/koeun`. Data: `abook/readaloud/name_sounds.json`. Code: `phoneme_policy.respell_rare_rimes`,
+2026-11-10, revised 2026-11-11 after the owner listened; branch `dev/koeun`. Data: `abook/readaloud/name_sounds.json`. Code: `phoneme_policy.respell_rare_rimes`,
 `repair_level_tone` (Python) = `PhonemePolicy.respellRareRimes`, `repairLevelTone` (Kotlin, the build hands the JSON
 over as `BuildConfig.NAME_SOUNDS`). Shared cases: `tests/fixtures/readaloud/phoneme_delivery/cases.json`.
 
@@ -26,8 +26,8 @@ frequency in Vietnamese prose, which is what VieNeu learned from.
 | ưn /ɯn/ | ưn 486, nưn 259, xưn 223, cưn 44, gưn 17 | 0.8 per million syllables |
 | ưm /ɯm/ | rưm 225, ưm 32, cưm 25, xưm 8, nưm 5 | with an onset: under 0.1 per million; bare "ưm": 35.5 per million |
 
-The bare syllable "ưm" is a Vietnamese interjection ("Ưm, được rồi."): 2,173 occurrences in prose against 32 in
-names (Soleum). It and "hưm" are in the `keep` list and stay as written, so "Xôn-ưm" is NOT repaired.
+"ưm" is rare too, but it is NOT respelled (owner, 11-11, see "ưm stays" below). The bare syllable "ưm" is also a
+Vietnamese interjection ("Ưm, được rồi."): 2,173 occurrences in prose against 32 in names (Soleum).
 
 Everything else the romanizers emit is a common Vietnamese syllable or was heard right ("éc", "eng" as rimes: no
 change).
@@ -56,9 +56,25 @@ trained on 80 real Vietnamese syllables (-n against -ng; leave-one-rime-out 98.7
 
 "ân" /ən/ is the nearest vowel to /ɯ/ that keeps the final in every seed (short, central, unrounded; "ơn" is long
 and is heard as English "Zion"). The same holds in other names: Ha-nưn -> "Ninh", "Nưng"; Ha-nân 6/6 -n; Xưn-ki ->
-"Xin", "Sưng"; Xân-ki 6/6; Ân-gi 6/6. "ưm": A-rưm -> "dưng", "rừng", "Rương"; A-râm keeps -m 6/6; Cưm ->
-"Cương", "Cưng", "cơm" (0/6 right); Câm 6/6; "ươm" is heard "ương" / "ơm". So `rimes` is
-`{"ưn": "ân", "ưm": "âm"}`, `keep` is `["ưm", "hưm"]`; "ưng" is a common rime and is not touched.
+"Xin", "Sưng"; Xân-ki 6/6; Ân-gi 6/6. So `rimes` is `{"ưn": "ân"}`; "ưng" is a common rime and is not touched.
+The owner listened on 11-11: "ưng" before, "ân" now - kept.
+
+## "ưm" stays
+
+On 2026-11-10 "ưm" was respelled "âm" on the transcriber's word alone (A-rưm -> "dưng", "rừng", "Rương"; A-râm
+keeps -m 6/6). The owner listened on 11-11 and heard the opposite: "Gieo-rưm" (before) is right, "Gieo-râm" (after)
+is wrong. The rule is gone: every "ưm" syllable of a name is said as written (`ɹˈym`, `kˈym`, `ˈym`).
+
+Why the machine was wrong: the transcriber has no word "rưm", so for a right "rưm" it writes the nearest real word.
+Seven sentences (Yeoreum x2, Areum x2, Boreum, Geum, Soleum), the app's seed and seeds 1-3, 28 clips each way:
+
+| | what the machine wrote |
+|---|---|
+| "ưm" as written (now) | "rưm" 1, "ưm" 1, "rừng" 5, "dương" / "dưng" / "rương" 7, "cơm" 4, "ươm" / "ơm" 2, others 8 |
+| "âm" (10-11, removed) | "râm" / "dâm" / "câm" / "âm" 23 of 28 |
+
+So a free transcription cannot judge this rime, and a forced choice between spellings only asks the same
+vocabulary again. The owner's ear is the judge here; the table is kept as the record of the mistake.
 
 ## The gap between the two syllables
 
@@ -78,7 +94,6 @@ and swallows syllables on Nano - "Gi‿ưn" is heard "Xin", "Dinh", "Jim"; "Ha�
 
 ## What is not done
 
-- Bare "ưm" in a name ("Xôn-ưm", Soleum; 32 occurrences) stays /ɯm/: the same letters are a Vietnamese interjection.
 - A short English name inside a sentence can be swallowed by Nano: "Rồi Dan quay sang nhìn Tom." lost "Dan" in one
   seed of three, "Rồi Ben ..." likewise; 2 of 27 clips (Dan, Ben, Ken in three carriers by three seeds), both right
   after "Rồi"; Jack and Bob, English before this branch, 0 of 18.
