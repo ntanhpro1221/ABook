@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -166,7 +167,8 @@ fun rememberSheetDrag(close: () -> Unit): SheetDrag {
  */
 @Composable
 fun Modifier.sheetSurface(drag: SheetDrag): Modifier {
-    val background = Abook.colors.bg
+    // The band sits over the dimmed screen, so it fades into the scrim as composited on the page, not into the bright page itself.
+    val background = Abook.colors.scrim.compositeOver(Abook.colors.bg)
     return this
     .drawBehind {
         val edge = Dim.s24.toPx()
