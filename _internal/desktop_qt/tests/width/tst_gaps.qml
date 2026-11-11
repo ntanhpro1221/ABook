@@ -402,16 +402,18 @@ Item {
         }
         // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ đã in tên thì không in lại dưới bìa.
         function test_everyCellHasTheSameHeight() {
-            const cells = [
+            const props = [
                 {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
                 {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Tô Hoài, Nhà xuất bản Kim Đồng, bản in lần thứ mười", coverKey: "b"},
                 {title: "Nhật ký trong tù", subtitle: "Hồ Chí Minh", source: "máy tính", coverKey: "c"},
-                {title: "Bìa vẽ", subtitle: "", coverKey: ""},
-            ].map(p => createTemporaryObject(cellFactory, host, Object.assign({book: {bookId: p.title}, coverWidth: 160}, p)))
+                {title: "Bìa vẽ", subtitle: "", coverKey: ""}
+            ]
+            const cells = []
+            for (const p of props) cells.push(createTemporaryObject(cellFactory, host, Object.assign({book: {bookId: p.title}, coverWidth: 160}, p)))
             for (const cell of cells) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
-            const long = one(cells[1], "bookCellSubtitle")
-            compare(long.lineCount, 1)
-            verify(long.truncated)
+            const longSub = one(cells[1], "bookCellSubtitle")
+            compare(longSub.lineCount, 1)
+            verify(longSub.truncated)
             verify(one(cells[1], "bookCellTitle").lineCount <= 2)
             verify(one(cells[0], "bookCellTitle").visible)
             verify(!one(cells[3], "bookCellTitle").visible)     // bìa vẽ đã in tên
