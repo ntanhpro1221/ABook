@@ -53,7 +53,9 @@ class ClipCache(
          * Luật đọc nằm trong khoá (`cache.py` `rules_version`): đổi luật thì clip làm trước / đã nghe KHÔNG còn trúng đệm - cách đọc mới được làm lại. Số riêng của mô-đun
          * có phiên bản ([Names.RULE_VERSION]) + [CACHE_RULES]; một thay đổi luật đọc mà mô-đun của nó không có số riêng thì tăng [CACHE_RULES], ở CẢ HAI nơi (cache.py `CACHE_RULES`).
          */
-        const val CACHE_RULES = 17 // Reading punctuation boundaries + loanwords + shouted acronyms; same as cache.py.
+        // 18 = 17 + phonemes changed with no other number moving: the name_sounds table (koeun: `unread` pin/veo/boa..., `level` toe/vin...,
+        // `foreign_onsets` "Dan" -> đ), the shared Vietnamese / English score table, automatic Japanese names read one word per syllable. Same as cache.py.
+        const val CACHE_RULES = 18
         const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
 
         /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */

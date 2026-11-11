@@ -37,7 +37,9 @@ TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 # Luật đọc (chuẩn hoá chữ) nằm trong khoá: đổi luật thì clip làm trước (kể cả "Làm trước" đã ghim) KHÔNG còn trúng đệm - cách đọc mới được làm lại, không giữ cách đọc cũ.
 # Khoá = phiên bản luật của các mô-đun có số riêng (`names.RULE_VERSION`) + số này; Android (ClipCache.kt `RULES`) tính CÙNG cách, từ `Names.RULE_VERSION` +
 # `ClipCache.CACHE_RULES`. Một thay đổi luật đọc mà mô-đun của nó không có số riêng (romanization, shouts, vieneu units...) thì tăng số này, ở CẢ HAI nơi.
-CACHE_RULES = 17  # 16 + shouted all-caps names / words are read, not spelled ("YUI!"); word-initial Japanese o is ô.
+# 18 = 17 + âm vị đổi mà không số nào khác đổi theo: bảng name_sounds (koeun: `unread` pin/veo/boa..., `level` toe/vin..., `foreign_onsets` "Dan" -> đ),
+# bảng điểm chữ trùng Việt / Anh (shared_words.json; phiên bản english_policy của nó trùng số 6 với loanwords), tên Nhật tự động đọc tách từng âm tiết.
+CACHE_RULES = 18
 
 
 def rules_version() -> str:
