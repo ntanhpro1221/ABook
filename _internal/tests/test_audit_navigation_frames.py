@@ -83,3 +83,28 @@ def test_one_good_cover_cannot_hide_another_distorted_cover():
     result = track_covers(frame, [first, second], {"search": [0, 0, 250, 200], "widths": [60, 72], "aspects": [1., 1.2], "threshold": .95})
     assert len(result["measured_covers"]) == 2
     assert result["aspect_error"] > .05
+
+
+def test_recorded_cover_flights_gate_both_directions_and_reject_endpoint_jitter(tmp_path):
+    template = artwork()
+    for direction in ("open", "close"):
+        for name, ys, expected in [("jump", [100, 100, 11, 10, 10], False),
+                                   ("smooth", [100, 85, 70, 55, 40, 25, 10], True),
+                                   ("stationary", [100] * 7, False)]:
+            if direction == "close":
+                ys = list(reversed(ys))
+            values = []
+            for y in ys:
+                frame = np.zeros((200, 200, 3), np.uint8)
+                frame[y:y + 90, 30:90] = template
+                values.append(frame)
+            path = tmp_path / f"{direction}_{name}.mp4"
+            video(path, values)
+            result = evaluate({"video": str(path), "checks": [{"name": direction, "kind": "flight",
+                "frames": [0, len(ys) - 1], "reference": 0, "rect": [30, ys[0], 60, 90],
+                "search": [0, 0, 200, 200], "analysis_width": 200}]}, path.with_suffix(".json"))
+            item = result["summary"][direction]
+            assert item["pass"] is expected
+            if name == "jump":
+                assert item["jump_pairs"][0]["frames"] == ([1, 2] if direction == "open" else [2, 3])
+                assert item["intermediate_positions"] == 0

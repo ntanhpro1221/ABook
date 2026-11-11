@@ -48,7 +48,7 @@ class PlayerRepoTest {
         val core = FakePlaybackCore(snap(playing = true, position = 12.5))
         val repo = repo(core)
         assertFalse(repo.state.value.hasTrack)
-        repo.attach()
+        repo.attach(this)
         val state = repo.state.value
         assertTrue(state.hasTrack)
         assertEquals("b1", state.bookId)
@@ -65,21 +65,66 @@ class PlayerRepoTest {
     fun `attach twice listens once and detach stops listening`() {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
-        repo.attach()
-        repo.attach()
+        repo.attach(this)
+        repo.attach(this)
         assertEquals(1, core.listeners.size)
-        repo.detach()
+        repo.detach(this)
         assertTrue(core.listeners.isEmpty())
-        repo.detach()
-        repo.attach()
+        repo.detach(this)
+        repo.attach(this)
         assertEquals(1, core.listeners.size)
+    }
+
+    @Test
+    fun `old Activity stopping after new Activity starts keeps playback updates`() {
+        val core = emptyCore()
+        val repo = repo(core)
+        val old = Any()
+        val current = Any()
+        repo.attach(old)
+        repo.attach(current)
+        repo.detach(old)
+        assertEquals(1, core.listeners.size)
+        core.emit(snap(playing = true))
+        assertTrue(repo.state.value.hasTrack)
+        assertTrue(repo.state.value.playing)
+        core.emit(snap(kind = "tick", position = 48.0))
+        assertEquals(48_000L, repo.clock.positionMs.value)
+        repo.detach(old)
+        repo.detach(Any())
+        assertEquals(1, core.listeners.size)
+        repo.detach(current)
+        assertTrue(core.listeners.isEmpty())
+    }
+
+    @Test
+    fun `overlapping owners are idempotent and the last stop releases in either order`() {
+        val core = FakePlaybackCore(snap())
+        val repo = repo(core)
+        val first = Any()
+        val second = Any()
+        repo.attach(first)
+        repo.attach(second)
+        repo.attach(second)
+        assertEquals(1, core.listeners.size)
+        repo.detach(second)
+        assertEquals(1, core.listeners.size)
+        core.emit(snap(playing = true))
+        assertTrue(repo.state.value.playing)
+        repo.detach(first)
+        assertTrue(core.listeners.isEmpty())
+        core.emit(snap(playing = false))
+        repo.attach(second)
+        assertFalse(repo.state.value.playing)
+        repo.detach(second)
+        assertTrue(core.listeners.isEmpty())
     }
 
     @Test
     fun `a tick moves the clock and leaves the state object alone`() {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         val before = repo.state.value
         core.emit(snap(kind = "tick", position = 40.0))
         assertSame(before, repo.state.value)
@@ -90,7 +135,7 @@ class PlayerRepoTest {
     fun `a real change builds a new state and keeps the cover of the same book`() {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         val cover = repo.state.value.cover
         assertEquals(CoverRef("/c.jpg", 1), cover)
         core.emit(snap(playing = true))
@@ -105,7 +150,7 @@ class PlayerRepoTest {
     @Test
     fun `no chapter means no mini player`() {
         val repo = repo(FakePlaybackCore(snap(chapter = null)))
-        repo.attach()
+        repo.attach(this)
         assertFalse(repo.state.value.hasTrack)
         assertNull(repo.state.value.chapterId)
     }
@@ -115,7 +160,7 @@ class PlayerRepoTest {
         val json = snap().put("sleep", JSONObject().put("mode", "minutes").put("minutes", 30).put("remaining", 1500.0).put("counting", true))
         val core = FakePlaybackCore(json)
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         assertEquals(SleepSetting("minutes", 30, true), repo.state.value.sleep)
         assertTrue(repo.state.value.sleep.active)
         assertEquals(1_500_000L, repo.clock.sleepRemainingMs.value)
@@ -149,7 +194,7 @@ class PlayerRepoTest {
         val core = emptyCore()
         val repo = repo(core, last = plan("last"))
         assertFalse(repo.state.value.hasTrack)
-        repo.attach()
+        repo.attach(this)
         val load = core.loads.single()
         assertEquals("last", load.id)
         assertEquals(1, load.startChapterId)
@@ -167,7 +212,7 @@ class PlayerRepoTest {
     fun `pressing play after the restore plays that book from the resume spot and loads nothing more`() {
         val core = emptyCore()
         val repo = repo(core, mapOf("other" to plan("other")), last = plan("last"))
-        repo.attach()
+        repo.attach(this)
         repo.toggle()
         assertEquals(listOf("toggle"), core.calls)
         assertEquals("không nạp lại cuốn nào", 1, core.loads.size)
@@ -180,7 +225,7 @@ class PlayerRepoTest {
     fun `the restore never replaces a book the player already has`() {
         val core = FakePlaybackCore(snap(book = "playing", playing = true), simulate = true)
         val repo = repo(core, last = plan("last"))
-        repo.attach()
+        repo.attach(this)
         assertTrue(core.loads.isEmpty())
         assertEquals("playing", repo.state.value.bookId)
         assertTrue(repo.state.value.playing)
@@ -190,7 +235,7 @@ class PlayerRepoTest {
     fun `no listening history means no restore and no mini player`() {
         val core = emptyCore()
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         assertTrue(core.loads.isEmpty())
         assertFalse(repo.state.value.hasTrack)
     }
@@ -199,9 +244,9 @@ class PlayerRepoTest {
     fun `attaching again after the restore does not load twice`() {
         val core = emptyCore()
         val repo = repo(core, last = plan("last"))
-        repo.attach()
-        repo.detach()
-        repo.attach()
+        repo.attach(this)
+        repo.detach(this)
+        repo.attach(this)
         assertEquals(1, core.loads.size)
     }
 
@@ -209,7 +254,7 @@ class PlayerRepoTest {
     fun `playing another book after the restore replaces it and plays`() {
         val core = emptyCore()
         val repo = repo(core, mapOf("b2" to plan("b2")), last = plan("last"))
-        repo.attach()
+        repo.attach(this)
         repo.playNow("b2")
         assertEquals(listOf("last", "b2"), core.loads.map { it.id })
         assertTrue(core.loads[1].autoplay)
@@ -221,7 +266,7 @@ class PlayerRepoTest {
     fun `play now continues a paused book leaves a playing one and loads another`() {
         val core = FakePlaybackCore(snap(playing = false))
         val repo = repo(core, mapOf("b2" to plan("b2")))
-        repo.attach()
+        repo.attach(this)
         repo.playNow("b1")
         assertEquals(listOf("play"), core.calls)
         core.emit(snap(playing = true))
@@ -238,7 +283,7 @@ class PlayerRepoTest {
             core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null },
             planAt = { id, chapter, seconds -> LoadRequest(id, "T", "", emptyList(), chapter, seconds, 1.0) },
         )
-        repo.attach()
+        repo.attach(this)
         repo.playChapter("b1", 3, 12.0)
         assertEquals(listOf("jump 3 12.0"), core.calls)
         repo.playChapter("b2", 5, 0.0)
@@ -256,7 +301,7 @@ class PlayerRepoTest {
         core.chapterList = listOf(chapter(1, 90.0), chapter(2))
         core.voiceChosen = "edge:x"
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         val first = repo.state.value
         assertEquals(listOf(PlayerChapter(1, "Chương 1", 90_000), PlayerChapter(2, "Chương 2", 60_000)), first.chapters)
         assertEquals("edge:x", first.voiceId)
@@ -271,7 +316,7 @@ class PlayerRepoTest {
     fun `music and voice commands go to the core and show at once`() {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         repo.setVoice("v1")
         repo.setSleep("minutes", 15)
         assertEquals(listOf("voice v1", "sleep minutes 15"), core.calls)
@@ -282,7 +327,7 @@ class PlayerRepoTest {
     fun `sampling the clock reads the exact position and a tick still moves it`() {
         val core = FakePlaybackCore(snap(position = 1.0))
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         core.position = 4_321
         repo.sampleClock()
         assertEquals(4_321L, repo.clock.positionMs.value)
@@ -294,7 +339,7 @@ class PlayerRepoTest {
     fun `events name every change that is not a tick even when the state is equal`() {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         val seen = ArrayList<String>()
         val job = CoroutineScope(Dispatchers.Unconfined).launch { repo.events.collect { seen += it } }
         core.emit(snap(kind = "state"))
@@ -308,7 +353,7 @@ class PlayerRepoTest {
     fun `prepare loads another book paused over the one in the player and waits for it`() = runBlocking {
         val core = FakePlaybackCore(snap(book = "b1", playing = true), simulate = true)
         val repo = repo(core, mapOf("b2" to plan("b2")))
-        repo.attach()
+        repo.attach(this)
         assertTrue(repo.prepare("b2"))
         val load = core.loads.single()
         assertEquals("b2", load.id)
@@ -322,7 +367,7 @@ class PlayerRepoTest {
     fun `prepare leaves the book that is already in the player alone and says no when there is nothing to load`() = runBlocking {
         val core = FakePlaybackCore(snap(book = "b1", playing = true), simulate = true)
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         assertTrue(repo.prepare("b1"))
         assertTrue(core.loads.isEmpty())
         assertTrue(repo.state.value.playing)
@@ -333,7 +378,7 @@ class PlayerRepoTest {
     fun `only the restore is a restore`() {
         val core = emptyCore()
         val repo = repo(core, last = plan("last"))
-        repo.attach()
+        repo.attach(this)
         assertTrue(core.loads.single().restore)
     }
 
@@ -341,7 +386,7 @@ class PlayerRepoTest {
     fun `the end of the last chapter is remembered until something is heard again`() {
         val core = FakePlaybackCore(snap(playing = true))
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         assertFalse(repo.state.value.ended)
         core.emit(snap(playing = false, kind = "ended"))
         assertTrue(repo.state.value.ended)
@@ -358,7 +403,7 @@ class PlayerRepoTest {
     fun `another book or chapter ends the end`() {
         val core = FakePlaybackCore(snap(playing = true))
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         core.emit(snap(playing = false, kind = "ended"))
         core.emit(snap(book = "b2", playing = false))
         assertFalse(repo.state.value.ended)
@@ -369,7 +414,7 @@ class PlayerRepoTest {
         val core = FakePlaybackCore(snap(playing = false))
         core.chapterList = listOf(Playback.Chapter(1, "Một", "1.mp3", 60.0))
         val repo = repo(core)
-        repo.attach()
+        repo.attach(this)
         assertTrue(repo.state.value.whole)
         assertFalse(repo.state.value.moreChapters)
         repo.reconcile(listOf(ListenBook("b1", "Tắt đèn", chaptersTotal = 5, complete = false)))

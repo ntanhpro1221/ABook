@@ -45,7 +45,7 @@ fun StudioScreen(
             if (choices.isNotEmpty()) ChoiceRow(choices, choices.firstOrNull { it.value == computer?.key } ?: choices.first(),
                 { choice, _ -> if (pickComputer != null) pickComputer(choice.value) else selected = choice.value }, tag = "studio_computer")
         }
-        if (companion != null) StudioNotices(companion, askNotifications, openNotificationSettings)
+        if (computer != null && companion != null) StudioNotices(companion, askNotifications, openNotificationSettings)
     }
     Column(modifier.fillMaxSize().padding(top = top, start = Dim.margin, end = Dim.margin).testTag("studio_screen")) {
         if (computer != null && hub != null && !computer.listenOnly) {

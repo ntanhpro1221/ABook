@@ -51,7 +51,13 @@ class GapSurfacesTest {
         core.noticeState = StudioNoticeState(true, false)
         runBlocking { companion.refresh() }
         var opened = 0
-        theme(dark) { StudioScreen(companion = companion, openNotificationSettings = { opened++ }) }
+        theme(dark) {
+            val scope = rememberCoroutineScope()
+            val devices = remember { DevicesState(FakeDevicesSource().apply {
+                studio = listOf(StudioComputer("", "Máy tính", listenOnly = true))
+            }, scope) }
+            StudioScreen(companion = companion, devices = devices, openNotificationSettings = { opened++ })
+        }
         rule.onNodeWithText("Báo từ Studio").assertIsDisplayed()
         rule.onNodeWithText("Android đang chặn thông báo của ABook.").assertIsDisplayed()
         rule.onNodeWithTag("studio_notification_settings").performClick()
@@ -166,7 +172,7 @@ class GapSurfacesTest {
             val player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, {
                 LoadRequest(it, remoteBook.title, "", emptyList(), 1, 0.0, 1.0)
             }) }
-            LaunchedEffect(Unit) { player.attach() }
+            LaunchedEffect(Unit) { player.attach(this) }
             val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope), devices = devices) }
             AppShell(shell, LibraryState.Ready(listOf(book, remoteBook)), player, CoverLoader(), settings, sampleClock = false)
         }
@@ -212,7 +218,7 @@ class GapSurfacesTest {
             deletes = remember { UndoDelete(scope, { "t-$it" }, { restored += it }, { library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) }) }) }
             val shell = remember { ShellState(scope) }
             val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(book = "b2", playing = true)), scope, Dispatchers.Unconfined, { null }, { null }) }
-            LaunchedEffect(Unit) { player.attach() }
+            LaunchedEffect(Unit) { player.attach(this) }
             val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope)) }
             AppShell(shell, library, player, CoverLoader(), settings, sampleClock = false, deletions = deletes)
         }
@@ -247,7 +253,7 @@ class GapSurfacesTest {
             val scope = rememberCoroutineScope()
             shell = remember { ShellState(scope) }
             player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, { null }) }
-            LaunchedEffect(Unit) { player.attach() }
+            LaunchedEffect(Unit) { player.attach(this) }
             val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope)) }
             AppShell(shell, library, player, CoverLoader(), settings, sampleClock = false)
         }
@@ -300,7 +306,7 @@ class GapSurfacesTest {
             val scope = rememberCoroutineScope()
             shell = remember { ShellState(scope) }
             val player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, { null }) }
-            LaunchedEffect(Unit) { player.attach() }
+            LaunchedEffect(Unit) { player.attach(this) }
             val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope)) }
             AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), settings, sampleClock = false, companion = companion)
         }

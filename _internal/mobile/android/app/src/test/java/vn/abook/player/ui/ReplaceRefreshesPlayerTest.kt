@@ -108,7 +108,7 @@ class ReplaceRefreshesPlayerTest {
         override fun load(request: LoadRequest) = Unit
     }
 
-    private fun repo() = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+    private fun repo() = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
 
     /** Thay qua đúng đường của app (nhập chạy ở luồng IO); việc làm mới trình phát chạy ở luồng chính nên chờ hàng đợi chính xong. */
     private fun replaceWith(file: File) = runBlocking { ImportRepo(context).replace(ImportItem(1, Uri.fromFile(file).toString())) }

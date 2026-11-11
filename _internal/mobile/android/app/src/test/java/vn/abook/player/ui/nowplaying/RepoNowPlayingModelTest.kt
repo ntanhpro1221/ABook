@@ -37,7 +37,7 @@ class RepoNowPlayingModelTest {
         it.chapterList = listOf(Playback.Chapter(1, "Một", "1.mp3", 60.0), Playback.Chapter(2, "Hai", "2.mp3", 90.0))
     }
     private val scope = CoroutineScope(Dispatchers.Unconfined)
-    private val repo = PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+    private val repo = PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { null }).also { it.attach(this) }
     private val source = Source()
     private val model = RepoNowPlayingModel(repo, scope, source)
 

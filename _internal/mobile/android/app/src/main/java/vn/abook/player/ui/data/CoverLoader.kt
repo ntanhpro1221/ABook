@@ -28,11 +28,12 @@ object CoverSampling {
  * Bộ nạp bìa riêng, nhỏ (không thư viện ảnh): giải mã thu nhỏ đúng cỡ ô bằng `inSampleSize`, ngoài luồng chính, trên tối đa 3 luồng IO;
  * `LruCache` tính theo BYTE. RGB_565: bìa là ảnh chụp không trong suốt, nửa bộ nhớ so với ARGB_8888.
  */
-class CoverLoader(maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().maxMemory())) {
+@OptIn(ExperimentalCoroutinesApi::class)
+class CoverLoader(
+    maxBytes: Int = CoverSampling.cacheBytes(Runtime.getRuntime().maxMemory()),
+    private val decoders: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(3),
+) {
     private class Cached(val image: ImageBitmap, val bytes: Int)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val decoders: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(3)
 
     private val cache = object : LruCache<String, Cached>(maxBytes) {
         override fun sizeOf(key: String, value: Cached) = value.bytes

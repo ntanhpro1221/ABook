@@ -84,6 +84,7 @@ class NativeActivity : ComponentActivity() {
     private val firstContent = kotlinx.coroutines.CompletableDeferred<Unit>()
     private var demo = false
     private lateinit var player: PlayerRepo
+    private val playerOwner = Any()
     private lateinit var pip: PipControl
 
     /** Android 8-11: chính app vừa mở một Activity khác (chọn file, Studio, bảng chia sẻ, hộp xin quyền) - [onUserLeaveHint] cũng nổ ở đó nhưng không phải bạn rời app. */
@@ -366,7 +367,7 @@ class NativeActivity : ComponentActivity() {
     private fun onFirstContent() {
         reportFullyDrawn()
         contentReady = true
-        if (started) player.attach()
+        if (started) player.attach(playerOwner)
         // Lượt tải còn giữ, chia sẻ đã bật từ lần trước, sách nghe thẳng của máy đã ghép: sau khung đầu, không nằm trong đường mở nguội.
         if (!demo) app.devices.apply { restore(); syncStreamed() }
         if (!demo) {
@@ -406,13 +407,13 @@ class NativeActivity : ComponentActivity() {
         started = true
         openedByApp = false
         pip.active = pip.available && isInPictureInPictureMode
-        if (contentReady) player.attach()
+        if (contentReady) player.attach(playerOwner)
     }
 
     override fun onStop() {
         super.onStop()
         started = false
-        player.detach()
+        player.detach(playerOwner)
     }
 
     override fun onTrimMemory(level: Int) {

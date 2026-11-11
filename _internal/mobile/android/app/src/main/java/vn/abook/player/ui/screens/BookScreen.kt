@@ -325,6 +325,8 @@ private fun BookScreenBody(
     // Cuốn không còn trên máy (bị chuyển thư mục / xoá ở nơi khác): trang nói rõ, nút về Thư viện.
     val gone = ui.loaded && detail == null && others != null && others.none { it.id == book.id }
     if (gone) {
+        val flight = vn.abook.player.ui.motion.LocalBookCoverFlight.current
+        LaunchedEffect(flight) { flight?.clear() }
         Column(modifier.fillMaxSize().testTag("book_screen")) {
             Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
                 BackButton(actions.back, Modifier.testTag("book_back"))
