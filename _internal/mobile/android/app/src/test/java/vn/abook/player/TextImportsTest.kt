@@ -78,6 +78,28 @@ class TextImportsTest {
     }
 
     @Test
+    fun staging_reports_real_bytes_for_a_file_and_real_file_counts_for_a_folder() {
+        val text = "Chương 1\n\n" + "Một câu dài. ".repeat(20_000) // ~260 KB: nhiều khối 64 KB
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        val file = ArrayList<Work>()
+        TextImports.stageFile("Truyện.txt", bytes.size.toLong(), { file += it }) { bytes.inputStream() }
+        assertTrue(file.size >= 4)
+        assertTrue(file.all { it.step == WorkStep.Copy && it.total == bytes.size.toLong() && it.bytes })
+        assertEquals(file.map { it.done }.sorted(), file.map { it.done })
+        assertEquals(0L, file.first().done)
+        assertEquals(bytes.size.toLong(), file.last().done)
+        assertEquals(TextImports.STAGE_SHARE, file.last().fraction!!, 1e-6f)
+        // Không biết cỡ: không có số nào, thanh chạy liên tục.
+        val unknown = ArrayList<Work>()
+        TextImports.stageFile("Truyện.txt", 0, { unknown += it }) { bytes.inputStream() }
+        assertTrue(unknown.isNotEmpty() && unknown.all { it.fraction == null })
+        val folder = ArrayList<Work>()
+        TextImports.stageFolder("Sách", (1..3).map { "$it.txt" to { "Chương $it\n\nMột.".byteInputStream() as java.io.InputStream? } }) { folder += it }
+        assertEquals(listOf(0L, 1L, 2L, 3L), folder.map { it.done })
+        assertTrue(folder.all { it.total == 3L && !it.bytes })
+    }
+
+    @Test
     fun a_long_chapter_file_name_keeps_its_txt_ending_and_no_two_files_collide() {
         val long = "[001] " + "Một tên chương light novel rất dài ".repeat(5)
         val staged = TextImports.stageFolder("Sách dài", listOf(

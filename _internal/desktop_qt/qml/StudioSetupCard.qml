@@ -204,6 +204,8 @@ Item {
                     width: parent.width
                     size: "sm"
                     value: root.status ? Math.max(0, Setup.progressOf(root.status)) : 0
+                    // Chưa có tổng byte (đang dựng môi trường, giải nén): thanh chạy liên tục, không đứng ở 0.
+                    indeterminate: !root.status || Setup.progressOf(root.status) < 0
                     label: S.s_tien_do_515e1f3f + (root.status && Setup.currentStep(root.status) ? Setup.currentStep(root.status).label : "")
                 }
                 Item {

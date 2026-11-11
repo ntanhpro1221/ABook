@@ -158,7 +158,7 @@ class ImportLogicTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val result = CompletableDeferred<PreparedImport>()
         val source = object : ImportSource by FakeImportSource(preview) {
-            override suspend fun prepare(item: ImportItem) = result.await()
+            override suspend fun prepare(item: ImportItem, progress: vn.abook.player.WorkSink) = result.await()
         }
         val queue = ImportQueue(source, scope)
         queue.enqueue(listOf("one"))
@@ -177,7 +177,7 @@ internal class FakeImportSource(private val preview: ImportPreview) : ImportSour
     var adds = 0
     var addedChoices: ImportChoices? = null
     override suspend fun describe(item: ImportItem) = item.source
-    override suspend fun prepare(item: ImportItem): PreparedImport {
+    override suspend fun prepare(item: ImportItem, progress: vn.abook.player.WorkSink): PreparedImport {
         read += item.source
         if (item.source == fail) error("Bạn hãy tải lại file.")
         return PreparedImport("ref${item.id}", item.source, preview)

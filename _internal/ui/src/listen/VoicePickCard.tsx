@@ -65,7 +65,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
     <MotionRegion className="space-y-3">
       <h3 className="text-sm font-semibold">{S.s_giong_theo_may_bc8b9fff}</h3>
       <p role="status" className="text-sm text-fg-2 text-pretty">{pickHeadline(status)}</p>
-      {measuring && <Progress value={(status.done ?? 0) / Math.max(1, status.total ?? 1)} size="sm" running label={S.s_dang_thu_cac_giong_872881f6} />}
+      {measuring && <Progress value={(status.done ?? 0) / Math.max(1, status.total ?? 1)} indeterminate={!status.total} size="sm" running label={S.s_dang_thu_cac_giong_872881f6} />}
       {status.engines.length > 0 && (
         <ul className="divide-y divide-line">
           {status.engines.map((row) => {

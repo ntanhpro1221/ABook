@@ -118,7 +118,7 @@ object TextImports {
 
     private fun newRef() = "i" + java.lang.Long.toHexString(System.nanoTime()) + java.lang.Long.toHexString(System.currentTimeMillis())
 
-    private fun copy(source: InputStream, target: File, budget: Long): Long {
+    private fun copy(source: InputStream, target: File, budget: Long, counted: (Long) -> Unit = {}): Long {
         var size = 0L
         target.parentFile?.mkdirs()
         target.outputStream().use { sink ->
@@ -129,13 +129,20 @@ object TextImports {
                 size += read
                 if (size > budget) throw BookImport.Failed(S.s_file_nay_qua_lon_de_them_vao_thu_vien_toi_c51dc582(MAX_SOURCE_BYTES shr 20))
                 sink.write(buffer, 0, read)
+                counted(size)
             }
         }
         return size
     }
 
-    /** Chép MỘT file (EPUB / DOCX / PDF / TXT). `open` trả luồng đọc file (content:// của hệ thống). */
-    fun stageFile(name: String, open: () -> InputStream?): Staged {
+    /** Phần của thanh dành cho bước chép file chữ vào máy; phần còn lại là bước đọc (tách chương, lấy chữ PDF). */
+    const val STAGE_SHARE = 0.7f
+
+    /**
+     * Chép MỘT file (EPUB / DOCX / PDF / TXT). `open` trả luồng đọc file (content:// của hệ thống). `progress`: byte đã chép / `total`
+     * (cỡ file theo hệ thống; <= 0 = chưa biết, thanh chạy liên tục), chiếm [0, [STAGE_SHARE]] của thanh.
+     */
+    fun stageFile(name: String, total: Long = 0, progress: WorkSink = {}, open: () -> InputStream?): Staged {
         val clean = safeName(name, "sach")
         val ext = clean.substringAfterLast('.', "").lowercase()
         if (ext !in SUPPORTED) throw BookImport.Failed(S.s_chua_doc_duoc_file_0_dung_epub_docx_pdf_tx_1a70d200(if (ext.isEmpty()) S.s_khong_co_duoi_178f5d10 else ".$ext"))
@@ -143,7 +150,8 @@ object TextImports {
         val target = File(dir(ref), clean)
         try {
             val input = open() ?: throw BookImport.Failed(S.s_chua_doc_duoc_file_6575d76b)
-            input.use { copy(it, target, MAX_SOURCE_BYTES) }
+            progress(Work(WorkStep.Copy, 0, total, 0f, STAGE_SHARE))
+            input.use { copy(it, target, MAX_SOURCE_BYTES) { done -> progress(copyWork(done, total, STAGE_SHARE)) } }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
             throw error
@@ -151,8 +159,8 @@ object TextImports {
         return Staged(ref, clean, if (ext == "pdf") target else null)
     }
 
-    /** Chép một thư mục TXT (chỉ các file .txt nằm ngay trong, như Studio): `files` = (tên file, luồng đọc). */
-    fun stageFolder(name: String, files: List<Pair<String, () -> InputStream?>>): Staged {
+    /** Chép một thư mục TXT (chỉ các file .txt nằm ngay trong, như Studio): `files` = (tên file, luồng đọc). `progress`: số file đã chép / tổng. */
+    fun stageFolder(name: String, files: List<Pair<String, () -> InputStream?>>, progress: WorkSink = {}): Staged {
         val texts = files.filter { it.first.lowercase().endsWith(".txt") }
         if (texts.isEmpty()) throw BookImport.Failed(S.s_thu_muc_nay_khong_co_file_txt_nao_nam_ngay_ba76d525)
         if (texts.size > MAX_FOLDER_FILES) throw BookImport.Failed(S.s_thu_muc_co_qua_nhieu_file_0_toi_da_1_842b73bc(texts.size, MAX_FOLDER_FILES))
@@ -162,7 +170,9 @@ object TextImports {
             var budget = MAX_SOURCE_BYTES
             val used = HashSet<String>()
             val names = JSONObject()
-            for ((fileName, open) in texts) {
+            for ((index, pair) in texts.withIndex()) {
+                val (fileName, open) = pair
+                progress(Work(WorkStep.Copy, index.toLong(), texts.size.toLong(), 0f, STAGE_SHARE, bytes = false))
                 try {
                     val input = open() ?: throw BookImport.Failed(S.s_chua_mo_duoc_file_8895249d)
                     val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
@@ -172,6 +182,7 @@ object TextImports {
                     throw BookImport.Failed(S.s_chua_doc_duoc_0_ban_kiem_tra_quyen_doc_va_9145df31(fileName))
                 }
             }
+            progress(Work(WorkStep.Copy, texts.size.toLong(), texts.size.toLong(), 0f, STAGE_SHARE, bytes = false))
             File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)
         } catch (error: Exception) {
             dir(ref).deleteRecursively()

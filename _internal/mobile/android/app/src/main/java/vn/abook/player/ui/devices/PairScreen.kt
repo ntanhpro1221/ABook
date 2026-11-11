@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Box
@@ -190,7 +191,7 @@ private fun pairForm(ui: PairUi, devices: DevicesState) {
         (ui.attempt as? Attempt.Working)?.let { last[0] = it.name }
         Column(Modifier.fillMaxWidth()) {
             Reveal(ui.attempt is Attempt.Working) {
-                ListItem(S.s_dang_noi_0_12f5920e(last[0]), Modifier.testTag("pair_working"), below = { CreepProgress() })
+                ListItem(S.s_dang_noi_0_12f5920e(last[0]), Modifier.testTag("pair_working"), below = { WorkingProgress() })
             }
             InlineProblem((ui.attempt as? Attempt.Failed)?.message.orEmpty(), devices::connect, "pair_problem")
         }
@@ -202,7 +203,7 @@ private fun wifiRows(ui: PairUi, devices: DevicesState) {
     val list = ui.wifiChoices
     when {
         list.isNotEmpty() -> { key("wifi_title", "title") { SectionTitle(S.s_may_tinh_tim_thay_fda2636c) }; foundRows(list, ui, devices) }
-        ui.scanning -> key("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        ui.scanning -> key("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { WorkingProgress() }) }
         else -> key("none", "status") { NoneRow(S.s_chua_thay_thiet_bi_192c6e9e, devices::scan) }
     }
 }
@@ -218,7 +219,7 @@ private fun bluetoothRows(ui: PairUi, devices: DevicesState) {
                 TextAction(S.s_de_sau_9be0a7ab, devices::deferBluetooth, "bluetooth_later")
             }
         }
-        Bluetooth.Listing -> key("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        Bluetooth.Listing -> key("scanning", "status") { ListItem(S.s_dang_tim_thiet_bi_b72cae79, Modifier.testTag("pair_scanning"), below = { WorkingProgress() }) }
         Bluetooth.Denied -> key("denied", "status") {
             ListItem(
                 S.s_can_quyen_thiet_bi_o_gan_ea24d4e0, Modifier.testTag("pair_denied"), titleColor = Abook.colors.danger,

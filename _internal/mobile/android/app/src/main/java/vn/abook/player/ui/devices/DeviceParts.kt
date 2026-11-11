@@ -4,16 +4,12 @@ import vn.abook.player.S
 
 import vn.abook.player.formatSize
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -31,7 +27,6 @@ import vn.abook.player.ui.components.PhoneIcon
 import vn.abook.player.ui.components.StageProgress
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.data.Fmt
-import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
@@ -107,14 +102,6 @@ fun RemoteBookRow(
 fun DownloadBar(flow: StateFlow<Float>) {
     val value = flow.collectAsState()
     StageProgress { value.value }
-}
-
-/** Thanh "đang làm" khi chưa biết còn bao lâu (đang ghép, đang tìm): chạy chậm dần tới gần hết rồi dừng, không lặp vô hạn. */
-@Composable
-fun CreepProgress() {
-    val creep = remember { Animatable(0.06f) }
-    LaunchedEffect(Unit) { creep.animateTo(0.92f, tween(12_000, easing = Motion.Decelerate)) }
-    StageProgress { creep.value }
 }
 
 /** Một thiết bị đang nghe thư viện này: lần cuối thấy nó; chạm mở bảng bỏ ghép. */

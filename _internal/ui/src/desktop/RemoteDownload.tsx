@@ -95,7 +95,7 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
         {note.tone === "running" ? <LiveText shown={note.title} spoken={spokenProgress(S.s_dang_tai_ve_may_abb61c38, downloadFraction(status))} /> : note.title}
       </p>
       {note.detail && <p className="mt-0.5 text-pretty">{note.detail}</p>}
-      {note.tone === "running" && <Progress value={downloadFraction(status)} size="xs" className="mt-2" label={S.s_da_tai_ve_may_a3ac321b} />}
+      {note.tone === "running" && <Progress value={downloadFraction(status)} indeterminate={status.bytes <= 0 && status.files <= 0} size="xs" className="mt-2" label={S.s_da_tai_ve_may_a3ac321b} />}
       {note.action && (
         <Button
           size="sm"

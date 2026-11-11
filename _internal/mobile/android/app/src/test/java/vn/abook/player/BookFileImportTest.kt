@@ -102,6 +102,26 @@ class BookFileImportTest {
     }
 
     @Test
+    fun opening_a_book_file_reports_real_checked_bytes_up_to_the_end_of_the_bar() {
+        val one = ByteArray(300_000) { (it % 251).toByte() }
+        val two = ByteArray(200_000) { (it % 241).toByte() }
+        val book = JSONObject().put("title", "Dài").put("chaptersAvailable", 2).put("chaptersTotal", 2)
+            .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")).put(chapter(2, 0, "chapters/2.mp3")))
+        val file = abook("dai.abook", 1, mapOf("chapters/1.mp3" to one, "chapters/2.mp3" to two), book)
+        val seen = ArrayList<Work>()
+        BookFileImport.importFile(file, progress = { seen += it }, from = 0.5f)
+        assertTrue(seen.size > 8)
+        assertTrue(seen.all { it.step == WorkStep.Check && it.from == 0.5f && it.to == 1f })
+        val total = seen.first().total
+        assertTrue(total >= one.size + two.size)
+        assertEquals(0L, seen.first().done)
+        assertEquals(seen.map { it.done }.sorted(), seen.map { it.done })
+        assertEquals(total, seen.last().done)
+        assertEquals(0.5f, seen.first().fraction!!, 1e-6f)
+        assertEquals(1f, seen.last().fraction!!, 1e-6f)
+    }
+
+    @Test
     fun a_corrupt_base_update_leaves_the_existing_book_untouched() {
         fun book(title: String) = JSONObject().put("title", title).put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
         val first = BookFileImport.importFile(abook("first.abook", 1, mapOf("chapters/1.mp3" to "audio".toByteArray()), book("Old")))

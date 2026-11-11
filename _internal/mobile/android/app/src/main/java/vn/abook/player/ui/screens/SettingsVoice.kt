@@ -67,7 +67,7 @@ import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.VoiceList
 import vn.abook.player.ui.data.VoiceOption
 import vn.abook.player.ui.data.VoiceSpeedChoice
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -300,7 +300,7 @@ private fun VoiceRow(
             }
         },
         trailing = trailing,
-        below = if (loading) ({ CreepProgress() }) else null,
+        below = if (loading) ({ WorkingProgress() }) else null,
         role = Role.RadioButton,
     )
 }

@@ -171,7 +171,7 @@ private fun UploadRow(state: StudioNewState, row: SourceRow) {
     val bad = row.status == UploadStatus.Failed || row.status == UploadStatus.TooBig || row.status == UploadStatus.NotStory
     val hint = when (row.status) {
         UploadStatus.Waiting -> StudioNewText.WAITING
-        UploadStatus.Sending -> dotJoin(StudioNewText.sending(row), StudioNewText.percent(state.progressOf(row)))
+        UploadStatus.Sending -> dotJoin(StudioNewText.sending(row), state.progressOf(row)?.let(StudioNewText::percent))
         UploadStatus.Sent -> StudioNewText.SENT
         else -> row.problem
     }
@@ -185,7 +185,7 @@ private fun UploadRow(state: StudioNewState, row: SourceRow) {
                     else -> TextAction(StudioNewText.REMOVE, { state.remove(row.id) }, "studio_new_row_remove_${row.id}")
                 }
             },
-            below = { if (sending) StageProgress { state.progressOf(row) } },
+            below = { if (sending) StageProgress(state.progressOf(row) != null) { state.progressOf(row) ?: 0f } },
         )
         RowLine()
     }

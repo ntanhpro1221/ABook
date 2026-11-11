@@ -42,7 +42,7 @@ import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.TrashIcon
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.fadeEdges
@@ -230,7 +230,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                         Reveal(work == KeyWork.Checking) {
                             Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("key_checking")) {
                                 Caption(S.s_dang_kiem_tra_424c43e3)
-                                CreepProgress()
+                                WorkingProgress()
                             }
                         }
                         InlineProblem(problem, null, "key_problem")

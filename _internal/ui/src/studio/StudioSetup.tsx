@@ -267,7 +267,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
 
       {status.running && current && (
         <div className="mt-4">
-          <Progress value={progress ?? 0} running={progress === null} size="sm" label={S.s_tien_do_0_bebc77d0(current.label)} />
+          <Progress value={progress ?? 0} indeterminate={progress === null} running size="sm" label={S.s_tien_do_0_bebc77d0(current.label)} />
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
             <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (

@@ -59,7 +59,7 @@ import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.data.ListenLogic
-import vn.abook.player.ui.devices.CreepProgress
+import vn.abook.player.ui.components.WorkingProgress
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -177,7 +177,7 @@ private fun FoundCoverTile(found: FoundCover, choosing: String?, choose: (FoundC
         Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken)) {
             image?.let { Image(it, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
         }
-        Reveal(busy) { Box(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_dat_anh_bia_f4a60e45 }.testTag("cover_setting")) { CreepProgress() } }
+        Reveal(busy) { Box(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_dat_anh_bia_f4a60e45 }.testTag("cover_setting")) { WorkingProgress() } }
         BasicText(found.title, style = Abook.type.caption.copy(color = colors.text), modifier = Modifier.padding(top = Dim.s8))
         BasicText(found.provider, style = Abook.type.caption.copy(color = colors.text3))
     }

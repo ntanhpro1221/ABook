@@ -124,7 +124,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
       {note && <p className={cn("mt-0.5 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
       {current?.state === "downloading" && (
         <div className="mt-1 flex items-center gap-3">
-          <Progress size="xs" running value={modulePercent(current) / 100} label={note ?? ""} className="flex-1" />
+          <Progress size="xs" running value={modulePercent(current) / 100} indeterminate={current.total <= 0} label={note ?? ""} className="flex-1" />
           {current.cancellable && !remote && (
             <Button size="sm" variant="ghost" loading={cancel.isPending} onClick={() => cancel.mutate()}>{S.s_huy_96732485}</Button>
           )}

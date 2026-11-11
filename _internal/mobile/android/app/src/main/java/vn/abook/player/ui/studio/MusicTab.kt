@@ -92,7 +92,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
         item("music_download", "music_download") {
             Column(Modifier.fillMaxWidth().then(slide).padding(top = Dim.s12).testTag("studio_music_download")) {
                 ClockLabel(MusicLogic.downloadText(download), Modifier.testTag("studio_music_download_text"), Abook.type.bodySmall.copy(color = Abook.colors.text2))
-                StageProgress { MusicLogic.downloadShare(download) }
+                StageProgress(MusicLogic.downloadShare(download) != null) { MusicLogic.downloadShare(download) ?: 0f }
                 TextAction(StudioMusicText.CANCEL_DOWNLOAD, music::cancelDownload, "studio_music_download_cancel", Modifier.fillMaxWidth())
             }
         }

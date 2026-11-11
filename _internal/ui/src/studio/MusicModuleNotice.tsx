@@ -69,7 +69,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
           {module.state === "missing" && <MoreInfo label={S.s_phan_tich_nhac_a0082a10}>{S.s_tai_mot_lan_phan_tich_tren_may_roi_dung_kh_c1fb770b}</MoreInfo>}
           {downloadingModule && (
             <div className="flex items-center gap-3">
-              <Progress value={modulePercent(module) / 100} size="sm" running label={S.s_dang_tai_phan_tich_nhac_880839b5} className="flex-1" />
+              <Progress value={modulePercent(module) / 100} indeterminate={module.total <= 0} size="sm" running label={S.s_dang_tai_phan_tich_nhac_880839b5} className="flex-1" />
               {module.cancellable && (
                 <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/module/cancel")}>{S.s_huy_96732485}</Button>
               )}
@@ -105,7 +105,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
           </p>
           {precise.state === "error" && <ErrorDetails technical={precise.errorDetail} className="text-danger" />}
           {precise.state === "downloading" && (
-            <Progress value={precise.total > 0 ? precise.done / precise.total : 0} size="sm" running label={S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498} />
+            <Progress value={precise.total > 0 ? precise.done / precise.total : 0} indeterminate={!(precise.total > 0)} size="sm" running label={S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498} />
           )}
           {precise.state === "downloading" && module.cancellable && (
             <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/precise/cancel")}>{S.s_huy_96732485}</Button>

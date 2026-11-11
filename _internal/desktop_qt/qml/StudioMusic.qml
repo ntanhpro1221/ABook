@@ -277,6 +277,7 @@ Column {
                 MyMusicBar {
                     width: parent.width
                     value: downloadBox.download ? Logic.downloadShare(downloadBox.download) : 0
+                    indeterminate: !(downloadBox.download && (downloadBox.download.totalBytes || downloadBox.download.total))
                     label: S.s_tai_san_nhac_nen_4474e87f
                 }
             }
