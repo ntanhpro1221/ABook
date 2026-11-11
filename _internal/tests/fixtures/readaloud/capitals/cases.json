@@ -1,0 +1,248 @@
+{
+ "spoken": [
+  {
+   "text": "YUI!",
+   "origin": "ja",
+   "said": "Giu-i!",
+   "note": "tên hét, romaji trọn vẹn + dấu kêu: đọc như tên"
+  },
+  {
+   "text": "YUI!",
+   "origin": null,
+   "said": "Yui!",
+   "note": "chưa rõ gốc: trả về dạng viết hoa đầu, bộ đọc tên / sea-g2p đọc tiếp"
+  },
+  {
+   "text": "YUI!",
+   "origin": "en",
+   "said": "<en>Y U I</en>!",
+   "note": "cuốn gốc Anh không có bằng chứng: yui không phải từ Anh, vẫn đánh vần"
+  },
+  {
+   "text": "“YUKI!”",
+   "origin": "ja",
+   "said": "“Giu-ki!”"
+  },
+  {
+   "text": "KASAI!",
+   "origin": "ja",
+   "said": "Ca-xai!"
+  },
+  {
+   "text": "Yui chạy tới. YUI",
+   "origin": "ja",
+   "said": "Giu-i chạy tới. Giu-i",
+   "note": "bằng chứng ngay trong đoạn: không cần dấu kêu"
+  },
+  {
+   "text": "Rồi YUI đến.",
+   "origin": "ja",
+   "said": "Rồi <en>Y U I</en> đến.",
+   "note": "không bằng chứng, không hét: giữ đánh vần"
+  },
+  {
+   "text": "I LOVE YUI",
+   "origin": "ja",
+   "said": "<en>I</en> love Giu-i",
+   "note": "đứng cạnh một từ đang gào"
+  },
+  {
+   "text": "ĐỪNG ĐI YUI",
+   "origin": null,
+   "said": "ĐỪNG ĐI Yui"
+  },
+  {
+   "text": "KAEL!",
+   "origin": "en",
+   "said": "Kael!",
+   "note": "bốn chữ có dáng một từ"
+  },
+  {
+   "text": "LYRA!",
+   "origin": null,
+   "said": "Lyra!"
+  },
+  {
+   "text": "BUG!",
+   "origin": "en",
+   "said": "Bug!"
+  },
+  {
+   "text": "WAH!?",
+   "origin": null,
+   "said": "Wah?",
+   "note": "thán từ kết bằng h"
+  },
+  {
+   "text": "GUHAH-!",
+   "origin": "ja",
+   "said": "Guhah-!"
+  },
+  {
+   "text": "MYTHS!",
+   "origin": "en",
+   "said": "Myths!"
+  },
+  {
+   "text": "Rồi KAEL đến.",
+   "origin": "en",
+   "said": "Rồi <en>K A E L</en> đến."
+  },
+  {
+   "text": "Rồi KAEL đến.",
+   "origin": "en",
+   "said": "Rồi Kael đến.",
+   "readings": {
+    "KAEL": "Kael"
+   },
+   "note": "cuốn chứng minh KAEL là tên (book_name_readings)"
+  },
+  {
+   "text": "Rồi KAEL đến.",
+   "origin": "en",
+   "said": "Rồi Ca-en đến.",
+   "readings": {
+    "KAEL": "Kael",
+    "Kael": "Ca-en"
+   },
+   "note": "cách đọc người nghe đặt cho Kael áp cả cho KAEL"
+  },
+  {
+   "text": "Rồi KAEL đến.",
+   "origin": "en",
+   "said": "Rồi Ca-eo đến.",
+   "readings": {
+    "KAEL": "Ca-eo"
+   },
+   "note": "cách đọc người nghe đặt thẳng cho KAEL thắng"
+  },
+  {
+   "text": "NPC!",
+   "origin": "ja",
+   "said": "en pi xi!",
+   "note": "phản chứng: viết tắt không nguyên âm"
+  },
+  {
+   "text": "HP?",
+   "origin": "ja",
+   "said": "hát pê?"
+  },
+  {
+   "text": "UBND!",
+   "origin": null,
+   "said": "ủy ban nhân dân!"
+  },
+  {
+   "text": "USA!",
+   "origin": "en",
+   "said": "<en>U S A</en>!",
+   "note": "phản chứng: viết tắt trong bảng"
+  },
+  {
+   "text": "AGI!",
+   "origin": "ja",
+   "said": "<en>A G I</en>!",
+   "note": "phản chứng: mã chỉ số game (capital_codes) dù là romaji hợp lệ"
+  },
+  {
+   "text": "STR, AGI!",
+   "origin": "ja",
+   "said": "<en>S T R</en>, <en>A G I</en>!"
+  },
+  {
+   "text": "(AOE)!",
+   "origin": "ja",
+   "said": "(<en>A O E</en>)!"
+  },
+  {
+   "text": "UFO!",
+   "origin": null,
+   "said": "<en>U F O</en>!"
+  },
+  {
+   "text": "CPU!",
+   "origin": null,
+   "said": "<en>C P U</en>!"
+  },
+  {
+   "text": "YYDS!",
+   "origin": "zh",
+   "said": "<en>Y Y D S</en>!",
+   "note": "y chỉ là nguyên âm khi đứng sau phụ âm; yyds không có nguyên âm nào"
+  },
+  {
+   "text": "UKG? EEG!",
+   "origin": "ja",
+   "said": "<en>U K G</en>? <en>E E G</en>!",
+   "note": "bộ đọc tiếng kêu đọc Ukg thành u: chữ kết bằng phụ âm không kéo dài là mã, không phải tiếng kêu"
+  },
+  {
+   "text": "AHHH! KENGGG!",
+   "origin": "en",
+   "said": "a…! keng…!"
+  },
+  {
+   "text": "Rồi ...GEORG! NORDDDDD——!!! GRRRAH! YESSSS! MARYYYY! x.COM!",
+   "origin": "en",
+   "said": "Rồi ...Georg! Nord…——!!! Grah! yes…! mary…! x.COM!",
+   "note": "dấu lửng trước chữ không chặn; chữ kéo dài là chính từ ấy kéo dài (YESSSS thì bộ đọc tiếng kêu đã tự đọc); một dấu chấm dính trước là tên miền / đường dẫn"
+  },
+  {
+   "text": "AAA!",
+   "origin": "ja",
+   "said": "a… a!",
+   "note": "một chữ lặp: tiếng kêu, shouts quyết"
+  }
+ ],
+ "books": [
+  {
+   "note": "Tên viết hoa đầu giữa câu từ hai lần: chữ HOA là tên; một lần hay chỉ đầu câu thì chưa đủ; viết tắt trong bảng không bao giờ.",
+   "origin": "en",
+   "texts": [
+    "Kael nhìn Lyra. Rồi Kael và Lyra đi.",
+    "KAEL! LYRA! NPC! USA! Usa và Usa. Mira đến."
+   ],
+   "characters": [],
+   "readings": {
+    "LYRA": "Lyra"
+   }
+  },
+  {
+   "note": "Một từ trong tên nhân vật là đủ.",
+   "origin": "en",
+   "texts": [
+    "KAEL! MIRA!"
+   ],
+   "characters": [
+    "Kael Storm",
+    "MIRA"
+   ],
+   "readings": {
+    "KAEL": "Kael"
+   }
+  },
+  {
+   "note": "Chưa rõ gốc cũng dò.",
+   "origin": null,
+   "texts": [
+    "Anh và Kael, cùng Kael. KAEL!"
+   ],
+   "characters": [],
+   "readings": {
+    "KAEL": "Kael"
+   }
+  },
+  {
+   "note": "Cuốn gốc Nhật: tên Nhật mang cách đọc romaji, tên khác mang dạng viết hoa đầu.",
+   "origin": "ja",
+   "texts": [
+    "Yui và Kael, với Kael. YUI! KAEL!"
+   ],
+   "characters": [],
+   "readings": {
+    "YUI": "Giu-i",
+    "KAEL": "Kael"
+   }
+  }
+ ]
+}

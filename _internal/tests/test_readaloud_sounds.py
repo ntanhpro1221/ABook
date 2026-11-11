@@ -47,7 +47,7 @@ def test_punctuation_around_an_abbreviation_is_kept_and_a_number_before_it_stops
 
 def test_a_shouted_sentence_is_not_a_row_of_abbreviations() -> None:
     assert _said("CÚT ĐI, AI ĐÓ") == ["CÚT", "ĐI,", "AI", "ĐÓ"]
-    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["o_-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
+    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["ô-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
     assert _said("HP MP SP") == ["hát pê", "mờ pê", "ét pê"], "một dãy toàn viết tắt thì vẫn đọc"
 
 
@@ -108,6 +108,50 @@ def test_tn9_a_cry_glued_to_another_cry_reads_both_and_xanh_um_tum_stays() -> No
 @pytest.mark.parametrize("core", ["Weisss", "wwww", "zzz", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz", "Boss", "Class", "Jess", "Tamm", "Grimm", "Jazz", "Buzz", "Dizz", "SSS", "MMM", "UH", "um", "Yosssh"])
 def test_what_cannot_be_traced_to_a_sound_is_left_alone(core: str) -> None:
     assert shouts.stretch_reading(core) is None
+
+
+@pytest.mark.parametrize("core", ["CCCD", "cccd", "Cccd", "SSSR", "BBBC", "WWW", "KKK", "CMND"])
+def test_a_listed_or_vowel_less_abbreviation_is_never_a_cry(core: str) -> None:
+    assert shouts.stretch_reading(core) is None, "gộp ra không nguyên âm (\"cd\") hay có trong bảng viết tắt: để bước viết tắt đọc"
+
+
+def test_an_abbreviation_added_to_a_table_stops_being_a_cry(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert shouts.stretch_reading("AAAA") == "a… a"
+    shouts.stretch_reading.cache_clear()
+    monkeypatch.setattr(shouts, "listed_abbreviations", lambda: frozenset({"aaaa"}))
+    try:
+        assert shouts.stretch_reading("AAAA") is None, "toàn hoa và có trong bảng viết tắt: không bao giờ là tiếng kêu"
+        assert shouts.stretch_reading("Aaaa") == "a… a", "chữ thường vẫn là tiếng kêu"
+    finally:
+        shouts.stretch_reading.cache_clear()
+
+
+@pytest.mark.parametrize(("core", "reading"), [("Mmmph", "mph…"), ("MMMMPH", "mph…"), ("mmmph", "mph…"), ("Ssst", "st…"), ("drrr", "dr…"), ("Tssssk", "chậc…")])
+def test_a_vowel_less_sound_outside_the_tables_keeps_its_reading(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading, "chỉ chữ HOA không nguyên âm (\"SSSR\", \"PCCC\") mới bị coi là viết tắt"
+
+
+@pytest.mark.parametrize("core", ["PCCC", "PPPH", "DRRRR", "AK", "KO", "IG", "EK", "OG", "IH", "EEG", "UGG", "FIFA", "Fifi", "HIFI", "Ahifa", "Fifu"])
+def test_capital_codes_and_f_names_are_not_breaths_or_laughs(core: str) -> None:
+    assert shouts.stretch_reading(core) is None
+
+
+@pytest.mark.parametrize(("core", "reading"), [("Fufu", "phu phu"), ("Fuhaha", "phu ha ha"), ("Fwahaha", "phu ha ha"), ("Fahaha", "phu ha ha"), ("Fofofo", "phu phu phu"),
+                                               ("AH", "a"), ("OH", "ô"), ("EEEK", "e…"), ("EEK", "e"), ("EGGG", "e…"), ("Ek", "e")])
+def test_real_laughs_and_breaths_keep_their_reading(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading
+
+
+def test_three_equal_capitals_are_a_cry_only_with_a_cry_mark() -> None:
+    assert _said("Kết quả: AAA là cao nhất") == ["Kết", "quả:", "a a a", "là", "cao", "nhất"]  # tên chữ, không phải "a… a"
+    assert _said("Rider OOO, tài khoản YYY.") == ["Rider", "ô ô ô,", "tài", "khoản", "i-dài i-dài i-dài."]
+    assert _said("『AAA――――』 AAA──") == ["『a… a――――』", "a… a──"]
+    assert _said("AAA! OOO…! UUU~ EEE?! Aaa, AAAA") == ["a… a!", "o… o_…!", "u… u,", "e… e?", "a… a,", "a… a"]
+
+
+@pytest.mark.parametrize(("core", "reading"), [("Hmmm", "hừm…"), ("HMMM", "hừm…"), ("Shhh", "suỵt…"), ("Grrr", "gừ…"), ("Pffft", "phụt…"), ("Kkkk", "khà khà…")])
+def test_a_listed_cry_without_a_vowel_is_still_a_cry(core: str, reading: str) -> None:
+    assert shouts.stretch_reading(core) == reading
 
 
 def test_two_stretched_words_in_a_row_and_a_stretch_inside_quotes() -> None:
@@ -229,19 +273,20 @@ def test_won_yen_and_kwan_are_units_only_after_a_number() -> None:
 
 
 def test_a_capital_o_starting_a_hyphenated_name_is_a_syllable_not_a_letter() -> None:
-    assert _said("Otsuki-san, Okayama, Onii-sama", "ja") == ["o_-xu-ki-xan,", "o_-ca-gia-ma,", "o_-ni-xa-ma"]
+    assert _said("Otsuki-san, Okayama, Onii-sama", "ja") == ["ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"]
 
 
 def test_a_lone_o_syllable_is_marked_so_the_normaliser_keeps_it_an_o_and_not_the_letter_o_circumflex() -> None:
-    """sea-g2p spells a bare "o" in a Vietnamese sentence as the letter "ô"; "o_" loses the "_" in its first pass and `keep_lone_o` protects it in the second, so the engine says "o" (the TN answer)."""
-    assert _said("Kaori, okonomiyaki", "ja") == ["Ca-o_-ri,", "o_-cô-nô-mi-a-ki"]
+    """An "o" syllable after a / e inside a Japanese word stays "o" (owner 10-11: only the word-initial one is "ô"). sea-g2p spells a bare "o" in a Vietnamese sentence as the letter "ô"; "o_" loses the "_" in its first pass and `keep_lone_o` protects it in the second, so the engine says "o" (the TN answer)."""
+    assert _said("Kaori, okonomiyaki, Naoki", "ja") == ["Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki"]
     assert names.lone_syllable("O-xu-ki-xan") == "o_-xu-ki-xan" and names.lone_syllable("A-ri") == "a-ri" and names.lone_syllable("ca-o-ri") == "ca-o_-ri" and names.lone_syllable("o") == "o_" and names.lone_syllable("ô") == "ô"
     pytest.importorskip("sea_g2p")
     from abook.readaloud import vieneu_engine
 
-    pieces = "0. Câu thử đã gỡ. 0.".join(_said("0. Câu thử đã gỡ. 0."))
-    assert vieneu_engine.normalize([pieces]).startswith("hẳn là o xu ki xan rất")
-    assert " ˈɔ sˈu kˈi " in vieneu_engine.phonemize([pieces]), "VieNeu's second normalisation must not turn the syllable into the letter ô (ˈo)"
+    pieces = " ".join(_said("Hẳn là Naoki-san rất thích nấu ăn."))
+    assert vieneu_engine.normalize([pieces]).startswith("hẳn là na o ki xan rất")
+    assert " nˈaː ˈɔ kˈi " in vieneu_engine.phonemize([pieces]), "VieNeu's second normalisation must not turn the syllable into the letter ô (ˈo)"
+    assert "0. Câu thử đã gỡ. 0." in vieneu_engine.phonemize(["0. Câu thử đã gỡ. 0.".join(_said("0. Câu thử đã gỡ. 0."))]), "0. Câu thử đã gỡ. 0."
     assert " ˈo bˈeɜ " in vieneu_engine.phonemize(["Tôi đi o bế con."]), "a real Vietnamese 'o' is still spelled like sea-g2p does"
     assert vieneu_engine.keep_lone_o("a o, b", "a ô, b") == "a o, b" and vieneu_engine.keep_lone_o("a o b", "a ô b c") == "a ô b c"
 
@@ -258,7 +303,7 @@ def test_two_words_glued_by_an_ellipsis_or_a_dash_are_read_one_by_one() -> None:
 
 # ---- TN "Nghe ngay" lượt 4: gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ -----------------------------------------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("ONII-CHAN, ONII-CHAN LO LẮNG!", "o_-ni-chan, o_-ni-chan LO LẮNG!"),
+    ("ONII-CHAN, ONII-CHAN LO LẮNG!", "ô-ni-chan, ô-ni-chan LO LẮNG!"),
     ("“NEE-SAN!” và OPPA, ARIEL-SAMA.", "“ne-xan!” và óp-pa, ariel-xa-ma."),
     ("Kiểm tra SAN và SENPAI", "Kiểm tra ét a en và xen-pai"),  # hậu tố đứng một mình không có tên đi trước: SAN vẫn là viết tắt, senpai là từ mượn quen
 ])

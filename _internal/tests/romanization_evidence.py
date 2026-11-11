@@ -28,18 +28,19 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     # phán quyết lần 4 (04-10), Nhật: ee -> e, ii -> i (gộp như oo, uu); g + i -> ghi (ji vẫn gi); tsu -> xu ở mọi chỗ; yu sau phụ âm tách (ri-u); senpai
     # o không có phụ âm đầu (âm tiết chỉ là nguyên âm) -> o, có phụ âm đầu -> ô; aa -> a; ao CUỐI từ gộp (Nao), ao giữa từ tách a-o; onigiri là từ quen (cơm nắm),
     # chủ sách ghi đè cố định (_JA_FIXED), g + i -> ghi (Hiiragi) vẫn đứng. Dạng đầu là chính, dạng sau là alternative chủ sách chấp nhận.
-    ("Osaka", "ja", ("o-xa-ca", "ô-xa-ca"), "owner"),
+    # chủ sách 10-11 đổi o đầu từ -> ô (Ô-xa-ca, Ô-ne-xan, Ô-ni-gi-ri); o sau a / e giữa từ vẫn -> o (A-o-i, Ca-o-ri, Na-o-ki).
+    ("Osaka", "ja", ("ô-xa-ca",), "owner"),
     ("Aoi", "ja", ("a-o-i",), "owner"),
     ("Kaori", "ja", ("ca-o-ri",), "owner"),
     ("Nao", "ja", ("nao",), "owner"),
-    ("Okaa-san", "ja", ("o-ca-xan", "ô-ca-xan"), "owner"),
-    ("Ojii-san", "ja", ("o-gi-xan", "ô-gi-xan"), "owner"),
-    ("Onigiri", "ja", ("o-ni-gi-ri",), "owner"),
+    ("Okaa-san", "ja", ("ô-ca-xan",), "owner"),
+    ("Ojii-san", "ja", ("ô-gi-xan",), "owner"),
+    ("Onigiri", "ja", ("ô-ni-gi-ri",), "owner"),
     ("Tomoe", "ja", ("tô-mô-e",), "owner"),
     ("Sora", "ja", ("xô-ra", "xo-ra"), "owner"),
     ("Konoha", "ja", ("cô-nô-ha",), "owner"),
-    ("Onee-san", "ja", ("o-ne-xan",), "owner"),
-    ("Onii-chan", "ja", ("o-ni-chan",), "owner"),
+    ("Onee-san", "ja", ("ô-ne-xan",), "owner"),
+    ("Onii-chan", "ja", ("ô-ni-chan",), "owner"),
     ("Hiiragi", "ja", ("hi-ra-ghi",), "owner"),
     ("Inoue", "ja", ("i-nâu-e",), "owner"),
     ("Shouta", "ja", ("sâu-ta",), "owner"),
@@ -246,7 +247,7 @@ _KO4 = "chủ sách 04-10 lần 4"
 _J = "j Hàn -> gi (" + _KO4 + ": Seojun -> Xeo-giun, Jeong -> Gie-ong); nguồn viết ch"
 _EO = "eo -> eo, tách e-o + coda khi có phụ âm cuối (" + _KO4 + ": Jeong -> Gie-ong, Seojun -> Xeo-giun); nguồn viết ơ"
 _KS = "s Hàn -> x (" + _KO4 + ": Seojun -> Xeo-giun); nguồn viết s"
-_O0 = "o không có phụ âm đầu (âm tiết chỉ là nguyên âm) -> o (chủ sách 04-10 lần 4: Osaka -> O-xa-ca, Aoi -> A-o-i); có phụ âm đầu mới -> ô"
+_O0 = "o không có phụ âm đầu sau a / e (âm tiết chỉ là nguyên âm) -> o (chủ sách 04-10 lần 4: Aoi -> A-o-i; 10-11: o ĐẦU TỪ -> ô, Osaka -> Ô-xa-ca); có phụ âm đầu -> ô"
 _HY = "tên Hàn nối gạch thành một chuỗi, không tách bộ phận bằng dấu cách (chủ sách 04-10 lần 5: Kim Jong-un -> Kim Giông-un, Lee Myung-bak -> Li Mung-bắc)"
 _COMMUNITY = "dạng cộng đồng (tên cũ ở Việt Nam), không phải chuẩn"
 EXPLAINED: dict[str, tuple[str, str]] = {
@@ -304,7 +305,5 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Kim Dae-jung": ("Kim Te-giung", _J + "; " + _HY),
     "Han Seung-soo": ("Han Xưng-xu", _KS + "; " + _HY),
     "Kim Hyong-o": ("Kim He-ong-ô", "yeo sau phụ âm mất y, eo tách e-ong (" + _KO4 + "); nguồn viết Kim Hiêng Ô" + "; " + _HY),
-    "Ōsaka": ("O-xa-ca", _O0 + "; SGK viết Ô-xa-ca (alternative chủ sách chấp nhận)"),
-    "Ōita": ("O-i-ta", _O0 + "; SGK viết Ô-i-ta"),
     "Gangwon": ("Cang-guôn", "g đầu từ -> k, k trước a viết c theo chính tả (luật 1.5; bộ kiểm âm tiết không nhận kang); chủ sách 04-10 lần 8 viết kang-guôn"),
 }

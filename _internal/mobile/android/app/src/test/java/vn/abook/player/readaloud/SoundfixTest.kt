@@ -26,7 +26,7 @@ class SoundfixTest {
         val disk = JSONObject(File("../../../abook/readaloud/sound_policy.json").readText(Charsets.UTF_8))
         assertEquals(disk.keys().asSequence().toSet(), Shouts.POLICY.keys().asSequence().toSet())
         for (key in disk.keys()) assertEquals(key, disk.get(key).toString(), Shouts.POLICY.get(key).toString())
-        assertEquals(16, ClipCache.CACHE_RULES)
+        assertEquals(17, ClipCache.CACHE_RULES)
         assertEquals(9, Shouts.stretchReading("a" + "ha".repeat(100))!!.split(" ").size) // eight atoms plus the opening vowel
     }
 }

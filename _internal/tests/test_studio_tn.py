@@ -28,7 +28,8 @@ def test_a_word_is_read_as_read_aloud_reads_it(text: str, said: str) -> None:
 
 
 def test_the_lone_o_mark_of_read_aloud_never_reaches_studio_text() -> None:
-    assert studio_tn("Otsuki-san đến", "ja", True)[0] == "o-xu-ki-xan đến"
+    assert studio_tn("Otsuki-san đến", "ja", True)[0] == "ô-xu-ki-xan đến"
+    assert studio_tn("Naoki-san đến", "ja", True)[0] == "Na-o-ki-xan đến"
     assert "_" not in studio_tn("Tooo!", None, True)[0]
     assert studio_tn("snake_case ơi", None, True)[0] == "snake_case ơi"
 

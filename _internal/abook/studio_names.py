@@ -44,12 +44,10 @@ def book_origin_for_project(db: Any) -> str | None:
 
 
 def book_name_readings_for_project(db: Any, origin: str | None) -> dict[str, str]:
-    """Tên cuốn gốc Nhật tự chứng minh, từ chữ các chương và sổ nhân vật (`japanese_policy.book_name_readings`); cuốn khác không có."""
-    if origin != "ja":
-        return {}
+    """Tên cuốn tự chứng minh, từ chữ các chương và sổ nhân vật (`japanese_policy.book_name_readings`): tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA ("KAEL" -> "Kael") của mọi cuốn."""
     from .readaloud.japanese_policy import book_name_readings
 
-    return book_name_readings(chapter_texts(db), [str(row["canonical_name"]) for row in db.list_characters()])
+    return book_name_readings(chapter_texts(db), [str(row["canonical_name"]) for row in db.list_characters()], origin)
 
 
 def rule_reading(surface: str, origin: str | None) -> str | None:
@@ -139,6 +137,10 @@ def japanese_pronunciations(pronunciations: list[Any], origin: str | None,
 
     explicit = {str(row["surface"]).casefold() for row in pronunciations
                 if str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE}
+    # "KAEL" -> "Kael" is the proof that the capitals are a name, not a Japanese reading.
+    from .readaloud.abbreviations import proves_name
+
+    book_names = {surface: said for surface, said in (book_names or {}).items() if not proves_name(surface, said)}
     components: dict[str, Any] = {}
     untouched = []
     for row in pronunciations:

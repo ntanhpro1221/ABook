@@ -1,5 +1,8 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.VietnameseReading
+import java.util.Locale
+
 /**
  * Spoken abbreviations, with unchanged display text. Owner readings, Vietnamese
  * expansions and contextual cues come from the same english_policy.json as Python.
@@ -58,6 +61,13 @@ object Abbreviations {
     private val PAREN_ABBREVIATION = Regex("""(?<=.)\(([A-Z]{2,5})\)""")
     /** Chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê. */
     private val LEVEL_NAMES = mapOf("lv" to "lờ vê", "lvl" to "lờ vê lờ")
+    /** Every abbreviation the reading tables know (english_policy.json, the tables here), lower-cased - `shouts.listed_abbreviations`: never a cry ("CCCD"). */
+    val LISTED: Set<String> by lazy {
+        val root = Locale.ROOT
+        val keys = listOf("vietnamese_abbreviations", "spoken_abbreviations", "contextual_abbreviations").flatMap { policy.getJSONObject(it).keys().asSequence().toList() }
+        val acronyms = listOf("preserve_acronyms", "acronyms", "capital_codes").flatMap { key -> policy.getJSONArray(key).let { a -> (0 until a.length()).map { a.getString(it).lowercase(root) } } }
+        (keys + acronyms + AS_WORDS.keys + SPELLED_ENGLISH + LEVEL_NAMES.keys).toSet()
+    }
     private const val MIN_LETTERS = 2
     private val MAX_LETTERS = Shouts.POLICY.getInt("max_acronym_letters")
     private const val ROMAJI_FROM = 4
@@ -72,6 +82,106 @@ object Abbreviations {
     }
 
     private fun letterNames(lower: String) = lower.map { LETTERS.getValue(it) }.joinToString(" ")
+
+    /** Tên / từ hét viết hoa ("YUI!", "BUG!") ngắn nhất; hai chữ hoa luôn là viết tắt. */
+    internal const val WORD_FROM = 3
+    /** Chữ đứng riêng: không dính số, gạch nối tên, đường dẫn. */
+    private val CAPITALS = Regex("""(?<![\p{L}\p{N}_'’/@#&+])(?<!(?<!\.)\.)(?<![\p{L}\p{N}_]-)[A-Z]{3,}(?![\p{L}\p{N}_'’/@#&+])(?![-.][\p{L}\p{N}_])""")
+    /** Dấu kêu ngay sau chữ: "YUI!", "YUI…!", "YUI~!?"; "(AOE)!" là chú giải. */
+    private val CRY = Regex("""^[^\p{L}\p{N}_()]*[!?]""")
+    /** "y" sau phụ âm là nguyên âm ("MYTHS", "LYNX"); "YYDS" không có nguyên âm nào. */
+    private val VOWEL = Regex("[aeiou]|(?<=[^aeiouy])y")
+    /** "WAH!?", "YAH!", "UOH!": thán từ kết bằng "h". */
+    private val INTERJECTION = Regex("[^aeiou]{0,2}[aeiou]+h")
+    private val STRETCH = Regex("""(.)\1{2,}""") // chữ kéo dài: "NORDDDDD", "WUTTTT"
+    private val CRY_SHAPED = Regex("(.)\\1\\1|[aeiouh]\$") // tiếng kêu: chữ kéo dài ("AHHH") hay kết bằng nguyên âm / "h"; "UKG", "EEG" là mã
+    private val ONSETS = ("bl br by ch cl cr dr dw fl fr gh gl gr gw gy hy jh kh kl kn kr kw ky my ny ph pl pr py rh ry sc sh sk sl sm sn sp st sv sw th tr ts tw vl wh wr zh" +
+        " chr sch scr shr spl spr str thr thw").split(" ").toSet()
+    private val CODAS = ("bb ch ck ct dd ds ff ft gg gh gs ht ks ld lf lk ll lm lp ls lt mb mm mp ms nd ng nk nn ns nt ph pp ps pt rb rc rd rf rg rk rl rm rn rp rs rt sh sk sp ss st th ts tt tz wk wl wn ws xt zz" +
+        " cks ght lls lms lts mph mps nch nds ngh ngs nks nth nts rch rds rgh rks rld rms rns rst rth rts sts tch").split(" ").toSet()
+
+    /** "KAEL" -> "Kael". */
+    fun capitalized(word: String) = word.lowercase(Locale.ROOT).replaceFirstChar { it.uppercaseChar() }
+
+    /** A per-book reading that is only the capitals' own capitalized spelling ("KAEL": "Kael") is the book's proof that the capitals are a name, not a sound to say - `proves_name`. */
+    fun provesName(surface: String, said: String) =
+        surface.all { it.code < 128 } && surface.any(Char::isUpperCase) && surface.none(Char::isLowerCase) && said == capitalized(surface)
+
+    /** Chữ có dáng một từ đọc được ("kwang", "thud", "combo", "lyra"), không phải một mã ("crce", "ussr", "lmao", "oecd") - `_word_shaped`. */
+    private fun wordShaped(lower: String): Boolean {
+        val runs = lower.split(Regex("[aeiouy]+"))
+        if (runs.size < 2) return false
+        val first = runs.first()
+        val last = runs.last()
+        return (first.length < 2 || first in ONSETS) && (last.length < 2 || last in CODAS) && runs.subList(1, runs.size - 1).all { it.length <= 3 }
+    }
+
+    /** Chữ HOA cả đang bị đọc tên chữ cái mà CÓ THỂ là một tên / từ - `_capital_word`. */
+    internal fun capitalWord(core: String): Boolean {
+        val lower = core.lowercase(Locale.ROOT)
+        return core.length <= MAX_LETTERS && VOWEL.containsMatchIn(lower) && lower.toSet().size > 1 && lower !in LISTED &&
+            !lower.all { it in ROMAN_LETTERS } && spelled(core) == letterNames(lower) && !VietnameseReading.isSyllable(lower)
+    }
+
+    /** Không có bằng chứng trong cuốn: romaji trọn vẹn (gốc Nhật hay chưa rõ gốc), từ Anh trong bộ từ vựng chung, từ bốn chữ trở lên có dáng một từ, thán từ kết "h", hay chữ bộ đọc tiếng kêu nhận - `_reads_as_word`. */
+    private fun writtenAsWord(lower: String, origin: String?): String? {
+        val word = capitalized(lower)
+        val short = STRETCH.replace(lower) { it.groupValues[1] }
+        if (short != lower && short.length >= WORD_FROM && VOWEL.containsMatchIn(short) && (short in JapanesePolicy.lexicalGuard || wordShaped(short))) {
+            // "NORDDDDD!" là "Nord" kéo dài: viết "Nord…". Chữ mà bộ đọc tiếng kêu đã tự đọc ở dạng HOA ("YESSSS" -> "yes…", "MARYYYY" -> "mary…") thì để nó.
+            val capitals = listOf(lower.uppercase(Locale.ROOT))
+            val read = capitals.toMutableList()
+            Shouts.readShouts(capitals, read, origin)
+            if (read != capitals) return null
+            return capitalized(short) + if (STRETCH.findAll(lower).last().range.last == lower.length - 1) "…" else ""
+        }
+        if ((origin == null || origin == "ja") && JapanesePolicy.syllables(lower) > 0 && Romanization.reading(lower, "ja") != null) return word
+        if (lower in JapanesePolicy.lexicalGuard || (lower.length >= 4 && wordShaped(lower)) || INTERJECTION.matches(lower)) return word
+        if (!CRY_SHAPED.containsMatchIn(lower)) return null
+        val source = listOf(word)
+        val cry = source.toMutableList()
+        Shouts.readShouts(source, cry, origin)
+        return if (cry != source) word else null
+    }
+
+    /** Chữ HOA cả bên cạnh là một từ đang gào: có dấu ("CÚT"), hay từ Anh / Nhật / tên từ bốn chữ ("LOVE", "MISAKI") - không phải một viết tắt khác ("STR, AGI") - `_shouted_word`. */
+    private fun shoutedWord(core: String): Boolean {
+        if (!caps(core)) return false
+        if (core.any { it.code >= 128 }) return true
+        return core.all { it in 'A'..'Z' } && core.length >= 4 && spelled(core) != letterNames(core.lowercase(Locale.ROOT))
+    }
+
+    /**
+     * Tên / từ bị hét viết HOA cả ("YUI!", "KAEL!", "BUG!") viết lại ở dạng viết hoa đầu ("Yui!") để đọc như chính từ ấy ở chỗ khác của cuốn, không đọc tên chữ cái. null khi không có chữ nào.
+     * Có bằng chứng thì luôn đổi: cuốn chứng minh nó là tên ([readings] mang cách đọc là chính dạng viết hoa đầu, [JapanesePolicy.bookNameReadings]) hay dạng viết hoa đầu đứng ngay trong đoạn này.
+     * Không bằng chứng: chỉ khi đọc được thành từ VÀ đang hét - dấu "!" / "?" ngay sau, hay đứng cạnh một từ viết hoa cả khác ("I LOVE YUI"). `capital_words`.
+     */
+    fun capitalWords(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null): List<String>? {
+        var named: MutableList<String>? = null
+        var cores: List<String>? = null
+        for ((index, token) in toks.withIndex()) {
+            if (token.none { it in 'A'..'Z' }) continue
+            var rewritten = token
+            for (match in CAPITALS.findAll(token).toList().asReversed()) {
+                val core = match.value
+                if (!capitalWord(core)) continue
+                val before = token.substring(0, match.range.first)
+                val after = token.substring(match.range.last + 1)
+                val known = cores ?: toks.map { Names.splitToken(it).second }.also { cores = it }
+                var titled = capitalized(core)
+                if (readings?.get(core) != titled && titled !in known) {
+                    titled = writtenAsWord(core.lowercase(Locale.ROOT), origin) ?: continue
+                    val cried = CRY.containsMatchIn(after) && !before.endsWith("(")
+                    val beside = (before.isEmpty() && index > 0 && shoutedWord(known[index - 1])) ||
+                        (after.isEmpty() && index + 1 < toks.size && shoutedWord(known[index + 1]))
+                    if (!(cried || beside)) continue
+                }
+                rewritten = rewritten.substring(0, match.range.first) + titled + rewritten.substring(match.range.last + 1)
+            }
+            if (rewritten != token) (named ?: toks.toMutableList().also { named = it })[index] = rewritten
+        }
+        return named
+    }
 
     /** Cách đọc của [core] (đã bỏ dấu câu quanh) khi nó là chữ HOA cả cần đổi để đọc, null khi để nguyên: viết tắt thì tên chữ cái; từ Anh / Nhật / tiếng cười viết hoa cả thì chữ thường. */
     fun spelled(core: String): String? {

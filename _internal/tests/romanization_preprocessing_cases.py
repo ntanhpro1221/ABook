@@ -14,11 +14,11 @@ BENCH_JA: list[tuple[str, str, str]] = [
     ("hùng-sama", "ja", "hùng-xa-ma"), ("Thư-sama", "ja", "Thư-xa-ma"), ("thần-sama", "ja", "thần-xa-ma"), ("Thủy-sama", "ja", "Thủy-xa-ma"),
     ("sĩ-sama", "ja", "sĩ-xa-ma"), ("chính-sama", "ja", "chính-xa-ma"), ("tước-sama", "ja", "tước-xa-ma"), ("Giả-sama", "ja", "Giả-xa-ma"),
     ("giả-sama", "ja", "giả-xa-ma"), ("ChuChu", "ja", "Chu-chu"), ("chúa-sama", "ja", "chúa-xa-ma"), ("Thú-sama", "ja", "Thú-xa-ma"),
-    ("Thần-sama", "ja", "Thần-xa-ma"), ("Thủ-chan", "ja", "Thủ-chan"), ("KANATA", "ja", "Ca-na-ta"), ("OkabeRintarou", "ja", "O-ca-be Rin-ta-râu"),
+    ("Thần-sama", "ja", "Thần-xa-ma"), ("Thủ-chan", "ja", "Thủ-chan"), ("KANATA", "ja", "Ca-na-ta"), ("OkabeRintarou", "ja", "Ô-ca-be Rin-ta-râu"),
     ("Tenshi-chan", "ja", "Ten-si-chan"), ("HAruto", "ja", "Ha-ru-tô"), ("REI", "ja", "Rây"), ("KOU", "ja", "Câu"), ("KAEDE", "ja", "Ca-e-đe"),
     ("TAKIOTO", "ja", "Ta-ki-ô-tô"), ("NEE-SAN", "ja", "Ne-xan"), ("Eruza-người", "ja", "E-ru-da-người"), ("Kanata-cả", "ja", "Ca-na-ta-cả"),
     ("Kanata-vẫn", "ja", "Ca-na-ta-vẫn"), ("đại-sama", "ja", "đại-xa-ma"), ("thơm-sensei", "ja", "thơm-xen-xây"),
-    ("xám-onechan", "ja", "xám-o-ne-chan"), ("tải-kun", "ja", "tải-cun"), ("à-degozaru", "ja", "à-đe-gô-da-ru"), ("NhạcJoJo", "ja", "Nhạc Giô-giô"),
+    ("xám-onechan", "ja", "xám-ô-ne-chan"), ("tải-kun", "ja", "tải-cun"), ("à-degozaru", "ja", "à-đe-gô-da-ru"), ("NhạcJoJo", "ja", "Nhạc Giô-giô"),
     ("DereDere", "ja", "Đe-re Đe-re"), ("Trắng-chan", "ja", "Trắng-chan"),
 ]
 

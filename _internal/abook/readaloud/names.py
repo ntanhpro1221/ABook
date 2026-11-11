@@ -123,8 +123,8 @@ def _known_word(head: str) -> bool:
 
 
 def lone_syllable(reading: str | None) -> str | None:
-    """Âm tiết MỘT chữ cái của tên nối gạch là âm tiết, không phải chữ cái đọc tên: "O-xu-ki-xan" -> "o_-xu-ki-xan". Chữ HOA đầu hạ thường (sea-g2p đánh vần "O" thành "ô");
-    mà "o" trần giữa câu tiếng Việt cũng bị nó đánh vần thành "ô" ("o-ni-chan", "o-ca-gia-ma": đáp án TN là "o" ngắn như "Oppa o ngắn"), nên "o" thành "o_": bộ chuẩn hoá bỏ dấu "_" ("o_-xu" ra "o xu")
+    """Âm tiết MỘT chữ cái của tên nối gạch là âm tiết, không phải chữ cái đọc tên: "A-o-i" -> "a-o_-i". Chữ HOA đầu hạ thường (sea-g2p đánh vần "O" thành "ô");
+    mà "o" trần giữa câu tiếng Việt cũng bị nó đánh vần thành "ô" ("na-o-ki", "ca-o-ri": chủ sách chọn "o" cho o sau a / e; o đầu từ đã là "ô" từ 10-11 nên không tới đây), nên "o" thành "o_": bộ chuẩn hoá bỏ dấu "_" ("a-o_-i" ra "a o i")
     và G2P đọc đúng "o"."""
     if not reading:
         return reading
@@ -550,15 +550,16 @@ class BookOrigins:
                 self._save(data)
             return guess if guess in ORIGINS else None
 
-    def name_readings(self, book_id: str, texts: Callable[[], Iterable[str]]) -> dict[str, str]:
-        """Tên cuốn gốc Nhật tự chứng minh (`japanese_policy.book_name_readings`), tính một lần trên cả cuốn rồi lưu; đổi luật thì tính lại."""
-        from .japanese_policy import VERSION, book_name_readings
+    def name_readings(self, book_id: str, texts: Callable[[], Iterable[str]], origin: str | None) -> dict[str, str]:
+        """Tên cuốn tự chứng minh (`japanese_policy.book_name_readings`: tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA của mọi cuốn), tính một lần trên cả cuốn rồi lưu; đổi luật hay đổi gốc thì tính lại."""
+        from .japanese_policy import BOOK_NAMES_RULE, book_name_readings
 
+        rule = f"{BOOK_NAMES_RULE}:{origin or 'none'}"
         with self._lock:
             data = self._load()
             entry = data.setdefault(book_id, {})
-            if entry.get("names_rule") != VERSION or not isinstance(entry.get("names"), dict):
-                entry["names"], entry["names_rule"] = book_name_readings(texts()), VERSION
+            if entry.get("names_rule") != rule or not isinstance(entry.get("names"), dict):
+                entry["names"], entry["names_rule"] = book_name_readings(texts(), origin=origin), rule
                 self._save(data)
             return dict(entry["names"])
 

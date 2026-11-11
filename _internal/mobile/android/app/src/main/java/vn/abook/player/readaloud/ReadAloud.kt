@@ -355,7 +355,7 @@ object ReadAloud {
 
     /**
      * Cách đọc riêng người nghe đặt cho cuốn ("Đọc từ này là…", lớp sửa `readings` - [BookEdits]). Nhớ theo giờ sửa + cỡ của `edits.json`: lưu một cách đọc
-     * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính. Tên cuốn gốc Nhật tự chứng minh ([provenNames]) nằm dưới cách đọc của người nghe.
+     * thì đoạn đọc sau đó dùng ngay cách mới. Đọc file nhỏ - gọi được ở luồng chính. Tên cuốn tự chứng minh ([provenNames]: tên Nhật của cuốn gốc Nhật, tên bị hét viết HOA của mọi cuốn) nằm dưới cách đọc của người nghe.
      */
     fun readingsOf(bookId: String): Map<String, String> {
         val proven = provenNames[bookId].orEmpty()
@@ -399,8 +399,8 @@ object ReadAloud {
     fun originNow(bookId: String): String? {
         if (bookId.isBlank()) return null
         val found = origins[bookId] ?: (runCatching { choices?.originFor(bookId) { sampleTexts(bookId) } }.getOrNull() ?: "").also { origins[bookId] = it }
-        if (found == "ja" && !provenNames.containsKey(bookId)) {
-            provenNames[bookId] = runCatching { choices?.nameReadingsFor(bookId) { sampleTexts(bookId, null) } }.getOrNull().orEmpty()
+        if (!provenNames.containsKey(bookId)) {
+            provenNames[bookId] = runCatching { choices?.nameReadingsFor(bookId, found.ifEmpty { null }) { sampleTexts(bookId, null) } }.getOrNull().orEmpty()
         }
         return found.ifEmpty { null }
     }

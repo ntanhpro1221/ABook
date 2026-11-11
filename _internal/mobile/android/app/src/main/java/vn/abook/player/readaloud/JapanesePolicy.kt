@@ -12,13 +12,16 @@ object JapanesePolicy {
     val VERSION = data.getInt("version")
     val NAMESPACE = data.getString("namespace")
     val PROVENANCE = data.getString("provenance")
-    private val lexicalGuard by lazy {
+    internal val lexicalGuard by lazy {
         GZIPInputStream(WebSocket.unbase64(BuildConfig.JAPANESE_LEXICON_GZIP).inputStream())
             .bufferedReader(Charsets.UTF_8).use { it.readText().split(Regex("\\s+")).toSet() }
     }
     private const val LETTERS = "A-Za-zāīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
     private val wordPattern = Regex("[$LETTERS]+(?:[-'][$LETTERS]+)*")
     private val notePattern = Regex("\\[note[0-9]+\\]", RegexOption.IGNORE_CASE)
+    /** [bookNameReadings]: 2 = capitals of any book that the book writes as a name ("KAEL" -> "Kael"). */
+    val BOOK_NAMES_RULE = "$VERSION.2"
+    private val sentenceEnd = Regex("""[.!?…:;"”’」』)\]】*~—–-]$""")
     private val knownNames by lazy { list("known_names").toSet() }
     private val honorifics by lazy { list("honorifics").toSet() }
     private val particles by lazy { list("particles").toSet() }
@@ -224,34 +227,53 @@ object JapanesePolicy {
         return if (address.lowercase(Locale.ROOT).startsWith(said.lowercase(Locale.ROOT) + "-")) said else null
     }
 
-    /** {surface: reading} for names a Japanese book proves by itself, so that one character is never read two ways - `book_name_readings`. */
-    fun bookNameReadings(texts: Sequence<String>, characterNames: List<String> = emptyList()): Map<String, String> {
+    /**
+     * {surface: reading} for names a book proves by itself, so that one character is never read two ways - `book_name_readings`.
+     * A Japanese book ([origin] "ja"): guarded names with an honorific and short capitals of a titled name. Any book: capitals that would be spelled
+     * ("KAEL") and that the book writes capitalized inside a sentence at least twice, or lists in a character name; their reading is that spelling ("Kael").
+     */
+    fun bookNameReadings(texts: Sequence<String>, characterNames: List<String> = emptyList(), origin: String? = "ja"): Map<String, String> {
         val guarded = LinkedHashSet<String>()
-        val titledWords = HashSet<String>()
+        val titledWords = HashMap<String, Int>()
         val capitals = LinkedHashSet<String>()
-        for (text in texts) for (token in text.split(Regex("\\s+"))) {
-            val core = Names.splitToken(notePattern.replace(token, "")).second
-            if (core.isEmpty() || core.any { it.code >= 128 }) continue
-            val parts = core.split("-")
-            if (parts.size == 2 && parts[1].lowercase(Locale.ROOT) in honorifics) guarded.add(parts[0])
-            else if (parts.size == 1 && allCaps(core)) { if (core.length in 2..4) capitals.add(core) }
-            else if (parts.size == 1 && titled(core)) titledWords.add(core)
+        for (text in texts) {
+            var previous = ""
+            for (token in text.split(Regex("\\s+"))) {
+                if (token.isEmpty()) continue
+                val (before, core, _) = Names.splitToken(notePattern.replace(token, ""))
+                val inside = previous.isNotEmpty() && before.isEmpty() && !sentenceEnd.containsMatchIn(previous)
+                previous = token
+                if (core.isEmpty() || core.any { it.code >= 128 }) continue
+                val parts = core.split("-")
+                if (parts.size == 2 && parts[1].lowercase(Locale.ROOT) in honorifics) guarded.add(parts[0])
+                else if (parts.size == 1 && allCaps(core)) capitals.add(core)
+                else if (parts.size == 1 && titled(core)) titledWords[core] = (titledWords[core] ?: 0) + (if (inside) 1 else 0)
+            }
         }
+        val listed = HashSet<String>()
         for (surface in characterNames) {
             // The character list writes names in capitals ("ABE TAKESHI").
-            val words = surface.split(" ").filter { it.isNotEmpty() }.map { if (allCaps(it)) it.lowercase(Locale.ROOT).replaceFirstChar { c -> c.uppercaseChar() } else it }
-            if (words.size > 1 && words.all { w -> w.all { it.code < 128 } } && words.any { readingWord(it, "ja", false) != null }) guarded.addAll(words)
+            val words = surface.split(Regex("\\s+")).filter { it.isNotEmpty() }.map { if (allCaps(it)) Abbreviations.capitalized(it) else it }
+            listed.addAll(words.filter { w -> w.all { it in 'A'..'Z' || it in 'a'..'z' } && w == Abbreviations.capitalized(w) })
+            if (origin == "ja" && words.size > 1 && words.all { w -> w.all { it.code < 128 } } && words.any { readingWord(it, "ja", false) != null }) guarded.addAll(words)
         }
         val found = LinkedHashMap<String, String>()
-        for (word in guarded) {
-            val said = (if (readingWord(word, "ja", false) != null) null else evidencedReading(word)) ?: continue
-            found[word] = said
-            found[word.uppercase(Locale.ROOT)] = said
+        if (origin == "ja") {
+            for (word in guarded) {
+                val said = (if (readingWord(word, "ja", false) != null) null else evidencedReading(word)) ?: continue
+                found[word] = said
+                found[word.uppercase(Locale.ROOT)] = said
+            }
+            for (capital in capitals) {
+                val word = Abbreviations.capitalized(capital)
+                if (capital.length !in 2..4 || (word !in titledWords && word !in found)) continue
+                (found[word] ?: readingWord(word, "ja", false))?.let { found[capital] = it }
+            }
         }
         for (capital in capitals) {
-            val word = capital.lowercase(Locale.ROOT).replaceFirstChar { it.uppercaseChar() }
-            if (word !in titledWords && word !in found) continue
-            (found[word] ?: readingWord(word, "ja", false))?.let { found[capital] = it }
+            val word = Abbreviations.capitalized(capital)
+            if (capital !in found && capital.length >= Abbreviations.WORD_FROM && capital.all { it in 'A'..'Z' } &&
+                ((titledWords[word] ?: 0) >= 2 || word in listed) && Abbreviations.capitalWord(capital)) found[capital] = word
         }
         return found
     }
