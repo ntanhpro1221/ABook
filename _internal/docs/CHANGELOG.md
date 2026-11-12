@@ -7,16 +7,33 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.167] - 2026-11-12
+
+- Nghe thử giọng và thu trong Studio không còn báo lỗi 422 khi sách có danh sách nhân vật; tên nhân vật được đọc theo đúng cách sách đã chọn ở cả bản nghe thử lẫn các tiến trình thu.
+- Tên Nhật tự nhận trong sách đọc từng âm tiết một; tên Hàn và tên Tây trong danh sách nhân vật đọc theo gốc của từng tên. Tên viết hoa cả chữ (hét tên) đọc như tên, không như tiếng kêu; mã và chữ viết tắt toàn chữ hoa không còn bị đọc thành tiếng kêu.
+- Từ mượn đã quen đọc theo kiểu Việt cho mọi giọng; từ dùng chung Việt/Anh chọn cách đọc theo ngữ cảnh câu, tên "Nick" và các tiêu đề giữ chữ Anh. Các âm cuối hiếm của tên phiên âm và "ưm" được đọc đúng như viết.
+- Lặp từ, tiếng kêu và nói lắp, cùng tên Nhật, đọc thống nhất giữa máy tính và Nghe ngay trên Android; tách đúng chỗ đọc khi chữ nguồn dính dấu câu, mở rộng chức danh có dấu chấm, giữ ngoặc mở. Giữ nguyên chữ hiển thị.
+- Trẻ em dùng giọng nữ nguyên bản; tên Nhật dùng cho cả nam lẫn nữ được nhận giới theo lời văn.
+- Tự thu lại một lần khi phát hiện ngắt giữa âm tiết cùng từ, và bản thu không đổi sau khi tắt máy, thiếu bộ nhớ hay lỗi đĩa; câu bị lặp tiếng bị từ chối, giữ nguyên vị trí nghe dở khi tiếp tục. Giọng trẻ em nữ nguyên bản qua cổng xuất.
+- Thư viện nhạc nền: duyệt, tìm, nghe thử và lưu cả danh mục trên web, Android và máy tính; chuyển chương và chế độ nhạc nền hoạt động giống nhau trên ba máy nghe.
+- Mọi cài đặt số dùng chung một bộ chọn giá trị (chip số, thước, dấu thập phân tiếng Việt) trên web, Android và Qt; thêm các mẫu chỉnh âm có sẵn và quản lý mẫu riêng.
+- Đọc theo trên điện thoại, web và máy tính: tô sáng bo tròn liền một khối, theo dòng của chữ đang nói, mở đúng chỗ và đặt lại ngay khi vùng chữ đổi cỡ; có thanh nhảy về chỗ đang đọc.
+- Trang sách và trình phát nối với nhau chỉ một lần bấm; mở trang sách từ "Thêm tuỳ chọn"; bìa bay mượt kể cả trên điện thoại chậm; các trang con của bảng cài đặt gộp vào trang nhóm.
+- Android: sửa lỗi dừng tiếng khi đổi cao độ, bảng Âm thanh và Thêm được thiết kế lại, có nút đóng trên thông báo; tên chương hiện trên thẻ media; bớt khoảng trống ở đáy với điện thoại giấu vạch cử chỉ.
+- Thanh tiến trình theo công việc thật (byte đã chép, mục đã xong); tổng chưa biết thì chạy liên tục. Ẩn phần tô dưới 2 %, nút xoá dùng màu cảnh báo, chữ số tỉ lệ trong văn bản, lưới bìa có khung chữ đều nhau, mép bảng mờ vào lớp phủ; thông báo Studio ẩn cho đến khi ghép máy tính.
+- Điện thoại mở nhanh hơn, ít RAM hơn (ảnh bìa nhỏ hơn, nhịp phát không cấp phát, hình học đọc theo rẻ hơn); lưu vị trí và nạp sách không còn làm chậm luồng chính.
 - Điện thoại dùng cử chỉ giấu vạch (như OPPO): thanh tab và thanh phát nhỏ nằm thấp hơn, bớt khoảng trống ở đáy mà vẫn bấm trúng.
 - Tách đúng chỗ đọc khi chữ nguồn thiếu khoảng cách sau dấu câu; giữ nguyên chữ trong sách, số, địa chỉ mạng và chữ viết tắt.
 - Đọc đủ chức danh và đơn vị hành chính có dấu chấm trước tên (như `PGS.TS. Lê`, `TS.Nguyễn`, `TP. Hồ Chí Minh`, `Q.1`), cả khi chữ dính liền. Giữ cách đọc cũ khi chữ cái đầu và tên địa phương còn mơ hồ.
 - Giữ ngoặc thẳng mở sau dấu hai chấm, phẩy, chấm phẩy; sửa tách nhầm tên miền, chuỗi chữ cái đầu sau dấu chấm và các trường hợp khoảng trắng Unicode để máy tính và Nghe ngay trên Android đọc giống nhau.
 - Tự sinh lại tối đa một lần khi phát hiện ngắt giữa các âm tiết cùng từ ở giọng đã hiệu chỉnh, giữ nguyên chữ và cách đọc. Tắt máy giữa chừng hay thiếu bộ nhớ không làm sách đọc khác đi, và bản sinh lại chỉ được dùng khi tốt hơn bản đầu.
 - Trẻ con, cả bé trai, lại đọc bằng giọng nữ nguyên bản, không bóp giọng; nhân vật mang tên Nhật dùng cho cả nam lẫn nữ (như Mizuho, Chihiro) được nhận giới theo lời văn thay vì theo tên.
-
-### Lưu ý khi tích hợp
-
 - Thay đổi chuỗi nói làm dự án đang dở phải thu lại những đoạn đổi chuỗi khi resume: WAV, kết quả QA audio và phán quyết nghe gắn với bản thu cũ không còn hiệu lực trên các đoạn đó. Chỉ tích hợp sau khi hết run, áp cho dự án mới hoặc đã hoàn tất; sách đã đóng không bị ảnh hưởng nếu không chạy lại. Không chuyển đổi dữ liệu hay thêm mã tương thích.
+- Kiểm thử ổn định hơn: không phụ thuộc đồng hồ thật, TLS hay dung lượng đĩa của máy.
+
+### Lưu ý khi nâng cấp
+
+- Thay đổi chuỗi nói làm dự án Studio đang dở phải thu lại những đoạn đổi chuỗi khi resume; WAV, kết quả QA audio và phán quyết nghe gắn với bản thu cũ không còn hiệu lực trên các đoạn đó. Sách đã đóng và file `.abook` đã xuất không bị ảnh hưởng; không có chuyển đổi dữ liệu.
 
 ## [0.4.166] - 2026-11-09
 
