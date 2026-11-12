@@ -1,20 +1,4 @@
-# "Tensei Shitara Ken Deshita" (Chuyển sinh thành kiếm) file 14.txt ("Chương 2 Phần 6"). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10;
-# luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu; file này 24 KB nên lấy trọn). Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT: "tôi" = thanh kiếm có tri giác, tên MASTER (m; 07.txt Fran đặt tên "Master", bảng thông báo "Danh xưng đã được
-# điền thành Master"; Fran gọi "anh", nó xưng "anh"). Garrus gọi nó "Kiếm"/"cậu" - danh xưng, không phải tên, không tính.
-# Tên: FRAN (f, cô bé thú nhân, nói cụt "Nn."); GARRUS (m, ông lão dwarf thợ rèn; bảng Thẩm định 43 "Tên: Garrus").
-0. Câu thử đã gỡ. 0.
-# đề bài: telepathy với người khác là D). “…” trơn = người nói thành tiếng (Fran hoặc Garrus) - Master KHÔNG BAO GIỜ dùng “”,
-# nên 54 "Wow.", 102 "Bất ngờ.", 128 "Lâu quá.", 136 "Ma kiếm? Thánh Kiếm?" là Fran (lối nói cụt), 89 "Thông minh qué!" là
-<removed>
-# đáp "Ờ." như 137; Fran đáp "Nn").
-<removed>
-# T,D MASTER đủ (quy tắc 9). 34 ‘lỡ’ (khoá T) là chữ mỉa của người kể giữa câu -> NARRATOR, MASTER~ (quy tắc 8 + 10).
-# 29, 31 giọng gọi "Này tiểu thư gì ơi" chưa được gọi tên lúc nói (33 "một ông lão tộc dwarf"), 43 mới lộ tên -> GARRUS đủ, NPC*~.
-# 43-52 và 159-163: bảng Thẩm định (chữ hiển thị) -> lời kể N (quy tắc 7).
-# Tiếng lòng tức thời của Master KHÔNG nói ra (không 『』): câu hỏi tu từ, cảm thán, tự nhủ -> N,T NARRATOR,MASTER (quy tắc 4):
-# 6-7, 21, 24, 27-28, 42, 53, 59, 62, 64, 66, 73, 76 ("Diễn xuất quá tuyệt, Fran ơi!" - nghĩ, không truyền), 78, 86, 90-91, 95,
-# 101, 110, 116-117, 123. Đoạn giải thích/kể (12-13, 22, 69, 94, 124, 134, 141, 151) chỉ N.
+# Nhãn gold tensei_shitara_ken/14. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tensei_shitara_ken/14.txt
 0 H
 1 N
 2 D MASTER surprised,sad,neutral 0-1 normal normal m

@@ -1,6 +1,4 @@
-<removed>
-# Ngôi ba. Gần như cả chương là Hạ Tử Cường kể chuyện (HẠ TỬ CƯỜNG / TỬ CƯỜNG; "anh Hạ" là xưng hô - không điểm). 78 là lời Lý Hữu
-# Quốc được nhắc lại (79) -> tên đủ, NARRATOR~. Đoạn kể về Chu Mặc có câu nghĩ -> CHU MẶC~; câu thuần tiếng lòng -> đủ.
+# Nhãn gold da_bao_la_cung_nhau_tu_sat/143. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/da_bao_la_cung_nhau_tu_sat/143.txt
 0 H
 1 D CHU MẶC happy 0-1 normal normal m
 2 N

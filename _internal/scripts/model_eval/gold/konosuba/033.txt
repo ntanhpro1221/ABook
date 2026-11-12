@@ -1,26 +1,4 @@
-# "Konosuba" (Kono Subarashii Sekai ni Shukufuku wo!) file 033.txt ("Chương 03 p2", "Part 2" - Wiz gặp kẻ bám đuôi Duke).
-# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu) - file 16,8 KB nên lấy trọn.
-# Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT, "tôi" = KAZUMA / SATOU KAZUMA / KAZUMA SATOU (m; 116 tự gọi "Satou Kazuma"; 38 lần dạng ấy trong bộ).
-# Tên: AQUA (f, xưng "tôi"/"ta", gọi Kazuma "Kazuma-san", gọi Vanir "ngươi", tự xưng "Aqua-sama"); VANIR (m, quỷ, xưng "ta", gọi Wiz
-# "bà chủ"); WIZ (f, lich chủ tiệm, gọi "Vanir-san", "Aqua-sama"); MEGUMIN (f, xưng "em"); DARKNESS / LALATINA / DUSTINESS FORD
-# LALATINA (f). Duke (kẻ bám đuôi) không nói trực tiếp: 52, 55, 57 lời hắn nằm TRONG câu Wiz kể lại -> WIZ (người đọc to).
-<removed>
-# với Wiz "đang bị nói xấu").
-<removed>
-# là lời kể -> N,D NARRATOR (48 thêm WIZ~ vì ngay sau câu Wiz mở chuyện ở 47).
-<removed>
-<removed>
-# KAZUMA~, AQUA~ (quy tắc 10); 110 lời giả định của kẻ bám đuôi -> NARRATOR, KAZUMA~, DUKE~.
-<removed>
-<removed>
-<removed>
-# (Wiz hỏi "Cậu" = Kazuma), Kazuma gọi Vanir "ngươi" ở 028:33, 044:799 -> KAZUMA đủ; Aqua cũng hay khích Vanir -> AQUA~.
-<removed>
-# đáp 100 (Kazuma chê cô nói "biến thái"). 104 Megumin ("Em không giống như Darkness"). 105 "Ey…!" Darkness (106).
-# Tiếng lòng tức thời của "tôi" không ngoặc -> N,T NARRATOR,KAZUMA (quy tắc 4): 27-29, 32, 53, 58, 64, 71, 74, 79, 84, 97, 113-117,
-# 119; lời kể giải thích (108, 112, 118) chỉ N.
-# Parser bỏ dòng ngăn cảnh p36-41, p92-95 (không có seq).
+# Nhãn gold konosuba/033. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/konosuba/033.txt
 0 H
 1 N
 2 N

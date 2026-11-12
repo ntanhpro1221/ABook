@@ -1,20 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
-<removed>
-# Hai góc kể: 2-78 NGÔI BA (tiệc trà của các tiểu thư, theo Karin ở cuối); 79-95 NGÔI THỨ NHẤT, "tôi" = ABIGAIL (Vương Phi,
-# mẹ kế của Blanche) -> --first-person Abigail. "Vương Phi", "Công chúa", "Quốc Vương bệ hạ" là danh hiệu - không điểm.
-# Tên: ABIGAIL / ABIGAIL FRIEDKIN / ABIGAIL CRONENBERG (f, họ gốc); BLANCHE / BLANCHE FRIEDKIN (f, bé); KARIN (f, tiểu thư nhà
-# Công Tước; "Karin-nim" là cách gọi - không tính); CLARA (f, thị nữ của Vương Phi); tiểu thư nhà Bá tước Whateley không có
-# tên riêng, lời kể cả cuốn gọi "tiểu thư Whateley" (025, 042) -> WHATELEY / TIỂU THƯ WHATELEY đều là tên (quy tắc 11, như
-# "Trịnh lão"). Sablian (Quốc vương) không xuất hiện.
-# Các tiểu thư vô danh -> NPC*:<mô tả> (UNKNOWN~): 26 và 30 cùng người mời caviar; 33 "tiểu thư trẻ tuổi nhất" (34); 41 và
-<removed>
-<removed>
-# (20). 45 "Tôi xin lỗi vì tới muộn!" trước khi gọi tên (47 "Là Clara") -> CLARA đủ, NPC*~ (quy tắc 5). 49 "......xin chào"
-<removed>
-# tiểu thư, KARIN~ (Karin vừa chào gượng, câu tò mò thân thiện không hợp giọng cô).
-# Ngôi ba, câu tự hỏi/chửi thầm giữa lời kể -> N,T, người nghĩ ~ (quy tắc 4): 30 (người mời caviar), 50 và 75-76 (Karin -
-<removed>
-# đủ; 83 phần lớn tả Blanche, chỉ "Hiuu..." là tiếng lòng -> ABIGAIL~. 1 dòng dịch giả, 2 tiêu đề tiểu mục -> N.
+# Nhãn gold me_ke/031. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/me_ke/031.txt
 0 H
 1 N
 2 N

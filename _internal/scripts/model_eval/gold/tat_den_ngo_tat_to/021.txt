@@ -1,9 +1,4 @@
-# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố), Chương XXI. Quy ước tên như 020.txt: CHỊ DẬU / THỊ ĐÀO là chị (DẬU trơn là chồng
-# chị - không điểm); DẬU / NGUYỄN VĂN DẬU là anh (ANH DẬU nửa điểm); DẦN (THẰNG DẦN nửa điểm); LÝ TRƯỞNG, và "bà lão
-# láng giềng" - không tên, nói ở chương 19, 21, 26: BÀ LÃO LÁNG GIỀNG / BÀ LÃO đủ, NPC*~ nửa điểm (quy tắc 5, 11).
-# Chương này là bài thử đối đáp KHÔNG lời dẫn: 43-45 (anh Dậu - bà lão - anh Dậu, "nó" ở 45 là vợ anh, 46 "Rồi anh dấp
-# dính nước mắt"), 60-61 (chị Dậu đáp, rồi bà lão: "để tôi ẵm cháu cho"), 76 (chị Dậu vừa húp cháo vừa ứa nước mắt, bà
-# lão đáp ở 78), 21 (chị Dậu, 22 "Chị Dậu đương nói dở câu").
+# Nhãn gold tat_den_ngo_tat_to/021. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tat_den_ngo_tat_to/021.txt
 0 H
 1 N NARRATOR neutral,afraid 0-1 normal normal u
 2 N

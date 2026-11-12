@@ -1,10 +1,4 @@
-# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố), Chương XXIV. Quy ước tên như 020.txt. Ở phủ: CAI LỆ (cũng nói ở chương 23, nên
-# NPC*~ nửa điểm), BIỆN LỆ (nguồn viết lẫn "Biên lệ" - cả hai đủ; chỉ nói ở chương này nên NPC* đủ), ông huyện MINH HẢO
-# (tên huyện, nhân vật được gọi theo nó: "quan Minh Hảo"; gọi tên ở 7-8 trước khi nói -> NPC*~), QUAN PHỦ (45: "Quan
-<removed>
-# Đối đáp không lời dẫn: 18-22 cai lệ - biện lệ - cai lệ - biện lệ - cai lệ (19 "Tao vào bẩm" là biện lệ, người vừa lên
-# nhà tư ở 15; câu trích “Kệ hắn! Ông ăn xong đã!” nằm trong lời biện lệ, đọc bằng giọng hắn); 28-30 chị Dậu - biện lệ -
-# chị Dậu; 38-39 biện lệ - chị Dậu; 59-60 chị Dậu - biện lệ.
+# Nhãn gold tat_den_ngo_tat_to/024. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tat_den_ngo_tat_to/024.txt
 0 H
 1 N
 2 D CAI LỆ,NPC*~ happy,excited,sarcastic 1-2 normal,fast normal m

@@ -1,17 +1,4 @@
-<removed>
-# Claude gán (A) 02-10. Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
-# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m). Tên như 029: RYUUZAKI RYOUMA / RYUUZAKI / RYOUMA (m);
-# SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f, chỉ được nhắc); Kirari (bạn thân cũ của người kể, nay nhuộm tóc gyaru) chỉ
-# được nhắc. Chương là đối đáp hai người KHÔNG lời dẫn: Ryuuzaki xưng "tao/mày" với Nakayama (15, 20, 24, 28, 40), Nakayama
-# xưng "tôi/cậu" (21 "cậu cũng phải tốn...", 26 "phương châm của tôi", 29) - 21 là NAKAYAMA (22 "À mà tôi cũng nghĩ thế."),
-<removed>
-<removed>
-<removed>
-# NARRATOR và NPC* đủ, UNKNOWN~; KHÔNG phải Ryuuzaki (quy tắc 12). 55-61: phần tiếp của lời ấy chép lại không ngoặc, khoá N
-# -> NARRATOR; 60-61 ("Tôi sẽ mang đến hạnh phúc...") là "tôi" của nhân vật kia: NPC*~ giữ cho segment_diff.
-# Tiếng lòng tức thời của người kể -> N,T (quy tắc 4): 7 "À không, chắc đây cũng là...", 11-12 tự hỏi tự đáp, 17 "Ui, không
-# được rồi", 30-31 tự khen màn diễn, 37 "Hoặc không...", 41 "Hả?", 50 "Chẳng phải... à?", 63 "Chẳng lẽ...?". Câu giải
-# thích bối cảnh (6, 22-23, 33-36, 45-47, 64-67) giữ N.
+# Nhãn gold shimotsuki/032. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/shimotsuki/032.txt
 0 H
 1 N
 2 N NARRATOR neutral,tired 0-1 normal normal u

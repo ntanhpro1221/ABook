@@ -1,21 +1,4 @@
-# "Nise Seiken Monogatari" file 086 ("Chương 85: Hồn Xiêu Phách Lạc"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học, cách 111
-# (train) 25 chương, 132 (test) 46 chương). Claude gán (A), agent soát (B). NGÔI BA. ALISTAR (m, "Anh Hùng"); MAGALI (f,
-# "Thánh Nữ" - danh hiệu, không điểm, quy tắc 11); RUBON / RUBON STREAM (m, giáo chủ, cha của Elizabeth); ELIZABETH /
-# ELIZABETH STREAM (f; 077:39 "Rubon Stream, cha đứa trẻ này"). Lính Toà án dị giáo không tên -> NPC* (UNKNOWN~); tiếng
-# kêu không lời thêm NARRATOR~ (quy tắc 8). Thanh kiếm nói bằng dòng "[...]" (119 chương): cả cuốn gọi "Nguyền Kiếm" (533 lần,
-# tên Alistar đặt - 009:243-245, 010:127-129; chương 085 chỉ dùng tên này) và "Thánh Kiếm" (429 lần, tên nó tự nhận); tên thật
-# bị giấu (008:299) -> cả hai là tên (quy tắc 7c/11). Parser KHOÁ N -> NARRATOR, THÁNH KIẾM~, NGUYỀN KIẾM~ (quy tắc 10). Nội tâm "(...)" bị khoá T: màn "đấu khẩu thầm lặng" Alistar - Magali (7-9, 31-32, 96-99, 100 "màn
-0. Câu thử đã gỡ. 0.
-<removed>
-<removed>
-# NARRATOR đủ, NPC*~ (quy tắc 10). 67 nội tâm trong "(...)" bị khoá D -> T,D ALISTAR. 83 "Ugh!" = Elizabeth (84 "cơ thể cô bé
-# run rẩy"), ALISTAR~ (85 cũng giật mình). 103 "(Không! Hắn ta đáng sợ lắm!)" = Alistar đáp Thánh Kiếm (104-105).
-# Host sai (giữ đáp án): dấu nháy mở ở 65 không đóng nên host NỐI LỜI (_repair_continued_dialogue_speakers) gán cả 66 và
-# 67 cho người lính ở 65 - 67 "(Khôngggggg! Tránh xa ta ra! ...)" là tiếng thét trong đầu Alistar (xưng "ta" như 25, 31, 75,
-# 93). 66 là lời kể: NARRATOR, không nửa điểm cho người lính (lỗi host, như LU 07:90). Nhánh dev/curse-noun (82ed7a7) sửa
-# host: đoạn mở bằng "(" là lượt mới - 67 về ALISTAR. 83 "Ugh!": Elizabeth run rẩy (84) và Alistar giật mình (85), "Ugh!?"
-<removed>
-# chứ" -> N,T, người nghĩ ~ (quy tắc 4 ngôi ba).
+# Nhãn gold nise_seiken/086. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nise_seiken/086.txt
 0 H
 1 N
 2 N

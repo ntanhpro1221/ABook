@@ -1,15 +1,4 @@
-# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố, 1937-1939; hết bản quyền, vi.wikisource), Chương XX.
-# Truyện Việt viết thẳng bằng tiếng Việt, không qua bản dịch - cổng đo "truyện Việt chưa từng thấy" (28-09), cùng ba
-# model của cổng Tam quốc. Thoại gạch đầu dòng sau lời dẫn "X nói:", nhiều cặp hỏi - đáp không lời dẫn.
-# Nhân vật gọi bằng CHỨC DANH suốt cả cuốn, không có tên riêng: quan Phủ, lý trưởng, cai lệ, thủ quỹ -> dạng ấy là tên
-# (quy tắc 11, như "Trịnh lão"), đủ điểm; NPC*~ nửa điểm vì họ nói ở nhiều chương (quy tắc 5). "Tư Ân" (chương 26) là
-# tên phủ, không phải tên người.
-# Chị Dậu: cả cuốn gọi chị theo tên chồng - "chị Dậu" là tên của chị, không phải "chị" + tên riêng. CHỊ DẬU đủ, THỊ ĐÀO
-# (tên thật, lý trưởng khai ở câu 15, 20) đủ. DẬU trơn là CHỒNG chị: không điểm - hai vợ chồng chung một giọng là lỗi
-# nặng nhất cuốn này có thể mắc. Anh Dậu: DẬU / NGUYỄN VĂN DẬU đủ; ANH DẬU nửa điểm (tiền tố xưng hô bị prompt cấm, quy
-# tắc 11 - nhưng lời kể không bao giờ viết "Dậu" trơn cho anh). Thằng Dần: DẦN đủ, THẰNG DẦN nửa điểm, cùng lý do.
-# 31: trả lời ngay sau câu quan "vặn anh Dậu" -> anh Dậu (tiền do chị nộp, nhưng không có lời dẫn nào cho chị).
-# 49: lý trưởng giải thích (50-51 quan hỏi gặng chính lý trưởng). 80: “xin ông lớn thương” là cuối câu kể (quy tắc 8).
+# Nhãn gold tat_den_ngo_tat_to/020. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tat_den_ngo_tat_to/020.txt
 0 H
 1 N
 2 N

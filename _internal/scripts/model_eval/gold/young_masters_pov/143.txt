@@ -1,15 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
-<removed>
-# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). NGÔI THỨ NHẤT: "tôi" = SAMAEL (m; cùng tập 134/188/199/248 - "Theosbane", "cậu bé
-# vàng" chỉ là cách người khác gọi). LEON / LEON VAAN ASTA (m, thủ lĩnh ngầm phe quý tộc, 121); REINER / REINER TOVAK (m,
-# thủ lĩnh phe bình dân, 122). Michael, Lily, Vince, Kang, Alexia, Juliana có mặt nhưng không nói.
-<removed>
-# câu lịch sự 128 ("ngài Theosbane") là của Reiner, đối lập với 126. 138 Reiner (136-137 Reiner cau mày, "giọng hắn đanh lại").
-<removed>
-# điềm tĩnh của Leon -> LEON đủ, REINER~ (Reiner chỉ "siết chặt nắm đấm", 155). 191-193 tiếng la của đám đông -> mỗi câu
-# một NPC* khác (quy tắc 6). Tiếng lòng tức thời của "tôi" -> N,T (quy tắc 4): 15 "Haa!", 54, 71, 78, 94, 95; câu nói với
-<removed>
-# Host sai (giữ đáp án): 147 đòi afraid vì "bất an", 154 đòi sad vì "mệt mỏi/tuyệt vọng" - Samael đang mỉa (sarcastic).
+# Nhãn gold young_masters_pov/143. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/young_masters_pov/143.txt
 0 H
 1 N
 2 N

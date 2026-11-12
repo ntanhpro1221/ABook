@@ -1,7 +1,4 @@
-# Đáp án chuẩn - cuốn 2, file 347 ("Chương 348 - Tất cả đã sẵn sàng"). Claude làm 20-09 (lượt đo chi phí token).
-# 27 là LARRY (tiếng thở dài "từ phía cửa" đánh thức K, rồi Larry bước vào). 48-51 là thư Douglas gửi Hellen, 53-55 là
-# thư trả lời của Hellen - văn bản viết: chấp nhận người viết hoặc người kể. 20-23 là tiếng thì thầm của các Arcanist
-# vô danh. 65 là Jerome và Lazar cùng đồng ý. 83 là một giám mục không tên.
+# Nhãn gold throne_of_magical_arcana/347. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/347.txt
 0 H
 1 N
 2 N

@@ -1,9 +1,4 @@
-# "Nise Seiken Monogatari" file 132 ("Chương 131: Khởi đầu"). Bộ đo LN 28-09 (chương CHƯA học): chọn model phân tích cho
-# thứ chủ sách đọc (LN Nhật/Hàn). Claude gán (A), agent soát (B). Hồi tưởng NGÔI BA: Magali và Alistar lúc nhỏ ở làng; ông
-# chú trong làng không tên = NPC*. 28: tiếng trẻ con gõ cửa, cùng chương gọi tên ngay sau (33) -> ALISTAR đủ, NPC*~ (quy
-# tắc 5). 30, 93: câu hỏi tu từ trong lời kể -> N,T, người nghĩ nửa điểm. 82: 『...』 giữa câu kể là suy nghĩ của Magali ->
-# NARRATOR, MAGALI~ (quy tắc 8). 72: "Allistar" là lỗi gõ của bản dịch (lời kể).
-# 29-09 tối: 11 câu NPC* ghi `NPC*:ông chú trong làng` (chấm người nói y như cũ; cho thước F1 giọng biết là MỘT người).
+# Nhãn gold nise_seiken/132. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nise_seiken/132.txt
 0 H
 1 N
 2 D MAGALI surprised,neutral 0-1 normal,slow soft,normal f

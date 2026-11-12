@@ -1,11 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
-# "Young Master's PoV Woke Up As A Villain In A Game One Day" file 334 ("Chương 333: Hoàng Tử Kiếm Gãy [I]").
-# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). NGÔI THỨ NHẤT: "tôi" = SAMAEL (m; cùng tập 134/188/199/248). XALDRETH (m, Hoàng Tử
-# Quỷ Thứ Sáu; "HOÀNG TỬ KIẾM GÃY" là danh hiệu khi đã biết tên -> không điểm, quy tắc 11). Chỉ hai người nói; mọi câu
-# có lời dẫn hoặc xưng hô rõ ("ta/ngươi" = Xaldreth, "tôi/ngài" = Samael). 43 "...Cái đéo gì thế này?" = Samael khi linh
-<removed>
-# N,T (quy tắc 4). 10, 28, 69-70 nói với người đọc -> chỉ N. 41 "Thịch—!!" tiếng động trong lời kể (khoá N).
-# Host sai (giữ đáp án): 38 đòi afraid nhưng câu nói rõ "Không phải vì sợ hãi" (phủ định).
+# Nhãn gold young_masters_pov/334. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/young_masters_pov/334.txt
 0 H
 1 N NARRATOR neutral,surprised 0-1 normal normal u
 2 N

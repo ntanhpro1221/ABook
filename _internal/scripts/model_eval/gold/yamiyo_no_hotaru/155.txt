@@ -1,7 +1,4 @@
-# "Yamiyo no Hotaru" file 155 ("Chap 126 (1)"). CHỈ KHỚP bộ tách đoạn sau patch_a_corner_bracket_is_a_quote.py (「」 -> “”):
-# trước bản vá cả 54 câu thoại bị khoá lời kể. Vòng 6 (20-09): HỢP NHẤT hai bản làm mù (A = Claude, B = agent review).
-# Người nói ưu tiên trùng 100%, loại 106/106. TAMAKI / HOTOYA TAMAKI; IRUKA (lang nữ Emishi); MURASAKI / AKOU / AKO
-# MURASAKI; SHIRAWAKAMARU (nam). 2, 3, 86 nói trước khi được gọi tên -> NPC*~. 43: lời lẩm bẩm bị khoá N (quy tắc 10).
+# Nhãn gold yamiyo_no_hotaru/155. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/yamiyo_no_hotaru/155.txt
 0 H
 1 N
 2 D TAMAKI,HOTOYA TAMAKI,NPC*~ neutral,sad 0-1 normal normal,soft f

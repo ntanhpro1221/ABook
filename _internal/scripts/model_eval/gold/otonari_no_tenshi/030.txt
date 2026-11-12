@@ -1,25 +1,4 @@
-# "Otonari no Tenshi" (Otonari no Tenshi-sama ni Itsu no Ma ni ka Dame Ningen ni Sareteita Ken - Thiên thần nhà bên; bản dịch fan)
-# file 030 ("Chương 31: Cơn bão đã tan"). Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định: vị trí 30% của bộ); mục đích:
-# văn phong romcom hai người. Agent A gán 02-10, B soát + phân xử 02-10 (51 N->N,T).
-# NGÔI BA ("cậu" = Amane, lời kể bám góc nhìn Amane); KHÔNG truyền --first-person. Cảnh: chiều Giáng Sinh ở nhà Amane, ngay
-# sau 029 (Itsuki và Chitose phát hiện Mahiru nấu cơm cho Amane rồi ra về); chỉ HAI người nói: Amane và Mahiru.
-# Tên: AMANE / FUJIMIYA AMANE / FUJIMIYA (m; "Fujimiya Amane" 077, "Fujimiya-san" là cách Mahiru/Chitose gọi); MAHIRU /
-# SHIINA MAHIRU / SHIINA (f; "Shiina Mahiru" 000, 022, 040...; Amane gọi "Shiina" ở 029). Không tính "Amane-kun",
-# "Fujimiya-san", "Shiina-san", "Thiên thần-sama" (hậu tố xưng hô / danh hiệu, quy tắc 11). Itsuki (AKAZAWA ITSUKI, 001
-# "Akazawa Itsuka"), Chitose (SHIRAKAWA CHITOSE, 074 "Shirakawa-san"), Shihoko (mẹ Amane) chỉ được NHẮC, không nói câu nào.
-# Đối đáp không lời dẫn suốt chương -> người nói theo lượt xen kẽ + xưng hô + lời kể kề: Mahiru gọi Amane "cậu"/"Amane-kun";
-<removed>
-<removed>
-<removed>
-<removed>
-<removed>
-# nhé"), 43 gọi "Amane-kun", 44 "Nghe ngon quá" = Amane (45 "cậu bắt đầu ngóng trông"), 46 phần trứng "của tôi" = Amane đặt món;
-<removed>
-# Parser khoá T sai (dấu nháy đơn nhấn mạnh giữa câu kể, quy tắc 8/10): 12 ‘năng động’ = chữ Mahiru vừa nói (9), Amane nhắc lại
-# trong lời kể -> N,T NARRATOR, MAHIRU~ (gốc lời), AMANE~ (người nghĩ, quy tắc 10); 15 ‘con nhỏ’ = cách Amane gọi Chitose trong
-<removed>
-<removed>
-# NARRATOR, AMANE~ (quy tắc 4, ngôi ba). Các đoạn kể khác (kể VỀ Amane hay tả cảnh) -> chỉ N.
+# Nhãn gold otonari_no_tenshi/030. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/otonari_no_tenshi/030.txt
 0 H
 1 D AMANE,FUJIMIYA AMANE,FUJIMIYA sad,neutral,afraid 1-2 normal,fast normal,loud m
 2 N NARRATOR neutral,tired 0-1 normal normal u

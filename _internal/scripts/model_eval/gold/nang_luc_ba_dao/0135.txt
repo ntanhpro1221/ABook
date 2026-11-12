@@ -1,7 +1,4 @@
-<removed>
-# review gán (B), Claude soát đối kháng (A) - ADJUDICATION.md. Hai người: con trai út TRỊNH VĨNH MONG (gọi tên ở 17 -> NPC*~
-# chỉ cho 9-16, quy tắc 5) và trưởng trấn, không có tên riêng, cả trấn gọi "Trịnh lão" -> TRỊNH LÃO đủ (họ + kính xưng là
-# tên, quy tắc 11), NPC*~ vì ông xuất hiện nhiều chương; danh xưng trơn "trưởng trấn" không điểm. 54 "Ai…" là tiếng thở dài.
+# Nhãn gold nang_luc_ba_dao/0135. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nang_luc_ba_dao/0135.txt
 0 H
 1 N
 2 N

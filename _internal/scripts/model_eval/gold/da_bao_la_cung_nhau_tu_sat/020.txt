@@ -1,7 +1,4 @@
-<removed>
-# Claude làm 19-09. Romcom Trung Quốc, kể ngôi ba. CHU MẶC (nam) và DIỆP CẨN HUYÊN (nữ), học sinh. Tên gọi tắt
-# "CẨN HUYÊN" chấp nhận ngang tên đầy đủ (cùng một người; gộp bí danh là việc của host). Những câu Cẩn Huyên
-# tự nhủ trong lời kể (13, 28, 29, 45) chấp nhận N/NARRATOR hoặc T/DIỆP CẨN HUYÊN.
+# Nhãn gold da_bao_la_cung_nhau_tu_sat/020. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/da_bao_la_cung_nhau_tu_sat/020.txt
 0 H
 1 N
 2 D DIỆP CẨN HUYÊN,CẨN HUYÊN surprised,neutral 0-1 normal normal,soft f

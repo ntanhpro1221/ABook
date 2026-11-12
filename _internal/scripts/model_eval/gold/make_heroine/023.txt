@@ -1,15 +1,4 @@
-<removed>
-<removed>
-# chương phiên nhạc đã chép; 017a = 25 KB đầu chương 17). Claude gán (A) 02-10; chưa soát B.
-# NGÔI BA trọn chương: không có "tôi" trong lời kể (người kể cả bộ là NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO /
-# KAZUHIKO, nhưng cậu không có mặt và không nói câu nào) - đo xem model có gán bừa câu cho người kể cả bộ không.
-# Tên dùng chung ba file: YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA (nữ; Remon gọi "Yana-chan" - không tính, hậu tố xưng hô);
-# YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO (nữ; lời kể chương này gọi "Remon", Yanami gọi "Remon-chan").
-# Chỉ hai người trong phòng tắm nhà bà Yakishio; đối đáp không lời dẫn - người nói theo cách xưng hô: câu gọi "Remon-chan",
-<removed>
-# "Yanami nghiêm túc lắc đầu" đáp lại). 18 "Ồ..." là Remon (19 "Remon thoáng lưỡng lự... giữ im lặng").
-<removed>
-# N,T, YANAMI chỉ nửa điểm (ngôi ba, quy tắc 4).
+# Nhãn gold make_heroine/023. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/make_heroine/023.txt
 0 H
 1 N
 2 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,excited 1-2 normal,fast loud,normal f

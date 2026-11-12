@@ -1,18 +1,4 @@
-<removed>
-# (chương chưa học, cách 090 (train) 40 và 062 (test) 68 chương). Claude gán (A), agent soát (B). Ngôi thứ nhất: "tôi" = ED /
-# ED ROSTAILER (m). BEL / BEL MAIA (f, Tổng quản hầu gái Tòa Opelis, gọi "thiếu gia Ed", nói "ạ"); ZIX / ZIX EFFELSTEIN (m,
-# "em", "tiền bối Ed"); CLARICE / KYLIE~ / KYLIE ECKNE~ (f, Thánh nữ - "THÁNH NỮ" không điểm; Kylie Eckne là TÊN GIẢ (075:99)
-# và chương luôn gọi người nói là Clarice -> tên giả nửa điểm, quy tắc 13); YENNICA / YENNICA FAILOVER (f, xưng "tớ"). Adel (đã chết) chỉ hiện
-# như bóng hình (182-183), không nói. 15, 20 nói trước khi lời kể gọi tên Bel (22) -> BEL đủ, NPC*~; 66 trước "là Zix"
-# (67), 195, 197 trước "Yennica đã ra ngoài" (199) -> tên đủ, NPC*~ (quy tắc 5). 69 "…Hựp…!!": Zix vừa bảo "cứ dùng nắm đấm... Em sẽ gồng
-# bụng" (66) - tiếng hự khi ăn đấm, 70 xin lỗi hụt hơi -> ZIX đủ, ED~ (tiếng gắng sức của người đấm), NARRATOR~. 58 "– ‘Cậu
-<removed>
-# NARRATOR đủ, ED~. 63, 64: tiếng la từ trong chòi (Bel đòi mở cửa, Yennica phản đối). 2 "– Tách!", 56 "– ẦM", 173 "– Phịch":
-# tiếng động -> NARRATOR, UNKNOWN~ (quy tắc 8). 110 "Xin chào." = Clarice vừa tới (ED~). 127 "Đã cười mà chết." = Ed nói về
-# Adel (129 lời Ed nói tiếp). 203/204 nhập nhằng: "Không sao đâu." = Yennica (202 "Yennica gọi tôi..."), nhưng cũng là điệp khúc của Ed
-<removed>
-<removed>
-# ngạc nhiên hay hoảng hốt" là phủ định.
+# Nhãn gold huong_dan_sinh_ton/130. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/130.txt
 0 H
 1 N
 2 D NARRATOR,UNKNOWN~ neutral 0-1 normal normal u

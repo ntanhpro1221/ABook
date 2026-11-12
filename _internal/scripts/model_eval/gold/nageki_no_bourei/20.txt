@@ -1,9 +1,4 @@
-<removed>
-# HỢP NHẤT hai bản làm mù độc lập (A = Claude, B = agent review) rồi phân xử - ADJUDICATION.md. Người nói ưu tiên trùng 100%.
-# Ngôi thứ nhất (kể ở quá khứ): "tôi" = KRAI / KRAI ANDREY. SITRI / SITRI SMART. KILLIAM là sinh vật Sitri tạo, tên có ở 175.
-# 33: Krai NGHĨ nhưng parser khoá D -> T,D (quy tắc 9). 102: thoại Sitri giữa dòng kể, khoá N -> NARRATOR (quy tắc 10).
-# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
-# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold nageki_no_bourei/20. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nageki_no_bourei/20.txt
 0 H
 1 N
 2 N

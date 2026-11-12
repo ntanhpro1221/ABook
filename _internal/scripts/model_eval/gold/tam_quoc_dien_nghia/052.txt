@@ -1,8 +1,4 @@
-# Đáp án chuẩn - Tam quốc diễn nghĩa (Phan Kế Bính dịch), Hồi 52 - truyện chưa thấy, cổng đo LoRA 27-09.
-# 8-9, 23-24, 26-27, 147-149: một lượt lời bị tách nhiều đoạn - cùng người. 21: Lỗ Túc "khen thầm" nhưng nguồn là
-# dòng gạch đầu (host khoá thoại) -> D, cho soft/whispering. 119/166: lời dẫn nêu hai người (Trần Ứng, Pháo Long) -> cả
-# hai đủ điểm. 170: quân giả hàng gọi cửa theo lệnh Triệu Vân ("Triệu Vân chết rồi") -> NPC*, Triệu Vân nửa điểm.
-# 15 "các tướng", 51 sứ Tôn Quyền, 71 thám mã = NPC*. 81: câu trong ngoặc giữa đoạn kể = Trương Phi.
+# Nhãn gold tam_quoc_dien_nghia/052. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tam_quoc_dien_nghia/052.txt
 0 H
 1 N
 2 N

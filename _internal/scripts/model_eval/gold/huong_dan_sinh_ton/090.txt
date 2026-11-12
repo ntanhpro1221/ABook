@@ -1,7 +1,4 @@
-<removed>
-# agent review gán (B), Claude soát đối kháng (A), không đổi dòng nào. "tôi" = ED ROSTAILER / ED; YENNICA / YENNICA FAILOVER;
-# KNOX. 2-27 là đoạn ngôi ba về Yennica. Lời thần giao cách cảm của sói Merilda "[ … ]" (43, 45, 46, 53, 56) bị khoá lời kể ->
-# NARRATOR (quy tắc 10). 93 giọng từ trên cao trước khi lộ là Yennica (97) -> NPC*~.
+# Nhãn gold huong_dan_sinh_ton/090. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/090.txt
 0 H
 1 N
 2 N

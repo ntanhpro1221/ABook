@@ -1,25 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
-# "Nhân viên văn phòng Cục quái vật" file 170 ("Chương 171: Tiến vào giấc mơ"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
-# BẢN GOLD 2 (05-10, cho lượt đo trên main >= e926ed12 - dòng nguyên vẹn [..] là đơn vị giọng): 146 "[Sổ hướng dẫn cho nhân
-# viên văn phòng]" đổi N -> D NARRATOR. Cây ghim cũ giữ bản 1.
-# Hai góc kể: 1-110 và 144-219 NGÔI THỨ NHẤT, "tôi" = KIM JAEHUN / JAEHUN (m; "cậu Kim Jaehun" 160-167, "anh Jaehun").
-# 111-143 NGÔI BA theo Song Ahrin ("Cô thực sự lo lắng", "người đàn ông" = Jaehun); "tôi" không xuất hiện.
-# Tên: SONG AHRIN / AHRIN (f, xưng "tôi", gọi "anh"; Jaehun gọi "cô Ahrin"); PARK YEEUN / YEEUN (f, bé hơn ~10 tuổi, gọi
-# "anh trai", "ạ"); JANG CHAEYEON / CHAEYEON (f), YU DAON / DAON (f) - "Tóc Đen", "Tóc Trắng" là biệt danh Song Ahrin đặt
-# (102, không ai nói bằng tên ấy ở đây). Ông già ở Chi nhánh Gangdong (208-217, Song Ahrin gọi "Ông già!"): chương này
-# không gọi tên, nhưng đã xưng danh/hiện bảng tên "Choi Soocheol" ở 126.txt (gặp lần đầu) và lại ở 171.txt -> nhân vật
-# nhiều chương: CHOI SOOCHEOL đủ, NPC*~ (quy tắc 5, tiền lệ Thần Hơi Nước).
-# Đối đáp Jaehun - Song Ahrin không lời dẫn (1-110): theo lời dẫn kề và xưng hô ("anh" = Ahrin nói). 53 "Vui thật đấy" /
-<removed>
-# nhạt của anh -> 53 AHRIN, 55 JAEHUN (đảo nửa điểm). 99 "Dù sao thì" Ahrin (100 "Cô ấy nhấc tay ra").
-<removed>
-<removed>
-# đã xin lỗi vậy mà"). 153 Ahrin (154). 164 "Anh ấy hả?" Jaehun đáp Yeeun. 183-189, 199: Jaehun xin lỗi Sổ hướng dẫn.
-# 191, 201 "-Lật phật!" tiếng sổ mở, khoá D -> NARRATOR, UNKNOWN~ (quy tắc 8). 146, 193-194, 203-206 chữ trong Sổ hướng
-# dẫn (văn bản nhìn thấy, khoá N; sổ không có tên) -> NARRATOR.
-# Tiếng lòng tức thời của "tôi" -> N,T, người kể đủ (quy tắc 4 ngôi một): 74, 78-84, 97, 106, 147, 152, 184, 195-196, 207.
-<removed>
-<removed>
+# Nhãn gold nhan_vien_van_phong/170. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nhan_vien_van_phong/170.txt
 0 H
 1 D SONG AHRIN,AHRIN neutral,whispering 0-1 normal soft,normal f
 2 N

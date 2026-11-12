@@ -1,15 +1,4 @@
-# "Kurakon" (Kurasu no Daikirai na Joshi to Kekkon suru Koto ni Natta) file 034.txt ("Prologue" - mở đầu tập mới: Himari gặp
-# Saito ở công viên hồi năm nhất). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu;
-# file này 4 KB nên lấy trọn). Agent A gán 02-10; chưa soát B.
-# NGÔI BA (lời kể theo góc Himari, gọi "nhỏ"/"cậu"), không có "tôi" người kể -> KHÔNG truyền --first-person.
-# Tên (cả bộ): SAITO / HOUJOU SAITO / SAITO HOUJOU / HOUJOU (m; "Houjou" 275 lần trong bộ); HIMARI / ISHIKURA HIMARI /
-# HIMARI ISHIKURA / ISHIKURA (f; Saito gọi "Ishikura" ở 7); HIMARIN~ (biệt danh Akane gọi, lời kể không dùng - nửa điểm).
-# Chỉ hai người trong cảnh, đối đáp xen kẽ không lời dẫn: xưng hô quyết định ("tớ"/"cậu" = Himari, "tôi" = Saito; 6 "Saito-kun"
-<removed>
-<removed>
-# D -> T,D HIMARI đủ (quy tắc 9, câu nghĩ bị khoá thoại).
-<removed>
-# N,T với Himari chỉ `~` (quy tắc 4, ngôi ba). 19 có "Nhỏ đã nghĩ" -> lời kể thuật lại, chỉ N.
+# Nhãn gold kurakon/034. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/kurakon/034.txt
 0 H
 1 N
 2 N

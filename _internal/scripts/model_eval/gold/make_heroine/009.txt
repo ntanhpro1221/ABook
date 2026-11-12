@@ -1,15 +1,4 @@
-<removed>
-# mừng bản Đài Loan). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép;
-# 017a = 25 KB đầu chương 17). Claude gán (A) 02-10; chưa soát B.
-# Ngôi thứ nhất: "tôi" = NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO / KAZUHIKO (02.txt "Tôi, Kazuhiko Nukumizu, học sinh
-0. Câu thử đã gỡ. 0.
-# Tên dùng chung ba file: YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA (nữ); YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO
-# (nữ); AYANO / MITSUKI / AYANO MITSUKI / MITSUKI AYANO (nam). Không tính "YANA-CHAN" (hậu tố xưng hô, quy tắc 11).
-# Chỉ hai người trong cảnh: Nukumizu và Yanami (khu ăn uống Apita Mukaiyama).
-<removed>
-# ấy "tôi" đang "coi cọp" một mình (7) -> NUKUMIZU đủ, YANAMI~ (xưng "tớ" gợi lời nói với bạn, nhưng Yanami chưa ở cạnh).
-<removed>
-# NARRATOR,NUKUMIZU (quy tắc 4). 36 "Chậc, hẳn đây là..." tiếng lòng tức thời -> N,T.
+# Nhãn gold make_heroine/009. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/make_heroine/009.txt
 0 H
 1 N
 2 N

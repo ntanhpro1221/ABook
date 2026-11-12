@@ -1,12 +1,4 @@
-# "Love Unseen Beneath the Clear Night Sky" file 03 ("Chương 04: Monja"). Đáp án HUẤN LUYỆN (không vào test) 28-09: Love Unseen
-# mới có một chương train (09); chương này nhiều đối đáp BA người không lời dẫn (Kakeru - Narumi - Hayase ở quán monja) và hồi
-# tưởng hai người (Kakeru - Fuyutsuki). Claude gán (A); soát B ghi ở ADJUDICATION.md. Tên như 07/09: "tôi" = KAKERU / KAKERU
-# SORANO / SORANO; FUYUTSUKI / KOHARU / KOHARU FUYUTSUKI; NARUMI / USHIO NARUMI; HAYASE / YUUKO HAYASE / YUUKO.
-# Dấu hiệu xưng hô: Kakeru và Narumi gọi nhau "mày/tao", với Hayase thì "mình/cậu"; Hayase gọi Fuyutsuki là "Koharu".
-# 96 người phục vụ, 361 cả quán, 363 và 365 hai khách khác nhau -> NPC*. 134 câu Kakeru KHÔNG nói, 229 tiếng thở, 356 ý ánh mắt
-# - trích giữa câu kể -> NARRATOR, người nói nửa điểm (quy tắc 8). 284/285 hai người nói chồng lên nhau (quy tắc 6, đảo nửa điểm).
-# Soát B 28-09: 354 nghiêng về Narumi (người ngoài xác nhận lời Hayase); 343 "Mày... Tội cho Koharu" và 66, 339 nhập nhằng thật
-# -> cả hai người đủ điểm, lựa chọn đầu theo bằng chứng mạnh hơn. 350 host bắt nhầm "mừng" trong "chào mừng" - giữ neutral.
+# Nhãn gold love_unseen/03. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/love_unseen/03.txt
 0 H
 1 N
 2 N

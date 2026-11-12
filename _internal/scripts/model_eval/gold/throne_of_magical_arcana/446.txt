@@ -1,5 +1,4 @@
-# Đáp án chuẩn "Chương 447 - [Thanh âm Arcana]", Text_Tmp/446.txt (lô 10 - lô đầu tiên chạy với tám bản vá host). Vòng 13 (20-09): agent review gán
-# (B), Claude soát (A) - ADJUDICATION.md. Câu gọi tên: người được gọi là người NGHE.
+# Nhãn gold throne_of_magical_arcana/446. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/446.txt
 0 H
 1 N
 2 N

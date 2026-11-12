@@ -1,19 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
-# "Hướng dẫn sinh tồn trong học viện" file 052a = 25 KB đầu của 052.txt ("Chương 53: Trận chiến chinh phạt Glast (2)").
-# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). NGÔI THỨ NHẤT: "tôi" = ED / ED ROSTAILER (m; 135, 181 Glast gọi đủ tên) - cùng tập
-# với 060/062/090/130. AYLA / AYLA TRIST (f, 34 "Ayla Trist", gọi Ed "anh"); GLAST (m; "GIÁO SƯ GLAST" không tính - quy
-# tắc 11); YENNICA / YENNICA FAILOVER (f, chỉ có câu nhớ lại ở 96). GLOCKT (tác giả sách, 24): 2-23 GLOCKT~ (soát B).
-# 2-23: lời kết sách của Glockt (đề từ chương) - parser khoá N -> NARRATOR (quy tắc 7 + 10); 24 dòng trích nguồn khoá D ->
-# NARRATOR; 93 tựa hồ sơ chỉ được nhìn thấy -> NARRATOR. 3, 31, 54, 114, 123, 132, 167: tên sách/phép trong nháy đơn khoá
-# T -> N,T NARRATOR (tiền lệ 060:142).
-<removed>
-<removed>
-# 102 "G-giáo sư", 105 "C-cứu"), Ed không lắp câu nào -> nhập nhằng thật, cả hai đủ, AYLA trước. 56 “Này.” = Ed gọi Ayla
-# (60 Ed hỏi tiếp). 96 câu Yennica nói hôm trước vọng lại trong đầu Ed (97) -> YENNICA và NARRATOR đủ, ED~ (tiền lệ 130:58).
-# 83 "– Cộp, cộp, cộp", 106, 107, 126: tiếng động -> NARRATOR, UNKNOWN~ (quy tắc 8). 109 "Áaaa!" = Ayla bị Ngục tù thời
-# gian đè (110); 127 "Ực!" = Glast dính vụ nổ (128) - NARRATOR~. 120 "Mug!" = Ed gọi tinh linh dơi lửa. 175 "Hừm…" = Ed
-# cân nhắc (176). Tiếng lòng tức thời của "tôi" -> N,T (quy tắc 4): 38, 47, 88, 139, 156, 159, 165, 170, 171, 174.
-# Host sai (giữ đáp án): 26 đòi angry vì "trực giác gào thét" (ẩn dụ, cảnh là điềm báo -> afraid).
+# Nhãn gold huong_dan_sinh_ton/052a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/052a.txt
 0 H
 1 N
 2 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u

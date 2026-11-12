@@ -1,22 +1,4 @@
-<removed>
-# HUẤN LUYỆN (không vào test/dev) 29-09: chọn vì ĐỐI ĐÁP HAI NGƯỜI KHÔNG LỜI DẪN dài (Ed - Lortel, 60-211; Ed - Zix, 213-239)
-# - lỗi lớn nhất của v3 là mất lượt đối đáp (scratchpad/turn_chain_scan.py: 80 câu trong chuỗi >= 3 đoạn thoại liền). Cách
-# xa hai chương test 062, 130. Claude gán (A); soát B ghi ở ADJUDICATION.md.
-# Tên: "tôi" = ED ROSTAILER / ED; LORTEL / LORTEL KEHELN; ZIX / ZIX EFFELSTEIN (như 060/090); CLAVIUS / CLAVIUS NORTONDALE
-# (ngôi ba, 22-47; tên đủ ở 068, 079, 092 - quy tắc 11).
-# Xưng hô: Lortel xưng "em", gọi "anh", "anh Ed", "tiền bối Ed"; Ed gọi Lortel "cô", Zix "cậu"; Zix xưng "em", gọi "anh Ed".
-# LƯỢT IM LẶNG: nguồn có dòng "..." riêng - parser BỎ (không có chữ đọc): p145 là Lortel (bị bắt thóp sau "...Yên tâm?"),
-# p148, p153, p161, p165, p207 là Ed (p20 thuộc cảnh Clavius). Model thấy Lortel nói hai câu liền: 153-154, 157-158,
-# 166-167 (qua p161), 169-170; 164 -> 166 qua 165 kể. Không xen kẽ máy móc.
-# 2-20: lời đề từ gửi Clavius (văn bản, khoá lời kể) -> NARRATOR; 21 "– 'Đơn Xin Đấu Tập'" tựa văn bản -> NARRATOR (quy tắc 7);
-# 13 "bất khả thi", 46 "thì đã sao" = chữ trong ngoặc giữa câu kể, không ai nói -> NARRATOR (quy tắc 8); 103 "ẦM!" tiếng động
-# -> NARRATOR, UNKNOWN~; 85 'khục khục', 160 'ư,' tiếng của Lortel giữa câu kể (khoá T) -> N,T NARRATOR, LORTEL~ (quy tắc 8, 10);
-# 223, 225 'đạo quán phá' thuật ngữ trong ngoặc -> N,T NARRATOR. 53 "Ôi chao..." lúc chưa nêu tên, 62 mới là Lortel; 213 và
-# 249 trước khi lời kể nêu Zix -> tên đủ, NPC*~ (quy tắc 5). 118 mở chuyện bầu cử: Lortel (119 là Ed hỏi "Cô không có ý định
-# ra tranh cử sao?"), Ed nửa điểm. 44, 250, 252: tự nhủ trực tiếp trong đoạn ngôi ba -> N,T, người nghĩ đủ (quy tắc 4).
-# 259 dòng xin ủng hộ của nhóm dịch (có trong nguồn) -> lời kể. Host bắt từ cảm xúc nhưng đáp án giữ neutral (host sai):
-# 5 mệnh lệnh "Hãy biết sợ hãi đi", 12 "gào lên" nghĩa bóng, 22 "kinh hoàng" tả bão, 101 "hỗn loạn" nhận định chung.
-# Soát B (agent, 29-09): không lỗi người nói; nhận thêm tên đủ Clavius, 57 NPC*~, UNKNOWN~ cho chủ tiệm, 31/32/210/236 N,T.
+# Nhãn gold huong_dan_sinh_ton/086. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/086.txt
 0 H
 1 N
 2 N

@@ -1,9 +1,4 @@
-# Đáp án chuẩn chương 408 ("Trợ lý" thí nghiệm), Text_Tmp/407.txt. Vòng 5 (20-09): HỢP NHẤT hai bản làm mù độc lập
-# (A = Claude, B = agent review) bằng merge_gold.py rồi phân xử - ADJUDICATION.md. Người nói ưu tiên trùng 100%.
-<removed>
-# Trời Thanos") mà Lucien đọc thầm - quy tắc 7: NARRATOR, tác giả đủ; người đọc LUCIEN~; chương chỉ gọi "người viết" nên NPC*~.
-# 78, 83: người trong xác Hoàng tử BEYER thật ra là Hoàng đế RUDOLF II (lộ ở chương 409) - tên chương này gọi đủ điểm,
-# danh tính thật nửa điểm (quy tắc 13). 63, 69: đoạn kể NGÔI BA dài có câu tự nhủ - SOPHIA chỉ nửa điểm (quy tắc 4).
+# Nhãn gold throne_of_magical_arcana/407. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/407.txt
 0 H
 1 N
 2 N

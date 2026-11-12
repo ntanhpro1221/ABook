@@ -1,7 +1,4 @@
-# Đáp án chuẩn chương 420 ("Sử dụng điện an toàn"), Text_Tmp/419.txt. Vòng 6 (20-09): HỢP NHẤT hai bản làm mù độc lập
-# (A = Claude, B = agent review) rồi phân xử - ADJUDICATION.md. Người nói ưu tiên trùng 100%, loại 109/109.
-# JULIE nói trước khi được gọi tên (51) -> NPC*~. 47: lời dẫn nêu cả JAMES và BAREK -> cả hai đủ (quy tắc 6). 69-70: mục
-# trong danh sách người kể trích (quy tắc 7). 109: tựa luận án Eric nhìn thấy - NARRATOR, tác giả LEVSKI đủ, ERIC~.
+# Nhãn gold throne_of_magical_arcana/419. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/419.txt
 0 H
 1 N
 2 N

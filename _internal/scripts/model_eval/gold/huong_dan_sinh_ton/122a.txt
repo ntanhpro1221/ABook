@@ -1,17 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
-<removed>
-# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). Hai đoạn: 2-42 NGÔI BA (quá khứ của Adel Seris, không thoại); 43-162 NGÔI THỨ NHẤT,
-# "tôi" = ED / ED ROSTAILER (m). Tên (cùng tập 060/062/090/130): LORTEL / LORTEL KEHELN (f, xưng "em", gọi "tiền bối Ed",
-# hay "ạ", "~"); CLARICE / KYLIE~ / KYLIE ECKNE~ (f; Thánh nữ - "THÁNH NỮ" không điểm); ADEL / ADEL SERIS (f, chỉ nghĩ ở 41).
-# Verdio, người chủ nhà giữ xe không có câu thoại. Đối đáp Ed - Lortel không lời dẫn: theo xưng hô ("em/ạ/tiền bối" =
-# Lortel, "cô/tôi" = Ed). 43 câu mở cảnh = Lortel (46 "ngay khi Lortel bước vào"). 134 "Vậy thì..." + 136 "...bao nhiêu
-0. Câu thử đã gỡ. 0.
-# ra ngoài đã." theo lời dẫn 157 (Lortel nén giọng run nhìn tôi) -> LORTEL, ED~ (Ed vừa bảo ở trong, 95). 96 "Dạ?" không
-# ngoặc, parser khoá N (97 "Lortel còn chưa kịp đáp lời") -> NARRATOR, LORTEL~ (quy tắc 10; ~ giữ cho segment_diff).
-<removed>
-0. Câu thử đã gỡ. 0.
-# = Clarice cố kéo cửa (162). 23, 24 tiếng động khoá D -> NARRATOR, UNKNOWN~; 102, 105, 110, 113, 114, 132 tiếng động
-# trong lời kể (khoá N). 115 tên kỹ năng khoá T -> N,T NARRATOR.
+# Nhãn gold huong_dan_sinh_ton/122a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/122a.txt
 0 H
 1 N
 2 N

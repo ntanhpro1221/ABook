@@ -1,7 +1,4 @@
-# Đáp án chuẩn - chương 378 (tiêu đề "Chương 379 - Hạ phàm"). Claude làm 19-09, không nhìn nhãn sản xuất.
-# Cú pháp như 351.txt. Gần như toàn nhân vật MỚI (chỉ TESS có trong danh sách đã biết): Augustus (đại trưởng
-# lão người lùn, nam, già), Harold (nam), Myrna (nữ), Quinns (nam), Galata (quản gia, nam), Wells (nam),
-# Edith (hầu gái, nữ). Những câu cả đám cùng nói/niệm chấp nhận NPC, UNKNOWN hoặc một người trong đám.
+# Nhãn gold throne_of_magical_arcana/378. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/378.txt
 0 H
 1 D AUGUSTUS,NPC*~ neutral,tender,excited 0-2 slow,normal normal,loud m
 2 N NARRATOR neutral,sarcastic,happy 0-1 normal normal u

@@ -1,7 +1,4 @@
-# Đáp án chuẩn chương 427 ("Lời khen ngợi hiếm có"), Text_Tmp/426.txt. Vòng 9 (20-09): agent review gán (B), Claude soát
-# đối kháng (A) - ADJUDICATION.md. 36 sau "Levski quay sang Lucien nói:" -> LEVSKI (host cũ khoá cho Lucien, người nghe). 52-53:
-<removed>
-# nhận xét Neeshka đang VIẾT (quy tắc 7) -> NEESHKA, NARRATOR đủ. 1 "Tự Nhiên?" có thể cả phòng hỏi lại -> NPC*~.
+# Nhãn gold throne_of_magical_arcana/426. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/426.txt
 0 H
 1 D NEESHKA,NPC*~,UNKNOWN~ surprised,neutral 0-1 normal normal m
 2 N

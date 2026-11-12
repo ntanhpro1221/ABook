@@ -1,16 +1,4 @@
-# "Shimotsuki wa Mob ga Suki" file 456 ("Chương 423 - Yêu quá"; bản dịch đánh số chương lệch số file). Claude gán (A) 02-10.
-# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
-# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m; 455 mở bằng 【Góc nhìn của Nakayama Koutarou】). Tên như
-# 029: SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f). Azusa (em gái kế của Koutarou, "Azunyan") chỉ được nhắc; câu 『Azusa không
-# muốn...』 lồng trong lời Shiho ở 27 là Shiho thuật lại - cả dòng vẫn là Shiho.
-0. Câu thử đã gỡ. 0.
-<removed>
-<removed>
-# (NPC*:thầy bệnh xá). Từ 5: đối đáp hai người gần như không lời dẫn - Koutarou gọi "Shiho", nói chậm rãi, ra lệnh 30
-# "Ngồi xuống"; Shiho gọi "Koutarou-kun", lắp bắp ("V-vậy sao", "Hee!? G-gì nhế――! Hong phải", "Đ-đừng"). 45 "Tớ, đã thay
-<removed>
-<removed>
-# "Nhìn Shiho lúc này kỳ quá." Bộ tách bỏ hai dòng câm 「「............」」 (p8, cả hai) và 「............」 (p12, Shiho).
+# Nhãn gold shimotsuki/456. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/shimotsuki/456.txt
 0 H
 1 D NPC*:thầy bệnh xá,UNKNOWN~ happy,sarcastic,neutral 0-1 normal normal m
 2 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,angry,excited 1-2 fast,normal loud f

@@ -1,20 +1,4 @@
-# "Yamiyo no Hotaru" file 141 ("Chap 120 (4)"). Bộ đo LN 28-09 (chương CHƯA học): chọn model phân tích cho thứ chủ sách
-# đọc. Claude gán (A), agent soát (B). Ngôi thứ nhất: "tôi" = TOMOBE. HINA / ONIZUKI HINA (tiểu thư); YUUSEI / ONIZUKI YUUSEI
-# (2, "Yuusei cất lời" ở 4); SUMIRE / ONIZUKI SUMIRE (5, 8). BA GIỌNG ngoài thoại thường:
-# - 『…』 (41 dòng: 3, 7, 10, 13, 19, ...): giọng nữ xưng "thiếp" với "chàng", "ta" với Hina, châm chọc suốt chương = TỌA PHU
-#   ĐỒNG TỬ (Zashiki-warashi, thần giữ nhà Onizuki) - soát B, SỬA (A đã ghi Yêu Mẫu, sai): 096:477-479 "nàng, Tọa Phu Đồng Tử,
-#   cất lên lời nguyền" ngay sau một câu 『』 cùng giọng; nói cả khi Tomobe vắng mặt (137:159, 237), nên không nằm trong máu cậu.
-#   Yêu Mẫu là nhân vật khác (107: tóc xanh, nói 「」, xưng "mẹ"). Tên chỉ có ở chương khác vẫn đủ (Thanos, vòng 5); nói ở >=27
-#   chương -> NPC*~; NARRATOR không điểm (giọng nữ khác người kể).
-# - (…) ngay sau lời Hina, CÙNG đoạn văn (39, 46, 52, ... 23 dòng): nội tâm thật của Hina ("thiếp"/"chàng" - 096:387-391 cô tự
-#   coi mình là vợ Tomobe), bị khoá lời kể -> N,T, NARRATOR và HINA đều đủ. Soát B đề xuất T,N với HINA đầu; phát lại cho thấy host GIỮ khoá (đọc
-#   bằng NARRATOR, giới u) nên giữ N đầu (điều kiện B tự nêu). Việc cho app: "(…)" cùng đoạn ngay sau lời thoại gần như luôn
-#   là nội tâm của chính người vừa nói - bộ tách câu nên khoá T, để nội tâm đọc bằng giọng người nghĩ (chủ sách 20-09). Tọa Phu Đồng Tử cãi lại đúng những câu ấy (47, 75, 142, 147).
-# - 173, 175: con nhện trắng nói trong đầu Tomobe (174, 177); cả cuốn gọi "con nhện trắng", không tên riêng -> NHỆN TRẮNG đủ
-#   (như ký sinh trùng ở TCF), NPC*~; 173 chỉ toàn tiếng ngáy/hắt hơi -> NARRATOR~.
-# 26, 100, 149: nội tâm của Tomobe, parser khoá T -> TOMOBE (như 189:117). 18, 22: tiếng kêu -> TOMOBE, NARRATOR~. 25, 28,
-# 177: tự nhủ tức thời -> N,T. 38-39: Hina trước khi lời kể gọi tên (42) -> HINA đủ, NPC*~. Lời kể trong cảnh căng/vui có
-# thêm cảm xúc của cảnh (luôn giữ neutral đứng đầu).
+# Nhãn gold yamiyo_no_hotaru/141. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/yamiyo_no_hotaru/141.txt
 0 H
 1 N
 2 D YUUSEI,ONIZUKI YUUSEI neutral 0-1 normal normal m

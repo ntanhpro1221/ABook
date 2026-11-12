@@ -1,18 +1,4 @@
-# "Rokujouma no Shinryakusha" file 284a = 25 KB đầu file 284 ("Chương 3: Kabutonga chết lúc bình minh!?"). Đáp án KIỂM TRA LN
-# Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A).
-# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Shizuka nhận vai Kabutonga; Ruth ghét bọ cánh cứng.
-# Tên (chung cả bốn file): KOUTAROU / SATOMI KOUTAROU / SATOMI / KOU; SHIZUKA / KASAGI SHIZUKA / KASAGI / SHIZU; KIRIHA /
-# KURANO KIRIHA / KURANO, KII~; YURIKA / NIJINO YURIKA / NIJINO; SANAE / HIGASHIHONGAN SANAE / HIGASHIHONGAN; THEIA /
-# THEIAMILLIS / THEIAMILLIS GRE FORTHORTHE; RUTH / RUTHKANIA / RUTHKHANIA / RUTHKANIA NYE PARDOMSHIHA (hai cách phiên trong
-# kho; PARDOMSHIHA trơn là gia tộc / "Lord Pardomshiha" - không điểm); MAKI / AIKA MAKI / AIKA. "Master" (Ruth gọi Koutarou),
-# "Ooya-san", "Ngài Thanh Kỵ sĩ", "công chúa" là xưng hô - không điểm.
-# 2-18: đạo diễn chương trình siêu anh hùng, không tên trong cả bộ, giới không rõ -> NPC*, giới u.
-# 55, 105, 112, 160: dòng 〔…〕 là suy nghĩ (Shizuka 56, Ruth 104-107, Koutarou 113, Kiriha 161) nhưng parser khoá N -> N,T
-# NARRATOR,<người nghĩ>, giới u (tiền lệ Yamiyo 141: host giữ khoá lời kể). 34, 38, 43, 45, 58, 60, 62, 80, 91, 124, 130, 137,
-# 148, 156: lời dẫn "- X nói -" tách riêng -> N. 95, 106: tiếng động *Roạt*, *Vụt* -> N.
-<removed>
-# Yurika, 77) - Maki~. 98 "Ế ế ế!" = "các cô gái khác trong phòng" (99) không nêu tên -> NPC* (cả đám) đủ, từng người ~.
-# 67/68: "Yurika và Maki về đến phòng" - 67 hớn hở là Yurika, 68 là Maki; đảo lại nửa điểm.
+# Nhãn gold rokujouma/284a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/rokujouma/284a.txt
 0 H
 1 N
 2 D NPC*:đạo diễn,UNKNOWN~ afraid,sad,excited 1-2 normal,fast normal,loud u

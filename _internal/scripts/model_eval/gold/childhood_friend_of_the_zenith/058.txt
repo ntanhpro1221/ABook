@@ -1,22 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
-# "Childhood Friend of the Zenith" file 058 ("Chương 52: Mai Hoa Kiếm Long (2)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
-# BẢN GOLD 2 (05-10, cho lượt đo trên main >= e926ed12 - dòng nguyên vẹn [..] là đơn vị giọng): 34 dòng "[...]" của hồn ma
-# đổi N -> D SHINCHEOL,LÃO SHIN~ (bỏ NARRATOR). Cây ghim cũ giữ bản 1 (khoá N -> NARRATOR). Ghi chú bên dưới là của bản 1.
-# NGÔI THỨ NHẤT: "tôi" = GU YANGCHEON / YANGCHEON (m; thiếu gia nhà Gu dẫn đoàn - 057, "Gu Yangcheon" 40 lần ở 050-062).
-# "Thiếu gia", "Thiếu hiệp", "Thiếu gia Gu" là cách gọi - không điểm (quy tắc 11). YUNG PUNG (m, đệ tử Hoa Sơn, danh hiệu
-# "Mai Hoa Kiếm Long" - không điểm). MUYEON có mặt (205) nhưng không nói.
-# Hồn ma trong bảo vật Hoa Sơn nói bằng dòng "[...]" (parser KHOÁ N): tự xưng "Thần Kiếm Hoa Sơn, Shincheol" (84); cả cuốn
-# lời kể gọi "lão Shin" ~700 lần, không bao giờ bỏ "lão" (quy tắc 11, tiền lệ ANH DẬU) -> SHINCHEOL là tên, LÃO SHIN chỉ nửa
-# điểm; "Thần Kiếm Hoa Sơn"/"ác linh"/"hồn ma" là danh hiệu/cách gọi - không điểm. Dòng "[...]" khoá N -> NARRATOR,
-<removed>
-# cũng ngoặc vuông -> hồn ma.
-# Hồn ma NGHE được ý nghĩ của "tôi" nên các câu tự hỏi/chửi thầm không ngoặc (4-10, 29-38, 42, 50-53, 59-67, 122-133...)
-# vừa là tiếng lòng vừa là lượt "đối đáp" với hồn ma -> N,T NARRATOR,GU YANGCHEON,YANGCHEON (quy tắc 4 ngôi một). 114 đoạn
-# chủ yếu tả giọng ông lão, chỉ câu cuối tự hỏi -> người nghĩ ~.
-<removed>
-# D) -> NARRATOR đủ, GU YANGCHEON~ (quy tắc 8: cụm giữa câu kể). 1, 19, 21, 23, 45, 200, 211 Yung Pung (2, 18, 202, 210);
-# 20, 22, 25 "tôi" cãi Yung Pung (chỉ "tôi" nghe được giọng); 44 "tôi" nói to với hồn ma, 45 Yung Pung hoảng.
-# 86-104 lời kể lịch sử Đại Chiến Huyết Ma (danh sách năm anh hùng) - N.
+# Nhãn gold childhood_friend_of_the_zenith/058. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/childhood_friend_of_the_zenith/058.txt
 0 H
 1 D YUNG PUNG surprised,neutral 0-1 normal normal m
 2 N

@@ -1,6 +1,4 @@
-# Đáp án chuẩn - cuốn 2, file 345 ("Chương 346 - Phớt lờ"). Claude làm 20-09 (lượt đo chi phí token).
-# Phần lớn "lời thoại" ở đây là VĂN BẢN VIẾT: nhận xét Chloe/Sonia đang viết (1-6, 63-68), câu trích luận án (27, 38),
-# kết luận chính thức của hội đồng (84-85). Chấp nhận người viết hoặc người kể.
+# Nhãn gold throne_of_magical_arcana/345. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/345.txt
 0 H
 1 D CHLOE,NARRATOR neutral 0-1 normal normal m
 2 D CHLOE,NARRATOR neutral 0-1 normal normal m

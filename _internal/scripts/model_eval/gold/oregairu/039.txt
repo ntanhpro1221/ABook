@@ -1,31 +1,4 @@
-0. Câu thử đã gỡ. 0.
-0. Câu thử đã gỡ. 0.
-# Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định: vị trí 30% của bộ); mục đích: văn phong độc thoại mỉa mai ngôi một.
-# Agent A gán 02-10, B soát + phân xử 02-10 (85, 91, 94 N->N,T).
-# KHÁC THƯỜNG 1: file KHÔNG có dòng tiêu đề - seq 0 "Ngày 31 tháng 8..." là câu văn thật (parser khoá N) -> `0 N`, không `0 H`.
-# KHÁC THƯỜNG 2: nguồn tải từ Wattpad, công cụ tải tách MỖI CÂU thành một đoạn (xuống dòng sau mỗi dấu câu) - đoạn văn gốc bị
-# chia nhỏ, lời dẫn ("cậu ta... quay đầu lại nói", "Cậu ta tiếp tục nói.") nằm ở đoạn riêng, tách khỏi câu thoại; một câu thoại
-# cũng bị cắt làm hai seq (45-46, 71-72, 73-74). Gán theo đúng văn bản đã tách. Bộ tách bỏ hai dòng chỉ có dấu: p54 `"...`
-# (mở đầu lời Yukinoshita ở 55) và p92 `.` (dấu ngắt cảnh) - không có seq.
-# NGÔI THỨ NHẤT: "tôi" = HIKIGAYA HACHIMAN / HIKIGAYA / HACHIMAN (m) - truyền --first-person "HIKIGAYA HACHIMAN". Bằng chứng:
-<removed>
-# tôi" (Hachiman lớp 2F). Tên: YUKINOSHITA YUKINO / YUKINOSHITA / YUKINO (f; lời kể gọi "Yukinoshita"). Không tính biệt danh
-# HIKKI / YUKINON (Yuigahama gọi, chương này không có chữ nào - tiền lệ HIMARIN~ Kurakon 034). "chị tôi" ở 55 = Yukinoshita
-# Haruno (037: Hachiman gặp chị ấy ở lễ hội pháo hoa) - chỉ được nhắc. Chương chỉ có HAI người nói.
-# Đối đáp ở cầu thang: 44 Yukinoshita (43 "cậu ta... quay đầu lại nói"); 45-46 Hachiman đáp; 50 "Hikigaya này." Yukinoshita (51
-<removed>
-<removed>
-<removed>
-<removed>
-# 19 "cậu bị đen đi à?" - câu hỏi GIẢ ĐỊNH của "lũ ngây ngô" chung chung, nằm cuối câu kể 18 (parser tách thành D cùng p18) ->
-# NARRATOR đủ (không ai thật nói; đổi giọng giữa câu kể là sai, quy tắc 8), NPC*~.
-<removed>
-# kết luận trong đầu người kể -> T,D, HIKIGAYA HACHIMAN và NARRATOR đều đủ (ngôi một, người nghĩ = người kể; quy tắc 9).
-# Tiếng lòng tức thời của "tôi" không ngoặc -> N,T NARRATOR,HIKIGAYA... (quy tắc 4, ngôi một đủ điểm): 30-31 tự khen
-<removed>
-<removed>
-<removed>
-# Lời kể mỉa mai cả chương: cảm xúc lời kể giữ neutral trước, thêm sarcastic ở các câu châm biếm, sad ở đoạn cuối tự ghét mình.
+# Nhãn gold oregairu/039. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/oregairu/039.txt
 0 N
 1 N
 2 N

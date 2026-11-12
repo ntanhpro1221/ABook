@@ -1,29 +1,4 @@
-# "Evil Lord" (Ore wa Seikan Kokka no Akutoku Ryoushu! - Tôi là ác vương của đế chế liên thiên hà) file 02.txt ("Chương 02:
-<removed>
-# đầu) - file 25,7 KB nên lấy trọn. Agent A gán 02-10; chưa soát B.
-# BỐN cảnh, hai ngôi kể: seq 1-120 NGÔI BA theo quản gia Brian; seq 121-170 NGÔI THỨ NHẤT, "tôi" = LIAM / LIAM SERA BANFIELD
-# (01.txt:5 "Tên mới của tôi là [Liam Sera Banfield]"; ngôi kể chính của cả bộ); 171-194 ngôi ba theo người dẫn lối;
-# 195-222 ngôi ba theo Yasushi.
-# Tên: LIAM / LIAM SERA BANFIELD (m, 5 tuổi rồi 7 tuổi; xưng "ta", gọi Brian "ông", Amagi "cô"); AMAGI (f, android hầu gái, xưng
-# "em", gọi Liam "Chủ nhân"); BRIAN (m, quản gia, xưng "tôi"/"lão", gọi Liam "ngài"/"Chúa tể của tôi"); NGƯỜI DẪN LỐI (m, cả bộ
-# không có tên riêng - 00.txt:69 hắn tự nhận "người dẫn lối", lời kể gọi "Người dẫn lối" mọi chỗ: chức danh trọn cuốn = tên,
-# quy tắc 11); YASUSHI (m, kiếm sĩ lừa đảo, được nêu tên ở 201 ngay sau câu nói đầu 200 -> tên đủ, NPC*~).
-<removed>
-# hầu gái (lo bị phát hiện), 14 người làm vườn (rủ đi phòng trống rồi kéo cô đi, 15).
-<removed>
-# 94 "Chúa tể của tôi..." = Brian (cùng lối gọi ở 101, 109; Amagi luôn gọi "Chủ nhân").
-# 97-98: không lời dẫn; 97 ra lệnh bắt đầu tái cơ cấu = Liam (AMAGI~), 98 "Ngừng làm khuôn mặt đó đi" nói với Brian (99).
-# Parser khoá D cho chữ kể: 57 "-bởi vì ngay từ đầu...", 96 (nháy mở ở 95 không đóng), 116 "-Brian không thể không nghĩ," ->
-# N,D NARRATOR (tiền lệ Love Unseen 07:90). 43 "- Cậu chủ sẽ nghĩ gì..." là câu nghĩ của Brian bị khoá D -> T,D BRIAN (quy tắc 9),
-# NARRATOR~ (gạch đầu dòng, "ngài ấy" - nửa như lời kể).
-# 62, 75, 117 "(...)" = nội tâm Brian (62 nhắc "ngài Alistair" mà 117-118 nói Brian ngưỡng mộ; 75 ngay sau "Brian nhẹ nhõm").
-<removed>
-<removed>
-# hẳn) - đây là người dẫn lối diễn lại/nhại động cơ của Liam (169-170) -> NGƯỜI DẪN LỐI đủ, LIAM~.
-<removed>
-# Tiếng lòng tức thời của "tôi"-Liam -> N,T NARRATOR,LIAM (quy tắc 4): 121 "...điều này, thật tệ.", 129, 138, 139, 141; 142 nửa
-# tự nhủ nửa kể -> LIAM~. Lời kể ngôi một giải thích/quyết tâm (160-170) chỉ N.
-# Sau 120, 170, 194: parser bỏ dòng ngăn cảnh (p121, p172, p197 không có seq).
+# Nhãn gold evil_lord/02. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/evil_lord/02.txt
 0 H
 1 N NARRATOR neutral,sad 0-1 normal normal u
 2 N

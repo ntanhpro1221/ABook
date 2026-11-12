@@ -1,22 +1,4 @@
-<removed>
-# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT: "tôi" = GODOU / SHIRAISHI GODOU / GODOU SHIRAISHI (m, anh hùng chuyển sinh; truyền --first-person GODOU).
-# Bộ có chương do Shiina kể (11, 12) - chương này Godou kể.
-# Tên (tập dùng chung cả bộ): SHIINA / MAI / SHIINA MAI / MAI SHIINA (f, phù thủy chuyển sinh; lời kể gọi "Shiina" và "Phù
-# thủy" - danh hiệu trơn không tính, quy tắc 11); HINA / KIRISHIMA / KIRISHIMA HINA / HINA KIRISHIMA (f, gọi Shiina "Mai-chan",
-# xưng "tui"); YUUKA / SHINDOU / SHINDOU YUUKA / YUUKA SHINDOU (f, 02:125); SHINJI / KUDOU / KUDOU SHINJI / SHINJI KUDOU (m,
-# 01:41, xưng "tao").
-<removed>
-<removed>
-0. Câu thử đã gỡ. 0.
-# hạnh phúc, à." = Godou nhớ lại câu Shiina nói ở 04:1061 rồi ngẫm ("à"), khoá D -> T,N,D GODOU, NARRATOR đủ, SHIINA~. 20
-<removed>
-<removed>
-# "……" là lối Shiina -> SHIINA, GODOU~ (kém chắc); 154 "Ừm ừm! ... cùng nhau đi biển đi!" hồ hởi kiểu Hina (Yuuka là người đề xuất
-# đi biển ở 143) -> HINA, YUUKA~ (kém chắc). 168/170: cảnh kết "Phù Thủy cất câu hỏi" / "Anh Hùng đáp lại" = Shiina / Godou kiếp
-# trước (prologue 00) -> SHIINA / GODOU; PHÙ THỦY / ANH HÙNG không điểm (danh hiệu). 100 "Thế tại sao mẹ lại nghĩ..." - "mẹ" là
-# tiếng cảm thán của Godou. 50 "……Đi chơi với tôi nhé." Godou mời (nối 46-49), 53/55 Shiina nhận lời.
-# Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,GODOU đều đủ (quy tắc 4).
+# Nhãn gold eiyuu_to_majo/05. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/eiyuu_to_majo/05.txt
 0 H
 1 N
 2 N NARRATOR neutral,sad 0-1 normal normal u

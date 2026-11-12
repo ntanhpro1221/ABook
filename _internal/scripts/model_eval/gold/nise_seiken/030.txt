@@ -1,8 +1,4 @@
-# Đáp án chuẩn "Nise Seiken Monogatari" file 030 ("Chương 29: Tay tôi, buông ra"). Vòng 4 (20-09): HỢP NHẤT hai bản
-# làm mù độc lập (A = Claude, B = agent review) bằng merge_gold.py rồi phân xử - ADJUDICATION.md.
-# Ngôi thứ nhất: "tôi" = MAGALI (câu 52, 55 gọi tên). "THÁNH NỮ" là danh hiệu - không điểm (quy tắc 11). ERIA = hoàng
-# tử; câu 17 viết nhầm "Eris" (ERIS~ ở câu 16 mà nó dẫn). 48/49: bản dịch lẫn đại từ - theo mạch truyện 48 ERIA, 49
-# MAGALI (câu 50 "Đó là nói dối"); cách đọc theo đại từ được nửa điểm. Lời kể là tiếng lòng tức thời của Magali: N,T.
+# Nhãn gold nise_seiken/030. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nise_seiken/030.txt
 0 H
 1 N
 2 N,T MAGALI,NARRATOR sad,tired,neutral,surprised 0-2 normal normal u

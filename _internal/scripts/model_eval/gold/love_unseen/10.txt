@@ -1,16 +1,4 @@
-# "Love Unseen Beneath the Clear Night Sky" file 10 ("Chương 11: Yuuko Hayase"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học;
-# 03, 09 train, 07 test): chương NGOẠI, ngôi thứ nhất của HAYASE - cả cuốn do Kakeru kể, trừ các chương đổi góc kể (file 11
-# Narumi, 13 Koharu) -> đo đúng chỗ "tôi là ai" (--first-person "YUUKO HAYASE"; replay_all đặt KAKERU cho cả thư mục - nhãn
-# đáp án ghi thẳng HAYASE nên phát lại vẫn đúng). Claude gán (A), agent soát (B, ADJUDICATION.md). "Tôi" = HAYASE / YUUKO
-# HAYASE / YUUKO (f; 6 "Em về được rồi Hayase", 71 "giới thiệu tên mình là Hayase"). FUYUTSUKI / KOHARU / KOHARU FUYUTSUKI
-# (f, trong hồi ức 67-77; FUYUTSUKI đứng đầu như 03/07/09 - lựa chọn đầu là cụm của voice_identity). Sếp ("anh ta", 6-17),
-# mẹ (35, 104-113, qua điện thoại), người qua đường (54) không tên, không nói ở chương nào khác -> NPC* (UNKNOWN~). 26: câu
-<removed>
-# UNKNOWN~, NARRATOR~ (người kể nhại lại). 46, 60, 95, 97, 127: Hayase nói một mình thành tiếng (trong ngoặc; câu nghĩ của
-# chương không có ngoặc) -> D, HAYASE. Câu hỏi tu từ / phàn nàn / mong muốn tức thời trong cảnh (47, 98-100, 124-125 - 101
-<removed>
-# NPC* ghi người là ai (`NPC*:sếp của Hayase` 6-17, `NPC*:mẹ Hayase` 35/104-113, `NPC*:người qua đường` 54; 26 là cả đám,
-# để trơn) - chấm người nói y như cũ, thước F1 giọng thì nay biết sếp, mẹ và người qua đường là ba người khác nhau.
+# Nhãn gold love_unseen/10. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/love_unseen/10.txt
 0 H
 1 N NARRATOR neutral,tired 0-1 normal normal u
 2 N

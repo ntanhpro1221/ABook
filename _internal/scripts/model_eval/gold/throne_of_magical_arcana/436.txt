@@ -1,7 +1,4 @@
-# Đáp án chuẩn chương 437 ("Sóng ngầm"), Text_Tmp/436.txt. Vòng 9 (20-09): HỢP NHẤT hai bản làm mù (A = Claude, B = agent
-# review), người nói ưu tiên trùng 100%. 77-78 "Annonis trịnh trọng nhìn Levski nói:" -> ANNONIS (host cũ khoá cho Levski, người
-# nghe - patch_the_one_being_looked_at_is_not_the_speaker.py). 21 Levski ("ông nhìn thấy"). 25 cả nhóm cúi chào: Lucien,
-# Levski nêu tên -> đủ, NPC* đủ, Lazar/Heidi có mặt ~. 72: phần lớn là tiếng lòng Lucien -> đủ (như 418:32).
+# Nhãn gold throne_of_magical_arcana/436. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/436.txt
 0 H
 1 N
 2 N

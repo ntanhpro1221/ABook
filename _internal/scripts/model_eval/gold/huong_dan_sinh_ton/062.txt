@@ -1,14 +1,4 @@
-# "Hướng dẫn sinh tồn trong học viện" file 062 ("Chương 63: Trận chiến chinh phạt Glast (12)"). Bộ đo LN 28-09 (chương
-# CHƯA học): chọn model phân tích cho thứ chủ sách đọc. Claude gán (A), agent soát (B). Ngôi thứ nhất: "tôi" = ED /
-# ED ROSTAILER (74 Glast gọi đủ tên). YENNICA / YENNICA FAILOVER; LUCY / LUCY MEIRIL; LORTEL / LORTEL KEHELN; GLAST (không
-# tính "GIÁO SƯ GLAST" - quy tắc 11). 2: Yennica dẫn đường (9, 17). 3: than thở ngay trước đoạn kể về Lortel -> Lortel,
-# Lucy nửa điểm. 26: lời định nói của người kể -> N,T. 99: câu điều kiện nhận thư viện, người kể nghĩ tiếp ở 100 ->
-# Glast, Ed nửa điểm. 112: lời Glast KHÔNG ngoặc ("Nói những lời như vậy" ở 113) bị khoá lời kể -> NARRATOR (quy tắc 10).
-<removed>
-# Soát B (28-09): 3 chỉ Lortel - "Hừm~" mở câu là tật nói của cô (028:39-41, 100:265-267), Lucy không nói kiểu ấy -> bỏ
-# Lucy~. 37, 98, 119: nghĩ tức thời của người kể -> N,T (như 26; tiền lệ 060:127). Lời kể cảnh Glast hấp hối có thêm sad
-# (tender ở 128, 141-143), 6/48/117 thêm afraid (host cấm neutral: "bất an", "run rẩy", "hoảng hốt"); luôn giữ neutral đứng
-# đầu. 56: host đòi angry vì chữ "tan nát" - sai, câu tả nụ cười nhạt -> neutral,sad (host sai, ghi sổ).
+# Nhãn gold huong_dan_sinh_ton/062. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/huong_dan_sinh_ton/062.txt
 0 H
 1 N
 2 D YENNICA,YENNICA FAILOVER neutral 0-1 normal normal f

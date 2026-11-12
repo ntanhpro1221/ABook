@@ -1,8 +1,4 @@
-# Đáp án chuẩn cuốn 1, file 188 ("Chương 187 - Khủng hoảng tình ái"). Vòng 11 (20-09): agent review gán (B), Claude soát (A).
-# "tôi" = SAMAEL. JULIANA / JULIANA VOX ("Juli" là tên Samael gọi); IVAN (Samael cố ý gọi sai "Igor", "Imolde", "Vivan" - không
-# điểm). 3 Ivan ré lên trước khi được gọi tên (14) -> NPC*~.
-# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
-# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold young_masters_pov/188. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/young_masters_pov/188.txt
 0 H
 1 N
 2 N

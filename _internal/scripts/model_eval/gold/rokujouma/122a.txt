@@ -1,17 +1,4 @@
-# "Rokujouma no Shinryakusha" file 122a = 25 KB đầu file 122 ("Chương 2: Phòng 106 ngày hôm đó", Phần 1-3). Đáp án KIỂM TRA
-# LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A).
-# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Cả phòng 106: Koutarou, Shizuka, Kiriha, Yurika, Sanae
-# (Theia và Ruth vắng - 3).
-# Tên (chung cả bốn file): KOUTAROU / SATOMI KOUTAROU / SATOMI / KOU; SHIZUKA / KASAGI SHIZUKA / KASAGI / SHIZU; KIRIHA /
-<removed>
-# nửa điểm vì nhãn KII thành giọng thứ hai của cùng người); YURIKA / NIJINO YURIKA / NIJINO; SANAE / HIGASHIHONGAN SANAE /
-# HIGASHIHONGAN. "Bạn chủ nhà", "onii-chan", "sếp", "binh nhì" là xưng hô - không điểm.
-# 43, 44, 49, 50, 111: tiếng anime trên TV Sanae và Yurika đang xem (111 lời kể 112 nói rõ là "kẻ phản diện trong bộ anime";
-# 45 hai cô "dán mắt vào màn hình") -> NPC* đủ, UNKNOWN~; 43-44, 49-50 có thể là hai cô hô theo màn hình -> SANAE~, YURIKA~.
-# 61, 102: Kiriha nói bằng giọng Kii ("onii-chan") - vẫn là KIRIHA (lời kể gọi Kiriha). 107: câu Kiriha nói một năm trước,
-<removed>
-# cậu bực vì Yurika) hoặc Sanae trêu Yurika -> cả hai đủ. 149 "Oh gừ..." = Koutarou bực, Yurika~.
-# Tiếng kêu/sủa của Yurika (121, 123, 127, 130, 132, 143, 145, 162), "Fufufu" 59, "A..." 103, "Hehehe~" 212 -> người ấy, NARRATOR~.
+# Nhãn gold rokujouma/122a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/rokujouma/122a.txt
 0 H
 1 N
 2 N

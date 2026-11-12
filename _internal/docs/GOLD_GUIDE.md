@@ -5,6 +5,10 @@ Chủ sách, 20-09: *"đáp án rất quan trọng để chấm điểm và ch�
 tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`. Quy ước này bám theo luật của chính dự án
 (SYSTEM_PROMPT trong `abook/analysis.py`) - đáp án chấm model theo đúng cái dự án đòi, không theo sở thích riêng.
 
+**Repo này công khai (12-11):** file gold trong repo chỉ giữ dòng nhãn. Mọi chú thích `#` có trích câu truyện làm bằng
+chứng, và bản đầy đủ của `ADJUDICATION.md`, nằm ở kho riêng `Corpus/_gold/model_eval_gold/` (cùng đường dẫn tương đối).
+Gán/sửa nhãn: sửa bản ở Corpus, rồi chép phần nhãn (bỏ dòng `#`) sang repo. `scripts/leak_scan.py` chặn chữ truyện lọt vào.
+
 ## Cú pháp một dòng
 
     seq kind speaker emotion intensity pace volume gender

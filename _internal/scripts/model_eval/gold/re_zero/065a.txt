@@ -1,28 +1,4 @@
-0. Câu thử đã gỡ. 0.
-<removed>
-# vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: văn phong đông nhân vật. Agent A gán 02-10, B soát + phân xử 02-10 (33, 85 D->D,T; 83 N->N,T).
-# NGÔI BA ("cậu" = Subaru); KHÔNG truyền --first-person. Cảnh: Subaru về dinh thự Roswaal (sau 064 rời Thánh Địa trên lưng
-# Patrasche), gặp Frederica rồi Petra; chỉ ba người nói (Patrasche là rồng đất, không nói).
-# Tên: SUBARU / NATSUKI SUBARU / SUBARU NATSUKI (m; "Natsuki Subaru" 228 lần trong bộ); FREDERICA / FREDERICA BAUMANN (f; 104
-0. Câu thử đã gỡ. 0.
-# neesama", "Subaru-sama" (tiền tố/hậu tố xưng hô). Garfiel, Lewes, Emilia, Echidna, Ram chỉ được NHẮC, không nói câu nào.
-# Xưng hô quyết định người nói ở đối đáp không lời dẫn: Subaru gọi Frederica "cô", tự xưng "tôi", gọi Petra "em", tự xưng "anh";
-# Frederica gọi Subaru "cậu"/"Subaru-sama", gọi Petra "em"; Petra gọi Subaru "anh"/"Subaru-sama", tự xưng "em", gọi Frederica
-<removed>
-# "cô hầu gái — Frederica") -> FREDERICA đủ (quy tắc 5, tên lộ cùng chương; nhân vật cũ của bộ).
-# GHI CHÚ NGƯỜI DỊCH chèn vào truyện (quy tắc 7, tiền lệ KuraNiKa 084:1-2, Tsurekano 031a:257): 1 "VIỆT NAM THẮNG RỒI!!!! QUẨY
-# LÊN NÀO ANH CHỊ EM!!!!" (lời reo của người dịch đứng ngay dưới tiêu đề, không phải lời nhân vật) -> N NARRATOR, cảm xúc
-# excited/happy được; 42-44 "(*Ame: ... "desuka" ...)" bị cắt ba mảnh: 42, 44 N; 43 “desuka” khoá D là chữ trích trong ghi chú
-# -> NARRATOR, PETRA~ (quy tắc 8: gốc là đuôi câu lịch sự của Petra ở 41); 59 "(*Ame: Petra à, em đang nghĩ...)" khoá T (ngoặc
-# đơn) -> N,T NARRATOR (quy tắc 10, không ai trong truyện nghĩ câu ấy); 76 "(*Ame: Từ hẹn hò, hay “deeto”...)" N.
-<removed>
-<removed>
-<removed>
-<removed>
-# cho hắn hay không..." Subaru lẩm bẩm, 153 Frederica hỏi lại "Subaru-sama?" -> D SUBARU (nói thành tiếng). 95, 120 "Ư~~~." = Petra
-# (96 "Petra chán nản thè lưỡi", 121 "nuốt những ấm ức").
-<removed>
-<removed>
+# Nhãn gold re_zero/065a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/re_zero/065a.txt
 0 H
 1 N NARRATOR neutral,excited,happy 0-2 normal,fast normal,loud u
 2 D FREDERICA,FREDERICA BAUMANN whispering,neutral,tender,surprised 0-1 normal,slow soft,normal f

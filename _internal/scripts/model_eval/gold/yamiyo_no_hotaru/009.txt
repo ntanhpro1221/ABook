@@ -1,27 +1,4 @@
-<removed>
-# nhất của model trên bộ LN là dòng 『』 (sai 56-67%) và đối đáp hai người không lời dẫn ở truyện ngôi thứ nhất (Yamiyo
-# 83/126 câu sai). Chương này có cả hai, và cách xa chương thi 141 (không lộ đề). Claude gán (A), B soát 28-09 (chấp nhận
-# hết: thêm NPC*~ trước khi gọi tên, NARRATOR~ cho tiếng không lời, N,T cho tự nhủ, cảm xúc theo từ gợi ý).
-# Ngôi thứ nhất: "tôi" = TOMOBE (m; kho chỉ có dạng kèm kính xưng - quy tắc 11 loại). Ba phần (số là seq):
-# - Phần 1 (hồi tưởng, 5-127): tôi hồi nhỏ và HINA / ONIZUKI HINA (tiểu thư, f) đối đáp gần như không lời dẫn - theo
-#   lượt: HINA xưng "ta" gọi "ngươi", tôi gọi "Tiểu thư", xưng "tôi"; 7 nói trước khi lời kể gọi tên (10) -> NPC*~; 61
-#   "Nếu là cậu thì..." vẫn là Hina ("cậu" = ông thủ quỹ); 90/91 "Mời cả nhà dùng bữa."/"Itadakimasu!" không rõ ai
-#   trước -> người được chọn đủ, người kia ~. Lời kể là tự nhủ / câu hỏi tu từ của tôi -> N,T (13 "Mùi vị của thời Showa
-#   ư?" - Hina đáp đúng chữ ấy ở 14).
-# - Phần 2 (hiện tại, 129-179): tôi, MAGOROKU (m, nấu Soba) và MARI (f, cô em mù) - kho không có họ; 129 "Ngài sao vậy
-#   ạ?" và 171 "Vâng!" không lời dẫn -> MAGOROKU đủ, MARI~; 129/144 nói trước khi gọi tên -> NPC*~. 『』 xen giữa = TỌA PHU
-#   ĐỒNG TỬ (thần giữ nhà Onizuki: 164 "Là nhà của thiếp cơ mà", xưng "thiếp" với "chàng", "ta" với người khác; 096:423/479
-#   gọi tên; 100:371 cùng kiểu "♪ + đồ ăn"; như gold 141) - tên cả cuốn đủ (quy tắc 7c), NPC*~, UNKNOWN~; KHÔNG phải Mari hay
-#   Magoroku dù nói ngay sau họ. Tiếng không lời ("Chụt chụt", "Khạc. Phù.") -> thêm NARRATOR~.
-<removed>
-#   (soba) chàng" - đúng lời hỏi của Hina ở 118; "đứa em gái" = Aoi 079:299, "tảng mỡ thừa" = Uemon 079:207); chương không
-#   gọi tên -> HINA đủ, NPC*~. 「」 của ả xưng "thiếp" với "chàng" như Tọa Phu Đồng Tử nhưng là NGƯỜI KHÁC (ngoặc khác, có
-#   thân xác, ở phòng khác). Tiếng lòng xưng "ta" trong lời kể ngôi ba (186, 196, 197, 199, 202) -> N,T, HINA~; 200 "Chỉ
-<removed>
-#   PHU ĐỒNG TỬ.
-<removed>
-#   người đăng bản dịch -> NARRATOR.
-# Host sai (giữ đáp án): 40 "vui vẻ" là CỐ TỎ RA vui (thêm sad cạnh happy); 128 "gào lên" là Hina đùa ("phồng má").
+# Nhãn gold yamiyo_no_hotaru/009. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/yamiyo_no_hotaru/009.txt
 0 H
 1 N
 2 N

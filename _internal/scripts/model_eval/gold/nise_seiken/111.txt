@@ -1,6 +1,4 @@
-# "Nise Seiken Monogatari" file 111 ("Chương 110: Nhiệt thành"). Vòng 11 (20-09): agent review gán (B), Claude soát (A), không
-# đổi. Chương NGÔI BA (khác 030): Marla và Alistar; "mình" trong lời kể là tiếng lòng của Marla (75 là của Alistar). Thuộc hạ không
-# tên là NPC*. "Marla-sama/-san", "Alistar-san" là người được gọi, không phải người nói.
+# Nhãn gold nise_seiken/111. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nise_seiken/111.txt
 0 H
 1 N
 2 N

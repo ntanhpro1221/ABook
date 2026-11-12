@@ -1,17 +1,4 @@
-# "KuraNiKa" (Kurasu de Nibanme ni Kawaii Onnanoko to Tomodachi ni Natta) file 084.txt ("Chương 85 – Album gia đình").
-# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu; file này 8 KB nên lấy trọn).
-# Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT: "tôi" = MAKI / MAEHARA MAKI / MAEHARA (m; bộ dùng "Maki" 659 lần, "Maehara" 438 lần, "tôi, Maehara Maki").
-# Mẹ của Maki: MASAKI / MAEHARA MASAKI (f; tên lộ ở chương khác - 009/026 "mẹ tôi, 'Maehara Masaki'", "Masaki-san"); lời kể
-# chương này chỉ gọi "mẹ" nên NPC*~ (nhân vật nói ở nhiều chương - nhãn NPC chỉ sống một chương, quy tắc 5).
-# Cảnh chỉ có hai mẹ con nói chuyện: "con"/"mẹ" trong câu quyết định người nói ("mẹ này" = Maki, "Maki ơi"/"con" = mẹ).
-<removed>
-<removed>
-# mẹ nên MASAKI đủ; NARRATOR~ (thật ra là người kể diễn giải). Kém chắc nhất file.
-<removed>
-# ngoặc trong đoạn kể bị khoá N -> chỉ NARRATOR (quy tắc 10, tiền lệ Yamiyo 155:43).
-# Tiếng lòng tức thời của "tôi" (câu hỏi tu từ, phỏng đoán ngay trong cảnh): 15-18, 27, 48, 53, 61 -> N,T NARRATOR,MAKI.
-# 1-2 "Trans: Arteria", lời nhắn của người dịch - lời kể thường N (không chấm người nói).
+# Nhãn gold kuranika/084. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/kuranika/084.txt
 0 H
 1 N
 2 N

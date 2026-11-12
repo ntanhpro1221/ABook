@@ -1,30 +1,4 @@
-# "Gimai Seikatsu" (Cuộc sống em gái kế) file 14a = 25 KB đầu của 14.txt ("Chương 3: Thứ bảy, ngày 18 tháng 7", tập 2).
-# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT: "tôi" = ASAMURA / YUUTA / ASAMURA YUUTA / YUUTA ASAMURA (m; cha và dì gọi "Yuuta", quản lý gọi "Asamura-kun",
-# Yomiuri gọi "Kouhai-kun" - biệt danh, không tính).
-# Tên (cả bộ): AKIKO / AYASE AKIKO (f, mẹ kế, lời kể gọi "Akiko-san", "dì"); TAICHI / ASAMURA TAICHI (m, cha "tôi" - lời kể chỉ
-# gọi "ông già nhà tôi"/"cha", tên từ lời Akiko 70 "Taichi-san"); YOMIURI / SHIORI / YOMIURI SHIORI / SHIORI YOMIURI (f, đàn chị
-# ở hiệu sách; lời kể không bao giờ bỏ kính xưng "Yomiuri-senpai" -> YOMIURI-SENPAI~ như SUZUKI-SENSEI~ ở Shimotsuki);
-# AYASE / SAKI / AYASE SAKI (f, em kế - ngủ suốt, không nói câu nào trong file). Quản lý cửa hiệu không tên (m: "anh ấy" ở
-# chương khác) -> NPC*:quản lý cửa hiệu.
-# Bữa sáng (8-78): ba người. "Yuuta" + "con" = Taichi hay Akiko: 8, 60, 64, 75 Taichi (7 "ông già nhà tôi quay lại", 77 "Tôi trả lời
-<removed>
-# Hiệu sách (90-163): 98 Yomiuri chưa được gọi tên lúc nói (99 "Một cô gái"), 102 mới "Yomiuri-senpai nói" -> tên đủ, NPC*~.
-# Đối đáp không lời dẫn: "em" tự xưng = Asamura, "chị" tự xưng = Yomiuri, NHƯNG Asamura cũng gọi cô là "chị":
-<removed>
-<removed>
-<removed>
-<removed>
-<removed>
-#   156 Asamura đủ, YOMIURI~; 155 theo lượt xen kẽ Yomiuri đủ, ASAMURA~.
-<removed>
-<removed>
-#   xưng "em") bị khoá D -> N,D NARRATOR, ASAMURA~ (quy tắc 9-10).
-#   Từ trong nháy đơn giữa câu kể bị khoá T (quy tắc 8 + 10): 5 ‘mọi người’ (chữ "tôi" vừa nghĩ) NARRATOR, ASAMURA~; 42 ‘nó rất
-#   dễ để nấu,’ (lời Akiko và Ayase hay nói) NARRATOR, AKIKO~/AYASE~; 114 ‘văn học nhẹ’ (thuật ngữ) chỉ NARRATOR; 126 ‘bằng
-#   phẳng và ngửa lên’ (nhắc lời Yomiuri 124) NARRATOR, YOMIURI~; 129 ‘Trở thành bìa mềm’ (nhắc lời Asamura 128) NARRATOR, ASAMURA~.
-# Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,ASAMURA (quy tắc 4): 2, 4, 16, 24, 37, 50, 71, 116, 147, 157 ("Uầy, mình bất
-# cẩn quá" + 158 "Tôi thầm càu nhàu"). 58 có "nếu bạn hỏi tôi" (nói với người đọc) -> chỉ N.
+# Nhãn gold gimai_seikatsu/14a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/gimai_seikatsu/14a.txt
 0 H
 1 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral 0-1 normal normal u
 2 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,surprised 0-1 normal normal u

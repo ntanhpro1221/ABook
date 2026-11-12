@@ -1,5 +1,4 @@
-# Đáp án chuẩn "Chương 450 - Thí nghiệm của mỗi người", Text_Tmp/449.txt (lô 10 - lô đầu tiên chạy với tám bản vá host). Vòng 13 (20-09): agent review gán
-# (B), Claude soát (A) - ADJUDICATION.md. Câu gọi tên: người được gọi là người NGHE.
+# Nhãn gold throne_of_magical_arcana/449. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/449.txt
 0 H
 1 D SƠN CA,SAMANTHA neutral,excited 0-1 normal normal f
 2 D SƠN CA,SAMANTHA neutral,excited 0-1 normal normal f

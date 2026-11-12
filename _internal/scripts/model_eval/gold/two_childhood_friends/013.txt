@@ -1,7 +1,4 @@
-# "Two Childhood Friends Who Have the Strongest Power Kick Each Other in the Dungeon With All Their Might" file 013 ("Chương 14:
-# Quỷ"). Vòng 8 (20-09): agent review gán (B), Claude soát đối kháng (A), không đổi dòng nào. URAZUMI / URAZUMI SAKUKO; ENMI /
-# KAKUSHIGI ENMI / KAKUSHIGI; YOSHIHITO / KUCHINASHI YOSHIHITO; KIRAKO / KUROMITSU KIRAKO; thầy đồng nghiệp và sĩ quan là NPC*.
-# 76-77 nội tâm bị khoá thoại -> T,D. 119, 123: tiếng lòng chung của hai đứa -> cả hai đủ.
+# Nhãn gold two_childhood_friends/013. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/two_childhood_friends/013.txt
 0 H
 1 D NPC*:thầy giáo đồng nghiệp afraid,whispering 1 normal,slow soft m
 2 N

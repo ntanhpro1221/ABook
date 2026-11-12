@@ -1,5 +1,4 @@
-<removed>
-# Claude soát đối kháng (A), không đổi dòng nào - ADJUDICATION.md. Lucien đội lốt Beaulac: câu nói LUCIEN, BEAULAC~ (quy tắc 13).
+# Nhãn gold throne_of_magical_arcana/415. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/415.txt
 0 H
 1 N
 2 N,T LUCIEN~,NARRATOR neutral,happy,afraid 0-1 normal normal u

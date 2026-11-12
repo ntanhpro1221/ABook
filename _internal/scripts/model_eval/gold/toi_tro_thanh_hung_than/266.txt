@@ -1,20 +1,4 @@
-# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
-# "Tôi trở thành hung thần" file 266 (tiêu đề trong file: "Chương 265 - Kureha vs Lunared"; file ~10 KB, lấy trọn). Claude gán (A) 03-10.
-# Hai góc kể: 1-85 NGÔI BA (trận Kureha - Lunared, Kuilan đứng xem); 86-211 NGÔI THỨ NHẤT, người kể xưng "ta" (chương khác xưng
-# "tôi"), "ta" = ASH (Ash "BornHater" Everblack, 000.txt; lời kể 25x-26x gọi "Ash", vd 26x "Người phán quyết là tôi — Ash.";
-# Evangeline gọi "tiền bối", lính gọi "Điện hạ", Godhand gọi "Bệ hạ" - danh hiệu, không điểm) -> --first-person Ash.
-# Tên: ASH / ASH EVERBLACK (m); KUREHA (m, "hắn", Tông Chủ đời 43 Diệp Tộc, đang ở dạng sói); LUNARED (m, Vua Sói, tổ tiên -
-# "Vua Sói" là danh hiệu, không điểm); KUILAN (m, em Kureha, không nói trong đoạn này); EVANGELINE (f); GODHAND (m, 260.txt "Anh cười").
-<removed>
-# hắn), KUILAN~ (11 Kuilan há hốc mồm đứng ngay trước). 33 "Hãy nhìn cho kỹ…" sau "Như thể nói," = lời không thành tiếng của
-# Kureha qua cái gật đầu (parser khoá D) -> KUREHA đủ, NARRATOR~. 58, 67 nội tâm Lunared (59, 64 hắn phản ứng).
-# 137-145 tiếng báo cáo dồn dập (136) của lính vô danh -> mỗi câu một NPC* (quy tắc 6); 141-145 cùng một người truyền tin gọi
-# "Điện hạ" (141 "Báo cáo!" mở, 145 "xin chỉ thị!" đóng) - không chữ nào nêu tên. 156 "Bệ hạ." = Godhand (155).
-# 175 "…Cũng có lý." -> ASH (176 "Nhưng—", 177 + 178 "Ta nói"). 207 "Đúng." ASH (208 "Ta trả lời ngay").
-# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 128-135 chuỗi suy nghĩ sau 126 "vừa đi... vừa suy nghĩ"
-<removed>
-# hoạch của ta." là câu kể giải thích (nói với người đọc) -> N.
-# Tiếng động trong lời kể (1, 5, 7, 9, 34, 43, 54, 94, 117) không ngoặc, parser khoá N -> N.
+# Nhãn gold toi_tro_thanh_hung_than/266. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/toi_tro_thanh_hung_than/266.txt
 0 H
 1 N
 2 N

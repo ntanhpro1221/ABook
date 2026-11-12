@@ -1,7 +1,4 @@
-# Đáp án chuẩn chương 419 ("Bất đồng"), Text_Tmp/418.txt. Vòng 8 (20-09): HỢP NHẤT hai bản làm mù (A = Claude, B = agent
-# review) rồi phân xử - ADJUDICATION.md. Người nói ưu tiên trùng 97%. BAREK / BAREK PAPHOS nói ở 39 trước khi được giới
-# thiệu (42) -> NPC*~. 41: Lillian và Isaac cùng chào, gọi tên ở 44 -> cả hai đủ, NPC*~ (quy tắc 5-6). 32: phần lớn là
-# tiếng lòng trực tiếp của Lucien, lời dẫn ngắn -> LUCIEN đủ. 68: đoạn kể về cậu có một câu hỏi thầm -> LUCIEN~.
+# Nhãn gold throne_of_magical_arcana/418. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/418.txt
 0 H
 1 N
 2 N

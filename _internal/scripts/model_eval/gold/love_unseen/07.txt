@@ -1,13 +1,4 @@
-# "Love Unseen Beneath the Clear Night Sky" file 07 ("Chương 08: Kỳ nghỉ hè"). Bộ đo LN 28-09 (test, chưa học): LN Nhật,
-# ngôi thứ nhất, đối đáp hai người không lời dẫn dài (6-13, 30-37, 104-129, 161-168, 178-182, 222-232) - đo lượt đối đáp.
-# Claude gán (A) 28-09; soát đối kháng (B) ghi ở ADJUDICATION.md. Tên như 09.txt: "tôi" = KAKERU / KAKERU SORANO / SORANO;
-# FUYUTSUKI / KOHARU / KOHARU FUYUTSUKI (mù, nằm viện); HAYASE / YUUKO HAYASE / YUUKO; KOTOMUGI / YUICHI KOTOMUGI
-# (01.txt:895; hội trưởng Hội nghiên cứu pháo hoa, làm thêm ở xưởng pháo hoa). 104-129: mẹ Kakeru qua điện thoại, không tên, chỉ nói ở chương này -> NPC*.
-# Parser: 39 'Whoa' khoá T giữa câu kể -> NARRATOR, Kakeru nửa điểm (quy tắc 8); 54, 58, 117 hỏng dấu ngoặc nên khoá N, 100
-# là nửa sau lời Kotomugi bị cắt ở "Đoàng!" -> NARRATOR (quy tắc 10; host ép, bộ chấm không xét người); 90 là LỜI KỂ ("Tôi nhìn những
-# người bên trong...") bị khoá D vì 89 quên đóng ngoặc - khoá thoại nối tiếp của host gán nó cho Kotomugi (lỗi host, ghi ở
-# ADJUDICATION); 196, 209, 211 là câu Kakeru ĐỊNH nói, trích giữa câu kể -> NARRATOR, Kakeru nửa điểm (quy tắc 8).
-# 29-09 tối: 11 câu NPC* ghi `NPC*:mẹ Kakeru` (chấm người nói y như cũ; cho thước F1 giọng biết là MỘT người).
+# Nhãn gold love_unseen/07. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/love_unseen/07.txt
 0 H
 1 N
 2 N

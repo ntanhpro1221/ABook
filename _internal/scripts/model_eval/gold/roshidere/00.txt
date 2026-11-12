@@ -1,28 +1,4 @@
-# "Roshidere" (Tokidoki Bosotto Russia-go de Dereru Tonari no Alya-san) file 00 = bản truyện ngắn GỐC trên Syosetu ("Arya-san
-<removed>
-# cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
-# BẢN NGẮN NÀY KHÁC BẢN LN: nhân vật là Maki Alisa / Himuro Masatsugu, KHÔNG phải Kujou Alisa / Kuze Masachika - tên bản LN không
-# được điểm (quy tắc 12). 01.txt là bản đổi ngôi kể cùng sự việc (dùng để đối chiếu người nói).
-# HAI NGƯỜI KỂ: seq 1-114 NGÔI THỨ NHẤT "tôi" = HIMURO / MASATSUGU / HIMURO MASATSUGU / MASATSUGU HIMURO (m, 40 "tên tôi là Himuro
-0. Câu thử đã gỡ. 0.
-# --first-person (hai người kể; nếu buộc chọn thì HIMURO cho nửa đầu).
-<removed>
-<removed>
-# viết khác chỉ ở tiêu đề, quy tắc 11 tên viết nhầm). Người không tên: NPC*:giáo viên Anh Văn (f - "Chúng em chào cô ạ" 30; bản 01
-# là "thầy" nhưng tin chữ chương này), NPC*:mẹ Pusha (116, 118), NPC*:ông nội Himuro (139; 143 "jii-chan", 142 "ông già người Nhật
-# mặc áo khoác lông chồn"), NPC*:cả lớp (30).
-# Tiếng Nga: 23 "Ну, мне тоже нравится эта часть", 84 "Ты мне нравишься" là lời ARIA (25, 85). Câu trong [ ] ở nửa sau là
-# thoại nói bằng tiếng Nga (ghi chú 115) - vẫn là lời người nói.
-<removed>
-# 10). 36, 38 câu dịch lời Aria nằm GIỮA câu kể -> NARRATOR, ARIA~ (quy tắc 8). 54 câu cũ của Himuro, 65 câu Himuro không dám nói -
-# giữa câu kể -> NARRATOR, HIMURO~. 56 ‘Aria’ (khoá T) và 29 ‘Reeeeeeeeeẹt’ (tiếng chuông, khoá T) -> N,T NARRATOR (29 UNKNOWN~).
-<removed>
-# NARRATOR, HIMURO đủ, ARIA~. 82 "VÂNG~" hai người cùng đáp (83 "chúng tôi ngưng trò") -> HIMURO, ARIA đủ, NPC*~. 141 "[Hể? Lại mấy
-# ông già dâm dê à?]" = Aria lẩm bẩm. 143 Himuro nói khi Aria chưa nhận ra (144 "một người đang hỏi... hở?", 145) -> HIMURO, NPC*~;
-# 193 "Ê~~~, có sao không đấy?" (195 "bị ai đó vỗ vai", 196 Himuro) -> HIMURO, NPC*~. 147 ““A”” hai người cùng thốt, ngoặc lồng
-# làm parser khoá N -> NARRATOR, ARIA~, HIMURO~. 137 "[……..Mình muốn gặp cậu.]" nói thành tiếng (138 "tiếng lòng của mình tan biến
-# vào bầu trời") -> D ARIA. Tiếng hét 188, 191, 194, 109 thêm NARRATOR~ (tiền lệ nise_seiken).
-# Tiếng lòng tức thời của người kể -> N,T NARRATOR,<người kể> đều đủ (quy tắc 4): nửa đầu HIMURO, nửa sau ARIA.
+# Nhãn gold roshidere/00. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/roshidere/00.txt
 0 H
 1 D,T HIMURO,MASATSUGU,HIMURO MASATSUGU,MASATSUGU HIMURO surprised,afraid,neutral 0-1 normal normal,soft m
 2 N,T HIMURO,MASATSUGU,HIMURO MASATSUGU,MASATSUGU HIMURO,NARRATOR surprised,neutral,afraid 0-1 normal normal u

@@ -1,8 +1,4 @@
-# "Yamiyo no Hotaru" file 189 ("Chap 149 (2)"). CHỈ KHỚP bộ tách đoạn sau patch_a_corner_bracket_is_a_quote.py (「」 -> “”)
-# VÀ patch_a_whole_line_in_white_corner_brackets_is_a_voice.py (dòng nguyên vẹn 『…』 là thoại). Vòng 8 (20-09): agent review gán
-# (B), Claude soát (A). Ngôi thứ nhất: "tôi" = TOMOBE. AOI / ONIZUKI AOI. "Sư phụ" không được gọi tên trong chương = KAEDE TOMOE
-# (corpus 168), NPC*~. Kẻ nhập xác YUUSEI / ONIZUKI YUUSEI nói qua miệng sư phụ, luôn trong 『…』: 26 câu ấy TRƯỚC bản vá bị khoá
-# lời kể nên đáp án cũ ghi NARRATOR (quy tắc 10); nay là thoại của Yuusei (bốn tiếng gào 121, 123, 135, 138 thêm NARRATOR~ - quy tắc 8).
+# Nhãn gold yamiyo_no_hotaru/189. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/yamiyo_no_hotaru/189.txt
 0 H
 1 N
 2 D YUUSEI,ONIZUKI YUUSEI sarcastic,angry,neutral 1 normal normal m

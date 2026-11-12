@@ -1,21 +1,4 @@
-<removed>
-# cho vòng dữ liệu v5: truyện ngôi thứ nhất là chỗ model sai nhiều nhất trên bộ LN (Nageki 57/97 câu sai, phần lớn nhầm
-# giữa hai người có tên). Chương ngắn, bảy người đối đáp, nhiều câu chỉ suy được từ mạch; xa chương thi 65. Claude gán (A),
-# agent soát (B). "Tôi" = KRAI / KRAI ANDREY (m). Bản dịch này: LUKE / LUKE SYKOL (m), LUCIA / LUCIA ROGIER (f, gọi Krai
-# "Đội trưởng", điều khiển dòng nước), LIZ / LIZ SMART (f, gọi Sitri "Siddy", Ansem "Anssy"), SITRI / SITRI SMART (f),
-# TINO / TINO SHADE (f), ANSEM / ANSEM SMART (m, trầm, "hừm"/"Ừm"), KILLIAM / KILLIAM SMART (con quái vật, như 65:41).
-# 8: câu châm ngôn "người ta thường nói" -> NARRATOR, UNKNOWN~, NPC*~ (quy tắc 8). 33 "HẢ?!": Luke vừa đòi 100 mức nước,
-# người phải giữ dòng nước là Lucia (36-41) -> LUCIA đủ, KRAI~. 95 "Ừm.": Ansem (77, 107; 96 "tôi không biết phải phản ứng
-# sao") -> ANSEM đủ, KRAI~. 103 "Hay đó!!" cả đám đồng thanh, không nêu tên -> NPC* đủ, UNKNOWN~, người có mặt nửa điểm
-# (quy tắc 6; Tino là nạn nhân, Ansem đáp riêng ở 107). 66 "chắc em sẽ thử nín thở" là lời Sitri Krai nhắc lại giữa câu
-# tu từ của chính Krai (65, 67 là N,T) -> NARRATOR và KRAI đủ, SITRI~ (quy tắc 8). Câu hỏi tu từ / cảm thán tức thời của người kể -> N,T (quy tắc 4).
-# LỖI HOST (quy tắc 10): 45, 74, 90, 101 - câu “...,” có lời dẫn ngoài 13 động từ của SPEECH_VERB_PATTERN ("gọi",
-# "giải thích", "đề xuất"; 45 không động từ nói nào) bị khoá N cả đoạn -> NARRATOR, người nói ~ (score_models bỏ qua ~ ở dòng
-# N; giữ để segment_diff.py gán người nói khi bộ tách mới tách thành thoại). 31 tách được vì trong ngoặc có "…". Host sai
-# (giữ đáp án): 6 "Khóc" nằm trong tên nhóm "Vong Linh Than Khóc". B soát 28-09, A nhận: tên gọi SIDDY/ANSSY/LIZZY/LUCY
-# (quy tắc 11), 29/30/106 N,T, 75 NARRATOR~ NPC*~, 103 bỏ Lucia (người đề xuất).
-# 28-09 22:xx - CHUYỂN sang cách tách mới (dev/comma-dialogue): 45, 74, 90, 101 (số cũ) tách thành thoại + lời dẫn
-# (45, 75, 92, 104 mới) - số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold nageki_no_bourei/53. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nageki_no_bourei/53.txt
 0 H
 1 D LUKE,LUKE SYKOL excited,happy 1-2 normal,fast loud,normal m
 2 N

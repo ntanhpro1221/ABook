@@ -1,8 +1,4 @@
-# Đáp án chuẩn - chương 381 (tiêu đề "Chương 382 - Bá tước Vlad"). Claude làm 19-09, không nhìn nhãn sản xuất.
-# Cú pháp như 351.txt. "Thanh âm" trên trời (11, 15, 19, 28) là Lucien đóng vai Thần Hơi Nước bằng ảo ảnh:
-# chấp nhận LUCIEN, NPC, hoặc một tên riêng cho vị thần. Đại trưởng lão chỉ được gọi tên (Augustus) ở đoạn 48,
-# nên NPC cho ông trước đó là nửa điểm (lượt hoà giải NPC của dây chuyền có thể đổi nó thành AUGUSTUS).
-# Đoạn 59 là "một người lùn" KHÁC Harold. 53 và 79 là văn bản được trích (luận án, khế ước).
+# Nhãn gold throne_of_magical_arcana/381. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/381.txt
 0 H
 1 N NARRATOR neutral,surprised,excited 0-2 normal,slow normal u
 2 N NARRATOR neutral,surprised,excited 0-2 normal normal u

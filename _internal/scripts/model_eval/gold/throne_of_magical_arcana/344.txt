@@ -1,7 +1,4 @@
-# Đáp án chuẩn - cuốn 2, file 344 ("Chương 345 - Tác động"). Claude làm 20-09 (lượt đo chi phí token).
-# CHLOE ở chương này là NAM ("anh", "ngài Chloe") - sổ nhân vật của sản xuất ghi CHLOE female (6 lần): lệch.
-# 40-46 là giọng máy của pháp trận phân luận án (NPC). 68/93 là tiêu đề luận án, 72/95 là câu trích từ luận án của
-# Lucien, 75/76 là câu ấy vang lại trong đầu Chloe: chấp nhận người kể hoặc người đọc/viết.
+# Nhãn gold throne_of_magical_arcana/344. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/344.txt
 0 H
 1 N
 2 N NARRATOR neutral,happy 0-1 normal normal u

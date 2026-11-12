@@ -1,7 +1,4 @@
-# Đáp án chuẩn chương 397 ("Biến chuyển kỳ quái"), Text_Tmp/396.txt. Vòng 7 (20-09): agent review gán (B), Claude soát đối
-# kháng (A) - ADJUDICATION.md. Lucien đội lốt Beaulac nhưng lời kể gọi "Lucien" trước mọi câu -> LUCIEN đủ, BEAULAC~ trên câu
-# NÓI (quy tắc 13). 16-18 đám quý tộc bỏ chạy (NPC*); 16 "Ác quỷ…" cũng khớp Andris đang quỳ (câu 1) -> ANDRIS~. 31 Sophia
-# nói trước khi được gọi tên (32) -> NPC*~. 29 tiếng vỗ tay (quy tắc 8). 35, 43, 47 cụm trích giữa câu kể (quy tắc 8).
+# Nhãn gold throne_of_magical_arcana/396. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/396.txt
 0 H
 1 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
 2 N NARRATOR neutral,surprised 0-1 normal normal u

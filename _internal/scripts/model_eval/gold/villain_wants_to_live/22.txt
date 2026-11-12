@@ -1,31 +1,4 @@
-# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
-# "The Villain Wants to Live" file 22 ("Chương 52: Cung điện hoàng gia (3)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
-# Nhiều góc kể: 1-56 ngôi ba (Hoàng đế Sophien - Louina - Keiron); 57-115 NGÔI THỨ NHẤT, "tôi" = DECULEIN (Kim Woojin nhập
-# xác Deculein; lời kể cả cuốn gọi "Deculein" ~1600 lần, "Kim Woojin" 28 lần - 247 chương này) -> --first-person Deculein;
-# 116-164 ngôi ba (Glitheon); 165-282 ngôi ba (Epherene, lớp của Deculein).
-# Tên: DECULEIN / DECULEIN VON GRAHAN YUKLINE (m), KIM WOOJIN~ (danh tính thật, chương gọi "Deculein" - quy tắc 13, giữ một
-# giọng); SOPHIEN / SOPHIEN AEKATER / SOPHIEN EKATER (f, "Hoàng đế"/"bệ hạ" là danh hiệu - không điểm); LOUINA (f, McQueen);
-# KEIRON (m, hộ tống hoàng đế, 17.txt); JEFF (m, tài xế của "tôi"); GLITHEON (m, lãnh chúa Iliade); GALAK (m, em trai
-# Glitheon - 05.txt:103); EPHERENE / EPHERENE LUNA (f); LUCIA (f, nhà nữ bá tước Leviron). Rondo, Sylvia không nói.
-<removed>
-<removed>
-# Tên gọi trong chương sau câu đầu (118) -> GALAK đủ, NPC*~ (quy tắc 5).
-<removed>
-<removed>
-<removed>
-<removed>
-<removed>
-# người viết vô danh NPC*~, người đọc DECULEIN~ (quy tắc 7). 100 lời Deculein hỏi Jeff bị parser khoá T -> D,T DECULEIN
-# (101 Jeff đáp). 113 "Mình nên nghĩ về nó." tự nói thành tiếng (ngoặc kép) -> D,T.
-<removed>
-<removed>
-# không lời dẫn từng câu -> mỗi câu một NPC* khác (quy tắc 6), LUCIA~ (đứng đầu đám, 189).
-# Parser khoá T sai (dấu ‘ ’ trong lời kể): 22-23 lời kể về Louina -> N,T NARRATOR, LOUINA~ (quy tắc 10); 65 chữ trong ghi
-# chú dịch giả, 214 tên vở kịch trên vé, 281 cụm ‘Một lần nữa’ giữa câu kể (DECULEIN~, quy tắc 8) -> N,T NARRATOR. 99
-# ‘gia tộc bóng tối' nằm trong câu tự nhủ của "tôi" (98) -> N,T người kể đủ. 26 '"... l" Louina ngạc nhiên lắc đầu.' khoá
-# N -> NARRATOR, LOUINA~. 1 dòng dịch giả "Trans: Bui!!!" -> N. 184 "Ự!" tiếng kêu khi ngã -> EPHERENE, NARRATOR~ (quy tắc 8).
-# Ngôi ba: 126 câu tự hỏi của Glitheon -> N,T, GLITHEON~.
-# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 22 tách thành 22 (T, nhãn cũ) + 23 N; cũ 23 -> 24 N (khoá lời kể); cũ >=24 dời +1
+# Nhãn gold villain_wants_to_live/22. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/villain_wants_to_live/22.txt
 0 H
 1 N
 2 N

@@ -1,23 +1,4 @@
-# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
-<removed>
-<removed>
-# 08x "Tôi là Hannon Irey.") -> --first-person Hannon; 156-212 NGÔI BA (Iris, ngày giỗ mẹ).
-# Tên: HANNON / HANNON IREY (m); SHARIN / SHARIN SAZARIS (f); MIDRA / MIDRA FENIN (m, "Cậu bé này là Midra Fenin", năm nhất, thành
-# viên hội học sinh); IRIS / IRIS HYSIRION (f, "Công chúa thứ ba", "Điện hạ" là danh hiệu); HANIA / HANIA RAPIDEDIA (f, 08x "cô ấy").
-# Nikita, Isabel, Aisha, Sylvester, Zerion, Robliage chỉ được nhắc.
-<removed>
-<removed>
-# 23-24 thể lực nhờ tập với Aisha là của "tôi"; đặt "tôi" = Midra thì mâu thuẫn 25-27 Sharin gọi "tôi" là Hannon). Nên: 15
-# "Ôi, chết mất thôi." + 16 thành viên kiệt sức = MIDRA (tên chỉ nêu ở 22 -> tên đủ, NPC*~, quy tắc 5); 19 "Cố gắng thêm một
-<removed>
-<removed>
-<removed>
-0. Câu thử đã gỡ. 0.
-# 101 "Bị Đế quốc cấm, phải." = SHARIN (102 "Cô ấy nói đúng"). 123-124, 130-131 một câu thoại bị parser tách hai dòng - cùng Sharin.
-0. Câu thử đã gỡ. 0.
-# 198 "Bắt đầu." IRIS ra lệnh, 199 "Vâng." HANIA (200). 207 ‘Gia đình.’ nội tâm IRIS.
-# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 30, 55-56, 83, 90, 141, 143-144, 151, 155.
-# Lời kể ngôi ba về Iris u sầu, cô đơn -> thêm sad vào tập.
+# Nhãn gold the_gioi_sau_doan_ket/086. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/the_gioi_sau_doan_ket/086.txt
 0 H
 1 N
 2 N

@@ -1,11 +1,4 @@
-# Đáp án chuẩn - chương 351 (tiêu đề "Chương 352 - Sự thật"). Claude làm 19-09, KHÔNG nhìn nhãn sản xuất.
-# Cú pháp: seq kind speaker emotion intensity pace volume gender
-#   kind      N narration, D dialogue, T thought, H tiêu đề (không chấm)
-#   speaker   các lựa chọn cách nhau dấu phẩy, đều đủ điểm; hậu tố ~ là nửa điểm; NPC* = bất kỳ NPC_LOCAL
-#   emotion/pace/volume  tập chấp nhận, cách nhau dấu phẩy
-#   intensity khoảng a-b
-#   gender    m / f / u (u: không chấm)
-# Dòng chỉ có "seq N" = NARRATOR neutral 0-1 normal normal u.
+# Nhãn gold throne_of_magical_arcana/351. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/351.txt
 0 H
 1 N
 2 D DOUGLAS happy,neutral,excited 0-2 normal normal m

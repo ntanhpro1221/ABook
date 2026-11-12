@@ -1,26 +1,4 @@
-# "Tsurekano" (Mamahaha no Tsurego ga Motokano datta - Con riêng của mẹ kế là bạn gái cũ) file 031a = 25 KB đầu của 031.txt
-<removed>
-# định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
-# NGÔI THỨ NHẤT: "tôi" = YUME / IRIDO YUME / YUME IRIDO (f; truyền --first-person YUME). Bộ truyện đổi người kể theo chương
-# (030 là Kawanami "tui", 032 là Mizuto) - chương này Yume kể ("Chị là Irido Yume" 028; Madoka gọi "Yume-chan", Higashira gọi
-# "Yume-san"). Không cho AYAI (họ cũ, chỉ dùng cho quá khứ trung học).
-# Tên (tập dùng chung cả bộ): MIZUTO / IRIDO MIZUTO / MIZUTO IRIDO (m, em kế kiêm bạn trai cũ); MADOKA / TANESATO MADOKA /
-# MADOKA TANESATO (f, chị họ 20 tuổi, 028:345); CHIKUMA / TANESATO CHIKUMA / CHIKUMA TANESATO (m, em Madoka, học sinh tiểu học
-# sợ người lạ); HIGASHIRA / ISANA / HIGASHIRA ISANA / ISANA HIGASHIRA (f, qua điện thoại 197-290). Mẹ Higashira (284): chương này
-# không tên; tên NATORA chỉ lộ ở 035 -> NPC*:mẹ Higashira và NATORA đều đủ (kém chắc - xem quy tắc 5/13).
-<removed>
-# ấy đồng cảm cho mình." là câu tự nhủ của Yume nối dòng kể, parser khoá D vì gạch đầu dòng -> T,N,D, YUME đủ và NARRATOR đủ
-# (quy tắc 9/10). 26 「Chú Mineaki đang gọi cậu đấy」 nằm GIỮA câu kể (câu Yume định nói) -> NARRATOR, YUME~ (quy tắc 8). 208
-# 「Chỉ có vếu to...」 giữa câu hỏi tu từ của người kể, lời diễn ý của mẹ Higashira -> NARRATOR, NPC*~/NATORA~. 36 "—Là một
-0. Câu thử đã gỡ. 0.
-# 78 "A." / 79 "……A……": Yume bắt gặp Chikuma (81) - tiếng lắp bắp "……A……" là kiểu Chikuma -> 78 YUME (CHIKUMA~), 79 CHIKUMA
-# (YUME~). 122/124/126 "(Gật gật gật!)" là cử chỉ gật đầu của Chikuma viết như thoại -> NARRATOR đủ, CHIKUMA~. 151 "—Thất lễ vì
-# đã cắt ngang..." nói trước khi lời kể nêu Mizuto (152 "Một giọng nói gắt gỏng", 154) -> MIZUTO đủ, NPC*~. 194 ‘suỵt’ (tiếng
-# suỵt trong câu kể, khoá T) -> N,T NARRATOR, YUME~. 217 nhập nhằng nhẹ: Yume nói tiếp đề tài áo tắm (220 Yume "Khoan khoan. Cậu
-<removed>
-# Higashira, ngoặc lồng “Higashira” làm parser khoá N -> NARRATOR, HIGASHIRA~ (quy tắc 10). 257 chú thích người dịch khoá T ->
-# N,T NARRATOR. 205 Higashira thuật lời mẹ trong câu của mình -> HIGASHIRA.
-# Tiếng lòng tức thời của "tôi" (ngôi một) -> N,T NARRATOR,YUME đều đủ (quy tắc 4).
+# Nhãn gold tsurekano/031a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tsurekano/031a.txt
 0 H
 1 N
 2 N

@@ -1,7 +1,4 @@
-# Đáp án chuẩn - Tam quốc diễn nghĩa (Phan Kế Bính dịch), Hồi 51 - truyện chưa thấy, cổng đo LoRA 27-09.
-# Bí danh cùng người đủ điểm (Du/Chu Du/Công-cẩn/Chu lang; Túc/Lỗ Túc/Tử-kính; Huyền-đức/Lưu Bị/Dự-châu...).
-# 133 thầy thuốc, 141 "các tướng bẩm", 174 lính hàng, 185/187 thám mã = NPC*. 136: Ngưu Kim được nêu tên trong lời
-# dẫn câu cả đám hò reo -> NGƯU KIM và NPC* đều đủ điểm. 163-167: Chu Du bảo thầm Trình Phổ -> soft/whispering.
+# Nhãn gold tam_quoc_dien_nghia/051. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tam_quoc_dien_nghia/051.txt
 0 H
 1 N
 2 N

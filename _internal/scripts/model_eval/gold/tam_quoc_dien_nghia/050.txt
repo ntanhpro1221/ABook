@@ -1,11 +1,4 @@
-# Đáp án chuẩn - Tam quốc diễn nghĩa (Phan Kế Bính dịch, Bùi Kỷ hiệu đính; hết bản quyền, vi.wikisource), Hồi 50.
-# Truyện CHƯA TỪNG có trong dữ liệu huấn luyện - cổng đo "truyện chưa thấy, khác thể loại" để quyết đổi qwen3:8b -> LoRA
-# (27-09). Văn dịch 1909: thoại gạch đầu dòng sau lời dẫn "X nói:", xưng hô cổ (ta/ngươi, thừa tướng, tướng quân).
-# Bí danh cùng một người đều đủ điểm (Tháo/Tào Tháo/Mạnh Đức, Vân-trường/Quan Vũ/Quan-công, Khổng Minh/Gia-cát Lượng,
-# Tử-long/Triệu Vân, Dực-đức/Trương Phi, Hưng-bá/Cam Ninh) - việc một người bị tách thành hai giọng đo riêng.
-# "Các tướng hỏi/Quân sĩ bẩm/Tả hữu" (cả nhóm, không nêu tên) = NPC*. 5: tiếng Hoàng Cái gọi Hàn Đương. 26/28/32/44:
-# tướng tự xưng tên ("Lăng Thống ở đây!") -> người ấy. 114: câu trong ngoặc giữa đoạn kể, Quan Vũ bảo quân sĩ.
-# 168-169: chú thích cuối hồi (Dữu-công nói).
+# Nhãn gold tam_quoc_dien_nghia/050. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/tam_quoc_dien_nghia/050.txt
 0 H
 1 N
 2 N

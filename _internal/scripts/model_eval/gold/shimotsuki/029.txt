@@ -1,17 +1,4 @@
-<removed>
-# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
-# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m, tự nhận "nhân vật nền"; 46-47 cô giáo gọi nhầm
-# "Nakagawa... Nakayama...san?"). Tên (cùng tập cho cả 029/032/195/456): SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f);
-0. Câu thử đã gỡ. 0.
-# viên chủ nhiệm; lời kể cả cuốn không bao giờ bỏ kính xưng - "Suzuki-sensei", "cô Suzuki" - nên SUZUKI-SENSEI chỉ nửa
-# điểm, tiền lệ "ANH DẬU" quy tắc 11; "Suzuki-chan" ở 37 là cách Ryuuzaki trêu, không tính).
-<removed>
-<removed>
-# tắc 10), SUZUKI~ giữ cho segment_diff. 42, 49 "(...)": nội tâm chính người kể (49 kèm 50 "Tôi nghĩ thế"). Tiếng lòng tức
-# thời của người kể -> N,T (quy tắc 4): 40 "Định mệnh.", 43-44 cân nhắc chọn ghế ngay tại cảnh (45 nửa giải thích nửa tự
-<removed>
-# thầm với Ryuuzaki). 64 "Cái gì!?" không lời dẫn trực tiếp nhưng 65 "người ngạc nhiên nhất là Ryuuzaki", 66-67 cùng người.
-# Bộ tách bỏ ba dòng câm 「.........」 (p20 Shimotsuki, p34 Shimotsuki, p59 Ryuuzaki) - không có seq.
+# Nhãn gold shimotsuki/029. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/shimotsuki/029.txt
 0 H
 1 N
 2 N

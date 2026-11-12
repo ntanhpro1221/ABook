@@ -1,34 +1,4 @@
-0. Câu thử đã gỡ. 0.
-# vang bãi săn"). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10;
-# chưa soát B.
-# NGÔI BA, không có người kể "tôi" ("Tôi:" ở 101, 129 là TÊN KÊNH CHAT của Aoi Toori - handle "Me").
-# Dòng tên kênh chat ("Tôi:", "Hori-ko:", "Người mới:"...) parser khoá N, đứng riêng một seq -> N; câu chat ngay sau là của chủ kênh.
-# Tra kênh trong kho: Tôi = AOI TOORI (0420:373 chị em chơi game khiêu dâm); Hori-ko = HORIZON (0400:475-477 Asama đáp "Horizon!");
-# Người mới/Tân Binh/Novice = NESHINBARA (0168:309 "Siêu Neshinbara", 0409:245-247); Chính nghĩa = SATOMI YOSHIYASU (0219:65-67
-# "Yoshy cũng vào trong cuộc trò chuyện", 0228:577-579 "Truyền tin thần thánh của Yoshiyasu"); Mar Vàng/Gold Mar = MARGOT NAITO
-# (gọi Naruze "Ga-chan", 0411:171); Mal-Ga = NARUZE (vẽ doujinshi, 0219:197); 10ZO = TENZOU CROSSUNITE (= "Sĩ Quan Đặc Vụ Số 1",
-# 248-256). Tên kênh lời kể không dùng làm tên -> nửa điểm (như biệt danh NUKKUN~ ở Make Heroine); "TÔI" bị bộ chấm gom về NPC*.
-# Tên: TORAHIDE / KAKEI TORAHIDE (m, rồng đất); FUTAYO / HONDA FUTAYO (f) - bản dịch chương này gọi cô "Phó Hội trưởng của Musashi"
-# (13-19) nhưng người cầm Tonbo Spare nhảy 100 m là Futayo (0420:293, 731-733 "Kích hoạt... Tonbo Spare!" Đó là Futayo); KHÔNG
-# phải Masazumi; TONBO SPARE (ngọn thương có trí tuệ đáp lệnh, 18 "Rõ.", 21 "Đang vươn ra." - u, NPC*~ vì nói ở nhiều chương);
-# HORIZON / HORIZON ARIADUST (f); ASAMA / TOMO / ASAMA TOMO (f, xưng "thần" với Horizon); MUNESHIGE / TACHIBANA MUNESHIGE (m,
-# "Tây Quốc Vô Song"); GIN / TACHIBANA GIN (f, vợ Muneshige); ADELE / ADELE BALFETTE (f, trong vỏ di động); YOSHINAO (m, Phó Hiệu
-# trưởng kiêm Vua Musashi - 0078:197); SUZU / MUKAI SUZU (f, nói lắp); MITOTSUDAIRA / NATE MITOTSUDAIRA / NATE (f, "con sói bạc");
-# REINE DES GAROUS / NỮ HOÀNG NGƯỜI SÓI (f, mẹ Mitotsudaira - cả bộ gọi bằng danh hiệu này 923 lần, quy tắc 11).
-# 10 "...Tuyệt!" = Torahide (11 "Hắn tự tin"). 37 "Tây Quốc Vô Song!" = Torahide nhận ra người đứng trên ngọn thương (35-36), 38
-# Muneshige đáp; NPC*~ (không lời dẫn). 84, 87, 91, 93-95, 100: người trên tàu / các pháo thủ vô danh (92 "một trong những pháo
-<removed>
-<removed>
-# 148-159: hạm kiều Musashino. 148 "Một người đàn ông" rồi 150 Suzu gọi "Thầy Phó Hiệu trưởng… Yoshinao…?" -> YOSHINAO đủ, NPC*~.
-<removed>
-# NPC*~ (có thể là người vợ vô danh hỏi).
-# 188-233: Mitotsudaira (189 "lẩm bẩm", 201, 222 "cô nói", 226 "con sói bạc"). 218 đứng sau "Mitotsudaira nghĩ" nhưng 219 "Horizon
-0. Câu thử đã gỡ. 0.
-<removed>
-# mẹ Mitotsudaira = REINE DES GAROUS đủ, NPC*~.
-# Tiếng lòng trực tiếp không ngoặc (ngôi ba): trọn đoạn -> N,T người nghĩ đủ (7, 36 Torahide; 161, 165, 181 Adele; 206, 235, 242,
-# 247 Mitotsudaira); có lời dẫn "hắn nghĩ"/lẫn lời kể -> người nghĩ ~ (34, 111 Torahide; 45, 49 Muneshige; 169 Adele).
-# 1-4: thơ đề từ + tiêu đề phụ - văn bản viết, NARRATOR. Parser bỏ p72, p74, p213 (không có seq).
+# Nhãn gold kyoukai_senjou_no_horizon/0422a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/kyoukai_senjou_no_horizon/0422a.txt
 0 H
 1 N
 2 N

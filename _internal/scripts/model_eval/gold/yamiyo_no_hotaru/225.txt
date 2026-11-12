@@ -1,22 +1,4 @@
-# "Yamiyo no Hotaru" file 225 ("Chap 169 (2)"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học, xa mọi chương train/đo): bộ LN cũ 519
-# câu nhiễu ~±3 điểm, chưa đủ phân định v3/v5/9B. Claude gán (A), agent soát (B).
-# Ngôi thứ nhất: "tôi" = TOMOBE (m). AZUMA HIBARI / AZUMA / HIBARI AZUMA (nữ tanuki, cựu Thủ lĩnh Âm Dương Liêu; xưng "ta", gọi
-# tôi "ngươi", Shiro "con"; f). SHIRO (f; "Bạch Hồ" là danh xưng loài - không điểm, quy tắc 11). GENSEI / KIRIKUSA GENSEI (Thủ
-# lĩnh Âm Dương Liêu đương nhiệm, "y", gọi Azuma "Azuma-dono"; m) - chương gọi tên từ 72, trước đó NPC*~ (quy tắc 5).
-# MURASAKI / AKO MURASAKI / AKOU MURASAKI (153 "cô con gái út nhà Ako" = Ako Murasaki, dạng tên như gold 155; f).
-<removed>
-<removed>
-# tiếng, thủ lĩnh đã mở lời" -> 45 Gensei, 44 là tôi vừa mở miệng (SHIRO~); 72 "Gensei khẽ liếc" sau lời nhắc vụ Yêu Hồ -> 71.
-<removed>
-# (quy tắc 10); 72 “Thật là rắc rối” của Gensei giữa câu kể -> NARRATOR, GENSEI~ (quy tắc 8). 150 = lời Murasaki nối liền tiếng
-# hô của lũ trẻ (“Áp đảo, xông lênnn!!”) -> MURASAKI, NPC*~; 151 tiếng hét của Murasaki bị khoá N -> NARRATOR, MURASAKI~.
-# 135 “Ha, haha…” = tôi cười gượng vì bị lộ chuyện hiệu sách (133 “Bị lộ rồi”; 136 Gensei nhìn nghi hoặc vì chưa được báo) ->
-# TOMOBE, neutral/afraid trước happy (B).
-# Tự nhủ / câu hỏi tu từ của tôi trong lời kể -> N,T (quy tắc 4). 154 là lời người đăng bản dịch -> N. "nhẹ nhõm" (102, 104) ->
-# thêm happy; "run rẩy" (51, 72) -> thêm afraid; "bối rối và khó chịu" (4, 5) -> thêm surprised/angry; "e ngại" (84) -> afraid.
-# 116 "Đây là…" bỏ lửng ngay trước câu hỏi 117 -> N,T như 99/110/138 (B). 47 "Thủ lĩnh-sama...?" -> SHIRO~ như 44 (B).
-# Host sai (giữ đáp án): 33 "không thể tin" nằm trong "không thể tin tưởng"; 45 "bất an" là của người nghe; 125 "khóc" là
-# của một đứa trẻ giả định.
+# Nhãn gold yamiyo_no_hotaru/225. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/yamiyo_no_hotaru/225.txt
 0 H
 1 N
 2 N

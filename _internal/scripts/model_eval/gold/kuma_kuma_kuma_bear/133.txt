@@ -1,27 +1,4 @@
-# Đáp án KIỂM TRA LN Nhật đợt 4 (03-10; luật cố định: vị trí 30% của bộ); mục đích: văn phong nữ chính ngôi một.
-<removed>
-# NGÔI THỨ NHẤT: "tôi" = YUNA (f; cả bộ chỉ gọi "Yuna", không có họ; Sherry gọi "Yuna-oneechan", Mylene "Yuna-chan", Anzu
-# "Yuna-san" - không tính dạng có hậu tố); TRUYỀN --first-person YUNA. Nối thẳng cuối 132: ở nhà hàng mới của Anzu, Mylene đòi
-# đồng phục Gấu; nửa sau (từ 85) Yuna và Mylene tới trại mồ côi gặp Sherry.
-# Tên: MYLENE (f; guild master guild thương mại, xưng "tôi" với Yuna/Anzu, "chị" với Sherry, gọi Yuna "em"/"Yuna-chan");
-# TERUMI (f; mẹ Fina, Shuri, gọi Yuna "cháu"); FINA, SHURI (f; con gái Terumi); ANZU (f; quản lí nhà hàng, gọi Yuna "cậu"/
-# "Yuna-san"); FORNE (f; một trong các phụ nữ từ Mireera - nhóm Seno, Forne, Betoru, Eshuna; 38 có lời dẫn 39); SHERRY (f; bé
-# gái trại mồ côi ~12 tuổi, xưng "em", gọi Yuna "Yuna-oneechan", gọi Mylene "chị"). Liz, viện trưởng, Fifu/Arn, Deiga, Atora,
-# Mireera chỉ được NHẮC.
-# Xưng hô: Yuna với Mylene xưng "tôi"/"em", gọi "chị"; với Anzu gọi "cậu"; với Sherry lúc "tôi", lúc "chị" (bản dịch lẫn). Mylene
-0. Câu thử đã gỡ. 0.
-<removed>
-0. Câu thử đã gỡ. 0.
-# cho bọn con..." - lời dẫn "Cả hai cùng lấy" nêu hai con gái -> FINA,SHURI đều đủ (quy tắc 6). 32-35 "họ" (36 "Mylene-san cười
-0. Câu thử đã gỡ. 0.
-# của Anzu-chan' hay 'Quán trọ của Deiga-san'..." cũng thế (người Mireera biết quán Deiga, 70 "Tất cả bọn họ đều gật đầu").
-0. Câu thử đã gỡ. 0.
-# "em"; 118 Mylene "Đúng thế, em có thể làm không?") -> SHERRY, MYLENE~. 96, 101, 104, 108, 122, 124 không lời dẫn trong cảnh hai
-# người lớn: Yuna là người gõ cửa, hỏi chuyện (121 "tôi sẽ không ép em ấy") -> YUNA, MYLENE~.
-0. Câu thử đã gỡ. 0.
-# 10). 52, 62, 78, 107 tên cửa hàng trong ‘ ’ giữa câu kể bị khoá T -> N,T NARRATOR, YUNA~ (quy tắc 8, 10).
-# Tiếng lòng tức thời của "tôi" (câu hỏi tu từ, than thầm: 13, 15, 20, 30, 44, 45, 59, 60, 72, 79, 83, 99, 100, 121, 125, 127,
-# 143, 163) -> N,T NARRATOR,YUNA (quy tắc 4, ngôi một); 89 đoạn kể dài chỉ có câu hỏi ở cuối -> YUNA~.
+# Nhãn gold kuma_kuma_kuma_bear/133. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/kuma_kuma_kuma_bear/133.txt
 0 H
 1 N NARRATOR neutral,tired 0-1 normal normal u
 2 N NARRATOR neutral,sad 0-1 normal normal u

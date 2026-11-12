@@ -1,8 +1,4 @@
-# "Nageki no Bourei wa Intai Shitai" file 73 (ngoại truyện "Bereaving Souls"). Vòng 12 (20-09): B gán, A soát, không đổi.
-# NGÔI BA, không có "tôi". Nhóm GIẢ MẠO Grieving Souls: KRAHI / KRAHI ANDRIHEE (giả Krai), KULE / KULE SAICOOL, KUTRI / KUTRI SMYAT,
-# IZABEE / ELIZABETH SMYAT. KRAI, SITRI... KHÔNG được điểm ở đâu cả (quy tắc 12: model hay chộp tên quen). Trưởng làng là NPC*.
-# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
-# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold nageki_no_bourei/73. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nageki_no_bourei/73.txt
 0 H
 1 N
 2 D NPC*:trưởng thôn,UNKNOWN~ surprised,excited 2 fast,normal loud,normal m

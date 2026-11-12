@@ -1,25 +1,4 @@
-# "Make Heroine ga Oosugiru" (Có quá nhiều nữ chính thua cuộc) file 17a = 25 KB đầu của 17.txt ("Chương 04: Remon Yakishio lên
-# tiếng", tập 2). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; 017a = 25 KB
-# đầu chương 17). Claude gán (A) 02-10; chưa soát B.
-# Hai góc kể trong một file: seq 2-82 NGÔI THỨ NHẤT, "tôi" = NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO / KAZUHIKO
-# (02.txt, 31.txt); NUKKUN~ (biệt danh Yakishio gọi 125 lần, lời kể không dùng - nửa điểm). Từ seq 83 ("Dưới ánh trăng, sân chơi...
-0. Câu thử đã gỡ. 0.
-# Tên dùng chung ba file: YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO (nữ; nửa đầu "tôi" gọi "Yakishio", nửa sau lời kể gọi
-# "Remon"); AYANO / MITSUKI / AYANO MITSUKI / MITSUKI AYANO (nam; nửa sau gọi "Mitsuki"); YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA
-# (không nói ở file này). Dạng đầu cố định YAKISHIO, AYANO cho cả hai nửa - đổi dạng đầu theo lời kể là tách một người làm hai giọng.
-# Đối đáp không lời dẫn dài: người nói theo xưng hô ("Nukkun" = Yakishio nói; "Remon" trong câu = Mitsuki nói, "Mitsuki" = Remon
-<removed>
-# nghiêng... qua hàng rào" (56) -> NUKUMIZU, YAKISHIO~. 59 "Sắp tới giờ rồi." nhập nhằng: "tôi" là người đeo đồng hồ (38), Yakishio
-<removed>
-<removed>
-# Tiếng lòng của "tôi" không ngoặc (12, 37, 58, 66, 69, 74, 82) -> N,T NARRATOR,NUKUMIZU (quy tắc 4). Ngôi ba: 87 "...Mitsuki đã ở
-0. Câu thử đã gỡ. 0.
-<removed>
-# thì thầm không ngoặc trong đoạn kể bị khoá N -> chỉ NARRATOR (quy tắc 10, tiền lệ Yamiyo 155:43).
-<removed>
-<removed>
-# AYANO~ (quy tắc 10; host ép NARRATOR, ~ giữ cho segment_diff như Nageki 53).
-# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 133 N -> D (khoá thoại, giữ NARRATOR)
+# Nhãn gold make_heroine/017a. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/make_heroine/017a.txt
 0 H
 1 N
 2 N

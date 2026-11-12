@@ -1,25 +1,4 @@
-<removed>
-# xa 53/65/73 và mọi chương train): ngôi thứ nhất, một bà thầy bói vô danh nói dài, câu hỏi tu từ dày đặc. Claude gán (A),
-# agent soát (B, ADJUDICATION.md). "Tôi" = KRAI / KRAI ANDREY (m, thợ săn mới vào nghề một tháng). LUCIA / LUCIA ROGIER / LUCY
-# (f, em gái, hộ vệ hôm ấy; gọi Krai "anh"; "Lucy" là biệt danh cả cuốn - 52.txt, như gold 53). Bà thầy bói (bà lão trùm mũ
-<removed>
-<removed>
-# - có lẽ chính bà, nhưng bà không nói ở đó; 66:1311: "Con Mắt Thần" là danh hiệu của NHIỀU nhà chiêm tinh; 72:13-62 là một
-# bà chiêm tinh áo choàng xanh không tên, không chứng minh được là bà. "CON MẮT CỦA THẦN" không điểm: danh hiệu dùng chung,
-# prompt dự án đòi NPC_LOCAL cho người không tên (khác "BIỆN LỆ" ở Tắt đèn - chức danh của đúng một người trọn cuốn). Liz,
-# Sitri, công chúa chỉ được nhắc.
-<removed>
-# lý.") -> cả ba khoá D. 53 là câu hỏi của Krai bị cắt -> KRAI. 54, 55 là lời kể của chính Krai: host NỐI LỜI
-# (_repair_continued_dialogue_speakers: p50 -> p51 -> p52 không dấu mở/đóng) chép người nói của 53 sang 54, 55 - model đúng ở 53
-# thì 54-55 là KRAI -> NARRATOR và KRAI đều đủ (khác LU 07:90: ở đó khoá gán nhầm người, ở đây gán đúng người kể). 56 “Mọi
-# loại vận xui” mở câu nghĩ của Krai (57 "nghe hơi cường điệu", cùng khuôn "nghe..." với 33, 72, 77, 91) -> NARRATOR và KRAI
-# đủ, NPC*~ (tiền lệ 53:67). 62 "Hả?!": không lời dẫn - bà thầy bói LỜ ĐI tiếng chen ngang như với Lucia ở 27, 44, còn câu nào
-# Krai nói (30, 64, 83, 97, 112) bà đều đáp; lúc ấy Krai đang thấy buồn cười (66-67) -> LUCIA đủ, KRAI~. 113 "Ồ?": bà thầy
-# bói - "Ồ?" là tật của bà (70), 119-120 "nheo mắt... Một lúc sau, bà nói"; "Tôi hỏi theo bản năng" (114) nói về câu hỏi 112
-# -> NPC* đủ, KRAI~. Câu hỏi tu từ / phản ứng tức thời của người kể -> N,T (quy tắc 4); giải thích, lập luận -> N.
-# 29-09 tối: 25 câu NPC* ghi `NPC*:bà thầy bói` - chấm người nói y như cũ; thước F1 giọng nay biết cả 25 câu là MỘT người
-# (trước đó mọi cặp câu vô danh bị bỏ qua: tách bà làm hai giọng không mất điểm, giữ một giọng mà lẫn một câu của Krai thì
-# mất nửa độ chính xác của cả 25 câu).
+# Nhãn gold nageki_no_bourei/62. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nageki_no_bourei/62.txt
 0 H
 1 N
 2 N

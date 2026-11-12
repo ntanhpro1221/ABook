@@ -1,16 +1,4 @@
-# "Nageki no Bourei wa Intai Shitai" file 65 ("Lời mở đầu: Danh Dự Mới"). Bộ đo LN 28-09 (chương CHƯA học): chọn model phân
-# tích cho thứ chủ sách đọc. Claude gán (A), agent soát (B). 1-111, 214-307 ngôi thứ nhất: "tôi" = KRAI / KRAI ANDREY. 112-213
-# NGÔI BA theo Murina: Krai chỉ được gọi bằng danh hiệu "Thiên Biến Vạn Hoá" -> KRAI đủ, "THIÊN BIẾN VẠN HOÁ" KHÔNG điểm (quy
-# tắc 11 - nhãn danh hiệu thành giọng thứ hai của Krai). KRIS / KRIS ARGENT (nói kèm "Thưa ngài"); EVA / EVA RENFIED; MURINA /
-# MURINA ATOLM ZEBRUDIA; FRANZ / FRANZ ARGMAN (corpus, 7 lần) / FRANZ ARGMEN~ (lỗi gõ 1 lần ở 143, quy tắc 11); ÉCLAIR / ÉCLAIR GLADIS; RODRICK /
-# RODRICK ATOLM ZEBRUDIA (hoàng đế; "HOÀNG ĐẾ" không điểm). 41 (soát B, SỬA): Killiam đã lộ từ chương 60 (60:141-143 Killiam chui
-# ra khỏi giáp của Killigan; 47 "Sitri đã bảo tôi trước rồi") -> KILLIAM đủ và đứng đầu, KILLIGAN~ (quy tắc 13, tiền lệ 385:123). 46, 251: lời Krai trong dòng kể bị khoá N -> NARRATOR, KRAI~ (quy tắc 10). 78, 134, 183, 243, 271:
-# chữ trong ngoặc giữa câu kể (châm ngôn, thuật ngữ, mô tả) -> NARRATOR, tác giả câu trích ~ (quy tắc 8). 192: "Tinh linh Quý
-0. Câu thử đã gỡ. 0.
-# tổn thay công chúa (133). 295: Eva (296 "Nghe tuyệt đấy" đáp lại nó; 294 là tiếng lòng). 130: nội tâm trực tiếp của Murina -> đủ.
-# 187: Franz, Murina~ (nhập nhằng: 182-186 là lập luận của cô). Câu hỏi tu từ/cảm thán tức thời của người kể -> N,T.
-# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
-# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold nageki_no_bourei/65. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/nageki_no_bourei/65.txt
 0 H
 1 N
 2 N

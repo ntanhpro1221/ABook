@@ -1,8 +1,4 @@
-<removed>
-# Cú pháp như 351.txt; kind có thể là tập (T,N) khi parser khoá sai loại.
-# Nguồn hỏng ở đoạn 68: mở ‘ đóng ” - parser tự phục hồi và coi CẢ 68..81 là thought. Thực chất 69..80 là
-# lời kể (đọc giọng người kể mới đúng), 79 là câu tự hỏi của Bellak, 81 là lời Lucien nói.
-# BELLAK không có trong danh sách nhân vật đã biết: model phải tự nhận ra (nam).
+# Nhãn gold throne_of_magical_arcana/363. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/363.txt
 0 H
 1 N
 2 N NARRATOR neutral,afraid,surprised 0-2 normal,fast normal u

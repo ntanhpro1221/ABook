@@ -1,9 +1,4 @@
-<removed>
-# nhìn nhãn sản xuất. "tôi" = SAMAEL. Ray xưng "tớ", Vince xưng "tôi" - 59 là Vince (sau câu Vince thở dài).
-# 32, 57, 72: câu có lời thoại nằm TRONG đoạn parser khoá là lời kể (dấu nháy thẳng giữa dòng) - kind bị khoá N nên
-# người nói phải là NARRATOR. 60: lời nghĩ trong ngoặc đơn giữa lời kể - chấp nhận N/NARRATOR hoặc T/SAMAEL.
-# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
-# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
+# Nhãn gold young_masters_pov/248. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/young_masters_pov/248.txt
 0 H
 1 N NARRATOR neutral,surprised 0-1 normal,fast normal u
 2 N

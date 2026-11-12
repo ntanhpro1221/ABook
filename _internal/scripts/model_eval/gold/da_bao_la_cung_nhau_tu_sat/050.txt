@@ -1,7 +1,4 @@
-<removed>
-# UÔNG PHI (nữ) gọi điện, đầu dây bên kia là người nhà Ngụy Hiểu Na (nữ, không tên - "Tiểu Na nhà tôi"); HOÀNG
-# THƯỢNG (nam) là bạn trai Uông Phi. 32 là lời chú Lưu Đạt (đội cứu hộ) mà Chu Mặc nhớ lại. 61-62 là lời bài hát
-# nhạc chuông. Nhiều câu tự nhủ của Chu Mặc trong lời kể chấp nhận N/NARRATOR hoặc T/CHU MẶC.
+# Nhãn gold da_bao_la_cung_nhau_tu_sat/050. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/da_bao_la_cung_nhau_tu_sat/050.txt
 0 H
 1 D UÔNG PHI angry 1-3 normal,fast loud,normal f
 2 N NARRATOR neutral,angry,sarcastic 0-1 normal normal u

@@ -1,13 +1,4 @@
-<removed>
-# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
-# NGÔI BA - KHÔNG có "tôi" (không truyền --first-person): người kể toàn tri nói về "tác phẩm này" (2) và với người đọc
-# ("bạn sẽ hiểu", 9), rồi bám theo Shiho (cả 196 cũng thế). Không câu thoại nào; 14 dòng "(...)" đều là nội tâm Shiho - tự
-# xưng "mình"/"tớ", gọi "cậu ấy"/"Koutarou-kun", "Kurumizawa-san" - nên SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI đủ điểm (quy
-# tắc 3), NARRATOR không điểm (tiền lệ Yamiyo 141: dòng T thật không cho NARRATOR). Chỉ được nhắc, không nói/nghĩ: Nakayama
-# Koutarou (24 "Koutaro" là lỗi gõ của bản dịch, lời kể), Kurumizawa Kururi (cô bạn tóc hồng ngồi chỗ cũ của Shiho).
-<removed>
-<removed>
-# gián tiếp tự do -> N,T, Shiho nửa điểm.
+# Nhãn gold shimotsuki/195. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/shimotsuki/195.txt
 0 H
 1 N
 2 N

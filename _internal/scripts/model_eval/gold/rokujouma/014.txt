@@ -1,18 +1,4 @@
-# "Rokujouma no Shinryakusha" file 014 ("Chương 1: Dựng trại nào", tập 1). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố
-# định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A) 02-10.
-# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Koutarou chuyển vào phòng 106 ký túc Corona.
-# Tên (dùng chung cả bốn file rokujouma): KOUTAROU / SATOMI KOUTAROU / SATOMI ("Satomi-san" của Shizuka) / KOU (biệt danh
-# Kenji gọi); KENJI / MATSUDAIRA KENJI / MACKENZIE (biệt danh, lời kể 148 cũng dùng) / MATSUDAIRA; SHIZUKA / KASAGI SHIZUKA /
-# KASAGI / SHIZU (lời kể 218, 232); YUICHIROU / SATOMI YUICHIROU (bố Koutarou, qua điện thoại; SATOMI trơn là Koutarou).
-# "Bạn chủ nhà" (Ooya-san), "Bốn mắt-kun", "lão già" là xưng hô - không điểm (quy tắc 11).
-# 1-7: điều khoản "Hiệp ước CORONA" (văn bản trích, parser khoá D) -> NARRATOR đủ; người soạn không biết -> NPC*~, UNKNOWN~.
-# 45-73: người đàn ông của công ty vận chuyển, chỉ nói ở chương này -> NPC*. 62 "Bốn mắt-kun" = Kenji (đeo kính, 77, 191)
-# nên 61 là Kenji. 125: Shizuka nói trước khi lời kể gọi tên (152) -> SHIZUKA đủ, NPC*~ (quy tắc 5).
-# Câu kém chắc (đối đáp không lời dẫn): 65-67 (ai hỏi chỗ đặt vali), 75, 84 (cả hai cùng uống - cả hai đủ), 172, 182 "Ôi…"
-# (Shizuka trước cái cười trừ 183), 233-234, 252-254 (252 Kenji trách không được cảm ơn, 253 Koutarou mỉa "có đi có lại").
-# 235, 240: lời thoại hỏng dấu ngoặc nên parser khoá N -> NARRATOR (quy tắc 10). 333, 341 "Zzzz", 346 "Guehefuefuefue",
-# 361 "Uehhehehe": tiếng ngáy / nói mơ của Koutarou (347 "Koutarou nói mơ lần nữa", 362) -> KOUTAROU, NARRATOR~ (quy tắc 8).
-# 06-10 (phiên Model) chuyển theo cách tách rel430b 24ed59d2 (gate_gold_rel430b.py): 235 N -> D KOUTAROU (khoá thoại)
+# Nhãn gold rokujouma/014. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/rokujouma/014.txt
 0 H
 1 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
 2 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u

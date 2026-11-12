@@ -1,19 +1,4 @@
-<removed>
-# 042 (test) 18 và 082 (train) 22 chương; "Linlin" không có trong data_v2..v5). Claude gán (A), agent soát (B,
-# ADJUDICATION.md). 1-69 NGÔI BA (góc Linlin, Kirako, Yoshihito), từ 70 (sau dấu "◆") ngôi thứ nhất:
-# "tôi" = YOSHIHITO / KUCHINASHI YOSHIHITO (m) - các câu kêu thầm, chửi thầm của cậu N,T đủ (như 082). KIRAKO / KUROMITSU
-# KIRAKO (f). LINLIN (f; sát thủ Đông Bộ Quân, xưng "Ngộ", đuôi "yo/ne/aru"; "con nhỏ sườn xám" là cách tả, không điểm - quy
-# tắc 11). Dòng 『』 = "con ký sinh trùng" trong não Yoshihito (54 "giọng nói trong đầu cậu", 87 "Con ký sinh trùng trong não
-# ngán ngẩm") -> KÝ SINH TRÙNG, CON KÝ SINH TRÙNG đủ, NPC*~, UNKNOWN~, NARRATOR~ (quy tắc 7c, như 042:64, 082:94; tên thật
-# AIDA MASAMICHI chỉ lộ ở 107 - chấm từng chương, model không thể biết, nên chưa thêm cho cả cuốn). Nội tâm trong "(...)" bị khoá thoại
-# -> T,D, người nghĩ đủ (1 Linlin - 2 "Linlin chắc chắn"; 39, 51, 53 Yoshihito - 40 "phẫn nộ trong lòng").
-<removed>
-# 44 "cán bộ Đông Bộ Quân" chỉ cô biết) -> N,T, người nghĩ đủ (như 082:46);
-# 13 "Vậy thì, tại sao?" là câu hỏi của người kể về Kirako -> Kirako chỉ ~; 68 có lời dẫn "Yoshihito nghĩ thầm" trong
-# đoạn, 69 nửa tiếng lòng nửa lời kể -> ~ (quy tắc 4). Tiếng kêu/hô (16, 57 "Hự!?", 67 "Hừm?", 110 "Tou!") thêm NARRATOR~
-# (quy tắc 8). 57 "Hự!?" = Linlin trúng phản đòn (58-59), như 16. 110 "Tou!" = Linlin, lộ ở 112 ("con nhỏ sườn
-# xám lại xuất hiện") -> LINLIN đủ, NPC*~ (quy tắc 5). 152 "Vừa phải thôi." (khoá N, giữa lời ký sinh trùng 150/153) ->
-# NARRATOR, Yoshihito đáp trả trong đầu.
+# Nhãn gold two_childhood_friends/060. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/two_childhood_friends/060.txt
 0 H
 1 T,D LINLIN neutral,happy 0-1 normal normal,soft f
 2 N

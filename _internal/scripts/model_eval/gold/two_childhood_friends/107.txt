@@ -1,15 +1,4 @@
-# "Two Childhood Friends..." file 107 ("Chương 108: Quá Phiền Phức"). Làm 28-09 cho vòng dữ liệu v5: phân tích lỗi LN
-# (docs/ANALYSIS_RESEARCH.md) cho thấy model sai nhiều nhất ở dòng 『』 (56-67%) và ở truyện có người kể/người nghĩ. Claude
-# gán (A), B soát đối kháng 28-09. YOSHIHITO / KUCHINASHI YOSHIHITO (nam); KIRAKO / KUROMITSU KIRAKO (nữ); 『』 = ký sinh
-# trùng trong não Yoshihito, tự xưng tên ở câu 1: AIDA MASAMICHI (nam, "một gã đàn ông Nhật Bản" câu 7). KÝ SINH TRÙNG
-# đứng ĐẦU: cả cuốn gọi nó thế (102 lần/49 file, kể cả sau khi lộ tên; "Aida" 37 lần, từ 107) và 042:64, 082:94 cũng
-# thế - lựa chọn đầu là cụm đáp án của thước B-cubed, một thực thể phải một tên cố định. CON KÝ SINH TRÙNG (câu 4), AIDA,
-# AIDA MASAMICHI đủ điểm, NPC*~ (quy tắc 7c, 11, 13); KHÔNG gán cho Yoshihito dù nó nói trong đầu cậu.
-# Tiếng lòng của Yoshihito trong lời kể (4, 6, 11, 18, 21-23, 29, 39-41) -> N,T, cậu đủ điểm (quy tắc 4); suy nghĩ chung
-# của cả hai (35, 48-50) -> cả hai đủ (lời kể 36, 51 nói thẳng; tiền lệ 042:76-77, 013:119/123). 46/47, 65/66, 83: không
-# lời dẫn - người hỏi ngắn / "Hừm" là Yoshihito, người giảng giải là Kirako (chuỗi 27->28->30; Yoshihito nói cụt, Kirako
-# nói dài), người kia nửa điểm. 106: hai người đồng thanh (lời dẫn 107) - cả hai đủ. 35: host bắt "đau lòng" đòi sad -
-<removed>
+# Nhãn gold two_childhood_friends/107. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/two_childhood_friends/107.txt
 0 H
 1 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
 2 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised,sarcastic,neutral 0-2 normal,slow normal m

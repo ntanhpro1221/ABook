@@ -1,5 +1,4 @@
-# Đáp án chuẩn "Chương 401 - Căn nguyên", Text_Tmp/400.txt (lô 9 - chấm được đầu ra sản xuất thật). Vòng 10 (20-09): agent review gán (B),
-# Claude soát đối kháng (A), không đổi dòng nào - ADJUDICATION.md. Lucien đội lốt Beaulac: câu nói LUCIEN, BEAULAC~ (quy tắc 13).
+# Nhãn gold throne_of_magical_arcana/400. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/400.txt
 0 H
 1 N NARRATOR neutral,afraid 0-1 normal normal u
 2 N NARRATOR neutral,afraid 0-1 normal normal u

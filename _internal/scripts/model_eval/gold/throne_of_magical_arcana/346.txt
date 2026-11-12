@@ -1,5 +1,4 @@
-# Đáp án chuẩn - cuốn 2, file 346 ("Chương 347 - Quy định"). Claude làm 20-09 (lượt đo chi phí token).
-# 46 là cả nhóm Rock cùng đáp. 67 là con vẹt đưa thư (NPC). 86-88 là ghi chú của người dịch - vẫn là lời kể.
+# Nhãn gold throne_of_magical_arcana/346. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/throne_of_magical_arcana/346.txt
 0 H
 1 D LUCIEN neutral,surprised 0-1 normal normal m
 2 N NARRATOR neutral,sarcastic,happy 0-1 normal normal u

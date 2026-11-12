@@ -1,15 +1,4 @@
-# "Two Childhood Friends..." file 042 ("Chương 43: Bỏ Cuộc Đi Chứ!"). Bộ đo LN 28-09 (chương CHƯA học - không có trong
-# train/dev/test của LoRA): chọn model phân tích cho thứ chủ sách đọc (LN Nhật/Hàn). Claude gán (A), agent soát (B).
-# YOSHIHITO / KUCHINASHI YOSHIHITO; KIRAKO / KUROMITSU KIRAKO; GREY / JANE GREY (công chúa Lostland, "cô"); Colbert ở ngoài
-# mái vòm, không nói trong chương. 2-35: bài đăng mạng xã hội trong 『』 (parser khoá thoại) = văn bản viết, quy tắc 7:
-# NARRATOR và NPC* đều đủ (mỗi bài một người vô danh - như cả đám, quy tắc 7b), UNKNOWN~; gán cho nhân vật có tên được
-# nhắc TRONG bài (Kuchinashi) là sai. 46, 68, 69, 79: nội tâm trong "(...)" bị khoá thoại -> T,D, người nghĩ đủ
-# (quy tắc 9). 73-74 (soát B): Grey luôn tiếp cận và bị Yoshihito từ chối riêng (035, 038, 040, 041), 73 "đã nói rồi" là
-# Yoshihito, 74 mở bằng "Đúng vậy" là Kirako; đảo lại nửa điểm. 76-77: quyết tâm chung trọn câu -> cả hai đủ (013:119, 123).
-# 64 (soát B, SỬA - A ghi Grey): dòng 『』 giữa cảnh là "con ký sinh trùng" - giọng NAM sống trong não Yoshihito, cả cuốn gọi
-<removed>
-# cậu" để lời kể trả lời (65-67). Grey chỉ nói bằng 『』 khi đã hoá đàn dơi (043); ở đây cả 7 câu của cô đều trong "". Tên cả
-# cuốn dùng -> đủ (như QUAN PHỦ, TRỊNH LÃO); NPC*~ vì nó nói ở nhiều chương (một NPC mỗi chương = mỗi chương một giọng).
+# Nhãn gold two_childhood_friends/042. Chú thích và bằng chứng trích truyện ở kho riêng: Corpus/_gold/model_eval_gold/two_childhood_friends/042.txt
 0 H
 1 N
 2 D NARRATOR,NPC*,UNKNOWN~ neutral,sad 0-1 normal normal u
