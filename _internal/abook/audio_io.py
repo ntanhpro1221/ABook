@@ -1519,9 +1519,19 @@ def _cap_segment_edge_silence(
     trimmed: list[dict[str, Any]] = []
     for index, (path, break_ms) in enumerate(entries):
         try:
+            info = sf.info(str(path))
             audio, rate = sf.read(path, dtype="float32", always_2d=False)
         except Exception as exc:  # noqa: BLE001
             raise AudioQualityError(f"cannot read WAV: {path}: {exc}") from exc
+        if rate != sample_rate or info.channels != 1:
+            raise AudioQualityError(
+                f"take is {rate} Hz x{info.channels}, the chapter is {sample_rate} Hz mono: {path}"
+            )
+        # FFmpeg's concat demuxer takes the first file's sample format for every file, so one
+        # float take (a signal-rejected take kept for review is written as FLOAT) among 16-bit
+        # ones is decoded as noise: 12-11 a chapter measured an infinite true peak and three more
+        # ran 5-35 s long. Every take therefore reaches the joiner as the same 16-bit PCM.
+        canonical = info.subtype == "PCM_16"
         samples = np.asarray(audio)
         leading, trailing = _edge_silence_seconds(samples, rate)
         start = int(round(max(0.0, leading - SEGMENT_EDGE_SILENCE_CAP_SECONDS) * rate))
@@ -1535,13 +1545,16 @@ def _cap_segment_edge_silence(
         # the single longest silence in 10,869 across the whole book, and the one the owner
         # picked out by ear.
         inner, removed_inner = _cap_internal_silence(edged, rate)
-        if removed_edges <= 0.0 and removed_inner <= 0.0:
+        if removed_edges <= 0.0 and removed_inner <= 0.0 and canonical:
             capped.append((path, break_ms))
             continue
         work_dir.mkdir(parents=True, exist_ok=True)
         target = work_dir / f"trimmed_{index:05d}_{path.stem}.wav"
-        sf.write(target, inner, rate, subtype="PCM_16")
+        # Clip before the 16-bit write: libsndfile wraps out-of-range floats instead of clipping.
+        sf.write(target, np.clip(inner, -1.0, 32767 / 32768), rate, subtype="PCM_16")
         capped.append((target, break_ms))
+        if removed_edges <= 0.0 and removed_inner <= 0.0:
+            continue  # Only the sample format changed; no silence was removed.
         trimmed.append(
             {
                 "source": str(path),

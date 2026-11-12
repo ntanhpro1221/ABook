@@ -237,3 +237,44 @@ def test_both_caps_apply_to_one_take(tmp_path) -> None:
 
     assert trimmed[0]["internal_removed_seconds"] > 0.5
     assert trimmed[0]["removed_seconds"] > trimmed[0]["internal_removed_seconds"]
+
+
+# 12-11, Hello Hello and Hello: a signal-rejected take kept for review is written as FLOAT.
+# FFmpeg's concat demuxer read the 16 such takes of chapter 5 with the 16-bit decoder of the
+# first file - loudnorm measured an infinite true peak and the chapter failed; chapters 3, 7
+# and 8 (2, 14, 3 float takes) ran 5-35 s long. The joiner must only ever see 16-bit PCM.
+
+def test_a_float_take_reaches_the_joiner_as_16_bit_pcm(tmp_path):
+    pcm = _take(tmp_path / "a.wav", lead=0.05, speech=1.0, trail=0.05)
+    audio = np.concatenate([np.zeros(1200, np.float32), _tone(1.0), np.zeros(1200, np.float32)])
+    sf.write(tmp_path / "b.wav", audio, RATE, subtype="FLOAT")
+    before = (tmp_path / "b.wav").read_bytes()
+
+    entries, trimmed = _cap_segment_edge_silence(
+        [(pcm, 380), (tmp_path / "b.wav", 380)], RATE, tmp_path / "work"
+    )
+
+    assert entries[0][0] == pcm
+    assert [sf.info(str(path)).subtype for path, _ in entries] == ["PCM_16", "PCM_16"]
+    assert trimmed == []  # a format change is not a silence trim
+    converted, rate = sf.read(entries[1][0], dtype="float32")
+    assert rate == RATE and np.abs(converted - audio).max() < 1 / 16384
+    assert (tmp_path / "b.wav").read_bytes() == before
+
+
+def test_an_out_of_range_float_take_is_clipped_not_wrapped(tmp_path):
+    audio = np.concatenate([np.zeros(1200, np.float32), 1.6 * _tone(0.5) / 0.3, np.zeros(1200, np.float32)])
+    sf.write(tmp_path / "loud.wav", audio, RATE, subtype="FLOAT")
+
+    entries, _trimmed = _cap_segment_edge_silence([(tmp_path / "loud.wav", 0)], RATE, tmp_path / "w")
+
+    converted, _rate = sf.read(entries[0][0], dtype="float32")
+    peaks = np.flatnonzero(audio > 1.0)
+    assert peaks.size and (converted[peaks] > 0.99).all()
+
+
+def test_a_take_at_another_rate_is_refused(tmp_path):
+    sf.write(tmp_path / "x.wav", _tone(0.5), RATE // 2, subtype="PCM_16")
+
+    with pytest.raises(Exception, match="Hz"):
+        _cap_segment_edge_silence([(tmp_path / "x.wav", 0)], RATE, tmp_path / "w")
