@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [0.4.167] - 2026-11-12
 
+## [0.4.167] - 2026-11-12
+
 - Nghe thử giọng và thu trong Studio không còn báo lỗi 422 khi sách có danh sách nhân vật; tên nhân vật được đọc theo đúng cách sách đã chọn ở cả bản nghe thử lẫn các tiến trình thu.
 - Tên Nhật tự nhận trong sách đọc từng âm tiết một; tên Hàn và tên Tây trong danh sách nhân vật đọc theo gốc của từng tên. Tên viết hoa cả chữ (hét tên) đọc như tên, không như tiếng kêu; mã và chữ viết tắt toàn chữ hoa không còn bị đọc thành tiếng kêu.
 - Từ mượn đã quen đọc theo kiểu Việt cho mọi giọng; từ dùng chung Việt/Anh chọn cách đọc theo ngữ cảnh câu, tên "Nick" và các tiêu đề giữ chữ Anh. Các âm cuối hiếm của tên phiên âm và "ưm" được đọc đúng như viết.
