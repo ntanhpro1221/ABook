@@ -25,7 +25,7 @@ def _rate(text: str, duration: float) -> float:
 
 def test_adjacent_punctuation_is_one_pause() -> None:
     """"): " is one silence however many characters spell it."""
-    <removed>
+    assert pause_group_count('Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.') == 5
     assert pause_group_count("a), b") == 1, "a run of adjacent marks is one silence"
     assert pause_group_count("a), b.") == 2, "separated marks are separate silences"
     assert pause_group_count('Anh ta nói: "Thôi!"') == 3
@@ -37,7 +37,7 @@ def test_text_without_punctuation_asks_for_no_pause() -> None:
 
 
 def test_the_segment_that_blocked_a_chapter_now_passes() -> None:
-    <removed>
+    text = 'Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.'
     speakable = sum(char.isalnum() for char in text)
     duration = speakable / 9.77  # what it actually measured, below the old 10.5 floor
     bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]
@@ -88,11 +88,11 @@ def test_a_syllable_hyphen_is_not_a_pause() -> None:
 def test_a_spaced_dash_is_still_a_pause() -> None:
     """Only the in-word hyphen is exempt; a dash between words is a real silence."""
     assert pause_group_count("anh ta - người kia - đã đi") == 2
-    <removed>
+    assert pause_group_count('Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.') == 5
 
 
 def test_the_transliterated_segment_that_failed_now_passes() -> None:
-    <removed>
+    text = 'Bộ bánh răng của máy Đếm Phiếu Tự Động trong xưởng (Đê-phi-lê-ô-nêt).'
     speakable = sum(character.isalnum() for character in text)
     bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]
     # Four seconds is a plausible reading of this sentence; it measured 26.80 before.

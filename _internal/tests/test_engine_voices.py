@@ -341,7 +341,7 @@ def test_three_real_lines_in_a_listener_picked_voice(tmp_path: Path, monkeypatch
     profile_id = int(db.voice_profile_by_key(voice)["id"])
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
     lines = (
-        <removed>
+        'Mặt bàn gỗ có sáu vệt mực tím, một chiếc cốc sứt và chùm khóa bằng đồng.',
         "Con cứ coi như không nghe thấy gì là được, đừng bận tâm làm chi cho mệt.",
         "Về rồi?",
     )

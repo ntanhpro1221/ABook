@@ -5,7 +5,7 @@ patch_keep_the_locked_reading.
 
 Chuong 106 (lo 4, va lai o lo04v_106) chet vi MOT doan, 10/10 lan thu:
 
-    <removed>
+    To huong dan chinh thuc ghi ba mat khau de kiem thu: "password", "123456", roi den "qwerty1234".
 
     thuoc chu    70 ky tu doc duoc  o 12,35 kt/s   -> duoi san 12,5 dung 0,15
     thuoc am tiet 17 am tiet         o ~3,0 at/s    -> duoi san 3,75
@@ -273,8 +273,8 @@ from abook.text_processing import vietnamese_number_words
 
 NORMAL = (12.5, 24.5)
 LOST_LINE_106 = (
-    <removed>
-    "thậm chí là \\"qwerty1234\\"."
+    "Tờ hướng dẫn chính thức ghi ba mật khẩu để kiểm thử: \\"password\\", \\"123456\\", "
+    "rồi đến \\"qwerty1234\\"."
 )
 
 

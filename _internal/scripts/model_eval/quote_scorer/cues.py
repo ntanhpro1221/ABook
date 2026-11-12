@@ -24,7 +24,7 @@ def cue_patterns(aliases: dict[str, set[str]]) -> tuple[re.Pattern, re.Pattern] 
     if not aliases:
         return None
     names = "|".join(re.escape(name) for name in sorted(aliases, key=len, reverse=True))
-    <removed>
+    # Tên ở vị trí CHỦ NGỮ: đầu mệnh đề cuối (sau dấu câu gần nhất) - "Sana đưa hộp tem cho Lucien và nhỏ giọng nói:" là Sana.
     before = re.compile(rf"(?:^|[.!?…,;]\s*)\W{{0,3}}(?P<name>{names})(?:\s+[\w-]+){{0,8}}?\s+(?:{VERB})(?!\w)"
                         rf"[^.!?…:]{{0,20}}:\s*$", re.IGNORECASE)
     after = re.compile(rf"^\W{{0,3}}(?P<name>{names})(?:\s+\w+){{0,3}}?\s+(?:{VERB})(?!\w)", re.IGNORECASE)

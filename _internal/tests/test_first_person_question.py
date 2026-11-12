@@ -55,7 +55,7 @@ def _chapter(first_person_lines: int, narration: int = 10) -> str:
     lines = []
     for index in range(narration):
         lines.append("Tôi đứng lặng nhìn ra cửa sổ." if index < first_person_lines else "Gió thổi qua hành lang dài.")
-        lines.append("“Đi thôi.”")
+        lines.append('“Đẩy vào nhé.”')
     return "\n\n".join(lines) + "\n"
 
 

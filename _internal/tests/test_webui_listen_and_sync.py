@@ -62,7 +62,7 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
     rows = [
         (1, 1, 1, 0, 400, "Chương 646 - Trở về (1)", "narration", "NARRATOR", 1, "verified", "", "x", 2.0, now),
         (2, 1, 2, 1, 300, "Trời đã sáng.", "narration", "NARRATOR", 1, "verified", "", "x", 3.0, now),
-        (3, 1, 3, 1, 0, "“Đi thôi.”", "dialogue", "LUCIEN", 2, "verified", str(sample), "x", 4.0, now),
+        (3, 1, 3, 1, 0, '“Đẩy vào nhé.”', "dialogue", "LUCIEN", 2, "verified", str(sample), "x", 4.0, now),
         (4, 2, 1, 0, 400, "Chương 647 - Trở về (2)", "narration", "NARRATOR", 1, "verified", "", "x", 2.0, now),
         (5, 2, 2, 1, 0, "Chưa thu.", "narration", "NARRATOR", 1, "analyzed", "", "", None, now),
     ]

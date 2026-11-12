@@ -86,9 +86,9 @@ Không riêng "Samael". Cùng một dạng lỗi ở `c00010_s0000017`:
 
 | | |
 |---|---|
-<removed>
+| lời | "Tôi chuyển hộp mực này cho Arthur Kaizer Theosbane." |
 | neo đòi | `A-thờ cai-dờ theo-bên` |
-<removed>
+| Whisper gõ | `Tôi chuyển hộp mực này cho Arthur Kaiser theo bên.` |
 | chủ sách nghe | **"đúng rồi"** |
 | máy | loại |
 
@@ -220,7 +220,7 @@ alpha.52 chương 3, `c00003_s0000029`:
 
 | | |
 |---|---|
-<removed>
+| lời | "Hộp này mang nhãn Mười Màu (Ten Colors)." |
 | neo | `Tenth Demon Prince` → `Ten Đe-mon Pờ-rin` |
 | Whisper gõ | "Hắn là hoàng tử quỷ thứ 10, tên **Demon Perrin**." |
 | khớp âm từng phần | `[Tenth ✓, Demon ✓, Prince ✗]` |
@@ -320,8 +320,8 @@ phẩy hơn gốc. Tỷ lệ ấy quá cao để là tỷ lệ lỗi, và nhìn 
 dấu câu thành phẩy:
 
 ```
-<removed>
-<removed>
+gốc : Ví dụ: Khay Mực (Ink Tray) - Dùng để in tem…
+nghe: Ví dụ, khay mực Ink Tray dùng để in tem…
 ```
 
 Hai chấm, ngoặc đơn, gạch ngang — tất cả thành phẩy. Đó là văn phong ghi chép, không phải chỗ
@@ -534,7 +534,7 @@ Hai ca còn chặn cùng chương thì **không** thuộc lớp này, và đáng
 
 - `Tôi cười toe toét.` → `Tôi cười tué toách.` — **từ láy biểu cảm**, Whisper méo. Không phải
   tiếng thốt, cần lớp xử lý khác.
-<removed>
+- `"Đọc nhãn này: Mavru selkan 'ito pamil."` → `Đọc nhãn này, Máp Ru Xen Can I Tô Pa Min.` —
   **tiếng Ả Rập trong nguồn**, và `Dịch` → `Thịt` là nghe sai thật ở phần tiếng Việt. Không
   phép kiểm nào trong dự án được thiết kế cho văn bản đa ngữ hệ.
 
@@ -544,7 +544,7 @@ Lượt kiểm một chương 2026-09-08 05:45 (`v0.2.0-alpha.58-kiem-tieu-de`),
 `c00001_s0000001`:
 
 ```
-<removed>
+gốc : Samael Kaizer Theosbane kiểm xong kho, phòng in liền tắt đèn…
 nghe: Sau khi Sa-men Kai dở theo bên bước ra ngoài, sảnh thầm vẫn liền chìm…
 ```
 

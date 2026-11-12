@@ -131,7 +131,7 @@ def test_a_studio_project_gives_the_sentences_of_its_reader_script(tmp_path: Pat
 
     assert status == 200
     assert found["chapters"][0]["segments"] == _reader_segments(port, identifier, 1)
-    assert [s["text"] for s in found["chapters"][0]["segments"]] == ["Trời đã sáng.", "“Đi thôi.”", "Chương 646 - Trở về (1)"]
+    assert [s["text"] for s in found["chapters"][0]["segments"]] == ["Trời đã sáng.", '“Đẩy vào nhé.”', "Chương 646 - Trở về (1)"]
     assert found["chapters"][0]["segments"][0]["sceneBreak"] is True
     assert found["chapters"][1:] == [{"id": 2, "failed": True}, {"id": 3, "failed": True}], "dự án không có chương chỉ-có-chữ; chương 3 không có"
     status, found = _get(port, f"/api/listen/books/{identifier}/search-texts?chapters=2")

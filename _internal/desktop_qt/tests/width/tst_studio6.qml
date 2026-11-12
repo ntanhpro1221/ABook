@@ -177,7 +177,7 @@ Item {
         function chapterTwo() {
             return {chapterId: 2, index: 2, title: "Chương 2", previous: 1, next: null, castReady: true, firstPerson: null,
                     cast: [{value: "HEIDI", label: "Heidi", lines: 1}], others: [{value: "LUCIEN", label: "Lucien", lines: 2}],
-                    lines: [line("x0", 0, 0, "narration", "NARRATOR", "Sáng hôm sau."), line("x1", 1, 1, "dialogue", "HEIDI", "“Đi thôi.”", {hint: {kind: "turn", note: "Máy nghi."}})]}
+                    lines: [line("x0", 0, 0, "narration", "NARRATOR", "Sáng hôm sau."), line("x1", 1, 1, "dialogue", "HEIDI", "“Đẩy vào nhé.”", {hint: {kind: "turn", note: "Máy nghi."}})]}
         }
         function contents() {
             return {castReady: true, chapters: [{chapterId: 1, index: 1, title: "Chương 1", lines: 6, speech: 4, hints: 2, decided: 0},

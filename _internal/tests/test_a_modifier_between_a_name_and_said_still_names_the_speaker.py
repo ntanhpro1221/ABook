@@ -7,8 +7,8 @@ from abook.analysis import _trailing_speech_attribution
 def test_a_modifier_between_a_name_and_said() -> None:
     assert _trailing_speech_attribution("Arthen nghiêm nghị hỏi:") == "Arthen"
     assert _trailing_speech_attribution("James mỉm cười nói:") == "James"
-    <removed>
-    <removed>
+    assert _trailing_speech_attribution('Gấp xong tấm bản đồ, Lazar đột nhiên hỏi:') == "Lazar"
+    assert _trailing_speech_attribution('Đặt hộp tem xuống, Sophia thở hổn hển nói:') == "Sophia"
 
 
 def test_the_plain_form_still_works() -> None:

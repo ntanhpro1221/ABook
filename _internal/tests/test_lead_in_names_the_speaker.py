@@ -23,7 +23,7 @@ def test_a_lead_in_names_who_speaks_the_line_before_it() -> None:
     # "Shizuka lên tiếng:" đứng trước câu thoại nó dẫn, không phải sau.
     assert lead_in_speaker("Shizuka lên tiếng:", NAMES, after=False) == "Shizuka"
     assert lead_in_speaker("Shizuka lên tiếng:", NAMES, after=True) is None
-    <removed>
+    assert lead_in_speaker('Kou đang nói chuyện về cuộn dây, nhận ra nét bối rối ở người thợ.', NAMES, after=True) is None
     # Tên là người bị vẫy chứ không phải chủ ngữ của "bảo rằng:".
     assert lead_in_speaker("Trên xe có một người cầm quạt lông, vẫy Kou bảo rằng:", NAMES, after=False) is None
     assert lead_in_speaker("Trên xe có một người cầm quạt lông. Kou bảo rằng:", NAMES, after=False) == "Kou"
@@ -40,9 +40,9 @@ def test_gestures_replies_negations_and_other_subjects_are_not_a_lead_in() -> No
     assert lead_in_speaker("Cô ấy nói với Kou rằng trời sắp mưa.", NAMES, after=True) is None
     assert lead_in_speaker("Kou", set(), after=True) is None
     # Nghĩ thầm, đáp lại người khác bằng cử chỉ, hay đoạn kể dài dẫn sang câu thoại KẾ TIẾP: không phải người nói câu vừa xong.
-    <removed>
+    assert lead_in_speaker('Kou tự hỏi liệu có nên in thêm lịch tàu hay thôi.', NAMES, after=True) is None
     assert lead_in_speaker("Sanae chỉ đáp lại lời Kou bằng ánh mắt sắc lạnh.", NAMES, after=True) is None
-    <removed>
+    assert lead_in_speaker('Shizuka nói mà không rõ đang trách ai; nhìn Kou chờ phiếu xuất hàng.', NAMES, after=True) is None
     assert lead_in_speaker("Shizuka lên tiếng:", NAMES, after=True) is None
 
 

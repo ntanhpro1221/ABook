@@ -30,7 +30,7 @@ def make_book(root: Path) -> Path:
     rows = [
         (1, "a", 1, 0, "Chương 1 - Mở đầu", "narration", "NARRATOR", 1, None),
         (2, "b", 1, 1, "“Heidi, các cậu đi đâu vậy?”", "dialogue", "HEIDI", 3, 2),
-        (3, "c", 1, 2, "“Đi thôi.”", "dialogue", "LUCIEN", 2, 1),
+        (3, "c", 1, 2, '“Đẩy vào nhé.”', "dialogue", "LUCIEN", 2, 1),
         (4, "d", 1, 3, "“Ta đến rồi.”", "dialogue", "ÁO CHOÀNG ĐEN", 4, 3),
         (5, "e", 1, 4, "“Ta nữa.”", "dialogue", "ÁO CHOÀNG ĐEN", 4, 3),
         (6, "f", 1, 5, "“Được.”", "dialogue", "RHINE", 2, 4),
@@ -320,7 +320,7 @@ def make_dialogue_book(root: Path, first_person: str = "") -> Path:
         (7, 6, "khi Obel còn là học trò.”", "dialogue", "ED ROSTAILER"),
         (8, 7, "“Hả?”", "dialogue", "NPC_LOCAL::c00001::r1::lính gác"),
         (9, 8, "“Hả?”", "dialogue", "NPC_LOCAL::c00001::r1::lính gác"),
-        (10, 9, "“Đi thôi.”", "dialogue", "ED ROSTAILER"),
+        (10, 9, '“Đẩy vào nhé.”', "dialogue", "ED ROSTAILER"),
         (11, 10, "“Vâng.”", "dialogue", "GLAST"),
     ]
     db.executemany(
@@ -419,7 +419,7 @@ def make_alias_book(root: Path) -> Path:
         (14, "ANNA RHINE", "Anna Rhine", "male", 0),
     ])
     rows = [
-        ("a1", "“Đi thôi.”", "LUCIEN", 2, 1),
+        ("a1", '“Đẩy vào nhé.”', "LUCIEN", 2, 1),
         ("a2", "“Nhanh lên.”", "LUCIEN", 2, 1),
         ("a3", "“Tới rồi.”", "LUCIEN", 2, 1),
         ("a4", "“Ta là Lucien Evans.”", "LUCIEN EVANS", 9, 11),
@@ -479,7 +479,7 @@ def make_bracket_book(root: Path) -> Path:
     rows = [
         ("s1", 1, "『Tạm biệt nhé.』", "TOMOBE"),
         ("s2", 1, "“Vâng.”", "HINA"),
-        <removed>
+        ("s3", 1, '『Tối nay chúng ta kiểm nốt hộp mực nhé?』', "HINA"),
         ("s4", 1, "『Thiếp hiểu cảm giác đó mà.』", "TỌA PHU ĐỒNG TỬ"),
         ("s5", 1, "『Hử? Khí tức này...』", "TỌA PHU ĐỒNG TỬ"),
         ("t1", 2, "『Chàng về rồi.』", "TỌA PHU ĐỒNG TỬ"),
@@ -519,22 +519,22 @@ def test_telepathy_in_corner_brackets_split_across_people_is_fixed_for_the_whole
 
 
 def make_epithet_book(root: Path) -> Path:
-    """Người kể Krai bị gán câu dưới danh hiệu "Thiên Biến Vạn Hóa" - sách viết danh hiệu sát tên ba lần. Tino đứng cạnh Krai
+    """Người kể Krai bị gán câu dưới danh hiệu "Thợ In Bảy Màu" - sách viết danh hiệu sát tên ba lần. Tino đứng cạnh Krai
     chỉ qua dấu phẩy (danh sách), "Giáo sư" đứng sát HAI người: không phải biệt danh của ai."""
     project = make_book(root)
     source = root / "nguon"
     source.mkdir()
     (source / "001.txt").write_text(
-        "Thiên Biến Vạn Hóa Krai bước vào. Ai cũng sợ Thiên Biến Vạn Hóa Krai Andrey. Người ta gọi Krai được mệnh danh"
-        " Thiên Biến Vạn Hóa. Tino, Krai và Lucia đi chợ. Tino, Krai ngồi xuống. Tino, Krai lại đi.\n"
-        "Giáo sư Glast gật đầu. Giáo sư Krayd lắc đầu. Rồi Giáo sư Glast nói. Giáo sư Krayd im.\n",
+        """Thợ In Bảy Màu Krai bước vào. Ai cũng sợ Thợ In Bảy Màu Krai Andrey. Ở xưởng, Krai được mệnh danh Thợ In Bảy Màu. Tino, Krai và Lucia đi chợ. Tino, Krai ngồi xuống. Tino, Krai lại đi.
+Giáo sư Glast gật đầu. Giáo sư Krayd lắc đầu. Rồi Giáo sư Glast nói. Giáo sư Krayd im.
+""",
         encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET input_path = ?", (str(source / "001.txt"),))
     db.execute("DELETE FROM segments")
     rows = [
-        ("k1", "“Đi thôi.”", "KRAI ANDREY"), ("k2", "“Ừ.”", "KRAI ANDREY"), ("k3", "“Được.”", "KRAI ANDREY"),
-        ("e1", "“Tôi không làm gì cả.”", "THIÊN BIẾN VẠN HÓA"),
+        ("k1", '“Đẩy vào nhé.”', "KRAI ANDREY"), ("k2", "“Ừ.”", "KRAI ANDREY"), ("k3", "“Được.”", "KRAI ANDREY"),
+        ("e1", "“Tôi không làm gì cả.”", "THỢ IN BẢY MÀU"),
         ("t1", "“Anh Krai!”", "TINO"),
         ("g1", "“Học đi.”", "GIÁO SƯ"), ("g2", "“Ta là Glast.”", "GLAST"), ("g3", "“Ta là Krayd.”", "KRAYD"),
     ]
@@ -549,12 +549,12 @@ def make_epithet_book(root: Path) -> Path:
 
 
 def test_a_title_the_book_writes_next_to_one_name_asks_to_join_that_voice(tmp_path: Path) -> None:
-    """Thẻ biệt danh (3a): "Thiên Biến Vạn Hóa" sát "Krai" ba lần -> hỏi gộp câu của danh hiệu vào Krai. Dấu phẩy không
+    """Thẻ biệt danh (3a): "Thợ In Bảy Màu" sát "Krai" ba lần -> hỏi gộp câu của danh hiệu vào Krai. Dấu phẩy không
     tính (danh sách "Tino, Krai"); chức danh sát hai người ("Giáo sư Glast", "Giáo sư Krayd") không phải biệt danh."""
     project = make_epithet_book(tmp_path)
     cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
-    assert set(cards) == {"alias:KRAI ANDREY|THIÊN BIẾN VẠN HÓA"}, set(cards)
-    card = cards["alias:KRAI ANDREY|THIÊN BIẾN VẠN HÓA"]
+    assert set(cards) == {"alias:KRAI ANDREY|THỢ IN BẢY MÀU"}, set(cards)
+    card = cards["alias:KRAI ANDREY|THỢ IN BẢY MÀU"]
     assert [line["stableId"] for line in card["lines"]] == ["e1"] and card["affected"] == 1
     assert card["choices"] == [{"label": "Gộp vào Krai Andrey", "value": "KRAI ANDREY", "name": "Krai Andrey"}]
     assert "hay đi liền nhau" in card["problem"] and card["keepLabel"] == "Hai người khác nhau"

@@ -40,8 +40,8 @@ def test_only_a_bare_digit_folds() -> None:
 
 
 def test_the_notation_difference_no_longer_costs_similarity() -> None:
-    <removed>
-    heard = "Hắn là hoàng tử quỷ thứ 10."
+    text = 'Hộp mực đánh số Thứ Mười.'
+    heard = 'Hộp mực đánh số thứ 10.'
     similarity, _wer, _tone = tone_folded_transcript_metrics(text, heard)
     assert similarity > 0.95
 

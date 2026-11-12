@@ -137,7 +137,7 @@ Tiêu đề chương 023 giờ đo **17,78 kt/s** thay vì 10,68.
 Lô 3 mất chương 075 vì một câu dẫn truyện, 10/10 lần, mỗi lần một seed:
 
 ```
-<removed>
+"Và chú Anh in vé tím để mẹ đi xem hội."   27 ký tự đọc · 11 từ · 1 chỗ nghỉ
 11,00  11,38  11,38  11,80  11,38  11,00  10,64  11,38  11,80  11,00 chars/s   (sàn 12,5)
 split     = segment too short to split safely   (38 < 100)
 pace_band = already normal

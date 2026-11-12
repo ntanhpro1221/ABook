@@ -30,7 +30,7 @@ from tests.test_listener_overrides import _Pipeline
 
 LINES = [
     ("c1s0", "narration", "NARRATOR", "Lucien nhìn Natasha."),
-    ("c1s1", "dialogue", "Lucien", "“Đi thôi.”"),
+    ("c1s1", "dialogue", "Lucien", '“Đẩy vào nhé.”'),
     ("c1s2", "dialogue", "Lucien", "“Cô chắc chứ?”"),
     ("c1s3", "dialogue", "NATASHA", "“Chắc.”"),
     ("c1s4", "dialogue", "UNKNOWN", "“Ai đó?”"),

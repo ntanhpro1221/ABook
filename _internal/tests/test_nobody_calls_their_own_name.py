@@ -66,16 +66,16 @@ def test_a_call_at_the_head_or_tail_of_a_line_names_who_is_spoken_to() -> None:
 
 def test_a_name_that_is_only_mentioned_is_not_a_call() -> None:
     # Tên giữa câu kẹp dấu câu: Forbidden 094 - đại tư tế hỏi Karui về người thứ ba, câu không phải của ai trong cặp.
-    <removed>
+    assert addressed_names('“Karui và Amae phụ trách hộp mực… Hmm? Karui… Tsukshi cầm tờ phiếu nào?”', NAMES) == set()
     assert addressed_names("“Kou đầu teo nên chắc không sao đâu.”", NAMES) == set()
     # Tự giới thiệu đọc đúng tên người nói; "gọi là X" là nói về cái tên.
-    <removed>
+    assert addressed_names('“Tôi là người giữ quầy tem mới mở, Kasagi Shizuka.”', NAMES) == set()
     assert addressed_names("“Ở đây ai cũng gọi là Kou, cậu cứ thế mà gọi.”", NAMES) == set()
     assert addressed_names("“Kou ơi.”", set()) == set()
 
 
 def test_a_new_turn_is_an_opened_quote_a_dash_or_a_closed_previous_line() -> None:
-    assert opens_a_new_turn("“Đi thôi.”", "“Ừ.”")
+    assert opens_a_new_turn('“Đẩy vào nhé.”', "“Ừ.”")
     assert opens_a_new_turn("“Đi thôi.", "- Ừ.")
     assert not opens_a_new_turn("“Nghe này, ta chỉ nói một lần thôi.", "Ngày mai cả đoàn lên đường.”")
 

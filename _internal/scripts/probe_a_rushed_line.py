@@ -1,6 +1,6 @@
-r"""Vì sao một câu ngắn bị đọc VỘI ở mọi seed? — phép thử cần GPU, không sửa gì.
+"""Vì sao một câu ngắn bị đọc VỘI ở mọi seed? — phép thử cần GPU, không sửa gì.
 
-    python scripts/probe_a_rushed_line.py <project_root> --segment c00001_s0000041_fb0874d2f05b \
+    python scripts/probe_a_rushed_line.py <project_root> --segment c00001_s0000041_fb0874d2f05b \\
         --variant "“Tôi không biết xoay đâu, Felicia.”" --takes 5
 
 **CHỈ CHẠY KHI MÁY RẢNH.** Nó nạp VieNeu lên GPU và sinh audio thật; chạy đè lên một lượt `run`
@@ -12,7 +12,7 @@ Bảy đoạn trong cả hai cuốn chưa bao giờ có bản thu, và cả bả
 sau 10 seed (đo 2026-09-15 02:10). Hai ca của cuốn 2:
 
     “Tôi không biết ‘xoay’ đâu, Felicia.”      10/10 lần ở 29,0–33,9 kt/s   (7,2 âm tiết/giây)
-    <removed>
+    “Thưa Điện hạ, bảng kê đã đủ số hộp.”    10/10 lần ở 25,6 kt/s        (7,3 âm tiết/giây)
 
 Đổi seed không cứu được (project vá thu thêm 10 lần nữa, vẫn 31–32,5). Nới băng nhịp cũng không:
 băng rộng nhất (`fast`) có cận trên 30,0, mà bản thu ở 31–32,5 nằm ngoài **mọi** băng — theo đúng

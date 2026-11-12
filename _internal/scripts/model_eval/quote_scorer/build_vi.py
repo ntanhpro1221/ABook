@@ -149,7 +149,7 @@ def point_of_view(segments_by_chapter: dict, golds: dict) -> dict[str, str]:
     return {chapter: entity for chapter, entity in result.items() if entity}
 
 
-<removed>
+# "mình" sau "của"/"tự" là PHẢN THÂN ("Tamaki xếp lại cuộn dây của mình") - có đầy trong truyện ngôi thứ ba: Yamiyo 155
 # đếm được 13% lời kể "có tôi" chỉ nhờ nó. Đo tỉ lệ ngôi thứ nhất bằng mẫu này, không bằng FIRST_PERSON.
 NARRATOR_I = re.compile(r"(?<!của )(?<!tự )(?<!\w)(tôi|tớ|mình)(?!\w)", re.IGNORECASE)
 

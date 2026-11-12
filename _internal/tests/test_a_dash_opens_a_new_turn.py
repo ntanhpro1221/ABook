@@ -25,16 +25,16 @@ def _run(lines: list[tuple[int, str, str]]) -> list[str]:
 
 def test_an_answer_on_its_own_dash_line_keeps_its_speaker() -> None:
     assert _run([
-        <removed>
-        <removed>
+        (27, '- Mày cân xong thì phiếu hàng đâu?', "QUAN PHỦ"),
+        (28, '- Bẩm bác thủ kho, cháu quên mang phiếu đặt hàng...', "DẬU"),
     ]) == ["QUAN PHỦ", "DẬU"]
 
 
 def test_every_dash_is_a_turn_whatever_the_dash() -> None:
     assert _run([
-        <removed>
+        (1, '– Bác gái đã nhận đủ cuộn vải đặt dệt chưa?', "BÀ LÃO LÁNG GIỀNG"),
         (2, "— Thưa cụ chưa.", "DẬU"),
-        <removed>
+        (3, '-Hình như nó đã mang cuộn giấy ra quầy rồi.', "CHỊ DẬU"),
     ]) == ["BÀ LÃO LÁNG GIỀNG", "DẬU", "CHỊ DẬU"]
 
 
@@ -50,9 +50,9 @@ def test_a_parenthesised_thought_after_an_open_quote_is_a_new_turn() -> None:
     # Nise Seiken 086:65-67: lời người lính mở nháy không đóng, đoạn kể sau vẫn là phần tiếp (parser khoá thoại) - nhưng
     # "(...)" mở một lượt nội tâm mới của người khác.
     assert _run([
-        <removed>
-        <removed>
-        <removed>
+        (65, '“Ối!? C-Cái cân này…! Vì triển lãm… vì giải thưởng…!', "NPC_LÍNH"),
+        (66, 'Chiếc càng nâng cố giữ thùng men khỏi rơi xuống rãnh.', "NARRATOR"),
+        (67, '(Khôngggggg! Đừng dán tem lên áo! Cíu, mực còn ướt!!)', "ALISTAR"),
     ]) == ["NPC_LÍNH", "NPC_LÍNH", "ALISTAR"]
     assert _run([(1, "“Nói tiếp đi,", "A"), (2, "（Không đời nào.）", "B")]) == ["A", "B"]
 

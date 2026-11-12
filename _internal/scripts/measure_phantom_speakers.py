@@ -1,4 +1,4 @@
-r"""Có bao nhiêu "nhân vật" thật ra là chữ mở đầu một câu tường thuật sau dấu đóng ngoặc kép?
+"""Có bao nhiêu "nhân vật" thật ra là chữ mở đầu một câu tường thuật sau dấu đóng ngoặc kép?
 
     python scripts/measure_phantom_speakers.py
     python scripts/measure_phantom_speakers.py --min-lines 1 --all-books
@@ -7,7 +7,7 @@ Chỉ đọc: mở database project ở chế độ read-only, không ghi gì.
 
 ## Ca thật
 
-<removed>
+Nguồn `“Victor đây, mở hộp tem nhé.” Nghe tiếng đếm phiếu của Victor…` cho ra một "nhân vật" tên `Nghe` giữ 3 câu
 thực ra của Victor và Nam tước Othello (14-09). Hai hệ quả: lời bị gán sai giọng, và cổng dàn
 giọng chặn cả lô vì cái tên ấy không có giới tính. `Nghe` cũng góp một va chạm cùng chương ở lô
 3 (chương 36, chia giọng với Camil).
@@ -68,8 +68,8 @@ def _is_mid_sentence(text: str, at: int) -> bool:
     đầu đoạn và dấu mở ngoặc kép, nên cả 13 lần `Nghe` viết hoa của cuốn 2 bị tính là "giữa
     câu" - trong khi đọc ra thì **cả 13** đứng ngay sau `.`, `?` hoặc `!`:
 
-        <removed>
-        <removed>
+        ... trên kệ hộp mực. [Nghe] tiếng đếm phiếu của Victor...
+        ... lại là một tờ phiếu? [Nghe] như đơn đặt giấy can...
 
     Và vì thế `Nghe` - ca thật đã sinh ra cả mục hàng chờ này - lọt lưới chính phép đo đi tìm
     nó. Giữa câu = chữ liền trước (bỏ dấu cách) là **chữ, số, hoặc dấu phẩy**; mọi dấu kết câu,

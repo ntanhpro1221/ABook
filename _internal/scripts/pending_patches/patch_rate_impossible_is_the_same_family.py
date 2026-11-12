@@ -54,12 +54,12 @@ ASR_TRANSCRIPT_RATE_IMPOSSIBLE = "ASR_TRANSCRIPT_RATE_IMPOSSIBLE"'''
 assert OLD in s, "khong khop hang so"
 s = s.replace(OLD, NEW, 1)
 
-<removed>
+OLD = '''    "Ôi trời! Ơ ơ ơ! Kẹt giấy!" came back as "Bản tin minh họa của đài kết thúc ở đây"
     twice, from two separately generated takes with different seeds. Whisper is deterministic
     about it, so another repair round cannot rescue a verdict that was never available.
     """
     return str(reason).strip() == ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE'''
-<removed>
+NEW = '''    "Ôi trời! Ơ ơ ơ! Kẹt giấy!" came back as "Bản tin minh họa của đài kết thúc ở đây"
     twice, from two separately generated takes with different seeds. Whisper is deterministic
     about it, so another repair round cannot rescue a verdict that was never available.
 

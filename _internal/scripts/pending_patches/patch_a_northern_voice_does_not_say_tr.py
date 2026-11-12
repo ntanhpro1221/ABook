@@ -396,16 +396,16 @@ NORTH = regional_consonant_folds("Bắc")
 # Ca thật lấy nguyên văn từ DB lô 6: (sách, Whisper)
 # Ba ca mà phép gộp phụ âm vùng THẬT SỰ thêm được, đo bằng chính hàm dây chuyền dùng.
 IMPROVED_CASES = (
-    <removed>
+    ("Nhận đủ thẻ kiểm kê, Raventi trầm giọng gầm lên:",
      "Sau một hồi im lặng dài răng rạc, Giaventi chầm rộng gầm lên."),
     ("Lily dụi dụi mắt rồi nói:", "Layli rụi rụi mắt rồi nói."),
-    <removed>
+    ("Lucien kiểm lại khay mực và cân.", "Lucy Enliak kiểm lại khay mực và cân."),
 )
 # Các ca mà phép gộp thanh điệu (âm vị sea-g2p) vốn đã cứu: phép gộp vùng không được làm tệ đi.
 ALREADY_HANDLED = (
     ("Gaston trầm ngâm một lúc:", "Gatton chầm ngâm một lúc."),
-    <removed>
-    <removed>
+    ("Susan thấy hộp tem mới rồi reo lên:", "Suzanne thấy hộp tem mới rồi reo lên."),
+    ("Bên cạnh bàn cân, Thompson trầm ngâm nói:", "Bên cạnh bàn cân, Tom Persson chầm ngâm nói."),
 )
 REAL_CASES = IMPROVED_CASES + ALREADY_HANDLED
 

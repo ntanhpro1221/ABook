@@ -20,7 +20,7 @@ describe("shownReading", () => {
 
 describe("excerpt", () => {
   it("keeps a short line whole, without its dialogue quotes", () => {
-    expect(excerpt("“Đi thôi.”")).toBe("Đi thôi.");
+    expect(excerpt("“Đẩy vào nhé.”")).toBe("Đẩy vào nhé.");
     expect(excerpt("『Ta là ai?』")).toBe("Ta là ai?");
     expect(excerpt("- Chị Dậu đâu rồi?")).toBe("Chị Dậu đâu rồi?");
   });

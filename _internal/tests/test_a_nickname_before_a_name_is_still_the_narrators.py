@@ -17,9 +17,9 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "unknown") -> dict:
 def test_a_nickname_quoted_before_a_name_stays_the_narrators() -> None:
     group = [
         _row(0, "dialogue", "“Tôi là một chiêm tinh sư.”"),
-        <removed>
+        _row(1, "narration", 'Sau khi xếp các cuộn giấy lên kệ và khóa ngăn kéo đựng mực,'),
         _row(2, "dialogue", "“Sơn Ca”"),
-        <removed>
+        _row(3, "narration", 'Samantha rảo bước qua quầy in để nhận túi bìa mới.'),
     ]
     payload = {"segments": [
         _item(0, "dialogue", "Samantha", "female"), _item(1, "narration", "NARRATOR"),

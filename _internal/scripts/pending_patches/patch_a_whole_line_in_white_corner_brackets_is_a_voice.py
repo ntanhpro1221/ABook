@@ -10,7 +10,7 @@ một giọng nói, chỉ khác ai nói:
 
 | truyện | 『…』 nguyên dòng là gì | số dòng |
 |---|---|---|
-<removed>
+| Yamiyo no Hotaru | kẻ nhập xác nói qua miệng người bị nhập ("Loa ở quầy in, nhưng giọng đọc là của người trực cổng") | 6.185 |
 | Năng lực bá đạo của tôi trong game tử thần | bảng thông báo của game (`『Ting.』`, `『Số người chơi: 8』`) | 5.048 |
 | Two Childhood Friends | tiếng qua loa, qua điện thoại | 691 |
 
@@ -24,7 +24,7 @@ Vá HẸP nhất có thể - chỉ dòng nguyên vẹn `『…』`:
   - không thêm 『 vào `CURLY_QUOTE_SPECS`, nên 『 không mở trạng thái ngoặc nhiều dòng: theo lối Nhật `『』` là ngoặc
     LỒNG trong `「…」`, mà `「」` nay đã thành `“”`, nên coi 『』 là ngoặc ngoài sẽ cắt vụn câu thoại;
   - cuốn 1 và cuốn 2 KHÔNG có dòng nguyên vẹn nào như thế (cuốn 1 có ba file dùng 『』 trong bảng trạng thái, đều nằm
-    <removed>
+    giữa câu: "Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』"), nên hai cuốn đang chạy không đổi một
     đoạn nào - chứng minh bằng cách chia đoạn lại cả 915 + 478 chương trước/sau (xem lượt thử trong commit).
 
 Phần analysis: `DIALOGUE_OPENERS`/`DIALOGUE_CLOSERS` nhận thêm 『 và 』. Nếu không, khoá "thoại nối tiếp cùng người nói"
@@ -98,8 +98,8 @@ def test_a_whole_line_is_a_voice() -> None:
 
 def test_a_term_inside_a_sentence_stays_narration() -> None:
     assert _kinds("『Dị năng』 của cô ấy rất mạnh.") == [("narration", "『Dị năng』 của cô ấy rất mạnh.")]
-    <removed>
-        <removed>
+    assert _kinds("Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』") == [
+        ("narration", "Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』")
     ]
 
 
@@ -109,8 +109,8 @@ def test_two_voices_in_a_row_are_not_chained_to_one_speaker() -> None:
 
 
 def test_a_book_without_white_corner_brackets_is_untouched() -> None:
-    <removed>
-    <removed>
+    text = "“Lucien, chọn giúp tớ màu tem nhé.”\\n\\nDouglas cười nói."
+    assert _kinds(text) == [("dialogue", "“Lucien, chọn giúp tớ màu tem nhé.”"),
                             ("narration", "Douglas cười nói.")]
 ''', encoding="utf-8")
 print(f"da viet {test}")

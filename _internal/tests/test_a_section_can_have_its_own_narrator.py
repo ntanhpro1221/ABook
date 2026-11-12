@@ -359,7 +359,7 @@ def test_overlapping_name_fragments_keep_the_longest_name_that_does_not_overlap(
     """Soát UX a13 #11: "Thiên Biến Vạn", "Biến Vạn Hóa", "Hóa Krai Andrey" là mảnh của cùng một cụm tên - gợi ý chỉ giữ không chồng."""
     from abook.webui import narrator_cards
 
-    texts = ["Rồi Thiên Biến Vạn Hóa Krai Andrey bước vào.", "Lúc ấy Thiên Biến Vạn gật đầu.", "Gặp Biến Vạn Hóa, Mai cười."]
+    texts = ['Rồi Thợ In Bảy Màu Krai Andrey bước vào.', "Lúc ấy Thiên Biến Vạn gật đầu.", "Gặp Biến Vạn Hóa, Mai cười."]
     names = narrator_cards.section_names(texts, set())
     assert "Biến Vạn Hóa" not in names and "Thiên Biến Vạn" in names, names
     assert not any(narrator_cards._overlap(a, b) for a in names for b in names if a != b), names

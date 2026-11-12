@@ -13,7 +13,7 @@ là chỗ sai:
 |---|---|---|---|---|
 | NEESHKA (lô 10) | 9 nam / 12 nữ | 23 nam / 7 nữ | **nữ** | nam: "Ngài Neeshka", "Ủy viên Neeshka, **ông** cảm thấy...", "Neeshka và những **quý ông** khác", và câu đối lập "**ngài** Neeshka, **cô** Milina" |
 | CHLOE (lô 8) | 2 nam / 13 nữ | 26 nam / 5 nữ | **nữ** | nam: `docs/GOLD_GUIDE.md` đã ghi từ trước - chương 344 gọi "anh", "ngài Chloe" |
-<removed>
+| LAUREN (lô 8) | 4 nam / 7 nữ | 11 nam / 0 nữ | **nữ** | nam: "Ý kiến của **ngài** Lauren", "**ông** đang kiểm lại phiếu của Lauren" |
 
 Giới tính sai là lỗi NGHE RÕ NHẤT: cả nhân vật đọc bằng giọng khác giới suốt cuốn sách.
 

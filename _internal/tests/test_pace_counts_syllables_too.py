@@ -1,6 +1,6 @@
 """Một bản thu chỉ chậm khi chậm theo cả chữ lẫn âm tiết — chương 075 của lô 3 là ca gốc.
 
-<removed>
+"Và chú Anh in vé tím để mẹ đi xem hội." mất 10/10 lần ở 10,64–11,80 chars/s (sàn 12,5) vì câu
 có 2,25 chữ mỗi từ so với trung vị kho 3,33; theo âm tiết nó đọc 4,48/giây, gần trung vị kho
 4,67. Cùng họ với lỗi chữ số (`spoken_speakable_chars`): thước đếm sai cái nó nhận là đếm.
 """
@@ -14,7 +14,7 @@ from abook.audio_io import (
 )
 
 NORMAL = (12.5, 24.5)
-<removed>
+SENTENCE_075 = 'Và chú Anh in vé tím để mẹ đi xem hội.'
 
 
 def test_the_lost_sentence_of_chapter_075_is_not_slow() -> None:

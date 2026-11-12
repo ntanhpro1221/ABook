@@ -57,9 +57,9 @@ def test_a_quote_spanning_paragraphs_still_closes_where_it_should() -> None:
     the closing mark. That is not a defect and must keep its single dialogue reading.
     """
     text = (
-        <removed>
-        <removed>
-        <removed>
+        "“Đồng hồ Theosbane luôn đủ kim,\\n\\n"
+        "Khay mực Zynx luôn đủ màu,\\n\\n"
+        "Tập phiếu Kallith luôn đủ số.”\\n\\n"
         "Tôi liếc xuống nhìn cậu ta."
     )
     warnings: list[str] = []
@@ -79,9 +79,9 @@ def test_recovery_closes_the_offending_paragraph_not_the_innocent_one() -> None:
     versions of check_sources.py did.
     """
     text = (
-        <removed>
-        <removed>
-        <removed>
+        "“Đồng hồ Theosbane luôn đủ kim,\\n\\n"
+        "Tập phiếu Kallith luôn đủ số.”\\n\\n"
+        "Cậu bé đặt cuộn giấy xuống rồi gọi người ghi phiếu.\\n\\n"
         "Đúng là vậy, nhưng tiền nong có hơi eo hẹp.”\\n\\n"
         "À, đương nhiên rồi nhỉ."
     )

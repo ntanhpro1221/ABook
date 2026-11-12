@@ -20,7 +20,7 @@ from abook.database import (
     ProjectDB,
 )
 
-<removed>
+LOST_LINE_SUFFIX = "feeb9dd9dda2"  # 'Chúng tôi in tem cho Xưởng Ishtara (Ishtara Workshop).'
 
 
 def _copy(tmp_path: Path) -> ProjectDB:

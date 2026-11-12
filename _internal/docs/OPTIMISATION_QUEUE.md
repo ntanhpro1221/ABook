@@ -627,8 +627,8 @@ tiếp theo rõ ràng nhất. Ghi kèm toàn bộ số liệu vì lập luận �
 | **đương nhiệm** | 1,92s | **có** | `"Tiếp theo. À xong."` | — |
 | vòng 0 | 0,96s | **có** | `"tiếp theo"` | 1,00 |
 | vòng 1 | 0,56s | không | `"Cảm ơn các bạn đã theo dõi."` | 0,00 |
-| vòng 2 | 0,96s | **có** | `"Cảm ơn các bạn đã theo dõi và hẹn gặp lại."` | 0,00 |
-| vòng 3 | 0,96s | **có** | `"Cảm ơn các bạn đã theo dõi và hẹn gặp lại."` | 0,00 |
+| vòng 2 | 0,96s | **có** | `"Bản tin minh họa của đài kết thúc ở đây."` | 0,00 |
+| vòng 3 | 0,96s | **có** | `"Bản tin minh họa của đài kết thúc ở đây."` | 0,00 |
 | **vòng 4** | **0,64s** | **không** | `"Tiếp theo. Tiếp theo. Tiếp theo."` | **1,00** |
 
 Ba bản 0,96s giống hệt nhau đến hai chữ số — đó là **trần khung**, không phải trùng hợp. Và
@@ -997,7 +997,7 @@ c00008_s0000058_b47b5843ed04=TTS_PACE_BAND_RELAXED
 thì bản vá — vốn chỉ nhận `TTS_PACE_BAND_RELAXED` — trông như không khớp với chính chương nó
 sinh ra để cứu. `last_error` của chương 007 trong lô 1 ghi đủ đuôi.)
 
-<removed>
+Đoạn ấy: `"C-Cái máy này! Nó lại nuốt tờ phiếu vừa in của tôi rồi à?!"` — phân tích gán
 nhịp **`fast`**.
 
 **Bản đầu của mục này viết 11,22 ký tự/giây. Con số ấy sai.** Tôi tính lại từ `signal_json` của
@@ -1681,7 +1681,7 @@ chương cũ ghép lại sẽ đoạt lại chỗ trong sách vì `assemble_book
 `scripts/pending_patches/patch_a_number_is_read_in_full.py`, sau `patch_keep_the_locked_reading`
 trong `ORDER`. Chương 106 của lô 4 chết vì **một** đoạn, 10/10 lần thử:
 
-    <removed>
+    Tờ hướng dẫn chính thức ghi ba mật khẩu để kiểm thử: "password", "123456", rồi đến "qwerty1234".
 
     thước chữ      70 ký tự đọc được ở 12,35 kt/s  → dưới sàn 12,5 đúng 0,15
     thước âm tiết  17 âm tiết         ở ~3,0 at/s   → dưới sàn 3,75
@@ -1812,7 +1812,7 @@ Con số thật là **IVAN**: `male`, `age=unknown`, 17 câu ở chương 062 đ
     lô 3, chương 060   `age = unknown`, 3 câu, `thai_son_f100_p+00` — giọng nam, đúng
     lô 4               `age = unknown`, `locked_voice_key = ngoc_linh_f107_p+02` — port mang theo
 
-<removed>
+Thoại: *"T-Tôi tên là Ivan,"*, *"cậu để m-mực lên t-tờ phiếu mới rồi…"*, *"Khỏe không, người
 anh em?"* — một thanh niên hay lắp, không phải một đứa trẻ. Một lần phân loại sai đã theo anh ta
 sang mọi lô sau, vì `port_casting` mang `locked_voice_key` đi cùng danh tính. Đúng cơ chế giữ nhất
 quán; nó giữ nguyên cả cái sai.
@@ -2147,7 +2147,7 @@ bốn bài test đều xanh và chương vẫn hỏng.
   Đừng thu lại lô 1 vì nó: 41 lần đã lên sách và đã được máy cho qua, đổi cách đọc giữa sách còn tệ hơn.
 
 - **Tên người nói bịa từ chữ mở đầu câu tường thuật** (2026-09-14, ca thật `Nghe`): nguồn
-  <removed>
+  `“Victor đây, mở hộp tem nhé.” Nghe tiếng đếm phiếu của Victor…` cho ra một "nhân vật" tên `Nghe` giữ 3 câu thực ra của Victor
   và Nam tước Othello. Hai hệ quả: lời bị gán sai giọng, và cổng dàn giọng chặn cả lô vì cái tên ấy không
   có giới tính. Đề xuất **đo trước**: đếm trong mọi project đã lưu những speaker mà (a) chỉ xuất hiện
   ngay sau một dấu đóng ngoặc kép, và (b) là từ chức năng / động từ tiếng Việt thường gặp
@@ -2187,7 +2187,7 @@ bốn bài test đều xanh và chương vẫn hỏng.
 
   **Chưa vá.** `analysis.py` nằm trong `ANALYSIS_CASTING_IMPLEMENTATION_FILES`: đổi sau khi phân tích đã bắt
   đầu thì lượt ấy **mất phân tích**, nên bản vá phải áp ở ranh giới **trước** khi một lô bắt đầu phân tích.
-  Và câu khó chưa có câu trả lời đo được: bỏ pin thì gán lời ấy cho ai? `“Là tôi, Victor.”` là của Victor
+  Và câu khó chưa có câu trả lời đo được: bỏ pin thì gán lời ấy cho ai? `“Victor đây, mở hộp tem nhé.”` là của Victor
   (người nói tự khai tên), `Mình` là một lá thư đọc lên, `Tin` là một tờ tin nhắn. "Người nói gần nhất" đúng
   cho ca 1, chưa rõ cho ca 2–3. Đo tiếp trước khi viết: với mỗi trong 87 câu, so "người nói gần nhất trước
   đó" với người đúng đọc bằng tay trên 10 ca.
@@ -2202,10 +2202,10 @@ bốn bài test đều xanh và chương vẫn hỏng.
 
   | câu bị gán sai | câu tường thuật liền sau | chủ thật | "gần nhất trước đó" |
   |---|---|---|---|
-  <removed>
-  <removed>
+  | `“Victor đây, mở hộp tem nhé.”` | `Nghe tiếng đếm phiếu của **Victor**…` | Victor | Victor ✔ |
+  | `“Ta phụ trách kho tem, Nam tước Othello…”` | `Nghe tiếng máy in, **Othello** dừng đếm phiếu…` | Othello | Victor ✘ |
   | `“Lucien vừa hoàn thành tác phẩm…”` | `Dù **Othello** không thích phong cách…` | Othello | Victor ✘ |
-  <removed>
+  | `“Ta chưa thấy phiếu xuất hàng của ngươi.”` | `Nghe tin thủ lĩnh…, **Sard** không thể hiện…` | Sard | Natasha ✘ |
 
   Nên: **lấy tên nhân vật xuất hiện trong chính câu tường thuật ấy** — 4/4 đúng — còn "người nói gần nhất"
   1/4 (và lần đúng ấy là ngẫu nhiên). Đề xuất cũ của mục trên ("trả về người nói gần nhất") phải sửa theo.
@@ -2490,8 +2490,8 @@ bốn bài test đều xanh và chương vẫn hỏng.
   dấu của "mẹ" cũng là "me". Đọc ca thật (cuốn 1, lô 8/9/10) thì `ME` là **"me" tiếng Anh**: cuốn 1 kể ở
   ngôi thứ nhất, và mô hình khai người nói là `ME` cho chính lời của **nhân vật chính**:
 
-        <removed>
-        <removed>
+        seq 127 [NARRATOR] "Cảm ơn đã giữ hộ thẻ trực," tôi đều giọng.
+        seq 128 [ME      ] "Các ngươi xếp đủ các hộp màu rồi. Ta ký vào bảng kê nhé."
 
   Nên nhóm xưng hô ngôi thứ ba thật chỉ còn **16 câu** (`CHA` 9, `BÀ` 4, `MẸ` 3), không phải 110. `MẸ`
   (id 21, minor, có pin) và `ME` (id 41, **main**, 54 lần nhắc) là **hai dòng `characters` khác nhau**
@@ -3122,8 +3122,8 @@ Cả ba là tên riêng / từ tượng thanh mà Whisper đổi thành chữ n�
 Tỉ lệ cảnh báo neo tên như nhau (23-31% cả hai). Đo lại khi lô 8 và 9 xong; nếu 1-3 chữ vẫn trên ~2% thì
 đây là việc của lớp "tên Whisper nhận ra" ở trên (so theo âm), không phải việc của giọng đọc.
 
-<removed>
-tục…”` → Whisper nghe "không liên tục" BA lần. Có vẻ là lỗi âm thật: cụm lặp + dấu ba chấm cuối câu và giọng
+Một ca KHÁC loại, cùng lô: 344 CHLOE (Ngọc Huyền): ví dụ tự viết “Hãy chia màu men thành từng khay nhỏ…”
+(Trích nguồn gốc đã gỡ; số đo bên dưới vẫn thuộc lần đo cũ.)
 đọc đọc tiếp theo nhịp lặp. **Đã đếm (11:1x):** nguồn cả cuốn có 18 câu dạng "X, X…" (6 đã thu trước lô 8,
 12 ở phía trước). Trong 6 ca cũ, bản chép cho thấy giọng đọc gần như LUÔN thêm một nhịp lặp - `cốc, cốc…` →
 "Cốc, cốc, cốc, cốc", `hm, hm…` → "Hưng, hưng, hưng", `thình thịch, thình thịch…` → ba lần - và cả sáu đều qua

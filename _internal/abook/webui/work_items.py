@@ -379,8 +379,8 @@ def _word_positions(needle: str, text: str) -> list[int]:
 
 
 def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], int]:
-    """{(danh hiệu, tên): số lần sách viết chúng SÁT nhau}: "Thiên Biến Vạn Hóa Krai", "Krai Thiên Biến Vạn Hóa",
-    <removed>
+    """{(danh hiệu, tên): số lần sách viết chúng SÁT nhau}: "Thợ In Bảy Màu Krai", "Krai Thợ In Bảy Màu",
+    "Krai được mệnh danh Thợ In Bảy Màu". Tên được so cả chữ đầu và chữ cuối ("Krai" của "Krai Andrey"). Dấu phẩy KHÔNG
     tính: "Tino, Krai" hay "Lapis, Kris" là danh sách hai người (đo trên kho Nageki 29-09: cặp đúng 5 lần sát nhau, hai cặp
     sai 0 lần sát, 9 và 5 lần cách dấu phẩy). Nhãn này nằm trong nhãn kia thì bỏ - thẻ "một người hai tên" lo."""
     from ..character_registry import fold_for_source_search
@@ -1420,7 +1420,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                 **fix,
             })
 
-    # 3a. Danh hiệu / biệt danh của một người: sách viết hai tên SÁT nhau ("Thiên Biến Vạn Hóa Krai") mà máy gán câu cho
+    # 3a. Danh hiệu / biệt danh của một người: sách viết hai tên SÁT nhau ("Thợ In Bảy Màu Krai") mà máy gán câu cho
     #     cả hai - hai giọng cho một người (Nageki 65: 3 câu của người kể thành "Thiên Biến Vạn Hoá"). Thẻ trên chỉ bắt
     #     tên ngắn nằm trong tên dài. Chỉ hỏi khi danh hiệu đứng sát ĐÚNG MỘT người (EPITHET_EVIDENCE lần trở lên) - sát
     #     nhiều người là chức vụ chung ("Giáo sư"). Gộp như thẻ trên: người ít câu về người nhiều câu.

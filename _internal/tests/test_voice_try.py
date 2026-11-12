@@ -75,7 +75,7 @@ def test_the_try_line_is_a_calm_line_of_the_character_in_a_comfortable_length(tm
 
 def test_a_character_with_only_short_lines_gets_the_nearest_and_one_with_none_is_no_line(tmp_path: Path) -> None:
     paths, _db = _noah(tmp_path)
-    assert _line(paths, "LUCIEN")["stable_id"] == "c1s1", "chỉ có “Đi thôi.”: vẫn đọc được bằng câu của sách"
+    assert _line(paths, "LUCIEN")["stable_id"] == "c1s1", 'chỉ có “Đẩy vào nhé.”: vẫn đọc được bằng câu của sách'
     with sqlite3.connect(paths.db) as conn:
         conn.execute("UPDATE segments SET voice_profile_id=NULL WHERE stable_id='c1s1'")
     with pytest.raises(PreviewError) as raised:

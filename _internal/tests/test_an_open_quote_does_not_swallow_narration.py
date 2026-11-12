@@ -70,17 +70,20 @@ def test_an_unclosed_straight_quote_does_not_swallow_narration() -> None:
 def test_a_thought_word_ending_a_narration_line_does_not_close_an_open_quote() -> None:
     rows = segment_chapter_text(
         1,
-        "“Ngài không nên tự mình ra tay.\n\n"
-        "Thế là Minh bước ra can. Cô gái vẫn thì thầm, ‘ba’\n\n"
-        <removed>
-        "“Đi thôi.”",
+        """“Ngài cứ để chiếc xe ở kho.
+
+Thế là Minh đi lấy thẻ. Cô gái vẫn thì thầm, ‘mực’
+
+Tôi chưa thấy phiếu giao hàng.
+
+“Đẩy vào nhé.”""",
     )
 
     by_text = {str(row["text"]): str(row["kind_hint"]) for row in rows}
-    assert by_text["Thế là Minh bước ra can. Cô gái vẫn thì thầm,"] == "narration"
-    assert by_text["‘ba’"] == "thought"
-    <removed>
-    assert by_text["“Đi thôi.”"] == "dialogue"
+    assert by_text['Thế là Minh đi lấy thẻ. Cô gái vẫn thì thầm,'] == "narration"
+    assert by_text['‘mực’'] == "thought"
+    assert by_text['Tôi chưa thấy phiếu giao hàng.'] == "narration"
+    assert by_text['“Đẩy vào nhé.”'] == "dialogue"
 
 
 def test_a_speech_that_reopens_every_paragraph_is_still_one_speech() -> None:

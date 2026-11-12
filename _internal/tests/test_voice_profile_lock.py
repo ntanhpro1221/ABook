@@ -190,7 +190,7 @@ def test_standalone_gasp_profile_uses_empirically_locked_sampling() -> None:
 
 def test_clarity_delivery_only_lowers_sampling_variance() -> None:
     row = {
-        <removed>
+        "text": 'Đập nát cái máy gian lận khốn kiếp kia ngay!',
         "speaker": "Đám đông",
         "emotion": "angry",
         "intensity": 3,

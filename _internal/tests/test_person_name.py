@@ -10,7 +10,7 @@ from abook.webui.humanize import person_name
 @pytest.mark.parametrize(
     ("raw", "shown"),
     [
-        <removed>
+        ("LÃNH SƯƠNG MỘC THANH Y", "Lãnh Sương Mộc Thanh Y"),  # sổ nhân vật viết hoa hết
         ("AZUMA", "Azuma"),
         ("LOUIS IV", "Louis IV"),
         ("NPC_LOCAL::c00006::r0b2::người lùn", "người lùn"),

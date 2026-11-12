@@ -19,7 +19,7 @@ def test_a_foreign_name_that_only_opens_a_sentence_is_a_candidate() -> None:
 
 
 def test_capitalised_vietnamese_words_at_the_start_are_still_not_names() -> None:
-    <removed>
+    assert _candidates('May mắn thay, chiếc hộp còn kín. Xen lẫn các sợi len còn có tóc đỏ.') == {}
 
 
 def test_a_vietnamese_word_is_stripped_off_the_name_it_opens() -> None:

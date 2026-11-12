@@ -3,8 +3,8 @@
 Three of alpha.32's blocked segments read a Vietnamese phrase followed by its English
 source in brackets, and the voice says both:
 
-    <removed>
-    <removed>
+    1.000 Đơn vị Bột màu (Pigment Units)  ->  heard "PIG MEN UNIT"
+    Hộp này mang nhãn Mười Màu (Ten Colors)      ->  heard "tên Demon Prince"
 
 Two remedies suggest themselves and both are wrong, which is why this script exists rather
 than a patch. Measured over the whole book it prints the base rate, the rate inside the

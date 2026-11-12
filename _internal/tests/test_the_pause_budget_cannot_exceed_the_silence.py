@@ -1,8 +1,8 @@
 """Cận trên của phép kiểm nhịp phải xét khoảng lặng CÓ THẬT, không xét ngân sách đoán.
 
 Ba đoạn của cuốn 2 mất hẳn bản thu vì bị kết tội "đọc quá nhanh" khi không hề nhanh: chương 082
-(`“Tôi không biết ‘xoay’ đâu, Felicia.”`, 22 lần thử, 29–32,50 kt/s), chương 131 (`“Chà… Cậu
-‘nếu’ nhiều thật đấy, Lucien.”`, 11 lần thử, 26,37) và chương 090.
+(`“Tôi không biết ‘xoay’ đâu, Felicia.”`, 22 lần thử, 29–32,50 kt/s), chương 131 (`“Này… Cậu
+‘chắc’ hơi nhiều rồi, Lucien.”`, 11 lần thử, 26,37) và chương 090.
 
 Nhịp không phải ký tự chia thời lượng: `validate_audio_array` trừ trước một **ngân sách nghỉ**
 0,276 giây mỗi nhóm dấu câu. Ngân sách ấy cứu những câu đọc đúng dấu câu khỏi bị gọi là chậm,
@@ -16,7 +16,7 @@ số giây im lặng.
 Nên cận TRÊN có thêm một thước: nhịp tính với khoảng lặng đo được. Nó luôn nhỏ hơn hoặc bằng
 nhịp cũ, nên thay đổi là **một chiều** — chỉ bớt lời kết tội, không thêm. Cận DƯỚI giữ nguyên
 thước cũ: đo trên 3000 đoạn đã chốt, chặn cả hai cận biến 2 đoạn đang đạt thành ngoài băng ở
-<removed>
+cận dưới, và `“Felicia, ký giúp nhé. Ồ… cậu cũng đến nhận tem à, Lucien!”` (13,75 → 10,27) là một trong hai.
 """
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ SAMPLE_RATE = 24_000
 # Đúng câu đã mất bản thu ở chương 082 sau 22 lần thử.
 LOST_LINE = "\u201cTôi không biết \u2018xoay\u2019 đâu, Felicia.\u201d"
 # Một trong hai đoạn mà chặn ở cận dưới sẽ giết; nó đang đạt và phải tiếp tục đạt.
-<removed>
+SLOW_LINE = '“Felicia, ký giúp nhé. Ồ… cậu cũng đến nhận tem à, Lucien!”'
 ONE_FRAME = 0.011
 
 
@@ -145,7 +145,7 @@ def test_the_second_ruler_can_only_remove_a_verdict() -> None:
 
 
 def test_the_slow_side_keeps_the_old_ruler() -> None:
-    """Đoạn `“Chào, Felicia...”`: 13,75 kt/s với ngân sách, 10,27 với khoảng lặng thật.
+    """Đoạn `“Felicia, ký giúp nhé...”`: 13,75 kt/s với ngân sách, 10,27 với khoảng lặng thật.
 
     Nó đang đạt. Nếu khoảng lặng đo được cũng chặn cận dưới thì nó thành "đọc quá chậm" - 1
     trong 2 đoạn như thế trên 3000 đoạn đã chốt, và đúng lý do cận dưới giữ thước cũ.

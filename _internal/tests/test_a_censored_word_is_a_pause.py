@@ -11,8 +11,8 @@ from abook.text_processing import spoken_symbols_to_words
     [
         ("\u201cC\u00e1i #&!@! Kh\u00f4ng ph\u1ea3i l\u1ea1i n\u1eefa ch\u1ee9?\u201d",
          "\u201cC\u00e1i\u2026 Kh\u00f4ng ph\u1ea3i l\u1ea1i n\u1eefa ch\u1ee9?\u201d"),
-        ("\u0111\u1ea7u ng\u01b0\u01a1i \u0111\u1ec3 d\u01b0\u1edbi *** \u00e0?",
-         "\u0111\u1ea7u ng\u01b0\u01a1i \u0111\u1ec3 d\u01b0\u1edbi\u2026 \u00e0?"),
+        ('ngươi cất hộp mực dưới *** à?',
+         'ngươi cất hộp mực dưới… à?'),
     ],
     ids=["chuong 225 #&!@!", "chuong 385 ***"],
 )

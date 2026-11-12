@@ -18,8 +18,7 @@ from abook.text_processing import vietnamese_number_words
 
 NORMAL = (12.5, 24.5)
 LOST_LINE_106 = (
-    <removed>
-    "thậm chí là \"qwerty1234\"."
+    'Tờ hướng dẫn chính thức ghi ba mật khẩu để kiểm thử: "password", "123456", rồi đến "qwerty1234".'
 )
 
 

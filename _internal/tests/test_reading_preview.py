@@ -33,7 +33,7 @@ from tests.test_voice_profile_lock import FakeVieNeuRuntime
 from tests.test_webui_listen_and_sync import _request
 from tests.timing import assert_within, scaled
 
-<removed>
+LONG = '“Natasha, đưa tập phiếu tới quầy trước giờ kiểm kê nhé.”'  # 24-160 ký tự, có tên
 
 
 def _pronounce(db, surface: str, spoken: str, *, confidence: float = 0.95, source: str = "analysis", locked: int = 0) -> None:

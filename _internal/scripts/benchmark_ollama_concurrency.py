@@ -45,8 +45,7 @@ NUM_CTX = 16384
 # narrative segments to label. Length matters - a short prompt would understate the KV
 # cache each concurrent slot actually needs.
 SEGMENTS = (
-    <removed>
-    "mồ hôi ướt đẫm cả lưng áo.",
+    'Hạ Phong choàng tỉnh bên máy in tem, mồ hôi ướt đẫm cả lưng áo.',
     "‘Tỉnh dậy, phải tỉnh dậy!’",
     "Cậu nhớ lại giấc mơ hỏa hoạn, khói dày "
     "đặc phủ kín cả căn phòng nhỏ.",

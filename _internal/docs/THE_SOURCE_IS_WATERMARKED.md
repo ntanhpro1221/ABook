@@ -25,8 +25,8 @@ Chương 015 đã chạy thật ở alpha.56. Đoạn mang thuỷ ấn:
 
 ```
 c00006_s0000013_81fb26ac2675   status=verified   8,08s
-<removed>
-<removed>
+văn bản : 'Tôi đang bọc lại cuộn dây, Juliana đã<53 ký tự vô hình> đưa ra một quyết định…'
+nghe ra : 'Tôi đang bọc lại cuộn dây, Juliana đã ghi số lượng vào phiếu rồi…'
 sim 0,966   wer 0,111   không cảnh báo
 ```
 
@@ -85,7 +85,7 @@ Nghi ngờ nặng nhất, vì bộ chia đoạn **biết** `«»` mà vẫn khô
 
 ```
 «Thẩm Định»
-<removed>
+Tôi khóa mục «Bảng Kiểm» rồi mở hai phiếu nhận hàng trên màn hình.
 ```
 
 Đó là **tên kỹ năng**, không phải lời ai nói. Gán chúng cho một nhân vật sẽ khiến giọng đổi
@@ -97,7 +97,7 @@ dẫn chuyện. Đo: **6 lần trong 3 file** (011, 367, 406), và không lần 
 là chú thích trong bảng trạng thái kiểu game:
 
 ```
-<removed>
+Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』
 ```
 
 Coi chúng là ngoặc kép mới **sai**. Hành vi hiện tại đúng, và không thêm rủi ro ngoặc treo vì

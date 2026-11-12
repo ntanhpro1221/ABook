@@ -8,9 +8,9 @@ Lượt so model 21-09 cho một nguồn dữ liệu mới: ba model trả lời
 mắc là chuyện của model ấy; lỗi **mọi model cùng mắc** là chỗ luật host còn thiếu, và vá host thì mọi model
 đều lợi. Trên 177 đoạn cả ba đều trả lời: 17 đoạn mọi model cùng sai người nói, và lớp lớn nhất là
 
-    <removed>
-    <removed>
-    <removed>
+    363:70  thought  LUCIEN   | Bên chiếc máy in, Lucien Evans đặt hộp màu trước Bellak...
+    363:71  thought  LUCIEN   | Một tờ phiếu còn ướt mực trượt khỏi bàn, rơi xuống cạnh Bellak.
+    363:72  thought  LUCIEN   | Trước bảng nhiệt độ của lò nung, hắn kiểm lại từng nhãn cảnh báo...
 
 Đây là **lời kể ngôi ba** về việc bên ngoài. Bộ tách đoạn gọi chúng là `thought` (hint bất biến, host không
 được đổi), nên cái sai duy nhất còn sửa được là NGƯỜI NÓI: model nêu một người nghĩ, và host tin người được
@@ -23,7 +23,7 @@ thật; chỗ này thì không có nội tâm nào.
    1.283 dòng hint=narration, chỉ 40 dòng đáp án *cho phép* thought và cả 40 vẫn nhận narration) nhưng
    **lợi = 0** và cả sách chỉ 23 đoạn khớp. Sai địa chỉ: 363:70-72 có hint là `thought`, không phải narration.
 2. **"thought không có đại từ ngôi thứ nhất thì về người kể"**: **PHÁ 29 dòng đáp án**. Tiếng Việt cho trống
-   <removed>
+   chủ ngữ, nên nội tâm thật thường chẳng có ngôi 1 nào: `‘Không, hộp mực này ghi nhầm số rồi.’` (344:59, CHLOE).
 3. **"thought ngoài mọi nhịp ngoặc"** - cái được chọn. Nội tâm trực tiếp trong sách này luôn nằm trong ngoặc
    ‘…’ hoặc “…”, còn ba dòng 363:70-72 thì không có ngoặc nào.
 
@@ -199,7 +199,7 @@ def test_a_quote_span_covers_the_segments_between_its_ends() -> None:
         _row("s1", "Hắn nhíu mày."),
         _row("s2", "\\u2018Không được... Không được ngủ."),
         _row("s3", "Phải xử lý việc này trước.\\u2019"),
-        <removed>
+        _row("s4", "Men tím khô thành một lớp mỏng."),
     ]
     assert _segments_outside_every_quote_span(group) == [True, False, False, True]
 
@@ -214,7 +214,7 @@ def test_the_narration_the_parser_called_a_thought_goes_back_to_the_narrator() -
 
 
 def test_real_inner_speech_keeps_its_thinker() -> None:
-    <removed>
+    group = [_row("s1", "\\u2018Không, hộp mực này ghi nhầm số rồi!\\u2019")]
     result = {"s1": {"kind": "thought", "speaker": "CHLOE", "gender": "female", "age": "adult"}}
     _repair_thought_outside_quotes(group, result)
     assert result["s1"]["speaker"] == "CHLOE", "nội tâm đọc bằng giọng người đang nghĩ (20-09)"
@@ -222,7 +222,7 @@ def test_real_inner_speech_keeps_its_thinker() -> None:
 
 def test_a_continuation_segment_of_one_inner_speech_keeps_its_thinker() -> None:
     group = [
-        <removed>
+        _row("s1", "\\u2018Hộp mực thông thường hết hàng thì đặt loại khác."),
         _row("s2", "Phải xử lý việc này trước.\\u2019"),
     ]
     result = {

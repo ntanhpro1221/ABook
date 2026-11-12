@@ -6,7 +6,7 @@ every take rejected by the pace gate for being too slow, and the sentences too s
 split:
 
     Tên tôi là Samael Kaizer Theosbane.                     12.25 chars/s
-    <removed>
+    Tôi chuyển hộp mực này cho Arthur Kaizer Theosbane.       12.13 chars/s
     Cấp Linh Hồn ... C » B » A » S » SS » SSS                9.36 chars/s
 
 The bound is 12.5 and it is not mis-set: over 807 accepted segments the median is 15.82,

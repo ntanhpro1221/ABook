@@ -2,7 +2,7 @@
 
 Nguồn: `D:/Novels/ABook/Text_Tmp` — chủ sách chỉ định 2026-09-13 22:5x (*"lấy tài liệu ở đây mà dev"*)
 sau khi nguồn cuốn 1 (`D:/Novels/Tools/Text`, 478 chương) vào Thùng rác lúc 22:25. Không chung một byte với
-cuốn 1: 478/478 file khác. Đây là một cuốn khác — "Chương 01 - Giàn hỏa thiêu rực cháy".
+cuốn 1: 478/478 file khác. Đây là một cuốn khác — "Chương 01 - Ca trực ở trạm cân".
 
 Gốc sách là tham số (`scripts/book_paths.py`): root `D:/Novels/Audiobooks/book2`, tag `v0.3.0-loNN`,
 kế hoạch này. Cuốn 1 giữ nguyên tại `D:/Novels/Audiobooks/_versions` + `_book` (253 chương), quay lại bằng

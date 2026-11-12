@@ -326,7 +326,7 @@ GENERIC_SPEAKER_TRAITS = {
     "người đàn ông trung niên": ("male", "adult"),
     "người đàn ông": ("male", "adult"),
     "người phụ nữ": ("female", "adult"),
-    <removed>
+    'người phụ nữ áo khoác tím': ("female", "adult"),
     "ông lão": ("male", "elderly"),
     "bà lão": ("female", "elderly"),
     "giám mục": ("male", "adult"),
@@ -638,7 +638,7 @@ ATTRIBUTION_SENTENCE_START_EXCLUSIONS = {
     "cho", "hy", "khe", "kim", "lo", "ly", "ma", "may", "men", "nhanh", "quai", "quay", "sao", "sinh", "so", "tay",
     "tra", "uy", "vong", "xe", "xem", "xoa", "xung", "y",
 }
-<removed>
+# "Lucien còn chưa kịp mở hộp mực, một giọng nói... vọng đến": tên mở câu kể là người CHƯA nói - câu thoại trước là của
 # người khác. Trừ khi cái chưa kịp chính là nói cho xong ("chưa kịp nói dứt câu", "chưa kịp dứt lời"): khi đó người
 # được nêu tên đúng là người vừa nói và bị ngắt.
 NOT_YET_SPOKEN_PATTERN = re.compile(
@@ -1779,7 +1779,7 @@ def _is_quoted_inside_a_sentence(
     result: dict[str, dict[str, Any]],
     original_context: dict[str, dict[str, Any]] | None = None,
 ) -> bool:
-    <removed>
+    """Cụm trích nằm GIỮA một câu kể: "Arthur chưa biết cách gọi “khay chia mực” hay ...".
 
     Câu kể trước chưa kết thúc (không có dấu câu cuối) và câu kể sau nối tiếp nó (mở bằng chữ thường hay dấu câu), cùng
     một đoạn văn. Đó là chữ của người kể trích lời/thuật ngữ, không phải một câu thoại của người nói trong đoạn.
@@ -2027,7 +2027,7 @@ def _repair_same_paragraph_speakers(
             # Chữ của người kể trích giữa câu (quy tắc 8 của đáp án chuẩn) - không phải câu của người nói trong đoạn.
             continue
         if _has_its_own_speech_tag(group, index, result):
-            <removed>
+            # "Raventi đang định đọc bảng kê, Florencia cầm tấm phiếu và cắt ngang: “...”" - một lượt ngắt lời trong cùng đoạn.
             continue
         try:
             key = (int(row["chapter_id"]), int(row["paragraph_index"]))
@@ -7100,7 +7100,7 @@ def _traits_compatible(left: list[Any], right: list[Any]) -> bool:
 LOCAL_IDENTITY_MODES = ("loose", "off", "named", "evidence")
 LOCAL_IDENTITY_MODE_ENV = "ABOOK_LOCAL_IDENTITY_RECONCILE"
 # Lời dẫn cách đoạn của nhãn tối đa bấy nhiêu đoạn mới tính là "gọi tên gần" (ca thật: "Cậu bé Iven,
-<removed>
+# ...:" ngay trước câu thoại; "Cạnh chiếc máy in là Tre'ainar" ba đoạn sau).
 LOCAL_IDENTITY_EVIDENCE_WINDOW = 3
 # Tìm lượt thoại liền trước/liền sau nhãn trong bấy nhiêu đoạn; xa hơn coi như đã sang cảnh khác.
 LOCAL_IDENTITY_TURN_WINDOW = 8
@@ -7140,7 +7140,7 @@ def _text_names(text: str, forms: set[str]) -> bool:
 
 def _description_names(description: str, forms: set[str], texts: list[str]) -> bool:
     """Whether the text joins the description to the name: "cậu bé Iven", "cậu bé tên là Iven",
-    <removed>
+    "cậu bé ấy, Iven". A bare comma is not a join: "Đi qua người đàn ông đang giữ cuộn giấy
     lạnh, Koutarou và Kenji ..." ends one clause and starts the next (9bv8, rk014)."""
     folded = " ".join(description.casefold().split())
     if not folded:
@@ -7249,7 +7249,7 @@ def _identity_named_in_text(
 ) -> str | None:
     """The "named" mode's answer, without the model: the name the label itself carries
     (`_identity_named_by_label`), or else the one name the narration next to the speaker's
-    <removed>
+    lines joins to the description - "Cậu bé Iven, người đã hẹn Lucien lấy màu ...:" right
     before the boy's line, the case this step was written for."""
     named = _identity_named_by_label(speaker, options)
     if named is not None:

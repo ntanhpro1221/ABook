@@ -10,11 +10,15 @@ def _kinds(text: str) -> list[tuple[str, str]]:
 
 
 def test_a_whole_line_in_corner_brackets_is_dialogue() -> None:
-    <removed>
+    rows = _kinds("""「Đến giờ kiểm kê. Tôi ra quầy nhé.」
+
+「Nhớ mang theo bút.」
+
+Hai người gấp sổ hàng.""")
     assert rows == [
-        <removed>
-        ("dialogue", "“Ừ. Hiểu rồi.”"),
-        ("narration", "Hai người lặng lẽ trao đổi."),
+        ("dialogue", '“Đến giờ kiểm kê. Tôi ra quầy nhé.”'),
+        ("dialogue", '“Nhớ mang theo bút.”'),
+        ("narration", 'Hai người gấp sổ hàng.'),
     ]
 
 
@@ -26,18 +30,20 @@ def test_two_corner_bracket_lines_each_open_their_own_quote() -> None:
 
 
 def test_a_term_in_corner_brackets_inside_narration_stays_narration() -> None:
-    <removed>
+    rows = _kinds('Tấm thẻ cô ấy「đóng dấu」được cất vào hộp chì bên cạnh máy in.')
     assert [kind for kind, _ in rows] == ["narration"]
 
 
 def test_white_corner_brackets_are_left_alone() -> None:
     # 『』 là thuật ngữ, bảng hệ thống, ngoặc lồng - không phải ngoặc thoại.
-    <removed>
-        <removed>
+    assert normalize_text('Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』') == (
+        'Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』'
     )
     assert _kinds("『Dị năng』 của cô ấy rất mạnh.") == [("narration", "『Dị năng』 của cô ấy rất mạnh.")]
 
 
 def test_a_text_without_corner_brackets_is_unchanged() -> None:
-    <removed>
+    text = """“Lucien, chọn giúp tớ màu tem nhé.”
+
+Douglas cười nói."""
     assert normalize_text(text) == text

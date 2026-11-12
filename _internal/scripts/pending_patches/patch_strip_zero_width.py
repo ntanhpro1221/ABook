@@ -54,13 +54,13 @@ from __future__ import annotations
 from abook.text_processing import normalize_text, segment_chapter_text
 
 WATERMARK = "\\u200c\\u200d" * 26 + "\\u200c"
-<removed>
+CAU = "Tôi đang bọc lại cuộn dây, Juliana đã"
 
 
 def test_two_texts_that_look_identical_hash_identically() -> None:
     """Cái đắt nhất: hai file trông y hệt nhau trên màn hình phải cho cùng một stable_id."""
-    <removed>
-    <removed>
+    sach = f"{CAU} ghi số lượng vào phiếu rồi treo nó cạnh chiếc cân."
+    co_an = f"{CAU}{WATERMARK} ghi số lượng vào phiếu rồi treo nó cạnh chiếc cân."
 
     assert normalize_text(co_an) == normalize_text(sach)
 
@@ -75,7 +75,7 @@ def test_a_watermark_that_changes_does_not_change_the_audio_seed() -> None:
     # SyntaxError trên Python 3.11, và runtime của dự án là 3.11.9.
     xuoi = "\\u200c\\u200d" * 26
     nguoc = "\\u200d\\u200c" * 26
-    <removed>
+    duoi = " ghi số lượng vào phiếu rồi treo nó cạnh chiếc cân."
     mot = CAU + xuoi + duoi
     hai = CAU + nguoc + duoi
 

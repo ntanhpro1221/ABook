@@ -9,7 +9,7 @@ Chạy: python patch_the_name_after_a_quote_is_not_always_its_speaker.py <root>
 nó bắn 52 lần, đúng 50 - đáng giữ. Hai lần sai cho thấy hai lỗ, và đếm trên cả hai cuốn sản xuất (7.374 lần bắn) cho
 biết lỗ rộng cỡ nào:
 
-<removed>
+1. **Chữ tiếng Việt đầu câu không phải tên.** "Lo lắng phu nhân Tess làm đổ lọ mực..." (TMA 378:25, đáp án
    WELLS) thành người nói "Lo". `LATIN_PROPER_NAME_SURFACE_PATTERN` chỉ bắt chữ ASCII, nên chữ Việt có dấu tự thoát;
    chữ Việt KHÔNG dấu thì không: hai cuốn có ~40 lần như thế - Tay (trái), Cho (rằng), Y (đại từ "y"), Sinh (mệnh),
    Vong (linh), Lo (lắng), Xem (chừng), Hy (vọng), Uy (lực), Xung (quanh), May (thay), Ma (thuật), Xoa, Nhanh, So (với),
@@ -17,7 +17,7 @@ biết lỗ rộng cỡ nào:
    không tồn tại được giao một giọng. Thêm chúng vào `ATTRIBUTION_SENTENCE_START_EXCLUSIONS` - đúng cơ chế 4 mục cuối
    (Nghe, Tin, Giai, Im) đã dùng. Đã kiểm: không chữ nào xuất hiện viết hoa GIỮA câu như tên người trong hai cuốn (chỉ
    trong tựa/thuật ngữ: "Găng Tay Trắng", "Sao chủ", "Y Liệu"). Bỏ ngoài: Ham, Lich - có thể là nhân vật thật.
-<removed>
+2. **Người được nêu tên CHƯA nói.** "Lucien còn chưa kịp mở hộp mực, một giọng nói trang nghiêm... vọng đến" (TMA
    407:78, đáp án BEYER) khoá câu của Beyer cho Lucien. Hai cuốn có ~15 câu "X (còn) chưa kịp đáp / làm gì / phản ứng /
    đứng vững, Y đã..." - X là người NGHE, câu thoại là của Y hoặc của giọng mới. Nhưng "X chưa kịp nói dứt câu / nói gì
    thêm / dứt lời" thì X CHÍNH LÀ người vừa nói (bị ngắt) - giữ khoá. Luật mới: sau tên là "(còn) chưa/không kịp" mà
@@ -45,7 +45,7 @@ replace_once('''ATTRIBUTION_SENTENCE_START_EXCLUSIONS = {
     "ban", "cung", "du", "khi", "luc", "neu", "ngoai", "sau", "suy", "thay",
     "theo", "trong", "truoc", "tuy", "vi",
     "giai", "im", "nghe", "tin",
-}''', '''#
+}''', """#
 # Hàng cuối (20-09) cũng là ca thật, đếm trên cả hai cuốn: chữ Việt KHÔNG dấu mở câu kể sau câu thoại ("Lo lắng phu nhân
 # Tess...", "Tay trái của Lucien...", "Y chỉ vào ghế...", "Cho rằng...") - khoảng 40 câu thành người nói không tồn tại.
 # Không chữ nào viết hoa giữa câu như tên người trong hai cuốn. Ham và Lich cố ý để ngoài: có thể là nhân vật thật.
@@ -56,14 +56,14 @@ ATTRIBUTION_SENTENCE_START_EXCLUSIONS = {
     "cho", "hy", "khe", "kim", "lo", "ly", "ma", "may", "men", "nhanh", "quai", "quay", "sao", "sinh", "so", "tay",
     "tra", "uy", "vong", "xe", "xem", "xoa", "xung", "y",
 }
-<removed>
+# "Lucien còn chưa kịp mở hộp mực, một giọng nói... vọng đến": tên mở câu kể là người CHƯA nói - câu thoại trước là của
 # người khác. Trừ khi cái chưa kịp chính là nói cho xong ("chưa kịp nói dứt câu", "chưa kịp dứt lời"): khi đó người
 # được nêu tên đúng là người vừa nói và bị ngắt.
 NOT_YET_SPOKEN_PATTERN = re.compile(
     r"^\\s*(?:còn\\s+)?(?:chưa|không)\\s+kịp\\s+"
     r"(?!nói\\s+(?:gì\\s+|được\\s+)?(?:thêm|hết|xong|dứt|tiếp)|dứt\\s+lời|nói\\s+dứt)",
     re.IGNORECASE,
-)''')
+)""")
 
 replace_once('''def _trailing_speech_attribution(text: str) -> str | None:''', '''def _names_someone_who_had_not_spoken(text: str, name: str) -> bool:
     """Câu kể mở bằng `name` rồi "(còn) chưa kịp đáp/làm gì..." - người ấy chưa nói, câu thoại trước không phải của họ."""
@@ -106,38 +106,38 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "male") -> dict:
 
 
 def _speaker_of_the_quote(narration: str, model_says: str) -> str:
-    <removed>
+    group = [_row(0, "dialogue", "“Hóa ra dưới khay tem còn một ngăn đựng mực nữa.”"), _row(1, "narration", narration)]
     result = _validate(group, {"segments": [_item(0, "dialogue", model_says), _item(1, "narration", "NARRATOR")]})
     return str(result["s0"]["speaker"]).casefold()
 
 
 def test_a_vietnamese_word_opening_the_sentence_is_not_a_name() -> None:
-    <removed>
-                 <removed>
-                 <removed>
+    for text in ("Lo lắng phu nhân Tess làm đổ lọ mực, ông vội nói.", "Tay trái của Lucien nắm chặt.",
+                 "Y chỉ vào cuộn giấy sát chiếc cân rồi nói.", "Cho rằng màu tem vẫn chưa khớp, hắn nói.",
+                 "Mất cả hộp mực, Beyer ngồi bệt bên quầy.", "Xung quanh bàn là mấy thùng giấy chưa dán nhãn."):
         assert _leading_proper_name(text) is None, text
     assert _leading_proper_name("Victor giải thích thêm một lần nữa.") == "Victor"
-    <removed>
+    assert _leading_proper_name("Ray nói, chuyển sang hỏi giá giấy can.") == "Ray"
 
 
 def test_someone_who_had_not_spoken_yet_does_not_take_the_line() -> None:
-    <removed>
-    <removed>
-    <removed>
+    assert _names_someone_who_had_not_spoken("Lucien còn chưa kịp lấy cuộn giấy, một giọng nói vang qua bộ đàm.", "Lucien")
+    assert _names_someone_who_had_not_spoken("Lucien chưa kịp mở hộp, Jacob đã nói tiếp.", "Lucien")
+    assert _names_someone_who_had_not_spoken("Fernando còn chưa kịp đọc số phiếu, Antec đã kêu lên.", "Fernando")
     # Bị ngắt khi đang nói: người được nêu tên CHÍNH là người vừa nói.
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    assert not _names_someone_who_had_not_spoken("Lucien chưa kịp nói hết bảng kê, Natasha đã cắt ngang.", "Lucien")
+    assert not _names_someone_who_had_not_spoken("Dieppe còn chưa kịp đọc nốt số phiếu, tiếng còi tàu vang lên.", "Dieppe")
+    assert not _names_someone_who_had_not_spoken("Lucien còn chưa kịp khép hộp màu, Alferris đã chộp lấy.", "Lucien")
+    assert not _names_someone_who_had_not_spoken("Fernando lặp lại giá giấy, nhưng chưa kịp đọc hết.", "Fernando")
 
 
 def test_the_model_keeps_the_line_when_the_named_person_had_not_spoken() -> None:
-    <removed>
+    narration = "Lucien còn chưa kịp mở hộp mực, một giọng nói trầm vang qua bộ đàm ở quầy vé."
     assert _speaker_of_the_quote(narration, "Beyer") == "beyer"
 
 
 def test_the_named_person_still_takes_the_line_when_the_sentence_says_so() -> None:
     assert _speaker_of_the_quote("Lucien nói, giọng trầm xuống.", "Beyer") == "lucien"
-    <removed>
+    assert _speaker_of_the_quote("Lucien chưa kịp nói hết bảng kê, Natasha đã cắt ngang.", "Natasha") == "lucien"
 ''', encoding="utf-8")
 print(f"da viet {test}")

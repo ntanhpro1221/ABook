@@ -71,7 +71,7 @@ def test_output_filename_is_sanitized_and_bounded(tmp_path: Path) -> None:
 
 
 def test_inline_quoted_terms_remain_one_narration_segment() -> None:
-    <removed>
+    text = 'Lucien ghi vào sổ các mục “màu men”, “khuôn cốc”, “bảng kiểm nhiệt”.'
 
     rows = segment_chapter_text(1, text)
 
@@ -103,11 +103,7 @@ def test_long_text_split_prefers_sentence_boundaries_without_rewriting() -> None
 
 def test_clause_split_keeps_seq44_boundaries_bounded_without_rewriting() -> None:
     text = (
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        "quá trước mặt anh ấy đâu!”"
+        'Người giữ kho đặt cái cân lên bàn rồi mở sổ theo dõi, Simon dán tờ nhãn tím lên hộp và đếm đủ những cái cốc mới ra lò rồi ký bảng kê mới trước khi giao hàng hôm nay. Wayne đặt cuộn giấy cạnh một cái máy in, anh nhắc từng tổ kiểm tra van khí và ghi số đo rồi xếp khay men lên giá hong trước lúc đóng cửa tiệm!”'
     )
 
     parts = split_text_by_clauses(text, CLAUSE_SPLIT_MAX_CHARS)
@@ -126,11 +122,15 @@ def test_clause_split_rejects_an_unbroken_token_over_max_chars() -> None:
 
 def test_multiline_dialogue_and_inner_thought_keep_their_kind() -> None:
     text = (
-        "Cô ta nguyền rủa:\n\n"
-        <removed>
-        "Ta sẽ chứng kiến giáo đường tan nát.\n\n"
-        "Các ngươi sẽ vĩnh viễn trầm luân!”\n\n"
-        "‘Đây không phải thế giới cũ…’"
+        """Cô ta tuyên bố:
+
+“Trong kỳ triển lãm, ta sẽ trưng bày đủ bộ cốc mới.
+
+Ta sẽ sơn lại toàn bộ giá hong.
+
+Các ngươi nhớ nộp phiếu chọn màu!”
+
+‘Lịch trực phải đổi hết rồi…’"""
     )
 
     rows = segment_chapter_text(1, text)
@@ -161,10 +161,13 @@ def test_multiline_ascii_quotes_keep_dialogue_state() -> None:
 
 def test_chapter_031_mismatched_thought_closer_does_not_run_into_narration() -> None:
     text = (
-        <removed>
-        <removed>
-        <removed>
-        "“Lùi lại!”"
+        """‘Mình cần đặt báo giờ trước lúc lò nung chạm vạch đỏ.
+
+‘Tờ hướng dẫn còn nhắc phải kiểm tra van khí trước mỗi ca.”
+
+Lucien tắt đồng hồ bấm giây rồi ghi lại nhiệt độ lò.
+
+“Tránh khay nóng!”"""
     )
 
     rows = segment_chapter_text(32, text)
@@ -179,10 +182,11 @@ def test_chapter_031_mismatched_thought_closer_does_not_run_into_narration() -> 
 
 def test_chapter_091_nested_unclosed_thought_stays_inside_outer_dialogue() -> None:
     text = (
-        <removed>
-        <removed>
-        <removed>
-        "Sau đó mọi người im lặng."
+        """Ilia tiếp tục nói: “Cuộn băng này ghi buổi kiểm kê cuối. ‘Một hộp mực tím đã gửi sang quầy đồ gốm. Các tem còn lại ở ngăn số bảy.”
+
+“Ai ký nhận hộp mực?” Dragan hỏi.
+
+Sau đó họ kiểm tra biên nhận."""
     )
 
     rows = segment_chapter_text(92, text)
@@ -190,7 +194,7 @@ def test_chapter_091_nested_unclosed_thought_stays_inside_outer_dialogue() -> No
     later_rows = [row for row in rows if int(row["paragraph_index"]) > 0]
     assert all(row["kind_hint"] != "thought" for row in rows)
     assert any(
-        row["kind_hint"] == "dialogue" and "Một ngôi sao" in str(row["text"])
+        row["kind_hint"] == "dialogue" and 'Một hộp mực' in str(row["text"])
         for row in rows
     )
     assert [row["kind_hint"] for row in later_rows] == [
@@ -213,7 +217,7 @@ def test_unclosed_ascii_quote_nested_in_balanced_dialogue_does_not_escape() -> N
     ("malformed_quote", "expected_kind"),
     [
         ("‘Tiệc tùng rồi lại tiệc tùng!”", "thought"),
-        <removed>
+        ('“Aha! Hộp tem đủ số rồi! "Để tôi cất phiếu vào ngăn."', "dialogue"),
         (
             "‘Căn nhà gỗ ở phía Tây…” Lucien tra cứu bản đồ. “Nó nằm trong rừng!’",
             "thought",
@@ -278,10 +282,13 @@ def test_a_quote_spanning_paragraphs_still_closes_where_it_should() -> None:
     the closing mark. That is not a defect and must keep its single dialogue reading.
     """
     text = (
-        <removed>
-        <removed>
-        <removed>
-        "Tôi liếc xuống nhìn cậu ta."
+        """“Đồng hồ Theosbane luôn đủ kim,
+
+Khay mực Zynx luôn đủ màu,
+
+Tập phiếu Kallith luôn đủ số.”
+
+Tôi liếc xuống nhìn cậu ta."""
     )
     warnings: list[str] = []
 
@@ -306,9 +313,9 @@ def test_recovery_closes_the_offending_paragraph_not_the_innocent_one() -> None:
     """
     text = "\n\n".join(
         [
-            <removed>
-            <removed>
-            <removed>
+            '"Đồng hồ Theosbane luôn đủ kim,',
+            'Tập phiếu Kallith luôn đủ số."',
+            'Cậu bé đặt cuộn giấy xuống rồi gọi người ghi phiếu.',
             'Đúng là vậy, nhưng tiền nong có hơi eo hẹp."',
             "À, đương nhiên rồi nhỉ.",
         ]
@@ -321,7 +328,7 @@ def test_recovery_closes_the_offending_paragraph_not_the_innocent_one() -> None:
     assert "paragraph 4" in warnings[0], warnings[0]
     # lời thề vẫn là lời thoại trải hai đoạn, recovery không đụng vào
     assert rows[0]["kind_hint"] == "dialogue"
-    assert str(rows[0]["text"]).startswith('"Món nợ')
+    assert str(rows[0]["text"]).startswith('"Đồng hồ')
 
 
 def test_recovery_terminates_on_a_chapter_of_nothing_but_open_quotes() -> None:
@@ -343,8 +350,7 @@ def test_inline_curly_single_quote_is_an_inner_thought() -> None:
 
 def test_nested_curly_term_inside_dialogue_is_not_duplicated() -> None:
     text = (
-        <removed>
-        "cậu sẽ trở thành một quý tộc đáng kính đấy.”"
+        'Bà nói: “Nếu hộp màu ‘Thần ân’ còn trong huyết mạch của sơ đồ, cậu nhớ chuyển nhánh ấy sang bảng kiểm mới trước khi đóng xưởng nhé.”'
     )
 
     rows = segment_chapter_text(1, text)
@@ -358,12 +364,10 @@ def test_nested_curly_term_inside_dialogue_is_not_duplicated() -> None:
 def test_nested_quote_regressions_preserve_every_spoken_token_once() -> None:
     samples = [
         (
-            <removed>
-            <removed>
+            '“Lọ mực ‘Nightingale đen’ do xưởng Holm đóng riêng cho loại tem tròn. Cậu đã thử in lên giấy nhám chưa?”'
         ),
         (
-            <removed>
-            "cậu sẽ trở thành một quý tộc đáng kính đấy.”"
+            '“Nếu hộp màu ‘Thần ân’ còn trong huyết mạch của sơ đồ, cậu nhớ chuyển nhánh ấy sang bảng kiểm mới trước khi đóng xưởng nhé.”'
         ),
     ]
 

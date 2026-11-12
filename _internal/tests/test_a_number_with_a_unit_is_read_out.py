@@ -22,8 +22,8 @@ from abook.asr import (
 
 
 def test_the_hour_that_cost_half_the_score() -> None:
-    <removed>
-    heard = "B\u00e2y gi\u1edd \u0111\u00e3 l\u00e0 12h35 ph\u00fat chi\u1ec1u."
+    book = 'Phiếu kiểm kê ghi lúc mười một giờ bốn mươi lăm phút sáng.'
+    heard = 'Phiếu kiểm kê ghi lúc 11h45 phút sáng.'
 
     similarity, wer = transcript_metrics(book, heard)
 
@@ -32,8 +32,8 @@ def test_the_hour_that_cost_half_the_score() -> None:
 
 
 def test_the_percent_sign_the_punctuation_stripper_ate() -> None:
-    <removed>
-    <removed>
+    book = "Chỉ có một phần trăm số vé được bán trước giờ mở cửa."
+    heard = "chỉ có 1% số vé được bán trước giờ mở cửa."
 
     similarity, _wer = transcript_metrics(book, heard)
 
@@ -41,8 +41,8 @@ def test_the_percent_sign_the_punctuation_stripper_ate() -> None:
 
 
 def test_a_bare_hour_matches_too() -> None:
-    <removed>
-    heard = "10h s\u00e1ng, ph\u00f2ng t\u1eadp c\u1ee7a Victor."
+    book = 'Mười giờ sáng. Quầy in tem của Victor.'
+    heard = '10h sáng, quầy in tem của Victor.'
 
     similarity, _wer = transcript_metrics(book, heard)
 
@@ -52,12 +52,12 @@ def test_a_bare_hour_matches_too() -> None:
 def test_the_sentence_that_would_get_worse_does_not() -> None:
     """`chín rưỡi` không phải `chín giờ ba mươi`; phép nở chỉ được thêm, không được lấy đi."""
     book = (
-        <removed>
-        <removed>
+        "Sau chín rưỡi, xưởng in cuối cùng cũng tắt máy."
+        " Minh khóa tủ mực, kéo rèm cửa sổ rồi dắt chiếc xe đạp cũ ra cổng sau."
     )
     heard = (
-        <removed>
-        <removed>
+        "Sau 9h30, xưởng in cuối cùng cũng tắt máy."
+        " Minh khóa tủ mực, kéo rèm cửa sổ rồi dắt chiếc xe đạp cũ ra cổng sau."
     )
 
     similarity, _wer = transcript_metrics(book, heard)

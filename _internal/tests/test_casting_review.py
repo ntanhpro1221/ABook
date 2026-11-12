@@ -35,7 +35,7 @@ def make_book(root: Path, *, cast: bool = True) -> Path:
     rows = [
         # id, stable, chapter, seq, paragraph, text, kind, speaker, voice, character, wav
         (1, "a", 1, 0, 0, "Chương 1 - Mở đầu", "narration", "NARRATOR", 1, 4, "chunks/1.wav"),
-        (2, "b", 1, 1, 1, "“Đi thôi.”", "dialogue", "LUCIEN", 2, 1, "chunks/2.wav"),
+        (2, "b", 1, 1, 1, '“Đẩy vào nhé.”', "dialogue", "LUCIEN", 2, 1, "chunks/2.wav"),
         (3, "c", 1, 2, 2, "“Heidi, đợi đã!”", "dialogue", "HEIDI", 3, 2, None),
         (4, "d", 1, 3, 3, "“Tớ đợi mà.”", "dialogue", "HEIDI", 3, 2, None),
         (5, "e", 1, 4, 4, "“Ai đó?”", "dialogue", "NPC_LOCAL::c00001::r1::người gác", 5, 5, None),

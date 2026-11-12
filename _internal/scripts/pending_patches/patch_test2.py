@@ -24,9 +24,9 @@ new = '''def test_recovery_closes_the_offending_paragraph_not_the_innocent_one()
     """
     text = "\\n\\n".join(
         [
-            <removed>
-            <removed>
-            <removed>
+            '"Đồng hồ Theosbane luôn đủ kim,',
+            'Tập phiếu Kallith luôn đủ số."',
+            "Cậu bé đặt cuộn giấy xuống rồi gọi người ghi phiếu.",
             'Đúng là vậy, nhưng tiền nong có hơi eo hẹp."',
             "À, đương nhiên rồi nhỉ.",
         ]
@@ -39,7 +39,7 @@ new = '''def test_recovery_closes_the_offending_paragraph_not_the_innocent_one()
     assert "paragraph 4" in warnings[0], warnings[0]
     # lời thề vẫn là lời thoại trải hai đoạn, recovery không đụng vào
     assert rows[0]["kind_hint"] == "dialogue"
-    assert str(rows[0]["text"]).startswith('"Món nợ')
+    assert str(rows[0]["text"]).startswith('"Đồng hồ')
 
 
 '''

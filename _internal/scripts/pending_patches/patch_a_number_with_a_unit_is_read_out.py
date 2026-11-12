@@ -12,10 +12,10 @@ giua lo se doi `quality_implementation_hash()` va lo dang bay bi tu choi khi res
 nen `24` gap `hai muoi bon` la khop. Nhung token co **don vi dinh lien** thi khong phai toan
 chu so, va `%` thi bi xoa han:
 
-    <removed>
-    Whisper: "Bay gio da la 12h35 phut chieu."            do giong 0,53
-    <removed>
-    Whisper: "nhung chi danh cho 1% dan so..."            do giong 0,85
+    sach   : "Phieu kiem ke ghi luc muoi mot gio bon muoi lam phut sang."
+    Whisper: "Phieu kiem ke ghi luc 11h45 phut sang."            do giong 0,53
+    sach   : "Chi co mot phan tram so ve..."
+    Whisper: "chi co 1% so ve..."            do giong 0,85
 
 Do bang `scripts/measure_a_number_with_a_unit.py` tren **75.881 doan co ban ghi ASR** cua ca hai
 cuon (136 project):
@@ -29,8 +29,8 @@ cuon (136 project):
 
 Thay thang ban no vao thi **5 doan te hon**, va ca 5 la cung mot cau that:
 
-    <removed>
-    <removed>
+    sach   : "Sau chin ruoi, xuong in cuoi cung cung tat may..."
+    Whisper: "Sau 9h30, xuong in cuoi cung cung tat may..."
              0,9286 -> 0,9196   (vi "chin ruoi" khong phai "chin gio ba muoi")
 
 Nen phep no chi **them mot cach doc**, roi lay cai tot hon: `similarity = max(...)`,

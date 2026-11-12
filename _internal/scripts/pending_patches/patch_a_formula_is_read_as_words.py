@@ -2,7 +2,7 @@
 
 Cuon 2, lo 1, chuong 025 (chapter_index 26), doan c00026_s0000015_1e32f852fb08:
 
-    <removed>
+    "Bot giay + Mau nuoc + Keo ho + Soi vai vun = Mat Na Giay"
 
 Giong doc phat ra dung nhu nguoi Viet doc cong thuc: "... cong mo nao thuy quy cong ... bang linh hon than
 khoc" - Whisper viet lai y nhu the, bang CHU. Nhung chuoi doi chieu (`spoken_symbols_to_words(row["text"])`,
@@ -92,7 +92,7 @@ from abook.text_processing import spoken_symbols_to_words
 
 def test_an_alchemy_recipe_is_read_as_words() -> None:
     assert (
-        <removed>
+        spoken_symbols_to_words("Bột giấy + Màu nước + Keo hồ = Mặt Nạ Giấy")
         == "Nấm xác chết cộng Mô não thủy quỷ cộng Bụi oán linh bằng Linh Hồn Than Khóc"
     )
 
@@ -115,7 +115,7 @@ def test_percent_is_left_for_the_transcriber_to_write_back() -> None:
 
 
 def test_stable_on_its_own_output() -> None:
-    <removed>
+    once = spoken_symbols_to_words("Khay 1+2: 1 bánh mặn + 2 bánh ngọt (ví dụ 10 = 5 + (2 + 3))")
     assert once == spoken_symbols_to_words(once)
     assert "+" not in once and "=" not in once
 

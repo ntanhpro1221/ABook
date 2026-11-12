@@ -23,7 +23,7 @@ không nói gì về tuổi. Pitch thì gần như chỉ đến từ tuổi. Và
     ngoc_linh + female:  child f109 p+4 | teen f096 p+1 | young/adult f100 p+0 | elderly f100 p-3
 
 Đếm trên lô 10: **đúng 1 trong 266** nhân vật có giọng ghim mang pitch trẻ con - KAELYN, `preset_ngoc_linh_f109_p+04`,
-<removed>
+23 câu ở chương 140-144. Bà phụ trách kho tem của Nam tước ("thưa phu nhân", "Người phụ nữ gật đầu"), bị model gán
 `age=child`, và tôi đã ghim `--age adult` giữa lô 10. Nhưng ghim ấy KHÔNG có tác dụng: luật hiện tại chỉ so phái,
 mà preset nữ khớp nhãn nữ, nên giọng bé gái được giữ lại. **Một ghim của người nghe không làm gì cả** - đúng loại
 lỗi im lặng mà luật kia sinh ra để dọn.

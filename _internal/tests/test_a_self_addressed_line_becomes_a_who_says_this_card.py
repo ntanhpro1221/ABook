@@ -38,7 +38,7 @@ def _vocative_cards(project: Path) -> list[dict]:
 def test_a_call_the_rule_cannot_resolve_becomes_a_card_and_the_speaker_stays(tmp_path: Path) -> None:
     # Hai người đối thoại có tên quanh câu gọi Kasagi: luật không biết là ai, nên để nguyên.
     db, project = _registered(tmp_path / "a", [
-        <removed>
+        (1, "dialogue", '“Kasagi-san, em định xếp chiếc đồng hồ ở ngăn nào!?”', "KASAGI", "female"),
         (2, "narration", "Sanae cúi đầu.", "NARRATOR", "unknown"),
         (3, "dialogue", "“Em không biết.”", "SANAE", "female"),
         (4, "narration", "Cả phòng im lặng.", "NARRATOR", "unknown"),

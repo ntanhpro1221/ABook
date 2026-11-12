@@ -3,7 +3,7 @@
   "cases": [
     {"note": "hết câu", "piece": "Trời đã sẩm tối khi đoàn người tới được cổng làng.", "frames": 300, "last_end_ms": 6325, "kept_frames": 294},
     {"note": "hết câu hỏi / cảm thán / lửng", "piece": "Anh có nghe tiếng ai gọi ngoài kia không?", "frames": 250, "last_end_ms": 4800, "kept_frames": 231},
-    {"note": "hết câu có dấu đóng nháy", "piece": "Anh nói: “Đi thôi.”", "frames": 220, "last_end_ms": 4050, "kept_frames": 200},
+    {"note": "hết câu có dấu đóng nháy", "piece": "Anh nói: “Đẩy vào nhé.”", "frames": 220, "last_end_ms": 4050, "kept_frames": 200},
     {"note": "dấu phẩy: nghỉ ngắn", "piece": "Người gác cổng đứng chờ sẵn, tay cầm chiếc đèn dầu cũ,", "frames": 230, "last_end_ms": 4287, "kept_frames": 183},
     {"note": "dấu phẩy trong nháy ,”", "piece": "“Chuyện ấy để mai hãy tính,”", "frames": 160, "last_end_ms": 3000, "kept_frames": 130},
     {"note": "cắt giữa câu không dấu (mảnh quá giới hạn byte)", "piece": "một hai ba bốn năm sáu", "frames": 200, "last_end_ms": 4000, "kept_frames": 171},

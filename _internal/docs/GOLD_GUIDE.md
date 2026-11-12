@@ -65,7 +65,7 @@ Gán/sửa nhãn: sửa bản ở Corpus, rồi chép phần nhãn (bỏ dòng `
    - văn bản được một nhân vật ĐỌC TO bằng giọng của mình ("khàn khàn giọng đọc lên", giọng máy đọc tiêu đề kèm dấu
      "?", đang viết nhận xét): người đọc và NARRATOR đủ điểm, tác giả nửa điểm.
    Người ký/nhận văn bản không được điểm. Người viết không tên: `NPC*~`. Tác giả chỉ được gọi tên ở chương khác hoặc qua
-   <removed>
+   một câu trích thoáng qua ("sổ kiểm kê của xưởng Thanos"): tên đủ điểm, `NPC*~` (vòng 5). Thư gửi CHO X thì X không phải người nói.
    **7b. Chuỗi bài đăng mạng xã hội / diễn đàn / khung chat của người vô danh** (LN Nhật hay có - Two Childhood Friends 042:
    2-35): mỗi bài là một người vô danh khác, như câu "cả đám" (quy tắc 6) -> `NARRATOR` và `NPC*` đều đủ, `UNKNOWN~`. Nhân vật
    có tên chỉ được NHẮC đến trong bài ("thằng Kuchinashi...") không phải người đăng - không điểm (bộ đo LN 28-09).
@@ -84,7 +84,7 @@ Gán/sửa nhãn: sửa bản ở Corpus, rồi chép phần nhãn (bỏ dòng `
 10. **Parser khoá sai loại** (nguồn hỏng dấu nháy làm cả đoạn lời kể thành T; thoại nằm giữa dòng lời kể nên bị khoá N):
    giữ loại bị khoá là đủ điểm (model không được phép đổi), người nói = người đọc hợp lý nhất theo loại bị khoá (khoá N
    thì NARRATOR; khoá T mà thực chất là lời kể thì NARRATOR, người nghĩ `~`). Ghi chú ở đầu file. Lời lẩm bẩm không
-   <removed>
+   ngoặc nằm trong đoạn kể bị khoá N ("Mực loang cả bản in. Iruka lẩm bẩm") cũng chỉ NARRATOR (Yamiyo 155:43).
 11. **Tên gọi khác của cùng một người** (Cẩn Huyên / Diệp Cẩn Huyên, Ray / Ray Warner, Douglas / Derrick Douglas): liệt kê
    các dạng, đều đủ điểm. KHÔNG tính dạng có tiền tố vai vế/xưng hô ("CHÚ LƯU ĐẠT", "NGÀI X", "GIÁO SƯ GLAST") hay
    danh hiệu trơn khi đã biết tên ("THÁNH NỮ" cho Magali) - prompt dự án cấm chúng, và nhãn danh hiệu thành giọng thứ

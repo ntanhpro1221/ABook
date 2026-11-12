@@ -773,7 +773,7 @@ write_atomic(q, t)
 print("da va", q)
 
 # ============================================================ tests
-TEST = r'''
+TEST = '''
 """Giữ cách đọc ghim khi chỉ bài chính tả neo tên phàn nàn — thử trên bản sao của project THẬT.
 
 Chương 084 đúc lại (`lo03r_084b`) là ca gốc: bản đọc-ghim `I-xờ-hờ-ta-ra` qua nhịp, chết ở neo
@@ -801,7 +801,7 @@ from abook.database import (
 )
 
 REAL = Path("D:/Novels/Audiobooks/_versions/v0.2.0-lo03r/lo03r_084b_9455372a18")
-<removed>
+LOST_LINE_SUFFIX = "feeb9dd9dda2"  # 'Chúng tôi in tem cho Xưởng Ishtara (Ishtara Workshop).'
 
 
 def _copy(tmp_path: Path) -> ProjectDB:

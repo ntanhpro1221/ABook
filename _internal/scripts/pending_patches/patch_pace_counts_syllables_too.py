@@ -1,11 +1,11 @@
-r"""Va audio_io.py: mot ban thu chi "cham" khi no cham theo CA chu lan am tiet.
+"""Va audio_io.py: mot ban thu chi "cham" khi no cham theo CA chu lan am tiet.
 
 CHUA AP luc viet - lo 3 dang chay (chuong 075 vua chet vi dung loi nay). Ap o ranh gioi lo,
 truoc lo va cho lo 3 - chuong 075 chay lai duoi ban va nay la phep thu dau tien.
 
 Chuong 075 mat mot cau dan truyen, 10/10 lan thu, moi lan mot seed:
 
-    <removed>
+    "Và chú Anh in vé tím để mẹ đi xem hội."   27 ky tu doc, 11 tu, 1 cho nghi
     11,00  11,38  11,38  11,80  11,38  11,00  10,64  11,38  11,80  11,00 chars/s  (san 12,5)
     split = "segment too short to split safely" (38 < 100), pace_band = "already normal"
 
@@ -79,7 +79,7 @@ def pace_is_outlier(
 ) -> bool:
     """Chậm chỉ khi chậm theo CẢ chữ lẫn âm tiết; nhanh vẫn xét theo chữ như cũ.
 
-    <removed>
+    Chương 075 của lô 3 mất câu "Và chú Anh in vé tím để mẹ đi xem hội." sau 10/10 lần thử ở
     10,64–11,80 chars/s, sàn 12,5. Câu ấy có 2,25 chữ mỗi từ (trung vị kho: 3,33): cùng một
     tốc độ đọc thì câu toàn từ ngắn cho ra ít chữ mỗi giây hơn, và thước "chars/s" gọi nó là
     chậm. Đo theo âm tiết: 4,48/giây, gần trung vị kho (4,67). Bản thu không chậm; thước chậm.
@@ -120,7 +120,7 @@ print("da va", p)
 
 TEST = '''"""Một bản thu chỉ chậm khi chậm theo cả chữ lẫn âm tiết — chương 075 của lô 3 là ca gốc.
 
-<removed>
+"Và chú Anh in vé tím để mẹ đi xem hội." mất 10/10 lần ở 10,64–11,80 chars/s (sàn 12,5) vì câu
 có 2,25 chữ mỗi từ so với trung vị kho 3,33; theo âm tiết nó đọc 4,48/giây, gần trung vị kho
 4,67. Cùng họ với lỗi chữ số (`spoken_speakable_chars`): thước đếm sai cái nó nhận là đếm.
 """
@@ -134,7 +134,7 @@ from abook.audio_io import (
 )
 
 NORMAL = (12.5, 24.5)
-<removed>
+SENTENCE_075 = "Và chú Anh in vé tím để mẹ đi xem hội."
 
 
 def test_the_lost_sentence_of_chapter_075_is_not_slow() -> None:

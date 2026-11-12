@@ -21,7 +21,7 @@ không cộng vào tử số.
 Tương quan **−0,62**. Một câu dày dấu câu có xác suất bị chặn cao gấp **260 lần** một câu
 thưa dấu — vì nó **ngắt nghỉ đúng**.
 
-<removed>
+Hậu quả thật: segment `'Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.'` đo được 9,77 chars/s,
 trượt sàn 10,5, bị sinh lại, không chia nhỏ được, fail, và **chặn cả chương không xuất
 được MP3**.
 
@@ -219,7 +219,7 @@ phải trả là ~18 lượt tổng hợp thêm cho một quyển sách 948 segm
 
 **Segment thứ ba là một vấn đề khác hẳn.** Văn bản của nó là một thang bậc:
 
-    <removed>
+    Mẫu hộp được xếp theo các cỡ: C » B » A » S » SS » SSS.
 
 Giọng đọc *tên chữ cái*, không đọc văn xuôi. Thước đo ký tự/giây được hiệu chỉnh trên văn
 xuôi nên định giá sai loại văn bản này theo đúng cấu tạo của nó - và không ngân sách nào
@@ -271,7 +271,7 @@ Tôi đã viết "cận là 12.5" ở khắp nơi trong tài liệu này và har
     normal [12.5, 24.5]
     fast   [14.0, 30.0]
 
-<removed>
+Cái làm lộ ra: alpha.43 mất `c00007_s0000074` (*"Hộp mực này giao cho Juliana Vox Blade."*) với
 những lần thử **12,70 / 12,26 / 12,26 / 12,70** — mà 12,70 thì **trên** 12,5, lẽ ra phải
 đạt.
 
@@ -591,7 +591,7 @@ Ba đoạn của cuốn 2 **mất hẳn bản thu** vì đúng cơ chế đó:
 | chương | câu | lần thử | nhịp bị tính |
 |---|---|---|---|
 | 082 | `“Tôi không biết ‘xoay’ đâu, Felicia.”` | 22 | 29,02–32,50 kt/s |
-<removed>
+| 131 | `“À… Cậu ghi ‘mực’ hai lần rồi, Lucien.”` | 11 | 26,37 kt/s |
 | 090 | (cùng hình) | — | — |
 
 Hai mươi hai lần thử đều cho cùng một con số không phải là xui, mà là số học.
@@ -660,8 +660,8 @@ chốt cho thấy như thế thì 274 đoạn bị cắt ngân sách và **2 đo
 cận dưới:
 
 ```
-<removed>
-<removed>
+“Felicia, ký giúp nhé. Ồ… cậu cũng đến nhận tem à, Lucien!”   13,75 -> 10,27 kt/s   (sàn 12,5)
+“Lucien, hộp mực tím đã cân xong chưa?”       12,66 -> 12,17 kt/s
 ```
 
 Hai đoạn ấy là lý do cận dưới giữ nguyên thước cũ — ngân sách sinh ra để bảo vệ đúng chúng.
@@ -677,7 +677,7 @@ Phép kiểm vẫn đóng với bản thu thật sự nhanh: cùng câu ấy đ�
 ### Xác nhận trên sản xuất, 19:53 ngày 15-09
 
 Bản vá vào cây ở ranh giới lô 3 (`3443758`, tag `v0.3.0-lo03v`), và bước 3 của ranh giới đúc lại chương
-<removed>
+131 — chương đã mất bản thu vì đúng cơ chế này. Đoạn `“À… Cậu ghi ‘mực’ hai lần rồi, Lucien.”` đạt ở
 **lần thu đầu tiên** sau 11 lần trượt trước đó:
 
     nhịp tính bằng ngân sách nghỉ   25,57 kt/s   -> VẪN ngoài cận trên 24,5

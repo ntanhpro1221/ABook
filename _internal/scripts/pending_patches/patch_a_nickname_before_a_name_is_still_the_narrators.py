@@ -7,9 +7,9 @@ Chạy: python patch_a_nickname_before_a_name_is_still_the_narrators.py <root>
 `_is_quoted_inside_a_sentence` (bản vá ranh giới 9) đòi hai điều: câu kể trước chưa kết thúc VÀ câu kể sau mở bằng chữ
 thường hay dấu câu. Điều kiện thứ hai hỏng đúng lối viết đặt biệt danh trước tên:
 
-    <removed>
-    <removed>
-    <removed>
+    Sau khi xếp các cuộn giấy lên kệ và khóa ngăn kéo đựng mực, “Sơn Ca” Samantha rảo bước qua quầy kiểm tem.
+    Victor đã “bảo vệ” Lucien bằng chiếc tạp dề chống mực.
+    ...ngang với phòng “trưng bày đặc biệt” của xưởng in thành phố!
 
 Câu kể sau mở bằng "Samantha", "Lucien", "Đế chế" - chữ hoa - nên luật không nhận ra cụm trích nằm giữa câu, và khoá
 "một đoạn văn một người nói" lại gán cụm ấy cho người nói của đoạn (bắt được khi phát lại đáp án TMA 449:65: “Sơn Ca” ->
@@ -94,9 +94,9 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "unknown") -> dict:
 def test_a_nickname_quoted_before_a_name_stays_the_narrators() -> None:
     group = [
         _row(0, "dialogue", "“Tôi là một chiêm tinh sư.”"),
-        <removed>
+        _row(1, "narration", "Sau khi xếp các cuộn giấy lên kệ và khóa ngăn kéo đựng mực,"),
         _row(2, "dialogue", "“Sơn Ca”"),
-        <removed>
+        _row(3, "narration", "Samantha rảo bước qua quầy in để nhận túi bìa mới."),
     ]
     payload = {"segments": [
         _item(0, "dialogue", "Samantha", "female"), _item(1, "narration", "NARRATOR"),

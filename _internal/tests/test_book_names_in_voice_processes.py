@@ -28,7 +28,7 @@ from tests.test_voice_profile_lock import FakeVieNeuRuntime
 from tests.test_webui_listen_and_sync import _request
 
 # Unshouted capitals in the middle of a sentence: a name only if the book says so. (Shouted, "KAEL!" reads as a word anyway.)
-<removed>
+LINE = '“Natasha, đưa KAEL tập phiếu trước lúc quầy kiểm kê đóng cửa nhé.”'
 VOICES = ["narrator", "v_lucien", "v_natasha", "v_anon_m"]
 PROCESS_SECONDS = 240  # a real python starts and imports the voice stack; slow when the machine is busy
 

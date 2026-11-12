@@ -64,9 +64,17 @@ def test_a_reference_marker_line_is_still_dropped() -> None:
 
 
 def test_curly_quotes_and_square_brackets_mix_in_one_chapter() -> None:
-    rows = _kinds("“Đi thôi.”\n\n[Ừ, đi thôi.]\n\nHọ rời quán.\n\n[Ting! Nhiệm vụ mới.]\n\n‘Lại thế nữa rồi,’ cô nghĩ.")
+    rows = _kinds("""“Đẩy vào nhé.”
+
+[Ừ, đi thôi.]
+
+Họ rời quán.
+
+[Ting! Nhiệm vụ mới.]
+
+‘Lại thế nữa rồi,’ cô nghĩ.""")
     assert rows == [
-        ("dialogue", "“Đi thôi.”"),
+        ("dialogue", '“Đẩy vào nhé.”'),
         ("dialogue", "[Ừ, đi thôi.]"),
         ("narration", "Họ rời quán."),
         ("dialogue", "[Ting! Nhiệm vụ mới.]"),
@@ -153,7 +161,7 @@ def test_a_framed_name_or_title_is_not_a_voice() -> None:
 
 def test_a_longer_or_punctuated_or_lowercase_line_in_brackets_is_still_a_voice() -> None:
     for speech in (
-        <removed>
+        '[Sổ kiểm kê dành cho xưởng làm cốc]',  # có chữ thường - chấp nhận là giọng
         "[Một Hai Ba Bốn Năm]",  # quá 4 chữ
         "[Lớp A, phòng 2]",  # có dấu phẩy
         "[Vâng!]",

@@ -911,7 +911,7 @@ def label_pronunciation(surface: str, spoken_form: Any) -> str:
 
 
 def label_speaker(text: str, who: str, count: int) -> str:
-    """"“Đi thôi.” là lời của Lucien", hay (cả nhóm câu của một lần bấm) "12 câu là lời của Lucien"."""
+    '"“Đẩy vào nhé.” là lời của Lucien", hay (cả nhóm câu của một lần bấm) "12 câu là lời của Lucien".'
     return f"{quote_line(text)} là lời của {who}" if count == 1 else f"{count} câu là lời của {who}"
 
 

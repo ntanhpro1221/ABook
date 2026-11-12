@@ -132,7 +132,7 @@ def test_a_genuinely_slow_take_is_still_caught() -> None:
 
 def test_plain_vietnamese_counts_exactly_as_before() -> None:
     """Câu không có gạch ngang phải đếm y hệt bản cũ - thay đổi chỉ chạm cách đọc nối gạch."""
-    <removed>
+    plain = "Và chú Anh in vé tím để mẹ đi xem hội."
     assert spoken_syllables(plain) == len(plain.split()) == 11
 
 

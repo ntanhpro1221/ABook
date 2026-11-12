@@ -197,12 +197,12 @@ def _reconciliation_db(tmp_path: Path) -> ProjectDB:
     rows = [
         (1, 1, "“Lời của người đàn ông.”", "NPC_LOCAL::c00001::a::người đàn ông trung niên", "male", "adult"),
         (10, 10, "“Lời của giám mục.”", "NPC_LOCAL::c00001::b::giam muc", "male", "adult"),
-        <removed>
-        (21, 21, "“Điên rồi!”", "NPC_LOCAL::c00001::crowd::phu nu ao choang den", "female", "unknown"),
-        (22, 22, "“Độc ác quá!”", "NPC_LOCAL::c00001::crowd::phu nu ao choang den", "female", "unknown"),
-        (23, 23, "“Thiêu ả đi!”", "NPC_LOCAL::c00001::crowd::phu nu ao choang den", "female", "unknown"),
-        <removed>
-        <removed>
+        (20, 20, "“Lời nguyền đầu tiên!”", 'NPC_LOCAL::c00001::c::người phụ nữ áo khoác tím', "female", "adult"),
+        (21, 21, "“Điên rồi!”", 'NPC_LOCAL::c00001::crowd::phu nu ao khoac tim', "female", "unknown"),
+        (22, 22, '“Máy gian lận!”', 'NPC_LOCAL::c00001::crowd::phu nu ao khoac tim', "female", "unknown"),
+        (23, 23, "“Thiêu ả đi!”", 'NPC_LOCAL::c00001::crowd::phu nu ao khoac tim', "female", "unknown"),
+        (24, 24, 'Người dân ở quầy đổi vé hô lớn vì chiếc máy bấm số bị kẹt.', "NARRATOR", "unknown", "unknown"),
+        (30, 30, '“Chính giữa sân ga, ta sẽ dựng chiếc đồng hồ mới.', 'NPC_LOCAL::c00001::d::phu nu ao khoac tim', "female", "adult"),
         (31, 31, "Ta sẽ chứng kiến các ngươi trầm luân!”", "NPC_LOCAL::c00001::e::thần lửa", "male", "unknown"),
     ]
     db.replace_chapter_segments(

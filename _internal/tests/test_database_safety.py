@@ -111,23 +111,17 @@ ANALYSIS_POLICY_FINGERPRINT = "director-policy-v2"
 ANALYSIS_GROUP_FINGERPRINT = "group-source-v1"
 ANALYSIS_CONTEXT_HASH = "group-context-v1"
 RECALLED_PERSISTENT_FEAR_TEXT = (
-    <removed>
-    <removed>
-    <removed>
+    'Hạ Phong nhớ lại vẫn đang tim đập chân run.'
 )
 STUNNED_BLANK_MIND_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    'Hạ Phong đứng đực mặt, đầu óc trắng xóa.'
 )
 V28_SEQ10_SLEEP_PARALYSIS_TEXT = (
-    <removed>
-    <removed>
+    'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
 )
 V28_SEQ10_SLEEP_PARALYSIS_STABLE_ID = "c00001_s0000010_c5b601fe6b9d"
 V28_SEQ10_SLEEP_PARALYSIS_TEXT_SHA256 = (
-    "c5b601fe6b9dd8f87e3697be5f615b3392d9569a9b6cde44ca85b57e93587274"
+    "f9674c12fe361078e37cda2e7b2cc600f4b167591355177bb53f01dc9408cc4a"
 )
 DIRECT_NARRATION_AFFECT_LOCK_CASES = (
     (
@@ -148,65 +142,51 @@ DIRECT_NARRATION_AFFECT_LOCK_CASES = (
     ),
 )
 V21_SEQ12_PREVIOUS_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    "trường. Cậu bèn thầm cười giễu:"
+    'Hạ Phong xếp các phiếu bảo hành thành từng chồng, nhìn kim phút nhích qua vạch đỏ trên đồng hồ treo tường rồi thầm cười giễu:'
 )
 V21_SEQ13_THOUGHT_TEXT = (
-    <removed>
-    <removed>
+    '‘Mình lại quên đặt chuông nhắc đóng quầy; sáng mai chắc phải mua thêm một cuộn giấy in.’'
 )
 V21_SEQ12_STABLE_ID = "c00001_s0000012_040f30f9df84"
 V21_SEQ13_STABLE_ID = "c00001_s0000013_3addf4e2e280"
 V21_SEQ13_TEXT_SHA256 = (
-    "3addf4e2e280f94186326177ddaa1a5b75c1fa6e7b6fa0f522de8b2bad1ab8b2"
+    "7225cb44805e4c0cbb7d103cefda65730968f36a00024302ee64d51b561d649a"
 )
 V26_SEQ18_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    "chẳng giống bệnh viện tí nào!"
+    'Hạ Phong thường kiểm tra phiếu gửi đồ rất chậm, nhất là lúc có nhiều kiện hàng. Lần này cậu phát hiện số ngăn trên biên nhận không khớp với ổ khóa: dù nhân viên vừa bảo đã đổi tủ, tại sao biển hướng dẫn vẫn ghi số cũ, ngay sát bàn cân cùng hộp bút chì màu xanh!'
 )
 V26_SEQ18_TEXT_SHA256 = (
-    "9acd51b63f0675c74dc5c0d91d75cd66fbb9af44a9815b381431f4d4598546c7"
+    'a0baf0c7c685f2e17e4f50110bc80ac13b5b51a613a20d78ebf62b5073337620'
 )
 V27_MAX_UNICODE_NO_WHITESPACE_TEXT = "".join(
     chr(0x4E00 + index) for index in range(340)
 )
-<removed>
+V27_SEQ31_PREVIOUS_TEXT = '“Đập nát cái máy gian lận khốn kiếp kia ngay!”'
 V27_SEQ32_NARRATION_TEXT = (
-    <removed>
-    <removed>
+    'Tiếng người kiểm vé vừa sợ hãi vừa phấn khích vang qua bộ đàm. Hạ Phong bỏ tờ lịch trực xuống, tò mò nghĩ thầm:'
 )
-<removed>
+V27_SEQ33_THOUGHT_TEXT = '‘Vé tháng? Trạm này bắt đầu bán từ hồi nào nhỉ?’'
 V27_SEQ32_STABLE_ID = "c00001_s0000032_ee14f5622d9a"
 V29_SEQ37_PREVIOUS_TEXT = "“Anh tỉnh rồi?”"
 V29_SEQ38_NARRATION_TEXT = (
-    <removed>
-    <removed>
+    'Hạ Phong nhận tấm bản đồ từ người giao thư mặc áo mưa bạc, gật đầu một cách máy móc rồi chợt nghĩ thầm:'
 )
 V29_SEQ39_THOUGHT_TEXT = (
-    <removed>
-    <removed>
+    '‘Lucien, thẻ tàu, tuyến ngầm, kho lạnh… Chẳng lẽ bưu kiện này phải chuyển tận đài quan trắc ngoài đảo? Mình còn chưa xin được lịch của chuyến phà cuối tuần cơ mà?’'
 )
 V29_SEQ38_STABLE_ID = "c00001_s0000038_6d1eebb237de"
 V29_SEQ39_STABLE_ID = "c00001_s0000039_55abbb7a19a4"
 V30_SEQ23_PREVIOUS_TEXT = (
-    <removed>
-    <removed>
+    'Ngoài quầy bảo hành có một kệ gốm màu ngà, tầng trên bày sáu cái cốc không quai.'
 )
 V30_SEQ24_NARRATION_TEXT = (
-    <removed>
-    <removed>
+    'Trước bảng tuyến xe mới, Hạ Phong thấy mọi ký hiệu đều xa lạ. Cảm giác yếu ớt làm đầu óc cậu hỗn loạn giữa các số tuyến và giá vé.'
 )
 V30_SEQ25_THOUGHT_TEXT = "‘Đây rốt cuộc là nơi nào?!"
 V30_SEQ24_STABLE_ID = "c00001_s0000024_3ab59bb4bd38"
 V30_SEQ25_STABLE_ID = "c00001_s0000025_1582edb61545"
 V32_SEQ43_DIALOGUE_TEXT = (
-    <removed>
-    <removed>
-    <removed>
+    '“Bác quản kho vẫn giữ chiếc hộp ấy, dù khóa đã gỉ đến mức không mở nổi. Bác cứ gọi nó là ‘Evans và chiếc diều xanh’, rồi xếp riêng trên tầng cao nhất, bên cạnh bó dây đồng chưa dùng.'
 )
 
 
@@ -2562,8 +2542,7 @@ def test_v36_critic_retry_schema_rejects_forged_direct_affect_id(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
     envelope = _analysis_acceptance_envelope(source_rows)
@@ -2596,8 +2575,7 @@ def test_v37_critic_reserve_cannot_omit_generator_rejection_map(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     rejection_map = [{"id": "S001", "emotions": ["neutral"]}]
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
@@ -2630,8 +2608,7 @@ def test_v39_generator_rejection_map_cannot_override_physical_collapse(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "nhưng ánh mắt cậu tràn ngập vẻ tự hào."
+        'Phổi và yết hầu bỏng rát, ý thức bắt đầu mơ hồ, nhưng ánh mắt cậu tràn ngập vẻ tự hào.'
     )
     rejection_map = [{"id": "S001", "emotions": ["neutral"]}]
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
@@ -2656,8 +2633,7 @@ def test_v37_candidate_history_cannot_change_critic_rejection_schema(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
     candidate = _allocate_analysis_candidate(db, source_rows)
@@ -2681,8 +2657,7 @@ def test_v38_rehashed_generator_history_cannot_change_rejection_schema(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
     candidate = _allocate_analysis_candidate(db, source_rows)
@@ -2796,8 +2771,7 @@ def test_v38_rejected_completion_binds_candidate_contract_outcome_and_segments(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     rejection_map = [{"id": "S001", "emotions": ["neutral"]}]
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
@@ -3006,8 +2980,7 @@ def test_v37_accepted_evidence_rejects_neutral_schema_violation(
     tmp_path: Path,
 ) -> None:
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     rejection_map = [{"id": "S001", "emotions": ["neutral"]}]
     db, source_rows = _analysis_batch_db(tmp_path, texts=(source_text,))
@@ -3171,8 +3144,8 @@ def test_v23_singleton_full_target_evidence_survives_crash_reopen_and_commit(
     (
         "Ha...",
         "“Ha...”",
-        <removed>
-        <removed>
+        'Hạ Phong choàng dậy bên máy bán vé, phổi bỏng rát và ý thức mơ hồ. Trong giấc mơ cậu bị kẹt ở trạm cân, màn hình trước mặt nhòe đi giữa tiếng còi; cậu chỉ thấy kim áp suất đỏ rực rồi đèn vụt tắt.',
+        '“Ha…” Hạ Phong choàng dậy bên máy bán vé, phổi bỏng rát và ý thức mơ hồ. Trong giấc mơ cậu bị kẹt ở trạm cân, màn hình trước mặt nhòe đi giữa tiếng còi; cậu chỉ thấy kim áp suất đỏ rực rồi đèn vụt tắt.',
     ),
 )
 def test_v23_singleton_full_target_rejects_normalized_or_context_quote(
@@ -3450,7 +3423,7 @@ def test_v27_long_singleton_reserve_rejects_forged_anchor_contract(
             "NFD",
             canonical_analysis_critic_source_anchors(V26_SEQ18_TEXT)[0],
         ),
-        <removed>
+        'Hạ Phong thường kiểm tra phiếu gửi đồ rất chậm, nhất là lúc có nhiều kiện hàng. Lần này cậu phát hiện số ngăn trên biên nhận không khớp với ổ khóa: dù nhân viên vừa bảo đã đổi tủ, tại sao biển hướng dẫn vẫn ghi số cũ, ngay sát bàn cân cùng hộp bút chì màu xanh!, nhất là lúc có nhiều kiện hàng. Lần này cậu phát hiện số ngăn trên biên nhận không khớp với ổ khóa: dù nhân viên vừa bảo đã đổi tủ, tại sao biển hướng dẫn vẫn ghi số cũ, ngay sát bàn cân cùng hộp bút chì màu xanh!',
     ),
 )
 def test_v27_long_singleton_rejects_substring_or_normalized_quote_not_in_anchor_enum(
@@ -4509,8 +4482,7 @@ def test_v38_rejected_multi_field_direct_affect_does_not_require_semantic_overri
     tmp_path: Path,
 ) -> None:
     texts = (
-        <removed>
-        <removed>
+        'Trên bảng cứu hộ đèn vàng vừa bật, cậu tuyệt vọng gắng gượng nâng cửa cuốn để luồn chiếc cán chổi qua khe.',
         "Cậu bước tiếp về phía trước.",
     )
     db, source_rows = _analysis_batch_db(tmp_path, texts=texts)
@@ -5796,7 +5768,7 @@ def test_analysis_candidate_accepts_source_bound_chapter_heading_override(
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        <removed>
+        texts=('Chương 01 - Ca trực ở trạm cân', 'Khói cuộn quanh máy phát điện.'),
     )
     envelope = _chapter_heading_envelope(source_rows)
     clearance = _chapter_heading_clearance(envelope)
@@ -5843,7 +5815,7 @@ def test_v39_heading_override_rejects_unbound_local_speaker_evidence(
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        <removed>
+        texts=('Chương 01 - Ca trực ở trạm cân', 'Khói cuộn quanh máy phát điện.'),
     )
     envelope = _chapter_heading_envelope(source_rows)
     clearance = _chapter_heading_clearance(envelope)
@@ -5893,7 +5865,7 @@ def test_v24_heading_critic_confidence_preserves_lock_through_reopen_and_commit(
     assert ANALYSIS_DIRECTOR_CRITIC_POLICY_VERSION == "second_pass_v18"
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        <removed>
+        texts=('Chương 01 - Ca trực ở trạm cân', 'Khói cuộn quanh máy phát điện.'),
     )
     envelope = _chapter_heading_envelope(source_rows)
     clearance = _chapter_heading_clearance(
@@ -6178,7 +6150,7 @@ def test_analysis_candidate_rejects_tampered_heading_structural_clearance(
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        <removed>
+        texts=('Chương 01 - Ca trực ở trạm cân', 'Khói cuộn quanh máy phát điện.'),
     )
     envelope = _chapter_heading_envelope(source_rows)
     clearance = _chapter_heading_clearance(envelope)
@@ -6225,24 +6197,22 @@ def test_direct_narration_affect_source_authority_accepts_exact_smoke_rows() -> 
         STUNNED_BLANK_MIND_TEXT
     )
     assert analysis_source_has_recalled_persistent_fear(
-        <removed>
+        'Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.'
     )
     assert analysis_source_has_recalled_persistent_fear(
-        <removed>
+        'Đèn đã tắt. Hạ Phong nhớ lại vẫn đang tim đập chân run.'
     )
     assert analysis_source_has_recalled_persistent_fear(
-        "Giấc mơ ấy chân thực đến dị thường, làm cho Hạ Phong nghĩ lại "
-        "vẫn tim đập chân run."
+        'Giấc mơ ấy chân thực đến dị thường, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.'
     )
     assert analysis_source_has_stunned_blank_mind(
-        <removed>
+        'Cậu đứng đực mặt, đầu óc trắng xóa.'
     )
     assert analysis_source_has_stunned_blank_mind(
-        <removed>
+        'Đèn đã tắt. Cậu đứng đực mặt, đầu óc trắng xóa.'
     )
     assert analysis_source_has_stunned_blank_mind(
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
+        'Giống như bị cây chùy nặng đập vào đầu, cậu đứng đực mặt, đầu óc trắng xóa.'
     )
 
 
@@ -6254,12 +6224,10 @@ def test_sleep_paralysis_source_authority_accepts_exact_v28_seq10() -> None:
         V28_SEQ10_SLEEP_PARALYSIS_TEXT
     )
     assert analysis_source_has_sleep_paralysis_helplessness(
-        <removed>
-        "muốn thoát ra nhưng không thể điều khiển bản thân."
+        'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
     )
     assert analysis_source_has_sleep_paralysis_helplessness(
-        <removed>
-        "muốn thoát ra nhưng không thể điều khiển bản thân."
+        'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
     )
 
 
@@ -6267,133 +6235,100 @@ def test_sleep_paralysis_source_authority_accepts_exact_v28_seq10() -> None:
     "text",
     (
         (
-            <removed>
-            "mơ, muốn thoát ra nhưng không thể điều khiển bản thân.”"
+            '“Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.”'
         ),
         (
-            <removed>
-            "mơ, muốn thoát ra nhưng không thể điều khiển bản thân?"
+            'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể?'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Nếu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "ra nhưng không thể điều khiển bản thân."
+            'Cụm từ bóng đè mô tả việc cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "mơ, muốn thoát ra nhưng không thể điều khiển bản thân. Cuối cùng "
-            "cậu đã tỉnh dậy."
+            'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể. Cuối cùng cậu đã tỉnh dậy.'
         ),
         (
-            <removed>
-            "mơ, muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Giống như cậu bị bóng đè, cậu nhận thức rằng mình không đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "mơ, không muốn thoát ra và không thể điều khiển bản thân."
+            'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, không muốn tự thoát ra và chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, song cậu không hề sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, song cậu không hề sợ hãi.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng cậu không cảm thấy sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu không cảm thấy sợ hãi.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng cậu chẳng thấy sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu chẳng thấy sợ hãi.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng cậu vẫn hoàn toàn bình tĩnh."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu vẫn hoàn toàn bình tĩnh.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng cậu vẫn hoàn toàn điềm tĩnh."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu vẫn hoàn toàn điềm tĩnh.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng cậu không có chút sợ hãi nào."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu không có chút sợ hãi nào.'
         ),
         (
-            <removed>
-            "hãi nào, vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu không có chút kinh hãi nào, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu chẳng thấy hoảng sợ, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "an, vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu không cảm thấy bất an, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu bình tĩnh, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu điềm tĩnh, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Không phải bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "phòng, nhưng Nam không thể điều khiển bản thân vì say rượu."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ; Lan muốn tự thoát ra khỏi phòng, nhưng Nam chẳng thể kiểm soát cơ thể vì say rượu.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Lan đang bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Lan giống như bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Giống như Lan bị bóng đè trước đây, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan, vào đêm ấy, bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan gặp hiện tượng lạ: bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Lan; bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan vừa cứu Nam rồi bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "Giống như người lạ vừa cứu Nam rồi bị bóng đè, Nam biết rõ mình "
-            <removed>
+            'Giống như người lạ vừa cứu Nam rồi bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Cậu đâu có bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "ra nhưng không thể điều khiển bản thân."
+            'Cậu không hẳn bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Cậu chỉ suýt bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân, nhưng rồi cậu đã cử động được."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng rồi cậu đã cử động được.'
         ),
         (
             f"{V28_SEQ10_SLEEP_PARALYSIS_TEXT} "
@@ -6409,8 +6344,8 @@ def test_sleep_paralysis_source_authority_rejects_unsafe_controls(
 
 def test_sleep_paralysis_source_authority_does_not_compose_neighbor_rows() -> None:
     source_rows = (
-        <removed>
-        "Cậu muốn thoát ra nhưng không thể điều khiển bản thân.",
+        'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ.',
+        'Cậu muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.',
     )
 
     assert not any(
@@ -6456,8 +6391,7 @@ def test_analysis_candidate_recalled_suffix_does_not_overlap_sleep_rule_on_repla
     tmp_path: Path,
 ) -> None:
     overlap_text = (
-        <removed>
-        "thể điều khiển bản thân. Cậu nhớ lại vẫn tim đập chân run."
+        'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể. Cậu nhớ lại vẫn đang tim đập chân run.'
     )
     assert not analysis_source_has_sleep_paralysis_helplessness(overlap_text)
     assert analysis_source_has_recalled_persistent_fear(overlap_text)
@@ -6540,60 +6474,59 @@ def test_analysis_candidate_rejects_sleep_paralysis_rule_for_thought_source(
 @pytest.mark.parametrize(
     "text",
     (
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Hạ Phong không còn nhớ lại vẫn đang tim đập chân run.',
+        'Hạ Phong từng nhớ lại vẫn đang tim đập chân run.',
+        'Nếu Hạ Phong nhớ lại vẫn đang tim đập chân run, cậu sẽ xin nghỉ.',
+        'Nghe nói Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Không phải Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Không đúng là Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Không chắc Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Chưa chắc Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Đâu phải Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Cô phủ nhận Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Cô nói Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Cô nói rằng Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Cô cho rằng Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Cô nghi ngờ Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Theo lời kể, Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Có vẻ Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Có vẻ như Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Có vẻ là Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Người ta đồn rằng Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Theo tin đồn, Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Theo lời đồn, Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Nghe đồn Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Tương truyền Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Tưởng tượng rằng Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run.',
+        'Không có bằng chứng rằng Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Chưa có bằng chứng rằng Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Có vẻ một ký ức hiện lên, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Không chắc một ký ức hiện lên, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Theo lời đồn, một ký ức hiện lên, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Cô phủ nhận chuyện một ký ức hiện lên, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Nếu một ký ức hiện lên, làm cho Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Trước đây Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Ngày trước, Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Hồi ấy, Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Đã có lúc Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Khi đó Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Hồi đó Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Ngày ấy Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Thuở ấy Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Lúc trước Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Trước kia Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Năm xưa Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Xưa kia Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Trong quá khứ Hạ Phong nhớ lại vẫn đang tim đập chân run.',
+        'Hạ Phong giả vờ nhớ lại vẫn đang tim đập chân run.',
+        'Ông nhắc lại câu “Hạ Phong nhớ lại vẫn đang tim đập chân run”.',
+        'Cụm từ Hạ Phong nhớ lại vẫn đang tim đập chân run được định nghĩa ở đây.',
+        'Hạ Phong nhớ lại vẫn đang tim đập chân run nhưng lại vui mừng nhẹ nhõm.',
+        'Cô dịu dàng ôm đứa trẻ đang nhớ lại vẫn đang tim đập chân run.',
         "Hạ Phong vẫn tim đập chân run.",
-        <removed>
+        'Liệu Hạ Phong nhớ lại vẫn đang tim đập chân run?',
         (
-            <removed>
-            <removed>
+            'Hạ Phong nhớ lại vẫn đang tim đập chân run. Hạ Phong nhớ lại vẫn đang tim đập chân run.'
         ),
     ),
 )
@@ -6606,56 +6539,55 @@ def test_recalled_persistent_fear_source_authority_excludes_ambiguous_rows(
 @pytest.mark.parametrize(
     "text",
     (
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Cậu không còn đứng đực mặt, đầu óc trắng xóa.',
+        'Cậu từng đứng đực mặt, đầu óc trắng xóa.',
+        'Nếu cậu đứng đực mặt, đầu óc trắng xóa thì hãy ngồi xuống.',
+        'Nghe nói cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Không phải cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Không đúng là cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Không chắc cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Chưa chắc cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Đâu phải cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cô phủ nhận cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cô nói cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cô nói rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cô cho rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cô nghi ngờ cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Theo lời kể, cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Có vẻ cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Có vẻ như cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Có vẻ là cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Người ta đồn rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Theo tin đồn, cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Theo lời đồn, cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Nghe đồn cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Tương truyền cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Tưởng tượng rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Không có bằng chứng rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Chưa có bằng chứng rằng cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Trước đây cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Ngày trước, cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Hồi ấy, cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Đã có lúc cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Khi đó cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Hồi đó cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Ngày ấy cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Thuở ấy cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Lúc trước cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Trước kia cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Năm xưa cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Xưa kia cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Trong quá khứ cậu đứng đực mặt, đầu óc trắng xóa.',
+        'Cậu giả vờ đứng đực mặt, đầu óc trắng xóa.',
+        'Ông nhắc lại câu “cậu đứng đực mặt, đầu óc trắng xóa”.',
+        'Cậu đứng đực mặt, đầu óc trắng xóa nhưng lại vui mừng.',
         (
-            <removed>
-            "tim đập chân run."
+            'Cậu đứng đực mặt, đầu óc trắng xóa, tim đập chân run.'
         ),
-        <removed>
+        'Cô dịu dàng ôm đứa trẻ đang đứng đực mặt, đầu óc trắng xóa.',
         "Cậu đực mặt ra.",
         "Đầu óc cậu một mảng trắng xóa rồi cậu đực mặt ra.",
-        <removed>
+        'Liệu cậu đứng đực mặt, đầu óc trắng xóa?',
     ),
 )
 def test_stunned_blank_mind_source_authority_excludes_ambiguous_rows(
@@ -6684,10 +6616,10 @@ def test_direct_narration_affect_source_authority_rejects_outer_scope_suffix(
     suffix: str,
 ) -> None:
     assert not analysis_source_has_recalled_persistent_fear(
-        <removed>
+        f"Hạ Phong đến giờ nhớ lại vẫn đang tim đập chân run{suffix}"
     )
     assert not analysis_source_has_stunned_blank_mind(
-        <removed>
+        f"Cậu đứng đực mặt, đầu óc trắng xóa{suffix}"
     )
 
 
@@ -7023,17 +6955,17 @@ def test_direct_narration_affect_critic_dissent_cannot_override_commit(
     ("text", "kind_hint", "candidate_emotion"),
     (
         (
-            <removed>
+            '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "thought",
             "afraid",
         ),
         (
-            <removed>
+            'Phổi và yết hầu bỏng rát. Ý thức của anh liền mất dần.',
             "narration",
             "afraid",
         ),
         (
-            <removed>
+            'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
             "narration",
             "afraid",
         ),
@@ -7074,8 +7006,7 @@ def test_analysis_candidate_accepts_source_bound_desperate_exertion_lock(
     db, source_rows = _analysis_batch_db(
         tmp_path,
         texts=(
-            <removed>
-            <removed>
+            'Bóng đèn kiểm kê vừa bật, cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
         ),
     )
     envelope = _semantic_lock_envelope(
@@ -7106,7 +7037,7 @@ def test_analysis_candidate_rejects_invalid_mandatory_desperate_exertion_emotion
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        <removed>
+        texts=('Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',),
     )
     envelope = _analysis_acceptance_envelope(source_rows, emotion=candidate_emotion)
 
@@ -7121,24 +7052,24 @@ def test_analysis_candidate_rejects_invalid_mandatory_desperate_exertion_emotion
 @pytest.mark.parametrize(
     "text",
     (
-        <removed>
+        'Cậu không còn tuyệt vọng gắng gượng nâng cửa cuốn.',
         "Cậu từng tuyệt vọng gắng gượng trong quãng đời trước.",
         "Ông nhắc lại câu “cậu tuyệt vọng gắng gượng” rồi giải thích.",
         "Cậu tuyệt vọng gắng gượng nhưng vẫn vui mừng vì mọi người an toàn.",
         "Một nỗ lực tuyệt vọng gắng gượng diễn ra trong im lặng.",
         "Cậu tuyệt vọng đến gần ánh sáng.",
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Nếu cậu tuyệt vọng gắng gượng nâng cửa cuốn, cậu sẽ kiệt sức.',
+        'Tôi không tin cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Không có chuyện cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi không hề tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi không còn tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi chưa từng nghĩ rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Không ai tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Có lẽ cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Dường như cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Nghe nói cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi nghi ngờ rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Liệu cậu tuyệt vọng gắng gượng nâng cửa cuốn?',
     ),
 )
 def test_analysis_candidate_rejects_desperate_exertion_lock_on_ambiguous_source(
@@ -7174,7 +7105,7 @@ def test_analysis_candidate_rejects_desperate_exertion_lock_on_ambiguous_source(
         ),
         (
             (
-                <removed>
+                'Phổi và yết hầu bỏng rát. Ý thức của anh liền mất dần.',
                 "Cậu cố mở mắt.",
             ),
             ("narration", "narration"),
@@ -7183,7 +7114,7 @@ def test_analysis_candidate_rejects_desperate_exertion_lock_on_ambiguous_source(
         ),
         (
             (
-                <removed>
+                'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
                 "Ánh sáng vẫn ở phía trước.",
             ),
             ("narration", "narration"),
@@ -7203,7 +7134,7 @@ def test_analysis_candidate_rejects_desperate_exertion_lock_on_ambiguous_source(
             (),
         ),
         (
-            <removed>
+            ("‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’", "‘Tỉnh dậy, mau tỉnh dậy!’"),
             ("thought", "thought"),
             1,
             (0,),
@@ -7266,7 +7197,7 @@ def test_analysis_candidate_allows_ordinary_narration_to_implicit_thought(
     (
         "Phổi và yết hầu không còn bị thiêu đốt, ý thức đã tỉnh táo và anh vui mừng.",
         "Ông nhắc lại câu “cậu tuyệt vọng gắng gượng” rồi giải thích.",
-        <removed>
+        'Nếu cậu tuyệt vọng gắng gượng nâng cửa cuốn, cậu sẽ kiệt sức.',
     ),
 )
 def test_analysis_candidate_allows_ambiguous_narration_to_thought(
@@ -7357,12 +7288,10 @@ def test_analysis_candidate_rejects_unsupported_durable_kind(tmp_path: Path) -> 
 @pytest.mark.parametrize(
     "text",
     (
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0.",
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0.",
-        <removed>
-        <removed>
+        'Cậu không sợ hãi và kinh hoàng; sau đó cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Cậu không vui mừng và phấn khích; sau đó cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Cậu khóc rồi cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Đau lòng, cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
     ),
 )
 def test_analysis_candidate_accepts_desperate_exertion_after_coordinated_negation(
@@ -7394,7 +7323,7 @@ def test_analysis_candidate_rejects_mandatory_adjacent_lock_when_omitted(
     db, source_rows = _analysis_batch_db(
         tmp_path,
         texts=(
-            <removed>
+            '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "‘Tỉnh dậy, phải tỉnh dậy!’",
         ),
         kind_hints=("thought", "thought"),
@@ -7428,7 +7357,7 @@ def test_analysis_candidate_rejects_invalid_mandatory_adjacent_emotion(
     db, source_rows = _analysis_batch_db(
         tmp_path,
         texts=(
-            <removed>
+            '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "‘Tỉnh dậy, phải tỉnh dậy!’",
         ),
         kind_hints=("thought", "thought"),
@@ -7459,11 +7388,11 @@ def test_analysis_candidate_rejects_invalid_mandatory_adjacent_emotion(
     ("text", "kind_hint"),
     (
         (
-            <removed>
+            '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "thought",
         ),
         (
-            <removed>
+            'Phổi và yết hầu bỏng rát. Ý thức của anh liền mất dần.',
             "narration",
         ),
     ),
@@ -7519,8 +7448,7 @@ def test_analysis_candidate_accepts_source_bound_host_semantic_override(
     # the coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
     physical_text = (
-        <removed>
-        <removed>
+        'Phổi và yết hầu bỏng rát. Ý thức Hạ Phong mơ hồ dần.'
     )
     db, source_rows = _analysis_batch_db(
         tmp_path,
@@ -7577,8 +7505,7 @@ def test_analysis_candidate_revalidates_semantic_override_protocol_after_reopen(
     # the coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
     physical_text = (
-        <removed>
-        "0. Câu thử đã gỡ. 0."
+        'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
     )
     db, source_rows = _analysis_batch_db(
         tmp_path,
@@ -7697,8 +7624,7 @@ def test_analysis_candidate_semantic_override_rejects_invalid_critic_protocol(
     remove_delta: bool,
 ) -> None:
     physical_text = (
-        <removed>
-        "Ý thức của Hạ Phong nhanh chóng trở nên mơ hồ."
+        'Phổi và yết hầu bỏng rát. Ý thức Hạ Phong mơ hồ dần.'
     )
     db, source_rows = _analysis_batch_db(
         tmp_path,
@@ -8521,7 +8447,7 @@ def test_analysis_candidate_rejects_tampered_host_clearance_metadata(
     expected_error: str,
 ) -> None:
     physical_text = (
-        "0. Câu thử đã gỡ. 0."
+        'Phổi đang bị bỏng rát. Ý thức anh mơ hồ dần.'
     )
     db, source_rows = _analysis_batch_db(
         tmp_path,
@@ -8614,12 +8540,10 @@ def test_analysis_candidate_rejects_semantic_lock_on_arbitrary_source(
     "mixed_text",
     (
         (
-            <removed>
-            "nhưng anh lại vui mừng rỡ."
+            'Phổi và yết hầu bỏng rát, ý thức của anh liền mơ hồ, nhưng anh lại vui mừng rỡ.'
         ),
         (
-            <removed>
-            "và anh sợ hãi cực độ."
+            'Phổi và yết hầu bỏng rát. Ý thức của anh liền mơ hồ và anh sợ hãi cực độ.'
         ),
     ),
 )
@@ -8649,7 +8573,7 @@ def test_analysis_candidate_binds_adjacent_semantic_lock_to_mortality_source(
     db, source_rows = _analysis_batch_db(
         tmp_path,
         texts=(
-            <removed>
+            '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "‘Tỉnh dậy, phải tỉnh dậy!’",
         ),
         kind_hints=("thought", "thought"),
@@ -8915,7 +8839,7 @@ def test_analysis_candidate_revalidates_semantic_lock_on_reopen(
     tmp_path: Path,
 ) -> None:
     physical_text = (
-        <removed>
+        'Phổi và yết hầu bỏng rát. Ý thức của anh liền mất dần.'
     )
     db, source_rows = _analysis_batch_db(
         tmp_path,

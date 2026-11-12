@@ -23,8 +23,8 @@ the co, nen no phai dem vao.
 
 Hai cai ten cua ca that, de sau nay doc lai hieu vi sao:
   - `Luke`: nguoi that, 4 cau ("Vang thua ngai.", "Xin moi ngai.") - model khong doan duoc gioi tinh.
-  <removed>
-    <removed>
+  - `Nghe`: **khong phai nguoi**. Nguon viet `"Ta phu trach kho tem, Victor." Nghe may in chay, Victor...` va
+    `"...Nam tuoc Othello." Nghe tieng may in, Othello dung dem phieu...` - chu "Nghe" mo dau cau tuong thuat
     ngay sau loi thoai bi nhan thanh ten nguoi noi; ba cau ay thuc ra cua Victor va Othello. Viec chua
     cai do la viec KHAC (xem docs/OPTIMISATION_QUEUE.md), khong phai viec cua cong nay.
 

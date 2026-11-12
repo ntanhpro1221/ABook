@@ -41,7 +41,7 @@ Sáu đoạn đầu, đọc transcript là hiểu ngay vì sao ASR mù:
 "Gia tộc Remis,"             → "Gia tộc dây mít"       sim 0,94   (d/r lẫn nhau)
 "Bụi đá của Golem Silian,"   → "Bụi đá của go lem xí lên"  sim 0,89   (s/x đồng âm)
 "Tên của cô là Selene Valkryn." → "Selenva L. Green."   sim 0,74   (tên bịa, đánh vần Latin)
-<removed>
+"Đọc nhãn này: Mavru selkan 'ito pamil." → "máp ru xen can i tô pa min."
 "Khác gì ăn cướp không?"     → "Khắc gì ăn cướp không? Khắc gì ăn cướp không?"
 "Tôi cười toe toét."         → "Tôi cười tué toách."
 ```

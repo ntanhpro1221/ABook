@@ -157,7 +157,13 @@ def test_the_studio_suggests_chapters_named_after_a_character_told_in_first_pers
     from abook.first_person import pov_chapters
 
     kakeru = "Tôi nhìn cô ấy rồi nói với Hayase một câu. Tôi đi về nhà. Tôi nghĩ mãi về Hayase và Narumi.\n\n" * 4
-    <removed>
+    hayase = """Tôi kiểm lại danh sách vận đơn. Tôi mệt mỏi.
+
+“Hayase, khóa giúp anh ngăn kéo.” Anh ta thở dài.
+
+Tôi cất bút.
+
+""" * 3
     files = _book(tmp_path, [("Chương 1: Lần đầu gặp gỡ", kakeru), ("Chương 2: Tấm Khiên Thịt", kakeru),
                              ("Chương 3: Yuuko Hayase", hayase), ("Chương 4: Kakeru Sorano", kakeru)])
     assert pov_chapters(files, "KAKERU SORANO") == [

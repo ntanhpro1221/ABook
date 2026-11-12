@@ -474,7 +474,7 @@ SEGMENTER_TEXTS = [
     "‘Mình phải đi thôi,’ Lan nghĩ thầm. Rồi cô đứng dậy.",
     "'Chà, chắc mình phải chăm chỉ thêm thôi.'\n\nMinh gõ cửa.",
     "Lan nói với Ma'at rằng I'm fine, rồi đi.",
-    "「Ừ. Hiểu rồi.」 Minh gật đầu. 「Mai gặp lại.」",
+    '「Nhớ mang theo bút.」 Minh gật đầu. 「Mai gặp lại.」',
     "『Hệ thống đã khởi động』\n\nLan mở mắt.",
     "[Bạn đã lên cấp.]\n\n【Nhiệm vụ mới】\n\nLan đọc bảng thông báo.",
     "[Note: Mình dịch chương này hơi vội]\n\nLan tới nơi.",
@@ -484,7 +484,7 @@ SEGMENTER_TEXTS = [
     "***\n\nGió thổi.\n\n***",
     "Gió thổi.\n\n*\n\nTrời tối.\n\n-\n\nTrời sáng.\n\n--\n\nHết.",
     "Gió thổi.\n\n...\n\n“...”\n\nTrời tối.",
-    <removed>
+    'Cô ghi nghề “thợ săn” lên phiếu. Chức danh của tôi là “đội trưởng,” theo quy ước của xưởng.',
     "Cô đọc “Cơ hội hoàn hảo”? Rồi lắc đầu.",
     "“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!” Cô cười.",
     "“Một câu nói chưa đóng ngoặc.\n\nLan tiếp tục đi.\n\nMinh quay lại.",

@@ -9,12 +9,12 @@ from __future__ import annotations
 from abook.character_registry import canonical_speaker_names
 
 ROKUJOUMA = "\n".join([
-    <removed>
-    <removed>
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    '“Kou, đừng đặt lọ mực lên lịch tàu của anh chứ.”',
+    'Người đang xếp hộp màu là Satomi Koutarou, 15 tuổi.',
+    'Matsudaira Kenji ngồi cạnh máy in, thường gọi người bạn cùng tổ là Kou.',
+    'Còn Koutarou đặt biệt danh Mackenzie cho bạn cùng tổ.',
+    '“Kou, cậu đăng ký ca kiểm kê chiều thứ sáu chưa?” Kenji hỏi Koutarou bên quầy đổi tem.',
+    '“Tên đầy đủ là Matsudaira Kenji; cứ gọi tắt là Mackenzie cho gọn.”',
     "Satomi Koutarou gật đầu. Koutarou thở dài. Koutarou cười. Matsudaira Kenji vẫy tay.",
 ])
 
@@ -28,7 +28,7 @@ def test_a_short_form_of_the_given_name_joins_its_owner() -> None:
 
 
 def test_a_caller_in_the_same_sentence_is_not_the_nickname_owner() -> None:
-    <removed>
+    '"Koutarou đặt biệt danh Mackenzie cho bạn cùng tổ": Koutarou là NGƯỜI GỌI; thiếu dấu hiệu tên đầy đủ thì không nối.'
     book = "\n".join(line for line in ROKUJOUMA.split("\n") if "Tên đầy đủ" not in line)
     mapping = canonical_speaker_names({"MACKENZIE": 12, "SATOMI KOUTAROU": 60, "MATSUDAIRA KENJI": 30}, book)
     assert mapping["MACKENZIE"] == "MACKENZIE"

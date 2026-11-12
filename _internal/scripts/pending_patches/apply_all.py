@@ -326,12 +326,12 @@ APPLIED = (
     # cuốn đang sản xuất trước/sau: 0 chương đổi (không có 「 nào). Thử chung bốn bản trên bản sao của cây 3fafd29.
     #
     # Cùng ranh giới, 20-09 01:1x: luật host "tên đầu câu kể sau câu thoại là người nói" (`_explicit_speaker_attribution`)
-    <removed>
+    # đè câu trả lời đúng ở TMA 378:25 ("Lo lắng phu nhân Tess..." -> "Lo") và 407:78 ("Lucien còn chưa kịp mở hộp mực, một
     # giọng nói... vọng đến" -> Lucien). Thêm ~24 chữ Việt không dấu vào danh sách mở-câu, và im khi người được nêu tên "chưa
     # kịp đáp/làm gì". Trên đáp án chuẩn: 50/52 -> 50/50 lần khoá đều đúng. Thử chung năm bản: chỉ đỏ hai test môi trường.
     #
     # Cùng ranh giới, 20-09 01:3x: khoá "một đoạn văn một người nói" (`_repair_same_paragraph_speakers`) nuốt cả thuật ngữ
-    <removed>
+    # trích GIỮA câu kể (TMA 419:24, 26: Arthur chưa biết cách gọi “khay chia mực” hay “vạch chia khay” -> giọng Arthur giữa câu
     # kể). Hai cuốn có 561 cụm như thế, ~66 bị khoá. Phát lại 10 chương đáp án TMA qua bộ phân tích đã vá đủ sáu bản: người
     # nói 100%, điểm 100 (trước vá 92,8% người nói). Thử chung sáu bản trên bản sao của cây f332f26: chỉ đỏ hai test môi trường.
     #

@@ -15,21 +15,21 @@ def _kinds(text: str) -> list[tuple[str, str]]:
 
 def test_a_comma_quote_with_any_attribution_is_dialogue() -> None:
     assert _kinds("“Được,” Liz gật đầu.") == [("dialogue", "“Được,”"), ("narration", "Liz gật đầu.")]
-    <removed>
-        <removed>
+    assert _kinds('“Cái bàn này còn thiếu một thanh giằng ở dưới,” cô giải thích.') == [
+        ("dialogue", '“Cái bàn này còn thiếu một thanh giằng ở dưới,”'),
         ("narration", "cô giải thích."),
     ]
     assert _kinds('"Ấn tượng đấy," cô nhận xét.')[0][0] == "dialogue"
 
 
 def test_a_term_after_a_naming_word_stays_narration_even_with_a_comma() -> None:
-    <removed>
-                 <removed>
-                 <removed>
+    for text in ('Trong bảng phân ca, chức danh của tôi là “đội trưởng,” theo quy ước của xưởng.',
+                 'Tấm thẻ mang danh “thợ săn,” kèm dấu mực xanh.',
+                 'Ba thợ gốm ghép nhóm thành “tổ đội,” mỗi người giữ một màu men.'):
         assert [kind for kind, _ in _kinds(text)] == ["narration"], text
 
 
 def test_a_plain_emphasis_quote_is_still_narration() -> None:
-    <removed>
-        <removed>
+    assert _kinds('Bản thiết kế chậu cây lấy cảm hứng từ “thác đổ” ở công viên.') == [
+        ("narration", 'Bản thiết kế chậu cây lấy cảm hứng từ “thác đổ” ở công viên.'),
     ]

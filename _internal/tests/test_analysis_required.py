@@ -120,85 +120,57 @@ ORIGINAL_DIRECTOR_CRITIC_REQUEST = OllamaBookAnalyzer._request_director_critic
 ORIGINAL_ANALYZER_INIT = OllamaBookAnalyzer.__init__
 ORIGINAL_MODEL_DIGEST_VERIFY = OllamaBookAnalyzer._verify_locked_model_digest
 V20_RECALLED_FEAR_TEXT = (
-    <removed>
-    <removed>
-    <removed>
+    'Hạ Phong nhớ lại vẫn đang tim đập chân run.'
 )
 V20_STUNNED_BLANK_MIND_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    'Hạ Phong đứng đực mặt, đầu óc trắng xóa.'
 )
 V21_SEQ13_PREVIOUS_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    "thầm cười giễu:"
+    'Hạ Phong xếp các phiếu bảo hành thành từng chồng, nhìn kim phút nhích qua vạch đỏ trên đồng hồ treo tường rồi thầm cười giễu:'
 )
 V21_SEQ13_TEXT = (
-    <removed>
-    <removed>
+    '‘Mình lại quên đặt chuông nhắc đóng quầy; sáng mai chắc phải mua thêm một cuộn giấy in.’'
 )
 V21_SEQ13_NEXT_TEXT = V20_STUNNED_BLANK_MIND_TEXT
 V25_SEQ9_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    "lan tới."
+    'Hạ Phong choàng dậy bên máy bán vé, thở dốc vì mơ thấy kẹt trong kho lạnh. Cậu sợ hãi nhìn nút báo động không sáng, tuyệt vọng chờ tiếng chuông từ phòng trực; tấm thẻ kiểm kê ướt mực cứ trượt khỏi tay.'
 )
 V26_SEQ18_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    "chẳng giống bệnh viện tí nào!"
+    'Hạ Phong thường kiểm tra phiếu gửi đồ rất chậm, nhất là lúc có nhiều kiện hàng. Lần này cậu phát hiện số ngăn trên biên nhận không khớp với ổ khóa: dù nhân viên vừa bảo đã đổi tủ, tại sao biển hướng dẫn vẫn ghi số cũ, ngay sát bàn cân cùng hộp bút chì màu xanh!'
 )
-<removed>
+V27_SEQ31_TEXT = '“Đập nát cái máy gian lận khốn kiếp kia ngay!”'
 V27_SEQ32_TEXT = (
-    <removed>
-    <removed>
+    'Tiếng người kiểm vé vừa sợ hãi vừa phấn khích vang qua bộ đàm. Hạ Phong bỏ tờ lịch trực xuống, tò mò nghĩ thầm:'
 )
-<removed>
+V27_SEQ33_TEXT = '‘Vé tháng? Trạm này bắt đầu bán từ hồi nào nhỉ?’'
 V28_SEQ10_TEXT = (
-    <removed>
-    <removed>
+    'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
 )
 V29_SEQ37_TEXT = "“Anh tỉnh rồi?”"
 V29_SEQ38_TEXT = (
-    <removed>
-    <removed>
+    'Hạ Phong nhận tấm bản đồ từ người giao thư mặc áo mưa bạc, gật đầu một cách máy móc rồi chợt nghĩ thầm:'
 )
 V29_SEQ39_TEXT = (
-    <removed>
-    <removed>
+    '‘Lucien, thẻ tàu, tuyến ngầm, kho lạnh… Chẳng lẽ bưu kiện này phải chuyển tận đài quan trắc ngoài đảo? Mình còn chưa xin được lịch của chuyến phà cuối tuần cơ mà?’'
 )
 V30_SEQ23_TEXT = (
-    <removed>
-    <removed>
-    <removed>
+    'Ngoài quầy bảo hành có một kệ gốm màu ngà, tầng trên bày sáu cái cốc không quai và tầng dưới xếp đầy hộp thiếc. Người thủ kho đánh dấu bằng phấn tím vào nhãn của từng hộp, rồi kéo tấm rèm có hình bánh răng xuống.'
 )
 V30_SEQ24_TEXT = (
-    <removed>
-    <removed>
+    'Trước bảng tuyến xe mới, Hạ Phong thấy mọi ký hiệu đều xa lạ. Cảm giác yếu ớt làm đầu óc cậu hỗn loạn giữa các số tuyến và giá vé.'
 )
 V30_SEQ25_TEXT = "‘Đây rốt cuộc là nơi nào?!"
 V32_SEQ42_TEXT = (
-    <removed>
+    'Hạ Phong thả rơi cây thước; cậu bé đang dán nhãn kiện hàng ngẩng lên nhắc:'
 )
 V32_SEQ43_TEXT = (
-    <removed>
-    <removed>
-    <removed>
+    '“Bác quản kho vẫn giữ chiếc hộp ấy, dù khóa đã gỉ đến mức không mở nổi. Bác cứ gọi nó là ‘Evans và chiếc diều xanh’, rồi xếp riêng trên tầng cao nhất, bên cạnh bó dây đồng chưa dùng.'
 )
 V32_SEQ44_TEXT = (
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    'Sáng nay Simon đem tới một cuộn nhãn mới, dặn ghi đủ tên người nhận ở mỗi hộp. Wayne cũng gửi bảng kê dụng cụ từ xưởng đóng thuyền; anh bảo chưa cần thanh toán, cứ thử chiếc máy đo trước khi quyết định có đặt thêm bộ đầu dò hay không!”'
 )
 V37_SEQ45_TEXT = (
-    <removed>
-    <removed>
+    'Cậu bé kể về huy chương sửa đồng hồ của anh mình, cả gương mặt nhỏ tràn ngập vẻ tự hào, tay vẫn giữ chiếc túi đeo chéo.'
 )
 
 
@@ -1373,8 +1345,7 @@ def test_neighbor_notes_cannot_leak_into_candidate_envelope() -> None:
             "seq": 5,
             "paragraph_index": 5,
             "text": (
-                <removed>
-                "vùng ra khỏi bóng tối."
+                'Hạ Phong dùng hết sức đẩy cánh cửa kho, rồi ngã xuống sàn mát lạnh khi then cài bật ra.'
             ),
             "kind_hint": "narration",
         },
@@ -1384,7 +1355,7 @@ def test_neighbor_notes_cannot_leak_into_candidate_envelope() -> None:
             "chapter_id": 1,
             "seq": 6,
             "paragraph_index": 6,
-            <removed>
+            "text": 'Một đốm đèn tím nhấp nháy trên hộp điều khiển của chiếc cần trục.',
             "kind_hint": "narration",
         },
     ]
@@ -1394,7 +1365,7 @@ def test_neighbor_notes_cannot_leak_into_candidate_envelope() -> None:
             "emotion": "tired",
             "intensity": 1,
             "pace": "fast",
-            <removed>
+            "notes": 'Đốm đèn tím nhấp nháy trên hộp điều khiển của chiếc cần trục.',
             "personality_hint": "bình tĩnh từ segment kế bên",
         }
     )
@@ -1783,8 +1754,7 @@ def test_v36_semantic_rejection_removes_conflicting_director_neutral_advice() ->
 def test_physical_collapse_feedback_is_typed_and_does_not_forward_source_text() -> None:
     stable_id = str(analysis_group()[0]["stable_id"])
     raw_reason = (
-        '0. Câu thử đã gỡ. 0.'
-        '0. Câu thử đã gỡ. 0.'
+        'emotion=neutral mâu thuẫn với cue trực tiếp: physical_collapse="Phổi và yết hầu bỏng rát"'
     )
 
     issues = _structured_feedback_issues({stable_id: raw_reason})
@@ -2245,9 +2215,7 @@ def test_v36_direct_affect_contract_rejects_neutral_for_only_the_source_bound_id
             "seq": 36,
             "paragraph_index": 32,
             "text": (
-                <removed>
-                <removed>
-                "cùng kinh ngạc và mừng rỡ:"
+                'Cậu bé đeo tạp dề đang bọc sách ở quầy vé thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
             ),
             "kind_hint": "narration",
         },
@@ -2328,9 +2296,7 @@ def test_v36_adjudicator_rejects_director_neutral_semantic_regression() -> None:
         "seq": 36,
         "paragraph_index": 32,
         "text": (
-            <removed>
-            <removed>
-            "kinh ngạc và mừng rỡ:"
+            'Cậu bé đeo tạp dề đang bọc sách ở quầy vé thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
         ),
         "kind_hint": "narration",
     }
@@ -2372,8 +2338,7 @@ def test_v37_adjudicator_rejects_unchanged_rejected_emotion() -> None:
         "seq": 36,
         "paragraph_index": 32,
         "text": (
-            <removed>
-            "kinh ngạc và mừng rỡ:"
+            'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
         ),
         "kind_hint": "narration",
     }
@@ -2412,8 +2377,7 @@ def test_v37_same_projection_is_recriticized_after_semantic_rejection(
     # issues - so the coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     stable_id = "c00001_s0000036_899a660818f4"
     db = FakeDB()
@@ -2500,8 +2464,7 @@ def test_v38_nonledger_clearance_keeps_projection_hash_after_semantic_retry(
     # issues - so the coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
     source_text = (
-        <removed>
-        "kinh ngạc và mừng rỡ:"
+        'Cậu bé bên quầy vé trông thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:'
     )
     stable_id = "c00001_s0000036_899a660818f4"
     db = FakeDB()
@@ -2866,20 +2829,20 @@ def test_director_adjudicator_rejects_template_corrections_by_field_only(monkeyp
     # coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
     texts = [
-        "Chương 01 - Giàn hỏa thiêu rực cháy",
+        'Chương 01 - Ca trực ở trạm cân',
         "Khói dày khiến phổi và yết hầu như bị thiêu đốt.",
         "‘Không được ngủ… sẽ chết mất.’",
         "‘Tỉnh dậy, phải tỉnh dậy!’",
         "Cậu cố vùng khỏi bóng tối.",
         "Một tia sáng đỏ xuất hiện.",
-        <removed>
+        'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
         "Ánh sáng chuyển sang trắng xóa.",
         "“Ha…”",
         "Cậu bật dậy sau cơn ác mộng.",
         "Cậu nhận ra mình vừa bị bóng đè.",
         "Nghĩ lại cậu vẫn tim đập chân run.",
         "Nhịp tim dần bình tĩnh trở lại.",
-        <removed>
+        '‘Mình lại ngủ quên cạnh máy in tem.’',
         "Cảnh lạ khiến cậu đực mặt.",
         "Mọi bộ bàn gỗ đều biến mất.",
         "Nơi này là một chiếc giường gỗ.",
@@ -3012,8 +2975,7 @@ def test_sentence_initial_vietnamese_words_are_not_name_candidates() -> None:
         {
             "speaker": "NARRATOR",
             "text": (
-                "Điều duy nhất cậu cảm thấy may mắn là mọi việc đã qua. "
-                <removed>
+                'Điều duy nhất cậu cảm thấy may mắn là mọi việc đã qua. May mắn thay, chiếc hộp còn kín. Xen lẫn các sợi len còn có tóc đỏ.'
             ),
         },
         {
@@ -3905,7 +3867,7 @@ def test_speech_verb_before_quote_overrides_speaker_but_weak_context_does_not() 
 def test_bare_name_vocative_is_repaired_but_self_introduction_is_not() -> None:
     addressed = {
         **analysis_group()[0],
-        <removed>
+        "text": '“Iven, mang giúp mẹ chiếc hộp xuống bến nhé.”',
         "kind_hint": "dialogue",
     }
     self_intro = {
@@ -4096,11 +4058,11 @@ def test_quote_hints_cannot_arm_a_kind_override():
     ("text", "rule"),
     [
         (
-            <removed>
+            'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.',
             HOST_PHYSICAL_COLLAPSE_RULE,
         ),
         (
-            <removed>
+            'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
             HOST_DESPERATE_EXERTION_RULE,
         ),
     ],
@@ -4278,12 +4240,10 @@ def test_v28_seq10_source_rule_locks_reported_cognition_to_afraid_narration() ->
     "text",
     (
         (
-            <removed>
-            "muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Giống như cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
     ),
 )
@@ -4344,125 +4304,95 @@ def test_v28_seq10_source_rule_rejects_generator_thought_relabel() -> None:
     "text",
     [
         (
-            <removed>
-            "mơ, muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Giống như cậu bị bóng đè, cậu không nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân."
+            'Nếu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "ra nhưng không thể điều khiển bản thân."
+            'Đoạn văn kể việc cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "ra nhưng không thể điều khiển bản thân.”"
+            'Người kể đọc: “Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.”'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, song vẫn vui mừng vì bạn bè an toàn."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, song vẫn vui mừng vì bạn bè an toàn.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, song cậu không hề sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, song cậu không hề sợ hãi.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, nhưng cậu không cảm thấy sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu không cảm thấy sợ hãi.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, nhưng cậu chẳng thấy sợ hãi."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu chẳng thấy sợ hãi.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, nhưng cậu vẫn hoàn toàn bình tĩnh."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu vẫn hoàn toàn bình tĩnh.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, nhưng cậu không có chút sợ hãi nào."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng cậu không có chút sợ hãi nào.'
         ),
         (
-            <removed>
-            "hãi nào, vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu không có chút kinh hãi nào, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu chẳng thấy hoảng sợ, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "an, vẫn muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu không cảm thấy bất an, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu bình tĩnh, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thoát ra nhưng không thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, cậu điềm tĩnh, vẫn muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Không phải bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "phòng, nhưng Nam không thể điều khiển bản thân vì say rượu."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ; Lan muốn tự thoát ra khỏi phòng, nhưng Nam chẳng thể kiểm soát cơ thể vì say rượu.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Lan đang bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Lan giống như bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "muốn thoát ra nhưng không thể điều khiển bản thân."
+            'Giống như Lan bị bóng đè trước đây, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan, vào đêm ấy, bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan gặp hiện tượng lạ: bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "không thể điều khiển bản thân."
+            'Lan; bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            'Lan vừa cứu Nam rồi bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            "Giống như người lạ vừa cứu Nam rồi bị bóng đè, Nam biết rõ mình "
-            <removed>
+            'Giống như người lạ vừa cứu Nam rồi bị bóng đè, Nam nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Cậu đâu có bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "ra nhưng không thể điều khiển bản thân."
+            'Cậu không hẳn bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "nhưng không thể điều khiển bản thân."
+            'Cậu chỉ suýt bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
         (
-            <removed>
-            "thể điều khiển bản thân, nhưng rồi cậu đã cử động được."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể, nhưng rồi cậu đã cử động được.'
         ),
-        "Cậu bị bóng đè nên không thể điều khiển bản thân.",
+        'Cậu bị bóng đè nên chẳng thể kiểm soát cơ thể.',
         (
-            "Cậu bị bóng đè, cậu biết rõ mình không nằm mơ, muốn thoát ra nhưng không "
-            "thể điều khiển bản thân."
+            'Cậu bị bóng đè, cậu nhận thức rằng mình không đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể.'
         ),
     ],
 )
@@ -4498,8 +4428,7 @@ def test_sleep_paralysis_rule_excludes_nonassertive_or_incomplete_sources(
 
 def test_recalled_suffix_does_not_overlap_sleep_paralysis_source_rule() -> None:
     text = (
-        <removed>
-        "thể điều khiển bản thân. Cậu nhớ lại vẫn tim đập chân run."
+        'Cậu bị bóng đè, cậu nhận thức rằng mình đang mơ, muốn tự thoát ra nhưng chẳng thể kiểm soát cơ thể. Cậu nhớ lại vẫn đang tim đập chân run.'
     )
     row = {
         **analysis_group()[0],
@@ -4578,7 +4507,7 @@ def test_sleep_paralysis_rule_never_leaks_from_neighbor_context() -> None:
             "Phổi và yết hầu không còn bị thiêu đốt, ý thức đã tỉnh táo và anh vui mừng."
         ),
         "Ông nhắc lại câu “cậu tuyệt vọng gắng gượng” rồi giải thích.",
-        <removed>
+        'Nếu cậu tuyệt vọng gắng gượng nâng cửa cuốn, cậu sẽ kiệt sức.',
     ],
 )
 def test_analysis_does_not_lock_ambiguous_narration_kind(text: str) -> None:
@@ -4626,14 +4555,14 @@ def test_analysis_calibrates_repeated_maximum_intensity(
 
 def test_semantic_delivery_rejects_v8_collapsed_happy_batch() -> None:
     texts = [
-        <removed>
+        'Cậu cảm thấy choáng váng bên tủ dụng cụ; hai chân mềm nhũn cạnh bàn cân, nghiêng ngả sắp ngã.',
         "Sắc mặt cậu trắng bệch, chỉ liếc nhìn đã vô cùng kinh hãi.",
         "Mọi thứ xa lạ khiến đầu óc cậu hỗn loạn.",
-        <removed>
-        <removed>
-        <removed>
+        'Nỗi lo sợ tăng dần bên bảng áp suất.',
+        'Bảng cân nhảy số làm cậu bất an.',
+        'Tâm trí cậu hỗn loạn trước mớ lịch trực.',
         "“Anh tỉnh rồi?”",
-        <removed>
+        'Cậu bé kinh ngạc và mừng rỡ khi anh trả lại máy ảnh.',
     ]
     group = [
         {
@@ -4667,7 +4596,7 @@ def test_semantic_delivery_rejects_v9_all_neutral_zero_template() -> None:
     rows = [
         ("‘Không được ngủ… sẽ chết mất.’", "thought"),
         ("‘Tỉnh dậy, phải tỉnh dậy!’", "thought"),
-        <removed>
+        ('Cậu tuyệt vọng gắng gượng nâng cửa cuốn.', "narration"),
         ("Cậu bật dậy thở dốc sau cảnh hỏa hoạn kinh hoàng.", "narration"),
         ("Nghĩ lại cậu vẫn tim đập chân run.", "narration"),
         ("Cảnh tượng khiến cậu đực mặt ra.", "narration"),
@@ -4703,43 +4632,35 @@ def test_semantic_delivery_rejects_v9_all_neutral_zero_template() -> None:
 def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature() -> None:
     rows = [
         (
-            <removed>
-            <removed>
+            'Rời bàn cân, cậu choáng váng tựa vào tủ dụng cụ, đầu gối mềm nhũn, sắp ngã xuống chồng thùng rỗng.',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
-            <removed>
+            'Hạ Phong tì lên chiếc ghế xếp để khỏi trượt chân. Mặt cậu trắng bệch và chưa thể bình tĩnh; cậu kiểm tra từng nhãn cảnh báo trên tủ điện cạnh cửa kho, rồi lùi thêm một bước.',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
-            <removed>
+            'Gian trực có một giá treo áo phản quang, ba chiếc cốc nhựa và bảng phân công viết bằng bút xanh. Bên dưới ô cửa thông gió, cuộn cáp mới đặt trên ghế xếp cạnh chiếc cân lò xo đã gãy kim.',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
-            <removed>
+            'Ngoài quầy bảo hành có một kệ gốm màu ngà, tầng trên bày sáu cái cốc không quai và tầng dưới xếp đầy hộp thiếc. Người thủ kho đánh dấu bằng phấn tím vào nhãn của từng hộp, rồi kéo tấm rèm có hình bánh răng xuống.',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
+            'Trước bảng tuyến xe mới, Hạ Phong thấy mọi ký hiệu đều xa lạ. Cảm giác yếu ớt làm đầu óc cậu hỗn loạn giữa các số tuyến và giá vé.',
             "narration",
             "neutral",
             1,
@@ -4747,33 +4668,28 @@ def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature()
         ),
         ("‘Đây rốt cuộc là nơi nào?!", "thought", "neutral", 1, "normal"),
         (
-            <removed>
-            <removed>
+            'Thân thể mình giống như vừa qua một cơn bệnh nặng, chắc phải ngồi nghỉ bên bảng giờ tàu thêm lát nữa.’',
             "thought",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
-            <removed>
+            'Hạ Phong nhìn hàng số nhảy trên bảng cân, càng tính càng rối. Cậu chẳng biết gọi cho ca trưởng hay chờ lệnh từ phòng máy; nỗi lo sợ tăng dần khi kim áp suất bắt đầu rung.',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
-            <removed>
+            'Hạ Phong hít sâu, ghim lại tấm thẻ trực trước ngực để dằn nỗi lo sợ. Cuộn dây còn nguyên niêm phong; ngoài sân, người gác cổng bất chợt cất tiếng qua loa:',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
+            '“Máy báo cháy! Ga phía bắc đang kiểm tra máy báo cháy kìa!”',
             "dialogue",
             "angry",
             3,
@@ -4781,26 +4697,22 @@ def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature()
         ),
         ("“Mọi người mau đi xem!”", "dialogue", "neutral", 1, "normal"),
         (
-            <removed>
+            '“Đập nát cái máy gian lận khốn kiếp kia ngay!”',
             "dialogue",
             "angry",
             3,
             "loud",
         ),
         (
-            <removed>
-            <removed>
+            'Tiếng người kiểm vé vừa sợ hãi vừa phấn khích vang qua bộ đàm. Hạ Phong bỏ tờ lịch trực xuống, tò mò nghĩ thầm:',
             "narration",
             "neutral",
             1,
             "normal",
         ),
-        <removed>
+        ('‘Vé tháng? Trạm này bắt đầu bán từ hồi nào nhỉ?’', "thought", "neutral", 1, "normal"),
         (
-            <removed>
-            <removed>
-            <removed>
-            <removed>
+            'Tờ lịch không có ngày thứ hai làm Hạ Phong lo sợ. Cậu chưa tra xong danh mục thì “rầm”, thùng bìa bên cửa đổ xuống, một nhân viên đeo kính bảo hộ vội chạy vào tìm hộp cầu chì.',
             "narration",
             "neutral",
             1,
@@ -4808,8 +4720,7 @@ def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature()
         ),
         ("“Anh Lucien!”", "dialogue", "happy", 2, "normal"),
         (
-            <removed>
-            <removed>
+            'Cậu bé đeo tạp dề đang bọc sách ở quầy vé thấy Hạ Phong mang trả chiếc máy ảnh thì vừa kinh ngạc vừa mừng rỡ:',
             "narration",
             "neutral",
             1,
@@ -4817,16 +4728,14 @@ def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature()
         ),
         ("“Anh tỉnh rồi?”", "dialogue", "happy", 2, "normal"),
         (
-            <removed>
-            <removed>
+            'Hạ Phong nhận tấm bản đồ từ người giao thư mặc áo mưa bạc, gật đầu một cách máy móc rồi chợt nghĩ thầm:',
             "narration",
             "neutral",
             1,
             "normal",
         ),
         (
-            <removed>
-            <removed>
+            '‘Lucien, thẻ tàu, tuyến ngầm, kho lạnh… Chẳng lẽ bưu kiện này phải chuyển tận đài quan trắc ngoài đảo? Mình còn chưa xin được lịch của chuyến phà cuối tuần cơ mà?’',
             "thought",
             "neutral",
             1,
@@ -4869,7 +4778,7 @@ def test_semantic_delivery_rejects_v9_batch_two_dominant_neutral_one_signature()
     "text",
     [
         V29_SEQ38_TEXT,
-        <removed>
+        'Hạ Phong đánh rơi tờ phiếu; cậu bé đặt bút xuống nhắc:',
         "Cậu bàng hoàng đứng lặng giữa căn phòng.",
     ],
 )
@@ -4936,7 +4845,7 @@ def test_semantic_delivery_does_not_treat_recalled_terms_as_performed_anger() ->
     group = [
         {
             "stable_id": "recalled-terms",
-            <removed>
+            "text": '‘Lucien, tuyến ngầm, kho lạnh… Chẳng lẽ bưu kiện bị gửi nhầm trạm?’',
         }
     ]
     validated = {
@@ -4981,7 +4890,7 @@ def test_semantic_delivery_keeps_neutral_physical_recovery_thought() -> None:
     group = [
         {
             "stable_id": "physical-recovery",
-            <removed>
+            "text": '‘Người mình nặng như đang đeo bộ đồ lặn.’',
         }
     ]
     validated = {
@@ -5000,7 +4909,7 @@ def test_semantic_delivery_keeps_neutral_physical_recovery_thought() -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "Chương 01 - Giàn hỏa thiêu rực cháy",
+        'Chương 01 - Ca trực ở trạm cân',
         "Chapter IV: The Return",
         "Hồi 2",
         "Phần III — Tái sinh",
@@ -5029,8 +4938,8 @@ def test_explicit_chapter_heading_matcher_accepts_only_structural_first_row(text
         {"seq": 1},
         {"paragraph_index": 1},
         {"kind_hint": "thought"},
-        {"text": "“Chương 01 - Giàn hỏa thiêu rực cháy”"},
-        {"text": "Ở Chương 01 - Giàn hỏa thiêu rực cháy"},
+        {"text": '“Chương 01 - Ca trực ở trạm cân”'},
+        {"text": 'Ở Chương 01 - Ca trực ở trạm cân'},
         {"text": "Chương 01 kể về giàn hỏa thiêu rực cháy."},
         {"text": "Chương Một - Giàn hỏa thiêu rực cháy"},
         {"text": "Chương 01 -"},
@@ -5041,7 +4950,7 @@ def test_explicit_chapter_heading_matcher_rejects_content_lookalikes(update: dic
         "stable_id": "heading-lookalike",
         "seq": 0,
         "paragraph_index": 0,
-        "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+        "text": 'Chương 01 - Ca trực ở trạm cân',
         "kind_hint": "narration",
         **update,
     }
@@ -5056,7 +4965,7 @@ def test_host_structural_heading_lock_preserves_generator_proposal_then_canonica
         "chapter_id": 1,
         "seq": 0,
         "paragraph_index": 0,
-        "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+        "text": 'Chương 01 - Ca trực ở trạm cân',
         "kind_hint": "narration",
     }
     item = analysis_item("chapter-heading")
@@ -5152,7 +5061,7 @@ def test_director_heading_row_is_target_only_but_content_keeps_neighbors() -> No
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         },
         {
@@ -5234,7 +5143,7 @@ def test_v21_split_singleton_thought_critic_keeps_prior_attribution_and_masks_ne
     assert critic_rows[0]["context_policy"] == ANALYSIS_CONTEXT_POLICY_PREVIOUS_ONLY
     assert original_context[row["stable_id"]]["next_text"] == V21_SEQ13_NEXT_TEXT
     assert critic_rows[0]["previous_text"] == V21_SEQ13_PREVIOUS_TEXT
-    assert critic_rows[0]["previous_text"].endswith("Cậu bèn thầm cười giễu:")
+    assert critic_rows[0]["previous_text"].endswith('rồi thầm cười giễu:')
     assert critic_rows[0]["next_text"] == ""
     serialized = json.dumps(critic_rows, ensure_ascii=False)
     assert "bỗng đập thẳng vào mắt cậu" not in serialized
@@ -5690,8 +5599,7 @@ def test_director_content_row_binds_source_verified_semantic_emotion_lock() -> N
         "seq": 1,
         "paragraph_index": 1,
         "text": (
-            <removed>
-            "0. Câu thử đã gỡ. 0."
+            'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
         ),
         "kind_hint": "narration",
     }
@@ -5735,8 +5643,7 @@ def test_physical_collapse_semantic_lock_is_not_created_for_mixed_affect() -> No
         "seq": 1,
         "paragraph_index": 1,
         "text": (
-            <removed>
-            "nhưng anh vẫn vui mừng vì mọi người đã thoát được."
+            'Phổi và yết hầu bỏng rát, ý thức bắt đầu mơ hồ, nhưng anh vẫn vui mừng vì mọi người đã thoát được.'
         ),
         "kind_hint": "narration",
     }
@@ -5764,8 +5671,7 @@ def test_desperate_exertion_creates_source_bound_semantic_lock(emotion: str) -> 
         "seq": 6,
         "paragraph_index": 7,
         "text": (
-            <removed>
-            <removed>
+            'Trên bảng cứu hộ đèn vàng vừa bật, cậu tuyệt vọng gắng gượng nâng cửa cuốn để luồn chiếc cán chổi qua khe.'
         ),
         "kind_hint": "narration",
     }
@@ -5811,7 +5717,7 @@ def test_desperate_exertion_rejects_emotion_outside_source_bound_set(
         "chapter_id": 1,
         "seq": 6,
         "paragraph_index": 7,
-        <removed>
+        "text": 'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
         "kind_hint": "narration",
     }
     validated = {
@@ -5839,24 +5745,24 @@ def test_desperate_exertion_rejects_emotion_outside_source_bound_set(
 @pytest.mark.parametrize(
     "text",
     [
-        <removed>
+        'Cậu không còn tuyệt vọng gắng gượng nâng cửa cuốn.',
         "Cậu từng tuyệt vọng gắng gượng trong quãng đời trước.",
         "Ông nhắc lại câu “cậu tuyệt vọng gắng gượng” rồi giải thích.",
         "Cậu tuyệt vọng gắng gượng nhưng vẫn vui mừng vì mọi người an toàn.",
         "Một nỗ lực tuyệt vọng gắng gượng diễn ra trong im lặng.",
         "Cậu tuyệt vọng đến gần ánh sáng.",
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Nếu cậu tuyệt vọng gắng gượng nâng cửa cuốn, cậu sẽ kiệt sức.',
+        'Tôi không tin cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Không có chuyện cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi không hề tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi không còn tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi chưa từng nghĩ rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Không ai tin rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Có lẽ cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Dường như cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Nghe nói cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Tôi nghi ngờ rằng cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Liệu cậu tuyệt vọng gắng gượng nâng cửa cuốn?',
     ],
 )
 def test_desperate_exertion_lock_excludes_ambiguous_or_suppressed_sources(
@@ -5893,7 +5799,7 @@ def test_host_adjudication_rejects_mandatory_narration_kind_bypass() -> None:
         "chapter_id": 1,
         "seq": 6,
         "paragraph_index": 7,
-        <removed>
+        "text": 'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
         "kind_hint": "narration",
     }
     validated = {
@@ -5911,12 +5817,10 @@ def test_host_adjudication_rejects_mandatory_narration_kind_bypass() -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0.",
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0.",
-        <removed>
-        <removed>
+        'Cậu không sợ hãi và kinh hoàng; sau đó cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Cậu không vui mừng và phấn khích; sau đó cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Cậu khóc rồi cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
+        'Đau lòng, cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
     ],
 )
 def test_desperate_exertion_lock_preserves_coordinated_negation_scope(
@@ -6043,7 +5947,7 @@ def test_director_adjacent_wake_lock_uses_original_context_for_override(monkeypa
     # the adjudicator is still live for kind, speaker, pace and volume, so the
     # coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
-    <removed>
+    mortality_text = '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’'
     wake_text = "‘Tỉnh dậy, phải tỉnh dậy!’"
     row = {
         "id": 2,
@@ -6113,7 +6017,7 @@ def test_pending_singleton_wake_retains_previous_source_lock_in_durable_critic(
     # the adjudicator is still live for kind, speaker, pace and volume, so the
     # coverage is kept by enabling the trigger explicitly here.
     monkeypatch.setattr(database_module, "AFFECT_CUE_DISAGREEMENT_BLOCKS", True)
-    <removed>
+    mortality_text = '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’'
     wake_text = "‘Tỉnh dậy, phải tỉnh dậy!’"
     db = FakeDB()
     db.rows = [
@@ -6206,8 +6110,7 @@ def test_director_valid_semantic_lock_dissent_is_audited_without_veto(monkeypatc
         "seq": 1,
         "paragraph_index": 1,
         "text": (
-            <removed>
-            "0. Câu thử đã gỡ. 0."
+            'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
         ),
         "kind_hint": "narration",
     }
@@ -7043,8 +6946,7 @@ def test_v28_seq10_generator_must_clear_host_affect_before_critic(
 
 def test_source_kind_override_is_not_available_to_unprotected_semantic_rules() -> None:
     text = (
-        <removed>
-        "0. Câu thử đã gỡ. 0."
+        'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
     )
     row = {
         "id": 1,
@@ -7116,8 +7018,7 @@ def test_director_semantic_lock_never_overrides_invalid_or_allowed_dissent(
         "seq": 1,
         "paragraph_index": 1,
         "text": (
-            <removed>
-            "0. Câu thử đã gỡ. 0."
+            'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
         ),
         "kind_hint": "narration",
     }
@@ -7176,7 +7077,7 @@ def test_desperate_exertion_lock_never_overrides_invalid_or_allowed_dissent(
         "chapter_id": 1,
         "seq": 6,
         "paragraph_index": 7,
-        <removed>
+        "text": 'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
         "kind_hint": "narration",
     }
     validated = {
@@ -7221,7 +7122,7 @@ def test_director_heading_locked_field_dissent_is_audited_without_veto(monkeypat
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         }
     ]
@@ -7287,7 +7188,7 @@ def test_director_heading_agreement_keeps_locked_confidence_above_critic_and_cap
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         }
     ]
@@ -7329,7 +7230,7 @@ def test_director_heading_critic_confidence_still_must_meet_floor() -> None:
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         }
     ]
@@ -7366,7 +7267,7 @@ def test_director_mixed_batch_keeps_heading_lock_and_caps_content_confidence() -
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         },
         {
@@ -7428,7 +7329,7 @@ def test_director_cannot_override_critic_before_heading_delivery_is_host_locked(
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         }
     ]
@@ -7473,7 +7374,7 @@ def test_director_mixed_batch_still_rejects_invalid_content_evidence_quote(monke
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
+            "text": 'Chương 01 - Ca trực ở trạm cân',
             "kind_hint": "narration",
         },
         {
@@ -7544,8 +7445,8 @@ def test_structural_heading_neighbor_leak_is_canonicalized_and_checkpointed(monk
             "chapter_id": 1,
             "seq": 0,
             "paragraph_index": 0,
-            "text": "Chương 01 - Giàn hỏa thiêu rực cháy",
-            "text_sha256": sha256_text("Chương 01 - Giàn hỏa thiêu rực cháy"),
+            "text": 'Chương 01 - Ca trực ở trạm cân',
+            "text_sha256": sha256_text('Chương 01 - Ca trực ở trạm cân'),
             "kind_hint": "narration",
             "status": "pending",
             "speaker": None,
@@ -7620,16 +7521,14 @@ def test_structural_heading_neighbor_leak_is_canonicalized_and_checkpointed(monk
 
 def test_host_affect_first_batch_rejects_only_self_preservation_thoughts() -> None:
     texts = [
-        "Chương 01 - Giàn hỏa thiêu rực cháy",
+        'Chương 01 - Ca trực ở trạm cân',
         (
-            <removed>
-            <removed>
+            'Máy phát điện khạc ra một luồng khói xám. Hạ Phong ho khò khè, ý thức cậu mơ hồ dần, tấm bảng số trước mắt nhòe thành các vệt dọc.'
         ),
-        <removed>
+        '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
         "‘Tỉnh dậy, phải tỉnh dậy!’",
         (
-            <removed>
-            "Hạ Phong vùng ra khỏi bóng tối."
+            'Bóng đèn báo động tắt phụt. Hạ Phong đạp bung tấm ván chắn rồi lăn xuống sàn có trải mạt cưa.'
         ),
     ]
     kinds = ["narration", "narration", "thought", "thought", "narration"]
@@ -7824,15 +7723,15 @@ def test_v20_narration_cues_lock_source_kind_before_affect_adjudication() -> Non
 @pytest.mark.parametrize(
     "text",
     (
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Hạ Phong không còn nhớ lại vẫn đang tim đập chân run.',
+        'Nếu Hạ Phong nhớ lại vẫn đang tim đập chân run, cậu sẽ xin nghỉ.',
+        'Hạ Phong nhớ lại vẫn đang tim đập chân run nhưng lại vui mừng nhẹ nhõm.',
+        'Cô dịu dàng ôm đứa trẻ đang nhớ lại vẫn đang tim đập chân run.',
         "Hạ Phong vẫn tim đập chân run.",
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        'Cậu không còn đứng đực mặt, đầu óc trắng xóa.',
+        'Cậu đứng đực mặt, đầu óc trắng xóa nhưng lại vui mừng.',
+        'Cậu đứng đực mặt, đầu óc trắng xóa, tim đập chân run.',
+        'Cô dịu dàng ôm đứa trẻ đang đứng đực mặt, đầu óc trắng xóa.',
         "Đầu óc cậu một mảng trắng xóa rồi cậu đực mặt ra.",
     ),
 )
@@ -7996,7 +7895,7 @@ def test_host_affect_adjacent_rule_does_not_cross_source_boundaries(
         "stable_id": "previous-thought",
         "chapter_id": 1,
         "paragraph_index": 1,
-        <removed>
+        "text": '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
         "kind_hint": "thought",
     }
     current = {
@@ -8044,7 +7943,7 @@ def test_repeated_host_candidate_splits_before_third_generator_or_critic(
             "chapter_id": 1,
             "paragraph_index": index,
             "text": (
-                <removed>
+                '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’'
                 if index == 1
                 else f"Đoạn kể {index}."
             ),
@@ -8232,7 +8131,7 @@ def test_repeated_host_candidate_fails_singleton_without_critic(monkeypatch) -> 
     db = FakeDB()
     db.rows[0].update(
         {
-            <removed>
+            "text": '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "kind_hint": "thought",
             "paragraph_index": 1,
         }
@@ -8272,7 +8171,7 @@ def test_semantic_delivery_rejects_neutral_direct_emotion_but_keeps_mixed_narrat
         {"stable_id": "fear", "text": "‘Mình sẽ chết mất.’"},
         {
             "stable_id": "mixed-narration",
-            <removed>
+            "text": 'Tiếng gọi qua bộ đàm vừa sợ hãi vừa phấn khích.',
         },
     ]
     validated = {
@@ -8458,11 +8357,11 @@ def test_v37_seq45_active_pride_rejects_neutral_and_persists_retry_schema() -> N
 @pytest.mark.parametrize(
     "text",
     [
-        "Ánh mắt không còn tràn ngập vẻ tự hào.",
-        "Ánh mắt từng tràn ngập vẻ tự hào.",
-        "Cụm từ “tràn ngập vẻ tự hào” là một danh từ.",
+        'Ánh mắt không còn tràn ngập vẻ tự hào.',
+        'Ánh mắt từng tràn ngập vẻ tự hào.',
+        'Cụm từ “tràn ngập vẻ tự hào” là một danh từ.',
         'Chương 797 - "Tự hào"',
-        <removed>
+        'Bộ sưu tập tem xe điện là niềm tự hào của gia đình thợ in.',
         "Cảm thấy tự hào, nhưng đồng thời buồn bã.",
     ],
 )
@@ -8487,7 +8386,7 @@ def test_v37_pride_guard_does_not_overreach(text: str) -> None:
         "Anh đã từng sợ hãi, nhưng giờ hoàn toàn bình tĩnh.",
         "Ông giải thích rằng “tuyệt vọng” là một danh từ.",
         "Cô vừa sợ hãi vừa phấn khích.",
-        <removed>
+        'Cậu choáng váng bên tủ dụng cụ; hai chân mềm nhũn cạnh bàn cân, nghiêng ngả sắp ngã.',
     ],
 )
 def test_direct_cue_retry_choices_ignore_suppressed_opposing_and_distress(
@@ -8532,8 +8431,7 @@ def test_direct_cue_retry_choices_do_not_constrain_nonneutral_delivery(
 
 def test_direct_cue_retry_choices_skip_physical_and_host_rule_paths() -> None:
     physical_text = (
-        <removed>
-        "0. Câu thử đã gỡ. 0."
+        'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
     )
     group = [
         {
@@ -8543,7 +8441,7 @@ def test_direct_cue_retry_choices_skip_physical_and_host_rule_paths() -> None:
         },
         {
             "stable_id": "host-rule",
-            <removed>
+            "text": 'Cậu tuyệt vọng gắng gượng nâng cửa cuốn.',
             "kind_hint": "narration",
         },
     ]
@@ -8568,7 +8466,7 @@ def test_semantic_delivery_keeps_neutral_physical_distress_in_narration() -> Non
     group = [
         {
             "stable_id": "distressed-narration",
-            <removed>
+            "text": 'Cậu choáng váng bên tủ dụng cụ; hai chân mềm nhũn cạnh bàn cân, nghiêng ngả sắp ngã.',
         }
     ]
     validated = {
@@ -8586,9 +8484,7 @@ def test_semantic_delivery_keeps_neutral_physical_distress_in_narration() -> Non
 
 def test_semantic_delivery_rejects_neutral_respiratory_and_consciousness_collapse() -> None:
     text = (
-        <removed>
-        <removed>
-        "liền trở nên mơ hồ."
+        'Ống xả của máy phát điện rung mạnh, khói làm Hạ Phong ho khò khè. Phổi và yết hầu bỏng rát. Ý thức cậu mơ hồ dần giữa tiếng còi báo động kéo dài.'
     )
     group = [{"stable_id": "physical-collapse", "text": text, "kind_hint": "narration"}]
     validated = {
@@ -8603,7 +8499,7 @@ def test_semantic_delivery_rejects_neutral_respiratory_and_consciousness_collaps
     issues, batch_collapsed = _semantic_delivery_issues(group, validated)
 
     assert batch_collapsed is False
-    <removed>
+    assert 'physical_collapse="Phổi và yết hầu bỏng rát"' in issues[
         "physical-collapse"
     ]
 
@@ -8632,14 +8528,13 @@ def test_semantic_delivery_keeps_neutral_single_clinical_observation() -> None:
     "text",
     [
         (
-            "Phổi và yết hầu không bị thiêu đốt. "
-            "0. Câu thử đã gỡ. 0."
+            'Phổi và yết hầu không bị thiêu đốt. Ý thức anh mơ hồ dần.'
         ),
         (
-            <removed>
+            'Phổi và yết hầu bỏng rát, nhưng ý thức của anh không còn mơ hồ.'
         ),
         (
-            <removed>
+            'Phổi và yết hầu bỏng rát, nhưng ý thức của anh đã hết mơ hồ.'
         ),
     ],
 )
@@ -8877,7 +8772,7 @@ def test_direct_cue_compatibility_does_not_fail_nonrepeated_nonneutral_delivery(
 
 
 def test_semantic_delivery_rejects_happy_crowd_condemnation_individually() -> None:
-    <removed>
+    texts = ['“Cái máy khốn kiếp!”', '“Phá bản in thế này thật độc ác!”', '“Giết cái máy nhai giấy đi!”']
     group = [
         {"stable_id": f"crowd{index}", "text": text}
         for index, text in enumerate(texts)
@@ -9261,8 +9156,7 @@ def test_retry_retains_host_constraints_while_fixing_later_semantic_issue(
             "chapter_id": 1,
             "paragraph_index": 1,
             "text": (
-                <removed>
-                <removed>
+                'Phổi và yết hầu bỏng rát. Ý thức Hạ Phong mơ hồ dần.'
             ),
             "kind_hint": "narration",
             "status": "pending",
@@ -9273,7 +9167,7 @@ def test_retry_retains_host_constraints_while_fixing_later_semantic_issue(
             "stable_id": "mortality-thought",
             "chapter_id": 1,
             "paragraph_index": 2,
-            <removed>
+            "text": '‘Mình sẽ chết mất trong kho lạnh nếu ngủ quên.’',
             "kind_hint": "thought",
             "status": "pending",
             "speaker": None,
@@ -9363,8 +9257,7 @@ def test_retry_merges_source_kind_and_host_affect_failures_in_one_attempt(
             "seq": 1,
             "paragraph_index": 1,
             "text": (
-                <removed>
-                "0. Câu thử đã gỡ. 0."
+                'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
             ),
             "kind_hint": "narration",
             "status": "pending",
@@ -9441,8 +9334,7 @@ def test_retry_retains_host_pass_constraint_while_fixing_other_semantic_issue(
             "chapter_id": 1,
             "paragraph_index": 1,
             "text": (
-                <removed>
-                "0. Câu thử đã gỡ. 0."
+                'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
             ),
             "kind_hint": "narration",
             "status": "pending",
@@ -9524,8 +9416,7 @@ def test_desperate_exertion_retry_receives_typed_allowed_emotions(
 ) -> None:
     db = FakeDB()
     source_text = (
-        <removed>
-        <removed>
+        'Trên bảng cứu hộ đèn vàng vừa bật, cậu tuyệt vọng gắng gượng nâng cửa cuốn để luồn chiếc cán chổi qua khe.'
     )
     db.rows = [
         {
@@ -9604,8 +9495,7 @@ def test_critic_exhaustion_does_not_clear_prior_deterministic_feedback(
             "stable_id": "physical-collapse",
             "paragraph_index": 1,
             "text": (
-                <removed>
-                "0. Câu thử đã gỡ. 0."
+                'Phổi và yết hầu bỏng rát. Ý thức anh mơ hồ dần.'
             ),
             "kind_hint": "narration",
         }
@@ -11773,7 +11663,7 @@ def test_the_advertised_set_is_the_one_the_host_enforces_on_retry() -> None:
         # the emotion anyway, so a line about composure regained was read as astonished -
         # it overrode the model with the opposite of what the sentence says, and spent a
         # retry doing it. Both of these came out of a real run.
-        <removed>
+        ('Cậu gập bản đồ, thu lại vẻ kinh ngạc rồi để cậu bé dẫn tới quầy mua tem.', False),
         ("Cậu gạt bỏ nỗi sợ hãi rồi bước tới.", False),
         ("Cậu xua tan nỗi sợ hãi trong lòng.", False),
         ("Nỗi sợ hãi đã tan biến, cậu bước tới.", False),
@@ -11786,7 +11676,7 @@ def test_the_advertised_set_is_the_one_the_host_enforces_on_retry() -> None:
         ("Cậu chẳng gạt bỏ được nỗi sợ hãi.", True),
         # Ordinary affect keeps working; the cue is not weakened for everyone else.
         ("Tim thắt lại, cậu nhìn ngọn lửa kinh hoàng.", True),
-        <removed>
+        ('Mực tràn khay, cậu tuyệt vọng nhìn bản in bị hỏng.', True),
         ("Hắn nhìn cậu bằng ánh mắt tàn nhẫn kinh hoàng.", True),
     ],
 )
@@ -11800,9 +11690,9 @@ def test_an_affect_the_prose_ends_stops_being_a_cue(text: str, keeps_cue: bool) 
         # A curse is a thing in fantasy and horror: a ward against it, a cursed doll, the
         # words of one. Reading the narrator angry over it contradicted the gold
         # (Throne of Magical Arcana 346, Yamiyo no Hotaru 189).
-        <removed>
+        ('Hộp đựng mực có một nhãn chống nguyền rủa.', False),
         ("Con búp bê bị nguyền rủa nằm yên trên kệ.", False),
-        <removed>
+        ('Người thợ nói lời nguyền rủa chiếc máy kẹt giấy.', False),
         # Someone cursing is still anger.
         ("Hắn thầm nguyền rủa tên khốn đó.", True),
         ("Cái thứ đáng nguyền rủa này!", True),
@@ -11917,7 +11807,7 @@ def test_a_described_speaker_is_merged_with_the_name_revealed_later(monkeypatch)
         },
         {
             "id": 2, "stable_id": "c1s2", "chapter_id": 1, "status": "analyzed",
-            <removed>
+            "text": '“Anh Lucien học pha mực in ở xưởng nào vậy?”',
             "kind": "dialogue", "kind_hint": "dialogue",
             "speaker": "Iven", "gender": "male", "age": "child",
         },
@@ -12022,18 +11912,17 @@ def _identity_analyzer(monkeypatch, db, mode: str):
 # boy's line names him, his own line names somebody else, and his named line comes later.
 IVEN_CHAPTER = (
     ("dialogue", "NPC_LOCAL::c00002::rf::người đàn ông",
-     <removed>
+     '“Alisa, để Evans chọn màu sơn đã. Iven, mang giúp mẹ chiếc hộp xuống bến nhé.”'),
     ("narration", "NARRATOR",
-     <removed>
-      "vừa làm mặt hài hước:")),
+     ('Cậu bé Iven, người đã hẹn Lucien đến lấy hộp màu, cẩn thận gấp chiếc ô giấy rồi cười tinh nghịch:')),
     ("dialogue", "NPC_LOCAL::c00002::rae::cậu bé",
-     <removed>
+     '“Anh Lucien sửa được máy chiếu thì chắc cũng nối được cuộn phim này thôi.”'),
     ("dialogue", "NPC_LOCAL::c00002::r1e::phụ nữ",
-     <removed>
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+     '“Evans bé nhỏ, dì đã dành riêng con tem hình tàu điện cho con này.”'),
+    ("narration", "NARRATOR", 'Bà cất phiếu hàng vào ví rồi cằn nhằn:'),
+    ("narration", "NARRATOR", 'Bốn người ghé quầy in của Lucien để nhận tập áp phích vừa đóng gói.'),
+    ("narration", "NARRATOR", 'Iven chạm vào hộp màu của Lucien rồi tò mò hỏi:'),
+    ("dialogue", "Iven", '“Anh Lucien học pha mực in ở xưởng nào vậy?”'),
     ("dialogue", "Lucien", "“Vừa xong.”"),
 )
 
@@ -12075,10 +11964,10 @@ def test_the_person_a_stranger_talks_to_is_never_offered_as_the_stranger(monkeyp
     """
     db = FakeDB()
     db.rows = _identity_rows(
-        <removed>
-        <removed>
+        ("narration", "NARRATOR", 'Koutarou đóng nắp hộp mực đúng lúc người giao hàng đặt chồng bìa xuống.'),
+        ("dialogue", "NPC_LOCAL::c00001::r4::người đàn ông", '“Đây là cuộn giấy cuối của đơn hôm nay hả?”'),
         ("dialogue", "Koutarou", "“Dạ cảm ơn bác ạ!”"),
-        <removed>
+        ("narration", "NARRATOR", 'Koutarou đưa biên nhận và cảm tạ bác thợ in lớn tuổi.'),
     )
     for mode in ("evidence", "named"):
         analyzer, asked = _identity_analyzer(monkeypatch, db, mode)
@@ -12092,7 +11981,7 @@ def test_a_name_the_text_never_ties_to_the_stranger_is_not_asked_about(monkeypat
     was merged into Clara, who arrives forty segments later)."""
     db = FakeDB()
     db.rows = _identity_rows(
-        <removed>
+        ("narration", "NARRATOR", 'Các tiểu thư chọn xong màu men rồi xếp cốc lên giá hong.'),
         ("dialogue", "NPC_LOCAL::c00001::r6::người hỏi", "“Tiểu thư, cô đã mua váy mới rồi sao?”"),
         *[("narration", "NARRATOR", "Gió thổi qua những tán cây.")] * 6,
         ("narration", "NARRATOR", "Clara bước tới, vẫy tay chào mọi người."),

@@ -16,12 +16,12 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "unknown") -> dict:
 
 def test_a_term_quoted_inside_a_sentence_keeps_its_own_reading() -> None:
     group = [
-        <removed>
+        _row(0, "dialogue", '“Làm khô hết chồng giấy can này chắc phải chờ tới cuối ca…”'),
         _row(1, "narration", "Arthur không hiểu"),
         _row(2, "dialogue", "“dây chuyền lắp ráp”"),
         _row(3, "narration", "hay"),
         _row(4, "dialogue", "“tiêu chuẩn hóa”"),
-        <removed>
+        _row(5, "narration", 'là gì, nhưng ông còn bận đánh số từng hộp mực.'),
     ]
     payload = {"segments": [
         _item(0, "dialogue", "Arthur", "male"), _item(1, "narration", "NARRATOR"),
@@ -37,7 +37,7 @@ def test_a_term_quoted_inside_a_sentence_keeps_its_own_reading() -> None:
 def test_a_term_at_the_edge_of_an_analysis_batch_is_still_seen() -> None:
     # 419:26 là đoạn cuối lô của nó: không thấy câu kể phía sau.
     group = [
-        <removed>
+        _row(0, "dialogue", '“Làm khô hết chồng giấy can này chắc phải chờ tới cuối ca…”'),
         _row(1, "narration", "Arthur không hiểu"),
         _row(2, "dialogue", "“dây chuyền lắp ráp”"),
         _row(3, "narration", "hay"),

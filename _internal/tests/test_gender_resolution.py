@@ -48,7 +48,7 @@ def test_a_tie_is_settled_by_what_the_narration_calls_them() -> None:
     identity = _rows(("NOAH", "male", "..."), ("NOAH", "female", "..."))
     narration = _rows(
         *[
-            <removed>
+            ("NARRATOR", "unknown", 'Cha của Noah dạy cậu đếm bánh răng từ hồi cậu mới lên sáu.')
             for _ in range(4)
         ]
     )

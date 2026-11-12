@@ -9,13 +9,13 @@ Chạy: python patch_the_one_being_looked_at_is_not_the_speaker.py <root>
 đặt người nói ở đầu câu và người nghe ngay trước "nói:":
 
     Levski quay sang Lucien nói:                     -> khoá cho Lucien (người nghe)
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    Ông mở hộp tem rồi nhìn Lucien nói:         -> Lucien
+    Công tước James cầm tờ phiếu nhìn Tử tước Harrison nói:   -> Harrison
+    Lucien gấp lịch tàu rồi dùng giọng Beaulac nói:   -> Beaulac (tên cải trang)
+    Sau khi so màu mực, ông khẽ cười với Heidi nói:       -> Heidi
 
 Và khi `LATIN_PROPER_NAME_SURFACE_PATTERN` (chỉ chữ ASCII) cắt cụt một tên có dấu: "Triết Gia hỏi:" -> người nói "Gia";
-<removed>
+"giữ cuộn giấy của Trịnh Vĩnh Mong nói:" -> "Mong" (bắt được khi phát lại đáp án chuẩn Năng lực bá đạo 0135:103).
 
 Đếm trên cuốn 2 (915 chương): luật bắn 78 lần, ~29 lần khoá cho người nghe hoặc cho mẩu tên - trong đó 003, 192, 231, 301,
 368, 406 đã thu, 426-870 còn ở các lô sau. Kho truyện tên Hán-Việt (Năng lực bá đạo): 115 lần, 52 lần tên bị cắt cụt.
@@ -23,7 +23,7 @@ Và khi `LATIN_PROPER_NAME_SURFACE_PATTERN` (chỉ chữ ASCII) cắt cụt mộ
 Luật mới - im (câu trả lời của model và lượt phản biện quyết) khi: từ ngay trước tên viết hoa và "tên" là một âm tiết
 tiếng Việt (mẩu của một tên có dấu bị cắt), hoặc là "một/của/đám/người/trò" (danh từ chung hay nhóm), hoặc ba từ ngay trước
 tên có một động từ/giới từ hướng về người nghe: nhìn, sang, với, giọng, tai, chỗ, phía, hướng. Chủ ngữ có chức vị viết
-<removed>
+thường vẫn khoá như cũ ("tổng giám mục Augustus nói:", "Đại hồng y vừa kiểm kê Philip nói:", "thế nên Raventi nói:").
 """
 import io
 import sys
@@ -86,30 +86,30 @@ from abook.analysis import _trailing_speech_attribution
 
 def test_the_listener_named_before_the_speech_verb_is_not_the_speaker() -> None:
     for text in (
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
-        <removed>
+        "Nhìn Neeshka, Salgueiro và tổ thợ in dọn bàn, Levski quay sang Lucien nói:",
+        "Ông mở hộp tem rồi nhìn Lucien nói:",
+        "Công tước James cầm tờ phiếu nhìn Tử tước Harrison nói:",
+        "Lucien gấp lịch tàu rồi dùng giọng Beaulac nói:",
+        "Sau khi so màu mực, ông khẽ cười với Heidi nói:",
+        "Xếp xong hộp mực, Benjamin nhìn nhóm thợ cạnh Lucien nói:",
+        "Lucien kiểm lại nhãn của Heidi, sau đó quay sang tổ thợ Annick nói:",
+        "Lucien chưa đọc bảng kê mà dùng giọng nghiêm nghị của một thợ in nói:",
     ):
         assert _trailing_speech_attribution(text) is None, text
 
 
 def test_a_name_cut_short_by_its_accents_is_not_a_name() -> None:
-    <removed>
-    <removed>
+    assert _trailing_speech_attribution("Chưa rõ cách đóng dấu của Giáo Sư, Triết Gia hỏi:") is None
+    assert _trailing_speech_attribution("một tay giữ cuộn giấy của Trịnh Vĩnh Mong nói:") is None
 
 
 def test_the_subject_still_takes_the_line() -> None:
     assert _trailing_speech_attribution("Lucien nói:") == "Lucien"
     assert _trailing_speech_attribution("Rồi Lucien nói:") == "Lucien"
     assert _trailing_speech_attribution("Sau đó, Lucien hỏi:") == "Lucien"
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    assert _trailing_speech_attribution("Khi tổ thợ đóng xong hộp mực, tổng giám mục Augustus nói:") == "Augustus"
+    assert _trailing_speech_attribution("Đại hồng y vừa kiểm kê Philip nói:") == "Philip"
+    assert _trailing_speech_attribution("Nhìn Natasha với tờ phiếu trên tay, Bá tước Barady nói:") == "Barady"
+    assert _trailing_speech_attribution("chưa kể mực vẫn còn đủ, thế nên Raventi nói:") == "Raventi"
 ''', encoding="utf-8")
 print(f"da viet {test}")

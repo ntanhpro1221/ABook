@@ -75,8 +75,7 @@ def test_no_hanging_or_doubled_commas() -> None:
 # fragment's end, which is not the end of the text the fragment came from.
 
 ALPHA45_KILLER = (
-    <removed>
-    <removed>
+    'Ví dụ, nếu phiếu đặt hàng ghi hạng A, xưởng sẽ cấp Hộp màu loại Sử thi (Epic), hoặc khi hết mẫu cũ thì dùng loại Huyền thoại (Legendary).'
 )
 
 
@@ -100,7 +99,7 @@ def test_every_piece_of_converted_text_is_left_alone() -> None:
     samples = [
         ALPHA45_KILLER,
         "Thường (Common) (C) » Hiếm (Rare) » Sử thi (Epic)",
-        <removed>
+        'Bậc 1-3 dùng Khay Gỗ (Wood Trays) xếp chồng. Chỉ Mẫu Nhỏ (Mini) vừa ngăn dưới.',
         "↓ 1.000 Đơn vị (SEU) » còn lại 4.000",
         "[thở dài] Thôi được rồi (đành vậy), đi thôi.",
     ]
@@ -131,7 +130,7 @@ def test_a_vocal_cue_at_the_very_start_keeps_its_brackets() -> None:
 
 def test_a_comma_the_author_wrote_at_the_end_is_kept() -> None:
     """Verse lines in this book end on a comma. Trimming it deleted a pause somebody meant."""
-    <removed>
+    line = 'Lăn qua lớp mực, để lại hàng dấu nhỏ,'
     assert spoken_symbols_to_words(line) == line
 
 
@@ -154,7 +153,7 @@ def test_a_slash_between_words_becomes_a_pause() -> None:
 def test_a_slash_between_digits_keeps_its_reading() -> None:
     """8.5/10 is "tám phẩy năm trên mười" and that is correct. The book has exactly one of
     these against eight word/word slashes, and it would be lost by a blanket rule."""
-    <removed>
+    text = 'bảng kiểm ghi điểm mới là 8.5/10 ở cột bên phải.'
     assert spoken_symbols_to_words(text) == text
 
 
@@ -194,8 +193,8 @@ def test_a_comma_before_a_colon_collapses() -> None:
 def test_the_slash_rule_is_also_stable_on_fragments() -> None:
     """Same invariant as everything else here: the repair path re-derives pieces of this
     output, and a rule that fires twice moves the boundary text."""
-    <removed>
-                   <removed>
+    for sample in ('Sentry (Gác cổng/Trực quầy): Phụ trách ghi số phiếu.',
+                   'Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.',
                    "Tốc độ (Speed): 50km/h, gió 3 m/s, chọn và/hoặc bỏ."):
         converted = spoken_symbols_to_words(sample)
         assert spoken_symbols_to_words(converted) == converted

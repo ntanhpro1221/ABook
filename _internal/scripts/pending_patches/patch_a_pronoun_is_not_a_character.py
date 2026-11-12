@@ -11,7 +11,7 @@ Chay: python patch_a_pronoun_is_not_a_character.py <root>
 17.461 cau): 87 cau thuoc ve nhung "nhan vat" khong ton tai — `Toi` 70, `Minh` 10 (+`MINH` 6),
 `BA` 4, `Nghe` 4, `Giai` 2, `Tin` 1 — va rieng cuon 1 con `ME` 94 cau.
 
-<removed>
+Nguon `“Ta phu trach kho tem, Victor.” Nghe may in chay, Victor…` cho ra mot "nhan vat" ten `Nghe` giu 3 cau
 thuc ra cua Victor va Nam tuoc Othello, gop mot va cham cung chuong o lo 3 (chuong 36), va mot
 cai ten khong co gioi tinh nhu the tung chan ca cong dan giong.
 
@@ -53,7 +53,7 @@ bo dau o khoa ma khong viet lai danh sach ay se **giet** no. Ban va dong nhat ve
 ## Cai ban va CO Y khong lam
 
 Do bang tay 7 ca cho thay ten nguoi noi that nam **ngay trong** cau tuong thuat bi lay chu dau
-<removed>
+(`Nghe tieng may in, **Othello** dung dem phieu…`), va "lay cai ten trong cau ay" dung 4/4 - nhung no
 **khong** duoc lam thanh luat, vi danh sach loai tru co san ton tai de noi "cau nay khong neu
 ten nguoi noi, dung doan". Phan vi du that, chuong 3 cuon 1: `Sau khi Benjamin lai hoi Lucien
 them vai cau…` - "Sau" da nam trong danh sach, va lay "Benjamin" se gan sai mot cau cua Lucien.

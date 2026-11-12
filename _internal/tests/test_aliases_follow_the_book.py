@@ -37,7 +37,7 @@ def test_decomposed_marks_are_the_same_name(tmp_path: Path) -> None:
 def _project(root: Path, speakers: list[str]) -> ProjectDB:
     root.mkdir(parents=True)
     source = root / "001.txt"
-    source.write_text("Thiên Biến Vạn Hóa Krai Andrey bước vào. Tino chạy theo.", encoding="utf-8")
+    source.write_text('Thợ In Bảy Màu Krai Andrey bước vào. Tino chạy theo.', encoding="utf-8")
     db = ProjectDB(root / "project.sqlite3")
     db.initialize_book(title="Nageki", project_root=root, settings={}, settings_hash="s", input_manifest_hash="m")
     chapter = db.ensure_chapters([{"chapter_index": 1, "title": "001", "input_path": source, "input_sha256": "x",

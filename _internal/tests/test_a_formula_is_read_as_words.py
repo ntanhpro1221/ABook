@@ -13,8 +13,8 @@ from abook.text_processing import spoken_symbols_to_words
 
 def test_an_alchemy_recipe_is_read_as_words() -> None:
     assert (
-        <removed>
-        == "Nấm xác chết cộng Mô não thủy quỷ cộng Bụi oán linh bằng Linh Hồn Than Khóc"
+        spoken_symbols_to_words('Bột giấy + Màu nước + Keo hồ = Mặt Nạ Giấy')
+        == "Bột giấy cộng Màu nước cộng Keo hồ bằng Mặt Nạ Giấy"
     )
 
 
@@ -36,7 +36,7 @@ def test_percent_is_left_for_the_transcriber_to_write_back() -> None:
 
 
 def test_stable_on_its_own_output() -> None:
-    <removed>
+    once = spoken_symbols_to_words('Khay 1+2: 1 bánh mặn + 2 bánh ngọt (ví dụ 10 = 5 + (2 + 3))')
     assert once == spoken_symbols_to_words(once)
     assert "+" not in once and "=" not in once
 

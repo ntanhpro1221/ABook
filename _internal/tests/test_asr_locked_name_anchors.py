@@ -932,8 +932,8 @@ def test_tone_differences_are_folded_out_of_content_metrics() -> None:
     of 0.296 among failed ones - so they carry no signal about the take.
     """
     similarity, wer, evidence = tone_folded_transcript_metrics(
-        <removed>
-        "cha bị tiếng nhéo nhéo của mè",
+        'bố mua cá ngừ ở chợ',
+        'bồ múa cà ngư ơ chơ',
     )
 
     assert evidence["raw_wer"] > 0.2

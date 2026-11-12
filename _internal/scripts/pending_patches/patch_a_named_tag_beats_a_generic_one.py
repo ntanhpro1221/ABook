@@ -10,12 +10,12 @@ Phát lại đáp án chuẩn vòng 8-9 (TMA 418, 426, 436) qua bộ phân tích
 1. `_generic_speaker_attribution` khoá câu thoại cho một NHÃN CHUNG khi câu kể liền trước kết thúc bằng ":" và có nhắc một
    danh từ trong `GENERIC_SPEAKER_TRAITS` - bất kể câu kể ấy nêu tên ai:
 
-       <removed>
-       <removed>
+       Bên quầy in có hai người đàn ông cùng một người phụ nữ, James đưa cho Lucien tập phiếu rồi nói:   -> "người phụ nữ"   (418:37)
+       Người đàn ông trung niên đeo tạp dề chấm mực, Salgueiro, cau mày nói:          -> NPC, không phải Salgueiro (426:22-23)
 
    Trên toàn bộ đáp án chuẩn luật này bắn 2 lần, sai cả 2. Trên cuốn 2 nó bắn 304 lần, phần lớn câu kể có tên riêng:
-   <removed>
-   <removed>
+   "Chưa từng chọn được quà cho cô gái ở quầy bên, Lucien nói như tự giễu." -> "cô gái"; "Joanna cẩn thận hỏi người
+   phụ nữ." -> người NGHE; "Felipe chỉ cho người đàn ông trung niên chỗ cất thùng ..., sau đó nói tiếp." -> người được giới
    thiệu. Luật mới: câu kể có một tên nhân vật thật (chữ Latin viết hoa >= 3 chữ cái, không nằm trong danh sách loại trừ,
    không phải âm tiết tiếng Việt) thì im - model đọc được tên ấy. Nhãn chung chỉ còn khoá khi lời dẫn thật sự vô danh
    ("Một người phụ nữ trung niên bước tới nói:").
@@ -23,7 +23,7 @@ Phát lại đáp án chuẩn vòng 8-9 (TMA 418, 426, 436) qua bộ phân tích
 2. `_repair_same_paragraph_speakers` gán mọi câu thoại trong một đoạn văn cho người nói được neo. Nhưng một đoạn văn có thể
    chứa một lượt NGẮT lời:
 
-       <removed>
+       “Việc này…” Raventi đang định đọc bảng kê, Florencia cầm tấm phiếu và cắt ngang: “Bảng này thiếu hai dòng...”   (436:61)
 
    Câu sau có lời dẫn RIÊNG (câu kể liền trước, cùng đoạn, kết thúc bằng ":") nên không phải "câu cùng người" của đoạn.
    Luật mới: câu thoại như thế không bị khoá theo đoạn - lời dẫn của nó (model, lượt phản biện, hay luật lời dẫn) quyết.
@@ -79,12 +79,12 @@ def _generic_speaker_attribution(text: str, *, prefer_last: bool) -> str | None:
 
 replace_once('''        if _is_quoted_inside_a_sentence(group, index, result):
             # Chữ của người kể trích giữa câu (quy tắc 8 của đáp án chuẩn) - không phải câu của người nói trong đoạn.
-            continue''', '''        if _is_quoted_inside_a_sentence(group, index, result):
+            continue''', """        if _is_quoted_inside_a_sentence(group, index, result):
             # Chữ của người kể trích giữa câu (quy tắc 8 của đáp án chuẩn) - không phải câu của người nói trong đoạn.
             continue
         if _has_its_own_speech_tag(group, index, result):
-            <removed>
-            continue''')
+            # "Raventi đang định đọc bảng kê, Florencia cầm tấm phiếu và cắt ngang: “...”" - một lượt ngắt lời trong cùng đoạn.
+            continue""")
 
 replace_once('''def _repair_same_paragraph_speakers(''', '''def _has_its_own_speech_tag(
     group: list[Any],
@@ -127,9 +127,9 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "male") -> dict:
 
 def test_a_named_tag_is_not_given_to_a_generic_label() -> None:
     for text in (
-        <removed>
-        <removed>
-        <removed>
+        "Bên quầy in có hai người đàn ông cùng một người phụ nữ, James đưa cho Lucien tập phiếu rồi nói:",
+        "Người đàn ông trung niên đeo tạp dề chấm mực, Salgueiro, cau mày nói:",
+        "Chưa từng chọn được món quà cho cô gái ở quầy bên, Lucien nói như tự giễu:",
     ):
         assert _generic_speaker_attribution(text, prefer_last=True) is None, text
 
@@ -137,13 +137,13 @@ def test_a_named_tag_is_not_given_to_a_generic_label() -> None:
 def test_an_anonymous_tag_still_gets_its_generic_label() -> None:
     assert _generic_speaker_attribution("Một người phụ nữ trung niên bước tới nói:", prefer_last=True) == "người phụ nữ"
     # "Người", "Nhìn" mở câu không phải tên.
-    <removed>
+    assert _generic_speaker_attribution("Đọc bảng giá giấy can, người đàn ông trung niên thở dài:", prefer_last=True)
 
 
 def test_the_model_keeps_the_named_speaker() -> None:
     group = [
-        <removed>
-        <removed>
+        _row(0, "narration", "Người đàn ông trung niên đeo tạp dề chấm mực, Salgueiro, cau mày nói:"),
+        _row(1, "dialogue", "“Chúng ta đánh dấu từng lô bằng màu mực nào đây?”"),
     ]
     result = _validate(group, {"segments": [_item(0, "narration", "NARRATOR"), _item(1, "dialogue", "Salgueiro")]})
     assert result["s1"]["speaker"].casefold() == "salgueiro"
@@ -152,8 +152,8 @@ def test_the_model_keeps_the_named_speaker() -> None:
 def test_an_interruption_in_the_same_paragraph_keeps_its_own_speaker() -> None:
     group = [
         _row(0, "dialogue", "“Việc này…”"),
-        <removed>
-        <removed>
+        _row(1, "narration", "Raventi đang định đọc bảng kê, Florencia cầm tấm phiếu và cắt ngang:"),
+        _row(2, "dialogue", "“Oliver đã xem bản vẽ và đặt thêm hai cuộn giấy can cho cậu đấy.”"),
     ]
     payload = {"segments": [
         _item(0, "dialogue", "Raventi"), _item(1, "narration", "NARRATOR"), _item(2, "dialogue", "Florencia", "female"),

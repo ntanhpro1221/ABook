@@ -26,7 +26,7 @@ tự ấy, nên chúng đi thẳng tới giọng đọc. Người nghe nghe TÊN
     cuon 1 (478 chuong): 339 "*?*"
 
 `*` đã nằm trong `SPOKEN_DROPPED`, nên `?**` và `*?*` (dấu in đậm/nghiêng sót lại) đã đọc đúng thành
-<removed>
+"?". Nhưng `***` thay cho một chữ bị che thì biến mất không để lại dấu vết: "ngươi cất hộp mực dưới *** à?"
 thành "đầu ngươi để dưới à?". Người nghe không biết có chữ nào vừa bị che.
 
 ## Luật

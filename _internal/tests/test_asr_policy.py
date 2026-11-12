@@ -123,7 +123,7 @@ def test_non_lexical_text_skips_whisper_and_one_word_can_be_repaired(monkeypatch
 def test_severe_mismatch_detects_impossibly_long_unrelated_transcript() -> None:
     assert is_severe_asr_mismatch(
         "Ha...",
-        "Cảm ơn các bạn đã theo dõi và hẹn gặp lại.",
+        'Bản tin minh họa của đài kết thúc ở đây.',
         0.0465,
     ) is True
     assert is_severe_asr_mismatch(

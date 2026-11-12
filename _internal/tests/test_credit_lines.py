@@ -38,7 +38,11 @@ def test_the_suggestion_names_exactly_the_lines_it_would_leave_out() -> None:
 
 def test_story_lines_that_look_like_credits_are_never_suggested() -> None:
     # Giữa chương 211 của Throne: một câu truyện mở bằng "Tác giả:" - không phải nhãn ghi công, không ở đầu chương.
-    <removed>
+    story = """Chương 211
+
+Tác giả: Lucien Evans X, chuyên viên đo mực, thợ in hạng một.”
+
+Họ kiểm lại bản in."""
     assert credit_lines(story) == [] and drop_credit_lines(story) == story
     # Nhãn ghi công nhưng phần sau là một câu (có dấu kết câu) thì cũng là truyện.
     assert credit_lines("Chương 3\n\nDịch: ông lão dịch lại bức thư cho cả làng nghe.") == []

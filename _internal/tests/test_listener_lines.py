@@ -173,7 +173,7 @@ def test_a_reworded_line_is_read_in_the_listeners_words_and_the_book_keeps_its_o
     _paths, db = _book(tmp_path)
     result = _apply(db, "c1s1", spoken="  \u201cĐi   thôi nào.\u201d  ")
     line = _line(db, "c1s1")
-    assert line["listener_text"] == "\u201cĐi thôi nào.\u201d" and line["text"] == "\u201cĐi thôi.\u201d"
+    assert line["listener_text"] == "\u201cĐi thôi nào.\u201d" and line["text"] == '“Đẩy vào nhé.”'
     assert line["text_sha256"] == "sha-c1s1", "băm chữ của sách không đổi: yêu cầu cũ và đọc theo vẫn khớp"
     assert result is not None and result["reset"] is True and line["status"] == "analyzed" and line["wav_path"] is None
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
@@ -185,7 +185,7 @@ def test_a_reworded_line_is_read_in_the_listeners_words_and_the_book_keeps_its_o
     reverted = _apply(db, "c1s1", spoken="")
     assert reverted is not None and reverted["listener_text"] is None and _line(db, "c1s1")["listener_text"] is None
     _apply(db, "c1s1", spoken="Đi thôi nào.")
-    assert _apply(db, "c1s1", spoken="\u201cĐi thôi.\u201d")["listener_text"] is None, "sửa về đúng chữ của sách = bỏ sửa"
+    assert _apply(db, "c1s1", spoken='“Đẩy vào nhé.”')["listener_text"] is None, "sửa về đúng chữ của sách = bỏ sửa"
 
 
 @pytest.mark.parametrize("spoken", ["\u2026", "Đi\x07 thôi", "x" * 2001, "Đi thôi " * 20],

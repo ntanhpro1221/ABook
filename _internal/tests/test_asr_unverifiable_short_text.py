@@ -31,7 +31,7 @@ def test_real_sentences_stay_verifiable_even_when_short() -> None:
     for text in (
         "Thôi được rồi",
         "• Spirit Realm (Linh Giới):",
-        <removed>
+        'Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.',
     ):
         assert not asr_verdict_is_unverifiable(text), text
 
@@ -128,7 +128,7 @@ def test_a_long_anchor_mismatch_is_still_not_forgiven() -> None:
     ASR_MIN_VERIFIABLE_CHARS, so it must keep blocking. If this ever passes, the anchor has
     been softened where it works rather than where it is blind.
     """
-    <removed>
+    misread_list = 'Đèn Tím (Violet Lamp) (Thường) || Chuông Đồng (Copper Bell) (Thường)'
 
     assert not asr_verdict_is_unverifiable(misread_list)
 
@@ -152,7 +152,7 @@ def test_perceptual_failure_still_outranks_unverifiable_text() -> None:
 def test_a_transcript_about_other_audio_is_also_unanswerable() -> None:
     """Whisper's own timestamps ran past the end of the file, so it left the audio.
 
-    <removed>
+    "Ôi trời! Ơ ơ ơ! Kẹt giấy!" came back as "Bản tin minh họa của đài kết thúc ở đây"
     - the sign-off of a video, which is what the model was trained on - from two separately
     generated takes with different seeds. The reference is 18 characters, well above the
     short-text floor, so the existing branch could not reach it and the chapter stayed

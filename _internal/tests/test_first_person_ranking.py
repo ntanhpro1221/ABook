@@ -117,4 +117,7 @@ def test_a_capitalised_common_word_is_ranked_below_a_real_name(tmp_path: Path) -
 
 
 def test_a_book_without_names_has_no_suggestions(tmp_path: Path) -> None:
-    assert _suggest(tmp_path, "Tôi đứng lặng nhìn ra cửa sổ.\n\n“Đi thôi.”\n") == []
+    assert _suggest(tmp_path, """Tôi đứng lặng nhìn ra cửa sổ.
+
+“Đẩy vào nhé.”
+""") == []

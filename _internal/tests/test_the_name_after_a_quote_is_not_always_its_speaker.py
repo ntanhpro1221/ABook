@@ -15,33 +15,33 @@ def _item(seq: int, kind: str, speaker: str, gender: str = "male") -> dict:
 
 
 def _speaker_of_the_quote(narration: str, model_says: str) -> str:
-    <removed>
+    group = [_row(0, "dialogue", '“Hóa ra dưới khay tem còn một ngăn đựng mực nữa.”'), _row(1, "narration", narration)]
     result = _validate(group, {"segments": [_item(0, "dialogue", model_says), _item(1, "narration", "NARRATOR")]})
     return str(result["s0"]["speaker"]).casefold()
 
 
 def test_a_vietnamese_word_opening_the_sentence_is_not_a_name() -> None:
-    <removed>
-                 <removed>
-                 <removed>
+    for text in ('Lo lắng phu nhân Tess làm đổ lọ mực, ông vội nói.', "Tay trái của Lucien nắm chặt.",
+                 'Y chỉ vào cuộn giấy sát chiếc cân rồi nói.', 'Cho rằng màu tem vẫn chưa khớp, hắn nói.',
+                 'Mất cả hộp mực, Beyer ngồi bệt bên quầy.', "Xung quanh bàn là mấy thùng giấy chưa dán nhãn."):
         assert _leading_proper_name(text) is None, text
     assert _leading_proper_name("Victor giải thích thêm một lần nữa.") == "Victor"
-    <removed>
+    assert _leading_proper_name('Ray nói, chuyển sang hỏi giá giấy can.') == "Ray"
 
 
 def test_someone_who_had_not_spoken_yet_does_not_take_the_line() -> None:
-    <removed>
-    <removed>
-    <removed>
+    assert _names_someone_who_had_not_spoken('Lucien còn chưa kịp lấy cuộn giấy, một giọng nói vang qua bộ đàm.', "Lucien")
+    assert _names_someone_who_had_not_spoken('Lucien chưa kịp mở hộp, Jacob đã nói tiếp.', "Lucien")
+    assert _names_someone_who_had_not_spoken('Fernando còn chưa kịp đọc số phiếu, Antec đã kêu lên.', "Fernando")
     # Bị ngắt khi đang nói: người được nêu tên CHÍNH là người vừa nói.
-    <removed>
-    <removed>
-    <removed>
-    <removed>
+    assert not _names_someone_who_had_not_spoken('Lucien chưa kịp nói hết bảng kê, Natasha đã cắt ngang.', "Lucien")
+    assert not _names_someone_who_had_not_spoken('Dieppe còn chưa kịp dứt lời đọc số phiếu, tiếng còi tàu vang lên.', "Dieppe")
+    assert not _names_someone_who_had_not_spoken('Lucien còn chưa kịp nói thêm về hộp màu, Alferris đã chộp lấy.', "Lucien")
+    assert not _names_someone_who_had_not_spoken('Fernando lặp lại giá giấy, nhưng chưa kịp đọc hết.', "Fernando")
 
 
 def test_the_model_keeps_the_line_when_the_named_person_had_not_spoken() -> None:
-    <removed>
+    narration = 'Lucien còn chưa kịp mở hộp mực, một giọng nói trầm vang qua bộ đàm ở quầy vé.'
     assert _speaker_of_the_quote(narration, "Beyer") == "beyer"
 
 

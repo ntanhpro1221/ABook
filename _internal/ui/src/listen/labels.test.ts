@@ -186,7 +186,7 @@ describe("chờ giọng đọc", () => {
 
 describe("unquoted (soát a26 L6: câu trích hiện ““…””)", () => {
   it("bỏ ngoặc của chính câu thoại trước khi bọc ngoặc trích", () => {
-    expect(unquoted("“Đi thôi.”")).toBe("Đi thôi.");
+    expect(unquoted("“Đẩy vào nhé.”")).toBe("Đẩy vào nhé.");
     expect(unquoted("Lucien nhìn Natasha.")).toBe("Lucien nhìn Natasha.");
     expect(unquoted(" «Ừ» ")).toBe("Ừ");
   });

@@ -226,8 +226,8 @@ văn bản, văn bản trả lời **3 nữ / 0 nam** — nhất trí tuyệt đ
 
 Đọc sách thì chuyện rõ ràng:
 
-<removed>
-<removed>
+> Ví dụ tự viết: *“Người phụ nữ giữ phiếu số sáu yêu cầu đổi hộp mực.”*
+> Câu minh họa vẫn có đại từ và mô tả người nói.
 
 `SỐ SÁU` là nữ, và nhãn `male` là model gán sai. Bằng chứng văn bản **đúng**; ngưỡng chặn một
 quyết định đúng.
@@ -398,8 +398,8 @@ chính phép kiểm**.
 
 Chương 000 **không phải nội dung sách**. Nó là ghi chú của người đăng:
 
-<removed>
-> mắt…"*
+> Ví dụ tự viết: *“Phụ lục hình mẫu”* · *“Các bản vẽ kèm theo chỉ để tham khảo màu men.”*
+>
 
 Bảy giây rưỡi nói về mấy tấm ảnh không tồn tại trong file text. Có nên nằm trong audiobook
 không là quyết định của chủ sách, không phải của máy — nên nó được ghi ở đây chứ không bị âm

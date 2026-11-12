@@ -13,7 +13,7 @@ Bang chung (do bang `scripts/voice_matches_the_person.py` tren sach 116 chuong):
 
 Duong di cua loi: lo 3 chuong 072 goi anh ta la `child` MOT lan (moi `segments.age` cua anh ta:
 `unknown`), casting cap giong tre con, roi `port_casting` mang `locked_voice_key` ay sang moi lo
-<removed>
+sau. Thoai cua anh ta: "T-Toi ten la Ivan," / "cau de m-muc len t-to phieu moi roi..." - mot
 thanh nien hay lap. Khong lenh nao sua duoc: `cast` chi ghim PHAI, ma TUOI moi chon HO GIONG.
 
 Ba viec, va hai su that da doi thiet ke (doc code truoc khi viet):

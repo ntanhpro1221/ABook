@@ -2215,8 +2215,8 @@ báo cả 12 nhóm không hề chung chương; con số đáng đọc là 3 va c
 
 ## 2026-09-14, 06:32–07:00 — đoạn hỏng đầu tiên của cuốn 2 là một công thức giả kim đọc ĐÚNG mà thước đo sai
 
-<removed>
-<removed>
+Lô 1 cuốn 2, chương 025 (chapter_index 26), đoạn c00026_s0000015: `“Bột giấy + Màu nước + Keo
+hồ + Sợi vải vụn = Mặt Nạ Giấy”`. Whisper nghe ra *"…cộng màu nước, cộng keo
 linh cộng bụi hoa hồng ánh, trăng bằng linh hồn thàn khóc"* — tức giọng đọc "+" là **cộng** và "=" là **bằng**,
 đúng như người Việt đọc công thức. Nhưng chuỗi đối chiếu (`spoken_symbols_to_words` trong tts.py) còn giữ
 nguyên ký hiệu vì `SPOKEN_SYMBOL_WORDS` chỉ biết ↓ và ↑; độ giống 0,73, năm ứng viên sửa cùng trượt
@@ -2621,8 +2621,8 @@ khác hẳn test ngay bên trên nó.
 
 - `Luke` — người thật, 4 câu ở chương 4: *"Đi mà bắt chuột đi!"*, *"Vâng thưa ngài."*, *"Xin mời ngài."* Một
   người hầu; model không đoán được giới tính.
-<removed>
-  <removed>
+- `Nghe` — **không phải người**. Nguồn viết: `“Victor đây, mở hộp tem nhé.” Nghe tiếng đếm phiếu của Victor bây giờ có vẻ…` và
+  `“…Ta phụ trách kho tem, Nam tước Othello.” Nghe tiếng máy in, Othello dừng đếm phiếu…` Chữ **"Nghe"** mở
   đầu câu tường thuật ngay sau lời thoại bị nhận thành **tên người nói**. Ba câu ấy thực ra của Victor và
   Nam tước Othello — tức ngoài việc chặn cả lô, nó còn gán lời của hai nhân vật thật cho một cái tên bịa.
 
@@ -2659,8 +2659,8 @@ xanh mà chẳng kiểm bản vá. Phải `cd` vào bản sao, và kiểm bằng
 
 | văn bản | Whisper viết | similarity |
 |---|---|---|
-<removed>
-<removed>
+| `Mười giờ sáng. Quầy in tem của Victor.` | `10h sáng, quầy in tem của Victor.` | 0,63 |
+| `Phiếu kiểm kê ghi lúc mười một giờ bốn mươi lăm phút sáng.` | `Phiếu kiểm kê ghi lúc 11h45 phút sáng.` | 0,53 |
 | `“Thầy Victor...”` | `Hãy vít tờ.` | 0,67 |
 
 Hai ca đầu: bản thu **đọc đúng**, Whisper chỉ viết số bằng **chữ số** trong khi văn bản viết bằng **chữ**.
@@ -2694,7 +2694,7 @@ Lô 2 mất chương **082** và **090**, mỗi chương vì đúng một đoạ
 | đoạn | văn bản | kt/s | âm tiết/giây |
 |---|---|---|---|
 | `c00034_s0000041` | `“Tôi không biết ‘xoay’ đâu, Felicia.”` | 31,25 (10/10 lần) | **7,21** |
-<removed>
+| `c00042_s0000076` | `“Thưa Điện hạ, bảng kê đã đủ số hộp.”` | 25,64 (10/10 lần) | **7,33** |
 
 Cả hai: 10 lần thu đều vượt cận trên 24,5 kt/s, bộ chia từ chối (*"segment too short to split safely"*),
 nới dải nhịp cũng không được (*"pace_band=already normal"*) → không có bản thu → chương không lên sách.
@@ -2941,7 +2941,7 @@ nên phép tính này là phép tính của chính máy.
 
 Bản đầu tôi định chặn ngân sách ở **cả hai** cận. `measure_a_silence_capped_pace.py` (mới, chỉ đọc) đo trên
 3000 đoạn đã chốt: 274 đoạn bị cắt ngân sách, 0 đoạn vượt dải an toàn, **2 đoạn "đạt → ngoài băng" ở cận
-<removed>
+dưới** (`“Felicia, ký giúp nhé. Ồ… cậu cũng đến nhận tem à, Lucien!”` 13,75 → 10,27 với sàn 12,5). Nên bản vá cuối **chỉ**
 dùng thước mới cho cận TRÊN; cận dưới giữ nguyên ngân sách, thứ sinh ra để bảo vệ đúng hai đoạn ấy.
 
 Vì `nhịp_nghe ≤ nhịp_cũ` luôn luôn, thay đổi là **một chiều**: chỉ bớt lời kết tội "đọc quá nhanh", không
@@ -2970,7 +2970,7 @@ và 12 bản thu của phép thử GPU là chỗ duy nhất còn giữ chúng.
   quãng đúng bằng ngưỡng sẽ được tính hay không tùy lỗi làm tròn. `measure_a_silence_capped_pace.py` đã sửa
   theo để phép đo là đúng phép đo mà mã dùng.
 
-11 test mới, trong đó 4 bài giữ đúng những ca thật: câu chương 082 (30,09 → 15,29), câu `“Chào, Felicia…”`
+11 test mới, trong đó 4 bài giữ đúng những ca thật: câu chương 082 (30,09 → 15,29), câu `“Felicia, ký giúp nhé…”`
 ở cận dưới, bản thu **thật sự nhanh** vẫn bị từ chối (1,00 giây → 27,4 kt/s > 24,5), và phép đo bất biến
 với phép nhân âm lượng.
 
@@ -3058,8 +3058,8 @@ Hàng chờ ghi "trả lời thoại về NARRATOR hoặc **về người nói g
 gần nhất" đúng 1/4 cho `Nghe`, và lần đúng ấy là ngẫu nhiên. Tên người nói thật nằm **ngay trong chính câu
 tường thuật** bị lấy chữ đầu:
 
-    <removed>
-    <removed>
+    “Ta phụ trách kho tem, Nam tước Othello…”   →  Nghe tiếng máy in, **Othello** dừng đếm phiếu…
+    “Ta chưa thấy phiếu xuất hàng của ngươi.”              →  Nghe tin thủ lĩnh…, **Sard** không thể hiện…
 
 Lấy **cái tên** trong câu ấy: 4/4. Đúng chỗ hỏng, vì lỗi sinh ra do bộ phân tích lấy chữ đầu thay vì lấy tên.
 
@@ -3092,7 +3092,7 @@ Lô 3 xong lúc ~19:18 (40/41 chương; 131 hỏng). Ranh giới tự đi tiếp
 - **bước 4** sẽ đúc lại 5 chương va chạm pin: **110 112 114 130 134** (đúng 5 chương đã đo lúc 14:23).
 
 **Dự đoán, ghi lúc 19:35 khi chương 131 mới phân tích được 23/126 đoạn:** đoạn
-<removed>
+`“À… Cậu ghi ‘mực’ hai lần rồi, Lucien.”` sẽ có bản thu ở một hai lần thử đầu, với nhịp *charged* quanh
 26 kt/s, nhịp *nghe* trong dải 12,5–24,5, khoảng lặng đo được 0,3–0,6 giây, và `pace_outlier = 0`. Nếu nó
 **vẫn** trượt thì nguyên nhân không phải thước nhịp, và chỗ nhìn tiếp là ngoặc đơn lồng trong ngoặc kép
 làm ngữ điệu hỏng — đúng câu tôi đã ghi trong hàng chờ trước khi có bản vá.
@@ -3220,8 +3220,8 @@ Tôi đã ghi `ME` (94 câu) vào nhóm "nhãn xưng hô ngôi thứ ba" cùng `
 cũng là "me". Đọc ca thật thì sai hẳn: cuốn 1 kể ở **ngôi thứ nhất**, và `ME` là lời của **chính nhân vật
 chính**:
 
-    <removed>
-    <removed>
+    seq 127 [NARRATOR] "Cảm ơn đã giữ hộ thẻ trực," tôi đều giọng.
+    seq 128 [ME      ] "Các ngươi xếp đủ các hộp màu rồi. Ta ký vào bảng kê nhé."
 
 Và `MẸ` (id 21, minor, có pin) với `ME` (id 41, **main**, 54 lần nhắc) là **hai dòng `characters` khác
 nhau** trong cùng một project — chứng cứ dứt điểm. Nhóm xưng hô ngôi thứ ba thật chỉ còn **16 câu**
@@ -3500,7 +3500,7 @@ có chương nào trong sách — khớp đúng với việc `repoint_the_source
 một file lệch (109/118 project, 701 chương được trỏ lại).
 
 Và 18 file sắp đọc đều có mặt, kích thước 7,9–24,5 KB, tiêu đề đúng dạng chương
-<removed>
+(`261 → "Chương 260: Xưởng In Bên Bến Phà"`, `278 → "Chương 277: Lửa Trại [II]"`).
 
 Nên cuốn 1 chạy tiếp được, và nó sẽ đọc **đúng** văn bản mà 261 chương trước đã đọc.
 
@@ -3581,7 +3581,7 @@ Lô 4 đang tổng hợp (3 chương xong, 347 đoạn có bản thu, 0 thất b
     CUU  (thuoc cu ket toi, thuoc moi tha):  1
     ca hai thuoc deu noi qua nhanh:          0
 
-<removed>
+Đoạn được cứu: `“Hai người gửi hộp mực của nhà Hunt từ xưởng Bonn à?”` — **26,40 → 20,24 kt/s**, khoảng lặng đo
 được 0,16 giây. Thước cũ (26,40 > cận trên 24,5) sẽ từ chối nó, thu lại tới 10 lần với 10 seed khác, và nếu
 cả 10 lần vẫn ~26 kt/s thì bộ chia từ chối ("câu quá ngắn để chia an toàn") và **chương mất một câu** —
 đúng con đường đã giết chương 082 và 131.

@@ -19,7 +19,11 @@ def _project(tmp_path: Path) -> Path:
     project = make_project(tmp_path / "may_cu")
     sources = tmp_path / "nguon"
     sources.mkdir()
-    (sources / "645.txt").write_text("Chương 645 - Trở về (1)\n\nTrời đã sáng.\n“Đi thôi.”\n", encoding="utf-8")
+    (sources / "645.txt").write_text("""Chương 645 - Trở về (1)
+
+Trời đã sáng.
+“Đẩy vào nhé.”
+""", encoding="utf-8")
     (sources / "646.txt").write_text("Chương 646 - Trở về (2)\n\nChưa thu.\n", encoding="utf-8")
     (project / "logs").mkdir()
     (project / "logs" / "abook.log").write_text("nhật ký", encoding="utf-8")

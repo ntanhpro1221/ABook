@@ -106,7 +106,7 @@ def asr_answer_is_about_other_audio(reason: str) -> bool:
     transcribe, established by different evidence, and it deserves the same treatment -
     a listen rather than a failed chapter.
 
-    <removed>
+    "Ôi trời! Ơ ơ ơ! Kẹt giấy!" came back as "Bản tin minh họa của đài kết thúc ở đây"
     twice, from two separately generated takes with different seeds. Whisper is deterministic
     about it, so another repair round cannot rescue a verdict that was never available.
 
@@ -266,8 +266,8 @@ def _fold_number_digits(text: str) -> str:
     This used to reach only as far as ten, from an eleven-entry table, and that gap failed
     whole chapters. alpha.32's chapter 6 was refused over one segment:
 
-        <removed>
-        heard: "Hôm nay là ngày 24 tháng 12."
+        text:  "Phiếu nhập kho ghi ngày 24 tháng Mười hai."
+        heard: "Phiếu nhập kho ghi ngày 24 tháng 12."
 
     The voice read it exactly right. Whisper writes digits where the book writes words, and
     "mười hai" against "12" was scored as an error because the table stopped at "10". The

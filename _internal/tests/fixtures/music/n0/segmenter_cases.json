@@ -161,11 +161,11 @@
    ]
   },
   {
-   "text": "「Ừ. Hiểu rồi.」 Minh gật đầu. 「Mai gặp lại.」",
+   "text": "「Nhớ mang theo bút.」 Minh gật đầu. 「Mai gặp lại.」",
    "segments": [
     {
      "id": 0,
-     "text": "“Ừ. Hiểu rồi.”",
+     "text": "“Nhớ mang theo bút.”",
      "sceneBreak": false
     },
     {
@@ -351,7 +351,7 @@
    ]
   },
   {
-   <removed>
+   "text": "Cô ghi nghề “thợ săn” lên phiếu. Chức danh của tôi là “đội trưởng,” theo quy ước của xưởng.",
    "segments": [
     {
      "id": 0,

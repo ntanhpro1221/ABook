@@ -4,7 +4,7 @@ Chạy: python patch_a_corner_bracket_is_a_quote.py <root>
 
 ## Vì sao (20-09, 00:4x)
 
-Bản dịch light novel Nhật trên Hako hay giữ ngoặc góc của bản gốc: 「Ừ. Hiểu rồi.」 thay cho “Ừ. Hiểu rồi.”. Bộ tách đoạn
+Bản dịch light novel Nhật trên Hako hay giữ ngoặc góc của bản gốc: 「Nhớ mang theo bút.」 thay cho “Nhớ mang theo bút.”. Bộ tách đoạn
 chỉ biết “…”, "…" và ‘…’, nên mọi câu thoại trong ngoặc góc bị khoá là LỜI KỂ - người kể đọc hết, model phân tích không
 được phép gán người nói (loại bị khoá). Đo trên kho truyện (`Corpus/`, 20-09):
 
@@ -44,14 +44,14 @@ def replace_once(old: str, new: str) -> None:
 
 replace_once('''    for zero_width in ("\\u200b", "\\u200c", "\\u200d", "\\u2060", "\\ufeff"):
         text = text.replace(zero_width, "")
-''', '''    for zero_width in ("\\u200b", "\\u200c", "\\u200d", "\\u2060", "\\ufeff"):
+''', """    for zero_width in ("\\u200b", "\\u200c", "\\u200d", "\\u2060", "\\ufeff"):
         text = text.replace(zero_width, "")
-    # Ngoặc góc của bản dịch light novel Nhật (「Ừ. Hiểu rồi.」) là ngoặc thoại: đổi thành “…” ở đây, một chỗ, để mọi luật
+    # Ngoặc góc của bản dịch light novel Nhật (「Nhớ mang theo bút.」) là ngoặc thoại: đổi thành “…” ở đây, một chỗ, để mọi luật
     # phía sau - tách thoại, ngoặc nhiều dòng, khoá thoại nối tiếp, luật host, ngắt nghỉ TTS - thấy đúng dấu chúng biết.
     # Yamiyo no Hotaru có 30.941 dòng thoại như thế từng bị khoá là lời kể. 『…』 thì để yên: truyện dùng nó cho thuật
     # ngữ, bảng hệ thống và ngoặc lồng trong 「…」. Truyện không có 「 thì chuỗi không đổi - stable_id không đổi.
     text = text.replace("\\u300c", "\\u201c").replace("\\u300d", "\\u201d")
-''')
+""")
 io.open(p, "w", encoding="utf-8").write(s)
 print(f"da va {p}")
 
@@ -68,11 +68,11 @@ def _kinds(text: str) -> list[tuple[str, str]]:
 
 
 def test_a_whole_line_in_corner_brackets_is_dialogue() -> None:
-    <removed>
+    rows = _kinds("「Đến giờ kiểm kê. Tôi ra quầy nhé.」\\n\\n「Nhớ mang theo bút.」\\n\\nHai người gấp sổ hàng.")
     assert rows == [
-        <removed>
-        ("dialogue", "“Ừ. Hiểu rồi.”"),
-        ("narration", "Hai người lặng lẽ trao đổi."),
+        ("dialogue", "“Đến giờ kiểm kê. Tôi ra quầy nhé.”"),
+        ("dialogue", "“Nhớ mang theo bút.”"),
+        ("narration", "Hai người gấp sổ hàng."),
     ]
 
 
@@ -84,20 +84,20 @@ def test_two_corner_bracket_lines_each_open_their_own_quote() -> None:
 
 
 def test_a_term_in_corner_brackets_inside_narration_stays_narration() -> None:
-    <removed>
+    rows = _kinds("Tấm thẻ cô ấy「đóng dấu」được cất vào hộp chì bên cạnh máy in.")
     assert [kind for kind, _ in rows] == ["narration"]
 
 
 def test_white_corner_brackets_are_left_alone() -> None:
     # 『』 là thuật ngữ, bảng hệ thống, ngoặc lồng - không phải ngoặc thoại.
-    <removed>
-        <removed>
+    assert normalize_text("Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』") == (
+        "Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』"
     )
     assert _kinds("『Dị năng』 của cô ấy rất mạnh.") == [("narration", "『Dị năng』 của cô ấy rất mạnh.")]
 
 
 def test_a_text_without_corner_brackets_is_unchanged() -> None:
-    <removed>
+    text = "“Lucien, chọn giúp tớ màu tem nhé.”\\n\\nDouglas cười nói."
     assert normalize_text(text) == text
 ''', encoding="utf-8")
 print(f"da viet {test}")

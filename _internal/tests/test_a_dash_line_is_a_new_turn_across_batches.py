@@ -62,7 +62,7 @@ def test_a_quote_cut_across_paragraphs_is_still_one_speaker(tmp_path: Path) -> N
 
 def test_an_opened_quote_or_a_closed_line_is_a_new_turn(tmp_path: Path) -> None:
     db = _project(tmp_path / "b", [
-        (1, "dialogue", "“Đi thôi.”", "AN", "male"),
+        (1, "dialogue", '“Đẩy vào nhé.”', "AN", "male"),
         (2, "dialogue", "“Ừ.”", "BÌNH", "female"),
         (3, "dialogue", "(Lại thế nữa rồi)", "AN", "male"),
     ])

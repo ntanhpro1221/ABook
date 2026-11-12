@@ -101,7 +101,7 @@ def test_a_named_speaker_of_another_gender_is_not_offered() -> None:
 
 
 def test_cards_are_ranked_by_lines_and_capped_per_chapter() -> None:
-    rows = [_row(1, 1, "narration", "NARRATOR", "Mira và Lena chờ ở cổng."), _row(2, 2, "dialogue", "MIRA", "“Đi thôi.”")]
+    rows = [_row(1, 1, "narration", "NARRATOR", "Mira và Lena chờ ở cổng."), _row(2, 2, "dialogue", "MIRA", '“Đẩy vào nhé.”')]
     labels = [f"NPC_LOCAL::c1::r{index}::người {index}" for index in range(5)]
     seq = 3
     for index, label in enumerate(labels):

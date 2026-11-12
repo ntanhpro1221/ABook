@@ -26,7 +26,7 @@ QUOTE_CLOSING_MARKS = {"”", "’", '"'}
 QUOTE_CLOSING_PATTERNS = {"’": THOUGHT_CLOSING_PATTERN}
 # Cả dòng bọc trong cặp ' thẳng ('Chà, chắc mình phải chăm chỉ thêm thôi.') là nội tâm, như ‘…’: kho có 8.554 dòng như
 # thế ở 70 bộ (bản dịch gõ không có dấu cong). Chỉ nhận khi ' mở dính chữ ở ĐẦU dòng và ' đóng dính chữ ở CUỐI dòng -
-<removed>
+# dấu ' giữa dòng ("Ma'at", "I'm") không mở/đóng gì. Dòng có ' đóng GIỮA chừng ('Mực tím à? Ừm,' tôi thầm nghĩ. 'Mai...'')
 # là nội tâm xen lời kể - không nhận cả dòng.
 STRAIGHT_THOUGHT_LINE_PATTERN = re.compile(r"^'(?=\S)(?:(?!\S'\s).)*\S'$", re.DOTALL)
 # Một dòng NGUYÊN VẸN trong 『…』 là một giọng nói: kẻ nhập xác (Yamiyo no Hotaru), bảng thông báo game (Năng lực bá
@@ -63,7 +63,7 @@ TRANSLATOR_SELF_REFERENCE_PATTERN = re.compile(
 INLINE_REFERENCE_MARKER_PATTERN = re.compile(r"\[\s*note\d+\s*\]", re.IGNORECASE)
 # Dòng ghi công người dịch / biên tập ở đầu chương ("*Edit: Lắc", "TL : NicK", "Translator: NicK", "Editor: Deemo"): TTS
 # từng đọc to như một câu kể - 17 chương Throne, 172 chương Nise (quét kho 29-09). Chỉ trong vài dòng đầu chương, nhãn ghi
-<removed>
+# công rõ ràng, phần tên ngắn không kết câu: "Tác giả: Lucien Evans X, chuyên viên đo mực…" ở giữa chương 211 là câu truyện
 # và ở lại ("tác giả" không phải nhãn ở đây, và dòng ấy không ở đầu chương).
 CREDIT_LINE_PATTERN = re.compile(
     r"^[*_~#>\-–—\s]*(?:edit(?:or|ed by)?|tl|t/l|trans(?:lator|lated by)?|dịch(?: giả)?|người dịch|biên tập(?: viên)?|"
@@ -335,7 +335,7 @@ SPOKEN_SYMBOL_WORDS = {
 # nghỉ. Trên c00009_s0000018 thước đo trừ 6,90s khoảng lặng của 11,80s âm thanh mà giọng
 # không hề nghỉ, thổi nhịp từ 10,76 lên 25,92 chars/s và vượt cận trên 24,5.
 # `|` is here because the voice reads it as mathematics. alpha.55 chapter 011 lists skills as
-<removed>
+# "Đèn Tím (Violet Lamp) (Thường) || Chuông Đồng (Copper Bell) …" and Whisper transcribed the take
 # as "Fireball thường giá trị tuyệt đối của xương dáng" - the voice said "absolute value of"
 # between every entry. In this book `||` separates list items; a pause is what it means.
 # 24 of them across 4 chapters, so rare, and wrong every single time.
@@ -572,7 +572,7 @@ def normalize_text(text: str) -> str:
     # thì không, và nguồn này không có chữ nào ngoài Latin - đã quét cả 478 file.
     for zero_width in ("\u200b", "\u200c", "\u200d", "\u2060", "\ufeff"):
         text = text.replace(zero_width, "")
-    # Ngoặc góc của bản dịch light novel Nhật (「Ừ. Hiểu rồi.」) là ngoặc thoại: đổi thành “…” ở đây, một chỗ, để mọi luật
+    # Ngoặc góc của bản dịch light novel Nhật (「Nhớ mang theo bút.」) là ngoặc thoại: đổi thành “…” ở đây, một chỗ, để mọi luật
     # phía sau - tách thoại, ngoặc nhiều dòng, khoá thoại nối tiếp, luật host, ngắt nghỉ TTS - thấy đúng dấu chúng biết.
     # Yamiyo no Hotaru có 30.941 dòng thoại như thế từng bị khoá là lời kể. 『…』 thì để yên: truyện dùng nó cho thuật
     # ngữ, bảng hệ thống và ngoặc lồng trong 「…」. Truyện không có 「 thì chuỗi không đổi - stable_id không đổi.
@@ -851,7 +851,7 @@ def _quoted_span_is_dialogue(line: str, match: re.Match[str]) -> bool:
     # “Được,” Liz gật đầu. - câu trong ngoặc kết thúc bằng dấu phẩy là lời nói nối vào lời dẫn, dù động từ dẫn là gì
     # (gật đầu, lầm bầm, lên tiếng, thở dài...: danh sách động từ không bao giờ đủ). Quét Corpus 28-09: 1.826 câu như thế
     # bị khoá lời kể - đọc bằng giọng người kể - ở YMP (Hàn) và Nageki; trừ 5 câu thuật ngữ đặt dấu phẩy kiểu Anh ngay
-    <removed>
+    # sau "là", "gọi", "danh", "thành" ("chức danh của tôi là “đội trưởng,” theo quy ước...") thì đều là thoại.
     if inner.endswith(",") and not TERM_INTRODUCER_PATTERN.search(before.casefold()):
         return True
     context = f"{before[-100:]} {after[:100]}"
@@ -1073,7 +1073,7 @@ def _terminal_alternative_quote_closing(line: str, expected_closing_mark: str) -
         end == len(stripped) and stripped[start] in "“‘"
         for start, end in _balanced_quote_spans(stripped)
     ):
-        # Dấu cuối dòng đóng cặp của chính nó ("...cô gái vẫn thì thầm, ‘ba’"): không phải dấu đóng nhầm của ngoặc đang mở.
+        # Dấu cuối dòng đóng cặp của chính nó ("...cô gái vẫn thì thầm, ‘mực’"): không phải dấu đóng nhầm của ngoặc đang mở.
         return -1
     return len(stripped) - 1
 

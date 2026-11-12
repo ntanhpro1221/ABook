@@ -142,7 +142,7 @@ chỉ ra **92,8% người nói** - tức một model hoàn hảo cũng không v�
 | `_explicit_speaker_attribution` | chữ Việt không dấu đầu câu là "tên" ("Lo lắng" -> Lo); "X còn chưa kịp đáp..." khoá cho X | `patch_the_name_after_a_quote_is_not_always_its_speaker.py` |
 | `_repair_same_paragraph_speakers` | thuật ngữ trích giữa câu kể ("dây chuyền lắp ráp") thành giọng người nói của đoạn | `patch_a_quoted_term_is_not_the_paragraphs_line.py` |
 | `_trailing_speech_attribution` | "Levski quay sang **Lucien** nói:" khoá cho người NGHE; "Triết Gia hỏi:" -> "Gia" (~29 câu cuốn 2) | `patch_the_one_being_looked_at_is_not_the_speaker.py` |
-<removed>
+| `_generic_speaker_attribution` + khoá theo đoạn | lời dẫn có tên vẫn khoá cho nhãn chung ("…một người phụ nữ, James đưa cho Lucien tờ phiếu rồi nói:" -> "người phụ nữ"; trên đáp án 2/2 lần sai; cuốn 2: 157/304 lần có tên); lượt ngắt lời trong một đoạn ("Florencia liền … cắt ngang:") bị gán cho người nói trước | `patch_a_named_tag_beats_a_generic_one.py` |
 
 Với đủ tám bản vá, phát lại **cả 28 chương đáp án** (10 truyện) được 100% người nói; chỉ còn hai câu nửa điểm đúng
 như đáp án muốn (385:123 lời dẫn dùng tên giả "Aska"; Love Unseen 09:54 lời dẫn viết nhầm "Naurmi"). Cùng đợt, kho truyện lộ lỗi bộ tách đoạn: ngoặc
@@ -184,12 +184,12 @@ Một nửa số 57 là **nội tâm**, và phần ấy đã được sửa bằ
 là một dạng lời dẫn chưa ai khai thác: câu kể kết bằng `<động từ nói>:` nhưng cái tên **sát động từ** lại là người
 NGHE, còn người nói là **chủ ngữ mở câu**:
 
-    <removed>
-    <removed>
+    "Thấy Aska mang cuộn giấy vào quầy, Inke tò mò hỏi:"   -> INKE, không phải Aska
+    "Người thợ Sana đưa hộp mực cho Lucien và nhỏ giọng nói:"                          -> SANA, không phải Lucien
 
 Tôi đã viết luật ấy (lấy tên đầu câu, với bốn chốt đo ra từng cái: bỏ mảnh vụn chữ Việt "Nhìn" -> "Nh" và
 "Ham muốn" -> "Ham"; giới từ/động từ tri giác liền trước tên - "của Lucien", "cao hơn Fil", "Nghe Levski";
-<removed>
+`NOT_YET_SPOKEN_PATTERN` - "Lucien chưa kịp đóng hộp, Artil đã ... nói:"; và đứng trước nhãn chung chung).
 
 **Và đã LOẠI nó, sau khi hai phép đo trả lời trái nhau. Đây là bài học đáng giữ hơn cả bản vá.**
 
@@ -232,7 +232,7 @@ Ba bản vá còn lại chỉ chạy ở bước **phân vai**, nên đo khi lô
 | bản vá | kết quả trong sản xuất |
 |---|---|
 | giọng mang pitch trẻ con không thuộc người lớn | `Bỏ giọng ghim của KAELYN: preset_ngoc_linh_f109_p+04 mang pitch trẻ con mà người nghe đã ghim tuổi adult` - đúng 1 ca, cùng với CHRISTOPHER bị luật cũ bỏ |
-<removed>
+| văn bản thắng phiếu CHIA về giới tính | **Nika**: model bỏ phiếu 5 nữ / 1 nam, văn bản 44 nam / 1 nữ -> sổ ghi `male`. Kiểm nguồn: lời kể gọi Nika bằng đại từ nam **"hắn"** - đè ĐÚNG |
 | tên lệch hai ký tự vẫn là một người | **không nổ lần nào**: lô 11 chỉ có `NATHASHA` -> `Natasha`, mà đó là lệch MỘT ký tự nên luật cũ đã lo. Không có nhãn nào lệch hai ký tự trong lô này |
 
 Hàng cuối là cách đọc đúng của một bản vá phòng ngừa: nó không nổ nghĩa là lô này không có ca ấy, không phải nó vô

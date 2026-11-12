@@ -180,8 +180,8 @@ bằng alpha.26.
 Chương 6 của alpha.32 bị từ chối vì một segment:
 
 ```
-<removed>
-nghe ra : "Hôm nay là ngày 24 tháng 12."
+văn bản : "Phiếu nhập kho ghi ngày 24 tháng Mười hai."
+nghe ra : "Phiếu nhập kho ghi ngày 24 tháng 12."
 ```
 
 **Giọng đọc đúng từng chữ.** Whisper viết chữ số ở chỗ sách viết chữ, và `_fold_number_digits`
@@ -274,7 +274,7 @@ Sau khi `retry` + `resume` với bản sửa gộp số, alpha.32 vẫn hỏng c
 segment cũ. Nhưng lần này chẩn đoán đi tới tận gốc, và gốc **không phải** chính sách.
 
 ```
-<removed>
+văn bản : Hộp này mang nhãn Mười Màu (Ten Colors).
 nghe ra : Hắn là hoàng tử quỷ thứ 10, tên Demon Prince.
 ```
 
@@ -377,7 +377,7 @@ split=segment too short to split safely
 | segment | pace đo được | văn bản |
 |---|---:|---|
 | `c00005_s0000013` | 12,25 | Tên tôi là **Samael Kaizer Theosbane**. |
-<removed>
+| `c00010_s0000017` | 12,13 | Tôi chuyển hộp mực này cho, **Arthur Kaizer Theosbane**. |
 | `c00009_s0000008` | 9,36 | Cấp Linh Hồn … **C » B » A » S » SS » SSS** |
 
 Cả ba đều **quá chậm** so với cận dưới 12,5 của nhịp `normal`.
@@ -705,7 +705,7 @@ hai:
 
 **Mọi lớp cảnh báo ASR giữ nguyên.** Đúng cái tiêu chuẩn đặt ra.
 
-<removed>
+Segment duy nhất khác - `c00002_s0000037`, văn bản `Rare (Hiếm - B): Bền hơn / ít chỗ bán
 hơn.` - thì faster-whisper nghe **tệ hơn**, không phải tốt hơn:
 
     openai : "Rai hiếm B mạnh hơn trên khó tìm hơn."     similarity 0,86   WER 0,125
@@ -731,11 +731,11 @@ thì các segment còn lại chưa qua hết vòng sửa.
 alpha.43 hỏng chương 6 trong khi alpha.32 **xuất bản được** chương ấy. Đây là khác biệt kết
 quả đầu tiên giữa hai lần chạy, và nó không phải chuyện engine nghe tệ hơn — ngược lại hẳn.
 
-<removed>
+Segment `c00006_s0000001`, văn bản `"Ôi trời! Ơ ơ ơ! Kẹt giấy!"` (một tiếng gào):
 
 | | máy nghe | similarity | kết cục |
 |---|---|---|---|
-| alpha.32 (openai) | *"Cảm ơn các bạn đã theo dõi và hẹn gặp lại."* | **0,00** | `TIMELINE_IMPOSSIBLE` → warning → **xuất bản** |
+| alpha.32 (openai) | *"Bản tin minh họa của đài kết thúc ở đây."* | **0,00** | `TIMELINE_IMPOSSIBLE` → warning → **xuất bản** |
 | alpha.43 (faster) | *"Mày tiếp, á á khốn nặng"* | **0,59** | `MISMATCH_UNRESOLVED` → failed → **chặn** |
 
 Bản của alpha.32 là ảo giác kinh điển của Whisper (đoạn kết video YouTube). faster-whisper

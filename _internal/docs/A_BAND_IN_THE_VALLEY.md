@@ -9,7 +9,7 @@
 Chương 140 của lô 5 hỏng lúc 05:51 ngày 2026-09-12 vì **một** đoạn trong 196 đoạn — 195 đoạn kia
 `verified`. Đoạn ấy chưa từng tới cổng ASR: nó chết ở cổng **nhịp**, trong vòng thử lại TTS.
 
-    <removed>
+    "Đặt hộp xuống và xem bảng kê,"     SAMAEL, dialogue, pace=normal, 24 ký tự đọc được
 
 Mười lần thử, và tốc độ đọc **lặp lại đúng bốn giá trị**:
 
@@ -125,7 +125,7 @@ báo ở đầu.
 
 ## Ca thứ hai, chương 175 (2026-09-13 01:5x): lượt vá đổi cả NGƯỜI NÓI
 
-<removed>
+Lô 7, chương 175, câu "In thử… dùng màu nào để in cơ?": 10 lần thử, 4 giá trị, 25,7–33,7 kt/s,
 tất cả trên trần — cùng lớp với 140. Bước 3 vá lại: **qua ngay lần thử đầu**, 2,16 s, 19,5 kt/s,
 với **cùng phiếu diễn** (normal/neutral/1). Lần này không phải đạo diễn đổi ý. Thứ đổi là người nói:
 

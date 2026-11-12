@@ -142,7 +142,7 @@ _LINE_TAIL = re.compile(r"[\W_]*")
 # phải tiếng gọi. Gạch phải đứng sau chữ viết thường/dấu câu hay khoảng trắng (không phải "S-Suzune-san") và có chữ trước nó.
 _TAG_DASHES = "–—―-"
 _TAG_TAIL = re.compile(r"[\s.!?…,;:”\"’'»)\]]*")
-<removed>
+# Câu tự giới thiệu đọc đúng tên người nói ("Tôi là người giữ quầy tem mới mở, Kasagi Shizuka").
 _SAYS_WHO_I_AM = re.compile(
     r"(?<!\w)(?:tôi|tớ|mình|em|ta|tao|anh|chị)\s+(?:tên\s+|chính\s+)?là(?!\w)|(?<!\w)tên\s+(?:của\s+)?(?:tôi|tớ|mình|em|ta)\s+là(?!\w)",
     re.IGNORECASE,
@@ -247,8 +247,8 @@ _LEAD_MID_BLOCKED = frozenset({"không", "chưa", "chẳng", "bật", "nhắm", 
                                "muốn", "định", "toan", "tưởng", "như", "thể"})
 # Ngay sau động từ: "nói chuyện" là trò chuyện, "đồng ý/hùa theo/lời" là đáp lại người khác - không phải tên người vừa nói câu thoại.
 _LEAD_NOT_FOLLOWED_BY = r"(?!\s+(?:chuyện|đồng ý|đồng tình|tán thành|phụ họa|phụ hoạ|hùa theo|lời))"
-<removed>
-<removed>
+# Sau động từ chỉ còn tối đa 3 chữ rồi hết câu hay dấu câu: "Shizuka khẽ đáp, ..." nhưng không "Alistar chỉ đáp lại tờ phiếu của Rubon bằng nét mặt
+# sắc lạnh" (phản ứng với người khác) hay "Azuma nói mà không rõ đang trách ai; ..." (dẫn câu thoại KẾ TIẾP). Tên phải là CHỦ NGỮ: đầu
 # đoạn hoặc ngay sau dấu câu ("..., vẫy Đạo-vinh bảo rằng:" thì Đạo-vinh là người bị vẫy, không phải người nói).
 _LEAD_END = r"(?:\s+[^\W\d_]+){0,5}\s*(?:[,.;!?…–—-]|$)"
 

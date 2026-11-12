@@ -220,7 +220,7 @@ Tiếp mục trên. Mọi cặp giọng mà gold nói là một người trên 2
 | kiểu | cặp | câu ở giọng thứ hai | bằng chứng trong chữ | làm |
 |---|---|---|---|---|
 | tiền tố tên gọi | KOU / SATOMI KOUTAROU (Rokujouma 014, 015) | 271 (22 lượt) | "Kou" 12 lần, "Koutarou" 230, không câu nào nhắc cả hai | gộp |
-<removed>
+| tên gọi kiểu Âu | MACKENZIE / MATSUDAIRA KENJI (014) | 83 (10 lượt) | "Tên đầy đủ là Matsudaira Kenji; cứ gọi tắt là Mackenzie cho gọn" | gộp |
 | tên khác hẳn | KIM WOOJIN / DECULEIN (Villain 22) | 20 (6 lượt) | linh hồn xuyên không, sách nhắc một lần, không câu nối | không |
 | mô tả | BÓNG ĐÈN (SÁNG TRƯNG) / QUỶ VƯƠNG | 11 | không câu nối | không |
 | không phải biệt danh | YUNG PUNG / GU YANGCHEON (Zenith 058) | 93 | Yung Pung là người khác (gold 7 câu) - model gán nhầm | không |
@@ -234,7 +234,7 @@ Hai luật (`merge_short_given_names`, `merge_named_short_forms`, sau lượt t�
   nhắc cả hai. Quét Corpus: "Miko" (140) / "Mikoto" (2), "Tia" / "Tiana" bị chặn vì tên dài ít hơn; "Yukino" /
   "Yukinoshita" bị chặn vì đứng chung câu.
 - **Câu nối**: "tên đầy đủ ... là <tên đủ> ... gọi (tắt) là <tên gọi>" trong một câu, cả hai là nhãn, câu không nhắc nhãn
-  <removed>
+  nào khác. "Koutarou đặt biệt danh Mackenzie cho bạn cùng tổ" (Koutarou là người gọi) không tính. Corpus: chỉ câu Mackenzie.
 
 | | B3 F1 giọng B9 (1.349 câu) | B3 F1 giọng 22 lượt (25.916 câu) |
 |---|---|---|
@@ -299,7 +299,7 @@ trên ứng viên còn lại; "Model tất định" = nối mọi nhãn chứa �
 `named` không thua `off` ở lượt nào (bằng 8, hơn 2), giữ ca Iven và không tốn lượt model. Nó nối 18 dòng trên 10 lượt,
 13 đúng ("quỷ vương" -> Quỷ vương, "tiểu thư Clara" -> Clara). `evidence` hơn `off` ở 4 lượt, thua ở 3: lời dẫn gần vẫn
 gọi tên người cùng cảnh ("Koutarou và Kenji đang cố vác..." ngay trước câu của người vận chuyển). Mẫu "<mô tả>, <Tên>"
-<removed>
+(dấu phẩy trơn) đã bỏ: "Đi qua người đàn ông đang giữ cuộn giấy, Koutarou và Kenji..." là hai mệnh đề.
 
 **Đo lại bằng chính code (phiên Model 09-10 01:0x, LLM_Train/known_text/recgate_score_cpu.txt):** chép DB 10 lượt, trả
 các đoạn đã nối về nhãn thô theo sự kiện LOCAL_IDENTITY_RECONCILED (khớp 100% số đoạn), rồi gọi lại
@@ -1146,7 +1146,7 @@ tả tiếng Anh, nên chính tả nó chọn không phải bằng chứng về 
   `Lucy` (`lˈuːsi`) vẫn không thỏa anchor của `Lucien` (`lˈuːʃən`).
 - Metric canonical canonical hóa anchor **không khớp** ở cả hai vế, để bất đồng về tên thôi bị tính lỗi hai
   lần. Trước đây nó vừa bị anchor bắt vừa làm phồng WER — chính điều này làm câu như
-  <removed>
+  *"Iven chạm vào hộp màu của Lucien rồi tò mò hỏi"* fail ở WER 0,357 dù **mọi từ thường đều đúng**.
 - Miễn trừ chỉ áp dụng khi còn ≥ 4 token thường. Bỏ tên khỏi *"Anh Lucy"* thì không còn gì để kiểm, nên câu
   ngắn giữ nguyên quyền hard-fail.
 - Repair vẫn chạy đủ vòng; chỉ trạng thái cuối đổi từ `failed` sang publish kèm
@@ -1562,7 +1562,7 @@ nào, nên luật ấy không thể bắn lần hai.
   ngoặc mở làm cue không còn được nhận ra và biến thành hai từ đọc thành tiếng. Đúng cái bẫy
   test anchor đã bắt lần trước — nó bắt được lần này nữa.
 - **Bỏ trim dấu phẩy hai đầu thôi xoá dấu câu của tác giả.** 10 segment là câu thơ kết thúc
-  <removed>
+  bằng dấu phẩy (`'Lăn qua lớp mực, để lại hàng dấu nhỏ,'`); `.strip(",")` cũ xoá
   mất nhịp nghỉ mà tác giả cố ý đặt. Toàn bộ 10 khác biệt cũ↔mới đều là dấu phẩy được giữ lại.
 
 #### Xác nhận được: chốt pool của alpha.44 đã hết chốt
@@ -1685,7 +1685,7 @@ Bản sửa lỗi (2) bắt buộc đổi vân tay chất lượng, mà resume d
 
 ### alpha.48: bản sửa dấu `/` gỡ được một chương mà hai lần chạy trước phải hỏi tai người
 
-<removed>
+`c00002_s0000037` — `Rare (Hiếm - B): Bền hơn / ít chỗ bán hơn.` — chặn chương 2 ở **cả
 alpha.46 lẫn alpha.47**. Nguyên nhân tìm ra từ chính dòng "máy nghe" trên trang review:
 
 | | alpha.47 | alpha.48 |
@@ -2379,14 +2379,14 @@ và đây **không** phải thứ đáng đem ra làm phiền tai chủ sách.
 
 Lúc ghi mục trên tôi viết "chưa rõ lệch này tốt hay xấu". Chương 6 trả lời.
 
-<removed>
+`c00006_s0000001` — `"Ôi trời! Ơ ơ ơ! Kẹt giấy!"`, đoạn mà docstring của `asr.py` lấy làm ví
 dụ kinh điển về ca khó:
 
 | | alpha.51 | alpha.52 |
 |---|---|---|
 | người nói | `…r5eacf93…::người bị bắt nạt` | `…r5eacf93…::người bị đánh` |
 | `voice_profile_id` | **16** | **14** |
-<removed>
+| Whisper nghe | "Ôi trời Ơ-Ơ-Ơ kẹt giấy." | "Ơ ơ, kẹt giấy." |
 | kết quả | **verified** | **failed** (`ASR_MISMATCH_UNRESOLVED`) |
 
 Cùng một đoạn, cùng một câu, **cùng một ID phòng** — chỉ khác cái nhãn mà phân tích gán. Nhãn
@@ -2710,7 +2710,7 @@ Quét toàn bộ nguồn (`scripts/check_sources.py`): **8 trên 478 chương** 
 | 019 | 309 | bài thề nhiều dòng không đóng |
 | 216 | 261 | câu thoại không đóng |
 | 287 | 291 | `"Thung Lũng…,  tôi khẽ nói` — thiếu ngoặc đóng |
-<removed>
+| 375 | 35 | `"Mực tím ư? đứa trẻ đọc lại` — thiếu ngoặc đóng |
 | 397, 405, 430, 452 | | câu thoại không đóng |
 
 Ca 287 và 375 cho thấy đây là **thiếu một ký tự**, không phải phong cách viết.
@@ -2942,7 +2942,7 @@ lên). Ba lần cùng một hình dạng: **lấy một mẫu nhỏ, giả đị
    `scripts/machine_credit.py` **không thấy nó** — nó đếm 5 trong khi thật ra 6.
 2. **Lỗi đếm chữ số có thật và giết chương.** Xem
    [PACE_COUNTS_THE_WRONG_STRING.md](PACE_COUNTS_THE_WRONG_STRING.md).
-<removed>
+3. **Văn bản gốc có tiếng Ả Rập.** `"Đọc nhãn này: Mavru selkan 'ito pamil."` — không phép kiểm
    nào trong dự án được thiết kế cho chuyện đó, và nó sẽ còn xuất hiện.
 
 ## Kiểm hai bản vá trên audio thật: chương 023 từ `failed` thành 74/74
@@ -3027,7 +3027,7 @@ Chương 060..091, 3.675 segment, gieo từ `lo02_4d783ac744`. Chạy 11:43 → 
 | chấp nhận có ghi sổ (máy) | 13 | — | 13 |
 | phán quyết người nghe được gieo | 14 | — | 14 |
 
-<removed>
+**Một chương mất, một nguyên nhân:** 075, đoạn `Và chú Anh in vé tím để mẹ đi xem hội.` — 10/10
 lần thử ở 10,64–11,80 kt/s dưới sàn 12,5; câu 38 ký tự không chia được, dải đã `normal`, mọi
 đường cứu đóng. Không phải seed: câu toàn từ ngắn (2,25 chữ/từ so với trung vị kho 3,33). Đo
 theo âm tiết nó đọc 4,48/giây, gần trung vị kho 4,67 — bản thu **không** chậm.
@@ -3060,7 +3060,7 @@ Cả hai do `scripts/boundary.sh 3 --recast 062 066 071 084 086` chạy **không
 ### Lô vá: 1/1, và bản vá nhịp được chứng minh
 
 `lo03v_075`: chương 075, 106/106 segment, `completed`. Đoạn từng giết chương —
-<removed>
+`Và chú Anh in vé tím để mẹ đi xem hội.` — lần này:
 
 ```
                 trước bản vá                  sau

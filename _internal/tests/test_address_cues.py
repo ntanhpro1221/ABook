@@ -27,7 +27,7 @@ HINA = [
     "“Lại đây, ta có chuyện muốn nói với ngươi.”",
 ]
 # Máy gán nhầm cho người kể: xưng "ta", gọi "ngươi" - đúng kiểu của Hina.
-<removed>
+WRONG = '“Ngươi mang thêm mực tím à. Ta tưởng hôm nay chỉ giao giấy can.”'
 
 
 def make_book(root: Path, narrator: str) -> Path:
@@ -147,7 +147,7 @@ def test_saying_we_is_not_a_second_self() -> None:
     cách tự xưng của người khác."""
     from abook.webui.address_cues import split_doubts
 
-    <removed>
+    shouting = ['“Tôi đã nhắc, tôi không giữ chìa khóa hộp sơn!”', '“Cậu tưởng tôi cần cậu chọn màu men hộ chắc?”', "“Cậu mưu tính gì, tôi hỏi!”"]
     we = ["“Chúng ta đi thôi.”", "“Chúng ta không còn thời gian.”"]
     rows = [{"chapter_id": 1, "speaker": "FRANZ", "text": text, "kind": "dialogue"} for text in shouting * 3]
     rows += [{"chapter_id": 2, "speaker": "FRANZ", "text": text, "kind": "dialogue"} for text in shouting + we]

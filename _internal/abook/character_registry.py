@@ -841,7 +841,7 @@ def merge_short_given_names(representatives: dict[str, str], source: str) -> dic
     return redirected
 
 
-<removed>
+# Câu sách tự nối hai tên của một người: "Tên đầy đủ là Matsudaira Kenji; cứ gọi tắt là Mackenzie cho gọn." Phần tên lấy là
 # các chữ viết hoa đầu liền nhau ngay sau "là" (`_leading_capitalized`).
 FULL_NAME_SENTENCE_PATTERN = re.compile(
     r"tên đầy đủ\b[^.!?…\n]*?\blà\s+(?P<full>[^.!?…\n]+?)\bgọi\s+(?:tắt\s+)?là\s+(?P<short>[^.!?…\n]+)",
@@ -867,12 +867,12 @@ def _leading_capitalized(text: str) -> str:
 
 def merge_named_short_forms(representatives: dict[str, str], source: str) -> dict[str, str]:
     """Nhãn là tên gọi tắt mà SÁCH tự nối với tên đủ trong một câu: "MACKENZIE" -> "MATSUDAIRA KENJI" khi sách viết
-    <removed>
+    "Tên đầy đủ là Matsudaira Kenji; cứ gọi tắt là Mackenzie cho gọn". Trả về {key: tên đích}.
 
     Đo 08-10 trên cổng 22 lượt (Rokujouma 014): bạn thân Koutarou có hai nhãn "MACKENZIE" / "MATSUDAIRA KENJI" - 83 câu
     sang giọng thứ hai. Tên gọi kiểu Âu của người Nhật (cả tên Hàn, Trung) không suy được từ chữ cái, chỉ tin câu nối:
     "tên đầy đủ ... là <tên đủ>" rồi "gọi (tắt) là <tên gọi>" trong CÙNG một câu, cả hai đã là nhãn, và câu không nhắc nhãn
-    <removed>
+    nào khác - "Koutarou đặt biệt danh Mackenzie cho bạn cùng tổ" (Koutarou là NGƯỜI GỌI) không có "tên đầy đủ" nên không tính.
     Quét Corpus 59 truyện (08-10): chỉ đúng câu này qua mẫu."""
     if not source:
         return {}

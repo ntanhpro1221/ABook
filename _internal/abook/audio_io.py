@@ -461,7 +461,7 @@ def pace_is_outlier(
     `floor_scale` là nhịp chung của bảng cân bằng (`voice_balance.pace_gate_scale`): cả hai sàn nhân
     với nó, cận trên thì không. Mặc định 1,0 - mọi chỗ gọi cũ ra đúng câu trả lời cũ.
 
-    <removed>
+    Chương 075 của lô 3 mất câu "Và chú Anh in vé tím để mẹ đi xem hội." sau 10/10 lần thử ở
     10,64–11,80 chars/s, sàn 12,5. Câu ấy có 2,25 chữ mỗi từ (trung vị kho: 3,33): cùng một
     tốc độ đọc thì câu toàn từ ngắn cho ra ít chữ mỗi giây hơn, và thước "chars/s" gọi nó là
     chậm. Đo theo âm tiết: 4,48/giây, gần trung vị kho (4,67). Bản thu không chậm; thước chậm.

@@ -70,7 +70,7 @@ def test_whisper_spelling_of_a_name_is_not_a_pronunciation_error() -> None:
     `c00010_s0000017` is this exact shape and the owner said "đúng rồi". "kaizer" and
     "kaiser" sound out identically; no letter comparison will ever agree on them."""
     assert _passes(
-        <removed>
+        'tôi chuyển hộp mực này cho arthur kaiser theo bên',
         {"surface": "Arthur Kaizer Theosbane", "spoken_form": "A-thờ cai-dờ theo-bên"},
     )
 
@@ -200,8 +200,8 @@ def test_end_to_end_a_spelling_disagreement_no_longer_needs_a_listener() -> None
     the listener from spelling disagreements, not from real mispronunciations. Chapter 10
     publishes on this fix *plus* the acceptance already recorded for that other segment."""
     result = _adjudicate(
-        "Ông ta chính là cha tôi, A-thờ cai-dờ theo-bên.",
-        <removed>
+        'Tôi chuyển hộp mực này cho, A-thờ cai-dờ theo-bên.',
+        'Tôi chuyển hộp mực này cho Arthur Kaiser theo bên.',
         "Arthur Kaizer Theosbane",
         "A-thờ cai-dờ theo-bên",
     )

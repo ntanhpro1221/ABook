@@ -42,7 +42,7 @@ def test_a_long_anchor_mismatch_is_still_not_forgiven() -> None:
     ASR_MIN_VERIFIABLE_CHARS, so it must keep blocking. If this ever passes, the anchor has
     been softened where it works rather than where it is blind.
     """
-    <removed>
+    misread_list = "Đèn Tím (Violet Lamp) (Thường) || Chuông Đồng (Copper Bell) (Thường)"
 
     assert not asr_verdict_is_unverifiable(misread_list)
 '''

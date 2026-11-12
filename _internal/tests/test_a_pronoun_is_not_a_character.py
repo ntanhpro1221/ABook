@@ -42,8 +42,8 @@ def test_both_exclusion_lists_are_written_folded() -> None:
 
 
 def test_the_narration_word_that_stole_three_lines_is_refused() -> None:
-    """Ca thật: `Nghe gi\u1ecdng c\u1ee7a Victor…` ngay sau `“L\u00e0 t\u00f4i, Victor.”`."""
-    assert _leading_proper_name("Nghe gi\u1ecdng c\u1ee7a Victor b\u00e2y gi\u1edd nh\u1eb9 h\u01a1n.") is None
+    'Ca thật: `Nghe tiếng đếm phiếu của Victor…` ngay sau `“Victor đây, mở hộp tem nhé.”`.'
+    assert _leading_proper_name('Nghe tiếng đếm phiếu của Victor bây giờ nhẹ hơn.') is None
     assert _leading_proper_name("Tin nh\u1eafn vi\u1ebft nh\u01b0 sau.") is None
     assert _leading_proper_name("Giai \u0111i\u1ec7u \u1ea5y l\u1eb7p l\u1ea1i m\u1ed9t l\u1ea7n n\u1eefa.") is None
     assert _leading_proper_name("Im l\u1eb7ng m\u1ed9t l\u00fac l\u00e2u.") is None

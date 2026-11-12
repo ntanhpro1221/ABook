@@ -459,7 +459,9 @@ def test_the_studio_offers_to_build_the_workshop_and_seeds_it_from_the_book(tmp_
     source = sorted((studio.library.root / workshop.SOURCE_FOLDER).rglob("*.txt"))
     assert [path.name for path in source] == ["00001.txt", "00002.txt"]
     first = source[0].read_text(encoding="utf-8")
-    assert first.startswith("Chương 646 - Trở về (1)\n\nTrời đã sáng. “Đi thôi.”")
+    assert first.startswith("""Chương 646 - Trở về (1)
+
+Trời đã sáng. “Đẩy vào nhé.”""")
     assert studio.listen_book(opened["id"])["projectFile"]["built"] == built["id"], "giao diện mời mở xưởng đã dựng"
 
 

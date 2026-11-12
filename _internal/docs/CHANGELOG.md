@@ -2064,7 +2064,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đúng như thế; thêm các chức danh "bác sĩ", "tướng quân", "thái tử", "trưởng lão". Cách gọi theo quan hệ ("chị Dậu") vẫn
   giữ riêng.
 - Nhân vật được gọi bằng tên gọi tắt ("Kou" của Koutarou) hay biệt danh mà truyện tự giải thích ("tên đầy đủ là Matsudaira
-  <removed>
+  Kenji; cứ gọi tắt là Mackenzie cho gọn") giờ đọc bằng một giọng. Hai người có tên na ná nhau ("Mai" và "Maika" cùng xuất
   hiện) vẫn là hai người.
 
 ### Điện thoại
@@ -3306,7 +3306,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   người đang nguyền rủa ("thầm nguyền rủa", "đáng nguyền rủa") mới là giận. Câu thoại mở bằng "(" ngay sau lời thoại của
   người khác được hiểu là một lượt nói mới, không gộp vào người vừa nói.
 - Hộp **"Việc cần duyệt"** hỏi khi một **danh hiệu hay biệt danh** có giọng riêng mà sách luôn viết nó sát tên một người
-  <removed>
+  ("Thợ In Bảy Màu Krai", "Krai giữ chức danh Thợ In Bảy Màu"): một cú bấm đọc các câu ấy bằng giọng của
   chính người đó. Trước đây chỉ hỏi khi tên ngắn nằm trong tên dài ("Lucien" / "Lucien Evans").
 - **Tự chọn đường Wi-Fi hay Bluetooth**: ghép điện thoại với máy tính một lần (qua Wi-Fi hay Bluetooth) là đủ - khi
   cùng Wi-Fi thì đi Wi-Fi, ra khỏi nhà thì tự đi Bluetooth (nếu hai máy đã ghép Bluetooth và máy tính bật Bluetooth),

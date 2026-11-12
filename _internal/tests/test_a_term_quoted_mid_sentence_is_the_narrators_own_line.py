@@ -52,7 +52,7 @@ def test_a_term_in_another_paragraph_is_not_touched() -> None:
     group = [
         row("a", 3, "Lucien không thể bảo rằng nếu là"),
         row("b", 4, "“Khoa Học”"),
-        <removed>
+        row("c", 5, 'thì phải thêm mục trên bảng kiểm.'),
     ]
     result = {"a": data("narration", "NARRATOR"), "b": data("dialogue", "LUCIEN"),
               "c": data("narration", "NARRATOR")}

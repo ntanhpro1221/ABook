@@ -2,8 +2,8 @@
 
 alpha.32's chapter 6 was refused over one segment:
 
-    <removed>
-    heard: "Hôm nay là ngày 24 tháng 12."
+    text:  "Phiếu nhập kho ghi ngày 24 tháng Mười hai."
+    heard: "Phiếu nhập kho ghi ngày 24 tháng 12."
 
 The voice read it exactly right. Whisper writes digits where the book writes words, and the
 folding table stopped at ten, so "mười hai" against "12" scored as an error. The same gap
@@ -18,12 +18,12 @@ def _same(left: str, right: str) -> bool:
 
 
 def test_the_segment_that_failed_a_chapter_now_matches() -> None:
-    <removed>
+    assert _same('Phiếu nhập kho ghi ngày 24 tháng Mười hai.', 'Phiếu nhập kho ghi ngày 24 tháng 12.')
 
 
 def test_the_two_near_misses_from_the_same_run_match_too() -> None:
     assert _same("Hoàng Tử Quỷ Thứ Mười", "hoàng tử quỷ thứ 10")
-    <removed>
+    assert _same('trong cả bốn mươi mốt hộp mực', 'trong cả 41 hộp mực')
 
 
 def test_it_reaches_as_far_as_the_speller_does() -> None:

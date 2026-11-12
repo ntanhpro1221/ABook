@@ -45,7 +45,7 @@ CAST = {
 }
 LINES = [
     ("c1s0", "narration", "NARRATOR", "Lucien nhìn Natasha."),
-    ("c1s1", "dialogue", "LUCIEN", "“Đi thôi.”"),
+    ("c1s1", "dialogue", "LUCIEN", '“Đẩy vào nhé.”'),
     ("c1s2", "dialogue", "NOAH", "“Tớ đi với.”"),
     ("c1s3", "dialogue", "NATASHA", "“Chắc.”"),
     ("c1s4", "dialogue", "NOAH", "“Nhanh lên.”"),

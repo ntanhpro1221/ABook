@@ -17,8 +17,8 @@ def test_a_whole_line_is_a_voice() -> None:
 
 def test_a_term_inside_a_sentence_stays_narration() -> None:
     assert _kinds("『Dị năng』 của cô ấy rất mạnh.") == [("narration", "『Dị năng』 của cô ấy rất mạnh.")]
-    <removed>
-        <removed>
+    assert _kinds('Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』') == [
+        ("narration", 'Bậc thiết kế: C 『Gom đủ 300 mảnh đồng để mở bản vẽ』')
     ]
 
 
@@ -28,6 +28,8 @@ def test_two_voices_in_a_row_are_not_chained_to_one_speaker() -> None:
 
 
 def test_a_book_without_white_corner_brackets_is_untouched() -> None:
-    <removed>
-    <removed>
+    text = """“Lucien, chọn giúp tớ màu tem nhé.”
+
+Douglas cười nói."""
+    assert _kinds(text) == [("dialogue", '“Lucien, chọn giúp tớ màu tem nhé.”'),
                             ("narration", "Douglas cười nói.")]

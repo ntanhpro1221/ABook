@@ -7,11 +7,11 @@ Chạy: python patch_a_term_quoted_mid_sentence_is_the_narrators_own_line.py <ro
 `patch_a_quoted_term_is_not_the_paragraphs_line.py` (ranh giới 9) đã dạy host ĐỪNG khoá người nói cho những cụm trích
 ấy - nhưng nó chỉ ngăn host gán SAI, còn câu trả lời của model thì vẫn đứng nguyên. Ở chương 426 lô 10:
 
-  <removed>
+  [8]  Lucien đang phân loại phiếu kiểm kê. Trong trường hợp dùng nhãn   (kể)
   [9]  “Khoa Học”                                                                                        <- model: LUCIEN
-  <removed>
+  [10] thì phải bổ sung mục riêng trên bảng kiểm, còn                                    (kể)
   [11] “Tự Nhiên”                                                                                        <- model: LUCIEN
-  <removed>
+  [12] thì chỉ cần in lại nhãn rồi dán lên hộp.                                                   (kể)
 
 Người kể đang gọi tên hai tập san giữa câu của chính mình; gán cho Lucien là đổi giọng hai lần giữa một câu. Đây là
 kiểu lỗi lớn thứ tư của model ở lô 9: 17 trên 133 chỗ lệch.
@@ -144,7 +144,7 @@ def test_a_term_between_two_halves_of_a_sentence_goes_back_to_the_narrator() -> 
     group = [
         row("a", 3, "Lucien không thể bảo rằng nếu là"),
         row("b", 3, "“Khoa Học”"),
-        <removed>
+        row("c", 3, "thì phải thêm mục trên bảng kiểm."),
     ]
     result = {"a": data("narration", "NARRATOR"), "b": data("dialogue", "LUCIEN"),
               "c": data("narration", "NARRATOR")}
@@ -170,7 +170,7 @@ def test_a_term_in_another_paragraph_is_not_touched() -> None:
     group = [
         row("a", 3, "Lucien không thể bảo rằng nếu là"),
         row("b", 4, "“Khoa Học”"),
-        <removed>
+        row("c", 5, "thì phải thêm mục trên bảng kiểm."),
     ]
     result = {"a": data("narration", "NARRATOR"), "b": data("dialogue", "LUCIEN"),
               "c": data("narration", "NARRATOR")}
