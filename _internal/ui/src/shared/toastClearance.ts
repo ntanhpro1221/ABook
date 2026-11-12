@@ -4,9 +4,11 @@ import { useEffect } from "react";
  * animated translate with less precision than getBoundingClientRect: a 750.5px
  * base otherwise flips across .5 and restarts the 25px/26px transition forever. */
 export function toastBaseBounds(top: number, bottom: number, translate: number) {
-  const layout = (coordinate: number) => Math.round((coordinate - translate) * 64) / 64;
+  const layout = (coordinate: number) => layoutCoordinate(coordinate - translate);
   return { top: layout(top), bottom: layout(bottom) };
 }
+
+export const layoutCoordinate = (coordinate: number) => Math.round(coordinate * 64) / 64;
 
 /** Giữ thông báo ngoài nội dung bảng/hộp, kể cả popover không khoá body.
  *  Dịch cả toaster để Sonner giữ nguyên thứ tự, vuốt đóng và chuyển động của từng toast. */
@@ -41,7 +43,7 @@ export function useToastClearance(): void {
           // Bỏ riêng transform vào/ra của tấm; dùng vị trí đích ngay lúc bảng bắt đầu mở.
           const matrix = new DOMMatrixReadOnly(getComputedStyle(layer).transform === "none" ? undefined : getComputedStyle(layer).transform);
           const origin = getComputedStyle(layer).transformOrigin.split(" ").map(parseFloat);
-          const layerTop = r.top - matrix.m42 - (1 - matrix.m22) * origin[1];
+          const layerTop = layoutCoordinate(r.top - matrix.m42 - (1 - matrix.m22) * origin[1]);
           const layerBottom = layerTop + layer.offsetHeight;
           if (!r.width || !r.height || r.right <= left || r.left >= right || layerBottom <= 0 || layerTop >= innerHeight) continue;
           spaces = spaces.flatMap(space => [
