@@ -72,7 +72,7 @@ def unescape(line: str) -> str:
     return ESCAPE.sub(lambda m: chr(int(m.group(1) or m.group(2) or m.group(3), 16)), line)
 
 
-IPV4 = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?![\d.])")
+IPV4 = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?:/(\d{1,2}))?(?![\d.])")
 TAILNET = ipaddress.ip_network("100.64.0.0/10")
 HOME_LAN = ipaddress.ip_network("192.168.0.0/16")
 # Made-up addresses the tests and docs already use. Anything else in these ranges looks real: new examples
@@ -285,8 +285,14 @@ def scan_machine(files: list[tuple[str, str]]) -> list[tuple[str, int, str, str]
                 value = m.group(1)
                 try:
                     addr = ipaddress.ip_address(value)
+                    if m.group(2) is not None:
+                        # A network in CIDR notation ("192.168.0.0/16") names a range, not a machine;
+                        # an interface address with its mask ("192.0.2.30/24") is still that address.
+                        ipaddress.ip_network(f"{value}/{m.group(2)}", strict=True)
+                        continue
                 except ValueError:
-                    continue
+                    if m.group(2) is None:
+                        continue
                 if value in own_addresses:
                     out.append((path, no, "machine", f"this machine's address {value}"))
                 elif (addr in TAILNET or addr in HOME_LAN) and value not in SAMPLE_ADDRESSES:

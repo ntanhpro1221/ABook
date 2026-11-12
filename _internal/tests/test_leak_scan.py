@@ -70,9 +70,9 @@ def test_machine_name_is_read_at_runtime_and_private_ranges_are_checked(monkeypa
     real_tail = ".".join(map(str, (100, 80, 20, 30)))
     real_lan = ".".join(map(str, (192, 168, 88, 99)))
     findings = leak_scan.scan_machine([("a.txt", "\n".join([
-        "Fixture" + "-Workstation", real_tail, real_lan, "100.64.0.1", "192.0.2.7",
+        "Fixture" + "-Workstation", real_tail, real_lan, "100.64.0.1", "192.0.2.7", "192.168.0.0/16", real_lan + "/24",
     ]))])
-    assert [n for _, n, _, _ in findings] == [1, 2, 3]
+    assert [n for _, n, _, _ in findings] == [1, 2, 3, 7]
 
 
 def test_absent_corpus_prints_skip_but_still_checks_machine(tmp_path, monkeypatch, capsys):
