@@ -142,6 +142,9 @@ TestCase {
         }
         // Nét thật sự có mực: gạch Thu nhỏ dày 1 điểm ảnh, rộng đúng 10 điểm ảnh, nằm giữa nút; hai bên không có gì.
         park()
+        // Mực đổi từ màu nhạt (cửa sổ chưa hoạt động) sang màu chữ bằng ColorAnimation: đợi nó xong rồi mới chụp, không đo giữa chừng.
+        tryVerify(function() { return minimize.active && Qt.colorEqual(glyphs(minimize)[0].color, Theme.text) }, 5000, "mực gạch Thu nhỏ đã về màu chữ")
+        waitForRendering(win.contentItem)
         const image = grabImage(win.contentItem), b = box(minimize), bg = rgb(Theme.bg)[0], ink = rgb(Theme.text)[0]
         const inked = []
         let thickness = 0
