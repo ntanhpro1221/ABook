@@ -71,12 +71,24 @@ export function installGeometryProbe() {
     triggers: () => [...document.querySelectorAll('[aria-haspopup="dialog"], [aria-label="Mở màn hình đang nghe"]' + (innerWidth <= 640 ? ', [aria-haspopup="menu"]' : ''))]
       .filter(el => !el.closest('[inert], [aria-hidden="true"]') && !excluded(el) && !el.matches(':disabled, [aria-expanded="true"]') && box(el).width > 0)
       .map(el => ({ selector: path(el), label: el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 100), menu: el.getAttribute('aria-haspopup') === 'menu' })),
+    // Điểm của điều khiển mà con trỏ thật chạm trúng chính nó: tâm trước, rồi lưới 5x5. Điều khiển lồng nhau (liên kết tên sách trên thanh thu nhỏ) hay lớp phủ
+    // che đúng tâm không làm điều khiển thành "không chạm được" khi phần còn lại của nó chạm được.
+    reach: el => {
+      const r = box(el);
+      for (const [fx, fy] of [[.5, .5], ...[.1, .3, .5, .7, .9].flatMap(y => [.1, .3, .5, .7, .9].map(x => [x, y]))]) {
+        const x = r.x + r.width * fx, y = r.y + r.height * fy;
+        if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+        const hit = document.elementFromPoint(x, y);
+        if (hit && el.contains(hit)) return { x, y };
+      }
+      return null;
+    },
     prepare: selector => {
       const el = document.querySelector(selector);
       if (!el) throw new Error(`Missing pointer target ${selector}`);
       const r = box(el);
-      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      if (r.y < 0 || r.y + r.height > innerHeight || r.x < 0 || r.x + r.width > innerWidth || !hit || !el.contains(hit)) el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+      const point = window.__sheetProbe.reach(el);
+      if (r.y < 0 || r.y + r.height > innerHeight || r.x < 0 || r.x + r.width > innerWidth || !point) el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
     },
     position: middle => {
       // Scroll user-scrollable underlay containers, including the document when its viewport permits scrolling.
@@ -145,11 +157,11 @@ export function installGeometryProbe() {
     center: selector => {
       const el = document.querySelector(selector);
       if (!el) throw new Error(`Missing click target ${selector}`);
-      const r = box(el), x = r.x + r.width / 2, y = r.y + r.height / 2;
-      const hit = document.elementFromPoint(x, y);
+      const r = box(el), reached = window.__sheetProbe.reach(el);
+      if (reached) return reached;
+      const x = r.x + r.width / 2, y = r.y + r.height / 2, hit = document.elementFromPoint(x, y);
       if (hit && !el.contains(hit) && hit.closest('[data-sonner-toast]')) return null;
-      if (!hit || !el.contains(hit)) throw new Error(`Pointer target occluded: ${selector} by ${hit?.outerHTML.slice(0, 180)}`);
-      return { x, y };
+      throw new Error(`Pointer target occluded: ${selector} by ${hit?.outerHTML.slice(0, 180)}`);
     },
     closeControl: () => {
       const el = surfaces().at(-1);

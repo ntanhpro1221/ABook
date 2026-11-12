@@ -511,7 +511,7 @@ const Paragraph = memo(function Paragraph({
     document.fonts?.ready.then(measure);
     return () => observer?.disconnect();
   }, [playing, paragraph]);
-  const ink = outline && <svg aria-hidden data-sentence-ink className="pointer-events-none absolute inset-0 -z-10 size-full overflow-visible"><path d={outline} fill="var(--read-along)" /></svg>;
+  const ink = outline && <svg aria-hidden data-sentence-ink data-underlay className="pointer-events-none absolute inset-0 -z-10 size-full overflow-visible"><path d={outline} fill="var(--read-along)" /></svg>;
   const sentence = (index: number, segment: ScriptSegment) => ({
     "data-index": index,
     "data-sentence": "",

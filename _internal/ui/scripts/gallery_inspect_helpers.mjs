@@ -30,6 +30,8 @@ export function createInspectorHelpers() {
     if (graphic.element.contains(text.element)) return null;
     const overlay = text.element.closest("[data-overlay]");
     if (overlay?.contains(graphic.element)) return null;
+    // Lớp nền cố ý nằm DƯỚI chữ (z âm trong khối isolate, vd. vệt tô câu đang đọc): chữ đứng trên nó là thiết kế, không phải chữ đè hình.
+    if (graphic.element.closest("[data-underlay]")) return null;
     return intersection(text.rect, graphic.rect);
   }
   function siblingDifferences(samples, tolerance = 1) {
