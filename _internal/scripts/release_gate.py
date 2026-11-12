@@ -423,7 +423,8 @@ def find_vcvars() -> Path:
     flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     found = subprocess.run([str(vswhere), "-latest", "-products", "*", "-requires",
                             "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"],
-                           capture_output=True, text=True, creationflags=flags).stdout.strip().splitlines()
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           creationflags=flags).stdout.strip().splitlines()
     return Path(found[0]) / "VC/Auxiliary/Build/vcvars64.bat" if found else vswhere.parent / "(no x64 C++ tools)/vcvars64.bat"
 
 

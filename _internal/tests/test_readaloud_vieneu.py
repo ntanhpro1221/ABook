@@ -726,8 +726,16 @@ def test_a_studio_short_question_keeps_its_mark_through_vieneu(monkeypatch: pyte
 
     from abook.tts import keep_vieneu_final_mark
 
+    # Other tests may already have installed the app's frontend. Load pristine
+    # upstream functions for this before/after contract without mutating that
+    # other test's module state or weakening the raw-baseline assertions.
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    spec = spec_from_file_location("vieneu_utils._pristine_test_phonemizer", pt.__file__)
+    pristine = module_from_spec(spec)
+    spec.loader.exec_module(pristine)
     for name in ("punc_norm", "_phonemize_cached"):
-        monkeypatch.setattr(pt, name, getattr(pt, name))
+        monkeypatch.setattr(pt, name, getattr(pristine, name))
     monkeypatch.setattr(pt, "_abook_keeps_final_mark", False, raising=False)
     long = "Hôm nay trời đẹp lắm và tôi muốn đi chơi cùng anh"
     before = {text: pt.phonemize_text_with_emotions(pt.normalize_to_chunks_v3_with_gaps(text)[0][0]) for text in ("Thật sao?", "Đi!", "Gì cơ", "Hả?!", long, long + "?", "Tôi đi, anh ở lại nhé!")}
