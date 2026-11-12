@@ -1519,7 +1519,10 @@ def adjudicate_collapsed_repeated_short(
     )
     anchor_metrics = collapsed.get(LOCKED_NAME_ANCHOR_METRICS_KEY)
     if not isinstance(anchor_metrics, dict) or anchor_metrics.get("adjudicated") is not True:
-        raise RuntimeError("collapsed repeated-short anchor evidence is incomplete")
+        # The locked-name rules legitimately decline (no anchor matched the transcript):
+        # the collapsed reading is then simply not a candidate, and the line keeps its
+        # ordinary verdict (retake / review). Raising here stopped a whole book on one line.
+        return None
 
     result = dict(collapsed)
     result[LOCKED_NAME_ANCHOR_METRICS_KEY] = {

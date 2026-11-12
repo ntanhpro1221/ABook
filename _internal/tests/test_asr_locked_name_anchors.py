@@ -991,3 +991,42 @@ def test_anchor_waiver_needs_the_name_to_be_a_minority_of_the_utterance() -> Non
     assert vacuous_metrics["anchor_expected_token_count"] == 3
     assert vacuous_metrics["canonical_waiver_available"] is False
     assert vacuous["locked_name_review_eligible"] is False
+
+
+@pytest.mark.parametrize(
+    "declined",
+    [
+        {},  # alias-only anchors fell back to the required set, which was empty: no metrics
+        {LOCKED_NAME_ANCHOR_METRICS_KEY: {"adjudicated": False, "status": "skipped_inconclusive"}},
+    ],
+)
+def test_collapsed_repeated_short_declines_when_name_rules_do_not_adjudicate(
+    monkeypatch: pytest.MonkeyPatch,
+    declined: dict,
+) -> None:
+    # 12-11: raising here stopped a whole book at chapter 4 on one short line.
+    import abook.asr as asr
+
+    monkeypatch.setattr(
+        asr,
+        "adjudicate_locked_name_anchors",
+        lambda expected, result, anchors, **kwargs: {**result, **declined},
+    )
+    original = _asr_result(
+        "Anh Lũ Sĩ En",
+        verdict=ASR_MISMATCH,
+        reason="ASR_MISMATCH",
+        repairable=True,
+    )
+
+    assert (
+        adjudicate_collapsed_repeated_short(
+            "Anh Lu-si-en!",
+            original,
+            [_anchor("Lucien", "Lu-si-en", spoken_start=4)],
+            requested_repeat_count=3,
+            min_similarity=0.78,
+            max_wer=0.30,
+        )
+        is None
+    )
