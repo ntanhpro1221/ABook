@@ -1116,7 +1116,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       <div className={split ? "grid min-h-0 flex-1 grid-cols-[var(--book-left)_minmax(0,1fr)] gap-x-8" : "contents"}>
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
-      <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pb-6 sm:gap-x-0")}>
+      <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 mt-4 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pt-1 pb-6 sm:gap-x-0")}>
         {/* Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b). Lớp nút phủ lên bìa, nên bắt đầu / thôi nghe không dựng lại bìa. */}
         <div className={cn("press relative w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")}>
           <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="aspect-[2/3] w-full" />

@@ -1,5 +1,5 @@
 import { Minus, Plus } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { S } from "./strings.generated";
 import { cn } from "./cn";
 import { feedback } from "./feedback";
@@ -69,6 +69,7 @@ export function ValuePicker({
   const last = useRef(shown);
   last.current = shown;
   const track = useRef<HTMLDivElement>(null);
+  const rulerId = useId();
   const repeat = useRef<{ timer: ReturnType<typeof setTimeout> | null; pressed: boolean }>({ timer: null, pressed: false });
   const input = useRef<HTMLInputElement>(null);
   const tickGesture = useRef({x: 0, dragged: false});
@@ -299,6 +300,7 @@ export function ValuePicker({
           {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
           <div
           ref={track}
+          id={rulerId}
           role="slider"
           tabIndex={disabled ? -1 : 0}
           aria-label={label}
@@ -341,7 +343,7 @@ export function ValuePicker({
           </span>
         </div>
         {plan.aligned && spec.typical.map((typical, index) => <button
-          key={typical} type="button" data-value-chip={typical} data-value-tick-label
+          key={typical} type="button" data-value-chip={typical} data-value-tick-label data-tap-proxy-for={rulerId}
           aria-label={format(typical)} aria-pressed={index === selected} disabled={disabled} aria-disabled={busy || undefined}
           onPointerDown={event => {
             if (event.button !== 0) return;

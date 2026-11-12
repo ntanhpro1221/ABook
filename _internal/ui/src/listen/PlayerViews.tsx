@@ -424,7 +424,7 @@ export function MenuShell({
   if (inline) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>
       {button}
-      <Collapse open={isOpen} id={sheetId} className="pb-2">{children}{footer}</Collapse>
+      <Collapse open={isOpen} id={sheetId} className="pb-2 [&_[data-audio-fx]]:px-2">{children}{footer}</Collapse>
     </div>
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
@@ -1360,14 +1360,14 @@ function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
-      {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : (
+      {preparing ? <span className={look === "bar" ? "block truncate" : undefined}>{PREPARING_VOICE}</span> : atEnd === "caughtUp" ? <span className={look === "bar" ? "block truncate" : undefined}>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</span> : (
         <button
           type="button"
           data-track-book
           onClick={openBook}
           aria-label={S.s_mo_trang_sach_3f7bd955}
           title={track.bookTitle}
-          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words")}
+          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words", look === "bar" && "inline-block max-w-full truncate align-top")}
         >
           {track.bookTitle}{look === "screen" && <span aria-hidden>{"\u00a0›"}</span>}
         </button>
@@ -1643,7 +1643,7 @@ export function PlayerBar({
               <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
               <div className="min-w-0">
                 <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-                <div data-np="book" className="truncate text-xs text-fg-2">
+                <div data-np="book" className="text-xs text-fg-2">
                   <TrackSubtitle look="bar" />
                 </div>
               </div>
@@ -1697,7 +1697,7 @@ export function PlayerBar({
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
             <div className="min-w-0">
               <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-              <div data-np="book" className="truncate text-xs text-fg-2">
+              <div data-np="book" className="text-xs text-fg-2">
                 <TrackSubtitle look="bar" />
               </div>
             </div>

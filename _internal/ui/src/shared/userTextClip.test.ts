@@ -9,7 +9,7 @@ const root = `${cwd()}/src`;
 const USER_TEXT = /book\.title|bookTitle|chapterTitle|chapter\.(sub)?title|fullTitle|displayTitle\(|titleOf\(|labels\.get\(|item\.label|\{item\.name\}|active\.name|^\{(name|title|sub|where)\}$/;
 /** Chỗ còn cắt có lý do (đã ghi trong báo cáo, chờ chủ sách quyết): thanh phát thu nhỏ cao cố định một dòng tên chương + một dòng tên sách (DESIGN 6),
  *  tên đầy đủ ở tooltip `title` của nút. */
-const ALLOWED = new Set(["listen/PlayerViews.tsx:{track.chapterTitle}#mini"]);
+const ALLOWED = new Set(["listen/PlayerViews.tsx:{track.chapterTitle}#mini", "listen/PlayerViews.tsx:{track.bookTitle}#mini"]);
 /** Tên máy trong chỗ hẹp (ShortName): rút có chủ đích, tên đầy đủ ở tooltip - tên máy không phải chữ của sách. */
 const ALLOWED_ANYWHERE = new Set(["shared/ShortName.tsx:{name}"]);
 
@@ -29,6 +29,8 @@ it("không khối nào cắt tên sách / tên chương / tên người dùng đ
         // Thanh phát thu nhỏ: khối MotionRegion của tên chương ngay trong nút "Mở màn hình đang nghe".
         const before = source.slice(Math.max(0, (match.index ?? 0) - 900), match.index);
         if (ALLOWED.has(`${where}#mini`) && before.includes('aria-label={S.s_mo_man_hinh_dang_nghe_')) continue;
+        // Dòng tên sách của cùng thanh thu nhỏ (nút `data-track-book`, chỉ look="bar" cắt; tên đầy đủ ở tooltip `title`).
+        if (ALLOWED.has(`${where}#mini`) && before.includes('data-track-book') && /look === "bar" && "[^"]*truncate/.test(source.slice(match.index ?? 0, (match.index ?? 0) + 400))) continue;
         clipped.push(`${where} (dòng ${source.slice(0, match.index).split("\n").length})`);
       }
     }

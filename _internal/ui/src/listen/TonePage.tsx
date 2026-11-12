@@ -63,7 +63,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     <div className="flex min-h-14 items-center gap-2">
       <button type="button" role="radio" aria-checked={chosen} aria-label={p.name} title={mine?S.s_tone_drag:undefined} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 text-left"
         onClick={()=>run(l=>l.select(p.id))} onKeyDown={mine?e=>{if(e.altKey&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();move(p.id,e.key==='ArrowUp'?-1:1);}}:undefined}>
-        <span aria-hidden className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors duration-motion-fast ${chosen?'border-accent':'border-fg-2'}`}><span className={`size-2.5 rounded-full bg-accent transition-transform duration-motion-fast ${chosen?'scale-100':'scale-0'}`}/></span>
+        <span aria-hidden className={`grid size-5 shrink-0 place-items-center rounded-full ring-2 ring-inset transition-colors duration-motion-fast ${chosen?'ring-accent':'ring-fg-2'}`}><span className={`size-2.5 rounded-full bg-accent transition-transform duration-motion-fast ${chosen?'scale-100':'scale-0'}`}/></span>
         <span className="min-w-0 flex-1 break-words">{p.name}</span><ToneThumb bands={p.bands} chosen={chosen}/>
       </button>
       {mine&&<button type="button" aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(p.name)} aria-expanded={menu===p.id} className="-mr-3 flex size-12 shrink-0 items-center justify-center rounded-control text-fg-2 hover:text-fg" onClick={()=>setMenu(menu===p.id?null:p.id)}><MoreHorizontal className="size-5"/></button>}
@@ -75,7 +75,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     </div></Collapse>}
   </div>;};
   return <div ref={page} data-tone-page className="flex min-w-0 flex-col">
-    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><h2 className="font-semibold">{S.s_am_sac_8c2f4e1a}</h2></div>}
+    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><p className="font-semibold">{S.s_am_sac_8c2f4e1a}</p></div>}
     <div className="flex min-h-12 items-center justify-between gap-3"><p className="min-w-0 font-semibold" aria-live="polite">{lib.name}</p>
       {(current.id==='draft'||lib.dirty)&&<button type="button" className={LINK} onClick={()=>form(suggest(),{})}>{S.s_tone_save}</button>}</div>
     <svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={S.s_am_sac_8c2f4e1a} className="box-content h-20 w-full rounded-control border border-line py-3 text-accent">

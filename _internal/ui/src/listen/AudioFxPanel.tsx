@@ -23,7 +23,8 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
   return <MotionRegion motionKey={toneOpen} slideIndex={toneOpen?1:0}><div data-audio-fx className="flex min-w-0 flex-col gap-1">
     {toneOpen?<TonePage onBack={()=>setToneOpen(false)} leaveGuard={leaveGuard}/>:<>
     <FxSlider label={S.s_giong_doc_11f2548d} spec={VALUE_SPECS.voice} value={Math.round(voice)} suffix="%" onChange={v=>{const next=withVoiceLevel(v/100);setVolume(next.volume);update({boost:next.boost});}}/>
-    {music}
+    {/* Dòng Nhạc nền là dòng menu (có lề 8 px và biểu tượng): trong tấm Âm thanh (không phải hộp nổi) chữ phải thẳng cột với Giọng đọc, Âm sắc, Mono - bỏ lề và biểu tượng đầu dòng. */}
+    {music&&<div className="min-w-0 [&_[data-player-menu-row]]:px-0 [&_[data-player-menu-row]_svg]:!-ml-1 [[data-radix-popper-content-wrapper]_&_[data-player-menu-row]]:w-[calc(100%+0.5rem)]">{music}</div>}
     <button type="button" aria-label={S.s_am_sac_8c2f4e1a} className="flex min-h-12 items-center justify-between gap-3 py-2 text-sm" onClick={()=>setToneOpen(true)} data-tone-open><span>{S.s_am_sac_8c2f4e1a}</span><span className="min-w-0 max-w-[60%] break-words text-right text-fg-2">{tones.name}{tones.scoped&&<small className="block">{S.s_copy_0aedb2b2cf2b}</small>}</span></button>
     <FxSwitch label={S.s_copy_6f00156cec07} checked={fx.mono} onChange={mono=>update({mono})}/>
     <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} format={formatBalance} onChange={v=>update({balance:v/100})}/>

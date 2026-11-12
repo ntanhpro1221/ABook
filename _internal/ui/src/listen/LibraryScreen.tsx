@@ -243,7 +243,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         <TileName drawn={!book.cover?.url} className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
-        <div data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", book.cover?.url ? "order-2 mt-1" : "order-1")}>
+        <div data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", book.cover?.url ? "order-2 mt-1" : "relative top-[2px] order-1")}>
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
           <TickingValue className="min-w-0 truncate">{[progressText(book, speaks), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
         </div>
