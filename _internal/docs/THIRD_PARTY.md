@@ -42,6 +42,7 @@ phần ấy.
   `abook/readaloud/japanese_lexicon.txt.gz` dùng cùng hai nguồn cho bộ chặn từ vựng ở cuốn gốc Nhật;
   `scripts/build_japanese_lexicon.py` sinh từ giao từ vựng và các từ CMU có tiền tố Anh cùng gốc nằm trong giao ấy.
   Asset nén xác định được dùng chung cho Python/Kotlin, không chứa trọng số hay dữ liệu truyện.
+- `abook/assets/word_break_tokenizer.json.gz` (cổng kiểm ngắt giữa từ của Studio, `abook/word_break.py`): trọng số bộ tách từ tiếng Việt CRF của PyVi 0.1.1 (Viet-Trung Tran, MIT) xuất thành dữ liệu thuần, không nạp pickle; giấy phép đi kèm ở `abook/assets/WORD_BREAK_TOKENIZER_LICENSE.txt`. `word_break_duc_tri.json` là số đo của giọng có sẵn Đức Trí do chính dự án sinh ra.
 
 ## App Windows đóng gói (Qt và bộ cài NSIS, `docs/QT_INSTALLER.md`)
 

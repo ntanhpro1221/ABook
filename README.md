@@ -38,6 +38,7 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
 - **Nhạc nền theo không khí từng đoạn**: mặc định bật, máy tự chọn bài (nhạc CC0 / CC BY, ghi công từng bài) và giữ nhạc
   luôn nằm dưới giọng đọc; tab **Nhạc nền** cho đổi bài, ghim, im lặng một đoạn hay tắt hẳn. Nhạc đi theo file sách
   `.abook`, nghe trên máy tính lẫn điện thoại.
+  Thư viện nhạc nền cho duyệt, tìm, nghe thử và lưu cả danh mục ngay trong app (web, Android, máy tính).
 - **Mọi máy trong nhà làm việc cùng nhau**: điện thoại nghe thẳng thư viện máy tính không cần tải (hoặc tải về nghe khi
   không có mạng); chỗ đang nghe đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
