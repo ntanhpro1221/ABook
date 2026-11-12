@@ -9,7 +9,8 @@ if not defined QWK_TAG set QWK_TAG=1.5.0
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
-if not defined VCVARS set VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat
+if not defined VCVARS call "%~dp0find_vcvars.bat"
+if not defined VCVARS exit /b 1
 if not defined VSCMD_ARG_TGT_ARCH call "%VCVARS%" >nul
 set PATH=%CMAKE_BIN%;%NINJA_BIN%;%QT_ROOT%\bin;%PATH%
 

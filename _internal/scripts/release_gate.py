@@ -413,6 +413,20 @@ def run_qt_suite(executable: Path, cwd: Path, log: Path, runner=run_process) -> 
     return Execution(result.returncode, output, result.timed_out)
 
 
+def find_vcvars() -> Path:
+    """vcvars64.bat of the newest Visual Studio / Build Tools with x64 C++ tools (no hard-coded edition)."""
+    if os.environ.get("VCVARS"):
+        return Path(os.environ["VCVARS"])
+    vswhere = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft Visual Studio/Installer/vswhere.exe"
+    if not vswhere.is_file():
+        return vswhere  # require() reports it missing
+    flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+    found = subprocess.run([str(vswhere), "-latest", "-products", "*", "-requires",
+                            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"],
+                           capture_output=True, text=True, creationflags=flags).stdout.strip().splitlines()
+    return Path(found[0]) / "VC/Auxiliary/Build/vcvars64.bat" if found else vswhere.parent / "(no x64 C++ tools)/vcvars64.bat"
+
+
 def qt_tests() -> dict:
     qt = ROOT / "desktop_qt"
     build_text = (qt / "build.bat").read_text(encoding="ascii")
@@ -422,7 +436,7 @@ def qt_tests() -> dict:
     qwk_root = Path(os.environ.get("QWK_ROOT", "D:/Novels/native_desk_proto/qwk"))
     cmake_bin = Path(os.environ.get("CMAKE_BIN", "D:/Novels/native_desk_proto/qt/Tools/CMake_64/bin"))
     ninja_bin = Path(os.environ.get("NINJA_BIN", "D:/Novels/native_desk_proto/qt/Tools/Ninja"))
-    vcvars = Path(os.environ.get("VCVARS", "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Auxiliary/Build/vcvars64.bat"))
+    vcvars = find_vcvars()
     require((qwk_root / "inst/lib/cmake/QWindowKit/QWindowKitConfig.cmake").is_file(), "Qt: cần QWindowKit đã dựng (không tự ghi worktree khác)")
     for path in (qt_root / "bin", cmake_bin / "cmake.exe", ninja_bin / "ninja.exe", vcvars):
         require(path.exists(), f"Qt: thiếu {path}")

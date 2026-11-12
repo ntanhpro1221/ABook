@@ -12,7 +12,8 @@ set QT_QPA_PLATFORM=offscreen
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
-if not defined VCVARS set VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat
+if not defined VCVARS call "%~dp0tools\find_vcvars.bat"
+if not defined VCVARS exit /b 1
 if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 rem cmd returns from `call :label` by byte offset: with LF endings it resumes on the wrong line and silently skips steps

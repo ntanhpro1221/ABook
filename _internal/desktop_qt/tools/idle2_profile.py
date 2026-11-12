@@ -15,7 +15,7 @@ out.mkdir(parents=True,exist_ok=True)
 qt="D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64"
 env=dict(os.environ,QT_QPA_PLATFORM="offscreen",PATH=qt+"/bin"+os.pathsep+os.environ["PATH"])
 bat=out/"profile-build.bat"
-bat.write_bytes(('call "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Auxiliary/Build/vcvars64.bat" >nul\n'
+bat.write_bytes((f'call "{root}/tools/find_vcvars.bat"\nif not defined VCVARS exit /b 1\ncall "%VCVARS%" >nul\n'
     'set PATH=D:/Novels/native_desk_proto/qt/Tools/Ninja;%PATH%\n'
     f'"D:/Novels/native_desk_proto/qt/Tools/CMake_64/bin/cmake.exe" -S "{root}/tools/decode_profile" -B "{root}/build/decode_profile" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt}"\n'
     'if errorlevel 1 exit /b 1\n'
