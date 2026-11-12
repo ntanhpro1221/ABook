@@ -49,11 +49,11 @@ from abook.voice_catalog import VIENEU_PRESETS  # noqa: E402
 # Ordinary narrative prose with a dense spread of tones, no foreign names: names would
 # reintroduce exactly the Latin-spelling confound this script exists to remove.
 PROBE_SENTENCES = (
-    <removed>
-    "Cô gái ấy ngày trước thuần khiết và nồng nhiệt, nhưng giờ đã khác hẳn.",
-    "Con cứ coi như không nghe thấy gì là được, đừng bận tâm làm chi cho mệt.",
-    "Trời vừa sáng, cha đã nhờ thằng nhóc hàng xóm báo tin tới tận nơi.",
-    "Khói dày bốc lên, mỗi hơi hít vào đều khiến phổi và yết hầu bỏng rát.",
+    'Mặt bàn gỗ có sáu vệt mực tím, một chiếc cốc sứt và chùm khóa bằng đồng.',
+    "Bác thợ gốm đếm đủ chín chiếc đĩa, phủ khăn lên giá rồi khóa cửa xưởng.",
+    "Tờ nhãn xanh ghi rõ giá mỗi hộp mực, cỡ giấy và lịch nhận hàng buổi tối.",
+    "Mưa gõ lộp bộp trên nắp thùng thiếc, chú mèo nép dưới ghế bành đợi bữa.",
+    "Cô đổi cuộn chỉ đỏ lấy bó len trắng để vá túi đựng thước ở quầy vải.",
 )
 SEED = 20260831
 
