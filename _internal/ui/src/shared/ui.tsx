@@ -306,11 +306,15 @@ export function toastClearance(target: Box, toasts: readonly Box[], viewportHeig
   return 0;
 }
 
-function scrollParent(element: HTMLElement): Element {
+function scrollParent(element: HTMLElement): Element | null {
+  // A fixed surface cannot be uncovered by scrolling the page behind it.
+  if (getComputedStyle(element).position === "fixed") return null;
   for (let node = element.parentElement; node; node = node.parentElement) {
     const { overflowY } = getComputedStyle(node);
     if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+    if (getComputedStyle(node).position === "fixed") return null;
   }
+  if (/hidden|clip/.test(getComputedStyle(document.body).overflowY) || /hidden|clip/.test(getComputedStyle(document.documentElement).overflowY)) return null;
   return document.scrollingElement ?? document.documentElement;
 }
 
@@ -325,7 +329,7 @@ export function useFocusClearOfToasts() {
       requestAnimationFrame(() => {
         const toasts = Array.from(document.querySelectorAll('[data-sonner-toast]:not([data-visible="false"])'), (toast) => toast.getBoundingClientRect());
         const delta = toastClearance(target.getBoundingClientRect(), toasts, window.innerHeight);
-        if (delta) scrollParent(target).scrollBy({ top: delta });
+        if (delta) scrollParent(target)?.scrollBy({ top: delta });
       });
     };
     document.addEventListener("focusin", onFocus);

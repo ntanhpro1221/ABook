@@ -93,9 +93,21 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (!chars.length) continue;
     ctx.font = `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
     ctx.fontKerning = s.fontKerning;
-    function glyph(c) {
+    function glyph(c, precise = false) {
       const range = document.createRange(); range.setStart(run.node, c.index); range.setEnd(run.node, c.index + c.segment.length);
-      const r = range.getBoundingClientRect(), m = ctx.measureText(c.segment);
+      const r = range.getBoundingClientRect(), native = ctx.measureText(c.segment);
+      let m = native;
+      if (precise) {
+        // Whole-pixel Canvas bounds can invent a >2px difference between two
+        // horizontal gaps. Resolve their edges at 1/16px, retaining native line metrics.
+        const nativeFont = ctx.font;
+        ctx.font = `${s.fontStyle} ${s.fontWeight} ${Number.parseFloat(s.fontSize) * 16}px ${s.fontFamily}`;
+        const bounds = ctx.measureText(c.segment);
+        ctx.font = nativeFont;
+        m = { fontBoundingBoxAscent: native.fontBoundingBoxAscent, fontBoundingBoxDescent: native.fontBoundingBoxDescent,
+          actualBoundingBoxLeft: bounds.actualBoundingBoxLeft / 16, actualBoundingBoxRight: bounds.actualBoundingBoxRight / 16,
+          actualBoundingBoxAscent: bounds.actualBoundingBoxAscent / 16, actualBoundingBoxDescent: bounds.actualBoundingBoxDescent / 16 };
+      }
       const total = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
       if (!(total > 0) || !(r.width > 0)) return null;
       const scale = r.height / total;
@@ -114,7 +126,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     }
     // Chỉ so cạnh phải khi chữ nằm trên một dòng; dòng cuối xuống hàng không phải mép cột.
     const singleLine = Math.abs(first.y - last.y) < Number.parseFloat(s.fontSize);
-    inkTexts.push({ ...run, ink: union([first, last]), first, last, singleLine, control: owner(run.element) });
+    inkTexts.push({ ...run, ink: union([first, last]), rhythmInk: union([glyph(chars[0], true), glyph(chars.at(-1), true)]), first, last, singleLine, control: owner(run.element) });
   }
   // reserved: đo cả khi đang mờ 0 - dấu chọn chưa bật vẫn giữ cột đầu dòng (SelectionMark), là mép mực của hàng.
   function iconInk(svg, reserved = false) {
@@ -143,11 +155,11 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     });
     const result = partial ? null : union(pieces); iconCache.set(cacheKey, result); return result;
   }
-  function controlInk(el) {
+  function controlInk(el, precise = false) {
     // Numeric composites centre their detents and chip cells. PICKER GEOMETRY
     // measures their rows and tick alignment instead of a prose column's left edge.
     if (el.closest('[data-value-picker]')) return null;
-    const pieces = inkTexts.filter((t) => t.control === el).map((t) => t.ink);
+    const pieces = inkTexts.filter((t) => t.control === el).map((t) => precise ? t.rhythmInk : t.ink);
     for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg, svg.hasAttribute("data-selection-mark")));
     return union(pieces.filter(Boolean));
   }
@@ -427,7 +439,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       const sameLine = boxes.every((b, i) => !i || (b.x >= right(boxes[i - 1]) - 1 && Math.min(b.y + b.height, boxes[i - 1].y + boxes[i - 1].height) - Math.max(b.y, boxes[i - 1].y) > b.height / 2));
       const equalWidths = boxes.every((b) => Math.abs(b.width - boxes[0].width) <= 1);
       if (sameLine && !equalWidths) {
-        const inks = words.map(controlInk);
+        const inks = words.map(el => controlInk(el, true));
         // A clipped button sliver can be visible while its glyphs are outside the scroll viewport.
         // Comparing those partial glyphs fabricates unequal gaps in rows scrolled past the top.
         if (inks.some((ink, index) => {

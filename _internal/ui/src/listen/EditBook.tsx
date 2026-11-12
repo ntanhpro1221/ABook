@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { ArrowLeft, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";

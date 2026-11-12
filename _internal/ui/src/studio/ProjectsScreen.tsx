@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Clapperboard, FolderOpen, History, MoreHorizontal, Plus, RotateCw } from "lucide-react";
 import { useMemo, useState } from "react";

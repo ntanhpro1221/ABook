@@ -8,7 +8,7 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";

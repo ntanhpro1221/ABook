@@ -31,7 +31,7 @@ import {
   Users,
   Wand2,
 } from "lucide-react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useId, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useListPresence } from "@/shared/motion";

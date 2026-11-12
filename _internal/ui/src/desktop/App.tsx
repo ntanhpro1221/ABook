@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { Clapperboard, Compass, FileAudio, Headphones, Laptop, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";

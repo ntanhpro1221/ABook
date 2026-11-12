@@ -1,4 +1,4 @@
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";

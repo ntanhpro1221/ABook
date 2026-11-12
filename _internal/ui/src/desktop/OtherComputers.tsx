@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold } from "@/shared/Collapse";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bluetooth, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

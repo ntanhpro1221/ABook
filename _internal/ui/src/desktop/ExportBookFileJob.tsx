@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Collapse } from "@/shared/Collapse";
 import type { ReactNode } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookAudio, CheckCircle2, CircleAlert, FileAudio, FolderDown, Headphones, Info, Loader2, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";

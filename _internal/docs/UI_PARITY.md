@@ -751,7 +751,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/number.ts` (3): Giữa (`12`); Phải {} % (`12`); Trái {} % (`12`)
 - `shared/peerStudio.ts` (1): Đang mở Studio của {} (`53`)
 - `shared/trashUndo.ts` (1): Chưa mang theo chỗ nghe. (`25`)
-- `shared/ui.tsx` (2): Xem các tab trước (`525`); Xem các tab sau (`530`)
+- `shared/ui.tsx` (2): Xem các tab trước (`529`); Xem các tab sau (`534`)
 
 ### c3. Chỉ có ở web phía máy tính / Studio (chỉ đếm)
 

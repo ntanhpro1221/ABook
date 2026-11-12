@@ -6,7 +6,7 @@ import { ScreenHeader } from "@/shared/ScreenHeader";
 import { useRowFade } from "@/shared/scrollFade";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { ArrivalScope, Collapse } from "@/shared/Collapse";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useBackLayer } from "@/shared/backStack";
 import { useMediaQuery } from "@/shared/media";
 import { LoadingCrossfade } from "@/shared/MotionPresence";

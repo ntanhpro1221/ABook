@@ -4,7 +4,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Fold } from "@/shared/Collapse";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, SkipBack, SkipForward, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";

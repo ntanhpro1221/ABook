@@ -1,5 +1,13 @@
 import { useEffect } from "react";
 
+/** Recover layout coordinates before rounding the final shift. CSSOM serializes
+ * animated translate with less precision than getBoundingClientRect: a 750.5px
+ * base otherwise flips across .5 and restarts the 25px/26px transition forever. */
+export function toastBaseBounds(top: number, bottom: number, translate: number) {
+  const layout = (coordinate: number) => Math.round((coordinate - translate) * 64) / 64;
+  return { top: layout(top), bottom: layout(bottom) };
+}
+
 /** Giữ thông báo ngoài nội dung bảng/hộp, kể cả popover không khoá body.
  *  Dịch cả toaster để Sonner giữ nguyên thứ tự, vuốt đóng và chuyển động của từng toast. */
 export function useToastClearance(): void {
@@ -25,7 +33,7 @@ export function useToastClearance(): void {
         const boxes = toasts.map(el => el.getBoundingClientRect());
         const left = Math.min(...boxes.map(r => r.left)), right = Math.max(...boxes.map(r => r.right));
         const current = parseFloat(getComputedStyle(toaster).translate.split(/\s+/)[1]) || 0;
-        const top = Math.min(...boxes.map(r => r.top)) - current, bottom = Math.max(...boxes.map(r => r.bottom)) - current;
+        const { top, bottom } = toastBaseBounds(Math.min(...boxes.map(r => r.top)), Math.max(...boxes.map(r => r.bottom)), current);
         const height = bottom - top;
         let spaces = [{ top: 16, bottom: innerHeight - 16 }];
         for (const layer of layers) {

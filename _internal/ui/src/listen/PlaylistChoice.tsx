@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { ActionSubmenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, EighthNote, Plus } from "lucide-react";
 import { toast } from "@/shared/toast";

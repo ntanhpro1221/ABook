@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Hammer, Wrench } from "lucide-react";
 import { useState } from "react";

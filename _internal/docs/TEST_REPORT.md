@@ -1879,3 +1879,10 @@ Validation: PlayerRepoTest 28 tests passed, including two overlapping-owner regr
 ## Unpaired native Studio (2026-11-10)
 
 The Studio tab only offers notification preferences after a computer has been paired. An unpaired phone shows its header, one connection hint and the Connect computer action. Paired and listen-only computers retain their notification controls. IA2NavigationTest now supplies a CompanionRepo; omitting it previously hid the faulty branch in tests. Five cases passed; restoring the old condition makes the unpaired case fail on studio_notices. Web desktop App.tsx/StudioClosed and Qt StudioScreen.qml were inspected: both use the local Studio or an existing remote computer and have no unpaired-phone notification opt-in block. No web or Qt source change was necessary.
+## 12-11-2026 — rel167b gallery blockers
+
+- Corrected fractional toast clearance feedback (25px/26px oscillation at 400px), and prevented toast focus clearance from scrolling the page behind fixed surfaces or a locked document. Recorded raster/CSSOM coordinates reproduce the clearance regression in a unit test.
+- All web dropdown content now uses the shared opening-release guard: releasing the pointer which opened a menu cannot select a newly appeared item. Fresh press/release and keyboard Enter remain covered.
+- RHYTHM resolves glyph edges at 1/16px while retaining its 2px threshold. A real-font Vietnamese fixture passes equal spacing and fails a planted 4px shift. The previous whole-pixel Canvas metric reported 2.21875px where the 4x raster shows 1.25px.
+- Related validation: TypeScript clean; 58 Vitest tests passed. Focused pytest: 179 passed, 2 skipped, plus two stale generated parity documents; regenerated both and reran parity: 30 passed, 2 skipped. Full build and release-gate evidence is recorded in the rel167b handoff.
+- Baseline 0.4.166 (bd07ae23d) focused gallery: 0 findings/errors. The toast-clearance code is identical there; timing-dependent failures were reproduced on the retained 0.4.167 build, with screenshots and native input traces. No quality implementation changes.
