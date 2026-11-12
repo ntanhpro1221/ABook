@@ -408,8 +408,13 @@ class _Analyzer:
     def unload(self) -> None:
         self.calls.append("unload")
 
+    def ensure_server(self) -> bool:
+        self.calls.append("ensure_server")
+        return True
 
-def _pipeline(monkeypatch: pytest.MonkeyPatch, *, pending: bool, hook: Any) -> tuple[Any, list[str], list[tuple[str, dict]]]:
+
+def _pipeline(monkeypatch: pytest.MonkeyPatch, *, pending: bool, hook: Any,
+              before_synthesis: Any = None) -> tuple[Any, list[str], list[tuple[str, dict]]]:
     _Analyzer.instances, _Analyzer.stop_during_analysis = [], False
     monkeypatch.setattr(pipeline_module, "OllamaBookAnalyzer", _Analyzer)
     logs: list[str] = []
@@ -422,6 +427,7 @@ def _pipeline(monkeypatch: pytest.MonkeyPatch, *, pending: bool, hook: Any) -> t
     pipeline.stop_requested = lambda: False
     pipeline.emit = lambda kind, payload: events.append((kind, payload))
     pipeline.after_analysis = hook
+    pipeline.before_synthesis = before_synthesis
     pipeline._completed_noop = False
     pipeline.log = logs.append
     pipeline._recover = lambda: None
@@ -473,3 +479,32 @@ def test_the_hook_does_not_run_when_the_analysis_is_stopped(monkeypatch: pytest.
     with pytest.raises(pipeline_module.PipelineStopped):
         pipeline.run(recovery_already_run=True)
     assert not seen and _Analyzer.instances[0].calls == ["analyze_all", "unload"]
+
+
+# ---- việc phải xong trước pha tổng hợp (tầng hai chữ trùng Việt / Anh, review 0.4.167 #1) -----------------------------------
+
+def _settle(seen: list[Any], fail: BaseException | None = None) -> Any:
+    def settle(base: str, ensure_server: Any, analysed: bool) -> None:
+        seen.append((base, ensure_server(), analysed))
+        if fail is not None:
+            raise fail
+    return settle
+
+
+@pytest.mark.parametrize("pending", [True, False])
+def test_the_step_before_synthesis_runs_on_every_run_even_into_an_analysed_book(monkeypatch: pytest.MonkeyPatch, pending: bool) -> None:
+    seen: list[Any] = []
+    pipeline, _logs, _events = _pipeline(monkeypatch, pending=pending, hook=lambda _base: seen.append("music"), before_synthesis=_settle(seen))
+    with pytest.raises(_Stop):  # rồi mới tới pha giọng
+        pipeline.run(recovery_already_run=True)
+    assert seen == (["music"] if pending else []) + [("http://ollama", True, pending)]
+    assert _Analyzer.instances[0].calls[-2:] == ["ensure_server", "unload"], "Ollama còn sống khi bước chạy, dỡ sau"
+
+
+@pytest.mark.parametrize("failure", [pipeline_module.PipelineStopped("dừng"), RuntimeError("Ollama chết")])
+def test_a_stop_or_a_failure_before_synthesis_is_not_swallowed(monkeypatch: pytest.MonkeyPatch, failure: BaseException) -> None:
+    seen: list[Any] = []
+    pipeline, _logs, events = _pipeline(monkeypatch, pending=False, hook=None, before_synthesis=_settle(seen, failure))
+    with pytest.raises(type(failure)):  # không tới pha giọng (`_Stop`) với nửa bộ phán quyết
+        pipeline.run(recovery_already_run=True)
+    assert _Analyzer.instances[0].calls[-1] == "unload" and not events

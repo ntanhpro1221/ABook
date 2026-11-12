@@ -369,9 +369,25 @@ def rulings_of(value: dict[str, Any] | None) -> Rulings | None:
     return Rulings(contexts, set(value["names"]), set(value["foreign"])) if contexts or value["names"] or value["foreign"] else None
 
 
+def finished(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    """`value` when its pass ran to the end, else None. A pass stopped or failed midway leaves `complete` false: a partial
+    set read as the book's rulings would record part of the book with the answers it lacks, and nothing checks for that."""
+    return value if value is not None and value.get("complete") is True else None
+
+
 def load(project_root: Path | str) -> Rulings | None:
-    """The book's rulings, None when it has none (tier 1 alone)."""
-    return rulings_of(read(Path(project_root) / FILE))
+    """The book's rulings, None when it has none (tier 1 alone) or its pass has not finished."""
+    return rulings_of(finished(read(Path(project_root) / FILE)))
+
+
+def skip(project_root: Path | str, reason: str) -> None:
+    """Settle a book with no second tier for good (no model to ask): a finished, empty pass, so a later run where the model
+    happens to answer does not read the rest of the book differently from what is already recorded."""
+    from ..io_utils import atomic_write_json
+
+    atomic_write_json(Path(project_root) / FILE, {
+        "version": VERSION, "prompt": PROMPT_VERSION, "complete": True, "skipped": reason,
+        "origins": {}, "names": [], "foreign": [], "readings": {}, "contexts": {}})
 
 
 def shared(value: dict[str, Any]) -> dict[str, Any]:
@@ -407,7 +423,9 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
     the roster's names, and write the file.
 
     Answers already stored for the same model digest and prompt are kept, so a stopped pass resumes; the file is
-    written after every batch. Returns counts: doubts, names, asked, failed, seconds.
+    written after every batch, with `complete` false until the last. Occurrences the model gave no usable answer for are
+    kept too (`unanswered`) and not asked again, so a resumed pass asks the same batches an unbroken one does. A stop
+    raises PipelineStopped; Ollama failing raises as it is. Returns counts: doubts, names, asked, failed, seconds.
     """
     from ..io_utils import atomic_write_json
 
@@ -419,14 +437,15 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
     same = bool(old) and old.get("digest") == digest and old.get("prompt") == PROMPT_VERSION and old.get("model") == model
     contexts: dict[str, str] = dict(old["contexts"]) if same else {}
     origins: dict[str, str] = dict(old.get("origins") or {}) if same else {}
+    unanswered: set[str] = {str(key) for key in old.get("unanswered") or ()} if same else set()
     found: dict[str, Doubt] = {}
     for shown, spoken in stretches:
         for doubt in doubts(shown, spoken):
             found.setdefault(doubt.key, doubt)
     roster = roster_names(roster)
     named = asked_names(roster)
-    todo = [doubt for doubt in found.values() if doubt.key not in contexts]
-    todo_names = [name for name in named if name not in origins]
+    todo = [doubt for doubt in found.values() if doubt.key not in contexts and doubt.key not in unanswered]
+    todo_names = [name for name in named if name not in origins and f"name	{name}" not in unanswered]
     asked = failed = 0
     started = time.monotonic()
 
@@ -436,39 +455,42 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
         atomic_write_json(project_root / FILE, {
             "version": VERSION, "prompt": PROMPT_VERSION, "model": model, "digest": digest, "complete": complete,
             "bookOrigin": book_origin, "origins": kept_origins, "names": vietnamese_names(kept_origins), "foreign": foreign_names(kept_origins),
-            "readings": name_readings(kept_origins, book_origin), "contexts": kept})
+            "readings": name_readings(kept_origins, book_origin), "contexts": kept,
+            "unanswered": sorted(key for key in unanswered if key in found or key.removeprefix("name	") in named)})
 
     def counts() -> dict[str, int]:
         return {"doubts": len(found), "names": len(named), "asked": asked, "failed": failed, "seconds": round(time.monotonic() - started)}
 
-    def halted() -> bool:
+    def halt() -> None:
         while pause_requested() and not stop_requested():
             time.sleep(1.0)
-        return stop_requested()
+        if stop_requested():
+            from ..pipeline import PipelineStopped
+
+            save(False)
+            raise PipelineStopped("Stop requested during the shared-word rulings")
 
     for at in range(0, len(todo_names), BATCH):
-        if halted():
-            save(False)
-            return counts()
+        halt()
         batch = todo_names[at:at + BATCH]
         answers = ask_names(base_url, model, digest, batch, roster, session=session, options=options)
         asked += len(batch)
         for name, origin in zip(batch, answers):
             if origin is None:
                 failed += 1
+                unanswered.add(f"name	{name}")
             else:
                 origins[name] = origin
         save(False)
     for at in range(0, len(todo), BATCH):
-        if halted():
-            save(False)
-            return counts()
+        halt()
         batch = todo[at:at + BATCH]
         answers = ask(base_url, model, digest, batch, session=session, options=options)
         asked += len(batch)
         for doubt, answer in zip(batch, answers):
             if answer is None:
                 failed += 1
+                unanswered.add(doubt.key)
             else:
                 contexts[doubt.key] = "v" if answer else "e"
         save(False)

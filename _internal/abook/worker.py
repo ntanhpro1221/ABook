@@ -228,16 +228,32 @@ def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log
         raise failure
 
 
-def run_shared_rulings_after_analysis(root: Path, db: ProjectDB, tts: Any, base_url: str, stop_requested: Any, log: Any, emit: Any, *,
-                                      pause_requested: Any, model: str | None = None) -> None:
-    """Sau pha phân tích, tầng hai của chữ trùng Việt / Anh và gốc từng tên (readaloud/shared_rulings.py): chính model phân tích của dự án
-    (`model`) phán những chỗ bảng điểm còn nghi ngờ và gốc các tên trong sổ nhân vật, ghi `shared_rulings.json` cạnh sổ dự án. Chữ đem hỏi
-    là đúng chuỗi máy đọc sẽ nhận (`tts.spoken_text`), nên khoá ngữ cảnh khớp lúc thu. Không model, lỗi: bỏ qua, bảng điểm tự quyết như trước."""
+def settle_shared_rulings(root: Path, db: ProjectDB, tts: Any, base_url: str, stop_requested: Any, log: Any, emit: Any, *,
+                          pause_requested: Any, model: str | None = None, ensure_server: Any = lambda: True,
+                          analysed: bool = False) -> None:
+    """Trước pha tổng hợp, MỖI lần chạy: tầng hai của chữ trùng Việt / Anh và gốc từng tên (readaloud/shared_rulings.py) phải xong. Chính
+    model phân tích của dự án (`model`) phán những chỗ bảng điểm còn nghi ngờ và gốc các tên trong sổ nhân vật, ghi `shared_rulings.json`
+    cạnh sổ dự án. Chữ đem hỏi là đúng chuỗi máy đọc sẽ nhận (`tts.spoken_text`), nên khoá ngữ cảnh khớp lúc thu.
+
+    File đã xong (`complete`) thì không làm gì - trừ khi lần chạy này vừa phân tích thêm đoạn (`analysed`): hỏi chỗ nghi ngờ mới như
+    trước giờ. Lượt dở (dừng, chết, Ollama lỗi giữa chừng) thì làm tiếp từ chỗ đã ghi - không chỉ ngay
+    sau pha phân tích, vì cuốn đã phân tích xong thì lần resume không qua đó nữa. Dừng: `PipelineStopped`; Ollama lỗi: ném nguyên, file
+    vẫn `complete` false và lần chạy sau làm lại - không bao giờ thu tiếp với nửa bộ phán quyết. Không có model ngay từ đầu (chưa hỏi
+    được gì): chốt "bỏ qua" thành trạng thái cuối, để cả cuốn cùng đọc theo bảng điểm."""
     from .readaloud import shared_rulings
     from .studio_names import book_origin_for_project
 
     model = model or shared_rulings.MODEL
-    if shared_rulings.model_digest(base_url, model) is None:
+    stored = shared_rulings.read(root / shared_rulings.FILE)
+    if shared_rulings.finished(stored) is not None and (not analysed or stored.get("skipped")):
+        return
+    if not ensure_server() or shared_rulings.model_digest(base_url, model) is None:
+        if stored is not None and not stored.get("skipped"):  # đã hỏi được: máy đang thiếu model, không phải cuốn không có tầng hai
+            raise RuntimeError(f"Chưa xong tầng hai chữ trùng Việt / Anh mà Ollama không có model {model}; hãy làm tiếp khi model sẵn sàng.")
+        shared_rulings.skip(root, f"no model {model}")
+        tts._shared_rulings = None
+        log(f"Không có model {model}: chữ trùng Việt / Anh đọc theo bảng điểm cho cả cuốn.")
+        emit("shared_rulings_skipped", {"reason": f"no model {model}"})
         return
     rows = [row for row in db.list_segments() if str(row["status"]) != "pending"]
 
@@ -673,14 +689,13 @@ def run_worker(
 
         def music_moods_after_analysis(base_url: str) -> None:
             apply_teller_voice(paths.root, db, settings, pipeline.log)  # trước nhạc: nhạc có thể bị dừng giữa chừng và không chạy lại
-            try:  # trước nhạc, cùng lý do; lỗi ở đây không chặn nhạc và không làm hỏng pha phân tích
-                run_shared_rulings_after_analysis(paths.root, db, pipeline.tts, base_url, stop_event.is_set, pipeline.log, emit,
-                                                  pause_requested=pause_event.is_set, model=str((settings or {}).get("analysis", {}).get("model", "")))
-            except Exception as exc:  # noqa: BLE001
-                pipeline.log(f"Bỏ qua tầng hai chữ trùng Việt / Anh: {exc}")
-                emit("shared_rulings_skipped", {"reason": str(exc)})
             run_music_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
                                      pause_requested=pause_event.is_set)
+
+        def shared_rulings_before_synthesis(base_url: str, ensure_server: Any, analysed: bool) -> None:
+            settle_shared_rulings(paths.root, db, pipeline.tts, base_url, stop_event.is_set, pipeline.log, emit,
+                                  pause_requested=pause_event.is_set, ensure_server=ensure_server, analysed=analysed,
+                                  model=str((settings or {}).get("analysis", {}).get("model", "")))
 
         pipeline = BookPipeline(
             paths=paths,
@@ -691,6 +706,7 @@ def run_worker(
             emit=emit,
             resource_updates=poll_resource_updates,
             after_analysis=music_moods_after_analysis,
+            before_synthesis=shared_rulings_before_synthesis,
         )
         _emit(
             message_queue,

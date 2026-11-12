@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from abook.pipeline import PipelineStopped
 from abook.readaloud import shared_rulings as sr
 from abook.readaloud.phoneme_policy import Rulings
 from abook.readaloud.vieneu_engine import phonemize
@@ -120,9 +121,11 @@ def test_an_answer_that_is_not_json_leaves_tier_one_alone_and_a_stop_keeps_what_
     assert (counts["asked"], counts["failed"]) == (2, 2)
     stored = sr.read(tmp_path / sr.FILE)
     assert stored["contexts"] == {} and stored["origins"] == {} and sr.rulings_of(stored) is None and sr.load(tmp_path) is None
-    stopped = sr.compute(tmp_path, stretches("Do trans sắp thi."), ["Ben"], "http://ollama", session=Ollama(), stop_requested=lambda: True,
-                         log=lambda _: None)
-    assert stopped["asked"] == 0 and sr.read(tmp_path / sr.FILE)["complete"] is False
+    (tmp_path / sr.FILE).unlink()
+    with pytest.raises(PipelineStopped):  # a stop is a stop: the pipeline must not go on to record with what is there
+        sr.compute(tmp_path, stretches("Do trans sắp thi."), ["Ben"], "http://ollama", session=Ollama(), stop_requested=lambda: True,
+                   log=lambda _: None)
+    assert sr.read(tmp_path / sr.FILE)["complete"] is False
     digest["value"] = None
     with pytest.raises(RuntimeError):
         sr.compute(tmp_path, [], [], "http://ollama", session=Ollama())
@@ -204,3 +207,119 @@ def test_the_book_file_carries_the_answers(tmp_path: Path):
     book, _ = bookfile.listening_layer(paths.root)
     assert book["sharedWords"] == {"version": sr.VERSION, "contexts": {DO_TRANS: "v"}, "names": ["an"], "foreign": ["dan"], "readings": {}}
     assert isinstance(book["sharedWords"], bookfile._BOOK_FIELDS["sharedWords"])
+
+
+# ---- a pass stopped, crashed or failed midway (review 0.4.167 #1) ------------------------------------------------------------
+
+def _book(*texts: str) -> tuple[object, object]:
+    from types import SimpleNamespace
+
+    rows = [{"status": "analyzed", "listener_text": text, "text": text} for text in texts]
+    db = SimpleNamespace(list_segments=lambda: rows, list_characters=lambda: [{"display_name": "Ben"}, {"display_name": "An An"}])
+    tts = SimpleNamespace(spoken_text=lambda row: row["text"], _shared_rulings=("stale",))
+    return db, tts
+
+
+BOOK = ("Do trans sắp thi.", "Do exercise đi.", "Hội quán của guild Say xỉn.")
+KEPT = ("contexts", "origins", "names", "foreign")
+
+
+@pytest.fixture
+def quiet(monkeypatch):
+    from abook import studio_names
+
+    monkeypatch.setattr(sr, "BATCH", 1)
+    monkeypatch.setattr(studio_names, "book_origin_for_project", lambda _db: None)
+    monkeypatch.setattr(sr, "release", lambda *_a, **_k: None)
+
+
+def _settle(root: Path, db, tts, *, stop=lambda: False, emit=lambda *_a: None, **kw):
+    from abook import worker
+
+    worker.settle_shared_rulings(root, db, tts, "http://ollama", stop, lambda _: None, emit, pause_requested=lambda: False, **kw)
+
+
+def test_a_pass_stopped_midway_is_finished_before_the_next_run_records(tmp_path: Path, digest, quiet, monkeypatch):
+    db, tts = _book(*BOOK)
+    ollama = Ollama()
+    monkeypatch.setattr("requests.post", ollama.post)
+    whole = tmp_path / "whole"  # an unbroken pass, for the answers the book must end up with
+    whole.mkdir()
+    _settle(whole, db, tts, analysed=True)
+    expected = json.loads((whole / sr.FILE).read_text("utf8"))
+    assert expected["complete"] is True
+    unbroken = [body["messages"][-1]["content"] for body in ollama.bodies]
+    ollama.bodies.clear()
+    book = tmp_path / "book"
+    book.mkdir()
+    # stopped after two requests: the run stops, and nothing reads the half as the book's rulings
+    with pytest.raises(PipelineStopped):
+        _settle(book, db, tts, stop=lambda: len(ollama.bodies) >= 2, analysed=True)
+    half = sr.read(book / sr.FILE)
+    assert half["complete"] is False and (half["origins"] or half["contexts"])
+    assert sr.finished(half) is None and sr.load(book) is None and tts._shared_rulings is None
+    # the next run resumes the pass without a fresh analysis (a resume into an analysed book) and finishes it
+    _settle(book, db, tts)
+    done = json.loads((book / sr.FILE).read_text("utf8"))
+    assert done["complete"] is True and sr.load(book) is not None
+    assert {k: done[k] for k in KEPT} == {k: expected[k] for k in KEPT}
+    assert [body["messages"][-1]["content"] for body in ollama.bodies] == unbroken, "the resumed pass asks what the unbroken one asked"
+    _settle(book, db, tts)  # finished: nothing asked again
+    assert len(ollama.bodies) == len(unbroken)
+
+
+def test_ollama_failing_midway_leaves_the_pass_unfinished_and_raises(tmp_path: Path, digest, quiet):
+    db, tts = _book(*BOOK)
+
+    class Dying(Ollama):
+        def post(self, url: str, json: dict, timeout: float) -> Reply:  # noqa: A002
+            if len(self.bodies) >= 2:
+                raise ConnectionError("Ollama chết")
+            return super().post(url, json, timeout)
+
+    with pytest.raises(ConnectionError):
+        sr.compute(tmp_path, stretches(*BOOK), ["Ben", "An An"], "http://ollama", session=Dying(), log=lambda _: None)
+    assert sr.read(tmp_path / sr.FILE)["complete"] is False and sr.load(tmp_path) is None
+    # the model gone on the next run: a half-asked book waits for it rather than recording the rest on tier one
+    digest["value"] = None
+    with pytest.raises(RuntimeError, match="model"):
+        _settle(tmp_path, db, tts, model=sr.MODEL)
+    assert sr.read(tmp_path / sr.FILE)["complete"] is False
+
+
+def test_a_book_with_no_model_from_the_start_is_settled_on_tier_one_for_good(tmp_path: Path, digest):
+    digest["value"] = None
+    db, tts = _book(*BOOK)
+    events: list[str] = []
+    emit = lambda kind, _payload: events.append(kind)  # noqa: E731
+    _settle(tmp_path, db, tts, emit=emit)
+    stored = sr.read(tmp_path / sr.FILE)
+    assert stored["complete"] is True and stored["skipped"] and sr.load(tmp_path) is None and events == ["shared_rulings_skipped"]
+    digest["value"] = "digest-one"  # the model turns up later: a book already recorded on tier one stays on it
+    _settle(tmp_path, db, tts, emit=emit)
+    _settle(tmp_path, db, tts, emit=emit, analysed=True)
+    assert sr.read(tmp_path / sr.FILE) == stored and events == ["shared_rulings_skipped"]
+
+
+def test_an_occurrence_without_a_usable_answer_is_not_asked_again_on_resume(tmp_path: Path, digest, monkeypatch):
+    monkeypatch.setattr(sr, "BATCH", 1)
+    broken = Ollama(broken=True)
+    with pytest.raises(PipelineStopped):
+        sr.compute(tmp_path, stretches(*BOOK), [], "http://ollama", session=broken, stop_requested=lambda: len(broken.bodies) >= 1,
+                   log=lambda _: None)
+    assert len(sr.read(tmp_path / sr.FILE)["unanswered"]) == 1
+    again = Ollama()
+    counts = sr.compute(tmp_path, stretches(*BOOK), [], "http://ollama", session=again, log=lambda _: None)
+    assert counts["asked"] == 2 and len(again.bodies) == 2, "an unbroken pass asks each occurrence once; so does a resumed one"
+
+
+def test_an_unfinished_pass_does_not_travel_in_the_book_file(tmp_path: Path):
+    from abook.io_utils import atomic_write_json
+    from abook.webui import bookfile
+    from tests.test_a_package_names_the_recorded_voices import _recorded
+
+    paths, _ = _recorded(tmp_path)
+    stored = {"version": sr.VERSION, "prompt": sr.PROMPT_VERSION, "model": sr.MODEL, "digest": "d", "complete": False, "bookOrigin": None,
+              "origins": {"An An": "vi"}, "names": ["an"], "foreign": [], "readings": {}, "contexts": {DO_TRANS: "v"}}
+    atomic_write_json(paths.root / sr.FILE, stored)
+    assert sr.load(paths.root) is None and "sharedWords" not in bookfile.listening_layer(paths.root)[0]

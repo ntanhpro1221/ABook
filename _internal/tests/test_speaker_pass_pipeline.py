@@ -451,6 +451,7 @@ def _pipeline(monkeypatch: pytest.MonkeyPatch, *, finalized: bool, pending: bool
     emitted: list[tuple[str, dict]] = []
     pipeline.emit = lambda kind, payload: emitted.append((kind, payload))
     pipeline.after_analysis = None
+    pipeline.before_synthesis = None
     pipeline._completed_noop = False
     pipeline.log = lambda _message: None
     pipeline._recover = lambda: None

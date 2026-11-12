@@ -412,6 +412,7 @@ class BookPipeline:
         emit: Callable[[str, dict[str, Any]], None],
         resource_updates: Callable[[], dict[str, Any] | None] | None = None,
         after_analysis: Callable[[str], None] | None = None,
+        before_synthesis: Callable[[str, Callable[[], bool], bool], None] | None = None,
     ) -> None:
         self.paths = paths
         self.db = db
@@ -423,6 +424,10 @@ class BookPipeline:
         # Việc phụ sau khi pha phân tích XONG (không phải resume vào cuốn đã phân tích): nhận base_url của Ollama, chạy khi model
         # phân tích đã dỡ khỏi VRAM nhưng Ollama còn sống (nhạc nền: webui/music_moods.py). Lỗi chỉ ghi nhật ký.
         self.after_analysis = after_analysis
+        # Việc phải xong trước pha tổng hợp, MỖI lần chạy tới đó (tầng hai chữ trùng Việt / Anh: worker.settle_shared_rulings): nhận
+        # base_url, hàm khởi động Ollama (cuốn đã phân tích xong thì lần resume chưa khởi động nó) và lần này có phân tích đoạn nào
+        # không. Dừng/lỗi ném ra, không nuốt.
+        self.before_synthesis = before_synthesis
         self.resources = AdaptiveResourceManager(settings, paths.root)
         self.notifier = WindowsNotifier()
         self.tts = TTSCoordinator(settings, db, self.log)
@@ -1011,15 +1016,20 @@ class BookPipeline:
         except AnalysisRequestStopped as exc:
             raise PipelineStopped("Stop requested during Ollama analysis") from exc
         finally:
-            if analysis_completed and had_pending and self.after_analysis is not None:
-                analyzer.release_model()  # dỡ model phân tích trước; Ollama vẫn sống vì unload() chưa chạy
-                try:
-                    self.after_analysis(analyzer.base_url)
-                except Exception as exc:  # không bao giờ làm hỏng pha phân tích
-                    self.log(f"Bỏ qua cảm xúc nhạc bằng LLM: {exc}")
-                    self.emit("music_moods_skipped", {"reason": str(exc)})
-            analyzer.unload()
-            self._safe_export_reports(incremental=True)
+            try:
+                if analysis_completed and had_pending and self.after_analysis is not None:
+                    analyzer.release_model()  # dỡ model phân tích trước; Ollama vẫn sống vì unload() chưa chạy
+                    try:
+                        self.after_analysis(analyzer.base_url)
+                    except Exception as exc:  # không bao giờ làm hỏng pha phân tích
+                        self.log(f"Bỏ qua cảm xúc nhạc bằng LLM: {exc}")
+                        self.emit("music_moods_skipped", {"reason": str(exc)})
+                if analysis_completed and self.before_synthesis is not None:
+                    analyzer.release_model()
+                    self.before_synthesis(analyzer.base_url, analyzer.ensure_server, had_pending)
+            finally:
+                analyzer.unload()
+                self._safe_export_reports(incremental=True)
 
         self._state("running", "Đang xác minh các giọng đã khóa.")
         self._resource_gate("xác minh preset VieNeu", keep_engine="vieneu")

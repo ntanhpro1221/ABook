@@ -199,7 +199,7 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
         # không có model (điện thoại) đọc chương chỉ-chữ đúng như Studio đã quyết.
         from ..readaloud import shared_rulings
 
-        rulings = shared_rulings.read(Path(project_root) / shared_rulings.FILE)
+        rulings = shared_rulings.finished(shared_rulings.read(Path(project_root) / shared_rulings.FILE))  # nửa bộ không đi theo cuốn
         if rulings is not None:
             book["sharedWords"] = shared_rulings.shared(rulings)
         cover = covers.cover_file(project_root)
