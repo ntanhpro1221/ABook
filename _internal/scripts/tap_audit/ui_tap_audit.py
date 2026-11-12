@@ -71,7 +71,7 @@ JS = r'''(() => {
  // Con có pointer-events:auto vẫn nhận chạm trong cha pointer-events:none; hit-test xác nhận đường thật.
  const blocked=getComputedStyle(e).pointerEvents==='none'?[e.tagName]:[];
  const toast=h?.closest('[data-sonner-toast]');const close=toast?.querySelector('[data-close-button]');const cr=close?.getBoundingClientRect();
- return {label:label(e),tag:e.tagName,disabled:e.matches(':disabled')||e.hasAttribute('data-disabled')||e.getAttribute('aria-disabled')==='true',x,y,hit:!!h&&(h===e||e.contains(h)),hitElement:h?label(h):null,pointerEvents:getComputedStyle(e).pointerEvents,noneAncestors:anc,blockedInLayer:blocked,hitToast:!!toast,toastClose:cr?{x:cr.left+cr.width/2,y:cr.top+cr.height/2}:null};};
+ return {label:label(e),tag:e.tagName,disabled:e.matches(':disabled')||e.hasAttribute('data-disabled')||e.getAttribute('aria-disabled')==='true',x,y,hit:!!h&&(h===e||e.contains(h)||(!!(e.id||e.getAttribute('data-tap-proxy-for'))&&h.closest('[data-tap-proxy-for]')?.getAttribute('data-tap-proxy-for')===(e.getAttribute('data-tap-proxy-for')||e.id))),hitElement:h?label(h):null,hitTag:h?h.tagName:null,pointerEvents:getComputedStyle(e).pointerEvents,noneAncestors:anc,blockedInLayer:blocked,hitToast:!!toast,toastClose:cr?{x:cr.left+cr.width/2,y:cr.top+cr.height/2}:null};};
  window.tapAudit={visible,label,layers,top,find,inspect,controls};return true;
 })()'''.replace('CONTROLS', json.dumps(CONTROLS))
 
@@ -146,7 +146,10 @@ class CDP:
                     continue
                 return p
             await asyncio.sleep(.1)
-        raise RuntimeError('visible target missing: '+json.dumps(spec,ensure_ascii=False))
+        try:
+            seen=await self.evaluate("[...document.querySelectorAll('button,[role=menuitem],[role=button],a,input,[role=slider]')].filter(e=>tapAudit.visible(e)).map(e=>tapAudit.label(e)).slice(0,40)")
+        except Exception: seen=None
+        raise RuntimeError('visible target missing: '+json.dumps(spec,ensure_ascii=False)+' (visible controls: '+json.dumps(seen,ensure_ascii=False)+')')
     async def step(self,spec):
         p=await self.select(spec)
         if not p['hit'] or p['blockedInLayer'] or p['disabled']: raise RuntimeError('opening step cannot receive pointer: '+str(p))
