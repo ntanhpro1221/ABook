@@ -115,18 +115,23 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         width: (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * scale,
         height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * scale };
     }
-    let first = glyph(chars[0]), last = glyph(chars.at(-1));
-    if (!first || !last) continue;
-    // Số tabular thẳng cột theo ô chữ số chứ không theo mực ("1" có lề trái rộng hơn "2"): đo mép bằng ô.
+    // Tabular digits align by their cells at both measurement precisions.
+    let cell = null;
     if (/tabular-nums/.test(s.fontVariantNumeric) && /^[\d\s:.,×%/−+–-]+$/.test(run.node.textContent.trim())) {
       const range = document.createRange(); range.selectNodeContents(run.node);
-      const box = range.getBoundingClientRect();
-      first = { ...first, x: box.x, width: first.x + first.width - box.x };
-      last = { ...last, width: box.right - last.x };
+      cell = range.getBoundingClientRect();
     }
+    const edges = (precise) => {
+      const a = glyph(chars[0], precise), b = glyph(chars.at(-1), precise);
+      if (!a || !b) return null;
+      return cell ? [{ ...a, x: cell.x, width: a.x + a.width - cell.x }, { ...b, width: cell.right - b.x }] : [a, b];
+    };
+    const coarse = edges(false), fine = edges(true);
+    if (!coarse || !fine) continue;
+    const [first, last] = coarse;
     // Chỉ so cạnh phải khi chữ nằm trên một dòng; dòng cuối xuống hàng không phải mép cột.
     const singleLine = Math.abs(first.y - last.y) < Number.parseFloat(s.fontSize);
-    inkTexts.push({ ...run, ink: union([first, last]), rhythmInk: union([glyph(chars[0], true), glyph(chars.at(-1), true)]), first, last, singleLine, control: owner(run.element) });
+    inkTexts.push({ ...run, ink: union(coarse), rhythmInk: union(fine), first, last, singleLine, control: owner(run.element) });
   }
   // reserved: đo cả khi đang mờ 0 - dấu chọn chưa bật vẫn giữ cột đầu dòng (SelectionMark), là mép mực của hàng.
   function iconInk(svg, reserved = false) {

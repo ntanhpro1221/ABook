@@ -220,12 +220,36 @@ def run_music_after_analysis(root: Path, base_url: str, stop_requested: Any, log
 
     failure: Exception | None = None
     for step in (music_bounds, music_moods):  # chia cảnh TRƯỚC: không khí đọc đúng các đoạn đã chia
+        if stop_requested():
+            raise PipelineStopped("Stop requested during music preparation")
         try:
             step.run_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
+        except (PipelineStopped, CriticalResourceStop):
+            raise
         except Exception as exc:  # noqa: BLE001 - hoãn tới sau việc kế
             failure = failure or exc
+        if stop_requested():
+            raise PipelineStopped("Stop requested during music preparation")
     if failure is not None:
         raise failure
+
+
+def prepare_before_synthesis(root: Path, db: ProjectDB, settings: dict[str, Any], tts: Any, base_url: str,
+                             stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any,
+                             ensure_server: Any, analysed: bool) -> None:
+    """Resume every checkpointed preparation step, including books already past analysis."""
+    apply_teller_voice(root, db, settings, log)
+    if ensure_server():
+        try:
+            run_music_after_analysis(root, base_url, stop_requested, log, emit, pause_requested=pause_requested)
+        except (PipelineStopped, CriticalResourceStop):
+            raise
+        except Exception as exc:  # optional music retains its per-scene fallback
+            log(f"Bỏ qua cảm xúc nhạc bằng LLM: {exc}")
+            emit("music_moods_skipped", {"reason": str(exc)})
+    settle_shared_rulings(root, db, tts, base_url, stop_requested, log, emit,
+                          pause_requested=pause_requested, ensure_server=ensure_server, analysed=analysed,
+                          model=str(settings.get("analysis", {}).get("model", "")))
 
 
 def settle_shared_rulings(root: Path, db: ProjectDB, tts: Any, base_url: str, stop_requested: Any, log: Any, emit: Any, *,
@@ -247,7 +271,9 @@ def settle_shared_rulings(root: Path, db: ProjectDB, tts: Any, base_url: str, st
     stored = shared_rulings.read(root / shared_rulings.FILE)
     if shared_rulings.finished(stored) is not None and (not analysed or stored.get("skipped")):
         return
-    if not ensure_server() or shared_rulings.model_digest(base_url, model) is None:
+    if not ensure_server():
+        raise RuntimeError("Ollama chưa sẵn sàng để hoàn tất tầng hai chữ trùng Việt / Anh.")
+    if shared_rulings.model_digest(base_url, model) is None:
         if stored is not None and not stored.get("skipped"):  # đã hỏi được: máy đang thiếu model, không phải cuốn không có tầng hai
             raise RuntimeError(f"Chưa xong tầng hai chữ trùng Việt / Anh mà Ollama không có model {model}; hãy làm tiếp khi model sẵn sàng.")
         shared_rulings.skip(root, f"no model {model}")
@@ -687,15 +713,9 @@ def run_worker(
             settings["resources"] = updated["resources"]
             return dict(settings["resources"])
 
-        def music_moods_after_analysis(base_url: str) -> None:
-            apply_teller_voice(paths.root, db, settings, pipeline.log)  # trước nhạc: nhạc có thể bị dừng giữa chừng và không chạy lại
-            run_music_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
-                                     pause_requested=pause_event.is_set)
-
         def shared_rulings_before_synthesis(base_url: str, ensure_server: Any, analysed: bool) -> None:
-            settle_shared_rulings(paths.root, db, pipeline.tts, base_url, stop_event.is_set, pipeline.log, emit,
-                                  pause_requested=pause_event.is_set, ensure_server=ensure_server, analysed=analysed,
-                                  model=str((settings or {}).get("analysis", {}).get("model", "")))
+            prepare_before_synthesis(paths.root, db, settings, pipeline.tts, base_url, stop_event.is_set, pipeline.log, emit,
+                                      pause_requested=pause_event.is_set, ensure_server=ensure_server, analysed=analysed)
 
         pipeline = BookPipeline(
             paths=paths,
@@ -705,7 +725,6 @@ def run_worker(
             stop_requested=stop_event.is_set,
             emit=emit,
             resource_updates=poll_resource_updates,
-            after_analysis=music_moods_after_analysis,
             before_synthesis=shared_rulings_before_synthesis,
         )
         _emit(

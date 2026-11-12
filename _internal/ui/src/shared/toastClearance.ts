@@ -10,6 +10,12 @@ export function toastBaseBounds(top: number, bottom: number, translate: number) 
 
 export const layoutCoordinate = (coordinate: number) => Math.round(coordinate * 64) / 64;
 
+/** Keep the committed target across half-pixel noise, including one layout unit.
+ * Returning to the resting position must still clear the shift immediately. */
+export function nextToastShift(wanted: number, committed: number) {
+  return wanted !== 0 && Math.abs(wanted - committed) <= 0.5 + 1 / 64 ? committed : Math.round(wanted);
+}
+
 /** Giữ thông báo ngoài nội dung bảng/hộp, kể cả popover không khoá body.
  *  Dịch cả toaster để Sonner giữ nguyên thứ tự, vuốt đóng và chuyển động của từng toast. */
 export function useToastClearance(): void {
@@ -55,7 +61,8 @@ export function useToastClearance(): void {
           .map(space => Math.max(space.top, Math.min(top, space.bottom - height)));
         // Hộp chiếm hết màn: mờ thông báo tạm thời, hiện lại khi có chỗ, không che mục trong hộp.
         const hidden = layers.length > 0 && !targets.length;
-        const shift = layers.length && targets.length ? Math.round(targets.sort((a, b) => Math.abs(a - top) - Math.abs(b - top))[0] - top) : 0;
+        const wanted = layers.length && targets.length ? targets.sort((a, b) => Math.abs(a - top) - Math.abs(b - top))[0] - top : 0;
+        const shift = nextToastShift(wanted, Number.parseFloat(toaster.style.getPropertyValue("--toast-shift")) || 0);
         // Hộp đổi cỡ ngay trong lúc fade vào: bỏ fade cũ trước khi ẩn, không để nó làm toast sáng lại trên hộp.
         if (hidden || toaster.style.getPropertyValue("--toast-shift") !== `${shift}px`) { fades.get(toaster)?.cancel(); fades.delete(toaster); }
         if (toaster.style.getPropertyValue("--toast-shift") !== `${shift}px`) {

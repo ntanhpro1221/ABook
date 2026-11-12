@@ -144,6 +144,48 @@ def test_a_saved_track_survives_a_cache_prune(tmp_path: Path) -> None:
     assert kept.exists() and not other.exists()
 
 
+@pytest.mark.parametrize("first_operation", ["add", "remove"])
+def test_saved_track_mutations_share_the_read_modify_write_lock(tmp_path: Path, first_operation: str) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    saved = music_library.SavedTracks(tmp_path / "saved.json")
+    saved.add(["https://x/old"])
+    iterating, release, second_attempt = threading.Event(), threading.Event(), threading.Event()
+    lock = threading.Lock()
+
+    class ObservedLock:
+        def __enter__(self):
+            if threading.current_thread().name.endswith("_1"):
+                second_attempt.set()
+            lock.acquire()
+
+        def __exit__(self, *_args):
+            lock.release()
+
+    saved._lock = ObservedLock()
+
+    def first_links():
+        iterating.set()
+        assert release.wait(5), "test did not release the first mutation"
+        yield "https://x/a" if first_operation == "add" else "https://x/old"
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(getattr(saved, first_operation), first_links())
+        try:
+            assert iterating.wait(5)
+            second = pool.submit(saved.add, ["https://x/b"])
+            assert second_attempt.wait(5)
+            # The first writer still owns its read/modify/write transaction.
+            assert lock.locked() and not second.done()
+        finally:
+            release.set()
+        first.result(timeout=5)
+        second.result(timeout=5)
+    expected = ["https://x/old", "https://x/a", "https://x/b"] if first_operation == "add" else ["https://x/b"]
+    assert saved.links() == expected
+    assert music_library.SavedTracks(saved.path).links() == expected
+
+
 def test_a_download_can_be_cancelled_and_failures_are_reported(tmp_path: Path) -> None:
     gate = threading.Event()
 

@@ -323,3 +323,51 @@ def test_an_unfinished_pass_does_not_travel_in_the_book_file(tmp_path: Path):
               "origins": {"An An": "vi"}, "names": ["an"], "foreign": [], "readings": {}, "contexts": {DO_TRANS: "v"}}
     atomic_write_json(paths.root / sr.FILE, stored)
     assert sr.load(paths.root) is None and "sharedWords" not in bookfile.listening_layer(paths.root)[0]
+
+
+@pytest.mark.parametrize("previously_complete", [False, True])
+def test_first_request_failure_always_leaves_an_unfinished_file(tmp_path, digest, previously_complete):
+    if previously_complete:
+        sr.compute(tmp_path, stretches("Do trans sắp thi."), [], "http://ollama", session=Ollama(), log=lambda _: None)
+        assert sr.read(tmp_path / sr.FILE)["complete"] is True
+    class Dying:
+        def post(self, *_a, **_kw):
+            raise ConnectionError("first request failed")
+    with pytest.raises(ConnectionError):
+        sr.compute(tmp_path, stretches(*BOOK), ["Ben"], "http://ollama", session=Dying(), log=lambda _: None)
+    assert sr.read(tmp_path / sr.FILE)["complete"] is False and sr.load(tmp_path) is None
+    counts = sr.compute(tmp_path, stretches(*BOOK), ["Ben"], "http://ollama", session=Ollama(), log=lambda _: None)
+    assert counts["asked"] > 0 and sr.read(tmp_path / sr.FILE)["complete"] is True
+
+
+def test_model_discovery_transport_failure_is_not_model_absence(monkeypatch):
+    import requests
+    def broken(*_a, **_kw):
+        raise requests.Timeout("tags timeout")
+    monkeypatch.setattr(requests, "get", broken)
+    with pytest.raises(requests.Timeout):
+        sr.model_digest("http://ollama")
+
+
+def test_server_start_failure_does_not_permanently_skip_the_pass(tmp_path):
+    from abook import worker
+    db, tts = _book(*BOOK)
+    with pytest.raises(RuntimeError, match="Ollama"):
+        worker.settle_shared_rulings(tmp_path, db, tts, "http://ollama", lambda: False, lambda _: None, lambda *_a: None,
+                                     pause_requested=lambda: False, ensure_server=lambda: False)
+    assert not (tmp_path / sr.FILE).exists()
+
+
+@pytest.mark.parametrize("marker", [False, None, 0, True, "omitted"])
+def test_package_and_direct_readers_never_use_an_explicitly_unfinished_set(tmp_path, monkeypatch, marker):
+    from types import SimpleNamespace
+    from abook.webui import server, packages
+    found = dict(version=sr.VERSION, contexts={DO_TRANS: "v"}, names=[], foreign=[], readings={})
+    if marker != "omitted":
+        found["complete"] = marker
+    monkeypatch.setattr(packages, "is_package", lambda _: True)
+    monkeypatch.setattr(packages, "manifest", lambda _: {"sharedWords": found})
+    app = SimpleNamespace(_listenable=lambda _: tmp_path)
+    usable = marker is True or marker == "omitted"
+    assert (server.App._shared_words(app, "book") is not None) == usable
+    assert (sr.rulings_of(found) is not None) == usable

@@ -5214,7 +5214,7 @@ class BookPipeline:
             return False
 
     @staticmethod
-    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float, float]:
+    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float, float, float]:
         """Bản tốt nhất có ít cờ tín hiệu/QA đã biết hơn, rồi ít lặp hơn; bằng nhau giữ bản trước."""
         repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
         flags = sum(bool(metrics.get(key)) for key in (

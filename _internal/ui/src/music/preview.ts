@@ -31,7 +31,15 @@ export function useLibraryPreview() {
   const until = useRef(0);
   const [playing, setPlaying] = useState<PreviewTrack | null>(null);
   const current = useRef<string | null>(null);
+  const request = useRef(0);
+  const metadataListener = useRef<(() => void) | null>(null);
+  const clearMetadataListener = useCallback(() => {
+    if (metadataListener.current) audio.current?.removeEventListener("loadedmetadata", metadataListener.current);
+    metadataListener.current = null;
+  }, []);
   const stop = useCallback(() => {
+    request.current++;
+    clearMetadataListener();
     const element = audio.current;
     if (element) {
       element.pause();
@@ -40,7 +48,7 @@ export function useLibraryPreview() {
     }
     current.current = null;
     setPlaying(null);
-  }, []);
+  }, [clearMetadataListener]);
   const toggle = useCallback(
     (track: PreviewTrack) => {
       if (current.current === track.link) {
@@ -60,19 +68,24 @@ export function useLibraryPreview() {
         audio.current = created;
       }
       const element = audio.current;
+      const token = ++request.current;
+      clearMetadataListener();
       const start = Math.max(0, track.audibleStart ?? 0);
       until.current = start + PREVIEW_SECONDS;
       element.src = mediaUrl(previewPath(track.link));
       element.volume = previewVolume(track.lufs);
       element.currentTime = start;
-      if (start > 0) element.addEventListener("loadedmetadata", () => { element.currentTime = start; }, { once: true });
+      if (start > 0) {
+        metadataListener.current = () => { metadataListener.current = null; element.currentTime = start; };
+        element.addEventListener("loadedmetadata", metadataListener.current, { once: true });
+      }
       current.current = track.link;
       setPlaying(track);
       void element.play().catch(() => {
-        if (current.current === track.link) stop();
+        if (request.current === token) stop();
       });
     },
-    [stop],
+    [stop, clearMetadataListener],
   );
   // Sách bắt đầu phát lại (người nghe bấm phát ở thanh dưới): bài nghe thử nhường.
   useEffect(() => {

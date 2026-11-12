@@ -508,3 +508,39 @@ def test_a_stop_or_a_failure_before_synthesis_is_not_swallowed(monkeypatch: pyte
     with pytest.raises(type(failure)):  # không tới pha giọng (`_Stop`) với nửa bộ phán quyết
         pipeline.run(recovery_already_run=True)
     assert _Analyzer.instances[0].calls[-1] == "unload" and not events
+
+
+@pytest.mark.parametrize("analysed", [True, False])
+def test_worker_prepares_teller_music_and_rulings_even_on_resume(tmp_path, monkeypatch, analysed):
+    from abook import worker
+    seen = []
+    monkeypatch.setattr(worker, "apply_teller_voice", lambda *_a: seen.append("teller"))
+    monkeypatch.setattr(worker, "run_music_after_analysis", lambda *_a, **_k: seen.append("music"))
+    monkeypatch.setattr(worker, "settle_shared_rulings", lambda *_a, **kw: seen.append(("rulings", kw["analysed"])))
+    worker.prepare_before_synthesis(tmp_path, None, {}, None, "http://ollama", lambda: False, lambda _: None,
+                                   lambda *_a: None, pause_requested=lambda: False, ensure_server=lambda: True, analysed=analysed)
+    assert seen == ["teller", "music", ("rulings", analysed)]
+
+
+def test_worker_stopped_mid_music_resumes_before_rulings_or_synthesis(tmp_path, monkeypatch):
+    from abook import worker
+    from abook.webui import music_bounds
+    seen = []
+    stopped = {"value": False}
+    monkeypatch.setattr(worker, "apply_teller_voice", lambda *_a: seen.append("teller"))
+    def bounds(*_a, **_kw):
+        seen.append("bounds")
+        stopped["value"] = True
+    monkeypatch.setattr(music_bounds, "run_after_analysis", bounds)
+    monkeypatch.setattr(music_moods, "run_after_analysis", lambda *_a, **_k: seen.append("moods"))
+    monkeypatch.setattr(worker, "settle_shared_rulings", lambda *_a, **_k: seen.append("rulings"))
+    def prepare():
+        worker.prepare_before_synthesis(tmp_path, None, {}, None, "http://ollama", lambda: stopped["value"], lambda _: None,
+                                       lambda *_a: None, pause_requested=lambda: False, ensure_server=lambda: True, analysed=False)
+    with pytest.raises(pipeline_module.PipelineStopped):
+        prepare()
+    assert seen == ["teller", "bounds"]
+    stopped["value"] = False
+    monkeypatch.setattr(music_bounds, "run_after_analysis", lambda *_a, **_k: seen.append("bounds"))
+    prepare()
+    assert seen == ["teller", "bounds", "teller", "bounds", "moods", "rulings"]

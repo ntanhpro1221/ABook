@@ -23,9 +23,15 @@ VERSION = 1
 ALIGNER_MISSING = "word aligner model is unavailable"
 # A syllable has voice, so one lying whole inside a silence means CTC misplaced it.
 SWALLOWED_SPAN_TOLERANCE_SECONDS = .005
-# Somebody else's memory comes back; a shortage must not decide which take the book keeps.
+# Somebody else's memory comes back; a shortage must not decide which take the book keeps. Nor may a file the machine
+# could not read: when the attempts run out the run stops at a checkpoint (CriticalResourceStop) and the next one measures
+# this take again. Only a verdict the take itself gives (alignment, tokens, a syllable inside a silence) is "inconclusive".
 MEASURE_MEMORY_ATTEMPTS = 3
 MEASURE_MEMORY_WAIT_SECONDS = 5.
+
+
+class InconclusiveMeasurement(ValueError):
+    """The take or its token mapping cannot support a reliable measurement."""
 
 
 @lru_cache(maxsize=1)
@@ -120,7 +126,7 @@ def plan(source: str, spoken: str, read_unit: Callable[[str], str]) -> tuple[str
         words += ref.split()
         units.append(dict(source=match[0], start=match.start(), end=match.end(), lo=lo, hi=len(words)))
     if " ".join(words) != reference:
-        raise ValueError("source-to-spoken token mapping differs from engine normalization")
+        raise InconclusiveMeasurement("source-to-spoken token mapping differs from engine normalization")
     groups = []
     covered: set[int] = set()
     cursor = 0
@@ -200,20 +206,26 @@ def measure(output: Path, voice_key: str, source: str, spoken: str,
         try:
             _measure_take(result, gate, word_timing, output, source, spoken, read_unit)
             break
-        except Exception as exc:  # noqa: BLE001 - the ruler only advises; it must never fail a take
-            if attempt < MEASURE_MEMORY_ATTEMPTS and _is_memory_error(exc):
+        except InconclusiveMeasurement as exc:
+            result.update(status="inconclusive", reason=str(exc))
+            break
+        except Exception as exc:  # noqa: BLE001 - a broken measurement must not select a take
+            if _is_environment_error(exc) and attempt < MEASURE_MEMORY_ATTEMPTS:
                 gc.collect()
                 time.sleep(MEASURE_MEMORY_WAIT_SECONDS)
                 continue
-            result.update(status="inconclusive", reason=str(exc) or type(exc).__name__)
-            break
+            from .pipeline import CriticalResourceStop
+
+            raise CriticalResourceStop(f"Không đo được ngắt trong từ vì môi trường máy: {type(exc).__name__}: {exc}") from exc
     result["seconds"] = time.perf_counter()-started
     return result
 
 
-def _is_memory_error(error: Exception) -> bool:
+def _is_environment_error(error: Exception) -> bool:
+    """What the machine did, not what the take is: a memory shortage, or a file or device it could not read."""
     from .tts import is_transient_tts_memory_error
-    return isinstance(error, MemoryError) or is_transient_tts_memory_error(error)
+    return (isinstance(error, (MemoryError, OSError, sf.SoundFileError))
+            or is_transient_tts_memory_error(error) or "bad allocation" in str(error).lower())
 
 
 def _measure_take(result: dict[str, Any], gate: dict[str, Any], word_timing: Any, output: Path, source: str,
@@ -225,15 +237,15 @@ def _measure_take(result: dict[str, Any], gate: dict[str, Any], word_timing: Any
         return
     folder = word_timing.model_dir()
     if folder is None:
-        raise ValueError(ALIGNER_MISSING)
+        raise InconclusiveMeasurement(ALIGNER_MISSING)
     wave, sr = sf.read(output, dtype="float32", always_2d=True)
     wave = wave.mean(axis=1)
     if len(wave)/sr > word_timing.MAX_LINE_SECONDS:
-        raise ValueError("audio exceeds alignment length limit")
+        raise InconclusiveMeasurement("audio exceeds alignment length limit")
     divisor = math.gcd(sr, word_timing.SAMPLE_RATE)
     aligned = _aligner(str(folder)).align(resample_poly(wave, word_timing.SAMPLE_RATE//divisor, sr//divisor).astype("float32"), reference)
     if aligned is None or aligned[1] < .7 or any(s is None for s in aligned[0]):
-        raise ValueError("low-confidence or incomplete CTC alignment")
+        raise InconclusiveMeasurement("low-confidence or incomplete CTC alignment")
     spans, confidence = aligned
     gg = gaps(wave, sr, spans)
     tokens = reference.split()

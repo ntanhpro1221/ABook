@@ -212,15 +212,12 @@ def ask_names(base_url: str, model: str, digest: str, batch: Sequence[str], rost
 
 
 def model_digest(base_url: str, model: str = MODEL) -> str | None:
-    """The digest Ollama reports for `model`, None when it is not installed or Ollama does not answer."""
+    """The model's installed digest; absence is optional, an unavailable server is an error."""
     import requests
 
-    try:
-        reply = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=5)
-        reply.raise_for_status()
-        models = reply.json().get("models") or []
-    except (OSError, ValueError, AttributeError):
-        return None
+    reply = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=5)
+    reply.raise_for_status()
+    models = reply.json().get("models") or []
     names = {model, f"{model}:latest"}
     for entry in models:
         if isinstance(entry, dict) and names & {entry.get("name"), entry.get("model")}:
@@ -363,7 +360,9 @@ def read(path: Path | str) -> dict[str, Any] | None:
 
 
 def rulings_of(value: dict[str, Any] | None) -> Rulings | None:
-    if not value:
+    # Packages carry only the answers, without a completion marker. An explicit
+    # unfinished marker, however, must never be treated as the book's full set.
+    if not value or value.get("complete", True) is not True:
         return None
     contexts = {key: answer == "v" for key, answer in value["contexts"].items()}
     return Rulings(contexts, set(value["names"]), set(value["foreign"])) if contexts or value["names"] or value["foreign"] else None
@@ -470,6 +469,9 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
             save(False)
             raise PipelineStopped("Stop requested during the shared-word rulings")
 
+    # Invalidate even a previously complete file before the first new request: a
+    # transport fault there must leave a resumable pass, never an old "complete" set.
+    save(False)
     for at in range(0, len(todo_names), BATCH):
         halt()
         batch = todo_names[at:at + BATCH]

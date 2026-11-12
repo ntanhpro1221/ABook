@@ -181,14 +181,18 @@ class SavedTracks:
 
     def links(self) -> list[str]:
         with self._lock:
-            if self._links is None:
-                try:
-                    data = json.loads(self.path.read_text(encoding="utf-8"))
-                    links = data.get("links") if isinstance(data, dict) and data.get("version") == SAVED_VERSION else None
-                except (OSError, ValueError):
-                    links = None
-                self._links = [link for link in links or [] if isinstance(link, str) and link.startswith("https://")]
-            return list(self._links)
+            return list(self._read_links())
+
+    def _read_links(self) -> list[str]:
+        """Read under the instance lock shared by all request threads, including writers."""
+        if self._links is None:
+            try:
+                data = json.loads(self.path.read_text(encoding="utf-8"))
+                links = data.get("links") if isinstance(data, dict) and data.get("version") == SAVED_VERSION else None
+            except (OSError, ValueError):
+                links = None
+            self._links = [link for link in links or [] if isinstance(link, str) and link.startswith("https://")]
+        return self._links
 
     def _write(self, links: list[str]) -> None:
         self._links = links
@@ -196,21 +200,21 @@ class SavedTracks:
             atomic_write_json(self.path, {"version": SAVED_VERSION, "links": links})
 
     def add(self, links: Iterable[str]) -> list[str]:
-        current = self.links()
-        added = [link for link in dict.fromkeys(links) if link.startswith("https://") and link not in current]
-        if added:
-            with self._lock:
+        with self._lock:
+            current = self._read_links()
+            added = [link for link in dict.fromkeys(links) if link.startswith("https://") and link not in current]
+            if added:
                 self._write(current + added)
-        return added
+            return added
 
     def remove(self, links: Iterable[str]) -> list[str]:
-        gone = set(links)
-        current = self.links()
-        kept = [link for link in current if link not in gone]
-        if len(kept) != len(current):
-            with self._lock:
+        with self._lock:
+            gone = set(links)
+            current = self._read_links()
+            kept = [link for link in current if link not in gone]
+            if len(kept) != len(current):
                 self._write(kept)
-        return [link for link in current if link in gone]
+            return [link for link in current if link in gone]
 
 
 class Downloads:

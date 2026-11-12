@@ -1,5 +1,14 @@
 # Test report
 
+## 13-11-2026 — fix167: resume preparation, resource failures and music UI
+
+- Continued from `9f90ced9b`, retaining its shared-rulings resume fix. Preparation of narration voice and music now also runs before synthesis on resumed books. A stop during music preparation propagates immediately. Shared rulings mark the file incomplete before the first request; discovery faults propagate, and explicitly incomplete sets are rejected by direct and package readers.
+- Word-break measurement distinguishes deterministic inconclusive results from resource or unexpected failures. The latter stop at a checkpoint; regressions cover a retry measurement failing, reopening the database and finishing with the reserved seed. Both saved-track writers hold the same lock across reading, mutation and writing; concurrent add/add and remove/add tests verify memory and disk results.
+- Restored unconditional Qt `changed()` after loading a chapter, as before `dfa51eb4e`. Web music previews remove obsolete metadata listeners and ignore stale play rejections, including A/B/A switches. P1 bans direct Radix dropdown imports outside the shared wrapper; P2 measures tabular cells at both precisions; P3 retains toast targets across half-pixel noise.
+- Focused pytest only, with `-rf`: **306 passed, 2 skipped, 0 failures/errors**, **308 unique cases** across 10 files (latest result per case, duplicates excluded). Focused vitest: **8 files, 79 passed, 0 failures/skips**. `tsc --noEmit` passed. Both parity documents were regenerated and remained byte-identical. Logs and JUnit XML are in the external `codex/fix167` scratch directory.
+- Initial focused runs exposed one OOM-marker regression and two unsupported TypeScript compiler-API assertions; both were fixed and the affected files rerun successfully. No whole-suite run, build, release gate, gallery run, native Qt compilation, GPU inference or listening comparison was performed while on battery.
+- Quality implementation list read from code: **69 files**. Task baseline: `71563e9c1a2ecee91b3be33d3300e0f529f3af7ceb77d7c0e18b6ee800489d9d`; final: `ed4fbd8eaf326136b972e587dad7b4a4720b28ebc34add77b1a9ed0fec88148f`. Changes remain on `dev/integ167`.
+
 ## 11-11-2026 — Verify Android references after the integ167 UI merges
 
 - Audited all 63 original snapshot mismatches and the five images previously blocked by Java heap OOM against source history. The four root tabs (including Music), the intentional auto-rewind removal, picker controls/chapter count, measured/indeterminate progress, cover-flight ownership, sized cover cache and design1 styles remain. No production UI change was needed. Recorded 83 updated references and one separate 130% filter reference; viewed every changed region at native resolution. The external mergeui2 report has the per-image provenance and SHA-256 evidence.

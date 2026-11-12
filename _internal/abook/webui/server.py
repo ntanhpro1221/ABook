@@ -808,7 +808,7 @@ class App:
         except ApiError:
             return None
         found = packages.manifest(path).get("sharedWords") if packages.is_package(path) else None
-        return found if shared_rulings.valid(found) else None
+        return found if shared_rulings.valid(found) and found.get("complete", True) is True else None
 
     def _shared_rulings(self, value: str) -> Any:
         from ..readaloud import shared_rulings

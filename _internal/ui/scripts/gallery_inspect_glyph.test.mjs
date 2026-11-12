@@ -17,7 +17,10 @@ it.skipIf(!browserAvailable)("resolves Vietnamese tab overhangs without hiding a
       body{margin:0;background:white;color:black}#tabs{display:flex;gap:24px;position:absolute;left:704.90625px;top:92px}
       button{display:inline-flex;align-items:center;height:44px;padding:0;border:0;background:none;color:inherit;font:500 14px/20px "Be Vietnam Pro"}
       .label{display:inline-flex;align-items:baseline;gap:6px}.count{font-size:12px;font-weight:400;line-height:16px}
-      </style><div id="tabs"><button><span class="label">Chương<span class="count">24</span></span></button><button>Lịch sử</button><button>Nhân vật</button></div>`);
+      #numbers{display:flex;gap:24px;position:absolute;left:40px;top:200px}
+      #numbers button{font-size:48px;line-height:64px;height:64px;font-variant-numeric:tabular-nums}
+      </style><div id="tabs"><button><span class="label">Chương<span class="count">24</span></span></button><button>Lịch sử</button><button>Nhân vật</button></div>
+      <div id="numbers"><button>1</button><button>22</button><button>333</button><button>4</button></div>`);
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   let browser, cdp;
@@ -27,7 +30,11 @@ it.skipIf(!browserAvailable)("resolves Vietnamese tab overhangs without hiding a
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/` }, page.sessionId);
     await settle(cdp, page.sessionId, 10000);
     const rhythm = result => result.findings.filter(f => f.metric === 'horizontal-ink-gap');
-    expect(rhythm(await evaluate(cdp, page.sessionId, inspectionExpression(false)))).toEqual([]);
+    const measured = await evaluate(cdp, page.sessionId, inspectionExpression(false));
+    expect(rhythm(measured)).toEqual([]);
+    const numbers = measured.layout.rhythms.find(row => row.selector === '#numbers' && row.role === 'word-row');
+    expect(numbers?.values).toHaveLength(3);
+    for (const gap of numbers.values) expect(gap).toBeCloseTo(24, 2);
     await evaluate(cdp, page.sessionId, `document.querySelector('#tabs button:last-child').style.marginLeft='4px'`);
     const broken = rhythm(await evaluate(cdp, page.sessionId, inspectionExpression(false)));
     expect(broken).toHaveLength(1);

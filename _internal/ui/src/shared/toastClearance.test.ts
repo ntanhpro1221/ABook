@@ -1,5 +1,16 @@
 import { expect, it } from "vitest";
-import { layoutCoordinate, toastBaseBounds } from "./toastClearance";
+import { layoutCoordinate, nextToastShift, toastBaseBounds } from "./toastClearance";
+
+it("keeps the committed shift across half-pixel noise and clears it when the layer closes", () => {
+  expect(nextToastShift(25.5, 0)).toBe(26);
+  expect(nextToastShift(25.4999, 26)).toBe(26);
+  expect(nextToastShift(25.5001, 25)).toBe(25);
+  expect(nextToastShift(-25.4999, -26)).toBe(-26);
+  expect(nextToastShift(26 + 0.5 + 1 / 64, 26)).toBe(26);
+  expect(nextToastShift(26.52, 26)).toBe(27);
+  expect(nextToastShift(27.2, 26)).toBe(27);
+  expect(nextToastShift(0, 26)).toBe(0);
+});
 
 it("keeps the same clearance target across recorded frames of a half-pixel toast", () => {
   // Native 400px add-book-3 trace: the stationary menu ends at 760px.

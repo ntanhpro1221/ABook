@@ -577,7 +577,6 @@ void Player::load(int chapterId, double at, bool autoplay) {
         closeListening();
         m_audible = false;
     }
-    if (!autoplay)
     changed();
     if (!wasLoaded)
         emit loadedChanged();

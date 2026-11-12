@@ -663,14 +663,73 @@ def test_pool_budget_counts_the_aligner_each_worker_loads():
 
 
 # F9
-@pytest.mark.parametrize("error", [KeyError("x"), IndexError("x"), TypeError("x"), MemoryError()])
-def test_measure_failure_is_inconclusive_not_a_tts_failure(tmp_path, monkeypatch, error):
+@pytest.mark.parametrize("reason", ["source-to-spoken token mapping differs from engine normalization",
+                                   "low-confidence or incomplete CTC alignment", word_break.ALIGNER_MISSING])
+def test_measure_failure_is_inconclusive_not_a_tts_failure(tmp_path, monkeypatch, reason):
     def boom(*_args):
-        raise error
+        raise word_break.InconclusiveMeasurement(reason)
     monkeypatch.setattr(word_break, "plan", boom)
     monkeypatch.setattr(word_break.time, "sleep", lambda _seconds:None)
     gate = word_break.measure(tmp_path/"none.wav", "vieneu@3.8.3/Ngọc Linh", TEXT, TEXT, lambda s:s)
     assert gate["status"] == "inconclusive" and not gate["fired"]
+
+
+@pytest.mark.parametrize("error", [MemoryError(), RuntimeError("bad allocation"), PermissionError(13, "locked"),
+                                   OSError(28, "No space left on device")])
+def test_a_measurement_the_machine_broke_stops_the_run_instead_of_ranking_the_take(tmp_path, monkeypatch, error):
+    """Review 0.4.167 #2: an "inconclusive" retry always ranks below the incumbent, so a shortage while measuring decided
+    which take the book kept. The run stops at a checkpoint instead and the next one measures the same take again."""
+    from abook.pipeline import CriticalResourceStop
+    calls = []
+    def boom(*_args):
+        calls.append(1)
+        raise error
+    monkeypatch.setattr(word_break, "plan", boom)
+    monkeypatch.setattr(word_break.time, "sleep", lambda _seconds:None)
+    with pytest.raises(CriticalResourceStop):
+        word_break.measure(tmp_path/"none.wav", "vieneu@3.8.3/Ngọc Linh", TEXT, TEXT, lambda s:s)
+    assert len(calls) == word_break.MEASURE_MEMORY_ATTEMPTS
+
+
+@pytest.mark.parametrize("error", [KeyError("x"), IndexError("x"), TypeError("x"), RuntimeError("aligner failed")])
+def test_unknown_measurement_errors_are_not_audio_verdicts(tmp_path, monkeypatch, error):
+    from abook.pipeline import CriticalResourceStop
+    def boom(*_args):
+        raise error
+    monkeypatch.setattr(word_break, "plan", boom)
+    with pytest.raises(CriticalResourceStop):
+        word_break.measure(tmp_path/"none.wav", "vieneu@3.8.3/Ngọc Linh", TEXT, TEXT, lambda s:s)
+
+
+@pytest.mark.parametrize("error", [MemoryError(), OSError("unreadable retry")])
+def test_measurement_shortage_preserves_retry_for_reopen(tmp_path, monkeypatch, error):
+    from abook.pipeline import CriticalResourceStop
+    pipeline, chapter, row, engine = seeded(tmp_path, monkeypatch, {"primary_0":"gap", RETRY_SALT:"clean"})
+    real = word_break._measure_take
+    def broken(*args):
+        if len(engine.calls) > 1:
+            raise error
+        return real(*args)
+    monkeypatch.setattr(word_break, "_measure_take", broken)
+    with pytest.raises(CriticalResourceStop):
+        pipeline._process_single_segment(row, chapter)
+    assert reservation(pipeline)[0]["state"] == "reserved"
+    monkeypatch.setattr(word_break, "_measure_take", real)
+    pipeline.tts._real_synthesize = pipeline.tts.synthesize_atomic
+    row = reopen(pipeline, row)
+    pipeline._process_single_segment(row, chapter)
+    assert reservation(pipeline)[0]["state"] == "complete"
+    assert pipeline.db.get_segment(int(row["id"]))["generation_seed"] == pipeline.tts.generation_seed(row, RETRY_SALT)
+
+
+def test_an_unreadable_take_stops_the_run(tmp_path, monkeypatch):
+    from abook.pipeline import CriticalResourceStop
+    monkeypatch.setattr(word_break.time, "sleep", lambda _seconds:None)
+    monkeypatch.setattr(word_break, "plan", lambda *_a: ("a b", [dict(source="a b", lo=0, hi=2)]))
+    import abook.webui.word_timing as word_timing
+    monkeypatch.setattr(word_timing, "model_dir", lambda: tmp_path)
+    with pytest.raises(CriticalResourceStop):
+        word_break.measure(tmp_path/"missing.wav", "vieneu@3.8.3/Ngọc Linh", TEXT, TEXT, lambda s:s)
 
 
 def test_measure_rides_out_a_passing_memory_shortage(tmp_path, monkeypatch):
