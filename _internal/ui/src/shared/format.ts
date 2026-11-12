@@ -81,7 +81,7 @@ export function excerpt(text: string, max = 48): string {
   return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "")}…`;
 }
 
-/** Rút một tên dài giữ CẢ đầu lẫn đuôi - "MayCuaNam-Laptop" thành "NGDtu…Lecoo": tên máy thường chung đầu ("NGDtuanh-…") nên chỗ phân biệt máy nằm ở đuôi. */
+/** Rút một tên dài giữ CẢ đầu lẫn đuôi - "MayCuaNam-Laptop" thành "MayCuaN…Laptop": tên máy thường chung đầu ("MayCuaNam-…") nên chỗ phân biệt máy nằm ở đuôi. */
 export function middleEllipsis(text: string, max = 14): string {
   if (text.length <= max) return text;
   const tail = Math.floor((max - 1) / 2);

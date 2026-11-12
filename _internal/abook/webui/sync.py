@@ -1518,8 +1518,8 @@ def away_addresses(addresses: list[str]) -> list[str]:
 
 def local_addresses() -> list[str]:
     """Địa chỉ LAN của máy (để hiện cho người dùng khi điện thoại không tự tìm thấy): địa chỉ ra mạng chính ĐẦU TIÊN, mạng
-    riêng ảo cuối, bỏ card ảo và địa chỉ link-local 169.254.x.x. Soát UX 29-09: "gõ 100.73.x.x hoặc 192.0.2.1 hoặc
-    192.0.2.10" - 192.0.2.1 là card WSL, 100.73 là Tailscale, người dùng không biết gõ cái nào."""
+    riêng ảo cuối, bỏ card ảo và địa chỉ link-local 169.254.x.x. Soát UX 29-09: "gõ 100.64.x.x hoặc 192.0.2.1 hoặc
+    192.0.2.10" - 192.0.2.1 là card WSL, 100.64 là Tailscale, người dùng không biết gõ cái nào."""
     addresses: set[str] = set()
     primary = ""
     try:

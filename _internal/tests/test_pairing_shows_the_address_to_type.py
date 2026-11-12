@@ -1,7 +1,7 @@
 """Địa chỉ hiện cho người ghép máy: địa chỉ ra mạng chính đầu tiên, mạng riêng ảo cuối, không card ảo, không link-local.
 
-Soát UX 29-09: "gõ 100.73.x.x:47630 hoặc 192.0.2.1:47630 hoặc 192.0.2.10:47630" - 192.0.2.1 là card WSL (điện thoại
-không bao giờ tới được, lại trông như router), 100.73 là Tailscale; người dùng không biết gõ cái nào.
+Soát UX 29-09: "gõ 100.64.x.x:47630 hoặc 192.0.2.1:47630 hoặc 192.0.2.10:47630" - 192.0.2.1 là card WSL (điện thoại
+không bao giờ tới được, lại trông như router), 100.64 là Tailscale; người dùng không biết gõ cái nào.
 """
 from __future__ import annotations
 
