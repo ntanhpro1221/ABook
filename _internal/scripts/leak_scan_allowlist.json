@@ -1,0 +1,443 @@
+{
+ "about": "Exact, individually reviewed leak_scan findings (stripped line SHA-256). A changed line is no longer covered. Review before adding; never add a directory.",
+ "entries": [
+  {
+   "kind": "corpus",
+   "path": "_internal/abook/readaloud/engine_pick.py",
+   "sha256": "7461c800a06bbe833c44a1f213bfac1549aae48392d2e81d02a802e1f3aaf02c",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/abook/readaloud/symbols.py",
+   "sha256": "90a22a34405f723cfd7be8af44d26864a68a37a212f38ebe5464b08f1116db69",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/desktop_qt/tests/width/tst_studio3.qml",
+   "sha256": "4106fbc2a87aa0add208b88b4b3e8724ae62102e83d20394796e02c03454857a",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/A_NAME_READ_MANY_WAYS.md",
+   "sha256": "41de46dc8055d704b84225a6e87f5dd9e433dec21dbd32d881a2779fea9b07f1",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/ENGLISH_TO_VIETNAMESE.md",
+   "sha256": "5c9aeda106b2cb87fc88b5e453c1189f729e456c68dcbf4fe82078b031a5b381",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/LLM_EVAL.md",
+   "sha256": "4a78c311491d5d0b66d9129670d57e030cbe8c55cd5beacc1a3dcbb252d6c0d3",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/LLM_EVAL.md",
+   "sha256": "695adbefe16fc3b39d1499e44eac38304c3edc55bcca25b7e9c49e5e4dabe4d5",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/LLM_EVAL.md",
+   "sha256": "94eed96581173db2eef4806299abacb7566a93e7c41644a039255aac80585e9e",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/LLM_EVAL.md",
+   "sha256": "c2dde0d3564a93e080cb4373fbbc3610875bf281b067384a101975a73b15c53c",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/LOCKED_NAME_ANCHOR_IS_A_SPELLING_TEST.md",
+   "sha256": "7abc209fd23b5e781f579cd16229b5c2a9875cecb38f9df3366849d496abf017",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/MUSIC_RESEARCH.md",
+   "sha256": "ae438cd89fb9859d93d5395ec13f97b63f06a2088b42662e34931a9c062a44d2",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/README.md",
+   "sha256": "5baa4155876cd935de0debcd336b1079e99f10645677fc496ae6310fb7d72b31",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/VERSIONS.md",
+   "sha256": "82f7d96f0a7983b51df9d6f3092c4f6a05bd5375da1a69a22519b9e5f7891ac4",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/WORK_LOG.md",
+   "sha256": "582ac95137fc4010df1ed787f484b96ee12fe10ce9fa20cf649b3d6742a596a1",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/docs/WORK_LOG.md",
+   "sha256": "ba741a691a23eaab7f43a15e0d62561fe9b65a206d2960ce28c40cc6cda62016",
+   "reason": "Quoted message of the project owner, not book text."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/LiveStreamOnDeviceTest.kt",
+   "sha256": "95cc3d816e6e8e206569c2bfa605159b8232113775a03eeeee0cc2de1a48ed9c",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/readaloud/ReadAloudOnDeviceTest.kt",
+   "sha256": "de9b8bbc04a6fe7df04529b7acd6626cf8ef55a3c264c0d24ebd3c4b7eed81c3",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt",
+   "sha256": "43c612307216e9a8b245911f568a500fe12f8c231785b357f61a6a90f87a6a23",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/MachineVoicePick.kt",
+   "sha256": "ef6f950dc5dab57052d7815e1c115bcff2307e1fdb3995e93c815181493b06d4",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt",
+   "sha256": "c5fa98f7f20bc427e4e07204aa51fcf357749e8cfd73dfe773bc8acd839e2c1d",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/corpus/manifest.py",
+   "sha256": "3cedd3b1e30b95c73fc0ad85c29829457f9dbb01651d25ccccfcd6b121bd89d5",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/corpus/manifest.py",
+   "sha256": "e8548653b9adf615205e846f017c9b607c4027b2288c94811172b796a58ffc56",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/heartbeat_wait.py",
+   "sha256": "8da1e9a3b24c0ee9e7067e729c00505a2dffca3b034954e87061334e2aac65c6",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/make_speaker_pass_fixtures.py",
+   "sha256": "1c4ec5399452acc9177a4fd384185ab89d43fe3cdca0d4b29c772b72344736d2",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/model_eval/build_training_set.py",
+   "sha256": "681bb6e753c4bab236010ab7f8553312c1bf32b92543b24fbae2c2424847aad5",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/model_eval/replay_all.py",
+   "sha256": "0dc77b19ba8303c9604988cb7713c340cbea526da03a076fa2ac324ac7b3eb1c",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/model_eval/replay_all.py",
+   "sha256": "a5ef8eb6facc08b83aba6c262e327e8e757956ff709c78a6290dc7871f2de85d",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/pending_patches/patch_a_censored_word_is_a_pause.py",
+   "sha256": "50c4d4d3a603837080442de3859ba106d8874d8f81088f30819e32652aeaeb21",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/pending_patches/patch_a_term_quoted_mid_sentence_is_the_narrators_own_line.py",
+   "sha256": "1dc3c13e7e37abea25884217f1a78793c0af58b5507383849c0189b8e1b842f7",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/pending_patches/patch_a_whole_line_in_white_corner_brackets_is_a_voice.py",
+   "sha256": "68dc6f64d5c69b36b56650c48c757b1f770d4661754df6bf4dbc9b96a33ab5cf",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/try_a_pronunciation.py",
+   "sha256": "7b84d419496b742d03d4dccab97f80ec983b7b519ffff5dad5c4c724fe10f325",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/vieneu_android_fixtures.py",
+   "sha256": "9d7dce0a012c0e03dc6ea94182f8c654c00b9bd799fb7f8bbfd1acea76dff2c0",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/n0/chapters_mood.json",
+   "sha256": "1e0431034c8e6006fa3de7a117e93597cfb109933e753c47d0a65c0268c66d7f",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/n0/chapters_mood.json",
+   "sha256": "30807f452b9cd0e7540f90dc4028eaddaf0fff978da85a51c770e97fa5cf608b",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/n0/chapters_mood.json",
+   "sha256": "ab1b154d5a70ddcb868d0fc32e1eecdac976daf501e9512677f3c2bf86da59c8",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/n0/chapters_mood.json",
+   "sha256": "e9bab06b255ee598906833b5dea83b9f92ce1a3710a382f54fdfcc691e03a55b",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/lb_fixture.json",
+   "sha256": "0fc4b1304b9e53696f7878a8581b66bd2d73e441e3e2931c80e97b48f0f3e28d",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/lb_fixture.json",
+   "sha256": "3450d7f8ac0541d9907dd8cfef7a0803148f1c5c42025e1d19c79c9650e2783f",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/lb_fixture.json",
+   "sha256": "58a4bd6c4ffedab0d218b6a2f4b76af6ca101bdf4d7922de084a8eece2ec316e",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/lvj_fixture.json",
+   "sha256": "caeac5f6f1eb41f1e3a0fe1f42db4cbf297b82644bd09c4d621d163c8e0eef04",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/lvj_fixture.json",
+   "sha256": "f83439ca27bceff2d9f263521be9267623f429f97eac660f762887891d158869",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json",
+   "sha256": "1e0431034c8e6006fa3de7a117e93597cfb109933e753c47d0a65c0268c66d7f",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json",
+   "sha256": "30807f452b9cd0e7540f90dc4028eaddaf0fff978da85a51c770e97fa5cf608b",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json",
+   "sha256": "ab1b154d5a70ddcb868d0fc32e1eecdac976daf501e9512677f3c2bf86da59c8",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json",
+   "sha256": "e9bab06b255ee598906833b5dea83b9f92ce1a3710a382f54fdfcc691e03a55b",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/readaloud/soundfix/cases.json",
+   "sha256": "aa4d281d26331c2508670c80feca2afff275b60335403f6774d0836776c8d7a2",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "07b3b96650dd44a32d0db9dc159531242c2f63385702215d781330cb30f6041e",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "0deb4ea9fa18b381e39281e3b709f4f453606c71465285d1e976f98071df3565",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "163abe53036051184f5f2001be5202d8aff7d8cbd0c0c9dcce6b45aaffbf3fb9",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "19d9cb013c094f8b6dbe0ceaa21405c62660e962b2361e48eb658d0c971a9283",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "3e7a22a6fc35deb8fcd1df755e4e72ed121568435e7963485450e63e87a51503",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "4421c389a6e6898af47b74008ee21a463c664d3feb9f111557f00ff644f71dd3",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "4695aaefa14f3237d4a26b4ed70ca8b95a9f57c6fdc8a0f9140db871d415c5fe",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "4f51890d1301927e4d3ecc8bec653f111f750f4f82fa063092d60ac3826c7366",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "5842362adc6837e2fed7dc1e5e7aa0624f43f5592874f45d77af5160d4edf073",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "9da2b331ae8c99d34c0d04c16fb754bface8f01edf58d5f22617dc641afe7996",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "a261629b9ca775148d32c52c2747722a3c3f0664d9a373c069f0bd4672dd0c76",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "afd321fba29dff2190ab6a7c59691ee01bbb099fe27d2552a85b776557f0386c",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "d0bd8c5a3a68111ba3f4c5f7ccea4f0ae3517d2b4d26d87a193be22232c2ad61",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "e7bcdd08fc4ba9f5b927b5add6770c65cf58283084c67237c8d283999abb63eb",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/speaker_pass/synthetic_b.json",
+   "sha256": "fa9ef294a87f42de8c3de1bd18503b5f3f269ced1b157832cc03baee987ed127",
+   "reason": "Self-written music/speaker fixture (audit 2026-11-12); matches are stock phrases repeated across fixtures."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/vieneu/android/text.json",
+   "sha256": "17cb134f28e6d8f9e58fba87f5217fd458051a3934914d7fa6f94a2bc6884bf3",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/vieneu/android/text.json",
+   "sha256": "3ed18530ce26152b1d454092cc55f8aca7185144a5483425f4c821063edc717b",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/vieneu/android/text.json",
+   "sha256": "a9fab49435bb13ae9f317effa6125b93dc501e6a8e243a7104200227d06876c7",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/vieneu/android/text.json",
+   "sha256": "f05a929af327a59cb0042daf9180d81481d91aa1ad7aae477d03e98b3ccf5423",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/word_timing/truth.json",
+   "sha256": "bba8dc63e56c9134e4afcbd4e3dde1179169e3513e348bd905cb9c452ec79041",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/test_a_censored_word_is_a_pause.py",
+   "sha256": "46d71cb5ac011bbf76b6a36caab51aaca43947b223af4ce7e370946b455475b5",
+   "reason": "Character title or name repeated as an input/expected pair; no sentence."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/test_address_cues.py",
+   "sha256": "de03cf9f6d74282ce08c4706b8fb11d402cd3fd8969e61789f9d7bcdbcf5fcc1",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/test_first_person_question.py",
+   "sha256": "3ec52108f6e2350489ead7578c6a9d2eea0ceb43bc3a5c0b249d30323bd4a54e",
+   "reason": "Public title of a book in the test library (book metadata, not book text)."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/test_readaloud_vieneu.py",
+   "sha256": "1979b17de210acec33647557194e44d088e567c4f1b8435ff44196bb742f6c6f",
+   "reason": "Code or grammar expression (weekday names, numerals); no prose."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/test_tail_credit_lines.py",
+   "sha256": "9ea4b132d1e7d01a65c1c65943cfb9711edd8746773e5f82097ab8ef0e73f66d",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/ui/src/gallery/data.ts",
+   "sha256": "f6e12e4acc54157a96419af8775153dd7efba7b0553d16f530780ea3ad053ab2",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/ui_strings/vi.json",
+   "sha256": "431a486c643b54858b4c5843e82dc862984c2a24abed3b7d8f0396da2f68f0ae",
+   "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  }
+ ]
+}
