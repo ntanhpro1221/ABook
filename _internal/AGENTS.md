@@ -125,10 +125,18 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - MP3 phải được FFmpeg decode toàn bộ trước khi commit.
 - TTS retry theo thứ tự: seed VieNeu khác → chia nhỏ an toàn nếu câu đủ dài → `failed`; câu cảm thán
   ngắn không được split vì sẽ làm sai nội dung.
+  Ngoại lệ đã duyệt F1: hai hạt khác nhau cùng có `repeated_content` với cùng cụm >= 2 âm tiết
+  (so đúng bằng phép gộp thanh của ASR), hoặc F4 báo thời lượng bất thường, thì ứng viên kế tiếp
+  tách tại dấu câu giữa các lần xuất hiện trong lời đọc đã materialize. Không đổi chữ, không
+  chạm câu <= 2 từ, không cắt span cách đọc ghim. SQLite dựng lại bằng chứng trước vòng ứng viên;
+  thiếu bằng chứng không được nhận provenance `repeat_alias_v1`. F0 cấm đề cử ngoại lệ nếu có cụm lặp.
 - **Một preset là một giọng nguyên bản** (chủ sách 06-11: “bỏ hết trừ cân bằng tốc độ”). Không đổi F0,
   formant, register hay gain theo tuổi/cảm xúc/volume/vai người kể. Chỉ giữ WSOLA và khoảng nghỉ cấu trúc, không bù nghỉ theo cảm xúc hay lời dẫn thoại.
 - Khoá bảng `engine@version/preset`; VieNeu chỉ có `r`, `o_db`, `ref_lufs`. Gain câu = `L + o_db - ref_lufs`,
   thêm trần đỉnh an toàn; không line offset, không RMS/LUFS đo từng câu để đặt gain. Không đổi `r` khi fit độ to.
+  Metadata QA `seconds_per_syllable` của F4 là trung vị đóng băng theo preset ở x=1 từ bản chụp
+  đã dùng trong thiết kế; chỉ đo tỉ lệ cho câu 5-12 âm tiết, không điều khiển giọng/ngân sách frame.
+  Giọng chưa đo không mang metric này; không fit lại từ DB sách đang thu. Đổi `r` phải đo lại hằng này.
 - Sau phân tích toàn sách, cấp preset chưa dùng cho vai nhiều câu trước vai ít câu. Chọn bằng phái và hạng
   chủ sách; trẻ con (cả bé trai) tự chọn từ pool nữ nguyên bản, giọng người nghe ghim vẫn được ưu tiên.
   Casting và kiểm giọng trước xuất dùng chung `preset_fits_person`. Hết preset thì dùng chung và nghe cùng giọng; không tạo thang bậc phụ.

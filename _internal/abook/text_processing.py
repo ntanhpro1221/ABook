@@ -709,6 +709,160 @@ def split_text_for_strategy(text: str, strategy: str) -> tuple[list[str], int]:
     return parts, max_chars
 
 
+# Tách "alias" (repeat_design.md, F1): VieNeu không có căn chỉnh tường minh, nên hai bản giống hệt
+# nhau của một cụm trong cùng một prompt là hai đích attention nó không phân biệt được. Đọc xong
+# lần sau, con trỏ ngầm nhảy về sau lần trước và đọc lại đoạn giữa ("Đấm hắn! ×3" ra ×4, "là đồ
+# bơi, là đồ bơi" ra ×4) - ở MỌI hạt giống (Hello 1915 6/6, 2153 6/6), nên vòng hạt mới không cứu
+# được. Tách văn bản ở dấu câu giữa hai lần xuất hiện để không lần gọi nào thấy hai bản. Chỉ cắt
+# văn bản, không đổi một ký tự (`" ".join(pieces) == text`), không cắt audio.
+REPEAT_ALIAS_SPLIT_STRATEGY = "repeat_alias_v1"
+# Không có trần độ dài: mảnh là những gì nằm giữa hai lần xuất hiện. Trường `split_max_chars` vẫn
+# phải là một số nguyên trong provenance, nên 0 nghĩa là "không chia theo độ dài".
+REPEAT_ALIAS_SPLIT_MAX_CHARS = 0
+SPLIT_REPEAT_NGRAM_FIELD = "split_repeat_ngram"
+# F4: bản thu đầu dài bất thường so với số âm tiết (audio_io.inspect_wav). Chỉ là bằng chứng,
+# không phải cổng trượt; nhưng nó cho phép vào thẳng tách alias sau bản đầu.
+SYLLABLE_DURATION_RATIO_METRIC = "syllable_duration_ratio"
+SYLLABLE_DURATION_OUTLIER_METRIC = "syllable_duration_outlier"
+REPEAT_ALIAS_MIN_WORDS = 2
+REPEAT_ALIAS_MAX_WORDS = 6  # = asr.REPEATED_CONTENT_MAX_NGRAM
+REPEAT_ALIAS_BOUNDARY_MARKS = ".!?…,;:"
+_REPEAT_ALIAS_CLOSERS = "\"'”’»)]}"
+_REPEAT_ALIAS_WORD = re.compile(r"[^\W_]+", re.UNICODE)
+_REPEAT_ALIAS_EN_TAG = re.compile(r"</?en>")
+
+
+def fold_vietnamese_tones(text: str) -> str:
+    """Use exactly the word normalization and segmental comparison of the ASR detector.
+
+    Import lazily because ASR also imports text processing. No recognizer is loaded.
+    Spelling-only accent stripping disagrees with ASR on homophones such as gi/d.
+    """
+    from .asr import _tone_folded_words, normalize_transcript
+
+    return " ".join(_tone_folded_words(normalize_transcript(text).split()))
+
+
+def _repeat_alias_words(text: str) -> list[tuple[str, int, int]]:
+    masked = _REPEAT_ALIAS_EN_TAG.sub(lambda match: " " * len(match.group()), text)
+    words = [
+        (word, match.start(), match.end())
+        for match in _REPEAT_ALIAS_WORD.finditer(masked)
+        for word in fold_vietnamese_tones(match.group()).split()
+    ]
+    # Numeric normalization can consume several source tokens (e.g. 1,000). If their
+    # spans cannot be mapped exactly, keep this line on its ordinary repair schedule.
+    return words if [word for word, _, _ in words] == fold_vietnamese_tones(text).split() else []
+
+
+def _repeat_alias_occurrences(folded: list[str], gram: list[str]) -> list[int]:
+    width, index, found = len(gram), 0, []
+    while index + width <= len(folded):
+        if folded[index : index + width] == gram:
+            found.append(index)
+            index += width
+        else:
+            index += 1
+    return found
+
+
+def repeated_alias_phrase(text: str, ngram: str | None = None) -> list[str] | None:
+    """Cụm (đã gộp thanh) dài nhất, 2-6 từ, xuất hiện >= 2 lần không chồng nhau trong `text`.
+
+    Có `ngram` (cụm ASR nghe lặp, `repeated_content.ngram`) thì cụm phải nằm trong nó: ASR nghe
+    "một mình ngắm pháo hoa" còn cụm lặp của văn bản là "một mình". Bằng nhau về độ dài thì lấy
+    cụm xuất hiện sớm nhất. Không có thì None.
+    """
+    folded = [word for word, _start, _end in _repeat_alias_words(text)]
+    allowed: list[str] | None = None
+    if ngram is not None and str(ngram).strip():
+        allowed = [word for word, _start, _end in _repeat_alias_words(str(ngram))]
+    best: tuple[int, int, list[str]] | None = None
+    for width in range(REPEAT_ALIAS_MIN_WORDS, REPEAT_ALIAS_MAX_WORDS + 1):
+        for start in range(len(folded) - width + 1):
+            gram = folded[start : start + width]
+            if allowed is not None and not any(
+                allowed[i : i + width] == gram for i in range(len(allowed) - width + 1)
+            ):
+                continue
+            if len(_repeat_alias_occurrences(folded, gram)) < 2:
+                continue
+            key = (-width, start)
+            if best is None or key < best[:2]:
+                best = (key[0], key[1], gram)
+    if best is None:
+        return None
+    words = _repeat_alias_words(text)
+    start, width = best[1], len(best[2])
+    from .asr import normalize_transcript
+
+    return normalize_transcript(text[words[start][1] : words[start + width - 1][2]]).split()
+
+
+def _repeat_alias_cut(text: str, left: int, right: int, en_spans: list[tuple[int, int]]) -> int | None:
+    """Vị trí khoảng trắng đơn đầu tiên trong [left, right) đứng ngay sau một dấu câu."""
+    for index in range(left, right):
+        if text[index] != " " or index + 1 >= len(text) or text[index + 1].isspace():
+            continue
+        if any(start < index < end for start, end in en_spans):
+            continue
+        back = index - 1
+        while back >= 0 and text[back] in _REPEAT_ALIAS_CLOSERS:
+            back -= 1
+        if back >= 0 and text[back] in REPEAT_ALIAS_BOUNDARY_MARKS:
+            return index
+    return None
+
+
+def split_text_at_repeated_phrase(text: str, ngram: str | None = None) -> list[str]:
+    """Chia `text` ở dấu câu giữa mỗi cặp lần xuất hiện liên tiếp của cụm lặp.
+
+    Mỗi cặp k, k+1 cắt **một** lần, ở dấu câu đầu tiên sau khi lần k kết thúc (ưu tiên ngay sau
+    lần k). Không có dấu câu giữa hai lần thì cặp ấy không cắt - không bao giờ cắt ở giữa từ ở
+    đây. Không có cụm, hay không cắt được chỗ nào, thì trả `[text]`. Hàm thuần của (text, ngram):
+    resume dựng lại y hệt.
+    """
+    stripped = text.strip()
+    if stripped != text or not text:
+        return [text] if text else []
+    if len(re.findall(r"[^\W_]+(?:-[^\W_]+)*", _REPEAT_ALIAS_EN_TAG.sub("", text))) <= 2:
+        return [text]
+    gram = repeated_alias_phrase(text, ngram)
+    if gram is None:
+        return [text]
+    words = _repeat_alias_words(text)
+    folded = [word for word, _start, _end in words]
+    folded_gram = fold_vietnamese_tones(" ".join(gram)).split()
+    occurrences = _repeat_alias_occurrences(folded, folded_gram)
+    width = len(folded_gram)
+    en_spans: list[tuple[int, int]] = []
+    opened: int | None = None
+    for match in _REPEAT_ALIAS_EN_TAG.finditer(text):
+        if match.group() == "<en>":
+            opened = match.start()
+        elif opened is not None:
+            en_spans.append((opened, match.end()))
+            opened = None
+    cuts: list[int] = []
+    for current, following in zip(occurrences, occurrences[1:]):
+        left = words[current + width - 1][2]
+        right = words[following][1]
+        cut = _repeat_alias_cut(text, left, right, en_spans)
+        if cut is not None:
+            cuts.append(cut)
+    if not cuts:
+        return [text]
+    pieces: list[str] = []
+    start = 0
+    for cut in cuts:
+        pieces.append(text[start:cut])
+        start = cut + 1
+    pieces.append(text[start:])
+    if " ".join(pieces) != text or any(not has_spoken_content(piece) for piece in pieces):
+        raise RuntimeError("repeat-alias split changed the spoken text")
+    return pieces
+
+
 def _split_long(text: str, max_chars: int) -> list[str]:
     return split_long_text(text, max_chars)
 

@@ -130,12 +130,18 @@ from .perceptual_contract import (
 )
 from .text_processing import (
     CLAUSE_SPLIT_STRATEGY,
+    REPEAT_ALIAS_SPLIT_MAX_CHARS,
+    REPEAT_ALIAS_SPLIT_STRATEGY,
     SENTENCE_SPLIT_STRATEGY,
     SPLIT_MAX_CHARS_FIELD,
+    SPLIT_REPEAT_NGRAM_FIELD,
     SPLIT_STRATEGY_FIELD,
+    SYLLABLE_DURATION_OUTLIER_METRIC,
+    SYLLABLE_DURATION_RATIO_METRIC,
     has_spoken_content,
     is_standalone_ha_gasp,
     load_and_segment_chapter,
+    split_text_at_repeated_phrase,
     split_text_for_strategy,
 )
 from .recovery import SignalMetricsCache, recover_project
@@ -330,6 +336,7 @@ TTS_SIGNAL_PROVENANCE_FIELDS = (
     "split_seed_salt_prefix",
     SPLIT_STRATEGY_FIELD,
     SPLIT_MAX_CHARS_FIELD,
+    SPLIT_REPEAT_NGRAM_FIELD,
     "split_parts",
     "applied_level_offset_db",
     "level_speech_seconds",
@@ -1670,6 +1677,11 @@ class BookPipeline:
             "split_seed_salt_prefix": signal.get("split_seed_salt_prefix"),
             SPLIT_STRATEGY_FIELD: signal.get(SPLIT_STRATEGY_FIELD),
             SPLIT_MAX_CHARS_FIELD: signal.get(SPLIT_MAX_CHARS_FIELD),
+            SPLIT_REPEAT_NGRAM_FIELD: signal.get(SPLIT_REPEAT_NGRAM_FIELD),
+            # F4: chép sang check để bằng chứng kích hoạt tách alias nằm cùng chỗ với
+            # `repeated_content`, gắn với checksum bản thu (ProjectDB._repeat_alias_split_evidence_conn).
+            SYLLABLE_DURATION_RATIO_METRIC: signal.get(SYLLABLE_DURATION_RATIO_METRIC),
+            SYLLABLE_DURATION_OUTLIER_METRIC: signal.get(SYLLABLE_DURATION_OUTLIER_METRIC),
             "split_parts": signal.get("split_parts", []),
             LOCKED_NAME_ANCHOR_METRICS_KEY: anchor_metrics,
             "spelling_alias_evidence": result.get("spelling_alias_evidence"),
@@ -4152,6 +4164,40 @@ class BookPipeline:
             else SENTENCE_SPLIT_STRATEGY
         )
 
+    def _repeat_alias_split_ngram(
+        self,
+        row: Any,
+        repair_round: int,
+        spoken_text: str,
+        incumbent_sha256: str,
+    ) -> str | None:
+        """Cụm ASR (hay "") mà ứng viên vòng này tách alias theo, hoặc None nếu không tách alias.
+
+        Hàm thuần của bằng chứng đã lưu (`ProjectDB.repeat_alias_split_evidence`) và chuỗi nói,
+        nên lúc cấp phát và lúc sinh (cả sau resume) ra cùng một câu trả lời. Không bao giờ chạm
+        câu <= 2 từ (bất biến AGENTS: câu cảm thán ngắn không được split), và chỉ tách khi văn bản
+        thật có một cụm >= 2 từ xuất hiện >= 2 lần với dấu câu giữa hai lần.
+        """
+        if is_short_utterance(spoken_text):
+            return None
+        evidence = self.db.repeat_alias_split_evidence(
+            segment_id=int(row["id"]),
+            policy_hash=self.quality_policy_hash,
+            repair_round=int(repair_round),
+            incumbent_sha256=str(incumbent_sha256 or ""),
+        )
+        if evidence is None:
+            return None
+        ngram = str(evidence["ngram"])
+        if len(self._repeat_alias_pieces(spoken_text, ngram)) < 2:
+            return None
+        return ngram
+
+    @staticmethod
+    def _repeat_alias_pieces(spoken_text: str, ngram: str) -> list[str]:
+        """Only duration evidence (empty ngram) may choose the text's own longest repeat."""
+        return split_text_at_repeated_phrase(spoken_text, ngram or None)
+
     def _allocate_segment_candidate(
         self,
         row: Any,
@@ -4243,9 +4289,19 @@ class BookPipeline:
                 )
             )
         spoken_text_sha256 = hashlib.sha256(spoken_text.encode("utf-8")).hexdigest()
+        # F1: hai bản thu cùng lặp một cụm (hay bản đầu dài bất thường, F4) thì hạt mới không
+        # cứu được - cấp phát thẳng một ứng viên tách, không qua các lượt direct. Thay chỗ cho
+        # tách mệnh đề nếu cả hai cùng đến: tách alias nhắm đúng nguyên nhân.
+        repeat_alias = (
+            self._repeat_alias_split_ngram(
+                row, repair_round, spoken_text, str(row["wav_sha256"] or "")
+            )
+            is not None
+        )
+        split_from_start = force_clause_split or repeat_alias
         tts_attempt = (
             int(self.settings["tts"]["max_retries"])
-            if force_clause_split
+            if split_from_start
             else 0
         )
         seed_salt = (
@@ -4253,7 +4309,7 @@ class BookPipeline:
                 repair_round,
                 pronunciation_variant,
             )
-            if force_clause_split
+            if split_from_start
             else self._segment_candidate_seed_salt(
                 repair_round,
                 tts_attempt,
@@ -4274,7 +4330,7 @@ class BookPipeline:
             tts_attempt=tts_attempt,
             generation_strategy=(
                 GENERATION_STRATEGY_SPLIT
-                if force_clause_split
+                if split_from_start
                 else GENERATION_STRATEGY_DIRECT
             ),
             perceptual_required=self._perceptual_qa_enabled(),
@@ -4652,18 +4708,25 @@ class BookPipeline:
             last_error = f"{last_error}; split=short utterance is not splittable"
         else:
             split_attempt = retries
-            split_strategy = self._segment_candidate_split_strategy(candidate)
-            try:
-                _split_parts, split_max_chars = split_text_for_strategy(
-                    spoken_text,
-                    split_strategy,
-                )
-            except ValueError:
-                split_strategy = SENTENCE_SPLIT_STRATEGY
-                _split_parts, split_max_chars = split_text_for_strategy(
-                    spoken_text,
-                    split_strategy,
-                )
+            repeat_ngram = self._repeat_alias_split_ngram(
+                row, repair_round, spoken_text, str(candidate["incumbent_sha256"])
+            )
+            if repeat_ngram is not None:
+                split_strategy = REPEAT_ALIAS_SPLIT_STRATEGY
+                split_max_chars = REPEAT_ALIAS_SPLIT_MAX_CHARS
+            else:
+                split_strategy = self._segment_candidate_split_strategy(candidate)
+                try:
+                    _split_parts, split_max_chars = split_text_for_strategy(
+                        spoken_text,
+                        split_strategy,
+                    )
+                except ValueError:
+                    split_strategy = SENTENCE_SPLIT_STRATEGY
+                    _split_parts, split_max_chars = split_text_for_strategy(
+                        spoken_text,
+                        split_strategy,
+                    )
             split_seed_salt = self._segment_candidate_split_seed_salt(
                 repair_round,
                 pronunciation_variant,
@@ -4693,6 +4756,7 @@ class BookPipeline:
                         seed_salt_prefix=split_seed_salt,
                         pronunciation_delivery_variant=pronunciation_variant,
                         split_strategy=split_strategy,
+                        repeat_ngram=repeat_ngram,
                     ))
                     or []
                 )
@@ -4712,6 +4776,8 @@ class BookPipeline:
                 metrics["split_seed_salt_prefix"] = split_seed_salt
                 metrics[SPLIT_STRATEGY_FIELD] = split_strategy
                 metrics[SPLIT_MAX_CHARS_FIELD] = split_max_chars
+                if repeat_ngram is not None:
+                    metrics[SPLIT_REPEAT_NGRAM_FIELD] = repeat_ngram
                 metrics["split_parts"] = split_provenance
                 if split_provenance:
                     first_part = split_provenance[0]
@@ -6024,14 +6090,22 @@ class BookPipeline:
         seed_salt_prefix: str = "split",
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
         split_strategy: str = SENTENCE_SPLIT_STRATEGY,
+        repeat_ngram: str | None = None,
     ) -> list[dict[str, Any]]:
         text, anchors = self._spoken_text_with_pronunciation_variant(
             row,
             pronunciation_delivery_variant,
         )
-        if len(text) < 100:
-            raise AudioQualityError("segment too short to split safely")
-        pieces, _split_max_chars = split_text_for_strategy(text, split_strategy)
+        if split_strategy == REPEAT_ALIAS_SPLIT_STRATEGY:
+            # Không có sàn 100 ký tự: "Đấm hắn! ×3" có 24. Nhưng câu <= 2 từ thì không bao giờ
+            # (bất biến AGENTS), và mảnh nối lại phải đúng từng ký tự (kiểm ngay dưới).
+            if repeat_ngram is None or is_short_utterance(text):
+                raise AudioQualityError("repeat-alias split needs its phrase and a non-short line")
+            pieces = self._repeat_alias_pieces(text, repeat_ngram)
+        else:
+            if len(text) < 100:
+                raise AudioQualityError("segment too short to split safely")
+            pieces, _split_max_chars = split_text_for_strategy(text, split_strategy)
         if len(pieces) < 2:
             raise AudioQualityError("split produced fewer than two pieces")
         if " ".join(pieces) != text:

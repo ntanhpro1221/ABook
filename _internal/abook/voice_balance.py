@@ -37,6 +37,7 @@ class VoiceConstants:
     ref_lufs: float  # LUFS trung bình của bản thô (sau tempo) của giọng
     engine_speed: float | None = None  # tham số tốc độ của chính máy đọc (ENGINE_SPEED_RANGE), None = máy kéo bằng WSOLA
     word_break_gate: dict[str, Any] | None = None
+    seconds_per_syllable: float | None = None  # diagnostic median at x=1; never changes synthesis
 
 
 def voice_key(engine: str, version: str, preset: str) -> str:
@@ -81,13 +82,15 @@ def _validate(table: Any) -> dict[str, Any]:
     for key, record in voices.items():
         if not isinstance(record, dict):
             raise VoiceBalanceError(f"voice_balance.json: {key} phải là object")
-        if set(record) - {"r", "o_db", "ref_lufs", "engine_speed", "word_break_gate"}:
+        if set(record) - {"r", "o_db", "ref_lufs", "engine_speed", "word_break_gate", "seconds_per_syllable"}:
             raise VoiceBalanceError(f"voice_balance.json: {key} có trường ngoài hợp đồng preset")
         if key.count("/") != 1 or not key.partition("/")[2]:
             raise VoiceBalanceError(f"voice_balance.json: khoá preset không hợp lệ: {key}")
         r = number(record, "r", R_RANGE, key)
         number(record, "o_db", O_DB_RANGE, key)
         number(record, "ref_lufs", REF_LUFS_RANGE, key)
+        if "seconds_per_syllable" in record:
+            number(record, "seconds_per_syllable", (0.05, 1.0), key)
         if "word_break_gate" in record:
             gate = record["word_break_gate"]
             if not isinstance(gate, dict) or gate.get("metric") not in {"silence_ms", "closure_hgb_v1"}:
@@ -195,6 +198,7 @@ def constants_for_key(key: str) -> VoiceConstants:
         ref_lufs=float(record["ref_lufs"]),
         engine_speed=float(record["engine_speed"]) if "engine_speed" in record else None,
         word_break_gate=dict(record["word_break_gate"]) if "word_break_gate" in record else None,
+        seconds_per_syllable=float(record["seconds_per_syllable"]) if "seconds_per_syllable" in record else None,
     )
 
 

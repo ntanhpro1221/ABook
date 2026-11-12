@@ -52,10 +52,16 @@ from .perceptual_contract import (
 )
 from .text_processing import (
     CLAUSE_SPLIT_STRATEGY,
+    REPEAT_ALIAS_MIN_WORDS,
+    REPEAT_ALIAS_SPLIT_MAX_CHARS,
+    REPEAT_ALIAS_SPLIT_STRATEGY,
     SENTENCE_SPLIT_STRATEGY,
     SPLIT_MAX_CHARS_BY_STRATEGY,
     SPLIT_MAX_CHARS_FIELD,
+    SPLIT_REPEAT_NGRAM_FIELD,
     SPLIT_STRATEGY_FIELD,
+    SYLLABLE_DURATION_OUTLIER_METRIC,
+    fold_vietnamese_tones,
     is_standalone_ha_gasp,
     spoken_symbols_to_words,
 )
@@ -271,6 +277,29 @@ tên một **khoá dữ liệu** đã nằm sẵn trong hàng nghìn hàng `sign
 ngưỡng ai có thể đổi ý - khác hẳn `ASR_MIN_VERIFIABLE_CHARS`, thứ đã được chuyển vào
 `asr_contract` chính vì nó là một con số đo được.
 """
+REPEATED_CONTENT_EVIDENCE_KEY = "repeated_content"
+"""= `asr.ASR_REPEATED_CONTENT_KEY`: khoá trong metrics của check ASR khi bản thu nói một cụm nhiều
+lần hơn văn bản. Chuỗi trần cùng lý do với khoá trần ở trên (test giữ hai bên bằng nhau)."""
+
+
+def _candidate_heard_repeated_content(candidate: sqlite3.Row) -> bool:
+    """Kết quả beam/greedy đã lưu trên dòng ứng viên có `repeated_content` không (đọc lỗi = có).
+
+    `beam_result_json` / `greedy_result_json` bằng đúng metrics của check (đã kiểm lúc ghi)."""
+    for field in ("beam_result_json", "greedy_result_json"):
+        try:
+            raw = candidate[field]
+        except (KeyError, IndexError):
+            raw = None
+        if raw is None:
+            continue
+        try:
+            stored = json.loads(raw)
+        except ValueError:
+            return True
+        if not isinstance(stored, dict) or stored.get(REPEATED_CONTENT_EVIDENCE_KEY) is not None:
+            return True
+    return False
 
 
 def _asr_only_failure_codes(reason: str) -> set[str] | None:
@@ -9866,6 +9895,7 @@ class ProjectDB:
             "split_seed_salt_prefix": signal.get("split_seed_salt_prefix"),
             SPLIT_STRATEGY_FIELD: signal.get(SPLIT_STRATEGY_FIELD),
             SPLIT_MAX_CHARS_FIELD: signal.get(SPLIT_MAX_CHARS_FIELD),
+            SPLIT_REPEAT_NGRAM_FIELD: signal.get(SPLIT_REPEAT_NGRAM_FIELD),
             "split_parts": signal.get("split_parts") or [],
             POSTPROCESS_PROFILE_FIELD: signal.get(POSTPROCESS_PROFILE_FIELD),
             POSTPROCESS_SOURCE_CANDIDATE_ID_FIELD: signal.get(
@@ -10094,6 +10124,7 @@ class ProjectDB:
             or split_strategy is not None
             or split_max_chars is not None
             or split_parts not in (None, [])
+            or signal.get(SPLIT_REPEAT_NGRAM_FIELD) is not None
         )
         try:
             generation_strategy = ProjectDB._normalized_generation_strategy(
@@ -10138,23 +10169,51 @@ class ProjectDB:
             raise RuntimeError(
                 "candidate split seed-salt prefix differs from its deterministic schedule"
             )
-        expected_split_strategy = (
-            CLAUSE_SPLIT_STRATEGY
-            if (
-                int(candidate["repair_round"]) + 1
-                == int(candidate["repair_budget"])
-                and str(candidate["pronunciation_delivery_variant"])
-                == PRONUNCIATION_DELIVERY_SOURCE
+        repeat_ngram = signal.get(SPLIT_REPEAT_NGRAM_FIELD)
+        if split_strategy == REPEAT_ALIAS_SPLIT_STRATEGY:
+            # Tách alias chỉ hợp lệ khi bằng chứng ASR/thời lượng ĐÃ LƯU nói vậy - dựng lại từ
+            # chính các check, không tin lời khai của người gọi. Chiều ngược lại (bằng chứng có
+            # mà vẫn tách thường) thì cho qua: tầng này không có chuỗi nói, nên không biết văn bản
+            # có dấu câu nào giữa hai lần xuất hiện để cắt hay không.
+            evidence = ProjectDB._repeat_alias_split_evidence_conn(
+                conn,
+                segment_id=int(candidate["segment_id"]),
+                policy_hash=str(candidate["policy_hash"]),
+                repair_round=int(candidate["repair_round"]),
+                incumbent_sha256=str(candidate["incumbent_sha256"]),
             )
-            else SENTENCE_SPLIT_STRATEGY
-        )
-        if split_strategy != expected_split_strategy:
-            raise RuntimeError(
-                "candidate split strategy differs from its deterministic schedule"
+            if evidence is None:
+                raise RuntimeError(
+                    "candidate repeat-alias split lacks its stored repeated-content evidence"
+                )
+            if repeat_ngram != evidence["ngram"]:
+                raise RuntimeError(
+                    "candidate repeat-alias phrase differs from its stored evidence"
+                )
+            expected_split_strategy = REPEAT_ALIAS_SPLIT_STRATEGY
+            expected_split_max_chars = REPEAT_ALIAS_SPLIT_MAX_CHARS
+        else:
+            if repeat_ngram is not None:
+                raise RuntimeError(
+                    "ordinary candidate split cannot carry a repeat-alias phrase"
+                )
+            expected_split_strategy = (
+                CLAUSE_SPLIT_STRATEGY
+                if (
+                    int(candidate["repair_round"]) + 1
+                    == int(candidate["repair_budget"])
+                    and str(candidate["pronunciation_delivery_variant"])
+                    == PRONUNCIATION_DELIVERY_SOURCE
+                )
+                else SENTENCE_SPLIT_STRATEGY
             )
-        expected_split_max_chars = SPLIT_MAX_CHARS_BY_STRATEGY[
-            expected_split_strategy
-        ]
+            if split_strategy != expected_split_strategy:
+                raise RuntimeError(
+                    "candidate split strategy differs from its deterministic schedule"
+                )
+            expected_split_max_chars = SPLIT_MAX_CHARS_BY_STRATEGY[
+                expected_split_strategy
+            ]
         if (
             isinstance(split_max_chars, bool)
             or not isinstance(split_max_chars, int)
@@ -13136,7 +13195,7 @@ class ProjectDB:
         candidate: sqlite3.Row,
         segment: sqlite3.Row,
     ) -> str:
-        """Bốn điều kiện phải đúng cùng lúc mới được thay một bản thu chưa qua ASR.
+        """Năm điều kiện phải đúng cùng lúc mới được thay một bản thu chưa qua ASR.
 
         Kiểm ở tầng này chứ không ở đường ống, và kiểm từ **chính hai dòng dữ liệu** chứ không
         từ lời khai của người gọi: một chốt chặn mà người gọi tự khẳng định điều kiện thì không
@@ -13150,6 +13209,9 @@ class ProjectDB:
            không mang thông tin. Nếu văn bản đủ dài thì ASR **có** ý kiến, và "ứng viên trượt
            ASR" là bằng chứng thật — lúc ấy không được thay.
         4. Mọi mã trượt của ứng viên đều là mã ASR.
+        5. Không đường phiên nào của ứng viên nghe **cụm lặp**. Văn bản ngắn làm phán quyết ASR
+           mất thông tin về *từ*, nhưng một cụm nói nhiều lần hơn văn bản vẫn là bản thu hỏng -
+           cùng nguyên tắc với điều 6 của `_require_locked_reading_lost_only_the_spelling_test`.
 
         Trả về một dòng lý do, để nó đi thẳng vào bảng ghi và vào báo cáo.
 
@@ -13181,6 +13243,7 @@ class ProjectDB:
             ),
             ("văn bản đủ dài để ASR phán xử", speakable >= ASR_MIN_VERIFIABLE_CHARS),
             ("ứng viên trượt bằng mã ngoài ASR", codes is None),
+            ("ứng viên nghe cụm lặp", _candidate_heard_repeated_content(candidate)),
             segment_stable_id=str(segment["stable_id"]),
             candidate_id=int(candidate["id"]),
         )
@@ -13215,13 +13278,147 @@ class ProjectDB:
             return set()
         return {str(code) for code in codes}
 
+    @staticmethod
+    def _check_heard_repeated_content_conn(
+        conn: sqlite3.Connection,
+        quality_check_id: Any,
+    ) -> bool:
+        """Check ASR này có nghe một cụm lặp (`repeated_content`) không. Đọc không được = có.
+
+        Bằng chứng nằm trong `metrics_json` của check, không trong mã trượt: verdict vẫn là
+        `ASR_MISMATCH` như mọi lần trượt khác (asr.ASR_REPEATED_CONTENT_KEY). Không đọc được thì
+        trả True, vì ở chỗ dùng (đề cử ngoại lệ) thiếu bằng chứng không phải lý do để cho qua.
+        """
+        if quality_check_id is None:
+            return True
+        row = conn.execute(
+            "SELECT metrics_json FROM quality_checks WHERE id=?",
+            (int(quality_check_id),),
+        ).fetchone()
+        if row is None:
+            return True
+        try:
+            metrics = json.loads(row["metrics_json"] or "{}")
+        except ValueError:
+            return True
+        if not isinstance(metrics, dict):
+            return True
+        return metrics.get(REPEATED_CONTENT_EVIDENCE_KEY) is not None
+
+    @staticmethod
+    def _repeat_alias_split_evidence_conn(
+        conn: sqlite3.Connection,
+        *,
+        segment_id: int,
+        policy_hash: str,
+        repair_round: int,
+        incumbent_sha256: str,
+    ) -> dict[str, Any] | None:
+        """Bằng chứng đã lưu cho phép ứng viên vòng `repair_round` tách alias (F1), hoặc None.
+
+        Hàm thuần của các dòng `quality_checks` / `segment_candidates` đã commit **trước** vòng
+        này, nên đường ống (lúc cấp phát) và tầng DB (lúc kiểm provenance) dựng ra cùng một câu
+        trả lời, và resume dựng lại y hệt. Các bản thu được xét: đương nhiệm (bản đầu) và ứng
+        viên thường các vòng trước của cùng đương nhiệm.
+
+        Hai cách kích hoạt (repeat_design.md):
+
+        - `repeated_takes`: **hai bản thu khác nhau** đều có `repeated_content` cùng một cụm
+          (gộp thanh) >= 2 từ. Đo ở Hello: khi hai hạt đầu cùng lặp một cụm thì mọi hạt sau đều
+          lặp (6/6 đoạn); khi chỉ hạt đầu lặp, một hạt mới thường tự sửa - nên một bản không đủ.
+          Cụm một từ ("không ... không", đoạn 673) không bao giờ kích hoạt.
+        - `duration`: bản đầu mang cờ `syllable_duration_outlier` (F4: câu 5-12 âm tiết dài hơn
+          p99,9 của bản đã verified). Câu hô "Ăn đi! ×3" ASR nghe thành "anh đi", tức cụm không
+          có trong văn bản, nên không chờ được bằng chứng ASR; thời lượng thì đã đủ nói.
+
+        `ngram` là cụm ASR nghe của check sớm nhất thuộc nhóm thắng, hoặc "" khi chỉ có thời
+        lượng (đường ống tự tìm cụm lặp của văn bản).
+        """
+        normalized_incumbent = str(incumbent_sha256 or "").casefold()
+        takes = {normalized_incumbent}
+        for row in conn.execute(
+            "SELECT wav_sha256 FROM segment_candidates WHERE segment_id=? AND policy_hash=? "
+            "AND repair_round<? AND postprocess_profile=? AND lower(incumbent_sha256)=? "
+            "AND generation_strategy='direct_v1' AND pronunciation_delivery_variant='locked_spoken_v1' "
+            "AND wav_sha256 IS NOT NULL ORDER BY repair_round",
+            (
+                int(segment_id),
+                str(policy_hash).strip(),
+                int(repair_round),
+                POSTPROCESS_PROFILE_NONE,
+                normalized_incumbent,
+            ),
+        ):
+            sha = str(row["wav_sha256"]).casefold()
+            if sha not in takes:
+                takes.add(sha)
+        flagged: dict[str, set[int]] = {}
+        first_ngram: dict[str, tuple[int, str]] = {}
+        duration_outlier = False
+        for row in conn.execute(
+            "SELECT id, artifact_sha256, metrics_json FROM quality_checks "
+            "WHERE segment_id=? AND stage=? AND policy_hash=? ORDER BY id",
+            (int(segment_id), SEGMENT_ASR_DECODE_QUALITY_STAGE, str(policy_hash).strip()),
+        ):
+            sha = str(row["artifact_sha256"] or "").casefold()
+            if sha not in takes:
+                continue
+            try:
+                metrics = json.loads(row["metrics_json"] or "{}")
+            except ValueError:
+                continue
+            if not isinstance(metrics, dict):
+                continue
+            if sha == normalized_incumbent and metrics.get(SYLLABLE_DURATION_OUTLIER_METRIC):
+                duration_outlier = True
+            repeated = metrics.get(REPEATED_CONTENT_EVIDENCE_KEY)
+            if not isinstance(repeated, dict):
+                continue
+            ngram = str(repeated.get("ngram") or "").strip()
+            if len(ngram.split()) < REPEAT_ALIAS_MIN_WORDS:
+                continue
+            key = fold_vietnamese_tones(ngram)
+            seed = metrics.get("generation_seed")
+            if isinstance(seed, bool) or not isinstance(seed, int):
+                continue
+            flagged.setdefault(key, set()).add(seed)
+            first_ngram.setdefault(key, (int(row["id"]), ngram))
+        ranked = sorted(
+            flagged,
+            key=lambda key: (-len(flagged[key]), first_ngram[key][0]),
+        )
+        if ranked and len(flagged[ranked[0]]) >= 2:
+            return {"trigger": "repeated_takes", "ngram": first_ngram[ranked[0]][1]}
+        if duration_outlier:
+            # Duration evidence does not depend on how Whisper spells the repeated
+            # phrase ("anh đi" for "Ăn đi"). Find it from the spoken text in this case.
+            return {"trigger": "duration", "ngram": ""}
+        return None
+
+    def repeat_alias_split_evidence(
+        self,
+        *,
+        segment_id: int,
+        policy_hash: str,
+        repair_round: int,
+        incumbent_sha256: str,
+    ) -> dict[str, Any] | None:
+        with self.connect() as conn:
+            return self._repeat_alias_split_evidence_conn(
+                conn,
+                segment_id=segment_id,
+                policy_hash=policy_hash,
+                repair_round=repair_round,
+                incumbent_sha256=incumbent_sha256,
+            )
+
     def _require_locked_reading_lost_only_the_spelling_test(
         self,
         conn: sqlite3.Connection,
         candidate: sqlite3.Row,
         segment: sqlite3.Row,
     ) -> str:
-        """Năm điều kiện phải đúng cùng lúc mới được đề cử một bản đọc-ghim đã trượt ASR.
+        """Sáu điều kiện phải đúng cùng lúc mới được đề cử một bản đọc-ghim đã trượt ASR.
 
         Kiểm ở tầng này, từ **chính các dòng dữ liệu**, không từ lời khai người gọi - cùng
         lý do với `_require_candidate_beats_a_cut_off_incumbent`.
@@ -13238,6 +13435,11 @@ class ProjectDB:
         5. Đương nhiệm hiện tại của đoạn hoặc là đúng đương nhiệm ứng viên đã đấu với (ca đang
            bay), hoặc là một anh em `source_spelling_v1` của **cùng đoạn** (ca đề cử lại) - tức
            chính bản thu đã thắng nhờ đổi cách đọc. Không đề cử đè lên thứ gì khác.
+        6. Không đường phiên nào nghe **cụm lặp** (`repeated_content` trong metrics của check).
+           Bằng chứng lặp không mang mã riêng - verdict vẫn là `ASR_MISMATCH` như mọi lần trượt -
+           nên điều 2 không thấy nó: ở Hello 4 đoạn (203, 3068, 3409, 3469) lặp ở mọi decode mà
+           vẫn xuất bản thành `warning` qua đúng đường này. Lặp là bản thu hỏng, không phải bài
+           chính tả; AGENTS: cứu tên riêng không được xoá cờ lặp.
 
         Đo trước khi viết: 348 đoạn trong sách đủ cả năm; không đoạn nào có mã khác.
         """
@@ -13276,6 +13478,11 @@ class ProjectDB:
                 bool(float(signal.get(SEGMENT_CEILING_METRIC_KEY, 0.0) or 0.0)),
             ),
             ("ứng viên lệch nhịp", bool(float(signal.get("pace_outlier", 0.0) or 0.0))),
+            (
+                "một đường phiên nghe cụm lặp",
+                self._check_heard_repeated_content_conn(conn, candidate["beam_check_id"])
+                or self._check_heard_repeated_content_conn(conn, candidate["greedy_check_id"]),
+            ),
             ("file WAV thiếu hoặc checksum lệch", self._candidate_file_error(candidate, book_paths.connection_root(conn)) is not None),
             (
                 "đương nhiệm hiện tại không phải bản đã đấu, cũng không phải anh em đọc-theo-chữ-viết",
@@ -13300,7 +13507,7 @@ class ProjectDB:
         segment_id: int,
         policy_hash: str,
     ) -> sqlite3.Row | None:
-        """Ứng viên đọc-ghim mới nhất của đoạn đủ năm điều kiện trên, hoặc None. Không ném."""
+        """Ứng viên đọc-ghim mới nhất của đoạn đủ sáu điều kiện trên, hoặc None. Không ném."""
         with self.connect() as conn:
             segment = conn.execute(
                 "SELECT * FROM segments WHERE id=?", (int(segment_id),)

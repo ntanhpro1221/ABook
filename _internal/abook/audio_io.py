@@ -23,7 +23,12 @@ from .audio_transform_contract import (
     POSTPROCESS_TEMPO_FACTOR,
 )
 from .io_utils import _replace_with_retry, atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
-from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
+from .text_processing import (
+    SYLLABLE_DURATION_OUTLIER_METRIC,
+    SYLLABLE_DURATION_RATIO_METRIC,
+    VIETNAMESE_UNITS,
+    vietnamese_number_words,
+)
 from . import voice_balance
 
 
@@ -295,6 +300,11 @@ def is_edge_kept_take(signal: Any, policy_hash: str | None) -> bool:
 # those segments and only those were failing.
 PAUSE_GROUP_SECONDS = 0.276
 REPEATED_UTTERANCE_METRIC = "repeated_utterance_score"
+# F4: p99.9 duration ratios from the frozen four-book snapshot (repeat_design.md 3.1).
+# The denominator is the preset's frozen median in voice_balance, never the current
+# book. Unknown presets have no opinion. This metric only advances alias repair;
+# it never fails a take or changes its frame budget.
+SYLLABLE_DURATION_THRESHOLDS = ((5, 7, 1.81), (8, 12, 1.52))
 # Above this, the two sides of the longest internal silence are saying the same thing.
 #
 # The owner heard "Mẹ kiếp!" read twice and asked why a real defect was not being fixed. The
@@ -955,6 +965,15 @@ def validate_audio_array(
     score = repeated_utterance_score(array, sample_rate)
     if score is not None:
         metrics[REPEATED_UTTERANCE_METRIC] = float(score)
+    key = _voice_balance_key(segment)
+    reference = voice_balance.constants_for_key(key).seconds_per_syllable if key else None
+    if reference is not None:
+        syllables = spoken_syllables(text)
+        for low, high, threshold in SYLLABLE_DURATION_THRESHOLDS:
+            if low <= syllables <= high:
+                ratio = metrics["duration"] / (syllables * reference / voice_balance.x())
+                metrics[SYLLABLE_DURATION_RATIO_METRIC] = float(ratio)
+                metrics[SYLLABLE_DURATION_OUTLIER_METRIC] = float(ratio > threshold)
     return array, metrics
 
 

@@ -2423,3 +2423,26 @@ files without findings; git diff --check passed.
 
 Quality implementation hash before/after is unchanged:
 `dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64`.
+
+# Repeat repair (dev/repeatfix, 2026-11-13)
+
+Approved scope: F0/F1/F3/F4. Repeated-content evidence now blocks both exceptional
+take substitutions. Two distinct stored seeds repeating the same ASR-normalized
+phrase select a punctuation-only alias split; frozen per-preset duration evidence
+can advance this to round zero. Source text and pronunciation spans are preserved.
+Frame-ceiling evidence now includes non-short single-chunk VieNeu lines.
+
+CPU regression: `pytest -rf --tb=short` on repeatfix, database safety, pipeline mock,
+text processing, ASR repeats, waveform repeats, voice balance, quality policy,
+recovery, split scheduling, locked-reading and cut-off substitution suites:
+927 tests, 927 passed, FAILED=0, ERROR=0 (JUnit verified). The repeatfix suite
+includes crash/reopen before split, after signal checkpoint and before promotion;
+each matches its uninterrupted control's WAV hash, generation seed and part ledger.
+
+F4 constants: medians of verified >=8-syllable takes, >=5 examples per preset,
+from the design's existing 14,432-row snapshot, SHA-256
+`f84e1a6ba7cf90d214cb4e90ddfd1f4ad03603395e457ef96f30d037c1f1ebd8`.
+19 presets are calibrated at x=1. Missing presets have no duration opinion.
+These diagnostic constants never change gain, tempo or generation budgets.
+
+GPU A/B/C measurements are pending in the task's external `result.md`.

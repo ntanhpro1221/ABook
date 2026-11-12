@@ -148,6 +148,9 @@ MICRO_UTTERANCE_REPAIR_MAX_FRAMES = 6
 MICRO_UTTERANCE_MAX_SPEAKABLE_CHARS = 1
 GENERATION_CEILING_WARNING = "TTS_GENERATION_CEILING_REACHED"
 GENERATION_CEILING_METRIC = "generation_ceiling_hit"
+# `max_chars` mặc định của `normalize_to_chunks_v3_with_gaps` trong SDK VieNeu 3.8.3: văn bản dài
+# hơn bị SDK tự chia, và `max_new_frames` của app áp cho từng khúc chứ không cho cả đoạn.
+VIENEU_SDK_CHUNK_MAX_CHARS = 256
 GENERATION_ENDPOINT_ACTIVE_METRIC = "generation_endpoint_active"
 GENERATION_FRAME_CAP_FIELD = "generation_frame_cap"
 DEFAULT_SEGMENT_ACTIVE_FLOOR_DBFS = -45.0
@@ -1578,9 +1581,17 @@ class TTSCoordinator:
                 generation_max_frames=int(sampling["max_new_frames"]),
                 validation_max_seconds=duration_policy.validation_max_seconds,
             )
+            # F3: cờ chạm trần cho MỌI độ dài, không riêng câu <= 2 từ. Đoạn Hello 2153 ra đúng trần
+            # ở cả 6 hạt (đọc lặp tới hết khung) mà không mang cờ, nên điều kiện "không chạm trần"
+            # ở các đường đề cử ngoại lệ không có tác dụng với câu dài. Trần của app áp cho TỪNG
+            # khúc của SDK (văn bản > 256 ký tự bị SDK chia), nên chỉ so khi chuỗi nói là một khúc.
+            # Chạm trần vẫn không tự động là hỏng: cờ đi tiếp qua validation và Whisper.
             generation_ceiling_hit = (
                 engine.name == VieNeuEngine.name
-                and is_short_utterance(str(spoken_row["text"]))
+                and (
+                    is_short_utterance(str(spoken_row["text"]))
+                    or len(str(spoken_row["text"])) <= VIENEU_SDK_CHUNK_MAX_CHARS
+                )
                 and vieneu_generation_reached_frame_ceiling(audio, effective_generation_policy)
             )
             speed_change_skipped = False

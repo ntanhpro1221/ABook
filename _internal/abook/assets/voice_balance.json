@@ -75,32 +75,38 @@
     "vieneu@3.8.3/Adam bựa": {
       "r": 1.0527,
       "o_db": -2.5582426,
-      "ref_lufs": -19.1831355
+      "ref_lufs": -19.1831355,
+      "seconds_per_syllable": 0.25458333333333333
     },
     "vieneu@3.8.3/Adam": {
       "r": 0.9763,
       "o_db": -0.4914052,
-      "ref_lufs": -19.5038814
+      "ref_lufs": -19.5038814,
+      "seconds_per_syllable": 0.24279089506172838
     },
     "vieneu@3.8.3/Hải Đăng": {
       "r": 0.9173,
       "o_db": -2.2053595,
-      "ref_lufs": -19.8811026
+      "ref_lufs": -19.8811026,
+      "seconds_per_syllable": 0.24168668300653595
     },
     "vieneu@3.8.3/Kim Thanh": {
       "r": 1.3222,
       "o_db": -1.3511138,
-      "ref_lufs": -20.3651609
+      "ref_lufs": -20.3651609,
+      "seconds_per_syllable": 0.25866024305555557
     },
     "vieneu@3.8.3/Mỹ Duyên": {
       "r": 1.3055,
       "o_db": 0.3375295,
-      "ref_lufs": -19.876397
+      "ref_lufs": -19.876397,
+      "seconds_per_syllable": 0.24010915471923538
     },
     "vieneu@3.8.3/Ngọc Huyền": {
       "r": 0.9573,
       "o_db": -0.2186522,
-      "ref_lufs": -19.611248
+      "ref_lufs": -19.611248,
+      "seconds_per_syllable": 0.2548842592592593
     },
     "vieneu@3.8.3/Ngọc Linh": {
       "r": 1.0447,
@@ -111,7 +117,8 @@
         "threshold": 72.8,
         "calibrated_r": 1.0447,
         "calibrated_x": 1.0
-      }
+      },
+      "seconds_per_syllable": 0.23708280529953918
     },
     "vieneu@3.8.3/Ngọc Trân": {
       "r": 1.0917,
@@ -121,7 +128,8 @@
     "vieneu@3.8.3/Phạm Tuyên": {
       "r": 1.0,
       "o_db": -0.8088074,
-      "ref_lufs": -20.6398887
+      "ref_lufs": -20.6398887,
+      "seconds_per_syllable": 0.24631688311688313
     },
     "vieneu@3.8.3/Quang Sơn": {
       "r": 0.982,
@@ -131,52 +139,62 @@
     "vieneu@3.8.3/Quốc Tuấn": {
       "r": 0.9629,
       "o_db": -0.5351223,
-      "ref_lufs": -19.8792308
+      "ref_lufs": -19.8792308,
+      "seconds_per_syllable": 0.24924731182795698
     },
     "vieneu@3.8.3/Quỳnh Anh": {
       "r": 1.0965,
       "o_db": -1.6895975,
-      "ref_lufs": -19.9099885
+      "ref_lufs": -19.9099885,
+      "seconds_per_syllable": 0.23807785087719296
     },
     "vieneu@3.8.3/Thanh Bình": {
       "r": 0.8952,
       "o_db": -2.1145658,
-      "ref_lufs": -19.7852269
+      "ref_lufs": -19.7852269,
+      "seconds_per_syllable": 0.24575520833333334
     },
     "vieneu@3.8.3/Thiền Tâm Đức": {
       "r": 1.2146,
       "o_db": 0.7122032,
-      "ref_lufs": -19.6467085
+      "ref_lufs": -19.6467085,
+      "seconds_per_syllable": 0.26149502487562193
     },
     "vieneu@3.8.3/Thiện Minh": {
       "r": 0.9558,
       "o_db": 0.3054277,
-      "ref_lufs": -19.8700066
+      "ref_lufs": -19.8700066,
+      "seconds_per_syllable": 0.2406362847222222
     },
     "vieneu@3.8.3/Thái Sơn": {
       "r": 1.0487,
       "o_db": -0.5802298,
-      "ref_lufs": -20.0058514
+      "ref_lufs": -20.0058514,
+      "seconds_per_syllable": 0.2574615885416667
     },
     "vieneu@3.8.3/Thục Đoan": {
       "r": 1.0064,
       "o_db": -1.2061114,
-      "ref_lufs": -20.2128385
+      "ref_lufs": -20.2128385,
+      "seconds_per_syllable": 0.2632544492240216
     },
     "vieneu@3.8.3/Trúc Ly": {
       "r": 0.8897,
       "o_db": -1.283639,
-      "ref_lufs": -19.3427717
+      "ref_lufs": -19.3427717,
+      "seconds_per_syllable": 0.23603385416666667
     },
     "vieneu@3.8.3/Xuân Vĩnh": {
       "r": 0.9134,
       "o_db": 0.1511835,
-      "ref_lufs": -20.2706995
+      "ref_lufs": -20.2706995,
+      "seconds_per_syllable": 0.2578888888888889
     },
     "vieneu@3.8.3/Đoan Trang": {
       "r": 0.987,
       "o_db": -0.1469452,
-      "ref_lufs": -19.6990091
+      "ref_lufs": -19.6990091,
+      "seconds_per_syllable": 0.2623580043859649
     },
     "vieneu@3.8.3/Đức Trí": {
       "r": 1.2643,
@@ -188,7 +206,8 @@
         "model": "word_break_duc_tri.json",
         "calibrated_r": 1.2643,
         "calibrated_x": 1.0
-      }
+      },
+      "seconds_per_syllable": 0.26507545045045044
     },
     "zerotts@0.1.5/baotrang": {
       "r": 1.0427,

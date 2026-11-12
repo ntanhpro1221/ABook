@@ -2477,7 +2477,11 @@ class WhisperVerifier:
             max_wer=max_wer,
         )
         # Something said twice fails even when the rest of the sentence carries the score:
-        # the take is wrong, and a new seed (the ordinary repair round) is the fix.
+        # the take is wrong. A new seed fixes it only sometimes: when one take repeats, the
+        # next seed usually reads clean, but when two takes repeat the same phrase every later
+        # seed did too (Hello, 6/6 segments) - the text itself pulls VieNeu back to the first
+        # copy of a phrase it says twice. Two such takes send the next candidate to the
+        # repeat-alias split (ProjectDB._repeat_alias_split_evidence_conn), not to a new seed.
         repeated = heard_repeated_content(expected, transcript)
         result = {
             "passed": passed and repeated is None,
