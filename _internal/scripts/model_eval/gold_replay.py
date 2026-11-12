@@ -69,7 +69,7 @@ class Replayer:
                  book_spelling: bool = False) -> None:
         self.gold = gold
         self.gold_name = gold_name
-        self.out = out.open("w", encoding="utf-8") if out else None
+        self.out = out.open("w", encoding="utf-8", newline="\n") if out else None
         self.segments = [dict(row) for row in db.list_segments()]
         self.book_spelling = book_spelling
         self.text = "\n".join(str(segment["text"]) for segment in self.segments)
@@ -193,6 +193,38 @@ class Replayer:
                 out.append(str(row["id"]))
         return out
 
+    def _training_response(self, request: dict, response: dict) -> dict:
+        """Preserve half-credit gold choices in the saved targets only.
+
+        ``speaker_alt`` contains {speaker, credit} objects, with credit 0.5 for
+        the gold ``~`` suffix. All-half rows also carry ``speaker_credit=0.5``.
+        The production response and its schema stay as
+        requested by the host; this annotation is for offline data builders.
+        """
+        rows = json.loads(request["prompt"].split("Các đoạn liên tiếp:\n", 1)[1].split("\n\nRàng buộc", 1)[0]
+                          .split("\n\nKết quả lần trước", 1)[0])
+        window = self._locate([row["text"] for row in rows])
+        targets = []
+        for target, segment in zip(response["segments"], window, strict=True):
+            gold = self._gold_for(segment)
+            alternatives = []
+            seen = set()
+            for option, credit in gold.speakers if gold is not None else ():
+                if credit != 0.5:
+                    continue
+                if option == "NPC*":
+                    option = f"NPC_LOCAL:{gold.npc_label or 'người lạ'}"
+                name = self._spelled(option)
+                if name not in seen:
+                    alternatives.append({"speaker": name, "credit": credit})
+                    seen.add(name)
+            annotation = {"speaker_alt": alternatives} if alternatives else {}
+            if gold is not None and not any(credit == 1.0 for _, credit in gold.speakers):
+                # Do not turn the fallback choice into an unqualified hard target.
+                annotation["speaker_credit"] = max(credit for _, credit in gold.speakers)
+            targets.append({**target, **annotation})
+        return {**response, "segments": targets}
+
     def __call__(self, analyzer, request: dict, **_kw) -> dict:
         properties = request["format"].get("properties", {})
         if "segments" in properties:
@@ -203,9 +235,10 @@ class Replayer:
             raise RuntimeError(f"gold_replay không trả lời loại câu hỏi này: {sorted(properties)}")
         self.counts[kind] += 1
         if self.out:
+            training_response = self._training_response(request, response) if kind == "generator" else response
             self.out.write(json.dumps({"type": kind, "gold": self.gold_name, "chapters": self._chapters_of(request),
                                        "system": request["system"], "prompt": request["prompt"],
-                                       "format": request["format"], "response": response,
+                                       "format": request["format"], "response": training_response,
                                        "uncertain": self._uncertain_of(request)}, ensure_ascii=False) + "\n")
         return response
 

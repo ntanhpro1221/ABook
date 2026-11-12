@@ -1895,3 +1895,17 @@ The Studio tab only offers notification preferences after a computer has been pa
 - RHYTHM resolves glyph edges at 1/16px while retaining its 2px threshold. A real-font Vietnamese fixture passes equal spacing and fails a planted 4px shift. The previous whole-pixel Canvas metric reported 2.21875px where the 4x raster shows 1.25px.
 - Related validation: TypeScript clean; 58 Vitest tests passed. Focused pytest: 179 passed, 2 skipped, plus two stale generated parity documents; regenerated both and reran parity: 30 passed, 2 skipped. Full build and release-gate evidence is recorded in the rel167b handoff.
 - Baseline 0.4.166 (bd07ae23d) focused gallery: 0 findings/errors. The toast-clearance code is identical there; timing-dependent failures were reproduced on the retained 0.4.167 build, with screenshots and native input traces. No quality implementation changes.
+
+## Gold replay half-credit preservation (2026-11-13)
+
+`gold_replay.py` now keeps half-credit speaker choices in the saved generator
+targets as `speaker_alt: [{speaker, credit: 0.5}]`. The response returned to the
+host retains its production schema. Gold rows containing only half-credit
+choices use a fallback and record `speaker_credit: 0.5` in the saved target.
+Existing training artifacts were not rebuilt.
+
+Verification: 11 focused synthetic tests in `test_gold_replay_half_credit.py`
+passed. Coverage includes book spelling, NPC normalization, duplicate choices,
+thought/narration, all-half choices, critic isolation, and UTF-8/LF output.
+The test loader compiles the real replay class and helpers with standard
+library dependencies; it does not start workers, models, or GPU jobs.
