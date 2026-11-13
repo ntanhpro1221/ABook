@@ -4,6 +4,7 @@ rem (drag, double-click, Aero Snap, Windows 11 Snap Layouts, resize borders, sha
 rem Built STATIC (no extra DLL), Quick module only, from the pinned tag below, into %QWK_ROOT%\inst. build.bat calls this when %QWK_ROOT%\inst is missing.
 rem Override with env vars: QWK_ROOT, QWK_TAG, QT_ROOT, CMAKE_BIN, NINJA_BIN, VCVARS.
 setlocal
+if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined QWK_TAG set QWK_TAG=1.5.0
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
@@ -18,6 +19,8 @@ if not exist "%QWK_ROOT%\src\CMakeLists.txt" (
   git clone --depth 1 --branch %QWK_TAG% --recurse-submodules --shallow-submodules https://github.com/stdware/qwindowkit.git "%QWK_ROOT%\src"
   if errorlevel 1 exit /b 1
 )
+"%ABOOK_PYTHON%" -X utf8 "%~dp0drop_stale_cmake_cache.py" "%QWK_ROOT%\build"
+if errorlevel 1 exit /b 1
 cmake -S "%QWK_ROOT%\src" -B "%QWK_ROOT%\build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe" -DCMAKE_INSTALL_PREFIX="%QWK_ROOT%\inst" -DQWINDOWKIT_BUILD_STATIC=ON -DQWINDOWKIT_BUILD_WIDGETS=OFF -DQWINDOWKIT_BUILD_QUICK=ON -DQWINDOWKIT_ENABLE_STYLE_AGENT=OFF -DQWINDOWKIT_BUILD_EXAMPLES=OFF -DQWINDOWKIT_BUILD_TESTS=OFF
 if errorlevel 1 exit /b 1
 cmake --build "%QWK_ROOT%\build"

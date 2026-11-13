@@ -72,6 +72,8 @@ rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in 
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\drop_stale_cmake_cache.py" "%HERE%build"
+if errorlevel 1 exit /b 1
 cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1

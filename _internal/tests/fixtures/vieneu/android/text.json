@@ -1,5 +1,5 @@
 {
- "sea_g2p": "0.9.1",
+ "sea_g2p": "0.10.0",
  "sentences": 209,
  "g2p": [
   {
@@ -2292,7 +2292,7 @@
     "Kate hỏi Mike, còn Rose và Ha-na thì cười.",
     "Anne, Emma và Ri-ca cũng ở đó."
    ],
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
   },
   {
    "sentences": [
@@ -2301,14 +2301,14 @@
     "Kate hỏi Mike, còn Rose và Ha-na thì cười.",
     "Anne, Emma và Ri-ca cũng ở đó."
    ],
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
   },
   {
    "sentences": [
     "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
     "“Gia-ma-tô!”"
    ],
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!"
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!"
   },
   {
    "sentences": [
@@ -2389,14 +2389,14 @@
     "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
     "Kate hỏi Mike, còn Rose và Hana thì cười."
    ],
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
   },
   {
    "sentences": [
     "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
     "Kate hỏi Mike, còn Rose và Hana thì cười."
    ],
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
   },
   {
    "sentences": [
@@ -2732,7 +2732,7 @@
     "xô-pha, a-ni-me, nin-gia, man-ga, xa-mu-rai (ben-tô) ki-mô-nô xa-ke mi-xô đan-gô ta-cô-gia-ki ô-cô-nô-mi-a-ki xen-pai a-ra a-ra, u-mu e-rô-ghe xúc-cô-mi.",
     "vi-đê-ô, lô-gích, pi-a-nô, vi-ô-lông, xăng-đan, va-li, rô-bốt, gô-ri-la."
    ],
-   "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈen t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː."
+   "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈɛn t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː."
   },
   {
    "sentences": [
@@ -2762,7 +2762,7 @@
     "và óp-pa, ariel-xa-ma.",
     "Kiểm tra ét a en và xen-pai."
    ],
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
   },
   {
    "sentences": [
@@ -2771,7 +2771,7 @@
     "và óp-pa, ariel-xa-ma.",
     "Kiểm tra ét a en và xen-pai."
    ],
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
   },
   {
    "sentences": [
@@ -2786,7 +2786,7 @@
     "“ne-xan!”",
     "và óp-pa, ariel-xa-ma."
    ],
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
   },
   {
    "sentences": [
@@ -2794,7 +2794,7 @@
     "“ne-xan!”",
     "và óp-pa, ariel-xa-ma."
    ],
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
   },
   {
    "sentences": [
@@ -7909,7 +7909,7 @@
       "Kate hỏi Mike, còn Rose và Ha-na thì cười.",
       "Anne, Emma và Ri-ca cũng ở đó."
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
     }
    ],
    "origin": "ja"
@@ -7928,7 +7928,7 @@
       "Kate hỏi Mike, còn Rose và Ha-na thì cười.",
       "Anne, Emma và Ri-ca cũng ở đó."
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ."
     }
    ],
    "origin": "ja"
@@ -7945,7 +7945,7 @@
       "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
       "“Gia-ma-tô!”"
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!"
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!"
     },
     {
      "first": 5,
@@ -8176,7 +8176,7 @@
       "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
       "Kate hỏi Mike, còn Rose và Hana thì cười."
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
     }
    ]
   },
@@ -8192,7 +8192,7 @@
       "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến.",
       "Kate hỏi Mike, còn Rose và Hana thì cười."
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j."
     }
    ]
   },
@@ -8207,7 +8207,7 @@
      "pieces": [
       "Ha-ru-tô-cun, Ki-âu-cô-xan đã đến."
      ],
-     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn."
+     "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn."
     },
     {
      "first": 4,
@@ -8339,7 +8339,7 @@
      "pieces": [
       "Ruel, a-ra-ne-a, Elise,"
      ],
-     "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ɐ, ᵻlˈiːz."
+     "phonemes": "rjˈuːəl, ˈaː ɹˈaː nˈɛ ˈaː, ᵻlˈiːz."
     },
     {
      "first": 3,
@@ -8965,7 +8965,7 @@
      "pieces": [
       "Ariel-xa-ma, Mary-xan, Zeros-xen-xây, Xô-ra-xa-ma, Ha-ru-tô-cun, ô-ne-chan, ô-giâu-xa-ma, Xu-ki-nô-ki-xen-pai."
      ],
-     "phonemes": "ˈæɹiːəl sˈaː mˈaː, mˈɛɹi sˈaːn, zˈiəɹoʊz sˈɛn sˈəɪ, sˈo ɹˈaː sˈaː mˈaː, hˈaː ɹˈu t̪ˈo kˈun, ˈo nˈɛ tʃˈaːn, ˈo zˈə1w sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
+     "phonemes": "ˈæɹiːəl sˈaː mˈaː, mˈɛɹi sˈaːn, zˈiəɹoʊz sˈɛn sˈəɪ, sˈo ɹˈaː sˈaː mˈaː, hˈaː ɹˈu t̪ˈo kˈun, ˈo nˈɛ tʃˈaːn, ˈo zˈəw sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
     }
    ],
    "origin": "ja"
@@ -8981,7 +8981,7 @@
      "pieces": [
       "Ariel-xa-ma, Mary-xan, Zeros-xen-xây, Xô-ra-xa-ma, Ha-ru-tô-cun, ô-ne-chan, ô-giâu-xa-ma, Xu-ki-nô-ki-xen-pai."
      ],
-     "phonemes": "ˈæɹiːəl sˈaː mˈaː, mˈɛɹi sˈaːn, zˈiəɹoʊz sˈɛn sˈəɪ, sˈo ɹˈaː sˈaː mˈaː, hˈaː ɹˈu t̪ˈo kˈun, ˈo nˈɛ tʃˈaːn, ˈo zˈə1w sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
+     "phonemes": "ˈæɹiːəl sˈaː mˈaː, mˈɛɹi sˈaːn, zˈiəɹoʊz sˈɛn sˈəɪ, sˈo ɹˈaː sˈaː mˈaː, hˈaː ɹˈu t̪ˈo kˈun, ˈo nˈɛ tʃˈaːn, ˈo zˈəw sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
     }
    ],
    "origin": "ja"
@@ -9013,7 +9013,7 @@
      "pieces": [
       "ô-giâu-xa-ma, Xu-ki-nô-ki-xen-pai."
      ],
-     "phonemes": "ˈo zˈə1w sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
+     "phonemes": "ˈo zˈəw sˈaː mˈaː, sˈu kˈi nˈo kˈi sˈɛn pˈaːj."
     }
    ],
    "origin": "ja"
@@ -9439,7 +9439,7 @@
       "xô-pha, a-ni-me, nin-gia, man-ga, xa-mu-rai (ben-tô) ki-mô-nô xa-ke mi-xô đan-gô ta-cô-gia-ki ô-cô-nô-mi-a-ki xen-pai a-ra a-ra, u-mu e-rô-ghe xúc-cô-mi.",
       "vi-đê-ô, lô-gích, pi-a-nô, vi-ô-lông, xăng-đan, va-li, rô-bốt, gô-ri-la."
      ],
-     "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈen t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː."
+     "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈɛn t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː."
     }
    ]
   },
@@ -9454,7 +9454,7 @@
      "pieces": [
       "xô-pha, a-ni-me, nin-gia, man-ga, xa-mu-rai (ben-tô) ki-mô-nô xa-ke mi-xô đan-gô ta-cô-gia-ki ô-cô-nô-mi-a-ki xen-pai a-ra a-ra, u-mu e-rô-ghe xúc-cô-mi."
      ],
-     "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈen t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi."
+     "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈɛn t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi."
     },
     {
      "first": 18,
@@ -9485,7 +9485,7 @@
      "pieces": [
       "xa-mu-rai (ben-tô) ki-mô-nô xa-ke mi-xô đan-gô"
      ],
-     "phonemes": "sˈaː mˈu ɹˈaːj, bˈen t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo."
+     "phonemes": "sˈaː mˈu ɹˈaːj, bˈɛn t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo."
     },
     {
      "first": 10,
@@ -9583,7 +9583,7 @@
      "pieces": [
       "ô-xu-ki-xan, ô-ca-gia-ma, ô-ni-xa-ma, ô-giâu-xa-ma, ô-ta-cu-cun."
      ],
-     "phonemes": "ˈo sˈu kˈi sˈaːn, ˈo kˈaː zˈaː mˈaː, ˈo nˈi sˈaː mˈaː, ˈo zˈə1w sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
+     "phonemes": "ˈo sˈu kˈi sˈaːn, ˈo kˈaː zˈaː mˈaː, ˈo nˈi sˈaː mˈaː, ˈo zˈəw sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
     }
    ],
    "origin": "ja"
@@ -9599,7 +9599,7 @@
      "pieces": [
       "ô-xu-ki-xan, ô-ca-gia-ma, ô-ni-xa-ma, ô-giâu-xa-ma, ô-ta-cu-cun."
      ],
-     "phonemes": "ˈo sˈu kˈi sˈaːn, ˈo kˈaː zˈaː mˈaː, ˈo nˈi sˈaː mˈaː, ˈo zˈə1w sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
+     "phonemes": "ˈo sˈu kˈi sˈaːn, ˈo kˈaː zˈaː mˈaː, ˈo nˈi sˈaː mˈaː, ˈo zˈəw sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
     }
    ],
    "origin": "ja"
@@ -9623,7 +9623,7 @@
      "pieces": [
       "ô-giâu-xa-ma, ô-ta-cu-cun."
      ],
-     "phonemes": "ˈo zˈə1w sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
+     "phonemes": "ˈo zˈəw sˈaː mˈaː, ˈo t̪ˈaː kˈu kˈun."
     }
    ],
    "origin": "ja"
@@ -9642,7 +9642,7 @@
       "và óp-pa, ariel-xa-ma.",
       "Kiểm tra ét a en và xen-pai."
      ],
-     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
+     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
     }
    ]
   },
@@ -9660,7 +9660,7 @@
       "và óp-pa, ariel-xa-ma.",
       "Kiểm tra ét a en và xen-pai."
      ],
-     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
+     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj."
     }
    ]
   },
@@ -9684,7 +9684,7 @@
      "pieces": [
       "và óp-pa, ariel-xa-ma."
      ],
-     "phonemes": "vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+     "phonemes": "vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
     },
     {
      "first": 8,
@@ -9709,7 +9709,7 @@
       "“ne-xan!”",
       "và óp-pa, ariel-xa-ma."
      ],
-     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
     }
    ],
    "origin": "ja"
@@ -9727,7 +9727,7 @@
       "“ne-xan!”",
       "và óp-pa, ariel-xa-ma."
      ],
-     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+     "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
     }
    ],
    "origin": "ja"
@@ -9752,7 +9752,7 @@
      "pieces": [
       "và óp-pa, ariel-xa-ma."
      ],
-     "phonemes": "vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː."
+     "phonemes": "vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː."
     }
    ],
    "origin": "ja"
@@ -10567,19 +10567,19 @@
    "cap": 248
   },
   {
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j.",
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈɑːnə tˌi2 kˈyə2j.",
    "syllables": 20,
-   "cap": 240
+   "cap": 238
   },
   {
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!",
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!",
    "syllables": 13,
-   "cap": 158
+   "cap": 156
   },
   {
-   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.",
+   "phonemes": "hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.",
    "syllables": 32,
-   "cap": 362
+   "cap": 360
   },
   {
    "phonemes": "hˈaː4, hˈiɜc, ˈo, ˈyɜc. hˈaː hˈaː.",
@@ -11212,7 +11212,7 @@
    "cap": 142
   },
   {
-   "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈen t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː.",
+   "phonemes": "sˈo fˈaː, ˈaː nˈi mˈɛ, nˈin zˈaː, mˈaːn ɣˈaː, sˈaː mˈu ɹˈaːj, bˈɛn t̪ˈo, kˈi mˈo nˈo sˈaː kˈɛ mˈi sˈo ɗˈaːn ɣˈo t̪ˈaː kˈo zˈaː kˈi ˈo kˈo nˈo mˈi ˈaː kˈi sˈɛn pˈaːj ˈaː ɹˈaː ˈaː ɹˈaː, ˈu mˈu ˈɛ ɹˈo ɣˈɛ sˈuɜc kˈo mˈi. vˈi ɗˈe ˈo, lˈo zˈiɜc, pˈi ˈaː nˈo, vˈi ˈo lˈoŋ, sˈaŋ ɗˈaːn, vˈaː lˈi, ɹˈo bˈoɜt̪, ɣˈo ɹˈi lˈaː.",
    "syllables": 67,
    "cap": 650
   },
@@ -12077,12 +12077,12 @@
    "cap": 124
   },
   {
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː.",
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː.",
    "syllables": 17,
    "cap": 196
   },
   {
-   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈɑː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj.",
+   "phonemes": "ˈo nˈi tʃˈaːn, ˈo nˈi tʃˈaːn lˈɔ lˈaɜŋ! nˈɛ sˈaːn! vˌaː2 ˈɔɜp pˈaː, ˈæɹiːəl sˈaː mˈaː. kˈiɛ4m tʃˈaː ˈɛɜt̪ ˈaː ˈɛn vˌaː2 sˈɛn pˈaːj.",
    "syllables": 25,
    "cap": 286
   },

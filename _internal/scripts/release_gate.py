@@ -451,6 +451,8 @@ def qt_tests() -> dict:
     build = qt / "build"
     commands = ["@echo off", f'call "{vcvars}" >nul', "if errorlevel 1 exit /b 1",
                 f'set "PATH={qt_root / "bin"};{cmake_bin};{ninja_bin};%PATH%"',
+                f'"{sys.executable}" -X utf8 "{qt / "tools/drop_stale_cmake_cache.py"}" "{build}"',
+                "if errorlevel 1 exit /b 1",
                 f'cmake -S "{qt}" -B "{build}" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt_root};{qwk_root / "inst"}" -DCMAKE_MAKE_PROGRAM="{ninja_bin / "ninja.exe"}"',
                 "if errorlevel 1 exit /b 1", 'cmake --build "' + str(build) + '" --parallel 4 --target ABookDesk_qmltyperegistration ' + " ".join(Path(t.replace("\\", "/")).stem for t in targets),
                 "exit /b %errorlevel%"]

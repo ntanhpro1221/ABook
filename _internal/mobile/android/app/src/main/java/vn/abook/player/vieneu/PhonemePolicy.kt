@@ -1,6 +1,7 @@
 package vn.abook.player.vieneu
 
 import java.util.Locale
+import java.text.Normalizer
 import vn.abook.player.BuildConfig
 import vn.abook.player.readaloud.EnglishPolicy
 import vn.abook.player.readaloud.EnglishWords
@@ -8,6 +9,65 @@ import vn.abook.player.readaloud.Names
 
 /** Corrections after sea-g2p normalization, shared with readaloud/phoneme_policy.py. */
 object PhonemePolicy {
+    /** Same sac probe as phoneme_policy._level_probe; only sea-g2p Vietnamese phones. */
+    private fun levelProbe(word: String, g2p: (String) -> String): String? {
+        fun nfd(c: Char) = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)
+        if (Normalizer.normalize(word, Normalizer.Form.NFD).any { it in "\u0300\u0301\u0309\u0303\u0323" }) return null
+        val vowels = word.indices.filter { nfd(word[it])[0] in "aeiouy" }
+        if (vowels.isEmpty()) return null
+        val priority = vowels.filter { word[it] in "âêôơ" }.ifEmpty { vowels.filter { word[it] in "ăư" } }
+        val pair = vowels.map { word[it] }.joinToString("")
+        var pos = if (priority.isNotEmpty()) priority.last() else if (pair in setOf("oa", "oe", "uy")) vowels.last()
+            else if (vowels.size >= 2 && (word.length > vowels.last() + 1 || vowels.size == 3)) vowels[1] else vowels[0]
+        if ((word.startsWith("gi") || word.startsWith("qu")) && vowels.size >= 2 && pos == vowels[0]) pos = vowels[1]
+        val marked = word.take(pos) + Normalizer.normalize(word[pos] + "\u0301", Normalizer.Form.NFC) + word.drop(pos + 1)
+        val phone = g2p(marked).trim()
+        return if (phone.split(Regex("\\s+")).size == 1 && 'ɜ' in phone) phone.replace("ɜ", "") else null
+    }
+
+    /** Generated Vietnamese syllables must survive the phonemizer's language detection. */
+    fun restoreGeneratedSyllables(spoken: String, given: String, phonemes: String, g2p: (String) -> String,
+                                  source: String? = null, rulings: Rulings? = null): String {
+        val eligible = ruledVietnameseWords(spoken, source, rulings)
+        val rendered = mutableListOf<String>()
+        val generatedPositions = mutableSetOf<Int>()
+        val runs = Regex("<en>.*?</en>|\\S+").findAll(spoken).map { it.value }.toList()
+        val original = source?.trim()?.split(Regex("\\s+")) ?: emptyList()
+        val singleRendering = original.size == 1 && !spoken.equals(source, ignoreCase = true)
+        for ((index, run) in runs.withIndex()) {
+            val clean = run.replace("<en>", "").replace("</en>", "").lowercase(Locale.ROOT)
+            val syllables = Regex("[\\p{L}\\p{N}_]+(?:['’][\\p{L}\\p{N}_]+)*").findAll(clean).map { it.value }.toList()
+            val changed = '-' in run || singleRendering || (original.size == runs.size && !run.equals(original[index], ignoreCase = true))
+            val generated = changed && "<en>" !in run && syllables.isNotEmpty() && syllables.all { EnglishPolicy.vietnamese(it.trimEnd('_')) }
+            if (generated) generatedPositions.addAll(rendered.size until rendered.size + syllables.size)
+            rendered.addAll(syllables.map { respellRareRimes(it.trimEnd('_')) })
+        }
+        val tokens = given.trim().split(Regex("\\s+"))
+        val phones = phonemes.trim().split(Regex("\\s+")).toMutableList()
+        if (tokens.size != phones.size) return phonemes
+        val aligned = rendered.size == tokens.size && rendered.zip(tokens).all { (w, t) ->
+            w == t.replace("<en>", "").replace("</en>", "").trim(*WORD_EDGE.toCharArray()).lowercase(Locale.ROOT)
+        }
+        var inside = false
+        for ((index, token) in tokens.withIndex()) {
+            inside = inside || "<en>" in token
+            val word = token.trim(*WORD_EDGE.toCharArray())
+            if (!inside && (word in eligible || aligned && index in generatedPositions)) levelProbe(word, g2p)?.let { probe ->
+                val core = phones[index].trimEnd(*PHONEME_MARKS.toCharArray())
+                phones[index] = probe + phones[index].drop(core.length)
+            }
+            inside = inside && "</en>" !in token
+        }
+        return phones.joinToString(" ")
+    }
+
+    /** Preserve the learned context guards for a roster word used as English prose. */
+    fun ruledVietnameseWords(text: String, source: String? = null, rulings: Rulings? = null): Set<String> {
+        if (rulings == null) return emptySet()
+        return rulings.names.filter { it !in shared.words }.toSet() +
+            sharedWordVerdicts(text, capitalised(text, source), rulings)
+                .filter { it.vietnamese && it.who in setOf("ruling", "roster") }.map { it.word }
+    }
     private val gi = Regex("(?<![\\p{L}\\p{N}_])gi(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
     private val bareZ = Regex("(?<!\\S)z(?=[.,!?;:…]*(?:\\s|$))")
     private const val VOWELS = "aeiouyæɐɑɒɔəɘɛɜɤɯɵøœʉʊʌɪɨɚɝᵻᵿ"

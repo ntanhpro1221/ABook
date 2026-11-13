@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "4806f842518bf82709be323c3720bb1762ef7c16ccd82d91f92a51c373684461"
+   "key": "495aac6542a934ae87d8bbd6e785f993e22e21589f40812707eddf14eb9220ef"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "958c0a5f584531f39cc3e0039335060fc57838c1f177235c987b2a89655a23da"
+   "key": "10434650891ea2922148d4391b3c95e824ffed94ec66cd0ad9255ac89374bb9c"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "449cb581d5c88f3c20a03e985fe95c892def3298ff8021657cc453331ff7e8aa"
+   "key": "ac2b29e798285f9e83b178a51116980c37543ef74357d1a67e0a963455e286b5"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -190,7 +190,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "6957d4eee78ed04dde340a588fa48d5f7737a1c7dd7dedeb438381e9c26a79e0"
+   "key": "0a67a402491ba9a39fabae6d0c5b5d4e78d27751e69c17dca8824cbc9d0936f3"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "4a79bdd925fdf912f96cf649ad3e4ff4ea5b44fbc5a7eaea71ee8b61169c3903"
+   "key": "f9276b0ab86ed3566d5168b98375aa4a53cdddb53524c9340e513e34070c9a69"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "79579edd10d784457c4a1077fd6dda759f3dea67c2ebed033c12258ca96af0c1"
+   "key": "bbbce8f69121002c6be073951c1869cb186ffe76b283f3abcccf93d27ff55f8d"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "7c180b55fde1762c5dbf99068697c8e1177cca790348f6669ad992f7f9037ac6"
+   "key": "30ef50218fd25af82817389353c97048004a156017ffd9faa87de70b9c98a92e"
   }
  ]
 }

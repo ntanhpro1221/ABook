@@ -1,0 +1,134 @@
+{
+  "_internal/tests/fixtures/import/expected/a84_contracts.json": {
+    "sha256": "cf82cec2d26720a048453152bc168b85a05269767ef7fec24b59637d1550a7ba",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/README.md": {
+    "sha256": "61e75701fd2132e94caae93bf157692a6bf36c5c0b8f928f6ce9bda21f3c1f6c",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/case_is_ignored.json": {
+    "sha256": "bc0a2272bf2c911b76eeece2eb0ecf7eaf1ac1f45761b09b4a1deb490d61f5b0",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/char_hint_resyncs.json": {
+    "sha256": "a0a94a1d1c5baea67fa83da15b002bfa1cbf659e0e2f2614868421108fb8a946",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/clamped_to_duration.json": {
+    "sha256": "a35eace531b61f49af50cbe0afd6857b6735503e08373a4b44b4107696e8a6f4",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/dash_is_interpolated.json": {
+    "sha256": "8fe17a7a214b05abaa71cf75a2dc4d3af96b1ae72cb7ed6178f646a2ddcd162b",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/english_direct/frontend.json": {
+    "sha256": "625dcc619270f8a05f4f0e853e601d83b5b0decd2f808cdf1843203298ee9fb6",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/japanese_delivery/cases.json": {
+    "sha256": "a68727ddfb3665cfff52038a42766a04006bb5f23cac957ce907dbc419ae4e9f",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/js_space_is_the_word_boundary.json": {
+    "sha256": "9097a4bb7022f355795cf4b1ade66a03a050bbcf2d89284bc088bbab30d42ea2",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/leading_punctuation_and_tail.json": {
+    "sha256": "6731ca6d87966df1577b5914acd77095a2ee8933160820e441cb1b3c6f3b9a2a",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/no_pieces_at_all.json": {
+    "sha256": "f7e41b54ffe80c8068e04b9bb842846b2d7ba7fb105b75b9e525971c0005eebf",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/number_read_as_words.json": {
+    "sha256": "0d9f27e2aa7b0c2a7aefd329d1b6838226ece11cd62e287c232fc03ad7eca765",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/one_piece_per_word.json": {
+    "sha256": "3eb069e88f7d6abf0ce26cdce32675a1da34c7765e723313b55cd06b47baa8ef",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/one_piece_two_words.json": {
+    "sha256": "629343d511c9ac68189dc13a3bfed7100c09eca36b83d7d082ed5f881712bdee",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/overlap_is_trimmed.json": {
+    "sha256": "f46f5b70c3972b5c1f62dda00474e176d438e6353b92577745843780c99a3fd9",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/phoneme_delivery/cases.json": {
+    "sha256": "7c168106861a1c4782b04dcc98b8e7529ea88d2a4ebb5f4c082c24e31b38455b",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/real_names/cases.json": {
+    "sha256": "a561c6f427f86e2954ca65755859f0f2719833404d4cc37938fb341f414e7eb8",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
+    "sha256": "670533efe92880b846de6815455716bac77ea863c8bf735abfd2f242134c0f8d",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spoken/words.json": {
+    "sha256": "e54f3c6abe0ebd2c813fe6f20b31483b07d788363abdf715225ce474ee0084b7",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/foreign_name_in_quotes.json": {
+    "sha256": "707bca6e432673c272646fc6e68ac94f23d3d4a842f41c9ee46c9edd82f67528",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/nothing_spoken.json": {
+    "sha256": "24456b3a292555c8cd4acc4f29f51b1b7b1bd19d6eb2d982aa0011ef94d3835f",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/number_and_dash.json": {
+    "sha256": "fd3e85f8c47c62dc833407829fec14bfaac41375b7aa952576a217011834fc5c",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/plain_words.json": {
+    "sha256": "97b963f09ca9aef5ab0c4c9d2001994089cfe073619c4a9d4cc78e7e94d758b5",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/punctuation_pauses.json": {
+    "sha256": "754790768f4d975c296793eeec34dbf681170573d5410f7c6ade81cbd8f273ad",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/spread/time_and_date.json": {
+    "sha256": "474c2f32f10e0300b213763e1658c9ca0c1532293861b5bb9048ea336aad91cf",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/two_pieces_one_word.json": {
+    "sha256": "3d211c6a52cb9d0bd0fd8b0bfef828668abcaf6280798ef8c144a9696c1a4f80",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/readaloud/unknown_piece_is_skipped.json": {
+    "sha256": "b9f77d5c2e12576b00282a2a9fb408a8f94e02ebdaa888593089d9f0980ac3c0",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/text_books/cases.json": {
+    "sha256": "cc85333ad58e61ecfe18a1eff59f580772c5524035224803be44295a701b63f9",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/vieneu/android/audio.json": {
+    "sha256": "73d2c6c32a21b22ed6e9e2cf7da74521dac021126dbdf054a66731bc1270c28e",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/vieneu/android/clips.json": {
+    "sha256": "ef012e7b3f984db44974c262bd47cb6377e89ca68433b786c68f44f7e3ef7668",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/vieneu/android/text.json": {
+    "sha256": "c1f03a0e1cc23e63532f360c73dc425d348df0cb2a96d15404c86ac828f30cf7",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/vieneu/android/tokens.json": {
+    "sha256": "ab8373c5739e749c55f3c7a7fd363e1b2e4e2377429bf18bb02d565b6f7acbfb",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  },
+  "_internal/tests/fixtures/word_timing/truth.json": {
+    "sha256": "f9a934b804626c628e5c6341490748601959faeab655a8e10f3fffadae9b76b2",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+  }
+}

@@ -204,10 +204,12 @@ object EnglishPolicy {
         val generic = letters && !vietnamese(core) && !lower.all { it in "ivx" } &&
             Abbreviations.spelled(core) == lower.map { Abbreviations.LETTERS.getValue(it) }.joinToString(" ")
         if (core in ACRONYMS || generic) return englishLetters(core) to "spell_english"
-        return if (keepsWord(core, origin)) (if (letters) lower else core) to "keep_english" else null
+        return if (keepsWord(core, origin)) (if (letters || Regex("[a-z][A-Z]").containsMatchIn(core)) lower else core) to "keep_english" else null
     }
 
-    fun applyTokens(toks: List<String>, out: MutableList<String>, origin: String?, protected: Set<Int> = emptySet()) {
+    fun applyTokens(toks: List<String>, out: MutableList<String>, origin: String?, protected: Set<Int> = emptySet(),
+                    rulings: vn.abook.player.vieneu.PhonemePolicy.Rulings? = null) {
+        val ruled = vn.abook.player.vieneu.PhonemePolicy.ruledVietnameseWords(toks.joinToString(" "), rulings = rulings)
         val proposed = out.toMutableList()
         JapanesePolicy.applyTokens(toks, proposed, origin)
         val contextual = if (protected.isNotEmpty() && origin != "ko") JapanesePolicy.contextualNames(toks, origin) else emptySet()
@@ -222,6 +224,10 @@ object EnglishPolicy {
         for ((index, token) in toks.withIndex()) {
             if (index in protected) continue
             val (before, core, after) = Names.splitToken(token)
+            if (core.lowercase(Locale.ROOT) in ruled && vietnamese(core)) {
+                out[index] = before + core + after
+                continue
+            }
             if (Abbreviations.contextualLetters(core, toks, index) || (out[index] == token && index !in english && letterName(toks, index))) {
                 out[index] = before + englishLetters(core) + after
                 continue
@@ -232,7 +238,7 @@ object EnglishPolicy {
             if (asian[index] != token) continue
             if (index in english) {
                 val shouted = core.length > 1 && core.all { it in 'A'..'Z' }
-                val marked = "<en>" + (if (shouted) core.lowercase(Locale.ROOT) else core) + "</en>"
+                val marked = "<en>" + (if (shouted || Regex("[a-z][A-Z]").containsMatchIn(core)) core.lowercase(Locale.ROOT) else core) + "</en>"
                 val expanded = if (shouted) Abbreviations.spelled(core) else null  // the abbreviation rule already spelled the capitals out
                 if (out[index].lowercase(Locale.ROOT) == token.lowercase(Locale.ROOT)) {
                     out[index] = before + marked + after

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import threading
+import unicodedata
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Callable, Iterator
@@ -34,6 +35,108 @@ _APOSTROPHE = re.compile("['’]")
 _readings: dict[str, tuple[str, str]] = {}
 _unread_readings: dict[str, str] = {}  # name_sounds.json `unread`: word -> its Vietnamese phonemes, from the dictionary that is loaded
 _case = threading.local()
+
+
+@lru_cache(maxsize=8192)
+def _level_probe(word: str, g2p: Callable[[str], str]) -> str | None:
+    """A Vietnamese syllable using only sea-g2p's own Vietnamese phones.
+
+    Never transplant an English phone or invent IPA. A tone-marked probe
+    disambiguates sea-g2p's English dictionary; remove only that probe's tone.
+    Invalid probes (multiple phonetic words/no sac tone) are rejected.
+    """
+    if any(c in "\u0300\u0301\u0309\u0303\u0323" for c in unicodedata.normalize("NFD", word)):
+        return None
+    vowels = [i for i, c in enumerate(word) if unicodedata.normalize("NFD", c)[0] in "aeiouy"]
+    if not vowels:
+        return None
+    priority = [i for i in vowels if word[i] in "âêôơ"] or [i for i in vowels if word[i] in "ăư"]
+    pair = "".join(word[i] for i in vowels)
+    pos = (
+        priority[-1]
+        if priority
+        else vowels[-1]
+        if pair in {"oa", "oe", "uy"}
+        else vowels[1]
+        if len(vowels) >= 2 and (len(word) > vowels[-1] + 1 or len(vowels) == 3)
+        else vowels[0]
+    )
+    if word.startswith(("gi", "qu")) and len(vowels) >= 2 and pos == vowels[0]:
+        pos = vowels[1]
+    marked = word[:pos] + unicodedata.normalize("NFC", word[pos] + "\u0301") + word[pos + 1 :]
+    phone = g2p(marked).strip()
+    if len(phone.split()) != 1 or "ɜ" not in phone:
+        return None
+    return phone.replace("ɜ", "")
+
+
+def restore_generated_syllables(
+    spoken: str,
+    given: str,
+    phonemes: str,
+    g2p: Callable[[str], str],
+    source: str | None = None,
+    rulings: Rulings | None = None,
+) -> str:
+    """Generated Vietnamese name syllables must not be reclassified English.
+
+    Evidence is a Vietnamese hyphenated rendering, or a source word replaced
+    by Vietnamese syllables. Ordinary words and explicit English spans keep
+    the existing learned shared-word decision. No sentence or per-name table.
+    """
+    from ..analysis import is_vietnamese_syllable
+
+    eligible = ruled_vietnamese_words(spoken, source, rulings)
+    rendered = []
+    generated_positions = set()
+    runs = re.findall(r"<en>.*?</en>|[^\s]+", spoken)
+    original = source.split() if source else []
+    single_rendering = len(original) == 1 and spoken.casefold() != source.casefold()
+    for index, run in enumerate(runs):
+        syllables = re.findall(r"\w+(?:['’]\w+)*", run.replace("<en>", "").replace("</en>", "").lower())
+        generated = "-" in run or single_rendering or (
+            len(original) == len(runs) and run.casefold() != original[index].casefold()
+        )
+        generated = (
+            generated
+            and "<en>" not in run
+            and bool(syllables)
+            and all(is_vietnamese_syllable(w.rstrip("_")) for w in syllables)
+        )
+        if generated:
+            generated_positions.update(range(len(rendered), len(rendered) + len(syllables)))
+        rendered.extend(respell_rare_rimes(w.rstrip("_")) for w in syllables)
+    tokens, phones = given.split(), phonemes.split()
+    if len(tokens) != len(phones):
+        return phonemes
+    aligned = len(rendered) == len(tokens) and all(
+        w == t.replace("<en>", "").replace("</en>", "").strip(_WORD_EDGE).lower()
+        for w, t in zip(rendered, tokens)
+    )
+    inside = False
+    for index, token in enumerate(tokens):
+        inside = inside or "<en>" in token
+        word = token.strip(_WORD_EDGE)
+        if not inside and (word in eligible or aligned and index in generated_positions):
+            probe = _level_probe(word, g2p)
+            if probe:
+                core = phones[index].rstrip(_PHONEME_MARKS)
+                phones[index] = probe + phones[index][len(core) :]
+        inside = inside and "</en>" not in token
+    return " ".join(phones)
+
+
+def ruled_vietnamese_words(text: str, source: str | None = None, rulings: Rulings | None = None) -> set[str]:
+    """Honor roster classes with the learned context guards (e.g. An apple)."""
+    if not rulings:
+        return set()
+    words = set(rulings.names) - _shared().listed
+    words.update(
+        word
+        for word, claimed, _, who in shared_word_verdicts(text, capitalised(text, source), rulings)
+        if claimed and who in {"ruling", "roster"}
+    )
+    return words
 
 
 def repair_syllabic_gi(text: str, phonemes: str) -> str:
@@ -198,12 +301,20 @@ def capitalised(text: str, source: str | None = None) -> frozenset[str]:
 def sentence_case(text: str, source: str | None = None, rulings: "Rulings | None" = None) -> Iterator[None]:
     """Remember `capitalised(text, source)` and the book's rulings for a frontend that only hands over normalized chunks (Studio)."""
     previous = getattr(_case, "capitals", frozenset()), getattr(_case, "rulings", None), getattr(_case, "named", frozenset())
+    spelling = getattr(_case, 'spelling', None)
+    _case.spelling = (text, source)
     _case.capitals, _case.rulings = capitalised(text, source), rulings
     _case.named = written_names(text, source) & rulings.foreign if rulings else frozenset()
     try:
         yield
     finally:
         _case.capitals, _case.rulings, _case.named = previous
+        _case.spelling = spelling
+
+
+def remembered_spelling(fallback: str) -> tuple[str, str | None]:
+    """Pre-normalization generated syllable boundaries for Studio's second pass."""
+    return getattr(_case, 'spelling', None) or (fallback, None)
 
 
 @contextmanager

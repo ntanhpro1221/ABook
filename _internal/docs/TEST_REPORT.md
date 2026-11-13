@@ -1909,3 +1909,179 @@ passed. Coverage includes book spelling, NPC normalization, duplicate choices,
 thought/narration, all-half choices, critic isolation, and UTF-8/LF output.
 The test loader compiles the real replay class and helpers with standard
 library dependencies; it does not start workers, models, or GPU jobs.
+
+
+## Class-conditioned text pronunciation gate (2026-11-12, dev/g2pgate)
+
+The fixed public gate contains 744 source-verified tokens/name groups (739
+casefold-distinct): Japanese 377, Korean 20, Chinese/Sino-Vietnamese 80,
+Western 100, English loans 19, acronyms 21, mixed tokens 88 and Vietnamese
+controls 39. Corpus contributes 551 tokens and hand18 gold speaker lists 193.
+The 442 calibration identities represent 81 distinct source hashes. Private
+sentences remain outside the repository; only isolated tokens, hashes,
+phonemes and class/owner metadata are distributed. See
+`tests/data/g2pgate/README.md` and `tests/test_g2pgate.py`.
+
+The oracle is policy code and explicit owner decisions, not independent human
+phoneme annotation. The app materializes its own readings from roster origins;
+precomputed automatic reading aliases are not replay inputs. The normalization
+follows judge2's text scorer, with corrected acute-probe placement. Case-sensitive
+Vietnamese words and two-letter capital codes are scored normally. The only
+remaining mismatching token is the ambiguous platform/initialism `KAKI`.
+`LV` also lacks its original numeral/code context but matches the default.
+Two personal names without source-language evidence remain ambiguous in 12
+calibration rows. These declarations do not certify automatic language inference
+or acoustic pronunciation.
+
+Against the baseline G2P code at d8710f23f, harvested-token mismatches are
+20/744 -> 1/744 (19 unambiguous -> 0), and calibration source replay is
+7/442 -> 0/442. Historical sent phonemes are retained unchanged; this is
+regeneration of the source, not rewriting old clips. The runtime preserves
+generated syllable positions across both frontends, uses only Vietnamese
+sea-g2p probes for replacement phones, and keeps the split Japanese-name route.
+The cache namespace is direct-en7. Instrumentation observed 3,984 probes over
+596 valid Vietnamese syllables, with all 2,674 emitted probe results matching
+the independent Vietnamese phone oracle. These are probe counts, not repairs.
+
+Validation with the pinned Python and `-rf`: the gate passed all 11 tests with
+the private calibration source; the final full suite for touched/reading modules
+passed 4,725 tests in 81 files, with 7 skipped and 0 FAILED. The earlier entire
+repository run recorded 12,131 passed, 2 FAILED, 21 skipped and 2 xfailed. Its
+two failures were an order-dependent assumption of an unpatched upstream
+frontend and stale text parity expectations. The test now gets pristine upstream
+functions while retaining its original assertions; text/BPE fixtures were
+refreshed without audio generation, and their sea-g2p metadata now records the
+installed version instead of an obsolete literal. Both failing files passed in
+the final module suite. The entire repository run was not repeated after these
+test/fixture-only fixes; the app implementation hash did not change. Compileall
+and diff checks passed. Kotlin was explicitly rerun: 22 passed, 7 skipped,
+0 failures/errors. Host JNI parity remains unverified (Rust JNI pins 0.9.1;
+the Python gate uses sea-g2p 0.10.0). No acoustic evaluation or release was made.
+
+Quality implementation hash, read from the worktree's `_internal`:
+`bd0e02b4d872503d8a396c7b2b3a5befde44b0fd8f7def641c56e5b280a1eced`
+-> `3b089118a842cc74fb53736357c704fa41c5bf656d7cf109a7442e22de4ccb48`.
+
+### Full repository and host JNI verification (2026-11-12)
+
+The entire repository suite was rerun after c227bcfaf's fixture fixes, from
+the worktree's `_internal`, using the pinned Python, private calibration source
+and `-o addopts= -q -rf`: **12133 passed, 0 FAILED, 21 skipped, 2 xfailed,
+4 warnings**, exit 0, in 2881.80 seconds. Both earlier failing tests passed.
+No implementation failure required a runtime fix.
+
+Host parity now runs the actual Kotlin `VieneuUnits` -> `SeaG2p` /
+`PhonemePolicy` -> Rust JNI sea-g2p **0.9.1**, against desktop sea-g2p **0.10.0**.
+Both use dictionary SHA-256
+`4346e690d0711ebc5231e7a42c5c88aaf6e40377e894b4617c018fd81c6f4096`.
+The comparison is exact per-unit UTF-8 phoneme strings and unit boundaries:
+no normalization, accepted alternatives or ambiguity exemptions.
+
+| Class | Rows | Before mismatches | Final mismatches |
+|---|---:|---:|---:|
+| Japanese | 377 | 0 | 0 |
+| Korean | 20 | 0 | 0 |
+| Chinese/Sino-Vietnamese | 80 | 0 | 0 |
+| Western | 100 | 0 | 0 |
+| English loans | 19 | 0 | 0 |
+| Acronyms | 21 | 0 | 0 |
+| Mixed | 88 | 0 | 0 |
+| Vietnamese | 39 | 0 | 0 |
+| Private calibration | 442 | 0 | 0 |
+
+The 442 calibration identities still represent 81 distinct source hashes.
+Seven rows differ only in intermediate `Ban`/`BAN` -> `ban` case, and three
+in the English tag around `do`; their exact final phonemes and unit boundaries
+match. These spelling diagnostics are separate from phoneme mismatches.
+Source inspection found 36 identical Rust files and an identical single-text
+`Normalizer.normalize` body; 0.10.0 adds binding/feature and C-ABI support.
+The JNI pin is retained because no differing phoneme behavior was measured;
+no Android engine/library download pins were changed.
+
+`scripts/generate_g2p_parity.py` freezes all 744 desktop outputs in
+`tests/data/g2pgate/desktop_parity.json`; each also matches the existing gate
+runner byte for byte. `--check` verifies the snapshot. Optional private
+calibration generation validates every source hash and refuses output inside
+the repository. Book readings/rulings are transported inputs, as in production;
+this does not certify independent language inference or acoustic pronunciation.
+
+`G2pGateParityTest` asserts the public fixture and optional private replay on
+JVM/host JNI. `ABOOK_REQUIRE_G2P_PARITY=1` makes missing native inputs fail CI.
+`prepare_sea_g2p_android.py --host-only` builds JNI without the NDK and preserves
+previous source trees. The final rebuilt host DLL was tested with all
+`vieneu.*` and `readaloud.*` JVM tests: **583 passed, 2 skipped, 0 failures/errors**.
+The skips require an optional private punctuation corpus and Supertonic model;
+all native G2P/parity tests actually ran. The older 209-sentence native text
+contract also passed. Commands are in `tests/data/g2pgate/README.md`.
+Compileall, the two scripts' lint and exact fixture regeneration checks passed.
+
+The quality list was read from code (69 entries). Before and after this follow-up,
+the worktree implementation hash remained
+`3b089118a842cc74fb53736357c704fa41c5bf656d7cf109a7442e22de4ccb48`.
+This measures host JNI text parity, not Android runtime performance or audio.
+No emulator, real phone, release, model upload or push was used.
+
+## integ168: G2P/collapse integration and stale CMake caches (2026-11-12)
+
+Merged `dev/g2pgate` and `dev/collapsefix` into `dev/integ168`, starting at
+`6398020de`. Both merges were conflict-free. The ASR implementation and its
+locked-name regression test file have identical Git blobs in the starting
+release, collapse branch and integrated result; the second merge records ancestry.
+
+All five CMake configure entrypoints (desktop, QWindowKit, audiobench, decoder
+profiling and release-gate Qt tests) now call one `drop_stale_cmake_cache.py`
+helper. A missing cached C/C++ compiler or linker invalidates only
+`CMakeCache.txt` and `CMakeFiles`, after containment checks. Intact caches and
+other build products are preserved. The three edited batch files retain CRLF.
+Nine synthetic helper cases cover missing tools, intact tools, mixed tool
+states, absent caches, containment and CLI paths with spaces/parentheses.
+Final cache/VCVars/batch checks: **15 passed, 0 failures/errors**, exit 0.
+
+The integrated parity fixture needed only its `quality_hash` metadata refreshed:
+all 744 case payloads remain identical. Desktop snapshot checks pass for all
+744 public tokens and 442 private calibration rows; private-source G2P pytest:
+**11 passed, 0 failures/errors**. Rebuilt host Rust JNI and reran all
+`vieneu.*`/`readaloud.*` JVM tests with strict native parity enabled:
+**583 passed, 0 failures/errors, 2 skipped**, 74 XML files. Both native G2P gate
+tests executed, with zero exact phoneme/unit-boundary mismatches across all
+1,186 rows. The skips require an optional punctuation corpus and Supertonic
+model. The first Gradle attempt was blocked before tests by missing local
+TypeScript dependencies; a local locked `npm ci --ignore-scripts` resolved it
+without changing source or lockfiles.
+
+The implementation list was read from code (69 entries). The starting hash was
+`bfbf90f934c2a5d8bce0622b29ed1752d74cbe56a5e81e3f1969dac98f5c762b`;
+after the G2P merge it is
+`d73a53dedf1b2ea61384c23951423763bc1894694a1dd2f2a8aa69e5da416b92`,
+unchanged by collapse/cache/test work. Compileall, new-file Ruff checks and diff
+checks passed. Validation uses CPU, offscreen/software Qt and headless JVM;
+host JNI text parity does not measure phone performance or audio quality.
+No protected sibling worktree, release, push or GPU was used.
+
+Final full repository pytest, one invocation with `-o addopts= -q -rf`:
+**12,146 passed, 0 FAILED, 0 errors, 21 skipped, 2 xfailed, 4 warnings**,
+exit 0, 3,384.08 seconds. All 12,169 XML cases reconcile with the summary;
+the actual `^FAILED` line count is zero. This invocation omitted the private
+calibration environment variable; its 442 rows were covered separately above.
+The warnings are a duplicate synthetic EPUB entry, an AST invalid-escape
+deprecation, the queue test's deliberate thread `SystemExit`, and a mock music
+server's `accept()` timeout. Their source files match `6398020de`; no unrelated
+warning fixes were made. There are no final failures to classify against baseline.
+
+The full run started with 12.56 GiB free RAM and numerical thread pools capped
+at two. Shared free RAM later fell to 3.76 GiB in the recorded samples; no new
+heavy workload was launched during that dip. External evidence (full/focused
+logs and XML, exact JNI reports, source-derived hash list and RAM samples) is
+retained in the task's external `scratchpad/codex/integ168` directory.
+
+
+## 2026-11-12 g2pfix privacy repair (dev/integ168b)
+
+Supersedes the earlier claims that calibration.json contained no sentence data:
+it contained recoverable whole-sentence phonemes and sentence hashes. Those
+claims were incorrect. Private context is now outside this public repository in
+Corpus/g2pgate/calibration_context.json; the public calibration holds token phones
+only. The new branch squashes sanitized content onto 6398020de and must not be
+pushed until Lead reviews it. Historical probe-oracle and parity measurements
+above are not evidence for the repaired code. Current validation is recorded in
+the final repair entry; heavy checks are pending AC power.

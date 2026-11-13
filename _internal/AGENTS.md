@@ -267,6 +267,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   xác định span tên Nhật phải qua cùng luật sửa phoneme trước khi nối, để `gi`/`o` không làm sai phép so tiền tố.
   Chỉ 72 từ mà từ điển Việt của sea-g2p đọc thành âm tiết thanh ngang nằm trong bảng (cat -> "cát", pa -> "pà" thì không:
   âm "Việt" của chúng là đoán dấu). Văn bản truyện và nhãn huấn luyện không vào repo.
+  Gate chữ `tests/test_g2pgate.py` giữ token/tên thật và mã băm sách; câu nguồn hiệu chỉnh phải ở ngoài repo.
+  Khi lớp/ngôn ngữ đã được cuốn xác nhận, cách đọc ấy phải sống qua cả lớp chữ và lượt sea-g2p thứ hai.
+  Sửa âm tiết phiên âm chỉ lấy âm Việt từ chính sea-g2p (thử dấu sắc hợp lệ rồi bỏ đúng thanh thử), không tự tạo IPA;
+  chỉ sửa đúng vị trí âm tiết đã sinh, không lan sang từ Anh trùng chữ. Namespace hiện tại `direct-en7`.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây

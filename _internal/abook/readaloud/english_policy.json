@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "provenance": "auto",
   "acronyms": ["UDF", "MIT", "GPS", "DNA", "ID"],
   "capital_codes": ["acc", "adn", "afk", "afl", "agi", "ahl", "aka", "aoe", "api", "apk", "arn", "atk", "atm", "atp", "att", "cpu", "def", "dex", "emp", "epa", "espn", "eta", "eur", "fda", "fia", "hbo", "ign", "imf", "int", "ios", "iou", "ipa", "ipu", "iso", "luc", "luk", "mag", "mba", "oem", "ost", "pga", "pua", "rca", "res", "rna", "sci", "suv", "uae", "uav", "ufo", "ups", "usb", "usd", "ussr", "vit"],

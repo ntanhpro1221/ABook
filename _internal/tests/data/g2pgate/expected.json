@@ -1,0 +1,5354 @@
+{
+  "japanese:Fukamachi": {
+    "reading": "phu ca ma chi",
+    "phones": [
+      "fˈu kˈaː mˈaː tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Funami": {
+    "reading": "phu na mi",
+    "phones": [
+      "fˈu nˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kayato": {
+    "reading": "ca gia tô",
+    "phones": [
+      "kˈaː zˈaː t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akira": {
+    "reading": "a ki ra",
+    "phones": [
+      "ˈaː kˈi ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mugino": {
+    "reading": "mu ghi nô",
+    "phones": [
+      "mˈu ɣˈi nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Iguma": {
+    "reading": "i gu ma",
+    "phones": [
+      "ˈi ɣˈu mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sou": {
+    "reading": "xâu",
+    "phones": [
+      "sˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haruoka": {
+    "reading": "ha ru ô ca",
+    "phones": [
+      "hˈaː ɹˈu ˈo kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hiiragi": {
+    "reading": "hi ra ghi",
+    "phones": [
+      "hˈi ɹˈaː ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuto": {
+    "reading": "giu tô",
+    "phones": [
+      "zˈu t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Riichi": {
+    "reading": "ri chi",
+    "phones": [
+      "ɹˈi tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kotoha": {
+    "reading": "cô tô ha",
+    "phones": [
+      "kˈo t̪ˈo hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Segawa": {
+    "reading": "xe ga oa",
+    "phones": [
+      "sˈɛ ɣˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Natsume": {
+    "reading": "na xu me",
+    "phones": [
+      "nˈaː sˈu mˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haruyoshi": {
+    "reading": "ha ru giô si",
+    "phones": [
+      "hˈaː ɹˈu zˈo sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kazuhi": {
+    "reading": "ca du hi",
+    "phones": [
+      "kˈaː zˈu hˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hoshina": {
+    "reading": "hô si na",
+    "phones": [
+      "hˈo sˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Amagase": {
+    "reading": "a ma ga xe",
+    "phones": [
+      "ˈaː mˈaː ɣˈaː sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Misaki": {
+    "reading": "mi xa ki",
+    "phones": [
+      "mˈi sˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hajikano": {
+    "reading": "ha gi ca nô",
+    "phones": [
+      "hˈaː zˈi kˈaː nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kazuki": {
+    "reading": "ca du ki",
+    "phones": [
+      "kˈaː zˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Natsumi": {
+    "reading": "na xu mi",
+    "phones": [
+      "nˈaː sˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takigawa": {
+    "reading": "ta ki ga oa",
+    "phones": [
+      "t̪ˈaː kˈi ɣˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mizuki": {
+    "reading": "mi du ki",
+    "phones": [
+      "mˈi zˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Chigusa": {
+    "reading": "chi gu xa",
+    "phones": [
+      "tʃˈi ɣˈu sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ogiue": {
+    "reading": "ô ghi u e",
+    "phones": [
+      "ˈo ɣˈi ˈu ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Taku": {
+    "reading": "ta cu",
+    "phones": [
+      "t̪ˈaː kˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sugawara": {
+    "reading": "xu ga oa ra",
+    "phones": [
+      "sˈu ɣˈaː wˈaː ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tsukigase": {
+    "reading": "xu ki ga xe",
+    "phones": [
+      "sˈu kˈi ɣˈaː sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kaishu": {
+    "reading": "cai su",
+    "phones": [
+      "kˌaːj sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Erisa": {
+    "reading": "e ri xa",
+    "phones": [
+      "ˈɛ ɹˈi sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Jinka": {
+    "reading": "gin ca",
+    "phones": [
+      "zˈin kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shuu": {
+    "reading": "su",
+    "phones": [
+      "sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yagi": {
+    "reading": "gia ghi",
+    "phones": [
+      "zˈaː ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Igarashi": {
+    "reading": "i ga ra si",
+    "phones": [
+      "ˈi ɣˈaː ɹˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Keiji": {
+    "reading": "cây gi",
+    "phones": [
+      "kˈəɪ zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kiriya": {
+    "reading": "ki ri a",
+    "phones": [
+      "kˈi ɹˈi ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yui": {
+    "reading": "giu i",
+    "phones": [
+      "zˈu ˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuzuki": {
+    "reading": "giu du ki",
+    "phones": [
+      "zˈu zˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Saegusa": {
+    "reading": "xa e gu xa",
+    "phones": [
+      "sˈaː ˈɛ ɣˈu sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kishitani": {
+    "reading": "ki si ta ni",
+    "phones": [
+      "kˈi sˈi t̪ˈaː nˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yakumo": {
+    "reading": "gia cu mô",
+    "phones": [
+      "zˈaː kˈu mˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Suzuya": {
+    "reading": "xu du gia",
+    "phones": [
+      "sˈu zˈu zˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kuuya": {
+    "reading": "cu gia",
+    "phones": [
+      "kˈu zˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mamesaki": {
+    "reading": "ma me xa ki",
+    "phones": [
+      "mˈaː mˈɛ sˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Rinka": {
+    "reading": "rin ca",
+    "phones": [
+      "ɹˈin kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takatsu": {
+    "reading": "ta ca xu",
+    "phones": [
+      "t̪ˈaː kˈaː sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tsubaki": {
+    "reading": "xu ba ki",
+    "phones": [
+      "sˈu bˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mikiya": {
+    "reading": "mi ki a",
+    "phones": [
+      "mˈi kˈi ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ozaki": {
+    "reading": "ô da ki",
+    "phones": [
+      "ˈo zˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aika": {
+    "reading": "ai ca",
+    "phones": [
+      "ˈaːj kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nanao": {
+    "reading": "na nao",
+    "phones": [
+      "nˈaː nˈaːw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Eina": {
+    "reading": "ây na",
+    "phones": [
+      "ˈəɪ nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hinohara": {
+    "reading": "hi nô ha ra",
+    "phones": [
+      "hˈi nˈo hˈaː ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aya": {
+    "reading": "ay a",
+    "phones": [
+      "ˈaj ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Minekawa": {
+    "reading": "mi ne ca oa",
+    "phones": [
+      "mˈi nˈɛ kˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Inamura": {
+    "reading": "i na mu ra",
+    "phones": [
+      "ˈi nˈaː mˈu ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Rindou": {
+    "reading": "rin đâu",
+    "phones": [
+      "ɹˈin ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kaho": {
+    "reading": "ca hô",
+    "phones": [
+      "kˈaː hˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yonabaru": {
+    "reading": "giô na ba ru",
+    "phones": [
+      "zˈo nˈaː bˈaː ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Jin": {
+    "reading": "gin",
+    "phones": [
+      "zˈin"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nishina": {
+    "reading": "ni si na",
+    "phones": [
+      "nˈi sˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akimitsu": {
+    "reading": "a ki mi xu",
+    "phones": [
+      "ˈaː kˈi mˈi sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sayo": {
+    "reading": "xa giô",
+    "phones": [
+      "sˈaː zˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kotomi": {
+    "reading": "cô tô mi",
+    "phones": [
+      "kˈo t̪ˈo mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ishikawa": {
+    "reading": "i si ca oa",
+    "phones": [
+      "ˈi sˈi kˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haruhito": {
+    "reading": "ha ru hi tô",
+    "phones": [
+      "hˈaː ɹˈu hˈi t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tamaki": {
+    "reading": "ta ma ki",
+    "phones": [
+      "t̪ˈaː mˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Iruse": {
+    "reading": "i ru xe",
+    "phones": [
+      "ˈi ɹˈu sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kusama": {
+    "reading": "cu xa ma",
+    "phones": [
+      "kˈu sˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yousuke": {
+    "reading": "giâu xu ke",
+    "phones": [
+      "zˈəw sˈu kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mishima": {
+    "reading": "mi si ma",
+    "phones": [
+      "mˈi sˈi mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Honoka": {
+    "reading": "hô nô ca",
+    "phones": [
+      "hˈo nˈo kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kanae": {
+    "reading": "ca na e",
+    "phones": [
+      "kˈaː nˈaː ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takaki": {
+    "reading": "ta ca ki",
+    "phones": [
+      "t̪ˈaː kˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fujimoto": {
+    "reading": "phu gi mô tô",
+    "phones": [
+      "fˈu zˈi mˈo t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ryota": {
+    "reading": "ri ô ta",
+    "phones": [
+      "ɹˈi ˈo t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Watanabe": {
+    "reading": "oa ta na be",
+    "phones": [
+      "wˈaː t̪ˈaː nˈaː bˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aiba": {
+    "reading": "ai ba",
+    "phones": [
+      "ˈaːj bˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Eri": {
+    "reading": "e ri",
+    "phones": [
+      "ˈɛ ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shuuji": {
+    "reading": "su gi",
+    "phones": [
+      "sˈu zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haruka": {
+    "reading": "ha ru ca",
+    "phones": [
+      "hˈaː ɹˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Keisuke": {
+    "reading": "cây xu ke",
+    "phones": [
+      "kˈəɪ sˈu kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sakai": {
+    "reading": "xa cai",
+    "phones": [
+      "sˈaː kˌaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kurehiko": {
+    "reading": "cu re hi cô",
+    "phones": [
+      "kˈu ɹˈɛ hˈi kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haruko": {
+    "reading": "ha ru cô",
+    "phones": [
+      "hˈaː ɹˈu kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yadomura": {
+    "reading": "gia đô mu ra",
+    "phones": [
+      "zˈaː ɗˈo mˈu ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ruka": {
+    "reading": "ru ca",
+    "phones": [
+      "ɹˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akari": {
+    "reading": "a ca ri",
+    "phones": [
+      "ˈaː kˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Andou": {
+    "reading": "an đâu",
+    "phones": [
+      "ˈaːn ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akito": {
+    "reading": "a ki tô",
+    "phones": [
+      "ˈaː kˈi t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Masaya": {
+    "reading": "ma xay a",
+    "phones": [
+      "mˈaː sˈaj ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nagahora": {
+    "reading": "na ga hô ra",
+    "phones": [
+      "nˈaː ɣˈaː hˈo ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Katou": {
+    "reading": "ca tâu",
+    "phones": [
+      "kˈaː t̪ˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tokiwa": {
+    "reading": "tô ki oa",
+    "phones": [
+      "t̪ˈo kˈi wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akiho": {
+    "reading": "a ki hô",
+    "phones": [
+      "ˈaː kˈi hˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kasai": {
+    "reading": "ca xai",
+    "phones": [
+      "kˈaː sˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kisaragi": {
+    "reading": "ki xa ra ghi",
+    "phones": [
+      "kˈi sˈaː ɹˈaː ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shimizu": {
+    "reading": "si mi du",
+    "phones": [
+      "sˈi mˈi zˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kensuke": {
+    "reading": "ken xu ke",
+    "phones": [
+      "kˈɛn sˈu kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nagai": {
+    "reading": "na gai",
+    "phones": [
+      "nˈaː ɣˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hikawa": {
+    "reading": "hi ca oa",
+    "phones": [
+      "hˈi kˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shoko": {
+    "reading": "sô cô",
+    "phones": [
+      "sˈo kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Masafumi": {
+    "reading": "ma xa phu mi",
+    "phones": [
+      "mˈaː sˈaː fˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Usumizu": {
+    "reading": "u xu mi du",
+    "phones": [
+      "ˈu sˈu mˈi zˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ryunosuke": {
+    "reading": "ri u nô xu ke",
+    "phones": [
+      "ɹˈi ˈu nˈo sˈu kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yoshie": {
+    "reading": "giô si e",
+    "phones": [
+      "zˈo sˈi ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yoshiki": {
+    "reading": "giô si ki",
+    "phones": [
+      "zˈo sˈi kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Furuta": {
+    "reading": "phu ru ta",
+    "phones": [
+      "fˈu ɹˈu t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tsugumi": {
+    "reading": "xu gu mi",
+    "phones": [
+      "sˈu ɣˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sumoto": {
+    "reading": "xu mô tô",
+    "phones": [
+      "sˈu mˈo t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Endou": {
+    "reading": "en đâu",
+    "phones": [
+      "ˈɛn ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tanaka": {
+    "reading": "ta na ca",
+    "phones": [
+      "t̪ˈaː nˈaː kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yukata": {
+    "reading": "giu ca ta",
+    "phones": [
+      "zˈu kˈaː t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kouhei": {
+    "reading": "câu hây",
+    "phones": [
+      "kˈəw hˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tagami": {
+    "reading": "ta ga mi",
+    "phones": [
+      "t̪ˈaː ɣˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuki": {
+    "reading": "giu ki",
+    "phones": [
+      "zˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Funakoshi": {
+    "reading": "phu na cô si",
+    "phones": [
+      "fˈu nˈaː kˈo sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Suga": {
+    "reading": "xu ga",
+    "phones": [
+      "sˈu ɣˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mizuno": {
+    "reading": "mi du nô",
+    "phones": [
+      "mˈi zˈu nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Risa": {
+    "reading": "ri xa",
+    "phones": [
+      "ɹˈi sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kouchi": {
+    "reading": "câu chi",
+    "phones": [
+      "kˈəw tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Midou": {
+    "reading": "mi đâu",
+    "phones": [
+      "mˈi ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Suzumoto": {
+    "reading": "xu du mô tô",
+    "phones": [
+      "sˈu zˈu mˈo t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takuma": {
+    "reading": "ta cu ma",
+    "phones": [
+      "t̪ˈaː kˈu mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Isezaki": {
+    "reading": "i xe da ki",
+    "phones": [
+      "ˈi sˈɛ zˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Michi": {
+    "reading": "mi chi",
+    "phones": [
+      "mˈi tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Saki": {
+    "reading": "xa ki",
+    "phones": [
+      "sˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shouta": {
+    "reading": "sâu ta",
+    "phones": [
+      "sˈəw t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aida": {
+    "reading": "ai đa",
+    "phones": [
+      "ˈaːj ɗˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kanade": {
+    "reading": "ca na đe",
+    "phones": [
+      "kˈaː nˈaː ɗˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Toguchi": {
+    "reading": "tô gu chi",
+    "phones": [
+      "t̪ˈo ɣˈu tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Toyoda": {
+    "reading": "tô giô đa",
+    "phones": [
+      "t̪ˈo zˈo ɗˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hiyori": {
+    "reading": "hi ô ri",
+    "phones": [
+      "hˈi ˈo ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Natsuna": {
+    "reading": "na xu na",
+    "phones": [
+      "nˈaː sˈu nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ranko": {
+    "reading": "ran cô",
+    "phones": [
+      "ɹˈaːn kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Rosari": {
+    "reading": "rô xa ri",
+    "phones": [
+      "ɹˈo sˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shirakawa": {
+    "reading": "si ra ca oa",
+    "phones": [
+      "sˈi ɹˈaː kˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haneda": {
+    "reading": "ha ne đa",
+    "phones": [
+      "hˈaː nˈɛ ɗˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Miacha": {
+    "reading": "mi a cha",
+    "phones": [
+      "mˈi ˈaː tʃˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sekigahara": {
+    "reading": "xe ki ga ha ra",
+    "phones": [
+      "sˈɛ kˈi ɣˈaː hˈaː ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yukko": {
+    "reading": "giúc cô",
+    "phones": [
+      "zˈuɜc kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hashiba": {
+    "reading": "ha si ba",
+    "phones": [
+      "hˈaː sˈi bˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hashibami": {
+    "reading": "ha si ba mi",
+    "phones": [
+      "hˈaː sˈi bˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shino": {
+    "reading": "si nô",
+    "phones": [
+      "sˈi nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yoko": {
+    "reading": "giô cô",
+    "phones": [
+      "zˈo kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Arisu": {
+    "reading": "a ri xu",
+    "phones": [
+      "ˈaː ɹˈi sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hojo": {
+    "reading": "hô giô",
+    "phones": [
+      "hˈo zˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nogiyama": {
+    "reading": "nô ghi a ma",
+    "phones": [
+      "nˈo ɣˈi ˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ramen": {
+    "reading": "ra men",
+    "phones": [
+      "ɹˈaː mˈɛn"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Roppongi": {
+    "reading": "rốp pôn ghi",
+    "phones": [
+      "ɹˈoɜp pˈon ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Satoru": {
+    "reading": "xa tô ru",
+    "phones": [
+      "sˈaː t̪ˈo ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takashi": {
+    "reading": "ta ca si",
+    "phones": [
+      "t̪ˈaː kˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Takeshita": {
+    "reading": "ta ke si ta",
+    "phones": [
+      "t̪ˈaː kˈɛ sˈi t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hosoda": {
+    "reading": "hô xô đa",
+    "phones": [
+      "hˈo sˈo ɗˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sousuke": {
+    "reading": "xâu xu ke",
+    "phones": [
+      "sˈəw sˈu kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hirose": {
+    "reading": "hi rô xe",
+    "phones": [
+      "hˈi ɹˈo sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Itou": {
+    "reading": "i tâu",
+    "phones": [
+      "ˈi t̪ˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Izumi": {
+    "reading": "i du mi",
+    "phones": [
+      "ˈi zˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kogoro": {
+    "reading": "cô gô rô",
+    "phones": [
+      "kˈo ɣˈo ɹˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Murata": {
+    "reading": "mu ra ta",
+    "phones": [
+      "mˈu ɹˈaː t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sakaguchi": {
+    "reading": "xa ca gu chi",
+    "phones": [
+      "sˈaː kˈaː ɣˈu tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sakamoto": {
+    "reading": "xa ca mô tô",
+    "phones": [
+      "sˈaː kˈaː mˈo t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Togawa": {
+    "reading": "tô ga oa",
+    "phones": [
+      "t̪ˈo ɣˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuji": {
+    "reading": "giu gi",
+    "phones": [
+      "zˈu zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Iwafune": {
+    "reading": "i oa phu ne",
+    "phones": [
+      "ˈi wˈaː fˈu nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kobayashi": {
+    "reading": "cô ba gia si",
+    "phones": [
+      "kˈo bˈaː zˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Koyomi": {
+    "reading": "cô giô mi",
+    "phones": [
+      "kˈo zˈo mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fuyutsuki": {
+    "reading": "phu giu xu ki",
+    "phones": [
+      "fˈu zˈu sˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hayase": {
+    "reading": "ha gia xe",
+    "phones": [
+      "hˈaː zˈaː sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Koutarou": {
+    "reading": "câu ta râu",
+    "phones": [
+      "kˈəw t̪ˈaː ɹˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Subaru": {
+    "reading": "xu ba ru",
+    "phones": [
+      "sˈu bˈaː ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Narumi": {
+    "reading": "na ru mi",
+    "phones": [
+      "nˈaː ɹˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kirako": {
+    "reading": "ki ra cô",
+    "phones": [
+      "kˈi ɹˈaː kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kakeru": {
+    "reading": "ca ke ru",
+    "phones": [
+      "kˈaː kˈɛ ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Remon": {
+    "reading": "re môn",
+    "phones": [
+      "ɹˈɛ mˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mitsuki": {
+    "reading": "mi xu ki",
+    "phones": [
+      "mˈi sˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Koharu": {
+    "reading": "cô ha ru",
+    "phones": [
+      "kˈo hˈaː ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Saito": {
+    "reading": "xai tô",
+    "phones": [
+      "sˈaːj t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shiina": {
+    "reading": "si na",
+    "phones": [
+      "sˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Onizuki": {
+    "reading": "ô ni du ki",
+    "phones": [
+      "ˈo nˈi zˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yakishio": {
+    "reading": "gia ki si ô",
+    "phones": [
+      "zˈaː kˈi sˈi ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shizuka": {
+    "reading": "si du ca",
+    "phones": [
+      "sˈi zˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sorano": {
+    "reading": "xô ra nô",
+    "phones": [
+      "sˈo ɹˈaː nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mahiru": {
+    "reading": "ma hi ru",
+    "phones": [
+      "mˈaː hˈi ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akane": {
+    "reading": "a ca ne",
+    "phones": [
+      "ˈaː kˈaː nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Enmi": {
+    "reading": "en mi",
+    "phones": [
+      "ˈɛn mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kiriha": {
+    "reading": "ki ri ha",
+    "phones": [
+      "kˈi ɹˈi hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yurika": {
+    "reading": "giu ri ca",
+    "phones": [
+      "zˈu ɹˈi kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Soba": {
+    "reading": "xô ba",
+    "phones": [
+      "sˈo bˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kakushigi": {
+    "reading": "ca cu si ghi",
+    "phones": [
+      "kˈaː kˈu sˈi ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kenji": {
+    "reading": "ken gi",
+    "phones": [
+      "kˈɛn zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tengu": {
+    "reading": "ten gu",
+    "phones": [
+      "t̪ˈɛn ɣˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yoshihito": {
+    "reading": "giô si hi tô",
+    "phones": [
+      "zˈo sˈi hˈi t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuuko": {
+    "reading": "giu cô",
+    "phones": [
+      "zˈu kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Gâ": {
+    "reading": "ga",
+    "phones": [
+      "ɣˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Urazumi": {
+    "reading": "u ra du mi",
+    "phones": [
+      "ˈu ɹˈaː zˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kaina": {
+    "reading": "cai na",
+    "phones": [
+      "kˌaːj nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ayano": {
+    "reading": "a gia nô",
+    "phones": [
+      "ˈaː zˈaː nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hayama": {
+    "reading": "ha gia ma",
+    "phones": [
+      "hˈaː zˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kappa": {
+    "reading": "cáp pa",
+    "phones": [
+      "kˈaːɜp pˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Juuyaku": {
+    "reading": "giu gia cu",
+    "phones": [
+      "zˈu zˈaː kˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sanae": {
+    "reading": "xa na e",
+    "phones": [
+      "sˈaː nˈaː ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shiho": {
+    "reading": "si hô",
+    "phones": [
+      "sˈi hˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shimotsuki": {
+    "reading": "si mô xu ki",
+    "phones": [
+      "sˈi mˈo sˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Amane": {
+    "reading": "a ma ne",
+    "phones": [
+      "ˈaː mˈaː nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Zanoba": {
+    "reading": "da nô ba",
+    "phones": [
+      "zˈaː nˈo bˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akasha": {
+    "reading": "a ca sa",
+    "phones": [
+      "ˈaː kˈaː sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kotomugi": {
+    "reading": "cô tô mu ghi",
+    "phones": [
+      "kˈo t̪ˈo mˈu ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sudou": {
+    "reading": "xu đâu",
+    "phones": [
+      "sˈu ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yanami": {
+    "reading": "gia na mi",
+    "phones": [
+      "zˈaː nˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mizuto": {
+    "reading": "mi du tô",
+    "phones": [
+      "mˈi zˈu t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yasushi": {
+    "reading": "gia xu si",
+    "phones": [
+      "zˈaː sˈu sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Udon": {
+    "reading": "u đôn",
+    "phones": [
+      "ˈu ɗˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Amagi": {
+    "reading": "a ma ghi",
+    "phones": [
+      "ˈaː mˈaː ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nukkun": {
+    "reading": "núc cun",
+    "phones": [
+      "nˈuɜc kˈun"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Paripi": {
+    "reading": "pa ri pi",
+    "phones": [
+      "pˈaː ɹˈi pˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Horikita": {
+    "reading": "hô ri ki ta",
+    "phones": [
+      "hˈo ɹˈi kˈi t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ryuuzaki": {
+    "reading": "ri u da ki",
+    "phones": [
+      "ɹˈi ˈu zˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kouta": {
+    "reading": "câu ta",
+    "phones": [
+      "kˈəw t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Anzu": {
+    "reading": "an du",
+    "phones": [
+      "ˈaːn zˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kayo": {
+    "reading": "ca giô",
+    "phones": [
+      "kˈaː zˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shiramine": {
+    "reading": "si ra mi ne",
+    "phones": [
+      "sˈi ɹˈaː mˈi nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Zaimokuza": {
+    "reading": "dai mô cu da",
+    "phones": [
+      "zˈaːj mˈo kˈu zˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aderon": {
+    "reading": "a đe rôn",
+    "phones": [
+      "ˈaː ɗˈɛ ɹˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hina": {
+    "reading": "hi na",
+    "phones": [
+      "hˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Karina": {
+    "reading": "ca ri na",
+    "phones": [
+      "kˈaː ɹˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tsukishima": {
+    "reading": "xu ki si ma",
+    "phones": [
+      "sˈu kˈi sˈi mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuugo": {
+    "reading": "giu gô",
+    "phones": [
+      "zˈu ɣˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Himuro": {
+    "reading": "hi mu rô",
+    "phones": [
+      "hˈi mˈu ɹˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kuchinashi": {
+    "reading": "cu chi na si",
+    "phones": [
+      "kˈu tʃˈi nˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mana": {
+    "reading": "ma na",
+    "phones": [
+      "mˈaː nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Rodin": {
+    "reading": "rô đin",
+    "phones": [
+      "ɹˈo ɗˈin"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Totsuka": {
+    "reading": "tô xu ca",
+    "phones": [
+      "t̪ˈo sˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuria": {
+    "reading": "giu ri a",
+    "phones": [
+      "zˈu ɹˈi ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kabutonga": {
+    "reading": "ca bu tôn ga",
+    "phones": [
+      "kˈaː bˈu t̪ˈon ɣˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aoi": {
+    "reading": "a o i",
+    "phones": [
+      "ˈaː ˈɔ ˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Juyaku": {
+    "reading": "giu gia cu",
+    "phones": [
+      "zˈu zˈaː kˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kadowaki": {
+    "reading": "ca đô oa ki",
+    "phones": [
+      "kˈaː ɗˈo wˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kansai": {
+    "reading": "can xai",
+    "phones": [
+      "kˈaːn sˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ko": {
+    "reading": "cô",
+    "phones": [
+      "kˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Marietta": {
+    "reading": "ma ri ét ta",
+    "phones": [
+      "mˈaː ɹˈi ˈɛɜt̪ t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yukinoshita": {
+    "reading": "giu ki nô si ta",
+    "phones": [
+      "zˈu kˈi nˈo sˈi t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kaya": {
+    "reading": "cay a",
+    "phones": [
+      "kˈaj ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kou": {
+    "reading": "câu",
+    "phones": [
+      "kˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sakura": {
+    "reading": "xa cu ra",
+    "phones": [
+      "sˈaː kˈu ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shiro": {
+    "reading": "si rô",
+    "phones": [
+      "sˈi ɹˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tachibana": {
+    "reading": "ta chi ba na",
+    "phones": [
+      "t̪ˈaː tʃˈi bˈaː nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Chitose": {
+    "reading": "chi tô xe",
+    "phones": [
+      "tʃˈi t̪ˈo sˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Haa": {
+    "reading": "ha",
+    "phones": [
+      "hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hana": {
+    "reading": "ha na",
+    "phones": [
+      "hˈaː nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hayato": {
+    "reading": "ha gia tô",
+    "phones": [
+      "hˈaː zˈaː t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kawanami": {
+    "reading": "ca oa na mi",
+    "phones": [
+      "kˈaː wˈaː nˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nukumizu": {
+    "reading": "nu cu mi du",
+    "phones": [
+      "nˈu kˈu mˈi zˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Osechi": {
+    "reading": "ô xe chi",
+    "phones": [
+      "ˈo sˈɛ tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Chihaya": {
+    "reading": "chi hay a",
+    "phones": [
+      "tʃˈi hˈaj ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Maa": {
+    "reading": "ma",
+    "phones": [
+      "mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mitsunari": {
+    "reading": "mi xu na ri",
+    "phones": [
+      "mˈi sˈu nˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Nakayama": {
+    "reading": "na ca gia ma",
+    "phones": [
+      "nˈaː kˈaː zˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Satomi": {
+    "reading": "xa tô mi",
+    "phones": [
+      "sˈaː t̪ˈo mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Asakusabashi": {
+    "reading": "a xa cu xa ba si",
+    "phones": [
+      "ˈaː sˈaː kˈu sˈaː bˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Asama": {
+    "reading": "a xa ma",
+    "phones": [
+      "ˈaː sˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fina": {
+    "reading": "phi na",
+    "phones": [
+      "fˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hokkaido": {
+    "reading": "hốc cai đô",
+    "phones": [
+      "hˈoɜk kˌaːj ɗˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Isshin": {
+    "reading": "ít sin",
+    "phones": [
+      "ˈiɜt̪ sˈin"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kanoe": {
+    "reading": "ca nô e",
+    "phones": [
+      "kˈaː nˈo ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Samurai": {
+    "reading": "xa mu rai",
+    "phones": [
+      "sˈaː mˈu ɹˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sumida": {
+    "reading": "xu mi đa",
+    "phones": [
+      "sˈu mˈi ɗˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Torahide": {
+    "reading": "tô ra hi đe",
+    "phones": [
+      "t̪ˈo ɹˈaː hˈi ɗˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Anma": {
+    "reading": "an ma",
+    "phones": [
+      "ˈaːn mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Chikuma": {
+    "reading": "chi cu ma",
+    "phones": [
+      "tʃˈi kˈu mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Echidona": {
+    "reading": "e chi đô na",
+    "phones": [
+      "ˈɛ tʃˈi ɗˈo nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Himari": {
+    "reading": "hi ma ri",
+    "phones": [
+      "hˈi mˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Irido": {
+    "reading": "i ri đô",
+    "phones": [
+      "ˈi ɹˈi ɗˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kii": {
+    "reading": "ki",
+    "phones": [
+      "kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kirito": {
+    "reading": "ki ri tô",
+    "phones": [
+      "kˈi ɹˈi t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kitsushouharukaze": {
+    "reading": "ki xu sâu ha ru ca de",
+    "phones": [
+      "kˈi sˈu sˈəw hˈaː ɹˈu kˈaː zˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kokurei": {
+    "reading": "cô cu rây",
+    "phones": [
+      "kˈo kˈu ɹˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Minami": {
+    "reading": "mi na mi",
+    "phones": [
+      "mˈi nˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mitotsudaira": {
+    "reading": "mi tô xu đai ra",
+    "phones": [
+      "mˈi t̪ˈo sˈu ɗˈaːj ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "korean:Dok-seo": {
+    "reading": "tốc xeo",
+    "phones": [
+      "t̪ˈoɜk sˈɛw"
+    ],
+    "ambiguity": null
+  },
+  "korean:Ha-yul": {
+    "reading": "ha giun",
+    "phones": [
+      "hˈaː zˈun"
+    ],
+    "ambiguity": null
+  },
+  "korean:Seol-Ah": {
+    "reading": "xe on a",
+    "phones": [
+      "sˈɛ ˈɔn ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "korean:Do-hwa": {
+    "reading": "tô hoa",
+    "phones": [
+      "t̪ˈo hwˈaː"
+    ],
+    "ambiguity": null
+  },
+  "korean:Yangcheon": {
+    "reading": "giang che on",
+    "phones": [
+      "zˈaːŋ tʃˈɛ ˈɔn"
+    ],
+    "ambiguity": null
+  },
+  "korean:Chaeyeon": {
+    "reading": "che gion",
+    "phones": [
+      "tʃˈɛ zˈɔn"
+    ],
+    "ambiguity": null
+  },
+  "korean:Pung": {
+    "reading": "pung",
+    "phones": [
+      "pˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "korean:Yung": {
+    "reading": "giung",
+    "phones": [
+      "zˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "korean:Namgung": {
+    "reading": "nam gung",
+    "phones": [
+      "nˈaːm ɣˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "korean:Yeonseo": {
+    "reading": "gion xeo",
+    "phones": [
+      "zˈɔn sˈɛw"
+    ],
+    "ambiguity": null
+  },
+  "korean:Jung": {
+    "reading": "giung",
+    "phones": [
+      "zˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "korean:Sang-guk": {
+    "reading": "xang gúc",
+    "phones": [
+      "sˈaːŋ ɣˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "korean:Yeeun": {
+    "reading": "gie ưn",
+    "phones": [
+      "zˈɛ ˈyn",
+      "zˈɛ ˈən"
+    ],
+    "ambiguity": null
+  },
+  "korean:Karin-nim": {
+    "reading": "ca rin nim",
+    "phones": [
+      "kˈaː ɹˈin nˈim"
+    ],
+    "ambiguity": null
+  },
+  "korean:Ryunghwa": {
+    "reading": "li ung hoa",
+    "phones": [
+      "lˈi ˈuŋ hwˈaː"
+    ],
+    "ambiguity": null
+  },
+  "korean:Soyeol": {
+    "reading": "xô gion",
+    "phones": [
+      "sˈo zˈɔn"
+    ],
+    "ambiguity": null
+  },
+  "korean:Gangdong": {
+    "reading": "cang đông",
+    "phones": [
+      "kˈaːŋ ɗˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "korean:Bi-ah": {
+    "reading": "bi a",
+    "phones": [
+      "bˈi ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "korean:Seo-rin": {
+    "reading": "xeo rin",
+    "phones": [
+      "sˈɛw ɹˈin"
+    ],
+    "ambiguity": null
+  },
+  "korean:Shincheol": {
+    "reading": "xin che on",
+    "phones": [
+      "sˈin tʃˈɛ ˈɔn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lã Bố": {
+    "reading": "lã bố",
+    "phones": [
+      "lˈaː5 bˈoɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lưu Bị": {
+    "reading": "lưu bị",
+    "phones": [
+      "lˈiw bˌi6"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tào Tháo": {
+    "reading": "tào tháo",
+    "phones": [
+      "t̪ˈaː2w tˈaːɜw"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Đổng Trác": {
+    "reading": "đổng trác",
+    "phones": [
+      "ɗˈo4ŋ tʃˈaːɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Huyền Đức": {
+    "reading": "huyền đức",
+    "phones": [
+      "hwˈiɛ2n ɗˈyɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lý Thôi": {
+    "reading": "lý thôi",
+    "phones": [
+      "lˈiɜ tˈoj"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Viên Thiệu": {
+    "reading": "viên thiệu",
+    "phones": [
+      "vˈiɛn tˈiɛ6w"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Phi": {
+    "reading": "trương phi",
+    "phones": [
+      "tʃˈyəŋ fˈi"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Quách Dĩ": {
+    "reading": "quách dĩ",
+    "phones": [
+      "kwˈe-ɜc zˈi5"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tôn Sách": {
+    "reading": "tôn sách",
+    "phones": [
+      "t̪ˈon sˈe-ɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Viên Thuật": {
+    "reading": "viên thuật",
+    "phones": [
+      "vˈiɛn twˈə6t̪"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trung Quốc": {
+    "reading": "trung quốc",
+    "phones": [
+      "tʃˈuŋ kˈuəɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Nam Cung Nhiên": {
+    "reading": "nam cung nhiên",
+    "phones": [
+      "nˈaːm kˈuŋ ɲˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Điêu Thuyền": {
+    "reading": "điêu thuyền",
+    "phones": [
+      "ɗˈiɛw twˈiɛ2n"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lý Nho": {
+    "reading": "lý nho",
+    "phones": [
+      "lˈiɜ ɲˈɔ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trần Cung": {
+    "reading": "trần cung",
+    "phones": [
+      "tʃˈə2n kˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lưu Biểu": {
+    "reading": "lưu biểu",
+    "phones": [
+      "lˈiw bˈiɛ4w"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Dương Phụng": {
+    "reading": "dương phụng",
+    "phones": [
+      "zˈyəŋ fˈu6ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tôn Kiên": {
+    "reading": "tôn kiên",
+    "phones": [
+      "t̪ˈon kˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Đào Khiêm": {
+    "reading": "đào khiêm",
+    "phones": [
+      "ɗˈaː2w xˈiɛm"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hà Tiến": {
+    "reading": "hà tiến",
+    "phones": [
+      "hˈaː2 t̪ˈiɛɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Giả Hủ": {
+    "reading": "giả hủ",
+    "phones": [
+      "zˈaː4 hˈu4"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Tú": {
+    "reading": "trương tú",
+    "phones": [
+      "tʃˈyəŋ t̪ˈuɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Vương Doãn": {
+    "reading": "vương doãn",
+    "phones": [
+      "vˈyəŋ zwˈaː5n"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Điển Vi": {
+    "reading": "điển vi",
+    "phones": [
+      "ɗˈiɛ4n vˈi"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tâu Bệ": {
+    "reading": "tâu bệ",
+    "phones": [
+      "t̪ˈəw bˈe6"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Cao Thuận": {
+    "reading": "cao thuận",
+    "phones": [
+      "kˈaːw twˈə6n"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Khổng Dung": {
+    "reading": "khổng dung",
+    "phones": [
+      "xˈo4ŋ zˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lưu Do": {
+    "reading": "lưu do",
+    "phones": [
+      "lˈiw zˈɔ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:My Chúc": {
+    "reading": "my chúc",
+    "phones": [
+      "mˈi tʃˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Mã Cương Tố": {
+    "reading": "mã cương tố",
+    "phones": [
+      "mˈaː5 kˈyəŋ t̪ˈoɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tuân Úc": {
+    "reading": "tuân úc",
+    "phones": [
+      "t̪wˈən ˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hạ Hầu": {
+    "reading": "hạ hầu",
+    "phones": [
+      "hˈaː6 hˈə2w"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lý Túc": {
+    "reading": "lý túc",
+    "phones": [
+      "lˈiɜ t̪ˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Thái Sử": {
+    "reading": "thái sử",
+    "phones": [
+      "tˈaːɜj sˈy4"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Tế": {
+    "reading": "trương tế",
+    "phones": [
+      "tʃˈyəŋ t̪ˈeɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trình Phổ": {
+    "reading": "trình phổ",
+    "phones": [
+      "tʃˈi2ɲ fˈo4"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Chu Tuấn": {
+    "reading": "chu tuấn",
+    "phones": [
+      "tʃˈu t̪wˈəɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hoàng Tổ": {
+    "reading": "hoàng tổ",
+    "phones": [
+      "hwˈaː2ŋ t̪ˈo4"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hàn Thụy Trấn": {
+    "reading": "hàn thụy trấn",
+    "phones": [
+      "hˈaː2n twˈi6 tʃˈəɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Quan Vũ": {
+    "reading": "quan vũ",
+    "phones": [
+      "kwˈaːn vˈu5"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Vu Cấm": {
+    "reading": "vu cấm",
+    "phones": [
+      "vˈu kˈəɜm"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lư Thực": {
+    "reading": "lư thực",
+    "phones": [
+      "lˈy tˈy6c"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Đinh Nguyên": {
+    "reading": "đinh nguyên",
+    "phones": [
+      "ɗˈiɲ ŋwˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hoàng Cái": {
+    "reading": "hoàng cái",
+    "phones": [
+      "hwˈaː2ŋ kˌaːɜj"
+    ],
+    "ambiguity": null
+  },
+  "chinese:La Quán Trung": {
+    "reading": "la quán trung",
+    "phones": [
+      "lˈaː kwˈaːɜn tʃˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Phan Kế Bính": {
+    "reading": "phan kế bính",
+    "phones": [
+      "fˈaːn kˈeɜ bˈiɜɲ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Bảo": {
+    "reading": "trương bảo",
+    "phones": [
+      "tʃˈyəŋ bˈaː4w"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đầu đề": {
+    "reading": "đầu đề",
+    "phones": [
+      "ɗˈə2w ɗˈe2"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hàn Tiêm": {
+    "reading": "hàn tiêm",
+    "phones": [
+      "hˈaː2n t̪ˈiɛm"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hứa Chử": {
+    "reading": "hứa chử",
+    "phones": [
+      "hˈyəɜ tʃˈy4"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Nhà Hán": {
+    "reading": "nhà hán",
+    "phones": [
+      "ɲˈaː2 hˈaːɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Quách Gia": {
+    "reading": "quách gia",
+    "phones": [
+      "kwˈe-ɜc zˈaː"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Giốc": {
+    "reading": "trương giốc",
+    "phones": [
+      "tʃˈyəŋ zˈoɜk"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Nhượng": {
+    "reading": "trương nhượng",
+    "phones": [
+      "tʃˈyəŋ ɲˈyə6ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đến đây": {
+    "reading": "đến đây",
+    "phones": [
+      "ɗˌeɜn ɗˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hoa Hùng": {
+    "reading": "hoa hùng",
+    "phones": [
+      "hwˈaː hˈu2ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lý Nhạc": {
+    "reading": "lý nhạc",
+    "phones": [
+      "lˈiɜ ɲˈaː6c"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lý Điển": {
+    "reading": "lý điển",
+    "phones": [
+      "lˈiɜ ɗˈiɛ4n"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tào Báo": {
+    "reading": "tào báo",
+    "phones": [
+      "t̪ˈaː2w bˈaːɜw"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Dương Bưu": {
+    "reading": "dương bưu",
+    "phones": [
+      "zˈyəŋ bˈiw"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hàn Đương": {
+    "reading": "hàn đương",
+    "phones": [
+      "hˈaː2n ɗˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Nhạc Tiến": {
+    "reading": "nhạc tiến",
+    "phones": [
+      "ɲˈaː6c t̪ˈiɛɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Đốc Bưu": {
+    "reading": "đốc bưu",
+    "phones": [
+      "ɗˈoɜk bˈiw"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đánh được": {
+    "reading": "đánh được",
+    "phones": [
+      "ɗˈe-ɜɲ ɗˌyə6c"
+    ],
+    "ambiguity": null
+  },
+  "chinese:để đánh": {
+    "reading": "để đánh",
+    "phones": [
+      "ɗˌe4 ɗˈe-ɜɲ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Mã Đằng": {
+    "reading": "mã đằng",
+    "phones": [
+      "mˈaː5 ɗˈa2ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Người ấy": {
+    "reading": "người ấy",
+    "phones": [
+      "ŋˈyə2j ˈəɪɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Liêu": {
+    "reading": "trương liêu",
+    "phones": [
+      "tʃˈyəŋ lˈiɛw"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tào Hồng": {
+    "reading": "tào hồng",
+    "phones": [
+      "t̪ˈaː2w hˈo2ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Tào Nhân": {
+    "reading": "tào nhân",
+    "phones": [
+      "t̪ˈaː2w ɲˈən"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đánh Lã Bố": {
+    "reading": "đánh lã bố",
+    "phones": [
+      "ɗˈe-ɜɲ lˈaː5 bˈoɜ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đầu đuôi": {
+    "reading": "đầu đuôi",
+    "phones": [
+      "ɗˈə2w ɗˈuəj"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Hàn Toại": {
+    "reading": "hàn toại",
+    "phones": [
+      "hˈaː2n t̪wˈaː6j"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Lã Bố đến": {
+    "reading": "lã bố đến",
+    "phones": [
+      "lˈaː5 bˈoɜ ɗˌeɜn"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trương Anh": {
+    "reading": "trương anh",
+    "phones": [
+      "tʃˈyəŋ ˈe-ɲ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Trần Khuê": {
+    "reading": "trần khuê",
+    "phones": [
+      "tʃˈə2n xwˈe"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Từ Hoảng": {
+    "reading": "từ hoảng",
+    "phones": [
+      "t̪ˌy2 hwˈaː4ŋ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:đến đánh": {
+    "reading": "đến đánh",
+    "phones": [
+      "ɗˌeɜn ɗˈe-ɜɲ"
+    ],
+    "ambiguity": null
+  },
+  "chinese:Khoái Lương": {
+    "reading": "khoái lương",
+    "phones": [
+      "xwˈaːɜj lˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "western:Siegfried": {
+    "reading": "Xích-phơ-rít",
+    "phones": [
+      "sˈiɜc fˈəː ɹˈiɜt̪",
+      "sˈiːɡfɹid"
+    ],
+    "ambiguity": null
+  },
+  "western:Brunhild": {
+    "reading": "Bờ-răn-hiu",
+    "phones": [
+      "bˈəː2 ɹˈan hˈiw",
+      "bɹˈʌn hˈɪld"
+    ],
+    "ambiguity": null
+  },
+  "western:Rita": {
+    "reading": "Ri-ta",
+    "phones": [
+      "ɹˈi t̪ˈaː",
+      "ɹˈiːɾə"
+    ],
+    "ambiguity": null
+  },
+  "western:Vrataski": {
+    "reading": "Vờ-ra-tát-ki",
+    "phones": [
+      "vˈəː2 ɹˈaː t̪ˈaːɜt̪ kˈi",
+      "vɹˈɑːɾə skˈiː"
+    ],
+    "ambiguity": null
+  },
+  "western:Sigurd": {
+    "reading": "Xi-gớt",
+    "phones": [
+      "sˈi ɣˈəːɜt̪",
+      "sˈɪɡɜːd"
+    ],
+    "ambiguity": null
+  },
+  "western:Johann": {
+    "reading": "I-ô-han",
+    "phones": [
+      "ˈi ˈo hˈaːn",
+      "jˈoʊhɑːn"
+    ],
+    "ambiguity": null
+  },
+  "western:Sachs": {
+    "reading": "Xách",
+    "phones": [
+      "sˈe-ɜc",
+      "sˈæks"
+    ],
+    "ambiguity": null
+  },
+  "western:Bartolome": {
+    "reading": "Ba-to-lôm",
+    "phones": [
+      "bˈaː t̪ˈɔ lˈom",
+      "bˌɑːɹɾələmˈeɪ"
+    ],
+    "ambiguity": null
+  },
+  "western:Ferrell": {
+    "reading": "Phe-riu",
+    "phones": [
+      "fˈɛ ɹˈiw",
+      "fˈɛɹəl"
+    ],
+    "ambiguity": null
+  },
+  "western:Raylle": {
+    "reading": "Rây-ồ",
+    "phones": [
+      "ɹˈəɪ ˈo2",
+      "ɹˈaj l"
+    ],
+    "ambiguity": null
+  },
+  "western:Shasta": {
+    "reading": "Sát-ta",
+    "phones": [
+      "sˈaːɜt̪ t̪ˈaː",
+      "ʃˈæstə"
+    ],
+    "ambiguity": null
+  },
+  "western:Sigebert": {
+    "reading": "Xi-gie-bớt",
+    "phones": [
+      "sˈi zˈɛ bˈəːɜt̪",
+      "sˈi dʒˈɛbɚt"
+    ],
+    "ambiguity": null
+  },
+  "western:Murdoch": {
+    "reading": "Mơ-đóc",
+    "phones": [
+      "mˈəː ɗˈɔɜk",
+      "mˈɜːdɑːk"
+    ],
+    "ambiguity": null
+  },
+  "western:Ralph": {
+    "reading": "Ran",
+    "phones": [
+      "ɹˈaːn",
+      "ɹˈælf"
+    ],
+    "ambiguity": null
+  },
+  "western:Rachel": {
+    "reading": "Rây-chồ",
+    "phones": [
+      "ɹˈəɪ tʃˈo2",
+      "ɹˈeɪtʃəl"
+    ],
+    "ambiguity": null
+  },
+  "western:Sary": {
+    "reading": "Xa-ri",
+    "phones": [
+      "sˈaː ɹˈi",
+      "sˈɛɹi"
+    ],
+    "ambiguity": null
+  },
+  "western:Alexei": {
+    "reading": "A-léc-xây",
+    "phones": [
+      "ˈaː lˈɛɜc sˈəɪ",
+      "ɐlˈɛkseɪ"
+    ],
+    "ambiguity": null
+  },
+  "western:Breeder": {
+    "reading": "Bờ-ri-đờ",
+    "phones": [
+      "bˈəː2 ɹˈi ɗˈəː2",
+      "bɹˈiːdɚ"
+    ],
+    "ambiguity": null
+  },
+  "western:Hendricks": {
+    "reading": "Hen-đờ-rích",
+    "phones": [
+      "hˈɛn ɗˈəː2 ɹˈiɜc",
+      "hˈɛndɹɪks"
+    ],
+    "ambiguity": null
+  },
+  "western:Daniel": {
+    "reading": "Đa-ni-ồ",
+    "phones": [
+      "ɗˈaː nˈi ˈo2",
+      "dˈænjəl"
+    ],
+    "ambiguity": null
+  },
+  "western:Emil": {
+    "reading": "E-miu",
+    "phones": [
+      "ˈɛ mˈiw",
+      "ˈɛmɪl"
+    ],
+    "ambiguity": null
+  },
+  "western:Kaminski": {
+    "reading": "Ca-min-xơ-ki",
+    "phones": [
+      "kˈaː mˈin sˈəː kˈi",
+      "kæmˈɪnski"
+    ],
+    "ambiguity": null
+  },
+  "western:Miller": {
+    "reading": "Mi-lờ",
+    "phones": [
+      "mˈi lˈəː2",
+      "mˈɪlɚ"
+    ],
+    "ambiguity": null
+  },
+  "western:Tino": {
+    "reading": "Ti-nô",
+    "phones": [
+      "t̪ˈi nˈo",
+      "tˈiːnoʊ"
+    ],
+    "ambiguity": null
+  },
+  "western:Lucien": {
+    "reading": "Lu-xi-en",
+    "phones": [
+      "lˈu sˈi ˈɛn",
+      "lˈuːʃən"
+    ],
+    "ambiguity": null
+  },
+  "western:Liz": {
+    "reading": "Lít",
+    "phones": [
+      "lˈiɜt̪",
+      "lˈɪz"
+    ],
+    "ambiguity": null
+  },
+  "western:Sitri": {
+    "reading": "Xi-tri",
+    "phones": [
+      "sˈi tʃˈi"
+    ],
+    "ambiguity": null
+  },
+  "western:Sven": {
+    "reading": "Xờ-ven",
+    "phones": [
+      "sˈəː2 vˈɛn",
+      "svˈɛn"
+    ],
+    "ambiguity": null
+  },
+  "western:Krai": {
+    "reading": "Cờ-rây",
+    "phones": [
+      "kˈəː2 ɹˈəɪ",
+      "kɹˈaɪ"
+    ],
+    "ambiguity": null
+  },
+  "western:Gilbert": {
+    "reading": "Ghiu-bớt",
+    "phones": [
+      "ɣˈiw bˈəːɜt̪",
+      "ɡˈɪlbɚt"
+    ],
+    "ambiguity": null
+  },
+  "western:Noctus": {
+    "reading": "Nóc-tút",
+    "phones": [
+      "nˈɔɜk t̪ˈuɜt̪",
+      "nˈɑːktəs"
+    ],
+    "ambiguity": null
+  },
+  "western:Gark": {
+    "reading": "Gác",
+    "phones": [
+      "ɣˈaːɜc",
+      "ɡˈɑːɹk"
+    ],
+    "ambiguity": null
+  },
+  "western:Sophia": {
+    "reading": "Xô-phi-a",
+    "phones": [
+      "sˈo fˈi ˈaː",
+      "soʊfˈiə"
+    ],
+    "ambiguity": null
+  },
+  "western:Magali": {
+    "reading": "Ma-ga-li",
+    "phones": [
+      "mˈaː ɣˈaː lˈi",
+      "mæɡˈɑːli"
+    ],
+    "ambiguity": null
+  },
+  "western:Rhuda": {
+    "reading": "Rờ-hu-đa",
+    "phones": [
+      "ɹˈəː2 hˈu ɗˈaː",
+      "ɹˈuː zˈaː"
+    ],
+    "ambiguity": null
+  },
+  "western:Greg": {
+    "reading": "Gờ-réc",
+    "phones": [
+      "ɣˈəː2 ɹˈɛɜc",
+      "ɡɹˈɛɡ"
+    ],
+    "ambiguity": null
+  },
+  "western:Eva": {
+    "reading": "Ây-va",
+    "phones": [
+      "ˈəɪ vˈaː",
+      "ˈiːvə"
+    ],
+    "ambiguity": null
+  },
+  "western:Steps": {
+    "reading": "Xờ-tép",
+    "phones": [
+      "sˈəː2 t̪ˈɛɜp",
+      "stˈɛps"
+    ],
+    "ambiguity": null
+  },
+  "western:Ark": {
+    "reading": "Ác",
+    "phones": [
+      "ˈaːɜc",
+      "ˈɑːɹk"
+    ],
+    "ambiguity": null
+  },
+  "western:Rostailer": {
+    "reading": "Rót-tây-lờ",
+    "phones": [
+      "ɹˈɔɜt̪ t̪ˈəɪ lˈəː2",
+      "ɹˈoʊz tˈeɪlɚ"
+    ],
+    "ambiguity": null
+  },
+  "western:Lucy": {
+    "reading": "Lu-xi",
+    "phones": [
+      "lˈu sˈi",
+      "lˈuːsi"
+    ],
+    "ambiguity": null
+  },
+  "western:First": {
+    "reading": "Phớt",
+    "phones": [
+      "fˈəːɜt̪",
+      "fˈɜːst"
+    ],
+    "ambiguity": null
+  },
+  "western:Ed": {
+    "reading": "Ét",
+    "phones": [
+      "ˈɛɜt̪",
+      "ˈɛd"
+    ],
+    "ambiguity": null
+  },
+  "western:John": {
+    "reading": "Gion",
+    "phones": [
+      "zˈɔn",
+      "dʒˈɑːn"
+    ],
+    "ambiguity": null
+  },
+  "western:Gein": {
+    "reading": "Giên",
+    "phones": [
+      "zˈen",
+      "dʒˈeɪn"
+    ],
+    "ambiguity": null
+  },
+  "western:Grieving": {
+    "reading": "Gờ-ri-vinh",
+    "phones": [
+      "ɣˈəː2 ɹˈi vˈiɲ",
+      "ɡɹˈiːvɪŋ"
+    ],
+    "ambiguity": null
+  },
+  "western:Souls": {
+    "reading": "Xôn",
+    "phones": [
+      "sˈon",
+      "sˈoʊlz"
+    ],
+    "ambiguity": null
+  },
+  "western:Sylvania": {
+    "reading": "Xin-vây-ni-a",
+    "phones": [
+      "sˈin vˈəɪ nˈi ˈaː",
+      "sɪlvˈeɪniə"
+    ],
+    "ambiguity": null
+  },
+  "western:Yennica": {
+    "reading": "I-e-ni-ca",
+    "phones": [
+      "ˈi ˈɛ nˈi kˈaː",
+      "jˈɛn nˈiːkə"
+    ],
+    "ambiguity": null
+  },
+  "western:Flick": {
+    "reading": "Phờ-lích",
+    "phones": [
+      "fˈəː2 lˈiɜc",
+      "flˈɪk"
+    ],
+    "ambiguity": null
+  },
+  "western:Gary": {
+    "reading": "Ga-ri",
+    "phones": [
+      "ɣˈaː ɹˈi",
+      "ɡˈæɹi"
+    ],
+    "ambiguity": null
+  },
+  "western:Talia": {
+    "reading": "Ta-li-a",
+    "phones": [
+      "t̪ˈaː lˈi ˈaː",
+      "tˈeɪliə"
+    ],
+    "ambiguity": null
+  },
+  "western:Tailly": {
+    "reading": "Tây-li",
+    "phones": [
+      "t̪ˈəɪ lˈi",
+      "t̪ˈaː ˈɪli"
+    ],
+    "ambiguity": null
+  },
+  "western:Juliana": {
+    "reading": "Giu-li-a-na",
+    "phones": [
+      "zˈu lˈi ˈaː nˈaː",
+      "dʒˌuːliˈɑːnə"
+    ],
+    "ambiguity": null
+  },
+  "western:Alistar": {
+    "reading": "A-lít-ta",
+    "phones": [
+      "ˈaː lˈiɜt̪ t̪ˈaː",
+      "ˈælɪstˌɑːɹ"
+    ],
+    "ambiguity": null
+  },
+  "western:Benjamin": {
+    "reading": "Ben-gia-min",
+    "phones": [
+      "bˈɛn zˈaː mˈin",
+      "bˈɛndʒəmɪn"
+    ],
+    "ambiguity": null
+  },
+  "western:Jackson": {
+    "reading": "Dác-xơn",
+    "phones": [
+      "zˈaːɜc sˈəːn",
+      "dʒˈæksən"
+    ],
+    "ambiguity": null
+  },
+  "western:Luce": {
+    "reading": "Lu-xe",
+    "phones": [
+      "lˈu sˈɛ",
+      "lˈuːs"
+    ],
+    "ambiguity": null
+  },
+  "western:Herge": {
+    "reading": "Hớt",
+    "phones": [
+      "hˈəːɜt̪",
+      "hˈɜːdʒ"
+    ],
+    "ambiguity": null
+  },
+  "western:Ruth": {
+    "reading": "Rút",
+    "phones": [
+      "ɹˈuɜt̪",
+      "ɹˈuːθ"
+    ],
+    "ambiguity": null
+  },
+  "western:Henrik": {
+    "reading": "Hen-rích",
+    "phones": [
+      "hˈɛn ɹˈiɜc",
+      "hˈɛnɹɪk"
+    ],
+    "ambiguity": null
+  },
+  "western:Samael": {
+    "reading": "Xa-ma-ồ",
+    "phones": [
+      "sˈaː mˈaː ˈo2",
+      "sˈæmeɪl"
+    ],
+    "ambiguity": null
+  },
+  "western:Cross": {
+    "reading": "Cờ-rót",
+    "phones": [
+      "kˈəː2 ɹˈɔɜt̪",
+      "kɹˈɔs"
+    ],
+    "ambiguity": null
+  },
+  "western:Christine": {
+    "reading": "Cờ-rít-tin",
+    "phones": [
+      "kˈəː2 ɹˈiɜt̪ t̪ˈin",
+      "kɹɪstˈiːn"
+    ],
+    "ambiguity": null
+  },
+  "western:Rudolph": {
+    "reading": "Ru-đôn",
+    "phones": [
+      "ɹˈu ɗˈon",
+      "ɹˈuːdɑːlf"
+    ],
+    "ambiguity": null
+  },
+  "western:Zebrudia": {
+    "reading": "De-bờ-ru-đi-a",
+    "phones": [
+      "zˈɛ bˈəː2 ɹˈu ɗˈi ˈaː",
+      "zˈɛb ɹˈu dˈaɪə"
+    ],
+    "ambiguity": null
+  },
+  "western:Emilia": {
+    "reading": "E-mi-li-a",
+    "phones": [
+      "ˈɛ mˈi lˈi ˈaː",
+      "ɛmˈɪliə"
+    ],
+    "ambiguity": null
+  },
+  "western:Taily": {
+    "reading": "Tây-li",
+    "phones": [
+      "t̪ˈəɪ lˈi",
+      "tˈeɪli"
+    ],
+    "ambiguity": null
+  },
+  "western:Petra": {
+    "reading": "Pe-tra",
+    "phones": [
+      "pˈɛ tʃˈaː",
+      "pˈɛtɹə"
+    ],
+    "ambiguity": null
+  },
+  "western:Ainz": {
+    "reading": "Ên",
+    "phones": [
+      "ˈen",
+      "ˈeɪnts"
+    ],
+    "ambiguity": null
+  },
+  "western:Deculein": {
+    "reading": "Đe-cu-lên",
+    "phones": [
+      "ɗˈɛ kˈu lˈen",
+      "dᵻkˈuː lˈeɪn"
+    ],
+    "ambiguity": null
+  },
+  "western:Joel": {
+    "reading": "Giô-ồ",
+    "phones": [
+      "zˈo ˈo2",
+      "dʒˈoʊl"
+    ],
+    "ambiguity": null
+  },
+  "western:Beatrice": {
+    "reading": "Bi-a-trít",
+    "phones": [
+      "bˈi ˈaː tʃˈiɜt̪",
+      "bˈiətɹɪs"
+    ],
+    "ambiguity": null
+  },
+  "western:Slime": {
+    "reading": "Xờ-lam",
+    "phones": [
+      "sˈəː2 lˈaːm",
+      "slˈaɪm"
+    ],
+    "ambiguity": null
+  },
+  "western:Corella": {
+    "reading": "Cơ-re-la",
+    "phones": [
+      "kˈəː ɹˈɛ lˈaː",
+      "kɔːɹˈɛlə"
+    ],
+    "ambiguity": null
+  },
+  "western:Obsidian": {
+    "reading": "Ớp-xi-đi-an",
+    "phones": [
+      "ˈəːɜp sˈi ɗˈi ˈaːn",
+      "əbsˈɪdiən"
+    ],
+    "ambiguity": null
+  },
+  "western:Zeros": {
+    "reading": "Di-rốt",
+    "phones": [
+      "zˈi ɹˈoɜt̪",
+      "zˈiəɹoʊz"
+    ],
+    "ambiguity": null
+  },
+  "western:Akashic": {
+    "reading": "A-ca-sích",
+    "phones": [
+      "ˈaː kˈaː sˈiɜc",
+      "ækˈæʃɪk"
+    ],
+    "ambiguity": null
+  },
+  "western:Hecate": {
+    "reading": "He-kết",
+    "phones": [
+      "hˈɛ kˈeɜt̪",
+      "hˈɛkətˌeɪ"
+    ],
+    "ambiguity": null
+  },
+  "western:Noah": {
+    "reading": "Nô-a",
+    "phones": [
+      "nˈo ˈaː",
+      "nˈoʊʌ"
+    ],
+    "ambiguity": null
+  },
+  "western:Lee": {
+    "reading": "Li",
+    "phones": [
+      "lˈi",
+      "lˈiː"
+    ],
+    "ambiguity": null
+  },
+  "western:Aria": {
+    "reading": "A-ri-a",
+    "phones": [
+      "ˈaː ɹˈi ˈaː",
+      "ˈɛɹiə"
+    ],
+    "ambiguity": null
+  },
+  "western:Cohn": {
+    "reading": "Côn",
+    "phones": [
+      "kˈon",
+      "kˈoʊn"
+    ],
+    "ambiguity": null
+  },
+  "western:Mag": {
+    "reading": "Mác",
+    "phones": [
+      "mˈaːɜc",
+      "mˈæɡ"
+    ],
+    "ambiguity": null
+  },
+  "western:Opelis": {
+    "reading": "O-pe-lít",
+    "phones": [
+      "ˈɔ pˈɛ lˈiɜt̪",
+      "ˈɑːp ᵻliz"
+    ],
+    "ambiguity": null
+  },
+  "western:Theosbane": {
+    "reading": "The-ót-bên",
+    "phones": [
+      "tˈɛ ˈɔɜt̪ bˈen",
+      "ðə ˈɑːsbeɪn"
+    ],
+    "ambiguity": null
+  },
+  "western:Isabel": {
+    "reading": "I-da-beo",
+    "phones": [
+      "ˈi zˈaː bˈɛw",
+      "ˈɪzəbˌɛl"
+    ],
+    "ambiguity": null
+  },
+  "western:Shooting": {
+    "reading": "Su-tinh",
+    "phones": [
+      "sˈu t̪ˈiɲ",
+      "ʃˈuːɾɪŋ"
+    ],
+    "ambiguity": null
+  },
+  "western:Silk": {
+    "reading": "Xiu",
+    "phones": [
+      "sˈiw",
+      "sˈɪlk"
+    ],
+    "ambiguity": null
+  },
+  "western:Fell": {
+    "reading": "Pheo",
+    "phones": [
+      "fˈɛw",
+      "fˈɛl"
+    ],
+    "ambiguity": null
+  },
+  "western:Andre": {
+    "reading": "An-đờ-rây",
+    "phones": [
+      "ˈaːn ɗˈəː2 ɹˈəɪ",
+      "ˈɑːndɹeɪ"
+    ],
+    "ambiguity": null
+  },
+  "western:Ring": {
+    "reading": "Rinh",
+    "phones": [
+      "ɹˈiɲ",
+      "ɹˈɪŋ"
+    ],
+    "ambiguity": null
+  },
+  "western:Blanche": {
+    "reading": "Bờ-lan-che",
+    "phones": [
+      "bˈəː2 lˈaːn tʃˈɛ",
+      "blˈɑːnʃ"
+    ],
+    "ambiguity": null
+  },
+  "western:Glast": {
+    "reading": "Gờ-lát",
+    "phones": [
+      "ɣˈəː2 lˈaːɜt̪",
+      "ɡlˈæst"
+    ],
+    "ambiguity": null
+  },
+  "western:Malice": {
+    "reading": "Ma-lít",
+    "phones": [
+      "mˈaː lˈiɜt̪",
+      "mˈælɪs"
+    ],
+    "ambiguity": null
+  },
+  "western:Wiz": {
+    "reading": "Guýt",
+    "phones": [
+      "ɣwˈiɜt̪",
+      "wˈɪz"
+    ],
+    "ambiguity": null
+  },
+  "western:Coman": {
+    "reading": "Cô-man",
+    "phones": [
+      "kˈo mˈaːn",
+      "kˈoʊmən"
+    ],
+    "ambiguity": null
+  },
+  "western:Echidna": {
+    "reading": "I-kít-na",
+    "phones": [
+      "ˈi kˈiɜt̪ nˈaː",
+      "ˈɛtʃɪdnə"
+    ],
+    "ambiguity": null
+  },
+  "western:Brian": {
+    "reading": "Bờ-rai-an",
+    "phones": [
+      "bˈəː2 ɹˈaːj ˈaːn",
+      "bɹˈaɪən"
+    ],
+    "ambiguity": null
+  },
+  "western:Gazef": {
+    "reading": "Ga-dép",
+    "phones": [
+      "ɣˈaː zˈɛɜp",
+      "ɣˈaː zˈɛf"
+    ],
+    "ambiguity": null
+  },
+  "loanword:piano": {
+    "reading": "pi-a-nô",
+    "phones": [
+      "pˈi ˈaː nˈo",
+      "piˈænoʊ"
+    ],
+    "ambiguity": null
+  },
+  "loanword:LINE": {
+    "reading": "Lai",
+    "phones": [
+      "lˈaːj",
+      "lˈaɪn"
+    ],
+    "ambiguity": null
+  },
+  "loanword:Level": {
+    "reading": "le-vồ",
+    "phones": [
+      "lˈɛ vˈo2",
+      "lˈɛvəl"
+    ],
+    "ambiguity": null
+  },
+  "loanword:Game": {
+    "reading": "ghêm",
+    "phones": [
+      "ɣˈem",
+      "ɡˈeɪm"
+    ],
+    "ambiguity": null
+  },
+  "loanword:game": {
+    "reading": "ghêm",
+    "phones": [
+      "ɣˈem",
+      "ɡˈeɪm"
+    ],
+    "ambiguity": null
+  },
+  "loanword:socola": {
+    "reading": "sô-cô-la",
+    "phones": [
+      "sˈo kˈo lˈaː",
+      "sˈoʊ kˈoʊlə"
+    ],
+    "ambiguity": null
+  },
+  "loanword:NicK": {
+    "reading": "ních",
+    "phones": [
+      "nˈiɜc",
+      "nˈɪk"
+    ],
+    "ambiguity": null
+  },
+  "loanword:Karaoke": {
+    "reading": "ca-ra-ô-kê",
+    "phones": [
+      "kˈaː ɹˈaː ˈo kˈe",
+      "kˌæɹɪˈoʊki"
+    ],
+    "ambiguity": null
+  },
+  "acronym:SR": {
+    "reading": "ét e rờ",
+    "phones": [
+      "ˈɛɜt̪ ˈɛ ɹˈəː2",
+      "ˈɛs ˈɑːɹ"
+    ],
+    "ambiguity": null
+  },
+  "loanword:laser": {
+    "reading": "la-de",
+    "phones": [
+      "lˈaː zˈɛ",
+      "lˈeɪzɚ"
+    ],
+    "ambiguity": null
+  },
+  "loanword:chat": {
+    "reading": "chát",
+    "phones": [
+      "tʃˈaːɜt̪",
+      "tʃˈæt"
+    ],
+    "ambiguity": null
+  },
+  "acronym:SS": {
+    "reading": "ét ét",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪",
+      "ˈɛs ˈɛs"
+    ],
+    "ambiguity": null
+  },
+  "loanword:CORONA": {
+    "reading": "Cơ-rô-na",
+    "phones": [
+      "kˈəː ɹˈo nˈaː",
+      "kɔːɹˈoʊnə"
+    ],
+    "ambiguity": null
+  },
+  "loanword:fan": {
+    "reading": "phan",
+    "phones": [
+      "fˈaːn",
+      "fˈæn"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:ban": {
+    "reading": "ban",
+    "phones": [
+      "bˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "loanword:radio": {
+    "reading": "ra-đi-ô",
+    "phones": [
+      "ɹˈaː ɗˈi ˈo",
+      "ɹˈeɪdɪˌoʊ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Ban": {
+    "reading": "ban",
+    "phones": [
+      "bˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "acronym:EX": {
+    "reading": "e ích",
+    "phones": [
+      "ˈɛ ˈiɜc",
+      "ˈiː ˈɛks"
+    ],
+    "ambiguity": null
+  },
+  "loanword:Online": {
+    "reading": "on-lai",
+    "phones": [
+      "ˈɔn lˈaːj",
+      "ˈɑːnlaɪn"
+    ],
+    "ambiguity": null
+  },
+  "loanword:logic": {
+    "reading": "lô-gích",
+    "phones": [
+      "lˈo zˈiɜc",
+      "lˈɑːdʒɪk"
+    ],
+    "ambiguity": null
+  },
+  "loanword:sofa": {
+    "reading": "xô-pha",
+    "phones": [
+      "sˈo fˈaː",
+      "sˈoʊfə"
+    ],
+    "ambiguity": null
+  },
+  "loanword:taxi": {
+    "reading": "tắc-xi",
+    "phones": [
+      "t̪ˈaɜc sˈi",
+      "tˈæksi"
+    ],
+    "ambiguity": null
+  },
+  "loanword:video": {
+    "reading": "vi-đê-ô",
+    "phones": [
+      "vˈi ɗˈe ˈo",
+      "vˈɪdɪoʊ"
+    ],
+    "ambiguity": null
+  },
+  "loanword:virus": {
+    "reading": "vi-rút",
+    "phones": [
+      "vˈi ɹˈuɜt̪",
+      "vˈaɪɹəs"
+    ],
+    "ambiguity": null
+  },
+  "acronym:Npc": {
+    "reading": "en pi xi",
+    "phones": [
+      "ˈɛn pˈi sˈi",
+      "ˈɛn pˈiː sˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:Clb": {
+    "reading": "câu lạc bộ",
+    "phones": [
+      "kˈəw lˈaː6c bˈo6",
+      "sˈiː ˈɛl bˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:LV": {
+    "reading": "lờ vê",
+    "phones": [
+      "lˈəː2 vˈe",
+      "ˈɛl vˈiː"
+    ],
+    "ambiguity": "Roman numeral versus an initialism requires the missing sentence."
+  },
+  "acronym:SSR": {
+    "reading": "ét ét e rờ",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪ ˈɛ ɹˈəː2",
+      "ˈɛs ˈɛs ˈɑːɹ"
+    ],
+    "ambiguity": null
+  },
+  "acronym:TL": {
+    "reading": "tê e lờ",
+    "phones": [
+      "t̪ˈe ˈɛ lˈəː2",
+      "tˈiː ˈɛl"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:ai": {
+    "reading": "ai",
+    "phones": [
+      "ˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "acronym:QQ": {
+    "reading": "quy quy",
+    "phones": [
+      "kwˈi kwˈi",
+      "kjˈuː kjˈuː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:SP": {
+    "reading": "ét pê",
+    "phones": [
+      "ˈɛɜt̪ pˈe",
+      "ˈɛs pˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:SSS": {
+    "reading": "ét ét ét",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪ ˈɛɜt̪",
+      "ˈɛs ˈɛs ˈɛs"
+    ],
+    "ambiguity": null
+  },
+  "acronym:VIP": {
+    "reading": "víp",
+    "phones": [
+      "vˈiɜp",
+      "vˈiː ˈaɪ pˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:WI": {
+    "reading": "vê kép i",
+    "phones": [
+      "vˈe kˈɛɜp ˈi",
+      "dˈʌbəljˌuː ˈaɪ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Ai": {
+    "reading": "ai",
+    "phones": [
+      "ˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "acronym:JK": {
+    "reading": "gi ca",
+    "phones": [
+      "zˈi kˈaː",
+      "dʒˈeɪ kˈeɪ"
+    ],
+    "ambiguity": null
+  },
+  "acronym:KAKI": {
+    "reading": "ca a ca i",
+    "phones": [
+      "kˈaː ˈaː kˈaː ˈi",
+      "kˈeɪ ˈeɪ kˈeɪ ˈaɪ"
+    ],
+    "ambiguity": "An all-capital proper/brand word versus an initialism: spelling alone does not choose."
+  },
+  "acronym:MB": {
+    "reading": "em bê",
+    "phones": [
+      "ˈɛm bˈe",
+      "ˈɛm bˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:MP": {
+    "reading": "mờ pê",
+    "phones": [
+      "mˈəː2 pˈe",
+      "ˈɛm pˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:TV": {
+    "reading": "ti vi",
+    "phones": [
+      "t̪ˈi vˈi",
+      "tˈiː vˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:HP": {
+    "reading": "hát pê",
+    "phones": [
+      "hˈaːɜt̪ pˈe",
+      "ˈeɪtʃ pˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:NPC": {
+    "reading": "en pi xi",
+    "phones": [
+      "ˈɛn pˈi sˈi",
+      "ˈɛn pˈiː sˈiː"
+    ],
+    "ambiguity": null
+  },
+  "acronym:TCN": {
+    "reading": "tê xê en",
+    "phones": [
+      "t̪ˈe sˈe ˈɛn",
+      "tˈiː sˈiː ˈɛn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Từ-châu": {
+    "reading": "từ châu",
+    "phones": [
+      "t̪ˌy2 tʃˈəw"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bệ-hạ": {
+    "reading": "bệ hạ",
+    "phones": [
+      "bˈe6 hˈaː6"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thái-tử": {
+    "reading": "thái tử",
+    "phones": [
+      "tˈaːɜj t̪ˈy4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bao-tự": {
+    "reading": "bao tự",
+    "phones": [
+      "bˈaːw t̪ˈy6"
+    ],
+    "ambiguity": null
+  },
+  "mixed:U-vương": {
+    "reading": "u vương",
+    "phones": [
+      "ˈu vˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Chúa-công": {
+    "reading": "chúa công",
+    "phones": [
+      "tʃˈuəɜ kˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Trịnh-trang-công": {
+    "reading": "trịnh trang công",
+    "phones": [
+      "tʃˈi6ɲ tʃˈaːŋ kˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tràng-an": {
+    "reading": "tràng an",
+    "phones": [
+      "tʃˈaː2ŋ ˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Lạc-dương": {
+    "reading": "lạc dương",
+    "phones": [
+      "lˈaː6c zˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hứa-đô": {
+    "reading": "hứa đô",
+    "phones": [
+      "hˈyəɜ ɗˈo"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thân-hầu": {
+    "reading": "thân hầu",
+    "phones": [
+      "tˈən hˈə2w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tiểu-bái": {
+    "reading": "tiểu bái",
+    "phones": [
+      "t̪ˈiɛ4w bˈaːɜj"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Duyện-châu": {
+    "reading": "duyện châu",
+    "phones": [
+      "zwˈiɛ6n tʃˈəw"
+    ],
+    "ambiguity": null
+  },
+  "mixed:McDowell": {
+    "reading": null,
+    "phones": [
+      "məkdˈaʊɛl"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Công-tử": {
+    "reading": "công tử",
+    "phones": [
+      "kˈoŋ t̪ˈy4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Huyền-đức": {
+    "reading": "huyền đức",
+    "phones": [
+      "hwˈiɛ2n ɗˈyɜc"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Chu-hu": {
+    "reading": "chu hu",
+    "phones": [
+      "tʃˈu hˈu"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Giang-đông": {
+    "reading": "giang đông",
+    "phones": [
+      "zˈaːŋ ɗˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Mylene-san": {
+    "reading": "mylene xan",
+    "phones": [
+      "mˈi lˈɛ nˈɛ sˈaːn",
+      "mˈaɪliːn sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Himuro-kun": {
+    "reading": "hi mu rô cun",
+    "phones": [
+      "hˈi mˈu ɹˈo kˈun"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Quật-đột": {
+    "reading": "quật đột",
+    "phones": [
+      "kwˈə6t̪ ɗˈo6t̪"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Rhasa-san": {
+    "reading": "rhasa xan",
+    "phones": [
+      "ˈɛʐəː2 hˈaː sˈaː sˈaːn",
+      "ɹˈɑː sˈaː sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tuyên-vương": {
+    "reading": "tuyên vương",
+    "phones": [
+      "t̪wˈiɛn vˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ayase-san": {
+    "reading": "a gia xe xan",
+    "phones": [
+      "ˈaː zˈaː sˈɛ sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Yuna-san": {
+    "reading": "giu na xan",
+    "phones": [
+      "zˈu nˈaː sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bình-vương": {
+    "reading": "bình vương",
+    "phones": [
+      "bˈi2ɲ vˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Khuyển-nhung": {
+    "reading": "khuyển nhung",
+    "phones": [
+      "xwˈiɛ4n ɲˈuŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Khương-thị": {
+    "reading": "khương thị",
+    "phones": [
+      "xˈyəŋ tˈi6"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Nhung-chúa": {
+    "reading": "nhung chúa",
+    "phones": [
+      "ɲˈuŋ tʃˈuəɜ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thân-hậu": {
+    "reading": "thân hậu",
+    "phones": [
+      "tˈən hˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bạch-hổ": {
+    "reading": "bạch hổ",
+    "phones": [
+      "bˈe-6c hˈo4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bộc-dương": {
+    "reading": "bộc dương",
+    "phones": [
+      "bˈo6k zˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Sử-từ": {
+    "reading": "sử từ",
+    "phones": [
+      "sˈy4 t̪ˌy2"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Akiko-san": {
+    "reading": "a ki cô xan",
+    "phones": [
+      "ˈaː kˈi kˈo sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Chikuma-kun": {
+    "reading": "chi cu ma cun",
+    "phones": [
+      "tʃˈi kˈu mˈaː kˈun"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Chánh-hậu": {
+    "reading": "chánh hậu",
+    "phones": [
+      "tʃˈe-ɜɲ hˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ký-châu": {
+    "reading": "ký châu",
+    "phones": [
+      "kˈiɜ tʃˈəw"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Sơn-đông": {
+    "reading": "sơn đông",
+    "phones": [
+      "sˈəːn ɗˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hầu-đôn": {
+    "reading": "hầu đôn",
+    "phones": [
+      "hˈə2w ɗˈon"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Kiểu-kinh": {
+    "reading": "kiểu kinh",
+    "phones": [
+      "kˈiɛ4w kˈiɲ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Quách-công": {
+    "reading": "quách công",
+    "phones": [
+      "kwˈe-ɜc kˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Kinh-thành": {
+    "reading": "kinh thành",
+    "phones": [
+      "kˈiɲ tˈe-2ɲ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tây-lương": {
+    "reading": "tây lương",
+    "phones": [
+      "t̪ˈəɪ lˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Khảo-thúc": {
+    "reading": "khảo thúc",
+    "phones": [
+      "xˈaː4w tˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thúc-đoạn": {
+    "reading": "thúc đoạn",
+    "phones": [
+      "tˈuɜc ɗwˈaː6n"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tiên-vương": {
+    "reading": "tiên vương",
+    "phones": [
+      "t̪ˈiɛn vˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Fitts-senpai": {
+    "reading": "fitts xen pai",
+    "phones": [
+      "ˈɛp ˈit̪ tˈeˈɛs sˈɛn pˈaːj",
+      "fˈɪts sˈɛn pˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Quan-công": {
+    "reading": "quan công",
+    "phones": [
+      "kwˈaːn kˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thiếu-đế": {
+    "reading": "thiếu đế",
+    "phones": [
+      "tˈiɛɜw ɗˈeɜ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Trịnh-bá-hữu": {
+    "reading": "trịnh bá hữu",
+    "phones": [
+      "tʃˈi6ɲ bˈaːɜ hˈi5w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:My-ổ": {
+    "reading": "my ổ",
+    "phones": [
+      "mˈi ˈo4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Quách-thạch-phủ": {
+    "reading": "quách thạch phủ",
+    "phones": [
+      "kwˈe-ɜc tˈe-6c fˈu4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ðỗ-bá": {
+    "reading": "đỗ bá",
+    "phones": [
+      "ɗˈo5 bˈaːɜ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bình-nguyên": {
+    "reading": "bình nguyên",
+    "phones": [
+      "bˈi2ɲ ŋwˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bắc-hải": {
+    "reading": "bắc hải",
+    "phones": [
+      "bˈaɜc hˈaː4j"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Deiga-san": {
+    "reading": "đây ga xan",
+    "phones": [
+      "ɗˈəɪ ɣˈaː sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hiến-đế": {
+    "reading": "hiến đế",
+    "phones": [
+      "hˈiɛɜn ɗˈeɜ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thanh-châu": {
+    "reading": "thanh châu",
+    "phones": [
+      "tˈe-ɲ tʃˈəw"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Madoka-san": {
+    "reading": "ma đô ca xan",
+    "phones": [
+      "mˈaː ɗˈo kˈaː sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thạch-hậu": {
+    "reading": "thạch hậu",
+    "phones": [
+      "tˈe-6c hˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thế-tử": {
+    "reading": "thế tử",
+    "phones": [
+      "tˈeɜ t̪ˈy4"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ðại-phu": {
+    "reading": "đại phu",
+    "phones": [
+      "ɗˈaː6j fˈu"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ôn-hầu": {
+    "reading": "ôn hầu",
+    "phones": [
+      "ˈon hˈə2w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Bá-dương-phụ": {
+    "reading": "bá dương phụ",
+    "phones": [
+      "bˈaːɜ zˈyəŋ fˈu6"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Chiyabashira-sensei": {
+    "reading": "chi a ba si ra xen xây",
+    "phones": [
+      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Công-lộ": {
+    "reading": "công lộ",
+    "phones": [
+      "kˈoŋ lˈo6"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hoài-nam": {
+    "reading": "hoài nam",
+    "phones": [
+      "hwˈaː2j nˈaːm"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hoàn-vương": {
+    "reading": "hoàn vương",
+    "phones": [
+      "hwˈaː2n vˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Magali-sama": {
+    "reading": "magali xa ma",
+    "phones": [
+      "mˈaː ɣˈaː lˈi sˈaː mˈaː",
+      "mæɡˈɑːli sˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Oni-kun": {
+    "reading": "ô ni cun",
+    "phones": [
+      "ˈo nˈi kˈun"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Subaru-sama": {
+    "reading": "xu ba ru xa ma",
+    "phones": [
+      "sˈu bˈaː ɹˈu sˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thái-thúc": {
+    "reading": "thái thúc",
+    "phones": [
+      "tˈaːɜj tˈuɜc"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Thọ-xuân": {
+    "reading": "thọ xuân",
+    "phones": [
+      "tˈɔ6 swˈən"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Tả-nho": {
+    "reading": "tả nho",
+    "phones": [
+      "t̪ˈaː4 ɲˈɔ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Vệ-công": {
+    "reading": "vệ công",
+    "phones": [
+      "vˈe6 kˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Celestina-san": {
+    "reading": "celestina xan",
+    "phones": [
+      "səlɪstˈiːnə sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Công-tôn": {
+    "reading": "công tôn",
+    "phones": [
+      "kˈoŋ t̪ˈon"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Cối-kê": {
+    "reading": "cối kê",
+    "phones": [
+      "kˈoɜj kˈe"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hoàng-hậu": {
+    "reading": "hoàng hậu",
+    "phones": [
+      "hwˈaː2ŋ hˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Nam-dương": {
+    "reading": "nam dương",
+    "phones": [
+      "nˈaːm zˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Nghi-cựu": {
+    "reading": "nghi cựu",
+    "phones": [
+      "ŋˈi kˈi6w"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Yuna-oneechan": {
+    "reading": "giu na ô ne chan",
+    "phones": [
+      "zˈu nˈaː ˈo nˈɛ tʃˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Dĩnh-xuyên": {
+    "reading": "dĩnh xuyên",
+    "phones": [
+      "zˈi5ɲ swˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Higashira-san": {
+    "reading": "hi ga si ra xan",
+    "phones": [
+      "hˈi ɣˈaː sˈi ɹˈaː sˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Hà-hậu": {
+    "reading": "hà hậu",
+    "phones": [
+      "hˈaː2 hˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bác Ái": {
+    "reading": "bác ái",
+    "phones": [
+      "bˈaːɜc ˈaːɜj"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Xuân Hoa": {
+    "reading": "xuân hoa",
+    "phones": [
+      "swˈən hwˈaː"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Quảng Giao": {
+    "reading": "quảng giao",
+    "phones": [
+      "kwˈaː4ŋ zˈaːw"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bà Án": {
+    "reading": "bà án",
+    "phones": [
+      "bˈaː2 ˈaːɜn"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Chị Dậu": {
+    "reading": "chị dậu",
+    "phones": [
+      "tʃˈi6 zˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Thưa ông": {
+    "reading": "thưa ông",
+    "phones": [
+      "tˈyə ˈoŋ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bạch Hải": {
+    "reading": "bạch hải",
+    "phones": [
+      "bˈe-6c hˈaː4j"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:ông Hạnh": {
+    "reading": "ông hạnh",
+    "phones": [
+      "ˈoŋ hˈe-6ɲ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Anh Dậu": {
+    "reading": "anh dậu",
+    "phones": [
+      "ˈe-ɲ zˈə6w"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Ông Hạnh": {
+    "reading": "ông hạnh",
+    "phones": [
+      "ˈoŋ hˈe-6ɲ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Thằng Dần": {
+    "reading": "thằng dần",
+    "phones": [
+      "tˈa2ŋ zˈə2n"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Cái Tý": {
+    "reading": "cái tý",
+    "phones": [
+      "kˌaːɜj t̪ˈiɜ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Họa Sĩ": {
+    "reading": "họa sĩ",
+    "phones": [
+      "hˈoaː6 sˈi5"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:ông ấy": {
+    "reading": "ông ấy",
+    "phones": [
+      "ˈoŋ ˈəɪɜ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Sài Gòn": {
+    "reading": "sài gòn",
+    "phones": [
+      "sˈaː2j ɣˈɔ2n"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bà Nghị": {
+    "reading": "bà nghị",
+    "phones": [
+      "bˈaː2 ŋˈi6"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:đăm đăm": {
+    "reading": "đăm đăm",
+    "phones": [
+      "ɗˈam ɗˈam"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Không được": {
+    "reading": "không được",
+    "phones": [
+      "xˈoŋ ɗˌyə6c"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Long Xuyên": {
+    "reading": "long xuyên",
+    "phones": [
+      "lˈɔŋ swˈiɛn"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Mai đã": {
+    "reading": "mai đã",
+    "phones": [
+      "mˈaːj ɗˌaː5"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Mai đứng": {
+    "reading": "mai đứng",
+    "phones": [
+      "mˈaːj ɗˈyɜŋ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Trời ơi": {
+    "reading": "trời ơi",
+    "phones": [
+      "tʃˈəː2j ˈəːj"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Hà Nội": {
+    "reading": "hà nội",
+    "phones": [
+      "hˈaː2 nˈo6j"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Nghị Quế": {
+    "reading": "nghị quế",
+    "phones": [
+      "ŋˈi6 kwˈeɜ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:SIM": {
+    "reading": "sim",
+    "phones": [
+      "sˈim"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:ông Cò": {
+    "reading": "ông cò",
+    "phones": [
+      "ˈoŋ kˈɔ2"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bà Hương": {
+    "reading": "bà hương",
+    "phones": [
+      "bˈaː2 hˈyəŋ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Việt Nam": {
+    "reading": "việt nam",
+    "phones": [
+      "vˈiɛ6t̪ nˈaːm"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:êm đềm": {
+    "reading": "êm đềm",
+    "phones": [
+      "ˈem ɗˈe2m"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Bà Cán": {
+    "reading": "bà cán",
+    "phones": [
+      "bˈaː2 kˈaːɜn"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Cái Tỉu": {
+    "reading": "cái tỉu",
+    "phones": [
+      "kˌaːɜj t̪ˈi4w"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:đi Tây": {
+    "reading": "đi tây",
+    "phones": [
+      "ɗˈi t̪ˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Hồ Biểu Chánh": {
+    "reading": "hồ biểu chánh",
+    "phones": [
+      "hˈo2 bˈiɛ4w tʃˈe-ɜɲ"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Nho Giáo": {
+    "reading": "nho giáo",
+    "phones": [
+      "ɲˈɔ zˈaːɜw"
+    ],
+    "ambiguity": null
+  },
+  "vietnamese:Nhưng Mai": {
+    "reading": "nhưng mai",
+    "phones": [
+      "ɲˈyŋ mˈaːj"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Musashi": {
+    "reading": "mu xa si",
+    "phones": [
+      "mˈu sˈaː sˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Sensei": {
+    "reading": "xen xây",
+    "phones": [
+      "sˈɛn sˈəɪ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shinji": {
+    "reading": "sin gi",
+    "phones": [
+      "sˈin zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shuri": {
+    "reading": "su ri",
+    "phones": [
+      "sˈu ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tsuwabuki": {
+    "reading": "xu oa bu ki",
+    "phones": [
+      "sˈu wˈaː bˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Uemon": {
+    "reading": "u e môn",
+    "phones": [
+      "ˈu ˈɛ mˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Gigi": {
+    "reading": "ghi ghi",
+    "phones": [
+      "ɣˈi ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hisame": {
+    "reading": "hi xa me",
+    "phones": [
+      "hˈi sˈaː mˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Isshiki": {
+    "reading": "ít si ki",
+    "phones": [
+      "ˈiɜt̪ sˈi kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kanto": {
+    "reading": "can tô",
+    "phones": [
+      "kˈaːn t̪ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Karui": {
+    "reading": "ca ru i",
+    "phones": [
+      "kˈaː ɹˈu ˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kochou": {
+    "reading": "cô châu",
+    "phones": [
+      "kˈo tʃˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Pika": {
+    "reading": "pi ca",
+    "phones": [
+      "pˈi kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tâ": {
+    "reading": "ta",
+    "phones": [
+      "t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ufufu": {
+    "reading": "u phu phu",
+    "phones": [
+      "ˈu fˈu fˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Umi": {
+    "reading": "u mi",
+    "phones": [
+      "ˈu mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yume": {
+    "reading": "giu me",
+    "phones": [
+      "zˈu mˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akagami": {
+    "reading": "a ca ga mi",
+    "phones": [
+      "ˈaː kˈaː ɣˈaː mˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ame": {
+    "reading": "a me",
+    "phones": [
+      "ˈaː mˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Donoa": {
+    "reading": "đô nô a",
+    "phones": [
+      "ɗˈo nˈo ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hachiman": {
+    "reading": "ha chi man",
+    "phones": [
+      "hˈaː tʃˈi mˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Maki": {
+    "reading": "ma ki",
+    "phones": [
+      "mˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Miura": {
+    "reading": "mi u ra",
+    "phones": [
+      "mˈi ˈu ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Musashino": {
+    "reading": "mu xa si nô",
+    "phones": [
+      "mˈu sˈaː sˈi nˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Natsuki": {
+    "reading": "na xu ki",
+    "phones": [
+      "nˈaː sˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Omamori": {
+    "reading": "ô ma mô ri",
+    "phones": [
+      "ˈo mˈaː mˈo ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ritton": {
+    "reading": "rít tôn",
+    "phones": [
+      "ɹˈiɜt̪ t̪ˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuru": {
+    "reading": "giu ru",
+    "phones": [
+      "zˈu ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuuka": {
+    "reading": "giu ca",
+    "phones": [
+      "zˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aioi": {
+    "reading": "ai ô i",
+    "phones": [
+      "ˈaːj ˈo ˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aodoji": {
+    "reading": "a o đô gi",
+    "phones": [
+      "ˈaː ˈɔ ɗˈo zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Daimyo": {
+    "reading": "đai mi ô",
+    "phones": [
+      "ɗˈaːj mˈi ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Gigigi": {
+    "reading": "ghi ghi ghi",
+    "phones": [
+      "ɣˈi ɣˈi ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Gunma": {
+    "reading": "gun ma",
+    "phones": [
+      "ɣˈun mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hirata": {
+    "reading": "hi ra ta",
+    "phones": [
+      "hˈi ɹˈaː t̪ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kanmon": {
+    "reading": "can môn",
+    "phones": [
+      "kˈaːn mˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kurumizawa": {
+    "reading": "cu ru mi da oa",
+    "phones": [
+      "kˈu ɹˈu mˈi zˈaː wˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kururi": {
+    "reading": "cu ru ri",
+    "phones": [
+      "kˈu ɹˈu ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shimonoseki": {
+    "reading": "si mô nô xe ki",
+    "phones": [
+      "sˈi mˈo nˈo sˈɛ kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shinobu": {
+    "reading": "si nô bu",
+    "phones": [
+      "sˈi nˈo bˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuichirou": {
+    "reading": "giu i chi râu",
+    "phones": [
+      "zˈu ˈi tʃˈi ɹˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ahahaha": {
+    "reading": "a ha ha ha",
+    "phones": [
+      "ˈaː hˈaː hˈaː hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Akou": {
+    "reading": "a câu",
+    "phones": [
+      "ˈaː kˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Amae": {
+    "reading": "a ma e",
+    "phones": [
+      "ˈaː mˈaː ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Asa": {
+    "reading": "a xa",
+    "phones": [
+      "ˈaː sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Asagumo": {
+    "reading": "a xa gu mô",
+    "phones": [
+      "ˈaː sˈaː ɣˈu mˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Asakusa": {
+    "reading": "a xa cu xa",
+    "phones": [
+      "ˈaː sˈaː kˈu sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ayaka": {
+    "reading": "a gia ca",
+    "phones": [
+      "ˈaː zˈaː kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ayanokouji": {
+    "reading": "a gia nô câu gi",
+    "phones": [
+      "ˈaː zˈaː nˈo kˈəw zˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fujimiya": {
+    "reading": "phu gi mi a",
+    "phones": [
+      "fˈu zˈi mˈi ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "mixed:GOAAAAAAAAAAAAAAAAAAAAAAAAAAAA": {
+    "reading": "goa a",
+    "phones": [
+      "ɣwˈaː ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Godou": {
+    "reading": "gô đâu",
+    "phones": [
+      "ɣˈo ɗˈəw"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Gutche": {
+    "reading": "gút che",
+    "phones": [
+      "ɣˈuɜt̪ tʃˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Haaa": {
+    "reading": "ha a",
+    "phones": [
+      "hˈaː ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hiratsuka": {
+    "reading": "hi ra xu ca",
+    "phones": [
+      "hˈi ɹˈaː sˈu kˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ike": {
+    "reading": "i ke",
+    "phones": [
+      "ˈi kˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Itsuki": {
+    "reading": "i xu ki",
+    "phones": [
+      "ˈi sˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Matsudaira": {
+    "reading": "ma xu đai ra",
+    "phones": [
+      "mˈaː sˈu ɗˈaːj ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mera": {
+    "reading": "me ra",
+    "phones": [
+      "mˈɛ ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mireera": {
+    "reading": "mi re ra",
+    "phones": [
+      "mˈi ɹˈɛ ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Muneshige": {
+    "reading": "mu ne si ghe",
+    "phones": [
+      "mˈu nˈɛ sˈi ɣˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Oni": {
+    "reading": "ô ni",
+    "phones": [
+      "ˈo nˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shirone": {
+    "reading": "si rô ne",
+    "phones": [
+      "sˈi ɹˈo nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Shun": {
+    "reading": "sun",
+    "phones": [
+      "sˈun"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Suu": {
+    "reading": "xu",
+    "phones": [
+      "sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Tobe": {
+    "reading": "tô be",
+    "phones": [
+      "t̪ˈo bˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ushio": {
+    "reading": "u si ô",
+    "phones": [
+      "ˈu sˈi ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yamiyo": {
+    "reading": "gia mi ô",
+    "phones": [
+      "zˈaː mˈi ˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Yuigahama": {
+    "reading": "giu i ga ha ma",
+    "phones": [
+      "zˈu ˈi ɣˈaː hˈaː mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Aa": {
+    "reading": "a",
+    "phones": [
+      "ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Aaa": {
+    "reading": "a a",
+    "phones": [
+      "ˈaː ˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ahaha": {
+    "reading": "a ha ha",
+    "phones": [
+      "ˈaː hˈaː hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ara": {
+    "reading": "a ra",
+    "phones": [
+      "ˈaː ɹˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Eae": {
+    "reading": "e a e",
+    "phones": [
+      "ˈɛ ˈaː ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ebina": {
+    "reading": "e bi na",
+    "phones": [
+      "ˈɛ bˈi nˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fufu": {
+    "reading": "phu phu",
+    "phones": [
+      "fˈu fˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fufufu": {
+    "reading": "phu phu phu",
+    "phones": [
+      "fˈu fˈu fˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fufufufu": {
+    "reading": "phu phu phu phu",
+    "phones": [
+      "fˈu fˈu fˈu fˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fuhahahaha": {
+    "reading": "phu ha ha ha ha",
+    "phones": [
+      "fˈu hˈaː hˈaː hˈaː hˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Fumu": {
+    "reading": "phu mu",
+    "phones": [
+      "fˈu mˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hagikage": {
+    "reading": "ha ghi ca ghe",
+    "phones": [
+      "hˈaː ɣˈi kˈaː ɣˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Harabote": {
+    "reading": "ha ra bô te",
+    "phones": [
+      "hˈaː ɹˈaː bˈo t̪ˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hee": {
+    "reading": "he",
+    "phones": [
+      "hˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Hotaru": {
+    "reading": "hô ta ru",
+    "phones": [
+      "hˈo t̪ˈaː ɹˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Ine": {
+    "reading": "i ne",
+    "phones": [
+      "ˈi nˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kamenuki": {
+    "reading": "ca me nu ki",
+    "phones": [
+      "kˈaː mˈɛ nˈu kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kasagi": {
+    "reading": "ca xa ghi",
+    "phones": [
+      "kˈaː sˈaː ɣˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kawasaki": {
+    "reading": "ca oa xa ki",
+    "phones": [
+      "kˈaː wˈaː sˈaː kˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kazuma": {
+    "reading": "ca du ma",
+    "phones": [
+      "kˈaː zˈu mˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kinton": {
+    "reading": "kin tôn",
+    "phones": [
+      "kˈin t̪ˈon"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kirari": {
+    "reading": "ki ra ri",
+    "phones": [
+      "kˈi ɹˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kobe": {
+    "reading": "cô be",
+    "phones": [
+      "kˈo bˈɛ"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kuromitsu": {
+    "reading": "cu rô mi xu",
+    "phones": [
+      "kˈu ɹˈo mˈi sˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Kyu": {
+    "reading": "ki u",
+    "phones": [
+      "kˈi ˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Macho": {
+    "reading": "ma chô",
+    "phones": [
+      "mˈaː tʃˈo"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Magoroku": {
+    "reading": "ma gô rô cu",
+    "phones": [
+      "mˈaː ɣˈo ɹˈo kˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mamu": {
+    "reading": "ma mu",
+    "phones": [
+      "mˈaː mˈu"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mari": {
+    "reading": "ma ri",
+    "phones": [
+      "mˈaː ɹˈi"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Masa": {
+    "reading": "ma xa",
+    "phones": [
+      "mˈaː sˈaː"
+    ],
+    "ambiguity": null
+  },
+  "japanese:Mayoiga": {
+    "reading": "ma gioi ga",
+    "phones": [
+      "mˈaː zˈɔj ɣˈaː"
+    ],
+    "ambiguity": null
+  }
+}

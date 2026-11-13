@@ -618,8 +618,8 @@ def keep_vieneu_final_mark() -> None:
 
     def phonemize(text: str, punc_norm: bool = True) -> str:
         from .readaloud.phoneme_policy import (
-            emphasize_english_interjections, foreign_names, remembered_case, remembered_named, remembered_rulings,
-            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese,
+            emphasize_english_interjections, foreign_names, remembered_case, remembered_named, remembered_rulings, remembered_spelling,
+            repair_level_tone, repair_syllabic_gi, repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese, restore_generated_syllables,
         )
 
         # `text` is already normalized and lower-cased by vieneu; `generate_one` remembers which words were names.
@@ -636,6 +636,9 @@ def keep_vieneu_final_mark() -> None:
         if named:  # a foreign roster name spelled like a Vietnamese syllable ("Dan"): "đan", the syllable with the name's onset
             out = foreign_names(given(), raw, out, phonemize_text._get_g2p().convert, named)
         out = repair_level_tone(given(), out)  # the words sea-g2p saw: "nô-pa-mi" is three of them
+        out = repair_syllabic_gi(value, out)
+        spelling, source = remembered_spelling(text)
+        out = restore_generated_syllables(spelling, given(), out, phonemize_text._get_g2p().convert, source, remembered_rulings())
         if punc_norm and out.endswith(".") and ("?" in value or "!" in value):
             written = original_phonemize(value, False).rstrip()
             if written.endswith(("?", "!")):

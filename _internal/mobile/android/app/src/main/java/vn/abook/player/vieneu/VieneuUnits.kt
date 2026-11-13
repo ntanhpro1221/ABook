@@ -837,10 +837,13 @@ object VieneuUnits {
         readingMarks(out, toks)
         if (directEnglish) {
             // Sound and stutter readings precede the Japanese fallback.
-            EnglishPolicy.applyTokens(toks, out, origin, vocalized)
+            EnglishPolicy.applyTokens(toks, out, origin, vocalized, (readings as? vn.abook.player.readaloud.BookReadings)?.rulings)
             Readings.applyTokens(toks, out, readings)
         }
-        return out.map(::separateDigitQuotes)
+        val legacy = Regex("\\p{L}*[Ðð]\\p{L}*")
+        return out.map { word -> separateDigitQuotes(legacy.replace(word) { match ->
+            if (match.value.any { it !in "Ðð" && it.code > 127 }) match.value.replace('Ð', 'Đ').replace('ð', 'đ') else match.value
+        }) }
     }
 
     /** Same voice-only guard as studio_tn.separate_digit_quotes: adjacent primes are spoken as units by sea-g2p. */

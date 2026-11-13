@@ -348,7 +348,7 @@ def phonemize(sentences: Sequence[str], source: str | None = None, rulings: Any 
 
     from .phoneme_policy import (
         capitalised, emphasize_english_interjections, foreign_names, remembered_rulings, repair_level_tone, repair_syllabic_gi,
-        repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese, written_names,
+        repair_syllabic_o, respell_rare_rimes, restore_unread_words, restore_vietnamese, written_names, restore_generated_syllables,
     )
 
     shown = " ".join(sentences)
@@ -367,6 +367,8 @@ def phonemize(sentences: Sequence[str], source: str | None = None, rulings: Any 
     phonemes = restore_unread_words(given, phonemes, pipeline.g2p.convert)  # "hết pin" /pˈɪn/ -> /pˈin/: từ Việt chỉ có âm Anh trong sea-g2p
     phonemes = foreign_names(given, raw, phonemes, pipeline.g2p.convert, named)  # "Dan" của danh sách nhân vật Tây: "đan" /ɗaːn/, không /zaːn/
     phonemes = repair_level_tone(given, phonemes)
+    phonemes = repair_syllabic_gi(text, phonemes)
+    phonemes = restore_generated_syllables(shown, given, phonemes, pipeline.g2p.convert, source, rulings)
     if phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

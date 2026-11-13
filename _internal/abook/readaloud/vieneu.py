@@ -747,7 +747,15 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
         book_readings.apply_tokens(toks, out, readings)
     from .studio_tn import separate_digit_quotes
 
-    return [separate_digit_quotes(word) for word in out]
+    # Older Vietnamese sources use Latin eth for Vietnamese D-stroke. Restrict
+    # conversion to words carrying Vietnamese vowel/tone evidence.
+    legacy = re.compile(r'[^\W\d_]*[Ðð][^\W\d_]*')
+    def legacy_d(match):
+        word = match.group()
+        if any(c not in 'Ðð' and not c.isascii() for c in word):
+            return word.replace('Ð','Đ').replace('ð','đ')
+        return word
+    return [separate_digit_quotes(legacy.sub(legacy_d, word)) for word in out]
 
 
 def _roman_numbers(toks: list[str], out: list[str]) -> None:

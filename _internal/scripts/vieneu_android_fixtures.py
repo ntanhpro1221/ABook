@@ -19,6 +19,7 @@ import json
 import os
 import shutil
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -457,7 +458,7 @@ def text_fixture() -> dict:
         shares = names.origin_shares(*names.scan_names(texts[:sample or names.SAMPLE_CHAPTERS]))
         origins.append({"texts": texts, **({"sample": sample} if sample else {}), "origin": names.book_origin(texts, **({"sample": sample} if sample else {})),
                         **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names", "ja_marked", "ko_marked", "ja_terms", "ko_terms")}})
-    return {"sea_g2p": "0.9.1", "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds,
+    return {"sea_g2p": version("sea-g2p"), "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds,
             "origins": origins}
 
 

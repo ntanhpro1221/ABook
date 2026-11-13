@@ -263,7 +263,9 @@ def reading(core: str, origin: str | None) -> tuple[str, str] | None:
             and spelled(core) == " ".join(LETTERS[ch] for ch in core.lower())):
         return english_letters(core), "spell_english"
     if keeps_word(core, origin):
-        return core.lower() if core.isupper() else core, "keep_english"
+        # sea-g2p's normalizer splits internal capitals into separate words.
+        # Once classified English, case has no pronunciation meaning.
+        return core.lower() if len(core)>1 and core.isupper() or re.search(r'[a-z][A-Z]',core) else core, "keep_english"
     return None
 
 
@@ -274,6 +276,10 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
     Tags are generated only here, so angle-bracket TN cannot consume them.
     """
     from .japanese_policy import apply_tokens as japanese_tokens, contextual_names, read_unmodified
+    from .phoneme_policy import remembered_rulings, ruled_vietnamese_words
+
+    rulings = remembered_rulings()
+    ruled = ruled_vietnamese_words(' '.join(toks), rulings=rulings)
 
     protected = protected or set()
     proposed = list(out)
@@ -290,6 +296,11 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
         if index in protected:
             continue
         before, core, after = names.split_token(token)
+        if core.lower() in ruled and vietnamese(core):
+            # A declared Vietnamese roster class must survive text routing too;
+            # an English-context tag would otherwise defeat the phoneme ruling.
+            out[index] = before + core + after
+            continue
         from .abbreviations import contextual_letters, pronoun_ai, standard_reading
 
         if contextual_letters(core, toks, index) or (out[index] == token and index not in english and letter_name(toks, index)):
@@ -307,7 +318,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
             from .abbreviations import spelled
 
             shouted = len(core) > 1 and core.isupper()
-            marked = "<en>" + (core.lower() if shouted else core) + "</en>"
+            marked = "<en>" + (core.lower() if len(core)>1 and core.isupper() or re.search(r'[a-z][A-Z]',core) else core) + "</en>"
             expanded = spelled(core) if shouted else None  # the abbreviation rule already spelled the capitals out
             if out[index].casefold() == token.casefold():
                 out[index] = before + marked + after

@@ -1,0 +1,13 @@
+{
+  "base_commit": "d8710f23f",
+  "sea_g2p": "0.10.0",
+  "distinct_tokens": 744,
+  "calibration_rows": 744,
+  "sha256": {
+    "tokens.json": "e426f54f93bfb3b1ec4e5ee44dc0c0211d247ded73291e2ac4a9a2f040d7d953",
+    "expected.json": "9be6ba7ecccae4cf19647e6bed2369d642fab191ce19e7f3dc2b68285a2353df",
+    "calibration.json": "ca691a540efee0130951cc440c741e9a5a7018c28485eb18018443c2cbbf1f17"
+  },
+  "hash_normalization": "UTF-8 bytes with CRLF normalized to LF",
+  "private_calibration_rows": 442
+}

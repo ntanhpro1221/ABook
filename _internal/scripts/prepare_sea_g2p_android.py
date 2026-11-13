@@ -16,6 +16,9 @@ Upload `<out>/sea-g2p/<version>/` to the model repo yourself (next to `ort/`); t
     runtime/.venv/Scripts/python.exe scripts/prepare_sea_g2p_android.py --out D:/Novels/LLM_Train/sea_g2p_build/hosting
     (needs cargo + cargo-ndk, `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android`,
     and an Android NDK - ANDROID_NDK_HOME, or the newest one under the SDK of mobile/android/local.properties)
+
+Use --host-only without --out for the CI JVM parity test; only Rust and its
+host linker are needed. Previous prepared source trees are preserved in build/.
 """
 from __future__ import annotations
 
@@ -29,6 +32,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+import uuid
 from pathlib import Path
 
 VERSION = "0.9.1"
@@ -92,11 +96,22 @@ def strip_pyo3(source: Path) -> None:
 
 
 def unpack(sdist: bytes) -> None:
-    shutil.rmtree(SOURCE, ignore_errors=True)
+    # Prepare a verified source tree first, preserving previous builds rather
+    # than deleting them. This also leaves the old source intact if patching fails.
     SOURCE.parent.mkdir(parents=True, exist_ok=True)
+    build_root = SOURCE.parent.resolve()
+    staging = build_root / f"source-{uuid.uuid4().hex}"
+    staging.mkdir()
     with tarfile.open(fileobj=io.BytesIO(sdist), mode="r:gz") as archive:
-        archive.extractall(SOURCE.parent, filter="data")
-    strip_pyo3(SOURCE)
+        archive.extractall(staging, filter="data")
+    prepared = staging / SOURCE.name
+    strip_pyo3(prepared)
+    backup = build_root / f"{SOURCE.name}.previous-{uuid.uuid4().hex}"
+    if not all(path.resolve().is_relative_to(build_root) for path in (SOURCE, prepared, backup)):
+        raise SystemExit("source paths must stay inside the JNI build directory")
+    if SOURCE.exists():
+        SOURCE.rename(backup)
+    prepared.rename(SOURCE)
     lock = CRATE / "Cargo.lock"
     if not lock.exists():  # first build: start from the sdist's own lock so regex & co. are the versions the wheel was built with
         shutil.copyfile(SOURCE / "Cargo.lock", lock)
@@ -115,13 +130,17 @@ def ndk_home() -> str:
     raise SystemExit("no Android NDK: set ANDROID_NDK_HOME")
 
 
-def build(locked: bool) -> dict[str, Path]:
+def build(locked: bool, *, host_only: bool = False) -> dict[str, Path]:
     # Source paths end up in panic messages: strip this machine's folders (user name, checkout) so the library is reproducible and
     # carries nothing personal.
     cargo_home = Path(os.environ.get("CARGO_HOME") or Path.home() / ".cargo")
     remap = [f"--remap-path-prefix={cargo_home}=/cargo", f"--remap-path-prefix={CRATE}=/sea_g2p_jni"]
-    env = {**os.environ, "ANDROID_NDK_HOME": ndk_home(), "CARGO_ENCODED_RUSTFLAGS": "\x1f".join(remap)}
+    env = {**os.environ, "CARGO_ENCODED_RUSTFLAGS": "\x1f".join(remap)}
     lock = ["--locked"] if locked else []
+    if host_only:
+        subprocess.run(["cargo", "build", "--release", *lock], cwd=CRATE, env=env, check=True)
+        return {}
+    env["ANDROID_NDK_HOME"] = ndk_home()
     targets = [arg for abi in ABIS for arg in ("-t", abi)]
     subprocess.run(["cargo", "ndk", *targets, "--platform", str(MIN_SDK), "build", "--release", *lock], cwd=CRATE, env=env, check=True)
     subprocess.run(["cargo", "build", "--release", *lock], cwd=CRATE, env=env, check=True)  # host library for the JVM test
@@ -131,17 +150,23 @@ def build(locked: bool) -> dict[str, Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--host-only", action="store_true", help="build JNI for JVM parity without Android SDK/NDK or packaging")
     parser.add_argument("--sdist", type=Path, help="a local copy of the sdist (otherwise downloaded from PyPI)")
     parser.add_argument("--unlocked", action="store_true", help="let cargo update Cargo.lock (only when changing a dependency)")
     args = parser.parse_args()
+    if not args.host_only and args.out is None:
+        parser.error("--out is required unless --host-only is set")
 
     blob = args.sdist.read_bytes() if args.sdist else urllib.request.urlopen(SDIST_URL, timeout=300).read()
     if sha256(blob) != SDIST_SHA256:
         print(f"sdist SHA-256 mismatch: {sha256(blob)} != {SDIST_SHA256}", file=sys.stderr)
         return 1
     unpack(blob)
-    libraries = build(locked=not args.unlocked and (CRATE / "Cargo.lock").exists())
+    libraries = build(locked=not args.unlocked and (CRATE / "Cargo.lock").exists(), host_only=args.host_only)
+    if args.host_only:
+        print(f"host JNI built in {CRATE / 'target' / 'release'}")
+        return 0
     lines = []
     for abi, path in libraries.items():
         raw = path.read_bytes()

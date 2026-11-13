@@ -1,0 +1,5354 @@
+[
+  {
+    "token": "Fukamachi",
+    "class": "japanese",
+    "phones": [
+      "fˈu kˈaː mˈaː tʃˈi"
+    ]
+  },
+  {
+    "token": "Funami",
+    "class": "japanese",
+    "phones": [
+      "fˈu nˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Kayato",
+    "class": "japanese",
+    "phones": [
+      "kˈaː zˈaː t̪ˈo"
+    ]
+  },
+  {
+    "token": "Akira",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈi ɹˈaː"
+    ]
+  },
+  {
+    "token": "Mugino",
+    "class": "japanese",
+    "phones": [
+      "mˈu ɣˈi nˈo"
+    ]
+  },
+  {
+    "token": "Iguma",
+    "class": "japanese",
+    "phones": [
+      "ˈi ɣˈu mˈaː"
+    ]
+  },
+  {
+    "token": "Sou",
+    "class": "japanese",
+    "phones": [
+      "sˈəw"
+    ]
+  },
+  {
+    "token": "Haruoka",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈu ˈo kˈaː"
+    ]
+  },
+  {
+    "token": "Hiiragi",
+    "class": "japanese",
+    "phones": [
+      "hˈi ɹˈaː ɣˈi"
+    ]
+  },
+  {
+    "token": "Yuto",
+    "class": "japanese",
+    "phones": [
+      "zˈu t̪ˈo"
+    ]
+  },
+  {
+    "token": "Riichi",
+    "class": "japanese",
+    "phones": [
+      "ɹˈi tʃˈi"
+    ]
+  },
+  {
+    "token": "Kotoha",
+    "class": "japanese",
+    "phones": [
+      "kˈo t̪ˈo hˈaː"
+    ]
+  },
+  {
+    "token": "Segawa",
+    "class": "japanese",
+    "phones": [
+      "sˈɛ ɣˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Natsume",
+    "class": "japanese",
+    "phones": [
+      "nˈaː sˈu mˈɛ"
+    ]
+  },
+  {
+    "token": "Haruyoshi",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈu zˈo sˈi"
+    ]
+  },
+  {
+    "token": "Kazuhi",
+    "class": "japanese",
+    "phones": [
+      "kˈaː zˈu hˈi"
+    ]
+  },
+  {
+    "token": "Hoshina",
+    "class": "japanese",
+    "phones": [
+      "hˈo sˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Amagase",
+    "class": "japanese",
+    "phones": [
+      "ˈaː mˈaː ɣˈaː sˈɛ"
+    ]
+  },
+  {
+    "token": "Misaki",
+    "class": "japanese",
+    "phones": [
+      "mˈi sˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Hajikano",
+    "class": "japanese",
+    "phones": [
+      "hˈaː zˈi kˈaː nˈo"
+    ]
+  },
+  {
+    "token": "Kazuki",
+    "class": "japanese",
+    "phones": [
+      "kˈaː zˈu kˈi"
+    ]
+  },
+  {
+    "token": "Natsumi",
+    "class": "japanese",
+    "phones": [
+      "nˈaː sˈu mˈi"
+    ]
+  },
+  {
+    "token": "Takigawa",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈi ɣˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Mizuki",
+    "class": "japanese",
+    "phones": [
+      "mˈi zˈu kˈi"
+    ]
+  },
+  {
+    "token": "Chigusa",
+    "class": "japanese",
+    "phones": [
+      "tʃˈi ɣˈu sˈaː"
+    ]
+  },
+  {
+    "token": "Ogiue",
+    "class": "japanese",
+    "phones": [
+      "ˈo ɣˈi ˈu ˈɛ"
+    ]
+  },
+  {
+    "token": "Taku",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈu"
+    ]
+  },
+  {
+    "token": "Sugawara",
+    "class": "japanese",
+    "phones": [
+      "sˈu ɣˈaː wˈaː ɹˈaː"
+    ]
+  },
+  {
+    "token": "Tsukigase",
+    "class": "japanese",
+    "phones": [
+      "sˈu kˈi ɣˈaː sˈɛ"
+    ]
+  },
+  {
+    "token": "Kaishu",
+    "class": "japanese",
+    "phones": [
+      "kˌaːj sˈu"
+    ]
+  },
+  {
+    "token": "Erisa",
+    "class": "japanese",
+    "phones": [
+      "ˈɛ ɹˈi sˈaː"
+    ]
+  },
+  {
+    "token": "Jinka",
+    "class": "japanese",
+    "phones": [
+      "zˈin kˈaː"
+    ]
+  },
+  {
+    "token": "Shuu",
+    "class": "japanese",
+    "phones": [
+      "sˈu"
+    ]
+  },
+  {
+    "token": "Yagi",
+    "class": "japanese",
+    "phones": [
+      "zˈaː ɣˈi"
+    ]
+  },
+  {
+    "token": "Igarashi",
+    "class": "japanese",
+    "phones": [
+      "ˈi ɣˈaː ɹˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Keiji",
+    "class": "japanese",
+    "phones": [
+      "kˈəɪ zˈi"
+    ]
+  },
+  {
+    "token": "Kiriya",
+    "class": "japanese",
+    "phones": [
+      "kˈi ɹˈi ˈaː"
+    ]
+  },
+  {
+    "token": "Yui",
+    "class": "japanese",
+    "phones": [
+      "zˈu ˈi"
+    ]
+  },
+  {
+    "token": "Yuzuki",
+    "class": "japanese",
+    "phones": [
+      "zˈu zˈu kˈi"
+    ]
+  },
+  {
+    "token": "Saegusa",
+    "class": "japanese",
+    "phones": [
+      "sˈaː ˈɛ ɣˈu sˈaː"
+    ]
+  },
+  {
+    "token": "Kishitani",
+    "class": "japanese",
+    "phones": [
+      "kˈi sˈi t̪ˈaː nˈi"
+    ]
+  },
+  {
+    "token": "Yakumo",
+    "class": "japanese",
+    "phones": [
+      "zˈaː kˈu mˈo"
+    ]
+  },
+  {
+    "token": "Suzuya",
+    "class": "japanese",
+    "phones": [
+      "sˈu zˈu zˈaː"
+    ]
+  },
+  {
+    "token": "Kuuya",
+    "class": "japanese",
+    "phones": [
+      "kˈu zˈaː"
+    ]
+  },
+  {
+    "token": "Mamesaki",
+    "class": "japanese",
+    "phones": [
+      "mˈaː mˈɛ sˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Rinka",
+    "class": "japanese",
+    "phones": [
+      "ɹˈin kˈaː"
+    ]
+  },
+  {
+    "token": "Takatsu",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈaː sˈu"
+    ]
+  },
+  {
+    "token": "Tsubaki",
+    "class": "japanese",
+    "phones": [
+      "sˈu bˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Mikiya",
+    "class": "japanese",
+    "phones": [
+      "mˈi kˈi ˈaː"
+    ]
+  },
+  {
+    "token": "Ozaki",
+    "class": "japanese",
+    "phones": [
+      "ˈo zˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Aika",
+    "class": "japanese",
+    "phones": [
+      "ˈaːj kˈaː"
+    ]
+  },
+  {
+    "token": "Nanao",
+    "class": "japanese",
+    "phones": [
+      "nˈaː nˈaːw"
+    ]
+  },
+  {
+    "token": "Eina",
+    "class": "japanese",
+    "phones": [
+      "ˈəɪ nˈaː"
+    ]
+  },
+  {
+    "token": "Hinohara",
+    "class": "japanese",
+    "phones": [
+      "hˈi nˈo hˈaː ɹˈaː"
+    ]
+  },
+  {
+    "token": "Aya",
+    "class": "japanese",
+    "phones": [
+      "ˈaj ˈaː"
+    ]
+  },
+  {
+    "token": "Minekawa",
+    "class": "japanese",
+    "phones": [
+      "mˈi nˈɛ kˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Inamura",
+    "class": "japanese",
+    "phones": [
+      "ˈi nˈaː mˈu ɹˈaː"
+    ]
+  },
+  {
+    "token": "Rindou",
+    "class": "japanese",
+    "phones": [
+      "ɹˈin ɗˈəw"
+    ]
+  },
+  {
+    "token": "Kaho",
+    "class": "japanese",
+    "phones": [
+      "kˈaː hˈo"
+    ]
+  },
+  {
+    "token": "Yonabaru",
+    "class": "japanese",
+    "phones": [
+      "zˈo nˈaː bˈaː ɹˈu"
+    ]
+  },
+  {
+    "token": "Jin",
+    "class": "japanese",
+    "phones": [
+      "zˈin"
+    ]
+  },
+  {
+    "token": "Nishina",
+    "class": "japanese",
+    "phones": [
+      "nˈi sˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Akimitsu",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈi mˈi sˈu"
+    ]
+  },
+  {
+    "token": "Sayo",
+    "class": "japanese",
+    "phones": [
+      "sˈaː zˈo"
+    ]
+  },
+  {
+    "token": "Kotomi",
+    "class": "japanese",
+    "phones": [
+      "kˈo t̪ˈo mˈi"
+    ]
+  },
+  {
+    "token": "Ishikawa",
+    "class": "japanese",
+    "phones": [
+      "ˈi sˈi kˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Haruhito",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈu hˈi t̪ˈo"
+    ]
+  },
+  {
+    "token": "Tamaki",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː mˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Iruse",
+    "class": "japanese",
+    "phones": [
+      "ˈi ɹˈu sˈɛ"
+    ]
+  },
+  {
+    "token": "Kusama",
+    "class": "japanese",
+    "phones": [
+      "kˈu sˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Yousuke",
+    "class": "japanese",
+    "phones": [
+      "zˈəw sˈu kˈɛ"
+    ]
+  },
+  {
+    "token": "Mishima",
+    "class": "japanese",
+    "phones": [
+      "mˈi sˈi mˈaː"
+    ]
+  },
+  {
+    "token": "Honoka",
+    "class": "japanese",
+    "phones": [
+      "hˈo nˈo kˈaː"
+    ]
+  },
+  {
+    "token": "Kanae",
+    "class": "japanese",
+    "phones": [
+      "kˈaː nˈaː ˈɛ"
+    ]
+  },
+  {
+    "token": "Takaki",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Fujimoto",
+    "class": "japanese",
+    "phones": [
+      "fˈu zˈi mˈo t̪ˈo"
+    ]
+  },
+  {
+    "token": "Ryota",
+    "class": "japanese",
+    "phones": [
+      "ɹˈi ˈo t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Watanabe",
+    "class": "japanese",
+    "phones": [
+      "wˈaː t̪ˈaː nˈaː bˈɛ"
+    ]
+  },
+  {
+    "token": "Aiba",
+    "class": "japanese",
+    "phones": [
+      "ˈaːj bˈaː"
+    ]
+  },
+  {
+    "token": "Eri",
+    "class": "japanese",
+    "phones": [
+      "ˈɛ ɹˈi"
+    ]
+  },
+  {
+    "token": "Shuuji",
+    "class": "japanese",
+    "phones": [
+      "sˈu zˈi"
+    ]
+  },
+  {
+    "token": "Haruka",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Keisuke",
+    "class": "japanese",
+    "phones": [
+      "kˈəɪ sˈu kˈɛ"
+    ]
+  },
+  {
+    "token": "Sakai",
+    "class": "japanese",
+    "phones": [
+      "sˈaː kˌaːj"
+    ]
+  },
+  {
+    "token": "Kurehiko",
+    "class": "japanese",
+    "phones": [
+      "kˈu ɹˈɛ hˈi kˈo"
+    ]
+  },
+  {
+    "token": "Haruko",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈu kˈo"
+    ]
+  },
+  {
+    "token": "Yadomura",
+    "class": "japanese",
+    "phones": [
+      "zˈaː ɗˈo mˈu ɹˈaː"
+    ]
+  },
+  {
+    "token": "Ruka",
+    "class": "japanese",
+    "phones": [
+      "ɹˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Akari",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Andou",
+    "class": "japanese",
+    "phones": [
+      "ˈaːn ɗˈəw"
+    ]
+  },
+  {
+    "token": "Akito",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈi t̪ˈo"
+    ]
+  },
+  {
+    "token": "Masaya",
+    "class": "japanese",
+    "phones": [
+      "mˈaː sˈaj ˈaː"
+    ]
+  },
+  {
+    "token": "Nagahora",
+    "class": "japanese",
+    "phones": [
+      "nˈaː ɣˈaː hˈo ɹˈaː"
+    ]
+  },
+  {
+    "token": "Katou",
+    "class": "japanese",
+    "phones": [
+      "kˈaː t̪ˈəw"
+    ]
+  },
+  {
+    "token": "Tokiwa",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo kˈi wˈaː"
+    ]
+  },
+  {
+    "token": "Akiho",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈi hˈo"
+    ]
+  },
+  {
+    "token": "Kasai",
+    "class": "japanese",
+    "phones": [
+      "kˈaː sˈaːj"
+    ]
+  },
+  {
+    "token": "Kisaragi",
+    "class": "japanese",
+    "phones": [
+      "kˈi sˈaː ɹˈaː ɣˈi"
+    ]
+  },
+  {
+    "token": "Shimizu",
+    "class": "japanese",
+    "phones": [
+      "sˈi mˈi zˈu"
+    ]
+  },
+  {
+    "token": "Kensuke",
+    "class": "japanese",
+    "phones": [
+      "kˈɛn sˈu kˈɛ"
+    ]
+  },
+  {
+    "token": "Nagai",
+    "class": "japanese",
+    "phones": [
+      "nˈaː ɣˈaːj"
+    ]
+  },
+  {
+    "token": "Hikawa",
+    "class": "japanese",
+    "phones": [
+      "hˈi kˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Shoko",
+    "class": "japanese",
+    "phones": [
+      "sˈo kˈo"
+    ]
+  },
+  {
+    "token": "Masafumi",
+    "class": "japanese",
+    "phones": [
+      "mˈaː sˈaː fˈu mˈi"
+    ]
+  },
+  {
+    "token": "Usumizu",
+    "class": "japanese",
+    "phones": [
+      "ˈu sˈu mˈi zˈu"
+    ]
+  },
+  {
+    "token": "Ryunosuke",
+    "class": "japanese",
+    "phones": [
+      "ɹˈi ˈu nˈo sˈu kˈɛ"
+    ]
+  },
+  {
+    "token": "Yoshie",
+    "class": "japanese",
+    "phones": [
+      "zˈo sˈi ˈɛ"
+    ]
+  },
+  {
+    "token": "Yoshiki",
+    "class": "japanese",
+    "phones": [
+      "zˈo sˈi kˈi"
+    ]
+  },
+  {
+    "token": "Furuta",
+    "class": "japanese",
+    "phones": [
+      "fˈu ɹˈu t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Tsugumi",
+    "class": "japanese",
+    "phones": [
+      "sˈu ɣˈu mˈi"
+    ]
+  },
+  {
+    "token": "Sumoto",
+    "class": "japanese",
+    "phones": [
+      "sˈu mˈo t̪ˈo"
+    ]
+  },
+  {
+    "token": "Endou",
+    "class": "japanese",
+    "phones": [
+      "ˈɛn ɗˈəw"
+    ]
+  },
+  {
+    "token": "Tanaka",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː nˈaː kˈaː"
+    ]
+  },
+  {
+    "token": "Yukata",
+    "class": "japanese",
+    "phones": [
+      "zˈu kˈaː t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Kouhei",
+    "class": "japanese",
+    "phones": [
+      "kˈəw hˈəɪ"
+    ]
+  },
+  {
+    "token": "Tagami",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː ɣˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Yuki",
+    "class": "japanese",
+    "phones": [
+      "zˈu kˈi"
+    ]
+  },
+  {
+    "token": "Funakoshi",
+    "class": "japanese",
+    "phones": [
+      "fˈu nˈaː kˈo sˈi"
+    ]
+  },
+  {
+    "token": "Suga",
+    "class": "japanese",
+    "phones": [
+      "sˈu ɣˈaː"
+    ]
+  },
+  {
+    "token": "Mizuno",
+    "class": "japanese",
+    "phones": [
+      "mˈi zˈu nˈo"
+    ]
+  },
+  {
+    "token": "Risa",
+    "class": "japanese",
+    "phones": [
+      "ɹˈi sˈaː"
+    ]
+  },
+  {
+    "token": "Kouchi",
+    "class": "japanese",
+    "phones": [
+      "kˈəw tʃˈi"
+    ]
+  },
+  {
+    "token": "Midou",
+    "class": "japanese",
+    "phones": [
+      "mˈi ɗˈəw"
+    ]
+  },
+  {
+    "token": "Suzumoto",
+    "class": "japanese",
+    "phones": [
+      "sˈu zˈu mˈo t̪ˈo"
+    ]
+  },
+  {
+    "token": "Takuma",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈu mˈaː"
+    ]
+  },
+  {
+    "token": "Isezaki",
+    "class": "japanese",
+    "phones": [
+      "ˈi sˈɛ zˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Michi",
+    "class": "japanese",
+    "phones": [
+      "mˈi tʃˈi"
+    ]
+  },
+  {
+    "token": "Saki",
+    "class": "japanese",
+    "phones": [
+      "sˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Shouta",
+    "class": "japanese",
+    "phones": [
+      "sˈəw t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Aida",
+    "class": "japanese",
+    "phones": [
+      "ˈaːj ɗˈaː"
+    ]
+  },
+  {
+    "token": "Kanade",
+    "class": "japanese",
+    "phones": [
+      "kˈaː nˈaː ɗˈɛ"
+    ]
+  },
+  {
+    "token": "Toguchi",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo ɣˈu tʃˈi"
+    ]
+  },
+  {
+    "token": "Toyoda",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo zˈo ɗˈaː"
+    ]
+  },
+  {
+    "token": "Hiyori",
+    "class": "japanese",
+    "phones": [
+      "hˈi ˈo ɹˈi"
+    ]
+  },
+  {
+    "token": "Natsuna",
+    "class": "japanese",
+    "phones": [
+      "nˈaː sˈu nˈaː"
+    ]
+  },
+  {
+    "token": "Ranko",
+    "class": "japanese",
+    "phones": [
+      "ɹˈaːn kˈo"
+    ]
+  },
+  {
+    "token": "Rosari",
+    "class": "japanese",
+    "phones": [
+      "ɹˈo sˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Shirakawa",
+    "class": "japanese",
+    "phones": [
+      "sˈi ɹˈaː kˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Haneda",
+    "class": "japanese",
+    "phones": [
+      "hˈaː nˈɛ ɗˈaː"
+    ]
+  },
+  {
+    "token": "Miacha",
+    "class": "japanese",
+    "phones": [
+      "mˈi ˈaː tʃˈaː"
+    ]
+  },
+  {
+    "token": "Sekigahara",
+    "class": "japanese",
+    "phones": [
+      "sˈɛ kˈi ɣˈaː hˈaː ɹˈaː"
+    ]
+  },
+  {
+    "token": "Yukko",
+    "class": "japanese",
+    "phones": [
+      "zˈuɜc kˈo"
+    ]
+  },
+  {
+    "token": "Hashiba",
+    "class": "japanese",
+    "phones": [
+      "hˈaː sˈi bˈaː"
+    ]
+  },
+  {
+    "token": "Hashibami",
+    "class": "japanese",
+    "phones": [
+      "hˈaː sˈi bˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Shino",
+    "class": "japanese",
+    "phones": [
+      "sˈi nˈo"
+    ]
+  },
+  {
+    "token": "Yoko",
+    "class": "japanese",
+    "phones": [
+      "zˈo kˈo"
+    ]
+  },
+  {
+    "token": "Arisu",
+    "class": "japanese",
+    "phones": [
+      "ˈaː ɹˈi sˈu"
+    ]
+  },
+  {
+    "token": "Hojo",
+    "class": "japanese",
+    "phones": [
+      "hˈo zˈo"
+    ]
+  },
+  {
+    "token": "Nogiyama",
+    "class": "japanese",
+    "phones": [
+      "nˈo ɣˈi ˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Ramen",
+    "class": "japanese",
+    "phones": [
+      "ɹˈaː mˈɛn"
+    ]
+  },
+  {
+    "token": "Roppongi",
+    "class": "japanese",
+    "phones": [
+      "ɹˈoɜp pˈon ɣˈi"
+    ]
+  },
+  {
+    "token": "Satoru",
+    "class": "japanese",
+    "phones": [
+      "sˈaː t̪ˈo ɹˈu"
+    ]
+  },
+  {
+    "token": "Takashi",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Takeshita",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː kˈɛ sˈi t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Hosoda",
+    "class": "japanese",
+    "phones": [
+      "hˈo sˈo ɗˈaː"
+    ]
+  },
+  {
+    "token": "Sousuke",
+    "class": "japanese",
+    "phones": [
+      "sˈəw sˈu kˈɛ"
+    ]
+  },
+  {
+    "token": "Hirose",
+    "class": "japanese",
+    "phones": [
+      "hˈi ɹˈo sˈɛ"
+    ]
+  },
+  {
+    "token": "Itou",
+    "class": "japanese",
+    "phones": [
+      "ˈi t̪ˈəw"
+    ]
+  },
+  {
+    "token": "Izumi",
+    "class": "japanese",
+    "phones": [
+      "ˈi zˈu mˈi"
+    ]
+  },
+  {
+    "token": "Kogoro",
+    "class": "japanese",
+    "phones": [
+      "kˈo ɣˈo ɹˈo"
+    ]
+  },
+  {
+    "token": "Murata",
+    "class": "japanese",
+    "phones": [
+      "mˈu ɹˈaː t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Sakaguchi",
+    "class": "japanese",
+    "phones": [
+      "sˈaː kˈaː ɣˈu tʃˈi"
+    ]
+  },
+  {
+    "token": "Sakamoto",
+    "class": "japanese",
+    "phones": [
+      "sˈaː kˈaː mˈo t̪ˈo"
+    ]
+  },
+  {
+    "token": "Togawa",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo ɣˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Yuji",
+    "class": "japanese",
+    "phones": [
+      "zˈu zˈi"
+    ]
+  },
+  {
+    "token": "Iwafune",
+    "class": "japanese",
+    "phones": [
+      "ˈi wˈaː fˈu nˈɛ"
+    ]
+  },
+  {
+    "token": "Kobayashi",
+    "class": "japanese",
+    "phones": [
+      "kˈo bˈaː zˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Koyomi",
+    "class": "japanese",
+    "phones": [
+      "kˈo zˈo mˈi"
+    ]
+  },
+  {
+    "token": "Fuyutsuki",
+    "class": "japanese",
+    "phones": [
+      "fˈu zˈu sˈu kˈi"
+    ]
+  },
+  {
+    "token": "Hayase",
+    "class": "japanese",
+    "phones": [
+      "hˈaː zˈaː sˈɛ"
+    ]
+  },
+  {
+    "token": "Koutarou",
+    "class": "japanese",
+    "phones": [
+      "kˈəw t̪ˈaː ɹˈəw"
+    ]
+  },
+  {
+    "token": "Subaru",
+    "class": "japanese",
+    "phones": [
+      "sˈu bˈaː ɹˈu"
+    ]
+  },
+  {
+    "token": "Narumi",
+    "class": "japanese",
+    "phones": [
+      "nˈaː ɹˈu mˈi"
+    ]
+  },
+  {
+    "token": "Kirako",
+    "class": "japanese",
+    "phones": [
+      "kˈi ɹˈaː kˈo"
+    ]
+  },
+  {
+    "token": "Kakeru",
+    "class": "japanese",
+    "phones": [
+      "kˈaː kˈɛ ɹˈu"
+    ]
+  },
+  {
+    "token": "Remon",
+    "class": "japanese",
+    "phones": [
+      "ɹˈɛ mˈon"
+    ]
+  },
+  {
+    "token": "Mitsuki",
+    "class": "japanese",
+    "phones": [
+      "mˈi sˈu kˈi"
+    ]
+  },
+  {
+    "token": "Koharu",
+    "class": "japanese",
+    "phones": [
+      "kˈo hˈaː ɹˈu"
+    ]
+  },
+  {
+    "token": "Saito",
+    "class": "japanese",
+    "phones": [
+      "sˈaːj t̪ˈo"
+    ]
+  },
+  {
+    "token": "Shiina",
+    "class": "japanese",
+    "phones": [
+      "sˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Onizuki",
+    "class": "japanese",
+    "phones": [
+      "ˈo nˈi zˈu kˈi"
+    ]
+  },
+  {
+    "token": "Yakishio",
+    "class": "japanese",
+    "phones": [
+      "zˈaː kˈi sˈi ˈo"
+    ]
+  },
+  {
+    "token": "Shizuka",
+    "class": "japanese",
+    "phones": [
+      "sˈi zˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Sorano",
+    "class": "japanese",
+    "phones": [
+      "sˈo ɹˈaː nˈo"
+    ]
+  },
+  {
+    "token": "Mahiru",
+    "class": "japanese",
+    "phones": [
+      "mˈaː hˈi ɹˈu"
+    ]
+  },
+  {
+    "token": "Akane",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈaː nˈɛ"
+    ]
+  },
+  {
+    "token": "Enmi",
+    "class": "japanese",
+    "phones": [
+      "ˈɛn mˈi"
+    ]
+  },
+  {
+    "token": "Kiriha",
+    "class": "japanese",
+    "phones": [
+      "kˈi ɹˈi hˈaː"
+    ]
+  },
+  {
+    "token": "Yurika",
+    "class": "japanese",
+    "phones": [
+      "zˈu ɹˈi kˈaː"
+    ]
+  },
+  {
+    "token": "Soba",
+    "class": "japanese",
+    "phones": [
+      "sˈo bˈaː"
+    ]
+  },
+  {
+    "token": "Kakushigi",
+    "class": "japanese",
+    "phones": [
+      "kˈaː kˈu sˈi ɣˈi"
+    ]
+  },
+  {
+    "token": "Kenji",
+    "class": "japanese",
+    "phones": [
+      "kˈɛn zˈi"
+    ]
+  },
+  {
+    "token": "Tengu",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈɛn ɣˈu"
+    ]
+  },
+  {
+    "token": "Yoshihito",
+    "class": "japanese",
+    "phones": [
+      "zˈo sˈi hˈi t̪ˈo"
+    ]
+  },
+  {
+    "token": "Yuuko",
+    "class": "japanese",
+    "phones": [
+      "zˈu kˈo"
+    ]
+  },
+  {
+    "token": "Gâ",
+    "class": "japanese",
+    "phones": [
+      "ɣˈaː"
+    ]
+  },
+  {
+    "token": "Urazumi",
+    "class": "japanese",
+    "phones": [
+      "ˈu ɹˈaː zˈu mˈi"
+    ]
+  },
+  {
+    "token": "Kaina",
+    "class": "japanese",
+    "phones": [
+      "kˌaːj nˈaː"
+    ]
+  },
+  {
+    "token": "Ayano",
+    "class": "japanese",
+    "phones": [
+      "ˈaː zˈaː nˈo"
+    ]
+  },
+  {
+    "token": "Hayama",
+    "class": "japanese",
+    "phones": [
+      "hˈaː zˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Kappa",
+    "class": "japanese",
+    "phones": [
+      "kˈaːɜp pˈaː"
+    ]
+  },
+  {
+    "token": "Juuyaku",
+    "class": "japanese",
+    "phones": [
+      "zˈu zˈaː kˈu"
+    ]
+  },
+  {
+    "token": "Sanae",
+    "class": "japanese",
+    "phones": [
+      "sˈaː nˈaː ˈɛ"
+    ]
+  },
+  {
+    "token": "Shiho",
+    "class": "japanese",
+    "phones": [
+      "sˈi hˈo"
+    ]
+  },
+  {
+    "token": "Shimotsuki",
+    "class": "japanese",
+    "phones": [
+      "sˈi mˈo sˈu kˈi"
+    ]
+  },
+  {
+    "token": "Amane",
+    "class": "japanese",
+    "phones": [
+      "ˈaː mˈaː nˈɛ"
+    ]
+  },
+  {
+    "token": "Zanoba",
+    "class": "japanese",
+    "phones": [
+      "zˈaː nˈo bˈaː"
+    ]
+  },
+  {
+    "token": "Akasha",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈaː sˈaː"
+    ]
+  },
+  {
+    "token": "Kotomugi",
+    "class": "japanese",
+    "phones": [
+      "kˈo t̪ˈo mˈu ɣˈi"
+    ]
+  },
+  {
+    "token": "Sudou",
+    "class": "japanese",
+    "phones": [
+      "sˈu ɗˈəw"
+    ]
+  },
+  {
+    "token": "Yanami",
+    "class": "japanese",
+    "phones": [
+      "zˈaː nˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Mizuto",
+    "class": "japanese",
+    "phones": [
+      "mˈi zˈu t̪ˈo"
+    ]
+  },
+  {
+    "token": "Yasushi",
+    "class": "japanese",
+    "phones": [
+      "zˈaː sˈu sˈi"
+    ]
+  },
+  {
+    "token": "Udon",
+    "class": "japanese",
+    "phones": [
+      "ˈu ɗˈon"
+    ]
+  },
+  {
+    "token": "Amagi",
+    "class": "japanese",
+    "phones": [
+      "ˈaː mˈaː ɣˈi"
+    ]
+  },
+  {
+    "token": "Nukkun",
+    "class": "japanese",
+    "phones": [
+      "nˈuɜc kˈun"
+    ]
+  },
+  {
+    "token": "Paripi",
+    "class": "japanese",
+    "phones": [
+      "pˈaː ɹˈi pˈi"
+    ]
+  },
+  {
+    "token": "Horikita",
+    "class": "japanese",
+    "phones": [
+      "hˈo ɹˈi kˈi t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Ryuuzaki",
+    "class": "japanese",
+    "phones": [
+      "ɹˈi ˈu zˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Kouta",
+    "class": "japanese",
+    "phones": [
+      "kˈəw t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Anzu",
+    "class": "japanese",
+    "phones": [
+      "ˈaːn zˈu"
+    ]
+  },
+  {
+    "token": "Kayo",
+    "class": "japanese",
+    "phones": [
+      "kˈaː zˈo"
+    ]
+  },
+  {
+    "token": "Shiramine",
+    "class": "japanese",
+    "phones": [
+      "sˈi ɹˈaː mˈi nˈɛ"
+    ]
+  },
+  {
+    "token": "Zaimokuza",
+    "class": "japanese",
+    "phones": [
+      "zˈaːj mˈo kˈu zˈaː"
+    ]
+  },
+  {
+    "token": "Aderon",
+    "class": "japanese",
+    "phones": [
+      "ˈaː ɗˈɛ ɹˈon"
+    ]
+  },
+  {
+    "token": "Hina",
+    "class": "japanese",
+    "phones": [
+      "hˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Karina",
+    "class": "japanese",
+    "phones": [
+      "kˈaː ɹˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Tsukishima",
+    "class": "japanese",
+    "phones": [
+      "sˈu kˈi sˈi mˈaː"
+    ]
+  },
+  {
+    "token": "Yuugo",
+    "class": "japanese",
+    "phones": [
+      "zˈu ɣˈo"
+    ]
+  },
+  {
+    "token": "Himuro",
+    "class": "japanese",
+    "phones": [
+      "hˈi mˈu ɹˈo"
+    ]
+  },
+  {
+    "token": "Kuchinashi",
+    "class": "japanese",
+    "phones": [
+      "kˈu tʃˈi nˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Mana",
+    "class": "japanese",
+    "phones": [
+      "mˈaː nˈaː"
+    ]
+  },
+  {
+    "token": "Rodin",
+    "class": "japanese",
+    "phones": [
+      "ɹˈo ɗˈin"
+    ]
+  },
+  {
+    "token": "Totsuka",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo sˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Yuria",
+    "class": "japanese",
+    "phones": [
+      "zˈu ɹˈi ˈaː"
+    ]
+  },
+  {
+    "token": "Kabutonga",
+    "class": "japanese",
+    "phones": [
+      "kˈaː bˈu t̪ˈon ɣˈaː"
+    ]
+  },
+  {
+    "token": "Aoi",
+    "class": "japanese",
+    "phones": [
+      "ˈaː ˈɔ ˈi"
+    ]
+  },
+  {
+    "token": "Juyaku",
+    "class": "japanese",
+    "phones": [
+      "zˈu zˈaː kˈu"
+    ]
+  },
+  {
+    "token": "Kadowaki",
+    "class": "japanese",
+    "phones": [
+      "kˈaː ɗˈo wˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Kansai",
+    "class": "japanese",
+    "phones": [
+      "kˈaːn sˈaːj"
+    ]
+  },
+  {
+    "token": "Ko",
+    "class": "japanese",
+    "phones": [
+      "kˈo"
+    ]
+  },
+  {
+    "token": "Marietta",
+    "class": "japanese",
+    "phones": [
+      "mˈaː ɹˈi ˈɛɜt̪ t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Yukinoshita",
+    "class": "japanese",
+    "phones": [
+      "zˈu kˈi nˈo sˈi t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Kaya",
+    "class": "japanese",
+    "phones": [
+      "kˈaj ˈaː"
+    ]
+  },
+  {
+    "token": "Kou",
+    "class": "japanese",
+    "phones": [
+      "kˈəw"
+    ]
+  },
+  {
+    "token": "Sakura",
+    "class": "japanese",
+    "phones": [
+      "sˈaː kˈu ɹˈaː"
+    ]
+  },
+  {
+    "token": "Shiro",
+    "class": "japanese",
+    "phones": [
+      "sˈi ɹˈo"
+    ]
+  },
+  {
+    "token": "Tachibana",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː tʃˈi bˈaː nˈaː"
+    ]
+  },
+  {
+    "token": "Chitose",
+    "class": "japanese",
+    "phones": [
+      "tʃˈi t̪ˈo sˈɛ"
+    ]
+  },
+  {
+    "token": "Haa",
+    "class": "japanese",
+    "phones": [
+      "hˈaː"
+    ]
+  },
+  {
+    "token": "Hana",
+    "class": "japanese",
+    "phones": [
+      "hˈaː nˈaː"
+    ]
+  },
+  {
+    "token": "Hayato",
+    "class": "japanese",
+    "phones": [
+      "hˈaː zˈaː t̪ˈo"
+    ]
+  },
+  {
+    "token": "Kawanami",
+    "class": "japanese",
+    "phones": [
+      "kˈaː wˈaː nˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Nukumizu",
+    "class": "japanese",
+    "phones": [
+      "nˈu kˈu mˈi zˈu"
+    ]
+  },
+  {
+    "token": "Osechi",
+    "class": "japanese",
+    "phones": [
+      "ˈo sˈɛ tʃˈi"
+    ]
+  },
+  {
+    "token": "Chihaya",
+    "class": "japanese",
+    "phones": [
+      "tʃˈi hˈaj ˈaː"
+    ]
+  },
+  {
+    "token": "Maa",
+    "class": "japanese",
+    "phones": [
+      "mˈaː"
+    ]
+  },
+  {
+    "token": "Mitsunari",
+    "class": "japanese",
+    "phones": [
+      "mˈi sˈu nˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Nakayama",
+    "class": "japanese",
+    "phones": [
+      "nˈaː kˈaː zˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Satomi",
+    "class": "japanese",
+    "phones": [
+      "sˈaː t̪ˈo mˈi"
+    ]
+  },
+  {
+    "token": "Asakusabashi",
+    "class": "japanese",
+    "phones": [
+      "ˈaː sˈaː kˈu sˈaː bˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Asama",
+    "class": "japanese",
+    "phones": [
+      "ˈaː sˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Fina",
+    "class": "japanese",
+    "phones": [
+      "fˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Hokkaido",
+    "class": "japanese",
+    "phones": [
+      "hˈoɜk kˌaːj ɗˈo"
+    ]
+  },
+  {
+    "token": "Isshin",
+    "class": "japanese",
+    "phones": [
+      "ˈiɜt̪ sˈin"
+    ]
+  },
+  {
+    "token": "Kanoe",
+    "class": "japanese",
+    "phones": [
+      "kˈaː nˈo ˈɛ"
+    ]
+  },
+  {
+    "token": "Samurai",
+    "class": "japanese",
+    "phones": [
+      "sˈaː mˈu ɹˈaːj"
+    ]
+  },
+  {
+    "token": "Sumida",
+    "class": "japanese",
+    "phones": [
+      "sˈu mˈi ɗˈaː"
+    ]
+  },
+  {
+    "token": "Torahide",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo ɹˈaː hˈi ɗˈɛ"
+    ]
+  },
+  {
+    "token": "Anma",
+    "class": "japanese",
+    "phones": [
+      "ˈaːn mˈaː"
+    ]
+  },
+  {
+    "token": "Chikuma",
+    "class": "japanese",
+    "phones": [
+      "tʃˈi kˈu mˈaː"
+    ]
+  },
+  {
+    "token": "Echidona",
+    "class": "japanese",
+    "phones": [
+      "ˈɛ tʃˈi ɗˈo nˈaː"
+    ]
+  },
+  {
+    "token": "Himari",
+    "class": "japanese",
+    "phones": [
+      "hˈi mˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Irido",
+    "class": "japanese",
+    "phones": [
+      "ˈi ɹˈi ɗˈo"
+    ]
+  },
+  {
+    "token": "Kii",
+    "class": "japanese",
+    "phones": [
+      "kˈi"
+    ]
+  },
+  {
+    "token": "Kirito",
+    "class": "japanese",
+    "phones": [
+      "kˈi ɹˈi t̪ˈo"
+    ]
+  },
+  {
+    "token": "Kitsushouharukaze",
+    "class": "japanese",
+    "phones": [
+      "kˈi sˈu sˈəw hˈaː ɹˈu kˈaː zˈɛ"
+    ]
+  },
+  {
+    "token": "Kokurei",
+    "class": "japanese",
+    "phones": [
+      "kˈo kˈu ɹˈəɪ"
+    ]
+  },
+  {
+    "token": "Minami",
+    "class": "japanese",
+    "phones": [
+      "mˈi nˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Mitotsudaira",
+    "class": "japanese",
+    "phones": [
+      "mˈi t̪ˈo sˈu ɗˈaːj ɹˈaː"
+    ]
+  },
+  {
+    "token": "Dok-seo",
+    "class": "korean",
+    "phones": [
+      "t̪ˈoɜk sˈɛw"
+    ]
+  },
+  {
+    "token": "Ha-yul",
+    "class": "korean",
+    "phones": [
+      "hˈaː zˈun"
+    ]
+  },
+  {
+    "token": "Seol-Ah",
+    "class": "korean",
+    "phones": [
+      "sˈɛ ˈɔn ˈaː"
+    ]
+  },
+  {
+    "token": "Do-hwa",
+    "class": "korean",
+    "phones": [
+      "t̪ˈo hwˈaː"
+    ]
+  },
+  {
+    "token": "Yangcheon",
+    "class": "korean",
+    "phones": [
+      "zˈaːŋ tʃˈɛ ˈɔn"
+    ]
+  },
+  {
+    "token": "Chaeyeon",
+    "class": "korean",
+    "phones": [
+      "tʃˈɛ zˈɔn"
+    ]
+  },
+  {
+    "token": "Pung",
+    "class": "korean",
+    "phones": [
+      "pˈuŋ"
+    ]
+  },
+  {
+    "token": "Yung",
+    "class": "korean",
+    "phones": [
+      "zˈuŋ"
+    ]
+  },
+  {
+    "token": "Namgung",
+    "class": "korean",
+    "phones": [
+      "nˈaːm ɣˈuŋ"
+    ]
+  },
+  {
+    "token": "Yeonseo",
+    "class": "korean",
+    "phones": [
+      "zˈɔn sˈɛw"
+    ]
+  },
+  {
+    "token": "Jung",
+    "class": "korean",
+    "phones": [
+      "zˈuŋ"
+    ]
+  },
+  {
+    "token": "Sang-guk",
+    "class": "korean",
+    "phones": [
+      "sˈaːŋ ɣˈuɜc"
+    ]
+  },
+  {
+    "token": "Yeeun",
+    "class": "korean",
+    "phones": [
+      "zˈɛ ˈyn",
+      "zˈɛ ˈən"
+    ]
+  },
+  {
+    "token": "Karin-nim",
+    "class": "korean",
+    "phones": [
+      "kˈaː ɹˈin nˈim"
+    ]
+  },
+  {
+    "token": "Ryunghwa",
+    "class": "korean",
+    "phones": [
+      "lˈi ˈuŋ hwˈaː"
+    ]
+  },
+  {
+    "token": "Soyeol",
+    "class": "korean",
+    "phones": [
+      "sˈo zˈɔn"
+    ]
+  },
+  {
+    "token": "Gangdong",
+    "class": "korean",
+    "phones": [
+      "kˈaːŋ ɗˈoŋ"
+    ]
+  },
+  {
+    "token": "Bi-ah",
+    "class": "korean",
+    "phones": [
+      "bˈi ˈaː"
+    ]
+  },
+  {
+    "token": "Seo-rin",
+    "class": "korean",
+    "phones": [
+      "sˈɛw ɹˈin"
+    ]
+  },
+  {
+    "token": "Shincheol",
+    "class": "korean",
+    "phones": [
+      "sˈin tʃˈɛ ˈɔn"
+    ]
+  },
+  {
+    "token": "Lã Bố",
+    "class": "chinese",
+    "phones": [
+      "lˈaː5 bˈoɜ"
+    ]
+  },
+  {
+    "token": "Lưu Bị",
+    "class": "chinese",
+    "phones": [
+      "lˈiw bˌi6"
+    ]
+  },
+  {
+    "token": "Tào Tháo",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈaː2w tˈaːɜw"
+    ]
+  },
+  {
+    "token": "Đổng Trác",
+    "class": "chinese",
+    "phones": [
+      "ɗˈo4ŋ tʃˈaːɜc"
+    ]
+  },
+  {
+    "token": "Huyền Đức",
+    "class": "chinese",
+    "phones": [
+      "hwˈiɛ2n ɗˈyɜc"
+    ]
+  },
+  {
+    "token": "Lý Thôi",
+    "class": "chinese",
+    "phones": [
+      "lˈiɜ tˈoj"
+    ]
+  },
+  {
+    "token": "Viên Thiệu",
+    "class": "chinese",
+    "phones": [
+      "vˈiɛn tˈiɛ6w"
+    ]
+  },
+  {
+    "token": "Trương Phi",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ fˈi"
+    ]
+  },
+  {
+    "token": "Quách Dĩ",
+    "class": "chinese",
+    "phones": [
+      "kwˈe-ɜc zˈi5"
+    ]
+  },
+  {
+    "token": "Tôn Sách",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈon sˈe-ɜc"
+    ]
+  },
+  {
+    "token": "Viên Thuật",
+    "class": "chinese",
+    "phones": [
+      "vˈiɛn twˈə6t̪"
+    ]
+  },
+  {
+    "token": "Trung Quốc",
+    "class": "chinese",
+    "phones": [
+      "tʃˈuŋ kˈuəɜc"
+    ]
+  },
+  {
+    "token": "Nam Cung Nhiên",
+    "class": "chinese",
+    "phones": [
+      "nˈaːm kˈuŋ ɲˈiɛn"
+    ]
+  },
+  {
+    "token": "Điêu Thuyền",
+    "class": "chinese",
+    "phones": [
+      "ɗˈiɛw twˈiɛ2n"
+    ]
+  },
+  {
+    "token": "Lý Nho",
+    "class": "chinese",
+    "phones": [
+      "lˈiɜ ɲˈɔ"
+    ]
+  },
+  {
+    "token": "Trần Cung",
+    "class": "chinese",
+    "phones": [
+      "tʃˈə2n kˈuŋ"
+    ]
+  },
+  {
+    "token": "Lưu Biểu",
+    "class": "chinese",
+    "phones": [
+      "lˈiw bˈiɛ4w"
+    ]
+  },
+  {
+    "token": "Dương Phụng",
+    "class": "chinese",
+    "phones": [
+      "zˈyəŋ fˈu6ŋ"
+    ]
+  },
+  {
+    "token": "Tôn Kiên",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈon kˈiɛn"
+    ]
+  },
+  {
+    "token": "Đào Khiêm",
+    "class": "chinese",
+    "phones": [
+      "ɗˈaː2w xˈiɛm"
+    ]
+  },
+  {
+    "token": "Hà Tiến",
+    "class": "chinese",
+    "phones": [
+      "hˈaː2 t̪ˈiɛɜn"
+    ]
+  },
+  {
+    "token": "Giả Hủ",
+    "class": "chinese",
+    "phones": [
+      "zˈaː4 hˈu4"
+    ]
+  },
+  {
+    "token": "Trương Tú",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ t̪ˈuɜ"
+    ]
+  },
+  {
+    "token": "Vương Doãn",
+    "class": "chinese",
+    "phones": [
+      "vˈyəŋ zwˈaː5n"
+    ]
+  },
+  {
+    "token": "Điển Vi",
+    "class": "chinese",
+    "phones": [
+      "ɗˈiɛ4n vˈi"
+    ]
+  },
+  {
+    "token": "Tâu Bệ",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈəw bˈe6"
+    ]
+  },
+  {
+    "token": "Cao Thuận",
+    "class": "chinese",
+    "phones": [
+      "kˈaːw twˈə6n"
+    ]
+  },
+  {
+    "token": "Khổng Dung",
+    "class": "chinese",
+    "phones": [
+      "xˈo4ŋ zˈuŋ"
+    ]
+  },
+  {
+    "token": "Lưu Do",
+    "class": "chinese",
+    "phones": [
+      "lˈiw zˈɔ"
+    ]
+  },
+  {
+    "token": "My Chúc",
+    "class": "chinese",
+    "phones": [
+      "mˈi tʃˈuɜc"
+    ]
+  },
+  {
+    "token": "Mã Cương Tố",
+    "class": "chinese",
+    "phones": [
+      "mˈaː5 kˈyəŋ t̪ˈoɜ"
+    ]
+  },
+  {
+    "token": "Tuân Úc",
+    "class": "chinese",
+    "phones": [
+      "t̪wˈən ˈuɜc"
+    ]
+  },
+  {
+    "token": "Hạ Hầu",
+    "class": "chinese",
+    "phones": [
+      "hˈaː6 hˈə2w"
+    ]
+  },
+  {
+    "token": "Lý Túc",
+    "class": "chinese",
+    "phones": [
+      "lˈiɜ t̪ˈuɜc"
+    ]
+  },
+  {
+    "token": "Thái Sử",
+    "class": "chinese",
+    "phones": [
+      "tˈaːɜj sˈy4"
+    ]
+  },
+  {
+    "token": "Trương Tế",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ t̪ˈeɜ"
+    ]
+  },
+  {
+    "token": "Trình Phổ",
+    "class": "chinese",
+    "phones": [
+      "tʃˈi2ɲ fˈo4"
+    ]
+  },
+  {
+    "token": "Chu Tuấn",
+    "class": "chinese",
+    "phones": [
+      "tʃˈu t̪wˈəɜn"
+    ]
+  },
+  {
+    "token": "Hoàng Tổ",
+    "class": "chinese",
+    "phones": [
+      "hwˈaː2ŋ t̪ˈo4"
+    ]
+  },
+  {
+    "token": "Hàn Thụy Trấn",
+    "class": "chinese",
+    "phones": [
+      "hˈaː2n twˈi6 tʃˈəɜn"
+    ]
+  },
+  {
+    "token": "Quan Vũ",
+    "class": "chinese",
+    "phones": [
+      "kwˈaːn vˈu5"
+    ]
+  },
+  {
+    "token": "Vu Cấm",
+    "class": "chinese",
+    "phones": [
+      "vˈu kˈəɜm"
+    ]
+  },
+  {
+    "token": "Lư Thực",
+    "class": "chinese",
+    "phones": [
+      "lˈy tˈy6c"
+    ]
+  },
+  {
+    "token": "Đinh Nguyên",
+    "class": "chinese",
+    "phones": [
+      "ɗˈiɲ ŋwˈiɛn"
+    ]
+  },
+  {
+    "token": "Hoàng Cái",
+    "class": "chinese",
+    "phones": [
+      "hwˈaː2ŋ kˌaːɜj"
+    ]
+  },
+  {
+    "token": "La Quán Trung",
+    "class": "chinese",
+    "phones": [
+      "lˈaː kwˈaːɜn tʃˈuŋ"
+    ]
+  },
+  {
+    "token": "Phan Kế Bính",
+    "class": "chinese",
+    "phones": [
+      "fˈaːn kˈeɜ bˈiɜɲ"
+    ]
+  },
+  {
+    "token": "Trương Bảo",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ bˈaː4w"
+    ]
+  },
+  {
+    "token": "đầu đề",
+    "class": "chinese",
+    "phones": [
+      "ɗˈə2w ɗˈe2"
+    ]
+  },
+  {
+    "token": "Hàn Tiêm",
+    "class": "chinese",
+    "phones": [
+      "hˈaː2n t̪ˈiɛm"
+    ]
+  },
+  {
+    "token": "Hứa Chử",
+    "class": "chinese",
+    "phones": [
+      "hˈyəɜ tʃˈy4"
+    ]
+  },
+  {
+    "token": "Nhà Hán",
+    "class": "chinese",
+    "phones": [
+      "ɲˈaː2 hˈaːɜn"
+    ]
+  },
+  {
+    "token": "Quách Gia",
+    "class": "chinese",
+    "phones": [
+      "kwˈe-ɜc zˈaː"
+    ]
+  },
+  {
+    "token": "Trương Giốc",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ zˈoɜk"
+    ]
+  },
+  {
+    "token": "Trương Nhượng",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ ɲˈyə6ŋ"
+    ]
+  },
+  {
+    "token": "đến đây",
+    "class": "chinese",
+    "phones": [
+      "ɗˌeɜn ɗˈəɪ"
+    ]
+  },
+  {
+    "token": "Hoa Hùng",
+    "class": "chinese",
+    "phones": [
+      "hwˈaː hˈu2ŋ"
+    ]
+  },
+  {
+    "token": "Lý Nhạc",
+    "class": "chinese",
+    "phones": [
+      "lˈiɜ ɲˈaː6c"
+    ]
+  },
+  {
+    "token": "Lý Điển",
+    "class": "chinese",
+    "phones": [
+      "lˈiɜ ɗˈiɛ4n"
+    ]
+  },
+  {
+    "token": "Tào Báo",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈaː2w bˈaːɜw"
+    ]
+  },
+  {
+    "token": "Dương Bưu",
+    "class": "chinese",
+    "phones": [
+      "zˈyəŋ bˈiw"
+    ]
+  },
+  {
+    "token": "Hàn Đương",
+    "class": "chinese",
+    "phones": [
+      "hˈaː2n ɗˈyəŋ"
+    ]
+  },
+  {
+    "token": "Nhạc Tiến",
+    "class": "chinese",
+    "phones": [
+      "ɲˈaː6c t̪ˈiɛɜn"
+    ]
+  },
+  {
+    "token": "Đốc Bưu",
+    "class": "chinese",
+    "phones": [
+      "ɗˈoɜk bˈiw"
+    ]
+  },
+  {
+    "token": "đánh được",
+    "class": "chinese",
+    "phones": [
+      "ɗˈe-ɜɲ ɗˌyə6c"
+    ]
+  },
+  {
+    "token": "để đánh",
+    "class": "chinese",
+    "phones": [
+      "ɗˌe4 ɗˈe-ɜɲ"
+    ]
+  },
+  {
+    "token": "Mã Đằng",
+    "class": "chinese",
+    "phones": [
+      "mˈaː5 ɗˈa2ŋ"
+    ]
+  },
+  {
+    "token": "Người ấy",
+    "class": "chinese",
+    "phones": [
+      "ŋˈyə2j ˈəɪɜ"
+    ]
+  },
+  {
+    "token": "Trương Liêu",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ lˈiɛw"
+    ]
+  },
+  {
+    "token": "Tào Hồng",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈaː2w hˈo2ŋ"
+    ]
+  },
+  {
+    "token": "Tào Nhân",
+    "class": "chinese",
+    "phones": [
+      "t̪ˈaː2w ɲˈən"
+    ]
+  },
+  {
+    "token": "đánh Lã Bố",
+    "class": "chinese",
+    "phones": [
+      "ɗˈe-ɜɲ lˈaː5 bˈoɜ"
+    ]
+  },
+  {
+    "token": "đầu đuôi",
+    "class": "chinese",
+    "phones": [
+      "ɗˈə2w ɗˈuəj"
+    ]
+  },
+  {
+    "token": "Hàn Toại",
+    "class": "chinese",
+    "phones": [
+      "hˈaː2n t̪wˈaː6j"
+    ]
+  },
+  {
+    "token": "Lã Bố đến",
+    "class": "chinese",
+    "phones": [
+      "lˈaː5 bˈoɜ ɗˌeɜn"
+    ]
+  },
+  {
+    "token": "Trương Anh",
+    "class": "chinese",
+    "phones": [
+      "tʃˈyəŋ ˈe-ɲ"
+    ]
+  },
+  {
+    "token": "Trần Khuê",
+    "class": "chinese",
+    "phones": [
+      "tʃˈə2n xwˈe"
+    ]
+  },
+  {
+    "token": "Từ Hoảng",
+    "class": "chinese",
+    "phones": [
+      "t̪ˌy2 hwˈaː4ŋ"
+    ]
+  },
+  {
+    "token": "đến đánh",
+    "class": "chinese",
+    "phones": [
+      "ɗˌeɜn ɗˈe-ɜɲ"
+    ]
+  },
+  {
+    "token": "Khoái Lương",
+    "class": "chinese",
+    "phones": [
+      "xwˈaːɜj lˈyəŋ"
+    ]
+  },
+  {
+    "token": "Siegfried",
+    "class": "western",
+    "phones": [
+      "sˈiɜc fˈəː ɹˈiɜt̪",
+      "sˈiːɡfɹid"
+    ]
+  },
+  {
+    "token": "Brunhild",
+    "class": "western",
+    "phones": [
+      "bˈəː2 ɹˈan hˈiw",
+      "bɹˈʌn hˈɪld"
+    ]
+  },
+  {
+    "token": "Rita",
+    "class": "western",
+    "phones": [
+      "ɹˈi t̪ˈaː",
+      "ɹˈiːɾə"
+    ]
+  },
+  {
+    "token": "Vrataski",
+    "class": "western",
+    "phones": [
+      "vˈəː2 ɹˈaː t̪ˈaːɜt̪ kˈi",
+      "vɹˈɑːɾə skˈiː"
+    ]
+  },
+  {
+    "token": "Sigurd",
+    "class": "western",
+    "phones": [
+      "sˈi ɣˈəːɜt̪",
+      "sˈɪɡɜːd"
+    ]
+  },
+  {
+    "token": "Johann",
+    "class": "western",
+    "phones": [
+      "ˈi ˈo hˈaːn",
+      "jˈoʊhɑːn"
+    ]
+  },
+  {
+    "token": "Sachs",
+    "class": "western",
+    "phones": [
+      "sˈe-ɜc",
+      "sˈæks"
+    ]
+  },
+  {
+    "token": "Bartolome",
+    "class": "western",
+    "phones": [
+      "bˈaː t̪ˈɔ lˈom",
+      "bˌɑːɹɾələmˈeɪ"
+    ]
+  },
+  {
+    "token": "Ferrell",
+    "class": "western",
+    "phones": [
+      "fˈɛ ɹˈiw",
+      "fˈɛɹəl"
+    ]
+  },
+  {
+    "token": "Raylle",
+    "class": "western",
+    "phones": [
+      "ɹˈəɪ ˈo2",
+      "ɹˈaj l"
+    ]
+  },
+  {
+    "token": "Shasta",
+    "class": "western",
+    "phones": [
+      "sˈaːɜt̪ t̪ˈaː",
+      "ʃˈæstə"
+    ]
+  },
+  {
+    "token": "Sigebert",
+    "class": "western",
+    "phones": [
+      "sˈi zˈɛ bˈəːɜt̪",
+      "sˈi dʒˈɛbɚt"
+    ]
+  },
+  {
+    "token": "Murdoch",
+    "class": "western",
+    "phones": [
+      "mˈəː ɗˈɔɜk",
+      "mˈɜːdɑːk"
+    ]
+  },
+  {
+    "token": "Ralph",
+    "class": "western",
+    "phones": [
+      "ɹˈaːn",
+      "ɹˈælf"
+    ]
+  },
+  {
+    "token": "Rachel",
+    "class": "western",
+    "phones": [
+      "ɹˈəɪ tʃˈo2",
+      "ɹˈeɪtʃəl"
+    ]
+  },
+  {
+    "token": "Sary",
+    "class": "western",
+    "phones": [
+      "sˈaː ɹˈi",
+      "sˈɛɹi"
+    ]
+  },
+  {
+    "token": "Alexei",
+    "class": "western",
+    "phones": [
+      "ˈaː lˈɛɜc sˈəɪ",
+      "ɐlˈɛkseɪ"
+    ]
+  },
+  {
+    "token": "Breeder",
+    "class": "western",
+    "phones": [
+      "bˈəː2 ɹˈi ɗˈəː2",
+      "bɹˈiːdɚ"
+    ]
+  },
+  {
+    "token": "Hendricks",
+    "class": "western",
+    "phones": [
+      "hˈɛn ɗˈəː2 ɹˈiɜc",
+      "hˈɛndɹɪks"
+    ]
+  },
+  {
+    "token": "Daniel",
+    "class": "western",
+    "phones": [
+      "ɗˈaː nˈi ˈo2",
+      "dˈænjəl"
+    ]
+  },
+  {
+    "token": "Emil",
+    "class": "western",
+    "phones": [
+      "ˈɛ mˈiw",
+      "ˈɛmɪl"
+    ]
+  },
+  {
+    "token": "Kaminski",
+    "class": "western",
+    "phones": [
+      "kˈaː mˈin sˈəː kˈi",
+      "kæmˈɪnski"
+    ]
+  },
+  {
+    "token": "Miller",
+    "class": "western",
+    "phones": [
+      "mˈi lˈəː2",
+      "mˈɪlɚ"
+    ]
+  },
+  {
+    "token": "Tino",
+    "class": "western",
+    "phones": [
+      "t̪ˈi nˈo",
+      "tˈiːnoʊ"
+    ]
+  },
+  {
+    "token": "Lucien",
+    "class": "western",
+    "phones": [
+      "lˈu sˈi ˈɛn",
+      "lˈuːʃən"
+    ]
+  },
+  {
+    "token": "Liz",
+    "class": "western",
+    "phones": [
+      "lˈiɜt̪",
+      "lˈɪz"
+    ]
+  },
+  {
+    "token": "Sitri",
+    "class": "western",
+    "phones": [
+      "sˈi tʃˈi"
+    ]
+  },
+  {
+    "token": "Sven",
+    "class": "western",
+    "phones": [
+      "sˈəː2 vˈɛn",
+      "svˈɛn"
+    ]
+  },
+  {
+    "token": "Krai",
+    "class": "western",
+    "phones": [
+      "kˈəː2 ɹˈəɪ",
+      "kɹˈaɪ"
+    ]
+  },
+  {
+    "token": "Gilbert",
+    "class": "western",
+    "phones": [
+      "ɣˈiw bˈəːɜt̪",
+      "ɡˈɪlbɚt"
+    ]
+  },
+  {
+    "token": "Noctus",
+    "class": "western",
+    "phones": [
+      "nˈɔɜk t̪ˈuɜt̪",
+      "nˈɑːktəs"
+    ]
+  },
+  {
+    "token": "Gark",
+    "class": "western",
+    "phones": [
+      "ɣˈaːɜc",
+      "ɡˈɑːɹk"
+    ]
+  },
+  {
+    "token": "Sophia",
+    "class": "western",
+    "phones": [
+      "sˈo fˈi ˈaː",
+      "soʊfˈiə"
+    ]
+  },
+  {
+    "token": "Magali",
+    "class": "western",
+    "phones": [
+      "mˈaː ɣˈaː lˈi",
+      "mæɡˈɑːli"
+    ]
+  },
+  {
+    "token": "Rhuda",
+    "class": "western",
+    "phones": [
+      "ɹˈəː2 hˈu ɗˈaː",
+      "ɹˈuː zˈaː"
+    ]
+  },
+  {
+    "token": "Greg",
+    "class": "western",
+    "phones": [
+      "ɣˈəː2 ɹˈɛɜc",
+      "ɡɹˈɛɡ"
+    ]
+  },
+  {
+    "token": "Eva",
+    "class": "western",
+    "phones": [
+      "ˈəɪ vˈaː",
+      "ˈiːvə"
+    ]
+  },
+  {
+    "token": "Steps",
+    "class": "western",
+    "phones": [
+      "sˈəː2 t̪ˈɛɜp",
+      "stˈɛps"
+    ]
+  },
+  {
+    "token": "Ark",
+    "class": "western",
+    "phones": [
+      "ˈaːɜc",
+      "ˈɑːɹk"
+    ]
+  },
+  {
+    "token": "Rostailer",
+    "class": "western",
+    "phones": [
+      "ɹˈɔɜt̪ t̪ˈəɪ lˈəː2",
+      "ɹˈoʊz tˈeɪlɚ"
+    ]
+  },
+  {
+    "token": "Lucy",
+    "class": "western",
+    "phones": [
+      "lˈu sˈi",
+      "lˈuːsi"
+    ]
+  },
+  {
+    "token": "First",
+    "class": "western",
+    "phones": [
+      "fˈəːɜt̪",
+      "fˈɜːst"
+    ]
+  },
+  {
+    "token": "Ed",
+    "class": "western",
+    "phones": [
+      "ˈɛɜt̪",
+      "ˈɛd"
+    ]
+  },
+  {
+    "token": "John",
+    "class": "western",
+    "phones": [
+      "zˈɔn",
+      "dʒˈɑːn"
+    ]
+  },
+  {
+    "token": "Gein",
+    "class": "western",
+    "phones": [
+      "zˈen",
+      "dʒˈeɪn"
+    ]
+  },
+  {
+    "token": "Grieving",
+    "class": "western",
+    "phones": [
+      "ɣˈəː2 ɹˈi vˈiɲ",
+      "ɡɹˈiːvɪŋ"
+    ]
+  },
+  {
+    "token": "Souls",
+    "class": "western",
+    "phones": [
+      "sˈon",
+      "sˈoʊlz"
+    ]
+  },
+  {
+    "token": "Sylvania",
+    "class": "western",
+    "phones": [
+      "sˈin vˈəɪ nˈi ˈaː",
+      "sɪlvˈeɪniə"
+    ]
+  },
+  {
+    "token": "Yennica",
+    "class": "western",
+    "phones": [
+      "ˈi ˈɛ nˈi kˈaː",
+      "jˈɛn nˈiːkə"
+    ]
+  },
+  {
+    "token": "Flick",
+    "class": "western",
+    "phones": [
+      "fˈəː2 lˈiɜc",
+      "flˈɪk"
+    ]
+  },
+  {
+    "token": "Gary",
+    "class": "western",
+    "phones": [
+      "ɣˈaː ɹˈi",
+      "ɡˈæɹi"
+    ]
+  },
+  {
+    "token": "Talia",
+    "class": "western",
+    "phones": [
+      "t̪ˈaː lˈi ˈaː",
+      "tˈeɪliə"
+    ]
+  },
+  {
+    "token": "Tailly",
+    "class": "western",
+    "phones": [
+      "t̪ˈəɪ lˈi",
+      "t̪ˈaː ˈɪli"
+    ]
+  },
+  {
+    "token": "Juliana",
+    "class": "western",
+    "phones": [
+      "zˈu lˈi ˈaː nˈaː",
+      "dʒˌuːliˈɑːnə"
+    ]
+  },
+  {
+    "token": "Alistar",
+    "class": "western",
+    "phones": [
+      "ˈaː lˈiɜt̪ t̪ˈaː",
+      "ˈælɪstˌɑːɹ"
+    ]
+  },
+  {
+    "token": "Benjamin",
+    "class": "western",
+    "phones": [
+      "bˈɛn zˈaː mˈin",
+      "bˈɛndʒəmɪn"
+    ]
+  },
+  {
+    "token": "Jackson",
+    "class": "western",
+    "phones": [
+      "zˈaːɜc sˈəːn",
+      "dʒˈæksən"
+    ]
+  },
+  {
+    "token": "Luce",
+    "class": "western",
+    "phones": [
+      "lˈu sˈɛ",
+      "lˈuːs"
+    ]
+  },
+  {
+    "token": "Herge",
+    "class": "western",
+    "phones": [
+      "hˈəːɜt̪",
+      "hˈɜːdʒ"
+    ]
+  },
+  {
+    "token": "Ruth",
+    "class": "western",
+    "phones": [
+      "ɹˈuɜt̪",
+      "ɹˈuːθ"
+    ]
+  },
+  {
+    "token": "Henrik",
+    "class": "western",
+    "phones": [
+      "hˈɛn ɹˈiɜc",
+      "hˈɛnɹɪk"
+    ]
+  },
+  {
+    "token": "Samael",
+    "class": "western",
+    "phones": [
+      "sˈaː mˈaː ˈo2",
+      "sˈæmeɪl"
+    ]
+  },
+  {
+    "token": "Cross",
+    "class": "western",
+    "phones": [
+      "kˈəː2 ɹˈɔɜt̪",
+      "kɹˈɔs"
+    ]
+  },
+  {
+    "token": "Christine",
+    "class": "western",
+    "phones": [
+      "kˈəː2 ɹˈiɜt̪ t̪ˈin",
+      "kɹɪstˈiːn"
+    ]
+  },
+  {
+    "token": "Rudolph",
+    "class": "western",
+    "phones": [
+      "ɹˈu ɗˈon",
+      "ɹˈuːdɑːlf"
+    ]
+  },
+  {
+    "token": "Zebrudia",
+    "class": "western",
+    "phones": [
+      "zˈɛ bˈəː2 ɹˈu ɗˈi ˈaː",
+      "zˈɛb ɹˈu dˈaɪə"
+    ]
+  },
+  {
+    "token": "Emilia",
+    "class": "western",
+    "phones": [
+      "ˈɛ mˈi lˈi ˈaː",
+      "ɛmˈɪliə"
+    ]
+  },
+  {
+    "token": "Taily",
+    "class": "western",
+    "phones": [
+      "t̪ˈəɪ lˈi",
+      "tˈeɪli"
+    ]
+  },
+  {
+    "token": "Petra",
+    "class": "western",
+    "phones": [
+      "pˈɛ tʃˈaː",
+      "pˈɛtɹə"
+    ]
+  },
+  {
+    "token": "Ainz",
+    "class": "western",
+    "phones": [
+      "ˈen",
+      "ˈeɪnts"
+    ]
+  },
+  {
+    "token": "Deculein",
+    "class": "western",
+    "phones": [
+      "ɗˈɛ kˈu lˈen",
+      "dᵻkˈuː lˈeɪn"
+    ]
+  },
+  {
+    "token": "Joel",
+    "class": "western",
+    "phones": [
+      "zˈo ˈo2",
+      "dʒˈoʊl"
+    ]
+  },
+  {
+    "token": "Beatrice",
+    "class": "western",
+    "phones": [
+      "bˈi ˈaː tʃˈiɜt̪",
+      "bˈiətɹɪs"
+    ]
+  },
+  {
+    "token": "Slime",
+    "class": "western",
+    "phones": [
+      "sˈəː2 lˈaːm",
+      "slˈaɪm"
+    ]
+  },
+  {
+    "token": "Corella",
+    "class": "western",
+    "phones": [
+      "kˈəː ɹˈɛ lˈaː",
+      "kɔːɹˈɛlə"
+    ]
+  },
+  {
+    "token": "Obsidian",
+    "class": "western",
+    "phones": [
+      "ˈəːɜp sˈi ɗˈi ˈaːn",
+      "əbsˈɪdiən"
+    ]
+  },
+  {
+    "token": "Zeros",
+    "class": "western",
+    "phones": [
+      "zˈi ɹˈoɜt̪",
+      "zˈiəɹoʊz"
+    ]
+  },
+  {
+    "token": "Akashic",
+    "class": "western",
+    "phones": [
+      "ˈaː kˈaː sˈiɜc",
+      "ækˈæʃɪk"
+    ]
+  },
+  {
+    "token": "Hecate",
+    "class": "western",
+    "phones": [
+      "hˈɛ kˈeɜt̪",
+      "hˈɛkətˌeɪ"
+    ]
+  },
+  {
+    "token": "Noah",
+    "class": "western",
+    "phones": [
+      "nˈo ˈaː",
+      "nˈoʊʌ"
+    ]
+  },
+  {
+    "token": "Lee",
+    "class": "western",
+    "phones": [
+      "lˈi",
+      "lˈiː"
+    ]
+  },
+  {
+    "token": "Aria",
+    "class": "western",
+    "phones": [
+      "ˈaː ɹˈi ˈaː",
+      "ˈɛɹiə"
+    ]
+  },
+  {
+    "token": "Cohn",
+    "class": "western",
+    "phones": [
+      "kˈon",
+      "kˈoʊn"
+    ]
+  },
+  {
+    "token": "Mag",
+    "class": "western",
+    "phones": [
+      "mˈaːɜc",
+      "mˈæɡ"
+    ]
+  },
+  {
+    "token": "Opelis",
+    "class": "western",
+    "phones": [
+      "ˈɔ pˈɛ lˈiɜt̪",
+      "ˈɑːp ᵻliz"
+    ]
+  },
+  {
+    "token": "Theosbane",
+    "class": "western",
+    "phones": [
+      "tˈɛ ˈɔɜt̪ bˈen",
+      "ðə ˈɑːsbeɪn"
+    ]
+  },
+  {
+    "token": "Isabel",
+    "class": "western",
+    "phones": [
+      "ˈi zˈaː bˈɛw",
+      "ˈɪzəbˌɛl"
+    ]
+  },
+  {
+    "token": "Shooting",
+    "class": "western",
+    "phones": [
+      "sˈu t̪ˈiɲ",
+      "ʃˈuːɾɪŋ"
+    ]
+  },
+  {
+    "token": "Silk",
+    "class": "western",
+    "phones": [
+      "sˈiw",
+      "sˈɪlk"
+    ]
+  },
+  {
+    "token": "Fell",
+    "class": "western",
+    "phones": [
+      "fˈɛw",
+      "fˈɛl"
+    ]
+  },
+  {
+    "token": "Andre",
+    "class": "western",
+    "phones": [
+      "ˈaːn ɗˈəː2 ɹˈəɪ",
+      "ˈɑːndɹeɪ"
+    ]
+  },
+  {
+    "token": "Ring",
+    "class": "western",
+    "phones": [
+      "ɹˈiɲ",
+      "ɹˈɪŋ"
+    ]
+  },
+  {
+    "token": "Blanche",
+    "class": "western",
+    "phones": [
+      "bˈəː2 lˈaːn tʃˈɛ",
+      "blˈɑːnʃ"
+    ]
+  },
+  {
+    "token": "Glast",
+    "class": "western",
+    "phones": [
+      "ɣˈəː2 lˈaːɜt̪",
+      "ɡlˈæst"
+    ]
+  },
+  {
+    "token": "Malice",
+    "class": "western",
+    "phones": [
+      "mˈaː lˈiɜt̪",
+      "mˈælɪs"
+    ]
+  },
+  {
+    "token": "Wiz",
+    "class": "western",
+    "phones": [
+      "ɣwˈiɜt̪",
+      "wˈɪz"
+    ]
+  },
+  {
+    "token": "Coman",
+    "class": "western",
+    "phones": [
+      "kˈo mˈaːn",
+      "kˈoʊmən"
+    ]
+  },
+  {
+    "token": "Echidna",
+    "class": "western",
+    "phones": [
+      "ˈi kˈiɜt̪ nˈaː",
+      "ˈɛtʃɪdnə"
+    ]
+  },
+  {
+    "token": "Brian",
+    "class": "western",
+    "phones": [
+      "bˈəː2 ɹˈaːj ˈaːn",
+      "bɹˈaɪən"
+    ]
+  },
+  {
+    "token": "Gazef",
+    "class": "western",
+    "phones": [
+      "ɣˈaː zˈɛɜp",
+      "ɣˈaː zˈɛf"
+    ]
+  },
+  {
+    "token": "piano",
+    "class": "loanword",
+    "phones": [
+      "pˈi ˈaː nˈo",
+      "piˈænoʊ"
+    ]
+  },
+  {
+    "token": "LINE",
+    "class": "loanword",
+    "phones": [
+      "lˈaːj",
+      "lˈaɪn"
+    ]
+  },
+  {
+    "token": "Level",
+    "class": "loanword",
+    "phones": [
+      "lˈɛ vˈo2",
+      "lˈɛvəl"
+    ]
+  },
+  {
+    "token": "Game",
+    "class": "loanword",
+    "phones": [
+      "ɣˈem",
+      "ɡˈeɪm"
+    ]
+  },
+  {
+    "token": "game",
+    "class": "loanword",
+    "phones": [
+      "ɣˈem",
+      "ɡˈeɪm"
+    ]
+  },
+  {
+    "token": "socola",
+    "class": "loanword",
+    "phones": [
+      "sˈo kˈo lˈaː",
+      "sˈoʊ kˈoʊlə"
+    ]
+  },
+  {
+    "token": "NicK",
+    "class": "loanword",
+    "phones": [
+      "nˈiɜc",
+      "nˈɪk"
+    ]
+  },
+  {
+    "token": "Karaoke",
+    "class": "loanword",
+    "phones": [
+      "kˈaː ɹˈaː ˈo kˈe",
+      "kˌæɹɪˈoʊki"
+    ]
+  },
+  {
+    "token": "SR",
+    "class": "acronym",
+    "phones": [
+      "ˈɛɜt̪ ˈɛ ɹˈəː2",
+      "ˈɛs ˈɑːɹ"
+    ]
+  },
+  {
+    "token": "laser",
+    "class": "loanword",
+    "phones": [
+      "lˈaː zˈɛ",
+      "lˈeɪzɚ"
+    ]
+  },
+  {
+    "token": "chat",
+    "class": "loanword",
+    "phones": [
+      "tʃˈaːɜt̪",
+      "tʃˈæt"
+    ]
+  },
+  {
+    "token": "SS",
+    "class": "acronym",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪",
+      "ˈɛs ˈɛs"
+    ]
+  },
+  {
+    "token": "CORONA",
+    "class": "loanword",
+    "phones": [
+      "kˈəː ɹˈo nˈaː",
+      "kɔːɹˈoʊnə"
+    ]
+  },
+  {
+    "token": "fan",
+    "class": "loanword",
+    "phones": [
+      "fˈaːn",
+      "fˈæn"
+    ]
+  },
+  {
+    "token": "ban",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaːn"
+    ]
+  },
+  {
+    "token": "radio",
+    "class": "loanword",
+    "phones": [
+      "ɹˈaː ɗˈi ˈo",
+      "ɹˈeɪdɪˌoʊ"
+    ]
+  },
+  {
+    "token": "Ban",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaːn"
+    ]
+  },
+  {
+    "token": "EX",
+    "class": "acronym",
+    "phones": [
+      "ˈɛ ˈiɜc",
+      "ˈiː ˈɛks"
+    ]
+  },
+  {
+    "token": "Online",
+    "class": "loanword",
+    "phones": [
+      "ˈɔn lˈaːj",
+      "ˈɑːnlaɪn"
+    ]
+  },
+  {
+    "token": "logic",
+    "class": "loanword",
+    "phones": [
+      "lˈo zˈiɜc",
+      "lˈɑːdʒɪk"
+    ]
+  },
+  {
+    "token": "sofa",
+    "class": "loanword",
+    "phones": [
+      "sˈo fˈaː",
+      "sˈoʊfə"
+    ]
+  },
+  {
+    "token": "taxi",
+    "class": "loanword",
+    "phones": [
+      "t̪ˈaɜc sˈi",
+      "tˈæksi"
+    ]
+  },
+  {
+    "token": "video",
+    "class": "loanword",
+    "phones": [
+      "vˈi ɗˈe ˈo",
+      "vˈɪdɪoʊ"
+    ]
+  },
+  {
+    "token": "virus",
+    "class": "loanword",
+    "phones": [
+      "vˈi ɹˈuɜt̪",
+      "vˈaɪɹəs"
+    ]
+  },
+  {
+    "token": "Npc",
+    "class": "acronym",
+    "phones": [
+      "ˈɛn pˈi sˈi",
+      "ˈɛn pˈiː sˈiː"
+    ]
+  },
+  {
+    "token": "Clb",
+    "class": "acronym",
+    "phones": [
+      "kˈəw lˈaː6c bˈo6",
+      "sˈiː ˈɛl bˈiː"
+    ]
+  },
+  {
+    "token": "LV",
+    "class": "acronym",
+    "phones": [
+      "lˈəː2 vˈe",
+      "ˈɛl vˈiː"
+    ]
+  },
+  {
+    "token": "SSR",
+    "class": "acronym",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪ ˈɛ ɹˈəː2",
+      "ˈɛs ˈɛs ˈɑːɹ"
+    ]
+  },
+  {
+    "token": "TL",
+    "class": "acronym",
+    "phones": [
+      "t̪ˈe ˈɛ lˈəː2",
+      "tˈiː ˈɛl"
+    ]
+  },
+  {
+    "token": "ai",
+    "class": "vietnamese",
+    "phones": [
+      "ˈaːj"
+    ]
+  },
+  {
+    "token": "QQ",
+    "class": "acronym",
+    "phones": [
+      "kwˈi kwˈi",
+      "kjˈuː kjˈuː"
+    ]
+  },
+  {
+    "token": "SP",
+    "class": "acronym",
+    "phones": [
+      "ˈɛɜt̪ pˈe",
+      "ˈɛs pˈiː"
+    ]
+  },
+  {
+    "token": "SSS",
+    "class": "acronym",
+    "phones": [
+      "ˈɛɜt̪ ˈɛɜt̪ ˈɛɜt̪",
+      "ˈɛs ˈɛs ˈɛs"
+    ]
+  },
+  {
+    "token": "VIP",
+    "class": "acronym",
+    "phones": [
+      "vˈiɜp",
+      "vˈiː ˈaɪ pˈiː"
+    ]
+  },
+  {
+    "token": "WI",
+    "class": "acronym",
+    "phones": [
+      "vˈe kˈɛɜp ˈi",
+      "dˈʌbəljˌuː ˈaɪ"
+    ]
+  },
+  {
+    "token": "Ai",
+    "class": "vietnamese",
+    "phones": [
+      "ˈaːj"
+    ]
+  },
+  {
+    "token": "JK",
+    "class": "acronym",
+    "phones": [
+      "zˈi kˈaː",
+      "dʒˈeɪ kˈeɪ"
+    ]
+  },
+  {
+    "token": "KAKI",
+    "class": "acronym",
+    "phones": [
+      "kˈaː ˈaː kˈaː ˈi",
+      "kˈeɪ ˈeɪ kˈeɪ ˈaɪ"
+    ]
+  },
+  {
+    "token": "MB",
+    "class": "acronym",
+    "phones": [
+      "ˈɛm bˈe",
+      "ˈɛm bˈiː"
+    ]
+  },
+  {
+    "token": "MP",
+    "class": "acronym",
+    "phones": [
+      "mˈəː2 pˈe",
+      "ˈɛm pˈiː"
+    ]
+  },
+  {
+    "token": "TV",
+    "class": "acronym",
+    "phones": [
+      "t̪ˈi vˈi",
+      "tˈiː vˈiː"
+    ]
+  },
+  {
+    "token": "HP",
+    "class": "acronym",
+    "phones": [
+      "hˈaːɜt̪ pˈe",
+      "ˈeɪtʃ pˈiː"
+    ]
+  },
+  {
+    "token": "NPC",
+    "class": "acronym",
+    "phones": [
+      "ˈɛn pˈi sˈi",
+      "ˈɛn pˈiː sˈiː"
+    ]
+  },
+  {
+    "token": "TCN",
+    "class": "acronym",
+    "phones": [
+      "t̪ˈe sˈe ˈɛn",
+      "tˈiː sˈiː ˈɛn"
+    ]
+  },
+  {
+    "token": "Từ-châu",
+    "class": "mixed",
+    "phones": [
+      "t̪ˌy2 tʃˈəw"
+    ]
+  },
+  {
+    "token": "Bệ-hạ",
+    "class": "mixed",
+    "phones": [
+      "bˈe6 hˈaː6"
+    ]
+  },
+  {
+    "token": "Thái-tử",
+    "class": "mixed",
+    "phones": [
+      "tˈaːɜj t̪ˈy4"
+    ]
+  },
+  {
+    "token": "Bao-tự",
+    "class": "mixed",
+    "phones": [
+      "bˈaːw t̪ˈy6"
+    ]
+  },
+  {
+    "token": "U-vương",
+    "class": "mixed",
+    "phones": [
+      "ˈu vˈyəŋ"
+    ]
+  },
+  {
+    "token": "Chúa-công",
+    "class": "mixed",
+    "phones": [
+      "tʃˈuəɜ kˈoŋ"
+    ]
+  },
+  {
+    "token": "Trịnh-trang-công",
+    "class": "mixed",
+    "phones": [
+      "tʃˈi6ɲ tʃˈaːŋ kˈoŋ"
+    ]
+  },
+  {
+    "token": "Tràng-an",
+    "class": "mixed",
+    "phones": [
+      "tʃˈaː2ŋ ˈaːn"
+    ]
+  },
+  {
+    "token": "Lạc-dương",
+    "class": "mixed",
+    "phones": [
+      "lˈaː6c zˈyəŋ"
+    ]
+  },
+  {
+    "token": "Hứa-đô",
+    "class": "mixed",
+    "phones": [
+      "hˈyəɜ ɗˈo"
+    ]
+  },
+  {
+    "token": "Thân-hầu",
+    "class": "mixed",
+    "phones": [
+      "tˈən hˈə2w"
+    ]
+  },
+  {
+    "token": "Tiểu-bái",
+    "class": "mixed",
+    "phones": [
+      "t̪ˈiɛ4w bˈaːɜj"
+    ]
+  },
+  {
+    "token": "Duyện-châu",
+    "class": "mixed",
+    "phones": [
+      "zwˈiɛ6n tʃˈəw"
+    ]
+  },
+  {
+    "token": "McDowell",
+    "class": "mixed",
+    "phones": [
+      "məkdˈaʊɛl"
+    ]
+  },
+  {
+    "token": "Công-tử",
+    "class": "mixed",
+    "phones": [
+      "kˈoŋ t̪ˈy4"
+    ]
+  },
+  {
+    "token": "Huyền-đức",
+    "class": "mixed",
+    "phones": [
+      "hwˈiɛ2n ɗˈyɜc"
+    ]
+  },
+  {
+    "token": "Chu-hu",
+    "class": "mixed",
+    "phones": [
+      "tʃˈu hˈu"
+    ]
+  },
+  {
+    "token": "Giang-đông",
+    "class": "mixed",
+    "phones": [
+      "zˈaːŋ ɗˈoŋ"
+    ]
+  },
+  {
+    "token": "Mylene-san",
+    "class": "mixed",
+    "phones": [
+      "mˈi lˈɛ nˈɛ sˈaːn",
+      "mˈaɪliːn sˈaːn"
+    ]
+  },
+  {
+    "token": "Himuro-kun",
+    "class": "mixed",
+    "phones": [
+      "hˈi mˈu ɹˈo kˈun"
+    ]
+  },
+  {
+    "token": "Quật-đột",
+    "class": "mixed",
+    "phones": [
+      "kwˈə6t̪ ɗˈo6t̪"
+    ]
+  },
+  {
+    "token": "Rhasa-san",
+    "class": "mixed",
+    "phones": [
+      "ˈɛʐəː2 hˈaː sˈaː sˈaːn",
+      "ɹˈɑː sˈaː sˈaːn"
+    ]
+  },
+  {
+    "token": "Tuyên-vương",
+    "class": "mixed",
+    "phones": [
+      "t̪wˈiɛn vˈyəŋ"
+    ]
+  },
+  {
+    "token": "Ayase-san",
+    "class": "mixed",
+    "phones": [
+      "ˈaː zˈaː sˈɛ sˈaːn"
+    ]
+  },
+  {
+    "token": "Yuna-san",
+    "class": "mixed",
+    "phones": [
+      "zˈu nˈaː sˈaːn"
+    ]
+  },
+  {
+    "token": "Bình-vương",
+    "class": "mixed",
+    "phones": [
+      "bˈi2ɲ vˈyəŋ"
+    ]
+  },
+  {
+    "token": "Khuyển-nhung",
+    "class": "mixed",
+    "phones": [
+      "xwˈiɛ4n ɲˈuŋ"
+    ]
+  },
+  {
+    "token": "Khương-thị",
+    "class": "mixed",
+    "phones": [
+      "xˈyəŋ tˈi6"
+    ]
+  },
+  {
+    "token": "Nhung-chúa",
+    "class": "mixed",
+    "phones": [
+      "ɲˈuŋ tʃˈuəɜ"
+    ]
+  },
+  {
+    "token": "Thân-hậu",
+    "class": "mixed",
+    "phones": [
+      "tˈən hˈə6w"
+    ]
+  },
+  {
+    "token": "Bạch-hổ",
+    "class": "mixed",
+    "phones": [
+      "bˈe-6c hˈo4"
+    ]
+  },
+  {
+    "token": "Bộc-dương",
+    "class": "mixed",
+    "phones": [
+      "bˈo6k zˈyəŋ"
+    ]
+  },
+  {
+    "token": "Sử-từ",
+    "class": "mixed",
+    "phones": [
+      "sˈy4 t̪ˌy2"
+    ]
+  },
+  {
+    "token": "Akiko-san",
+    "class": "mixed",
+    "phones": [
+      "ˈaː kˈi kˈo sˈaːn"
+    ]
+  },
+  {
+    "token": "Chikuma-kun",
+    "class": "mixed",
+    "phones": [
+      "tʃˈi kˈu mˈaː kˈun"
+    ]
+  },
+  {
+    "token": "Chánh-hậu",
+    "class": "mixed",
+    "phones": [
+      "tʃˈe-ɜɲ hˈə6w"
+    ]
+  },
+  {
+    "token": "Ký-châu",
+    "class": "mixed",
+    "phones": [
+      "kˈiɜ tʃˈəw"
+    ]
+  },
+  {
+    "token": "Sơn-đông",
+    "class": "mixed",
+    "phones": [
+      "sˈəːn ɗˈoŋ"
+    ]
+  },
+  {
+    "token": "Hầu-đôn",
+    "class": "mixed",
+    "phones": [
+      "hˈə2w ɗˈon"
+    ]
+  },
+  {
+    "token": "Kiểu-kinh",
+    "class": "mixed",
+    "phones": [
+      "kˈiɛ4w kˈiɲ"
+    ]
+  },
+  {
+    "token": "Quách-công",
+    "class": "mixed",
+    "phones": [
+      "kwˈe-ɜc kˈoŋ"
+    ]
+  },
+  {
+    "token": "Kinh-thành",
+    "class": "mixed",
+    "phones": [
+      "kˈiɲ tˈe-2ɲ"
+    ]
+  },
+  {
+    "token": "Tây-lương",
+    "class": "mixed",
+    "phones": [
+      "t̪ˈəɪ lˈyəŋ"
+    ]
+  },
+  {
+    "token": "Khảo-thúc",
+    "class": "mixed",
+    "phones": [
+      "xˈaː4w tˈuɜc"
+    ]
+  },
+  {
+    "token": "Thúc-đoạn",
+    "class": "mixed",
+    "phones": [
+      "tˈuɜc ɗwˈaː6n"
+    ]
+  },
+  {
+    "token": "Tiên-vương",
+    "class": "mixed",
+    "phones": [
+      "t̪ˈiɛn vˈyəŋ"
+    ]
+  },
+  {
+    "token": "Fitts-senpai",
+    "class": "mixed",
+    "phones": [
+      "ˈɛp ˈit̪ tˈeˈɛs sˈɛn pˈaːj",
+      "fˈɪts sˈɛn pˈaːj"
+    ]
+  },
+  {
+    "token": "Quan-công",
+    "class": "mixed",
+    "phones": [
+      "kwˈaːn kˈoŋ"
+    ]
+  },
+  {
+    "token": "Thiếu-đế",
+    "class": "mixed",
+    "phones": [
+      "tˈiɛɜw ɗˈeɜ"
+    ]
+  },
+  {
+    "token": "Trịnh-bá-hữu",
+    "class": "mixed",
+    "phones": [
+      "tʃˈi6ɲ bˈaːɜ hˈi5w"
+    ]
+  },
+  {
+    "token": "My-ổ",
+    "class": "mixed",
+    "phones": [
+      "mˈi ˈo4"
+    ]
+  },
+  {
+    "token": "Quách-thạch-phủ",
+    "class": "mixed",
+    "phones": [
+      "kwˈe-ɜc tˈe-6c fˈu4"
+    ]
+  },
+  {
+    "token": "Ðỗ-bá",
+    "class": "mixed",
+    "phones": [
+      "ɗˈo5 bˈaːɜ"
+    ]
+  },
+  {
+    "token": "Bình-nguyên",
+    "class": "mixed",
+    "phones": [
+      "bˈi2ɲ ŋwˈiɛn"
+    ]
+  },
+  {
+    "token": "Bắc-hải",
+    "class": "mixed",
+    "phones": [
+      "bˈaɜc hˈaː4j"
+    ]
+  },
+  {
+    "token": "Deiga-san",
+    "class": "mixed",
+    "phones": [
+      "ɗˈəɪ ɣˈaː sˈaːn"
+    ]
+  },
+  {
+    "token": "Hiến-đế",
+    "class": "mixed",
+    "phones": [
+      "hˈiɛɜn ɗˈeɜ"
+    ]
+  },
+  {
+    "token": "Thanh-châu",
+    "class": "mixed",
+    "phones": [
+      "tˈe-ɲ tʃˈəw"
+    ]
+  },
+  {
+    "token": "Madoka-san",
+    "class": "mixed",
+    "phones": [
+      "mˈaː ɗˈo kˈaː sˈaːn"
+    ]
+  },
+  {
+    "token": "Thạch-hậu",
+    "class": "mixed",
+    "phones": [
+      "tˈe-6c hˈə6w"
+    ]
+  },
+  {
+    "token": "Thế-tử",
+    "class": "mixed",
+    "phones": [
+      "tˈeɜ t̪ˈy4"
+    ]
+  },
+  {
+    "token": "Ðại-phu",
+    "class": "mixed",
+    "phones": [
+      "ɗˈaː6j fˈu"
+    ]
+  },
+  {
+    "token": "Ôn-hầu",
+    "class": "mixed",
+    "phones": [
+      "ˈon hˈə2w"
+    ]
+  },
+  {
+    "token": "Bá-dương-phụ",
+    "class": "mixed",
+    "phones": [
+      "bˈaːɜ zˈyəŋ fˈu6"
+    ]
+  },
+  {
+    "token": "Chiyabashira-sensei",
+    "class": "mixed",
+    "phones": [
+      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ"
+    ]
+  },
+  {
+    "token": "Công-lộ",
+    "class": "mixed",
+    "phones": [
+      "kˈoŋ lˈo6"
+    ]
+  },
+  {
+    "token": "Hoài-nam",
+    "class": "mixed",
+    "phones": [
+      "hwˈaː2j nˈaːm"
+    ]
+  },
+  {
+    "token": "Hoàn-vương",
+    "class": "mixed",
+    "phones": [
+      "hwˈaː2n vˈyəŋ"
+    ]
+  },
+  {
+    "token": "Magali-sama",
+    "class": "mixed",
+    "phones": [
+      "mˈaː ɣˈaː lˈi sˈaː mˈaː",
+      "mæɡˈɑːli sˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Oni-kun",
+    "class": "mixed",
+    "phones": [
+      "ˈo nˈi kˈun"
+    ]
+  },
+  {
+    "token": "Subaru-sama",
+    "class": "mixed",
+    "phones": [
+      "sˈu bˈaː ɹˈu sˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Thái-thúc",
+    "class": "mixed",
+    "phones": [
+      "tˈaːɜj tˈuɜc"
+    ]
+  },
+  {
+    "token": "Thọ-xuân",
+    "class": "mixed",
+    "phones": [
+      "tˈɔ6 swˈən"
+    ]
+  },
+  {
+    "token": "Tả-nho",
+    "class": "mixed",
+    "phones": [
+      "t̪ˈaː4 ɲˈɔ"
+    ]
+  },
+  {
+    "token": "Vệ-công",
+    "class": "mixed",
+    "phones": [
+      "vˈe6 kˈoŋ"
+    ]
+  },
+  {
+    "token": "Celestina-san",
+    "class": "mixed",
+    "phones": [
+      "səlɪstˈiːnə sˈaːn"
+    ]
+  },
+  {
+    "token": "Công-tôn",
+    "class": "mixed",
+    "phones": [
+      "kˈoŋ t̪ˈon"
+    ]
+  },
+  {
+    "token": "Cối-kê",
+    "class": "mixed",
+    "phones": [
+      "kˈoɜj kˈe"
+    ]
+  },
+  {
+    "token": "Hoàng-hậu",
+    "class": "mixed",
+    "phones": [
+      "hwˈaː2ŋ hˈə6w"
+    ]
+  },
+  {
+    "token": "Nam-dương",
+    "class": "mixed",
+    "phones": [
+      "nˈaːm zˈyəŋ"
+    ]
+  },
+  {
+    "token": "Nghi-cựu",
+    "class": "mixed",
+    "phones": [
+      "ŋˈi kˈi6w"
+    ]
+  },
+  {
+    "token": "Yuna-oneechan",
+    "class": "mixed",
+    "phones": [
+      "zˈu nˈaː ˈo nˈɛ tʃˈaːn"
+    ]
+  },
+  {
+    "token": "Dĩnh-xuyên",
+    "class": "mixed",
+    "phones": [
+      "zˈi5ɲ swˈiɛn"
+    ]
+  },
+  {
+    "token": "Higashira-san",
+    "class": "mixed",
+    "phones": [
+      "hˈi ɣˈaː sˈi ɹˈaː sˈaːn"
+    ]
+  },
+  {
+    "token": "Hà-hậu",
+    "class": "mixed",
+    "phones": [
+      "hˈaː2 hˈə6w"
+    ]
+  },
+  {
+    "token": "Bác Ái",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaːɜc ˈaːɜj"
+    ]
+  },
+  {
+    "token": "Xuân Hoa",
+    "class": "vietnamese",
+    "phones": [
+      "swˈən hwˈaː"
+    ]
+  },
+  {
+    "token": "Quảng Giao",
+    "class": "vietnamese",
+    "phones": [
+      "kwˈaː4ŋ zˈaːw"
+    ]
+  },
+  {
+    "token": "Bà Án",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaː2 ˈaːɜn"
+    ]
+  },
+  {
+    "token": "Chị Dậu",
+    "class": "vietnamese",
+    "phones": [
+      "tʃˈi6 zˈə6w"
+    ]
+  },
+  {
+    "token": "Thưa ông",
+    "class": "vietnamese",
+    "phones": [
+      "tˈyə ˈoŋ"
+    ]
+  },
+  {
+    "token": "Bạch Hải",
+    "class": "vietnamese",
+    "phones": [
+      "bˈe-6c hˈaː4j"
+    ]
+  },
+  {
+    "token": "ông Hạnh",
+    "class": "vietnamese",
+    "phones": [
+      "ˈoŋ hˈe-6ɲ"
+    ]
+  },
+  {
+    "token": "Anh Dậu",
+    "class": "vietnamese",
+    "phones": [
+      "ˈe-ɲ zˈə6w"
+    ]
+  },
+  {
+    "token": "Ông Hạnh",
+    "class": "vietnamese",
+    "phones": [
+      "ˈoŋ hˈe-6ɲ"
+    ]
+  },
+  {
+    "token": "Thằng Dần",
+    "class": "vietnamese",
+    "phones": [
+      "tˈa2ŋ zˈə2n"
+    ]
+  },
+  {
+    "token": "Cái Tý",
+    "class": "vietnamese",
+    "phones": [
+      "kˌaːɜj t̪ˈiɜ"
+    ]
+  },
+  {
+    "token": "Họa Sĩ",
+    "class": "vietnamese",
+    "phones": [
+      "hˈoaː6 sˈi5"
+    ]
+  },
+  {
+    "token": "ông ấy",
+    "class": "vietnamese",
+    "phones": [
+      "ˈoŋ ˈəɪɜ"
+    ]
+  },
+  {
+    "token": "Sài Gòn",
+    "class": "vietnamese",
+    "phones": [
+      "sˈaː2j ɣˈɔ2n"
+    ]
+  },
+  {
+    "token": "Bà Nghị",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaː2 ŋˈi6"
+    ]
+  },
+  {
+    "token": "đăm đăm",
+    "class": "vietnamese",
+    "phones": [
+      "ɗˈam ɗˈam"
+    ]
+  },
+  {
+    "token": "Không được",
+    "class": "vietnamese",
+    "phones": [
+      "xˈoŋ ɗˌyə6c"
+    ]
+  },
+  {
+    "token": "Long Xuyên",
+    "class": "vietnamese",
+    "phones": [
+      "lˈɔŋ swˈiɛn"
+    ]
+  },
+  {
+    "token": "Mai đã",
+    "class": "vietnamese",
+    "phones": [
+      "mˈaːj ɗˌaː5"
+    ]
+  },
+  {
+    "token": "Mai đứng",
+    "class": "vietnamese",
+    "phones": [
+      "mˈaːj ɗˈyɜŋ"
+    ]
+  },
+  {
+    "token": "Trời ơi",
+    "class": "vietnamese",
+    "phones": [
+      "tʃˈəː2j ˈəːj"
+    ]
+  },
+  {
+    "token": "Hà Nội",
+    "class": "vietnamese",
+    "phones": [
+      "hˈaː2 nˈo6j"
+    ]
+  },
+  {
+    "token": "Nghị Quế",
+    "class": "vietnamese",
+    "phones": [
+      "ŋˈi6 kwˈeɜ"
+    ]
+  },
+  {
+    "token": "SIM",
+    "class": "vietnamese",
+    "phones": [
+      "sˈim"
+    ]
+  },
+  {
+    "token": "ông Cò",
+    "class": "vietnamese",
+    "phones": [
+      "ˈoŋ kˈɔ2"
+    ]
+  },
+  {
+    "token": "Bà Hương",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaː2 hˈyəŋ"
+    ]
+  },
+  {
+    "token": "Việt Nam",
+    "class": "vietnamese",
+    "phones": [
+      "vˈiɛ6t̪ nˈaːm"
+    ]
+  },
+  {
+    "token": "êm đềm",
+    "class": "vietnamese",
+    "phones": [
+      "ˈem ɗˈe2m"
+    ]
+  },
+  {
+    "token": "Bà Cán",
+    "class": "vietnamese",
+    "phones": [
+      "bˈaː2 kˈaːɜn"
+    ]
+  },
+  {
+    "token": "Cái Tỉu",
+    "class": "vietnamese",
+    "phones": [
+      "kˌaːɜj t̪ˈi4w"
+    ]
+  },
+  {
+    "token": "đi Tây",
+    "class": "vietnamese",
+    "phones": [
+      "ɗˈi t̪ˈəɪ"
+    ]
+  },
+  {
+    "token": "Hồ Biểu Chánh",
+    "class": "vietnamese",
+    "phones": [
+      "hˈo2 bˈiɛ4w tʃˈe-ɜɲ"
+    ]
+  },
+  {
+    "token": "Nho Giáo",
+    "class": "vietnamese",
+    "phones": [
+      "ɲˈɔ zˈaːɜw"
+    ]
+  },
+  {
+    "token": "Nhưng Mai",
+    "class": "vietnamese",
+    "phones": [
+      "ɲˈyŋ mˈaːj"
+    ]
+  },
+  {
+    "token": "Musashi",
+    "class": "japanese",
+    "phones": [
+      "mˈu sˈaː sˈi"
+    ]
+  },
+  {
+    "token": "Sensei",
+    "class": "japanese",
+    "phones": [
+      "sˈɛn sˈəɪ"
+    ]
+  },
+  {
+    "token": "Shinji",
+    "class": "japanese",
+    "phones": [
+      "sˈin zˈi"
+    ]
+  },
+  {
+    "token": "Shuri",
+    "class": "japanese",
+    "phones": [
+      "sˈu ɹˈi"
+    ]
+  },
+  {
+    "token": "Tsuwabuki",
+    "class": "japanese",
+    "phones": [
+      "sˈu wˈaː bˈu kˈi"
+    ]
+  },
+  {
+    "token": "Uemon",
+    "class": "japanese",
+    "phones": [
+      "ˈu ˈɛ mˈon"
+    ]
+  },
+  {
+    "token": "Gigi",
+    "class": "japanese",
+    "phones": [
+      "ɣˈi ɣˈi"
+    ]
+  },
+  {
+    "token": "Hisame",
+    "class": "japanese",
+    "phones": [
+      "hˈi sˈaː mˈɛ"
+    ]
+  },
+  {
+    "token": "Isshiki",
+    "class": "japanese",
+    "phones": [
+      "ˈiɜt̪ sˈi kˈi"
+    ]
+  },
+  {
+    "token": "Kanto",
+    "class": "japanese",
+    "phones": [
+      "kˈaːn t̪ˈo"
+    ]
+  },
+  {
+    "token": "Karui",
+    "class": "japanese",
+    "phones": [
+      "kˈaː ɹˈu ˈi"
+    ]
+  },
+  {
+    "token": "Kochou",
+    "class": "japanese",
+    "phones": [
+      "kˈo tʃˈəw"
+    ]
+  },
+  {
+    "token": "Pika",
+    "class": "japanese",
+    "phones": [
+      "pˈi kˈaː"
+    ]
+  },
+  {
+    "token": "Tâ",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Ufufu",
+    "class": "japanese",
+    "phones": [
+      "ˈu fˈu fˈu"
+    ]
+  },
+  {
+    "token": "Umi",
+    "class": "japanese",
+    "phones": [
+      "ˈu mˈi"
+    ]
+  },
+  {
+    "token": "Yume",
+    "class": "japanese",
+    "phones": [
+      "zˈu mˈɛ"
+    ]
+  },
+  {
+    "token": "Akagami",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈaː ɣˈaː mˈi"
+    ]
+  },
+  {
+    "token": "Ame",
+    "class": "japanese",
+    "phones": [
+      "ˈaː mˈɛ"
+    ]
+  },
+  {
+    "token": "Donoa",
+    "class": "japanese",
+    "phones": [
+      "ɗˈo nˈo ˈaː"
+    ]
+  },
+  {
+    "token": "Hachiman",
+    "class": "japanese",
+    "phones": [
+      "hˈaː tʃˈi mˈaːn"
+    ]
+  },
+  {
+    "token": "Maki",
+    "class": "japanese",
+    "phones": [
+      "mˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Miura",
+    "class": "japanese",
+    "phones": [
+      "mˈi ˈu ɹˈaː"
+    ]
+  },
+  {
+    "token": "Musashino",
+    "class": "japanese",
+    "phones": [
+      "mˈu sˈaː sˈi nˈo"
+    ]
+  },
+  {
+    "token": "Natsuki",
+    "class": "japanese",
+    "phones": [
+      "nˈaː sˈu kˈi"
+    ]
+  },
+  {
+    "token": "Omamori",
+    "class": "japanese",
+    "phones": [
+      "ˈo mˈaː mˈo ɹˈi"
+    ]
+  },
+  {
+    "token": "Ritton",
+    "class": "japanese",
+    "phones": [
+      "ɹˈiɜt̪ t̪ˈon"
+    ]
+  },
+  {
+    "token": "Yuru",
+    "class": "japanese",
+    "phones": [
+      "zˈu ɹˈu"
+    ]
+  },
+  {
+    "token": "Yuuka",
+    "class": "japanese",
+    "phones": [
+      "zˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Aioi",
+    "class": "japanese",
+    "phones": [
+      "ˈaːj ˈo ˈi"
+    ]
+  },
+  {
+    "token": "Aodoji",
+    "class": "japanese",
+    "phones": [
+      "ˈaː ˈɔ ɗˈo zˈi"
+    ]
+  },
+  {
+    "token": "Daimyo",
+    "class": "japanese",
+    "phones": [
+      "ɗˈaːj mˈi ˈo"
+    ]
+  },
+  {
+    "token": "Gigigi",
+    "class": "japanese",
+    "phones": [
+      "ɣˈi ɣˈi ɣˈi"
+    ]
+  },
+  {
+    "token": "Gunma",
+    "class": "japanese",
+    "phones": [
+      "ɣˈun mˈaː"
+    ]
+  },
+  {
+    "token": "Hirata",
+    "class": "japanese",
+    "phones": [
+      "hˈi ɹˈaː t̪ˈaː"
+    ]
+  },
+  {
+    "token": "Kanmon",
+    "class": "japanese",
+    "phones": [
+      "kˈaːn mˈon"
+    ]
+  },
+  {
+    "token": "Kurumizawa",
+    "class": "japanese",
+    "phones": [
+      "kˈu ɹˈu mˈi zˈaː wˈaː"
+    ]
+  },
+  {
+    "token": "Kururi",
+    "class": "japanese",
+    "phones": [
+      "kˈu ɹˈu ɹˈi"
+    ]
+  },
+  {
+    "token": "Shimonoseki",
+    "class": "japanese",
+    "phones": [
+      "sˈi mˈo nˈo sˈɛ kˈi"
+    ]
+  },
+  {
+    "token": "Shinobu",
+    "class": "japanese",
+    "phones": [
+      "sˈi nˈo bˈu"
+    ]
+  },
+  {
+    "token": "Yuichirou",
+    "class": "japanese",
+    "phones": [
+      "zˈu ˈi tʃˈi ɹˈəw"
+    ]
+  },
+  {
+    "token": "Ahahaha",
+    "class": "japanese",
+    "phones": [
+      "ˈaː hˈaː hˈaː hˈaː"
+    ]
+  },
+  {
+    "token": "Akou",
+    "class": "japanese",
+    "phones": [
+      "ˈaː kˈəw"
+    ]
+  },
+  {
+    "token": "Amae",
+    "class": "japanese",
+    "phones": [
+      "ˈaː mˈaː ˈɛ"
+    ]
+  },
+  {
+    "token": "Asa",
+    "class": "japanese",
+    "phones": [
+      "ˈaː sˈaː"
+    ]
+  },
+  {
+    "token": "Asagumo",
+    "class": "japanese",
+    "phones": [
+      "ˈaː sˈaː ɣˈu mˈo"
+    ]
+  },
+  {
+    "token": "Asakusa",
+    "class": "japanese",
+    "phones": [
+      "ˈaː sˈaː kˈu sˈaː"
+    ]
+  },
+  {
+    "token": "Ayaka",
+    "class": "japanese",
+    "phones": [
+      "ˈaː zˈaː kˈaː"
+    ]
+  },
+  {
+    "token": "Ayanokouji",
+    "class": "japanese",
+    "phones": [
+      "ˈaː zˈaː nˈo kˈəw zˈi"
+    ]
+  },
+  {
+    "token": "Fujimiya",
+    "class": "japanese",
+    "phones": [
+      "fˈu zˈi mˈi ˈaː"
+    ]
+  },
+  {
+    "token": "GOAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "class": "mixed",
+    "phones": [
+      "ɣwˈaː ˈaː"
+    ]
+  },
+  {
+    "token": "Godou",
+    "class": "japanese",
+    "phones": [
+      "ɣˈo ɗˈəw"
+    ]
+  },
+  {
+    "token": "Gutche",
+    "class": "japanese",
+    "phones": [
+      "ɣˈuɜt̪ tʃˈɛ"
+    ]
+  },
+  {
+    "token": "Haaa",
+    "class": "mixed",
+    "phones": [
+      "hˈaː ˈaː"
+    ]
+  },
+  {
+    "token": "Hiratsuka",
+    "class": "japanese",
+    "phones": [
+      "hˈi ɹˈaː sˈu kˈaː"
+    ]
+  },
+  {
+    "token": "Ike",
+    "class": "japanese",
+    "phones": [
+      "ˈi kˈɛ"
+    ]
+  },
+  {
+    "token": "Itsuki",
+    "class": "japanese",
+    "phones": [
+      "ˈi sˈu kˈi"
+    ]
+  },
+  {
+    "token": "Matsudaira",
+    "class": "japanese",
+    "phones": [
+      "mˈaː sˈu ɗˈaːj ɹˈaː"
+    ]
+  },
+  {
+    "token": "Mera",
+    "class": "japanese",
+    "phones": [
+      "mˈɛ ɹˈaː"
+    ]
+  },
+  {
+    "token": "Mireera",
+    "class": "japanese",
+    "phones": [
+      "mˈi ɹˈɛ ɹˈaː"
+    ]
+  },
+  {
+    "token": "Muneshige",
+    "class": "japanese",
+    "phones": [
+      "mˈu nˈɛ sˈi ɣˈɛ"
+    ]
+  },
+  {
+    "token": "Oni",
+    "class": "japanese",
+    "phones": [
+      "ˈo nˈi"
+    ]
+  },
+  {
+    "token": "Shirone",
+    "class": "japanese",
+    "phones": [
+      "sˈi ɹˈo nˈɛ"
+    ]
+  },
+  {
+    "token": "Shun",
+    "class": "japanese",
+    "phones": [
+      "sˈun"
+    ]
+  },
+  {
+    "token": "Suu",
+    "class": "japanese",
+    "phones": [
+      "sˈu"
+    ]
+  },
+  {
+    "token": "Tobe",
+    "class": "japanese",
+    "phones": [
+      "t̪ˈo bˈɛ"
+    ]
+  },
+  {
+    "token": "Ushio",
+    "class": "japanese",
+    "phones": [
+      "ˈu sˈi ˈo"
+    ]
+  },
+  {
+    "token": "Yamiyo",
+    "class": "japanese",
+    "phones": [
+      "zˈaː mˈi ˈo"
+    ]
+  },
+  {
+    "token": "Yuigahama",
+    "class": "japanese",
+    "phones": [
+      "zˈu ˈi ɣˈaː hˈaː mˈaː"
+    ]
+  },
+  {
+    "token": "Aa",
+    "class": "japanese",
+    "phones": [
+      "ˈaː"
+    ]
+  },
+  {
+    "token": "Aaa",
+    "class": "mixed",
+    "phones": [
+      "ˈaː ˈaː"
+    ]
+  },
+  {
+    "token": "Ahaha",
+    "class": "japanese",
+    "phones": [
+      "ˈaː hˈaː hˈaː"
+    ]
+  },
+  {
+    "token": "Ara",
+    "class": "japanese",
+    "phones": [
+      "ˈaː ɹˈaː"
+    ]
+  },
+  {
+    "token": "Eae",
+    "class": "japanese",
+    "phones": [
+      "ˈɛ ˈaː ˈɛ"
+    ]
+  },
+  {
+    "token": "Ebina",
+    "class": "japanese",
+    "phones": [
+      "ˈɛ bˈi nˈaː"
+    ]
+  },
+  {
+    "token": "Fufu",
+    "class": "japanese",
+    "phones": [
+      "fˈu fˈu"
+    ]
+  },
+  {
+    "token": "Fufufu",
+    "class": "japanese",
+    "phones": [
+      "fˈu fˈu fˈu"
+    ]
+  },
+  {
+    "token": "Fufufufu",
+    "class": "japanese",
+    "phones": [
+      "fˈu fˈu fˈu fˈu"
+    ]
+  },
+  {
+    "token": "Fuhahahaha",
+    "class": "japanese",
+    "phones": [
+      "fˈu hˈaː hˈaː hˈaː hˈaː"
+    ]
+  },
+  {
+    "token": "Fumu",
+    "class": "japanese",
+    "phones": [
+      "fˈu mˈu"
+    ]
+  },
+  {
+    "token": "Hagikage",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɣˈi kˈaː ɣˈɛ"
+    ]
+  },
+  {
+    "token": "Harabote",
+    "class": "japanese",
+    "phones": [
+      "hˈaː ɹˈaː bˈo t̪ˈɛ"
+    ]
+  },
+  {
+    "token": "Hee",
+    "class": "japanese",
+    "phones": [
+      "hˈɛ"
+    ]
+  },
+  {
+    "token": "Hotaru",
+    "class": "japanese",
+    "phones": [
+      "hˈo t̪ˈaː ɹˈu"
+    ]
+  },
+  {
+    "token": "Ine",
+    "class": "japanese",
+    "phones": [
+      "ˈi nˈɛ"
+    ]
+  },
+  {
+    "token": "Kamenuki",
+    "class": "japanese",
+    "phones": [
+      "kˈaː mˈɛ nˈu kˈi"
+    ]
+  },
+  {
+    "token": "Kasagi",
+    "class": "japanese",
+    "phones": [
+      "kˈaː sˈaː ɣˈi"
+    ]
+  },
+  {
+    "token": "Kawasaki",
+    "class": "japanese",
+    "phones": [
+      "kˈaː wˈaː sˈaː kˈi"
+    ]
+  },
+  {
+    "token": "Kazuma",
+    "class": "japanese",
+    "phones": [
+      "kˈaː zˈu mˈaː"
+    ]
+  },
+  {
+    "token": "Kinton",
+    "class": "japanese",
+    "phones": [
+      "kˈin t̪ˈon"
+    ]
+  },
+  {
+    "token": "Kirari",
+    "class": "japanese",
+    "phones": [
+      "kˈi ɹˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Kobe",
+    "class": "japanese",
+    "phones": [
+      "kˈo bˈɛ"
+    ]
+  },
+  {
+    "token": "Kuromitsu",
+    "class": "japanese",
+    "phones": [
+      "kˈu ɹˈo mˈi sˈu"
+    ]
+  },
+  {
+    "token": "Kyu",
+    "class": "japanese",
+    "phones": [
+      "kˈi ˈu"
+    ]
+  },
+  {
+    "token": "Macho",
+    "class": "japanese",
+    "phones": [
+      "mˈaː tʃˈo"
+    ]
+  },
+  {
+    "token": "Magoroku",
+    "class": "japanese",
+    "phones": [
+      "mˈaː ɣˈo ɹˈo kˈu"
+    ]
+  },
+  {
+    "token": "Mamu",
+    "class": "japanese",
+    "phones": [
+      "mˈaː mˈu"
+    ]
+  },
+  {
+    "token": "Mari",
+    "class": "japanese",
+    "phones": [
+      "mˈaː ɹˈi"
+    ]
+  },
+  {
+    "token": "Masa",
+    "class": "japanese",
+    "phones": [
+      "mˈaː sˈaː"
+    ]
+  },
+  {
+    "token": "Mayoiga",
+    "class": "japanese",
+    "phones": [
+      "mˈaː zˈɔj ɣˈaː"
+    ]
+  }
+]

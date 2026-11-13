@@ -17,6 +17,8 @@ env=dict(os.environ,QT_QPA_PLATFORM="offscreen",PATH=qt+"/bin"+os.pathsep+os.env
 bat=out/"profile-build.bat"
 bat.write_bytes((f'call "{root}/tools/find_vcvars.bat"\nif not defined VCVARS exit /b 1\ncall "%VCVARS%" >nul\n'
     'set PATH=D:/Novels/native_desk_proto/qt/Tools/Ninja;%PATH%\n'
+    f'"{sys.executable}" -X utf8 "{root}/tools/drop_stale_cmake_cache.py" "{root}/build/decode_profile"\n'
+    'if errorlevel 1 exit /b 1\n'
     f'"D:/Novels/native_desk_proto/qt/Tools/CMake_64/bin/cmake.exe" -S "{root}/tools/decode_profile" -B "{root}/build/decode_profile" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt}"\n'
     'if errorlevel 1 exit /b 1\n'
     f'"D:/Novels/native_desk_proto/qt/Tools/CMake_64/bin/cmake.exe" --build "{root}/build/decode_profile"\n'

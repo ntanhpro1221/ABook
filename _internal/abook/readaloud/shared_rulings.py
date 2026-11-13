@@ -37,7 +37,7 @@ from .phoneme_policy import Rulings
 FILE = "shared_rulings.json"
 VERSION = 2
 MODEL = "abook-analyzer:v5"  # the analysis model (the worker passes the project's own): every Studio has it, and it answers both questions better than the music model (TEST_REPORT)
-PROMPT_VERSION = "sw-2+no-3"
+PROMPT_VERSION = "sw-2+no-4"
 BATCH = 8  # items per request
 NAME_LIMIT = 160  # roster names asked, in roster order (main characters first)
 ROSTER_SHOWN = 5  # other roster names shown beside each name asked (the main characters)
@@ -329,9 +329,14 @@ def name_readings(origins: dict[str, str], book_origin: str | None) -> dict[str,
     for word, origin in sorted(word_origins(origins).items()):
         by_book = names.name_reading(word, book_origin)
         if origin in names.ORIGINS:
-            reading = names.name_reading(word, origin)
-            if reading and reading != by_book:
-                out[word] = reading.replace("_", "")
+            # A roster origin settles lexical homographs and vowel-only names.
+            # Automatic detection guards must not veto that explicit evidence.
+            from ..romanization import romanized_reading
+            from .japanese_policy import reading as japanese_reading
+
+            reading = names.lone_syllable(romanized_reading(word, origin))
+            if reading and (reading != by_book or book_origin == 'ja' and japanese_reading(word, book_origin) != reading):
+                out[word] = reading
         elif origin == "vi" and by_book:
             out[word] = word
     return out
