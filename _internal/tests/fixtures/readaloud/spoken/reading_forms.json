@@ -1160,6 +1160,131 @@
    "id": "tnfix_numbers-5",
    "text": "Giá 1,25 đồng.",
    "said": "Giá 1,25 đồng."
+  },
+  {
+   "id": "tnfix_loanword-1",
+   "text": "Từ loli ở đây.",
+   "said": "Từ lô-li ở đây."
+  },
+  {
+   "id": "tnfix_loanword-2",
+   "text": "Từ ting ở đây.",
+   "said": "Từ tinh ở đây."
+  },
+  {
+   "id": "tnfix_loanword-3",
+   "text": "Từ livestream ở đây.",
+   "said": "Từ lai-xtrim ở đây."
+  },
+  {
+   "id": "tnfix_loanword-4",
+   "text": "Từ boss ở đây.",
+   "said": "Từ bót ở đây."
+  },
+  {
+   "id": "tnfix_loanword-5",
+   "text": "Từ bar ở đây.",
+   "said": "Từ ba ở đây."
+  },
+  {
+   "id": "tnfix_loanword-6",
+   "text": "Từ vest ở đây.",
+   "said": "Từ vét ở đây."
+  },
+  {
+   "id": "tnfix_loanword-7",
+   "text": "Từ katana ở đây.",
+   "said": "Từ ca-ta-na ở đây."
+  },
+  {
+   "id": "tnfix_loanword-8",
+   "text": "Từ mini ở đây.",
+   "said": "Từ mi-ni ở đây."
+  },
+  {
+   "id": "tnfix_loanword-9",
+   "text": "Từ streamer ở đây.",
+   "said": "Từ xtrim-mơ ở đây."
+  },
+  {
+   "id": "tnfix_loanword-10",
+   "text": "Từ solo ở đây.",
+   "said": "Từ xô-lô ở đây."
+  },
+  {
+   "id": "tnfix_loanword-11",
+   "text": "Từ bikini ở đây.",
+   "said": "Từ bi-ki-ni ở đây."
+  },
+  {
+   "id": "tnfix_loanword-12",
+   "text": "Từ blouse ở đây.",
+   "said": "Từ bờ-lu ở đây."
+  },
+  {
+   "id": "tnfix_loanword-13",
+   "text": "Từ icon ở đây.",
+   "said": "Từ ai-côn ở đây."
+  },
+  {
+   "id": "tnfix_loanword-14",
+   "text": "Từ web ở đây.",
+   "said": "Từ oép ở đây."
+  },
+  {
+   "id": "tnfix_loanword-15",
+   "text": "Từ stress ở đây.",
+   "said": "Từ xì-trét ở đây."
+  },
+  {
+   "id": "tnfix_loanword-16",
+   "text": "Từ buffet ở đây.",
+   "said": "Từ búp-phê ở đây."
+  },
+  {
+   "id": "tnfix_loanword-17",
+   "text": "Từ avatar ở đây.",
+   "said": "Từ a-va-ta ở đây."
+  },
+  {
+   "id": "tnfix_loanword-18",
+   "text": "Từ mascara ở đây.",
+   "said": "Từ mát-xca-ra ở đây."
+  },
+  {
+   "id": "tnfix_loanword-19",
+   "text": "Từ hoodie ở đây.",
+   "said": "Từ hu-đi ở đây."
+  },
+  {
+   "id": "tnfix_loanword-20",
+   "text": "Từ jeans ở đây.",
+   "said": "Từ gin ở đây."
+  },
+  {
+   "id": "tnfix_loanword-21",
+   "text": "Từ spam ở đây.",
+   "said": "Từ xờ-pam ở đây."
+  },
+  {
+   "id": "tnfix_loanword-22",
+   "text": "Từ vtuber ở đây.",
+   "said": "Từ vi-tiu-bơ ở đây."
+  },
+  {
+   "id": "tnfix_loanword-23",
+   "text": "Từ v-tuber ở đây.",
+   "said": "Từ vi-tiu-bơ ở đây."
+  },
+  {
+   "id": "tnfix_compound-1",
+   "text": "Mẫu T-virus và G-virus.",
+   "said": "Mẫu tê vi-rút và giê vi-rút."
+  },
+  {
+   "id": "tnfix_compound-2",
+   "text": "Thử B-robot.",
+   "said": "Thử bê rô-bốt."
   }
  ]
 }

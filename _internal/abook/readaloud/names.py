@@ -369,6 +369,12 @@ def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False, sp
         if out[index] != token:
             continue
         before, core, after = split_token(token)
+        compound = re.fullmatch(r"([A-Z])-([A-Za-z]+)", core)
+        if compound and core.lower() not in LOANWORDS and compound[2].lower() in LOANWORDS:
+            from .abbreviations import LETTERS
+
+            out[index] = before + LETTERS[compound[1].lower()] + " " + LOANWORDS[compound[2].lower()] + after
+            continue
         if not core or (shouted and not (len(core) > 1 and core.isupper() and core.lower() in LOANWORDS)):
             continue
         if speaks_english and core.lower() in ENGLISH_VOICE_KEEPS:

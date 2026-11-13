@@ -11,3 +11,8 @@
 - Added Vietnamese bare integer readings, terminal-dot grouped integers, short dot decimals and unambiguous comma thousands in Python/Kotlin.
 - Added synthetic boundary/ownership tests and shared reading fixtures; refreshed number text and highlight spans in existing fixtures.
 - Focused pytest: 303 collected cases passed, zero FAILED (`-rf`). Full TN/G2P/parity and corpus comparison remain pending.
+
+## Loanwords and letter compounds
+- Added the 23 counted loanword spellings to the single policy JSON consumed by Python and Android.
+- Letter-hyphen-known-loanword now uses the existing letter-name table plus the loanword reading on both platforms.
+- Added synthetic shared cases for every new spelling and generic compounds. Focused pytest: 276 passed, zero FAILED.

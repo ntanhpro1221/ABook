@@ -301,6 +301,12 @@ object Names {
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val (before, core, after) = splitToken(token)
+            val compound = Regex("([A-Z])-([A-Za-z]+)").matchEntire(core)
+            if (compound != null && lower(core) !in LOANWORDS && lower(compound.groupValues[2]) in LOANWORDS) {
+                out[index] = before + Abbreviations.LETTERS.getValue(compound.groupValues[1].lowercase(Locale.ROOT)[0]) +
+                    " " + LOANWORDS.getValue(lower(compound.groupValues[2])) + after
+                continue
+            }
             if (core.isEmpty() || (shouted && !(core.length > 1 && core == core.uppercase(Locale.ROOT) && core != lower(core) && lower(core) in LOANWORDS))) continue
             if (lower(core) in ENGLISH_VOICE_KEEPS) {  // the only Android voice speaks English; "APP" for emphasis is the English word, not "A P P"
                 if (core.length > 1 && core == core.uppercase(Locale.ROOT)) out[index] = before + lower(core) + after

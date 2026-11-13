@@ -25,3 +25,13 @@ def test_unbounded_integer_and_leading_zeroes():
 def test_explicit_readings_keep_number_ownership():
     source = "Giá 300."
     assert studio_tn(source, None, True, [(4, 7)], direct_english=True)[0] == source
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Mẫu T-virus và G-virus.", "Mẫu tê vi-rút và giê vi-rút."),
+    ("Thử B-robot.", "Thử bê rô-bốt."),
+    ("Xem livestream rồi gặp boss.", "Xem lai-xtrim rồi gặp bót."),
+    ("Mặc vest ở bar.", "Mặc vét ở ba."),
+])
+def test_loanwords_and_letter_compounds(source, expected):
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
