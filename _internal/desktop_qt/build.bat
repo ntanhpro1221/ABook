@@ -147,6 +147,9 @@ rem Width classes: actual Book/Library/NowPlaying/Settings QML with fake HTTP/au
 call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\width-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+call :test "%HERE%build\hitl_tests\HitlTests.exe" "%HERE%build\hitl-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 
 rem Every `call :test` above must have run: a skipped suite fails nothing, so count them
 "%ABOOK_PYTHON%" -X utf8 -c "import re,sys; n=len(re.findall(r'^call :test ', open(sys.argv[1],encoding='ascii').read(), re.M)); sys.exit(0 if n==int(sys.argv[2]) else f'ERROR: ran {sys.argv[2]} of {n} Qt test suites')" "%~f0" %TESTS_RUN%

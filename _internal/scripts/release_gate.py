@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tempfile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +111,7 @@ def safe_env() -> dict[str, str]:
     env = dict(os.environ, CUDA_VISIBLE_DEVICES="-1", QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",
                QSG_RHI_BACKEND="software", PYTHONIOENCODING="utf-8", PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1",
                PYTHON=sys.executable, ABOOK_PYTHON=sys.executable, NO_COLOR="1", CI="1")
+    env["ABOOK_REQUIRE_G2P_PARITY"] = "1"
     # Import app luôn từ worktree này, không từ bản editable của runtime dùng chung.
     env["PYTHONPATH"] = str(ROOT)
     env["ABOOK_TEST_PYTHON"] = sys.executable
@@ -127,9 +129,9 @@ def g2p_parity_env() -> dict[str, str]:
             "ABOOK_SEA_G2P_LIB": str(Path(os.environ.get("ABOOK_SEA_G2P_LIB", str(library))).resolve())}
 
 
-def run_process(command: list[str], cwd: Path, timeout: float) -> Execution:
+def run_process(command: list[str], cwd: Path, timeout: float, extra_env: dict | None = None) -> Execution:
     flags = (subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS) if os.name == "nt" else 0
-    proc = subprocess.Popen(command, cwd=cwd, env=safe_env(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    proc = subprocess.Popen(command, cwd=cwd, env=safe_env() | (extra_env or {}), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             encoding="utf-8", errors="replace", creationflags=flags)
     try:
         output, _ = proc.communicate(timeout=timeout)
@@ -170,11 +172,14 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
     ui = ROOT / "ui"
     definitions = [
         Check("compile", py("-m", "compileall", "-q", "abook", "tests", "scripts")),
-        Check("pytest", py("-m", "pytest", "-o", "addopts=", "-q", "-rfs", "--durations=30"), timeout=7200, parser="pytest"),
+        Check("pytest", py("-m", "pytest", "-o", "addopts=", "-q", "-rfs", "-m", "not browser", "--durations=30"), timeout=7200, parser="pytest"),
+        Check("sheet-geometry", py("-m", "pytest", str(ROOT / "scripts/tap_audit/test_sheetgeo.py"),
+              "-o", "addopts=", "-q", "-rfs"), timeout=1800, parser="pytest"),
         Check("typecheck", [node, "node_modules/typescript/bin/tsc", "-p", "tsconfig.json"], ui, 180),
         Check("vitest", [node, "node_modules/vitest/vitest.mjs", "run", "--no-cache", "--configLoader", "runner", "--reporter", "verbose"],
               ui, 900, "vitest"),
         Check("android-unit", worker_command("android-unit"), timeout=900, parser="json"),
+        Check("android-snapshots", worker_command("android-snapshots"), timeout=900, parser="json"),
         Check("ui-parity", py("scripts/ui_parity.py", "--check")),
         Check("ui-parity-qt", py("scripts/ui_parity_qt.py", "--check")),
         Check("dom-count", worker_command("dom-count"), parser="json", requires=("vitest",)),
@@ -277,22 +282,74 @@ def require(ok: bool, detail: str) -> None:
         raise ValueError(detail)
 
 
+def android_host_inputs() -> dict[str, str]:
+    library = Path(os.environ.get("ABOOK_SEA_G2P_LIB", str(ROOT / "mobile/sea_g2p_jni/target/release/abook_sea_g2p.dll")))
+    dictionary = Path(os.environ.get("ABOOK_SEA_G2P_DICT", str(Path(sys.prefix) / "Lib/site-packages/sea_g2p/sea_g2p.bin")))
+    require(library.is_file() and library.stat().st_size > 0, "required host sea_g2p library missing; set ABOOK_SEA_G2P_LIB")
+    require(dictionary.is_file() and dictionary.stat().st_size > 0, "required host sea_g2p dictionary missing; set ABOOK_SEA_G2P_DICT")
+    return {"ABOOK_SEA_G2P_LIB": str(library.resolve()), "ABOOK_SEA_G2P_DICT": str(dictionary.resolve()),
+            "ABOOK_REQUIRE_G2P_PARITY": "1"}
+
+
+def snapshot_baseline() -> dict[str, str]:
+    prefix = "_internal/mobile/android/app/src/test/snapshots/"
+    names = [p for p in git("ls-files", "-z", "--", prefix).split("\0") if p.endswith(".png")]
+    require(bool(names), "Roborazzi: no tracked golden images")
+    return {p.removeprefix(prefix): hashlib.sha256((REPO / p).read_bytes()).hexdigest() for p in names}
+
+
+def validate_snapshot_proofs(directory: Path, baseline: dict[str, str]) -> dict:
+    rows = [json.loads(p.read_text(encoding="utf-8")) for p in directory.glob("*.json")]
+    names = [row["snapshot"] for row in rows]
+    require(len(names) == len(set(names)) and set(names) == set(baseline),
+            f"Roborazzi: compared={len(names)}, goldens={len(baseline)}; missing or extra image proofs")
+    require(all(row.get("status") == "verified" and row.get("golden_sha256") == baseline[row["snapshot"]] for row in rows),
+            "Roborazzi: changed images or invalid verification proofs")
+    require(snapshot_baseline() == baseline, "Roborazzi modified the tracked goldens")
+    return {"goldens": len(baseline), "compared": len(rows), "different": 0}
+
+
+def require_phoneme_suites_ran(results: Path) -> None:
+    required = {"SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest"}
+    seen = set()
+    for path in results.glob("**/TEST-*.xml"):
+        suite = ET.parse(path).getroot()
+        name = suite.attrib.get("name", "").rsplit(".", 1)[-1]
+        if name in required:
+            cases = suite.findall("testcase")
+            require(bool(cases) and not any(c.find("skipped") is not None for c in cases), name + ": missing/skipped phoneme parity")
+            seen.add(name)
+    require(seen == required, "missing phoneme parity suites: " + ", ".join(sorted(required - seen)))
+
+
 def worker(name: str, confirm_hash: str | None = None) -> dict:
     """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
-    if name == "android-unit":
-        inputs = g2p_parity_env()
-        for key in ("ABOOK_SEA_G2P_LIB", "ABOOK_SEA_G2P_DICT"):
-            require(Path(inputs[key]).is_file(), f"Required G2P parity input absent: {key}={inputs[key]}; build host JNI / supply dictionary")
+    if name in {"android-unit", "android-snapshots"}:
+        inputs = android_host_inputs()  # Fail before Gradle if the mandatory host frontend is unavailable.
+        android = ROOT / "mobile/android"
+        baseline = None
+        if name == "android-snapshots":
+            properties = (android / "gradle.properties").read_text(encoding="utf-8")
+            require(not re.search(r"(?m)^\s*roborazzi\.test\.record\s*=\s*true\b", properties, re.I),
+                    "Roborazzi recording is forbidden in gradle.properties")
+            baseline = snapshot_baseline()
+            proof_parent = android / "app/build/release_gate"
+            proof_parent.mkdir(parents=True, exist_ok=True)
+            proofs = Path(tempfile.mkdtemp(prefix="verified-", dir=proof_parent))
+            inputs["ABOOK_SNAPSHOT_PROOFS"] = str(proofs.resolve())
         results = ROOT / "mobile/android/app/build/test-results/testDebugUnitTest"
         # Xoá riêng XML cũ trong worktree, không bao giờ dùng kết quả của lần trước.
         for path in results.glob("**/TEST-*.xml"):
             require(path.resolve().is_relative_to(REPO.resolve()), "XML ra ngoài worktree")
             path.unlink()
-        android = ROOT / "mobile/android"
-        command = [str(android / "gradlew.bat"), "--no-daemon", ":app:testDebugUnitTest", "--rerun-tasks"]
-        execution = run_process(command, android, 840)
+        task = ":app:verifyRoborazziDebug" if baseline is not None else ":app:testDebugUnitTest"
+        command = [str(android / "gradlew.bat"), "--no-daemon", task, "--rerun-tasks", "-Proborazzi.test.record=false"]
+        execution = run_process(command, android, 840, inputs)
         print(execution.output, end="")
         counts = parse_gradle(results)
+        require_phoneme_suites_ran(results)
+        if baseline is not None:
+            counts.update(validate_snapshot_proofs(proofs, baseline))
         ok = (execution.returncode == 0 and not execution.timed_out and counts["passed"] > 0
               and not counts["failed"] and not counts["error"])
         return {"counts": counts, "status": "PASS" if ok else "FAIL", "detail": "Gradle: đối chiếu exit và XML"}
@@ -381,8 +438,7 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         from scripts import public_leak_scan as scanner
         files = tracked_and_new()
         require(bool(files), "public-paths: no files checked")
-        findings = [p.relative_to(REPO).as_posix() for p in files
-                    if any(scanner.private_path(text) for _, text in scanner.texts(p))]
+        findings = [p.relative_to(REPO).as_posix() for p in files if scanner.private_file(p)]
         require(not findings, "public-paths: private machine/session paths in " + ", ".join(findings))
         return {"counts": {"files": len(files), "findings": 0}}
     if name in {"diff-safety", "forbidden-terms"}:
@@ -643,7 +699,7 @@ def select_checks(definitions: list[Check], only: list[str] | None) -> list[Chec
     return [check for check in definitions if check.name in requested]
 
 
-UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "contrast"}
+UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "contrast", "sheet-geometry"}
 
 
 def directory_link(link: Path, target: Path) -> None:
@@ -771,6 +827,12 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                     require(ui_error is None, ui_error or "UI dependency preparation failed")
                     cwd, dependency_evidence = ui_context
                     row.update(cwd=str(cwd), dependencies=dependency_evidence)
+                    if check.name == "sheet-geometry":
+                        # The wrapper builds its gallery only in the private, lock-matched UI mirror.
+                        command = py("-c", "import os,pytest; os.environ['ABOOK_SHEETGEO_ROOT']="
+                                     + repr(str(cwd.parent.parent)) + "; raise SystemExit(pytest.main("
+                                     + repr(check.command[5:]) + "))")
+                        row["command"] = command
                 execution = runner(command, cwd, check.timeout)
                 row["returncode"] = execution.returncode
                 row["timed_out"] = execution.timed_out

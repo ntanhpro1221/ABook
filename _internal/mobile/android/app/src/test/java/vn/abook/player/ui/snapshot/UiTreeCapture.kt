@@ -31,6 +31,17 @@ fun SemanticsNodeInteraction.`captureRoboImage`(
 ) {
     roborazziCapture(filePath, roborazziOptions)
     if (!filePath.replace('\\', '/').contains("src/test/snapshots/")) return
+    System.getenv("ABOOK_SNAPSHOT_PROOFS")?.let { directory ->
+        check(roborazziOptions.taskType == RoborazziTaskType.Verify) { "Release gate requires Verify, never Record" }
+        val golden = File(filePath).canonicalFile
+        val root = File("src/test/snapshots").canonicalFile
+        val relative = golden.relativeTo(root).invariantSeparatorsPath
+        check(!relative.startsWith("../")) { "Golden outside snapshot root" }
+        val proof = JSONObject().put("snapshot", relative).put("status", "verified")
+            .put("golden_sha256", MessageDigest.getInstance("SHA-256").digest(golden.readBytes()).joinToString("") { "%02x".format(it) })
+        val key = MessageDigest.getInstance("SHA-256").digest(relative.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        File(directory, "$key.json").writeText(proof.toString())
+    }
     val name = File(filePath).name.removeSuffix(".png")
     val image = File("build/design_lint/$name.png")
     image.parentFile?.mkdirs()

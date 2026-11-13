@@ -348,6 +348,45 @@ def test_gate_reports_skip_reasons_and_runs_external_test_tools():
     assert "-rfs" in definitions["pytest"].command
     assert definitions["qt-installer"].requires == ("qt-tests",)
     assert "desktop_qt/tools/test_installer.py" in definitions["qt-installer"].command
+    assert "sheet-geometry" in definitions and "sheet-geometry" in gate.UI_CHECKS
+    assert definitions["pytest"].command[definitions["pytest"].command.index("-m", 5) + 1] == "not browser"
+
+
+def test_missing_host_g2p_fails_before_any_gradle_invocation(tmp_path, monkeypatch):
+    monkeypatch.setenv("ABOOK_SEA_G2P_LIB", str(tmp_path / "absent.dll"))
+    monkeypatch.setattr(gate, "run_process", lambda *_: pytest.fail("Gradle must not run"))
+    assert gate.safe_env()["ABOOK_REQUIRE_G2P_PARITY"] == "1"
+    for name in ("android-unit", "android-snapshots"):
+        with pytest.raises(ValueError, match="host sea_g2p"):
+            gate.worker(name)
+
+
+def test_snapshot_checks_require_all_goldens_and_unmodified_verified_images(tmp_path, monkeypatch):
+    baseline = {"a.png": "a" * 64, "b.png": "b" * 64}
+    monkeypatch.setattr(gate, "snapshot_baseline", lambda: baseline.copy())
+    with pytest.raises(ValueError, match="missing or extra"):
+        gate.validate_snapshot_proofs(tmp_path, baseline)
+    for name, digest in baseline.items():
+        (tmp_path / (name + ".json")).write_text(json.dumps({"snapshot": name, "status": "verified", "golden_sha256": digest}), encoding="utf-8")
+    assert gate.validate_snapshot_proofs(tmp_path, baseline) == {"goldens": 2, "compared": 2, "different": 0}
+    monkeypatch.setattr(gate, "snapshot_baseline", lambda: {"a.png": "changed", "b.png": "b" * 64})
+    with pytest.raises(ValueError, match="modified"):
+        gate.validate_snapshot_proofs(tmp_path, baseline)
+
+
+def test_phoneme_suite_skip_and_absence_cannot_be_hidden_by_other_android_passes(tmp_path):
+    names = ("SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest")
+    for name in names:
+        (tmp_path / ("TEST-" + name + ".xml")).write_text(
+            f'<testsuite name="vn.abook.player.vieneu.{name}"><testcase name="real"/></testsuite>', encoding="utf-8")
+    gate.require_phoneme_suites_ran(tmp_path)
+    path = tmp_path / ("TEST-" + names[0] + ".xml")
+    path.write_text(f'<testsuite name="{names[0]}"><testcase name="real"><skipped/></testcase></testsuite>', encoding="utf-8")
+    with pytest.raises(ValueError, match="skipped"):
+        gate.require_phoneme_suites_ran(tmp_path)
+    path.rename(path.with_suffix(".absent"))
+    with pytest.raises(ValueError, match="missing phoneme"):
+        gate.require_phoneme_suites_ran(tmp_path)
 
 
 def test_vitest_unhandled_errors_block_even_when_all_tests_pass(tmp_path):

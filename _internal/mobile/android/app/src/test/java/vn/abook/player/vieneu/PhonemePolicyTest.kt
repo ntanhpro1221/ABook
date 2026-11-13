@@ -2,7 +2,6 @@ package vn.abook.player.vieneu
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.json.JSONObject
 import java.io.File
@@ -104,7 +103,7 @@ class PhonemePolicyTest {
     @Test fun theNativeFrontendKeepsSharedWordsVietnamese() {
         val library = File(System.getenv("ABOOK_SEA_G2P_LIB") ?: "../../sea_g2p_jni/target/release/abook_sea_g2p.dll")
         val dictionary = File(System.getenv("ABOOK_SEA_G2P_DICT") ?: "../../../runtime/.venv/Lib/site-packages/sea_g2p/sea_g2p.bin")
-        assumeTrue("Native frontend files required", library.isFile && dictionary.isFile)
+        G2pTestInputs.requireOrSkip("Native frontend files required", library.isFile && dictionary.isFile)
         val cases = sharedCases()
         SeaG2p(library.absoluteFile, dictionary.absoluteFile).use { reader ->
             for (i in 0 until cases.length()) {
@@ -117,7 +116,7 @@ class PhonemePolicyTest {
     @Test fun theNativeFrontendPreservesTheSharedSyllablesAndEnglishDelivery() {
         val library = File(System.getenv("ABOOK_SEA_G2P_LIB") ?: "../../sea_g2p_jni/target/release/abook_sea_g2p.dll")
         val dictionary = File(System.getenv("ABOOK_SEA_G2P_DICT") ?: "../../../runtime/.venv/Lib/site-packages/sea_g2p/sea_g2p.bin")
-        assumeTrue("Native frontend files required", library.isFile && dictionary.isFile)
+        G2pTestInputs.requireOrSkip("Native frontend files required", library.isFile && dictionary.isFile)
         val cases = JSONObject(File("../../../tests/fixtures/readaloud/phoneme_delivery/cases.json").readText(Charsets.UTF_8)).getJSONArray("cases")
         SeaG2p(library.absoluteFile, dictionary.absoluteFile).use { reader ->
             for (i in 0 until cases.length()) {

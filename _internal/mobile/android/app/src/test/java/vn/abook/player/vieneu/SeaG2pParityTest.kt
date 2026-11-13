@@ -4,7 +4,6 @@ import org.json.JSONObject
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
@@ -51,7 +50,7 @@ class SeaG2pParityTest {
     }
 
     private fun reader(): SeaG2p {
-        assumeTrue("sea-g2p host library or dictionary missing (${library().absolutePath}, ${dictionary().absolutePath})", g2p != null)
+        G2pTestInputs.requireOrSkip("sea-g2p host library or dictionary missing (${library().absolutePath}, ${dictionary().absolutePath})", g2p != null)
         return g2p!!
     }
 
