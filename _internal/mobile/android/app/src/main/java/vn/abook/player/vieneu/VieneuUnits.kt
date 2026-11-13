@@ -862,20 +862,24 @@ object VieneuUnits {
      * `spoken_tokens` of vieneu.py.
      */
     fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null, directEnglish: Boolean = false): List<String> {
+        val normalized = toks.map { Normalizer.normalize(it, Normalizer.Form.NFC) }
+        val normalizedReadings = readings?.entries?.associate {
+            Normalizer.normalize(it.key, Normalizer.Form.NFC) to Normalizer.normalize(it.value, Normalizer.Form.NFC)
+        }
         val parts = ArrayList<String>()
         val owners = ArrayList<Int>()
-        toks.forEachIndexed { index, token ->
+        normalized.forEachIndexed { index, token ->
             val separated = tokens(ReadingPunctuation.separate(token))
             parts.addAll(separated)
             owners.addAll(List(separated.size) { index })
         }
-        val said = readSeparatedTokens(parts, origin, readings, directEnglish)
+        val said = readSeparatedTokens(parts, origin, normalizedReadings, directEnglish)
         val grouped = List(toks.size) { ArrayList<String>() }
         said.forEachIndexed { index, word -> grouped[owners[index]].add(word) }
         val out = grouped.map { it.joinToString(" ") }.toMutableList()
         // A reading that only re-capitalizes the word ("KAEL" -> "Kael") is name evidence, not a sound: the inner pass used it,
         // and re-applying it here would undo the sound set for "Kael" (vieneu.spoken_tokens).
-        Readings.applyTokens(toks, out, readings.orEmpty().filter { (surface, said) -> !Abbreviations.provesName(surface, said) })
+        Readings.applyTokens(normalized, out, normalizedReadings.orEmpty().filter { (surface, said) -> !Abbreviations.provesName(surface, said) })
         return out
     }
 

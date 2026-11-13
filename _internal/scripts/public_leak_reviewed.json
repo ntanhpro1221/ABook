@@ -1288,7 +1288,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/LiveClips.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt": {
-    "sha256": "e87a537767bc6436d19510c32822af5dbeddb7c4acb72f72db63963df0305d95",
+    "sha256": "89b52fa9b30024821f945c863bc5b520cda546980906d0ed263796c1e52fd3fd",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/PreparePlan.kt": {

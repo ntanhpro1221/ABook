@@ -1,6 +1,7 @@
 package vn.abook.player.readaloud
 
 import java.util.Locale
+import java.text.Normalizer
 import vn.abook.player.BuildConfig
 import vn.abook.player.VietnameseReading
 
@@ -191,6 +192,8 @@ object EnglishPolicy {
     }
 
     fun reading(core: String, origin: String?): Pair<String, String>? {
+        val normalized = Normalizer.normalize(core, Normalizer.Form.NFC)
+        if (normalized != core) return reading(normalized, origin)
         if (policy.getJSONObject("contextual_abbreviations").has(core.lowercase(Locale.ROOT)) ||
             policy.getJSONObject("contextual_letter_names").has(core.lowercase(Locale.ROOT)) ||
             policy.getJSONArray("case_sensitive_abbreviations").let { a ->

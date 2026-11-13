@@ -1,6 +1,7 @@
 package vn.abook.player.readaloud
 
 import java.util.Locale
+import java.text.Normalizer
 import java.util.concurrent.ConcurrentHashMap
 import vn.abook.player.VietnameseReading
 import vn.abook.player.VietnameseSyllable
@@ -38,19 +39,20 @@ object Names {
 
     /** (dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối). */
     fun splitToken(token: String): Triple<String, String, String> {
+        val text = Normalizer.normalize(token, Normalizer.Form.NFC)
         var start = 0
-        var end = token.length
+        var end = text.length
         while (start < end) {
-            val cp = token.codePointAt(start)
+            val cp = text.codePointAt(start)
             if (Character.isLetter(cp)) break
             start += Character.charCount(cp)
         }
         while (end > start) {
-            val cp = token.codePointBefore(end)
+            val cp = text.codePointBefore(end)
             if (Character.isLetter(cp)) break
             end -= Character.charCount(cp)
         }
-        return Triple(token.substring(0, start), token.substring(start, end), token.substring(end))
+        return Triple(text.substring(0, start), text.substring(start, end), text.substring(end))
     }
 
     private fun lower(text: String) = text.lowercase(Locale.ROOT)

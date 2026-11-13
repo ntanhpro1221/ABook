@@ -1,6 +1,7 @@
 package vn.abook.player.readaloud
 
 import java.io.File
+import java.text.Normalizer
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,6 +9,19 @@ import org.junit.Test
 import vn.abook.player.vieneu.VieneuUnits
 
 class EnglishDirectTest {
+    @Test
+    fun decomposedVietnameseUsesTheSameTokenAndReadingBoundaries() {
+        for (text in listOf("Tôi kiểm GPS.", "Cô gái tên Y.", "Bản hot này hay.")) {
+            val nfd = Normalizer.normalize(text, Normalizer.Form.NFD)
+            assertEquals(Names.splitToken(text.split(" ")[0]), Names.splitToken(nfd.split(" ")[0]))
+            assertEquals(VieneuUnits.spokenTokens(VieneuUnits.tokens(text), directEnglish = true),
+                VieneuUnits.spokenTokens(VieneuUnits.tokens(nfd), directEnglish = true))
+        }
+        val readings = mapOf(Normalizer.normalize("Hà Vy", Normalizer.Form.NFD) to Normalizer.normalize("Lan Anh", Normalizer.Form.NFD))
+        val tokens = VieneuUnits.tokens(Normalizer.normalize("Hà Vy vẽ.", Normalizer.Form.NFD))
+        assertEquals(listOf("Lan", "Anh", "vẽ."), VieneuUnits.spokenTokens(tokens, readings = readings))
+    }
+
     @Test
     fun sharedSentencesHaveTheSameReadingAsDesktop() {
         val fixture = JSONObject(File("../../../tests/fixtures/readaloud/english_direct/cases.json").readText(Charsets.UTF_8))
