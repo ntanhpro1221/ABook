@@ -32,6 +32,7 @@
 - **0 PASS losses and 0 rank regressions** against both controls, at best-take, individual-decode and internal-verified levels. **0 decode label/verdict changes against the branch baseline**, which also reproduces the saved asrjudge4 results exactly. No new corpus PASS is claimed; the synthetic tests expose the missing stroke cases.
 - Dataset SHA-256: `3b54f84d89d28f98b5c11cb1cb86399e1349bd3c4e668c9d5cf3c87aff7cdf15`. Replay uses the saved dataset without new ASR/audio or text generation. Its row-scoped edit-distance memoization asserts identical function ASTs across revisions and calls the original function on cache misses. Replay starts with 6.53 GiB available RAM, peaks at 403.8 MiB process-tree RSS, exits 0.
 - Quality implementation hash: `dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64` -> `b0d055488ff0c1304f770d1b419b0d97ae9f8f47030ef1d42224356811d8101f`. `compileall` passes; changed files have LF, no unexpected control characters, and a clean diff check. Dev branch only.
+- Implementation commit `9b7283ef4`: full-corpus `scripts/leak_scan.py --rev HEAD` exits 0, 0 findings in 4,636 files; 1,577 pre-existing exact reviewed false positives. No allowlist changes.
 
 ## 13-11-2026 — integ168c release integration follow-up
 
