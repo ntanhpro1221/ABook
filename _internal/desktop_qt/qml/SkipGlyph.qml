@@ -19,7 +19,7 @@ Item {
     Canvas {
         id: stroke
         anchors.fill: parent
-        Reveal { shown: root.showStroke }
+        visible: root.showStroke
         renderTarget: Canvas.Image
         renderStrategy: Canvas.Cooperative
         onPaint: {
@@ -55,7 +55,7 @@ Item {
     }
     Text {
         id: digits
-        Reveal { shown: root.showDigits }
+        visible: root.showDigits
         text: "15"
         color: root.color
         anchors.horizontalCenter: parent.horizontalCenter

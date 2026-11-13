@@ -116,6 +116,24 @@ class QtProject:
                     out.append((name, own[m.start(1):m.end(1)].strip()))
         return out
 
+    def configured(self, file: str, expression: str) -> bool:
+        """True when every name is a literal-default property of this component that no QML binding or assignment ever
+        changes: a per-instance setting fixed for the item's lifetime (only C++ tests or the default set it)."""
+        names = set(re.findall(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)(?!\s*\()', mask(expression))) - {'root', 'true', 'false', 'null'}
+        if not names:
+            return False
+        for name in names:
+            decl = self.decls.get(file, {}).get(name)
+            if decl is None or not re.fullmatch(r'"[^"]*"|-?\d+(?:\.\d+)?|true|false', decl):
+                return False
+            if self.assignments(file, name):
+                return False
+            if any(re.search(r'\.' + name + r'\s*=(?!=)', clean) for clean in self.clean.values()):
+                return False
+            if re.search(r'(?<![.\w])' + name + r'\s*=(?!=)', self.clean[file]):
+                return False
+        return True
+
     def responsive(self, file: str, expression: str, seen: frozenset = frozenset()) -> bool:
         """True when every name in the expression is derived from a width/height (the layout follows the window size)."""
         names = [n for n in re.findall(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)(?!\s*\()', mask(expression))
@@ -191,6 +209,8 @@ def _qt_reason(project, name, source, obj, objects, expression, animated):
     transform = re.search(r'\btransform\s*:\s*[^\n]*\{([^}]*)\}', own)
     if transform and set(re.findall(r'[a-zA-Z_]\w*', transform[1])) & animated:
         return 'b-transition-layer', 'the item itself slides with an animated transform'
+    if project.configured(name, expression):
+        return 'b-constant', 'per-instance setting that nothing changes after creation'
     if project.responsive(name, expression):
         return 'b-responsive', 'layout follows the window size'
     return 'a-hard', 'direct conditional with no transition on this object'
