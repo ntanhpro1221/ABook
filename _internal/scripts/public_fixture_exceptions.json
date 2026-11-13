@@ -64,7 +64,7 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/readaloud/real_names/cases.json": {
-    "sha256": "e0632c8b26a3253d63056526fced9908c234e0d412dc3723b593a66d4bffdc2e",
+    "sha256": "005b114bce54028a9a5cc12008e7ba6eaada8558de0420c2f2424859356556d3",
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
@@ -120,7 +120,7 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "aafce739272c65f7a6e16a4c0274d9f6cf70677b42b4cf15ed8f95b7bbd099b4",
+    "sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
     "reason": "Synthetic sentences authored in scripts/vieneu_android_fixtures.py; native level/stress correction, generated text/token IDs only"
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {

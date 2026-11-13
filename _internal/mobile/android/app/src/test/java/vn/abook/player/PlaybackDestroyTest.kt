@@ -52,9 +52,9 @@ class PlaybackDestroyTest {
         assertTrue(holding.await(TestTime.seconds(5), TimeUnit.SECONDS))
         try {
             DiskWrites.post("destroy-test") { Store.writeAtomic(java.io.File(Store.root, "queued.json"), "{}") }
-            val start = System.nanoTime()
+            val start = System.nanoTime() // wallclock-ok: scaled lifecycle bound distinguishes returning from a blocked Store writer.
             controller.destroy()
-            val elapsedMs = (System.nanoTime() - start) / 1_000_000
+            val elapsedMs = (System.nanoTime() - start) / 1_000_000 // wallclock-ok: compared with TestTime.ms and a blocked-writer ceiling below.
             println("onDestroy with both writers blocked: ${elapsedMs}ms")
             assertTrue("onDestroy took $elapsedMs ms with Store blocked", elapsedMs < TestTime.ms(100, blockedMs = 4_000))
             assertNull(Playback.player)
@@ -98,9 +98,9 @@ class PlaybackDestroyTest {
         try {
             DiskWrites.post("destroy-test") { Store.writeAtomic(java.io.File(Store.root, "after-timeout.json"), "{}") }
             controller.destroy()
-            val start = System.nanoTime()
+            val start = System.nanoTime() // wallclock-ok: measures the explicitly shared flush timeout, not a performance target.
             assertFalse(Playback.flushSaves(100))
-            val elapsedMs = (System.nanoTime() - start) / 1_000_000
+            val elapsedMs = (System.nanoTime() - start) / 1_000_000 // wallclock-ok: scaled upper bound remains below the blocked-writer duration.
             println("shared 100ms flush budget: ${elapsedMs}ms")
             assertTrue("flush exceeded its shared budget: $elapsedMs ms", elapsedMs < TestTime.ms(100, blockedMs = 200))
         } finally {

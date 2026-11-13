@@ -8,7 +8,7 @@ from abook.readaloud import phoneme_policy as pp, vieneu, vieneu_engine
 from abook.readaloud.studio_tn import studio_tn
 from abook.tts import keep_vieneu_final_mark
 
-CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/normalized_occurrences.json").read_text("utf8"))
+CASES = json.loads((Path(__file__).parent / "fixtures/readaloud/normalized_occurrences/cases.json").read_text("utf8"))
 VI = {"ben": "bˈɛn", "can": "kˈaːn", "an": "ˈaːn", "ten": "t̪ˈɛn"}
 
 

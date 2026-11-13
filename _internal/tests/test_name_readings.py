@@ -9,7 +9,14 @@ from pathlib import Path
 from abook.database import LISTENER_PRONUNCIATION_SOURCE
 from abook.listener_overrides import request_pronunciation
 from abook.webui.name_readings import name_readings
-from tests.test_listener_speakers import _book
+from tests.test_listener_speakers import _book as _speaker_book
+
+
+def _book(tmp_path):
+    paths, db = _speaker_book(tmp_path)
+    with db.connect() as conn:
+        conn.execute("UPDATE segments SET wav_path=? WHERE wav_path IS NOT NULL", (str(paths.root / "take.wav"),))
+    return paths, db
 
 
 def _pronounce(db, surface: str, spoken: str, *, confidence: float = 0.95, source: str = "analysis") -> None:
@@ -90,7 +97,7 @@ def test_the_studio_serves_the_list(tmp_path: Path) -> None:
 
 def _say(db, stable_id: str, text: str, *, recorded: bool = True) -> None:
     with db.connect() as conn:
-        conn.execute("UPDATE segments SET text=?, wav_path=? WHERE stable_id=?", (text, "take.wav" if recorded else None, stable_id))
+        conn.execute("UPDATE segments SET text=?, wav_path=? WHERE stable_id=?", (text, str(db.path.parent / "take.wav") if recorded else None, stable_id))
 
 
 def test_a_reading_for_any_word_says_which_lines_it_reaches_and_what_it_costs(tmp_path: Path) -> None:

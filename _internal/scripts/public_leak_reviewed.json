@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "1c71701fa31ec9016c17aa9cbfac2a5b95d4202587cc934444c5bdbc8f6d588c",
+    "sha256": "f82b8d5025fff35fe96ddd831f3f24426f65629fbe6fde1d7074ccdcbf728ad0",
     "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
@@ -3464,7 +3464,7 @@
     "reason": "tests/test_moreinfo_parity.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_moved_book_samples.py": {
-    "sha256": "2285b9209b567aec7970eac5186a37abd872c60a061e6621f53457c7d93b0dfe",
+    "sha256": "095d491c848ea940a273055dda60ad2877b74970e247c7f485059df8ccc881f6",
     "reason": "tests/test_moved_book_samples.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_mp3_export_fixtures.py": {
@@ -3592,7 +3592,7 @@
     "reason": "tests/test_name_marks_agree.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_name_readings.py": {
-    "sha256": "e6ae77ab12d46744ab621b3f259085d9b6fc6d73d1bf290a5cd760630733dff1",
+    "sha256": "6997908a9a5a9107fe906b9ce7cd339ac40f6b62edf1d404090bf700ed4f84c6",
     "reason": "tests/test_name_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_names.py": {

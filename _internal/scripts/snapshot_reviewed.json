@@ -1,107 +1,107 @@
 {
   "_internal/mobile/android/app/src/test/snapshots/add_chapter_name_dark.png": {
-    "sha256": "4f7ff347e839db758f5271c46d3e729f6caa4f52ad61c60bbd27a4c53061e880",
-    "reason": "Reviewed old/new add_chapter_name_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1e10928276901e69f72c02cba62fe6e7dec5d4cfef967c1c268ef5caeae99a99",
+    "reason": "Visually reviewed late fix168reveal layout: add_chapter_name_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/add_chapter_name_light.png": {
-    "sha256": "60cf7de49579309b42946da0c8f5617de117b224acceccdaf3099e478693967e",
-    "reason": "Reviewed old/new add_chapter_name_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a9d9afbddab84a32e31c63971dfabddd12ff8ad605295a9ccabb4dcab7933514",
+    "reason": "Visually reviewed late fix168reveal layout: add_chapter_name_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/add_footnotes_dark.png": {
-    "sha256": "af9aa5c7e20c8c2ece0d422cd1545a574ba67b2eb335add74444ff67d5a7cef5",
-    "reason": "Reviewed old/new add_footnotes_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a83d239739e5e4722e8f437e0b341885ae940ff4878ca642446e2eb26f4f9899",
+    "reason": "Visually reviewed late fix168reveal layout: add_footnotes_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/add_footnotes_light.png": {
-    "sha256": "445fa881540a1fc06b4906b7c775888a4ec8f12bf7a489652de2fbdd86e4f8a7",
-    "reason": "Reviewed old/new add_footnotes_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "40eae6649859c7ee8f54b4eca0af7856d5c072724818486714f05517ce9e310f",
+    "reason": "Visually reviewed late fix168reveal layout: add_footnotes_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "9a9e9def9ef38854c4d3c3a303371d45d2f3d64e2ec8c1ab7733e8f2606aef75",
-    "reason": "Reviewed old/new book_cast_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "879eaa93763f43a2cc13d5742216f5226cf815af990cc3b8917ee80aa7a7003c",
+    "reason": "Visually reviewed late fix168reveal layout: book_cast_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "9c801b0bd7435d47692110186669eb8273865331675c2bbe3f117de48a971728",
-    "reason": "Reviewed old/new book_cast_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b60395fc3356c01be16777159bc8d8055c62e554a680182c654c9460c7b32491",
+    "reason": "Visually reviewed late fix168reveal layout: book_cast_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "30955de32d855d0d3b566901fc2a5b5cbfdd9915fa1fb0de66eb67a9cffc0463",
-    "reason": "Reviewed old/new book_delete_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "78f2c62a57fbe1ee24f09da2a3e5268be6ab4cde4dda235f002d21b797421798",
+    "reason": "Visually reviewed late fix168reveal layout: book_delete_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "eca1ee458b9db0d01eb80650683642dbb92855b94140ebabd1129d8dd9017959",
-    "reason": "Reviewed old/new book_delete_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "74e614e156c6d80ac7ab52ac206d5586b606d1839fbd02c59a66ac6b506e1930",
+    "reason": "Visually reviewed late fix168reveal layout: book_delete_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
-    "sha256": "5e4894a93704b9e49e7fffeba925ee4c22013c8f246d09477562ad7d118da4a5",
-    "reason": "Reviewed old/new book_expanded_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "22d3f327ba5dbcb233647f40322acffc6cc3b6fc3b47a63f1ba7ed870cfd67ce",
+    "reason": "Visually reviewed late fix168reveal layout: book_expanded_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "b087eae95163aee68d419cc45d4e32157a6ce463e885b464c292bf5d9570b384",
-    "reason": "Reviewed old/new book_find_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "be8bd9b5007749156e759c407cef3cfb7a434b9f8195f3d84d09a4e8c332e4bb",
+    "reason": "Visually reviewed late fix168reveal layout: book_find_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
-    "sha256": "31e44042d3ea4391ff1f4ab6a6f6063954f309d9774728a5866b5eb14d7e1bba",
-    "reason": "Reviewed old/new book_finished_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "99b9d62173dc3253cc4c711342577e7a2cfdc8046718396d294ca74004e25da9",
+    "reason": "Visually reviewed late fix168reveal layout: book_finished_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_dark.png": {
-    "sha256": "0ce0f0b2d50adfe4fb0803d614573bb422da7ee919fe7569dfad298ddfda652b",
-    "reason": "Reviewed old/new book_fresh_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "6d68f2f07b9c6e16798505d0f46494e681b5718554a976181a236588773f2994",
+    "reason": "Visually reviewed late fix168reveal layout: book_fresh_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_light.png": {
-    "sha256": "c3b470a0bf44b2006349ffd25f009456263cd29ad9b68b4bdb1b244d0ea66848",
-    "reason": "Reviewed old/new book_fresh_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "3c834e9c5b6076ec799160907e02470edecc4f641375f427445e9be52c8c19f5",
+    "reason": "Visually reviewed late fix168reveal layout: book_fresh_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_gone_light.png": {
     "sha256": "c310cdded105be9255c335344f4b346aa77427930f5fadd97def91405edba9fe",
     "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
-    "sha256": "778c48eeb06080dbfd2877d14d4b3e69756b69bb480b15bc754d2b66cd174b33",
-    "reason": "Reviewed old/new book_head_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ca8533d54a16f2472a4777718eec6bc698ff2c16c7933b15ca64a861c2605b20",
+    "reason": "Visually reviewed late fix168reveal layout: book_head_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
-    "sha256": "1defd88f22556f4e8da9d1e55af909cb9f13e2fe32cca2fd3b1a5f14564d94ec",
-    "reason": "Reviewed old/new book_history_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "11eb941b6ee18ee049095597c14ef70222f08d03c8e59ff973bf0bb9dd4ff631",
+    "reason": "Visually reviewed late fix168reveal layout: book_history_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
-    "sha256": "deab02590c0661c2b1c1c16928d41a462bc2b42f5d9cd8066adc5df213698337",
-    "reason": "Reviewed old/new book_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b1364936781c2f2894d49343228ae23fb569e6b63940bd532d7ca6f7bd027128",
+    "reason": "Visually reviewed late fix168reveal layout: book_large_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
-    "sha256": "6ee6d33ac14aeeda56c443141a7458bbd46d083801039458beb920c561c5e171",
-    "reason": "Reviewed old/new book_listening_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a1a4153716b21c191f819c28c404366cafd5c53fd1e9ab82d6d231a0c62d88d1",
+    "reason": "Visually reviewed late fix168reveal layout: book_listening_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
-    "sha256": "bba4d129f5324be8c38ab429f88d1549f9d0c17e4a1ffbdd8f424c18ccdf25bd",
-    "reason": "Reviewed old/new book_listening_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "24e588f86a15668cbb425d88d13f3c0994199f86183c0eb93485f38798e69a3b",
+    "reason": "Visually reviewed late fix168reveal layout: book_listening_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
-    "sha256": "17916dfc8b96ff06782e0f984a3488017ec075b48ea50840599a4e5a2bf41389",
-    "reason": "Reviewed old/new book_loading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "f7dde25644efa66112f61abfa07f7d161c6cdaef9b0aa5bad1992e02ba64dd78",
+    "reason": "Visually reviewed late fix168reveal layout: book_loading_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
-    "sha256": "d00f5dc7630e999432f58103de76677998c45a596bbb7e6674ddf8089cc68144",
-    "reason": "Reviewed old/new book_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d1a7709d11293bc87eaee39d29e013f04481f093b4413b7619a4fbd2cd9a1e92",
+    "reason": "Visually reviewed late fix168reveal layout: book_menu_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
-    "sha256": "e33325f55460698e82c20c7c25d6ec3dbc227dbf12b43bc276edbdbc24ab9a87",
-    "reason": "Reviewed old/new book_partial_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d17f50201e0ca15cd2fa8dcf3c7171fe0ce8c1c90f83cf1d363e1ea88a20c345",
+    "reason": "Visually reviewed late fix168reveal layout: book_partial_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "245f782a0e020b70d252a6a7bc3fec740deb607d18a02fde6ae1c528576fac2d",
-    "reason": "Reviewed old/new book_person_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "fe35ab050ff8a43b5552dd6fccfc017072ec49032e5efde8803573a31f9a54d4",
+    "reason": "Visually reviewed late fix168reveal layout: book_person_sheet_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
-    "sha256": "f22208802d629c6b2bdc1c9398a7b388a48c86fc74e16a5e47ddd520c793b0d0",
-    "reason": "Reviewed old/new book_playing_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9e65cbc17061413c11f6beaeb9ec823ef0fc46ef95bfbaf9c72968be4ffcb3d3",
+    "reason": "Visually reviewed late fix168reveal layout: book_playing_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "f040c2e9e27e8902c2f279e72115f5f08a757caf06616e868cbc9205eb1005b9",
-    "reason": "Reviewed old/new book_save_as_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b48fdf14fec4214b7fe9abef5c2027076a8d4f81445adb731a2a06bf81090080",
+    "reason": "Visually reviewed late fix168reveal layout: book_save_as_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
-    "sha256": "f618296977f1753d38deea0455b1210d5f098af14485d064f41e5b38bd5e6e68",
-    "reason": "Reviewed old/new cover_long_title.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
+    "reason": "Visually reviewed late fix168reveal layout: cover_long_title.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_failed_dark.png": {
     "sha256": "47dc73347769aac53052d424ae2f14d1caf52ac5d5bf8d6c944bf2153eda94a5",
@@ -156,16 +156,16 @@
     "reason": "Reviewed old/new edit_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_chapter_audio_light.png": {
-    "sha256": "801efa892333e303bdd4771f96533a898df0d07fc614cec536300363789028f7",
-    "reason": "Reviewed old/new edit_chapter_audio_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "db24760a33b61c2f70fc8c90a4f78d27292a9065dab0cb72d77b4f82c4e76140",
+    "reason": "Visually reviewed late fix168reveal layout: edit_chapter_audio_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_chapter_dark.png": {
-    "sha256": "2fd181e5465ee307408f2cb353d02a32bb2cc99e1c14de318c86e97449cc0af9",
-    "reason": "Reviewed old/new edit_chapter_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a71b905a786cca78863b685e3f9eb4bb212bd7a8ae803626d1d5b10d56628e9e",
+    "reason": "Visually reviewed late fix168reveal layout: edit_chapter_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_chapter_light.png": {
-    "sha256": "8e8aec1f2adf84bb45e5e8fa66c575b6c95dc1ce4f7333a4a94b277234c21ae2",
-    "reason": "Reviewed old/new edit_chapter_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "753c772644b6d4739fe7e48e5a79454dbac2c1895e98fba4d8f3b587cd196922",
+    "reason": "Visually reviewed late fix168reveal layout: edit_chapter_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_none_dark.png": {
     "sha256": "abc1460a91498d0c833f74e30744de0a4ad5732914498eda9e020cadac8af55c",
@@ -348,12 +348,12 @@
     "reason": "Reviewed old/new gap1b_device_kinds_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
-    "sha256": "db8af73e662454b6dc606658dd9ab2310de7ccc3464c1d12d5bb1c9f9762901b",
-    "reason": "Reviewed old/new gap1b_shell_error_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "67c99f6f49c88dfd1cf89b63d8e9466103edc18efe4a2f0738722e64c516ebdf",
+    "reason": "Visually reviewed late fix168reveal layout: gap1b_shell_error_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_light.png": {
-    "sha256": "93af3060321a94544380bd8084e746d0c2d93c0daa1d9821a2200536969a4ac0",
-    "reason": "Reviewed old/new gap1b_shell_error_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "556a7cb0e8dfe2e15696bb493a4c1fbc56f46910d496d6e466c9aeb1c4c0d1ba",
+    "reason": "Visually reviewed late fix168reveal layout: gap1b_shell_error_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_dark.png": {
     "sha256": "b529e2fde79e5a23acda5da6d9d8a048addf46ae7942e6f150e301f7a72cf105",
@@ -428,12 +428,12 @@
     "reason": "Reviewed old/new library_sort_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
-    "sha256": "d954d346c69557606e5ff1b6bc2222a7b66903f277012d12df2c89e7587f0ea3",
-    "reason": "Reviewed old/new link_book_mini_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9a20e995ad4b9fcc47f55e3999c436665509edb6d50c0032f5bc6ce9ecb5f3f6",
+    "reason": "Visually reviewed late fix168reveal layout: link_book_mini_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_light.png": {
-    "sha256": "2775c9d2ddd8b97ee22a1f469a6d24c5c3decdb5498496e436ec17176372559c",
-    "reason": "Reviewed old/new link_book_mini_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "077f5c8ef78f6132b2901de4c51c25730e3392b87d0205bf4f169d93d9312bb2",
+    "reason": "Visually reviewed late fix168reveal layout: link_book_mini_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/mini_long_title_light.png": {
     "sha256": "f437e3aed9fa9bcf4bfc4301fb35f21bc4d15e69c3587207933e85e154893811",
@@ -476,32 +476,32 @@
     "reason": "Reviewed old/new music_book_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
-    "sha256": "40f3fe34089df6f1aafdfed0abf89daf6927c96f4375fe409b0f0e9f568d938b",
-    "reason": "Reviewed old/new music_library_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1e1b32724672b99e267c67d0df7848d73ef0b3b3a08e75c2b6b7097482064dd2",
+    "reason": "Visually reviewed late fix168reveal layout: music_library_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
-    "sha256": "e904ac3739f77cb233b2ab15a6d8c1eeedfde17a7fa2b429a220fcb748b99308",
-    "reason": "Reviewed old/new music_library_downloading_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "f8b5ea5049c6fd607fe78bd70ec70bef94d301ab43b6efabf50559bf1c8e176a",
+    "reason": "Visually reviewed late fix168reveal layout: music_library_downloading_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
-    "sha256": "b6eab0a4df1a99af27b729cb36d3afdb2e55166e41e8d255d42aef5347b3f167",
-    "reason": "Reviewed old/new music_library_downloading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "04a13565cc480462330ce3be6bc362544823b6897c8b9bb6011c99d71b76ec51",
+    "reason": "Visually reviewed late fix168reveal layout: music_library_downloading_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
-    "sha256": "348f929c5a632c3539f13e084561cbac3dd52c302ffaec198fd79dc62486d866",
-    "reason": "Reviewed old/new music_library_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "3da94cbaa1ae044a94d6f9e4a5e1091a6b5fe5736e4569c186ce58558e6e6867",
+    "reason": "Visually reviewed late fix168reveal layout: music_library_font130_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_light.png": {
-    "sha256": "41a7b2ff976a35f0213c441139a519be858b8bd8a9499956bba821caa52254b2",
-    "reason": "Reviewed old/new music_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "436a586bdd1d7536a78679dd0ed09d91200b31365afb9dfb4d9540383e5adfca",
+    "reason": "Visually reviewed late fix168reveal layout: music_library_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_dark.png": {
-    "sha256": "0357b4209edc475364f36b6ee7b0b1c3c42656c68cce9431a1801cd15120d276",
-    "reason": "Reviewed old/new music_pick_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "68a0416f1b35810e16bf6280533dcaf235c435d9d4a271e7fbde3de796375d8c",
+    "reason": "Visually reviewed late fix168reveal layout: music_pick_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_light.png": {
-    "sha256": "d214e1fda75f6275ff64edb64927dce2adfbfd87fd9eccdf1594cc4ebb30a1c1",
-    "reason": "Reviewed old/new music_pick_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9b63a40fe37b63ea099382564ac86419ce518326a17c59738928bb92b87bafd3",
+    "reason": "Visually reviewed late fix168reveal layout: music_pick_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
     "sha256": "ea87254dc24d7ce768ce0435f8e719cbf3dea895388ee86f5626fb8b462dbb42",
@@ -644,8 +644,8 @@
     "reason": "Reviewed old/new settings_sleep_time_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
-    "sha256": "bdcaf35f2dd3f4ba0cb8482ddf9731d674c30b1c4c78ee59f2bfbec007c85a23",
-    "reason": "Reviewed old/new shell_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "0e0c20b85b0b47804534fdad3d3a75409cd8001c3f0db2fd492100466c6a5f43",
+    "reason": "Visually reviewed late fix168reveal layout: shell_book_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_empty_light.png": {
     "sha256": "d30608f1998fa778cd8c4dedf1e7ea9fd442a6cc1c56fa57f07be76a51d698a7",
@@ -676,8 +676,8 @@
     "reason": "Reviewed old/new shell_now_playing_open_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
-    "sha256": "98dbe0b785b5ea6c8b97a7d05c70763d83813b080786411ba84fddeef525a7f0",
-    "reason": "Reviewed old/new shell_push_mid_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "2d71b6a2c14a8abde41d23df264425b802b8b039d70e201d9231f55073edc686",
+    "reason": "Visually reviewed late fix168reveal layout: shell_push_mid_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
     "sha256": "29fc4169de9d907e35dcc8a0311873684fb2c820a30b96f0f8e103f37d46517c",
@@ -720,24 +720,24 @@
     "reason": "Reviewed old/new voice_key_consent_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_problem_light.png": {
-    "sha256": "3ed0d730c88244d1778f3f801d3fefe502b0264ce1614f5b4749408362e20f26",
-    "reason": "Reviewed old/new voice_key_problem_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b5026087b03390a645b28621fe1181e3ce036125434c30fb6e6b96d637a2891c",
+    "reason": "Visually reviewed late fix168reveal layout: voice_key_problem_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_refused_dark.png": {
-    "sha256": "aab0c84e9fe4e71553c643b40889be62cec4f6a303e27399369e3b69d675ef8c",
-    "reason": "Reviewed old/new voice_key_refused_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "7eac4fc0bb4a18bcf37dd3e77130f938bb7321a874aaac1a73e8957233e2c7b8",
+    "reason": "Visually reviewed late fix168reveal layout: voice_key_refused_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_remove_dark.png": {
     "sha256": "56452e29091f2738867d6758d5588356515a94c55a711afcf698fa19866d9031",
     "reason": "Reviewed old/new voice_key_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_dark.png": {
-    "sha256": "87b20e7913dbea5f3ef0e6199bc3ff386e11a85c34264783680124851e20bc44",
-    "reason": "Reviewed old/new voice_key_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "c59e04233e02abe6e2a7679ee28eea04fa1a3b7357f3e47653544711418b90ee",
+    "reason": "Visually reviewed late fix168reveal layout: voice_key_sheet_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_light.png": {
-    "sha256": "e8f885d69cebe59965532a60c382118b0eedb9b33b546b716a7f785cce181a4e",
-    "reason": "Reviewed old/new voice_key_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "e028c889ff3f120717a6f6246aacf9a603e72afa04fde8a91066a485e62afe5f",
+    "reason": "Visually reviewed late fix168reveal layout: voice_key_sheet_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_metered_sheet_light.png": {
     "sha256": "f251189c5ddf47d626b78dde13a1bab8bddd9577cad3ed94ab58f1357a8cd7d2",
@@ -792,8 +792,8 @@
     "reason": "Reviewed corrected devices_share_on_light.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_records_light.png": {
-    "sha256": "22408a53a9b8ab73f23a1a9e622f44841e98b6a21575408125f01ceee76aa879",
-    "reason": "Reviewed book_records_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "4acbf777c45ca08f27662bb3f4992f56a5e3ac9ad1d0ac062f9c9cf54ef50749",
+    "reason": "Visually compared book_records_light.png after the reveal layout fix: book progress/controls have proper vertical spacing; profile sheet labels and actions remain separate and readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/icon_sheet_dark.png": {
     "sha256": "05b972d2b301dac115580abe1fc051552511ffcaa91edf085aafcab7224bfc37",
@@ -860,8 +860,8 @@
     "reason": "Reviewed skip_glyph_fwd_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_verdict_light.png": {
-    "sha256": "bb62880b24191ea79275b0888933e147259c3dad106f87fa613ace3ffdfa7fef",
-    "reason": "Reviewed voice_key_verdict_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "df271630765b476bea6b1724c22b3d12120bb0210b6b7aaf5cf748f2f09b4997",
+    "reason": "Visually reviewed late fix168reveal layout: voice_key_verdict_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_light.png": {
     "sha256": "f8f94b0db4c06435fdb5b83ba4215622dae65746891442e548e3c848ca803bb9",

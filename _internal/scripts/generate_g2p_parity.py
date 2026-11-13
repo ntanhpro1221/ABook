@@ -77,7 +77,7 @@ def public_cases():
 
 def occurrence_cases():
     """Authored contexts; full sentence phones are written only outside Git."""
-    rows = load(ROOT / "tests/fixtures/readaloud/normalized_occurrences.json")
+    rows = load(ROOT / "tests/fixtures/readaloud/normalized_occurrences/cases.json")
     return [case(row["id"], "normalized_occurrence", row["text"], row.get("origin"), {},
                  Rulings(names=set(row["names"]))) for row in rows]
 

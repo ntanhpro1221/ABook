@@ -161,6 +161,7 @@ def test_active_edge_uses_existing_pipeline_seed_retry(tmp_path, monkeypatch):
     from abook.pipeline import BookPipeline
 
     p = object.__new__(BookPipeline)
+    p.paths = SimpleNamespace(root=tmp_path)
     p.settings = build_settings()
     p.settings['tts']['max_retries'] = 2
     p.quality_policy_hash = 'synthetic-policy'

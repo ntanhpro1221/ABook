@@ -80,6 +80,7 @@ def test_optional_asr_inference_error_becomes_warning(monkeypatch) -> None:
 
 
 def test_asr_fail_policy_rejects_missing_model_cache(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     settings = build_settings(
         overrides={
             "asr": {

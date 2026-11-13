@@ -52,12 +52,12 @@ class RecordSwitchIoTest {
                 }
             }
             // Let main capture/detach. A Store mutation submitted to main would block this idle call.
-            val start = System.nanoTime()
+            val start = System.nanoTime() // wallclock-ok: scaled bound detects a record mutation incorrectly running on main.
             for (attempt in 0 until 1_000) {
                 shadowOf(Looper.getMainLooper()).idle()
                 if (entered.await(TestTime.ms(1), TimeUnit.MILLISECONDS)) break
             }
-            val elapsedMs = (System.nanoTime() - start) / 1_000_000
+            val elapsedMs = (System.nanoTime() - start) / 1_000_000 // wallclock-ok: TestTime.ms preserves separation from the blocked mutation deadline.
             assertEquals(0L, entered.count)
             assertNotSame(mainThread, thread.get())
             assertTrue("main waited for the record mutation ($elapsedMs ms)", elapsedMs < TestTime.ms(100, blockedMs = 4_000))

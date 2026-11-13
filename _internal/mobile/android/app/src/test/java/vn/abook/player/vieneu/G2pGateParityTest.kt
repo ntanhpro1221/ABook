@@ -99,7 +99,7 @@ class G2pGateParityTest {
     @Test fun authoredNormalizedOccurrencesMatchDesktopExactly() {
         val path = System.getenv("ABOOK_G2P_OCCURRENCE_FIXTURE")
         G2pTestInputs.requireOrSkip("Generate authored occurrence parity outside the repository", path != null && File(path).isFile)
-        val rows = JSONArray(File("../../../tests/fixtures/readaloud/normalized_occurrences.json").readText(Charsets.UTF_8))
+        val rows = JSONArray(File("../../../tests/fixtures/readaloud/normalized_occurrences/cases.json").readText(Charsets.UTF_8))
         compare(File(path!!), rows.length(), "occurrences")
     }
 

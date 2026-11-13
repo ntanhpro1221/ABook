@@ -16,7 +16,7 @@ class NormalizedOccurrenceTest {
     }
 
     @Test fun readerKeepsOnlyAdjudicatedOccurrencesAfterNumbersExpand() {
-        val cases = JSONArray(File("../../../tests/fixtures/readaloud/normalized_occurrences.json").readText(Charsets.UTF_8))
+        val cases = JSONArray(File("../../../tests/fixtures/readaloud/normalized_occurrences/cases.json").readText(Charsets.UTF_8))
         val vi = mapOf("ben" to "bˈɛn", "can" to "kˈaːn", "an" to "ˈaːn", "ten" to "t̪ˈɛn")
         reader().use { g2p ->
             for (i in 0 until cases.length()) {

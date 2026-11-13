@@ -23,11 +23,11 @@ class PlaybackStartupIoTest {
         } }.apply { start() }
         assertTrue(holding.await(TestTime.seconds(5), TimeUnit.SECONDS))
         try {
-            val start = System.nanoTime()
+            val start = System.nanoTime() // wallclock-ok: scaled bound detects lifecycle waiting for the deliberately blocked Store.
             val service = controller.create().get()
             assertFalse(service.initialization.isDone)
             controller.destroy()
-            val elapsedMs = (System.nanoTime() - start) / 1_000_000
+            val elapsedMs = (System.nanoTime() - start) / 1_000_000 // wallclock-ok: TestTime.ms caps the assertion below the blocked Store deadline.
             println("cold service create/destroy with Store blocked: ${elapsedMs}ms")
             assertTrue("service lifecycle waited for Store ($elapsedMs ms)", elapsedMs < TestTime.ms(100, blockedMs = 4_000))
             release.countDown()

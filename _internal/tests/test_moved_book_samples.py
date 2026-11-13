@@ -23,7 +23,7 @@ def test_a_take_in_place_is_found_as_before(tmp_path: Path) -> None:
     take.parent.mkdir(parents=True)
     take.write_bytes(b"RIFF")
     assert segment_audio(tmp_path, str(take)) == take.resolve()
-    assert segment_audio(tmp_path, "work/chunks/0001.wav") == take.resolve()
+    assert segment_audio(tmp_path, "work/chunks/0001.wav") is None, "Stored relative paths are untrusted"
 
 
 def test_nothing_outside_the_book_is_ever_served(tmp_path: Path) -> None:

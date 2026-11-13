@@ -48,8 +48,11 @@ class _StubPool:
         return dict(self.scores)
 
 
-def _pipeline(tmp_path: Path):
-    checkpoint = tmp_path / "utmos.pth"
+def _pipeline(tmp_path: Path, monkeypatch):
+    runtime = tmp_path / "runtime"
+    monkeypatch.setenv("ABOOK_RUNTIME", str(runtime))
+    checkpoint = runtime / "models" / "utmosv2" / "utmos.pth"
+    checkpoint.parent.mkdir(parents=True)
     checkpoint.write_bytes(b"locked checkpoint")
     source = tmp_path / "001.txt"
     # Several paragraphs, because a pool of fewer than two workers is not a pool and the
@@ -124,7 +127,7 @@ def _allow(**overrides) -> ResourceDecision:
 def _arrange(tmp_path, monkeypatch, *, decision: ResourceDecision | None = None):
     _StubPool.instances.clear()
     _StubPool.next_scores = {}
-    pipeline, db, chapter = _pipeline(tmp_path)
+    pipeline, db, chapter = _pipeline(tmp_path, monkeypatch)
     monkeypatch.setattr("abook.pipeline.PerceptualScorePool", _StubPool)
     monkeypatch.setattr(pipeline.resources, "decide", lambda _s: decision or _allow())
     return pipeline, db, chapter

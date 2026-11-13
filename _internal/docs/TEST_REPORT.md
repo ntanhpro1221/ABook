@@ -1,5 +1,13 @@
 # Test report
 
+## 14-11-2026 — complete integration fixture and motion repairs
+
+- Complete diagnostic pytest: **13,552 passed / 20 failed / 17 skipped / 2 deselected**. The same source passed browser geometry, TypeScript and full Vitest. Android unit XML reported **3,750 passed / 5 failed / 5 skipped**; snapshot Verify also found changed renderings after the completed review branches. These red results are retained as diagnostics, not release approval.
+- Model-cache fixtures now declare their isolated runtime, pipeline mocks supply the trusted book root, and reading examples store absolute in-book WAV paths. Relative stored paths remain rejected. The new occurrence dataset lives in its own folder so both existing word-timing readers keep their one-object-per-file contract.
+- Shared speech data regenerated exactly seven cache keys without changing any text/reading field. Two symbol expectations follow the dotted-number fix on Android. Exact fixture privacy reviews were refreshed after checking the inherited self-written sentences and regenerated TN output; no corpus exemption or new narrative fixture was added.
+- ValuePicker starts with the ruler layout and reveals fallback chips only after actual overflow measurement, using the shared motion component. This preserves motion while avoiding retention of an unmeasured fallback during sheet opening. Eight stopwatch lines in the Android lifecycle regressions now carry the documented wallclock-ok rationale: their bounds already use TestTime and remain below the deliberately blocked operation deadline; assertions and ratchet budgets were not relaxed.
+- Focused failure groups: **287 passed / 1 skipped / 0 failed**. Reviewed 12 old/new image sheets and adopted 46 exact layout renderings. The intentionally failing widget pixel probe is excluded. Fresh complete Android Verify and final release gate remain required.
+
 ## 14-11-2026 — fail invalid synthetic executables before native loading
 
 - A second full-gate attempt reached the music-module tests, where an intentionally fake ffmpeg image blocked in the same Windows CreateProcess boundary. Both attempts retain stack dumps, partial output and exact process identities; neither is reported as a completed pytest suite.

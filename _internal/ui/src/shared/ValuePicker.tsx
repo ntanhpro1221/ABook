@@ -77,7 +77,7 @@ export function ValuePicker({
   const input = useRef<HTMLInputElement>(null);
   const tickGesture = useRef({x: 0, dragged: false});
   const rulerHost = useRef<HTMLDivElement>(null);
-  const [plan, setPlan] = useState({inset: 8, aligned: false});
+  const [plan, setPlan] = useState({inset: 8, aligned: true});
   const labels = spec.typical.map(chipLabel ?? (v => formatNumber(spec, v)));
   const labelKey = JSON.stringify(labels);
   useLayoutEffect(() => {
@@ -384,9 +384,8 @@ export function ValuePicker({
         </div>
         {stepButton(1)}
       </div>
-      {/* Layout measurement selects one label layout before paint. Retaining the
-          fallback through an exit animation changes an opening sheet's height. */}
-      {!plan.aligned && spec.typical.length > 0 && <div className="mx-12"><BalancedChips label={label}>
+      {/* Start with the ruler layout; only measured overflow opens the fallback. */}
+      <Reveal when={!plan.aligned && spec.typical.length > 0}><div className="mx-12"><BalancedChips label={label}>
           {spec.typical.map((typical, index) => (
             <button
               key={typical}
@@ -411,7 +410,7 @@ export function ValuePicker({
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
             </button>
           ))}
-        </BalancedChips></div>}
+        </BalancedChips></div></Reveal>
       {children}
     </div>
   );
