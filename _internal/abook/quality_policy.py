@@ -56,6 +56,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "voice_catalog.py",
 )
 QUALITY_IMPLEMENTATION_FILES = (
+    "book_paths.py",
     "analysis.py",
     "asr.py",
     "asr_contract.py",

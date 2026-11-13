@@ -324,7 +324,7 @@ def test_ipv4_and_ipv6_reach_the_same_identity_and_advertisements_are_filtered(l
     server = sync.SyncServer(app, host="0.0.0.0", port=0, discovery_port=0).start()
     try:
         computers = remote_books.Computers(tmp_path / "dual-computers.json")
-        paired = computers.pair(f"127.0.0.1:{server.port}", devices.start_pairing()["code"], "Test")
+        paired = pair_confirmed(computers, f"127.0.0.1:{server.port}", devices.start_pairing()["code"], "Test")
         entry = computers.get(paired["id"])
         raw, seen = remote_books._exchange(remote_books.Endpoint("::1", server.port, entry["fingerprint"]), "GET", "/sync/v1/library", entry["token"])
         assert seen == server.fingerprint
@@ -345,7 +345,7 @@ def test_actual_pinned_tls_fails_over_without_sending_token_to_wrong_server(libr
                        identity=tls.load_or_create(tmp_path / "wrong-identity.json")).start()
     computers = remote_books.Computers(tmp_path / "computers.json")
     try:
-        paired = computers.pair(f"127.0.0.1:{good.port}", devices.start_pairing()["code"], "Test")
+        paired = pair_confirmed(computers, f"127.0.0.1:{good.port}", devices.start_pairing()["code"], "Test")
         monkeypatch.setattr(remote_books, "_COMPUTERS", computers)
         monkeypatch.setattr(route, "_reachable", lambda _: True)
         good_address = f"127.0.0.1:{good.port}"
@@ -369,3 +369,4 @@ def test_actual_pinned_tls_fails_over_without_sending_token_to_wrong_server(libr
 
 # Shared fixture constructs a tiny local library; no GPU/model work.
 from tests.test_webui_listen_and_sync import library  # noqa: E402,F401
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401

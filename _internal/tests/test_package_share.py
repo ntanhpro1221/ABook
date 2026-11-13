@@ -22,6 +22,7 @@ from abook.webui.sync import Devices, SyncApp, SyncServer, manifest
 from tests import book_edits_fixtures as shared
 from tests.test_text_books import _book_file
 from tests.test_webui_listen_and_sync import library, make_project  # noqa: F401 - fixture dùng chung
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 def _holder(tmp_path: Path) -> tuple[Library, SyncApp, Path, Path]:
@@ -160,7 +161,7 @@ def _pair(tmp_path: Path, holder: tuple[Library, SyncApp, Path, Path] | None = N
     preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     app.edits_send_delay = None
-    view = app.pair_computer(f"127.0.0.1:{server.port}", sync.devices.start_pairing()["code"])
+    view = pair_app(app, f"127.0.0.1:{server.port}", sync.devices.start_pairing()["code"])
     (computer,) = [item["id"] for item in view["computers"]]
     return app, server, sync, folder, mirror, computer
 

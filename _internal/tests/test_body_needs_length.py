@@ -122,7 +122,7 @@ def test_the_local_ui_reads_the_same_body_when_it_has_a_length(world) -> None:
 def _device_token(app) -> str:
     code = app.devices.start_pairing()["code"]
     status, _headers, data, _closed = _send(app.sync_server.port, True, "POST", "/sync/v1/pair", {},
-                                            {"code": code, "device": "Pixel"}, chunked=False)
+                                            {"code": code, "fingerprint": app.sync_server.fingerprint, "device": "Pixel"}, chunked=False)
     assert status == 200, data
     return json.loads(data)["token"]
 

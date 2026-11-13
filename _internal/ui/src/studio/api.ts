@@ -447,7 +447,7 @@ async function call<T>(path: string, init: ApiInit | undefined, read: (response:
           method: init?.method ?? "GET",
           headers: {
             "X-Ebook-Token": token,
-            ...(init?.body !== undefined ? { "Content-Type": "application/json" } : {}),
+            ...((init?.method ?? "GET").toUpperCase() !== "GET" ? { "Content-Type": "application/json" } : {}),
           },
           body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
           signal,

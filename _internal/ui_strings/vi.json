@@ -1,6 +1,11 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
+    "s_pair_fingerprint_label": "Mã nhận máy: ",
+    "s_pair_fingerprint_help": "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”.",
+    "s_pair_fingerprint_confirm": "Đúng, ghép",
+    "s_pair_code_or_string": "Mã 6 số hoặc chuỗi ghép",
+    "s_pair_string": "Chuỗi ghép: ",
     "s_00_giay_27015af3": "00 giây",
     "s_00_phut_347ed245": "00 phút",
     "s_0_1_0adfdd23": "{0}.{1}",
@@ -4839,7 +4844,6 @@
     "s_readaloudengine_can_track_speech_d8cb03a0": "ReadAloudEngine cần track.speech",
     "s_ro_0_68776af2": "Rõ {0}%",
     "s_roi_app_khi_co_sach_mo_thi_sach_thu_vao_cu_7f4e317e": "Rời app khi sách đang phát thì sách thu vào cửa sổ mini.",
-    "s_roi_nhap_ma_fdfaf308": " rồi nhập mã.",
     "s_rung_24cfaa21": "Rung",
     "s_rung_nhe_khi_ban_chon_hay_giu_5292ace9": "Rung nhẹ khi bạn chọn hay giữ.",
     "s_rung_ron_e9a9ecec": "rùng rợn",
@@ -5524,7 +5528,6 @@
     "s_tren_may_tinh_gui_lai_roi_thu_lan_nua_f28a369b": "” trên máy tính. Gửi lại rồi thử lần nữa.",
     "s_tren_thiet_bi_da_ghep_de_lam_sach_tu_xa_b780f10e": " trên thiết bị đã ghép để làm sách từ xa.",
     "s_tren_viettelai_vn_dang_nhap_mo_tai_khoan_t_0f2b04ac": "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token.",
-    "s_trinh_duyet_mo_78712782": "Trình duyệt: mở ",
     "s_trinh_phat_9270993d": "Trình phát",
     "s_trinh_phat_thu_nho_e379c265": "Trình phát thu nhỏ",
     "s_tro_lai_cach_doc_cho_ap_truoc_do_0_6eb7e545": "Trở lại cách đọc chờ áp trước đó: “{0}”.",

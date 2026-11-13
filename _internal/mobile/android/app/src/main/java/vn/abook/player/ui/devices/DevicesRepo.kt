@@ -36,6 +36,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
 
     /** Lỗi của lõi thành lời cho người nghe (lỗi mạng đã dịch, máy kia bỏ ghép, chứng chỉ đổi). */
     private fun failure(error: Exception, fallback: String): DeviceFailure {
+        if (error is Pin.PairConfirm) throw error
         if (error is DeviceFailure) return error
         val (message, technical) = BookDownloads.describe(error, fallback)
         return DeviceFailure(message, technical, unpaired = NetErrors.unpaired(error), changed = error is Pin.ChangedException)
@@ -65,7 +66,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
 
     override suspend fun pair(address: String, code: String, extra: Boolean): String = io {
         guard(S.s_chua_ket_noi_duoc_007a5651) {
-            val digits = code.filter(Char::isDigit)
+            val digits = code
             if (address.startsWith("bt:")) {
                 val device = address.removePrefix("bt:")
                 if (extra) Peers.pairBluetooth(context, device, digits).optString("name") else Devices.pairBluetooth(context, device, digits)

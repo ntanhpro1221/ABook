@@ -69,11 +69,12 @@ object Peers {
     /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
     fun pairBluetooth(context: Context, address: String, code: String): JSONObject {
         val device = DeviceName.shared(context)
-        val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
+        val body = JSONObject().put("code", code).put("device", device)
         val root = BluetoothLink.base(context, address)
         val (reply, fingerprint) = try {
             SyncLink.pair(context, root, body)
         } catch (error: Exception) {
+            if (error is Pin.PairConfirm) throw error
             throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
         }
         val host = "bt:$address"
@@ -147,7 +148,7 @@ object Peers {
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         SyncLink.refuseSelf(host, port)
         val device = DeviceName.shared(context)
-        val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
+        val body = JSONObject().put("code", code).put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
         val peers = all(context)
         val key = existingKey(peers, host, port, fingerprint)

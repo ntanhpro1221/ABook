@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import book_paths
 from .audio_io import inspect_wav, is_edge_kept_take, signal_metrics_cache_version, verify_mp3
 from .background_runner import BACKGROUND_DIRECTORY
 from .database import (
@@ -130,10 +131,12 @@ def _chapter_has_current_segment_audio_qa(
     )
 
 
-def _validate_chapter_source_for_completed_fast_path(chapter, settings: dict) -> None:
+def _validate_chapter_source_for_completed_fast_path(chapter, settings: dict, root: Path) -> None:
+    source = book_paths.safe_source(root, chapter["input_path"])
+    if source is None:
+        raise RecoveryError(f"Source chapter path is not allowed: {chapter['input_path']}")
     if not settings.get("safety", {}).get("stop_book_on_source_change", True):
         return
-    source = Path(str(chapter["input_path"] or ""))
     if not source.is_file():
         raise RecoveryError(f"Source chapter is missing: {source}")
     if source.stat().st_size != int(chapter["input_size"]):
@@ -176,10 +179,10 @@ def recover_project(
         completed_ok = True
         chapters = db.list_chapters()
         for chapter in chapters:
-            _validate_chapter_source_for_completed_fast_path(chapter, settings)
-            output = Path(str(chapter["output_mp3"] or ""))
+            _validate_chapter_source_for_completed_fast_path(chapter, settings, paths.root)
+            output = book_paths.safe_inside(paths.root, chapter["output_mp3"])
             artifact = db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}")
-            valid, _ = verify_mp3(output)
+            valid = output is not None and verify_mp3(output)[0]
             quality_ok = db.chapter_artifact_is_current_qa_verified(
                 int(chapter["chapter_index"])
             )
@@ -192,6 +195,7 @@ def recover_project(
                 artifact
                 and artifact["verified"]
                 and artifact["sha256"]
+                and output is not None
                 and output.exists()
                 and sha256_file(output) == str(artifact["sha256"])
             )
@@ -218,7 +222,7 @@ def recover_project(
     signal_cache = SignalMetricsCache(db)
     for row in db.list_segments(statuses=("signal_passed", "verified", "warning")):
         wav_text = str(row["wav_path"] or "")
-        wav = Path(wav_text) if wav_text else None
+        wav = book_paths.safe_inside(paths.root, wav_text) if wav_text else None
         valid = False
         if wav and wav.exists() and wav.stat().st_size > 1024:
             checksum_required = bool(settings.get("safety", {}).get("verify_checksums", True))
@@ -284,7 +288,12 @@ def recover_project(
         output_text = str(chapter["output_mp3"] or "")
         if not output_text:
             continue
-        output = Path(output_text)
+        output = book_paths.safe_inside(paths.root, output_text)
+        if output is None:  # sổ trỏ MP3 ra ngoài thư mục sách: không đọc ở đó, coi như phải dựng lại
+            if chapter["status"] == "completed":
+                db.update_chapter_status(int(chapter["id"]), "warning", "MP3 must be rebuilt: output path is outside the book folder")
+                report.invalid_mp3 += 1
+            continue
         if chapter["status"] == "completed":
             if not db.chapter_is_publishable(int(chapter["id"])):
                 db.update_chapter_status(

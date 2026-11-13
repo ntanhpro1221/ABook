@@ -2,6 +2,11 @@
 package vn.abook.player
 
 internal object S {
+    const val s_pair_fingerprint_label = "Mã nhận máy: "
+    const val s_pair_fingerprint_help = "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”."
+    const val s_pair_fingerprint_confirm = "Đúng, ghép"
+    const val s_pair_code_or_string = "Mã 6 số hoặc chuỗi ghép"
+    const val s_pair_string = "Chuỗi ghép: "
     fun s_0_1_0adfdd23(p0: Any?, p1: Any?): String = p0.toString() + "." + p1.toString()
     fun s_0_1_2_chuong_ad930f12(p0: Any?, p1: Any?, p2: Any?): String = p0.toString() + " · " + p1.toString() + "/" + p2.toString() + " chương"
     fun s_0_1_2_sau_khi_ban_sua_ban_cua_ban_3_cho_ch_dcdf6b2c(p0: Any?, p1: Any?, p2: Any?, p3: Any?): String = p0.toString() + ": " + p1.toString() + " " + p2.toString() + " sau khi bạn sửa - bản của bạn" + p3.toString() + " chờ chủ máy chọn"
@@ -1942,9 +1947,7 @@ internal object S {
     const val s_luu_thay_doi_48ee3bfe = "Lưu thay đổi"
     const val s_m4b_c793d08a = "M4B"
     const val s_m4b_ca_cuon_2cba5ce9 = "M4B cả cuốn"
-    const val s_ma_6_so_a067b6d9 = "Mã 6 số"
     fun s_ma_da_huy_sau_0_lan_nhap_sai_ban_tao_ma_mo_7bd4cd99(p0: Any?): String = "Mã đã huỷ sau " + p0.toString() + " lần nhập sai — bạn tạo mã mới trên máy kia."
-    const val s_ma_ghep_noi_9111985a = "Mã ghép nối"
     fun s_ma_hoa_lai_vi_0_chuong_vuot_dinh_luot_1_04047057(p0: Any?, p1: Any?): String = "Mã hoá lại vì " + p0.toString() + " chương vượt đỉnh (lượt " + p1.toString() + ")"
     const val s_ma_lan_chon_khong_hop_le_9a254152 = "mã lần chọn không hợp lệ"
     const val s_ma_nguon_mo_mit_d9c23b48 = "Mã nguồn mở (MIT)"

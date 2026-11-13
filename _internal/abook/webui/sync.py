@@ -46,7 +46,7 @@ from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from ..io_utils import atomic_write_json
-from . import book_edits, covers, edits_inbox, export, listen_view, listing_cache, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
+from . import book_edits, covers, edits_inbox, export, listen_view, listing_cache, music_plan, notices, package_share, packages, precast, remote_books, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -1181,6 +1181,9 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             if method == "POST" and path == "/sync/v1/pair":
                 body = self._body()
+                if not self.app.fingerprint or str(body.get("fingerprint", "")).lower() != self.app.fingerprint:
+                    self._json(HTTPStatus.FORBIDDEN, {"error": remote_books.PAIR_MISMATCH})
+                    return
                 # Ghép lúc người dùng ĐANG bật Studio từ xa: họ ghép thiết bị này để điều khiển - cho luôn quyền ấy.
                 studio_on = self.app.studio is not None and self.app.studio.allowed()
                 token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")), studio=studio_on,
@@ -1193,25 +1196,10 @@ class SyncHandler(BaseHTTPRequestHandler):
                                                "fingerprint": self.app.fingerprint})
                 return
             if method == "POST" and path == "/sync/v1/pair-browser":
-                # Trang ghép của Studio từ xa: cùng mã 6 số, nhưng mã thiết bị về cookie HttpOnly thay vì về tay trang.
-                if not remote_studio.allowed_host(self.headers.get("Host")):
-                    self._json(HTTPStatus.FORBIDDEN, {"error": "Host không hợp lệ"})
-                    return
-                if self.app.studio is None:
-                    self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện ABook của máy tính chưa mở"})
-                    return
-                # Ghép để NGHE luôn được (cùng mã 6 số người dùng vừa bấm trên máy tính); quyền sản xuất chỉ khi công tắc
-                # đang bật - như ghép điện thoại.
-                body = self._body()
-                studio = self.app.studio.allowed()
-                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt",
-                                              studio=studio)
-                if token is None:
-                    self._json(HTTPStatus.FORBIDDEN, {"error": self.app.devices.wrong_code_message()})
-                else:
-                    remote_studio.send_bytes(self, HTTPStatus.OK, json.dumps({"name": self.app.name, "studio": studio}).encode("utf-8"),
-                                             "application/json; charset=utf-8",
-                                             extra={"Set-Cookie": remote_studio.device_cookie(token)})
+                # JavaScript cannot inspect the browser's TLS peer certificate.
+                # A server-claimed fingerprint on an untrusted page does not bind a code.
+                self.close_connection = True
+                self._json(HTTPStatus.GONE, {"error": remote_studio.BROWSER_PAIRING_CLOSED})
                 return
             device = self._device()
             if device is None:
@@ -1384,6 +1372,7 @@ class Discovery(threading.Thread):
         self._stop = threading.Event()
 
     def run(self) -> None:
+        # Discovery is an address hint only. Its fingerprint never authorizes sending a pairing code.
         reply = json.dumps({"app": "abook", "name": self.name_text, "port": self.port, "fingerprint": self.fingerprint}).encode("utf-8")
         while not self._stop.is_set():
             try:

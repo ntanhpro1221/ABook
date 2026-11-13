@@ -148,7 +148,7 @@ fun List<Found>.withoutPaired(paired: List<Paired>): List<Found> = filter { foun
 /** Phần người dùng đang nhập: máy chọn trong danh sách, hay địa chỉ gõ tay, và mã 6 số. */
 @Immutable
 data class PairForm(val address: String = "", val code: String = "", val picked: String? = null, val manual: Boolean = false) {
-    val digits: String get() = code.filter(Char::isDigit)
+    val digits: String get() = runCatching { vn.abook.player.Pin.parsePairing(code).code }.getOrDefault("")
 
     /** Nơi sẽ ghép: máy đã chọn, hay địa chỉ gõ tay (có dấu chấm hay dấu hai chấm) khi đang ở chế độ nhập địa chỉ. */
     val target: String?
@@ -174,6 +174,7 @@ sealed interface Attempt {
 
     /** Đang ghép với `name`: tiến độ ở ngay hàng, không hộp chặn. */
     data class Working(val name: String) : Attempt
+    data class Confirm(val fingerprint: String) : Attempt
     data class Failed(val message: String, val technical: String? = null) : Attempt
 }
 

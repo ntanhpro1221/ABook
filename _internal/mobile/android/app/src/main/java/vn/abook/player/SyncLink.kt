@@ -191,9 +191,15 @@ object SyncLink {
      */
     fun pair(context: Context, root: String, body: JSONObject): Pair<JSONObject, String> {
         Pin.install(context)
+        val pairing = Pin.parsePairing(body.getString("code"))
+        val endpoint = URL(root)
+        require(endpoint.protocol == "https")
+        val expected = pairing.fingerprint ?: throw Pin.PairConfirm(Pin.probe(endpoint.host, if (endpoint.port > 0) endpoint.port else 443))
+        body.put("code", pairing.code)
+        body.put("fingerprint", expected)
         // Mã của chính máy này: máy kia nhận ra cùng máy ghép lại thì thay dòng cũ, không thêm dòng trùng (sync.py `Devices.pair` `ident`).
         if (!body.has("id")) body.put("id", selfId(context))
-        val seen = arrayOfNulls<String>(1)
+        val seen = arrayOf<String?>(expected)
         val text = send(context, "POST", "/sync/v1/pair", body, false, root, 20_000, 5000, null, seen)
         val reply = JSONObject(text)
         val fingerprint = seen[0].orEmpty()
@@ -264,7 +270,10 @@ object SyncLink {
         fun connect(): HttpURLConnection {
             val connection = HostWait.open(root + path, connectTimeoutMs, idleMs)
             // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
-            if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
+            if (firstUse != null) {
+                require(connection is HttpsURLConnection)
+                Pin.pin(connection, requireNotNull(firstUse[0]))
+            }
             else if (connection is HttpsURLConnection) {
                 val credential = token ?: if (auth) SyncLink.token(context) else ""
                 PeerRouting.expected(context, credential)?.let { Pin.pin(connection, it) }

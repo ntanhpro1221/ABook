@@ -76,7 +76,13 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                             Caption(S.s_may_kia_chua_tu_thay_dien_thoai_dia_chi_na_34b7f3e8, Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
                             Reveal(share.code != null) {
-                                lastCode[0]?.let { code -> CodeRow(code, devices::cancelCode) }
+                                lastCode[0]?.let { code ->
+                                    CodeRow(code, devices::cancelCode)
+                                    val fingerprint = share.fingerprint.replace(" ", "")
+                                    Caption(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint))
+                                    Caption(S.s_pair_fingerprint_help)
+                                    Caption(S.s_pair_string + vn.abook.player.Pin.pairingString(code, fingerprint))
+                                }
                             }
                             Reveal(share.code == null) {
                                 TextAction(S.s_ghep_thiet_bi_moi_e22fb590, devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)

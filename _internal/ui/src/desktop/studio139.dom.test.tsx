@@ -56,8 +56,11 @@ it.each(["RuntimeError: CUDA out of memory", "KeyError: 'speaker'"])("chi tiết
 });
 
 it("mã ghép hết hạn fade cùng vùng và không chờ poll máy chủ", async () => {
-  client.setQueryData(["sync"], { enabled: true, name: "Máy này", addresses: [], devices: [], fingerprint: "", remoteStudio: false, pairing: { code: "123456", expiresAt: Date.now() / 1000 + 1 }, pairingBlocked: false });
+  const fingerprint = "0123456789abcdef".repeat(4);
+  client.setQueryData(["sync"], { enabled: true, name: "Máy này", addresses: [], devices: [], fingerprint, fingerprintShort: "0123 4567 89AB CDEF", remoteStudio: false, pairing: { code: "123456", expiresAt: Date.now() / 1000 + 1, pairString: "123456-" + fingerprint.toUpperCase() }, pairingBlocked: false });
   await draw(<PhoneSync />);
+  expect(host.textContent).toContain("Mã nhận máy: 0123 4567 89AB CDEF");
+  expect(host.textContent).toContain("123456-" + fingerprint.toUpperCase());
   const code = host.querySelector('[aria-label="Mã ghép nối: 1 2 3 4 5 6"]')!;
   const region = code.closest("[data-motion-region]");
   expect(code).not.toBeNull();

@@ -62,6 +62,57 @@ class RemoteError(Exception):
         self.status = status
 
 
+# ---- ghép gắn với chứng chỉ (soát bảo mật 12-11) ----------------------------------------------------------------------------
+# Mã 6 số một mình không nói gì về chứng chỉ: máy chen giữa trong Wi-Fi nhận mã rồi chuyển sang máy thật. Nên mã chỉ được gửi tới
+# đúng chứng chỉ của máy đang hiện mã: hoặc "chuỗi ghép" (mã + ĐỦ vân tay SHA-256) dán từ máy kia, hoặc - nhập mã tay - người dùng
+# so "mã nhận máy" (4 nhóm đầu vân tay, 64 bit) máy này thấy với mã hiện trên máy kia rồi bấm "Đúng, ghép". Không dùng HMAC(mã, vân
+# tay): một triệu khả năng, bẻ offline được. Chữ chung với Android / Qt / web: ui_strings/vi.json (`pair_fingerprint_*`).
+SHORT_GROUPS = 4
+PAIR_CONFIRM = "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”."
+PAIR_MISMATCH = "Chứng chỉ máy kia không khớp chuỗi ghép nên chưa gửi mã — có thể bị chen mạng. Bạn kiểm tra địa chỉ rồi thử lại."
+_PAIRING = re.compile(r"([0-9]{6})([0-9a-f]{64})")
+_FINGERPRINT = re.compile(r"[0-9a-f]{64}")
+
+
+class PairConfirm(RemoteError):
+    """Nhập mã tay: chưa gửi mã - người dùng phải so `short_fingerprint(fingerprint)` với máy kia trước."""
+
+    def __init__(self, fingerprint: str) -> None:
+        super().__init__(PAIR_CONFIRM, status=409)
+        self.fingerprint = fingerprint
+
+
+def short_fingerprint(fingerprint: str) -> str:
+    """4 nhóm đầu của vân tay, nhóm 4 ký tự hoa - "3FA2 9C01 77DE B410" (Kotlin: Pin.short)."""
+    return tls.display(str(fingerprint or "")[: 4 * SHORT_GROUPS])
+
+
+def pairing_string(code: str, fingerprint: str) -> str:
+    """Chuỗi ghép máy hiện cạnh mã: mã 6 số + đủ vân tay (Kotlin: Pin.pairingString)."""
+    return f"{code}-{str(fingerprint).upper()}"
+
+
+def parse_pairing(text: str) -> tuple[str, str | None]:
+    """(mã 6 số, vân tay hay None) từ thứ người dùng gõ / dán: chuỗi ghép thì có vân tay; mã trơn ("482 913") thì không."""
+    compact = re.sub(r"[\s-]", "", text or "").lower()
+    found = _PAIRING.fullmatch(compact)
+    if found:
+        return found.group(1), found.group(2)
+    return (compact if re.fullmatch(r"[0-9]{6}", compact) else ""), None
+
+
+def _probe(endpoint: Endpoint, timeout: float) -> str:
+    """Vân tay chứng chỉ máy ở `endpoint` - chỉ bắt tay TLS, không gửi byte HTTP nào (mã ghép không rời máy này)."""
+    try:
+        connection = _connect(endpoint, timeout)
+    except (OSError, http.client.HTTPException) as error:
+        raise RemoteError(_unreachable(endpoint, error)) from error
+    try:
+        return connection.peer_fingerprint
+    finally:
+        connection.close()
+
+
 def configure(computers: "Computers | None") -> None:
     """App gọi lúc dựng: `packages` hỏi module này khi cần tải một file của sách trên máy khác."""
     global _COMPUTERS
@@ -188,11 +239,16 @@ class Computers:
                 self._write(data)
                 _ROUTES.invalidate((str(entry.get("fingerprint") or ""), computer))
 
-    def pair(self, address: str, code: str, device_name: str, *, own_port: int | None = None) -> dict[str, Any]:
+    def pair(self, address: str, code: str, device_name: str, *, own_port: int | None = None,
+             fingerprint: str | None = None) -> dict[str, Any]:
         """Ghép với máy ở `address` ("192.168.1.20" hay "192.168.1.20:47630"; "AA:BB:CC:DD:EE:FF" hay "bt:AA:BB:..." là địa chỉ
         Bluetooth của máy đã ghép trong Cài đặt Windows - không cần chung Wi-Fi) bằng mã 6 số đang hiện trên máy ấy.
-        `own_port`: cổng đồng bộ của CHÍNH máy này - địa chỉ của máy này kèm cổng ấy là ghép với chính mình (thư viện nhân đôi)."""
-        digits = re.sub(r"\D", "", code or "")
+        `own_port`: cổng đồng bộ của CHÍNH máy này - địa chỉ của máy này kèm cổng ấy là ghép với chính mình (thư viện nhân đôi).
+        Mã chỉ được gửi tới chứng chỉ đã biết trước: `code` là chuỗi ghép (mang vân tay), hay `fingerprint` là vân tay người dùng vừa
+        xác nhận. Không có cả hai: `PairConfirm` mang vân tay thấy được, mã chưa gửi."""
+        digits, pinned = parse_pairing(code)
+        chosen = str(fingerprint or "").strip().lower()
+        expected = pinned or (chosen if _FINGERPRINT.fullmatch(chosen) else None)
         dev = (address or "").strip().lower().endswith("@dev")
         raw_address = (address or "").strip()[:-4] if dev else address
         by_bluetooth = bluetooth.normalize_address(re.sub(r"(?i)^\s*bt:", "", raw_address or ""))
@@ -203,10 +259,18 @@ class Computers:
         host, port = (f"bt:{by_bluetooth}", DEBUG["port"] if dev else LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
         if not by_bluetooth and own_port is not None and port == own_port and is_own_host(host):
             raise RemoteError("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
-        # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
-        first = _tunnel(by_bluetooth + ("@dev" if dev else ""), None) if by_bluetooth else Endpoint(host, port, None)
-        reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính", "id": self.own_id()},
-                                PAIR_BLUETOOTH_TIMEOUT if by_bluetooth else TIMEOUT)
+        timeout = PAIR_BLUETOOTH_TIMEOUT if by_bluetooth else TIMEOUT
+        target = by_bluetooth + ("@dev" if dev else "")
+        probe = _tunnel(target, None) if by_bluetooth else Endpoint(host, port, None)
+        shown = _probe(probe, timeout)
+        if expected is None:
+            raise PairConfirm(shown)  # nhập mã tay: người dùng so mã nhận máy trước, mã chưa rời máy này
+        if shown != expected:
+            raise RemoteError(PAIR_MISMATCH)
+        # Mã đi trên kết nối GHIM đúng vân tay ấy: máy chen vào giữa lần dò và lần gửi cũng không nhận được mã.
+        first = probe._replace(fingerprint=expected)
+        reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "fingerprint": expected, "device": device_name or "Máy tính", "id": self.own_id()},
+                                timeout)
         try:
             reply_data = json.loads(reply.decode("utf-8"))
             token, name = str(reply_data["token"]), str(reply_data.get("name") or host)

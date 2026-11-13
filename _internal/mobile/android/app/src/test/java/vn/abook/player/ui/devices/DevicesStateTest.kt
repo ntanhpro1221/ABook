@@ -111,11 +111,38 @@ class DevicesStateTest {
         assertFalse(devices.pair.value.form.ready)
         devices.pick(computer)
         devices.setCode("12ab34")
-        assertEquals("1234", devices.pair.value.form.code)
+        assertEquals("12ab34", devices.pair.value.form.code)
         assertFalse(devices.pair.value.form.ready)
         devices.setCode("123 456 789")
-        assertEquals("123456", devices.pair.value.form.code)
+        assertFalse(devices.pair.value.form.ready)
+        devices.setCode("123 456")
+        assertEquals("123 456", devices.pair.value.form.code)
         assertTrue(devices.pair.value.form.ready)
+    }
+
+    @Test
+    fun `manual pairing waits for certificate comparison and confirmation is cleared by an edit`() {
+        val fingerprint = "0123456789abcdef".repeat(4)
+        source.found = listOf(computer)
+        val verified = object : DevicesSource by source {
+            override suspend fun pair(address: String, code: String, extra: Boolean): String {
+                val parsed = vn.abook.player.Pin.parsePairing(code)
+                if (parsed.fingerprint == null) throw vn.abook.player.Pin.PairConfirm(fingerprint)
+                assertEquals(fingerprint, parsed.fingerprint)
+                return source.pair(address, code, extra)
+            }
+        }
+        val devices = DevicesState(verified, CoroutineScope(Dispatchers.Unconfined))
+        devices.openPair()
+        devices.setCode("482913")
+        devices.connect()
+        assertEquals(Attempt.Confirm(fingerprint), devices.pair.value.attempt)
+        assertTrue(source.pairs.isEmpty())
+        devices.setCode("482914")
+        assertEquals(Attempt.Idle, devices.pair.value.attempt)
+        devices.connect()
+        devices.confirmPair()
+        assertEquals(vn.abook.player.Pin.pairingString("482914", fingerprint), source.pairs.single().second)
     }
 
     @Test

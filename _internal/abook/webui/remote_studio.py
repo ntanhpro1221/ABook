@@ -414,41 +414,12 @@ def closed_page(machine: str) -> str:
     return _page("ABook chưa mở", f"ABook trên <b>{html.escape(machine)}</b> chưa chạy — bạn mở app rồi tải lại trang.")
 
 
+BROWSER_PAIRING_CLOSED = "Bạn dùng app ABook trên điện thoại hoặc máy tính để ghép và đối chiếu mã nhận máy trước khi gửi mã."
+
+
 def pairing_page(machine: str) -> str:
-    """Trình duyệt chưa ghép: nhập mã 6 số máy tính đưa ra (như điện thoại), cổng đặt cookie rồi mở Studio."""
-    return _page(f"Ghép với {machine}", f"""
-<p>Trên <b>{html.escape(machine)}</b>: Cài đặt → Thiết bị → Ghép thiết bị → “Ghép thiết bị mới”.<br>
-Bạn nhập mã 6 số vào đây để nghe sách của máy ấy.</p>
-<form id="pair">
-  <label>Mã ghép nối<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label>
-  <label>Tên thiết bị này<input id="device" maxlength="80" placeholder="Ví dụ: Điện thoại của Anh"></label>
-  <button type="submit">Ghép nối</button>
-  <p id="message" role="alert"></p>
-</form>
-<script>
-document.getElementById("pair").addEventListener("submit", async (event) => {{
-  event.preventDefault();
-  const message = document.getElementById("message");
-  message.textContent = "Đang ghép…";
-  const device = document.getElementById("device").value.trim() || "Trình duyệt";
-  try {{
-    const response = await fetch("/sync/v1/pair-browser", {{
-      method: "POST",
-      headers: {{ "Content-Type": "application/json" }},
-      body: JSON.stringify({{ code: document.getElementById("code").value, device }}),
-    }});
-    const data = await response.json().catch(() => ({{}}));
-    if (response.ok) {{
-      // Cùng đường "/", chỉ khác phần sau #: phải tự tải lại thì cổng mới trả giao diện thay cho trang này.
-      // Có quyền điều khiển sản xuất thì vào Studio; chỉ nghe thì vào thư viện (Studio sẽ báo "chỉ nghe sách").
-      history.replaceState(null, "", data.studio ? "/#/studio" : "/#/");
-      location.reload();
-    }} else message.textContent = data.error || "Không ghép được";
-  }} catch {{
-    message.textContent = "Không nói chuyện được với máy tính";
-  }}
-}});
-</script>""")
+    """Browsers cannot verify a self-signed peer through page-controlled JavaScript."""
+    return _page(f"Ghép với {machine}", f"<p>{html.escape(BROWSER_PAIRING_CLOSED)}</p>")
 
 
 def _page(title: str, content: str) -> str:

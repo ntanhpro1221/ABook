@@ -18,6 +18,9 @@ Column {
     property var bluetoothDevices: []
     property string address: ""
     property string code: ""
+    property var confirmation: null
+    onAddressChanged: confirmation = null
+    onCodeChanged: confirmation = null
     property string pairError: ""
     property bool pairBusy: false
     property bool discovering: false
@@ -36,7 +39,7 @@ Column {
     readonly property var pairedAddresses: computers.filter(computer => Logic.isBluetoothHost(computer.host)).map(computer => Logic.bluetoothAddress(computer))
     readonly property var unpairedDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("release") >= 0 && pairedAddresses.indexOf(String(device.address).toUpperCase()) < 0)
     readonly property var unpairedDevDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("dev") >= 0 && pairedAddresses.indexOf((device.address + "@dev").toUpperCase()) < 0)
-    readonly property bool canPair: address.trim() !== "" && code.replace(/\D/g, "").length === 6
+    readonly property bool canPair: address.trim() !== "" && /^[0-9]{6}([0-9a-f]{64})?$/i.test(code.replace(/[\s-]/g, ""))
     signal openStudio(string id)
 
     function say(text) { Api.notice = text }
@@ -61,12 +64,17 @@ Column {
         // Thiết bị đã ghép ở Windows và dịch vụ ABook qua SDP; lỗi hay rỗng thì thôi, không chặn gì.
         quiet("GET", "/api/computers/bluetooth", null, function(result, error) { if (!error) root.bluetoothDevices = result.devices || [] })
     }
-    function pair() {
+    function pair(fingerprint) {
         pairBusy = true
         pairError = ""
         const known = computers.map(computer => computer.id)
-        Api.call("POST", "/api/computers", {address: address, code: code}, function(view, error) {
+        const target = address
+        const entered = code
+        Api.quiet("POST", "/api/computers", {address: address, code: code, fingerprint: fingerprint || ""}, function(view, error, detail) {
             root.pairBusy = false
+            if (target !== root.address || entered !== root.code) return
+            if (error && detail && detail.confirm) { root.confirmation = detail.confirm; return }
+            root.confirmation = null
             if (error) { root.pairError = error; root.say(S.s_chua_ghep_duoc_e27b68c8); return }
             // Máy vừa ghép = máy có trong danh sách mới mà danh sách cũ chưa có: nói tên thật (soát UX a11).
             const added = (view.computers || []).find(computer => known.indexOf(computer.id) < 0)
@@ -298,7 +306,7 @@ Column {
                         Column {
                             width: form.codeWidth
                             spacing: 4
-                            Text { width: parent.width; text: S.s_ma_6_so_a067b6d9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                            Text { width: parent.width; text: S.s_pair_code_or_string; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                             FormField {
                                 id: codeField
                                 objectName: "codeField"
@@ -306,9 +314,7 @@ Column {
                                 label: S.s_ma_6_so_a067b6d9
                                 placeholderText: "123456"
                                 onTextChanged: {
-                                    const digits = text.replace(/\D/g, "").slice(0, 6)
-                                    if (text !== digits) { text = digits; return }
-                                    root.code = digits
+                                    root.code = text
                                 }
                                 onAccepted: if (root.canPair && !root.pairBusy) root.pair()
                             }
@@ -329,6 +335,14 @@ Column {
                         }
                     }
                     // Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17).
+                    Column {
+                        width: parent.width
+                        visible: root.confirmation !== null
+                        spacing: 8
+                        HintText { width: parent.width; text: S.s_pair_fingerprint_label + (root.confirmation ? root.confirmation.short : "") }
+                        HintText { width: parent.width; text: S.s_pair_fingerprint_help }
+                        Button { text: S.s_pair_fingerprint_confirm; enabled: !root.pairBusy; onClicked: if (root.confirmation) root.pair(root.confirmation.fingerprint) }
+                    }
                     Collapse {
                         width: parent.width
                         open: root.pairError !== ""

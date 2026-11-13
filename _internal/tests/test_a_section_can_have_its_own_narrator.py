@@ -234,7 +234,7 @@ def _book(root: Path, identity: str = "Kakeru", text: str = "", chapters: dict[s
     first_rows: list[dict[str, Any]] = []
     segment_id = 0
     for number, chapter_text in enumerate((text, *more), start=1):
-        source = root / f"{number:03d}.txt"
+        source = project / f"{number:03d}.txt"  # nguồn chương nằm trong thư mục sách (book_paths)
         source.write_bytes(chapter_text.encode("utf-8"))
         rows = segment_chapter_text(number, chapter_text, max_chars=340)
         first_rows = first_rows or rows
@@ -469,7 +469,7 @@ def test_a_narrator_who_says_ta_is_not_flagged_for_it(tmp_path: Path) -> None:
     project, _rows = _book(tmp_path, text=TOI_CHAPTER, more=(TA_CHAPTER, TA_CHAPTER, TA_CHAPTER, TOI_CHAPTER))
     assert _chapters_with_cards(project) == []
     for number in (2, 4):
-        (tmp_path / f"{number:03d}.txt").write_bytes(TOI_CHAPTER.encode("utf-8"))
+        (project / f"{number:03d}.txt").write_bytes(TOI_CHAPTER.encode("utf-8"))
     assert _chapters_with_cards(project) == [3], "chương 3 giờ nằm giữa các chương 'tôi' (chương 2, 4 lệch câu đã chia: im)"
 
 

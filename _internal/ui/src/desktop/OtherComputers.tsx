@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bluetooth, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { api } from "@/studio/api";
+import { api, ApiError } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { peerPage } from "@/shared/peerStudio";
@@ -76,6 +76,9 @@ export function OtherComputers() {
   }, [waking, client]);
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
+  const [confirmation, setConfirmation] = useState<{ fingerprint: string; short: string; address: string; code: string } | null>(null);
+  const confirm = confirmation?.address === address && confirmation.code === code ? confirmation : null;
+  const validCode = /^(?:[0-9]{6})(?:[0-9a-f]{64})?$/i.test(code.replace(/[\s-]/g, ""));
   // Thiết bị đã ghép ở Windows và dịch vụ ABook qua SDP; lỗi hay rỗng thì thôi, không chặn gì.
   const paired = useQuery({
     queryKey: ["computers", "bluetooth"],
@@ -89,7 +92,7 @@ export function OtherComputers() {
     void client.invalidateQueries({ queryKey: ["listen", "library"] });
   };
   const pair = useMutation({
-    mutationFn: () => api<ComputersView>("/api/computers", { method: "POST", body: { address, code } }),
+    mutationFn: (fingerprint: string = "") => api<ComputersView>("/api/computers", { method: "POST", body: { address, code, fingerprint } }),
     onSuccess: (view) => {
       // Máy vừa ghép = máy có trong danh sách mới mà danh sách cũ chưa có: nói tên thật, không để mẫu “<tên máy>” (soát UX a11).
       const known = new Set(data?.computers.map((computer) => computer.id));
@@ -97,9 +100,14 @@ export function OtherComputers() {
       done(view);
       setAddress("");
       setCode("");
+      setConfirmation(null);
       toast.success(name ? S.s_da_ghep_0_a04998dd(name) : S.s_da_ghep_2bd0972f);
     },
-    onError: (error: Error) => toast.error(S.s_chua_ghep_duoc_e27b68c8, { description: error.message }),
+    onError: (error: Error) => {
+      const detail = error instanceof ApiError ? error.detail.confirm as { fingerprint: string; short: string } | undefined : undefined;
+      if (detail) setConfirmation({ ...detail, address, code });
+      else { setConfirmation(null); toast.error(S.s_chua_ghep_duoc_e27b68c8, { description: error.message }); }
+    },
   });
   const refresh = useMutation({
     mutationFn: () => api<ComputersView>("/api/computers/refresh", { method: "POST" }),
@@ -266,13 +274,14 @@ export function OtherComputers() {
         className="flex flex-wrap items-end gap-2"
         onSubmit={(event) => {
           event.preventDefault();
-          pair.mutate();
+          setConfirmation(null);
+          pair.mutate("");
         }}
       >
         <label className="min-w-0 flex-1 text-xs text-fg-2 max-sm:basis-full" htmlFor="other-computer-address">{S.s_dia_chi_may_kia_e746667e}<input
             id="other-computer-address"
             value={address}
-            onChange={(event) => setAddress(event.target.value)}
+            onChange={(event) => { setAddress(event.target.value); setConfirmation(null); }}
             placeholder={S.s_192_168_1_20_hoac_dia_chi_bluetooth_326669dc}
             inputMode="url"
             autoComplete="off"
@@ -280,21 +289,26 @@ export function OtherComputers() {
             className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
-        <label className="w-32 text-xs text-fg-2" htmlFor="other-computer-code">{S.s_ma_6_so_a067b6d9}<input
+        <label className="min-w-32 flex-1 text-xs text-fg-2" htmlFor="other-computer-code">{S.s_pair_code_or_string}<input
             id="other-computer-code"
             ref={codeInput}
             value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(event) => { setCode(event.target.value.slice(0, 100)); setConfirmation(null); }}
             placeholder="123456"
-            inputMode="numeric"
+            inputMode="text"
             autoComplete="off"
             className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
-        <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>{S.s_ket_noi_02ca3cba}</Button>
+        <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || !validCode}>{S.s_ket_noi_02ca3cba}</Button>
       </form>
+      {confirm && <div role="status" className="space-y-2">
+        <p>{S.s_pair_fingerprint_label}{confirm.short}</p>
+        <p>{S.s_pair_fingerprint_help}</p>
+        <Button type="button" disabled={pair.isPending} onClick={() => pair.mutate(confirm.fingerprint)}>{S.s_pair_fingerprint_confirm}</Button>
+      </div>}
       {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
-      {pair.isError && (
+      {pair.isError && !confirm && (
         <p role="alert" className="text-[0.8125rem] text-danger text-pretty">{S.s_chua_ghep_duoc_160c13b4}{pair.error.message}
         </p>
       )}

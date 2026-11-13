@@ -313,7 +313,7 @@ def gate(tmp_path: Path, project: Path):
                    after_edits=lambda value, _report: rebuilt.append(value))
     server = SyncServer(sync, host="127.0.0.1", port=0).start()
     code = devices.start_pairing()["code"]
-    token = _call(server.port, "POST", "/sync/v1/pair", body=json.dumps({"code": code, "device": "Pixel"}).encode(),
+    token = _call(server.port, "POST", "/sync/v1/pair", body=json.dumps({"code": code, "fingerprint": server.fingerprint, "device": "Pixel"}).encode(),
                   content="application/json")[1]["token"]
     try:
         yield server, devices, token, switch, rebuilt, book_id(project)

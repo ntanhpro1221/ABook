@@ -79,7 +79,7 @@ def test_level_warning_never_changes_book_completion(tmp_path):
     updates = []
     pipeline.paths = SimpleNamespace(root=tmp_path, output=tmp_path)
     pipeline.settings = {"audio": {"create_m3u8": False}}
-    pipeline.db = SimpleNamespace(list_chapters=lambda: [{"id":1, "status":"completed", "output_mp3":"synthetic.mp3"}],
+    pipeline.db = SimpleNamespace(list_chapters=lambda: [{"id":1, "status":"completed", "output_mp3":str(tmp_path / "synthetic.mp3")}],
         update_book=lambda **kw: updates.append(kw), book=lambda: {"title":"Synthetic"})
     pipeline._state = lambda *a: None
     pipeline.notifier = SimpleNamespace(notify=lambda *a, **kw: None)

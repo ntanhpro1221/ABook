@@ -57,7 +57,7 @@ def test_delivery_preserves_samples_and_structural_pause(tmp_path, emotion):
            'scene_break': 0, 'emotion': emotion, 'intensity': 3, 'kind': 'dialogue', 'text': 'Xin chào.'}
     p = object.__new__(BookPipeline)
     p.settings = build_settings()
-    p.paths = SimpleNamespace(work=tmp_path/'work')
+    p.paths = SimpleNamespace(work=tmp_path/'work', root=tmp_path)
     p.db = SimpleNamespace(list_voice_profiles=lambda: [{'id': 1}])
     p.log = lambda *_: None
     [(delivered, pause)] = p._chapter_delivery_wavs({'id': 1, 'chapter_index': 1}, [row])
@@ -72,7 +72,7 @@ def test_pause_between_lines_ignores_emotion_intensity_and_speech_tags(tmp_path,
     sf.write(source, np.zeros(rate, dtype=np.float32), rate, subtype='PCM_16')
     p = object.__new__(BookPipeline)
     p.settings = build_settings()
-    p.paths = SimpleNamespace(work=tmp_path / 'work')
+    p.paths = SimpleNamespace(work=tmp_path / 'work', root=tmp_path)
     p.db = SimpleNamespace(list_voice_profiles=lambda: [])
     p.log = lambda *_: None
     base = dict(wav_path=str(source), voice_profile_id=0, kind='dialogue',

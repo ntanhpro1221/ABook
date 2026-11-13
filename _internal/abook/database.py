@@ -36,6 +36,7 @@ from .audio_transform_contract import (
     POSTPROCESS_TEMPO_FACTOR,
     POSTPROCESS_TEMPO_NUMERATOR,
 )
+from . import book_paths
 from .io_utils import sha256_file, sha256_text, stable_int
 from .models import (
     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
@@ -9556,7 +9557,7 @@ class ProjectDB:
             metadata = self._json_object(artifact["metadata_json"], "word-break reservation")
             if metadata["state"] != "reserved":
                 raise RuntimeError("word-break retry is already terminal")
-            if checksum and (not Path(artifact["path"]).is_file() or sha256_file(Path(artifact["path"])) != checksum):
+            if checksum and (not book_paths.inside(self.path.parent, artifact["path"]).is_file() or sha256_file(book_paths.inside(self.path.parent, artifact["path"])) != checksum):
                 raise RuntimeError("word-break retry checksum differs before checkpoint")
             metadata.update(state="complete" if checksum else "failed", result=result)
             conn.execute("UPDATE artifacts SET sha256=?,metadata_json=?,updated_at=? WHERE id=?",
@@ -10267,6 +10268,8 @@ class ProjectDB:
 
     @staticmethod
     def _pcm16_mono_wav_shape(path: Path, label: str) -> tuple[int, int]:
+        if book_paths.network(path):  # sổ có thể do người khác viết: không mở đường mạng (book_paths)
+            raise RuntimeError(f"{label} is on a network path")
         try:
             with wave.open(str(path), "rb") as reader:
                 channels = int(reader.getnchannels())
@@ -10333,7 +10336,7 @@ class ProjectDB:
                 raise KeyError(f"Unknown segment id: {candidate['segment_id']}")
         if is_standalone_ha_gasp(str(segment["text"])):
             return "tempo rescue excludes standalone vocalizations"
-        file_error = cls._candidate_file_error(candidate)
+        file_error = cls._candidate_file_error(candidate, book_paths.connection_root(conn))
         if file_error:
             raise RuntimeError(file_error)
         signal = cls._json_object(candidate["signal_json"], "candidate signal metrics")
@@ -10523,11 +10526,11 @@ class ProjectDB:
                 "tempo candidate source is not eligible: " + eligibility_reason
             )
         source_rate, actual_source_samples = cls._pcm16_mono_wav_shape(
-            Path(str(source["wav_path"])),
+            book_paths.inside(book_paths.connection_root(conn), source["wav_path"]),
             "tempo candidate source WAV",
         )
         output_rate, actual_output_samples = cls._pcm16_mono_wav_shape(
-            Path(str(candidate["wav_path"])),
+            book_paths.inside(book_paths.connection_root(conn), candidate["wav_path"]),
             "tempo candidate output WAV",
         )
         if (
@@ -10668,7 +10671,7 @@ class ProjectDB:
             raise RuntimeError(
                 "promoted candidate is not the current segment artifact"
             )
-        file_error = self._candidate_file_error(candidate)
+        file_error = self._candidate_file_error(candidate, book_paths.connection_root(conn))
         if file_error:
             raise RuntimeError(file_error)
         self._require_candidate_voice_profile_conn(conn, candidate, segment)
@@ -10946,11 +10949,15 @@ class ProjectDB:
         return profile
 
     @staticmethod
-    def _candidate_file_error(candidate: sqlite3.Row) -> str | None:
-        wav_path = Path(str(candidate["wav_path"] or ""))
+    def _candidate_file_error(candidate: sqlite3.Row, root: Path) -> str | None:
+        wav_path = book_paths.safe_inside(root, candidate["wav_path"])
+        if wav_path is None:
+            return "candidate WAV is outside the book folder"
         wav_sha256 = str(candidate["wav_sha256"] or "").strip().casefold()
         if not wav_sha256:
             return "candidate WAV checksum is missing"
+        if book_paths.network(candidate["wav_path"]):  # không mở đường mạng (book_paths)
+            return "candidate WAV is on a network path"
         if not wav_path.is_file():
             return "candidate WAV is missing"
         try:
@@ -12720,7 +12727,7 @@ class ProjectDB:
                 except (KeyError, RuntimeError) as exc:
                     invalid_reason = str(exc)
                 if invalid_reason is None:
-                    invalid_reason = self._candidate_file_error(candidate)
+                    invalid_reason = self._candidate_file_error(candidate, book_paths.connection_root(conn))
                 if invalid_reason is None:
                     try:
                         signal = self._json_object(
@@ -13271,7 +13278,7 @@ class ProjectDB:
                 bool(float(signal.get(SEGMENT_CEILING_METRIC_KEY, 0.0) or 0.0)),
             ),
             ("ứng viên lệch nhịp", bool(float(signal.get("pace_outlier", 0.0) or 0.0))),
-            ("file WAV thiếu hoặc checksum lệch", self._candidate_file_error(candidate) is not None),
+            ("file WAV thiếu hoặc checksum lệch", self._candidate_file_error(candidate, book_paths.connection_root(conn)) is not None),
             (
                 "đương nhiệm hiện tại không phải bản đã đấu, cũng không phải anh em đọc-theo-chữ-viết",
                 not incumbent_unchanged and spelling_sibling is None,
@@ -13553,7 +13560,7 @@ class ProjectDB:
                 and str(segment["wav_sha256"] or "").casefold() != str(candidate["incumbent_sha256"])
             ):
                 raise RuntimeError("segment candidate incumbent checksum changed")
-            file_error = self._candidate_file_error(candidate)
+            file_error = self._candidate_file_error(candidate, book_paths.connection_root(conn))
             if file_error:
                 return self._invalidate_candidate_conn(conn, candidate, file_error)
             blocking_signal_flags = self._candidate_blocking_signal_flags(signal)

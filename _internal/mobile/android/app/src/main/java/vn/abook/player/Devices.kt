@@ -96,6 +96,7 @@ object Devices {
         val (reply, fingerprint) = try {
             SyncLink.pair(context, root, body)
         } catch (error: Exception) {
+            if (error is Pin.PairConfirm) throw error
             val reason = BluetoothLink.lastError(address)
             throw IllegalStateException(reason.ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
         }

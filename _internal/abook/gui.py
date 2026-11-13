@@ -44,6 +44,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from . import book_paths
 from .config import build_settings, load_settings
 from .database import ProjectDB
 from .io_utils import discover_txt_files, natural_key
@@ -1016,7 +1017,7 @@ class MainWindow(QMainWindow):
                 int(row["warning_segments"]),
                 int(row["failed_segments"]),
                 int(row["total_segments"]),
-                Path(str(row["output_mp3"])).exists(),
+                book_paths.safe_inside(self.project_paths.root, row["output_mp3"]) is not None and book_paths.inside(self.project_paths.root, row["output_mp3"]).exists(),
             )
             for row in chapters
         )
@@ -1071,7 +1072,8 @@ class MainWindow(QMainWindow):
             published_paths = [
                 str(row["output_mp3"])
                 for row in chapters
-                if str(row["status"]) == "completed" and Path(str(row["output_mp3"])).exists()
+                if str(row["status"]) == "completed" and book_paths.safe_inside(self.project_paths.root, row["output_mp3"]) is not None
+                and book_paths.inside(self.project_paths.root, row["output_mp3"]).exists()
             ]
             if published_paths:
                 content_width = max(

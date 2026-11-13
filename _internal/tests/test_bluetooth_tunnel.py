@@ -81,7 +81,7 @@ def test_the_sync_protocol_runs_unchanged_through_the_tunnel(library, tmp_path: 
     client, server, local = _tunnel(sync.port)
     try:
         code = devices.start_pairing()["code"]
-        status, data = _get(local.port, "/sync/v1/pair", body={"code": code, "device": "Điện thoại BT"}, method="POST", secure=True)
+        status, data = _get(local.port, "/sync/v1/pair", body={"code": code, "fingerprint": sync.fingerprint, "device": "Điện thoại BT"}, method="POST", secure=True)
         assert status == 200
         token = json.loads(data)["token"]
         status, data = _get(local.port, "/sync/v1/library", token, secure=True)

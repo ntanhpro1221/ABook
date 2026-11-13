@@ -23,6 +23,7 @@ from abook.webui.listening import Listening
 from abook.webui.server import ApiError, App, Server, socket_name
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import FakeRunner, _request, library  # noqa: F401 - fixture dùng chung
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 class CountingSync(SyncApp):
@@ -45,7 +46,7 @@ def _two_computers(library, tmp_path: Path):  # noqa: F811
     preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     app.edits_send_delay = None  # bài thử gửi bằng tay, không để hẹn giờ nền chen vào
-    view = app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+    view = pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
     (computer,) = [item["id"] for item in view["computers"]]
     (book,) = [item for item in app.listen_library() if item.get("remote")]
     return app, other, sync, project, devices, computer, book["id"], app._listenable(book["id"])
@@ -388,7 +389,7 @@ def test_forgetting_says_what_is_downloaded_keeps_the_listening_place_and_pairin
         assert cache["books"] == 1 and cache["bytes"] > 0 and cache["places"] == 1, cache
         app.forget_computer(computer)
         assert not app.computers.list()
-        view = app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        view = pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
         assert [item["id"] for item in view["computers"]] == [computer], "cùng vân tay chứng chỉ: lấy lại mã cũ"
         (book,) = [item for item in app.listen_library() if item.get("remote")]
         assert book["id"] == value and book["state"]["last"]["seconds"] == 42.0, "chỗ nghe vẫn còn"

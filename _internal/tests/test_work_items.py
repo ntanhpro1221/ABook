@@ -522,7 +522,7 @@ def make_epithet_book(root: Path) -> Path:
     """Người kể Krai bị gán câu dưới danh hiệu "Thợ In Bảy Màu" - sách viết danh hiệu sát tên ba lần. Tino đứng cạnh Krai
     chỉ qua dấu phẩy (danh sách), "Giáo sư" đứng sát HAI người: không phải biệt danh của ai."""
     project = make_book(root)
-    source = root / "nguon"
+    source = project / "nguon"  # nguồn chương nằm trong thư mục sách (book_paths)
     source.mkdir()
     (source / "001.txt").write_text(
         """Thợ In Bảy Màu Krai bước vào. Ai cũng sợ Thợ In Bảy Màu Krai Andrey. Ở xưởng, Krai được mệnh danh Thợ In Bảy Màu. Tino, Krai và Lucia đi chợ. Tino, Krai ngồi xuống. Tino, Krai lại đi.

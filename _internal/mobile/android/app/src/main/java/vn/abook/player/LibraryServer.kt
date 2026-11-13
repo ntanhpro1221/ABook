@@ -535,6 +535,10 @@ object LibraryServer {
         val path = request.path
         if (request.method == "POST" && path == "/sync/v1/pair") {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
+            if (fingerprint.isEmpty() || !body.optString("fingerprint").equals(fingerprint, ignoreCase = true)) {
+                json(output, 403, JSONObject().put("error", S.s_pair_fingerprint_help))
+                return
+            }
             val token = pair(body.optString("code"), body.optString("device"), body.optString("id"))
             if (token == null) json(output, 403, JSONObject().put("error", wrongCodeMessage()))
             else json(output, 200, identity(JSONObject().put("token", token)).put("fingerprint", fingerprint))

@@ -15,9 +15,9 @@ from tests.test_webui_listen_and_sync import make_project
 
 
 def _project(tmp_path: Path) -> Path:
-    """Dự án có nguồn chương nằm NGOÀI thư mục dự án và sổ ghi gốc dự án, như dự án Studio thật."""
+    """A project owns its source files; explicit input files are copied at creation."""
     project = make_project(tmp_path / "may_cu")
-    sources = tmp_path / "nguon"
+    sources = project / "nguon"
     sources.mkdir()
     (sources / "645.txt").write_text("""Chương 645 - Trở về (1)
 
@@ -171,13 +171,15 @@ def test_a_book_file_is_not_a_project_file(tmp_path: Path) -> None:
 
 def test_a_source_moved_away_does_not_block_the_backup(tmp_path: Path) -> None:
     project = _project(tmp_path)
-    (tmp_path / "nguon" / "646.txt").unlink()
+    (project / "nguon" / "646.txt").unlink()
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
     with ProjectFile(packed) as opened:
-        assert opened.missing_sources == [str(tmp_path / "nguon" / "646.txt")]
+        assert opened.missing_sources == [str(project / "nguon" / "646.txt")]
         target, report = opened.open_into(tmp_path / "may_moi")
-    assert _rows(target, "SELECT input_path FROM chapters WHERE id = 2") == [(str(tmp_path / "nguon" / "646.txt"),)]
-    assert report["outside"] >= 1
+    # Nguồn thiếu trỏ vào chỗ chưa có TRONG dự án mới (app báo thiếu nguồn), không giữ đường của máy gói.
+    placeholder = target / "sources" / "missing" / "00001_646.txt"
+    assert _rows(target, "SELECT input_path FROM chapters WHERE id = 2") == [(str(placeholder),)]
+    assert not placeholder.exists() and report["outside"] == 0
 
 
 def _app(tmp_path: Path, library_root: Path):
@@ -228,7 +230,7 @@ def test_double_clicking_a_project_file_opens_it_in_the_studio(tmp_path: Path) -
     opened = app.open_book_file(str(packed))
 
     [project] = app.library.projects()
-    assert opened == {"id": book_id(project), "how": "studio", "missingSources": 0, "outside": 0}
+    assert opened == {"id": book_id(project), "how": "studio", "missingSources": 0}
     assert project.parent == library.resolve()
 
 
@@ -335,7 +337,7 @@ def test_a_project_without_a_finished_chapter_or_a_readable_source_has_nothing_t
     project = _project(tmp_path)
     with sqlite3.connect(project / store.DB_NAME) as db:
         db.execute("UPDATE chapters SET status = 'synthesizing'")
-    shutil.rmtree(tmp_path / "nguon")
+    shutil.rmtree(project / "nguon")
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
     with zipfile.ZipFile(packed) as archive:
         assert "book.json" not in archive.namelist() and not any(

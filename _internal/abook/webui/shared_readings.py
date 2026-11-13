@@ -20,7 +20,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any, Iterable
 
-from .. import listener_overrides
+from .. import book_paths, listener_overrides
 from ..io_utils import atomic_write_bytes, decode_text_bytes
 from . import book_wishes, store
 
@@ -103,7 +103,8 @@ def book_texts(project_root: Path) -> Iterable[str]:
     with closing(store.connect(project_root)) as connection:
         rows = connection.execute("SELECT text FROM segments").fetchall()
         has_path = "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")}
-        paths = [str(row[0]) for row in connection.execute("SELECT input_path FROM chapters")] if has_path and not rows else []
+        paths = [str(source) for row in connection.execute("SELECT input_path FROM chapters")
+                 if (source := book_paths.safe_source(project_root, row[0])) is not None] if has_path and not rows else []
     if rows:
         yield "\n".join(str(row[0] or "") for row in rows)
         return

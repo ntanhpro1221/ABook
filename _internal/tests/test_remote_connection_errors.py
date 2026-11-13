@@ -11,6 +11,7 @@ import pytest
 from abook.webui import remote_books
 from abook.webui.server import ApiError
 from tests.test_sync_tls_pinning import _this_computer
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 def test_a_port_that_is_not_abooks_says_so_not_that_the_machine_is_off(tmp_path: Path) -> None:
@@ -19,7 +20,7 @@ def test_a_port_that_is_not_abooks_says_so_not_that_the_machine_is_off(tmp_path:
     app = _this_computer(tmp_path)
     try:
         with pytest.raises(ApiError) as caught:
-            app.pair_computer(f"127.0.0.1:{plain.server_address[1]}", "123456")
+            pair_app(app, f"127.0.0.1:{plain.server_address[1]}", "123456")
         assert str(caught.value) == remote_books.NOT_ABOOK, caught.value
     finally:
         plain.shutdown()

@@ -16,6 +16,15 @@ import javax.net.ssl.SSLHandshakeException
  * qua lời đáp ghép nối - và chỉ đúng vân tay ấy mới qua được.
  */
 class PinTest {
+    @Test
+    fun pairingStringsCarryTheFullCertificateAndManualCodesCarryNone() {
+        val expected = "0123456789abcdef".repeat(4)
+        assertEquals(Pin.Pairing("482913", expected), Pin.parsePairing(Pin.pairingString("482913", expected)))
+        assertEquals(Pin.Pairing("482913", null), Pin.parsePairing("482 913"))
+        assertEquals("0123 4567 89AB CDEF", Pin.short(expected))
+        assertThrows(IllegalArgumentException::class.java) { Pin.parsePairing("482913-" + expected.take(63)) }
+        assertThrows(IllegalArgumentException::class.java) { Pin.parsePairing("482913-" + "g".repeat(64)) }
+    }
     // Chứng chỉ tự ký do tls.generate() của máy tính sinh (ECDSA P-256); vân tay do tls.fingerprint() tính.
     private val der = Base64.getDecoder().decode("MIIBbDCCARGgAwIBAgIQQtsXy341ikso5HxWaYgiTzAKBggqhkjOPQQDAjAQMQ4wDAYDVQQDDAVBQm9vazAeFw0yNjEwMDEwNzQ3MDFaFw00NjA5MjcwNzQ3MDFaMBAxDjAMBgNVBAMMBUFCb29rMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhbAOSP4+ZUuo4PdbQ8mT/fchWK3ZSMpYr7w1STXOLxvtp5eZJ0DuQA7mKxBpZ4GqAaYnOTqd9XZ+MYJbihndzaNNMEswDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwEwFgYDVR0RBA8wDYILYWJvb2subG9jYWwwCgYIKoZIzj0EAwIDSQAwRgIhAMXF56mkEcJZXI99B92R0Lxibl89JlIIEwVZjQ1Kb3eLAiEAxoDo4nHCcSPlMyHyBrwChimz7/zIPDxa+3bxeTWyIow=")
     private val fingerprint = "7414dc673adf95d62f9e114a0cf1ce8d3413704348c755f9f152071bb911d08f"

@@ -165,15 +165,35 @@ object Pin {
 
     // ---- lần ghép đầu -----------------------------------------------------------------------------------------------
 
-    /** Chỉ cho yêu cầu GHÉP: nhận chứng chỉ nào cũng được (chưa có vân tay để đối chiếu), vân tay đọc lại sau đó từ kết nối. */
-    fun firstUse(connection: HttpsURLConnection) {
+    data class Pairing(val code: String, val fingerprint: String?)
+    class PairConfirm(val fingerprint: String) : Exception(S.s_pair_fingerprint_help)
+
+    fun short(fingerprint: String): String = display(fingerprint.take(16))
+    fun pairingString(code: String, fingerprint: String): String = "$code-${fingerprint.uppercase()}"
+
+    fun parsePairing(text: String): Pairing {
+        val compact = text.replace(Regex("[\\s-]"), "").lowercase()
+        require(Regex("[0-9]{6}([0-9a-f]{64})?").matches(compact)) { S.s_pair_code_or_string }
+        return Pairing(compact.take(6), compact.drop(6).ifEmpty { null })
+    }
+
+    /** TLS handshake only: never send HTTP or a pairing code to an unverified peer. */
+    fun probe(host: String, port: Int): String {
         val trustAll = object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
             override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
             override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
         }
-        connection.sslSocketFactory = SSLContext.getInstance("TLS").apply { init(null, arrayOf<TrustManager>(trustAll), null) }.socketFactory
-        connection.hostnameVerifier = javax.net.ssl.HostnameVerifier { _, _ -> true }
+        val factory = SSLContext.getInstance("TLS").apply { init(null, arrayOf<TrustManager>(trustAll), null) }.socketFactory
+        val raw = FastConnect.connect(host, port, 5000)
+        try {
+            (factory.createSocket(raw, host, port, true) as SSLSocket).use { socket ->
+                socket.soTimeout = 5000
+                socket.startHandshake()
+                val certificate = socket.session.peerCertificates.first() as X509Certificate
+                return fingerprint(certificate.encoded)
+            }
+        } finally { raw.close() }
     }
 
     /** Vân tay chứng chỉ máy kia đã đưa ra trong kết nối này (sau khi đã nhận trả lời). */

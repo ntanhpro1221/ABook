@@ -37,6 +37,12 @@
   },
   {
     "screen": "Cài đặt",
+    "qt": "Vân tay {}",
+    "web": "Vân tay",
+    "reason": "Same certificate-fingerprint label; Qt appends the first fingerprint groups in one expression, web renders them as a JSX child."
+  },
+  {
+    "screen": "Cài đặt",
     "qt": "Điều khiển sản xuất từ",
     "web": "Điều khiển sản xuất từ {}",
     "reason": "Same production-control heading; Qt places the device name in a separate item."

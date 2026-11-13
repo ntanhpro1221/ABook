@@ -18,6 +18,7 @@ from abook.webui.server import App
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import FakeRunner, library  # noqa: F401 - fixture dùng chung
 from tests.async_wait import wait_until
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: Path) -> None:  # noqa: F811
@@ -29,7 +30,7 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     try:
         code = devices.start_pairing()["code"]
-        view = app.pair_computer(f"127.0.0.1:{other.port}", code)
+        view = pair_app(app, f"127.0.0.1:{other.port}", code)
         assert [computer["name"] for computer in view["computers"]] == ["Máy kia"]
         assert "token" not in json.dumps(view), "mã thiết bị không bao giờ ra giao diện"
 
@@ -79,7 +80,7 @@ def test_the_place_you_are_listening_travels_both_ways_between_computers(library
     preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     try:
-        app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
         (book,) = [item for item in app.listen_library() if item.get("remote")]
         chapter = app.listen_book(book["id"])["chapters"][0]["id"]
         remote_id = book_id(project)
@@ -118,9 +119,9 @@ def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, t
     try:
         devices.start_pairing()
         with pytest.raises(ApiError, match="Mã sai; còn 4 lần thử trước khi mã bị huỷ."):
-            app.pair_computer(f"127.0.0.1:{other.port}", "000000" if devices.pairing()["code"] != "000000" else "111111")
+            pair_app(app, f"127.0.0.1:{other.port}", "000000" if devices.pairing()["code"] != "000000" else "111111")
         with pytest.raises(ApiError, match="mã 6 số"):
-            app.pair_computer("", "12")
+            pair_app(app, "", "12")
     finally:
         other.stop()
     assert app.computers_view()["computers"] == [] and book_id(tmp_path) != ""
@@ -142,7 +143,7 @@ def test_this_computer_refuses_to_pair_with_itself(library, tmp_path: Path) -> N
         code = app.devices.start_pairing()["code"]
         for address in (f"127.0.0.1:{app.sync_server.port}", f"localhost:{app.sync_server.port}"):
             with pytest.raises(ApiError, match="chính máy này"):
-                app.pair_computer(address, code)
+                pair_app(app, address, code)
         assert app.devices.pairing() is not None and app.devices.list() == [], "từ chối trước khi gửi mã đi đâu"
         assert app.computers_view()["computers"] == []
     finally:
@@ -221,7 +222,7 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
     preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     try:
-        app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
         (local,) = [item for item in app.listen_library() if item.get("remote")]
         remote_id = book_id(project)
         state = {"bookId": remote_id, "bookTitle": "Sách thử", "chapterId": 1, "chapterTitle": "Chương 646",

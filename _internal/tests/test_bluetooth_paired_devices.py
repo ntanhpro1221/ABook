@@ -15,6 +15,7 @@ from abook.webui.remote_books import Computers, RemoteError
 from tests.test_bluetooth_desktop_client import (  # noqa: F401 - fixture + bộ giả dùng chung
     PHONE, FakePhone, FakeWs2, _clean_routes, _eventually, _sync)
 from tests.test_webui_listen_and_sync import library  # noqa: F401
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 class FakeBthprops:
@@ -102,7 +103,7 @@ def test_a_phone_is_matched_by_its_name_and_never_guessed() -> None:
 
 def _wifi_entry_of_the_phone(computers: Computers, phone: FakePhone, devices, refused_tcp_port) -> str:
     """Máy đã ghép qua Wi-Fi mà Wi-Fi giờ hỏng (cổng chết) và chưa biết địa chỉ Bluetooth."""
-    paired = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
+    paired = pair_confirmed(computers, f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
     computers.note(paired["id"], host="127.0.0.1", port=refused_tcp_port, name="Điện thoại")
     return paired["id"]
 

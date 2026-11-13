@@ -77,7 +77,8 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fal
         S.s_noi_may_tinh_2950692d, onBack, "pair_screen", embedded,
         footer = if (ui.showForm) ({
             PrimaryButton(
-                if (ui.paired) S.s_ghep_thiet_bi_8de1f23c else S.s_ket_noi_02ca3cba, devices::connect,
+                if (ui.attempt is Attempt.Confirm) S.s_pair_fingerprint_confirm else if (ui.paired) S.s_ghep_thiet_bi_8de1f23c else S.s_ket_noi_02ca3cba,
+                { if (ui.attempt is Attempt.Confirm) devices.confirmPair() else devices.connect() },
                 Modifier.fillMaxWidth().testTag("pair_connect"), enabled = form.ready && ui.attempt !is Attempt.Working,
             )
         }) else null,
@@ -181,7 +182,11 @@ private fun pairForm(ui: PairUi, devices: DevicesState) {
     key("code", "code") {
         Reveal(form.target != null) {
             Column(Modifier.padding(top = Dim.s16)) {
-                BookField(S.s_ma_ghep_noi_9111985a, form.code, devices::setCode, "pair_code", description = S.s_ma_ghep_noi_9111985a, placeholder = S.s_ma_6_so_a067b6d9, keyboard = KeyboardType.Number)
+                BookField(S.s_pair_code_or_string, form.code, devices::setCode, "pair_code", description = S.s_pair_code_or_string, placeholder = "123456", keyboard = KeyboardType.Text)
+                (ui.attempt as? Attempt.Confirm)?.let { confirm ->
+                    RowHint(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(confirm.fingerprint))
+                    RowHint(S.s_pair_fingerprint_help)
+                }
             }
         }
     }

@@ -7,6 +7,7 @@ import pytest
 from abook.webui import bluetooth, remote_books, sync
 from abook.webui.peer_endpoints import DEBUG, RELEASE
 from scripts import phone_diag
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 PHONE = "AA:BB:CC:DD:EE:FF"
 PIN = "ab" * 32
@@ -86,14 +87,15 @@ def test_bluetooth_pairing_persists_the_selected_build_and_routes_phone_diag(tmp
         return json.dumps({"token": "dev" if dev else "release", "fingerprint": pin,
                            "name": "Pixel (ABook .dev)" if dev else "Pixel"}).encode(), pin
     monkeypatch.setattr(remote_books, "_exchange", exchange)
-    release = computers.pair(PHONE, "123456", "Studio")
-    dev = computers.pair(PHONE + "@dev", "123456", "Studio")
+    monkeypatch.setattr(remote_books, "_probe", lambda endpoint, timeout: PIN if endpoint.bluetooth.endswith("@dev") else "cd" * 32)
+    release = pair_confirmed(computers, PHONE, "123456", "Studio")
+    dev = pair_confirmed(computers, PHONE + "@dev", "123456", "Studio")
     assert release["id"] != dev["id"]
     assert release["port"] == RELEASE["port"] and dev["port"] == DEBUG["port"]
     entry = phone_diag.find(computers, ".dev")
     assert entry["id"] == dev["id"]
     assert remote_books._base(entry).bluetooth == PHONE + "@dev"
-    assert gateways == [PHONE, PHONE + "@dev", PHONE + "@dev"]
+    assert gateways == [PHONE, PHONE, PHONE + "@dev", PHONE + "@dev", PHONE + "@dev"]
 
 
 def test_wifi_dev_fallback_to_bluetooth_selects_only_dev_service(tmp_path, monkeypatch):

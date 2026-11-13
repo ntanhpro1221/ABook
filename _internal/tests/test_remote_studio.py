@@ -37,15 +37,13 @@ def studio(library, tmp_path: Path):
         ui.stop()
 
 
-def _pair_browser(app: App) -> str:
+def _paired_cookie(app: App) -> str:
+    """Cookie authorization after native TLS verification, independent of browser onboarding."""
     code = app.devices.start_pairing()["code"]
-    status, data, headers = _sync_request(app.sync_server.port, "POST", "/sync/v1/pair-browser",
-                                     body={"code": code, "device": "Điện thoại của Anh"})
+    status, data, _headers = _sync_request(app.sync_server.port, "POST", "/sync/v1/pair",
+                                         body={"code": code, "device": "Điện thoại của Anh"})
     assert status == 200, data
-    assert json.loads(data)["studio"] is app.sync_view()["remoteStudio"], "trang ghép biết có vào Studio được không"
-    cookie = headers["Set-Cookie"]
-    assert "HttpOnly" in cookie and "Secure" in cookie and "SameSite=Strict" in cookie
-    return cookie.split(";", 1)[0]
+    return remote_studio.device_cookie(json.loads(data)["token"]).split(";", 1)[0]
 
 
 def test_production_is_closed_until_the_owner_opens_it(studio) -> None:
@@ -53,14 +51,14 @@ def test_production_is_closed_until_the_owner_opens_it(studio) -> None:
     port = app.sync_server.port
     assert app.sync_view()["remoteStudio"] is False
     status, data, _ = _sync_request(port, "GET", "/")
-    assert status == 200 and "Mã ghép nối" in data.decode("utf-8"), "ghép để nghe luôn được, như điện thoại"
+    assert status == 200 and remote_studio.BROWSER_PAIRING_CLOSED in data.decode("utf-8"), "ghép để nghe luôn được, như điện thoại"
     code = app.devices.start_pairing()["code"]
     _status, data, _ = _sync_request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
     phone = json.loads(data)["token"]
     status, data, _ = _sync_request(port, "GET", "/api/library", phone)
     assert status == 403 and "chỉ nghe" in json.loads(data)["error"], "ghép để nghe không có nghĩa là được điều khiển sản xuất"
     status, _data, _ = _sync_request(port, "POST", "/sync/v1/pair-browser", body={"code": "000000"})
-    assert status == 403
+    assert status == 410
 
 
 def test_the_home_screen_files_open_without_pairing_but_nothing_else_does(studio) -> None:
@@ -78,7 +76,7 @@ def test_the_home_screen_files_open_without_pairing_but_nothing_else_does(studio
         status, data, headers = _sync_request(port, "GET", f"/{name}")
         assert (status, data, headers["Content-Type"]) == (200, b"icon", "image/png")
     status, data, _ = _sync_request(port, "GET", "/assets/app.js")
-    assert status == 200 and "Mã ghép nối" in data.decode("utf-8"), "file khác của giao diện vẫn cần ghép nối"
+    assert status == 200 and remote_studio.BROWSER_PAIRING_CLOSED in data.decode("utf-8"), "file khác của giao diện vẫn cần ghép nối"
 
 
 def test_a_paired_browser_listens_without_the_production_switch(studio) -> None:
@@ -87,7 +85,7 @@ def test_a_paired_browser_listens_without_the_production_switch(studio) -> None:
     app, project = studio
     port = app.sync_server.port
     identifier = book_id(project)
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     status, data, _ = _sync_request(port, "GET", "/", headers=cookie)
     assert status == 200 and data.startswith(b"<!doctype html>")
     status, data, _ = _sync_request(port, "GET", "/api/app", headers=cookie)
@@ -130,7 +128,7 @@ def test_setup_templates_are_managed_by_operation_only_with_the_production_switc
     assert not permitted("PUT", "/api/book-templates") and not permitted("PUT", "/api/preferences")
     app, _project = studio
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     body = {"op": "save", "template": {"name": "Từ xa", "narrator": "", "profile": "fast", "analysisModel": "", "startNow": True}}
     status, data, _ = _sync_request(port, "POST", "/api/book-templates", headers=cookie, body=body)
     assert status == 403 and "chỉ nghe" in json.loads(data)["error"], "chế độ chỉ nghe vẫn chỉ đọc"
@@ -147,16 +145,16 @@ def test_setup_templates_are_managed_by_operation_only_with_the_production_switc
     assert status == 403, "ghi cả danh sách vẫn không qua"
 
 
-def test_a_browser_pairs_with_the_code_then_runs_the_studio(studio) -> None:
+def test_a_verified_device_cookie_runs_the_studio(studio) -> None:
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
     status, data, _ = _sync_request(port, "GET", "/")
-    assert status == 200 and "Mã ghép nối" in data.decode("utf-8"), "chưa ghép: trang nhập mã"
+    assert status == 200 and remote_studio.BROWSER_PAIRING_CLOSED in data.decode("utf-8"), "chưa ghép: trang nhập mã"
     app.devices.start_pairing()
     status, _data, _ = _sync_request(port, "POST", "/sync/v1/pair-browser", body={"code": "999999"})
-    assert status == 403
-    cookie = {"Cookie": _pair_browser(app)}
+    assert status == 410
+    cookie = {"Cookie": _paired_cookie(app)}
     assert any(device["name"] == "Điện thoại của Anh" for device in app.sync_view()["devices"])
 
     status, data, _ = _sync_request(port, "GET", "/", headers=cookie)
@@ -190,7 +188,7 @@ def test_what_only_makes_sense_on_the_computer_never_passes(studio) -> None:
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     identifier = book_id(project)
     for method, path in (("POST", "/api/dialog/folder"), ("POST", "/api/dialog/files"),
                          ("POST", f"/api/books/{identifier}/reveal"), ("POST", "/api/reveal-export"), ("POST", "/api/open-url"),
@@ -228,7 +226,7 @@ def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
     app, _project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     chapter = "Chương 1\n\nTrời đã sáng.".encode("utf-16")  # byte nguyên vẹn: bảng mã do dây chuyền nhận, không do trang
     for name in ("001.txt", "..\\..\\002.txt"):
         status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
@@ -263,7 +261,7 @@ def test_a_whole_book_sent_from_a_phone_can_be_split_into_chapters(studio, tmp_p
     app, _project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     book = "Chương 1\n\nTrời đã sáng.\n\nChương 2\n\nTrời tối.\n".encode()
     _status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "Cả truyện", "name": "tron bo.txt", "data": base64.b64encode(book).decode("ascii")})
@@ -299,7 +297,7 @@ def test_a_picked_folder_keeps_its_name_inside_its_own_upload(studio) -> None:
     app, _project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     root = Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên"
     for name in ("10.txt", "2.txt", "1.txt"):
         status, data = _send(port, cookie, "Lần gửi a1/Truyện Thử", name, f"Chương {name}\n\nTrời sáng.".encode())
@@ -329,7 +327,7 @@ def test_a_series_export_reconnects_after_the_forward_deadline(studio, tmp_path,
     app, project = studio
     _part(tmp_path, project.parent, "part-two", "Truyện · Phần 2", project)
     app.set_remote_studio(True)
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     url = f"/api/books/{book_id(project)}/bookfile-job"
     reached, release = threading.Event(), threading.Event()
     real = bookfile.write_entries
@@ -410,7 +408,7 @@ def test_remote_paths_stay_inside_the_upload_folder(studio, tmp_path: Path) -> N
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     private = tmp_path / "rieng"
     private.mkdir()
     (private / "ghi_chu.txt").write_text("Dòng đầu tiên của một file riêng tư", encoding="utf-8")
@@ -438,7 +436,7 @@ def test_create_and_start_waits_in_the_queue(studio, tmp_path: Path) -> None:
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     app.start(book_id(project))
     deadline = time.time() + scaled(10)
     while not app.runner.running(project) and time.time() < deadline:
@@ -459,7 +457,7 @@ def test_malformed_and_cross_site_requests_are_refused(studio) -> None:
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = _pair_browser(app)
+    cookie = _paired_cookie(app)
     # Content-Length âm: trước đây rfile.read(-1) đọc tới hết kết nối, vượt mọi trần kích thước.
     connection = tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=10)
     connection.putrequest("POST", "/api/scan")
@@ -495,7 +493,7 @@ def test_head_keeps_the_connection_in_step_and_private_preferences_stay_home(stu
     app.set_remote_studio(True)
     app.preferences.update({"recents": ["C:/Users/ai-do/Sach"]})
     port = app.sync_server.port
-    cookie = _pair_browser(app)
+    cookie = _paired_cookie(app)
     connection = tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=10)
     connection.request("HEAD", "/api/app", headers={"Cookie": cookie})
     response = connection.getresponse()
@@ -536,9 +534,9 @@ def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tm
     app, project = studio
     app.set_remote_studio(True)
     port = app.sync_server.port
-    cookie = {"Cookie": _pair_browser(app)}
-    story = tmp_path / "truyen"
-    story.mkdir()
+    cookie = {"Cookie": _paired_cookie(app)}
+    story = project / "sources"  # nguồn chương phải nằm trong thư mục sách (book_paths)
+    story.mkdir(exist_ok=True)
     for name in ("645.txt", "646.txt", "647.txt"):
         (story / name).write_text(f"Chương {name[:3]}\nLucien đi tiếp.\n", encoding="utf-8")
     db = sqlite3.connect(project / "project.sqlite3")

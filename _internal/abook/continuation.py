@@ -32,7 +32,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
-from . import aliases, bracket_rule
+from . import aliases, book_paths, bracket_rule
 from .database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 from .io_utils import discover_txt_files, natural_key
 from . import names as renames
@@ -246,8 +246,9 @@ def series_parts(project: Path, candidates: Iterable[Path]) -> list[Path]:
 
 def _input_paths(project: Path) -> list[Path]:
     with closing(_read_only(project)) as connection:
+        # Chỉ nguồn được phép đọc (book_paths): sổ có thể do người khác viết, đường mạng không được chạm.
         return [Path(str(row[0])) for row in _rows(connection, "SELECT input_path FROM chapters ORDER BY chapter_index")
-                if row[0]]
+                if book_paths.safe_source(project, row[0]) is not None]
 
 
 def next_chapters(project: Path) -> list[Path]:
@@ -277,11 +278,15 @@ def next_chapters(project: Path) -> list[Path]:
 
 def _source_text(connection: sqlite3.Connection) -> str:
     """Như `character_registry._source_text`, qua kết nối chỉ-đọc: mọi .txt cùng thư mục với các chương."""
-    paths = {Path(str(row[0])) for row in _rows(connection, "SELECT input_path FROM chapters") if row[0]}
+    paths = {Path(str(row[0])) for row in _rows(connection, "SELECT input_path FROM chapters")
+             if book_paths.safe_source(book_paths.connection_root(connection), row[0]) is not None}
     folders = {path.parent for path in paths if path.parent.is_dir()}
     files = sorted({found for folder in folders for found in folder.glob("*.txt")})
     chunks: list[str] = []
     for path in files or sorted(path for path in paths if path.is_file()):
+        path = book_paths.safe_source(book_paths.connection_root(connection), path)
+        if path is None:
+            continue
         try:
             chunks.append(path.read_text(encoding="utf-8", errors="replace"))
         except OSError:

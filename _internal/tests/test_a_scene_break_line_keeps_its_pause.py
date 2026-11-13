@@ -120,7 +120,7 @@ def test_the_pause_reaches_the_audio_concat_entries(tmp_path: Path) -> None:
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.db = _Db()
-    pipeline.paths = type("Paths", (), {"work": tmp_path / "work"})()
+    pipeline.paths = type("Paths", (), {"work": tmp_path / "work", "root": tmp_path})()
     pipeline.log = lambda *_args, **_kwargs: None
     pipeline.settings = build_settings()
     entries = pipeline._chapter_delivery_wavs({"id": 1, "chapter_index": 1}, db_rows)

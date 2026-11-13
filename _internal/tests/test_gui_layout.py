@@ -587,7 +587,8 @@ def test_startup_opens_the_last_selected_project(tmp_path: Path) -> None:
 
     assert window.project_paths is not None
     assert window.project_paths.root == paths.root
-    assert window.files == [source.resolve()]
+    # Dự án dùng bản chép nguồn trong sources/ của sách (book_paths), không trỏ ra file gốc.
+    assert [path.name for path in window.files] == [source.name] and all(path.is_relative_to(paths.root.resolve()) for path in window.files)
     assert window.start_button.text() == "Tiếp tục"
     assert window.profile_combo.isEnabled() is False
     assert store.value("resource_mode") == "max_safe"
@@ -660,7 +661,7 @@ def test_removing_from_open_book_creates_draft_without_mutating_old_project(tmp_
 
     assert window.project_paths is None
     assert window.db is None
-    assert window.files == [sources[1].resolve()]
+    assert [path.name for path in window.files] == [sources[1].name]  # bản chép trong sources/ của sách cũ
     assert paths.db.exists()
     assert window.profile_combo.isEnabled() is True
     window.close()

@@ -57,7 +57,6 @@ Column {
                         label: S.s_cach_dung_ma_ae1cba85
                         HintText { width: parent.width; text: S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816 }
                         HintText { width: parent.width; visible: (root.sync.addresses || []).length > 0; textFormat: Text.RichText; text: S.s_dia_chi_9945f0f4 + Logic.whereHtml(root.sync, false, root.ink) }
-                        HintText { width: parent.width; visible: Boolean(root.sync.remoteStudio); textFormat: Text.RichText; text: S.s_trinh_duyet_mo_78712782 + Logic.whereHtml(root.sync, true, root.ink) + S.s_roi_nhap_ma_fdfaf308 }
                     }
                 }
                 Column {
@@ -92,8 +91,8 @@ Column {
                     id: fingerprint
                     y: 12
                     width: parent.width
-                    visible: Boolean(root.sync.fingerprint)
-                    text: S.s_van_tay_8b70c9dd + (root.sync.fingerprint || "")
+                    visible: Boolean(root.sync.fingerprintShort)
+                    text: S.s_pair_fingerprint_label + (root.sync.fingerprintShort || "") + "\n" + S.s_pair_fingerprint_help + "\n" + S.s_pair_string + (root.sync.pairing ? root.sync.pairing.pairString || "" : "")
                     color: Theme.text3
                     wrapMode: Text.WrapAnywhere
                     font.pixelSize: Theme.sizeCaption

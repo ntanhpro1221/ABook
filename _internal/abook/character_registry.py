@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from . import narrator_sections
+from . import book_paths, narrator_sections
 from .analysis import (
     LOCAL_SPEAKER_REQUEST_PREFIX,
     _canonical_speaker,
@@ -323,10 +323,11 @@ def _source_text(db: ProjectDB) -> str:
     hai nhân vật nhập làm một, tệ hơn hẳn việc không gộp.
     """
     try:
+        root = Path(db.path).parent
         paths = {
-            Path(str(row["input_path"]))
+            path
             for row in db.list_chapters()
-            if row["input_path"]
+            if (path := book_paths.safe_source(root, row["input_path"])) is not None
         }
     except Exception:  # noqa: BLE001
         return ""
@@ -334,6 +335,9 @@ def _source_text(db: ProjectDB) -> str:
     files = sorted({found for folder in folders for found in folder.glob("*.txt")})
     chunks: list[str] = []
     for path in files or sorted(path for path in paths if path.is_file()):
+        path = book_paths.safe_source(root, path)
+        if path is None:
+            continue
         try:
             chunks.append(path.read_text(encoding="utf-8", errors="replace"))
         except OSError:

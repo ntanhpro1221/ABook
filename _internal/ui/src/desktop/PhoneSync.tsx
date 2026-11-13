@@ -36,10 +36,11 @@ export interface SyncView {
   addresses: string[];
   /** Trong `addresses`, địa chỉ trên card mạng riêng ảo (Tailscale, ZeroTier, WireGuard... - sync.away_addresses). */
   awayAddresses: string[];
-  pairing: { code: string; expiresAt: number } | null;
+  pairing: { code: string; expiresAt: number; pairString: string } | null;
   pairingBlocked: boolean;
   /** Vân tay SHA-256 chứng chỉ TLS của máy này (webui/tls.py), nhóm 4 ký tự; "" khi đồng bộ tắt. */
   fingerprint: string;
+  fingerprintShort: string;
   devices: SyncDevice[];
   /** Studio từ xa (webui/remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. */
   remoteStudio: boolean;
@@ -151,7 +152,6 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
             <p className="text-sm font-semibold">{S.s_ma_ghep_thiet_bi_02370316}</p>
             <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_tren_may_kia_cai_dat_thiet_bi_chon_7cad8e7a}{sync.name}{S.s_nhap_ma_8a077ab3}</p>
             <MoreInfo label={S.s_cach_dung_ma_ae1cba85} className="mt-2">{S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816}{sync.addresses.length > 0 && <span className="block">{S.s_dia_chi_9945f0f4}<Where sync={sync} scheme={false} /></span>}
-              {sync.remoteStudio && <span className="block">{S.s_trinh_duyet_mo_78712782}<Where sync={sync} />{S.s_roi_nhap_ma_fdfaf308}</span>}
             </MoreInfo>
           </div>
           {/* Mã và dòng hết hạn cùng một trục giữa (soát UX a19): khoảng cách chữ thừa sau số cuối đã được bù ở bên trái. */}
@@ -169,7 +169,9 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
           </div>
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
-        {sync.fingerprint && <p className="mt-3 break-all text-xs text-fg-3" title={S.s_doi_chieu_van_tay_voi_may_kia_18aa9fb1}>{S.s_van_tay_8b70c9dd}{sync.fingerprint}</p>}
+        <p className="mt-3 text-sm">{S.s_pair_fingerprint_label}{sync.fingerprintShort}</p>
+        <p className="text-xs text-fg-2">{S.s_pair_fingerprint_help}</p>
+        <p className="mt-2 break-all text-xs text-fg-3 select-all">{S.s_pair_string}{sync.pairing.pairString}</p>
         <DialogActions>
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>{S.s_huy_ma_1b0a6559}</Button>

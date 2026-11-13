@@ -16,7 +16,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from .. import narrator_sections
+from .. import book_paths, narrator_sections
 from . import store
 
 # Kết quả phát hiện theo (chương, tệp nguồn, người kể, số câu, cỡ câu, bỏ dòng ghi công): tính một chương mất vài chục ms, và
@@ -103,7 +103,9 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
             ).fetchall()
             if not rows:
                 continue
-            path = Path(str(chapter["input_path"]))
+            path = book_paths.safe_source(project_root, chapter["input_path"])
+            if path is None:  # sổ trỏ ra chỗ không được đọc (book_paths): bỏ chương, không chạm đĩa
+                continue
             try:
                 stat = path.stat()
             except OSError:
@@ -112,8 +114,9 @@ def proposals(project_root: Path) -> list[dict[str, Any]]:
             if narrator:
                 window: Counter[str] = Counter()
                 for other in range(max(0, position - PRONOUN_WINDOW), min(len(chapters), position + PRONOUN_WINDOW + 1)):
-                    if tellers[other] == narrator and chapters[other]["input_path"]:
-                        window.update(_pronoun_counts(Path(str(chapters[other]["input_path"]))))
+                    other_path = book_paths.safe_source(project_root, chapters[other]["input_path"]) if tellers[other] == narrator else None
+                    if other_path is not None:
+                        window.update(_pronoun_counts(other_path))
                 pron = narrator_sections.pronoun_pattern(window)
             key = (str(project_root), index, stat.st_mtime_ns, stat.st_size, narrator, len(rows), max_chars, drop_credits, drop_tail_credits,
                    pron.pattern)

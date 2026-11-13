@@ -69,6 +69,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Self
 
 from ..database import SCHEMA_VERSION
+from .. import book_paths
 from . import book_edits, bookfile, covers, project_views, store
 from .fingerprints import content_key, identity_prints
 
@@ -95,6 +96,10 @@ _CHUNK = 1024 * 1024
 # Báo tiến độ đóng gói: progress(pha, đã, tổng) - "prepare" | "listen" (chương) | "views" | "hash" (byte) | "write" (byte). Gọi ở mỗi điểm
 # kiểm giữa hai file; ném `export_jobs.Cancelled` từ đó thì việc dừng, file tạm bị dọn, không có file mang tên thật. Không đổi một byte của file ra.
 Progress = Callable[[str, int, int], None]
+
+
+OUTSIDE_PATHS = ("File dự án có đường dẫn trỏ ra ngoài thư mục dự án (ổ khác hay máy khác qua mạng) — app không mở để khỏi đọc hay "
+                 "ghi đè file lạ. Bạn nhờ người gửi gói lại bằng ABook.")
 
 
 class ProjectFileError(Exception):
@@ -130,8 +135,12 @@ def _sources(database: Path, project_root: Path) -> dict[str, str]:
         connection.close()
     mapping: dict[str, str] = {}
     for index, value in rows:
-        if not value or value in mapping or not _absolute(value) or _under(value, str(project_root)) is not None:
+        if not value or value in mapping:
             continue
+        try:
+            book_paths.inside(project_root, value)
+        except book_paths.UnsafeBookPath as exc:
+            raise ProjectFileError(OUTSIDE_PATHS) from exc
         name = _PART.fullmatch(PureWindowsPath(value).name) and PureWindowsPath(value).name or "chuong.txt"
         mapping[value] = f"sources/{int(index or 0):05d}_{name}"
     return mapping
@@ -540,6 +549,27 @@ class ProjectFile:
         """Mọi mục thật đúng cỡ và mã băm ghi trong `project.json` (bí danh có cỡ + mã băm của mục thật - `_validate` đã kiểm)."""
         with bookfile.refuse_unreadable(ProjectFileError, bookfile.UNSUPPORTED_ZIP):
             self._verify()
+        self.validate_workshop_paths()
+
+    def validate_workshop_paths(self) -> None:
+        """Reject unsafe workbook paths before import, merge, or listening-only extraction."""
+        if self.workshop != PRESENT:
+            return
+        with tempfile.TemporaryDirectory(prefix="abookproj-paths-") as scratch:
+            folder = Path(scratch)
+            database = folder / store.DB_NAME
+            self._copy_checked(f"project/{store.DB_NAME}", database)
+            target = folder / "book"
+            sources = {item["path"]: str(target.joinpath(*item["entry"].split("/")))
+                       for item in self.manifest["sources"]}
+            for index, old in enumerate(self.missing_sources, 1):
+                sources.setdefault(old, str(target / "sources" / "missing" / f"{index:05d}.txt"))
+            try:
+                report = relocate(database, str(self.manifest["projectRoot"]), str(target), sources)
+            except sqlite3.DatabaseError as exc:
+                raise ProjectFileError("Sổ trong file dự án không hợp lệ.") from exc
+            if report["outside"]:
+                raise ProjectFileError(OUTSIDE_PATHS)
 
     def _verify(self) -> None:
         for name, expected in self.manifest["files"].items():
@@ -595,7 +625,16 @@ class ProjectFile:
                 self._copy_checked(name, destination)
             sources = {item["path"]: str(target.joinpath(*item["entry"].split("/")))
                        for item in self.manifest["sources"]}
+            # Nguồn thiếu lúc gói: trỏ vào một chỗ CHƯA có trong thư mục mới - app báo thiếu nguồn như trên máy gói, không đọc đường máy kia.
+            for number, old in enumerate(self.missing_sources, 1):
+                name = PureWindowsPath(old).name
+                sources.setdefault(old, str(target / "sources" / "missing" / (
+                    f"{number:05d}_{name}" if _PART.fullmatch(name or "") else f"{number:05d}_chuong.txt")))
             report = relocate(staging / store.DB_NAME, str(self.manifest["projectRoot"]), str(target), sources)
+            if report["outside"]:
+                # Sổ do người gửi viết: đường còn trỏ ra ngoài (ổ khác, máy khác qua mạng \máy\share) là đọc / ghi đè file lạ
+                # ngay khi trang sách mở. Từ chối cả file, không mở dở (soát bảo mật 12-11).
+                raise ProjectFileError(OUTSIDE_PATHS)
             os.replace(staging, target)
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)
@@ -609,6 +648,7 @@ class ProjectFile:
         để lưu lại được (không mở sổ dự án). Dùng khi file chỉ chờ dựng xưởng (`workshop: "pending"`) hay máy không có Studio.
         Kiểm cỡ + mã băm trong lúc chép; thư mục tạm rồi đổi tên; thư mục đã có thì được thay nhưng phần sửa của người nghe
         trên máy này được hợp vào (bookfile.keep_local_edits). Báo cáo hợp ở `last_merge`."""
+        self.validate_workshop_paths()
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
         files = self.manifest["files"]
@@ -790,7 +830,8 @@ class ProjectFile:
 
 def relocate(database: Path, old_root: str, new_root: str, sources: dict[str, str]) -> dict[str, Any]:
     """Viết lại các cột đường dẫn thường của sổ dự án: nguồn cũ -> nguồn mới, gốc cũ -> gốc mới. Không đụng JSON.
-    Trả số ô đã đổi và số đường dẫn tuyệt đối còn trỏ ra ngoài (đường dẫn tới model, file nằm chỗ lạ)."""
+    Trả số ô đã đổi và số ô SAU khi đổi vẫn không nằm trong `new_root` (tuyệt đối ngoài, UNC, tương đối, có `..`) - `open_into`
+    từ chối file khi số này khác 0."""
     changed = 0
     outside = 0
     connection = sqlite3.connect(database)
@@ -807,7 +848,10 @@ def relocate(database: Path, old_root: str, new_root: str, sources: dict[str, st
                         continue
                     updates = []
                     for rowid, value in connection.execute(f'SELECT rowid, "{column}" FROM "{table}"'):
-                        if not isinstance(value, str) or not value:
+                        if value is None or value == "":
+                            continue
+                        if not isinstance(value, str) or book_paths.network(value) or not _absolute(value):
+                            outside += 1
                             continue
                         moved = sources.get(value) if column == "input_path" else None
                         if moved is None:
@@ -818,7 +862,7 @@ def relocate(database: Path, old_root: str, new_root: str, sources: dict[str, st
                                     break
                         if moved is not None and moved != value:
                             updates.append((moved, rowid))
-                        elif moved is None and _absolute(value):
+                        if not _contained(moved if moved is not None else value, new_root):
                             outside += 1
                     connection.executemany(f'UPDATE "{table}" SET "{column}" = ? WHERE rowid = ?', updates)
                     changed += len(updates)
@@ -829,6 +873,14 @@ def relocate(database: Path, old_root: str, new_root: str, sources: dict[str, st
 
 def _has_column(connection: sqlite3.Connection, table: str, column: str) -> bool:
     return any(row[1] == column for row in connection.execute(f'PRAGMA table_info("{table}")'))
+
+
+def _contained(value: str, root: str) -> bool:
+    """`value` nằm trong `root` theo chữ (không chạm đĩa): tuyệt đối, không phải đường mạng, không có `..`."""
+    if book_paths.network(value) or book_paths.network(root):
+        return False
+    rest = _under(value, root)
+    return rest is not None and not any(part in (".", "..") for part in rest)
 
 
 def _absolute(value: str) -> bool:
@@ -917,7 +969,7 @@ def main(argv: list[str] | None = None) -> int:
                       f"{f' · thiếu {len(project.missing_sources)} nguồn' if project.missing_sources else ''}")
             else:
                 target, report = project.open_into(args.library)
-                print(f"{target} · đổi {report['changed']} đường dẫn · {report['outside']} đường dẫn trỏ ra ngoài")
+                print(f"{target} · đổi {report['changed']} đường dẫn")
         return 0
     except (ProjectFileError, bookfile.BookFileError) as exc:
         print(exc, file=sys.stderr)

@@ -20,6 +20,7 @@ from abook.webui.listening import Listening
 from abook.webui.server import App
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import FakeRunner, library  # noqa: F401 - fixture dùng chung
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 def _other(library, tmp_path: Path, identity: tls.Identity | None = None):  # noqa: F811
@@ -63,7 +64,7 @@ def test_pairing_stores_the_fingerprint_the_other_computer_showed(library, tmp_p
     other, devices = _other(library, tmp_path)
     app = _this_computer(tmp_path)
     try:
-        view = app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        view = pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
         (computer,) = view["computers"]
         assert computer["fingerprint"] == other.fingerprint
         stored = json.loads((tmp_path / "nay" / "computers.json").read_text(encoding="utf-8"))["computers"]
@@ -76,7 +77,7 @@ def test_the_pairing_answer_carries_the_fingerprint(library, tmp_path: Path) -> 
     other, devices = _other(library, tmp_path)
     try:
         connection = tls.PinnedHTTPSConnection("127.0.0.1", other.port, expected=None)
-        body = json.dumps({"code": devices.start_pairing()["code"], "device": "Pixel"})
+        body = json.dumps({"code": devices.start_pairing()["code"], "fingerprint": other.fingerprint, "device": "Pixel"})
         connection.request("POST", "/sync/v1/pair", body=body, headers={"Content-Type": "application/json"})
         reply = json.loads(connection.getresponse().read())
         assert reply["fingerprint"] == other.fingerprint == connection.peer_fingerprint
@@ -89,7 +90,7 @@ def test_a_client_with_the_right_fingerprint_connects_and_range_works(library, t
     other, devices = _other(library, tmp_path)
     app = _this_computer(tmp_path)
     try:
-        app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        pair_app(app, f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
         (entry,) = [remote_books.Computers(tmp_path / "nay" / "computers.json").get(item["id"])
                     for item in app.computers_view()["computers"]]
         endpoint = remote_books._base(entry)
@@ -133,7 +134,7 @@ def test_a_computer_that_changed_its_certificate_is_not_trusted_silently(library
     app = _this_computer(tmp_path)
     port = other.port
     try:
-        app.pair_computer(f"127.0.0.1:{port}", devices.start_pairing()["code"])
+        pair_app(app, f"127.0.0.1:{port}", devices.start_pairing()["code"])
         (before,) = app.computers_view()["computers"]
     finally:
         other.stop()

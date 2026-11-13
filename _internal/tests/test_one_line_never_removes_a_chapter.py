@@ -91,7 +91,7 @@ def test_soft_rejections_keep_best_audio_and_failure_after_reopen(tmp_path, monk
 def test_take_order_and_crash_keep_incumbent_until_better_checkpoint(tmp_path):
     pipeline, _, row = _short_tts_pipeline(tmp_path)
     for index, flags in enumerate([{'pace_outlier': 1, 'generation_ceiling_hit': 1}, {'pace_outlier': 1}, {'pace_outlier': 1, 'generation_ceiling_hit': 1}, {}]):
-        path = tmp_path / f'take{index}.wav'
+        path = pipeline.paths.root / f'take{index}.wav'  # WAV của sách nằm trong thư mục sách (book_paths)
         sf.write(path, np.sin(np.arange(24000) / 30) * .1, 24000)
         metrics = {'duration': 1.0, **flags}
         pipeline.db.mark_generating(row['id'], index)
@@ -367,7 +367,7 @@ def test_candidate_archive_is_durable_and_keeps_the_best_without_claiming_pass(t
     pipeline, _, row = _short_tts_pipeline(tmp_path)
     kept = None
     for index, flags in enumerate([{'pace_outlier': 1}, {'pace_outlier': 1}, {}]):
-        path = tmp_path / f'candidate{index}.wav'
+        path = pipeline.paths.root / f'candidate{index}.wav'  # WAV của sách nằm trong thư mục sách (book_paths)
         sf.write(path, .1 * np.sin(np.arange(24000) / (30 + index)), 24000)
         pipeline._archive_usable_take(row, path, sha256_file(path), {'duration': 1, **flags}, index)
         current = pipeline.db.artifact_by_key(f"usable_take:{row['id']}")

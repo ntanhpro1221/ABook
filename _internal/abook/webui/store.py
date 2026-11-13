@@ -27,6 +27,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, Iterable, Iterator
 
 from . import humanize, listing_cache, word_timing
+from .. import book_paths
 from .. import names as renames
 from ..database import validate_project_schema
 from ..io_utils import atomic_write_bytes
@@ -431,12 +432,16 @@ class AudioLocator:
             return None
         project_root = self.project_root
         path = Path(str(recorded_path))
-        try:
-            resolved, is_file = self.probe(path if path.is_absolute() else project_root / path)
-            if self.within_root(resolved) or resolved == self.root:
-                return resolved if is_file else None
-        except (OSError, ValueError):
-            pass
+        candidate = path if path.is_absolute() else project_root / path
+        # Chỉ hỏi đĩa khi đường nằm trong thư mục sách THEO CHỮ: sổ có thể do người khác viết, lstat một đường mạng (\máy\share)
+        # là Windows đã nối SMB (book_paths). Đường ngoài (sách đã chuyển chỗ) đi nhánh tìm theo phần đuôi bên dưới.
+        if book_paths.lexically_inside(project_root, candidate) or book_paths.lexically_inside(self.root, candidate):
+            try:
+                resolved, is_file = self.probe(candidate)
+                if self.within_root(resolved) or resolved == self.root:
+                    return resolved if is_file else None
+            except (OSError, ValueError):
+                pass
         # Ngoài thư mục sách: nối phần đuôi từ thư mục con của dự án ("work", "output") vào thư mục sách hiện tại. Rẻ - chỉ
         # `is_file`, rồi `resolve` đúng một file: hộp việc gọi hàm này cho hàng trăm câu (thử mọi phần đuôi từng làm nó chậm
         # 0,7 -> 5 giây).
@@ -578,9 +583,11 @@ def _chapter_names(connection: sqlite3.Connection,
             # Chương chưa tách câu (dự án chưa chạy tới): dòng đầu FILE nguồn, như danh sách chương của trình tạo - tên file
             # lệch một so với truyện ("767.txt" mở đầu "Chương 768 - ...") làm ranh giới hai phần trông như lặp chương
             # (soát UX 29-09).
-            if row["input_path"]:
-                sources.append((str(row["input_path"]), _mtime_ns(row["input_path"])))
-            heading = _first_line(row["input_path"])
+            # Đường trong sổ là dữ liệu (file dự án người khác gửi): chỉ đọc nguồn được phép (book_paths), không stat/mở đường mạng.
+            source = book_paths.safe_source(project_root, row["input_path"])
+            if source is not None:
+                sources.append((str(source), _mtime_ns(source)))
+            heading = _first_line(source)
         name, subtitle = humanize.chapter_names(str(row["title"]), heading)
         name, subtitle = apply_chapter_title(name, subtitle, renamed.get(int(row["id"])))
         out[int(row["id"])] = {
@@ -1516,10 +1523,11 @@ def chapter_source_text(project_root: Path, chapter_id: int) -> str | None:
 
     with closing(connect(project_root)) as connection:
         row = connection.execute("SELECT input_path FROM chapters WHERE id = ?", (chapter_id,)).fetchone()
-    if row is None or not row["input_path"]:
+    source = book_paths.safe_source(project_root, row["input_path"]) if row is not None else None
+    if source is None:
         return None
     try:
-        return decode_text_bytes(Path(str(row["input_path"])).read_bytes())
+        return decode_text_bytes(source.read_bytes())
     except OSError:
         return None
 

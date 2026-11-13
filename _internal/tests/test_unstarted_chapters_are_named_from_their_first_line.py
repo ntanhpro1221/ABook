@@ -15,14 +15,14 @@ from tests.project_tables import create_project_tables
 def test_an_unsegmented_chapter_takes_its_heading_from_the_file(tmp_path: Path) -> None:
     source = tmp_path / "767.txt"
     source.write_text("\n\nChương 768 - Mô hình chân không mới\nNội dung…\n" + "chữ " * 3000, encoding="utf-8")
-    db = sqlite3.connect(":memory:")
+    db = sqlite3.connect(tmp_path / "project.sqlite3")  # thư mục sách = chỗ của sổ (book_paths.connection_root)
     db.row_factory = sqlite3.Row
     create_project_tables(db, "chapters", "segments")
     db.execute("INSERT INTO chapters (id, chapter_index, title, input_path) VALUES (1, 1, '767', ?)", (str(source),))
     db.execute("INSERT INTO chapters (id, chapter_index, title, input_path) VALUES (2, 2, '768', ?)",
                (str(tmp_path / "missing.txt"),))
 
-    names = chapter_names(db)
+    names = chapter_names(db, tmp_path)  # chỉ đọc nguồn nằm trong thư mục sách (book_paths)
 
     assert names[1]["name"] == "Chương 768" and names[1]["subtitle"] == "Mô hình chân không mới"
     assert names[2]["name"] == "Chương 768", "file mất: tên theo tên file như trước"

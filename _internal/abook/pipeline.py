@@ -38,6 +38,7 @@ from .asr_contract import (
     COLLAPSED_SHORT_CONTEXT_EFFECTIVE_REPEAT_COUNT,
     COLLAPSED_SHORT_CONTEXT_MODE,
 )
+from . import book_paths
 from .audio_io import (
     REPEATED_UTTERANCE_METRIC,
     REPEATED_UTTERANCE_THRESHOLD,
@@ -841,7 +842,7 @@ class BookPipeline:
         delivery_root = self.paths.work / "delivery" / f"chapter_{int(chapter['chapter_index']):05d}"
         rendered = []
         for row in rows:
-            source = Path(str(row['wav_path']))
+            source = self._book_file(row['wav_path'])
             audio, rate = sf.read(source, dtype='float32', always_2d=False)
             audio = np.asarray(audio, dtype=np.float32).reshape(-1)
             if edge_amplitude(audio) > EDGE_FADE_MIN_AMPLITUDE:
@@ -854,7 +855,19 @@ class BookPipeline:
             rendered.append((source, int(row['break_ms'])))
         return rendered
 
+    def _book_file(self, value: Any) -> Path:
+        """File của cuốn sách theo một cột đường dẫn của sổ (`wav_path`, `output_mp3`, `artifacts.path`): chỉ khi nó nằm trong thư mục
+        sách (book_paths, kiểm theo chữ trước mọi I/O). Sổ có thể đến từ file dự án người khác gửi - không đọc / ghi đè file ở chỗ khác.
+        Trả đúng đường như sổ ghi (so khớp chuỗi với sổ vẫn đúng)."""
+        try:
+            book_paths.inside(self.paths.root, value)
+        except book_paths.UnsafeBookPath as exc:
+            raise RuntimeError(f"Đường dẫn trong sổ dự án nằm ngoài thư mục sách: {value}") from exc
+        return Path(str(value))
+
     def _validate_chapter_source(self, chapter: Any) -> None:
+        if book_paths.safe_source(self.paths.root, chapter["input_path"]) is None:
+            raise RuntimeError(f"Source chapter path is not allowed outside the book folder: {chapter['input_path']}")
         if not self.settings["safety"].get("stop_book_on_source_change", True):
             return
         source = Path(str(chapter["input_path"]))
@@ -971,6 +984,7 @@ class BookPipeline:
     def _segmentation_checkpoint_mismatch(self) -> str | None:
         max_chars = int(self.settings["tts"]["max_segment_chars"])
         for chapter in self.db.list_chapters():
+            self._validate_chapter_source(chapter)
             expected_rows = load_and_segment_chapter(
                 dict(chapter),
                 max_chars=max_chars,
@@ -1439,7 +1453,7 @@ class BookPipeline:
         self,
         item: dict[str, Any],
     ) -> tuple[Path, str]:
-        wav_path = Path(str(item["wav_path"] or ""))
+        wav_path = self._book_file(item["wav_path"]) if item["wav_path"] else Path("")  # chưa có WAV: như trước, không phải file
         artifact_sha256 = str(item["wav_sha256"] or "").strip()
         if (
             not artifact_sha256
@@ -1827,7 +1841,7 @@ class BookPipeline:
     ) -> int:
         segment_id = int(item["id"])
         artifact_sha256 = str(item["wav_sha256"] or "").strip()
-        wav_path = Path(str(item["wav_path"] or ""))
+        wav_path = self._book_file(item["wav_path"]) if item["wav_path"] else Path("")  # chưa có WAV: như trước, không phải file
         if (
             not artifact_sha256
             or not wav_path.is_file()
@@ -1882,7 +1896,7 @@ class BookPipeline:
         profile = self._effective_perceptual_profile(row)
         preset_name = str(profile["preset_name"] or "").strip()
         result = self.perceptual_qa.verify(
-            Path(str(row["wav_path"])),
+            self._book_file(row["wav_path"]),
             preset_name,
 
             prefetched_score=prefetched_score,
@@ -3122,7 +3136,7 @@ class BookPipeline:
         all_chapters = self.db.list_chapters()
         if completed and len(completed) == len(all_chapters):
             self._check_finished_book_levels(completed)
-            chapter_files = [Path(str(row["output_mp3"])) for row in completed]
+            chapter_files = [self._book_file(row["output_mp3"]) for row in completed]
             if self.settings["audio"].get("create_m3u8", True):
                 write_playlist_atomic(chapter_files, self.paths.output / "playlist.m3u8")
             self.db.update_book(status=BookStatus.COMPLETED.value, stage="completed", error=None)
@@ -3139,7 +3153,7 @@ class BookPipeline:
             missing = len(all_chapters) - len(completed) - len(review)
             error_text = f"Đã xử lý xong: {len(review)} chương cần nghe lại; {missing} chương thiếu audio."
             if not missing and self.settings["audio"].get("create_m3u8", True):
-                write_playlist_atomic([Path(str(row["output_mp3"])) for row in all_chapters], self.paths.output / "playlist.m3u8")
+                write_playlist_atomic([self._book_file(row["output_mp3"]) for row in all_chapters], self.paths.output / "playlist.m3u8")
             self.db.update_book(
                 status=BookStatus.ERROR.value,
                 stage="completed_with_errors",
@@ -3181,7 +3195,7 @@ class BookPipeline:
                     row = rows[int(segment['id'])]
                     segments.append({'voice': profiles.get(int(row['voice_profile_id'] or 0)),
                         'stable_id': row['stable_id'], 'start': segment['start'], 'end': segment['end']})
-                inputs.append({'id': int(chapter['id']), 'file': Path(str(chapter['output_mp3'])), 'segments': segments})
+                inputs.append({'id': int(chapter['id']), 'file': self._book_file(chapter['output_mp3']), 'segments': segments})
             identity = {str(ch['id']): sha256_file(ch['file']) for ch in inputs}
             sampling = hashlib.sha256(json.dumps([ch['segments'] for ch in inputs],
                 sort_keys=True, ensure_ascii=False).encode()).hexdigest()
@@ -3214,7 +3228,7 @@ class BookPipeline:
         wav_text = str(row["wav_path"] or "")
         if not wav_text:
             return False, {}
-        wav = Path(wav_text)
+        wav = self._book_file(wav_text)
         if not wav.exists():
             return False, {}
         wav_sha256 = str(row["wav_sha256"] or "").strip()
@@ -3263,7 +3277,7 @@ class BookPipeline:
         self.db.mark_generating(int(row["id"]), generation_seed)
         self.db.mark_signal_passed(
             int(row["id"]),
-            wav_path=Path(str(row["wav_path"])),
+            wav_path=self._book_file(row["wav_path"]),
             wav_sha256=str(row["wav_sha256"]),
             duration=float(checkpoint_metrics["duration"]),
             signal=checkpoint_metrics,
@@ -3277,7 +3291,7 @@ class BookPipeline:
     def _process_chapter(self, chapter: Any, verifier: WhisperVerifier) -> None:
         chapter_id = int(chapter["id"])
         self._validate_chapter_source(chapter)
-        output = Path(str(chapter["output_mp3"]))
+        output = self._book_file(chapter["output_mp3"])
         if chapter["status"] == ChapterStatus.COMPLETED.value:
             valid, _ = verify_mp3(output)
             quality_verified = self.db.chapter_artifact_is_current_qa_verified(
@@ -3442,7 +3456,7 @@ class BookPipeline:
         thân hàm, không chép: cổng nào thêm sau này thì cả hai người gọi cùng đi qua.
         """
         chapter_id = int(chapter["id"])
-        output = Path(str(chapter["output_mp3"]))
+        output = self._book_file(chapter["output_mp3"])
         # Sau mọi đường thu lại, trước mọi cổng chặn: đây là chỗ duy nhất "hết ngân sách
         # sửa" là đúng theo cấu trúc chứ không phải theo một biến đếm ai đó phải nhớ tăng.
         self._grant_machine_acceptances(chapter)
@@ -3479,7 +3493,7 @@ class BookPipeline:
     def _register_chapter_assembly(self, chapter: Any, assembly: Any,
                                    rows: list[Any]) -> None:
         chapter_id = int(chapter['id'])
-        output = Path(str(chapter['output_mp3']))
+        output = self._book_file(chapter['output_mp3'])
         assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
         blocking_warnings = self._high_quality_blocking_segment_warnings(rows)
         failed_lines = [str(row["stable_id"]) for row in rows if row["status"] == SegmentStatus.FAILED.value]
@@ -4361,7 +4375,7 @@ class BookPipeline:
         if source_candidate_id is None or not source_sha256:
             raise RuntimeError("tempo rescue candidate lacks a locked source binding")
         source = self.db.get_segment_candidate(int(source_candidate_id))
-        source_path = Path(str(source["wav_path"]))
+        source_path = self._book_file(source["wav_path"])
         if (
             str(source["wav_sha256"] or "").casefold() != source_sha256.casefold()
             or not source_path.is_file()
@@ -4377,7 +4391,7 @@ class BookPipeline:
         _variant, spoken_text, _anchors = (
             self._require_segment_candidate_pronunciation_delivery(row, candidate)
         )
-        output = Path(str(candidate["wav_path"]))
+        output = self._book_file(candidate["wav_path"])
         try:
             checksum, transform_metrics = tempo_stretch_wav_atomic(source_path, output)
             valid, metrics, reason = inspect_wav(
@@ -4467,7 +4481,7 @@ class BookPipeline:
         pronunciation_variant, spoken_text, _anchors = (
             self._require_segment_candidate_pronunciation_delivery(row, candidate)
         )
-        output = Path(str(candidate["wav_path"]))
+        output = self._book_file(candidate["wav_path"])
         retries = int(self.settings["tts"]["max_retries"])
         current_attempt = int(candidate["tts_attempt"])
         # What this candidate *is* comes from the row, not from arithmetic on a settings
@@ -5287,10 +5301,9 @@ class BookPipeline:
                 f"TTS circuit breaker opened after {failure_limit} identical failures: {last_error}"
             )
 
-    @staticmethod
-    def _has_real_audio(row: Any) -> bool:
+    def _has_real_audio(self, row: Any) -> bool:
         try:
-            path = Path(str(row["wav_path"] or ""))
+            path = self._book_file(row["wav_path"])
             audio, rate = sf.read(path, dtype="float32", always_2d=True)
             return bool(audio.size and rate > 0 and np.isfinite(audio).all() and np.any(audio)
                         and row["wav_sha256"] and sha256_file(path) == row["wav_sha256"])
@@ -5530,7 +5543,7 @@ class BookPipeline:
         """Reserve this attempt's file and seed before synthesizing, so a replay writes the same file."""
         record = session["attempts"].get(seed_salt)
         if record is not None:
-            return Path(record["path"])
+            return self._book_file(record["path"])
         session["attempts"][seed_salt] = dict(path=str(fresh), seed=int(self.tts.generation_seed(row, seed_salt)))
         self._write_take_session(row, session)
         return fresh
@@ -5558,7 +5571,7 @@ class BookPipeline:
             error_type = AudioQualityError if record["quality"] else RuntimeError
             raise error_type(record["error"])
         if "sha256" in record:
-            path = Path(record["path"])
+            path = self._book_file(record["path"])
             if path.is_file() and sha256_file(path) == record["sha256"]:
                 return path, record["sha256"], copy.deepcopy(record["metrics"]), int(record["seed"])
         try:
@@ -5596,7 +5609,7 @@ class BookPipeline:
         """Bring one reservation to its terminal state, by the same code from any entry point."""
         artifact = self.db.artifact_by_key(key)
         metadata = json.loads(str(artifact["metadata_json"]))
-        path = Path(str(artifact["path"]))
+        path = self._book_file(artifact["path"])
         if metadata["state"] == "complete" and not (path.is_file() and sha256_file(path) == artifact["sha256"]):
             metadata = self.db.reopen_word_break_retry(key)
         if metadata["state"] != "reserved":
@@ -5633,7 +5646,7 @@ class BookPipeline:
         metadata = self._settle_word_break_retry(row, key)
         if metadata["state"] == "complete":
             artifact = self.db.artifact_by_key(key)
-            self._keep_usable_take(row, Path(str(artifact["path"])), str(artifact["sha256"]),
+            self._keep_usable_take(row, self._book_file(artifact["path"]), str(artifact["sha256"]),
                                    metadata["result"]["metrics"], int(metadata["generation_seed"]))
         current = self.db.get_segment(int(row["id"]))
         self.db.annotate_word_break_retry(int(row["id"]), str(current["wav_sha256"]), metadata["result"]["summary"])
@@ -5718,7 +5731,7 @@ class BookPipeline:
             retry = metadata["result"]["metrics"]
             if self._take_rank(retry) < self._take_rank(metrics):
                 artifact = self.db.artifact_by_key(key)
-                return Path(str(artifact["path"])), str(artifact["sha256"]), retry, int(metadata["generation_seed"])
+                return self._book_file(artifact["path"]), str(artifact["sha256"]), retry, int(metadata["generation_seed"])
         metrics["word_break_gate"].update(metadata["result"]["summary"])
         return output, checksum, metrics, seed
 
@@ -5736,7 +5749,7 @@ class BookPipeline:
             return None
         metadata = self._settle_word_break_retry(row, key)
         artifact = self.db.artifact_by_key(key)
-        return Path(str(artifact["path"])), str(artifact["sha256"]), metadata["result"]["metrics"]
+        return self._book_file(artifact["path"]), str(artifact["sha256"]), metadata["result"]["metrics"]
 
     @staticmethod
     def _install_word_break_winner(source: Path, output: Path, checksum: str) -> None:
@@ -5759,8 +5772,8 @@ class BookPipeline:
         old = self.db.artifact_by_key(key)
         if old:
             metadata = json.loads(str(old["metadata_json"] or "{}"))
-            if (Path(str(old["path"])).is_file()
-                    and sha256_file(Path(str(old["path"]))) == old["sha256"]
+            if (self._book_file(old["path"]).is_file()
+                    and sha256_file(self._book_file(old["path"])) == old["sha256"]
                     and all(metadata["signal"].get(field) == metrics.get(field) for field in (
                         "spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant"))
                     and self._take_rank(metadata["signal"]) <= self._take_rank(metrics)):
@@ -5792,7 +5805,7 @@ class BookPipeline:
         self._require_audible_take(output, checksum)
         metrics["generation_policy_hash"] = self.quality_policy_hash
         current = self.db.get_segment(int(row["id"]))
-        previous = Path(str(current["wav_path"] or ""))
+        previous = self._book_file(current["wav_path"]) if current["wav_path"] else Path("")
         if current["wav_sha256"] and previous.is_file() and sha256_file(previous) == current["wav_sha256"]:
             try:
                 old_metrics = json.loads(str(current["signal_json"] or "{}"))
@@ -5835,7 +5848,7 @@ class BookPipeline:
         if checked_sha256 is None or str(current["wav_sha256"]) != checked_sha256:
             self._require_high_quality_take(signal)
         signal.pop("quality_pending", None)
-        checkpoint = dict(wav_path=Path(str(current["wav_path"])), wav_sha256=str(current["wav_sha256"]),
+        checkpoint = dict(wav_path=self._book_file(current["wav_path"]), wav_sha256=str(current["wav_sha256"]),
                           duration=float(current["wav_duration"]), generation_seed=current["generation_seed"])
         self.db.mark_signal_passed(
             int(row["id"]), **checkpoint, signal=signal,
@@ -6127,7 +6140,7 @@ class BookPipeline:
     ) -> dict[str, Any]:
         expected_text, locked_name_anchors = self._spoken_text_and_anchors(item)
         voice_region = self.tts.voice_region_for_row(item) if hasattr(self.tts, "voice_region_for_row") else ""
-        wav_path = Path(str(item["wav_path"]))
+        wav_path = self._book_file(item["wav_path"]) if item["wav_path"] else Path("")  # chưa có WAV: như trước, không phải file
         direct = verifier.verify(
             expected_text,
             wav_path,

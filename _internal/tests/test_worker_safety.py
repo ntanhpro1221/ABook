@@ -45,7 +45,8 @@ def _project(tmp_path: Path):
         settings_hash=settings_hash(settings),
         input_manifest_hash="manifest",
     )
-    source = tmp_path / "001.txt"
+    source = paths.root / "sources" / "001.txt"  # nguồn chương nằm trong thư mục sách (book_paths)
+    source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text("Nội dung nguồn đã khóa.", encoding="utf-8")
     db.ensure_chapters([{
         "chapter_index": 1,

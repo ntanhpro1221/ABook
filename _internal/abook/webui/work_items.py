@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from .. import aliases as alias_book
 from .. import names as renames
-from .. import narrator_sections
+from .. import book_paths, narrator_sections
 from ..listener_overrides import (
     NARRATOR, NO_VOICE, UNNAMED, character_key, pronunciation_requests, read_overrides, speaker_requests, speaker_target, surface_key,
     voice_requests,
@@ -1002,8 +1002,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     with closing(store.connect(project_root)) as connection:
         names = store.chapter_names(connection, project_root)
         # Văn bản sách cho thẻ biệt danh (3a); sổ tối thiểu của test không có cột này.
-        chapter_paths = [
-            str(row[0] or "") for row in connection.execute("SELECT input_path FROM chapters")
+        chapter_paths = [  # chỉ nguồn được phép đọc (book_paths): sổ có thể do người khác viết
+            str(source) for row in connection.execute("SELECT input_path FROM chapters")
+            if (source := book_paths.safe_source(project_root, row[0])) is not None
         ] if "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")} else []
         has_wav_path = "wav_path" in {row[1] for row in connection.execute("PRAGMA table_info(segments)")}
         spoken = _Spoken(connection.execute(

@@ -18,6 +18,7 @@ from abook.webui.library import book_id
 from abook.webui.server import App, Server
 from tests.test_sync_tls_pinning import _this_computer
 from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - fixture dùng chung
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 PAGE = {"X-Ebook-Token": "t", "Sec-Fetch-Site": "same-origin"}
 
@@ -37,7 +38,7 @@ def two(library, tmp_path: Path):  # noqa: F811
     b = _this_computer(tmp_path)
     b_ui = Server(b, port=0).start()
     try:
-        (computer,) = b.pair_computer(f"127.0.0.1:{a.sync_server.port}", a.devices.start_pairing()["code"])["computers"]
+        (computer,) = pair_app(b, f"127.0.0.1:{a.sync_server.port}", a.devices.start_pairing()["code"])["computers"]
         a.set_remote_studio(True)  # bật sau khi ghép: dòng thiết bị ghép lúc tắt chưa có quyền riêng
         yield a, b, b_ui.port, computer["id"], computer["name"], book_id(project)
     finally:

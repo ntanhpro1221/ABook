@@ -99,10 +99,10 @@ def source_fingerprint(project: Path) -> str:
     for index, raw in rows:
         if not raw:
             return ""
-        path = Path(raw)
-        if not path.is_absolute():
-            path = project / path
-        if not path.is_file():
+        from .. import book_paths
+
+        path = book_paths.safe_source(project, raw if Path(raw).is_absolute() else project / raw)
+        if path is None or not path.is_file():  # sổ trỏ ra chỗ không được đọc (book_paths): không chạm đĩa
             return ""
         values.append((index, describe(path)["sha256"]))
     return hashlib.sha256(json.dumps(values).encode()).hexdigest() if values else ""

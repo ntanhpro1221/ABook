@@ -43,7 +43,7 @@ def setup_db(tmp_path: Path):
         settings_hash=settings_hash(settings),
         input_manifest_hash="manifest",
     )
-    source = tmp_path / "001.txt"
+    source = paths.root / "001.txt"
     source.write_text("Xin chào thế giới", encoding="utf-8")
     chapter_id = db.ensure_chapters([
         {

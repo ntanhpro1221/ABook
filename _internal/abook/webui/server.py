@@ -1002,6 +1002,7 @@ class App:
         """File dự án có xưởng, máy có Studio. Cùng dự án đã có ở đây (mọi chương của file đều có y hệt trong dự án - file không
         mới hơn dự án) -> mở dự án ấy; file mang chương mà dự án này chưa có thì là bản KHÁC (làm tiếp ở nơi khác), thành dự án
         mới như trước. Phần sửa của người nghe trong file (điện thoại sửa rồi lưu) luôn được cất chờ người dùng quyết."""
+        opened.validate_workshop_paths()
         prints = opened.chapter_prints
         edits = book_edits.count(opened.edits)
         same = [project for project in self.library.projects()
@@ -1032,7 +1033,7 @@ class App:
         if edits:
             book_edits.stash_incoming(target, opened.edits, opened.edits_cover(), opened.copy_member)
         self.library.preferences.add_recent(target)
-        return {"id": book_id(target), "how": "studio", "missingSources": missing, "outside": report["outside"],
+        return {"id": book_id(target), "how": "studio", "missingSources": missing,
                 **({"edits": edits} if edits else {})}
 
     def summary(self, path: Path) -> dict[str, Any]:
@@ -3456,6 +3457,14 @@ class App:
 
     # ---- đồng bộ điện thoại ------------------------------------------------------------------------------
 
+    def _pairing_view(self) -> dict[str, Any] | None:
+        """Mã ghép đang hiện kèm chuỗi ghép (mã + ĐỦ vân tay chứng chỉ máy này): máy kia dán chuỗi thì ghim đúng chứng chỉ trước khi
+        gửi mã (remote_books.parse_pairing)."""
+        pairing = self.devices.pairing()
+        if pairing is None or self.sync_server is None:
+            return pairing
+        return {**pairing, "pairString": remote_books.pairing_string(pairing["code"], self.sync_server.fingerprint)}
+
     def sync_view(self) -> dict[str, Any]:
         running = self.sync_server is not None
         addresses = local_addresses() if self.sync_host == "0.0.0.0" else [self.sync_host]
@@ -3468,10 +3477,12 @@ class App:
             "addresses": addresses,
             # Địa chỉ trên card mạng riêng ảo (Tailscale, ZeroTier, WireGuard...): dùng khi ở ngoài nhà.
             "awayAddresses": away_addresses(addresses),
-            "pairing": self.devices.pairing() if running else None,
+            "pairing": self._pairing_view() if running else None,
             "pairingBlocked": running and self.devices.blocked,
-            # Vân tay chứng chỉ TLS của máy này (tls.py): hiện cạnh mã ghép để người dùng đối chiếu nếu muốn.
+            # Vân tay chứng chỉ TLS của máy này (tls.py). `fingerprintShort` (4 nhóm đầu) hiện cạnh mã ghép: máy nhập mã tay hiện đúng
+            # 4 nhóm ấy của chứng chỉ nó thấy, người dùng so hai màn trước khi mã được gửi (soát bảo mật 12-11).
             "fingerprint": tls.display(self.sync_server.fingerprint) if running else "",
+            "fingerprintShort": remote_books.short_fingerprint(self.sync_server.fingerprint) if running else "",
             "devices": sorted(self.devices.list(), key=lambda device: -float(device.get("lastSeen") or 0)),
             # Studio từ xa (remote_studio.py): công tắc riêng, tách khỏi quyền nghe của điện thoại.
             "remoteStudio": bool(self.preferences.get().get("remoteStudio")),
@@ -3890,11 +3901,17 @@ class App:
         found = remote_books.discover(exclude_port=own_port)
         return {"found": [{**item, "paired": (item["host"], item["port"]) in paired} for item in found]}
 
-    def pair_computer(self, address: str, code: str) -> dict[str, Any]:
+    def pair_computer(self, address: str, code: str, fingerprint: str = "") -> dict[str, Any]:
+        """`code`: mã 6 số hay chuỗi ghép (mang vân tay). Mã trơn mà chưa có `fingerprint` người dùng vừa xác nhận: 409 kèm `confirm`
+        (vân tay thấy được + 4 nhóm đầu để so với máy kia) - mã chưa gửi đi (remote_books.PairConfirm)."""
         self._mutating()
         try:
             self.computers.pair(address, code, socket_name(),
-                                own_port=self.sync_server.port if self.sync_server is not None else None)
+                                own_port=self.sync_server.port if self.sync_server is not None else None,
+                                fingerprint=fingerprint or None)
+        except remote_books.PairConfirm as confirm:
+            raise ApiError(HTTPStatus.CONFLICT, str(confirm), confirm={
+                "fingerprint": confirm.fingerprint, "short": remote_books.short_fingerprint(confirm.fingerprint)}) from confirm
         except remote_books.RemoteError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         self.refresh_remote(wait=True)
@@ -4220,6 +4237,19 @@ class Handler(BaseHTTPRequestHandler):
         host = (self.headers.get("Host") or "").lower()
         return host in {f"127.0.0.1:{self.port}", f"localhost:{self.port}"}
 
+    def _same_origin(self) -> bool:
+        """Yêu cầu không đến từ trang web khác, ở MỌI chế độ (soát bảo mật 12-11): `--dev` không có mã phiên, nên trang lạ mở trong
+        trình duyệt từng POST được vào đây. `Sec-Fetch-Site` (nếu trình duyệt gửi) phải là same-origin / none; `Origin` (nếu có) phải
+        đúng máy chủ này - `null` (iframe sandbox, file://) cũng bị từ chối. Không có cả hai: không phải trình duyệt (Studio từ xa
+        chuyển tiếp, công cụ dòng lệnh), không có gì tự gửi kèm để lợi dụng. Vite dev đổi Origin của chính nó (ui/vite.config.ts)."""
+        fetch_site = (self.headers.get("Sec-Fetch-Site") or "").strip().lower()
+        if fetch_site and fetch_site not in ("same-origin", "none"):
+            return False
+        origin = self.headers.get("Origin")
+        if origin is None:
+            return True
+        return origin.strip().lower().rstrip("/") in {f"http://127.0.0.1:{self.port}", f"http://localhost:{self.port}"}
+
     def _authorized(self, query: dict[str, list[str]]) -> bool:
         token = self.app.token
         if token is None:
@@ -4239,6 +4269,12 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self, limit: int = MAX_BODY) -> dict[str, Any]:
+        if not self._same_origin():
+            raise ApiError(HTTPStatus.FORBIDDEN, "Yêu cầu không đến từ giao diện ABook")
+        # Chỉ JSON, kể cả thân rỗng: `text/plain` / form là "simple request" trình duyệt gửi đi không cần hỏi trước (preflight) -
+        # trang lạ dùng chúng để lén gửi lệnh (soát bảo mật 12-11). Giao diện luôn gửi application/json.
+        if (self.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower() != "application/json":
+            raise ApiError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "Yêu cầu phải gửi dạng JSON")
         if lacks_length(self):  # chunked: không có Content-Length thì thân đọc ra rỗng và lời báo lỗi nói sai chỗ
             raise ApiError(HTTPStatus.LENGTH_REQUIRED, LENGTH_REQUIRED)
         length = int(self.headers.get("Content-Length") or 0)
@@ -4467,6 +4503,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if not self._allowed_host():
                 raise ApiError(HTTPStatus.FORBIDDEN, "Host không hợp lệ")
+            if not self._same_origin():
+                raise ApiError(HTTPStatus.FORBIDDEN, "Yêu cầu không đến từ giao diện ABook")
             path = parts.path
             if not (path.startswith("/api/") or path.startswith("/media/")):
                 if method not in ("GET", "HEAD"):
@@ -6222,7 +6260,8 @@ class Handler(BaseHTTPRequestHandler):
     def post_computers(self, _query: dict[str, list[str]]) -> None:
         # Ghép với máy tính khác bằng địa chỉ + mã 6 số đang hiện trên máy ấy (cùng mã điện thoại dùng).
         body = self._body()
-        self._send_json(HTTPStatus.OK, self.app.pair_computer(str(body.get("address") or ""), str(body.get("code") or "")))
+        self._send_json(HTTPStatus.OK, self.app.pair_computer(str(body.get("address") or ""), str(body.get("code") or ""),
+                                                             str(body.get("fingerprint") or "")))
 
     def get_computers_discover(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.discover_computers())

@@ -22,6 +22,7 @@ from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
 from tests.async_wait import wait_until
 from tests.timing import assert_within
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 PHONE = "AA:BB:CC:DD:EE:FF"
 
@@ -363,7 +364,7 @@ def test_pairing_over_bluetooth_with_the_six_digit_code_then_the_library_flows(l
     bluetooth.gateway(PHONE, connect=phone.connect)  # RFCOMM giả; mọi thứ khác là mã thật
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        paired = computers.pair(f"bt:{PHONE.lower()}", devices.start_pairing()["code"], "Máy tính thử")
+        paired = pair_confirmed(computers, f"bt:{PHONE.lower()}", devices.start_pairing()["code"], "Máy tính thử")
         entry = computers.get(paired["id"])
         assert entry["host"] == f"bt:{PHONE}" and entry["name"] == "Điện thoại"
         assert entry["fingerprint"] == sync.fingerprint, "vân tay ghi lại là của chứng chỉ ở BÊN KIA đường hầm"
@@ -378,7 +379,7 @@ def test_pairing_over_bluetooth_with_the_six_digit_code_then_the_library_flows(l
         assert phone.connects == 1, "mọi yêu cầu chung MỘT kết nối RFCOMM"
 
         # Ghép lại cùng địa chỉ thì thay chỗ cũ, không thêm máy.
-        again = computers.pair(PHONE, devices.start_pairing()["code"], "Máy tính thử")
+        again = pair_confirmed(computers, PHONE, devices.start_pairing()["code"], "Máy tính thử")
         assert again["id"] == paired["id"] and len(computers.list()) == 1
 
         computers.forget(paired["id"], tmp_path / "thu_vien")
@@ -394,11 +395,11 @@ def test_a_bare_or_malformed_bluetooth_address_is_understood_or_refused(library,
     bluetooth.gateway(PHONE, connect=phone.connect)
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        assert computers.pair(PHONE, devices.start_pairing()["code"], "x")["host"] == f"bt:{PHONE}"
+        assert pair_confirmed(computers, PHONE, devices.start_pairing()["code"], "x")["host"] == f"bt:{PHONE}"
         with pytest.raises(RemoteError, match="Bluetooth"):
-            computers.pair("bt:khong-phai", "123456", "x")
+            pair_confirmed(computers, "bt:khong-phai", "123456", "x")
         with pytest.raises(RemoteError, match="mã 6 số"):
-            computers.pair(PHONE, "12", "x")
+            pair_confirmed(computers, PHONE, "12", "x")
     finally:
         sync.stop()
         phone.drop()
@@ -412,7 +413,7 @@ def test_the_pinned_fingerprint_is_still_enforced_through_the_tunnel(library, tm
     bluetooth.gateway(PHONE, connect=phone.connect)
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        paired = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
+        paired = pair_confirmed(computers, f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
         entry = computers.get(paired["id"])
         for wrong in ("0" * 64, ""):
             with pytest.raises(RemoteError, match="ghép lại"):
@@ -489,7 +490,7 @@ def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(
     bluetooth.gateway(PHONE, connect=phone.connect)
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        paired = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
+        paired = pair_confirmed(computers, f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
         # Cùng máy, ghép tiếp theo đường Wi-Fi giờ đã hỏng: cổng LAN chết, `bt` còn đó.
         entry = {**computers.get(paired["id"]), "host": "127.0.0.1", "port": refused_tcp_port, "bt": PHONE}
         entry["addresses"] = [{"address": f"127.0.0.1:{entry['port']}", "lastSuccess": 0}]
@@ -520,7 +521,7 @@ def test_the_bluetooth_address_the_other_side_reports_is_remembered(library, tmp
     server = SyncServer(app, host="127.0.0.1", port=0).start()
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        paired = computers.pair(f"127.0.0.1:{server.port}", devices.start_pairing()["code"], "Máy tính thử")
+        paired = pair_confirmed(computers, f"127.0.0.1:{server.port}", devices.start_pairing()["code"], "Máy tính thử")
         entry = computers.get(paired["id"])
         assert entry["bt"] == PHONE and entry["host"] == "127.0.0.1"
         assert "token" not in json.dumps(computers.list()), "giao diện không bao giờ thấy mã thiết bị"

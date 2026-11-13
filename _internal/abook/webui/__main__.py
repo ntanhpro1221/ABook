@@ -3,7 +3,8 @@
     python -m abook.webui --dev --port 8765 --library <thư mục thư viện> --preferences <file.json>
 
 `--dev` bỏ mã phiên (Vite proxy không mang được nó) và dùng bộ chạy giả, nên bấm "Bắt đầu" không khởi động
-worker thật. `--real-runner` bật lại worker thật; `--read-only` khoá mọi thao tác ghi.
+worker thật. Không có mã phiên, máy chủ vẫn từ chối yêu cầu mang `Origin` / `Sec-Fetch-Site` của trang khác và thân không phải
+JSON (server.Handler._same_origin, _body) - trang web lạ mở trong trình duyệt không gửi lệnh vào được. `--real-runner` bật lại worker thật; `--read-only` khoá mọi thao tác ghi.
 """
 from __future__ import annotations
 

@@ -280,7 +280,13 @@ class DevicesState(
 
     fun setAddress(text: String) = pairFlow.update { it.copy(form = it.form.copy(address = text), attempt = Attempt.Idle) }
 
-    fun setCode(text: String) = pairFlow.update { it.copy(form = it.form.copy(code = text.filter(Char::isDigit).take(6)), attempt = Attempt.Idle) }
+    fun setCode(text: String) = pairFlow.update { it.copy(form = it.form.copy(code = text.take(100)), attempt = Attempt.Idle) }
+
+    fun confirmPair() {
+        val confirm = pairFlow.value.attempt as? Attempt.Confirm ?: return
+        pairFlow.update { it.copy(form = it.form.copy(code = vn.abook.player.Pin.pairingString(it.form.digits, confirm.fingerprint)), attempt = Attempt.Idle) }
+        connect()
+    }
 
     /** Mở / đóng khung ghép thêm một thiết bị khi đã có máy tính chính. */
     fun setAdding(on: Boolean) {
@@ -301,13 +307,13 @@ class DevicesState(
         val name = state.choices.firstOrNull { it.address == raw }?.shown ?: address.substringBeforeLast(':')
         pairFlow.update { it.copy(attempt = Attempt.Working(name)) }
         scope.launch {
-            attempt { source.pair(address, form.digits, extra = state.paired) }
+            attempt { source.pair(address, form.code, extra = state.paired) }
                 .onSuccess { pairedName ->
                     notice.value = S.s_da_ghep_0_a04998dd(pairedName)
                     pairFlow.update { it.copy(form = PairForm(), attempt = Attempt.Idle, adding = false, found = emptyList(), bluetooth = Bluetooth.Off) }
                     reload()
                 }
-                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(DeviceText.failure(S.s_chua_ghep_duoc_e27b68c8, message(error)), (error as? DeviceFailure)?.technical)) } }
+                .onFailure { error -> pairFlow.update { it.copy(attempt = if (error is vn.abook.player.Pin.PairConfirm) Attempt.Confirm(error.fingerprint) else Attempt.Failed(DeviceText.failure(S.s_chua_ghep_duoc_e27b68c8, message(error)), (error as? DeviceFailure)?.technical)) } }
         }
     }
 

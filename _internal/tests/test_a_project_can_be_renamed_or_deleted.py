@@ -83,7 +83,8 @@ def test_a_deleted_project_goes_to_the_recycle_bin_and_leaves_the_list(studio, m
     monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
     monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
     app.preferences.add_recent(paths.root)
-    source = paths.root.parent / "001.txt"
+    source = paths.root.parent / "001.txt"  # file truyện gốc người dùng giữ ngoài dự án (dự án dùng bản chép trong sources/)
+    source.write_text("Chương 1", encoding="utf-8")
     status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
     assert status == 200 and data["undo"] and moved == [], "nằm chờ để Hoàn tác (test_trash_undo.py)"
     app.sweep_trash(everything=True)

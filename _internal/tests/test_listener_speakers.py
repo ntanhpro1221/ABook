@@ -45,7 +45,8 @@ def _book(tmp_path: Path) -> tuple[ProjectPaths, ProjectDB]:
     db = ProjectDB(paths.db)
     db.initialize_book(title="T", project_root=paths.root, settings=settings, settings_hash=settings_hash(settings),
                        input_manifest_hash="manifest")
-    source = tmp_path / "001.txt"
+    source = paths.root / "sources" / "001.txt"  # nguồn chương nằm trong thư mục sách (book_paths)
+    source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text("\n".join(text for *_rest, text in LINES), encoding="utf-8")
     chapter_id = db.ensure_chapters([{
         "chapter_index": 1, "title": "001", "input_path": source, "input_sha256": sha256_file(source),

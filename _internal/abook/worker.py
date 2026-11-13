@@ -13,6 +13,7 @@ from typing import Any
 
 import psutil
 
+from . import book_paths
 from .config import (
     deep_merge,
     load_settings_raw,
@@ -468,14 +469,16 @@ def _validate_model_runtime_contract(settings: dict[str, Any]) -> None:
 
 def _validate_project_inputs(paths: ProjectPaths, db: ProjectDB, settings: dict[str, Any]) -> None:
     for chapter in db.list_chapters():
-        output = Path(str(chapter["output_mp3"])).resolve()
-        if output.suffix.casefold() != ".mp3" or not output.is_relative_to(paths.chapters.resolve()):
+        output = book_paths.safe_inside(paths.root, chapter["output_mp3"])  # kiểm theo chữ TRƯỚC resolve: đường mạng không được chạm
+        if output is None or output.suffix.casefold() != ".mp3" or not output.is_relative_to(paths.chapters.resolve()):
             raise RuntimeError(
                 f"Output chapter không hợp lệ hoặc nằm ngoài output/chapters: {output}"
             )
+        source = book_paths.safe_source(paths.root, chapter["input_path"])
+        if source is None:
+            raise RuntimeError(f"Source chapter nằm ngoài thư mục sách: {chapter['input_path']}")
         if not settings["safety"].get("stop_book_on_source_change", True):
             continue
-        source = Path(str(chapter["input_path"]))
         if not source.exists() or not source.is_file():
             raise RuntimeError(f"Source chapter không còn tồn tại: {source}")
         if source.stat().st_size != int(chapter["input_size"]):

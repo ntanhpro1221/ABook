@@ -1,11 +1,27 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig, type ProxyOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 // Bản build nằm trong package Python (abook/webui/static) để app chạy không cần Node.
 // Không đặt tên "dist": .gitignore của repo bỏ qua mọi thư mục dist/.
+// Máy chủ giao diện từ chối yêu cầu mang Origin của trang khác, kể cả khi chạy `--dev` không mã phiên (soát bảo mật 12-11). Trang Vite
+// chính là giao diện, nên Origin của nó được đổi thành Origin của máy chủ; Origin khác (trang web lạ gửi vào cổng Vite) giữ nguyên để
+// máy chủ từ chối. `changeOrigin` chỉ đổi Host.
+const BACKEND = "http://127.0.0.1:8765";
+const VITE_ORIGINS = new Set(["http://localhost:5173", "http://127.0.0.1:5173"]);
+const devBackend: ProxyOptions = {
+  target: BACKEND,
+  changeOrigin: true,
+  configure: (proxy) => {
+    proxy.on("proxyReq", (proxyReq, req) => {
+      const origin = req.headers.origin;
+      if (origin && VITE_ORIGINS.has(origin)) proxyReq.setHeader("origin", BACKEND);
+    });
+  },
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: "./",
@@ -27,8 +43,8 @@ export default defineConfig({
         path.resolve(import.meta.dirname, "../abook/webui/assets/music_mix.json")],
     },
     proxy: {
-      "/api": { target: "http://127.0.0.1:8765", changeOrigin: true },
-      "/media": { target: "http://127.0.0.1:8765", changeOrigin: true },
+      "/api": devBackend,
+      "/media": devBackend,
     },
   },
 });

@@ -52,8 +52,9 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
                " VALUES (1, ?, 'synthesizing', 'chapter_synthesis', ?, ?, '', '{}')", (title, now - 90, now))
     chapter = ("INSERT INTO chapters (id, chapter_index, title, input_path, status, total_segments, output_mp3,"
                " started_at, completed_at, last_error) VALUES ")
-    db.execute(chapter + "(1, 1, '645', 'a.txt', 'completed', 3, ?, ?, ?, '')", (str(mp3), now - 80, now - 60))
-    db.execute(chapter + "(2, 2, '646', 'b.txt', 'synthesizing', 2, '', ?, NULL, '')", (now - 50,))
+    # Nguồn chương nằm trong thư mục sách (book_paths): sổ ghi đường tuyệt đối, không tương đối.
+    db.execute(chapter + "(1, 1, '645', ?, 'completed', 3, ?, ?, ?, '')", (str(project / "sources" / "a.txt"), str(mp3), now - 80, now - 60))
+    db.execute(chapter + "(2, 2, '646', ?, 'synthesizing', 2, '', ?, NULL, '')", (str(project / "sources" / "b.txt"), now - 50))
     db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,engine) VALUES (1, 'narrator', 'Đức Trí', 'vieneu')")
     db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,engine)"
                " VALUES (2, 'vieneu@3.8.3/Thanh Bình', 'Thanh Bình', 'vieneu')")
@@ -291,8 +292,9 @@ def _request(port: int, method: str, path: str, token: str = "", body: dict | No
     all_headers = {"Authorization": f"Bearer {token}"} if token else {}
     all_headers.update(headers or {})
     payload = json.dumps(body).encode() if body is not None else None
-    if payload is not None:
-        all_headers["Content-Type"] = "application/json"
+    if payload is not None or method not in ("GET", "HEAD"):
+        # Như ui/src/studio/api.ts: lệnh ghi luôn mang application/json, kể cả thân rỗng (server._body từ chối kiểu khác).
+        all_headers.setdefault("Content-Type", "application/json")
     connection.request(method, path, body=payload, headers=all_headers)
     response = connection.getresponse()
     data = response.read()
@@ -302,6 +304,14 @@ def _request(port: int, method: str, path: str, token: str = "", body: dict | No
 
 def _sync_request(port: int, method: str, path: str, token: str = "", body: dict | None = None, headers: dict | None = None):
     """Như `_request` nhưng tới cổng đồng bộ (TLS)."""
+    if path in ("/sync/v1/pair", "/sync/v1/pair-browser") and body is not None and "fingerprint" not in body:
+        from abook.webui import tls
+        peer = tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None)
+        try:
+            peer.connect()
+            body = {**body, "fingerprint": peer.peer_fingerprint}
+        finally:
+            peer.close()
     return _request(port, method, path, token, body, headers, secure=True)
 
 

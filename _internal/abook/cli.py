@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Sequence
 
+from . import book_paths
 from .config import (
     PROFILE_OVERRIDES,
     build_settings,
@@ -379,12 +380,14 @@ def _validate_project_inputs_read_only(
     settings: dict[str, Any],
 ) -> None:
     for chapter in db.list_chapters():
-        output = Path(str(chapter["output_mp3"])).resolve()
-        if output.suffix.casefold() != ".mp3" or not output.is_relative_to(paths.chapters.resolve()):
-            raise RuntimeError(f"Invalid chapter output path outside output/chapters: {output}")
+        output = book_paths.safe_inside(paths.root, chapter["output_mp3"])  # theo chữ TRƯỚC resolve: đường mạng không được chạm
+        if output is None or output.suffix.casefold() != ".mp3" or not output.is_relative_to(paths.chapters.resolve()):
+            raise RuntimeError(f"Invalid chapter output path outside output/chapters: {chapter['output_mp3']}")
+        source = book_paths.safe_source(paths.root, chapter["input_path"])
+        if source is None:
+            raise RuntimeError(f"Source chapter path is not allowed outside the book folder: {chapter['input_path']}")
         if not settings["safety"].get("stop_book_on_source_change", True):
             continue
-        source = Path(str(chapter["input_path"]))
         if not source.is_file():
             raise RuntimeError(f"Source chapter is missing: {source}")
         if source.stat().st_size != int(chapter["input_size"]):
@@ -551,7 +554,10 @@ def validate_project(project_root: Path | str, *, require_complete: bool = False
             continue
 
         completed += 1
-        output = Path(str(chapter["output_mp3"])).resolve()
+        output = book_paths.safe_inside(paths.root, chapter["output_mp3"])
+        if output is None:
+            errors.append(f"Chapter {chapter_index} output path is outside the book folder: {chapter['output_mp3']}")
+            continue
         artifact = db.artifact_by_key(f"chapter_mp3:{chapter_index}")
         decoded, reason = verify_mp3(output)
         checksum_ok = bool(

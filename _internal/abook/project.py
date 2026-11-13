@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,7 @@ from .config import load_settings, save_settings, settings_hash
 from .database import ProjectDB
 from .io_utils import slugify
 from .models import ProjectPaths
+from .book_paths import inside, network, UnsafeBookPath
 from .text_processing import build_chapter_manifest, input_manifest_hash
 
 
@@ -85,6 +87,8 @@ def create_or_open_project(
 ) -> tuple[ProjectPaths, ProjectDB, dict[str, Any]]:
     if not input_files:
         raise ValueError("At least one TXT file is required")
+    if any(network(path) for path in input_files):
+        raise UnsafeBookPath()
     output_root = output_root.expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     book_title = (title or infer_book_title(input_files)).strip() or "audiobook"
@@ -119,6 +123,27 @@ def create_or_open_project(
                 }
                 for row in locked_manifest
             ]
+            # User-selected files are copied once at creation. Stored paths never grant
+            # permission to read an arbitrary file outside this project.
+            if not paths.db.exists():
+                for row in manifest:
+                    source = Path(row["input_path"])
+                    destination = inside(project_root, project_root / "sources" /
+                                         f"{int(row['chapter_index']):05d}" / source.name)
+                    data = source.read_bytes()
+                    if len(data) != row["input_size"] or hashlib.sha256(data).hexdigest() != row["input_sha256"]:
+                        raise RuntimeError("Source chapter changed during project creation")
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(data)
+                    row["input_path"] = str(destination)
+                manifest_hash = input_manifest_hash(manifest)
+            else:
+                # Existing books use their locked, contained sources. No migration.
+                existing_db = ProjectDB(paths.db)
+                manifest = [dict(row) for row in existing_db.list_chapters()]
+                for row in manifest:
+                    inside(project_root, row["input_path"])
+                manifest_hash = input_manifest_hash(manifest)
             if paths.settings.exists():
                 settings = load_settings(paths.settings)
             else:

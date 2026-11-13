@@ -16,6 +16,7 @@ from abook.webui.remote_books import Computers, RemoteError
 from tests.test_bluetooth_desktop_client import PHONE, FakePhone, _clean_routes, _sync  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
 from tests.timing import assert_between, assert_within
+from tests.pair_helpers import pair_app, pair_confirmed  # noqa: F401
 
 
 class FrozenApp:
@@ -88,7 +89,7 @@ def _paired_over_wifi(library, tmp_path: Path):  # noqa: F811
     sync, devices = _sync(library, tmp_path)
     frozen = FrozenApp(sync.port)
     computers = Computers(tmp_path / "nay" / "computers.json")
-    computer = computers.pair(f"127.0.0.1:{frozen.port}", devices.start_pairing()["code"], "Máy tính thử")["id"]
+    computer = pair_confirmed(computers, f"127.0.0.1:{frozen.port}", devices.start_pairing()["code"], "Máy tính thử")["id"]
     return sync, frozen, computers, computer
 
 
@@ -197,7 +198,7 @@ def test_over_bluetooth_the_wait_starts_once_rfcomm_is_up(library, tmp_path: Pat
     bluetooth.gateway(PHONE, connect=phone.connect)
     computers = Computers(tmp_path / "nay" / "computers.json")
     try:
-        computer = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")["id"]
+        computer = pair_confirmed(computers, f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")["id"]
         frozen.freeze()
         worker, result = _refresh_in_background(tmp_path, computers)
         assert _eventually(lambda: "waking" in _view(computers, computer))

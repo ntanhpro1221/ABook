@@ -16,7 +16,7 @@ from abook import continuation
 from abook.webui import remote_sources, remote_studio, store
 from abook.webui.library import book_id
 from abook.webui.server import is_local_path, without_local_paths
-from tests.test_remote_studio import _pair_browser, studio  # noqa: F401 - fixture dùng chung
+from tests.test_remote_studio import _paired_cookie, studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import library  # noqa: F401
 from tests.test_webui_listen_and_sync import _request, _sync_request
 from tests.timing import scaled
@@ -67,7 +67,7 @@ def _cookie_with_studio(app) -> dict[str, str]:
     # Không hỏi Ollama thật (cổng 11434) trong bài thử: danh sách model là câu trả lời dựng sẵn.
     app.analysis_models = lambda: {"default": "", "models": [], "reachable": False}
     app.set_remote_studio(True)
-    cookie = {"Cookie": _pair_browser(app)}
+    cookie = {"Cookie": _paired_cookie(app)}
     short_id = next(device["id"] for device in app.sync_view()["devices"])
     assert app.devices.set_studio(short_id, True)
     return cookie
@@ -221,7 +221,7 @@ def test_a_remote_redo_hands_out_no_path_and_recreates_the_same_book(studio, tmp
     assert all(remote_sources.parse(item) for item in plan["paths"]) and str(story) not in data.decode("utf-8")
     assert _leaks(data, [str(story), str(tmp_path)]) == []
     local = app.redo(old_id)  # máy tính thì vẫn nhận đường thật
-    assert [Path(path).name for path in local["paths"]] == ["645.txt", "646.txt"] and str(story) in local["paths"][0]
+    assert [Path(path).name for path in local["paths"]] == ["645.txt", "646.txt"] and str(old) in local["paths"][0]  # nguồn đã chép vào sources/ của sách
 
     status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": plan["paths"]})
     scan = json.loads(data)
@@ -427,7 +427,7 @@ def test_a_remote_device_with_edit_rights_teaches_readings_and_skips_credit_line
     private = [str(Path(app.preferences.get()["libraryRoot"])), str(folder), str(tmp_path), "Users", "AppData"]
     editor = _cookie_with_studio(app)  # thiết bị có quyền "Điều khiển sản xuất"
     known = {device["id"] for device in app.sync_view()["devices"]}
-    listen_only = {"Cookie": _pair_browser(app)}  # thiết bị thứ hai: ghép được nhưng chỉ nghe
+    listen_only = {"Cookie": _paired_cookie(app)}  # thiết bị thứ hai: ghép được nhưng chỉ nghe
     assert app.devices.set_studio(next(device["id"] for device in app.sync_view()["devices"] if device["id"] not in known), False)
     port = app.sync_server.port
     reading = {"surface": "Lucien", "spoken": "Lu-xi-en"}
