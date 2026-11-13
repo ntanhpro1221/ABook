@@ -78,7 +78,7 @@ Diagnose and repair Qt failures, then remaining web/Android presence transitions
 - All **19** Qt suites reported their totals; every suite has 0 failed / 0 QML type errors.
 - qt_pytests in this build: **169 passed / 0 failed / 3 skipped**.
 - Dist checks: 0 dependency problems, 46 binary imports checked; SMOKE_OK (Main.qml loaded and drew its first frame without QML warnings).
-- Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-qtbuild-final.txt`.
+- Log: `external-artifacts/parity3-qtbuild-final.txt`.
 - Committed Qt repairs as **3fce94045** (`Fix Qt width failures and detached delegate bindings`), on top of 73473dfb2; no push.
 - Latest Android compilation passed again in 93 s. Runtime tests use a 512 MB Gradle coordinator plus one test JVM after compilation, preserving the four-heavy-process limit.
 
@@ -92,7 +92,7 @@ Diagnose and repair Qt failures, then remaining web/Android presence transitions
 ## 11. Final full web gate
 
 - Full Vitest on the latest web sources: **338 files, 3121 passed / 0 failed / 0 skipped**, 498.04 s.
-- Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-vitest-final.txt`.
+- Log: `external-artifacts/parity3-vitest-final.txt`.
 - Android test-only corrections are now compiling after the web process released the shared resource lease. No Qt or web implementation changes remain pending.
 
 ## 12. Final static gates
@@ -106,7 +106,7 @@ Diagnose and repair Qt failures, then remaining web/Android presence transitions
 - `testDebugUnitTest`: **BUILD SUCCESSFUL**, 5m26s.
 - Fresh XML: **430 suites, 3688 tests = 3676 passed / 0 failed / 0 errors / 12 skipped**.
 - Suite timestamps all belong to this run: 2026-11-13T05:00:30.543Z through 05:04:54.187Z (UTC).
-- Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-gradle-final.txt`.
+- Log: `external-artifacts/parity3-gradle-final.txt`.
 - All eight first-run Android failures are resolved, including the five existing failures; no failure budget retained.
 
 ## 14. Implementation committed and report finalized

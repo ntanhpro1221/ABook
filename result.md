@@ -9,7 +9,7 @@ Cây `D:/Novels/ABook_parity2`, nhánh `dev/parity2`, gốc `73473dfb2`. Commit 
 | `3fce94045` | Sửa các FAIL Qt WidthTests, binding của delegate khi mất parent, và hồi quy kiểm log QML |
 | `eebcb15b9` | Cơ chế giữ nội dung/chuyển động web và Android; máy dò cấu trúc; ratchet L7 về 0; sửa lỗi runtime và test cũ |
 
-Thư mục bằng chứng: `C:/Users/NGDtuanh/AppData/Local/Temp/claude/D--Novels-ABook/eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a/scratchpad/codex/parity3`. Có log nguyên bản, `qt_totals.json`, `android_test_totals.json`, `instant_rows.json`, danh sách miễn và manifest stage cụ thể. Báo cáo được commit riêng sau hai commit triển khai trên.
+Thư mục bằng chứng: `external-artifacts/parity3`. Có log nguyên bản, `qt_totals.json`, `android_test_totals.json`, `instant_rows.json`, danh sách miễn và manifest stage cụ thể. Báo cáo được commit riêng sau hai commit triển khai trên.
 
 **Các gate đều xanh:** WidthTests 0 FAIL / 0 QML_TYPE_ERROR, ratchet L7 bằng 0, Vitest và Gradle không còn FAIL.
 
@@ -34,7 +34,7 @@ Thư mục bằng chứng: `C:/Users/NGDtuanh/AppData/Local/Temp/claude/D--Novel
 
 ### Số thật từ build.bat
 
-Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-qtbuild-final.txt`.
+Log: `external-artifacts/parity3-qtbuild-final.txt`.
 
 | Bộ | PASS | FAIL | QML_TYPE_ERROR |
 |---|---:|---:|---:|
