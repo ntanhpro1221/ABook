@@ -51,7 +51,7 @@ Interactive {
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            color: root.primary ? "#000000" : root.danger ? Theme.danger : Theme.hover
+            color: root.primary ? Theme.pressInk : root.danger ? Theme.danger : Theme.hover
             opacity: root.primary ? (root.pressed ? Theme.pressShade : root.hovered ? 0.04 : 0)
                                   : root.danger ? (root.hovered || root.pressed ? 0.16 : 0)
                                                 : (root.hovered || root.pressed ? 1 : 0)

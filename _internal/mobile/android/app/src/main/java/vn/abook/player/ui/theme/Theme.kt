@@ -44,6 +44,16 @@ val AbookColors.switchOn: Color get() = Color(if (dark) DarkPalette.FOCUS else L
 val AbookColors.switchOff: Color get() = Color(if (dark) DarkPalette.SWITCH_OFF else LightPalette.SWITCH_OFF)
 val AbookColors.switchThumb: Color get() = Color(if (dark) DarkPalette.SWITCH_THUMB else LightPalette.SWITCH_THUMB)
 
+/** Vạch mạnh hơn [AbookColors.line]: tay nắm bảng trượt (web `bg-line-strong`, Qt `Theme.lineStrong`). */
+val AbookColors.lineStrong: Color get() = Color(if (dark) DarkPalette.LINE_STRONG else LightPalette.LINE_STRONG)
+/** Nền nhạt của trạng thái xong (web `bg-success-soft`, Qt `Theme.successSoft`). */
+val AbookColors.successSoft: Color get() = Color(if (dark) DarkPalette.SUCCESS_SOFT else LightPalette.SUCCESS_SOFT)
+/** Lớp phủ trên bìa (rãnh vạch tiến độ, nền nút trên ảnh) và chữ/icon trên lớp ấy: cùng số ở web `--cover-overlay` / `--cover-ink`, Qt. */
+val AbookColors.coverOverlay: Color get() = Color(if (dark) DarkPalette.COVER_OVERLAY else LightPalette.COVER_OVERLAY)
+val AbookColors.coverInk: Color get() = Color(if (dark) DarkPalette.COVER_INK else LightPalette.COVER_INK)
+/** Nền nhãn tập in trên bìa tự vẽ (web BookCover, Qt GeneratedCover). */
+val AbookColors.coverTag: Color get() = Color(if (dark) DarkPalette.COVER_TAG else LightPalette.COVER_TAG)
+
 internal val LightColors = AbookColors(
     Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE), Color(LightPalette.CONTROL_LINE),
     Color(LightPalette.TEXT), Color(LightPalette.TEXT_2), Color(LightPalette.TEXT_3), Color(LightPalette.FG_3),

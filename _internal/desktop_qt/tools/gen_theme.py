@@ -64,8 +64,20 @@ def section(text: str, start: str, end: str) -> str:
     return text[i:j if j > 0 else len(text)]
 
 
+WEB_ONLY_COLORS = ("select-chevron", "shadow", "shadow-lg")  # same list as scripts/gen_native_tokens.py: CSS image + box-shadows
+
+
+def resolve(theme: dict[str, str], name: str) -> str:
+    value = theme[name].strip()
+    while value.startswith("var(--"):
+        value = theme[value[6:-1]].strip()
+    return value
+
+
 def to_qt_color(value: str) -> str:
     value = value.strip()
+    if value == "transparent":
+        return "#00000000"
     if value.startswith("#"):
         return value.lower()
     m = re.fullmatch(r"rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*/\s*([\d.]+)\s*\)", value)
@@ -274,6 +286,17 @@ def render() -> str:
     for dm, qn in COLOR_NAMES.items():
         light, dark = col[dm]
         a(f'    readonly property color {qn}: dark ? "{dark}" : "{light}"')
+    # Every other colour token of tokens.json (web-only CSS images/shadows aside): same values as the web and Compose.
+    themes = {theme: {**data['colors']['light'], **data['colors'][theme]} for theme in ('light', 'dark')}
+    for dm in data['colors']['light']:
+        if dm in COLOR_NAMES or dm in WEB_ONLY_COLORS:
+            continue
+        qn = re.sub(r"-([a-z0-9])", lambda m: m.group(1).upper(), dm)
+        light, dark = (resolve(themes[t], dm) for t in ('light', 'dark'))
+        if re.fullmatch(r"[0-9.]+", light):
+            a(f'    readonly property real {qn}: dark ? {dark} : {light}')
+        else:
+            a(f'    readonly property color {qn}: dark ? "{to_qt_color(dark)}" : "{to_qt_color(light)}"')
     a("")
     a("    // ---- mặt đọc theo (styles.css [data-surface]; Cài đặt › Giao diện › \"Nền đọc\"): \"auto\" = Giấy khi sáng, Đêm khi tối ----")
     a("    // Trong vùng đọc theo, chữ / chữ phụ / màu nhấn / lớp tô câu (along) và chữ (word) theo MẶT ĐỌC, không theo giao diện của app.")

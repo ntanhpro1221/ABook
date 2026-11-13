@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.theme.coverTag
+import vn.abook.player.ui.theme.coverInk
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,7 +142,7 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
     Column(Modifier.fillMaxSize().padding(pad)) {
         FitText(
             main,
-            style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Bold, fontSize = titleSize, lineHeight = 1.18.em, color = Color.White),
+            style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Bold, fontSize = titleSize, lineHeight = 1.18.em, color = Abook.colors.coverInk),
             maxSize = titleSize,
             kind = "title",
             softWrap = true,
@@ -154,7 +156,7 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
                 maxSize = subSize,
                 kind = "part",
                 softWrap = false,
-                modifier = Modifier.background(Color.Black.copy(alpha = 0.28f)).padding(horizontal = 4.dp, vertical = 2.dp).testTag("cover_part"),
+                modifier = Modifier.background(Abook.colors.coverTag).padding(horizontal = 4.dp, vertical = 2.dp).testTag("cover_part"),
             )
         }
     }

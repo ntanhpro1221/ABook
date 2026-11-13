@@ -182,14 +182,14 @@ Item {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: Theme.radiusControl
-                                        color: Qt.rgba(18 / 255, 17 / 255, 16 / 255, 0.72)
+                                        color: Theme.coverOverlay
                                         opacity: root.choosing && root.chosenFound && root.chosenFound.url === tile.modelData.url ? 1 : 0
                                         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                                         Icon {
                                             anchors.centerIn: parent
                                             name: "loader-circle"
                                             size: 20
-                                            color: "#ffffff"
+                                            color: Theme.coverInk
                                             RotationAnimator on rotation { running: root.choosing && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
                                         }
                                     }

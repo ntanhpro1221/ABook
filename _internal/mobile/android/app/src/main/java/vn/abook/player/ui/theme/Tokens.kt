@@ -29,6 +29,24 @@ internal object LightPalette {
     const val SWITCH_THUMB = 0xFFFFFFFFL
     const val HOVER = 0xFFEFECE6L
     const val DANGER_SOFT = 0xFFFBE4E4L
+    const val PANEL_2 = 0xFFFAF9F6L
+    const val LINE_STRONG = 0xFFD3CDC2L
+    const val CONTROL_LINE_STRONG = 0xFF6F685DL
+    const val SWITCH_ON = 0xFFA0600CL
+    const val ACCENT_HOVER = 0xFFC2821FL
+    const val SUCCESS_SOFT = 0xFFDFF3EAL
+    const val INFO = 0xFF5E5950L
+    const val NAV_ACTIVE = 0xFFFFFFFFL
+    const val NAV_ACTIVE_RING = 0x141A1814L
+    const val AVATAR_BG_L = 0.93f
+    const val AVATAR_FG_L = 0.43f
+    const val DANGER_INK = 0xFFFFFFFFL
+    const val COVER_OVERLAY = 0xB8121110L
+    const val COVER_INK = 0xFFFFFFFFL
+    const val COVER_TAG = 0x47000000L
+    const val PRESS_INK = 0xFF000000L
+    const val BUTTON_SHINE = 0x40FFFAF0L
+    const val SHEEN = 0x59FFFAF0L
 }
 
 /** Màu ARGB, bảng tối. */
@@ -58,6 +76,24 @@ internal object DarkPalette {
     const val SWITCH_THUMB = 0xFF1B1204L
     const val HOVER = 0xFF252320L
     const val DANGER_SOFT = 0x21EF7B70L
+    const val PANEL_2 = 0xFF201E1BL
+    const val LINE_STRONG = 0xFF3D3934L
+    const val CONTROL_LINE_STRONG = 0xFF8C867CL
+    const val SWITCH_ON = 0xFFE9A945L
+    const val ACCENT_HOVER = 0xFFF4B85CL
+    const val SUCCESS_SOFT = 0x215CC596L
+    const val INFO = 0xFFA8A196L
+    const val NAV_ACTIVE = 0xFF252320L
+    const val NAV_ACTIVE_RING = 0x00000000L
+    const val AVATAR_BG_L = 0.33f
+    const val AVATAR_FG_L = 0.84f
+    const val DANGER_INK = 0xFF32130FL
+    const val COVER_OVERLAY = 0xB8121110L
+    const val COVER_INK = 0xFFFFFFFFL
+    const val COVER_TAG = 0x47000000L
+    const val PRESS_INK = 0xFF000000L
+    const val BUTTON_SHINE = 0x40FFFAF0L
+    const val SHEEN = 0x59FFFAF0L
 }
 
 /** Khoảng cách, bo góc, vùng chạm (dp). */

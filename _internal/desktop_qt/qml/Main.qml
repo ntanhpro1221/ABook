@@ -365,14 +365,14 @@ Window {
         height: tipLabel.implicitHeight + 12
         width: tipLabel.implicitWidth + 20
         radius: Theme.radiusControl
-        color: Theme.dark ? Theme.text : "#2a2723"
+        color: Theme.text
         x: Math.max(8, Math.min(win.width - width - 8, a.x + a.width / 2 - width / 2))
         y: a.y + a.height + 8 + height > win.height ? a.y - height - 8 : a.y + a.height + 8
         Text {
             id: tipLabel
             anchors.centerIn: parent
             text: Nav.tipText
-            color: Theme.dark ? Theme.bg : "#f5f3ef"
+            color: Theme.bg
             font.pixelSize: Theme.sizeCaption
         }
     }

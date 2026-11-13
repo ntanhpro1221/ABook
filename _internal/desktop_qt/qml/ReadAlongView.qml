@@ -396,7 +396,7 @@ Item {
         width: chipRow.implicitWidth + 2 * Theme.s16
         height: 40
         radius: height / 2
-        color: Theme.dark ? Theme.text : "#2a2723"
+        color: Theme.text
         opacity: shown ? 1 : 0
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: chip.shown ? Theme.motionMedium : Theme.motionFastOut } }
@@ -414,12 +414,12 @@ Item {
             Icon {
                 name: "locate"
                 size: 16
-                color: Theme.dark ? Theme.bg : "#f5f3ef"
+                color: Theme.bg
                 anchors.verticalCenter: parent.verticalCenter
             }
             Text {
                 text: S.s_toi_cau_dang_nghe_4526cf38
-                color: Theme.dark ? Theme.bg : "#f5f3ef"
+                color: Theme.bg
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium
                 anchors.verticalCenter: parent.verticalCenter

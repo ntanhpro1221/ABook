@@ -25,7 +25,7 @@ Item {
         width: Math.min(row.implicitWidth + 2 * Theme.s16, 560)
         height: Math.max(40, row.implicitHeight + 2 * Theme.s8)
         radius: Theme.radiusCover
-        color: Theme.dark ? Theme.text : "#2a2723"
+        color: Theme.text
         opacity: root.shown ? 1 : 0
         transform: Translate { y: root.shown ? 0 : 12 }
         Behavior on opacity { NumberAnimation { duration: root.shown ? Theme.motionMedium : Theme.motionFastOut } }
@@ -38,7 +38,7 @@ Item {
                 width: Math.min(implicitWidth, 560 - 2 * Theme.s16 - (actionLabel.visible ? actionLabel.width + Theme.s12 : 0))
                 text: root.text
                 wrapMode: Text.Wrap
-                color: Theme.dark ? Theme.bg : "#f5f3ef"
+                color: Theme.bg
                 font.pixelSize: Theme.sizeBodySmall
             }
             Interactive {

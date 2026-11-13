@@ -114,7 +114,7 @@ export function BookCover({
             {/* Bìa lớn bị ép nhỏ (màn ngang: bìa trình phát ~55 px): chữ đã chạm sàn cỡ nên tên 3-4 dòng tràn khỏi bìa, cắt ngang dòng chữ
                 (soát a66). Dưới 5,5rem chỉ giữ hai dòng tên (có "…"), bỏ nhãn tập. */}
             <span
-              className={cn("line-clamp-4 min-h-0 overflow-hidden font-bold tracking-tight text-white @max-[5.5rem]:line-clamp-2", leading)}
+              className={cn("line-clamp-4 min-h-0 overflow-hidden font-bold tracking-tight text-cover-ink @max-[5.5rem]:line-clamp-2", leading)}
               style={{ fontSize: text.fontSize }}
             >
               {main}
@@ -122,7 +122,7 @@ export function BookCover({
             {sub ? (
               <span
                 className="shrink-0 self-start rounded-control px-1.5 py-0.5 font-semibold uppercase tracking-wider @max-[5.5rem]:hidden"
-                style={{ color: style.ink, background: "rgb(0 0 0 / 0.28)", fontSize: "clamp(8px, 6cqw, 11px)" }}
+                style={{ color: style.ink, background: "var(--cover-tag)", fontSize: "clamp(8px, 6cqw, 11px)" }}
               >
                 {sub}
               </span>

@@ -47,6 +47,24 @@ QtObject {
     readonly property color controlLine: dark ? "#75706a" : "#857e72"
     readonly property color dangerSoft: dark ? "#21ef7b70" : "#fbe4e4"
     readonly property color scrim: dark ? "#9e060504" : "#7314110d"
+    readonly property color panel2: dark ? "#201e1b" : "#faf9f6"
+    readonly property color lineStrong: dark ? "#3d3934" : "#d3cdc2"
+    readonly property color controlLineStrong: dark ? "#8c867c" : "#6f685d"
+    readonly property color switchOn: dark ? "#e9a945" : "#a0600c"
+    readonly property color accentHover: dark ? "#f4b85c" : "#c2821f"
+    readonly property color successSoft: dark ? "#215cc596" : "#dff3ea"
+    readonly property color info: dark ? "#a8a196" : "#5e5950"
+    readonly property color navActive: dark ? "#252320" : "#ffffff"
+    readonly property color navActiveRing: dark ? "#00000000" : "#141a1814"
+    readonly property real avatarBgL: dark ? 0.33 : 0.93
+    readonly property real avatarFgL: dark ? 0.84 : 0.43
+    readonly property color dangerInk: dark ? "#32130f" : "#ffffff"
+    readonly property color coverOverlay: dark ? "#b8121110" : "#b8121110"
+    readonly property color coverInk: dark ? "#ffffff" : "#ffffff"
+    readonly property color coverTag: dark ? "#47000000" : "#47000000"
+    readonly property color pressInk: dark ? "#000000" : "#000000"
+    readonly property color buttonShine: dark ? "#40fffaf0" : "#40fffaf0"
+    readonly property color sheen: dark ? "#59fffaf0" : "#59fffaf0"
 
     // ---- mặt đọc theo (styles.css [data-surface]; Cài đặt › Giao diện › "Nền đọc"): "auto" = Giấy khi sáng, Đêm khi tối ----
     // Trong vùng đọc theo, chữ / chữ phụ / màu nhấn / lớp tô câu (along) và chữ (word) theo MẶT ĐỌC, không theo giao diện của app.

@@ -40,7 +40,7 @@ Rectangle {
         height: root.height - 2 * pad - (tagBox.visible ? tagBox.height + 8 : 0)
         verticalAlignment: Text.AlignTop
         text: TextWrap.pretty(root.parts[0])
-        color: "#ffffff"
+        color: Theme.coverInk
         wrapMode: Text.Wrap
         fontSizeMode: Text.Fit
         minimumPixelSize: 9
@@ -57,7 +57,7 @@ Rectangle {
         width: tag.implicitWidth + 12
         height: tag.implicitHeight + 6
         radius: Theme.radiusControl
-        color: "#47000000"
+        color: Theme.coverTag
         Text {
             id: tag
             anchors.centerIn: parent

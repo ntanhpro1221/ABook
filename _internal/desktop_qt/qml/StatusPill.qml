@@ -10,7 +10,7 @@ Rectangle {
     property bool live: false
     readonly property color ink: tone === "accent" ? Theme.accentText : tone === "success" ? Theme.success : tone === "danger" ? Theme.danger
                                  : tone === "warning" ? Theme.warning : Theme.text2
-    readonly property color back: tone === "accent" ? Theme.accentSoft : tone === "success" ? Qt.alpha(Theme.success, 0.14) : tone === "danger" ? Theme.dangerSoft
+    readonly property color back: tone === "accent" ? Theme.accentSoft : tone === "success" ? Theme.successSoft : tone === "danger" ? Theme.dangerSoft
                                   : tone === "warning" ? Theme.warningSoft : Theme.hover
     implicitHeight: 24
     implicitWidth: lead.width + text.implicitWidth + 20 + 6

@@ -105,6 +105,8 @@
   --button-shine: rgb(255 250 240 / 0.25); /* generated: ui_design/tokens.json */
   --sheen: rgb(255 250 240 / 0.35); /* generated: ui_design/tokens.json */
   color-scheme: light;
+  --cover-tag: rgb(0 0 0 / 0.28); /* generated: ui_design/tokens.json */
+  --press-ink: #000000; /* generated: ui_design/tokens.json */
 }
 
 [data-theme="dark"] {
@@ -153,6 +155,8 @@
   --button-shine: rgb(255 250 240 / 0.25); /* generated: ui_design/tokens.json */
   --sheen: rgb(255 250 240 / 0.35); /* generated: ui_design/tokens.json */
   color-scheme: dark;
+  --cover-tag: rgb(0 0 0 / 0.28); /* generated: ui_design/tokens.json */
+  --press-ink: #000000; /* generated: ui_design/tokens.json */
 }
 
 @theme inline {

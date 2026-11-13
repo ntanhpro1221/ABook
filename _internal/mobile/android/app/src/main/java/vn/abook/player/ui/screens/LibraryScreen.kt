@@ -7,7 +7,6 @@ import vn.abook.player.ui.components.ProgressFill
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import vn.abook.player.ui.data.CoverArt
-import vn.abook.player.ui.data.dotJoined
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -28,6 +27,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -43,7 +43,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
@@ -63,7 +62,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -193,7 +191,7 @@ private fun LibraryGrid(
                 if (tiles.isEmpty()) {
                     item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                         if (books.isEmpty()) Column {
-                            BasicText(S.s_chua_co_sach_tren_may_1b1ca653, style = Abook.type.sectionTitle)
+                            BasicText(S.s_chua_co_sach_30843cb2, style = Abook.type.sectionTitle)
                             RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
                             actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
                         } else NoMatch(ui.query.trim(), filter)
@@ -265,12 +263,6 @@ private fun BookTile(
     ) {
         Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).then(if (active) Modifier.testTag("library_cover") else Modifier)) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
-            if (series?.hasRemote ?: (lead.remote != null)) {
-                // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.
-                Box(Modifier.align(Alignment.BottomEnd).padding(Dim.s4).padding(bottom = 3.dp).size(22.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                    RemoteIcon(Color.White, Modifier.semantics { contentDescription = S.s_co_sach_tren_may_khac_3b7cdd88 })
-                }
-            }
             if (series != null) {
                 CoverChip("${series.books.size} ${series.unit}", Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
             } else if (single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty())) {
@@ -278,10 +270,12 @@ private fun BookTile(
             }
             val fraction = if (series == null) lead.progress.fraction else 0f
             if (ProgressFill.of(fraction) > 0f && fraction < 0.995f) {
+                // Một hình với web/Qt: vạch sát đáy, cao 4, rãnh --cover-overlay, cắt theo đúng khung bo của bìa (clip ở trên).
                 val accent = Abook.colors.accent
+                val track = Abook.colors.coverOverlay
                 Box(
-                    Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).drawBehind {
-                        drawRect(Color.Black.copy(alpha = 0.3f))
+                    Modifier.align(Alignment.BottomStart).fillMaxWidth().height(Dim.s4).drawBehind {
+                        drawRect(track)
                         drawRect(accent, Offset.Zero, Size(size.width * fraction, size.height))
                     },
                 )
@@ -295,15 +289,21 @@ private fun BookTile(
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }
-        // Sách ở máy khác: nơi để đứng đầu cùng dòng phụ ("Trên máy tính · Tô Hoài"), không thành dòng thứ hai.
-        val sub = listOfNotNull(ListenLogic.remotePlace(lead).takeIf { series?.hasRemote ?: (lead.remote != null) }, detail.ifEmpty { null }).dotJoined()
+        // Sách ở máy khác: dấu máy tính nhỏ đầu dòng phụ như web/Qt (không đè lên bìa); nơi để nằm trong tên đọc màn hình của dấu ấy.
+        val remote = series?.hasRemote ?: (lead.remote != null)
+        val sub = detail
         val name: @Composable () -> Unit = {
             // cắt-có-chủ-ý: tên dưới bìa giữ đúng 2 dòng để mọi ô một hàng cao bằng nhau; tên đầy đủ ở trang sách và trình đọc màn hình.
             BasicText(title, Modifier.fillMaxWidth().testTag("tile_title"), style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         val line: @Composable () -> Unit = {
             // cắt-có-chủ-ý: dòng phụ một dòng (tác giả / tình trạng), phần đầu là thứ quan trọng.
-            BasicText(sub, Modifier.fillMaxWidth().testTag("tile_sub"), style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
+                if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
+                    contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)
+                }, size = 12.dp)
+                BasicText(sub, Modifier.weight(1f).testTag("tile_sub"), style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         if (drawn) {
             line()

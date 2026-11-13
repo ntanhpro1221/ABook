@@ -1,5 +1,6 @@
 package vn.abook.player.ui.pip
 
+import vn.abook.player.ui.theme.LightPalette
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Size
@@ -29,7 +30,7 @@ internal object PipIcons {
         val density = Density(context)
         val side = (SIZE_DP * density.density).toInt().coerceAtLeast(1)
         val image = ImageBitmap(side, side)
-        val ink = Color.White
+        val ink = Color(LightPalette.COVER_INK)  // --cover-ink: thanh nút của PiP luôn nền tối, cả hai chế độ cùng một màu
         val path = Path()
         CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(side.toFloat(), side.toFloat())) {
             when (kind) {

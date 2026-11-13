@@ -23,7 +23,7 @@ Interactive {
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            color: "#000000"
+            color: Theme.pressInk
             opacity: root.pressed ? Theme.pressShade : (root.hovered ? 0.04 : 0)
             Behavior on opacity { NumberAnimation { duration: root.pressed ? Theme.motionFastOut : Theme.motionFast } }
         }

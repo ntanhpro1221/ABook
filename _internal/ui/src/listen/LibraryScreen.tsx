@@ -227,9 +227,9 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
           )}
         </button>
         {progressFill(book.progress.fraction) > 0 && !book.progress.finished && (
-          // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-control): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
+          // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-cover với bìa): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 12 px
           // của bìa thành khe hở ở mép dưới (chủ sách 25-10).
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-control">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-cover">
             <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 bg-cover-overlay">
               <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
             </div>
@@ -566,7 +566,7 @@ export function LibraryScreen({
         <LoadError what={S.s_thu_vien_beb0f831} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
-          <EmptyState icon={Headphones} title={S.s_chua_co_sach_tren_may_1b1ca653} className="mt-12">{S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f}</EmptyState>
+          <EmptyState icon={Headphones} title={S.s_chua_co_sach_30843cb2} className="mt-12">{S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f}</EmptyState>
         )
       ) : (
         <>

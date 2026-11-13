@@ -114,7 +114,7 @@ fun SheetLayer(host: SheetHost) {
                 .then(if (colors.dark) Modifier.sheetEdge(colors.line) else Modifier),
         ) {
             Box(Modifier.fillMaxWidth().height(Dim.s24), contentAlignment = Alignment.Center) {
-                Box(Modifier.width(36.dp).height(4.dp).clip(CircleShape).background(colors.line))
+                Box(Modifier.width(40.dp).height(Dim.s4).clip(CircleShape).background(colors.lineStrong))  // tay nắm 40x4 --line-strong, như web
             }
             Box(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
                 sheet.content { host.dismiss() }

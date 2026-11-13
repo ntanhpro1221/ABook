@@ -1,5 +1,6 @@
 import "UiStrings.js" as S
 import QtQuick
+import QtQuick.Shapes
 import ABook
 import "TextWrap.js" as TextWrap
 
@@ -57,23 +58,24 @@ Interactive {
         Rectangle {
             anchors.fill: parent
             radius: Theme.radiusCover
-            color: "#000000"
+            color: Theme.pressInk
             opacity: root.pressed ? Theme.pressShade : 0
             Behavior on opacity { NumberAnimation { duration: Theme.motionFastOut } }
         }
-        Rectangle {          // vạch tiến độ
+        // Vạch tiến độ: một hình với web / Android - sát đáy, cao 4, rãnh Theme.coverOverlay, cắt theo đúng góc bo của bìa.
+        Item {
+            id: heard
             visible: root.progress >= Theme.progressFillMin && root.progress < 0.995
-            x: 8
-            y: parent.height - 11
-            width: parent.width - 16
-            height: 3
-            radius: height / 2
-            color: "#66000000"
-            Rectangle {
-                width: parent.width * root.progress
-                height: parent.height
-                radius: parent.radius
-                color: Theme.accent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Theme.s4
+            CoverBand { width: heard.width; height: heard.height; fill: Theme.coverOverlay }
+            Item {
+                width: heard.width * root.progress
+                height: heard.height
+                clip: true
+                CoverBand { width: heard.width; height: heard.height; fill: Theme.accent }
             }
         }
         CoverButton {
@@ -138,5 +140,24 @@ Interactive {
         x: 0; y: subtitleText.y + 2; size: 12; name: "laptop"; color: Theme.text3
         visible: root.source !== ""
         Accessible.name: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
+    }
+
+    // Dải đáy của một hình chữ nhật bo Theme.radiusCover: hai đầu theo cung của góc bo (dải thấp hơn bán kính).
+    component CoverBand: Shape {
+        id: band
+        property color fill: "transparent"
+        readonly property real r: Theme.radiusCover
+        readonly property real k: r - Math.sqrt(r * r - (r - height) * (r - height))
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeWidth: 0
+            strokeColor: "transparent"
+            fillColor: band.fill
+            startX: band.k; startY: 0
+            PathLine { x: band.width - band.k; y: 0 }
+            PathArc { x: band.width - band.r; y: band.height; radiusX: band.r; radiusY: band.r }
+            PathLine { x: band.r; y: band.height }
+            PathArc { x: band.k; y: 0; radiusX: band.r; radiusY: band.r }
+        }
     }
 }

@@ -77,7 +77,7 @@ Item {
         width: bubbleText.implicitWidth + 16
         height: bubbleText.implicitHeight + 8
         radius: Theme.radiusControl
-        color: Theme.dark ? Theme.text : "#2a2723"
+        color: Theme.text
         readonly property real at: root.dragging ? root.dragFraction : root.hoverFraction
         x: Math.max(0, Math.min(root.width - width, root.width * at - width / 2))
         y: -height - (root.compact ? 2 : 4)
@@ -86,7 +86,7 @@ Item {
             id: bubbleText
             anchors.centerIn: parent
             text: Player.clockText(bubble.at * root.total)
-            color: Theme.dark ? Theme.bg : "#f5f3ef"
+            color: Theme.bg
             font.pixelSize: Theme.sizeCaption
         }
     }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.pip
 
+import vn.abook.player.ui.theme.coverOverlay
+import vn.abook.player.ui.theme.coverInk
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,8 +58,9 @@ import vn.abook.player.ui.theme.Dim
 @Composable
 fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, modifier: Modifier = Modifier) {
     val colors = Abook.colors
-    val titleStyle = Abook.type.body.copy(fontWeight = FontWeight.Bold, color = Color.White)
-    val chapterStyle = Abook.type.caption.copy(color = Color.White.copy(alpha = CHAPTER_ALPHA))
+    val titleStyle = Abook.type.body.copy(fontWeight = FontWeight.Bold, color = colors.coverInk)
+    val chapterStyle = Abook.type.caption.copy(color = colors.coverInk.copy(alpha = CHAPTER_ALPHA))
+    val track = colors.coverOverlay
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     BoxWithConstraints(
@@ -71,7 +74,7 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
         }
         if (plan.showBook || plan.showChapter) {
             Column(
-                Modifier.align(Alignment.BottomStart).fillMaxWidth().then(if (plan.full) Modifier.fillMaxHeight() else Modifier).background(SCRIM)
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().then(if (plan.full) Modifier.fillMaxHeight() else Modifier).background(Brush.verticalGradient(listOf(Color.Transparent, colors.coverOverlay)))
                     .padding(start = Dim.s12, end = Dim.s12, top = if (plan.full) Dim.s8 else Dim.s24, bottom = PROGRESS_HEIGHT + Dim.s8),
                 verticalArrangement = Arrangement.spacedBy(Dim.s4, if (plan.full) Alignment.Bottom else Alignment.Top),
             ) {
@@ -81,7 +84,7 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
         }
         Box(
             Modifier.align(Alignment.BottomStart).fillMaxWidth().height(PROGRESS_HEIGHT).testTag("pip_progress").drawBehind {
-                drawRect(TRACK)
+                drawRect(track)
                 val fraction = if (player.durationMs > 0) (position().toFloat() / player.durationMs).coerceIn(0f, 1f) else 0f
                 drawRect(colors.accent, size = Size(size.width * fraction, size.height))
             },
@@ -126,11 +129,7 @@ private fun PipCover(player: PlayerState, covers: CoverLoader, maxWidthPx: Int, 
 
 private val PROGRESS_HEIGHT = 3.dp
 
-/** Nền dải tiến độ: tối vừa đủ nổi trên mọi bìa, sáng hay tối. */
-private val TRACK = Color.Black.copy(alpha = 0.45f)
-
-/** Nền tối dần ở đáy bìa cho hai dòng chữ: tối vừa đủ để chữ trắng đọc được trên mọi bìa, sáng hay tối. */
-private val SCRIM = Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)))
+// Nền dải tiến độ và nền tối dần ở đáy bìa cho hai dòng chữ: token --cover-overlay / --cover-ink (cùng số với web, Qt), đọc được trên mọi bìa.
 
 /** Tên chương là chữ phụ so với tên sách (như `Theme.text2` ở bản máy tính). */
 private const val CHAPTER_ALPHA = 0.78f

@@ -47,6 +47,33 @@ COLOR_NAMES = {
 }
 
 
+# Tokens that only the browser can use: a CSS image and two CSS box-shadow lists. Every other key of tokens.json "colors" reaches
+# Compose and Qt (scripts/ui_parity_rules.py L3 checks both outputs against the JSON).
+WEB_ONLY_COLORS = ("select-chevron", "shadow", "shadow-lg")
+
+
+def palette_value(theme: dict[str, str], name: str) -> str:
+    """Raw value of one colour token with `var(--x)` aliases resolved inside the same theme."""
+    value = theme[name].strip()
+    while value.startswith("var(--"):
+        value = theme[value[6:-1]].strip()
+    return value
+
+
+def extra_colors() -> list[str]:
+    """tokens.json colour keys beyond the DESIGN-checked COLOR_NAMES, in JSON order."""
+    light = tokens()["colors"]["light"]
+    return [k for k in light if k not in COLOR_NAMES and k not in WEB_ONLY_COLORS]
+
+
+def kotlin_value(value: str) -> str:
+    if value == "transparent":
+        return "0x00000000L"
+    if re.fullmatch(r"[0-9.]+", value):
+        return number(float(value))
+    return f"0x{argb(value):08X}L"
+
+
 def section(text: str, start: str, end: str) -> str:
     a = text.index(start)
     return text[a:text.index(end, a)]
@@ -159,11 +186,17 @@ def render() -> str:
         "/** Màu ARGB, bảng sáng. */",
         "internal object LightPalette {",
     ]
+    themes = {theme: {**data['colors']['light'], **data['colors'][theme]} for theme in ('light', 'dark')}
+    extras = extra_colors()
     for name in COLOR_NAMES.values():
         lines.append(f"    const val {name} = 0x{light[name]:08X}L")
+    for key in extras:
+        lines.append(f"    const val {key.replace('-', '_').upper()} = {kotlin_value(palette_value(themes['light'], key))}")
     lines += ["}", "", "/** Màu ARGB, bảng tối. */", "internal object DarkPalette {"]
     for name in COLOR_NAMES.values():
         lines.append(f"    const val {name} = 0x{dark[name]:08X}L")
+    for key in extras:
+        lines.append(f"    const val {key.replace('-', '_').upper()} = {kotlin_value(palette_value(themes['dark'], key))}")
     lines += ["}", "", "/** Khoảng cách, bo góc, vùng chạm (dp). */", "internal object Dimens {"]
     for value in spacing:
         lines.append(f"    const val SPACE_{value} = {value}")
