@@ -56,15 +56,15 @@ def test_book_labels_preserve_source_timing_and_listener_readings() -> None:
     shown, _units = vieneu.units(text, 256)
     assert shown == ["Xem", "Chap.12", "nhé."]
     said, spans = spoken.layout(text, None)
-    assert said == "Xem chương mười hai nhé."
-    assert spans == [(0, 0), (1, 3), (4, 4)]
-    assert spoken.expand_words([[0, 100], [100, 200], [200, 300], [300, 500], [500, 700]], spans) == [
+    assert said == "Xem chương 12 nhé."
+    assert spans == [(0, 0), (1, 2), (3, 3)]
+    assert spoken.expand_words([[0, 100], [100, 300], [300, 500], [500, 700]], spans) == [
         [0, 100], [100, 500], [500, 700]]
     translated, mapping = studio_tn(text, None, True)
     assert translated[mapping[text.index("nhé")]:] == "nhé."
     for origin in (None, "ja", "ko"):
         for speaks_english in (False, True):
-            assert vieneu.spoken_tokens(shown, origin, speaks_english)[1] == "chương mười hai"
+            assert vieneu.spoken_tokens(shown, origin, speaks_english)[1] == "chương 12"
     assert spoken.layout(text, None, readings={"Chap.12": "mục riêng"})[0] == "Xem mục-riêng nhé."
     assert studio_tn(text, None, True, [(4, 11)])[0] == text
 

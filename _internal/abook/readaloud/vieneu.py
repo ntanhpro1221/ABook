@@ -406,13 +406,50 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
         out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
         token = out[index]
         # A final sentence dot is not another thousands separator.
-        token = re.sub(r"(?<![\w.,])\d{1,3}(?:\.\d{3})+(?!\d|[.,]\d)",
-                       lambda m: integer_reading(m.group().replace(".", "")), token)
+        if not _number_unit(plain, index):
+            token = re.sub(r"(?<![\w.,])\d{1,3}(?:\.\d{3})+(?!\w|[.,]\d)",
+                           lambda m: integer_reading(m.group().replace(".", "")), token)
         token = re.sub(r"(?<![\w.,])\d+\.\d{1,2}(?!\d|[.,]\d)",
                        lambda m: m.group().replace(".", ","), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
-        out[index] = re.sub(r"(?<![\w.,/:])\d+(?!\w|[.,/:]\d)",
-                            lambda m: integer_reading(m.group()), token)
+        # Only a number standing alone is a count; dates, codes, money,
+        # brackets and comparisons keep their digits for the later rules.
+        if _bare_number(plain, index):
+            token = re.sub(r"(?<![\w.,/:])\d+(?!\w|[.,/:]\d)", lambda m: _count_reading(m.group()), token)
+        out[index] = token
+
+
+BARE_NUMBER = re.compile(r"[\"'“‘(«]*[0-9]+(?:[.,][0-9]{3})*[\"'”’)».,;:!?…]*")
+NUMBER_NEIGHBOURS = frozenset("< > = + - – — × x * / ÷ ~ ≤ ≥ ≠ : %".split())
+# sea-g2p expands these only after digits ("10 kg" is "mười ki lô gam").
+NUMBER_UNITS = frozenset("km cm dm mm m kg mg g ml mL l L h ms s GB MB KB TB Gb Mb Kb Hz kHz MHz GHz W kW kWh V mAh ha cc".split())
+
+
+def _count_reading(digits: str) -> str:
+    """Long ungrouped runs and leading zeros are codes or phone numbers: sea-g2p reads those digit by digit."""
+    if len(digits) > 6 or len(digits) > 1 and digits.startswith("0"):
+        return digits
+    return integer_reading(digits)
+
+
+def _bare_number(plain: list[str], index: int) -> bool:
+    """A whole token that is only a count, not next to a math or comparison sign nor before a unit."""
+    if not BARE_NUMBER.fullmatch(plain[index]):
+        return False
+    # Keep sea-g2p's ordinal forms ("thứ 1" -> "thứ nhất", "thứ 4" -> "thứ tư").
+    if index and plain[index - 1].strip(OPENERS + CLOSERS + PUNCT_MARKS).casefold() == "thứ":
+        return False
+    # Space-grouped digits ("144 126 071") are one number that sea-g2p joins.
+    if any(0 <= near < len(plain) and (plain[near] in NUMBER_NEIGHBOURS or plain[near].isdigit()) for near in (index - 1, index + 1)):
+        return False
+    return not _number_unit(plain, index)
+
+
+def _number_unit(plain: list[str], index: int) -> bool:
+    if index + 1 >= len(plain):
+        return False
+    unit = plain[index + 1].rstrip(CLOSERS + PUNCT_MARKS).split("/")[0].rstrip("²³23")
+    return unit in NUMBER_UNITS
 
 
 def integer_reading(digits: str) -> str:
@@ -676,25 +713,13 @@ def _big_integers(out: list[str], toks: list[str] | None = None) -> None:
 
 
 def _thousands(out: list[str], toks: list[str] | None = None) -> None:
-    """Chỉ bỏ dấu ngăn nghìn khi có ngữ cảnh đếm / chỉ số hay nhiều nhóm nghìn.
-    "1,500 kg", mã và số đứng riêng có thể là thập phân: giữ nguyên. Xét chữ hiện
-    vì nhãn "HP" đã được đánh vần trong `out`. Khoảng và tỉ số dùng ngữ cảnh ở đầu kia.
-    """
-    plain = toks if toks is not None and len(toks) == len(out) else list(out)
-    def context(index: int) -> bool:
-        before = plain[index - 1].strip(OPENERS + CLOSERS + PUNCT_MARKS).lower() if index else ""
-        after = plain[index + 1].strip(OPENERS + CLOSERS + PUNCT_MARKS).lower() if index + 1 < len(plain) else ""
-        if before in _THOUSANDS_LABELS or after in _COUNTED_THOUSANDS:
-            return True
-        if after in ("~", "-", "–", "đến", "/") and index + 2 < len(plain) and THOUSANDS.search(plain[index + 2]):
-            return after == "/" or context(index + 2)
-        return before == "/" and index >= 2 and bool(THOUSANDS.search(plain[index - 2]))
+    """Comma groups of three are thousands; a zero integer part remains a Vietnamese decimal."""
     for index, token in enumerate(out):
         def replace(match: re.Match) -> str:
             left, right = token[:match.start()], token[match.end():]
             gold = bool(re.fullmatch(r"(?:G|pt)[" + re.escape(CLOSERS + PUNCT_MARKS) + r"]*", right))
             bounded = not left[-1:].isalnum() and (not right[:1].isalnum() or gold)
-            if not bounded:
+            if not bounded or match.group().startswith("0,"):
                 return match.group()
             digits = match.group().replace(",", "")
             if len(digits) >= 7:

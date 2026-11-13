@@ -386,12 +386,43 @@ object VieneuUnits {
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
             out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
             var token = out[index]
-            token = Regex("""(?<![$W.,])[0-9]{1,3}(?:\.[0-9]{3})+(?![0-9]|[.,][0-9])""").replace(token) {
-                integerReading(it.value.replace(".", ""))
+            if (!numberUnit(plain, index)) {
+                token = Regex("""(?<![$W.,])[0-9]{1,3}(?:\.[0-9]{3})+(?![$W]|[.,][0-9])""").replace(token) {
+                    integerReading(it.value.replace(".", ""))
+                }
             }
             token = Regex("""(?<![$W.,])[0-9]+\.[0-9]{1,2}(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
-            out[index] = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { integerReading(it.value) }
+            // Only a number standing alone is a count; dates, codes, money, brackets and comparisons keep their digits.
+            if (bareNumber(plain, index)) {
+                token = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { countReading(it.value) }
+            }
+            out[index] = token
         }
+    }
+
+    private val BARE_NUMBER = Regex("[\"'“‘(«]*[0-9]+(?:[.,][0-9]{3})*[\"'”’)».,;:!?…]*")
+    private val NUMBER_NEIGHBOURS = "< > = + - – — × x * / ÷ ~ ≤ ≥ ≠ : %".split(" ").toSet()
+    // sea-g2p expands these only after digits ("10 kg" is "mười ki lô gam").
+    private val NUMBER_UNITS = "km cm dm mm m kg mg g ml mL l L h ms s GB MB KB TB Gb Mb Kb Hz kHz MHz GHz W kW kWh V mAh ha cc".split(" ").toSet()
+
+    /** Same as vieneu._count_reading: long ungrouped runs and leading zeros are codes or phone numbers, read digit by digit by sea-g2p. */
+    private fun countReading(digits: String): String =
+        if (digits.length > 6 || (digits.length > 1 && digits.startsWith("0"))) digits else integerReading(digits)
+
+    /** Same as vieneu._bare_number: a whole token that is only a count, not next to a math or comparison sign nor before a unit. */
+    private fun bareNumber(plain: List<String>, index: Int): Boolean {
+        if (!BARE_NUMBER.matches(plain[index])) return false
+        // Keep sea-g2p's ordinal forms ("thứ 1" -> "thứ nhất", "thứ 4" -> "thứ tư").
+        if (index > 0 && plain[index - 1].trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.lowercase(Locale.ROOT) == "thứ") return false
+        // Space-grouped digits ("144 126 071") are one number that sea-g2p joins.
+        if (listOf(index - 1, index + 1).any { it in plain.indices && (plain[it] in NUMBER_NEIGHBOURS || (plain[it].isNotEmpty() && plain[it].all { c -> c in '0'..'9' })) }) return false
+        return !numberUnit(plain, index)
+    }
+
+    private fun numberUnit(plain: List<String>, index: Int): Boolean {
+        if (index + 1 >= plain.size) return false
+        val unit = plain[index + 1].trimEnd { it in CLOSERS || it in PUNCT_MARKS }.substringBefore('/').trimEnd { it in "²³23" }
+        return unit in NUMBER_UNITS
     }
 
     /** Bare integers use Vietnamese even in an English sentence; no fixed-width integer limit. */
@@ -766,24 +797,14 @@ object VieneuUnits {
         }
     }
 
-    /** Only counted quantities, stat labels or multiple thousands groups lose their commas. Bare numbers, codes and "1,500 kg" stay ambiguous - `_thousands`. */
+    /** Comma groups of three are thousands; a zero integer part remains a Vietnamese decimal. */
     private fun thousands(out: MutableList<String>, toks: List<String>? = null) {
-        val plain = if (toks != null && toks.size == out.size) toks else out.toList()
-        fun context(index: Int): Boolean {
-            fun clean(word: String) = word.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.lowercase()
-            val before = if (index > 0) clean(plain[index - 1]) else ""
-            val after = if (index + 1 < plain.size) clean(plain[index + 1]) else ""
-            if (before in THOUSANDS_LABELS || after in COUNTED_THOUSANDS) return true
-            if (after in setOf("~", "-", "–", "đến", "/") && index + 2 < plain.size && THOUSANDS.containsMatchIn(plain[index + 2]))
-                return after == "/" || context(index + 2)
-            return before == "/" && index >= 2 && THOUSANDS.containsMatchIn(plain[index - 2])
-        }
         for ((index, token) in out.withIndex()) out[index] = THOUSANDS.replace(token) { match ->
             val right = token.substring(match.range.last + 1)
             val suffix = when { right.startsWith("G") -> 1; right.startsWith("pt") -> 2; else -> 0 }
             val gold = suffix > 0 && right.drop(suffix).all { it in CLOSERS || it in PUNCT_MARKS }
             val bounded = token.getOrNull(match.range.first - 1)?.isLetterOrDigit() != true && (token.getOrNull(match.range.last + 1)?.isLetterOrDigit() != true || gold)
-            if (bounded) {
+            if (bounded && !match.value.startsWith("0,")) {
                 val digits = match.value.replace(",", "")
                 if (digits.length >= 7) match.value.replace(",", ".") + (if (right.startsWith(".")) " " else "") else digits
             } else match.value

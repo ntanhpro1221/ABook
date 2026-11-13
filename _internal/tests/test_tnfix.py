@@ -11,6 +11,8 @@ from abook.readaloud.vieneu import integer_reading
     ("Đo 2.5kg.", "Đo 2,5kg."),
     ("Alex 1. Morgan 3. Taylor 5.", "Alex một. Morgan ba. Taylor năm."),
     ("Giá 1,25 đồng.", "Giá 1,25 đồng."),
+    ("Đo 0,357 giây.", "Đo 0,357 giây."),
+    ("Đo 3,0005 giây.", "Đo 3,0005 giây."),
     ("Mã v1.2 và 12:30.", "Mã v1.2 và 12:30."),
 ])
 def test_number_boundaries(source, expected):
@@ -88,3 +90,37 @@ def test_internal_apostrophes_are_lexical(source):
 @pytest.mark.parametrize("source", ["C{}Cái gì?", "Kh{}Không!", "T{} tôi đi.", "Ng{}ngài đâu?"])
 def test_long_dash_stutters_read_like_hyphen_stutters(source, dash):
     assert studio_tn(source.format(dash), None, True)[0] == studio_tn(source.format("-"), None, True)[0]
+
+
+@pytest.mark.parametrize("source", [
+    "Ngày 01-10-2026 nhé.", "Gọi 090-123-4567 nhé.", "Phép 3 < 5 đúng.", "Xem [1] nhé.", "Nặng 10 kg.",
+    "Mã 007 đây.", "Số 1234567 đây.", "Có 144 126 071 người.", "Giá $5 thôi.", "Tăng ×3 lần.", "Khoảng ~50 người.",
+])
+def test_only_a_standalone_count_becomes_words(source):
+    assert studio_tn(source, None, True, direct_english=True)[0] == studio_tn(source, None, True)[0]
+    said = studio_tn(source, None, True)[0]
+    assert any(c.isdigit() for c in said), said
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Có 3 người.", "Có ba người."),
+    ("Mất 120 vàng.", "Mất một trăm hai mươi vàng."),
+    ("Đủ 999999 điểm.", "Đủ chín trăm chín mươi chín nghìn chín trăm chín mươi chín điểm."),
+])
+def test_a_standalone_count_is_read_in_vietnamese(source, expected):
+    assert studio_tn(source, None, True)[0] == expected
+
+
+
+@pytest.mark.parametrize(("source", "phrase"), [
+    ("Xếp thứ 1 nhé.", "thứ nhất"),
+    ("Xếp thứ 4 nhé.", "thứ tư"),
+    ("Diện tích 17 km² nhé.", "ki lô mét vuông"),
+    ("Diện tích 2.000.000 km² nhé.", "ki lô mét vuông"),
+    ("Thể tích 23 m³ nhé.", "mét khối"),
+])
+def test_ordinals_and_powered_units_keep_their_numeric_context(source, phrase):
+    from abook.readaloud import vieneu_engine
+
+    said = studio_tn(source, None, True, direct_english=True)[0]
+    assert phrase in vieneu_engine.normalize([said])
