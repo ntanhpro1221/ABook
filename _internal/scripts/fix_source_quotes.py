@@ -15,11 +15,11 @@ thoại mất dấu mở.
 CẢNH BÁO: `stop_book_on_source_change: true`. Sửa nguồn khi đang có lượt chạy sẽ làm nó dừng.
 Chỉ chạy `--apply` khi máy rảnh.
 """
-import sys, pathlib, shutil, re
+import sys, pathlib, shutil, re, tempfile
 
 SRC = pathlib.Path(r'D:\Novels\Tools\Text')
-SCRATCH = pathlib.Path(r'C:\Users\user\AppData\Local\Temp\claude'
-                       r'\D--Novels-ABook\eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a'
+SCRATCH = pathlib.Path(tempfile.gettempdir(), 'claude',
+                       r'D--Novels-ABook\eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a'
                        r'\scratchpad\quotefix_test')
 
 # (file, dong 1-based, kieu, moc)

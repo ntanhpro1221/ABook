@@ -75,6 +75,51 @@ def test_machine_name_is_read_at_runtime_and_private_ranges_are_checked(monkeypa
     assert [n for _, n, _, _ in findings] == [1, 2, 3, 7]
 
 
+def test_address_that_ends_a_sentence_is_still_an_address(monkeypatch):
+    monkeypatch.setenv("COMPUTERNAME", "localhost")
+    monkeypatch.setenv("HOSTNAME", "localhost")
+    monkeypatch.setattr(leak_scan.socket, "gethostname", lambda: "localhost")
+    monkeypatch.setattr(leak_scan.socket, "getaddrinfo", lambda *a: [])
+    real_lan = ".".join(map(str, (192, 168, 88, 99)))
+    real_tail = ".".join(map(str, (100, 80, 20, 30)))
+    findings = leak_scan.scan_machine([("a.md", "\n".join([
+        f"The phone answered at {real_lan}.",
+        f"Try {real_tail}, then the other one.",
+        f"({real_lan}); {real_tail}!",
+        f"version {real_lan}.4 is a longer number, not an address",
+        f"1{real_lan} is not one either",
+        "The sample 192.168.1.1. stays a sample.",
+    ]))])
+    assert [(n, e) for _, n, _, e in findings] == [
+        (1, f"non-sample private address {real_lan}"),
+        (2, f"non-sample private address {real_tail}"),
+        (3, f"non-sample private address {real_lan}"),
+        (3, f"non-sample private address {real_tail}"),
+    ]
+
+
+def test_home_folder_of_the_user_running_the_scan_is_found(monkeypatch):
+    user = "Fixture" + "Owner"
+    monkeypatch.setenv("USERNAME", user)
+    monkeypatch.delenv("USER", raising=False)
+    monkeypatch.setenv("COMPUTERNAME", "localhost")
+    monkeypatch.setenv("HOSTNAME", "localhost")
+    monkeypatch.setattr(leak_scan.socket, "gethostname", lambda: "localhost")
+    monkeypatch.setattr(leak_scan.socket, "getaddrinfo", lambda *a: [])
+    backslash = chr(92)
+    findings = leak_scan.scan_machine([("a.py", "\n".join([
+        f"EXE = 'C:/Users/{user}/AppData/Local/Programs/x.exe'",
+        f"SCRATCH = r'C:{backslash}Users{backslash}{user}{backslash}AppData'",
+        f"cd /c/Users/{user.lower()}/Novels",
+        f"ls /home/{user}",
+        f"C:/Users/{user}2/elsewhere is someone else",
+        "C:/Users/someone/AppData is not this user",
+        "%LOCALAPPDATA%/Programs/x.exe",
+    ]))])
+    assert [n for _, n, _, _ in findings] == [1, 2, 3, 4]
+    assert {e for _, _, _, e in findings} == {"this user's home folder"}
+
+
 def test_absent_corpus_prints_skip_but_still_checks_machine(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(leak_scan, "repo_root", lambda: tmp_path)
     monkeypatch.setattr(leak_scan, "tracked_files", lambda *a: [("a.txt", "nothing private")])

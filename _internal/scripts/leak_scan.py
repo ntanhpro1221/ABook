@@ -7,8 +7,8 @@ Three checks, each printed as ``path:line: kind: excerpt``:
     to bare letters. The corpus is looked up at ``$ABOOK_CORPUS`` or ``<main checkout>/Corpus``; when it
     is absent the check is skipped and says so, it never passes silently.
 (b) ``ipa``     - a line with 8 or more IPA-bearing tokens (phonemised prose is still the prose).
-(c) ``machine`` - this machine's own name (read from the environment at run time, never written here),
-    its own addresses, and any tailnet (100.64.0.0/10) or home-LAN (192.168.0.0/16) address that is not
+(c) ``machine`` - this machine's own name and the user's home folder (both read from the environment at run
+    time, never written here), its own addresses, and any tailnet (100.64.0.0/10) or home-LAN (192.168.0.0/16) address that is not
     one of the documentation samples below.
 
 Exit status is 1 when anything is found. ``--rev REV`` scans a commit instead of the work tree,
@@ -72,7 +72,9 @@ def unescape(line: str) -> str:
     return ESCAPE.sub(lambda m: chr(int(m.group(1) or m.group(2) or m.group(3), 16)), line)
 
 
-IPV4 = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?:/(\d{1,2}))?(?![\d.])")
+# A dot that ends the sentence ("... at 192.0.2.1.") is not a fifth octet, so only a digit or a dot followed by a
+# digit counts as part of a longer number on either side.
+IPV4 = re.compile(r"(?<!\d)(?<!\d\.)(\d{1,3}(?:\.\d{1,3}){3})(?:/(\d{1,2}))?(?!\d|\.\d)")
 TAILNET = ipaddress.ip_network("100.64.0.0/10")
 HOME_LAN = ipaddress.ip_network("192.168.0.0/16")
 # Made-up addresses the tests and docs already use. Anything else in these ranges looks real: new examples
@@ -272,15 +274,35 @@ def own_identity() -> tuple[list[str], set[str]]:
     return names, addresses
 
 
+def own_users() -> list[str]:
+    users = []
+    for raw in (os.environ.get("USERNAME"), os.environ.get("USER"), Path.home().name):
+        if raw and raw.lower() not in {"user", "root", "runner"} and raw.lower() not in (u.lower() for u in users):
+            users.append(raw)
+    return users
+
+
+def home_path_re(users: list[str]) -> re.Pattern | None:
+    """``C:/Users/<me>`` (either slash, doubled or not), ``/c/Users/<me>`` or ``/home/<me>``: write
+    ``%LOCALAPPDATA%``, ``Path.home()``, ``tempfile.gettempdir()`` or a relative path instead."""
+    if not users:
+        return None
+    names = "|".join(re.escape(u) for u in users)
+    return re.compile(r"(?:users|home)(?:\\|/)+(?:" + names + r")(?![\w-])", re.IGNORECASE)
+
+
 def scan_machine(files: list[tuple[str, str]]) -> list[tuple[str, int, str, str]]:
     names, own_addresses = own_identity()
     name_res = [re.compile(r"(?<![\w-])" + re.escape(n) + r"(?![\w-])", re.IGNORECASE) for n in names]
+    home_re = home_path_re(own_users())
     out = []
     for path, text in files:
         for no, line in enumerate(text.splitlines(), 1):
             for rx in name_res:
                 if rx.search(line):
                     out.append((path, no, "machine", "this machine's name"))
+            if home_re is not None and home_re.search(line):
+                out.append((path, no, "machine", "this user's home folder"))
             for m in IPV4.finditer(line):
                 value = m.group(1)
                 try:

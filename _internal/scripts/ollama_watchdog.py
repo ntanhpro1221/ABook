@@ -54,8 +54,8 @@ except ImportError:  # chạy trực tiếp: python scripts/x.py
 DEFAULT_VERSIONS_ROOT = _BOOK_VERSIONS
 LOG_NAME = "_ollama_watchdog.log"
 OLLAMA_BASE_URL = "http://127.0.0.1:11434"
-OLLAMA_EXE_FALLBACK = Path(
-    "C:/Users/NGDtuanh/AppData/Local/Programs/Ollama/ollama.exe"
+OLLAMA_EXE_FALLBACK = (
+    Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "Programs" / "Ollama" / "ollama.exe"
 )
 # A quiet log is the first signal. Analysis batches land every 5-20 seconds and synthesis
 # is noisier still, so ten minutes of silence is far outside normal for either phase.

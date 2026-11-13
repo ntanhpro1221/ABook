@@ -8,7 +8,7 @@ SERIAL="${1:?dùng: native_perf.sh <serial> [lần] [chờ-giây]}"
 RUNS="${2:-10}"
 SETTLE="${3:-4}"
 PKG="${ABOOK_PACKAGE:-com.ngdtuanh.abook}"
-ADB_BIN="${ADB_BIN:-C:/Users/NGDtuanh/AppData/Local/Android/Sdk/platform-tools/adb.exe}"
+ADB_BIN="${ADB_BIN:-${LOCALAPPDATA:-}/Android/Sdk/platform-tools/adb.exe}"
 export MSYS_NO_PATHCONV=1
 adb() { "$ADB_BIN" -P 5038 -s "$SERIAL" "$@"; }
 

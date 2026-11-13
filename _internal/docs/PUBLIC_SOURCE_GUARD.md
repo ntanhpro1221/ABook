@@ -22,6 +22,10 @@ are written for the tests and stay under the Corpus check); any other file fails
 The machine name comes from COMPUTERNAME at runtime. Tailnet and home LAN addresses
 outside the explicit sample list fail; new examples should use TEST-NET addresses
 (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24).
+An address that ends a sentence ("... at 192.0.2.1.") is still an address.
+The user's home folder (`Users/<USERNAME>` with either slash, `/home/<USER>`;
+the name is read at runtime) fails too: write `%LOCALAPPDATA%`, `Path.home()`,
+`tempfile.gettempdir()` or a relative path instead.
 
 Reviewed false positives are individual stripped-line SHA-256 entries in
 `scripts/leak_scan_allowlist.json`. Each entry states its reason. These cover
