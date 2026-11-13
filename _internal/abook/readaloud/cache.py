@@ -40,7 +40,8 @@ TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 # 18 = 17 + âm vị đổi mà không số nào khác đổi theo: bảng name_sounds (koeun: `unread` pin/veo/boa..., `level` toe/vin..., `foreign_onsets` "Dan" -> đ),
 # bảng điểm chữ trùng Việt / Anh (shared_words.json; phiên bản english_policy của nó trùng số 6 với loanwords), tên Nhật tự động đọc tách từng âm tiết.
 # 19 invalidates clips made before the integrated numeric/loanword rules and NFC input boundaries.
-CACHE_RULES = 19
+# 20 resolves dotted date/time/version contexts and preserves fractional zeroes.
+CACHE_RULES = 20
 
 
 def rules_version() -> str:

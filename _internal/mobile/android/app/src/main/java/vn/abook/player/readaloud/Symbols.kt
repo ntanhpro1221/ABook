@@ -105,6 +105,13 @@ object Symbols {
         return "$whole phẩy $fraction"
     }
 
+    /** A dotted multiplier is explicitly decimal; preserve every fractional zero. */
+    private fun multiplierNumber(number: String): String {
+        if ('.' !in number) return number
+        val (whole, fraction) = number.split('.')
+        return VieneuUnits.decimalReading(whole, fraction)
+    }
+
     private fun kind(char: Char?): String = when {
         char == null -> "edge"
         char.isWhitespace() -> "space"
@@ -367,11 +374,11 @@ object Symbols {
         val number = search("""\d+(?:[.,]\d+)?$""", c.left)!!.value
         val start = c.left.substring(0, c.left.length - number.length)
         val place = c.l2.lowercase() in MASK_PLACES // "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
-        if (sym == 'X' || place || (search("""\d{3}$""", number) != null && match("""\s?[a-zà-ỹ]|\s+[A-ZĐ]""", c.right) == null)) return say("ích") to 0
-        if ((c.l2.lowercase() in setOf("đến", "tới") && search("""từ\s""", c.left.takeLast(40).lowercase()) != null) || (c.l2.lowercase() == "từ" && c.r1 in setOf("đến", "tới"))) return say(number.replace(".", ",") + " lần") to number.length // "từ 0x đến 1x": mức gấp
+        if (sym == 'X' || place || ('.' !in number && search("""\d{3}$""", number) != null && match("""\s?[a-zà-ỹ]|\s+[A-ZĐ]""", c.right) == null)) return say("ích") to 0
+        if ((c.l2.lowercase() in setOf("đến", "tới") && search("""\btừ\s""", c.left.takeLast(40).lowercase()) != null) || (c.l2.lowercase() == "từ" && c.r1 in setOf("đến", "tới"))) return say(multiplierNumber(number) + " lần") to number.length // "từ 0x đến 1x": mức gấp
         if ((c.left3 hit setOf("tuổi", "thế", "hệ", "gen", "đời", "sinh")) || (c.right3 hit setOf("km", "km/h", "m")) || c.rw1 in setOf("tuổi", "đời")) return say("ích") to 0 // "tuổi 9x", "16x km/h", "3x tuổi"
         if (search("""(?:sin|cos|tan|cot|log|ln)[\s(]*[\d/.,]*$""", start.lowercase()) != null) return say("ích") to 0 // "cos2/3x": biến của hàm số
-        val times = say(number.replace(".", ",") + " lần") to number.length
+        val times = say(multiplierNumber(number) + " lần") to number.length
         if (c.rw1 in QUANTITY_WORDS || c.l2.lowercase() in QUANTITY_WORDS) return times // "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
         if (search("""[A-Za-z]$""", start) != null || search("""[+=(]""", c.left.takeLast(4) + c.right.take(3)) != null) return say("ích") to 0
         if (c.rch == '[' || (search("""(?:^|[\s\[(–—-])$""", start) != null && match("""\s+[A-ZĐ]""", c.right) != null)) return say("") to 0
@@ -588,9 +595,9 @@ object Symbols {
             }
             if (afterChar?.isDigit() == true && !wordChar(before)) {
                 val said = timesPre(spot(pos + 1), char)
-                val decimal = if (said.text == "nhân") match("""\d+\.\d{1,2}(?![\d.,])""", token.substring(pos + 1)) else null
+                val decimal = if (said.text == "nhân") match("""\d+\.\d+(?![\d.,])""", token.substring(pos + 1)) else null
                 // "x1.5": an English decimal multiplier, sea-g2p reads "1.5" as "một chấm năm"
-                if (decimal != null) return Found(pos + 1 + decimal.value.length, say("nhân " + decimal.value.replace(".", ",")))
+                if (decimal != null) return Found(pos + 1 + decimal.value.length, say("nhân " + multiplierNumber(decimal.value)))
                 return Found(pos + 1, said)
             }
             val masked = if (before?.isDigit() == true) match("""[xX×]{2,}(?![$W])""", token.substring(pos)) else null

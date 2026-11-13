@@ -35,6 +35,18 @@ def test_the_shared_cases_cover_every_class_with_cases_that_must_stay() -> None:
     assert {"ellipsis_pause", "ellipsis_lead", "tilde_pause", "roman", "multiplier", "thousands"} <= set(classes)
 
 
+@pytest.fixture(scope="module")
+def number_normalizer():
+    from sea_g2p.normalizer import Normalizer
+
+    return Normalizer()
+
+
+@pytest.mark.parametrize("case", [case for case in CASES if "normalized" in case], ids=lambda case: case["id"])
+def test_shared_dotted_numbers_survive_the_downstream_normalizer(case, number_normalizer):
+    assert number_normalizer.normalize(_said(case["text"])) == case["normalized"]
+
+
 def test_a_hesitation_inside_a_sentence_does_not_cut_the_sentence() -> None:
     """"Tôi..." trước chữ thường đọc thành dấu phẩy, nên VieNeu / Supertonic đọc cả câu một lượt (sea-g2p bỏ dấu phẩy cuối câu, câu cắt ở đó sẽ dính liền chữ sau)."""
     _toks, units = vieneu.units("Tôi... tôi không biết. Ừm… Vâng.", 256)

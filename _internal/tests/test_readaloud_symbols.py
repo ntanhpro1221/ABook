@@ -78,7 +78,7 @@ def test_a_symbol_with_a_number_is_read_by_its_neighbours(text: str, said: str) 
     # 12. tăng giảm
     ("Tấn công (↑1), phòng thủ ▲(0.15).", "Tấn công (tăng 1), phòng thủ tăng (0 phẩy mười lăm)."),
     # 13. gấp
-    ("Boost 3x, 100x cấp độ, 0.5x tốc độ.", "Boost 3 lần, 100 lần cấp độ, 0,5 lần tốc độ."),
+    ("Boost 3x, 100x cấp độ, 0.5x tốc độ.", "Boost 3 lần, 100 lần cấp độ, không phẩy năm lần tốc độ."),
     # 14. cặp đôi
     ("Aki × Rin là một cặp, Bảng Nhiệm Vụ × Nhiệm Vụ Phụ mở ra, 3 × 4.", "Aki và Rin là một cặp, Bảng Nhiệm Vụ,  Nhiệm Vụ Phụ mở ra, 3 nhân 4."),
     # 15. khác
@@ -95,7 +95,7 @@ def test_the_leads_decisions_of_04_10(text: str, said: str) -> None:
     ("Còn -50% Nhanh nhẹn, thanh máu của Shido -1. Tôi mười tám (-2) nhé.",
      "Còn trừ 50% Nhanh nhẹn, thanh máu của Shido trừ 1. Tôi mười tám (âm 2) nhé."),
     ("Đánh giá 4/5 sao, điểm 9.7/10, hết 1/4 máu, rồi 24/7. Ngày 8/3 là ngày hội, còn 3/4 cốc nước.",
-     "Đánh giá 4 trên 5 sao, điểm 9,7 trên 10, hết 1 phần tư máu, rồi 24 trên 7. Ngày 8 tháng 3 là ngày hội, còn 3 phần tư cốc nước."),
+     "Đánh giá 4 trên 5 sao, điểm chín phẩy bảy trên 10, hết 1 phần tư máu, rồi 24 trên 7. Ngày 8 tháng 3 là ngày hội, còn 3 phần tư cốc nước."),
     ("Hầm trú -> Một ngày mới -> Mặt trời. → Biến hóa → Honnoshi. Tokyo → Osaka. Máu 10 → 20 → 30.",
      "Hầm trú rồi Một ngày mới rồi Mặt trời.  Biến hóa rồi Honnoshi. Tokyo thành Osaka. Máu mười rồi hai mươi rồi ba mươi."),
     ("Bá Vương bị chọc giận. ATK↑ DEF↓. Lượt đọc: ↓ và Đông 4↓ xong.",

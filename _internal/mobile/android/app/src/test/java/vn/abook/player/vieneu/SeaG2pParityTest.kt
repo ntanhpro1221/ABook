@@ -85,6 +85,22 @@ class SeaG2pParityTest {
     }
 
     @Test
+    fun sharedDottedNumbersSurviveTheDownstreamNormaliser() {
+        val g2p = reader()
+        val cases = JSONObject(File("../../../tests/fixtures/readaloud/spoken/reading_forms.json").readText(Charsets.UTF_8)).getJSONArray("cases")
+        var checked = 0
+        for (i in 0 until cases.length()) {
+            val case = cases.getJSONObject(i)
+            if (!case.has("normalized")) continue
+            val (_, units) = VieneuUnits.units(case.getString("text"), 256)
+            val said = units.flatMap { it.pieces }.filter { it.isNotEmpty() }.joinToString(" ")
+            assertEquals(case.getString("id"), case.getString("normalized"), g2p.normalize(said, false))
+            checked++
+        }
+        assertTrue("missing dotted-number cases", checked >= 45)
+    }
+
+    @Test
     fun unitsOfParagraphsGetTheDesktopsPhonemes() {
         val g2p = reader()
         val cases = fixture.getJSONArray("units")

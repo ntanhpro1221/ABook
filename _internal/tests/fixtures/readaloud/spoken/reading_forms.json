@@ -104,7 +104,7 @@
   {
    "id": "ellipsis_keep-10",
    "text": "3.14 và 1.000 người.",
-   "said": "3,14 và một nghìn người."
+   "said": "3.14 và một nghìn người."
   },
   {
    "id": "ellipsis_lead-1",
@@ -289,17 +289,17 @@
   {
    "id": "multiplier-4",
    "text": "Tốc độ x1.5 khi chạy.",
-   "said": "Tốc độ nhân 1,5 khi chạy."
+   "said": "Tốc độ nhân một phẩy năm khi chạy."
   },
   {
    "id": "multiplier-5",
    "text": "Hệ số x0.75 thôi.",
-   "said": "Hệ số nhân 0,75 thôi."
+   "said": "Hệ số nhân không phẩy bảy năm thôi."
   },
   {
    "id": "multiplier-6",
    "text": "Gia tốc 1.5x nhé.",
-   "said": "Gia tốc 1,5 lần nhé."
+   "said": "Gia tốc một phẩy năm lần nhé."
   },
   {
    "id": "multiplier_keep-1",
@@ -314,7 +314,7 @@
   {
    "id": "multiplier_keep-3",
    "text": "Tỉ lệ x1.000 lần.",
-   "said": "Tỉ lệ nhân 1.000 lần."
+   "said": "Tỉ lệ nhân một phẩy không không không lần."
   },
   {
    "id": "level-1",
@@ -639,12 +639,12 @@
   {
    "id": "bigint_keep-19",
    "text": "Có 1.1234567 người.",
-   "said": "Có 1,1234567 người."
+   "said": "Có một phẩy một hai ba bốn năm sáu bảy người."
   },
   {
    "id": "bigint_keep-20",
    "text": "Có 1234567.5 người.",
-   "said": "Có 1234567,5 người."
+   "said": "Có một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy phẩy năm người."
   },
   {
    "id": "bigint_keep-21",
@@ -879,7 +879,7 @@
   {
    "id": "book_label_keep-10",
    "text": "Xem Chap 1.5 nhé.",
-   "said": "Xem Chap 1,5 nhé."
+   "said": "Xem Chap 1.5 nhé."
   },
   {
    "id": "book_label_keep-11",
@@ -1149,7 +1149,7 @@
   {
    "id": "tnfix_numbers-3",
    "text": "Đo 2.5kg.",
-   "said": "Đo 2,5kg."
+   "said": "Đo hai phẩy năm kg."
   },
   {
    "id": "tnfix_numbers-4",
@@ -1649,12 +1649,12 @@
   {
    "id": "tnfix_decimal_zero-1",
    "text": "Xác suất chỉ 0.0007% thôi.",
-   "said": "Xác suất chỉ 0,0007% thôi."
+   "said": "Xác suất chỉ không phẩy không không không bảy% thôi."
   },
   {
    "id": "tnfix_decimal_zero-2",
    "text": "Mất 0.004 giây.",
-   "said": "Mất 0,004 giây."
+   "said": "Mất không phẩy không không bốn giây."
   },
   {
    "id": "tnfix_count_letter-1",
@@ -1674,22 +1674,22 @@
   {
    "id": "tnfix_decimal_zero_keep-1",
    "text": "Bản 0.0.3 ra rồi.",
-   "said": "Bản 0.0.3 ra rồi."
+   "said": "Bản không chấm không chấm ba ra rồi."
   },
   {
    "id": "tnfix_decimal_long-1",
    "text": "Sai số chỉ 20.0005 thôi.",
-   "said": "Sai số chỉ 20,0005 thôi."
+   "said": "Sai số chỉ hai mươi phẩy không không không năm thôi."
   },
   {
    "id": "tnfix_decimal_long-2",
    "text": "Hằng số là 2.71828 nhé.",
-   "said": "Hằng số là 2,71828 nhé."
+   "said": "Hằng số là hai phẩy bảy một tám hai tám nhé."
   },
   {
    "id": "tnfix_decimal_long-3",
    "text": "Mã 5678.123 kìa.",
-   "said": "Mã 5678,123 kìa."
+   "said": "Mã năm nghìn sáu trăm bảy mươi tám phẩy một hai ba kìa."
   },
   {
    "id": "tnfix_decimal_long_keep-1",
@@ -1720,6 +1720,73 @@
    "id": "tnfix_dotted_initials_keep-2",
    "text": "Tôi biết v.v. rồi.",
    "said": "Tôi biết vân vân. rồi."
-  }
+  },
+  {"id": "fix168_dotted_date-1", "text": "ngày 12.05", "said": "ngày mười hai tháng năm", "normalized": "ngày mười hai tháng năm"},
+  {"id": "fix168_dotted_date-2", "text": "hôm 03.09", "said": "hôm ba tháng chín", "normalized": "hôm ba tháng chín"},
+  {"id": "fix168_dotted_date-3", "text": "mùng 1.2", "said": "mùng một tháng hai", "normalized": "mùng một tháng hai"},
+  {"id": "fix168_dotted_date-4", "text": "NGÀY 31.12", "said": "NGÀY ba mươi mốt tháng mười hai", "normalized": "ngày ba mươi mốt tháng mười hai"},
+  {"id": "fix168_dotted_date-5", "text": "ngày 29.02", "said": "ngày hai mươi chín tháng hai", "normalized": "ngày hai mươi chín tháng hai"},
+  {"id": "fix168_dotted_date-6", "text": "ngày 30.04", "said": "ngày ba mươi tháng bốn", "normalized": "ngày ba mươi tháng bốn"},
+  {"id": "fix168_dotted_invalid_keep-1", "text": "ngày 31.04", "said": "ngày 31.04", "normalized": "ngày ba mươi mốt chấm không bốn"},
+  {"id": "fix168_dotted_invalid_keep-2", "text": "hôm 30.02", "said": "hôm 30.02", "normalized": "hôm ba mươi chấm không hai"},
+  {"id": "fix168_dotted_invalid_keep-3", "text": "mùng 00.05", "said": "mùng 00.05"},
+  {"id": "fix168_dotted_invalid_keep-4", "text": "ngày 12.13", "said": "ngày 12.13", "normalized": "ngày mười hai chấm một ba"},
+  {"id": "fix168_dotted_time-1", "text": "lúc 10.30", "said": "lúc mười giờ ba mươi", "normalized": "lúc mười giờ ba mươi"},
+  {"id": "fix168_dotted_time-2", "text": "giờ 23.59", "said": "giờ hai mươi ba giờ năm mươi chín", "normalized": "giờ hai mươi ba giờ năm mươi chín"},
+  {"id": "fix168_dotted_time-3", "text": "lúc 00.00", "said": "lúc không giờ không", "normalized": "lúc không giờ không"},
+  {"id": "fix168_dotted_time-4", "text": "lúc 07.05", "said": "lúc bảy giờ năm", "normalized": "lúc bảy giờ năm"},
+  {"id": "fix168_dotted_time-5", "text": "LÚC 10.00", "said": "LÚC mười giờ không", "normalized": "lúc mười giờ không"},
+  {"id": "fix168_dotted_invalid_keep-5", "text": "lúc 24.00", "said": "lúc 24.00", "normalized": "lúc hai mươi bốn chấm không không"},
+  {"id": "fix168_dotted_invalid_keep-6", "text": "giờ 10.60", "said": "giờ 10.60", "normalized": "giờ mười chấm sáu không"},
+  {"id": "fix168_dotted_version-1", "text": "phiên bản 1.10", "said": "phiên bản một chấm mười", "normalized": "phiên bản một chấm mười"},
+  {"id": "fix168_dotted_version-2", "text": "bản 2.0", "said": "bản hai chấm không", "normalized": "bản hai chấm không"},
+  {"id": "fix168_dotted_version-3", "text": "version 1.10", "said": "version một chấm mười", "normalized": "version một chấm mười"},
+  {"id": "fix168_dotted_version-4", "text": "v 1.10", "said": "v một chấm mười"},
+  {"id": "fix168_dotted_version-5", "text": "v1.10", "said": "một chấm mười", "normalized": "một chấm mười"},
+  {"id": "fix168_dotted_version-6", "text": "V2.00", "said": "hai chấm không", "normalized": "hai chấm không"},
+  {"id": "fix168_dotted_version-7", "text": "bản 1.234", "said": "bản một chấm hai trăm ba mươi bốn", "normalized": "bản một chấm hai trăm ba mươi bốn"},
+  {"id": "fix168_dotted_version-8", "text": "bản 1.0000", "said": "bản một chấm không", "normalized": "bản một chấm không"},
+  {"id": "fix168_dotted_version-9", "text": "bản 1234.50", "said": "bản một nghìn hai trăm ba mươi bốn chấm năm mươi", "normalized": "bản một nghìn hai trăm ba mươi bốn chấm năm mươi"},
+  {"id": "fix168_dotted_version-10", "text": "bản 1.10.0", "said": "bản một chấm mười chấm không", "normalized": "bản một chấm mười chấm không"},
+  {"id": "fix168_dotted_ambiguous_keep-1", "text": "2.0", "said": "2.0", "normalized": "hai chấm không"},
+  {"id": "fix168_dotted_ambiguous_keep-2", "text": "1.10", "said": "1.10", "normalized": "một chấm một không"},
+  {"id": "fix168_dotted_ambiguous_keep-3", "text": "12.05", "said": "12.05", "normalized": "mười hai chấm không năm"},
+  {"id": "fix168_dotted_ambiguous_keep-4", "text": "10.30", "said": "10.30", "normalized": "mười chấm ba không"},
+  {"id": "fix168_dotted_ambiguous_keep-5", "text": "0.05", "said": "0.05", "normalized": "không chấm không năm"},
+  {"id": "fix168_dotted_ambiguous_keep-6", "text": "99.99", "said": "99.99", "normalized": "chín mươi chín chấm chín chín"},
+  {"id": "fix168_dotted_ambiguous_keep-7", "text": "ngày. 12.05", "said": "ngày. 12.05"},
+  {"id": "fix168_dotted_ambiguous_keep-8", "text": "lúc khác 10.30", "said": "lúc khác 10.30", "normalized": "lúc khác mười chấm ba không"},
+  {"id": "fix168_dotted_decimal-1", "text": "2.5000", "said": "hai phẩy năm không không không", "normalized": "hai phẩy năm không không không"},
+  {"id": "fix168_dotted_decimal-2", "text": "0.0010", "said": "không phẩy không không một không", "normalized": "không phẩy không không một không"},
+  {"id": "fix168_dotted_decimal-3", "text": "0.0000", "said": "không phẩy không không không không", "normalized": "không phẩy không không không không"},
+  {"id": "fix168_dotted_decimal-4", "text": "1234.50", "said": "một nghìn hai trăm ba mươi bốn phẩy năm không", "normalized": "một nghìn hai trăm ba mươi bốn phẩy năm không"},
+  {"id": "fix168_dotted_decimal-5", "text": "1234.0", "said": "một nghìn hai trăm ba mươi bốn phẩy không", "normalized": "một nghìn hai trăm ba mươi bốn phẩy không"},
+  {"id": "fix168_dotted_decimal-6", "text": "1234.100", "said": "một nghìn hai trăm ba mươi bốn phẩy một không không", "normalized": "một nghìn hai trăm ba mươi bốn phẩy một không không"},
+  {"id": "fix168_dotted_decimal-7", "text": "0.010", "said": "không phẩy không một không", "normalized": "không phẩy không một không"},
+  {"id": "fix168_dotted_decimal-8", "text": "10.0001", "said": "mười phẩy không không không một", "normalized": "mười phẩy không không không một"},
+  {"id": "fix168_dotted_decimal-9", "text": "2.0kg", "said": "hai phẩy không kg", "normalized": "hai phẩy không ki lô gam"},
+  {"id": "fix168_dotted_decimal-10", "text": "1.10 kg", "said": "một phẩy một không kg", "normalized": "một phẩy một không ki lô gam"},
+  {"id": "fix168_dotted_decimal-11", "text": "0.0010%", "said": "không phẩy không không một không%", "normalized": "không phẩy không không một không phần trăm"},
+  {"id": "fix168_dotted_decimal-12", "text": "1234.5600kg", "said": "một nghìn hai trăm ba mươi bốn phẩy năm sáu không không kg", "normalized": "một nghìn hai trăm ba mươi bốn phẩy năm sáu không không ki lô gam"},
+  {"id": "fix168_dotted_thousands_keep-1", "text": "8,125", "said": "tám nghìn một trăm hai mươi lăm", "normalized": "tám nghìn một trăm hai mươi lăm"},
+  {"id": "fix168_dotted_thousands_keep-2", "text": "3,000", "said": "ba nghìn", "normalized": "ba nghìn"},
+  {"id": "fix168_dotted_thousands_keep-3", "text": "7.400 km", "said": "7.400 km", "normalized": "bảy nghìn bốn trăm ki lô mét"},
+  {"id": "fix168_dotted_thousands_keep-4", "text": "4.200", "said": "bốn nghìn hai trăm", "normalized": "bốn nghìn hai trăm"},
+  {"id": "fix168_dotted_code_keep-1", "text": "A1.10", "said": "A1.10"},
+  {"id": "fix168_dotted_code_keep-2", "text": "1.10.2026", "said": "1.10.2026"},
+  {"id": "fix168_dotted_code_keep-3", "text": "12.05.2026", "said": "12.05.2026"},
+  {"id": "fix168_dotted_code_keep-4", "text": "2,345.50", "said": "2,345.50"},
+  {"id": "fix168_dotted_multiplier-1", "text": "x2.0", "said": "nhân hai phẩy không", "normalized": "nhân hai phẩy không"},
+  {"id": "fix168_dotted_multiplier-2", "text": "x1.10", "said": "nhân một phẩy một không", "normalized": "nhân một phẩy một không"},
+  {"id": "fix168_dotted_multiplier-3", "text": "x0.0010", "said": "nhân không phẩy không không một không", "normalized": "nhân không phẩy không không một không"},
+  {"id": "fix168_dotted_multiplier-4", "text": "×1.5000", "said": "nhân một phẩy năm không không không", "normalized": "nhân một phẩy năm không không không"},
+  {"id": "fix168_dotted_multiplier-5", "text": "2.0x", "said": "hai phẩy không lần", "normalized": "hai phẩy không lần"},
+  {"id": "fix168_dotted_multiplier-6", "text": "1.10x", "said": "một phẩy một không lần", "normalized": "một phẩy một không lần"},
+  {"id": "fix168_dotted_multiplier-7", "text": "0.0010x", "said": "không phẩy không không một không lần", "normalized": "không phẩy không không một không lần"},
+  {"id": "fix168_dotted_multiplier-8", "text": "1.5000x", "said": "một phẩy năm không không không lần", "normalized": "một phẩy năm không không không lần"},
+  {"id": "fix168_dotted_multiplier-9", "text": "từ 1.10x đến 2.00x", "said": "từ một phẩy một không lần đến hai phẩy không không lần", "normalized": "từ một phẩy một không lần đến hai phẩy không không lần"},
+  {"id": "fix168_dotted_score-1", "text": "9.7/10", "said": "chín phẩy bảy trên 10", "normalized": "chín phẩy bảy trên mười"},
+  {"id": "fix168_dotted_score-2", "text": "9.70/10", "said": "chín phẩy bảy không trên 10", "normalized": "chín phẩy bảy không trên mười"},
+  {"id": "fix168_dotted_score-3", "text": "9.7000/10", "said": "chín phẩy bảy không không không trên 10", "normalized": "chín phẩy bảy không không không trên mười"}
  ]
 }

@@ -395,6 +395,57 @@ def _range_mode(plain: list[str], index: int) -> str:
     return "duel" if set(before[:3]) & symbols.DUEL_WORDS else ""
 
 
+DOTTED_NUMBER = re.compile(r"(?<![\w.,])([vV]?)([0-9]+(?:\.[0-9]+)+)(?:/([0-9]+))?(?![0-9]|[.,][0-9])")
+
+
+def decimal_reading(whole: str, fraction: str) -> str:
+    """Read every fractional digit, including leading and trailing zeroes."""
+    return integer_reading(whole) + " phẩy " + " ".join(_DIGITS[int(c)] or "không" for c in fraction)
+
+
+def _dotted_number(match: re.Match, token: str, plain: list[str], index: int) -> str:
+    """Resolve explicit contexts first; short ambiguous pairs retain sea-g2p's base reading."""
+    parts = match[2].split(".")
+    tail = token[match.end():]
+    prefix = token[:match.start()]
+    if prefix.endswith("×") and not prefix[-2:-1].isdigit():
+        return match.group()  # The symbol pass owns unary decimal multipliers.
+    unit = tail.rstrip(CLOSERS + PUNCT_MARKS).split("/")[0].rstrip("²³23") in NUMBER_UNITS
+    if tail[:1].isalnum() and not unit:
+        return match.group()  # A number embedded in a code is not a dotted quantity.
+    before = ""
+    if index and not prefix.strip(OPENERS):
+        previous = plain[index - 1].rstrip(CLOSERS)
+        if previous[-1:] not in tuple(SENTENCE_END):
+            before = previous.strip(OPENERS + CLOSERS + PUNCT_MARKS).casefold()
+    if match[3]:
+        if len(parts) == 2 and not match[1] and before not in {"bản", "version", "v"}:
+            return decimal_reading(*parts) + " trên " + match[3]
+        return match.group()
+    if match[1] or before in {"bản", "version", "v"}:
+        return " chấm ".join(integer_reading(part.lstrip("0") or "0") for part in parts)
+    if len(parts) == 2 and all(len(part) <= 2 for part in parts):
+        first, second = map(int, parts)
+        month_days = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+        if (before in {"ngày", "hôm", "mùng"} and 1 <= second <= 12
+                and 1 <= first <= month_days[second - 1]):
+            return f"{vietnamese_number(first)} tháng {vietnamese_number(second)}"
+        if before in {"lúc", "giờ"} and 0 <= first <= 23 and 0 <= second <= 59:
+            return f"{vietnamese_number(first) if first else 'không'} giờ {vietnamese_number(second) if second else 'không'}"
+    if re.fullmatch(r"[1-9][0-9]{0,2}(?:\.[0-9]{3})+", match[2]):
+        return match.group() if unit or _number_unit(plain, index) else integer_reading("".join(parts))
+    if len(parts) != 2:
+        return match.group()
+    whole, fraction = parts
+    decimal = len(whole) >= 4 or len(fraction) >= 4 or (whole == "0" and len(fraction) >= 3)
+    if decimal or unit or _number_unit(plain, index):
+        # sea-g2p strips fractional trailing zeroes after converting '.' to ','.
+        # Speak every fractional digit ourselves, with a boundary before glued units.
+        said = decimal_reading(whole, fraction)
+        return said + (" " if tail[:1].isalnum() else "")
+    return match.group()
+
+
 def _numbers(out: list[str], toks: list[str] | None = None) -> None:
     """Số mà sea-g2p đọc chưa đúng ý người nghe: "10G" là "mười giê" (chữ G, không phải "gờ"), "3-4000" là "ba đến bốn nghìn", "1-1" / "1-3-1" là các số liền ("lớp 1-7", "tỉ lệ 3-7" cũng liền, "đấu 1-1" là "một chọi một"). Phân số, "x2", "$5"
     nằm ở `symbols`."""
@@ -405,15 +456,7 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
         out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
         token = out[index]
-        # A final sentence dot is not another thousands separator; a leading
-        # 0 group is never a thousands group ("0.001" is a decimal).
-        if not _number_unit(plain, index):
-            token = re.sub(r"(?<![\w.,])[1-9]\d{0,2}(?:\.\d{3})+(?!\w|[.,]\d)",
-                           lambda m: integer_reading(m.group().replace(".", "")), token)
-        # Two dotted groups that cannot be a date (day.month needs two short
-        # groups) nor a thousands group are a decimal: "10.0001", "1234.567".
-        token = re.sub(r"(?<![\w.,])(?:\d+\.\d{1,2}|0\.\d+|\d+\.\d{4,}|\d{4,}\.\d{3})(?!\d|[.,]\d)",
-                       lambda m: m.group().replace(".", ","), token)
+        token = DOTTED_NUMBER.sub(lambda match: _dotted_number(match, token, plain, index), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
         # Only a number standing alone is a count; dates, codes, money,
         # brackets and comparisons keep their digits for the later rules.

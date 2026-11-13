@@ -33,6 +33,14 @@
 - Dataset SHA-256: `3b54f84d89d28f98b5c11cb1cb86399e1349bd3c4e668c9d5cf3c87aff7cdf15`. Replay uses the saved dataset without new ASR/audio or text generation. Its row-scoped edit-distance memoization asserts identical function ASTs across revisions and calls the original function on cache misses. Replay starts with 6.53 GiB available RAM, peaks at 403.8 MiB process-tree RSS, exits 0.
 - Quality implementation hash: `dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64` -> `b0d055488ff0c1304f770d1b419b0d97ae9f8f47030ef1d42224356811d8101f`. `compileall` passes; changed files have LF, no unexpected control characters, and a clean diff check. Dev branch only.
 - Implementation commit `9b7283ef4`: full-corpus `scripts/leak_scan.py --rev HEAD` exits 0, 0 findings in 4,636 files; 1,577 pre-existing exact reviewed false positives. No allowlist changes.
+## 13-11-2026 — fix168tn: dotted numbers and fractional zeroes
+
+- Python and Kotlin now resolve explicit dotted version, valid day/month, and valid hour/minute contexts before numeric fallback. Short ambiguous pairs retain the base dotted reading. Definite decimals, attached-unit quantities, decimal scores, and dotted multipliers read every fractional digit, including trailing zeroes. Comma thousands (`8,125`, `3,000`) retain the approved policy.
+- Extended the existing shared reading-forms contract to **411 cases**, with **60** downstream-normalizer expectations checked by both Python and host JNI. Clip-cache rule advanced together from 19 to 20; dependent cache-key fixtures were refreshed.
+- Final 29-file CPU pytest invocation with `-rf`: **2459 passed, 0 FAILED/errors, 2 skipped**, 57.18 seconds. Skips are the optional private 442-row calibration replay and the real network Edge service. The final run began at **8.02 GiB** free with `CUDA_VISIBLE_DEVICES=-1`.
+- Filtered Gradle `:app:testDebugUnitTest`: **98 tests = 97 passed, 0 failed/errors, 1 skipped**, BUILD SUCCESSFUL in 1m31s; **6.79 GiB** free before launch. Both shared numeric contracts ran. Exact JNI parity: **748 public tokens** and **115 marked stretches**, **0 phoneme mismatches**. The JVM skip is optional private calibration.
+- The broad gates exposed stale pre-NFC stretch snapshots and frozen quality-hash metadata. Refreshed four short synthetic cry rows and added Python freshness coverage for this snapshot; no stretch implementation, oracle policy, or long IPA was added or changed. Initial diagnostics and their repaired reruns are recorded in `PROGRESS.md` and external logs.
+- Quality implementation list loaded from code: **70 entries**. Before: `dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64`; after: `3e83369310dcbcfaf798ec746ccbfc9960d747a17428b0a6f44dac597e060c74`. Changes are confined to `dev/fix168tn`.
 
 ## 13-11-2026 — integ168c release integration follow-up
 

@@ -8,12 +8,12 @@ from abook.readaloud.vieneu import integer_reading
 @pytest.mark.parametrize(("source", "expected"), [
     ("Quỹ có 2.070.000.000.", "Quỹ có hai tỷ không trăm bảy mươi triệu."),
     ("Giá 3,000 đồng.", "Giá ba nghìn đồng."),
-    ("Đo 2.5kg.", "Đo 2,5kg."),
+    ("Đo 2.5kg.", "Đo hai phẩy năm kg."),
     ("Alex 1. Morgan 3. Taylor 5.", "Alex một. Morgan ba. Taylor năm."),
     ("Giá 1,25 đồng.", "Giá 1,25 đồng."),
     ("Đo 0,357 giây.", "Đo 0,357 giây."),
     ("Đo 3,0005 giây.", "Đo 3,0005 giây."),
-    ("Mã v1.2 và 12:30.", "Mã v1.2 và 12:30."),
+    ("Mã v1.2 và 12:30.", "Mã một chấm hai và 12:30."),
 ])
 def test_number_boundaries(source, expected):
     assert studio_tn(source, None, True, direct_english=True)[0] == expected
@@ -27,6 +27,12 @@ def test_unbounded_integer_and_leading_zeroes():
 def test_explicit_readings_keep_number_ownership():
     source = "Giá 300."
     assert studio_tn(source, None, True, [(4, 7)], direct_english=True)[0] == source
+
+
+@pytest.mark.parametrize("source", ["ngày 12.05", "lúc 10.30", "phiên bản 1.10", "đo 1234.5000"])
+def test_explicit_readings_keep_dotted_number_ownership(source):
+    start = source.rfind(" ") + 1
+    assert studio_tn(source, None, True, [(start, len(source))])[0] == source
 
 
 @pytest.mark.parametrize(("source", "expected"), [
@@ -136,9 +142,9 @@ def test_quotation_marks_after_a_lone_letter_stay(source):
 
 
 @pytest.mark.parametrize(("source", "expected"), [
-    ("Chỉ 0.0003% thôi.", "Chỉ 0,0003% thôi."),
-    ("Mất 0.006 giây.", "Mất 0,006 giây."),
-    ("Bản 0.0.2 nhé.", "Bản 0.0.2 nhé."),
+    ("Chỉ 0.0003% thôi.", "Chỉ không phẩy không không không ba% thôi."),
+    ("Mất 0.006 giây.", "Mất không phẩy không không sáu giây."),
+    ("Bản 0.0.2 nhé.", "Bản không chấm không chấm hai nhé."),
     ("Giá 4.200 đồng.", "Giá bốn nghìn hai trăm đồng."),
 ])
 def test_a_leading_zero_group_is_a_decimal(source, expected):
@@ -168,9 +174,9 @@ def test_loanwords_beside_vietnamese_words(source, expected):
 
 
 @pytest.mark.parametrize(("source", "expected"), [
-    ("Sai số 30.0002 thôi.", "Sai số 30,0002 thôi."),
-    ("Chiều dài 4321.765 nhé.", "Chiều dài 4321,765 nhé."),
-    ("Hằng số 1.41421 đây.", "Hằng số 1,41421 đây."),
+    ("Sai số 30.0002 thôi.", "Sai số ba mươi phẩy không không không hai thôi."),
+    ("Chiều dài 4321.765 nhé.", "Chiều dài bốn nghìn ba trăm hai mươi mốt phẩy bảy sáu năm nhé."),
+    ("Hằng số 1.41421 đây.", "Hằng số một phẩy bốn một bốn hai một đây."),
     ("Ngày 21.9.2027 nhé.", "Ngày 21.9.2027 nhé."),
     ("Đi 7.400 km.", "Đi 7.400 km."),
     ("Giá 6.300 đồng.", "Giá sáu nghìn ba trăm đồng."),

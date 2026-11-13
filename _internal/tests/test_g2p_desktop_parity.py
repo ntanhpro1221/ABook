@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import pytest
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/data/g2pgate/desktop_parity.json"
 

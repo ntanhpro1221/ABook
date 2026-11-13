@@ -378,6 +378,55 @@ object VieneuUnits {
         return if (before.take(3).any { it in Symbols.DUEL_WORDS }) "duel" else ""
     }
 
+    private val DOTTED_NUMBER = Regex("""(?<![$W.,])([vV]?)([0-9]+(?:\.[0-9]+)+)(?:/([0-9]+))?(?![0-9]|[.,][0-9])""")
+
+    /** Read every fractional digit, including leading and trailing zeroes. */
+    internal fun decimalReading(whole: String, fraction: String): String =
+        integerReading(whole) + " phẩy " + fraction.map { DIGITS[it - '0'].ifEmpty { "không" } }.joinToString(" ")
+
+    /** Same decisions and digit readings as vieneu._dotted_number. */
+    private fun dottedNumber(match: MatchResult, token: String, plain: List<String>, index: Int): String {
+        val parts = match.groupValues[2].split(".")
+        val tail = token.substring(match.range.last + 1)
+        if (token.getOrNull(match.range.first - 1) == '×' && token.getOrNull(match.range.first - 2)?.isDigit() != true)
+            return match.value // The symbol pass owns unary decimal multipliers.
+        val unit = tail.trimEnd { it in CLOSERS || it in PUNCT_MARKS }.substringBefore('/').trimEnd { it in "²³23" } in NUMBER_UNITS
+        if (tail.firstOrNull()?.isLetterOrDigit() == true && !unit) return match.value
+        var before = ""
+        if (index > 0 && token.substring(0, match.range.first).trim { it in OPENERS }.isEmpty()) {
+            val previous = plain[index - 1].trimEnd { it in CLOSERS }
+            if (previous.lastOrNull()?.let { it in SENTENCE_END } != true)
+                before = previous.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.lowercase(Locale.ROOT)
+        }
+        if (match.groupValues[3].isNotEmpty()) {
+            if (parts.size == 2 && match.groupValues[1].isEmpty() && before !in setOf("bản", "version", "v"))
+                return decimalReading(parts[0], parts[1]) + " trên " + match.groupValues[3]
+            return match.value
+        }
+        if (match.groupValues[1].isNotEmpty() || before in setOf("bản", "version", "v"))
+            return parts.joinToString(" chấm ") { integerReading(it.trimStart('0').ifEmpty { "0" }) }
+        if (parts.size == 2 && parts.all { it.length <= 2 }) {
+            val first = parts[0].toInt()
+            val second = parts[1].toInt()
+            val monthDays = listOf(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+            if (before in setOf("ngày", "hôm", "mùng") && second in 1..12 && first in 1..monthDays[second - 1])
+                return "${vietnameseNumber(first)} tháng ${vietnameseNumber(second)}"
+            if (before in setOf("lúc", "giờ") && first in 0..23 && second in 0..59)
+                return "${if (first == 0) "không" else vietnameseNumber(first)} giờ ${if (second == 0) "không" else vietnameseNumber(second)}"
+        }
+        if (Regex("""[1-9][0-9]{0,2}(?:\.[0-9]{3})+""").matches(match.groupValues[2]))
+            return if (unit || numberUnit(plain, index)) match.value else integerReading(parts.joinToString(""))
+        if (parts.size != 2) return match.value
+        val (whole, fraction) = parts
+        val decimal = whole.length >= 4 || fraction.length >= 4 || (whole == "0" && fraction.length >= 3)
+        if (decimal || unit || numberUnit(plain, index)) {
+            // Preserve every fractional zero and separate an attached unit before sea-g2p.
+            val said = decimalReading(whole, fraction)
+            return said + if (tail.firstOrNull()?.isLetterOrDigit() == true) " " else ""
+        }
+        return match.value
+    }
+
     /** Numbers sea-g2p reads differently from the listener's ear: "3-4000" has its "đến", "1-1" / "1-3-1" are numbers in a row ("lớp 1-7", "tỉ lệ 3-7" too, "đấu 1-1" is "một chọi một"). Fractions, "x2", "$5" are in [Symbols] - `_numbers`. */
     private fun numbers(out: MutableList<String>, toks: List<String>? = null) {
         val plain = if (toks != null && toks.size == out.size) toks else out
@@ -386,14 +435,7 @@ object VieneuUnits {
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
             out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
             var token = out[index]
-            // A leading 0 group is never a thousands group ("0.001" is a decimal).
-            if (!numberUnit(plain, index)) {
-                token = Regex("""(?<![$W.,])[1-9][0-9]{0,2}(?:\.[0-9]{3})+(?![$W]|[.,][0-9])""").replace(token) {
-                    integerReading(it.value.replace(".", ""))
-                }
-            }
-            // Two dotted groups that cannot be a date (day.month needs two short groups) nor a thousands group are a decimal: "10.0001", "1234.567".
-            token = Regex("""(?<![$W.,])(?:[0-9]+\.[0-9]{1,2}|0\.[0-9]+|[0-9]+\.[0-9]{4,}|[0-9]{4,}\.[0-9]{3})(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
+            token = DOTTED_NUMBER.replace(token) { dottedNumber(it, token, plain, index) }
             // Only a number standing alone is a count; dates, codes, money, brackets and comparisons keep their digits.
             if (bareNumber(plain, index)) {
                 token = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { countReading(it.value) }

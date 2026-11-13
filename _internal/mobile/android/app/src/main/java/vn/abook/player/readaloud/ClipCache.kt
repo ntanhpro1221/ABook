@@ -56,7 +56,8 @@ class ClipCache(
         // 18 = 17 + phonemes changed with no other number moving: the name_sounds table (koeun: `unread` pin/veo/boa..., `level` toe/vin...,
         // `foreign_onsets` "Dan" -> đ), the shared Vietnamese / English score table, automatic Japanese names read one word per syllable. Same as cache.py.
         // 19: integrated numeric/loanword rules and NFC boundaries, shared with desktop cache.py.
-        const val CACHE_RULES = 19
+        // 20: dotted date/time/version contexts and every fractional zero, shared with cache.py.
+        const val CACHE_RULES = 20
         const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
 
         /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */

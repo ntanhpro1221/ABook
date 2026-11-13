@@ -436,21 +436,30 @@ def _times_pre(c: Spot, sym: str) -> tuple:
     return ("nhân", False)
 
 
+def _multiplier_number(number: str) -> str:
+    """A dotted multiplier is explicitly decimal; do not let sea-g2p drop zeroes."""
+    if "." not in number:
+        return number
+    from .vieneu import decimal_reading
+
+    return decimal_reading(*number.split("."))
+
+
 def _times_post(c: Spot, sym: str) -> tuple:
     """"3x", "100x", "0,5x", "1x Cuộn phép", "194X" - sym ngay sau số. Trả (lời, ngắt, số chữ số đứng trước được gộp vào lời).
     Số + x là con số bị che ("9x", "thứ 9x", "3x tuổi", "10x xem") thì "ích", là hệ số nhân của một đại lượng ("10x Sức mạnh", "kính ngắm 8x", "3x.") thì "N lần"."""
     number = re.search(r"\d+(?:[.,]\d+)?$", c.left).group()
     start = c.left[: len(c.left) - len(number)]
     place = c.l2.lower() in MASK_PLACES  # "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
-    if sym == "X" or place or (re.search(r"\d{3}$", number) and not re.match(r"\s?[a-zà-ỹ]|\s+[A-ZĐ]", c.right)):
+    if sym == "X" or place or ("." not in number and re.search(r"\d{3}$", number) and not re.match(r"\s?[a-zà-ỹ]|\s+[A-ZĐ]", c.right)):
         return ("ích", False, 0)  # "194X"
-    if (c.l2.lower() in ("đến", "tới") and re.search(r"từ\s", c.left[-40:].lower())) or (c.l2.lower() == "từ" and c.r1 in ("đến", "tới")):
-        return (number.replace(".", ",") + " lần", False, len(number))  # "từ 0x đến 1x": mức gấp, đọc "không lần"
+    if (c.l2.lower() in ("đến", "tới") and re.search(r"\btừ\s", c.left[-40:].lower())) or (c.l2.lower() == "từ" and c.r1 in ("đến", "tới")):
+        return (_multiplier_number(number) + " lần", False, len(number))  # "từ 0x đến 1x": mức gấp, đọc "không lần"
     if c.left3 & {"tuổi", "thế", "hệ", "gen", "đời", "sinh"} or c.right3 & {"km", "km/h", "m"} or c.rw1 in ("tuổi", "đời"):
         return ("ích", False, 0)  # "tuổi 9x", "16x km/h", "3x tuổi"
     if re.search(r"(?:sin|cos|tan|cot|log|ln)[\s(]*[\d/.,]*$", start.lower()):
         return ("ích", False, 0)  # "cos2/3x": biến của hàm số
-    times = (number.replace(".", ",") + " lần", False, len(number))
+    times = (_multiplier_number(number) + " lần", False, len(number))
     if c.rw1 in QUANTITY_WORDS or c.l2.lower() in QUANTITY_WORDS:
         return times  # "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
     if re.search(r"[A-Za-z]$", start) or re.search(r"[+=(]", c.left[-4:] + c.right[:3]):
@@ -706,9 +715,9 @@ def _dispatch(token: str, pos: int, spot) -> tuple | None:
             return end, _times_sign(spot(end))
         if after_char.isdigit() and not _word_char(before):
             said = _times_pre(spot(pos + 1), char)
-            decimal = re.match(r"\d+\.\d{1,2}(?![\d.,])", token[pos + 1:]) if said[0] == "nhân" else None
+            decimal = re.match(r"\d+\.\d+(?![\d.,])", token[pos + 1:]) if said[0] == "nhân" else None
             if decimal:
-                return pos + 1 + len(decimal.group()), ("nhân " + decimal.group().replace(".", ","), False)  # "x1.5": hệ số thập phân kiểu Anh, sea-g2p đọc "1.5" là "một chấm năm"
+                return pos + 1 + len(decimal.group()), ("nhân " + _multiplier_number(decimal.group()), False)
             return pos + 1, said
         masked = re.match(r"[xX×]{2,}(?![\w])", token[pos:]) if before.isdigit() else None
         if masked:
