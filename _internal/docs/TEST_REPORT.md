@@ -21,6 +21,7 @@
 - Follow-up full-file invocations with `-rf`: recovery **121 passed / 2 skipped**; word-break **101 passed**; pipeline/work-item fixtures **140 passed**; retention **167 passed**; final fault-boundary/rejected-take checks **144 passed**. All have zero failures/errors. Latest results per file, replacing earlier diagnostic rows: **1,044 passed / 0 failed / 0 errors / 2 skipped**, **1,046 unique cases in 31 files**, including **86 new synthetic regression cases**. This is aggregated final coverage, not a second complete-suite invocation.
 - Known libsndfile format/malformed/encoding errors only prevent retaining already-refused provider output. System code 2 and machine/programming contexts remain fatal; the system error also follows the same-seed machine retry boundary through cause/context wrappers.
 - JUnit, logs and exact counts are saved outside the checkout in the fix168sec scratch directory. CPU/mocked checks only; the broad invocation started with 7.69 GiB free, with CUDA disabled. Final commit privacy verification is recorded in `result.md`.
+- Implementation commit `7c917ad208de5b7256f6c69d104b91dd03e41c46`: `scripts/leak_scan.py --rev HEAD` exited 0 with 0 findings in 4,637 files; no corpus skip. Quality hash changed from `dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64` to `aa593ea08778853281fb76aefc8a7cf4dd3fed103f8917873dce03d2beb74623` on this dev branch.
 
 ## 13-11-2026 — integ168c release integration follow-up
 
