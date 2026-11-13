@@ -6,6 +6,7 @@ Chạy từ _internal: runtime/.venv/Scripts/python.exe -X utf8 scripts/release_
 from __future__ import annotations
 
 import argparse
+import ast
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import importlib.util
@@ -27,6 +28,10 @@ ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 DESIGN_LINT_BLOCKS = False
 # Từ của chính máy dò không phải mã chuyển đổi; chỉ miễn đúng dòng khai báo này.
 FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
+# Released 0.4.167 report: 19 skips. Remove two optional audiotsm comparisons;
+# pitch and LUFS remain mandatory direct measurements in the same test module.
+PYTEST_MAX_SKIPPED = 17
+PYTEST_MAX_XFAILED = 0
 
 
 @dataclass
@@ -160,12 +165,12 @@ def worker_command(name: str) -> list[str]:
     return py(str(Path(__file__).resolve()), "--worker", name)
 
 
-def checks() -> list[Check]:
+def checks(confirm_hash: str | None = None) -> list[Check]:
     node = shutil.which("node") or "node"
     ui = ROOT / "ui"
     definitions = [
         Check("compile", py("-m", "compileall", "-q", "abook", "tests", "scripts")),
-        Check("pytest", py("-m", "pytest", "-o", "addopts=", "-q", "-rf", "--durations=30"), timeout=7200, parser="pytest"),
+        Check("pytest", py("-m", "pytest", "-o", "addopts=", "-q", "-rfs", "--durations=30"), timeout=7200, parser="pytest"),
         Check("typecheck", [node, "node_modules/typescript/bin/tsc", "-p", "tsconfig.json"], ui, 180),
         Check("vitest", [node, "node_modules/vitest/vitest.mjs", "run", "--no-cache", "--configLoader", "runner", "--reporter", "verbose"],
               ui, 900, "vitest"),
@@ -184,11 +189,13 @@ def checks() -> list[Check]:
               ui, 3600, "gallery", ("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
+        Check("qt-installer", py("desktop_qt/tools/test_installer.py", str(ROOT / "desktop_qt/dist")),
+              timeout=1200, requires=("qt-tests",)),
         # Sau android-unit / qt-tests: hai bước ấy vừa ghi lại ảnh và cây UI mà máy đo thiết kế đọc.
         Check("design-lint", worker_command("design-lint"), timeout=600, parser="json"),
     ]
     definitions += [Check(name, worker_command(name), parser="json") for name in
-                    ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "batch-crlf",
+                    ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "public-fixtures", "public-paths", "batch-crlf",
                      "studio-pins", "android-sdk")]
     definitions += [Check(name, manual=detail) for name, detail in (
         ("manual-ui", "Android thật/máy ảo; duyệt ảnh gallery, README, nguồn truyện trong diff và giấy phép thành phần đóng gói"),
@@ -196,6 +203,8 @@ def checks() -> list[Check]:
         ("manual-artifacts", "Bộ cài/APK ký, packaged smoke, audio sink hai lượt + đối chứng, cài/cập nhật/gỡ hồ sơ giả"),
         ("manual-dependencies", "Duyệt dependency audit mỗi phiên bản; cần máy Studio/GPU/Ollama, không chạy ở gate CPU"),
     )]
+    if confirm_hash:
+        next(check for check in definitions if check.name == "quality-hash").command += ["--confirm-hash", confirm_hash]
     return definitions
 
 
@@ -211,15 +220,42 @@ def tracked_and_new() -> list[Path]:
 
 
 def changed_files() -> list[Path]:
-    names = git("diff", "HEAD", "--name-only", "-z").split("\0")
+    names = git("diff", release_range()["base"], "--name-only", "-z").split("\0")
     names += git("ls-files", "--others", "--exclude-standard", "-z").split("\0")
     return [REPO / name for name in dict.fromkeys(names) if name and (REPO / name).is_file()]
+
+
+def release_range() -> dict:
+    """At a release tag, compare with its predecessor; otherwise use the latest reachable release."""
+    base = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "HEAD").strip()
+    if git("rev-parse", base + "^{}").strip() == git("rev-parse", "HEAD").strip():
+        base = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "HEAD^").strip()
+    require(bool(re.fullmatch(r"v\d+\.\d+\.\d+", base)), "invalid release tag: " + base)
+    return {"base": base, "commits": int(git("rev-list", "--count", base + "..HEAD").strip())}
+
+
+def release_quality_hash(base: str) -> str:
+    """Read the protected list and exact blobs from the tag, without checking out or executing old code."""
+    from abook.quality_policy import _hashed_bytes
+
+    policy = ast.parse(git("show", base + ":_internal/abook/quality_policy.py"))
+    filenames = next(ast.literal_eval(node.value) for node in policy.body if isinstance(node, ast.Assign)
+                     and any(isinstance(t, ast.Name) and t.id == "QUALITY_IMPLEMENTATION_FILES" for t in node.targets))
+    import posixpath
+
+    digest = hashlib.sha256()
+    for filename in filenames:
+        relative = posixpath.normpath("_internal/abook/" + filename)
+        data = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=REPO, capture_output=True,
+                              check=True, timeout=30).stdout
+        digest.update(filename.encode("utf-8") + b"\0" + _hashed_bytes(filename, data) + b"\0")
+    return digest.hexdigest()
 
 
 def added_lines(path: Path) -> list[str]:
     relative = path.relative_to(REPO).as_posix()
     if git("ls-files", "--error-unmatch", "--", relative).strip():
-        diff = git("diff", "HEAD", "--no-ext-diff", "--unified=0", "--", relative)
+        diff = git("diff", release_range()["base"], "--no-ext-diff", "--unified=0", "--", relative)
         return [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
     return []
 
@@ -241,7 +277,7 @@ def require(ok: bool, detail: str) -> None:
         raise ValueError(detail)
 
 
-def worker(name: str) -> dict:
+def worker(name: str, confirm_hash: str | None = None) -> dict:
     """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
     if name == "android-unit":
         inputs = g2p_parity_env()
@@ -270,9 +306,14 @@ def worker(name: str) -> dict:
 
         digest = quality_implementation_hash()
         require(bool(re.fullmatch(r"[0-9a-f]{64}", digest)), "hash không hợp lệ")
+        comparison = release_range()
+        previous = release_quality_hash(comparison["base"])
+        require(digest == previous or confirm_hash == digest,
+                f"quality hash changed since {comparison['base']}: {previous} -> {digest}; requires --confirm-hash {digest}")
         locked = {(ROOT / "abook" / item).resolve() for item in QUALITY_IMPLEMENTATION_FILES}
         touched = [path.relative_to(REPO).as_posix() for path in changed_files() if path.resolve() in locked]
-        return {"counts": {"files": len(locked), "changed": len(touched)}, "hash": digest, "locked_changes": touched,
+        return {"counts": {"files": len(locked), "changed": len(touched)}, "hash": digest, "previous_hash": previous,
+                "range": comparison, "confirmed_hash": confirm_hash, "locked_changes": touched,
                 "implementation_files": list(QUALITY_IMPLEMENTATION_FILES)}
     if name == "changelog":
         # Trước bump: [Chưa phát hành] phải có gạch đầu dòng. Sau bump (commit phát hành): [<version>] phải có - khi ấy
@@ -329,8 +370,26 @@ def worker(name: str) -> dict:
                 bad.append(path.relative_to(REPO).as_posix())
         require(bool(files) and not bad, "batch không CRLF: " + ", ".join(bad))
         return {"counts": {"files": len(files)}}
+    if name == "public-fixtures":
+        from scripts import public_leak_scan as scanner
+        result = scanner.audit(REPO)
+        return {"status": "FAIL" if result["findings"] or result["stale_reviewed"] else "PASS",
+                "counts": {"files": result["files"], "text_files": result["text_files"],
+                           "findings": len(result["findings"]), "waived": result["waived"]},
+                "detail": result["corpus"], "evidence": result}
+    if name == "public-paths":
+        from scripts import public_leak_scan as scanner
+        files = tracked_and_new()
+        require(bool(files), "public-paths: no files checked")
+        findings = [p.relative_to(REPO).as_posix() for p in files
+                    if any(scanner.private_path(text) for _, text in scanner.texts(p))]
+        require(not findings, "public-paths: private machine/session paths in " + ", ".join(findings))
+        return {"counts": {"files": len(files), "findings": 0}}
     if name in {"diff-safety", "forbidden-terms"}:
+        comparison = release_range()
         files = changed_files()
+        require(bool(files) or comparison["commits"] == 0,
+                f"{name}: files=0 but range {comparison['base']}..HEAD has {comparison['commits']} commits")
         problems = []
         prose_mentions = []
         terms = re.compile("|".join(FORBIDDEN_TERMS), re.I)
@@ -359,6 +418,7 @@ def worker(name: str) -> dict:
                     prose_mentions.append(relative)
         require(not problems, f"{name}: cần duyệt " + ", ".join(problems))
         return {"counts": {"files": len(files), "findings": 0, "prose_mentions": len(prose_mentions)},
+                "range": comparison, "explicitly_empty_range": not files and comparison["commits"] == 0,
                 "prose_mentions_for_manual_review": prose_mentions}
     if name in {"studio-pins", "android-sdk"}:
         module = load_module(ROOT / "scripts/release.py", "gate_release")
@@ -561,6 +621,10 @@ def validate_report(check: Check, execution: Execution, artifact: Path, row: dic
     if kind in {"pytest", "vitest"}:
         require(counts.get("passed", 0) > 0 and not any(counts.get(k, 0) for k in ("failed", "error", "xpassed")),
                 "summary có test lỗi hoặc không có test passed: " + json.dumps(counts))
+    if kind == "pytest":
+        require(counts["skipped"] <= PYTEST_MAX_SKIPPED,
+                f"pytest skipped={counts['skipped']} exceeds ceiling {PYTEST_MAX_SKIPPED}")
+        require(counts["xfailed"] <= PYTEST_MAX_XFAILED, "pytest: unexpected xfailed tests")
     require(execution.returncode == 0, f"exit {execution.returncode}")
     return counts, evidence
 
@@ -754,19 +818,20 @@ def main(argv: list[str] | None = None, *, runner=run_process, definitions=None)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--inject-failure", metavar="NAME", help="cấy một hàng FAIL để kiểm cổng phát hành")
     parser.add_argument("--worker", help=argparse.SUPPRESS)
+    parser.add_argument("--confirm-hash", help="explicit approval of this exact quality implementation hash")
     parser.add_argument("--confirm", action="append", default=[], metavar="MANUAL-NAME=NOTE",
                         help="human sign-off for this invocation's exact commit and source bytes; never loaded from earlier reports")
     args = parser.parse_args(argv)
     if args.worker:
         try:
-            result = worker(args.worker)
+            result = worker(args.worker, args.confirm_hash)
             result.setdefault("status", "PASS")
             print(json.dumps(result, ensure_ascii=False))
             return 0 if result["status"] == "PASS" else 1
         except Exception as exc:
             print(json.dumps({"status": "FAIL", "detail": str(exc)}, ensure_ascii=False))
             return 1
-    definitions = checks() if definitions is None else definitions
+    definitions = checks(args.confirm_hash) if definitions is None else definitions
     if args.list:
         for check in definitions:
             print(f"{check.name:22} {'MANUAL' if check.manual else str(check.timeout) + 's':8} "

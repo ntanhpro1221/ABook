@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+import pytest
+
 from abook.audio_transform_contract import (
     POSTPROCESS_ALGORITHM,
     POSTPROCESS_OUTPUT_CODEC,
@@ -74,6 +77,31 @@ def test_quality_policy_fingerprints_every_critical_implementation_file() -> Non
     assert "../pyproject.toml" in QUALITY_IMPLEMENTATION_FILES
     assert "../uv.lock" in QUALITY_IMPLEMENTATION_FILES
     assert len(quality_implementation_hash()) == 64
+
+
+def test_every_locked_file_exists_and_every_contract_is_locked():
+    import abook.quality_policy as policy
+    root = Path(policy.__file__).parent
+    assert all((root / name).is_file() for name in QUALITY_IMPLEMENTATION_FILES)
+    assert {p.name for p in root.glob("*_contract.py")} <= set(QUALITY_IMPLEMENTATION_FILES)
+
+
+@pytest.mark.parametrize("filename", QUALITY_IMPLEMENTATION_FILES)
+def test_changing_or_removing_a_locked_file_cannot_preserve_the_hash(tmp_path, monkeypatch, filename):
+    import abook.quality_policy as policy
+    package = tmp_path / "abook"
+    package.mkdir()
+    monkeypatch.setattr(policy, "__file__", str(package / "quality_policy.py"))
+    monkeypatch.setattr(policy, "QUALITY_IMPLEMENTATION_FILES", (filename,))
+    path = package / filename
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"original\n")
+    before = policy.quality_implementation_hash()
+    path.write_bytes(b"changed\n")
+    assert policy.quality_implementation_hash() != before
+    path.rename(path.with_name(path.name + ".absent"))
+    with pytest.raises(FileNotFoundError):
+        policy.quality_implementation_hash()
 
 
 def test_the_apps_own_version_number_does_not_retire_quality_evidence() -> None:

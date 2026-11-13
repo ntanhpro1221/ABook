@@ -154,7 +154,7 @@ def implementation_files_hash(filenames: tuple[str, ...]) -> str:
         path = (package_root / filename).resolve()
         digest.update(filename.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(_hashed_bytes(filename, path.read_bytes()) if path.is_file() else b"MISSING")
+        digest.update(_hashed_bytes(filename, path.read_bytes()))
         digest.update(b"\0")
     return digest.hexdigest()
 

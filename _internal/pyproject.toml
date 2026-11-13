@@ -93,8 +93,10 @@ abook = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "scripts/tap_audit", "mobile/android/scripts/test_phone_frames.py"]
 addopts = "-q"
+xfail_strict = true
+empty_parameter_set_mark = "fail_at_collect"
 
 [tool.ruff]
 line-length = 110

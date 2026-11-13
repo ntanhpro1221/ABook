@@ -262,6 +262,7 @@ def test_qt_never_reuses_a_stale_log_or_claims_a_missing_log_passed(tmp_path):
 
 
 def test_source_checks_detect_crlf_and_private_data_failures(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
     monkeypatch.setattr(gate, "REPO", tmp_path)
     bad = tmp_path / "broken.cmd"
     bad.write_bytes(b"@echo off\n")
@@ -278,6 +279,7 @@ def test_source_checks_detect_crlf_and_private_data_failures(tmp_path, monkeypat
 
 
 def test_term_detector_only_exempts_its_own_literal_declaration(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
     source = tmp_path / "source.py"
     source.write_text("# " + gate.FORBIDDEN_TERMS[0], encoding="utf-8")
     monkeypatch.setattr(gate, "REPO", tmp_path)
@@ -285,6 +287,67 @@ def test_term_detector_only_exempts_its_own_literal_declaration(tmp_path, monkey
     monkeypatch.setattr(gate, "source_lines", lambda path: path.read_text(encoding="utf-8").splitlines())
     with pytest.raises(ValueError, match="cần duyệt"):
         gate.worker("forbidden-terms")
+
+
+@pytest.mark.parametrize("name", ["diff-safety", "forbidden-terms"])
+def test_commits_with_no_checked_files_fail(name, monkeypatch):
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
+    monkeypatch.setattr(gate, "changed_files", lambda: [])
+    with pytest.raises(ValueError, match="files=0.*range"):
+        gate.worker(name)
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 0})
+    assert gate.worker(name)["explicitly_empty_range"]
+
+
+def test_clean_committed_diff_is_checked_from_the_previous_release(tmp_path, monkeypatch):
+    def run(*args):
+        return subprocess.run(["git", "-C", str(tmp_path), *args], check=True, capture_output=True, text=True).stdout
+    run("init")
+    run("config", "user.name", "Gate test")
+    run("config", "user.email", "gate@example.invalid")
+    path = tmp_path / "source.py"
+    path.write_text("safe = 1\n", encoding="utf-8")
+    run("add", "source.py")
+    run("commit", "-m", "baseline")
+    run("tag", "v0.0.1")
+    path.write_text("# " + gate.FORBIDDEN_TERMS[0] + "\n", encoding="utf-8")
+    run("commit", "-am", "new source")
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    assert run("status", "--porcelain") == ""
+    assert gate.changed_files() == [path]
+    assert gate.worker("diff-safety")["range"] == {"base": "v0.0.1", "commits": 1}
+    with pytest.raises(ValueError, match="cần duyệt"):
+        gate.worker("forbidden-terms")
+    run("tag", "v0.0.2")
+    assert gate.release_range()["base"] == "v0.0.1"
+
+
+def test_quality_hash_requires_exact_current_hash_when_changed(monkeypatch):
+    from abook import quality_policy
+    current = "b" * 64
+    monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: current)
+    monkeypatch.setattr(gate, "release_quality_hash", lambda _: "a" * 64)
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
+    monkeypatch.setattr(gate, "changed_files", lambda: [])
+    for confirmation in (None, "a" * 64):
+        with pytest.raises(ValueError, match="requires --confirm-hash"):
+            gate.worker("quality-hash", confirmation)
+    assert gate.worker("quality-hash", current)["hash"] == current
+    check = next(c for c in gate.checks(current) if c.name == "quality-hash")
+    assert check.command[-2:] == ["--confirm-hash", current]
+
+
+@pytest.mark.parametrize("summary", ["2 passed, 900 skipped in 1s", "2 passed, 1 xfailed in 1s"])
+def test_skipped_or_expected_failure_growth_blocks_the_gate(tmp_path, summary):
+    rows = gate.run_gate([fake_check()], tmp_path, lambda *_: gate.Execution(0, summary))
+    assert rows[0]["result"] == "FAIL"
+
+
+def test_gate_reports_skip_reasons_and_runs_external_test_tools():
+    definitions = {c.name: c for c in gate.checks()}
+    assert "-rfs" in definitions["pytest"].command
+    assert definitions["qt-installer"].requires == ("qt-tests",)
+    assert "desktop_qt/tools/test_installer.py" in definitions["qt-installer"].command
 
 
 def test_vitest_unhandled_errors_block_even_when_all_tests_pass(tmp_path):
