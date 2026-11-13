@@ -255,7 +255,7 @@ private slots:
 
     // Soát Android 12-11 mục 2: hẹn giờ đứng vì tạm dừng tới 30 phút thì tự tắt - tối mai nghe tiếp không bị hẹn giờ cũ tắt tiếng.
     void sleepPausedForThirtyMinutesTurnsOff() {
-        QCOMPARE(kSleepPausedExpiresMs, qint64(30 * 60'000));
+        QCOMPARE(PlayerLogic::kSleepPausedExpiresMs, qint64(30 * 60'000));
         for (const QString kind : {QStringLiteral("minutes"), QStringLiteral("chapter")}) {
             Rig rig;
             rig.player->open(QStringLiteral("a"), -1, -1, true);
@@ -292,10 +292,10 @@ private slots:
     }
 
     void sleepPausedExpiryIsAPureRule() {
-        QVERIFY(!sleepPausedExpired(false, 1, 1 + kSleepPausedExpiresMs));
-        QVERIFY(!sleepPausedExpired(true, 0, kSleepPausedExpiresMs * 2));
-        QVERIFY(!sleepPausedExpired(true, 1000, 1000 + kSleepPausedExpiresMs - 1));
-        QVERIFY(sleepPausedExpired(true, 1000, 1000 + kSleepPausedExpiresMs));
+        QVERIFY(!PlayerLogic::sleepPausedExpired(false, 1, 1 + PlayerLogic::kSleepPausedExpiresMs));
+        QVERIFY(!PlayerLogic::sleepPausedExpired(true, 0, PlayerLogic::kSleepPausedExpiresMs * 2));
+        QVERIFY(!PlayerLogic::sleepPausedExpired(true, 1000, 1000 + PlayerLogic::kSleepPausedExpiresMs - 1));
+        QVERIFY(PlayerLogic::sleepPausedExpired(true, 1000, 1000 + PlayerLogic::kSleepPausedExpiresMs));
     }
 
     // "Hết N chương" (bộ chọn giá trị): mỗi chương hết là đếm xuống và nghe tiếp; chương cuối của hẹn mới dừng.
