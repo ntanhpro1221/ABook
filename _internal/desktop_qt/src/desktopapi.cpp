@@ -76,6 +76,11 @@ int DesktopApi::request(const QString &method, const QString &path, const QJSVal
     return id;
 }
 QString DesktopApi::localPath(const QUrl &file) const { return file.isLocalFile() ? file.toLocalFile() : QString(); }
+QUrl DesktopApi::pickerFolder(const QString &hint) const {
+    const QString path = QDir::fromNativeSeparators(hint);
+    if (path.isEmpty() || path.startsWith(QStringLiteral("//")) || !QDir::isAbsolutePath(path)) return {};
+    return QFileInfo(path).isDir() ? QUrl::fromLocalFile(path) : QUrl();
+}
 namespace {
 void collect(const QFileInfo &entry, const QString &relative, int depth, QVariantList &out) {
     if (entry.isFile()) {

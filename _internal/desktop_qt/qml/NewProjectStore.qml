@@ -17,6 +17,7 @@ QtObject {
     property bool active: true
     signal created(string id)
     signal pickRequested()                    // "Dự án mới": mở hộp chọn file ngay (DESIGN.md §2 L10)
+    property bool continuationPickPending: false
     signal leaveRequested(string id)          // sách đã bắt đầu chạy: về trang dự án
 
     readonly property var info: store ? store.info : Api.info
@@ -140,6 +141,8 @@ QtObject {
             if (status < 200 || status >= 300 || !data) { root.fail(S.s_chua_mo_duoc_phan_truoc_52e838aa, status, data); root.leaveRequested(""); return }
             root.draft = Logic.draftFromContinuation(data, id)
             root.profileApplied = true
+            root.continuationPickPending = true
+            root.pickRequested()
         })
     }
     function dropSeed() {

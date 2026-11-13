@@ -2170,8 +2170,8 @@ export const S = {
   s_lam_moi_b4c61340: "Làm mới",
   s_lam_o_studio_tren_may_tinh_c89f87a5: "Làm ở Studio trên máy tính",
   s_lam_sach_tren_pin_cham_va_hao_pin_bam_tiep_c6ccaf1c: "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin",
-  s_lam_tiep_cuon_nay_18bbf3cc: "Làm tiếp cuốn này",
-  s_lam_tiep_cuon_nay_c6fc93ac: " Làm tiếp cuốn này",
+  s_lam_tiep_cuon_nay_18bbf3cc: "Làm tiếp",
+  s_lam_tiep_cuon_nay_c6fc93ac: " Làm tiếp",
   s_lam_tiep_tu_cho_ay_c42ae1b1: " Làm tiếp từ chỗ ấy ",
   s_lam_truoc_0_chuong_08803833: (p0: unknown) => "Làm trước " + String(p0) + " chương",
   s_lam_truoc_bi_dung_9e573747: "Làm trước bị dừng.",
@@ -3315,4 +3315,6 @@ export const S = {
   s_value_middle: "Giữa",
   s_value_left: (p0: unknown) => "Trái " + String(p0) + " %",
   s_value_right: (p0: unknown) => "Phải " + String(p0) + " %",
+  s_continuation_choose: "Chọn chương mới",
+  s_continuation_hint: (p0: unknown) => "Gợi ý thư mục: " + String(p0) + ". Bạn chọn lại các chương cần làm tiếp.",
 } as const;

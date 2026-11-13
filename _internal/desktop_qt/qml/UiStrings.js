@@ -1769,8 +1769,7 @@ var s_lam_lai_cac_chuong_da_co_1a0e5f5c = " - làm lại các chương đã có?
 var s_lam_moi_b4c61340 = "Làm mới";
 var s_lam_o_studio_tren_may_tinh_c89f87a5 = "Làm ở Studio trên máy tính";
 var s_lam_sach_tren_pin_cham_va_hao_pin_bam_tiep_c6ccaf1c = "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin";
-var s_lam_tiep_cuon_nay_18bbf3cc = "Làm tiếp cuốn này";
-var s_lam_tiep_cuon_nay_51fc8121 = "Làm tiếp cuốn này…";
+var s_lam_tiep_cuon_nay_18bbf3cc = "Làm tiếp";
 var s_lam_tiep_tu_cho_ay_c42ae1b1 = " Làm tiếp từ chỗ ấy ";
 var s_lan_chay_truoc_bi_ngat_dot_ngot_tien_trinh_48f760d3 = "Lần chạy trước bị ngắt đột ngột (tiến trình làm sách bị tắt, máy khởi động lại hay hết điện).";
 var s_lan_chay_truoc_dung_vi_su_co_edbb6146 = "Lần chạy trước dừng vì sự cố.";
@@ -2872,3 +2871,5 @@ var s_tone_band_4 = "12 kHz";
 var s_value_middle = "Giữa";
 function s_value_left(p0) { return "Trái " + String(p0) + " %"; }
 function s_value_right(p0) { return "Phải " + String(p0) + " %"; }
+var s_continuation_choose = "Chọn chương mới";
+function s_continuation_hint(p0) { return "Gợi ý thư mục: " + String(p0) + ". Bạn chọn lại các chương cần làm tiếp."; }

@@ -245,7 +245,7 @@ export function useReveal() {
   });
 }
 
-/** `seedFrom` ("Làm tiếp cuốn này"): Studio từ xa chỉ được đọc chương kế tiếp của đúng dự án ấy, ngoài các chương đã gửi lên. */
+/** `seedFrom`: filter the user's selected/uploaded files after the preceding part. */
 export function useScan() {
   return useMutation({
     mutationFn: ({ paths, seedFrom }: { paths: string[]; seedFrom?: string }) =>

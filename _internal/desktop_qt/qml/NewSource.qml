@@ -21,7 +21,11 @@ Column {
     Loader {
         id: picker
         active: false
-        sourceComponent: NewPicker { onPicked: (paths, append) => root.form.picked(paths, append) }
+        sourceComponent: NewPicker {
+            sourceHint: root.form && root.form.dialogs && root.draft.seed ? root.draft.seed.folder || "" : ""
+            continuing: Boolean(root.draft.seed)
+            onPicked: (paths, append) => root.form.picked(paths, append)
+        }
         onLoaded: {
             if (!root.pending) return
             if (root.pending.files) item.chooseFiles(root.pending.add); else item.chooseFolder()

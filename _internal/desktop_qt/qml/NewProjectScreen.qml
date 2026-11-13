@@ -39,7 +39,16 @@ FocusScope {
         if (form.dialogs && !ready && !(form.draft.paths && form.draft.paths.length)) Later.call(root, function() { source.chooseFiles(false) })
     }
     onPickOnOpenChanged: if (pickOnOpen) { pickedOnOpen = false; maybePick() }
-    Component.onCompleted: maybePick()
+    function maybePickContinuation() {
+        if (!form || !form.continuationPickPending) return
+        form.continuationPickPending = false
+        Later.call(root, function() { source.chooseFiles(false) })
+    }
+    Component.onCompleted: { maybePick(); maybePickContinuation() }
+    Connections {
+        target: root.form
+        function onPickRequested() { root.maybePickContinuation() }
+    }
 
     Flickable {
         id: page

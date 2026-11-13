@@ -463,7 +463,7 @@ function projectMenu(book, opts) {
     if (opts.rename !== false) out.push(item("rename", "text-cursor-input", S.s_doi_ten_4cea1fd0))
     if (!book.broken) {
         const analyzed = ((book.segments && book.segments.analyzed) || 0) > 0
-        out.push(item("continueBook", "book-plus", S.s_lam_tiep_cuon_nay_51fc8121, {disabled: !analyzed, hint: analyzed ? "" : S.s_chay_phan_nay_truoc_73213667}))
+        out.push(item("continueBook", "book-plus", S.s_lam_tiep_cuon_nay_18bbf3cc, {disabled: !analyzed, hint: analyzed ? "" : S.s_chay_phan_nay_truoc_73213667}))
     }
     out.push(separator())
     if (opts.remote) out.push(item("onComputer", "monitor", onComputerLine(S.s_xoa_du_an_6b9e7c0b, opts.computer || S.s_may_tinh_8eafc226), {disabled: true}))

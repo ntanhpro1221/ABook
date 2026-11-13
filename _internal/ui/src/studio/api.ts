@@ -285,9 +285,9 @@ export interface ContinuationPlan {
   /** Số của phần sắp tạo (phần trước + 1). */
   part: number;
   title: string;
-  /** Các chương kế tiếp trong thư mục truyện, sau chương cuối đã làm - rỗng khi chưa có chương mới. */
+  /** Empty until the user selects sources; stored paths do not authorize discovery. */
   paths: string[];
-  /** Thư mục truyện và file chương cuối đã làm (máy chủ cũ không có). */
+  /** Display/picker hint only, and the last chapter's filename. */
   folder?: string;
   lastChapter?: string;
   profile: string;

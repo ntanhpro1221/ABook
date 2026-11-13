@@ -23,6 +23,8 @@ public:
     /// Ảnh đang nằm trong bộ nhớ tạm (Ctrl+V trên trang sách): data URL PNG như `imageData`, "" khi không có ảnh.
     Q_INVOKABLE QString clipboardImage() const;
     Q_INVOKABLE QString localPath(const QUrl &file) const;
+    // Called only when opening a picker, never while loading a project record.
+    Q_INVOKABLE QUrl pickerFolder(const QString &hint) const;
     /// Studio ở máy khác (trình tạo sách): file lẻ hay cả thư mục chương người dùng chọn ở máy này, kể theo cách trình duyệt kể (name, size, path = "Truyện/Tập 1/001.txt"
     /// khi từ thư mục, "" khi file lẻ; local = đường thật) - tới tầng thư mục con thứ hai như `walk` của studio/upload.ts. `fileBase64` đọc nguyên byte để gửi lên.
     Q_INVOKABLE QVariantList sourceFiles(const QStringList &paths) const;

@@ -159,5 +159,9 @@ def create_or_open_project(
                 input_manifest_hash=manifest_hash,
             )
             db.ensure_chapters(manifest)
+            from .continuation import SOURCE_HINT_FILE, save_source_hint
+
+            if not inside(project_root, project_root / SOURCE_HINT_FILE).exists():
+                save_source_hint(project_root, input_files)
             return paths, db, settings
     raise RuntimeError("Input sources changed repeatedly while the project creation lock was acquired")

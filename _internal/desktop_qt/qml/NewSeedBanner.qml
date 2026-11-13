@@ -46,6 +46,11 @@ Item {
                 }
                 // Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file
                 Prose {
+                    visible: Boolean(box.seed && box.seed.folder)
+                    topPadding: visible ? 4 : 0
+                    text: visible ? S.s_continuation_hint(box.seed.folder) : ""
+                }
+                Prose {
                     objectName: "newSeedEmpty"
                     visible: Boolean(box.seed) && box.seed.empty && !root.hasFiles
                     topPadding: visible ? 4 : 0

@@ -568,13 +568,17 @@ def input_files(paths: list[str]) -> list[Path]:
     return _gather_inputs(paths)[0]
 
 
-def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
+def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation_from: Path | None = None) -> dict[str, Any]:
     """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB / DOCX /
     PDF (importers.py) được tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file) rồi quét như một
     thư mục."""
     from . import txt_split, volumes
 
     files, found = _gather_inputs(paths, epub_root)
+    if continuation_from is not None:
+        from ..continuation import next_chapters
+
+        files = next_chapters(continuation_from, files)
     rows = []
     errors = list(found["errors"])
     legacy: dict[str, list[str]] = {}

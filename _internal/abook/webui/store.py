@@ -678,8 +678,7 @@ def segment_text_sha256(project_root: Path, stable_id: str) -> str | None:
 
 
 def continuation_plan(project_root: Path) -> dict[str, Any]:
-    """"Làm tiếp cuốn này" (abook/continuation.py): các chương kế tiếp trong thư mục truyện, tên phần sau, cài
-    đặt giữ nguyên (chất lượng, giọng kể, người xưng "tôi") và những gì sẽ mang theo - cho trình tạo sách điền sẵn."""
+    """Continuation settings, carried choices and a display/picker hint; sources require a fresh selection."""
     from .. import continuation
 
     settings = read_settings(project_root)
@@ -699,9 +698,9 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
         "sourceTitle": continuation.base_title(title),
         "part": part,
         "title": continuation.continued_title(title, part),
-        "paths": [str(path) for path in continuation.next_chapters(project_root)],
-        # Thư mục truyện của chương cuối đã làm: trình tạo nói RÕ thư mục nào chưa có chương mới (soát UX 29-09).
-        "folder": str(last_input.parent) if last_input else "",
+        "paths": [],
+        # Display/picker hint only: do not stat, resolve or scan this directory.
+        "folder": continuation.source_hint(project_root),
         "lastChapter": last_input.name if last_input else "",
         "profile": str(settings.get("quality_profile") or "high_quality"),
         "narrator": narrator,

@@ -1803,7 +1803,7 @@ class App:
             except continuation.ContinuationError as error:
                 raise ApiError(HTTPStatus.CONFLICT,
                                f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
-        shared = self._apply_shared_readings(root, paths)
+        shared = self._apply_shared_readings(root, [str(path) for path in continuation._input_paths(root)])
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
@@ -3406,10 +3406,9 @@ class App:
         return plan
 
     def source_files(self, kind: str, value: str) -> list[Path]:
-        """File nguồn mà một `ref:<kind>:<mã cuốn>:...` của thiết bị ở xa trỏ tới (webui/remote_sources.py): "redo" - chương lúc tạo cuốn ấy
-        ("Sửa thiết lập"); "next" - chương kế tiếp của nó ("Làm tiếp cuốn này")."""
+        """Contained sources for redo references. Legacy next references grant no source access."""
         project = self._book(value)
-        return continuation._input_paths(project) if kind == "redo" else continuation.next_chapters(project)
+        return continuation._input_paths(project) if kind == "redo" else []
 
     def continuation(self, value: str) -> dict[str, Any]:
         """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
@@ -4381,8 +4380,8 @@ class Handler(BaseHTTPRequestHandler):
         return Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
 
     def _source_paths(self, raw: Any) -> list[str]:
-        """Các file nguồn của một lời gọi tạo sách. Từ xa: chỉ tham chiếu (remote_sources.py) - `up:...` cho file đã gửi lên máy tính, `ref:...`
-        cho chương kế tiếp của "Làm tiếp cuốn này" và chương của "Sửa thiết lập" do CHÍNH máy này tính (thiết bị không biết đường dẫn nào
+        """Các file nguồn của một lời gọi tạo sách. Từ xa: chỉ tham chiếu (remote_sources.py) - `up:...` cho file đã gửi lên máy tính, `ref:redo:...`
+        cho chương của "Sửa thiết lập" (thiết bị không biết đường dẫn nào
         trên máy tính) - đổi ra đường thật ở đây. Đường dẫn trần, kể cả đường UNC, bị từ chối mà không chạm đĩa hay mạng."""
         paths = [str(item) for item in (raw or [])]
         if not self._remote():
@@ -5611,7 +5610,7 @@ class Handler(BaseHTTPRequestHandler):
     def get_continuation(self, _query: dict[str, list[str]], value: str) -> None:
         plan = self.app.continuation(value)
         if self._remote():
-            plan["paths"] = [remote_sources.make("next", plan["sourceId"], number, path) for number, path in enumerate(plan["paths"])]
+            plan.pop("folder", None)  # The hint belongs to the host's picker, not a remote device.
         self._send_json(HTTPStatus.OK, plan)
 
     def get_parts(self, _query: dict[str, list[str]], value: str) -> None:
@@ -6606,7 +6605,9 @@ class Handler(BaseHTTPRequestHandler):
         # EPUB tách vào thư viện (như "Nguồn tải lên"), không ghi cạnh file của người dùng. Từ xa: tách NGAY trong thư mục tải lên, để
         # chương của nó cũng có tham chiếu `up:...` mà thiết bị gửi lại khi tạo sách.
         epub_root = self._upload_root(actions.UPLOAD_EPUB_FOLDER) if self._remote() else self.app.library.root / "Nguồn EPUB"
-        result = actions.scan_inputs(self._source_paths(body.get("paths")), epub_root=epub_root)
+        previous = self.app._book(str(body["seedFrom"])) if body.get("seedFrom") else None
+        result = actions.scan_inputs(self._source_paths(body.get("paths")), epub_root=epub_root,
+                                     continuation_from=previous)
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
         self._send_json(HTTPStatus.OK, self._hide_sources(result, body.get("paths")) if self._remote() else result)
 
@@ -7131,11 +7132,24 @@ class Handler(BaseHTTPRequestHandler):
         self.app.previews.shutdown()
         self._send_json(HTTPStatus.OK, setup.remove())
 
+    @staticmethod
+    def _picker_start(value: Any) -> str:
+        # Called only for an explicit picker request, never while loading a book.
+        from ..book_paths import network
+
+        text = str(value or "")
+        if not text or network(text) or not Path(text).is_absolute() or network(os.path.normpath(text)):
+            return ""
+        try:
+            return text if Path(text).is_dir() else ""
+        except (OSError, ValueError):
+            return ""
+
     def post_pick_folder(self, _query: dict[str, list[str]]) -> None:
         if self.app.dialogs is None:
             raise ApiError(HTTPStatus.NOT_IMPLEMENTED, "Không có hộp thoại chọn thư mục ở chế độ này")
         body = self._body()
-        path = self.app.dialogs.pick_folder(str(body.get("title", "Chọn thư mục")), str(body.get("start", "")))
+        path = self.app.dialogs.pick_folder(str(body.get("title", "Chọn thư mục")), self._picker_start(body.get("start")))
         self._send_json(HTTPStatus.OK, {"path": path})
 
     def post_pick_files(self, _query: dict[str, list[str]]) -> None:
@@ -7143,7 +7157,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_IMPLEMENTED, "Không có hộp thoại chọn file ở chế độ này")
         body = self._body()
         kind = "music" if body.get("kind") == "music" else "chapters"  # loại file hộp chọn cho xem: chương truyện hay nhạc
-        paths = self.app.dialogs.pick_files(str(body.get("title", "Chọn file TXT")), str(body.get("start", "")), kind)
+        paths = self.app.dialogs.pick_files(str(body.get("title", "Chọn file TXT")), self._picker_start(body.get("start")), kind)
         self._send_json(HTTPStatus.OK, {"paths": paths})
 
     def media_voice(self, _query: dict[str, list[str]], name: str) -> None:

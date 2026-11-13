@@ -3,8 +3,8 @@
 Hai loại tham chiếu, cùng một bộ phân tích (`parse`), máy tính đổi lại ra file thật ở server.Handler._ref_sources:
 
 - `ref:<kiểu>:<mã cuốn>:<số thứ tự>:<tên file>` - "Sửa thiết lập" / "Làm lại phân tích" và "Làm tiếp cuốn này" cần đọc lại file nguồn của
-  một cuốn có sẵn. Máy tính tìm file ở vị trí đó, kiểm tên file vẫn khớp rồi mới đọc. Kiểu: "redo" - chương lúc tạo cuốn ấy; "next" - chương
-  kế tiếp của cuốn ấy (continuation.next_chapters).
+  một cuốn có sẵn. Máy tính tìm file ở vị trí đó, kiểm tên file vẫn khớp rồi mới đọc. Kiểu "redo" là chương lúc tạo cuốn ấy.
+  Kiểu "next" cũ luôn bị từ chối: làm tiếp phải chọn lại nguồn và tải lên, không tự đọc thư mục lưu trong sổ.
 - `up:<đường dẫn trong "Nguồn tải lên", cách bằng "/">` - file / thư mục chính thiết bị đã gửi lên (POST /api/sources/upload) hay vừa tách
   chương (POST /api/sources/split). Đổi ra file thật bằng cách nối vào `<thư viện>/Nguồn tải lên`; tầng nào là "..", rỗng, có ổ đĩa / UNC / ký
   tự lạ / tên thiết bị Windows thì không phải tham chiếu (và yêu cầu bị từ chối) - không bao giờ chạm đĩa hay mạng để quyết định điều đó.

@@ -39,11 +39,11 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio kịch bản | Đang chọn {} câu | Đang chọn | 0.82 | `qt/ScriptTab.qml:466` ~ `studio/ScriptTab.tsx:1406` | Same selection count; web uses separate TickingValue and unit children. |
 | Studio tạo sách | Tạo trên {} | Tạo trên | 1.00 | `qt/StudioSetupNotice.qml:98` ~ `studio/StudioSetup.tsx:104` | Same remote-create action; web renders the computer name as another child. |
 | Studio tạo sách | Bản thử nghiệm | Bản thử nghiệm{} | 1.00 | `qt/NewProjectLogic.js:371` ~ `studio/AnalysisModelPicker.tsx:53` | Same model qualifier; web appends an optional model-description value. |
-| Studio tạo sách | Có file không gửi{} | Có file không gửi | 1.00 | `qt/NewProjectStore.qml:270` ~ `studio/NewProjectScreen.tsx:305` | Same upload warning; Qt appends a detail list in the expression, web uses a separate child. |
-| Studio tạo sách | Không gửi hết các chương{} {} | Không gửi hết các chương | 1.00 | `qt/NewProjectStore.qml:313` ~ `studio/NewProjectScreen.tsx:312` | Same upload warning; the two Qt slots are file count and detail, rendered separately on web. |
+| Studio tạo sách | Có file không gửi{} | Có file không gửi | 1.00 | `qt/NewProjectStore.qml:273` ~ `studio/NewProjectScreen.tsx:311` | Same upload warning; Qt appends a detail list in the expression, web uses a separate child. |
+| Studio tạo sách | Không gửi hết các chương{} {} | Không gửi hết các chương | 1.00 | `qt/NewProjectStore.qml:316` ~ `studio/NewProjectScreen.tsx:318` | Same upload warning; the two Qt slots are file count and detail, rendered separately on web. |
 | Studio tạo sách | Máy thấy {} | Máy thấy | 1.00 | `qt/NewVolumes.qml:58` ~ `studio/VolumeSplit.tsx:101` | Same volume-detection sentence; web renders the count/source after the label. |
 | Studio tạo sách | Studio chưa xong{} | Studio chưa xong | 1.00 | `qt/StudioSetupCard.qml:28` ~ `studio/StudioSetup.tsx:162` | Same setup status; Qt appends optional details in the expression. |
-| Studio tạo sách | Tách theo {} | Tách theo | 1.00 | `qt/NewHints.qml:88` ~ `studio/NewProjectScreen.tsx:863` | Same chapter-split description; web renders the chosen rule after the label. |
+| Studio tạo sách | Tách theo {} | Tách theo | 1.00 | `qt/NewHints.qml:88` ~ `studio/NewProjectScreen.tsx:876` | Same chapter-split description; web renders the chosen rule after the label. |
 | Studio tạo sách | Đã có mẫu “{}” | Đã có mẫu “ | 1.00 | `qt/TemplateLogic.js:52` ~ `studio/TemplateBar.tsx:171` | Same duplicate-template error; web renders the user-entered template name between JSX quote fragments. |
 | Studio tạo sách | Máy này {}. | Máy thấy | 0.80 | `qt/StudioSetupLogic.js:17` ~ `studio/VolumeSplit.tsx:101` | Different subjects: Qt describes machine setup/capability, the matched web text describes detected book volumes. |
 | Studio việc duyệt | Bỏ qua mọi việc từ | Bỏ qua mọi việc từ {}? | 1.00 | `qt/PhoneEdits.qml:154` ~ `studio/PhoneEdits.tsx:246` | Same destructive-confirmation question; Qt places the phone name and question mark in separate children. |
@@ -72,7 +72,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 
 | nhãn | web | Qt | nơi | giải thích |
 |---|---|---|---|---|
-| Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:176` ~ `desktop/AudiobookDialog.tsx:210` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
+| Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:210` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:762` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:222` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
 | Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:86` ~ `listen/BookScreen.tsx:178` (+2) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
@@ -118,7 +118,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio tạo sách | layers | Phần | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewChapters.qml:204` |
 | Studio tạo sách | layers | Chọn {} tập | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewDrop.qml:211` |
 | Studio tạo sách | scissors | Tách thành {} chương | Tách thành chương | `qt/NewHints.qml:94` |
-| Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:176` |
+| Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:185` |
 | Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:434` |
 | Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:434` |
 | Cài đặt | bluetooth | Dùng Bluetooth | Dùng Bluetooth cho {}, · bản thử | `qt/OtherComputersBluetooth.qml:23` |
@@ -218,8 +218,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Studio tạo sách
 
-- chỉ Qt (35): Tìm ảnh bìa* (`qt/CoverEditor.qml:194`); Chọn ảnh bìa* (`qt/CoverPicker.qml:13`); Gợi ý: {} chương có {} (`qt/NewCredits.qml:60`); Chọn {} tập (`qt/NewDrop.qml:216`); Tách theo {} (`qt/NewHints.qml:88`); Truyện (*.txt *.epub *.docx *.pdf) (`qt/NewPicker.qml:18`); Tất cả file (*) (`qt/NewPicker.qml:18`); Đang đọc nguồn… (`qt/NewProjectLogic.js:49`); Nhân vật tự kể* (`qt/NewProjectLogic.js:193`); Thứ tự lệch: {} (`qt/NewProjectLogic.js:234`); Có vẻ thiếu {} (`qt/NewProjectLogic.js:235`); Bản thử nghiệm (`qt/NewProjectLogic.js:371`); Chưa làm được lúc này. (`qt/NewProjectStore.qml:59`); Chưa đọc được:* (`qt/NewProjectStore.qml:154`); Đã áp (`qt/NewProjectStore.qml:224`); Có file không gửi{} (`qt/NewProjectStore.qml:270`); Chưa gửi được. (`qt/NewProjectStore.qml:285`); Không gửi hết các chương{} {} (`qt/NewProjectStore.qml:313`); Tìm hiểu thêm* (`qt/NewTemplateBar.qml:144`); Dùng lại {} (`qt/NewVoice.qml:211`); Chia {} phần? (`qt/NewVolumes.qml:52`); Máy thấy {} (`qt/NewVolumes.qml:58`); Studio chưa xong{} (`qt/StudioSetupCard.qml:28`); Tiến độ:* (`qt/StudioSetupCard.qml:209`); Máy này {}. (`qt/StudioSetupLogic.js:17`); Tải lại {} (`qt/StudioSetupLogic.js:61`); Tạo trên {} (`qt/StudioSetupNotice.qml:98`); Mặc định* (`qt/TemplateLogic.js:12`); Đặt cho mẫu một cái tên (`qt/TemplateLogic.js:49`); Tên mẫu tối đa {} chữ (`qt/TemplateLogic.js:50`); Đã có mẫu “{}” (`qt/TemplateLogic.js:52`); Giọng máy đề xuất* (`qt/TemplateLogic.js:57`); Tải lên {} (`qt/UploadLogic.js:29`); Chưa gửi file nào. (`qt/UploadLogic.js:93`); Đã gửi {}/{} file, giữ lại (`qt/UploadLogic.js:95`)
-- chỉ web (29): Bản thử nghiệm{} (`53`); Bản thử nghiệm ({}) (`59`); Nhanh (`94`); Có file không gửi (`305`); Không gửi hết các chương (`312`); Gửi các chương từ máy này (`437`); Sẽ bỏ (`775`); Gợi ý: (`780`); Gợi ý: “ (`862`); Tách theo (`863`); Tách thành (`875`); Nam (`1108`); Giọng kể phần trước: (`1201`); Đang chọn: (`1226`); Tham khảo: (`1314`); ...
+- chỉ Qt (35): Tìm ảnh bìa* (`qt/CoverEditor.qml:194`); Chọn ảnh bìa* (`qt/CoverPicker.qml:13`); Gợi ý: {} chương có {} (`qt/NewCredits.qml:60`); Chọn {} tập (`qt/NewDrop.qml:216`); Tách theo {} (`qt/NewHints.qml:88`); Truyện (*.txt *.epub *.docx *.pdf) (`qt/NewPicker.qml:20`); Tất cả file (*) (`qt/NewPicker.qml:20`); Đang đọc nguồn… (`qt/NewProjectLogic.js:49`); Nhân vật tự kể* (`qt/NewProjectLogic.js:193`); Thứ tự lệch: {} (`qt/NewProjectLogic.js:234`); Có vẻ thiếu {} (`qt/NewProjectLogic.js:235`); Bản thử nghiệm (`qt/NewProjectLogic.js:371`); Chưa làm được lúc này. (`qt/NewProjectStore.qml:60`); Chưa đọc được:* (`qt/NewProjectStore.qml:157`); Đã áp (`qt/NewProjectStore.qml:227`); Có file không gửi{} (`qt/NewProjectStore.qml:273`); Chưa gửi được. (`qt/NewProjectStore.qml:288`); Không gửi hết các chương{} {} (`qt/NewProjectStore.qml:316`); Tìm hiểu thêm* (`qt/NewTemplateBar.qml:144`); Dùng lại {} (`qt/NewVoice.qml:211`); Chia {} phần? (`qt/NewVolumes.qml:52`); Máy thấy {} (`qt/NewVolumes.qml:58`); Studio chưa xong{} (`qt/StudioSetupCard.qml:28`); Tiến độ:* (`qt/StudioSetupCard.qml:209`); Máy này {}. (`qt/StudioSetupLogic.js:17`); Tải lại {} (`qt/StudioSetupLogic.js:61`); Tạo trên {} (`qt/StudioSetupNotice.qml:98`); Mặc định* (`qt/TemplateLogic.js:12`); Đặt cho mẫu một cái tên (`qt/TemplateLogic.js:49`); Tên mẫu tối đa {} chữ (`qt/TemplateLogic.js:50`); Đã có mẫu “{}” (`qt/TemplateLogic.js:52`); Giọng máy đề xuất* (`qt/TemplateLogic.js:57`); Tải lên {} (`qt/UploadLogic.js:29`); Chưa gửi file nào. (`qt/UploadLogic.js:93`); Đã gửi {}/{} file, giữ lại (`qt/UploadLogic.js:95`)
+- chỉ web (29): Bản thử nghiệm{} (`53`); Bản thử nghiệm ({}) (`59`); Nhanh (`94`); Có file không gửi (`311`); Không gửi hết các chương (`318`); Gửi các chương từ máy này (`450`); Sẽ bỏ (`788`); Gợi ý: (`793`); Gợi ý: “ (`875`); Tách theo (`876`); Tách thành (`888`); Nam (`1122`); Giọng kể phần trước: (`1215`); Đang chọn: (`1240`); Tham khảo: (`1328`); ...
 
 ### Studio việc duyệt
 
@@ -272,7 +272,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 
 - (không có)
 
-**Nhãn kết thúc bằng `…` / `...`** (80): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
+**Nhãn kết thúc bằng `…` / `...`** (79): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
 
 - Bỏ mọi thay đổi… (`qt/EditBook.qml:339`) - web: `Bỏ mọi thay đổi`
 - Chuyển sang cuốn khác… (`qt/RecordLogic.js:40`) - web: `Chuyển sang cuốn khác`
@@ -287,7 +287,6 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Gộp vào người khác… (`qt/CastMenu.qml:29`) - web: `Gộp vào người khác`
 - Gộp vào… (`qt/PrecastReview.qml:417`) - web: `Gộp vào`
 - Khôi phục bản sao… (`qt/StudioLogic.js:476`) - web: `Khôi phục bản sao`
-- Làm tiếp cuốn này… (`qt/StudioLogic.js:466`) - web: `Làm tiếp cuốn này`
 - Lưu thành mẫu… (`qt/NewTemplateBar.qml:80`) - web: `Lưu thành mẫu`
 - Lưu thành… (`qt/EditBookItems.qml:81`) - web: `Lưu thành`
 - Lưu thành… (`qt/EditBookSaveAs.qml:17`) - web: `Lưu thành`

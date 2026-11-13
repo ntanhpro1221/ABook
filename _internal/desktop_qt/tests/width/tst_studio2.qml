@@ -560,16 +560,19 @@ Item {
             verify(Api.notice.indexOf("Chưa đọc được thiết lập của sách") === 0)
         }
         function continuation(over) {
-            return Object.assign({paths: [folder], title: "Lò rèn · Tập 2", narrator: "Mai", firstPerson: "", profile: "balanced", sourceId: "tap1", sourceTitle: "Lò rèn · Tập 1",
+            return Object.assign({paths: [], title: "Lò rèn · Tập 2", narrator: "Mai", firstPerson: "", profile: "balanced", sourceId: "tap1", sourceTitle: "Lò rèn · Tập 1",
                                   clickedTitle: "Lò rèn · Tập 1", latestTitle: "Lò rèn · Tập 1", analysisModel: "", analysisModelMissing: false, part: 2, analyzed: true,
                                   carries: {}, folder: folder, lastChapter: "Chương 5"}, over || {})
         }
         function test_continuationShowsTheBannerAndSendsSeedFrom() {
             reply("GET /api/books/tap1/continuation", {status: 200, data: continuation()})
             const page = openBuilder(1280, "continue", "tap1")
+            compare(page.newStore.draft.paths, [])
+            compare(calls("POST", "/api/scan").length, 0)
+            page.newStore.picked([folder], false) // Explicit picker selection; only then scan.
             tryCompare(page.newStore, "ready", true, 3000)
             tryVerify(function() { return has(page, "newSeedBanner") })
-            compare(one(page, "newHeader").title, "Làm tiếp cuốn này")
+            compare(one(page, "newHeader").title, "Làm tiếp")
             // gửi hạt giống để máy chủ nối nhân vật
             compare(calls("POST", "/api/scan")[0].body, {paths: [folder], seedFrom: "tap1"})
             one(page, "newCreate").activated()
@@ -582,6 +585,7 @@ Item {
         function test_continuationCanBeDroppedAndUndone() {
             reply("GET /api/books/tap1/continuation", {status: 200, data: continuation()})
             const page = openBuilder(1280, "continue", "tap1")
+            page.newStore.picked([folder], false)
             tryCompare(page.newStore, "ready", true, 3000)
             tryVerify(function() { return has(page, "newSeedDrop") })
             one(page, "newSeedDrop").clicked()

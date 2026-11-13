@@ -540,34 +540,13 @@ Và hai cờ mới của `boundary.sh` sinh ra từ lần chạy lại này: `4:
 có project hoàn thành (hoàn thành ≠ đúng — 097/104 xong trước bản vá gạch dưới và mang một người
 hai giọng), `--skip 106` để một chương chưa có bản vá không bị vá lại vô ích ở mỗi lần thả.
 
-## Thư mục nguồn dời chỗ (2026-09-13, 23:15–23:35)
+## Thư mục nguồn dời chỗ
 
-Project ghi **đường dẫn tuyệt đối** của từng chương (`chapters.input_path`) và khoá cả danh sách bằng
-`book.input_manifest_hash` (băm `chapter_index|input_path|sha256|size`). Dời hay xoá thư mục .txt là mọi
-project của cuốn cùng trỏ vào chỗ trống: `cli run` dừng ngay ("Source chapter is missing"), `cli validate`
-đỏ ở `source_files`, và luật "tên này có trong sách không" của `character_registry` tự tắt vì không còn
-thư mục để đọc bằng chứng.
+Sách mới chép TXT do bạn chọn vào `sources/<chương>/` của sách trước khi dùng. Dời hay xoá thư mục truyện gốc không làm mất nguồn đã chép.
 
-Chữa: đặt thư mục về một chỗ (không cần chỗ cũ), rồi
+“Làm tiếp” mở hộp chọn file/thư mục mới. Thư mục truyện gốc chỉ là gợi ý hiển thị và vị trí mở hộp chọn nếu còn tồn tại; app không tự đọc nó. Chương kế tiếp được lọc trong lựa chọn vừa chọn, rồi chép vào sách mới. Studio từ xa nhận các file bạn chọn và tải lên từ thiết bị.
 
-    python scripts/repoint_the_source.py <thư mục mới> --root <_versions của cuốn>          # xem
-    python scripts/repoint_the_source.py <thư mục mới> --root <_versions của cuốn> --apply  # ghi
-    python scripts/repoint_the_source.py --undo <project>                                    # hoàn tác theo sổ
-
-Nó không tin tên file: mỗi chương chỉ được trỏ sang file có đúng `sha256` + `size` đã khoá; một chương
-lệch là cả project bị bỏ qua và in ra vì sao. Hash khoá được băm lại bằng chính hàm `validate` dùng, nên
-`validate` xanh lại đúng nghĩa. Sổ `source_repoint_ledger.json` nằm trong thư mục project.
-
-Ca thật: cuốn 1, 478 chương, `D:/Novels/Tools/Text` vào Thùng rác giữa lô 10 (22:25). Chủ sách bảo khôi
-phục *nhưng chuyển vào thư mục project* → `D:/Novels/ABook/Text`. 118 project quét, **109 trỏ lại
-(701 chương), 9 bỏ qua đúng** (alpha.10–15 và alpha.46-nguon-sai đọc `Text_Tmp` tháng 8 — file cùng tên,
-khác cỡ, không phải cuốn này). `validate` lô 9, lô 10 xanh cả `input_manifest_hash` và `source_files`.
-
-Hai điều đi kèm: (1) thư mục project là **gốc repo git** — nguồn khôi phục vào đó lập tức thành 478 file
-untracked, và `git add -A` của ranh giới sẽ nuốt chúng; `.gitignore` phải có `/Text/` trước (đã thêm; `Text_Tmp/`
-đã có sẵn). (2) Tên thư mục project mang 10 ký tự đầu của hash khoá **lúc tạo** (`lo10_24893cbe8c`); sau khi
-trỏ lại, hash trong DB đổi nhưng tên thư mục giữ nguyên — cố ý, vì mọi tag, log, ledger đều gọi tên ấy. Sổ ghi
-cả hash cũ và mới.
+Sách cũ còn trỏ nguồn ra ngoài thư mục sách bị từ chối. Không trỏ lại nguồn và không migrate; tạo sách mới từ các TXT bạn chọn.
 
 ## Máy tắt, không phải shell bị giết (2026-09-14, 07:51)
 

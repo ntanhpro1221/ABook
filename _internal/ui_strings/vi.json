@@ -3865,9 +3865,8 @@
     "s_lam_sach_gap_su_co_3d9065b0": "Làm sách gặp sự cố",
     "s_lam_sach_tren_pin_cham_va_hao_pin_bam_tiep_7044fad1": "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin.",
     "s_lam_sach_tren_pin_cham_va_hao_pin_bam_tiep_c6ccaf1c": "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin",
-    "s_lam_tiep_cuon_nay_18bbf3cc": "Làm tiếp cuốn này",
-    "s_lam_tiep_cuon_nay_51fc8121": "Làm tiếp cuốn này…",
-    "s_lam_tiep_cuon_nay_c6fc93ac": " Làm tiếp cuốn này",
+    "s_lam_tiep_cuon_nay_18bbf3cc": "Làm tiếp",
+    "s_lam_tiep_cuon_nay_c6fc93ac": " Làm tiếp",
     "s_lam_tiep_tu_cho_ay_c42ae1b1": " Làm tiếp từ chỗ ấy ",
     "s_lam_truoc_0_chuong_08803833": "Làm trước {0} chương",
     "s_lam_truoc_bi_dung_9e573747": "Làm trước bị dừng.",
@@ -5948,7 +5947,9 @@
     "s_value_middle": "Giữa",
     "s_value_left": "Trái {0} %",
     "s_value_right": "Phải {0} %",
-    "s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2": "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp"
+    "s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2": "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp",
+    "s_continuation_choose": "Chọn chương mới",
+    "s_continuation_hint": "Gợi ý thư mục: {0}. Bạn chọn lại các chương cần làm tiếp."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

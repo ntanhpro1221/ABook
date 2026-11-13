@@ -423,12 +423,12 @@ function draftFromRedo(redo, id) {
 /** GET /api/books/<id>/continuation -> nháp điền sẵn từ phần trước. */
 function draftFromContinuation(plan, id) {
     const draft = Object.assign(emptyDraft(), {
-        paths: plan.paths, title: plan.title, titleEdited: true, narrator: plan.narrator, firstPerson: plan.firstPerson,
+        paths: [], title: plan.title, titleEdited: true, narrator: plan.narrator, firstPerson: plan.firstPerson,
         profile: profileFor(plan.profile),
         seed: {
             id: plan.sourceId || id, title: plan.sourceTitle, clickedTitle: plan.clickedTitle, latestTitle: plan.latestTitle,
             analysisModel: plan.analysisModel, analysisModelMissing: plan.analysisModelMissing, part: plan.part, analyzed: plan.analyzed,
-            empty: plan.paths.length === 0, carries: plan.carries, narrator: plan.narrator, folder: plan.folder, lastChapter: plan.lastChapter
+            empty: true, carries: plan.carries, narrator: plan.narrator, folder: plan.folder, lastChapter: plan.lastChapter
         }
     })
     if (plan.analysisModel) draft.analysisModel = plan.analysisModel

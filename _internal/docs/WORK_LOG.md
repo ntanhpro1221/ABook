@@ -2132,7 +2132,7 @@ vào `.gitignore` trước mọi việc khác.
 **118 project của cuốn 1 trỏ vào chỗ trống.** `chapters.input_path` là đường tuyệt đối, `book.input_manifest_hash`
 băm cả đường ấy; `character_registry` đọc *thư mục* của input_path để lấy bằng chứng "tên này có trong sách" và
 tự tắt khi không thấy — tức cuốn 1 nối lại mà không trỏ lại thì luật gộp tên chạy mù. Viết
-`scripts/repoint_the_source.py` (docstring kể đủ): xem trước, `--apply`, `--undo` theo sổ; **không tin tên file**
+công cụ trỏ lại nguồn cũ (đã gỡ trong secfix2; sách mới dùng bản chép trong sách): xem trước, `--apply`, `--undo` theo sổ; **không tin tên file**
 — chương chỉ đổi khi file mới có đúng `sha256` + `size` đã khoá, một chương lệch là bỏ qua cả project; hash khoá
 băm lại bằng chính `text_processing.input_manifest_hash`. Không dùng `ProjectDB` để không kéo di trú schema lên
 DB alpha cũ. Bốn test dựng project thật trong thư mục tạm (`create_or_open_project`), dời thư mục, kiểm
@@ -3496,7 +3496,7 @@ một văn bản khác với 261 chương cũ, và không cổng nào bắt đư
     261 chuong DANG TRONG SACH         ->  261 khop tung byte,  0 lech,  0 thieu sha256
 
 54 dòng lệch **toàn bộ** nằm trong các project thí nghiệm cũ (`alpha10`, `alpha11`, `alpha12`) và **không**
-có chương nào trong sách — khớp đúng với việc `repoint_the_source.py` hôm 13-09 bỏ qua cả project khi thấy
+có chương nào trong sách — khớp đúng với việc công cụ trỏ lại nguồn cũ hôm 13-09 (đã gỡ trong secfix2) bỏ qua cả project khi thấy
 một file lệch (109/118 project, 701 chương được trỏ lại).
 
 Và 18 file sắp đọc đều có mặt, kích thước 7,9–24,5 KB, tiêu đề đúng dạng chương

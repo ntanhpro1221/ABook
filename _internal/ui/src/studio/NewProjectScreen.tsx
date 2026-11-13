@@ -231,6 +231,9 @@ export function SourceStep({
   onDropCredits,
   onSplit,
   previousLast,
+  continuationId,
+  pickContinuation = false,
+  sourceHint = "",
   replaces,
   volumeSplit,
   splitting,
@@ -269,6 +272,9 @@ export function SourceStep({
   onSplit: (path: string) => Promise<void>;
   /** "Làm tiếp": file chương cuối của phần trước - phần này phải bắt đầu ngay sau nó. */
   previousLast?: string;
+  continuationId?: string;
+  pickContinuation?: boolean;
+  sourceHint?: string;
 }) {
   const { data: info } = useAppInfo();
   const [chapterList, setChapterList] = useState<HTMLDivElement | null>(null);
@@ -323,14 +329,14 @@ export function SourceStep({
   };
   const percent = uploading?.totalBytes ? Math.round((uploading.bytes / uploading.totalBytes) * 100) : 0;
   const chooseFolder = async () => {
-    const path = await pickFolder(S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58).catch((error: Error) => {
+    const path = await pickFolder(S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58, sourceHint).catch((error: Error) => {
       toast.error(error.message);
       return null;
     });
     if (path) onPaths([path]);
   };
   const chooseFiles = async (append: boolean) => {
-    const chosen = await pickFiles(S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8).catch((error: Error) => {
+    const chosen = await pickFiles(continuationId ? S.s_continuation_choose : S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8, sourceHint).catch((error: Error) => {
       toast.error(error.message);
       return [];
     });
@@ -349,6 +355,13 @@ export function SourceStep({
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     if (info.dialogs && !files.length) void chooseFiles(false);
   }, [pickOnOpen, info]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pickedContinuation = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!pickContinuation || !continuationId || !info || pickedContinuation.current === continuationId) return;
+    pickedContinuation.current = continuationId;
+    if (info.dialogs) void chooseFiles(false);
+    else browse(filesInput.current, false);
+  }, [pickContinuation, continuationId, info]); // eslint-disable-line react-hooks/exhaustive-deps
   // Cửa sổ app: vỏ Tauri nuốt sự kiện thả của HTML5 và phát `abook-drag` kèm đường dẫn thật (như Thư viện) - nghe nó để khung nét đứt nhận file.
   const dropTarget = useRef({ files: files.length, onPaths, onAddFiles });
   dropTarget.current = { files: files.length, onPaths, onAddFiles };
@@ -892,6 +905,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
           </p>
         )}
         {!seed.clickedTitle && <p className="mt-0.5 text-fg-2">{S.s_giu_d3777f80}{carriedText(seed.carries)}{S.s_giong_va_cach_doc_ten_995cc280}</p>}
+        {seed.folder && <p className="mt-1 break-all text-fg-2">{S.s_continuation_hint(seed.folder)}</p>}
         {/* Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file (soát UX a6 01-10, B5: vẫn hiện sau khi đã có). */}
         {seed.empty && !hasFiles && (
           <p className="mt-1 text-fg-2">
@@ -1519,6 +1533,7 @@ export function NewProjectScreen() {
   const [draft, setDraft] = useState<Draft>(loadDraft);
   // Kết quả quét gắn với đúng danh sách nguồn đã quét (soát a92 V1): nguồn đổi thì kết quả cũ chỉ còn để xem / chỉnh, không dùng để tạo sách.
   const [scanned, setScanned] = useState<ScannedSources | null>(null);
+  const [continuationPick, setContinuationPick] = useState(false);
   const rawScan = scanned?.result ?? null;
   const latestSources = useRef("");
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
@@ -1584,9 +1599,10 @@ export function NewProjectScreen() {
   // những gì người dùng đã sửa.
   useEffect(() => {
     if (!continueId || !plan) return;
+    setContinuationPick(true);
     setDraft({
       ...EMPTY_DRAFT,
-      paths: plan.paths,
+      paths: [],
       title: plan.title,
       titleEdited: true,
       narrator: plan.narrator,
@@ -1602,7 +1618,7 @@ export function NewProjectScreen() {
         analysisModelMissing: plan.analysisModelMissing,
         part: plan.part,
         analyzed: plan.analyzed,
-        empty: plan.paths.length === 0,
+        empty: true,
         carries: plan.carries,
         narrator: plan.narrator,
         folder: plan.folder,
@@ -1818,6 +1834,9 @@ export function NewProjectScreen() {
       <div className="mt-8">
           <StudioInstallNotice className="mb-6" />
           <SourceStep
+            continuationId={draft.seed?.id}
+            pickContinuation={continuationPick}
+            sourceHint={draft.seed?.folder}
             scan={scan}
             title={title}
             onTitle={(value) => update({ title: value, titleEdited: true })}

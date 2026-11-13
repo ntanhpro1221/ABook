@@ -34,7 +34,7 @@ from typing import Any
 
 from . import aliases, book_paths, bracket_rule
 from .database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
-from .io_utils import discover_txt_files, natural_key
+from .io_utils import atomic_write_json, natural_key
 from . import names as renames
 
 DB_NAME = "project.sqlite3"
@@ -251,26 +251,39 @@ def _input_paths(project: Path) -> list[Path]:
                 if book_paths.safe_source(project, row[0]) is not None]
 
 
-def next_chapters(project: Path) -> list[Path]:
-    """Các file .txt kế tiếp sau chương cuối đã làm của cả chuỗi, theo thứ tự thư mục (như trình tạo sách xếp).
+SOURCE_HINT_FILE = "source_hint.json"
 
-    Chỉ lấy file ĐỨNG SAU chương cuối: chương đứng trước chương đầu (lời tựa, chương bỏ qua) là người dùng đã không chọn.
+
+def source_hint(project: Path) -> str:
+    """Read only the book's hint record, never probe the directory named in it."""
+    try:
+        value = json.loads(book_paths.inside(project, project / SOURCE_HINT_FILE).read_text(encoding="utf-8"))
+        folder = value.get("folder", "")
+        return folder if isinstance(folder, str) else ""
+    except (OSError, ValueError, AttributeError):
+        return ""
+
+
+def save_source_hint(project: Path, selected: Iterable[Path]) -> None:
+    """Remember the original folder for display and the next explicit picker only."""
+    parents = {str(path.parent) for path in selected}
+    folder = next(iter(parents)) if len(parents) == 1 else ""
+    atomic_write_json(book_paths.inside(project, project / SOURCE_HINT_FILE), {"folder": folder})
+
+
+def next_chapters(project: Path, selected: Iterable[Path] = ()) -> list[Path]:
+    """Filter only freshly selected files after the last chapter of the chain.
+
+    Stored source paths and the folder hint never authorize directory discovery.
+    Original filenames survive the per-chapter copies inside each book.
     """
-    done: set[Path] = set()
-    folders: list[Path] = []
-    parents: dict[Path, Path | None] = {}  # thư mục chương -> bản resolve (None: không còn) - cả nghìn chương chung một thư mục
+    done: set[str] = set()
     for part in chain_of(project):
         for path in _input_paths(part):
-            done.add(path.resolve())
-            if path.parent not in parents:
-                parents[path.parent] = path.parent.resolve() if path.parent.is_dir() else None
-            folder = parents[path.parent]
-            if folder is not None and folder not in folders:
-                folders.append(folder)
-    # discover_txt_files đã trả đường resolve.
-    files = sorted({found for folder in folders for found in discover_txt_files(folder)}, key=lambda path: natural_key(path.name))
-    last = max((index for index, path in enumerate(files) if path in done), default=-1)
-    return [path for path in files[last + 1:] if path not in done]
+            done.add(path.name.casefold())
+    files = sorted(set(selected), key=lambda path: natural_key(path.name))
+    last = max((index for index, path in enumerate(files) if path.name.casefold() in done), default=-1)
+    return [path for path in files[last + 1:] if path.name.casefold() not in done]
 
 
 # ---- tên: gộp cách viết của cùng một người ------------------------------------------------------------------------

@@ -40,10 +40,18 @@ def _project(root: Path, files: list[Path], title: str = "Truyện") -> ProjectD
     root.mkdir(parents=True, exist_ok=True)
     db = ProjectDB(root / "project.sqlite3")
     db.initialize_book(title=title, project_root=root, settings={}, settings_hash="s", input_manifest_hash=root.name)
+    # Match production creation: source paths in the ledger belong to the book.
+    continuation.save_source_hint(root, files)
+    copied = []
+    for index, path in enumerate(files, start=1):
+        destination = root / "sources" / f"{index:05d}" / path.name
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(path.read_bytes())
+        copied.append(destination)
     db.ensure_chapters([
         {"chapter_index": index, "title": path.stem, "input_path": path, "input_sha256": path.stem,
          "input_size": 1, "output_mp3": root / f"{path.stem}.mp3"}
-        for index, path in enumerate(files, start=1)
+        for index, path in enumerate(copied, start=1)
     ])
     return db
 
@@ -178,13 +186,17 @@ def test_an_analysed_project_is_not_seeded(book: dict[str, Path]) -> None:
 
 def test_the_chain_knows_its_parts_and_what_comes_next(book: dict[str, Path]) -> None:
     folder = book["folder"]
-    assert [path.name for path in continuation.next_chapters(book["first"])] == ["003.txt", "004.txt", "005.txt"]
+    assert continuation.next_chapters(book["first"]) == [], "a stored folder is only a hint"
+    assert continuation.source_hint(book["first"]) == str(folder)
+    selected = list(folder.glob("*.txt"))  # Explicit user selection, including already completed chapters.
+    assert [path.name for path in continuation.next_chapters(book["first"], selected)] == ["003.txt", "004.txt", "005.txt"]
 
     continuation.seed(book["first"], book["second"])
 
     assert continuation.chain_of(book["second"]) == [book["first"].resolve(), book["second"].resolve()]
     assert continuation.part_number(book["second"]) == 2
-    assert continuation.next_chapters(book["second"]) == [(folder / "004.txt").resolve(), (folder / "005.txt").resolve()]
+    assert continuation.next_chapters(book["second"], selected) == [folder / "004.txt", folder / "005.txt"]
+    assert continuation.next_chapters(book["second"], [folder / "005.txt"]) == [folder / "005.txt"], "do not discover unselected files"
     assert continuation.continued_title("Truyện · Phần 2", 3) == "Truyện · Phần 3"
     assert continuation.continued_title("Truyện", 2) == "Truyện · Phần 2"
     assert continuation.continued_title("Truyện (phần 2)", 3) == "Truyện · Phần 3", "hậu tố kiểu cũ"
