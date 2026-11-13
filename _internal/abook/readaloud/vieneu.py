@@ -443,6 +443,19 @@ def _emoticons(out: list[str]) -> None:
             out[index] = token[len(body):]
 
 
+def _letter_codes(toks: list[str], out: list[str]) -> None:
+    """Bounded uppercase model codes use letter names and Vietnamese numbers."""
+    code = re.compile(r"([^\w]*)([A-Z]{1,3}\d+(?:[A-Z]{1,3}\d+)*)([^\w]*)")
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        match = code.fullmatch(token)
+        if match:
+            parts = re.findall(r"[A-Z]+|\d+", match[2])
+            said = [integer_reading(part) if part.isdigit() else " ".join(abbreviations.LETTERS[c.lower()] for c in part) for part in parts]
+            out[index] = match[1] + " ".join(said) + match[3]
+
+
 def stutter_sound(frag: str, rest: str) -> str:
     """Tiếng nói lắp của `frag` ở đầu `rest` ("C" trước "chuyện" -> "chờ", "T" trước "tôi" -> "tờ"): phụ âm đầu của chữ sau + "ờ"; nguyên âm đứng riêng ("E" trước "em") thì chính nó. Phụ âm đầu
     ghép (kh, ch, ng...) lấy từ chữ sau khi chữ lắp là phần đầu của nó."""
@@ -703,6 +716,7 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     _numbers(out, toks)
     _angle(out)
     symbols.read_symbols(toks, out)
+    _letter_codes(toks if toks is not None else list(out), out)
     _dashes(out)
     _frames(out)
     _stars(out)

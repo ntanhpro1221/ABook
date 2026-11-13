@@ -21,3 +21,8 @@
 - Added a whole-word `e/ừ + repeated m` rule in Python/Kotlin without broadening vowel-run detection.
 - Shared tests cover five hesitation forms and fourteen real-word controls (including the ASR audit's regression list).
 - Focused pytest: 314 passed, zero FAILED.
+
+## Letter-number codes
+- Added bounded uppercase model-code readings, including alternating letter/number groups, to Python/Kotlin.
+- Run after the symbol rules so contextual multiplication `X3` retains its meaning.
+- Synthetic shared code cases plus existing multiplier controls: focused pytest 324 passed, zero FAILED.

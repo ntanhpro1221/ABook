@@ -594,7 +594,7 @@
   {
    "id": "bigint_keep-10",
    "text": "A1234567 người.",
-   "said": "A1234567 người."
+   "said": "a một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy người."
   },
   {
    "id": "bigint_keep-11",
@@ -1380,6 +1380,31 @@
    "id": "tnfix_realword_keep-14",
    "text": "Từ em này.",
    "said": "Từ em này."
+  },
+  {
+   "id": "tnfix_code-1",
+   "text": "Thử M2 nhé.",
+   "said": "Thử em hai nhé."
+  },
+  {
+   "id": "tnfix_code-2",
+   "text": "Thử M60 nhé.",
+   "said": "Thử em sáu mươi nhé."
+  },
+  {
+   "id": "tnfix_code-3",
+   "text": "Thử M500 nhé.",
+   "said": "Thử em năm trăm nhé."
+  },
+  {
+   "id": "tnfix_code-4",
+   "text": "Thử MP9 nhé.",
+   "said": "Thử em pê chín nhé."
+  },
+  {
+   "id": "tnfix_code-5",
+   "text": "Thử M82A1 nhé.",
+   "said": "Thử em tám mươi hai a một nhé."
   }
  ]
 }

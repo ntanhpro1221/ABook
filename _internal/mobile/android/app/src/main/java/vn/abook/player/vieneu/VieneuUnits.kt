@@ -418,6 +418,19 @@ object VieneuUnits {
     }
 
     /** The sound of a stuttered [frag] at the start of [rest] ("C" before "chuyện" is "chờ", "E" before "em" is "e") - `stutter_sound`. */
+    private fun letterCodes(toks: List<String>, out: MutableList<String>) {
+        val code = Regex("""([^$W]*)([A-Z]{1,3}[0-9]+(?:[A-Z]{1,3}[0-9]+)*)([^$W]*)""")
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val match = code.matchEntire(token) ?: continue
+            val parts = Regex("[A-Z]+|[0-9]+").findAll(match.groupValues[2]).map { part ->
+                if (part.value[0].isDigit()) integerReading(part.value)
+                else part.value.map { Abbreviations.LETTERS.getValue(it.lowercaseChar()) }.joinToString(" ")
+            }.joinToString(" ")
+            out[index] = match.groupValues[1] + parts + match.groupValues[3]
+        }
+    }
+
     private fun stutterSound(frag: String, rest: String): String {
         val lowered = frag.lowercase(Locale.ROOT)
         val word = Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT)
@@ -789,6 +802,7 @@ object VieneuUnits {
         numbers(out, toks)
         angle(out)
         Symbols.readSymbols(toks, out)
+        letterCodes(toks ?: out.toList(), out)
         dashes(out)
         frames(out)
         stars(out)
