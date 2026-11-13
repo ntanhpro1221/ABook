@@ -95,7 +95,7 @@ ASSET_PATHS = ("cmudict.dict", "voice_previews")
 # scripts/release.py từ chối dựng bản phát hành.
 # Gói 2 (04-10): thêm giọng nghe thử ZeroTTS (voice_previews/zerotts_*.wav) và Supertonic (supertonic_*.wav). Gói 1 =
 # 234640f0…/studio-assets-1.zip, 3e7d31b5…, 14 561 173.
-STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/ed98850c33ea719eae2adde0a0366b5ec6d7682e/"
+STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/"
                          "studio-assets/studio-assets-3.zip", "262add0c494a08ec2572f2c6c6d18c11a67450b0c733b41ee7150278dab87235", 21_103_743)
 
 # Model căn từng chữ khi nghe (webui/word_timing.py, docs/LISTEN_ANYTHING.md "Word timings"): wav2vec2 CTC tiếng Việt
@@ -106,7 +106,7 @@ STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook
 # đăng - scripts/release.py từ chối dựng bản phát hành.
 WORD_ALIGN_FOLDER = "wordalign"
 WORD_ALIGN_MODEL = "wav2vec2-vi-int8.onnx"
-WORD_ALIGN_BASE = "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/95c5e5f04153618e00213dca6459810bd6dd1c72/word-align/"
+WORD_ALIGN_BASE = "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/word-align/"
 WORD_ALIGN_FILES = (
     Download(WORD_ALIGN_MODEL, WORD_ALIGN_BASE + WORD_ALIGN_MODEL,
              "ec91b6e298067ee7004388c52db8cc7b0635331dc25e03f32bd3473859c7970d", 121_984_263),
@@ -154,7 +154,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
     "abook-analyzer:v3": PublishedModel(
         "abook-analyzer:v3",
         (Download("abook-analyzer-v3.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/8b19e96c5e5b2bd8453ebdd2105ea4b44e7d8054/"
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/"
                   "abook-analyzer-v3.Q8_0.gguf",
                   "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778", 4_280_403_328),),
         "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778",
@@ -164,7 +164,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
     "abook-analyzer:v4": PublishedModel(
         "abook-analyzer:v4",
         (Download("abook-analyzer-v4.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/917d6b875882ecd71bfebe5c83b2bb680df5e3d2/"
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/"
                   "abook-analyzer-v4.Q8_0.gguf",
                   "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb", 4_280_403_328),),
         "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb",
@@ -175,7 +175,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
     "abook-analyzer:v5": PublishedModel(
         "abook-analyzer:v5",
         (Download("abook-analyzer-v5.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/6026d290f258d0cef0d337836a2a209c9e7956a8/"
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/"
                   "abook-analyzer-v5.Q8_0.gguf",
                   "b366713f0e5ac9c5500f0abd7738c18867f738b6a1171ce89d7347b1e9da543b", 4_280_403_424),),
         "b366713f0e5ac9c5500f0abd7738c18867f738b6a1171ce89d7347b1e9da543b",
@@ -187,7 +187,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
     SPEAKER_MODEL: PublishedModel(
         SPEAKER_MODEL,
         (Download("abook-speaker-v2.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/ded0fe2a2f14d65cb9d99389e95cb05afddf61ea/"
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/"
                   "abook-speaker-v2.Q8_0.gguf",
                   "813031b68a16c04032cc776341b0369dbec7adef66a28c2488b37fcdd376520a", 4_280_403_424),),
         "813031b68a16c04032cc776341b0369dbec7adef66a28c2488b37fcdd376520a",

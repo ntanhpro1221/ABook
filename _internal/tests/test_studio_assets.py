@@ -202,9 +202,9 @@ def test_the_pinned_word_model_matches_the_files_the_pack_script_makes_and_a_rel
     files = studio_setup.WORD_ALIGN_FILES
     assert [item.name for item in files] == list(word_timing.MODEL_FILES)
     assert all(re.fullmatch(r"[0-9a-f]{64}", item.sha256) and item.size > 0 for item in files), "băm + cỡ là của file thật"
-    assert all("/resolve/95c5e5f04153618e00213dca6459810bd6dd1c72/word-align/" in item.url for item in files), "ghim theo commit đã đăng"
+    assert all("/resolve/9f35bf23b2326ead7fa660e34a08076dba1d9895/word-align/" in item.url for item in files), "ghim theo commit đã đăng"
     release.check_word_align_pinned()
-    monkeypatch.setattr(studio_setup, "WORD_ALIGN_FILES", tuple(Download(item.name, item.url.replace("95c5e5f04153618e00213dca6459810bd6dd1c72", "PIN_REVISION"),
+    monkeypatch.setattr(studio_setup, "WORD_ALIGN_FILES", tuple(Download(item.name, item.url.replace("9f35bf23b2326ead7fa660e34a08076dba1d9895", "PIN_REVISION"),
                                                                          item.sha256, item.size) for item in files))
     with pytest.raises(AssertionError, match="chưa ghim"):  # chưa đăng: URL còn PIN_REVISION thì không dựng bản phát hành
         release.check_word_align_pinned()
