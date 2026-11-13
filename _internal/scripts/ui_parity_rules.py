@@ -373,6 +373,13 @@ def l6_motion_tokens() -> list[str]:
             problems.append(f"L6 ui_design/tokens.json thiếu timing.{key}")
     if problems:
         return problems
+    # These values are the approved DESIGN contract, not a free choice of the generator.
+    for key, expected in {"skeletonLow": 0.6, "skeletonPeriodMs": 1600, "noticeMs": 4000,
+                          "undoMs": 28000, "indeterminateMs": 1400, "spinMs": 1000}.items():
+        if timing[key] != expected:
+            problems.append(f"L6 timing.{key} = {timing[key]!r}, DESIGN yêu cầu {expected}")
+    if not 0 < timing["reducedFadeMs"] <= 120:
+        problems.append("L6 timing.reducedFadeMs phải > 0 và <= 120 (giữ mờ, không cắt cứng)")
     cfg = config()["L6"]
     for item in cfg["uses"]:
         path = ROOT / item["file"]
@@ -441,10 +448,11 @@ def l7_instant() -> list[str]:
     cfg = config()["L7"]
     problems = []
     hits = instant_hits()
+    # Confirmed repairs must not disappear into a heuristic's nearby-animation window.
     for item in cfg["fixed"]:
-        for path, i, line in hits:
-            if path == item["file"] and item["match"] in line:
-                problems.append(f"L7 {path}:{i} đã sửa ({item['what']}) mà lại hiện/ẩn cứng: {line}")
+        for i, line in enumerate(lines(ROOT / item["file"]), 1):
+            if item["match"] in line and not line.lstrip().startswith("//"):
+                problems.append(f"L7 {item['file']}:{i} đã sửa ({item['what']}) mà lại hiện/ẩn cứng: {line.strip()}")
     per = Counter(path for path, _i, _l in hits)
     return problems + _ratchet("L7", per, cfg["remaining"], "chỗ hiện/ẩn cứng")
 
@@ -503,9 +511,9 @@ def l8_ellipsis_names() -> list[str]:
 
 # ---------------------------------------------------------------------------------------------------------------- L9 label length
 LABEL_CTX = {
-    "web": re.compile(r"(<Button\b|<ActionButton\b|<TextButton\b|<MenuRow\b|<DropdownMenu\.Item\b|<TabLabel\b|<Switch\b|<DisclosureRow\b|<button\b|\blabel=\{)"),
-    "qt": re.compile(r"(\bButton\s*\{|\bTextLink\s*\{|\bMenuRow\s*\{|\bDisclosureRow\s*\{|\blabel:|\bActionButton\s*\{|\bTabLabel\s*\{|\bNewSwitchRow\s*\{|\bSettingRow\s*\{)"),
-    "android": re.compile(r"(PrimaryButton\(|TextAction\(|DangerButton\(|MenuRow\(|DisclosureRow\(|SwitchRow\(|TabLabel\(|SecondaryButton\(|ChoiceRow\()"),
+    "web": re.compile(r"(<Button\b|<ActionButton\b|<TextButton\b|<MenuRow\b|<DropdownMenu\.Item\b|<TabLabel\b|<Switch\b|<DisclosureRow\b|<EmptyState\b|<Dialog\b|<Sheet\b|<ScreenHeader\b|<LogBox\b|<button\b|(?<![\w.])label\s*[:=])"),
+    "qt": re.compile(r"(\bButton\s*\{|\bTextLink\s*\{|\bMenuRow\s*\{|\bDisclosureRow\s*\{|\b(?:label|title):|\bActionButton\s*\{|\bTabLabel\s*\{|\bNewSwitchRow\s*\{|\bSettingRow\s*\{)"),
+    "android": re.compile(r"(PrimaryButton\(|TextAction\(|DangerButton\(|MenuRow\(|DisclosureRow\(|SwitchRow\(|TabLabel\(|SecondaryButton\(|ChoiceRow\(|ScreenHeader\(|SheetRow\()"),
 }
 
 
@@ -529,10 +537,12 @@ def long_labels() -> dict[str, list[str]]:
                 if original.strip().startswith(("//", "*", "/*")):
                     continue
                 # A description/input hint is not a control label, even on the same line as a Button.
-                line = re.sub(r'\b(?:placeholder|description|hint|help|detail|summary|error|message|body)(?:Text)?\s*(?:[:=]\s*\{?|=\s*)[^;}\n]*', '', original)
+                line = re.sub(r'\b(?:placeholder|description|hint|help|detail|summary|error|message|body|note)(?:Text)?\s*(?:[:=]\s*\{?|=\s*)[^;}\n]*', '', original)
+                if "<MoreInfo" in line:
+                    line = re.sub(r'(<MoreInfo\b[^>]*>).*', r'\1', line)
                 if plat == "qt" and not re.search(r'\b(?:text|label|title|name|tip)\s*:', line):
                     continue
-                if plat == "qt" and re.search(r'\b(?:onClicked|function|notify|notice|showError)\b', line):
+                if plat == "qt" and re.search(r'\b(?:onClicked|function|notify|notice|showError|say)\b', line):
                     continue
                 if plat == "web":
                     # Handler bodies and tooltip descriptions can contain entire messages. Only the visible child or explicit label counts.
@@ -600,6 +610,12 @@ def counts() -> dict:
 
 
 def main(argv: list[str]) -> int:
+    if "--instant" in argv:
+        hits = instant_hits()
+        print(f"L7: {len(hits)} ứng viên (heuristic; chưa phải lỗi đã xác nhận)")
+        for path, i, line in hits:
+            print(f"{path}:{i}: {line}")
+        return 0
     if "--counts" in argv:
         print(json.dumps(counts(), ensure_ascii=False, indent=2))
         return 0

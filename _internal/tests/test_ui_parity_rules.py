@@ -135,6 +135,15 @@ def test_l7_ratchet_only_goes_down(planted, monkeypatch):
     assert all("hạ số" in p for p in planted.l7_instant())  # fixed more than the list says: the list must be lowered too
 
 
+def test_l7_confirmed_repairs_cannot_be_hidden_by_a_nearby_animation(planted):
+    cfg = planted.config()
+    cfg["L7"]["fixed"] = [{"file": "desktop_qt/qml/Lib.qml", "match": "visible: root.ready", "what": "confirmed repair"}]
+    planted.CONFIG.write_text(json.dumps(cfg), encoding="utf-8")
+    path = planted.ROOT / "desktop_qt/qml/Lib.qml"
+    path.write_text('Item {\n    Button { visible: root.ready }\n    Collapse { open: root.other }\n}', encoding="utf-8")
+    assert any("confirmed repair" in p for p in planted.l7_instant())
+
+
 def test_l8_bites_an_ellipsis_button_with_the_wrong_name(planted):
     problems = planted.l8_ellipsis_names()
     assert any("Lib.qml" in p and "Tuỳ chọn {0}" in p for p in problems), problems
@@ -142,6 +151,12 @@ def test_l8_bites_an_ellipsis_button_with_the_wrong_name(planted):
 
 def test_l9_bites_a_five_word_button(planted):
     assert any("Thu vào khay khi đóng cửa sổ" in p for p in planted.l9_label_length())
+
+
+@pytest.mark.parametrize("source", ['const label = S.s_g;', 'const action = { label: S.s_g };', '<LogBox title={S.s_g} />'])
+def test_l9_checks_labels_built_before_the_control(planted, source):
+    (planted.ROOT / "ui/src/listen/Lib.tsx").write_text(source, encoding="utf-8")
+    assert any("ui/src/listen/Lib.tsx" in p for p in planted.l9_label_length())
 
 
 def test_l10_bites_one_control_with_two_words(planted):
@@ -167,6 +182,15 @@ def test_l6_bites_missing_timings_and_a_hard_reduced_fade(planted):
     qml = planted.ROOT / "desktop_qt/qml/Lib.qml"
     qml.write_text(qml.read_text(encoding="utf-8") + '\nBehavior on opacity { duration: Theme.reduceMotion ? 0 : 220 }', encoding="utf-8")
     assert any("cắt cứng" in p for p in planted.l6_motion_tokens())
+
+
+def test_l6_rejects_generated_but_wrong_design_timings(planted):
+    token = planted.ROOT / "ui_design/tokens.json"
+    token.parent.mkdir()
+    token.write_text(json.dumps({"timing": {"skeletonLow": 0.5, "skeletonPeriodMs": 2000, "noticeMs": 5000,
+        "undoMs": 28000, "reducedFadeMs": 0, "indeterminateMs": 1400, "spinMs": 1000}}), encoding="utf-8")
+    problems = planted.l6_motion_tokens()
+    assert all(any(key in p for p in problems) for key in ("skeletonLow", "skeletonPeriodMs", "noticeMs", "reducedFadeMs"))
 
 
 def test_l9_ignores_input_hints_and_descriptions(planted):
