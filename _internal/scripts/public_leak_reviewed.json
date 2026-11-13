@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "3965f6bd4abdd3740a2985e337bf04621ac3d832a4bac68b7b059be6dc55ecec",
+    "sha256": "ba7d8bc50fc80cfcbfa54333803717e5a9a76075c3eab415b5d2152062fbecf4",
     "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {

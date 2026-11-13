@@ -29,8 +29,40 @@ fun SemanticsNodeInteraction.`captureRoboImage`(
     filePath: String,
     roborazziOptions: RoborazziOptions = provideRoborazziContext().options,
 ) {
+    requireSnapshotVerify(filePath, roborazziOptions)
     roborazziCapture(filePath, roborazziOptions)
     if (!filePath.replace('\\', '/').contains("src/test/snapshots/")) return
+    recordSnapshotProof(filePath, roborazziOptions)
+    val name = File(filePath).name.removeSuffix(".png")
+    val image = File("build/design_lint/$name.png")
+    image.parentFile?.mkdirs()
+    // Record the actual frame even when normal unit tests do not update goldens.
+    roborazziCapture(image.path, roborazziOptions.copy(taskType = RoborazziTaskType.Record))
+    val out = File(image.parentFile, "$name.tree.json")
+    out.parentFile?.mkdirs()
+    val tree = UiTree.describe(fetchSemanticsNode(), image.name)
+    tree.put("image_sha256", MessageDigest.getInstance("SHA-256").digest(image.readBytes()).joinToString("") { "%02x".format(it) })
+    out.writeText(tree.toString())
+}
+
+/** Bitmap-only widget captures obey the same Verify/proof contract as Compose. */
+fun android.graphics.Bitmap.captureRoboImage(
+    filePath: String,
+    roborazziOptions: RoborazziOptions = provideRoborazziContext().options,
+) {
+    requireSnapshotVerify(filePath, roborazziOptions)
+    roborazziCapture(filePath, roborazziOptions)
+    if (!filePath.replace('\\', '/').contains("src/test/snapshots/")) return
+    recordSnapshotProof(filePath, roborazziOptions)
+}
+
+private fun requireSnapshotVerify(filePath: String, roborazziOptions: RoborazziOptions) {
+    if (System.getenv("ABOOK_SNAPSHOT_PROOFS") != null && filePath.replace('\\', '/').contains("src/test/snapshots/")) {
+        check(roborazziOptions.taskType == RoborazziTaskType.Verify) { "Release gate requires Verify, never Record" }
+    }
+}
+
+private fun recordSnapshotProof(filePath: String, roborazziOptions: RoborazziOptions) {
     System.getenv("ABOOK_SNAPSHOT_PROOFS")?.let { directory ->
         check(roborazziOptions.taskType == RoborazziTaskType.Verify) { "Release gate requires Verify, never Record" }
         val golden = File(filePath).canonicalFile
@@ -42,16 +74,6 @@ fun SemanticsNodeInteraction.`captureRoboImage`(
         val key = MessageDigest.getInstance("SHA-256").digest(relative.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
         File(directory, "$key.json").writeText(proof.toString())
     }
-    val name = File(filePath).name.removeSuffix(".png")
-    val image = File("build/design_lint/$name.png")
-    image.parentFile?.mkdirs()
-    // Record the actual frame even when normal unit tests do not update goldens.
-    roborazziCapture(image.path, roborazziOptions.copy(taskType = RoborazziTaskType.Record))
-    val out = File(image.parentFile, "$name.tree.json")
-    out.parentFile?.mkdirs()
-    val tree = UiTree.describe(fetchSemanticsNode(), image.name)
-    tree.put("image_sha256", MessageDigest.getInstance("SHA-256").digest(image.readBytes()).joinToString("") { "%02x".format(it) })
-    out.writeText(tree.toString())
 }
 
 internal object UiTree {

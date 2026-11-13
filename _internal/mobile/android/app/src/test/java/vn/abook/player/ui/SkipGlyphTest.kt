@@ -15,6 +15,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ApplicationProvider
 import vn.abook.player.ui.snapshot.captureRoboImage
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertThrows
+import com.github.takahirom.roborazzi.RoborazziTaskType
+import com.github.takahirom.roborazzi.provideRoborazziContext
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,9 +76,23 @@ class SkipGlyphTest {
             canvas.drawColor(Color.rgb(20, 18, 16))
             drawable.setBounds(6, 6, 78, 78)
             drawable.draw(canvas)
-            File("src/test/snapshots/skip_widget_$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.captureRoboImage("src/test/snapshots/skip_widget_$name.png")
             checkGap(bitmap, "widget $name")
         }
+    }
+
+    @Test
+    fun changedWidgetPixelsFailVerificationWithoutReplacingTheGolden() {
+        val directory = File("build/widget-negative-control").apply { mkdirs() }
+        val golden = File(directory, "widget.png")
+        val baseline = Bitmap.createBitmap(84, 84, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.BLACK) }
+        golden.outputStream().use { baseline.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val before = golden.readBytes()
+        val changed = Bitmap.createBitmap(84, 84, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.WHITE) }
+        assertThrows(AssertionError::class.java) {
+            changed.captureRoboImage(golden.path, provideRoborazziContext().options.copy(taskType = RoborazziTaskType.Verify))
+        }
+        assertArrayEquals(before, golden.readBytes())
     }
 
     private fun checkGap(map: Bitmap, where: String) {
