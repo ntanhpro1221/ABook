@@ -235,15 +235,19 @@ fun EditChapterRoute(editor: BookEditor, chapterId: Long, onBack: () -> Unit) {
                         editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
                     }, "chapter_title", description = if (textOnly) S.s_ten_chuong_9edb6c28 else S.s_nhan_58861f44)
                     Reveal(!textOnly) {
-                        Spacer(Modifier.height(Dim.s16))
-                        BookField(S.s_ten_c8b17259, row.subtitle, { value ->
-                            editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
-                        }, "chapter_subtitle")
+                        Column {
+                            Spacer(Modifier.height(Dim.s16))
+                            BookField(S.s_ten_c8b17259, row.subtitle, { value ->
+                                editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
+                            }, "chapter_subtitle")
+                        }
                     }
                     InlineProblem(state.problem, editor::retry, "chapter_problem")
                     Reveal(row.renamed) {
-                        Spacer(Modifier.height(Dim.s16))
-                        RevertName(row.original, { editor.revertChapter(chapterId) })
+                        Column {
+                            Spacer(Modifier.height(Dim.s16))
+                            RevertName(row.original, { editor.revertChapter(chapterId) })
+                        }
                     }
                 }
             }

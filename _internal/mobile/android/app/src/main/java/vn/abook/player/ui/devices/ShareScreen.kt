@@ -77,14 +77,14 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                             Caption(S.s_may_kia_chua_tu_thay_dien_thoai_dia_chi_na_34b7f3e8, Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
                             Reveal(share.code != null) {
-                                lastCode[0]?.let { code ->
-                                  Column {
-                                    CodeRow(code, devices::cancelCode)
-                                    val fingerprint = share.fingerprint.replace(" ", "")
-                                    Text(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.testTag("share_fingerprint"))
-                                    Text(S.s_pair_fingerprint_help, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_fingerprint_help"))
-                                    Text(S.s_pair_string + vn.abook.player.Pin.pairingString(code.digits, fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_pair_string"))
-                                  }
+                                Column {
+                                    lastCode[0]?.let { code ->
+                                        CodeRow(code, devices::cancelCode)
+                                        val fingerprint = share.fingerprint.replace(" ", "")
+                                        Text(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.testTag("share_fingerprint"))
+                                        Text(S.s_pair_fingerprint_help, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_fingerprint_help"))
+                                        Text(S.s_pair_string + vn.abook.player.Pin.pairingString(code.digits, fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_pair_string"))
+                                    }
                                 }
                             }
                             Reveal(share.code == null) {

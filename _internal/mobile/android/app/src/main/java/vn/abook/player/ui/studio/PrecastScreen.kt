@@ -139,8 +139,10 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                             RowLine()
                         }
                         Reveal(castCards.isNotEmpty()) {
-                            BasicText(PrecastText.CAST_UNSURE, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s16))
-                            Caption(PrecastText.castUnsure(castCards.size), Modifier.padding(top = Dim.s4))
+                            Column {
+                                BasicText(PrecastText.CAST_UNSURE, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s16))
+                                Caption(PrecastText.castUnsure(castCards.size), Modifier.padding(top = Dim.s4))
+                            }
                         }
                         castCards.firstOrNull()?.let { WorkCard(it, castCards.size, state, sheets, clip) {} }
                     }

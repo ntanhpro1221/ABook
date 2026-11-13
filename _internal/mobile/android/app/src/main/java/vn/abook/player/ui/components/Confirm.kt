@@ -70,8 +70,10 @@ fun ConfirmPage(title: String, tag: String, lines: List<String>, problem: String
             BasicText(line, style = Abook.type.body.copy(color = colors.text2))
         }
         Reveal(problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("${tag}_problem"))
+            Column {
+                Spacer(Modifier.height(Dim.s8))
+                BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("${tag}_problem"))
+            }
         }
         Spacer(Modifier.height(Dim.s24))
         buttons()

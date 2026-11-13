@@ -102,8 +102,10 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
             }
             SwitchRow(S.s_nut_tai_nghe_lui_toi_973e4a19, settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
             Reveal(env.pip?.available == true) {
-                RowLine()
-                SwitchRow(S.s_tu_mo_cua_so_mini_a93a51d2, settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
+                Column {
+                    RowLine()
+                    SwitchRow(S.s_tu_mo_cua_so_mini_a93a51d2, settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
+                }
             }
         }
         ListSection(S.s_nhac_nen_271fb292) {

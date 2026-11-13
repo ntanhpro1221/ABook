@@ -231,8 +231,10 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                             trailing = { TextAction(if (revealed) S.s_an_9c7a6c2d else S.s_hien_79d3e7eb, { revealed = !revealed }, "key_reveal") },
                         )
                         Reveal(provider.region) {
-                            Spacer(Modifier.height(Dim.s8))
-                            BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, S.s_vung_db826aa7, placeholder = S.s_vung_vi_du_southeastasia_959965a2)
+                            Column {
+                                Spacer(Modifier.height(Dim.s8))
+                                BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, S.s_vung_db826aa7, placeholder = S.s_vung_vi_du_southeastasia_959965a2)
+                            }
                         }
                         Reveal(work == KeyWork.Checking) {
                             Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("key_checking")) {
@@ -262,8 +264,10 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                         }, "key_check")
                     }
                     Reveal(provider.hasKey) {
-                        Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
-                        MenuRow(S.s_xoa_khoa_2ec6cb1a, "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
+                        Column {
+                            Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
+                            MenuRow(S.s_xoa_khoa_2ec6cb1a, "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
+                        }
                     }
                 }
                 KeyPage.Consent -> ConsentPage(S.s_nay_13127283, provider.id, allowing, onAllow = {

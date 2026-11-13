@@ -489,8 +489,10 @@ private fun BookHead(
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
     val info: @Composable ColumnScope.() -> Unit = {
         Reveal(sub.isNotEmpty()) {
-            BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
-            Spacer(Modifier.height(Dim.s4))
+            Column {
+                BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
+                Spacer(Modifier.height(Dim.s4))
+            }
         }
         BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
         Spacer(Modifier.height(Dim.s8))
@@ -512,17 +514,19 @@ private fun BookHead(
             }
         }
         Reveal(!book.textOnly) {
-            Spacer(Modifier.height(Dim.s16))
-            val fraction = book.progress.fraction
-            val fill = if (book.progress.finished) colors.success else colors.accent
-            Box(
-                Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).semantics { contentDescription = S.s_da_nghe_1e0f8d88 }.drawBehind {
-                    drawRect(colors.line)
-                    drawRect(fill, Offset.Zero, Size(size.width * fraction, size.height))
-                },
-            )
-            Spacer(Modifier.height(Dim.s8))
-            ClockLabel(BookPage.progressLine(book, listening, failed), style = Abook.type.caption.copy(color = colors.text2))
+            Column {
+                Spacer(Modifier.height(Dim.s16))
+                val fraction = book.progress.fraction
+                val fill = if (book.progress.finished) colors.success else colors.accent
+                Box(
+                    Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).semantics { contentDescription = S.s_da_nghe_1e0f8d88 }.drawBehind {
+                        drawRect(colors.line)
+                        drawRect(fill, Offset.Zero, Size(size.width * fraction, size.height))
+                    },
+                )
+                Spacer(Modifier.height(Dim.s8))
+                ClockLabel(BookPage.progressLine(book, listening, failed), style = Abook.type.caption.copy(color = colors.text2))
+            }
         }
         // Một hồ sơ thì không có chip: các việc với hồ sơ duy nhất nằm trong bảng "Thêm" (web: singleRecordActions).
         val active = if (records.size > 1) records.firstOrNull { it.active } else null

@@ -102,8 +102,10 @@ private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: Revi
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
         Reveal(review.filter == ReviewFilter.Todo) { Caption(WorkText.reviewPending(list.pending), Modifier.testTag("studio_review_pending")) }
         Reveal(list.redoChapters.isNotEmpty()) {
-            RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
-            MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.REDO_MORE, "studio_review_redo_more")
+            Column {
+                RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
+                MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.REDO_MORE, "studio_review_redo_more")
+            }
         }
         Reveal(minor > 0 || review.showMinor) {
             TextAction(

@@ -290,7 +290,9 @@ fun Fold(
 }
 
 
-/** Hiện / ẩn một khối trong dòng chảy: mở / khép chiều cao kèm trượt dọc (NATIVE_PHONE_UI.md §4 - không mờ). */
+/** Hiện / ẩn một khối trong dòng chảy: mở / khép chiều cao kèm trượt dọc (NATIVE_PHONE_UI.md §4 - không mờ).
+ * Content must emit one layout root. Wrap siblings in their intended Row/Column:
+ * both AnimatedVisibility and the reduced-motion Box overlay direct children. */
 @Composable
 fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
     if (vn.abook.player.ui.motion.rememberReducedMotion()) {

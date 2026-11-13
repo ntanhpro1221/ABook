@@ -196,11 +196,13 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
         Caption(WorkText.scopeNote(item.scopeLabels), Modifier.testTag("studio_scope_note"))
     }
     Reveal(item.pick) {
-        DisclosureRow(
-            WorkText.PICK_LINES, { sheets.show { dismiss -> PickSheet(item, work, left, dismiss) } }, "studio_pick",
-            summary = WorkLogic.pickNote(picked?.size ?: 0, lines.size),
-        )
-        RowLine()
+        Column {
+            DisclosureRow(
+                WorkText.PICK_LINES, { sheets.show { dismiss -> PickSheet(item, work, left, dismiss) } }, "studio_pick",
+                summary = WorkLogic.pickNote(picked?.size ?: 0, lines.size),
+            )
+            RowLine()
+        }
     }
     shown.forEachIndexed { index, choice ->
         val primary = index == 0 && item.kind != WorkKind.Unnamed && item.suggested
@@ -236,15 +238,17 @@ private fun OtherPersonSheet(more: List<WorkChoice>, none: Boolean, suggestedNam
     Column(Modifier.fillMaxWidth().testTag("studio_other_sheet")) {
         BasicText(WorkText.OTHER_SHEET_TITLE, style = Abook.type.sectionTitle)
         Reveal(more.isNotEmpty()) {
-            LazyColumn(Modifier.fillMaxWidth().padding(top = Dim.s8).heightIn(max = 224.dp).fadeEdges(list), state = list) {
-                items(more, key = { it.value }) { choice ->
-                    Column(Modifier.fillMaxWidth()) {
-                        ListItem(choice.label, Modifier, { if (!none) choose(choice.value, null) }, "studio_other_${choice.value}")
-                        RowLine()
+            Column {
+                LazyColumn(Modifier.fillMaxWidth().padding(top = Dim.s8).heightIn(max = 224.dp).fadeEdges(list), state = list) {
+                    items(more, key = { it.value }) { choice ->
+                        Column(Modifier.fillMaxWidth()) {
+                            ListItem(choice.label, Modifier, { if (!none) choose(choice.value, null) }, "studio_other_${choice.value}")
+                            RowLine()
+                        }
                     }
                 }
+                RowHint(WorkText.NEW_PERSON_HINT, Modifier.padding(top = Dim.s12))
             }
-            RowHint(WorkText.NEW_PERSON_HINT, Modifier.padding(top = Dim.s12))
         }
         Spacer(Modifier.height(Dim.s8))
         BookField(null, name, { name = it }, "studio_other_name", description = WorkText.NEW_PERSON_FIELD, placeholder = WorkText.NEW_PERSON_FIELD)

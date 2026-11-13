@@ -165,8 +165,10 @@ private fun pairForm(ui: PairUi, devices: DevicesState) {
     }
     key("method", "method") {
         Reveal(ui.paired) {
-            RowHint(S.s_sach_may_kia_hien_trong_thu_vien_a323b709)
-            TextAction(S.s_ghep_bluetooth_0193ced5, { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
+            Column {
+                RowHint(S.s_sach_may_kia_hien_trong_thu_vien_a323b709)
+                TextAction(S.s_ghep_bluetooth_0193ced5, { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
+            }
         }
         ChoiceSetting(S.s_cach_noi_54df7083, PairMethod.entries, ui.method, { method, _ -> devices.setMethod(method) }, "pair_method")
     }

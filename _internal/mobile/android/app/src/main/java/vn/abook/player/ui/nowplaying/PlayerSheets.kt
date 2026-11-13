@@ -134,10 +134,12 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                     } else {
                                         val now = remember(window.sheetOpen) { System.currentTimeMillis() }
                                         Reveal(SleepText.recentlyStopped(state.sleep, now)) {
-                                            BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
-                                            TextAction(SleepText.restart(window.lastSleepMinutes), {
-                                                model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
-                                            }, "sleep_again", align = Alignment.CenterStart)
+                                            Column {
+                                                BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
+                                                TextAction(SleepText.restart(window.lastSleepMinutes), {
+                                                    model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
+                                                }, "sleep_again", align = Alignment.CenterStart)
+                                            }
                                         }
                                     }
                                 }

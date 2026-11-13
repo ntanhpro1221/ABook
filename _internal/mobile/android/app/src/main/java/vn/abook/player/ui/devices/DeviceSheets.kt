@@ -103,8 +103,10 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow(S.s_bo_ghep_64f921f9, "device_forget", danger = true, onClick = onForget) { ink -> UnplugIcon(ink) }
         Reveal(problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s4))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("device_problem"))
+            Column {
+                Spacer(Modifier.height(Dim.s4))
+                BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("device_problem"))
+            }
         }
     }
 }
@@ -168,8 +170,10 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
         FieldGroup {
             BookField(null, name, { name = it; problem = "" }, "rename_field", !working, S.s_ten_thiet_bi_525223a8)
             Reveal(problem.isNotEmpty()) {
-                Spacer(Modifier.height(Dim.s8))
-                BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
+                Column {
+                    Spacer(Modifier.height(Dim.s8))
+                    BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
+                }
             }
             Spacer(Modifier.height(Dim.s24))
             PrimaryButton(if (working) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, {

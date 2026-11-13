@@ -298,13 +298,17 @@ private fun Chip(label: String, on: Boolean, tag: String, chevron: Boolean, onCl
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Reveal(on && !chevron) {
-                CheckIcon(colors.accentText, size = 16.dp)
-                Spacer(Modifier.width(Dim.s4))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CheckIcon(colors.accentText, size = 16.dp)
+                    Spacer(Modifier.width(Dim.s4))
+                }
             }
             BasicText(label, style = Abook.type.label.copy(color = if (on) colors.accentText else colors.text))
             Reveal(chevron) {
-                Spacer(Modifier.width(Dim.s4))
-                LucideIcon(LucidePaths.CHEVRON_DOWN, if (on) colors.accentText else colors.text2, size = 16.dp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.width(Dim.s4))
+                    LucideIcon(LucidePaths.CHEVRON_DOWN, if (on) colors.accentText else colors.text2, size = 16.dp)
+                }
             }
         }
     }

@@ -154,15 +154,17 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
             modifier = Modifier.weight(1f).fillMaxWidth().testTag("cover_title"),
         )
         Reveal(sub.isNotEmpty()) {
-            Spacer(Modifier.height(pad / 2))
-            FitText(
-                sub.uppercase(),
-                style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Medium, fontSize = subSize, color = ink),
-                maxSize = subSize,
-                kind = "part",
-                softWrap = false,
-                modifier = Modifier.background(Abook.colors.coverTag).padding(horizontal = 4.dp, vertical = 4.dp).testTag("cover_part"),
-            )
+            Column {
+                Spacer(Modifier.height(pad / 2))
+                FitText(
+                    sub.uppercase(),
+                    style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Medium, fontSize = subSize, color = ink),
+                    maxSize = subSize,
+                    kind = "part",
+                    softWrap = false,
+                    modifier = Modifier.background(Abook.colors.coverTag).padding(horizontal = 4.dp, vertical = 4.dp).testTag("cover_part"),
+                )
+            }
         }
     }
 }

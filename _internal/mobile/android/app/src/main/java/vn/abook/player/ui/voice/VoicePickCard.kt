@@ -41,8 +41,10 @@ fun VoicePickCard(voice: VoiceState) {
         }
         Reveal(status.engines.isNotEmpty()) { Caption(S.s_cung_vai_cau_cho_moi_giong_chua_co_bo_nghe_e6bb15d4) }
         Reveal(status.installed.isNotEmpty() && !status.measuring) {
-            TextAction(if (status.engines.isEmpty()) S.s_thu_77e1c0d9 else S.s_thu_lai_c58d068c, voice::measurePick, "voice_pick_measure")
-            Reveal(status.override.isNotEmpty()) { TextAction(S.s_theo_so_do_f3663b51, { voice.choosePick("") }, "voice_pick_auto") }
+            Column {
+                TextAction(if (status.engines.isEmpty()) S.s_thu_77e1c0d9 else S.s_thu_lai_c58d068c, voice::measurePick, "voice_pick_measure")
+                Reveal(status.override.isNotEmpty()) { TextAction(S.s_theo_so_do_f3663b51, { voice.choosePick("") }, "voice_pick_auto") }
+            }
         }
     }
 }

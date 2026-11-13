@@ -299,14 +299,18 @@ fun ImportReviewScreen(
                         SectionTitle(S.s_chu_thich_fc0aa279)
                         Caption(S.s_0_chu_thich_trong_file_be2ecbf5(preview.footnoteCount), Modifier.testTag("footnote_count"))
                         Reveal(preview.footnoteExample.isNotEmpty()) {
-                            Spacer(Modifier.height(Dim.s12))
-                            QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
+                            Column {
+                                Spacer(Modifier.height(Dim.s12))
+                                QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
+                            }
                         }
                         Spacer(Modifier.height(Dim.s8))
                         Reveal(preview.footnoteMarks > 0) {
-                            SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
-                            hint = S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(preview.footnoteMarks))
-                            RowLine()
+                            Column {
+                                SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
+                                hint = S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(preview.footnoteMarks))
+                                RowLine()
+                            }
                         }
                         ChoiceSetting(S.s_loi_chu_eca33b1a, NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
                         { mode, _ -> revise { it.copy(notes = mode.code) } }, "footnote_notes")
@@ -390,8 +394,10 @@ fun ImportChapterScreen(state: ImportState, index: Int, onBack: () -> Unit, choo
                 val current = state.choices.names[index] ?: row.title
                 BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = S.s_ten_chuong_9edb6c28)
                 Reveal(ImportLogic.renamed(current, row.title)) {
-                    Spacer(Modifier.height(Dim.s16))
-                    RevertName(row.title, { choose { it.copy(names = it.names - index) } })
+                    Column {
+                        Spacer(Modifier.height(Dim.s16))
+                        RevertName(row.title, { choose { it.copy(names = it.names - index) } })
+                    }
                 }
             }
         }

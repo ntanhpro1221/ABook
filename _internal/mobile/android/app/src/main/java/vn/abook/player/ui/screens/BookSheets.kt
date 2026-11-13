@@ -271,8 +271,10 @@ private fun MenuActions(
         MenuRow(S.s_xoa_khoi_thu_vien_79dbd32b, tag = "menu_delete", danger = true, hint = bytes?.let { S.s_chiem_0_ebd89982(formatSize(it)) }, onClick = onDelete) { ink -> TrashIcon(ink) }
         Reveal(save.problem.isNotEmpty()) { BasicText(save.problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("save_problem")) }
         Reveal(problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s4))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))
+            Column {
+                Spacer(Modifier.height(Dim.s4))
+                BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))
+            }
         }
     }
 }
@@ -427,11 +429,13 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
         ClockLabel(BookSearch.status(query, progress), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.testTag("find_status"))
         val hits = progress?.hits.orEmpty()
         Reveal(hits.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            val list = rememberLazyListState()
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).fadeEdges(list).testTag("find_results"), state = list) {
-                items(hits, key = { "${it.chapterId}:${it.index}" }, contentType = { "hit" }) { hit ->
-                    FindRow(hit, titles[hit.chapterId].orEmpty(), onPick)
+            Column {
+                Spacer(Modifier.height(Dim.s8))
+                val list = rememberLazyListState()
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).fadeEdges(list).testTag("find_results"), state = list) {
+                    items(hits, key = { "${it.chapterId}:${it.index}" }, contentType = { "hit" }) { hit ->
+                        FindRow(hit, titles[hit.chapterId].orEmpty(), onPick)
+                    }
                 }
             }
         }

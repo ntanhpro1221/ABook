@@ -233,8 +233,10 @@ private fun ChapterRow(state: StudioNewState, chapter: ScannedChapter) {
     Column(Modifier.fillMaxWidth().testTag("studio_new_chapter")) {
         SwitchRow(label, kept, { state.toggle(chapter.path) }, "studio_new_chapter_${chapter.path.hashCode()}", hint)
         Reveal(chapter.splitChapters > 1) {
-            RowHint(StudioNewText.SPLIT_NOTE, Modifier.testTag("studio_new_split_note"))
-            TextAction(StudioNewText.splitAsk(chapter.splitChapters), { state.split(chapter) }, "studio_new_split_${chapter.path.hashCode()}", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+            Column {
+                RowHint(StudioNewText.SPLIT_NOTE, Modifier.testTag("studio_new_split_note"))
+                TextAction(StudioNewText.splitAsk(chapter.splitChapters), { state.split(chapter) }, "studio_new_split_${chapter.path.hashCode()}", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+            }
         }
         RowLine()
     }

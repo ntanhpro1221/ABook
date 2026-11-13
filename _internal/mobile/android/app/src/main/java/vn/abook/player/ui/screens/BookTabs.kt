@@ -121,8 +121,10 @@ fun BookTabs(tabs: List<BookTab>, selected: BookTab, chapterCount: Int, onPick: 
         tabs, selected, onPick, label = { it.label }, tag = { it.tag }, rowTag = "book_tabs", modifier = modifier,
         suffix = { tab ->
             Reveal(tab == BookTab.Chapters) {
-                Spacer(Modifier.width(Dim.s8))
-                BasicText("$chapterCount", style = Abook.type.caption.copy(color = Abook.colors.text2))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.width(Dim.s8))
+                    BasicText("$chapterCount", style = Abook.type.caption.copy(color = Abook.colors.text2))
+                }
             }
         },
     )
@@ -393,8 +395,10 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
             Row(verticalAlignment = Alignment.Bottom) {
                 BasicText(name, style = Abook.type.bodyStrong, modifier = Modifier.weight(1f, fill = false))
                 Reveal(person.gender.isNotEmpty()) {
-                    Spacer(Modifier.width(Dim.s8))
-                    BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Spacer(Modifier.width(Dim.s8))
+                        BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
+                    }
                 }
             }
             person.originalName?.let { BasicText(S.s_ten_goc_0_dea1648c(Cast.cleanName(it)), style = Abook.type.caption) }
