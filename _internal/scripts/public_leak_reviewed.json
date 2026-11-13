@@ -304,8 +304,8 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "815af2b3678b6a1fa7e7a8c4b6fc84a4948e0a2c3d08511a934ad484ac4f0d92",
-    "reason": "abook/text_processing.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "a23a129907d4c7a9570fdf377b29909a8ae4805de0eafdc0c3a6319fdde15be4",
+    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings."
   },
   "_internal/abook/tts.py": {
     "sha256": "3e9bd63116922a3d650e00ee4883023bcc580e57d0000d3cad8eb4873219588c",

@@ -572,6 +572,7 @@ def normalize_text(text: str) -> str:
     # thì không, và nguồn này không có chữ nào ngoài Latin - đã quét cả 478 file.
     for zero_width in ("\u200b", "\u200c", "\u200d", "\u2060", "\ufeff"):
         text = text.replace(zero_width, "")
+    text = unicodedata.normalize("NFC", text)
     # Ngoặc góc của bản dịch light novel Nhật (「Nhớ mang theo bút.」) là ngoặc thoại: đổi thành “…” ở đây, một chỗ, để mọi luật
     # phía sau - tách thoại, ngoặc nhiều dòng, khoá thoại nối tiếp, luật host, ngắt nghỉ TTS - thấy đúng dấu chúng biết.
     # Yamiyo no Hotaru có 30.941 dòng thoại như thế từng bị khoá là lời kể. 『…』 thì để yên: truyện dùng nó cho thuật
