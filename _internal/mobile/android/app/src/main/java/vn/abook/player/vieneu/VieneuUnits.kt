@@ -386,12 +386,13 @@ object VieneuUnits {
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
             out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
             var token = out[index]
+            // A leading 0 group is never a thousands group ("0.001" is a decimal).
             if (!numberUnit(plain, index)) {
-                token = Regex("""(?<![$W.,])[0-9]{1,3}(?:\.[0-9]{3})+(?![$W]|[.,][0-9])""").replace(token) {
+                token = Regex("""(?<![$W.,])[1-9][0-9]{0,2}(?:\.[0-9]{3})+(?![$W]|[.,][0-9])""").replace(token) {
                     integerReading(it.value.replace(".", ""))
                 }
             }
-            token = Regex("""(?<![$W.,])[0-9]+\.[0-9]{1,2}(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
+            token = Regex("""(?<![$W.,])(?:[0-9]+\.[0-9]{1,2}|0\.[0-9]+)(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
             // Only a number standing alone is a count; dates, codes, money, brackets and comparisons keep their digits.
             if (bareNumber(plain, index)) {
                 token = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { countReading(it.value) }

@@ -405,11 +405,12 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
         out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
         token = out[index]
-        # A final sentence dot is not another thousands separator.
+        # A final sentence dot is not another thousands separator; a leading
+        # 0 group is never a thousands group ("0.001" is a decimal).
         if not _number_unit(plain, index):
-            token = re.sub(r"(?<![\w.,])\d{1,3}(?:\.\d{3})+(?!\w|[.,]\d)",
+            token = re.sub(r"(?<![\w.,])[1-9]\d{0,2}(?:\.\d{3})+(?!\w|[.,]\d)",
                            lambda m: integer_reading(m.group().replace(".", "")), token)
-        token = re.sub(r"(?<![\w.,])\d+\.\d{1,2}(?!\d|[.,]\d)",
+        token = re.sub(r"(?<![\w.,])(?:\d+\.\d{1,2}|0\.\d+)(?!\d|[.,]\d)",
                        lambda m: m.group().replace(".", ","), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
         # Only a number standing alone is a count; dates, codes, money,
