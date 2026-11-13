@@ -18,6 +18,12 @@ object SleepText {
     /** Hẹn giờ vừa tắt tiếng mà chưa quá chừng này thì tấm Hẹn giờ còn mời bật lại (web: 30 phút). */
     const val RECENT_STOP_MS = 30 * 60_000L
 
+    /** Hẹn giờ đứng vì tạm dừng phát tới chừng này thì tự bỏ: buổi nghe sau (tối mai) không bị hẹn giờ cũ tắt tiếng. Web: sleep.ts `SLEEP_PAUSED_EXPIRES_MS`, Qt: kSleepPausedExpiresMs. */
+    const val PAUSED_EXPIRES_MS = 30 * 60_000L
+
+    /** Dòng dưới đồng hồ khi hẹn giờ đang đứng vì tạm dừng (web: PlayerViews.tsx `SleepMenu`, Qt: SleepPopover.qml). */
+    val pausedNote: String get() = S.s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(PAUSED_EXPIRES_MS / 60_000L)
+
     /** Đầu khối đang hẹn: "hết chương" thì "Dừng khi", hẹn phút thì "Tắt sau". */
     fun heading(kind: SleepKind): String = if (kind == SleepKind.Chapter) S.s_dung_khi_f05a4cb5 else S.s_tat_sau_8d10e047
 

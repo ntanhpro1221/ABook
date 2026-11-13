@@ -40,6 +40,13 @@ inline constexpr int kExtendMinutesMax = 60;
 inline constexpr int kScheduleMinutesMin = 5;
 inline constexpr int kScheduleMinutesMax = 240;
 inline constexpr int kScheduleMinutesStep = 5;
+// Hẹn giờ đứng vì tạm dừng phát tới chừng này thì tự tắt: buổi nghe sau (tối mai) không bị hẹn giờ cũ tắt tiếng.
+// Điện thoại: SleepText.PAUSED_EXPIRES_MS; web: sleep.ts SLEEP_PAUSED_EXPIRES_MS.
+inline constexpr qint64 kSleepPausedExpiresMs = 30 * 60'000;
+// Hẹn giờ đang có (`active`) đã đứng từ `pausedAt` (0 = đang phát) tới `now` quá hạn trên: phải tắt (sleep.ts sleepExpired).
+inline bool sleepPausedExpired(bool active, qint64 pausedAt, qint64 now) {
+    return active && pausedAt > 0 && now - pausedAt >= kSleepPausedExpiresMs;
+}
 
 struct Chapter {
     int id = 0;

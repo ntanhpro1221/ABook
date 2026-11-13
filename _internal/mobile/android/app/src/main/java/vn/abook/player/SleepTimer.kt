@@ -61,6 +61,9 @@ object SleepTimer {
     private var stoppedAutomatically = false
     private var ownerBook = ""
     private var ownerRecord = ""
+    /** Lúc trình phát dừng khi đang có hẹn giờ (0 = đang phát / không hẹn): dừng quá [SleepText.PAUSED_EXPIRES_MS] thì hẹn giờ tự bỏ ([expireIfPausedTooLong]). */
+    private var pausedAtMs = 0L
+    private val expireCheck = Runnable { if (!playing()) expireIfPausedTooLong() }
 
     /** An awake signal cancels automatic timers only. Explicitly chosen timers keep counting. */
     fun onAwake() {
@@ -93,13 +96,19 @@ object SleepTimer {
         ListenPrefs.saveTimer(timer)
     }
 
-    /** Khôi phục hẹn giờ đã ghi ([persist]) lúc tiến trình dậy: chưa quá mốc kết thúc thì còn lại đúng phần chưa trôi, đồng hồ đứng tới khi phát ([onPlaying]); quá rồi thì bỏ. */
+    /**
+     * Khôi phục hẹn giờ đã ghi ([persist]) lúc tiến trình dậy: chưa quá mốc kết thúc thì còn lại đúng phần chưa trôi, đồng hồ đứng tới khi phát ([onPlaying]); quá rồi thì bỏ.
+     * Hẹn giờ ghi lúc đang dừng (`remainingMs`, `savedAt` = lúc dừng) đã dừng tới [SleepText.PAUSED_EXPIRES_MS] cũng bỏ - như khi tiến trình còn sống.
+     */
     fun restore(timer: JSONObject?, now: Long = System.currentTimeMillis()) {
         if (timer == null || mode != Mode.OFF) return
-        val left = if (timer.has("endsAt")) timer.optLong("endsAt") - now else timer.optLong("remainingMs", 0L)
+        val running = timer.has("endsAt")
+        val left = if (running) timer.optLong("endsAt") - now else timer.optLong("remainingMs", 0L)
         val picked = timer.optInt("minutes")
+        val savedAt = timer.optLong("savedAt")
+        val window = if (running) 24 * 3_600_000L else SleepText.PAUSED_EXPIRES_MS - 1
         if (timer.optString("source") != "manual" || timer.optString("bookId").isEmpty() ||
-            now - timer.optLong("savedAt") !in 0..(24 * 3_600_000L) || !minutesAllowed(picked) || left !in 1..(picked * 60_000L)) {
+            now - savedAt !in 0..window || !minutesAllowed(picked) || left !in 1..(picked * 60_000L)) {
             ListenPrefs.saveTimer(null)
             return
         }
@@ -111,6 +120,8 @@ object SleepTimer {
         remainingMs = left
         warned = false
         runningSinceMs = 0L
+        // Đồng hồ đứng từ lúc dừng đã ghi (ghi lúc đang dừng) hay từ bây giờ (tiến trình chết lúc đang phát).
+        holdPausedClock(paused = true, since = if (running) now else savedAt, now = now)
     }
 
     fun describe(now: Long = System.currentTimeMillis()): JSONObject {
@@ -138,19 +149,41 @@ object SleepTimer {
         if (mode != Mode.OFF && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) cancel()
     }
 
+    /**
+     * Đang dừng thì hẹn giờ đứng yên và không tốn pin: vòng [tick] 250 ms tự ngừng, cảm biến tắt ([Motion.refresh] chỉ giữ nó khi đang phát). Phát lại thì
+     * chạy lại cả hai - trừ khi đã dừng tới [SleepText.PAUSED_EXPIRES_MS]: hẹn giờ của buổi nghe trước (tối qua) không được tắt tiếng buổi nghe này.
+     */
     fun onPlaying(isPlaying: Boolean) {
-        if (mode != Mode.MINUTES) return
+        if (mode == Mode.OFF) return
         if (isPlaying && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) { cancel(); return }
         val now = System.currentTimeMillis()
+        if (isPlaying && expireIfPausedTooLong(now)) return
+        holdPausedClock(paused = !isPlaying, since = now, now = now)
+        if (isPlaying) tick() // vòng đếm đã ngừng lúc dừng (hay chưa có: hẹn giờ khôi phục sau khi tiến trình chết, [restore])
+        if (mode != Mode.MINUTES) return
         if (isPlaying && runningSinceMs == 0L) {
             runningSinceMs = now
-            tick() // hẹn giờ khôi phục sau khi tiến trình chết ([restore]) chưa có vòng đếm
         } else if (!isPlaying && runningSinceMs > 0L) {
             remainingMs = leftMs(now)
             runningSinceMs = 0L
         }
         persist(now)
         Playback.emit("sleep")
+    }
+
+    /** Đang dừng: ghi lúc bắt đầu đứng và hẹn một lần xét hết hạn; đang phát thì xoá cả hai. Đã đứng rồi thì giữ mốc cũ (đệm / dừng lặp lại không kéo dài hạn). */
+    private fun holdPausedClock(paused: Boolean, since: Long, now: Long) {
+        main.removeCallbacks(expireCheck)
+        if (!paused) { pausedAtMs = 0L; return }
+        if (pausedAtMs == 0L) pausedAtMs = since
+        main.postDelayed(expireCheck, (pausedAtMs + SleepText.PAUSED_EXPIRES_MS - now).coerceAtLeast(0L))
+    }
+
+    /** Hẹn giờ đã dừng tới [SleepText.PAUSED_EXPIRES_MS] thì bỏ (khác [cancel]: không phải tín hiệu còn thức, lịch đêm vẫn tự hẹn lại được). true khi đã bỏ. */
+    internal fun expireIfPausedTooLong(now: Long = System.currentTimeMillis()): Boolean {
+        if (mode == Mode.OFF || pausedAtMs == 0L || now - pausedAtMs < SleepText.PAUSED_EXPIRES_MS) return false
+        turnOff()
+        return true
     }
 
     /** Số phút hẹn được: miền tự do của bộ chọn giá trị (1-240, ValueSpecs.sleepMinutes). */
@@ -168,6 +201,8 @@ object SleepTimer {
         warned = false
         runningSinceMs = if (playing()) System.currentTimeMillis() else 0L
         stoppedAtMs = 0
+        pausedAtMs = 0L
+        holdPausedClock(paused = !playing(), since = System.currentTimeMillis(), now = System.currentTimeMillis())
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
         Bedtime.timerSet(value, reason)
@@ -189,6 +224,8 @@ object SleepTimer {
         mode = Mode.CHAPTER
         warned = false
         stoppedAtMs = 0
+        pausedAtMs = 0L
+        holdPausedClock(paused = !playing(), since = System.currentTimeMillis(), now = System.currentTimeMillis())
         Playback.holdAtItemEnd(count == 1)
         restoreVolume()
         Bedtime.timerSet(-1)
@@ -202,10 +239,16 @@ object SleepTimer {
     fun cancel() {
         // Tự tắt hẹn giờ trong khung lịch đêm: đêm ấy không tự bật lại nữa.
         scheduleOffFor = scheduleWindow() ?: ""
+        ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
+        turnOff()
+    }
+
+    private fun turnOff() {
         mode = Mode.OFF
         automaticReason = ""
         stoppedAtMs = 0L
-        ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
+        pausedAtMs = 0L
+        main.removeCallbacks(expireCheck)
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
         Motion.refresh()
@@ -234,6 +277,8 @@ object SleepTimer {
         }
         minutes = target
         warned = false
+        pausedAtMs = 0L
+        holdPausedClock(paused = !playing(), since = now, now = now)
         restoreVolume()
         tick()
         persist()
@@ -296,6 +341,8 @@ object SleepTimer {
         automaticReason = ""
         stoppedAutomatically = automatic
         stoppedAtMs = System.currentTimeMillis()
+        pausedAtMs = 0L
+        main.removeCallbacks(expireCheck)
         restoreVolume()
         Bedtime.stopped()
         // No sound or vibration at expiry: the listener may already be asleep (DESIGN 5.4).
@@ -311,7 +358,8 @@ object SleepTimer {
         main.post(object : Runnable {
             override fun run() {
                 val exo = Playback.player
-                if (mode == Mode.OFF || exo == null) {
+                // Đang dừng: vòng đếm ngừng (đỡ pin), [onPlaying] chạy lại khi phát.
+                if (mode == Mode.OFF || exo == null || !exo.isPlaying) {
                     ticking = false
                     return
                 }
@@ -394,13 +442,14 @@ object Motion : SensorEventListener {
     private val recent = ArrayDeque<Pair<Long, Double>>()
 
     /**
-     * Bật cảm biến khi có ai cần: hẹn giờ đang chạy (lắc để nghe thêm), vừa tự dừng < 2 phút (lắc để nghe tiếp), hoặc
-     * đang phát để xét hẹn tự động, hoặc vừa úp máy dừng. Không ai cần thì tắt - đỡ pin.
+     * Bật cảm biến khi có ai cần: đang phát mà có hẹn giờ (lắc để nghe thêm - hẹn giờ đứng lúc dừng thì không cần) hay có lịch đêm (xét hẹn tự động),
+     * vừa tự dừng < 2 phút (lắc để nghe tiếp), hoặc vừa úp máy dừng. Không ai cần thì tắt - đỡ pin.
      */
     fun refresh() {
         val now = System.currentTimeMillis()
-        val wanted = (Playback.player?.isPlaying == true && SleepTimer.schedule != null) || SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
-            (flipEnabled && (Playback.player?.isPlaying == true || (flipPausedAtMs > 0 && now - flipPausedAtMs < FLIP_RESUME_MS)))
+        val playing = Playback.player?.isPlaying == true
+        val wanted = (playing && (SleepTimer.schedule != null || SleepTimer.mode != SleepTimer.Mode.OFF)) || SleepTimer.stoppedRecently(now) ||
+            (flipEnabled && (playing ||(flipPausedAtMs > 0 && now - flipPausedAtMs < FLIP_RESUME_MS)))
         if (wanted) start(Playback.appContext) else stop()
     }
     private val peaks = ArrayDeque<Long>()

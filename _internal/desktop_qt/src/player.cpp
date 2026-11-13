@@ -266,6 +266,13 @@ void Player::changed() {
 void Player::setPlaying(bool playing) {
     if (m_playing == playing)
         return;
+    // Hẹn giờ đã đứng quá hạn (tối qua dừng giữa chừng) thì tắt trước khi đồng hồ chạy tiếp; dừng thì bắt đầu đếm hạn.
+    if (playing) {
+        expireSleepIfPaused(m_now());
+        m_sleepPausedAt = 0;
+    } else if (m_sleep.kind != Sleep::Off) {
+        m_sleepPausedAt = m_now();
+    }
     m_playing = playing;
     changed();
     emit playingChanged();
@@ -1010,6 +1017,8 @@ void Player::applySleepState(Sleep::Kind kind, int minutes, double leftMs) {
     m_sleep.minutes = minutes;
     m_sleep.leftMs = leftMs;
     m_sleepWarned = false;
+    // Hẹn / hẹn lại khi đang dừng: hạn đứng tính lại từ bây giờ.
+    m_sleepPausedAt = kind != Sleep::Off && !m_playing ? m_now() : 0;
     changed();
     emit sleepChanged();
     m_clock.setSleepLeft(sleepLeftSeconds());
@@ -1102,6 +1111,19 @@ void Player::tickSleep(qint64 now) {
     } else if (m_fading) {
         endFade();
     }
+}
+
+// Hẹn giờ đứng vì tạm dừng quá kSleepPausedExpiresMs thì tắt - không phải "tắt hẹn giờ" của người nghe: lịch đêm vẫn tự hẹn lại được đêm ấy.
+bool Player::expireSleepIfPaused(qint64 now) {
+    if (!sleepPausedExpired(m_sleep.kind != Sleep::Off, m_sleepPausedAt, now))
+        return false;
+    if (!m_automaticSleep.isEmpty()) {
+        m_automaticSleep.clear();
+        setNotice(QString());
+    }
+    endFade();
+    applySleepState(Sleep::Off, 0, 0);
+    return true;
 }
 
 void Player::stopBySleep() {
@@ -1353,6 +1375,7 @@ void Player::tick() {
         m_outbox->flush();
     }
     if (!m_loaded || !m_playing) {
+        expireSleepIfPaused(now);
         updateTicker();
         return;
     }

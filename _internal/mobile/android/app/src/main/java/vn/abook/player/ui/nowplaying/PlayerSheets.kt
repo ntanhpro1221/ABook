@@ -324,5 +324,5 @@ private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
     } }
     ClockLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
     if (sleep.kind == SleepKind.Minutes && !sleep.counting)
-        BasicText(S.s_dang_tam_dung_dong_ho_cung_dung_474889f9, style = Abook.type.caption)
+        BasicText(SleepText.pausedNote, style = Abook.type.caption)
 }

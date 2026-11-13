@@ -43,6 +43,19 @@ export function sleepPaused(mode: SleepMode, now: number): SleepMode {
   return { ...mode, leftMs: sleepLeftMs(mode, now) ?? 0, since: null };
 }
 
+/** Hẹn giờ đứng vì tạm dừng phát tới chừng này thì tự tắt: buổi nghe sau (tối mai) không bị hẹn giờ cũ tắt tiếng. Điện thoại: SleepText.PAUSED_EXPIRES_MS, Qt: kSleepPausedExpiresMs. */
+export const SLEEP_PAUSED_EXPIRES_MS = 30 * 60_000;
+
+/** Hẹn giờ (phút hay hết chương) đã đứng từ `pausedAt` (null = đang phát) tới `now` quá [SLEEP_PAUSED_EXPIRES_MS]: phải tắt. */
+export function sleepExpired(mode: SleepMode, pausedAt: number | null, now: number): boolean {
+  return mode.kind !== "off" && pausedAt !== null && now - pausedAt >= SLEEP_PAUSED_EXPIRES_MS;
+}
+
+/** Dòng dưới đồng hồ khi hẹn giờ đứng vì tạm dừng. Điện thoại: SleepText.pausedNote. */
+export function sleepPausedNote(): string {
+  return S.s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(SLEEP_PAUSED_EXPIRES_MS / 60_000);
+}
+
 export function sleepResumed(mode: SleepMode, now: number): SleepMode {
   if (mode.kind !== "minutes" || mode.since !== null) return mode;
   return { ...mode, since: now };

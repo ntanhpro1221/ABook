@@ -65,7 +65,7 @@ import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContin
 import { SKIP_SECONDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber } from "@/shared/valuePickerLogic";
-import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
+import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepPausedNote, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
@@ -1105,7 +1105,7 @@ function SleepPicker({
             <TickingValue>{sleep.kind === "chapter" ? (sleep.chapters > 1 ? S.s_het_0_chuong_79433c77(sleep.chapters) : S.s_het_chuong_nay_8ccc288f) : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
-            <div className="mt-0.5 text-xs text-fg-2">{S.s_dang_tam_dung_dong_ho_cung_dung_474889f9}</div>
+            <div className="mt-0.5 text-xs text-fg-2">{sleepPausedNote()}</div>
           )}
           <div className="mt-3 flex gap-1.5">
             <Popover.Close asChild>

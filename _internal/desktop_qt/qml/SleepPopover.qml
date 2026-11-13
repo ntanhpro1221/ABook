@@ -45,7 +45,7 @@ Popover {
         }
         Collapse {
             width: parent.width; open: Player.sleepKind === "minutes" && !Player.playing
-            Text { width: parent.width; text: S.s_dang_tam_dung_dong_ho_cung_dung_474889f9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; text: S.s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(Player.sleepPausedExpiresMinutes); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
         }
         Text {
             visible: Player.sleepStoppedText !== "" && Player.sleepKind === "off"

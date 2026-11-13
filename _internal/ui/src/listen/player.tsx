@@ -27,6 +27,8 @@ import {
   sleepExtended,
   sleepFrom,
   sleepAfterChapter,
+  sleepExpired,
+  SLEEP_PAUSED_EXPIRES_MS,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
@@ -369,6 +371,8 @@ export function PlayerProvider({
   );
 
   const sleepWarned = useRef(false);
+  /** Lúc hẹn giờ bắt đầu đứng vì tạm dừng (null = đang phát / không hẹn) - xem hiệu ứng hết hạn bên dưới. */
+  const sleepPausedAt = useRef<number | null>(null);
   const applySleep = useCallback((mode: SleepMode) => {
     sleepWarned.current = false;
     refs.current.sleep = mode;
@@ -1550,6 +1554,8 @@ export function PlayerProvider({
       }),
       engine.on("seeked", () => { refs.current.sleepMark = { at: Date.now(), seconds: engine.time }; syncClock(); save(true); }),
       engine.on("play", () => {
+        // Hẹn giờ đã đứng quá hạn (tối qua dừng giữa chừng): tắt trước khi đồng hồ chạy tiếp - nhịp hẹn bên dưới có thể đã bị trình duyệt / máy ngủ hoãn.
+        if (!native && sleepExpired(refs.current.sleep, sleepPausedAt.current, Date.now())) applySleep({ kind: "off" });
         refs.current.wantsPlay = true;
         setPlaying(true);
         setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
@@ -1683,6 +1689,20 @@ export function PlayerProvider({
     ];
     return () => offs.forEach((off) => off());
   }, [applyRate, applySleep, caughtUpToast, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
+
+  // Hẹn giờ đứng vì tạm dừng (bộ máy web; điện thoại tự lo trong lõi native): tới SLEEP_PAUSED_EXPIRES_MS thì tắt. Mỗi lần hẹn / hẹn lại khi đang dừng tính lại từ đầu.
+  useEffect(() => {
+    if (native || playing || sleep.kind === "off") {
+      sleepPausedAt.current = null;
+      return;
+    }
+    const pausedAt = Date.now();
+    sleepPausedAt.current = pausedAt;
+    const timer = window.setTimeout(() => {
+      if (sleepExpired(refs.current.sleep, sleepPausedAt.current, Date.now())) applySleep({ kind: "off" });
+    }, SLEEP_PAUSED_EXPIRES_MS);
+    return () => window.clearTimeout(timer);
+  }, [applySleep, native, playing, sleep]);
 
   // Đồng hồ chạy theo khung hình khi đang phát: nhãn giây đổi đúng nhịp 1 giây thay vì theo timeupdate (~4 lần/giây,
   // lệch tới 270 ms). Chỉ component nào chọn giá trị đổi mới render lại.

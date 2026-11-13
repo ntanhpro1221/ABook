@@ -253,6 +253,51 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() < before);
     }
 
+    // Soát Android 12-11 mục 2: hẹn giờ đứng vì tạm dừng tới 30 phút thì tự tắt - tối mai nghe tiếp không bị hẹn giờ cũ tắt tiếng.
+    void sleepPausedForThirtyMinutesTurnsOff() {
+        QCOMPARE(kSleepPausedExpiresMs, qint64(30 * 60'000));
+        for (const QString kind : {QStringLiteral("minutes"), QStringLiteral("chapter")}) {
+            Rig rig;
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.player->setSleep(kind, 30);
+            rig.run(5);
+            rig.player->pause();
+            rig.run(29 * 60);
+            QCOMPARE(rig.player->sleepKind(), kind); // chưa tới hạn: vẫn hẹn
+            rig.run(61);
+            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+            QVERIFY(rig.player->sleepStoppedText().isEmpty()); // không phải "Hẹn giờ đã tắt tiếng lúc ..."
+            rig.player->resume();
+            rig.run(5);
+            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        }
+    }
+
+    void sleepPauseClockRestartsOnPlayAndOnANewTimer() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 30);
+        rig.player->pause();
+        rig.run(20 * 60);
+        rig.player->resume(); // phát lại trước hạn: hạn đứng tính lại từ lần dừng sau
+        rig.run(5);
+        rig.player->pause();
+        rig.run(20 * 60);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        rig.player->setSleep(QStringLiteral("minutes"), 15); // hẹn lại khi đang dừng: tính lại từ bây giờ
+        rig.run(20 * 60);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        rig.run(11 * 60);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+    }
+
+    void sleepPausedExpiryIsAPureRule() {
+        QVERIFY(!sleepPausedExpired(false, 1, 1 + kSleepPausedExpiresMs));
+        QVERIFY(!sleepPausedExpired(true, 0, kSleepPausedExpiresMs * 2));
+        QVERIFY(!sleepPausedExpired(true, 1000, 1000 + kSleepPausedExpiresMs - 1));
+        QVERIFY(sleepPausedExpired(true, 1000, 1000 + kSleepPausedExpiresMs));
+    }
+
     // "Hết N chương" (bộ chọn giá trị): mỗi chương hết là đếm xuống và nghe tiếp; chương cuối của hẹn mới dừng.
     void sleepEndOfThreeChaptersCountsDownThenStops() {
         Rig rig;

@@ -1546,7 +1546,7 @@ export const S = {
   s_dang_tai_viec_xuong_571590f2: "Đang tải việc xưởng",
   s_dang_tam_dung_0_47531a88: (p0: unknown) => "Đang tạm dừng" + String(p0),
   s_dang_tam_dung_0_b6363dfa: (p0: unknown) => "Đang tạm dừng " + String(p0),
-  s_dang_tam_dung_dong_ho_cung_dung_474889f9: "Đang tạm dừng - đồng hồ cũng dừng.",
+  s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4: (p0: unknown) => "Đang tạm dừng - đồng hồ cũng dừng. Dừng quá " + String(p0) + " phút thì hẹn giờ tự tắt.",
   s_dang_tam_dung_e40cc1b7: "Đang tạm dừng",
   s_dang_tam_dung_may_dang_chay_pin_83cf9dae: "Đang tạm dừng · máy đang chạy pin",
   s_dang_tao_giong_doc_799156a0: "đang tạo giọng đọc",

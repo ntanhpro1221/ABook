@@ -1213,7 +1213,7 @@ internal object S {
     fun s_dang_tai_san_nhac_nen_0_1_2_48ce53ca(p0: Any?, p1: Any?, p2: Any?): String = "Đang tải sẵn nhạc nền: " + p0.toString() + " / " + p1.toString() + " (" + p2.toString() + ")"
     fun s_dang_tai_san_nhac_nen_0_ca14ae35(p0: Any?): String = "Đang tải sẵn nhạc nền: " + p0.toString()
     fun s_dang_tam_dung_0_b6363dfa(p0: Any?): String = "Đang tạm dừng " + p0.toString()
-    const val s_dang_tam_dung_dong_ho_cung_dung_474889f9 = "Đang tạm dừng - đồng hồ cũng dừng."
+    fun s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(p0: Any?): String = "Đang tạm dừng - đồng hồ cũng dừng. Dừng quá " + p0.toString() + " phút thì hẹn giờ tự tắt."
     const val s_dang_tam_dung_e40cc1b7 = "Đang tạm dừng"
     const val s_dang_tam_dung_may_dang_chay_pin_83cf9dae = "Đang tạm dừng · máy đang chạy pin"
     const val s_dang_tao_sach_cb293b07 = "Đang tạo sách"
