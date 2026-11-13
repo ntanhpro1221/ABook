@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.168] - 2026-11-13
+
+- Names follow the book's chosen language and pronunciation more consistently in Studio and on the phone, including shouted names and Vietnamese syllables inside foreign names.
+- Improve readings of decimals, large numbers, model codes, letter names, stutters and familiar loanwords. Text pasted with decomposed Vietnamese accents now follows the same reading rules.
+- Improve speech checks for repeated short phrases and keep rejected takes available for the correct recovery path.
+- Continuing a book asks you to choose its source files again. Pairing a new computer checks its certificate before sending a manual pairing code.
+- Make menus, expanding sections and changing content move consistently across desktop, web and Android, including reduced motion. Keep shorter labels and clearer sleep timer choices.
+- Record the runtime versions actually used to make books and detect changes to the installed speech recognition packages.
+
 ## [0.4.167] - 2026-11-12
 
 - Nghe thử giọng và thu trong Studio không còn báo lỗi 422 khi sách có danh sách nhân vật; tên nhân vật được đọc theo đúng cách sách đã chọn ở cả bản nghe thử lẫn các tiến trình thu.
