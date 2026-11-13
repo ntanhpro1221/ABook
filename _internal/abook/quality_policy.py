@@ -37,6 +37,8 @@ TEXT_SEGMENTATION_STAGE = "text_segmentation_v1"
 ANALYSIS_CASTING_STAGE = "analysis_casting_v27"
 TEXT_SEGMENTATION_IMPLEMENTATION_FILES = (
     "text_processing.py",
+    # Lớp chữ hoa/thường mà luật tách đoạn dùng (vd. chủ ngữ tên riêng "Ánh đã...").
+    "vietnamese_letters.py",
 )
 ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "analysis.py",
@@ -51,6 +53,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "character_registry.py",
     "models.py",
     "name_snap.py",
+    "vietnamese_letters.py",
     "speaker_pass.py",
     "voice_balance.py",
     "assets/voice_balance.json",
@@ -123,6 +126,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "assets/voice_rank.json",
     "voice_catalog.py",
     "vietnamese_syllable.py",
+    "vietnamese_letters.py",
     "word_break.py",
     "assets/word_break_tokenizer.json.gz",
     "assets/word_break_duc_tri.json",

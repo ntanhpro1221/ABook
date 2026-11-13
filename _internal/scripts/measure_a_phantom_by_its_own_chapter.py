@@ -62,7 +62,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from abook.text_processing import VIETNAMESE_UPPERCASE_CLASS  # noqa: E402
+from abook.vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS  # noqa: E402
 
 BOOK =sys.argv[1] if len(sys.argv) > 1 else "book2"
 VERSIONS = (

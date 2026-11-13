@@ -21,7 +21,8 @@ from pathlib import Path
 from typing import Any
 
 from .io_utils import decode_text_bytes
-from .text_processing import VIETNAMESE_UPPERCASE_CLASS, natural_key, segment_chapter_text
+from .text_processing import natural_key, segment_chapter_text
+from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
 
 FIRST_PERSON_RATE = 0.30
 # Theo chương (xem đầu file): ngưỡng một chương, tỉ lệ chương của cả cuốn, và số đoạn lời kể tối thiểu để một chương được

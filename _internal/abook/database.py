@@ -56,10 +56,10 @@ from .text_processing import (
     SPLIT_MAX_CHARS_BY_STRATEGY,
     SPLIT_MAX_CHARS_FIELD,
     SPLIT_STRATEGY_FIELD,
-    VIETNAMESE_UPPERCASE_CLASS,
     is_standalone_ha_gasp,
     spoken_symbols_to_words,
 )
+from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
 from .tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
     HA_VOCALIZATION_FINAL_SAMPLES_FIELD,

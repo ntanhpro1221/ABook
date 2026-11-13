@@ -45,7 +45,8 @@ object SceneSegmenter {
     private val THIRD_PERSON = Py.rx("""(?<!\w)$THIRD_PERSON_SOURCE(?!\w)""", ignoreCase = true)
     private val NARRATIVE_SUBJECT = Py.rx(
         """(?<!\w)(?:$THIRD_PERSON_SOURCE""" +
-            """|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))[A-ZĐ]\w*(?:[\s-][A-ZĐ]\w*)*)""" +
+            """|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))""" +
+            """${VietnameseLetters.UPPER_CLASS}\w*(?:[\s-]${VietnameseLetters.UPPER_CLASS}\w*)*)""" +
             """\s+(?:đã|đang|vừa|liền|bèn)\s+\w""",
     )
     private val SPEECH_PRONOUN = Py.rx(

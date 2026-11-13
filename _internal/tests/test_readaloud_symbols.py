@@ -142,5 +142,17 @@ def test_a_slash_between_two_units_is_left_for_the_per_reading(text: str, said: 
     assert _said(text) == said
 
 
+# Chữ hoa có dấu là chữ hoa, chữ hoa không phải chữ thường (vietnamese_letters): "Ánh"/"Ống" như "Cuộn", "@Ăn" như "@Ten".
+@pytest.mark.parametrize("text, said", [
+    ("Bùa 100x Ánh sáng rơi ra.", "Bùa 100 Ánh sáng rơi ra."),
+    ("Bùa 100x ánh sáng rơi ra.", "Bùa 100 ích ánh sáng rơi ra."),
+    ("Nhận được – 1x Ống sáo bạc.", "Nhận được – 1 Ống sáo bạc."),
+    ("Bạn gõ @ăn rồi đi.", "Bạn gõ a ăn rồi đi."),
+    ("Bạn gõ @Ăn rồi đi.", "Bạn gõ a còng Ăn rồi đi."),
+])
+def test_an_accented_capital_is_a_capital(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
 def test_a_phone_number_without_the_symbol_is_unchanged() -> None:
     assert _said("Gọi 0912345678 nhé.") == "Gọi 0912345678 nhé."

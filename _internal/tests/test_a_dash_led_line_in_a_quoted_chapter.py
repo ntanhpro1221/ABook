@@ -31,6 +31,8 @@ def hint_of(line: str, talk: list[str] = QUOTED_TALK) -> str:
 def test_a_dash_led_aside_in_the_narration_is_narration() -> None:
     assert hint_of("-Hoặc không, vì hắn đã nhảy lùi lại tránh nhát chém.") == "narration"
     assert hint_of("— Lan đã đứng chờ sẵn ở cổng làng.") == "narration"
+    # Tên mở bằng chữ hoa có dấu cũng là tên (vietnamese_letters), không chỉ A-Z và Đ.
+    assert hint_of("— Ánh đã đứng chờ sẵn ở cổng làng.") == "narration"
 
 
 def test_a_dash_led_line_continuing_the_sentence_is_narration() -> None:

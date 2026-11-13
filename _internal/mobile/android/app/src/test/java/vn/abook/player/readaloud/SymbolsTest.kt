@@ -122,6 +122,16 @@ class SymbolsTest {
         "Hạn 10 lần/ngày, 3 chương/tuần." to "Hạn mười lần mỗi ngày, ba chương mỗi tuần.",
     )
 
+    // Chữ hoa có dấu là chữ hoa, chữ hoa không phải chữ thường (VietnameseLetters): "Ánh"/"Ống" như "Cuộn", "@Ăn" như "@Ten".
+    @Test
+    fun anAccentedCapitalIsACapital() = check(
+        "Bùa 100x Ánh sáng rơi ra." to "Bùa 100 Ánh sáng rơi ra.",
+        "Bùa 100x ánh sáng rơi ra." to "Bùa 100 ích ánh sáng rơi ra.",
+        "Nhận được – 1x Ống sáo bạc." to "Nhận được – 1 Ống sáo bạc.",
+        "Bạn gõ @ăn rồi đi." to "Bạn gõ a ăn rồi đi.",
+        "Bạn gõ @Ăn rồi đi." to "Bạn gõ a còng Ăn rồi đi.",
+    )
+
     @Test
     fun aPhoneNumberWithoutTheSymbolIsUnchanged() = check("Gọi 0912345678 nhé." to "Gọi 0912345678 nhé.")
 }

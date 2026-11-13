@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
+from ..vietnamese_letters import VIETNAMESE_LOWERCASE_CLASS as LOWER, VIETNAMESE_UPPERCASE_CLASS as UPPER
 from .abbreviations import LETTERS
 
 OPEN = "\"'“‘([【「『《〈«{〔"
@@ -311,7 +312,7 @@ def _at(c: Spot) -> tuple:
     if c.left3 & {"ngày", "tháng", "năm"} or c.right3 & {"ngày", "tháng", "năm"}:
         return SILENT  # ô trống "Ngày @ tháng"
     if word_r and not word_l and c.ltype != "digit" and not smiley:
-        leet = re.match(r"[a-zà-ỹ]{1,3}(?![\w])", c.right)
+        leet = re.match(rf"{LOWER}{{1,3}}(?![\w])", c.right)
         return ("a", False) if leet else ("a còng", False)  # "@ss": leet "ass"; "@ten": nhắc tên / tài khoản
     if not c.glued_l and not c.glued_r and c.l1[:1].isalpha() and not c.line_end:
         return ("a còng", False)  # "vừa @ mà": nhắc tên đã bị cắt
@@ -451,7 +452,7 @@ def _times_post(c: Spot, sym: str) -> tuple:
     number = re.search(r"\d+(?:[.,]\d+)?$", c.left).group()
     start = c.left[: len(c.left) - len(number)]
     place = c.l2.lower() in MASK_PLACES  # "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
-    if sym == "X" or place or ("." not in number and re.search(r"\d{3}$", number) and not re.match(r"\s?[a-zà-ỹ]|\s+[A-ZĐ]", c.right)):
+    if sym == "X" or place or ("." not in number and re.search(r"\d{3}$", number) and not re.match(rf"\s?{LOWER}|\s+{UPPER}", c.right)):
         return ("ích", False, 0)  # "194X"
     if (c.l2.lower() in ("đến", "tới") and re.search(r"\btừ\s", c.left[-40:].lower())) or (c.l2.lower() == "từ" and c.r1 in ("đến", "tới")):
         return (_multiplier_number(number) + " lần", False, len(number))  # "từ 0x đến 1x": mức gấp, đọc "không lần"
@@ -464,13 +465,13 @@ def _times_post(c: Spot, sym: str) -> tuple:
         return times  # "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
     if re.search(r"[A-Za-z]$", start) or re.search(r"[+=(]", c.left[-4:] + c.right[:3]):
         return ("ích", False, 0)  # "Maxmalefic9x", "2x+3": biến
-    if c.rch == "[" or (re.search(r"(?:^|[\s\[(–—-])$", start) and re.match(r"\s+[A-ZĐ]", c.right)):
+    if c.rch == "[" or (re.search(r"(?:^|[\s\[(–—-])$", start) and re.match(rf"\s+{UPPER}", c.right)):
         return ("", False, 0)  # "32x[1]", "– 1x Cuộn phép": một cuộn phép
     if not c.right.strip() or c.right[0] in CLOSE + PUNCT_MARKS:
         return times  # "3x.", "3x,": hệ số nhân đứng một mình
     if "." in number or "," in number:
         return times  # "0.5x": không phẩy năm lần
-    if re.match(r"\s[a-zà-ỹ]", c.right):
+    if re.match(rf"\s{LOWER}", c.right):
         return ("ích", False, 0)  # "9x của", "2x mà", "10x xem": số bị che, không có đại lượng nào theo sau
     return ("gấp " + number, False, len(number))  # "3x": gấp ba
 

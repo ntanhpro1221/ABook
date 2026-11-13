@@ -8,14 +8,9 @@ from typing import Any
 from . import book_paths
 from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file, sha256_text, slugify
 from .readaloud.symbols import unit_slash
+from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
 
 
-# Một chữ HOA tiếng Việt, dùng làm lớp ký tự regex. Đừng viết dải điểm mã `À-Ỹ`: U+00C0..U+1EF8 chứa cả chữ thường
-# (à, đ, ă, ơ, ạ...), nên "đứng" hay "ăn" cũng thành "viết hoa" và bị coi là tên riêng.
-VIETNAMESE_UPPERCASE_CLASS = (
-    r"[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊ"
-    r"ÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ]"
-)
 QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
 # Bản dịch hay mở ‘ rồi đóng bằng dấu ' thẳng ("được gọi là ‘tổng hợp ý kiến'."): dấu ' bám cuối chữ và theo sau là khoảng
 # trắng / dấu câu / hết dòng thì đóng ‘. Dấu ' nằm GIỮA chữ (tên phiên âm "Ma'at", "I'm") không đóng gì. Không nhận nó
@@ -165,7 +160,8 @@ THIRD_PERSON_PATTERN = re.compile(rf"(?<!\w){_THIRD_PERSON}(?!\w)", re.IGNORECAS
 # Chủ ngữ ngôi ba + đã/đang/vừa/liền/bèn + động từ: "hắn đã nhảy", "Silk đã kháng cự" - không phải "Đợi đã.".
 NARRATIVE_SUBJECT_PATTERN = re.compile(
     rf"(?<!\w)(?:{_THIRD_PERSON}"
-    r"|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))[A-ZĐ]\w*(?:[\s-][A-ZĐ]\w*)*)"
+    r"|(?!(?:Tôi|Mình|Ta|Chúng|Bọn|Cô|Nó|Anh|Em|Cậu|Ngài|Bạn|Người|Hãy|Đừng)(?!\w))"
+    rf"{VIETNAMESE_UPPERCASE_CLASS}\w*(?:[\s-]{VIETNAMESE_UPPERCASE_CLASS}\w*)*)"
     r"\s+(?:đã|đang|vừa|liền|bèn)\s+\w"
 )
 # Dấu hiệu lời nói: xưng hô ngôi một/hai (sau khi bỏ "cậu ta", "cô ấy"...), câu hỏi/cảm thán, tiểu từ cuối câu nói.

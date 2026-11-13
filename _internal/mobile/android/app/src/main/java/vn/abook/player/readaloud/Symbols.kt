@@ -1,5 +1,6 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.VietnameseLetters
 import vn.abook.player.vieneu.VieneuUnits
 import java.text.Normalizer
 import java.util.concurrent.ConcurrentHashMap
@@ -17,6 +18,8 @@ object Symbols {
     private const val CLOSE = "\"'”’)]】」』》〉»}〕"
     private const val PUNCT_MARKS = ".,;:!?…"
     private const val W = """\p{L}\p{N}_"""
+    private const val LOWER = VietnameseLetters.LOWER_CLASS
+    private const val UPPER = VietnameseLetters.UPPER_CLASS
     private val FRACTION_HINTS = "bằng còn gấp hơn kém nửa chia".split(" ").toSet()
     private val FRACTION_WORDS = "phần chia nửa hết chiếm tổng mất sức".split(" ").toSet() // "hết 2/10 máu", "chiếm 3/8": a/b là phân số (một phần mười)
     private val SCORE_WORDS = "điểm sao đánh câu hỏi đúng sai".split(" ").toSet() // "Đánh giá 4/5", "đúng 7/10 câu": điểm, đọc "trên"
@@ -284,7 +287,7 @@ object Symbols {
         }
         if ((c.left3 hit setOf("ngày", "tháng", "năm")) || (c.right3 hit setOf("ngày", "tháng", "năm"))) return SILENT
         if (wordR && !wordL && c.ltype != "digit" && !smiley) {
-            val leet = match("""[a-zà-ỹ]{1,3}(?![$W])""", c.right)
+            val leet = match("""$LOWER{1,3}(?![$W])""", c.right)
             return if (leet != null) say("a") else say("a còng")
         }
         if (!c.gluedL && !c.gluedR && c.l1.letter0() && !c.lineEnd) return say("a còng")
@@ -374,17 +377,17 @@ object Symbols {
         val number = search("""\d+(?:[.,]\d+)?$""", c.left)!!.value
         val start = c.left.substring(0, c.left.length - number.length)
         val place = c.l2.lowercase() in MASK_PLACES // "tầng 8x", "năm 200x", "chương thứ 9x": số bị che
-        if (sym == 'X' || place || ('.' !in number && search("""\d{3}$""", number) != null && match("""\s?[a-zà-ỹ]|\s+[A-ZĐ]""", c.right) == null)) return say("ích") to 0
+        if (sym == 'X' || place || ('.' !in number && search("""\d{3}$""", number) != null && match("""\s?$LOWER|\s+$UPPER""", c.right) == null)) return say("ích") to 0
         if ((c.l2.lowercase() in setOf("đến", "tới") && search("""\btừ\s""", c.left.takeLast(40).lowercase()) != null) || (c.l2.lowercase() == "từ" && c.r1 in setOf("đến", "tới"))) return say(multiplierNumber(number) + " lần") to number.length // "từ 0x đến 1x": mức gấp
         if ((c.left3 hit setOf("tuổi", "thế", "hệ", "gen", "đời", "sinh")) || (c.right3 hit setOf("km", "km/h", "m")) || c.rw1 in setOf("tuổi", "đời")) return say("ích") to 0 // "tuổi 9x", "16x km/h", "3x tuổi"
         if (search("""(?:sin|cos|tan|cot|log|ln)[\s(]*[\d/.,]*$""", start.lowercase()) != null) return say("ích") to 0 // "cos2/3x": biến của hàm số
         val times = say(multiplierNumber(number) + " lần") to number.length
         if (c.rw1 in QUANTITY_WORDS || c.l2.lowercase() in QUANTITY_WORDS) return times // "10x Sức mạnh", "(2x Intelligence)", "kính ngắm 8x"
         if (search("""[A-Za-z]$""", start) != null || search("""[+=(]""", c.left.takeLast(4) + c.right.take(3)) != null) return say("ích") to 0
-        if (c.rch == '[' || (search("""(?:^|[\s\[(–—-])$""", start) != null && match("""\s+[A-ZĐ]""", c.right) != null)) return say("") to 0
+        if (c.rch == '[' || (search("""(?:^|[\s\[(–—-])$""", start) != null && match("""\s+$UPPER""", c.right) != null)) return say("") to 0
         if (c.right.isBlank() || c.right[0] in CLOSE + PUNCT_MARKS) return times // "3x.", "3x,": hệ số nhân đứng một mình
         if ('.' in number || ',' in number) return times
-        if (match("""\s[a-zà-ỹ]""", c.right) != null) return say("ích") to 0 // "9x của", "10x xem": số bị che, không có đại lượng nào theo sau
+        if (match("""\s$LOWER""", c.right) != null) return say("ích") to 0 // "9x của", "10x xem": số bị che, không có đại lượng nào theo sau
         return say("gấp $number") to number.length
     }
 

@@ -17,7 +17,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 
 from .character_registry import _fold_each_char, _within_one_edit, _within_two_edits
-from .text_processing import VIETNAMESE_UPPERCASE_CLASS
+from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
 
 # Nhãn không phải tên người: người kể, chưa rõ, hệ thống, NPC (cả nhãn cục bộ `NPC_LOCAL::...`).
 NOT_A_NAME = frozenset({"NARRATOR", "UNKNOWN", "SYSTEM", ""})

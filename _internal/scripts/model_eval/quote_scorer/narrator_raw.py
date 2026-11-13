@@ -26,9 +26,9 @@ from build_vi import NARRATOR_I  # noqa: E402
 
 from abook.io_utils import decode_text_bytes  # noqa: E402
 from abook.text_processing import segment_chapter_text  # noqa: E402
+from abook.vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS  # noqa: E402
 
-UPPER = "A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ"
-WORD = rf"[{UPPER}][\w'-]*"
+WORD = rf"{VIETNAMESE_UPPERCASE_CLASS}[\w'-]*"
 # Cụm viết hoa 1-3 chữ KHÔNG đứng đầu câu/đoạn (sau chữ thường hoặc dấu phẩy) - tên riêng, không phải chữ đầu câu.
 NAME = re.compile(rf"(?<=[\w,;]\s)({WORD}(?:\s{WORD}){{0,2}})")
 

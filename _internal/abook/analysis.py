@@ -86,11 +86,11 @@ from .process_utils import terminate_process_tree
 from . import studio_names
 from .text_processing import (
     ROMAN_NUMERAL_TOKEN_PATTERN,
-    VIETNAMESE_UPPERCASE_CLASS,
     is_vocalization_only,
     roman_numeral_value,
     vietnamese_number_words,
 )
+from .vietnamese_letters import VIETNAMESE_LOWERCASE_CLASS, VIETNAMESE_UPPERCASE_CLASS
 
 
 ALLOWED_KINDS = {"narration", "dialogue", "thought"}
@@ -650,7 +650,7 @@ NOT_YET_SPOKEN_PATTERN = re.compile(
 # nói:". Cho phép 1-3 chữ THƯỜNG ở giữa; dấu phẩy thì không, vì dấu phẩy là đã sang mệnh đề khác.
 SPEECH_ATTRIBUTION_PATTERN = re.compile(
     rf"(?P<speaker>{LATIN_PROPER_NAME_SURFACE_PATTERN.pattern})\s+"
-    r"(?P<middle>(?:[a-zà-ỹđ]+\s+){1,3})?"
+    rf"(?P<middle>(?:{VIETNAMESE_LOWERCASE_CLASS}+\s+){{1,3}})?"
     r"(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|quát|kêu|thốt lên)\s*[:：]\s*$"
 )
 # Giới từ ngay trước một cái tên: tên ấy là ĐỐI TƯỢNG của hành động, không phải người nói
@@ -1524,8 +1524,9 @@ def _split_analysis_group(
 # Lugar (thầy gán nhãn 06-10). Câu gọi thật thì sau tên là lời nói ("Lugar, đi thôi.") hay ngắt bằng dấu phẩy ("Lugar, con
 # trai của ta, nghe đây").
 SELF_INTRODUCTION_APPOSITIVE_PATTERN = re.compile(
-    r"\s*(?!(?:tôi|ta|tao|tớ|mình|em|anh|chị|ngươi|mày|cậu|bạn)\s)(?:[a-zà-ỹđ]+\s+){1,3}của\s+(?:[a-zà-ỹđ]+\s+){0,2}"
-    r"[A-ZĐ][\wÀ-ỹĐđ'’-]*(?:\s+[A-ZĐ][\wÀ-ỹĐđ'’-]*)*\s*[.!](?:\s|[\"”’]|$)"
+    r"\s*(?!(?:tôi|ta|tao|tớ|mình|em|anh|chị|ngươi|mày|cậu|bạn)\s)"
+    rf"(?:{VIETNAMESE_LOWERCASE_CLASS}+\s+){{1,3}}của\s+(?:{VIETNAMESE_LOWERCASE_CLASS}+\s+){{0,2}}"
+    rf"{VIETNAMESE_UPPERCASE_CLASS}[\wÀ-ỹĐđ'’-]*(?:\s+{VIETNAMESE_UPPERCASE_CLASS}[\wÀ-ỹĐđ'’-]*)*\s*[.!](?:\s|[\"”’]|$)"
 )
 
 

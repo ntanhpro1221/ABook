@@ -25,6 +25,7 @@ from .asr_contract import (
 from .audio_io import resample_audio
 from .resource_manager import trim_process_working_set
 from .text_processing import is_vocalization_only, vietnamese_number_words
+from .vietnamese_letters import VIETNAMESE_LOWERCASE_CLASS
 from .vietnamese_syllable import valid_syllable
 
 
@@ -169,7 +170,7 @@ _PHONEMIZER: list[Any] = []
 
 
 _VIETNAMESE_K_BEFORE_BACK_VOWEL = re.compile(
-    r"(?<![a-zà-ỹ])k(?=[aàáảãạăằắẳẵặâầấẩẫậoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữự])",
+    rf"(?<!{VIETNAMESE_LOWERCASE_CLASS})k(?=[aàáảãạăằắẳẵặâầấẩẫậoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữự])",
     re.IGNORECASE,
 )
 
