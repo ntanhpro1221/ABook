@@ -84,7 +84,7 @@ private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: Module
         if (choice.installed && status?.state == ModuleState.Outdated) {
             MenuRow(S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes)), "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
         }
-        if (choice.installed) {
+        Reveal(choice.installed) {
             MenuRow(
                 if (status?.benchmarking == true) S.s_dang_do_toc_do_d0876866 else S.s_thu_lai_toc_do_a69ef56d, "module_measure", unavailable = status?.benchmarking == true,
                 onClick = { voice.measure(kind); dismiss() },
@@ -223,7 +223,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                             masked = !revealed,
                             trailing = { TextAction(if (revealed) S.s_an_9c7a6c2d else S.s_hien_79d3e7eb, { revealed = !revealed }, "key_reveal") },
                         )
-                        if (provider.region) {
+                        Reveal(provider.region) {
                             Spacer(Modifier.height(Dim.s8))
                             BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, S.s_vung_db826aa7, placeholder = S.s_vung_vi_du_southeastasia_959965a2)
                         }
@@ -254,7 +254,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                             }
                         }, "key_check")
                     }
-                    if (provider.hasKey) {
+                    Reveal(provider.hasKey) {
                         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
                         MenuRow(S.s_xoa_khoa_2ec6cb1a, "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
                     }

@@ -318,7 +318,7 @@ fun ValuePicker(
                     }
                     StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
                 }
-                if (!plan.aligned && spec.typical.isNotEmpty()) {
+                Reveal(!plan.aligned && spec.typical.isNotEmpty()) {
                     BalancedPickerChips(Modifier.fillMaxWidth().padding(horizontal = Dim.s48).testTag("${tag}_chips")) {
                         spec.typical.forEachIndexed { index, typical ->
                             Box(Modifier.heightIn(min = Dim.s48).widthIn(min = Dim.s48)

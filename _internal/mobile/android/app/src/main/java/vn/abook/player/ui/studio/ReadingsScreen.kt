@@ -49,6 +49,7 @@ import vn.abook.player.ui.studio.parts.UndoStrip
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * "Cách đọc tên" (NATIVE_REMOTE_STUDIO.md §6.10): mọi tên riêng máy đọc thế nào. Chạm "Sửa" mở ô một dòng ngay dưới tên: gõ, "Nghe thử", rồi "Lưu" (máy kiểm,
@@ -95,7 +96,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
         item("undo", "undo") {
             Column(Modifier.fillMaxWidth()) {
                 DecisionStrip(state.decisions)
-                if (state.notice.isNotEmpty()) UndoStrip(state.notice, null, state::dismissNotice, "studio_readings_notice", Modifier.padding(top = Dim.s12))
+                Reveal(state.notice.isNotEmpty()) { UndoStrip(state.notice, null, state::dismissNotice, "studio_readings_notice", Modifier.padding(top = Dim.s12)) }
             }
         }
         if (state.offer.isNotEmpty()) item("offer", "offer") {
@@ -149,9 +150,9 @@ private fun ReadingRow(state: StudioReadingsState, item: NameReading, clip: Clip
                 }
                 RowHint(note, Modifier.padding(top = Dim.s4).testTag("studio_reading_note"))
             }
-            if (!editing) TextAction(if (fresh) ReadingsText.add(item.surface) else ReadingsText.EDIT, { onEdit(true) }, "studio_reading_edit_${item.surface}")
+            Reveal(!editing) { TextAction(if (fresh) ReadingsText.add(item.surface) else ReadingsText.EDIT, { onEdit(true) }, "studio_reading_edit_${item.surface}") }
         }
-        if (editing) ReadingEditor(state, item, fresh, reach) { onEdit(false) }
+        Reveal(editing) { ReadingEditor(state, item, fresh, reach) { onEdit(false) } }
         RowLine()
     }
 }
@@ -220,11 +221,11 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
             description = ReadingsText.FIELD, placeholder = S.s_vd_0_85e20173(item.spoken.ifEmpty { S.s_hen_kho_5490c924 }),
         )
         InlineProblem(problem, null, "studio_reading_problem")
-        if (suggestion.isNotEmpty()) {
+        Reveal(suggestion.isNotEmpty()) {
             TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
         }
-        if (never) RowHint(ReadingsLogic.neverText(item.surface), Modifier.padding(top = Dim.s4).testTag("studio_reading_never"), Abook.colors.danger)
-        if (heard.isNotEmpty()) RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_reading_heard"))
+        Reveal(never) { RowHint(ReadingsLogic.neverText(item.surface), Modifier.padding(top = Dim.s4).testTag("studio_reading_never"), Abook.colors.danger) }
+        Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_reading_heard")) }
         SwitchRow(ReadingsText.EVERYWHERE, everywhere, { everywhere = it }, "studio_reading_everywhere")
         Column(Modifier.fillMaxWidth().padding(top = Dim.s8), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Dim.s8)) {
             if (trying) AnswerButton(ReadingsText.TRY_STOP, state::cancelTry, "studio_reading_cancel_try")

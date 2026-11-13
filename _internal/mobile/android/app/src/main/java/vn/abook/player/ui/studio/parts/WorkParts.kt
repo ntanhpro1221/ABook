@@ -140,7 +140,7 @@ fun LineSample(example: WorkExample, clip: ClipState, clipId: String, onPlay: ((
         verticalAlignment = Alignment.Top,
     ) {
         Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
-            if (example.before.isNotEmpty()) RowHint(example.before, Modifier.padding(bottom = Dim.s4))
+            Reveal(example.before.isNotEmpty()) { RowHint(example.before, Modifier.padding(bottom = Dim.s4)) }
             val parts = WorkLogic.markNames(example.text, example.names)
             val base = Abook.type.body.copy(color = if (example.narration) colors.text2 else colors.text)
             BasicText(
@@ -152,7 +152,7 @@ fun LineSample(example: WorkExample, clip: ClipState, clipId: String, onPlay: ((
                 style = base,
                 modifier = Modifier.testTag("${tag}_text"),
             )
-            if (example.after.isNotEmpty()) RowHint(example.after, Modifier.padding(top = Dim.s4))
+            Reveal(example.after.isNotEmpty()) { RowHint(example.after, Modifier.padding(top = Dim.s4)) }
             val who = if (!example.narration && example.speaker.isNotEmpty()) " · ${example.speaker}" else ""
             Caption("${example.chapterTitle}$who", Modifier.padding(top = Dim.s4), colors.text3)
         }

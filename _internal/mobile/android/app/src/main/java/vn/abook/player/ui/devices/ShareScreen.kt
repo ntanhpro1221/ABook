@@ -53,7 +53,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
     share.code?.let { lastCode[0] = it }
     val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90 else "" }
     DeviceSettingsContent(S.s_chia_se_thu_vien_940de671, onBack, "share_screen", embedded) {
-        if (ui.loaded) Column(Modifier.fillMaxWidth().testTag("share_list").padding(bottom = Dim.s16)) {
+        Reveal(ui.loaded) { Column(Modifier.fillMaxWidth().testTag("share_list").padding(bottom = Dim.s16)) {
             key("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
                     SwitchRow(S.s_ket_noi_wi_fi_7680d1aa, share.running, { on ->
@@ -71,7 +71,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                             ListItem(S.s_ten_c8b17259, hint = share.name)
                             Fold(S.s_chi_tiet_e762d926, "share_details") {
                                 ListItem(S.s_dia_chi_249de6f5, Modifier.testTag("share_address"), hint = share.addressLine)
-                                if (share.fingerprint.isNotBlank()) ListItem(S.s_van_tay_74d5ff65, hint = share.fingerprint.uppercase().replace(Regex("(.{4})(?=.)"), "$1 "))
+                                Reveal(share.fingerprint.isNotBlank()) { ListItem(S.s_van_tay_74d5ff65, hint = share.fingerprint.uppercase().replace(Regex("(.{4})(?=.)"), "$1 ")) }
                             }
                             Caption(S.s_may_kia_chua_tu_thay_dien_thoai_dia_chi_na_34b7f3e8, Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
@@ -116,6 +116,6 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                     }
                 }
             }
-        }
+        } }
     }
 }

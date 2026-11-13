@@ -106,8 +106,8 @@ private fun ExportBody(state: StudioProjectState, book: StudioBook, job: StudioE
                     RowHint(StudioExportLogic.about(shown), Modifier.padding(top = Dim.s4, bottom = Dim.s8))
                 }
                 val size = if (kind == StudioExportKind.BookFile) StudioExportLogic.sizeNote(options) else ""
-                if (size.isNotEmpty()) Caption(size, Modifier.testTag("studio_export_size"))
-                if (blocker.isNotEmpty()) RowHint(blocker, Modifier.padding(top = Dim.s4).testTag("studio_export_blocker"), Abook.colors.accentText)
+                Reveal(size.isNotEmpty()) { Caption(size, Modifier.testTag("studio_export_size")) }
+                Reveal(blocker.isNotEmpty()) { RowHint(blocker, Modifier.padding(top = Dim.s4).testTag("studio_export_blocker"), Abook.colors.accentText) }
             }
         }
         item("music", "music") {
@@ -169,7 +169,7 @@ private fun JobBlock(state: StudioProjectState, kind: StudioExportKind, job: Stu
             }
             job.state == "error" -> {
                 BasicText(StudioExportText.failedTitle(kind), style = Abook.type.sectionTitle, modifier = Modifier.testTag("studio_export_failed"))
-                if (job.error.isNotBlank()) BasicText(job.error, style = Abook.type.body.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("studio_export_error"))
+                Reveal(job.error.isNotBlank()) { BasicText(job.error, style = Abook.type.body.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("studio_export_error")) }
             }
         }
     }

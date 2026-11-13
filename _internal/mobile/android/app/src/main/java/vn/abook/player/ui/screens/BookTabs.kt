@@ -117,7 +117,7 @@ fun BookTabs(tabs: List<BookTab>, selected: BookTab, chapterCount: Int, onPick: 
     ScrollingTabs(
         tabs, selected, onPick, label = { it.label }, tag = { it.tag }, rowTag = "book_tabs", modifier = modifier,
         suffix = { tab ->
-            if (tab == BookTab.Chapters) {
+            Reveal(tab == BookTab.Chapters) {
                 Spacer(Modifier.width(Dim.s8))
                 BasicText("$chapterCount", style = Abook.type.caption.copy(color = Abook.colors.text2))
             }
@@ -211,7 +211,7 @@ fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () ->
         item(key = "history_day_${day.label}", contentType = "day") {
             Fold(day.label, "history_day_${day.label}", Modifier.fade(fade), summary = History.daySummary(day)) {
                 for ((n, session) in day.sessions.withIndex()) {
-                    if (n > 0) RowLine()
+                    Reveal(n > 0) { RowLine() }
                     HistoryRow(session, { titles[it] }, onResume)
                 }
             }
@@ -335,10 +335,10 @@ fun LazyListScope.castItems(
                 summary = S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.size), defaultOpen = cast.characters.size <= 4,
             ) {
                 for ((n, person) in shown.withIndex()) {
-                    if (n > 0) RowLine(start = PersonTextStart)
+                    Reveal(n > 0) { RowLine(start = PersonTextStart) }
                     PersonRow(person, samples, onMore)
                 }
-                if (ahead > 0) {
+                Reveal(ahead > 0) {
                     TextAction(Cast.laterLabel(later, ahead), onLater, "cast_later", Modifier.padding(top = Dim.s4), align = Alignment.CenterStart)
                 }
             }
@@ -348,7 +348,7 @@ fun LazyListScope.castItems(
         item(key = "cast_extras", contentType = "fold") {
             Fold(S.s_vai_phu_6e7c6bce, "cast_extras", Modifier.fade(fade).padding(top = Dim.s8), summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) {
                 for ((n, person) in cast.extras.withIndex()) {
-                    if (n > 0) RowLine(start = PersonTextStart)
+                    Reveal(n > 0) { RowLine(start = PersonTextStart) }
                     PersonRow(person, samples, onMore)
                 }
             }
@@ -387,7 +387,7 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 BasicText(name, style = Abook.type.bodyStrong, modifier = Modifier.weight(1f, fill = false))
-                if (person.gender.isNotEmpty()) {
+                Reveal(person.gender.isNotEmpty()) {
                     Spacer(Modifier.width(Dim.s8))
                     BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
                 }

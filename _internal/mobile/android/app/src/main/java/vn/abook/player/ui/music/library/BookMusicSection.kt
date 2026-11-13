@@ -21,6 +21,7 @@ import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Phần "Nhạc trong sách" của trang sách: các bài của danh mục cuốn này dùng (gộp trùng, số đoạn mỗi bài) + "Lưu tất cả (X)" - lưu = ghim + tải
@@ -44,7 +45,7 @@ fun BookMusicSection(state: LibraryState, sheets: SheetHost, scenes: List<Pair<S
             }
             RowLine(start = Dim.s48)
         }
-        if (unsaved.isNotEmpty()) {
+        Reveal(unsaved.isNotEmpty()) {
             QuietButton(S.s_luu_tat_ca_0_e16e7860(formatSize(ui.missingBytes(unsaved))), { state.save(unsaved.map { it.link }) }, "book_music_save_all")
         }
     }

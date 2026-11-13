@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.music.MusicCredit
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Lối vào màn Nhạc từ những chỗ khác (Shell cung cấp; null = bản thử, không có màn Nhạc):
@@ -36,5 +37,5 @@ fun BookMusicFor(state: LibraryState, sheets: SheetHost, bookId: String, scenesO
     val scenes by produceState(emptyList<Pair<String?, String>>(), bookId) {
         value = withContext(Dispatchers.IO) { runCatching { scenesOf(bookId) }.getOrDefault(emptyList()) }
     }
-    if (scenes.isNotEmpty()) BookMusicSection(state, sheets, scenes, Modifier.padding(top = Dim.s24))
+    Reveal(scenes.isNotEmpty()) { BookMusicSection(state, sheets, scenes, Modifier.padding(top = Dim.s24)) }
 }

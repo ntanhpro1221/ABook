@@ -386,7 +386,7 @@ fun LevelMeter(level: Double, enabled: Boolean = true, onPick: (Double) -> Unit,
     LaunchedEffect(enabled, level) { if (enabled) moving = null }
     val shown = moving ?: MusicLevels.clamp(level)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("music_levels")) {
-        if (showTitle) BasicText(MusicLevels.TITLE, style = Abook.type.bodyStrong)
+        Reveal(showTitle) { BasicText(MusicLevels.TITLE, style = Abook.type.bodyStrong) }
         AnimatedContent(targetState = MusicLevels.label(shown), transitionSpec = {
             (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 } + fadeIn(tween(MotionMs.MEDIUM)))
                 .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)))
@@ -444,8 +444,8 @@ fun MusicCreditBlock(credit: MusicCredit?, bookId: String = "") {
                         if (shown.licenseUrl.isNotEmpty()) ActionRow(S.s_giay_phep_b609ade1, label, { openUri(shown.licenseUrl) }, "music_license")
                         else ListRow(S.s_giay_phep_b609ade1) { BasicText(label, style = Abook.type.bodySmall) }
                     }
-                    if (MusicText.needsModifiedNote(shown.license)) Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8))
-                    if (shown.landing.isNotEmpty()) ActionRow(S.s_trang_cua_bai_nhac_50968bde, S.s_mo_741bd2c2, { openUri(shown.landing) }, "music_landing")
+                    Reveal(MusicText.needsModifiedNote(shown.license)) { Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8)) }
+                    Reveal(shown.landing.isNotEmpty()) { ActionRow(S.s_trang_cua_bai_nhac_50968bde, S.s_mo_741bd2c2, { openUri(shown.landing) }, "music_landing") }
                 }
             }
         }

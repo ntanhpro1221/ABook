@@ -34,6 +34,7 @@ import vn.abook.player.ui.data.SaveStep
 import vn.abook.player.ui.data.SaveText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /** Loại file của "Lưu thành" (web: EditBook.tsx SaveAsDialog). */
 enum class SaveKind(override val key: String, override val label: String, val project: Boolean) : Choice {
@@ -133,7 +134,7 @@ fun SaveAsPage(detail: BookDetail, run: BookSaveRun) {
             style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = Dim.s8).testTag("save_kind_note"),
         )
         PrimaryButton(if (run.busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { run.saveAs(kind) }, Modifier.fillMaxWidth().testTag("save_as_go"), enabled = !run.busy) { ink -> ExportIcon(ink) }
-        if (run.problem.isNotEmpty()) {
+        Reveal(run.problem.isNotEmpty()) {
             BasicText(run.problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("save_problem"))
         }
     }

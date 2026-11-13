@@ -70,6 +70,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.hover
 import vn.abook.player.ui.theme.ThemeReveal
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.Reveal
 
 /** Việc Cài đặt nhờ hệ điều hành làm (mở trang khác, bảng chia sẻ): Activity cung cấp, test đưa bản giả. */
 class SettingsLinks(
@@ -169,7 +170,7 @@ private fun GroupList(
     ) {
         Box(Modifier.padding(horizontal = if (split) Dim.s8 else 0.dp)) { ScreenHeader(S.s_cai_dat_202e0e9b) }
         for ((index, group) in SettingsGroup.entries.withIndex()) {
-            if (!split && index > 0) RowLine(start = IconSlot + IconGap)
+            Reveal(!split && index > 0) { RowLine(start = IconSlot + IconGap) }
             val here = group == selected
             val row: @Composable () -> Unit = {
                 DisclosureRow(

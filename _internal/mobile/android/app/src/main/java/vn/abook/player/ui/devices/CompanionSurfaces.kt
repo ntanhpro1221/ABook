@@ -78,7 +78,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                         hint = if (remote.book.isEmpty()) S.s_chua_phat_sach_f18215d2 else if (remote.playing) S.s_dang_phat_ac2dd0c2 else S.s_dang_dung_9b35aeb5,
                         leading = { OtherPlayerIcon(remote) },
                         below = {
-                            if (remote.protocol == "gcast") Caption(S.s_google_cast_981c76f4)
+                            Reveal(remote.protocol == "gcast") { Caption(S.s_google_cast_981c76f4) }
                             Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
                                 Column {
                                     BasicText(remote.title, style = Abook.type.bodySmall)

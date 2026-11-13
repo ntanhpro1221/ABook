@@ -16,6 +16,7 @@ import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.data.dotJoin
 import vn.abook.player.ui.data.dotJoined
 import java.util.Locale
+import vn.abook.player.ui.components.Reveal
 
 @Composable
 fun VoicePickCard(voice: VoiceState) {
@@ -35,13 +36,13 @@ fun VoicePickCard(voice: VoiceState) {
             }
             val numbers = EnginePickText.numbers(row)
             ListRow(dotJoin(MachineVoicePick.name(engine), badge), hint = numbers) {
-                if (!chosen && !status.measuring) TextAction(S.s_dung_giong_nay_903b57aa, { voice.choosePick(engine) }, "voice_pick_$engine")
+                Reveal(!chosen && !status.measuring) { TextAction(S.s_dung_giong_nay_903b57aa, { voice.choosePick(engine) }, "voice_pick_$engine") }
             }
         }
-        if (status.engines.isNotEmpty()) Caption(S.s_cung_vai_cau_cho_moi_giong_chua_co_bo_nghe_e6bb15d4)
-        if (status.installed.isNotEmpty() && !status.measuring) {
+        Reveal(status.engines.isNotEmpty()) { Caption(S.s_cung_vai_cau_cho_moi_giong_chua_co_bo_nghe_e6bb15d4) }
+        Reveal(status.installed.isNotEmpty() && !status.measuring) {
             TextAction(if (status.engines.isEmpty()) S.s_thu_77e1c0d9 else S.s_thu_lai_c58d068c, voice::measurePick, "voice_pick_measure")
-            if (status.override.isNotEmpty()) TextAction(S.s_theo_so_do_f3663b51, { voice.choosePick("") }, "voice_pick_auto")
+            Reveal(status.override.isNotEmpty()) { TextAction(S.s_theo_so_do_f3663b51, { voice.choosePick("") }, "voice_pick_auto") }
         }
     }
 }

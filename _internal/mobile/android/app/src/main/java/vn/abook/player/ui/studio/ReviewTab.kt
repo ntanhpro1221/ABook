@@ -36,6 +36,7 @@ import vn.abook.player.ui.studio.parts.SideBySide
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /** Những gì tab "Cần nghe lại" đọc từ các luồng (lần hỏi gần nhất, tiếng đang phát) - gom lại để dựng các mục của danh sách mà không cần là hàm Composable. */
 @Immutable
@@ -94,12 +95,12 @@ internal fun LazyListScope.reviewTab(review: StudioReviewState, data: ReviewData
 private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: ReviewData) {
     val minor = (list.counts[ReviewKind.Name] ?: 0) + (list.counts[ReviewKind.Text] ?: 0)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
-        if (review.filter == ReviewFilter.Todo) Caption(WorkText.reviewPending(list.pending), Modifier.testTag("studio_review_pending"))
-        if (list.redoChapters.isNotEmpty()) {
+        Reveal(review.filter == ReviewFilter.Todo) { Caption(WorkText.reviewPending(list.pending), Modifier.testTag("studio_review_pending")) }
+        Reveal(list.redoChapters.isNotEmpty()) {
             RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
             MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.REDO_MORE, "studio_review_redo_more")
         }
-        if (minor > 0 || review.showMinor) {
+        Reveal(minor > 0 || review.showMinor) {
             TextAction(
                 if (review.showMinor) WorkText.MINOR_HIDE else "${WorkText.MINOR_SHOW} ($minor)", review::toggleMinor, "studio_review_minor",
                 Modifier.fillMaxWidth(), Alignment.CenterStart,
@@ -108,10 +109,10 @@ private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: Revi
         val playable = data.items.count { review.clipOf(it) != null }
         if (review.continuous) {
             AnswerButton(WorkText.PLAY_ALL_STOP, review::stopContinuous, "studio_review_stop", Modifier.padding(top = Dim.s8))
-        } else if (playable > 0) {
+        } else Reveal(playable > 0) {
             AnswerButton(WorkText.playAll(playable), review::startContinuous, "studio_review_play_all", Modifier.padding(top = Dim.s8), primary = true)
         }
-        if (review.finished && !review.continuous) Caption(WorkText.PLAY_FINISHED, Modifier.padding(top = Dim.s8).testTag("studio_review_finished"))
+        Reveal(review.finished && !review.continuous) { Caption(WorkText.PLAY_FINISHED, Modifier.padding(top = Dim.s8).testTag("studio_review_finished")) }
     }
 }
 
@@ -142,7 +143,7 @@ private fun ReviewEmpty(review: StudioReviewState, book: StudioBook, modifier: M
         else -> WorkText.REVIEW_EMPTY
     }
     Column(modifier.fillMaxWidth().padding(top = Dim.s24).testTag("studio_review_empty")) {
-        if (title.isNotEmpty()) BasicText(title, style = Abook.type.sectionTitle)
+        Reveal(title.isNotEmpty()) { BasicText(title, style = Abook.type.sectionTitle) }
         RowHint(line, Modifier.padding(top = if (title.isEmpty()) 0.dp else Dim.s8))
     }
 }
@@ -159,9 +160,9 @@ private fun ReviewRow(item: ReviewItem, review: StudioReviewState, clip: ClipSta
             }
             if (spec != null) ClipButton(ReviewLogic.clipId(item), clip, { review.play(item) }, "studio_review_play")
         }
-        if (item.reason.isNotEmpty()) RowHint(item.reason, Modifier.padding(top = Dim.s4))
+        Reveal(item.reason.isNotEmpty()) { RowHint(item.reason, Modifier.padding(top = Dim.s4)) }
         val heard = heardLine(item)
-        if (heard.isNotEmpty()) RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_review_heard"))
+        Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_review_heard")) }
         item.pendingSpoken?.let { RowHint(S.s_se_doc_la_0_f26bc05e(it), Modifier.padding(top = Dim.s4)) }
         if (spec == null) Caption(WorkText.NO_AUDIO, Modifier.padding(top = Dim.s8))
         Spacer(Modifier.height(Dim.s8))

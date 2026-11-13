@@ -64,6 +64,7 @@ import vn.abook.player.ui.data.Gender
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.insetSurface
+import vn.abook.player.ui.components.Reveal
 
 /*
  * Việc làm với MỘT người ở tab Nhân vật: "Gộp vào người khác", "Đổi tên", "Đổi giới tính" - viết lại từ studio/CastEdits.tsx + studio/MergePeople.tsx,
@@ -90,7 +91,7 @@ fun PersonSheet(
             PersonPage.Menu -> Column(Modifier.fillMaxWidth()) {
                 BasicText(name, style = Abook.type.sectionTitle)
                 Spacer(Modifier.height(Dim.s8))
-                if (person.lines > 0) MenuRow(S.s_gop_vao_nguoi_khac_8f5c461d, tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) }
+                Reveal(person.lines > 0) { MenuRow(S.s_gop_vao_nguoi_khac_8f5c461d, tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) } }
                 MenuRow(S.s_doi_ten_a2a0dc70, tag = "person_rename", onClick = { page = PersonPage.Rename }) { ink -> TextCursorInputIcon(ink) }
                 if (person.voice != null && person.lines > 0) {
                     MenuRow(S.s_doi_gioi_tinh_8fde2c62, tag = "person_gender", onClick = { page = PersonPage.Gender }) { ink -> UserRoundIcon(ink) }
@@ -299,7 +300,7 @@ internal fun SheetField(
             keyboardActions = KeyboardActions(onDone = { onDone() }, onSearch = { onDone() }),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
-                    if (value.isEmpty()) BasicText(placeholder, style = Abook.type.body.copy(color = colors.text3))
+                    Reveal(value.isEmpty()) { BasicText(placeholder, style = Abook.type.body.copy(color = colors.text3)) }
                     inner()
                 }
             },
@@ -316,7 +317,7 @@ internal fun PickRow(title: String, hint: String?, selected: Boolean, onClick: (
         verticalAlignment = Alignment.Top,
     ) {
         Box(Modifier.size(Dim.s24, 24.dp), contentAlignment = Alignment.CenterStart) {
-            if (selected) CheckIcon(colors.accentText)
+            Reveal(selected) { CheckIcon(colors.accentText) }
         }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {

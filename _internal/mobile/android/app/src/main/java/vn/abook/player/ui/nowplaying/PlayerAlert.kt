@@ -24,6 +24,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.ConsentVoice
 import vn.abook.player.ui.voice.VieneuDownload
 import vn.abook.player.ui.voice.VoiceStuck
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Lời báo không phát được của trình phát (listen/PlayerViews.tsx `PlayerAlert`). Giọng đang chọn không đọc được (mất mạng, hay giọng trực tuyến hỏng) mà máy không có giọng nào khác:
@@ -53,7 +54,7 @@ fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayi
                 }, "alert_use_local", align = Alignment.CenterStart)
             }
             TextAction(S.s_thu_lai_c58d068c, model::toggle, "alert_retry", align = Alignment.CenterStart)
-            if (stuck && state.voices.isNotEmpty()) {
+            Reveal(stuck && state.voices.isNotEmpty()) {
                 TextAction(S.s_chon_giong_khac_d31cfe89, { window.openSheet(PlayerSheet.Voice) }, "alert_choose", align = Alignment.CenterStart)
             }
         }

@@ -119,7 +119,7 @@ private fun NewFooter(state: StudioNewState) {
         when (state.step) {
             NewStep.Source -> {
                 // Lý do nút "Tiếp" chưa bấm được nằm NGAY trên nút (chân màn không bị bàn phím hay danh sách che), không nằm trong danh sách cuộn.
-                if (state.rows.isEmpty()) RowHint(StudioNewText.NO_SOURCE, Modifier.testTag("studio_new_none"))
+                Reveal(state.rows.isEmpty()) { RowHint(StudioNewText.NO_SOURCE, Modifier.testTag("studio_new_none")) }
                 PrimaryButton(
                     if (state.scanning) StudioNewText.SCANNING else StudioNewText.NEXT, state::next, Modifier.fillMaxWidth().testTag("studio_new_next"), enabled = state.canScan,
                 )
@@ -185,7 +185,7 @@ private fun UploadRow(state: StudioNewState, row: SourceRow) {
                     else -> TextAction(StudioNewText.REMOVE, { state.remove(row.id) }, "studio_new_row_remove_${row.id}")
                 }
             },
-            below = { if (sending) StageProgress(state.progressOf(row) != null) { state.progressOf(row) ?: 0f } },
+            below = { Reveal(sending) { StageProgress(state.progressOf(row) != null) { state.progressOf(row) ?: 0f } } },
         )
         RowLine()
     }
@@ -225,7 +225,7 @@ private fun ChapterRow(state: StudioNewState, chapter: ScannedChapter) {
     ).dotJoined().ifEmpty { null }
     Column(Modifier.fillMaxWidth().testTag("studio_new_chapter")) {
         SwitchRow(label, kept, { state.toggle(chapter.path) }, "studio_new_chapter_${chapter.path.hashCode()}", hint)
-        if (chapter.splitChapters > 1) {
+        Reveal(chapter.splitChapters > 1) {
             RowHint(StudioNewText.SPLIT_NOTE, Modifier.testTag("studio_new_split_note"))
             TextAction(StudioNewText.splitAsk(chapter.splitChapters), { state.split(chapter) }, "studio_new_split_${chapter.path.hashCode()}", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
         }

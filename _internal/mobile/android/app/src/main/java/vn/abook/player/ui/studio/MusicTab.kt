@@ -56,6 +56,7 @@ import vn.abook.player.ui.studio.parts.ClipProblem
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /** Những gì tab "Nhạc nền" đọc từ các luồng (lần hỏi gần nhất, tiếng đang phát). */
 @Immutable
@@ -77,7 +78,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
     item("music_notice", "music_notice") {
         Column(Modifier.fillMaxWidth().then(slide)) {
             InlineProblem(music.problem.ifEmpty { data.poll.error?.let { StudioText.failure(it) }.orEmpty() }, music::refreshSoon, "studio_music_problem")
-            if (music.notice.isNotEmpty()) RowHint(music.notice, Modifier.padding(top = Dim.s8).testTag("studio_music_notice"))
+            Reveal(music.notice.isNotEmpty()) { RowHint(music.notice, Modifier.padding(top = Dim.s8).testTag("studio_music_notice")) }
             ClipProblem(data.clip)
         }
     }
@@ -116,7 +117,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
                 if (view.moodsRunning) StudioMusicText.MOODS_RUNNING else StudioMusicText.MOODS_RUN, { if (!view.moodsRunning) music.computeMoods() },
                 "studio_music_moods_run", Modifier.fillMaxWidth(), Alignment.CenterStart,
             )
-            if (view.moodsError.isNotEmpty()) RowHint(view.moodsError, Modifier.testTag("studio_music_moods_error"), Abook.colors.danger)
+            Reveal(view.moodsError.isNotEmpty()) { RowHint(view.moodsError, Modifier.testTag("studio_music_moods_error"), Abook.colors.danger) }
         }
     }
     if (view.error.isNotEmpty()) item("music_error", "status") { RowHint(view.error, Modifier.then(slide).padding(top = Dim.s12).testTag("studio_music_error"), Abook.colors.danger) }
@@ -135,7 +136,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
     if (view.tracks.isNotEmpty()) item("music_credits", "music_credits") {
         Fold("${StudioMusicText.CREDITS} (${view.tracks.size})", "studio_music_credits", Modifier.then(slide).padding(top = Dim.s12)) {
             for ((link, track) in view.tracks) Caption(MusicLogic.creditText(link, track), Modifier.padding(bottom = Dim.s8))
-            if (MusicLogic.needsModifiedNote(view)) Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8))
+            Reveal(MusicLogic.needsModifiedNote(view)) { Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8)) }
         }
     }
 }
@@ -165,7 +166,7 @@ private fun Settings(music: StudioMusicState, view: MusicView, sheets: SheetHost
             hint = StudioMusicText.REBUILD_HINT, chevron = true,
         )
         RowLine()
-        if (music.busy.isNotEmpty()) RowHint(music.busy, Modifier.padding(top = Dim.s8).testTag("studio_music_busy"))
+        Reveal(music.busy.isNotEmpty()) { RowHint(music.busy, Modifier.padding(top = Dim.s8).testTag("studio_music_busy")) }
     }
 }
 
@@ -226,8 +227,8 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
                             track?.let { MusicLogic.trackLabel(link, it) } ?: StudioMusicText.TRACK, style = Abook.type.body,
                             modifier = Modifier.padding(top = Dim.s4).testTag("studio_music_track"),
                         )
-                        if (scene.pinned) Caption(StudioMusicText.PINNED, Modifier.testTag("studio_music_pinned"))
-                        if (scene.pinUnavailable) RowHint(StudioMusicText.PIN_GONE, Modifier.testTag("studio_music_pin_gone"), Abook.colors.danger)
+                        Reveal(scene.pinned) { Caption(StudioMusicText.PINNED, Modifier.testTag("studio_music_pinned")) }
+                        Reveal(scene.pinUnavailable) { RowHint(StudioMusicText.PIN_GONE, Modifier.testTag("studio_music_pin_gone"), Abook.colors.danger) }
                     }
                     else -> RowHint(if (scene.silenced) StudioMusicText.SILENT_CHOSEN else StudioMusicText.SILENT_AUTO, Modifier.padding(top = Dim.s4).testTag("studio_music_silent"))
                 }
@@ -236,7 +237,7 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
             TextAction(MusicLogic.swapText(scene), { sheets.show { dismiss -> AlternativesSheet(music, scene, dismiss) } }, "studio_music_swap_${scene.key}", align = Alignment.CenterStart)
-            if (!follows) TextAction(StudioMusicText.MORE, { sheets.show { dismiss -> SceneMenu(music, view, scene, dismiss) } }, "studio_music_more_${scene.key}", align = Alignment.CenterStart)
+            Reveal(!follows) { TextAction(StudioMusicText.MORE, { sheets.show { dismiss -> SceneMenu(music, view, scene, dismiss) } }, "studio_music_more_${scene.key}", align = Alignment.CenterStart) }
         }
         RowLine()
     }
@@ -247,7 +248,7 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
 private fun SceneMenu(music: StudioMusicState, view: MusicView, scene: MusicScene, dismiss: () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("studio_music_scene_menu")) {
         MenuRow(if (scene.silenced) StudioMusicText.SILENCE_OFF else StudioMusicText.SILENCE_ON, "studio_scene_silence", onClick = { dismiss(); music.change(MusicLogic.silence(scene.key, !scene.silenced)) }) { }
-        if (scene.pinned) MenuRow(StudioMusicText.UNPIN, "studio_scene_unpin", onClick = { dismiss(); music.change(MusicLogic.unpin(scene.key)) }) { }
+        Reveal(scene.pinned) { MenuRow(StudioMusicText.UNPIN, "studio_scene_unpin", onClick = { dismiss(); music.change(MusicLogic.unpin(scene.key)) }) { } }
         scene.link?.let { link ->
             val used = MusicLogic.usedIn(view, link)
             MenuRow(
@@ -287,7 +288,7 @@ private fun AlternativesSheet(music: StudioMusicState, scene: MusicScene, dismis
                     items(loaded, key = { "alt_${it.link}" }) { alt ->
                         Column(Modifier.fillMaxWidth().padding(vertical = Dim.s8).testTag("studio_music_alt_${alt.link.hashCode()}")) {
                             BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).dotJoined(), style = Abook.type.body)
-                            if (alt.duration > 0) ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2))
+                            Reveal(alt.duration > 0) { ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2)) }
                             Row(horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
                                 val active = clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)
                                 TextAction(if (active) StudioMusicText.STOP else StudioMusicText.PLAY, { music.playTrack(alt.link) }, "studio_alt_play_${alt.link.hashCode()}", align = Alignment.CenterStart)

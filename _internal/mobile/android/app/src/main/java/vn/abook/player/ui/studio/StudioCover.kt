@@ -39,6 +39,7 @@ import vn.abook.player.ui.editbook.EditSnapshot
 import vn.abook.player.ui.editbook.EditSource
 import vn.abook.player.ui.editbook.FoundCover
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 // Bìa của dự án trên máy tính (NATIVE_REMOTE_STUDIO.md §6.13): DÙNG LẠI màn tìm và màn cắt bìa của Sửa sách (CoverSearchRoute, CoverCropRoute) qua [BookEditor]; chỉ nguồn khác
 // - [StudioCoverSource] gọi `GET .../cover/search`, `PUT .../cover {url | image}`, `DELETE .../cover` của máy tính. Không có màn bìa mới ngoài một trang chọn ba việc.
@@ -142,7 +143,7 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
             RowHint(if (state.loading) "" else if (has) StudioCoverText.HAS else StudioCoverText.NONE, Modifier.padding(bottom = Dim.s8))
             MenuRow(StudioCoverText.PICK, "studio_cover_pick", onClick = { picker.launch(arrayOf("image/*")) }) { ink -> ImageIcon(ink) }
             MenuRow(StudioCoverText.FIND, "studio_cover_find", onClick = find) { ink -> GlobeIcon(ink) }
-            if (has) MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { editor.setCover(null) }) { ink -> TrashIcon(ink) }
+            Reveal(has) { MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { editor.setCover(null) }) { ink -> TrashIcon(ink) } }
             InlineProblem(state.problem, editor::retry, "studio_cover_problem")
         }
     }

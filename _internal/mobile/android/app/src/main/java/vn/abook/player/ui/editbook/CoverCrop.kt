@@ -47,6 +47,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.scrim
 import java.io.ByteArrayOutputStream
+import vn.abook.player.ui.components.Reveal
 
 object CoverCrop {
     /** Bounds first, sampled to the phone's display width; no full-resolution photo on the UI thread. */
@@ -125,7 +126,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
         if (image != null) TextAction(S.s_dat_lai_51a46825, { choice = CropChoice() }, "crop_reset")
     }) {
         if (image == null) {
-            if (problem.isEmpty()) Caption(S.s_dang_doc_anh_df6455cf, Modifier.padding(top = Dim.s16))
+            Reveal(problem.isEmpty()) { Caption(S.s_dang_doc_anh_df6455cf, Modifier.padding(top = Dim.s16)) }
         } else CropArea(image, choice) { choice = it }
     }
 }

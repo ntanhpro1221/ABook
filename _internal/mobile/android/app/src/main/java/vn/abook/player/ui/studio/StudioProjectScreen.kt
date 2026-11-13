@@ -158,8 +158,8 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
                 PrimaryAction(book, kind, state.busy, onPick = { picked -> pick(picked, book, state, sheets, listen) })
                 val note = StudioText.actionNote(book, kind)
-                if (note.isNotEmpty()) BasicText(note, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("studio_action_note"))
-                if (StudioText.onBattery(book)) MoreInfo(S.s_dung_pin_d9d66b55, StudioText.BATTERY_INFO, "studio_battery_info")
+                Reveal(note.isNotEmpty()) { BasicText(note, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("studio_action_note")) }
+                Reveal(StudioText.onBattery(book)) { MoreInfo(S.s_dung_pin_d9d66b55, StudioText.BATTERY_INFO, "studio_battery_info") }
                 InlineProblem(state.problem, state::retryLast, "studio_problem")
             }
         }
@@ -253,7 +253,7 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
     SheetPages(page, { it.ordinal }, "studio_more_sheet") { shown ->
         when (shown) {
             MorePage.Menu -> Column(Modifier.fillMaxWidth()) {
-                if (book.chaptersCompleted > 0 && kind != PrimaryKind.Listen) {
+                Reveal(book.chaptersCompleted > 0 && kind != PrimaryKind.Listen) {
                     MenuRow(StudioText.label(PrimaryKind.Listen, book), "studio_more_listen", onClick = { dismiss(); listen() }) { HeadphonesIcon(it) }
                 }
                 for (sub in StudioLogic.subPages(book)) {
@@ -268,7 +268,7 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
                         }
                     }
                 }
-                if (book.running && !book.stopping) MenuRow(S.s_dung_11554138, "studio_more_stop", onClick = { page = MorePage.Stop }) { StopIcon(it) }
+                Reveal(book.running && !book.stopping) { MenuRow(S.s_dung_11554138, "studio_more_stop", onClick = { page = MorePage.Stop }) { StopIcon(it) } }
             }
             MorePage.Stop -> ConfirmPage(StudioText.stopTitle(book), "studio_stop", StudioText.stopLines(book), "") {
                 // Tạm dừng luôn là lựa chọn đầu khi đang phân tích (AGENTS.md: dừng giữa phân tích là đổi cả quyển sách).

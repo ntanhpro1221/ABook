@@ -42,6 +42,7 @@ import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Nội dung của cửa sổ nhỏ (PiP), cùng năm thứ với cửa sổ mini của bản máy tính (`MiniPlayer.qml`, docs/DESIGN.md "Khay hệ thống và cửa sổ mini"), cùng thứ tự đọc:
@@ -78,8 +79,8 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
                     .padding(start = Dim.s12, end = Dim.s12, top = if (plan.full) Dim.s8 else Dim.s24, bottom = PROGRESS_HEIGHT + Dim.s8),
                 verticalArrangement = Arrangement.spacedBy(Dim.s4, if (plan.full) Alignment.Bottom else Alignment.Top),
             ) {
-                if (plan.showBook) BasicText(player.bookTitle, Modifier.testTag("pip_book_title"), style = titleStyle)
-                if (plan.showChapter) BasicText(player.chapterTitle, Modifier.testTag("pip_chapter_title"), style = chapterStyle)
+                Reveal(plan.showBook) { BasicText(player.bookTitle, Modifier.testTag("pip_book_title"), style = titleStyle) }
+                Reveal(plan.showChapter) { BasicText(player.chapterTitle, Modifier.testTag("pip_chapter_title"), style = chapterStyle) }
             }
         }
         Box(

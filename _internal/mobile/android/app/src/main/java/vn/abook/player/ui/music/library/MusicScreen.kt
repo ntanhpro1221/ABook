@@ -74,6 +74,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.insetSurface
 import vn.abook.player.ui.theme.hover
+import vn.abook.player.ui.components.Reveal
 
 /** Hai phần của màn Nhạc: bài đã lưu (+ "Nhạc của tôi") và cả kho. */
 enum class MusicPart(val label: String, val tag: String) {
@@ -152,7 +153,7 @@ private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onM
     ) {
         item(key = "summary") {
             Caption(S.s_da_tai_0_bai_1_3cac202f(count, formatSize(bytes)), Modifier.testTag("music_saved_summary").padding(bottom = Dim.s8))
-            if (!ui.online) Caption(S.s_bai_da_tai_nghe_duoc_khi_khong_co_mang_ca12f3db, Modifier.padding(bottom = Dim.s8))
+            Reveal(!ui.online) { Caption(S.s_bai_da_tai_nghe_duoc_khi_khong_co_mang_ca12f3db, Modifier.padding(bottom = Dim.s8)) }
         }
         if (tracks.isEmpty()) {
             item(key = "empty") { Caption(S.s_chua_luu_bai_nao_6e7558df, Modifier.padding(vertical = Dim.s16).testTag("music_saved_empty")) }
@@ -184,16 +185,16 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
         FilterChips(ui, index, state, sheets)
         Row(Modifier.fillMaxWidth().padding(horizontal = Dim.margin).heightIn(min = Dim.touch), verticalAlignment = Alignment.CenterVertically) {
             Caption(S.s_0_bai_1e392237(ui.shown.size), Modifier.weight(1f).testTag("music_count"))
-            if (filters.filtering) TextAction(S.s_bo_loc_74de0064, state::clearFilters, "music_clear")
+            Reveal(filters.filtering) { TextAction(S.s_bo_loc_74de0064, state::clearFilters, "music_clear") }
         }
         if (filters.playlist.isNotEmpty()) {
             val missing = ui.shown.filter { it.link !in ui.downloaded }
-            if (missing.isNotEmpty()) {
+            Reveal(missing.isNotEmpty()) {
                 QuietButton(S.s_tai_ca_danh_sach_0_63e52378(formatSize(ui.missingBytes(missing))), { state.save(missing.map { it.link }) }, "music_save_playlist",
                     Modifier.padding(horizontal = Dim.margin).padding(bottom = Dim.s8))
             }
         }
-        if (!ui.online) Caption(S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8, Modifier.padding(horizontal = Dim.margin).padding(bottom = Dim.s8))
+        Reveal(!ui.online) { Caption(S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8, Modifier.padding(horizontal = Dim.margin).padding(bottom = Dim.s8)) }
         LazyColumn(
             Modifier.fillMaxSize().testTag("music_list").fadeEdges(list),
             state = list,
@@ -236,12 +237,12 @@ private fun SearchField(query: String, onChange: (String) -> Unit, modifier: Mod
             keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
-                    if (query.isEmpty()) BasicText(S.s_tim_ten_bai_nguoi_sang_tac_fdee04f4, style = Abook.type.body.copy(color = colors.text3))
+                    Reveal(query.isEmpty()) { BasicText(S.s_tim_ten_bai_nguoi_sang_tac_fdee04f4, style = Abook.type.body.copy(color = colors.text3)) }
                     inner()
                 }
             },
         )
-        if (query.isNotEmpty()) {
+        Reveal(query.isNotEmpty()) {
             Box(
                 Modifier.size(Dim.touch).pressable { onChange("") }.semantics { contentDescription = S.s_xoa_o_tim_0bafa7ad }.testTag("music_search_clear"),
                 contentAlignment = Alignment.Center,
@@ -289,12 +290,12 @@ private fun Chip(label: String, on: Boolean, tag: String, chevron: Boolean, onCl
             Modifier.height(36.dp).clip(shape).background(if (on) colors.accentSoft else colors.hover).padding(horizontal = Dim.s12),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (on && !chevron) {
+            Reveal(on && !chevron) {
                 CheckIcon(colors.accentText, size = 16.dp)
                 Spacer(Modifier.width(Dim.s4))
             }
             BasicText(label, style = Abook.type.label.copy(color = if (on) colors.accentText else colors.text))
-            if (chevron) {
+            Reveal(chevron) {
                 Spacer(Modifier.width(Dim.s4))
                 LucideIcon(LucidePaths.CHEVRON_DOWN, if (on) colors.accentText else colors.text2, size = 16.dp)
             }

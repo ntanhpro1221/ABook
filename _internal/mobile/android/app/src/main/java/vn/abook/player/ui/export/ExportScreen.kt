@@ -205,7 +205,7 @@ private fun VoiceBlock(ui: ExportUi) {
         RowLine()
         if (voice != null) {
             ListItem(S.s_giong_doc_11f2548d, Modifier, null, "export_voice", hint = S.s_0_giong_dang_chon_cho_cuon_nay_doi_o_trinh_bc47c66f(voice.caption), titleStyle = Abook.type.bodyStrong)
-        } else if (ui.voiceChecked) {
+        } else Reveal(ui.voiceChecked) {
             BasicText(
                 S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_aa7e4957,
                 style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(vertical = Dim.s12).testTag("export_no_voice"),
@@ -332,7 +332,7 @@ private fun ResultPage(book: ListenBook, ui: ExportUi, shown: ExportPhase?) {
 private fun Footer(book: ListenBook, ui: ExportUi, exports: ExportState, running: ExportPhase.Running?, shown: ExportPhase?) {
     SheetPages(ui.phase.page, { it }, "export_footer") { page ->
         Column(Modifier.fillMaxWidth()) {
-            if (page != 1) InlineProblem(ui.problem, null, "export_problem")
+            Reveal(page != 1) { InlineProblem(ui.problem, null, "export_problem") }
             when (page) {
                 0 -> {
                     val plan = ui.plan

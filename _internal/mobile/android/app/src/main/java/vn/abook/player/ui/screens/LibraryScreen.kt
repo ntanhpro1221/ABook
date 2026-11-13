@@ -89,8 +89,10 @@ import vn.abook.player.ui.data.ListenLogic
 import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.coverOverlay
 import kotlin.math.roundToInt
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.Reveal
 
 /** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát ngay, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable

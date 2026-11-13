@@ -84,7 +84,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fal
         }) else null,
         trailing = if (ui.paired) ({ RefreshButton(ui.refreshing, devices::refresh) }) else null,
     ) {
-        if (ui.loaded) Column(Modifier.fillMaxWidth().testTag("pair_list").padding(bottom = Dim.s16)) {
+        Reveal(ui.loaded) { Column(Modifier.fillMaxWidth().testTag("pair_list").padding(bottom = Dim.s16)) {
             key("notice", "notice") { Reveal(notice.isNotBlank()) { RowHint(notice) } }
             devicesList(ui, devices, sheets)
             booksLists(ui, devices)
@@ -92,7 +92,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fal
                 TextAction(S.s_them_thiet_bi_15b663e2, { devices.setAdding(true) }, "pair_add", Modifier.padding(top = Dim.s8).fillMaxWidth(), align = Alignment.CenterStart)
             }
             if (!ui.paired) key("install", "install") { InstallFold(devices) }
-        }
+        } }
     }
 }
 
@@ -164,7 +164,7 @@ private fun pairForm(ui: PairUi, devices: DevicesState) {
         }
     }
     key("method", "method") {
-        if (ui.paired) {
+        Reveal(ui.paired) {
             RowHint(S.s_sach_may_kia_hien_trong_thu_vien_a323b709)
             TextAction(S.s_ghep_bluetooth_0193ced5, { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
         }

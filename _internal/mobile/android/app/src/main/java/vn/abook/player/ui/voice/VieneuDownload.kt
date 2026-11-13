@@ -69,20 +69,20 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
                         TextAction(S.s_huy_96732485, { voice.cancel(kind) }, "vieneu_cancel")
                     }
                 }
-                if (failed) {
+                Reveal(failed) {
                     BasicText(S.s_chua_tai_duoc_giong_vieneu_7fd2908f, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s4))
                 }
                 if (note != null) ClockLabel(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
                 if (metered != null) BasicText(metered, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
                 Spacer(Modifier.height(Dim.s4))
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
-                    if (!downloading && !unsupported && offer.missing.isNotEmpty()) {
+                    Reveal(!downloading && !unsupported && offer.missing.isNotEmpty()) {
                         TextAction(
                             OfflineOffer.label(button, failed, bytes),
                             { voice.download(kind, offer.missing) }, "vieneu_start", align = Alignment.CenterStart,
                         )
                     }
-                    if (!downloading && !failed && !unsupported && offer.light.isNotEmpty() && fullBytes > bytes) {
+                    Reveal(!downloading && !failed && !unsupported && offer.light.isNotEmpty() && fullBytes > bytes) {
                         TextAction(OfflineOffer.fullLabel(fullBytes), { voice.download(kind, offer.full) }, "vieneu_full", align = Alignment.CenterStart)
                     }
                 }

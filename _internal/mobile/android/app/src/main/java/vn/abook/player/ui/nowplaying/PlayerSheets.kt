@@ -83,7 +83,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
         transitionSpec = { if (targetState) tween(MotionMs.SLOW) else tween(MotionMs.SLOW_OUT) }, label = "player-sheet-scrim",
     ) { if (it) 1f else 0f }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        if (transition.currentState || transition.targetState) {
+        Reveal(transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim, alpha = scrimShown * (1f - drag.offset / drag.height).coerceIn(0f, 1f)) }
                 .pressable(onClick = ::closeSheet).semantics { contentDescription = S.s_dong_5d54c2a1 })
         }
@@ -129,7 +129,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             }
                         } else {
                             val now = remember(window.sheetOpen) { System.currentTimeMillis() }
-                            if (SleepText.recentlyStopped(state.sleep, now)) {
+                            Reveal(SleepText.recentlyStopped(state.sleep, now)) {
                                 BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
                                 TextAction(SleepText.restart(window.lastSleepMinutes), {
                                     model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
@@ -165,10 +165,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                     .semantics { selected = current }.padding(vertical = 12.dp)) {
                                     BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
                                     RowHint(if (current) S.s_dang_nghe_9310d8cf else PlayerLabels.time(chapter.durationMs))
-                                    if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
+                                    Reveal(current) { Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
                                         val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
                                         drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * ProgressFill.of(fraction), size.height))
-                                    })
+                                    }) }
                                 }
                             }
                         }
@@ -180,9 +180,9 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         SheetRow(S.s_giong_doc_11f2548d, if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) S.s_giong_thu_san_ff3861c7 else S.s_chon_giong_1bc47aed,
                             LucidePaths.MIC_VOCAL, tag = "more_voice") { deeper(PlayerSheet.Voice) }
                         // Dáng chữ chỉ có nghĩa khi có chữ để đọc theo.
-                        if (state.readAlongAvailable) Box(Modifier.semantics { contentDescription = S.s_co_chu_va_gian_dong_7dfe48ac }) {
+                        Reveal(state.readAlongAvailable) { Box(Modifier.semantics { contentDescription = S.s_co_chu_va_gian_dong_7dfe48ac }) {
                             SheetRow(S.s_co_chu_d7b231e3, window.look.summary, LucidePaths.CAPTIONS, tag = "more_look") { deeper(PlayerSheet.Look) }
-                        }
+                        } }
                         if (window.otherPlayers != null) SheetRow(S.s_phat_tren_681e16e1, S.s_chon_1171ca97, LucidePaths.CAST, tag = "more_devices") {
                             window.closeSheet()
                             window.otherPlayers?.invoke()
@@ -337,6 +337,5 @@ private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
         label = readout(it)
     } }
     ClockLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
-    if (sleep.kind == SleepKind.Minutes && !sleep.counting)
-        BasicText(SleepText.pausedNote, style = Abook.type.caption)
+    Reveal(sleep.kind == SleepKind.Minutes && !sleep.counting) { BasicText(SleepText.pausedNote, style = Abook.type.caption) }
 }

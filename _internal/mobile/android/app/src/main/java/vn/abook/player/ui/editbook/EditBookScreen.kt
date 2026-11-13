@@ -102,7 +102,7 @@ fun CoverSheet(hasCover: Boolean, onPick: () -> Unit, onRemove: () -> Unit, onFi
         Spacer(Modifier.height(Dim.s8))
         MenuRow(S.s_chon_anh_41ecf092, tag = "cover_pick", onClick = onPick) { ink -> ImageIcon(ink) }
         MenuRow(S.s_tim_bia_34025664, tag = "cover_find", onClick = onFind) { ink -> GlobeIcon(ink) }
-        if (hasCover) MenuRow(S.s_bo_anh_bia_696c6692, tag = "cover_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
+        Reveal(hasCover) { MenuRow(S.s_bo_anh_bia_696c6692, tag = "cover_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) } }
     }
 }
 
@@ -172,7 +172,7 @@ fun EditBookScreen(
                             { if (!state.sending && !state.saving) send() }, "send_edits",
                             hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(book.holder, book.holder),
                         )
-                        if (book.syncNote.isNotEmpty()) Caption(book.syncNote, Modifier.testTag("sync_note"))
+                        Reveal(book.syncNote.isNotEmpty()) { Caption(book.syncNote, Modifier.testTag("sync_note")) }
                         InlineProblem(state.sendProblem, send, "send_problem")
                     }
                 }
@@ -230,14 +230,14 @@ fun EditChapterRoute(editor: BookEditor, chapterId: Long, onBack: () -> Unit) {
                 BookField(if (textOnly) null else S.s_nhan_58861f44, row.title, { value ->
                     editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
                 }, "chapter_title", description = if (textOnly) S.s_ten_chuong_9edb6c28 else S.s_nhan_58861f44)
-                if (!textOnly) {
+                Reveal(!textOnly) {
                     Spacer(Modifier.height(Dim.s16))
                     BookField(S.s_ten_c8b17259, row.subtitle, { value ->
                         editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
                     }, "chapter_subtitle")
                 }
                 InlineProblem(state.problem, editor::retry, "chapter_problem")
-                if (row.renamed) {
+                Reveal(row.renamed) {
                     Spacer(Modifier.height(Dim.s16))
                     RevertName(row.original, { editor.revertChapter(chapterId) })
                 }
@@ -346,7 +346,7 @@ private fun ReadingForm(surface: String, current: String, saving: Boolean, onSav
             Spacer(Modifier.height(Dim.s12))
             PrimaryButton(S.s_luu_cho_ca_cuon_76b88dc9, { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
                 enabled = !saving && ReadingText.canSave(surface, current, value))
-            if (current.isNotEmpty()) TextAction(S.s_doc_nhu_trong_sach_4ff053c6, { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
+            Reveal(current.isNotEmpty()) { TextAction(S.s_doc_nhu_trong_sach_4ff053c6, { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center) }
         }
     }
 }

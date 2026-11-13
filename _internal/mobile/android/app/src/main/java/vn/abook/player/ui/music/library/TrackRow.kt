@@ -43,7 +43,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
                     BasicText(track.creator, style = Abook.type.bodySmall.copy(color = colors.text2), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).testTag("music_row_creator"))
                 }
                 track.duration?.let {
-                    if (track.creator.isNotEmpty()) BasicText("·", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.padding(horizontal = Dim.s4))
+                    Reveal(track.creator.isNotEmpty()) { BasicText("·", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.padding(horizontal = Dim.s4)) }
                     ClockLabel(Fmt.clock(it), Modifier.testTag("music_row_duration"), Abook.type.bodySmall.copy(color = colors.text2))
                 }
             }

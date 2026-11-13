@@ -39,6 +39,7 @@ import vn.abook.player.ui.components.RefreshIcon
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /*
  * Các bảng trượt của ba màn Thiết bị: việc của một thiết bị đã nối (kèm bước bỏ ghép), đổi tên máy này, bỏ ghép một máy đang nghe, xoá một thứ khỏi máy.
@@ -94,7 +95,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow(S.s_bo_ghep_64f921f9, "device_forget", danger = true, onClick = onForget) { ink -> UnplugIcon(ink) }
-        if (problem.isNotEmpty()) {
+        Reveal(problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("device_problem"))
         }
@@ -157,7 +158,7 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
         Spacer(Modifier.height(Dim.s16))
         FieldGroup {
             BookField(null, name, { name = it; problem = "" }, "rename_field", !working, S.s_ten_thiet_bi_525223a8)
-            if (problem.isNotEmpty()) {
+            Reveal(problem.isNotEmpty()) {
                 Spacer(Modifier.height(Dim.s8))
                 BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
             }

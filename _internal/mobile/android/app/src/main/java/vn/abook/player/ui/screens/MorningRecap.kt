@@ -90,7 +90,7 @@ fun MorningRecap(night: NightState, books: List<ListenBook>, play: (bookId: Stri
             Spacer(Modifier.size(Dim.s8))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
                 if (suggested != null) PrimaryButton(S.s_nghe_tu_day_6a7ff4ab, { resume(suggested.chapterId, suggested.seconds) }, Modifier.weight(1f).testTag("recap_resume"))
-                if (lines.values.any { paragraphs -> paragraphs.any { it.timed } }) {
+                Reveal(lines.values.any { paragraphs -> paragraphs.any { it.timed } }) {
                     TextAction(if (scrubbing) S.s_thu_gon_1f6bf2c3 else S.s_tim_dung_cau_4bfb13c3, { scrubbing = !scrubbing }, "recap_scrub_toggle")
                 }
             }

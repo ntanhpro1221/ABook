@@ -262,8 +262,8 @@ fun ImportReviewScreen(
                             else S.s_cuon_nay_da_co_trong_thu_vien_0_d8728110(preview.existingTitle))
                     }
                     if (preview.existingId != null && preview.splitOffer > 0) RowLine()
-                    if (preview.splitOffer > 0) SwitchRow(S.s_tach_chuong_2f1df570, choice.split, { revise { it.copy(split = !it.split) } },
-                        "split_chapters", hint = ImportLogic.splitHint(preview))
+                    Reveal(preview.splitOffer > 0) { SwitchRow(S.s_tach_chuong_2f1df570, choice.split, { revise { it.copy(split = !it.split) } },
+                        "split_chapters", hint = ImportLogic.splitHint(preview)) }
                 }
             }
             val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
@@ -282,12 +282,12 @@ fun ImportReviewScreen(
                 Column {
                     SectionTitle(S.s_chu_thich_fc0aa279)
                     Caption(S.s_0_chu_thich_trong_file_be2ecbf5(preview.footnoteCount), Modifier.testTag("footnote_count"))
-                    if (preview.footnoteExample.isNotEmpty()) {
+                    Reveal(preview.footnoteExample.isNotEmpty()) {
                         Spacer(Modifier.height(Dim.s12))
                         QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
                     }
                     Spacer(Modifier.height(Dim.s8))
-                    if (preview.footnoteMarks > 0) {
+                    Reveal(preview.footnoteMarks > 0) {
                         SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
                             hint = S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(preview.footnoteMarks))
                         RowLine()
@@ -369,7 +369,7 @@ fun ImportChapterScreen(state: ImportState, index: Int, onBack: () -> Unit, choo
         if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
             val current = state.choices.names[index] ?: row.title
             BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = S.s_ten_chuong_9edb6c28)
-            if (ImportLogic.renamed(current, row.title)) {
+            Reveal(ImportLogic.renamed(current, row.title)) {
                 Spacer(Modifier.height(Dim.s16))
                 RevertName(row.title, { choose { it.copy(names = it.names - index) } })
             }

@@ -98,7 +98,7 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
                 }
             }
             SwitchRow(S.s_nut_tai_nghe_lui_toi_973e4a19, settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
-            if (env.pip?.available == true) {
+            Reveal(env.pip?.available == true) {
                 RowLine()
                 SwitchRow(S.s_tu_mo_cua_so_mini_a93a51d2, settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
             }
@@ -209,7 +209,7 @@ private fun TimeSheet(title: String, value: String, onPick: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
-                        if (chosen) CheckIcon(Abook.colors.accentText)
+                        Reveal(chosen) { CheckIcon(Abook.colors.accentText) }
                     }
                     BasicText(time, style = Abook.type.body.copy(color = if (chosen) Abook.colors.accentText else Abook.colors.text))
                 }

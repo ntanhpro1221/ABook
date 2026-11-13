@@ -40,6 +40,7 @@ import vn.abook.player.ui.studio.parts.PollWhileVisible
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * "Duyệt trước khi thu" (NATIVE_REMOTE_STUDIO.md §6.9): bốn bước (nhân vật và giọng, cách đọc tên, ai nói câu này, xong), mỗi bước hiện thẻ việc của nó từng thẻ
@@ -100,9 +101,9 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_precast_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
-                if (book.precastHeld) RowHint(PrecastText.HELD, Modifier.testTag("studio_precast_held"), Abook.colors.accentText)
+                Reveal(book.precastHeld) { RowHint(PrecastText.HELD, Modifier.testTag("studio_precast_held"), Abook.colors.accentText) }
                 RowHint(PrecastText.LEAD, Modifier.padding(top = Dim.s4))
-                if (PrecastLogic.showWait(data)) {
+                Reveal(PrecastLogic.showWait(data)) {
                     SwitchRow(PrecastText.WAIT, data.wait, { precast.setWait(it) }, "studio_precast_wait", hint = PrecastLogic.waitHint(data))
                 }
                 InlineProblem(precast.problem, null, "studio_precast_wait_problem")
@@ -115,9 +116,9 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                 ClockLabel(PrecastText.step(step.ordinal + 1, total), Modifier.testTag("studio_precast_step"), Abook.type.label)
                 StageProgress { (step.ordinal + 1) / total.toFloat() }
                 // Bước cuối không có tên riêng: đầu mục "Xong lượt duyệt" bên dưới đã là tên của nó (không hai tiêu đề "Xong" chồng nhau).
-                if (step != PrecastStep.Done) BasicText(step.label, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s12).testTag("studio_precast_step_title"))
+                Reveal(step != PrecastStep.Done) { BasicText(step.label, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s12).testTag("studio_precast_step_title")) }
                 val count = PrecastLogic.count(step, castCards, nameCards, lineCards, people.size)
-                if (count.isNotEmpty()) RowHint(count, Modifier.padding(top = Dim.s4).testTag("studio_precast_count"))
+                Reveal(count.isNotEmpty()) { RowHint(count, Modifier.padding(top = Dim.s4).testTag("studio_precast_count")) }
             }
         }
         item("step_${step.name}", "step") {
@@ -132,7 +133,7 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                             )
                             RowLine()
                         }
-                        if (castCards.isNotEmpty()) {
+                        Reveal(castCards.isNotEmpty()) {
                             BasicText(PrecastText.CAST_UNSURE, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s16))
                             Caption(PrecastText.castUnsure(castCards.size), Modifier.padding(top = Dim.s4))
                         }

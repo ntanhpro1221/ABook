@@ -123,6 +123,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.Reveal
 
 /** Việc mà trang sách nhờ nơi khác làm (về, phát, nhảy chương, sau khi xoá) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
@@ -424,11 +425,11 @@ private fun BookScreenBody(
                                 .padding(top = Dim.s12, bottom = bottom + Dim.s32),
                         ) {
                             BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = true, onOpenPlayer = { actions.openNowPlaying(shown.id) }) { openRecords(null) }
-                            if (built) BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
+                            Reveal(built) { BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords) }
                         }
                         Spacer(Modifier.width(Dim.s32))
                         Column(Modifier.weight(1f).fillMaxHeight()) {
-                            if (built) BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.s12, bottom = Dim.s8))
+                            Reveal(built) { BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.s12, bottom = Dim.s8)) }
                             LazyColumn(
                                 state = listWide,
                                 modifier = Modifier.weight(1f).fillMaxWidth().fadeEdges(listWide).testTag("book_list"),
@@ -484,7 +485,7 @@ private fun BookHead(
     val coverOpens = if (listening) Modifier.pressable(onClick = onOpenPlayer).semantics { contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad } else Modifier
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
     val info: @Composable ColumnScope.() -> Unit = {
-        if (sub.isNotEmpty()) {
+        Reveal(sub.isNotEmpty()) {
             BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
             Spacer(Modifier.height(Dim.s4))
         }
@@ -505,7 +506,7 @@ private fun BookHead(
                 Column(Modifier.weight(1f), content = info)
             }
         }
-        if (!book.textOnly) {
+        Reveal(!book.textOnly) {
             Spacer(Modifier.height(Dim.s16))
             val fraction = book.progress.fraction
             val fill = if (book.progress.finished) colors.success else colors.accent
@@ -775,7 +776,7 @@ private fun ChapterRow(
             Column(Modifier.weight(1f)) {
                 BasicText(chapter.title, style = Abook.type.body.copy(color = title, fontWeight = if (current) FontWeight.Medium else FontWeight.Normal))
                 RowHint(BookPage.chapterLine(chapter, producing), ticking = true)
-                if (prepared) PreparedMark()
+                Reveal(prepared) { PreparedMark() }
                 val partly = chapter.heard > 0f && chapter.heard < 1f
                 if (livePosition != null || partly) {
                     Spacer(Modifier.height(6.dp))

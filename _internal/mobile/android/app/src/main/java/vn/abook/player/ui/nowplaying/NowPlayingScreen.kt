@@ -135,7 +135,7 @@ private fun NowPlayingBody(
             val textShown by remember { derivedStateOf { mode.value > 0f } }
             Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
-                  if (!split && (window.reading || textShown) && window.shown) {
+                  Reveal(!split && (window.reading || textShown) && window.shown) {
                     ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
                   }
                 }
@@ -259,7 +259,7 @@ private fun NowPlayingBody(
             content = {
                 Column(Modifier.fillMaxSize(), content = playerColumn)
                 Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 64.dp), contentAlignment = Alignment.TopCenter) {
-                    if (rightComposed && window.shown) ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {}
+                    Reveal(rightComposed && window.shown) { ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {} }
                 }
             },
         ) { measurables, constraints ->

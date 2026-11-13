@@ -57,7 +57,7 @@ fun PrepareBlock(state: NowPlayingState, prepare: PrepareState, modifier: Modifi
         Reveal(estimate.isNotEmpty()) { BasicText(estimate, Modifier.padding(top = Dim.s4).testTag("prepare_plan"), style = Abook.type.caption.copy(color = Abook.colors.text2)) }
         if (working) {
             TextAction(S.s_dung_lam_truoc_632af923, prepare::cancel, "prepare_cancel", align = Alignment.CenterStart)
-        } else if (upcoming.isNotEmpty()) {
+        } else Reveal(upcoming.isNotEmpty()) {
             TextAction(PrepareText.startLabel(upcoming.size), {
                 if (!busy) prepare.start(state.voiceId, state.bookId, ids, PrepareText.jobLabel(upcoming))
             }, "prepare_start", align = Alignment.CenterStart)

@@ -43,6 +43,7 @@ import vn.abook.player.ui.studio.parts.PollWhileVisible
 import vn.abook.player.ui.studio.parts.ink
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Studio của một máy tính: các dự án xếp theo điều cần làm ngay - đang làm, cần bạn duyệt, còn lại (NATIVE_REMOTE_STUDIO.md §6.1). Mỗi dự án là một thẻ, chạm
@@ -108,7 +109,7 @@ private fun ProjectCard(book: StudioBook, onOpen: (StudioBook) -> Unit) {
             Column(Modifier.weight(1f)) {
                 BasicText(book.title, style = Abook.type.bodyStrong, modifier = Modifier.testTag("studio_book_title"))
                 ClockLabel(StudioText.statusLine(book), Modifier.padding(top = 4.dp).testTag("studio_book_status"), Abook.type.bodySmall.copy(color = status.tone.ink()))
-                if (book.working && book.phase != "done" && book.phase != "idle") StageProgress { book.overall }
+                Reveal(book.working && book.phase != "done" && book.phase != "idle") { StageProgress { book.overall } }
             }
             Spacer(Modifier.width(Dim.s12))
             ChevronIcon(Abook.colors.text3)

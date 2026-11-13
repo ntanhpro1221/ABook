@@ -81,6 +81,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import vn.abook.player.ui.components.Reveal
 
 /** "Thêm sách": chữ hổ phách với dấu + (nút chữ, DESIGN.md §6 "Nút (c)"), vùng chạm cao 48. */
 @Composable
@@ -258,7 +259,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        if (ui.query.isEmpty()) BasicText(S.s_ten_sach_tac_gia_giong_a003bb13, style = Abook.type.body.copy(color = colors.text3))
+                        Reveal(ui.query.isEmpty()) { BasicText(S.s_ten_sach_tac_gia_giong_a003bb13, style = Abook.type.body.copy(color = colors.text3)) }
                         inner()
                     }
                 },
@@ -320,7 +321,7 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
-                        if (chosen) CheckIcon(colors.accentText)
+                        Reveal(chosen) { CheckIcon(colors.accentText) }
                     }
                     BasicText(option.label, style = Abook.type.body.copy(color = if (chosen) colors.accentText else colors.text))
                 }

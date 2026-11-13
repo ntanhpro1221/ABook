@@ -31,7 +31,7 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
     Reveal(visible) {
         Row(Modifier.fillMaxWidth().background(Abook.colors.panel).then(if (aboveNavigation) Modifier else Modifier.gestureBarPadding()).heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("undo_bar"), verticalAlignment = Alignment.CenterVertically) {
             BasicText(shown, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
-            if (showing && ids.isNotEmpty()) {
+            Reveal(showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
                 PrimaryButton(S.s_hoan_tac_e72ff675, deletions::undo, Modifier.testTag("undo_delete"), compact = true)
             }

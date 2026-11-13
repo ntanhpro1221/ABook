@@ -48,6 +48,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.insetSurface
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.Reveal
 
 /** Sheet "Bài đang phát" (chạm dòng Nhạc nền của trình phát): Lưu / Bỏ lưu, Xem trong kho, Đổi bài. */
 class PlayingActions(val onOpenLibrary: (title: String) -> Unit, val onSwap: (() -> Unit)? = null)
@@ -79,13 +80,13 @@ fun TrackSheet(
         }
         if (playing != null) Caption(S.s_bai_dang_phat_3c20c832, Modifier.padding(bottom = Dim.s4).testTag("track_playing"))
         BasicText(track.title, style = Abook.type.sectionTitle, modifier = Modifier.testTag("track_title"))
-        if (track.creator.isNotEmpty()) BasicText(track.creator, style = Abook.type.body.copy(color = colors.text2))
+        Reveal(track.creator.isNotEmpty()) { BasicText(track.creator, style = Abook.type.body.copy(color = colors.text2)) }
         Spacer(Modifier.height(Dim.s16))
         Actions(ui, state, track, dismiss, pick, playing)
         val why = MusicLibrary.why(scene, track.emotions)
         if (why != null) {
             Section(S.s_vi_sao_bai_nay_f681e004)
-            if (why.matches.isNotEmpty()) Caption(S.s_doan_va_bai_cung_0_music(index.emotionLabel(why.matches.first().id)), Modifier.testTag("track_fit"))
+            Reveal(why.matches.isNotEmpty()) { Caption(S.s_doan_va_bai_cung_0_music(index.emotionLabel(why.matches.first().id)), Modifier.testTag("track_fit")) }
             Row(horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
                 Legend(S.s_doan_nay_82d01522, colors.text3)
                 Legend(S.s_bai_nay_d9683a01, colors.accent)
@@ -102,7 +103,7 @@ fun TrackSheet(
             }
         }
         val ranked = track.rankedEmotions()
-        if (ranked.isNotEmpty()) {
+        Reveal(ranked.isNotEmpty()) {
             Section(S.s_cam_xuc_05c1aee0)
             for ((id, score) in ranked) Bar(index.emotionLabel(id), score, Modifier.testTag("emotion_$id"))
         }
@@ -140,7 +141,7 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
                 icon = { ink -> if (load != null) DownloadRing(load.percent, S.s_dang_tai_0_e9a97892(load.percent ?: 0)) else LucideIcon(if (downloaded) LucidePaths.TRASH_2 else LucidePaths.DOWNLOAD, ink) },
             )
         }
-        if (link in ui.failed) Caption(S.s_chua_tai_xong_b257419d, Modifier.testTag("track_failed"), color = Abook.colors.danger)
+        Reveal(link in ui.failed) { Caption(S.s_chua_tai_xong_b257419d, Modifier.testTag("track_failed"), color = Abook.colors.danger) }
         if (pick != null) {
             Spacer(Modifier.height(Dim.s8))
             QuietButton(S.s_dung_7927ca4e, { dismiss(); pick.onUse(link) }, "track_use")

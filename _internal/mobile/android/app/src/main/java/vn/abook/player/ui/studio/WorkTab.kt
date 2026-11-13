@@ -62,6 +62,7 @@ import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.Reveal
 
 /** Thẻ nhóm nhiều người: chừa bấy nhiêu nút đầu trên thẻ, phần còn lại nằm trong "Người khác" (web `MAX_CHIPS` = 6; điện thoại hẹp hơn nên 4). */
 private const val SHOWN_CHOICES = 4
@@ -97,7 +98,7 @@ internal fun WorkDeck(state: StudioProjectState, book: StudioBook, sheets: Sheet
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
                     ClockLabel(WorkText.left(deck.size), Modifier.testTag("studio_work_count"), Abook.type.label)
                     RowHint(WorkLogic.inboxLead(book), Modifier.padding(top = Dim.s4).testTag("studio_work_lead"))
-                    if (waiting > 0) Caption("${WorkText.waiting(waiting)} - ${WorkLogic.pendingNote(WorkLogic.applyWhen(book))}", Modifier.padding(top = Dim.s4).testTag("studio_work_waiting"))
+                    Reveal(waiting > 0) { Caption("${WorkText.waiting(waiting)} - ${WorkLogic.pendingNote(WorkLogic.applyWhen(book))}", Modifier.padding(top = Dim.s4).testTag("studio_work_waiting")) }
                 }
                 AnimatedContent(
                     targetState = top,
@@ -122,7 +123,7 @@ private fun EmptyDeck(live: Boolean) {
     Column(Modifier.fillMaxWidth().padding(top = Dim.s24).testTag("studio_work_empty")) {
         BasicText(WorkText.WORK_EMPTY_TITLE, style = Abook.type.sectionTitle)
         RowHint(WorkText.WORK_EMPTY, Modifier.padding(top = Dim.s8))
-        if (live) RowHint(WorkText.WORK_EMPTY_LIVE, Modifier.padding(top = Dim.s4))
+        Reveal(live) { RowHint(WorkText.WORK_EMPTY_LIVE, Modifier.padding(top = Dim.s4)) }
     }
 }
 
@@ -134,9 +135,9 @@ internal fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, 
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("studio_card_${item.kind.key}")) {
         Caption(item.kind.label, Modifier.testTag("studio_card_kind"))
         BasicText(item.title, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s4).testTag("studio_card_title"))
-        if (item.problem.isNotEmpty()) RowHint(item.problem, Modifier.padding(top = Dim.s8).testTag("studio_card_problem"))
-        if (item.affected > 0) Caption(WorkText.affected(item.affected), Modifier.padding(top = Dim.s8).testTag("studio_card_affected"))
-        if (item.current.isNotEmpty() && (template == CardTemplate.Choose || template == CardTemplate.Voice)) {
+        Reveal(item.problem.isNotEmpty()) { RowHint(item.problem, Modifier.padding(top = Dim.s8).testTag("studio_card_problem")) }
+        Reveal(item.affected > 0) { Caption(WorkText.affected(item.affected), Modifier.padding(top = Dim.s8).testTag("studio_card_affected")) }
+        Reveal(item.current.isNotEmpty() && (template == CardTemplate.Choose || template == CardTemplate.Voice)) {
             RowHint(WorkText.using(item.current), Modifier.padding(top = Dim.s4).testTag("studio_card_using"))
         }
         val samples = if (template == CardTemplate.Listen) emptyList() else item.examples.take(PREVIEW_LINES)
@@ -161,7 +162,7 @@ internal fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, 
                 CardTemplate.Plain -> RowHint(WorkText.PLAIN_LINE, Modifier.testTag("studio_card_plain"))
             }
         }
-        if (deckSize > 1) QuietButton(WorkText.SKIP, { work.skip(item.key) }, "studio_card_skip", Modifier.padding(top = Dim.s8))
+        Reveal(deckSize > 1) { QuietButton(WorkText.SKIP, { work.skip(item.key) }, "studio_card_skip", Modifier.padding(top = Dim.s8)) }
     }
 }
 
@@ -191,7 +192,7 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
         ChoiceRow(options, options.first { it.value == scope }, { chosen, _ -> scope = chosen.value }, Modifier.fillMaxWidth(), "studio_scope")
         Caption(WorkText.scopeNote(item.scopeLabels), Modifier.testTag("studio_scope_note"))
     }
-    if (item.pick) {
+    Reveal(item.pick) {
         DisclosureRow(
             WorkText.PICK_LINES, { sheets.show { dismiss -> PickSheet(item, work, left, dismiss) } }, "studio_pick",
             summary = WorkLogic.pickNote(picked?.size ?: 0, lines.size),
@@ -212,8 +213,8 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
     }
     item.currentValue?.let { current -> AnswerButton(WorkText.keepName(item), { pick(current) }, "studio_keep", enabled = !none) }
     item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: S.s_tao_nhan_vat_18e9a09a, { pick(name, "unknown") }, "studio_new_person", enabled = !none) }
-    if (item.keepGroups.isNotEmpty()) AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all")
-    if (item.kind != WorkKind.Alias) {
+    Reveal(item.keepGroups.isNotEmpty()) { AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all") }
+    Reveal(item.kind != WorkKind.Alias) {
         TextAction(if (item.suggestedName.isNotEmpty()) S.s_dat_ten_519d84a1 else WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none, item.suggestedName) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
     }
     if (item.kind == WorkKind.Unnamed) item.pickVoice?.let { person ->
@@ -229,7 +230,7 @@ private fun OtherPersonSheet(more: List<WorkChoice>, none: Boolean, suggestedNam
     val list = rememberLazyListState()
     Column(Modifier.fillMaxWidth().testTag("studio_other_sheet")) {
         BasicText(WorkText.OTHER_SHEET_TITLE, style = Abook.type.sectionTitle)
-        if (more.isNotEmpty()) {
+        Reveal(more.isNotEmpty()) {
             LazyColumn(Modifier.fillMaxWidth().padding(top = Dim.s8).heightIn(max = 224.dp).fadeEdges(list), state = list) {
                 items(more, key = { it.value }) { choice ->
                     Column(Modifier.fillMaxWidth()) {
@@ -316,7 +317,7 @@ private fun NarratorAnswers(item: WorkItem, state: StudioProjectState, sheets: S
     val work = state.work
     val section = item.narratorSection ?: return
     val buttons = WorkLogic.narratorButtons(item.current, section.heading)
-    if (section.appliesNote.isNotEmpty()) RowHint(section.appliesNote, Modifier.testTag("studio_narrator_note"))
+    Reveal(section.appliesNote.isNotEmpty()) { RowHint(section.appliesNote, Modifier.testTag("studio_narrator_note")) }
     AnswerButton(buttons.accept, { WorkDecisions.narrator(item, "accept")?.let(work::decide) }, "studio_narrator_accept", primary = true)
     AnswerButton(buttons.keep, { WorkDecisions.narrator(item, "keep")?.let(work::decide) }, "studio_narrator_keep")
     TextAction(
@@ -408,10 +409,10 @@ private fun ReadingAnswers(item: WorkItem, state: StudioProjectState) {
             description = WorkText.readingField(item.surface.orEmpty()), placeholder = S.s_vd_0_85e20173(item.current),
         )
         InlineProblem(problem, null, "studio_reading_problem")
-        if (suggestion.isNotEmpty()) {
+        Reveal(suggestion.isNotEmpty()) {
             TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
         }
-        if (heard.isNotEmpty()) RowHint(heard, Modifier.testTag("studio_reading_heard"))
+        Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.testTag("studio_reading_heard")) }
         AnswerButton(WorkText.READING_TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())
         AnswerButton(WorkText.READING_SAVE, { save(typed) }, "studio_reading_save", primary = true, enabled = !busy && typed.isNotEmpty() && typed != item.current)
     }
@@ -425,7 +426,7 @@ private fun VoiceAnswers(item: WorkItem, state: StudioProjectState, sheets: Shee
     item.voiceChoices.orEmpty().forEachIndexed { index, choice ->
         AnswerButton(choice.label, { work.decide(WorkDecisions.voice(item, choice)) }, "studio_voice_$index", primary = choice.recommended, hint = choice.note)
     }
-    if (item.keepCharacters.isNotEmpty()) AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.voiceKeep(item)?.let(work::decide) }, "studio_voice_keep")
+    Reveal(item.keepCharacters.isNotEmpty()) { AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.voiceKeep(item)?.let(work::decide) }, "studio_voice_keep") }
     item.pickVoice?.let { person ->
         TextAction(WorkText.VOICE_OTHER, { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_voice_other", align = Alignment.CenterStart)
     }

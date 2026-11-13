@@ -30,6 +30,7 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /*
  * Dung lượng. Đầu màn: tổng đã dùng và chỗ còn trống; rồi từng thứ chiếm chỗ, lớn nhất trước. Chạm một hàng để xoá khỏi máy - cùng bước xác nhận với "Xoá khỏi máy"
@@ -43,7 +44,7 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = 
     val entries = rememberPresence(ui.storage.entries) { it.id }
     LaunchedEffect(devices) { devices.openStorage() }
     DeviceSettingsContent(S.s_dung_luong_32009349, onBack, "storage_screen", embedded) {
-        if (ui.loaded) Column(Modifier.fillMaxWidth().testTag("storage_list").padding(bottom = Dim.s16)) {
+        Reveal(ui.loaded) { Column(Modifier.fillMaxWidth().testTag("storage_list").padding(bottom = Dim.s16)) {
             key("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
                     ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
@@ -64,6 +65,6 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = 
                 }
                 }
             }
-        }
+        } }
     }
 }

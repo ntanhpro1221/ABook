@@ -94,7 +94,7 @@ fun ProgressBlock(book: StudioBook, modifier: Modifier = Modifier) {
                 ClockLabel(StudioText.percent(book.overall), Modifier.width(Dim.s48).testTag("studio_percent"), Abook.type.bodyStrong.copy(textAlign = TextAlign.End))
             }
             val note = StudioText.progressNote(book)
-            if (note.isNotEmpty()) ClockLabel(note, Modifier.padding(top = Dim.s8).testTag("studio_note"), Abook.type.bodySmall.copy(color = Abook.colors.text2))
+            Reveal(note.isNotEmpty()) { ClockLabel(note, Modifier.padding(top = Dim.s8).testTag("studio_note"), Abook.type.bodySmall.copy(color = Abook.colors.text2)) }
         }
     }
 }

@@ -51,6 +51,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
+import vn.abook.player.ui.components.Reveal
 
 /** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
@@ -195,7 +196,7 @@ private fun ThirdPartySheet(repo: SettingsRepo) {
                     }
                     itemsIndexed(section.items, key = { line, _ -> "item:$index:$line" }, contentType = { _, _ -> "item" }) { _, item ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            if (item.bullet) BasicText("•  ", style = Abook.type.caption.copy(color = Abook.colors.text2))
+                            Reveal(item.bullet) { BasicText("•  ", style = Abook.type.caption.copy(color = Abook.colors.text2)) }
                             BasicText(ThirdParty.plain(item.text), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.weight(1f))
                         }
                     }

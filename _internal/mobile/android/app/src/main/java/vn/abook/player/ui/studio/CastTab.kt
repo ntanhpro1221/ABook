@@ -51,6 +51,7 @@ import vn.abook.player.ui.studio.parts.SideBySide
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /** Những gì tab "Nhân vật" đọc từ các luồng (lần hỏi gần nhất, tiếng đang phát). */
 @Immutable
@@ -191,10 +192,10 @@ private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipS
         }
         val filter = sheet.filter
         ChoiceRow(genderOptions, genderOptions.first { it.value == filter }, { picked, _ -> sheet.pickFilter(picked.value) }, Modifier.fillMaxWidth().padding(top = Dim.s8), "studio_voice_filter")
-        if (sheet.said.isNotEmpty()) RowHint(sheet.said, Modifier.padding(top = Dim.s8).testTag("studio_voice_said"))
+        Reveal(sheet.said.isNotEmpty()) { RowHint(sheet.said, Modifier.padding(top = Dim.s8).testTag("studio_voice_said")) }
         val groups = VoiceLogic.groups(VoiceLogic.byGender(choices.voices, filter))
         val labels = VoiceLogic.groupLabels(groups)
-        if (groups.isEmpty()) RowHint(WorkText.VOICE_NO_VOICES, Modifier.padding(top = Dim.s12).testTag("studio_voice_none"))
+        Reveal(groups.isEmpty()) { RowHint(WorkText.VOICE_NO_VOICES, Modifier.padding(top = Dim.s12).testTag("studio_voice_none")) }
         val list = rememberLazyListState()
         LazyColumn(Modifier.fillMaxWidth().padding(top = Dim.s8).heightIn(max = 340.dp).fadeEdges(list).testTag("studio_voice_list"), state = list) {
             groups.forEachIndexed { index, group ->
@@ -231,10 +232,10 @@ private fun VoiceRow(sheet: VoiceSheetState, voice: VoiceEntry, clip: ClipState,
             Column(Modifier.weight(1f)) {
                 BasicText(voice.name, style = Abook.type.bodyStrong)
                 val meta = VoiceLogic.meta(voice, filter == GenderFilter.All)
-                if (meta.isNotEmpty()) RowHint(meta, Modifier.padding(top = 4.dp))
-                if (!voice.installed) Caption(WorkText.VOICE_NOT_INSTALLED, Modifier.padding(top = Dim.s4))
+                Reveal(meta.isNotEmpty()) { RowHint(meta, Modifier.padding(top = 4.dp)) }
+                Reveal(!voice.installed) { Caption(WorkText.VOICE_NOT_INSTALLED, Modifier.padding(top = Dim.s4)) }
             }
-            if (voice.preview) ClipButton(sheet.sampleClip(voice), clip, { sheet.playSample(voice) }, "studio_voice_play_${voice.key}")
+            Reveal(voice.preview) { ClipButton(sheet.sampleClip(voice), clip, { sheet.playSample(voice) }, "studio_voice_play_${voice.key}") }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             TextAction(tryLabel, { sheet.tryVoice(voice) }, "studio_voice_try_${voice.key}", Modifier.weight(1f), Alignment.CenterStart)

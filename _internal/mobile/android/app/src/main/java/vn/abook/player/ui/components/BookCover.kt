@@ -148,7 +148,7 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
             softWrap = true,
             modifier = Modifier.weight(1f).fillMaxWidth().testTag("cover_title"),
         )
-        if (sub.isNotEmpty()) {
+        Reveal(sub.isNotEmpty()) {
             Spacer(Modifier.height(pad / 2))
             FitText(
                 sub.uppercase(),

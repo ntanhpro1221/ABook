@@ -69,7 +69,7 @@ fun ConfirmPage(title: String, tag: String, lines: List<String>, problem: String
             Spacer(Modifier.height(Dim.s8))
             BasicText(line, style = Abook.type.body.copy(color = colors.text2))
         }
-        if (problem.isNotEmpty()) {
+        Reveal(problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("${tag}_problem"))
         }

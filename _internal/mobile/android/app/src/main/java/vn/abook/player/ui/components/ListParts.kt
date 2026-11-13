@@ -79,7 +79,7 @@ val LocalEmbeddedPane = androidx.compose.runtime.compositionLocalOf { false }
 fun PageHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
     val embedded = LocalEmbeddedPane.current
     Row(modifier.fillMaxWidth().padding(top = Dim.s12).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-        if (!embedded) BackButton(onBack)
+        Reveal(!embedded) { BackButton(onBack) }
         // Mũi tên 24 nằm đầu ô chạm 48: kéo tiêu đề lùi vào nửa trống của ô để nó "sát sau" nét mũi tên (DESIGN.md §6 "Đầu màn").
         BasicText(title, style = Abook.type.screenTitle, modifier = Modifier.weight(1f).offset(x = if (embedded) 0.dp else -Dim.s12))
         if (trailing != null) trailing()

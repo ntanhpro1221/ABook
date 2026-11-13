@@ -54,6 +54,7 @@ import vn.abook.player.ui.studio.parts.PollWhileVisible
 import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * "Kịch bản" (NATIVE_REMOTE_STUDIO.md §6.8): cả chương đọc như kịch bản. Chạm tên người nói để đổi người (bảng chọn, giữ 15 giây cho "Hoàn tác"); chạm "Sửa chữ"
@@ -141,11 +142,11 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
                 val pending = line.wish?.state == "pending"
                 Caption(listOfNotNull(ScriptText.line(line.seq), ScriptText.PENDING.takeIf { pending }, ScriptText.CONTEXT.takeIf { row.context }).dotJoined())
             }
-            if (line.hasAudio && !row.context) ClipButton(StudioScriptState.clipId(line), clip, { state.play(line) }, "studio_line_play_${line.stableId}")
+            Reveal(line.hasAudio && !row.context) { ClipButton(StudioScriptState.clipId(line), clip, { state.play(line) }, "studio_line_play_${line.stableId}") }
         }
         BasicText(line.text, style = Abook.type.body, modifier = Modifier.padding(top = Dim.s4).testTag("studio_line_text_${line.stableId}"))
         val spoken = line.lineWish?.spoken ?: line.spoken
-        if (!spoken.isNullOrEmpty() && !editing) {
+        Reveal(!spoken.isNullOrEmpty() && !editing) {
             RowHint("${ScriptText.READ_AS}: $spoken", Modifier.padding(top = Dim.s4).testTag("studio_line_spoken_${line.stableId}"))
         }
         val hint = line.hint

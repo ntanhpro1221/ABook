@@ -48,7 +48,7 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         ListRow(S.s_am_sac_8c2f4e1a, Modifier.pressable(onClick = openTone).testTag("audiofx_tones")) {
             Column(Modifier.widthIn(max = 180.dp), horizontalAlignment = Alignment.End) {
                 BasicText(tones.name, style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
-                if (tones.scoped) RowHint(S.s_copy_0aedb2b2cf2b)
+                Reveal(tones.scoped) { RowHint(S.s_copy_0aedb2b2cf2b) }
             }
         }
         Spacer(Modifier.height(Dim.s8))

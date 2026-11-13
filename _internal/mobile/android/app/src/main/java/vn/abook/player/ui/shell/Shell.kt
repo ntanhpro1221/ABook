@@ -120,6 +120,7 @@ import vn.abook.player.ui.nowplaying.PlayerCoverProvider
 import vn.abook.player.ui.nowplaying.rememberRepoNowPlaying
 import kotlin.math.abs
 import kotlin.math.max
+import vn.abook.player.ui.components.Reveal
 
 /** Mọi trạng thái sống của khung (ngăn xếp, tab, vị trí cuộn từng tab) ở MỘT chỗ - tab rời khỏi cây vẫn giữ chỗ cuộn. */
 @Stable
@@ -683,8 +684,8 @@ private fun MiniBarArea(shell: ShellState, player: PlayerState, repo: PlayerRepo
         // Keep the slot mounted before the first track, so first playback
         // reveals it instead of constructing an already fully visible bar.
         MiniPlayerSlot(visible = player.hasTrack || shell.window.expanded) {
-            if (last[0].hasTrack) MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying,
-                onDevices = companion?.let { remote -> { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(remote, repo, dismiss) } } })
+            Reveal(last[0].hasTrack) { MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying,
+                onDevices = companion?.let { remote -> { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(remote, repo, dismiss) } } }) }
         }
     }
 }

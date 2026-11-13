@@ -19,6 +19,7 @@ import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.screens.SettingsPage
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.Reveal
 
 /**
  * Khoá giọng trực tuyến: mỗi nhà cung cấp (Azure, Google Cloud, FPT.AI, Viettel AI) một hàng - tên, khoá che và kết quả lần kiểm tra; chạm mở bảng nhập / kiểm tra / xoá khoá.
@@ -36,7 +37,7 @@ fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifie
             MoreInfo(S.s_tim_hieu_them_032fe408, S.s_khoa_chi_luu_tren_may_dich_vu_co_the_tinh_a894acea, "keys_more")
             val rows = if (ui.loaded) ui.providers else VoiceText.KEYED.map { (id, name) -> KeyProvider(id, name, "", false, false, "", "", false, 0) }
             for ((index, provider) in rows.withIndex()) {
-                if (index > 0) RowLine()
+                Reveal(index > 0) { RowLine() }
                 KeyRow(provider, if (ui.loaded) ({ sheets.show { dismiss -> KeySheet(provider, voice, dismiss) } }) else null)
             }
             InlineProblem(if (ui.failed && !ui.loaded) S.s_chua_doc_duoc_cac_khoa_87b08dca else "", voice::loadKeys, "keys_problem")
