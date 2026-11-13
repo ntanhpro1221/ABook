@@ -90,7 +90,8 @@ SAMPLE_ADDRESSES = {
 
 
 def repo_root() -> Path:
-    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True)
+    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", check=True)
     return Path(out.stdout.strip())
 
 
@@ -100,7 +101,7 @@ def default_corpus(root: Path) -> Path | None:
         return Path(env)
     common = subprocess.run(
         ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     ).stdout.strip()
     candidates = [root / "Corpus"]
     if common:
@@ -337,11 +338,11 @@ def pending_audio(root: Path, files, rev: str | None) -> list[str]:
     if rev is None:
         present = [p for p in entries if (root / p).is_file()]
         out = subprocess.run(["git", "-C", str(root), "hash-object", "--", *present],
-                             capture_output=True, text=True, check=True).stdout.split() if present else []
+                             capture_output=True, text=True, encoding="utf-8", errors="replace", check=True).stdout.split() if present else []
         current = dict(zip(present, out))
     else:
         listing = subprocess.run(["git", "-C", str(root), "ls-tree", "-r", rev, "--", *entries],
-                                 capture_output=True, text=True, check=True).stdout
+                                 capture_output=True, text=True, encoding="utf-8", errors="replace", check=True).stdout
         current = {line.split("\t", 1)[1]: line.split()[2] for line in listing.splitlines()}
     return sorted(p for p, blob in entries.items() if current.get(p) == blob)
 

@@ -10,7 +10,6 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 import textwrap
 import time
 import wave
@@ -133,7 +132,8 @@ def test_voice_files_are_made_once_from_the_preset(tmp_path: Path) -> None:
     assert other != first and b"\r" not in (first / "ref_codes.txt").read_bytes()
 
 
-HERE = Path(tempfile.gettempdir(), "claude/D--Novels-ABook/eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a/scratchpad")
+# Thư mục chứa bản tải audio.cpp (vieneu_gguf/dl) và venv vieneu 3.8.3 (vieneu383/.venv) để so; không đặt thì bỏ qua.
+HERE = Path(os.environ.get("ABOOK_VIENEU_GGUF_REFERENCE") or "_unset_vieneu_gguf_reference_")
 HF_VOICES = HERE / "vieneu_gguf" / "dl" / "model" / "voices"
 PRESETS = HERE / "vieneu383" / ".venv" / "Lib" / "site-packages" / "vieneu" / "assets" / "voices_v3_turbo.json"
 

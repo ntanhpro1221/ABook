@@ -351,7 +351,7 @@
    ]
   },
   {
-   "text": "Cô ghi nghề “thợ săn” lên phiếu. Chức danh của tôi là “đội trưởng,” theo quy ước của xưởng.",
+   "text": "Cô nói “thợ săn” rồi cười. Cả xưởng gọi tôi là “đội trưởng,” chỉ vì tôi giữ chìa khoá.",
    "segments": [
     {
      "id": 0,
@@ -365,7 +365,7 @@
     },
     {
      "id": 2,
-     "text": "rồi cười. Họ gọi tôi là",
+     "text": "rồi cười. Cả xưởng gọi tôi là",
      "sceneBreak": false
     },
     {
@@ -375,7 +375,7 @@
     },
     {
      "id": 4,
-     "text": "đơn giản vì thế.",
+     "text": "chỉ vì tôi giữ chìa khoá.",
      "sceneBreak": false
     }
    ]

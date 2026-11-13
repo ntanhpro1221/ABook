@@ -484,7 +484,7 @@ SEGMENTER_TEXTS = [
     "***\n\nGió thổi.\n\n***",
     "Gió thổi.\n\n*\n\nTrời tối.\n\n-\n\nTrời sáng.\n\n--\n\nHết.",
     "Gió thổi.\n\n...\n\n“...”\n\nTrời tối.",
-    'Cô ghi nghề “thợ săn” lên phiếu. Chức danh của tôi là “đội trưởng,” theo quy ước của xưởng.',
+    'Cô nói “thợ săn” rồi cười. Cả xưởng gọi tôi là “đội trưởng,” chỉ vì tôi giữ chìa khoá.',
     "Cô đọc “Cơ hội hoàn hảo”? Rồi lắc đầu.",
     "“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!” Cô cười.",
     "“Một câu nói chưa đóng ngoặc.\n\nLan tiếp tục đi.\n\nMinh quay lại.",
