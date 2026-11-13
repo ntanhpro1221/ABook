@@ -437,7 +437,7 @@ FocusScope {
                         Column {
                             objectName: "projectNotes"
                             width: parent.width
-                            spacing: 6
+                            spacing: 8
                             Repeater {
                                 model: root.book ? Logic.actionNotes(root.book, root.remote).concat([Logic.studioMissingNote(root.store.info && root.store.info.studio, root.book, root.remote)]).filter(Boolean) : []
                                 delegate: Text {
@@ -495,7 +495,7 @@ FocusScope {
                                 readonly property var shown: root.book ? Logic.bookProblem(root.book, !!(root.store.info && root.store.info.studio), false) : null
                                 visible: shown !== null
                                 width: parent.width
-                                spacing: 2
+                                spacing: 4
                                 Text { width: parent.width; text: problem.shown ? problem.shown.summary : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                                 Text { width: parent.width; text: problem.shown ? problem.shown.hint : ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                             }

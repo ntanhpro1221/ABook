@@ -188,21 +188,21 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
           key={JSON.stringify(option.id)}
           disabled={option.disabled}
           onSelect={() => choose(option.id)}
-          className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 transition-colors duration-motion-fast data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}
+          className={cn(MENU_ITEM, "h-auto min-h-9 py-2 transition-colors duration-motion-fast data-[disabled]:opacity-50", option.id === chosen && "font-medium")}
         >
           <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
         </DropdownMenu.Item>
       ))}
       </MotionRegion>
       {canImport && (
-        <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5")}>
+        <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-2")}>
           <Plus className="size-4 shrink-0" />
           {ADD_MUSIC_LABEL}
         </DropdownMenu.Item>
       )}
       <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label={S.s_dang_tai_danh_sach_831ab748} className="p-2" /> : loadFailed ? <InlineError message={S.s_ban_hay_thu_tai_lai_danh_sach_nhac_c3976285} onRetry={retry} /> : null}</MotionRegion>
       {/* Chữ nhỏ chỉ khi có điều cần biết (mất mạng lần đầu thì lý do) - như bản điện thoại, không nhắc suông. */}
-      <MotionRegion motionKey={error}>{error ? <p data-menu-note className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error}</p> : null}</MotionRegion>
+      <MotionRegion motionKey={error}>{error ? <p data-menu-note className="px-2 pb-1 pt-2 text-xs text-fg-2">{error}</p> : null}</MotionRegion>
     </ActionSubmenu>
   );
 }

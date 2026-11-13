@@ -37,7 +37,7 @@ export function OwnDiagnostics() {
   return (
     <div>
     <div className="flex items-center justify-between gap-6">
-      <div className="min-w-0 text-[0.8125rem] text-fg-2 text-pretty">
+      <div className="min-w-0 text-body-small text-fg-2 text-pretty">
         {OWN_DIAGNOSTICS_HINT}
       </div>
       <Button size="sm" variant="ghost" icon={Save} loading={busy} onClick={() => void send()} className="shrink-0">{S.s_gui_nhat_ky_2e35a4f8}</Button>

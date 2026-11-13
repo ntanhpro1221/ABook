@@ -20,13 +20,13 @@ function Choice({
   help: string;
 }) {
   return (
-    <label className="touch-row flex items-start gap-2.5 text-sm">
+    <label className="touch-row flex items-start gap-3 text-sm">
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+        className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
       />
       <span className="min-w-0">
         <span className="block font-medium">{label}</span>
@@ -51,7 +51,7 @@ export function FootnoteChoices({
   return (
     <div className="mt-3 py-3" data-testid="footnote-choices">
       <p className="text-xs font-medium">{title}</p>
-      {example && <p className="mt-0.5 text-xs text-fg-2">{example}</p>}
+      {example && <p className="mt-1 text-xs text-fg-2">{example}</p>}
       <div className="mt-2 space-y-3">
         {offer.marks > 0 && (
           <Choice

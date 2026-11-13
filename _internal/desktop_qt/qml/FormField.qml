@@ -23,8 +23,8 @@ C.TextArea {
     wrapMode: TextEdit.Wrap
     selectByMouse: true
     activeFocusOnTab: true
-    topPadding: 10
-    bottomPadding: 10
+    topPadding: 12
+    bottomPadding: 12
     leftPadding: 12
     rightPadding: 12
     implicitHeight: Math.max(40, contentHeight + topPadding + bottomPadding)

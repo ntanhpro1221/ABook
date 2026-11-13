@@ -119,7 +119,7 @@ Item {
                 text: root.lastFailure
                 color: Theme.danger
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
         }
         Item { width: parent.width; height: 8 }

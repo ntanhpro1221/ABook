@@ -144,9 +144,9 @@ export function useTryReading({
     bookBusy,
   });
   const note = <MotionPresence open={Boolean(unavailable || status)}>{unavailable ? (
-    <MotionRegion as="p" className="mt-1.5 text-xs text-fg-3">{S.s_chua_nghe_thu_duoc_45a0d2ad}{unavailable}</MotionRegion>
+    <MotionRegion as="p" className="mt-2 text-xs text-fg-3">{S.s_chua_nghe_thu_duoc_45a0d2ad}{unavailable}</MotionRegion>
   ) : status ? (
-    <MotionRegion as="p" role="status" className={cn("mt-1.5 text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
+    <MotionRegion as="p" role="status" className={cn("mt-2 text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
       {status}
       {needsStudio && refusal && !remote && studio.missing && (
         <Button size="sm" variant="ghost" type="button" icon={Download} className="ml-2 align-middle" onClick={() => navigate("/studio")}>

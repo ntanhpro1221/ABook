@@ -17,7 +17,7 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
       {rows.length > 0 && (
         <dl className="divide-y divide-line text-sm">
           {rows.map((row) => (
-            <div key={row.label} className="flex flex-wrap gap-x-4 gap-y-0.5 py-2">
+            <div key={row.label} className="flex flex-wrap gap-x-4 gap-y-1 py-2">
               <dt className="w-44 shrink-0 text-fg-2">{row.label}</dt>
               <dd className="min-w-0 flex-1 [overflow-wrap:anywhere]">{row.value}</dd>
             </div>
@@ -50,7 +50,7 @@ function LogBox({ title, lines, empty, open }: { title: string; lines: string[];
           style={scrollFade.style}
           tabIndex={0}
           aria-label={title}
-          className="max-h-72 select-text overflow-auto border-t border-line py-2 text-[0.6875rem] leading-snug text-fg-2"
+          className="max-h-72 select-text overflow-auto border-t border-line py-2 text-caption leading-snug text-fg-2"
         >
           {lines.join("\n")}
         </pre>

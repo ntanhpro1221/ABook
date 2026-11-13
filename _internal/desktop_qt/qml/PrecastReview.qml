@@ -276,13 +276,13 @@ FocusScope {
                             Item { width: 1; height: 24 }
                             Flow {
                                 width: parent.width
-                                spacing: 6
+                                spacing: 8
                                 Text {
                                     objectName: "precastDoubt"
                                     text: S.s_may_chua_chac_5781f0c4
                                     color: Theme.text
                                     font.pixelSize: Theme.sizeBodySmall
-                                    font.weight: 600
+                                    font.weight: Theme.weightMedium
                                 }
                                 FlowDetail { detail: P.doubtLine(root.castCards.length) }
                             }

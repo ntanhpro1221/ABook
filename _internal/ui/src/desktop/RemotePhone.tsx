@@ -231,7 +231,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-control" />
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
+            <div className="flex items-center gap-2 text-xs font-medium text-accent-text">
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
               {/* Tên máy là chỗ phân biệt máy: câu dẫn không co, tên co sau cùng (và có tooltip), cách phát chỉ hiện khi rộng. */}
               <span className="shrink-0 whitespace-nowrap">{phone.playing ? S.s_dang_phat_tren_1088c6da : S.s_dang_dung_tren_2fa8df8a}</span>
@@ -277,7 +277,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
                 onClick={() => void listenHere()}
                 disabled={moving}
                 aria-label={S.s_nghe_o_day_f7f1d741}
-                className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
+                className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
                 <span className="hidden lg:inline">{S.s_nghe_o_day_f7f1d741}</span>
@@ -465,13 +465,13 @@ export function HandOffButton({ className }: { className?: string }) {
       </Tooltip>
       )}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">{S.s_phat_tren_681e16e1}</DropdownMenu.Label>
+        <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-2 shadow-float"><MotionRegion>
+          <DropdownMenu.Label className="px-2 pb-1 pt-1 text-xs font-medium text-fg-3">{S.s_phat_tren_681e16e1}</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (
             <>
               {/* Trong menu chỉ được có mục / nhóm / vạch: lời báo là khối trơn (không role="status", không <p>); trình đọc màn hình nghe qua announce ở trên. */}
-              <div className="px-2 py-1.5 text-sm text-fg-2">
+              <div className="px-2 py-2 text-sm text-fg-2">
                 {searching ? S.s_dang_tim_thiet_bi_b72cae79 : S.s_chua_thay_thiet_bi_192c6e9e}
               </div>
               <div className="px-2 pb-1 text-xs text-fg-3">{S.s_bat_may_kia_va_noi_cung_wi_fi_de_phat_e3991e2f}</div>

@@ -158,7 +158,7 @@ export function MyMusicSection() {
           {rows.map(({ item: track, key, state, ref }) => (
             <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
-                <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
+                <EighthNote className="mr-2 inline size-4 text-accent-text" />
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="text-fg-2"> · {formatClock(track.duration)}</span> : null}

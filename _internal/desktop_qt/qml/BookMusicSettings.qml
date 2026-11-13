@@ -91,7 +91,7 @@ Column {
             // Công tắc nói trạng thái ("Bật" / "Tắt"); tên mục "Nhạc nền" đã ở ngay trên, không lặp lại
             Row {
                 height: 36
-                spacing: 10
+                spacing: 12
                 Switch {
                     objectName: "musicSwitch"
                     anchors.verticalCenter: parent.verticalCenter

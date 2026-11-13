@@ -43,7 +43,7 @@ export function OnlineVoicePrompt() {
       width="max-w-md"
     ><MotionRegion>
       {choosing ? (
-        <div ref={scrollFade.ref} style={scrollFade.style} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="flex max-h-[50vh] flex-col gap-1 overflow-y-auto">
           {voices.map((item) => {
             const playing = sample.playing === item.id;
             return (
@@ -59,7 +59,7 @@ export function OnlineVoicePrompt() {
                     }}
                     className={cn(
                       "flex min-h-[48px] min-w-0 flex-1 items-center justify-between gap-2 rounded-control px-3 text-left text-sm hover:bg-hover",
-                      item.id === voice.id && "font-semibold",
+                      item.id === voice.id && "font-medium",
                     )}
                   >
                     <span className="truncate">{spokenVoiceName(item.name)}</span>
@@ -79,7 +79,7 @@ export function OnlineVoicePrompt() {
                     </Button>
                   )}
                 </div>
-                {sample.failed?.voice === item.id && <p className="px-3 pb-1 text-[0.8125rem] text-danger text-pretty" role="alert">{sample.failed.message}</p>}
+                {sample.failed?.voice === item.id && <p className="px-3 pb-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>}
               </div>
             );
           })}

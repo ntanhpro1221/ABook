@@ -142,7 +142,7 @@ Column {
                     value: root.draft.firstPersonGender || "unknown"
                     onPicked: value => root.setGender(value === "male" || value === "female" ? value : undefined)
                 }
-                Prose { topPadding: 6; small: true; text: S.s_chua_ro_thi_may_doan_loi_dan_dung_giong_cu_243f284d }
+                Prose { topPadding: 8; small: true; text: S.s_chua_ro_thi_may_doan_loi_dan_dung_giong_cu_243f284d }
                 NewSwitchRow {
                     objectName: "newTellerMode"
                     width: parent.width
@@ -163,7 +163,7 @@ Column {
                     topPadding: 16
                     Rectangle { width: parent.width; height: 1; color: Theme.line }
                     Prose { strong: true; tone: Theme.text; topPadding: 12; text: S.s_chuong_doi_nguoi_ke_88865076 }
-                    Prose { topPadding: 2; text: S.s_ke_bang_toi_bo_chon_neu_may_doan_sai_306c44c1 }
+                    Prose { topPadding: 4; text: S.s_ke_bang_toi_bo_chon_neu_may_doan_sai_306c44c1 }
                     Item { width: 1; height: 8 }
                     Repeater {
                         model: root.povList
@@ -320,7 +320,7 @@ Column {
                             }
                             Text {
                                 width: parent.width
-                                topPadding: 2
+                                topPadding: 4
                                 text: card.modelData.gender + S.s_u00a0_u00a0mien_0b77fd18 + card.modelData.region + "\u00a0·\u00a0" + card.modelData.style
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -338,7 +338,7 @@ Column {
                                     y: 1
                                     text: S.s_de_xuat_c576f0da
                                     color: Theme.accentText
-                                    font.pixelSize: 11
+                                    font.pixelSize: 12
                                     font.weight: Theme.weightBold
                                     font.letterSpacing: 0.5
                                 }

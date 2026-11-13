@@ -124,12 +124,12 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
-        className={cn("grid w-full items-center gap-x-4 gap-y-1 rounded-control px-3 py-2.5 text-left transition-colors hover:bg-hover", COLUMNS)}
+        className={cn("grid w-full items-center gap-x-4 gap-y-1 rounded-control px-3 py-3 text-left transition-colors hover:bg-hover", COLUMNS)}
       >
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
           <div className="truncate font-medium">{book.title}</div>
-          <div className="truncate text-[0.8125rem] text-fg-2">
+          <div className="truncate text-body-small text-fg-2">
             {/* Chất lượng "Cân bằng" là mặc định của gần mọi dự án: chữ giống nhau trên mọi hàng thì chỉ ghi ở hàng KHÁC (soát 25-10). */}
             <DotJoin parts={[book.settings.narrator && S.s_giong_ke_0_958dd853(book.settings.narrator), book.settings.profile !== "balanced" && book.settings.profileLabel]} />
           </div>
@@ -180,7 +180,7 @@ function EntryView({ entry }: { entry: Entry }) {
   if (entry.kind === "book") return <ProjectRow book={entry.book} />;
   return (
     <section aria-label={entry.name}>
-      <h2 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
+      <h2 className="px-3 pb-1 pt-3 text-xs font-medium text-fg-2">
         {entry.name} <span className="font-normal">· {entry.books.length} {entry.unit}</span>
       </h2>
       {entry.books.map((book) => (
@@ -208,7 +208,7 @@ function TableHead() {
 /** Khung chờ đúng hình một hàng của bảng (DESIGN.md mục 2: không vòng xoay giữa màn): hai vạch đứng trong hai hộp dòng của tên và dòng phụ. */
 function RowSkeleton() {
   return (
-    <div className={cn("grid items-center gap-x-4 px-3 py-2.5", COLUMNS)}>
+    <div className={cn("grid items-center gap-x-4 px-3 py-3", COLUMNS)}>
       <Skeleton className="size-10 rounded-control" />
       <div>
         <div className="flex h-6 items-center"><Skeleton className="h-4 w-1/2" /></div>
@@ -235,7 +235,7 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float">
           <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>{S.s_mo_du_an_f990c9d8}</MenuItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -276,7 +276,7 @@ export function ProjectsScreen() {
       <ScreenHeader
         title={S.s_studio_0aa91af2}
         actions={
-          <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[9px] pointer-coarse:-mr-[15px] max-sm:-mr-[15px]" : "-mr-3.5")}>
+          <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[8px] pointer-coarse:-mr-[16px] max-sm:-mr-[16px]" : "-mr-4")}>
             <MotionPresence open={!empty}>
               <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new", PICK_SOURCE)}>{S.s_du_an_moi_992d22b2}</Button>
             </MotionPresence>

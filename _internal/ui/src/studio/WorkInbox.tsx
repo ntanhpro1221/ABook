@@ -215,7 +215,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
     <li className={cn("flex items-start gap-2 text-sm transition-opacity duration-motion-fast", onPick && !picked && "opacity-60")}>
       {onPick && (
         // Ô 14 px: nhãn bọc nới vùng bấm ra 24 px (màn hẹp/cảm ứng cao 40 px) mà ô vẫn đứng đúng chỗ cũ (soát a31, 2.5.8).
-        <label className="touch-reach -mx-[5.25px] grid size-[24.5px] shrink-0 cursor-pointer place-items-center">
+        <label className="touch-reach -mx-[4px] grid size-[24.5px] shrink-0 cursor-pointer place-items-center">
           <input
             type="checkbox"
             checked={picked}
@@ -230,12 +230,12 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
           type="button"
           onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
           aria-label={playing ? S.s_dung_11554138 : S.s_nghe_cau_0_4329fb13(example.text)}
-          className="mt-0.5 grid size-[32px] shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
+          className="mt-1 grid size-[32px] shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
           <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
         </button>
       ) : (
-        <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
+        <span className="mt-1 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
         {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p>}
@@ -246,14 +246,14 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
             {example.chapterTitle} · {example.seq === 0 ? S.s_tieu_de_chuong_4f8f59f4 : S.s_cau_0_7b7d4092(example.seq)}
             {example.speaker && S.s_may_gan_0_e3b67580(example.speaker)}
             {example.narration && S.s_loi_ke_d511b7eb}
-            {example.changes && <span className="font-semibold text-accent-text">{S.s_se_doi_b8b363f7}</span>}
+            {example.changes && <span className="font-medium text-accent-text">{S.s_se_doi_b8b363f7}</span>}
             {!example.hasAudio && S.s_chua_thu_240643ef}
           </div>
           <p className={example.narration ? "text-fg-2" : "text-fg"}>
             {example.names?.length
               ? markNames(example.text, example.names).map((part, index) =>
                   part.mark ? (
-                    <mark key={index} className="rounded-control bg-accent-soft px-0.5 font-semibold text-accent-text">
+                    <mark key={index} className="rounded-control bg-accent-soft px-1 font-medium text-accent-text">
                       {part.text}
                     </mark>
                   ) : (
@@ -363,7 +363,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
   return (
     <div className="mt-3">
       {item.requested && (
-        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* "Giữ" cách máy đang đọc không đổi gì trong sách - không bảo bấm "Áp dụng thay đổi" (soát UX 29-09). */}
           {item.requested === item.current ? S.s_giu_0_khong_can_ap_dung_90d56536(item.requested) : S.s_da_ghi_0_1_ff5ca65e(item.requested, pending)}
@@ -394,7 +394,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           aria-invalid={problem ? true : undefined}
           aria-describedby={problem ? `${inputId}-problem` : undefined}
           className={cn(
-            "h-8 w-40 rounded-control border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus",
+            "h-8 w-40 rounded-control border bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus",
             problem ? "border-danger" : "border-line",
           )}
         />
@@ -534,7 +534,7 @@ function SpeakerFix({
   return (
     <div className="mt-3">
       {item.requested && (
-        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
           {item.kind === "alias"
@@ -563,7 +563,7 @@ function SpeakerFix({
             : S.s_cau_xen_ke_chi_doi_cau_danh_dau_ca_chuoi_d_8b814b90}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         {shownChoices.map((choice, index) => (
           <span key={choice.value} className="inline-flex items-center">
             <DecisionButton data-choice
@@ -613,9 +613,9 @@ function SpeakerFix({
         )}
       </div>
       <Collapse open={creating}>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           {moreChoices.length > 0 && (
-            <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
+            <div className="flex w-full flex-wrap items-center gap-2" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
               {moreChoices.map((choice) => (
                 <Button key={choice.value} size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
                   {choice.label}
@@ -631,7 +631,7 @@ function SpeakerFix({
             placeholder={sample ? S.s_ten_nguoi_noi_vd_0_b7a0ff62(sample) : S.s_ten_nguoi_noi_d3caf277}
             aria-label={S.s_ten_nguoi_noi_moi_9be83401}
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <span className="text-xs text-fg-2">{S.s_gioi_bam_de_luu_e314c934}</span>
           {(
@@ -697,12 +697,12 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     <div className="mt-3">
       {section.appliesNote && !(item.requested && item.redoOnly) && <p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p>}
       {item.requested && (
-        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {item.redoOnly ? S.s_da_ghi_ap_khi_lam_lai_phan_tich_tu_dau_4ed021d7 : S.s_da_ghi_0_036988b1(item.requested)}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
         </DecisionButton>
@@ -712,7 +712,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>{S.s_nguoi_ke_khac_7291e079}</Button>
       </div>
       <Collapse open={choosing}>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           {section.choices.map((choice) => (
             <Button key={choice.value} size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
               {choice.label}
@@ -725,7 +725,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             placeholder={S.s_ten_nguoi_ke_d492ccfb}
             aria-label={S.s_ten_nguoi_ke_cua_doan_94204731}
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>{S.s_dat_nguoi_ke_d4ae9aa6}</Button>
         </div>
@@ -799,13 +799,13 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   return (
     <div className="mt-3">
       {item.requested && (
-        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />{S.s_da_ghi_85094402}{item.requested} - {pending}.
         </p>
       )}
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label={S.s_chon_1171ca97}>
         {(item.voiceChoices ?? []).map((choice) => (
-          <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
+          <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-1">
             <DecisionButton data-choice
               size="sm"
               variant="ghost"
@@ -822,7 +822,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             >
               {choice.label}
             </DecisionButton>
-            {choice.note && <span className="px-0.5 text-[0.6875rem] text-fg-3">{choice.note}</span>}
+            {choice.note && <span className="px-1 text-caption text-fg-3">{choice.note}</span>}
           </div>
         ))}
         {item.keepCharacters && item.keepCharacters.length > 0 && (
@@ -926,13 +926,13 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
     >
       <MotionRegion>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="rounded-full bg-hover px-2 py-0.5 text-[0.6875rem] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
-        <h3 id={exiting ? undefined : `work-${item.key}-title`} className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
+        <span className="rounded-full bg-hover px-2 py-1 text-caption font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
+        <h3 id={exiting ? undefined : `work-${item.key}-title`} className="text-body font-medium">{decidedTitle(item) ?? item.title}</h3>
         {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
-      <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
+      <p className="mt-2 text-sm text-fg-2">{item.problem}</p>
       <MotionRegion motionKey={scope} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
-        <span>{S.s_anh_huong_f9ba35dd}<span className="font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
+        <span>{S.s_anh_huong_f9ba35dd}<span className="font-medium text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
         <span>
           {item.kind === "audio" ? S.s_trang_thai_cb31de81 : item.kind === "narrator" ? S.s_may_coi_nguoi_ke_la_f1309939 : S.s_may_dang_dung_d9ef0879}:{" "}
           <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? S.s_khong_ai_chuong_ke_o_ngoi_thu_ba_209ef4df : item.current}</span>
@@ -963,9 +963,9 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           )}
         </>
       ) : (
-        <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label={S.s_lua_chon_499eda35}>
+        <div role="group" className="mt-3 flex flex-wrap gap-2" aria-label={S.s_lua_chon_499eda35}>
           {item.options.map((option) => (
-            <span key={option} className="rounded-control border border-line px-2.5 py-1 text-xs text-fg-2">
+            <span key={option} className="rounded-control border border-line px-3 py-1 text-xs text-fg-2">
               {option}
             </span>
           ))}
@@ -1270,7 +1270,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         />
       </div>
       {active !== "all" && <BulkKeep bookId={bookId} kind={active} items={items} />}
-      <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
+      <p className="mt-2 hidden flex-wrap items-center gap-2 text-xs text-fg-3 md:flex">
         <Kbd>{S.s_j_6da43b94}</Kbd> <Kbd>{S.s_k_86be9a55}</Kbd>{S.s_chon_the_d4ce1760}<Kbd>1–9</Kbd>{S.s_chon_dap_an_4ef796c6}<Kbd>{S.s_esc_52f878ed}</Kbd>{S.s_bo_chon_647a1871}</p>
       {/* Đổi loại việc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn thẻ cũ đang mờ ra. */}
       <MotionRegion motionKey={active} slideIndex={active === "all" ? 0 : kinds.indexOf(active) + 1}>

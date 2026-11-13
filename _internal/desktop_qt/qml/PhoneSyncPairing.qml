@@ -33,7 +33,7 @@ Column {
             bottomPadding: 20
             readonly property real rightWidth: codeRow.width + 4.76
             readonly property bool sideBySide: width - rightWidth - 24 >= probe.implicitWidth
-            Text { id: probe; visible: false; text: instruction.text; font.pixelSize: 13 }
+            Text { id: probe; visible: false; text: instruction.text; font.pixelSize: 14 }
             Item {
                 width: parent.width
                 height: codeBox.sideBySide ? Math.max(left.height, right.height) : left.height + 24 + right.height
@@ -41,7 +41,7 @@ Column {
                     id: left
                     width: codeBox.sideBySide ? probe.implicitWidth : parent.width
                     anchors.verticalCenter: codeBox.sideBySide ? parent.verticalCenter : undefined
-                    Text { width: parent.width; text: S.s_ma_ghep_thiet_bi_02370316; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                    Text { width: parent.width; text: S.s_ma_ghep_thiet_bi_02370316; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                     Item { width: 1; height: 8 }
                     Text {
                         id: instruction
@@ -49,7 +49,7 @@ Column {
                         text: TextWrap.keepDots(S.s_tren_may_kia_cai_dat_thiet_bi_chon_3c0003fa + (root.sync.name || "") + S.s_nhap_ma_84cf2ece)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                     Item { width: 1; height: 8 }
                     MoreInfo {
@@ -70,9 +70,9 @@ Column {
                         x: 4.76
                         objectName: "pairingCode"
                         Accessible.name: S.s_ma_ghep_noi_c00b217d + (root.sync.pairing ? root.sync.pairing.code.split("").join(" ") : "")
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76 }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
                         Item { width: 12; height: 1 }
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 34; font.weight: 600; font.letterSpacing: 4.76 }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
                     }
                     ClockLabel {
                         objectName: "pairingExpiry"
@@ -121,9 +121,9 @@ Column {
                 x: 32
                 y: 16
                 width: parent.width - 32 - 12 - again.width
-                Text { width: parent.width; text: S.s_ma_bi_khoa_48579bd8; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                Text { width: parent.width; text: S.s_ma_bi_khoa_48579bd8; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                 Item { width: 1; height: 2 }
-                Text { width: parent.width; text: S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 13 }
+                Text { width: parent.width; text: S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 14 }
             }
             Button {
                 id: again

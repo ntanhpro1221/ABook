@@ -209,10 +209,10 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
         placeholder={S.s_vd_tp_hcm_26b95779}
         spellCheck={false}
         autoComplete="off"
-        className="mt-1.5 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+        className="mt-2 h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
       />
-      <p className="mt-1.5 text-xs text-fg-2">{S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5}</p>
-      {typed && !single && <p className="mt-1.5 text-xs text-warning">{S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6}</p>}
+      <p className="mt-2 text-xs text-fg-2">{S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5}</p>
+      {typed && !single && <p className="mt-2 text-xs text-warning">{S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6}</p>}
       {single && (
         <ul className="mt-2 divide-y divide-line">
           <ReadingRow key={typed} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />
@@ -246,7 +246,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
   // Chữ người nghe vừa gõ để thêm: nói nó chạm tới bao nhiêu câu, bao nhiêu câu đã thu phải thu lại (webui/name_readings.reading_reach).
   const reach = useReach(bookId, item.surface, fresh).data;
   return (
-    <MotionRegion as="li" className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
+    <MotionRegion as="li" className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3">
       {example?.hasAudio ? (
         <button
           type="button"
@@ -261,8 +261,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         <span className="size-8 shrink-0" aria-hidden />
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-1.5">
-          <span className="font-semibold">{item.surface}</span>
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-medium">{item.surface}</span>
           {item.spoken && (
             <>
               <span className="text-sm text-fg-2">{S.s_doc_la_f7c6afb9}</span>
@@ -319,9 +319,9 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
   const editButton = useReturnFocus(editing);
   // Trình bày như mục "Cách đọc tên" ở tab Nhân vật: đang đọc gì, và (nếu có) cách đọc đang chờ áp dụng.
   return (
-    <MotionRegion as="div" className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
+    <MotionRegion as="div" className="flex flex-wrap items-center gap-x-2 gap-y-2" data-name-editor>
       <span className="min-w-0 flex-1 text-sm">
-        <span className="font-semibold">{item.surface}</span>
+        <span className="font-medium">{item.surface}</span>
         {item.spoken && <span className="text-fg-2">{S.s_doc_la_6f6aa509}</span>}
         {item.spoken && <span className="whitespace-nowrap font-medium">“{shownReading(item.spoken)}”</span>}
         {item.requested && (
@@ -489,7 +489,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         spellCheck={false}
         autoComplete="off"
         className={cn(
-          "h-8 min-w-0 flex-1 rounded-control border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-44 sm:flex-none",
+          "h-8 min-w-0 flex-1 rounded-control border bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus sm:w-44 sm:flex-none",
           problem ? "border-danger" : "border-line",
         )}
       />
@@ -504,7 +504,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         // Chưa đổi gì (ô hiện chữ đầu viết hoa - so không phân biệt hoa thường) thì chỉ lưu khi đưa vào cách đọc chung.
         disabled={!typed || never || (!fresh && !everywhere && asStored(typed) === (item.requested ?? item.spoken))}
       >{S.s_luu_e91f26c0}</Button>
-      <label className="flex basis-full items-center gap-1.5 text-xs text-fg-2">
+      <label className="flex basis-full items-center gap-2 text-xs text-fg-2">
         <input
           type="checkbox"
           checked={everywhere}

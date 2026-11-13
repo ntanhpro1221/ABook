@@ -50,7 +50,7 @@ Interactive {
     }
     Icon {
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         name: "chevron-down"
         size: 14
@@ -61,7 +61,7 @@ Interactive {
         id: list
         property real shown: 0
         parent: C.Overlay.overlay
-        padding: 6
+        padding: 8
         modal: false
         focus: true
         closePolicy: C.Popup.CloseOnPressOutside | C.Popup.CloseOnEscape

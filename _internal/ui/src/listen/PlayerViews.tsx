@@ -168,7 +168,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
     action();
   };
   return (
-    <div className={cn("w-full", large ? "space-y-1.5" : "flex items-center gap-3")}>
+    <div className={cn("w-full", large ? "space-y-2" : "flex items-center gap-3")}>
       {!large && <span className="w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span>}
       <Slider.Root
         className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : cn("h-4 flex-1", SLIDER_REACH))}
@@ -410,7 +410,7 @@ export function MenuShell({
   const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
-        : "inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
+        : "inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-body-small font-medium transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
       {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
@@ -463,7 +463,7 @@ export function MenuShell({
           onKeyDown={menuArrowKeys}
           // Không bao giờ cao hơn chỗ còn lại của màn (điện thoại 375x812: danh sách nhạc / giọng từng tràn đáy): phần dài cuộn trong hộp.
           className={cn(
-            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-sheet border border-line bg-panel p-1.5 shadow-float",
+            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-sheet border border-line bg-panel p-2 shadow-float",
             width,
           )}
         >
@@ -509,7 +509,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
         }}
       />
       {!COARSE && (
-        <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-semibold">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-semibold">]</kbd>{S.s_de_giam_tang_f47777c5}</p>
+        <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-medium">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-medium">]</kbd>{S.s_de_giam_tang_f47777c5}</p>
       )}
     </MenuShell>
   );
@@ -567,7 +567,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       }
     ><MotionRegion>
       <div className="flex items-center justify-between gap-3 px-2 py-2">
-        <label htmlFor={id} className="text-sm font-medium">{S.s_nhac_nen_198fce26}<span className="font-semibold">{music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e}</span>
+        <label htmlFor={id} className="text-sm font-medium">{S.s_nhac_nen_198fce26}<span className="font-medium">{music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e}</span>
         </label>
         <Switch id={id} label={S.s_nhac_nen_271fb292} checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
       </div>
@@ -576,7 +576,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
         <MusicLevelRow level={music.levelDb} disabled={!music.enabled} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? S.s_doi_luon_trong_studio_20c762a6 : S.s_chi_doi_tren_may_nay_93811b69}</p>
+      <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{music.project ? S.s_doi_luon_trong_studio_20c762a6 : S.s_chi_doi_tren_may_nay_93811b69}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
   );
 }
@@ -601,7 +601,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       width="w-72"
     ><MotionRegion>
       <MenuNote title={S.s_nhac_nen_271fb292}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
-      <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label={S.s_danh_sach_nhac_nen_61c9c58b} className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
+      <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label={S.s_danh_sach_nhac_nen_61c9c58b} className={cn("flex min-h-0 flex-col gap-1 overflow-y-auto", MENU_LIST)}>
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
             <button
@@ -612,7 +612,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
               onClick={() => choose(option.id)}
               className={cn(
                 CHOICE_ROW, "disabled:opacity-50",
-                option.id === chosen ? "font-semibold text-accent-text" : "text-fg",
+                option.id === chosen ? "font-medium text-accent-text" : "text-fg",
               )}
             >
               <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
@@ -627,12 +627,12 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
             </button>
           </Popover.Close>
         )}
-        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">{S.s_dang_tai_cac_danh_sach_nhac_b9297500}</p>}
+        {loading && <p className="px-2 py-2 text-xs text-fg-2">{S.s_dang_tai_cac_danh_sach_nhac_b9297500}</p>}
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <MusicLevelRow level={levelDb} disabled={false} saving={levelBusy} onChange={setLevel} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">{S.s_co_bai_nhac_chua_phat_duoc_may_se_thu_lai_27ed64dd}</p>}
-      {(error || musicOffline) && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error || musicOffline}</p>}
+      {(error || musicOffline) && <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
   );
 }
@@ -680,7 +680,7 @@ function ScrollHint({ className, children }: { className: string; children: Reac
       <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-panel to-transparent transition-opacity duration-motion-fast", above ? "opacity-100" : "opacity-0")} />
       {/* Luôn dựng, chỉ đổi độ mờ: cuộn tới đáy thì dòng nhắc mờ đi, không bật tắt cứng. */}
       <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1 transition-opacity duration-motion-fast", more ? "opacity-100" : "opacity-0")}>
-        <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">{S.s_keo_xuong_con_giong_khac_d4bb507b}</span>
+        <span className="rounded-full bg-panel px-3 py-1 text-caption font-medium text-fg-2 ring-1 ring-line">{S.s_keo_xuong_con_giong_khac_d4bb507b}</span>
       </div>
     </div>
   );
@@ -746,15 +746,15 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; S.s_thu_77e1c0d9 dùng cùng cách nghe thử. */}
       <ScrollHint className={cn("min-h-0 flex-1 overflow-y-auto", MENU_LIST)}>
         {groupedVoices(voices).map((group) => (
-          <div key={group.provider} role="group" aria-label={groupLabel(group)} className="mb-1.5">
+          <div key={group.provider} role="group" aria-label={groupLabel(group)} className="mb-2">
             {/* Nhãn HOA chỉ tên nhóm (≤ 3 chữ, DESIGN 5.5); phần mô tả cùng hàng, chữ thường 12 px. */}
-            <div className="flex flex-wrap items-baseline justify-between gap-x-2 px-2 pb-0.5 pt-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2 px-2 pb-1 pt-1">
               <span className="label-section text-fg-3">{group.title}</span>
               {group.detail && <span className="text-xs text-fg-3">{group.detail}</span>}
             </div>
             {voiceSections(group.voices).map((section) => (
               <div key={section.label ?? ""}>
-                {section.label && <div className="px-2 pb-0.5 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
+                {section.label && <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
                 {section.voices.map(({ voice, shown }) => {
                   const selected = voice.id === current?.id;
                   const playing = sample.playing === voice.id;
@@ -778,7 +778,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           }}
                           className={cn(
                             "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
-                            selected ? "font-semibold text-accent-text" : "text-fg",
+                            selected ? "font-medium text-accent-text" : "text-fg",
                           )}
                         >
                           <SelectionMark selected={selected} />
@@ -818,7 +818,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         data-sheet-choice
         className="flex min-h-9 w-full items-center rounded-control px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
       >{S.s_them_giong_15d3a618}</button>
-      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
+      {current?.online && <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{onlineNotice(current)}</p>}
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
       )}
@@ -903,7 +903,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
     <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
       <p className="text-pretty">{label || prepareIntro(voice)}</p>
       {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
-      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         {mine && running ? (
           <button type="button" data-focus-next className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>
         ) : (
@@ -914,7 +914,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
           )
         )}
         {source.readAloudPrepareOptions && (
-          <label className="flex min-h-8 cursor-pointer items-center gap-1.5 px-1">
+          <label className="flex min-h-8 cursor-pointer items-center gap-2 px-1">
             <input
               type="checkbox"
               className="size-4 accent-[var(--accent)]"
@@ -959,15 +959,15 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
       <p tabIndex={-1} data-focus-fallback className="text-pretty">{cacheLabel(usage)}</p>
       {usage.book > 0 &&
         (asking ? (
-          <div ref={askBox} role="alertdialog" aria-label={S.s_xoa_ban_doc_1eb88b99} className="mt-1.5">
+          <div ref={askBox} role="alertdialog" aria-label={S.s_xoa_ban_doc_1eb88b99} className="mt-2">
             <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-control px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>{S.s_xoa_777195ab}</button>
               <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>{S.s_giu_lai_3c3ba2db}</button>
             </div>
           </div>
         ) : (
-          <button type="button" data-focus-next className="mt-1.5 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>{S.s_xoa_ban_doc_1eb88b99}</button>
+          <button type="button" data-focus-next className="mt-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>{S.s_xoa_ban_doc_1eb88b99}</button>
         ))}
     </MotionRegion>
   );
@@ -991,15 +991,15 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       onSet={setSleep}
       idle={
         recentlyStopped ? (
-          <div className="px-2 pb-2 pt-1.5">
+          <div className="px-2 pb-2 pt-2">
             <div className="text-sm">{S.s_hen_gio_da_tat_tieng_luc_ac7c0df9}{" "}
-              <span className="font-semibold">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
+              <span className="font-medium">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
             </div>
             <Popover.Close asChild>
               <button
                 type="button"
                 onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
-                className="mt-2 h-9 w-full rounded-control text-sm font-semibold text-accent-text"
+                className="mt-2 h-9 w-full rounded-control text-sm font-medium text-accent-text"
               >{S.s_bat_lai_0bad8bcf}{lastSleepMinutes}{S.s_phut_cf728a6a}</button>
             </Popover.Close>
           </div>
@@ -1099,20 +1099,20 @@ function SleepPicker({
       }
     ><MotionRegion>
       {active ? (
-        <div className="px-2 pb-2 pt-1.5">
+        <div className="px-2 pb-2 pt-2">
           <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? S.s_dung_khi_f05a4cb5 : S.s_tat_sau_8d10e047}</div>
-          <div className="mt-0.5 text-2xl font-semibold tracking-tight">
+          <div className="mt-1 text-2xl font-medium tracking-tight">
             <TickingValue>{sleep.kind === "chapter" ? (sleep.chapters > 1 ? S.s_het_0_chuong_79433c77(sleep.chapters) : S.s_het_chuong_nay_8ccc288f) : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
-            <div className="mt-0.5 text-xs text-fg-2">{sleepPausedNote()}</div>
+            <div className="mt-1 text-xs text-fg-2">{sleepPausedNote()}</div>
           )}
-          <div className="mt-3 flex gap-1.5">
+          <div className="mt-3 flex gap-2">
             <Popover.Close asChild>
               <button
                 type="button"
                 onClick={onExtend}
-                className="h-9 flex-1 rounded-control text-sm font-semibold text-accent-text hover:brightness-95"
+                className="h-9 flex-1 rounded-control text-sm font-medium text-accent-text hover:brightness-95"
               >
                 {sleepExtendLabel(sleepExtendMinutes(sleep, extendMinutes))}
               </button>
@@ -1279,7 +1279,7 @@ function FadingNotice({ className }: { className?: string }) {
     <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">{S.s_sap_tat_e76c49b1}{EXTEND_GESTURE}{S.s_de_hen_lai_f1a3acdc}{again}{S.s_phut_cf728a6a}</span>
-      <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
+      <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-3 py-1 text-xs font-medium text-accent-ink">
         {sleepExtendLabel(again)}
       </button>
     </div>
@@ -1302,7 +1302,7 @@ function MusicCreditLine() {
   const content = () => {
   if (!playing || !musicCredit || !label) return null;
   return (
-    <div className="motion-appear mt-0.5 text-xs text-fg-2">
+    <div className="motion-appear mt-1 text-xs text-fg-2">
       <button
         type="button"
         aria-expanded={catalogLink ? undefined : open}
@@ -1366,7 +1366,7 @@ function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
   return (
     <MotionRegion>
       {purpose === "review" && (
-        <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
+        <span className="mr-2 inline-block rounded-control bg-info-soft px-2 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
       {preparing ? <span className={look === "bar" ? "block truncate" : undefined}>{PREPARING_VOICE}</span> : atEnd === "caughtUp" ? <span className={look === "bar" ? "block truncate" : undefined}>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</span> : (
         <button
@@ -1536,9 +1536,9 @@ function FollowRecord() {
 
 // ---- Menu "…" của trình phát -----------------------------------------------------------------------------
 
-/** Khung danh sách trong menu nổi: tràn hết lề p-1.5 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng (S.s_them_giong_bbe0caf9) và chữ dòng
+/** Khung danh sách trong menu nổi: tràn hết lề p-2 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng (S.s_them_giong_bbe0caf9) và chữ dòng
  *  (px-2) thẳng chữ ghi chú của bảng; còn 5,25 px cho khung tiêu điểm. Bảng trượt điện thoại đặt lại lề theo lớp p-1 (styles.css). */
-const MENU_LIST = "p-1 -mx-1.5 px-1.5";
+const MENU_LIST = "p-1 -mx-2 px-2";
 /** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,
  *  khoảng 12 px, nền chọn tràn lề (styles.css); dòng tự chế thiếu thuộc tính này thì cột chữ lệch khỏi các dòng còn lại. */
 const CHOICE_ROW = "flex min-h-9 shrink-0 items-center gap-2 rounded-control px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover";
@@ -1599,7 +1599,7 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
         setOpen(value);
       }}
     >
-      <ToneExitGuard.Provider value={toneGuard}><div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div></ToneExitGuard.Provider>
+      <ToneExitGuard.Provider value={toneGuard}><div data-player-more tabIndex={-1} className="flex flex-col gap-1 outline-none">{children}</div></ToneExitGuard.Provider>
     </MenuShell>
   );
 }
@@ -1650,7 +1650,7 @@ export function PlayerBar({
             <div className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
               <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
               <div className="min-w-0">
-                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
                 <div data-np="book" className="text-xs text-fg-2">
                   <TrackSubtitle look="bar" />
                 </div>
@@ -1704,19 +1704,19 @@ export function PlayerBar({
           <div className="pointer-events-none flex min-w-0 items-center gap-3">
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
             <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
               <div data-np="book" className="text-xs text-fg-2">
                 <TrackSubtitle look="bar" />
               </div>
             </div>
           </div>
         </div>
-        <div className="flex w-full flex-col items-center gap-0.5 @max-[48rem]:col-span-2 @max-[48rem]:row-start-2">
+        <div className="flex w-full flex-col items-center gap-1 @max-[48rem]:col-span-2 @max-[48rem]:row-start-2">
           <div className="flex items-center gap-2">{extra}<Transport chapters={false} /></div>
           <SeekBar />
         </div>
         {/* Tối đa 6 điều khiển (docs/DESIGN.md mục 6): lùi · phát · tới ở giữa; tốc độ · âm lượng · "…" bên phải - còn lại vào "…". */}
-        <div className="flex min-w-0 items-center justify-end gap-0.5 whitespace-nowrap @max-[48rem]:col-start-2 @max-[48rem]:row-start-1">
+        <div className="flex min-w-0 items-center justify-end gap-1 whitespace-nowrap @max-[48rem]:col-start-2 @max-[48rem]:row-start-1">
           <SpeedMenu />
           <VolumeControl />
           <MoreMenu scope="bar">
@@ -1777,8 +1777,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   }
   return (
     <MotionRegion as="div" className="relative flex h-full flex-col">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
-        <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] py-8 sm:px-[32px]">
+        <div className="measure mx-auto text-reading leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải S.s_copy_815d3b923a95. */}
           {!script.timed && current?.state !== "text" && (
             <p className="mb-5 py-3 text-sm text-fg-2">{S.s_chuong_nay_chua_co_audio_hoan_chinh_dang_h_15f33c5e}</p>
@@ -1861,12 +1861,12 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
       onClick={() => onJump(chapter.id)}
       // Hàng đang phát: chữ màu nhấn, không tô nền cả hàng (docs/DESIGN.md mục 6).
       className={cn(
-        "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left transition-colors duration-motion-fast",
+        "flex w-full items-center gap-3 rounded-control px-3 py-3 text-left transition-colors duration-motion-fast",
         canPlay(chapter) && "hover:bg-hover",
       )}
     >
       {/* Cột dấu kéo ra 3,5 px: mực ✓ (3/24 trong ô 14 px, giữa cột 17,5 px) đứng đúng mép chữ của bảng. */}
-      <MotionRegion as="span" className="-ml-[3.5px] inline-grid h-4 w-5 shrink-0 place-items-center">
+      <MotionRegion as="span" className="-ml-[4px] inline-grid h-4 w-5 shrink-0 place-items-center">
         {playing ? (
           <Vu className="h-3 text-accent" />
         ) : done ? (
@@ -1966,7 +1966,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
     [books, track?.bookId, speaks, skipId],
   );
   return (
-    <div className="mt-3 border-t border-accent/20 pt-2.5 text-left">
+    <div className="mt-3 border-t border-accent/20 pt-3 text-left">
       {/* Thư viện về muộn (truy vấn của riêng khối này - vùng cha không thấy): cụm S.s_nghe_cuon_khac_cc5cf8a7 mở ra, không bật cứng. */}
       <MotionPresence open={others.length > 0}>
           <div className="px-1 pb-1 text-xs font-medium text-fg-2">{S.s_nghe_cuon_khac_cc5cf8a7}</div>
@@ -1981,7 +1981,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                 >
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm font-semibold text-fg">{book.title}</span>
+                    <span className="block break-words text-sm font-medium text-fg">{book.title}</span>
                     <span className="block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
                   </span>
                   <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
@@ -1996,7 +1996,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
           setExpanded(false);
           navigate("/");
         }}
-        className="mt-1 min-h-[48px] w-full text-center font-semibold text-accent-text underline underline-offset-2"
+        className="mt-1 min-h-[48px] w-full text-center font-medium text-accent-text underline underline-offset-2"
       >{S.s_ve_thu_vien_7bb3f8c2}</button>
     </div>
   );
@@ -2009,9 +2009,9 @@ function CaughtUpNotice() {
   const content = () => {
   if (atEnd === "finished" && next) {
     return (
-      <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
         <div className="text-fg">{S.s_da_nghe_het_cuon_nay_05edcdd9}</div>
-        <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
+        <button type="button" onClick={() => void playBook(next)} className="mt-2 font-medium text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
         </button>
         <AfterTheEnd skipId={next.id} />
       </div>
@@ -2019,9 +2019,9 @@ function CaughtUpNotice() {
   }
   if (atEnd === "finished") {
     return (
-      <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
         <div className="text-fg">{S.s_da_nghe_het_sach_4a2d3bf1}</div>
-        <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">{S.s_nghe_lai_tu_dau_e251d632}</button>
+        <button type="button" onClick={restart} className="mt-2 min-h-[48px] font-medium text-accent-text underline underline-offset-2">{S.s_nghe_lai_tu_dau_e251d632}</button>
         <AfterTheEnd />
       </div>
     );
@@ -2062,7 +2062,7 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
  *  báo trượt từ ô này sang ô kia. */
 function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {
   return (
-    <div role="tablist" aria-label={S.s_dang_nghe_9310d8cf} data-player-mode className="relative inline-grid h-9 grid-cols-2 rounded-full bg-sunken p-[3px]">
+    <div role="tablist" aria-label={S.s_dang_nghe_9310d8cf} data-player-mode className="relative inline-grid h-9 grid-cols-2 rounded-full bg-sunken p-[4px]">
       <span aria-hidden className="absolute inset-y-[3px] left-[3px] w-[calc((100%-6px)/2)] rounded-full bg-panel shadow-sm transition-transform duration-motion-medium"
         style={{ transform: reading ? "translateX(100%)" : "translateX(0)" }} />
       {([[S.s_nghe_a43aafef, false], [S.s_doc_theo_df342819, true]] as const).map(([label, value]) => (
@@ -2167,7 +2167,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
               <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
             </h2>
-            <div data-np="book" className={cn("mt-0.5 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+            <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
               <TrackSubtitle look={reading ? "reading" : "screen"} />
             </div>
             {!reading && <MusicCreditLine />}
@@ -2381,7 +2381,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
               else selectPanel(item.value);
             }}
             className={cn(
-              "touch-row relative inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors duration-motion-medium",
+              "touch-row relative inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap px-3 text-sm font-medium transition-colors duration-motion-medium",
               selected ? "text-fg" : "text-fg-2 hover:text-fg",
             )}
           >

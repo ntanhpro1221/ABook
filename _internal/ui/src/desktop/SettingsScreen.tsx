@@ -143,9 +143,9 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
   return (
     <div className="py-3">
       <p className="text-sm">
-        <span className="font-semibold">{S.s_abook_76b9d6fa}{update.version}</span>{S.s_da_co_d8cfc81f}{current ? S.s_dang_dung_0_a310b1d2(current) : ""}
+        <span className="font-medium">{S.s_abook_76b9d6fa}{update.version}</span>{S.s_da_co_d8cfc81f}{current ? S.s_dang_dung_0_a310b1d2(current) : ""}
       </p>
-      {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
+      {update.notes && <p className="mt-2 whitespace-pre-line text-body-small leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
       <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
         {busy ? S.s_dang_tai_ban_moi_ee824efa : S.s_cap_nhat_abook_66fb9f08}
       </Button>
@@ -210,7 +210,7 @@ function ThirdPartyButton() {
 function VoiceGroup() {
   return (
     <SettingsBlock>
-      <div className="py-3.5">
+      <div className="py-4">
         <VoiceSettings
           api={desktopVoices}
           deviceHint={S.s_cai_giong_tieng_viet_tai_cai_dat_windows_t_a66056d9}
@@ -348,7 +348,7 @@ function DevicesGroup() {
       {/* Tự dựng hai khối "Máy này" và "Máy đã ghép". */}
       <PhoneSync />
       <SettingsBlock title={S.s_may_tinh_khac_8c7c9cae} id="computers">
-        <div className="py-3.5">
+        <div className="py-4">
           <OtherComputers />
         </div>
       </SettingsBlock>
@@ -361,7 +361,7 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
   if (info?.remote) {
     return (
       <SettingsBlock title={S.s_mau_thiet_lap_be32f35e} id="templates">
-        <div className="py-3.5">
+        <div className="py-4">
           <BookTemplates />
         </div>
       </SettingsBlock>
@@ -383,10 +383,10 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
           />
         </SettingsRow>
       </SettingsBlock>
-      <MotionPresence open={!installed}><p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_tuy_chon_o_trang_nay_dung_khi_da_cai_studi_f1c313c4}</p></MotionPresence>
+      <MotionPresence open={!installed}><p className="mt-2 text-body-small text-fg-2">{S.s_tuy_chon_o_trang_nay_dung_khi_da_cai_studi_f1c313c4}</p></MotionPresence>
       <SettingsBlock title={S.s_sach_moi_099947f8} fold="studio.new-book">
         <NewBookDefaults />
-        <div className="py-3.5">
+        <div className="py-4">
           <BookTemplates />
         </div>
       </SettingsBlock>
@@ -436,13 +436,13 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
       )}
       {!remote && (
         <SettingsBlock title={S.s_chan_doan_906791d5} id="diagnostics" fold="advanced.diagnostics">
-          <div className="py-3.5">
+          <div className="py-4">
             <OwnDiagnostics />
           </div>
         </SettingsBlock>
       )}
       <SettingsBlock title={S.s_gioi_thieu_0c84d33f} id="about" fold="advanced.about">
-        <div className="space-y-3 py-3.5">
+        <div className="space-y-3 py-4">
           <p className="text-sm text-fg-2">{S.s_abook_76b9d6fa}{info?.version}{S.s_nghe_sach_tieng_viet_va_lam_sach_noi_63eff2aa}</p>
           {/* Liên kết mở ở cửa sổ mới (target="_blank"), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở. */}
           <p className="select-text text-sm text-fg-2">{S.s_ma_nguon_mo_mit_d9c23b48}{" "}
@@ -469,7 +469,7 @@ function GroupBody({ id, info, touchOnly }: { id: SettingsGroupId; info: AppInfo
 /** Ghi chú khi dùng ABook của máy tính qua mạng: không phải tuỳ chọn, chỉ nói cài đặt nào đổi được ở đây. */
 function RemoteNote({ listenOnly }: { listenOnly: boolean }) {
   return (
-    <p className="mt-3 text-[0.8125rem] text-fg-2 text-pretty">
+    <p className="mt-3 text-body-small text-fg-2 text-pretty">
       {listenOnly ? S.s_bat_dieu_khien_san_xuat_tren_may_tinh_de_l_c4d48ea8 : S.s_cai_dat_chinh_nam_tren_may_tinh_dang_ket_n_cf16bd5f}
     </p>
   );

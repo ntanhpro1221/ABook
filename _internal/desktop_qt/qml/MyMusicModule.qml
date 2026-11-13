@@ -56,7 +56,7 @@ Column {
         Collapse {
             width: parent.width
             open: root.showModule
-            spacing: 6
+            spacing: 8
             ClockLabel {
                 width: parent.width
                 text: root.label
@@ -144,7 +144,7 @@ Column {
         Collapse {
             width: parent.width
             open: root.precise !== null
-            spacing: 6
+            spacing: 8
             Text { width: parent.width; text: S.s_cam_xuc_chinh_xac_eab97dc3; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
             ClockLabel {
                 width: parent.width

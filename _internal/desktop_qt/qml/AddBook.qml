@@ -487,8 +487,8 @@ Modal {
             Accessible.name: root.leave === "again" ? S.s_chon_lai_khi_con_sach_chua_them_4b4c7b1a : S.s_dong_khi_con_sach_chua_them_0406a915
             Column {
                 width: parent.width
-                topPadding: 14
-                bottomPadding: 14 + 16
+                topPadding: 16
+                bottomPadding: 16 + 16
                 spacing: 12
                 Text {
                     width: parent.width
@@ -646,12 +646,12 @@ Modal {
                             label: S.s_ten_sach_d54846eb
                             placeholderText: S.s_ten_hien_thi_trong_thu_vien_c48c7ac6
                             invalid: root.bookTitle.trim() === ""
-                            font.pixelSize: 15
+                            font.pixelSize: 16
                             font.weight: Theme.weightMedium
-                            topPadding: 11
-                            bottomPadding: 11
-                            leftPadding: 14
-                            rightPadding: 14
+                            topPadding: 12
+                            bottomPadding: 12
+                            leftPadding: 16
+                            rightPadding: 16
                             implicitHeight: Math.max(44, contentHeight + 22)
                             background: Rectangle {
                                 color: Theme.bg
@@ -668,7 +668,7 @@ Modal {
                         open: root.shownPreview !== null && Boolean(root.shownPreview.author)
                         Text {
                             width: parent.width
-                            topPadding: 6
+                            topPadding: 8
                             text: TextWrap.keepDots(S.s_tac_gia_3fe05994 + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : ""))
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -692,7 +692,7 @@ Modal {
                                 text: root.totals.chapters + (shownPreview && root.totals.chapters !== root.shownPreview.chapters.length ? " / " + root.shownPreview.chapters.length : "") + S.s_chuong_9e6a01dc
                                 color: Theme.text
                                 font.pixelSize: Theme.sizeBodySmall
-                                font.weight: 600
+                                font.weight: Theme.weightMedium
                             }
                             FlowDetail {
                                 detail: Queue.formatNumber(root.totals.words) + S.s_chu_6117d040
@@ -849,7 +849,7 @@ Modal {
                                     Column {
                                         width: parent.width - 24
                                         topPadding: 12
-                                        spacing: 2
+                                        spacing: 4
                                         Text {
                                             width: parent.width
                                             text: TextWrap.keepDots(noteBody.said.title + S.s_abook_khong_tu_bo_hay_sua_chu_cua_truyen_1318242a)
@@ -935,7 +935,7 @@ Modal {
                                     bottomPadding: 12
                                     Text {
                                         width: parent.width - 24
-                                        topPadding: 2
+                                        topPadding: 4
                                         text: S.s_dong_bo_chi_bi_bo_qua_khi_doc_chu_cua_sach_5cc5fc5e
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

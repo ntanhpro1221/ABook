@@ -101,7 +101,7 @@ Item {
                             Text { width: parent.width; text: N.describePush(modelData); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                             Repeater {
                                 model: modelData.conflicts || []
-                                delegate: Text { required property var modelData; width: parent.width; topPadding: 2; text: modelData; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                                delegate: Text { required property var modelData; width: parent.width; topPadding: 4; text: modelData; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                             }
                         }
                     }

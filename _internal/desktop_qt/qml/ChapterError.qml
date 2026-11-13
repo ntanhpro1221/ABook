@@ -41,7 +41,7 @@ Popover {
             color: Theme.text2
             wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
             font.family: "monospace"
-            font.pixelSize: 11
+            font.pixelSize: 12
         }
     }
 }

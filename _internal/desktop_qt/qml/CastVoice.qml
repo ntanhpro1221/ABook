@@ -259,7 +259,7 @@ CastModal {
                             color: Theme.text3
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeCaption
-                            font.weight: 600
+                            font.weight: Theme.weightMedium
                         }
                         Repeater {
                             model: group.modelData.voices
@@ -310,10 +310,10 @@ CastModal {
                                     x: root.choices.tryLine ? 88 : 48
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.width - x - action.width - 20
-                                    spacing: 2
+                                    spacing: 4
                                     Flow {
                                         width: parent.width
-                                        spacing: 6
+                                        spacing: 8
                                         Text {
                                             width: Math.min(implicitWidth, parent.width)
                                             text: TextWrap.keepDots(row.voice.name)
@@ -326,21 +326,21 @@ CastModal {
                                             visible: Boolean(row.voice.current && root.choices.pending)
                                             text: S.s_dang_dung_275ca289
                                             color: Theme.accentText
-                                            font.pixelSize: 11
+                                            font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
                                             visible: Boolean(row.voice.pending && !row.voice.current)
                                             text: S.s_cho_ap_dung_77a52853
                                             color: Theme.warning
-                                            font.pixelSize: 11
+                                            font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
                                             visible: Boolean(row.voice.suggested && !row.voice.current && !row.voice.pending)
                                             text: S.s_may_goi_y_1e7f4cfa
                                             color: Theme.text2
-                                            font.pixelSize: 11
+                                            font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }
                                     }

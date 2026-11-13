@@ -47,7 +47,7 @@ Item {
         id: body
         x: root.gutter
         width: root.width - root.gutter
-        spacing: 2
+        spacing: 4
         Text {
             objectName: "exampleBefore"
             visible: Boolean(root.example.before)

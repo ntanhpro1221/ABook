@@ -48,7 +48,7 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
     <MotionRegion as="div" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 py-3 text-sm">
       <Captions className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1 basis-48">
-        <span className="block font-semibold">{S.s_chu_sang_02de067c}</span>
+        <span className="block font-medium">{S.s_chu_sang_02de067c}</span>
         <TickingValue className="block text-fg-2 text-pretty">{note}</TickingValue>
       </span>
       <Button size="sm" variant="ghost" loading={busy} disabled={running || (lines > 0 && aligned === lines && !finished)} onClick={() => start.mutate()}>{S.s_them_chu_sang_9bfff902}</Button>

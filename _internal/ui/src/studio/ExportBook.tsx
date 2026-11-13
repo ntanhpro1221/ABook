@@ -387,7 +387,7 @@ export function ExportDialog({
           ) : (
             <Progress value={0} indeterminate size="md" label={SAVING[kind][1]} />
           )}
-          <p className="mt-3 text-sm font-semibold">
+          <p className="mt-3 text-sm font-medium">
             {cancelling
               ? S.s_dang_huy_c25a0214
               : downloading
@@ -404,7 +404,7 @@ export function ExportDialog({
         </MotionRegion>
       ) : finished ? (
         <div className="py-2">
-          <p className="flex items-center gap-2 text-sm font-semibold">
+          <p className="flex items-center gap-2 text-sm font-medium">
             <CheckCircle2 className="size-4 shrink-0 text-success" />
             {finished.title}
           </p>
@@ -458,7 +458,7 @@ export function ExportDialog({
           >
             <Icon className="mt-line-icon size-4 shrink-0 text-accent-text" />
             <span className="min-w-0">
-              <span className="block font-semibold">{title}</span>
+              <span className="block font-medium">{title}</span>
               <span className="block text-fg-2">{detail}</span>
             </span>
           </button>
@@ -534,7 +534,7 @@ export function ExportDialog({
       {/* Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép - không mất cứng. */}
       <MotionPresence open={staleExports.length > 0}>
       <div className="mt-3 py-3 text-sm">
-        <p className="font-semibold">{S.s_ban_xuat_da_cu_7e726524}</p>
+        <p className="font-medium">{S.s_ban_xuat_da_cu_7e726524}</p>
         <div data-motion-live="">
         <AnimatedRows items={staleExports} keyOf={(item) => item.target}>
         {(item) => <div className="space-y-2 pt-2">
@@ -551,7 +551,7 @@ export function ExportDialog({
       {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />{S.s_xuat_00fa2c47}{changedChapters.length}{S.s_chuong_doi_e42b9885}</label>}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
-        <div className="mt-3 space-y-1.5 py-3 text-sm">
+        <div className="mt-3 space-y-2 py-3 text-sm">
           {warnings.map((line) => (
             <p key={line} className="flex items-start gap-2">
               <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
@@ -559,7 +559,7 @@ export function ExportDialog({
             </p>
           ))}
           {!whole && Boolean(book.pendingChanges) && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
               <AlertTriangle className="size-4 shrink-0 text-warning" />
               <span className="min-w-0 flex-1 text-pretty">{S.s_con_71d0e2b2}{book.pendingChanges}{S.s_thay_doi_chua_ap_ban_xuat_doc_nhu_truoc_kh_3a7b1e79}</span>
               <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => { onOpenChange(false); onApplyFirst(); }}>{S.s_ap_dung_truoc_fec0937b}</Button>

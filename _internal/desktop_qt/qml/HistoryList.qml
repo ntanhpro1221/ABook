@@ -98,7 +98,7 @@ Item {
                         Accessible.role: Accessible.StaticText
                         Accessible.name: S.s_7_ngay_qua_70c6d33d + Logic.formatLength(root.week) + S.s_nghe_cuon_nay_8e481d62
                         Text { text: S.s_7_ngay_qua_01662a56; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
-                        Text { objectName: "historyWeekLength"; text: Logic.formatLength(root.week); color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                        Text { objectName: "historyWeekLength"; text: Logic.formatLength(root.week); color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                         Text { text: S.s_nghe_cuon_nay_da2f5566; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                     }
                     Repeater {
@@ -127,7 +127,7 @@ Item {
                                             id: texts
                                             y: 10
                                             width: Math.max(0, session.width - resume.width - 12)
-                                            spacing: 2
+                                            spacing: 4
                                             Text {
                                                 objectName: "historyHeadline"
                                                 width: parent.width

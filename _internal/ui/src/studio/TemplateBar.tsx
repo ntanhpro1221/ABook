@@ -122,12 +122,12 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
         )}
       </div>
       {modified && active && (
-        <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_bam_lai_mau_26ea82c5}{active.name}{S.s_de_khoi_phuc_thiet_lap_da_luu_095b8a08}</p>
+        <p className="mt-2 text-body-small text-fg-2">{S.s_bam_lai_mau_26ea82c5}{active.name}{S.s_de_khoi_phuc_thiet_lap_da_luu_095b8a08}</p>
       )}
-      {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
-      {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote()}</p>}
+      {lostVoice && <p className="mt-2 text-body-small text-fg-2">{missingVoiceNote(lostVoice)}</p>}
+      {lostModel && <p className="mt-2 text-body-small text-fg-2">{missingModelNote()}</p>}
       {!templates.length && !saving && (
-        <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_luu_cac_lua_chon_duoi_day_thanh_mau_de_dun_8513aa2f}</p>
+        <p className="mt-2 text-body-small text-fg-2">{S.s_luu_cac_lua_chon_duoi_day_thanh_mau_de_dun_8513aa2f}</p>
       )}
       {saving && (
         <form
@@ -168,9 +168,9 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               </>
             )}
           </div>
-          {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_da_co_mau_8527783b}{findTemplate(templates, name)?.name}{S.s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5}</p>}
-          {problem && <p role="alert" className="mt-2 text-[0.8125rem] text-danger">{problem}</p>}
-          <p className="mt-2 text-[0.8125rem] text-fg-3">{S.s_mau_luu_giong_chat_luong_va_cach_tao_sach_143fa4bf}</p>
+          {confirming && <p className="mt-2 text-body-small text-fg-2">{S.s_da_co_mau_8527783b}{findTemplate(templates, name)?.name}{S.s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5}</p>}
+          {problem && <p role="alert" className="mt-2 text-body-small text-danger">{problem}</p>}
+          <p className="mt-2 text-body-small text-fg-3">{S.s_mau_luu_giong_chat_luong_va_cach_tao_sach_143fa4bf}</p>
           <MoreInfo>{S.s_gom_bo_phan_tich_bat_dau_ngay_va_duyet_tru_7f1b3642}</MoreInfo>
         </form>
       )}

@@ -57,7 +57,7 @@ Column {
             x: 112 + root.gap
             y: timeText.y
             width: 128
-            spacing: 6
+            spacing: 8
             Text {
                 id: moodText
                 objectName: "sceneMood"
@@ -87,7 +87,7 @@ Column {
             x: root.wide ? mood.x + mood.width + root.gap : 0
             y: root.wide ? root.pad + (Math.max(32, height) - height) / 2 : root.pad + Math.max(timeText.height, mood.height) + 6
             width: root.wide ? line.width - x - root.gap - buttons.width : line.width
-            spacing: 2
+            spacing: 4
             Row {
                 width: parent.width
                 visible: root.follows
@@ -112,7 +112,7 @@ Column {
             Flow {
                 width: parent.width
                 visible: !root.follows && !!root.scene.link
-                spacing: 6
+                spacing: 8
                 Icon { name: "eighth-note"; size: 16; color: Theme.accentText; y: 2 }
                 Text {
                     width: Math.min(implicitWidth, parent.width - 22)
@@ -197,8 +197,8 @@ Column {
             width: parent.width
             active: root.swapMade
             sourceComponent: StudioMusicSwap {
-                topPadding: 10
-                bottomPadding: 10
+                topPadding: 12
+                bottomPadding: 12
                 store: root.store
                 bookId: root.bookId
                 sceneKey: root.scene.key || ""

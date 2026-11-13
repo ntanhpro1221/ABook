@@ -172,10 +172,10 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                   <span className="min-w-0 flex-1 text-pretty">
                     {item.label}
                     {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
-                    {item.conflict && <span className="mt-0.5 block text-xs text-warning">{item.conflict}</span>}
+                    {item.conflict && <span className="mt-1 block text-xs text-warning">{item.conflict}</span>}
                   </span>
-                  <IconButton size="sm" icon={Check} label={S.s_ap_dung_viec_nay_76d8752a} className="-my-1.5" disabled={busy !== null} onClick={() => void decide("apply", device, item)} />
-                  <IconButton size="sm" icon={X} label={S.s_bo_qua_viec_nay_e6b2362b} className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("skip", device, item)} />
+                  <IconButton size="sm" icon={Check} label={S.s_ap_dung_viec_nay_76d8752a} className="-my-2" disabled={busy !== null} onClick={() => void decide("apply", device, item)} />
+                  <IconButton size="sm" icon={X} label={S.s_bo_qua_viec_nay_e6b2362b} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => void decide("skip", device, item)} />
                 </MotionRegion>
               );
             }}
@@ -202,7 +202,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                       {item.label}
                       {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
                     </span>
-                    <IconButton size="sm" icon={RotateCcw} label={S.s_khoi_phuc_viec_nay_8da3e2a8} className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
+                    <IconButton size="sm" icon={RotateCcw} label={S.s_khoi_phuc_viec_nay_8da3e2a8} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
                   </div>
                 )}
               </AnimatedRows>
@@ -220,7 +220,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
               <li key={`${push.device}:${push.at}`} className="text-pretty">
                 {describePush(push)}
                 {push.conflicts.map((line) => (
-                  <span key={line} className="mt-0.5 block text-xs text-fg-3">
+                  <span key={line} className="mt-1 block text-xs text-fg-3">
                     {line}
                   </span>
                 ))}

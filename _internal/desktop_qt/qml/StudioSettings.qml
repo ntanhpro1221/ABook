@@ -75,7 +75,7 @@ Item {
                         font.weight: Theme.weightMedium
                     }
                     Text { objectName: "studioState"; width: parent.width; topPadding: 4; text: root.status && root.status.running ? S.s_dang_cai_4ea651d1 : S.s_chua_cai_6003057a; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
-                    Text { width: parent.width; topPadding: 4; text: root.needs; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13; lineHeight: 1.3 }
+                    Text { width: parent.width; topPadding: 4; text: root.needs; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 14; lineHeight: 1.3 }
                     Text {
                         objectName: "studioFit"
                         width: parent.width
@@ -83,7 +83,7 @@ Item {
                         text: root.fit.level === "no" ? root.noStudioLine(root.fit.reason || "") : root.fit.line
                         color: root.fit.level === "no" ? Theme.text : Theme.text2
                         wrapMode: Text.Wrap
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                         font.weight: root.fit.level === "no" ? Theme.weightMedium : Theme.weightRegular
                         lineHeight: 1.3
                     }
@@ -140,7 +140,7 @@ Item {
                         text: (outdated.damaged ? S.s_mat_185abbd8 + root.status.damaged.join(", ") + S.s_file_da_bi_xoa_hay_hong_bbfea488 : S.s_can_cap_nhat_1655056f + ((root.status && root.status.outdated) || []).join(", ")) + " - "
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                     Interactive {
                         id: fixLink
@@ -154,12 +154,12 @@ Item {
                             id: fixText
                             text: outdated.damaged ? S.s_sua_studio_2f99394d : S.s_cap_nhat_studio_b3acc7e7
                             color: Theme.accentText
-                            font.pixelSize: 13
+                            font.pixelSize: 14
                             font.weight: Theme.weightMedium
                             font.underline: true
                         }
                     }
-                    Text { text: "."; color: Theme.text2; font.pixelSize: 13 }
+                    Text { text: "."; color: Theme.text2; font.pixelSize: 14 }
                 }
             }
             // Hậu quả của việc gỡ chỉ cần lúc đang xác nhận - không treo thường trực dưới nút

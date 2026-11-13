@@ -64,13 +64,13 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
     <ul className="space-y-2">
       {groups.map((group) => (
         <li key={group.line}>
-          <label className="flex items-start gap-2.5 text-sm">
+          <label className="flex items-start gap-3 text-sm">
             <input
               type="checkbox"
               checked={isOn(group)}
               disabled={disabled}
               onChange={(event) => onChange(group, event.target.checked)}
-              className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+              className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
             />
             <span className="min-w-0">
               <span className="block">{S.s_bo_doc_dong_3e82a7fd}</span>
@@ -145,7 +145,7 @@ function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions:
   const { groups, toggle } = suggestions;
   return (
     <>
-      <p className="mt-0.5 text-xs text-fg-2 text-pretty">{S.s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_35421485}{track?.bookId === bookId && S.s_chuong_dang_nghe_se_doi_tu_lan_nghe_sau_ca_06a20d3f}
+      <p className="mt-1 text-xs text-fg-2 text-pretty">{S.s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_35421485}{track?.bookId === bookId && S.s_chuong_dang_nghe_se_doi_tu_lan_nghe_sau_ca_06a20d3f}
       </p>
       <div className="mt-2">
         <SuggestionChoices

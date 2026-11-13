@@ -119,7 +119,7 @@ Item {
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
-            font.weight: 600
+            font.weight: Theme.weightMedium
         }
         // Lỗi tải không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn
         VoiceNote { width: parent.width; objectName: "moduleLabel"; tabular: true; text: root.ready && !root.failed ? VoiceLogic.moduleLabel(root.shown, root.copy) : ""; px: Theme.sizeBodySmall }
@@ -215,7 +215,7 @@ Item {
                                 x: 28
                                 width: line.width - 28 - sizeText.width - 12 - (removeButton.visible ? removeButton.width + 12 : 0)
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
+                                spacing: 4
                                 Flow {
                                     width: parent.width
                                     spacing: 8
@@ -238,8 +238,8 @@ Item {
                                             anchors.centerIn: parent
                                             text: S.s_khuyen_dung_b1d3dec8
                                             color: Theme.accentText
-                                            font.pixelSize: 11
-                                            font.weight: 600
+                                            font.pixelSize: 12
+                                            font.weight: Theme.weightMedium
                                         }
                                     }
                                 }
@@ -248,7 +248,7 @@ Item {
                                     text: choiceRow.choice.detail || ""
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: 13
+                                    font.pixelSize: 14
                                 }
                             }
                             Text {
@@ -310,7 +310,7 @@ Item {
                 text: root.status.accelerated ? VoiceLogic.acceleratedNote(root.status.accelerated) : ""
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
         }
         VoiceNote { width: parent.width; text: root.ready ? VoiceLogic.fastUnsupportedNote(root.status) : ""; ink: Theme.text3 }
@@ -338,7 +338,7 @@ Item {
                         text: root.keptSuggestion.message
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                     Item { width: 1; height: 8 }
                     Button {

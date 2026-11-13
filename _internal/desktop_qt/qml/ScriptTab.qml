@@ -434,7 +434,7 @@ Item {
                             text: S.s_chuong_ke_ngoi_thu_nhat_may_hay_nham_cau_c_b15169be
                             color: Theme.text2
                             wrapMode: Text.Wrap
-                            font.pixelSize: 13
+                            font.pixelSize: 14
                         }
                         Button {
                             objectName: "scriptFirstPersonCheck"
@@ -465,7 +465,7 @@ Item {
                                 verticalAlignment: Text.AlignVCenter
                                 text: S.s_dang_chon_b79eb4ba + root.selected.length + S.s_cau_b07e1008
                                 color: Theme.text
-                                font.pixelSize: 13
+                                font.pixelSize: 14
                                 font.weight: Theme.weightBold
                             }
                             Text {
@@ -475,7 +475,7 @@ Item {
                                 text: S.s_phim_so_hay_chon_nguoi_o_mot_cau_trong_nho_342b4e5a + root.selected.length + S.s_cau_u00a0_u00a0esc_bo_chon_7b208736
                                 color: Theme.text2
                                 wrapMode: Text.Wrap
-                                font.pixelSize: 13
+                                font.pixelSize: 14
                             }
                             Button {
                                 objectName: "scriptGroupRetake"
@@ -714,7 +714,7 @@ Item {
                         objectName: "scriptFind"
                         width: parent.width
                         y: 2
-                        leftPadding: 34
+                        leftPadding: 32
                         rightPadding: findCount.width + 16
                         label: S.s_tim_chu_trong_chuong_nay_75ba2c08
                         placeholderText: S.s_tim_chu_trong_chuong_ca34cb89
@@ -779,16 +779,16 @@ Item {
                             id: chipRow
                             x: 2
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
+                            spacing: 8
                             Rectangle {
                                 id: badge
                                 width: 24; height: 24; radius: width / 2
                                 readonly property real hue: Cast.hueOf(chip.modelData.person.label)
                                 color: Cast.avatarFill(hue, Theme.dark)
-                                Text { anchors.centerIn: parent; text: chip.modelData.badge; color: Cast.avatarInk(badge.hue, Theme.dark); font.pixelSize: 11; font.weight: Theme.weightBold }
+                                Text { anchors.centerIn: parent; text: chip.modelData.badge; color: Cast.avatarInk(badge.hue, Theme.dark); font.pixelSize: 12; font.weight: Theme.weightBold }
                             }
-                            Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.text; font.pixelSize: 13; font.weight: Theme.weightMedium }
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 13 }
+                            Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.text; font.pixelSize: 14; font.weight: Theme.weightMedium }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 14 }
                         }
                     }
                 }

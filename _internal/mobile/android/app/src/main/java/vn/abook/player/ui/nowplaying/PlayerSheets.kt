@@ -255,7 +255,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                 }
             }
             BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
-                .background(Abook.colors.panel, RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 10.dp, vertical = 2.dp).testTag("voice_more_hint"),
+                .background(Abook.colors.panel, RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 12.dp, vertical = 4.dp).testTag("voice_more_hint"),
                 style = Abook.type.caption)
         }
         sample.failed?.let { BasicText(it.message, style = Abook.type.caption.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("voice_sample_failed")) }
@@ -315,7 +315,7 @@ private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
 @Composable
 private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
-        .semantics { if (!enabled) disabled() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 6.dp),
+        .semantics { if (!enabled) disabled() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         if (icon != null) {
             LucideIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))

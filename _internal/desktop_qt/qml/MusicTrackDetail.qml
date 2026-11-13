@@ -105,7 +105,7 @@ Modal {
             visible: !!(root.detail && root.detail.why && root.detail.why.matches.length)
             width: parent.width
             spacing: Theme.s8
-            Text { text: S.s_vi_sao_bai_nay_f681e004; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Font.DemiBold }
+            Text { text: S.s_vi_sao_bai_nay_f681e004; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium }
             Text {
                 width: parent.width; wrapMode: Text.Wrap
                 text: root.detail && root.detail.why && root.detail.why.matches.length ? S.s_doan_va_bai_cung_0_music(Logic.labelOf(root.meta ? root.meta.emotions : [], root.detail.why.matches[0].id)) : ""
@@ -142,8 +142,8 @@ Modal {
         Column {
             visible: !!(root.detail && root.detail.emotions && root.detail.emotions.length)
             width: parent.width
-            spacing: 2
-            Text { text: S.s_cam_xuc_05c1aee0; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Font.DemiBold; bottomPadding: Theme.s4 }
+            spacing: 4
+            Text { text: S.s_cam_xuc_05c1aee0; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; bottomPadding: Theme.s4 }
             Repeater {
                 model: root.detail ? root.detail.emotions || [] : []
                 delegate: Bar {
@@ -157,7 +157,7 @@ Modal {
         Column {
             visible: !!root.detail
             width: parent.width
-            Text { text: S.s_thong_tin_4aa16c92; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Font.DemiBold; bottomPadding: Theme.s8 }
+            Text { text: S.s_thong_tin_4aa16c92; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; bottomPadding: Theme.s8 }
             Repeater {
                 model: {
                     const d = root.detail

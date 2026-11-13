@@ -211,7 +211,7 @@ Item {
                                     text: tile.modelData.provider
                                     color: Theme.text3
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: 11
+                                    font.pixelSize: 12
                                 }
                             }
                         }
@@ -240,7 +240,7 @@ Item {
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBody
-                            font.weight: 600
+                            font.weight: Theme.weightMedium
                         }
                         Item { width: 1; height: 20 }
                         Button {

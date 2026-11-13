@@ -109,7 +109,7 @@ export function useVoiceTry(bookId: string): {
     );
   };
   const note = <MotionPresence open={Boolean(said)}>{said && (
-    <MotionRegion as="p" role={said.status ? "status" : undefined} className={cn("mt-1.5 text-xs", said.status ? "text-fg-2" : "text-fg-3")}>
+    <MotionRegion as="p" role={said.status ? "status" : undefined} className={cn("mt-2 text-xs", said.status ? "text-fg-2" : "text-fg-3")}>
       {said.text}
     </MotionRegion>
   )}</MotionPresence>;

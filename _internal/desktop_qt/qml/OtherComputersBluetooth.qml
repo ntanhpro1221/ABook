@@ -39,7 +39,7 @@ Item {
             Text {
                 x: 8
                 width: parent.width - 16
-                topPadding: 2
+                topPadding: 4
                 bottomPadding: 4
                 text: S.s_qua_bluetooth_983cecc1
                 color: Theme.text3
@@ -51,8 +51,8 @@ Item {
                 x: 8
                 width: parent.width - 16
                 visible: root.devices.length === 0
-                topPadding: 6
-                bottomPadding: 6
+                topPadding: 8
+                bottomPadding: 8
                 text: S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2
                 color: Theme.text3
                 wrapMode: Text.Wrap

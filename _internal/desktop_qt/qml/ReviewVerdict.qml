@@ -26,7 +26,7 @@ Interactive {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 6
+        spacing: 8
         Icon { anchors.verticalCenter: parent.verticalCenter; name: root.icon; size: 16; color: root.ink }
         Text {
             anchors.verticalCenter: parent.verticalCenter

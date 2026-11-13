@@ -167,7 +167,7 @@ private fun LogSheet(repo: SettingsRepo) {
             shown.isEmpty() -> BasicText(S.s_chua_co_dong_nao_88732bb0, style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp).fadeEdges(list), state = list) {
                 itemsIndexed(shown, key = { index, _ -> index }, contentType = { _, _ -> "line" }) { _, line ->
-                    BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = 2.dp))
+                    BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
         }
@@ -194,7 +194,7 @@ private fun ThirdPartySheet(repo: SettingsRepo) {
                         }
                     }
                     itemsIndexed(section.items, key = { line, _ -> "item:$index:$line" }, contentType = { _, _ -> "item" }) { _, item ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             if (item.bullet) BasicText("•  ", style = Abook.type.caption.copy(color = Abook.colors.text2))
                             BasicText(ThirdParty.plain(item.text), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.weight(1f))
                         }

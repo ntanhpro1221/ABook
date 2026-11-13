@@ -23,7 +23,7 @@ Item {
         color: Theme.text2
         elide: Text.ElideNone
         font.pixelSize: Theme.sizeCaption
-        font.weight: Font.DemiBold
+        font.weight: Theme.weightMedium
         font.capitalization: Font.AllUppercase
         font.letterSpacing: 0.72
         Accessible.role: Accessible.ColumnHeader

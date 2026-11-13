@@ -17,7 +17,7 @@ Column {
         topPadding: 4
         leftPadding: Theme.s8
         rightPadding: Theme.s8
-        bottomPadding: 6
+        bottomPadding: 8
         text: Logic.PICKER_NOTE
         color: Theme.text2
         wrapMode: Text.Wrap

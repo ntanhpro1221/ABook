@@ -138,7 +138,7 @@ export function CoverSearchPanel({
                 type="button"
                 disabled={choose.isPending}
                 onClick={() => choose.mutate(found)}
-                className="group rounded-control p-1.5 text-left hover:bg-hover disabled:opacity-50"
+                className="group rounded-control p-2 text-left hover:bg-hover disabled:opacity-50"
                 title={`${found.title}${found.author ? " - " + found.author : ""} (${found.provider})`}
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-control bg-hover">
@@ -157,8 +157,8 @@ export function CoverSearchPanel({
                     </div>
                   )}
                 </div>
-                <div className="mt-1.5 line-clamp-2 text-xs font-medium">{found.title}</div>
-                <div className="truncate text-[0.6875rem] text-fg-3">{found.provider}</div>
+                <div className="mt-2 line-clamp-2 text-xs font-medium">{found.title}</div>
+                <div className="truncate text-caption text-fg-3">{found.provider}</div>
               </button>
             ))}
           </div>

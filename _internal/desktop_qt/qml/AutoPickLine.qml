@@ -13,7 +13,7 @@ Flow {
     property bool busy: false       // đang gửi công tắc
     signal pick(var next)
     spacing: 8
-    topPadding: 2
+    topPadding: 4
     readonly property string note: Music.trackNote(track)
     Row {
         visible: root.canPick

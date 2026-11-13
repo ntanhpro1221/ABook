@@ -170,7 +170,7 @@ Item {
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 lineHeight: 1.3
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
         }
         Text {
@@ -237,7 +237,7 @@ Item {
             open: !root.editing
             Flow {
                 width: parent.width
-                topPadding: 6
+                topPadding: 8
                 spacing: 16
                 LinkAction {
                     objectName: "reviewEdit"

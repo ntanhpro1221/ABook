@@ -83,7 +83,7 @@ Item {
                 id: texts
                 width: body.width - (actionButton.visible ? actionButton.width + 12 : 0)
                 y: Math.max(0, (body.height - height) / 2)
-                spacing: 2
+                spacing: 4
                 Text {
                     id: titleText
                     objectName: "toastTitle"
@@ -91,7 +91,7 @@ Item {
                     text: TextWrap.keepDots(root.title)
                     color: Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 13
+                    font.pixelSize: 14
                     font.weight: Theme.weightMedium
                 }
                 Text {
@@ -102,7 +102,7 @@ Item {
                     text: root.description
                     color: Theme.text2
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 13
+                    font.pixelSize: 14
                 }
             }
             Interactive {

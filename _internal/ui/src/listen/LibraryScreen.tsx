@@ -237,7 +237,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         )}
         {extras.cover?.(book)}
       </div>
-      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-2.5 flex w-full flex-col text-left">
+      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-3 flex w-full flex-col text-left">
         {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
             Bìa vẽ (không ảnh) đã in tên: tên dưới bìa chỉ còn cho trình đọc màn hình, chỗ của nó vẫn giữ ở cuối ô. */}
         <TileName drawn={!book.cover?.url} className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
@@ -281,13 +281,13 @@ function ContinueCard({ book }: { book: ListenBook }) {
           {where}
           {current ? (playingHere ? S.s_dang_phat_e6ea5044 : S.s_tam_dung_4b55ce49) : last ? <TickingValue>{S.s_nghe_lan_cuoi_0_d055df7b(formatWhen(last.at))}</TickingValue> : ""}
         </MotionRegion>
-        <p className="mt-0.5 text-sm text-fg-2"><TickingValue>{bookStatusText(book, speaks)}</TickingValue></p>
+        <p className="mt-1 text-sm text-fg-2"><TickingValue>{bookStatusText(book, speaks)}</TickingValue></p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3" label={S.s_da_nghe_1e0f8d88} />
       </div>
       <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>
       {book.progress.caughtUp && !current ? (
         // Đã nghe hết phần đã có: nút phát lớn chỉ phát 0 giây rồi báo hết - nói thẳng đang chờ chương mới (soát UX 29-09).
-        <span className="block rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">{S.s_cho_chuong_moi_79b8dba7}</span>
+        <span className="block rounded-full bg-hover px-3 py-2 text-xs font-medium text-fg-2">{S.s_cho_chuong_moi_79b8dba7}</span>
       ) : (
       <button
         type="button"
@@ -354,7 +354,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
     >
       <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
-        <span className="block break-words text-sm font-semibold">{book.title}</span>
+        <span className="block break-words text-sm font-medium">{book.title}</span>
         <span className="block truncate text-xs text-fg-2">{status}</span>
       </MotionRegion>
     </button>
@@ -376,7 +376,7 @@ function Shelf({ books, badges, twins, memory }: { books: ListenBook[]; badges?:
     </div>
   );
   return (
-    <MotionRegion as="div" role="list" aria-label={S.s_sach_0c2b3e9b} className="space-y-7" motionKey={books.map((book) => book.id)}>
+    <MotionRegion as="div" role="list" aria-label={S.s_sach_0c2b3e9b} className="space-y-8" motionKey={books.map((book) => book.id)}>
       <Windowed
         memory={memory} items={rows} block={SHELF_BLOCK} estimate={90} className={SHELF_GRID} alwaysBlocks
         row={({ key, item, state, ref }, index) => (
@@ -424,7 +424,7 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
-    <span className="mt-2.5 flex flex-col">
+    <span className="mt-3 flex flex-col">
       <TileName drawn={!item.items[0].cover?.url}>{item.label}</TileName>
       <span data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", item.items[0].cover?.url ? "order-2 mt-1" : "order-1")}>
         {item.items.some(book => book.remote) && <Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" />}
@@ -541,7 +541,7 @@ export function LibraryScreen({
       <ScreenHeader
         title={S.s_thu_vien_58145555}
         // Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9).
-        // -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới.
+        // -mr bù đệm ngang của nút ghost (px-4, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới.
         // Giữ chỗ từ đầu, chỉ mờ vào khi có sách: dòng tiêu đề không cao thêm lúc sách về (đo 25-10: lưới trôi 8 px khi mở app).
         actions={header && <div className="motion-hold -my-1 -ml-1 -mr-[16px] p-1" data-state={books?.length || upcoming.length ? "open" : "closed"} inert={!(books?.length || upcoming.length)}>{header}</div>}
         subtitleKey={shown.length + upcomingShown.length}
@@ -590,13 +590,13 @@ export function LibraryScreen({
               <DropdownMenu.Trigger asChild><button type="button" aria-label={S.s_xep_theo_2b280cd9} title={S.s_xep_theo_0_89631506(SORT_OPTIONS.find(option => option.value === sort)?.label)} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
                 <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">{S.s_xep_theo_2b280cd9}</span>
               </button></DropdownMenu.Trigger>
-              <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-cover border border-line bg-panel p-2 shadow-float">
                 <DropdownMenu.RadioGroup value={sort} onValueChange={value => { const next = value as LibrarySort; setSort(next); saveLibrarySort(next); }}>
                   {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center gap-3 rounded-control px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"><SelectionMark selected={sort === option.value} />{option.label}</DropdownMenu.RadioItem>)}
                 </DropdownMenu.RadioGroup>
               </DropdownMenu.Content></DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <button type="button" aria-label={S.s_tim_sach_1deb0125} aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-control text-fg-2">
+            <button type="button" aria-label={S.s_tim_sach_1deb0125} aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[16px] grid size-[44px] shrink-0 place-items-center rounded-control text-fg-2">
               {/* Vùng chạm 44 px giữ nguyên, mực kính lúp (lề phải 2/24 của ô 17,5 px) chạm đúng mép phải nội dung: (44 - 17,5) / 2 + 17,5 x 2 / 24 = 14,71 px. */}
               <Search className="size-5" />
             </button>
@@ -605,7 +605,7 @@ export function LibraryScreen({
             <label className="relative mt-3 block">
               <span className="sr-only">{S.s_tim_sach_1deb0125}</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
-              <input ref={searchInput} aria-label={S.s_tim_sach_1deb0125} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={S.s_ten_sach_tac_gia_giong_a003bb13} title={S.s_go_khong_dau_cung_duoc_b7275695} className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
+              <input ref={searchInput} aria-label={S.s_tim_sach_1deb0125} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={S.s_ten_sach_tac_gia_giong_a003bb13} title={S.s_go_khong_dau_cung_duoc_b7275695} className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-12 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
               <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? S.s_xoa_o_tim_0bafa7ad : S.s_dong_o_tim_1ba06fdf} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
             </label>
           </Collapse>

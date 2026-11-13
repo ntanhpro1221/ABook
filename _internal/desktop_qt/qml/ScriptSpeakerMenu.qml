@@ -20,7 +20,7 @@ Column {
     readonly property var suggested: Script.suggestedOf(script, line)
     readonly property var fixed: Script.FIXED.filter(person => !embedded || person.value !== Script.NARRATOR)
     function focusFind() { findField.forceActiveFocus() }
-    spacing: 6
+    spacing: 8
 
     WorkField {
         id: findField
@@ -58,7 +58,7 @@ Column {
                 }
                 Row {
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
                     Repeater {
                         model: Script.GENDERS
                         delegate: Button {
@@ -95,7 +95,7 @@ Column {
         width: parent.width
         height: shown ? implicitHeight + 10 : 0
         leftPadding: 8
-        topPadding: 6
+        topPadding: 8
         bottomPadding: 4
         color: tone
         font.pixelSize: Theme.sizeCaption
@@ -127,7 +127,7 @@ Column {
                 anchors.centerIn: parent
                 text: option.hotkey || String(option.person.label || "").slice(0, 1).toUpperCase()
                 color: Cast.avatarInk(badge.hue, Theme.dark)
-                font.pixelSize: 11
+                font.pixelSize: 12
                 font.weight: Theme.weightBold
             }
         }

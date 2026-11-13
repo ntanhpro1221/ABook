@@ -42,7 +42,7 @@ Column {
                     Prose { id: issueText; x: 16; width: parent.width - 16; text: modelData }
                 }
             }
-            Prose { topPadding: 2; text: (root.suggestsSplit ? S.s_nhieu_tap_danh_so_lai_tu_1_chia_thanh_nhie_50bbb0ff : "") + S.s_van_tao_duoc_nhu_the_may_chi_nhac_khong_bo_08ad11a0 }
+            Prose { topPadding: 4; text: (root.suggestsSplit ? S.s_nhieu_tap_danh_so_lai_tu_1_chia_thanh_nhie_50bbb0ff : "") + S.s_van_tao_duoc_nhu_the_may_chi_nhac_khong_bo_08ad11a0 }
         }
     }
     // Gợi ý bỏ dòng ghi công / ủng hộ

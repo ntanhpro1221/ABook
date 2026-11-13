@@ -91,8 +91,8 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
     <section aria-label={S.s_may_thieu_cau_hinh_df5ae9ef} className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1 basis-[16rem]">
-        <p className="font-semibold text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
+        <p className="font-medium text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</p>
+        <p className="mt-1 text-body-small leading-relaxed text-fg-2 text-pretty">
           {noStudioLine(fit.reason ?? "").replace(/\.$/, "")}; {peers.length
             ? S.s_tao_tren_may_da_ghep_co_studio_sach_xong_n_816bfc37
             : S.s_cai_studio_tren_may_khac_roi_ghep_tai_cai_ae8031d9}
@@ -127,8 +127,8 @@ export function StudioInstallNotice({ className }: { className?: string }) {
     <section aria-label={S.s_can_studio_4b14a373} className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{studio.repair ? S.s_can_sua_studio_a65aa0f0 : studio.update ? S.s_studio_can_cap_nhat_c0338642 : S.s_chua_cai_studio_029df34a}</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{S.s_du_an_giu_thiet_lap_va_cho_studio_san_sang_e878c6ea}</p>
+        <p className="font-medium">{studio.repair ? S.s_can_sua_studio_a65aa0f0 : studio.update ? S.s_studio_can_cap_nhat_c0338642 : S.s_chua_cai_studio_029df34a}</p>
+        <p className="mt-1 text-body-small leading-relaxed text-fg-2 text-pretty">{S.s_du_an_giu_thiet_lap_va_cho_studio_san_sang_e878c6ea}</p>
       </div>
       {!info?.remote && (
         <Button variant="ghost" size="sm" icon={Download} onClick={() => navigate("/studio")}>
@@ -191,10 +191,10 @@ export function StudioSetupCard({ className }: { className?: string }) {
           <Cpu className="size-5" />
         </div>
         <div className="min-w-0 flex-1 basis-[16rem]">
-          <h2 id="studio-setup-title" className="text-base font-semibold">
+          <h2 id="studio-setup-title" className="text-base font-medium">
             {repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : S.s_cai_studio_5fdd3bd9}
           </h2>
-          <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
+          <p className="mt-1 max-w-2xl text-body-small leading-relaxed text-fg-2 text-pretty">
             {repair
               ? S.s_tai_lai_0_sach_giu_nguyen_0ea0e553([...damaged, ...stale].join(", "))
               : update
@@ -202,7 +202,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
               : `${STUDIO_NEEDS}`}
           </p>
           {fit && (
-            <p className={cn("mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
+            <p className={cn("mt-2 max-w-2xl text-body-small leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
               {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
             </p>
           )}
@@ -227,13 +227,13 @@ export function StudioSetupCard({ className }: { className?: string }) {
       </div>
 
       {status.leftover && !status.running && (
-        <p role="status" className="mt-4 py-2 text-[0.8125rem] leading-relaxed text-pretty">
+        <p role="status" className="mt-4 py-2 text-body-small leading-relaxed text-pretty">
           {leftoverLine(status.leftover)}
         </p>
       )}
 
       {status.error && !status.running && !status.leftover && (
-        <div role="alert" className="mt-4 py-2 text-[0.8125rem] leading-relaxed text-danger">
+        <div role="alert" className="mt-4 py-2 text-body-small leading-relaxed text-danger">
           <p>{friendlySetupError(status.error).summary}</p>
           {friendlySetupError(status.error).detail && (
             <details className="mt-1 text-xs">
@@ -245,11 +245,11 @@ export function StudioSetupCard({ className }: { className?: string }) {
       )}
 
       {(status.running || started) && (
-        <ol className="mt-5 grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
+        <ol className="mt-5 grid gap-x-8 gap-y-2 sm:grid-cols-2">
           {status.steps.map((step) => {
             const active = status.running && step.id === status.step;
             return (
-              <li key={step.id} className="flex min-w-0 items-center gap-2.5 text-[0.8125rem]">
+              <li key={step.id} className="flex min-w-0 items-center gap-3 text-body-small">
                 {step.done ? (
                   <Check className="size-4 shrink-0 text-accent-text" aria-label={S.s_xong_a6f4543a} />
                 ) : active ? (
@@ -257,7 +257,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
                 ) : (
                   <span className="size-4 shrink-0 rounded-full border border-line-strong" aria-hidden />
                 )}
-                <span className={cn("truncate", step.done ? "text-fg-2" : active ? "font-semibold" : "text-fg-2")}>{step.label}</span>
+                <span className={cn("truncate", step.done ? "text-fg-2" : active ? "font-medium" : "text-fg-2")}>{step.label}</span>
                 <span className="truncate text-xs text-fg-3">{step.hint}</span>
               </li>
             );
@@ -268,7 +268,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
       {status.running && current && (
         <div className="mt-4">
           <Progress value={progress ?? 0} indeterminate={progress === null} running size="sm" label={S.s_tien_do_0_bebc77d0(current.label)} />
-          <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
+          <div className="mt-2 flex justify-between gap-4 text-xs text-fg-2">
             <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (
               <span data-motion-live className="shrink-0">
@@ -312,11 +312,11 @@ export function StudioSettings() {
       }
     };
     return (
-      <MotionRegion as="div" className="max-w-xl py-3.5">
+      <MotionRegion as="div" className="max-w-xl py-4">
         <SectionHeading as="h3">{S.s_studio_tren_may_nay_e2fb04aa}</SectionHeading>
         <p className="mt-1 text-sm">{status.running ? S.s_dang_cai_4ea651d1 : S.s_chua_cai_6003057a}</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
-        <p className={cn("mt-1 text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
+        <p className="mt-1 text-body-small leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
+        <p className={cn("mt-1 text-body-small leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
           {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
         </p>
         {status.running ? (
@@ -357,7 +357,7 @@ export function StudioSettings() {
         </Button>
       </SettingsRow>
       {status.outdated.length > 0 && (
-        <p className="mt-1 text-[0.8125rem] text-fg-2">
+        <p className="mt-1 text-body-small text-fg-2">
           {status.damaged?.length ? S.s_mat_0_file_da_bi_xoa_hay_hong_a1da54d6(status.damaged.join(", ")) : S.s_can_cap_nhat_0_ab9a2c84(status.outdated.join(", "))} -{" "}
           <button type="button" onClick={() => navigate("/studio")} className="font-medium text-accent-text underline">
             {status.damaged?.length ? S.s_sua_studio_2f99394d : S.s_cap_nhat_studio_b3acc7e7}

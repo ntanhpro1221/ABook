@@ -174,8 +174,8 @@ Item {
                                 enabled: row.isEditing
                                 label: S.s_ten_chuong_9edb6c28
                                 escapeLocal: true
-                                topPadding: 6
-                                bottomPadding: 6
+                                topPadding: 8
+                                bottomPadding: 8
                                 implicitHeight: Math.max(32, contentHeight + 12)
                                 font.weight: Theme.weightMedium
                                 property bool seeded: false
@@ -221,7 +221,7 @@ Item {
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeCaption
                             font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
-                            topPadding: 2
+                            topPadding: 4
                         }
                     }
                     Rectangle { y: parent.height - 1; width: parent.width; height: 1; color: Theme.line; visible: row.index < root.chapters.length - 1 }

@@ -11,8 +11,8 @@ Column {
     property string text: ""
     default property alias actions: actionRow.data
     spacing: 0
-    topPadding: 56
-    bottomPadding: 56
+    topPadding: 64
+    bottomPadding: 64
 
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter

@@ -79,7 +79,7 @@ Column {
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBody
-                font.weight: 600
+                font.weight: Theme.weightMedium
             }
             Item { width: 1; height: 20 }
             Button {

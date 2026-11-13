@@ -23,7 +23,7 @@ import { PhoneDiagnostics } from "./PhoneDiagnostics";
 // phần đã nghe vẫn nghe được khi máy kia tắt. Không chung Wi-Fi thì đi Bluetooth: ghép bằng địa chỉ Bluetooth của điện thoại
 // (chọn từ thiết bị đã ghép ở Windows), hay máy đã ghép Wi-Fi có thêm đường Bluetooth dự phòng.
 
-const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-2 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
 
 interface Computer {
   id: string;
@@ -182,7 +182,7 @@ export function OtherComputers() {
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
                   <div className="text-xs text-fg-2" role="status">
-                    <Moon className="mr-1.5 -mt-0.5 inline size-3.5 align-middle" aria-hidden />
+                    <Moon className="mr-2 -mt-1 inline size-3.5 align-middle" aria-hidden />
                     {wakingLine(computer)}
                     <button
                       type="button"
@@ -201,7 +201,7 @@ export function OtherComputers() {
                 )}
                 {computer.fingerprint && (
                   // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
-                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>{S.s_van_tay_8abdcdf0}{formatFingerprint(computer.fingerprint).slice(0, 9)}…
+                  <div className="mt-1 break-words text-caption text-fg-3" title={formatFingerprint(computer.fingerprint)}>{S.s_van_tay_8abdcdf0}{formatFingerprint(computer.fingerprint).slice(0, 9)}…
                   </div>
                 )}
               </div>
@@ -286,7 +286,7 @@ export function OtherComputers() {
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <label className="min-w-32 flex-1 text-xs text-fg-2" htmlFor="other-computer-code">{S.s_pair_code_or_string}<input
@@ -297,7 +297,7 @@ export function OtherComputers() {
             placeholder="123456"
             inputMode="text"
             autoComplete="off"
-            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || !validCode}>{S.s_ket_noi_02ca3cba}</Button>
@@ -309,11 +309,11 @@ export function OtherComputers() {
       </div>}
       {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
       {pair.isError && !confirm && (
-        <p role="alert" className="text-[0.8125rem] text-danger text-pretty">{S.s_chua_ghep_duoc_160c13b4}{pair.error.message}
+        <p role="alert" className="text-body-small text-danger text-pretty">{S.s_chua_ghep_duoc_160c13b4}{pair.error.message}
         </p>
       )}
       {unpaired.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <p className="text-xs text-fg-2">{S.s_khac_wi_fi_chon_may_da_ghep_bluetooth_f451876c}</p>
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
@@ -359,19 +359,19 @@ export function BluetoothFallback({
           aria-label={S.s_dung_bluetooth_cho_0_82d05e59(computer.name)}
           disabled={busy}
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-3",
             current ? "text-accent-text" : "text-fg-2",
           )}
         >
           <Bluetooth className="glyph" strokeWidth={2} />
-          <span className="ml-1.5 text-sm sm:hidden">{S.s_bluetooth_8bb29098}</span>
+          <span className="ml-2 text-sm sm:hidden">{S.s_bluetooth_8bb29098}</span>
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">{S.s_qua_bluetooth_983cecc1}</DropdownMenu.Label>
+        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-2 shadow-float"><MotionRegion>
+          <DropdownMenu.Label className="px-2 pb-1 pt-1 text-xs font-medium text-fg-3">{S.s_qua_bluetooth_983cecc1}</DropdownMenu.Label>
           {!devices.length && (
-            <p className="px-2 py-1.5 text-xs text-fg-3">{S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2}</p>
+            <p className="px-2 py-2 text-xs text-fg-3">{S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2}</p>
           )}
           {devices.map((device) => (
             <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={MENU_ITEM}>

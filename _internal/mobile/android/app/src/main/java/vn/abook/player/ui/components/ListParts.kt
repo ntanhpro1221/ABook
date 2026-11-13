@@ -480,7 +480,7 @@ fun MenuRow(
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
             BasicText(label, style = Abook.type.body.copy(color = if (unavailable) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
-            if (hint != null) RowHint(hint, Modifier.padding(top = 2.dp).testTag("${tag}_hint"), colors.text2)
+            if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp).testTag("${tag}_hint"), colors.text2)
         }
         if (value != null) {
             Spacer(Modifier.width(Dim.s12))

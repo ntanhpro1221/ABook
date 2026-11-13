@@ -233,7 +233,7 @@ private fun weekText(seconds: Double): AnnotatedString {
             append(line)
         } else {
             append(line.substring(0, at))
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(part) }
+            withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append(part) }
             append(line.substring(at + part.length))
         }
     }
@@ -367,7 +367,7 @@ private fun NarratorRow(cast: CastView, modifier: Modifier) {
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
             BasicText(S.s_nguoi_ke_chuyen_c0c2c504, style = Abook.type.caption.copy(color = colors.text2))
-            BasicText(Cast.narratorName(cast.narrator), style = Abook.type.bodyStrong, modifier = Modifier.padding(top = 2.dp))
+            BasicText(Cast.narratorName(cast.narrator), style = Abook.type.bodyStrong, modifier = Modifier.padding(top = 4.dp))
             cast.narrator.chapterVoices.forEach { RowHint(it) }
             RowHint(Cast.narratorCountLine(cast.narrator))
         }
@@ -391,13 +391,13 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
                 }
             }
             person.originalName?.let { BasicText(S.s_ten_goc_0_dea1648c(Cast.cleanName(it)), style = Abook.type.caption) }
-            Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.Top) {
+            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {
                 Box(Modifier.size(14.dp, 18.dp), contentAlignment = Alignment.CenterStart) { VoiceIcon(colors.text3, size = 14.dp) }
                 Spacer(Modifier.width(4.dp))
                 BasicText(Cast.voiceLine(person), style = Abook.type.caption.copy(color = colors.text2))
             }
-            Cast.pendingLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 2.dp)) }
-            Cast.mergeLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 2.dp)) }
+            Cast.pendingLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
+            Cast.mergeLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
             BasicText(Cast.countLine(person), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.padding(top = Dim.s4))
         }
         person.sampleId?.let { sample -> SampleButton(samples.playing == sample, S.s_nghe_0_noi_e9307f6f(name)) { samples.toggle(sample) } }

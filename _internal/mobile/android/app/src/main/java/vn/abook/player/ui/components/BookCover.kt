@@ -156,7 +156,7 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
                 maxSize = subSize,
                 kind = "part",
                 softWrap = false,
-                modifier = Modifier.background(Abook.colors.coverTag).padding(horizontal = 4.dp, vertical = 2.dp).testTag("cover_part"),
+                modifier = Modifier.background(Abook.colors.coverTag).padding(horizontal = 4.dp, vertical = 4.dp).testTag("cover_part"),
             )
         }
     }

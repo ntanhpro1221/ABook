@@ -479,7 +479,7 @@ export function SourceStep({
               >
                 <div className="motion-progress h-full rounded-full bg-accent" style={{ transform: `scaleX(${percent / 100})` }} />
               </div>
-              <p className="mt-1.5 text-xs text-fg-2">
+              <p className="mt-2 text-xs text-fg-2">
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress(S.s_dang_gui_cac_chuong_d7b47553, uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
               <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
@@ -500,7 +500,7 @@ export function SourceStep({
               type="button"
               aria-expanded={false}
               onClick={() => setAdvanced(true)}
-              className="mt-5 text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
+              className="mt-5 text-body-small text-fg-2 underline-offset-2 hover:text-fg hover:underline"
             >{S.s_dan_duong_dan_2ae49bc1}</button>
           ) : (
             <>
@@ -526,7 +526,7 @@ export function SourceStep({
                 />
                 <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || scanning}>{S.s_lay_chuong_8869b554}</Button>
               </form>
-              {!info?.dialogs && <p className="mx-auto mt-1.5 max-w-lg break-all text-left text-xs text-fg-3">{S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8}</p>}
+              {!info?.dialogs && <p className="mx-auto mt-2 max-w-lg break-all text-left text-xs text-fg-3">{S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8}</p>}
             </>
           )}
           {problem && (
@@ -579,13 +579,13 @@ export function SourceStep({
               aria-invalid={!title.trim()}
               aria-describedby={!title.trim() ? "title-problem" : undefined}
               className={cn(
-                "mt-1.5 h-11 w-full rounded-cover border bg-panel px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus",
+                "mt-2 h-11 w-full rounded-cover border bg-panel px-4 text-body font-medium outline-none focus:border-focus",
                 title.trim() ? "border-line" : "border-danger",
               )}
               placeholder={S.s_ten_hien_thi_trong_thu_vien_c48c7ac6}
             />
             {!title.trim() && (
-              <span id="title-problem" role="alert" className="mt-1 block text-[0.8125rem] text-danger">{S.s_sach_can_co_ten_de_hien_trong_thu_vien_49495e92}</span>
+              <span id="title-problem" role="alert" className="mt-1 block text-body-small text-danger">{S.s_sach_can_co_ten_de_hien_trong_thu_vien_49495e92}</span>
             )}
           </label>
           {replaces && (
@@ -593,14 +593,14 @@ export function SourceStep({
               <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
                 {replaces.restart ? S.s_dang_lam_lai_phan_tich_cua_a4a97a79 : S.s_dang_sua_thiet_lap_cua_e2a5f0e6}
-                <span className="font-semibold">“{replaces.title}”</span>{S.s_da_dien_thiet_lap_cu_tao_xong_se_dua_ban_c_1adb5eb8}</p>
+                <span className="font-medium">“{replaces.title}”</span>{S.s_da_dien_thiet_lap_cu_tao_xong_se_dua_ban_c_1adb5eb8}</p>
             </div>
           )}
           {scan?.existing && scan.existing.some((project) => project.id !== replaces?.id) && (
             <div className="mt-4 flex gap-3 py-4 text-sm">
               <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <div className="min-w-0">
-                <p className="font-semibold">{S.s_truyen_nay_da_co_du_an_07223685}</p>
+                <p className="font-medium">{S.s_truyen_nay_da_co_du_an_07223685}</p>
                 <ul className="mt-1 space-y-1">
                   {scan.existing.filter((project) => project.id !== replaces?.id).map((project) => (
                     <li key={project.id} className="flex flex-wrap items-baseline gap-x-2">
@@ -637,7 +637,7 @@ export function SourceStep({
           <CreditSuggestion files={files} drop={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm text-fg-2">
-              <span className="font-semibold text-fg">{files.length}{S.s_chuong_9e6a01dc}</span> · {approx(scan!.totals.words, scan!.totals.estimated)}{S.s_chu_khoang_7a1a54c6}{" "}
+              <span className="font-medium text-fg">{files.length}{S.s_chuong_9e6a01dc}</span> · {approx(scan!.totals.words, scan!.totals.estimated)}{S.s_chu_khoang_7a1a54c6}{" "}
               {formatLength(scan!.totals.audioSeconds)}{S.s_audio_7024c69b}</div>
             <div className="flex gap-1">
               {info?.dialogs && (
@@ -688,7 +688,7 @@ export function SourceStep({
                 <div key={key} ref={ref} role="listitem" className="motion-row border-b border-line last:border-b-0" data-state={state} inert={state === "exit"}>
                   <div>
                   <MotionPresence open={part >= 0}>
-                    <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent-text">
+                    <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 px-3 py-2 text-xs font-medium text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
                       <span className="min-w-0 truncate">{S.s_phan_a17569d5}{part + 1}{S.s_bat_dau_76545e3c}</span>
                     </div>
@@ -785,12 +785,12 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
       <div className="min-w-0 flex-1">
         {dropped ? (
           <>
-            <p className="font-semibold">{S.s_se_bo_976be2fb}{formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })}{S.s_khoi_phan_doc_a9d1c125}</p>
+            <p className="font-medium">{S.s_se_bo_976be2fb}{formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })}{S.s_khoi_phan_doc_a9d1c125}</p>
             <p className="mt-1 break-words text-fg-2">{S.s_chi_bo_khoi_phan_doc_giu_nguyen_file_truye_94c7dd67}</p>
           </>
         ) : (
           <>
-            <p className="font-semibold">{S.s_goi_y_dddb8282}{formatNumber(credits.chapters)}{S.s_chuong_co_51021419}{creditWhere(credits)}
+            <p className="font-medium">{S.s_goi_y_dddb8282}{formatNumber(credits.chapters)}{S.s_chuong_co_51021419}{creditWhere(credits)}
             </p>
             <p className="mt-1 break-words text-fg-2">
               {quoted}
@@ -814,7 +814,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           </ul>
           </div>
         )}
-        <div className="mt-2.5 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {both ? (
             <>
               <Button size="sm" variant="ghost" aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
@@ -847,8 +847,8 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
     <div className="mt-4 flex gap-3 py-4 text-sm">
       <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0">
-        <p className="font-semibold">{S.s_so_chuong_co_cho_la_xem_lai_truoc_khi_tao_cbf84a1f}</p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-fg-2">
+        <p className="font-medium">{S.s_so_chuong_co_cho_la_xem_lai_truoc_khi_tao_cbf84a1f}</p>
+        <ul className="mt-1 list-disc space-y-1 pl-4 text-fg-2">
           {issues.map((issue) => (
             <li key={issue} className="break-words">{issue}</li>
           ))}
@@ -872,10 +872,10 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
     <div className="mt-4 flex gap-3 py-4 text-sm">
       <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{S.s_goi_y_80f3b4ba}{file.name}{S.s_co_ve_chua_ca_f34d3ea9}{formatNumber(outcome.chapters)}{S.s_chuong_9e6a01dc}</p>
+        <p className="font-medium">{S.s_goi_y_80f3b4ba}{file.name}{S.s_co_ve_chua_ca_f34d3ea9}{formatNumber(outcome.chapters)}{S.s_chuong_9e6a01dc}</p>
         <p className="mt-1 break-words text-fg-2">{S.s_tach_theo_5f3e6530}{quoted}{plan.chapters > plan.titles.length ? "…" : ""}{S.s_giu_file_goc_4cf6140f}{plan.preamble ? S.s_va_chu_mo_dau_a047c58f : ""}.
         </p>
-        <div className="mt-2.5">
+        <div className="mt-3">
           <Button
             size="sm"
             variant="ghost"
@@ -898,13 +898,13 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
     <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 py-4 text-sm sm:flex-nowrap">
       <Layers className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{S.s_phan_a17569d5}{seed.part}{S.s_cua_285bec9f}{seed.title}”
+        <p className="font-medium">{S.s_phan_a17569d5}{seed.part}{S.s_cua_285bec9f}{seed.title}”
         </p>
         {seed.clickedTitle && (
-          <p className="mt-0.5 text-fg-2">{S.s_noi_sau_26bf063a}{seed.latestTitle ?? seed.title}{S.s_giu_c0878737}{carriedText(seed.carries)}.
+          <p className="mt-1 text-fg-2">{S.s_noi_sau_26bf063a}{seed.latestTitle ?? seed.title}{S.s_giu_c0878737}{carriedText(seed.carries)}.
           </p>
         )}
-        {!seed.clickedTitle && <p className="mt-0.5 text-fg-2">{S.s_giu_d3777f80}{carriedText(seed.carries)}{S.s_giong_va_cach_doc_ten_995cc280}</p>}
+        {!seed.clickedTitle && <p className="mt-1 text-fg-2">{S.s_giu_d3777f80}{carriedText(seed.carries)}{S.s_giong_va_cach_doc_ten_995cc280}</p>}
         {seed.folder && <p className="mt-1 break-all text-fg-2">{S.s_continuation_hint(seed.folder)}</p>}
         {/* Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file (soát UX a6 01-10, B5: vẫn hiện sau khi đã có). */}
         {seed.empty && !hasFiles && (
@@ -926,7 +926,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
       <button
         type="button"
         onClick={onDrop}
-        className="self-start whitespace-nowrap text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
+        className="self-start whitespace-nowrap text-body-small text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-8 max-sm:text-left"
       >{S.s_bo_noi_tiep_2b7945ba}</button>
     </MotionRegion>
   );
@@ -952,7 +952,7 @@ export function VoiceCard({
   return (
     <div
       className={cn(
-        "relative flex items-center gap-3 border-b border-line py-3.5 transition-colors",
+        "relative flex items-center gap-3 border-b border-line py-4 transition-colors",
         selected ? "text-accent-text" : "text-fg",
       )}
     >
@@ -978,12 +978,12 @@ export function VoiceCard({
         onClick={onSelect}
         className="min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:rounded-cover focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
       >
-        <span className="block font-semibold leading-snug">{voice.name}</span>
-        <span className="mt-0.5 block text-xs text-fg-2">
+        <span className="block font-medium leading-snug">{voice.name}</span>
+        <span className="mt-1 block text-xs text-fg-2">
           {voice.gender}{S.s_mien_8dcd7dbe}{voice.region} · {voice.style}
         </span>
         {voice.recommended && (
-          <span className="mt-1.5 inline-block rounded-control bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">{S.s_de_xuat_3a11f911}</span>
+          <span className="mt-2 inline-block rounded-control bg-accent-soft px-2 py-px text-caption font-medium uppercase tracking-wide text-accent-text">{S.s_de_xuat_3a11f911}</span>
         )}
       </button>
       <MotionRegion as="span" className="grid size-6 shrink-0 place-items-center" aria-hidden>
@@ -1025,20 +1025,20 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
   return (
     <fieldset className="mt-4 border-t border-line pt-3">
       <legend className="sr-only">{S.s_chuong_doi_nguoi_ke_88865076}</legend>
-      <p className="text-sm font-semibold">{S.s_chuong_doi_nguoi_ke_88865076}</p>
-      <p className="mt-0.5 text-sm text-fg-2 text-pretty">{S.s_ke_bang_toi_bo_chon_neu_may_doan_sai_306c44c1}</p>
-      <ul className="mt-2 space-y-1.5">
+      <p className="text-sm font-medium">{S.s_chuong_doi_nguoi_ke_88865076}</p>
+      <p className="mt-1 text-sm text-fg-2 text-pretty">{S.s_ke_bang_toi_bo_chon_neu_may_doan_sai_306c44c1}</p>
+      <ul className="mt-2 space-y-2">
         {chapters.map((chapter) => {
           const on = !off.includes(chapter.chapter);
           return (
             <li key={chapter.chapter}>
-              <label className="flex items-start gap-2.5 text-sm">
+              <label className="flex items-start gap-3 text-sm">
                 <input
                   id={`pov-chapter-${chapter.chapter}`}
                   type="checkbox"
                   checked={on}
                   onChange={() => onOffChange(on ? [...off, chapter.chapter] : off.filter((value) => value !== chapter.chapter))}
-                  className="mt-0.5 size-4 accent-[var(--accent)]"
+                  className="mt-1 size-4 accent-[var(--accent)]"
                 />
                 <span>
                   {chapter.title}{S.s_toi_la_90e4c35d}<b>{chapter.name}</b>
@@ -1078,7 +1078,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
   }
   return (
     <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl py-4 sm:py-5">
-      <h3 id="first-person-title" className="font-semibold">{S.s_toi_la_ai_efbf5a65}</h3>
+      <h3 id="first-person-title" className="font-medium">{S.s_toi_la_ai_efbf5a65}</h3>
       <p className="mt-1 text-sm text-fg-2 text-pretty">{S.s_ten_nguoi_ke_giup_phan_vai_dung_loi_thoai_ded89111}</p>
       <MoreInfo label={S.s_may_doan_0f0472f0}>{hint?.firstPerson
         ? hint.chaptersSampled && hint.chaptersWithI
@@ -1094,7 +1094,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
               aria-pressed={value === name}
               onClick={() => onChange(value === name ? "" : name)}
               className={cn(
-                "rounded-control px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
+                "rounded-control px-3 py-2 text-sm font-medium transition-colors duration-motion-medium",
                 value === name ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
@@ -1108,7 +1108,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={S.s_ten_nhan_vat_xung_toi_de_trong_neu_ke_ngoi_67659017}
-          className="mt-1.5 h-11 w-full rounded-cover border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+          className="mt-2 h-11 w-full rounded-cover border border-line bg-panel px-4 text-body font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
         />
       </label>
       {value.trim() && (
@@ -1123,12 +1123,12 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
               { value: "female", label: S.s_nu_e15bc11c },
             ]}
           />
-          <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">{S.s_chua_ro_thi_may_doan_loi_dan_dung_giong_cu_243f284d}</p>
+          <p className="mt-2 text-body-small text-fg-2 text-pretty">{S.s_chua_ro_thi_may_doan_loi_dan_dung_giong_cu_243f284d}</p>
           <label className="mt-3 flex items-start gap-3 py-4" htmlFor="teller-mode">
             <Switch id="teller-mode" labelledBy="teller-mode-name" describedBy="teller-mode-hint" checked={Boolean(tellerMode)} onCheckedChange={onTellerMode} />
             <span>
               <span id="teller-mode-name" className="block text-sm font-medium">{TELLER_TITLE}</span>
-              <span id="teller-mode-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">{tellerHint(Boolean(tellerMode))}</span>
+              <span id="teller-mode-hint" className="mt-1 block text-body-small leading-relaxed text-fg-2">{tellerHint(Boolean(tellerMode))}</span>
             </span>
           </label>
         </div>
@@ -1212,7 +1212,7 @@ export function VoiceStep({
         <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">{S.s_may_chon_cung_gioi_nguoi_ke_chon_giong_de_48aef3e1}</p>
       )}
       {previousNarrator && (
-        <p className="mt-4 text-sm text-fg-2">{S.s_giong_ke_phan_truoc_9750613e}<span className="font-semibold text-fg">{previousNarrator}</span>
+        <p className="mt-4 text-sm text-fg-2">{S.s_giong_ke_phan_truoc_9750613e}<span className="font-medium text-fg">{previousNarrator}</span>
           {narrator && narrator !== previousNarrator && (
             <>
               {S.s_dang_chon_giong_khac_hai_phan_se_doc_loi_d_bd6d927d}
@@ -1237,7 +1237,7 @@ export function VoiceStep({
         ]} />
       </div>
       {hiddenSelection && (
-        <p className="mt-3 text-sm text-fg-2">{S.s_dang_chon_7789a2de}<span className="font-semibold text-fg">{narrator}</span>{S.s_bo_loc_dang_an_giong_nay_90f64c87}{" "}
+        <p className="mt-3 text-sm text-fg-2">{S.s_dang_chon_7789a2de}<span className="font-medium text-fg">{narrator}</span>{S.s_bo_loc_dang_an_giong_nay_90f64c87}{" "}
           <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => { setGender("all"); setRegion("all"); }}>{S.s_bo_loc_74de0064}</button>
         </p>
       )}
@@ -1311,10 +1311,10 @@ export function QualityStep({
                   <Sparkles className="size-3" />{S.s_nen_dung_6d30e4cd}</span>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-base font-semibold">{option.title}</span>
+                <span className="text-base font-medium">{option.title}</span>
                 <MotionRegion as="span" className="grid size-6 place-items-center" aria-hidden>{selected ? <span className="grid size-6 place-items-center text-accent-text"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}</MotionRegion>
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-fg-2">
+              <div className="mt-1 flex items-center gap-2 text-xs font-medium text-fg-2">
                 <Gauge className="size-3.5" /> {option.pace}
               </div>
               <p className="mt-3 text-sm text-fg-2">{option.summary}</p>
@@ -1324,7 +1324,7 @@ export function QualityStep({
       </div>
       <Fold storageKey="new-project.quality" title={S.s_chi_tiet_e762d926} summary={chosen.title} className="mt-4" heading="h3">
         <MotionRegion>
-          <ul className="space-y-2 text-sm">{chosen.points.map((point) => <li key={point} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden /><span>{point}</span></li>)}</ul>
+          <ul className="space-y-2 text-sm">{chosen.points.map((point) => <li key={point} className="flex gap-2"><Check className="mt-1 size-3.5 shrink-0 text-success" aria-hidden /><span>{point}</span></li>)}</ul>
           <p className="mt-3 text-sm text-fg-2">{noStudio ? S.s_cai_studio_de_uoc_tinh_thoi_gian_0ac5ef9b : profile === "high_quality" ? <>{S.s_tham_khao_e9bde754}{lengthRange(guess.totalLow, guess.totalHigh)}{S.s_cho_0f86da9d}{chapters}{S.s_chuong_2721c3eb}{timeBasis(exact)}.</> : S.s_nhanh_hon_chat_luong_cao_chua_co_so_do_d80ead73}</p>
         </MotionRegion>
       </Fold>
@@ -1442,7 +1442,7 @@ function ConfirmStep({
   ];
   return (
     <MotionRegion as="div">
-      <h3 className="text-base font-semibold">{S.s_khi_tao_07d6f63b}</h3>
+      <h3 className="text-base font-medium">{S.s_khi_tao_07d6f63b}</h3>
       <div className="mt-2 divide-y divide-line">
         <label className="flex items-start gap-3 py-3" htmlFor="start-now">
           <Switch
@@ -1455,7 +1455,7 @@ function ConfirmStep({
           />
           <span>
             <span id="start-now-name" className="block text-sm font-medium">{S.s_bat_dau_tao_ngay_58ad17d7}</span>
-            <MotionRegion as="span" id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+            <MotionRegion as="span" id="start-now-hint" className="mt-1 block text-body-small leading-relaxed text-fg-2">
               {unfit
                 ? S.s_tat_vi_may_nay_khong_lam_sach_noi_duoc_ly_7f659322
                 : noStudio
@@ -1470,7 +1470,7 @@ function ConfirmStep({
           <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
           <span>
             <span id="precast-wait-name" className="block text-sm font-medium">{S.s_duyet_truoc_khi_thu_74c121d0}</span>
-            <MotionRegion as="span" id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+            <MotionRegion as="span" id="precast-wait-hint" className="mt-1 block text-body-small leading-relaxed text-fg-2">
               {precastWait
                 ? S.s_dung_sau_phan_tich_de_ban_duyet_roi_bam_th_0ca451d3
                 : S.s_phan_tich_xong_thi_thu_luon_duyet_luc_nao_1f91e9f9}
@@ -1479,11 +1479,11 @@ function ConfirmStep({
         </label>
       </div>
       {/* Mọi lựa chọn sẽ gửi đi, kể cả thời gian tham khảo - một danh sách phẳng. */}
-      <h3 className="mt-8 text-base font-semibold">{S.s_tom_tat_b4bb3064}</h3>
+      <h3 className="mt-8 text-base font-medium">{S.s_tom_tat_b4bb3064}</h3>
       <dl className="mt-2 divide-y divide-line text-sm">
         {rows.map(([label, value]) => (
           // Điện thoại: nhãn trên, giá trị dưới - cột nhãn cố định từng ép giá trị thành 5-6 dòng ở 390 px.
-          <div key={label} className="grid gap-0.5 py-2 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-4">
+          <div key={label} className="grid gap-1 py-2 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-4">
             <dt className="text-fg-2">{label}</dt>
             <dd>{value}</dd>
           </div>
@@ -1982,7 +1982,7 @@ export function NewProjectScreen() {
                 }}
               >{S.s_bat_dau_lai_a3fe79c8}</Button>
               <span className="flex min-w-0 items-center gap-3">
-                <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</span></MotionPresence>
+                <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-body-small text-fg-2 text-pretty">{S.s_may_thieu_cau_hinh_df5ae9ef}</span></MotionPresence>
                 <Button variant="primary" size="lg" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
                   {gate.label ?? (draft.startNow && !noStudio ? S.s_bat_dau_b3cacc46 : S.s_tao_sach_af3aeee3)}
                 </Button>

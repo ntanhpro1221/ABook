@@ -62,7 +62,7 @@ Item {
         y: 22 * root.u - baselineOffset
         font.family: root.family !== "" ? root.family : Qt.application.font.family
         font.pointSize: 14.5 * root.u * 0.75
-        font.weight: Font.DemiBold
+        font.weight: Theme.weightMedium
         font.letterSpacing: -0.2 * root.u
         // Không tnum: "15" cố định, và web vẽ nó bằng font thân (không có tnum) nên chữ số rộng tự nhiên - khe với vòng cung như web
     }

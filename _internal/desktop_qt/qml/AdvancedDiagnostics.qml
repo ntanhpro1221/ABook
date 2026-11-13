@@ -33,7 +33,7 @@ Column {
             text: S.s_xem_lai_truoc_khi_gui_ban_tu_gui_di_755dd05a
             color: Theme.text2
             wrapMode: Text.Wrap
-            font.pixelSize: 13
+            font.pixelSize: 14
         }
         Button {
             id: send

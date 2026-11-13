@@ -26,7 +26,7 @@ Popover {
         }
         // Đang hẹn: dòng nhỏ "Tắt sau" / "Dừng khi" trên đồng hồ đếm lùi lớn (như web SleepPicker).
         Collapse {
-            width: parent.width; open: Player.sleepKind !== "off"; spacing: 2
+            width: parent.width; open: Player.sleepKind !== "off"; spacing: 4
             Text {
                 objectName: "sleepCaption"
                 width: parent.width
@@ -43,7 +43,7 @@ Popover {
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeTitlePhone
-                font.weight: 600
+                font.weight: Theme.weightMedium
             }
         }
         Collapse {

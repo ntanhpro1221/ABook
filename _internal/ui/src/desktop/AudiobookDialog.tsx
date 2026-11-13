@@ -47,7 +47,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
   return (
     <MotionRegion as="div" className="py-3 text-sm" role="group" aria-label={S.s_cong_cu_ghep_am_thanh_f56c00a0}>
       <p className="font-medium">{status.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : remote ? S.s_thieu_cong_cu_ghep_1c3e0226 : S.s_thieu_cong_cu_ghep_1c3e0226}</p>
-      <p className="mt-0.5 text-fg-2">{status.outdated ? S.s_co_ban_moi_de_ghep_loi_doc_thanh_file_mp3_e3f81f2c : S.s_tai_mot_lan_de_ghep_mp3_m4b_2e0a2a50}{S.s_khoang_05ede49e}{formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
+      <p className="mt-1 text-fg-2">{status.outdated ? S.s_co_ban_moi_de_ghep_loi_doc_thanh_file_mp3_e3f81f2c : S.s_tai_mot_lan_de_ghep_mp3_m4b_2e0a2a50}{S.s_khoang_05ede49e}{formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} indeterminate={status.total <= 0} size="sm" running label={S.s_dang_tai_cong_cu_ghep_am_thanh_050601fc} />

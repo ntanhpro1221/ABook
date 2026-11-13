@@ -183,7 +183,7 @@ FocusScope {
                 visible: root.wide && root.keysOn
                 width: parent.width
                 topPadding: 8
-                spacing: 6
+                spacing: 8
                 LookKbd { text: "J" }
                 LookKbd { text: "K" }
                 Text { height: 20; verticalAlignment: Text.AlignVCenter; text: S.s_chon_the_u00a0_d1e08dae; color: Theme.text3; font.pixelSize: Theme.sizeCaption }

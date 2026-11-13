@@ -49,7 +49,7 @@ SettingsItem {
     }
     Component.onCompleted: load()
 
-    Text { width: parent.width; text: S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
+    Text { width: parent.width; text: S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 14 }
     Collapse {
         width: parent.width
         open: root.entries.length > root.searchFrom
@@ -152,6 +152,6 @@ SettingsItem {
     Collapse {
         width: parent.width
         open: root.problem !== ""
-        Text { objectName: "readingsProblem"; width: parent.width; topPadding: 4; text: root.problem; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: 13 }
+        Text { objectName: "readingsProblem"; width: parent.width; topPadding: 4; text: root.problem; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: 14 }
     }
 }

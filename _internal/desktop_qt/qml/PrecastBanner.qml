@@ -28,7 +28,7 @@ Item {
         x: 20 + 12
         y: 16
         width: root.width - x - (root.stacked ? 0 : open.width + 12)
-        spacing: 2
+        spacing: 4
         Text {
             objectName: "precastBannerTitle"
             width: parent.width
@@ -36,7 +36,7 @@ Item {
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall
-            font.weight: 600
+            font.weight: Theme.weightMedium
         }
         Text {
             width: parent.width

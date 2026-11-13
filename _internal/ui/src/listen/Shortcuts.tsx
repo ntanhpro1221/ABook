@@ -35,7 +35,7 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
   // Bật / tắt "Phím tắt chữ" ngay trên danh sách: hậu tố "(đang tắt)", gạch ngang và câu cuối mờ qua (state riêng - vùng cha không thấy).
   return (
     <MotionRegion motionKey={letters}>
-      <dl className={inSettings ? "space-y-2.5 text-sm" : "max-w-md space-y-2.5 text-sm"}>
+      <dl className={inSettings ? "space-y-3 text-sm" : "max-w-md space-y-3 text-sm"}>
         {SHORTCUTS.map(([keys, label, letter]) => (
           <div key={label} className="flex items-center justify-between gap-4">
             <dt className="text-fg-2">
@@ -47,7 +47,7 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
         ))}
       </dl>
       {!(inSettings && letters) && (
-      <p className="mt-3 max-w-md text-[0.8125rem] text-fg-2 text-pretty">
+      <p className="mt-3 max-w-md text-body-small text-fg-2 text-pretty">
         {letters
           ? remote
             ? S.s_phim_mot_chu_cai_m_va_j_k_19_o_r_o_studio_456e9e75

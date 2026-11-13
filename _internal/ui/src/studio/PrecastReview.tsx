@@ -203,7 +203,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 onClick={() => setStep(value)}
                 className={cn(
                   // h-full: thẻ "Xong" không có dòng phụ vẫn cao bằng ba thẻ cạnh (soát 24-10 T19).
-                  "touch-row -mb-px flex h-full w-full items-center gap-2.5 border-b-2 py-2.5 text-left transition-colors",
+                  "touch-row -mb-px flex h-full w-full items-center gap-3 border-b-2 py-3 text-left transition-colors",
                   active ? "border-accent" : "border-transparent hover:text-fg",
                 )}
               >
@@ -248,7 +248,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
             </div>
             {/* Quyết xong thẻ cuối: cả nhóm khép lại, không mất cứng giữa lúc thẻ đang khép. */}
             <MotionPresence open={castCards.length > 0}>
-                <h3 className="mt-6 text-sm font-semibold">{S.s_may_chua_chac_0e10b540}<span className="font-normal text-fg-2">· {castCards.length}{S.s_viec_ve_nguoi_va_giong_681679b6}</span>
+                <h3 className="mt-6 text-sm font-medium">{S.s_may_chua_chac_0e10b540}<span className="font-normal text-fg-2">· {castCards.length}{S.s_viec_ve_nguoi_va_giong_681679b6}</span>
                 </h3>
                 <WorkCards {...cards} items={castCards} />
             </MotionPresence>
@@ -311,7 +311,7 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
     <div className="mt-6 flex flex-wrap items-center gap-3 py-4">
       <ClipboardCheck className={cn("size-5 shrink-0", held ? "text-warning" : "text-accent-text")} />
       <div className="min-w-0 flex-1 text-sm">
-        <div className="font-semibold">{held ? S.s_phan_tich_xong_sach_dang_cho_ban_duyet_4df5357f : S.s_phan_tich_xong_duyet_truoc_khi_thu_86b704d6}</div>
+        <div className="font-medium">{held ? S.s_phan_tich_xong_sach_dang_cho_ban_duyet_4df5357f : S.s_phan_tich_xong_duyet_truoc_khi_thu_86b704d6}</div>
         <div className="text-fg-2">{S.s_duyet_giong_ten_va_nguoi_noi_truoc_de_tran_fcbf5c99}</div>
       </div>
       {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}

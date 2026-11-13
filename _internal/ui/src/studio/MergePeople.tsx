@@ -93,7 +93,7 @@ export function MergeDialog({
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
           placeholder={S.s_tim_nguoi_trong_truyen_a1507054}
-          className="h-9 w-full rounded-control border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
+          className="h-9 w-full rounded-control border border-line bg-bg pl-8 pr-3 text-sm outline-none focus-visible:border-focus"
         />
       </label>
       <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>
@@ -127,8 +127,8 @@ export function MergeDialog({
       <MotionRegion>
       {person && into && (
         <p className="mt-3 text-sm text-pretty">
-          {formatNumber(person.lines)}{S.s_cau_cua_35c4143d}<span className="font-semibold">{name}</span>{S.s_thanh_cua_788f02d8}{" "}
-          <span className="font-semibold">{cleanName(into.displayName)}</span>{S.s_doc_bang_giong_0e64b444}{voiceToUse(into)}
+          {formatNumber(person.lines)}{S.s_cau_cua_35c4143d}<span className="font-medium">{name}</span>{S.s_thanh_cua_788f02d8}{" "}
+          <span className="font-medium">{cleanName(into.displayName)}</span>{S.s_doc_bang_giong_0e64b444}{voiceToUse(into)}
           {into.pendingVoice?.preset ? S.s_giong_vua_chon_cho_ap_dung_23afd9d2 : ""}.
         </p>
       )}

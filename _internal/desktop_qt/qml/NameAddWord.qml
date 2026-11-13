@@ -77,11 +77,11 @@ Column {
                 onTextChanged: root.word = text
                 onEscaped: root.closeBox()
             }
-            Text { width: parent.width; topPadding: 6; text: S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; topPadding: 8; text: S.s_nhap_mot_tu_lien_de_doi_cach_doc_ca_cuon_g_208b65b5; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
             Collapse {
                 width: parent.width
                 open: root.typed !== "" && !root.single
-                Text { width: parent.width; topPadding: 6; text: S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6; color: Theme.warning; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                Text { width: parent.width; topPadding: 8; text: S.s_go_mot_chu_lien_nhau_khong_co_khoang_trang_028fecf6; color: Theme.warning; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
             }
             Collapse {
                 width: parent.width

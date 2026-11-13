@@ -96,7 +96,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       // Chưa có gì để xuất thì khoá (soát UX 29-09: bấm được rồi nhận lỗi 409); file sách mang cả chữ chương chưa có audio (a99 V5); đang làm thì chờ xong.
       disabled={!exportable(kind, book) || job?.state === "running"}
       onSelect={() => void run()}
-      className="flex h-auto cursor-default items-center gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-auto cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <Icon className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
@@ -134,7 +134,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       disabled={!book.chaptersTotal || job?.state === "running"}
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>(OPEN_AUDIOBOOK_EVENT, { detail: book }))}
-      className="flex h-auto cursor-default items-center gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-auto cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <Headphones className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
@@ -151,7 +151,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
  *  25 %), không đọc dòng chữ và thanh đổi mỗi giây (soát a31 A6). */
 export function ProgressNote({ text, spoken, fraction, label }: { text: string; spoken: string; fraction?: number; label: string }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <span>
         <LiveText shown={text} spoken={spoken} />
       </span>

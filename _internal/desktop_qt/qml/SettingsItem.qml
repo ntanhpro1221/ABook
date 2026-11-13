@@ -5,7 +5,7 @@ import ABook
 // tiên. Nội dung là một cột, đệm trên / dưới mặc định 14 (py-3.5 của web); hàng có nhãn dùng SettingRow (py-3).
 Item {
     id: root
-    property real padding: 14
+    property real padding: 16
     property alias spacing: body.spacing
     default property alias content: body.data
     readonly property bool firstShown: {

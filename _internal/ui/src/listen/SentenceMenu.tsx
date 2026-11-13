@@ -33,7 +33,7 @@ export interface SentenceEditing {
 const LineWishDialog = lazyComponent(() => import("./LineWishes").then((module) => module.LineWishDialog));
 
 const BAR_LABEL = "max-sm:sr-only";
-const BAR_BUTTON = "inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-control px-3 py-2.5 text-sm font-medium text-accent-text hover:bg-hover disabled:opacity-60";
+const BAR_BUTTON = "inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-control px-3 py-3 text-sm font-medium text-accent-text hover:bg-hover disabled:opacity-60";
 
 /** Câu đang chọn và mọi việc làm được với nó. Đổi chương (hay cuốn) thì bỏ câu / chữ đang chọn - câu số 3 của chương trước không phải câu số 3
  *  của chương này (soát a70). `onListen`: nghe từ một câu (nút "Nghe từ câu này"). */
@@ -180,7 +180,7 @@ export function useSentenceMenu({
           </button>
         </div>
         {lineEdit?.mode === "blocked" && (
-          <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">{S.s_sua_cau_nay_ce1728d3}{lineEdit.note}
+          <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-2 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">{S.s_sua_cau_nay_ce1728d3}{lineEdit.note}
           </p>
         )}
       </div>

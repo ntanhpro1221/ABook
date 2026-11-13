@@ -133,7 +133,7 @@ function SpokenEditor({
   };
   return (
     <form
-      className="mt-2 py-2.5"
+      className="mt-2 py-3"
       onSubmit={(event) => {
         event.preventDefault();
         void save([item]);
@@ -148,10 +148,10 @@ function SpokenEditor({
         onKeyDown={(event) => {
           if (event.key === "Escape") onDone(null);
         }}
-        className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-[0.9375rem] outline-none focus-visible:border-focus"
+        className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-3 text-body outline-none focus-visible:border-focus"
       />
       <p className="mt-1 text-xs text-fg-3">{S.s_viet_cach_doc_thanh_tieng_de_trong_de_dung_0f9e441a}</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button type="submit" size="sm" variant="primary" loading={busy} disabled={!value.trim() && !item.spoken}>{S.s_luu_e91f26c0}</Button>
         {twins.length > 0 && (
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => void save([item, ...twins])}>{S.s_luu_8c00346c}{twins.length + 1}{S.s_cau_b07e1008}</Button>
@@ -221,14 +221,14 @@ function Row({
         <DotJoin className="mt-1 text-xs text-fg-2" parts={[<span key="reason" className={KIND_INK[item.kind]}>{item.reason}</span>, item.chapterTitle]} />
         {/* Máy nghe ra đúng chữ thì không có gì để so - chỉ hiện khi KHÁC câu (soát 25-10). */}
         {item.heard && !sameText(item.heard, item.text) && (
-          <p className="mt-1 text-[0.8125rem] leading-snug text-fg-2">
+          <p className="mt-1 text-body-small leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />{S.s_may_nghe_ra_31219589}{item.heard}”
             {item.similarity !== null && <span className="text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
           </p>
         )}
         {!source && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
         {item.pendingSpoken !== null ? (
-          <p className="mt-1 flex items-start gap-1.5 text-xs text-fg-2">
+          <p className="mt-1 flex items-start gap-2 text-xs text-fg-2">
             <Clock className="mt-px size-3.5 shrink-0" />
             <span>
               {item.pendingSpoken ? <>{S.s_se_doc_la_a0124031}<span className="text-fg">{item.pendingSpoken}</span>”</> : S.s_se_doc_lai_dung_chu_sach_32abc746} - {pendingNote}.
@@ -253,7 +253,7 @@ function Row({
           />
         ) : (
           // Mở ngữ cảnh dùng mực phụ để hai nút phán quyết giữ vai trò chính.
-          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {item.textSha256 && (
               <button type="button" onClick={() => setEditing(true)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-fg-2 hover:text-fg hover:underline">
                 <PenLine className="size-3.5" /> {spokenEditLabel(twins.length)}
@@ -269,7 +269,7 @@ function Row({
       </div>
       {/* Hai phán quyết là việc chính của hàng: có biểu tượng, cao bằng điều khiển; đã chọn thì mang sắc trạng thái.
           Điện thoại: xuống dưới câu, thẳng mép chữ; máy tính: bên phải, nút cuối kéo lề -12 px để chữ thẳng mép phải nội dung. */}
-      <div className="col-start-2 -ml-3.5 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0 sm:-mr-3">
+      <div className="col-start-2 -ml-4 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0 sm:-mr-3">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
         {source && (
           <DecisionButton
@@ -435,7 +435,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         <p className="text-sm text-fg-2 text-pretty">
           {data.pending ? (
             <>
-              <span className="font-semibold text-fg">{data.pending}{S.s_cau_b07e1008}</span>{S.s_nghe_roi_chon_on_hoac_can_thu_lai_1f69221d}</>
+              <span className="font-medium text-fg">{data.pending}{S.s_cau_b07e1008}</span>{S.s_nghe_roi_chon_on_hoac_can_thu_lai_1f69221d}</>
           ) : unrecorded ? (
             S.s_chua_co_ban_thu_se_co_sau_khi_thu_am_c61d063f
           ) : (
@@ -453,19 +453,19 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         />
       </div>
       {playableCount > 1 && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           {continuous ? (
             <Button size="sm" variant="ghost" className="-ml-3" icon={Square} onClick={() => { setContinuous(false); clip.stop(); }}>{S.s_dung_nghe_lien_fff6a5f1}</Button>
           ) : (
             <Button size="sm" variant="ghost" className="-ml-3" icon={ListMusic} onClick={() => { setContinuous(true); playAt(0); }}>{S.s_nghe_lien_4fca5416}{playableCount}{S.s_cau_b07e1008}</Button>
           )}
           {shortcutHint(continuous) && (
-            <span className="hidden items-center gap-1.5 text-xs text-fg-3 md:inline-flex">{S.s_dang_nghe_lien_58d38e56}<Kbd>{S.s_o_c4694f2e}</Kbd>{S.s_on_eb909324}<Kbd>{S.s_r_8c257489}</Kbd>{S.s_can_thu_lai_roi_sang_cau_ke_2b70eb21}</span>
+            <span className="hidden items-center gap-2 text-xs text-fg-3 md:inline-flex">{S.s_dang_nghe_lien_58d38e56}<Kbd>{S.s_o_c4694f2e}</Kbd>{S.s_on_eb909324}<Kbd>{S.s_r_8c257489}</Kbd>{S.s_can_thu_lai_roi_sang_cau_ke_2b70eb21}</span>
           )}
         </div>
       )}
       {data.redoChapters.length > 0 && (
-        <div className="mt-3 py-2.5 text-sm text-danger">
+        <div className="mt-3 py-3 text-sm text-danger">
           <p>{data.redoChapters.length}{S.s_chuong_cho_thu_lai_sua_chu_o_kich_ban_11e7f43e}</p>
           <MoreInfo>{S.s_chay_tiep_hoac_ap_dung_thay_doi_de_thu_lai_7f582c5b}</MoreInfo>
         </div>

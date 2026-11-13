@@ -27,7 +27,7 @@ Column {
     Collapse {
         width: parent.width
         open: !(Api.info && Api.info.studio && Api.info.studio.installed)
-        Text { objectName: "notInstalledNote"; width: parent.width; topPadding: 8; text: S.s_tuy_chon_o_trang_nay_dung_khi_da_cai_studi_f1c313c4; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 13 }
+        Text { objectName: "notInstalledNote"; width: parent.width; topPadding: 8; text: S.s_tuy_chon_o_trang_nay_dung_khi_da_cai_studi_f1c313c4; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: 14 }
     }
     SectionBlock {
         width: parent.width

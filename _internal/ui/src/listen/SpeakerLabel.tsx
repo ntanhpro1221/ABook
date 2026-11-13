@@ -28,5 +28,5 @@ export function SpeakerLabel({ speaker, sentence }: { speaker: string; sentence:
     window.addEventListener("resize", measure);
     return () => { active = false; document.fonts?.removeEventListener("loadingdone", measure); window.removeEventListener("resize", measure); };
   }, [speaker, sentence]);
-  return <span ref={label} className="mr-[6px] inline-block text-xs font-medium text-fg-2">{speaker}</span>;
+  return <span ref={label} className="mr-[8px] inline-block text-xs font-medium text-fg-2">{speaker}</span>;
 }

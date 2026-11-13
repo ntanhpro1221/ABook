@@ -184,11 +184,11 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
     <MotionRegion as="div" className="py-3" data-provider={info.id}>
       <DisclosureRow title={info.name} summary={status} expanded={open} onClick={() => setOpen((now) => !now)} />
       <Collapse open={open}>
-      <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
+      <p className="mt-1 text-body-small text-fg-2 text-pretty">
         {info.limits.free}. {info.limits.timings === "exact" ? S.s_to_dung_tung_chu_dang_doc_b0692da6 : S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b}
       </p>
       <MoreInfo label={S.s_nhan_khoa_7ba3a705} className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
           <span className="sr-only">{S.s_khoa_0_7f56ecc3(info.name)}</span>
           <input
@@ -219,7 +219,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
           <Button size="md" variant="ghost" icon={Trash2} loading={busy === "remove"} disabled={Boolean(busy)} onClick={() => void remove()}>{S.s_xoa_khoa_2ec6cb1a}</Button>
         )}
       </div>
-      {result && <p className={cn("mt-2 text-[0.8125rem] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
+      {result && <p className={cn("mt-2 text-body-small text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
       </Collapse>
     </MotionRegion>
   );
@@ -288,7 +288,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           return (
             <Fold key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={S.s_0_1_giong_2_8057303d(detail ? `${detail} · ` : "", list.length, current?.provider === provider ? S.s_dang_dung_b8df7fc3 : "")} bodyClassName="pb-3">
               {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
-              {!list.length && <p className={cn("text-pretty", "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
+              {!list.length && <p className={cn("text-pretty", "py-1 text-body-small text-fg-2")}>{deviceHint}</p>}
               {list.length > 0 && (
               <div
                 role="radiogroup"
@@ -300,7 +300,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
               >
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
-                  {section.label && <div className="mb-0.5 mt-2 text-[0.8125rem] font-medium text-fg-2">{section.label}</div>}
+                  {section.label && <div className="mb-1 mt-2 text-body-small font-medium text-fg-2">{section.label}</div>}
                   <ul className="divide-y divide-line">
                     {section.voices.map(({ voice, shown }) => {
                       const selected = voice.id === current?.id;
@@ -317,7 +317,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                               chooseDefaultVoice(voice.id);
                               setChosen(voice.id);
                             }}
-                            className="touch-row flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                            className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
                           >
                             <span className="flex size-5 shrink-0 text-accent-text">
                               <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
@@ -341,7 +341,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           </div>
                           {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
                           {sample.failed?.voice === voice.id && (
-                            <p className="mt-1 text-[0.8125rem] text-danger text-pretty" role="alert">{sample.failed.message}</p>
+                            <p className="mt-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>
                           )}
                         </li>
                       );

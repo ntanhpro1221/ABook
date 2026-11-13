@@ -82,7 +82,7 @@ Column {
         id: chips
         objectName: "workChips"
         width: parent.width
-        spacing: 6
+        spacing: 8
         Repeater {
             model: root.shown
             delegate: DecisionButton {
@@ -167,10 +167,10 @@ Column {
                 id: createBox
                 y: 8
                 width: parent.width
-                spacing: 6
+                spacing: 8
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
                     visible: root.more.length > 0
                     Accessible.role: Accessible.Grouping
                     Accessible.name: S.s_nhung_nguoi_khac_trong_sach_43124252
@@ -189,7 +189,7 @@ Column {
                 }
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
                     Item {
                         width: Math.min(createBox.width, 240)
                         height: 40

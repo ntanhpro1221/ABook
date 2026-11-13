@@ -31,8 +31,8 @@ Item {
         id: words
         width: Math.min(640, root.width - (root.controlWidth > 0 ? root.controlWidth + Theme.s16 : 0))
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
-        Text { width: parent.width; text: root.label; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: 15; font.weight: Theme.weightMedium }
+        spacing: 4
+        Text { width: parent.width; text: root.label; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: 16; font.weight: Theme.weightMedium }
         Text { width: parent.width; text: root.hint; visible: text !== ""; color: root.hintColor; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.25 }
     }
     Item {

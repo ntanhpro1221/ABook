@@ -29,23 +29,23 @@ import { windowChrome } from "./windowChrome";
 
 function Brand() {
   return (
-    <div className="flex items-center gap-2.5 px-2">
+    <div className="flex items-center gap-3 px-2">
       <div className="grid size-9 place-items-center rounded-cover bg-accent text-accent-ink shadow-card">
-        <span className="flex h-4 items-end gap-[3px]">
+        <span className="flex h-4 items-end gap-[4px]">
           <span className="h-2 w-[3px] rounded-full bg-current" />
           <span className="h-4 w-[3px] rounded-full bg-current" />
           <span className="h-3 w-[3px] rounded-full bg-current" />
           <span className="h-[10px] w-[3px] rounded-full bg-current" />
         </span>
       </div>
-      <div className="text-[0.9375rem] font-bold tracking-tight">{S.s_abook_1c37d334}</div>
+      <div className="text-body font-bold tracking-tight">{S.s_abook_1c37d334}</div>
     </div>
   );
 }
 
 const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-control px-2 text-sm";
 // Mục đang mở: nền trung tính nhạt + chữ đậm thường (DESIGN 6 "Điều hướng"). Không dấu tích - dấu tích là của lựa chọn trong danh sách chọn.
-const NAV_ACTIVE = "bg-hover font-semibold text-fg";
+const NAV_ACTIVE = "bg-hover font-medium text-fg";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
 /** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô
@@ -84,7 +84,7 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-medium transition-colors duration-(--motion-medium) ease-standard",
+        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-caption font-medium transition-colors duration-(--motion-medium) ease-standard",
         active ? "text-accent-text" : "text-fg-2",
       )}
     >
@@ -112,11 +112,11 @@ export function Producing() {
           type="button"
           onClick={() => { setExpanded(false); navigate(`/studio/${book.id}`); }}
           aria-current={pathname === `/studio/${book.id}` ? "page" : undefined}
-          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-control p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-hover text-fg" : "text-fg-2")}
+          className={cn("sidebar-link flex w-full items-center gap-3 rounded-control p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-hover text-fg" : "text-fg-2")}
         >
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-control" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-1.5 text-xs font-medium">
+            <div className="flex items-start gap-2 text-xs font-medium">
               <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center [--icon-w:0.75rem] mt-line-icon">{book.queuePosition != null ? <Clock className="size-3" aria-label={S.s_dang_cho_0_e941f562(book.queuePosition)} /> : book.paused || book.stopping ? (
                 <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? S.s_dang_dung_9b35aeb5 : S.s_dang_tam_dung_e40cc1b7} />
               ) : (
@@ -126,7 +126,7 @@ export function Producing() {
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={S.s_tien_do_0_bebc77d0(book.title)} />
-              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="w-8 shrink-0 text-right text-[0.6875rem] text-fg-2"><span data-motion-live>{book.queuePosition != null ? S.s_cho_8de7e9a5 : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
+              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="w-8 shrink-0 text-right text-caption text-fg-2"><span data-motion-live>{book.queuePosition != null ? S.s_cho_8de7e9a5 : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
             </div>
           </div>
         </button>
@@ -148,11 +148,11 @@ export function UpdateNotice() {
         setExpanded(false);
         navigate("/settings/advanced");
       }}
-      className="mb-2 flex w-full items-center gap-2.5 py-2.5 text-left hover:bg-hover"
+      className="mb-2 flex w-full items-center gap-3 py-3 text-left hover:bg-hover"
     >
       <Download className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.8125rem] font-semibold">{S.s_co_abook_39ccc742}{info.update.version}</span>
+        <span className="block truncate text-body-small font-medium">{S.s_co_abook_39ccc742}{info.update.version}</span>
         <span className="block text-xs text-fg-2">{S.s_bam_de_cap_nhat_2f1cdcf0}</span>
       </span>
     </MotionRegion>
@@ -251,7 +251,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => main.current?.focus()}
-          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
+          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-medium text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
         >{S.s_toi_noi_dung_501e7d8d}</button>
       )}
       <TitleBar toggle={<IconButton size="sm" label={collapsed ? S.s_mo_rong_ctrl_b_5f11a976 : S.s_thu_gon_ctrl_b_931db193} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />

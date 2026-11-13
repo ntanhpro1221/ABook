@@ -117,7 +117,7 @@ Item {
                 text: (root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? S.s_to_dung_tung_chu_dang_doc_b0692da6 : S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b)
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
             MoreInfo {
                 width: parent.width
@@ -186,7 +186,7 @@ Item {
                     text: root.lastResult
                     color: root.resultOk ? Theme.success : Theme.danger
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 13
+                    font.pixelSize: 14
                     Accessible.role: Accessible.StaticText
                 }
             }

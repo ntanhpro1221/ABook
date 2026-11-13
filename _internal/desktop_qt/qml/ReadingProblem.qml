@@ -21,7 +21,7 @@ Collapse {
             id: col
             y: 6
             width: parent.width
-            spacing: 6
+            spacing: 8
             Text {
                 objectName: "readingProblem"
                 width: parent.width

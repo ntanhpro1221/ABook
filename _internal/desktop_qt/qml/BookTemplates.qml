@@ -78,16 +78,16 @@ Column {
     Text { width: parent.width; text: S.s_mau_sach_moi_6e860e3e; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
     Text {
         width: parent.width
-        topPadding: 2
+        topPadding: 4
         text: S.s_o_tao_sach_chon_luu_thanh_mau_de_dung_lai_a2505ca9
         color: Theme.text2
         wrapMode: Text.Wrap
-        font.pixelSize: 13
+        font.pixelSize: 14
     }
     Collapse {
         width: parent.width
         open: root.templates.length === 0
-        Text { width: parent.width; topPadding: 8; text: S.s_chua_co_mau_nao_55b4683e; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: 13 }
+        Text { width: parent.width; topPadding: 8; text: S.s_chua_co_mau_nao_55b4683e; color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: 14 }
     }
     Item {
         width: parent.width
@@ -124,7 +124,7 @@ Column {
                                 width: normal.stacked ? parent.width : parent.width - normal.buttons - 12
                                 anchors.verticalCenter: normal.stacked ? undefined : parent.verticalCenter
                                 Text { width: parent.width; text: TextWrap.keepDots(row.modelData.name); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-                                Text { width: parent.width; text: root.summaryOf(row.modelData); color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 13 }
+                                Text { width: parent.width; text: root.summaryOf(row.modelData); color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 14 }
                             }
                             Row {
                                 id: buttonRow
@@ -181,7 +181,7 @@ Column {
                             Collapse {
                                 width: parent.width
                                 open: root.problem !== ""
-                                Text { objectName: "renameProblem"; width: parent.width; text: root.problem; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: 13 }
+                                Text { objectName: "renameProblem"; width: parent.width; text: root.problem; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: 14 }
                             }
                         }
                     }

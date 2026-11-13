@@ -31,7 +31,7 @@ Item {
         width: hover.hovered || drag.active ? 8 : 4
         Behavior on width { NumberAnimation { duration: Theme.motionFast } }
         anchors.right: parent.right
-        anchors.rightMargin: 3
+        anchors.rightMargin: 4
         radius: width / 2
         color: Theme.text
         opacity: drag.active ? 0.5 : 0.28

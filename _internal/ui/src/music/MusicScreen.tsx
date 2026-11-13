@@ -34,7 +34,7 @@ export function MusicScreen() {
   const preview = useLibraryPreview();
   const navigate = useNavigate();
   return (
-    <div className="page-x mx-auto max-w-[1180px] pb-24">
+    <div className="page-x mx-auto max-w-[1180px] pb-16">
       <ScreenHeader
         title={picking ? S.s_chon_bai_cho_doan_840afc40 : S.s_nhac_0e4413e9}
         back={picking ? { label: S.s_quay_lai_6d793582, onClick: () => navigate(-1) } : undefined}
@@ -167,7 +167,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
         <input
           type="search" value={text} onChange={(event) => setText(event.target.value)} placeholder={S.s_tim_ten_bai_nguoi_sang_tac_fdee04f4}
           aria-label={S.s_tim_trong_kho_nhac_b9972ac9}
-          className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden"
+          className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-12 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden"
         />
         {text && <IconButton size="sm" label={S.s_bo_loc_74de0064} icon={X} onClick={() => setText("")} className="absolute right-1.5 top-1/2 -translate-y-1/2" />}
       </label>
@@ -227,7 +227,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
 
 function chipClass(active: boolean): string {
   return cn(
-    "press inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-control px-3.5 text-sm font-medium transition-colors duration-motion-fast touch-reach",
+    "press inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-control px-4 text-sm font-medium transition-colors duration-motion-fast touch-reach",
     active ? "bg-accent text-accent-ink" : "bg-hover text-fg-2 hover:text-fg",
   );
 }
@@ -249,8 +249,8 @@ function ChipMenu({ label, value, onChange, options }: {
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="start" sideOffset={4} collisionPadding={12} className="z-50 max-h-[min(420px,var(--radix-dropdown-menu-content-available-height))] min-w-48 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
-          <DropdownMenu.Label className="px-3 py-1.5 text-xs font-medium text-fg-2">{label}</DropdownMenu.Label>
+        <DropdownMenu.Content align="start" sideOffset={4} collisionPadding={12} className="z-50 max-h-[min(420px,var(--radix-dropdown-menu-content-available-height))] min-w-48 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float">
+          <DropdownMenu.Label className="px-3 py-2 text-xs font-medium text-fg-2">{label}</DropdownMenu.Label>
           <DropdownMenu.RadioGroup value={value} onValueChange={onChange}>
             {[{ value: "", label: S.s_tat_ca_49c73a31 }, ...options].map((option) => (
               <DropdownMenu.RadioItem key={option.value || "all"} value={option.value}
@@ -294,7 +294,7 @@ export function TrackRow({
   const playable = online || track.downloaded;
   const title = track.title || S.s_bai_nay_d9683a01;
   return (
-    <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-1.5 last:border-b-0">
+    <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-2 last:border-b-0">
       <IconButton
         label={previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         icon={previewing ? Square : Play}
@@ -303,9 +303,9 @@ export function TrackRow({
         onClick={() => preview.toggle(track)}
         className={cn("music-row-preview", previewing && "text-accent-text")}
       />
-      <button type="button" onClick={() => onOpen(track.link)} className="min-w-0 flex-1 rounded-control py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
+      <button type="button" onClick={() => onOpen(track.link)} className="min-w-0 flex-1 rounded-control py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
-        <DotJoin singleLine className="mt-0.5 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
+        <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
       </button>
       {onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
       {load.kind === "loading" ? (

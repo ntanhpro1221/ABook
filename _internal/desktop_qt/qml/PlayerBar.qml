@@ -91,7 +91,7 @@ Item {
             x: thumb.x + thumb.width + Theme.s16
             anchors.verticalCenter: parent.verticalCenter
             width: transport.x - Theme.s24 - x
-            spacing: 2
+            spacing: 4
             Text {
                 id: chapterLabel
                 objectName: "barChapterTitle"

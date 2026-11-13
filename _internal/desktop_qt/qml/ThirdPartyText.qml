@@ -42,7 +42,7 @@ Column {
                 color: Theme.text
                 wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeBodySmall
-                font.weight: 600
+                font.weight: Theme.weightMedium
             }
             Repeater {
                 model: section.modelData.items
@@ -51,7 +51,7 @@ Column {
                     required property var modelData
                     width: section.width
                     height: words.implicitHeight
-                    Text { visible: entry.modelData.bullet; x: 4; text: "•"; color: Theme.text2; font.pixelSize: 13; lineHeight: 1.625 }
+                    Text { visible: entry.modelData.bullet; x: 4; text: "•"; color: Theme.text2; font.pixelSize: 14; lineHeight: 1.625 }
                     TextEdit {
                         id: words
                         x: entry.modelData.bullet ? 16 : 0
@@ -62,7 +62,7 @@ Column {
                         text: "<p style=\"margin:0; line-height:162%\">" + Music.inlineHtml(entry.modelData.text, root.strong, root.codeBack) + "</p>"
                         color: Theme.text2
                         wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                 }
             }

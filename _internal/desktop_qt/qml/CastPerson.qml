@@ -47,7 +47,7 @@ Item {
         x: avatar.width + 12
         y: 12
         width: Math.max(0, root.width - x - 12 - buttons.width)
-        spacing: 2
+        spacing: 4
         Flow {
             width: parent.width
             spacing: 8
@@ -58,7 +58,7 @@ Item {
                 color: Theme.text
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeBody
-                font.weight: 600
+                font.weight: Theme.weightMedium
             }
             Text {
                 visible: !!root.person.gender

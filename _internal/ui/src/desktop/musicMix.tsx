@@ -8,13 +8,13 @@ import { MUSIC_MIX_HINT, type MusicExportState } from "./listenExport";
 /** Ô "Kèm nhạc nền" (chỉ dựng khi cuốn có kế hoạch nhạc - `MusicExportState.available`). */
 export function MusicMixOption({ checked, onChange, disabled }: { checked: boolean; onChange: (on: boolean) => void; disabled?: boolean }) {
   return (
-    <label className="flex items-start gap-2.5 text-sm">
+    <label className="flex items-start gap-3 text-sm">
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+        className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
       />
       <span className="min-w-0">
         <span className="block font-medium">{S.s_kem_nhac_nen_c616e8d2}</span>

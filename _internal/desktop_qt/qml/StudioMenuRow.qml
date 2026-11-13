@@ -27,7 +27,7 @@ Interactive {
         x: Theme.s8 + 16 + Theme.s12
         y: Theme.s8
         width: root.width - x - Theme.s8
-        spacing: 2
+        spacing: 4
         Text {
             id: label
             width: parent.width

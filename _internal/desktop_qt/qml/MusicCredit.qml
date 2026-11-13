@@ -35,7 +35,7 @@ Item {
     Column {
         id: body
         width: parent.width
-        topPadding: 2
+        topPadding: 4
         spacing: 0
 
         Interactive {

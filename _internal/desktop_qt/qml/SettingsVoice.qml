@@ -205,12 +205,12 @@ Column {
                                             Text {
                                                 width: parent.width
                                                 topPadding: 8
-                                                bottomPadding: 2
+                                                bottomPadding: 4
                                                 height: section.modelData.label ? implicitHeight : 0
                                                 text: section.modelData.label || ""
                                                 color: Theme.text2
                                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                                font.pixelSize: 13
+                                                font.pixelSize: 14
                                                 font.weight: Theme.weightMedium
                                             }
                                             Repeater {
@@ -289,7 +289,7 @@ Column {
                                     text: S.s_chu_cua_sach_gui_toi_dich_vu_ay_co_the_bi_6ecd4dfe
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: 13
+                                    font.pixelSize: 14
                                 }
                                 MoreInfo {
                                     width: parent.width

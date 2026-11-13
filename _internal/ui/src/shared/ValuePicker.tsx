@@ -234,7 +234,7 @@ export function ValuePicker({
   const fraction = toFraction(spec, shown);
   const selected = current ? chipIndex(spec, shown) : -1;
   const big = (
-    <span className={cn(dense ? "text-sm text-fg-2" : "text-3xl font-semibold leading-tight text-fg")}>{format(shown)}</span>
+    <span className={cn(dense ? "text-sm text-fg-2" : "text-3xl font-medium leading-tight text-fg")}>{format(shown)}</span>
   );
   const valueField = typing ? (
     <input
@@ -255,7 +255,7 @@ export function ValuePicker({
       onBlur={(event) => finishTyping(event.currentTarget.value)}
       className={cn(
         "rounded-control border border-line-strong bg-panel px-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-focus",
-        dense ? "h-8 w-20 text-sm" : "h-12 w-32 text-2xl font-semibold",
+        dense ? "h-8 w-20 text-sm" : "h-12 w-32 text-2xl font-medium",
       )}
     />
   ) : (
@@ -290,7 +290,7 @@ export function ValuePicker({
         <div className="flex min-h-5 items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium text-pretty">{label}</div>
-            {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
+            {hint && <div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
           </div>
           {valueField}
         </div>
@@ -305,7 +305,7 @@ export function ValuePicker({
       <div className="flex items-start">
         {stepButton(-1)}
         <div ref={rulerHost} className={cn("relative min-w-0 flex-1", !plan.aligned ? "h-12" : dense ? "h-14" : "h-16")}>
-          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-semibold ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
+          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-medium ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
           <div
           ref={track}
           id={rulerId}
@@ -378,7 +378,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-semibold text-fg" : "text-fg-2")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-medium text-fg" : "text-fg-2")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>
@@ -402,9 +402,9 @@ export function ValuePicker({
                 commit(typical);
               }}
               className={cn(
-                "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-2.5 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
+                "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-3 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
-                index === selected ? "font-semibold text-fg" : "text-fg",
+                index === selected ? "font-medium text-fg" : "text-fg",
               )}
             >
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>

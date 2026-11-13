@@ -56,9 +56,9 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       disabled={pending === 0 || busy}
       onSelect={send}
-      className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
+      className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}
     >
-      <MotionRegion as="span" className="mt-0.5 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
+      <MotionRegion as="span" className="mt-1 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
         <span className="block">{busy ? S.s_dang_gui_dd6f95be : S.s_gui_ve_0_50e46c2d(where)}</span>
         {!busy && !pending && <span className="block text-xs text-fg-3">{S.s_chua_co_thay_doi_nao_cho_gui_3f3fce11}</span>}
@@ -73,9 +73,9 @@ export function LocalEditsBanner({ book }: { book: ListenBook }) {
   if (!note || !book.edits) return <MotionRegion />;
   return (
     <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
-      <p className="inline-flex items-center gap-1.5 font-medium">
+      <p className="inline-flex items-center gap-2 font-medium">
         <Smartphone className="size-3.5 shrink-0" /> {book.edits}{S.s_thay_doi_chi_co_tren_dien_thoai_nay_fb7327ee}</p>
-      <p className="mt-0.5 text-pretty">{note}</p>
+      <p className="mt-1 text-pretty">{note}</p>
     </MotionRegion>
   );
 }
@@ -97,9 +97,9 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
   if (!items.length) return <MotionRegion />;
   return (
     <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
-      <p className="inline-flex items-center gap-1.5 font-medium">
+      <p className="inline-flex items-center gap-2 font-medium">
         <Smartphone className="size-3.5 shrink-0" />{S.s_may_da_ghep_vua_doi_phan_ban_da_dat_cc07a562}</p>
-      <ul className="mt-1 space-y-1.5">
+      <ul className="mt-1 space-y-2">
         {items.map((notice) => (
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
@@ -156,11 +156,11 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
         note.tone === "error" ? "bg-danger-soft text-danger" : "bg-info-soft text-info",
       )}
     >
-      <p className="inline-flex items-center gap-1.5 font-medium">
+      <p className="inline-flex items-center gap-2 font-medium">
         <Icon className="size-3.5 shrink-0" /> {note.title}
       </p>
       {note.lines.map((line) => (
-        <p key={line} className="mt-0.5 text-pretty">
+        <p key={line} className="mt-1 text-pretty">
           {line}
         </p>
       ))}

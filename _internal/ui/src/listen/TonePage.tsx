@@ -75,8 +75,8 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     </div></Collapse>}
   </div>;};
   return <div ref={page} data-tone-page className="flex min-w-0 flex-col">
-    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><p className="font-semibold">{S.s_am_sac_8c2f4e1a}</p></div>}
-    <div className="flex min-h-12 items-center justify-between gap-3"><p className="min-w-0 font-semibold" aria-live="polite">{lib.name}</p>
+    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><p className="font-medium">{S.s_am_sac_8c2f4e1a}</p></div>}
+    <div className="flex min-h-12 items-center justify-between gap-3"><p className="min-w-0 font-medium" aria-live="polite">{lib.name}</p>
       {(current.id==='draft'||lib.dirty)&&<button type="button" className={LINK} onClick={()=>form(suggest(),{})}>{S.s_tone_save}</button>}</div>
     <svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={S.s_am_sac_8c2f4e1a} className="box-content h-20 w-full rounded-control border border-line py-3 text-accent">
       <path d="M0 40H300" stroke="var(--line)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke"/>

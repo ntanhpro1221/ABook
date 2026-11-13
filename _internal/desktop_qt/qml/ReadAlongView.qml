@@ -189,7 +189,7 @@ Item {
         clip: true
         cacheBuffer: 900
         topMargin: 24
-        bottomMargin: 96
+        bottomMargin: 64
         boundsBehavior: Flickable.StopAtBounds
         onMovementStarted: root.manual()
         onContentYChanged: {

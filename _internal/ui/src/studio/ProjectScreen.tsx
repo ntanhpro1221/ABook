@@ -159,7 +159,7 @@ function Step({
   return (
     // Phẳng, không khung: ba bước đứng trong khối "Các bước" (đã là một khối), nhóm bằng khoảng trắng (DESIGN.md mục 4.2).
     <MotionRegion as="div" className="relative min-w-0 flex-1">
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <div
           className={cn(
             "grid size-7 place-items-center rounded-full text-xs font-bold",
@@ -171,7 +171,7 @@ function Step({
         >
           {state === "done" ? <Check className="size-4" strokeWidth={3} /> : state === "active" ? <Icon className="size-3.5" /> : index}
         </div>
-        <div className={cn("text-sm font-semibold", state === "pending" && "text-fg-3")}>{title}</div>
+        <div className={cn("text-sm font-medium", state === "pending" && "text-fg-3")}>{title}</div>
         {state === "active" && <Vu className="ml-auto h-3 text-accent" />}
         {state === "paused" && <Pause className="ml-auto size-3.5 text-fg-3" />}
       </div>
@@ -179,7 +179,7 @@ function Step({
       {progress !== undefined && state !== "pending" && (
         <div className="mt-3 flex items-center gap-2">
           <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" label={title} />
-          <span className="w-9 text-right text-xs font-semibold"><TickingValue>{formatPercent(progress)}</TickingValue></span>
+          <span className="w-9 text-right text-xs font-medium"><TickingValue>{formatPercent(progress)}</TickingValue></span>
         </div>
       )}
     </MotionRegion>
@@ -367,10 +367,10 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title={S.s_tiep_tuc_phan_tich_6d773a52}>
       <div className="mb-5 flex gap-3 py-4 text-sm leading-relaxed text-fg">
-        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+        <AlertTriangle className="mt-1 size-5 shrink-0 text-warning" />
         <div className="text-pretty">
           <p>
-            <span className="font-semibold">{S.s_phan_tich_cua_4a395adb}{book.title}{S.s_da_dung_giua_chung_df1e44a8}</span>{S.s_lam_tiep_tu_cho_ay_c42ae1b1}{ANALYSIS_CUT_COST}{S.s_khac_voi_khi_phan_tich_lien_mot_mach_a389d2e0}</p>
+            <span className="font-medium">{S.s_phan_tich_cua_4a395adb}{book.title}{S.s_da_dung_giua_chung_df1e44a8}</span>{S.s_lam_tiep_tu_cho_ay_c42ae1b1}{ANALYSIS_CUT_COST}{S.s_khac_voi_khi_phan_tich_lien_mot_mach_a389d2e0}</p>
           <p className="mt-2 text-fg-2">{S.s_muon_chac_nhu_chay_lien_mach_lam_lai_phan_856b2309}</p>
         </div>
       </div>
@@ -421,10 +421,10 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
       <MotionRegion>
       {inAnalysis && (
         <div className="mb-5 flex gap-3 py-4 text-sm leading-relaxed text-fg">
-          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+          <AlertTriangle className="mt-1 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              <span className="font-semibold">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
+              <span className="font-medium">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
             </p>
             <p data-motion-live className="mt-2 text-fg-2">{S.s_nen_de_chay_het_buoc_nay_55b34878}{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
             </p>
@@ -504,7 +504,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           maxLength={160}
           data-autofocus
           autoComplete="off"
-          className="mt-1.5 h-10 w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
+          className="mt-2 h-10 w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
 
       </form>
@@ -609,7 +609,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-2 shadow-float">
             {children && (
               <>
                 {children}
@@ -631,7 +631,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
             )}
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             {remote ? (
-              <div className="px-2 py-1.5">
+              <div className="px-2 py-2">
                 <OnComputerOnly verb={S.s_xoa_du_an_6b9e7c0b} />
               </div>
             ) : (
@@ -886,7 +886,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-2 shadow-float">
             {chapter.playable && (
               <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
                 <Play className="size-4" />{S.s_nghe_chuong_a61f17fb}</DropdownMenu.Item>
@@ -960,7 +960,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             type="button"
             onClick={onPlay}
             aria-label={current && player.playing ? S.s_tam_dung_0_43ccbbf2(chapter.displayTitle) : S.s_nghe_0_42d1e966(chapter.displayTitle)}
-            className="touch-hit relative -ml-[9px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[9px] text-fg-2 hover:bg-panel hover:text-fg"
+            className="touch-hit relative -ml-[8px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[8px] text-fg-2 hover:bg-panel hover:text-fg"
           >
             {/* Mực của Play / Pause bắt đầu 3,5 px trong ô 14 px: đặt ở 5,5 px để mực đứng đúng chỗ chữ số (đệm 9 px). */}
             {current && player.playing ? (
@@ -1008,7 +1008,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       <div data-motion-live role="cell" className="tabular-cell hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
-      <div role="cell" className="flex justify-end [&>button]:-mr-[5px]">
+      <div role="cell" className="flex justify-end [&>button]:-mr-[4px]">
         <ChapterMenu book={book} chapter={chapter} onPlay={onPlay} />
       </div>
     </MotionRegion>
@@ -1115,7 +1115,7 @@ function ActivityView({ book }: { book: BookSummary }) {
       ) : !groups.length ? (
         <EmptyState icon={BookOpenText} title={S.s_chua_co_gi_adba6b1d} className="mt-4">{S.s_dien_bien_se_hien_o_day_khi_sach_bat_dau_c_7794dda1}</EmptyState>
       ) : mode === "technical" ? (
-        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-caption leading-relaxed">
           <LogRows items={data ?? []}>
             {(item) => (
               <div className="flex gap-3 whitespace-pre-wrap break-words">
@@ -1136,7 +1136,7 @@ function ActivityView({ book }: { book: BookSummary }) {
               {/* Hàng lùi sang trái 8 đơn vị (rồi đệm lại) để chấm nằm TRONG hộp hàng: hàng mới mở ra (cắt chiều cao) không cắt mất chấm. */}
               <LogRows as="ol" items={group.items} className="relative space-y-1 border-l border-line pl-5" rowClassName="-ml-8">
                 {(item) => (
-                  <div className="relative py-1.5 pl-8 text-sm">
+                  <div className="relative py-2 pl-8 text-sm">
                     {/* Chấm đứng đúng TRÊN vạch: tâm chấm = tâm vạch (mép trái ol + 0,5 px): nội dung bắt đầu sau vạch 1 px + lề pl-5 (5 đơn vị), nửa chấm = 1 đơn vị, nên lùi 6 đơn vị + 0,5 px tính từ chữ - tức 2 đơn vị - 0,5 px từ mép hộp hàng (đã lùi 8); tâm dọc = tâm dòng chữ đầu (top-3.5). */}
                     <span className={cn("absolute left-[calc(var(--spacing)*2-0.5px)] top-3.5 size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
                     <span className="tabular-cell mr-3 text-xs text-fg-3">{formatTime(item.at).split(" · ")[0]}</span>
@@ -1211,7 +1211,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
             role="tab"
             aria-selected={inMore}
             data-active={inMore || undefined}
-            className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
+            className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
           >
             <TabLabel count={moreCount}>
               <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : S.s_them_dd92626f}</MotionRegion>
@@ -1220,7 +1220,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float">
             {more.map((key) => (
               <DropdownMenu.Item key={key} onSelect={() => onTab(key)} className={MENU_ITEM}>
                 <span className="grid size-4 place-items-center" aria-hidden>{key === tab && <Check className="size-4 text-accent-text" />}</span>
@@ -1290,7 +1290,7 @@ export function ProjectScreen() {
       <div className="page-x mx-auto max-w-[1180px]">
         {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
         <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} />
-        <div className="mt-5 flex gap-7">
+        <div className="mt-5 flex gap-8">
           <Skeleton className="size-44 rounded-control" />
           <div className="flex-1 space-y-3 pt-4">
             <Skeleton className="h-8 w-2/3" />
@@ -1307,7 +1307,7 @@ export function ProjectScreen() {
       <EmptyState
         icon={CircleAlert}
         title={S.s_du_an_nay_khong_con_94194a30}
-        className="mt-20"
+        className="mt-16"
         action={<Button onClick={() => navigate("/studio")}>{S.s_ve_studio_349a48c4}</Button>}
       >{S.s_cuon_nay_da_bi_xoa_hoac_chuyen_di_khoi_thu_7f90453a}</EmptyState>
     );
@@ -1318,7 +1318,7 @@ export function ProjectScreen() {
       <EmptyState
         icon={CircleAlert}
         title={S.s_chua_mo_duoc_sach_86cc68d3}
-        className="mt-20"
+        className="mt-16"
         action={
           <div className="flex flex-wrap justify-center gap-2">
             <Button variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
@@ -1359,7 +1359,7 @@ export function ProjectScreen() {
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
           chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến
           mất khỏi lưới ở màn hẹp để hàng nút tự chiếm cả hai cột mà vẫn chỉ có một bản của các nút. */}
-      <header className="mt-5 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-4 sm:flex sm:gap-7">
+      <header className="mt-5 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-4 sm:flex sm:gap-8">
         <CoverEditor book={book} />
         <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
           <div className="min-w-0 sm:contents">
@@ -1397,7 +1397,7 @@ export function ProjectScreen() {
         />
         <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
-          <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+          <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-2 text-sm text-fg-2 hover:text-fg">
             <ArrowLeft className="ink-start size-4" />{S.s_ve_man_truoc_3be95078}</button>
         )}
         <TabsContent value="chapters">

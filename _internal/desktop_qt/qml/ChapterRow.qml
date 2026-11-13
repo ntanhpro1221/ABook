@@ -82,7 +82,7 @@ Interactive {
         x: mark.x + mark.width + Theme.s12
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - x - Theme.s12 - root.menuWidth - (duration.visible ? duration.width + Theme.s16 : 0)
-        spacing: 2
+        spacing: 4
         Text {
             width: parent.width
             text: root.headline

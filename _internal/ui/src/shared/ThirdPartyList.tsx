@@ -10,7 +10,7 @@ function Inline({ text }: { text: string }) {
       {/* \x60 = dấu huyền: bộ so chữ (scripts/ui_parity.py) đọc dấu huyền trần trong biểu thức chính quy thành đầu chuỗi mẫu. */}
       {text.split(/(\*\*[^*]+\*\*|\x60[^\x60]+\x60)/).map((part, index) =>
         part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
-          <strong key={index} className="font-semibold text-fg">{part.slice(2, -2)}</strong>
+          <strong key={index} className="font-medium text-fg">{part.slice(2, -2)}</strong>
         ) : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? (
           <code key={index} className="rounded-control bg-sunken px-1 text-[0.92em]">{part.slice(1, -1)}</code>
         ) : (
@@ -23,10 +23,10 @@ function Inline({ text }: { text: string }) {
 
 export function ThirdPartySections({ sections }: { sections: ThirdPartySection[] }) {
   return (
-    <div className="space-y-4 text-[0.8125rem] leading-relaxed text-fg-2">
+    <div className="space-y-4 text-body-small leading-relaxed text-fg-2">
       {sections.map((section, index) => (
         <section key={index}>
-          {section.title && <h3 className="mb-1 text-sm font-semibold text-fg"><Inline text={section.title} /></h3>}
+          {section.title && <h3 className="mb-1 text-sm font-medium text-fg"><Inline text={section.title} /></h3>}
           <ul className="space-y-1">
             {section.items.map((item, itemIndex) => (
               <li key={itemIndex} className={item.bullet ? "ml-4 list-disc" : undefined}>

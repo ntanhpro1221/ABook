@@ -43,7 +43,7 @@ Column {
     }
     Flow {
         width: parent.width
-        spacing: 6
+        spacing: 8
         DecisionButton {
             objectName: "narratorAccept"
             text: root.buttons.accept
@@ -78,7 +78,7 @@ Column {
                 id: choose
                 y: 8
                 width: parent.width
-                spacing: 6
+                spacing: 8
                 Repeater {
                     model: root.section.choices
                     delegate: Button {

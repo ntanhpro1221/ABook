@@ -60,7 +60,7 @@ function NeedStudioItem({ title, phoneNote }: { title: string; phoneNote: string
 
 function DisabledNeedItem({ title, note }: { title: string; note: string }) {
   return (
-    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
+    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}>
       <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{title}</span>
@@ -75,7 +75,7 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
   const studio = useStudioMissing();
   if (!studio.missing) return <DisabledNeedItem title={title} note={note} />;
   return (
-    <DropdownMenu.Item onSelect={() => navigate("/studio")} className={cn(MENU_ITEM, "h-auto items-start py-1.5")}>
+    <DropdownMenu.Item onSelect={() => navigate("/studio")} className={cn(MENU_ITEM, "h-auto items-start py-2")}>
       <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{title}</span>
@@ -109,7 +109,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       disabled={building}
       onSelect={() => void build()}
-      className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
+      className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}
     >
       <Hammer className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
@@ -143,7 +143,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
         <DropdownMenu.Item
           disabled={building}
           onSelect={() => void build()}
-          className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
+          className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}
         >
           <Hammer className="mt-line-icon size-4 shrink-0" />
           <span className="min-w-0">

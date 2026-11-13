@@ -112,7 +112,7 @@ Modal {
                 id: field
                 objectName: "findQuery"
                 width: parent.width
-                leftPadding: 36
+                leftPadding: 40
                 topPadding: 12
                 bottomPadding: 12
                 font.pixelSize: Theme.sizeBody
@@ -191,7 +191,7 @@ Modal {
                                 x: 6
                                 y: 10
                                 width: parent.width - 12
-                                spacing: 2
+                                spacing: 4
                                 Text {
                                     width: parent.width
                                     text: root.chapterLabel(row.modelData.chapterId)

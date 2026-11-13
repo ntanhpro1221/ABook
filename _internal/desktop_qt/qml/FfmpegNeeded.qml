@@ -20,7 +20,7 @@ Column {
     readonly property bool outdated: Boolean(status && status.outdated)
     topPadding: 12
     bottomPadding: 12
-    spacing: 2
+    spacing: 4
     Accessible.role: Accessible.Grouping
     Accessible.name: S.s_cong_cu_ghep_am_thanh_f56c00a0
 
@@ -119,7 +119,7 @@ Column {
                     color: Theme.text2
                     wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
                     font.family: "monospace"
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                 }
             }
         }

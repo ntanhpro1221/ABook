@@ -209,7 +209,7 @@ fun ReadAlongPane(
                     contentAlignment = Alignment.Center) {
                     BasicText(S.s_toi_cau_dang_nghe_4526cf38, Modifier
                         .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                         style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
                 }
             }

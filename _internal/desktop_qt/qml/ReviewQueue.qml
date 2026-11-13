@@ -261,7 +261,7 @@ Item {
                         objectName: "reviewHint"
                         visible: root.continuous && root.wide
                         height: 40
-                        spacing: 6
+                        spacing: 8
                         Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_dang_nghe_lien_563c9fbf; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                         LookKbd { anchors.verticalCenter: parent.verticalCenter; text: "O" }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_on_u00a0_9c4c6bbd; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
@@ -280,7 +280,7 @@ Item {
                     Text {
                         objectName: "reviewRedoLine"
                         width: parent.width
-                        topPadding: 10
+                        topPadding: 12
                         text: root.lastRedo
                         color: Theme.danger
                         wrapMode: Text.Wrap

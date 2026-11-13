@@ -79,7 +79,7 @@ Item {
         x: root.titleX
         y: 12
         width: Math.max(80, (root.wide ? root.statusX - root.gap : root.moreX - 4) - root.titleX)
-        spacing: 2
+        spacing: 4
         Text {
             objectName: "chapterTitle"
             width: parent.width

@@ -87,7 +87,7 @@ Item {
                         text: root.update ? root.update.notes : ""
                         color: Theme.text2
                         wrapMode: Text.Wrap
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                         lineHeight: 1.625
                     }
                     Item { width: 1; height: 12 }

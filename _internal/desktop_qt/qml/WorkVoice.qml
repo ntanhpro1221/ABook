@@ -39,7 +39,7 @@ Column {
             model: root.item.voiceChoices || []
             delegate: Column {
                 required property var modelData
-                spacing: 2
+                spacing: 4
                 DecisionButton {
                     text: modelData.label
                     marked: W.voiceChoiceMarked(root.item, modelData)
@@ -53,7 +53,7 @@ Column {
                     text: modelData.note || ""
                     color: Theme.text3
                     wrapMode: Text.Wrap
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                 }
             }
         }

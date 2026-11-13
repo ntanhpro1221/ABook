@@ -40,11 +40,11 @@ Item {
         Text {
             objectName: "switchHint"
             width: parent.width
-            topPadding: 2
+            topPadding: 4
             text: root.hint
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            font.pixelSize: 13
+            font.pixelSize: 14
             lineHeight: 1.45
         }
     }

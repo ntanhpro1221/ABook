@@ -324,7 +324,7 @@ internal fun PickRow(title: String, hint: String?, selected: Boolean, onClick: (
                 title,
                 style = Abook.type.body.copy(color = if (selected) colors.accentText else colors.text, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal),
             )
-            if (hint != null) RowHint(hint, Modifier.padding(top = 2.dp), if (selected) colors.accentText else colors.text2)
+            if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp), if (selected) colors.accentText else colors.text2)
         }
     }
 }

@@ -212,7 +212,7 @@ private fun CoverButton(book: EditSnapshot, draft: EditDraft, covers: CoverLoade
     ) {
         BookCover(book.cover, draft.title, null, covers, 112.dp, Modifier.width(112.dp).padding(bottom = Dim.s8))
         Box(
-            Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape).background(colors.bg).padding(3.dp).clip(CircleShape).background(colors.panel),
+            Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape).background(colors.bg).padding(4.dp).clip(CircleShape).background(colors.panel),
             contentAlignment = Alignment.Center,
         ) { PencilIcon(colors.text, size = 18.dp) }
     }

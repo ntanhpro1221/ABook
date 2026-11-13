@@ -294,7 +294,7 @@ Item {
                         selectionColor: Theme.accent
                         selectedTextColor: Theme.accentInk
                         font.family: Theme.family
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                         text: S.s_chua_co_thiet_bi_app_android_file_b9da7146 + "<span style='font-weight:500;color:" + Theme.text + S.s_apk_span_o_d607c209
                             + "<span style='font-weight:500;color:" + Theme.text + S.s_github_com_ntanhpro1221_abook_releases_spa_cbf121ce
                     }

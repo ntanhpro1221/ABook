@@ -615,17 +615,17 @@ export function DeliveryMenu({
     if (dirty) dirty.current = unsaved;
   }, [dirty, unsaved]);
   return (
-    <MotionRegion as="div" className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
+    <MotionRegion as="div" className={cn("space-y-3 p-2", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
       <div>
-        <div className="mb-1.5 label-section text-fg-2">{S.s_loai_doan_4c243930}</div>
+        <div className="mb-2 label-section text-fg-2">{S.s_loai_doan_4c243930}</div>
         <ChoiceRow label={S.s_loai_doan_4c243930} value={kind} onChange={setKind} options={KINDS} />
       </div>
       {needsSpeaker && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">{S.s_ai_noi_ab25bbf5}</div>
+          <div className="mb-2 label-section text-fg-2">{S.s_ai_noi_ab25bbf5}</div>
           {picked ? (
-            <div className="flex items-center gap-2 py-1.5 text-sm text-accent-text">
+            <div className="flex items-center gap-2 py-2 text-sm text-accent-text">
               <SelectionMark selected />
               <span className="min-w-0 flex-1 truncate font-medium">
                 {picked.label}
@@ -643,25 +643,25 @@ export function DeliveryMenu({
       <Fold storageKey="delivery.emotion" title={S.s_cam_xuc_05c1aee0} summary={deliveryText(emotion, level)} bodyClassName="space-y-3 px-3 pb-3">
       {line.emotion !== null && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">{S.s_cam_xuc_05c1aee0}</div>
+          <div className="mb-2 label-section text-fg-2">{S.s_cam_xuc_05c1aee0}</div>
           <ChoiceRow wrap label={S.s_cam_xuc_05c1aee0} value={emotion} onChange={setEmotion} options={EMOTIONS.map(([value, label]) => ({ value, label }))} />
         </div>
       )}
       {line.intensity !== null && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">{S.s_muc_10267bc5}</div>
+          <div className="mb-2 label-section text-fg-2">{S.s_muc_10267bc5}</div>
           <ChoiceRow
             label={S.s_muc_10267bc5}
             value={String(level)}
             onChange={(value) => setLevel(Number(value))}
             options={LEVELS.map((label, index) => ({ value: String(index), label }))}
           />
-          <p className="mt-1.5 text-[0.6875rem] leading-snug text-fg-3">{S.s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3}</p>
+          <p className="mt-2 text-caption leading-snug text-fg-3">{S.s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3}</p>
         </div>
       )}
       </Fold>
       <label className="block">
-        <span className="mb-1.5 block label-section text-fg-2">{S.s_chu_dem_doc_9772701b}</span>
+        <span className="mb-2 block label-section text-fg-2">{S.s_chu_dem_doc_9772701b}</span>
         <textarea
           id={`spoken-${line.stableId}`}
           aria-label={S.s_chu_may_se_doc_thay_cho_cau_nay_a93194d6}
@@ -669,9 +669,9 @@ export function DeliveryMenu({
           value={words}
           onChange={(event) => setWords(event.target.value)}
           rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
-          className="w-full resize-y rounded-control border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
+          className="w-full resize-y rounded-control border border-line bg-panel px-3 py-2 text-sm leading-relaxed outline-none focus:border-focus"
         />
-        <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">{S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_bfa41b6d}{line.spoken ? S.s_xoa_het_de_dung_chu_goc_e7344ee8 : ""}
+        <span className="mt-1 block text-caption leading-snug text-fg-3">{S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_bfa41b6d}{line.spoken ? S.s_xoa_het_de_dung_chu_goc_e7344ee8 : ""}
         </span>
       </label>
       {line.spoken && (
@@ -684,7 +684,7 @@ export function DeliveryMenu({
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
         <Fold storageKey="delivery.names" title={S.s_ten_trong_cau_7a39c9f4} summary={S.s_0_ten_f2f08473(names.length)} bodyClassName="px-3 pb-3"><div data-names-section>
-          <div className="mb-1.5 label-section text-fg-2">{S.s_ten_ca_cuon_050a79ad}</div>
+          <div className="mb-2 label-section text-fg-2">{S.s_ten_ca_cuon_050a79ad}</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -747,7 +747,7 @@ function DeliveryChip({
       aria-label={S.s_cach_doc_0_bam_de_sua_cbabcbd5(text)}
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
-        "relative inline-flex h-6 items-center gap-1 rounded-control px-1.5 text-[0.6875rem] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
+        "relative inline-flex h-6 items-center gap-1 rounded-control px-2 text-caption font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
         // Màn chạm không có hover: nhãn hiện mờ thay vì ẩn hẳn (soát UX a13 #16).
         hidden && !open && "opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60",
         waiting && "text-fg-2",
@@ -780,7 +780,7 @@ function DeliveryChip({
           collisionPadding={12}
           onEscapeKeyDown={keepOpenForNameEditor}
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
-          className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float"
         >
           <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} dirty={dirty} />
         </Popover.Content>
@@ -791,7 +791,7 @@ function DeliveryChip({
 
 /** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
 export function LineQuote({ line }: { line: Line }) {
-  return <p className="mx-1.5 mt-2 line-clamp-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
+  return <p className="mx-2 mt-2 line-clamp-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính).
@@ -824,7 +824,7 @@ export function SpeakerMenu({
         onClick={() => onPick(person)}
         className="flex h-9 w-full items-center gap-2 rounded-control px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
       >
-        <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
+        <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-caption font-bold" style={hue(person.label)} aria-hidden>
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 truncate">
@@ -836,7 +836,7 @@ export function SpeakerMenu({
   };
   return (
     <MotionRegion as="div">
-      <label className="flex h-9 items-center gap-2 rounded-control border border-line bg-panel-2 px-2.5 focus-within:border-focus">
+      <label className="flex h-9 items-center gap-2 rounded-control border border-line bg-panel-2 px-3 focus-within:border-focus">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
           autoFocus={!phone && !embedded}
@@ -852,16 +852,16 @@ export function SpeakerMenu({
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
         />
       </label>
-      <div ref={scrollFade.ref} style={scrollFade.style} className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
+      <div ref={scrollFade.ref} style={scrollFade.style} className={cn("mt-2 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
         {query.trim() ? (
           found.length ? (
             found.map((person) => item(person))
           ) : (
             // Người chưa từng được máy gán câu nào (linh thể nói trong 『』...): tạo người ấy - dây chuyền cấp giọng riêng
             // như bước phân vai, khác giọng người cùng chương.
-            <div className="px-2 py-2.5">
+            <div className="px-2 py-3">
               <p className="text-sm text-fg-2">{S.s_chua_co_ai_ten_nhu_the_trong_truyen_tao_ng_897641ec}{query.trim()}”:</p>
-              <div className="mt-2 flex gap-1.5">
+              <div className="mt-2 flex gap-2">
                 {(
                   [
                     ["male", S.s_nam_22dd59c8],
@@ -885,17 +885,17 @@ export function SpeakerMenu({
           <>
             {suggested && suggested.value !== line.current && (
               <>
-                <div className="px-2 pb-1 pt-1.5 label-section text-warning">{S.s_may_goi_y_1e7f4cfa}</div>
+                <div className="px-2 pb-1 pt-2 label-section text-warning">{S.s_may_goi_y_1e7f4cfa}</div>
                 {item(suggested)}
               </>
             )}
             {script.cast.length > 0 && (
               <>
-                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">{S.s_trong_chuong_nay_73a2b156}</div>
+                <div className="px-2 pb-1 pt-2 label-section text-fg-2">{S.s_trong_chuong_nay_73a2b156}</div>
                 {script.cast.map((person, index) => item(person, index < HOTKEYS ? index + 1 : undefined))}
               </>
             )}
-            <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">{S.s_khac_bda82bf0}</div>
+            <div className="px-2 pb-1 pt-2 label-section text-fg-2">{S.s_khac_bda82bf0}</div>
             {FIXED.filter((person) => !embedded || person.value !== NARRATOR).map((person) => item(person))}
           </>
         )}
@@ -927,7 +927,7 @@ function SpeakerChip({
       tabIndex={-1}
       disabled={!script.castReady || !line.editable}
       aria-label={S.s_0_1_bam_de_doi_80d58682(line.kind === "thought" ? S.s_nguoi_nghi_ce1afa0f : S.s_nguoi_noi_9620707b, shown)}
-      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
+      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-3 text-body-small font-medium transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
       <span className="truncate">{shown}</span>
@@ -939,7 +939,7 @@ function SpeakerChip({
     return (
       <Sheet open={open} onOpenChange={onOpenChange} title={line.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95} trigger={trigger}>
         <LineQuote line={line} />
-        <div className="px-1.5 pt-2">
+        <div className="px-2 pt-2">
           <SpeakerMenu line={line} script={script} onPick={onPick} phone />
         </div>
       </Sheet>
@@ -953,7 +953,7 @@ function SpeakerChip({
           align="start"
           sideOffset={6}
           collisionPadding={12}
-          className="z-50 w-72 rounded-cover border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 w-72 rounded-cover border border-line bg-panel p-2 shadow-float"
         >
           <SpeakerMenu line={line} script={script} onPick={onPick} />
         </Popover.Content>
@@ -1027,7 +1027,7 @@ function ScriptRow({
       }}
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
-        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-control px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
+        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-control px-2 py-2 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
         active && !selected && "bg-hover",
         selected && "text-accent-text",
         speech && "focus-visible:ring-2 focus-visible:ring-focus",
@@ -1061,17 +1061,17 @@ function ScriptRow({
           </button>
         )}
       </div>
-      <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
+      <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-1">
       <SelectionMark selected={selected} className="mt-1" />
       {/* Hàng là phần tử thường (chứa nút, chip), không phải option: trạng thái "đang chọn" đọc bằng chữ ẩn thay cho aria-selected. */}
       {selected && <span className="sr-only">{S.s_dang_chon_8580d1e5}</span>}
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
-        <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
-          {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">{S.s_nghi_821be246}</span>}
+        <p className={cn("text-body leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
+          {line.kind === "thought" && <span className="mr-2 rounded-control bg-hover px-2 py-px align-[1px] text-caption font-medium not-italic text-fg-2">{S.s_nghi_821be246}</span>}
           {marks?.length ? (
             splitByRanges(line.text, marks).map(([part, hit], index) =>
               hit ? (
-                <mark key={index} className="rounded-control bg-warning-soft px-0.5 text-fg">
+                <mark key={index} className="rounded-control bg-warning-soft px-1 text-fg">
                   {part}
                 </mark>
               ) : (
@@ -1083,14 +1083,14 @@ function ScriptRow({
           )}
         </p>
         {line.spoken && (
-          <p className="mt-0.5 text-xs text-fg-2">{S.s_doc_la_4f8195e0}<span className="text-fg">{line.spoken}</span>
+          <p className="mt-1 text-xs text-fg-2">{S.s_doc_la_4f8195e0}<span className="text-fg">{line.spoken}</span>
           </p>
         )}
         {script.castReady && !plainDelivery(line) && (
           <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} active={active} />
         )}
         {line.lineWish?.state === "pending" && (
-          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
+          <p className="mt-1 flex items-center gap-2 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
             {line.lineWish.kind
               ? S.s_da_doi_loai_cau_0_0c42f4ee(KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase())
@@ -1100,13 +1100,13 @@ function ScriptRow({
           </p>
         )}
         {line.lineWish?.state === "refused" && (
-          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-danger">
+          <p className="mt-1 flex items-center gap-2 text-xs text-danger">
             <AlertTriangle className="size-3.5 shrink-0" />{S.s_cach_doc_moi_khong_ap_duoc_3b993682}{line.lineWish.reason}
           </p>
         )}
         {line.hint && !context && (!line.wish || line.wish.state === "refused") && (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-warning">
-            <span className="inline-flex items-start gap-1.5">
+            <span className="inline-flex items-start gap-2">
               <AlertTriangle className="mt-px size-3.5 shrink-0" />
               {line.hint.note}
             </span>
@@ -1114,14 +1114,14 @@ function ScriptRow({
               <button
                 type="button"
                 onClick={() => onPick(suggested)}
-                className="rounded-control px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
+                className="rounded-control px-2 py-1 font-medium text-warning hover:bg-warning-soft"
               >{S.s_gan_cho_6fe48d05}{suggested.label}
               </button>
             )}
           </p>
         )}
         {line.retake === "pending" && (
-          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-fg-2">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />{S.s_da_xin_thu_lai_cau_nay_7919d78c}{pendingNote}.
             <button
               type="button"
@@ -1134,18 +1134,18 @@ function ScriptRow({
           </p>
         )}
         {line.wish?.state === "pending" && (
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-fg-2">
+          <p className="mt-1 flex items-center gap-2 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />{S.s_da_ghi_6b67a4c2}{line.wish.label}{S.s_may_gan_c2531001}{line.label}) - {pendingNote}.
           </p>
         )}
         {line.wish?.state === "refused" && (
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-danger">
+          <p className="mt-1 flex items-center gap-2 text-xs text-danger">
             <AlertTriangle className="size-3.5 shrink-0" />{S.s_yeu_cau_6833dc12}{line.wish.label}{S.s_khong_ap_duoc_1fe639f0}{line.wish.reason}
           </p>
         )}
       </div>
       {/* Việc phụ chỉ hiện khi rê / chọn câu (thu lại, cách đọc mặc định): sau cột chữ, không chiếm chỗ dưới câu. */}
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-1">
         {/* Chỉ câu đã thu mới có gì để thu lại; câu chưa thu không có nút (chương chưa thu thì banner đầu tab đã nói). */}
         {line.hasAudio && line.retake !== "pending" && (
           <button
@@ -1402,8 +1402,8 @@ function ChapterScriptView({
     // motionKey: hàng vào / ra tự khép / mở tại chỗ (LineRows), vùng chỉ trượt khi đổi bộ lọc / người nói - không mờ cả danh sách mỗi lần gán.
     <MotionRegion slideIndex={FILTERS.indexOf(filter)} motionKey={[filter, who]}>
       <MotionPresence open={selected.length > 1}>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-control px-3 py-1.5 text-[0.8125rem]" role="status">
-          <span className="font-semibold">{S.s_dang_chon_b79eb4ba}{selected.length}{S.s_cau_b07e1008}</span>
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-control px-3 py-2 text-body-small" role="status">
+          <span className="font-medium">{S.s_dang_chon_b79eb4ba}{selected.length}{S.s_cau_b07e1008}</span>
           <span className="text-fg-2">{S.s_phim_so_hay_chon_nguoi_o_mot_cau_trong_nho_342b4e5a}{selected.length}{S.s_cau_esc_bo_chon_f55d704f}</span>
           {(() => {
             // Thu lại cả nhóm: chỉ những câu đã thu (câu chưa thu không có gì để thu lại).
@@ -1551,7 +1551,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           type="button"
           id="script-chapter"
           aria-label={S.s_chuong_2d157977}
-          className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-control px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
+          className="-ml-3 inline-flex h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-3 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
           <span className="truncate">{current ? chapterLabel(current) : ""}</span>
           <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
@@ -1562,7 +1562,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           align="start"
           sideOffset={4}
           collisionPadding={12}
-          className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float"
           ref={scrollToChecked}
         >
           <DropdownMenu.RadioGroup value={String(chapterId ?? "")} onValueChange={(value) => { if (Number(value) !== chapterId) onPick(Number(value)); }}>
@@ -1570,7 +1570,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
               <DropdownMenu.RadioItem
                 key={chapter.chapterId}
                 value={String(chapter.chapterId)}
-                className="flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
+                className="flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
               >
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
                 <SelectionMark selected={chapter.chapterId === chapterId} />
@@ -1699,7 +1699,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         </div>
         {narrow && entry && <MotionRegion as="p" className="w-full text-xs text-fg-3">{chapterExtras(entry)}</MotionRegion>}
         <div className="relative flex h-9 w-full items-center rounded-control border border-line bg-panel focus-within:border-focus sm:w-60">
-          <Search className="pointer-events-none ml-2.5 size-4 shrink-0 text-fg-3" aria-hidden />
+          <Search className="pointer-events-none ml-3 size-4 shrink-0 text-fg-3" aria-hidden />
           <input
             id="script-find"
             type="search"
@@ -1751,12 +1751,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 title={person.value === UNNAMED ? S.s_cau_may_chua_biet_ai_noi_va_vai_phu_khong_2bf6e97f : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-full py-0 pl-0.5 pr-2.5 text-[0.8125rem] font-medium transition-[opacity,background-color]",
+                  "inline-flex h-7 items-center gap-2 rounded-full py-0 pl-1 pr-3 text-body-small font-medium transition-[opacity,background-color]",
                   who === person.value ? "bg-hover" : "hover:bg-hover",
                   who && who !== person.value && "opacity-50",
                 )}
               >
-                <span className="avatar grid size-6 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
+                <span className="avatar grid size-6 place-items-center rounded-full text-caption font-bold" style={hue(person.label)} aria-hidden>
                   {badge}
                 </span>
                 {person.label}
@@ -1789,7 +1789,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
               người kể là sai) - mời soát riêng câu của người kể trước. */}
           {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
-            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-fg-2">
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-body-small text-fg-2">
               <span className="text-pretty">{S.s_chuong_ke_ngoi_thu_nhat_may_hay_nham_cau_c_b15169be}</span>
               <Button size="sm" variant="ghost" onClick={() => setWho(data.firstPerson!.chip!)}>{S.s_soat_cau_cua_b1475472}{data.cast.find((person) => person.value === data.firstPerson!.chip)?.label ?? data.firstPerson.label}
               </Button>

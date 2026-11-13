@@ -93,7 +93,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       }}
     >
       <p className="text-xs text-fg-2">
-        <span className="font-semibold text-fg">“{surface}”</span>{S.s_doc_la_c9fec5e6}</p>
+        <span className="font-medium text-fg">“{surface}”</span>{S.s_doc_la_c9fec5e6}</p>
       <input
         autoFocus
         data-autofocus
@@ -149,7 +149,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
       title={S.s_doc_tu_nay_la_00b9f99e}
       description={
         surface ? (
-          <>{S.s_go_cach_doc_cho_b6370d0d}<span className="font-semibold text-fg">“{surface}”</span>{S.s_moi_cho_co_dung_1db69f0a}{surface.includes(" ") ? S.s_cum_8e21f94d : S.s_tu_b40c8e0d}{S.s_nay_dung_chu_hoa_chu_thuong_trong_cuon_se_2814952b}</>
+          <>{S.s_go_cach_doc_cho_b6370d0d}<span className="font-medium text-fg">“{surface}”</span>{S.s_moi_cho_co_dung_1db69f0a}{surface.includes(" ") ? S.s_cum_8e21f94d : S.s_tu_b40c8e0d}{S.s_nay_dung_chu_hoa_chu_thuong_trong_cuon_se_2814952b}</>
         ) : (
           S.s_chon_tu_may_doc_sai_thuong_la_ten_rieng_ro_0021f14b
         )
@@ -157,7 +157,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
     ><MotionRegion>
       {chips > 1 && (
         <div ref={joinBox} className="mb-3">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
             {tokens.map((token, at) =>
               token.core ? (
                 <button
@@ -169,7 +169,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
                     setJoining(false);
                   }}
                   className={cn(
-                    "touch-row inline-flex min-h-10 items-center px-2.5 text-sm",
+                    "touch-row inline-flex min-h-10 items-center px-3 text-sm",
                     picked && at >= picked.from && at <= picked.to ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
                   )}
                 >
@@ -179,7 +179,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
             )}
           </div>
           {/* Hàng này luôn cao một dòng (nút hay chữ): chọn chữ khác không làm các chip phía trên xê dịch. */}
-          <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-fg-2">
+          <div className="mt-2 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-fg-2">
             {single && !joining ? (
               <>
                 <span>{S.s_ten_co_nhieu_chu_vd_ha_vy_142f6dc6}</span>
@@ -226,7 +226,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
         <li key={item.surface} className="py-2">
           <div className="flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm">
-              <span className="font-semibold">{item.surface}</span>
+              <span className="font-medium">{item.surface}</span>
               <span className="text-fg-2">{S.s_doc_la_6f6aa509}</span>
               <span>“{item.spoken}”</span>
             </span>

@@ -44,7 +44,7 @@ VoiceFold {
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
-            font.weight: 600
+            font.weight: Theme.weightMedium
         }
         ChoiceRow {
             objectName: "voiceSpeedChoice"
@@ -59,12 +59,12 @@ VoiceFold {
             text: VoiceLogic.speedDescription(root.status.choice || "auto")
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            font.pixelSize: 13
+            font.pixelSize: 14
         }
         Column {
             objectName: "voiceSpeedList"
             width: Theme.listWidth(parent, parent.width)
-            spacing: 6
+            spacing: 8
             Repeater {
                 model: root.ready ? root.status.voices.length : 0
                 Item {
@@ -81,7 +81,7 @@ VoiceFold {
                         text: TextWrap.pretty(VoiceLogic.speedLine(line.voice, root.status.choice))
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                     Button {
                         id: download

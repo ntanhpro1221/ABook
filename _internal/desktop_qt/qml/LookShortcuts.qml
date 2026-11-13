@@ -24,7 +24,7 @@ Column {
     ]
     Column {
         width: parent.width
-        spacing: 10
+        spacing: 12
         Repeater {
             model: root.rows
             Item {
@@ -83,7 +83,7 @@ Column {
                 text: root.tailText
                 color: Theme.text2
                 wrapMode: Text.Wrap
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
         }
     }

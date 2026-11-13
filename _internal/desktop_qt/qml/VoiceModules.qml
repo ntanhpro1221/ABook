@@ -30,7 +30,7 @@ VoiceFold {
             text: root.keptAdvice
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            font.pixelSize: 13
+            font.pixelSize: 14
         }
     }
     VoiceModule {

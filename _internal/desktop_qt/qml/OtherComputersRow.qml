@@ -94,13 +94,13 @@ Collapse {
                     // 8 ký tự đầu đủ để đối chiếu với máy kia
                     Text {
                         width: parent.width
-                        topPadding: 2
+                        topPadding: 4
                         visible: Boolean(root.computer.fingerprint)
                         text: S.s_van_tay_8abdcdf0 + Logic.formatFingerprint(root.computer.fingerprint).slice(0, 9) + "…"
                         Accessible.description: Logic.formatFingerprint(root.computer.fingerprint)
                         color: Theme.text3
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                     }
                 }
                 Row {

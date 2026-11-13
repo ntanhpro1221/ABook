@@ -81,7 +81,7 @@ Interactive {
         CoverButton {
             id: play
             objectName: "libraryTilePlay"
-            anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10
+            anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 12
             readonly property bool here: Player.loaded && Player.bookId === root.book.bookId
             // Sách chỉ có chữ vẫn nghe được bằng giọng đọc của máy; máy chưa có giọng nào thì nút mở trang đọc.
             readonly property bool textOnly: root.book.stage === "text" && Api.voiceList.length === 0

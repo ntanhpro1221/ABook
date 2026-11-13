@@ -90,7 +90,7 @@ export function PendingList({
               {item.from && <span className="text-fg-3">{S.s_tu_02926cd1}{item.from}</span>}
             </span>
             {showLines && (
-              <span className="shrink-0 pt-0.5 text-xs text-fg-3">
+              <span className="shrink-0 pt-1 text-xs text-fg-3">
                 {item.lines ? S.s_0_cau_thu_lai_372ad9c3(formatNumber(item.lines)) : S.s_chua_thu_khong_ton_gi_d0da00cf}
               </span>
             )}
@@ -99,7 +99,7 @@ export function PendingList({
               size="sm"
               icon={X}
               label={dropLabel(item)}
-              className="-my-1.5 -mr-1.5"
+              className="-my-2 -mr-2"
               disabled={dropping !== null}
               onClick={() => onDrop(item)}
             />
@@ -193,7 +193,7 @@ export function ApplyChangesDialog({
           {tryVoice.note}
           <p className="mt-3 text-sm text-pretty">
             {data.lines ? (
-              <>{S.s_thu_lai_bceb80c2}<span className="font-semibold">{formatNumber(data.lines)}{S.s_cau_b07e1008}</span>{S.s_o_ce0ade07}{chapters.length}{S.s_chuong_1c106b8b}{shownChapters})
+              <>{S.s_thu_lai_bceb80c2}<span className="font-medium">{formatNumber(data.lines)}{S.s_cau_b07e1008}</span>{S.s_o_ce0ade07}{chapters.length}{S.s_chuong_1c106b8b}{shownChapters})
                 {data.seconds > 0 && <> - {estimateText(data.seconds, data.measured)}</>}.
               </>
             ) : (

@@ -91,7 +91,7 @@ Column {
                             color: step.look === "pending" ? Theme.text3 : Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall
-                            font.weight: Font.DemiBold
+                            font.weight: Theme.weightMedium
                         }
                         // Đang làm: vạch nhảy Vu như web (h-3, mực nhấn); tạm dừng: icon pause
                         Item {
@@ -133,7 +133,7 @@ Column {
                             text: Logic.formatPercent(step.value || 0)
                             color: Theme.text
                             font.pixelSize: Theme.sizeCaption
-                            font.weight: Font.DemiBold
+                            font.weight: Theme.weightMedium
                         }
                     }
                 }

@@ -17,7 +17,7 @@ export function useComputerName(): string {
 export function OnComputerOnly({ verb = S.s_lam_0b6fa4c2, className }: { verb?: string; className?: string }) {
   const name = useComputerName();
   return (
-    <span className={cn("inline-flex max-w-full items-center gap-1.5 rounded-full bg-sunken px-2.5 py-1 text-xs text-fg-2", className)}>
+    <span className={cn("inline-flex max-w-full items-center gap-2 rounded-full bg-sunken px-3 py-1 text-xs text-fg-2", className)}>
       <Monitor className="size-3.5 shrink-0" aria-hidden />
       {/* Tên máy về sau ("máy tính" -> tên thật, useAppInfo của riêng khối này): chữ mờ qua, không thay cứng. */}
       <MotionRegion as="span" className="min-w-0 text-pretty">{onComputerLine(verb, name)}</MotionRegion>

@@ -11,7 +11,7 @@ import { formatSize } from "@/shared/format";
 import { moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, type LocalMusicView } from "./musicLocal";
 
 /** Nút dài ("Cập nhật Phân tích nhạc (820 MB)") xuống dòng thay vì tràn ra ngoài ở màn 375 px (Button mặc định không ngắt dòng, cao 32 px). */
-const WRAP = "h-auto min-h-8 whitespace-normal py-1.5 text-left";
+const WRAP = "h-auto min-h-8 whitespace-normal py-2 text-left";
 
 /** Thẻ duy nhất của mô-đun "Phân tích nhạc" (máy tính và điện thoại): nhập nhạc chạy không cần nó, nó chỉ cho máy NGHE nhạc để hiểu không khí
  *  của từng bài. Người dùng thấy tổng dung lượng và bấm mới tải (không bao giờ tự tải, nhất là khi đang dùng dữ liệu di động); có bản mới thì
@@ -60,7 +60,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
   return (
     <MotionRegion role="status" className="space-y-3 text-xs text-fg-2">
       {showModule && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {/* Đang tải: % đổi liên tục trong vùng role=status - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
           <p data-motion-live className={failed ? "text-danger" : undefined}>
             {downloadingModule ? <LiveText shown={label} spoken={spokenProgress(S.s_dang_tai_phan_tich_nhac_880839b5, modulePercent(module) / 100)} /> : label}
@@ -94,7 +94,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
         </div>
       )}
       {precise && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <p className="font-medium text-fg">{S.s_cam_xuc_chinh_xac_eab97dc3}</p>
           <p data-motion-live className={precise.state === "error" ? "text-danger" : undefined}>
             {precise.state === "downloading" ? (

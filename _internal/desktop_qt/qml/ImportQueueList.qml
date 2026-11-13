@@ -34,7 +34,7 @@ Item {
         Column {
             id: column
             width: view.width
-            spacing: 6
+            spacing: 8
             Repeater {
                 model: root.items.length
                 Item {

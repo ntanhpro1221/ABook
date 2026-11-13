@@ -216,7 +216,7 @@ fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = 
 fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+        Canvas(Modifier.fillMaxSize().padding(4.dp)) {
             val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
             drawArc(colors.line, 0f, 360f, false, style = stroke)
             drawArc(colors.accent, -90f, (percent ?: 12) * 3.6f, false, style = stroke)

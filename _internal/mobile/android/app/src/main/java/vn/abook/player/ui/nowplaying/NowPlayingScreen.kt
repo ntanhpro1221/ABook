@@ -255,7 +255,7 @@ private fun NowPlayingBody(
             modifier = Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = 12.dp),
             content = {
                 Column(Modifier.fillMaxSize(), content = playerColumn)
-                Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 56.dp), contentAlignment = Alignment.TopCenter) {
+                Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 64.dp), contentAlignment = Alignment.TopCenter) {
                     if (rightComposed && window.shown) ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {}
                 }
             },
@@ -409,7 +409,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
                 .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")
-                .padding(horizontal = 14.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
                 style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
         }
     }

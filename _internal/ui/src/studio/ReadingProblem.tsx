@@ -18,13 +18,13 @@ export function ReadingProblem({
   className?: string;
 }) {
   return (
-    <MotionRegion className={problem ? className ?? "mt-1.5" : undefined}>
+    <MotionRegion className={problem ? className ?? "mt-2" : undefined}>
       {problem && <>
       <p id={id} role="alert" className="text-xs text-danger">
         {problem}
       </p>
       {suggestion && (
-        <Button size="sm" variant="ghost" type="button" className="mt-1.5" onClick={() => onUse(suggestion)}>{S.s_dung_b12f0f49}{suggestion}”
+        <Button size="sm" variant="ghost" type="button" className="mt-2" onClick={() => onUse(suggestion)}>{S.s_dung_b12f0f49}{suggestion}”
         </Button>
       )}
       </>}

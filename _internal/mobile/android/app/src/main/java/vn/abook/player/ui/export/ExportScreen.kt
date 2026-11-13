@@ -192,7 +192,7 @@ private fun BookHead(book: ListenBook) {
     val facts = if (book.textOnly) S.s_0_chuong_04093412(book.chaptersTotal) else S.s_0_chuong_1_18097463(book.chaptersAvailable, Fmt.length(book.duration))
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12)) {
         BasicText(book.title, style = Abook.type.bodyStrong, modifier = Modifier.testTag("export_book"))
-        RowHint(facts, Modifier.padding(top = 2.dp))
+        RowHint(facts, Modifier.padding(top = 4.dp))
     }
 }
 
@@ -285,7 +285,7 @@ internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
             current.text, style = Abook.type.body,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = current.spoken }.testTag("export_progress_text"),
         )
-        if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 2.dp).testTag("export_progress_folder"))
+        if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 4.dp).testTag("export_progress_folder"))
         val known by remember { derivedStateOf { progress.value.fraction != null } }
         StageProgress(known) { progress.value.fraction ?: 0f }
     }
@@ -301,7 +301,7 @@ private fun ResultPage(book: ListenBook, ui: ExportUi, shown: ExportPhase?) {
         when (shown) {
             is ExportPhase.Done -> {
                 Row(verticalAlignment = Alignment.Top) {
-                    Column(Modifier.padding(top = 2.dp)) { CheckIcon(colors.success) }
+                    Column(Modifier.padding(top = 4.dp)) { CheckIcon(colors.success) }
                     Spacer(Modifier.width(Dim.s12))
                     BasicText(shown.result.title, style = Abook.type.sectionTitle, modifier = Modifier.testTag("export_result_title"))
                 }

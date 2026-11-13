@@ -78,7 +78,7 @@ export function RenamePersonDialog({
           maxLength={80}
           onChange={(event) => setValue(event.target.value)}
           aria-label={S.s_ten_moi_cua_0_ac5dd137(name)}
-          className="h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+          className="h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
         />
         {person?.originalName && <p className="mt-2 text-xs text-fg-2">{S.s_ten_goc_893370ef}{cleanName(person.originalName)}</p>}
 

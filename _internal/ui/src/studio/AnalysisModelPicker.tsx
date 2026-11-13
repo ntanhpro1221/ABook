@@ -86,7 +86,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
     <MotionRegion>
     <OpenWith open={Boolean(value)}>
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">{S.s_bo_phan_tich_truyen_9a52f60b}</summary>
-      <p className="mt-2 text-[0.8125rem] text-fg-2 text-pretty">{S.s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b}</p>
+      <p className="mt-2 text-body-small text-fg-2 text-pretty">{S.s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b}</p>
       <label htmlFor="analysis-model" className="sr-only">{S.s_bo_phan_tich_truyen_9a52f60b}</label>
       <Select
         id="analysis-model"
@@ -103,7 +103,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
           ))}
         </optgroup>
       </Select>
-      <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
+      <p className="mt-2 text-body-small text-fg-2 text-pretty">
         {value
           ? S.s_ban_thu_nghiem_chua_duoc_kiem_tren_nhieu_t_32fc14af
           : S.s_mac_dinh_may_de_xuat_cho_hau_het_cac_truye_ea11fe13}

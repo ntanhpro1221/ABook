@@ -115,7 +115,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           disabled={busy}
           onClick={() => input.current?.click()}
           aria-label={book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265}
-          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
+          className="touch-box inline-flex h-8 items-center gap-2 rounded-control px-2 text-body-small font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
           <ImagePlus className="ink-start size-4" /> {/* Hai chữ, không xuống dòng: nút đứng dưới bìa 154 px cạnh hai nút biểu tượng ("Đổi ảnh bìa" gãy dòng đè lên dòng gợi ý, soát 24-10). */}
           <span className="whitespace-nowrap max-sm:hidden">{book.cover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7}</span>

@@ -43,7 +43,7 @@ const PREFS_KEY = "abook-reader";
 const DEFAULT_PREFS: ReaderPrefs = { size: 20, leading: 1.7 };
 /** Điện thoại: nút của thanh điều khiển đủ 48 px để chạm. */
 const TOUCH = "max-sm:size-[48px]";
-/** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-40)
+/** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-16)
  *  thay vì đẩy bài dài thêm lúc hiện ra. Hiện ra khi đang ở cuối chương thì thẻ "Chương tiếp theo" vẫn nằm trên nó (soát a26 L9). */
 const FLOATING = "pointer-events-none sticky bottom-6 h-0";
 const FLOATING_BODY = "absolute inset-x-0 bottom-0 flex";
@@ -265,7 +265,7 @@ export function ReaderScreen(edit: SentenceEditing) {
 
   if (!chapter || !script) {
     return (
-      <EmptyState icon={BookOpenText} title={S.s_chua_mo_duoc_chuong_nay_d7a0396b} className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>{S.s_ve_trang_sach_52317a7e}</Button>}>
+      <EmptyState icon={BookOpenText} title={S.s_chua_mo_duoc_chuong_nay_d7a0396b} className="mt-16" action={<Button onClick={() => navigate(`/book/${id}`)}>{S.s_ve_trang_sach_52317a7e}</Button>}>
         {chapterOpenProblem(scriptError)}
       </EmptyState>
     );
@@ -343,7 +343,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   const name = chapter.subtitle || chapter.title;
   // Điện thoại: thanh trải đúng lề trang 20 px như chữ phía trên, các nút dàn đều (trước đây hộp co theo nút, thụt 34 px - soát 140 V13).
   const bar = (
-    <div role="toolbar" aria-label={S.s_dieu_khien_doc_9a0e8e89} data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-cover bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
+    <div role="toolbar" aria-label={S.s_dieu_khien_doc_9a0e8e89} data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-cover bg-panel px-2 py-2 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
       <IconButton label={S.s_chuong_truoc_4750f9e9} icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label={S.s_tim_trong_sach_de3ccc5f} icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
@@ -393,7 +393,7 @@ export function ReaderScreen(edit: SentenceEditing) {
       <header ref={header} data-reader-header className="sticky top-0 z-10 flex min-h-14 shrink-0 items-center border-b border-line bg-bg py-1 page-x">
         {/* Cùng nút ← với mọi màn con (ScreenHeader): nét mũi tên đứng trên lề màn như mép chữ bên dưới, tên chương sát sau. */}
         <BackButton label={S.s_ve_trang_sach_52317a7e} onClick={() => navigate(`/book/${id}`)} />
-        <h2 className="min-w-0 flex-1 break-words text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
+        <h2 className="min-w-0 flex-1 break-words text-base font-medium" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
           <MotionRegion as="span" motionKey={chapterId} className="block">{name}</MotionRegion>
         </h2>
       </header>
@@ -407,7 +407,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
         <article
           ref={article}
-          className="pointer-events-auto mx-auto max-w-[calc(31em+40px)] px-[20px] pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
+          className="pointer-events-auto mx-auto max-w-[calc(31em+40px)] px-[20px] pb-16 pt-8 [--removed-body-scroll-bar-size:0px]"
           style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
         >
           <MotionPresence open={Boolean(hint)}>
@@ -433,7 +433,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             >
               <span>
                 <span className="block text-xs text-fg-2">{S.s_chuong_tiep_theo_f07a08a4}</span>
-                <span className="block font-semibold">{chapters[index + 1].subtitle || chapters[index + 1].title}</span>
+                <span className="block font-medium">{chapters[index + 1].subtitle || chapters[index + 1].title}</span>
               </span>
               <ArrowRight className="ink-end size-5 text-fg-2 [--icon-w:17.5px]" />
             </button>
@@ -445,7 +445,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           aria-hidden
           data-reader-fade
           className={cn(
-            "pointer-events-none sticky bottom-0 -mt-36 h-36 bg-gradient-to-t from-[var(--read-bg)] from-[66%] to-transparent transition-opacity duration-motion-slow",
+            "pointer-events-none sticky bottom-0 -mt-16 h-36 bg-gradient-to-t from-[var(--read-bg)] from-[66%] to-transparent transition-opacity duration-motion-slow",
             controls || menu.bar ? "opacity-100" : "opacity-0",
           )}
         />

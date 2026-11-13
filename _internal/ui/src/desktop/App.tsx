@@ -450,7 +450,7 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
 function StudioChipLink({ id }: { id: string }) {
   const navigate = useNavigate();
   return (
-    <button type="button" onClick={() => navigate(`/studio/${id}`)} className="font-semibold underline underline-offset-2 hover:no-underline">{S.s_mo_studio_84ec0a81}</button>
+    <button type="button" onClick={() => navigate(`/studio/${id}`)} className="font-medium underline underline-offset-2 hover:no-underline">{S.s_mo_studio_84ec0a81}</button>
   );
 }
 
@@ -460,7 +460,7 @@ function PeerStudioChipLink({ device, book }: { device: string; book: string }) 
     <button
       type="button"
       onClick={() => window.location.assign(peerPage(window.location.search, device, `/studio/${book}`))}
-      className="font-semibold underline underline-offset-2 hover:no-underline"
+      className="font-medium underline underline-offset-2 hover:no-underline"
     >{S.s_mo_studio_84ec0a81}</button>
   );
 }
@@ -479,7 +479,7 @@ function PeerTrouble({ error, retry }: { error: unknown; retry: () => void }) {
     <EmptyState
       icon={Laptop}
       title={(error as Error).message || S.s_may_kia_khong_tra_loi_aabbe89f}
-      className="mt-24"
+      className="mt-16"
       action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>{S.s_ve_may_nay_d9404884}</Button>}
     >
       <MotionRegion as="span">{silent ? S.s_studio_tu_mo_khi_may_ay_tra_loi_lai_f4f4f246 : null}</MotionRegion>
@@ -516,7 +516,7 @@ function StudioClosed({ children }: { children: ReactNode }) {
     <MotionRegion motionKey="closed"><EmptyState
       icon={Clapperboard}
       title={listenOnlyLine(listenOnlyOwner(info))}
-      className="mt-24"
+      className="mt-16"
       action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
     >{S.s_sach_cua_may_ay_van_nghe_duoc_o_thu_vien_04fff8ae}</EmptyState></MotionRegion>
   );
@@ -528,7 +528,7 @@ function NotFound() {
     <EmptyState
       icon={Compass}
       title={S.s_khong_co_trang_nay_8ab9dc44}
-      className="mt-24"
+      className="mt-16"
       action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
     >{S.s_duong_dan_co_the_da_cu_hoac_go_nham_006475cb}</EmptyState>
   );
@@ -705,7 +705,7 @@ export function App() {
             description: "!text-fg-2",
             // Nút trong thông báo ("Hoàn tác", "Ở lại đây") theo màu của app - mặc định của sonner là chữ tối trên nền
             // tối ở giao diện tối (soát UX 29-09).
-            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-control",
+            actionButton: "!bg-accent !text-accent-ink !font-medium !rounded-control",
             cancelButton: "!bg-hover !text-fg !rounded-control",
             closeButton: "!text-fg-2",
           },

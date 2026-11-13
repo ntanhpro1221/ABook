@@ -231,7 +231,7 @@ private fun VoiceRow(sheet: VoiceSheetState, voice: VoiceEntry, clip: ClipState,
             Column(Modifier.weight(1f)) {
                 BasicText(voice.name, style = Abook.type.bodyStrong)
                 val meta = VoiceLogic.meta(voice, filter == GenderFilter.All)
-                if (meta.isNotEmpty()) RowHint(meta, Modifier.padding(top = 2.dp))
+                if (meta.isNotEmpty()) RowHint(meta, Modifier.padding(top = 4.dp))
                 if (!voice.installed) Caption(WorkText.VOICE_NOT_INSTALLED, Modifier.padding(top = Dim.s4))
             }
             if (voice.preview) ClipButton(sheet.sampleClip(voice), clip, { sheet.playSample(voice) }, "studio_voice_play_${voice.key}")

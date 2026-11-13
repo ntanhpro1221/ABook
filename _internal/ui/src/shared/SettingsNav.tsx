@@ -112,8 +112,8 @@ export function SettingsRow({ label, hint, children }: { label: ReactNode; hint?
     <div className="settings-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3">
       {/* Tên / mô tả đổi theo trạng thái ("Có bản mới …", lời nhắc theo lựa chọn): mờ chéo cả cụm; số đếm, phần trăm không tính (MotionRegion). */}
       <MotionRegion className="settings-row-label min-w-0">
-        <div className="text-[0.9375rem] font-medium text-pretty">{label}</div>
-        {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
+        <div className="text-body font-medium text-pretty">{label}</div>
+        {hint && <div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
       </MotionRegion>
       {children !== undefined && <div className="settings-row-control min-w-0 max-w-full">{children}</div>}
     </div>

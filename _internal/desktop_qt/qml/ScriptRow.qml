@@ -107,7 +107,7 @@ Item {
                 text: root.speakerShown
                 color: Cast.avatarInk(chip.hue, Theme.dark)
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                font.pixelSize: 13
+                font.pixelSize: 14
                 font.weight: Theme.weightBold
             }
             Icon {
@@ -151,7 +151,7 @@ Item {
         x: root.textX
         y: root.textY
         width: Math.max(0, Math.min(704, root.width - x - actions.width - 16))
-        spacing: 2
+        spacing: 4
         Item {
             width: parent.width
             height: Math.max(lineText.height, thinkTag.visible ? 22 : 0)
@@ -171,7 +171,7 @@ Item {
                 height: 18
                 radius: Theme.radiusControl
                 color: Theme.hover
-                Text { id: thinkText; anchors.centerIn: parent; text: S.s_nghi_821be246; color: Theme.text2; font.pixelSize: 11; font.weight: Theme.weightMedium }
+                Text { id: thinkText; anchors.centerIn: parent; text: S.s_nghi_821be246; color: Theme.text2; font.pixelSize: 12; font.weight: Theme.weightMedium }
             }
             Text {
                 id: lineText
@@ -181,7 +181,7 @@ Item {
                 text: root.marks.length ? Script.markedHtml(root.line.text, root.marks, Theme.warningSoft) : root.line.text
                 textFormat: root.marks.length ? Text.StyledText : Text.PlainText
                 color: root.selected ? Theme.accentText : root.speech ? Theme.text : Theme.text2
-                font.pixelSize: 15
+                font.pixelSize: 16
                 font.italic: root.line.kind === "thought"
                 lineHeight: 1.5
                 wrapMode: Text.Wrap
@@ -256,7 +256,7 @@ Item {
                 id: retakeFlow
                 y: 4
                 width: parent.width
-                spacing: 6
+                spacing: 8
                 Note_ { width: Math.min(implicitWidth, retakeFlow.width); icon: "clock"; text: S.s_da_xin_thu_lai_cau_nay_7919d78c + root.pendingNote + "." }
                 TextLink { objectName: "retakeCancel"; accent: true; small: true; text: S.s_bo_e07d3f4d; onClicked: root.cancelRetake() }
             }
@@ -281,7 +281,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 8
         y: root.textY - 2
-        spacing: 2
+        spacing: 4
         Interactive {
             objectName: "lineRetake"
             visible: root.line.hasAudio === true && root.line.retake !== "pending"
@@ -352,7 +352,7 @@ Item {
                 objectName: "deliveryText"
                 text: Script.deliveryChip(root.line)
                 color: delivery.waiting ? Theme.text2 : delivery.hovered ? Theme.text : Theme.text3
-                font.pixelSize: 11
+                font.pixelSize: 12
                 font.weight: Theme.weightMedium
             }
         }

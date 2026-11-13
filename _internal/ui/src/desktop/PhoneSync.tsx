@@ -149,8 +149,8 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
       <MotionRegion as="div" motionKey="code" className="py-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">{S.s_ma_ghep_thiet_bi_02370316}</p>
-            <p className="mt-2 text-[0.8125rem] text-fg-2">{S.s_tren_may_kia_cai_dat_thiet_bi_chon_7cad8e7a}{sync.name}{S.s_nhap_ma_8a077ab3}</p>
+            <p className="text-sm font-medium">{S.s_ma_ghep_thiet_bi_02370316}</p>
+            <p className="mt-2 text-body-small text-fg-2">{S.s_tren_may_kia_cai_dat_thiet_bi_chon_7cad8e7a}{sync.name}{S.s_nhap_ma_8a077ab3}</p>
             <MoreInfo label={S.s_cach_dung_ma_ae1cba85} className="mt-2">{S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816}{sync.addresses.length > 0 && <span className="block">{S.s_dia_chi_9945f0f4}<Where sync={sync} scheme={false} /></span>}
             </MoreInfo>
           </div>
@@ -158,7 +158,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
           <div className="text-center">
             <div
               aria-label={S.s_ma_ghep_noi_0_77e0df8a(code.split("").join(" "))}
-              className="pl-[0.14em] text-[2.125rem] font-semibold leading-none tracking-[0.14em] text-accent-text"
+              className="pl-[0.14em] text-title-desktop font-medium leading-none tracking-[0.14em] text-accent-text"
             >
               {code.slice(0, 3)}
               <span className="inline-block w-3" />
@@ -182,10 +182,10 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
   if (sync.pairingBlocked) {
     return (
       <MotionRegion as="div" motionKey="blocked" className="flex items-start gap-3 py-4">
-        <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
+        <ShieldAlert className="mt-1 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{S.s_ma_bi_khoa_48579bd8}</p>
-          <p className="mt-0.5 text-[0.8125rem] text-fg-2">{S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90}</p>
+          <p className="text-sm font-medium">{S.s_ma_bi_khoa_48579bd8}</p>
+          <p className="mt-1 text-body-small text-fg-2">{S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90}</p>
         </div>
         <Button size="sm" onClick={onPair} loading={busy}>{S.s_tao_ma_moi_0b393b03}</Button>
       </MotionRegion>
@@ -220,8 +220,8 @@ export function PhoneSync() {
   }, [sync]);
 
   // Khung chờ / lỗi và nội dung có CÙNG gốc (vùng ngoài cùng bên dưới): tải xong thì mờ qua, không gỡ cả cây làm khung chờ mất cứng.
-  if (error && !sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_ket_noi_db777637} onRetry={() => void refetch()} /></MotionRegion></SettingsBlock></MotionRegion>;
-  if (!sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label={S.s_dang_tai_ket_noi_e4acf571} /></MotionRegion></SettingsBlock></MotionRegion>;
+  if (error && !sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-4"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_ket_noi_db777637} onRetry={() => void refetch()} /></MotionRegion></SettingsBlock></MotionRegion>;
+  if (!sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title={S.s_may_nay_4668c138} id="phone"><MotionRegion fadeThrough className="py-4"><ContentSkeleton count={2} label={S.s_dang_tai_ket_noi_e4acf571} /></MotionRegion></SettingsBlock></MotionRegion>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
@@ -231,11 +231,11 @@ export function PhoneSync() {
     // cách giữa khối (trước đây danh sách thiết bị là tiêu đề con bên trong, sát hàng trên 17 px, và "Kết nối" rơi xuống dưới nó).
     <MotionRegion as="div" className="motion-reveal">
       <SettingsBlock title={S.s_may_nay_4668c138} id="phone">
-      <div className="space-y-5 py-3.5">
+      <div className="space-y-5 py-4">
       <div className="flex items-center justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
-          <span className="block text-[0.9375rem] font-medium">{SYNC_SWITCH_LABEL}</span>
-          <span className={cn("mt-0.5 block text-xs leading-snug", failing ? "text-danger" : "text-fg-2")}>
+          <span className="block text-body font-medium">{SYNC_SWITCH_LABEL}</span>
+          <span className={cn("mt-1 block text-xs leading-snug", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
               ? S.s_may_cung_mang_thay_may_nay_la_0_ad5d3423(sync.name)
               : failing
@@ -265,7 +265,7 @@ export function PhoneSync() {
           <div className="flex items-center justify-between gap-6">
             <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
               <span className="block text-sm font-medium">{S.s_dieu_khien_tu_xa_1db316de}</span>
-              <span id="remote-studio-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
+              <span id="remote-studio-hint" className="mt-1 block text-body-small text-fg-2 text-pretty">
                 {studioWanted ? (
                   <>{S.s_mo_05587fd6}<Where sync={sync} />{S.s_tren_thiet_bi_da_ghep_de_lam_sach_tu_xa_b780f10e}</>
                 ) : (
@@ -324,11 +324,11 @@ export function PhoneSync() {
       </SettingsBlock>
       {sync.enabled && (
         <SettingsBlock title={S.s_may_da_ghep_c2103758} id="paired">
-          <div className="py-3.5">
+          <div className="py-4">
             {deviceRows.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
               // liên kết có thể điều hướng chính cửa sổ).
-              <p className="select-text text-[0.8125rem] leading-relaxed text-fg-2">{S.s_chua_co_thiet_bi_app_android_file_b9da7146}<span className="font-medium text-fg">{S.s_apk_f33f6ac9}</span>{S.s_o_3584ba4c}{" "}
+              <p className="select-text text-body-small leading-relaxed text-fg-2">{S.s_chua_co_thiet_bi_app_android_file_b9da7146}<span className="font-medium text-fg">{S.s_apk_f33f6ac9}</span>{S.s_o_3584ba4c}{" "}
                 <span className="font-medium text-fg">{S.s_github_com_ntanhpro1221_abook_releases_4d97effb}</span>{S.s_iphone_ipad_nghe_bang_trinh_duyet_9ae77923}</p>
             ) : (
               <ul className="divide-y divide-line">

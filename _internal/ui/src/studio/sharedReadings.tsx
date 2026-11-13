@@ -72,15 +72,15 @@ export function SharedReadingsSettings() {
   return (
     // Nằm trong khối gập "Cách đọc chung" của Cài đặt › Studio: lời dẫn trước, ô tìm chỉ khi danh sách đủ dài để cần tìm.
     <MotionRegion as="div" className="py-3">
-      <p className="text-[0.8125rem] text-fg-2 text-pretty">{S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e}</p>
+      <p className="text-body-small text-fg-2 text-pretty">{S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e}</p>
       {entries.length > SEARCH_FROM && (
-        <input aria-label={S.s_tim_cach_doc_690f3c7e} value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder={S.s_tim_ten_260c6baf} />
+        <input aria-label={S.s_tim_cach_doc_690f3c7e} value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus" placeholder={S.s_tim_ten_260c6baf} />
       )}
       {/* Lọc / bỏ / thêm: hàng khép / mở tại chỗ; data-motion-live - khối không mờ lại cả theo từng phím gõ. */}
       <div data-motion-live="">
         <AnimatedRows className="mt-2 divide-y divide-line" items={filtered.slice(0, shown)} keyOf={(entry) => entry.surface}>
           {(entry) => (
-            <div className="flex items-center gap-3 py-1.5 text-sm">
+            <div className="flex items-center gap-3 py-2 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
                 {entry.from && <span className="text-xs text-fg-3">{S.s_tu_02926cd1}{entry.from}</span>}
@@ -111,7 +111,7 @@ export function SharedReadingsSettings() {
           aria-label={S.s_tu_trong_sach_e93bdaec}
           autoComplete="off"
           spellCheck={false}
-          className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+          className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
         <input
           id="shared-reading-spoken"
@@ -121,11 +121,11 @@ export function SharedReadingsSettings() {
           aria-label={S.s_cach_doc_94265da7}
           autoComplete="off"
           spellCheck={false}
-          className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+          className="h-8 w-56 max-w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
         <Button size="sm" variant="ghost" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>{S.s_them_dd92626f}</Button>
       </form>
-      {problem && <p className="mt-1 text-[0.8125rem] text-danger">{problem}</p>}
+      {problem && <p className="mt-1 text-body-small text-danger">{problem}</p>}
     </MotionRegion>
   );
 }

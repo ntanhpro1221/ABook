@@ -57,7 +57,7 @@ Column {
     Flow {
         width: parent.width
         topPadding: 8
-        spacing: 6
+        spacing: 8
         Button {
             objectName: "spokenSave"
             size: "sm"

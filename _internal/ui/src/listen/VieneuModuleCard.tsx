@@ -91,7 +91,7 @@ export function LocalVoiceModules({
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
     <Fold storageKey="voice.modules" title={S.s_bo_giong_75b79178} summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
-      {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
+      {advice && <p className="max-w-xl text-body-small text-fg-2 text-pretty">{advice}</p>}
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
       </div>
@@ -229,7 +229,7 @@ export function VieneuModuleCard({
   const spoken = vieneuSpoken(shown, copy);
   return (
     <MotionRegion as="div" {...follow} elementRef={followRef} className="space-y-3">
-      <h3 tabIndex={-1} data-focus-fallback className="text-sm font-semibold">{copy.title}</h3>
+      <h3 tabIndex={-1} data-focus-fallback className="text-sm font-medium">{copy.title}</h3>
       {/* Lỗi tải: không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn (soát a66) - xem dưới cùng. */}
       {!failed && (
         <p className="text-sm text-fg-2 text-pretty">
@@ -253,7 +253,7 @@ export function VieneuModuleCard({
           const id = `${ids}-${index}`;
           return (
             <li key={choice.id}>
-              <label className={cn("flex items-center gap-3 py-2.5", canPick && !choice.installed ? "cursor-pointer" : "cursor-default")}>
+              <label className={cn("flex items-center gap-3 py-3", canPick && !choice.installed ? "cursor-pointer" : "cursor-default")}>
                 <input
                   type="checkbox"
                   className="size-4 shrink-0 accent-[var(--accent)]"
@@ -267,10 +267,10 @@ export function VieneuModuleCard({
                   <span id={`${id}-name`} className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {choice.label}
                     {choice.recommended && !choice.installed && (
-                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-text">{S.s_khuyen_dung_b1d3dec8}</span>
+                      <span className="rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text">{S.s_khuyen_dung_b1d3dec8}</span>
                     )}
                   </span>
-                  <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
+                  <span id={`${id}-detail`} className="mt-1 block text-body-small text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
                 <span data-motion-live id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
                   {choice.installed ? S.s_da_co_7610f1dd : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : S.s_da_co_san_90ac4add}
@@ -296,18 +296,18 @@ export function VieneuModuleCard({
               onChange={(event) => void run(() => backend.accelerate!(event.target.checked), S.s_chua_doi_duoc_cach_doc_5077e18b)}
               aria-describedby={`${ids}-fast`}
             />{S.s_dung_ban_tang_toc_40b7f3dd}</label>
-          <p id={`${ids}-fast`} className="text-[0.8125rem] text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
+          <p id={`${ids}-fast`} className="text-body-small text-fg-2 text-pretty">{acceleratedNote(status.accelerated)}</p>
         </div>
       )}
-      {fastUnsupportedNote(status) && <p className="text-[0.8125rem] text-fg-3 text-pretty">{fastUnsupportedNote(status)}</p>}
+      {fastUnsupportedNote(status) && <p className="text-body-small text-fg-3 text-pretty">{fastUnsupportedNote(status)}</p>}
       {copy.tiers.map((tier) =>
         status.benchmark[tier] ? (
-          <p key={tier} className="text-[0.8125rem] text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
+          <p key={tier} className="text-body-small text-fg-2 text-pretty">{benchmarkLabel(tier, status.benchmark[tier]!, status.slowRtf)}</p>
         ) : null,
       )}
-      {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
+      {metered && <p className="text-body-small text-fg-2 text-pretty">{metered}</p>}
       {suggestion && (
-        <div className="py-2.5 text-[0.8125rem] text-pretty">
+        <div className="py-3 text-body-small text-pretty">
           <p>{suggestion.message}</p>
           <Button size="sm" variant="ghost" className="mt-2" loading={busy} onClick={() => void switchTo()}>
             {suggestion.action}

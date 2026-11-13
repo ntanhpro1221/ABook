@@ -21,7 +21,7 @@ export function ProjectInfoDialog({ book, open, onOpenChange }: { book: BookSumm
   const details = projectDetails(book);
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title={S.s_chi_tiet_du_an_c4b7fea0} description={book.title}>
-      <ul className="space-y-1.5 text-sm text-fg-2">
+      <ul className="space-y-2 text-sm text-fg-2">
         {details.map((line) => (
           <li key={line}>{line}</li>
         ))}

@@ -34,7 +34,7 @@ Item {
                 x: 28
                 y: 36
                 width: root.wide ? parent.width - 28 - drop.width - 12 : parent.width - 28
-                spacing: 2
+                spacing: 4
                 Prose { strong: true; tone: Theme.text; text: box.seed ? S.s_phan_0_1_07722a78(box.seed.part, box.seed.title) : " " }
                 Prose {
                     visible: Boolean(box.seed) && Boolean(box.seed.clickedTitle)

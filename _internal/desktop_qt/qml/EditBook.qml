@@ -383,7 +383,7 @@ Modal {
                 Row {
                     id: backRow
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: 8
                     Icon { anchors.verticalCenter: parent.verticalCenter; name: "arrow-left"; size: 16; color: backToEdit.hovered ? Theme.text : Theme.text2 }
                     Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_sua_sach_79fb71d2; color: backToEdit.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                 }

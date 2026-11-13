@@ -69,7 +69,7 @@ Popover {
         Text {
             x: Theme.s8
             width: parent.width - 2 * Theme.s8
-            topPadding: 6
+            topPadding: 8
             bottomPadding: Theme.s4
             text: Music.project ? S.s_doi_luon_trong_studio_20c762a6
                                 : S.s_chi_doi_tren_may_nay_93811b69

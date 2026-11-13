@@ -39,7 +39,7 @@ Modal {
 
     Column {
         width: parent.width
-        spacing: 6
+        spacing: 8
         Text { width: parent.width; text: S.s_ten_sach_d54846eb; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
         FormField {
             id: field

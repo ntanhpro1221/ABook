@@ -187,7 +187,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
     <MotionRegion as="div" elementRef={swapBox} className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
         {/* Công tắc nói trạng thái ("Bật" / "Tắt"); tên mục "Nhạc nền" đã ở ngay trên, không lặp lại. */}
-        <div className="flex h-9 items-center gap-2.5 text-sm">
+        <div className="flex h-9 items-center gap-3 text-sm">
           <Switch id={`music-enabled-${book.id}`} label={S.s_nhac_nen_271fb292} checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
           <label htmlFor={`music-enabled-${book.id}`}>{data.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e}</label>
         </div>
@@ -374,7 +374,7 @@ export function EditBookDialog({
     >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
     <MotionRegion motionKey={searching}>{searching ? (
       <div>
-        <button ref={searchBack} type="button" onClick={() => setSearching(false)} className="touch-hit touch-row mb-3 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+        <button ref={searchBack} type="button" onClick={() => setSearching(false)} className="touch-hit touch-row mb-3 inline-flex items-center gap-2 text-sm text-fg-2 hover:text-fg">
           <ArrowLeft className="ink-start size-4" />{S.s_sua_sach_44914329}</button>
         <CoverSearchPanel
           bookId={book.id}
@@ -479,7 +479,7 @@ export function EditBookDialog({
                 <Button variant="ghost" onClick={() => setConfirmRevert(false)}>{S.s_thoi_e68f9e88}</Button>
               </div>
             ) : (
-              <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>{S.s_bo_moi_thay_doi_ad999cde}</Button>
+              <Button ref={revertButton} variant="ghost" className="-ml-4" onClick={() => setConfirmRevert(true)}>{S.s_bo_moi_thay_doi_ad999cde}</Button>
             )}
           </Section>
         )}
@@ -552,7 +552,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             value={label}
             maxLength={160}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+            className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
           />
         </label>
         {!single && (
@@ -562,7 +562,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
               value={name}
               maxLength={160}
               onChange={(event) => setName(event.target.value)}
-              className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+              className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
             />
           </label>
         )}
@@ -693,7 +693,7 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
   if (!need || book.stage === "text") return null; // sách chỉ có chữ chưa có giọng nào để đổi (có "Làm sách nói từ cuốn này")
   const syncs = syncsToComputer(book.capabilities);
   return (
-    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
+    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}>
       <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{S.s_giong_va_loi_doc_450320f6}</span>
@@ -708,7 +708,7 @@ export function EditBlockedItem({ book }: { book: ListenBook }) {
   const note = editBlockedNote(book.capabilities);
   if (!note) return null;
   return (
-    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
+    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}>
       <Pencil className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{S.s_sua_thong_tin_17e4a8a6}</span>

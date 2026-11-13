@@ -654,7 +654,7 @@ Item {
     // Không tìm thấy sách này (đã chuyển thư mục / đã xoá): cả trang thành màn trống, nút ← vẫn ở trên.
     EmptyState {
         objectName: "bookMissing"
-        anchors.top: header.bottom; anchors.topMargin: 80
+        anchors.top: header.bottom; anchors.topMargin: 64
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.min(parent.width - 2 * Theme.margin, 560)
         opacity: bookDetail.status === "failed" && !root.loaded ? 1 : 0

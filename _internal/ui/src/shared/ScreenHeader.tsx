@@ -7,7 +7,7 @@ import { MotionRegion } from "./MotionRegion";
 import { cn } from "./cn";
 
 /** Cỡ tiêu đề màn (DESIGN 5.5: 24 điện thoại / 32 máy tính). Tiêu đề nằm trong nội dung (tên sách cạnh bìa, tên dự án) dùng chung cỡ này. */
-export const SCREEN_TITLE = "text-2xl font-bold tracking-tight sm:text-[2rem]";
+export const SCREEN_TITLE = "text-2xl font-bold tracking-tight sm:text-title-desktop";
 
 /** Nút ← của màn con: một kiểu cho mọi màn (Cài đặt con, trang sách, dự án, đọc theo). Nét mũi tên thẳng mép nội dung, vùng chạm 48 / 40. */
 export function BackButton({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {

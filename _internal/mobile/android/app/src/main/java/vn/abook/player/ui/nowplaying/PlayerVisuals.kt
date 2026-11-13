@@ -306,7 +306,7 @@ private fun rememberSkipNumber(color: Color): TextLayoutResult {
 internal fun skipNumberLayout(measurer: TextMeasurer, density: Density, color: Color): TextLayoutResult {
     val style = with(density) {
         TextStyle(
-            fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
+            fontFamily = BeVietnamPro, fontWeight = FontWeight.Medium, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
             letterSpacing = (-0.2).dp.toSp(), color = color,
         )
     }

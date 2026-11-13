@@ -69,7 +69,7 @@ Column {
                     wrapMode: TextEdit.WrapAnywhere
                     color: Theme.text2
                     font.family: "monospace"
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                     text: root.lines.join("\n")
                 }
             }

@@ -32,7 +32,7 @@ function Bar({ label, value, tone = "accent" }: { label: ReactNode; value: numbe
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
+    <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
       <dt className="shrink-0 text-fg-2">{label}</dt>
       <dd className="min-w-0 text-right [overflow-wrap:anywhere]">{children}</dd>
     </div>
@@ -146,8 +146,8 @@ function TrackBody({
           <SectionHeading as="h3" id="track-why">{S.s_vi_sao_bai_nay_f681e004}</SectionHeading>
           <p className="text-sm text-fg-2">{S.s_doan_va_bai_cung_0_music(labelOf(emotions, track.why.matches[0].id))}</p>
           <div className="mt-3 flex gap-4 text-xs text-fg-2" aria-hidden>
-            <span className="flex items-center gap-1.5"><span className="h-1 w-4 rounded-full bg-fg-3" />{S.s_doan_nay_82d01522}</span>
-            <span className="flex items-center gap-1.5"><span className="h-1 w-4 rounded-full bg-accent" />{S.s_bai_nay_d9683a01}</span>
+            <span className="flex items-center gap-2"><span className="h-1 w-4 rounded-full bg-fg-3" />{S.s_doan_nay_82d01522}</span>
+            <span className="flex items-center gap-2"><span className="h-1 w-4 rounded-full bg-accent" />{S.s_bai_nay_d9683a01}</span>
           </div>
           <ul className="mt-2 space-y-2">
             {track.why.matches.map((match) => (
@@ -180,7 +180,7 @@ function TrackBody({
         {track.playlists.length > 0 && <Fact label={S.s_co_trong_1312af9f}><DotJoin parts={track.playlists.map((item) => item.name)} /></Fact>}
         {credit && <Fact label={S.s_ghi_cong_9c291f64}>{credit}</Fact>}
         {track.landing && <Fact label={S.s_nguon_c76d57b3}>
-            <a href={track.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(track.landing!, event)} className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-text">
+            <a href={track.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(track.landing!, event)} className="inline-flex items-center gap-2 text-sm font-medium text-accent-text">
               <ExternalLink aria-hidden className="size-4" />{S.s_mo_trang_nguon_af980960}
             </a>
         </Fact>}

@@ -25,7 +25,7 @@ export function AutoPickNote({ track, canOverride, onView, showNote = true }: {
   const note = showNote ? trackNote(track) : "";
   if (!note && !canOverride) return <MotionRegion as="span" />;
   return (
-    <MotionRegion as="span" className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-2">
+    <MotionRegion as="span" className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-2">
       {canOverride && (
         <span className="flex h-6 items-center gap-2">
           <Switch id={id} label={`${AUTO_PICK_LABEL}: ${track.title}`} checked={autoOn(track)} disabled={change.isPending} onCheckedChange={() => change.mutate(autoNext(track))} />

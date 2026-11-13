@@ -75,7 +75,7 @@ export function VoiceSpeedSetting({
   };
   return (
     <MotionRegion><Fold storageKey="voice.performance" title={S.s_hieu_nang_8c7b7526} summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
-      <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
+      <h3 id={`${id}-title`} className="text-sm font-medium">{VOICE_SPEED_TITLE}</h3>
       <ChoiceRow
         value={status.choice}
         onChange={(choice) => void (busy || choose(choice))}
@@ -83,12 +83,12 @@ export function VoiceSpeedSetting({
         label={VOICE_SPEED_TITLE}
         wrap
       />
-      <p className="text-[0.8125rem] text-fg-2 text-pretty">{voiceSpeedDescription(status.choice)}</p>
-      <ul className="space-y-1.5">
+      <p className="text-body-small text-fg-2 text-pretty">{voiceSpeedDescription(status.choice)}</p>
+      <ul className="space-y-2">
         {status.voices.map((voice) => {
           const downloading = supertonicCard.status?.state === "downloading";
           return (
-            <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-pretty">
+            <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-small text-pretty">
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
               {needsFastDownload(voice) && (
                 <Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>

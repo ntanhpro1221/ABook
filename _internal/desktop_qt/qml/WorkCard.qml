@@ -101,7 +101,7 @@ Item {
                         anchors.centerIn: parent
                         text: W.kindLabel(root.item.kind)
                         color: Theme.text2
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.weight: Theme.weightMedium
                     }
                 }
@@ -111,7 +111,7 @@ Item {
                     text: W.cardTitle(root.item)
                     color: root.active ? Theme.accentText : Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 15
+                    font.pixelSize: 16
                     font.weight: Theme.weightBold
                     Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
                 }
@@ -133,7 +133,7 @@ Item {
         Text {
             objectName: "workProblem"
             width: parent.width
-            topPadding: 6
+            topPadding: 8
             text: root.item.problem || ""
             color: Theme.text2
             wrapMode: Text.Wrap
@@ -261,7 +261,7 @@ Item {
                     id: flow
                     y: 12
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
                     Accessible.role: Accessible.Grouping
                     Accessible.name: S.s_lua_chon_499eda35
                     Repeater {

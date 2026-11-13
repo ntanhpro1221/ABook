@@ -64,11 +64,11 @@ Column {
             visible: false
             text: Logic.formatNumber(root.spec, modelData)
             font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale
-            font.weight: 600
+            font.weight: Theme.weightMedium
         }
     }
     readonly property var labelPlan: Logic.tickLabels(spec.typical.map(function(v) { return Logic.toFraction(root.spec, v) }), labelWidths, ruler.width, 8, 4)
-    FontMetrics { id: labelMetrics; font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale; font.weight: 600 }
+    FontMetrics { id: labelMetrics; font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale; font.weight: Theme.weightMedium }
 
     spacing: dense ? 0 : Theme.s8
     opacity: enabled ? 1 : 0.5

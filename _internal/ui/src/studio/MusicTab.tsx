@@ -203,7 +203,7 @@ function TrackRow({
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <span className="min-w-0 flex-1 break-words">
-        <EighthNote className="mr-1.5 inline size-4 text-fg-2" />
+        <EighthNote className="mr-2 inline size-4 text-fg-2" />
         {item.title || S.s_bai_nhac_5d07657e}
         {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
         {item.duration ? <span className="text-fg-2"> · {formatClock(item.duration)}</span> : null}
@@ -379,7 +379,7 @@ function SceneMenu({
         <IconButton label={S.s_them_tuy_chon_cho_doan_nay_6554b55d} icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-2 shadow-float">
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
             <VolumeX className="size-4" /> {scene.silenced ? S.s_bat_nhac_doan_nay_57d716ef : S.s_tat_nhac_doan_nay_8fb1136b}
           </DropdownMenu.Item>
@@ -505,7 +505,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           <SettingsRow
             label={<label htmlFor="music-genre">{S.s_the_loai_truyen_9c821aa0}</label>}
             hint={
-              <>{S.s_chua_chon_thi_nhac_lay_tu_moi_the_loai_a144c9d2}{genreName.length > 28 && <span className="mt-0.5 block sm:hidden">{genreName}</span>}
+              <>{S.s_chua_chon_thi_nhac_lay_tu_moi_the_loai_a144c9d2}{genreName.length > 28 && <span className="mt-1 block sm:hidden">{genreName}</span>}
               </>
             }
           >
@@ -531,7 +531,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             <MusicLevelSlider value={overrides.levelDb} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} className="max-w-md pb-2" />
           </div>
           <SettingsRow label={S.s_bai_cho_tung_doan_f2d49b48} hint={S.s_may_chon_lai_theo_the_loai_va_muc_nhac_o_t_927c2f67}>
-            <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">
+            <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-4">
               {rebuild.isPending ? S.s_dang_chon_lai_16e4af51 : S.s_chon_lai_nhac_ebe26dde}
             </Button>
           </SettingsRow>
@@ -590,7 +590,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                 const follows = isContinuation(scene);
                 const swap = swapButton(scene);
                 return (
-                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm", follows ? "py-1.5" : "py-2.5")}>
+                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", follows ? "py-2" : "py-3")}>
                     <span className="tabular-cell w-28 shrink-0 text-fg-2">
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
@@ -599,7 +599,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       {moodOf(scene, taxonomy.emotions)}
                       {(scene.moodSource === "llm" || scene.moodSource === "chapter" || scene.moodSource === "student") && (
                         <span
-                          className="ml-1.5 rounded-control bg-sunken px-1 py-0.5 text-xs text-fg-2"
+                          className="ml-2 rounded-control bg-sunken px-1 py-1 text-xs text-fg-2"
                           title={
                             scene.moodSource === "student"
                               ? S.s_ai_da_doan_doan_nay_vui_hon_hay_buon_hon_c_e68274f5
@@ -615,13 +615,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         <span className="text-fg-2">{CONTINUED_NOTE}</span>
                       ) : scene.link ? (
                         <>
-                          <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
+                          <EighthNote className="mr-2 inline size-4 text-accent-text" />
                           {track?.title ?? S.s_bai_nhac_5d07657e}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
                           {track?.source === "local" && (
-                            <span className="ml-1.5 rounded-control bg-sunken px-1.5 py-0.5 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span>
+                            <span className="ml-2 rounded-control bg-sunken px-2 py-1 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span>
                           )}
-                          {scene.pinned && <Pin className="ml-1.5 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} />}
+                          {scene.pinned && <Pin className="ml-2 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} />}
                           {scene.pinUnavailable && (
                             <span className="block text-xs text-warning">{S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e}</span>
                           )}
@@ -645,7 +645,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
                       />}
                     </span>
-                    <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="py-2.5 text-sm">
+                    <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="py-3 text-sm">
                       <MotionPresence open={swapping === scene.key}>
                         <Alternatives
                           bookId={bookId}

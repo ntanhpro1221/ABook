@@ -21,7 +21,7 @@ type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
 /** Ô chọn trải hết cột như ô nhập; chỉ hàng giờ/phút đặt `inline` để các mảnh của một giá trị đứng cạnh nhau. */
 export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement>; inline?: boolean }) {
-  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-control border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
+  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-control border border-line bg-panel px-3 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
 }
 
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
@@ -43,9 +43,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-10 min-h-10 px-3 text-[0.8125rem] gap-1.5 rounded-control",
-  md: "h-10 min-h-10 px-3.5 text-sm gap-2 rounded-control",
-  lg: "h-10 min-h-10 px-5 text-[0.9375rem] gap-2 rounded-cover",
+  sm: "h-10 min-h-10 px-3 text-body-small gap-2 rounded-control",
+  md: "h-10 min-h-10 px-4 text-sm gap-2 rounded-control",
+  lg: "h-10 min-h-10 px-5 text-body gap-2 rounded-cover",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -74,7 +74,7 @@ export function busyClick<E extends { preventDefault: () => void }>(loading: boo
 }
 
 /** Nút có chữ dài (đường dẫn, tên mục): chữ xuống dòng, bẻ cả chuỗi liền, nút cao thêm thay vì rộng hơn khung - chữ hệ thống to ở 320 px không đẩy trang tràn ngang (soát a102).
- *  Một dòng thì cao đúng như nút cùng cỡ (min-h của cỡ nút giữ lại): trước đây `min-h-8 py-1.5` làm nút sm cao 32, md 32,5 cạnh nút thường 28 / 31,5. */
+ *  Một dòng thì cao đúng như nút cùng cỡ (min-h của cỡ nút giữ lại): trước đây `min-h-8 py-2` làm nút sm cao 32, md 32,5 cạnh nút thường 28 / 31,5. */
 export const WRAP_LABEL = "h-auto max-w-full whitespace-normal py-1 leading-snug text-center [overflow-wrap:anywhere]";
 
 export function Button({
@@ -221,7 +221,7 @@ export function Tooltip({ label, children, side = "top" }: { label: ReactNode; c
           style={open ? undefined : CLOSING}
           side={side}
           sideOffset={6}
-          className="motion-tooltip z-50 max-w-72 rounded-control bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
+          className="motion-tooltip z-50 max-w-72 rounded-control bg-fg px-3 py-2 text-xs font-medium text-bg shadow-float"
         >
           {/* Nhãn đổi lúc chú giải đang mở ("Nghe" -> "Dừng"): chữ mờ qua, không thay cứng. */}
           <MotionRegion as="span" className="block">{label}</MotionRegion>
@@ -383,7 +383,7 @@ LiveText.motionLive = true;
 
 export function Vu({ className }: { className?: string }) {
   return (
-    <span className={cn("vu inline-flex h-3 items-end gap-[2px]", className)} aria-hidden>
+    <span className={cn("vu inline-flex h-3 items-end gap-[4px]", className)} aria-hidden>
       <span className="h-full w-[3px] rounded-full bg-current" />
       <span className="h-full w-[3px] rounded-full bg-current" />
       <span className="h-full w-[3px] rounded-full bg-current" />
@@ -414,7 +414,7 @@ export function StatusPill({
   return (
     <MotionRegion as="span" motionKey={[label, tone, live]}
       className={cn(
-        "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium transition-colors duration-motion-fast",
+        "inline-flex h-6 items-center gap-2 whitespace-nowrap rounded-full px-3 text-xs font-medium transition-colors duration-motion-fast",
         PILL[tone],
         className,
       )}
@@ -437,7 +437,7 @@ const STATUS_INK: Record<Tone, string> = {
  *  làm tiêu đề lệch dòng theo trạng thái. Cùng tên màu với StatusPill (tone), `live` thêm vạch nhạc đang chạy. */
 export function StatusText({ label, tone, live = false, className }: { label: string; tone: Tone; live?: boolean; className?: string }) {
   return (
-    <MotionRegion as="span" motionKey={[label, tone, live]} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap font-medium transition-colors duration-motion-fast", STATUS_INK[tone], className)}>
+    <MotionRegion as="span" motionKey={[label, tone, live]} className={cn("inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors duration-motion-fast", STATUS_INK[tone], className)}>
       {live && <Vu className="h-2.5" />}
       {label}
     </MotionRegion>
@@ -557,7 +557,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
  *  để số không lệch dòng với tên ở chỗ nào. Số là chữ trơn `--text-2`, không viên thuốc. */
 export function TabLabel({ count, children }: { count?: number; children: ReactNode }) {
   return (
-    <span data-indicator-target="" className="inline-flex items-baseline gap-1.5">
+    <span data-indicator-target="" className="inline-flex items-baseline gap-2">
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
       <MotionRegion as="span" className="inline-flex" motionKey={count ?? null}>{count !== undefined && (
@@ -587,7 +587,7 @@ const CLOSING = { pointerEvents: "none" } as const;
 /** Nút ✕ của hộp thoại / tấm trượt: biểu tượng 20 px nhưng vùng bấm 44 x 44 px (máy tính), 48 x 48 (cảm ứng); lề âm giữ chỗ chiếm trong bố cục như
  *  cũ (soát a67: chỉ 24 x 24 px). */
 const CLOSE_BUTTON =
-  "-m-[0.75rem] inline-flex size-[2.75rem] shrink-0 items-center justify-center rounded-control text-fg-3 hover:bg-hover hover:text-fg pointer-coarse:-m-[0.875rem] pointer-coarse:size-[3rem]";
+  "-m-[0.75rem] inline-flex size-[2.75rem] shrink-0 items-center justify-center rounded-control text-fg-3 hover:bg-hover hover:text-fg pointer-coarse:-m-[16px] pointer-coarse:size-[3rem]";
 
 /** Phần tử "đã mở hộp" từ chỗ con trỏ đang đứng: mục của một menu (Radix DropdownMenu) mất ngay khi menu đóng, nên đó là nút mở menu (menu mang
  *  `aria-labelledby` = mã nút ấy; menu con thì lần lên tiếp). Phần tử thường thì chính nó. */
@@ -712,7 +712,7 @@ export function Dialog({
             </div>
             {/* Mực của ✕ dừng 5/24 ô biểu tượng trước mép ô (3,65 px ở 17,5 px): lề phải bù thêm chừng ấy cho mực thẳng mép nội dung. */}
             <DialogPrimitive.Close asChild>
-              <button aria-label={S.s_dong_5d54c2a1} className={cn(CLOSE_BUTTON, "-mr-[16.9px] pointer-coarse:-mr-[18.9px]")}>
+              <button aria-label={S.s_dong_5d54c2a1} className={cn(CLOSE_BUTTON, "-mr-[16px] pointer-coarse:-mr-[20px]")}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
@@ -912,7 +912,7 @@ export function InlineError({ message, onRetry, className, open }: { message: st
   if (open !== undefined) return <MotionPresence open={open}><InlineError message={message} onRetry={onRetry} className={className} /></MotionPresence>;
   // Nút đứng ngay sau câu (màn rộng không đẩy nó ra mép phải); màn hẹp xuống dòng thì thẳng mép với chữ - -ml bù phần đệm của nút ghost.
   // Câu đệm trên dưới cho dòng đầu đứng giữa chiều cao nút (--button-h), icon đứng giữa dòng ấy - cả khi câu gãy dòng hay nút xuống dòng
-  // (từng là mt-[3px] theo chữ trần: hàng cao bằng nút đẩy chữ xuống, icon treo trên dòng - soát 25-10, máy dò icon-off-first-line).
+  // (từng là mt-[4px] theo chữ trần: hàng cao bằng nút đẩy chữ xuống, icon treo trên dòng - soát 25-10, máy dò icon-off-first-line).
   return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
     <AlertTriangle aria-hidden className="ink-start mt-[calc((var(--button-h)-1rem)/2)] size-4 shrink-0 text-danger" />
     <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
@@ -959,13 +959,13 @@ export function EmptyState({
   // Tự là một vùng: đổi tiêu đề / lời / nút lúc đang hiện (tìm chữ khác, lọc khác) mờ qua tại chỗ, không đổi cứng; hiện / ẩn cả khối thì chỗ
   // gọi bọc MotionPresence (motionLint.test.ts).
   return (
-    <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-14 text-center", className)}>
+    <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-16 text-center", className)}>
       <div className="mb-4 grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
       {/* h2: lời mời đứng ngay dưới tiêu đề màn (h1), không nhảy cấp (axe heading-order). */}
-      <h2 className="text-base font-semibold">{title}</h2>
-      {children && <p className="mt-1.5 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
+      <h2 className="text-base font-medium">{title}</h2>
+      {children && <p className="mt-2 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
     </MotionRegion>
   );
@@ -983,7 +983,7 @@ export function LoadError({ what, onRetry, className, open }: { what: string; er
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-control border border-line-strong bg-panel-2 px-[6px] font-sans text-[0.6875rem] font-medium text-fg-2">
+    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-control border border-line-strong bg-panel-2 px-[8px] font-sans text-caption font-medium text-fg-2">
       {children}
     </kbd>
   );
@@ -993,8 +993,8 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   return (
     <div className="min-w-0">
       <div className="text-xs font-medium text-fg-3">{label}</div>
-      <div className="mt-1 truncate text-xl font-semibold tracking-tight">{value}</div>
-      {hint && <div className="mt-0.5 truncate text-xs text-fg-2">{hint}</div>}
+      <div className="mt-1 truncate text-xl font-medium tracking-tight">{value}</div>
+      {hint && <div className="mt-1 truncate text-xs text-fg-2">{hint}</div>}
     </div>
   );
 }

@@ -85,8 +85,8 @@ Item {
                     fill: Theme.panel
                     topPadding: 8
                     bottomPadding: 8
-                    leftPadding: 34
-                    rightPadding: 34
+                    leftPadding: 32
+                    rightPadding: 32
                     implicitHeight: Math.max(36, contentHeight + 16)
                     onTextChanged: { root.query = text; root.limit = N.PAGE }
                 }

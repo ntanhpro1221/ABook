@@ -174,7 +174,7 @@ FocusScope {
                     text: S.s_may_thieu_cau_hinh_df5ae9ef
                     color: Theme.text2
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 13
+                    font.pixelSize: 14
                 }
                 Button {
                     id: create

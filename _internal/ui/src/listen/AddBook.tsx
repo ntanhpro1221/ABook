@@ -579,7 +579,7 @@ export function AddBookDialog({
           ref={confirmBox}
           role="alertdialog"
           aria-label={confirmLeave === "again" ? S.s_chon_lai_khi_con_sach_chua_them_4b4c7b1a : S.s_dong_khi_con_sach_chua_them_0406a915}
-          className="mb-4 py-3.5"
+          className="mb-4 py-4"
         >
           <p className="text-sm font-medium">
             {confirmLeave === "again"
@@ -642,13 +642,13 @@ export function AddBookDialog({
                 placeholder={importer.choose ? S.s_hoac_dan_duong_dan_bb4837f7 : S.s_dan_duong_dan_file_hay_thu_muc_5bbc5845}
                 className="h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
               />
-              <Button type="submit" className="-mr-3.5 h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>{S.s_mo_741bd2c2}</Button>
+              <Button type="submit" className="-mr-4 h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>{S.s_mo_741bd2c2}</Button>
             </form>
           )}
           {/* Gợi ý dài nằm dưới ô, không nhét vào chữ mờ trong ô - màn 390 px cắt cụt nó (soát a64). Có nút chọn file thì lời đầu hộp đã kể các
               loại file, không nhắc lại. */}
           {importer.typedPath && !importer.choose && (
-            <p id="typed-path-hint" className="mt-1.5 text-pretty text-xs text-fg-3">{S.s_file_sach_epub_word_pdf_txt_hay_thu_muc_tx_3632db2b}</p>
+            <p id="typed-path-hint" className="mt-2 text-pretty text-xs text-fg-3">{S.s_file_sach_epub_word_pdf_txt_hay_thu_muc_tx_3632db2b}</p>
           )}
           {busy === "reading" && <ContentSkeleton shape="cards" count={2} label={S.s_dang_doc_1b09d2d9} className="mt-4" />}
           {problem && (
@@ -668,15 +668,15 @@ export function AddBookDialog({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               aria-invalid={!title.trim()}
-              className="touch-box mt-1.5 h-11 w-full rounded-cover border border-line bg-bg px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus"
+              className="touch-box mt-2 h-11 w-full rounded-cover border border-line bg-bg px-4 text-body font-medium outline-none focus:border-focus"
               placeholder={S.s_ten_hien_thi_trong_thu_vien_c48c7ac6}
             />
           </label>
-          {preview.author && <p className="mt-1.5 text-sm text-fg-2">{S.s_tac_gia_3fe05994}{preview.author}</p>}
+          {preview.author && <p className="mt-2 text-sm text-fg-2">{S.s_tac_gia_3fe05994}{preview.author}</p>}
           <SectionHeading as="h3" className="mt-2">{S.s_chuong_2d157977}</SectionHeading>
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
             <span>
-              <span className="font-semibold text-fg">
+              <span className="font-medium text-fg">
                 {totals.chapters}
                 {totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""}{S.s_chuong_9e6a01dc}</span>{" "}
               · {formatNumber(totals.words)}{S.s_chu_6117d040}</span>
@@ -693,13 +693,13 @@ export function AddBookDialog({
             )}
           </div>
           {preview.splitOffer ? (
-            <label className="mt-3 flex items-start gap-2.5 py-3 text-sm">
+            <label className="mt-3 flex items-start gap-3 py-3 text-sm">
               <input
                 type="checkbox"
                 checked={split}
                 disabled={busy !== null}
                 onChange={(event) => void changeSplit(event.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+                className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
               />
               <span className="min-w-0">
                 <span className="block font-medium">{S.s_tach_chuong_2f1df570}</span>
@@ -793,7 +793,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
-    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label={S.s_file_da_chon_e29eb975} className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label={S.s_file_da_chon_e29eb975} className={cn("mt-3 space-y-2 overflow-y-auto py-3 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
@@ -804,9 +804,9 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
         const said = item.state === "waiting" ? (current ? (focus.adding ? S.s_dang_them_457edcc3 : S.s_dang_xem_42cc3b08) : S.s_cho_8de7e9a5) : item.note ?? STATE_TEXT[item.state];
         return (
           <li key={key} ref={ref} aria-current={current ? "true" : undefined} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-2">
-            <MotionRegion as="span" className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</MotionRegion>
+            <MotionRegion as="span" className="mt-1 grid size-3.5 shrink-0 place-items-center">{mark}</MotionRegion>
             <span className="min-w-0 flex-1">
-              <span className={cn("block break-words", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
+              <span className={cn("block break-words", current ? "font-medium text-fg" : "text-fg-2")}>{item.name}</span>
               <MotionRegion as="span" motionKey={said} className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</MotionRegion>
             </span>
           </div></li>

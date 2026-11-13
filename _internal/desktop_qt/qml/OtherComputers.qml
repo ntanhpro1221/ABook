@@ -352,7 +352,7 @@ Column {
                             text: S.s_chua_ghep_duoc_160c13b4 + root.pairError
                             color: Theme.danger
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                            font.pixelSize: 13
+                            font.pixelSize: 14
                         }
                     }
                     Collapse {
@@ -360,7 +360,7 @@ Column {
                         open: root.unpairedDevices.length > 0
                         Column {
                             width: parent.width
-                            spacing: 6
+                            spacing: 8
                             HintText { width: parent.width; text: S.s_khac_wi_fi_chon_may_da_ghep_bluetooth_f451876c }
                             Flow {
                                 width: parent.width

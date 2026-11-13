@@ -23,7 +23,7 @@ Interactive {
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: 11          // tâm biểu tượng ở 28 = nửa dải thu gọn 56 (mục lệch lề 8)
+        anchors.leftMargin: 12          // tâm biểu tượng ở 28 = nửa dải thu gọn 56 (mục lệch lề 8)
         spacing: Theme.s12
         Item {
             width: 18

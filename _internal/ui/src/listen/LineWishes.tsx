@@ -113,7 +113,7 @@ function MenuRow({ icon: Icon, title, note, disabled, onClick, trailing }: { ico
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex w-full items-start gap-3 rounded-cover px-3 py-2.5 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
+      className="flex w-full items-start gap-3 rounded-cover px-3 py-3 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
     >
       <Icon className="mt-line-icon size-4 shrink-0 text-fg-2" />
       <span className="min-w-0 flex-1">
@@ -160,7 +160,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
   return (
     <div className="space-y-3">
       <p className="text-sm text-fg-2">{S.s_cham_vao_tu_may_doc_sai_thuong_la_ten_rien_2afff698}</p>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={S.s_cac_tu_trong_cau_e3fc9264}>
         {words.map((item) => {
           const waiting = names.find((entry) => sameWord(entry.surface, item));
           return (
@@ -170,7 +170,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
               aria-pressed={word === item}
               onClick={() => setWord(word === item ? null : item)}
               className={cn(
-                "touch-row inline-flex min-h-10 items-center gap-1 px-2.5 text-sm transition-colors duration-motion-medium",
+                "touch-row inline-flex min-h-10 items-center gap-1 px-3 text-sm transition-colors duration-motion-medium",
                 word === item ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
@@ -184,7 +184,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
       <MotionPresence open={Boolean(word)}>
         <MotionRegion motionKey={word} className="py-3" data-name-editor>
           <MotionRegion className="mb-2 text-sm">
-            <span className="font-semibold">{word}</span>
+            <span className="font-medium">{word}</span>
             {pending && (
               <span className="text-xs font-medium text-accent-text">
                 {" "}{S.s_dang_cho_may_lam_sach_c4bd7a16}<span className="whitespace-nowrap">“{pending.spokenForm}”</span>
@@ -195,7 +195,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
                 type="button"
                 onClick={() => onWithdraw(pending)}
                 aria-label={S.s_bo_cach_doc_0_a883978b(pending.surface)}
-                className="ml-1.5 inline-flex items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                className="ml-2 inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-text hover:bg-hover"
               >
                 <X className="size-3" />{S.s_bo_7107fb3c}</button>
             )}
@@ -397,7 +397,7 @@ export function LineWishDialog({
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
-        <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-1">
           <LineQuote line={line} />
           {!identified && (
             <p className="py-2 text-sm text-fg-2">{S.s_file_sach_nay_lam_bang_abook_ban_cu_nen_ch_45df1722}</p>
@@ -409,7 +409,7 @@ export function LineWishDialog({
               {/* Hộp không đóng khi bấm "Bỏ": hàng khép tại chỗ, khối khép khi hết việc, câu chốt mờ qua (soát chuyển động 139). */}
               <MotionPresence open={items.length > 0}>
                 <div className="py-2 text-sm" role="status">
-                  <p className="flex items-center gap-1.5 font-medium">
+                  <p className="flex items-center gap-2 font-medium">
                     <Clock className="size-4 shrink-0 text-info" />{S.s_dang_cho_may_lam_sach_d0ed158e}</p>
                   <AnimatedRows items={items} keyOf={(item) => item.key} className="mt-1">
                     {(item) => (
@@ -423,7 +423,7 @@ export function LineWishDialog({
                               goView("word");
                             }}
                             aria-label={S.s_sua_cach_doc_0_339e93f2(item.name.surface)}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-text hover:bg-hover"
                           >{S.s_sua_d4e07603}</button>
                         )}
                         {item.held ? (
@@ -434,7 +434,7 @@ export function LineWishDialog({
                             disabled={withdraw.isPending}
                             onClick={() => (item.name ? withdrawName(item.name) : withdraw.mutate(item))}
                             aria-label={S.s_bo_0_47f8ec66(item.text)}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-text hover:bg-hover"
                           >
                             <X className="size-3" />{S.s_bo_7107fb3c}</button>
                         )}
@@ -442,7 +442,7 @@ export function LineWishDialog({
                     )}
                   </AnimatedRows>
                   {/* Chỉ có việc đã ở máy giữ sách (đặt ở đó): không có gì "đã gửi" từ máy này - chỉ nói khi nào giọng đổi. */}
-                  <MotionRegion as="p" className="mt-0.5 text-xs text-fg-2">
+                  <MotionRegion as="p" className="mt-1 text-xs text-fg-2">
                     {holder && items.every((item) => item.held) ? S.s_giong_doc_chua_doi_studio_se_thu_lai_0_98beb11a(retakeWhen(holder)) : promise}
                   </MotionRegion>
                 </div>

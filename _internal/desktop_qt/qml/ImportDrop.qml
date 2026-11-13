@@ -54,7 +54,7 @@ Item {
                 color: Theme.text
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: 18
-                font.weight: 600
+                font.weight: Theme.weightMedium
             }
             Text {
                 width: parent.width

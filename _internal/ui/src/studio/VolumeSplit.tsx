@@ -96,13 +96,13 @@ export function VolumeSplit({
       <MotionRegion as="div" className="mt-4 flex gap-3 py-4 text-sm">
         <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{S.s_chia_e1f5ebcd}{proposal.volumes.length}{S.s_phan_67dc9fc9}</p>
+          <p className="font-medium">{S.s_chia_e1f5ebcd}{proposal.volumes.length}{S.s_phan_67dc9fc9}</p>
           <p className="mt-1 text-fg-2">{S.s_noi_cac_phan_giu_giong_va_cach_doc_ten_ae9d0eb0}</p>
           <MoreInfo>{S.s_may_thay_ed1e7e9f}{SOURCE_TEXT[proposal.source]}:{" "}
             {shown.map((volume) => S.s_0_1_chuong_a776ede8(volume.label, formatNumber(volume.chapters))).join(", ")}
             {proposal.volumes.length > shown.length ? ", …" : ""}.
             {" "}{S.s_chua_chia_thi_ca_truyen_la_mot_sach_moi_ph_5e6fe008}</MoreInfo>
-          <div className="mt-2.5 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>{S.s_chia_thanh_nhieu_phan_af52ab82}</Button>
           </div>
         </div>
@@ -122,7 +122,7 @@ export function VolumeSplit({
   return (
     <MotionRegion as="section" aria-labelledby="volumes-title" className="mt-4 py-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
+        <h3 id="volumes-title" className="flex items-center gap-2 font-medium">
           <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? S.s_chia_thanh_0_phan_db0187a5(parts.length) : S.s_chia_thanh_may_phan_1bf1cf9e}
         </h3>
         <Button size="sm" variant="ghost" onClick={() => onChange(null)}>{S.s_khong_chia_nua_3d6b48ed}</Button>

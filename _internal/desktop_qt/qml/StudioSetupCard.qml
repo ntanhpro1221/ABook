@@ -82,7 +82,7 @@ Item {
                         color: Theme.text2
                         wrapMode: Text.Wrap
                         lineHeight: 1.45
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                     Text {
                         objectName: "studioSetupFit"
@@ -94,7 +94,7 @@ Item {
                         font.weight: root.fit && root.fit.level === "no" ? Theme.weightMedium : Theme.weightRegular
                         wrapMode: Text.Wrap
                         lineHeight: 1.45
-                        font.pixelSize: 13
+                        font.pixelSize: 14
                     }
                 }
                 Row {
@@ -120,7 +120,7 @@ Item {
                 color: Theme.text
                 wrapMode: Text.Wrap
                 lineHeight: 1.45
-                font.pixelSize: 13
+                font.pixelSize: 14
             }
             Column {
                 objectName: "studioSetupError"
@@ -128,7 +128,7 @@ Item {
                 width: parent.width
                 topPadding: 16
                 spacing: 4
-                Text { width: parent.width; text: root.friendly.summary; color: Theme.danger; wrapMode: Text.Wrap; lineHeight: 1.45; font.pixelSize: 13 }
+                Text { width: parent.width; text: root.friendly.summary; color: Theme.danger; wrapMode: Text.Wrap; lineHeight: 1.45; font.pixelSize: 14 }
                 Interactive {
                     visible: root.friendly.detail !== ""
                     objectName: "studioSetupDetailsToggle"
@@ -158,14 +158,14 @@ Item {
                 topPadding: 20
                 columns: root.wide ? 2 : 1
                 columnSpacing: 32
-                rowSpacing: 6
+                rowSpacing: 8
                 Repeater {
                     model: root.status ? root.status.steps || [] : []
                     delegate: Row {
                         required property var modelData
                         readonly property bool activeStep: !!root.status && !!root.status.running && modelData.id === root.status.step
                         width: (parent.width - (root.wide ? 32 : 0)) / (root.wide ? 2 : 1)
-                        spacing: 10
+                        spacing: 12
                         Item {
                             width: 16; height: 20
                             Icon { anchors.centerIn: parent; visible: modelData.done; name: "check"; size: 16; color: Theme.accentText }
@@ -189,7 +189,7 @@ Item {
                             color: parent.activeStep ? Theme.text : Theme.text2
                             font.weight: parent.activeStep ? Theme.weightBold : Theme.weightRegular
                             wrapMode: Text.Wrap
-                            font.pixelSize: 13
+                            font.pixelSize: 14
                         }
                     }
                 }
@@ -199,7 +199,7 @@ Item {
                 visible: !!root.status && !!root.status.running && Setup.currentStep(root.status) !== null
                 width: parent.width
                 topPadding: 16
-                spacing: 6
+                spacing: 8
                 StudioBar {
                     width: parent.width
                     size: "sm"

@@ -107,7 +107,7 @@ private fun ProjectCard(book: StudioBook, onOpen: (StudioBook) -> Unit) {
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(book.title, style = Abook.type.bodyStrong, modifier = Modifier.testTag("studio_book_title"))
-                ClockLabel(StudioText.statusLine(book), Modifier.padding(top = 2.dp).testTag("studio_book_status"), Abook.type.bodySmall.copy(color = status.tone.ink()))
+                ClockLabel(StudioText.statusLine(book), Modifier.padding(top = 4.dp).testTag("studio_book_status"), Abook.type.bodySmall.copy(color = status.tone.ink()))
                 if (book.working && book.phase != "done" && book.phase != "idle") StageProgress { book.overall }
             }
             Spacer(Modifier.width(Dim.s12))

@@ -57,15 +57,15 @@ export function BookTemplates() {
   return (
     <MotionRegion as="div" className="mb-4 max-w-xl">
       <div className="text-sm font-medium">{S.s_mau_sach_moi_6e860e3e}</div>
-      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">{S.s_o_tao_sach_chon_luu_thanh_mau_de_dung_lai_a2505ca9}</p>
+      <p className="mt-1 text-body-small text-fg-2 text-pretty">{S.s_o_tao_sach_chon_luu_thanh_mau_de_dung_lai_a2505ca9}</p>
       {!templates.length ? (
-        <p className="mt-2 text-[0.8125rem] text-fg-3">{S.s_chua_co_mau_nao_55b4683e}</p>
+        <p className="mt-2 text-body-small text-fg-3">{S.s_chua_co_mau_nao_55b4683e}</p>
       ) : (
         // Xoá / Hoàn tác một mẫu: hàng khép / mở tại chỗ; đổi tên <-> hàng thường thì hàng tự mờ qua. data-motion-live: cả vùng không mờ theo từng hàng.
         <div data-motion-live="">
         <AnimatedRows className="mt-2 divide-y divide-line" items={templates} keyOf={(template) => template.name}>
           {(template) => (
-            <MotionRegion motionKey={renaming === template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2">
+            <MotionRegion motionKey={renaming === template.name} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
               {renaming === template.name ? (
                 <form
                   ref={renameBox}
@@ -88,17 +88,17 @@ export function BookTemplates() {
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setRenaming(null);
                     }}
-                    className="h-8 min-w-0 flex-1 rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
+                    className="h-8 min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
                   />
                   <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>{S.s_luu_e91f26c0}</Button>
                   <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>{S.s_huy_96732485}</Button>
-                  <MotionPresence className="basis-full" open={Boolean(problem)}><p role="alert" className="text-[0.8125rem] text-danger">{problem}</p></MotionPresence>
+                  <MotionPresence className="basis-full" open={Boolean(problem)}><p role="alert" className="text-body-small text-danger">{problem}</p></MotionPresence>
                 </form>
               ) : (
                 <>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{template.name}</div>
-                    <div className="truncate text-[0.8125rem] text-fg-2">
+                    <div className="truncate text-body-small text-fg-2">
                       {[template.narrator || S.s_giong_may_de_xuat_35389626, PROFILE_LABEL[template.profile], template.startNow ? S.s_bat_dau_ngay_83137873 : S.s_cho_bam_bat_dau_5d760870, ...(template.precastWait ? [S.s_cho_ban_duyet_truoc_khi_thu_35299b41] : [])].join(" · ")}
                     </div>
                   </div>

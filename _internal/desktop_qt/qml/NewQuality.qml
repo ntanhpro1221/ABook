@@ -146,7 +146,7 @@ Column {
             }
             Prose {
                 objectName: "newModelNote"
-                topPadding: 6
+                topPadding: 8
                 small: true
                 text: root.draft.analysisModel ? S.s_ban_thu_nghiem_chua_duoc_kiem_tren_nhieu_t_32fc14af
                                                : S.s_mac_dinh_may_de_xuat_cho_hau_het_cac_truye_ea11fe13

@@ -111,7 +111,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
   return (
     <MotionRegion as="div" className="sticky top-0 z-10 bg-panel pb-1 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold tracking-wide text-fg-3">{label}</span>
+        <span className="text-xs font-medium tracking-wide text-fg-3">{label}</span>
         {current && ["missing", "error", "outdated"].includes(current.state) &&
           (remote ? (
             <OnComputerOnly verb={S.s_tai_giong_d6f57d0b} />
@@ -121,7 +121,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
             </Button>
           ))}
       </div>
-      {note && <p className={cn("mt-0.5 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
+      {note && <p className={cn("mt-1 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
       {current?.state === "downloading" && (
         <div className="mt-1 flex items-center gap-3">
           <Progress size="xs" running value={modulePercent(current) / 100} indeterminate={current.total <= 0} label={note ?? ""} className="flex-1" />
@@ -301,7 +301,7 @@ export function VoicePicker({
               { value: "all", label: S.s_tat_ca_49c73a31 },
             ]}
           />
-          <div className="mt-2 space-y-0.5">
+          <div className="mt-2 space-y-1">
             <p className="text-xs text-pretty text-fg-3">
               {data.tryLine
                 ? S.s_nut_sach_doc_cau_cua_0_doc_mau_chung_54b8a732(name)
@@ -326,18 +326,18 @@ export function VoicePicker({
                     disabled: !voice.installed,
                   })}
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <SelectionMark selected={voice.current} /><span className={cn("font-medium", voice.current ? "text-accent-text" : voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
                     {/* Viên "Đang dùng" chỉ khi nút bên phải là "Giữ giọng này"; còn lại nút đã nói đúng chữ ấy (soát 25-10: nói hai lần một hàng). */}
-                    {voice.current && data.pending && <span className="rounded-full bg-panel px-2 py-px text-[0.6875rem] font-medium text-accent-text">{S.s_dang_dung_275ca289}</span>}
+                    {voice.current && data.pending && <span className="rounded-full bg-panel px-2 py-px text-caption font-medium text-accent-text">{S.s_dang_dung_275ca289}</span>}
                     {voice.pending && !voice.current && (
-                      <span className="rounded-full bg-warning-soft px-2 py-px text-[0.6875rem] font-medium text-warning">{S.s_cho_ap_dung_77a52853}</span>
+                      <span className="rounded-full bg-warning-soft px-2 py-px text-caption font-medium text-warning">{S.s_cho_ap_dung_77a52853}</span>
                     )}
                     {voice.suggested && !voice.current && !voice.pending && (
-                      <span className="rounded-full bg-info-soft px-2 py-px text-[0.6875rem] font-medium text-info">{S.s_may_goi_y_1e7f4cfa}</span>
+                      <span className="rounded-full bg-info-soft px-2 py-px text-caption font-medium text-info">{S.s_may_goi_y_1e7f4cfa}</span>
                     )}
                   </div>
-                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length && !voice.takenBy?.length ? "text-warning" : "text-fg-2")}>
+                  <div className={cn("mt-1 text-xs", voice.sharedWith.length && !voice.takenBy?.length ? "text-warning" : "text-fg-2")}>
                     {voiceMeta(voice, shown === "all")}
                   </div>
                 </div>

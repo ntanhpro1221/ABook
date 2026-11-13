@@ -27,7 +27,7 @@ Interactive {
 
     Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
     Rectangle {
-        anchors.fill: parent; anchors.topMargin: 1
+        anchors.fill: parent; anchors.topMargin: 0
         radius: Theme.radiusControl
         color: Theme.text
         opacity: root.pressed ? 0.08 : (root.hovered ? 0.04 : 0)
@@ -49,7 +49,7 @@ Interactive {
         x: play.width + Theme.s12
         y: 1 + Theme.s12
         width: root.width - x - tail.width - Theme.s12
-        spacing: 2
+        spacing: 4
         Text {
             width: parent.width
             text: TextWrap.keepDots(root.track.title || "")

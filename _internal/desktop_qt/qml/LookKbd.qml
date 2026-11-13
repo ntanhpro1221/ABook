@@ -21,7 +21,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.arrow === "" ? root.text : ""
         color: Theme.text2
-        font.pixelSize: 11
+        font.pixelSize: 12
         font.weight: Theme.weightMedium
     }
     Icon { objectName: "keyArrow"; visible: root.arrow !== ""; anchors.centerIn: parent; name: root.arrow; rotation: root.arrowTurns[root.text] || 0; size: 12; color: Theme.text2 }

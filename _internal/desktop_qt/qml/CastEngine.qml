@@ -23,7 +23,7 @@ Column {
     readonly property string action: Logic.moduleAction(status)
     signal ready()
     UiActivity { target: root; id: activity; onResumed: if (root.downloading) root.refresh() }
-    spacing: 2
+    spacing: 4
 
     function refresh() {
         if (!root.engine || root.remote) return
@@ -57,7 +57,7 @@ Column {
             color: Theme.text3
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
-            font.weight: 600
+            font.weight: Theme.weightMedium
         }
         Button {
             id: start

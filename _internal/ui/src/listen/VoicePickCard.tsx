@@ -63,7 +63,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
   const measured = status.engines.some((row) => row.measured);
   return (
     <MotionRegion className="space-y-3">
-      <h3 className="text-sm font-semibold">{S.s_giong_theo_may_bc8b9fff}</h3>
+      <h3 className="text-sm font-medium">{S.s_giong_theo_may_bc8b9fff}</h3>
       <p role="status" className="text-sm text-fg-2 text-pretty">{pickHeadline(status)}</p>
       {measuring && <Progress value={(status.done ?? 0) / Math.max(1, status.total ?? 1)} indeterminate={!status.total} size="sm" running label={S.s_dang_thu_cac_giong_872881f6} />}
       {status.engines.length > 0 && (
@@ -72,17 +72,17 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
             const badge = rowBadge(row, status);
             const isChosen = status.chosen === row.engine;
             return (
-              <li key={row.engine} className="flex items-center gap-3 py-2.5">
+              <li key={row.engine} className="flex items-center gap-3 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {engineName(row.engine)}
                     {badge && (
-                      <span className={isChosen ? "rounded-full bg-accent-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-text" : "text-[0.6875rem] font-semibold text-fg-3"}>
+                      <span className={isChosen ? "rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text" : "text-caption font-medium text-fg-3"}>
                         {badge}
                       </span>
                     )}
                   </span>
-                  <span data-motion-live className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{rowNumbers(row, status.liveRtf)}</span>
+                  <span data-motion-live className="mt-1 block text-body-small text-fg-2 text-pretty">{rowNumbers(row, status.liveRtf)}</span>
                 </span>
                 {!isChosen && !measuring && (
                   <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button>
@@ -92,7 +92,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
           })}
         </ul>
       )}
-      {measured && <p className="text-[0.8125rem] text-fg-3 text-pretty">{pickMethod(status)}</p>}
+      {measured && <p className="text-body-small text-fg-3 text-pretty">{pickMethod(status)}</p>}
       {status.engines.length > 0 && !measuring && (
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant={measured ? "ghost" : "primary"} loading={busy} onClick={() => void run(() => backend.measure())}>

@@ -264,9 +264,9 @@ private fun BookTile(
         Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).then(if (active) Modifier.testTag("library_cover") else Modifier)) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
             if (series != null) {
-                CoverChip("${series.books.size} ${series.unit}", Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
+                CoverChip("${series.books.size} ${series.unit}", Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 4.dp))
             } else if (single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty())) {
-                CoverChip(single.badge, Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 3.dp))
+                CoverChip(single.badge, Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 4.dp))
             }
             val fraction = if (series == null) lead.progress.fraction else 0f
             if (ProgressFill.of(fraction) > 0f && fraction < 0.995f) {
@@ -319,7 +319,7 @@ private fun BookTile(
 @Composable
 private fun CoverChip(text: String, modifier: Modifier) {
     val colors = Abook.colors
-    Box(modifier.clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bg.copy(alpha = 0.92f)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+    Box(modifier.clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bg.copy(alpha = 0.92f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
         BasicText(text, style = Abook.type.caption.copy(color = colors.text, fontWeight = FontWeight.Medium))
     }
 }

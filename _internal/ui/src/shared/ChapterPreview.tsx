@@ -64,9 +64,9 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
   }, [editing]);
   const digits = String(chapters.length).length;
   return (
-    <MotionRegion as="div" elementRef={box} className={cn("-mx-1.5", className)}>
+    <MotionRegion as="div" elementRef={box} className={cn("-mx-2", className)}>
     {/* Nới mép cắt cho vòng tiêu điểm; đệm trả hàng và vạch chia về đúng cột chữ. */}
-    <div data-list-edges="chapter-preview" ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain px-1.5">
+    <div data-list-edges="chapter-preview" ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain px-2">
       {chapters.map((chapter, position) => {
         const index = chapter.index ?? position + 1;
         const on = choice ? choice.picked.has(index) : true;
@@ -88,7 +88,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
           >
             {choice && (
               // Ô chọn 14 px: nhãn bao ngoài nới vùng chạm lên 40 px ở màn hẹp / cảm ứng (touch-hit), bấm vào vùng nới cũng tích / bỏ tích.
-              <label className="touch-hit mt-[1.25px] grid size-5 place-items-center">
+              <label className="touch-hit mt-[0px] grid size-5 place-items-center">
                 <input
                   type="checkbox"
                   checked={on}
@@ -101,7 +101,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
             )}
             {/* Cột số rộng đúng số chữ số của số lớn nhất, canh phải: khoảng tới ô chọn và tới tên chương như nhau ở mọi hàng (cột 36 px canh
                 trái để "1" cách tên 34 px mà cách ô chọn 12 px). */}
-            <span className="tabular-cell text-right text-xs leading-5 pt-[2px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>
+            <span className="tabular-cell text-right text-xs leading-5 pt-[4px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>
             <div className="min-w-0">
               {choice && editing === index ? (
                 <input
@@ -140,7 +140,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   {/* Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng (đặt cạnh khối chữ thì tên hai dòng đẩy bút ra tận mép phải). */}
                   <span className="break-words">
                     {title}
-                    <Pencil className="ml-1.5 inline size-3 align-[-0.0625rem] text-fg-3 group-hover:text-accent-text" aria-hidden />
+                    <Pencil className="ml-2 inline size-3 align-[-0.0625rem] text-fg-3 group-hover:text-accent-text" aria-hidden />
                   </span>
                 </button>
               ) : (
@@ -154,7 +154,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               )}
             </div>
             <div className="tabular-cell text-right text-xs text-fg-2">
-              <div className="pt-[2px] leading-5">{formatNumber(chapter.words)}{S.s_chu_6117d040}</div>
+              <div className="pt-[4px] leading-5">{formatNumber(chapter.words)}{S.s_chu_6117d040}</div>
               {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)}{S.s_ky_tu_c7cc4ddf}</div>}
             </div>
           </div>

@@ -111,7 +111,7 @@ Item {
                 x: (parent.width - width) / 2
                 width: Math.min(parent.width, 320)
                 topPadding: visible ? 16 : 0
-                spacing: 6
+                spacing: 8
                 StudioBar {
                     width: parent.width
                     size: "sm"
@@ -161,7 +161,7 @@ Item {
                 x: (parent.width - width) / 2
                 width: Math.min(parent.width, 512)
                 topPadding: visible ? 20 : 0
-                spacing: 6
+                spacing: 8
                 Row {
                     width: parent.width
                     spacing: 8

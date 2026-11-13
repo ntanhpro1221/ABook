@@ -36,7 +36,7 @@ Column {
 
     Column {
         width: parent.width
-        spacing: 6
+        spacing: 8
         Label_ { text: S.s_loai_doan_4c243930 }
         ChoiceRow {
             objectName: "deliveryKind"
@@ -53,7 +53,7 @@ Column {
         open: root.needsSpeaker
         Column {
             width: parent.width
-            spacing: 6
+            spacing: 8
             Label_ { text: S.s_ai_noi_ab25bbf5 }
             Item {
                 visible: !!root.picked
@@ -104,11 +104,11 @@ Column {
             Column {
                 visible: root.line.emotion !== null
                 width: parent.width
-                spacing: 6
+                spacing: 8
                 Label_ { text: S.s_cam_xuc_05c1aee0 }
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
                     Repeater {
                         model: Script.EMOTIONS
                         delegate: ChoiceChip {
@@ -124,7 +124,7 @@ Column {
             Column {
                 visible: root.line.intensity !== null
                 width: parent.width
-                spacing: 6
+                spacing: 8
                 Label_ { text: S.s_muc_10267bc5 }
                 ChoiceRow {
                     objectName: "deliveryLevel"
@@ -139,14 +139,14 @@ Column {
                     text: S.s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3
                     color: Theme.text3
                     wrapMode: Text.Wrap
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                 }
             }
         }
     }
     Column {
         width: parent.width
-        spacing: 6
+        spacing: 8
         Label_ { text: S.s_chu_dem_doc_9772701b }
         FormField {
             id: wordsField
@@ -163,7 +163,7 @@ Column {
             text: S.s_chi_sua_chu_dem_doc_sach_giu_nguyen_bfa41b6d + (root.line.spoken ? S.s_xoa_het_de_dung_chu_goc_e7344ee8 : "")
             color: Theme.text3
             wrapMode: Text.Wrap
-            font.pixelSize: 11
+            font.pixelSize: 12
         }
         TextLink {
             objectName: "deliveryOriginal"

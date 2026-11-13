@@ -142,14 +142,14 @@ Item {
                                 x: 52
                                 y: 8
                                 width: Math.max(0, narratorRow.width - x - 12 - narratorRow.buttonsWidth)
-                                spacing: 2
+                                spacing: 4
                                 Text {
                                     width: parent.width
                                     text: S.s_nguoi_ke_chuyen_c0c2c504
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
-                                    font.weight: 600
+                                    font.weight: Theme.weightMedium
                                     font.capitalization: Font.AllUppercase
                                     font.letterSpacing: 0.72
                                 }
@@ -160,7 +160,7 @@ Item {
                                     color: Theme.text
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeBody
-                                    font.weight: 600
+                                    font.weight: Theme.weightMedium
                                 }
                                 Text {
                                     objectName: "castNarratorPending"

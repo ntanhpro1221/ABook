@@ -157,12 +157,12 @@ export function MorningRecap({ className }: { className?: string }) {
         <X className="size-4" />
       </button>
       {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px - không thành một dòng HOA dài; tên dài xuống dòng, không cắt. */}
-      <div className="flex items-baseline gap-2 pr-11 text-accent-text">
+      <div className="flex items-baseline gap-2 pr-12 text-accent-text">
         <Moon className="size-3.5 shrink-0 self-center" />
         <span className="label-section shrink-0">{sessionLabel(session.endedAt)}</span>
         <span className="min-w-0 break-words text-xs font-medium text-fg-2">· {session.bookTitle}</span>
       </div>
-      <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">{S.s_nghe_toi_dau_roi_thiep_di_cef0e105}</h2>
+      <h2 className="mt-2 pr-12 text-lg font-medium leading-snug">{S.s_nghe_toi_dau_roi_thiep_di_cef0e105}</h2>
 
       {/* Nét ✕ và chữ "Tìm đúng câu" bù đệm nút (right-[2px], -mr-4) để chạm đúng mép chữ như giờ của các mốc. */}
       {/* Các mốc là hàng phẳng trong thẻ (không thẻ lồng thẻ - soát 24-10 V04): mốc gợi ý nổi bằng biểu tượng + tên màu nhấn, không khung. */}
@@ -178,13 +178,13 @@ export function MorningRecap({ className }: { className?: string }) {
                 data-recap-marker=""
                 onClick={() => void resume(marker.chapterId, marker.seconds)}
                 className={cn(
-                  "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-control px-2 py-2.5 text-left transition-colors hover:bg-hover",
+                  "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-control px-2 py-3 text-left transition-colors hover:bg-hover",
                 )}
               >
                 <marker.icon className={cn("mt-line-icon size-4 shrink-0", marker.suggested ? "text-accent-text" : "text-fg-2")} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
+                    <span className={cn("text-sm font-medium", marker.suggested && "text-accent-text")}>{marker.label}</span>
                     <span className="shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
                   <span className="block truncate text-xs text-fg-2">{marker.hint}</span>
@@ -192,7 +192,7 @@ export function MorningRecap({ className }: { className?: string }) {
                     {marker.chapterTitle}
                     <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
-                  {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
+                  {sentence && <span className="mt-2 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>
               </button>
             </li>
@@ -204,7 +204,7 @@ export function MorningRecap({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => void resume(suggested.chapterId, suggested.seconds)}
-          className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
+          className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-control bg-accent px-4 font-medium text-accent-ink sm:flex-none"
         >
           <Play className="size-4" fill="currentColor" strokeWidth={0} />{S.s_nghe_tu_day_2f4d7119}</button>
         {script?.timed && (
@@ -219,13 +219,13 @@ export function MorningRecap({ className }: { className?: string }) {
         {/* Lời dẫn đứng yên trên khung cuộn (không dính trong khung): mép trên mờ dần ngay dưới nó, không làm mờ chính nó. */}
         <div className="mt-4 border-t border-line"><p className="py-2 text-xs text-fg-2">{S.s_chon_cau_cuoi_cung_con_nho_89c46fd8}</p><div ref={scrollFade.ref} style={scrollFade.style} className="-mx-2 max-h-80 overflow-y-auto px-2">
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
-            <h3 className="pb-1 pt-3 text-xs font-semibold text-fg-2">{group.title}</h3>
+            <h3 className="pb-1 pt-3 text-xs font-medium text-fg-2">{group.title}</h3>
             {group.segments.map((segment) => (
             <button
               key={segment.id}
               type="button"
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
-              className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
+              className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-3 text-left text-body leading-snug hover:bg-hover active:bg-hover"
             >
               {segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}
               {segment.text}

@@ -16,7 +16,7 @@ import { downloadFraction, downloadMenuLabel, downloadNote, type RemoteDownload 
 // "Tải về máy" cho sách "Trên máy khác" trên máy tính - như mục "Tải về máy" của điện thoại (android/App.tsx DownloadMenuItem):
 // tải nền cả cuốn, xem tiến độ ngay dưới tên sách, dừng / tải tiếp được; xong thì nghe được cả khi máy kia tắt.
 
-const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-2 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
 
 function computerOf(book: ListenBook): string {
   return book.remote && typeof book.remote === "object" ? book.remote.computer : "";
@@ -90,11 +90,11 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
         note.tone === "error" ? "bg-danger-soft text-danger" : "bg-info-soft text-info",
       )}
     >
-      <p className="inline-flex items-center gap-1.5 font-medium">
+      <p className="inline-flex items-center gap-2 font-medium">
         <Icon className="size-3.5 shrink-0" />{" "}
         {note.tone === "running" ? <LiveText shown={note.title} spoken={spokenProgress(S.s_dang_tai_ve_may_abb61c38, downloadFraction(status))} /> : note.title}
       </p>
-      {note.detail && <p className="mt-0.5 text-pretty">{note.detail}</p>}
+      {note.detail && <p className="mt-1 text-pretty">{note.detail}</p>}
       {note.tone === "running" && <Progress value={downloadFraction(status)} indeterminate={status.bytes <= 0 && status.files <= 0} size="xs" className="mt-2" label={S.s_dang_tai_ve_may_abb61c38} />}
       {note.action && (
         <Button

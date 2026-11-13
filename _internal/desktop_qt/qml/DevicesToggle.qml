@@ -22,7 +22,7 @@ Item {
         id: words
         width: root.width - toggle.width - 24
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: 4
         Text {
             width: parent.width
             text: root.label

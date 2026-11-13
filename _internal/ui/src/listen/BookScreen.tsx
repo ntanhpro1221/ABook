@@ -161,7 +161,7 @@ const ChapterLine = memo(function ChapterLine({
       // quanh biểu tượng 14 px (nút phát size-9 = 31,5 px, màn chạm 48 px; nút "…" size-8 = 28 px). Điện thoại hết chỗ cho lề âm (nút 48 px sẽ
       // lòi khỏi màn): biểu tượng dồn về mép ngoài của nút. Nền rê chuột tràn ra lề.
       className={cn(
-        "group -mx-2 flex items-center gap-3 rounded-control px-2 py-2.5 transition-colors duration-motion-fast sm:-mx-3 sm:px-3",
+        "group -mx-2 flex items-center gap-3 rounded-control px-2 py-3 transition-colors duration-motion-fast sm:-mx-3 sm:px-3",
         canPlay(chapter) && "hover:bg-hover",
       )}
     >
@@ -170,7 +170,7 @@ const ChapterLine = memo(function ChapterLine({
         onClick={onPlay}
         disabled={!canPlay(chapter)}
         aria-label={playing ? S.s_tam_dung_0_43ccbbf2(chapter.fullTitle) : S.s_nghe_0_42d1e966(chapter.fullTitle)}
-        className="touch-hit touch-box -ml-[8.75px] grid size-9 shrink-0 place-items-center rounded-full text-fg-2 max-sm:ml-0 max-sm:!min-w-0 max-sm:!justify-start sm:pointer-coarse:-ml-[17px] hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
+        className="touch-hit touch-box -ml-[8px] grid size-9 shrink-0 place-items-center rounded-full text-fg-2 max-sm:ml-0 max-sm:!min-w-0 max-sm:!justify-start sm:pointer-coarse:-ml-[16px] hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
         {playing ? (
           <Vu className="h-3 text-accent" />
@@ -199,17 +199,17 @@ const ChapterLine = memo(function ChapterLine({
         <div className="min-h-[1rem] break-words text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
           {prepared && (
-            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
+            <span className="ml-2 inline-flex items-center gap-1 rounded-control bg-accent-soft px-1 align-[1px] text-caption font-medium text-accent-text">
               <CloudDownload className="size-3" aria-hidden />{S.s_da_lam_san_18d7d0da}</span>
           )}
         </div>
         {progressFill(heard) > 0 && heard < 1 && (
-          <div {...heardBarProps(heard)} className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
+          <div {...heardBarProps(heard)} className="mt-2 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
             <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${heard * 100 / 100})` }} />
           </div>
         )}
       </button>
-      <div className="-mr-[7px] size-8 shrink-0 max-sm:mr-0 max-sm:size-[48px]">
+      <div className="-mr-[8px] size-8 shrink-0 max-sm:mr-0 max-sm:size-[48px]">
         <ChapterMenu chapter={chapter} done={done} renamable={renamable} actions={actions} />
       </div>
     </MotionRegion>
@@ -264,7 +264,7 @@ function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenCha
     <DropdownMenu.Root open={open} onOpenChange={setOpen}>
       <DropdownMenu.Trigger asChild>{button({})}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-2 shadow-float">
           {canPlay(chapter) && (
             <DropdownMenu.Item onSelect={() => actions.play(chapter, 0)} className={MENU_ITEM}>
               <Play className="size-4" />{S.s_nghe_tu_dau_chuong_d35ec3e0}</DropdownMenu.Item>
@@ -360,7 +360,7 @@ export function SampleButton({ id, url, label }: { id: string; url: string; labe
         onClick={() => clip.toggle(id, url)}
         className={cn(
           // Cuối hàng: bù nửa phần ô 36 px rộng hơn icon 16 px để mực ▶ chạm mép cột như chữ các hàng khác (máy dò trailing-control-inset).
-          "touch-hit -mr-2.5 grid size-9 shrink-0 place-items-center rounded-full transition-colors",
+          "touch-hit -mr-3 grid size-9 shrink-0 place-items-center rounded-full transition-colors",
           active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg",
         )}
       >
@@ -432,17 +432,17 @@ export function PersonRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           {/* Tên và giọng xuống dòng thay vì cắt: "Thanh Bình · trầm hẳn" cắt giữa chừng là mất đúng chữ người nghe cần (soát UX a8). */}
-          <span className="min-w-0 break-words font-semibold">{name}</span>
+          <span className="min-w-0 break-words font-medium">{name}</span>
           {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
         </div>
         {person.originalName && <div className="break-words text-xs text-fg-3">{S.s_ten_goc_ece0e59a}{cleanName(person.originalName)})</div>}
-        <div className="mt-0.5 break-words text-xs text-fg-2">
+        <div className="mt-1 break-words text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
           {person.voice ? voiceName(person.voice) : S.s_chua_co_giong_7ce5f4b4}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
-          <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
+          <div className="mt-1 truncate text-xs font-medium text-accent-text">
             {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}:{" "}
             {[person.pendingVoice.preset && S.s_giong_0_e048b478(voiceName(person.pendingVoice)), person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
@@ -450,7 +450,7 @@ export function PersonRow({
           </div>
         )}
         {person.mergedInto && (onPickVoice || waiting) && (
-          <div className="mt-0.5 break-words text-xs font-medium text-accent-text">
+          <div className="mt-1 break-words text-xs font-medium text-accent-text">
             {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}{S.s_gop_vao_6f4014d0}{cleanName(person.mergedInto)}
             {onUnmerge && typeof person.mergedAt === "number" && (
               <button
@@ -484,7 +484,7 @@ export function PersonRow({
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-cover border border-line bg-panel p-2 shadow-float">
                 {canMerge && (
                   <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
                     <GitMerge className="size-4" />{S.s_gop_vao_nguoi_khac_2d232c7b}</DropdownMenu.Item>
@@ -557,10 +557,10 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         </div>
         <div className="min-w-0 flex-1">
           <div className="label-section text-fg-2">{S.s_nguoi_ke_chuyen_c0c2c504}</div>
-          <div className="mt-0.5 font-semibold">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
-          {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-0.5 text-xs text-fg-2">{line}</div>)}
+          <div className="mt-1 font-medium">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
+          {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-1 text-xs text-fg-2">{line}</div>)}
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
+            <div className="mt-1 truncate text-xs font-medium text-accent-text">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
           )}
           <div className="text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
@@ -658,7 +658,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
   });
   return (
     <div className="mt-3">
-      <p className="text-sm text-fg-2">{S.s_7_ngay_qua_70c6d33d}<span className="font-semibold text-fg">{formatLength(week)}</span>{S.s_nghe_cuon_nay_8e481d62}</p>
+      <p className="text-sm text-fg-2">{S.s_7_ngay_qua_70c6d33d}<span className="font-medium text-fg">{formatLength(week)}</span>{S.s_nghe_cuon_nay_8e481d62}</p>
       {/* Nhóm ngày / lượt nghe mới thêm khi đang mở tab: mở ra tại chỗ (vùng ngoài chỉ khoá "có / không có"). */}
       <AnimatedRows items={[...groups.entries()]} keyOf={([day]) => day}>
       {([day, items]) => (
@@ -666,7 +666,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
         <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={S.s_0_luot_nghe_6788e770(items.length)}>
           <AnimatedRows className="mt-2 divide-y divide-line" items={items} keyOf={(item) => String(item.id)}>
             {(item) => (
-              <div className="flex items-center gap-3 py-2.5">
+              <div className="flex items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">
                     {/* Cùng phút thì một mốc giờ, không "13:57-13:57" (soát UX 29-09). */}
@@ -790,7 +790,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="mt-3 inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
+            className="mt-3 inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
           >
             <UserRound className="size-3.5 shrink-0" />
             <span className="shrink-0">{S.s_ho_so_nghe_a80cbba0}</span>
@@ -799,15 +799,15 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-cover border border-line bg-panel p-1.5 shadow-float">
-            <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">{S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597}</p>
+          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-cover border border-line bg-panel p-2 shadow-float">
+            <p className="px-2 pb-2 pt-1 text-xs text-fg-2">{S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597}</p>
             {records.map((record) => (
               <DropdownMenu.Item
                 key={record.id}
                 onSelect={() => {
                   if (!record.active) switchTo(() => mutations.activateRecord.mutateAsync(record.id), S.s_dang_dung_ho_so_0_59e7b339(record.name));
                 }}
-                className={cn(MENU_ITEM, "h-auto py-1.5")}
+                className={cn(MENU_ITEM, "h-auto py-2")}
               >
                 <SelectionMark selected={record.active} />
                 <span className="min-w-0 flex-1">
@@ -1020,7 +1020,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   // "Không tìm thấy" và hộp thoại đang sửa dở mất theo.
   if (!book || isMissing(error)) {
     return (
-      <EmptyState icon={BookOpenText} title={S.s_khong_tim_thay_sach_nay_0836038e} className="mt-20" action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_7bb3f8c2}</Button>}>{S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0}</EmptyState>
+      <EmptyState icon={BookOpenText} title={S.s_khong_tim_thay_sach_nay_0836038e} className="mt-16" action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_7bb3f8c2}</Button>}>{S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0}</EmptyState>
     );
   }
   const chapters = book.chapters ?? [];
@@ -1116,7 +1116,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
       <div className={split ? "grid min-h-0 flex-1 grid-cols-[var(--book-left)_minmax(0,1fr)] gap-x-8" : "contents"}>
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
-      <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 mt-4 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pt-1 pb-6 sm:gap-x-0")}>
+      <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-8", split && "-mx-1 mt-4 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pt-1 pb-6 sm:gap-x-0")}>
         {/* Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b). Lớp nút phủ lên bìa, nên bắt đầu / thôi nghe không dựng lại bìa. */}
         <div className={cn("press relative w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")}>
           <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="aspect-[2/3] w-full" />
@@ -1124,7 +1124,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         </div>
         <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
-          <p className="mt-1.5 text-sm text-fg-2">
+          <p className="mt-2 text-sm text-fg-2">
             <DotJoin
               parts={[
                 book.author,
@@ -1138,9 +1138,9 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             />
           </p>
           {/* Tình trạng của cuốn: một dòng chữ nhỏ, không hộp, không viên thuốc màu. */}
-          {textOnly && <p className="mt-1.5 text-sm text-fg-2">{textBookLine(speaks)}</p>}
+          {textOnly && <p className="mt-2 text-sm text-fg-2">{textBookLine(speaks)}</p>}
           {!book.complete && !textOnly && (
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
                 ? S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2
@@ -1155,7 +1155,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             </p>
           )}
           {book.missingFiles ? (
-            <p className="mt-1.5 text-sm text-warning">
+            <p className="mt-2 text-sm text-warning">
               {book.missingFiles}{S.s_chuong_mat_file_tren_may_nay_09492c4c}{book.stage === "text"
                 ? S.s_ban_hay_them_lai_dung_file_sach_goc_epub_w_0833d0ba
                 : S.s_ban_hay_mo_lai_file_sach_abook_cua_cuon_na_4efff7a0}
@@ -1163,7 +1163,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           ) : null}
           {book.remote && !downloaded && (
             // Biểu tượng cao đúng một dòng chữ: chữ xuống hai dòng thì biểu tượng vẫn thẳng dòng đầu, không trôi vào giữa.
-            <p className="mt-1.5 flex items-start gap-1.5 text-sm text-fg-2">
+            <p className="mt-2 flex items-start gap-2 text-sm text-fg-2">
               <span className="grid h-[1lh] shrink-0 place-items-center"><Laptop className="size-4" /></span>
               {typeof book.remote === "object"
                 ? S.s_nghe_thang_tu_0_chuong_nghe_toi_duoc_giu_l_a6a23b61(book.remote.computer || S.s_may_khac_95db1846)
@@ -1181,7 +1181,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                 <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label={S.s_da_nghe_1e0f8d88} />
                 {/* Một dòng. "Còn" tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ
                     "chưa nghe" để hai con số không trông như mâu thuẫn (soát UX 29-09). */}
-                <p className="mt-1.5 text-xs text-fg-2">
+                <p className="mt-2 text-xs text-fg-2">
                   {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[S.s_da_nghe_0_2f78a962(formatLength(heard)), S.s_con_0_chua_nghe_4959c9c5(formatLength(left))]} /></TickingValue> : listening ? (player.error ? S.s_chua_phat_duoc_3ecb850e : S.s_dang_nghe_9310d8cf) : S.s_chua_nghe_2fbea4c8}
                 </p>
               </>
