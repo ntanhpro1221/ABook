@@ -12,6 +12,22 @@ import pytest
 
 from abook.webui.server import ApiError, App, Handler
 
+NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+
+
+@pytest.fixture
+def offline_ollama(monkeypatch):
+    """Fake installation files never launch a program or query the owner's server."""
+    from abook.webui.studio_setup import StudioSetup
+
+    monkeypatch.setattr(StudioSetup, "ensure_ollama", lambda self: None)
+    monkeypatch.setattr(StudioSetup, "_ollama_models", lambda self, **kwargs: None)
+
+    def refuse_process(*args, **kwargs):
+        raise AssertionError("Offline setup tests must not create a real process")
+
+    monkeypatch.setattr("abook.webui.studio_setup.subprocess.Popen", refuse_process)
+
 
 @pytest.mark.parametrize("where", ["Books", "Studio/books", "."])
 def test_library_cannot_be_saved_in_uninstall_tree(tmp_path, monkeypatch, where):
@@ -43,7 +59,7 @@ def test_uninstall_guard_reads_real_preferences(tmp_path, library, code, target,
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                              str(Path(guard).resolve())],
                             env={**os.environ, "ABOOK_PREFERENCES": str(prefs),
-                                 "ABOOK_DELETE_TARGET": str(tmp_path / target)}, capture_output=True)
+                                 "ABOOK_DELETE_TARGET": str(tmp_path / target)}, capture_output=True, creationflags=NO_WINDOW)
     expected = 0 if target == "ABook/Studio" and library == "ABook/Books" else code
     assert result.returncode == expected, result.stderr
 
@@ -103,7 +119,7 @@ def test_finished_steps_without_marker_repeat_verification(tmp_path, monkeypatch
     assert "verify" in setup._state()["done"]
 
 
-def test_crash_after_update_step_cannot_reuse_old_verify(tmp_path, monkeypatch):
+def test_crash_after_update_step_cannot_reuse_old_verify(tmp_path, monkeypatch, offline_ollama):
     from abook.webui.studio_setup import StudioSetup, STEPS
     setup = StudioSetup(tmp_path / "studio", tmp_path, gpu=lambda: None)
     setup.pythonw.parent.mkdir(parents=True)
@@ -213,7 +229,7 @@ def test_uninstaller_process_root_is_data_not_powershell_code(tmp_path, name):
         assignment = re.search(r"\$\$root = .*?;", source).group()
         args = ["-Command", assignment.replace("$$", "$").replace("${FOLDER}", str(root)) + " Write-Output $root"]
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", *args],
-                            env={**os.environ, "ABOOK_STOP_ROOT": str(root)}, capture_output=True)
+                            env={**os.environ, "ABOOK_STOP_ROOT": str(root)}, capture_output=True, creationflags=NO_WINDOW)
     assert result.returncode == 0, result.stderr
 
 
@@ -230,7 +246,7 @@ def test_requirements_change_invalidates_only_packages_and_verify(tmp_path):
     assert "packages" in setup.outdated()
 
 
-def test_missing_lightweight_dependency_is_repairable(tmp_path, monkeypatch):
+def test_missing_lightweight_dependency_is_repairable(tmp_path, monkeypatch, offline_ollama):
     from abook.webui.studio_setup import StudioSetup, STEPS
     setup = StudioSetup(tmp_path / "studio", tmp_path, gpu=lambda: None)
     setup.pythonw.parent.mkdir(parents=True)
@@ -244,7 +260,7 @@ def test_missing_lightweight_dependency_is_repairable(tmp_path, monkeypatch):
     assert "packages" in setup.damaged()
 
 
-def test_repair_reuses_venv_and_models_and_only_runs_packages_and_verify(tmp_path, monkeypatch):
+def test_repair_reuses_venv_and_models_and_only_runs_packages_and_verify(tmp_path, monkeypatch, offline_ollama):
     from abook.webui import studio_setup
     from abook.webui.studio_setup import StudioSetup, STEPS
     setup = StudioSetup(tmp_path / "studio", tmp_path, gpu=lambda: None)
@@ -308,7 +324,7 @@ wheels = [{{url = "https://invalid.invalid/a85fake.whl", hash = "sha256:{trusted
     def run(command, _what):
         command[command.index("--python") + 1] = "D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe"
         command += ["--target", str(tmp_path / "isolated"), "--offline", "--no-index", "--find-links", str(tmp_path)]
-        result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")
+        result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", creationflags=NO_WINDOW)
         if result.returncode:
             raise s.SetupError(result.stderr)
         return result.stdout
@@ -360,7 +376,7 @@ def test_upgrade_intent_is_independent_of_installer_filename(filename):
         mock = "function Get-CimInstance { param($ClassName,$Filter) if ($Filter -eq ('ProcessId=' + $PID)) { return @{ParentProcessId=100} }; if ($Filter -eq 'ProcessId=100') { return @{ParentProcessId=200} }; return @{Name='" + filename + "'} }; "
         args = ["-Command", mock + command]
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", *args],
-                            env={**os.environ, "ABOOK_INSTALLER_UPGRADE": "1"}, capture_output=True)
+                            env={**os.environ, "ABOOK_INSTALLER_UPGRADE": "1"}, capture_output=True, creationflags=NO_WINDOW)
     assert result.returncode == 3, result.stderr
 
 
@@ -374,7 +390,7 @@ def test_uninstall_guard_fails_closed_for_unreadable_preferences(tmp_path, broke
         prefs.mkdir()
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                              str(Path(guard).resolve())],
-                            env={**os.environ, "ABOOK_PREFERENCES": str(prefs), "ABOOK_DELETE_TARGET": str(tmp_path)}, capture_output=True)
+                            env={**os.environ, "ABOOK_PREFERENCES": str(prefs), "ABOOK_DELETE_TARGET": str(tmp_path)}, capture_output=True, creationflags=NO_WINDOW)
     assert result.returncode == 4
 
 
@@ -394,7 +410,7 @@ def test_qt_uninstall_guard_refuses_a_junction_inside_the_target(tmp_path, insid
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                              str(Path("desktop_qt/installer/uninstall_guard.ps1").resolve())],
                             env={**os.environ, "ABOOK_PREFERENCES": str(tmp_path / "none.json"), "ABOOK_DELETE_TARGET": str(target)},
-                            capture_output=True)
+                            capture_output=True, creationflags=NO_WINDOW)
     if inside:
         os.rmdir(target / "a" / "b" / "Studio")
     assert result.returncode == (4 if inside else 0), result.stderr
@@ -430,6 +446,6 @@ exit $LASTEXITCODE
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(wrapper)],
                             env={**os.environ, "ABOOK_STOP_ROOT": str(root), "ABOOK_TEST_DATE": "new" if reused else "old",
                                  "ABOOK_TEST_FAIL": "1" if failed else "0",
-                                 "ABOOK_TEST_HELPER": str(Path("shell/src-tauri/windows/stop_processes.ps1").resolve())}, capture_output=True)
+                                 "ABOOK_TEST_HELPER": str(Path("shell/src-tauri/windows/stop_processes.ps1").resolve())}, capture_output=True, creationflags=NO_WINDOW)
     assert result.returncode == code, result.stderr
     assert result.stdout == (b"stopped:200" if not failed and not reused else b"")

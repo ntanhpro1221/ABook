@@ -1,5 +1,11 @@
 # Test report
 
+## 14-11-2026 — isolate offline setup process boundaries
+
+- The full gate was stopped after its pytest process blocked in Windows CreateProcess while an offline setup test tried to launch a fake Ollama executable. A read-only stack dump identified the call. Partial output and process identities were retained; no production process was stopped.
+- Three setup cases now replace server startup/model discovery and reject any real process creation. Each passed in three separate pytest invocations (3/3 each); the surrounding setup/assets/disk suites passed **95 tests**. Explicit console-suppression flags also cover native tools in the touched test module.
+- Runtime, UI, native code, dependency declarations and packaging inputs did not change. Existing signed artifacts are retained only after checking the exact non-shipped file delta and all six artifact SHA-256 values; the full gate must repeat on the new clean test revision.
+
 ## 13-11-2026 — final review-branch integration preflight
 
 - Integrated all completed review fixes, generic attribution through its noun-phrase guard, background tools and the reading-dock surface. Combined dotted-number rules with the shared Vietnamese letter classes on both Python and Kotlin. Preserved the reviewed share-screen geometry and isolated TLS test identity.
