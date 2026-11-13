@@ -95,8 +95,8 @@ ASSET_PATHS = ("cmudict.dict", "voice_previews")
 # scripts/release.py từ chối dựng bản phát hành.
 # Gói 2 (04-10): thêm giọng nghe thử ZeroTTS (voice_previews/zerotts_*.wav) và Supertonic (supertonic_*.wav). Gói 1 =
 # 234640f0…/studio-assets-1.zip, 3e7d31b5…, 14 561 173.
-STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/c9b08b69be40248c70ac7eba06634dc8099281e5/"
-                         "studio-assets/studio-assets-2.zip", "2f7dd37de132c59a21230a1107052f7af21d552c9bf1aa0e4cc07a1069e14c87", 19_700_958)
+STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/ed98850c33ea719eae2adde0a0366b5ec6d7682e/"
+                         "studio-assets/studio-assets-3.zip", "262add0c494a08ec2572f2c6c6d18c11a67450b0c733b41ee7150278dab87235", 21_103_743)
 
 # Model căn từng chữ khi nghe (webui/word_timing.py, docs/LISTEN_ANYTHING.md "Word timings"): wav2vec2 CTC tiếng Việt
 # `dragonSwing/wav2vec2-base-vietnamese` (Apache-2.0) xuất ONNX int8 (122 MB) + từ điển ký tự. Chỉ Studio dùng (căn lúc đóng gói

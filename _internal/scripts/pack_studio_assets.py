@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from abook.webui.studio_setup import ASSET_PATHS  # noqa: E402
 
 ASSETS = Path(__file__).resolve().parent.parent / "abook" / "assets"
-ARCHIVE_NAME = "studio-assets-2.zip"  # 2: thêm giọng nghe thử ZeroTTS (5) và Supertonic (4), 04-10
+ARCHIVE_NAME = "studio-assets-3.zip"  # 3: giọng nghe thử sinh lại từ câu mẫu tự viết, 13-11 (2: ZeroTTS + Supertonic, 04-10)
 FIXED_TIME = (2026, 1, 1, 0, 0, 0)
 
 
