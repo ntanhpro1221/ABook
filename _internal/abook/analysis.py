@@ -13,7 +13,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 import requests
 
@@ -326,7 +326,6 @@ GENERIC_SPEAKER_TRAITS = {
     "người đàn ông trung niên": ("male", "adult"),
     "người đàn ông": ("male", "adult"),
     "người phụ nữ": ("female", "adult"),
-    'người phụ nữ áo khoác tím': ("female", "adult"),
     "ông lão": ("male", "elderly"),
     "bà lão": ("female", "elderly"),
     "giám mục": ("male", "adult"),
@@ -1280,18 +1279,68 @@ def _names_a_character(text: str) -> bool:
     return False
 
 
+GENERIC_TAG_ADVERBS = ("khẽ", "nhỏ", "lớn", "tiếp", "liền", "bỗng", "vội", "cười", "và", "trung niên", "bước tới")
+GENERIC_SPEECH_VERBS = (
+    "nói", "hỏi", "đáp", "trả lời", "lên tiếng", "thì thầm", "quát", "kêu", "thốt lên", "gào", "hét", "hô",
+)
+# Mô tả ngoại hình ngay sau nhãn chung ("người phụ nữ MẶC VÁY XANH nói"): mở bằng động từ mặc/mang/cầm, "có/với", hay danh
+# từ trang phục/tóc đứng làm định ngữ ("cô gái tóc đỏ"). Nhãn giữ cả mô tả - hai người phụ nữ mặc khác nhau là hai NPC;
+# giới/tuổi vẫn tra theo tiền tố là nhãn chung.
+GENERIC_DESCRIPTOR_STARTERS = (
+    "mặc", "đội", "đeo", "khoác", "choàng", "quàng", "cầm", "xách", "ôm", "vác", "mang", "với",
+    "đi giày", "đi dép", "đi ủng", "đi guốc",
+    "áo", "váy", "quần", "mũ", "nón", "khăn", "tóc", "râu",
+)
+# "có" chỉ mở mô tả khi theo sau là danh từ; "có vẻ/có lẽ/có thể..." là trạng ngữ, không phải ngoại hình.
+GENERIC_DESCRIPTOR_HAS_NOT = ("vẻ", "lẽ", "thể", "chút", "phần", "ý", "khi", "lúc", "gì", "điều", "người", "tiếng", "việc")
+# Từ cắt cụm mô tả: liên từ/quan hệ từ, trợ từ thời thể, đại từ, chỉ định từ. Một trong chúng nằm giữa nhãn và động từ nói
+# nghĩa là câu có chủ ngữ khác hay mệnh đề phụ ("người phụ nữ mặc áo mà anh ta nói" - người nói là "anh ta") nên không gán.
+GENERIC_DESCRIPTOR_STOPWORDS = (
+    "mà", "rằng", "thì", "là", "khi", "lúc", "nhưng", "còn", "nên", "vì", "để", "cho", "nếu", "rồi", "đã", "đang", "sẽ",
+    "vừa", "mới", "cũng", "lại", "hay", "hoặc", "tôi", "ta", "tao", "anh", "chị", "em", "hắn", "nó", "họ", "chúng",
+    "mình", "gã", "ả", "y", "cô", "ông", "bà", "cậu", "ấy", "này", "kia", "đó",
+)
+GENERIC_DESCRIPTOR_MAX_SYLLABLES = 6
+
+
+def _alternation(words: Iterable[str]) -> str:
+    # re.escape turns a space into "\ "; a multi-word entry matches any run of whitespace.
+    return "|".join(re.escape(word).replace(r"\ ", r"\s+") for word in sorted(set(words), key=len, reverse=True))
+
+
+_GENERIC_DESCRIPTOR_WORD = (
+    rf"(?!(?:{_alternation(GENERIC_DESCRIPTOR_STOPWORDS + GENERIC_TAG_ADVERBS + GENERIC_SPEECH_VERBS)})(?!\w))"
+    r"[^\W\d_]+"
+)
+_GENERIC_DESCRIPTOR = (
+    rf"(?i:(?:{_alternation(GENERIC_DESCRIPTOR_STARTERS)}|có(?!\s+(?:{_alternation(GENERIC_DESCRIPTOR_HAS_NOT)})(?!\w)))"
+    rf"(?:\s+{_GENERIC_DESCRIPTOR_WORD}){{1,{GENERIC_DESCRIPTOR_MAX_SYLLABLES - 1}}})"
+)
+
+
 def _generic_speaker_attribution(text: str, *, prefer_last: bool) -> str | None:
     # Capture the complete subject before the speech verb. A descriptor inside an
     # object/comparison is never a speaker, and a kinship complement is not its head.
+    # A short appearance phrase right after the label ("mặc váy xanh", "đội nón lá") is
+    # part of the subject; it may not hold a comma, a speech verb, a pronoun or a
+    # conjunction, nor a capitalised word, and is capped at GENERIC_DESCRIPTOR_MAX_SYLLABLES.
     labels = sorted(set(GENERIC_SPEAKER_TRAITS) | {"mẹ", "bố", "cha", "em gái", "em trai", "chị gái", "vợ", "chồng"}, key=len, reverse=True)
     pattern = re.compile(
         rf"^[\s,;—–-]*(?i:(?:một|mấy)\s+)?(?P<label>(?i:{'|'.join(map(re.escape, labels))})"
-        r"(?:\s+(?i:(?:của\s+)?(?:cô bé|cậu bé))|\s+(?:của\s+)?[A-ZÀ-ỸĐ][\w-]*(?:\s+[A-ZÀ-ỸĐ][\w-]*){0,2})?)"
-        r"\s+(?i:(?:(?:khẽ|nhỏ|lớn|tiếp|liền|bỗng|vội|cười|và|trung niên|bước tới)\s+){0,3}"
-        r"(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|quát|kêu|thốt lên|gào|hét|hô))(?!\w)",
+        r"(?:\s+(?i:(?:của\s+)?(?:cô bé|cậu bé))|\s+(?:của\s+)?[A-ZÀ-ỸĐ][\w-]*(?:\s+[A-ZÀ-ỸĐ][\w-]*){0,2})?"
+        rf"(?:\s+(?P<descriptor>{_GENERIC_DESCRIPTOR}))?)"
+        rf"\s+(?i:(?:(?:{_alternation(GENERIC_TAG_ADVERBS)})\s+){{0,3}}"
+        rf"(?:{_alternation(GENERIC_SPEECH_VERBS)}))(?!\w)",
     )
     match = pattern.match(text)
-    return match.group("label").strip().casefold() if match else None
+    if not match:
+        return None
+    descriptor = (match.group("descriptor") or "").split()
+    # A capitalised word inside the phrase is a name, not clothing ("cầm thư Tavin nói"):
+    # whose speech it is stays ambiguous, so nothing is attributed.
+    if len(descriptor) > GENERIC_DESCRIPTOR_MAX_SYLLABLES or any(word != word.casefold() for word in descriptor):
+        return None
+    return " ".join(match.group("label").split()).casefold()
 
 
 def _attribution_neighbours(
