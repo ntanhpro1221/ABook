@@ -74,6 +74,16 @@ _TEST_ENV_DEFAULTS = {name: "0" for name in (
 
 
 @pytest.fixture(autouse=True)
+def _invalid_synthetic_executables_fail_without_a_loader_dialog(monkeypatch, tmp_path_factory):
+    if os.name == "nt":
+        import _winapi
+        from tests.process_fakes import guarded_create_process
+
+        monkeypatch.setattr(_winapi, "CreateProcess",
+                            guarded_create_process(_winapi.CreateProcess, tmp_path_factory.getbasetemp()))
+
+
+@pytest.fixture(autouse=True)
 def _isolated_application_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in tuple(os.environ):
         if name.startswith(("HF_", "TRANSFORMERS_", "ABOOK_")) and name not in _RUNNER_ENV and not name.startswith("ABOOK_TEST_"):

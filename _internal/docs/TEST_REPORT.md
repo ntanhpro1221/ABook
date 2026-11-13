@@ -1,5 +1,11 @@
 # Test report
 
+## 14-11-2026 — fail invalid synthetic executables before native loading
+
+- A second full-gate attempt reached the music-module tests, where an intentionally fake ffmpeg image blocked in the same Windows CreateProcess boundary. Both attempts retain stack dumps, partial output and exact process identities; neither is reported as a completed pytest suite.
+- The test harness now intercepts only invalid `.exe` files under pytest's temporary root and returns Windows bad-image error 193 before native dispatch. It checks the DOS header and PE signature, including short files that start with MZ. Missing/inaccessible paths keep the native error path; valid images and paths outside the test root keep their original arguments and dispatch. Production process-launch code is unchanged.
+- Five boundary regressions plus both observed stall cases passed **7/7 in each of three isolated invocations**. The full adjacent process/setup/music/disk selection passed **149 tests, zero failures**, in 121.66 seconds. Native fake-image dispatch is never performed by those controls. The complete gate must repeat at the new clean revision.
+
 ## 14-11-2026 — isolate offline setup process boundaries
 
 - The full gate was stopped after its pytest process blocked in Windows CreateProcess while an offline setup test tried to launch a fake Ollama executable. A read-only stack dump identified the call. Partial output and process identities were retained; no production process was stopped.
