@@ -17,11 +17,14 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 
 from .character_registry import _fold_each_char, _within_one_edit, _within_two_edits
+from .text_processing import VIETNAMESE_UPPERCASE_CLASS
 
 # Nhãn không phải tên người: người kể, chưa rõ, hệ thống, NPC (cả nhãn cục bộ `NPC_LOCAL::...`).
 NOT_A_NAME = frozenset({"NARRATOR", "UNKNOWN", "SYSTEM", ""})
 NPC_LABEL = re.compile(r"NPC(?:$|[\s:_*-])", flags=re.IGNORECASE)
-CAPITALIZED_RUN = re.compile(r"(?<![\w-])([A-ZÀ-ỸĐ][\w']*(?:-[\w']+)*(?: [A-ZÀ-ỸĐ][\w']*(?:-[\w']+)*){0,2})")
+CAPITALIZED_RUN = re.compile(
+    rf"(?<![\w-])({VIETNAMESE_UPPERCASE_CLASS}[\w']*(?:-[\w']+)*(?: {VIETNAMESE_UPPERCASE_CLASS}[\w']*(?:-[\w']+)*){{0,2}})"
+)
 KEY_DROPPED = re.compile(r"[\s\-_'.]")
 # Nguyên âm dài / phiên âm hai cách: "Tooko" = "Toko", "Yangcheon" = "Yangchen".
 KEY_VOWELS = (("oo", "o"), ("uu", "u"), ("ou", "o"), ("eo", "e"), ("ii", "i"), ("aa", "a"), ("ee", "e"))

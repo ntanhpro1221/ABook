@@ -61,7 +61,10 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-BOOK = sys.argv[1] if len(sys.argv) > 1 else "book2"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from abook.text_processing import VIETNAMESE_UPPERCASE_CLASS  # noqa: E402
+
+BOOK =sys.argv[1] if len(sys.argv) > 1 else "book2"
 VERSIONS = (
     "D:/Novels/Audiobooks/book2/_versions" if BOOK == "book2" else "D:/Novels/Audiobooks/_versions"
 )
@@ -116,7 +119,7 @@ def main() -> int:
                 if (
                     not speaker
                     or speaker.upper() in RESERVED
-                    or not re.fullmatch(r"[A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ]{1,20}", speaker)
+                    or not re.fullmatch(rf"{VIETNAMESE_UPPERCASE_CLASS}[a-zà-ỹA-ZÀ-Ỹ]{{1,20}}", speaker)
                 ):
                     continue
                 lines_of[speaker] += 1

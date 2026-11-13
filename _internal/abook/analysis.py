@@ -86,6 +86,7 @@ from .process_utils import terminate_process_tree
 from . import studio_names
 from .text_processing import (
     ROMAN_NUMERAL_TOKEN_PATTERN,
+    VIETNAMESE_UPPERCASE_CLASS,
     is_vocalization_only,
     roman_numeral_value,
     vietnamese_number_words,
@@ -1279,7 +1280,10 @@ def _names_a_character(text: str) -> bool:
     return False
 
 
-GENERIC_TAG_ADVERBS = ("khẽ", "nhỏ", "lớn", "tiếp", "liền", "bỗng", "vội", "cười", "và", "trung niên", "bước tới")
+# Tư thế ("đứng", "ngồi") đứng giữa chủ ngữ và động từ nói như một trạng từ: "cô gái đứng hỏi" là lời của cô gái.
+GENERIC_TAG_ADVERBS = (
+    "khẽ", "nhỏ", "lớn", "tiếp", "liền", "bỗng", "vội", "cười", "và", "trung niên", "bước tới", "đứng", "ngồi",
+)
 GENERIC_SPEECH_VERBS = (
     "nói", "hỏi", "đáp", "trả lời", "lên tiếng", "thì thầm", "quát", "kêu", "thốt lên", "gào", "hét", "hô",
 )
@@ -1327,7 +1331,8 @@ def _generic_speaker_attribution(text: str, *, prefer_last: bool) -> str | None:
     labels = sorted(set(GENERIC_SPEAKER_TRAITS) | {"mẹ", "bố", "cha", "em gái", "em trai", "chị gái", "vợ", "chồng"}, key=len, reverse=True)
     pattern = re.compile(
         rf"^[\s,;—–-]*(?i:(?:một|mấy)\s+)?(?P<label>(?i:{'|'.join(map(re.escape, labels))})"
-        r"(?:\s+(?i:(?:của\s+)?(?:cô bé|cậu bé))|\s+(?:của\s+)?[A-ZÀ-ỸĐ][\w-]*(?:\s+[A-ZÀ-ỸĐ][\w-]*){0,2})?"
+        r"(?:\s+(?i:(?:của\s+)?(?:cô bé|cậu bé))"
+        rf"|\s+(?:của\s+)?{VIETNAMESE_UPPERCASE_CLASS}[\w-]*(?:\s+{VIETNAMESE_UPPERCASE_CLASS}[\w-]*){{0,2}})?"
         rf"(?:\s+(?P<descriptor>{_GENERIC_DESCRIPTOR}))?)"
         rf"\s+(?i:(?:(?:{_alternation(GENERIC_TAG_ADVERBS)})\s+){{0,3}}"
         rf"(?:{_alternation(GENERIC_SPEECH_VERBS)}))(?!\w)",

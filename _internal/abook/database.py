@@ -56,6 +56,7 @@ from .text_processing import (
     SPLIT_MAX_CHARS_BY_STRATEGY,
     SPLIT_MAX_CHARS_FIELD,
     SPLIT_STRATEGY_FIELD,
+    VIETNAMESE_UPPERCASE_CLASS,
     is_standalone_ha_gasp,
     spoken_symbols_to_words,
 )
@@ -902,10 +903,7 @@ ANALYSIS_HOST_STUNNED_BLANK_MIND_PREFIX_PATTERN = re.compile(
     r"(?:\s+(?:lớn|nặng|khổng\s+lồ))?\s+(?:nện|đập)\s+vào\s+đầu,\s*$",
     flags=re.IGNORECASE,
 )
-ANALYSIS_HOST_VIETNAMESE_UPPERCASE_PATTERN = (
-    r"[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊ"
-    r"ÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ]"
-)
+ANALYSIS_HOST_VIETNAMESE_UPPERCASE_PATTERN = VIETNAMESE_UPPERCASE_CLASS
 ANALYSIS_HOST_DIRECT_AFFECT_SUBJECT_PATTERN = (
     r"(?:tôi|ta|mình|anh|chị|ông|bà|cô|cậu|hắn|nó|họ|"
     rf"(?-i:{ANALYSIS_HOST_VIETNAMESE_UPPERCASE_PATTERN}[A-Za-zÀ-ỹĐđ]*"

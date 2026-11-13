@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from .io_utils import decode_text_bytes
-from .text_processing import natural_key, segment_chapter_text
+from .text_processing import VIETNAMESE_UPPERCASE_CLASS, natural_key, segment_chapter_text
 
 FIRST_PERSON_RATE = 0.30
 # Theo chương (xem đầu file): ngưỡng một chương, tỉ lệ chương của cả cuốn, và số đoạn lời kể tối thiểu để một chương được
@@ -31,8 +31,7 @@ FIRST_PERSON_SHARE = 0.30
 MIN_NARRATION = 8
 # "mình" sau "của"/"tự" là phản thân ("cảm xúc của mình") - đầy trong truyện ngôi thứ ba.
 NARRATOR_I = re.compile(r"(?<!của )(?<!tự )(?<!\w)(tôi|tớ|mình)(?!\w)", re.IGNORECASE)
-_UPPER = "A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ"
-_WORD = rf"[{_UPPER}][\w'-]*"
+_WORD = rf"{VIETNAMESE_UPPERCASE_CLASS}[\w'-]*"
 # Cụm viết hoa 1-3 chữ KHÔNG đứng đầu câu (sau chữ thường hoặc dấu phẩy): gần như luôn là tên riêng.
 _NAME = re.compile(rf"(?<=[\w,;]\s)({_WORD}(?:\s{_WORD}){{0,2}})")
 _HONORIFIC = re.compile(r"-(san|sama|kun|chan|sensei|senpai|dono|nii|nee|nim|ssi|yah|hyung|nuna|noona|oppa|unnie)$", re.IGNORECASE)

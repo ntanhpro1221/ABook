@@ -10,6 +10,12 @@ from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file,
 from .readaloud.symbols import unit_slash
 
 
+# Một chữ HOA tiếng Việt, dùng làm lớp ký tự regex. Đừng viết dải điểm mã `À-Ỹ`: U+00C0..U+1EF8 chứa cả chữ thường
+# (à, đ, ă, ơ, ạ...), nên "đứng" hay "ăn" cũng thành "viết hoa" và bị coi là tên riêng.
+VIETNAMESE_UPPERCASE_CLASS = (
+    r"[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊ"
+    r"ÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ]"
+)
 QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
 # Bản dịch hay mở ‘ rồi đóng bằng dấu ' thẳng ("được gọi là ‘tổng hợp ý kiến'."): dấu ' bám cuối chữ và theo sau là khoảng
 # trắng / dấu câu / hết dòng thì đóng ‘. Dấu ' nằm GIỮA chữ (tên phiên âm "Ma'at", "I'm") không đóng gì. Không nhận nó
