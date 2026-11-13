@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.BasicText as Text
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.DisclosureRow
@@ -77,11 +78,13 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                             RowLine()
                             Reveal(share.code != null) {
                                 lastCode[0]?.let { code ->
+                                  Column {
                                     CodeRow(code, devices::cancelCode)
                                     val fingerprint = share.fingerprint.replace(" ", "")
-                                    Caption(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint))
-                                    Caption(S.s_pair_fingerprint_help)
-                                    Caption(S.s_pair_string + vn.abook.player.Pin.pairingString(code.digits, fingerprint))
+                                    Text(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.testTag("share_fingerprint"))
+                                    Text(S.s_pair_fingerprint_help, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_fingerprint_help"))
+                                    Text(S.s_pair_string + vn.abook.player.Pin.pairingString(code.digits, fingerprint), style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("share_pair_string"))
+                                  }
                                 }
                             }
                             Reveal(share.code == null) {

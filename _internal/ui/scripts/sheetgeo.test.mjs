@@ -1,5 +1,20 @@
 import { expect, it } from 'vitest';
-import { checkMorph, checkUnderlay } from './sheetgeo.mjs';
+import { checkMorph, checkUnderlay, installPlayerProbe } from './sheetgeo.mjs';
+import { browserAvailable, launch, findBrowser, connect, openPage, evaluate } from './gallery_browser.mjs';
+
+it.skipIf(!browserAvailable)('records trusted Escape before a dialog stops propagation', async () => {
+  let browser, cdp;
+  try {
+    browser = await launch(findBrowser(), { disableGpu: true });
+    cdp = await connect(browser.endpoint);
+    const page = await openPage(cdp, { width: 1000, height: 700, scale: 1, mobile: false, theme: 'light', isolated: true });
+    await evaluate(cdp, page.sessionId, `(${installPlayerProbe.toString()})();window.addEventListener('keydown',e=>e.stopImmediatePropagation(),true);__playerProbe.arm();true`);
+    for (const type of ['keyDown', 'keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, page.sessionId);
+    const result = await evaluate(cdp, page.sessionId, `new Promise(resolve=>{const tick=()=>__playerProbe.done?resolve({timedOut:__playerProbe.timedOut,events:__playerProbe.events}):requestAnimationFrame(tick);tick()})`);
+    expect(result.timedOut).toBe(false);
+    expect(result.events).toContainEqual({ type: 'keydown', trusted: true });
+  } finally { cdp?.close(); await browser?.close(); }
+}, 30000);
 
 const mini = { x: 0, y: 800, width: 390, height: 60 };
 const full = { x: 0, y: 0, width: 390, height: 900 };

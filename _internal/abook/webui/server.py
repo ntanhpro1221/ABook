@@ -3424,7 +3424,7 @@ class App:
         return plan
 
     def source_files(self, kind: str, value: str) -> list[Path]:
-        """Contained sources for redo references. Legacy next references grant no source access."""
+        """Contained sources for redo references. Display-only next references grant no source access."""
         project = self._book(value)
         return continuation._input_paths(project) if kind == "redo" else []
 

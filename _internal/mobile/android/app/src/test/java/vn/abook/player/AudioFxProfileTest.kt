@@ -103,6 +103,7 @@ class AudioFxProfileTest {
     }
     @Test fun sharedBookAndReopenDoNotLeak() {
         val context=ApplicationProvider.getApplicationContext<Context>()
+        AudioFx::class.java.getDeclaredField("prefs").apply { isAccessible = true }.set(AudioFx, null)
         context.getSharedPreferences("audio_fx",Context.MODE_PRIVATE).edit().clear().commit()
         AudioFx.init(context);AudioFx.selectBook("")
         AudioFx.update(AudioFxSettings(boost=3.0,speed=1.5,volume=.7))

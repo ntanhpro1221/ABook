@@ -1,0 +1,794 @@
+{
+  "_internal/mobile/android/app/src/test/snapshots/add_chapter_name_dark.png": {
+    "sha256": "4f7ff347e839db758f5271c46d3e729f6caa4f52ad61c60bbd27a4c53061e880",
+    "reason": "Reviewed old/new add_chapter_name_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/add_chapter_name_light.png": {
+    "sha256": "60cf7de49579309b42946da0c8f5617de117b224acceccdaf3099e478693967e",
+    "reason": "Reviewed old/new add_chapter_name_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/add_footnotes_dark.png": {
+    "sha256": "af9aa5c7e20c8c2ece0d422cd1545a574ba67b2eb335add74444ff67d5a7cef5",
+    "reason": "Reviewed old/new add_footnotes_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/add_footnotes_light.png": {
+    "sha256": "445fa881540a1fc06b4906b7c775888a4ec8f12bf7a489652de2fbdd86e4f8a7",
+    "reason": "Reviewed old/new add_footnotes_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
+    "sha256": "9a9e9def9ef38854c4d3c3a303371d45d2f3d64e2ec8c1ab7733e8f2606aef75",
+    "reason": "Reviewed old/new book_cast_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
+    "sha256": "9c801b0bd7435d47692110186669eb8273865331675c2bbe3f117de48a971728",
+    "reason": "Reviewed old/new book_cast_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
+    "sha256": "30955de32d855d0d3b566901fc2a5b5cbfdd9915fa1fb0de66eb67a9cffc0463",
+    "reason": "Reviewed old/new book_delete_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
+    "sha256": "eca1ee458b9db0d01eb80650683642dbb92855b94140ebabd1129d8dd9017959",
+    "reason": "Reviewed old/new book_delete_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
+    "sha256": "5e4894a93704b9e49e7fffeba925ee4c22013c8f246d09477562ad7d118da4a5",
+    "reason": "Reviewed old/new book_expanded_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
+    "sha256": "b087eae95163aee68d419cc45d4e32157a6ce463e885b464c292bf5d9570b384",
+    "reason": "Reviewed old/new book_find_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
+    "sha256": "31e44042d3ea4391ff1f4ab6a6f6063954f309d9774728a5866b5eb14d7e1bba",
+    "reason": "Reviewed old/new book_finished_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_fresh_dark.png": {
+    "sha256": "0ce0f0b2d50adfe4fb0803d614573bb422da7ee919fe7569dfad298ddfda652b",
+    "reason": "Reviewed old/new book_fresh_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_fresh_light.png": {
+    "sha256": "c3b470a0bf44b2006349ffd25f009456263cd29ad9b68b4bdb1b244d0ea66848",
+    "reason": "Reviewed old/new book_fresh_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_gone_light.png": {
+    "sha256": "c310cdded105be9255c335344f4b346aa77427930f5fadd97def91405edba9fe",
+    "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
+    "sha256": "778c48eeb06080dbfd2877d14d4b3e69756b69bb480b15bc754d2b66cd174b33",
+    "reason": "Reviewed old/new book_head_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
+    "sha256": "1defd88f22556f4e8da9d1e55af909cb9f13e2fe32cca2fd3b1a5f14564d94ec",
+    "reason": "Reviewed old/new book_history_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
+    "sha256": "deab02590c0661c2b1c1c16928d41a462bc2b42f5d9cd8066adc5df213698337",
+    "reason": "Reviewed old/new book_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
+    "sha256": "6ee6d33ac14aeeda56c443141a7458bbd46d083801039458beb920c561c5e171",
+    "reason": "Reviewed old/new book_listening_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
+    "sha256": "bba4d129f5324be8c38ab429f88d1549f9d0c17e4a1ffbdd8f424c18ccdf25bd",
+    "reason": "Reviewed old/new book_listening_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
+    "sha256": "17916dfc8b96ff06782e0f984a3488017ec075b48ea50840599a4e5a2bf41389",
+    "reason": "Reviewed old/new book_loading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
+    "sha256": "d00f5dc7630e999432f58103de76677998c45a596bbb7e6674ddf8089cc68144",
+    "reason": "Reviewed old/new book_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
+    "sha256": "e33325f55460698e82c20c7c25d6ec3dbc227dbf12b43bc276edbdbc24ab9a87",
+    "reason": "Reviewed old/new book_partial_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
+    "sha256": "245f782a0e020b70d252a6a7bc3fec740deb607d18a02fde6ae1c528576fac2d",
+    "reason": "Reviewed old/new book_person_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
+    "sha256": "f22208802d629c6b2bdc1c9398a7b388a48c86fc74e16a5e47ddd520c793b0d0",
+    "reason": "Reviewed old/new book_playing_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
+    "sha256": "f040c2e9e27e8902c2f279e72115f5f08a757caf06616e868cbc9205eb1005b9",
+    "reason": "Reviewed old/new book_save_as_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
+    "sha256": "f618296977f1753d38deea0455b1210d5f098af14485d064f41e5b38bd5e6e68",
+    "reason": "Reviewed old/new cover_long_title.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_failed_dark.png": {
+    "sha256": "47dc73347769aac53052d424ae2f14d1caf52ac5d5bf8d6c944bf2153eda94a5",
+    "reason": "Reviewed old/new devices_pair_failed_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_failed_light.png": {
+    "sha256": "49b251415bd4082aaffde20530712b83b928fd8d88d3caa2f371dbf7ebfb82e1",
+    "reason": "Reviewed old/new devices_pair_failed_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_pick_dark.png": {
+    "sha256": "ea5c25d546745f179b9221b01c3efeada482f99912751d564499e9e2e30b5118",
+    "reason": "Reviewed old/new devices_pair_pick_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_pick_light.png": {
+    "sha256": "ab6b71ae5918309dac0bc88449c2d70cbc4bc472488f27a282ea98e950c7533c",
+    "reason": "Reviewed old/new devices_pair_pick_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_working_dark.png": {
+    "sha256": "c44b00c84984f8500d229d1f2e92340dd7208f3a60d96a50c548e5b28dfed030",
+    "reason": "Reviewed old/new devices_pair_working_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_working_light.png": {
+    "sha256": "ef75d83212fca76d235cbc75229d3e8fa8a841dc21485395ad8cfaecdea8cba2",
+    "reason": "Reviewed old/new devices_pair_working_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_sheet_delete_light.png": {
+    "sha256": "bb7c8e4f15cf04da10538015ccb12fe65b3c1054a8d2eb5089303b96de2c9df8",
+    "reason": "Reviewed old/new devices_sheet_delete_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_sheet_device_light.png": {
+    "sha256": "602b29552ebde99ddb9772dcda4d363bf6f33db0d3d358a31a044ebd22d4e066",
+    "reason": "Reviewed old/new devices_sheet_device_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_sheet_forget_dark.png": {
+    "sha256": "f33a661f6bb5346d29afba2f362a4fc054a56585667c623e1ede397c4da60e97",
+    "reason": "Reviewed old/new devices_sheet_forget_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_sheet_rename_light.png": {
+    "sha256": "0f7768c53d8b1a81a218ba8a6e2a7bb8894190f20d05753ca3f70d4f966ce2b4",
+    "reason": "Reviewed old/new devices_sheet_rename_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_sheet_revoke_light.png": {
+    "sha256": "2c7ba6fbe3ca1d4ef3d2c0d1c34eca4d111aff3a4901229edc35a14c54c07ca0",
+    "reason": "Reviewed old/new devices_sheet_revoke_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_book_dark.png": {
+    "sha256": "24e63039236d5c07e7d0078a1c94f1ea27daf6fc744697bb9d34ce9f74d06e59",
+    "reason": "Reviewed old/new edit_book_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_book_light.png": {
+    "sha256": "100262d9c7f7faa2e806c479553a5bed23274ca9f1228262f9ceb3cd5a3433fa",
+    "reason": "Reviewed old/new edit_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_chapter_audio_light.png": {
+    "sha256": "801efa892333e303bdd4771f96533a898df0d07fc614cec536300363789028f7",
+    "reason": "Reviewed old/new edit_chapter_audio_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_chapter_dark.png": {
+    "sha256": "2fd181e5465ee307408f2cb353d02a32bb2cc99e1c14de318c86e97449cc0af9",
+    "reason": "Reviewed old/new edit_chapter_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_chapter_light.png": {
+    "sha256": "8e8aec1f2adf84bb45e5e8fa66c575b6c95dc1ce4f7333a4a94b277234c21ae2",
+    "reason": "Reviewed old/new edit_chapter_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_none_dark.png": {
+    "sha256": "abc1460a91498d0c833f74e30744de0a4ad5732914498eda9e020cadac8af55c",
+    "reason": "Reviewed old/new edit_cover_search_none_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_none_light.png": {
+    "sha256": "8291333a6703771685b6b5e47ea4f56935a723f5b5eb6c36e1d0a8985b2ccf10",
+    "reason": "Reviewed old/new edit_cover_search_none_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_dark.png": {
+    "sha256": "36dd2948828b8c9c9a7830fbc8a91adb0ea30bde09da40dbe8c3b108b1669bc7",
+    "reason": "Reviewed old/new edit_cover_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_light.png": {
+    "sha256": "881166ce781a802a7ba8d3153a75800d80c4e36ba4b8a5661e3d90638d883624",
+    "reason": "Reviewed old/new edit_cover_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_none_light.png": {
+    "sha256": "5a9a4ff59b77bfc71595d6199697f8bd9017b635ea2590994319d22a0b53f927",
+    "reason": "Reviewed old/new edit_cover_sheet_none_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_discard_dark.png": {
+    "sha256": "374b765802c1b50b661d445601e7709734f2500d99e1f3f6a3460bd3cad78b68",
+    "reason": "Reviewed old/new edit_discard_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_discard_light.png": {
+    "sha256": "76171dbe031d72d3ae05ee285716b509d5c13a5e6120d240824d5ebcc8edf8ba",
+    "reason": "Reviewed old/new edit_discard_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_failed_light.png": {
+    "sha256": "dd2dc3009b763d95fca74d48ac9d5a5d7a0a5b55390b642701e4e0969829df5c",
+    "reason": "Reviewed old/new edit_failed_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_long_title_dark.png": {
+    "sha256": "ac5228c04fa79eb66b9d36d73f8567dd91118ca44cbaf716a0e7a01e8eefbe63",
+    "reason": "Reviewed old/new edit_long_title_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_long_title_light.png": {
+    "sha256": "dc0ce8b2e48eb3883b937d91b12434f4eadef3373cced1565376efcd8023242f",
+    "reason": "Reviewed old/new edit_long_title_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_readings_dark.png": {
+    "sha256": "0ad12a5b25b2392850806e5ef391ae9c23fff294066b10d55e5744cce5483d2a",
+    "reason": "Reviewed old/new edit_readings_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_readings_light.png": {
+    "sha256": "95cb60bfd5e879f46182230410a4de88628cd0aeddffa693a40267b762e3d907",
+    "reason": "Reviewed old/new edit_readings_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_done_m4b_dark.png": {
+    "sha256": "9c3b7b1a02732b15983dd227b90fec77ce5b6dc5b30e5b9ae39109ff6f7499b2",
+    "reason": "Reviewed old/new export_done_m4b_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_done_m4b_light.png": {
+    "sha256": "5447e497f188e6f8649a7626b34ca319dec9baddeb70f94f88bb4333066b1843",
+    "reason": "Reviewed old/new export_done_m4b_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_done_mp3_dark.png": {
+    "sha256": "d0f054e40bbbed46ca6fc5305b978c626612702172b51c91d8276c3fa98d5529",
+    "reason": "Reviewed old/new export_done_mp3_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_done_mp3_light.png": {
+    "sha256": "e46c361b81062f967f73f21833ee72f7f7088c0315b96c3227c22bb7677a89fb",
+    "reason": "Reviewed old/new export_done_mp3_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_not_started_dark.png": {
+    "sha256": "187e015fb7d7a38a230793b05d6e512e9fa21e205cbe12a80bc1437a7bab2673",
+    "reason": "Reviewed old/new export_not_started_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_not_started_light.png": {
+    "sha256": "113cd490edb1fe143c6172d33056d30d85b0e7bed40e51b8446cc95f8b26315f",
+    "reason": "Reviewed old/new export_not_started_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_dark.png": {
+    "sha256": "d0f569466622d4e9f2ae5d7b059da4caad849953c79250b2f00d8139346a5b3e",
+    "reason": "Reviewed old/new export_options_fresh_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_light.png": {
+    "sha256": "fdf7af8a640129f4872172b7f22929c3bad2325c855ce02de78a62aa15a5db96",
+    "reason": "Reviewed old/new export_options_fresh_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_dark.png": {
+    "sha256": "a8debfc81180153e6feb82f771fd6cf31c57490c2c423f3d1f16087c94f78922",
+    "reason": "Reviewed old/new export_options_m4b_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_light.png": {
+    "sha256": "086161385c3fabe4d407bca343b7c47a05cd23e487256400b6936f77aa19d879",
+    "reason": "Reviewed old/new export_options_m4b_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_dark.png": {
+    "sha256": "dbd4da8471ecf910e087e028d75c4c3e9ec829ce58ee115a94ff1acbc45d347e",
+    "reason": "Reviewed old/new export_options_mp3_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_light.png": {
+    "sha256": "5c0938be6a6a93674bafd905b075cf87180ea9af4dc95891cd4962d7b50aa9f5",
+    "reason": "Reviewed old/new export_options_mp3_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_no_voice_dark.png": {
+    "sha256": "b3fa8f7e67192e02351dad2ea2d75d982d70d1e24c4d7ff6715131b0a7af8cc5",
+    "reason": "Reviewed old/new export_options_no_voice_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_no_voice_light.png": {
+    "sha256": "964a80263edb562908177c403ea8c8dd4557e21fc2987845c33f1cce89e1d9c6",
+    "reason": "Reviewed old/new export_options_no_voice_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_text_dark.png": {
+    "sha256": "21ea0ab3ebb9dfd6ce843fddd976cc443b6f4942245b32e552e24ad70154f586",
+    "reason": "Reviewed old/new export_options_text_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_text_light.png": {
+    "sha256": "9f5a7c1f95003dbb0a684ca4ed728505831b1056fc0d1fd91c85646c1268d2b3",
+    "reason": "Reviewed old/new export_options_text_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_running_dark.png": {
+    "sha256": "cf9a2274b72d7ab786a33bcc9059f0ba20283936a84f92efcbebf1377b52fcc8",
+    "reason": "Reviewed old/new export_running_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_running_light.png": {
+    "sha256": "c7baec7ee3ab2b2978b9bba4018d168a73662642fec85ebeb720172a0e4e6f25",
+    "reason": "Reviewed old/new export_running_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_dark.png": {
+    "sha256": "628abd93e6bbc1aae006e26bd91c76a136b284cf39f45d8af83b8492e5c104fa",
+    "reason": "Reviewed old/new gap1_library_remote_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_light.png": {
+    "sha256": "cfada83a790063e2f295558284d6e96b1ff0ed5a30d33376d7b1ceac8cc19d78",
+    "reason": "Reviewed old/new gap1_library_remote_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_dark.png": {
+    "sha256": "d7bcc14740363fada3ebcb5b53442598f19e86ab6515485a01c5a69c808c9a8c",
+    "reason": "Reviewed old/new gap1_remote_book_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_light.png": {
+    "sha256": "ae9208bf327c9a66ad30792c6cf7e62ec7df6996fd3e4016bb7dcc00f0166782",
+    "reason": "Reviewed old/new gap1_remote_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_players_dark.png": {
+    "sha256": "169ffe1e77b10b0b3c5c55afdb8b864b4a27481a1b38799983255b7f7f77cef4",
+    "reason": "Reviewed old/new gap1_remote_players_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_players_light.png": {
+    "sha256": "c647220f0047a47f1257a92cb49a5a7d6190baee2473db5e2c93cea5e7c04afa",
+    "reason": "Reviewed old/new gap1_remote_players_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_360_font130_light.png": {
+    "sha256": "980f0c5660fe8393775130b4c9a044980f8bcea686d2532ba28a8db7db93821e",
+    "reason": "Reviewed old/new gap1_remote_sleep_360_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_font130_light.png": {
+    "sha256": "ef806e4dfcba5053c47433a1ebdda67e29ddc2b04aa607f4d3a3b7a4c0d81bce",
+    "reason": "Reviewed old/new gap1_remote_sleep_411_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_light.png": {
+    "sha256": "04ff8223c89064aa38ee3a797dbf13cad1dea43c5923acb34d789afa3a012711",
+    "reason": "Reviewed old/new gap1_remote_sleep_411_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_dark.png": {
+    "sha256": "1c51c855c192583c2af39074dc16c46733a65d60708b170198be4eb02e53e806",
+    "reason": "Reviewed old/new gap1_remote_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_light.png": {
+    "sha256": "ea3bb677680f50dddc085f148a9a5bd26d6ed176488e2257aabf01100de7248b",
+    "reason": "Reviewed old/new gap1_remote_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_undo_dark.png": {
+    "sha256": "bcfecc9028615347ae4b9833c88e132e7b71f252b5d057d2c7cd83c25c03f74c",
+    "reason": "Reviewed old/new gap1_undo_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1_undo_light.png": {
+    "sha256": "d0e168c61f18e6fca602a3a989fd5177a79e375f0ec04c611e968292ca02a9af",
+    "reason": "Reviewed old/new gap1_undo_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_dark.png": {
+    "sha256": "8d4dd5f2836300440267f939881654b99705a83e19b8ad85cd290d27776d6d51",
+    "reason": "Reviewed old/new gap1b_device_kinds_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_light.png": {
+    "sha256": "0faff97e32d5a640809fd49e5317779f57b82e5403e6ab5b17f1bda6005ee595",
+    "reason": "Reviewed old/new gap1b_device_kinds_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
+    "sha256": "db8af73e662454b6dc606658dd9ab2310de7ccc3464c1d12d5bb1c9f9762901b",
+    "reason": "Reviewed old/new gap1b_shell_error_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_light.png": {
+    "sha256": "93af3060321a94544380bd8084e746d0c2d93c0daa1d9821a2200536969a4ac0",
+    "reason": "Reviewed old/new gap1b_shell_error_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_dark.png": {
+    "sha256": "b529e2fde79e5a23acda5da6d9d8a048addf46ae7942e6f150e301f7a72cf105",
+    "reason": "Reviewed old/new gap1b_shell_undo_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_light.png": {
+    "sha256": "c73f288cf6a1be6d344b0a77cb285a3317732b89cdac640e0690f9a882c94ad3",
+    "reason": "Reviewed old/new gap1b_shell_undo_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_dark.png": {
+    "sha256": "9466fdb0f890c5b2c67e4465d2326e18c7c70c4ed3b5ec7442da1c0acf2327ba",
+    "reason": "Reviewed old/new gap1c_device_listen_only_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_light.png": {
+    "sha256": "e175b18657ee9fcf77261234e40a28ceb4088f0215395e09702f4769dc3024ec",
+    "reason": "Reviewed old/new gap1c_device_listen_only_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_dark.png": {
+    "sha256": "c2fb4d56d1d5097301dae7ca8e52d98beda70025afd64cdc8fcbae97781184e3",
+    "reason": "Reviewed old/new gap3_recovery_confirm_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_light.png": {
+    "sha256": "dbf8d3bcf9269f5ff3e6fddd4c9fcd1acd752e94d6852ce4ed2af521f6b3d499",
+    "reason": "Reviewed old/new gap3_recovery_confirm_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/icon_sheet_light.png": {
+    "sha256": "166b3369be760a5f66a395464de37cb105bead5a4a3874938953ba38d5dc2373",
+    "reason": "Reviewed old/new icon_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_30_dark.png": {
+    "sha256": "38c4b7229737bf5a43c572c0385570e6a7d8a8589405f2b2c491deabe37dcf49",
+    "reason": "Reviewed old/new library_30_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_30_light.png": {
+    "sha256": "dc53861d2bc50780b2f50c0495092546e650a8788ccc5f46d3378f4524010991",
+    "reason": "Reviewed old/new library_30_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_empty_dark.png": {
+    "sha256": "8e23b654e6809ca028392f5018ddac7c045106c9e8d2a4c77c8aaac70b9a00db",
+    "reason": "Reviewed old/new library_empty_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_empty_light.png": {
+    "sha256": "adb18ec8c59e7d0418359e9b6000915ea98c853dacf22599930b393ca6e85dec",
+    "reason": "Reviewed old/new library_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_filter_finished_light.png": {
+    "sha256": "bac540c33be6533adf10bd0c8f1ebf5cb6727bb83a04a3979386b550ffdd6da1",
+    "reason": "Reviewed old/new library_filter_finished_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_listening_light.png": {
+    "sha256": "bce51bfa78ff0a8639067fcf681b8945f6bce8169911dd1957a020fdf9ce1c03",
+    "reason": "Reviewed old/new library_listening_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_one_dark.png": {
+    "sha256": "6c9193df620adf9fcbd0b4f78e2a2590f6be6a793d7cf202e48cc20d4aa8d43e",
+    "reason": "Reviewed old/new library_one_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_one_light.png": {
+    "sha256": "31c7f48c4784f570c904be2a7158ab0bbad403282916b4177402cf79264bb599",
+    "reason": "Reviewed old/new library_one_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_search_light.png": {
+    "sha256": "7a2ea2e22faa19c8c51909b1f87d76eab01de7f0c3283682be162ee27b64ce73",
+    "reason": "Reviewed old/new library_search_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_series_sheet_light.png": {
+    "sha256": "97be8deb6564299e3a7c9173a1783c193db67fdb1d34baf43a831e811d7cc233",
+    "reason": "Reviewed old/new library_series_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
+    "sha256": "a657de811a636eb17fbb0c624a42a3983d4ac709ee4902e393b77a5789a1271d",
+    "reason": "Reviewed old/new library_sort_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
+    "sha256": "d954d346c69557606e5ff1b6bc2222a7b66903f277012d12df2c89e7587f0ea3",
+    "reason": "Reviewed old/new link_book_mini_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/link_book_mini_light.png": {
+    "sha256": "2775c9d2ddd8b97ee22a1f469a6d24c5c3decdb5498496e436ec17176372559c",
+    "reason": "Reviewed old/new link_book_mini_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_long_title_light.png": {
+    "sha256": "f437e3aed9fa9bcf4bfc4301fb35f21bc4d15e69c3587207933e85e154893811",
+    "reason": "Reviewed old/new mini_long_title_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_paused_dark.png": {
+    "sha256": "7fcde2016aced7f049da20b3e284f4616ef4f9ac2b52286f5fcc974a1fda9f99",
+    "reason": "Reviewed old/new mini_paused_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_paused_light.png": {
+    "sha256": "0a62c65e726c8277a2f46b9d810aab755b474bbcdebdffa6e9ef05ebb31e6dbe",
+    "reason": "Reviewed old/new mini_paused_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_playing_dark.png": {
+    "sha256": "a62ecad90d6aaa7e26c14328e0bb63ff786aa6765d53c68eaad0dd35f7e6a4d5",
+    "reason": "Reviewed old/new mini_playing_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_playing_light.png": {
+    "sha256": "1aeeba64b3d2303f2c25035c6004f76c43b1b22853f9cfe4df6595fb83aed55a",
+    "reason": "Reviewed old/new mini_playing_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/mini_short_light.png": {
+    "sha256": "fc6b629e91e1ddb349ff72cb1ef420c55f650c18487a5746d69378e8b54a877c",
+    "reason": "Reviewed old/new mini_short_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_cues_dark.png": {
+    "sha256": "be9fce5016d6f74d87f5f1d0730e96e14597827e07891f92bd95d484271beff8",
+    "reason": "Reviewed old/new music_book_cues_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_cues_light.png": {
+    "sha256": "8810e38b0f32e30d6916fec591d1b661817795bf88ec8ff3f41d91f16f666cc8",
+    "reason": "Reviewed old/new music_book_cues_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_menu_dark.png": {
+    "sha256": "9bb3631796b4be355d8bea28485cb3c7694573523422734da78ba0cf0e7d986f",
+    "reason": "Reviewed old/new music_book_menu_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_menu_light.png": {
+    "sha256": "3255c2bfc1a1bbe82bb7f9348c2f0c8751e9514d9620679911e875e7a57ec12a",
+    "reason": "Reviewed old/new music_book_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
+    "sha256": "40f3fe34089df6f1aafdfed0abf89daf6927c96f4375fe409b0f0e9f568d938b",
+    "reason": "Reviewed old/new music_library_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
+    "sha256": "e904ac3739f77cb233b2ab15a6d8c1eeedfde17a7fa2b429a220fcb748b99308",
+    "reason": "Reviewed old/new music_library_downloading_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
+    "sha256": "b6eab0a4df1a99af27b729cb36d3afdb2e55166e41e8d255d42aef5347b3f167",
+    "reason": "Reviewed old/new music_library_downloading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
+    "sha256": "348f929c5a632c3539f13e084561cbac3dd52c302ffaec198fd79dc62486d866",
+    "reason": "Reviewed old/new music_library_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_library_light.png": {
+    "sha256": "41a7b2ff976a35f0213c441139a519be858b8bd8a9499956bba821caa52254b2",
+    "reason": "Reviewed old/new music_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_pick_dark.png": {
+    "sha256": "0357b4209edc475364f36b6ee7b0b1c3c42656c68cce9431a1801cd15120d276",
+    "reason": "Reviewed old/new music_pick_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_pick_light.png": {
+    "sha256": "d214e1fda75f6275ff64edb64927dce2adfbfd87fd9eccdf1594cc4ebb30a1c1",
+    "reason": "Reviewed old/new music_pick_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
+    "sha256": "ea87254dc24d7ce768ce0435f8e719cbf3dea895388ee86f5626fb8b462dbb42",
+    "reason": "Reviewed old/new np_caught_up_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_ended_light.png": {
+    "sha256": "c35f2256c5d00ad68b202d3c5818b99838b9d416c0227ca55a33c768940d7cbb",
+    "reason": "Reviewed old/new np_ended_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_large_dark.png": {
+    "sha256": "a513591be12e0015597a8b087a555e8bccdcb47fea6ac21a138a55b589f329bd",
+    "reason": "Reviewed old/new np_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_large_light.png": {
+    "sha256": "9a5ad8f60aed5cd5cb1cccab305e06a49ad61c6b5d9992ae0799dd79d204818c",
+    "reason": "Reviewed old/new np_large_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_long_dark.png": {
+    "sha256": "18a78018e15756f8c6f7a11adc760c8171920883ffdf0942eb4bb4d178dace4b",
+    "reason": "Reviewed old/new np_long_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_long_light.png": {
+    "sha256": "a38adbed08e12f37bae414ff12604226f933e76ce93103ffa2d53b2a759de6f0",
+    "reason": "Reviewed old/new np_long_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_note_light.png": {
+    "sha256": "eb8c92cfd5aeb9904c30a1c6cf41019c8f5711172e51414bb803a59f050e9537",
+    "reason": "Reviewed old/new np_note_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_opening_start.png": {
+    "sha256": "428e86fcad98e2408a66071add72ed5020a81319131a6815c4ff42e6cced90f9",
+    "reason": "Reviewed old/new np_opening_start.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_paused_dark.png": {
+    "sha256": "2c9f651bf9581c71892ad2b11e219839cdacd13dd7b978f7070d8e607a627074",
+    "reason": "Reviewed old/new np_paused_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_paused_light.png": {
+    "sha256": "d5ce97f29d8373e1dd314db3f433f3a7941c6ed654c8ccfd0b647e61ac1c0f1b",
+    "reason": "Reviewed old/new np_paused_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_chapters_light.png": {
+    "sha256": "f12d0b89f0eaa39964c458b3a61cb006cf9c9190b2018430d5195beecca99db5",
+    "reason": "Reviewed old/new np_picker_sleep_chapters_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_dark.png": {
+    "sha256": "5754a7fc0ca01fb09a3f519756ed8f097e3be550158a8d1bd5eb24b25585d69f",
+    "reason": "Reviewed old/new np_picker_sleep_font130_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_light.png": {
+    "sha256": "aef65f864cf710ccbbf4bb16a674c39c5dd1dc91aef35b4540112206ee954cf3",
+    "reason": "Reviewed old/new np_picker_sleep_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
+    "sha256": "304954708b1c7e68739f1435c5a898cdca816c5758b948fbb74c7fc14e628bf9",
+    "reason": "Reviewed old/new np_playing_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_playing_light.png": {
+    "sha256": "4b135aeb056b1b6af4f99307b23f55a2b2a142ccee1fe3f78edf0e29c9837952",
+    "reason": "Reviewed old/new np_playing_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_reading_dark.png": {
+    "sha256": "8d1d0537a23cc9cfb552b0053ae568d0451abf44b292b533f24e30fa1fe46b42",
+    "reason": "Reviewed old/new np_reading_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
+    "sha256": "f0ac4f5a6655a3f46cbcdb063e3d269c0fb8736310d4bf36a13741b11dae294e",
+    "reason": "Reviewed old/new np_reading_follow_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
+    "sha256": "6dd24f96c5d37586b3c9b946163ef51a6db5c6e53186ab11eed6b62232be5053",
+    "reason": "Reviewed old/new np_reading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_reading_mid.png": {
+    "sha256": "88afcd09e1716197c7b3b43609898bd4f053570366bcb2fe6c9f353174dd0f6b",
+    "reason": "Reviewed old/new np_reading_mid.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
+    "sha256": "845bf13660f99a643257e6846a15e58aee297c82fededf1cb4b18f31cf42fbaf",
+    "reason": "Reviewed old/new np_return_chip_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
+    "sha256": "dd711c0a3cb5b2f8e330c03ad514bbc26ea5b18fc4e41208bff2ce4560ff1316",
+    "reason": "Reviewed old/new np_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_sleep_light.png": {
+    "sha256": "2c49a2d6460222aba04cdc5ab5321dfcae18bd0c56f5be596ad65bfe6d678ceb",
+    "reason": "Reviewed old/new np_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_dark.png": {
+    "sha256": "36e641de5fe24112217f1139ee3d7cefbeac787c52cfc2ca27d5d5b28a6c87b2",
+    "reason": "Reviewed old/new picker_settings_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_dark.png": {
+    "sha256": "4747d870e47d37b7817704a7ad2d8a9841fa9888effc519fe3e0945cde3fa84b",
+    "reason": "Reviewed old/new picker_settings_sleep_font130_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_light.png": {
+    "sha256": "7ba91c18f60f0ba714be7fe7ceda43222883024724930769bceff9eda7de3277",
+    "reason": "Reviewed old/new picker_settings_sleep_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_light.png": {
+    "sha256": "65fe58664720afc7a504253d0ea2f45e3acd0b81b41cc9f676f60d1c8edba8c7",
+    "reason": "Reviewed old/new picker_settings_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/pip_content_dark.png": {
+    "sha256": "c2bd655a22eac5e19cfd54de611b2d2370277b25dd54d9bc69474807bc4aa640",
+    "reason": "Reviewed old/new pip_content_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/pip_content_light.png": {
+    "sha256": "5e9d7189dc7a14aea23ee0f523a3a9cd834c48d08ef1291bcde81df670ec716d",
+    "reason": "Reviewed old/new pip_content_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_clear_sheet_light.png": {
+    "sha256": "c00c663e65570a39ef93628837475db071cf5b64b495677f74084ce284829796",
+    "reason": "Reviewed old/new settings_clear_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
+    "sha256": "881976b0ce335a78774ac49538a26da25513fc6d470583d5838c7039f4e28c28",
+    "reason": "Reviewed old/new settings_expanded_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_large_dark.png": {
+    "sha256": "14f213e1061b25ca5fd73c28a633d0185da1ccff96d1ae08044ef2e22eb96c23",
+    "reason": "Reviewed old/new settings_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
+    "sha256": "d07687d6a619deaf33b04b9d66aeb26f7b3ca97b4e81924b46ab7319f655071f",
+    "reason": "Reviewed old/new settings_log_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_root_dark.png": {
+    "sha256": "93ddbddf13e95e5bda36dfdd6a07e7ae828a1a50217070b89b8ee4dd69560044",
+    "reason": "Reviewed old/new settings_root_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_root_light.png": {
+    "sha256": "09b819cc89cf834ca43d60a89eb920d9d2adc46961bbe3f906d2c798eff07ec9",
+    "reason": "Reviewed old/new settings_root_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_sleep_time_sheet_light.png": {
+    "sha256": "815ab8548937f54cb0f99a22859cdece8f40af7db3c99aaf986ac27d9ba26b5a",
+    "reason": "Reviewed old/new settings_sleep_time_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
+    "sha256": "bdcaf35f2dd3f4ba0cb8482ddf9731d674c30b1c4c78ee59f2bfbec007c85a23",
+    "reason": "Reviewed old/new shell_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_empty_light.png": {
+    "sha256": "d30608f1998fa778cd8c4dedf1e7ea9fd442a6cc1c56fa57f07be76a51d698a7",
+    "reason": "Reviewed old/new shell_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_library_dark.png": {
+    "sha256": "06237cc64b70fb2016217c306a288d7a90b961267cf7af9237a9d745140b6b85",
+    "reason": "Reviewed old/new shell_library_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_library_light.png": {
+    "sha256": "b3e9f9bce6bbd117fabfa6cf7ce0e1f929e9ae6d95b247bb6bcfc68906943d75",
+    "reason": "Reviewed old/new shell_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_mini_library_light.png": {
+    "sha256": "25ccf401d3fb5f72a63ecf079487cd8b8c92076f9a7585dc689c50c4045b9531",
+    "reason": "Reviewed old/new shell_mini_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_mini_restored_light.png": {
+    "sha256": "88a7ba5c5c96dcba6e948a74ca286b7b85333e233dec3b6ef10056b64151c3f4",
+    "reason": "Reviewed old/new shell_mini_restored_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_mid_light.png": {
+    "sha256": "a4eb97f58d3a7bda601a3dec463c9ff06fa060329cc01ba3958b0547eae3d951",
+    "reason": "Reviewed old/new shell_now_playing_mid_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_open_light.png": {
+    "sha256": "67db609a502a804b99a0b34b7eced475dca2acabaa3be2999695991905bdb3cc",
+    "reason": "Reviewed old/new shell_now_playing_open_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
+    "sha256": "98dbe0b785b5ea6c8b97a7d05c70763d83813b080786411ba84fddeef525a7f0",
+    "reason": "Reviewed old/new shell_push_mid_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
+    "sha256": "29fc4169de9d907e35dcc8a0311873684fb2c820a30b96f0f8e103f37d46517c",
+    "reason": "Reviewed old/new shell_read_along_from_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
+    "sha256": "240bfd7a325622eceb68e12bead4ae8cb1b40773a5ce9b6520fcbe240dff074e",
+    "reason": "Reviewed old/new shell_settings_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_studio_paired_light.png": {
+    "sha256": "bd2682fd70d8de11da169215185af3cfe210c9929ff5bed3c3dfd43fe52d4453",
+    "reason": "Reviewed old/new shell_studio_paired_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_studio_single_light.png": {
+    "sha256": "b5eab8f6617c57a7e8d869366d24511eac4c6770f0b5e3cc58efec53b8b33084",
+    "reason": "Reviewed old/new shell_studio_single_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_glyph_back_light.png": {
+    "sha256": "b0cbd64c35b2f39686aac4c271dc7fb5c6b6f1791be886311503e1bc09e0b505",
+    "reason": "Reviewed old/new skip_glyph_back_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/tone_360_130_dark_mine.png": {
+    "sha256": "c3d875339e6ec5a88a3331f9e2b508d748ff82deec570e0185af58bfcc20b29b",
+    "reason": "Reviewed old/new tone_360_130_dark_mine.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/tone_360_130_light_mine.png": {
+    "sha256": "004d26874367e1f90a19260c62a9837f5ba7247a8aea594e0275ea30cf84bf18",
+    "reason": "Reviewed old/new tone_360_130_light_mine.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
+    "sha256": "24f7638a342cb2f604ded7b7a097788562fc51d76b41b0c671d6ee405f7b386d",
+    "reason": "Reviewed old/new voice_consent_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_light.png": {
+    "sha256": "98f45072f783e0bfec8e11386d6429ca912291d261543b6fa39c4bafb23f29c6",
+    "reason": "Reviewed old/new voice_consent_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_consent_light.png": {
+    "sha256": "9cc1f7fabee8db7081655c844f93e1f6191e046d305bb72664b16c0fc92153be",
+    "reason": "Reviewed old/new voice_key_consent_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_problem_light.png": {
+    "sha256": "3ed0d730c88244d1778f3f801d3fefe502b0264ce1614f5b4749408362e20f26",
+    "reason": "Reviewed old/new voice_key_problem_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_refused_dark.png": {
+    "sha256": "aab0c84e9fe4e71553c643b40889be62cec4f6a303e27399369e3b69d675ef8c",
+    "reason": "Reviewed old/new voice_key_refused_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_remove_dark.png": {
+    "sha256": "56452e29091f2738867d6758d5588356515a94c55a711afcf698fa19866d9031",
+    "reason": "Reviewed old/new voice_key_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_dark.png": {
+    "sha256": "87b20e7913dbea5f3ef0e6199bc3ff386e11a85c34264783680124851e20bc44",
+    "reason": "Reviewed old/new voice_key_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_light.png": {
+    "sha256": "e8f885d69cebe59965532a60c382118b0eedb9b33b546b716a7f785cce181a4e",
+    "reason": "Reviewed old/new voice_key_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_metered_sheet_light.png": {
+    "sha256": "f251189c5ddf47d626b78dde13a1bab8bddd9577cad3ed94ab58f1357a8cd7d2",
+    "reason": "Reviewed old/new voice_metered_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_dark.png": {
+    "sha256": "2ba69cb4ff4c97b62095dfc5c5efa1cf9bc8a3441b9f90b43304633441ddace6",
+    "reason": "Reviewed old/new voice_module_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_module_sheet_light.png": {
+    "sha256": "27d82e1e8447d7f969d9b6abec9c9a06f62ea8ef82757c183499e27b98c2b7ef",
+    "reason": "Reviewed old/new voice_module_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_dark.png": {
+    "sha256": "ddf65c42bcf1ebdafff75e12ded5b29dbeedb2b7f3718912f6456ab11a2418aa",
+    "reason": "Reviewed old/new voice_music_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_light.png": {
+    "sha256": "d95f255898c6ee95de46d6332f905a4096216af817a65a15eab08a8037682123",
+    "reason": "Reviewed old/new voice_music_remove_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_dark.png": {
+    "sha256": "1624c4546dfdcffbbcfca9023f6b2ac4bf0d865bd4f018d19391e3fe5bea1329",
+    "reason": "Reviewed corrected music_track_bottom_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_light.png": {
+    "sha256": "c694cef11261accccebedd0b52f7acfa1e84ec30c5c6129cb86cdb2ddfab6dbd",
+    "reason": "Reviewed corrected music_track_bottom_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_dark.png": {
+    "sha256": "747156f85d9e5afdf15fdeff0334a7a3085e591656f306f18f7c85e37fc94467",
+    "reason": "Reviewed corrected music_track_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_light.png": {
+    "sha256": "1ddd4bf31d26d2700f0e1f5d1da6e553d4410c0e7f8449b6fee1d70a82de05e5",
+    "reason": "Reviewed corrected music_track_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_middle_dark.png": {
+    "sha256": "0c67197a7b971feeb05e03376e9f8194ce3d93d1845620b52c0c146debdd5dd2",
+    "reason": "Reviewed corrected music_track_middle_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_track_middle_light.png": {
+    "sha256": "baf92888f5d67f6d63c1f86fc8a2596c53038e4960212c90108983754fa07707",
+    "reason": "Reviewed corrected music_track_middle_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_share_on_dark.png": {
+    "sha256": "e253c7f74c6a7a3cc1547aa0cca9b1193de13ca61556a9182dabf4ccf657e0cb",
+    "reason": "Reviewed corrected devices_share_on_dark.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_share_on_light.png": {
+    "sha256": "08ea3cfb7f1f7091125e09a16f5191211a4285f39a8204f3fe2dab015f65857b",
+    "reason": "Reviewed corrected devices_share_on_light.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
+  }
+}

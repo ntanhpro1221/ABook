@@ -97,7 +97,7 @@ async function main() {
           if(interaction==='sort-close' || interaction==='sheet-close') {
             await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},session);
             await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},session);
-          } else await tap(cdp,session,{'player-open':'Mở màn hình đang nghe','player-first-open':'Mở màn hình đang nghe','player-close':'Thu nhỏ','sort-open':'Xếp theo','reader-open':'Đọc','reader-first-open':'Đọc','sheet-open':'^Tốc độ đọc'}[interaction]);
+          } else await tap(cdp,session,{'player-open':'Mở trình phát','player-first-open':'Mở trình phát','player-close':'Thu nhỏ trình phát','sort-open':'Xếp theo','reader-open':'Đọc','reader-first-open':'Đọc','sheet-open':'^Tốc độ đọc'}[interaction]);
           await waitUntil(cdp,session,'window.__jank.done',10000,'khung hình');
           const probe=await evaluate(cdp,session,`({...window.__jank,errors:window.__gallery.errors,missing:window.__gallery.missing, nowPlaying:document.querySelector('.now-playing')?.dataset.state, menu:!!document.querySelector('[role=menu][data-state=open]'),sheet:!!document.querySelector('.motion-sheet[data-state=open]'),reader:!!document.querySelector('[data-reader-scroll]')})`);
           if(probe.errors.length || probe.missing.length) throw Error(JSON.stringify(probe));

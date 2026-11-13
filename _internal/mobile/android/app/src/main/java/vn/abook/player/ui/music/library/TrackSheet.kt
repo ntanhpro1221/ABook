@@ -111,8 +111,10 @@ fun TrackSheet(
                 }
                 val ranked = track.rankedEmotions()
                 Reveal(ranked.isNotEmpty()) {
-                    Section(S.s_cam_xuc_05c1aee0)
-                    for ((id, score) in ranked) Bar(index.emotionLabel(id), score, Modifier.testTag("emotion_$id"))
+                    Column {
+                        Section(S.s_cam_xuc_05c1aee0)
+                        for ((id, score) in ranked) Bar(index.emotionLabel(id), score, Modifier.testTag("emotion_$id"))
+                    }
                 }
                 Section(S.s_thong_tin_4aa16c92)
                 Facts(track, index)

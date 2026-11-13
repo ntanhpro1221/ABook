@@ -44,7 +44,7 @@
     "reason": "abook/analysis.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/asr.py": {
-    "sha256": "d33f74193d7e30a5753f01efbcc2bf9b97d41ad23a00a2d06773181bd85cdfeb",
+    "sha256": "7b1b93c1accbc09a58f3b53ddf25f4a14957e7846cbde115cb9e9beb6f03201e",
     "reason": "abook/asr.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/assets/word_break_tokenizer.json.gz": {
@@ -252,7 +252,7 @@
     "reason": "abook/readaloud/symbols.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/vieneu.py": {
-    "sha256": "6e6de80e3888fa634ddfffb310094fdbb966930da4843b9ce3138e91527cdf99",
+    "sha256": "37520306f9f40e28c610108f98d1824d1e90548728a43cb1c37ec2010c50b283",
     "reason": "abook/readaloud/vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/vieneu_engine.py": {
@@ -596,7 +596,7 @@
     "reason": "abook/webui/route.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/server.py": {
-    "sha256": "9bd62ac1b09b040507ad86ba7fed12055d845ea7a642bde6721a7756c33985a0",
+    "sha256": "13f1080e492a370834684e0ebf8ace5f6e6d6a24cd63fda7ba181283d7bdc7f2",
     "reason": "Server API docstrings for pairing confirmation, same-origin enforcement and uploaded source references."
   },
   "_internal/abook/webui/shared_readings.py": {
@@ -1048,8 +1048,8 @@
     "reason": "Documentation index mapping development questions to the corresponding technical files."
   },
   "_internal/docs/RELEASING.md": {
-    "sha256": "01572de75c846fb73b6758e5f608717ed636f6da71b7fa60aafac7c38ab740e5",
-    "reason": "docs/RELEASING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "2c192547d51e25554d41f5bd17794661c7879663993491c51535c5201e481106",
+    "reason": "Release procedure documentation: exact-byte visual PNG review, independent snapshot verification, validated explicit comparison base after history scrub, and source-tool versus private-data boundaries."
   },
   "_internal/docs/SHARED_VIETNAMESE_PAIRS.md": {
     "sha256": "10cab3f2a421a48690e8d7db8b744690188bce2f45f9f17b793e22641f291cb1",
@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "bcc7065bf5b2c1333b7ff96e9a4c4a48e721fdeb9b7fb35614fb96f3ef198785",
+    "sha256": "bc92a6ca05027156b5d22ef89302b218969d2671b14b5c7a29c866067ccfa178",
     "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
@@ -1108,7 +1108,7 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "15ede3bc8bf0db47fb97712666aaa33f13f9c2d73cc12e44ee33d2ec2c9cb0b1",
+    "sha256": "2eb8003ff1aeaba90509bd56593942a8c8767626b8406cc033797b8356646da6",
     "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/UI_PARITY_QT.md": {
@@ -2312,7 +2312,7 @@
     "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/release_gate.py": {
-    "sha256": "02c5dd70b944ca4ca56ec967d26adf9d1c979bbfb13897decb5482a3db387237",
+    "sha256": "68da0f7f2661171de479bcd783314577178388c2732181c50c0eeff2ef1d2e08",
     "reason": "scripts/release_gate.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/report_castrules.py": {
@@ -4284,7 +4284,7 @@
     "reason": "ui/src/gallery/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/listen/PlayerViews.tsx": {
-    "sha256": "7af5947cba8030de32b909a42ef71f95e74b8ed545f8db3c405e6f2d1bc59615",
+    "sha256": "adab9476b565cf7d44312f25dd915365ce58688ca06e9113d8b817ed8882ff90",
     "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/ui/src/listen/liveClip.ts": {
@@ -4340,7 +4340,7 @@
     "reason": "ui/src/shared/scrollFadeRules.test.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/shared/strings.generated.ts": {
-    "sha256": "466bee51ec9dd687238fd4e97510b19b5b5d5586a232bbeb92c3512ff50e31d5",
+    "sha256": "eb52144d12b428998cc3a40a314614acca78cf04b319d6445f0a5ee482b61920",
     "reason": "ui/src/shared/strings.generated.ts: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/studio/ProjectScreen.tsx": {
@@ -4356,7 +4356,7 @@
     "reason": "ui/src/studio/liveRefresh.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui_strings/vi.json": {
-    "sha256": "0e35f2946fe4a9c8c84134b0e19c166061b72c71b6d43c350fa2f5dd413f6482",
+    "sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
     "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "result.md": {

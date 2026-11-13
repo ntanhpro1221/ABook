@@ -304,7 +304,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     for (const svg of aside.querySelectorAll('a > svg')) edge(svg, iconInk(svg), "left", box.x, box, aside, "navigation-icon-left");
   }
   // Cột trình phát theo lề trong của aside, kể cả khi chỉ có một dòng chữ.
-  for (const aside of all.filter((el) => el.matches('.now-playing > aside'))) {
+  for (const aside of all.filter((el) => el.matches('.now-playing [data-player-column]'))) {
     const raw = rect(aside.getBoundingClientRect()), s = css(aside);
     const box = { x: raw.x + Number.parseFloat(s.paddingLeft), y: raw.y, width: raw.width - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth), height: raw.height };
     if (!box) continue;

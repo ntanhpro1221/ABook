@@ -81,6 +81,13 @@ const render = async (node: ReactNode, at = "/") => {
 };
 const book = (at = "/book/a") => render(<Routes><Route path="/book/:id" element={<BookScreen />} /></Routes>, at);
 
+it("renders a local imported book whose remote field is null", async () => {
+  player({ track: null });
+  state.book = listenBook({ remote: null } as unknown as Partial<ListenBook>);
+  await book();
+  expect(host.querySelector("h1")?.textContent).toBe("Sách A");
+});
+
 it("hỏi lại sách hụt một lần (máy chủ khởi động lại, mạng chớp): trang vẫn giữ sách đã có, không nói 'Không tìm thấy sách này'", async () => {
   player({ track: null });
   state.book = listenBook();

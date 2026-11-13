@@ -129,16 +129,16 @@ class PlaybackService : MediaLibraryService() {
             DefaultLoadControl.DEFAULT_MIN_BUFFER_MS, DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, STREAM_START_BUFFER_MS, STREAM_REBUFFER_MS,
         ).build()
 
-        val SLEEP_PLUS = SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY)
+        val SLEEP_PLUS by lazy { SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY) }
         // Chương trước/sau là lệnh riêng của app: Trước/Sau của phiên media (tai nghe, xe, đồng hồ) là lùi/tới 15 giây (HeadsetSkips).
-        val PREVIOUS_CHAPTER = SessionCommand("vn.abook.PREVIOUS_CHAPTER", Bundle.EMPTY)
-        val NEXT_CHAPTER = SessionCommand("vn.abook.NEXT_CHAPTER", Bundle.EMPTY)
-        val CLOSE = SessionCommand("vn.abook.CLOSE", Bundle.EMPTY)
+        val PREVIOUS_CHAPTER by lazy { SessionCommand("vn.abook.PREVIOUS_CHAPTER", Bundle.EMPTY) }
+        val NEXT_CHAPTER by lazy { SessionCommand("vn.abook.NEXT_CHAPTER", Bundle.EMPTY) }
+        val CLOSE by lazy { SessionCommand("vn.abook.CLOSE", Bundle.EMPTY) }
         var instance: PlaybackService? = null
             private set
 
         /** Mục giả trả cho phiên media khi lõi đã tự nạp một cuốn có chương chữ (đọc to): [HeadsetSkips] bỏ qua nó thay vì đặt vào ExoPlayer. */
-        private val READ_ALOUD = MediaItem.Builder().setMediaId("abook:read-aloud").build()
+        private val READ_ALOUD by lazy { MediaItem.Builder().setMediaId("abook:read-aloud").build() }
 
         private fun isReadAloud(items: List<MediaItem>) = items.singleOrNull()?.mediaId == READ_ALOUD.mediaId
 

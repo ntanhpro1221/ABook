@@ -294,12 +294,16 @@ class DevicesScreenTest {
     private fun shareOn(dark: Boolean) {
         source.share = Share(
             running = true, name = "Điện thoại của tôi", port = 47631, addresses = listOf("192.168.1.9"), code = Code("482915", 1_700_000_600.0),
+            fingerprint = "ab".repeat(32),
             devices = listOf(Sharer("d1", "Máy bàn của nhà", 1_700_000_000.0), Sharer("d2", "Điện thoại của chị", 1_699_000_000.0)),
             bluetooth = "running", bluetoothConnections = 1,
         )
         show(DevicesPage.Share, dark)
         rule.onNodeWithTag("share_switch").assertIsDisplayed()
         rule.onNodeWithTag("share_code").assertIsDisplayed()
+        val fingerprintRows = listOf("share_fingerprint", "share_fingerprint_help", "share_pair_string")
+            .map { rule.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        assertTrue("fingerprint instructions must not overlap", fingerprintRows.zipWithNext().all { (a, b) -> a.bottom <= b.top })
         rule.onNodeWithTag("sharer_d1").assertIsDisplayed()
         shot("devices_share_on_${theme(dark)}")
     }

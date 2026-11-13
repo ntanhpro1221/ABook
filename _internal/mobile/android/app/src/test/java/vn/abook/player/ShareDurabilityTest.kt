@@ -9,6 +9,7 @@ import org.junit.Test
 class ShareDurabilityTest {
     private fun useFile(file: File) {
         LibraryServer::class.java.getDeclaredField("devicesFile").apply { isAccessible = true }.set(LibraryServer, file)
+        LibraryServer::class.java.getDeclaredField("fingerprint").apply { isAccessible = true }.set(LibraryServer, "ab".repeat(32))
     }
 
     @Test fun damaged_share_blocks_pair_and_revoke_and_keeps_original_bytes() {
@@ -20,7 +21,7 @@ class ShareDurabilityTest {
                 val result = runCatching {
                     if (pair) {
                         val code = LibraryServer.startPairing().getString("code")
-                        val body = JSONObject().put("code", code).put("device", "Peer").toString().toByteArray()
+                        val body = JSONObject().put("code", code).put("fingerprint", LibraryServer.fingerprint).put("device", "Peer").toString().toByteArray()
                         LibraryServer.route(LibraryServer.Request("POST", "/sync/v1/pair", emptyMap(), body), ByteArrayOutputStream())
                     } else LibraryServer.revoke("not-a-device")
                 }

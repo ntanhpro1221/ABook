@@ -290,7 +290,7 @@ def _name_phonemes(word: str, voice_region: str) -> str:
     sounds = repair_syllabic_gi(word, _vietnamese_phonemes(word))
     # G2P may itself erase a nucleus distinction in a foreign spelling. New
     # regional matches must agree on the written vowels as well as the sounds.
-    # Legacy diacritic/component comparisons remain separate below.
+    # Diacritic/component comparisons remain separate below.
     vowels = "".join(c for c in word if c in "aăâeêioôơuưy")
     return f"{sounds}|{vowels}" if sounds else ""
 
@@ -723,7 +723,7 @@ def _anchor_component_sounds_right(
         return False
     # Only the pre-existing component path receives bare letters. In particular,
     # do not pass its folded u/o/a/e into the additional regional path.
-    legacy_span = _anchor_component_key(span)
+    component_span = _anchor_component_key(span)
     source_key = _anchor_component_key(source_component)
     # Sound alone is not quite enough, because the phonemiser is happy to drop letters that
     # do not change a sound: "enne" and "en" come out identical, so a locked "Lucien" would
@@ -735,33 +735,33 @@ def _anchor_component_sounds_right(
         len(source_key),
         sum(len(_anchor_component_key(part)) for part in spoken_syllables),
     )
-    if len(legacy_span) > longest_accepted:
+    if len(component_span) > longest_accepted:
         return False
     if source_key:
         source_sound = _vietnamese_phonemes(source_key)
-        span_sound = _vietnamese_phonemes(legacy_span)
+        span_sound = _vietnamese_phonemes(component_span)
         if source_sound and span_sound and source_sound == span_sound:
             return True
     expected = _anchor_component_phonemes(spoken_syllables)
     if expected is None:
         return False
-    for pieces in _anchor_component_splits(legacy_span, len(expected)):
+    for pieces in _anchor_component_splits(component_span, len(expected)):
         if _anchor_component_phonemes(pieces) == expected:
             return True
     # Before 8c90dc47b, normalize_transcript also folded đ to d on the
     # component path. Preserve that complete comparison, including its old
     # diacritic folding, rather than mixing it with a new regional merger.
-    legacy_parts = tuple(_anchor_component_key(part).replace("đ", "d") for part in spoken_syllables)
+    d_folded_parts = tuple(_anchor_component_key(part).replace("đ", "d") for part in spoken_syllables)
     if any("đ" in part.lower() for part in spoken_syllables) or "đ" in span or "đ" in source_key:
-        legacy_source = source_key.replace("đ", "d")
-        legacy_heard = legacy_span.replace("đ", "d")
-        legacy_sound = _vietnamese_phonemes(legacy_source) if legacy_source else ""
-        if legacy_sound and legacy_sound == _vietnamese_phonemes(legacy_heard):
+        d_folded_source = source_key.replace("đ", "d")
+        d_folded_heard = component_span.replace("đ", "d")
+        d_folded_sound = _vietnamese_phonemes(d_folded_source) if d_folded_source else ""
+        if d_folded_sound and d_folded_sound == _vietnamese_phonemes(d_folded_heard):
             return True
-        legacy_expected = _anchor_component_phonemes(legacy_parts)
-        if legacy_expected and any(
-            _anchor_component_phonemes(pieces) == legacy_expected
-            for pieces in _anchor_component_splits(legacy_heard, len(legacy_expected))
+        d_folded_expected = _anchor_component_phonemes(d_folded_parts)
+        if d_folded_expected and any(
+            _anchor_component_phonemes(pieces) == d_folded_expected
+            for pieces in _anchor_component_splits(d_folded_heard, len(d_folded_expected))
         ):
             return True
     for pieces in _anchor_component_splits(span, len(expected)):
@@ -1313,12 +1313,12 @@ def adjudicate_locked_name_anchors(
     if voice_region and result.get("verdict") != ASR_PASS:
         # Adding a regional spelling path may change an alignment tie. It must
         # never revoke a pass obtained without that additional path.
-        legacy = adjudicate_locked_name_anchors(
+        component_verdict = adjudicate_locked_name_anchors(
             expected_spoken_text, asr_result, anchors, repeat_count,
             min_similarity=min_similarity, max_wer=max_wer,
         )
-        if legacy.get("verdict") == ASR_PASS:
-            result = dict(legacy)
+        if component_verdict.get("verdict") == ASR_PASS:
+            result = dict(component_verdict)
             result["regional_name_evidence"] = {"voice_region": voice_region, "kept_unfolded_pass": True}
     return result
 

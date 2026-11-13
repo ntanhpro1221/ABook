@@ -66,7 +66,11 @@ export function checkUnderlay(frames, before, { vertical = true, closing = false
 }
 
 /** Runs in the real app, never substitutes a component or changes animation time. */
-function installPlayerProbe() {
+export function installPlayerProbe() {
+  // Install before the app: Radix's Escape handler stops propagation at the
+  // document. Observe trusted input in window capture without affecting it.
+  let inputSink = null;
+  for (const type of ['click', 'keydown']) window.addEventListener(type, event => inputSink?.(event), true);
   const box = e => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; };
   const player = () => document.querySelector('.now-playing:not([data-state="warm"])');
   const visible = e => {
@@ -83,7 +87,7 @@ function installPlayerProbe() {
   let refs = {};
   window.__playerProbe = {
     pin() {
-      const p = player(), aside = p.querySelector(':scope > aside');
+      const p = player(), aside = p.querySelector('[data-player-column]');
       refs = { frame: p, header: aside.firstElementChild, textColumn: p.querySelector('[data-read-along], [role="tabpanel"]') || p.querySelector('[data-np-stage]'),
         stage: p.querySelector('[data-np-stage]'), transport: p.querySelector('[data-player-transport]'), secondary: p.querySelector('[data-player-secondary]') };
       return this.snapshot().anchors;
@@ -130,8 +134,7 @@ function installPlayerProbe() {
       const observer = new MutationObserver(() => record('mutation'));
       observer.observe(document.body, { subtree: true, childList: true, attributes: true });
       const event = e => { this.events.push({ type: e.type, trusted: e.isTrusted }); if (e.isTrusted) { triggeredAt = performance.now(); stableFrames = 0; } };
-      document.addEventListener('click', event, true);
-      document.addEventListener('keydown', event, true);
+      inputSink = event;
       const tick = () => {
         record('raf');
         const snap = this.frames.at(-1);
@@ -145,7 +148,7 @@ function installPlayerProbe() {
             || a.effect?.pseudoElement?.startsWith('::view-transition')));
         const settled = triggeredAt !== null && performance.now() - triggeredAt >= 180 && stableFrames >= 3 && !moving;
         if (!settled && performance.now() - begin < 2500) requestAnimationFrame(tick);
-        else { observer.disconnect(); document.removeEventListener('click', event, true); document.removeEventListener('keydown', event, true); this.timedOut = !settled; this.done = true; }
+        else { observer.disconnect(); inputSink = null; this.timedOut = !settled; this.done = true; }
       };
       requestAnimationFrame(tick);
     },
@@ -223,17 +226,17 @@ async function widthRun(cdp, base, width, injected, classes) {
       report.contentWidth = contentWidth;
       report.widthClass = classes.filter(c => contentWidth >= c.from).at(-1).name;
       const mini = await ev(cdp, session, '(()=>{const r=document.querySelector("[data-np-source]").getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}})()');
-      const opening = await record(cdp, session, () => click('[data-np-source] [aria-label="Mở màn hình đang nghe"]'));
+      const opening = await record(cdp, session, () => click('[data-np-source] [aria-label="Mở trình phát"]'));
       const full = await ev(cdp, session, '__playerProbe.snapshot().player.raw');
       add(`${story}: mini → player`, checkMorph(opening.frames, mini, full, true), { mini, full, ...opening });
-      const layout = await ev(cdp, session, `(()=>{const p=document.querySelector('.now-playing'),a=p.querySelector(':scope > aside'),panel=p.querySelector(':scope > div'),r=a.getBoundingClientRect(),s=getComputedStyle(a),left=parseFloat(s.marginLeft),right=parseFloat(s.marginRight);return {column:r.toJSON(),columnMarginBox:{x:r.x-left,width:r.width+left+right},panel:panel?.getBoundingClientRect().toJSON()??null,stacked:!!p.querySelector('[data-player-mode]')}})()`);
+      const layout = await ev(cdp, session, `(()=>{const p=document.querySelector('.now-playing'),a=p.querySelector('[data-player-column]'),panel=p.querySelector('[data-player-panel]'),r=a.getBoundingClientRect(),s=getComputedStyle(a),left=parseFloat(s.marginLeft),right=parseFloat(s.marginRight);return {column:r.toJSON(),columnMarginBox:{x:r.x-left,width:r.width+left+right},panel:panel?.getBoundingClientRect().toJSON()??null,stacked:!!p.querySelector('[data-player-mode]')}})()`);
       const largeFrom = classes.find(c => c.name === 'large').from;
       const expectedStacked = contentWidth < largeFrom;
       const layoutMatches = expectedStacked
         ? Math.abs(layout.columnMarginBox.x - full.x) <= 0.5 && Math.abs(layout.columnMarginBox.width - full.width) <= 0.5
         : layout.panel && Math.abs(layout.panel.x - layout.column.right) <= 0.5 && Math.abs(layout.panel.right - (full.x + full.width)) <= 0.5;
       report.checks.push({ name: `${story}: DESIGN 5.5 player split starts at large content width`, pass: layout.stacked === expectedStacked && Boolean(layoutMatches), contentWidth, largeFrom, layout });
-      if (injected) await ev(cdp, session, `(()=>{const s=document.createElement('style');s.textContent='body:has([role="dialog"][data-state="open"]) .now-playing > aside { translate: 0 -32px !important; transition: translate 220ms linear !important; }';document.head.append(s);return true})()`);
+      if (injected) await ev(cdp, session, `(()=>{const s=document.createElement('style');s.textContent='body:has([role="dialog"][data-state="open"]) .now-playing [data-player-column] { translate: 0 -32px !important; transition: translate 220ms linear !important; }';document.head.append(s);return true})()`);
       const phone = await ev(cdp, session, 'Boolean(document.querySelector("[data-player-mode]"))');
       for (const mode of ['Nghe', 'Đọc theo']) {
         const before = await ev(cdp, session, '__playerProbe.snapshot().player.raw');
@@ -253,13 +256,16 @@ async function widthRun(cdp, base, width, injected, classes) {
         // Voice/music MenuShell sections live inside the shared More surface.
         // Inline expansion is measured independently; it may resize the sheet itself, never its underlay.
         await click('.now-playing button[aria-label="Thêm tuỳ chọn"]'); await stable(cdp, session);
-        const inline = await ev(cdp, session, `(()=>{const root=document.querySelector('[data-player-more]');return [...root.querySelectorAll('[data-player-inline] > button')].map((e,i)=>{e.dataset.sheetgeoInline=String(i);return '[data-sheetgeo-inline="'+i+'"]'})})()`);
+        const inline = await ev(cdp, session, `(()=>{const root=document.querySelector('[data-player-more]');return [...root.querySelectorAll('[data-player-inline] > button')].filter(e=>e.getClientRects().length && !e.closest('[hidden],[inert]')).map((e,i)=>{e.dataset.sheetgeoInline=String(i);return '[data-sheetgeo-inline="'+i+'"]'})})()`);
         for (const target of inline) {
           const label = await ev(cdp, session, `document.querySelector(${JSON.stringify(target)}).getAttribute('aria-label')`);
           const pinned = await ev(cdp, session, '__playerProbe.pin()');
           const expanded = await record(cdp, session, () => click(target));
           add(`${mode}: inline ${label}`, checkUnderlay(expanded.frames, pinned, { vertical: false }), { before: pinned, ...expanded });
-          const collapsed = await record(cdp, session, () => click(target));
+          const collapsed = await record(cdp, session, async () => {
+            const back = await ev(cdp, session, `(()=>{const e=[...document.querySelectorAll('[role="dialog"] .back-button')].find(e=>e.getClientRects().length && !e.closest('[hidden],[inert]'));if(!e)return null;e.dataset.sheetgeoBack='';return '[data-sheetgeo-back]'})()`);
+            if (back) await click(back); else await key(cdp, session);
+          });
           add(`${mode}: inline ${label} close`, checkUnderlay(collapsed.frames, pinned, { vertical: false }), { before: pinned, ...collapsed });
         }
         await closeSurface(); await stable(cdp, session);

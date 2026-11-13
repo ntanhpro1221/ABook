@@ -832,14 +832,14 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
     # Older Vietnamese sources use Latin eth even in unaccented syllables.
     # NFC must precede the letter regex so combining vowels stay in the word.
     from ..analysis import is_vietnamese_syllable
-    legacy = re.compile(r'[^\W\d_]*[Ðð][^\W\d_]*')
-    def legacy_d(match):
+    eth_words = re.compile(r'[^\W\d_]*[Ðð][^\W\d_]*')
+    def vietnamese_d_stroke(match):
         word = match.group()
         candidate = word.replace('Ð','Đ').replace('ð','đ')
         if is_vietnamese_syllable(candidate.lower()):
             return candidate
         return word
-    return [separate_digit_quotes(legacy.sub(legacy_d, unicodedata.normalize('NFC', word))).rstrip() for word in out]
+    return [separate_digit_quotes(eth_words.sub(vietnamese_d_stroke, unicodedata.normalize('NFC', word))).rstrip() for word in out]
 
 
 def _roman_numbers(toks: list[str], out: list[str]) -> None:

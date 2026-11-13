@@ -1,6 +1,5 @@
 {
   "sea_g2p": "0.10.0",
-  "quality_hash": "bd4ca0fda67c27e92764f940855ae4abaed5b4396f23e284fa6152bffdbc685f",
   "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
   "cases": [
     {
@@ -1802,12 +1801,12 @@
       "units": [
         {
           "pieces": [
-            "e… ê"
+            "ê… ê"
           ],
-          "phonemes": "ˈɛ, ˈe."
+          "phonemes": "ˈe, ˈe."
         }
       ],
-      "phonemes": "ˈɛ, ˈe."
+      "phonemes": "ˈe, ˈe."
     },
     {
       "id": "stretch:086",
@@ -1823,7 +1822,7 @@
       "units": [
         {
           "pieces": [
-            "gì… ì̀"
+            "gì… ì"
           ],
           "phonemes": "zˈi2, ˈi2."
         }
@@ -1928,12 +1927,12 @@
       "units": [
         {
           "pieces": [
-            "ớớ"
+            "ớ… ớ"
           ],
-          "phonemes": "ˈəːɜˈəːɜ."
+          "phonemes": "ˈəːɜ, ˈəːɜ."
         }
       ],
-      "phonemes": "ˈəːɜˈəːɜ."
+      "phonemes": "ˈəːɜ, ˈəːɜ."
     },
     {
       "id": "stretch:092",
@@ -1949,12 +1948,12 @@
       "units": [
         {
           "pieces": [
-            "ừừ"
+            "ừ… ừ"
           ],
-          "phonemes": "ˈy2ˈy2."
+          "phonemes": "ˈy2, ˈy2."
         }
       ],
-      "phonemes": "ˈy2ˈy2."
+      "phonemes": "ˈy2, ˈy2."
     },
     {
       "id": "stretch:093",

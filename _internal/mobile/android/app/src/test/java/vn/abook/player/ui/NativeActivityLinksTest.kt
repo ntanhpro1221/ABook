@@ -9,6 +9,7 @@ import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
@@ -23,6 +24,10 @@ import vn.abook.player.AbookApplication
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class NativeActivityLinksTest {
+    @Before fun keepMediaServiceOutsideThePickerTest() {
+        val app = ApplicationProvider.getApplicationContext<AbookApplication>()
+        shadowOf(app).declareComponentUnbindable(android.content.ComponentName(app, vn.abook.player.PlaybackService::class.java))
+    }
     @Test
     fun `a destroyed activity is not kept by the application`() {
         val app = ApplicationProvider.getApplicationContext<AbookApplication>()

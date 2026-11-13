@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
+RELEASE_BASE: str | None = None
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 # design-lint chỉ báo cáo cho tới khi dev/design1 gộp (docs/RELEASING.md); Lead đổi thành True để chặn.
 DESIGN_LINT_BLOCKS = False
@@ -164,7 +165,7 @@ def py(*args: str) -> list[str]:
 
 
 def worker_command(name: str) -> list[str]:
-    return py(str(Path(__file__).resolve()), "--worker", name)
+    return py(str(Path(__file__).resolve()), "--worker", name, *(["--base", RELEASE_BASE] if RELEASE_BASE else []))
 
 
 def checks(confirm_hash: str | None = None) -> list[Check]:
@@ -233,6 +234,12 @@ def changed_files() -> list[Path]:
 
 def release_range() -> dict:
     """At a release tag, compare with its predecessor; otherwise use the latest reachable release."""
+    if RELEASE_BASE:
+        base = git("rev-parse", "--verify", "--end-of-options", RELEASE_BASE + "^{commit}").strip()
+        git("merge-base", "--is-ancestor", base, "HEAD")
+        commits = int(git("rev-list", "--count", base + "..HEAD").strip())
+        require(commits > 0, "explicit release base must precede HEAD")
+        return {"base": base, "commits": commits}
     base = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "HEAD").strip()
     if git("rev-parse", base + "^{}").strip() == git("rev-parse", "HEAD").strip():
         base = git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "HEAD^").strip()
@@ -258,18 +265,16 @@ def release_quality_hash(base: str) -> str:
     return digest.hexdigest()
 
 
-def added_lines(path: Path) -> list[str]:
+def added_lines(path: Path, base: str | None = None) -> list[str]:
     relative = path.relative_to(REPO).as_posix()
-    if git("ls-files", "--error-unmatch", "--", relative).strip():
-        diff = git("diff", release_range()["base"], "--no-ext-diff", "--unified=0", "--", relative)
-        return [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
-    return []
+    diff = git("diff", base or release_range()["base"], "--no-ext-diff", "--unified=0", "--", relative)
+    return [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
 
 
-def source_lines(path: Path) -> list[str]:
+def source_lines(path: Path, base: str | None = None) -> list[str]:
     relative = path.relative_to(REPO).as_posix()
     tracked = git("ls-files", "--", relative).strip()
-    return added_lines(path) if tracked else path.read_text(encoding="utf-8").splitlines()
+    return added_lines(path, base) if tracked else path.read_text(encoding="utf-8").splitlines()
 
 
 def version() -> str:
@@ -296,6 +301,26 @@ def snapshot_baseline() -> dict[str, str]:
     names = [p for p in git("ls-files", "-z", "--", prefix).split("\0") if p.endswith(".png")]
     require(bool(names), "Roborazzi: no tracked golden images")
     return {p.removeprefix(prefix): hashlib.sha256((REPO / p).read_bytes()).hexdigest() for p in names}
+
+
+def require_reviewed_snapshot(path: Path) -> None:
+    """Permit only the exact PNG bytes covered by an explicit visual review."""
+    from PIL import Image
+
+    relative = path.relative_to(REPO).as_posix()
+    prefix = "_internal/mobile/android/app/src/test/snapshots/"
+    require(relative.startswith(prefix) and path.suffix == ".png",
+            f"binary trong diff cần duyệt: {relative}")
+    registry = REPO / "_internal/scripts/snapshot_reviewed.json"
+    require(registry.is_file(), f"snapshot review missing: {relative}")
+    entry = json.loads(registry.read_text(encoding="utf-8")).get(relative)
+    require(isinstance(entry, dict) and len(entry.get("reason", "")) >= 40
+            and entry.get("sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
+            f"snapshot review missing or stale: {relative}")
+    with Image.open(path) as image:
+        require(image.format == "PNG" and not image.info and 0 < image.width <= 8192 and 0 < image.height <= 8192,
+                f"snapshot PNG format/metadata invalid: {relative}")
+        image.verify()
 
 
 def validate_snapshot_proofs(directory: Path, baseline: dict[str, str]) -> dict:
@@ -453,24 +478,29 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         for path in files:
             relative = path.relative_to(REPO).as_posix()
             if name == "diff-safety":
+                parts = path.relative_to(REPO).parts
+                corpus_tool = (len(parts) == 4 and parts[:3] == ("_internal", "scripts", "corpus")
+                               and path.suffix == ".py")
                 prohibited = (path.suffix.lower() in {".wav", ".mp3", ".m4a", ".m4b", ".flac", ".ogg", ".aac", ".opus", ".wma", ".aiff", ".pcm", ".keystore", ".jks", ".p12", ".pfx", ".key"}
                               or path.name.lower() in {"listening.json", "devices.json", "computers.json", "reviews.json", "preferences.json", "local.properties"}
-                              or any(p.lower() in {"corpus", "text", "text_tmp"} for p in path.relative_to(REPO).parts))
+                              or (not corpus_tool and any(p.lower() in {"corpus", "text", "text_tmp"} for p in parts)))
                 require(not prohibited, f"file riêng tư/audio/khoá trong diff: {relative}")
                 data = path.read_bytes()
-                require(b"\0" not in data, f"binary trong diff cần duyệt: {relative}")
-                lines = source_lines(path)
+                if b"\0" in data:
+                    require_reviewed_snapshot(path)
+                    continue
+                lines = source_lines(path, comparison["base"])
                 if any(secret.search(line) for line in lines):
                     problems.append(relative)  # Chỉ ghi đường dẫn, tuyệt đối không in giá trị khoá.
             elif path.suffix.lower() in {".py", ".ts", ".tsx", ".kt", ".cpp", ".h", ".qml", ".js", ".mjs", ".ps1", ".bat", ".cmd"}:
-                lines = source_lines(path)
+                lines = source_lines(path, comparison["base"])
                 if path.resolve() == Path(__file__).resolve():
                     declaration = "FORBIDDEN_TERMS = " + repr(FORBIDDEN_TERMS).replace("'", '"')
                     lines = [line for line in lines if line != declaration]
                 if any(terms.search(line) for line in lines):
                     problems.append(relative)
             elif name == "forbidden-terms" and path.suffix.lower() in {".md", ".txt", ".json", ".toml"}:
-                if any(terms.search(line) for line in source_lines(path)):
+                if any(terms.search(line) for line in source_lines(path, comparison["base"])):
                     prose_mentions.append(relative)
         require(not problems, f"{name}: cần duyệt " + ", ".join(problems))
         return {"counts": {"files": len(files), "findings": 0, "prose_mentions": len(prose_mentions)},
@@ -873,6 +903,7 @@ def table(rows: list[dict]) -> str:
 
 
 def main(argv: list[str] | None = None, *, runner=run_process, definitions=None) -> int:
+    global RELEASE_BASE
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
@@ -881,10 +912,12 @@ def main(argv: list[str] | None = None, *, runner=run_process, definitions=None)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--inject-failure", metavar="NAME", help="cấy một hàng FAIL để kiểm cổng phát hành")
     parser.add_argument("--worker", help=argparse.SUPPRESS)
+    parser.add_argument("--base", help="explicit ancestor commit for source comparison after history rewriting")
     parser.add_argument("--confirm-hash", help="explicit approval of this exact quality implementation hash")
     parser.add_argument("--confirm", action="append", default=[], metavar="MANUAL-NAME=NOTE",
                         help="human sign-off for this invocation's exact commit and source bytes; never loaded from earlier reports")
     args = parser.parse_args(argv)
+    RELEASE_BASE = args.base
     if args.worker:
         try:
             result = worker(args.worker, args.confirm_hash)
@@ -922,7 +955,7 @@ def main(argv: list[str] | None = None, *, runner=run_process, definitions=None)
             if row["result"] == "CONFIRMED":
                 row.update(result="MANUAL", detail="source changed during gate; confirmation invalidated")
     report = dict(version=current, started_at=started.isoformat(), scope="partial" if only else "full", only=only,
-                  injected_failure=args.inject_failure, head=head, final_head=final_head,
+                  injected_failure=args.inject_failure, head=head, final_head=final_head, release_base=RELEASE_BASE,
                   tree_sha256=tree, final_tree_sha256=final_tree, confirmations=confirmations,
                   dirty=bool(git("status", "--porcelain")), rows=rows, exit_code=exit_code(rows))
     report_path = output / (stem + ".json")

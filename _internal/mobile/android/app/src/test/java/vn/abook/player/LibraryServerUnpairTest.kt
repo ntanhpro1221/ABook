@@ -19,6 +19,7 @@ class LibraryServerUnpairTest {
         root = BookEditsFixtures.tempDir("abook-server-unpair")
         BookEditsFixtures.useStoreRoot(root)
         LibraryServer::class.java.getDeclaredField("devicesFile").apply { isAccessible = true }.set(LibraryServer, File(root, "share.json"))
+        LibraryServer::class.java.getDeclaredField("fingerprint").apply { isAccessible = true }.set(LibraryServer, "ab".repeat(32))
     }
 
     private fun call(method: String, path: String, body: JSONObject = JSONObject(), token: String = ""): Pair<Int, JSONObject> {
@@ -31,7 +32,7 @@ class LibraryServerUnpairTest {
 
     private fun pair(id: String): String {
         val code = LibraryServer.startPairing().getString("code")
-        val (status, reply) = call("POST", "/sync/v1/pair", JSONObject().put("code", code).put("device", "Máy B").apply { if (id.isNotEmpty()) put("id", id) })
+        val (status, reply) = call("POST", "/sync/v1/pair", JSONObject().put("code", code).put("fingerprint", LibraryServer.fingerprint).put("device", "Máy B").apply { if (id.isNotEmpty()) put("id", id) })
         assertEquals(200, status)
         return reply.getString("token")
     }

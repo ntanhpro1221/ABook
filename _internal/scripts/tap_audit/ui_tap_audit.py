@@ -82,6 +82,9 @@ class CDP:
         await self.ws.send(json.dumps(dict(id=ident,method=method,params=params)))
         while True:
             msg=json.loads(await asyncio.wait_for(self.ws.recv(),20))
+            if msg.get('method') == 'Runtime.exceptionThrown':
+                if not hasattr(self, 'page_errors'): self.page_errors = []
+                self.page_errors.append(msg.get('params', {}).get('exceptionDetails', {}))
             if msg.get('id')==ident:
                 if 'error' in msg: raise RuntimeError(msg['error'])
                 return msg.get('result',{})
@@ -215,6 +218,7 @@ def result_status(results):
 async def scenario(c,base,s,inject):
     report=dict(name=s['name'],checks=[],elements=[],openingLayers=[])
     c.toast_dismissals=[]
+    c.page_errors=[]
     def check(name,ok,**evidence): report['checks'].append(dict(name=name,pass_=bool(ok),**evidence))
     try:
         w,h=s.get('viewport',[412,915])
@@ -299,7 +303,13 @@ async def scenario(c,base,s,inject):
         check('body pointer lock released',body!='none',pointerEvents=body)
         p=await c.select(s['background'])
         check('background center reaches control',p['hit'] and not p['blockedInLayer'],element=p)
-    except Exception as e: check('execution',False,error=str(e))
+    except Exception as e:
+        check('execution',False,error=str(e))
+        try:
+            report['failurePage'] = await c.evaluate("({url:location.href,text:document.body.innerText.slice(0,5000),html:document.body.innerHTML.slice(0,5000)})")
+            report['pageErrors'] = c.page_errors
+        except Exception as capture_error:
+            report['failurePageError'] = str(capture_error)
     report['toastDismissals']=c.toast_dismissals
     report['status']='PASS' if all(x['pass_'] for x in report['checks']) and all(e['status']!='FAIL' for e in report['elements']) else 'FAIL'
     return report

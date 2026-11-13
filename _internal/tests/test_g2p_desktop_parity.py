@@ -6,6 +6,7 @@ snapshot would let both platforms drift together unnoticed. CPU only, no models.
 import importlib.util
 import json
 from pathlib import Path
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/data/g2pgate/desktop_parity.json"
@@ -18,10 +19,11 @@ def _generator():
     return module
 
 
-def test_desktop_parity_snapshot_matches_current_desktop_output():
+@pytest.mark.parametrize("name,cases", [("desktop_parity.json", "public_cases"), ("stretches_parity.json", "stretch_cases")])
+def test_desktop_parity_snapshot_matches_current_desktop_output(name, cases):
     generator = _generator()
-    stored = json.loads(FIXTURE.read_text("utf8"))
-    current = generator.payload(generator.public_cases())
+    stored = json.loads(FIXTURE.with_name(name).read_text("utf8"))
+    current = generator.payload(getattr(generator, cases)())
     stale = [
         c["id"] for c, n in zip(stored["cases"], current["cases"]) if c != n
     ]
@@ -32,4 +34,5 @@ def test_desktop_parity_snapshot_matches_current_desktop_output():
 
 def test_snapshot_carries_no_stale_build_identity():
     # A frozen quality hash cannot be kept true; it is checked dynamically instead.
-    assert "quality_hash" not in json.loads(FIXTURE.read_text("utf8"))
+    for name in ("desktop_parity.json", "stretches_parity.json"):
+        assert "quality_hash" not in json.loads(FIXTURE.with_name(name).read_text("utf8"))

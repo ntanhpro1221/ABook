@@ -171,7 +171,7 @@
         "selector": "[data-line=\"tap-ui-line-1\"] p"
       },
       {
-        "selector": "button[aria-label^=\"Cách đọc:\"]"
+        "selector": "button[aria-label^=\"Sửa cách đọc:\"]"
       }
     ],
     "probe": {

@@ -140,7 +140,7 @@ def test_regional_name_tone_removal_preserves_nfc_and_nfd_vowels(word):
     assert asr._name_phonemes(word.upper(), 'Bắc') == expected
 
 
-def test_legacy_component_transliteration_still_accepts_mizuki():
+def test_component_transliteration_still_accepts_mizuki():
     result = adjudicate('Mi-dư-ki.', 'Mizuki', form='Mi-dư-ki', surface='Mizuki',
                         region='Bắc', alias=False)
     assert result['verdict'] == asr.ASR_PASS

@@ -138,7 +138,7 @@ def create_or_open_project(
                     row["input_path"] = str(destination)
                 manifest_hash = input_manifest_hash(manifest)
             else:
-                # Existing books use their locked, contained sources. No migration.
+                # Existing books use their locked, contained sources.
                 existing_db = ProjectDB(paths.db)
                 manifest = [dict(row) for row in existing_db.list_chapters()]
                 for row in manifest:

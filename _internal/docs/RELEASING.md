@@ -1,5 +1,9 @@
 # Phát hành một phiên bản
 
+Ảnh chuẩn Android thay đổi phải được xem cặp cũ/mới, sửa lỗi bố cục trước rồi mới cập nhật. `scripts/snapshot_reviewed.json` ghi đúng đường dẫn PNG, SHA-256 và lý do duyệt để cổng diff nhận đúng những byte đã xem; PNG có metadata vẫn bị từ chối. Đây là duyệt thay đổi nguồn. Cổng Roborazzi cuối vẫn chạy Verify với toàn bộ ảnh, cấm Record và kiểm bằng chứng đối chiếu riêng cho từng ảnh.
+
+Nếu lịch sử đã scrub và tag phát hành còn ở dòng cũ, truyền `release_gate.py --base <commit-gốc-đã-duyệt>`. Cổng xác minh commit gốc là tổ tiên của HEAD, phạm vi có commit mới, truyền cùng gốc cho từng worker và ghi vào báo cáo. Không tạo hoặc chuyển tag để làm phép so nguồn đi qua. Công cụ Python trực tiếp trong `scripts/corpus/` là mã nguồn; dữ liệu Corpus, file âm thanh và khoá vẫn bị cấm trong diff.
+
 Chủ sách, 27-09: *"mỗi bản release ra phải viết readme, changelog các thứ"*. Một bản phát hành chưa đủ các mục dưới đây thì
 chưa phải bản phát hành.
 

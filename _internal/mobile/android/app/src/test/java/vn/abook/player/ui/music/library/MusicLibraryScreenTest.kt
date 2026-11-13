@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -257,6 +258,9 @@ class MusicLibraryScreenTest {
         rule.waitForIdle()
         rule.onNodeWithTag("track_title").assertIsDisplayed()
         rule.onNodeWithTag("track_fit").assertIsDisplayed()
+        val ranked = state.ui.value.index!!.byLink.getValue(link(5)).rankedEmotions()
+        val bars = ranked.map { (id, _) -> rule.onNodeWithTag("emotion_$id").getUnclippedBoundsInRoot() }
+        assertTrue("emotion rows must stay below one another", bars.zipWithNext().all { (a, b) -> a.bottom <= b.top })
         shot("music_track_${theme(dark)}")
         rule.onNodeWithTag("emotion_anger").performScrollTo()
         shot("music_track_middle_${theme(dark)}")

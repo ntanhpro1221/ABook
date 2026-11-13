@@ -5,7 +5,7 @@ export const S = {
   s_pair_fingerprint_confirm: "Đúng, ghép",
   s_pair_code_or_string: "Mã 6 số hoặc chuỗi ghép",
   s_pair_string: "Chuỗi ghép: ",
-  s_0_1_2_chuong_d4e4d0f8: (p0: unknown, p1: unknown, p2: unknown) => String(p0) + " (" + String(p1) + "/" + String(p2) + " chương)…",
+  s_0_1_2_chuong_d4e4d0f8: (p0: unknown, p1: unknown, p2: unknown) => String(p0) + " (" + String(p1) + "/" + String(p2) + " chương)",
   s_0_1_bam_de_doi_80d58682: (p0: unknown, p1: unknown) => "Đổi " + String(p0) + ": " + String(p1),
   s_0_1_ban_thu_hien_co_cua_nhung_cau_ay_se_bi_bea67ccb: (p0: unknown, p1: unknown, p2: unknown) => String(p0) + ". " + String(p1) + " bản thu hiện có của những câu ấy sẽ bị bỏ và thu lại, " + String(p2) + ". Bản thu cũ không lấy lại được.",
   s_0_1_bo_f774b2ee: (p0: unknown, p1: unknown) => "“" + String(p0) + "” (" + String(p1) + ", bỏ)",

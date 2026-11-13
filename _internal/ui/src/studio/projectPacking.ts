@@ -27,7 +27,7 @@ const SPAN: Record<PackPhase, [number, number]> = {
 };
 
 export interface PackView {
-  /** "Đang đóng gói (12/400 chương)…" */
+  /** "Đang đóng gói (12/400 chương)" */
   title: string;
   /** 0-1; null: chưa có mẫu số (thanh chạy không biết trước). */
   fraction: number | null;

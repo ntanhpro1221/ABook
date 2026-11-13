@@ -8,6 +8,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -20,6 +21,9 @@ import vn.abook.player.TestTime
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class LibraryMembershipTest {
+    @Before fun isolateStore() {
+        vn.abook.player.BookEditsFixtures.useStoreRoot(vn.abook.player.BookEditsFixtures.tempDir("library-membership"))
+    }
     private fun awaitTrue(what: String, condition: () -> Boolean) {
         val until = System.currentTimeMillis() + TestTime.ms(5_000)
         while (!condition()) {

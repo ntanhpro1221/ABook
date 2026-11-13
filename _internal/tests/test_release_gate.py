@@ -284,9 +284,66 @@ def test_term_detector_only_exempts_its_own_literal_declaration(tmp_path, monkey
     source.write_text("# " + gate.FORBIDDEN_TERMS[0], encoding="utf-8")
     monkeypatch.setattr(gate, "REPO", tmp_path)
     monkeypatch.setattr(gate, "changed_files", lambda: [source])
-    monkeypatch.setattr(gate, "source_lines", lambda path: path.read_text(encoding="utf-8").splitlines())
+    monkeypatch.setattr(gate, "source_lines", lambda path, base=None: path.read_text(encoding="utf-8").splitlines())
     with pytest.raises(ValueError, match="cần duyệt"):
         gate.worker("forbidden-terms")
+
+
+@pytest.mark.parametrize("relative,allowed", [
+    ("_internal/scripts/corpus/manifest.py", True),
+    ("_internal/scripts/corpus/manifest.json", False),
+    ("_internal/scripts/corpus/Corpus/chapter.py", False),
+    ("_internal/Corpus/chapter.py", False),
+])
+def test_corpus_tool_namespace_is_distinct_from_private_corpus_data(tmp_path, monkeypatch, relative, allowed):
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True)
+    path.write_text("safe = 1\n", encoding="utf-8")
+    monkeypatch.setattr(gate, "changed_files", lambda: [path])
+    monkeypatch.setattr(gate, "source_lines", lambda path, base=None: path.read_text().splitlines())
+    if allowed:
+        assert gate.worker("diff-safety")["counts"]["findings"] == 0
+    else:
+        with pytest.raises(ValueError, match="file riêng tư"):
+            gate.worker("diff-safety")
+
+
+def test_binary_diff_requires_exact_reviewed_snapshot_without_metadata(tmp_path, monkeypatch):
+    from PIL import Image, PngImagePlugin
+
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    relative = "_internal/mobile/android/app/src/test/snapshots/example.png"
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True)
+    Image.new("RGB", (2, 2), "white").save(path)
+    registry = tmp_path / "_internal/scripts/snapshot_reviewed.json"
+    registry.parent.mkdir(parents=True)
+    with pytest.raises(ValueError, match="review missing"):
+        gate.require_reviewed_snapshot(path)
+
+    def review():
+        registry.write_text(json.dumps({relative: {
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "reason": "Visually reviewed the complete example and confirmed readable, separated controls.",
+        }}), encoding="utf-8")
+
+    review()
+    gate.require_reviewed_snapshot(path)
+    Image.new("RGB", (2, 2), "black").save(path)
+    with pytest.raises(ValueError, match="stale"):
+        gate.require_reviewed_snapshot(path)
+    metadata = PngImagePlugin.PngInfo()
+    metadata.add_text("private", "example metadata")
+    Image.new("RGB", (2, 2)).save(path, pnginfo=metadata)
+    review()
+    with pytest.raises(ValueError, match="metadata invalid"):
+        gate.require_reviewed_snapshot(path)
+    other = tmp_path / "unreviewed.png"
+    Image.new("RGB", (2, 2)).save(other)
+    with pytest.raises(ValueError, match="binary"):
+        gate.require_reviewed_snapshot(other)
 
 
 @pytest.mark.parametrize("name", ["diff-safety", "forbidden-terms"])
@@ -320,6 +377,35 @@ def test_clean_committed_diff_is_checked_from_the_previous_release(tmp_path, mon
         gate.worker("forbidden-terms")
     run("tag", "v0.0.2")
     assert gate.release_range()["base"] == "v0.0.1"
+
+
+def test_explicit_release_base_is_an_ancestor_and_reaches_every_worker(tmp_path, monkeypatch):
+    def run(*args):
+        return subprocess.run(["git", "-C", str(tmp_path), *args], check=True, capture_output=True, text=True).stdout.strip()
+
+    run("init")
+    run("config", "user.name", "Gate test")
+    run("config", "user.email", "gate@example.invalid")
+    path = tmp_path / "source.py"
+    path.write_text("safe = 1\n", encoding="utf-8")
+    run("add", "source.py")
+    run("commit", "-m", "scrubbed baseline")
+    base = run("rev-parse", "HEAD")
+    run("tag", "v0.3.0-example")
+    path.write_text("safe = 2\n", encoding="utf-8")
+    run("commit", "-am", "new release")
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    monkeypatch.setattr(gate, "RELEASE_BASE", base)
+    assert gate.release_range() == {"base": base, "commits": 1}
+    assert gate.changed_files() == [path]
+    assert gate.worker_command("diff-safety")[-2:] == ["--base", base]
+    monkeypatch.setattr(gate, "RELEASE_BASE", "HEAD")
+    with pytest.raises(ValueError, match="must precede HEAD"):
+        gate.release_range()
+    unrelated = run("commit-tree", "HEAD^{tree}", "-m", "unrelated root")
+    monkeypatch.setattr(gate, "RELEASE_BASE", unrelated)
+    with pytest.raises(subprocess.CalledProcessError):
+        gate.release_range()
 
 
 def test_quality_hash_requires_exact_current_hash_when_changed(monkeypatch):

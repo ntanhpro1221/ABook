@@ -2110,7 +2110,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   const bookPage = `/book/${encodeURIComponent(track.bookId)}`;
   return (
     // Chỉ cột điện thoại cuộn (máy tính: cột cố định có viền phải - mặt nạ sẽ xoá cả viền).
-    <aside ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
+    <aside data-player-column ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
       className={cn(
         "flex shrink-0 flex-col",
         plain && "motion-reveal",
@@ -2434,7 +2434,7 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
       {<Presence>{fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={S.s_chuong_2d157977} className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}</Presence>}
-      <Reveal when={fill && !stacked}><div className="flex min-w-0 flex-1 flex-col">
+      <Reveal when={fill && !stacked}><div data-player-panel className="flex min-w-0 flex-1 flex-col">
           <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 sm:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>
         </div></Reveal>

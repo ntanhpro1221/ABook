@@ -1155,7 +1155,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           {/* Biểu tượng cao đúng một dòng chữ: chữ xuống hai dòng thì biểu tượng vẫn thẳng dòng đầu, không trôi vào giữa. */}
           <Reveal when={book.remote && !downloaded}><p className="mt-2 flex items-start gap-2 text-sm text-fg-2">
               <span className="grid h-[1lh] shrink-0 place-items-center"><Laptop className="size-4" /></span>
-              {typeof book.remote === "object"
+              {book.remote && typeof book.remote === "object"
                 ? S.s_nghe_thang_tu_0_chuong_nghe_toi_duoc_giu_l_a6a23b61(book.remote.computer || S.s_may_khac_95db1846)
                 : S.s_nghe_thang_tu_may_tinh_tai_ve_de_nghe_ca_k_44e792bc}
             </p></Reveal>

@@ -68,7 +68,7 @@ export function installGeometryProbe() {
     recentInput,
     pending: null,
     surfaces: () => surfaces().map(el => ({ selector: path(el), title: el.querySelector('[data-surface-title]')?.textContent || el.getAttribute('aria-label') || '', rect: box(el) })),
-    triggers: () => [...document.querySelectorAll('[aria-haspopup="dialog"], [aria-label="Mở màn hình đang nghe"]' + (innerWidth <= 640 ? ', [aria-haspopup="menu"]' : ''))]
+    triggers: () => [...document.querySelectorAll('[aria-haspopup="dialog"], [aria-label="Mở trình phát"]' + (innerWidth <= 640 ? ', [aria-haspopup="menu"]' : ''))]
       .filter(el => !el.closest('[inert], [aria-hidden="true"]') && !excluded(el) && !el.matches(':disabled, [aria-expanded="true"]') && box(el).width > 0)
       .map(el => ({ selector: path(el), label: el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 100), menu: el.getAttribute('aria-haspopup') === 'menu' })),
     // Điểm của điều khiển mà con trỏ thật chạm trúng chính nó: tâm trước, rồi lưới 5x5. Điều khiển lồng nhau (liên kết tên sách trên thanh thu nhỏ) hay lớp phủ
