@@ -16,8 +16,10 @@ from abook.tts import TTSCoordinator
 @pytest.mark.parametrize("mark", list('“”\"‘’\'′″‴‵‶‷⁗＂＇「」『』〝〞〟ʹʺʻʼʽʾʿˈˊˋˮ`´«»'))
 def test_digit_quotes_removed_on_both_sides(mark):
     source = f'{mark}420000{mark}'
+    assert separate_digit_quotes(source).strip() == '420000'
     voice, mapping = studio_tn(source, None, True)
-    assert voice.strip() == '420000'
+    assert voice.strip(mark + ' ') == ('bốn trăm hai mươi nghìn' if mark in '\"\'' else '420000')
+    assert separate_digit_quotes(voice) == voice
     assert mapping[-1] == len(voice)
     assert source == f'{mark}420000{mark}'
 
@@ -216,8 +218,7 @@ def test_real_phonemizer_counted_thousands_are_kept_after_quote_fix():
     assert p.phonemize_text('420,000 đồng') != p.phonemize_text(voice)
 
 
-def test_unqualified_single_group_number_keeps_its_separator():
-    # A single group without counting context is intentionally ambiguous.
+def test_quoted_single_group_number_follows_the_count_reading():
     voice, mapping = studio_tn('"420,000"', None, True)
-    assert voice.strip() == '420,000'
+    assert voice == '"bốn trăm hai mươi nghìn"'
     assert mapping[-1] == len(voice)

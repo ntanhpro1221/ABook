@@ -32,7 +32,7 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "f268f100a202bc9d079ebb59cbbf66679dd91be3e87571b90dad3071dda717c8",
+    "sha256": "6b3e37ba50ef059d8f1e1b3ded6dc907f4248de2a6db1597b7b67371540390d1",
     "reason": "Developer workflow instructions covering containment, production boundaries and quality gates."
   },
   "_internal/abook/aliases.py": {
@@ -324,7 +324,7 @@
     "reason": "Development server CLI documentation explaining runner flags and origin protection."
   },
   "_internal/abook/webui/actions.py": {
-    "sha256": "4073edb563985697ae4fa624283566b5d0254424b46970849a194d72ed88cd18",
+    "sha256": "249b92aa2996324d6ab0486a0f5480388c6ae0924e708ad4834599daab9d210d",
     "reason": "abook/webui/actions.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/address_cues.py": {
@@ -596,7 +596,7 @@
     "reason": "abook/webui/route.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/server.py": {
-    "sha256": "c1480a1c47ec20d3babc360220abe30bcd24bcb4011d7921225e4a12c3af2c52",
+    "sha256": "9bd62ac1b09b040507ad86ba7fed12055d845ea7a642bde6721a7756c33985a0",
     "reason": "Server API docstrings for pairing confirmation, same-origin enforcement and uploaded source references."
   },
   "_internal/abook/webui/shared_readings.py": {
@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "3b9fefb21b54679b2c70e550af3c3f33de1e2fd4d17400cfa36f94e350b9fc7e",
+    "sha256": "5315e293dc2782deaacc368bb8de363bc6cd36ca5adeb9e04b9093ac643698eb",
     "reason": "docs/TEST_REPORT.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
@@ -2912,7 +2912,7 @@
     "reason": "tests/test_a_book_changes_narrator_at_a_chapter.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a_book_made_twice_is_flagged.py": {
-    "sha256": "e0971ece71ea4e61132442304de9f790882b6bf1f11629b629b2e8a17fcb924e",
+    "sha256": "116c340a4060a5be8b3c4a20a04c0c6f177c8f964717e7ab1aa4943cd416e6fe",
     "reason": "tests/test_a_book_made_twice_is_flagged.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a_caller_card.py": {
@@ -3152,7 +3152,7 @@
     "reason": "tests/test_audition_gate.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_background_runner.py": {
-    "sha256": "f6ddffa0096ec09e372c7965378cc9dadb919c7036fd147de313e4372bb37fe8",
+    "sha256": "c7a2228091080eae11c54af6b0d56261350a30632a0223fce83beb1823b0b7e4",
     "reason": "tests/test_background_runner.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_bluetooth_desktop_client.py": {
@@ -3596,7 +3596,7 @@
     "reason": "tests/test_name_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_names.py": {
-    "sha256": "b3d9928173746e23966807761e483fc620a07780615fc86181eba9d102a6d37e",
+    "sha256": "92606a5a2d900ad8495c4b75bf22e430447b72dc7ba3b786f6de79a4edaf4b0d",
     "reason": "tests/test_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_names_keep_the_book_spelling.py": {
@@ -3864,7 +3864,7 @@
     "reason": "tests/test_real_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_redo_a_book_not_started.py": {
-    "sha256": "aa78fe2bf8f14196f61f193ea65a6332b218e555afd0c111abf76e39ab3ff070",
+    "sha256": "2fbc7c8e30684d8cdac26c94be09f816ba072bd94627ada3259437317a2bd555",
     "reason": "tests/test_redo_a_book_not_started.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_remote_computers.py": {
@@ -3916,7 +3916,7 @@
     "reason": "tests/test_search_texts.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_secfix_book_paths.py": {
-    "sha256": "b42976c1a799f4f74f29916c6df62dc7ff9560a296631a79a21e03a971cc3cb8",
+    "sha256": "3837e234eef9dc45913c6785068a5b4f11970064fa27434f686a82fa5f1781a0",
     "reason": "Security regression documentation for project containment and rejection before filesystem or network access."
   },
   "_internal/tests/test_secfix_dev_origin.py": {
@@ -4244,7 +4244,7 @@
     "reason": "tests/test_work_items_speaker_suggestions.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_workshop_merge.py": {
-    "sha256": "74405aafc2758b9430158af9b17d231416697eb40649115e6581a8b2c14a790a",
+    "sha256": "502e6d2e106df4e752a80e5151d049f5092d68940d23b4b7b2c265ea312f9212",
     "reason": "tests/test_workshop_merge.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/text_book_fixtures.py": {
@@ -4252,7 +4252,7 @@
     "reason": "tests/text_book_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/timing.py": {
-    "sha256": "509edfd2b16c7d25fa0acce2de2ce6e5a0eee1696b861798900bb69c189863c6",
+    "sha256": "4b4ac4e083d70b699aa09b003559a243c73dea4278c09728dd714a161899254c",
     "reason": "tests/timing.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/scripts/fixtures/frames-lists.html": {

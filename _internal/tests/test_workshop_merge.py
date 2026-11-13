@@ -38,6 +38,7 @@ def test_opening_the_file_of_a_project_edited_on_another_machine_merges_its_edit
     # Máy kia: cùng dự án (chép nguyên), sửa thêm cách đọc Heidi, một phán quyết "Cần thu lại", và một cách đọc Rhine CŨ hơn máy này.
     other = tmp_path / "may_kia" / project.name
     shutil.copytree(project, other)
+    projectfile.relocate(other / store.DB_NAME, str(project), str(other), {})
     listener_overrides.request_pronunciation(other, "Heidi", "Hai-đi", now=200.0)
     listener_overrides.request_pronunciation(other, "Rhine", "Rai-nơ", now=100.0)
     reviews.set(other, "s3", "redo", 1)

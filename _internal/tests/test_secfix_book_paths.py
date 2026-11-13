@@ -102,7 +102,11 @@ def test_a_link_inside_the_book_folder_that_points_outside_is_refused(tmp_path: 
     try:
         os.symlink(outside, root / "lien_ket", target_is_directory=True)
     except OSError:
-        pytest.skip("máy không cho tạo symlink")
+        if os.name != "nt":
+            raise
+        import subprocess
+        subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(root / "lien_ket"), str(outside)],
+                       check=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
     with pytest.raises(book_paths.UnsafeBookPath):
         book_paths.inside(root, root / "lien_ket" / "x.mp3")
 

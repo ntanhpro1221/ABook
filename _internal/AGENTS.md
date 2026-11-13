@@ -599,6 +599,7 @@ Module chính:
 ## Quy tắc thay đổi
 
 - Normalize chapter input to NFC per line after invisible-marker removal and before segmentation or stable IDs. Preserve raw source bytes and checksums. Normalize TTS/Reader tokens and reading maps at comparison boundaries; desktop and Android share the reading cache rule version.
+- Redo compares selected chapter content and locked creation choices before reusing an unstarted project. Restarting interrupted analysis copies selected sources before moving the draft to recoverable trash, restores it if creation fails, and preserves the display-only source hint. The fresh project owns its source copies.
 
 - Tuỳ chọn âm thanh khi nghe thuộc thiết bị: mặc định dùng chung; `Riêng sách này` sao chép bộ hiện tại theo mã sách, tắt thì dùng lại bộ chung. Bao gồm tốc độ/âm lượng và DSP; không sửa bản thu, preset TTS hoặc evidence QA.
 - Âm sắc khi nghe có kho preset riêng của người nghe, mặc định toàn app và tuỳ chọn riêng sách. `abook/webui/assets/tone_presets.json` là nguồn duy nhất của tần số, Q và bảy đường cong có sẵn; `scripts/gen_tone_presets.py` sinh hằng native và bảng tên tường minh trước khi sinh ui_strings. Không dùng preset hệ thống Android. Tắt bỏ qua bộ lọc và giữ nguyên PCM; preset cá nhân có bản nháp bền, CRUD/hoàn tác/thứ tự riêng, chỉ hỏi lưu các thay đổi khi rời trang. Không chuyển dữ liệu preset cũ.

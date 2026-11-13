@@ -39,13 +39,13 @@ class PlaybackResumptionTest {
     }
 
     private fun <T> awaitMain(future: ListenableFuture<T>): T {
-        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(TestTime.ms(5_000))
-        while (!future.isDone && System.nanoTime() < deadline) {
+        val done = CountDownLatch(1)
+        future.addListener({ done.countDown() }, com.google.common.util.concurrent.MoreExecutors.directExecutor())
+        repeat(1_000) {
             shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(5)
+            if (done.await(TestTime.ms(5), TimeUnit.MILLISECONDS)) return future.get()
         }
-        assertTrue("library preparation did not finish", future.isDone)
-        return future.get()
+        throw AssertionError("library preparation did not finish")
     }
 
     @Test fun resumptionReturnsWhileStoreIsBusyAndMedia3SetsTheAudioQueueOnlyOnce() {

@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -236,7 +237,7 @@ def test_accept_retained_take_refuses_signal_rejected_unless_exhausted(tmp_path)
     pipeline, _chapter, row = _short_tts_pipeline(tmp_path, source_text="Một câu ngắn.")
     rate = int(pipeline.settings["tts"]["sample_rate"])
     with pytest.raises(SignalRejectedTake) as caught:
-        atomic_write_wav(tmp_path / "e.wav", _tone(1.2, rate, edge=True), rate, "Một câu ngắn.", pipeline.settings,
+        atomic_write_wav(pipeline.paths.root / "e.wav", _tone(1.2, rate, edge=True), rate, "Một câu ngắn.", pipeline.settings,
                          segment=_voiced(pipeline.db, row), keep_rejected=True)
     exc = caught.value
     pipeline.db.mark_generating(row["id"], 5)
@@ -478,7 +479,7 @@ def test_state_write_failures_never_end_the_worker(tmp_path, monkeypatch):
         return real(path, payload)
 
     monkeypatch.setattr(runner, "atomic_write_json", flaky)
-    monkeypatch.setattr(runner.time, "sleep", sleeps.append)
+    monkeypatch.setattr(runner, "time", SimpleNamespace(**{**vars(runner.time), "sleep": sleeps.append}))
     state = {"state": "running"}
     assert runner._write_live_state(paths, state) is False, "one try: a held file is not waited for"
     assert "state_write_lost" in state and sleeps == []
@@ -500,7 +501,8 @@ def test_held_state_file_is_retried_later_from_after_the_failed_write(tmp_path, 
 
     monkeypatch.setattr(runner, "atomic_write_json", held)
     monkeypatch.setattr(runner.time, "monotonic", lambda: clock[0])
-    monkeypatch.setattr(runner.time, "sleep", lambda _s: pytest.fail("the supervisor loop must never sleep on state.json"))
+    monkeypatch.setattr(runner, "time", SimpleNamespace(**{
+        **vars(runner.time), "sleep": lambda _s: pytest.fail("the supervisor loop must never sleep on state.json")}))
     writer = runner._LiveStateWriter(paths)
     assert writer.due(clock[0], False) is False and writer.due(clock[0], True) is True
     state = {"state": "running"}
@@ -638,7 +640,7 @@ def test_high_quality_rank_puts_its_refusals_right_after_the_signal_tier():
 def test_checkpoint_error_does_not_relabel_clean_audio(tmp_path, monkeypatch):
     pipeline, _chapter, row = _edge_pipeline(tmp_path, ["clean"])
     pipeline.db.mark_generating(row["id"], 1)
-    path = tmp_path / "ok.wav"
+    path = pipeline.paths.root / "ok.wav"
     checksum, metrics, seed = pipeline.tts.synthesize_atomic(row, path, seed_salt="primary_0")
     pipeline._keep_usable_take(row, path, checksum, metrics, seed)
     monkeypatch.setattr(pipeline.db, "mark_signal_passed", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("write failed")))

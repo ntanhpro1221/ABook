@@ -85,7 +85,7 @@ it("nhịp hết hạn bị hoãn (máy ngủ): phát lại vẫn tắt hẹn gi
   await mount();
   await act(async () => { actions.setSleep({ kind: "minutes", minutes: 30 }); });
   await pause();
-  vi.setSystemTime(Date.now() + 9 * 3_600_000); // đồng hồ thật trôi, nhịp setTimeout chưa chạy
+  vi.setSystemTime(clock + 9 * 3_600_000); // fake wall clock advances without firing the timeout queue
   await resume();
   expect(actions.sleep.kind).toBe("off");
 });

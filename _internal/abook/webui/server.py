@@ -1700,7 +1700,8 @@ class App:
         return overrides or None
 
     def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
-                     first_person_chapters: dict[str, str] | None, *, overrides: dict[str, Any] | None = None) -> Path:
+                     first_person_chapters: dict[str, str] | None, *, overrides: dict[str, Any] | None = None,
+                     reuse_project: Path | None = None) -> Path:
         """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập".
         `overrides`: cài đặt riêng đã kiểm sẵn (`_analysis_overrides`) - không có thì kiểm ở đây."""
         self.require_library_root()
@@ -1713,6 +1714,7 @@ class App:
             teller_mode=body.get("tellerMode") is True,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
             drop_tail_credit_lines=body["dropTailCreditLines"] if isinstance(body.get("dropTailCreditLines"), bool) else None,
+            reuse_project=reuse_project,
         )
         if body.get("precastWait") is True:
             precast.set_wait(root, True)  # "Chờ tôi duyệt trước khi thu" chọn ngay lúc tạo (mỗi tập của "Tạo nhiều tập")
@@ -1757,19 +1759,30 @@ class App:
         # Kiểm điều kiện của cuốn mới (model phân tích có trong Ollama...) TRƯỚC khi đụng tới bản cũ: lỗi ở đây không được
         # làm bản dở biến khỏi Studio (soát a88 V3).
         overrides = self._analysis_overrides(str(body.get("analysisModel", "") or ""))
-        if replaced is not None and not store.not_started(replaced):
-            # "Làm lại phân tích" (bản dở: phân tích bị ngắt): dự án mới cùng tên, cùng thiết lập sẽ MỞ LẠI đúng thư mục cũ
-            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở phải ra khỏi thư viện
-            # TRƯỚC khi tạo: vào chỗ chờ "Hoàn tác" (cùng ổ), tạo xong để nó tự vào Thùng rác lúc hết hạn; tạo hỏng thì khôi phục
-            # nguyên vẹn. Không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
-            for name in (covers.COVER_FILE, covers.META_FILE):
-                if (replaced / name).is_file():
-                    kept_covers[name] = (replaced / name).read_bytes()
-            held = self.delete(replaces, undo=True).get("undo")
-            replaced = None
+        redo_sources = None
+        redo_hint = None
         try:
+            if replaced is not None and not store.not_started(replaced):
+                # The selected sources may live inside the draft being moved.
+                # Copy them before holding it; failure still restores the draft.
+                redo_sources = tempfile.TemporaryDirectory(prefix="abook-redo-")
+                copied = []
+                for index, source in enumerate(actions.input_files(paths)):
+                    destination = Path(redo_sources.name) / str(index) / source.name
+                    destination.parent.mkdir(parents=True)
+                    shutil.copyfile(source, destination)
+                    copied.append(str(destination))
+                paths = copied
+                hint = replaced / continuation.SOURCE_HINT_FILE
+                if hint.is_file():
+                    redo_hint = hint.read_bytes()
+                for name in (covers.COVER_FILE, covers.META_FILE):
+                    if (replaced / name).is_file():
+                        kept_covers[name] = (replaced / name).read_bytes()
+                held = self.delete(replaces, undo=True).get("undo")
+                replaced = None
             root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body),
-                                     overrides=overrides)
+                                     overrides=overrides, reuse_project=replaced)
         except BaseException:
             if held:
                 try:
@@ -1777,9 +1790,14 @@ class App:
                 except ApiError:
                     pass  # không khôi phục được (thư mục đích bị chiếm): bản dở vẫn nằm trong chỗ chờ, sau đó vào Thùng rác
             raise
+        finally:
+            if redo_sources is not None:
+                redo_sources.cleanup()
         for name, data in kept_covers.items():
             if not (root / name).exists():
                 atomic_write_bytes(root / name, data)
+        if redo_hint is not None:
+            atomic_write_bytes(root / continuation.SOURCE_HINT_FILE, redo_hint)
         replace_error = ""
         unchanged = replaced is not None and root.resolve() == replaced.resolve()
         if unchanged:

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { act } from "react";
+import { eventually } from "@/testing/eventually";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -41,8 +42,7 @@ it("shows the certificate before a manual code can be sent with confirmation", a
   await enter("#other-computer-address", "192.168.1.20");
   await enter("#other-computer-code", "482913");
   await act(async () => { host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); });
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
-  expect(host.textContent).toContain("0123 4567 89AB CDEF");
+  await act(() => eventually(() => expect(host.textContent).toContain("0123 4567 89AB CDEF")));
   const posts = () => vi.mocked(api).mock.calls.filter(([path, options]) => path === "/api/computers" && options?.method === "POST");
   expect(posts()).toHaveLength(1);
   expect(posts()[0][1]?.body).toEqual({ address: "192.168.1.20", code: "482913", fingerprint: "" });

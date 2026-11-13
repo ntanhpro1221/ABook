@@ -81,7 +81,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = fa
                                     val fingerprint = share.fingerprint.replace(" ", "")
                                     Caption(S.s_pair_fingerprint_label + vn.abook.player.Pin.short(fingerprint))
                                     Caption(S.s_pair_fingerprint_help)
-                                    Caption(S.s_pair_string + vn.abook.player.Pin.pairingString(code, fingerprint))
+                                    Caption(S.s_pair_string + vn.abook.player.Pin.pairingString(code.digits, fingerprint))
                                 }
                             }
                             Reveal(share.code == null) {

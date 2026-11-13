@@ -680,7 +680,8 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
                 first_person: str = "", settings_overrides: dict[str, Any] | None = None,
                 first_person_chapters: dict[str, str] | None = None,
                 drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None,
-                first_person_gender: str = "", teller_mode: bool = False) -> Path:
+                first_person_gender: str = "", teller_mode: bool = False,
+                reuse_project: Path | None = None) -> Path:
     """`narrator` rỗng = người dùng không chọn giọng dẫn: sách có người kể "tôi" thì máy chọn giọng dẫn cùng giới người ấy
     (abook/teller_voice.py). `first_person_gender` ("male"/"female"/"" = chưa rõ): người dùng nói giới người kể "tôi" ngay lúc tạo -
     ghim giới ấy cho nhân vật (như một người nghe ghim) và, khi không chọn giọng dẫn, giọng dẫn cùng giới được đặt NGAY, để bước phân vai
@@ -731,6 +732,28 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         # Dòng ủng hộ / quảng cáo cuối chương: khoá riêng, nên sách tạo trước khi có đề xuất này vẫn tách như cũ.
         overrides["text"] = {**overrides.get("text", {}), "drop_tail_credit_lines": bool(drop_tail_credit_lines)}
     settings = build_settings(profile, overrides or None)
+    if reuse_project is not None:
+        from contextlib import closing
+        from ..config import settings_hash
+        from ..text_processing import build_chapter_manifest
+        from . import store
+
+        # Redo selects contained copies, whose paths differ from the original
+        # creation inputs. Compare their content and choices before creating.
+        if store.not_started(reuse_project):
+            plan = store.redo_plan(reuse_project)
+            with closing(store.connect(reuse_project)) as connection:
+                stored = [dict(row) for row in connection.execute(
+                    "SELECT chapter_index, title, input_sha256, input_size FROM chapters ORDER BY chapter_index, id")]
+            fields = ("chapter_index", "title", "input_sha256", "input_size")
+            selected = build_chapter_manifest(files, library_root)
+            if (settings_hash(settings) == settings_hash(store.read_settings(reuse_project))
+                    and title.strip() == plan["title"]
+                    and first_person_gender == plan["firstPersonGender"]
+                    and teller_mode == plan["tellerMode"]
+                    and [tuple(row[key] for key in fields) for row in selected]
+                    == [tuple(row[key] for key in fields) for row in stored]):
+                return reuse_project
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
     if not db.casting_is_finalized():  # sách đã phân vai (mở lại đúng sách cũ) thì giọng dẫn đã là chuyện đã rồi

@@ -85,7 +85,8 @@ class SleepPausedExpiryTest {
 
     @Test fun playingAgainAfterTheLimitDoesNotRunLastNightsTimer() {
         timer(picked = 30, leftMin = 20.0)
-        field("pausedAtMs").setLong(SleepTimer, System.currentTimeMillis() - SleepText.PAUSED_EXPIRES_MS - 1)
+        SleepTimer.onPlaying(false)
+        field("pausedAtMs").setLong(SleepTimer, paused - SleepText.PAUSED_EXPIRES_MS - 1)
         voice.playing = true
         SleepTimer.onPlaying(true)
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
@@ -93,7 +94,8 @@ class SleepPausedExpiryTest {
 
     @Test fun playingAgainBeforeTheLimitKeepsTheTimerAndRestartsTheLoop() {
         timer(picked = 30, leftMin = 20.0)
-        field("pausedAtMs").setLong(SleepTimer, System.currentTimeMillis() - 10 * 60_000L)
+        SleepTimer.onPlaying(false)
+        field("pausedAtMs").setLong(SleepTimer, paused - 10 * 60_000L)
         voice.playing = true
         SleepTimer.onPlaying(true)
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
@@ -103,7 +105,8 @@ class SleepPausedExpiryTest {
 
     @Test fun theQueuedCheckTurnsTheTimerOffWhilePaused() {
         timer(picked = 30, leftMin = 20.0)
-        field("pausedAtMs").setLong(SleepTimer, System.currentTimeMillis() - SleepText.PAUSED_EXPIRES_MS - 1)
+        SleepTimer.onPlaying(false)
+        field("pausedAtMs").setLong(SleepTimer, paused - SleepText.PAUSED_EXPIRES_MS - 1)
         SleepTimer.onPlaying(false) // dừng lại lần nữa: giữ mốc cũ, lần xét tới hạn ngay
         Handler.advance(0)
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)

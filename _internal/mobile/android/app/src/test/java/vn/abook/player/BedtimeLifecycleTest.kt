@@ -36,7 +36,7 @@ class BedtimeLifecycleTest {
             repeat(3) {
                 Bedtime.interaction("play")
                 Bedtime.checkpoint()
-                Bedtime.window(System.currentTimeMillis(), 0.0)
+                Bedtime.window(1_800_000_000_000L, 0.0)
             }
             assertEquals(night, saved().toString())
             assertTrue(saved().has("endedAt"))

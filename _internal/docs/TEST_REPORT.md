@@ -1,5 +1,12 @@
 # Test report
 
+## 13-11-2026 — integ168c release integration follow-up
+
+- The first complete CPU pass after integration reported **13,045 passed, 18 failed, 19 skipped**. This was a diagnostic run, not a release approval. Failures exposed stale test doubles and expectations, exact-byte privacy reviews from before the scrub, cache-key fixtures from rule 18, source containment assumptions, and two real redo regressions.
+- Redo now compares selected source content and creation choices before reusing an unstarted book. Restarting interrupted analysis copies its selected source files before holding the draft in recoverable trash. Creation failure restores the draft; the fresh book owns its source copies and retains the original display-only source hint. Existing restart, rollback and workshop merge tests cover these paths.
+- Focused Qt checks: **26 device tests and 38 Studio tests passed**, with zero failures, QML type errors, missing glyphs or leaked JavaScript values. The initial native builds also exposed missing namespace qualifications in the shared paused-sleep getter and tests; these were corrected without duplicating the constant. The complete Qt/build/release gate is still required.
+- Follow-up focused checks: **36 redo/merge/flakiness tests passed**, **18 web tests passed**. Both live-state writer tests passed three consecutive isolated runs (**2/2 each**) after replacing the module-local clock proxy instead of mutating process-wide `time.sleep`. The private calibration replay passed all **442 rows** without copying sentence data into the checkout. Android verification and the final full gate remain pending at this checkpoint.
+
 ## 13-11-2026 — fix167: resume preparation, resource failures and music UI
 
 - Continued from `9f90ced9b`, retaining its shared-rulings resume fix. Preparation of narration voice and music now also runs before synthesis on resumed books. A stop during music preparation propagates immediately. Shared rulings mark the file incomplete before the first request; discovery faults propagate, and explicitly incomplete sets are rejected by direct and package readers.

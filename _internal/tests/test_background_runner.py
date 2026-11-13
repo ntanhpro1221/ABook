@@ -25,7 +25,7 @@ from abook.background_runner import (
     tail_log,
 )
 from abook.io_utils import atomic_write_json
-from tests.timing import assert_within
+from tests.timing import assert_within, completes_within
 
 
 def test_default_startup_timeout_envelops_strict_worker_bootstrap() -> None:
@@ -663,9 +663,8 @@ def test_held_state_file_never_slows_the_supervisor_loop(tmp_path: Path, monkeyp
     project = _make_project(tmp_path)
     paths = BackgroundPaths.for_project(project)
     tries = _hold_live_state(monkeypatch, paths)
-    started = time.monotonic()
-    code = run_supervisor(project, "held-state", worker_target=_fake_worker_many_events, poll_seconds=0.01)
-    assert_within(10.0, started)
+    with completes_within(10.0):
+        code = run_supervisor(project, "held-state", worker_target=_fake_worker_many_events, poll_seconds=0.01)
     assert code == 0 and get_status(project).state == "completed"
     progress = [
         json.loads(line) for line in paths.events.read_text(encoding="utf-8").splitlines()
@@ -692,9 +691,8 @@ def test_held_state_file_never_delays_a_stop(tmp_path: Path, monkeypatch) -> Non
         },
     )
     tries = _hold_live_state(monkeypatch, paths)
-    started = time.monotonic()
-    code = run_supervisor(project, "held-stop", worker_target=_fake_worker_wait_for_stop, poll_seconds=0.01)
-    assert_within(5.0, started)
+    with completes_within(5.0):
+        code = run_supervisor(project, "held-stop", worker_target=_fake_worker_wait_for_stop, poll_seconds=0.01)
     assert code == 0 and get_status(project).state == "stopped"
     assert "stopping" in tries
     assert "STOP_REQUEST forwarded to worker" in tail_log(project, lines=40)

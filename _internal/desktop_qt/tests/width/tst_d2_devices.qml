@@ -376,9 +376,10 @@ Item {
             install(baseSync(), [])
             Platform.setSetting("fold.other-computers.pair", "1")
             const fingerprint = "1A".repeat(32)
+            const shortFingerprint = fingerprint.slice(0, 16).match(/.{4}/g).join(" ")
             DesktopApi.responses["POST /api/computers"] = function(body) {
                 if (body.fingerprint !== fingerprint)
-                    return {status: 409, data: {confirm: {fingerprint: fingerprint, short: "1A1A 1A1A 1A1A 1A1A"}}}
+                    return {status: 409, data: {confirm: {fingerprint: fingerprint, short: shortFingerprint}}}
                 server.computers = [computer()]
                 return {status: 200, data: {name: "NGDtuanh-PC", computers: server.computers}}
             }

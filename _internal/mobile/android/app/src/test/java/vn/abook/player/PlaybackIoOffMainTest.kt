@@ -94,7 +94,7 @@ class PlaybackIoOffMainTest {
     @Test fun aPauseWithATimerAnOpenSessionAndANightDoesNotWaitForDisk() {
         val record = Store.activeRecord("io-book")
         field("recordId").set(Playback, record)
-        val now = System.currentTimeMillis()
+        val now = System.currentTimeMillis() // wallclock-ok: snapshot must share the running player's clock, not a timeout
         SleepTimer.restore(JSONObject().put("source", "manual").put("bookId", "io-book").put("recordId", record)
             .put("minutes", 30).put("remainingMs", 20 * 60_000L).put("savedAt", now), now)
         field("sessionFrom").set(Playback, JSONObject().put("chapterId", 1).put("seconds", 800.0))

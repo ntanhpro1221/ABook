@@ -117,10 +117,12 @@ def test_an_analysis_cut_short_is_flagged_and_can_be_restarted_from_scratch(stud
     phân tích dở dang (`analysisInterrupted`, số câu chờ) và "Làm lại phân tích" thay bản dở bằng dự án mới, bìa đi theo."""
     import sqlite3
     from contextlib import closing
+    from abook import continuation
 
     _paths, app, server, _runner = studio
     old = _created(server, tmp_path)
     old_root = app.library.resolve(old)
+    source_hint = (old_root / continuation.SOURCE_HINT_FILE).read_bytes()
     (old_root / "cover.jpg").write_bytes(b"\xff\xd8bia")
     status, fresh = _call(server, "GET", f"/api/books/{old}")
     fresh = fresh["book"]
@@ -144,12 +146,17 @@ def test_an_analysis_cut_short_is_flagged_and_can_be_restarted_from_scratch(stud
     assert status == 201, created
     assert recycled == [], "nằm chờ \"Hoàn tác\" ít giây rồi mới vào Thùng rác (cho phép khôi phục nếu việc tạo hỏng)"
     app.sweep_trash(everything=True)
-    # Cuốn mới đã chiếm tên cũ: bản dở vào Thùng rác dưới tên anh em, Windows khôi phục về tên ấy chứ không đè cuốn mới.
-    assert [path.name for path in recycled] == [f"{old_root.name} (đã xoá)"]
+    # Copied inputs give the fresh project a separate identity; restoring the
+    # old draft can use its original folder without replacing the new book.
+    assert recycled == [old_root]
+    assert app.library.resolve(created["id"]) != old_root
     status, again = _call(server, "GET", f"/api/books/{created['id']}")
     again = again["book"]
     assert again["analysisInterrupted"] is False and again["segments"]["analyzed"] == 0, "bắt đầu lại từ câu đầu"
     assert (app.library.resolve(created["id"]) / "cover.jpg").read_bytes() == b"\xff\xd8bia"
+    new_root = app.library.resolve(created["id"])
+    assert (new_root / continuation.SOURCE_HINT_FILE).read_bytes() == source_hint
+    assert all(path.is_file() and path.is_relative_to(new_root) for path in continuation._input_paths(new_root))
 
 
 def _cut_book(server, app, tmp_path: Path) -> tuple[str, Path, dict]:

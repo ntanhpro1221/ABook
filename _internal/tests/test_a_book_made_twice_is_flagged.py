@@ -15,7 +15,7 @@ def test_the_same_story_copied_elsewhere_is_recognised(studio, tmp_path: Path) -
     paths, _app, server, _runner = studio
     copy = tmp_path / "elsewhere" / "chuong 1.txt"
     copy.parent.mkdir()
-    shutil.copyfile(tmp_path / "001.txt", copy)
+    shutil.copyfile(paths.root / "sources" / "001.txt", copy)
     status, data = _call(server, "POST", "/api/scan", {"paths": [str(copy.parent)]})
     assert status == 200
     assert [(item["id"], item["shared"], item["chapters"]) for item in data["existing"]] == [(book_id(paths.root), 1, 1)]

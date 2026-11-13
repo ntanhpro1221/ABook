@@ -68,8 +68,8 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
-    "sha256": "670533efe92880b846de6815455716bac77ea863c8bf735abfd2f242134c0f8d",
-    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+    "sha256": "69bba5b10f2c60b15c6e4b18e4bb5d56cd016011fa6b849a717431e1d844f7d2",
+    "reason": "Exact bytes verified against scrubbed baseline 645239bda; inherited synthetic Vietnamese reading cases, no new sentence phonemes"
   },
   "_internal/tests/fixtures/readaloud/spoken/words.json": {
     "sha256": "e54f3c6abe0ebd2c813fe6f20b31483b07d788363abdf715225ce474ee0084b7",

@@ -29,7 +29,7 @@ const finish = () => act(() => {
 });
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  vi.useFakeTimers(); localStorage.clear(); h.track = null; h.phones = [];
+  vi.useFakeTimers(); vi.setSystemTime(1_800_000_000_000); localStorage.clear(); h.track = null; h.phones = [];
   h.api.mockReset(); h.api.mockResolvedValue({ jobs: [], phones: [] });
   Object.defineProperty(CSSStyleDeclaration.prototype, Symbol.iterator, { configurable: true,
     value: function* (this: CSSStyleDeclaration) { for (let i = 0; i < this.length; i++) yield this.item(i); } });
@@ -57,7 +57,7 @@ it.each(["RuntimeError: CUDA out of memory", "KeyError: 'speaker'"])("chi tiết
 
 it("mã ghép hết hạn fade cùng vùng và không chờ poll máy chủ", async () => {
   const fingerprint = "0123456789abcdef".repeat(4);
-  client.setQueryData(["sync"], { enabled: true, name: "Máy này", addresses: [], devices: [], fingerprint, fingerprintShort: "0123 4567 89AB CDEF", remoteStudio: false, pairing: { code: "123456", expiresAt: Date.now() / 1000 + 1, pairString: "123456-" + fingerprint.toUpperCase() }, pairingBlocked: false });
+  client.setQueryData(["sync"], { enabled: true, name: "Máy này", addresses: [], devices: [], fingerprint, fingerprintShort: "0123 4567 89AB CDEF", remoteStudio: false, pairing: { code: "123456", expiresAt: 1_800_000_001, pairString: "123456-" + fingerprint.toUpperCase() }, pairingBlocked: false });
   await draw(<PhoneSync />);
   expect(host.textContent).toContain("Mã nhận máy: 0123 4567 89AB CDEF");
   expect(host.textContent).toContain("123456-" + fingerprint.toUpperCase());

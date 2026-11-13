@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import os
 import time
+from contextlib import contextmanager
 
 SCALE = max(1.0, float(os.environ.get("ABOOK_TEST_TIME_SCALE", "5")))
 
@@ -29,6 +30,14 @@ SCALE = max(1.0, float(os.environ.get("ABOOK_TEST_TIME_SCALE", "5")))
 def scaled(seconds: float) -> float:
     """Hạn `seconds` nhân hệ số máy tải."""
     return seconds * SCALE
+
+
+@contextmanager
+def completes_within(limit: float, *, blocked: float | None = None, clock=time.monotonic):
+    """Measure one operation using the shared, load-scaled upper bound."""
+    started = clock()
+    yield
+    assert_within(limit, started, blocked=blocked, clock=clock)
 
 
 def _upper(limit: float, blocked: float | None) -> float:

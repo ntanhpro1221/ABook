@@ -142,7 +142,7 @@ def test_f3_http_returns_retryable_503_without_technical_exception_name(monkeypa
     def locked(*args):
         raise io_utils.FileLockUnavailable("Dữ liệu của bạn đang được lưu. Bạn hãy thử lại.")
     monkeypatch.setattr(server, "ROUTES", [("PUT", re.compile("/api/lock-test"), locked)])
-    fake = SimpleNamespace(path="/api/lock-test", _allowed_host=lambda: True, _authorized=lambda _: True,
+    fake = SimpleNamespace(path="/api/lock-test", _allowed_host=lambda: True, _same_origin=lambda: True, _authorized=lambda _: True,
                            _send_json=lambda status, body: result.append((status, body)))
     server.Handler._route(fake, "PUT")
     assert result[0][0] == 503 and result[0][1]["retryable"] is True

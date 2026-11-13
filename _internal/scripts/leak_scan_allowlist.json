@@ -438,6 +438,18 @@
    "path": "_internal/ui_strings/vi.json",
    "sha256": "431a486c643b54858b4c5843e82dc862984c2a24abed3b7d8f0396da2f68f0ae",
    "reason": "Self-written line; the 7-word match is a common Vietnamese phrase, not a quoted passage."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/public_leak_reviewed.json",
+   "sha256": "7ac5f5adf87e3407a0f239096c4c43652f8732a0a0a73ca67495be2e2b0d22e8",
+   "reason": "Technical path metadata identifying a scrubbed gold-label file; only the existing book identifier is present, with no quoted sentence."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/scripts/public_leak_reviewed.json",
+   "sha256": "ede9bc5ea5f34de09881d30217b992819841c7fe499a0148bfe9e6548f2e7f78",
+   "reason": "Technical path metadata identifying a scrubbed gold-label file; only the existing book identifier is present, with no quoted sentence."
   }
  ]
 }
