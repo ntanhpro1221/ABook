@@ -450,7 +450,7 @@ object VieneuUnits {
 
     /** The sound of a stuttered [frag] at the start of [rest] ("C" before "chuyện" is "chờ", "E" before "em" is "e") - `stutter_sound`. */
     private fun letterCodes(toks: List<String>, out: MutableList<String>) {
-        val code = Regex("""([^$W]*)([A-Z]{1,3}[0-9]+(?:[A-Z]{1,3}[0-9]+)*)([^$W]*)""")
+        val code = Regex("""([^$W]*)([A-Z]{1,3}[0-9]{1,4}(?:[A-Z]{1,3}[0-9]{1,4})*)([^$W]*)""")
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val match = code.matchEntire(token) ?: continue

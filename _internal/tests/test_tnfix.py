@@ -52,7 +52,7 @@ def test_real_words_are_never_stretched(word):
     assert studio_tn(f"Từ {word} này.", None, True)[0] == f"Từ {word} này."
 
 
-@pytest.mark.parametrize(("code", "said"), [("M2", "em hai"), ("M60", "em sáu mươi"), ("M500", "em năm trăm"), ("MP9", "em pê chín"), ("M82A1", "em tám mươi hai a một")])
+@pytest.mark.parametrize(("code", "said"), [("M2", "em hai"), ("M60", "em sáu mươi"), ("M500", "em năm trăm"), ("MP9", "em pê chín"), ("M82A1", "em tám mươi hai a một"), ("SS2", "ét ét hai")])
 def test_uppercase_model_codes(code, said):
     assert studio_tn(f"Thử {code} nhé.", None, True, direct_english=True)[0] == f"Thử {said} nhé."
 

@@ -482,7 +482,7 @@ def _emoticons(out: list[str]) -> None:
 
 def _letter_codes(toks: list[str], out: list[str]) -> None:
     """Bounded uppercase model codes use letter names and Vietnamese numbers."""
-    code = re.compile(r"([^\w]*)([A-Z]{1,3}\d+(?:[A-Z]{1,3}\d+)*)([^\w]*)")
+    code = re.compile(r"([^\w]*)([A-Z]{1,3}\d{1,4}(?:[A-Z]{1,3}\d{1,4})*)([^\w]*)")
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
