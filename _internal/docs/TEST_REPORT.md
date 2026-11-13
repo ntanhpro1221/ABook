@@ -2227,3 +2227,48 @@ private Corpus repository.
 - Pytest skip ceiling: released report had 19; removing the two comparator cases sets the ceiling to 17. No full-suite remeasurement on battery. Xfailed ceiling is zero; skip reasons are logged with -rfs. Installer end-to-end CLI is now a separate gate row; tap-audit and phone-frame unit tests are in testpaths.
 - Qt end-ellipsis is a hard rule in `ui_parity_qt.py --check`, matching the web DESIGN rule. 80 Qt findings cleared through the shared catalog: 58 ellipsis keys folded into their existing plain twins, 10 values stripped; web export/music/player strings that used the same keys follow. Parity exemptions now have per-pair ceilings (`scripts/ui_parity_limits.json`) and unused exemptions fail; 46 unused entries removed.
 - Not run on battery: Gradle (Android unit, Roborazzi verify), Qt build/QuickTest, Vitest/typecheck (no lock-matched ui/node_modules in this worktree), full release gate.
+
+## 0.4.168 integration fixes and focused checks (2026-11-13)
+
+Integrated 69 distinct source commits on the scrubbed 0.4.167 base 645239bda.
+The advertised 21-commit TN lineage includes 84b3cf29b, already the final
+integ168b pick; it contributes 20 additional commits. Source task reports are
+retained, with sentence phonemes replaced by hashes and local paths scrubbed.
+
+The combined tree retains the actual secfix certificate-confirmation tests;
+the earlier gatefix note about an unimplemented first-use protocol describes
+that source branch before secfix integration. Continuation requires a fresh
+source selection. Shared motion also covers the added continuation, pairing
+confirmation and sleep timer controls.
+
+The ten package declarations that differed from installed metadata now record
+the measured runtime, including CTranslate2 4.8.2. No installed package changed.
+Runtime provenance checks both ASR packages and tests compare all registry
+lock versions against actual installed metadata.
+
+Host environment switches are isolated in the tests. Offline restoration is
+tested with absent and pre-existing flags. Source input is NFC per line after
+invisible-marker removal, before segmentation and stable identities; TTS and
+Reader comparisons normalize tokens and listener readings on both platforms.
+Reader cache rules advance from 18 to 19 for the integrated TN/NFC behavior.
+
+Focused invocations (overlapping coverage, not additive): 172 runtime/offline/
+reading tests; 146 UI/security/gate integration tests with 3 optional/perf skips;
+63 gate/input tests; 15 public-scanner tests; 149 final Unicode, segmentation
+and English-reading tests; 75 Reader/cache tests with 1 optional network skip.
+All these invocations have zero failures. Android build and the complete
+release gates follow the predecessor's resource handoff; their final measured
+counts belong to the external integration result, not these focused totals.
+
+The new public scanner keeps exact hash-bound reviews: 948 baseline-identical
+files, 114 with inherited flagged strings and 29 with reviewed new technical
+or synthetic content. A regression proves changed bytes invalidate a review
+and no review can waive a corpus match. The independent strict HEAD scan
+reported zero findings and zero pending audio before the final focused fixes;
+the final HEAD scan remains a required release step.
+
+Quality implementation hash: 5fb3551d9dac1a6f84072eff3baccedf76ec32cb4bb2f77e9d7a94cfa2f710bf
+to dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64.
+This is an isolated development pipeline change; no production project or
+running analysis was stopped or resumed. No acoustic quality claim follows
+from these text and mock-adapter checks.

@@ -17,6 +17,21 @@ def test_removed_invisible_characters_do_not_leave_decomposed_accents():
     assert normalize_text("a\u200b\u0300") == "à"
 
 
+def test_multiline_source_normalization_keeps_unicode_work_bounded(monkeypatch):
+    line = "Mã kiểm thử có dấu."
+    source = (unicodedata.normalize("NFD", line) + "\n") * 1000
+    real = unicodedata.normalize
+    sizes = []
+
+    def observed(form, text):
+        sizes.append(len(text))
+        return real(form, text)
+
+    monkeypatch.setattr(unicodedata, "normalize", observed)
+    assert normalize_text(source) == (line + "\n") * 999 + line
+    assert sizes and max(sizes) < 4096
+
+
 def test_reader_does_not_serve_audio_cached_under_the_previous_reading_rules(tmp_path):
     text = "Tôi kiểm GPS."
     previous = hashlib.sha256(f"{names.RULE_VERSION}.18|edge|voice|{text}".encode()).hexdigest()

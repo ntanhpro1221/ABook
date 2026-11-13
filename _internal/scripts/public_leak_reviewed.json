@@ -32,7 +32,7 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "60733dae898a0de03a65a4192486ae7ed4b75ac59e8266341ddca4fe5582eb57",
+    "sha256": "f268f100a202bc9d079ebb59cbbf66679dd91be3e87571b90dad3071dda717c8",
     "reason": "Developer workflow instructions covering containment, production boundaries and quality gates."
   },
   "_internal/abook/aliases.py": {
@@ -304,7 +304,7 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "a23a129907d4c7a9570fdf377b29909a8ae4805de0eafdc0c3a6319fdde15be4",
+    "sha256": "61b28415634cb8005081d5d30735183714df6cbe6715b446d389430050d694f5",
     "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings."
   },
   "_internal/abook/tts.py": {
@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "cee80bbb24a51dd7a49cd3a025c5617ac7e98b1cf957ca3a7dbdc10badf9171d",
+    "sha256": "3b9fefb21b54679b2c70e550af3c3f33de1e2fd4d17400cfa36f94e350b9fc7e",
     "reason": "docs/TEST_REPORT.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
