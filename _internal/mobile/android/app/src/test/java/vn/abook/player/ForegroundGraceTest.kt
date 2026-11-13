@@ -28,7 +28,8 @@ class ForegroundGraceTest {
     }
 
     @Test fun graceCoversTheShakeWindowAndTheFlipWindow() {
-        assertTrue(PlaybackService.foregroundGraceMs(flipEnabled = false) >= SleepTimer.SHAKE_RESUME_MS)
+        assertEquals(125_000L, PlaybackService.foregroundGraceMs(flipEnabled = false, shakeEnabled = false))
+        assertEquals(600_000L, PlaybackService.foregroundGraceMs(flipEnabled = false, shakeEnabled = true))
         assertTrue(SleepTimer.SHAKE_RESUME_MS >= 125_000L) // lắc trong 2 phút sau khi tự dừng ([SleepTimer.applyShake] 120 s)
         assertEquals(10 * 60_000L, PlaybackService.foregroundGraceMs(flipEnabled = true))
         assertEquals(Motion.FLIP_RESUME_MS, PlaybackService.foregroundGraceMs(flipEnabled = true))

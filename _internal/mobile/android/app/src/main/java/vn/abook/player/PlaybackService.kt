@@ -35,6 +35,9 @@ import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.Executor
 import java.io.File
 import java.security.MessageDigest
 import vn.abook.player.readaloud.ReadAloud
@@ -54,6 +57,62 @@ import vn.abook.player.ui.nowplaying.SleepText
 class PlaybackService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
     private val sleepButtons = SleepTimer.buttonsListener { refreshButtons() }
+    private val libraryIo = Executors.newSingleThreadExecutor { Thread(it, "abook-library").apply { isDaemon = true } }
+    private val playerLooper = Executor { task -> Playback.onMain { task.run() } }
+    private var destroyed = false
+
+    /** Read library, artwork and file stamps off the player looper; apply the prepared result on that looper. */
+    private fun <T, R> libraryTask(read: () -> T, apply: (T) -> R): ListenableFuture<R> {
+        val result = SettableFuture.create<R>()
+        libraryIo.execute {
+            try {
+                val value = read()
+                playerLooper.execute {
+                    if (!result.isCancelled) {
+                        if (destroyed) result.setException(IllegalStateException("Playback service destroyed"))
+                        else try { result.set(apply(value)) } catch (error: Exception) { result.setException(error) }
+                    }
+                }
+            } catch (error: Exception) { result.setException(error) }
+        }
+        return result
+    }
+
+    private data class QueueBook(val id: String, val title: String, val narrator: String, val chapters: List<Playback.Chapter>,
+                                 val index: Int, val seconds: Double, val rate: Double, val prepared: Playback.PreparedBook)
+
+    private fun prepareQueue(manifest: org.json.JSONObject, state: org.json.JSONObject, chapter: Int, seconds: Double, preview: Boolean = false): QueueBook {
+        val id = manifest.getString("id")
+        val title = manifest.optString("title")
+        val narrator = manifest.optString("narrator")
+        val chapters = Playback.chaptersOf(manifest)
+        require(chapters.isNotEmpty()) { S.s_cuon_nay_khong_con_tren_may_de91299f }
+        val prepared = Playback.prepareBook(id, title, narrator, chapters)
+        return QueueBook(id, title, narrator, chapters, chapters.indexOfFirst { it.id == chapter }.coerceAtLeast(0), seconds,
+            state.optDouble("rate", 1.0).takeIf { it.isFinite() && it > 0 } ?: 1.0,
+            if (preview && chapters.any { it.isText }) prepared.copy(media = Playback.mediaItems(id, title, narrator, chapters)) else prepared)
+    }
+
+    private fun applyQueue(book: QueueBook, forPlayback: Boolean): MediaSession.MediaItemsWithStartPosition = with(book) {
+        if (forPlayback) {
+            check(Store.knownActiveRecord(id) == prepared.record) { S.s_cuon_nay_khong_con_tren_may_de91299f }
+            val chapter = chapters[index].id
+            if (chapters.any { it.isText }) {
+                Playback.load(id, title, narrator, chapters, chapter, seconds, rate, prepared = prepared)
+                return@with MediaSession.MediaItemsWithStartPosition(listOf(READ_ALOUD), 0, 0)
+            }
+            Playback.adopt(id, title, narrator, chapters, chapter, seconds, rate, prepared)
+        }
+        MediaSession.MediaItemsWithStartPosition(prepared.media, index, (seconds * 1000).toLong())
+    }
+
+    internal fun resumeQueue(forPlayback: Boolean): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+        if (forPlayback && ReadAloud.active) return readAloudQueue()
+        return libraryTask({
+            val (manifest, last) = Playback.lastListened() ?: throw UnsupportedOperationException(S.s_chua_nghe_sach_nao_f2635716)
+            prepareQueue(manifest, Store.state(manifest.getString("id")), last.optInt("chapterId"), last.optDouble("seconds"), preview = !forPlayback)
+        }) { applyQueue(it, forPlayback) }
+    }
 
     companion object {
         /**
@@ -91,7 +150,8 @@ class PlaybackService : MediaLibraryService() {
          * media); các đường phát tiếp từ nền của app - lắc để nghe tiếp sau khi hẹn giờ tự dừng ([SleepTimer.SHAKE_RESUME_MS]), lật máy lên
          * ([Motion.FLIP_RESUME_MS], khi bật úp máy để dừng), lệnh phát từ máy tính ([Remote]) - phải tới trong lúc dịch vụ chưa rời. Hết hạn thì thẻ vuốt bỏ được như trước.
          */
-        internal fun foregroundGraceMs(flipEnabled: Boolean): Long = if (flipEnabled) Motion.FLIP_RESUME_MS else SleepTimer.SHAKE_RESUME_MS
+        internal fun foregroundGraceMs(flipEnabled: Boolean, shakeEnabled: Boolean = SleepTimer.shakeEnabled): Long =
+            if (flipEnabled || shakeEnabled) Motion.FLIP_RESUME_MS else SleepTimer.SHAKE_RESUME_MS
     }
 
     /** Đặt lại hạn giữ tiền cảnh theo công tắc úp máy hiện tại ([foregroundGraceMs]); ListenPrefs gọi khi công tắc đổi. */
@@ -107,7 +167,7 @@ class PlaybackService : MediaLibraryService() {
         AppLog.w("PlaybackService", S.s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2)
         Playback.onMain {
             ReadAloud.onPause()
-            Playback.player?.pause()
+            Playback.fail(S.s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2)
         }
     }
 
@@ -209,7 +269,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     /**
-     * Nút trên thông báo; đổi theo trạng thái hẹn giờ (có "+10 phút" chỉ khi đang hẹn - đứng đầu phần mở rộng để màn khoá luôn hiện).
+     * Nút trên thông báo; đổi theo trạng thái hẹn giờ (có "Hẹn lại N phút" chỉ khi đang hẹn - đứng đầu phần mở rộng để màn khoá luôn hiện).
      * Lùi/tới 15 giây chiếm ô trước/sau (dạng thu gọn). Media3 vì thế bỏ SKIP_TO_PREVIOUS/NEXT khỏi trạng thái phát cũ (MediaSessionLegacyStub;
      * hệ thống Android 13+ cũng chỉ vẽ biểu tượng ⏮⏭ cho hai hành động ấy) - LE Audio MediaControlProfile vẫn báo "base actions". Phím
      * Trước/Sau của tai nghe Bluetooth (AVRCP gửi phím media) vẫn tới [HeadsetSkips] vì Media3 xét lệnh của player, không xét trạng thái cũ.
@@ -353,7 +413,7 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (+10 phút, chương trước/sau, Đóng).
+            // Library commands plus sleep extension, previous/next chapter and Close.
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                 .add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).add(CLOSE).build()
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -369,20 +429,7 @@ class PlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             isForPlayback: Boolean,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
-            // Cuốn đọc to đã nạp, hàng đợi rỗng vì đang chờ đọc đoạn đầu: không nạp lại gì, lệnh phát đi tiếp qua HeadsetSkips.play.
-            if (isForPlayback && ReadAloud.active) return readAloudQueue()
-            val recent = Playback.lastListened()
-                ?: return Futures.immediateFailedFuture(UnsupportedOperationException(S.s_chua_nghe_sach_nao_f2635716))
-            val (manifest, last) = recent
-            val chapters = Playback.chaptersOf(manifest)
-            // Hệ thống chỉ hỏi để vẽ thẻ "nghe tiếp" (isForPlayback false): đừng nạp, đừng phát.
-            if (isForPlayback) Playback.onMain { Playback.resumeLast() }
-            if (isForPlayback && chapters.any { it.isText }) return readAloudQueue()
-            val index = chapters.indexOfFirst { it.id == last.optInt("chapterId") }.coerceAtLeast(0)
-            val items = Playback.mediaItems(manifest.getString("id"), manifest.optString("title"), manifest.optString("narrator"), chapters)
-            return Futures.immediateFuture(
-                MediaSession.MediaItemsWithStartPosition(items, index, (last.optDouble("seconds") * 1000).toLong()),
-            )
+            return resumeQueue(isForPlayback)
         }
 
         override fun onGetLibraryRoot(
@@ -399,11 +446,14 @@ class PlaybackService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-            val nodes = children(parentId)
-                ?: return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
-            val from = (page.toLong() * pageSize).coerceIn(0, nodes.size.toLong()).toInt()
-            val items = nodes.drop(from).take(pageSize.coerceAtLeast(1)).map { item(it, browser.packageName) }
-            return Futures.immediateFuture(LibraryResult.ofItemList(items, params))
+            return libraryTask({
+                val nodes = children(parentId)
+                if (nodes == null) LibraryResult.ofError<ImmutableList<MediaItem>>(SessionError.ERROR_BAD_VALUE)
+                else {
+                    val from = (page.toLong() * pageSize).coerceIn(0, nodes.size.toLong()).toInt()
+                    LibraryResult.ofItemList(nodes.drop(from).take(pageSize.coerceAtLeast(1)).map { item(it, browser.packageName) }, params)
+                }
+            }) { it }
         }
 
         override fun onGetItem(
@@ -412,13 +462,13 @@ class PlaybackService : MediaLibraryService() {
             mediaId: String,
         ): ListenableFuture<LibraryResult<MediaItem>> {
             if (mediaId == LibraryTree.ROOT) return Futures.immediateFuture(LibraryResult.ofItem(rootItem(), null))
-            val book = LibraryTree.bookOf(mediaId)
-            val node = book?.let { (children(LibraryTree.ROOT).orEmpty() + chaptersOf(it).orEmpty()) }
-                ?.firstOrNull { it.id == mediaId }
-            return Futures.immediateFuture(
+            return libraryTask({
+                val book = LibraryTree.bookOf(mediaId)
+                val node = book?.let { (children(LibraryTree.ROOT).orEmpty() + chaptersOf(it).orEmpty()) }
+                    ?.firstOrNull { it.id == mediaId }
                 if (node != null) LibraryResult.ofItem(item(node, browser.packageName), null)
-                else LibraryResult.ofError(SessionError.ERROR_BAD_VALUE),
-            )
+                else LibraryResult.ofError<MediaItem>(SessionError.ERROR_BAD_VALUE)
+            }) { it }
         }
 
         /**
@@ -435,29 +485,12 @@ class PlaybackService : MediaLibraryService() {
             val chosen = mediaItems.singleOrNull()?.takeIf { it.localConfiguration == null }?.mediaId
             val id = chosen?.let(LibraryTree::bookOf)
                 ?: return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
-            val manifest = Store.playableManifest(id)
-            val state = Store.state(id)
-            val start = manifest?.let { LibraryTree.start(chosen, it, state) }
-            if (manifest == null || start == null) {
-                return Futures.immediateFailedFuture(IllegalArgumentException(S.s_cuon_nay_khong_con_tren_may_de91299f))
-            }
-            val chapters = LibraryTree.chapters(manifest)
-            val title = manifest.optString("title")
-            val narrator = manifest.optString("narrator")
-            val rate = state.optDouble("rate", 1.0).takeIf { !it.isNaN() && it > 0 } ?: 1.0
-            if (chapters.any { it.isText }) {
-                // Có chương chữ: lõi tự nạp và đọc (ReadAloud) - hàng đợi mỗi đoạn một mục, không phải mỗi chương một file.
-                Playback.load(id, title, narrator, chapters, start.chapterId, start.seconds, rate)
-                return readAloudQueue()
-            }
-            Playback.adopt(id, title, narrator, chapters, start.chapterId, start.seconds, rate)
-            return Futures.immediateFuture(
-                MediaSession.MediaItemsWithStartPosition(
-                    Playback.mediaItems(id, title, narrator, chapters),
-                    chapters.indexOfFirst { it.id == start.chapterId }.coerceAtLeast(0),
-                    (start.seconds * 1000).toLong(),
-                ),
-            )
+            return libraryTask({
+                val manifest = Store.playableManifest(id) ?: throw IllegalArgumentException(S.s_cuon_nay_khong_con_tren_may_de91299f)
+                val state = Store.state(id)
+                val start = LibraryTree.start(chosen, manifest, state) ?: throw IllegalArgumentException(S.s_cuon_nay_khong_con_tren_may_de91299f)
+                prepareQueue(manifest, state, start.chapterId, start.seconds)
+            }) { applyQueue(it, true) }
         }
 
         override fun onCustomCommand(
@@ -547,6 +580,8 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        destroyed = true
+        libraryIo.shutdown()
         AppLog.i("PlaybackService", S.s_dich_vu_phat_tat_a884c3ae)
         Playback.removeListener(sleepButtons)
         Playback.saveNow()

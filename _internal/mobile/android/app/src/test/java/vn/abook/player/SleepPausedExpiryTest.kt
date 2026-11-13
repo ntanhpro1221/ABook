@@ -45,6 +45,7 @@ class SleepPausedExpiryTest {
     }
 
     @After fun cleanup() {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         reset()
         Playback.player = null
         Handler.reset()
@@ -53,6 +54,19 @@ class SleepPausedExpiryTest {
     @Test fun theLimitIsThirtyMinutesLikeWebAndQt() {
         assertEquals(30 * 60_000L, SleepText.PAUSED_EXPIRES_MS)
         assertEquals("Đang tạm dừng - đồng hồ cũng dừng. Dừng quá 30 phút thì hẹn giờ tự tắt.", SleepText.pausedNote)
+    }
+
+    @Test fun repeatedPausedSavesDoNotRenewTheRestoredTimerLifetime() {
+        timer(picked = 30, leftMin = 20.0)
+        SleepTimer.onPlaying(false)
+        val since = paused
+        SleepTimer.persist(since + 10 * 60_000L)
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
+        val saved = JSONObject(java.io.File(Store.root, "listen-prefs.json").readText()).getJSONObject("timer")
+        assertEquals(since, saved.getLong("savedAt"))
+        reset()
+        SleepTimer.restore(saved, since + SleepText.PAUSED_EXPIRES_MS)
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
 
     @Test fun aPausedTimerExpiresAfterThirtyMinutesAndIsForgotten() {

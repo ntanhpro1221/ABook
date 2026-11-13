@@ -25,6 +25,8 @@ Column {
     // Chữ của một giá trị kèm đơn vị ("23 phút", "1,35×"); chữ trên chip (mặc định như `format`).
     property var format: function(v) { return Logic.formatNumber(root.spec, v) }
     property var chipLabel: null
+    // Optional draft path; chips and typing continue to confirm through picked().
+    property var adjustValue: null
     default property alias extra: specialSlot.data
     signal picked(real value)
     signal previewed(real value)
@@ -83,7 +85,13 @@ Column {
         const next = Logic.stepValue(spec, before, steps)
         if (next === before) return
         if (Logic.isDetent(spec, before, next)) Feedback.play("tick")
-        commit(next)
+        adjust(next)
+    }
+    function adjust(next) {
+        if (!adjustValue) { commit(next); return }
+        moving = null
+        latest = next
+        adjustValue(next)
     }
     function dragTo(fraction) {
         const next = Logic.fromFraction(spec, fraction)
@@ -238,8 +246,8 @@ Column {
                 const steps = {[Qt.Key_Right]: 1, [Qt.Key_Up]: 1, [Qt.Key_Left]: -1, [Qt.Key_Down]: -1,
                                [Qt.Key_PageUp]: Logic.PAGE_STEPS, [Qt.Key_PageDown]: -Logic.PAGE_STEPS}[event.key]
                 if (steps !== undefined) root.nudge(steps)
-                else if (event.key === Qt.Key_Home) root.commit(root.spec.min)
-                else if (event.key === Qt.Key_End) root.commit(root.spec.max)
+                else if (event.key === Qt.Key_Home) root.adjust(root.spec.min)
+                else if (event.key === Qt.Key_End) root.adjust(root.spec.max)
                 else return
                 event.accepted = true
             }
@@ -283,7 +291,7 @@ Column {
                 function at(x) { return (x - ruler.inset) / track.width }
                 onPressed: mouse => { ruler.forceActiveFocus(Qt.MouseFocusReason); root.dragTo(at(mouse.x)) }
                 onPositionChanged: mouse => { if (pressed) root.dragTo(at(mouse.x)) }
-                onReleased: if (root.moving !== null) root.commit(root.moving)
+                onReleased: if (root.moving !== null) root.adjust(root.moving)
                 onCanceled: root.moving = null
             }
             Repeater {
@@ -326,7 +334,7 @@ Column {
                             if (dragged) root.dragTo(fraction(mouse.x))
                         }
                         onReleased: mouse => {
-                            if (dragged && root.moving !== null) root.commit(root.moving)
+                            if (dragged && root.moving !== null) root.adjust(root.moving)
                             else {
                                 const f = fraction(mouse.x)
                                 const nearest = root.spec.typical.reduce(function(best, v) { return Math.abs(Logic.toFraction(root.spec, v) - f) < Math.abs(Logic.toFraction(root.spec, best) - f) ? v : best })

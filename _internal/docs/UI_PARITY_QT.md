@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6050 chữ (2854 khác nhau), 352 cặp nhãn-icon; Qt 3514 chữ (2636 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6051 chữ (2854 khác nhau), 352 cặp nhãn-icon; Qt 3515 chữ (2636 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -173,17 +173,17 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thanh phát
 
 - chỉ Qt (10): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:156`); Âm thanh* (`qt/PlayerBar.qml:156`); Hẹn giờ* (`qt/PlayerBar.qml:157`); Giọng đọc* (`qt/PlayerBar.qml:160`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng…* (`qt/PlayerVoicePopover.qml:31`)
-- chỉ web (8): Shift+← (`276`); Sắp tắt · (`1273`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (8): Shift+← (`276`); Sắp tắt · (`1281`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
-- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {} (chưa có audio)* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:34`); Đang tải chương… (`qt/ChapterReader.qml:87`); Đã nghe* (`qt/ChapterRow.qml:75`); Tuỳ chọn {}* (`qt/ChapterRow.qml:126`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:340`); Danh sách chương* (`qt/NowPlaying.qml:457`); Nhạc nền* (`qt/NowPlaying.qml:468`); Chỉnh* (`qt/NowPlaying.qml:606`); Âm thanh* (`qt/NowPlaying.qml:606`); Cửa sổ mini (`qt/NowPlaying.qml:615`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:86`)
-- chỉ web (17): Shift+← (`276`); Đã chọn tốc độ đọc {} (`508`); Phím (`512`); Đã chọn giọng {} (`774`); Hẹn giờ đã tắt tiếng lúc (`995`); Bật lại (`1003`); Tiếng nhỏ dần (`1009`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2149`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {} (chưa có audio)* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:34`); Đang tải chương… (`qt/ChapterReader.qml:87`); Đã nghe* (`qt/ChapterRow.qml:75`); Tuỳ chọn {}* (`qt/ChapterRow.qml:126`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:340`); Danh sách chương* (`qt/NowPlaying.qml:457`); Nhạc nền* (`qt/NowPlaying.qml:468`); Chỉnh* (`qt/NowPlaying.qml:606`); Âm thanh* (`qt/NowPlaying.qml:606`); Cửa sổ mini (`qt/NowPlaying.qml:615`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:97`)
+- chỉ web (17): Shift+← (`276`); Đã chọn tốc độ đọc {} (`508`); Phím (`512`); Đã chọn giọng {} (`774`); Hẹn giờ đã tắt tiếng lúc (`995`); Bật lại (`1003`); Tiếng nhỏ dần (`1009`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2157`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
 
 ### Đọc theo
 
 - chỉ Qt (1): Đang mở văn bản chương… (`qt/ReadAlongView.qml:377`)
-- chỉ web (3): Đang tải chữ (`1765`); Nghe từ “{}” (`57`); Shift F10: sửa cách đọc. (`374`)
+- chỉ web (3): Đang tải chữ (`1773`); Nghe từ “{}” (`57`); Shift F10: sửa cách đọc. (`374`)
 
 ### Trang sách
 

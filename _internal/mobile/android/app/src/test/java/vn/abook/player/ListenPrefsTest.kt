@@ -32,6 +32,7 @@ class ListenPrefsTest {
         sleep("ownerRecord").set(SleepTimer, "test-record")
         sleep("remainingMs").setLong(SleepTimer, 0L)
         sleep("runningSinceMs").setLong(SleepTimer, 0L)
+        sleep("pausedAtMs").setLong(SleepTimer, 0L)
         sleep("minutes").setInt(SleepTimer, 0)
     }
 

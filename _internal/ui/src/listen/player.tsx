@@ -1305,14 +1305,19 @@ export function PlayerProvider({
       return;
     }
     if (refs.current.sleep.kind === "off") return;
-    if (automaticSleep.current) { awakeRef.current(); feedback("sleepExtend"); return; }
+    if (automaticSleep.current) {
+      automaticSleep.current = null;
+      refs.current.lastActivity = Date.now();
+      refs.current.scheduleOffFor = scheduleWindow(options.schedule) ?? "";
+      toast.dismiss("automatic-sleep");
+    }
     const minutes = sleepExtendMinutes(refs.current.sleep, options.extendMinutes);
     endFade();
     applySleep(sleepExtended(refs.current.sleep, options.extendMinutes, refs.current.audible && !engine.paused, Date.now()));
     night.extend(minutes, position());
     feedback("sleepExtend");
     toast.success(sleepExtendLabel(minutes), { id: "sleep-extend", duration: 2500 });
-  }, [applySleep, endFade, engine, native, night, options.extendMinutes, position]);
+  }, [applySleep, endFade, engine, native, night, options.extendMinutes, options.schedule, position]);
 
   const close = useCallback(() => {
     if (!native) publishTrackMetadata(null);

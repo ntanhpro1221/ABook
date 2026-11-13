@@ -29,6 +29,31 @@ async function open(sleep: SleepMode, onSet = vi.fn()) {
 const chips = () => [...document.querySelectorAll<HTMLButtonElement>("[data-value-chip]")];
 const chapterChoice = () => document.querySelector<HTMLButtonElement>("[data-sleep-chapters] button[aria-pressed]")!;
 
+it("step buttons and ruler keys only draft an inactive timer until Done", async () => {
+  const onSet = await open({kind: "off"});
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-value-step="up"]')!.click());
+  const ruler = document.querySelector<HTMLElement>('[data-value-ruler]')!;
+  await act(async () => ruler.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowRight", bubbles: true})));
+  expect(onSet).not.toHaveBeenCalled();
+  expect(ruler.getAttribute("aria-valuenow")).toBe("32");
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-sleep-confirm]')!.click());
+  expect(onSet).toHaveBeenCalledExactlyOnceWith({kind: "minutes", minutes: 32});
+});
+
+it("touching the ruler drafts minutes without replacing an end-of-chapter timer", async () => {
+  const onSet = await open({kind: "chapter", chapters: 1});
+  const ruler = document.querySelector<HTMLElement>('[data-value-ruler]')!;
+  ruler.getBoundingClientRect = () => ({left: 0, width: 240} as DOMRect);
+  ruler.setPointerCapture = vi.fn();
+  ruler.hasPointerCapture = () => true;
+  ruler.releasePointerCapture = vi.fn();
+  await act(async () => ruler.dispatchEvent(new PointerEvent("pointerdown", {button: 0, pointerId: 1, clientX: 150, bubbles: true})));
+  await act(async () => ruler.dispatchEvent(new PointerEvent("pointerup", {button: 0, pointerId: 1, clientX: 150, bubbles: true})));
+  expect(onSet).not.toHaveBeenCalled();
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-sleep-confirm]')!.click());
+  expect(onSet).toHaveBeenCalledWith({kind: "minutes", minutes: expect.any(Number)});
+});
+
 it("chip tiêu biểu, thước, gõ số và hàng Hết chương này; chạm chip / hàng là đặt", async () => {
   const onSet = await open({ kind: "off" });
   expect(chips().map((button) => button.textContent)).toEqual(["5", "15", "30", "45", "60", "90"]);

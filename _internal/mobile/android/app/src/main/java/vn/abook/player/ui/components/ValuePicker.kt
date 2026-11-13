@@ -125,6 +125,8 @@ fun ValuePicker(
     /** false: giá trị này chưa phải lựa chọn đang áp (hẹn giờ đang "Hết chương") - không tô chip nào, chọn đúng giá trị đang đứng vẫn là đặt. */
     current: Boolean = true,
     onPreview: ((Double) -> Unit)? = null,
+    /** Optional draft path for the ruler, step buttons and arrow keys; chips and typing still confirm. */
+    onAdjust: ((Double) -> Unit)? = null,
     special: (@Composable () -> Unit)? = null,
 ) {
     val colors = Abook.colors
@@ -132,6 +134,7 @@ fun ValuePicker(
     val scope = rememberCoroutineScope()
     val change by rememberUpdatedState(onChange)
     val preview by rememberUpdatedState(onPreview)
+    val adjust by rememberUpdatedState(onAdjust)
     var moving by remember { mutableStateOf<Double?>(null) }
     var typing by remember { mutableStateOf(false) }
     var clampNote by remember { mutableStateOf(false) }
@@ -147,12 +150,19 @@ fun ValuePicker(
         latest.doubleValue = next
         if (next != valueNow || !currentNow) change(next)
     }
+    fun adjustValue(next: Double) {
+        if (adjust == null) commit(next) else {
+            moving = null
+            latest.doubleValue = next
+            adjust?.invoke(next)
+        }
+    }
     fun nudge(steps: Int) {
         val before = latest.doubleValue
         val next = ValuePickerLogic.step(spec, before, steps)
         if (next == before) return
         if (ValuePickerLogic.isDetent(spec, before, next)) Feedback.play("tick", view)
-        commit(next)
+        adjustValue(next)
     }
     fun drag(fraction: Float) {
         val next = ValuePickerLogic.fromFraction(spec, fraction.toDouble())
@@ -229,7 +239,7 @@ fun ValuePicker(
                                 val steps = ((spec.max - spec.min) / spec.step).roundToInt() - 1
                                 progressBarRangeInfo = ProgressBarRangeInfo(shown.toFloat(), spec.min.toFloat()..spec.max.toFloat(), steps.coerceAtLeast(0))
                                 if (!enabled) disabled()
-                                setProgress { target -> if (enabled) { commit(ValuePickerLogic.quantize(spec, target.toDouble())); true } else false }
+                                setProgress { target -> if (enabled) { adjustValue(ValuePickerLogic.quantize(spec, target.toDouble())); true } else false }
                             }
                             .onKeyEvent { event ->
                                 if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
@@ -238,8 +248,8 @@ fun ValuePicker(
                                     Key.DirectionLeft, Key.DirectionDown -> -1
                                     Key.PageUp -> ValuePickerLogic.PAGE_STEPS
                                     Key.PageDown -> -ValuePickerLogic.PAGE_STEPS
-                                    Key.MoveHome -> { commit(spec.min); return@onKeyEvent true }
-                                    Key.MoveEnd -> { commit(spec.max); return@onKeyEvent true }
+                                    Key.MoveHome -> { adjustValue(spec.min); return@onKeyEvent true }
+                                    Key.MoveEnd -> { adjustValue(spec.max); return@onKeyEvent true }
                                     else -> return@onKeyEvent false
                                 }
                                 nudge(steps)
@@ -247,13 +257,13 @@ fun ValuePicker(
                             }
                             .focusable(enabled)
                             .pointerInput(spec, enabled, inset) {
-                                if (enabled) detectTapGestures { offset -> drag(at(offset.x)); moving?.let(::commit) }
+                                if (enabled) detectTapGestures { offset -> drag(at(offset.x)); moving?.let(::adjustValue) }
                             }
                             .pointerInput(spec, enabled, inset) {
                                 if (enabled) detectHorizontalDragGestures(
                                     onDragStart = { offset -> drag(at(offset.x)) },
                                     onHorizontalDrag = { pointer, _ -> pointer.consume(); drag(at(pointer.position.x)) },
-                                    onDragEnd = { moving?.let(::commit) },
+                                    onDragEnd = { moving?.let(::adjustValue) },
                                     onDragCancel = { moving = null },
                                 )
                             }) {

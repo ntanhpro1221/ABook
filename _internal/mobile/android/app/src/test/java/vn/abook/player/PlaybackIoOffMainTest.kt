@@ -46,6 +46,7 @@ class PlaybackIoOffMainTest {
         assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         field("sessionFrom").set(Playback, null)
         field("bookId").set(Playback, "")
+        field("recordId").set(Playback, "")
         field("chapters").set(Playback, emptyList<Playback.Chapter>())
         field("savedPlace").set(Playback, null)
         Playback.player = null

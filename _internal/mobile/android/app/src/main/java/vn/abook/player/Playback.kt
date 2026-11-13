@@ -195,7 +195,7 @@ object Playback {
     private var pending: Pending? = null
 
     private class Pending(val id: String, val title: String, val narrator: String, val items: List<Chapter>,
-                          val place: Pair<Int, Long>, val rate: Double)
+                          val place: Pair<Int, Long>, val rate: Double, val prepared: PreparedBook? = null)
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
     // Phiên nghe: mở lúc bắt đầu phát, đóng lúc dừng; dưới 20 giây nghe thật thì bỏ (bấm phát rồi dừng ngay).
@@ -577,14 +577,15 @@ object Playback {
      * đang nạp rồi thôi nhận chỗ nghe cho tới khi hàng đợi mới vào ExoPlayer (`onQueueReplaced`) - nhịp lưu 5 giây rơi
      * vào khoảng giữa mà đã đổi `bookId` thì sẽ ghi chỗ của cuốn cũ vào cuốn mới.
      */
-    fun adopt(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double) {
+    fun adopt(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double,
+              prepared: PreparedBook? = null) {
         touched()
         saveNow()
         closeSession()
         ReadAloud.stop()
         bookId = ""
         recordId = ""
-        pending = Pending(id, title, narratorName, items, startChapterId to msOf(startSeconds), rate)
+        pending = Pending(id, title, narratorName, items, startChapterId to msOf(startSeconds), rate, prepared)
     }
 
     /** ExoPlayer vừa nhận một hàng đợi mới (onTimelineChanged, PLAYLIST_CHANGED): là cuốn `adopt` đang chờ thì nhận
@@ -596,13 +597,15 @@ object Playback {
         lastError = ""
         bookId = next.id
         AudioFx.selectBook(next.id)
-        recordId = Store.activeRecord(next.id)
+        recordId = next.prepared?.record ?: Store.activeRecord(next.id)
         SleepTimer.checkOwner()
-        ReadAloud.useVoiceOf(next.id, recordId)
+        ReadAloud.useVoiceOf(next.id, recordId, next.prepared?.voice)
+        next.prepared?.let { MusicBed.prepare(it.music) }
         bookTitle = next.title
         narrator = next.narrator
         chapters = next.items
-        val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "https" }
+        val streamed = next.prepared?.media?.any { it.localConfiguration?.uri?.scheme == "https" }
+            ?: next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "https" }
         exo.setWakeMode(if (streamed) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         applySpeed(exo, AudioFx.current.speed)
         savedPlace = next.place

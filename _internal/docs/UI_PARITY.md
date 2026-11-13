@@ -157,7 +157,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6438 chữ (3095 khác nhau), 361 cặp nhãn-icon; native 2041 chữ (1550 khác nhau), 82 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6439 chữ (3095 khác nhau), 361 cặp nhãn-icon; native 2042 chữ (1550 khác nhau), 82 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -166,7 +166,7 @@ Quét: web 6438 chữ (3095 khác nhau), 361 cặp nhãn-icon; native 2041 chữ
 | native | web | giống | nơi | giải thích native | giải thích web |
 |---|---|---|---|---|---|
 | Chưa có chương nghe được | Chưa có chương nghe được{} | 1.00 | `native/data/Production.kt:66` ~ `listen/LibraryScreen.tsx:342` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; library-book.allow: same words as the web status line 'Chưa có chương nghe được' + ' · bấm để làm tiếp' (web appends the hint in one template, the scanner sees a different label) | library-book.allow: Same phone sentence in ProductionText.upcoming: web adds an optional desktop-only bấm để làm tiếp callback; native has no local Studio to resume and writes the complete phone sentence without the optional expression. |
-| Chọn giọng | Chọn một giọng | 1.00 | `native/nowplaying/PlayerSheets.kt:167` ~ `studio/NewProjectScreen.tsx:1211` | now-playing.missing: web shows the voice name in the Voice row and hides the row on recorded chapters; native writes a placeholder value | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
+| Chọn giọng | Chọn một giọng | 1.00 | `native/nowplaying/PlayerSheets.kt:180` ~ `studio/NewProjectScreen.tsx:1211` | now-playing.missing: web shows the voice name in the Voice row and hides the row on recorded chapters; native writes a placeholder value | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Cỡ ước tính: khoảng {}{}. | Cỡ ước tính: khoảng | 1.00 | `native/studio/StudioExport.kt:245` ~ `studio/ExportBook.tsx:509` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Dùng “{}” | Dùng “ | 1.00 | `native/studio/WorkText.kt:80` ~ `studio/ReadingProblem.tsx:27` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Dùng “{}” | Đúng là {} | 1.00 | `native/studio/WorkText.kt:80` ~ `studio/ScriptTab.tsx:831` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -658,7 +658,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/music/library/MusicScreen.kt` (2): Tải qua mạng tính phí? (`346`); Vẫn tải (`350`)
 - `native/nowplaying/AudioFxPage.kt` (1): Chọn nhạc (`115`)
 - `native/nowplaying/FakeNowPlayingModel.kt` (5): Chương 1 · Một buổi sớm (`82`); Những ngày gió hát (`82`); Chương {} · {} (`84`); Giọng thử A (`104`); Giọng thử B (`104`)
-- `native/nowplaying/PlayerSheets.kt` (3): Chọn giọng (`167`); Giọng thu sẵn (`167`); Cửa sổ mini (`179`)
+- `native/nowplaying/PlayerSheets.kt` (3): Chọn giọng (`180`); Giọng thu sẵn (`180`); Cửa sổ mini (`192`)
 - `native/screens/BookPeople.kt` (5): Tên gốc: {} (`137`); Đang lưu (`140`); Đang ghi (`187`); Không có ai khớp “{}”. (`227`); Đang gộp (`247`)
 - `native/screens/BookSaveUi.kt` (1): Đang lưu (`135`)
 - `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`719`)
@@ -699,7 +699,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/LineWishes.tsx` (22): Người nói: {} (`99`); Cách đọc câu - {} (`102`); Thu lại câu này (`104`); Các từ trong câu (`163`); Bỏ cách đọc “{}” (`194`); Chưa ghi được người nói (`318`); Chưa lấy lại được (`331`); Đã ghi cách đọc câu này (`334`); Chưa ghi được (`340`); Đã ghi: thu lại câu này (`359`); Chưa bỏ được thay đổi này (`385`); Cách đọc “{}”: “{}” (`394`); Ai nghĩ câu này? (`396`); Cách đọc câu này (`396`); Sửa câu này (`396`); Đọc từ này là (`396`); Sửa cách đọc “{}” (`419`); Bỏ: {} (`432`); Đang chờ máy làm sách: {} (`460`); Hiện là {} (`461`); Cách đọc câu (`466`); Sửa cách đọc một từ (`473`)
 - `listen/MorningRecap.tsx` (1): Lần cuối dùng máy (`73`)
 - `listen/MyMusic.tsx` (7): Đang tải bài nhạc (`72`); Đang thêm nhạc thì dừng (`119`); Đã xoá khỏi Nhạc của tôi (`135`); Đang tải nhạc riêng (`155`); Xoá bài: {} (`171`); Giữ lại: {} (`172`); Xoá: {} (`175`)
-- `listen/PlayerViews.tsx` (24): Tốc độ đọc: {} (`104`); Giọng đọc: {} (`107`); Shift+← (`276`); Đã chọn tốc độ đọc {} (`508`); Phím (`512`); Đổi luôn trong Studio. (`579`); Đang chuẩn bị nhạc nền (`590`); Danh sách nhạc nền (`604`); Đang tải các danh sách nhạc (`630`); Đã chọn giọng {} (`774`); Chưa xoá được bản đọc (`951`); Xoá bản đọc (`962`); Hẹn giờ ngủ trên {} (`1083`); Âm lượng (`1188`); Âm lượng {}% (`1190`); Bật tiếng (`1200`); Tắt tiếng (`1200`); Nghe kiểm (`1361`); Đóng trình phát (`1721`); Esc (`2126`); Phím tắt (`2136`); Gợi ý đọc (`2137`); Điều khiển phụ (`2182`); Bảng (`2357`)
+- `listen/PlayerViews.tsx` (24): Tốc độ đọc: {} (`104`); Giọng đọc: {} (`107`); Shift+← (`276`); Đã chọn tốc độ đọc {} (`508`); Phím (`512`); Đổi luôn trong Studio. (`579`); Đang chuẩn bị nhạc nền (`590`); Danh sách nhạc nền (`604`); Đang tải các danh sách nhạc (`630`); Đã chọn giọng {} (`774`); Chưa xoá được bản đọc (`951`); Xoá bản đọc (`962`); Hẹn giờ ngủ trên {} (`1083`); Âm lượng (`1196`); Âm lượng {}% (`1198`); Bật tiếng (`1208`); Tắt tiếng (`1208`); Nghe kiểm (`1369`); Đóng trình phát (`1729`); Esc (`2134`); Phím tắt (`2144`); Gợi ý đọc (`2145`); Điều khiển phụ (`2190`); Bảng (`2365`)
 - `listen/PlaylistChoice.tsx` (9): Nhạc nền: {} (`69`); Nhạc nền: để máy chọn{} (`69`); Đã lưu lựa chọn (`76`); Chưa chỉnh được mức nhạc (`95`); Đang thêm nhạc (`103`); Đang thêm nhạc {}/{} (`103`); Đang thêm nhạc thì dừng (`116`); Chưa mở được hộp chọn file (`118`); Đang tải danh sách (`203`)
 - `listen/ProjectFileItems.tsx` (14): Mở dự án (`42`); Chưa dựng được xưởng (`45`); Cần cài Studio (card NVIDIA) - (`83`); Cần cập nhật Studio - (`83`); Studio cần sửa - (`83`); Mở dự án Studio (`104`); Tạo sách nói (`107`); Việc của xưởng (`135`); Mở xưởng đã dựng (`139`); Dựng xưởng (`141`); Màn (`212`); Đang tải việc xưởng (`215`); Không còn việc nào cần quyết. (`253`); Ngoài ra: (`255`)
 - `listen/ReadAlongText.tsx` (2): Nghe từ “{}” (`57`); Shift F10: sửa cách đọc. (`374`)
@@ -742,7 +742,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/RowBoundary.tsx` (1): Hàng danh sách lỗi (`14`)
 - `shared/SettingsNav.tsx` (2): Nhóm cài đặt (`53`); Về Cài đặt (`80`)
 - `shared/ToastDetails.tsx` (1): Chi tiết thông báo (`43`)
-- `shared/ValuePicker.tsx` (1): Chạm để gõ số (`254`)
+- `shared/ValuePicker.tsx` (1): Chạm để gõ số (`262`)
 - `shared/backLayers.ts` (1): Escape (`48`)
 - `shared/diagnostics.ts` (16): Tải sách (`51`); Việc nền (`59`); Việc {} (`60`); Pha: {} (`62`); Bản ABook (`104`); Điện thoại (`108`); Giờ trên máy (`112`); Pin (`116`); Mạng (`120`); Wi-Fi (`123`); Chỗ trống (`126`); Chạy nền (`131`); Cho máy khác nghe thư viện (`147`); Lần tắt gần nhất (`151`); Lần văng (`155`); Phục hồi dữ liệu (`156`)
 - `shared/editsKept.ts` (1): Đã gộp {} sửa từ file (`13`)
@@ -804,23 +804,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6438 | 0 / 2041 |
-| dấu ba chấm `…` | 37 / 6438 | 0 / 2041 |
-| kết thúc bằng dấu chấm `.` | 1088 / 6438 | 395 / 2041 |
-| kết thúc bằng `!` | 0 / 6438 | 0 / 2041 |
-| kết thúc bằng `:` | 86 / 6438 | 3 / 2041 |
-| dấu thanh kiểu cũ `oà oá uý` | 486 / 6438 | 189 / 2041 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6438 | 0 / 2041 |
-| số thập phân dấu phẩy `1,5` | 2 / 6438 | 0 / 2041 |
-| số thập phân dấu chấm `1.5` | 0 / 6438 | 0 / 2041 |
-| nhân bằng `×` | 0 / 6438 | 0 / 2041 |
-| nhân bằng `x` sau số | 0 / 6438 | 0 / 2041 |
-| ngăn cách `·` | 146 / 6438 | 34 / 2041 |
-| ngăn cách ` - ` | 276 / 6438 | 81 / 2041 |
-| gạch dài `—`/`–` | 17 / 6438 | 2 / 2041 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6438 | 2 / 2041 |
-| dấu `%` dính số | 0 / 6438 | 1 / 2041 |
-| dấu `%` cách số | 0 / 6438 | 0 / 2041 |
+| dấu ba chấm ASCII `...` | 6 / 6439 | 0 / 2042 |
+| dấu ba chấm `…` | 37 / 6439 | 0 / 2042 |
+| kết thúc bằng dấu chấm `.` | 1088 / 6439 | 395 / 2042 |
+| kết thúc bằng `!` | 0 / 6439 | 0 / 2042 |
+| kết thúc bằng `:` | 86 / 6439 | 3 / 2042 |
+| dấu thanh kiểu cũ `oà oá uý` | 486 / 6439 | 189 / 2042 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6439 | 0 / 2042 |
+| số thập phân dấu phẩy `1,5` | 2 / 6439 | 0 / 2042 |
+| số thập phân dấu chấm `1.5` | 0 / 6439 | 0 / 2042 |
+| nhân bằng `×` | 0 / 6439 | 0 / 2042 |
+| nhân bằng `x` sau số | 0 / 6439 | 0 / 2042 |
+| ngăn cách `·` | 146 / 6439 | 34 / 2042 |
+| ngăn cách ` - ` | 276 / 6439 | 81 / 2042 |
+| gạch dài `—`/`–` | 17 / 6439 | 2 / 2042 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6439 | 2 / 2042 |
+| dấu `%` dính số | 0 / 6439 | 1 / 2042 |
+| dấu `%` cách số | 0 / 6439 | 0 / 2042 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 142, native 0); 15 đầu mỗi phía:
 
@@ -873,7 +873,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |
 |---|---|---|---|---|---|---|---|
-| now-playing | 147 | 145 | 0 | 0 | 32 | 6 | 0 |
+| now-playing | 148 | 146 | 0 | 0 | 32 | 6 | 0 |
 | shared-labels | 33 | 1371 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 205 | 215 | 0 | 0 | 64 | 10 | 0 |
 | settings | 110 | 129 | 0 | 0 | 21 | 78 | 0 |

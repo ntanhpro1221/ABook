@@ -66,6 +66,21 @@ Item {
             compare(Player.sleepChapters, 1)
             clickReady(findChild(findChild(menu, "sleepChapterPicker"), "valueCountUp")); compare(Player.sleepChapters, 2)
             compare(findChild(menu, "sleepCountdown").text, "Hết 2 chương")
+            verify(findChild(menu, "sleepExtend").visible)
+            clickReady(findChild(menu, "sleepExtend")); compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 15)
+        }
+        function test_sleep_adjustments_only_draft_until_confirmed() {
+            const menu = createTemporaryObject(sleep, host, {width: host.width, height: host.height})
+            menu.show(); tryCompare(menu, "open", true); ready()
+            const picker = findChild(menu, "sleepPicker")
+            picker.nudge(1)
+            compare(Player.sleepKind, "off")
+            const drafted = picker.value
+            picker.adjust(42)
+            compare(Player.sleepKind, "off")
+            compare(picker.value, 42)
+            clickReady(findChild(menu, "sleepConfirm"))
+            compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 42)
         }
         function test_fade_restart_and_geometric_bounds() {
             const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})

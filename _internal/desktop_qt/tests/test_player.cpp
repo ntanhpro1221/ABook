@@ -453,7 +453,7 @@ private slots:
         }
     }
 
-    void awakeExtensionCancelsTheAutomaticTimer() {
+    void awakeExtensionConvertsTheScheduleToAManualTimer() {
         g_now = at(23, 0);
         Rig rig;
         rig.player->configure(night());
@@ -467,8 +467,11 @@ private slots:
         QCOMPARE(rig.player->sleepExtendMinutes(), 30);
         rig.player->extendSleep();
         rig.player->extendSleep();
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
-        QVERIFY(rig.player->notice().isEmpty());
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->sleepMinutes(), 30);
+        QCOMPARE(rig.player->sleepLeftSeconds(), 1800.0);
+        rig.player->setVolume(0.5);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
     }
 
     void otherAppsOsInputCancelsANightCountdown() {

@@ -165,6 +165,8 @@ class NowPlayingUiTest {
         show(sheet = PlayerSheet.Sleep)
         rule.onNodeWithTag("sleep_chapters_up").performClick()
         rule.onNodeWithTag("sleep_chapters_up").performClick()
+        rule.runOnIdle { assertEquals(SleepKind.Off, model.state.value.sleep.kind) }
+        rule.onNodeWithTag("sleep_chapters_value").performClick()
         rule.waitForIdle()
         assertEquals(SleepKind.Chapter, model.state.value.sleep.kind)
         assertEquals(3, model.state.value.sleep.minutes)
@@ -172,6 +174,16 @@ class NowPlayingUiTest {
         rule.onNode(hasTestTag("sleep_chapters") and hasAnyDescendant(hasText("3")), useUnmergedTree = true).assertExists()
         rule.onAllNodes(hasText("Hết 3 chương") and hasAnyAncestor(hasTestTag("player_sheet_sleep"))).assertCountEquals(1)
         shot("picker_sleep_chapters_light")
+    }
+    @Test fun sleepStepButtonsOnlyDraftUntilDone() {
+        show(sheet = PlayerSheet.Sleep)
+        rule.onNodeWithTag("sleep_picker_up").performClick()
+        rule.runOnIdle { assertEquals(SleepKind.Off, model.state.value.sleep.kind) }
+        rule.onNodeWithTag("sleep_confirm").performClick()
+        rule.runOnIdle {
+            assertEquals(SleepKind.Minutes, model.state.value.sleep.kind)
+            assertEquals(31, model.state.value.sleep.minutes)
+        }
     }
     @Test fun chaptersLight() { show(sheet = PlayerSheet.Chapters); shot("chapters_light") }
     @Test fun chaptersDark() { show(dark = true, sheet = PlayerSheet.Chapters); shot("chapters_dark") }

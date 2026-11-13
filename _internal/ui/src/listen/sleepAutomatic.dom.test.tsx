@@ -131,6 +131,17 @@ it("manual timers survive OS and app activity", async () => {
   await elapsed(1000);
   expect(actions.sleep.kind).toBe("minutes");
 });
+it("extending the night schedule keeps the promised manual timer after more activity", async () => {
+  await mount(true); osIdle = 121_000;
+  await elapsed(121_000);
+  expect(actions.sleep.kind).toBe("minutes");
+  await act(async () => actions.extendSleep());
+  expect(actions.sleep).toMatchObject({kind: "minutes", minutes: 30});
+  osIdle = 0;
+  await act(async () => window.dispatchEvent(new Event("focus")));
+  await elapsed(1000);
+  expect(actions.sleep).toMatchObject({kind: "minutes", minutes: 30});
+});
 it("night schedule waits for idle evidence, gives its reason and respects cancellation for that night", async () => {
   await mount(true);
   expect(actions.sleep.kind).toBe("off");

@@ -25,6 +25,7 @@ export function ValuePicker({
   value,
   onChange,
   onPreview,
+  onAdjust,
   format,
   chipLabel,
   label,
@@ -42,6 +43,8 @@ export function ValuePicker({
   value: number;
   onChange: (value: number) => void;
   onPreview?: (value: number) => void;
+  /** Optional draft path for ruler, step buttons and arrow keys. Chips and typing confirm. */
+  onAdjust?: (value: number) => void;
   /** Chữ của một giá trị kèm đơn vị: "23 phút", "1,35×". */
   format: (value: number) => string;
   /** Chữ trên chip; mặc định như `format`. */
@@ -110,12 +113,17 @@ export function ValuePicker({
     // Chưa phải lựa chọn đang áp (`current` false): chọn đúng giá trị đang đứng vẫn là đặt.
     if (next !== value || !current) onChange(next);
   };
+  const adjust = (next: number) => {
+    if (!onAdjust) { commit(next); return; }
+    setMoving(null);
+    if (!busy) onAdjust(next);
+  };
   const nudge = (steps: number) => {
     const next = stepValue(spec, last.current, steps);
     if (next === last.current) return;
     if (isDetent(spec, last.current, next)) feedback("tick");
     last.current = next;
-    commit(next);
+    adjust(next);
   };
 
   const fractionAt = (clientX: number) => {
@@ -145,7 +153,7 @@ export function ValuePicker({
   const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    if (moving !== null) commit(moving);
+    if (moving !== null) adjust(moving);
   };
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const steps = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: PAGE_STEPS, PageDown: -PAGE_STEPS }[event.key];
@@ -158,7 +166,7 @@ export function ValuePicker({
     event.preventDefault();
     event.stopPropagation();
     if (isDetent(spec, shown, next)) feedback("tick");
-    commit(next);
+    adjust(next);
   };
 
   const startRepeat = (steps: number) => {
@@ -366,7 +374,7 @@ export function ValuePicker({
             setClampNote(false);
             const fraction = fractionAt(event.clientX);
             const nearest = spec.typical.reduce((best, v) => Math.abs(toFraction(spec, v) - fraction) < Math.abs(toFraction(spec, best) - fraction) ? v : best);
-            commit(tickGesture.current.dragged ? last.current : nearest);
+            if (tickGesture.current.dragged) adjust(last.current); else commit(nearest);
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}

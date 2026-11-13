@@ -1141,7 +1141,14 @@ function SleepPicker({
           setDraftMinutes(minutes);
           onSet({ kind: "minutes", minutes });
         }}
+        onAdjust={minutes => {
+          setDraftMinutes(minutes);
+          if (sleep.kind === "minutes") onSet({ kind: "minutes", minutes });
+        }}
       >
+        {sleep.kind !== "minutes" && <Popover.Close asChild><button type="button" disabled={disabled} data-sleep-confirm
+          className="h-12 w-full rounded-control text-right text-sm font-semibold text-accent-text"
+          onClick={() => onSet({kind: "minutes", minutes: draftMinutes})}>{S.s_xong_a6f4543a}</button></Popover.Close>}
         <SleepChapterChoice sleep={sleep} disabled={disabled} counts={chapterCounts} onSet={onSet} />
       </ValuePicker>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
@@ -1155,7 +1162,8 @@ function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMo
   const active = sleep.kind === "chapter" && chaptersOf(sleep) === chapters;
   return <div data-sleep-chapters><ValuePicker spec={VALUE_SPECS.sleepChapters} value={chapters} current={active} disabled={disabled}
     stepperOnly stepButtons={counts} label={S.s_so_chuong_6e52dccd} format={String}
-    onChange={next => { setChapters(next); onSet({kind: "chapter", chapters: next}); }} /></div>;
+    onChange={next => { setChapters(next); onSet({kind: "chapter", chapters: next}); }}
+    onAdjust={next => { setChapters(next); if (sleep.kind === "chapter") onSet({kind: "chapter", chapters: next}); }} /></div>;
 }
 
 function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {

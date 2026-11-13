@@ -39,6 +39,8 @@ class SleepExtendTest {
     }
 
     @After fun cleanup() {
+        Bedtime.timerOff()
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
         field("automaticReason").set(SleepTimer, "")
         field("stoppedAtMs").setLong(SleepTimer, 0L)
@@ -129,7 +131,7 @@ class SleepExtendTest {
         assertEquals(15, SleepTimer.describe().getInt("minutes"))
     }
 
-    @Test fun awakeExtensionCancelsAutomaticTimerInsteadOfArmingAnother() = withSensors {
+    @Test fun awakeExtensionConvertsTheScheduleToAManualTimerWithThePromisedMinutes() = withSensors {
         SleepTimer.extendMinutes = 15
         voice.playing = true
         SleepTimer.setMinutes(30, "schedule") // decision evidence is covered by SleepPolicyTest
@@ -140,8 +142,11 @@ class SleepExtendTest {
         assertEquals("Hẹn lại 30 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
         SleepTimer.extend()
         SleepTimer.extend()
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals("", SleepTimer.automaticReason)
+        assertEquals(1800.0, left(), 2.0)
+        Playback.touched()
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
     }
     @Test fun cancellingClearsTheRecentStopSoShakingCannotRearm() = withSensors {
         field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)

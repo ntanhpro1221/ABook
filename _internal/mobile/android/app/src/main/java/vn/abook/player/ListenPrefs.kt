@@ -90,7 +90,11 @@ object ListenPrefs {
         if (json.has("haptics")) Feedback.haptics = json.getBoolean("haptics")
         if (json.has("sleepExtendMinutes")) SleepTimer.extendMinutes = json.getInt("sleepExtendMinutes")
         if (json.has("sleepFadeSeconds")) SleepTimer.fadeMs = json.getInt("sleepFadeSeconds") * 1000L
-        if (json.has("shakeToExtend")) SleepTimer.shakeEnabled = json.getBoolean("shakeToExtend")
+        if (json.has("shakeToExtend")) {
+            SleepTimer.shakeEnabled = json.getBoolean("shakeToExtend")
+            PlaybackService.instance?.applyForegroundGrace()
+            if (!startup) Motion.refresh()
+        }
         if (json.has("headsetSkips")) Playback.headsetSkips = json.getBoolean("headsetSkips")
         if (json.has("flipToPause")) {
             Motion.flipEnabled = json.getBoolean("flipToPause")

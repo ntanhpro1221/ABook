@@ -1053,7 +1053,12 @@ int Player::sleepExtendMinutes() const {
 
 // Nghe thêm = hẹn lại: đồng hồ về đúng sleepExtendMinutes() phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
 void Player::extendSleep() {
-    if (!m_automaticSleep.isEmpty()) { noteInteraction(); emit sleepExtended(); return; }
+    if (!m_automaticSleep.isEmpty()) {
+        m_automaticSleep.clear();
+        m_lastActivity = m_now();
+        m_scheduleOffFor = scheduleWindow();
+        setNotice(QString());
+    }
     if (m_sleep.kind == Sleep::Off)
         return;
     const int minutes = sleepExtendMinutes();

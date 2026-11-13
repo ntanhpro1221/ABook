@@ -38,6 +38,7 @@ object SleepTimer {
     private var runningSinceMs = 0L
     /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). Hẹn theo chương dùng "Mỗi lần nghe thêm". */
     private var minutes = 0
+    val lastMinutes: Int get() = minutes.takeIf(::minutesAllowed) ?: 30
     /** "Hết N chương": số chương còn phải nghe hết (1 = chương này). Chỉ chương cuối của hẹn giữ ở cuối mục ([Playback.holdAtItemEnd]); các chương trước
      *  đếm xuống ở lúc sang chương tự nhiên ([onChapterChanged]), không nhỏ dần. */
     var chapters = 1
@@ -90,7 +91,8 @@ object SleepTimer {
      */
     fun persist(now: Long = System.currentTimeMillis()) {
         val timer = if (mode == Mode.MINUTES && automaticReason.isEmpty()) JSONObject().put("minutes", minutes)
-            .put("source", "manual").put("bookId", ownerBook).put("recordId", ownerRecord).put("savedAt", now).also {
+            .put("source", "manual").put("bookId", ownerBook).put("recordId", ownerRecord)
+            .put("savedAt", if (runningSinceMs == 0L && pausedAtMs > 0L) pausedAtMs else now).also {
             if (runningSinceMs > 0) it.put("endsAt", now + leftMs(now)) else it.put("remainingMs", leftMs(now))
         } else null
         ListenPrefs.saveTimer(timer)
@@ -267,7 +269,12 @@ object SleepTimer {
     fun extend(feedback: Boolean = true) {
         // Hẹn giờ đã hết (hay đã tắt): nút "Hẹn lại" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
         if (mode == Mode.OFF) return
-        if (automaticReason.isNotEmpty()) { onAwake(); if (feedback) Feedback.play("sleepExtend"); return }
+        // The label promises another N minutes: convert the schedule to a manual timer before awake signals arrive.
+        if (automaticReason.isNotEmpty()) {
+            scheduleOffFor = scheduleWindow() ?: ""
+            automaticReason = ""
+            ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
+        }
         val now = System.currentTimeMillis()
         val target = extendTarget()
         remainingMs = maxOf(if (mode == Mode.MINUTES) leftMs(now) else 0L, target * 60_000L)

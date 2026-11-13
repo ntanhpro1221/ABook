@@ -56,6 +56,7 @@ class PlayerWidget : AppWidgetProvider() {
             val playing: Boolean,
             val sleep: String,
             val sleepOn: Boolean,
+            val sleepAvailable: Boolean = false,
         )
 
         /** Trạng thái để vẽ: đang phát thì lấy từ lõi phát, không thì lấy cuốn nghe gần nhất trên máy. */
@@ -74,7 +75,7 @@ class PlayerWidget : AppWidgetProvider() {
                 return View(
                     Playback.bookTitle, state.optString("chapterTitle"),
                     if (duration > 0) state.optDouble("position") / duration else 0.0,
-                    state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off",
+                    state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off", true,
                 )
             }
             val recent = Playback.lastListened() ?: return View(S.s_abook_1c37d334, S.s_chua_nghe_sach_nao_595a4141, 0.0, false, "", false)
@@ -117,6 +118,7 @@ class PlayerWidget : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_back, controlIntent(context, ACTION_BACK, 2))
                 views.setOnClickPendingIntent(R.id.widget_forward, controlIntent(context, ACTION_FORWARD, 3))
                 views.setOnClickPendingIntent(R.id.widget_sleep, controlIntent(context, ACTION_SLEEP, 4))
+                views.setViewVisibility(R.id.widget_sleep, if (view.sleepAvailable) android.view.View.VISIBLE else android.view.View.GONE)
                 views.setImageViewResource(R.id.widget_sleep_icon, if (view.sleepOn) R.drawable.ic_widget_moon_on else R.drawable.ic_widget_moon)
                 views.setTextViewText(R.id.widget_sleep_text, view.sleep)
                 views.setOnClickPendingIntent(R.id.widget_book, open)
@@ -159,6 +161,7 @@ class PlayerWidget : AppWidgetProvider() {
         val action = intent.action ?: return
         if (action !in setOf(ACTION_TOGGLE, ACTION_BACK, ACTION_FORWARD, ACTION_SLEEP)) return
         Playback.init(context)
+        if (action == ACTION_SLEEP && Playback.bookId.isEmpty()) { refresh(context); return }
         val pending = goAsync()
         // Kết nối tới dịch vụ phát (khởi động nó nếu chưa chạy) rồi mới ra lệnh.
         // Context của BroadcastReceiver không được bind service (ReceiverCallNotAllowedException - app văng khi bấm nút widget):
@@ -169,21 +172,29 @@ class PlayerWidget : AppWidgetProvider() {
         ).buildAsync()
         future.addListener({
             Playback.onMain {
+                try {
+                val controller = future.get()
                 val hadTimer = SleepTimer.mode != SleepTimer.Mode.OFF
                 Playback.touched()
                 if (Playback.bookId.isEmpty() && action == ACTION_TOGGLE) {
-                    Playback.resumeLast()
+                    controller.play() // Media3 resumes through the prepared background library path.
                 } else {
                     when (action) {
                         ACTION_TOGGLE -> Playback.toggle()
                         ACTION_BACK -> Playback.skip(-Playback.SKIP_SECONDS.toDouble())
                         ACTION_FORWARD -> Playback.skip(Playback.SKIP_SECONDS.toDouble())
-                        ACTION_SLEEP -> if (!hadTimer) SleepTimer.setMinutes(30) else { SleepTimer.cancel(); Feedback.play("toggle") }
+                        ACTION_SLEEP -> if (Playback.bookId.isNotEmpty()) {
+                            if (!hadTimer) SleepTimer.setMinutes(SleepTimer.lastMinutes) else { SleepTimer.cancel(); Feedback.play("toggle") }
+                        }
                     }
                 }
                 refresh(context)
+                } catch (error: Exception) {
+                    AppLog.w("PlayerWidget", S.s_chua_nghe_sach_nao_f2635716, error)
+                } finally {
                 MediaController.releaseFuture(future)
                 pending.finish()
+                }
             }
         }, MoreExecutors.directExecutor())
     }

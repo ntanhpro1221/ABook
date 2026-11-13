@@ -113,13 +113,19 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     PlayerSheet.Sleep -> {
                         val options = model.sleepOptions
                         val active = state.sleep.kind != SleepKind.Off
+                        var draftMinutes by remember(window.sheetOpen, state.bookId) { mutableIntStateOf(window.lastSleepMinutes) }
+                        fun setMinutes(minutes: Int) {
+                            window.lastSleepMinutes = minutes
+                            draftMinutes = minutes
+                            model.setSleep(SleepKind.Minutes, minutes)
+                        }
                         // Đang hẹn: còn bao lâu + S.s_copy_4a2a3696181b / S.s_tat_hen_gio_fc8af231. Chưa hẹn mà vừa tắt tiếng (chưa quá 30 phút): mời bật lại đúng mức cũ.
                         if (active) {
                             RowHint(SleepText.heading(state.sleep.kind))
                             SleepClock(state.sleep, model.position)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
                                 TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
-                                TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart)
+                                TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart, danger = true)
                             }
                         } else {
                             val now = remember(window.sheetOpen) { System.currentTimeMillis() }
@@ -134,11 +140,18 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
                         val minutesNow = state.sleep.kind == SleepKind.Minutes
                         ValuePicker(
-                            ValueSpecs.sleepMinutes, (if (minutesNow) state.sleep.minutes else window.lastSleepMinutes).toDouble(),
-                            { minutes -> window.lastSleepMinutes = minutes.toInt(); model.setSleep(SleepKind.Minutes, minutes.toInt()) },
+                            ValueSpecs.sleepMinutes, (if (minutesNow) state.sleep.minutes else draftMinutes).toDouble(),
+                            { minutes -> setMinutes(minutes.toInt()) },
                             { minutes -> S.s_0_phut_2596d212(minutes.toInt()) }, S.s_hen_gio_ngu_21073488, "sleep_picker",
                             chipLabel = { minutes -> minutes.toInt().toString() }, current = minutesNow,
-                            special = { SleepChapterChoice(state.sleep) { count -> model.setSleep(SleepKind.Chapter, count) } },
+                            onAdjust = { minutes ->
+                                draftMinutes = minutes.toInt()
+                                if (minutesNow) setMinutes(minutes.toInt())
+                            },
+                            special = {
+                                if (!minutesNow) TextAction(S.s_xong_a6f4543a, { setMinutes(draftMinutes); window.closeSheet() }, "sleep_confirm", align = Alignment.CenterEnd)
+                                SleepChapterChoice(state.sleep) { count -> model.setSleep(SleepKind.Chapter, count) }
+                            },
                         )
                         BasicText(SleepText.note(options, model.hadNight), style = Abook.type.caption.copy(color = Abook.colors.text2),
                             modifier = Modifier.padding(top = Dim.s8).testTag("sleep_note"))
@@ -294,7 +307,8 @@ private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
     val active = sleep.kind == SleepKind.Chapter && sleep.minutes.coerceAtLeast(1) == chapters
     ValuePicker(ValueSpecs.sleepChapters, chapters.toDouble(), { next ->
         chapters = next.toInt(); vn.abook.player.Feedback.play("toggle"); onSet(chapters)
-    }, { it.toInt().toString() }, S.s_so_chuong_6e52dccd, "sleep_chapters", current = active, stepperOnly = true)
+    }, { it.toInt().toString() }, S.s_so_chuong_6e52dccd, "sleep_chapters", current = active, stepperOnly = true,
+        onAdjust = { next -> chapters = next.toInt(); if (sleep.kind == SleepKind.Chapter) onSet(chapters) })
 }
 
 /** Một dòng của tấm: `icon` (Lucide, 20 dp, cách chữ 16 dp) - trong một tấm hoặc mọi dòng có icon hoặc không dòng nào có. */

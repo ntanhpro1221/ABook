@@ -11,6 +11,9 @@ Popover {
     readonly property int fadeSeconds: Logic.quantize(Logic.SPECS.sleepFadeSeconds, Number(Api.preferences.sleepFadeSeconds || 30))
     // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
     readonly property int extendMinutes: Player.sleepExtendMinutes
+    property int draftMinutes: Player.lastSleepMinutes
+    property int draftChapters: 1
+    onOpenChanged: if (open) { draftMinutes = Player.lastSleepMinutes; draftChapters = Player.sleepKind === "chapter" ? Player.sleepChapters : 1 }
 
     ClockUser { wanted: root.visible }
 
@@ -70,22 +73,31 @@ Popover {
             objectName: "sleepPicker"
             width: parent.width
             spec: Logic.SPECS.sleepMinutes
-            value: Player.sleepKind === "minutes" ? Player.sleepMinutes : Player.lastSleepMinutes
+            value: Player.sleepKind === "minutes" ? Player.sleepMinutes : root.draftMinutes
             current: Player.sleepKind === "minutes"
             label: S.s_hen_gio_ngu_21073488
             format: Logic.minutesLabel
             chipLabel: function(v) { return String(v) }
-            onPicked: value => { Feedback.play("toggle"); Player.setSleep("minutes", value) }
+            onPicked: value => { root.draftMinutes = value; Feedback.play("toggle"); Player.setSleep("minutes", value) }
+            adjustValue: function(value) { root.draftMinutes = value; if (Player.sleepKind === "minutes") Player.setSleep("minutes", value) }
+            Button {
+                objectName: "sleepConfirm"
+                visible: Player.sleepKind !== "minutes"
+                text: S.s_xong_a6f4543a
+                kind: "text"
+                onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", root.draftMinutes); root.close() }
+            }
             ValuePicker {
                 objectName: "sleepChapterPicker"
                 width: parent.width
                 spec: Logic.SPECS.sleepChapters
-                value: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : 1
+                value: Player.sleepKind === "chapter" ? Math.max(1, Player.sleepChapters) : root.draftChapters
                 current: Player.sleepKind === "chapter"
                 stepperOnly: true
                 label: S.s_so_chuong_6e52dccd
                 format: function(v) { return String(v) }
                 onPicked: value => { Feedback.play("toggle"); Player.setSleep("chapter", value) }
+                adjustValue: function(value) { root.draftChapters = value; if (Player.sleepKind === "chapter") Player.setSleep("chapter", value) }
             }
         }
         Collapse {
@@ -96,7 +108,7 @@ Popover {
                 objectName: "sleepExtend"
                 kind: "text"
                 text: S.s_hen_lai_c2aae1b7 + root.extendMinutes + S.s_phut_cf728a6a
-                visible: Player.sleepKind === "minutes"
+                visible: Player.sleepKind !== "off"
                 onClicked: Player.extendSleep()
             }
             Button {
