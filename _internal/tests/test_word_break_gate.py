@@ -349,8 +349,8 @@ def install_fault(pipeline, point):
 SINGLE_PLANS = {
     "retry_wins": dict(plan={"primary_0":"gap", RETRY_SALT:"clean"}),
     "first_take_wins": dict(plan={"primary_0":"gap", RETRY_SALT:"big"}),
-    "retry_rejected_by_pace_then_new_attempt": dict(plan={"primary_0":"gap", RETRY_SALT:"clean", "primary_1":"clean"},
-                                                     outliers=(RETRY_SALT,)),
+    "hq_keeps_first_over_pace_outlier": dict(plan={"primary_0":"gap", RETRY_SALT:"clean"},
+                                            outliers=(RETRY_SALT,)),
 }
 SINGLE_POINTS = ["before_reservation", "after_reservation", "after_synthesis", "after_finish", "before_annotate", "before_accept", "oom", "disk"]
 
@@ -397,9 +397,13 @@ def test_uninterrupted_reference_runs_pick_the_expected_take(tmp_path, monkeypat
     kept = run_single(tmp_path/"b", monkeypatch, SINGLE_PLANS["first_take_wins"], "none")
     assert kept["signal"][word_break.FIELD]["fired"] and kept["signal"][word_break.FIELD]["after"]["fired"]
     assert kept["sha"] != won["sha"] and kept["seed"] != won["seed"]
-    third = run_single(tmp_path/"c", monkeypatch, SINGLE_PLANS["retry_rejected_by_pace_then_new_attempt"], "none")
+    third = run_single(tmp_path/"c", monkeypatch, SINGLE_PLANS["hq_keeps_first_over_pace_outlier"], "none")
     assert not third["signal"].get("pace_outlier")
-    assert third["seed"] not in (won["seed"], kept["seed"])
+    # HQ accepts the first take despite its word-break flag; its retry is off pace.
+    # Keep that acceptable first take instead of spending another primary seed.
+    assert third["seed"] == kept["seed"] and third["sha"] == kept["sha"]
+    assert third["signal"][word_break.FIELD]["fired"]
+    assert third["ledger"][0]["result"]["metrics"]["pace_outlier"]
 
 
 CANDIDATE_PLANS = {
@@ -481,24 +485,33 @@ def test_environment_failure_that_never_clears_stops_without_spending_the_budget
     assert reservation(pipeline)[0]["state"] == "complete"
 
 
-def test_quality_verdict_is_final_and_replays_without_synthesis(tmp_path, monkeypatch):
+@pytest.mark.parametrize("fault", ["signal", "wrapped_engine", "runtime"])
+def test_quality_verdict_is_final_and_replays_without_synthesis(tmp_path, monkeypatch, fault):
     from abook.audio_io import AudioQualityError
     pipeline, chapter, row, engine = seeded(tmp_path, monkeypatch, {"primary_0":"gap", RETRY_SALT:"clean"})
     real = pipeline.tts.synthesize_atomic
+    calls = []
     def refuse(*args, **kwargs):
         if str(kwargs.get("seed_salt", "")).startswith("word_break_candidate_"):
+            calls.append(1)
+            if fault == "wrapped_engine":
+                raise AudioQualityError("unsupported symbol") from ValueError("unsupported symbol")
+            if fault == "runtime":
+                raise RuntimeError("unsupported symbol")
             raise AudioQualityError("TTS_ACTIVE_OFFSET")
         return real(*args, **kwargs)
     pipeline.tts.synthesize_atomic = refuse
     pipeline._process_single_segment(row, chapter)
     current = pipeline.db.get_segment(int(row["id"]))
     gate = json.loads(current["signal_json"])[word_break.FIELD]
-    assert gate["retry_state"] == "failed" and gate["fired"] and "TTS_ACTIVE_OFFSET" in gate["error"]
+    reason = "TTS_ACTIVE_OFFSET" if fault == "signal" else "unsupported symbol"
+    assert gate["retry_state"] == "failed" and gate["fired"] and reason in gate["error"]
     assert current["status"] == "signal_passed"
     assert current["generation_seed"] == pipeline.tts.generation_seed(row, "primary_0")
-    calls = len(engine.calls)
+    assert len(calls) == (1 if fault == "signal" else 3)
+    engine_calls, retry_calls = len(engine.calls), len(calls)
     pipeline._process_single_segment(pipeline.db.get_segment(int(row["id"])), chapter)
-    assert len(engine.calls) == calls
+    assert len(engine.calls) == engine_calls and len(calls) == retry_calls
 
 
 def test_lost_retry_file_is_regenerated_from_its_seed(tmp_path, monkeypatch):
@@ -516,7 +529,7 @@ def test_lost_retry_file_is_regenerated_from_its_seed(tmp_path, monkeypatch):
 
 
 # F2
-def test_resume_refuses_the_outlier_take_a_crash_left_selected(tmp_path, monkeypatch):
+def test_resume_keeps_the_hq_accepted_first_take_over_an_outlier_retry(tmp_path, monkeypatch):
     pipeline, chapter, row, engine = seeded(tmp_path, monkeypatch, {"primary_0":"gap", RETRY_SALT:"clean"},
                                             outliers=(RETRY_SALT,))
     install_fault(pipeline, "before_annotate")
@@ -526,7 +539,13 @@ def test_resume_refuses_the_outlier_take_a_crash_left_selected(tmp_path, monkeyp
     resume_through_chapter_loop(pipeline, chapter)
     current = pipeline.db.get_segment(int(row["id"]))
     assert not json.loads(current["signal_json"]).get("pace_outlier")
-    assert current["generation_seed"] == pipeline.tts.generation_seed(row, "primary_1")
+    assert current["generation_seed"] == pipeline.tts.generation_seed(row, "primary_0")
+    assert current["status"] == "signal_passed"
+    assert json.loads(current["signal_json"])[word_break.FIELD]["fired"]
+    assert reservation(pipeline)[0]["result"]["metrics"]["pace_outlier"]
+    assert [call["seed"] for call in engine.calls] == [
+        pipeline.tts.generation_seed(row, "primary_0"), pipeline.tts.generation_seed(row, RETRY_SALT),
+    ]
 
 
 def test_last_attempt_candidate_retry_survives_a_crash(tmp_path, monkeypatch):

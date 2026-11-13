@@ -32,15 +32,21 @@ from tests.test_pipeline_mock import _short_tts_pipeline, _voiced
 LONG_TEXT = "Người ấy đặt chiếc túi xuống ghế gỗ rồi chậm rãi bước ra phía cửa sổ."
 
 
-def _tone(seconds: float, rate: int, *, edge: bool = False, amplitude: float = .12) -> np.ndarray:
-    audio = quiet_edges(np.sin(np.linspace(0, 50 * seconds, round(seconds * rate), dtype=np.float32)) * amplitude, rate)
+def _tone(seconds: float, rate: int, *, edge: bool = False, amplitude: float = .12, phase: float = 0.) -> np.ndarray:
+    audio = quiet_edges(np.sin(phase + np.linspace(0, 50 * seconds, round(seconds * rate), dtype=np.float32))
+                        * amplitude, rate)
     if edge:
         audio[: rate // 100] = .25  # a pop in the first 10 ms: TTS_ACTIVE_ONSET after any locked gain
     return audio
 
 
 class EdgeScriptTTS:
-    """A coordinator that writes through the real writer; each outcome is 'edge', 'clean' or an exception."""
+    """A coordinator that writes through the real writer; each outcome is 'edge', 'clean' or an exception.
+
+    Every seed gets its own audio (the tone's phase), as a real engine's would: two clean takes
+    of different seeds never share a checksum, so a kept earlier take is a different file from
+    the one just checked and the high-quality gate in `_accept_retained_take` really runs.
+    """
 
     def __init__(self, pipeline: BookPipeline, outcomes: list) -> None:
         self.settings, self.db = pipeline.settings, pipeline.db
@@ -66,12 +72,13 @@ class EdgeScriptTTS:
             raise outcome
         kind, flags = outcome if isinstance(outcome, tuple) else (outcome, {})
         rate = int(self.settings["tts"]["sample_rate"])
-        audio = _tone(1.2, rate, edge=kind == "edge", amplitude=1.4 if kind == "clipped" else .12)
+        seed = self.generation_seed(row, seed_salt)
+        audio = _tone(1.2, rate, edge=kind == "edge", amplitude=1.4 if kind == "clipped" else .12,
+                      phase=(seed % 997) * 0.01)
         if kind == "clipped":
             audio = np.clip(audio, -1.0, 1.0)
         provenance = {"spoken_text_sha256": hashlib.sha256(str(row["text"]).encode()).hexdigest(),
                       "voice_profile_id": int(row["voice_profile_id"]), "tts_delivery_mode": delivery_mode}
-        seed = self.generation_seed(row, seed_salt)
         try:
             checksum, metrics = atomic_write_wav(output, audio, rate, str(row["text"]), self.settings,
                                                  segment=_voiced(self.db, row), keep_rejected=True)
@@ -388,26 +395,72 @@ def test_locked_destination_is_retried_not_judged(tmp_path, monkeypatch):
     assert sha256_file(tmp_path / "ok.wav") == checksum
 
 
-def test_persistent_machine_fault_stops_without_spending_the_attempt(tmp_path):
-    pipeline, _chapter, row = _short_tts_pipeline(tmp_path)
+def _caused(message: str, cause: BaseException) -> AudioQualityError:
+    """An engine failure the way VieNeu reports it (tts.py generate_one): wrapped, with its cause."""
+    error = AudioQualityError(message)
+    error.__cause__ = cause
+    return error
+
+
+@pytest.mark.parametrize("cause", [OSError(5, "disk went away"), MemoryError(),
+                                   RuntimeError("CUDA error: an illegal memory access was encountered"),
+                                   ConnectionResetError("connection reset by peer")],
+                         ids=["oserror", "memoryerror", "cuda", "connection"])
+@pytest.mark.parametrize("wrapped", [False, True], ids=["direct", "wrapped"])
+def test_persistent_machine_fault_stops_without_spending_the_attempt(tmp_path, monkeypatch, cause, wrapped):
+    pipeline, _chapter, _row = _short_tts_pipeline(tmp_path)
+    monkeypatch.setattr(pipeline, "_recover_from_memory_pressure", lambda *_a: True)
     calls = []
 
     def broken():
         calls.append(1)
-        try:
-            raise OSError(5, "disk went away")
-        except OSError as cause:
-            raise AudioQualityError("engine failed") from cause
+        raise _caused("engine failed", cause) if wrapped else cause
+
+    with pytest.raises(pipeline_module.CriticalResourceStop):
+        pipeline._through_machine_faults("thử", broken)
+    assert len(calls) >= pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
+
+
+def test_named_machine_fault_without_a_cause_is_not_an_audio_verdict(tmp_path):
+    pipeline, _chapter, _row = _short_tts_pipeline(tmp_path)
+    calls = []
+
+    def broken():
+        calls.append(1)
+        raise AudioQualityError("CUDA error: device-side assert triggered")
 
     with pytest.raises(pipeline_module.CriticalResourceStop):
         pipeline._through_machine_faults("thử", broken)
     assert len(calls) == pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
 
+
+@pytest.mark.parametrize("fault", [
+    _caused("phonemizer: unsupported symbol", ValueError("unsupported symbol")),
+    RuntimeError("configured split changed the spoken text"),
+    KeyError("missing span"),
+], ids=["engine_wrapped", "split_invariant", "keyerror"])
+def test_persistent_deterministic_fault_is_the_take_verdict(tmp_path, fault):
+    """Retried on the same seed, then filed as the take's verdict - never a stop of the whole book."""
+    pipeline, _chapter, _row = _short_tts_pipeline(tmp_path)
+    calls = []
+
+    def broken():
+        calls.append(1)
+        raise fault
+
+    with pytest.raises(AudioQualityError) as caught:
+        pipeline._through_machine_faults("thử", broken)
+    assert len(calls) == pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
+    assert caught.value.__cause__ is fault
+
     def verdict():
+        calls.append(1)
         raise AudioQualityError("TTS_ACTIVE_ONSET: first 5 ms")
 
+    calls.clear()
     with pytest.raises(AudioQualityError):
         pipeline._through_machine_faults("thử", verdict)
+    assert calls == [1], "a validator's own verdict is not retried"
 
 
 def test_state_write_failures_never_end_the_worker(tmp_path, monkeypatch):
@@ -415,7 +468,7 @@ def test_state_write_failures_never_end_the_worker(tmp_path, monkeypatch):
 
     paths = runner.BackgroundPaths.for_project(tmp_path)
     paths.ensure_root()
-    real, failures = runner.atomic_write_json, [3]
+    real, failures = runner.atomic_write_json, [1]
     sleeps: list[float] = []
 
     def flaky(path, payload):
@@ -427,20 +480,48 @@ def test_state_write_failures_never_end_the_worker(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "atomic_write_json", flaky)
     monkeypatch.setattr(runner.time, "sleep", sleeps.append)
     state = {"state": "running"}
+    assert runner._write_live_state(paths, state) is False, "one try: a held file is not waited for"
+    assert "state_write_lost" in state and sleeps == []
     assert runner._write_live_state(paths, state)
-    assert json.loads(paths.state.read_text(encoding="utf-8"))["state"] == "running"
-    assert sleeps == [0.1, 0.2, 0.4], "backs off instead of the 0.6 s rename window"
+    assert json.loads(paths.state.read_text(encoding="utf-8"))["state_write_lost"], "the loss is reported once written"
+    assert "state_write_lost" not in state and sleeps == []
 
-    def always(path, payload):
+
+def test_held_state_file_is_retried_later_from_after_the_failed_write(tmp_path, monkeypatch):
+    from abook import background_runner as runner
+
+    paths = runner.BackgroundPaths.for_project(tmp_path)
+    paths.ensure_root()
+    clock = [100.0]
+
+    def held(path, payload):
+        clock[0] += 2.0  # a slow failure: the back-off counts from after it
         raise PermissionError(13, "state.json held")
 
-    monkeypatch.setattr(runner, "atomic_write_json", always)
-    monkeypatch.setattr(runner, "STATE_WRITE_RETRY_SECONDS", 0.0)
-    assert runner._write_live_state(paths, state) is False
-    assert "state_write_lost" in state
+    monkeypatch.setattr(runner, "atomic_write_json", held)
+    monkeypatch.setattr(runner.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(runner.time, "sleep", lambda _s: pytest.fail("the supervisor loop must never sleep on state.json"))
+    writer = runner._LiveStateWriter(paths)
+    assert writer.due(clock[0], False) is False and writer.due(clock[0], True) is True
+    state = {"state": "running"}
+    assert writer.write(state) is False
+    assert writer.retry_at == 102.0 + runner.STATE_LIVE_RETRY_FIRST_SECONDS
+    assert writer.due(102.5, True) is False, "a heartbeat or event during the back-off does not write"
+    assert writer.due(writer.retry_at, False) is True, "the lost write is owed even with nothing new"
+    clock[0] = writer.retry_at
+    writer.write(state)
+    assert writer.retry_at == clock[0] + 2 * runner.STATE_LIVE_RETRY_FIRST_SECONDS
+    for _ in range(10):
+        clock[0] = writer.retry_at
+        writer.write(state)
+    assert writer.backoff == runner.STATE_WRITE_RETRY_SECONDS
+    monkeypatch.setattr(runner, "atomic_write_json", lambda path, payload: None)
+    assert writer.write(state) and writer.retry_at is None
+    assert writer.backoff == runner.STATE_LIVE_RETRY_FIRST_SECONDS
 
 
-@pytest.mark.parametrize("fault", [PermissionError("locked"), RuntimeError("engine fault")])
+@pytest.mark.parametrize("fault", [PermissionError("locked"), RuntimeError("CUDA error: device-side assert triggered")],
+                         ids=["oserror", "cuda"])
 def test_persistent_machine_fault_is_not_written_as_a_seed_verdict(tmp_path, fault):
     pipeline, _chapter, row = _edge_pipeline(tmp_path, [fault] * 3)
     session = pipeline._begin_take_session(row, {"test": "machine-fault"})
@@ -455,6 +536,103 @@ def test_persistent_machine_fault_is_not_written_as_a_seed_verdict(tmp_path, fau
     pipeline._session_synthesis(row, saved, "primary_0", lambda: (
         output, *pipeline.tts.synthesize_atomic(row, output, seed_salt="primary_0")))
     assert pipeline.tts.salts == ["primary_0"] * 4
+
+
+def test_deterministic_engine_fault_is_written_as_the_seed_verdict(tmp_path):
+    fault = _caused("phonemizer: unsupported symbol", ValueError("unsupported symbol"))
+    pipeline, _chapter, row = _edge_pipeline(tmp_path, [fault] * 3)
+    session = pipeline._begin_take_session(row, {"test": "engine-fault"})
+    output = pipeline._session_attempt_path(row, session, "primary_0", tmp_path / "attempt.wav")
+    with pytest.raises(AudioQualityError, match="phonemizer"):
+        pipeline._session_synthesis(row, session, "primary_0", lambda: (
+            output, *pipeline.tts.synthesize_atomic(row, output, seed_salt="primary_0")))
+    saved = json.loads(pipeline.db.artifact_by_key(pipeline._take_session_key(row))["metadata_json"])
+    assert saved["attempts"]["primary_0"]["error"] == "phonemizer: unsupported symbol"
+    assert saved["attempts"]["primary_0"]["quality"] is True
+    # A replay reads the verdict from the ledger: the seed is not synthesized again.
+    with pytest.raises(AudioQualityError, match="phonemizer"):
+        pipeline._session_synthesis(row, saved, "primary_0", lambda: pytest.fail("replayed verdict re-synthesized"))
+    assert pipeline.tts.salts == ["primary_0"] * 3
+
+
+def test_deterministic_engine_fault_fails_the_line_and_the_chapter_goes_on(tmp_path):
+    """A line the engine can never read ends failed; the next line is read; a resume does not stick on it."""
+    from tests.test_word_break_gate import resume_through_chapter_loop
+
+    pipeline, chapter, _row = _edge_pipeline(tmp_path, [], text="Một câu ngắn.\n\nCâu thứ hai.")
+    bad, good = pipeline.db.list_segments(chapter_id=int(chapter["id"]))[:2]
+    retries = int(pipeline.settings["tts"]["max_retries"])
+    attempts = pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
+
+    def fault():
+        return _caused("phonemizer: unsupported symbol", ValueError("unsupported symbol"))
+
+    pipeline.tts.outcomes = [fault() for _ in range(retries * attempts)] + ["clean"]
+    resume_through_chapter_loop(pipeline, chapter)
+    assert pipeline.tts.salts == [f"primary_{index}" for index in range(retries) for _ in range(attempts)] + ["primary_0"]
+    assert pipeline.db.get_segment(bad["id"])["status"] == "failed"
+    assert pipeline.db.get_segment(good["id"])["status"] == "signal_passed"
+    assert "SEGMENT_TTS_FAILED" in [str(item["code"]) for item in pipeline.db.list_events()]
+    # A resume runs the chapter loop to its end instead of stopping on the same line.
+    pipeline.tts.outcomes = [fault() for _ in range(retries * attempts)]
+    resume_through_chapter_loop(pipeline, chapter)
+    assert pipeline.db.get_segment(bad["id"])["status"] == "failed"
+    assert pipeline.db.get_segment(good["id"])["status"] == "signal_passed"
+
+
+def test_deterministic_split_error_fails_the_line_instead_of_stopping_the_run(tmp_path, monkeypatch):
+    text = LONG_TEXT + " " + LONG_TEXT
+    pipeline, chapter, row = _edge_pipeline(tmp_path, [AudioQualityError("no take")] * 20, text=text)
+    calls = []
+
+    def split(*_a, **_k):
+        calls.append(1)
+        raise RuntimeError("configured split changed the spoken text")
+
+    monkeypatch.setattr(pipeline, "_synthesize_split", split)
+    pipeline._process_single_segment(row, chapter)
+    assert pipeline.db.get_segment(row["id"])["status"] == "failed"
+    assert len(calls) == pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
+    # Closed: a resume of this line starts a new call, it does not replay the split forever.
+    session = json.loads(pipeline.db.artifact_by_key(pipeline._take_session_key(row))["metadata_json"])
+    assert session["state"] == "closed"
+
+
+@pytest.mark.parametrize("soft", [
+    {"generation_ceiling_hit": 1.0},
+    {"word_break_gate": {"status": "measured", "fired": True, "flagged_words": 1,
+                         "boundaries": [{"gap_ms": 90.0, "flagged": True}]}},
+], ids=["ceiling", "word_break_fired"])
+def test_high_quality_keeps_the_take_its_gate_accepts_over_a_pace_outlier(tmp_path, monkeypatch, soft):
+    """primary_0 is clean but off pace (high_quality refuses it); primary_1 carries a flag the
+    profile accepts. The accepted take must be kept and passed, not lost to the earlier one."""
+    pipeline, chapter, row = _edge_pipeline(tmp_path, [("clean", {"pace_outlier": 1.0})] + [("clean", soft)] * 20,
+                                            profile="high_quality")
+    # The word-break retry is not under test here: no reservation, the measured gate stands.
+    monkeypatch.setattr(pipeline, "_retry_word_break_once", lambda *_a, **_k: None)
+    pipeline._process_single_segment(row, chapter)
+    current = pipeline.db.get_segment(row["id"])
+    signal = json.loads(current["signal_json"])
+    assert current["status"] == "signal_passed"
+    assert ".primary_1." in Path(current["wav_path"]).name and not signal.get("pace_outlier")
+    assert Path(current["wav_path"]).is_file() and sha256_file(Path(current["wav_path"])) == current["wav_sha256"]
+    assert pipeline.tts.salts == ["primary_0", "primary_1"]
+
+
+def test_high_quality_rank_puts_its_refusals_right_after_the_signal_tier():
+    rank = BookPipeline._usable_take_rank
+    pace, ceiling = {"pace_outlier": 1.0}, {"generation_ceiling_hit": 1.0}
+    doubled = {"repeated_utterance_score": 0.9}
+    fired = {"word_break_gate": {"fired": True, "flagged_words": 3, "boundaries": [{"gap_ms": 200, "flagged": True}]}}
+    for refused in (pace, doubled):
+        for accepted in (ceiling, fired, INCONCLUSIVE, {**ceiling, **fired}):
+            assert rank(accepted, high_quality=True) < rank(refused, high_quality=True)
+            assert rank(accepted, qa_failed=True, high_quality=True) < rank(refused, high_quality=True)
+        # Still behind the signal tier: any signal pass beats any refused take.
+        assert rank(refused, high_quality=True) < rank({"signal_rejected": True, "rejection_class": "edge"},
+                                                       high_quality=True)
+    # The standard profile does not refuse a pace outlier, so it stays one soft flag there.
+    assert rank(pace) == rank(ceiling)
 
 
 def test_checkpoint_error_does_not_relabel_clean_audio(tmp_path, monkeypatch):
@@ -513,3 +691,25 @@ def test_session_cleanup_preserves_artifact_references(tmp_path):
     session["attempts"].update(a={"path": str(evidence)}, b={"path": str(loser)})
     pipeline._close_take_session(row, session)
     assert evidence.exists() and not loser.exists() and not orphan.exists()
+
+
+@pytest.mark.parametrize("keep", [False, True], ids=["preview", "pipeline"])
+def test_only_a_caller_that_asks_keeps_a_refused_take_on_disk(tmp_path, monkeypatch, keep):
+    """A preview or probe (`reading_preview`, `scripts/probe_*`) never leaves an orphan .rejected.wav."""
+    from abook.character_registry import voice_profile_spec
+    from abook.config import build_settings
+    from abook.tts import TTSCoordinator
+    from tests.test_engine_voices import ZEROTTS, _row
+
+    db = ProjectDB(tmp_path / "p.sqlite3")
+    coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
+    row = _row(db, voice_profile_spec(ZEROTTS))
+    engine = coordinator.engine("zerotts")
+    engine.sample_rate = 48_000
+    monkeypatch.setattr(engine, "generate_one", lambda *_a, **_k: _tone(5.0, 48_000, edge=True))
+    output = tmp_path / "preview" / "a.wav"
+    with pytest.raises(AudioQualityError) as caught:
+        coordinator.synthesize_atomic(row, output, **({"keep_rejected": True} if keep else {}))
+    assert isinstance(caught.value, SignalRejectedTake) is keep
+    assert not output.exists()
+    assert rejected_take_path(output).is_file() is keep

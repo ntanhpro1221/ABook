@@ -403,6 +403,36 @@ TTS_MEMORY_RECOVERY_ATTEMPTS = 3
 TAKE_SESSION_KIND = "take_session"
 
 
+# A fault of the machine rather than of this line: it ends when the machine recovers, so a
+# take that keeps meeting it stops the run for a replay instead of being filed as a verdict.
+MACHINE_FAULT_MARKERS = (
+    "cuda error",
+    "cuda_error",
+    "out of memory",
+    "device-side",
+    "device lost",
+    "connection reset",
+    "connection refused",
+    "connection aborted",
+    "broken pipe",
+)
+
+
+def _is_machine_fault(error: BaseException) -> bool:
+    """An OSError, a MemoryError or a named transient fault, raised directly or wrapped by the engine."""
+    seen: set[int] = set()
+    current: BaseException | None = error
+    while current is not None and id(current) not in seen:
+        if isinstance(current, (OSError, MemoryError)):
+            return True
+        message = str(current).casefold()
+        if any(marker in message for marker in MACHINE_FAULT_MARKERS):
+            return True
+        seen.add(id(current))
+        current = current.__cause__
+    return False
+
+
 def _is_memory_pressure(error: BaseException) -> bool:
     """Somebody else's memory, raised directly or wrapped by the engine."""
     seen: set[int] = set()
@@ -3600,6 +3630,15 @@ class BookPipeline:
         )
 
     @staticmethod
+    def _accepts_keyword(provider: Callable[..., Any], name: str) -> bool:
+        try:
+            parameters = inspect.signature(provider).parameters.values()
+        except (TypeError, ValueError):
+            return False
+        return any(parameter.name == name or parameter.kind == inspect.Parameter.VAR_KEYWORD
+                   for parameter in parameters)
+
+    @staticmethod
     def _supports_pronunciation_delivery_variant(provider: Callable[..., Any]) -> bool:
         try:
             parameters = inspect.signature(provider).parameters.values()
@@ -5081,6 +5120,9 @@ class BookPipeline:
                         seed_salt=seed_salt,
                         repair_short_utterance=repair_short_utterance,
                         delivery_mode=delivery_mode,
+                        # This take session ranks a refused take and cleans it up when it closes.
+                        **({"keep_rejected": True} if self._accepts_keyword(
+                            self.tts.synthesize_atomic, "keep_rejected") else {}),
                     ))
 
                 output, checksum, metrics, seed = self._session_synthesis(row, session, seed_salt, synthesize)
@@ -5263,14 +5305,30 @@ class BookPipeline:
         return 1 if metrics.get("rejection_class") == SIGNAL_REJECTION_CLASS_EDGE else 2
 
     @staticmethod
-    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, int, float, float, float]:
+    def _high_quality_refusal(metrics: dict[str, Any]) -> bool:
+        """What `_require_high_quality_take` refuses: a pace outlier or a doubled reading."""
+        repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
+        return bool(metrics.get("pace_outlier")) or repeated > REPEATED_UTTERANCE_THRESHOLD
+
+    def _take_rank(self, metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, int, int, float, float, float]:
+        """`_usable_take_rank` under this book's quality profile."""
+        return self._usable_take_rank(metrics, qa_failed=qa_failed,
+                                      high_quality=self.settings.get("quality_profile") == "high_quality")
+
+    @staticmethod
+    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False,
+                          high_quality: bool = False) -> tuple[int, int, int, float, float, float]:
         """Signal pass first, as a tier of its own; then fewer known flags, less repetition; ties keep the earlier take.
 
         The tier comes before every flag because a refused take's soft measurements say nothing
         about the refusal: a pass with a pace or word-break flag still beats any refused take.
+        Under high_quality what that profile's gate refuses (`_require_high_quality_take`) is
+        the next tier: a take the gate accepts always beats one it refuses, so the kept take is
+        never one the gate then fails while an acceptable take is thrown away.
         """
         repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
         tier = BookPipeline._signal_rejection_tier(metrics)
+        hq_refused = int(high_quality and BookPipeline._high_quality_refusal(metrics))
         flags = sum(bool(metrics.get(key)) for key in (
             "pace_outlier",  GENERATION_CEILING_METRIC,
         )) + int(repeated > REPEATED_UTTERANCE_THRESHOLD) + int(qa_failed)
@@ -5278,12 +5336,12 @@ class BookPipeline:
         inconclusive = gate.get("status") == "inconclusive"
         flags += int(bool(gate.get("fired")) or inconclusive)
         if inconclusive:
-            return tier, flags, repeated, float("inf"), float("inf")
+            return tier, hq_refused, flags, repeated, float("inf"), float("inf")
         if not gate.get("fired"):
-            return tier, flags, repeated, 0., 0.
+            return tier, hq_refused, flags, repeated, 0., 0.
         # Only flagged boundaries: a long natural closure elsewhere says nothing about this take's breaks.
         flagged_gaps = [float(item["gap_ms"]) for item in gate.get("boundaries") or () if item.get("flagged")]
-        return tier, flags, repeated, float(gate.get("flagged_words", 0)), max(flagged_gaps, default=0.)
+        return tier, hq_refused, flags, repeated, float(gate.get("flagged_words", 0)), max(flagged_gaps, default=0.)
 
     def _require_high_quality_take(self, metrics: dict[str, Any]) -> None:
         if self.settings.get("quality_profile") != "high_quality":
@@ -5369,10 +5427,13 @@ class BookPipeline:
         """Run one synthesis; the machine's state may delay it but never spend an attempt.
 
         The validators' verdict on the audio (an AudioQualityError they raise themselves,
-        without a cause) is the take's and is returned at once. An engine failure wrapped
-        with its cause - a transient CUDA error, a file a scanner holds - is retried on the
-        same seed; an OSError that persists stops the run at a checkpoint instead of being
-        filed as this seed's verdict.
+        without a cause) is the take's and is raised at once. Any other failure is retried on
+        the same seed. If it persists, only a fault of the machine - an OSError such as a file
+        a scanner holds, a MemoryError, a named transient CUDA or connection error - stops the
+        run at a checkpoint for a replay. Anything else (an engine error this text or seed
+        causes, a split invariant) is this seed's verdict: an AudioQualityError the session
+        files, so the line moves on to the next seed, the split, or failed. One bad line never
+        stops the book, and a resume never sticks on it.
         """
         failures = 0
         while True:
@@ -5383,15 +5444,17 @@ class BookPipeline:
             except Exception as exc:  # noqa: BLE001
                 if is_fatal_tts_error(exc):
                     raise
-                if isinstance(exc, AudioQualityError) and exc.__cause__ is None:
+                if (isinstance(exc, AudioQualityError) and exc.__cause__ is None
+                        and not _is_machine_fault(exc)):
                     raise
                 failures += 1
-                time.sleep(min(8, 2**failures))
                 if failures < WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS:
+                    time.sleep(min(8, 2**failures))
                     continue
-                # Only a validator's uncaused AudioQualityError is a verdict. Persistent
-                # engine faults must also leave the reservation open for this same seed.
-                raise CriticalResourceStop(f"Không {where} được vì môi trường máy: {exc}") from exc
+                if _is_machine_fault(exc):
+                    # The machine's state never spends this seed: the reservation stays open.
+                    raise CriticalResourceStop(f"Không {where} được vì môi trường máy: {exc}") from exc
+                raise AudioQualityError(str(exc)) from exc
 
     def _take_session_key(self, row: Any) -> str:
         return f"{TAKE_SESSION_KIND}:{int(row['id'])}"
@@ -5653,7 +5716,7 @@ class BookPipeline:
         metadata = self._settle_word_break_retry(row, key)
         if metadata["state"] == "complete":
             retry = metadata["result"]["metrics"]
-            if self._usable_take_rank(retry) < self._usable_take_rank(metrics):
+            if self._take_rank(retry) < self._take_rank(metrics):
                 artifact = self.db.artifact_by_key(key)
                 return Path(str(artifact["path"])), str(artifact["sha256"]), retry, int(metadata["generation_seed"])
         metrics["word_break_gate"].update(metadata["result"]["summary"])
@@ -5700,7 +5763,7 @@ class BookPipeline:
                     and sha256_file(Path(str(old["path"]))) == old["sha256"]
                     and all(metadata["signal"].get(field) == metrics.get(field) for field in (
                         "spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant"))
-                    and self._usable_take_rank(metadata["signal"]) <= self._usable_take_rank(metrics)):
+                    and self._take_rank(metadata["signal"]) <= self._take_rank(metrics)):
                 return
         kept = output.with_name(output.stem + f".retained.{checksum[:16]}.wav")
         staged = kept.with_name(kept.name + f".{time.time_ns()}.part")
@@ -5743,7 +5806,7 @@ class BookPipeline:
                              and str(check["verdict"]) != QUALITY_VERDICT_PASS)
             if (isinstance(old_metrics, dict) and all(old_metrics.get(key) == metrics.get(key) for key in (
                     "spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant"))
-                    and self._usable_take_rank(old_metrics, qa_failed=qa_failed) <= self._usable_take_rank(
+                    and self._take_rank(old_metrics, qa_failed=qa_failed) <= self._take_rank(
                         metrics, qa_failed=qa_failed and checksum == current["wav_sha256"])):
                 return False
         self.db.checkpoint_usable_take(

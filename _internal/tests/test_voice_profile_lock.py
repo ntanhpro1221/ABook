@@ -348,11 +348,12 @@ def test_standalone_gasp_preserves_raw_audio_with_exact_provenance(
         captured["sampling"] = dict(sampling)
         return np.full(original_samples, 0.05, dtype=np.float32)
 
-    def write_wav(_output, audio, received_sample_rate, text, _settings, *, segment):
+    def write_wav(_output, audio, received_sample_rate, text, _settings, *, segment, keep_rejected):
         array = np.asarray(audio, dtype=np.float32)
         captured["written_audio"] = array
         captured["written_text"] = text
         captured["written_segment"] = segment
+        assert keep_rejected is False
         assert received_sample_rate == sample_rate
         return "checksum", {
             "duration": array.size / received_sample_rate,

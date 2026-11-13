@@ -73,6 +73,26 @@ def _fake_worker_wait_for_stop(
     )
 
 
+HELD_STATE_EVENTS = 300
+
+
+def _fake_worker_many_events(
+    project_root: str,
+    message_queue: Any,
+    _pause_event: Any,
+    _stop_event: Any,
+    _parent_pid: int,
+    _resource_overrides: dict[str, Any] | None,
+    _resource_queue: Any,
+) -> None:
+    message_queue.put(
+        {"kind": "worker_ready", "pid": os.getpid(), "project_root": project_root}
+    )
+    for index in range(HELD_STATE_EVENTS):
+        message_queue.put({"kind": "progress", "text": f"line {index}"})
+    message_queue.put({"kind": "finished", "ok": True, "text": "fake complete"})
+
+
 def _fake_worker_fails_before_ready(
     _project_root: str,
     message_queue: Any,
@@ -621,6 +641,63 @@ def test_state_write_failure_cannot_kill_a_live_worker(tmp_path: Path, monkeypat
     assert get_status(project).state == "completed"
     assert terminated == []
     assert "STATE_WRITE_FAILED PermissionError" in tail_log(project, lines=40)
+
+
+def _hold_live_state(monkeypatch, paths: BackgroundPaths) -> list[str]:
+    """state.json held by a scanner for as long as the worker runs; the final write gets through."""
+    original = background_runner.atomic_write_json
+    tries: list[str] = []
+
+    def held(path, payload):
+        if path == paths.state and payload.get("state") in {"running", "stopping"}:
+            tries.append(payload["state"])
+            raise PermissionError("scanner holds state.json")
+        return original(path, payload)
+
+    monkeypatch.setattr(background_runner, "atomic_write_json", held)
+    return tries
+
+
+def test_held_state_file_never_slows_the_supervisor_loop(tmp_path: Path, monkeypatch) -> None:
+    """Every worker event is drained at once while state.json is held; the write is retried with back-off."""
+    project = _make_project(tmp_path)
+    paths = BackgroundPaths.for_project(project)
+    tries = _hold_live_state(monkeypatch, paths)
+    started = time.monotonic()
+    code = run_supervisor(project, "held-state", worker_target=_fake_worker_many_events, poll_seconds=0.01)
+    assert_within(10.0, started)
+    assert code == 0 and get_status(project).state == "completed"
+    progress = [
+        json.loads(line) for line in paths.events.read_text(encoding="utf-8").splitlines()
+        if '"progress"' in line
+    ]
+    assert len(progress) == HELD_STATE_EVENTS, "no worker event waits behind a held state.json"
+    # One try at READY, then back-off: not one try per event or per poll.
+    assert 1 <= len(tries) <= 6
+
+
+def test_held_state_file_never_delays_a_stop(tmp_path: Path, monkeypatch) -> None:
+    project = _make_project(tmp_path)
+    paths = BackgroundPaths.for_project(project)
+    paths.ensure_root()
+    atomic_write_json(
+        paths.stop_request,
+        {
+            "schema_version": 1,
+            "instance_id": "held-stop",
+            "project_root": str(project.resolve()),
+            "requested_at": "2026-08-10T00:00:00Z",
+            "requester_pid": os.getpid(),
+            "force": False,
+        },
+    )
+    tries = _hold_live_state(monkeypatch, paths)
+    started = time.monotonic()
+    code = run_supervisor(project, "held-stop", worker_target=_fake_worker_wait_for_stop, poll_seconds=0.01)
+    assert_within(5.0, started)
+    assert code == 0 and get_status(project).state == "stopped"
+    assert "stopping" in tries
+    assert "STOP_REQUEST forwarded to worker" in tail_log(project, lines=40)
 
 
 def test_supervisor_never_sends_ready_when_worker_bootstrap_fails(tmp_path: Path) -> None:

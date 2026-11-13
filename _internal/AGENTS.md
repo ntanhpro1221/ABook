@@ -59,6 +59,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   dọn lease hay chạm file control; SQLite đang chạy phải được đọc bằng URI `mode=ro`, không dùng `immutable=1` vì có WAL.
 - Background start chỉ gửi `READY` sau khi worker đã giữ `.worker.lock`, nạp settings khóa và xác minh toàn bộ source.
   State/control JSON ghi atomic trong `runtime/background`; recovery tuyệt đối không xóa `.part` trong namespace này.
+  Ghi state khi worker còn sống chỉ thử một lần, hỏng thì hẹn backoff từ sau lần ghi và tiếp tục rút sự kiện/chuyển control; chỉ ghi kết thúc mới chờ retry.
 - Background identity gồm project path + instance token + PID + process create-time. Force-stop phải khóa launch ownership,
   đối chiếu lại đủ identity ngay trước khi kill/ghi state và từ chối nếu một instance mới đã thay thế instance được yêu cầu.
 - Hai tiến trình tạo cùng title/manifest phải serialize bằng OS creation lock xuyên suốt bước chọn project root,
@@ -152,9 +153,14 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Giọng dẫn khác giới người kể chương cần được chọn rõ hoặc sửa trước khi xuất.
 - Retry cùng chữ/giọng giữ bản thu tốt nhất trong SQLite và trên đĩa đến khi bản tốt hơn checkpoint. Lượt thử ghi file riêng;
   hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
+  Hạng `_usable_take_rank`: bậc tín hiệu trước, rồi (chỉ ở `high_quality`) bậc "cổng HQ cấm" (lệch tốc độ, đọc lặp), rồi các cờ mềm -
+  trong cùng bậc tín hiệu, bản HQ cho qua luôn thắng bản HQ cấm, để câu có bản đạt không ra `failed`.
 - Cổng ngắt trong từ đo WAV sau tempo/gain bằng CTC, chỉ bật cho giọng có thước riêng trong `voice_balance`. Không đổi sampling hay chữ khi sinh lại.
   Budget một lần và seed được reserve bền trong `artifacts` trước inference, gắn policy/chữ đọc/giọng/lượt thu tay; sinh lại là hàm thuần của (đầu vào, seed đã reserve).
-  Crash, thiếu bộ nhớ hay lỗi đĩa không tiêu lượt: chạy lại đúng seed, lỗi môi trường không hết thì `CriticalResourceStop` và giữ reservation; chỉ phán quyết của bộ kiểm audio mới là `failed` cuối.
+  Crash, thiếu bộ nhớ hay lỗi đĩa không tiêu lượt: chạy lại đúng seed, lỗi môi trường không hết thì `CriticalResourceStop` và giữ reservation; audio không đạt hoặc lỗi tất định của máy đọc/chia câu mới là phán quyết `failed` cuối của seed.
+  "Lỗi môi trường" chỉ là OSError/MemoryError (cả khi bọc làm cause) hay lỗi tạm thời có tên (`MACHINE_FAULT_MARKERS`: CUDA error, connection reset...).
+  Lỗi khác còn sau ba lần thử cùng seed (lỗi máy đọc do chữ/seed, bất biến chia câu) là phán quyết của seed ấy (`AudioQualityError from exc`, ghi sổ phiên):
+  câu đi tiếp sang seed kế/chia câu/`failed`; một câu lỗi tất định không được dừng cả cuốn hay làm resume kẹt.
   Mọi lượt gọi tổng hợp giữ `take_session` trong artifacts: snapshot đầu lượt, path/seed đặt chỗ và kết quả từng take. Resume khôi phục snapshot rồi phát lại cùng lượt gọi và cùng các phép kiểm high_quality; take đã xong đọc lại theo checksum, take dở dùng lại seed đã đặt chỗ. Recovery xếp take dở vào `failed + quality_pending`, nên vòng chapter phải gọi lại mọi session còn mở (`_owed_take_session`), cả câu không có cổng, và giữ đúng round của lượt clarity.
   OOM trực tiếp hoặc có cause dùng chung `_without_memory_pressure` trên đường chính, ứng viên, sinh lại qua cổng và chia nhỏ: tối đa ba lần cùng take; ngân sách tài nguyên tách khỏi ngân sách chất lượng, hết thì `CriticalResourceStop` và giữ lượt dở.
   Mẫu đầu và mẫu sinh lại giữ đường riêng, ứng viên ASR cũng vậy: chọn bằng `_usable_take_rank`, bản sinh lại chỉ thay `wav_path` của ứng viên khi tốt hơn; signal của incumbent không bị đụng. `signal_json.word_break_gate` giữ phép đo của bản được chọn và lịch sử trước/sau.

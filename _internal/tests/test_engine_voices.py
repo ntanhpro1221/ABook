@@ -197,13 +197,14 @@ def test_another_engine_is_resampled_and_balanced_like_vieneu(tmp_path: Path, mo
         return np.zeros(24_000, dtype=np.float32)
 
     speeds: list[tuple[int, float]] = []
-    written: list[tuple[int, int, str]] = []
+    written: list[tuple[int, int, str, bool]] = []
     monkeypatch.setattr(zerotts, "generate_one", generate_one)
     monkeypatch.setattr(tts_module, "apply_speed_change", lambda audio, rate, speed: speeds.append((rate, speed)) or audio)
     monkeypatch.setattr(
         tts_module,
         "atomic_write_wav",
-        lambda _path, audio, rate, _text, _settings, segment: written.append((len(audio), rate, segment[VOICE_BALANCE_FIELD]))
+        lambda _path, audio, rate, _text, _settings, segment, keep_rejected: written.append(
+            (len(audio), rate, segment[VOICE_BALANCE_FIELD], keep_rejected))
         or ("checksum", {}),
     )
 
@@ -211,7 +212,7 @@ def test_another_engine_is_resampled_and_balanced_like_vieneu(tmp_path: Path, mo
 
     assert calls and calls[0]["engine"] == "zerotts" and calls[0]["seed"] == seed
     # 24 kHz của máy -> 48 kHz của dự án, trước tempo và độ to.
-    assert written == [(48_000, 48_000, "zerotts@0.1.5/baotrang")]
+    assert written == [(48_000, 48_000, "zerotts@0.1.5/baotrang", False)]
     assert speeds == [(48_000, pytest.approx(1.0427))], "tempo x*r_v bằng WSOLA như VieNeu"
     assert metrics["effective_speed_factor"] == pytest.approx(1.0427)
     assert coordinator.vieneu.tts is None, "câu của giọng ZeroTTS không nạp VieNeu"

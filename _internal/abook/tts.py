@@ -1509,7 +1509,11 @@ class TTSCoordinator:
         delivery_mode: str = DELIVERY_PRIMARY,
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
         measure_word_break: bool = True,
+        keep_rejected: bool = False,
     ) -> tuple[str, dict[str, Any], int]:
+        # `keep_rejected`: only a caller that ranks and cleans up refused takes (the
+        # pipeline's take session) asks for an edge- or clip-refused take to be kept on disk
+        # as SignalRejectedTake; a preview or probe gets the plain refusal and no file.
         try:
             profile = self._voice_profile_for_row(row)
             seed = self.generation_seed(row, seed_salt)
@@ -1632,7 +1636,7 @@ class TTSCoordinator:
                     str(spoken_row["text"]),
                     self.settings,
                     segment=spoken_row,
-                    keep_rejected=True,
+                    keep_rejected=keep_rejected,
                 )
             except SignalRejectedTake as exc:
                 rejected = exc

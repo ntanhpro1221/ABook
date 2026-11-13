@@ -220,11 +220,15 @@ def _append_log(paths: BackgroundPaths, message: str) -> None:
 # state.json is how the book page sees a live run; it is not a reason for the run to end.
 # A scanner, sync client or polling script can hold it far longer than the 0.6 s rename retry
 # (`io_utils._replace_with_retry`), and the supervisor used to answer by killing the worker -
-# mid-analysis, which makes a different book (AGENTS.md). Live writes back off for about
-# `STATE_WRITE_RETRY_SECONDS`, then give up on that one write; the next heartbeat writes again.
+# mid-analysis, which makes a different book (AGENTS.md). A live write is one try and never
+# waits in the supervisor loop - that loop drains the worker's events and forwards stop and
+# pause. A held file schedules the next try (`_LiveStateWriter`), backing off from
+# `STATE_LIVE_RETRY_FIRST_SECONDS` to `STATE_WRITE_RETRY_SECONDS`. Only the final write, after
+# the worker is gone, waits for the file (`_write_state_retrying`).
 STATE_WRITE_RETRY_SECONDS = 30.0
 STATE_WRITE_FIRST_DELAY_SECONDS = 0.1
 STATE_WRITE_MAX_DELAY_SECONDS = 5.0
+STATE_LIVE_RETRY_FIRST_SECONDS = 1.0
 
 
 def _write_state_retrying(paths: BackgroundPaths, state: Mapping[str, Any]) -> None:
@@ -244,15 +248,39 @@ def _write_state_retrying(paths: BackgroundPaths, state: Mapping[str, Any]) -> N
 
 
 def _write_live_state(paths: BackgroundPaths, state: dict[str, Any]) -> bool:
-    """A state write while the worker runs: never raises, so it can never end the worker."""
+    """One state write while the worker runs: one try, no waiting, never raises."""
     try:
-        _write_state_retrying(paths, state)
+        atomic_write_json(paths.state, dict(state))
     except Exception as exc:  # noqa: BLE001 - bookkeeping cannot stop a live worker
         state["state_write_lost"] = {"at": _utc_now(), "error": f"{type(exc).__name__}: {exc}"}
         _append_log(paths, f"STATE_WRITE_FAILED {type(exc).__name__}: {exc}")
         return False
     state.pop("state_write_lost", None)
     return True
+
+
+class _LiveStateWriter:
+    """state.json while the worker runs: a failed write is tried again later, never waited for."""
+
+    def __init__(self, paths: BackgroundPaths) -> None:
+        self.paths = paths
+        self.retry_at: float | None = None
+        self.backoff = STATE_LIVE_RETRY_FIRST_SECONDS
+
+    def write(self, state: dict[str, Any]) -> bool:
+        if _write_live_state(self.paths, state):
+            self.retry_at, self.backoff = None, STATE_LIVE_RETRY_FIRST_SECONDS
+            return True
+        # Measured from after the failed try: a slow failure must not make the retry due at once.
+        self.retry_at = time.monotonic() + self.backoff
+        self.backoff = min(self.backoff * 2, STATE_WRITE_RETRY_SECONDS)
+        return False
+
+    def due(self, now: float, wanted: bool) -> bool:
+        """Whether to try now: when a write is wanted or owed, and no back-off is running."""
+        if self.retry_at is None:
+            return wanted
+        return now >= self.retry_at
 
 
 def _append_event(paths: BackgroundPaths, event: Mapping[str, Any]) -> None:
@@ -1101,7 +1129,8 @@ def run_supervisor(
                 "detail": "background supervisor và worker đã xác minh project",
             }
         )
-        _write_live_state(paths, state)
+        live_state = _LiveStateWriter(paths)
+        live_state.write(state)
         _write_handshake(paths, instance_id, "ready", "supervisor và worker đã khởi động")
         handshake_written = True
         _append_log(paths, f"READY supervisor_pid={supervisor_pid} worker_pid={worker.pid}")
@@ -1125,7 +1154,7 @@ def run_supervisor(
                         "detail": "đã chuyển stop request tới worker; đang chờ checkpoint sạch",
                     }
                 )
-                _write_live_state(paths, state)
+                live_state.write(state)
                 _append_log(paths, "STOP_REQUEST forwarded to worker")
 
             # Tạm dừng giữ tiến trình sống: dây chuyền đứng ở checkpoint kế (pause_requested) và làm tiếp đúng chỗ ấy -
@@ -1159,7 +1188,7 @@ def run_supervisor(
                 state.update(
                     {"pause_reason": wanted, "paused_at": _utc_now() if wanted else None, "updated_at": _utc_now()}
                 )
-                _write_live_state(paths, state)
+                live_state.write(state)
                 _append_log(paths, f"PAUSE reason={wanted}" if wanted else "RESUME")
 
             try:
@@ -1172,13 +1201,14 @@ def run_supervisor(
                     last_finished = normalized_event
 
             monotonic_now = time.monotonic()
-            if monotonic_now >= next_heartbeat or (
+            if live_state.due(monotonic_now, monotonic_now >= next_heartbeat or (
                 event is not None and monotonic_now - last_state_write >= STATE_EVENT_FLUSH_SECONDS
-            ):
+            )):
                 state["updated_at"] = _utc_now()
-                _write_live_state(paths, state)
-                last_state_write = monotonic_now
-                next_heartbeat = monotonic_now + STATUS_HEARTBEAT_SECONDS
+                if live_state.write(state):
+                    # After the write: a slow one must not make the next heartbeat due at once.
+                    last_state_write = time.monotonic()
+                next_heartbeat = time.monotonic() + STATUS_HEARTBEAT_SECONDS
 
         worker.join(timeout=1.0)
         drain_deadline = time.monotonic() + QUEUE_DRAIN_GRACE_SECONDS
