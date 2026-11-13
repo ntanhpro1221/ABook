@@ -46,6 +46,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from abook import voice_balance  # noqa: E402
+from abook.audio_io import VOICE_BALANCE_FIELD  # noqa: E402
 from abook.config import build_settings  # noqa: E402
 from abook.io_utils import slugify  # noqa: E402
 from abook.tts import ENGINE_ADAPTERS  # noqa: E402
@@ -78,9 +79,14 @@ def main() -> int:
                 print(f"  bo qua {name}: SDK nay khong co")
                 continue
             profile = {"engine": args.engine, "preset_name": name, "voice_key": "preview", "id": 0}
+            constants = voice_balance.constants_for_profile(profile)
+            # Ngân sách khung theo sàn nhịp THÔ của chính giọng, như dây chuyền (`tts.py` gắn `VOICE_BALANCE_FIELD` trước khi tính
+            # sampling). Thiếu khoá thì dùng sàn chung: giọng thô chậm (Kim Thanh r=1,32, Đức Trí, Mỹ Duyên) chạm trần 135 khung
+            # = 10,8 s và bị cắt cụt ở mọi seed (13-11).
+            voiced_row = {**row, VOICE_BALANCE_FIELD: constants.key}
             # Máy tự đọc theo tốc độ (Supertonic): nghe thử ở tốc độ của giọng trong bảng cân bằng, như lúc thu.
-            speed = voice_balance.engine_speed(voice_balance.constants_for_profile(profile)) if engine.native_tempo else None
-            audio = engine.generate_one(row, profile, SEED, **({"speed": speed} if engine.native_tempo else {}))
+            speed = voice_balance.engine_speed(constants) if engine.native_tempo else None
+            audio = engine.generate_one(voiced_row, profile, SEED, **({"speed": speed} if engine.native_tempo else {}))
             path = args.out / VOICE_PREVIEW_FILENAMES.get(name, f"{slugify(name)}.wav")
             sf.write(str(path), np.asarray(audio, dtype=np.float32), int(engine.sample_rate), subtype="PCM_16")
             print(f"  {name} -> {path.name} ({len(audio) / engine.sample_rate:.2f} s)", flush=True)
