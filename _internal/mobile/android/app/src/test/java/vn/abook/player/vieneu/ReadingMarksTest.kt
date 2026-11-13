@@ -17,19 +17,19 @@ class ReadingMarksTest {
 
     @Test
     fun aTildeIsDroppedOrReadAsARange() = check(
-        "Hmm~ Har~kun? EMMMMM~!" to "hừm, Har kun? em…!",
+        "Hmm~ Har~kun? EMMMMM~!" to "hừm, Har kun? ừm!",
         "Ưm~~~, xong. Ô ~, vậy sao. Ồ~”." to "Ưm, xong. Ô, vậy sao. Ồ”.",
         "Từ 10,000 ~ 15,000 đồng và 3~5 người." to "Từ 10000 đến 15000 đồng và 3 đến 5 người.",
-        "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50  nữa.",
+        "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50 nữa.",
         "~" to "",
     )
 
     @Test
     fun englishThousandsLoseTheirCommas() = check(
-        "Có 500,000 đồng, 100,000 yen và 1,419 / 3,419." to "Có 500000 đồng, 100000 yên và 1419 trên 3419.",
-        "Trả 2,000,000, xong." to "Trả 2.000.000, xong.",
-        "Giá 1,500 và 1,5 và 3,25 và 12,3456." to "Giá 1500 và 1,5 và 3,25 và 12,3456.",
-        "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5." to "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.",
+        "Có 500,000 đồng, 100,000 yen và 1,419 / 3,419." to "Có năm trăm nghìn đồng, một trăm nghìn yên và 1419 trên 3419.",
+        "Trả 2,000,000, xong." to "Trả hai triệu, xong.",
+        "Giá 1,500 và 1,5 và 3,25 và 12,3456." to "Giá một nghìn năm trăm và 1,5 và 3,25 và 12,3456.",
+        "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5." to "Số 1.234,567 và chín triệu ba trăm tám mươi chín nghìn bảy trăm và 1,234.5 và 1,234,5.",
     )
 
     @Test

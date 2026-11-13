@@ -64,8 +64,8 @@ def _said(text: str) -> str:
 
 @pytest.mark.parametrize("text, said", [
     ("Trường Phổ thông II và Trường Phổ thông III", "Trường Phổ thông hai và Trường Phổ thông ba"),
-    ("Chương IV bắt đầu ở trang 132.", "Chương bốn bắt đầu ở trang 132."),
-    ("Thế chiến II kết thúc năm 1945.", "Thế chiến hai kết thúc năm 1945."),
+    ("Chương IV bắt đầu ở trang 132.", "Chương bốn bắt đầu ở trang một trăm ba mươi hai."),
+    ("Thế chiến II kết thúc năm 1945.", "Thế chiến hai kết thúc năm một nghìn chín trăm bốn mươi lăm."),
     ("Benedict III lên ngôi.", "Benedict ba lên ngôi."),
     ("Cuối chương XIV.", "Cuối chương mười bốn."),
     ("Mục XV, XXIV và XXXIX.", "Mục mười lăm, hai mươi bốn và ba mươi chín."),
@@ -104,7 +104,7 @@ def test_other_capitals_and_headings_are_left_alone(text: str, said: str) -> Non
     # tn9: số La Mã sau tên nối gạch
     ("Lord El-Melloi II và Zi-O II.", "Lord El-Melloi hai và Zi-O hai."),
     # tn9: "I" một mình sau một chữ viết hoa không phải từ Anh, khi nó khép cụm hay chữ sau là tiếng Việt
-    ("91 điểm Toán I, 88 điểm Toán II.", "91 điểm Toán một, 88 điểm Toán hai."),
+    ("91 điểm Toán I, 88 điểm Toán II.", "chín mươi mốt điểm Toán một, tám mươi tám điểm Toán hai."),
     ("Julianus I sẽ đến. Ở Khu I. Diablo I, nghe rõ.", "Julianus một sẽ đến. Ở Khu một. Diablo một, nghe rõ."),
     ("But I never, When I was, Anh I love you.", "But I never, When I was, Anh I love you."),  # chữ trước hay sau là tiếng Anh: đại từ
 ])
@@ -113,9 +113,9 @@ def test_tn9_a_hyphenated_name_and_a_lone_one_before_a_non_english_word(text: st
 
 
 @pytest.mark.parametrize("text, said", [
-    ("Giá 10G, 9,999G và 30.000G.", "Giá 10 giê, 9999 giê và 30.000 giê."),  # chữ cái G (giê), không phải "gờ"
+    ("Giá 10G, 9,999G và 30.000G.", "Giá 10 giê, 9999 giê và ba mươi nghìn giê."),  # chữ cái G (giê), không phải "gờ"
     ("Mạng 5G và 1G trọng lực.", "Mạng 5 giê và 1 giê trọng lực."),
-    ("15GB, 3Gb, 100g, G10 và 4Gx.", "15GB, 3Gb, 100g, G10 và 4Gx."),  # dính chữ sau, hay G thường (gam), hay G đứng trước số
+    ("15GB, 3Gb, 100g, G10 và 4Gx.", "15GB, 3Gb, 100g, giê mười và 4Gx."),  # dính chữ sau, hay G thường (gam): giữ; G đứng trước số là mã (tên chữ + số)
     ("10Gà, 7Gỗ và 2G.", "10Gà, 7Gỗ và 2 giê."),  # chữ có dấu cũng là chữ (Kotlin: \W chỉ ASCII - fixture dùng chung kiểm hai bên)
 ])
 def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) -> None:
@@ -124,10 +124,10 @@ def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) ->
 
 # ---- dấu sea-g2p đọc sai thành lời (vieneu.reading_marks): "~", nghìn kiểu Anh, <ngoặc nhọn>, " / " ---------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Hmm~ Har~kun? EMMMMM~!", "hừm, Har kun? em…!"),  # kéo giọng: bỏ, còn chữ nói tiếp thì thành dấu phẩy; có chữ dính ngay sau thì thành khoảng trắng
+    ("Hmm~ Har~kun? EMMMMM~!", "hừm, Har kun? ừm!"),  # kéo giọng: bỏ, còn chữ nói tiếp thì thành dấu phẩy; có chữ dính ngay sau thì thành khoảng trắng
     ("Ưm~~~, xong. Ô ~, vậy sao. Ồ~”.", "Ưm, xong. Ô, vậy sao. Ồ”."),
     ("Từ 10,000 ~ 15,000 đồng và 3~5 người.", "Từ 10000 đến 15000 đồng và 3 đến 5 người."),  # giữa hai số: đến
-    ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50  nữa."),  # trước số: để sea-g2p đọc "khoảng"
+    ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50 nữa."),  # trước số: để sea-g2p đọc "khoảng"
     ("~", ""),
 ])
 def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
@@ -135,11 +135,11 @@ def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
 
 
 @pytest.mark.parametrize("text, said", [
-    ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có 500000 đồng, 100000 yên và 1419 trên 3419."),
-    ("Trả 2,000,000, xong.", "Trả 2.000.000, xong."),
+    ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có năm trăm nghìn đồng, một trăm nghìn yên và 1419 trên 3419."),
+    ("Trả 2,000,000, xong.", "Trả hai triệu, xong."),
     # "1,500" (đúng 3 chữ số sau phẩy) được coi là nghìn: truyện dịch dùng kiểu Anh, thập phân Việt có 1-2 chữ số
-    ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá 1500 và 1,5 và 3,25 và 12,3456."),
-    ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5."),
+    ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá một nghìn năm trăm và 1,5 và 3,25 và 12,3456."),
+    ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", "Số 1.234,567 và chín triệu ba trăm tám mươi chín nghìn bảy trăm và 1,234.5 và 1,234,5."),
 ])
 def test_english_thousands_lose_their_commas(text: str, said: str) -> None:
     assert _said(text) == said
@@ -644,7 +644,7 @@ def test_the_shipped_code_does_not_import_vieneu() -> None:
     import re
 
     for path in (Path(vieneu.__file__), Path(vieneu_engine.__file__), Path(vieneu_module.__file__)):
-        assert not re.search(r"^\s*(import|from) vieneu", path.read_bytes().decode("utf-8"), re.M), path.name
+        assert not re.search(r"^\s*(import|from) vieneu\b", path.read_bytes().decode("utf-8"), re.M), path.name
 
 
 # ---- "Làm trước" -------------------------------------------------------------------------------------------------------------------

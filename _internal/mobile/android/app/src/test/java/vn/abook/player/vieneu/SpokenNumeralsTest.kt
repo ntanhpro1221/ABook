@@ -14,8 +14,8 @@ class SpokenNumeralsTest {
     @Test
     fun aRomanNumeralAfterAWordIsReadAsANumber() {
         assertEquals("Trường Phổ thông hai và Trường Phổ thông ba", said("Trường Phổ thông II và Trường Phổ thông III"))
-        assertEquals("Chương bốn bắt đầu ở trang 132.", said("Chương IV bắt đầu ở trang 132."))
-        assertEquals("Thế chiến hai kết thúc năm 1945.", said("Thế chiến II kết thúc năm 1945."))
+        assertEquals("Chương bốn bắt đầu ở trang một trăm ba mươi hai.", said("Chương IV bắt đầu ở trang 132."))
+        assertEquals("Thế chiến hai kết thúc năm một nghìn chín trăm bốn mươi lăm.", said("Thế chiến II kết thúc năm 1945."))
         assertEquals("Benedict ba lên ngôi.", said("Benedict III lên ngôi."))
         assertEquals("Cuối chương mười bốn.", said("Cuối chương XIV."))
         assertEquals("Mục mười lăm, hai mươi bốn và ba mươi chín.", said("Mục XV, XXIV và XXXIX."))
@@ -52,7 +52,7 @@ class SpokenNumeralsTest {
     @Test
     fun aHyphenatedNameAndALoneOneBeforeANonEnglishWordAreNumbered() {
         assertEquals("Lord El-Melloi hai và Zi-O hai.", said("Lord El-Melloi II và Zi-O II."))
-        assertEquals("91 điểm Toán một, 88 điểm Toán hai.", said("91 điểm Toán I, 88 điểm Toán II."))
+        assertEquals("chín mươi mốt điểm Toán một, tám mươi tám điểm Toán hai.", said("91 điểm Toán I, 88 điểm Toán II."))
         assertEquals("Julianus một sẽ đến. Ở Khu một. Diablo một, nghe rõ.", said("Julianus I sẽ đến. Ở Khu I. Diablo I, nghe rõ."))
         assertEquals("But I never, When I was, Anh I love you.", said("But I never, When I was, Anh I love you."))
     }
@@ -60,8 +60,8 @@ class SpokenNumeralsTest {
     /** tn9: a capital G after a number is the letter G. */
     @Test
     fun aCapitalGAfterANumberIsTheLetterG() {
-        assertEquals("Giá 10 giê, 9999 giê và 30.000 giê.", said("Giá 10G, 9,999G và 30.000G."))
+        assertEquals("Giá 10 giê, 9999 giê và ba mươi nghìn giê.", said("Giá 10G, 9,999G và 30.000G."))
         assertEquals("Mạng 5 giê và 1 giê trọng lực.", said("Mạng 5G và 1G trọng lực."))
-        assertEquals("15GB, 3Gb, 100g, G10 và 4Gx.", said("15GB, 3Gb, 100g, G10 và 4Gx."))
+        assertEquals("15GB, 3Gb, 100g, giê mười và 4Gx.", said("15GB, 3Gb, 100g, G10 và 4Gx."))
     }
 }

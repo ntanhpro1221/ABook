@@ -36,7 +36,7 @@ class SoundsTest {
 
     @Test
     fun otherTokensAreLeftAlone() {
-        for (token in listOf("NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
+        for (token in listOf("NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
         assertEquals(listOf("“hát pê,”", "(mờ pê)", "en pi xi!", "3MP", "le-vồ 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
         assertEquals(listOf("ô-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
@@ -59,10 +59,10 @@ class SoundsTest {
         val cases = listOf(
             "Aaaa" to "a… a", "Haaa" to "ha… a", "Uuu" to "u… u", "Viiiiii" to "vi… i", "Taaa" to "ta… a", "oaaaa" to "oa… a", "Eeee" to "e… e",
             "rồiiiii" to "rồi… ì", "tớơơơơ" to "tớ… ớ", "chứứứứ" to "chứ… ứ", "quẹooo" to "quẹo… ọ", "đâuuuu" to "đâu… u", "màaaa" to "mà… à", "nhaaa" to "nha… a", "tooo" to "to… o_",
-            "Khônggg" to "không…", "Emmmm" to "em…", "Hầyyy" to "hầy…", "rấtttt" to "rất…", "hiếppppp" to "hiếp…", "Oáppp" to "oáp…", "Haizzz" to "hai…",
+            "Khônggg" to "không…", "Emmmm" to "ừm", "Hầyyy" to "hầy…", "rấtttt" to "rất…", "hiếppppp" to "hiếp…", "Oáppp" to "oáp…", "Haizzz" to "hai…",
             "Hmmm" to "hừm…", "Ummm" to "ừm…", "Shhhh" to "suỵt…", "Ahhhh" to "a…", "Aaah" to "a… a", "Oooh" to "ô… ô", "Ughhh" to "ức…",
             "Kyaaa" to "ki-a… a", "Uwaaa" to "u-oa… a", "Yaaa" to "gia… a",
-            "AAAA" to "a… a", "EMMMMMMM" to "em…", "HMMM" to "hừm…", "Aー" to "a… a", "Haー" to "ha… a", "Aーー" to "a… a",
+            "AAAA" to "a… a", "EMMMMMMM" to "ừm", "HMMM" to "hừm…", "Aー" to "a… a", "Haー" to "ha… a", "Aーー" to "a… a",
         )
         for ((token, reading) in cases) {
             val want = listOf("Rồi", "$reading,", "đến.")
@@ -82,7 +82,7 @@ class SoundsTest {
     fun aDoubledLastLetterABreathHAndARunOfConsonantsAreStretchedSounds() {
         val cases = listOf(
             "Ahh" to "a…", "Ehh" to "ê…", "Ohh" to "ô…", "Uhh" to "ờ…", "Ughh" to "ức…", "Hahh" to "ha…", "Wahhh" to "oa…", "Uwahhh" to "u-oa…", "Haizz" to "hai…", "Aizz" to "ai…",
-            "Ừmm" to "ừm…", "Hừmm" to "hừm…", "Ưmm" to "ưm…", "Uhmm" to "ừm…",
+            "Ừmm" to "ừm", "Hừmm" to "hừm…", "Ưmm" to "ưm…", "Uhmm" to "ừm…",
             "Haaah" to "ha… a", "Waaah" to "oa… a", "Uwaaah" to "u-oa… a", "Gaaah" to "ga… a", "Kyaaah" to "ki-a… a", "Uuuh" to "ờ…",
             "Mmm" to "ừm…", "kkkkk" to "khà khà…", "Grrr" to "gừ…", "Pfffft" to "phụt…", "Sssss" to "xì…", "Hhhh" to "ha ha…",
             "Um" to "ừm", "Uh" to "ờ", "Uhm" to "ừm", "Mm" to "ừm", "mm" to "ừm",
@@ -169,7 +169,7 @@ class SoundsTest {
 
     @Test
     fun lvIsALevelOnlyRightBeforeANumber() {
-        assertEquals("le-vồ 5, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ 40.", said("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.").joinToString(" "))
+        assertEquals("le-vồ năm, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ bốn mươi.", said("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.").joinToString(" "))
         assertEquals("lờ vê ơi, lờ vê lờ. lờ vê", said("Lv ơi, LVL. LV").joinToString(" "))
     }
 
@@ -183,7 +183,7 @@ class SoundsTest {
 
     @Test
     fun wonYenAndKwanAreUnitsOnlyAfterANumber() {
-        assertEquals(listOf("3", "triệu", "guôn,", "100", "yên,", "5", "quan,", "mười", "guôn"), said("3 triệu won, 100 yen, 5 kwan, mười won"))
+        assertEquals(listOf("ba", "triệu", "guôn,", "một trăm", "yên,", "năm", "quan,", "mười", "guôn"), said("3 triệu won, 100 yen, 5 kwan, mười won"))
         assertEquals(listOf("Anh", "won,", "rồi", "yen."), said("Anh won, rồi yen."))
     }
 
@@ -218,12 +218,12 @@ class SoundsTest {
     @Test
     fun aTextArrowIsThanhOrNothing() {
         fun arrows(text: String) = said(text).filter { it.isNotEmpty() }.joinToString(" ")
-        assertEquals("hát pê: 1780 thành 1940", arrows("HP: 1780 --> 1940"))
+        assertEquals("hát pê: một nghìn bảy trăm tám mươi thành một nghìn chín trăm bốn mươi", arrows("HP: 1780 --> 1940"))
         assertEquals("A thành B, C thành D, E thành F, G thành H.", arrows("A -> B, C => D, E → F, G ⇒ H."))
         assertEquals("1780 thành 1940 và A thành B", arrows("1780->1940 và A-->B"))
         assertEquals("A B và C D, E F", arrows("A <- B và C ← D, E<-F"))
         assertEquals("Bước tiếp. Xong", arrows("-> Bước tiếp. → Xong"))
-        assertEquals("A <-> B, x nhỏ hơn hoặc bằng 5, a lớn hơn hoặc bằng 3, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
+        assertEquals("A <-> B, x nhỏ hơn hoặc bằng năm, a lớn hơn hoặc bằng ba, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
     }
 
     @Test

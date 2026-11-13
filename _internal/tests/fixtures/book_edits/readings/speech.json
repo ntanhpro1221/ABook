@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "495aac6542a934ae87d8bbd6e785f993e22e21589f40812707eddf14eb9220ef"
+   "key": "0c1d94fbfa8333f85eb54dba57af475d59b58d1b5c24f580b44368e2ddc2b432"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "10434650891ea2922148d4391b3c95e824ffed94ec66cd0ad9255ac89374bb9c"
+   "key": "976632e6cb292b8e646905c4f979c5ba4b5e7575abbb9f20e51b6ae29a4710fb"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "ac2b29e798285f9e83b178a51116980c37543ef74357d1a67e0a963455e286b5"
+   "key": "5f0ab4805dcc08a296b679626dc0a99f3310cc47dc796bb9e5acc242be81ee27"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -183,14 +183,14 @@
    "spokenTokens": [
     "Lu-xi-en",
     "còn",
-    "30",
+    "ba mươi",
     "ma-lực…",
     "(Lu-xi-en!)"
    ],
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "0a67a402491ba9a39fabae6d0c5b5d4e78d27751e69c17dca8824cbc9d0936f3"
+   "key": "53a303ce6d5314da6beff2f3aac9e708802f56024c087c25985b663205d316b8"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -253,7 +253,7 @@
     "ở",
     "Tô-ky-ô,",
     "còn",
-    "30",
+    "ba mươi",
     "ma-lực."
    ],
    "spokenText": null,
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "f9276b0ab86ed3566d5168b98375aa4a53cdddb53524c9340e513e34070c9a69"
+   "key": "34a37929719b18ab717bf051d482a3d9934fa2b01884d13a2341929b4d35e1f4"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "bbbce8f69121002c6be073951c1869cb186ffe76b283f3abcccf93d27ff55f8d"
+   "key": "4afafbaa4906745d801b6cb5f195be573cb4331938d497a7d1c31448695bfbe1"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "30ef50218fd25af82817389353c97048004a156017ffd9faa87de70b9c98a92e"
+   "key": "e09e252e0365d74614db1509f519768c35befe1024751cbc4c10e33596f21f76"
   }
  ]
 }

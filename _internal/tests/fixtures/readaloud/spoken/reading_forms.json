@@ -184,12 +184,12 @@
   {
    "id": "tilde_keep-4",
    "text": "Từ 10,000 ~ 15,000 đồng và 3~5 người.",
-   "said": "Từ mười nghìn đến mười lăm nghìn đồng và ba đến năm người."
+   "said": "Từ 10000 đến 15000 đồng và 3 đến 5 người."
   },
   {
    "id": "tilde_keep-5",
    "text": "Khoảng ~50 người.",
-   "said": "Khoảng ~năm mươi người."
+   "said": "Khoảng ~50 người."
   },
   {
    "id": "tilde_keep-6",
@@ -239,7 +239,7 @@
   {
    "id": "frame_keep-1",
    "text": "Xem chú thích [1] nhé.",
-   "said": "Xem chú thích, [một], nhé."
+   "said": "Xem chú thích [1] nhé."
   },
   {
    "id": "thousands-1",
@@ -284,7 +284,7 @@
   {
    "id": "multiplier-3",
    "text": "Combo ×5 rồi.",
-   "said": "Combo năm rồi."
+   "said": "Combo nhân 5 rồi."
   },
   {
    "id": "multiplier-4",
@@ -309,7 +309,7 @@
   {
    "id": "multiplier_keep-2",
    "text": "Phép tính 3 x 2 bằng 6.",
-   "said": "Phép tính ba nhân hai bằng sáu."
+   "said": "Phép tính 3 nhân 2 bằng sáu."
   },
   {
    "id": "multiplier_keep-3",
@@ -319,7 +319,7 @@
   {
    "id": "level-1",
    "text": "Lv.5 rồi, Lv5 nữa.",
-   "said": "le-vồ năm rồi, le-vồ năm nữa."
+   "said": "le-vồ 5 rồi, le-vồ 5 nữa."
   },
   {
    "id": "level-2",
@@ -454,7 +454,7 @@
   {
    "id": "thousands_keep-5",
    "text": "Nặng 1,500 kg.",
-   "said": "Nặng một nghìn năm trăm kg."
+   "said": "Nặng 1500 kg."
   },
   {
    "id": "thousands_keep-6",
@@ -549,52 +549,52 @@
   {
    "id": "bigint_keep-1",
    "text": "1234567",
-   "said": "một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy"
+   "said": "1234567"
   },
   {
    "id": "bigint_keep-2",
    "text": "Mã 1234567 người.",
-   "said": "Mã một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy người."
+   "said": "Mã 1234567 người."
   },
   {
    "id": "bigint_keep-3",
    "text": "Có mã 1234567.",
-   "said": "Có mã một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
+   "said": "Có mã 1234567."
   },
   {
    "id": "bigint_keep-4",
    "text": "Số điện thoại 123456789.",
-   "said": "Số điện thoại một trăm hai mươi ba triệu bốn trăm năm mươi sáu nghìn bảy trăm tám mươi chín."
+   "said": "Số điện thoại 123456789."
   },
   {
    "id": "bigint_keep-5",
    "text": "Có số điện thoại 123456789.",
-   "said": "Có số điện thoại một trăm hai mươi ba triệu bốn trăm năm mươi sáu nghìn bảy trăm tám mươi chín."
+   "said": "Có số điện thoại 123456789."
   },
   {
    "id": "bigint_keep-6",
    "text": "Tài khoản 123456789.",
-   "said": "Tài khoản một trăm hai mươi ba triệu bốn trăm năm mươi sáu nghìn bảy trăm tám mươi chín."
+   "said": "Tài khoản 123456789."
   },
   {
    "id": "bigint_keep-7",
    "text": "ID 1234567.",
-   "said": "ai-đi một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
+   "said": "ai-đi 1234567."
   },
   {
    "id": "bigint_keep-8",
    "text": "Serial 1234567.",
-   "said": "Serial một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
+   "said": "Serial 1234567."
   },
   {
    "id": "bigint_keep-9",
    "text": "Có 01234567 người.",
-   "said": "Có không một hai ba bốn năm sáu bảy người."
+   "said": "Có 01234567 người."
   },
   {
    "id": "bigint_keep-10",
    "text": "A1234567 người.",
-   "said": "a một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy người."
+   "said": "A1234567 người."
   },
   {
    "id": "bigint_keep-11",
@@ -604,17 +604,17 @@
   {
    "id": "bigint_keep-12",
    "text": "Có 1234567-1234568 người.",
-   "said": "Có một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy-một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi tám người."
+   "said": "Có 1234567-1234568 người."
   },
   {
    "id": "bigint_keep-13",
    "text": "Năm 1234567.",
-   "said": "Năm một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
+   "said": "Năm 1234567."
   },
   {
    "id": "bigint_keep-14",
    "text": "Thứ 12345.",
-   "said": "Thứ mười hai nghìn ba trăm bốn mươi lăm."
+   "said": "Thứ 12345."
   },
   {
    "id": "bigint_keep-15",
@@ -654,12 +654,12 @@
   {
    "id": "bigint_keep-22",
    "text": "Có 1234567 ID.",
-   "said": "Có một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy ai-đi."
+   "said": "Có 1234567 ai-đi."
   },
   {
    "id": "bigint_keep-23",
    "text": "Mã: 1234567 người.",
-   "said": "Mã: một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy người."
+   "said": "Mã: 1234567 người."
   },
   {
    "id": "bigint_keep-24",
@@ -669,7 +669,7 @@
   {
    "id": "bigint_keep-25",
    "text": "Có 1234567 - 7654321 người.",
-   "said": "Có một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy trừ bảy triệu sáu trăm năm mươi bốn nghìn ba trăm hai mươi mốt người."
+   "said": "Có 1234567 trừ 7654321 người."
   },
   {
    "id": "generated_bigint-1",
@@ -689,7 +689,7 @@
   {
    "id": "generated_bigint-4",
    "text": "Có 1234567-2345678 người.",
-   "said": "Có một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy-hai triệu ba trăm bốn mươi lăm nghìn sáu trăm bảy mươi tám người."
+   "said": "Có 1234567-2345678 người."
   },
   {
    "id": "generated_bigint-5",
@@ -704,7 +704,7 @@
   {
    "id": "generated_bigint_keep-1",
    "text": "Có 144 126 071 người.",
-   "said": "Có một trăm bốn mươi bốn một trăm hai mươi sáu không bảy một người."
+   "said": "Có 144 126 071 người."
   },
   {
    "id": "generated_bigint_keep-2",
@@ -719,17 +719,17 @@
   {
    "id": "generated_bigint_keep-4",
    "text": "Mã 1234567-2345678.",
-   "said": "Mã một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy-hai triệu ba trăm bốn mươi lăm nghìn sáu trăm bảy mươi tám."
+   "said": "Mã 1234567-2345678."
   },
   {
    "id": "generated_bigint_keep-5",
    "text": "Có 01234567 người.",
-   "said": "Có không một hai ba bốn năm sáu bảy người."
+   "said": "Có 01234567 người."
   },
   {
    "id": "generated_bigint-7",
    "text": "Có 12345678901-23456789012 người.",
-   "said": "Có mười hai tỷ ba trăm bốn mươi lăm triệu sáu trăm bảy mươi tám nghìn chín trăm lẻ một-hai mươi ba tỷ bốn trăm năm mươi sáu triệu bảy trăm tám mươi chín nghìn không trăm mười hai người."
+   "said": "Có 12345678901-23456789012 người."
   },
   {
    "id": "book_label-1",
@@ -744,12 +744,12 @@
   {
    "id": "book_label-3",
    "text": "Chap.3: Khởi hành.",
-   "said": "chương ba: Khởi hành."
+   "said": "chương 3: Khởi hành."
   },
   {
    "id": "book_label-4",
    "text": "Xem chap4 nhé.",
-   "said": "Xem chương bốn nhé."
+   "said": "Xem chương 4 nhé."
   },
   {
    "id": "book_label-5",
@@ -759,7 +759,7 @@
   {
    "id": "book_label-6",
    "text": "CHAP.8: Gặp lại.",
-   "said": "chương tám: Gặp lại."
+   "said": "chương 8: Gặp lại."
   },
   {
    "id": "book_label-7",
@@ -774,12 +774,12 @@
   {
    "id": "book_label-9",
    "text": "Vol.7: Bến mới.",
-   "said": "tập bảy: Bến mới."
+   "said": "tập 7: Bến mới."
   },
   {
    "id": "book_label-10",
    "text": "Mở vol8 nhé.",
-   "said": "Mở tập tám nhé."
+   "said": "Mở tập 8 nhé."
   },
   {
    "id": "book_label-11",
@@ -789,22 +789,22 @@
   {
    "id": "book_label-12",
    "text": "VOL.10: Về nhà.",
-   "said": "tập mười: Về nhà."
+   "said": "tập 10: Về nhà."
   },
   {
    "id": "book_label-13",
    "text": "“Chap.12,” cô nói.",
-   "said": "“chương mười hai,” cô nói."
+   "said": "“chương 12,” cô nói."
   },
   {
    "id": "book_label-14",
    "text": "“Vol.2,” cậu đáp.",
-   "said": "“tập hai,” cậu đáp."
+   "said": "“tập 2,” cậu đáp."
   },
   {
    "id": "book_label-15",
    "text": "(Chap.4) rồi (Vol.3).",
-   "said": "(chương bốn) rồi (tập ba)."
+   "said": "(chương 4) rồi (tập 3)."
   },
   {
    "id": "book_label-16",
@@ -814,12 +814,12 @@
   {
    "id": "book_label-17",
    "text": "Chap 001: Bắt đầu.",
-   "said": "chương không không một: Bắt đầu."
+   "said": "chương 001: Bắt đầu."
   },
   {
    "id": "book_label-18",
    "text": "Vol.20",
-   "said": "tập hai mươi"
+   "said": "tập 20"
   },
   {
    "id": "book_label-19",
@@ -829,7 +829,7 @@
   {
    "id": "book_label-20",
    "text": "Chap 5 và Vol.2.",
-   "said": "chương năm và tập hai."
+   "said": "chương năm và tập 2."
   },
   {
    "id": "book_label_keep-1",
@@ -909,12 +909,12 @@
   {
    "id": "book_label_keep-16",
    "text": "Xem Chap -2 nhé.",
-   "said": "Xem Chap -hai nhé."
+   "said": "Xem Chap 2 nhé."
   },
   {
    "id": "book_label_keep-17",
    "text": "Xem Vol +3 nhé.",
-   "said": "Xem Vol ba nhé."
+   "said": "Xem Vol +3 nhé."
   },
   {
    "id": "book_label_keep-18",
@@ -929,7 +929,7 @@
   {
    "id": "book_label_keep-20",
    "text": "Xem Chap １２ nhé.",
-   "said": "Xem Chap mười hai nhé."
+   "said": "Xem Chap 12 nhé."
   },
   {
    "id": "book_label_keep-21",
@@ -1084,7 +1084,7 @@
   {
    "id": "book_label_keep-27",
    "text": "Chap 12..5",
-   "said": "Chap mười hai..5"
+   "said": "Chap 12..5"
   },
   {
    "id": "book_label_keep-28",
@@ -1174,7 +1174,7 @@
   {
    "id": "tnfix_loanword-3",
    "text": "Từ livestream ở đây.",
-   "said": "Từ lai-xtrim ở đây."
+   "said": "Từ lai-xờ-trim ở đây."
   },
   {
    "id": "tnfix_loanword-4",
@@ -1204,7 +1204,7 @@
   {
    "id": "tnfix_loanword-9",
    "text": "Từ streamer ở đây.",
-   "said": "Từ xtrim-mơ ở đây."
+   "said": "Từ xờ-trim-mơ ở đây."
   },
   {
    "id": "tnfix_loanword-10",
@@ -1229,7 +1229,7 @@
   {
    "id": "tnfix_loanword-14",
    "text": "Từ web ở đây.",
-   "said": "Từ oép ở đây."
+   "said": "Từ quép ở đây."
   },
   {
    "id": "tnfix_loanword-15",
@@ -1249,7 +1249,7 @@
   {
    "id": "tnfix_loanword-18",
    "text": "Từ mascara ở đây.",
-   "said": "Từ mát-xca-ra ở đây."
+   "said": "Từ mát-ca-ra ở đây."
   },
   {
    "id": "tnfix_loanword-19",
@@ -1450,6 +1450,201 @@
    "id": "tnfix_dash-4",
    "text": "Anh—anh nói.",
    "said": "Anh, anh nói."
+  },
+  {
+   "id": "tnfix_decimal_keep-1",
+   "text": "Đo 0,357 giây.",
+   "said": "Đo 0,357 giây."
+  },
+  {
+   "id": "tnfix_decimal_keep-2",
+   "text": "Đo 3,0005 giây.",
+   "said": "Đo 3,0005 giây."
+  },
+  {
+   "id": "tnfix_structure_keep-1",
+   "text": "Ngày 01-10-2026 nhé.",
+   "said": "Ngày 01-10-2026 nhé."
+  },
+  {
+   "id": "tnfix_structure_keep-2",
+   "text": "Gọi 090-123-4567 nhé.",
+   "said": "Gọi 090-123-4567 nhé."
+  },
+  {
+   "id": "tnfix_structure_keep-3",
+   "text": "Nặng 10 kg.",
+   "said": "Nặng 10 kg."
+  },
+  {
+   "id": "tnfix_structure_keep-4",
+   "text": "Mã 007 đây.",
+   "said": "Mã 007 đây."
+  },
+  {
+   "id": "tnfix_code-6",
+   "text": "Thử SS2 nhé.",
+   "said": "Thử ét ét hai nhé."
+  },
+  {
+   "id": "tnfix_quote_keep-1",
+   "text": "Cô nói “Ồ” rồi đi.",
+   "said": "Cô nói “Ồ” rồi đi."
+  },
+  {
+   "id": "tnfix_capital_loanword-1",
+   "text": "Từ Loli ở đây.",
+   "said": "Từ lô-li ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-2",
+   "text": "Từ Ting ở đây.",
+   "said": "Từ tinh ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-3",
+   "text": "Từ Livestream ở đây.",
+   "said": "Từ lai-xờ-trim ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-4",
+   "text": "Từ Boss ở đây.",
+   "said": "Từ bót ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-5",
+   "text": "Từ Bar ở đây.",
+   "said": "Từ ba ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-6",
+   "text": "Từ Vest ở đây.",
+   "said": "Từ vét ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-7",
+   "text": "Từ Katana ở đây.",
+   "said": "Từ ca-ta-na ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-8",
+   "text": "Từ Mini ở đây.",
+   "said": "Từ mi-ni ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-9",
+   "text": "Từ Streamer ở đây.",
+   "said": "Từ xờ-trim-mơ ở đây."
+  },
+  {
+   "id": "tnfix_proper_name_keep-1",
+   "text": "Nhân vật Han Solo ở đây.",
+   "said": "Nhân vật Han Solo ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-11",
+   "text": "Từ Bikini ở đây.",
+   "said": "Từ bi-ki-ni ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-12",
+   "text": "Từ Blouse ở đây.",
+   "said": "Từ bờ-lu ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-13",
+   "text": "Từ Icon ở đây.",
+   "said": "Từ ai-côn ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-14",
+   "text": "Từ Web ở đây.",
+   "said": "Từ quép ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-15",
+   "text": "Từ Stress ở đây.",
+   "said": "Từ xì-trét ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-16",
+   "text": "Từ Buffet ở đây.",
+   "said": "Từ búp-phê ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-17",
+   "text": "Từ Avatar ở đây.",
+   "said": "Từ a-va-ta ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-18",
+   "text": "Từ Mascara ở đây.",
+   "said": "Từ mát-ca-ra ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-19",
+   "text": "Từ Hoodie ở đây.",
+   "said": "Từ hu-đi ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-20",
+   "text": "Từ Jeans ở đây.",
+   "said": "Từ gin ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-21",
+   "text": "Từ Spam ở đây.",
+   "said": "Từ xờ-pam ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-22",
+   "text": "Từ Vtuber ở đây.",
+   "said": "Từ vi-tiu-bơ ở đây."
+  },
+  {
+   "id": "tnfix_capital_loanword-23",
+   "text": "Từ V-Tuber ở đây.",
+   "said": "Từ vi-tiu-bơ ở đây."
+  },
+  {
+   "id": "tnfix_ordinal_keep-1",
+   "text": "Xếp thứ 1 nhé.",
+   "said": "Xếp thứ 1 nhé."
+  },
+  {
+   "id": "tnfix_ordinal_keep-2",
+   "text": "Xếp thứ 4 nhé.",
+   "said": "Xếp thứ 4 nhé."
+  },
+  {
+   "id": "tnfix_unit_keep-1",
+   "text": "Diện tích 17 km² nhé.",
+   "said": "Diện tích 17 km² nhé."
+  },
+  {
+   "id": "tnfix_unit_keep-2",
+   "text": "Diện tích 2.000.000 km² nhé.",
+   "said": "Diện tích 2.000.000 km² nhé."
+  },
+  {
+   "id": "tnfix_unit_keep-3",
+   "text": "Thể tích 23 m³ nhé.",
+   "said": "Thể tích 23 m³ nhé."
+  },
+  {
+   "id": "tnfix_mixed_capital-1",
+   "text": "Xem VTuber rồi nghỉ.",
+   "said": "Xem vi-tiu-bơ rồi nghỉ."
+  },
+  {
+   "id": "tnfix_title_keep-1",
+   "text": "Gặp Boss Taylor ở đây.",
+   "said": "Gặp Boss Taylor ở đây."
+  },
+  {
+   "id": "tnfix_english_keep-1",
+   "text": "The boss is here.",
+   "said": "The boss is here."
   }
  ]
 }

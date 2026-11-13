@@ -112,7 +112,7 @@ def test_a_clip_is_a_wav_with_one_timing_per_word(fake_voices, tmp_path: Path) -
 def test_the_text_goes_through_the_normalizer_per_unit(fake_voices) -> None:
     provider, engine = fake_voices
     provider.synthesize("Lúc 7 giờ. Anh đến.", "F1")
-    assert engine.calls == [("F1", "lúc 7 giờ. anh đến.")]
+    assert engine.calls == [("F1", "lúc bảy giờ. anh đến.")]
 
 
 def test_an_unknown_voice_or_no_install_says_so(fake_voices) -> None:

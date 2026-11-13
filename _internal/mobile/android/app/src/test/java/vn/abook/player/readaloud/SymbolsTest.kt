@@ -20,7 +20,7 @@ class SymbolsTest {
     @Test
     fun aSymbolWithoutAReadingIsSilentOrAPause() = check(
         "Anh · em · chúng ta cùng đi." to "Anh,  em,  chúng ta cùng đi.",
-        "Số 2^10 là 1024, còn ^ lẻ loi thì im." to "Số 2 mũ 10 là 1024, còn  lẻ loi thì im.",
+        "Số 2^10 là 1024, còn ^ lẻ loi thì im." to "Số 2 mũ 10 là một nghìn không trăm hai mươi bốn, còn  lẻ loi thì im.",
         "Nếu a < b thì 3 > 2, nhưng < hay > đứng một mình thì im." to "Nếu a < b thì 3 > 2, nhưng,  hay  đứng một mình thì im.",
         "Số #7 và # đơn độc." to "Số 7 và  đơn độc.",
         "Gửi thư tới nam@example.com hoặc nhắn @ đây." to "Gửi thư tới nam@example.com hoặc nhắn a còng đây.",
@@ -34,13 +34,13 @@ class SymbolsTest {
 
     @Test
     fun aSymbolWithANumberIsReadByItsNeighbours() = check(
-        "Ngày 3/9 và tỉ lệ 1/3 và 10 người/ngày." to "Ngày 3 tháng 9 và tỉ lệ 1 phần 3 và 10 người mỗi ngày.",
+        "Ngày 3/9 và tỉ lệ 1/3 và 10 người/ngày." to "Ngày 3 tháng 9 và tỉ lệ 1 phần 3 và mười người mỗi ngày.",
         "Hôm nay ngày 5/3 trời đẹp, sinh nhật 12/10 của cô, thứ Hai 3/9 nữa." to "Hôm nay ngày 5 tháng 3 trời đẹp, sinh nhật ngày 12 tháng 10 của cô, thứ Hai ngày 3 tháng 9 nữa.",
         "Mùng 5/3 vui, hạn nộp 15/8 nhé, ngày 2/9/2026 và tỉ lệ 5/3." to "Mùng 5 tháng 3 vui, hạn nộp ngày 15 tháng 8 nhé, ngày 2/9/2026 và tỉ lệ 5 trên 3.",
         "Tối đa 3/5 rồi. HP 5813/5813 và 15/8 nữa." to "Tối đa 3 phần 5 rồi. hát pê 5813 trên 5813 và 15 tháng 8 nữa.",
         "Giá \$5, 100\$ và 30°C." to "Giá 5 đô la, 100 đô la và 30°C.",
         "Điểm tăng 2 × 3 lần, 4x3 là mười hai, x5 mạnh hơn." to "Điểm tăng 2 nhân 3 lần, 4 nhân 3 là mười hai, nhân 5 mạnh hơn.",
-        "Nhiệt độ -5 độ, từ 7 – 8cm, 3 -> 5 người, A -> B -> C." to "Nhiệt độ âm 5 độ, từ 7 đến 8cm, 3 thành 5 người, A rồi B rồi C.",
+        "Nhiệt độ -5 độ, từ 7 – 8cm, 3 -> 5 người, A -> B -> C." to "Nhiệt độ âm 5 độ, từ 7 đến 8cm, ba thành năm người, A rồi B rồi C.",
         "Tiền là 3-1 và hạng 4★." to "Tiền là 3 1 và hạng 4 sao.",
     )
 
@@ -70,17 +70,17 @@ class SymbolsTest {
     @Test
     fun theSymbolConventionsOfTn10() = check(
         "Nhiệt độ -5 độ, tọa độ (-3, 4) và năm -2324. Bị [Thất bại: -90%], HP -20, Blue -1, MK-2, rồi 10 - 3 = 7 và 8-2=6." to
-            "Nhiệt độ âm 5 độ, tọa độ (âm 3, 4) và năm âm 2324. Bị, [Thất bại: trừ 90%], hát pê trừ 20, Blue trừ 1, em ca-2, rồi 10 trừ 3 bằng 7 và 8 trừ 2 bằng 6.",
+            "Nhiệt độ âm 5 độ, tọa độ (âm 3, bốn) và năm âm 2324. Bị, [Thất bại: trừ 90%], hát pê trừ 20, Blue trừ 1, em ca-2, rồi 10 trừ 3 bằng 7 và 8 trừ 2 bằng 6.",
         "Còn -50% Nhanh nhẹn, thanh máu của Shido -1. Tôi mười tám (-2) nhé." to
             "Còn trừ 50% Nhanh nhẹn, thanh máu của Shido trừ 1. Tôi mười tám (âm 2) nhé.",
         "Đánh giá 4/5 sao, điểm 9.7/10, hết 1/4 máu, rồi 24/7. Ngày 8/3 là ngày hội, còn 3/4 cốc nước." to
-            "Đánh giá 4 trên 5 sao, điểm 9.7 trên 10, hết 1 phần tư máu, rồi 24 trên 7. Ngày 8 tháng 3 là ngày hội, còn 3 phần tư cốc nước.",
+            "Đánh giá 4 trên 5 sao, điểm 9,7 trên 10, hết 1 phần tư máu, rồi 24 trên 7. Ngày 8 tháng 3 là ngày hội, còn 3 phần tư cốc nước.",
         "Hầm trú -> Một ngày mới -> Mặt trời. → Biến hóa → Honnoshi. Tokyo → Osaka. Máu 10 → 20 → 30." to
-            "Hầm trú rồi Một ngày mới rồi Mặt trời.  Biến hóa rồi Honnoshi. Tokyo thành Osaka. Máu 10 rồi 20 rồi 30.",
+            "Hầm trú rồi Một ngày mới rồi Mặt trời.  Biến hóa rồi Honnoshi. Tokyo thành Osaka. Máu mười rồi hai mươi rồi ba mươi.",
         "Bá Vương bị chọc giận. ATK↑ DEF↓. Lượt đọc: ↓ và Đông 4↓ xong." to
             "Bá Vương bị chọc giận. a tê ca tăng đê e ép giảm. Lượt đọc: giảm và Đông 4 xong.",
         "Cho y=ax² và x >= 3, a <= 5. ８－２＝６ ＡＢＣ １２ ＋ xong." to
-            "Cho y bằng ax² và x lớn hơn hoặc bằng 3, a nhỏ hơn hoặc bằng 5. 8 trừ 2 bằng 6 ABC 12 + xong.",
+            "Cho y bằng ax² và x lớn hơn hoặc bằng ba, a nhỏ hơn hoặc bằng năm. 8 trừ 2 bằng 6 ABC 12 + xong.",
         "Trans+Edit và 2+3=5, A + B. Tầng 8x và năm 200x, 19××, từ 0x đến 1x. Tăng 3x tốc độ, 5x damage." to
             "Trans và Edit và 2+3 bằng 5, A cộng B. Tầng 8 ích và năm 200 ích, 19 ích ích, từ 0 lần đến 1 lần. Tăng 3 lần tốc độ, 5 lần damage.",
         "Hình hent*i và E**alibur, *boing**boing* rồi “*Khụ*Khụ*” xong." to
@@ -106,7 +106,7 @@ class SymbolsTest {
         "Nhận 10x Sức mạnh, (2x Intelligence), kính ngắm 8x, 1x Cuộn phép, mã 202X." to
             "Nhận 10 lần Sức mạnh, (2 lần Intelligence), kính ngắm 8 lần, 1 Cuộn phép, mã 202 ích.",
         "-25 máu. “-1600” vàng. Kết toán -1600 vàng, đòn -25 máu." to
-            "âm 25 máu. “âm 1600  vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu.",
+            "âm 25 máu. “âm 1600 vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu.",
         "Tuyệt mệnh -10: giảm máu. 1-2-3 -25 xong." to
             "Tuyệt mệnh trừ 10: giảm máu. 1 2 3 trừ 25 xong.",
         "Sức khỏe / 2. HP 100/250 và 8/3." to
@@ -118,8 +118,8 @@ class SymbolsTest {
         "Xe chạy 50km/h, gió 3 m/s và 60 km/h." to "Xe chạy 50km/h, gió 3 m/s và 60 km/h.",
         "Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h." to "Tốc độ km/h thôi, nặng 3 kg/m2, thuốc 5 mg/ml, đổ 2 L/h.",
         "Chọn và/hoặc bỏ, Mở/đóng cửa, ngày 12/3, ăn 1/2 cái, 10 DP/ngày, size M/L." to
-            "Chọn và, hoặc bỏ, Mở, đóng cửa, ngày 12 tháng 3, ăn 1 phần 2 cái, 10 DP mỗi ngày, size M, L.",
-        "Hạn 10 lần/ngày, 3 chương/tuần." to "Hạn 10 lần mỗi ngày, 3 chương mỗi tuần.",
+            "Chọn và, hoặc bỏ, Mở, đóng cửa, ngày 12 tháng 3, ăn 1 phần 2 cái, mười DP mỗi ngày, size M, L.",
+        "Hạn 10 lần/ngày, 3 chương/tuần." to "Hạn mười lần mỗi ngày, ba chương mỗi tuần.",
     )
 
     @Test

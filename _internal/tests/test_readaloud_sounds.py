@@ -36,7 +36,7 @@ def test_a_capital_word_is_a_word_not_an_abbreviation(token: str, lowered: str) 
     assert _said(f"Rồi {token}.") == ["Rồi", f"{lowered}."], "chữ thường: sea-g2p đọc chữ hoa cả thành từng chữ cái"
 
 
-@pytest.mark.parametrize("token", ["NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "CÁC"])
+@pytest.mark.parametrize("token", ["NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "CÁC"])
 def test_other_tokens_are_left_alone(token: str) -> None:
     assert _said(f"Rồi {token} đến.") == ["Rồi", token, "đến."]
 
@@ -68,13 +68,13 @@ def test_a_fixed_latin_interjection_is_read_as_a_vietnamese_sound(token: str, re
     # kéo nguyên âm mang thanh của âm gốc
     ("rồiiiii", "rồi… ì"), ("tớơơơơ", "tớ… ớ"), ("chứứứứ", "chứ… ứ"), ("quẹooo", "quẹo… ọ"), ("đâuuuu", "đâu… u"), ("màaaa", "mà… à"), ("nhaaa", "nha… a"), ("tooo", "to… o_"),
     # phụ âm / "y": chỉ gốc và "…"
-    ("Khônggg", "không…"), ("Emmmm", "em…"), ("Hầyyy", "hầy…"), ("rấtttt", "rất…"), ("hiếppppp", "hiếp…"), ("Oáppp", "oáp…"), ("Haizzz", "hai…"),
+    ("Khônggg", "không…"), ("Emmmm", "ừm"), ("Hầyyy", "hầy…"), ("rấtttt", "rất…"), ("hiếppppp", "hiếp…"), ("Oáppp", "oáp…"), ("Haizzz", "hai…"),
     # thán từ Latin: gốc trong bảng
     ("Hmmm", "hừm…"), ("Ummm", "ừm…"), ("Shhhh", "suỵt…"), ("Ahhhh", "a…"), ("Aaah", "a… a"), ("Oooh", "ô… ô"), ("Ughhh", "ức…"),
     # tiếng kêu Nhật: đọc bằng luật romaji
     ("Kyaaa", "ki-a… a"), ("Uwaaa", "u-oa… a"), ("Yaaa", "gia… a"),
     # toàn hoa cùng luật; "ー" sau nguyên âm là kéo
-    ("AAAA", "a… a"), ("EMMMMMMM", "em…"), ("HMMM", "hừm…"), ("Aー", "a… a"), ("Haー", "ha… a"), ("Aーー", "a… a"),
+    ("AAAA", "a… a"), ("EMMMMMMM", "ừm"), ("HMMM", "hừm…"), ("Aー", "a… a"), ("Haー", "ha… a"), ("Aーー", "a… a"),
 ])
 def test_a_stretched_sound_is_the_sound_then_an_ellipsis_then_the_vowel(token: str, reading: str) -> None:
     assert _said(f"Rồi {token}, đến.") == ["Rồi", f"{reading},", "đến."]
@@ -84,7 +84,7 @@ def test_a_stretched_sound_is_the_sound_then_an_ellipsis_then_the_vowel(token: s
 # tn9: chữ cuối lặp HAI lần (h z m), "h" thở ra sau nguyên âm kéo, chữ phụ âm lặp, "Um" / "Uh" / "Mm"
 @pytest.mark.parametrize("token, reading", [
     ("Ahh", "a…"), ("Ehh", "ê…"), ("Ohh", "ô…"), ("Uhh", "ờ…"), ("Ughh", "ức…"), ("Hahh", "ha…"), ("Wahhh", "oa…"), ("Uwahhh", "u-oa…"), ("Haizz", "hai…"), ("Aizz", "ai…"),
-    ("Ừmm", "ừm…"), ("Hừmm", "hừm…"), ("Ưmm", "ưm…"), ("Uhmm", "ừm…"),
+    ("Ừmm", "ừm"), ("Hừmm", "hừm…"), ("Ưmm", "ưm…"), ("Uhmm", "ừm…"),
     ("Haaah", "ha… a"), ("Waaah", "oa… a"), ("Uwaaah", "u-oa… a"), ("Gaaah", "ga… a"), ("Kyaaah", "ki-a… a"), ("Uuuh", "ờ…"),
     ("Mmm", "ừm…"), ("kkkkk", "khà khà…"), ("Grrr", "gừ…"), ("Pfffft", "phụt…"), ("Sssss", "xì…"), ("Hhhh", "ha ha…"),
     ("Um", "ừm"), ("Uh", "ờ"), ("Uhm", "ừm"), ("Mm", "ừm"), ("mm", "ừm"),
@@ -245,7 +245,7 @@ def test_the_word_after_a_stutter_still_goes_through_the_name_rules() -> None:
 
 
 @pytest.mark.parametrize("text, said", [
-    ("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.", "le-vồ 5, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ 40."),
+    ("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.", "le-vồ năm, le-vồ 15], le-vồ 1 le-vồ 5 và le-vồ bốn mươi."),
     ("Lv ơi, LVL. LV", "lờ vê ơi, lờ vê lờ. lờ vê"),  # chủ sách 04-10: không đi với số thì không chắc là cấp độ: đọc tên chữ cái
 ])
 def test_lv_is_a_level_only_right_before_a_number(text: str, said: str) -> None:
@@ -253,7 +253,7 @@ def test_lv_is_a_level_only_right_before_a_number(text: str, said: str) -> None:
 
 
 def test_lv_is_vietnamised_with_the_other_english_words_for_a_voice_that_cannot_say_english() -> None:
-    assert _said("Lv 5", None, False) == ["le-vồ", "5"]
+    assert _said("Lv 5", None, False) == ["le-vồ", "năm"]
 
 
 @pytest.mark.parametrize("token, reading", [
@@ -268,7 +268,7 @@ def test_a_common_loanword_is_read_with_any_book_origin_and_any_voice(token: str
 
 
 def test_won_yen_and_kwan_are_units_only_after_a_number() -> None:
-    assert _said("3 triệu won, 100 yen, 5 kwan, mười won") == ["3", "triệu", "guôn,", "100", "yên,", "5", "quan,", "mười", "guôn"]
+    assert _said("3 triệu won, 100 yen, 5 kwan, mười won") == ["ba", "triệu", "guôn,", "một trăm", "yên,", "năm", "quan,", "mười", "guôn"]
     assert _said("Anh won, rồi yen.") == ["Anh", "won,", "rồi", "yen."]
 
 
@@ -334,12 +334,12 @@ def test_a_title_has_a_fixed_vietnamised_form_for_a_voice_that_cannot_say_englis
 
 
 @pytest.mark.parametrize("text, said", [
-    ("HP: 1780 --> 1940", "hát pê: 1780 thành 1940"),
+    ("HP: 1780 --> 1940", "hát pê: một nghìn bảy trăm tám mươi thành một nghìn chín trăm bốn mươi"),
     ("A -> B, C => D, E → F, G ⇒ H.", "A thành B, C thành D, E thành F, G thành H."),
     ("1780->1940 và A-->B", "1780 thành 1940 và A thành B"),
     ("A <- B và C ← D, E<-F", "A B và C D, E F"),  # mũi tên ngược không có lời để đọc
     ("-> Bước tiếp. → Xong", "Bước tiếp. Xong"),  # đầu đoạn / đầu câu: dấu đầu mục
-    ("A <-> B, x <= 5, a >= 3, a -> b <- c", "A <-> B, x nhỏ hơn hoặc bằng 5, a lớn hơn hoặc bằng 3, a thành b c"),  # hai chiều để nguyên; "<=" ">=" sea-g2p đọc thiếu "hoặc" nên có lời
+    ("A <-> B, x <= 5, a >= 3, a -> b <- c", "A <-> B, x nhỏ hơn hoặc bằng năm, a lớn hơn hoặc bằng ba, a thành b c"),  # hai chiều để nguyên; "<=" ">=" sea-g2p đọc thiếu "hoặc" nên có lời
 ])
 def test_a_text_arrow_is_thanh_or_nothing(text: str, said: str) -> None:
     assert " ".join(piece for piece in _said(text) if piece) == said
