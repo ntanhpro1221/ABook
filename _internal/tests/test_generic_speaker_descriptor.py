@@ -37,8 +37,8 @@ def test_no_hand_copied_descriptor_keys_remain() -> None:
     ("Bà lão có mái tóc bạc thì thầm:", "bà lão có mái tóc bạc", "female", "elderly"),
     ("Chàng trai đi giày vải cười nói:", "chàng trai đi giày vải", "male", "young"),
     # The old hand-written key, now caught by the rule in two different phrasings.
-    ("0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."),
-    ("Người đàn ông áo choàng đen lên tiếng:", "người đàn ông áo choàng đen", "male", "adult"),
+    ("Bà lão quàng áo choàng đen trả lời:", "bà lão quàng áo choàng đen", "female", "elderly"),
+    ("Chàng trai áo choàng đen lên tiếng:", "chàng trai áo choàng đen", "male", "young"),
 ])
 def test_a_described_generic_speaker_is_attributed_with_head_traits(tag, label, gender, age) -> None:
     assert _generic_speaker_attribution(tag, prefer_last=True) == label
@@ -56,14 +56,14 @@ def test_two_different_outfits_are_two_speakers() -> None:
 
 def test_the_syllable_cap_is_inclusive() -> None:
     assert GENERIC_DESCRIPTOR_MAX_SYLLABLES == 6
-    assert _generic_speaker_attribution("0. Câu thử đã gỡ. 0.", prefer_last=True) \
-        == "0. Câu thử đã gỡ. 0."
-    assert _generic_speaker_attribution("0. Câu thử đã gỡ. 0.", prefer_last=True) is None
+    assert _generic_speaker_attribution("Ông lão đeo chiếc kính gọng bạc mỏng hỏi:", prefer_last=True) \
+        == "ông lão đeo chiếc kính gọng bạc mỏng"
+    assert _generic_speaker_attribution("Ông lão đeo chiếc kính gọng bạc mỏng tang hỏi:", prefer_last=True) is None
 
 
 @pytest.mark.parametrize("tag", [
     # Longer than the cap: a clause, not a label.
-    "Người đàn ông mặc áo khoác đen dài chấm gót chân hỏi:",
+    "Cô bé cầm chiếc ô giấy vàng sờn mép hỏi:",
     # A comma breaks the subject; what follows may have its own subject.
     "Người phụ nữ mặc váy xanh, tay cầm ô, nói:",
     "Ông lão đội nón lá, cháu ông, hỏi:",
