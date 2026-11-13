@@ -108,3 +108,11 @@ Diagnose and repair Qt failures, then remaining web/Android presence transitions
 - Suite timestamps all belong to this run: 2026-11-13T05:00:30.543Z through 05:04:54.187Z (UTC).
 - Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-gradle-final.txt`.
 - All eight first-run Android failures are resolved, including the five existing failures; no failure budget retained.
+
+## 14. Implementation committed and report finalized
+
+- Committed all remaining implementation/test/detector changes as **eebcb15b9** (`Animate remaining web and Android conditional content`). Staged an explicit 115-file manifest; control-character and LF audits passed before commit.
+- Quality hash still exactly `71563e9c1a2ecee91b3be33d3300e0f529f3af7ceb77d7c0e18b6ee800489d9d` before and after the implementation commits.
+- Final checks: Qt 2241 pass (WidthTests 1617, all failures/type errors zero); qt_pytests 169 pass; Vitest 3121 pass; Android 3676 pass, 0 failures/errors, 12 skipped; parity/context pytest 38 pass; tsc 0 errors; L1-L10 all 0; ratchet L7 285 -> 0.
+- Vietnamese `result.md` contains commits, individual Qt suite totals, root causes, classification counts and all 31 special exemptions with a one-line reason.
+- Evidence saved under the requested parity3 scratch directory. No push, amend, branch switch, reset or stash; no production quality files edited.
