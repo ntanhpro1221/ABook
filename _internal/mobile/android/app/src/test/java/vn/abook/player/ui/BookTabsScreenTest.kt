@@ -181,7 +181,7 @@ class BookTabsScreenTest {
     fun aBookGoneFromTheShelfSaysSoAndOffersTheLibrary() {
         show(null)
         rule.onNodeWithTag("book_gone").assertIsDisplayed()
-        rule.onNodeWithText("Không tìm thấy sách này").assertIsDisplayed()
+        rule.onNodeWithText("Không thấy sách").assertIsDisplayed()
         rule.onNodeWithTag("book_gone_back").assertIsDisplayed()
         snap("book_gone_light")
     }
@@ -194,7 +194,7 @@ class BookTabsScreenTest {
         snap("book_cast_dark")
     }
 
-    /** Kho đọc xong mà không có trang (nguồn không có dữ liệu): "Lịch sử" kết thúc bằng câu "Chưa có lịch sử nghe", không khung chờ mãi (soát điện thoại 02-11). */
+    /** Kho đọc xong mà không có trang (nguồn không có dữ liệu): "Lịch sử" kết thúc bằng câu "Chưa nghe lần nào", không khung chờ mãi (soát điện thoại 02-11). */
     @Test
     fun historyEndsAsAnEmptyNoteWhenTheSourceHasNoPage() {
         val book = BookDetail.of(manifest(), null, { null }).book

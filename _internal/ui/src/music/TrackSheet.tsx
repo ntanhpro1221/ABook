@@ -138,7 +138,7 @@ function TrackBody({
           </Button>
         )} />
         {onUse && <Button icon={Check} loading={busy} onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
-        {onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_bai_nay_ab3af35f}</Button>}
+        {onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_02ae1742}</Button>}
       </div>
       )}
       {track.why && track.why.matches.length > 0 && (

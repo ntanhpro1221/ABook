@@ -214,7 +214,7 @@ Column {
                             kind: "ghost"
                             text: modelData.label
                             enabled: root.typed !== "" && !root.busy && !root.none
-                            Accessible.name: S.s_luu_nguoi_noi_moi_gioi_32008e47 + modelData.label.toLowerCase()
+                            Accessible.name: S.s_luu_nguoi_noi_moi_gioi_0_f39ab58a(modelData.label.toLowerCase())
                             onClicked: root.choose({speaker: root.typed, newGender: modelData.gender})
                         }
                     }

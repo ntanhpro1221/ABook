@@ -723,7 +723,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={S.s_ten_nguoi_ke_d492ccfb}
-            aria-label={S.s_ten_nguoi_ke_cua_doan_94204731}
+            aria-label={S.s_ten_nguoi_ke_d492ccfb}
             maxLength={80}
             className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />

@@ -153,7 +153,7 @@ Item {
             openCast()
             const empty = findChild(page, "castEmpty")
             tryVerify(function() { return empty.visible })
-            compare(empty.title, "Chưa có dàn nhân vật")
+            compare(empty.title, "Chưa có nhân vật")
             compare(all(page, "castName").length, 0)
         }
         function test_textOnlyBookHasNoCastTab() {
@@ -380,7 +380,7 @@ Item {
             const dlg = openVoices(withLine())
             compare(triesOf(dlg).filter(button => button.visible).length, 2)
             compare(findChild(dlg, "voiceTryHint").text, "Nút sách đọc câu của Lan; ▶ đọc mẫu chung.")
-            compare(triesOf(dlg)[1].Accessible.name, "Nghe giọng Hoài My đọc một câu của sách")
+            compare(triesOf(dlg)[1].Accessible.name, "Nghe thử Hoài My")
             shot("cast_voice_try", host)
         }
         function test_trySendsTheLineRequestAndPlaysTheAnswer() {

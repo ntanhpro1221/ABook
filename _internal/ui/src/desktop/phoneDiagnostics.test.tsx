@@ -27,7 +27,7 @@ describe("hộp Chẩn đoán điện thoại", () => {
     for (const text of ["0.4.133 (4133)", "OPPO CPH2573 · Android 14", "41% · đang sạc", "di động + VPN", "1 đang chạy", "CRASH (văng)", "lỗi phát", "dòng thứ hai"]) {
       expect(html).toContain(text);
     }
-    expect(html).toContain("Nhật ký của ABook (2 dòng)");
+    expect(html).toContain("Nhật ký (2 dòng)");
     expect(html).toContain("overflow-auto");
   });
 

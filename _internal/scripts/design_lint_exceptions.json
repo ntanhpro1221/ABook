@@ -29,22 +29,22 @@
   {
    "image": "qt/s2_builder_continue_light.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/s2_builder_nostudio_light.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/s2_project_cover_light.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/sgaps_side_error_light.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "android/tone_360_130_dark_presets.png",
@@ -74,27 +74,27 @@
   {
    "image": "qt/s2_builder_continue_dark.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/s2_builder_nostudio_dark.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/s2_project_cover_dark.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/sgaps_side_error_dark.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   },
   {
    "image": "qt/s3_long_names_1024_light.png",
    "rule": "R6",
-   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có dàn nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
+   "reason": "Trạng thái rỗng của một tab ('Chưa có chương nào' / 'Chưa có nhân vật'): icon + câu căn giữa theo câu 3.4 soát 10-11 (vùng trạng thái căn giữa toàn bộ); vùng ấy tách khỏi phần đầu trang căn trái."
   }
  ]
 }

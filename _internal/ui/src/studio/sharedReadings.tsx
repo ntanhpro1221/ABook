@@ -86,7 +86,7 @@ export function SharedReadingsSettings() {
                 {entry.from && <span className="text-xs text-fg-3">{S.s_tu_02926cd1}{entry.from}</span>}
               </span>
               <IconButton
-                label={S.s_bo_0_khoi_cach_doc_chung_7cb754b6(entry.surface)}
+                label={S.s_bo_cach_doc_0_a883978b(entry.surface)}
                 icon={Trash2}
                 onClick={() => save.mutate({ surface: entry.surface, remove: true })}
               />

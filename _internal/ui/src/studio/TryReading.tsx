@@ -104,7 +104,7 @@ export function useTryReading({
           disabled={disabled || !spoken}
           loading={check.isPending || aloud.loading(surface, spoken)}
           onClick={() => (speaking ? void aloud.play(surface, spoken) : check.mutate())}
-          aria-label={speaking ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_doc_la_1_3b539221(surface, spoken)}
+          aria-label={speaking ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_cau_co_0_1_c134a9ca(surface, spoken)}
         >
           {speaking ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
           {speaking ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
@@ -130,7 +130,7 @@ export function useTryReading({
         if (same) play(heard.preview);
         else ask.mutate();
       }}
-      aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_doc_la_1_3b539221(surface, spoken)}
+      aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_cau_co_0_1_c134a9ca(surface, spoken)}
     >
       {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
       {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}

@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RotateCcw, Type, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { useBackLayer } from "@/shared/backStack";
@@ -472,7 +472,7 @@ export function LineWishDialog({
                 />
                 <MenuRow icon={Type} title={S.s_sua_cach_doc_mot_tu_ad71101c} note={S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e} onClick={() => goView("word")} />
                 <MenuRow
-                  icon={RefreshCw}
+                  icon={RotateCcw}
                   title={S.s_thu_lai_cau_nay_034c2834}
                   note={!identified ? S.s_chua_sua_duoc_tung_cau_o_file_lam_bang_abo_82209a43 : !hasAudio ? S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 : wish?.retake ? S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2 : S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad}
                   disabled={!identified || !hasAudio || Boolean(wish?.retake) || retake.isPending}

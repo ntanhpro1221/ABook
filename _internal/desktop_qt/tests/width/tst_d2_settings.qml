@@ -347,7 +347,7 @@ Item {
             compare(last("PUT", "/api/preferences").body.letterShortcuts, false)
             verify(!list.letters)
             verify(hasText(list, "Tắt / bật tiếng (đang tắt)"))
-            verify(hasText(list, "Xem các phím tắt này (đang tắt)"))
+            verify(hasText(list, "Xem phím tắt (đang tắt)"))
             verify(hasText(list, "Phát / tạm dừng"))
             verify(!hasText(list, "Phát / tạm dừng (đang tắt)"))
             verify(hasText(list, "Phím một chữ cái đang tắt. Space, mũi tên, Esc vẫn chạy."))
@@ -442,7 +442,7 @@ Item {
             buttonOf(storage, "Dọn bản đọc").clicked()
             const dialog = storage.confirmDialog
             verify(dialog.open)
-            compare(dialog.title, "Dọn bản đọc đã làm")
+            compare(dialog.title, "Dọn bản đọc")
             compare(dialog.description, "Dọn 141 MB bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên.")
             compare(Nav.layers.length, 1)
             verify(Nav.back())

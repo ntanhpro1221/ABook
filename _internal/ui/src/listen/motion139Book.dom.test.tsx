@@ -46,12 +46,12 @@ const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title,
 const settled = () => { vi.spyOn(performance, "now").mockReturnValue(performance.now() + 1000); };
 const wait = (ms: number) => act(() => new Promise<void>((done) => setTimeout(done, ms)));
 
-it("V8 lịch sử: đang tải là khung chờ (không 'Chưa có lịch sử nghe'), tới nơi thì khung chờ mờ ra", async () => {
+it("V8 lịch sử: đang tải là khung chờ (không 'Chưa nghe lần nào'), tới nơi thì khung chờ mờ ra", async () => {
   const b = book();
   let answer: (sessions: unknown[]) => void = () => {};
   state.sessions = new Promise((done) => { answer = done; });
   await render(<HistoryTab book={b} />);
-  expect(host.textContent).not.toContain("Chưa có lịch sử nghe");
+  expect(host.textContent).not.toContain("Chưa nghe lần nào");
   expect(host.querySelector(".motion-loading-placeholder")).not.toBeNull();
   // Chờ lâu hơn LOADING_PATIENCE: khung chờ đã hiện nên mờ ra (về sớm hơn thì nó chưa từng hiện và gỡ luôn - loadingCrossfade.dom.test).
   // Chỉ nhích đồng hồ vừa đủ: cửa sổ ổn định (motion.ts, toàn cục) mở theo đồng hồ này không được trùm sang test sau.

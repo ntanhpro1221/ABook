@@ -785,7 +785,7 @@ class NowPlayingUiTest {
 
     @Test fun moreSheetOffersTheTextLookOnlyWhereThereIsTextToRead() {
         show(sheet = PlayerSheet.More)
-        rule.onNodeWithContentDescription("Cỡ chữ và giãn dòng").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Chữ và giãn dòng").assertIsDisplayed()
     }
 
     private val readingList get() = hasScrollAction() and hasAnyAncestor(hasTestTag("read_along_text"))

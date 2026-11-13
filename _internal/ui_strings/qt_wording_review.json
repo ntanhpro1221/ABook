@@ -262,5 +262,17 @@
     "qt": "Xoá file ({})",
     "web": "Xoá bài: {}",
     "reason": "Different operations: Qt deletes the precise-emotion model file with its size; the web label names a track's delete button (Qt MyMusicTrack.qml builds the same name as prefix + title)."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Cho {}",
+    "web": "Khoá {}",
+    "reason": "Different controls: the Qt label allows a paired device to control production; the web label is a voice-provider API key. The paired PhoneSync control uses the same full template on both."
+  },
+  {
+    "screen": "Studio kịch bản",
+    "qt": "Duyệt {} câu",
+    "web": "Chưa có câu: {}",
+    "reason": "Different states: Qt opens review for a selected count; web is the empty result of filtering by a speaker. Not a wording pair."
   }
 ]

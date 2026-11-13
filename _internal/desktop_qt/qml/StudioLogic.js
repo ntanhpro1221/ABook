@@ -337,7 +337,7 @@ function primaryButton(book, busy) {
         record: {label: S.s_thu_am_db588c2e, icon: "mic-vocal", busy: Boolean(busy.start)},
         reanalyze: {label: S.s_phan_tich_lai_745c8437, icon: "rotate-ccw", busy: false},
         "continue": {label: S.s_tiep_tuc_87a7ae88, icon: "play", busy: Boolean(busy.start)},
-        apply: {label: S.s_ap_dung_a5a429fc + (book.pendingChanges || 0) + S.s_thay_doi_28c1bfb5, icon: "refresh-cw", busy: Boolean(busy.start)},
+        apply: {label: S.s_ap_dung_0_thay_doi_fdb3a048(book.pendingChanges || 0), icon: "refresh-cw", busy: Boolean(busy.start)},
         listen: {label: S.s_nghe_trong_thu_vien_c0d6771a, icon: "headphones", busy: false}
     }
     return Object.assign({kind: kind, enabled: kind !== "starting" && kind !== "stopping"}, table[kind])

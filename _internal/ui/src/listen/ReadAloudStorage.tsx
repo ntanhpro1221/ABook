@@ -25,7 +25,7 @@ export function ClearDialog({ open, onOpenChange, usage, busy, onClear }: { open
     <Dialog footer={<DialogActions>
         <Button variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>{S.s_giu_lai_3c3ba2db}</Button>
         <Button variant="danger" loading={busy} onClick={onClear}>{S.s_don_6730827d}</Button>
-      </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title={S.s_don_ban_doc_da_lam_ba8c42a3} description={clearStorageQuestion(usage)}>
+      </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title={S.s_don_ban_doc_5ae4774e} description={clearStorageQuestion(usage)}>
 
     </Dialog>
   );

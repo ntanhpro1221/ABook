@@ -208,7 +208,7 @@ class StudioScreenTest {
     @Test fun aFinishedBookWithEditsAsksBeforeApplying() {
         withBook(studioBook(phase = "done", statusLabel = "Đã xong", pendingChanges = 2))
         project()
-        tag("studio_primary").assertTextEquals("Áp dụng 2 thay đổi")
+        tag("studio_primary").assertTextEquals("Áp dụng (2)")
         tag("studio_primary").performClick()
         rule.waitForIdle()
         tag("studio_apply").assertIsDisplayed()

@@ -93,11 +93,11 @@ export function desktopTextImport(dialogs: boolean): TextImport {
     choose: dialogs
       ? async (kind) => {
           if (kind !== "folder") return null; // file: chooseMany (chọn được nhiều file)
-          const path = await pickFolder(S.s_chon_thu_muc_co_cac_chuong_txt_21d4f564);
+          const path = await pickFolder(S.s_chon_thu_muc_txt_dd0d140c);
           return path ? { ref: path, name: fileName(path) } : null;
         }
       : undefined,
-    chooseMany: dialogs ? async () => (await pickFiles(S.s_chon_file_sach_chon_duoc_nhieu_file_mot_lu_309bfc98)).map(itemFromPath) : undefined,
+    chooseMany: dialogs ? async () => (await pickFiles(S.s_chon_file_sach_1f25282c)).map(itemFromPath) : undefined,
     watchDrops: dialogs ? watchAppDrops : watchBrowserDrops,
     preview: (choice, options) =>
       api<ImportPreview>("/api/listen/import/preview", {

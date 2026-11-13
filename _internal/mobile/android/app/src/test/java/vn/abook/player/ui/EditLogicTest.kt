@@ -167,7 +167,7 @@ class EditLogicTest {
         assertEquals("Hạ Vy" to "Hạ Vi", source.readingCalls.last())
         assertEquals(1, closed)
         assertEquals("“Hạ Vy” sẽ đọc là “Hạ Vi” từ đoạn sau", editor.readings.value.notice)
-        // Số thay đổi của sách đọc lại sau mỗi lần lưu ("Bỏ mọi thay đổi (N)").
+        // Số thay đổi của sách đọc lại sau mỗi lần lưu ("Bỏ thay đổi (N)").
         assertEquals(2, editor.state.value.saved?.edits)
         editor.setReading("Haruto", "")
         assertEquals(listOf(WordReading("Hạ Vy", "Hạ Vi")), editor.readings.value.list)

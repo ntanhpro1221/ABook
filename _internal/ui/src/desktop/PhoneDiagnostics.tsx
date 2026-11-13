@@ -51,7 +51,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
     setSaving(true);
     try {
       if (info?.dialogs) {
-        const target = await pickFolder(S.s_chon_noi_luu_nhat_ky_38ffebc9, "").catch(() => null);
+        const target = await pickFolder(S.s_luu_nhat_ky_57df5372, "").catch(() => null);
         if (!target) return;
         await api<{ name: string; folder: string }>(`/api/remote/${computer.id}/diagnostics/save`, { method: "POST", body: { lines: SAVE_LINES, target } });
         toast.success(S.s_da_luu_nhat_ky_65019295);

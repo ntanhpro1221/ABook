@@ -146,7 +146,7 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
             QuietButton(S.s_dung_7927ca4e, { dismiss(); pick.onUse(link) }, "track_use")
         }
         if (pick?.onBan != null) {
-            QuietButton(S.s_khong_tu_chon_bai_nay_ab3af35f, { dismiss(); pick.onBan.invoke(link) }, "track_ban")
+            QuietButton(S.s_khong_tu_chon_02ae1742, { dismiss(); pick.onBan.invoke(link) }, "track_ban")
         }
     }
 }

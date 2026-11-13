@@ -329,14 +329,14 @@ export function SourceStep({
   };
   const percent = uploading?.totalBytes ? Math.round((uploading.bytes / uploading.totalBytes) * 100) : 0;
   const chooseFolder = async () => {
-    const path = await pickFolder(S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58, sourceHint).catch((error: Error) => {
+    const path = await pickFolder(S.s_chon_thu_muc_txt_dd0d140c, sourceHint).catch((error: Error) => {
       toast.error(error.message);
       return null;
     });
     if (path) onPaths([path]);
   };
   const chooseFiles = async (append: boolean) => {
-    const chosen = await pickFiles(continuationId ? S.s_continuation_choose : S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8, sourceHint).catch((error: Error) => {
+    const chosen = await pickFiles(continuationId ? S.s_continuation_choose : S.s_chon_file_sach_1f25282c, sourceHint).catch((error: Error) => {
       toast.error(error.message);
       return [];
     });

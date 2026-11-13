@@ -123,7 +123,7 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
 /** Hỏi lại trước khi dọn: bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage(S.s_don_ban_doc_da_lam_ba8c42a3, "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
+    ConfirmPage(S.s_don_ban_doc_5ae4774e, "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
         // Dọn bản đọc làm lại được: chữ đỏ, không nút tô đỏ cả bề ngang - nút đặc chỉ cho xoá sách (DESIGN.md §6, soát 10-11 L13).
         QuietButton(S.s_don_6730827d, onClear, "clear_confirm", danger = true)
         Spacer(Modifier.height(Dim.s8))

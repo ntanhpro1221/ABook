@@ -56,7 +56,7 @@ Collapse {
     }
     Modal {
         id: dialog
-        title: S.s_don_ban_doc_da_lam_ba8c42a3
+        title: S.s_don_ban_doc_5ae4774e
         description: root.usage ? Music.clearStorageQuestion(root.usage) : ""
         dismissable: !root.busy
         keepOpen: function() { return root.busy }

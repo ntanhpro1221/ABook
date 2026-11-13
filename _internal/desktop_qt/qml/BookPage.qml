@@ -592,7 +592,7 @@ Item {
                     hasMenu: true
                     menuOpen: chapterMenu.open && root.menuChapter !== null && root.menuChapter.chapterId === model.chapterId
                     opensPlayer: model.current && model.playable && root.listening
-                    Accessible.name: model.playable ? row.opensPlayer ? S.s_mo_man_hinh_dang_nghe_2426b4ad : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
+                    Accessible.name: model.playable ? row.opensPlayer ? S.s_mo_man_hinh_dang_nghe_2426b4ad : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_2e6ee219(model.fullTitle)
                     onToggleRequested: bookDetail.playChapter(model.chapterId)
                     onClicked: {
                         if (row.onMenuButton) return

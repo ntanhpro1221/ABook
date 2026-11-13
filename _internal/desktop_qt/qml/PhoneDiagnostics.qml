@@ -51,7 +51,7 @@ Modal {
 
     FolderDialog {
         id: folder
-        title: S.s_chon_noi_luu_nhat_ky_38ffebc9
+        title: S.s_luu_nhat_ky_57df5372
         onAccepted: {
             root.saving = true
             Api.transport.request("POST", "/api/remote/" + root.computer.id + "/diagnostics/save", {lines: 2000, target: DesktopApi.localPath(selectedFolder)}, function(status, data) {
@@ -117,7 +117,7 @@ Modal {
         }
         DevicesLogBox {
             width: parent.width
-            title: S.s_nhat_ky_cua_abook_843dd2fa + root.appLog.length + S.s_dong_8fe5919d
+            title: S.s_nhat_ky_cua_abook_0_dong_9a189053(root.appLog.length)
             lines: root.appLog
             empty: root.report ? Logic.emptyLogNote(root.report, "log") : ""
             startOpen: true

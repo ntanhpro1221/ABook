@@ -24,7 +24,7 @@ ListView {
         progress: model.progress
         fullTitle: model.fullTitle
         hasMenu: true
-        Accessible.name: model.playable ? model.current && Player.playing ? S.s_tam_dung_0_43ccbbf2(model.fullTitle) : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_chua_co_audio_baeeb512(model.fullTitle)
+        Accessible.name: model.playable ? model.current && Player.playing ? S.s_tam_dung_0_43ccbbf2(model.fullTitle) : S.s_nghe_0_42d1e966(model.fullTitle) : S.s_doc_0_2e6ee219(model.fullTitle)
         menuOpen: menu.open && root.menuChapter && root.menuChapter.chapterId === model.chapterId
         onClicked: {
             if (row.onMenuButton) return

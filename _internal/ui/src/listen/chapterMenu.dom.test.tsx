@@ -37,7 +37,7 @@ const book = { id: "b", title: "Sách", narrator: "", duration: 180, chaptersTot
   state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 180, fraction: 0, chaptersDone: 0, finished: false }, chapters: [1, 2, 3].map(chapter) } as ListenBook;
 const render = (node: ReactNode) =>
   act(() => root.render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><TooltipProvider>{node}</TooltipProvider></MemoryRouter></QueryClientProvider>));
-const menuButton = (id: number) => host.querySelector<HTMLButtonElement>(`[aria-label="Thêm tuỳ chọn cho Chương ${id}"]`)!;
+const menuButton = (id: number) => host.querySelector<HTMLButtonElement>(`[aria-label="Thêm tuỳ chọn: Chương ${id}"]`)!;
 const menuItems = () => [...document.querySelectorAll('[role="menu"] [role="menuitem"]')].map((item) => item.textContent?.trim());
 
 it("chưa cần thì không dựng menu; nút trơn vẫn nói là nút mở menu", async () => {

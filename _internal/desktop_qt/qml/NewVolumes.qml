@@ -167,7 +167,7 @@ Column {
                                     icon: "trash-2"
                                     iconSize: 16
                                     tip: S.s_gop_vao_phan_truoc_b2b49634
-                                    Accessible.name: S.s_bo_cho_cat_truoc_79e9b165 + row.modelData.title
+                                    Accessible.name: S.s_bo_cho_cat_truoc_0_5082349b(row.modelData.title)
                                     onClicked: root.commit(Logic.removeStart(root.starts, row.modelData.index))
                                 }
                             }

@@ -233,7 +233,7 @@ Column {
                 width: parent.width
                 storageKey: "other-computers.pair"
                 title: S.s_ghep_may_601e4c98
-                summary: S.s_nghe_sach_cua_may_tinh_khac_31628082
+                summary: S.s_co_sach_tren_may_khac_3b7cdd88
                 Column {
                     width: parent.width
                     spacing: 12

@@ -400,7 +400,7 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        if (query.isEmpty()) BasicText(S.s_chu_hay_cau_can_tim_d9ab6029, style = Abook.type.body.copy(color = colors.text3))
+                        if (query.isEmpty()) BasicText(S.s_chu_hay_cau_can_tim_41e570d3, style = Abook.type.body.copy(color = colors.text3))
                         inner()
                     }
                 },

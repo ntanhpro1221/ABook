@@ -76,7 +76,7 @@ FocusScope {
         Api.quiet("PUT", "/api/books/" + encodeURIComponent(pickBook) + "/music", {ban: [link]}, function(data, problem) {
             if (problem) { Api.notice = problem; return }
             detail.open = false
-            Api.notice = S.s_khong_tu_chon_bai_nay_ab3af35f
+            Api.notice = S.s_khong_tu_chon_02ae1742
         })
     }
     function search(text) { part = 1; query = text; refresh() }

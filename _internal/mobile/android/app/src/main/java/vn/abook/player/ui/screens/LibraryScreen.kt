@@ -214,7 +214,7 @@ private fun LibraryGrid(
 @Composable
 private fun NoMatch(query: String, filter: LibraryFilter) {
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s32)) {
-        BasicText(if (query.isEmpty()) S.s_khong_co_sach_o_day_9b24f539 else S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query), style = Abook.type.sectionTitle)
+        BasicText(if (query.isEmpty()) S.s_chua_co_sach_30843cb2 else S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query), style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s4))
         BasicText(
             if (query.isNotEmpty()) S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa else when (filter) {

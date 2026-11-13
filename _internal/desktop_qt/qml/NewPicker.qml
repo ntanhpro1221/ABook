@@ -15,14 +15,14 @@ Item {
     function chooseFolder() { append = false; folder.currentFolder = DesktopApi.pickerFolder(sourceHint); folder.open() }
     FileDialog {
         id: files
-        title: root.continuing ? S.s_continuation_choose : S.s_chon_cac_chuong_txt_hay_mot_file_sach_epub_cd4fd0b8
+        title: root.continuing ? S.s_continuation_choose : S.s_chon_file_sach_1f25282c
         fileMode: FileDialog.OpenFiles
         nameFilters: [S.s_truyen_txt_epub_docx_pdf_33caae66, S.s_tat_ca_file_05ec85ad]
         onAccepted: root.picked(selectedFiles.map(file => DesktopApi.localPath(file)).filter(path => path !== ""), root.append)
     }
     FolderDialog {
         id: folder
-        title: S.s_chon_thu_muc_chua_cac_chuong_txt_d3c22d58
+        title: S.s_chon_thu_muc_txt_dd0d140c
         onAccepted: root.picked([DesktopApi.localPath(selectedFolder)], false)
     }
 }

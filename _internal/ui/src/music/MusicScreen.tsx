@@ -136,7 +136,7 @@ function PickerLibrary({ preview, picking }: { preview: LibraryPreview; picking:
     void api(`/api/books/${picking.book}/music`, { method: "PUT", body: { ban: [link] } })
       .then(() => {
         void client.invalidateQueries({ queryKey: ["music-alternatives", picking.book] });
-        toast(S.s_khong_tu_chon_bai_nay_ab3af35f);
+        toast(S.s_khong_tu_chon_02ae1742);
       })
       .catch((problem: Error) => toast.error(problem.message));
   };

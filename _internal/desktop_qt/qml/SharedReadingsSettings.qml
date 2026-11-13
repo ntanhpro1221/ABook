@@ -100,7 +100,7 @@ SettingsItem {
                         iconSize: 16
                         ink: Theme.text2
                         hoverInk: Theme.text
-                        tip: S.s_bo_76ce0117 + row.modelData.surface + S.s_khoi_cach_doc_chung_c5d82684
+                        tip: S.s_bo_cach_doc_0_a883978b(row.modelData.surface)
                         Accessible.name: tip
                         onClicked: root.save({surface: row.modelData.surface, remove: true})
                     }

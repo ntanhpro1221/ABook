@@ -85,7 +85,7 @@ Collapse {
                         }
                         Switch {
                             anchors.verticalCenter: parent.verticalCenter
-                            label: S.s_dieu_khien_san_xuat_tu_9dea1e9e + (root.device.name || "")
+                            label: S.s_dieu_khien_san_xuat_tu_0_99c2c38a(root.device.name || "")
                             checked: Boolean(root.device.studio)
                             enabled: !root.studioBusy
                             onToggled: value => root.studioToggled(root.rowId, value)

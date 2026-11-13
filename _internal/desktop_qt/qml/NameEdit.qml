@@ -57,7 +57,7 @@ Column {
             id: field
             objectName: "nameField"
             width: root.width < 400 ? root.width : 176
-            label: S.s_cach_doc_moi_cho_c1e4a60a + root.item.surface
+            label: S.s_cach_doc_moi_cho_0_d68a75c3(root.item.surface)
             placeholderText: S.s_vd_hen_kho_bdb381fc
             invalid: root.problem !== ""
             escapeLocal: true

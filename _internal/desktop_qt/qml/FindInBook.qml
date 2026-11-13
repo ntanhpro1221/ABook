@@ -116,7 +116,7 @@ Modal {
                 topPadding: 12
                 bottomPadding: 12
                 font.pixelSize: Theme.sizeBody
-                label: S.s_chu_hay_cau_can_tim_d9ab6029
+                label: S.s_chu_hay_cau_can_tim_41e570d3
                 placeholderText: S.s_chu_hay_cau_can_tim_41e570d3
                 onTextChanged: root.query = text
                 onAccepted: if (root.hits.length) root.pick(root.hits[0])

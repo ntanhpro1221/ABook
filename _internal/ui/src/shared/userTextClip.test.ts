@@ -26,7 +26,7 @@ it("không khối nào cắt tên sách / tên chương / tên người dùng đ
         if (!expression) continue;
         const where = `${dir}/${file}:${expression}`;
         if (ALLOWED_ANYWHERE.has(where)) continue;
-        // Thanh phát thu nhỏ: khối MotionRegion của tên chương ngay trong nút "Mở màn hình đang nghe".
+        // Thanh phát thu nhỏ: khối MotionRegion của tên chương ngay trong nút "Mở trình phát".
         const before = source.slice(Math.max(0, (match.index ?? 0) - 900), match.index);
         if (ALLOWED.has(`${where}#mini`) && before.includes('aria-label={S.s_mo_man_hinh_dang_nghe_')) continue;
         // Dòng tên sách của cùng thanh thu nhỏ (nút `data-track-book`, chỉ look="bar" cắt; tên đầy đủ ở tooltip `title`).

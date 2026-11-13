@@ -337,7 +337,7 @@ Item {
         opacity: hiddenNow && !hover.hovered ? 0 : 1
         activeFocusOnTab: false
         Accessible.role: Accessible.Button
-        Accessible.name: S.s_cach_doc_1f39ff9c + deliveryText.text + S.s_bam_de_sua_00d1fbb6
+        Accessible.name: S.s_cach_doc_0_bam_de_sua_cbabcbd5(deliveryText.text)
         onClicked: { root.activate(); root.openDelivery(delivery) }
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.panel; opacity: delivery.hovered ? 1 : 0 }

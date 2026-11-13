@@ -3,7 +3,7 @@ import QtTest
 import "VisualReady.js" as VisualReady
 import ABook
 
-// Tab "Lịch sử" của trang sách (BookPage + HistoryList): khung chờ lúc hỏi (không nháy chữ "Chưa có lịch sử nghe"), trạng thái trống, danh sách gom theo ngày,
+// Tab "Lịch sử" của trang sách (BookPage + HistoryList): khung chờ lúc hỏi (không nháy chữ "Chưa nghe lần nào"), trạng thái trống, danh sách gom theo ngày,
 // tổng 7 ngày qua, "Nghe tiếp từ" mở trình phát đúng chỗ, chữ dài xuống dòng ở 1024 và 1920. Máy chủ giả: DesktopApi giả; trình phát là Player thật với mạng giả
 // (cuốn "width" của WidthNet). Ảnh offscreen ghi ra build/d2shots/history_*.png.
 Item {
@@ -125,7 +125,7 @@ Item {
             tryVerify(function() { return findChild(history, "historySkeleton").visible })
             verify(findChild(history, "historySkeleton").visible)
             compare(findChild(history, "historySkeleton").Accessible.name, "Đang tải lịch sử")
-            verify(!findChild(history, "historyEmpty").visible, "không được nháy 'Chưa có lịch sử nghe' khi còn đang hỏi")
+            verify(!findChild(history, "historyEmpty").visible, "không được nháy 'Chưa nghe lần nào' khi còn đang hỏi")
             verify(!findChild(history, "historyContent").visible)
             DesktopApi.delayed = false
             DesktopApi.finish()
@@ -140,7 +140,7 @@ Item {
             const history = openHistory()
             const empty = findChild(history, "historyEmpty")
             tryVerify(function() { return empty.visible })
-            compare(empty.title, "Chưa có lịch sử nghe")
+            compare(empty.title, "Chưa nghe lần nào")
             verify(!findChild(history, "historyContent").visible)
             verify(!findChild(history, "historySkeleton").visible)
         }

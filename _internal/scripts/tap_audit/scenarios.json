@@ -9,7 +9,7 @@
       }
     ],
     "probe": {
-      "selector": "input[aria-label='Đường dẫn file hay thư mục']",
+      "selector": "input[aria-label='File hoặc thư mục']",
       "type": "input"
     },
     "background": {
@@ -59,7 +59,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "selector": "button[aria-label^='Thêm tuỳ chọn cho Ch']"
+        "selector": "button[aria-label^='Thêm tuỳ chọn: Ch']"
       },
       {
         "text": "Đổi tên chương"
@@ -148,7 +148,7 @@
     "path": "#/studio/{studio}",
     "steps": [
       {
-        "text": "Tuỳ chọn dự án Tap Studio Fixture"
+        "text": "Thêm tuỳ chọn: Tap Studio Fixture"
       },
       {
         "text": "Đổi tên",
@@ -160,7 +160,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Tuỳ chọn dự án Tap Studio Fixture"
+      "text": "Thêm tuỳ chọn: Tap Studio Fixture"
     }
   },
   {
@@ -179,7 +179,7 @@
       "exact": true
     },
     "background": {
-      "text": "Tuỳ chọn dự án Tap Studio Fixture"
+      "text": "Thêm tuỳ chọn: Tap Studio Fixture"
     }
   },
   {
@@ -561,7 +561,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "selector": "button[aria-label^='Thêm tuỳ chọn cho Ch']"
+        "selector": "button[aria-label^='Thêm tuỳ chọn: Ch']"
       }
     ],
     "probe": {

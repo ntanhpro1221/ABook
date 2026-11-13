@@ -201,7 +201,7 @@ function genderWord(gender) { return gender === "female" ? S.s_nu_316c30fd : "na
 var heard = {}
 function tryKey(bookId, request) { return [bookId, request.character, request.preset || "", request.gender || "", request.avoid || ""].join("\u0000") }
 function tryId(preview) { return "voice-try-" + preview.url }
-function tryLabel(voiceName, playing) { return playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_giong_c10b4bc4 + voiceName + S.s_doc_mot_cau_cua_sach_fa73252c }
+function tryLabel(voiceName, playing) { return playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_65a85c4d(voiceName) }
 function tryHint(name, hasLine) {
     return hasLine ? S.s_nut_sach_doc_cau_cua_d9dd6eec + name + S.s_doc_mau_chung_26751b7c : name + S.s_chua_co_cau_nao_de_doc_thu_nut_la_cau_mau_438fb5c2
 }

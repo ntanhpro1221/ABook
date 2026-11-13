@@ -130,7 +130,7 @@ Item {
             compare(stepMark(page, 0).name, "vu")
             verify(hasText(page, "Phân tích truyện"))
             verify(hasText(page, "Phân vai"))
-            verify(hasText(page, "Thu âm và kiểm tra"))
+            verify(hasText(page, "Thu và kiểm tra"))
             verify(hasText(page, "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."))
             verify(hasText(page, "Trao cho mỗi nhân vật một giọng riêng và khoá cách đọc tên."))
             verify(hasText(page, "42%"))
@@ -143,7 +143,7 @@ Item {
             setBook(page, analysing({paused: "user"}))
             tryCompare(stepMark(page, 0), "name", "pause")
             setBook(page, analysing({phase: "synthesis", statusLabel: "Đang thu âm", progress: {overall: 0.6, analysis: 1, synthesis: 0.25}}))
-            tryCompare(steps, "summary", "Thu âm và kiểm tra")
+            tryCompare(steps, "summary", "Thu và kiểm tra")
             tryVerify(function() { return shown(stepMark(page, 2)) && stepMark(page, 2).name === "vu" })
             verify(!shown(stepMark(page, 0)))
             // xác định người nói: dòng của bước 1 nói số chương
@@ -242,7 +242,7 @@ Item {
         }
         function test_projectMenuNamesTheBook() {
             const page = openBook(book("menu", {title: "Kiếm Lai"}), [chapter(1)])
-            compare(one(page, "bookMore").Accessible.name, "Thêm tuỳ chọn cho Kiếm Lai")
+            compare(one(page, "bookMore").Accessible.name, "Thêm tuỳ chọn: Kiếm Lai")
             compare(one(page, "bookMore").tip, "Thêm tuỳ chọn")
         }
 

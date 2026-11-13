@@ -52,7 +52,7 @@ const SETTINGS_LABELS: Record<string, string> = {
 const MORNING = Date.UTC(2026, 9, 25, 0, 20); // 7:20 sáng 25-10, giờ Việt Nam
 
 const playerOpen = async () => {
-  await click("Mở màn hình đang nghe");
+  await click("Mở trình phát");
   // Màn mở qua View Transition dựng ruột sau một nhịp: các bước sau tìm trong nó, chờ nó có mặt (lỗi chạy chập chờn 25-10).
   await waitFor(() => document.querySelector(".now-playing"), "màn Đang nghe");
 };
@@ -199,7 +199,7 @@ export const ENTRIES: Entry[] = [
       await clickFirst("Thêm tuỳ chọn"); await click(/^Nhạc nền/);
     } },
     { id: `${platform}/book-find-results`, platform, group: "Trang sách", title: "Tìm chữ trong sách", route: "/book/suong-mu-2", act: async () => {
-      await click("Tìm chữ trong sách"); await type("Chữ hay câu cần tìm", "chiếc");
+      await click("Tìm chữ trong sách"); await type("Chữ cần tìm", "chiếc");
       await waitFor(() => document.querySelector('[data-list-edges="book-search"] button'), "kết quả tìm chữ");
     } },
     { id: `${platform}/book-edit`, platform, group: "Trang sách", title: "Sửa tên sách và tác giả", route: "/book/gac-xep", act: async () => {

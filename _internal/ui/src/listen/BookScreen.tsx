@@ -187,7 +187,7 @@ const ChapterLine = memo(function ChapterLine({
       <button
         type="button"
         onClick={!canPlay(chapter) ? () => actions.read(chapter) : current ? actions.open : onPlay}
-        aria-label={!canPlay(chapter) ? S.s_doc_0_chua_co_audio_baeeb512(chapter.fullTitle) : current ? S.s_mo_man_hinh_dang_nghe_2426b4ad : undefined}
+        aria-label={!canPlay(chapter) ? S.s_doc_0_2e6ee219(chapter.fullTitle) : current ? S.s_mo_man_hinh_dang_nghe_2426b4ad : undefined}
         // Nghe được thì nút tên làm đúng việc của nút phát bên trái: bàn phím dừng ở nút phát (đã có tên đầy đủ), chuột vẫn bấm cả dòng.
         tabIndex={canPlay(chapter) && !current ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"

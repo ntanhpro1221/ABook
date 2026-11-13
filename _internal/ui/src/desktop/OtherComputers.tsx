@@ -239,7 +239,7 @@ export function OtherComputers() {
         </AnimatedRows>
         </div>
       </MotionPresence>
-      <Fold storageKey="other-computers.pair" title={S.s_ghep_may_601e4c98} summary={S.s_nghe_sach_cua_may_tinh_khac_31628082} bodyClassName="space-y-3 pb-3">
+      <Fold storageKey="other-computers.pair" title={S.s_ghep_may_601e4c98} summary={S.s_co_sach_tren_may_khac_3b7cdd88} bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
         <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>{S.s_tu_tim_3f09ad05}</Button>
         {discover.data &&

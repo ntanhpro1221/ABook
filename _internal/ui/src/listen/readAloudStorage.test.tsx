@@ -22,7 +22,7 @@ beforeEach(() => {
 describe("ClearDialog", () => {
   it("là Dialog dùng chung, tên và lời hỏi đúng, mở theo `open`", () => {
     const html = renderToStaticMarkup(<ClearDialog open usage={usage} busy={false} onOpenChange={vi.fn()} onClear={vi.fn()} />);
-    expect(h.dialog).toMatchObject({ open: true, title: "Dọn bản đọc đã làm", description: clearStorageQuestion(usage) });
+    expect(h.dialog).toMatchObject({ open: true, title: "Dọn bản đọc", description: clearStorageQuestion(usage) });
     expect(html).toContain("Giữ lại");
     expect(html).toContain("Dọn");
     expect(html).not.toContain('role="alertdialog"');

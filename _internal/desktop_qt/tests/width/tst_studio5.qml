@@ -706,7 +706,7 @@ Item {
             verify(hasPart(dlg, "2 chương đang chờ thu lại theo sửa của bạn - sách xuất dùng bản thu cũ của các chương ấy."))
             one(dlg, "exportApplyFirst").clicked()
             tryVerify(function() { return !dlg.open && applyDlg(page) !== undefined }, 3000)
-            compare(applyDlg(page).title, "Áp dụng 3 thay đổi?")
+            compare(applyDlg(page).title, "Áp dụng (3)?")
         }
         function test_wordTimingsRowOnlyExistsForAbookAndStartsTheAlignment() {
             serve()
@@ -824,7 +824,7 @@ Item {
             serve()
             const page = openApply()
             const dlg = applyDlg(page)
-            compare(dlg.title, "Áp dụng 3 thay đổi?")
+            compare(dlg.title, "Áp dụng (3)?")
             compare(dlg.description, "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn.")
             tryVerify(function() { return all(dlg, "pendingRow").filter(shown).length === 3 }, 3000)
             verify(hasText(dlg, "“Lucien” đọc là “lu-xi-ăng”"))
@@ -880,7 +880,7 @@ Item {
             serve()
             const page = openApply(book("a", {pendingChanges: 3, running: true, phase: "synthesizing", statusLabel: "Đang thu"}))
             const dlg = applyDlg(page)
-            compare(dlg.title, "3 thay đổi đang chờ áp")
+            compare(dlg.title, "3 thay đổi chờ")
             compare(dlg.description, "Tự áp ở chương kế tiếp; chỉ bỏ được việc chưa áp.")
             compare(one(dlg, "confirm_later").text, "Đóng")
             verify(!has(dlg, "confirm_go"))
@@ -941,8 +941,8 @@ Item {
         function test_applyLogicShowsAtMostFourChaptersThenCountsTheRest() {
             compare(Export.shownChapters(["a", "b", "c", "d"]), "a, b, c, d")
             compare(Export.shownChapters(["a", "b", "c", "d", "e", "f"]), "a, b, c, d, và 2 chương khác")
-            compare(Export.applyHeading(2, false), "Áp dụng 2 thay đổi?")
-            compare(Export.applyHeading(2, true), "2 thay đổi đang chờ áp")
+            compare(Export.applyHeading(2, false), "Áp dụng (2)?")
+            compare(Export.applyHeading(2, true), "2 thay đổi chờ")
             compare(Export.applyClose(true), "Đóng")
             compare(Export.applyClose(false), "Để sau")
             compare(Export.applyRunning({running: true, paused: "listener", status: "paused"}), "checkpoint")

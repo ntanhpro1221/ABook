@@ -6,7 +6,7 @@ import ABook
 // repeated credit line is one choice across its chapters. Never edit raw text.
 Modal {
     id: root
-    title: S.s_goi_y_cho_phan_doc_8d550ff1
+    title: S.s_goi_y_phan_doc_b268d95e
     property string bookId: ""
     property var groups: []
     property bool loading: false

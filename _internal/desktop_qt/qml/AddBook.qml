@@ -1034,7 +1034,7 @@ Modal {
 
     FileDialog {
         id: files
-        title: S.s_chon_file_sach_chon_duoc_nhieu_file_mot_lu_309bfc98
+        title: S.s_chon_file_sach_1f25282c
         fileMode: FileDialog.OpenFiles
         nameFilters: [S.s_sach_epub_docx_pdf_txt_abook_abookproj_79f2a402, S.s_tat_ca_file_05ec85ad]
         onAccepted: {
@@ -1044,7 +1044,7 @@ Modal {
     }
     FolderDialog {
         id: folder
-        title: S.s_chon_thu_muc_co_cac_chuong_txt_21d4f564
+        title: S.s_chon_thu_muc_txt_dd0d140c
         onAccepted: {
             if (root.pickSession !== root.generation || !root.open) return
             const picked = DesktopApi.localPath(selectedFolder)

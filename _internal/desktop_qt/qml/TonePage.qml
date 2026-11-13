@@ -162,8 +162,8 @@ Column {
     }
     Row {
         width: parent.width; height: Math.max(48, scopeLabel.implicitHeight)
-        Text { id:scopeLabel;width:parent.width-48;anchors.verticalCenter:parent.verticalCenter;text:S.s_tone_scope;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
-        Switch { checked:root.library.scoped;label:S.s_tone_scope;anchors.verticalCenter:parent.verticalCenter;onToggled:value=>Player.toneAction("scope",{enabled:value}) }
+        Text { id:scopeLabel;width:parent.width-48;anchors.verticalCenter:parent.verticalCenter;text:S.s_copy_0aedb2b2cf2b;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
+        Switch { checked:root.library.scoped;label:S.s_copy_0aedb2b2cf2b;anchors.verticalCenter:parent.verticalCenter;onToggled:value=>Player.toneAction("scope",{enabled:value}) }
     }
     Column {
         width:parent.width;visible:root.pending!==null

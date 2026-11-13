@@ -376,7 +376,7 @@ function SceneMenu({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <IconButton label={S.s_them_tuy_chon_cho_doan_nay_6554b55d} icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
+        <IconButton label={S.s_them_tuy_chon_a0b4bb6e} icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-2 shadow-float">

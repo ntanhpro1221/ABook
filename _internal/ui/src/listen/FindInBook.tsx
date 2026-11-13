@@ -125,8 +125,8 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
               results.current?.querySelector<HTMLElement>("button")?.focus();
             }
           }}
-          aria-label={S.s_chu_hay_cau_can_tim_d9ab6029}
-          placeholder={S.s_chu_hay_cau_can_tim_d9ab6029}
+          aria-label={S.s_chu_hay_cau_can_tim_41e570d3}
+          placeholder={S.s_chu_hay_cau_can_tim_41e570d3}
           autoComplete="off"
           enterKeyHint="search"
           className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-10 pr-3 text-base outline-none focus:border-focus"

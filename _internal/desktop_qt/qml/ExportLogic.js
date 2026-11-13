@@ -281,7 +281,7 @@ function dropLabel(item) {
 function pendingKey(item) { return item.section + ":" + item.key }
 function pendingLines(item) { return item.lines ? Studio.formatNumber(item.lines) + S.s_cau_thu_lai_65b7ea54 : S.s_chua_thu_khong_ton_gi_d0da00cf }
 /** Hộp "Áp dụng": đang chạy (`running` "busy" | "checkpoint") thì máy tự áp ở ranh giới chương kế nên không có nút "Áp dụng". */
-function applyHeading(count, running) { return running ? count + S.s_thay_doi_dang_cho_ap_9ec08d2e : S.s_ap_dung_a5a429fc + count + S.s_thay_doi_bb1abe8b }
+function applyHeading(count, running) { return running ? count + S.s_thay_doi_dang_cho_ap_9ec08d2e : S.s_ap_dung_0_thay_doi_b7955e0a(count) }
 function applyDescription(running) {
     return running ? S.s_tu_ap_o_chuong_ke_tiep_chi_bo_duoc_viec_ch_6f3e60e9
                    : S.s_may_chi_thu_lai_nhung_cau_bi_anh_huong_roi_67af5454

@@ -60,7 +60,7 @@ it.each(["speaker", "narrator"] as const)("form %s mở/khép bằng Collapse v�
   const entry = item(kind === "narrator" ? { kind, narratorSection: { chapterIndex: 0, fromSeq: 1, toSeq: 2, narrator: "Mai", appliesNote: "", choices: [] } } : {});
   await draw(<WorkCards book={book} items={[entry]} onOpenReview={vi.fn()} />);
   const name = kind === "speaker" ? "Người khác" : "Người kể khác";
-  const input = host.querySelector<HTMLInputElement>(kind === "speaker" ? '[aria-label="Tên người nói mới"]' : '[aria-label="Tên người kể của đoạn"]')!;
+  const input = host.querySelector<HTMLInputElement>(kind === "speaker" ? '[aria-label="Tên người nói mới"]' : '[aria-label="Tên người kể"]')!;
   const body = input.closest<HTMLElement>(".motion-collapse")!;
   expect(body.hasAttribute("inert")).toBe(true);
   await click(name); expect(body.dataset.state).toBe("open"); animated(body);

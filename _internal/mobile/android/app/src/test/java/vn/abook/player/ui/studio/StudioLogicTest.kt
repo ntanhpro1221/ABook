@@ -147,7 +147,7 @@ class StudioLogicTest {
             assertTrue("\"$label\" quá dài", words in 1..5)
             for (word in listOf("API", "JSON", "HTTP", "poll", "checkpoint", "listenOnly")) assertFalse("\"$label\" có \"$word\"", label.contains(word, ignoreCase = true))
         }
-        assertEquals("Áp dụng 3 thay đổi", StudioText.label(PrimaryKind.Apply, book))
+        assertEquals("Áp dụng (3)", StudioText.label(PrimaryKind.Apply, book))
         assertEquals("Thu âm", StudioText.label(PrimaryKind.Unpause, studioBook(precastHeld = true)))
         assertTrue(StudioText.inert(PrimaryKind.Starting) && StudioText.inert(PrimaryKind.Stopping) && !StudioText.inert(PrimaryKind.Pause))
     }

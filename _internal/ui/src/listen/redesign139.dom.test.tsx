@@ -151,7 +151,7 @@ const reader = () => render(<Routes><Route path="/book/:id/read/:chapterId?" ele
 
 it("màn đọc: cỡ chữ và giãn dòng giữ lựa chọn, gạch chân và áp ngay vào bài", async () => {
   player({ track: null }); state.book = listenBook(); state.script = script;
-  await reader(); await press(named("Cỡ chữ và giãn dòng")!);
+  await reader(); await press(named("Chữ và giãn dòng")!);
   const sizes = document.querySelector('[data-value-ruler][aria-label="Cỡ chữ"]')!.closest('[data-value-picker]')!;
   expect([...sizes.querySelectorAll("[data-value-chip]")].map(button => button.textContent)).toEqual(["16", "18", "20", "22", "24"]);
   // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do (thước, -/+, gõ số).

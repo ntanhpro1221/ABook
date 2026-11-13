@@ -264,7 +264,7 @@
       "allow": [
         {
           "side": "web",
-          "match": "^(điều hướng|danh sách chương|mục của sách|việc với sách|lọc sách|mở bộ \\{\\}|mở \\{\\}|nghe ngay \\{\\}|đọc \\{\\}|thêm \\{\\}|nghe \\{\\}|tạm dừng \\{\\}|nghe \\{\\} nói|xếp theo: \\{\\}|nghe xong|thông báo|đóng thông báo|đang mở thư viện|gõ không dấu cũng được|nghe giọng \\{\\}|đổi giọng \\{\\}|nghe tiếp \\{\\}|chuyển sang cuốn|giới tính|gộp vào ai|sách)$",
+          "match": "^(điều hướng|danh sách chương|mục của sách|việc với sách|lọc sách|mở bộ \\{\\}|mở \\{\\}|nghe ngay \\{\\}|đọc \\{\\}|thêm \\{\\}|nghe \\{\\}|tạm dừng \\{\\}|nghe \\{\\} nói|xếp theo: \\{\\}|nghe xong|thông báo|đóng thông báo|đang mở thư viện|gõ được không dấu|nghe giọng \\{\\}|đổi giọng \\{\\}|nghe tiếp \\{\\}|chuyển sang cuốn|giới tính|gộp vào ai|sách)$",
           "reason": "web only: screen-reader name, hover tooltip or tab-list name of a control both sides have (the web control is icon-only or repeats per card; Compose reads the visible label); also the cast sheets' list names (Giới tính, Gộp vào ai, Chuyển sang cuốn)"
         },
         {
@@ -274,7 +274,7 @@
         },
         {
           "side": "web",
-          "match": "^(máy chủ không trả chương nào|không tìm thấy sách này)$",
+          "match": "^(máy chủ không trả chương nào|không thấy sách)$",
           "reason": "web only: error of the web book loader (desktop server / bundle reader); native screens only open books already in the library"
         },
         {
@@ -304,17 +304,17 @@
         },
         {
           "side": "native",
-          "match": "^(đang ghi|đang gộp|đang lưu|bạn hãy thử lại|chưa hoàn tác được)$",
+          "match": "^(đang ghi|đang gộp|đang lưu|chưa làm được|chưa hoàn tác được)$",
           "reason": "web shows a spinner or a toast from the core's own error text; native writes a busy word / retry hint in the sheet"
         },
         {
           "side": "web",
-          "match": "^(bỏ gộp|bỏ gộp \\{\\} vào \\{\\}|chờ áp dụng|chờ áp dụng: giọng|từ phần trước|đổi giọng người kể|nếu giọng|áp dụng sẽ thu lại|đang thu; chương mới tự hiện khi xong)$",
+          "match": "^(bỏ gộp|tách \\{\\} khỏi \\{\\}|chờ áp dụng|chờ áp dụng: giọng|từ phần trước|đổi giọng người kể|nếu giọng|áp dụng sẽ thu lại|đang thu; chương mới tự hiện khi xong)$",
           "reason": "Studio / workshop only: the book page of the phone never gets the unmerge, voice-pick or narrator callbacks (only Studio passes them), the cast is always 'waiting' (shown as 'Đang chờ máy làm sách'), nothing is recorded on the phone, and a book is never being recorded here"
         },
         {
           "side": "web",
-          "match": "^(chưa mở được chương này|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
+          "match": "^(chưa mở được chương|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
           "reason": "the phone has no separate Reader screen: text opens as Read-along inside Now Playing (docs/NATIVE_PHONE_UI.md), a failed load is written there with \"Thử lại\", chapters without audio but with text are read aloud by Nghe"
         },
         {
@@ -649,7 +649,7 @@
       "deferred": [
         {
           "side": "native",
-          "match": "^(tự mở cửa sổ mini|rời app khi sách đang phát thì sách thu vào cửa sổ mini)$",
+          "match": "^(tự mở mini|rời app khi sách đang phát thì sách thu vào cửa sổ mini)$",
           "reason": "Khác khả năng nền tảng: web trình duyệt không có cửa sổ mini app của hệ điều hành. Qt NowPlaying/SettingsLook và Android PiP đã có cùng thao tác; scripts/ui_parity_qt.py kiểm nhãn ở đúng file của hai nền."
         }
       ],
@@ -784,12 +784,27 @@
           "side": "web",
           "match": "^(mã\\ ghép\\ thiết\\ bị|mã\\ dùng\\ một\\ lần\\ để\\ máy\\ kia\\ nghe\\ thư\\ viện\\ này|hết\\ hạn\\ sau)$",
           "reason": "native shows the same code panel as 'Nhập mã này trên máy kia' + 'Dùng được đến {giờ}' (clock time instead of a countdown)"
+        },
+        {
+          "side": "web",
+          "label": "Chuyển từ {}",
+          "reason": "computer only: tooltip of the take-over button on the 'phone is playing' bar (RemotePhone); the phone continues a book from the computer through the 'Thiết bị phát' sheet, which has no take-over button"
+        },
+        {
+          "side": "web",
+          "label": "Sách trên máy khác",
+          "reason": "computer only: summary of the 'Ghép máy' fold in Other computers (listen to another computer's library); the phone pairs from Thiết bị, and uses the same words as the library's remote-series mark (library-book pair)"
+        },
+        {
+          "side": "web",
+          "label": "Đối chiếu vân tay",
+          "reason": "computer only: hover hint on the 64-character fingerprint line of the phone pairing dialog; the phone reads its own fingerprint from the pairing screen text"
         }
       ],
       "missing": [
         {
           "side": "web",
-          "match": "^(chọn|google cast|phát trên|phát trên thiết bị khác|phát trên \\{\\}|đang dừng trên|đang mở trên \\{\\}|đang phát trên|đang phát trên \\{\\}|ẩn)$",
+          "match": "^(chọn|google cast|phát trên|phát trên máy khác|phát trên \\{\\}|đang dừng trên|đang mở trên \\{\\}|đang phát trên|đang phát trên \\{\\}|ẩn)$",
           "reason": "web 'đang phát trên máy khác' bar and 'Phát trên' menu; native controls other players from the 'Thiết bị phát' sheet (CompanionSurfaces.kt)"
         },
         {
@@ -884,7 +899,7 @@
         },
         {
           "side": "web",
-          "match": "^(bật\\ quyền\\ riêng\\ cho\\ từng\\ thiết\\ bị\\ để\\ mở\\ studio\\ trong\\ trình\\ duyệt|bật\\ studio\\ từ\\ xa|quyền\\ điều\\ khiển|điều\\ khiển\\ từ\\ xa|điều\\ khiển\\ sản\\ xuất|điều\\ khiển\\ sản\\ xuất\\ từ\\ \\{\\}|tắt:\\ thiết\\ bị\\ đã\\ ghép\\ chỉ\\ tải\\ và\\ nghe\\ sách|mở|trình\\ duyệt:\\ mở|điện\\ thoại,\\ máy\\ tính\\ bảng|đang\\ hiện\\ mã\\ ghép|đang\\ tắt\\ \\-\\ máy\\ khác\\ không\\ thấy\\ máy\\ này|máy\\ cùng\\ mạng\\ thấy\\ máy\\ này\\ là\\ “\\{\\}”|máy\\ này|chưa\\ mở\\ được\\ cổng\\ đồng\\ bộ|chưa\\ bật\\ được\\ đồng\\ bộ|đã\\ tắt\\ chia\\ sẻ\\ qua\\ wi\\-fi|dừng\\ tải\\ và\\ đồng\\ bộ;\\ giữ\\ sách\\ đã\\ tải|kết\\ nối\\ lần\\ cuối|lần\\ cuối\\ \\{\\}|địa\\ chỉ\\ và\\ bluetooth|bluetooth:\\ điện\\ thoại\\ đã\\ ghép\\ nối\\ được\\ cả\\ khi\\ khác\\ wi\\-fi\\{\\}|đang\\ tải\\ kết\\ nối|đang\\ tải\\ thiết\\ bị|bạn\\ hãy\\ thử\\ tải\\ lại\\ cài\\ đặt\\ kết\\ nối|bạn\\ hãy\\ kiểm\\ tra\\ kết\\ nối\\ rồi\\ tải\\ lại\\ thiết\\ bị)$",
+          "match": "^(bật\\ quyền\\ riêng\\ cho\\ từng\\ thiết\\ bị\\ để\\ mở\\ studio\\ trong\\ trình\\ duyệt|bật\\ studio\\ từ\\ xa|quyền\\ điều\\ khiển|điều\\ khiển\\ từ\\ xa|điều\\ khiển\\ sản\\ xuất|cho\\ \\{\\}\\ điều\\ khiển|tắt:\\ thiết\\ bị\\ đã\\ ghép\\ chỉ\\ tải\\ và\\ nghe\\ sách|mở|trình\\ duyệt:\\ mở|điện\\ thoại,\\ máy\\ tính\\ bảng|đang\\ hiện\\ mã\\ ghép|đang\\ tắt\\ \\-\\ máy\\ khác\\ không\\ thấy\\ máy\\ này|máy\\ cùng\\ mạng\\ thấy\\ máy\\ này\\ là\\ “\\{\\}”|máy\\ này|chưa\\ mở\\ được\\ cổng\\ đồng\\ bộ|chưa\\ bật\\ được\\ đồng\\ bộ|đã\\ tắt\\ chia\\ sẻ\\ qua\\ wi\\-fi|dừng\\ tải\\ và\\ đồng\\ bộ;\\ giữ\\ sách\\ đã\\ tải|kết\\ nối\\ lần\\ cuối|lần\\ cuối\\ \\{\\}|địa\\ chỉ\\ và\\ bluetooth|bluetooth:\\ điện\\ thoại\\ đã\\ ghép\\ nối\\ được\\ cả\\ khi\\ khác\\ wi\\-fi\\{\\}|đang\\ tải\\ kết\\ nối|đang\\ tải\\ thiết\\ bị|bạn\\ hãy\\ thử\\ tải\\ lại\\ cài\\ đặt\\ kết\\ nối|bạn\\ hãy\\ kiểm\\ tra\\ kết\\ nối\\ rồi\\ tải\\ lại\\ thiết\\ bị)$",
           "reason": "computer hosting its library for phones: Wi-Fi sharing state, pairing code panel, remote-control permission (PhoneSync.tsx); the phone has its own share page"
         },
         {
@@ -899,7 +914,7 @@
         },
         {
           "side": "web",
-          "match": "^(máy\\ kia\\ không\\ trả\\ lời|về\\ máy\\ này|máy\\ tính\\ không\\ có\\ cuốn\\ này|bật\\ máy\\ kia\\ và\\ nối\\ cùng\\ wi\\-fi\\ để\\ phát)$",
+          "match": "^(máy\\ kia\\ im\\ lặng|về\\ máy\\ này|máy\\ tính\\ không\\ có\\ cuốn\\ này|bật\\ máy\\ kia\\ và\\ nối\\ cùng\\ wi\\-fi\\ để\\ phát)$",
           "reason": "computer bar shown while a book of another machine is open (PeerBar.tsx) and the 'player has no such book' line"
         },
         {
@@ -929,8 +944,8 @@
         },
         {
           "side": "web",
-          "match": "^(đang\\ tải\\ về\\ máy|đã\\ tải\\ “\\{\\}”\\ về\\ máy|phần\\ đã\\ tải\\ vẫn\\ giữ\\ trên\\ máy\\ này|tải\\ tiếp)$",
-          "reason": "web download status line / toasts under the book name; native has only the row states 'Đang tải' / 'Huỷ tải' / 'Thử lại' / 'Đã tải về máy' in the device list"
+          "match": "^(đang\\ tải\\ về\\ máy|đã\\ tải\\ “\\{\\}”\\ về\\ máy|phần\\ đã\\ tải\\ vẫn\\ giữ\\ trên\\ máy\\ này|tải\\ tiếp|đã\\ tải\\ xong)$",
+          "reason": "web download status line / toasts under the book name; native has only the row states 'Đang tải' / 'Huỷ tải' / 'Thử lại' / 'Đã tải xong' in the device list"
         },
         {
           "side": "web",
@@ -1498,7 +1513,7 @@
         },
         {
           "side": "web",
-          "label": "Đường dẫn file hay thư mục",
+          "label": "File hoặc thư mục",
           "reason": "Desktop only: AddBook path-paste input; Android uses the system document/tree picker and has no desktop filesystem paths to paste."
         },
         {
@@ -1535,6 +1550,11 @@
           "side": "web",
           "label": "Chưa nối được {}. Thử lại hoặc chọn ảnh trên máy.",
           "reason": "Unused web helper failedSourcesNote: no web caller; both real search grids show provider names from CoverSearch results and the same retry sentence. Android CoverSearch uses the same core provider fields, not hardcoded provider captions."
+        },
+        {
+          "side": "web",
+          "label": "Chọn lại sách",
+          "reason": "spoken name of the leave confirmation when picking files again while the queue still has books; the phone add-book screen has a single picker per run and only confirms on close ('Đóng hàng chờ' pane title)"
         }
       ],
       "deferred": [],
@@ -1664,8 +1684,8 @@
       "allow": [
         {
           "side": "native",
-          "label": "Bạn hãy thử lại.",
-          "reason": "generic retry sentence appended to a native failure line; the web puts the server message in a toast"
+          "label": "Chưa làm được",
+          "reason": "generic failure word on the native export line; the web puts the server message in a toast"
         },
         {
           "side": "native",
@@ -1721,7 +1741,7 @@
         },
         {
           "side": "web",
-          "match": "^(chưa\\ tải\\ được\\ công\\ cụ|công\\ cụ\\ ghép\\ âm\\ thanh|cập\\ nhật\\ công\\ cụ|thiếu\\ công\\ cụ\\ ghép|tải\\ công\\ cụ|tải\\ công\\ cụ\\ ghép\\ âm\\ thanh)$",
+          "match": "^(chưa\\ tải\\ được\\ công\\ cụ|ghép\\ âm\\ thanh|cập\\ nhật\\ công\\ cụ|thiếu\\ công\\ cụ\\ ghép|tải\\ công\\ cụ|tải\\ công\\ cụ\\ ghép\\ âm\\ thanh|đang\\ tải\\ công\\ cụ)$",
           "reason": "computer needs ffmpeg to join audio: download / update of the tool (AudiobookDialog.tsx); the phone encodes with its own codec"
         },
         {

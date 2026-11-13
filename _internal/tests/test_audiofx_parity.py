@@ -35,7 +35,7 @@ def test_audio_panel_copy_matches(label):
         assert label in copy_source(path), path
 
 
-@pytest.mark.parametrize("label", ["Có sẵn", "Của tôi", "Lưu âm sắc", "Tạo âm sắc", "Lưu đè", "Lưu thành mới", "Nhân bản", "Đổi tên", "Xoá", "Hoàn tác", "Dùng riêng cho sách này"])
+@pytest.mark.parametrize("label", ["Có sẵn", "Của tôi", "Lưu âm sắc", "Tạo âm sắc", "Lưu đè", "Lưu thành mới", "Nhân bản", "Đổi tên", "Xoá", "Hoàn tác", "Riêng sách này"])
 def test_preset_management_copy_matches(label):
     for path in [ROOT / "ui/src/listen/TonePage.tsx",
                  ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/TonePage.kt",

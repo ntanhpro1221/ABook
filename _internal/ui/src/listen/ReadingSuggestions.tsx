@@ -181,7 +181,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
         ) : (
           <section className="mt-4 max-w-xl py-3 text-left">
             <h2 className="text-sm font-medium">
-              <MotionRegion as="span">{S.s_goi_y_cho_phan_doc_8d550ff1}{pending ? S.s_0_chua_ap_85970233(pending) : ""}</MotionRegion>
+              <MotionRegion as="span">{S.s_goi_y_phan_doc_b268d95e}{pending ? S.s_0_chua_ap_85970233(pending) : ""}</MotionRegion>
             </h2>
             <SuggestionsBody bookId={book.id} suggestions={suggestions} />
             <MotionPresence open={pending > 0}>
@@ -204,7 +204,7 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
   const suggestions = useBookSuggestions(bookId);
   const { groups, pending, dismiss } = suggestions;
   if (!groups.length) return null;
-  const label = pending ? S.s_goi_y_cho_phan_doc_0_chua_ap_700c648b(pending) : S.s_goi_y_cho_phan_doc_8d550ff1;
+  const label = pending ? S.s_goi_y_cho_phan_doc_0_chua_ap_700c648b(pending) : S.s_goi_y_phan_doc_b268d95e;
   return (
     <>
       {slot
@@ -218,7 +218,7 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
             }}>{S.s_bo_qua_goi_y_bccec2b3}</Button>
           )}
           <Button variant="ghost" onClick={() => setOpen(false)}>{S.s_dong_5d54c2a1}</Button>
-        </DialogActions>} open={open} onOpenChange={setOpen} title={S.s_goi_y_cho_phan_doc_8d550ff1}>
+        </DialogActions>} open={open} onOpenChange={setOpen} title={S.s_goi_y_phan_doc_b268d95e}>
         <SuggestionsBody bookId={bookId} suggestions={suggestions} />
         {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}
 

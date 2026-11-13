@@ -86,7 +86,7 @@ it("hỏi lại sách hụt một lần (máy chủ khởi động lại, mạng
   state.book = listenBook();
   state.error = Object.assign(new Error("Failed to fetch"), { status: 0 });
   await book();
-  expect(host.textContent).not.toContain("Không tìm thấy sách này");
+  expect(host.textContent).not.toContain("Không thấy sách");
   expect(host.querySelector("h1")?.textContent).toBe("Sách A");
 });
 
@@ -95,7 +95,7 @@ it("sách thật sự không còn (404): nói không tìm thấy, kể cả khi 
   state.book = listenBook();
   state.error = Object.assign(new Error("Not found"), { status: 404 });
   await book();
-  expect(host.textContent).toContain("Không tìm thấy sách này");
+  expect(host.textContent).toContain("Không thấy sách");
 });
 
 it("nút phát một chương đã nghe gần hết (còn dưới 15 giây): phát từ đầu chương như 'Nghe tiếp', không phát 5 giây cuối rồi nhảy chương", async () => {

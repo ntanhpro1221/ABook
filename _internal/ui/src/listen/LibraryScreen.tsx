@@ -529,7 +529,7 @@ export function LibraryScreen({
   );
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
   const upcomingRows = useListPresence(upcomingShown, (book) => book.id);
-  const noResultsTitle = query ? S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query) : S.s_khong_co_sach_o_day_9b24f539;
+  const noResultsTitle = query ? S.s_khong_tim_thay_sach_nao_khop_0_3e17643f(query) : S.s_chua_co_sach_30843cb2;
   const grouped = true;
 
   return (

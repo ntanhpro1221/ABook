@@ -89,7 +89,7 @@ def test_tray_and_mini_shared_labels_are_detected():
     texts = {item.text for item in tool.qt_scan().items}
     assert {"Mở ABook", "Mở rộng", "Phát", "Tạm dừng", "Lùi {} giây", "Tới {} giây",
             "Chương trước", "Chương sau", "Cửa sổ mini", "Thoát ABook", "Ghim trên cùng",
-            "Thu vào khay khi đóng", "Tự mở cửa sổ mini"} <= texts
+            "Đóng vào khay", "Tự mở mini"} <= texts
 
 
 def test_detector_catches_each_kind(tmp_path):

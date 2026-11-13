@@ -76,7 +76,7 @@ export function useVoiceTry(bookId: string): {
     const known = heard.get(key);
     const playing = known !== undefined && clip.current === clipId(known);
     const loading = asking === key || (playing && clip.loading);
-    const label = playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_giong_0_doc_mot_cau_cua_sach_ef193b67(voiceName);
+    const label = playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_65a85c4d(voiceName);
     if (compact)
       return (
         <button

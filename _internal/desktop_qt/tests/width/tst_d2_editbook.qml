@@ -193,7 +193,7 @@ Item {
             const panel = make(coverFactory, {width: 500})
             reply("GET /api/books/c/cover/search?q=" + encodeURIComponent("Rỗng"), {status: 200, data: {results: [], failed: []}})
             panel.begin("c", "Rỗng")
-            tryCompare(panel, "hasEmpty", true)                           // "Bạn hãy chọn ảnh trên máy"
+            tryCompare(panel, "hasEmpty", true)                           // "Chọn ảnh trên máy"
             let picked = 0
             panel.chooseFile.connect(function() { picked++ })
             findChild(panel, "coverPickFile").clicked()

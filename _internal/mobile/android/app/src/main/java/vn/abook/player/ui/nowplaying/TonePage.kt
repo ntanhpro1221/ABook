@@ -123,7 +123,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
             BasicText(S.s_tone_add,style=Abook.type.label.copy(color=Abook.colors.accentText))
         }
         Spacer(Modifier.height(Dim.s8))
-        SwitchRow(S.s_tone_scope,lib.scoped,{enabled->AudioFx.changeTone { it.scope(enabled) }},"tone_scope")
+        SwitchRow(S.s_copy_0aedb2b2cf2b,lib.scoped,{enabled->AudioFx.changeTone { it.scope(enabled) }},"tone_scope")
         if(pending!=null) {
             BasicText(S.s_tone_leave,style=Abook.type.body)
             TextAction(S.s_tone_overwrite,{AudioFx.changeTone { it.save(it.preset?.name?:suggest,true) };finish()},"tone_overwrite")

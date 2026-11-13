@@ -336,7 +336,7 @@ Item {
             tryVerify(function() { return shown(page, "Máy bàn phòng làm việc") })
             tryVerify(function() { return shown(page, "Đã ghép") })
             tryVerify(function() { return shown(page, "Ghép máy") })
-            tryVerify(function() { return shown(page, "Nghe sách của máy tính khác") })
+            tryVerify(function() { return shown(page, "Sách trên máy khác") })
             const address = byName(page, "addressField"), code = byName(page, "codeField"), connect = byName(page, "connectComputer")
             tryVerify(function() { return shown(page, "Máy kia: Cài đặt › Thiết bị › bật “Kết nối Wi-Fi” để lấy mã; ghép một chiều để nghe thư viện của máy ấy.") })
             compare(connect.enabled, false)

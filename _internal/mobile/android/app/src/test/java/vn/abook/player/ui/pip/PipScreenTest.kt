@@ -49,7 +49,7 @@ import vn.abook.player.ui.theme.ThemeReveal
 
 /**
  * Cửa sổ nhỏ (PiP) trong giao diện: nội dung PiP sáng / tối (ảnh Roborazzi), nút "Cửa sổ mini" ở Đang nghe (chỉ khi máy cho PiP), khung chỉ còn nội dung PiP
- * và đóng mọi lớp phủ khi vào PiP, công tắc "Tự mở cửa sổ mini" ở Cài đặt.
+ * và đóng mọi lớp phủ khi vào PiP, công tắc "Tự mở mini" ở Cài đặt.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

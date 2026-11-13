@@ -8,7 +8,7 @@ import "../../qml/BookLogic.js" as BookText
 
 // Lỗ "chỉ web" của các màn ngoài Studio (docs/UI_PARITY_QT.md mục c): logic "Tìm trong sách" chép đủ ca của web listen/findText.test.ts (+ findStatus),
 // dòng chữ phần đầu trang sách (BookScreen.tsx / LibraryScreen.tsx bookStatusText), rồi giao diện: hàng nút phụ Đọc / Tìm / Từ đầu / Thêm, hộp Tìm
-// (nạp gộp search-texts, bàn phím, mở màn đọc đúng đoạn), "Nghe lại từ đầu" kèm "Quay lại chỗ cũ", "Không tìm thấy sách này", nút "Nghe ngay" của thẻ
+// (nạp gộp search-texts, bàn phím, mở màn đọc đúng đoạn), "Nghe lại từ đầu" kèm "Quay lại chỗ cũ", "Không thấy sách", nút "Nghe ngay" của thẻ
 // sách chỉ có chữ. Ảnh offscreen ghi ra build/d2shots/gaps_*.png.
 Item {
     id: host
@@ -362,7 +362,7 @@ Item {
             openPage(1440, "missing", "Sách đã xoá")
             const empty = one(page, "bookMissing")
             tryVerify(function() { return empty.visible && empty.opacity === 1 })
-            compare(empty.title, "Không tìm thấy sách này")
+            compare(empty.title, "Không thấy sách")
             compare(empty.text, "Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.")
             verify(!one(page, "bookStage").visible)
             verify(one(page, "bookMissingBack").visible)

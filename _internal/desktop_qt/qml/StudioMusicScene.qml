@@ -181,7 +181,7 @@ Column {
                 ink: Theme.text2
                 hoverInk: Theme.text
                 enabled: !root.busy
-                Accessible.name: S.s_them_tuy_chon_cho_doan_nay_6554b55d
+                Accessible.name: S.s_them_tuy_chon_a0b4bb6e
                 onClicked: root.menuRequested(more)
             }
         }

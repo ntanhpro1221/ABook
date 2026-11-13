@@ -165,8 +165,8 @@ def test_detector_accepts_current_labels_and_templates(strings):
     current = [
         {"name": "ok", "path": "#/", "steps": [
             {"text": "Thêm tuỳ chọn", "exact": True},
-            {"text": "Tuỳ chọn dự án Một Cuốn Nào Đó"},
-            {"selector": "button[aria-label^='Thêm tuỳ chọn cho Ch']"},
+            {"text": "Thêm tuỳ chọn: Một Cuốn Nào Đó"},
+            {"selector": "button[aria-label^='Thêm tuỳ chọn: Ch']"},
             {"selector": "section[aria-label='Trình phát'] button", "text": "Thêm tuỳ chọn", "exact": True},
         ]},
     ]

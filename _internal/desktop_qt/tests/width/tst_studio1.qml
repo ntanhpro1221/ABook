@@ -207,7 +207,7 @@ Item {
             reply("GET /api/library", library([], {rootMissing: true, root: "E:\\Sách của tôi"}))
             page.studioStore.loadLibrary()
             tryVerify(function() { return shown(one(page, "projectsMissing")) })
-            compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy thư mục thư viện “Sách của tôi”")
+            compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy “Sách của tôi”")
             verify(hasText(page, "Chọn thư mục"))
         }
         function test_newProjectButtonOpensTheBuilder() {
@@ -282,7 +282,7 @@ Item {
                 {tag: "paused", book: s.paused, label: "Tiếp tục", icon: "play"},
                 {tag: "stopped", book: s.stopped, label: "Tiếp tục", icon: "play"},
                 {tag: "done", book: s.done, label: "Nghe trong Thư viện", icon: "headphones"},
-                {tag: "apply", book: s.apply, label: "Áp dụng 3 thay đổi", icon: "refresh-cw"}
+                {tag: "apply", book: s.apply, label: "Áp dụng (3)", icon: "refresh-cw"}
             ]
         }
         function test_primary(d) {
@@ -361,10 +361,10 @@ Item {
         }
         function test_applyChangesAsksThenStarts() {
             const page = openBook(bookStates().apply, [chapter(1)])
-            compare(one(page, "primaryButton").text, "Áp dụng 3 thay đổi")
+            compare(one(page, "primaryButton").text, "Áp dụng (3)")
             one(page, "primaryButton").clicked()
             tryVerify(function() { return applyShown(page) !== undefined })
-            compare(applyShown(page).title, "Áp dụng 3 thay đổi?")
+            compare(applyShown(page).title, "Áp dụng (3)?")
             compare(calls("POST", "/api/books/apply/start").length, 0)
             applyShown(page).chosen("go")
             tryVerify(function() { return calls("POST", "/api/books/apply/start").length === 1 })
@@ -500,7 +500,7 @@ Item {
             reply("GET /api/books/idle", {status: 404, data: {error: "không có"}})
             page.studioStore.loadBook()
             tryVerify(function() { return shown(one(page, "projectGone")) })
-            compare(one(one(page, "projectGone"), "emptyTitle").text, "Dự án này không còn")
+            compare(one(one(page, "projectGone"), "emptyTitle").text, "Không còn dự án")
             one(page, "projectGoneBack").clicked()
             tryCompare(page, "shownKey", "route:list")
         }

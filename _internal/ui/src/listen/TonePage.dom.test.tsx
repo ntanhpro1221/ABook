@@ -24,9 +24,9 @@ it('shows all built-in names, creates a named preset, duplicates, reorders and d
   expect(host.textContent).toContain('−4 dB');expect(host.textContent).not.toMatch(/-\d+ dB/);
   await act(async()=>changeTone(l=>l.edit(0,8)));expect(host.textContent).toContain('Tự chỉnh (chưa lưu)');
   await click('Lưu âm sắc');expect((host.querySelector('input[maxlength]') as HTMLInputElement).value).toBe('Của tôi 1');await submit();
-  expect(getTones().data.mine).toHaveLength(1);await click('Thêm tuỳ chọn cho Của tôi 1');await click('Nhân bản');await submit();expect(getTones().data.mine).toHaveLength(2);
+  expect(getTones().data.mine).toHaveLength(1);await click('Thêm tuỳ chọn: Của tôi 1');await click('Nhân bản');await submit();expect(getTones().data.mine).toHaveLength(2);
   const copy=getTones().data.mine[1];await act(async()=>button(copy.name).dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',altKey:true,bubbles:true})));
-  expect(getTones().data.mine[0].id).toBe(copy.id);await click(`Thêm tuỳ chọn cho ${copy.name}`);await click('Xoá');expect(getTones().data.mine).toHaveLength(1);expect(host.querySelector('[role=alertdialog]')).toBeNull();
+  expect(getTones().data.mine[0].id).toBe(copy.id);await click(`Thêm tuỳ chọn: ${copy.name}`);await click('Xoá');expect(getTones().data.mine).toHaveLength(1);expect(host.querySelector('[role=alertdialog]')).toBeNull();
   await click('Tạo âm sắc');await submit();expect(getTones().data.mine).toHaveLength(2);
 });
 it.each(['Lưu đè','Lưu thành mới'])('asks only when leaving an edited user preset: %s',async(choice)=>{

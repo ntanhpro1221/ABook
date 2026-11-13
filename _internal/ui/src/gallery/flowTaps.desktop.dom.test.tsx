@@ -57,7 +57,7 @@ it("L2 nghe tiếp: 1 chạm từ Thư viện", async () => {
 
 it("L3 mở trình phát: 1 chạm vào thanh phát", async () => {
   await start("desktop/player-playing");
-  await tap("Mở màn hình đang nghe");
+  await tap("Mở trình phát");
   await waitFor(() => find(/^Thu nhỏ/) || document.querySelector('[role="dialog"][data-state="open"]'), "trình phát");
   expect(taps).toBe(1);
 });
@@ -83,7 +83,7 @@ it("L3b trang sách: nút chính phát rồi mở trình phát, 1 chạm", async
 
 it("L3b trang sách: dòng chương đang nạp mở trình phát, icon đầu dòng chỉ phát / dừng", async () => {
   await start("desktop/book");
-  const row = await waitFor(() => [...document.querySelectorAll<HTMLElement>('button[aria-label="Mở màn hình đang nghe"]')].find((button) => button.closest("[data-book-layout] ") && !button.hasAttribute("data-book-cover-open")), "dòng chương đang nạp");
+  const row = await waitFor(() => [...document.querySelectorAll<HTMLElement>('button[aria-label="Mở trình phát"]')].find((button) => button.closest("[data-book-layout] ") && !button.hasAttribute("data-book-cover-open")), "dòng chương đang nạp");
   const icon = row.parentElement!.querySelector<HTMLElement>("button")!;
   expect(icon).not.toBe(row);
   icon.click();

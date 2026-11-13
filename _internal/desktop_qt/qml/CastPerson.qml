@@ -179,8 +179,8 @@ Item {
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text
-            tip: S.s_them_tuy_chon_cho_5ddcac37 + root.shownName
-            Accessible.name: S.s_them_tuy_chon_cho_5ddcac37 + root.shownName
+            tip: S.s_them_tuy_chon_cho_0_82a2cf4d(root.shownName)
+            Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.shownName)
             onClicked: root.menuRequested(more, root.person)
         }
     }

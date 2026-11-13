@@ -576,7 +576,7 @@ class BookFormsTest {
         var asked = 0
         editorScreen(edit.copy(edits = 3), discard = { asked++ })
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("discard_edits"))
-        rule.onNodeWithText("Bỏ mọi thay đổi (3)").assertIsDisplayed()
+        rule.onNodeWithText("Bỏ thay đổi (3)").assertIsDisplayed()
         rule.onNodeWithText(ReadingText.DISCARD_HINT).assertIsDisplayed()
         rule.onNodeWithTag("discard_edits").performClick()
         assertEquals(1, asked)
@@ -696,7 +696,7 @@ class BookFormsTest {
     private fun coverNothing(dark: Boolean, name: String?) {
         val source = FakeEditSource(edit)
         coverSearch(source, dark)
-        rule.onNodeWithText("Bạn hãy chọn ảnh trên máy").assertIsDisplayed()
+        rule.onNodeWithText("Chọn ảnh trên máy").assertIsDisplayed()
         rule.onNodeWithTag("cover_pick_file").assertIsDisplayed()
         if (name != null) shot(name)
     }

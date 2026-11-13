@@ -606,7 +606,7 @@ Item {
             verify(hasText(page, "Đã xem hết"))
             verify(hasText(page, "Mọi câu đáng lo đều đã có phán quyết."))
             one(page, "reviewFilter").picked("done")
-            tryVerify(function() { return hasText(page, "Chưa đánh dấu câu nào") })
+            tryVerify(function() { return hasText(page, "Chưa đánh dấu") })
             verify(hasText(page, "Nghe một câu rồi bấm Ổn hoặc Cần thu lại."))
         }
 

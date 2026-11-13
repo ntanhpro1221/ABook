@@ -98,7 +98,7 @@ Column {
                         objectName: "narratorName"
                         y: 4
                         width: parent.width
-                        label: S.s_ten_nguoi_ke_cua_doan_94204731
+                        label: S.s_ten_nguoi_ke_d492ccfb
                         placeholderText: S.s_ten_nguoi_ke_d492ccfb
                         onTextChanged: if (text.length > 80) text = text.slice(0, 80)
                         onAccepted: if (root.typed) root.save({action: "choose", narrator: root.typed})
