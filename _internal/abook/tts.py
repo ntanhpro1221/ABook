@@ -1364,19 +1364,22 @@ class TTSCoordinator:
         # đổi "III" thành "I. I" và "Aaaa" thành "A... a" trước khi luật theo chữ kịp nhận ra); chữ của bảng phát âm giữ nguyên.
         before_tn = text
         changed_words: list[tuple[int, int, int, int]] = []
-        text, anchor_tags = studio_tn_tagged(
-            text, anchor_tags, self._origin_of_book(), speaks_english,
-            changed_words=changed_words,
-            direct_english=direct_english,
-            punctuation_prepared=True,
-            readings=self._book_name_readings(),
-            unprotected_anchors=frozenset(
-                int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
-                and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {
-                    "rule_romanization", LISTENER_PRONUNCIATION_SOURCE,
-                }))
-            ),
-        )
+        from .readaloud.phoneme_policy import book_rulings
+
+        with book_rulings(self.shared_rulings()):
+            text, anchor_tags = studio_tn_tagged(
+                text, anchor_tags, self._origin_of_book(), speaks_english,
+                changed_words=changed_words,
+                direct_english=direct_english,
+                punctuation_prepared=True,
+                readings=self._book_name_readings(),
+                unprotected_anchors=frozenset(
+                    int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
+                    and not (anchor.get("japanese_fallback") or (self._origin_of_book() == "ja" and str(anchor["source"]) in {
+                        "rule_romanization", LISTENER_PRONUNCIATION_SOURCE,
+                    }))
+                ),
+            )
         present = set().union(*anchor_tags) if anchor_tags else set()
         anchors[:] = [
             anchor for anchor in anchors
