@@ -69,6 +69,9 @@ def reading_punctuation(text: str, protected_spans: Sequence[tuple[int, int]] = 
     return "".join(parts), mapping
 
 
+ELISION_MARKS = "'’ʼ′`´"
+
+
 def separate_digit_quotes(text: str) -> str:
     """Keep quote/prime marks away from numbers in voice text only.
 
@@ -89,8 +92,11 @@ def separate_digit_quotes(text: str) -> str:
     if not marks:
         return text
     group = "[" + re.escape(marks) + "]+"
-    text = re.sub(r"(?<!\w)([^\W\d_])(" + group + r")(?!\w)",
-                  lambda match: match[1] + " " * len(match[2]), text)
+    # An elision mark after a lone letter ("n'") is not a prime; quotation marks stay.
+    elisions = "".join(sorted(set(marks) & set(ELISION_MARKS)))
+    if elisions:
+        text = re.sub(r"(?<!\w)([^\W\d_])([" + re.escape(elisions) + r"]+)(?!\w)",
+                      lambda match: match[1] + " " * len(match[2]), text)
     return re.sub(r"(?<=\d)" + group + "|" + group + r"(?=\d)",
                   lambda match: " " * len(match.group()), text)
 

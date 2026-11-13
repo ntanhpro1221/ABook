@@ -124,3 +124,11 @@ def test_ordinals_and_powered_units_keep_their_numeric_context(source, phrase):
 
     said = studio_tn(source, None, True, direct_english=True)[0]
     assert phrase in vieneu_engine.normalize([said])
+
+
+@pytest.mark.parametrize("source", ["Cô nói “Ồ” rồi đi.", "Chữ “A” đây."])
+def test_quotation_marks_after_a_lone_letter_stay(source):
+    from abook.readaloud.studio_tn import separate_digit_quotes
+
+    assert separate_digit_quotes(source) == source
+

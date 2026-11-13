@@ -904,6 +904,8 @@ object VieneuUnits {
         }).trimEnd() }
     }
 
+    private const val ELISION_MARKS = "'’ʼ′`´"
+
     /** Same voice-only guard as studio_tn.separate_digit_quotes: adjacent primes are spoken as units by sea-g2p. */
     internal fun separateDigitQuotes(text: String): String {
         val marks = text.codePoints().toArray().filter { cp ->
@@ -915,8 +917,13 @@ object VieneuUnits {
         }.distinct()
         if (marks.isEmpty()) return text
         val group = "[" + Regex.escape(String(marks.toIntArray(), 0, marks.size)) + "]+"
-        val separated = Regex("""(?<![$W])(\p{L})($group)(?![$W])""").replace(text) {
-            it.groupValues[1] + " ".repeat(it.groupValues[2].codePointCount(0, it.groupValues[2].length))
+        // An elision mark after a lone letter ("n'") is not a prime; quotation marks stay.
+        val elisions = marks.filter { it in ELISION_MARKS.codePoints().toArray() }
+        val separated = if (elisions.isEmpty()) text else {
+            val elision = "[" + Regex.escape(String(elisions.toIntArray(), 0, elisions.size)) + "]+"
+            Regex("""(?<![$W])(\p{L})($elision)(?![$W])""").replace(text) {
+                it.groupValues[1] + " ".repeat(it.groupValues[2].codePointCount(0, it.groupValues[2].length))
+            }
         }
         return Regex("(?<=\\p{Nd})$group|$group(?=\\p{Nd})").replace(separated) {
             " ".repeat(it.value.codePointCount(0, it.value.length))
