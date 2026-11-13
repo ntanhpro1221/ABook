@@ -35,6 +35,7 @@ object PhonemePolicy {
         val eligible = ruledVietnameseWords(spoken, source, rulings)
         val rendered = mutableListOf<String>()
         val generatedPositions = mutableSetOf<Int>()
+        val ruledPositions = mutableSetOf<Int>()
         val runs = Regex("<en>.*?</en>|\\S+").findAll(spoken).map { it.value }.toList()
         val original = source?.trim()?.split(Regex("\\s+")) ?: emptyList()
         val singleRendering = original.size == 1 && !spoken.equals(source, ignoreCase = true)
@@ -44,6 +45,7 @@ object PhonemePolicy {
             val changed = '-' in run || singleRendering || (original.size == runs.size && !run.equals(original[index], ignoreCase = true))
             val generated = changed && "<en>" !in run && syllables.isNotEmpty() && syllables.all { EnglishPolicy.vietnamese(it.trimEnd('_')) }
             if (generated) generatedPositions.addAll(rendered.size until rendered.size + syllables.size)
+            if (index in eligible) ruledPositions.addAll(rendered.size until rendered.size + syllables.size)
             rendered.addAll(syllables.map { respellRareRimes(it.trimEnd('_')) })
         }
         val tokens = given.trim().split(Regex("\\s+"))
@@ -56,7 +58,7 @@ object PhonemePolicy {
         for ((index, token) in tokens.withIndex()) {
             inside = inside || "<en>" in token
             val word = token.trim(*WORD_EDGE.toCharArray())
-            if (!inside && (word in eligible || aligned && index in generatedPositions)) levelProbe(word, g2p)?.let { probe ->
+            if (!inside && aligned && (index in ruledPositions || index in generatedPositions)) levelProbe(word, g2p)?.let { probe ->
                 val core = phones[index].trimEnd(*PHONEME_MARKS.toCharArray())
                 phones[index] = probe + phones[index].drop(core.length)
             }
@@ -66,11 +68,26 @@ object PhonemePolicy {
     }
 
     /** Preserve the learned context guards for a roster word used as English prose. */
-    fun ruledVietnameseWords(text: String, source: String? = null, rulings: Rulings? = null): Set<String> {
+    fun ruledVietnameseWords(text: String, source: String? = null, rulings: Rulings? = null): Set<Int> {
         if (rulings == null) return emptySet()
-        return rulings.names.filter { it !in shared.words }.toSet() +
-            sharedWordVerdicts(text, capitalised(text, source), rulings)
-                .filter { it.vietnamese && it.who in setOf("ruling", "roster") }.map { it.word }
+        val starts = Regex("\\S+").findAll(text).map { it.range.first }.toList()
+        val english = EnglishPolicy.englishContext(text.trim().split(Regex("\\s+")))
+        val verdicts = sharedWordVerdicts(text, capitalised(text, source), rulings).iterator()
+        val positions = mutableSetOf<Int>()
+        for (match in token.findAll(text)) {
+            if (match.groups[3] != null) continue
+            val word = (match.groups[1]?.value?.let { it.substring(4, it.length - 5).trim() }
+                ?: match.groups[2]!!.value).lowercase(Locale.ROOT)
+            val position = starts.indexOfLast { it <= match.range.first }
+            val written = match.groups[1]?.value ?: match.groups[2]!!.value
+            val claimed = if (word in shared.words) {
+                val verdict = verdicts.next()
+                verdict.vietnamese && verdict.who in setOf("ruling", "roster") &&
+                    !(verdict.who == "roster" && position in english && written.first().isLowerCase())
+            } else word in rulings.names && (position !in english || written.first().isUpperCase())
+            if (claimed) positions.add(position)
+        }
+        return positions
     }
     private val gi = Regex("(?<![\\p{L}\\p{N}_])gi(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
     private val bareZ = Regex("(?<!\\S)z(?=[.,!?;:…]*(?:\\s|$))")

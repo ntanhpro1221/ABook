@@ -224,7 +224,7 @@ object EnglishPolicy {
         for ((index, token) in toks.withIndex()) {
             if (index in protected) continue
             val (before, core, after) = Names.splitToken(token)
-            if (core.lowercase(Locale.ROOT) in ruled && vietnamese(core)) {
+            if (index in ruled && vietnamese(core)) {
                 out[index] = before + core + after
                 continue
             }

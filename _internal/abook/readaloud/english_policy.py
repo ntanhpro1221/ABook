@@ -296,7 +296,7 @@ def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protect
         if index in protected:
             continue
         before, core, after = names.split_token(token)
-        if core.lower() in ruled and vietnamese(core):
+        if index in ruled and vietnamese(core):
             # A declared Vietnamese roster class must survive text routing too;
             # an English-context tag would otherwise defeat the phoneme ruling.
             out[index] = before + core + after

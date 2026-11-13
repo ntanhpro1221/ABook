@@ -96,6 +96,7 @@ def restore_generated_syllables(
     eligible = ruled_vietnamese_words(spoken, source, rulings)
     rendered = []
     generated_positions = set()
+    ruled_positions = set()
     runs = re.findall(r"<en>.*?</en>|[^\s]+", spoken)
     original = source.split() if source else []
     single_rendering = len(original) == 1 and spoken.casefold() != source.casefold()
@@ -112,6 +113,8 @@ def restore_generated_syllables(
         )
         if generated:
             generated_positions.update(range(len(rendered), len(rendered) + len(syllables)))
+        if index in eligible:
+            ruled_positions.update(range(len(rendered), len(rendered) + len(syllables)))
         rendered.extend(respell_rare_rimes(w.rstrip("_")) for w in syllables)
     tokens, phones = given.split(), phonemes.split()
     if len(tokens) != len(phones):
@@ -124,7 +127,7 @@ def restore_generated_syllables(
     for index, token in enumerate(tokens):
         inside = inside or "<en>" in token
         word = token.strip(_WORD_EDGE)
-        if not inside and (word in eligible or aligned and index in generated_positions):
+        if not inside and aligned and index in (ruled_positions | generated_positions):
             probe = _level_probe(word, g2p)
             if probe:
                 core = phones[index].rstrip(_PHONEME_MARKS)
@@ -133,17 +136,32 @@ def restore_generated_syllables(
     return " ".join(phones)
 
 
-def ruled_vietnamese_words(text: str, source: str | None = None, rulings: Rulings | None = None) -> set[str]:
-    """Honor roster classes with the learned context guards (e.g. An apple)."""
+def ruled_vietnamese_words(text: str, source: str | None = None, rulings: Rulings | None = None) -> set[int]:
+    """Whitespace-token positions adjudicated Vietnamese, never word identities."""
+    from bisect import bisect_right
+    from .english_policy import english_context
+
     if not rulings:
         return set()
-    words = set(rulings.names) - _shared().listed
-    words.update(
-        word
-        for word, claimed, _, who in shared_word_verdicts(text, capitalised(text, source), rulings)
-        if claimed and who in {"ruling", "roster"}
-    )
-    return words
+    starts = [m.start() for m in re.finditer(r"\S+", text)]
+    english = english_context(text.split())
+    verdicts = iter(shared_word_verdicts(text, capitalised(text, source), rulings))
+    positions = set()
+    for match in _TOKEN.finditer(text):
+        if match.group(3):
+            continue
+        word = (match.group(1)[4:-5].strip() if match.group(1) else match.group(2)).lower()
+        position = bisect_right(starts, match.start()) - 1
+        written = match.group(1) or match.group(2)
+        claimed = word in rulings.names and (position not in english or written[0].isupper())
+        if word in _shared().listed:
+            _, vietnamese, _, who = next(verdicts)
+            claimed = vietnamese and who in {"ruling", "roster"}
+            if who == "roster" and position in english and written[0].islower():
+                claimed = False
+        if claimed:
+            positions.add(position)
+    return positions
 
 
 def repair_syllabic_gi(text: str, phonemes: str) -> str:
