@@ -69,7 +69,13 @@ def _relaunch_outside(argv: list[str]) -> bool:
     ENV_DIR.mkdir(parents=True, exist_ok=True)
     env_file = ENV_DIR / f"{os.getpid()}_{time.time_ns()}.json"
     env_file.write_text(json.dumps(dict(os.environ)), encoding="utf-8")
-    command_line = subprocess.list2cmdline([sys.executable, str(Path(__file__).resolve()), OUTSIDE, str(env_file), *argv])
+    # WMI mở tiến trình mới với console riêng nếu là python.exe -> cửa sổ terminal trống hiện lên (13-11: thợ gọi
+    # python.exe run_detached.py). Bản chạy lại luôn là pythonw.exe cạnh interpreter đang chạy, bất kể người gọi.
+    interpreter = Path(sys.executable)
+    windowless = interpreter.with_name("pythonw.exe")
+    if interpreter.name.lower() == "python.exe" and windowless.is_file():
+        interpreter = windowless
+    command_line = subprocess.list2cmdline([str(interpreter), str(Path(__file__).resolve()), OUTSIDE, str(env_file), *argv])
     quote = lambda value: "'" + value.replace("'", "''") + "'"  # noqa: E731 - chuỗi PowerShell nháy đơn
     script = (
         "$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "

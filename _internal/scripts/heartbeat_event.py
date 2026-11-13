@@ -113,8 +113,9 @@ def snapshot() -> dict:
 class Watch:
     """Nhớ những gì đã thấy; `observe` trả về các câu cần reo (rỗng = canh tiếp)."""
 
-    def __init__(self, first: dict, quiet: tuple[str, ...] = ()) -> None:
+    def __init__(self, first: dict, quiet: tuple[str, ...] = (), mute: tuple[str, ...] = ()) -> None:
         self.quiet = quiet
+        self.mute = mute
         self.roots = set(first["roots"] or [])
         self.done = int(first["done"])
         self.problems = set(first["problems"])
@@ -132,6 +133,9 @@ class Watch:
             # Việc của luồng khác (`--quiet`) xong êm (mã 0) thì không reo: mỗi lần reo là một lượt đầy đủ của phiên Lead
             # (chủ sách 05-10: thức mỗi vài phút vì từng chương của Model tốn token). Hỏng (mã khác 0) thì vẫn reo.
             fresh = [line for line in fresh if not ("(mã 0)" in line and any(part in line for part in self.quiet))]
+            # `--mute`: tiến trình canh do việc khác tự thả lại liên tục (vd goldrun hand18/watch.py bị thay mỗi vài phút,
+            # mã -1) - không reo dù mã gì; việc ấy có thư lead_inbox riêng khi xong (07-11).
+            fresh = [line for line in fresh if not any(part in line for part in self.mute)]
             if fresh:
                 ring.append("việc rời xong: " + " | ".join(line.strip() for line in fresh))
         fresh_letters = sorted(set(now.get("letters", [])) - self.letters)
@@ -174,6 +178,8 @@ def main(argv: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--every", type=float, default=60.0, help="giây giữa hai lần dò")
+    parser.add_argument("--mute", action="append", default=[],
+                        help="việc rời có chuỗi này thì không bao giờ reo, kể cả hỏng (lặp được)")
     parser.add_argument("--quiet", action="append", default=[],
                         help="việc rời có chuỗi này trong dòng lệnh mà xong êm thì không reo (lặp được)")
     args = parser.parse_args(argv)
@@ -190,7 +196,7 @@ def main(argv: list[str]) -> int:
                 break
             time.sleep(args.every)
             first = snapshot()
-        watch = Watch(first, tuple(args.quiet))
+        watch = Watch(first, tuple(args.quiet), tuple(args.mute))
         print(f"chuông A canh từ {time.strftime('%H:%M:%S ngày %d-%m')}: ranh giới {sorted(watch.roots) or 'không có'}"
               f" | {watch.done} việc rời đã xong | vấn đề sẵn có: {sorted(watch.problems) or 'không'}"
               f" | {'PIN' if watch.battery else 'cắm sạc'}", flush=True)

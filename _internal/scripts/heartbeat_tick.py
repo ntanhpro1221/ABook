@@ -96,6 +96,8 @@ def processes() -> list[tuple[int, int, str]]:
                 "powershell",
                 "-NoProfile",
                 "-Command",
+                # PowerShell 5.1 ghi theo bảng mã OEM: dòng lệnh tiếng Việt (prompt `claude -p`, đặc tả) vỡ chữ làm hỏng JSON (07-11)
+                "[Console]::OutputEncoding = [Text.Encoding]::UTF8; "
                 "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine"
                 " | ConvertTo-Json -Compress",
             ],
@@ -107,7 +109,7 @@ def processes() -> list[tuple[int, int, str]]:
             errors="replace",
             timeout=60,
         ).stdout or "[]"
-        rows = json.loads(raw)
+        rows = json.loads(raw, strict=False)  # dòng lệnh có ký tự điều khiển (đặc tả nhiều dòng) làm hỏng cả bảng 07-11
     except (OSError, subprocess.SubprocessError, ValueError) as exc:
         say(f"(không đếm được tiến trình: {exc!r})")
         return []
