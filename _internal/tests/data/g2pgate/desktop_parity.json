@@ -1,6 +1,5 @@
 {
   "sea_g2p": "0.10.0",
-  "quality_hash": "d73a53dedf1b2ea61384c23951423763bc1894694a1dd2f2a8aa69e5da416b92",
   "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
   "cases": [
     {
@@ -145,10 +144,10 @@
           "pieces": [
             "Xâu"
           ],
-          "phonemes": "sˈəw."
+          "phonemes": "sˈə1w."
         }
       ],
-      "phonemes": "sˈəw."
+      "phonemes": "sˈə1w."
     },
     {
       "id": "token:007",
@@ -628,10 +627,10 @@
           "pieces": [
             "Cai-su"
           ],
-          "phonemes": "kˌaːj sˈu."
+          "phonemes": "kˈaːj sˈu."
         }
       ],
-      "phonemes": "kˌaːj sˈu."
+      "phonemes": "kˈaːj sˈu."
     },
     {
       "id": "token:030",
@@ -1216,10 +1215,10 @@
           "pieces": [
             "Rin-đâu"
           ],
-          "phonemes": "ɹˈin ɗˈəw."
+          "phonemes": "ɹˈin ɗˈə1w."
         }
       ],
-      "phonemes": "ɹˈin ɗˈəw."
+      "phonemes": "ɹˈin ɗˈə1w."
     },
     {
       "id": "token:058",
@@ -1491,10 +1490,10 @@
           "pieces": [
             "Giâu-xu-ke"
           ],
-          "phonemes": "zˈəw sˈu kˈɛ."
+          "phonemes": "zˈə1w sˈu kˈɛ."
         }
       ],
-      "phonemes": "zˈəw sˈu kˈɛ."
+      "phonemes": "zˈə1w sˈu kˈɛ."
     },
     {
       "id": "token:071",
@@ -1764,10 +1763,10 @@
           "pieces": [
             "Xa-cai"
           ],
-          "phonemes": "sˈaː kˌaːj."
+          "phonemes": "sˈaː kˈaːj."
         }
       ],
-      "phonemes": "sˈaː kˌaːj."
+      "phonemes": "sˈaː kˈaːj."
     },
     {
       "id": "token:084",
@@ -1890,10 +1889,10 @@
           "pieces": [
             "An-đâu"
           ],
-          "phonemes": "ˈaːn ɗˈəw."
+          "phonemes": "ˈaːn ɗˈə1w."
         }
       ],
-      "phonemes": "ˈaːn ɗˈəw."
+      "phonemes": "ˈaːn ɗˈə1w."
     },
     {
       "id": "token:090",
@@ -1974,10 +1973,10 @@
           "pieces": [
             "Ca-tâu"
           ],
-          "phonemes": "kˈaː t̪ˈəw."
+          "phonemes": "kˈaː t̪ˈə1w."
         }
       ],
-      "phonemes": "kˈaː t̪ˈəw."
+      "phonemes": "kˈaː t̪ˈə1w."
     },
     {
       "id": "token:094",
@@ -2352,10 +2351,10 @@
           "pieces": [
             "En-đâu"
           ],
-          "phonemes": "ˈɛn ɗˈəw."
+          "phonemes": "ˈɛn ɗˈə1w."
         }
       ],
-      "phonemes": "ˈɛn ɗˈəw."
+      "phonemes": "ˈɛn ɗˈə1w."
     },
     {
       "id": "token:112",
@@ -2415,10 +2414,10 @@
           "pieces": [
             "Câu-hây"
           ],
-          "phonemes": "kˈəw hˈəɪ."
+          "phonemes": "kˈə1w hˈəɪ."
         }
       ],
-      "phonemes": "kˈəw hˈəɪ."
+      "phonemes": "kˈə1w hˈəɪ."
     },
     {
       "id": "token:115",
@@ -2562,10 +2561,10 @@
           "pieces": [
             "Câu-chi"
           ],
-          "phonemes": "kˈəw tʃˈi."
+          "phonemes": "kˈə1w tʃˈi."
         }
       ],
-      "phonemes": "kˈəw tʃˈi."
+      "phonemes": "kˈə1w tʃˈi."
     },
     {
       "id": "token:122",
@@ -2583,10 +2582,10 @@
           "pieces": [
             "Mi-đâu"
           ],
-          "phonemes": "mˈi ɗˈəw."
+          "phonemes": "mˈi ɗˈə1w."
         }
       ],
-      "phonemes": "mˈi ɗˈəw."
+      "phonemes": "mˈi ɗˈə1w."
     },
     {
       "id": "token:123",
@@ -2709,10 +2708,10 @@
           "pieces": [
             "Sâu-ta"
           ],
-          "phonemes": "sˈəw t̪ˈaː."
+          "phonemes": "sˈə1w t̪ˈaː."
         }
       ],
-      "phonemes": "sˈəw t̪ˈaː."
+      "phonemes": "sˈə1w t̪ˈaː."
     },
     {
       "id": "token:129",
@@ -3276,10 +3275,10 @@
           "pieces": [
             "Xâu-xu-ke"
           ],
-          "phonemes": "sˈəw sˈu kˈɛ."
+          "phonemes": "sˈə1w sˈu kˈɛ."
         }
       ],
-      "phonemes": "sˈəw sˈu kˈɛ."
+      "phonemes": "sˈə1w sˈu kˈɛ."
     },
     {
       "id": "token:156",
@@ -3318,10 +3317,10 @@
           "pieces": [
             "i-tâu"
           ],
-          "phonemes": "ˈi t̪ˈəw."
+          "phonemes": "ˈi t̪ˈə1w."
         }
       ],
-      "phonemes": "ˈi t̪ˈəw."
+      "phonemes": "ˈi t̪ˈə1w."
     },
     {
       "id": "token:158",
@@ -3591,10 +3590,10 @@
           "pieces": [
             "Câu-ta-râu"
           ],
-          "phonemes": "kˈəw t̪ˈaː ɹˈəw."
+          "phonemes": "kˈə1w t̪ˈaː ɹˈə1w."
         }
       ],
-      "phonemes": "kˈəw t̪ˈaː ɹˈəw."
+      "phonemes": "kˈə1w t̪ˈaː ɹˈə1w."
     },
     {
       "id": "token:171",
@@ -4158,10 +4157,10 @@
           "pieces": [
             "Cai-na"
           ],
-          "phonemes": "kˌaːj nˈaː."
+          "phonemes": "kˈaːj nˈaː."
         }
       ],
-      "phonemes": "kˌaːj nˈaː."
+      "phonemes": "kˈaːj nˈaː."
     },
     {
       "id": "token:198",
@@ -4412,10 +4411,10 @@
           "pieces": [
             "Xu-đâu"
           ],
-          "phonemes": "sˈu ɗˈəw."
+          "phonemes": "sˈu ɗˈə1w."
         }
       ],
-      "phonemes": "sˈu ɗˈəw."
+      "phonemes": "sˈu ɗˈə1w."
     },
     {
       "id": "token:210",
@@ -4622,10 +4621,10 @@
           "pieces": [
             "Câu-ta"
           ],
-          "phonemes": "kˈəw t̪ˈaː."
+          "phonemes": "kˈə1w t̪ˈaː."
         }
       ],
-      "phonemes": "kˈəw t̪ˈaː."
+      "phonemes": "kˈə1w t̪ˈaː."
     },
     {
       "id": "token:220",
@@ -5151,10 +5150,10 @@
           "pieces": [
             "câu"
           ],
-          "phonemes": "kˈəw."
+          "phonemes": "kˈə1w."
         }
       ],
-      "phonemes": "kˈəw."
+      "phonemes": "kˈə1w."
     },
     {
       "id": "token:245",
@@ -5550,10 +5549,10 @@
           "pieces": [
             "Hốc-cai-đô"
           ],
-          "phonemes": "hˈoɜk kˌaːj ɗˈo."
+          "phonemes": "hˈoɜk kˈaːj ɗˈo."
         }
       ],
-      "phonemes": "hˈoɜk kˌaːj ɗˈo."
+      "phonemes": "hˈoɜk kˈaːj ɗˈo."
     },
     {
       "id": "token:264",
@@ -5825,10 +5824,10 @@
           "pieces": [
             "Ki-xu-sâu-ha-ru-ca-de"
           ],
-          "phonemes": "kˈi sˈu sˈəw hˈaː ɹˈu kˈaː zˈɛ."
+          "phonemes": "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ."
         }
       ],
-      "phonemes": "kˈi sˈu sˈəw hˈaː ɹˈu kˈaː zˈɛ."
+      "phonemes": "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ."
     },
     {
       "id": "token:277",
@@ -6323,10 +6322,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bố",
-          "lã"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6347,10 +6343,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bị",
-          "lưu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6371,10 +6364,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "tháo",
-          "tào"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6395,10 +6385,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "trác",
-          "đổng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6419,10 +6406,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "huyền",
-          "đức"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6443,10 +6427,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lý",
-          "thôi"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6467,10 +6448,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "thiệu",
-          "viên"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6491,10 +6469,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "phi",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6515,10 +6490,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "dĩ",
-          "quách"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6539,10 +6511,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "sách",
-          "tôn"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6563,10 +6532,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "thuật",
-          "viên"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6587,10 +6553,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "quốc",
-          "trung"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6611,11 +6574,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cung",
-          "nam",
-          "nhiên"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6636,10 +6595,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "thuyền",
-          "điêu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6660,10 +6616,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lý",
-          "nho"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6684,10 +6637,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cung",
-          "trần"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6708,10 +6658,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "biểu",
-          "lưu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6732,10 +6679,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "dương",
-          "phụng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6756,10 +6700,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "kiên",
-          "tôn"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6780,10 +6721,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "khiêm",
-          "đào"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6804,10 +6742,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hà",
-          "tiến"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6828,10 +6763,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "giả",
-          "hủ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6852,10 +6784,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "trương",
-          "tú"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6876,10 +6805,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "doãn",
-          "vương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6900,10 +6826,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "vi",
-          "điển"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6924,10 +6847,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bệ",
-          "tâu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6935,10 +6855,10 @@
           "pieces": [
             "Tâu Bệ"
           ],
-          "phonemes": "t̪ˈəw bˈe6."
+          "phonemes": "t̪ˈə1w bˈe6."
         }
       ],
-      "phonemes": "t̪ˈəw bˈe6."
+      "phonemes": "t̪ˈə1w bˈe6."
     },
     {
       "id": "token:326",
@@ -6948,10 +6868,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cao",
-          "thuận"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6972,10 +6889,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "dung",
-          "khổng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -6997,8 +6911,7 @@
       "book_names": true,
       "rulings": {
         "names": [
-          "do",
-          "lưu"
+          "do"
         ],
         "foreign": []
       },
@@ -7021,7 +6934,6 @@
       "book_names": true,
       "rulings": {
         "names": [
-          "chúc",
           "my"
         ],
         "foreign": []
@@ -7044,11 +6956,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cương",
-          "mã",
-          "tố"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7069,10 +6977,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "tuân",
-          "úc"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7093,10 +6998,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hạ",
-          "hầu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7117,10 +7019,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lý",
-          "túc"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7141,10 +7040,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "sử",
-          "thái"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7165,10 +7061,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "trương",
-          "tế"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7189,10 +7082,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "phổ",
-          "trình"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7213,10 +7103,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "chu",
-          "tuấn"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7237,10 +7124,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hoàng",
-          "tổ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7261,11 +7145,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hàn",
-          "thụy",
-          "trấn"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7286,10 +7166,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "quan",
-          "vũ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7310,10 +7187,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cấm",
-          "vu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7334,10 +7208,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lư",
-          "thực"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7358,10 +7229,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nguyên",
-          "đinh"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7382,10 +7250,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cái",
-          "hoàng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7406,11 +7271,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "la",
-          "quán",
-          "trung"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7431,11 +7292,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bính",
-          "kế",
-          "phan"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7456,10 +7313,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bảo",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7480,10 +7334,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đầu",
-          "đề"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7504,10 +7355,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hàn",
-          "tiêm"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7528,10 +7376,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "chử",
-          "hứa"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7552,10 +7397,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hán",
-          "nhà"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7576,10 +7418,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "gia",
-          "quách"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7600,10 +7439,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "giốc",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7624,10 +7460,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nhượng",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7648,10 +7481,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đây",
-          "đến"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7672,10 +7502,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hoa",
-          "hùng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7696,10 +7523,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lý",
-          "nhạc"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7720,10 +7544,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "lý",
-          "điển"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7744,10 +7565,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "báo",
-          "tào"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7768,10 +7586,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bưu",
-          "dương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7792,10 +7607,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hàn",
-          "đương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7816,10 +7628,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nhạc",
-          "tiến"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7840,10 +7649,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bưu",
-          "đốc"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7864,10 +7670,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đánh",
-          "được"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7888,10 +7691,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đánh",
-          "để"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7912,10 +7712,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "mã",
-          "đằng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7936,10 +7733,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "người",
-          "ấy"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7960,10 +7754,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "liêu",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -7984,10 +7775,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hồng",
-          "tào"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8008,10 +7796,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nhân",
-          "tào"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8032,11 +7817,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bố",
-          "lã",
-          "đánh"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8057,10 +7838,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đuôi",
-          "đầu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8081,10 +7859,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hàn",
-          "toại"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8105,11 +7880,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bố",
-          "lã",
-          "đến"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8130,10 +7901,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "anh",
-          "trương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8154,10 +7922,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "khuê",
-          "trần"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8178,10 +7943,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hoảng",
-          "từ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8202,10 +7964,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đánh",
-          "đến"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -8226,10 +7985,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "khoái",
-          "lương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -10887,10 +10643,10 @@
           "pieces": [
             "câu lạc bộ"
           ],
-          "phonemes": "kˈəw lˈaː6c bˈo6."
+          "phonemes": "kˈə1w lˈaː6c bˈo6."
         }
       ],
-      "phonemes": "kˈəw lˈaː6c bˈo6."
+      "phonemes": "kˈə1w lˈaː6c bˈo6."
     },
     {
       "id": "token:506",
@@ -10963,9 +10719,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "ai"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -11091,9 +10845,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "ai"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -11290,10 +11042,10 @@
           "pieces": [
             "Từ-châu"
           ],
-          "phonemes": "t̪ˌy2 tʃˈəw."
+          "phonemes": "t̪ˌy2 tʃˈə1w."
         }
       ],
-      "phonemes": "t̪ˌy2 tʃˈəw."
+      "phonemes": "t̪ˌy2 tʃˈə1w."
     },
     {
       "id": "token:525",
@@ -11542,10 +11294,10 @@
           "pieces": [
             "Duyện-châu"
           ],
-          "phonemes": "zwˈiɛ6n tʃˈəw."
+          "phonemes": "zwˈiɛ6n tʃˈə1w."
         }
       ],
-      "phonemes": "zwˈiɛ6n tʃˈəw."
+      "phonemes": "zwˈiɛ6n tʃˈə1w."
     },
     {
       "id": "token:537",
@@ -12046,10 +11798,10 @@
           "pieces": [
             "Ký-châu"
           ],
-          "phonemes": "kˈiɜ tʃˈəw."
+          "phonemes": "kˈiɜ tʃˈə1w."
         }
       ],
-      "phonemes": "kˈiɜ tʃˈəw."
+      "phonemes": "kˈiɜ tʃˈə1w."
     },
     {
       "id": "token:561",
@@ -12487,10 +12239,10 @@
           "pieces": [
             "Thanh-châu"
           ],
-          "phonemes": "tˈe-ɲ tʃˈəw."
+          "phonemes": "tˈe-ɲ tʃˈə1w."
         }
       ],
-      "phonemes": "tˈe-ɲ tʃˈəw."
+      "phonemes": "tˈe-ɲ tʃˈə1w."
     },
     {
       "id": "token:582",
@@ -13067,10 +12819,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bác",
-          "ái"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13091,10 +12840,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hoa",
-          "xuân"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13115,10 +12861,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "giao",
-          "quảng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13139,10 +12882,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bà",
-          "án"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13163,10 +12903,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "chị",
-          "dậu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13187,10 +12924,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "thưa",
-          "ông"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13211,10 +12945,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bạch",
-          "hải"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13235,10 +12966,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hạnh",
-          "ông"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13259,10 +12987,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "anh",
-          "dậu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13283,10 +13008,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hạnh",
-          "ông"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13307,10 +13029,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "dần",
-          "thằng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13331,10 +13050,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cái",
-          "tý"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13355,10 +13071,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "họa",
-          "sĩ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13379,10 +13092,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "ông",
-          "ấy"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13403,10 +13113,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "gòn",
-          "sài"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13427,10 +13134,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bà",
-          "nghị"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13451,9 +13155,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "đăm"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13474,10 +13176,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "không",
-          "được"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13485,10 +13184,10 @@
           "pieces": [
             "Không được"
           ],
-          "phonemes": "xˈoŋ ɗˌyə6c."
+          "phonemes": "xˌoŋ ɗˌyə6c."
         }
       ],
-      "phonemes": "xˈoŋ ɗˌyə6c."
+      "phonemes": "xˌoŋ ɗˌyə6c."
     },
     {
       "id": "token:627",
@@ -13498,10 +13197,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "long",
-          "xuyên"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13522,10 +13218,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "mai",
-          "đã"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13546,10 +13239,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "mai",
-          "đứng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13570,10 +13260,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "trời",
-          "ơi"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13594,10 +13281,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "hà",
-          "nội"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13618,10 +13302,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nghị",
-          "quế"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13642,9 +13323,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "sim"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13665,10 +13344,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cò",
-          "ông"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13689,10 +13365,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bà",
-          "hương"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13713,10 +13386,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "nam",
-          "việt"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13737,10 +13407,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "êm",
-          "đềm"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13761,10 +13428,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "bà",
-          "cán"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13785,10 +13449,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "cái",
-          "tỉu"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13809,10 +13470,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "tây",
-          "đi"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13833,11 +13491,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "biểu",
-          "chánh",
-          "hồ"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13858,10 +13512,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "giáo",
-          "nho"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13882,10 +13533,7 @@
       "readings": {},
       "book_names": true,
       "rulings": {
-        "names": [
-          "mai",
-          "nhưng"
-        ],
+        "names": [],
         "foreign": []
       },
       "units": [
@@ -13893,10 +13541,10 @@
           "pieces": [
             "Nhưng Mai"
           ],
-          "phonemes": "ɲˈyŋ mˈaːj."
+          "phonemes": "ɲˌyŋ mˈaːj."
         }
       ],
-      "phonemes": "ɲˈyŋ mˈaːj."
+      "phonemes": "ɲˌyŋ mˈaːj."
     },
     {
       "id": "token:644",
@@ -14147,10 +13795,10 @@
           "pieces": [
             "Cô-châu"
           ],
-          "phonemes": "kˈo tʃˈəw."
+          "phonemes": "kˈo tʃˈə1w."
         }
       ],
-      "phonemes": "kˈo tʃˈəw."
+      "phonemes": "kˈo tʃˈə1w."
     },
     {
       "id": "token:656",
@@ -14758,10 +14406,10 @@
           "pieces": [
             "Giu-i-chi-râu"
           ],
-          "phonemes": "zˈu ˈi tʃˈi ɹˈəw."
+          "phonemes": "zˈu ˈi tʃˈi ɹˈə1w."
         }
       ],
-      "phonemes": "zˈu ˈi tʃˈi ɹˈəw."
+      "phonemes": "zˈu ˈi tʃˈi ɹˈə1w."
     },
     {
       "id": "token:685",
@@ -14800,10 +14448,10 @@
           "pieces": [
             "a-câu"
           ],
-          "phonemes": "ˈaː kˈəw."
+          "phonemes": "ˈaː kˈə1w."
         }
       ],
-      "phonemes": "ˈaː kˈəw."
+      "phonemes": "ˈaː kˈə1w."
     },
     {
       "id": "token:687",
@@ -14928,10 +14576,10 @@
           "pieces": [
             "a-gia-nô-câu-gi"
           ],
-          "phonemes": "ˈaː zˈaː nˈo kˈəw zˈi."
+          "phonemes": "ˈaː zˈaː nˈo kˈə1w zˈi."
         }
       ],
-      "phonemes": "ˈaː zˈaː nˈo kˈəw zˈi."
+      "phonemes": "ˈaː zˈaː nˈo kˈə1w zˈi."
     },
     {
       "id": "token:693",
@@ -14991,10 +14639,10 @@
           "pieces": [
             "Gô-đâu"
           ],
-          "phonemes": "ɣˈo ɗˈəw."
+          "phonemes": "ɣˈo ɗˈə1w."
         }
       ],
-      "phonemes": "ɣˈo ɗˈəw."
+      "phonemes": "ɣˈo ɗˈə1w."
     },
     {
       "id": "token:696",
@@ -16009,6 +15657,90 @@
         }
       ],
       "phonemes": "mˈaː zˈɔj ɣˈaː."
+    },
+    {
+      "id": "token:744",
+      "class": "mixed",
+      "text": "Ði",
+      "origin": null,
+      "readings": {},
+      "book_names": true,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "Đi"
+          ],
+          "phonemes": "ɗˈi."
+        }
+      ],
+      "phonemes": "ɗˈi."
+    },
+    {
+      "id": "token:745",
+      "class": "mixed",
+      "text": "Ðang",
+      "origin": null,
+      "readings": {},
+      "book_names": true,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "Đang"
+          ],
+          "phonemes": "ɗˌaːŋ."
+        }
+      ],
+      "phonemes": "ɗˌaːŋ."
+    },
+    {
+      "id": "token:746",
+      "class": "mixed",
+      "text": "Ðan",
+      "origin": null,
+      "readings": {},
+      "book_names": true,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "Đan"
+          ],
+          "phonemes": "ɗˈaːn."
+        }
+      ],
+      "phonemes": "ɗˈaːn."
+    },
+    {
+      "id": "token:747",
+      "class": "mixed",
+      "text": "Ðông",
+      "origin": null,
+      "readings": {},
+      "book_names": true,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "Đông"
+          ],
+          "phonemes": "ɗˈoŋ."
+        }
+      ],
+      "phonemes": "ɗˈoŋ."
     }
   ]
 }

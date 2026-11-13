@@ -17,7 +17,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from abook.quality_policy import quality_implementation_hash
 from abook.readaloud import japanese_policy, names, shared_rulings, vieneu, vieneu_engine
 from abook.readaloud.phoneme_policy import Rulings, book_rulings
 
@@ -67,7 +66,7 @@ def public_cases():
             shared_rulings.name_readings(roster, origin) if cls in {"western", "korean", "japanese"} else {}
         )
         rulings = (
-            Rulings(names=set(token.lower().split()))
+            Rulings(names=set(shared_rulings.vietnamese_names(roster)))
             if cls in {"vietnamese", "chinese"}
             else Rulings(foreign=set(shared_rulings.foreign_names(roster)))
         )
@@ -97,19 +96,25 @@ def private_cases(source: Path, context: Path):
     return result
 
 
-def write(path: Path, cases, *, check=False):
-    payload = {
+def payload(cases):
+    # No quality-implementation hash: it changes with unrelated locked files
+    # (audio_io.py) and went stale unnoticed. tests/test_g2p_desktop_parity.py
+    # instead regenerates the cases from the current desktop code on every run.
+    return {
         "sea_g2p": importlib.metadata.version("sea-g2p"),
-        "quality_hash": quality_implementation_hash(),
         "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
         "cases": cases,
     }
+
+
+def write(path: Path, cases, *, check=False):
+    payload_ = payload(cases)
     if check:
-        assert load(path) == payload, f"Desktop parity fixture is stale: {path}"
+        assert load(path) == payload_, f"Desktop parity fixture is stale: {path}"
         print(f"Verified {len(cases)} cases: {path}")
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf8", newline="\n")
+    path.write_text(json.dumps(payload_, ensure_ascii=False, indent=2) + "\n", encoding="utf8", newline="\n")
     print(f"Wrote {len(cases)} cases: {path}")
 
 
