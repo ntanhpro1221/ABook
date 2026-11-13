@@ -204,6 +204,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   nhận thêm phép gấp vùng. Phép gấp chỉ thêm đường khớp tên, không thay `_segmental_phonemes` của câu.
   Chỉ y là nguyên âm đơn mới gấp i; neo giữ đ riêng khỏi d/r/gi qua `_normalize_anchor_transcript`;
   đường `diacritic_folded_exact` gấp đ->d như cũ (`_plain_folded_token`), key vùng mới thì không.
+  Giữ đ chỉ ở token so tên. Token thường trong alignment và mọi nhánh metric canonical (cả
+  `fold_tone=False` lẫn guard alias theo vùng) gấp đ->d theo chuẩn câu cũ; không siết PASS cũ
+  khi Whisper viết d thay đ ngoài tên. Kiểm bằng `test_asrjudge.py` và replay cùng bộ 524/13.468 đoạn.
+  Guard alias nhận từng cặp token qua luật câu cũ HOẶC luật vùng; không nối đ->d với d/gi/r.
+  Cờ provenance của token thường chặn gấp vùng trên d do bỏ gạch, nên ra/đa và giá/đã vẫn trượt.
   Đường so tên vùng chỉ bỏ thanh, giữ mũ/móc/breve và chuỗi nguyên âm kể cả khi G2P làm mất khác biệt.
   Thành phần giữ chữ có dấu đến khi tách nhánh: chỉ nhánh component cũ được nhận bản bỏ toàn dấu.
   Không ghép một phép gấp phụ âm mới với lệch nguyên âm (Ha-rư/Há dù phải trượt); các tương đương

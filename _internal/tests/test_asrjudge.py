@@ -23,6 +23,67 @@ def test_alias_accepts_only_tone_changes(word, heard):
     assert result['verdict'] == asr.ASR_PASS
 
 
+@pytest.mark.parametrize("region", ["", "Bắc", "Nam", "Trung"])
+@pytest.mark.parametrize("alias", [False, True])
+@pytest.mark.parametrize("repeat_count", [1, asr.SHORT_CONTEXT_REPEAT_COUNT])
+@pytest.mark.parametrize("ordinary,heard", [
+    ("đến đây rồi", "dến dây rồi"),
+    ("đi đâu", "di đâu"),
+    ("di dâu", "đi đâu"),
+])
+def test_name_sentence_keeps_legacy_d_stroke_pass(region, alias, repeat_count, ordinary, heard):
+    # Synthetic sentences, including the review's transliterated-name scenario.
+    spoken = f"Ha-ru-mi {ordinary}."
+    transcript = " ".join([f"Harumi {heard}."] * repeat_count)
+    anchor = dict(surface="Harumi", spoken_form="Ha-ru-mi", spoken_start=0,
+                  spoken_end=len("Ha-ru-mi"), asr_alias_only=alias)
+    raw = asr.WhisperVerifier(build_settings(), lambda _: None)._evaluate_transcript(
+        " ".join([spoken] * repeat_count), transcript, 8 * repeat_count)
+    result = asr.adjudicate_locked_name_anchors(
+        spoken, raw, [anchor], repeat_count=repeat_count,
+        min_similarity=.78, max_wer=.3, voice_region=region)
+    assert result['verdict'] == asr.ASR_PASS
+    metrics = result[asr.LOCKED_NAME_ANCHOR_METRICS_KEY]
+    assert metrics['canonical_similarity'] == 1.0
+    assert metrics['canonical_cer'] == metrics['canonical_wer'] == 0.0
+    assert metrics['ordinary_exact_match_count'] == len(ordinary.split()) * repeat_count
+    assert metrics['matched_occurrence_count'] == repeat_count
+
+
+@pytest.mark.parametrize("fold_tone", [False, True])
+@pytest.mark.parametrize("alias_region", [None, "", "Bắc", "Nam", "Trung"])
+def test_canonical_metrics_fold_d_stroke_on_every_sentence_path(fold_tone, alias_region):
+    # Exercise the metric boundary even if its caller retains name spelling.
+    units = [dict(kind="token", token=word) for word in ["đến", "đây"]]
+    operations = [dict(kind="substitute_token") for _ in units]
+    assert asr._canonical_locked_name_metrics(
+        units, operations, ["dến", "dây"], 0,
+        fold_tone=fold_tone, ordinary_alias_region=alias_region) == (1.0, 0.0, 0.0)
+
+
+@pytest.mark.parametrize("region", ["", "Bắc", "Nam", "Trung"])
+def test_name_comparison_still_keeps_d_stroke(region):
+    assert asr._normalize_anchor_transcript("Đa") == "đa"
+    assert asr._name_spelling_key("Đa", region) != asr._name_spelling_key("ra", region)
+    forms = asr._locked_name_anchor_forms(dict(spoken_form="Đa", surface="Daa"), region)
+    assert any(tokens == ("đa",) for _, tokens, _ in forms)
+    assert not asr._regional_syllables_match(("Đa",), "ra", region)
+    result = adjudicate("Anh Đa.", "Anh ra.", form="Đa", surface="Daa",
+                        region=region, alias=False)
+    assert result['verdict'] == asr.ASR_MISMATCH
+
+
+def test_sentence_stroke_and_regional_aliases_can_coexist_without_chaining():
+    result = adjudicate("Ha-ru-mi đến đây cứ chần chừ.",
+                        "Harumi dến dây cứ trần trừ.", region="Bắc")
+    assert result['verdict'] == asr.ASR_PASS
+    # A stroke folded to d cannot then acquire the regional d/gi/r merger.
+    for spoken, heard in [("ra", "đa"), ("đa", "ra"), ("giá", "đã"), ("đã", "giá")]:
+        result = adjudicate(f"Ha-ru-mi nói {spoken} rồi.",
+                            f"Harumi nói {heard} rồi.", region="Bắc")
+        assert result['verdict'] == asr.ASR_MISMATCH
+
+
 @pytest.mark.parametrize("word,heard", [("thản", "thẳng"), ("sưởi", "sửa"), ("cúi", "cuối"), ("ghế", "đá")])
 def test_alias_keeps_vowel_quality_codas_and_wrong_words(word, heard):
     result = adjudicate(f"Ha-ru-mi nói rất {word} rồi.", f"Harumi nói rất {heard} rồi.", region="Bắc")

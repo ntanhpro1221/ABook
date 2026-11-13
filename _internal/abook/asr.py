@@ -421,8 +421,8 @@ def normalize_transcript(text: str, *, preserve_d_stroke: bool = False) -> str:
 
 
 def _normalize_anchor_transcript(text: str) -> str:
-    # Name/ordinary alias comparisons must distinguish đ from d/r/gi.
-    # Sentence metrics retain their established normalization and phonemes.
+    # Only name comparisons distinguish đ from d/r/gi. Ordinary alignment and
+    # sentence metrics use normalize_transcript's established đ -> d folding.
     return normalize_transcript(text, preserve_d_stroke=True)
 
 
@@ -911,9 +911,9 @@ def _locked_name_anchor_token_span(
     if not normalized_spoken_form or normalized_span != normalized_spoken_form:
         return "spoken_span_text_mismatch"
 
-    prefix_tokens = _normalize_anchor_transcript(expected_spoken_text[:spoken_start]).split()
-    span_tokens = normalized_span.split()
-    suffix_tokens = _normalize_anchor_transcript(expected_spoken_text[spoken_end:]).split()
+    prefix_tokens = normalize_transcript(expected_spoken_text[:spoken_start]).split()
+    span_tokens = normalize_transcript(expected_spoken_text[spoken_start:spoken_end]).split()
+    suffix_tokens = normalize_transcript(expected_spoken_text[spoken_end:]).split()
     if prefix_tokens + span_tokens + suffix_tokens != expected_tokens:
         return "spoken_span_token_boundary_mismatch"
     return len(prefix_tokens), len(prefix_tokens) + len(span_tokens)
@@ -925,7 +925,21 @@ def _build_locked_name_alignment_units(
     repeat_count: int,
     voice_region: str = "",
 ) -> tuple[list[dict[str, Any]], dict[tuple[int, int], str]]:
-    expected_tokens = _normalize_anchor_transcript(expected_spoken_text).split()
+    expected_tokens = normalize_transcript(expected_spoken_text).split()
+    name_tokens = _normalize_anchor_transcript(expected_spoken_text).split()
+
+    def ordinary_units(start: int, end: int) -> list[dict[str, Any]]:
+        return [
+            {
+                "kind": "token",
+                "token": expected_tokens[index],
+                # A stroke folded by the sentence rule must not subsequently
+                # gain d/r/gi dialect alternatives (ra must not become đa).
+                "allow_regional_alias": "đ" not in name_tokens[index],
+            }
+            for index in range(start, end)
+        ]
+
     base_units: list[dict[str, Any]] = []
     invalid_anchor_indexes: dict[int, str] = {}
     cursor = 0
@@ -942,10 +956,7 @@ def _build_locked_name_alignment_units(
         if anchor_start < cursor:
             invalid_anchor_indexes[anchor_index] = "spoken_span_order_invalid"
             continue
-        base_units.extend(
-            {"kind": "token", "token": token}
-            for token in expected_tokens[cursor:anchor_start]
-        )
+        base_units.extend(ordinary_units(cursor, anchor_start))
         base_units.append(
             {
                 "kind": "anchor",
@@ -954,10 +965,7 @@ def _build_locked_name_alignment_units(
             }
         )
         cursor = anchor_end
-    base_units.extend(
-        {"kind": "token", "token": token}
-        for token in expected_tokens[cursor:]
-    )
+    base_units.extend(ordinary_units(cursor, len(expected_tokens)))
 
     units: list[dict[str, Any]] = []
     invalid_occurrences: dict[tuple[int, int], str] = {}
@@ -1035,7 +1043,9 @@ def _minimum_cost_locked_name_alignment(
                     {"kind": "delete_token"},
                 )
                 if transcript_index < len(transcript_tokens):
-                    exact = unit["token"] == transcript_tokens[transcript_index]
+                    # Keep the original name tokens for forms/regional matching,
+                    # but compare ordinary words with the sentence normalization.
+                    exact = unit["token"] == transcript_tokens[transcript_index].replace("đ", "d")
                     update(
                         state,
                         (unit_index + 1, transcript_index + 1),
@@ -1221,11 +1231,32 @@ def _canonical_locked_name_metrics(
     if transcript_cursor != len(transcript_tokens):
         raise RuntimeError("Locked-name canonical alignment did not consume transcript")
 
+    expected_regional_allowed = [
+        unit.get("allow_regional_alias", "đ" not in str(unit.get("token", "")))
+        for unit in units
+    ]
+    actual_regional_allowed = ["đ" not in token for token in actual_tokens]
+    # Name matching needs the stroke; sentence scoring never did. Fold before
+    # every scoring path, including tone phonemes and the strict alias guard.
+    expected_tokens = [token.replace("đ", "d") for token in expected_tokens]
+    actual_tokens = [token.replace("đ", "d") for token in actual_tokens]
+
     if ordinary_alias_region is not None:
-        return _sequence_metrics(
-            [_ordinary_alias_key(token, ordinary_alias_region) for token in expected_tokens],
-            [_ordinary_alias_key(token, ordinary_alias_region) for token in actual_tokens],
-        )
+        expected_alias = [
+            _ordinary_alias_key(token, ordinary_alias_region if allowed else "")
+            for token, allowed in zip(expected_tokens, expected_regional_allowed)
+        ]
+        actual_alias = [
+            _ordinary_alias_key(token, ordinary_alias_region if allowed else "")
+            for token, allowed in zip(actual_tokens, actual_regional_allowed)
+        ]
+        # The guard requires zero WER, so only corresponding tokens can pass.
+        # Accept the legacy sentence fold OR a regional alias for each pair;
+        # never chain the stroke fold into a new regional consonant merger.
+        for index, (expected, actual) in enumerate(zip(expected_tokens, actual_tokens)):
+            if _ordinary_alias_key(expected) == _ordinary_alias_key(actual):
+                actual_alias[index] = expected_alias[index]
+        return _sequence_metrics(expected_alias, actual_alias)
 
     # Fold tone here too, for the same reason the ordinary metrics do: a tone difference
     # on the words around a name says nothing about whether the take was good. Taking the
@@ -1347,9 +1378,12 @@ def _adjudicate_locked_name_anchors(
         raise ValueError("repeat_count must be a positive integer")
 
     result = dict(asr_result)
-    normalized_transcript = _normalize_anchor_transcript(str(result.get("transcript", "")))
-    transcript_tokens = normalized_transcript.split()
-    normalized_expected = _normalize_anchor_transcript(expected_spoken_text)
+    transcript = str(result.get("transcript", ""))
+    normalized_transcript = normalize_transcript(transcript)
+    # The alignment shares token positions, not comparison rules: name paths
+    # retain đ while ordinary tokens and canonical metrics fold it to d.
+    transcript_tokens = _normalize_anchor_transcript(transcript).split()
+    normalized_expected = normalize_transcript(expected_spoken_text)
     safe_anchors = [
         {
             str(key): _json_safe_anchor_value(value)
@@ -1385,7 +1419,7 @@ def _adjudicate_locked_name_anchors(
             "required_occurrence_count": required_occurrence_count,
             "matched_occurrence_count": 0,
             "expected_token_count": len(normalized_expected.split()),
-            "transcript_token_count": len(transcript_tokens),
+            "transcript_token_count": len(normalized_transcript.split()),
             "anchors": evidence,
         }
         return result
@@ -1621,7 +1655,7 @@ def _adjudicate_locked_name_anchors(
         "required_occurrence_count": required_occurrence_count,
         "matched_occurrence_count": matched_occurrence_count,
         "expected_token_count": len(normalized_expected.split()),
-        "transcript_token_count": len(transcript_tokens),
+        "transcript_token_count": len(normalized_transcript.split()),
         "alignment_edit_cost": alignment_score[0],
         "ordinary_exact_match_count": -alignment_score[1],
         "raw_similarity": result.get("similarity"),
