@@ -16,6 +16,10 @@ _internal/runtime/
 
 # Generated audiobook projects and transient worker files
 /Text_Tmp/
+# Agent work logs at the repository root never belong in the public tree
+/PROGRESS.md
+/result.md
+/_internal/PROGRESS.md
 project.sqlite3
 project.sqlite3-shm
 project.sqlite3-wal
