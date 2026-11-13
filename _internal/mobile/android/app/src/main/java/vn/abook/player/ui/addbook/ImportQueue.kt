@@ -168,7 +168,7 @@ class ImportQueue(
     }
 
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: S.s_ban_hay_thu_lai_5fc1a02b).joinToString(" ")
+    private fun failure(what: String, error: Exception) = listOfNotNull(what, error.message?.takeIf { it.isNotBlank() }).joinToString(" ")
 
     /**
      * "Bỏ phần còn lại" khi đóng Thêm sách giữa hàng (web AddBook `reset`): cuốn đang đọc dừng, bản tạm của cuốn đang xem bị bỏ, cả hàng về trống. Cuốn đã thêm vẫn ở

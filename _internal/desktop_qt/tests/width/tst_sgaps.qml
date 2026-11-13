@@ -242,8 +242,8 @@ Item {
         }
         function test_projectMenuNamesTheBook() {
             const page = openBook(book("menu", {title: "Kiếm Lai"}), [chapter(1)])
-            compare(one(page, "bookMore").Accessible.name, "Tuỳ chọn dự án Kiếm Lai")
-            compare(one(page, "bookMore").tip, "Tuỳ chọn dự án")
+            compare(one(page, "bookMore").Accessible.name, "Thêm tuỳ chọn cho Kiếm Lai")
+            compare(one(page, "bookMore").tip, "Thêm tuỳ chọn")
         }
 
         // ---- bảng chương ----

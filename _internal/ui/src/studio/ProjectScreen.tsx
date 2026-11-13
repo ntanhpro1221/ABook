@@ -599,7 +599,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            aria-label={S.s_tuy_chon_du_an_0_bd8165fe(book.title)}
+            aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(book.title)}
             className={cn(
               "touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
               className,
@@ -879,7 +879,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            aria-label={S.s_tuy_chon_0_1f5bbd67(chapter.displayTitle)}
+            aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(chapter.displayTitle)}
             className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
             <MoreHorizontal className="glyph ink-end" />

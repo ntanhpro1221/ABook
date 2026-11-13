@@ -323,7 +323,6 @@ internal object S {
     const val s_ban_hay_nhap_ten_chuong_e78e5b32 = "Bạn hãy nhập tên chương."
     const val s_ban_hay_nhap_ten_sach_da2b7a84 = "Bạn hãy nhập tên sách."
     const val s_ban_hay_tam_dung_doc_truoc_khi_thu_giong_fae1497f = "Bạn hãy tạm dừng đọc trước khi thử giọng"
-    const val s_ban_hay_thu_lai_5fc1a02b = "Bạn hãy thử lại."
     const val s_ban_hay_thu_tai_lai_danh_sach_cach_doc_78ca66ce = "Bạn hãy thử tải lại danh sách cách đọc."
     const val s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139 = "Bạn hãy thử tải lại nhạc của bạn."
     const val s_ban_hay_thu_tai_lai_nhac_nen_cua_cuon_nay_b4336281 = "Bạn hãy thử tải lại nhạc nền của cuốn này."
@@ -647,7 +646,6 @@ internal object S {
     const val s_chua_co_may_nao_ghep_bluetooth_ghep_o_cai_01e82050 = "Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại."
     const val s_chua_co_nhac_ed5dc66e = "Chưa có nhạc"
     const val s_chua_co_sach_30843cb2 = "Chưa có sách"
-    const val s_chua_co_sach_tren_may_1b1ca653 = "Chưa có sách trên máy"
     const val s_chua_co_tep_nao_7aee9d48 = "Chưa có tệp nào"
     const val s_chua_co_thay_doi_nao_file_giong_ban_goc_f109003f = "Chưa có thay đổi nào - file giống bản gốc."
     const val s_chua_co_trong_sach_5fecd5a8 = "chưa có trong sách"
@@ -1027,7 +1025,6 @@ internal object S {
     const val s_da_dung_lam_truoc_3658da6b = "Đã dừng làm trước."
     const val s_da_dung_tai_nhac_nen_6addc23d = "Đã dừng tải nhạc nền"
     const val s_da_dung_xuat_ab8ac9d1 = "Đã dừng xuất"
-    const val s_da_dung_xuat_m4b_642b41ce = "Đã dừng xuất M4B"
     const val s_da_duyet_het_d28b4c37 = "Đã duyệt hết"
     fun s_da_ghep_0_a04998dd(p0: Any?): String = "Đã ghép " + p0.toString()
     fun s_da_ghep_voi_may_0_11302662(p0: Any?): String = "đã ghép với máy " + p0.toString()
@@ -1081,7 +1078,6 @@ internal object S {
     fun s_da_san_sang_0_1_chuong_06edeb48(p0: Any?, p1: Any?): String = "Đã sẵn sàng " + p0.toString() + "/" + p1.toString() + " chương"
     fun s_da_tai_0_bai_1_3cac202f(p0: Any?, p1: Any?): String = "Đã tải " + p0.toString() + " bài · " + p1.toString()
     const val s_da_tai_b7362bbf = "Đã tải"
-    const val s_da_tai_ve_may_a3ac321b = "Đã tải về máy"
     const val s_da_tai_xong_118e7acc = "Đã tải xong"
     const val s_da_tai_xong_nghe_duoc_ca_khi_khong_co_mang_4eb58e30 = "Đã tải xong - nghe được cả khi không có mạng"
     fun s_da_them_0_2918e530(p0: Any?): String = "Đã thêm: " + p0.toString()
@@ -1678,6 +1674,7 @@ internal object S {
     const val s_hao_hung_fec61823 = "hào hùng"
     const val s_hay_dat_ten_mot_nguoi_moi_b6a6bc49 = "hay đặt tên một người mới"
     const val s_he_thong_android_da_dung_viec_tai_sau_6_gi_e8447973 = "Hệ thống Android đã dừng việc tải sau 6 giờ - bạn bấm Tải để làm tiếp"
+    const val s_hen_244e495e = "Hẹn"
     const val s_hen_gio_39d9ca26 = "Hẹn giờ"
     const val s_hen_gio_da_tat_tieng_luc_5d5e4231 = "Hẹn giờ đã tắt tiếng lúc "
     const val s_hen_gio_ngu_21073488 = "Hẹn giờ ngủ"
@@ -2434,7 +2431,6 @@ internal object S {
     const val s_so_485ed077 = "Sợ"
     const val s_so_chuong_6e52dccd = "Số chương"
     const val s_so_do_8c497a89 = "Số đỏ"
-    const val s_so_phut_hen_40312361 = "Số phút hẹn"
     const val s_studio_0aa91af2 = "Studio"
     const val s_studio_may_tinh_1773d208 = "Studio máy tính"
     const val s_studio_tam_dung_cam_sac_de_tiep_tuc_5704e36a = "Studio tạm dừng; cắm sạc để tiếp tục."

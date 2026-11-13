@@ -194,7 +194,7 @@ Item {
         iconSize: 16
         ink: Theme.text2
         hoverInk: Theme.text
-        Accessible.name: S.s_tuy_chon_d737e0db + (root.chapter.displayTitle || "")
+        Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.chapter.displayTitle || "")
         opacity: root.hot || !root.wide ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
         onClicked: root.menuRequested(more)

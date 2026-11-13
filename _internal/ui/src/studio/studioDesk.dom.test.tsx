@@ -114,7 +114,7 @@ it("đang chạy: Dừng, Xuất, Mở thư mục nằm trong \"…\", không ph
   const buttons = [...host.querySelectorAll("button")].map(text);
   expect(buttons).not.toContain("Dừng");
   expect(buttons).not.toContain("Xuất");
-  await openMenu(host.querySelector('[aria-label="Tuỳ chọn dự án Sách thử"]')!);
+  await openMenu(host.querySelector('[aria-label="Thêm tuỳ chọn cho Sách thử"]')!);
   expect(menuItems()).toEqual(expect.arrayContaining(["Nghe trong Thư viện", "Dừng", "2 thay đổi chờ áp", "Xuất", "Mở thư mục", "Đổi tên", "Xoá dự án"]));
 });
 

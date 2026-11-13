@@ -4,7 +4,7 @@ import ABook
 import "VoiceLogic.js" as VoiceLogic
 
 // Một giọng trong danh sách Cài đặt › Giọng đọc (li của VoiceSettings.tsx): radio "chọn làm mặc định" (dấu tích 20, tên 14/500 xuống dòng ở bất kỳ
-// đâu, giới 12 mực phụ, "Mặc định" 12 màu nhấn) + nút "Thử giọng" / "Dừng" cỡ nhỏ bên phải; vạch chia với giọng trên; lỗi nghe thử nằm ngay dưới
+// đâu, giới 12 mực phụ, "Mặc định" 12 màu nhấn) + nút "Nghe thử" / "Dừng" cỡ nhỏ bên phải; vạch chia với giọng trên; lỗi nghe thử nằm ngay dưới
 // hàng vừa bấm. Cả nhóm chỉ một điểm Tab (`tabbable`): mũi tên đổi chọn như radiogroup, nút thử chỉ vào vòng Tab ở đúng giọng ấy.
 Item {
     id: root
@@ -102,7 +102,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 size: "sm"
                 kind: "text"
-                text: root.playing ? S.s_dung_11554138 : S.s_thu_giong_c6ece39e
+                text: root.playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065
                 icon: root.playing ? "square" : "play"
                 busy: root.loading
                 activeFocusOnTab: root.tabbable || activeFocus

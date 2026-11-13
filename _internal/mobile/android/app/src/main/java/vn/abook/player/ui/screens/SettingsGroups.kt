@@ -148,7 +148,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
                     ValuePicker(
                         ValueSpecs.scheduleMinutes, schedule.minutes.toDouble(),
                         { minutes -> repo.change { now -> now.schedule?.let { now.copy(schedule = it.copy(minutes = minutes.toInt())) } ?: now } },
-                        ::minutesLabel, S.s_so_phut_hen_40312361, "schedule_minutes", Modifier.padding(vertical = Dim.s12), dense = true,
+                        ::minutesLabel, S.s_hen_244e495e, "schedule_minutes", Modifier.padding(vertical = Dim.s12), dense = true,
                     )
                 }
             }

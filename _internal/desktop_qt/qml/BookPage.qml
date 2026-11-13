@@ -532,7 +532,7 @@ Item {
                                 visible: root.moreMenu
                                 icon: "ellipsis"
                                 label: S.s_them_dd92626f
-                                Accessible.name: S.s_them_viec_voi_sach_da033e6f
+                                Accessible.name: S.s_them_tuy_chon_a0b4bb6e
                                 active: more.open
                                 onClicked: more.toggle()
                             }

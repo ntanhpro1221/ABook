@@ -274,7 +274,7 @@ Item {
             compare(sent.from, "22:00"); compare(sent.to, "06:00"); compare(sent.minutes, 30)
             verify(toggle.checked)
             tryVerify(function() { return window.height > 40 })
-            const from = choiceOf(window, "Từ"), to = choiceOf(window, "Đến"), minutes = choiceOf(window, "Số phút hẹn")
+            const from = choiceOf(window, "Từ"), to = choiceOf(window, "Đến"), minutes = choiceOf(window, "Hẹn")
             compare(from.currentLabel, "22:00")
             compare(to.currentLabel, "06:00")
             compare(minutes.value, 30)          // bộ chọn giá trị

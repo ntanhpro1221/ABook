@@ -104,7 +104,7 @@ class ShellScreenshotTest {
     @Test
     fun emptyLibraryLight() {
         show(library = LibraryState.Ready(emptyList()))
-        rule.onNodeWithText("Chưa có sách trên máy").assertIsDisplayed()
+        rule.onNodeWithText("Chưa có sách").assertIsDisplayed()
         shot("shell_empty_light")
     }
 

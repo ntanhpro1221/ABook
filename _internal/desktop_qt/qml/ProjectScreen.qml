@@ -330,8 +330,8 @@ FocusScope {
                         objectName: "bookMore"
                         icon: "ellipsis"
                         iconSize: 20
-                        tip: S.s_tuy_chon_du_an_39f1aa52
-                        Accessible.name: S.s_tuy_chon_du_an_f619cf04 + (root.book ? root.book.title : "")
+                        tip: S.s_them_tuy_chon_a0b4bb6e
+                        Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book ? root.book.title : "")
                         onClicked: { bookMenu.items = root.bookMenuItems(); bookMenu.anchorItem = moreButton; bookMenu.show() }
                     }
                 }

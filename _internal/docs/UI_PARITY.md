@@ -73,7 +73,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 | Máy không có giọng | Máy này chưa có giọng đọc. | Chưa có giọng cài sẵn. Bạn chọn giọng trong Cài đặt. | ngắn, đã dùng ở thanh đọc |
 | Thời lượng còn lại | Còn {thời lượng} | "Còn " + … ghép tay | một mẫu cho cả hai |
 | Nguồn của sách nghe thẳng | Trên {tên máy} | "Trên máy tính" cố định | máy ghép thêm có tên riêng |
-| Thư viện trống | Chưa có sách trên máy · Thêm sách của bạn để bắt đầu nghe. | Chưa có sách nào · Sách nghe được sẽ hiện ở đây. | nói việc kế tiếp |
+| Thư viện trống | Chưa có sách · Thêm sách của bạn để bắt đầu nghe. | Chưa có sách trên máy; Chưa có sách nào; Sách nghe được sẽ hiện ở đây. | nói việc kế tiếp; tiêu đề giống nhau mọi nền (Lead 12-11) |
 | Nhãn menu xuất | Xuất MP3 · Xuất M4B · Xuất sách nói | Xuất sách nói (M4B); Xuất sách nói… | luật 2: không "…" cuối nhãn, không ngoặc kiểu file |
 
 **Cài đặt, nhật ký**
@@ -98,7 +98,6 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 | Không thấy máy | Chưa thấy thiết bị | Chưa thấy máy nào; Không thấy máy nào trong mạng này.; Chưa thấy máy tính nào. Kiểm tra…; Không thấy thiết bị nào - … | một câu + nút "Tìm lại" / "Địa chỉ" ngay đó |
 | Bluetooth chưa ghép | Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại. | ba cách viết | nói cách sửa |
 | Thiếu quyền Bluetooth | Cần quyền Thiết bị ở gần + nút "Mở cài đặt" | Quyền “Thiết bị ở gần” của ABook đang tắt. Mở Cài đặt → … | đường đi đã nằm trong nút |
-| Thêm máy ghép | Thêm thiết bị | Ghép thiết bị | cùng chữ màn Nối máy tính |
 | Máy thấy qua Bluetooth | Qua Bluetooth | Qua Bluetooth · điện thoại/máy tính | biểu tượng đã nói loại máy |
 | Công tắc chia sẻ | Kết nối Wi-Fi (dòng phụ của điện thoại: Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.) | Cho máy khác nghe; tên "Chia sẻ thư viện" cho công tắc | cùng công tắc với "Kết nối Wi-Fi" của web (`SYNC_SWITCH_LABEL`) |
 | Bluetooth khi chia sẻ | Bluetooth: {n} máy đang nối | Cả qua Bluetooth cho máy đã ghép - {n} đang kết nối | chỉ hiện khi mang tin |
@@ -106,16 +105,16 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 | Mã bị khoá | Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị. | Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm “Ghép máy mới” để có mã khác.; Mã đã huỷ vì nhập sai nhiều lần. | chữ của web |
 | Ghép xong | Đã ghép {tên} | Đã kết nối với {tên} | cùng một sự kiện ở web (máy vừa nhập đúng mã) và điện thoại |
 | Việc không làm được ở thiết bị khác | Chưa làm được | Chưa làm được, bạn thử lại | luật "Chưa … được", nút thử lại đã ở ngay đó |
-| Phát sang thiết bị khác | Phát trên thiết bị khác · Nghe ở đây | Phát trên máy khác; Phát trên máy kia; Nghe trên máy này | một danh từ "thiết bị" |
-| Hàng máy đang phát (tấm "Phát trên") | tên máy làm tiêu đề, dòng phụ "Đang phát" / "Đang dừng" / "Chưa phát sách"; tiêu đề tấm là "Phát trên", không nhắc lại thành chú thích | Đang phát trên / Đang dừng trên (treo, thiếu tên); chú thích "Phát trên thiết bị khác" ngay dưới tiêu đề "Phát trên" | thanh một dòng của web ghép "Đang phát trên {tên máy}" trong cùng câu |
+| Phát sang thiết bị khác | Phát trên máy khác · Nghe ở đây | Phát trên thiết bị khác; Phát trên máy kia; Nghe trên máy này | nhãn tối đa 4 chữ (Lead 12-11) |
+| Hàng máy đang phát (tấm "Phát trên") | tên máy làm tiêu đề, dòng phụ "Đang phát" / "Đang dừng" / "Chưa phát sách"; tiêu đề tấm là "Phát trên", không nhắc lại thành chú thích | Đang phát trên / Đang dừng trên (treo, thiếu tên); chú thích "Phát trên máy khác" ngay dưới tiêu đề "Phát trên" | thanh một dòng của web ghép "Đang phát trên {tên máy}" trong cùng câu |
 | Nút làm trước | Làm trước chương sau · Làm trước {n} chương | Làm trước {n} chương tới | nhãn nút tối đa 4 chữ; tên việc "{n} chương tới" chỉ nằm trong dòng tiến độ |
-| Ghép bằng mã | Ghép thiết bị · Ghép thiết bị mới · Huỷ mã | Ghép (nút khi đã có máy); Ghép máy mới; Huỷ mã này | "Huỷ mã" chỉ huỷ mã đang hiện, không gỡ thiết bị |
+| Ghép bằng mã | Ghép thiết bị · Ghép thiết bị mới · Huỷ mã | Ghép (nút khi đã có máy); Ghép máy mới; Huỷ mã này | "Huỷ mã" chỉ huỷ mã đang hiện, không gỡ thiết bị; "Ghép thiết bị" là chữ cả ba nền đang dùng - hàng "Thêm máy ghép" (chọn "Thêm thiết bị", bỏ "Ghép thiết bị") mâu thuẫn nên đã xoá (Lead 12-11) |
 | Đường Bluetooth | Qua Bluetooth (dòng phụ của máy) · Dùng Bluetooth (nút trên máy đã ghép) | Dự phòng qua Bluetooth; Đường Bluetooth | ngắn, cùng chữ hai bên |
 | Cách nối với máy tính | Tự tìm · Bluetooth · Nhập địa chỉ | Tìm máy trong mạng; Dùng Bluetooth (là tên cách nối); Tự tìm máy tính | ba tên một từ để cả ba nằm trên MỘT hàng ở 360 dp; web nút cùng việc là "Tự tìm" |
 | Máy kia không trả lời | Chưa nối được máy kia. | Chưa nối được, bạn thử lại; Chưa nối được máy tính | máy kia có thể là điện thoại |
 | Dung lượng (một dòng) | Sách {cỡ} · còn trống {cỡ} | {cỡ} · còn trống {cỡ}; Sách trên máy: … | cùng dòng tóm tắt hai bên |
 | Studio chưa nối | Studio trên máy tính · Nối máy tính để làm sách nói và xem tiến độ. | Nối máy tính của bạn để tạo sách nói. | DESIGN L11: xem tiến độ |
-| Hàng một máy tính ở Studio | Tạo sách nói từ xa | Studio trên máy tính | nói việc làm được |
+| Hàng một máy tính ở Studio | Tạo sách nói từ xa | Studio trên máy tính (làm dòng của một máy) | nói việc làm được |
 | Máy tính chỉ cho nghe | Máy tính {tên} chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”. | đường đi trong hằng riêng | một câu, có dấu chấm |
 | Tải sách / giọng | Tải về máy · Đang tải {n}% · Huỷ tải · Đã tải xong - nghe được cả khi không có mạng · Chưa tải được | Tải · {n}%; Huỷ; Đã tải về máy; Không tải được | |
 | Huỷ một lượt tải | Đã huỷ - lần tải sau làm tiếp từ chỗ dừng. | Đã huỷ tải - lần sau tải tiếp từ chỗ dở; Đã dừng tải | câu đã dùng cho giọng và Studio |

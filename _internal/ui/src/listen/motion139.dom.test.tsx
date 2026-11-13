@@ -341,7 +341,7 @@ it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút;
   await act(() => vi.advanceTimersByTime(400)); // hàng cuối khép xong (useListPresence)
   animate.mockClear();
   await render(<LibraryScreen />);
-  expect(host.textContent).toContain("Chưa có sách trên máy");
+  expect(host.textContent).toContain("Chưa có sách");
   expect(snapshotWith("Đang nghe")?.hasAttribute("inert")).toBe(true);
 });
 

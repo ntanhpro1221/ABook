@@ -123,7 +123,7 @@ Interactive {
         iconSize: 16
         ink: Theme.text2
         hoverInk: Theme.text
-        Accessible.name: S.s_tuy_chon_0_1f5bbd67(root.fullTitle)
+        Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.fullTitle)
         opacity: root.hovered || more.hovered || more.activeFocus || root.menuOpen ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         onClicked: {

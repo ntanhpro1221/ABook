@@ -29,7 +29,7 @@ object BookActions {
         Store.init(context)
         val (status, reply) = LocalStudio.handle(method, "/api/books/$id$rest", body)
         val answer = reply as? JSONObject ?: JSONObject()
-        if (status != 200) error(answer.optString("error").ifEmpty { S.s_ban_hay_thu_lai_5fc1a02b })
+        if (status != 200) error(answer.optString("error").ifEmpty { S.s_chua_lam_duoc_8b442a06 })
         if (method != "GET") edited(context, id)
         return answer
     }

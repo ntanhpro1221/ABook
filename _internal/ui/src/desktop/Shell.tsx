@@ -281,7 +281,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </MotionRegion>
           <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>{S.s_cai_dat_202e0e9b}</TabItem>
         </nav>
-        {/* Cùng nút "Phát trên thiết bị khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
+        {/* Cùng nút "Phát trên máy khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
         <NowPlaying mobile={phoneWidth} stacked={stackedPlayer} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} edit={readerEditing(info)} />
       </div>
     </div>

@@ -230,7 +230,7 @@ Item {
             openAll()
             const page = make()
             const target = row(page, "edge:vi-VN-HoaiMyNeural")
-            const sample = textItem(target, "Thử giọng")
+            const sample = textItem(target, "Nghe thử")
             verify(sample !== null)
             DesktopApi.delayed = true
             click(sample)
@@ -243,17 +243,17 @@ Item {
             tryVerify(function() { return textItem(target, "Dừng") !== null })
             click(textItem(target, "Dừng"))
             tryCompare(target, "playing", false)
-            tryVerify(function() { return textItem(target, "Thử giọng") !== null })
+            tryVerify(function() { return textItem(target, "Nghe thử") !== null })
             // bấm giọng khác khi mẫu cũ còn đang về: mẫu cũ bị bỏ
             const other = row(page, "edge:vi-VN-NamMinhNeural")
             DesktopApi.delayed = true
             DesktopApi.pending = []
-            click(textItem(target, "Thử giọng"))
-            click(textItem(other, "Thử giọng"))
+            click(textItem(target, "Nghe thử"))
+            click(textItem(other, "Nghe thử"))
             DesktopApi.finish()
             tryCompare(target, "playing", false)
             tryCompare(other, "playing", true)
-            // hết thời lượng mẫu thì nút về "Thử giọng"
+            // hết thời lượng mẫu thì nút về "Nghe thử"
             DesktopApi.delayed = false
             tryCompare(other, "playing", false)
         }
@@ -263,10 +263,10 @@ Item {
             const page = make()
             DesktopApi.responses["POST /api/readaloud/clip"] = {status: 503, data: {message: "Không có mạng - giọng Hoài My cần mạng."}}
             const target = row(page, "edge:vi-VN-HoaiMyNeural")
-            click(textItem(target, "Thử giọng"))
+            click(textItem(target, "Nghe thử"))
             tryVerify(function() { return hasText(target, "Không có mạng - giọng Hoài My cần mạng.") })
             tryCompare(Api, "notice", "")                      // lỗi nghe thử hiện tại chỗ, không toast
-            tryVerify(function() { return textItem(target, "Thử giọng") !== null })
+            tryVerify(function() { return textItem(target, "Nghe thử") !== null })
         }
 
         function test_keyFlow() {
@@ -494,7 +494,7 @@ Item {
             verify(name.paintedWidth <= name.width + 1)
             verify(longRow.radio.height >= name.height)
             // nút thử vẫn nằm trong hàng, không bị đẩy ra ngoài
-            const sample = textItem(longRow, "Thử giọng")
+            const sample = textItem(longRow, "Nghe thử")
             const edge = longRow.mapFromItem(sample, sample.width, 0).x
             verify(edge <= longRow.width + 1, "nút ra ngoài hàng: " + edge + " > " + longRow.width)
             verify(lacksOverflow(page))
@@ -581,11 +581,11 @@ Item {
             both(function() {
                 const shown = framed(800)
                 const page = shown.page
-                click(textItem(row(page, "edge:vi-VN-HoaiMyNeural"), "Thử giọng"))
+                click(textItem(row(page, "edge:vi-VN-HoaiMyNeural"), "Nghe thử"))
                 ready()
                 page.y = 0
                 shot("settings_voice_sample")
-                click(textItem(row(page, "edge:vi-VN-NamMinhNeural"), "Thử giọng"))
+                click(textItem(row(page, "edge:vi-VN-NamMinhNeural"), "Nghe thử"))
                 ready()
                 page.y = 0
                 shot("settings_voice_sample_error")

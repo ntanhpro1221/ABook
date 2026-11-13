@@ -160,7 +160,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             }
         } catch (error: Exception) {
             AppLog.w("Library", S.s_khong_luu_duoc_file_sach_0_0d017197(error.javaClass.simpleName))
-            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06)
         }
     }
 
@@ -175,7 +175,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             SaveStep.Done(written.name, written.edits)
         } catch (error: Exception) {
             AppLog.w("Library", S.s_khong_luu_duoc_file_sach_0_0d017197(error.javaClass.simpleName))
-            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06)
         }
     }
 
@@ -204,7 +204,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                 null
             } catch (error: Exception) {
                 AppLog.w("Library", S.s_khong_doi_duoc_ho_so_nghe_0_d81081a7(error.javaClass.simpleName))
-                error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b
+                error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06
             }
         }
         refresh()
@@ -229,7 +229,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                 Edit(block(), null)
             } catch (error: Exception) {
                 AppLog.w("Library", S.s_khong_sua_duoc_nhan_vat_0_f6bc8710(error.javaClass.simpleName))
-                Edit<T>(null, error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b)
+                Edit<T>(null, error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06)
             }
         }
         if (result.problem == null) refresh()

@@ -89,7 +89,7 @@ fun RemoteBookRow(
             when {
                 downloading -> TextAction(S.s_huy_tai_1a9ff73d, onCancel, "cancel_${book.id}")
                 failure != null -> TextAction(S.s_thu_lai_c58d068c, onDownload, "download_${book.id}")
-                book.upToDate -> BasicText(S.s_da_tai_ve_may_a3ac321b, style = Abook.type.caption.copy(color = colors.success))
+                book.upToDate -> BasicText(S.s_da_tai_xong_nghe_duoc_ca_khi_khong_co_mang_4eb58e30, style = Abook.type.caption.copy(color = colors.success))
                 else -> TextAction(book.action, onDownload, "download_${book.id}")
             }
         },

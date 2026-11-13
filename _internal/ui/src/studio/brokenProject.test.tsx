@@ -38,7 +38,7 @@ describe("dự án hỏng", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    expect(html).toContain("Tuỳ chọn dự án hong");
+    expect(html).toContain("Thêm tuỳ chọn cho hong");
   });
 
   it("hàng lỗi khi vẽ chỉ thay bằng dòng báo, không lan ra ngoài", () => {

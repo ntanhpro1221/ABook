@@ -45,7 +45,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 flow.value = flow.value.copy(saved = latest, draft = draft, loading = false)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(loading = false, problem = error.message ?: S.s_ban_hay_thu_lai_5fc1a02b)
+                flow.value = flow.value.copy(loading = false, problem = error.message ?: S.s_chua_lam_duoc_8b442a06)
             }
         } }
     }
@@ -232,11 +232,11 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: S.s_ban_hay_thu_lai_5fc1a02b else failure(what, error))
+            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: S.s_chua_lam_duoc_8b442a06 else failure(what, error))
             false
         }
     }
 
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: S.s_ban_hay_thu_lai_5fc1a02b).joinToString(" ")
+    private fun failure(what: String, error: Exception) = listOfNotNull(what, error.message?.takeIf { it.isNotBlank() }).joinToString(" ")
 }

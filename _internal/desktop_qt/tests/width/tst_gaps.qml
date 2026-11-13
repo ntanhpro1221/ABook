@@ -248,7 +248,7 @@ Item {
             compare([read.label, find.label, restart.label, more.label], ["Đọc", "Tìm", "Từ đầu", "Thêm"])
             compare(find.Accessible.name, "Tìm chữ trong sách")
             compare(restart.Accessible.name, "Nghe lại từ đầu")
-            compare(more.Accessible.name, "Thêm việc với sách")
+            compare(more.Accessible.name, "Thêm tuỳ chọn")
             verify(restart.enabled)
             // Hai đầu hàng phụ thẳng hai mép của khung hàng (ít nhất 256, không hẹp hơn nút chính).
             const primary = one(page, "bookPrimary")

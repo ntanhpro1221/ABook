@@ -61,7 +61,7 @@ Item {
                 dense: true
                 spec: Logic.SPECS.scheduleMinutes
                 value: root.last.minutes
-                label: S.s_so_phut_hen_40312361
+                label: S.s_hen_244e495e
                 format: Logic.minutesLabel
                 enabled: !root.locked
                 onPicked: value => root.changed({from: root.last.from, to: root.last.to, minutes: value})

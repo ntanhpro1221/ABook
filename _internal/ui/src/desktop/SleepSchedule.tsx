@@ -47,7 +47,7 @@ export function SleepSchedule() {
         spec={VALUE_SPECS.scheduleMinutes}
         value={schedule.minutes}
         busy={draft !== null}
-        label={S.s_so_phut_hen_40312361}
+        label={S.s_hen_244e495e}
         format={(minutes) => S.s_0_phut_2596d212(minutes)}
         onChange={(minutes) => change({ ...schedule, minutes })}
       />}

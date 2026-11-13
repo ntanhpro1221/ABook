@@ -102,7 +102,7 @@ class ExportState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_ban_hay_thu_lai_5fc1a02b
+    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06
 
     private fun edit(bookId: String, change: (ExportUi) -> ExportUi) {
         flow(bookId).update(change)

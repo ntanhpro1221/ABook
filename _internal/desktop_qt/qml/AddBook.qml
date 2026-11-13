@@ -874,33 +874,36 @@ Modal {
                                         open: noteBody.offer.marks > 0
                                         ImportCheck {
                                             width: parent.width
-                                            label: S.s_khong_doc_so_chu_thich_072033f4
-                                            help: S.s_bo_cac_con_so_nhu_2_hay_3_khoi_phan_doc_lo_de439e57
+                                            label: S.s_bo_so_goi_b8d25593
+                                            help: S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(noteBody.offer.marks)
                                             checked: root.footnotes.hideMarks
                                             enabled: root.busy === ""
                                             onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: value, notes: root.footnotes.notes}})
                                         }
                                     }
-                                    ImportCheck {
+                                    // Lời chú: MỘT giá trị (giữ nguyên / cuối chương / bỏ) - hàng chọn-một như web FootnoteChoices và Android NoteMode.
+                                    Text {
                                         width: parent.width - 24
-                                        label: S.s_doc_loi_chu_o_cuoi_chuong_13bcd8a5
-                                        help: S.s_moi_loi_chu_nam_o_cuoi_chuong_co_so_goi_no_263a0a08
-                                        checked: root.footnotes.notes === "end"
-                                        enabled: root.busy === ""
-                                        onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "end" : ""}})
+                                        topPadding: 8
+                                        text: S.s_loi_chu_eca33b1a
+                                        color: Theme.text
+                                        font.pixelSize: Theme.sizeBodySmall
+                                        font.weight: Theme.weightMedium
+                                        textFormat: Text.PlainText
                                     }
-                                    ImportCheck {
+                                    ChoiceRow {
+                                        objectName: "footnoteNotes"
                                         width: parent.width - 24
-                                        label: S.s_bo_loi_chu_b3d90294
-                                        help: S.s_phan_doc_khong_co_loi_chu_nao_bo_tich_de_c_844a284e
-                                        checked: root.footnotes.notes === "drop"
+                                        label: S.s_loi_chu_eca33b1a
                                         enabled: root.busy === ""
-                                        onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "drop" : ""}})
+                                        value: root.footnotes.notes
+                                        options: [{value: "", label: S.s_giu_nguyen_1b550a12}, {value: "end", label: S.s_cuoi_chuong_8e067450}, {value: "drop", label: S.s_bo_loi_chu_b3d90294}]
+                                        onPicked: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value}})
                                     }
                                     Text {
                                         width: parent.width - 24
                                         topPadding: 4
-                                        text: S.s_khong_tich_gi_thi_sach_giu_nguyen_nhu_tron_330a1251
+                                        text: S.s_ban_chon_giu_nguyen_de_giu_loi_chu_nhu_tro_fa013ff9
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
@@ -960,7 +963,7 @@ Modal {
                                                         required property var modelData
                                                         width: hintColumn.width
                                                         inView: y + 11 >= hintList.contentY && y + 31 <= hintList.contentY + hintList.height
-                                                        label: S.s_bo_dong_nay_khoi_phan_doc_5f39c6b5
+                                                        label: S.s_bo_doc_dong_3e82a7fd
                                                         help: "“" + modelData.line + "” - " + Queue.where(modelData.chapters)
                                                         checked: root.skipped.indexOf(modelData.line) >= 0
                                                         enabled: root.busy === ""

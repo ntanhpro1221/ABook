@@ -60,7 +60,7 @@ describe("nút điều khiển khi đang dừng", () => {
     expect(pause).toContain("bg-accent");
     expect(pause).not.toMatch(/disabled=""|aria-disabled="true"/);
     expect(out).not.toContain("Đang dừng");
-    expect(out).toContain("Tuỳ chọn dự án Sách thử");
+    expect(out).toContain("Thêm tuỳ chọn cho Sách thử");
   });
 
   it("đã bấm Dừng: nút chính 'Đang dừng' bị khoá, không còn Tạm dừng / Dừng nào bấm được (V1)", async () => {

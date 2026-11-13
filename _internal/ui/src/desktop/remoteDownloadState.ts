@@ -43,7 +43,7 @@ export function downloadNote(status: RemoteDownload | null | undefined, computer
     case "running":
       return { tone: "running", title: S.s_dang_tai_ve_may_0_d19b4333(percent), detail: S.s_van_nghe_duoc_trong_luc_tai_12c4a3a5, action: "cancel" };
     case "done":
-      return { tone: "done", title: S.s_da_tai_ve_may_a3ac321b, detail: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), action: null };
+      return { tone: "done", title: S.s_da_tai_xong_118e7acc, detail: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), action: null };
     case "failed": {
       // Chỉ nói “vẫn giữ” khi thật sự đã có phần tải được; đứt ở 0% thì không có gì để giữ.
       const kept = status.bytesDone > 0 || status.filesDone > 0 ? S.s_phan_da_tai_van_giu_tren_may_nay_79d4dcb7 : "";
@@ -71,7 +71,7 @@ export function downloadNote(status: RemoteDownload | null | undefined, computer
 export function downloadMenuLabel(status: RemoteDownload | null | undefined, computer: string): { label: string; hint: string; disabled: boolean } {
   const where = computer || S.s_may_kia_d1eb7142;
   if (status?.state === "running") return { label: S.s_huy_tai_1a9ff73d, hint: S.s_da_tai_0_12412428(Math.floor(downloadFraction(status) * 100)), disabled: false };
-  if (status?.state === "done") return { label: S.s_da_tai_ve_may_a3ac321b, hint: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), disabled: true };
+  if (status?.state === "done") return { label: S.s_da_tai_xong_118e7acc, hint: S.s_nghe_duoc_ca_khi_0_tat_d0f7626b(where), disabled: true };
   // “Tải nốt” chỉ khi đã có phần thật; 0% thì vẫn là tải từ đầu.
   if (status && Math.floor(downloadFraction(status) * 100) > 0) {
     // Đủ audio mà còn thiếu file: phần còn lại là chữ đọc theo hay nhạc nền - nói ra, "99%" không cho biết vì sao chưa xong.
