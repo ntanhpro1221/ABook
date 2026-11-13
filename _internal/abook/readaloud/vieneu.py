@@ -69,8 +69,8 @@ RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])[!?]+(?=[^\W\d_])|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph", "sh": "s", "ts": "x", "gh": "g"}
-STUTTER = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
-STUTTER_ALONE = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\w]*)$")
+STUTTER = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})[-–—]+([^\W\d_].*)$", re.DOTALL)
+STUTTER_ALONE = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})[-–—]+([^\w]*)$")
 # Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
 NUMBERED_NOUNS = frozenset(unicodedata.normalize("NFC", word) for word in (
     "chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì", "số", "bài", "điều",

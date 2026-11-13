@@ -82,3 +82,9 @@ def test_internal_apostrophes_are_lexical(source):
     from abook.readaloud.studio_tn import separate_digit_quotes
 
     assert separate_digit_quotes(source) == source
+
+
+@pytest.mark.parametrize("dash", ["–", "—"])
+@pytest.mark.parametrize("source", ["C{}Cái gì?", "Kh{}Không!", "T{} tôi đi.", "Ng{}ngài đâu?"])
+def test_long_dash_stutters_read_like_hyphen_stutters(source, dash):
+    assert studio_tn(source.format(dash), None, True)[0] == studio_tn(source.format("-"), None, True)[0]

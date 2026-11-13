@@ -57,8 +57,8 @@ object VieneuUnits {
     private val EMOTICON = Regex("""(?:[:;=]['\-^o]?[()dDpP3vV/\\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)""")
     private val STUTTER_ONSETS = listOf("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")
     private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph", "sh" to "s", "ts" to "x", "gh" to "g")
-    private val STUTTER = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
-    private val STUTTER_ALONE = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})-+([^$W]*)""")
+    private val STUTTER = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})[-–—]+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
+    private val STUTTER_ALONE = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})[-–—]+([^$W]*)""")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
     /** "hent*i", "E**alibur": dấu che giữa hai chữ cái; "*boing**boing*": chữ đầu chữ là dấu nhấn. */
     private val INSIDE_STAR = Regex("""(?<=\p{L})\*+(?=\p{L})""")

@@ -1430,6 +1430,26 @@
    "id": "tnfix_quote-2",
    "text": "Rock n' Roll.",
    "said": "Rock n Roll."
+  },
+  {
+   "id": "tnfix_dash-1",
+   "text": "C–Cái gì?",
+   "said": "cờ… Cái gì?"
+  },
+  {
+   "id": "tnfix_dash-2",
+   "text": "K—Không phải!",
+   "said": "khờ… Không phải!"
+  },
+  {
+   "id": "tnfix_dash-3",
+   "text": "T— tôi đi.",
+   "said": "tờ… tôi đi."
+  },
+  {
+   "id": "tnfix_dash-4",
+   "text": "Anh—anh nói.",
+   "said": "Anh, anh nói."
   }
  ]
 }
