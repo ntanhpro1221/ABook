@@ -349,9 +349,29 @@ def common_loanword(core: str, toks: list[str], index: int) -> bool:
         return False
     if index + 1 < len(toks) and not split_token(toks[index])[2]:
         before, following, _ = split_token(toks[index + 1])
-        if not before and following[:1].isascii() and following[:1].isupper():
+        # An English title is all Latin ASCII ("Code Breaker"); a Vietnamese word after it ("Boss Thế Giới") is not part of one.
+        if not before and following.isascii() and following[:1].isupper():
             return False
     return True
+
+
+def loanword_compound(core: str, toks: list[str], index: int) -> str | None:
+    """Reading of a hyphen compound of a common-noun loanword and Vietnamese syllables ("loli-con" -> "lô-li con"), None otherwise:
+    a part that is neither ("web-based", "e-mail") leaves the whole word to the other rules."""
+    from ..analysis import is_vietnamese_syllable
+
+    parts = core.split("-")
+    if len(parts) < 2 or core.lower() in LOANWORDS or not all(part.isalpha() for part in parts):
+        return None
+    said = []
+    for part in parts:
+        if part.lower() in LOANWORDS and common_loanword(part, toks, index):
+            said.append(LOANWORDS[part.lower()])
+        elif len(part) > 1 and is_vietnamese_syllable(part.lower()):
+            said.append(part)
+        else:
+            return None
+    return " ".join(said) if said != parts else None
 
 
 def _after_number(toks: list[str], index: int) -> bool:
@@ -374,6 +394,15 @@ def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False, sp
             from .abbreviations import LETTERS
 
             out[index] = before + LETTERS[compound[1].lower()] + " " + LOANWORDS[compound[2].lower()] + after
+            continue
+        compound_reading = loanword_compound(core, toks, index)
+        if compound_reading:
+            if english is None:
+                from .english_policy import loanword_english
+
+                english = loanword_english(toks)
+            if index not in english:
+                out[index] = before + compound_reading + after
             continue
         if not core or (shouted and not (len(core) > 1 and core.isupper() and core.lower() in LOANWORDS)):
             continue

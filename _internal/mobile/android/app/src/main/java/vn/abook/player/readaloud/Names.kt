@@ -289,9 +289,26 @@ object Names {
                 (core.length > 1 && core[0].isUpperCase() && core.substring(1) == lower(core.substring(1)) && sentenceStart(toks, index)))) return false
         if (index + 1 < toks.size && splitToken(toks[index]).third.isEmpty()) {
             val (before, following, _) = splitToken(toks[index + 1])
-            if (before.isEmpty() && following.firstOrNull()?.let { it.code < 128 && it.isUpperCase() } == true) return false
+            // An English title is all Latin ASCII ("Code Breaker"); a Vietnamese word after it ("Boss Thế Giới") is not part of one.
+            if (before.isEmpty() && following.all { it.code < 128 } && following.firstOrNull()?.isUpperCase() == true) return false
         }
         return true
+    }
+
+    /** Cách đọc của từ ghép gạch giữa một từ mượn viết như danh từ chung và âm tiết Việt ("loli-con" -> "lô-li con"), null khi không phải: một phần không là cả hai
+     *  ("web-based", "e-mail") để nguyên cả chữ cho luật khác - `loanword_compound`. */
+    fun loanwordCompound(core: String, toks: List<String>, index: Int): String? {
+        val parts = core.split("-")
+        if (parts.size < 2 || lower(core) in LOANWORDS || !parts.all { part -> part.isNotEmpty() && part.all { it.isLetter() } }) return null
+        val said = mutableListOf<String>()
+        for (part in parts) {
+            said += when {
+                lower(part) in LOANWORDS && commonLoanword(part, toks, index) -> LOANWORDS.getValue(lower(part))
+                part.length > 1 && VietnameseReading.isSyllable(lower(part)) -> part
+                else -> return null
+            }
+        }
+        return if (said != parts) said.joinToString(" ") else null
     }
 
     /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt. Từ của [LOANWORDS]
@@ -305,6 +322,12 @@ object Names {
             if (compound != null && lower(core) !in LOANWORDS && lower(compound.groupValues[2]) in LOANWORDS) {
                 out[index] = before + Abbreviations.LETTERS.getValue(compound.groupValues[1].lowercase(Locale.ROOT)[0]) +
                     " " + LOANWORDS.getValue(lower(compound.groupValues[2])) + after
+                continue
+            }
+            val compoundReading = loanwordCompound(core, toks, index)
+            if (compoundReading != null) {
+                val found = english ?: EnglishPolicy.loanwordEnglish(toks).also { english = it }
+                if (index !in found) out[index] = before + compoundReading + after
                 continue
             }
             if (core.isEmpty() || (shouted && !(core.length > 1 && core == core.uppercase(Locale.ROOT) && core != lower(core) && lower(core) in LOANWORDS))) continue
