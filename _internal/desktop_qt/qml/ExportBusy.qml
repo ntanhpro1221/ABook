@@ -19,7 +19,7 @@ Column {
         height: 8
         StudioBar {
             objectName: "exportBar"
-            visible: root.fraction >= 0
+            Reveal { shown: root.fraction >= 0 }
             width: parent.width
             size: "md"
             value: root.fraction
@@ -27,7 +27,7 @@ Column {
         }
         StudioBar {
             objectName: "exportIndeterminate"
-            visible: root.fraction < 0
+            Reveal { shown: root.fraction < 0 }
             width: parent.width
             size: "md"
             indeterminate: true

@@ -14,7 +14,7 @@ Column {
     readonly property string codeBack: Qt.color(Theme.sunken).toString()
     spacing: 16
     Text {
-        visible: root.sections.length === 0
+        Reveal { shown: root.sections.length === 0 }
         width: parent.width
         topPadding: 16
         bottomPadding: 16
@@ -51,7 +51,7 @@ Column {
                     required property var modelData
                     width: section.width
                     height: words.implicitHeight
-                    Text { visible: entry.modelData.bullet; x: 4; text: "•"; color: Theme.text2; font.pixelSize: 14; lineHeight: 1.625 }
+                    Text { Reveal { shown: entry.modelData.bullet } x: 4; text: "•"; color: Theme.text2; font.pixelSize: 14; lineHeight: 1.625 }
                     TextEdit {
                         id: words
                         x: entry.modelData.bullet ? 16 : 0

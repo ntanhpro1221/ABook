@@ -163,7 +163,7 @@ CastModal {
                     }
                 }
                 Text {
-                    visible: root.choices !== null && !!root.choices.rerecord
+                    Reveal { shown: root.choices !== null && !!root.choices.rerecord }
                     width: parent.width
                     text: root.choices && root.choices.rerecord ? Logic.rerecordText(root.shownName, root.choices.rerecord) : ""
                     color: Theme.text2
@@ -243,7 +243,7 @@ CastModal {
                         CastEngine {
                             objectName: "voiceEngine"
                             store: root.store
-                            visible: Logic.groupHasHeader(root.groups, group.modelData)
+                            Reveal { shown: Logic.groupHasHeader(root.groups, group.modelData) }
                             width: parent.width
                             engine: group.modelData.engine
                             label: root.labels[group.index] || ""
@@ -252,7 +252,7 @@ CastModal {
                         }
                         Text {
                             objectName: "voiceGroup"
-                            visible: !Logic.groupHasHeader(root.groups, group.modelData)
+                            Reveal { shown: !Logic.groupHasHeader(root.groups, group.modelData) }
                             width: parent.width
                             topPadding: 4
                             text: root.labels[group.index] || ""
@@ -283,7 +283,7 @@ CastModal {
                                     objectName: "voicePreview"
                                     x: 4
                                     anchors.verticalCenter: parent.verticalCenter
-                                    visible: row.voice.preview
+                                    Reveal { shown: row.voice.preview }
                                     clipId: Logic.voiceId(row.voice.name)
                                     url: root.media(Logic.voiceUrl(row.voice.key))
                                     label: S.s_nghe_thu_giong_d06e1a82 + row.voice.name
@@ -294,7 +294,7 @@ CastModal {
                                     objectName: "voiceTry"
                                     x: 44
                                     anchors.verticalCenter: parent.verticalCenter
-                                    visible: Boolean(root.choices.tryLine)
+                                    Reveal { shown: Boolean(root.choices.tryLine) }
                                     asks: true
                                     idleIcon: "book-open-text"
                                     readonly property string key: root.tryKey(row.voice)
@@ -323,21 +323,21 @@ CastModal {
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
-                                            visible: Boolean(row.voice.current && root.choices.pending)
+                                            Reveal { shown: Boolean(row.voice.current && root.choices.pending) }
                                             text: S.s_dang_dung_275ca289
                                             color: Theme.accentText
                                             font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
-                                            visible: Boolean(row.voice.pending && !row.voice.current)
+                                            Reveal { shown: Boolean(row.voice.pending && !row.voice.current) }
                                             text: S.s_cho_ap_dung_77a52853
                                             color: Theme.warning
                                             font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }
                                         Text {
-                                            visible: Boolean(row.voice.suggested && !row.voice.current && !row.voice.pending)
+                                            Reveal { shown: Boolean(row.voice.suggested && !row.voice.current && !row.voice.pending) }
                                             text: S.s_may_goi_y_1e7f4cfa
                                             color: Theme.text2
                                             font.pixelSize: 12
@@ -347,7 +347,7 @@ CastModal {
                                     Text {
                                         width: parent.width
                                         text: Logic.voiceMeta(row.voice, root.shownGender === "all")
-                                        visible: text !== ""
+                                        Reveal { shown: target.text !== "" }
                                         color: (row.voice.sharedWith || []).length && !(row.voice.takenBy || []).length ? Theme.warning : Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption

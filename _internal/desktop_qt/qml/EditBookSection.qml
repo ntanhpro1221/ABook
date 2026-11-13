@@ -27,7 +27,7 @@ Item {
         Rectangle { visible: root.separator > 0; width: parent.width; height: root.separator; opacity: root.separator; color: Theme.line }
         Item { width: 1; height: (root.fold !== "" ? 8 : 16) * root.separator }
         Item {
-            visible: root.fold === ""
+            Reveal { shown: root.fold === "" }
             width: parent.width
             height: visible ? Math.max(56, heading.implicitHeight) : 0
             Text {
@@ -42,7 +42,7 @@ Item {
             }
         }
         DisclosureRow {
-            visible: root.fold !== ""
+            Reveal { shown: root.fold !== "" }
             width: parent.width
             height: visible ? implicitHeight : 0
             section: true
@@ -59,7 +59,7 @@ Item {
             Item {
                 width: parent.width
                 height: root.hint !== "" ? hintText.implicitHeight + 8 : 0
-                visible: root.hint !== ""
+                Reveal { shown: root.hint !== "" }
                 HintText { id: hintText; width: parent.width; text: root.hint }
             }
             Item { width: 1; height: root.hint === "" ? 8 : 0 }

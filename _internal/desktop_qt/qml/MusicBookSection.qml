@@ -18,7 +18,7 @@ Column {
     readonly property var unsaved: tracks.filter(track => !track.saved)
     readonly property bool busy: !!(downloads && downloads.active && Object.keys(downloads.active).length)
     readonly property string previewing: Clip.current.indexOf("library:") === 0 ? Clip.current.slice(8) : ""
-    visible: tracks.length > 0
+    Reveal { shown: target.tracks.length > 0 }
     height: visible ? implicitHeight : 0
     spacing: Theme.s8
 
@@ -56,7 +56,7 @@ Column {
             id: saveAll
             objectName: "bookMusicSaveAll"
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-            visible: root.unsaved.length > 0
+            Reveal { shown: root.unsaved.length > 0 }
             text: S.s_luu_tat_ca_0_e16e7860(Size.formatSize(root.data ? root.data.missingBytes : 0))
             icon: "download"; kind: "ghost"; size: "sm"
             onActivated: root.change("/api/music/library/save", root.unsaved.map(track => track.link))

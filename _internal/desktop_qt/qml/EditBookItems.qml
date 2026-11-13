@@ -54,7 +54,7 @@ Column {
         id: edit
         objectName: "menuEdit"
         width: parent.width
-        visible: root.editable
+        Reveal { shown: root.editable }
         height: root.editable ? implicitHeight : 0
         text: S.s_sua_thong_tin_17e4a8a6
         icon: "pencil"
@@ -64,7 +64,7 @@ Column {
         id: save
         objectName: "menuSave"
         width: parent.width
-        visible: root.showSave
+        Reveal { shown: root.showSave }
         height: root.showSave ? implicitHeight : 0
         enabled: Boolean(root.book.unsaved !== undefined ? root.book.unsaved : root.book.edits) && !root.saving
         opacity: enabled ? 1 : 0.5
@@ -76,7 +76,7 @@ Column {
         id: saveAs
         objectName: "menuSaveAs"
         width: parent.width
-        visible: root.showSave
+        Reveal { shown: root.showSave }
         height: root.showSave ? implicitHeight : 0
         text: S.s_luu_thanh_d9ea985e
         icon: "file-down"
@@ -85,7 +85,7 @@ Column {
     NoteRow {
         id: blocked
         objectName: "menuBlocked"
-        visible: root.showBlocked
+        Reveal { shown: root.showBlocked }
         height: root.showBlocked ? implicitHeight : 0
         icon: "pencil"
         label: S.s_sua_thong_tin_17e4a8a6
@@ -94,7 +94,7 @@ Column {
     NoteRow {
         id: studioOnly
         objectName: "menuStudioOnly"
-        visible: root.showStudio
+        Reveal { shown: root.showStudio }
         height: root.showStudio ? implicitHeight : 0
         icon: "wrench"
         label: S.s_giong_va_loi_doc_450320f6

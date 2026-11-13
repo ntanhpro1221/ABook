@@ -14,7 +14,7 @@ Item {
     default property alias inner: holder.data
     width: parent ? parent.width : 400
     height: outer.height
-    visible: outer.height > 0
+    Reveal { shown: outer.height > 0 }
     onTitleChanged: if (title !== "") shownTitle = title
 
     Collapse {

@@ -289,7 +289,7 @@ Item {
                     PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; chevron: true; opacity: root.g >= 1 ? 1 : 0; onBookRequested: root.bookRequested() }
                     Text {
                         id: narratorLabel
-                        visible: Player.narrator !== ""
+                        Reveal { shown: Player.narrator !== "" }
                         opacity: Math.max(0, Math.min(1, (root.g - 0.9) * 10))
                         transform: Translate { y: Theme.reduceMotion ? 0 : (1 - narratorLabel.opacity) * 8 }
                         width: parent.width
@@ -531,7 +531,7 @@ Item {
             Item {
                 objectName: "nowSharedMorph"
                 anchors.fill: parent
-                visible: root.p > 0 && root.p < 1
+                Reveal { shown: root.p > 0 && root.p < 1 }
                 Repeater {
                     model: root.sharedFrames
                     Item {
@@ -610,14 +610,14 @@ Item {
                 }
             }
             MenuRow { objectName: "nowAudioFxButton"; width: parent.width; text: S.s_copy_c1303271503d; value: S.s_copy_cc27613e0895; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
-            MenuRow { objectName: "nowVoice"; width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { objectName: "nowVoice"; width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; Reveal { shown: Player.speaking && Api.voiceList.length > 0 } onClicked: { more.close(); voice.show() } }
             MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }
-            MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
+            MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; Reveal { shown: Player.canGoBack } onClicked: { more.close(); Player.goBack() } }
             MenuRow { objectName: "nowKeys"; width: parent.width; text: S.s_phim_tat_7baaed2f; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
             MenuRow { objectName: "nowAddVoice"; width: parent.width; text: S.s_them_giong_bbe0caf9; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
-            MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: S.s_goi_y_doc_346ac8be; icon: "lightbulb"; visible: suggestions.groups.length > 0; onClicked: { more.close(); suggestions.show() } }
+            MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: S.s_goi_y_doc_346ac8be; icon: "lightbulb"; Reveal { shown: suggestions.groups.length > 0 } onClicked: { more.close(); suggestions.show() } }
             // Như Android / web: trang của cuốn đang nghe, ngay trước Cửa sổ mini.
-            MenuRow { objectName: "nowBookPage"; width: parent.width; text: S.s_trang_sach_2b6c8e51; icon: "book-open"; visible: Player.bookId !== ""; onClicked: { more.close(); root.bookRequested() } }
+            MenuRow { objectName: "nowBookPage"; width: parent.width; text: S.s_trang_sach_2b6c8e51; icon: "book-open"; Reveal { shown: Player.bookId !== "" } onClicked: { more.close(); root.bookRequested() } }
             MenuRow { width: parent.width; text: S.s_cua_so_mini_65edeb9b; icon: "picture-in-picture-2"; onClicked: { more.close(); if (Nav.windowMode) Nav.windowMode.enter() } }
         }
     }

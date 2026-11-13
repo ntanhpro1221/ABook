@@ -75,7 +75,7 @@ Item {
                 CoverView { x: Theme.s8; y: Theme.s8; width: 32; height: 32; radius: Theme.radiusControl; title: row.modelData.title; coverKey: row.modelData.cover ? row.modelData.id + "/" + (row.modelData.cover.version || 0) : "" }
                 // Đang chạy: vạch nhảy Vu như web (h-2.5, vạch 2 cách 1, mực nhấn); chờ / dừng: icon
                 Vu {
-                    visible: row.modelData.queuePosition == null && !row.modelData.paused && !row.modelData.stopping
+                    Reveal { shown: row.modelData.queuePosition == null && !row.modelData.paused && !row.modelData.stopping }
                     x: Theme.s8 + 40 + (12 - width) / 2; y: Theme.s8 + 2 + 1; height: 10; barWidth: 2; gap: 1; color: Theme.accent
                 }
                 Icon {

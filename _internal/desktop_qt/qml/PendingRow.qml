@@ -42,7 +42,7 @@ Collapse {
         width: parent.width
         implicitHeight: (root.first ? 0 : 1) + Math.max(40, Math.max(label.height, actions.height) + 16)
         height: implicitHeight
-        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
+        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
         Icon { x: 0; y: (root.first ? 0 : 1) + 8 + 2; name: root.icons[root.item.kind] || "refresh-cw"; size: 16; color: Theme.text3 }
         Text {
             id: label
@@ -63,7 +63,7 @@ Collapse {
             spacing: 8
             Text {
                 objectName: "pendingLines"
-                visible: root.showLines
+                Reveal { shown: root.showLines }
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, 120)
                 text: Logic.pendingLines(root.item)
@@ -74,7 +74,7 @@ Collapse {
             }
             Button {
                 objectName: "pendingTry"
-                visible: root.voiceTry !== null && Boolean(root.item.voice)
+                Reveal { shown: root.voiceTry !== null && Boolean(root.item.voice) }
                 anchors.verticalCenter: parent.verticalCenter
                 size: "sm"
                 kind: "ghost"

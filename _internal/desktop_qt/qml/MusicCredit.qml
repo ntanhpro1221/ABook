@@ -77,14 +77,14 @@ Item {
                 topPadding: Theme.s4
                 Line { text: root.credit.text || "" }
                 Line {
-                    visible: (root.credit.license || "") !== ""
+                    Reveal { shown: (root.credit.license || "") !== "" }
                     rich: true
                     text: S.s_giay_phep_14b585a0 + (root.credit.licenseUrl
                         ? "<a href=\"" + root.esc(root.credit.licenseUrl) + "\">" + root.esc(root.credit.license) + "</a>" : root.esc(root.credit.license))
                 }
-                Line { visible: root.credit.modified === true; text: root.credit.modifiedNote || "" }
+                Line { Reveal { shown: root.credit.modified === true } text: root.credit.modifiedNote || "" }
                 Line {
-                    visible: (root.credit.landing || "") !== ""
+                    Reveal { shown: (root.credit.landing || "") !== "" }
                     rich: true
                     text: "<a href=\"" + root.esc(root.credit.landing) + S.s_trang_cua_bai_nhac_a_dcd03b62
                 }

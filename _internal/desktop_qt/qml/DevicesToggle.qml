@@ -33,7 +33,7 @@ Item {
         }
         Text {
             width: parent.width
-            visible: text !== ""
+            Reveal { shown: target.text !== "" }
             text: root.hint
             textFormat: root.hintRich ? Text.RichText : Text.PlainText
             color: root.hintColor

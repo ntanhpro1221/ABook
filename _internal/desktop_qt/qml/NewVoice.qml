@@ -57,7 +57,7 @@ Column {
     Item {
         width: parent.width
         height: !root.askOpen ? 12 + ask.height : 0
-        visible: height > 0
+        Reveal { shown: target.height > 0 }
         TextLink { id: ask; objectName: "newFirstPersonOpen"; y: 12; text: S.s_ke_bang_toi_521f80f7; accent: true; enabled: !(root.form && root.form.hintLoading); opacity: enabled ? 1 : 0.6; onClicked: root.opened = true }
     }
     // “Tôi” là ai?
@@ -79,7 +79,7 @@ Column {
             // Gợi ý tên người kể
             Item {
                 width: parent.width
-                visible: Boolean(root.hint) && root.hint.suggestions.length > 0
+                Reveal { shown: Boolean(root.hint) && root.hint.suggestions.length > 0 }
                 height: visible ? 12 + chips.height : 0
                 Flow {
                     id: chips
@@ -184,11 +184,11 @@ Column {
             Item { width: 1; height: 4 }
         }
     }
-    Prose { objectName: "newNarratorAuto"; visible: root.auto; topPadding: visible ? 16 : 0; text: S.s_may_chon_cung_gioi_nguoi_ke_chon_giong_de_48aef3e1 }
+    Prose { objectName: "newNarratorAuto"; Reveal { shown: root.auto } topPadding: visible ? 16 : 0; text: S.s_may_chon_cung_gioi_nguoi_ke_chon_giong_de_48aef3e1 }
     // Giọng kể phần trước
     Item {
         width: parent.width
-        visible: root.previous !== ""
+        Reveal { shown: root.previous !== "" }
         height: visible ? 16 + previousText.height : 0
         Text {
             id: previousText
@@ -206,7 +206,7 @@ Column {
     }
     Item {
         width: parent.width
-        visible: root.previous !== "" && root.narrator !== "" && root.narrator !== root.previous
+        Reveal { shown: root.previous !== "" && root.narrator !== "" && root.narrator !== root.previous }
         height: visible ? back.height : 0
         TextLink { id: back; objectName: "newPreviousBack"; text: S.s_dung_lai_267968d0 + root.previous; accent: true; onClicked: root.setNarrator(root.previous) }
     }
@@ -327,7 +327,7 @@ Column {
                                 font.pixelSize: Theme.sizeCaption
                             }
                             Rectangle {
-                                visible: Boolean(card.modelData.recommended)
+                                Reveal { shown: Boolean(card.modelData.recommended) }
                                 width: badge.width + 12
                                 height: visible ? badge.height + 2 : 0
                                 radius: Theme.radiusControl

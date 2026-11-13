@@ -61,7 +61,7 @@ Column {
                 required property int index
                 width: root.width
                 height: Math.max(words.height, pin.height) + 16
-                Rectangle { visible: row.index > 0; width: parent.width; height: 1; color: Theme.line }
+                Rectangle { Reveal { shown: row.index > 0 } width: parent.width; height: 1; color: Theme.line }
                 Rectangle { anchors.fill: parent; color: Theme.bg; opacity: 0.4; z: -1 }
                 Column {
                     id: words
@@ -71,7 +71,7 @@ Column {
                     Text { width: parent.width; text: TextWrap.keepDots(row.modelData.title); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
                     Text {
                         width: parent.width
-                        visible: text !== ""
+                        Reveal { shown: target.text !== "" }
                         text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0·\u00a0")   // tick-ok: độ dài cố định của bài
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -79,7 +79,7 @@ Column {
                     }
                     Text {
                         width: parent.width
-                        visible: text !== ""
+                        Reveal { shown: target.text !== "" }
                         text: Music.mineNote(row.modelData)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

@@ -50,7 +50,7 @@ Rectangle {
     }
     Rectangle {
         id: tagBox
-        visible: !root.compact && root.parts[1] !== ""
+        Reveal { shown: !root.compact && root.parts[1] !== "" }
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: Math.max(8, root.width * 0.08)

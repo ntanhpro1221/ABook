@@ -228,7 +228,7 @@ Item {
                                         font.weight: Theme.weightMedium
                                     }
                                     Rectangle {
-                                        visible: Boolean(choiceRow.choice.recommended) && !choiceRow.choice.installed
+                                        Reveal { shown: Boolean(choiceRow.choice.recommended) && !choiceRow.choice.installed }
                                         width: badge.implicitWidth + 16
                                         height: badge.implicitHeight + 4
                                         radius: height / 2
@@ -263,7 +263,7 @@ Item {
                             Button {
                                 id: removeButton
                                 objectName: "choiceRemove." + choiceRow.choice.id
-                                visible: choiceRow.removable
+                                Reveal { shown: choiceRow.removable }
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 size: "sm"
@@ -372,7 +372,7 @@ Item {
                 width: parent.width
                 Button {
                     objectName: "moduleUpdate"
-                    visible: root.status.state === "outdated"
+                    Reveal { shown: root.status.state === "outdated" }
                     size: "sm"
                     kind: "text"
                     text: S.s_cap_nhat_000e3ccc + Size.formatSize(root.status.outdatedBytes || 0) + ")"
@@ -382,7 +382,7 @@ Item {
                 Button {
                     id: startButton
                     objectName: "moduleStart"
-                    visible: root.missing.length > 0
+                    Reveal { shown: root.missing.length > 0 }
                     size: "sm"
                     kind: root.status.state === "missing" ? "primary" : "text"
                     text: root.failed ? S.s_thu_lai_c58d068c : root.bytes > 0 ? S.s_tai_40698276 + Size.formatSize(root.bytes) + ")" : S.s_dung_7927ca4e
@@ -391,7 +391,7 @@ Item {
                 }
                 Button {
                     objectName: "moduleMeasure"
-                    visible: root.hasMeasure
+                    Reveal { shown: root.hasMeasure }
                     size: "sm"
                     kind: "text"
                     text: S.s_thu_lai_toc_do_a69ef56d

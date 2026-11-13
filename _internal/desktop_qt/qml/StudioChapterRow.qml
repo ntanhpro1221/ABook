@@ -63,16 +63,16 @@ Item {
         height: 20
         Text {
             objectName: "chapterNumber"
-            visible: !(root.playable && root.hot) && !(root.current && Player.playing)
+            Reveal { shown: !(root.playable && root.hot) && !(root.current && Player.playing) }
             text: root.chapter.index
             color: root.current ? Theme.accentText : Theme.text3
             font.pixelSize: Theme.sizeCaption
             font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
             anchors.verticalCenter: parent.verticalCenter
         }
-        Item { visible: root.current && Player.playing && !(root.playable && root.hot); width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
+        Item { Reveal { shown: root.current && Player.playing && !(root.playable && root.hot) } width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
                Vu { anchors.centerIn: parent; color: Theme.accent } }
-        Icon { visible: root.playable && root.hot; name: root.current && Player.playing ? "pause" : "play"; size: 16; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+        Icon { Reveal { shown: root.playable && root.hot } name: root.current && Player.playing ? "pause" : "play"; size: 16; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
     }
     Column {
         id: titleBlock
@@ -91,7 +91,7 @@ Item {
         }
         Text {
             objectName: "chapterSubtitle"
-            visible: text !== ""
+            Reveal { shown: target.text !== "" }
             width: parent.width
             text: TextWrap.keepDots(root.errorLine !== "" ? "" : (root.chapter.subtitle || ""))
             color: Theme.text2
@@ -101,7 +101,7 @@ Item {
         // Lỗi của chương: một câu cho người nghe + "Chi tiết" mở khung nổi có việc nên làm và nguyên văn (ChapterError.tsx)
         Flow {
             objectName: "chapterErrorLine"
-            visible: root.errorLine !== ""
+            Reveal { shown: root.errorLine !== "" }
             width: parent.width
             spacing: 4
             Text {
@@ -133,7 +133,7 @@ Item {
         y: root.wide ? 12 : 12 + titleBlock.height + 6
         width: root.wide ? 150 : 200
         height: 24
-        visible: root.hasStatus
+        Reveal { shown: root.hasStatus }
         // Rê chuột lên vạch đang thu: đang thu hay đứng giữa chương (title của ô trạng thái bên web)
         HoverHandler {
             id: statusHover
@@ -143,7 +143,7 @@ Item {
         Timer { id: statusTip; interval: 600; onTriggered: Nav.showTip(statusCell, root.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2) }
         Accessible.description: root.working ? (root.running ? S.s_dang_thu_am_96160328 : S.s_tam_dung_giua_chuong_f426a7e2) : ""
         Row {
-            visible: root.working
+            Reveal { shown: root.working }
             spacing: 8
             anchors.verticalCenter: parent.verticalCenter
             StudioBar {
@@ -157,7 +157,7 @@ Item {
             }
             ClockLabel { text: Logic.chapterWorkingText(root.chapter, root.running); color: Theme.text2; font.pixelSize: Theme.sizeCaption; anchors.verticalCenter: parent.verticalCenter }
         }
-        StatusPill { visible: !root.working && root.mark !== null; label: root.mark ? root.mark.label : ""; tone: root.mark ? root.mark.tone : "muted"; anchors.verticalCenter: parent.verticalCenter }
+        StatusPill { Reveal { shown: !root.working && root.mark !== null } label: root.mark ? root.mark.label : ""; tone: root.mark ? root.mark.tone : "muted"; anchors.verticalCenter: parent.verticalCenter }
     }
     Text {
         id: lengthText
@@ -173,7 +173,7 @@ Item {
     }
     Text {
         objectName: "chapterDone"
-        visible: root.wide
+        Reveal { shown: root.wide }
         x: root.doneX
         y: 12 + (24 - height) / 2
         width: 96

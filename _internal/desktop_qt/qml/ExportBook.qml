@@ -245,11 +245,10 @@ StudioConfirm {
             id: timingsRegion
             width: parent.width
             open: root.kind === "abook"
-            OnComputerPill { visible: root.remote; verb: S.s_chu_sang_theo_giong_57fb4327; computer: root.computer; maxWidth: parent.width }
+            OnComputerPill { Reveal { shown: root.remote } verb: S.s_chu_sang_theo_giong_57fb4327; computer: root.computer; maxWidth: parent.width }
             Loader {
                 width: parent.width
                 active: timingsRegion.reveal > 0 && !root.remote
-                visible: active
                 sourceComponent: Component { WordTimings { store: root.store; bookId: root.book.id; bookRunning: Boolean(root.book.running) } }
             }
         }
@@ -286,7 +285,7 @@ StudioConfirm {
                         onActivated: { root.kind = modelData.kind; root.scope = "part"; root.changedOnly = modelData.kind === "mp3" }
                     }
                     Text {
-                        visible: modelData.kind === "m4b"
+                        Reveal { shown: modelData.kind === "m4b" }
                         width: parent.width
                         text: S.s_m4b_gop_ca_cuon_ban_can_dung_lai_ca_file_v_6adad4ec
                         color: Theme.text
@@ -334,7 +333,7 @@ StudioConfirm {
             }
             Flow {
                 objectName: "exportPending"
-                visible: !root.plan.whole && Boolean(root.book.pendingChanges)
+                Reveal { shown: !root.plan.whole && Boolean(root.book.pendingChanges) }
                 width: parent.width
                 spacing: 8
                 Item {

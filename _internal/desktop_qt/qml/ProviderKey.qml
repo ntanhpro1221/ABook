@@ -142,7 +142,7 @@ Item {
                 Box {
                     id: regionField
                     objectName: "regionInput"
-                    visible: root.hasRegion
+                    Reveal { shown: root.hasRegion }
                     implicitWidth: 192
                     enabled: root.busy === ""
                     Accessible.name: S.s_vung_0dec5e2e + (root.info.name || "")
@@ -167,7 +167,7 @@ Item {
                 }
                 Button {
                     objectName: "keyRemove"
-                    visible: Boolean(root.info.hasKey)
+                    Reveal { shown: Boolean(root.info.hasKey) }
                     text: S.s_xoa_khoa_2ec6cb1a
                     icon: "trash"
                     kind: "text"

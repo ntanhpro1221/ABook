@@ -119,7 +119,7 @@ Item {
             Button {
                 id: undoButton
                 objectName: "workUndo"
-                visible: root.decided && Boolean(root.item.undo)
+                Reveal { shown: root.decided && Boolean(root.item.undo) }
                 anchors.right: parent.right
                 size: "sm"
                 kind: "ghost"
@@ -218,7 +218,7 @@ Item {
             id: wishFix
             Column {
                 Item {
-                    visible: root.voicePick && Boolean(root.item.pickVoice)
+                    Reveal { shown: root.voicePick && Boolean(root.item.pickVoice) }
                     width: 1
                     height: visible ? 12 + pick.height : 0
                     Button {
@@ -283,17 +283,17 @@ Item {
 
         // ---- câu ví dụ ----
         Item { width: 1; height: root.examples.length > 0 ? 12 : 0 }
-        Rectangle { visible: root.examples.length > 0; width: parent.width; height: 1; color: Theme.line }
+        Rectangle { Reveal { shown: root.examples.length > 0 } width: parent.width; height: 1; color: Theme.line }
         Column {
             id: sentences
             objectName: "workExamples"
-            visible: root.examples.length > 0
+            Reveal { shown: root.examples.length > 0 }
             width: parent.width
             topPadding: 12
             spacing: 8
             Text {
                 objectName: "workPickNote"
-                visible: root.picked !== null && Boolean(root.item.lines)
+                Reveal { shown: root.picked !== null && Boolean(root.item.lines) }
                 width: parent.width
                 text: root.picked !== null && root.item.lines ? W.pickNote(root.picked.length, root.item.lines.length) + S.s_bo_chon_cau_khong_phai_cua_nguoi_ay_c8d4e374 : ""
                 color: Theme.text2
@@ -330,7 +330,7 @@ Item {
             }
         }
         Flow {
-            visible: Boolean(root.item.pick) && root.page.total > W.PICK_PREVIEW
+            Reveal { shown: Boolean(root.item.pick) && root.page.total > W.PICK_PREVIEW }
             width: parent.width
             topPadding: 8
             spacing: 8
@@ -347,7 +347,7 @@ Item {
             }
             Button {
                 objectName: "workLoadMore"
-                visible: root.all && Boolean(root.page.next)
+                Reveal { shown: root.all && Boolean(root.page.next) }
                 size: "sm"
                 kind: "ghost"
                 enabled: !root.loadingMore

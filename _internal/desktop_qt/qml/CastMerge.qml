@@ -129,7 +129,7 @@ CastModal {
                     }
                     Text {
                         objectName: "mergeNone"
-                        visible: root.others.length === 0
+                        Reveal { shown: root.others.length === 0 }
                         width: parent.width
                         leftPadding: 12
                         topPadding: 12

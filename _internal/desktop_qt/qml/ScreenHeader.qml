@@ -19,7 +19,7 @@ Item {
 
     IconButton {
         id: back
-        visible: root.showBack
+        Reveal { shown: root.showBack }
         icon: "arrow-left"
         x: -10                      // nét mũi tên (lùi 10 trong vùng bấm 40) thẳng mép nội dung
         y: Theme.s32
@@ -40,7 +40,7 @@ Item {
         font.weight: Theme.weightBold
     }
     Text {
-        visible: root.subtitle !== ""
+        Reveal { shown: root.subtitle !== "" }
         x: titleText.x
         y: Theme.s32 + titleText.height + 2
         text: root.subtitle

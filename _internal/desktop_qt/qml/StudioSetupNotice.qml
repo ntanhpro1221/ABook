@@ -21,7 +21,7 @@ Item {
     property var peers: []
     implicitHeight: reveal.height
     height: implicitHeight
-    visible: reveal.visible
+    Reveal { shown: reveal.visible }
 
     function loadPeers() {
         if (remote) return
@@ -69,7 +69,7 @@ Item {
             Button {
                 id: install
                 objectName: "studioNoticeInstall"
-                visible: root.shownInstall && !root.remote
+                Reveal { shown: root.shownInstall && !root.remote }
                 x: parent.wide ? parent.width - width : 28
                 y: parent.wide ? 16 : 16 + words.height + 8
                 text: root.studio.action
@@ -80,7 +80,7 @@ Item {
             }
             Flow {
                 id: peerFlow
-                visible: root.shownUnfit && root.peers.length > 0
+                Reveal { shown: root.shownUnfit && root.peers.length > 0 }
                 x: parent.wide ? parent.width - width : 28
                 y: parent.wide ? 16 : 16 + words.height + 8
                 width: parent.wide ? natural : parent.width - 28

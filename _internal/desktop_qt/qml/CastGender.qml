@@ -52,7 +52,7 @@ CastModal {
         }
         Text {
             objectName: "genderWaiting"
-            visible: root.waiting
+            Reveal { shown: root.waiting }
             width: parent.width
             text: S.s_giong_doc_cua_5e7d06dc + root.shownName + S.s_chua_doi_ngay_studio_se_lam_khi_ban_mo_fil_cc8fd9a5
             color: Theme.text
@@ -62,7 +62,7 @@ CastModal {
         // Chưa có câu nào được thu: vẫn nói giọng sẽ đổi - đổi giới là đổi giọng
         Text {
             objectName: "genderNote"
-            visible: !root.waiting && root.recorded === 0 && root.person !== null && root.choice !== "" && root.choice !== root.current
+            Reveal { shown: !root.waiting && root.recorded === 0 && root.person !== null && root.choice !== "" && root.choice !== root.current }
             width: parent.width
             text: root.person ? S.s_neu_giong_14749bed + (Logic.voiceToUse(root.person) ? Logic.voiceToUse(root.person) + " " : "") + S.s_dang_doc_080a360c + root.shownName
                 + S.s_khong_hop_gioi_moi_may_chon_mot_giong_889c64ad + Logic.genderWord(root.choice) + S.s_khac_cho_nguoi_ay_khi_ap_dung_094fb017 : ""
@@ -72,7 +72,7 @@ CastModal {
         }
         Text {
             objectName: "genderRecorded"
-            visible: root.recorded > 0
+            Reveal { shown: root.recorded > 0 }
             width: parent.width
             text: S.s_ap_dung_se_thu_lai_adf61f2b + Logic.formatNumber(root.recorded) + S.s_cau_cua_35c4143d + root.shownName + S.s_neu_giong_chua_hop_gioi_moi_dce1d351
             color: Theme.text

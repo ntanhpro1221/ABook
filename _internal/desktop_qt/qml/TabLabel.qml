@@ -23,7 +23,7 @@ Item {
     }
     ClockLabel {
         id: countText
-        visible: root.count > 0
+        Reveal { shown: root.count > 0 }
         x: label.implicitWidth + 6
         anchors.verticalCenter: parent.verticalCenter
         text: root.count
@@ -31,7 +31,7 @@ Item {
         font.pixelSize: Theme.sizeCaption
     }
     Icon {
-        visible: root.chevron
+        Reveal { shown: root.chevron }
         x: parent.width - 14
         anchors.verticalCenter: parent.verticalCenter
         name: "chevron-down"

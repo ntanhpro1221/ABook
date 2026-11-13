@@ -13,7 +13,7 @@ Column {
     default property alias rows: body.content
     topPadding: Theme.s32
     Text {
-        visible: root.title !== "" && root.fold === ""
+        Reveal { shown: root.title !== "" && root.fold === "" }
         width: parent.width
         height: Math.max(56, implicitHeight)
         verticalAlignment: Text.AlignVCenter
@@ -24,7 +24,7 @@ Column {
         font.weight: Theme.weightMedium
     }
     DisclosureRow {
-        visible: root.title !== "" && root.fold !== ""
+        Reveal { shown: root.title !== "" && root.fold !== "" }
         width: parent.width
         section: true
         title: root.title

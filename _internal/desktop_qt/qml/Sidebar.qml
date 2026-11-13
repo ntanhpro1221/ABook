@@ -161,7 +161,7 @@ Item {
             height: Math.max(0, chip.y - y - Theme.s8)
             contentHeight: production.height + update.height
             clip: true; boundsBehavior: Flickable.StopAtBounds
-            visible: root.expanded || root.peek
+            Reveal { target: productionScroll; shown: root.expanded || root.peek }
             SidebarProgress {
                 id: production; width: parent.width; height: implicitHeight
                 openProject: root.openProject
@@ -210,7 +210,7 @@ Item {
         x: panel.width - 1
         width: 1
         height: parent.height
-        visible: root.overlay > 0.5
+        Reveal { shown: root.overlay > 0.5 }
         color: Theme.line
     }
 }

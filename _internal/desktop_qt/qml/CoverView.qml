@@ -26,13 +26,13 @@ Item {
         anchors.fill: parent
         title: root.title
         radius: root.radius
-        visible: root.coverKey === "" || image.status === Image.Error
+        Reveal { shown: root.coverKey === "" || image.status === Image.Error }
     }
     Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: Theme.sunken
-        visible: root.coverKey !== "" && !root.shown && image.status !== Image.Ready && image.status !== Image.Error
+        Reveal { shown: root.coverKey !== "" && !root.shown && image.status !== Image.Ready && image.status !== Image.Error }
     }
     Image {
         id: image

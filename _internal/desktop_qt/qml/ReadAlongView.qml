@@ -47,7 +47,7 @@ Item {
     Text {
         id: hint; objectName: "readerHint"
         x: Theme.s24; y: Theme.s12; width: parent.width - 2 * Theme.s24
-        visible: ReadAlong.status === "ready" && text !== ""
+        Reveal { shown: ReadAlong.status === "ready" && target.text !== "" }
         text: Labels.readerHint(Player.speaking, Api.voiceList.length > 0, ReadAlong.timed, root.tapped)
         wrapMode: Text.Wrap; color: root.surface.fg2; font.pixelSize: Theme.sizeCaption
         z: 2
@@ -240,7 +240,7 @@ Item {
 
             Text {
                 id: speakerLabel
-                visible: del.speaker !== "" && !del.heading && !del.scene
+                Reveal { shown: del.speaker !== "" && !del.heading && !del.scene }
                 x: Math.round((del.width - del.textW) / 2)
                 width: del.textW
                 text: del.speaker
@@ -373,7 +373,7 @@ Item {
         width: Math.min(parent.width - 2 * Theme.s24, 360)
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        visible: ReadAlong.status === "loading" || ReadAlong.status === "failed"
+        Reveal { shown: ReadAlong.status === "loading" || ReadAlong.status === "failed" }
         text: ReadAlong.status === "loading" ? S.s_dang_mo_van_ban_chuong_703dec05 : S.s_chua_mo_duoc_van_ban_chuong_nay_fc50ef45
         color: root.surface.fg2
         font.pixelSize: Theme.sizeBodySmall

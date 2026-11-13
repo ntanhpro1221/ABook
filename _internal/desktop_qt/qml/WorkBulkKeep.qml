@@ -15,7 +15,7 @@ Item {
     readonly property bool available: W.BULK_KINDS.indexOf(kind) >= 0 && keepable.length >= 2
     width: parent ? parent.width : 400
     height: available ? 12 + ask.height : 0
-    visible: available
+    Reveal { shown: target.available }
 
     Button {
         id: ask

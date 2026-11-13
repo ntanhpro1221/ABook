@@ -50,7 +50,7 @@ Item {
             Text {
                 x: 8
                 width: parent.width - 16
-                visible: root.devices.length === 0
+                Reveal { shown: root.devices.length === 0 }
                 topPadding: 8
                 bottomPadding: 8
                 text: S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2

@@ -122,7 +122,7 @@ Column {
                                 textFormat: Text.StyledText
                             }
                             Prose {
-                                visible: Logic.foldersIn(root.files.slice(row.modelData.start - 1, row.modelData.end)) > 1
+                                Reveal { shown: Logic.foldersIn(root.files.slice(row.modelData.start - 1, row.modelData.end)) > 1 }
                                 small: true
                                 tone: Theme.warning
                                 // Dây chuyền xếp chương theo TÊN file: chương của hai thư mục trong một phần thì xen nhau (máy chủ từ chối khi tạo).
@@ -138,7 +138,7 @@ Column {
                             Item {
                                 width: 64; height: 32
                                 anchors.verticalCenter: parent.verticalCenter
-                                Text { visible: row.modelData.index === 0; anchors.centerIn: parent; text: "1"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
+                                Text { Reveal { shown: row.modelData.index === 0 } anchors.centerIn: parent; text: "1"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
                                 NumberBox {
                                     visible: row.modelData.index > 0
                                     objectName: "newCutBox"
@@ -161,7 +161,7 @@ Column {
                                 width: 32; height: 32
                                 anchors.verticalCenter: parent.verticalCenter
                                 IconButton {
-                                    visible: row.modelData.index > 0
+                                    Reveal { shown: row.modelData.index > 0 }
                                     objectName: "newCutRemove"
                                     anchors.fill: parent
                                     icon: "trash-2"
@@ -205,7 +205,7 @@ Column {
                     }
                     Text {
                         objectName: "newCutError"
-                        visible: addBox.bad
+                        Reveal { shown: addBox.bad }
                         width: Math.min(implicitWidth, addRow.width)
                         text: root.starts.length >= 99 ? S.s_toi_da_99_phan_9661ebdc : S.s_chuong_nay_da_la_cho_cat_hay_khong_nam_tro_1005c9e5 + root.files.length + "."
                         color: Theme.danger

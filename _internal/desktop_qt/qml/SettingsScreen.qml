@@ -106,7 +106,7 @@ FocusScope {
             Text {
                 id: groupHeading
                 objectName: "settingsGroupHeading"
-                visible: root.layoutExpanded
+                Reveal { shown: root.layoutExpanded }
                 x: 260 + Theme.s32
                 width: parent.width - x
                 y: header.titleBaseline - baselineOffset
@@ -119,7 +119,7 @@ FocusScope {
             // Ghi chú trên danh sách (chỉ hẹp): đã có bản mới -> một hàng dẫn tới Nâng cao.
             DisclosureRow {
                 id: updateNotice
-                visible: !root.layoutExpanded && !root.shown && Boolean(Api.info && Api.info.update)
+                Reveal { shown: !root.layoutExpanded && !root.shown && Boolean(Api.info && Api.info.update) }
                 y: header.height + 16
                 width: parent.width
                 title: Api.info && Api.info.update ? S.s_co_abook_39ccc742 + Api.info.update.version : ""
@@ -131,7 +131,7 @@ FocusScope {
                 objectName: "settingsGroups"
                 y: header.height + (updateNotice.visible ? updateNotice.height + 16 : 0) + 20
                 width: root.layoutExpanded ? 260 : parent.width
-                visible: root.layoutExpanded || !root.shown
+                Reveal { shown: root.layoutExpanded || !root.shown }
                 Accessible.name: S.s_nhom_cai_dat_8cf2ef86
                 Repeater {
                     model: root.groups
@@ -140,7 +140,7 @@ FocusScope {
                         required property int index
                         width: navigation.width
                         height: row.height
-                        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: index > 0 }
+                        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: index > 0 }}
                         DisclosureRow {
                             id: row
                             width: parent.width
@@ -161,7 +161,7 @@ FocusScope {
                 y: header.height
                 width: parent.width - x
                 height: body.height
-                visible: root.shown !== ""
+                Reveal { shown: root.shown !== "" }
                 SettingsBody { id: body; width: parent.width; group: root.shown; onStudioRequested: root.studioRequested() }
             }
         }

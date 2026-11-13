@@ -93,7 +93,7 @@ Modal {
                 width: parent.width
                 Text {
                     objectName: "recordLoading"
-                    visible: root.library === "loading"
+                    Reveal { shown: root.library === "loading" }
                     width: parent.width
                     text: S.s_dang_mo_thu_vien_95914f2d
                     color: Theme.text2
@@ -102,7 +102,7 @@ Modal {
                 }
                 Text {
                     objectName: "recordNoOthers"
-                    visible: root.library !== "loading" && root.options.length === 0
+                    Reveal { shown: root.library !== "loading" && root.options.length === 0 }
                     width: parent.width
                     text: S.s_thu_vien_chua_co_cuon_nao_khac_4bff3d9b
                     color: Theme.text2
@@ -112,7 +112,7 @@ Modal {
                 Select {
                     id: picker
                     objectName: "recordTarget"
-                    visible: root.library === "ready" && root.options.length > 0
+                    Reveal { shown: root.library === "ready" && root.options.length > 0 }
                     width: parent.width
                     label: S.s_chuyen_sang_cuon_ffe90248
                     placeholder: S.s_chon_cuon_300c901b

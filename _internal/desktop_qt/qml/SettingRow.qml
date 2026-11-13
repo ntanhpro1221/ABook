@@ -26,14 +26,14 @@ Item {
     }
     Accessible.name: label
     implicitHeight: Math.max(words.implicitHeight, control.childrenRect.height) + 24
-    Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.firstShown }
+    Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.firstShown }}
     Column {
         id: words
         width: Math.min(640, root.width - (root.controlWidth > 0 ? root.controlWidth + Theme.s16 : 0))
         anchors.verticalCenter: parent.verticalCenter
         spacing: 4
         Text { width: parent.width; text: root.label; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: 16; font.weight: Theme.weightMedium }
-        Text { width: parent.width; text: root.hint; visible: text !== ""; color: root.hintColor; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.25 }
+        Text { width: parent.width; text: root.hint; Reveal { shown: target.text !== "" } color: root.hintColor; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.25 }
     }
     Item {
         id: control

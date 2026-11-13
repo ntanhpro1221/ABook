@@ -99,7 +99,7 @@ Column {
     TryNote { reading: tryIt; width: parent.width }
     Text {
         objectName: "nameNever"
-        visible: root.never
+        Reveal { shown: root.never }
         width: parent.width
         text: N.neverText(root.item.surface || "")
         color: Theme.warning

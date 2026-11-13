@@ -32,7 +32,7 @@ Interactive {
     }
     Icon {
         id: lead
-        visible: root.icon !== ""
+        Reveal { shown: root.icon !== "" }
         name: root.icon
         size: 20
         color: root.current ? Theme.text : Theme.text2
@@ -55,7 +55,7 @@ Interactive {
         }
         Text {
             width: parent.width
-            visible: root.summary !== ""
+            Reveal { shown: root.summary !== "" }
             text: TextWrap.pretty(root.summary)
             color: Theme.text2
             wrapMode: Text.Wrap

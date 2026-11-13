@@ -128,7 +128,7 @@ Item {
         spacing: 4
         Button {
             objectName: "coverSet"
-            visible: !root.narrow
+            Reveal { shown: !root.narrow }
             text: root.hasCover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7
             icon: "image-plus"
             kind: "ghost"
@@ -138,7 +138,7 @@ Item {
         }
         IconButton {
             objectName: "coverSetIcon"
-            visible: root.narrow
+            Reveal { shown: root.narrow }
             icon: "image-plus"
             iconSize: 16
             ink: Theme.text2
@@ -163,7 +163,7 @@ Item {
         }
         IconButton {
             objectName: "coverRemove"
-            visible: root.hasCover
+            Reveal { shown: root.hasCover }
             implicitWidth: 32
             implicitHeight: 32
             icon: "trash"
@@ -178,7 +178,7 @@ Item {
     }
     Text {
         objectName: "coverHint"
-        visible: !root.narrow
+        Reveal { shown: !root.narrow }
         y: actions.y + actions.height
         width: parent.width
         text: S.s_keo_hoac_dan_anh_71bf1343

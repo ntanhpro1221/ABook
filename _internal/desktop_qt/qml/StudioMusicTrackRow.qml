@@ -40,7 +40,7 @@ Item {
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
         }
-        HintText { width: parent.width; visible: root.note !== ""; text: root.note }
+        HintText { width: parent.width; Reveal { shown: root.note !== "" } text: root.note }
     }
     Row {
         id: buttons
@@ -49,7 +49,7 @@ Item {
         spacing: 4
         Button {
             objectName: "musicPreview"
-            visible: root.canPreview
+            Reveal { shown: root.canPreview }
             text: root.previewing === root.item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
             icon: root.previewing === root.item.link ? "square" : "play"
             kind: "ghost"; size: "sm"

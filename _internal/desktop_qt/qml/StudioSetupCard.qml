@@ -18,7 +18,7 @@ Item {
     readonly property bool wide: width >= 640
     implicitHeight: reveal.height
     height: implicitHeight
-    visible: reveal.visible
+    Reveal { shown: reveal.visible }
     objectName: "studioSetupCard"
 
     StudioSetupState {
@@ -86,7 +86,7 @@ Item {
                     }
                     Text {
                         objectName: "studioSetupFit"
-                        visible: root.fit !== null
+                        Reveal { shown: root.fit !== null }
                         topPadding: 4
                         width: Math.min(parent.width, 672)
                         text: root.fit ? (root.fit.level === "no" ? Setup.noStudioLine(root.fit.reason || "") : root.fit.line) : ""
@@ -113,7 +113,7 @@ Item {
             }
             Text {
                 objectName: "studioSetupLeftover"
-                visible: !!root.status && !!root.status.leftover && !root.status.running
+                Reveal { shown: !!root.status && !!root.status.leftover && !root.status.running }
                 width: parent.width
                 topPadding: 16
                 text: root.status && root.status.leftover ? Setup.leftoverLine(root.status.leftover) : ""
@@ -124,13 +124,13 @@ Item {
             }
             Column {
                 objectName: "studioSetupError"
-                visible: !!root.status && !!root.status.error && !root.status.running && !root.status.leftover
+                Reveal { shown: !!root.status && !!root.status.error && !root.status.running && !root.status.leftover }
                 width: parent.width
                 topPadding: 16
                 spacing: 4
                 Text { width: parent.width; text: root.friendly.summary; color: Theme.danger; wrapMode: Text.Wrap; lineHeight: 1.45; font.pixelSize: 14 }
                 Interactive {
-                    visible: root.friendly.detail !== ""
+                    Reveal { shown: root.friendly.detail !== "" }
                     objectName: "studioSetupDetailsToggle"
                     implicitWidth: toggleText.implicitWidth
                     implicitHeight: 24
@@ -140,7 +140,7 @@ Item {
                     Text { id: toggleText; anchors.verticalCenter: parent.verticalCenter; text: S.s_chi_tiet_e762d926; color: Theme.danger; font.pixelSize: Theme.sizeCaption }
                 }
                 Text {
-                    visible: root.details && root.friendly.detail !== ""
+                    Reveal { shown: root.details && root.friendly.detail !== "" }
                     width: parent.width
                     text: root.friendly.detail
                     color: Theme.danger
@@ -153,7 +153,7 @@ Item {
             // Từng bước (khi đang cài hay đã cài dở)
             Grid {
                 objectName: "studioSetupSteps"
-                visible: !!root.status && (root.status.running || Setup.started(root.status))
+                Reveal { shown: !!root.status && (root.status.running || Setup.started(root.status)) }
                 width: parent.width
                 topPadding: 20
                 columns: root.wide ? 2 : 1
@@ -168,17 +168,17 @@ Item {
                         spacing: 12
                         Item {
                             width: 16; height: 20
-                            Icon { anchors.centerIn: parent; visible: modelData.done; name: "check"; size: 16; color: Theme.accentText }
+                            Icon { anchors.centerIn: parent; Reveal { shown: modelData.done } name: "check"; size: 16; color: Theme.accentText }
                             Icon {
                                 id: spinner
                                 anchors.centerIn: parent
-                                visible: !modelData.done && parent.parent.activeStep
+                                Reveal { shown: !modelData.done && target.parent.parent.activeStep }
                                 name: "loader-circle"; size: 16; color: Theme.accentText
                                 RotationAnimator on rotation { running: spinner.visible && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
                             }
                             Rectangle {
                                 anchors.centerIn: parent
-                                visible: !modelData.done && !parent.parent.activeStep
+                                Reveal { shown: !modelData.done && !target.parent.parent.activeStep }
                                 width: 16; height: 16; radius: width / 2
                                 color: "transparent"; border.width: 1; border.color: Theme.controlLine
                             }
@@ -196,7 +196,7 @@ Item {
             }
             Column {
                 objectName: "studioSetupProgress"
-                visible: !!root.status && !!root.status.running && Setup.currentStep(root.status) !== null
+                Reveal { shown: !!root.status && !!root.status.running && Setup.currentStep(root.status) !== null }
                 width: parent.width
                 topPadding: 16
                 spacing: 8
@@ -222,7 +222,7 @@ Item {
                     ClockLabel {
                         id: sizes
                         objectName: "studioSetupSizes"
-                        visible: !!root.status && !!root.status.progress && root.status.progress.total > 0
+                        Reveal { shown: !!root.status && !!root.status.progress && root.status.progress.total > 0 }
                         anchors.right: parent.right
                         text: root.status && root.status.progress ? Size.formatSize(root.status.progress.done) + " / " + Size.formatSize(root.status.progress.total) : ""
                         color: Theme.text2

@@ -36,7 +36,7 @@ Column {
     readonly property real gap: 16
     readonly property real pad: follows ? 6 : 10
 
-    Rectangle { width: parent.width; height: 1; color: Theme.line; visible: root.position > 0 }
+    Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: root.position > 0 }}
     Item {
         id: line
         width: parent.width
@@ -70,7 +70,7 @@ Column {
             Rectangle {
                 id: badge
                 objectName: "sceneAi"
-                visible: root.ai !== ""
+                Reveal { shown: root.ai !== "" }
                 width: aiText.implicitWidth + 8
                 height: aiText.implicitHeight + 4
                 radius: Theme.radiusControl
@@ -90,7 +90,7 @@ Column {
             spacing: 4
             Row {
                 width: parent.width
-                visible: root.follows
+                Reveal { shown: root.follows }
                 spacing: 4
                 Icon { name: "corner-down-right"; size: 14; color: Theme.text2; y: 2 }
                 Text {
@@ -103,7 +103,7 @@ Column {
             }
             Text {
                 width: parent.width
-                visible: !root.follows && !root.scene.link
+                Reveal { shown: !root.follows && !root.scene.link }
                 text: root.scene.silenced ? S.s_im_lang_ban_chon_356a628b : S.s_im_lang_khong_bai_nao_du_hop_6881c83f
                 color: Theme.text2
                 wrapMode: Text.Wrap
@@ -111,7 +111,7 @@ Column {
             }
             Flow {
                 width: parent.width
-                visible: !root.follows && !!root.scene.link
+                Reveal { shown: !root.follows && !!root.scene.link }
                 spacing: 8
                 Icon { name: "eighth-note"; size: 16; color: Theme.accentText; y: 2 }
                 Text {
@@ -128,7 +128,7 @@ Column {
                     font.pixelSize: Theme.sizeBodySmall
                 }
                 Rectangle {
-                    visible: !!root.track && root.track.source === "local"
+                    Reveal { shown: !!root.track && root.track.source === "local" }
                     width: mineText.implicitWidth + 12
                     height: mineText.implicitHeight + 4
                     radius: Theme.radiusControl
@@ -137,7 +137,7 @@ Column {
                 }
                 Icon {
                     objectName: "scenePinned"
-                    visible: !!root.scene.pinned
+                    Reveal { shown: !!root.scene.pinned }
                     name: "pin"; size: 14; color: Theme.text2; y: 3
                     Accessible.role: Accessible.Graphic
                     Accessible.name: S.s_da_ghim_f1645be7
@@ -145,7 +145,7 @@ Column {
             }
             Text {
                 width: parent.width
-                visible: !root.follows && !!root.scene.link && !!root.scene.pinUnavailable
+                Reveal { shown: !root.follows && !!root.scene.link && !!root.scene.pinUnavailable }
                 text: S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e
                 color: Theme.warning
                 wrapMode: Text.Wrap
@@ -168,11 +168,11 @@ Column {
                 Accessible.checked: root.open
                 onActivated: root.swapRequested()
             }
-            Item { visible: root.follows && root.wide; width: 32; height: 32 }
+            Item { Reveal { shown: root.follows && root.wide } width: 32; height: 32 }
             IconButton {
                 id: more
                 objectName: "sceneMore"
-                visible: !root.follows
+                Reveal { shown: !root.follows }
                 width: 32
                 height: 32
                 anchors.verticalCenter: parent.verticalCenter

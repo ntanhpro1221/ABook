@@ -164,7 +164,7 @@ Item {
             }
             MenuRow {
                 objectName: "menuFinished"
-                visible: root.canToggleFinished
+                Reveal { shown: root.canToggleFinished }
                 width: parent.width
                 height: visible ? implicitHeight : 0
                 icon: "check-check"
@@ -180,7 +180,7 @@ Item {
                 onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
             }
             Item {
-                visible: root.recordRows.some(row => row.danger)
+                Reveal { shown: root.recordRows.some(row => row.danger) }
                 width: parent.width
                 height: visible ? 9 : 0
                 Rectangle { y: 4; width: parent.width; height: 1; color: Theme.line }
@@ -287,7 +287,7 @@ Item {
             }
             MenuRow {
                 objectName: "chapterFromStart"
-                visible: Boolean(parent.c.playable)
+                Reveal { shown: Boolean(target.parent.c.playable) }
                 width: parent.width
                 icon: "play"
                 text: S.s_nghe_tu_dau_chuong_06c66bfc
@@ -295,7 +295,7 @@ Item {
             }
             MenuRow {
                 objectName: "chapterDone"
-                visible: Boolean(parent.c.playable)
+                Reveal { shown: Boolean(target.parent.c.playable) }
                 width: parent.width
                 icon: parent.c.done ? "circle-dashed" : "check-check"
                 text: parent.c.done ? S.s_chua_nghe_2fbea4c8 : S.s_da_nghe_xong_d276b702
@@ -303,7 +303,7 @@ Item {
             }
             MenuRow {
                 objectName: "chapterRename"
-                visible: root.canRename
+                Reveal { shown: root.canRename }
                 width: parent.width
                 icon: "text-cursor-input"
                 text: S.s_doi_ten_chuong_bb06ca82
@@ -349,7 +349,7 @@ Item {
                 // Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b).
                 Interactive {
                     objectName: "bookCoverOpen"
-                    visible: root.listening
+                    Reveal { shown: root.listening }
                     anchors.fill: parent
                     ringRadius: Theme.radiusCover
                     Accessible.role: Accessible.Button
@@ -377,7 +377,7 @@ Item {
                     font.weight: Theme.weightBold
                 }
                 Text {
-                    visible: !!root.book.author
+                    Reveal { shown: !!root.book.author }
                     width: parent.width
                     text: TextWrap.keepDots(root.book.author || "")
                     color: Theme.text2
@@ -388,7 +388,7 @@ Item {
                 Flow {
                     objectName: "bookMeta"
                     readonly property var parts: BookText.metaParts(root.book.detail, root.book.chapters > 0 ? root.book.chapters + S.s_chuong_9e6a01dc : "")
-                    visible: parts.length > 0
+                    Reveal { shown: target.parts.length > 0 }
                     width: parent.width
                     spacing: Theme.s4
                     Repeater {
@@ -403,7 +403,7 @@ Item {
                 // Tình trạng của cuốn: một dòng chữ nhỏ (chỉ có chữ / chưa đủ chương), không hộp, không viên thuốc màu.
                 Text {
                     objectName: "bookStatusLine"
-                    visible: text !== ""
+                    Reveal { shown: target.text !== "" }
                     width: parent.width
                     text: root.loaded ? BookText.statusLine(root.fullBook, root.speaks) : ""
                     color: root.textOnly ? Theme.text2 : Theme.accentText
@@ -413,7 +413,7 @@ Item {
                 Item { width: 1; height: Theme.s8 * root.summaryT }
                 Rectangle {          // tiến độ mảnh ("Đã nghe")
                     objectName: "bookProgress"
-                    visible: root.loaded && !root.textOnly
+                    Reveal { shown: root.loaded && !root.textOnly }
                     width: Math.min(parent.width, 448)
                     height: 4
                     radius: height / 2
@@ -431,7 +431,7 @@ Item {
                 }
                 Text {
                     objectName: "bookProgressLine"
-                    visible: root.loaded && !root.textOnly
+                    Reveal { shown: root.loaded && !root.textOnly }
                     width: parent.width
                     text: root.loaded ? BookText.progressLine(root.fullBook, root.listening, Player.error !== "") : ""
                     color: Theme.text2
@@ -439,7 +439,7 @@ Item {
                     font.pixelSize: Theme.sizeCaption
                 }
                 Item {          // "Hồ sơ nghe: {tên}" (chỉ khi cuốn có từ hai hồ sơ)
-                    visible: Records.hasPicker(root.fullBook)
+                    Reveal { shown: Records.hasPicker(root.fullBook) }
                     width: parent.width
                     height: visible ? recordChip.height + Theme.s4 : 0
                     RecordChip {
@@ -459,7 +459,7 @@ Item {
                 Grid {
                     id: actions
                     objectName: "bookActions"
-                    visible: bookDetail.status === "ready" || (bookDetail.status === "failed" && root.loaded)
+                    Reveal { shown: bookDetail.status === "ready" || (bookDetail.status === "failed" && root.loaded) }
                     width: parent.width
                     columns: !root.expanded && width >= 2 * rowWidth + Theme.s16 ? 2 : 1
                     rowSpacing: Theme.s12
@@ -468,7 +468,7 @@ Item {
                     readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth))
                     Text {
                         objectName: "bookCaughtUp"
-                        visible: bookDetail.caughtUp
+                        Reveal { shown: bookDetail.caughtUp }
                         width: actions.columns === 1 ? parent.width : Math.max(0, parent.width - actions.rowWidth - actions.columnSpacing)
                         text: S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13
                         color: Theme.text2
@@ -478,7 +478,7 @@ Item {
                     Button {
                         id: primaryButton
                         objectName: "bookPrimary"
-                        visible: !bookDetail.caughtUp
+                        Reveal { shown: !bookDetail.caughtUp }
                         size: "lg"
                         wrap: true
                         width: actions.rowWidth          // web: cột w-fit min-w-[16rem], nút giãn bằng cột
@@ -501,7 +501,7 @@ Item {
                             ActionButton {
                                 id: readButton
                                 objectName: "bookRead"
-                                visible: bookDetail.hasPoint || bookDetail.caughtUp
+                                Reveal { shown: bookDetail.hasPoint || bookDetail.caughtUp }
                                 icon: "book-open"
                                 label: S.s_doc_5709880c
                                 Accessible.name: BookText.readLabel(root.fullBook, root.listening)
@@ -519,7 +519,7 @@ Item {
                             ActionButton {
                                 id: restartButton
                                 objectName: "bookRestart"
-                                visible: !root.textOnly || bookDetail.hasPoint
+                                Reveal { shown: !root.textOnly || bookDetail.hasPoint }
                                 icon: "rotate-ccw"
                                 label: S.s_tu_dau_89ef6d78
                                 Accessible.name: S.s_nghe_lai_tu_dau_e251d632
@@ -529,7 +529,7 @@ Item {
                             ActionButton {
                                 id: moreButton
                                 objectName: "bookMore"
-                                visible: root.moreMenu
+                                Reveal { shown: root.moreMenu }
                                 icon: "ellipsis"
                                 label: S.s_them_dd92626f
                                 Accessible.name: S.s_them_tuy_chon_a0b4bb6e

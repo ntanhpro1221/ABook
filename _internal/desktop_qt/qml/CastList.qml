@@ -164,7 +164,7 @@ Item {
                                 }
                                 Text {
                                     objectName: "castNarratorPending"
-                                    visible: Boolean(root.caps.voice) && text !== ""
+                                    Reveal { shown: Boolean(root.caps.voice) && target.text !== "" }
                                     width: parent.width
                                     text: Logic.narratorPending(root.narrator)
                                     color: Theme.accentText
@@ -187,14 +187,14 @@ Item {
                                 spacing: 4
                                 CastSample {
                                     objectName: "castNarratorSample"
-                                    visible: narratorRow.voice !== ""
+                                    Reveal { shown: narratorRow.voice !== "" }
                                     clipId: Logic.voiceId(narratorRow.voice)
                                     url: Logic.routed(Logic.voiceUrl(narratorRow.voice), root.peer)
                                     label: S.s_nghe_giong_c10b4bc4 + narratorRow.voice
                                 }
                                 IconButton {
                                     objectName: "castNarratorVoiceButton"
-                                    visible: Boolean(root.caps.voice) && Boolean(root.caps.narrator)
+                                    Reveal { shown: Boolean(root.caps.voice) && Boolean(root.caps.narrator) }
                                     implicitWidth: 36
                                     implicitHeight: 36
                                     icon: "sliders-horizontal"
@@ -303,9 +303,9 @@ Item {
         }
         SmoothWheel { flick: flick; enabled: !root.embedded }
     }
-    Scrollbar { target: flick; visible: !root.embedded }
+    Scrollbar { target: flick; Reveal { shown: !root.embedded }}
     ScrollEdges {
-        visible: !root.embedded
+        Reveal { shown: !root.embedded }
         x: flick.x; y: flick.y; width: flick.width; height: flick.height
         target: flick
     }

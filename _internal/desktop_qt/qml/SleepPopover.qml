@@ -51,7 +51,7 @@ Popover {
             Text { width: parent.width; text: S.s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(Player.sleepPausedExpiresMinutes); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
         }
         Text {
-            visible: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
+            Reveal { shown: Player.sleepStoppedText !== "" && Player.sleepKind === "off" }
             width: parent.width
             text: S.s_hen_gio_da_tat_tieng_luc_5d5e4231 + Player.sleepStoppedText + "."
             color: Theme.text3
@@ -108,7 +108,7 @@ Popover {
                 objectName: "sleepExtend"
                 kind: "text"
                 text: S.s_hen_lai_c2aae1b7 + root.extendMinutes + S.s_phut_cf728a6a
-                visible: Player.sleepKind !== "off"
+                Reveal { shown: Player.sleepKind !== "off" }
                 onClicked: Player.extendSleep()
             }
             Button {

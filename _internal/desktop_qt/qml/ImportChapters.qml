@@ -131,7 +131,7 @@ Item {
                                 objectName: "importRename"
                                 width: parent.width
                                 height: Math.max(20, titleText.contentHeight + 2)
-                                visible: !row.isEditing
+                                Reveal { shown: !row.isEditing }
                                 enabled: !root.locked
                                 tip: S.s_bam_de_doi_ten_chuong_10c942c5
                                 ringMargin: 2
@@ -158,7 +158,7 @@ Item {
                                     // đè lên dòng dưới - Lead soát 0.4.151, máy dò IconText)
                                     readonly property rect end: titleText.width + titleText.contentWidth + titleText.contentHeight >= 0
                                                                 ? titleText.positionToRectangle(titleText.length) : Qt.rect(0, 0, 0, 0)
-                                    visible: root.inside(row.y + 8 + end.y, 14)
+                                    Reveal { shown: root.inside(row.y + 8 + target.end.y, 14) }
                                     x: end.x + 6
                                     y: end.y + (end.height - 12) / 2 + 1
                                     name: "pencil"
@@ -170,7 +170,7 @@ Item {
                                 id: editor
                                 objectName: "importRenameField"
                                 width: parent.width
-                                visible: row.isEditing
+                                Reveal { shown: row.isEditing }
                                 enabled: row.isEditing
                                 label: S.s_ten_chuong_9edb6c28
                                 escapeLocal: true
@@ -192,7 +192,7 @@ Item {
                         }
                         Text {
                             width: parent.width
-                            visible: row.sub !== ""
+                            Reveal { shown: row.sub !== "" }
                             text: row.sub
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -201,7 +201,7 @@ Item {
                         }
                         Text {
                             width: parent.width
-                            visible: text !== ""
+                            Reveal { shown: target.text !== "" }
                             text: row.chapter.matter ? row.chapter.matter + S.s_co_ve_khong_phai_truyen_tich_neu_muon_nghe_e93a3b54 : (row.chapter.short ? S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0 : "")
                             color: Theme.text3
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -224,7 +224,7 @@ Item {
                             topPadding: 4
                         }
                     }
-                    Rectangle { y: parent.height - 1; width: parent.width; height: 1; color: Theme.line; visible: row.index < root.chapters.length - 1 }
+                    Rectangle { y: parent.height - 1; width: parent.width; height: 1; color: Theme.line; Reveal { shown: row.index < root.chapters.length - 1 }}
                 }
             }
         }

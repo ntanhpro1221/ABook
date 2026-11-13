@@ -35,7 +35,7 @@ Column {
         font.pixelSize: Theme.sizeBodySmall
     }
     Row {
-        visible: root.note !== ""
+        Reveal { shown: root.note !== "" }
         spacing: 8
         width: parent.width
         Icon { name: "triangle-alert"; size: 16; color: Theme.warning; y: 2 }

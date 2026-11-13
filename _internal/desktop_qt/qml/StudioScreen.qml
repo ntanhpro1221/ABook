@@ -139,7 +139,7 @@ Item {
         y: bar.height
         width: parent.width
         height: parent.height - y
-        visible: root.shownView === "own" || root.shownView === "open"
+        Reveal { shown: root.shownView === "own" || root.shownView === "open" }
         opacity: Theme.reduceMotion ? root.phase : 1
         transform: Translate { x: swap.incomingShift }
         // Dữ liệu của trình tạo sách: dựng muộn, sống tiếp khi rời trang (nháp không mất)
@@ -157,7 +157,7 @@ Item {
             id: projects
             objectName: "projectsScreen"
             anchors.fill: parent
-            visible: root.shownKey === "route:list"
+            Reveal { shown: root.shownKey === "route:list" }
             enabled: visible
             store: dataStore
             onProjectOpened: id => root.openProject(id)
@@ -201,7 +201,7 @@ Item {
     ScreenHeader {
         id: header
         objectName: "studioHeader"
-        visible: !content.visible
+        Reveal { target: header; shown: !content.visible }
         x: (parent.width - root.bodyWidth) / 2
         y: bar.height
         width: root.bodyWidth
@@ -214,13 +214,14 @@ Item {
         y: header.y + header.height
         width: root.bodyWidth
         height: parent.height - y
-        visible: !content.visible
+        Reveal { shown: !content.visible }
         opacity: Theme.reduceMotion ? root.phase : 1
         transform: Translate { x: swap.incomingShift }
         // Thiết bị này chỉ được nghe ở máy kia (StudioClosed): nói bật quyền ở đâu
         EmptyState {
+            id: studioClosed
             objectName: "studioClosed"
-            visible: root.shownView === "closed"
+            Reveal { target: studioClosed; shown: root.shownView === "closed" }
             y: 96          // mt-24 của web; EmptyState tự đệm 56 trên dưới
             width: parent.width
             icon: "clapperboard"
@@ -230,8 +231,9 @@ Item {
         }
         // Chưa vào được Studio của máy kia (PeerTrouble): lời máy chủ; máy ấy im thì tự mở lại khi nó trả lời
         EmptyState {
+            id: peerTrouble
             objectName: "peerTrouble"
-            visible: root.shownView === "trouble"
+            Reveal { target: peerTrouble; shown: root.shownView === "trouble" }
             y: 96          // mt-24 của web; EmptyState tự đệm 56 trên dưới
             width: parent.width
             icon: "laptop"

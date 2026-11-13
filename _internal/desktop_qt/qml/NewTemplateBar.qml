@@ -62,7 +62,7 @@ Column {
         Text { height: 36; verticalAlignment: Text.AlignVCenter; text: S.s_mau_thiet_lap_be32f35e; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
         ChoiceRow {
             objectName: "newTemplates"
-            visible: root.templates.length > 0
+            Reveal { shown: root.templates.length > 0 }
             width: Math.min(implicitWidth, root.width - 140)
             label: S.s_mau_thiet_lap_be32f35e
             options: [{value: "", label: Templates.DEFAULT_LABEL}].concat(root.templates.map(item => ({value: item.name, label: item.name === (root.active ? root.active.name : "") && root.modified ? item.name + S.s_da_sua_a7e7e8e8 : item.name})))
@@ -76,7 +76,7 @@ Column {
             Button {
                 id: saveButton
                 objectName: "newTemplateSave"
-                visible: !root.saving
+                Reveal { shown: !root.saving }
                 text: S.s_luu_thanh_mau_bd20c55a
                 icon: "bookmark-plus"
                 kind: "ghost"
@@ -87,16 +87,16 @@ Column {
     }
     Prose {
         objectName: "newTemplateModified"
-        visible: root.modified && Boolean(root.active)
+        Reveal { shown: root.modified && Boolean(root.active) }
         topPadding: visible ? 8 : 0
         small: true
         text: root.active ? S.s_bam_lai_mau_26ea82c5 + root.active.name + S.s_de_khoi_phuc_thiet_lap_da_luu_095b8a08 : ""
     }
-    Prose { objectName: "newTemplateLostVoice"; visible: root.lostVoice !== ""; topPadding: visible ? 8 : 0; small: true; text: Templates.missingVoiceNote(root.lostVoice) }
-    Prose { objectName: "newTemplateLostModel"; visible: root.lostModel !== ""; topPadding: visible ? 8 : 0; small: true; text: Templates.missingModelNote() }
+    Prose { objectName: "newTemplateLostVoice"; Reveal { shown: root.lostVoice !== "" } topPadding: visible ? 8 : 0; small: true; text: Templates.missingVoiceNote(root.lostVoice) }
+    Prose { objectName: "newTemplateLostModel"; Reveal { shown: root.lostModel !== "" } topPadding: visible ? 8 : 0; small: true; text: Templates.missingModelNote() }
     Prose {
         objectName: "newTemplateHint"
-        visible: !root.templates.length && !root.saving
+        Reveal { shown: !root.templates.length && !root.saving }
         topPadding: visible ? 8 : 0
         small: true
         text: S.s_luu_cac_lua_chon_duoi_day_thanh_mau_de_dun_8513aa2f
@@ -125,19 +125,19 @@ Column {
                 escapeLocal: true
                 onEscaped: root.close()
             }
-            Button { objectName: "newTemplateConfirm"; visible: root.confirming; text: S.s_ghi_de_5e4cd1eb; kind: "primary"; size: "sm"; busy: root.busy; onActivated: root.submit() }
-            Button { objectName: "newTemplateRename"; visible: root.confirming; text: S.s_dat_ten_khac_78e8f19c; kind: "ghost"; size: "sm"; onActivated: { root.confirming = false; nameField.forceActiveFocus() } }
-            Button { objectName: "newTemplateOk"; visible: !root.confirming; text: S.s_luu_e91f26c0; kind: "primary"; size: "sm"; busy: root.busy; enabled: Templates.cleanName(root.name) !== ""; onActivated: root.submit() }
-            Button { objectName: "newTemplateCancel"; visible: !root.confirming; text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onActivated: root.close() }
+            Button { objectName: "newTemplateConfirm"; Reveal { shown: root.confirming } text: S.s_ghi_de_5e4cd1eb; kind: "primary"; size: "sm"; busy: root.busy; onActivated: root.submit() }
+            Button { objectName: "newTemplateRename"; Reveal { shown: root.confirming } text: S.s_dat_ten_khac_78e8f19c; kind: "ghost"; size: "sm"; onActivated: { root.confirming = false; nameField.forceActiveFocus() } }
+            Button { objectName: "newTemplateOk"; Reveal { shown: !root.confirming } text: S.s_luu_e91f26c0; kind: "primary"; size: "sm"; busy: root.busy; enabled: Templates.cleanName(root.name) !== ""; onActivated: root.submit() }
+            Button { objectName: "newTemplateCancel"; Reveal { shown: !root.confirming } text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onActivated: root.close() }
         }
         Prose {
             objectName: "newTemplateAsk"
-            visible: root.confirming
+            Reveal { shown: root.confirming }
             topPadding: visible ? 8 : 0
             small: true
             text: root.existing ? S.s_da_co_mau_8527783b + root.existing.name + S.s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5 : ""
         }
-        Prose { objectName: "newTemplateProblem"; visible: root.problem !== ""; topPadding: visible ? 8 : 0; small: true; tone: Theme.danger; text: root.problem }
+        Prose { objectName: "newTemplateProblem"; Reveal { shown: root.problem !== "" } topPadding: visible ? 8 : 0; small: true; tone: Theme.danger; text: root.problem }
         Prose { topPadding: 8; small: true; tone: Theme.text3; text: S.s_mau_luu_giong_chat_luong_va_cach_tao_sach_143fa4bf }
         MoreInfo {
             width: parent.width

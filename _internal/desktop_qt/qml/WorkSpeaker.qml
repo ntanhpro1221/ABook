@@ -96,7 +96,7 @@ Column {
         }
         DecisionButton {
             objectName: "speakerKeep"
-            visible: Boolean(root.item.currentValue)
+            Reveal { shown: Boolean(root.item.currentValue) }
             text: W.keepButtonLabel(root.item)
             enabled: !root.busy
             onClicked: root.choose({speaker: root.item.currentValue})
@@ -104,21 +104,21 @@ Column {
         // Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng
         DecisionButton {
             objectName: "speakerNew"
-            visible: Boolean(root.item.newPerson)
+            Reveal { shown: Boolean(root.item.newPerson) }
             text: root.item.newPersonLabel || S.s_tao_nhan_vat_18e9a09a
             enabled: !root.busy && !root.none
             onClicked: root.choose({speaker: root.item.newPerson, newGender: "unknown"})
         }
         DecisionButton {
             objectName: "speakerKeepGroups"
-            visible: Boolean(root.item.keepGroups) && root.item.keepGroups.length > 0
+            Reveal { shown: Boolean(root.item.keepGroups) && root.item.keepGroups.length > 0 }
             text: root.item.keepLabel || S.s_giu_nguyen_1b550a12
             enabled: !root.busy
             onClicked: root.keepAll()
         }
         Button {
             objectName: "speakerVoice"
-            visible: root.voicePick && root.item.kind === "unnamed" && Boolean(root.item.pickVoice)
+            Reveal { shown: root.voicePick && root.item.kind === "unnamed" && Boolean(root.item.pickVoice) }
             size: "sm"
             kind: "ghost"
             text: S.s_gioi_giong_a5c7c7b7
@@ -127,7 +127,7 @@ Column {
         // Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề
         Button {
             objectName: "speakerOther"
-            visible: root.item.kind !== "alias"
+            Reveal { shown: root.item.kind !== "alias" }
             size: "sm"
             kind: "ghost"
             icon: root.item.suggestedName || root.item.kind === "caller" ? "" : "user-plus"
@@ -138,7 +138,7 @@ Column {
         // Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó
         Button {
             objectName: "speakerFind"
-            visible: root.scriptLinks && Boolean(root.item.lines) && root.item.lines.length === 1 && Boolean(root.item.examples) && root.item.examples.length > 0
+            Reveal { shown: root.scriptLinks && Boolean(root.item.lines) && root.item.lines.length === 1 && Boolean(root.item.examples) && root.item.examples.length > 0 }
             size: "sm"
             kind: "ghost"
             icon: "search"
@@ -148,7 +148,7 @@ Column {
         // Thẻ nhóm chỉ in vài câu làm ví dụ: đọc đủ ngữ cảnh ở tab Kịch bản trước khi quyết, mở đúng chương, tại câu đầu của nhóm
         Button {
             objectName: "speakerRead"
-            visible: root.scriptLinks && Boolean(root.item.lines) && Boolean(root.item.examples) && root.item.lines.length > root.item.examples.length && root.item.examples.length > 0
+            Reveal { shown: root.scriptLinks && Boolean(root.item.lines) && Boolean(root.item.examples) && root.item.lines.length > root.item.examples.length && root.item.examples.length > 0 }
             size: "sm"
             kind: "ghost"
             icon: "search"
@@ -171,7 +171,7 @@ Column {
                 Flow {
                     width: parent.width
                     spacing: 8
-                    visible: root.more.length > 0
+                    Reveal { shown: root.more.length > 0 }
                     Accessible.role: Accessible.Grouping
                     Accessible.name: S.s_nhung_nguoi_khac_trong_sach_43124252
                     Repeater {

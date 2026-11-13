@@ -99,7 +99,7 @@ FocusScope {
         width: parent.width
         EditBookSkeleton {
             objectName: "workSkeleton"
-            visible: root.query !== null && root.query.loading
+            Reveal { shown: root.query !== null && root.query.loading }
             width: parent.width
             y: 24
             shape: "rows"
@@ -114,8 +114,9 @@ FocusScope {
             onRetry: root.query.load()
         }
         EmptyState {
+            id: workEmpty
             objectName: "workEmpty"
-            visible: root.all !== null && root.all.length === 0
+            Reveal { target: workEmpty; shown: root.all !== null && root.all.length === 0 }
             width: parent.width
             topPadding: 40
             bottomPadding: 40
@@ -126,7 +127,7 @@ FocusScope {
         Column {
             id: content
             objectName: "workContent"
-            visible: root.all !== null && root.all.length > 0
+            Reveal { shown: root.all !== null && root.all.length > 0 }
             width: parent.width
             Item { width: 1; height: 20 }
             // Lời mở đầu theo trạng thái sách: "đang chạy tiếp" không hiện cả khi sách đã xong hay đang dừng
@@ -180,7 +181,7 @@ FocusScope {
             WorkBulkKeep { work: root.work; kind: root.group.active; items: root.group.filtered }
             Flow {
                 objectName: "workKeys"
-                visible: root.wide && root.keysOn
+                Reveal { shown: root.wide && root.keysOn }
                 width: parent.width
                 topPadding: 8
                 spacing: 8

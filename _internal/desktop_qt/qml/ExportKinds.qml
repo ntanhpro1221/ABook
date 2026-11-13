@@ -49,7 +49,7 @@ Item {
                 Keys.onSpacePressed: root.picked(modelData.value)
                 function choose() { forceActiveFocus(Qt.MouseFocusReason); root.picked(modelData.value) }
                 Rectangle { width: parent.width; height: parent.height - (row.last ? 0 : 1); color: Theme.hover; opacity: hover.hovered && !row.selected ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
-                Rectangle { y: parent.height - 1; width: parent.width; height: 1; color: Theme.line; visible: !row.last }
+                Rectangle { y: parent.height - 1; width: parent.width; height: 1; color: Theme.line; Reveal { shown: !row.last }}
                 HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: row.choose() }
                 Icon { x: 0; y: 12 + 2; name: row.modelData.icon; size: 16; color: Theme.accentText }
@@ -83,7 +83,7 @@ Item {
         // rows.count trong biểu thức: tính lại khi các hàng vừa dựng xong (itemAt không báo đổi)
         readonly property Item target: rows.count > 0 ? rows.itemAt(root.selectedIndex) : null
         objectName: "exportKindLine"
-        visible: target !== null
+        Reveal { shown: target.target !== null }
         x: 0
         y: target ? target.y + target.height - height - (target.last ? 0 : 1) : 0
         width: root.width

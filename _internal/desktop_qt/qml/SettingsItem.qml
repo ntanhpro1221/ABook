@@ -15,6 +15,6 @@ Item {
         return true
     }
     implicitHeight: body.implicitHeight + 2 * padding
-    Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.firstShown }
+    Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.firstShown }}
     Column { id: body; y: root.padding; width: root.width }
 }

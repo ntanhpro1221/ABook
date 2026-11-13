@@ -198,7 +198,7 @@ Item {
         width: parent.width
         EditBookSkeleton {
             objectName: "reviewSkeleton"
-            visible: first.loading
+            Reveal { shown: first.loading }
             width: parent.width
             y: 24
             shape: "rows"
@@ -215,7 +215,7 @@ Item {
         Column {
             id: content
             objectName: "reviewContent"
-            visible: root.view !== null
+            Reveal { shown: root.view !== null }
             width: parent.width
             Item { width: 1; height: 16 }
             Flow {
@@ -259,7 +259,7 @@ Item {
                     }
                     Row {
                         objectName: "reviewHint"
-                        visible: root.continuous && root.wide
+                        Reveal { shown: root.continuous && root.wide }
                         height: 40
                         spacing: 8
                         Text { anchors.verticalCenter: parent.verticalCenter; text: S.s_dang_nghe_lien_563c9fbf; color: Theme.text3; font.pixelSize: Theme.sizeCaption }

@@ -21,7 +21,7 @@ Item {
     readonly property string needs: Setup.STUDIO_NEEDS
     implicitHeight: present ? column.height : 0
     height: implicitHeight
-    visible: present || column.height > 0
+    Reveal { shown: target.present || column.height > 0 }
     objectName: "studioSettings"
 
     function noStudioLine(reason) { return Setup.noStudioLine(reason) }

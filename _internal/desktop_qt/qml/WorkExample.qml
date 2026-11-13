@@ -23,7 +23,7 @@ Item {
     ImportBox {
         id: tick
         objectName: "exampleTick"
-        visible: root.picks
+        Reveal { shown: root.picks }
         x: 2
         y: 8
         checked: root.picked
@@ -37,7 +37,7 @@ Item {
         height: 36
         CastSample {
             objectName: "exampleSample"
-            visible: Boolean(root.example.hasAudio)
+            Reveal { shown: Boolean(root.example.hasAudio) }
             clipId: "work-" + root.example.segmentId
             url: root.work && root.example.hasAudio ? root.work.store.path("/media/books/" + root.work.bookId + "/samples/" + root.example.segmentId) : ""
             label: S.s_nghe_cau_22ae467f + root.example.text
@@ -50,7 +50,7 @@ Item {
         spacing: 4
         Text {
             objectName: "exampleBefore"
-            visible: Boolean(root.example.before)
+            Reveal { shown: Boolean(root.example.before) }
             width: parent.width
             text: root.example.before || ""
             color: Theme.text3
@@ -61,7 +61,7 @@ Item {
         Item {
             width: parent.width
             height: inner.height
-            Rectangle { visible: root.framed; width: 2; height: parent.height; color: Theme.accent }
+            Rectangle { Reveal { shown: root.framed } width: 2; height: parent.height; color: Theme.accent }
             Column {
                 id: inner
                 x: root.framed ? 10 : 0
@@ -88,7 +88,7 @@ Item {
         }
         Text {
             objectName: "exampleAfter"
-            visible: Boolean(root.example.after)
+            Reveal { shown: Boolean(root.example.after) }
             width: parent.width
             text: root.example.after || ""
             color: Theme.text3

@@ -76,7 +76,7 @@ Item {
     Rectangle {
         // repeater.count trong biểu thức: tính lại khi các mục vừa dựng xong (itemAt không báo đổi)
         readonly property Item target: repeater.count > 0 && root.currentIndex >= 0 ? repeater.itemAt(root.currentIndex) : null
-        visible: target !== null
+        Reveal { shown: target.target !== null }
         x: target ? target.x : 0
         y: target ? target.y + target.height - height : 0
         width: target ? target.width : 0

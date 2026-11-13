@@ -20,7 +20,7 @@ Column {
         objectName: "projectLogLost"
         width: parent.width
         spacing: Theme.s8
-        visible: lost.text !== ""
+        Reveal { shown: lost.text !== "" }
         Icon { name: "circle-alert"; size: 16; color: Theme.warning; y: 2 }
         Text {
             id: lost
@@ -69,14 +69,14 @@ Column {
                             Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
                             Icon {
                                 anchors.centerIn: parent
-                                visible: step.look === "done" || step.look === "active"
+                                Reveal { shown: step.look === "done" || step.look === "active" }
                                 name: step.look === "done" ? "check" : Logic.STEP_ICONS[step.index]
                                 size: step.look === "done" ? 16 : 14
                                 color: step.look === "done" ? Theme.successInk : Theme.accentInk
                             }
                             Text {
                                 anchors.centerIn: parent
-                                visible: step.look === "paused" || step.look === "pending"
+                                Reveal { shown: step.look === "paused" || step.look === "pending" }
                                 text: String(step.index + 1)
                                 color: step.look === "paused" ? Theme.bg : Theme.text2
                                 font.pixelSize: Theme.sizeCaption
@@ -101,9 +101,9 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 18
                             height: 14
-                            visible: step.look === "active" || step.look === "paused"
-                            Vu { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: step.look === "active"; color: Theme.accent }
-                            Icon { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: step.look === "paused"; name: "pause"; size: 14; color: Theme.text3 }
+                            Reveal { shown: step.look === "active" || step.look === "paused" }
+                            Vu { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; Reveal { shown: step.look === "active" } color: Theme.accent }
+                            Icon { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; Reveal { shown: step.look === "paused" } name: "pause"; size: 14; color: Theme.text3 }
                         }
                     }
                     Text {
@@ -115,7 +115,7 @@ Column {
                         font.pixelSize: Theme.sizeCaption
                     }
                     Row {
-                        visible: step.value !== undefined && step.look !== "pending"
+                        Reveal { shown: step.value !== undefined && step.look !== "pending" }
                         width: parent.width
                         topPadding: Theme.s4
                         spacing: Theme.s8

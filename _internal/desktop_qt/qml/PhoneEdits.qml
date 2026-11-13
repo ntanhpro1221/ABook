@@ -22,7 +22,7 @@ Item {
     onViewChanged: if (filled(view)) held = view
     width: parent ? parent.width : 600
     height: outer.height
-    visible: outer.height > 0
+    Reveal { shown: outer.height > 0 }
 
     function decide(verb, device, item) {
         if (busy !== "") return

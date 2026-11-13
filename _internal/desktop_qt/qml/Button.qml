@@ -60,21 +60,21 @@ Interactive {
     }
     Item {
         id: lead
-        visible: root.showsIcon
+        Reveal { shown: root.showsIcon }
         x: Math.max(root.pad, (root.width - root.implicitWidth) / 2 + root.pad)
         width: 16
         height: 16
         y: root.wrap && label.lineCount > 1 ? label.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
         Icon {
             anchors.centerIn: parent
-            visible: !root.busy
+            Reveal { shown: !root.busy }
             name: root.icon
             size: 16
             color: root.ink
         }
         Icon {
             anchors.centerIn: parent
-            visible: root.busy
+            Reveal { shown: root.busy }
             name: "loader-circle"
             size: 16
             color: root.ink

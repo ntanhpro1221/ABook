@@ -40,7 +40,7 @@ Interactive {
         id: arc
         anchors.fill: parent
         anchors.margins: -4
-        visible: Player.buffering && Player.playing
+        Reveal { shown: Player.buffering && Player.playing }
         onVisibleChanged: if (visible) requestPaint()
         onPaint: {
             const ctx = getContext("2d")

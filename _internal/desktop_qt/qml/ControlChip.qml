@@ -31,7 +31,7 @@ Interactive {
         spacing: Theme.s8
         Icon {
             id: glyph
-            visible: root.icon !== ""
+            Reveal { shown: root.icon !== "" }
             name: root.icon
             size: 16
             color: root.active ? Theme.accentText : Theme.text2
@@ -49,7 +49,7 @@ Interactive {
             }
         }
         ClockLabel {
-            visible: root.text !== ""
+            Reveal { shown: root.text !== "" }
             text: root.text
             reserve: root.reserve
             color: root.active ? Theme.accentText : Theme.text

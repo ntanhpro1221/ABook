@@ -60,7 +60,7 @@ Column {
             ClockLabel {
                 width: parent.width
                 text: root.label
-                visible: text !== ""
+                Reveal { shown: target.text !== "" }
                 color: root.failed ? Theme.danger : Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeCaption
@@ -94,7 +94,7 @@ Column {
                     Button {
                         id: cancel
                         anchors.right: parent.right
-                        visible: Boolean(root.module) && Boolean(root.module.cancellable)
+                        Reveal { shown: Boolean(root.module) && Boolean(root.module.cancellable) }
                         text: S.s_huy_96732485; kind: "ghost"; size: "sm"
                         busy: root.starting
                         onActivated: root.post("/api/music/local/module/cancel")
@@ -108,7 +108,7 @@ Column {
                     width: parent.width
                     spacing: 8
                     Button {
-                        visible: root.action === "install"
+                        Reveal { shown: root.action === "install" }
                         text: root.module && root.action === "install" ? root.installText() : ""
                         kind: "ghost"; size: "sm"; wrap: true
                         width: Math.min(implicitWidth, parent.width)
@@ -116,7 +116,7 @@ Column {
                         onActivated: root.post("/api/music/local/module")
                     }
                     Button {
-                        visible: root.action === "reanalyse"
+                        Reveal { shown: root.action === "reanalyse" }
                         text: S.s_phan_tich_7dc5d6d2 + root.stale + S.s_bai_43a258fa
                         kind: "ghost"; size: "sm"; wrap: true
                         width: Math.min(implicitWidth, parent.width)
@@ -124,7 +124,7 @@ Column {
                         onActivated: root.post("/api/music/local/reanalyse")
                     }
                     Item {
-                        visible: Boolean(root.module) && root.module.metered && root.action === "install" && !root.failed
+                        Reveal { shown: Boolean(root.module) && root.module.metered && root.action === "install" && !root.failed }
                         width: Math.min(warn.implicitWidth, parent.width)
                         height: 40
                         Text {
@@ -184,7 +184,7 @@ Column {
                         onActivated: root.post("/api/music/local/precise", {enabled: root.precise.state !== "ready"})
                     }
                     Button {
-                        visible: Boolean(root.precise) && root.precise.removable
+                        Reveal { shown: Boolean(root.precise) && root.precise.removable }
                         text: root.precise ? S.s_xoa_file_ddf600eb + Size.formatSize(root.precise.bytes) + ")" : ""
                         kind: "ghost"; size: "sm"
                         busy: root.starting

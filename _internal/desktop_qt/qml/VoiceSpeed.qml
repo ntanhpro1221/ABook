@@ -86,7 +86,7 @@ VoiceFold {
                     Button {
                         id: download
                         objectName: "voiceSpeedDownload"
-                        visible: line.wants
+                        Reveal { shown: line.wants }
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         size: "sm"

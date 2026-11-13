@@ -41,7 +41,7 @@ Column {
         // Người chưa từng được máy gán câu nào (linh thể nói trong 『』...): tạo người ấy
         Item {
             objectName: "speakerNew"
-            visible: root.query !== "" && root.found.length === 0
+            Reveal { shown: root.query !== "" && root.found.length === 0 }
             width: parent.width
             height: visible ? newBox.height + 20 : 0
             Column {
@@ -75,7 +75,7 @@ Column {
             }
         }
         Section_ { shown: !root.query && !!root.suggested && root.suggested.value !== root.line.current; text: S.s_may_goi_y_1e7f4cfa; tone: Theme.warning }
-        Row_ { visible: !root.query && !!root.suggested && root.suggested.value !== root.line.current; person: root.suggested || ({value: "", label: "", lines: 0}) }
+        Row_ { Reveal { shown: !root.query && !!root.suggested && root.suggested.value !== root.line.current } person: root.suggested || ({value: "", label: "", lines: 0}) }
         Section_ { shown: !root.query && root.script.cast.length > 0; text: S.s_trong_chuong_nay_73a2b156 }
         Repeater {
             model: root.query ? [] : root.script.cast
@@ -91,7 +91,7 @@ Column {
     component Section_: Text {
         property bool shown: true
         property color tone: Theme.text2
-        visible: shown
+        Reveal { shown: target.shown }
         width: parent.width
         height: shown ? implicitHeight + 10 : 0
         leftPadding: 8
@@ -149,10 +149,10 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             width: option.current ? 16 : count.visible ? count.implicitWidth : 0
             height: 16
-            Icon { visible: option.current; name: "check"; size: 16; color: Theme.success }
+            Icon { Reveal { shown: option.current } name: "check"; size: 16; color: Theme.success }
             Text {
                 id: count
-                visible: !option.current && option.person.lines > 0
+                Reveal { shown: !option.current && option.person.lines > 0 }
                 anchors.verticalCenter: parent.verticalCenter
                 text: Studio.formatNumber(option.person.lines || 0)
                 color: Theme.text3

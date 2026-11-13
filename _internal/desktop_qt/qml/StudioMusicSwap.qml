@@ -84,7 +84,7 @@ Column {
             }
             Text {
                 width: parent.width
-                visible: root.alternatives.length === 0
+                Reveal { shown: root.alternatives.length === 0 }
                 text: S.s_khong_con_bai_nao_khac_trong_danh_muc_du_h_970fe053
                 color: Theme.text2
                 wrapMode: Text.Wrap
@@ -113,7 +113,7 @@ Column {
             }
             Text {
                 width: parent.width
-                visible: root.mine.length === 0
+                Reveal { shown: root.mine.length === 0 }
                 text: root.remote ? S.s_chua_co_bai_nao_them_nhac_cua_ban_tren_may_0f4b6b30 : S.s_chua_co_bai_nao_bam_them_nhac_cua_ban_o_da_dfd69e49
                 color: Theme.text2
                 wrapMode: Text.Wrap
@@ -125,7 +125,7 @@ Column {
     // Studio của máy đã ghép thì không: kho và bản tải là của máy này
     DisclosureRow {
         objectName: "swapOpenLibrary"
-        visible: !root.remote
+        Reveal { shown: !root.remote }
         width: parent.width
         icon: "library"
         title: S.s_xem_ca_kho_fa30b353

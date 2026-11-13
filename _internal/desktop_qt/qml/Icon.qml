@@ -26,7 +26,6 @@ Item {
         scale: root.size / 24
         transformOrigin: Item.TopLeft
         preferredRendererType: Shape.CurveRenderer
-        visible: root.path !== ""
         ShapePath {
             strokeColor: root.solid ? "transparent" : root.color
             strokeWidth: root.solid ? -1 : 2

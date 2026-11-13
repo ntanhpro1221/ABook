@@ -58,6 +58,6 @@ Item {
         color: "transparent"
         border.width: 2
         border.color: Theme.accent
-        visible: (root.activeFocus || root.externalFocus) && Platform.keyboardNav
+        Reveal { shown: (root.activeFocus || root.externalFocus) && Platform.keyboardNav }
     }
 }

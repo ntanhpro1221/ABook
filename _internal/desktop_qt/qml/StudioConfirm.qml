@@ -12,10 +12,10 @@ Modal {
     signal chosen(string key)
 
     Row {
-        visible: root.lines.length > 0
+        Reveal { shown: root.lines.length > 0 }
         width: parent.width
         spacing: 12
-        Icon { visible: root.warn; name: "triangle-alert"; size: 20; color: Theme.warning; y: 2 }
+        Icon { Reveal { shown: root.warn } name: "triangle-alert"; size: 20; color: Theme.warning; y: 2 }
         Column {
             width: parent.width - (root.warn ? 20 + 12 : 0)
             spacing: 8

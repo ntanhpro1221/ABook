@@ -54,7 +54,7 @@ Modal {
         Button {
             objectName: "unpairSend"
             width: parent.width
-            visible: Boolean(root.shownCopy && root.shownCopy.send)
+            Reveal { shown: Boolean(root.shownCopy && root.shownCopy.send) }
             kind: root.shownCopy && root.shownCopy.sendPrimary ? "primary" : "ghost"
             text: root.shownCopy && root.shownCopy.send ? root.shownCopy.send : ""
             busy: root.busyChoice === "send"

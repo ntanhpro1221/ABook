@@ -56,7 +56,7 @@ Column {
             spacing: 8
             Label_ { text: S.s_ai_noi_ab25bbf5 }
             Item {
-                visible: !!root.picked
+                Reveal { shown: !!root.picked }
                 width: parent.width
                 height: visible ? Math.max(32, pickedName.implicitHeight + 8) : 0
                 Icon { anchors.verticalCenter: parent.verticalCenter; name: "check"; size: 16; color: Theme.accentText }
@@ -82,7 +82,7 @@ Column {
                 }
             }
             ScriptSpeakerMenu {
-                visible: !root.picked
+                Reveal { shown: !root.picked }
                 width: parent.width
                 line: root.line
                 script: root.script
@@ -102,7 +102,7 @@ Column {
             width: parent.width
             spacing: 12
             Column {
-                visible: root.line.emotion !== null
+                Reveal { shown: root.line.emotion !== null }
                 width: parent.width
                 spacing: 8
                 Label_ { text: S.s_cam_xuc_05c1aee0 }
@@ -122,7 +122,7 @@ Column {
                 }
             }
             Column {
-                visible: root.line.intensity !== null
+                Reveal { shown: root.line.intensity !== null }
                 width: parent.width
                 spacing: 8
                 Label_ { text: S.s_muc_10267bc5 }
@@ -167,7 +167,7 @@ Column {
         }
         TextLink {
             objectName: "deliveryOriginal"
-            visible: !!root.line.spoken
+            Reveal { shown: !!root.line.spoken }
             accent: true
             text: S.s_dung_chu_goc_b0016031
             onClicked: wordsField.text = root.line.text
@@ -183,8 +183,9 @@ Column {
         onClicked: root.save(root.change)
     }
     ImportFold {
+        id: deliveryNames
         objectName: "deliveryNames"
-        visible: root.names.length > 0
+        Reveal { target: deliveryNames; shown: root.names.length > 0 }
         width: parent.width
         prefix: "fold."
         storageKey: "delivery.names"

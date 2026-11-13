@@ -23,8 +23,8 @@ Column {
         Item {
             width: root.width
             height: root.shape === "cards" ? 24 + 16 + 12 + 12 + 8 + 12 : 40
-            Rectangle { visible: root.shape === "rows"; width: 40; height: 40; radius: Theme.radiusControl; color: Theme.sunken }
-            Rectangle { visible: root.shape === "cards"; y: 12; width: parent.width / 3; height: 16; radius: Theme.radiusControl; color: Theme.sunken }
+            Rectangle { Reveal { shown: root.shape === "rows" } width: 40; height: 40; radius: Theme.radiusControl; color: Theme.sunken }
+            Rectangle { Reveal { shown: root.shape === "cards" } y: 12; width: parent.width / 3; height: 16; radius: Theme.radiusControl; color: Theme.sunken }
             Column {
                 x: root.shape === "rows" ? 52 : 0
                 y: root.shape === "rows" ? 4 : 12 + 16 + 12

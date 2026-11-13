@@ -38,7 +38,7 @@ Interactive {
         }
         Text {
             id: hintText
-            visible: root.hint !== ""
+            Reveal { shown: root.hint !== "" }
             width: parent.width
             text: root.hint
             color: Theme.text3

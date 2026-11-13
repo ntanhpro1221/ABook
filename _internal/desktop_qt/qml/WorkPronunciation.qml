@@ -70,7 +70,7 @@ Column {
         // Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác sửa ở tab Nhân vật, mục "Cách đọc tên"
         Button {
             objectName: "pronNames"
-            visible: root.namesLink
+            Reveal { shown: root.namesLink }
             size: "sm"
             kind: "ghost"
             text: S.s_moi_cach_doc_ten_85347e60

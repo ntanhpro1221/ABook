@@ -59,7 +59,7 @@ Column {
                     y: 16
                     width: parent.width - 32
                     Row {
-                        visible: option.modelData.value === "high_quality"
+                        Reveal { shown: option.modelData.value === "high_quality" }
                         spacing: 4
                         bottomPadding: visible ? 8 : 0
                         Icon { y: 2; name: "sparkles"; size: 12; color: Theme.text2 }

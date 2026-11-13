@@ -46,17 +46,17 @@ Interactive {
         x: Theme.s12
         width: 20
         height: parent.height
-        Vu { anchors.centerIn: parent; visible: root.current && (!root.opensPlayer || Player.playing); color: Theme.accent }
+        Vu { anchors.centerIn: parent; Reveal { shown: root.current && (!root.opensPlayer || Player.playing) } color: Theme.accent }
         Icon {
             anchors.centerIn: parent
-            visible: root.current && root.opensPlayer && !Player.playing
+            Reveal { shown: root.current && root.opensPlayer && !Player.playing }
             name: "play"
             size: 16
             color: Theme.accentText
         }
         Interactive {
             objectName: "chapterToggle"
-            visible: root.current && root.opensPlayer
+            Reveal { shown: root.current && root.opensPlayer }
             anchors.centerIn: parent
             width: 32
             height: 32
@@ -70,7 +70,7 @@ Interactive {
         }
         Icon {
             anchors.centerIn: parent
-            visible: !root.current && root.done
+            Reveal { shown: !root.current && root.done }
             name: "check"
             Accessible.name: root.done ? S.s_da_nghe_1e0f8d88 : ""
             size: 16
@@ -92,7 +92,7 @@ Interactive {
             font.weight: root.current ? Theme.weightMedium : Theme.weightRegular
         }
         Text {
-            visible: root.detail !== ""
+            Reveal { shown: root.detail !== "" }
             width: parent.width
             text: root.detail
             color: Theme.text3
@@ -103,7 +103,7 @@ Interactive {
     Text {
         id: duration
         objectName: "chapterDuration"
-        visible: root.status === "" && root.length !== ""
+        Reveal { shown: root.status === "" && root.length !== "" }
         x: parent.width - width - Theme.s12 - root.menuWidth
         anchors.verticalCenter: parent.verticalCenter
         text: root.length
@@ -114,7 +114,7 @@ Interactive {
     IconButton {
         id: more
         objectName: "chapterMore"
-        visible: root.hasMenu
+        Reveal { shown: root.hasMenu }
         x: parent.width - width - Theme.s8
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: 32
@@ -134,7 +134,7 @@ Interactive {
     }
     Rectangle {
         objectName: "chapterProgress"
-        visible: root.progress >= Theme.progressFillMin && !root.done
+        Reveal { shown: root.progress >= Theme.progressFillMin && !root.done }
         x: Theme.s12 + 20 + Theme.s12
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 4

@@ -17,7 +17,7 @@ Item {
     onScheduleChanged: if (schedule) last = schedule
     implicitHeight: fold.height
     height: implicitHeight
-    visible: fold.visible
+    Reveal { shown: fold.visible }
 
     function times(value) {
         const list = []

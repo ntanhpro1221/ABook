@@ -56,13 +56,13 @@ Column {
                             height: 20
                             Text {
                                 id: plus
-                                visible: key.modelData === "+"
+                                Reveal { shown: key.modelData === "+" }
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "+"
                                 color: Theme.text2
                                 font.pixelSize: Theme.sizeBodySmall
                             }
-                            LookKbd { id: cap; visible: key.modelData !== "+"; struck: entry.off; text: key.modelData === "+" ? "" : key.modelData }
+                            LookKbd { id: cap; Reveal { shown: key.modelData !== "+" } struck: entry.off; text: key.modelData === "+" ? "" : key.modelData }
                         }
                     }
                 }

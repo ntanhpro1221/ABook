@@ -46,7 +46,7 @@ Column {
         Rectangle { width: parent.width; height: 1; color: Theme.line }
         Item {
             width: parent.width
-            visible: root.lines.length > 0
+            Reveal { shown: root.lines.length > 0 }
             height: visible ? Math.min(288, log.contentHeight + 16) : 0
             Flickable {
                 id: log
@@ -77,7 +77,7 @@ Column {
         }
         Text {
             width: parent.width
-            visible: root.lines.length === 0
+            Reveal { shown: root.lines.length === 0 }
             topPadding: 8
             bottomPadding: 8
             text: root.empty

@@ -12,7 +12,7 @@ Item {
     Canvas {
         id: ring
         anchors.fill: parent
-        visible: root.percent >= 0
+        Reveal { shown: root.percent >= 0 }
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
@@ -27,10 +27,10 @@ Item {
     }
     ClockLabel {
         anchors.centerIn: parent
-        visible: root.percent >= 0
+        Reveal { shown: root.percent >= 0 }
         text: Math.round(root.percent) + " %"
         font.pixelSize: Theme.sizeCaption
         color: Theme.text2
     }
-    Icon { anchors.centerIn: parent; visible: root.percent < 0; name: "loader-circle"; size: 20; color: Theme.accentText }
+    Icon { anchors.centerIn: parent; Reveal { shown: root.percent < 0 } name: "loader-circle"; size: 20; color: Theme.accentText }
 }

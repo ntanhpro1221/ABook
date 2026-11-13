@@ -89,7 +89,7 @@ Column {
             required property var modelData
             required property int index
             width: Theme.listWidth(root, root.width)
-            Rectangle { visible: entry.index > 0; width: parent.width; height: 1; color: Theme.line }
+            Rectangle { Reveal { shown: entry.index > 0 } width: parent.width; height: 1; color: Theme.line }
             Item { width: 1; height: 8 }
             Item {
                 width: parent.width
@@ -157,7 +157,7 @@ Column {
                         onActivated: if (enabled) root.store(entry.modelData.surface, root.draft, entry.modelData.spoken)
                     }
                     Button {
-                        visible: entry.modelData.spoken !== ""
+                        Reveal { shown: entry.modelData.spoken !== "" }
                         text: S.s_doc_nhu_chu_trong_sach_9a45fc3e
                         kind: "ghost"
                         size: "sm"

@@ -37,7 +37,7 @@ Collapse {
     Item {
         width: parent.width
         height: Math.max(words.height, buttons.height) + 16 + 1
-        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
+        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
         Item {
             id: row
             y: 1 + 8
@@ -70,13 +70,13 @@ Collapse {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
-                visible: root.canImport || root.canPreview
+                Reveal { shown: root.canImport || root.canPreview }
                 width: (root.canPreview ? listen.width + (root.canImport ? spacing : 0) : 0)
                        + (root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0)
                 Button {
                     id: listen
                     objectName: "musicPreview"
-                    visible: root.canPreview
+                    Reveal { shown: root.canPreview }
                     text: root.previewing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_fa024065
                     icon: root.previewing ? "pause" : "play"
                     kind: "ghost"; size: "sm"
@@ -85,7 +85,7 @@ Collapse {
                 }
                 Item {
                     id: ask
-                    visible: root.canImport
+                    Reveal { shown: root.canImport }
                     width: root.confirming ? 0 : askButton.implicitWidth
                     height: askButton.implicitHeight
                     clip: true
@@ -102,7 +102,7 @@ Collapse {
                 }
                 Item {
                     id: confirm
-                    visible: root.canImport
+                    Reveal { shown: root.canImport }
                     width: root.confirming ? confirmRow.implicitWidth : 0
                     height: confirmRow.implicitHeight
                     clip: true

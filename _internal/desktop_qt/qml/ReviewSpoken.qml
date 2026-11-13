@@ -68,7 +68,7 @@ Column {
         }
         Button {
             objectName: "spokenSaveAll"
-            visible: root.twins.length > 0
+            Reveal { shown: root.twins.length > 0 }
             size: "sm"
             kind: "ghost"
             text: S.s_luu_8c00346c + (root.twins.length + 1) + S.s_cau_b07e1008

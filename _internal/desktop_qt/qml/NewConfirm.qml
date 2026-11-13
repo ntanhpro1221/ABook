@@ -72,7 +72,7 @@ Column {
                 required property int index
                 width: parent.width
                 height: 16 + (root.wide ? Math.max(label.height, value.height) : label.height + 2 + value.height)
-                Rectangle { visible: row.index > 0; width: parent.width; height: 1; color: Theme.line }
+                Rectangle { Reveal { shown: row.index > 0 } width: parent.width; height: 1; color: Theme.line }
                 Text {
                     id: label
                     objectName: "newSummaryLabel"

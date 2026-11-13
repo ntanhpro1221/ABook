@@ -34,7 +34,7 @@ Collapse {
             }
             Button {
                 objectName: "readingSuggestion"
-                visible: root.shownSuggestion !== ""
+                Reveal { shown: root.shownSuggestion !== "" }
                 size: "sm"
                 kind: "ghost"
                 text: S.s_dung_b12f0f49 + root.shownSuggestion + "”"

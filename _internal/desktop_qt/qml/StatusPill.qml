@@ -26,8 +26,8 @@ Rectangle {
         width: root.live ? vu.width : 6
         height: 12
         anchors.verticalCenter: parent.verticalCenter
-        Rectangle { visible: !root.live; anchors.centerIn: parent; width: 6; height: 6; radius: width / 2; color: root.ink }
-        Vu { id: vu; visible: root.live; anchors.centerIn: parent; height: 10; color: root.ink }
+        Rectangle { Reveal { shown: !root.live } anchors.centerIn: parent; width: 6; height: 6; radius: width / 2; color: root.ink }
+        Vu { id: vu; Reveal { shown: root.live } anchors.centerIn: parent; height: 10; color: root.ink }
     }
     Text {
         id: text

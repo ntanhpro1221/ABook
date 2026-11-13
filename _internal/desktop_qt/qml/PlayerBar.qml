@@ -157,7 +157,7 @@ Item {
             MenuRow { width: parent.width; text: S.s_hen_gio_39d9ca26; icon: "moon"; onClicked: { more.close(); sleep.show() } }
             MenuRow { width: parent.width; text: S.s_chuong_truoc_4750f9e9; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
             MenuRow { width: parent.width; text: S.s_chuong_sau_17d1bd20; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
-            MenuRow { width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { width: parent.width; text: S.s_giong_doc_11f2548d; icon: "audio-lines"; Reveal { shown: Player.speaking && Api.voiceList.length > 0 } onClicked: { more.close(); voice.show() } }
             MenuRow { width: parent.width; text: S.s_mo_man_hinh_dang_nghe_2426b4ad; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
             MenuRow { objectName: "barClose"; width: parent.width; text: S.s_dong_trinh_phat_8a833838; icon: "x"; onClicked: { more.close(); Player.close() } }
             MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }

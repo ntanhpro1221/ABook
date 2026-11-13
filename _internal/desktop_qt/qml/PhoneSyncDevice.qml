@@ -37,7 +37,7 @@ Collapse {
         width: parent.width
         implicitHeight: (root.first ? 0 : 1) + fold.height
         height: implicitHeight
-        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
+        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
         DevicesFold {
             id: fold
             y: root.first ? 0 : 1
@@ -73,7 +73,7 @@ Collapse {
                     x: body.inline ? body.width - width : 0
                     y: body.inline ? (body.lineHeight - height) / 2 : body.lineHeight + 12
                     Row {
-                        visible: root.remoteStudio
+                        Reveal { shown: root.remoteStudio }
                         spacing: 8
                         height: 40
                         Text {

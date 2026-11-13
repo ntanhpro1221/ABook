@@ -255,7 +255,7 @@ Column {
                                         width: parent.width
                                         implicitHeight: Math.max(foundWords.height, 40) + 16 + (index > 0 ? 1 : 0)
                                         height: implicitHeight
-                                        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: foundRow.index > 0 }
+                                        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: foundRow.index > 0 }}
                                         Icon { x: 0; y: (foundRow.height - 20 + (foundRow.index > 0 ? 1 : 0)) / 2; name: modelData.kind === "phone" ? "smartphone" : "laptop"; size: 20; color: Theme.text2 }
                                         Column {
                                             id: foundWords
@@ -270,8 +270,8 @@ Column {
                                             width: modelData.paired ? pairedText.implicitWidth : chooseButton.width
                                             height: parent.height
                                             x: parent.width - width
-                                            Text { id: pairedText; visible: modelData.paired; anchors.verticalCenter: parent.verticalCenter; text: S.s_da_ghep_2bd0972f; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
-                                            Button { id: chooseButton; visible: !modelData.paired; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_chon_1171ca97; onClicked: root.choose(modelData.host + ":" + modelData.port) }
+                                            Text { id: pairedText; Reveal { shown: modelData.paired } anchors.verticalCenter: parent.verticalCenter; text: S.s_da_ghep_2bd0972f; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                                            Button { id: chooseButton; Reveal { shown: !modelData.paired } anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_chon_1171ca97; onClicked: root.choose(modelData.host + ":" + modelData.port) }
                                         }
                                     }
                                 }

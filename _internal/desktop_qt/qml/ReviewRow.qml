@@ -73,7 +73,7 @@ Item {
     Interactive {
         id: play
         objectName: "reviewPlay"
-        visible: root.source !== null
+        Reveal { shown: root.source !== null }
         x: 12
         y: 12
         width: 40
@@ -115,7 +115,7 @@ Item {
     // Không có gì để nghe thì không có nút nhìn như bấm được: một dấu nói thẳng lý do (câu hỏng / đã dọn bản thu)
     Rectangle {
         objectName: "reviewMute"
-        visible: root.source === null
+        Reveal { shown: root.source === null }
         x: 12
         y: 12
         width: 40
@@ -156,7 +156,7 @@ Item {
         // Máy nghe ra đúng chữ thì không có gì để so - chỉ hiện khi KHÁC câu
         Item {
             objectName: "reviewHeard"
-            visible: R.showsHeard(root.item)
+            Reveal { shown: R.showsHeard(root.item) }
             width: parent.width
             height: visible ? heard.height + 4 : 0
             Icon { x: 0; y: 6; name: "ear"; size: 14; color: Theme.text2 }
@@ -175,7 +175,7 @@ Item {
         }
         Text {
             objectName: "reviewUnplayable"
-            visible: root.source === null
+            Reveal { shown: root.source === null }
             width: parent.width
             topPadding: 4
             text: root.unplayable + "."
@@ -185,7 +185,7 @@ Item {
         }
         Item {
             objectName: "reviewPending"
-            visible: root.item.pendingSpoken !== null && root.item.pendingSpoken !== undefined
+            Reveal { shown: root.item.pendingSpoken !== null && root.item.pendingSpoken !== undefined }
             width: parent.width
             height: visible ? pending.height + 4 : 0
             Icon { x: 0; y: 5; name: "clock"; size: 14; color: Theme.text2 }
@@ -205,7 +205,7 @@ Item {
         }
         Text {
             objectName: "reviewSpoken"
-            visible: (root.item.pendingSpoken === null || root.item.pendingSpoken === undefined) && Boolean(root.item.spoken)
+            Reveal { shown: (root.item.pendingSpoken === null || root.item.pendingSpoken === undefined) && Boolean(root.item.spoken) }
             width: parent.width
             topPadding: 4
             textFormat: Text.RichText
@@ -241,14 +241,14 @@ Item {
                 spacing: 16
                 LinkAction {
                     objectName: "reviewEdit"
-                    visible: Boolean(root.item.textSha256)
+                    Reveal { shown: Boolean(root.item.textSha256) }
                     icon: "pen-line"
                     text: R.spokenEditLabel(root.twins.length)
                     onClicked: root.editing = true
                 }
                 LinkAction {
                     objectName: "reviewScript"
-                    visible: root.item.verdict === "redo" || root.item.kind === "failed"
+                    Reveal { shown: root.item.verdict === "redo" || root.item.kind === "failed" }
                     icon: "file-text"
                     text: S.s_mo_kich_ban_cc97745f
                     onClicked: root.openScript(root.item.chapterId, root.item.stableId)
@@ -268,7 +268,7 @@ Item {
         ReviewVerdict {
             id: okButton
             objectName: "verdictOk"
-            visible: root.source !== null
+            Reveal { shown: root.source !== null }
             text: S.s_on_cec6d53a
             icon: "check"
             tone: "ok"

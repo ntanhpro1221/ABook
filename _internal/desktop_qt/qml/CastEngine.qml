@@ -62,7 +62,7 @@ Column {
         Button {
             id: start
             objectName: "engineStart"
-            visible: root.action !== "" && !root.remote
+            Reveal { shown: root.action !== "" && !root.remote }
             x: parent.width - width
             anchors.verticalCenter: parent.verticalCenter
             size: "sm"
@@ -74,7 +74,7 @@ Column {
         OnComputerPill {
             id: pill
             objectName: "engineOnComputer"
-            visible: root.action !== "" && root.remote
+            Reveal { shown: root.action !== "" && root.remote }
             x: parent.width - width
             anchors.verticalCenter: parent.verticalCenter
             verb: S.s_tai_giong_d6f57d0b
@@ -84,7 +84,7 @@ Column {
     }
     Text {
         objectName: "engineNote"
-        visible: root.note !== ""
+        Reveal { shown: root.note !== "" }
         width: parent.width
         text: root.note
         color: root.status && root.status.state === "error" ? Theme.danger : Theme.text2
@@ -92,7 +92,7 @@ Column {
         font.pixelSize: Theme.sizeCaption
     }
     Item {
-        visible: root.downloading
+        Reveal { shown: root.downloading }
         width: parent.width
         height: visible ? Math.max(6, cancel.height) + 4 : 0
         MyMusicBar {
@@ -106,7 +106,7 @@ Column {
         Button {
             id: cancel
             objectName: "engineCancel"
-            visible: Boolean(root.status && root.status.cancellable) && !root.remote
+            Reveal { shown: Boolean(root.status && root.status.cancellable) && !root.remote }
             x: parent.width - width
             y: 2
             size: "sm"

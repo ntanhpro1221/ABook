@@ -47,7 +47,7 @@ Column {
                     onClicked: root.choose(modelData)
                 }
                 Text {
-                    visible: Boolean(modelData.note)
+                    Reveal { shown: Boolean(modelData.note) }
                     x: 2
                     width: Math.min(implicitWidth, 260)
                     text: modelData.note || ""
@@ -59,7 +59,7 @@ Column {
         }
         DecisionButton {
             objectName: "voiceKeep"
-            visible: Boolean(root.item.keepCharacters) && root.item.keepCharacters.length > 0
+            Reveal { shown: Boolean(root.item.keepCharacters) && root.item.keepCharacters.length > 0 }
             text: root.item.keepLabel || S.s_giu_nguyen_1b550a12
             enabled: !root.busy
             onClicked: root.keepAll()

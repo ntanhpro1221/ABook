@@ -20,7 +20,7 @@ Column {
     onVisibleChanged: { if (visible && preparing && Nav.uiVisible) delay.restart(); else { delay.stop(); delayed = false } }
     Timer { id: delay; interval: 1500; onTriggered: root.delayed = root.preparing }
     Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.preparing && root.visible) delay.restart(); else { delay.stop(); root.delayed = false } } }
-    Text { width: parent.width; horizontalAlignment: root.horizontalAlignment; wrapMode: Text.Wrap; visible: Player.purpose === "review"; text: S.s_nghe_kiem_f9c474bb; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+    Text { width: parent.width; horizontalAlignment: root.horizontalAlignment; wrapMode: Text.Wrap; Reveal { shown: Player.purpose === "review" } text: S.s_nghe_kiem_f9c474bb; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     Text {
         id: bookLabel
         objectName: "playerSubtitleText"; width: parent.width; wrapMode: Text.Wrap
@@ -31,7 +31,7 @@ Column {
         Interactive {
             id: bookLink
             objectName: "playerBookLink"
-            visible: root.showsBook && bookLabel.text !== ""
+            Reveal { shown: root.showsBook && bookLabel.text !== "" }
             // Vừa khít phần chữ: chỗ trống cạnh tên vẫn thuộc việc của nền (thanh phát: mở Đang nghe). Thấp hơn hộp chạm thì giãn đều lên dưới.
             width: Math.min(bookLabel.width, bookLabel.paintedWidth)
             height: Math.max(bookLabel.paintedHeight, 24)

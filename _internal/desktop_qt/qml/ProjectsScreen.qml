@@ -80,7 +80,7 @@ FocusScope {
         IconButton {
             id: studioMore
             objectName: "studioMore"
-            visible: Boolean(root.store && root.store.info && root.store.info.dialogs)
+            Reveal { shown: Boolean(root.store && root.store.info && root.store.info.dialogs) }
             icon: "ellipsis"
             iconSize: 20
             tip: S.s_tuy_chon_studio_16c07366
@@ -112,7 +112,7 @@ FocusScope {
         Item {
             id: head
             objectName: "tableHead"
-            visible: (root.loading || root.listed) && root.kind !== "stacked"
+            Reveal { shown: (root.loading || root.listed) && root.kind !== "stacked" }
             x: -12
             y: 0
             width: root.rowW
@@ -121,13 +121,13 @@ FocusScope {
             Text { x: root.cols.nameX; y: 4; width: root.cols.nameW; text: S.s_du_an_4f139d43; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
             Text { x: root.cols.statusX; y: 4; width: root.cols.statusW; text: S.s_trang_thai_cb31de81; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
             Text { x: root.cols.progressX; y: 4; width: root.cols.progressW; text: S.s_tien_do_e5947845; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
-            Text { visible: root.kind === "wide"; x: root.cols.updatedX; y: 4; width: root.cols.updatedW; horizontalAlignment: Text.AlignRight; text: S.s_cap_nhat_5293d03c; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+            Text { Reveal { shown: root.kind === "wide" } x: root.cols.updatedX; y: 4; width: root.cols.updatedW; horizontalAlignment: Text.AlignRight; text: S.s_cap_nhat_5293d03c; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
         }
 
         // ---- khung chờ ----
         EditBookSkeleton {
             objectName: "projectsSkeleton"
-            visible: root.loading
+            Reveal { shown: root.loading }
             x: 0
             y: head.y + (head.visible ? head.height : 0) + 12
             width: root.contentW
@@ -140,7 +140,7 @@ FocusScope {
         ListView {
             id: list
             objectName: "projectsList"
-            visible: root.listed
+            Reveal { target: list; shown: root.listed }
             x: -12
             y: head.y + (head.visible ? head.height : 0)
             width: root.rowW
@@ -219,8 +219,9 @@ FocusScope {
             onRetry: root.store.loadLibrary()
         }
         EmptyState {
+            id: projectsMissing
             objectName: "projectsMissing"
-            visible: root.rootMissing
+            Reveal { target: projectsMissing; shown: root.rootMissing }
             x: 0
             y: 48 - 56
             width: root.contentW
@@ -228,12 +229,13 @@ FocusScope {
             title: root.local && root.store && root.store.libraryData && root.store.libraryData.root
                    ? S.s_khong_thay_thu_muc_thu_vien_a160d7be + Logic.folderName(root.store.libraryData.root) + "”" : S.s_khong_thay_thu_muc_thu_vien_8c2af7eb
             text: S.s_o_chua_cam_hay_thu_muc_da_doi_ten_cam_lai_713e694c
-            Button { visible: root.local; text: S.s_chon_thu_muc_1fe47e38; icon: "settings"; onClicked: if (Nav.stack) Nav.stack.show(2) }
-            OnComputerPill { visible: !root.local; verb: S.s_chon_lai_thu_muc_thu_vien_2d290748; computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226 }
+            Button { Reveal { shown: root.local } text: S.s_chon_thu_muc_1fe47e38; icon: "settings"; onClicked: if (Nav.stack) Nav.stack.show(2) }
+            OnComputerPill { Reveal { shown: !root.local } verb: S.s_chon_lai_thu_muc_thu_vien_2d290748; computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226 }
         }
         EmptyState {
+            id: projectsEmpty
             objectName: "projectsEmpty"
-            visible: root.empty
+            Reveal { target: projectsEmpty; shown: root.empty }
             x: 0
             y: 48 - 56
             width: root.contentW

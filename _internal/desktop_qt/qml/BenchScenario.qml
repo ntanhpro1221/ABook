@@ -53,7 +53,7 @@ Item {
     // Nhịp tim: một điểm ảnh cùng màu nền nhúc nhích mỗi khung, để cảnh luôn vẽ lại ở tần số quét và khoảng cách giữa hai khung lộ ra mọi khung nặng
     // (không có nó, lúc phát chỉ có vài khung mỗi giây và p99 của khoảng cách khung vô nghĩa).
     Rectangle {
-        visible: root.beat
+        Reveal { shown: root.beat }
         z: 1000
         width: 1
         height: 1

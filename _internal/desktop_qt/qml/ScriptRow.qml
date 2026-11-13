@@ -83,11 +83,11 @@ Item {
         x: 8; y: 6
         width: root.wide ? 160 : root.width - 16
         height: 28
-        visible: root.speech || root.wide
+        Reveal { shown: root.speech || root.wide }
         Interactive {
             id: chip
             objectName: "speakerChip"
-            visible: root.speech
+            Reveal { shown: root.speech }
             enabled: root.script.castReady && root.line.editable
             width: Math.min(parent.width, chipText.implicitWidth + 20 + 18)
             height: Math.max(28, chipText.implicitHeight + 6)
@@ -119,7 +119,7 @@ Item {
             }
         }
         Text {
-            visible: !root.speech
+            Reveal { shown: !root.speech }
             width: parent.width
             height: 28
             verticalAlignment: Text.AlignVCenter
@@ -133,7 +133,7 @@ Item {
     // ---- nút nghe: ngay trước chữ ----
     Interactive {
         objectName: "linePlay"
-        visible: root.line.hasAudio === true
+        Reveal { shown: root.line.hasAudio === true }
         x: root.textX - 36
         y: root.textY - 2
         width: 28; height: 28
@@ -156,7 +156,7 @@ Item {
             width: parent.width
             height: Math.max(lineText.height, thinkTag.visible ? 22 : 0)
             Icon {
-                visible: root.selected
+                Reveal { shown: root.selected }
                 y: 4
                 name: "check"
                 size: 16
@@ -164,7 +164,7 @@ Item {
             }
             Rectangle {
                 id: thinkTag
-                visible: root.line.kind === "thought"
+                Reveal { shown: root.line.kind === "thought" }
                 x: root.selected ? 22 : 0
                 y: 3
                 width: thinkText.implicitWidth + 12
@@ -188,7 +188,7 @@ Item {
             }
         }
         Note_ {
-            visible: !!root.line.spoken
+            Reveal { shown: !!root.line.spoken }
             text: S.s_doc_la_4f8195e0 + (root.line.spoken || "")
         }
         Item {
@@ -197,25 +197,25 @@ Item {
             height: deliveryInline.visible ? deliveryInline.height : 0
             DeliveryChip_ {
                 id: deliveryInline
-                visible: root.script.castReady && root.hasEmotion && !root.plain
+                Reveal { shown: root.script.castReady && root.hasEmotion && !root.plain }
                 quiet: !root.speech && !root.active
             }
         }
         Note_ {
             objectName: "lineWishNote"
-            visible: !!root.line.lineWish && root.line.lineWish.state === "pending"
+            Reveal { shown: !!root.line.lineWish && root.line.lineWish.state === "pending" }
             icon: "clock"
             text: visible ? Script.lineWishText(root.line.lineWish, root.pendingNote) : ""
         }
         Note_ {
-            visible: !!root.line.lineWish && root.line.lineWish.state === "refused"
+            Reveal { shown: !!root.line.lineWish && root.line.lineWish.state === "refused" }
             icon: "triangle-alert"
             tone: Theme.danger
             text: visible ? S.s_cach_doc_moi_khong_ap_duoc_3b993682 + root.line.lineWish.reason : ""
         }
         Item {
             objectName: "lineHint"
-            visible: !!root.line.hint && !root.context && (!root.line.wish || root.line.wish.state === "refused")
+            Reveal { shown: !!root.line.hint && !root.context && (!root.line.wish || root.line.wish.state === "refused") }
             width: parent.width
             height: visible ? hintFlow.height + 4 : 0
             Flow {
@@ -239,7 +239,7 @@ Item {
                 Button {
                     id: hintAssign
                     objectName: "hintAssign"
-                    visible: !!root.suggested && root.script.castReady && root.suggested.value !== root.line.current && !(root.line.wish && root.line.wish.value === root.suggested.value)
+                    Reveal { shown: !!root.suggested && root.script.castReady && root.suggested.value !== root.line.current && !(root.line.wish && root.line.wish.value === root.suggested.value) }
                     size: "sm"
                     kind: "ghost"
                     text: root.suggested ? S.s_gan_cho_6fe48d05 + root.suggested.label : ""
@@ -249,7 +249,7 @@ Item {
         }
         Item {
             objectName: "retakeNote"
-            visible: root.line.retake === "pending"
+            Reveal { shown: root.line.retake === "pending" }
             width: parent.width
             height: visible ? retakeFlow.height + 4 : 0
             Flow {
@@ -263,12 +263,12 @@ Item {
         }
         Note_ {
             objectName: "wishNote"
-            visible: !!root.line.wish && root.line.wish.state === "pending"
+            Reveal { shown: !!root.line.wish && root.line.wish.state === "pending" }
             icon: "clock"
             text: visible ? S.s_da_ghi_6b67a4c2 + root.line.wish.label + S.s_may_gan_c2531001 + root.line.label + ") - " + root.pendingNote + "." : ""
         }
         Note_ {
-            visible: !!root.line.wish && root.line.wish.state === "refused"
+            Reveal { shown: !!root.line.wish && root.line.wish.state === "refused" }
             icon: "triangle-alert"
             tone: Theme.danger
             text: visible ? S.s_yeu_cau_6833dc12 + root.line.wish.label + S.s_khong_ap_duoc_1fe639f0 + root.line.wish.reason : ""
@@ -284,7 +284,7 @@ Item {
         spacing: 4
         Interactive {
             objectName: "lineRetake"
-            visible: root.line.hasAudio === true && root.line.retake !== "pending"
+            Reveal { shown: root.line.hasAudio === true && root.line.retake !== "pending" }
             width: 28; height: 28
             opacity: root.shownActions || activeFocus ? 1 : 0
             activeFocusOnTab: false
@@ -301,7 +301,7 @@ Item {
             height: 28
             DeliveryChip_ {
                 id: plainChip
-                visible: root.script.castReady && root.hasEmotion && root.plain
+                Reveal { shown: root.script.castReady && root.hasEmotion && root.plain }
                 quiet: !root.speech && !root.active
             }
         }
@@ -315,7 +315,7 @@ Item {
         width: parent ? parent.width : 0
         implicitWidth: noteText.implicitWidth + (icon ? 20 : 0)
         height: visible ? noteText.height + 2 : 0
-        Icon { visible: note.icon !== ""; y: 2; name: note.icon || "clock"; size: 14; color: note.tone }
+        Icon { Reveal { shown: note.icon !== "" } y: 2; name: note.icon || "clock"; size: 14; color: note.tone }
         Text {
             id: noteText
             x: note.icon ? 20 : 0
@@ -346,7 +346,7 @@ Item {
             x: 6
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
-            Icon { visible: delivery.waiting; anchors.verticalCenter: parent.verticalCenter; name: "clock"; size: 12; color: Theme.text2 }
+            Icon { Reveal { shown: delivery.waiting } anchors.verticalCenter: parent.verticalCenter; name: "clock"; size: 12; color: Theme.text2 }
             Text {
                 id: deliveryText
                 objectName: "deliveryText"

@@ -105,28 +105,28 @@ Column {
                 width: parent.width
                 spacing: 8
                 Button {
-                    visible: root.both
+                    Reveal { shown: root.both }
                     objectName: "newCreditHead"
                     text: root.drop.head ? S.s_giu_dong_dau_d250460c : S.s_bo_8d4fc41c + Studio.formatNumber(root.credits.head) + S.s_dong_7111afc1
                     kind: "ghost"; size: "sm"
                     onActivated: root.change({head: !root.drop.head, tail: root.drop.tail})
                 }
                 Button {
-                    visible: root.both
+                    Reveal { shown: root.both }
                     objectName: "newCreditTail"
                     text: root.drop.tail ? S.s_giu_dong_cuoi_d9387556 : S.s_bo_8d4fc41c + Studio.formatNumber(root.credits.tail) + S.s_dong_7111afc1
                     kind: "ghost"; size: "sm"
                     onActivated: root.change({head: root.drop.head, tail: !root.drop.tail})
                 }
                 Button {
-                    visible: !root.both && root.dropped > 0
+                    Reveal { shown: !root.both && root.dropped > 0 }
                     objectName: "newCreditKeep"
                     text: S.s_giu_nguyen_chu_02c81916
                     kind: "ghost"; size: "sm"
                     onActivated: root.change(Logic.KEEP_CREDITS)
                 }
                 Button {
-                    visible: !root.both && root.dropped === 0
+                    Reveal { shown: !root.both && root.dropped === 0 }
                     objectName: "newCreditDrop"
                     text: S.s_bo_khoi_phan_doc_6726e734
                     kind: "ghost"; size: "sm"

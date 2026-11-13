@@ -103,14 +103,14 @@ FocusScope {
         spacing: Theme.s12
         PageSwitch {
             objectName: "musicParts"
-            visible: !root.picking
+            Reveal { shown: !root.picking }
             labels: [S.s_da_luu_6379aeba, S.s_kho_nhac_94affa81]
             index: root.part
             onPicked: index => root.part = index
         }
         FormField {
             objectName: "musicSearch"
-            visible: root.part === 1
+            Reveal { shown: root.part === 1 }
             width: parent.width
             label: S.s_tim_trong_kho_nhac_b9972ac9; placeholderText: S.s_tim_ten_bai_nguoi_sang_tac_fdee04f4
             text: root.query
@@ -118,7 +118,7 @@ FocusScope {
         }
         Flow {
             objectName: "musicFilters"
-            visible: root.part === 1
+            Reveal { shown: root.part === 1 }
             width: parent.width
             spacing: Theme.s8
             Accessible.name: S.s_loc_kho_nhac_6c590fb5
@@ -150,7 +150,7 @@ FocusScope {
             }
         }
         Item {
-            visible: root.part === 1
+            Reveal { shown: root.part === 1 }
             width: parent.width
             height: Math.max(count.height, clear.height)
             Text {
@@ -163,9 +163,9 @@ FocusScope {
             Row {
                 anchors.right: parent.right
                 spacing: Theme.s8
-                TextLink { id: clear; visible: Logic.filtering(root.filters); text: S.s_bo_loc_74de0064; onClicked: root.clearFilters() }
+                TextLink { id: clear; Reveal { shown: Logic.filtering(root.filters) } text: S.s_bo_loc_74de0064; onClicked: root.clearFilters() }
                 Button {
-                    visible: root.filters.playlist !== "" && !!root.list && root.list.missingBytes > 0
+                    Reveal { shown: root.filters.playlist !== "" && !!root.list && root.list.missingBytes > 0 }
                     objectName: "musicSavePlaylist"
                     text: S.s_tai_ca_danh_sach_0_63e52378(Size.formatSize(root.list ? root.list.missingBytes : 0))
                     kind: "ghost"; size: "sm"; icon: "download"
@@ -174,7 +174,7 @@ FocusScope {
             }
         }
         Text {
-            visible: !root.online || root.error !== ""
+            Reveal { shown: !root.online || root.error !== "" }
             width: parent.width; wrapMode: Text.Wrap
             text: root.error !== "" ? root.error : S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8
             color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
@@ -213,12 +213,12 @@ FocusScope {
             topPadding: Theme.s16
             spacing: Theme.s8
             Text {
-                visible: !root.loading && root.shown.length === 0
+                Reveal { shown: !root.loading && root.shown.length === 0 }
                 text: root.part === 0 ? S.s_chua_luu_bai_nao_6e7558df : S.s_khong_co_bai_nao_hop_5b5b11b5
                 color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
             }
             // "Nhạc của tôi" (nhạc tự nhập) là một phần của "Đã lưu" - một chỗ duy nhất, như MyMusicSection trong MusicScreen.tsx của web
-            MyMusicSettings { visible: root.part === 0; width: parent.width }
+            MyMusicSettings { Reveal { shown: root.part === 0 } width: parent.width }
         }
     }
     Scrollbar { target: rows }
@@ -227,7 +227,7 @@ FocusScope {
     Rectangle {
         id: bar
         objectName: "musicPreviewBar"
-        visible: root.previewing !== ""
+        Reveal { shown: root.previewing !== "" }
         x: root.contentX; width: root.contentW
         y: root.height - height - Theme.s8
         height: 48

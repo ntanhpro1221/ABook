@@ -92,7 +92,7 @@ Item {
             }
             // Gửi chương từ máy này (Studio của máy khác)
             Item {
-                visible: root.browser
+                Reveal { shown: root.browser }
                 width: parent.width
                 height: visible ? 24 + browseRow.height : 0
                 Row {
@@ -107,7 +107,7 @@ Item {
             // Tiến độ gửi chương
             Column {
                 objectName: "newUploadProgress"
-                visible: Boolean(root.form && root.form.uploading)
+                Reveal { shown: Boolean(root.form && root.form.uploading) }
                 x: (parent.width - width) / 2
                 width: Math.min(parent.width, 320)
                 topPadding: visible ? 16 : 0
@@ -137,7 +137,7 @@ Item {
             }
             // Hộp chọn của máy này
             Item {
-                visible: root.dialogs && !root.browser
+                Reveal { shown: root.dialogs && !root.browser }
                 width: parent.width
                 height: visible ? 24 + dialogRow.height : 0
                 Row {
@@ -151,13 +151,13 @@ Item {
             }
             // Dán đường dẫn: Studio từ xa không có đường dẫn nào của máy tính để dán
             Item {
-                visible: !(root.form && root.form.remote) && root.browser && !root.advanced
+                Reveal { shown: !(root.form && root.form.remote) && root.browser && !root.advanced }
                 width: parent.width
                 height: visible ? 20 + pasteLink.height : 0
                 TextLink { id: pasteLink; objectName: "newPasteLink"; y: 20; x: (parent.width - width) / 2; text: S.s_dan_duong_dan_2ae49bc1; small: true; onClicked: root.advanced = true }
             }
             Column {
-                visible: !(root.form && root.form.remote) && !(root.browser && !root.advanced)
+                Reveal { shown: !(root.form && root.form.remote) && !(root.browser && !root.advanced) }
                 x: (parent.width - width) / 2
                 width: Math.min(parent.width, 512)
                 topPadding: visible ? 20 : 0
@@ -183,12 +183,12 @@ Item {
                         onActivated: root.submitPath()
                     }
                 }
-                Prose { visible: !root.dialogs; small: true; tone: Theme.text3; text: S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8 }
+                Prose { Reveal { shown: !root.dialogs } small: true; tone: Theme.text3; text: S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8 }
             }
             // Nguồn không đọc được
             Column {
                 objectName: "newSourceProblem"
-                visible: Boolean(root.problem)
+                Reveal { shown: Boolean(root.problem) }
                 x: (parent.width - width) / 2
                 width: Math.min(parent.width, 512)
                 topPadding: visible ? 12 : 0
@@ -196,12 +196,12 @@ Item {
                 Prose { objectName: "newSourceProblemText"; tone: Theme.danger; text: root.problem ? root.problem.text : "" }
                 Column {
                     width: parent.width
-                    visible: Boolean(root.problem) && root.problem.subfolders.length > 0
+                    Reveal { shown: Boolean(root.problem) && root.problem.subfolders.length > 0 }
                     spacing: 4
                     Prose { text: S.s_co_le_nen_chon_thu_muc_con_b36394ab }
                     // Light novel ra từng tập, mỗi tập một thư mục: chọn cả bộ một lần; bước sau ĐỀ XUẤT chia tập, người dùng bấm mới chia.
                     Interactive {
-                        visible: Boolean(root.problem) && root.problem.subfolders.length > 1
+                        Reveal { shown: Boolean(root.problem) && root.problem.subfolders.length > 1 }
                         objectName: "newPickAllFolders"
                         width: parent.width
                         height: visible ? Math.max(40, allText.height + 16) : 0
@@ -245,7 +245,7 @@ Item {
                             }
                         }
                     }
-                    Prose { visible: Boolean(root.problem) && root.problem.subfolders.length > 8; text: S.s_va_6e638075 + (root.problem ? root.problem.subfolders.length - 8 : 0) + S.s_thu_muc_nua_deu_nam_trong_dung_ca_o_tren_ea2063d1 }
+                    Prose { Reveal { shown: Boolean(root.problem) && root.problem.subfolders.length > 8 } text: S.s_va_6e638075 + (root.problem ? root.problem.subfolders.length - 8 : 0) + S.s_thu_muc_nua_deu_nam_trong_dung_ca_o_tren_ea2063d1 }
                 }
             }
         }

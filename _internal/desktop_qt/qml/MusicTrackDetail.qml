@@ -56,12 +56,12 @@ Modal {
         width: root.bodyWidth
         spacing: Theme.s16
         Text {
-            visible: !root.detail
+            Reveal { shown: !root.detail }
             text: root.loading ? S.s_dang_tai_465b1987 : S.s_chua_tai_duoc_bai_nay_d66f95b6
             color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
         }
         Row {
-            visible: !!root.detail && !root.playing
+            Reveal { shown: !!root.detail && !root.playing }
             width: parent.width
             spacing: Theme.s8
             Button {
@@ -109,7 +109,7 @@ Modal {
         }
         // Vì sao bài này
         Column {
-            visible: !!(root.detail && root.detail.why && root.detail.why.matches.length)
+            Reveal { shown: !!(root.detail && root.detail.why && root.detail.why.matches.length) }
             width: parent.width
             spacing: Theme.s8
             Text { text: S.s_vi_sao_bai_nay_f681e004; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium }
@@ -147,7 +147,7 @@ Modal {
             }
         }
         Column {
-            visible: !!(root.detail && root.detail.emotions && root.detail.emotions.length)
+            Reveal { shown: !!(root.detail && root.detail.emotions && root.detail.emotions.length) }
             width: parent.width
             spacing: 4
             Text { text: S.s_cam_xuc_05c1aee0; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; bottomPadding: Theme.s4 }
@@ -162,7 +162,7 @@ Modal {
             }
         }
         Column {
-            visible: !!root.detail
+            Reveal { shown: !!root.detail }
             width: parent.width
             Text { text: S.s_thong_tin_4aa16c92; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; bottomPadding: Theme.s8 }
             Repeater {
@@ -187,9 +187,9 @@ Modal {
                     width: parent ? parent.width : 0
                     height: Math.max(name.height, modelData[2] ? source.height : value.height) + Theme.s8
                     Text { id: name; width: 140; text: modelData[0]; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
-                    Text { id: value; x: 140; width: parent.width - 140; visible: modelData[1] !== null && !modelData[2]; text: modelData[1] || ""; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
-                    Icon { x: 140; visible: modelData[1] === null; name: "check"; size: 16; color: Theme.success }
-                    TextLink { id: source; x: 140; width: parent.width - 140; visible: !!modelData[2]; text: modelData[1] || ""; accent: true; onClicked: Qt.openUrlExternally(modelData[2]) }
+                    Text { id: value; x: 140; width: parent.width - 140; Reveal { shown: modelData[1] !== null && !modelData[2] } text: modelData[1] || ""; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
+                    Icon { x: 140; Reveal { shown: modelData[1] === null } name: "check"; size: 16; color: Theme.success }
+                    TextLink { id: source; x: 140; width: parent.width - 140; Reveal { shown: !!modelData[2] } text: modelData[1] || ""; accent: true; onClicked: Qt.openUrlExternally(modelData[2]) }
                 }
             }
         }

@@ -65,7 +65,7 @@ Interactive {
         // Vạch tiến độ: một hình với web / Android - sát đáy, cao 4, rãnh Theme.coverOverlay, cắt theo đúng góc bo của bìa.
         Item {
             id: heard
-            visible: root.progress >= Theme.progressFillMin && root.progress < 0.995
+            Reveal { shown: root.progress >= Theme.progressFillMin && root.progress < 0.995 }
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -107,7 +107,7 @@ Interactive {
     Text {
         id: titleText
         objectName: "bookCellTitle"
-        visible: !root.drawnTitle
+        Reveal { shown: !root.drawnTitle }
         x: 0
         y: root.subtitleFirst ? subtitleText.y + subtitleText.height + 4 : root.coverHeight + 12
         width: root.coverWidth
@@ -138,7 +138,7 @@ Interactive {
     // Same laptop mark as web, leading the one subtitle line.
     Icon {
         x: 0; y: subtitleText.y + 2; size: 12; name: "laptop"; color: Theme.text3
-        visible: root.source !== ""
+        Reveal { shown: root.source !== "" }
         Accessible.name: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
     }
 

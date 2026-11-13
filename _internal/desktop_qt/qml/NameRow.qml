@@ -55,7 +55,7 @@ Item {
     Interactive {
         id: sample
         objectName: "nameSample"
-        visible: Boolean(root.example && root.example.hasAudio)
+        Reveal { shown: Boolean(root.example && root.example.hasAudio) }
         x: 12
         y: 10
         width: 32

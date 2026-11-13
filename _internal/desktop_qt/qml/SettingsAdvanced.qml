@@ -77,16 +77,18 @@ Column {
         }
     }
     SectionBlock {
+        id: sectionBlockShown
         width: parent.width
         title: S.s_bo_nho_e3d4d2b2
-        visible: !root.remote
+        Reveal { target: sectionBlockShown; shown: !root.remote }
         SettingsItem { width: parent.width; padding: 0; AdvancedStorage { width: parent.width } }
     }
     SectionBlock {
+        id: sectionBlockShown2
         width: parent.width
         title: S.s_chan_doan_906791d5
         fold: "advanced.diagnostics"
-        visible: !root.remote
+        Reveal { target: sectionBlockShown2; shown: !root.remote }
         SettingsItem { width: parent.width; AdvancedDiagnostics { width: parent.width } }
     }
     SectionBlock {

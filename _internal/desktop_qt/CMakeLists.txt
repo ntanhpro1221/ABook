@@ -216,6 +216,7 @@ qt_add_qml_module(ABookDesk
         qml/CoverSearch.qml
         qml/BookMusicSettings.qml
         qml/Collapse.qml
+        qml/Reveal.qml
         qml/DisclosureRow.qml
         qml/SettingsItem.qml
         qml/ChoiceRow.qml

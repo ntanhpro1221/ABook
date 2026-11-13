@@ -39,7 +39,7 @@ Item {
         }
         Text {
             width: parent.width
-            visible: text !== ""
+            Reveal { shown: target.text !== "" }
             text: root.help
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

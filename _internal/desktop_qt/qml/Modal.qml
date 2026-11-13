@@ -89,7 +89,7 @@ WindowLayer {
             width: Math.min(640, panel.width - 48 - 44 - 16 + 17)     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
             spacing: 4
             Text { width: parent.width; text: TextWrap.pretty(root.title); color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
-            Text { width: parent.width; text: root.description; visible: text !== ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Text { width: parent.width; text: root.description; Reveal { shown: target.text !== "" } color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
         IconButton {
             id: closeButton
@@ -127,7 +127,7 @@ WindowLayer {
             width: panel.width - 48
             y: panel.height - 24 - height
             height: root.hasFooter ? footerBox.childrenRect.height + 32 : 0
-            Rectangle { y: 16; width: parent.width; height: 1; color: Theme.line; visible: root.hasFooter }
+            Rectangle { y: 16; width: parent.width; height: 1; color: Theme.line; Reveal { shown: root.hasFooter }}
             Item { id: footerBox; y: 32; width: parent.width; height: childrenRect.height }
         }
     }

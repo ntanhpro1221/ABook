@@ -84,6 +84,7 @@ EditBook 1.0 ../../../../qml/EditBook.qml
 CoverSearch 1.0 ../../../../qml/CoverSearch.qml
 BookMusicSettings 1.0 ../../../../qml/BookMusicSettings.qml
 Collapse 1.0 ../../../../qml/Collapse.qml
+Reveal 1.0 ../../../../qml/Reveal.qml
 DisclosureRow 1.0 ../../../../qml/DisclosureRow.qml
 SettingsItem 1.0 ../../../../qml/SettingsItem.qml
 ChoiceRow 1.0 ../../../../qml/ChoiceRow.qml

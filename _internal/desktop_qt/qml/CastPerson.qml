@@ -61,14 +61,14 @@ Item {
                 font.weight: Theme.weightMedium
             }
             Text {
-                visible: !!root.person.gender
+                Reveal { shown: !!root.person.gender }
                 text: root.person.gender || ""
                 color: Theme.text2
                 font.pixelSize: Theme.sizeCaption
             }
         }
         Text {
-            visible: !!root.person.originalName
+            Reveal { shown: !!root.person.originalName }
             width: parent.width
             text: S.s_ten_goc_ece0e59a + Logic.cleanName(root.person.originalName) + ")"
             color: Theme.text3
@@ -93,7 +93,7 @@ Item {
         }
         Text {
             objectName: "castPending"
-            visible: !!root.person.pendingVoice && root.showsPending
+            Reveal { shown: !!root.person.pendingVoice && root.showsPending }
             width: parent.width
             text: TextWrap.pretty(Logic.pendingVoiceLine(root.person, Boolean(root.caps.waiting)))
             color: Theme.accentText
@@ -103,7 +103,7 @@ Item {
         }
         Flow {
             objectName: "castMerged"
-            visible: !!root.person.mergedInto && root.showsPending
+            Reveal { shown: !!root.person.mergedInto && root.showsPending }
             width: parent.width
             spacing: 8
             Text {
@@ -116,7 +116,7 @@ Item {
             }
             Interactive {
                 objectName: "castUnmerge"
-                visible: Boolean(root.caps.unmerge) && typeof root.person.mergedAt === "number"
+                Reveal { shown: Boolean(root.caps.unmerge) && typeof root.person.mergedAt === "number" }
                 implicitWidth: unmergeText.implicitWidth
                 implicitHeight: unmergeText.implicitHeight
                 width: implicitWidth
@@ -151,14 +151,14 @@ Item {
         spacing: 4
         CastSample {
             objectName: "castSample"
-            visible: !!root.person.sampleId
+            Reveal { shown: !!root.person.sampleId }
             clipId: Logic.sampleId(root.bookId, root.person)
             url: Logic.routed(Logic.sampleUrl(root.bookId, root.person), root.peer)
             label: S.s_nghe_b2faf200 + root.shownName + S.s_noi_76731592
         }
         IconButton {
             objectName: "castVoiceButton"
-            visible: root.canVoiceHere
+            Reveal { shown: root.canVoiceHere }
             implicitWidth: 36
             implicitHeight: 36
             icon: "sliders-horizontal"
@@ -172,7 +172,7 @@ Item {
         IconButton {
             id: more
             objectName: "castMore"
-            visible: root.hasMenu
+            Reveal { shown: root.hasMenu }
             implicitWidth: 36
             implicitHeight: 36
             icon: "ellipsis"

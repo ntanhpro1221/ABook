@@ -114,7 +114,7 @@ Column {
 
     Text {
         objectName: "valueSectionLabel"
-        visible: root.stepperOnly
+        Reveal { shown: root.stepperOnly }
         text: root.label
         color: Theme.text2
         font.pixelSize: Theme.sizeBodySmall
@@ -126,7 +126,7 @@ Column {
         height: Math.max(root.dense ? 20 : 48, nameColumn.implicitHeight, valueBox.height)
         IconButton {
             objectName: "valueCountDown"
-            visible: root.stepperOnly
+            Reveal { shown: root.stepperOnly }
             width: 48; height: 48
             icon: "minus"; iconSize: 18; tip: S.s_giam_a6c2901a
             enabled: root.enabled && root.shown > root.spec.min
@@ -134,7 +134,7 @@ Column {
         }
         IconButton {
             objectName: "valueCountUp"
-            visible: root.stepperOnly
+            Reveal { shown: root.stepperOnly }
             x: parent.width - width; width: 48; height: 48
             icon: "plus"; iconSize: 18; tip: S.s_tang_a2363bce
             enabled: root.enabled && root.shown < root.spec.max
@@ -142,11 +142,11 @@ Column {
         }
         Column {
             id: nameColumn
-            visible: root.dense
+            Reveal { shown: root.dense }
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - valueBox.width - Theme.s12
             Text { width: parent.width; text: root.label; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-            Text { visible: root.hint !== ""; width: parent.width; text: root.hint; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Text { Reveal { shown: root.hint !== "" } width: parent.width; text: root.hint; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
         Item {
             id: valueBox
@@ -157,7 +157,7 @@ Column {
             Interactive {
                 id: display
                 objectName: "valueDisplay"
-                visible: !root.typing
+                Reveal { shown: !root.typing }
                 enabled: root.enabled
                 width: Math.max(48, bigText.implicitWidth + 2 * Theme.s8)
                 height: 48
@@ -180,7 +180,7 @@ Column {
             FormField {
                 id: input
                 objectName: "valueInput"
-                visible: root.typing
+                Reveal { shown: root.typing }
                 label: root.label
                 width: root.dense ? 88 : 128
                 horizontalAlignment: TextEdit.AlignHCenter
@@ -209,7 +209,7 @@ Column {
     // 2. Thước giữa nút - / +.
     Row {
         width: root.width
-        visible: !root.stepperOnly
+        Reveal { shown: !root.stepperOnly }
         height: !root.labelPlan.aligned ? 48 : root.dense ? 56 : 64
         IconButton {
             objectName: "valueDown"
@@ -318,7 +318,7 @@ Column {
                         anchors.fill: parent; anchors.margins: -2
                         radius: Theme.radiusControl
                         color: "transparent"; border.width: 2; border.color: Theme.accent
-                        visible: tickLabel.activeFocus && Platform.keyboardNav
+                        Reveal { shown: tickLabel.activeFocus && Platform.keyboardNav }
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -380,7 +380,7 @@ Column {
     Item {
         id: chips
         objectName: "valueChips"
-        visible: !root.stepperOnly && !root.labelPlan.aligned && root.spec.typical.length > 0
+        Reveal { shown: !root.stepperOnly && !root.labelPlan.aligned && root.spec.typical.length > 0 }
         x: 48
         width: root.width - 96
         readonly property var widths: root.spec.typical.map(function(v) { return Math.max(48, metrics.advanceWidth(Logic.formatNumber(root.spec, v)) + 16) })
@@ -427,7 +427,7 @@ Column {
     // 4. Lựa chọn đặc biệt (con do chỗ dùng đặt vào).
     Column {
         id: specialSlot
-        visible: children.length > 0
+        Reveal { shown: children.length > 0 }
         width: root.width
         spacing: Theme.s4
     }

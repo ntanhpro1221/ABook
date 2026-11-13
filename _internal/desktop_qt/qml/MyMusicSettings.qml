@@ -140,7 +140,7 @@ Column {
         spacing: 8
         Flow {
             width: parent.width
-            visible: root.canImport
+            Reveal { shown: root.canImport }
             Button {
                 text: root.progress ? S.s_dang_them_b24da066 + root.progress.done + "/" + root.progress.total : S.s_them_nhac_cua_ban_dbd7d8c4
                 icon: "upload"; kind: "ghost"; size: "sm"; wrap: true

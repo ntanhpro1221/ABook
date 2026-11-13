@@ -16,7 +16,7 @@ Flow {
     topPadding: 4
     readonly property string note: Music.trackNote(track)
     Row {
-        visible: root.canPick
+        Reveal { shown: root.canPick }
         spacing: 8
         Switch {
             id: autoSwitch
@@ -38,7 +38,7 @@ Flow {
     }
     Text {
         objectName: "autoPickNote"
-        visible: !root.canPick && text !== ""
+        Reveal { shown: !root.canPick && target.text !== "" }
         text: root.note
         color: Theme.text2
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

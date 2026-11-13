@@ -82,13 +82,13 @@ Column {
             Text { id: label; x: 32; width: thumb.x - x - Theme.s8; anchors.verticalCenter: parent.verticalCenter; text: TextWrap.keepDots(row.name); wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
             ToneCurve { id: thumb; x: parent.width - width - (row.mine ? 44 : 4); anchors.verticalCenter: parent.verticalCenter; width: 48; height: 24; bands: row.preset.bands; ink: row.chosen ? Theme.accent : Theme.text2; stroke: 1.5 }
             IconButton {
-                objectName: row.mine ? "toneMore" : ""; visible: row.mine; icon: "ellipsis"; ink: Theme.text2; x: parent.width - width + 10; anchors.verticalCenter: parent.verticalCenter
+                objectName: row.mine ? "toneMore" : ""; Reveal { shown: row.mine } icon: "ellipsis"; ink: Theme.text2; x: parent.width - width + 10; anchors.verticalCenter: parent.verticalCenter
                 tip: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name); Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name)
                 onClicked: root.menu = root.menu === row.preset.id ? "" : row.preset.id
             }
         }
         Item {
-            width: parent.width; height: root.menu === row.preset.id ? actions.implicitHeight : 0; clip: true; visible: row.mine && height > 0
+            width: parent.width; height: root.menu === row.preset.id ? actions.implicitHeight : 0; clip: true; Reveal { shown: row.mine && target.height > 0 }
             Behavior on height { NumberAnimation { duration: Theme.motionFast } }
             Flow {
                 id: actions; x: 32; width: parent.width - x; spacing: Theme.s24
@@ -166,19 +166,19 @@ Column {
         Switch { checked:root.library.scoped;label:S.s_copy_0aedb2b2cf2b;anchors.verticalCenter:parent.verticalCenter;onToggled:value=>Player.toneAction("scope",{enabled:value}) }
     }
     Column {
-        width:parent.width;visible:root.pending!==null
+        width:parent.width;Reveal { shown: root.pending!==null }
         Text { width:parent.width;text:S.s_tone_leave;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
         TextLink { text:S.s_tone_overwrite;onClicked:{Player.toneAction("save",{name:root.library.preset.name,overwrite:true});root.finish()} }
         TextLink { text:S.s_tone_new;onClicked:root.namePreset("save","",root.suggest,true) }
         TextLink { text:S.s_tone_discard;onClicked:{Player.toneAction("discard");root.finish()} }
     }
     Column {
-        width:parent.width;visible:root.form!==""
+        width:parent.width;Reveal { shown: root.form!=="" }
         FormField { id:nameField;width:parent.width;label:S.s_tone_name;onAccepted:root.saveName() }
         Flow { width:parent.width;spacing:Theme.s16;TextLink { text:S.s_luu_e91f26c0;onClicked:root.saveName() } TextLink { text:S.s_tone_back;onClicked:{root.form="";root.afterName=false} } }
     }
     Row {
-        width:parent.width;visible:root.deleted!==null;spacing:Theme.s12
+        width:parent.width;Reveal { shown: root.deleted!==null }spacing:Theme.s12
         Text { width:parent.width-undoAction.width-parent.spacing;text:S.s_tone_deleted;color:Theme.text;font.pixelSize:Theme.sizeBodySmall;wrapMode:Text.Wrap }
         TextLink { id:undoAction;objectName:"toneUndo";text:S.s_hoan_tac_e72ff675;onClicked:{Player.toneAction("undo",root.deleted);root.deleted=null} }
     }

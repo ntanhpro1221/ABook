@@ -48,7 +48,7 @@ Interactive {
             id: valueLabel
             width: root.valueLimit > 0 ? Math.min(implicitWidth, root.valueLimit) : implicitWidth
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            visible: root.value !== ""
+            Reveal { shown: root.value !== "" }
             text: root.value
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption

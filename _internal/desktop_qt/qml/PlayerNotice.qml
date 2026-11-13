@@ -43,7 +43,7 @@ Item {
             }
             Interactive {
                 id: actionLabel
-                visible: root.action !== ""
+                Reveal { shown: root.action !== "" }
                 anchors.verticalCenter: parent.verticalCenter
                 width: actionText.implicitWidth + 2 * Theme.s8
                 height: 32

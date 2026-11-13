@@ -56,7 +56,7 @@ Column {
                         width: parent.width
                         label: S.s_cach_dung_ma_ae1cba85
                         HintText { width: parent.width; text: S.s_ma_dung_mot_lan_de_may_kia_nghe_thu_vien_n_a41fb816 }
-                        HintText { width: parent.width; visible: (root.sync.addresses || []).length > 0; textFormat: Text.RichText; text: S.s_dia_chi_9945f0f4 + Logic.whereHtml(root.sync, false, root.ink) }
+                        HintText { width: parent.width; Reveal { shown: (root.sync.addresses || []).length > 0 } textFormat: Text.RichText; text: S.s_dia_chi_9945f0f4 + Logic.whereHtml(root.sync, false, root.ink) }
                     }
                 }
                 Column {
@@ -91,7 +91,7 @@ Column {
                     id: fingerprint
                     y: 12
                     width: parent.width
-                    visible: Boolean(root.sync.fingerprintShort)
+                    Reveal { shown: Boolean(root.sync.fingerprintShort) }
                     text: S.s_pair_fingerprint_label + (root.sync.fingerprintShort || "") + "\n" + S.s_pair_fingerprint_help + "\n" + S.s_pair_string + (root.sync.pairing ? root.sync.pairing.pairString || "" : "")
                     color: Theme.text3
                     wrapMode: Text.WrapAnywhere

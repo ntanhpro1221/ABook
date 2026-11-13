@@ -81,7 +81,7 @@ FocusScope {
         width: parent.width
         EditBookSkeleton {
             objectName: "precastSkeleton"
-            visible: !root.ready && !root.failed
+            Reveal { shown: !root.ready && !root.failed }
             y: 24
             width: parent.width
             shape: "rows"
@@ -98,7 +98,7 @@ FocusScope {
         Column {
             id: content
             objectName: "precastContent"
-            visible: root.ready
+            Reveal { shown: root.ready }
             width: parent.width
             Item { width: 1; height: 20 }
             Collapse {
@@ -118,7 +118,7 @@ FocusScope {
             // Điện thoại / cửa sổ hẹp: bốn bước phải nằm ở màn đầu - lời giới thiệu và công tắc gập lại
             DisclosureRow {
                 objectName: "precastIntroToggle"
-                visible: root.narrow
+                Reveal { shown: root.narrow }
                 width: parent.width
                 title: S.s_cho_duyet_6af96613
                 expanded: root.introOpen
@@ -214,7 +214,7 @@ FocusScope {
                                 }
                                 Text {
                                     id: countText
-                                    visible: text !== ""
+                                    Reveal { shown: target.text !== "" }
                                     width: parent.width
                                     text: root.counts[button.modelData] || ""
                                     color: Theme.text2
@@ -398,7 +398,7 @@ FocusScope {
             id: twin
             property var person: ({})
             readonly property bool shown: Boolean(root.twins[Cast.cleanName(person.displayName).toLowerCase()]) && person.lines > 0
-            visible: shown
+            Reveal { shown: target.shown }
             height: shown ? implicitHeight : 0
             spacing: 8
             leftPadding: 4

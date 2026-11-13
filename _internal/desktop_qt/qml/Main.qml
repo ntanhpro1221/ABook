@@ -39,7 +39,7 @@ Window {
     MiniPlayer {
         id: miniPlayer
         width: 360; height: win.height
-        visible: windowMode.mini && win.uiVisible
+        Reveal { shown: windowMode.mini && win.uiVisible }
         windowMode: windowMode
         framed: false
     }
@@ -99,7 +99,7 @@ Window {
         id: shell
         objectName: "mainShell"
         anchors.fill: parent
-        visible: !windowMode.mini && win.uiVisible
+        Reveal { shown: !windowMode.mini && win.uiVisible }
         focus: true
 
         // Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung (như web Shell). Chỉ trượt vào khi có tiêu điểm;
@@ -111,7 +111,7 @@ Window {
             x: 12
             y: activeFocus ? 12 : -height - 24
             opacity: activeFocus ? 1 : 0
-            visible: enabled
+            Reveal { shown: (!(win.nowPlaying && win.nowPlaying.open)) }
             enabled: !(win.nowPlaying && win.nowPlaying.open)
             text: S.s_toi_noi_dung_501e7d8d
             size: "sm"
@@ -345,7 +345,7 @@ Window {
     }
     // Lời báo của app: góc trên bên phải, cách dải tiêu đề và mép phải 16 px; dưới mặt hộp / bảng.
     ToastStack {
-        visible: !windowMode.mini && win.uiVisible
+        Reveal { shown: !windowMode.mini && win.uiVisible }
         anchors.right: parent.right
         anchors.rightMargin: 16
         y: titleBar.height + 16

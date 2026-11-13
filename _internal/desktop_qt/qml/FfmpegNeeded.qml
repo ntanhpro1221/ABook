@@ -44,7 +44,7 @@ Column {
     }
     Item { width: 1; height: 6 }
     Item {
-        visible: root.status !== null && root.status.downloading
+        Reveal { shown: root.status !== null && root.status.downloading }
         width: parent.width
         height: Math.max(40, percent.implicitHeight)
         Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_dung_11554138; onClicked: root.stop() }
@@ -72,14 +72,14 @@ Column {
         }
     }
     OnComputerPill {
-        visible: root.status !== null && !root.status.downloading && root.remote
+        Reveal { shown: root.status !== null && !root.status.downloading && root.remote }
         verb: root.outdated ? S.s_cap_nhat_cong_cu_ghep_am_thanh_6fd454a5 : S.s_tai_cong_cu_ghep_am_thanh_1d4036fd
         computer: root.computer
         maxWidth: root.width
     }
     Text {
         objectName: "ffmpegBlocked"
-        visible: root.status !== null && !root.status.downloading && !root.remote && Boolean(root.status.blocked)
+        Reveal { shown: root.status !== null && !root.status.downloading && !root.remote && Boolean(root.status.blocked) }
         width: parent.width
         text: root.status ? root.status.blocked : ""
         color: Theme.warning
@@ -87,7 +87,7 @@ Column {
         font.pixelSize: Theme.sizeBodySmall
     }
     Flow {
-        visible: root.status !== null && !root.status.downloading && !root.remote && !root.status.blocked
+        Reveal { shown: root.status !== null && !root.status.downloading && !root.remote && !root.status.blocked }
         width: parent.width
         spacing: 12
         // Lời lỗi nói "bấm Thử lại" (studio_setup.download_failure): nút mang đúng tên ấy
@@ -98,11 +98,11 @@ Column {
             onClicked: root.download()
         }
         Column {
-            visible: root.status !== null && Boolean(root.status.error)
+            Reveal { shown: root.status !== null && Boolean(root.status.error) }
             width: Math.min(root.width, 360)
             Text { objectName: "ffmpegError"; width: parent.width; text: root.status ? root.status.error : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
             TextLink {
-                visible: root.status !== null && Boolean(root.status.errorDetail)
+                Reveal { shown: root.status !== null && Boolean(root.status.errorDetail) }
                 small: true
                 text: S.s_chi_tiet_e762d926
                 onClicked: root.detailOpen = !root.detailOpen

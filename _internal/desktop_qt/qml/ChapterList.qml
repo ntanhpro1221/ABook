@@ -42,7 +42,7 @@ ListView {
         panelWidth: 236; pad: Theme.s8
         Column {
             width: parent.width
-            MenuRow { width: parent.width; text: S.s_nghe_tu_dau_chuong_06c66bfc; icon: "play"; visible: !!root.menuChapter && root.menuChapter.playable; onClicked: { menu.close(); Player.jumpTo(root.menuChapter.chapterId, 0) } }
+            MenuRow { width: parent.width; text: S.s_nghe_tu_dau_chuong_06c66bfc; icon: "play"; Reveal { shown: !!root.menuChapter && root.menuChapter.playable } onClicked: { menu.close(); Player.jumpTo(root.menuChapter.chapterId, 0) } }
             MenuRow { objectName: "chapterRead"; width: parent.width; text: S.s_doc_chuong_nay_5d5272d3; icon: "book-open"; onClicked: { menu.close(); root.readRequested(root.menuChapter.chapterId) } }
         }
     }

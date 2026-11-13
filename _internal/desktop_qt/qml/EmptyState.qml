@@ -36,7 +36,7 @@ Column {
     Item { width: 1; height: root.text !== "" ? 6 : 0 }
     Text {
         objectName: "emptyText"
-        visible: root.text !== ""
+        Reveal { shown: root.text !== "" }
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.min(root.width, 448)
         horizontalAlignment: Text.AlignHCenter

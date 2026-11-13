@@ -31,7 +31,7 @@ Collapse {
         Button {
             id: offer
             objectName: "tryStudio"
-            visible: !!root.reading && root.reading.offersStudio
+            Reveal { shown: !!root.reading && root.reading.offersStudio }
             y: line.y + line.height + 4
             size: "sm"
             kind: "ghost"

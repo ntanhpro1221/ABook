@@ -81,11 +81,11 @@ Modal {
     }
     Column {
         width: parent.width
-        visible: root.report !== null
+        Reveal { shown: root.report !== null }
         spacing: 16
         Column {
             width: parent.width
-            visible: root.rows.length > 0
+            Reveal { shown: root.rows.length > 0 }
             Repeater {
                 model: root.rows
                 Item {
@@ -94,15 +94,16 @@ Modal {
                     width: parent.width
                     implicitHeight: valueText.height + 16 + (index > 0 ? 1 : 0)
                     height: implicitHeight
-                    Rectangle { width: parent.width; height: 1; color: Theme.line; visible: index > 0 }
+                    Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: index > 0 }}
                     Text { x: 0; y: 8 + (index > 0 ? 1 : 0); width: 176; text: modelData.label; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                     Text { id: valueText; x: 176 + 16; y: 8 + (index > 0 ? 1 : 0); width: parent.width - x; text: modelData.value; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
                 }
             }
         }
         MoreInfo {
+            id: moreInfoShown
             width: parent.width
-            visible: root.errors.length > 0
+            Reveal { target: moreInfoShown; shown: root.errors.length > 0 }
             label: S.s_chi_tiet_ky_thuat_f27eb5f6
             TextEdit {
                 width: parent.width
@@ -124,11 +125,11 @@ Modal {
         }
         DevicesLogBox {
             width: parent.width
-            visible: root.report !== null && (root.systemLog.length > 0 || root.report.logcat !== undefined)
+            Reveal { shown: root.report !== null && (root.systemLog.length > 0 || root.report.logcat !== undefined) }
             title: S.s_nhat_ky_he_thong_cua_app_5d62b230 + root.systemLog.length + S.s_dong_8fe5919d
             lines: root.systemLog
             empty: root.report ? Logic.emptyLogNote(root.report, "logcat") : ""
         }
-        HintText { width: parent.width; visible: Boolean(root.report && root.report.truncated); color: Theme.text3; text: S.s_nhat_ky_dai_nen_da_cat_bot_phan_cu_nhat_ad1b7371 }
+        HintText { width: parent.width; Reveal { shown: Boolean(root.report && root.report.truncated) } color: Theme.text3; text: S.s_nhat_ky_dai_nen_da_cat_bot_phan_cu_nhat_ad1b7371 }
     }
 }

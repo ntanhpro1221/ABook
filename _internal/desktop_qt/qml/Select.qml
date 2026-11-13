@@ -138,7 +138,7 @@ Interactive {
                 onClicked: rows.pick(index)
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: !row.header && (row.hovered || row.ListView.isCurrentItem) ? 1 : 0 }
                 Icon {
-                    visible: !row.header
+                    Reveal { shown: !row.header }
                     x: 8
                     anchors.verticalCenter: parent.verticalCenter
                     name: "check"

@@ -57,7 +57,7 @@ Column {
         Text { width: parent.width; text: S.s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         Flow {
             width: parent.width
-            visible: root.phase === "installed"
+            Reveal { shown: root.phase === "installed" }
             spacing: 12
             Button {
                 objectName: "moodsCompute"
@@ -67,7 +67,7 @@ Column {
                 onActivated: root.compute()
             }
             Text {
-                visible: !!root.moods && !!root.moods.error
+                Reveal { shown: !!root.moods && !!root.moods.error }
                 width: Math.min(implicitWidth, parent.width)
                 height: 32; verticalAlignment: Text.AlignVCenter
                 text: root.moods ? root.moods.error || "" : ""
@@ -78,7 +78,7 @@ Column {
         }
         ClockLabel {
             width: parent.width
-            visible: root.phase === "downloading"
+            Reveal { shown: root.phase === "downloading" }
             text: S.s_dang_tai_phan_doc_khong_khi_a6481b11 + (root.percent !== null ? " - " + root.percent + "%" : "")
             color: Theme.text
             wrapMode: Text.Wrap
@@ -86,7 +86,7 @@ Column {
         }
         Flow {
             width: parent.width
-            visible: root.phase === "offer"
+            Reveal { shown: root.phase === "offer" }
             spacing: 12
             Button {
                 objectName: "moodsDownload"
@@ -96,7 +96,7 @@ Column {
                 onActivated: root.download()
             }
             Text {
-                visible: !!root.model && !!root.model.error
+                Reveal { shown: !!root.model && !!root.model.error }
                 width: Math.min(implicitWidth, parent.width)
                 height: 32; verticalAlignment: Text.AlignVCenter
                 text: root.model ? root.model.error || "" : ""
@@ -107,7 +107,7 @@ Column {
         }
         Text {
             width: parent.width
-            visible: root.phase === "elsewhere"
+            Reveal { shown: root.phase === "elsewhere" }
             text: root.model && root.model.downloadable ? S.s_tai_phan_doc_khong_khi_tren_may_tinh_chu_s_f52208a6 : S.s_may_nay_chua_co_phan_doc_khong_khi_cai_qua_5174e4ee
             color: Theme.text2
             wrapMode: Text.Wrap

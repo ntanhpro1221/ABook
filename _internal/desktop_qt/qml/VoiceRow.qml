@@ -79,7 +79,7 @@ Item {
                 }
                 Text {
                     id: gender
-                    visible: text !== ""
+                    Reveal { shown: target.text !== "" }
                     x: name.x + name.width + 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: VoiceLogic.genderLabel(root.voice.gender)
@@ -88,7 +88,7 @@ Item {
                 }
                 Text {
                     id: marker
-                    visible: root.selected
+                    Reveal { shown: root.selected }
                     x: (gender.visible ? gender.x + gender.implicitWidth : name.x + name.width) + 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: S.s_mac_dinh_9a1af367

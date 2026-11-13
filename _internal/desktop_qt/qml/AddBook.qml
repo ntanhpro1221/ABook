@@ -701,7 +701,7 @@ Modal {
                         Row {
                             id: links
                             readonly property real implicitWidth: childrenRect.width
-                            visible: root.shownPreview !== null && root.shownPreview.chapters.length > 1
+                            Reveal { shown: root.shownPreview !== null && root.shownPreview.chapters.length > 1 }
                             x: totalsRow.stacked ? 0 : parent.width - width
                             y: totalsRow.stacked ? 16 + summaryFlow.height + 4 : 16
                             spacing: 12
@@ -815,7 +815,7 @@ Modal {
                                     }
                                     Text {
                                         width: parent.width - 24
-                                        visible: root.notes.length > 6
+                                        Reveal { shown: root.notes.length > 6 }
                                         text: S.s_va_6e638075 + (root.notes.length - 6) + S.s_ghi_chu_nua_fe5122f7
                                         color: Theme.text2
                                         font.pixelSize: Theme.sizeCaption
@@ -861,7 +861,7 @@ Modal {
                                         }
                                         Text {
                                             width: parent.width
-                                            visible: text !== ""
+                                            Reveal { shown: target.text !== "" }
                                             text: noteBody.said.example
                                             color: Theme.text2
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

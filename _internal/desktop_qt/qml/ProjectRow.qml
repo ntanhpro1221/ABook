@@ -50,7 +50,7 @@ Item {
 
     // ---- dự án bình thường ----
     Item {
-        visible: !root.broken
+        Reveal { shown: !root.broken }
         anchors.fill: parent
         Interactive {
             id: rowButton
@@ -86,7 +86,7 @@ Item {
             }
             Text {
                 objectName: "projectSubtitle"
-                visible: text !== ""
+                Reveal { shown: target.text !== "" }
                 width: parent.width
                 text: Logic.rowSubtitle(root.book)
                 color: Theme.text2
@@ -98,7 +98,7 @@ Item {
         StatusPill {
             id: pill
             objectName: "projectStatus"
-            visible: Logic.rowShowsPill(root.book)
+            Reveal { shown: Logic.rowShowsPill(root.book) }
             x: root.stacked ? root.nameX : root.statusX
             y: root.stacked ? 10 + root.stackedY : (root.height - height) / 2
             label: root.status.label
@@ -112,7 +112,7 @@ Item {
             width: root.stacked ? root.nameW : root.progressW
             spacing: 4
             Row {
-                visible: !root.done
+                Reveal { shown: !root.done }
                 width: parent.width
                 spacing: 8
                 StudioBar {
@@ -150,7 +150,7 @@ Item {
         }
         Text {
             objectName: "projectUpdated"
-            visible: root.wide
+            Reveal { shown: root.wide }
             x: root.updatedX
             y: (root.height - height) / 2
             width: root.updatedW
@@ -183,7 +183,7 @@ Item {
 
     // ---- dự án không mở được ----
     Item {
-        visible: root.broken
+        Reveal { shown: root.broken }
         anchors.fill: parent
         Rectangle { x: root.pad; y: 10; width: 40; height: 40; radius: Theme.radiusControl; color: Theme.hover }
         Column {
@@ -215,18 +215,18 @@ Item {
             y: 10 - 2
             spacing: 4
             // Đang bị chương trình khác giữ (diệt virus, sao lưu): KHÔNG phải hỏng - chỉ Thử lại / Mở thư mục, không mời xoá
-            IconButton { objectName: "brokenRetry"; visible: root.busy; width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_thu_lai_c58d068c; Accessible.name: S.s_thu_lai_c58d068c; onClicked: root.retried() }
-            IconButton { objectName: "brokenReveal"; visible: root.busy && root.local; width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_mo_thu_muc_4bf5b127; Accessible.name: S.s_mo_thu_muc_4bf5b127; onClicked: root.revealRequested() }
+            IconButton { objectName: "brokenRetry"; Reveal { shown: root.busy } width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_thu_lai_c58d068c; Accessible.name: S.s_thu_lai_c58d068c; onClicked: root.retried() }
+            IconButton { objectName: "brokenReveal"; Reveal { shown: root.busy && root.local } width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_mo_thu_muc_4bf5b127; Accessible.name: S.s_mo_thu_muc_4bf5b127; onClicked: root.revealRequested() }
             IconButton {
                 id: brokenMore
                 objectName: "projectMore"
-                visible: !root.busy && root.local
+                Reveal { shown: !root.busy && root.local }
                 width: 32; height: 32; icon: "ellipsis"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text
                 Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book.title || "")
                 onClicked: root.menuRequested(brokenMore)
             }
             // Studio từ xa: khôi phục, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để chỗ trống
-            OnComputerPill { objectName: "brokenOnComputer"; visible: !root.busy && !root.local; verb: S.s_khoi_phuc_hoac_xoa_9cc4c06f; computer: root.computer; maxWidth: 260 }
+            OnComputerPill { objectName: "brokenOnComputer"; Reveal { shown: !root.busy && !root.local } verb: S.s_khoi_phuc_hoac_xoa_9cc4c06f; computer: root.computer; maxWidth: 260 }
         }
     }
 }

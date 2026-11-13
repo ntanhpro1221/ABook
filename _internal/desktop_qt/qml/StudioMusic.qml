@@ -333,11 +333,11 @@ Column {
                 onComputed: next => root.accept(next)
             }
         }
-        MusicOpenRow { width: parent.width; visible: !Nav.studioPeer }
+        MusicOpenRow { width: parent.width; Reveal { shown: !Nav.studioPeer }}
 
         Text {
             width: parent.width
-            visible: !!root.view && !!root.view.error
+            Reveal { shown: !!root.view && !!root.view.error }
             text: root.view ? root.view.error || "" : ""
             color: Theme.warning
             wrapMode: Text.Wrap
@@ -346,7 +346,7 @@ Column {
         Text {
             objectName: "musicOffNote"
             width: parent.width
-            visible: !root.overrides.enabled && root.scenes.length > 0
+            Reveal { shown: !root.overrides.enabled && root.scenes.length > 0 }
             text: S.s_nhac_nen_dang_tat_cac_doan_duoi_day_se_kho_2cc431ba
             color: Theme.text2
             wrapMode: Text.Wrap
@@ -355,7 +355,7 @@ Column {
         Text {
             objectName: "musicNoScenes"
             width: parent.width
-            visible: root.scenes.length === 0
+            Reveal { shown: root.scenes.length === 0 }
             text: S.s_chua_co_doan_nao_nhac_nen_dung_sau_khi_sac_b1bdaf8e
             color: Theme.text2
             wrapMode: Text.Wrap
@@ -441,7 +441,7 @@ Column {
                         model: root.credits.lines
                         HintText { required property string modelData; width: parent.width; text: modelData }
                     }
-                    HintText { width: parent.width; visible: root.credits.modified; topPadding: 4; text: Logic.MODIFIED_NOTE }
+                    HintText { width: parent.width; Reveal { shown: root.credits.modified } topPadding: 4; text: Logic.MODIFIED_NOTE }
                 }
             }
         }

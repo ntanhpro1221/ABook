@@ -36,19 +36,19 @@ Column {
     width: parent.width
     spacing: Theme.s4
     TonePage {
-        id:tonePage;width:root.width;visible:root.toneOpen
+        id:tonePage;width:root.width;Reveal { shown: root.toneOpen }
         onBackRequested:root.toneOpen=false
         onVisibleChanged:if(visible)slide.restart()
         NumberAnimation { id:slide;target:tonePage;property:"x";from:24;to:0;duration:Theme.reduceMotion?0:Theme.motionMedium }
     }
     Column {
     id:audioMain
-    width:parent.width;visible:!root.toneOpen;spacing:Theme.s4
+    width:parent.width;Reveal { shown: !root.toneOpen }spacing:Theme.s4
     onVisibleChanged:if(visible)backSlide.restart()
     NumberAnimation { id:backSlide;target:audioMain;property:"x";from:-24;to:0;duration:Theme.reduceMotion?0:Theme.motionMedium }
     Text { width: parent.width; text: S.s_copy_c1303271503d; color: Theme.text; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
     AudioFxSlider { objectName: "audioFxVoice"; width: parent.width; label: S.s_giong_doc_11f2548d; spec: Logic.SPECS.voice; value: Math.round(root.voice*100); suffix: "%"; onPicked: value => root.setVoice(value/100) }
-    MenuRow { width: parent.width; visible: root.openMusic !== null && Music.hasMusic; text: S.s_nhac_nen_271fb292; icon: "eighth-note"; onClicked: root.openMusic() }
+    MenuRow { width: parent.width; Reveal { shown: root.openMusic !== null && Music.hasMusic } text: S.s_nhac_nen_271fb292; icon: "eighth-note"; onClicked: root.openMusic() }
     MenuRow { objectName:"audioFxTones";width:parent.width;valueLimit:width*.55;text:S.s_am_sac_8c2f4e1a;value:root.toneName+(root.library.scoped ? "\u00a0·\u00a0"+S.s_copy_0aedb2b2cf2b : "");icon:"sliders-horizontal";onClicked:root.toneOpen=true }
     Row {
         width: parent.width; height: 48
@@ -63,7 +63,7 @@ Column {
     }
     Text { width: parent.width; text: S.s_copy_b09b5fb2264a; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     Column {
-        width: parent.width; visible: root.fx.skipSilence
+        width: parent.width; Reveal { shown: root.fx.skipSilence }
         AudioFxSlider { width: parent.width; label: S.s_copy_8e18e6dd7fd9; spec: Logic.SPECS.silenceDb; value: root.fx.silenceDb; suffix: " dBFS"; onPicked: value => Player.setAudioFx({silenceDb:value}) }
         AudioFxSlider { width: parent.width; label: S.s_copy_19adc1b298a9; spec: Logic.SPECS.silenceSeconds; value: root.fx.silenceSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({silenceSeconds:value}) }
         AudioFxSlider { width: parent.width; label: S.s_copy_483cdfec9d5f; spec: Logic.capped(Logic.SPECS.keepSeconds, root.fx.silenceSeconds); value: root.fx.keepSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({keepSeconds:value}) }

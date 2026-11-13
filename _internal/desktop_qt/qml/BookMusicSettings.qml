@@ -146,7 +146,7 @@ Column {
                             required property var modelData
                             required property int index
                             width: cueList.width
-                            Rectangle { visible: cue.index > 0; width: parent.width; height: 1; color: Theme.line }
+                            Rectangle { Reveal { shown: cue.index > 0 } width: parent.width; height: 1; color: Theme.line }
                             Flow {
                                 width: parent.width
                                 topPadding: 8
@@ -176,7 +176,7 @@ Column {
                                     id: cueButtons
                                     spacing: 4
                                     Button {
-                                        visible: !!cue.modelData.pinned
+                                        Reveal { shown: !!cue.modelData.pinned }
                                         text: S.s_ve_bai_goc_dc6a21f6; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
                                         onClicked: { const pins = {}; pins[cue.modelData.key] = null; root.change({pins: pins}) }

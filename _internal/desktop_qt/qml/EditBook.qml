@@ -278,7 +278,7 @@ Modal {
                         shown: !root.textBook
                         Flow {
                             width: parent.width
-                            visible: root.workshop
+                            Reveal { shown: root.workshop }
                             height: visible ? implicitHeight : 0
                             spacing: 12
                             Text {
@@ -289,7 +289,7 @@ Modal {
                                 font.pixelSize: Theme.sizeBodySmall
                             }
                             Button {
-                                visible: root.canOpenStudio
+                                Reveal { shown: root.canOpenStudio }
                                 text: S.s_mo_tab_nhac_nen_117e60f2
                                 icon: "eighth-note"
                                 kind: "ghost"

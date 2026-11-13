@@ -122,7 +122,7 @@ Item {
                                         objectName: "historySession"
                                         width: parent.width
                                         height: Math.max(texts.height, resume.height) + 20
-                                        Rectangle { visible: session.index > 0; width: parent.width; height: 1; color: Theme.line }
+                                        Rectangle { Reveal { shown: session.index > 0 } width: parent.width; height: 1; color: Theme.line }
                                         Column {
                                             id: texts
                                             y: 10

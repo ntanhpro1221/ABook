@@ -34,13 +34,13 @@ Item {
             height: root.rowHeight
             opacity: root.pulse
             Rectangle {
-                visible: root.shape === "covers"
+                Reveal { shown: root.shape === "covers" }
                 width: parent.width; height: parent.width * 1.5
                 radius: Theme.radiusCover
                 color: Theme.sunken
             }
             Rectangle {
-                visible: root.shape === "rows"
+                Reveal { shown: root.shape === "rows" }
                 width: 40; height: 40
                 radius: Theme.radiusControl
                 color: Theme.sunken

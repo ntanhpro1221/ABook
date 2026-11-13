@@ -40,7 +40,7 @@ Collapse {
         width: parent.width
         implicitHeight: (root.first ? 0 : 1) + fold.height
         height: implicitHeight
-        Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
+        Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
         DevicesFold {
             id: fold
             y: root.first ? 0 : 1
@@ -63,7 +63,7 @@ Collapse {
                     // Đang chờ máy ấy dậy
                     Flow {
                         width: parent.width
-                        visible: Boolean(root.computer.waking)
+                        Reveal { shown: Boolean(root.computer.waking) }
                         spacing: 0
                         Item { width: 20; height: 16; Icon { x: 0; y: (parent.height - 14) / 2; name: "moon"; size: 14; color: Theme.text2 } }
                         Text { id: status; text: root.computer.waking ? Logic.wakingLine(root.computer, root.clock) : ""; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; width: Math.min(implicitWidth, parent.width - 20) }
@@ -84,7 +84,7 @@ Collapse {
                     // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
                     Text {
                         width: parent.width
-                        visible: !root.computer.waking
+                        Reveal { shown: !root.computer.waking }
                         text: root.computer.error ? root.computer.error
                             : Logic.connectionRoute(root.computer.connectedVia) + (root.computer.lastSeen ? S.s_u00a0_u00a0thay_f7bb91c5 + Logic.formatRelative(root.computer.lastSeen, root.clock) : "")
                         color: root.computer.error ? Theme.danger : Theme.text2
@@ -95,7 +95,7 @@ Collapse {
                     Text {
                         width: parent.width
                         topPadding: 4
-                        visible: Boolean(root.computer.fingerprint)
+                        Reveal { shown: Boolean(root.computer.fingerprint) }
                         text: S.s_van_tay_8abdcdf0 + Logic.formatFingerprint(root.computer.fingerprint).slice(0, 9) + "…"
                         Accessible.description: Logic.formatFingerprint(root.computer.fingerprint)
                         color: Theme.text3
@@ -109,10 +109,10 @@ Collapse {
                     x: body.inline ? body.width - width : body.width - width
                     y: body.inline ? (body.lineHeight - height) / 2 : body.lineHeight + 12
                     // Studio của máy tính ấy ngay trong app này, bằng ghép sẵn có - không ghép lần hai (webui/peer_studio.py).
-                    Button { objectName: "openStudio"; visible: root.computer.kind === "computer"; size: "sm"; kind: "ghost"; icon: "clapperboard"; text: S.s_mo_studio_84ec0a81; Accessible.name: S.s_mo_studio_cua_57fcc890 + (root.computer.name || ""); onClicked: root.openStudio(root.rowId) }
-                    Button { objectName: "diagnose"; visible: root.computer.kind === "phone"; size: "sm"; kind: "ghost"; icon: "stethoscope"; text: S.s_chan_doan_906791d5; Accessible.name: S.s_chan_doan_738cc26b + (root.computer.name || ""); onClicked: root.diagnose(root.computer) }
+                    Button { objectName: "openStudio"; Reveal { shown: root.computer.kind === "computer" } size: "sm"; kind: "ghost"; icon: "clapperboard"; text: S.s_mo_studio_84ec0a81; Accessible.name: S.s_mo_studio_cua_57fcc890 + (root.computer.name || ""); onClicked: root.openStudio(root.rowId) }
+                    Button { objectName: "diagnose"; Reveal { shown: root.computer.kind === "phone" } size: "sm"; kind: "ghost"; icon: "stethoscope"; text: S.s_chan_doan_906791d5; Accessible.name: S.s_chan_doan_738cc26b + (root.computer.name || ""); onClicked: root.diagnose(root.computer) }
                     OtherComputersBluetooth {
-                        visible: !root.bluetoothHost
+                        Reveal { shown: !root.bluetoothHost }
                         computer: root.computer
                         devices: root.devices
                         busy: root.busy

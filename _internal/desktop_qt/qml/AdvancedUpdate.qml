@@ -81,7 +81,7 @@ Item {
                         font.pixelSize: Theme.sizeBodySmall
                     }
                     Text {
-                        visible: Boolean(root.update) && Boolean(root.update.notes)
+                        Reveal { shown: Boolean(root.update) && Boolean(root.update.notes) }
                         width: parent.width
                         topPadding: 8
                         text: root.update ? root.update.notes : ""

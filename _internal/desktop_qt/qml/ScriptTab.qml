@@ -333,15 +333,16 @@ Item {
             onRetry: scripts.contents.load()
         }
         EditBookSkeleton {
-            visible: scripts.contents.loading
+            Reveal { shown: scripts.contents.loading }
             width: parent.width * 2 / 3
             shape: "rows"
             count: 4
             label: S.s_dang_tai_kich_ban_0eea9c53
         }
         EmptyState {
+            id: scriptEmpty
             objectName: "scriptEmpty"
-            visible: scripts.contents.data !== null && root.chapters.length === 0
+            Reveal { target: scriptEmpty; shown: scripts.contents.data !== null && root.chapters.length === 0 }
             width: parent.width
             height: visible ? implicitHeight + 40 : 0
             icon: "book-open-text"
@@ -350,7 +351,7 @@ Item {
         }
         Column {
             id: main
-            visible: root.chapters.length > 0
+            Reveal { shown: root.chapters.length > 0 }
             width: parent.width
             spacing: 0
             Text {
@@ -385,7 +386,7 @@ Item {
             }
             Column {
                 objectName: "scriptSkeleton"
-                visible: !root.script && scripts.script.error === null
+                Reveal { shown: !root.script && scripts.script.error === null }
                 width: parent.width
                 topPadding: 16
                 spacing: 8
@@ -396,12 +397,12 @@ Item {
             }
             Column {
                 id: chapterBody
-                visible: !!root.script
+                Reveal { shown: !!root.script }
                 width: parent.width
                 spacing: 0
                 Item {
                     objectName: "scriptNotReady"
-                    visible: !!root.script && !root.script.castReady
+                    Reveal { shown: !!root.script && !root.script.castReady }
                     width: parent.width
                     height: visible ? notReady.height + 24 : 0
                     Icon { y: 14; name: "clock"; size: 16; color: Theme.text2 }
@@ -419,7 +420,7 @@ Item {
                 Item {
                     objectName: "scriptFirstPerson"
                     readonly property var first: root.script ? root.script.firstPerson : null
-                    visible: !!root.script && root.script.castReady && !!first && !!first.chip && root.who !== first.chip
+                    Reveal { shown: !!root.script && root.script.castReady && !!target.first && !!target.first.chip && root.who !== target.first.chip }
                     width: parent.width
                     height: visible ? firstFlow.height + 12 : 0
                     Flow {
@@ -491,8 +492,9 @@ Item {
                     }
                 }
                 EmptyState {
+                    id: scriptNoLines
                     objectName: "scriptNoLines"
-                    visible: !!root.script && root.shown.length === 0
+                    Reveal { target: scriptNoLines; shown: !!root.script && root.shown.length === 0 }
                     width: parent.width
                     height: visible ? implicitHeight + 40 : 0
                     icon: "book-open-text"
@@ -502,7 +504,7 @@ Item {
                 Column {
                     id: lines
                     objectName: "scriptLines"
-                    visible: height > topPadding
+                    Reveal { shown: target.height > topPadding }
                     width: parent.width
                     topPadding: 12
                     Keys.onPressed: event => root.onKey(event)
@@ -580,7 +582,7 @@ Item {
                         Button {
                             id: confirmButton
                             objectName: "scriptConfirm"
-                            visible: !!root.script && root.script.castReady && root.openLines.length > 0
+                            Reveal { shown: !!root.script && root.script.castReady && root.openLines.length > 0 }
                             size: "sm"
                             kind: "ghost"
                             icon: "check"
@@ -601,7 +603,7 @@ Item {
                     Interactive {
                         id: nextChapter
                         objectName: "scriptNextChapter"
-                        visible: !!root.script && root.script.next !== null
+                        Reveal { shown: !!root.script && root.script.next !== null }
                         x: footer.sameLine ? footer.width - width : -4
                         y: footer.sameLine ? 41 + Math.max(0, (footerLeft.height - height) / 2) : 41 + footerLeft.height + 12
                         width: nextRow.width + 8
@@ -699,7 +701,7 @@ Item {
                     }
                 }
                 Text {
-                    visible: root.narrow && !!root.entry && text !== ""
+                    Reveal { shown: root.narrow && !!root.entry && target.text !== "" }
                     width: toolbar.width
                     text: root.entry ? Script.chapterExtras(root.entry) : ""
                     color: Theme.text3
@@ -752,7 +754,7 @@ Item {
             // Chú giải người nói: bấm để chỉ xem câu của họ, bấm lại để xem tất cả
             Flow {
                 objectName: "scriptLegend"
-                visible: !!root.script && (root.people.length > 0 || root.unnamed > 0)
+                Reveal { shown: !!root.script && (root.people.length > 0 || root.unnamed > 0) }
                 x: -4
                 width: parent.width + 4
                 spacing: 4
@@ -795,7 +797,7 @@ Item {
                 Interactive {
                     id: showAll
                     objectName: "legendAll"
-                    visible: root.who !== ""
+                    Reveal { shown: root.who !== "" }
                     width: showAllRow.width + 16
                     height: 28
                     Accessible.role: Accessible.Button
@@ -813,8 +815,9 @@ Item {
                 }
             }
             MoreInfo {
+                id: scriptKeys
                 objectName: "scriptKeys"
-                visible: !!root.script && root.script.castReady && root.people.length > 0 && root.width >= 720
+                Reveal { target: scriptKeys; shown: !!root.script && root.script.castReady && root.people.length > 0 && root.width >= 720 }
                 width: parent.width
                 label: S.s_phim_tat_7baaed2f
                 Flow {

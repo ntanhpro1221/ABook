@@ -34,7 +34,7 @@ Interactive {
             name: "check"
             size: 12
             color: Theme.accentInk
-            visible: root.inView
+            Reveal { shown: root.inView }
             opacity: root.checked ? 1 : 0
             scale: root.checked || Theme.reduceMotion ? 1 : 0.6
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }

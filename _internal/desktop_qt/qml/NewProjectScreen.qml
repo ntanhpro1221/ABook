@@ -167,7 +167,7 @@ FocusScope {
                 Text {
                     id: hint
                     objectName: "newUnfitHint"
-                    visible: root.form ? Boolean(root.form.unfit) : false
+                    Reveal { shown: root.form ? Boolean(root.form.unfit) : false }
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, Math.max(80, actions.width - startOver.width - create.width - 36))
                     horizontalAlignment: Text.AlignRight

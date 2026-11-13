@@ -24,8 +24,8 @@ Rectangle {
         font.pixelSize: 12
         font.weight: Theme.weightMedium
     }
-    Icon { objectName: "keyArrow"; visible: root.arrow !== ""; anchors.centerIn: parent; name: root.arrow; rotation: root.arrowTurns[root.text] || 0; size: 12; color: Theme.text2 }
-    Rectangle { visible: root.struck; anchors.centerIn: parent; width: parent.width - 12; height: 1; color: Theme.text2 }
+    Icon { objectName: "keyArrow"; Reveal { shown: root.arrow !== "" } anchors.centerIn: parent; name: root.arrow; rotation: root.arrowTurns[root.text] || 0; size: 12; color: Theme.text2 }
+    Rectangle { Reveal { shown: root.struck } anchors.centerIn: parent; width: parent.width - 12; height: 1; color: Theme.text2 }
     Accessible.role: Accessible.StaticText
     Accessible.name: root.text
 }

@@ -75,7 +75,7 @@ Item {
                             readonly property bool on: ["added", "existing", "opened"].indexOf(line.modelData.state) >= 0
                             anchors.centerIn: parent
                             name: "check"; size: 14; color: Theme.success
-                            visible: line.seen
+                            Reveal { shown: line.seen }
                             opacity: on ? 1 : 0
                             scale: on || Theme.reduceMotion ? 1 : 0.5
                             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
@@ -85,7 +85,7 @@ Item {
                             readonly property bool on: line.modelData.state === "error"
                             anchors.centerIn: parent
                             name: "circle-alert"; size: 14; color: Theme.danger
-                            visible: line.seen
+                            Reveal { shown: line.seen }
                             opacity: on ? 1 : 0
                             scale: on || Theme.reduceMotion ? 1 : 0.5
                             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
@@ -95,7 +95,7 @@ Item {
                             readonly property bool on: line.modelData.state === "skipped"
                             anchors.centerIn: parent
                             name: "minus"; size: 14; color: Theme.text3
-                            visible: line.seen
+                            Reveal { shown: line.seen }
                             opacity: on ? 1 : 0
                             scale: on || Theme.reduceMotion ? 1 : 0.5
                             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }

@@ -25,7 +25,7 @@ Interactive {
     implicitHeight: Math.max(words.height, 40) + 2 * Theme.s12 + 1
     Accessible.name: (track.title || "") + (track.creator ? ", " + track.creator : "")
 
-    Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.first }
+    Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
     Rectangle {
         anchors.fill: parent; anchors.topMargin: 0
         radius: Theme.radiusControl
@@ -81,7 +81,7 @@ Interactive {
         spacing: Theme.s8
         Button {
             objectName: "musicRowUse"
-            visible: root.picking
+            Reveal { shown: root.picking }
             text: S.s_dung_7927ca4e; kind: "ghost"; size: "sm"
             Accessible.name: S.s_dung_7927ca4e + ": " + (root.track.title || "")
             onActivated: root.use()
@@ -96,7 +96,7 @@ Interactive {
             onClicked: root.load.kind === "loading" ? root.cancelDownload() : root.save()
             DownloadRing {
                 objectName: "musicRowLoading"
-                anchors.centerIn: parent; visible: root.load.kind === "loading"
+                anchors.centerIn: parent; Reveal { shown: root.load.kind === "loading" }
                 percent: root.load.kind === "loading" && root.load.percent !== null && root.load.percent !== undefined ? root.load.percent : -1
             }
         }

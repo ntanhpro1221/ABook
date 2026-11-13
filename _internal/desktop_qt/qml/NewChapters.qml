@@ -87,10 +87,10 @@ Column {
                 for (let i = 0; i < children.length; ++i) if (children[i].visible) sum += children[i].width + spacing
                 return Math.max(0, sum - spacing)
             }
-            Button { objectName: "newAddFiles"; visible: root.dialogs; text: S.s_them_file_834b1f33; icon: "file-text"; kind: "ghost"; size: "sm"; onActivated: root.filesRequested() }
+            Button { objectName: "newAddFiles"; Reveal { shown: root.dialogs } text: S.s_them_file_834b1f33; icon: "file-text"; kind: "ghost"; size: "sm"; onActivated: root.filesRequested() }
             Button {
                 objectName: "newAddUpload"
-                visible: root.browser
+                Reveal { shown: root.browser }
                 text: root.uploading ? Upload.progressLabel(root.uploading) : S.s_them_file_834b1f33
                 icon: "upload"
                 kind: "ghost"
@@ -101,7 +101,7 @@ Column {
             }
             Button {
                 objectName: "newAddCancel"
-                visible: root.browser && Boolean(root.uploading)
+                Reveal { shown: root.browser && Boolean(root.uploading) }
                 text: root.form && root.form.stopping ? S.s_dang_dung_2fb8aa7c : S.s_huy_gui_4d53a582
                 kind: "ghost"
                 size: "sm"
@@ -139,7 +139,7 @@ Column {
                 }
                 FlowDetail {
                     objectName: "newLimitLater"
-                    visible: Boolean(root.form) && Boolean(root.form.draft.limit) && root.form.later > 0
+                    Reveal { shown: Boolean(root.form) && Boolean(root.form.draft.limit) && root.form.later > 0 }
                     height: Math.max(36, implicitHeight)
                     verticalAlignment: Text.AlignVCenter
                     detail: S.s_con_c697bae9 + Studio.formatNumber(root.form ? root.form.later : 0) + S.s_chuong_cho_dot_sau_50fbbbf5
@@ -219,7 +219,7 @@ Column {
                         width: parent.width
                         height: 16 + Math.max(names.height, figures.height, 32)
                         HoverHandler { id: over }
-                        Rectangle { visible: cell.index > 0 && cell.part < 0; width: parent.width; height: 1; color: Theme.line }
+                        Rectangle { Reveal { shown: cell.index > 0 && cell.part < 0 } width: parent.width; height: 1; color: Theme.line }
                         Text {
                             x: 12
                             y: 8
@@ -268,7 +268,7 @@ Column {
                                 font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
                             }
                             Text {
-                                visible: Boolean(cell.file) && cell.file.chars > 0
+                                Reveal { shown: Boolean(cell.file) && cell.file.chars > 0 }
                                 width: parent.width
                                 horizontalAlignment: Text.AlignRight
                                 text: cell.file && cell.file.chars > 0 ? Logic.approx(cell.file.chars, cell.file.estimated) + S.s_ky_tu_c7cc4ddf : ""
@@ -305,7 +305,7 @@ Column {
     }
     Prose {
         objectName: "newSkipped"
-        visible: root.scan && root.scan.skipped.length > 0
+        Reveal { shown: root.scan && root.scan.skipped.length > 0 }
         topPadding: visible ? 8 : 0
         small: true
         text: root.scan && root.scan.skipped.length ? S.s_bo_qua_0e8d852d + root.scan.skipped.length + S.s_file_khong_phai_txt_674f8d1a : ""

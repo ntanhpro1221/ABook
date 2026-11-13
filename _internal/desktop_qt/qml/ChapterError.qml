@@ -33,7 +33,7 @@ Popover {
         }
         TextEdit {
             objectName: "chapterErrorDetail"
-            visible: root.friendly.detail !== ""
+            Reveal { shown: root.friendly.detail !== "" }
             width: parent.width
             readOnly: true
             selectByMouse: true

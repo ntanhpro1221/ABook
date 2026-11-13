@@ -255,7 +255,7 @@ FocusScope {
     // ---- lời nói thẳng khi chưa có sách ----
     EditBookSkeleton {
         objectName: "projectSkeleton"
-        visible: !!root.store && root.store.bookLoading
+        Reveal { shown: !!root.store && root.store.bookLoading }
         x: root.contentX
         y: Theme.s32 + Theme.headerRow + 32
         width: root.contentW
@@ -264,8 +264,9 @@ FocusScope {
         label: S.s_dang_mo_du_an_b76ab67b
     }
     EmptyState {
+        id: projectGone
         objectName: "projectGone"
-        visible: root.failure === "gone"
+        Reveal { target: projectGone; shown: root.failure === "gone" }
         x: root.contentX
         y: 80 - 56
         width: root.contentW
@@ -275,8 +276,9 @@ FocusScope {
         Button { objectName: "projectGoneBack"; text: S.s_ve_danh_sach_du_an_67552315; onClicked: root.backRequested() }
     }
     EmptyState {
+        id: projectError
         objectName: "projectError"
-        visible: root.failure === "error"
+        Reveal { target: projectError; shown: root.failure === "error" }
         x: root.contentX
         y: 80 - 56
         width: root.contentW
@@ -291,7 +293,7 @@ FocusScope {
     ListView {
         id: list
         objectName: "projectList"
-        visible: !!root.book && root.failure !== "gone" && root.failure !== "error"
+        Reveal { target: list; shown: !!root.book && root.failure !== "gone" && root.failure !== "error" }
         x: root.contentX - 8
         width: root.contentW + 16
         height: parent.height
@@ -318,7 +320,7 @@ FocusScope {
                     Button {
                         id: primaryButton
                         objectName: "primaryButton"
-                        visible: root.primary !== null
+                        Reveal { shown: root.primary !== null }
                         text: root.primary ? root.primary.label : ""
                         icon: root.primary && root.primary.icon ? root.primary.icon : ""
                         busy: root.primary ? Boolean(root.primary.busy) : false
@@ -338,7 +340,7 @@ FocusScope {
                 // Dải báo khi lần hỏi gần nhất hỏng mà vẫn còn bản cũ
                 Row {
                     objectName: "projectStale"
-                    visible: root.failure === "stale"
+                    Reveal { shown: root.failure === "stale" }
                     width: parent.width
                     spacing: 8
                     Icon { name: "circle-alert"; size: 16; color: Theme.warning; y: 2 }
@@ -362,7 +364,7 @@ FocusScope {
                         narrow: root.narrowHead
                         store: root.store
                         book: root.book
-                        visible: Boolean(root.book)
+                        Reveal { shown: Boolean(root.book) }
                     }
                     Column {
                         id: headRest
@@ -394,7 +396,7 @@ FocusScope {
                         Flow {
                             id: projectProgress
                             objectName: "projectProgress"
-                            visible: !!root.book && root.book.phase !== "done" && root.book.phase !== "idle"
+                            Reveal { shown: !!root.book && root.book.phase !== "done" && root.book.phase !== "idle" }
                             width: parent.width
                             spacing: 12
                             readonly property bool moving: !!root.book && (root.book.running || root.book.starting) && !root.book.paused && !root.book.stopping
@@ -423,7 +425,7 @@ FocusScope {
                             }
                             ClockLabel {
                                 objectName: "projectProgressNote"
-                                visible: text !== ""
+                                Reveal { shown: target.text !== "" }
                                 width: Math.min(implicitWidth, parent.width)
                                 height: Math.max(22, implicitHeight)
                                 verticalAlignment: Text.AlignVCenter
@@ -451,15 +453,16 @@ FocusScope {
                                 }
                             }
                             MoreInfo {
+                                id: projectBattery
                                 objectName: "projectBattery"
-                                visible: battery.text !== ""
+                                Reveal { target: projectBattery; shown: battery.text !== "" }
                                 width: parent.width
                                 label: S.s_dung_pin_d9d66b55
                                 HintText { id: battery; width: parent.width; text: root.book ? Logic.batteryInfo(root.book, root.remote) : "" }
                             }
                             Flow {
                                 objectName: "projectStartError"
-                                visible: !!root.book && !!root.book.startError
+                                Reveal { shown: !!root.book && !!root.book.startError }
                                 width: parent.width
                                 spacing: 8
                                 Accessible.role: Accessible.AlertMessage
@@ -480,7 +483,7 @@ FocusScope {
                                 Button {
                                     id: startRetry
                                     objectName: "projectStartRetry"
-                                    visible: !!root.book && !root.book.starting && !root.book.running
+                                    Reveal { shown: !!root.book && !root.book.starting && !root.book.running }
                                     size: "sm"
                                     kind: "ghost"
                                     icon: "rotate-ccw"
@@ -493,7 +496,7 @@ FocusScope {
                                 id: problem
                                 objectName: "projectProblem"
                                 readonly property var shown: root.book ? Logic.bookProblem(root.book, !!(root.store.info && root.store.info.studio), false) : null
-                                visible: shown !== null
+                                Reveal { shown: target.shown !== null }
                                 width: parent.width
                                 spacing: 4
                                 Text { width: parent.width; text: problem.shown ? problem.shown.summary : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
@@ -732,7 +735,7 @@ FocusScope {
             EmptyState {
                 id: emptyBlock
                 objectName: "tabEmpty"
-                visible: parent.chaptersEmpty || parent.activityEmpty
+                Reveal { target: emptyBlock; shown: target.parent.chaptersEmpty || target.parent.activityEmpty }
                 x: 8
                 y: backWrap.height
                 width: root.contentW
@@ -744,7 +747,7 @@ FocusScope {
             Text {
                 id: placeholderText
                 objectName: "tabPlaceholder"
-                visible: parent.placeholder
+                Reveal { shown: target.parent.placeholder }
                 x: 8; y: backWrap.height + 32
                 width: root.contentW
                 text: parent.notReady ? Precast.NOT_READY : Logic.tabPlaceholder(root.shownTab)
@@ -754,7 +757,7 @@ FocusScope {
             }
             EditBookSkeleton {
                 objectName: "activitySkeleton"
-                visible: root.shownTab === "activity" && root.activityLoading
+                Reveal { shown: root.shownTab === "activity" && root.activityLoading }
                 x: 8; y: backWrap.height + 24
                 width: root.contentW * 2 / 3
                 shape: "rows"
@@ -824,8 +827,8 @@ FocusScope {
         }
         SmoothWheel { flick: list }
     }
-    ScrollEdges { target: list; color: Theme.bg; x: list.x; y: list.y; width: list.width; height: list.height; visible: list.visible }
-    Scrollbar { target: list; visible: list.visible && scrollable && opacity > 0 }
+    ScrollEdges { target: list; color: Theme.bg; x: list.x; y: list.y; width: list.width; height: list.height; Reveal { shown: list.visible }}
+    Scrollbar { target: list; Reveal { shown: list.visible && scrollable && opacity > 0 }}
 
     // ---- menu ----
     ProjectMenu {

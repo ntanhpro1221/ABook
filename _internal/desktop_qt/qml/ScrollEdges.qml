@@ -10,7 +10,7 @@ Item {
         objectName: "scrollFadeTop"
         width: parent.width
         height: Theme.s16
-        visible: !root.target.atYBeginning
+        Reveal { shown: !root.target.atYBeginning }
         gradient: Gradient {
             GradientStop { position: 0; color: root.color }
             GradientStop { position: 1; color: Qt.alpha(root.color, 0) }
@@ -21,7 +21,7 @@ Item {
         anchors.bottom: parent.bottom
         width: parent.width
         height: Theme.s16
-        visible: !root.target.atYEnd
+        Reveal { shown: !root.target.atYEnd }
         gradient: Gradient {
             GradientStop { position: 0; color: Qt.alpha(root.color, 0) }
             GradientStop { position: 1; color: root.color }
