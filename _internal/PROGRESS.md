@@ -16,3 +16,8 @@
 - Added the 23 counted loanword spellings to the single policy JSON consumed by Python and Android.
 - Letter-hyphen-known-loanword now uses the existing letter-name table plus the loanword reading on both platforms.
 - Added synthetic shared cases for every new spelling and generic compounds. Focused pytest: 276 passed, zero FAILED.
+
+## Nasal hesitation
+- Added a whole-word `e/ừ + repeated m` rule in Python/Kotlin without broadening vowel-run detection.
+- Shared tests cover five hesitation forms and fourteen real-word controls (including the ASR audit's regression list).
+- Focused pytest: 314 passed, zero FAILED.

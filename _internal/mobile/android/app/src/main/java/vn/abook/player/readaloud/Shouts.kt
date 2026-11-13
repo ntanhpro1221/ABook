@@ -200,6 +200,7 @@ object Shouts {
         // "UH-60", "MMM", "SSS": abbreviations, not cries
         if (upper(core) && (word in SHORT_CASED || (chars.toSet().size == 1 && plain(chars[0]).singleOrNull() !in VOWELS))) return null
         // "um" is usually a Vietnamese word ("xanh um tùm"); capital "Um" is the cry
+        if (Regex("(?:e|ừ)m{2,}", RegexOption.IGNORE_CASE).matches(core)) return "ừm"
         if (!(word == "um" && core.none { it.isUpperCase() })) INTERJECTIONS[word]?.let { return it }
         if (LAUGH.matches(word) && (0 until word.length step 2).all { word.substring(it, it + 2) == word.substring(0, 2) }) {
             return (0 until minOf(word.length, 2 * POLICY.getInt("max_laugh_syllables")) step 2).joinToString(" ") { LAUGH_SYLLABLES.getValue(word.substring(it, it + 2)) }

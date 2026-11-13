@@ -35,3 +35,16 @@ def test_explicit_readings_keep_number_ownership():
 ])
 def test_loanwords_and_letter_compounds(source, expected):
     assert studio_tn(source, None, True, direct_english=True)[0] == expected
+
+
+@pytest.mark.parametrize("word", ["Emm", "Emmmm", "emmmmm", "Ừmmm", "ừmm"])
+def test_nasal_hesitation(word):
+    assert studio_tn(f"{word}, chờ đã.", None, True, direct_english=True)[0] == "ừm, chờ đã."
+
+
+@pytest.mark.parametrize("word", ["cứu", "hưu", "lưu", "mưu", "bưu", "cừu", "hữu", "cựu", "ưu", "soóc", "moóc", "goòng", "voọc", "em"])
+def test_real_words_are_never_stretched(word):
+    from abook.readaloud.shouts import stretch_reading
+
+    assert stretch_reading(word) is None
+    assert studio_tn(f"Từ {word} này.", None, True)[0] == f"Từ {word} này."

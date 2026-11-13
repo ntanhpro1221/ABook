@@ -192,6 +192,9 @@ def _basic_reading(core: str) -> str | None:
     """Cách đọc của `core` (chữ cái đầu tới cuối, không dấu câu) khi nó là thán từ Latin hay tiếng kêu kéo dài; None khi để nguyên."""
     from ..analysis import is_vietnamese_syllable
 
+    # This hesitation has a repeated nasal, never a general vowel-family fold.
+    if re.fullmatch(r"(?:e|ừ)m{2,}", core, re.IGNORECASE):
+        return "ừm"
     chars = _letters(core)
     if not chars or (core.isupper() and ROMAN_LETTERS.issuperset(chars) and len(chars) >= MIN_RUN):  # "III", "XXX": số La Mã / chữ X, không phải tiếng kéo
         return None

@@ -1285,6 +1285,101 @@
    "id": "tnfix_compound-2",
    "text": "Thử B-robot.",
    "said": "Thử bê rô-bốt."
+  },
+  {
+   "id": "tnfix_hesitation-1",
+   "text": "Emm, chờ đã.",
+   "said": "ừm, chờ đã."
+  },
+  {
+   "id": "tnfix_hesitation-2",
+   "text": "Emmmm, chờ đã.",
+   "said": "ừm, chờ đã."
+  },
+  {
+   "id": "tnfix_hesitation-3",
+   "text": "emmmmm, chờ đã.",
+   "said": "ừm, chờ đã."
+  },
+  {
+   "id": "tnfix_hesitation-4",
+   "text": "Ừmmm, chờ đã.",
+   "said": "ừm, chờ đã."
+  },
+  {
+   "id": "tnfix_hesitation-5",
+   "text": "ừmm, chờ đã.",
+   "said": "ừm, chờ đã."
+  },
+  {
+   "id": "tnfix_realword_keep-1",
+   "text": "Từ cứu này.",
+   "said": "Từ cứu này."
+  },
+  {
+   "id": "tnfix_realword_keep-2",
+   "text": "Từ hưu này.",
+   "said": "Từ hưu này."
+  },
+  {
+   "id": "tnfix_realword_keep-3",
+   "text": "Từ lưu này.",
+   "said": "Từ lưu này."
+  },
+  {
+   "id": "tnfix_realword_keep-4",
+   "text": "Từ mưu này.",
+   "said": "Từ mưu này."
+  },
+  {
+   "id": "tnfix_realword_keep-5",
+   "text": "Từ bưu này.",
+   "said": "Từ bưu này."
+  },
+  {
+   "id": "tnfix_realword_keep-6",
+   "text": "Từ cừu này.",
+   "said": "Từ cừu này."
+  },
+  {
+   "id": "tnfix_realword_keep-7",
+   "text": "Từ hữu này.",
+   "said": "Từ hữu này."
+  },
+  {
+   "id": "tnfix_realword_keep-8",
+   "text": "Từ cựu này.",
+   "said": "Từ cựu này."
+  },
+  {
+   "id": "tnfix_realword_keep-9",
+   "text": "Từ ưu này.",
+   "said": "Từ ưu này."
+  },
+  {
+   "id": "tnfix_realword_keep-10",
+   "text": "Từ soóc này.",
+   "said": "Từ soóc này."
+  },
+  {
+   "id": "tnfix_realword_keep-11",
+   "text": "Từ moóc này.",
+   "said": "Từ moóc này."
+  },
+  {
+   "id": "tnfix_realword_keep-12",
+   "text": "Từ goòng này.",
+   "said": "Từ goòng này."
+  },
+  {
+   "id": "tnfix_realword_keep-13",
+   "text": "Từ voọc này.",
+   "said": "Từ voọc này."
+  },
+  {
+   "id": "tnfix_realword_keep-14",
+   "text": "Từ em này.",
+   "said": "Từ em này."
   }
  ]
 }
