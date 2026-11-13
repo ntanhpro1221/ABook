@@ -459,7 +459,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           </div>
         </MotionRegion>
       </div>
-      <div data-reading-dock className="flex h-12 shrink-0 items-center justify-center bg-bg">
+      <div data-reading-dock className="flex h-12 shrink-0 items-center justify-center bg-[var(--read-bg)]">
         <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />

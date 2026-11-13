@@ -1799,7 +1799,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-12 h-6 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
-      <MotionRegion motionKey="floating" data-reading-dock className="flex h-12 shrink-0 flex-col items-center justify-center bg-bg">
+      <MotionRegion motionKey="floating" data-reading-dock className="flex h-12 shrink-0 flex-col items-center justify-center bg-[var(--read-bg)]">
         <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </MotionRegion>

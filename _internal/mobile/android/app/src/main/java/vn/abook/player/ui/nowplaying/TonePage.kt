@@ -6,7 +6,6 @@ import vn.abook.player.ui.motion.ContentLayout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -150,7 +149,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
                 }
             }
         }
-        undo?.let { token->Row(Modifier.fillMaxWidth().background(Abook.colors.bg).padding(Dim.s8),verticalAlignment=Alignment.CenterVertically) {
+        undo?.let { token->Row(Modifier.fillMaxWidth().padding(Dim.s8),verticalAlignment=Alignment.CenterVertically) {
             BasicText(S.s_tone_deleted,style=Abook.type.bodySmall,modifier=Modifier.weight(1f).semantics { liveRegion=LiveRegionMode.Polite })
             TextAction(S.s_hoan_tac_e72ff675,{AudioFx.changeTone { it.undo(token) };undo=null},"tone_undo")
         } }

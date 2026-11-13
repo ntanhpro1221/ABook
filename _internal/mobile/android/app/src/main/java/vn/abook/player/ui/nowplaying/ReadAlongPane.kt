@@ -199,8 +199,9 @@ fun ReadAlongPane(
                 }
             }
         }
-        // The fixed dock owns its space; the text viewport ends above it.
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(Dim.s48).background(Abook.colors.bg)
+        // The fixed dock owns its space; the text viewport ends above it, so the dock paints nothing of its own: the player's cover tint shows through
+        // (a bg fill here was a dark slab under the text on the phone, 13-11).
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(Dim.s48)
             .testTag("reading_dock").clipToBounds(), contentAlignment = Alignment.Center) {
             AnimatedVisibility(showJump,
                 enter = slideInVertically(tween(MotionMs.MEDIUM)) { it },
