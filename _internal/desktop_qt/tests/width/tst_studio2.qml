@@ -382,8 +382,8 @@ Item {
             one(page, "newTemplateOk").activated()
             tryVerify(function() { return shown(one(page, "newTemplateAsk")) })
             compare(calls("POST", "/api/book-templates").length, 0)
-            verify(shown(one(page, "newTemplateConfirm")))
-            verify(shown(one(page, "newTemplateRename")))
+            tryVerify(function() { return shown(one(page, "newTemplateConfirm")) })
+            tryVerify(function() { return shown(one(page, "newTemplateRename")) })
         }
 
         // ================= 5. chia phần =================

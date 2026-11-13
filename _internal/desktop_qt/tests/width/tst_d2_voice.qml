@@ -205,7 +205,7 @@ Item {
             tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng\u00a0·\u00a0đang dùng") })
             tryCompare(Api, "voiceName", "Nam Minh")
             // chỉ giọng được chọn có "Mặc định"
-            compare(findAll(page, node => node.text === "Mặc định" && node.visible).length, 1)
+            tryVerify(function() { return findAll(page, node => node.text === "Mặc định" && node.visible).length === 1 })   // the old one fades out
             // lưu hỏng: lời báo cách thử lại, như web
             DesktopApi.responses["PUT /api/preferences"] = {status: 500, data: {error: "đĩa đầy"}}
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)

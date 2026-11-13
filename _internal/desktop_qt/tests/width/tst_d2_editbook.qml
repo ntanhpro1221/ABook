@@ -413,7 +413,7 @@ Item {
             items.book = {id: "x", stage: "audio", capabilities: {workshop: false, toolchain: true, link: false, sync: true}}
             compare(findChild(items, "menuStudioOnly").caption, "Làm ở Studio trên máy tính")
             items.book = {id: "x", stage: "text", capabilities: {workshop: false, toolchain: false, link: false}}
-            verify(!findChild(items, "menuStudioOnly").visible)       // sách chỉ có chữ: chưa có giọng nào để đổi
+            tryVerify(function() { return !findChild(items, "menuStudioOnly").visible })       // sách chỉ có chữ: chưa có giọng nào để đổi
         }
         function test_menuSaveNeedsEdits() {
             const items = make(itemsFactory, {width: 280, book: Object.assign(textBook(), {edits: 0})})

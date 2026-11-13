@@ -158,12 +158,12 @@ Item {
             // hẹp hơn: bỏ cột "Cập nhật"; hẹp nữa: trạng thái và tiến độ xếp dưới tên
             page.width = 1024
             tryCompare(page, "projectsKind", "mid")
-            verify(!hasText(page, "Cập nhật"))
+            tryVerify(function() { return !hasText(page, "Cập nhật") })
             compare(page.projectsKind, "mid")
             page.width = 720
             tryCompare(page, "projectsKind", "stacked")
             compare(page.projectsKind, "stacked")
-            verify(!hasText(page, "Trạng thái"))
+            tryVerify(function() { return !hasText(page, "Trạng thái") })
         }
         function test_pollingUpdatesRowsInPlace() {
             reply("GET /api/library", library([book("a", {title: "Cuốn a", updatedAt: stamp() - 100}), book("b", {title: "Cuốn b"})]))

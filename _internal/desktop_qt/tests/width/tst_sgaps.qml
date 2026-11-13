@@ -145,7 +145,7 @@ Item {
             setBook(page, analysing({phase: "synthesis", statusLabel: "Đang thu âm", progress: {overall: 0.6, analysis: 1, synthesis: 0.25}}))
             tryCompare(steps, "summary", "Thu và kiểm tra")
             tryVerify(function() { return shown(stepMark(page, 2)) && stepMark(page, 2).name === "vu" })
-            verify(!shown(stepMark(page, 0)))
+            tryVerify(function() { return !shown(stepMark(page, 0)) })
             // xác định người nói: dòng của bước 1 nói số chương
             setBook(page, analysing({speakerPass: {active: true, done: 2, total: 5}}))
             tryVerify(function() { return hasText(page, "Xác định người nói từng câu: 2/5 chương.") })

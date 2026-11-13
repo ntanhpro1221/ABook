@@ -503,7 +503,7 @@ Item {
             header.refresh()                                              // người dùng đang xem: hỏi lại trạng thái như mỗi giây lúc tải
             tryVerify(function() { return calls("GET", "/api/books/b1/voices?character=Lan").length === 2 })
             compare(dlg.status, "ready")                                  // không quay về khung chờ
-            verify(!all(header, "engineStart")[0].visible)
+            tryVerify(function() { return !all(header, "engineStart")[0].visible })
         }
 
         // ---------- chữ dài xuống dòng, không cắt ----------

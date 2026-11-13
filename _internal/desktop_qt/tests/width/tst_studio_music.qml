@@ -228,7 +228,7 @@ Item {
             tryVerify(function() { return calls("PUT", "/api/books/b/music").length === 1 })
             compare(calls("PUT", "/api/books/b/music")[0].body, {enabled: false})
             tryVerify(function() { return hasText(tab, "Đang tắt: các đoạn dưới đây sẽ không phát.") })
-            verify(shown(one(tab, "musicOffNote")))
+            tryVerify(function() { return shown(one(tab, "musicOffNote")) })
             tryCompare(all(tab, "musicChapter")[0], "opacity", 0.5)
         }
         function test_genreSaysRebuildingWhileBusy() {

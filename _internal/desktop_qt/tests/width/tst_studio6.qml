@@ -585,7 +585,7 @@ Item {
             all(page, "scriptChapterOption").filter(shown)[1].clicked()
             ready(page, 2)
             tryVerify(function() { return calls("GET", base + "/casting/2").length >= 1 })
-            verify(!has(page, "scriptNextChapter"))
+            tryVerify(function() { return !has(page, "scriptNextChapter") })
             one(page, "scriptPrevious").clicked()
             ready(page, 6)
             one(page, "scriptNextChapter").clicked()

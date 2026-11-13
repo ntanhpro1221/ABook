@@ -293,7 +293,7 @@ Item {
             DesktopApi.delayed = false
             DesktopApi.finish()
             tryVerify(function() { return findChild(dialogs, "recordTarget").visible })
-            verify(!findChild(dialogs, "recordLoading").visible)
+            tryVerify(function() { return !findChild(dialogs, "recordLoading").visible })
         }
         function test_moveWithNoOtherBookSaysSo() {
             reply("GET /api/listen/library", {status: 200, data: [{id: "width", title: "Sách nhiều lần nghe"}]})

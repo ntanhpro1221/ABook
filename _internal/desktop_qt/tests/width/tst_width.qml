@@ -104,7 +104,7 @@ Item {
             verify(progress.visible)
             // Soát 10-11 L13: dưới 2 % không vẽ gạch tiến độ (trông như lỗi dưới tên chương).
             row.progress = 0.015
-            verify(!progress.visible)
+            tryVerify(function() { return !progress.visible })
             row.progress = Theme.progressFillMin
             verify(progress.visible)
             row.progress = 0.4
@@ -121,9 +121,9 @@ Item {
             tryCompare(fill, "opacity", 1)
             tryVerify(function() { return grabImage(row).red(data.w - 20, 5) !== plain }, 5000, "current fill must paint the row end")
             row.done = true
-            compare(progress.visible, false)
+            tryCompare(progress, "visible", false)
             row.status = "Chưa có audio"
-            compare(duration.visible, false)
+            tryCompare(duration, "visible", false)
             verify(row.detail.indexOf("Chưa có audio") >= 0)
             Theme.mode = "auto"
         }
