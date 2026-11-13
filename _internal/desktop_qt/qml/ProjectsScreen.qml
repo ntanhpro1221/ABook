@@ -75,7 +75,7 @@ FocusScope {
             icon: "plus"
             kind: "ghost"
             onClicked: root.newRequested()
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
         IconButton {
             id: studioMore
@@ -151,9 +151,9 @@ FocusScope {
             bottomMargin: 64
             reuseItems: false
             cacheBuffer: 600
-            add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.reduceMotion ? 0 : Theme.motionMedium } }
-            remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Theme.reduceMotion ? 0 : Theme.motionFastOut } }
-            displaced: Transition { NumberAnimation { properties: "y"; duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+            add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
+            remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFastOut } }
+            displaced: Transition { NumberAnimation { properties: "y"; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
             delegate: Item {
                 id: cell
                 required property string key

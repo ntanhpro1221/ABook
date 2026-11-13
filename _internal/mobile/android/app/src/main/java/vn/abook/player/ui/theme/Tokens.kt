@@ -128,6 +128,13 @@ internal object TypeScale {
 
 /** Thời lượng chuyển động (ms): vào / ra. */
 internal object MotionMs {
+    const val SKELETON_LOW = 0.6f
+    const val SKELETON_PERIOD_MS = 1600
+    const val NOTICE_MS = 4000
+    const val UNDO_MS = 28000
+    const val REDUCED_FADE_MS = 120
+    const val INDETERMINATE_MS = 1400
+    const val SPIN_MS = 1000
     const val FAST = 120
     const val FAST_OUT = 90
     const val MEDIUM = 220

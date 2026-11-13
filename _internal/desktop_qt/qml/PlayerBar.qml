@@ -37,7 +37,7 @@ Item {
     visible: height > 0
     Behavior on appear {
         NumberAnimation {
-            duration: Theme.reduceMotion ? 0 : (Player.loaded ? Theme.motionMedium : Theme.motionMediumOut)
+            duration: Theme.reduceMotion ? Theme.motionReduced : (Player.loaded ? Theme.motionMedium : Theme.motionMediumOut)
             easing.type: Easing.BezierSpline
             easing.bezierCurve: Player.loaded ? Theme.easeDecelerate : Theme.easeAccelerate
         }

@@ -280,6 +280,10 @@ fun Fold(
 /** Hiện / ẩn một khối trong dòng chảy: mở / khép chiều cao kèm trượt dọc (NATIVE_PHONE_UI.md §4 - không mờ). */
 @Composable
 fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
+    if (vn.abook.player.ui.motion.rememberReducedMotion()) {
+        vn.abook.player.ui.motion.ReducedFade(visible, content)
+        return
+    }
     AnimatedVisibility(
         visible = visible,
         enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate), expandFrom = Alignment.Top) +
@@ -401,7 +405,7 @@ fun StageProgress(known: Boolean = true, progress: () -> Float) {
 @Composable
 fun WorkingProgress() = StageProgress(known = false) { 0f }
 
-private const val INDETERMINATE_MS = 1400
+private const val INDETERMINATE_MS = MotionMs.INDETERMINATE_MS
 
 /** Flat progress track shared by stage progress and the music emotion meters. */
 @Composable

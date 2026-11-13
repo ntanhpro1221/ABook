@@ -69,10 +69,10 @@ Item {
             anchors.fill: parent
             radius: width / 2
             color: sample.hovered || sample.pressed ? Theme.line : Theme.hover
-            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
-        Icon { anchors.centerIn: parent; name: "play"; size: 14; color: sample.hovered ? Theme.text : Theme.text2; opacity: root.playing ? 0 : 1; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } } }
-        Icon { anchors.centerIn: parent; name: "pause"; size: 14; color: sample.hovered ? Theme.text : Theme.text2; opacity: root.playing ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } } }
+        Icon { anchors.centerIn: parent; name: "play"; size: 14; color: sample.hovered ? Theme.text : Theme.text2; opacity: root.playing ? 0 : 1; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } } }
+        Icon { anchors.centerIn: parent; name: "pause"; size: 14; color: sample.hovered ? Theme.text : Theme.text2; opacity: root.playing ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } } }
     }
 
     Column {

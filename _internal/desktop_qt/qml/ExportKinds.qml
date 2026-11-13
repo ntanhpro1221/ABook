@@ -65,7 +65,7 @@ Item {
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall
                         font.weight: Theme.weightBold
-                        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium } }
+                        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
                     }
                     Text {
                         width: parent.width

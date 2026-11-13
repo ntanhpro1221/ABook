@@ -21,8 +21,8 @@ Item {
     SequentialAnimation on pulse {
         running: root.visible && Nav.uiVisible && !Theme.reduceMotion
         loops: Animation.Infinite
-        NumberAnimation { to: 0.5; duration: 900; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }
+        NumberAnimation { to: Theme.skeletonLow; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 1; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
     }
     Repeater {
         model: root.count

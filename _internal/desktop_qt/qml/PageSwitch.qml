@@ -41,7 +41,7 @@ Item {
         Behavior on x {
             enabled: root.settled
             NumberAnimation {
-                duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+                duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Theme.easeStandard
             }
@@ -49,7 +49,7 @@ Item {
         Behavior on width {
             enabled: root.settled
             NumberAnimation {
-                duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+                duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Theme.easeStandard
             }

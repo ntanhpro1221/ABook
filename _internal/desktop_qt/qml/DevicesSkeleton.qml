@@ -14,8 +14,8 @@ Column {
     SequentialAnimation on opacity {
         running: root.visible && Nav.uiVisible && !Theme.reduceMotion
         loops: Animation.Infinite
-        NumberAnimation { to: 0.6; duration: 800; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 1; duration: 800; easing.type: Easing.InOutSine }
+        NumberAnimation { to: Theme.skeletonLow; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 1; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
     }
     Repeater {
         model: root.count

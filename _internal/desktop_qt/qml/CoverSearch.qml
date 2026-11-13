@@ -190,7 +190,7 @@ Item {
                                             name: "loader-circle"
                                             size: 20
                                             color: Theme.coverInk
-                                            RotationAnimator on rotation { running: root.choosing && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
+                                            RotationAnimator on rotation { running: root.choosing && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
                                         }
                                     }
                                 }

@@ -71,7 +71,7 @@ Item {
                 width: column.width; height: Math.max(32, detail.implicitHeight) + 2 * Theme.s8
                 Accessible.name: modelData.title
                 onClicked: root.projectRequested(modelData.id)
-                Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.sunken; opacity: row.hovered || row.pressed ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } } }
+                Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.sunken; opacity: row.hovered || row.pressed ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } } }
                 CoverView { x: Theme.s8; y: Theme.s8; width: 32; height: 32; radius: Theme.radiusControl; title: row.modelData.title; coverKey: row.modelData.cover ? row.modelData.id + "/" + (row.modelData.cover.version || 0) : "" }
                 // Đang chạy: vạch nhảy Vu như web (h-2.5, vạch 2 cách 1, mực nhấn); chờ / dừng: icon
                 Vu {

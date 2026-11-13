@@ -67,6 +67,7 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.hover
 import vn.abook.player.ui.theme.ThemeReveal
 import vn.abook.player.ui.components.fadeEdges
 
@@ -117,9 +118,14 @@ fun SettingsScreen(
     val repo = env.repo
     val settings by repo.state.collectAsState()
     val voices by repo.voices.collectAsState()
+    val devices = env.devices?.summary?.collectAsState()?.value
+    val devicesSummary = devices?.share?.let {
+        if (it.running) S.s_0_thiet_bi_da_ghep_2fe2b8a5(it.devices.size) else S.s_dang_tat_53bfa8b7
+    }.orEmpty()
     LaunchedEffect(repo) {
         snapshotFlow(shown).first { it }
         if (repo.voices.value is VoiceList.Loading) repo.loadVoices()
+        env.devices?.loadSummary()
     }
     // Nhóm đang mở ở cột phải: nhớ qua xoay máy và qua lúc cửa sổ hẹp lại rồi rộng ra.
     var selected by rememberSaveable { mutableStateOf(SettingsGroup.entries.first()) }
@@ -129,7 +135,7 @@ fun SettingsScreen(
             if (twoColumns) {
                 Box(Modifier.fillMaxSize().testTag("settings_split"), contentAlignment = Alignment.TopCenter) {
                     Row(Modifier.widthIn(max = SettingsMaxWidth).fillMaxSize()) {
-                        GroupList(settings, voices, repo.version, selected, { selected = it }, Modifier.width(GroupColumnWidth))
+                        GroupList(settings, voices, repo.version, devicesSummary, selected, { selected = it }, Modifier.width(GroupColumnWidth))
                         // Đổi nhóm thì màn con trượt như đổi khổ; mỗi màn con tự cuộn.
                         AnimatedContent(selected, Modifier.weight(1f).fillMaxHeight().testTag("settings_pane"), transitionSpec = { Motion.layoutSwitch(true) }, label = "settings-pane") { group ->
                             CompositionLocalProvider(LocalEmbeddedPane provides true) {
@@ -139,7 +145,7 @@ fun SettingsScreen(
                     }
                 }
             } else {
-                GroupList(settings, voices, repo.version, null, onOpen, Modifier.fillMaxSize())
+                GroupList(settings, voices, repo.version, devicesSummary, null, onOpen, Modifier.fillMaxSize())
             }
         }
     }
@@ -152,7 +158,7 @@ private val SettingsMaxWidth = 1180.dp
 /** Danh sách nhóm. `selected` == null: danh sách một cột (chạm mở màn con); khác null: cột trái của hai cột, nhóm đang mở nền trung tính nhạt + chữ đậm. */
 @Composable
 private fun GroupList(
-    settings: AppSettings, voices: VoiceList, version: String, selected: SettingsGroup?, onPick: (SettingsGroup) -> Unit, modifier: Modifier,
+    settings: AppSettings, voices: VoiceList, version: String, devicesSummary: String, selected: SettingsGroup?, onPick: (SettingsGroup) -> Unit, modifier: Modifier,
 ) {
     val split = selected != null
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -170,7 +176,7 @@ private fun GroupList(
                     group.label,
                     onClick = { onPick(group) },
                     tag = group.tag,
-                    summary = summary(group, settings, voices, version),
+                    summary = summary(group, settings, voices, version, devicesSummary),
                     icon = { GroupIcon(group, if (here) Abook.colors.text else Abook.colors.text2) },
                     chevron = !split,
                 )
@@ -178,7 +184,7 @@ private fun GroupList(
             if (split) {
                 Box(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl))
-                        .then(if (here) Modifier.background(Abook.colors.accentSoft) else Modifier)
+                        .then(if (here) Modifier.background(Abook.colors.hover) else Modifier)
                         .padding(horizontal = Dim.s8).semantics { this.selected = here },
                 ) { row() }
             } else {
@@ -188,12 +194,12 @@ private fun GroupList(
     }
 }
 
-private fun summary(group: SettingsGroup, settings: AppSettings, voices: VoiceList, version: String): String? = when (group) {
+private fun summary(group: SettingsGroup, settings: AppSettings, voices: VoiceList, version: String, devicesSummary: String): String? = when (group) {
     SettingsGroup.Voice -> (voices as? VoiceList.Ready)?.chosenVoice?.name
     SettingsGroup.Listen -> SettingsSummary.listen(settings)
     SettingsGroup.Sleep -> SettingsSummary.sleep(settings)
     SettingsGroup.Look -> SettingsSummary.look(settings)
-    SettingsGroup.Devices -> listOf(S.s_noi_may_tinh_2950692d, S.s_chia_se_thu_vien_940de671).dotJoined()
+    SettingsGroup.Devices -> devicesSummary
     SettingsGroup.Advanced -> S.s_phien_ban_0_164b4cda(version)
 }
 

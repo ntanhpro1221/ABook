@@ -1,5 +1,6 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.S
 
 import kotlinx.coroutines.CancellationException
@@ -143,12 +144,12 @@ class UndoDelete(
     private fun say(message: String, error: Boolean = false) {
         val flow = if (error) errors else notes
         flow.value = message
-        scope.launch { delay(5_000); if (flow.value == message) flow.value = "" }
+        scope.launch { delay(MotionMs.NOTICE_MS.toLong()); if (flow.value == message) flow.value = "" }
     }
 
     companion object {
         /** Khớp `UNDO_TOAST_MS` của `trashUndo.ts` = (hạn của chỗ chờ - 2) giây: bấm ở giây chót không gặp chỗ chờ đã dọn. */
-        const val WINDOW_MS = 28_000L
+        const val WINDOW_MS = MotionMs.UNDO_MS * 1L
 
         /** Dòng của thanh / thông báo sau khi xoá. */
         fun removedText(count: Int, title: String, partial: Boolean): String = when {

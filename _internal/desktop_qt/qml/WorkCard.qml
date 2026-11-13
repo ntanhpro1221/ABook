@@ -73,7 +73,7 @@ Item {
         color: Theme.hover
         opacity: root.active ? 0.5 : 0
         radius: Theme.radiusControl
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
 
     Column {
@@ -113,7 +113,7 @@ Item {
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: 16
                     font.weight: Theme.weightBold
-                    Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+                    Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
                 }
             }
             Button {

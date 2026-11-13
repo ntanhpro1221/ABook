@@ -66,7 +66,7 @@ Item {
                 radius: Theme.radiusControl
                 color: Theme.hover
                 opacity: rowButton.hovered || more.hovered ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+                Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
             }
         }
         GeneratedCover { x: root.pad; y: stacked ? 10 : (root.height - 40) / 2; width: 40; height: 40; radius: Theme.radiusControl; title: root.book.title || "" }
@@ -161,7 +161,7 @@ Item {
             font.pixelSize: Theme.sizeCaption
             font.features: { "tnum": 1 }   // tnum-ok: cột số của bảng
             opacity: root.hot ? 0 : 1
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
         IconButton {
             id: more
@@ -176,7 +176,7 @@ Item {
             hoverInk: Theme.text
             Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book.title || "")
             opacity: root.moreShown ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
             onClicked: root.menuRequested(more)
         }
     }

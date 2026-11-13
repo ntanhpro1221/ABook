@@ -49,7 +49,7 @@ Interactive {
         color: Theme.accentText
         opacity: root.loading ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: root.fade } }
-        RotationAnimator on rotation { running: root.loading && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
+        RotationAnimator on rotation { running: root.loading && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
     }
     Vu {
         anchors.centerIn: parent

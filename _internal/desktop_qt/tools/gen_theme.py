@@ -335,6 +335,10 @@ def render() -> str:
             a(f"    readonly property real lineHeight{name[0].upper()}{name[1:]}: {fmt(lh)}")
     a("")
     a("    // ---- chuyển động (5.2; cùng số với motion.ts) ----")
+    for k, v in data["timing"].items():
+        qn = "motionReduced" if k == "reducedFadeMs" else k
+        a(f"    readonly property {'real' if isinstance(v, float) else 'int'} {qn}: {v}")
+    a("    readonly property int skeletonHalf: skeletonPeriodMs / 2")
     for k, qn in MOTION_NAMES.items():
         a(f"    readonly property int motion{qn}: Nav.uiVisible ? {ms[k]} : 0")
     for k, qn in EASE_NAMES.items():

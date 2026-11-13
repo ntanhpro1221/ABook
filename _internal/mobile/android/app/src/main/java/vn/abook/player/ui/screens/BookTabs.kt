@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.skeletonPulse
+import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.gestureBarPadding
@@ -424,18 +426,18 @@ private fun SampleButton(active: Boolean, label: String, onClick: () -> Unit) {
 @Composable
 private fun Avatar(initials: String, hue: Int) {
     val dark = Abook.colors.dark
-    val background = Color.hsv(hue.toFloat(), if (dark) 0.28f else 0.14f, if (dark) 0.30f else 0.96f)
-    val ink = Color.hsv(hue.toFloat(), if (dark) 0.30f else 0.60f, if (dark) 0.90f else 0.38f)
+    val background = vn.abook.player.ui.theme.avatarColor(hue, dark, ink = false)
+    val ink = vn.abook.player.ui.theme.avatarColor(hue, dark, ink = true)
     Box(Modifier.size(40.dp).clip(CircleShape).background(background), contentAlignment = Alignment.Center) {
         BasicText(initials, style = Abook.type.label.copy(color = ink, fontWeight = FontWeight.Bold))
     }
 }
 
-/** Khung xám đứng yên đúng hình một dòng (đang tải: không nhấp nháy, DESIGN.md §2). */
+/** Placeholder row with the shared pulse; reduced motion keeps it still. */
 @Composable
 private fun SkeletonLine(fade: () -> Float) {
     val sunken = Abook.colors.bgSunken
-    Column(Modifier.fade(fade).fillMaxWidth().height(64.dp).padding(vertical = Dim.s12).testTag("skeleton"), verticalArrangement = Arrangement.Center) {
+    Column(Modifier.skeletonPulse().fade(fade).fillMaxWidth().height(64.dp).padding(vertical = Dim.s12).testTag("skeleton"), verticalArrangement = Arrangement.Center) {
         Box(Modifier.fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))
         Spacer(Modifier.height(Dim.s8))
         Box(Modifier.fillMaxWidth(0.3f).height(10.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))

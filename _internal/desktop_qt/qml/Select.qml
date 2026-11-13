@@ -82,9 +82,9 @@ Interactive {
         }
         onClosed: { Nav.closedLayer(list); root.forceActiveFocus(Qt.OtherFocusReason) }
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
-                            NumberAnimation { property: "shown"; from: 0; to: 1; duration: Theme.reduceMotion ? 0 : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
+                            NumberAnimation { property: "shown"; from: 0; to: 1; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-                           NumberAnimation { property: "shown"; from: 1; to: 0; duration: Theme.reduceMotion ? 0 : Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate } }
+                           NumberAnimation { property: "shown"; from: 1; to: 0; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate } }
         background: Item {
             transform: Translate { y: -8 * (1 - list.shown) }
             Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)

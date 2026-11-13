@@ -106,7 +106,7 @@ Item {
                     opacity: root.query !== "" ? 1 : 0
                     visible: opacity > 0
                     enabled: root.query !== ""
-                    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
                     onClicked: { search.text = ""; search.forceActiveFocus() }
                 }
             }

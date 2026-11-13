@@ -112,6 +112,14 @@ QtObject {
     readonly property real lineHeightReading: 1.7
 
     // ---- chuyển động (5.2; cùng số với motion.ts) ----
+    readonly property real skeletonLow: 0.6
+    readonly property int skeletonPeriodMs: 1600
+    readonly property int noticeMs: 4000
+    readonly property int undoMs: 28000
+    readonly property int motionReduced: 120
+    readonly property int indeterminateMs: 1400
+    readonly property int spinMs: 1000
+    readonly property int skeletonHalf: skeletonPeriodMs / 2
     readonly property int motionFast: Nav.uiVisible ? 120 : 0
     readonly property int motionFastOut: Nav.uiVisible ? 90 : 0
     readonly property int motionMedium: Nav.uiVisible ? 220 : 0

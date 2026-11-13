@@ -29,7 +29,7 @@ Rectangle {
         radius: height / 2
         color: root.fill
         opacity: root.indeterminate ? 0 : 1
-        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium } }
+        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
         Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionFast : Theme.motionMedium } }
         // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
     }
@@ -47,7 +47,7 @@ Rectangle {
         SequentialAnimation on x {
             running: root.indeterminate && root.visible && Nav.uiVisible && !Theme.reduceMotion
             loops: Animation.Infinite
-            NumberAnimation { from: -runner.width; to: root.width; duration: 1400; easing.type: Easing.InOutSine }
+            NumberAnimation { from: -runner.width; to: root.width; duration: Theme.indeterminateMs; easing.type: Easing.InOutSine }
         }
     }
 }

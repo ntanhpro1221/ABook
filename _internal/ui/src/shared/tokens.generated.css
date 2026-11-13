@@ -2,6 +2,13 @@
    Shared with Compose and Qt. Do not edit these declarations. */
 @theme static {
   --radius-*: initial;
+  --skeleton-low: 0.6;
+  --skeleton-period-ms: 1600ms;
+  --notice-ms: 4000ms;
+  --undo-ms: 28000ms;
+  --reduced-fade-ms: 120ms;
+  --indeterminate-ms: 1400ms;
+  --spin-ms: 1000ms;
   --radius-control: 8px;
   --radius-cover: 12px;
   --radius-sheet: 20px;

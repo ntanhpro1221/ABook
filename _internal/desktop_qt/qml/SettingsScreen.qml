@@ -66,11 +66,11 @@ FocusScope {
         if (key === "voice") return Api.voiceName
         if (key === "listen") return (p.autoMusic !== false ? S.s_nhac_tu_chon_31bdb97d : S.s_khong_nhac_nen_0e54f623)
         if (key === "sleep") {
-            if (p.sleepSchedule) return S.s_lich_dem_cd78826f + p.sleepSchedule.from + "–" + p.sleepSchedule.to
+            if (p.sleepSchedule) return S.s_lich_dem_0_1_4578d519(p.sleepSchedule.from, p.sleepSchedule.to)
             return S.s_tat_3286064e
         }
         if (key === "look") return p.theme === "light" ? S.s_sang_8f0c677d : p.theme === "dark" ? S.s_toi_4ac2d267 : S.s_tu_dong_a25c8028
-        if (key === "devices") return root.sync ? (root.sync.enabled ? (root.sync.devices || []).length + S.s_thiet_bi_da_ghep_0dac64c4 : S.s_dang_tat_53bfa8b7) : ""
+        if (key === "devices") return root.sync ? (root.sync.enabled ? S.s_0_thiet_bi_da_ghep_2fe2b8a5((root.sync.devices || []).length) : S.s_dang_tat_53bfa8b7) : ""
         if (key === "studio") return info.studio && info.studio.installed ? S.s_da_cai_e0159635 : S.s_chua_cai_17f9d6d7
         if (key === "advanced") return info.update ? S.s_co_ban_moi_fa2f1de5 + info.update.version : info.version ? S.s_phien_ban_52b00626 + info.version : ""
         return ""

@@ -46,6 +46,6 @@ Item {
         opacity: status === Image.Ready || (root.shown && status === Image.Loading) ? 1 : 0
         onStatusChanged: if (status === Image.Ready) { root.shown = true; Bench.noteOnce("first_cover") }
         visible: opacity > 0
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
 }

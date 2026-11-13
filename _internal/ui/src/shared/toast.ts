@@ -1,3 +1,4 @@
+import { TIMING } from "./widthClass.generated";
 import { toast as sonner, type ExternalToast } from "sonner";
 import { prepareToast } from "./ToastDetails";
 
@@ -33,7 +34,7 @@ const prefix = "abook-toast-id-";
 let sequence = 0;
 function options(value?: ExternalToast): ExternalToast {
   const id = value?.id ?? `abook-toast-${++sequence}`;
-  return { ...value, id, className: `${value?.className ?? ""} ${prefix}${encodeURIComponent(JSON.stringify(id))}` };
+  return { duration: TIMING.noticeMs, ...value, id, className: `${value?.className ?? ""} ${prefix}${encodeURIComponent(JSON.stringify(id))}` };
 }
 const toastArgs = (args: unknown[]) => {
   const shown = prepareToast(args, options), value = shown[1] as ExternalToast | undefined;

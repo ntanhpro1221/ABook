@@ -17,7 +17,7 @@ Rectangle {
     height: implicitHeight
     radius: height / 2
     color: back
-    Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+    Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     Accessible.role: Accessible.StaticText
     Accessible.name: label
     Item {
@@ -39,6 +39,6 @@ Rectangle {
         wrapMode: Text.NoWrap
         font.pixelSize: Theme.sizeCaption
         font.weight: Theme.weightMedium
-        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
 }

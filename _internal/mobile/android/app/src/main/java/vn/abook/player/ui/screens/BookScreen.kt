@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.skeletonPulse
+import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.navigationClearance
@@ -821,7 +823,7 @@ private fun PreparedMark() {
 @Composable
 private fun SkeletonRow() {
     val sunken = Abook.colors.bgSunken
-    Row(Modifier.fillMaxWidth().height(64.dp).testTag("skeleton"), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.skeletonPulse().fillMaxWidth().height(64.dp).testTag("skeleton"), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(Dim.s24))
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {

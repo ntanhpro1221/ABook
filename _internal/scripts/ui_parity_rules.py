@@ -386,7 +386,10 @@ def l6_motion_tokens() -> list[str]:
     # Qt: reduced motion never cuts an opacity / colour fade to 0.
     for path in qt_files():
         for i, line in enumerate(lines(path), 1):
-            if re.search(r"reduceMotion\s*\?\s*0\b", line):
+            context = "\n".join(lines(path)[max(0, i - 5):i])
+            behavior = re.findall(r'Behavior on (\w+)', context)
+            geometry = (behavior and behavior[-1] not in ("opacity", "color")) or re.search(r'property:\s*"[xy]"|properties:\s*"x,y"', line)
+            if not geometry and re.search(r"duration\s*:\s*Theme\.reduceMotion\s*\?\s*0\b", line) and re.search(r"opacity|ColorAnimation|color", context):
                 problems.append(f"L6 {rel(path)}:{i} giảm chuyển động cắt cứng (`reduceMotion ? 0`) - dùng Theme.motionReduced")
     # Every skeleton pulse reads the shared token.
     for path in qt_files():

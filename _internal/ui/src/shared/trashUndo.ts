@@ -1,3 +1,4 @@
+import { TIMING } from "./widthClass.generated";
 import { S } from "./strings.generated";
 import { toast, toastDone } from "@/shared/toast";
 import { moveBookStorage } from "@/shared/bookStorage";
@@ -6,7 +7,7 @@ import { api } from "@/studio/api";
 /** Khớp `trash_pending.UNDO_SECONDS` của máy tính và `TrashPending.UNDO_SECONDS` của điện thoại: hết chừng này giây cuốn vừa xoá mới đi tiếp (Thùng rác / xoá hẳn). */
 export const UNDO_SECONDS = 30;
 /** Nút "Hoàn tác" sống ngắn hơn hạn của máy chủ một chút: bấm ở giây chót không bị 404 vì độ trễ. */
-export const UNDO_TOAST_MS = (UNDO_SECONDS - 2) * 1000;
+export const UNDO_TOAST_MS = TIMING.undoMs;
 
 /** `renamed`: chỗ cũ đã có cuốn cùng tên nên cuốn về dưới tên khác (`title` - tên thư mục mới, "<tên> (2)"). Máy chủ đã chuyển chỗ nghe
  *  sang mã sách mới thì kèm `oldId`/`newId` (máy này chuyển theo những gì nó nhớ theo mã sách); `dataLeft`: chưa chuyển được. */

@@ -174,7 +174,7 @@ Item {
                                 anchors.centerIn: parent
                                 visible: !modelData.done && parent.parent.activeStep
                                 name: "loader-circle"; size: 16; color: Theme.accentText
-                                RotationAnimator on rotation { running: spinner.visible && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
+                                RotationAnimator on rotation { running: spinner.visible && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
                             }
                             Rectangle {
                                 anchors.centerIn: parent

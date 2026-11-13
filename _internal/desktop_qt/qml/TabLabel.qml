@@ -19,7 +19,7 @@ Item {
         color: root.active || root.hovered ? Theme.text : Theme.text2
         font.pixelSize: Theme.sizeBodySmall
         font.weight: Theme.weightMedium
-        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
     ClockLabel {
         id: countText

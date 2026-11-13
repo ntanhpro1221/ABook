@@ -24,3 +24,13 @@ export function widthClass(px: number): WidthClass {
 export function widthAtLeast(px: number, name: WidthClass): boolean {
   return px >= WIDTH_FROM[name];
 }
+
+export const TIMING = {
+  "skeletonLow": 0.6,
+  "skeletonPeriodMs": 1600,
+  "noticeMs": 4000,
+  "undoMs": 28000,
+  "reducedFadeMs": 120,
+  "indeterminateMs": 1400,
+  "spinMs": 1000
+} as const;

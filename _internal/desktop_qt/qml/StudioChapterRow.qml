@@ -53,7 +53,7 @@ Item {
             radius: Theme.radiusControl
             color: root.current ? Theme.accentSoft : Theme.hover
             opacity: root.current || (root.playable && (rowButton.hovered || more.hovered)) ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
     }
     Item {
@@ -196,7 +196,7 @@ Item {
         hoverInk: Theme.text
         Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.chapter.displayTitle || "")
         opacity: root.hot || !root.wide ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         onClicked: root.menuRequested(more)
     }
 }

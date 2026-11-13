@@ -408,8 +408,8 @@ FocusScope {
         SequentialAnimation {
             running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
             loops: Animation.Infinite
-            OpacityAnimator { target: pulse; from: 1; to: 0.6; duration: 800; easing.type: Easing.InOutSine }
-            OpacityAnimator { target: pulse; from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: pulse; from: 1; to: Theme.skeletonLow; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: pulse; from: Theme.skeletonLow; to: 1; duration: Theme.skeletonHalf; easing.type: Easing.InOutSine }
         }
         // Nhịp mờ trên lớp con: opacity của skeleton là của phần hiện / ẩn (visible bám theo nó), nhịp chạy chung thì vòng binding.
         Item {

@@ -246,7 +246,7 @@ Item {
     ParallelAnimation {
         id: seq
         onFinished: root._slideDone()
-        NumberAnimation { target: root._out; property: "opacity"; to: Theme.reduceMotion ? 0 : 1; duration: Theme.motionMedium }
+        NumberAnimation { target: root._out; property: "opacity"; to: Theme.reduceMotion ? Theme.motionReduced : 1; duration: Theme.motionMedium }
         NumberAnimation { target: root._out; property: "dx"; to: root.outDx; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
         NumberAnimation { target: root._out; property: "dy"; to: root.outDy; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
         NumberAnimation { target: root._in; property: "opacity"; to: 1; duration: Theme.motionMedium }

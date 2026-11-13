@@ -33,8 +33,9 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
             BasicText(shown, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
             if (showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
-                TextAction(S.s_hoan_tac_e72ff675, deletions::undo, "undo_delete")
+                PrimaryButton(S.s_hoan_tac_e72ff675, deletions::undo, Modifier.testTag("undo_delete"), compact = true)
             }
+            IconAction(S.s_dong_thong_bao_8af6ba92, deletions::dismiss, "toast_close") { CloseIcon(Abook.colors.text2) }
         }
     }
 }

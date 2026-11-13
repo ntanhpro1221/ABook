@@ -20,7 +20,7 @@ Item {
     height: 10
     opacity: shown ? 1 : 0
     scale: shown ? 1 : 0.8
-    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     Behavior on scale {
         NumberAnimation {
             duration: Theme.reduceMotion ? 0 : Theme.motionFast

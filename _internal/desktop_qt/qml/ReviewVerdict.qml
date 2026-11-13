@@ -20,8 +20,8 @@ Interactive {
         radius: Theme.radiusControl
         color: root.on ? (root.tone === "ok" ? Theme.successSoft : Theme.dangerSoft) : Theme.hover
         opacity: root.on || root.hovered || root.pressed ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
-        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
+        Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
     Row {
         id: row

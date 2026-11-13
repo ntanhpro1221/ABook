@@ -253,13 +253,13 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Khoảng cách**: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 px. Lề màn: điện thoại 20, máy tính 40. Giữa các phần của một màn: 32
   (điện thoại) / 48 (máy tính); trong một phần: 12-16.
 - **Chữ** (Be Vietnam Pro): 12 phụ chú · 14 thân phụ · 16 thân · 18 tiêu đề mục · 24 tiêu đề màn điện thoại · 32 tiêu đề màn
-  máy tính · 20/1.7 chữ đọc theo. Đậm: 400 / 500 / 700 - tối đa ba mức một màn. Chữ hoa giãn chỉ cho nhãn phần (12, 600, +0.06em).
+  máy tính · 20/1.7 chữ đọc theo. Đậm: 400 / 500 / 700 - tối đa ba mức một màn. Chữ hoa giãn chỉ cho nhãn phần (12, 500, +0.06em).
 - **Chữ số**: chữ số đều độ rộng (`tnum`) chỉ dùng cho số đang đổi tại chỗ (đồng hồ phát, đếm ngược, phần trăm đang chạy) và cột số của bảng.
   Số trong câu ("12 chương", "5 giờ", "0 dB", "1,15×") dùng số tỉ lệ. Giá trị bằng 0 viết "0" kèm đơn vị, không "0.0" hay "0,0". Dấu thập phân là
   dấu phẩy; dấu nhân "×" cùng cỡ với số, không khoảng trắng. Trong code: điện thoại `ClockLabel`, Qt `ClockLabel` + ô bảng đánh dấu `// tnum-ok:`, web
   `.tabular-cell`; máy dò `TabularDigitsRulesTest.kt`, `tests/test_qt_tabular_digits.py`, `shared/tabularDigits.test.ts` (soát 10-11 L2).
 - **Bo góc**: 8 điều khiển · 12 bìa/ảnh · 20 bảng trượt/hộp thoại · tròn cho nút tròn. Danh sách không bo khung. Theo vai: ô lựa chọn, nền câu
-  đang đọc, phím, chip, menu = 8; bìa, thẻ, ô nhập, nút = 12; sheet, hộp thoại = 20; nút phát, công tắc, núm = tròn. Nền câu đang đọc: một khối
+  đang đọc, phím, chip, ô nhập, nút = 8; bìa, thẻ, menu = 12; sheet, hộp thoại = 20; nút phát, công tắc, núm = tròn. Nền câu đang đọc: một khối
   ôm chữ, đệm ngang 4, không vượt lề chữ; cả ba nền tảng cùng hình (Qt `ReadingInk.js`, web `readingInk.ts`, điện thoại `ReadAlongPane`).
 - **Viền**: 1px `--line` chỉ làm vạch chia hàng trong danh sách dài, thụt theo nội dung.
 - **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại). Bóng không thấy được trên nền tối (bảng `--panel` #1b1a18 chỉ hơn nền #121110 một bậc),

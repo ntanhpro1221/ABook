@@ -18,7 +18,7 @@ Item {
     width: parent ? parent.width : 400
     height: Math.max(36, body.height)
     opacity: picks && !picked ? 0.6 : 1
-    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
 
     ImportBox {
         id: tick

@@ -67,7 +67,7 @@ Item {
                     name: root.busy ? "loader-circle" : "folder-input"
                     size: 28
                     color: Theme.accentText
-                    RotationAnimator on rotation { running: root.busy && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
+                    RotationAnimator on rotation { running: root.busy && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
                     onNameChanged: rotation = 0
                 }
             }

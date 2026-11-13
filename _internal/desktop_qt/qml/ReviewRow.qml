@@ -31,7 +31,7 @@ Item {
     width: parent ? parent.width : 600
     height: 12 + Math.max(40, details.height + (wide ? 0 : 4 + verdicts.height)) + 12
     opacity: handled && !editing ? 0.7 : 1
-    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
 
     // Tiêu điểm vào nút bấm được đầu tiên của hàng (nút nghe, không có thì phán quyết)
     function focusFirst() { (play.visible ? play : redoButton).forceActiveFocus() }
@@ -42,7 +42,7 @@ Item {
         radius: Theme.radiusControl
         color: Theme.hover
         opacity: hover.hovered && !(root.handled && !root.editing) ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
 
     // Một nút chữ nhỏ có biểu tượng, mực phụ (ngữ cảnh phụ: để hai phán quyết giữ vai chính)
@@ -86,7 +86,7 @@ Item {
             anchors.fill: parent
             radius: width / 2
             color: root.playing ? Theme.accent : play.hovered || play.pressed ? Theme.line : Theme.hover
-            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
         Icon {
             anchors.centerIn: parent
@@ -94,7 +94,7 @@ Item {
             size: 16
             color: Theme.text
             opacity: root.playing ? 0 : 1
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
         Icon {
             anchors.centerIn: parent
@@ -102,14 +102,14 @@ Item {
             size: 16
             color: Theme.accentInk
             opacity: root.playing && Clip.loading ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
-            RotationAnimator on rotation { running: root.playing && Clip.loading && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
+            RotationAnimator on rotation { running: root.playing && Clip.loading && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
         }
         Vu {
             anchors.centerIn: parent
             color: Theme.accentInk
             opacity: root.playing && !Clip.loading ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+            Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
     }
     // Không có gì để nghe thì không có nút nhìn như bấm được: một dấu nói thẳng lý do (câu hỏng / đã dọn bản thu)

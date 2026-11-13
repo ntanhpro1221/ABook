@@ -15,6 +15,6 @@ Button {
         height: 2
         color: Theme.accent
         opacity: root.marked ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+        Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
     }
 }

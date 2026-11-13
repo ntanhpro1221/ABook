@@ -52,6 +52,12 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.lineStrong
+import vn.abook.player.ui.motion.rememberReducedMotion
+import vn.abook.player.ui.motion.FadeDurationScale
+import vn.abook.player.ui.theme.MotionMs
+import androidx.compose.animation.core.tween
+import kotlinx.coroutines.withContext
 
 /** Một bảng trượt đang chờ hiện: nội dung nhận hàm đóng. `id` khác nhau cho mỗi lần mở. */
 class SheetSpec internal constructor(val id: Int, val content: @Composable (dismiss: () -> Unit) -> Unit)
@@ -81,6 +87,7 @@ class SheetHost {
  */
 @Composable
 fun SheetLayer(host: SheetHost) {
+    val reduced = rememberReducedMotion()
     val spec = host.current
     var shown by remember { mutableStateOf<SheetSpec?>(null) }
     val progress = remember { Animatable(0f) }
@@ -89,9 +96,11 @@ fun SheetLayer(host: SheetHost) {
         if (spec != null) {
             shown = spec
             drag.reset()
-            progress.animateTo(1f, Motion.SheetIn)
+            if (reduced) withContext(FadeDurationScale) { progress.animateTo(1f, tween(MotionMs.REDUCED_FADE_MS)) }
+            else progress.animateTo(1f, Motion.SheetIn)
         } else {
-            progress.animateTo(0f, Motion.SheetOut)
+            if (reduced) withContext(FadeDurationScale) { progress.animateTo(0f, tween(MotionMs.REDUCED_FADE_MS)) }
+            else progress.animateTo(0f, Motion.SheetOut)
             shown = null
         }
     }
@@ -108,7 +117,10 @@ fun SheetLayer(host: SheetHost) {
             // imePadding ở đây (một chỗ cho MỌI bảng): bàn phím mở thì cả bảng - ô nhập lẫn nút - nằm trên bàn phím, không bảng nào phải tự nhớ.
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().imePadding()
                 .sheetSurface(drag)
-                .graphicsLayer { translationY = (1f - progress.value) * size.height + drag.offset }
+                .graphicsLayer {
+                    translationY = if (reduced) 0f else (1f - progress.value) * size.height + drag.offset
+                    alpha = if (reduced) progress.value else 1f
+                }
                 .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
                 .background(colors.panel)
                 .then(if (colors.dark) Modifier.sheetEdge(colors.line) else Modifier),

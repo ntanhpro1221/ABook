@@ -90,7 +90,7 @@ Item {
 
     Behavior on pageT {
         NumberAnimation {
-            duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+            duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium
             easing.type: Easing.BezierSpline
             easing.bezierCurve: Theme.easeStandard
         }

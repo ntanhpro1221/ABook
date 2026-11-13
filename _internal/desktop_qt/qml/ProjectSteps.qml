@@ -66,7 +66,7 @@ Column {
                             id: dot
                             width: 28; height: 28; radius: height / 2
                             color: step.look === "done" ? Theme.success : step.look === "active" ? Theme.accent : step.look === "paused" ? Theme.text3 : Theme.hover
-                            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium } }
+                            Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
                             Icon {
                                 anchors.centerIn: parent
                                 visible: step.look === "done" || step.look === "active"

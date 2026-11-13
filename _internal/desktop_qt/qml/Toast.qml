@@ -10,7 +10,7 @@ import "TextWrap.js" as TextWrap
 Item {
     id: root
     objectName: "toast"
-    readonly property int defaultDuration: 4000
+    readonly property int defaultDuration: Theme.noticeMs
     property string slot: ""
     readonly property string noticeText: slot === "edited-elsewhere" ? (Api.elsewhereNotice ? Api.elsewhereNotice.text : "") : Api.notice
     readonly property bool shown: noticeText !== ""
@@ -76,7 +76,7 @@ Item {
             id: body
             x: 16
             y: 14
-            width: card.width - 32
+            width: card.width - 32 - close.width - 12
             // Như sonner: nút ở bên phải, chữ xuống dòng bên trái (chữ không bao giờ bị cắt; từ dài không ngắt được thì ngắt giữa từ)
             height: Math.max(texts.height, actionButton.visible ? actionButton.height : 0)
             Column {
@@ -138,12 +138,12 @@ Item {
                 }
             }
         }
-        // ✕ ở góc trên bên trái, đè lên viền (closeButton của sonner)
+        // Close stays inside the top right corner, clear of the text and action.
         Interactive {
             id: close
             objectName: "toastClose"
-            x: -6
-            y: -6
+            x: card.width - width - 12
+            y: 12
             width: 20
             height: 20
             Accessible.role: Accessible.Button

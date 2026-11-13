@@ -196,7 +196,7 @@ FocusScope {
                                 name: button.passed ? "check" : P.ICON[button.modelData]
                                 size: 16
                                 color: button.passed ? Theme.success : button.active ? Theme.accentText : Theme.text3
-                                Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
+                                Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
                             }
                             Column {
                                 id: texts

@@ -198,7 +198,7 @@ QtObject {
             if (done) done(true)
             const message = S.s_da_xoa_du_an_fa259027 + title + "”"
             if (data && data.undo) {
-                Api.toast(message, {duration: 28000, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.undoRemove(data.undo, title) }}})
+                Api.toast(message, {duration: Theme.undoMs, action: {label: S.s_hoan_tac_e72ff675, run: function() { root.undoRemove(data.undo, title) }}})
             } else Api.notice = message
         })
     }

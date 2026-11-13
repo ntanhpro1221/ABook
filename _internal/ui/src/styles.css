@@ -805,9 +805,9 @@ select[class~="border-line"] {
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-amount: 0;
-    --motion-medium: 140ms;
+    --motion-medium: var(--reduced-fade-ms);
     --motion-medium-out: 100ms;
-    --motion-slow: 160ms;
+    --motion-slow: var(--reduced-fade-ms);
     --motion-slow-out: 110ms;
   }
 }
@@ -1250,11 +1250,11 @@ select[class~="border-line"] {
   --enter-y: calc(4px * var(--motion-amount));
   animation:
     motion-enter var(--motion-medium) linear var(--loading-patience) backwards,
-    skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) calc(var(--loading-patience) + var(--motion-medium)) infinite;
+    skeleton-pulse var(--skeleton-period-ms) cubic-bezier(0.4, 0, 0.6, 1) calc(var(--loading-patience) + var(--motion-medium)) infinite;
 }
 @keyframes skeleton-pulse {
   50% {
-    opacity: 0.5;
+    opacity: var(--skeleton-low);
   }
 }
 
@@ -1368,7 +1368,7 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
   }
 }
 .indeterminate-bar {
-  animation: indeterminate 1.4s ease-in-out infinite;
+  animation: indeterminate var(--indeterminate-ms) ease-in-out infinite;
   transition: background-color var(--motion-medium) var(--ease-standard);
 }
 
@@ -1668,10 +1668,10 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 /* Khung chờ xám, nhịp 1,6 giây; giữ quy tắc giảm chuyển động ở trên. */
 @media (prefers-reduced-motion: no-preference) {
   .motion-skeleton {
-    animation: fade-in var(--motion-medium) linear var(--loading-patience) backwards, state-skeleton-pulse 1.6s ease-in-out calc(var(--loading-patience) + var(--motion-medium)) infinite;
+    animation: fade-in var(--motion-medium) linear var(--loading-patience) backwards, state-skeleton-pulse var(--skeleton-period-ms) ease-in-out calc(var(--loading-patience) + var(--motion-medium)) infinite;
   }
 }
-@keyframes state-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+@keyframes state-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: var(--skeleton-low); } }
 @media (prefers-reduced-motion: reduce) {
   .sidebar-link:active { transform: none; }
 }

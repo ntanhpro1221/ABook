@@ -231,6 +231,9 @@ def render() -> str:
         "/** Đường cong cubic-bezier (x1, y1, x2, y2), Material 3. */",
         "internal object Bezier {",
     ]
+    # Timing tokens share the MotionMs namespace with finite transitions.
+    at = lines.index("internal object MotionMs {") + 1
+    lines[at:at] = [f"    const val {snake(k)} = {number(v) if isinstance(v, float) else v}" for k, v in data["timing"].items()]
     for name, v in ease.items():
         for suffix, value in zip(("X1", "Y1", "X2", "Y2"), v):
             lines.append(f"    const val {name.upper()}_{suffix} = {number(value)}")
@@ -289,6 +292,7 @@ def render_ts() -> str:
         "}",
         "",
     ]
+    lines += ["export const TIMING = " + json.dumps(tokens()["timing"], indent=2) + " as const;", ""]
     return "\n".join(lines)
 
 
@@ -302,6 +306,7 @@ def render_css() -> str:
         "   Shared with Compose and Qt. Do not edit these declarations. */",
         "@theme static {",
         "  --radius-*: initial;",
+        *[f"  --{snake(k).lower().replace('_', '-')}: {v}{'ms' if k.endswith('Ms') else ''};" for k, v in tokens()["timing"].items()],
         f"  --radius-control: {radius[0]}px;",
         f"  --radius-cover: {radius[1]}px;",
         f"  --radius-sheet: {radius[2]}px;",
