@@ -5944,7 +5944,8 @@
     "s_tone_band_4": "12 kHz",
     "s_value_middle": "Giữa",
     "s_value_left": "Trái {0} %",
-    "s_value_right": "Phải {0} %"
+    "s_value_right": "Phải {0} %",
+    "s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2": "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp"
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

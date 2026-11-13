@@ -28,6 +28,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
@@ -44,8 +45,8 @@ import vn.abook.player.ui.nowplaying.SleepText
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
  * nhận nút tai nghe/Bluetooth, tự dừng khi rút tai nghe hoặc có cuộc gọi (audio focus).
  *
- * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm Đóng (X), chương trước / chương sau và - khi đang hẹn giờ ngủ - "+10 phút".
- * Đang dừng thì vuốt bỏ được (dịch vụ rời tiền cảnh ngay khi dừng); Đóng thì cất sách và tắt hẳn.
+ * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm Đóng (X), chương trước / chương sau và - khi đang hẹn giờ ngủ - "Hẹn lại N phút".
+ * Dừng thì dịch vụ còn ở tiền cảnh [foregroundGraceMs] rồi mới rời (thẻ vuốt bỏ được từ lúc ấy); Đóng thì cất sách và tắt hẳn.
  *
  * Là MediaLibraryService: Android Auto và trình duyệt media của hệ thống duyệt được thư viện trên máy (LibraryTree:
  * sách -> chương) và chọn phát ngay trên màn hình xe.
@@ -84,6 +85,30 @@ class PlaybackService : MediaLibraryService() {
 
         private fun readAloudQueue(): ListenableFuture<MediaSession.MediaItemsWithStartPosition> =
             Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(listOf(READ_ALOUD), 0, 0))
+
+        /**
+         * Dừng rồi thì dịch vụ còn giữ tiền cảnh bao lâu. Android 12+ chỉ cho dịch vụ đã rời tiền cảnh lên lại khi NGƯỜI NGHE bấm (thông báo, widget, nút
+         * media); các đường phát tiếp từ nền của app - lắc để nghe tiếp sau khi hẹn giờ tự dừng ([SleepTimer.SHAKE_RESUME_MS]), lật máy lên
+         * ([Motion.FLIP_RESUME_MS], khi bật úp máy để dừng), lệnh phát từ máy tính ([Remote]) - phải tới trong lúc dịch vụ chưa rời. Hết hạn thì thẻ vuốt bỏ được như trước.
+         */
+        internal fun foregroundGraceMs(flipEnabled: Boolean): Long = if (flipEnabled) Motion.FLIP_RESUME_MS else SleepTimer.SHAKE_RESUME_MS
+    }
+
+    /** Đặt lại hạn giữ tiền cảnh theo công tắc úp máy hiện tại ([foregroundGraceMs]); ListenPrefs gọi khi công tắc đổi. */
+    @OptIn(UnstableApi::class)
+    fun applyForegroundGrace() = setForegroundServiceTimeoutMs(foregroundGraceMs(Motion.flipEnabled))
+
+    /**
+     * Android không cho dịch vụ lên lại tiền cảnh (phát tiếp từ nền khi đã quá [foregroundGraceMs]): tiếng chạy không có dịch vụ tiền cảnh thì ColorOS
+     * đóng băng / giết tiến trình sau vài phút tắt màn hình, nghe giữa chừng là mất. Không để thế: ghi log rồi dừng đúng chỗ (lưu chỗ nghe) - nút Phát
+     * trên thẻ thông báo là đường hệ thống cho phép, bấm là nghe tiếp đúng chỗ ấy. Không qua [Playback.pause]: đây không phải người nghe chạm máy (hẹn tự động không bị huỷ).
+     */
+    internal fun foregroundRefused() {
+        AppLog.w("PlaybackService", S.s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2)
+        Playback.onMain {
+            ReadAloud.onPause()
+            Playback.player?.pause()
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -164,8 +189,11 @@ class PlaybackService : MediaLibraryService() {
             .setMediaButtonPreferences(buttons())
             .build()
         setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build().apply { setSmallIcon(R.drawable.ic_notification) })
-        // Dừng là rời tiền cảnh ngay: thẻ thông báo vuốt bỏ được. Không còn gì để phát (Đóng, lỗi) thì không giữ thẻ.
-        setForegroundServiceTimeoutMs(0)
+        // Dừng rồi còn giữ tiền cảnh một lúc ([foregroundGraceMs]) cho lắc / lật máy / máy tính phát tiếp; quá hạn thì thẻ vuốt bỏ được. Không còn gì để phát (Đóng, lỗi) thì không giữ thẻ.
+        applyForegroundGrace()
+        setListener(object : MediaSessionService.Listener {
+            override fun onForegroundServiceStartNotAllowedException() = foregroundRefused()
+        })
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_NEVER)
     }
 

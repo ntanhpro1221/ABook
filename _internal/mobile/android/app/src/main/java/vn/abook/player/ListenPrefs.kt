@@ -94,6 +94,7 @@ object ListenPrefs {
         if (json.has("headsetSkips")) Playback.headsetSkips = json.getBoolean("headsetSkips")
         if (json.has("flipToPause")) {
             Motion.flipEnabled = json.getBoolean("flipToPause")
+            PlaybackService.instance?.applyForegroundGrace()
             if (!startup) Motion.refresh()
         }
         if (json.has("shakeSensitivity")) {

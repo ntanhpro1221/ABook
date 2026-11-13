@@ -27,6 +27,9 @@ import kotlin.math.sqrt
 object SleepTimer {
     enum class Mode { OFF, MINUTES, CHAPTER }
 
+    /** Cửa sổ "lắc để nghe tiếp" sau khi hẹn giờ tự dừng (2 phút + 5 giây cho cảm biến): cũng là hạn tối thiểu dịch vụ phát giữ tiền cảnh ([PlaybackService.foregroundGraceMs]). */
+    const val SHAKE_RESUME_MS = 125_000L
+
     private val main = Handler(Looper.getMainLooper())
     var mode = Mode.OFF
         private set
@@ -239,7 +242,7 @@ object SleepTimer {
     }
 
     /** Vừa tự dừng chưa tới 2 phút: cảm biến còn nghe để "lắc để nghe tiếp". */
-    fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs in 0 until 125_000L
+    fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs in 0 until SHAKE_RESUME_MS
 
     /** Lắc máy: đang hẹn giờ thì hẹn lại ([extend]); vừa tự dừng (< 2 phút) thì phát tiếp và hẹn [extendMinutes] phút. */
     fun onShake() {
@@ -297,7 +300,7 @@ object SleepTimer {
         Bedtime.stopped()
         // No sound or vibration at expiry: the listener may already be asleep (DESIGN 5.4).
         // Cảm biến còn nghe thêm 2 phút để "lắc để nghe tiếp" vẫn chạy.
-        main.postDelayed({ Motion.refresh() }, 125_000L)
+        main.postDelayed({ Motion.refresh() }, SHAKE_RESUME_MS)
         persist()
         Playback.emit("sleep")
     }
@@ -383,7 +386,7 @@ object Motion : SensorEventListener {
 
     /** Úp máy để tạm dừng, lật lên (trong `FLIP_RESUME_MS`) để nghe tiếp - Cài đặt, mặc định tắt. */
     var flipEnabled = false
-    private const val FLIP_RESUME_MS = 10 * 60_000L
+    const val FLIP_RESUME_MS = 10 * 60_000L
     private var faceDownSinceMs = 0L
     private var flipPausedAtMs = 0L
     // Độ lệch độ lớn gia tốc trong ~1 giây gần nhất: nằm yên trên bàn/nệm gần 0; cầm trên tay (kể cả nằm ngửa giơ máy

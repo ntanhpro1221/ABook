@@ -2913,4 +2913,5 @@ internal object S {
     const val s_value_middle = "Giữa"
     fun s_value_left(p0: Any?): String = "Trái " + p0.toString() + " %"
     fun s_value_right(p0: Any?): String = "Phải " + p0.toString() + " %"
+    const val s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2 = "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp"
 }
