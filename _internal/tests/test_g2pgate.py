@@ -120,7 +120,7 @@ def test_generated_syllable_does_not_change_another_occurrence():
     given = "on lai on time."
     raw = convert(given)
     result = restore_generated_syllables("on-lai on time.", given, raw, convert)
-    assert result.split()[0] == canonical_options("Online", "loanword")[0].split()[0]
+    assert result.split()[0] == "ˈɔn"  # independently attested by dictionary ón, not a production probe
     assert result.split()[2:] == raw.split()[2:]
 
 

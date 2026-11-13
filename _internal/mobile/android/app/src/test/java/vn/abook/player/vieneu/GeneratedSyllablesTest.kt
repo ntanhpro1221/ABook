@@ -16,6 +16,11 @@ class GeneratedSyllablesTest {
         assertEquals("kˈaːj", PhonemePolicy.levelProbe("cai", fake))
     }
 
+    @Test fun levelToneStopSyllablesAreNeverProbed() {
+        // dat/bach/cap/Cat: Vietnamese p/t/c/ch codas carry only sac or nang tone.
+        for (word in listOf("dat", "bach", "cap", "Cat")) assertEquals(null, PhonemePolicy.levelProbe(word, fake))
+    }
+
     @Test fun generatedRestorationPreservesExactNativeLevel() {
         assertEquals("t̪ˈə1w.", PhonemePolicy.restoreGeneratedSyllables("tâu", "tâu.", "t̪ˈə1w.", fake, "Tou"))
     }

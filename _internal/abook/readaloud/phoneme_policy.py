@@ -47,6 +47,8 @@ def _level_probe(word: str, g2p: Callable[[str], str]) -> str | None:
     """
     if any(c in "\u0300\u0301\u0309\u0303\u0323" for c in unicodedata.normalize("NFD", word)):
         return None
+    if word.lower().endswith(("p", "t", "c", "ch")):
+        return None  # Vietnamese stop codas require acute or dot tone.
     vowels = [i for i, c in enumerate(word) if unicodedata.normalize("NFD", c)[0] in "aeiouy"]
     if not vowels:
         return None

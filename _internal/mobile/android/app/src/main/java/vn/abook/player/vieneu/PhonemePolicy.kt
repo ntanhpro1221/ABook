@@ -13,6 +13,7 @@ object PhonemePolicy {
     internal fun levelProbe(word: String, g2p: (String) -> String): String? {
         fun nfd(c: Char) = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)
         if (Normalizer.normalize(word, Normalizer.Form.NFD).any { it in "\u0300\u0301\u0309\u0303\u0323" }) return null
+        if (listOf("p", "t", "c", "ch").any { word.lowercase(Locale.ROOT).endsWith(it) }) return null  // Level-tone stop syllables are not Vietnamese.
         val vowels = word.indices.filter { nfd(word[it])[0] in "aeiouy" }
         if (vowels.isEmpty()) return null
         val priority = vowels.filter { word[it] in "âêôơ" }.ifEmpty { vowels.filter { word[it] in "ăư" } }

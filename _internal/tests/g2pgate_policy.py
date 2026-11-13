@@ -39,39 +39,7 @@ def words(value: str) -> list[str]:
     return re.findall(r"[^\W\d_]+|\d+", value.lower())
 
 
-def add_sac(value: str) -> str:
-    vowels = [i for i, ch in enumerate(value) if unicodedata.normalize("NFD", ch)[0] in "aeiouy"]
-    if not vowels:
-        return value
-    # judge2's first-marked-vowel probe makes invalid spellings trứơng/ó a.
-    # Tone is on ơ in ươ and on the last vowel in oa/oe/uy.
-    priority = [i for i in vowels if value[i] in "âêôơ"]
-    if not priority:
-        priority = [i for i in vowels if value[i] in "ăư"]
-    pair = "".join(value[i] for i in vowels)
-    i = (
-        priority[-1]
-        if priority
-        else vowels[-1]
-        if pair in {"oa", "oe", "uy"}
-        else vowels[1]
-        if len(vowels) >= 2 and (len(value) > vowels[-1] + 1 or len(vowels) == 3)
-        else vowels[0]
-    )
-    if value.startswith(("gi", "qu")) and len(vowels) >= 2 and i == vowels[0]:
-        i = vowels[1]
-    return value[:i] + unicodedata.normalize("NFC", value[i] + "\u0301") + value[i + 1 :]
-
-
-@lru_cache(maxsize=8192)
-def vietnamese_phone(syllable: str) -> str:
-    convert = _sea().g2p.convert
-    if any(ch in MARKS for ch in unicodedata.normalize("NFD", syllable)):
-        value = convert(syllable)
-    else:
-        value = convert(add_sac(syllable))
-        value = value.replace("ɜ", "") if "ɜ" in value else convert(syllable)
-    return value.strip().rstrip(".").strip()
+from g2pgate_dictionary import vietnamese_phone
 
 
 def canonical_reading(token: str, token_class: str) -> str | None:
@@ -127,7 +95,12 @@ def canonical_options(token: str, token_class: str) -> list[str]:
     reading = canonical_reading(token, token_class)
     options = []
     if reading:
-        options.append(" ".join(vietnamese_phone(w) for w in words(reading)))
+        try:
+            options.append(" ".join(vietnamese_phone(w) for w in words(reading)))
+        except ValueError:
+            # The dictionary attests no Vietnamese syllable for a spelling such as
+            # "mylene": no Vietnamese-reading target exists, so only other options apply.
+            pass
         # Owner accepted eun -> an, but rejected eum -> am (judge2 feat_text).
         if any(w.endswith("ưn") for w in words(reading)):
             options.append(
@@ -168,6 +141,8 @@ def canonical_options(token: str, token_class: str) -> list[str]:
         options.append(vietnamese_phone("nô"))
     if token == "Y" and token_class == "acronym":
         options.append(vietnamese_phone("oai"))
+    if not options:
+        raise ValueError(f"No attested canonical reading for {token_class}:{token}")
     return list(dict.fromkeys(options))
 
 

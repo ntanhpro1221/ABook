@@ -24,7 +24,7 @@ def app_output(token: str, token_class: str) -> str:
     if token_class in {"western", "korean", "japanese"}:
         readings.update(shared_rulings.name_readings(roster, origin))
     rulings = (
-        Rulings(names=set(token.lower().split()))
+        Rulings(names=set(shared_rulings.vietnamese_names(roster)))
         if token_class in {"vietnamese", "chinese"}
         else Rulings(foreign=shared_rulings.foreign_names(roster))
     )

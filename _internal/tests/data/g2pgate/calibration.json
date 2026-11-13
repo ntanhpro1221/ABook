@@ -45,7 +45,7 @@
     "token": "Sou",
     "class": "japanese",
     "phones": [
-      "sˈəw"
+      "sˈə1w"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "token": "Kaishu",
     "class": "japanese",
     "phones": [
-      "kˌaːj sˈu"
+      "kˈaːj sˈu"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "token": "Rindou",
     "class": "japanese",
     "phones": [
-      "ɹˈin ɗˈəw"
+      "ɹˈin ɗˈə1w"
     ]
   },
   {
@@ -493,7 +493,7 @@
     "token": "Yousuke",
     "class": "japanese",
     "phones": [
-      "zˈəw sˈu kˈɛ"
+      "zˈə1w sˈu kˈɛ"
     ]
   },
   {
@@ -584,7 +584,7 @@
     "token": "Sakai",
     "class": "japanese",
     "phones": [
-      "sˈaː kˌaːj"
+      "sˈaː kˈaːj"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "token": "Andou",
     "class": "japanese",
     "phones": [
-      "ˈaːn ɗˈəw"
+      "ˈaːn ɗˈə1w"
     ]
   },
   {
@@ -654,7 +654,7 @@
     "token": "Katou",
     "class": "japanese",
     "phones": [
-      "kˈaː t̪ˈəw"
+      "kˈaː t̪ˈə1w"
     ]
   },
   {
@@ -780,7 +780,7 @@
     "token": "Endou",
     "class": "japanese",
     "phones": [
-      "ˈɛn ɗˈəw"
+      "ˈɛn ɗˈə1w"
     ]
   },
   {
@@ -801,7 +801,7 @@
     "token": "Kouhei",
     "class": "japanese",
     "phones": [
-      "kˈəw hˈəɪ"
+      "kˈə1w hˈəɪ"
     ]
   },
   {
@@ -850,14 +850,14 @@
     "token": "Kouchi",
     "class": "japanese",
     "phones": [
-      "kˈəw tʃˈi"
+      "kˈə1w tʃˈi"
     ]
   },
   {
     "token": "Midou",
     "class": "japanese",
     "phones": [
-      "mˈi ɗˈəw"
+      "mˈi ɗˈə1w"
     ]
   },
   {
@@ -899,7 +899,7 @@
     "token": "Shouta",
     "class": "japanese",
     "phones": [
-      "sˈəw t̪ˈaː"
+      "sˈə1w t̪ˈaː"
     ]
   },
   {
@@ -1088,7 +1088,7 @@
     "token": "Sousuke",
     "class": "japanese",
     "phones": [
-      "sˈəw sˈu kˈɛ"
+      "sˈə1w sˈu kˈɛ"
     ]
   },
   {
@@ -1102,7 +1102,7 @@
     "token": "Itou",
     "class": "japanese",
     "phones": [
-      "ˈi t̪ˈəw"
+      "ˈi t̪ˈə1w"
     ]
   },
   {
@@ -1193,7 +1193,7 @@
     "token": "Koutarou",
     "class": "japanese",
     "phones": [
-      "kˈəw t̪ˈaː ɹˈəw"
+      "kˈə1w t̪ˈaː ɹˈə1w"
     ]
   },
   {
@@ -1382,7 +1382,7 @@
     "token": "Kaina",
     "class": "japanese",
     "phones": [
-      "kˌaːj nˈaː"
+      "kˈaːj nˈaː"
     ]
   },
   {
@@ -1466,7 +1466,7 @@
     "token": "Sudou",
     "class": "japanese",
     "phones": [
-      "sˈu ɗˈəw"
+      "sˈu ɗˈə1w"
     ]
   },
   {
@@ -1536,7 +1536,7 @@
     "token": "Kouta",
     "class": "japanese",
     "phones": [
-      "kˈəw t̪ˈaː"
+      "kˈə1w t̪ˈaː"
     ]
   },
   {
@@ -1711,7 +1711,7 @@
     "token": "Kou",
     "class": "japanese",
     "phones": [
-      "kˈəw"
+      "kˈə1w"
     ]
   },
   {
@@ -1844,7 +1844,7 @@
     "token": "Hokkaido",
     "class": "japanese",
     "phones": [
-      "hˈoɜk kˌaːj ɗˈo"
+      "hˈoɜk kˈaːj ɗˈo"
     ]
   },
   {
@@ -1935,7 +1935,7 @@
     "token": "Kitsushouharukaze",
     "class": "japanese",
     "phones": [
-      "kˈi sˈu sˈəw hˈaː ɹˈu kˈaː zˈɛ"
+      "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ"
     ]
   },
   {
@@ -2279,7 +2279,7 @@
     "token": "Tâu Bệ",
     "class": "chinese",
     "phones": [
-      "t̪ˈəw bˈe6"
+      "t̪ˈə1w bˈe6"
     ]
   },
   {
@@ -3661,7 +3661,7 @@
     "token": "Clb",
     "class": "acronym",
     "phones": [
-      "kˈəw lˈaː6c bˈo6",
+      "kˈə1w lˈaː6c bˈo6",
       "sˈiː ˈɛl bˈiː"
     ]
   },
@@ -3811,7 +3811,7 @@
     "token": "Từ-châu",
     "class": "mixed",
     "phones": [
-      "t̪ˌy2 tʃˈəw"
+      "t̪ˌy2 tʃˈə1w"
     ]
   },
   {
@@ -3895,7 +3895,7 @@
     "token": "Duyện-châu",
     "class": "mixed",
     "phones": [
-      "zwˈiɛ6n tʃˈəw"
+      "zwˈiɛ6n tʃˈə1w"
     ]
   },
   {
@@ -3937,7 +3937,6 @@
     "token": "Mylene-san",
     "class": "mixed",
     "phones": [
-      "mˈi lˈɛ nˈɛ sˈaːn",
       "mˈaɪliːn sˈaːn"
     ]
   },
@@ -3959,7 +3958,6 @@
     "token": "Rhasa-san",
     "class": "mixed",
     "phones": [
-      "ˈɛʐəː2 hˈaː sˈaː sˈaːn",
       "ɹˈɑː sˈaː sˈaːn"
     ]
   },
@@ -4065,7 +4063,7 @@
     "token": "Ký-châu",
     "class": "mixed",
     "phones": [
-      "kˈiɜ tʃˈəw"
+      "kˈiɜ tʃˈə1w"
     ]
   },
   {
@@ -4135,7 +4133,6 @@
     "token": "Fitts-senpai",
     "class": "mixed",
     "phones": [
-      "ˈɛp ˈit̪ tˈeˈɛs sˈɛn pˈaːj",
       "fˈɪts sˈɛn pˈaːj"
     ]
   },
@@ -4213,7 +4210,7 @@
     "token": "Thanh-châu",
     "class": "mixed",
     "phones": [
-      "tˈe-ɲ tʃˈəw"
+      "tˈe-ɲ tʃˈə1w"
     ]
   },
   {
@@ -4290,7 +4287,6 @@
     "token": "Magali-sama",
     "class": "mixed",
     "phones": [
-      "mˈaː ɣˈaː lˈi sˈaː mˈaː",
       "mæɡˈɑːli sˈaː mˈaː"
     ]
   },
@@ -4529,7 +4525,7 @@
     "token": "Không được",
     "class": "vietnamese",
     "phones": [
-      "xˈoŋ ɗˌyə6c"
+      "xˌoŋ ɗˌyə6c"
     ]
   },
   {
@@ -4648,7 +4644,7 @@
     "token": "Nhưng Mai",
     "class": "vietnamese",
     "phones": [
-      "ɲˈyŋ mˈaːj"
+      "ɲˌyŋ mˈaːj"
     ]
   },
   {
@@ -4732,7 +4728,7 @@
     "token": "Kochou",
     "class": "japanese",
     "phones": [
-      "kˈo tʃˈəw"
+      "kˈo tʃˈə1w"
     ]
   },
   {
@@ -4935,7 +4931,7 @@
     "token": "Yuichirou",
     "class": "japanese",
     "phones": [
-      "zˈu ˈi tʃˈi ɹˈəw"
+      "zˈu ˈi tʃˈi ɹˈə1w"
     ]
   },
   {
@@ -4949,7 +4945,7 @@
     "token": "Akou",
     "class": "japanese",
     "phones": [
-      "ˈaː kˈəw"
+      "ˈaː kˈə1w"
     ]
   },
   {
@@ -4991,7 +4987,7 @@
     "token": "Ayanokouji",
     "class": "japanese",
     "phones": [
-      "ˈaː zˈaː nˈo kˈəw zˈi"
+      "ˈaː zˈaː nˈo kˈə1w zˈi"
     ]
   },
   {
@@ -5012,7 +5008,7 @@
     "token": "Godou",
     "class": "japanese",
     "phones": [
-      "ɣˈo ɗˈəw"
+      "ɣˈo ɗˈə1w"
     ]
   },
   {
@@ -5362,7 +5358,7 @@
     "token": "Ðang",
     "class": "mixed",
     "phones": [
-      "ɗˈaːŋ"
+      "ɗˌaːŋ"
     ]
   },
   {
